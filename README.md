@@ -39,7 +39,7 @@ One way to make this process about 10x faster is to convert the models to pytorc
 
 The output model will be saved to `torch-dumps/model-name.pt`. This is the default way to load all models except for `gpt-neox-20b`, `opt-13b`, `OPT-13B-Erebus`, `gpt-j-6B`, and `flan-t5`. I don't remember why these models are exceptions.
 
-If I get enough ⭐s on this repository, I will make the process of loading models more transparent and straightforward.
+If I get enough ⭐s on this repository, I will make the process of loading models saner and more customizable.
 
 ## Starting the webui
 
@@ -47,3 +47,7 @@ If I get enough ⭐s on this repository, I will make the process of loading mode
     python server.py
 
 Then browse to `http://localhost:7860/?__theme=dark`
+
+## Contributing
+
+Pull requests are welcome.
