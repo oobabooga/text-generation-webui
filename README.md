@@ -11,13 +11,13 @@ A gradio webui for running large language models locally. Supports gpt-j-6B, gpt
 
 Models should be placed under `models/model-name`.
 
-### Hugging Face
+#### Hugging Face
 
 Hugging Face is the main place to download models. For instance, [here](https://huggingface.co/EleutherAI/gpt-j-6B/tree/main) you can find the files for the model gpt-j-6B.
 
 The files that you need to download and put under `models/gpt-j-6B` are the json, txt, and pytorch*.bin files. The remaining files are not necessary.
 
-### GPT-4chan
+#### GPT-4chan
 
 [GPT-4chan](https://huggingface.co/ykilcher/gpt-4chan) has been shut down from Hugging Face, so you need to download it elsewhere. You have two options:
 
@@ -28,7 +28,5 @@ The files that you need to download and put under `models/gpt-j-6B` are the json
 
     conda activate textgen
     python server.py
-    
-
 
 Then browse to `http://localhost:7860/?__theme=dark`
