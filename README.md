@@ -10,7 +10,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 
     conda env create -f environment.yml
 
-This installs the CUDA version of pytorch, which assumes that you have a NVIDIA GPU. If you want to run this on an AMD GPU, you should install the ROCM version of pytorch instead.
+This installs the CUDA version of pytorch, which assumes that you have a NVIDIA GPU. If you want to run this on an AMD GPU, you should install the ROCm version of pytorch instead.
 
 ## Downloading models
 
