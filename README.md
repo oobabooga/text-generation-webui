@@ -37,6 +37,14 @@ Hugging Face is the main place to download models. These are some of my favorite
 
 The files that you need to download are the json, txt, and pytorch\*.bin files. The remaining files are not necessary.
 
+For your convenience, you can automatically download a model from HF using the script download-model.py. Its usage is very simple:
+
+    python download-model.py organization/model
+
+For instance:
+
+    python download-model.py facebook/opt-1.3b
+
 #### GPT-4chan
 
 [GPT-4chan](https://huggingface.co/ykilcher/gpt-4chan) has been shut down from Hugging Face, so you need to download it elsewhere. You have two options:
@@ -57,7 +65,13 @@ The output model will be saved to `torch-dumps/model-name.pt`. When you load a n
     conda activate textgen
     python server.py
 
-Then browse to `http://localhost:7860/?__theme=dark`
+Then browse to 
+
+`http://localhost:7860/?__theme=dark`
+
+#### Command-line flags
+
+* `--model MODEL`: load this model by default.
 
 ## Presets
 
