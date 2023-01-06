@@ -50,7 +50,7 @@ The script `convert-to-torch.py` allows you to convert models to .pt format, whi
 
     python convert-to-torch.py models/model-name/
 
-The output model will be saved to `torch-dumps/model-name.pt`. When you load a new model from the webui, it will first look for this .pt file; if it is not found, it will load the model as usual from `models/model-name/`. 
+The output model will be saved to `torch-dumps/model-name.pt`. When you load a new model, the webui first looks for this .pt file; if it is not found, it loads the model as usual from `models/model-name/`. 
 
 ## Starting the webui
 
