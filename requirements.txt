@@ -5,8 +5,10 @@ altair==4.2.0
 anyio==3.6.2
 async-timeout==4.0.2
 attrs==22.1.0
+beautifulsoup4==4.11.1
 bitsandbytes==0.35.4
 brotlipy==0.7.0
+bs4==0.0.1
 charset-normalizer==2.1.1
 click==8.1.3
 contourpy==1.0.6
@@ -14,6 +16,7 @@ cycler==0.11.0
 entrypoints==0.4
 fastapi==0.88.0
 ffmpy==0.3.0
+filelock==3.9.0
 fonttools==4.38.0
 frozenlist==1.3.3
 fsspec==2022.11.0
@@ -47,9 +50,11 @@ pyrsistent==0.19.2
 python-dateutil==2.8.2
 python-multipart==0.0.5
 pytz==2022.7
+PyYAML==6.0
 regex==2022.10.31
 rfc3986==1.5.0
 sniffio==1.3.0
+soupsieve==2.3.2.post1
 starlette==0.22.0
 tokenizers==0.13.2
 toolz==0.12.0
