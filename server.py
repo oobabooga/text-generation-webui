@@ -120,8 +120,8 @@ if args.notebook:
         textbox = gr.Textbox(value=default_text, lines=23)
         temp_slider = gr.Slider(minimum=0.0, maximum=1.0, step=0.01, label='Temperature', value=0.7)
         length_slider = gr.Slider(minimum=1, maximum=2000, step=1, label='max_length', value=200)
-        preset_menu = gr.Dropdown(choices=list(map(lambda x : x.split('/')[-1].split('.')[0], glob.glob("presets/*.txt"))), value="Default")
-        model_menu = gr.Dropdown(choices=available_models, value=model_name)
+        preset_menu = gr.Dropdown(choices=list(map(lambda x : x.split('/')[-1].split('.')[0], glob.glob("presets/*.txt"))), value="Default", label='Preset')
+        model_menu = gr.Dropdown(choices=available_models, value=model_name, label='Model')
         btn = gr.Button("Generate")
         markdown = gr.Markdown()
 
@@ -133,8 +133,8 @@ else:
             gr.Textbox(value=default_text, lines=15),
             gr.Slider(minimum=0.0, maximum=1.0, step=0.01, label='Temperature', value=0.7),
             gr.Slider(minimum=1, maximum=2000, step=1, label='max_length', value=200),
-            gr.Dropdown(choices=list(map(lambda x : x.split('/')[-1].split('.')[0], glob.glob("presets/*.txt"))), value="Default"),
-            gr.Dropdown(choices=available_models, value=model_name),
+            gr.Dropdown(choices=list(map(lambda x : x.split('/')[-1].split('.')[0], glob.glob("presets/*.txt"))), value="Default", label='Preset'),
+            gr.Dropdown(choices=available_models, value=model_name, label='Model'),
         ],
         outputs=[
              gr.Textbox(placeholder="", lines=15),
