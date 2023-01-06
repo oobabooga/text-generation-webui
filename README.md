@@ -71,7 +71,7 @@ Then browse to
 
 Optionally, you can use the following command-line flags:
 
-    `--model model-name`: load this model by default.
+    --model model-name: load this model by default.
 
 ## Presets
 
