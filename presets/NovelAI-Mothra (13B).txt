@@ -1,0 +1,7 @@
+do_sample=True,
+max_new_tokens=max_length,
+top_p=1.0,
+top_k=100,
+temperature=1.25,
+repetition_penalty=1.05,
+typical_p=1.0,
