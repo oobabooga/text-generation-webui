@@ -37,7 +37,7 @@ Hugging Face is the main place to download models. These are some of my favorite
 
 The files that you need to download are the json, txt, and pytorch\*.bin files. The remaining files are not necessary.
 
-For your convenience, you can automatically download a model from HF using the script download-model.py. Its usage is very simple:
+For your convenience, you can automatically download a model from HF using the script `download-model.py`. Its usage is very simple:
 
     python download-model.py organization/model
 
@@ -71,7 +71,7 @@ Then browse to
 
 #### Command-line flags
 
-* `--model MODEL`: load this model by default.
+`--model model-name`: load this model by default.
 
 ## Presets
 
