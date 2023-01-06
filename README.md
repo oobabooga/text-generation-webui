@@ -27,9 +27,15 @@ Models should be placed under `models/model-name`.
 
 #### Hugging Face
 
-Hugging Face is the main place to download models. For instance, [here](https://huggingface.co/EleutherAI/gpt-j-6B/tree/main) you can find the files for the model gpt-j-6B.
+Hugging Face is the main place to download models. These are the most important ones in my opinion:
 
-The files that you need to download and put under `models/gpt-j-6B` are the json, txt, and pytorch*.bin files. The remaining files are not necessary.
+* [gpt-j-6B](https://huggingface.co/EleutherAI/gpt-j-6B/tree/main)
+* [gpt-neox-20b](https://huggingface.co/EleutherAI/gpt-neox-20b/tree/main)
+* [opt](https://huggingface.co/models?search=facebook/opt)
+* [galactica](https://huggingface.co/models?search=facebook/galactica)
+* [\*-Erebus](https://huggingface.co/models?search=erebus)
+
+The files that you need to download and put under `models/gpt-j-6B` are the json, txt, and pytorch\*.bin files. The remaining files are not necessary.
 
 #### GPT-4chan
 
