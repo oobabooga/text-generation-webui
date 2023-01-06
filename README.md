@@ -63,6 +63,10 @@ If I get enough ⭐s on this repository, I will make the process of loading mode
 
 Then browse to `http://localhost:7860/?__theme=dark`
 
+## Presets
+
+Inference settings presets can be created under `presets/` as text files. These files are detected automatically at startup.
+
 ## Contributing
 
 Pull requests are welcome.

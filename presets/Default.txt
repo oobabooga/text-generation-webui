@@ -1,0 +1,5 @@
+do_sample=True,
+max_new_tokens=max_length,
+top_p=1,
+typical_p=0.3,
+temperature=temperature, 
