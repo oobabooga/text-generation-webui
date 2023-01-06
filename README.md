@@ -21,8 +21,6 @@ Install the requirements:
 
     pip install -r requirements.txt
 
-This installs the CUDA version of pytorch, which assumes that you have a NVIDIA GPU. If you want to run this on an AMD GPU, you should install the ROCm version of pytorch instead.
-
 ## Downloading models
 
 Models should be placed under `models/model-name`.
