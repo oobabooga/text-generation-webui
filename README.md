@@ -1,5 +1,8 @@
 # text-generation-webui
-A gradio webui for running large language models locally. Supports gpt-j-6B, gpt-neox-20b, opt, galactica, and many others.
+
+A gradio webui for running large language models locally. Supports gpt-j-6B, gpt-neox-20b, opt, galactica, and many others. 
+
+Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.com/AUTOMATIC1111/stable-diffusion-webui) of text generation.
 
 ![webui screenshot](https://github.com/oobabooga/text-generation-webui/raw/main/webui.png)
 
@@ -18,6 +21,8 @@ Install the requirements:
 
     pip install -r requirements.txt
 
+This installs the CUDA version of pytorch, which assumes that you have a NVIDIA GPU. If you want to run this on an AMD GPU, you should install the ROCm version of pytorch instead.
+
 ## Downloading models
 
 Models should be placed under `models/model-name`.
@@ -35,9 +40,25 @@ The files that you need to download and put under `models/gpt-j-6B` are the json
 * Torrent: [16-bit](https://archive.org/details/gpt4chan_model_float16) / [32-bit](https://archive.org/details/gpt4chan_model)
 * Direct download: [16-bit](https://theswissbay.ch/pdf/_notpdf_/gpt4chan_model_float16/) / [32-bit](https://theswissbay.ch/pdf/_notpdf_/gpt4chan_model/)
 
+## Converting to pytorch
+
+This webui allows you to switch between different models on the fly, so it must be fast to load the models from disk.
+
+One way to make this process about 10x faster is to convert the models to pytorch format using the script `convert-to-torch.py`. Create a folder called `torch-dumps` and then make the conversion with:
+
+    python convert-to-torch.py models/model-name/
+
+The output model will be saved to `torch-dumps/model-name.pt`. This is the default way to load all models except for `gpt-neox-20b`, `opt-13b`, `OPT-13B-Erebus`, `gpt-j-6B`, and `flan-t5`. I don't remember why these models are exceptions.
+
+If I get enough ⭐s on this repository, I will make the process of loading models saner and more customizable.
+
 ## Starting the webui
 
     conda activate textgen
     python server.py
 
 Then browse to `http://localhost:7860/?__theme=dark`
+
+## Contributing
+
+Pull requests are welcome.
