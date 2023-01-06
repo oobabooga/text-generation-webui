@@ -18,7 +18,7 @@ model_name = 'galactica-6.7b'
 #model_name = 'flan-t5'
 #model_name = 'OPT-13B-Erebus'
 
-settings_name = "Default"
+loaded_preset = None
 
 def load_model(model_name):
     print(f"Loading {model_name}...")
@@ -31,7 +31,7 @@ def load_model(model_name):
         model = AutoModelForCausalLM.from_pretrained(f"models/{model_name}", device_map='auto', load_in_8bit=True)
     elif model_name in ['gpt-j-6B']:
         model = AutoModelForCausalLM.from_pretrained(f"models/{model_name}", low_cpu_mem_usage=True, torch_dtype=torch.float16).cuda()
-    elif model_name in ['flan-t5']:
+    elif model_name in ['flan-t5', 't5-large']:
         model = T5ForConditionalGeneration.from_pretrained(f"models/{model_name}").cuda()
 
     if model_name in ['gpt4chan_model_float16']:
@@ -41,7 +41,7 @@ def load_model(model_name):
     else:
         tokenizer = AutoTokenizer.from_pretrained(f"models/{model_name}/")
 
-    print(f"Loaded the model in {time.time()-t0} seconds.")
+    print(f"Loaded the model in {(time.time()-t0):.2f} seconds.")
     return model, tokenizer
 
 def fix_gpt4chan(s):
@@ -53,7 +53,7 @@ def fix_gpt4chan(s):
     return s
 
 def fn(question, temperature, max_length, inference_settings, selected_model):
-    global model, tokenizer, model_name, settings_name
+    global model, tokenizer, model_name, loaded_preset, preset
 
     if selected_model != model_name:
         model_name = selected_model
@@ -61,10 +61,10 @@ def fn(question, temperature, max_length, inference_settings, selected_model):
         tokenier = None
         torch.cuda.empty_cache()
         model, tokenizer = load_model(model_name)
-    if inference_settings != settings_name:
+    if inference_settings != loaded_preset:
         with open(f'presets/{inference_settings}.txt', 'r') as infile:
             preset = infile.read()
-        settings_name = inference_settings
+        loaded_preset = inference_settings
 
     torch.cuda.empty_cache()
     input_text = question
@@ -92,7 +92,7 @@ interface = gr.Interface(
         gr.Slider(minimum=0.0, maximum=1.0, step=0.01, label='Temperature', value=0.7),
         gr.Slider(minimum=1, maximum=2000, step=1, label='max_length', value=200),
         gr.Dropdown(choices=list(map(lambda x : x.split('/')[-1].split('.')[0], glob.glob("presets/*.txt"))), value="Default"),
-        gr.Dropdown(choices=["gpt4chan_model_float16", "galactica-6.7b", "opt-6.7b",  "opt-13b", "gpt-neox-20b", "gpt-j-6B-float16", "flan-t5", "bloomz-7b1-p3", "OPT-13B-Erebus"], value=model_name),
+        gr.Dropdown(choices=sorted(set(map(lambda x : x.split('/')[-1].replace('.pt', ''), glob.glob("models/*") + glob.glob("torch-dumps/*")))), value=model_name),
     ],
     outputs=[
          gr.Textbox(placeholder="", lines=15),
