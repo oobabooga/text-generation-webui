@@ -23,11 +23,11 @@ Install the requirements:
 
 ## Downloading models
 
-Models should be placed under `models/model-name`.
+Models should be placed under `models/model-name`. For instance, `models/gpt-j-6B` for [gpt-j-6B](https://huggingface.co/EleutherAI/gpt-j-6B/tree/main).
 
 #### Hugging Face
 
-Hugging Face is the main place to download models. These are the most important ones in my opinion:
+Hugging Face is the main place to download models. These are the most relevant at the moment (in my opinion):
 
 * [gpt-j-6B](https://huggingface.co/EleutherAI/gpt-j-6B/tree/main)
 * [gpt-neox-20b](https://huggingface.co/EleutherAI/gpt-neox-20b/tree/main)
@@ -35,7 +35,7 @@ Hugging Face is the main place to download models. These are the most important 
 * [galactica](https://huggingface.co/models?search=facebook/galactica)
 * [\*-Erebus](https://huggingface.co/models?search=erebus)
 
-The files that you need to download and put under `models/model-name` (for instance, `models/gpt-j-6B`) are the json, txt, and pytorch\*.bin files. The remaining files are not necessary.
+The files that you need to download are the json, txt, and pytorch\*.bin files. The remaining files are not necessary.
 
 #### GPT-4chan
 
