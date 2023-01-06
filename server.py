@@ -57,7 +57,6 @@ def fix_gpt4chan(s):
         s = re.sub("--- [0-9]*\n>>[0-9]*\n---", "---", s)
         s = re.sub("--- [0-9]*\n *\n---", "---", s)
         s = re.sub("--- [0-9]*\n\n\n---", "---", s)
-
     return s
 
 def generate_reply(question, temperature, max_length, inference_settings, selected_model):
