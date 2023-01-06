@@ -1,3 +1,4 @@
+import os
 import re
 import time
 import glob
@@ -20,17 +21,18 @@ model_name = 'galactica-6.7b'
 settings_name = "Default"
 
 def load_model(model_name):
-    print(f"Loading {model_name}")
-
+    print(f"Loading {model_name}...")
     t0 = time.time()
-    if model_name in ['gpt-neox-20b', 'opt-13b', 'OPT-13B-Erebus']:
+
+    if os.path.exists(f"torch-dumps/{model_name}.pt"):
+        print("Loading in .pt format...")
+        model = torch.load(f"torch-dumps/{model_name}.pt").cuda()
+    elif model_name in ['gpt-neox-20b', 'opt-13b', 'OPT-13B-Erebus']:
         model = AutoModelForCausalLM.from_pretrained(f"models/{model_name}", device_map='auto', load_in_8bit=True)
     elif model_name in ['gpt-j-6B']:
         model = AutoModelForCausalLM.from_pretrained(f"models/{model_name}", low_cpu_mem_usage=True, torch_dtype=torch.float16).cuda()
     elif model_name in ['flan-t5']:
         model = T5ForConditionalGeneration.from_pretrained(f"models/{model_name}").cuda()
-    else:
-        model = torch.load(f"torch-dumps/{model_name}.pt").cuda()
 
     if model_name in ['gpt4chan_model_float16']:
         tokenizer = AutoTokenizer.from_pretrained("models/gpt-j-6B/")

@@ -46,15 +46,11 @@ The files that you need to download and put under `models/model-name` (for insta
 
 ## Converting to pytorch
 
-This webui allows you to switch between different models on the fly, so it must be fast to load the models from disk.
-
-One way to make this process about 10x faster is to convert the models to pytorch format using the script `convert-to-torch.py`. Create a folder called `torch-dumps` and then make the conversion with:
+The script `convert-to-torch.py` allows you to convert models to .pt format, which is about 10x faster to load:
 
     python convert-to-torch.py models/model-name/
 
-The output model will be saved to `torch-dumps/model-name.pt`. This is the default way to load all models except for `gpt-neox-20b`, `opt-13b`, `OPT-13B-Erebus`, `gpt-j-6B`, and `flan-t5`. I don't remember why these models are exceptions.
-
-If I get enough ⭐s on this repository, I will make the process of loading models saner and more customizable.
+The output model will be saved to `torch-dumps/model-name.pt`. When you load a new model from the webui, it will first look for this .pt file; if it is not found, it will load the model as usual from `models/model-name/`. 
 
 ## Starting the webui
 
