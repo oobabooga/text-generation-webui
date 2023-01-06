@@ -69,7 +69,7 @@ Then browse to
 
 `http://localhost:7860/?__theme=dark`
 
-#### Command-line flags
+## Command-line flags
 
 `--model model-name`: load this model by default.
 
