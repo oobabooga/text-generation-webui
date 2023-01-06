@@ -71,8 +71,9 @@ Then browse to
 
 Optionally, you can use the following command-line flags:
 
-    --model model-name: load this model by default.
-    --notebook: Launch the webui in notebook mode, where the output is written to the same text box as the input.
+`--model model-name`: Load this model by default.
+
+`--notebook`: Launch the webui in notebook mode, where the output is written to the same text box as the input.
 
 ## Presets
 
