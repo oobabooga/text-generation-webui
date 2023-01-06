@@ -5,7 +5,18 @@ A gradio webui for running large language models locally. Supports gpt-j-6B, gpt
 
 ## Installation
 
-    conda env create -f environment.yml
+Create a conda environment:
+
+    conda create -n textgen
+    conda activate textgen
+
+Install the appropriate pytorch for your GPU. For NVIDIA GPUs, this should work:
+
+    conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvidia
+
+Install the requirements:
+
+    pip install -r requirements.txt
 
 ## Downloading models
 
