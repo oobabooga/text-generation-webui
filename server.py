@@ -63,6 +63,9 @@ def fix_gpt4chan(s):
 def fix_galactica(s):
     s = s.replace(r'\[', r'$')
     s = s.replace(r'\]', r'$')
+    s = s.replace(r'\(', r'$')
+    s = s.replace(r'\)', r'$')
+    s = s.replace(r'$$', r'$')
     return s
 
 def generate_reply(question, temperature, max_length, inference_settings, selected_model):
