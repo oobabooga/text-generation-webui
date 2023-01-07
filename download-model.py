@@ -27,9 +27,11 @@ def get_file(args):
             f.write(data)
         t.close()
 
-model = Path(argv[1])
+model = argv[1]
+if model[-1] == '/':
+    model = model[:-1]
 url = f'https://huggingface.co/{model}/tree/main'
-output_folder = Path("models") / model.name
+output_folder = Path("models") / model.split('/')[-1]
 if not output_folder.exists():
     output_folder.mkdir()
 
