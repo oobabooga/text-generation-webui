@@ -9,7 +9,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 ## Features
 
 * Switch between different models using a dropdown menu.
-* Generate nice HTML output for gpt4chan.
+* Generate nice HTML output for GPT-4chan.
 * Generate Markdown output for [GALACTICA](https://github.com/paperswithcode/galai), including LaTeX support.
 * Notebook mode that resembles OpenAI's playground.
 * Load 13b/20b models in 8-bit mode.
