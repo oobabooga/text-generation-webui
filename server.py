@@ -1,15 +1,15 @@
-import os
 import re
 import time
 import glob
 from sys import exit
 import torch
 import argparse
+from pathlib import Path
 import gradio as gr
 import transformers
 from html_generator import *
-from transformers import AutoTokenizer
-from transformers import GPTJForCausalLM, AutoModelForCausalLM, AutoModelForSeq2SeqLM, OPTForCausalLM, T5Tokenizer, T5ForConditionalGeneration, GPTJModel, AutoModel
+from transformers import AutoTokenizer, T5Tokenizer
+from transformers import AutoModelForCausalLM, T5ForConditionalGeneration
 
 
 parser = argparse.ArgumentParser()
@@ -17,37 +17,37 @@ parser.add_argument('--model', type=str, help='Name of the model to load by defa
 parser.add_argument('--notebook', action='store_true', help='Launch the webui in notebook mode, where the output is written to the same text box as the input.')
 args = parser.parse_args()
 loaded_preset = None
-available_models = sorted(set(map(lambda x : x.split('/')[-1].replace('.pt', ''), glob.glob("models/*")+ glob.glob("torch-dumps/*"))))
+available_models = sorted(set(map(lambda x : str(x.name).replace('.pt', ''), list(Path('models/').glob('*'))+list(Path('torch-dumps/').glob('*')))))
 available_models = [item for item in available_models if not item.endswith('.txt')]
-#available_models = sorted(set(map(lambda x : x.split('/')[-1].replace('.pt', ''), glob.glob("models/*[!\.][!t][!x][!t]")+ glob.glob("torch-dumps/*[!\.][!t][!x][!t]"))))
+available_presets = sorted(set(map(lambda x : str(x.name).split('.')[0], list(Path('presets').glob('*.txt')))))
 
 def load_model(model_name):
     print(f"Loading {model_name}...")
     t0 = time.time()
 
     # Loading the model
-    if os.path.exists(f"torch-dumps/{model_name}.pt"):
+    if Path(f"torch-dumps/{model_name}.pt").exists():
         print("Loading in .pt format...")
-        model = torch.load(f"torch-dumps/{model_name}.pt").cuda()
+        model = torch.load(Path(f"torch-dumps/{model_name}.pt")).cuda()
     elif model_name.lower().startswith(('gpt-neo', 'opt-', 'galactica')):
         if any(size in model_name.lower() for size in ('13b', '20b', '30b')):
-            model = AutoModelForCausalLM.from_pretrained(f"models/{model_name}", device_map='auto', load_in_8bit=True)
+            model = AutoModelForCausalLM.from_pretrained(Path(f"models/{model_name}"), device_map='auto', load_in_8bit=True)
         else:
-            model = AutoModelForCausalLM.from_pretrained(f"models/{model_name}", low_cpu_mem_usage=True, torch_dtype=torch.float16).cuda()
+            model = AutoModelForCausalLM.from_pretrained(Path(f"models/{model_name}"), low_cpu_mem_usage=True, torch_dtype=torch.float16).cuda()
     elif model_name in ['gpt-j-6B']:
-        model = AutoModelForCausalLM.from_pretrained(f"models/{model_name}", low_cpu_mem_usage=True, torch_dtype=torch.float16).cuda()
+        model = AutoModelForCausalLM.from_pretrained(Path(f"models/{model_name}"), low_cpu_mem_usage=True, torch_dtype=torch.float16).cuda()
     elif model_name in ['flan-t5', 't5-large']:
-        model = T5ForConditionalGeneration.from_pretrained(f"models/{model_name}").cuda()
+        model = T5ForConditionalGeneration.from_pretrained(Path(f"models/{model_name}")).cuda()
     else:
-        model = AutoModelForCausalLM.from_pretrained(f"models/{model_name}", low_cpu_mem_usage=True, torch_dtype=torch.float16).cuda()
+        model = AutoModelForCausalLM.from_pretrained(Path(f"models/{model_name}"), low_cpu_mem_usage=True, torch_dtype=torch.float16).cuda()
 
     # Loading the tokenizer
     if model_name.startswith('gpt4chan'):
-        tokenizer = AutoTokenizer.from_pretrained("models/gpt-j-6B/")
+        tokenizer = AutoTokenizer.from_pretrained(Path("models/gpt-j-6B/"))
     elif model_name in ['flan-t5']:
-        tokenizer = T5Tokenizer.from_pretrained(f"models/{model_name}/")
+        tokenizer = T5Tokenizer.from_pretrained(Path(f"models/{model_name}/"))
     else:
-        tokenizer = AutoTokenizer.from_pretrained(f"models/{model_name}/")
+        tokenizer = AutoTokenizer.from_pretrained(Path(f"models/{model_name}/"))
 
     print(f"Loaded the model in {(time.time()-t0):.2f} seconds.")
     return model, tokenizer
@@ -78,7 +78,7 @@ def generate_reply(question, temperature, max_length, inference_settings, select
         torch.cuda.empty_cache()
         model, tokenizer = load_model(model_name)
     if inference_settings != loaded_preset:
-        with open(f'presets/{inference_settings}.txt', 'r') as infile:
+        with open(Path(f'presets/{inference_settings}.txt'), 'r') as infile:
             preset = infile.read()
         loaded_preset = inference_settings
 
@@ -143,7 +143,7 @@ if args.notebook:
                 temp_slider = gr.Slider(minimum=0.0, maximum=1.0, step=0.01, label='Temperature', value=0.7)
                 length_slider = gr.Slider(minimum=1, maximum=2000, step=1, label='max_length', value=200)
             with gr.Column():
-                preset_menu = gr.Dropdown(choices=list(map(lambda x : x.split('/')[-1].split('.')[0], glob.glob("presets/*.txt"))), value="NovelAI-Sphinx Moth", label='Preset')
+                preset_menu = gr.Dropdown(choices=available_presets, value="NovelAI-Sphinx Moth", label='Preset')
                 model_menu = gr.Dropdown(choices=available_models, value=model_name, label='Model')
 
         btn.click(generate_reply, [textbox, temp_slider, length_slider, preset_menu, model_menu], [textbox, markdown, html], show_progress=False)
@@ -161,7 +161,7 @@ else:
                 textbox = gr.Textbox(value=default_text, lines=15, label='Input')
                 temp_slider = gr.Slider(minimum=0.0, maximum=1.0, step=0.01, label='Temperature', value=0.7)
                 length_slider = gr.Slider(minimum=1, maximum=2000, step=1, label='max_length', value=200)
-                preset_menu = gr.Dropdown(choices=list(map(lambda x : x.split('/')[-1].split('.')[0], glob.glob("presets/*.txt"))), value="NovelAI-Sphinx Moth", label='Preset')
+                preset_menu = gr.Dropdown(choices=available_presets, value="NovelAI-Sphinx Moth", label='Preset')
                 model_menu = gr.Dropdown(choices=available_models, value=model_name, label='Model')
                 btn = gr.Button("Generate")
             with gr.Column():

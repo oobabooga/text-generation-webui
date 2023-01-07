@@ -9,16 +9,16 @@ python download-model.py facebook/opt-1.3b
 import requests 
 from bs4 import BeautifulSoup 
 import multiprocessing
-import os
 import tqdm
 from sys import argv
+from pathlib import Path
 
 def get_file(args):
     url = args[0]
     output_folder = args[1]
 
     r = requests.get(url, stream=True)
-    with open(f"{output_folder}/{url.split('/')[-1]}", 'wb') as f:
+    with open(output_folder / Path(url.split('/')[-1]), 'wb') as f:
         total_size = int(r.headers.get('content-length', 0))
         block_size = 1024
         t = tqdm.tqdm(total=total_size, unit='iB', unit_scale=True)
@@ -27,13 +27,11 @@ def get_file(args):
             f.write(data)
         t.close()
 
-model = argv[1]
-if model.endswith('/'):
-    model = model[:-1]    
+model = Path(argv[1])
 url = f'https://huggingface.co/{model}/tree/main'
-output_folder = f"models/{model.split('/')[-1]}"
-if not os.path.exists(output_folder):
-    os.mkdir(output_folder)
+output_folder = Path("models") / model.name
+if not output_folder.exists():
+    output_folder.mkdir()
 
 # Finding the relevant files to download
 page = requests.get(url) 

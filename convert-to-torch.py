@@ -10,11 +10,10 @@ Output will be written to torch-dumps/name-of-the-model.pt
 from transformers import AutoModelForCausalLM, T5ForConditionalGeneration
 import torch
 from sys import argv
+from pathlib import Path
  
-path = argv[1]
-if path[-1] != '/':
-    path = path+'/'
-model_name = path.split('/')[-2]
+path = Path(argv[1])
+model_name = path.name
 
 print(f"Loading {model_name}...")
 if model_name in ['flan-t5', 't5-large']:
@@ -24,4 +23,4 @@ else:
 print("Model loaded.")
 
 print(f"Saving to torch-dumps/{model_name}.pt")
-torch.save(model, f"torch-dumps/{model_name}.pt")
+torch.save(model, Path(f"torch-dumps/{model_name}.pt"))
