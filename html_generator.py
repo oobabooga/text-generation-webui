@@ -148,7 +148,8 @@ def generate_html(f):
     output += '</div>'
     output = output.split('\n')
     for i in range(len(output)):
-        output[i] = re.sub('^(&gt;[^\n]*(<br>|</div>))', '<span class="greentext">\\1</span>\n', output[i])
+        output[i] = re.sub(r'^(&gt;(.*?)(<br>|</div>))', r'<span class="greentext">\1</span>', output[i])
+        output[i] = re.sub(r'^<blockquote class="message">(&gt;(.*?)(<br>|</div>))', r'<blockquote class="message"><span class="greentext">\1</span>', output[i])
     output = '\n'.join(output)
 
     return output
