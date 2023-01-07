@@ -30,7 +30,7 @@ def load_model(model_name):
         print("Loading in .pt format...")
         model = torch.load(f"torch-dumps/{model_name}.pt").cuda()
     elif model_name.lower().startswith(('gpt-neo', 'opt-', 'galactica')):
-        if any(size in model_name for size in ('13b', '20b', '30b')):
+        if any(size in model_name.lower() for size in ('13b', '20b', '30b')):
             model = AutoModelForCausalLM.from_pretrained(f"models/{model_name}", device_map='auto', load_in_8bit=True)
         else:
             model = AutoModelForCausalLM.from_pretrained(f"models/{model_name}", low_cpu_mem_usage=True, torch_dtype=torch.float16).cuda()
