@@ -42,7 +42,7 @@ def load_model(model_name):
         model = AutoModelForCausalLM.from_pretrained(Path(f"models/{model_name}"), low_cpu_mem_usage=True, torch_dtype=torch.float16).cuda()
 
     # Loading the tokenizer
-    if model_name.startswith('gpt4chan'):
+    if model_name.lower().startswith('gpt4chan'):
         tokenizer = AutoTokenizer.from_pretrained(Path("models/gpt-j-6B/"))
     elif model_name in ['flan-t5']:
         tokenizer = T5Tokenizer.from_pretrained(Path(f"models/{model_name}/"))
@@ -116,15 +116,16 @@ else:
     model_name = available_models[i]
 model, tokenizer = load_model(model_name)
 
-if model_name.startswith('gpt4chan'):
+if model_name.lower().startswith('gpt4chan'):
     default_text = "-----\n--- 865467536\nInput text\n--- 865467537\n"
 else:
     default_text = "Common sense questions and answers\n\nQuestion: \nFactual answer:"
 
 if args.notebook:
-    with gr.Blocks() as interface:
+    with gr.Blocks(css=".my-4 {margin-top: 0} .py-6 {padding-top: 2.5rem}") as interface:
         gr.Markdown(
         f"""
+
         # Text generation lab
         Generate text using Large Language Models.
         """
@@ -148,7 +149,7 @@ if args.notebook:
 
         btn.click(generate_reply, [textbox, temp_slider, length_slider, preset_menu, model_menu], [textbox, markdown, html], show_progress=False)
 else:
-    with gr.Blocks() as interface:
+    with gr.Blocks(css=".my-4 {margin-top: 0} .py-6 {padding-top: 2.5rem}") as interface:
         gr.Markdown(
         f"""
         # Text generation lab
