@@ -83,13 +83,13 @@ def generate_reply(question, temperature, max_length, inference_settings, select
     if model_name.lower().startswith('galactica'):
         return reply, reply
     else:
-        return reply, ''
+        return reply, 'Only applicable for galactica models.'
 
 # Choosing the default model
 if args.model is not None:
     model_name = args.model
 else:
-    if len(available_models == 0):
+    if len(available_models) == 0:
         print("No models are available! Please download at least one.")
         exit(0)
     elif len(available_models) == 1:
@@ -117,31 +117,44 @@ if args.notebook:
         """
         )
 
-        textbox = gr.Textbox(value=default_text, lines=23)
-        temp_slider = gr.Slider(minimum=0.0, maximum=1.0, step=0.01, label='Temperature', value=0.7)
-        length_slider = gr.Slider(minimum=1, maximum=2000, step=1, label='max_length', value=200)
-        preset_menu = gr.Dropdown(choices=list(map(lambda x : x.split('/')[-1].split('.')[0], glob.glob("presets/*.txt"))), value="Default", label='Preset')
-        model_menu = gr.Dropdown(choices=available_models, value=model_name, label='Model')
+        with gr.Tab('Raw'):
+            textbox = gr.Textbox(value=default_text, lines=23)
+        with gr.Tab('Markdown'):
+            markdown = gr.Markdown()
         btn = gr.Button("Generate")
-        markdown = gr.Markdown()
+
+        with gr.Row():
+            with gr.Column():
+                temp_slider = gr.Slider(minimum=0.0, maximum=1.0, step=0.01, label='Temperature', value=0.7)
+                length_slider = gr.Slider(minimum=1, maximum=2000, step=1, label='max_length', value=200)
+            with gr.Column():
+                preset_menu = gr.Dropdown(choices=list(map(lambda x : x.split('/')[-1].split('.')[0], glob.glob("presets/*.txt"))), value="Default", label='Preset')
+                model_menu = gr.Dropdown(choices=available_models, value=model_name, label='Model')
 
         btn.click(generate_reply, [textbox, temp_slider, length_slider, preset_menu, model_menu], [textbox, markdown], show_progress=False)
 else:
-    interface = gr.Interface(
-        generate_reply,
-        inputs=[
-            gr.Textbox(value=default_text, lines=15),
-            gr.Slider(minimum=0.0, maximum=1.0, step=0.01, label='Temperature', value=0.7),
-            gr.Slider(minimum=1, maximum=2000, step=1, label='max_length', value=200),
-            gr.Dropdown(choices=list(map(lambda x : x.split('/')[-1].split('.')[0], glob.glob("presets/*.txt"))), value="Default", label='Preset'),
-            gr.Dropdown(choices=available_models, value=model_name, label='Model'),
-        ],
-        outputs=[
-             gr.Textbox(placeholder="", lines=15),
-             gr.Markdown()
-        ],
-        title="Text generation lab",
-        description=f"Generate text using Large Language Models.",
-    )
+    with gr.Blocks() as interface:
+        gr.Markdown(
+        f"""
+        # Text generation lab
+        Generate text using Large Language Models.
+        """
+        )
+
+        with gr.Row():
+            with gr.Column():
+                textbox = gr.Textbox(value=default_text, lines=15, label='Input')
+                temp_slider = gr.Slider(minimum=0.0, maximum=1.0, step=0.01, label='Temperature', value=0.7)
+                length_slider = gr.Slider(minimum=1, maximum=2000, step=1, label='max_length', value=200)
+                preset_menu = gr.Dropdown(choices=list(map(lambda x : x.split('/')[-1].split('.')[0], glob.glob("presets/*.txt"))), value="Default", label='Preset')
+                model_menu = gr.Dropdown(choices=available_models, value=model_name, label='Model')
+                btn = gr.Button("Generate")
+            with gr.Column():
+                with gr.Tab('Raw'):
+                    output_textbox = gr.Textbox(value=default_text, lines=15, label='Output')
+                with gr.Tab('Markdown'):
+                    markdown = gr.Markdown()
+
+        btn.click(generate_reply, [textbox, temp_slider, length_slider, preset_menu, model_menu], [output_textbox, markdown], show_progress=True)
 
 interface.launch(share=False, server_name="0.0.0.0")
