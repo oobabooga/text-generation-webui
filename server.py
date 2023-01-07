@@ -7,15 +7,19 @@ import torch
 import argparse
 import gradio as gr
 import transformers
+from html_generator import *
 from transformers import AutoTokenizer
 from transformers import GPTJForCausalLM, AutoModelForCausalLM, AutoModelForSeq2SeqLM, OPTForCausalLM, T5Tokenizer, T5ForConditionalGeneration, GPTJModel, AutoModel
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', type=str, help='Name of the model to load by default.')
 parser.add_argument('--notebook', action='store_true', help='Launch the webui in notebook mode, where the output is written to the same text box as the input.')
 args = parser.parse_args()
 loaded_preset = None
-available_models = sorted(set(map(lambda x : x.split('/')[-1].replace('.pt', ''), glob.glob("models/*[!\.][!t][!x][!t]")+ glob.glob("torch-dumps/*[!\.][!t][!x][!t]"))))
+available_models = sorted(set(map(lambda x : x.split('/')[-1].replace('.pt', ''), glob.glob("models/*")+ glob.glob("torch-dumps/*"))))
+available_models = [item for item in available_models if not item.endswith('.txt')]
+#available_models = sorted(set(map(lambda x : x.split('/')[-1].replace('.pt', ''), glob.glob("models/*[!\.][!t][!x][!t]")+ glob.glob("torch-dumps/*[!\.][!t][!x][!t]"))))
 
 def load_model(model_name):
     print(f"Loading {model_name}...")
@@ -75,15 +79,17 @@ def generate_reply(question, temperature, max_length, inference_settings, select
     input_ids = tokenizer.encode(str(input_text), return_tensors='pt').cuda()
 
     output = eval(f"model.generate(input_ids, {preset}).cuda()")
-
     reply = tokenizer.decode(output[0], skip_special_tokens=True)
+
     if model_name.startswith('gpt4chan'):
         reply = fix_gpt4chan(reply)
 
     if model_name.lower().startswith('galactica'):
-        return reply, reply
+        return reply, reply, 'Only applicable for gpt4chan.'
+    elif model_name.lower().startswith('gpt4chan'):
+        return reply, 'Only applicable for galactica models.', generate_html(reply)
     else:
-        return reply, 'Only applicable for galactica models.'
+        return reply, 'Only applicable for galactica models.', 'Only applicable for gpt4chan.'
 
 # Choosing the default model
 if args.model is not None:
@@ -121,6 +127,8 @@ if args.notebook:
             textbox = gr.Textbox(value=default_text, lines=23)
         with gr.Tab('Markdown'):
             markdown = gr.Markdown()
+        with gr.Tab('HTML'):
+            html = gr.HTML()
         btn = gr.Button("Generate")
 
         with gr.Row():
@@ -131,7 +139,7 @@ if args.notebook:
                 preset_menu = gr.Dropdown(choices=list(map(lambda x : x.split('/')[-1].split('.')[0], glob.glob("presets/*.txt"))), value="Default", label='Preset')
                 model_menu = gr.Dropdown(choices=available_models, value=model_name, label='Model')
 
-        btn.click(generate_reply, [textbox, temp_slider, length_slider, preset_menu, model_menu], [textbox, markdown], show_progress=False)
+        btn.click(generate_reply, [textbox, temp_slider, length_slider, preset_menu, model_menu], [textbox, markdown, html], show_progress=False)
 else:
     with gr.Blocks() as interface:
         gr.Markdown(
@@ -154,7 +162,9 @@ else:
                     output_textbox = gr.Textbox(value=default_text, lines=15, label='Output')
                 with gr.Tab('Markdown'):
                     markdown = gr.Markdown()
+                with gr.Tab('HTML'):
+                    html = gr.HTML()
 
-        btn.click(generate_reply, [textbox, temp_slider, length_slider, preset_menu, model_menu], [output_textbox, markdown], show_progress=True)
+        btn.click(generate_reply, [textbox, temp_slider, length_slider, preset_menu, model_menu], [output_textbox, markdown, html], show_progress=True)
 
 interface.launch(share=False, server_name="0.0.0.0")
