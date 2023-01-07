@@ -6,6 +6,15 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 
 ![webui screenshot](https://github.com/oobabooga/text-generation-webui/raw/main/webui.png)
 
+## Features
+
+* Switch between different models using a dropdown menu.
+* Generate nice HTML output for gpt4chan.
+* Generate Markdown output for galactica, including LaTeX support.
+* Notebook mode that resembles OpenAI's playground.
+* Load 13b/20b models in 8-bit mode.
+* Load parameter presets from text files.
+
 ## Installation
 
 Create a conda environment:
