@@ -2,9 +2,9 @@
 Converts a transformers model to .pt, which is faster to load.
  
 Example:
-python convert.py models/opt-1.3b
+python convert-to-torch.py models/opt-1.3b
  
-Output will be written to torch-dumps/name-of-the-model.pt
+The output will be written to torch-dumps/name-of-the-model.pt
 '''
  
 from transformers import AutoModelForCausalLM, T5ForConditionalGeneration
