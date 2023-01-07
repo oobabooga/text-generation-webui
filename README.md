@@ -10,7 +10,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 
 * Switch between different models using a dropdown menu.
 * Generate nice HTML output for gpt4chan.
-* Generate Markdown output for galactica, including LaTeX support.
+* Generate Markdown output for [GALACTICA](https://github.com/paperswithcode/galai), including LaTeX support.
 * Notebook mode that resembles OpenAI's playground.
 * Load 13b/20b models in 8-bit mode.
 * Load parameter presets from text files.
@@ -40,8 +40,8 @@ Hugging Face is the main place to download models. These are some of my favorite
 
 * [gpt-j-6B](https://huggingface.co/EleutherAI/gpt-j-6B/tree/main)
 * [gpt-neox-20b](https://huggingface.co/EleutherAI/gpt-neox-20b/tree/main)
-* [opt](https://huggingface.co/models?search=facebook/opt)
-* [galactica](https://huggingface.co/models?search=facebook/galactica)
+* [OPT](https://huggingface.co/models?search=facebook/opt)
+* [GALACTICA](https://huggingface.co/models?search=facebook/galactica)
 * [\*-Erebus](https://huggingface.co/models?search=erebus)
 
 The files that you need to download are the json, txt, and pytorch\*.bin files. The remaining files are not necessary.
