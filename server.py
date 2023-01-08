@@ -192,7 +192,7 @@ elif args.chat:
                 context = gr.Textbox(value='This is a conversation between two people.', lines=2, label='Context')
             with gr.Column():
                 display1 = gr.Chatbot()
-                textbox = gr.Textbox(lines=2)
+                textbox = gr.Textbox(lines=2, label='Input')
                 btn = gr.Button("Generate")
                 btn2 = gr.Button("Clear history")
 
