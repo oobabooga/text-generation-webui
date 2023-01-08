@@ -62,6 +62,8 @@ For instance:
 * Torrent: [16-bit](https://archive.org/details/gpt4chan_model_float16) / [32-bit](https://archive.org/details/gpt4chan_model)
 * Direct download: [16-bit](https://theswissbay.ch/pdf/_notpdf_/gpt4chan_model_float16/) / [32-bit](https://theswissbay.ch/pdf/_notpdf_/gpt4chan_model/)
 
+You also need to put GPT-J-6B's config.json file in the same folder: [config.json](https://huggingface.co/EleutherAI/gpt-j-6B/raw/main/config.json)
+
 ## Converting to pytorch
 
 The script `convert-to-torch.py` allows you to convert models to .pt format, which is about 10x faster to load:
