@@ -197,7 +197,10 @@ elif args.chat:
                 btn2 = gr.Button("Clear history")
 
         btn.click(chatbot, [textbox, temp_slider, length_slider, preset_menu, model_menu, name1, name2, context], display1, show_progress=True)
+        textbox.submit(chatbot, [textbox, temp_slider, length_slider, preset_menu, model_menu, name1, name2, context], display1, show_progress=True)
         btn2.click(clear)
+        btn.click(lambda x: "", textbox, textbox, show_progress=False)
+        btn2.click(lambda x: "", display1, display1)
 else:
     with gr.Blocks(css=".my-4 {margin-top: 0} .py-6 {padding-top: 2.5rem}") as interface:
         gr.Markdown(
