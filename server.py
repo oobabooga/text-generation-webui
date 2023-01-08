@@ -75,7 +75,7 @@ def generate_reply(question, temperature, max_length, inference_settings, select
     if selected_model != model_name:
         model_name = selected_model
         model = None
-        tokenier = None
+        tokenizer = None
         torch.cuda.empty_cache()
         model, tokenizer = load_model(model_name)
     if inference_settings != loaded_preset:
@@ -84,8 +84,7 @@ def generate_reply(question, temperature, max_length, inference_settings, select
         loaded_preset = inference_settings
 
     torch.cuda.empty_cache()
-    input_text = question
-    input_ids = tokenizer.encode(str(input_text), return_tensors='pt').cuda()
+    input_ids = tokenizer.encode(str(question), return_tensors='pt').cuda()
 
     output = eval(f"model.generate(input_ids, {preset}).cuda()")
     reply = tokenizer.decode(output[0], skip_special_tokens=True)

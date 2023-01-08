@@ -68,9 +68,9 @@ You also need to put GPT-J-6B's config.json file in the same folder: [config.jso
 
 The script `convert-to-torch.py` allows you to convert models to .pt format, which is about 10x faster to load:
 
-    python convert-to-torch.py models/model-name/
+    python convert-to-torch.py models/model-name
 
-The output model will be saved to `torch-dumps/model-name.pt`. When you load a new model, the webui first looks for this .pt file; if it is not found, it loads the model as usual from `models/model-name/`. 
+The output model will be saved to `torch-dumps/model-name.pt`. When you load a new model, the webui first looks for this .pt file; if it is not found, it loads the model as usual from `models/model-name`. 
 
 ## Starting the webui
 
