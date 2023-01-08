@@ -116,21 +116,21 @@ else:
     model_name = available_models[i]
 model, tokenizer = load_model(model_name)
 
+# UI settings
 if model_name.lower().startswith('gpt4chan'):
     default_text = "-----\n--- 865467536\nInput text\n--- 865467537\n"
 else:
     default_text = "Common sense questions and answers\n\nQuestion: \nFactual answer:"
-
-if args.notebook:
-    with gr.Blocks(css=".my-4 {margin-top: 0} .py-6 {padding-top: 2.5rem}", analytics_enabled=False) as interface:
-        gr.Markdown(
-        f"""
+description = f"""
 
         # Text generation lab
         Generate text using Large Language Models.
         """
-        )
+css=".my-4 {margin-top: 0} .py-6 {padding-top: 2.5rem}"
 
+if args.notebook:
+    with gr.Blocks(css=css, analytics_enabled=False) as interface:
+        gr.Markdown(description)
         with gr.Tab('Raw'):
             textbox = gr.Textbox(value=default_text, lines=23)
         with gr.Tab('Markdown'):
@@ -168,14 +168,8 @@ elif args.chat:
         global history
         history = []
 
-    with gr.Blocks(css=".my-4 {margin-top: 0} .py-6 {padding-top: 2.5rem}", analytics_enabled=False) as interface:
-        gr.Markdown(
-        f"""
-
-        # Text generation lab
-        Generate text using Large Language Models.
-        """
-        )
+    with gr.Blocks(css=css+".h-\[40vh\] {height: 50vh}", analytics_enabled=False) as interface:
+        gr.Markdown(description)
 
         with gr.Row(equal_height=True):
             with gr.Column():
@@ -202,13 +196,8 @@ elif args.chat:
         textbox.submit(lambda x: "", textbox, textbox, show_progress=False)
         btn2.click(lambda x: "", display1, display1)
 else:
-    with gr.Blocks(css=".my-4 {margin-top: 0} .py-6 {padding-top: 2.5rem}", analytics_enabled=False) as interface:
-        gr.Markdown(
-        f"""
-        # Text generation lab
-        Generate text using Large Language Models.
-        """
-        )
+    with gr.Blocks(css=css, analytics_enabled=False) as interface:
+        gr.Markdown(description)
 
         with gr.Row():
             with gr.Column():
