@@ -123,7 +123,7 @@ else:
     default_text = "Common sense questions and answers\n\nQuestion: \nFactual answer:"
 
 if args.notebook:
-    with gr.Blocks(css=".my-4 {margin-top: 0} .py-6 {padding-top: 2.5rem}") as interface:
+    with gr.Blocks(css=".my-4 {margin-top: 0} .py-6 {padding-top: 2.5rem}", analytics_enabled=False) as interface:
         gr.Markdown(
         f"""
 
@@ -169,7 +169,7 @@ elif args.chat:
         global history
         history = []
 
-    with gr.Blocks(css=".my-4 {margin-top: 0} .py-6 {padding-top: 2.5rem}") as interface:
+    with gr.Blocks(css=".my-4 {margin-top: 0} .py-6 {padding-top: 2.5rem}", analytics_enabled=False) as interface:
         gr.Markdown(
         f"""
 
@@ -203,7 +203,7 @@ elif args.chat:
         textbox.submit(lambda x: "", textbox, textbox, show_progress=False)
         btn2.click(lambda x: "", display1, display1)
 else:
-    with gr.Blocks(css=".my-4 {margin-top: 0} .py-6 {padding-top: 2.5rem}") as interface:
+    with gr.Blocks(css=".my-4 {margin-top: 0} .py-6 {padding-top: 2.5rem}", analytics_enabled=False) as interface:
         gr.Markdown(
         f"""
         # Text generation lab
