@@ -181,7 +181,7 @@ elif args.chat:
             with gr.Column():
                 with gr.Row(equal_height=True):
                     with gr.Column():
-                        length_slider = gr.Slider(minimum=1, maximum=2000, step=1, label='max_length', value=200)
+                        length_slider = gr.Slider(minimum=1, maximum=2000, step=1, label='max_length', value=100)
                         preset_menu = gr.Dropdown(choices=available_presets, value="NovelAI-Sphinx Moth", label='Preset')
                     with gr.Column():
                         temp_slider = gr.Slider(minimum=0.0, maximum=1.0, step=0.01, label='Temperature', value=0.7)
