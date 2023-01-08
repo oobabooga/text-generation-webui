@@ -200,6 +200,7 @@ elif args.chat:
         textbox.submit(chatbot, [textbox, temp_slider, length_slider, preset_menu, model_menu, name1, name2, context], display1, show_progress=True)
         btn2.click(clear)
         btn.click(lambda x: "", textbox, textbox, show_progress=False)
+        textbox.submit(lambda x: "", textbox, textbox, show_progress=False)
         btn2.click(lambda x: "", display1, display1)
 else:
     with gr.Blocks(css=".my-4 {margin-top: 0} .py-6 {padding-top: 2.5rem}") as interface:
@@ -214,7 +215,7 @@ else:
             with gr.Column():
                 textbox = gr.Textbox(value=default_text, lines=15, label='Input')
                 temp_slider = gr.Slider(minimum=0.0, maximum=1.0, step=0.01, label='Temperature', value=0.7)
-                length_slider = gr.Slider(minimum=1, maximum=2000, step=1, label='max_length', value=200)
+                length_slider = gr.Slider(minimum=1, maximum=2000, step=1, label='max_length', value=100)
                 preset_menu = gr.Dropdown(choices=available_presets, value="NovelAI-Sphinx Moth", label='Preset')
                 model_menu = gr.Dropdown(choices=available_models, value=model_name, label='Model')
                 btn = gr.Button("Generate")
