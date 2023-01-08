@@ -15,6 +15,7 @@ from transformers import AutoModelForCausalLM, T5ForConditionalGeneration
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', type=str, help='Name of the model to load by default.')
 parser.add_argument('--notebook', action='store_true', help='Launch the webui in notebook mode, where the output is written to the same text box as the input.')
+parser.add_argument('--chat', action='store_true', help='Launch the webui in chat mode.')
 args = parser.parse_args()
 loaded_preset = None
 available_models = sorted(set(map(lambda x : str(x.name).replace('.pt', ''), list(Path('models/').glob('*'))+list(Path('torch-dumps/').glob('*')))))
@@ -148,6 +149,55 @@ if args.notebook:
                 model_menu = gr.Dropdown(choices=available_models, value=model_name, label='Model')
 
         btn.click(generate_reply, [textbox, temp_slider, length_slider, preset_menu, model_menu], [textbox, markdown, html], show_progress=False)
+elif args.chat:
+    history = []
+
+    def chatbot(text, temperature, max_length, inference_settings, selected_model, name1, name2, context):
+        question = context+'\n\n'
+        for i in range(len(history)):
+            question += f"{name1}: {history[i][0][3:-5].strip()}\n"
+            question += f"{name2}: {history[i][1][3:-5].strip()}\n"
+        question += f"{name1}: {text.strip()}\n"
+        question += f"{name2}:"
+
+        reply = generate_reply(question, temperature, max_length, inference_settings, selected_model)[0]
+        reply = reply[len(question):].split('\n')[0].strip()
+        history.append((text, reply))
+        return history
+
+    def clear():
+        global history
+        history = []
+
+    with gr.Blocks(css=".my-4 {margin-top: 0} .py-6 {padding-top: 2.5rem}") as interface:
+        gr.Markdown(
+        f"""
+
+        # Text generation lab
+        Generate text using Large Language Models.
+        """
+        )
+
+        with gr.Row(equal_height=True):
+            with gr.Column():
+                with gr.Row(equal_height=True):
+                    with gr.Column():
+                        length_slider = gr.Slider(minimum=1, maximum=2000, step=1, label='max_length', value=200)
+                        preset_menu = gr.Dropdown(choices=available_presets, value="NovelAI-Sphinx Moth", label='Preset')
+                    with gr.Column():
+                        temp_slider = gr.Slider(minimum=0.0, maximum=1.0, step=0.01, label='Temperature', value=0.7)
+                        model_menu = gr.Dropdown(choices=available_models, value=model_name, label='Model')
+                name1 = gr.Textbox(value='Person 1', lines=1, label='Your name')
+                name2 = gr.Textbox(value='Person 2', lines=1, label='Bot\'s name')
+                context = gr.Textbox(value='This is a conversation between two people.', lines=2, label='Context')
+            with gr.Column():
+                display1 = gr.Chatbot()
+                textbox = gr.Textbox(lines=2)
+                btn = gr.Button("Generate")
+                btn2 = gr.Button("Clear history")
+
+        btn.click(chatbot, [textbox, temp_slider, length_slider, preset_menu, model_menu, name1, name2, context], display1, show_progress=True)
+        btn2.click(clear)
 else:
     with gr.Blocks(css=".my-4 {margin-top: 0} .py-6 {padding-top: 2.5rem}") as interface:
         gr.Markdown(

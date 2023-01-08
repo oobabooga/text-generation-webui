@@ -12,6 +12,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * Generate nice HTML output for gpt4chan.
 * Generate Markdown output for [GALACTICA](https://github.com/paperswithcode/galai), including LaTeX support.
 * Notebook mode that resembles OpenAI's playground.
+* Chat mode for conversation and role playing.
 * Load 13b/20b models in 8-bit mode.
 * Load parameter presets from text files.
 
@@ -83,6 +84,8 @@ Optionally, you can use the following command-line flags:
 `--model model-name`: Load this model by default.
 
 `--notebook`: Launch the webui in notebook mode, where the output is written to the same text box as the input.
+
+`--chat`: Launch the webui in chat mode.
 
 ## Presets
 
