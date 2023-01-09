@@ -15,6 +15,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * Chat mode for conversation and role playing.
 * Load 13b/20b models in 8-bit mode.
 * Load parameter presets from text files.
+* Option to use the CPU instead of the GPU for generation.
 
 ## Installation
 
@@ -88,6 +89,8 @@ Optionally, you can use the following command-line flags:
 `--notebook`: Launch the webui in notebook mode, where the output is written to the same text box as the input.
 
 `--chat`: Launch the webui in chat mode.
+
+`--cpu`: Use the CPU to generate text instead of the GPU.
 
 ## Presets
 
