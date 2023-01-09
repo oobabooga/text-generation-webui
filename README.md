@@ -98,7 +98,7 @@ Inference settings presets can be created under `presets/` as text files. These 
 
 ## System requirements
 
-These are the VRAM and RAM requirements to run some model examples.
+These are the VRAM (in GiB) and RAM (in MiB) requirements to run some model examples.
 
 #### GPU mode (default)
 
