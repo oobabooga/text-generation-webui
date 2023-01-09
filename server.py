@@ -103,7 +103,7 @@ def generate_reply(question, temperature, max_length, inference_settings, select
     if eos_token is None:
         output = eval(f"model.generate(input_ids, {preset}){cuda}")
     else:
-        n = tokenizer.encode(eos_token, return_tensors='pt')[0][1]
+        n = tokenizer.encode(eos_token, return_tensors='pt')[0][-1]
         output = eval(f"model.generate(input_ids, eos_token_id={n}, {preset}){cuda}")
 
     reply = tokenizer.decode(output[0], skip_special_tokens=True)
@@ -131,6 +131,7 @@ else:
             print(f"{i+1}. {model}")
         print(f"\nWhich one do you want to load? 1-{len(available_models)}\n")
         i = int(input())-1
+        print()
     model_name = available_models[i]
 model, tokenizer = load_model(model_name)
 
