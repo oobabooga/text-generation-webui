@@ -10,7 +10,6 @@ These are the VRAM (in GiB) and RAM (in MiB) requirements to run some examples o
 | opt-1.3b               |         2.45 | 2868.12 |
 | gpt-neo-1.3b           |         2.54 | 4047.04 |
 | gpt4chan_model_float16 |        11.38 | 1909.79 |
-| gpt-j-6b-float16       |        11.38 | 2847.75 |
 | gpt-j-6B               |        11.38 | 3959.55 |
 | galactica-6.7b         |        12.4  | 1933.19 |
 | opt-6.7b               |        12.4  | 1944.21 |
@@ -40,6 +39,5 @@ A lot slower, but does not require a GPU.
 | bloomz-7b1-p3          | 23613.9  |
 | gpt-j-6B               | 23975.5  |
 | gpt4chan_model         | 23999.5  |
-| gpt-j-6b-float16       | 24999.1  |
 | galactica-6.7b         | 26248    |
 | opt-6.7b               | 27334.2  |
