@@ -96,10 +96,10 @@ Optionally, you can use the following command-line flags:
 
 Inference settings presets can be created under `presets/` as text files. These files are detected automatically at startup.
 
-## Other projects
-
-Make sure to also check out the great work by [KoboldAI](https://github.com/KoboldAI/KoboldAI-Client).
-
 ## Contributing
 
 Pull requests, suggestions and issue reports are welcome.
+
+## Other projects
+
+Make sure to also check out the great work by [KoboldAI](https://github.com/KoboldAI/KoboldAI-Client). I have borrowed some of the presets listed on their [wiki](https://github.com/KoboldAI/KoboldAI-Client/wiki/Settings-Presets) after performing a k-means clustering analysis to select the most relevant subsample.
