@@ -9,6 +9,7 @@ These are the VRAM (in GiB) and RAM (in MiB) requirements to run some examples o
 | blenderbot-1B-distill  |         2.38 | 2705.9  |
 | opt-1.3b               |         2.45 | 2868.12 |
 | gpt-neo-1.3b           |         2.54 | 4047.04 |
+| opt-2.7b               |         4.94 | 4220.01 |
 | gpt4chan_model_float16 |        11.38 | 1909.79 |
 | gpt-j-6B               |        11.38 | 3959.55 |
 | galactica-6.7b         |        12.4  | 1933.19 |
@@ -36,6 +37,7 @@ A lot slower, but does not require a GPU.
 | gpt-neo-1.3b           |  5937.81 |
 | opt-1.3b               |  7346.08 |
 | blenderbot-1B-distill  |  7565.36 |
+| opt-2.7b               | 12527.31 |
 | bloomz-7b1-p3          | 23613.9  |
 | gpt-j-6B               | 23975.5  |
 | gpt4chan_model         | 23999.5  |
