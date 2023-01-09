@@ -185,9 +185,9 @@ elif args.chat:
     with gr.Blocks(css=css+".h-\[40vh\] {height: 50vh}", analytics_enabled=False) as interface:
         gr.Markdown(description)
 
-        with gr.Row(equal_height=True):
+        with gr.Row():
             with gr.Column():
-                with gr.Row(equal_height=True):
+                with gr.Row():
                     with gr.Column():
                         length_slider = gr.Slider(minimum=1, maximum=2000, step=1, label='max_length', value=200)
                         preset_menu = gr.Dropdown(choices=available_presets, value="NovelAI-Sphinx Moth", label='Preset')
