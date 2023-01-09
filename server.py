@@ -17,7 +17,7 @@ parser.add_argument('--model', type=str, help='Name of the model to load by defa
 parser.add_argument('--notebook', action='store_true', help='Launch the webui in notebook mode, where the output is written to the same text box as the input.')
 parser.add_argument('--chat', action='store_true', help='Launch the webui in chat mode.')
 parser.add_argument('--cpu', action='store_true', help='Use the CPU to generate text.')
-parser.add_argument('--listen', action='store_true', help='Makes the webui reachable from your local network.')
+parser.add_argument('--listen', action='store_true', help='Make the webui reachable from your local network.')
 args = parser.parse_args()
 loaded_preset = None
 available_models = sorted(set(map(lambda x : str(x.name).replace('.pt', ''), list(Path('models/').glob('*'))+list(Path('torch-dumps/').glob('*')))))

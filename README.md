@@ -91,7 +91,7 @@ Optionally, you can use the following command-line flags:
                to the same text box as the input.
 --chat         Launch the webui in chat mode.
 --cpu          Use the CPU to generate text.
---listen       Makes the webui reachable from your local network.
+--listen       Make the webui reachable from your local network.
 ```
 
 ## Presets
