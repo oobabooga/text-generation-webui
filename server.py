@@ -166,6 +166,7 @@ if args.notebook:
                 model_menu = gr.Dropdown(choices=available_models, value=model_name, label='Model')
 
         btn.click(generate_reply, [textbox, temp_slider, length_slider, preset_menu, model_menu], [textbox, markdown, html], show_progress=True)
+        textbox.submit(generate_reply, [textbox, temp_slider, length_slider, preset_menu, model_menu], [textbox, markdown, html], show_progress=True)
 elif args.chat:
     history = []
 
@@ -234,5 +235,6 @@ else:
                     html = gr.HTML()
 
         btn.click(generate_reply, [textbox, temp_slider, length_slider, preset_menu, model_menu], [output_textbox, markdown, html], show_progress=True)
+        textbox.submit(generate_reply, [textbox, temp_slider, length_slider, preset_menu, model_menu], [output_textbox, markdown, html], show_progress=True)
 
 interface.launch(share=False, server_name="0.0.0.0")
