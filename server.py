@@ -47,7 +47,7 @@ def load_model(model_name):
         model = AutoModelForCausalLM.from_pretrained(Path(f"models/{model_name}"), low_cpu_mem_usage=True, torch_dtype=dtype)
 
     # Loading the tokenizer
-    if model_name.lower().startswith('gpt4chan'):
+    if model_name.lower().startswith('gpt4chan') and Path(f"models/gpt-j-6B/").exists():
         tokenizer = AutoTokenizer.from_pretrained(Path("models/gpt-j-6B/"))
     elif model_name in ['flan-t5', 't5-large']:
         tokenizer = T5Tokenizer.from_pretrained(Path(f"models/{model_name}/"))
