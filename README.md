@@ -96,6 +96,10 @@ Optionally, you can use the following command-line flags:
 
 Inference settings presets can be created under `presets/` as text files. These files are detected automatically at startup.
 
+## Other projects
+
+Make sure to also check out the great work by [KoboldAI](https://github.com/KoboldAI/KoboldAI-Client).
+
 ## Contributing
 
-Pull requests are welcome.
+Pull requests, suggestions and issue reports are welcome.
