@@ -65,7 +65,7 @@ For instance:
 
 You also need to put GPT-J-6B's config.json file in the same folder: [config.json](https://huggingface.co/EleutherAI/gpt-j-6B/raw/main/config.json)
 
-## Converting to pytorch
+#### Converting to pytorch (optional)
 
 The script `convert-to-torch.py` allows you to convert models to .pt format, which is about 10x faster to load:
 
