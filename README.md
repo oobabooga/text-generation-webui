@@ -15,7 +15,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * Chat mode for conversation and role playing.
 * Load 13b/20b models in 8-bit mode.
 * Load parameter presets from text files.
-* Option to use the CPU instead of the GPU for generation.
+* CPU mode.
 
 ## Installation
 
