@@ -251,7 +251,7 @@ else:
                 cont = gr.Button("Continue")
             with gr.Column():
                 with gr.Tab('Raw'):
-                    output_textbox = gr.Textbox(value=default_text, lines=15, label='Output')
+                    output_textbox = gr.Textbox(lines=15, label='Output')
                 with gr.Tab('Markdown'):
                     markdown = gr.Markdown()
                 with gr.Tab('HTML'):
