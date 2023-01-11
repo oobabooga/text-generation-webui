@@ -23,6 +23,7 @@ args = parser.parse_args()
 loaded_preset = None
 available_models = sorted(set(map(lambda x : str(x.name).replace('.pt', ''), list(Path('models/').glob('*'))+list(Path('torch-dumps/').glob('*')))))
 available_models = [item for item in available_models if not item.endswith('.txt')]
+available_models = sorted(available_models, key=str.lower)
 available_presets = sorted(set(map(lambda x : str(x.name).split('.')[0], list(Path('presets').glob('*.txt')))))
 
 def load_model(model_name):
