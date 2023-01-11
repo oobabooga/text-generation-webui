@@ -189,7 +189,7 @@ if args.notebook:
 elif args.chat:
     history = []
 
-    def chatbot(text, temperature, max_length, inference_settings, selected_model, name1, name2, context):
+    def chatbot_wrapper(text, temperature, max_length, inference_settings, selected_model, name1, name2, context):
         question = context+'\n\n'
         for i in range(len(history)):
             question += f"{name1}: {history[i][0][3:-5].strip()}\n"
@@ -208,7 +208,6 @@ elif args.chat:
 
     with gr.Blocks(css=css+".h-\[40vh\] {height: 50vh}", analytics_enabled=False) as interface:
         gr.Markdown(description)
-
         with gr.Row():
             with gr.Column():
                 with gr.Row():
@@ -227,16 +226,20 @@ elif args.chat:
                 btn = gr.Button("Generate")
                 btn2 = gr.Button("Clear history")
 
-        btn.click(chatbot, [textbox, temp_slider, length_slider, preset_menu, model_menu, name1, name2, context], display1, show_progress=True)
-        textbox.submit(chatbot, [textbox, temp_slider, length_slider, preset_menu, model_menu, name1, name2, context], display1, show_progress=True)
+        btn.click(chatbot_wrapper, [textbox, temp_slider, length_slider, preset_menu, model_menu, name1, name2, context], display1, show_progress=True)
+        textbox.submit(chatbot_wrapper, [textbox, temp_slider, length_slider, preset_menu, model_menu, name1, name2, context], display1, show_progress=True)
         btn2.click(clear)
         btn.click(lambda x: "", textbox, textbox, show_progress=False)
         textbox.submit(lambda x: "", textbox, textbox, show_progress=False)
         btn2.click(lambda x: "", display1, display1)
 else:
+
+    def continue_wrapper(question, temperature, max_length, inference_settings, selected_model):
+        a, b, c = generate_reply(question, temperature, max_length, inference_settings, selected_model)
+        return a, a, b, c
+
     with gr.Blocks(css=css, analytics_enabled=False) as interface:
         gr.Markdown(description)
-
         with gr.Row():
             with gr.Column():
                 textbox = gr.Textbox(value=default_text, lines=15, label='Input')
@@ -245,6 +248,7 @@ else:
                 preset_menu = gr.Dropdown(choices=available_presets, value="NovelAI-Sphinx Moth", label='Preset')
                 model_menu = gr.Dropdown(choices=available_models, value=model_name, label='Model')
                 btn = gr.Button("Generate")
+                cont = gr.Button("Continue")
             with gr.Column():
                 with gr.Tab('Raw'):
                     output_textbox = gr.Textbox(value=default_text, lines=15, label='Output')
@@ -254,6 +258,7 @@ else:
                     html = gr.HTML()
 
         btn.click(generate_reply, [textbox, temp_slider, length_slider, preset_menu, model_menu], [output_textbox, markdown, html], show_progress=True)
+        cont.click(continue_wrapper, [output_textbox, temp_slider, length_slider, preset_menu, model_menu], [output_textbox, textbox, markdown, html], show_progress=True)
         textbox.submit(generate_reply, [textbox, temp_slider, length_slider, preset_menu, model_menu], [output_textbox, markdown, html], show_progress=True)
 
 if args.no_listen:
