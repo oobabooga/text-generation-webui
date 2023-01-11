@@ -17,6 +17,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * Load large models in 8-bit mode.
 * Split large models across your GPU(s) and CPU.
 * CPU mode.
+* Get responses via API.
 
 ## Installation
 
