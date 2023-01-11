@@ -85,13 +85,15 @@ Then browse to
 Optionally, you can use the following command-line flags:
 
 ```
--h, --help     show this help message and exit
---model MODEL  Name of the model to load by default.
---notebook     Launch the webui in notebook mode, where the output is written
-               to the same text box as the input.
---chat         Launch the webui in chat mode.
---cpu          Use the CPU to generate text.
---listen       Make the webui reachable from your local network.
+-h, --help      show this help message and exit
+--model MODEL   Name of the model to load by default.
+--notebook      Launch the webui in notebook mode, where the output is written to the same text
+                box as the input.
+--chat          Launch the webui in chat mode.
+--cpu           Use the CPU to generate text.
+--auto-devices  Automatically split the model across the available GPU(s) and CPU.
+--load-in-8bit  Load the model with 8-bit precision.
+--listen        Make the webui reachable from your local network.
 ```
 
 ## Presets
