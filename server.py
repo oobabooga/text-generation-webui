@@ -184,7 +184,7 @@ if args.notebook:
                 preset_menu = gr.Dropdown(choices=available_presets, value="NovelAI-Sphinx Moth", label='Preset')
                 model_menu = gr.Dropdown(choices=available_models, value=model_name, label='Model')
 
-        btn.click(generate_reply, [textbox, temp_slider, length_slider, preset_menu, model_menu], [textbox, markdown, html], show_progress=True)
+        btn.click(generate_reply, [textbox, temp_slider, length_slider, preset_menu, model_menu], [textbox, markdown, html], show_progress=True, api_name="textgen")
         textbox.submit(generate_reply, [textbox, temp_slider, length_slider, preset_menu, model_menu], [textbox, markdown, html], show_progress=True)
 elif args.chat:
     history = []
@@ -226,7 +226,7 @@ elif args.chat:
                 btn = gr.Button("Generate")
                 btn2 = gr.Button("Clear history")
 
-        btn.click(chatbot_wrapper, [textbox, temp_slider, length_slider, preset_menu, model_menu, name1, name2, context], display1, show_progress=True)
+        btn.click(chatbot_wrapper, [textbox, temp_slider, length_slider, preset_menu, model_menu, name1, name2, context], display1, show_progress=True, api_name="textgen")
         textbox.submit(chatbot_wrapper, [textbox, temp_slider, length_slider, preset_menu, model_menu, name1, name2, context], display1, show_progress=True)
         btn2.click(clear)
         btn.click(lambda x: "", textbox, textbox, show_progress=False)
@@ -257,7 +257,7 @@ else:
                 with gr.Tab('HTML'):
                     html = gr.HTML()
 
-        btn.click(generate_reply, [textbox, temp_slider, length_slider, preset_menu, model_menu], [output_textbox, markdown, html], show_progress=True)
+        btn.click(generate_reply, [textbox, temp_slider, length_slider, preset_menu, model_menu], [output_textbox, markdown, html], show_progress=True, api_name="textgen")
         cont.click(continue_wrapper, [output_textbox, temp_slider, length_slider, preset_menu, model_menu], [output_textbox, textbox, markdown, html], show_progress=True)
         textbox.submit(generate_reply, [textbox, temp_slider, length_slider, preset_menu, model_menu], [output_textbox, markdown, html], show_progress=True)
 
