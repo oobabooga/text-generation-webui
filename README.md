@@ -94,7 +94,7 @@ Optionally, you can use the following command-line flags:
 --cpu           Use the CPU to generate text.
 --auto-devices  Automatically split the model across the available GPU(s) and CPU.
 --load-in-8bit  Load the model with 8-bit precision.
---listen        Make the webui reachable from your local network.
+--no-listen     Make the webui unreachable from your local network.
 ```
 
 ## Presets

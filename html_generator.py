@@ -20,7 +20,7 @@ def process_post(post, c):
     src = f'<span class="name">Anonymous </span> <span class="number">No.{number}</span>\n{src}'
     return src
 
-def generate_html(f):
+def generate_4chan_html(f):
     css = """
     #container {
         background-color: #eef2ff;
