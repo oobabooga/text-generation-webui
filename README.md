@@ -65,7 +65,11 @@ For instance:
 * Torrent: [16-bit](https://archive.org/details/gpt4chan_model_float16) / [32-bit](https://archive.org/details/gpt4chan_model)
 * Direct download: [16-bit](https://theswissbay.ch/pdf/_notpdf_/gpt4chan_model_float16/) / [32-bit](https://theswissbay.ch/pdf/_notpdf_/gpt4chan_model/)
 
-You also need to put GPT-J-6B's config.json file in the same folder: [config.json](https://huggingface.co/EleutherAI/gpt-j-6B/raw/main/config.json)
+Then follow these steps to install:
+
+1. Place the files under `models/gpt4chan_model_float16` or `models/gpt4chan_model`
+2. Place GPT-J-6B's config.json file inside that folder: [config.json](https://huggingface.co/EleutherAI/gpt-j-6B/raw/main/config.json)
+3. Download GPT-J-6B under `models/gpt-j-6B`: `python download-model.py EleutherAI/gpt-j-6B`
 
 #### Converting to pytorch (optional)
 
