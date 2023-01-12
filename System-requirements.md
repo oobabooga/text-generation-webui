@@ -1,20 +1,21 @@
-These are the VRAM (in GiB) and RAM (in MiB) requirements to run some examples of models.
+These are the VRAM and RAM requirements (in MiB) to run some examples of models.
 
 #### GPU mode (default)
 
 | model                  |   VRAM (GPU) |     RAM |
 |:-----------------------|-------------:|--------:|
-| OPT-350M-Erebus        |         0.62 | 1939.3  |
-| arxiv_ai_gpt2          |         1.48 | 6350.68 |
-| blenderbot-1B-distill  |         2.38 | 2705.9  |
-| opt-1.3b               |         2.45 | 2868.12 |
-| gpt-neo-1.3b           |         2.54 | 4047.04 |
-| opt-2.7b               |         4.94 | 4220.01 |
-| gpt4chan_model_float16 |        11.38 | 1909.79 |
-| gpt-j-6B               |        11.38 | 3959.55 |
-| galactica-6.7b         |        12.4  | 1933.19 |
-| opt-6.7b               |        12.4  | 1944.21 |
-| bloomz-7b1-p3          |        13.17 | 1845.58 |
+| OPT-350M-Erebus        |       632.61 | 4366.4  |
+| arxiv_ai_gpt2          |      1512.37 | 5824.2  |
+| blenderbot-1B-distill  |      2441.75 | 4425.91 |
+| opt-1.3b               |      2509.61 | 4427.79 |
+| gpt-neo-1.3b           |      2605.27 | 5851.58 |
+| opt-2.7b               |      5058.05 | 4863.95 |
+| gpt4chan_model_float16 |     11653.7  | 4437.71 |
+| gpt-j-6B               |     11653.7  | 5633.79 |
+| galactica-6.7b         |     12697.9  | 4429.89 |
+| OPT-6.7B-Erebus        |     12700    | 4388.55 |
+| opt-6.7b               |     12700    | 4368.66 |
+| bloomz-7b1-p3          |     13483.1  | 4470.34 |
 
 #### GPU mode with 8-bit precision
 
@@ -22,9 +23,9 @@ Allows you to load models that would not normally fit into your GPU. Enabled by 
 
 | model          |   VRAM (GPU) |     RAM |
 |:---------------|-------------:|--------:|
-| OPT-13B-Erebus |        12.23 |  749.08 |
-| opt-13b        |        12.23 | 1258.95 |
-| gpt-neox-20b   |        19.91 | 2104.04 |
+| OPT-13B-Erebus |      12528   | 1819.41 |
+| opt-13b        |      12528.1 | 1152.39 |
+| gpt-neox-20b   |      20384   | 2291.7  |
 
 #### CPU mode
 
@@ -32,14 +33,16 @@ A lot slower, but does not require a GPU.
 
 | model                  |      RAM |
 |:-----------------------|---------:|
-| OPT-350M-Erebus        |  2622.17 |
-| arxiv_ai_gpt2          |  3764.81 |
-| gpt-neo-1.3b           |  5937.81 |
-| opt-1.3b               |  7346.08 |
-| blenderbot-1B-distill  |  7565.36 |
-| opt-2.7b               | 12527.31 |
-| bloomz-7b1-p3          | 23613.9  |
-| gpt-j-6B               | 23975.5  |
-| gpt4chan_model         | 23999.5  |
-| galactica-6.7b         | 26248    |
-| opt-6.7b               | 27334.2  |
+| OPT-350M-Erebus        |  4372.19 |
+| arxiv_ai_gpt2          |  4430.82 |
+| gpt-neo-1.3b           |  6089.31 |
+| opt-1.3b               |  8411.12 |
+| blenderbot-1B-distill  |  8508.16 |
+| opt-2.7b               | 14969.3  |
+| bloomz-7b1-p3          | 21371.2  |
+| gpt-j-6B               | 24200.3  |
+| gpt4chan_model         | 24246.3  |
+| OPT-6.7B-Erebus        | 25656.8  |
+| galactica-6.7b         | 26561.4  |
+| gpt-j-6b-float16       | 27353.1  |
+| opt-6.7b               | 29596.6  |
