@@ -68,8 +68,10 @@ For instance:
 Then follow these steps to install:
 
 1. Place the files under `models/gpt4chan_model_float16` or `models/gpt4chan_model`
-2. Place GPT-J-6B's config.json file inside that folder: [config.json](https://huggingface.co/EleutherAI/gpt-j-6B/raw/main/config.json)
-3. Download GPT-J-6B under `models/gpt-j-6B`: `python download-model.py EleutherAI/gpt-j-6B`
+2. Place GPT-J-6B's config.json file in that same folder: [config.json](https://huggingface.co/EleutherAI/gpt-j-6B/raw/main/config.json)
+3. Download GPT-J-6B under `models/gpt-j-6B`:
+
+    python download-model.py EleutherAI/gpt-j-6B
 
 #### Converting to pytorch (optional)
 
