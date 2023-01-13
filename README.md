@@ -21,26 +21,34 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 
 ## Installation
 
-1. You need to have the conda environment manager installed into your system. If you don't have it already, get it here: [miniconda download](https://docs.conda.io/en/latest/miniconda.html).
+1. You need to have the conda environment manager installed into your system. If you don't have it already, [get miniconda here](https://docs.conda.io/en/latest/miniconda.html).
 
 2. Then open a terminal window and create a conda environment:
 
-    conda create -n textgen
-    conda activate textgen
+```
+conda create -n textgen
+conda activate textgen
+```
 
 3. Install the appropriate pytorch. For NVIDIA GPUs, this should work:
 
-    conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvidia
+```
+conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvidia
+```
 
 For AMD GPUs, you need the ROCm version of pytorch. For running exclusively on the CPU, you just need the stock pytorch and this should probably work:
 
-    conda install pytorch torchvision torchaudio -c pytorch
+```
+conda install pytorch torchvision torchaudio -c pytorch
+```
 
 4. Clone or download this repository, and then `cd` into its directory from your terminal window.
 
 5. Install the required Python libraries:
 
-    pip install -r requirements.txt
+```
+pip install -r requirements.txt
+```
 
 After these steps, you should be able to start the webui, but first you need to download some model to load.
 
