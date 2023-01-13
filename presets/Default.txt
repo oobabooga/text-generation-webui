@@ -1,4 +1,4 @@
 do_sample=True,
-max_new_tokens=max_length,
+max_new_tokens=tokens,
 top_k=100,
 top_p=0.9,

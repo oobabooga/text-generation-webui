@@ -1,5 +1,5 @@
 do_sample=True,
-max_new_tokens=max_length,
+max_new_tokens=tokens,
 top_p=0.18,
 top_k=30,
 temperature=2.0,
