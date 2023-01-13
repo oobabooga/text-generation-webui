@@ -65,6 +65,7 @@ Hugging Face is the main place to download models. These are some of my favorite
 * [OPT](https://huggingface.co/models?search=facebook/opt)
 * [GALACTICA](https://huggingface.co/models?search=facebook/galactica)
 * [\*-Erebus](https://huggingface.co/models?search=erebus)
+* [Pygmalion](https://huggingface.co/models?search=pygmalion)
 
 The files that you need to download are the json, txt, and pytorch\*.bin files. The remaining files are not necessary.
 
