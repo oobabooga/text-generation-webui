@@ -23,7 +23,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 
 1. You need to have the conda environment manager installed into your system. If you don't have it already, [get miniconda here](https://docs.conda.io/en/latest/miniconda.html).
 
-2. Then open a terminal window and create a conda environment:
+2. Open a terminal window and create a conda environment:
 
 ```
 conda create -n textgen
@@ -36,7 +36,7 @@ conda activate textgen
 conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvidia
 ```
 
-For AMD GPUs, you need the ROCm version of pytorch. For running exclusively on the CPU, you just need the stock pytorch and this should probably work:
+For AMD GPUs, you need the ROCm version of pytorch. If you don't have any GPU and want to run in CPU mode, you just need the stock pytorch and this should work:
 
 ```
 conda install pytorch torchvision torchaudio -c pytorch
@@ -83,21 +83,23 @@ For instance:
 * Torrent: [16-bit](https://archive.org/details/gpt4chan_model_float16) / [32-bit](https://archive.org/details/gpt4chan_model)
 * Direct download: [16-bit](https://theswissbay.ch/pdf/_notpdf_/gpt4chan_model_float16/) / [32-bit](https://theswissbay.ch/pdf/_notpdf_/gpt4chan_model/)
 
-Then follow these steps to install:
+The 32-bit version is only relevant if you intend to run the model in CPU mode. Otherwise, I recommend using the 16-bit version.
 
-1. Place the files under `models/gpt4chan_model_float16` or `models/gpt4chan_model`
-2. Place GPT-J-6B's config.json file in that same folder: [config.json](https://huggingface.co/EleutherAI/gpt-j-6B/raw/main/config.json)
+After downloading the model, follow these steps:
+
+1. Place the files under `models/gpt4chan_model_float16` or `models/gpt4chan_model`.
+2. Place GPT-J-6B's config.json file in that same folder: [config.json](https://huggingface.co/EleutherAI/gpt-j-6B/raw/main/config.json).
 3. Download GPT-J-6B under `models/gpt-j-6B`:
 
 ```
 python download-model.py EleutherAI/gpt-j-6B
 ```
 
-You don't really need all of GPT-J's files, just the tokenizer files, but you might as well download the whole thing. Those files will be automatically detected when you attempt to load gpt4chan.
+You don't really need all of GPT-J's files, just the tokenizer files, but you might as well download the whole thing. Those files will be automatically detected when you attempt to load GPT-4chan.
 
 #### Converting to pytorch (optional)
 
-The script `convert-to-torch.py` allows you to convert models to .pt format, which is about 10x faster to load:
+The script `convert-to-torch.py` allows you to convert models to .pt format, which is about 10x faster to load to the GPU:
 
     python convert-to-torch.py models/model-name
 
