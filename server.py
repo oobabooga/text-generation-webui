@@ -206,6 +206,15 @@ elif args.chat:
         global history
         history = []
 
+    if 'pygmalion' in model_name.lower():
+        context_str = "Kawaii's Persona: Kawaii is an enthusiastic and nice girl.\n<START>"
+        name1_str = "You"
+        name2_str = "Kawaii"
+    else:
+        context_str = "This is a conversation between two people."
+        name1_str = "Person 1"
+        name2_str = "Person 2"
+
     with gr.Blocks(css=css+".h-\[40vh\] {height: 50vh}", analytics_enabled=False) as interface:
         gr.Markdown(description)
         with gr.Row():
@@ -217,9 +226,9 @@ elif args.chat:
                     with gr.Column():
                         temp_slider = gr.Slider(minimum=0.0, maximum=1.0, step=0.01, label='Temperature', value=0.7)
                         model_menu = gr.Dropdown(choices=available_models, value=model_name, label='Model')
-                name1 = gr.Textbox(value='Person 1', lines=1, label='Your name')
-                name2 = gr.Textbox(value='Person 2', lines=1, label='Bot\'s name')
-                context = gr.Textbox(value='This is a conversation between two people.', lines=2, label='Context')
+                name1 = gr.Textbox(value=name1_str, lines=1, label='Your name')
+                name2 = gr.Textbox(value=name2_str, lines=1, label='Bot\'s name')
+                context = gr.Textbox(value=context_str, lines=2, label='Context')
             with gr.Column():
                 display1 = gr.Chatbot()
                 textbox = gr.Textbox(lines=2, label='Input')
