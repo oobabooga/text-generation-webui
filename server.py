@@ -94,7 +94,7 @@ def generate_html(s):
     s = f'<div style="max-width: 600px; margin-left: auto; margin-right: auto; background-color:#eef2ff; color:#0b0f19; padding:3em; font-size:1.2em;">{s}</div>'
     return s
 
-def generate_reply(question, temperature, max_length, inference_settings, selected_model, eos_token=None):
+def generate_reply(question, max_length, inference_settings, selected_model, eos_token=None):
     global model, tokenizer, model_name, loaded_preset, preset
 
     if selected_model != model_name:
@@ -179,17 +179,16 @@ if args.notebook:
         with gr.Row():
             with gr.Column():
                 length_slider = gr.Slider(minimum=1, maximum=2000, step=1, label='max_length', value=200)
-                temp_slider = gr.Slider(minimum=0.0, maximum=1.0, step=0.01, label='Temperature', value=0.7)
             with gr.Column():
-                preset_menu = gr.Dropdown(choices=available_presets, value="NovelAI-Sphinx Moth", label='Preset')
                 model_menu = gr.Dropdown(choices=available_models, value=model_name, label='Model')
+                preset_menu = gr.Dropdown(choices=available_presets, value="NovelAI-Sphinx Moth", label='Preset')
 
-        btn.click(generate_reply, [textbox, temp_slider, length_slider, preset_menu, model_menu], [textbox, markdown, html], show_progress=True, api_name="textgen")
-        textbox.submit(generate_reply, [textbox, temp_slider, length_slider, preset_menu, model_menu], [textbox, markdown, html], show_progress=True)
+        btn.click(generate_reply, [textbox, length_slider, preset_menu, model_menu], [textbox, markdown, html], show_progress=True, api_name="textgen")
+        textbox.submit(generate_reply, [textbox, length_slider, preset_menu, model_menu], [textbox, markdown, html], show_progress=True)
 elif args.chat:
     history = []
 
-    def chatbot_wrapper(text, temperature, max_length, inference_settings, selected_model, name1, name2, context):
+    def chatbot_wrapper(text, max_length, inference_settings, selected_model, name1, name2, context):
         question = context+'\n\n'
         for i in range(len(history)):
             question += f"{name1}: {history[i][0][3:-5].strip()}\n"
@@ -197,7 +196,7 @@ elif args.chat:
         question += f"{name1}: {text.strip()}\n"
         question += f"{name2}:"
 
-        reply = generate_reply(question, temperature, max_length, inference_settings, selected_model, eos_token='\n')[0]
+        reply = generate_reply(question, max_length, inference_settings, selected_model, eos_token='\n')[0]
         reply = reply[len(question):].split('\n')[0].strip()
         history.append((text, reply))
         return history
@@ -207,7 +206,7 @@ elif args.chat:
         history = []
 
     if 'pygmalion' in model_name.lower():
-        context_str = "Kawaii's Persona: Kawaii is an enthusiastic and nice girl.\n<START>"
+        context_str = "This is a conversation between two people.\n<START>"
         name1_str = "You"
         name2_str = "Kawaii"
     else:
@@ -221,11 +220,10 @@ elif args.chat:
             with gr.Column():
                 with gr.Row():
                     with gr.Column():
-                        length_slider = gr.Slider(minimum=1, maximum=2000, step=1, label='max_length', value=200)
+                        model_menu = gr.Dropdown(choices=available_models, value=model_name, label='Model')
                         preset_menu = gr.Dropdown(choices=available_presets, value="NovelAI-Sphinx Moth", label='Preset')
                     with gr.Column():
-                        temp_slider = gr.Slider(minimum=0.0, maximum=1.0, step=0.01, label='Temperature', value=0.7)
-                        model_menu = gr.Dropdown(choices=available_models, value=model_name, label='Model')
+                        length_slider = gr.Slider(minimum=1, maximum=2000, step=1, label='max_length', value=200)
                 name1 = gr.Textbox(value=name1_str, lines=1, label='Your name')
                 name2 = gr.Textbox(value=name2_str, lines=1, label='Bot\'s name')
                 context = gr.Textbox(value=context_str, lines=2, label='Context')
@@ -235,16 +233,16 @@ elif args.chat:
                 btn = gr.Button("Generate")
                 btn2 = gr.Button("Clear history")
 
-        btn.click(chatbot_wrapper, [textbox, temp_slider, length_slider, preset_menu, model_menu, name1, name2, context], display1, show_progress=True, api_name="textgen")
-        textbox.submit(chatbot_wrapper, [textbox, temp_slider, length_slider, preset_menu, model_menu, name1, name2, context], display1, show_progress=True)
+        btn.click(chatbot_wrapper, [textbox, length_slider, preset_menu, model_menu, name1, name2, context], display1, show_progress=True, api_name="textgen")
+        textbox.submit(chatbot_wrapper, [textbox, length_slider, preset_menu, model_menu, name1, name2, context], display1, show_progress=True)
         btn2.click(clear)
         btn.click(lambda x: "", textbox, textbox, show_progress=False)
         textbox.submit(lambda x: "", textbox, textbox, show_progress=False)
         btn2.click(lambda x: "", display1, display1)
 else:
 
-    def continue_wrapper(question, temperature, max_length, inference_settings, selected_model):
-        a, b, c = generate_reply(question, temperature, max_length, inference_settings, selected_model)
+    def continue_wrapper(question, max_length, inference_settings, selected_model):
+        a, b, c = generate_reply(question, max_length, inference_settings, selected_model)
         return a, a, b, c
 
     with gr.Blocks(css=css, analytics_enabled=False) as interface:
@@ -252,7 +250,6 @@ else:
         with gr.Row():
             with gr.Column():
                 textbox = gr.Textbox(value=default_text, lines=15, label='Input')
-                temp_slider = gr.Slider(minimum=0.0, maximum=1.0, step=0.01, label='Temperature', value=0.7)
                 length_slider = gr.Slider(minimum=1, maximum=2000, step=1, label='max_length', value=200)
                 preset_menu = gr.Dropdown(choices=available_presets, value="NovelAI-Sphinx Moth", label='Preset')
                 model_menu = gr.Dropdown(choices=available_models, value=model_name, label='Model')
@@ -266,9 +263,9 @@ else:
                 with gr.Tab('HTML'):
                     html = gr.HTML()
 
-        btn.click(generate_reply, [textbox, temp_slider, length_slider, preset_menu, model_menu], [output_textbox, markdown, html], show_progress=True, api_name="textgen")
-        cont.click(continue_wrapper, [output_textbox, temp_slider, length_slider, preset_menu, model_menu], [output_textbox, textbox, markdown, html], show_progress=True)
-        textbox.submit(generate_reply, [textbox, temp_slider, length_slider, preset_menu, model_menu], [output_textbox, markdown, html], show_progress=True)
+        btn.click(generate_reply, [textbox, length_slider, preset_menu, model_menu], [output_textbox, markdown, html], show_progress=True, api_name="textgen")
+        cont.click(continue_wrapper, [output_textbox, length_slider, preset_menu, model_menu], [output_textbox, textbox, markdown, html], show_progress=True)
+        textbox.submit(generate_reply, [textbox, length_slider, preset_menu, model_menu], [output_textbox, markdown, html], show_progress=True)
 
 if args.no_listen:
     interface.launch(share=False)
