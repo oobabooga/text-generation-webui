@@ -36,7 +36,7 @@ conda activate textgen
 conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvidia
 ```
 
-For AMD GPUs, you need the ROCm version of pytorch. If you don't have any GPU and want to run in CPU mode, you just need the stock pytorch and this should work:
+For AMD GPUs, you need the ROCm version of pytorch. If you don't have any GPU and want to run the webui in CPU mode, you just need the stock pytorch and this should work:
 
 ```
 conda install pytorch torchvision torchaudio -c pytorch
@@ -83,7 +83,7 @@ For instance:
 * Torrent: [16-bit](https://archive.org/details/gpt4chan_model_float16) / [32-bit](https://archive.org/details/gpt4chan_model)
 * Direct download: [16-bit](https://theswissbay.ch/pdf/_notpdf_/gpt4chan_model_float16/) / [32-bit](https://theswissbay.ch/pdf/_notpdf_/gpt4chan_model/)
 
-The 32-bit version is only relevant if you intend to run the model in CPU mode. Otherwise, I recommend using the 16-bit version.
+The 32-bit version is only relevant if you intend to run the model in CPU mode. Otherwise, you should use the 16-bit version.
 
 After downloading the model, follow these steps:
 
