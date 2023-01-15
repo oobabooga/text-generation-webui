@@ -130,7 +130,7 @@ Optionally, you can use the following command-line flags:
 | `--auto-devices` | Automatically split the model across the available GPU(s) and CPU.|
 | `--load-in-8bit`  | Load the model with 8-bit precision.|
 | `--no-listen`   | Make the webui unreachable from your local network.|
-| `--settings-file SETTINGS\_FILE` | Load default interface settings from this json file. See settings-template.json for an example.|
+| `--settings-file SETTINGS_FILE` | Load default interface settings from this json file. See settings-template.json for an example.|
 
 ## Presets
 
