@@ -1,6 +1,6 @@
 # text-generation-webui
 
-A gradio webui for running large language models locally. Supports gpt-j-6B, gpt-neox-20b, opt, galactica, Pygmalion, and many others. 
+A gradio webui for running large language models like gpt-j-6B, gpt-neo, opt, galactica, and pygmalion on your own computer.
 
 Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.com/AUTOMATIC1111/stable-diffusion-webui) of text generation.
 
@@ -143,6 +143,7 @@ Check the [wiki](https://github.com/oobabooga/text-generation-webui/wiki/System-
 
 Pull requests, suggestions and issue reports are welcome.
 
-## Other projects
+## Credits
 
-Make sure to also check out the great work by [KoboldAI](https://github.com/KoboldAI/KoboldAI-Client). I have borrowed some of the presets listed on their [wiki](https://github.com/KoboldAI/KoboldAI-Client/wiki/Settings-Presets) after performing a k-means clustering analysis to select the most relevant subsample.
+- NovelAI and KoboldAI presets: https://github.com/KoboldAI/KoboldAI-Client/wiki/Settings-Presets
+- Pygmalion preset: https://github.com/PygmalionAI/gradio-ui/blob/master/src/gradio_ui.py
