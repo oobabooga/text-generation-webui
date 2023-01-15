@@ -143,6 +143,7 @@ Check the [wiki](https://github.com/oobabooga/text-generation-webui/wiki/System-
 
 Pull requests, suggestions and issue reports are welcome.
 
-## Other projects
+## Credits
 
-Make sure to also check out the great work by [KoboldAI](https://github.com/KoboldAI/KoboldAI-Client). I have borrowed some of the presets listed on their [wiki](https://github.com/KoboldAI/KoboldAI-Client/wiki/Settings-Presets) after performing a k-means clustering analysis to select the most relevant subsample.
+- NovelAI and KoboldAI presets: https://github.com/KoboldAI/KoboldAI-Client/wiki/Settings-Presets
+- Pygmalion preset: https://github.com/PygmalionAI/gradio-ui/blob/master/src/gradio_ui.py
