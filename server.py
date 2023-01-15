@@ -189,11 +189,15 @@ elif args.chat:
     history = []
 
     def chatbot_wrapper(text, tokens, inference_settings, selected_model, name1, name2, context, check):
+        text = text.replace('\n', '\n\n')
+        text = re.sub(r"\n{3,}", "\n\n", text)
+        text = text.strip()
+
         question = context+'\n\n'
         for i in range(len(history)):
             question += f"{name1}: {history[i][0][3:-5].strip()}\n"
             question += f"{name2}: {history[i][1][3:-5].strip()}\n"
-        question += f"{name1}: {text.strip()}\n"
+        question += f"{name1}: {text}\n"
         question += f"{name2}:"
 
         if check:
@@ -205,7 +209,9 @@ elif args.chat:
             idx = reply.find(f"\n{name1}:")
             if idx != -1:
                 reply = reply[:idx]
-            reply = reply.replace('\n', '\n\n').strip()
+            reply = reply.replace('\n', '\n\n')
+            reply = re.sub(r"\n{3,}", "\n\n", reply)
+            reply = reply.strip()
 
         history.append((text, reply))
         return history
