@@ -222,8 +222,12 @@ elif args.chat or args.cai_chat:
 
         question = context+'\n\n'
         for i in range(len(history)):
-            question += f"{name1}: {history[i][0][3:-5].strip()}\n"
-            question += f"{name2}: {history[i][1][3:-5].strip()}\n"
+            if args.cai_chat:
+                question += f"{name1}: {history[i][0].strip()}\n"
+                question += f"{name2}: {history[i][1].strip()}\n"
+            else:
+                question += f"{name1}: {history[i][0][3:-5].strip()}\n"
+                question += f"{name2}: {history[i][1][3:-5].strip()}\n"
         question += f"{name1}: {text}\n"
         question += f"{name2}:"
 
@@ -293,8 +297,6 @@ elif args.chat or args.cai_chat:
         context = gr.Textbox(value=context_str, lines=2, label='Context')
         with gr.Row():
             check = gr.Checkbox(value=settings['stop_at_newline'], label='Stop generating at new line character?')
-
-
 
         if args.cai_chat:
             btn.click(cai_chatbot_wrapper, [textbox, length_slider, preset_menu, model_menu, name1, name2, context, check], display1, show_progress=True, api_name="textgen")
