@@ -216,6 +216,10 @@ def generate_chat_html(history, name1, name2):
     output += f'<style>{css}</style><div class="chat" id="chat">'
     if Path("profile.png").exists():
         img = '<img src="file/profile.png">'
+    elif Path("profile.jpg").exists():
+        img = '<img src="file/profile.jpg">'
+    elif Path("profile.jpeg").exists():
+        img = '<img src="file/profile.jpeg">'
     else:
         img = ''
 
