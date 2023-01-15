@@ -1,0 +1,15 @@
+{
+    "max_new_tokens": 200,
+    "max_new_tokens_min": 1,
+    "max_new_tokens_max": 2000,
+    "preset": "NovelAI-Sphinx Moth",
+    "name1": "Person 1",
+    "name2": "Person 2",
+    "name1_pygmalion": "You",
+    "name2_pygmalion": "Kawaii",
+    "context": "This is a conversation between two people.\n<START>",
+    "context_pygmalion": "This is a conversation between two people.",
+    "prompt": "Common sense questions and answers\n\nQuestion: \nFactual answer:",
+    "prompt_gpt4chan": "-----\n--- 865467536\nInput text\n--- 865467537\n",
+    "stop_at_newline": true
+}

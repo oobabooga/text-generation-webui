@@ -4,6 +4,7 @@ import glob
 from sys import exit
 import torch
 import argparse
+import json
 from pathlib import Path
 import gradio as gr
 import transformers
@@ -12,8 +13,11 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 import warnings
 
 
+transformers.logging.set_verbosity_error()
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', type=str, help='Name of the model to load by default.')
+parser.add_argument('--settings-file', type=str, help='Load default interface settings from this json file. See settings-template.json for an example.')
 parser.add_argument('--notebook', action='store_true', help='Launch the webui in notebook mode, where the output is written to the same text box as the input.')
 parser.add_argument('--chat', action='store_true', help='Launch the webui in chat mode.')
 parser.add_argument('--cai-chat', action='store_true', help='Launch the webui in chat mode with a style similar to Character.AI\'s. If the file profile.png exists in the same folder as server.py, this image will be used as the bot\'s profile picture.')
@@ -29,7 +33,28 @@ available_models = [item for item in available_models if not item.endswith('.txt
 available_models = sorted(available_models, key=str.lower)
 available_presets = sorted(set(map(lambda x : str(x.name).split('.')[0], list(Path('presets').glob('*.txt')))))
 
-transformers.logging.set_verbosity_error()
+settings = {
+    'max_new_tokens': 200,
+    'max_new_tokens_min': 1,
+    'max_new_tokens_max': 2000,
+    'preset': 'NovelAI-Sphinx Moth',
+    'name1': 'Person 1',
+    'name2': 'Person 2',
+    'name1_pygmalion': 'You',
+    'name2_pygmalion': 'Kawaii',
+    'context': 'This is a conversation between two people.',
+    'context_pygmalion': 'This is a conversation between two people.\n<START>',
+    'prompt': 'Common sense questions and answers\n\nQuestion: \nFactual answer:',
+    'prompt_gpt4chan': '-----\n--- 865467536\nInput text\n--- 865467537\n',
+    'stop_at_newline': True,
+}
+
+if args.settings_file is not None and Path(args.settings_file).exists():
+    with open(Path(args.settings_file), 'r') as f:
+        new_settings = json.load(f)
+    for i in new_settings:
+        if i in settings:
+            settings[i] = new_settings[i]
 
 def load_model(model_name):
     print(f"Loading {model_name}...")
@@ -160,14 +185,11 @@ model, tokenizer = load_model(model_name)
 
 # UI settings
 if model_name.lower().startswith('gpt4chan'):
-    default_text = "-----\n--- 865467536\nInput text\n--- 865467537\n"
+    default_text = settings['prompt_gpt4chan']
 else:
-    default_text = "Common sense questions and answers\n\nQuestion: \nFactual answer:"
-description = f"""
+    default_text = settings['prompt']
 
-        # Text generation lab
-        Generate text using Large Language Models.
-        """
+description = f"\n\n# Text generation lab\nGenerate text using Large Language Models.\n"
 css=".my-4 {margin-top: 0} .py-6 {padding-top: 2.5rem}"
 
 if args.notebook:
@@ -181,12 +203,12 @@ if args.notebook:
             html = gr.HTML()
         btn = gr.Button("Generate")
 
-        length_slider = gr.Slider(minimum=1, maximum=2000, step=1, label='max_new_tokens', value=200)
+        length_slider = gr.Slider(minimum=settings['max_new_tokens_min'], maximum=settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=settings['max_new_tokens'])
         with gr.Row():
             with gr.Column():
                 model_menu = gr.Dropdown(choices=available_models, value=model_name, label='Model')
             with gr.Column():
-                preset_menu = gr.Dropdown(choices=available_presets, value="NovelAI-Sphinx Moth", label='Settings preset')
+                preset_menu = gr.Dropdown(choices=available_presets, value=settings['preset'], label='Settings preset')
 
         btn.click(generate_reply, [textbox, length_slider, preset_menu, model_menu], [textbox, markdown, html], show_progress=True, api_name="textgen")
         textbox.submit(generate_reply, [textbox, length_slider, preset_menu, model_menu], [textbox, markdown, html], show_progress=True)
@@ -243,30 +265,30 @@ elif args.chat or args.cai_chat:
         return generate_chat_html([], "", "")
 
     if 'pygmalion' in model_name.lower():
-        context_str = "This is a conversation between two people.\n<START>"
-        name1_str = "You"
-        name2_str = "Kawaii"
+        context_str = settings['context_pygmalion']
+        name1_str = settings['name1_pygmalion']
+        name2_str = settings['name2_pygmalion']
     else:
-        context_str = "This is a conversation between two people."
-        name1_str = "Person 1"
-        name2_str = "Person 2"
+        context_str = settings['context']
+        name1_str = settings['name1']
+        name2_str = settings['name2']
 
     with gr.Blocks(css=css+".h-\[40vh\] {height: 50vh}", analytics_enabled=False) as interface:
         gr.Markdown(description)
         with gr.Row():
             with gr.Column():
-                length_slider = gr.Slider(minimum=1, maximum=2000, step=1, label='max_new_tokens', value=200)
+                length_slider = gr.Slider(minimum=settings['max_new_tokens_min'], maximum=settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=settings['max_new_tokens'])
                 with gr.Row():
                     with gr.Column():
                         model_menu = gr.Dropdown(choices=available_models, value=model_name, label='Model')
                     with gr.Column():
-                        preset_menu = gr.Dropdown(choices=available_presets, value="NovelAI-Sphinx Moth", label='Settings preset')
+                        preset_menu = gr.Dropdown(choices=available_presets, value=settings['preset'], label='Settings preset')
 
                 name1 = gr.Textbox(value=name1_str, lines=1, label='Your name')
                 name2 = gr.Textbox(value=name2_str, lines=1, label='Bot\'s name')
                 context = gr.Textbox(value=context_str, lines=2, label='Context')
                 with gr.Row():
-                    check = gr.Checkbox(value=True, label='Stop generating at new line character?')
+                    check = gr.Checkbox(value=settings['stop_at_newline'], label='Stop generating at new line character?')
 
             with gr.Column():
                 if args.cai_chat:
@@ -305,8 +327,8 @@ else:
         with gr.Row():
             with gr.Column():
                 textbox = gr.Textbox(value=default_text, lines=15, label='Input')
-                length_slider = gr.Slider(minimum=1, maximum=2000, step=1, label='max_new_tokens', value=200)
-                preset_menu = gr.Dropdown(choices=available_presets, value="NovelAI-Sphinx Moth", label='Settings preset')
+                length_slider = gr.Slider(minimum=settings['max_new_tokens_min'], maximum=settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=settings['max_new_tokens'])
+                preset_menu = gr.Dropdown(choices=available_presets, value=settings['preset'], label='Settings preset')
                 model_menu = gr.Dropdown(choices=available_models, value=model_name, label='Model')
                 btn = gr.Button("Generate")
                 cont = gr.Button("Continue")
