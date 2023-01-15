@@ -201,10 +201,11 @@ elif args.chat:
             reply = reply[len(question):].split('\n')[0].strip()
         else:
             reply = generate_reply(question, tokens, inference_settings, selected_model)[0]
-            reply = reply[len(question):].strip()
+            reply = reply[len(question):]
             idx = reply.find(f"\n{name1}:")
             if idx != -1:
                 reply = reply[:idx]
+            reply = reply.replace('\n', '\n\n').strip()
 
         history.append((text, reply))
         return history
