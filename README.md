@@ -1,6 +1,6 @@
 # text-generation-webui
 
-A gradio webui for running large language models locally. Supports gpt-j-6B, gpt-neox-20b, opt, galactica, Pygmalion, and many others. 
+A gradio webui for running large language models like gpt-j-6B, gpt-neo, opt, galactica and pygmalion on your own computer.
 
 Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.com/AUTOMATIC1111/stable-diffusion-webui) of text generation.
 
