@@ -119,11 +119,6 @@ def fix_galactica(s):
     s = s.replace(r'$$', r'$')
     return s
 
-def generate_html(s):
-    s = '\n'.join([f'<p style="margin-bottom: 20px">{line}</p>' for line in s.split('\n')])
-    s = f'<div style="max-width: 600px; margin-left: auto; margin-right: auto; background-color:#eef2ff; color:#0b0f19; padding:3em; font-size:1.2em;">{s}</div>'
-    return s
-
 def generate_reply(question, tokens, inference_settings, selected_model, eos_token=None):
     global model, tokenizer, model_name, loaded_preset, preset
 
@@ -157,12 +152,12 @@ def generate_reply(question, tokens, inference_settings, selected_model, eos_tok
     reply = reply.replace(r'<|endoftext|>', '')
     if model_name.lower().startswith('galactica'):
         reply = fix_galactica(reply)
-        return reply, reply, generate_html(reply)
+        return reply, reply, generate_basic_html(reply)
     elif model_name.lower().startswith('gpt4chan'):
         reply = fix_gpt4chan(reply)
         return reply, 'Only applicable for galactica models.', generate_4chan_html(reply)
     else:
-        return reply, 'Only applicable for galactica models.', generate_html(reply)
+        return reply, 'Only applicable for galactica models.', generate_basic_html(reply)
 
 # Choosing the default model
 if args.model is not None:

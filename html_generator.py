@@ -7,6 +7,11 @@ This is a library for formatting gpt4chan outputs as nice HTML.
 import re
 from pathlib import Path
 
+def generate_basic_html(s):
+    s = '\n'.join([f'<p style="margin-bottom: 20px">{line}</p>' for line in s.split('\n')])
+    s = f'<div style="max-width: 600px; margin-left: auto; margin-right: auto; background-color:#efefef; color:#0b0f19; padding:3em; font-size:1.1em; font-family: helvetica">{s}</div>'
+    return s
+
 def process_post(post, c):
     t = post.split('\n')
     number = t[0].split(' ')[1]
