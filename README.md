@@ -121,16 +121,16 @@ Optionally, you can use the following command-line flags:
 
 | Flag        | Description |
 |-------------|-------------|
-| -h, --help  | show this help message and exit |
-| --model MODEL    | Name of the model to load by default. |
-| --notebook  | Launch the webui in notebook mode, where the output is written to the same text box as the input. |
-| --chat      | Launch the webui in chat mode.|
-| --cai-chat  | Launch the webui in chat mode with a style similar to Character.AI's. If the file profile.png exists in the same folder as server.py, this image will be used as the bot's profile picture.|
-| --cpu       | Use the CPU to generate text.|
-| --auto-devices | Automatically split the model across the available GPU(s) and CPU.|
-| --load-in-8bit  | Load the model with 8-bit precision.|
-| --no-listen   | Make the webui unreachable from your local network.|
-| --settings-file SETTINGS\_FILE | Load default interface settings from this json file. See settings-template.json for an example.|
+| `-h`, `--help`  | show this help message and exit |
+| `--model MODEL`    | Name of the model to load by default. |
+| `--notebook`  | Launch the webui in notebook mode, where the output is written to the same text box as the input. |
+| `--chat`      | Launch the webui in chat mode.|
+| `--cai-chat`  | Launch the webui in chat mode with a style similar to Character.AI's. If the file profile.png exists in the same folder as server.py, this image will be used as the bot's profile picture.|
+| `--cpu`       | Use the CPU to generate text.|
+| `--auto-devices` | Automatically split the model across the available GPU(s) and CPU.|
+| `--load-in-8bit`  | Load the model with 8-bit precision.|
+| `--no-listen`   | Make the webui unreachable from your local network.|
+| `--settings-file SETTINGS\_FILE` | Load default interface settings from this json file. See settings-template.json for an example.|
 
 ## Presets
 
