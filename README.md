@@ -58,9 +58,9 @@ After these steps, you should be able to start the webui, but first you need to 
 
 Models should be placed under `models/model-name`. For instance, `models/gpt-j-6B` for [gpt-j-6B](https://huggingface.co/EleutherAI/gpt-j-6B/tree/main).
 
-#### Hugging Face
+#### [Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads)
 
-[Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads) is the main place to download models. These are some of my favorite:
+Hugging Face is the main place to download models. These are some of my favorite:
 
 * [gpt-j-6B](https://huggingface.co/EleutherAI/gpt-j-6B/tree/main)
 * [gpt-neox-20b](https://huggingface.co/EleutherAI/gpt-neox-20b/tree/main)
