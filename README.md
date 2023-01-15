@@ -4,7 +4,9 @@ A gradio webui for running large language models locally. Supports gpt-j-6B, gpt
 
 Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.com/AUTOMATIC1111/stable-diffusion-webui) of text generation.
 
-![webui screenshot](https://github.com/oobabooga/text-generation-webui/raw/main/webui.png)
+|![Image1](https://github.com/oobabooga/text-generation-webui/raw/main/screenshots/qa.png) | ![Image2](https://github.com/oobabooga/text-generation-webui/raw/main/screenshots/chat.png) |
+|:---:|:---:|
+|![Image3](https://github.com/oobabooga/text-generation-webui/raw/main/screenshots/gpt4chan.png) | ![Image4](https://github.com/oobabooga/text-generation-webui/raw/main/screenshots/galactica.png) |
 
 ## Features
 
