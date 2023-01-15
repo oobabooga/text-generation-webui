@@ -185,7 +185,7 @@ else:
     default_text = settings['prompt']
 
 description = f"\n\n# Text generation lab\nGenerate text using Large Language Models.\n"
-css=".my-4 {margin-top: 0} .py-6 {padding-top: 2.5rem}"
+css = ".my-4 {margin-top: 0} .py-6 {padding-top: 2.5rem}"
 
 if args.notebook:
     with gr.Blocks(css=css, analytics_enabled=False) as interface:
@@ -268,35 +268,33 @@ elif args.chat or args.cai_chat:
         name1_str = settings['name1']
         name2_str = settings['name2']
 
-    with gr.Blocks(css=css+".h-\[40vh\] {height: 50vh}", analytics_enabled=False) as interface:
-        gr.Markdown(description)
+    with gr.Blocks(css=css+".h-\[40vh\] {height: 66.67vh} .gradio-container {max-width: 800px; margin-left: auto; margin-right: auto}", analytics_enabled=False) as interface:
+        if args.cai_chat:
+            display1 = gr.HTML(value=generate_chat_html([], "", ""))
+        else:
+            display1 = gr.Chatbot()
+        textbox = gr.Textbox(lines=2, label='Input')
+        btn = gr.Button("Generate")
         with gr.Row():
             with gr.Column():
-                length_slider = gr.Slider(minimum=settings['max_new_tokens_min'], maximum=settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=settings['max_new_tokens'])
-                with gr.Row():
-                    with gr.Column():
-                        model_menu = gr.Dropdown(choices=available_models, value=model_name, label='Model')
-                    with gr.Column():
-                        preset_menu = gr.Dropdown(choices=available_presets, value=settings['preset'], label='Settings preset')
-
-                name1 = gr.Textbox(value=name1_str, lines=1, label='Your name')
-                name2 = gr.Textbox(value=name2_str, lines=1, label='Bot\'s name')
-                context = gr.Textbox(value=context_str, lines=2, label='Context')
-                with gr.Row():
-                    check = gr.Checkbox(value=settings['stop_at_newline'], label='Stop generating at new line character?')
-
+                btn3 = gr.Button("Remove last message")
             with gr.Column():
-                if args.cai_chat:
-                    display1 = gr.HTML(value=generate_chat_html([], "", ""))
-                else:
-                    display1 = gr.Chatbot()
-                textbox = gr.Textbox(lines=2, label='Input')
-                btn = gr.Button("Generate")
-                with gr.Row():
-                    with gr.Column():
-                        btn3 = gr.Button("Remove last message")
-                    with gr.Column():
-                        btn2 = gr.Button("Clear history")
+                btn2 = gr.Button("Clear history")
+
+        length_slider = gr.Slider(minimum=settings['max_new_tokens_min'], maximum=settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=settings['max_new_tokens'])
+        with gr.Row():
+            with gr.Column():
+                model_menu = gr.Dropdown(choices=available_models, value=model_name, label='Model')
+            with gr.Column():
+                preset_menu = gr.Dropdown(choices=available_presets, value=settings['preset'], label='Settings preset')
+
+        name1 = gr.Textbox(value=name1_str, lines=1, label='Your name')
+        name2 = gr.Textbox(value=name2_str, lines=1, label='Bot\'s name')
+        context = gr.Textbox(value=context_str, lines=2, label='Context')
+        with gr.Row():
+            check = gr.Checkbox(value=settings['stop_at_newline'], label='Stop generating at new line character?')
+
+
 
         if args.cai_chat:
             btn.click(cai_chatbot_wrapper, [textbox, length_slider, preset_menu, model_menu, name1, name2, context, check], display1, show_progress=True, api_name="textgen")

@@ -166,7 +166,7 @@ def generate_chat_html(history, name1, name2):
       margin-left: auto;
       margin-right: auto;
       max-width: 800px;
-      height: 50vh;
+      height: 66.67vh;
       overflow-y: auto;
       padding-right: 20px;
       display: flex;
