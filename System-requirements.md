@@ -35,7 +35,7 @@ Allows you to load models that would not normally fit into your GPU. Enabled by 
 
 A lot slower, but does not require a GPU. 
 
-On my i5-12400F, 6B models take around 10-20 seconds to respond in chat mode, and around 5 minutes to generate a ~200 token completion. 
+On my i5-12400F, 6B models take around 10-20 seconds to respond in chat mode, and around 5 minutes to generate a 200 token completion. 
 
 | model                  |      RAM |
 |:-----------------------|---------:|
