@@ -145,5 +145,5 @@ Pull requests, suggestions and issue reports are welcome.
 
 ## Credits
 
-- NovelAI and KoboldAI presets (I have performed a k-means clustering analysis to automatically select the most relevant subsample): https://github.com/KoboldAI/KoboldAI-Client/wiki/Settings-Presets
+- NovelAI and KoboldAI presets: https://github.com/KoboldAI/KoboldAI-Client/wiki/Settings-Presets
 - Pygmalion preset: https://github.com/PygmalionAI/gradio-ui/blob/master/src/gradio_ui.py
