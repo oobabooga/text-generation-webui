@@ -223,6 +223,10 @@ elif args.chat:
         history.append((text, reply))
         return history
 
+    def remove_last_message():
+        history.pop()
+        return history
+
     def clear():
         global history
         history = []
@@ -257,10 +261,15 @@ elif args.chat:
                 display1 = gr.Chatbot()
                 textbox = gr.Textbox(lines=2, label='Input')
                 btn = gr.Button("Generate")
-                btn2 = gr.Button("Clear history")
+                with gr.Row():
+                    with gr.Column():
+                        btn3 = gr.Button("Remove last message")
+                    with gr.Column():
+                        btn2 = gr.Button("Clear history")
 
         btn.click(chatbot_wrapper, [textbox, length_slider, preset_menu, model_menu, name1, name2, context, check], display1, show_progress=True, api_name="textgen")
         textbox.submit(chatbot_wrapper, [textbox, length_slider, preset_menu, model_menu, name1, name2, context, check], display1, show_progress=True)
+        btn3.click(remove_last_message, [], display1, show_progress=False)
         btn2.click(clear)
         btn.click(lambda x: "", textbox, textbox, show_progress=False)
         textbox.submit(lambda x: "", textbox, textbox, show_progress=False)
