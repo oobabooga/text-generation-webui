@@ -5,6 +5,7 @@ This is a library for formatting gpt4chan outputs as nice HTML.
 '''
 
 import re
+from pathlib import Path
 
 def process_post(post, c):
     t = post.split('\n')
@@ -151,5 +152,108 @@ def generate_4chan_html(f):
         output[i] = re.sub(r'^(&gt;(.*?)(<br>|</div>))', r'<span class="greentext">\1</span>', output[i])
         output[i] = re.sub(r'^<blockquote class="message">(&gt;(.*?)(<br>|</div>))', r'<blockquote class="message"><span class="greentext">\1</span>', output[i])
     output = '\n'.join(output)
+
+    return output
+
+def generate_chat_html(history, name1, name2):
+    css = """
+    .chat {
+      margin-left: auto;
+      margin-right: auto;
+      max-width: 800px;
+      height: 50vh;
+      overflow-y: auto;
+      padding-right: 20px;
+      display: flex;
+      flex-direction: column-reverse;
+    }       
+
+    .message {
+      display: grid;
+      grid-template-columns: 50px 1fr;
+      padding-bottom: 20px;
+      font-size: 15px;
+      font-family: helvetica;
+    }   
+        
+    .circle-you {
+      width: 45px;
+      height: 45px;
+      background-color: rgb(244, 78, 59);
+      border-radius: 50%;
+    }
+          
+    .circle-bot {
+      width: 45px;
+      height: 45px;
+      background-color: rgb(59, 78, 244);
+      border-radius: 50%;
+    }
+
+    .circle-bot img {
+      border-radius: 50%;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .text {
+    }
+
+    .text p {
+      margin-top: 5px;
+    }
+
+    .username {
+      font-weight: bold;
+    }
+
+    .body {
+    }
+    """
+
+    output = ''
+    output += f'<style>{css}</style><div class="chat" id="chat">'
+    if Path("profile.png").exists():
+        img = '<img src="file/profile.png">'
+    else:
+        img = ''
+
+    for row in history[::-1]:
+        p = '\n'.join([f"<p>{x}</p>" for x in row[1].split('\n')])
+        output += f"""
+              <div class="message">
+                <div class="circle-bot">
+                  {img}
+                </div>
+                <div class="text">
+                  <div class="username">
+                    {name2}
+                  </div>
+                  <div class="body">
+                    {p}
+                  </div>
+                </div>
+              </div>
+            """
+
+        p = '\n'.join([f"<p>{x}</p>" for x in row[0].split('\n')])
+        output += f"""
+              <div class="message">
+                <div class="circle-you">
+                </div>
+                <div class="text">
+                  <div class="username">
+                    {name1}
+                  </div>
+                  <div class="body">
+                    {p}
+                  </div>
+                </div>
+              </div>
+            """
+
+    output += '<script>document.getElementById("chat").scrollTo(0, document.getElementById("chat").scrollHeight);</script>'
+    output += "</div>"
 
     return output
