@@ -1,6 +1,6 @@
 # text-generation-webui
 
-A gradio webui for running large language models like gpt-j-6B, gpt-neo, opt, galactica, and pygmalion on your own computer.
+A gradio web UI for running large language models like gpt-j-6B, gpt-neo, opt, galactica, and pygmalion on your own computer.
 
 Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.com/AUTOMATIC1111/stable-diffusion-webui) of text generation.
 
@@ -23,7 +23,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 
 ## Installation
 
-1. You need to have the conda environment manager installed into your system. If you don't have it already, [get miniconda here](https://docs.conda.io/en/latest/miniconda.html).
+1. You need to have the conda environment manager installed on your system. If you don't have it already, [get miniconda here](https://docs.conda.io/en/latest/miniconda.html).
 
 2. Open a terminal window and create a conda environment:
 
@@ -40,13 +40,13 @@ conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvi
 
 For AMD GPUs, you need the ROCm version of pytorch. 
 
-If you don't have any GPU and want to run the webui in CPU mode, you just need the stock pytorch and should use this command instead:
+If you don't have a GPU and want to run the web UI in CPU mode, you just need the standard pytorch and should use this command instead:
 
 ```
 conda install pytorch torchvision torchaudio -c pytorch
 ```
 
-4. Clone or download this repository, and then `cd` into its directory from your terminal window.
+4. Clone or download this repository, and then `cd` into its folder from your terminal window.
 
 5. Install the required Python libraries:
 
@@ -54,7 +54,7 @@ conda install pytorch torchvision torchaudio -c pytorch
 pip install -r requirements.txt
 ```
 
-After these steps, you should be able to start the webui, but first you need to download some model to load.
+After these steps, you should be able to start the web UI, but first you need to download some model to load.
 
 ## Downloading models
 
@@ -108,9 +108,9 @@ The script `convert-to-torch.py` allows you to convert models to .pt format, whi
 
     python convert-to-torch.py models/model-name
 
-The output model will be saved to `torch-dumps/model-name.pt`. When you load a new model, the webui first looks for this .pt file; if it is not found, it loads the model as usual from `models/model-name`. 
+The output model will be saved to `torch-dumps/model-name.pt`. When you load a new model, the web UI first looks for this .pt file; if it is not found, it loads the model as usual from `models/model-name`. 
 
-## Starting the webui
+## Starting the web UI
 
     conda activate textgen
     python server.py
@@ -125,15 +125,15 @@ Optionally, you can use the following command-line flags:
 |-------------|-------------|
 | `-h`, `--help`  | show this help message and exit |
 | `--model MODEL`    | Name of the model to load by default. |
-| `--notebook`  | Launch the webui in notebook mode, where the output is written to the same text box as the input. |
-| `--chat`      | Launch the webui in chat mode.|
-| `--cai-chat`  | Launch the webui in chat mode with a style similar to Character.AI's. If the file profile.png or profile.jpg exists in the same folder as server.py, this image will be used as the bot's profile picture. |
+| `--notebook`  | Launch the web UI in notebook mode, where the output is written to the same text box as the input. |
+| `--chat`      | Launch the web UI in chat mode.|
+| `--cai-chat`  | Launch the web UI in chat mode with a style similar to Character.AI's. If the file profile.png or profile.jpg exists in the same folder as server.py, this image will be used as the bot's profile picture. |
 | `--cpu`       | Use the CPU to generate text.|
 | `--auto-devices` | Automatically split the model across the available GPU(s) and CPU.|
 | `--load-in-8bit`  | Load the model with 8-bit precision.|
-| `--max-gpu-memory MAX_GPU_MEMORY` | Maximum memory in GiB to allocate to the GPU while loading the model. This is useful if you get out of memory errors while trying to generate text. Must be an integer number. |
-| `--no-listen`   | Make the webui unreachable from your local network.|
-| `--settings-file SETTINGS_FILE` | Load default interface settings from this json file. See settings-template.json for an example.|
+| `--max-gpu-memory MAX_GPU_MEMORY` | Maximum memory in GiB to allocate to the GPU when loading the model. This is useful if you get out of memory errors while trying to generate text. Must be an integer number. |
+| `--no-listen`   | Make the web UI unreachable from your local network.|
+| `--settings-file SETTINGS_FILE` | Load the default interface settings from this json file. See `settings-template.json` for an example.|
 
 ## Presets
 
@@ -145,7 +145,7 @@ Check the [wiki](https://github.com/oobabooga/text-generation-webui/wiki/System-
 
 ## Contributing
 
-Pull requests, suggestions and issue reports are welcome.
+Pull requests, suggestions, and issue reports are welcome.
 
 ## Credits
 
