@@ -9,7 +9,7 @@ from pathlib import Path
 import gradio as gr
 import transformers
 from html_generator import *
-from transformers import AutoTokenizer, AutoModelForCausalLM
+from transformers import AutoTokenizer, AutoModelForCausalLM, AutoConfig
 import warnings
 
 
@@ -23,6 +23,7 @@ parser.add_argument('--cai-chat', action='store_true', help='Launch the webui in
 parser.add_argument('--cpu', action='store_true', help='Use the CPU to generate text.')
 parser.add_argument('--auto-devices', action='store_true', help='Automatically split the model across the available GPU(s) and CPU.')
 parser.add_argument('--load-in-8bit', action='store_true', help='Load the model with 8-bit precision.')
+parser.add_argument('--max-gpu-memory', type=int, help='Maximum memory in GiB to allocate to the GPU while loading the model. This is useful if get out of memory errors while trying to generate text. Must be an integer number.')
 parser.add_argument('--no-listen', action='store_true', help='Make the webui unreachable from your local network.')
 parser.add_argument('--settings-file', type=str, help='Load default interface settings from this json file. See settings-template.json for an example.')
 args = parser.parse_args()
@@ -61,7 +62,7 @@ def load_model(model_name):
     t0 = time.time()
 
     # Default settings
-    if not (args.cpu or args.auto_devices or args.load_in_8bit):
+    if not (args.cpu or args.auto_devices or args.load_in_8bit or args.max_gpu_memory is not None):
         if Path(f"torch-dumps/{model_name}.pt").exists():
             print("Loading in .pt format...")
             model = torch.load(Path(f"torch-dumps/{model_name}.pt"))
@@ -79,7 +80,11 @@ def load_model(model_name):
         if args.cpu:
             settings.append("torch_dtype=torch.float32")
         else:
-            if args.load_in_8bit:
+            if args.max_gpu_memory is not None:
+                settings.append(f"max_memory={{0: '{args.max_gpu_memory}GiB', 'cpu': '99GiB'}}")
+                settings.append("device_map='auto'")
+                settings.append("torch_dtype=torch.float16")
+            elif args.load_in_8bit:
                 settings.append("device_map='auto'")
                 settings.append("load_in_8bit=True")
             else:
@@ -89,7 +94,7 @@ def load_model(model_name):
                 else:
                     cuda = ".cuda()"
 
-        settings = ', '.join(settings)
+        settings = ', '.join(list(set(settings)))
         command = f"{command}(Path(f'models/{model_name}'), {settings}){cuda}"
         model = eval(command)
 
