@@ -58,14 +58,14 @@ After these steps, you should be able to start the web UI, but first you need to
 
 ## Downloading models
 
-Models should be placed under `models/model-name`. For instance, `models/gpt-j-6B` for [gpt-j-6B](https://huggingface.co/EleutherAI/gpt-j-6B/tree/main).
+Models should be placed under `models/model-name`. For instance, `models/gpt-j-6B` for [GPT-J 6B](https://huggingface.co/EleutherAI/gpt-j-6B/tree/main).
 
 #### Hugging Face
 
 [Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads) is the main place to download models. These are some noteworthy examples:
 
-* [gpt-j-6B](https://huggingface.co/EleutherAI/gpt-j-6B/tree/main)
-* [gpt-neox-20b](https://huggingface.co/EleutherAI/gpt-neox-20b/tree/main)
+* [GPT-J 6B](https://huggingface.co/EleutherAI/gpt-j-6B/tree/main)
+* [GPT-Neo](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads&search=eleutherai+%2F+gpt-neo)
 * [OPT](https://huggingface.co/models?search=facebook/opt)
 * [GALACTICA](https://huggingface.co/models?search=facebook/galactica)
 * [\*-Erebus](https://huggingface.co/models?search=erebus)
@@ -93,14 +93,14 @@ The 32-bit version is only relevant if you intend to run the model in CPU mode. 
 After downloading the model, follow these steps:
 
 1. Place the files under `models/gpt4chan_model_float16` or `models/gpt4chan_model`.
-2. Place GPT-J-6B's config.json file in that same folder: [config.json](https://huggingface.co/EleutherAI/gpt-j-6B/raw/main/config.json).
-3. Download GPT-J-6B under `models/gpt-j-6B`:
+2. Place GPT-J 6B's config.json file in that same folder: [config.json](https://huggingface.co/EleutherAI/gpt-j-6B/raw/main/config.json).
+3. Download GPT-J 6B under `models/gpt-j-6B`:
 
 ```
 python download-model.py EleutherAI/gpt-j-6B
 ```
 
-You don't really need all of GPT-J's files, just the tokenizer files, but you might as well download the whole thing. Those files will be automatically detected when you attempt to load GPT-4chan.
+You don't really need all of GPT-J 6B's files, just the tokenizer files, but you might as well download the whole thing. Those files will be automatically detected when you attempt to load GPT-4chan.
 
 #### Converting to pytorch (optional)
 
