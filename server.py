@@ -23,7 +23,7 @@ parser.add_argument('--cai-chat', action='store_true', help='Launch the webui in
 parser.add_argument('--cpu', action='store_true', help='Use the CPU to generate text.')
 parser.add_argument('--auto-devices', action='store_true', help='Automatically split the model across the available GPU(s) and CPU.')
 parser.add_argument('--load-in-8bit', action='store_true', help='Load the model with 8-bit precision.')
-parser.add_argument('--max-gpu-memory', type=int, help='Maximum memory in GiB to allocate to the GPU while loading the model. This is useful if get out of memory errors while trying to generate text. Must be an integer number.')
+parser.add_argument('--max-gpu-memory', type=int, help='Maximum memory in GiB to allocate to the GPU while loading the model. This is useful if you get out of memory errors while trying to generate text. Must be an integer number.')
 parser.add_argument('--no-listen', action='store_true', help='Make the webui unreachable from your local network.')
 parser.add_argument('--settings-file', type=str, help='Load default interface settings from this json file. See settings-template.json for an example.')
 args = parser.parse_args()
