@@ -151,3 +151,4 @@ Pull requests, suggestions, and issue reports are welcome.
 
 - NovelAI and KoboldAI presets: https://github.com/KoboldAI/KoboldAI-Client/wiki/Settings-Presets
 - Pygmalion preset: https://github.com/PygmalionAI/gradio-ui/blob/master/src/gradio_ui.py
+- Verbose preset: Anonymous 4chan user.
