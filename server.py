@@ -9,7 +9,7 @@ from pathlib import Path
 import gradio as gr
 import transformers
 from html_generator import *
-from transformers import AutoTokenizer, AutoModelForCausalLM, AutoConfig
+from transformers import AutoTokenizer, AutoModelForCausalLM
 import warnings
 
 
