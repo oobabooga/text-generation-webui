@@ -1,4 +1,4 @@
-# text-generation-webui
+# Text generation web UI
 
 A gradio web UI for running large language models like gpt-j-6B, gpt-neo, opt, galactica, and pygmalion on your own computer.
 
