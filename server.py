@@ -232,12 +232,12 @@ elif args.chat or args.cai_chat:
 
         if check:
             reply = generate_reply(question, tokens, inference_settings, selected_model, eos_token='\n')[0]
-            idx = reply.rfind(question[-500:])
-            reply = reply[idx+min(500, len(question)):].split('\n')[0].strip()
+            idx = reply.rfind(question[-1024:])
+            reply = reply[idx+min(1024, len(question)):].split('\n')[0].strip()
         else:
             reply = generate_reply(question, tokens, inference_settings, selected_model)[0]
-            idx = reply.rfind(question[-500:])
-            reply = reply[idx+min(500, len(question)):]
+            idx = reply.rfind(question[-1024:])
+            reply = reply[idx+min(1024, len(question)):]
             idx = reply.find(f"\n{name1}:")
             if idx != -1:
                 reply = reply[:idx]
