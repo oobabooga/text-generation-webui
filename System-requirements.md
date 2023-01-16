@@ -23,7 +23,7 @@ These are the VRAM and RAM requirements (in MiB) to run some examples of models.
 
 #### GPU mode with 8-bit precision
 
-Allows you to load models that would not normally fit into your GPU. Enabled by default for 13b and 20b models in this webui.
+Allows you to load models that would not normally fit into your GPU. Enabled by default for 13b and 20b models in this web UI.
 
 | model          |   VRAM (GPU) |     RAM |
 |:---------------|-------------:|--------:|
