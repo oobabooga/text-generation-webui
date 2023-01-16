@@ -131,7 +131,7 @@ Optionally, you can use the following command-line flags:
 | `--cpu`       | Use the CPU to generate text.|
 | `--auto-devices` | Automatically split the model across the available GPU(s) and CPU.|
 | `--load-in-8bit`  | Load the model with 8-bit precision.|
-| `--max-gpu-memory MAX_GPU_MEMORY` | Maximum memory in GiB to allocate to the GPU while loading the model. This is useful if get out of memory errors while trying to generate text. Must be an integer number. |
+| `--max-gpu-memory MAX_GPU_MEMORY` | Maximum memory in GiB to allocate to the GPU while loading the model. This is useful if you get out of memory errors while trying to generate text. Must be an integer number. |
 | `--no-listen`   | Make the webui unreachable from your local network.|
 | `--settings-file SETTINGS_FILE` | Load default interface settings from this json file. See settings-template.json for an example.|
 
