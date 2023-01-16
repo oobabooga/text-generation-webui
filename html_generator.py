@@ -1,6 +1,6 @@
 '''
 
-This is a library for formatting gpt4chan outputs as nice HTML.
+This is a library for formatting GPT-4chan and chat outputs as nice HTML.
 
 '''
 
@@ -267,7 +267,5 @@ def generate_chat_html(history, name1, name2):
               </div>
             """
 
-    output += '<script>document.getElementById("chat").scrollTo(0, document.getElementById("chat").scrollHeight);</script>'
     output += "</div>"
-
     return output

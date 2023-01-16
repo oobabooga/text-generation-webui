@@ -28,7 +28,6 @@ def get_file(args):
         t.close()
 
 if __name__ == '__main__':
-
     model = argv[1]
     if model[-1] == '/':
         model = model[:-1]

@@ -133,7 +133,7 @@ Optionally, you can use the following command-line flags:
 | `--load-in-8bit`  | Load the model with 8-bit precision.|
 | `--max-gpu-memory MAX_GPU_MEMORY` | Maximum memory in GiB to allocate to the GPU when loading the model. This is useful if you get out of memory errors while trying to generate text. Must be an integer number. |
 | `--no-listen`   | Make the web UI unreachable from your local network.|
-| `--settings-file SETTINGS_FILE` | Load the default interface settings from this json file. See `settings-template.json` for an example.|
+| `--settings SETTINGS_FILE` | Load the default interface settings from this json file. See `settings-template.json` for an example.|
 
 ## Presets
 

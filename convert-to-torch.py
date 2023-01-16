@@ -17,7 +17,5 @@ model_name = path.name
 
 print(f"Loading {model_name}...")
 model = AutoModelForCausalLM.from_pretrained(path, low_cpu_mem_usage=True, torch_dtype=torch.float16).cuda()
-print("Model loaded.")
-
-print(f"Saving to torch-dumps/{model_name}.pt")
+print(f"Model loaded.\nSaving to torch-dumps/{model_name}.pt")
 torch.save(model, Path(f"torch-dumps/{model_name}.pt"))
