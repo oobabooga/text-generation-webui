@@ -374,7 +374,10 @@ if args.chat or args.cai_chat:
 
         save_btn.click(save_history, inputs=[], outputs=[download])
         upload.upload(load_history, [upload], [])
-        upload.upload(redraw_html, [name1, name2], [display1])
+        if args.cai_chat:
+            upload.upload(redraw_html, [name1, name2], [display1])
+        else:
+            upload.upload(lambda : history, [], [display1])
 
 
 elif args.notebook:
