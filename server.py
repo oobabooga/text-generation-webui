@@ -11,6 +11,7 @@ import transformers
 from html_generator import *
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import warnings
+import gc
 
 
 transformers.logging.set_verbosity_error()
@@ -151,6 +152,7 @@ def generate_reply(question, tokens, inference_settings, selected_model, eos_tok
         model = None
         tokenizer = None
         if not args.cpu:
+            gc.collect()
             torch.cuda.empty_cache()
         model, tokenizer = load_model(model_name)
     if inference_settings != loaded_preset:
