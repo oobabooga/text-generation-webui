@@ -160,7 +160,7 @@ def generate_4chan_html(f):
 
     return output
 
-def generate_chat_html(history, name1, name2):
+def generate_chat_html(history, name1, name2, character):
     css = """
     .chat {
       margin-left: auto;
@@ -219,17 +219,21 @@ def generate_chat_html(history, name1, name2):
 
     output = ''
     output += f'<style>{css}</style><div class="chat" id="chat">'
-    if Path("profile.png").exists():
-        img = '<img src="file/profile.png">'
-    elif Path("profile.jpg").exists():
-        img = '<img src="file/profile.jpg">'
-    elif Path("profile.jpeg").exists():
-        img = '<img src="file/profile.jpeg">'
-    else:
-        img = ''
+    img = ''
+    for i in [
+            f"characters/{character}.png",
+            f"characters/{character}.jpg",
+            f"characters/{character}.jpeg",
+            "profile.png",
+            "profile.jpg",
+            "profile.jpeg",
+            ]:
+        
+        if Path(i).exists():
+            img = f'<img src="file/{i}">'
+            break
 
-    for row in history[::-1]:
-        row = list(row)
+    for i,row in enumerate(history[::-1]):
         row[0] = re.sub(r"[\\]*\*", r"*", row[0])
         row[1] = re.sub(r"[\\]*\*", r"*", row[1])
         row[0] = re.sub(r"(\*)([^\*]*)(\*)", r"<em>\2</em>", row[0])
@@ -251,21 +255,22 @@ def generate_chat_html(history, name1, name2):
               </div>
             """
 
-        p = '\n'.join([f"<p>{x}</p>" for x in row[0].split('\n')])
-        output += f"""
-              <div class="message">
-                <div class="circle-you">
-                </div>
-                <div class="text">
-                  <div class="username">
-                    {name1}
+        if not (i == len(history)-1 and len(row[0]) == 0):
+            p = '\n'.join([f"<p>{x}</p>" for x in row[0].split('\n')])
+            output += f"""
+                  <div class="message">
+                    <div class="circle-you">
+                    </div>
+                    <div class="text">
+                      <div class="username">
+                        {name1}
+                      </div>
+                      <div class="body">
+                        {p}
+                      </div>
+                    </div>
                   </div>
-                  <div class="body">
-                    {p}
-                  </div>
-                </div>
-              </div>
-            """
+                """
 
     output += "</div>"
     return output
