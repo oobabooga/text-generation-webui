@@ -27,9 +27,10 @@ parser.add_argument('--load-in-8bit', action='store_true', help='Load the model 
 parser.add_argument('--auto-devices', action='store_true', help='Automatically split the model across the available GPU(s) and CPU.')
 parser.add_argument('--disk', action='store_true', help='If the model is too large for your GPU(s) and CPU combined, send the remaining layers to the disk.')
 parser.add_argument('--max-gpu-memory', type=int, help='Maximum memory in GiB to allocate to the GPU when loading the model. This is useful if you get out of memory errors while trying to generate text. Must be an integer number.')
-parser.add_argument('--no-listen', action='store_true', help='Make the web UI unreachable from your local network.')
 parser.add_argument('--no-stream', action='store_true', help='Don\'t stream the text output in real time. This slightly improves the text generation performance.')
 parser.add_argument('--settings', type=str, help='Load the default interface settings from this json file. See settings-template.json for an example.')
+parser.add_argument('--no-listen', action='store_true', help='Make the web UI unreachable from your local network.')
+parser.add_argument('--share', action='store_true', help='Create a public URL. This is useful for running the web UI on Google Colab or similar.')
 args = parser.parse_args()
 
 loaded_preset = None
@@ -464,6 +465,6 @@ else:
 
 interface.queue()
 if args.no_listen:
-    interface.launch(share=False)
+    interface.launch(share=args.share)
 else:
-    interface.launch(share=False, server_name="0.0.0.0")
+    interface.launch(share=args.share, server_name="0.0.0.0")

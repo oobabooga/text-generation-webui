@@ -134,9 +134,10 @@ Optionally, you can use the following command-line flags:
 | `--auto-devices` | Automatically split the model across the available GPU(s) and CPU.|
 | `--disk` | If the model is too large for your GPU(s) and CPU combined, send the remaining layers to the disk. |
 | `--max-gpu-memory MAX_GPU_MEMORY` | Maximum memory in GiB to allocate to the GPU when loading the model. This is useful if you get out of memory errors while trying to generate text. Must be an integer number. |
-| `--no-listen`   | Make the web UI unreachable from your local network.|
 | `--no-stream`   | Don't stream the text output in real time. This slightly improves the text generation performance.|
 | `--settings SETTINGS_FILE` | Load the default interface settings from this json file. See `settings-template.json` for an example.|
+| `--no-listen`   | Make the web UI unreachable from your local network.|
+| `--share`   | Create a public URL. This is useful for running the web UI on Google Colab or similar. |
 
 Out of memory errors? [Check this guide](https://github.com/oobabooga/text-generation-webui/wiki/Low-VRAM-guide).
 
