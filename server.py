@@ -45,13 +45,14 @@ settings = {
     'preset': 'NovelAI-Sphinx Moth',
     'name1': 'Person 1',
     'name2': 'Person 2',
-    'name1_pygmalion': 'You',
-    'name2_pygmalion': 'Kawaii',
     'context': 'This is a conversation between two people.',
-    'context_pygmalion': 'This is a conversation between two people.\n<START>',
     'prompt': 'Common sense questions and answers\n\nQuestion: \nFactual answer:',
     'prompt_gpt4chan': '-----\n--- 865467536\nInput text\n--- 865467537\n',
     'stop_at_newline': True,
+    'preset_pygmalion': 'Pygmalion',
+    'name1_pygmalion': 'You',
+    'name2_pygmalion': 'Kawaii',
+    'context_pygmalion': 'This is a conversation between two people.\n<START>',
     'stop_at_newline_pygmalion': False,
 }
 
@@ -332,9 +333,9 @@ if args.chat or args.cai_chat:
                 context += f"{data['char_name']}'s Persona: {data['char_persona']}\n"
             if 'world_scenario' in data and data['world_scenario'] != '':
                 context += f"Scenario: {data['world_scenario']}\n"
+            context = f"{context.strip()}\n<START>"
             if 'example_dialogue' in data and data['example_dialogue'] != '':
                 context += f"{data['example_dialogue']}"
-            context = f"{context.strip()}\n<START>"
             if 'char_greeting' in data:
                 history = [['', data['char_greeting']]]
         else:
@@ -348,11 +349,6 @@ if args.chat or args.cai_chat:
             return name2, context, history
 
     suffix = '_pygmalion' if 'pygmalion' in model_name.lower() else ''
-    context_str = settings[f'context{suffix}']
-    name1_str = settings[f'name1{suffix}']
-    name2_str = settings[f'name2{suffix}']
-    stop_at_newline = settings[f'stop_at_newline{suffix}']
-
     with gr.Blocks(css=css+".h-\[40vh\] {height: 66.67vh} .gradio-container {max-width: 800px; margin-left: auto; margin-right: auto}", analytics_enabled=False) as interface:
         if args.cai_chat:
             display1 = gr.HTML(value=generate_chat_html([], "", "", character))
@@ -370,15 +366,15 @@ if args.chat or args.cai_chat:
             with gr.Column():
                 model_menu = gr.Dropdown(choices=available_models, value=model_name, label='Model')
             with gr.Column():
-                preset_menu = gr.Dropdown(choices=available_presets, value=settings['preset'], label='Settings preset')
+                preset_menu = gr.Dropdown(choices=available_presets, value=settings[f'preset{suffix}'], label='Settings preset')
 
-        name1 = gr.Textbox(value=name1_str, lines=1, label='Your name')
-        name2 = gr.Textbox(value=name2_str, lines=1, label='Bot\'s name')
-        context = gr.Textbox(value=context_str, lines=2, label='Context')
+        name1 = gr.Textbox(value=settings[f'name1{suffix}'], lines=1, label='Your name')
+        name2 = gr.Textbox(value=settings[f'name2{suffix}'], lines=1, label='Bot\'s name')
+        context = gr.Textbox(value=settings[f'context{suffix}'], lines=2, label='Context')
         with gr.Row():
             character_menu = gr.Dropdown(choices=["None"]+available_characters, value="None", label='Character')
         with gr.Row():
-            check = gr.Checkbox(value=stop_at_newline, label='Stop generating at new line character?')
+            check = gr.Checkbox(value=settings[f'stop_at_newline{suffix}'], label='Stop generating at new line character?')
         with gr.Row():
             with gr.Column():
                 gr.Markdown("Upload chat history")
