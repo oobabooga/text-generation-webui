@@ -139,11 +139,11 @@ def generate_reply(question, tokens, inference_settings, selected_model, eos_tok
             preset = infile.read()
         loaded_preset = inference_settings
 
+    input_ids = encode(question, 1)
+    preset = preset.replace('max_new_tokens=tokens', 'max_new_tokens=1')
+    cuda = ".cuda()" if args.cpu else ""
     for i in range(tokens):
-        input_ids = encode(question, 1)
-        preset = preset.replace('max_new_tokens=tokens', 'max_new_tokens=1')
 
-        cuda = ".cuda()" if args.cpu else ""
         if eos_token is None:
             output = eval(f"model.generate(input_ids, {preset}){cuda}")
         else:
@@ -152,7 +152,6 @@ def generate_reply(question, tokens, inference_settings, selected_model, eos_tok
 
         reply = tokenizer.decode(output[0], skip_special_tokens=True)
         reply = reply.replace(r'<|endoftext|>', '')
-        question = reply
         if model_name.lower().startswith('galactica'):
             reply = fix_galactica(reply)
             yield reply, reply, generate_basic_html(reply)
@@ -161,6 +160,8 @@ def generate_reply(question, tokens, inference_settings, selected_model, eos_tok
             yield reply, 'Only applicable for GALACTICA models.', generate_4chan_html(reply)
         else:
             yield reply, 'Only applicable for GALACTICA models.', generate_basic_html(reply)
+
+        input_ids = output
 
 # Choosing the default model
 if args.model is not None:
