@@ -333,9 +333,9 @@ if args.chat or args.cai_chat:
                 context += f"{data['char_name']}'s Persona: {data['char_persona']}\n"
             if 'world_scenario' in data and data['world_scenario'] != '':
                 context += f"Scenario: {data['world_scenario']}\n"
-            context = f"{context.strip()}\n<START>"
+            context = f"{context.strip()}\n<START>\n"
             if 'example_dialogue' in data and data['example_dialogue'] != '':
-                context += f"{data['example_dialogue']}"
+                context += f"{data['example_dialogue'].strip()}\n"
             if 'char_greeting' in data:
                 history = [['', data['char_greeting']]]
         else:
