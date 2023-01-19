@@ -236,8 +236,8 @@ def generate_chat_html(history, name1, name2, character):
     for i,row in enumerate(history[::-1]):
         row[0] = re.sub(r"[\\]*\*", r"*", row[0])
         row[1] = re.sub(r"[\\]*\*", r"*", row[1])
-        row[0] = re.sub(r"(\*)([^\*]*)(\*)", r"<em>\2</em>", row[0])
-        row[1] = re.sub(r"(\*)([^\*]*)(\*)", r"<em>\2</em>", row[1])
+        row[0] = re.sub(r"(\*)([^\*\\n]*)(\*)", r"<em>\2</em>", row[0])
+        row[1] = re.sub(r"(\*)([^\*\\n]*)(\*)", r"<em>\2</em>", row[1])
         p = '\n'.join([f"<p>{x}</p>" for x in row[1].split('\n')])
         output += f"""
               <div class="message">

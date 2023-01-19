@@ -256,9 +256,10 @@ if args.chat or args.cai_chat:
         for reply in generate_reply(question, tokens, inference_settings, selected_model, eos_token=eos_token):
             next_character_found = False
 
-            previous_idx = [m.start() for m in re.finditer(f"\n{name2}:", question)]
+            previous_idx = [m.start() for m in re.finditer(f"(^|\n){name2}:", question)]
             idx = [m.start() for m in re.finditer(f"(^|\n){name2}:", reply)]
             idx = idx[len(previous_idx)-1]
+
             reply = reply[idx + len(f"\n{name2}:"):]
 
             if check:
