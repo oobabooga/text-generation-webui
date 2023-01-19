@@ -15,6 +15,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * Generate Markdown output for [GALACTICA](https://github.com/paperswithcode/galai), including LaTeX support.
 * Notebook mode that resembles OpenAI's playground.
 * Chat mode for conversation and role playing.
+* Text output is streamed in real time.
 * Load parameter presets from text files.
 * Load large models in 8-bit mode.
 * Split large models across your GPU(s) and CPU.
