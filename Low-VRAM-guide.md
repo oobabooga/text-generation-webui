@@ -3,7 +3,7 @@ If you GPU is not large enough to fit a model, try these in the following order:
 ### Load the model in 8-bit mode
 `python server.py --load-in-8bit`
 
-This reduces the memory usage by half with no noticeable loss in performance. Only newer GPUs support 8-bit mode.
+This reduces the memory usage by half with no noticeable loss in quality. Only newer GPUs support 8-bit mode.
 
 ### Split the model across your GPU and CPU
 
