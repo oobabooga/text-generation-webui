@@ -296,6 +296,21 @@ if args.chat or args.cai_chat:
     def clear_html():
         return generate_chat_html([], "", "")
 
+    def redraw_html(name1, name2):
+        global history
+        return generate_chat_html(history, name1, name2)
+
+    def save_history():
+        if not Path('logs').exists():
+            Path('logs').mkdir()
+        with open(Path('logs/conversation.json'), 'w') as f:
+            f.write(json.dumps({'data': history}))
+        return Path('logs/conversation.json')
+
+    def load_history(file):
+        global history
+        history = json.loads(file.decode('utf-8'))['data']
+
     if 'pygmalion' in model_name.lower():
         context_str = settings['context_pygmalion']
         name1_str = settings['name1_pygmalion']
@@ -329,6 +344,14 @@ if args.chat or args.cai_chat:
         context = gr.Textbox(value=context_str, lines=2, label='Context')
         with gr.Row():
             check = gr.Checkbox(value=settings['stop_at_newline'], label='Stop generating at new line character?')
+        with gr.Row():
+            with gr.Column():
+                gr.Markdown("Upload chat history")
+                upload = gr.File(type='binary')
+            with gr.Column():
+                gr.Markdown("Download chat history")
+                save_btn = gr.Button(value="Click me")
+                download = gr.File()
 
         if args.cai_chat:
             gen_event = btn.click(cai_chatbot_wrapper, [textbox, length_slider, preset_menu, model_menu, name1, name2, context, check], display1, show_progress=args.no_stream, api_name="textgen")
@@ -344,6 +367,11 @@ if args.chat or args.cai_chat:
         btn.click(lambda x: "", textbox, textbox, show_progress=False)
         textbox.submit(lambda x: "", textbox, textbox, show_progress=False)
         stop.click(None, None, None, cancels=[gen_event, gen_event2])
+
+        save_btn.click(save_history, inputs=[], outputs=[download])
+        upload.upload(load_history, [upload], [])
+        upload.upload(redraw_html, [name1, name2], [display1])
+
 
 elif args.notebook:
     with gr.Blocks(css=css, analytics_enabled=False) as interface:
