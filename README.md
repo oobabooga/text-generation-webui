@@ -130,8 +130,9 @@ Optionally, you can use the following command-line flags:
 | `--chat`      | Launch the web UI in chat mode.|
 | `--cai-chat`  | Launch the web UI in chat mode with a style similar to Character.AI's. If the file profile.png or profile.jpg exists in the same folder as server.py, this image will be used as the bot's profile picture. |
 | `--cpu`       | Use the CPU to generate text.|
-| `--auto-devices` | Automatically split the model across the available GPU(s) and CPU.|
 | `--load-in-8bit`  | Load the model with 8-bit precision.|
+| `--auto-devices` | Automatically split the model across the available GPU(s) and CPU.|
+| `--disk` | If the model is too large for your GPU(s) and CPU combined, send the remaining layers to the disk. |
 | `--max-gpu-memory MAX_GPU_MEMORY` | Maximum memory in GiB to allocate to the GPU when loading the model. This is useful if you get out of memory errors while trying to generate text. Must be an integer number. |
 | `--no-listen`   | Make the web UI unreachable from your local network.|
 | `--no-stream`   | Don't stream the text output in real time. This slightly improves the text generation performance.|

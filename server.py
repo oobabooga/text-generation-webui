@@ -21,8 +21,9 @@ parser.add_argument('--notebook', action='store_true', help='Launch the web UI i
 parser.add_argument('--chat', action='store_true', help='Launch the web UI in chat mode.')
 parser.add_argument('--cai-chat', action='store_true', help='Launch the web UI in chat mode with a style similar to Character.AI\'s. If the file profile.png or profile.jpg exists in the same folder as server.py, this image will be used as the bot\'s profile picture.')
 parser.add_argument('--cpu', action='store_true', help='Use the CPU to generate text.')
-parser.add_argument('--auto-devices', action='store_true', help='Automatically split the model across the available GPU(s) and CPU.')
 parser.add_argument('--load-in-8bit', action='store_true', help='Load the model with 8-bit precision.')
+parser.add_argument('--auto-devices', action='store_true', help='Automatically split the model across the available GPU(s) and CPU.')
+parser.add_argument('--disk', action='store_true', help='If the model is too large for your GPU(s) and CPU combined, send the remaining layers to the disk.')
 parser.add_argument('--max-gpu-memory', type=int, help='Maximum memory in GiB to allocate to the GPU when loading the model. This is useful if you get out of memory errors while trying to generate text. Must be an integer number.')
 parser.add_argument('--no-listen', action='store_true', help='Make the web UI unreachable from your local network.')
 parser.add_argument('--no-stream', action='store_true', help='Don\'t stream the text output in real time. This slightly improves the text generation performance.')
@@ -81,6 +82,8 @@ def load_model(model_name):
             settings.append("device_map='auto'")
             if args.max_gpu_memory is not None:
                 settings.append(f"max_memory={{0: '{args.max_gpu_memory}GiB', 'cpu': '99GiB'}}")
+            if args.disk:
+                settings.append("offload_folder='cache'")
             if args.load_in_8bit:
                 settings.append("load_in_8bit=True")
             else:
@@ -167,6 +170,7 @@ def generate_reply(question, tokens, inference_settings, selected_model, eos_tok
 
     # Generate the reply 1 token at a time
     else:
+        yield formatted_outputs(question, model_name)
         input_ids = encode(question, 1)
         preset = preset.replace('max_new_tokens=tokens', 'max_new_tokens=1')
         for i in range(tokens):
