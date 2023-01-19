@@ -1,7 +1,7 @@
     !git clone https://github.com/oobabooga/text-generation-webui
     %cd text-generation-webui
-    !python download-model.py PygmalionAI/pygmalion-6b
+    !python download-model.py PygmalionAI/pygmalion-1.3b
     !pip install -r requirements.txt
-    !python server.py --cai-chat --share --auto-devices
+    !python server.py --cai-chat --share 
 
-Replace `PygmalionAI/pygmalion-6b` with whatever model you want to use.
+Replace `PygmalionAI/pygmalion-1.3b` with whatever model you want to use.
