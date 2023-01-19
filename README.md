@@ -138,6 +138,8 @@ Optionally, you can use the following command-line flags:
 | `--no-stream`   | Don't stream the text output in real time. This slightly improves the text generation performance.|
 | `--settings SETTINGS_FILE` | Load the default interface settings from this json file. See `settings-template.json` for an example.|
 
+Out of memory errors? [Check this guide](https://github.com/oobabooga/text-generation-webui/wiki/Low-VRAM-guide).
+
 ## Presets
 
 Inference settings presets can be created under `presets/` as text files. These files are detected automatically at startup.
