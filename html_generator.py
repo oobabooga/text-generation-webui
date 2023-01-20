@@ -233,7 +233,8 @@ def generate_chat_html(history, name1, name2, character):
             img = f'<img src="file/{i}">'
             break
 
-    for i,row in enumerate(history[::-1]):
+    for i,_row in enumerate(history[::-1]):
+        row = _row.copy()
         row[0] = re.sub(r"[\\]*\*", r"*", row[0])
         row[1] = re.sub(r"[\\]*\*", r"*", row[1])
         row[0] = re.sub(r"(\*)([^\*\n]*)(\*)", r"<em>\2</em>", row[0])
