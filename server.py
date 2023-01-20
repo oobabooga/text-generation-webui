@@ -170,10 +170,10 @@ def generate_reply(question, tokens, inference_settings, selected_model, eos_tok
 
     cuda = "" if args.cpu else ".cuda()"
     n = None if eos_token is None else tokenizer.encode(eos_token, return_tensors='pt')[0][-1]
+    input_ids = encode(question, tokens)
 
     # Generate the entire reply at once
     if args.no_stream:
-        input_ids = encode(question, tokens)
         output = eval(f"model.generate(input_ids, eos_token_id={n}, {preset}){cuda}")
         reply = decode(output[0])
         yield formatted_outputs(reply, model_name)
@@ -181,7 +181,6 @@ def generate_reply(question, tokens, inference_settings, selected_model, eos_tok
     # Generate the reply 1 token at a time
     else:
         yield formatted_outputs(question, model_name)
-        input_ids = encode(question, 1)
         preset = preset.replace('max_new_tokens=tokens', 'max_new_tokens=1')
         for i in tqdm(range(tokens)):
             output = eval(f"model.generate(input_ids, {preset}){cuda}")
