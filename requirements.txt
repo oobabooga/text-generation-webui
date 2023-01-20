@@ -6,7 +6,7 @@ anyio==3.6.2
 async-timeout==4.0.2
 attrs==22.1.0
 beautifulsoup4==4.11.1
-bitsandbytes==0.35.4
+bitsandbytes==0.36.0.post2
 brotlipy==0.7.0
 bs4==0.0.1
 charset-normalizer==2.1.1
