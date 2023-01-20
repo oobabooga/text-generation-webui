@@ -37,7 +37,7 @@ conda activate textgen
 3. Install the appropriate pytorch for your GPU. If you have an NVIDIA GPU, use this command:
 
 ```
-conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvidia
+conda install pytorch torchvision torchaudio pytorch-cuda=11.7 git -c pytorch -c nvidia
 ```
 
 If you have an AMD GPU, you will need the ROCm version of pytorch.
@@ -45,10 +45,15 @@ If you have an AMD GPU, you will need the ROCm version of pytorch.
 If you are running in CPU mode, you just need the standard pytorch and should use this command instead:
 
 ```
-conda install pytorch torchvision torchaudio -c pytorch
+conda install pytorch torchvision torchaudio git -c pytorch
 ```
 
-4. Clone or download this repository, and then `cd` into its folder from your terminal window.
+4. Clone or download this repository, and then `cd` into its folder from your terminal window:
+
+```
+git clone https://github.com/oobabooga/text-generation-webui
+cd text-generation-webui
+```
 
 5. Install the required Python libraries by running the following command:
 
