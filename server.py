@@ -255,7 +255,6 @@ if args.chat or args.cai_chat:
             rows.pop(1)
 
         question = ''.join(rows)
-        print(question)
         return question
 
     def chatbot_wrapper(text, tokens, inference_settings, selected_model, name1, name2, context, check, history_size):
