@@ -232,11 +232,12 @@ if args.chat or args.cai_chat:
     def generate_chat_prompt(text, tokens, name1, name2, context):
         text = clean_chat_message(text)
 
-        rows = [f"{context}\n\n"]
+        rows = [f"{context.strip()}\n"]
         i = len(history)-1
         while i >= 0 and len(encode(''.join(rows), tokens)[0]) < 2048-tokens:
             rows.insert(1, f"{name2}: {history[i][1].strip()}\n")
-            rows.insert(1, f"{name1}: {history[i][0].strip()}\n")
+            if not (i == 0 and len(history[i][0]) == 0):
+                rows.insert(1, f"{name1}: {history[i][0].strip()}\n")
             i -= 1
         rows.append(f"{name1}: {text}\n")
         rows.append(f"{name2}:")
