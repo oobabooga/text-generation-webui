@@ -1,3 +1,5 @@
+!!! Known issue: the results look worse on Colab than running locally ([see here](https://github.com/oobabooga/text-generation-webui/issues/14#issuecomment-1399007549)). I don't know why yet. !!!
+
 #### Notebook
 
 You can use [this notebook](https://colab.research.google.com/github/81300/AI-Notebooks/blob/main/Colab-TextGen-GPU.ipynb), kindly provided by a very clever Anonymous 4chan poster. 
