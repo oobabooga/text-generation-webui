@@ -35,8 +35,8 @@ args = parser.parse_args()
 
 loaded_preset = None
 available_models = sorted(set([item.replace('.pt', '') for item in map(lambda x : str(x.name), list(Path('models/').glob('*'))+list(Path('torch-dumps/').glob('*'))) if not item.endswith('.txt')]), key=str.lower)
-available_presets = sorted(set(map(lambda x : str(x.name).split('.')[0], Path('presets').glob('*.txt'))), key=str.lower)
-available_characters = sorted(set(map(lambda x : str(x.name).split('.')[0], Path('characters').glob('*.json'))), key=str.lower)
+available_presets = sorted(set(map(lambda x : '.'.join(str(x.name).split('.')[:-1]), Path('presets').glob('*.txt'))), key=str.lower)
+available_characters = sorted(set(map(lambda x : '.'.join(str(x.name).split('.')[:-1]), Path('characters').glob('*.json'))), key=str.lower)
 
 settings = {
     'max_new_tokens': 200,
