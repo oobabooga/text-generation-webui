@@ -4,9 +4,9 @@ A gradio web UI for running large language models like gpt-j-6B, gpt-neo, opt, g
 
 Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.com/AUTOMATIC1111/stable-diffusion-webui) of text generation.
 
-|![Image1](https://github.com/oobabooga/screenshots/raw/main/qa.png) | ![Image2](https://github.com/oobabooga/screenshots/raw/main/cai2.png) |
-|:---:|:---:|
-|![Image3](https://github.com/oobabooga/screenshots/raw/main/gpt4chan.png) | ![Image4](https://github.com/oobabooga/screenshots/raw/main/galactica.png) |
+| ![Image1](https://github.com/oobabooga/screenshots/raw/main/qa.png)       | ![Image2](https://github.com/oobabooga/screenshots/raw/main/cai2.png)      |
+|:-------------------------------------------------------------------------:|:--------------------------------------------------------------------------:|
+| ![Image3](https://github.com/oobabooga/screenshots/raw/main/gpt4chan.png) | ![Image4](https://github.com/oobabooga/screenshots/raw/main/galactica.png) |
 
 ## Features
 
@@ -37,7 +37,7 @@ conda activate textgen
 3. Install the appropriate pytorch for your GPU. If you have an NVIDIA GPU, use this command:
 
 ```
-conda install pytorch torchvision torchaudio pytorch-cuda=11.7 git -c pytorch -c nvidia
+conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvidia
 ```
 
 If you have an AMD GPU, you will need the ROCm version of pytorch.
@@ -45,15 +45,10 @@ If you have an AMD GPU, you will need the ROCm version of pytorch.
 If you are running in CPU mode, you just need the standard pytorch and should use this command instead:
 
 ```
-conda install pytorch torchvision torchaudio git -c pytorch
+conda install pytorch torchvision torchaudio -c pytorch
 ```
 
-4. Clone or download this repository, and then `cd` into its folder from your terminal window:
-
-```
-git clone https://github.com/oobabooga/text-generation-webui
-cd text-generation-webui
-```
+4. Clone or download this repository, and then `cd` into its folder from your terminal window.
 
 5. Install the required Python libraries by running the following command:
 
@@ -128,22 +123,24 @@ Then browse to
 
 Optionally, you can use the following command-line flags:
 
-| Flag        | Description |
-|-------------|-------------|
-| `-h`, `--help`  | show this help message and exit |
-| `--model MODEL`    | Name of the model to load by default. |
-| `--notebook`  | Launch the web UI in notebook mode, where the output is written to the same text box as the input. |
-| `--chat`      | Launch the web UI in chat mode.|
-| `--cai-chat`  | Launch the web UI in chat mode with a style similar to Character.AI's. If the file profile.png or profile.jpg exists in the same folder as server.py, this image will be used as the bot's profile picture. |
-| `--cpu`       | Use the CPU to generate text.|
-| `--load-in-8bit`  | Load the model with 8-bit precision.|
-| `--auto-devices` | Automatically split the model across the available GPU(s) and CPU.|
-| `--disk` | If the model is too large for your GPU(s) and CPU combined, send the remaining layers to the disk. |
-| `--max-gpu-memory MAX_GPU_MEMORY` | Maximum memory in GiB to allocate to the GPU when loading the model. This is useful if you get out of memory errors while trying to generate text. Must be an integer number. |
-| `--no-stream`   | Don't stream the text output in real time. This slightly improves the text generation performance.|
-| `--settings SETTINGS_FILE` | Load the default interface settings from this json file. See `settings-template.json` for an example.|
-| `--no-listen`   | Make the web UI unreachable from your local network.|
-| `--share`   | Create a public URL. This is useful for running the web UI on Google Colab or similar. |
+| Flag                              | Description                                                                                                                                                                                                 |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `-h`, `--help`                    | show this help message and exit                                                                                                                                                                             |
+| `--model MODEL`                   | Name of the model to load by default.                                                                                                                                                                       |
+| `--notebook`                      | Launch the web UI in notebook mode, where the output is written to the same text box as the input.                                                                                                          |
+| `--chat`                          | Launch the web UI in chat mode.                                                                                                                                                                             |
+| `--cai-chat`                      | Launch the web UI in chat mode with a style similar to Character.AI's. If the file profile.png or profile.jpg exists in the same folder as server.py, this image will be used as the bot's profile picture. |
+| `--cpu`                           | Use the CPU to generate text.                                                                                                                                                                               |
+| `--load-in-8bit`                  | Load the model with 8-bit precision.                                                                                                                                                                        |
+| `--auto-devices`                  | Automatically split the model across the available GPU(s) and CPU.                                                                                                                                          |
+| `--disk`                          | If the model is too large for your GPU(s) and CPU combined, send the remaining layers to the disk.                                                                                                          |
+| `--disk-cache-dir DISK_CACHE_DIR` | If you want to specify the drive or folder for offloading to disk, specify the **full path** of your folder here. (Unless you just want to rename your cache folder)                                        |
+| `--max-gpu-memory MAX_GPU_MEMORY` | Maximum memory in GiB to allocate to the GPU when loading the model. This is useful if you get out of memory errors while trying to generate text. Must be an integer number.                               |
+| `--max-cpu-mem MAX_CPU_MEMORY`    | Maximum memory in GiB to allocate to the CPU when offloading the model to ram. This parameter defaults to 99GiB.                                                                                            |
+| `--no-stream`                     | Don't stream the text output in real time. This slightly improves the text generation performance.                                                                                                          |
+| `--settings SETTINGS_FILE`        | Load the default interface settings from this json file. See `settings-template.json` for an example.                                                                                                       |
+| `--no-listen`                     | Make the web UI unreachable from your local network.                                                                                                                                                        |
+| `--share`                         | Create a public URL. This is useful for running the web UI on Google Colab or similar.                                                                                                                      |
 
 Out of memory errors? [Check this guide](https://github.com/oobabooga/text-generation-webui/wiki/Low-VRAM-guide).
 
