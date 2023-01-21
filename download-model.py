@@ -42,7 +42,7 @@ def sanitize_branch_name(branch_name):
         raise ValueError("Invalid branch name. Only alphanumeric characters, period, underscore and dash are allowed.")
 
 if __name__ == '__main__':
-    model = args.model
+    model = args.MODEL
     if model[-1] == '/':
         model = model[:-1]
         branch = args.branch
