@@ -140,11 +140,11 @@ Optionally, you can use the following command-line flags:
 | `--auto-devices` | Automatically split the model across the available GPU(s) and CPU.|
 | `--disk` | If the model is too large for your GPU(s) and CPU combined, send the remaining layers to the disk. |
 | `--disk-cache-dir DISK_CACHE_DIR` | If you want to specify the drive or folder for offloading to disk, specify the **full path** of your folder here. (Unless you just want to rename your cache folder) |
-| `--max-gpu-memory MAX_GPU_MEMORY` | Maximum memory in GiB to allocate to the GPU when loading the model. This is useful if you get out of memory errors while trying to generate text. Must be an integer number. |
-| `--max-cpu-mem MAX_CPU_MEMORY`    | Maximum memory in GiB to allocate to the CPU when offloading the model to ram. This parameter defaults to 99GiB. |
+| `--gpu-memory GPU_MEMORY` | Maximum memory in GiB to allocate to the GPU when loading the model. This is useful if you get out of memory errors while trying to generate text. Must be an integer number. |
+| `--max-cpu-mem MAX_CPU_MEMORY`    | Maximum memory in GiB to allocate to the CPU when offloading the model to RAM. This parameter defaults to 99GiB. |
 | `--no-stream`   | Don't stream the text output in real time. This slightly improves the text generation performance.|
 | `--settings SETTINGS_FILE` | Load the default interface settings from this json file. See `settings-template.json` for an example.|
-| `--no-listen`   | Make the web UI unreachable from your local network.|
+| `--listen`   | Make the web UI reachable from your local network.|
 | `--share`   | Create a public URL. This is useful for running the web UI on Google Colab or similar. |
 
 Out of memory errors? [Check this guide](https://github.com/oobabooga/text-generation-webui/wiki/Low-VRAM-guide).
