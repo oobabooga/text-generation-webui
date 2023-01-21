@@ -6,6 +6,7 @@ This is a library for formatting GPT-4chan and chat outputs as nice HTML.
 
 import re
 from pathlib import Path
+import copy
 
 def generate_basic_html(s):
     s = '\n'.join([f'<p style="margin-bottom: 20px">{line}</p>' for line in s.split('\n')])
@@ -160,7 +161,7 @@ def generate_4chan_html(f):
 
     return output
 
-def generate_chat_html(history, name1, name2, character):
+def generate_chat_html(_history, name1, name2, character):
     css = """
     .chat {
       margin-left: auto;
@@ -231,6 +232,13 @@ def generate_chat_html(history, name1, name2, character):
         
         if Path(i).exists():
             img = f'<img src="file/{i}">'
+            break
+
+    history = copy.deepcopy(_history)
+    for i in range(len(history)):
+        if '<|BEGIN-VISIBLE-CHAT|>' in history[i][0]:
+            history[i][0] = history[i][0].replace('<|BEGIN-VISIBLE-CHAT|>', '')
+            history = history[i:]
             break
 
     for i,_row in enumerate(history[::-1]):
