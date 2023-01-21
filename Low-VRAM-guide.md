@@ -11,7 +11,7 @@ This reduces the memory usage by half with no noticeable loss in quality. Only n
 
 If you can load the model with this command but it runs out of memory when you try to generate text, try limiting the amount of memory allocated to the GPU: 
 
-`python server.py --auto-devices --max-gpu-memory 10`
+`python server.py --auto-devices --gpu-memory 10`
 
 where the number is in GiB.
 
