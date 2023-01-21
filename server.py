@@ -26,13 +26,13 @@ parser.add_argument('--cpu', action='store_true', help='Use the CPU to generate 
 parser.add_argument('--load-in-8bit', action='store_true', help='Load the model with 8-bit precision.')
 parser.add_argument('--auto-devices', action='store_true', help='Automatically split the model across the available GPU(s) and CPU.')
 parser.add_argument('--disk', action='store_true', help='If the model is too large for your GPU(s) and CPU combined, send the remaining layers to the disk.')
-parser.add_argument('--gpu-memory', type=int, help='Maximum memory in GiB to allocate to the GPU when loading the model. This is useful if you get out of memory errors while trying to generate text. Must be an integer number.')
+parser.add_argument('--disk-cache-dir', type=str, help='Directory which you want the disk cache to load to.')
+parser.add_argument('--gpu-memory', type=int, help='Maximum GPU memory in GiB to allocate. This is useful if you get out of memory errors while trying to generate text. Must be an integer number.')
+parser.add_argument('--cpu-memory', type=int, help='Maximum CPU memory in GiB to allocate for offloaded weights. Must be an integer number.')
 parser.add_argument('--no-stream', action='store_true', help='Don\'t stream the text output in real time. This slightly improves the text generation performance.')
 parser.add_argument('--settings', type=str, help='Load the default interface settings from this json file. See settings-template.json for an example.')
 parser.add_argument('--listen', action='store_true', help='Make the web UI reachable from your local network.')
 parser.add_argument('--share', action='store_true', help='Create a public URL. This is useful for running the web UI on Google Colab or similar.')
-parser.add_argument('--max-cpu-mem', type=int, help='Maximum cpu memory in GiB to allocate to the memory for offloading.')
-parser.add_argument('--disk-cache-dir', type=str, help='Directory which you want the disk cache to load to.')
 args = parser.parse_args()
 
 loaded_preset = None
@@ -92,8 +92,8 @@ def load_model(model_name):
         else:
             settings.append("device_map='auto'")
             if args.gpu_memory is not None:
-                if args.max_cpu_mem is not None:
-                    settings.append(f"max_memory={{0: '{args.gpu_memory}GiB', 'cpu': '{args.max_cpu_mem}GiB'}}")
+                if args.cpu_memory is not None:
+                    settings.append(f"max_memory={{0: '{args.gpu_memory}GiB', 'cpu': '{args.cpu_memory}GiB'}}")
                 else:
                     settings.append(f"max_memory={{0: '{args.gpu_memory}GiB', 'cpu': '99GiB'}}")
             if args.disk:
