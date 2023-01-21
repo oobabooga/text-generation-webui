@@ -141,7 +141,7 @@ Optionally, you can use the following command-line flags:
 | `--disk` | If the model is too large for your GPU(s) and CPU combined, send the remaining layers to the disk. |
 | `--disk-cache-dir DISK_CACHE_DIR` | Directory to save the disk cache to. Defaults to `cache/`. |
 | `--gpu-memory GPU_MEMORY` | Maximum GPU memory in GiB to allocate. This is useful if you get out of memory errors while trying to generate text. Must be an integer number. |
-| `--cpu-memory CPU_MEMORY`    | Maximum CPU memory in GiB to allocate for offloaded weights. Must be an integer number. Defaults to 99 GiB.|
+| `--cpu-memory CPU_MEMORY`    | Maximum CPU memory in GiB to allocate for offloaded weights. Must be an integer number. Defaults to 99.|
 | `--no-stream`   | Don't stream the text output in real time. This slightly improves the text generation performance.|
 | `--settings SETTINGS_FILE` | Load the default interface settings from this json file. See `settings-template.json` for an example.|
 | `--listen`   | Make the web UI reachable from your local network.|
