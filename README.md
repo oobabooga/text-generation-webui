@@ -139,7 +139,9 @@ Optionally, you can use the following command-line flags:
 | `--load-in-8bit`  | Load the model with 8-bit precision.|
 | `--auto-devices` | Automatically split the model across the available GPU(s) and CPU.|
 | `--disk` | If the model is too large for your GPU(s) and CPU combined, send the remaining layers to the disk. |
+| `--disk-cache-dir DISK_CACHE_DIR` | If you want to specify the drive or folder for offloading to disk, specify the **full path** of your folder here. (Unless you just want to rename your cache folder) |
 | `--gpu-memory GPU_MEMORY` | Maximum memory in GiB to allocate to the GPU when loading the model. This is useful if you get out of memory errors while trying to generate text. Must be an integer number. |
+| `--max-cpu-mem MAX_CPU_MEMORY`    | Maximum memory in GiB to allocate to the CPU when offloading the model to RAM. This parameter defaults to 99GiB. |
 | `--no-stream`   | Don't stream the text output in real time. This slightly improves the text generation performance.|
 | `--settings SETTINGS_FILE` | Load the default interface settings from this json file. See `settings-template.json` for an example.|
 | `--listen`   | Make the web UI reachable from your local network.|
