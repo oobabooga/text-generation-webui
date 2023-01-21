@@ -11,7 +11,6 @@ from bs4 import BeautifulSoup
 import multiprocessing
 import tqdm
 import sys
-from sys import argv
 import argparse
 from pathlib import Path
 import re
@@ -43,7 +42,7 @@ def sanitize_branch_name(branch_name):
         raise ValueError("Invalid branch name. Only alphanumeric characters, period, underscore and dash are allowed.")
 
 if __name__ == '__main__':
-    model = argv[1]
+    model = args.model
     if model[-1] == '/':
         model = model[:-1]
         branch = args.branch
