@@ -26,10 +26,10 @@ parser.add_argument('--cpu', action='store_true', help='Use the CPU to generate 
 parser.add_argument('--load-in-8bit', action='store_true', help='Load the model with 8-bit precision.')
 parser.add_argument('--auto-devices', action='store_true', help='Automatically split the model across the available GPU(s) and CPU.')
 parser.add_argument('--disk', action='store_true', help='If the model is too large for your GPU(s) and CPU combined, send the remaining layers to the disk.')
-parser.add_argument('--max-gpu-memory', type=int, help='Maximum memory in GiB to allocate to the GPU when loading the model. This is useful if you get out of memory errors while trying to generate text. Must be an integer number.')
+parser.add_argument('--gpu-memory', type=int, help='Maximum memory in GiB to allocate to the GPU when loading the model. This is useful if you get out of memory errors while trying to generate text. Must be an integer number.')
 parser.add_argument('--no-stream', action='store_true', help='Don\'t stream the text output in real time. This slightly improves the text generation performance.')
 parser.add_argument('--settings', type=str, help='Load the default interface settings from this json file. See settings-template.json for an example.')
-parser.add_argument('--no-listen', action='store_true', help='Make the web UI unreachable from your local network.')
+parser.add_argument('--listen', action='store_true', help='Make the web UI reachable from your local network.')
 parser.add_argument('--share', action='store_true', help='Create a public URL. This is useful for running the web UI on Google Colab or similar.')
 args = parser.parse_args()
 
@@ -71,7 +71,7 @@ def load_model(model_name):
     t0 = time.time()
 
     # Default settings
-    if not (args.cpu or args.load_in_8bit or args.auto_devices or args.disk or args.max_gpu_memory is not None):
+    if not (args.cpu or args.load_in_8bit or args.auto_devices or args.disk or args.gpu_memory is not None):
         if Path(f"torch-dumps/{model_name}.pt").exists():
             print("Loading in .pt format...")
             model = torch.load(Path(f"torch-dumps/{model_name}.pt"))
@@ -89,8 +89,8 @@ def load_model(model_name):
             settings.append("torch_dtype=torch.float32")
         else:
             settings.append("device_map='auto'")
-            if args.max_gpu_memory is not None:
-                settings.append(f"max_memory={{0: '{args.max_gpu_memory}GiB', 'cpu': '99GiB'}}")
+            if args.gpu_memory is not None:
+                settings.append(f"max_memory={{0: '{args.gpu_memory}GiB', 'cpu': '99GiB'}}")
             if args.disk:
                 settings.append("offload_folder='cache'")
             if args.load_in_8bit:
@@ -160,8 +160,7 @@ def generate_reply(question, tokens, inference_settings, selected_model, eos_tok
 
     if selected_model != model_name:
         model_name = selected_model
-        model = None
-        tokenizer = None
+        model = tokenizer = None
         if not args.cpu:
             gc.collect()
             torch.cuda.empty_cache()
@@ -418,7 +417,6 @@ if args.chat or args.cai_chat:
         else:
             upload.upload(lambda : history, [], [display1])
 
-
 elif args.notebook:
     with gr.Blocks(css=css, analytics_enabled=False) as interface:
         gr.Markdown(description)
@@ -471,7 +469,7 @@ else:
         stop.click(None, None, None, cancels=[gen_event, gen_event2, cont_event])
 
 interface.queue()
-if args.no_listen:
-    interface.launch(share=args.share)
-else:
+if args.listen:
     interface.launch(share=args.share, server_name="0.0.0.0")
+else:
+    interface.launch(share=args.share)
