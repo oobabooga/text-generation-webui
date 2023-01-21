@@ -327,10 +327,17 @@ if args.chat or args.cai_chat:
         return generate_chat_html(history, name1, name2, character)
 
     def save_history():
+        _history = copy.deepcopy(history)
+        for i in range(len(_history)):
+            if '<|BEGIN-VISIBLE-CHAT|>' in history[i][0]:
+                _history[i][0] = _history[i][0].replace('<|BEGIN-VISIBLE-CHAT|>', '')
+                _history = _history[i:]
+                break
+
         if not Path('logs').exists():
             Path('logs').mkdir()
         with open(Path('logs/conversation.json'), 'w') as f:
-            f.write(json.dumps({'data': history}))
+            f.write(json.dumps({'data': _history}))
         return Path('logs/conversation.json')
 
     def load_history(file):
