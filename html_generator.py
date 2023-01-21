@@ -161,7 +161,7 @@ def generate_4chan_html(f):
 
     return output
 
-def generate_chat_html(_history, name1, name2, character):
+def generate_chat_html(history, name1, name2, character):
     css = """
     .chat {
       margin-left: auto;
@@ -232,13 +232,6 @@ def generate_chat_html(_history, name1, name2, character):
         
         if Path(i).exists():
             img = f'<img src="file/{i}">'
-            break
-
-    history = copy.deepcopy(_history)
-    for i in range(len(history)):
-        if '<|BEGIN-VISIBLE-CHAT|>' in history[i][0]:
-            history[i][0] = history[i][0].replace('<|BEGIN-VISIBLE-CHAT|>', '')
-            history = history[i:]
             break
 
     for i,_row in enumerate(history[::-1]):
