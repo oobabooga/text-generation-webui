@@ -29,11 +29,14 @@ parser.add_argument('--disk', action='store_true', help='If the model is too lar
 parser.add_argument('--disk-cache-dir', type=str, help='Directory to save the disk cache to. Defaults to "cache/".')
 parser.add_argument('--gpu-memory', type=int, help='Maximum GPU memory in GiB to allocate. This is useful if you get out of memory errors while trying to generate text. Must be an integer number.')
 parser.add_argument('--cpu-memory', type=int, help='Maximum CPU memory in GiB to allocate for offloaded weights. Must be an integer number. Defaults to 99.')
-parser.add_argument('--no-stream', action='store_true', help='Don\'t stream the text output in real time. This slightly improves the text generation performance.')
+parser.add_argument('--no-stream', action='store_true', help='Don\'t stream the text output in real time. This improves the text generation performance.')
 parser.add_argument('--settings', type=str, help='Load the default interface settings from this json file. See settings-template.json for an example.')
 parser.add_argument('--listen', action='store_true', help='Make the web UI reachable from your local network.')
 parser.add_argument('--share', action='store_true', help='Create a public URL. This is useful for running the web UI on Google Colab or similar.')
 args = parser.parse_args()
+
+if (args.chat or args.cai_chat) and not args.no_stream:
+    print("Warning: chat mode currently becomes a lot slower with text streaming on.\nConsider starting the web UI with the --no-stream option.\n")
 
 settings = {
     'max_new_tokens': 200,
