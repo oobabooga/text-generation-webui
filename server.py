@@ -258,7 +258,7 @@ if args.chat or args.cai_chat:
         while i >= 0 and len(encode(''.join(rows), tokens)[0]) < 2048-tokens:
             rows.insert(1, f"{name2}: {history[i][1].strip()}\n")
             count += 1
-            if not (i == 0 and len(history[i][0]) == 0):
+            if not (history[i][0] == '<|BEGIN-VISIBLE-CHAT|>'):
                 rows.insert(1, f"{name1}: {history[i][0].strip()}\n")
                 count += 1
             i -= 1
@@ -272,7 +272,6 @@ if args.chat or args.cai_chat:
             rows.pop(1)
 
         question = ''.join(rows)
-        question = question.replace('<|BEGIN-VISIBLE-CHAT|>', '')
         return question
 
     def remove_example_dialogue_from_history(history):
