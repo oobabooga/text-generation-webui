@@ -4,6 +4,8 @@ A gradio web UI for running large language models like gpt-j-6B, gpt-neo, opt, g
 
 Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.com/AUTOMATIC1111/stable-diffusion-webui) of text generation.
 
+**[Try it on Google Colab](https://colab.research.google.com/github/oobabooga/AI-Notebooks/blob/main/Colab-TextGen-GPU.ipynb)**
+
 |![Image1](https://github.com/oobabooga/screenshots/raw/main/qa.png) | ![Image2](https://github.com/oobabooga/screenshots/raw/main/cai3.png) |
 |:---:|:---:|
 |![Image3](https://github.com/oobabooga/screenshots/raw/main/gpt4chan.png) | ![Image4](https://github.com/oobabooga/screenshots/raw/main/galactica.png) |
@@ -22,7 +24,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * Split large models across your GPU(s) and CPU.
 * CPU mode.
 * Get responses via API.
-* **Works on Google Colab** ([launch the notebook](https://colab.research.google.com/github/oobabooga/AI-Notebooks/blob/main/Colab-TextGen-GPU.ipynb), [see the full guide](https://github.com/oobabooga/text-generation-webui/wiki/Running-on-Colab)).
+* Works on Google Colab ([see the full guide](https://github.com/oobabooga/text-generation-webui/wiki/Running-on-Colab)).
 
 ## Installation
 
