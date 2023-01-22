@@ -12,4 +12,4 @@ Just execute every cell and a private gradio URL will appear.
     %cd text-generation-webui
     !python download-model.py PygmalionAI/pygmalion-1.3b
     !pip install -r requirements.txt
-    !python server.py --cai-chat --share --load-in-8bit
+    !python server.py --cai-chat --share 
