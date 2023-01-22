@@ -182,8 +182,11 @@ def generate_reply(question, tokens, inference_settings, selected_model, eos_tok
 
     # Generate the entire reply at once
     if args.no_stream:
+        t0 = time.time()
         output = eval(f"model.generate(input_ids, eos_token_id={n}, {preset}){cuda}")
         reply = decode(output[0])
+        t1 = time.time()
+        print(f"Output generated in {(t1-t0):.2f} seconds ({(len(output[0])-len(input_ids[0]))/(t1-t0):.2f} it/s)")
         yield formatted_outputs(reply, model_name)
 
     # Generate the reply 1 token at a time
