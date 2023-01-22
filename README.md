@@ -15,14 +15,14 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * Generate Markdown output for [GALACTICA](https://github.com/paperswithcode/galai), including LaTeX support.
 * Notebook mode that resembles OpenAI's playground.
 * Chat mode for conversation and role playing.
-* Support for [Pygmalion](https://huggingface.co/models?search=pygmalionai/pygmalion) and custom characters in JSON format.
+* Support for [Pygmalion](https://huggingface.co/models?search=pygmalionai/pygmalion) and custom characters in JSON format (just place the files into the `characters/` folder).
 * Text output is streamed in real time.
 * Load parameter presets from text files.
 * Load large models in 8-bit mode.
 * Split large models across your GPU(s) and CPU.
 * CPU mode.
 * Get responses via API.
-* Works on Google Colab ([guide](https://github.com/oobabooga/text-generation-webui/wiki/Running-on-Colab)).
+* *Works on Google Colab* ([launch the notebook](https://colab.research.google.com/github/oobabooga/AI-Notebooks/blob/main/Colab-TextGen-GPU.ipynb), [see the full guide](https://github.com/oobabooga/text-generation-webui/wiki/Running-on-Colab)).
 
 ## Installation
 
