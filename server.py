@@ -348,7 +348,8 @@ if args.chat or args.cai_chat:
 
     def redraw_html(name1, name2):
         global history
-        return generate_chat_html(history, name1, name2, character)
+        _history = remove_example_dialogue_from_history(history)
+        return generate_chat_html(_history, name1, name2, character)
 
     def save_history():
         if not Path('logs').exists():
@@ -478,7 +479,7 @@ if args.chat or args.cai_chat:
         if args.cai_chat:
             upload.upload(redraw_html, [name1, name2], [display1])
         else:
-            upload.upload(lambda : history, [], [display1])
+            upload.upload(lambda : remove_example_dialogue_from_history(history), [], [display1])
 
 elif args.notebook:
     with gr.Blocks(css=css, analytics_enabled=False) as interface:
