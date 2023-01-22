@@ -15,6 +15,6 @@
     "preset_pygmalion": "Pygmalion",
     "name1_pygmalion": "You",
     "name2_pygmalion": "Kawaii",
-    "context_pygmalion": "This is a conversation between two people.\n<START>",
+    "context_pygmalion": "Kawaii's persona: Kawaii is a cheerful person who loves to make others smile. She is an optimist who loves to spread happiness and positivity wherever she goes.\n<START>",
     "stop_at_newline_pygmalion": false
 }

@@ -15,7 +15,6 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from modules.html_generator import *
 from modules.ui import *
 
-
 transformers.logging.set_verbosity_error()
 
 parser = argparse.ArgumentParser()
@@ -36,20 +35,6 @@ parser.add_argument('--listen', action='store_true', help='Make the web UI reach
 parser.add_argument('--share', action='store_true', help='Create a public URL. This is useful for running the web UI on Google Colab or similar.')
 args = parser.parse_args()
 
-loaded_preset = None
-def get_available_models():
-    return sorted(set([item.replace('.pt', '') for item in map(lambda x : str(x.name), list(Path('models/').glob('*'))+list(Path('torch-dumps/').glob('*'))) if not item.endswith('.txt')]), key=str.lower)
-
-def get_available_presets():
-    return sorted(set(map(lambda x : '.'.join(str(x.name).split('.')[:-1]), Path('presets').glob('*.txt'))), key=str.lower)
-
-def get_available_characters():
-    return ["None"] + sorted(set(map(lambda x : '.'.join(str(x.name).split('.')[:-1]), Path('characters').glob('*.json'))), key=str.lower)
-
-available_models = get_available_models()
-available_presets = get_available_presets()
-available_characters = get_available_characters()
-
 settings = {
     'max_new_tokens': 200,
     'max_new_tokens_min': 1,
@@ -67,7 +52,7 @@ settings = {
     'preset_pygmalion': 'Pygmalion',
     'name1_pygmalion': 'You',
     'name2_pygmalion': 'Kawaii',
-    'context_pygmalion': 'This is a conversation between two people.\n<START>',
+    'context_pygmalion': "Kawaii's persona: Kawaii is a cheerful person who loves to make others smile. She is an optimist who loves to spread happiness and positivity wherever she goes.\n<START>",
     'stop_at_newline_pygmalion': False,
 }
 
@@ -211,6 +196,19 @@ def generate_reply(question, tokens, inference_settings, selected_model, eos_tok
             yield formatted_outputs(reply, model_name)
             input_ids = output
 
+def get_available_models():
+    return sorted(set([item.replace('.pt', '') for item in map(lambda x : str(x.name), list(Path('models/').glob('*'))+list(Path('torch-dumps/').glob('*'))) if not item.endswith('.txt')]), key=str.lower)
+
+def get_available_presets():
+    return sorted(set(map(lambda x : '.'.join(str(x.name).split('.')[:-1]), Path('presets').glob('*.txt'))), key=str.lower)
+
+def get_available_characters():
+    return ["None"] + sorted(set(map(lambda x : '.'.join(str(x.name).split('.')[:-1]), Path('characters').glob('*.json'))), key=str.lower)
+
+available_models = get_available_models()
+available_presets = get_available_presets()
+available_characters = get_available_characters()
+
 # Choosing the default model
 if args.model is not None:
     model_name = args.model
@@ -229,15 +227,13 @@ else:
         print()
     model_name = available_models[i]
 model, tokenizer = load_model(model_name)
+loaded_preset = None
 
 # UI settings
-if model_name.lower().startswith('gpt4chan'):
-    default_text = settings['prompt_gpt4chan']
-else:
-    default_text = settings['prompt']
-
+default_text = settings['prompt_gpt4chan'] if model_name.lower().startswith(('gpt4chan', 'gpt-4chan', '4chan')) else settings['prompt']
 description = f"\n\n# Text generation lab\nGenerate text using Large Language Models.\n"
 css = ".my-4 {margin-top: 0} .py-6 {padding-top: 2.5rem} #refresh-button {flex: none; margin: 0; padding: 0; min-width: 50px; border: none; box-shadow: none; border-radius: 0} #download-label, #upload-label {min-height: 0}"
+
 if args.chat or args.cai_chat:
     history = []
     character = None
