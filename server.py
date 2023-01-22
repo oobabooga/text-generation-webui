@@ -434,7 +434,7 @@ if args.chat or args.cai_chat:
                     model_menu = gr.Dropdown(choices=available_models, value=model_name, label='Model')
                     create_refresh_button(model_menu, lambda : None, lambda : {"choices": get_available_models()}, "refresh-button")
             with gr.Column():
-                history_size_slider = gr.Slider(minimum=settings['history_size_min'], maximum=settings['history_size_max'], step=1, label='Chat history size (0 for no limit)', value=settings['history_size'])
+                history_size_slider = gr.Slider(minimum=settings['history_size_min'], maximum=settings['history_size_max'], step=1, label='Chat history size in prompt (0 for no limit)', value=settings['history_size'])
                 with gr.Row():
                     preset_menu = gr.Dropdown(choices=available_presets, value=settings[f'preset{suffix}'], label='Settings preset')
                     create_refresh_button(preset_menu, lambda : None, lambda : {"choices": get_available_presets()}, "refresh-button")
