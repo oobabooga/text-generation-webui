@@ -25,40 +25,24 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 
 ## Installation
 
-1. You need to have the conda environment manager installed on your system. If you don't have it already, [get miniconda here](https://docs.conda.io/en/latest/miniconda.html).
-
-2. Open a terminal window and create a conda environment by entering the following commands:
+Open a terminal and copy and paste these commands one at a time ([install conda](https://docs.conda.io/en/latest/miniconda.html) first if you don't have it already):
 
 ```
 conda create -n textgen
 conda activate textgen
-```
-
-3. Install the appropriate pytorch for your GPU. If you have an NVIDIA GPU, use this command:
-
-```
 conda install pytorch torchvision torchaudio pytorch-cuda=11.7 git -c pytorch -c nvidia
+git clone https://github.com/oobabooga/text-generation-webui
+cd text-generation-webui
+pip install -r requirements.txt
 ```
 
-If you have an AMD GPU, you will need the ROCm version of pytorch.
+The third line assumes that you have an NVIDIA GPU. 
 
-If you are running in CPU mode, you just need the standard pytorch and should use this command instead:
+* If you have an AMD GPU, you should install the ROCm version of pytorch instead.
+* If you are running in CPU mode, you just need the standard pytorch and should replace the command with this one:
 
 ```
 conda install pytorch torchvision torchaudio git -c pytorch
-```
-
-4. Clone or download this repository, and then `cd` into its folder from your terminal window:
-
-```
-git clone https://github.com/oobabooga/text-generation-webui
-cd text-generation-webui
-```
-
-5. Install the required Python libraries by running the following command:
-
-```
-pip install -r requirements.txt
 ```
 
 Once you have completed these steps, you should be able to start the web UI. However, you will first need to download a model.
