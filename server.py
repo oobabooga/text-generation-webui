@@ -336,12 +336,12 @@ if args.chat or args.cai_chat:
                 yield i
 
     def remove_last_message(name1, name2):
-        history.pop()
+        last = history.pop()
         _history = remove_example_dialogue_from_history(history)
         if args.cai_chat:
-            return generate_chat_html(_history, name1, name2, character)
+            return generate_chat_html(_history, name1, name2, character), last[0]
         else:
-            return _history
+            return _history, last[0]
 
     def clear():
         global history
@@ -471,7 +471,7 @@ if args.chat or args.cai_chat:
         gen_event3 = btn_regenerate.click(regenerate_wrapper, input_params, display1, show_progress=args.no_stream)
 
         btn_clear.click(clear)
-        btn_remove_last.click(remove_last_message, [name1, name2], display1, show_progress=False)
+        btn_remove_last.click(remove_last_message, [name1, name2], [display1, textbox], show_progress=False)
         btn.click(lambda x: "", textbox, textbox, show_progress=False)
         btn_regenerate.click(lambda x: "", textbox, textbox, show_progress=False)
         textbox.submit(lambda x: "", textbox, textbox, show_progress=False)
