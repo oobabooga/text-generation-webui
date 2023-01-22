@@ -334,10 +334,11 @@ if args.chat or args.cai_chat:
 
     def remove_last_message(name1, name2):
         history.pop()
+        _history = remove_example_dialogue_from_history(history)
         if args.cai_chat:
-            return generate_chat_html(history, name1, name2, character)
+            return generate_chat_html(_history, name1, name2, character)
         else:
-            return history
+            return _history
 
     def clear():
         global history
