@@ -155,7 +155,7 @@ def formatted_outputs(reply, model_name):
         if model_name.lower().startswith('galactica'):
             reply = fix_galactica(reply)
             return reply, reply, generate_basic_html(reply)
-        elif model_name.lower().startswith('gpt4chan'):
+        elif model_name.lower().startswith(('gpt4chan', 'gpt-4chan', '4chan')):
             reply = fix_gpt4chan(reply)
             return reply, 'Only applicable for GALACTICA models.', generate_4chan_html(reply)
         else:
