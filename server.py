@@ -344,7 +344,7 @@ if args.chat or args.cai_chat:
         if not Path('logs').exists():
             Path('logs').mkdir()
         with open(Path('logs/conversation.json'), 'w') as f:
-            f.write(json.dumps({'data': history}))
+            f.write(json.dumps({'data': history}, indent=2))
         return Path('logs/conversation.json')
 
     def load_history(file):
@@ -437,11 +437,11 @@ if args.chat or args.cai_chat:
         with gr.Row():
             check = gr.Checkbox(value=settings[f'stop_at_newline{suffix}'], label='Stop generating at new line character?')
         with gr.Row():
-            with gr.Tab('Upload chat history'):
-                upload = gr.File(type='binary')
             with gr.Tab('Download chat history'):
                 download = gr.File()
                 save_btn = gr.Button(value="Click me")
+            with gr.Tab('Upload chat history'):
+                upload = gr.File(type='binary')
 
         input_params = [textbox, length_slider, preset_menu, model_menu, name1, name2, context, check, history_size_slider]
         if args.cai_chat:
