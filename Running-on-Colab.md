@@ -8,11 +8,11 @@ Just execute every cell and in about 10 minutes a private gradio URL will appear
 
 #### Basic commands
 
-For debugging purposes, you can use these commands, replacing `PygmalionAI/pygmalion-6b` with whatever model you want to load:
+For debugging purposes, you can use these commands, replacing `PygmalionAI/pygmalion-1.3b` with whatever model you want to load:
 
     !git clone https://github.com/oobabooga/text-generation-webui
     %cd text-generation-webui
-    !python download-model.py PygmalionAI/pygmalion-6b
+    !python download-model.py PygmalionAI/pygmalion-1.3b
     !pip install -r requirements.txt
     !python server.py --cai-chat --share --load-in-8bit
 
