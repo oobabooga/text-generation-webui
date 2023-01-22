@@ -1,10 +1,9 @@
 #### Pygmalion chat notebook
 
-[This Colab notebook](https://colab.research.google.com/github/81300/AI-Notebooks/blob/main/Colab-TextGen-GPU.ipynb) can be used to chat with the `pygmalion-6b` conversational model (NSFW). It was kindly provided by [@81300](https://github.com/81300).
+* [Original notebook](https://colab.research.google.com/github/81300/AI-Notebooks/blob/main/Colab-TextGen-GPU.ipynb): can be used to chat with the `pygmalion-6b` conversational model (NSFW). It was kindly provided by [@81300](https://github.com/81300), and it supports persistent storage of characters and models on Google Drive.
+* [Simplified notebook](https://colab.research.google.com/github/oobabooga/AI-Notebooks/blob/main/Colab-TextGen-GPU.ipynb): this is a variation of the notebook above for casual users. Just execute all cells and a gradio URL will automatically appear in 12 minutes.
 
-Just execute every cell and a private gradio URL will appear.
-
-[See here a discussion about this](https://github.com/oobabooga/text-generation-webui/issues/14).
+See also [this discussion](https://github.com/oobabooga/text-generation-webui/issues/14).
 
 #### Basic commands
 
