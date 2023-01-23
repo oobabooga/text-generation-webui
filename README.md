@@ -140,6 +140,8 @@ Out of memory errors? [Check this guide](https://github.com/oobabooga/text-gener
 
 Inference settings presets can be created under `presets/` as text files. These files are detected automatically at startup.
 
+By default, 10 presets by NovelAI and KoboldAI are included. These were selected out of a sample of 43 presets after applying a K-Means clustering algorithm and selecting the elements closest to the average of each cluster.
+
 ## System requirements
 
 Check the [wiki](https://github.com/oobabooga/text-generation-webui/wiki/System-requirements) for some examples of VRAM and RAM usage in both GPU and CPU mode.
