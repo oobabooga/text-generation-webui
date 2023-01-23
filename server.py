@@ -430,7 +430,7 @@ if args.chat or args.cai_chat:
             display1 = gr.HTML(value=generate_chat_html([], "", "", character))
         else:
             display1 = gr.Chatbot()
-        textbox = gr.Textbox(lines=2, label='Input')
+        textbox = gr.Textbox(label='Input')
         btn = gr.Button("Generate")
         with gr.Row():
             stop = gr.Button("Stop")
