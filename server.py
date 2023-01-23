@@ -392,7 +392,16 @@ if args.chat or args.cai_chat:
         global history
         file = file.decode('utf-8')
         try:
-            history = json.loads(file)['data']
+            j = json.loads(file)
+            if 'data' in j:
+                history = j['data']
+            # Compatibility with Pygmalion AI's official web UI
+            elif 'chat' in j:
+                history = [':'.join(x.split(':')[1:]).strip() for x in j['chat']]
+                if len(j['chat']) > 0 and j['chat'][0].startswith(f'{name2}:'):
+                    history = [['<|BEGIN-VISIBLE-CHAT|>', history[0]]] + [[history[i], history[i+1]] for i in range(1, len(history)-1, 2)]
+                else:
+                    history = [[history[i], history[i+1]] for i in range(0, len(history)-1, 2)]
         except:
             history = tokenize_dialogue(file, name1, name2)
 
