@@ -13,15 +13,15 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 ## Features
 
 * Switch between different models using a dropdown menu.
-* Generate nice HTML output for GPT-4chan.
-* Generate Markdown output for [GALACTICA](https://github.com/paperswithcode/galai), including LaTeX support.
 * Notebook mode that resembles OpenAI's playground.
 * Chat mode for conversation and role playing.
+* Generate nice HTML output for GPT-4chan.
+* Generate Markdown output for [GALACTICA](https://github.com/paperswithcode/galai), including LaTeX support.
 * Support for [Pygmalion](https://huggingface.co/models?search=pygmalionai/pygmalion) and custom characters in JSON format (just place the files into the `characters/` folder).
-* Text output is streamed in real time.
+* Stream the text output in real time.
 * Load parameter presets from text files.
 * Load large models in 8-bit mode.
-* Split large models across your GPU(s) and CPU.
+* Split large models across your GPU(s), CPU, and disk.
 * CPU mode.
 * Get responses via API.
 * Works on Google Colab ([see the full guide](https://github.com/oobabooga/text-generation-webui/wiki/Running-on-Colab)).
@@ -65,15 +65,15 @@ Models should be placed under `models/model-name`. For instance, `models/gpt-j-6
 * [\*-Erebus](https://huggingface.co/models?search=erebus)
 * [Pygmalion](https://huggingface.co/models?search=pygmalion)
 
-The files that you need to download are the json, txt, and pytorch\*.bin files. The remaining files are not necessary.
-
-For your convenience, you can automatically download a model from HF using the script `download-model.py`. Its usage is very simple:
+You can automatically download a model from HF using the script `download-model.py`. Its usage is very simple:
 
     python download-model.py organization/model
 
 For instance:
 
     python download-model.py facebook/opt-1.3b
+
+If you want to download a model manually, note that all you need are the json, txt, and pytorch\*.bin files. The remaining files are not necessary.
 
 #### GPT-4chan
 
