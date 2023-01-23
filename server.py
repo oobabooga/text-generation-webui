@@ -366,6 +366,8 @@ if args.chat or args.cai_chat:
         messages = []
         for i in range(len(idx)-1):
             messages.append(dialogue[idx[i]:idx[i+1]].strip())
+        messages.append(dialogue[idx[-1]:].strip())
+
         history = []
         entry = ['', '']
         for i in messages:
@@ -376,6 +378,7 @@ if args.chat or args.cai_chat:
                 if not (len(entry[0]) == 0 and len(entry[1]) == 0):
                     history.append(entry)
                 entry = ['', '']
+
         return history
 
     def save_history():
