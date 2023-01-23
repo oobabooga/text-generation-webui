@@ -17,7 +17,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * Chat mode for conversation and role playing.
 * Generate nice HTML output for GPT-4chan.
 * Generate Markdown output for [GALACTICA](https://github.com/paperswithcode/galai), including LaTeX support.
-* Support for [Pygmalion](https://huggingface.co/models?search=pygmalionai/pygmalion) and custom characters in JSON format (just place the files into the `characters/` folder).
+* Support for [Pygmalion](https://huggingface.co/models?search=pygmalionai/pygmalion) and custom characters in JSON format (just place the files under `characters/`).
 * Stream the text output in real time.
 * Load parameter presets from text files.
 * Load large models in 8-bit mode.
