@@ -98,7 +98,7 @@ You don't really need all of GPT-J 6B's files, just the tokenizer files, but you
 
 #### Converting to pytorch (optional)
 
-The script `convert-to-torch.py` allows you to convert models to .pt format, which is about 10x faster to load to the GPU:
+The script `convert-to-torch.py` allows you to convert models to .pt format, which is sometimes 10x faster to load to the GPU:
 
     python convert-to-torch.py models/model-name
 
