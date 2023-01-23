@@ -358,18 +358,7 @@ if args.chat or args.cai_chat:
         _history = remove_example_dialogue_from_history(history)
         return generate_chat_html(_history, name1, name2, character)
 
-    def save_history():
-        if not Path('logs').exists():
-            Path('logs').mkdir()
-        with open(Path('logs/conversation.json'), 'w') as f:
-            f.write(json.dumps({'data': history}, indent=2))
-        return Path('logs/conversation.json')
-
-    def load_history(file):
-        global history
-        history = json.loads(file.decode('utf-8'))['data']
-
-    def tokenize_example_dialogue(dialogue, name1, name2):
+    def tokenize_dialogue(dialogue, name1, name2):
         dialogue = re.sub('<START>', '', dialogue)
         dialogue = re.sub('(\n|^)[Aa]non:', '\\1You:', dialogue)
 
@@ -389,6 +378,21 @@ if args.chat or args.cai_chat:
                 entry = ['', '']
         return history
 
+    def save_history():
+        if not Path('logs').exists():
+            Path('logs').mkdir()
+        with open(Path('logs/conversation.json'), 'w') as f:
+            f.write(json.dumps({'data': history}, indent=2))
+        return Path('logs/conversation.json')
+
+    def load_history(file, name1, name2):
+        global history
+        file = file.decode('utf-8')
+        try:
+            history = json.loads(file)['data']
+        except:
+            history = tokenize_dialogue(file, name1, name2)
+
     def load_character(_character, name1, name2):
         global history, character
         context = ""
@@ -404,7 +408,7 @@ if args.chat or args.cai_chat:
                 context += f"Scenario: {data['world_scenario']}\n"
             context = f"{context.strip()}\n<START>\n"
             if 'example_dialogue' in data and data['example_dialogue'] != '':
-                history = tokenize_example_dialogue(data['example_dialogue'], name1, name2)
+                history = tokenize_dialogue(data['example_dialogue'], name1, name2)
             if 'char_greeting' in data and len(data['char_greeting'].strip()) > 0:
                 history += [['<|BEGIN-VISIBLE-CHAT|>', data['char_greeting']]]
             else:
@@ -480,7 +484,7 @@ if args.chat or args.cai_chat:
         textbox.submit(lambda x: "", textbox, textbox, show_progress=False)
         stop.click(None, None, None, cancels=[gen_event, gen_event2, gen_event3])
         save_btn.click(save_history, inputs=[], outputs=[download])
-        upload.upload(load_history, [upload], [])
+        upload.upload(load_history, [upload, name1, name2], [])
         character_menu.change(load_character, [character_menu, name1, name2], [name2, context, display1])
 
         if args.cai_chat:
