@@ -459,7 +459,7 @@ if args.chat or args.cai_chat:
             with gr.Column():
                 history_size_slider = gr.Slider(minimum=settings['history_size_min'], maximum=settings['history_size_max'], step=1, label='Chat history size in prompt (0 for no limit)', value=settings['history_size'])
                 with gr.Row():
-                    preset_menu = gr.Dropdown(choices=available_presets, value=settings[f'preset{suffix}'], label='Settings preset')
+                    preset_menu = gr.Dropdown(choices=available_presets, value=settings[f'preset{suffix}'], label='Generation parameters preset')
                     create_refresh_button(preset_menu, lambda : None, lambda : {"choices": get_available_presets()}, "refresh-button")
 
         name1 = gr.Textbox(value=settings[f'name1{suffix}'], lines=1, label='Your name')
@@ -524,7 +524,7 @@ elif args.notebook:
                     create_refresh_button(model_menu, lambda : None, lambda : {"choices": get_available_models()}, "refresh-button")
             with gr.Column():
                 with gr.Row():
-                    preset_menu = gr.Dropdown(choices=available_presets, value=settings['preset'], label='Settings preset')
+                    preset_menu = gr.Dropdown(choices=available_presets, value=settings['preset'], label='Generation parameters preset')
                     create_refresh_button(preset_menu, lambda : None, lambda : {"choices": get_available_presets()}, "refresh-button")
 
         gen_event = btn.click(generate_reply, [textbox, length_slider, preset_menu, model_menu], [textbox, markdown, html], show_progress=args.no_stream, api_name="textgen")
@@ -539,7 +539,7 @@ else:
                 textbox = gr.Textbox(value=default_text, lines=15, label='Input')
                 length_slider = gr.Slider(minimum=settings['max_new_tokens_min'], maximum=settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=settings['max_new_tokens'])
                 with gr.Row():
-                    preset_menu = gr.Dropdown(choices=available_presets, value=settings['preset'], label='Settings preset')
+                    preset_menu = gr.Dropdown(choices=available_presets, value=settings['preset'], label='Generation parameters preset')
                     create_refresh_button(preset_menu, lambda : None, lambda : {"choices": get_available_presets()}, "refresh-button")
                 with gr.Row():
                     model_menu = gr.Dropdown(choices=available_models, value=model_name, label='Model')
