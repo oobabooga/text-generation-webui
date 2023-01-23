@@ -42,7 +42,7 @@ pip install -r requirements.txt
 The third line assumes that you have an NVIDIA GPU. 
 
 * If you have an AMD GPU, you should install the ROCm version of pytorch instead.
-* If you are running in CPU mode, you just need the standard pytorch and should replace the command with this one:
+* If you are running in CPU mode, you just need the standard pytorch and should replace the third command with this one:
 
 ```
 conda install pytorch torchvision torchaudio git -c pytorch
