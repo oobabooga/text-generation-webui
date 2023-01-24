@@ -28,7 +28,7 @@ parser.add_argument('--auto-devices', action='store_true', help='Automatically s
 parser.add_argument('--disk', action='store_true', help='If the model is too large for your GPU(s) and CPU combined, send the remaining layers to the disk.')
 parser.add_argument('--disk-cache-dir', type=str, help='Directory to save the disk cache to. Defaults to "cache/".')
 parser.add_argument('--gpu-memory', type=int, help='Maximum GPU memory in GiB to allocate. This is useful if you get out of memory errors while trying to generate text. Must be an integer number.')
-parser.add_argument('--cpu-memory', type=int, help='Maximum CPU memory in GiB to allocate for offloaded weights. Must be an integer number. Defaults to 99.')
+parser.add_argument('--cpu-memory', type=int, help='Maximum CPU memory in GiB to allocate for offloaded weights. Must be an integer number.')
 parser.add_argument('--no-stream', action='store_true', help='Don\'t stream the text output in real time. This improves the text generation performance.')
 parser.add_argument('--settings', type=str, help='Load the default interface settings from this json file. See settings-template.json for an example.')
 parser.add_argument('--listen', action='store_true', help='Make the web UI reachable from your local network.')
@@ -71,7 +71,7 @@ def load_model(model_name):
     t0 = time.time()
 
     # Default settings
-    if not (args.cpu or args.load_in_8bit or args.auto_devices or args.disk or args.gpu_memory is not None):
+    if not (args.cpu or args.load_in_8bit or args.auto_devices or args.disk or args.gpu_memory is not None or args.cpu_memory is not None):
         if Path(f"torch-dumps/{model_name}.pt").exists():
             print("Loading in .pt format...")
             model = torch.load(Path(f"torch-dumps/{model_name}.pt"))
@@ -88,24 +88,33 @@ def load_model(model_name):
         if args.cpu:
             settings.append("torch_dtype=torch.float32")
         else:
-            settings.append("device_map='auto'")
-            if args.gpu_memory is not None:
-                if args.cpu_memory is not None:
+            if args.auto_devices:
+                settings.append("device_map='auto'")
+            if args.gpu_memory is not None or args.cpu_memory is not None:
+                if args.gpu_memory is not None and args.cpu_memory is None:
+                    settings.append(f"max_memory={{0: '{args.gpu_memory}GiB'}}")
+                elif args.gpu_memory is None and args.cpu_memory is not None:
+                    settings.append(f"max_memory={{'cpu': '{args.cpu_memory}GiB'}}")
+                elif args.gpu_memory is not None and args.cpu_memory is not None:
                     settings.append(f"max_memory={{0: '{args.gpu_memory}GiB', 'cpu': '{args.cpu_memory}GiB'}}")
-                else:
-                    settings.append(f"max_memory={{0: '{args.gpu_memory}GiB', 'cpu': '99GiB'}}")
             if args.disk:
+                settings.append(f"offload_state_dict=True")
                 if args.disk_cache_dir is not None:
                     settings.append(f"offload_folder='{args.disk_cache_dir}'")
                 else:
                     settings.append("offload_folder='cache'")
             if args.load_in_8bit:
                 settings.append("load_in_8bit=True")
+                settings.append("device_map='auto'")
             else:
                 settings.append("torch_dtype=torch.float16")
 
         settings = ', '.join(set(settings))
-        command = f"{command}(Path(f'models/{model_name}'), {settings})"
+        if args.cpu is None or args.auto_devices is None:
+            cuda = ".cuda()"
+        else:
+            cuda = ""
+        command = f"{command}(Path(f'models/{model_name}'), {settings}){cuda}"
         model = eval(command)
 
     # Loading the tokenizer
