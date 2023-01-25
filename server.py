@@ -408,7 +408,7 @@ if args.chat or args.cai_chat:
             f.write(json.dumps({'data': history}, indent=2))
         return Path('logs/conversation.json')
 
-    def load_history(file, name1, name2):
+    def upload_history(file, name1, name2):
         global history
         file = file.decode('utf-8')
         try:
@@ -456,6 +456,20 @@ if args.chat or args.cai_chat:
         else:
             return name2, context, _history
 
+    def upload_character(file, name1, name2):
+        global history
+        file = file.decode('utf-8')
+        data = json.loads(file)
+        outfile_name = data["char_name"]
+        i = 1
+        while Path(f'characters/{outfile_name}.json').exists():
+            outfile_name = f'{data["char_name"]}_{i:03d}'
+            i += 1
+        with open(Path(f'characters/{outfile_name}.json'), 'w') as f:
+            f.write(file)
+        print(f'New character saved to "characters/{outfile_name}.json".')
+        return outfile_name
+
     suffix = '_pygmalion' if 'pygmalion' in model_name.lower() else ''
     with gr.Blocks(css=css+".h-\[40vh\] {height: 66.67vh} .gradio-container {max-width: 800px; margin-left: auto; margin-right: auto}", analytics_enabled=False) as interface:
         if args.cai_chat:
@@ -497,6 +511,8 @@ if args.chat or args.cai_chat:
                 save_btn = gr.Button(value="Click me")
             with gr.Tab('Upload chat history'):
                 upload = gr.File(type='binary')
+            with gr.Tab('Upload character'):
+                upload_char = gr.File(type='binary')
 
         input_params = [textbox, length_slider, preset_menu, model_menu, name1, name2, context, check, history_size_slider]
         if args.cai_chat:
@@ -514,8 +530,9 @@ if args.chat or args.cai_chat:
         textbox.submit(lambda x: "", textbox, textbox, show_progress=False)
         stop.click(None, None, None, cancels=[gen_event, gen_event2, gen_event3])
         save_btn.click(save_history, inputs=[], outputs=[download])
-        upload.upload(load_history, [upload, name1, name2], [])
         character_menu.change(load_character, [character_menu, name1, name2], [name2, context, display1])
+        upload.upload(upload_history, [upload, name1, name2], [])
+        upload_char.upload(upload_character, [upload_char, name1, name2], [character_menu])
 
         if args.cai_chat:
             upload.upload(redraw_html, [name1, name2], [display1])
