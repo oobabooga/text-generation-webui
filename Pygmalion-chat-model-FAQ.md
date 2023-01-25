@@ -16,7 +16,7 @@ Those are simply added to the the Context field when you load a character.
 
 #### Is the chat history truncated in the prompt?
 
-Old messages are removed one at a time once your prompt reaches the 2048 tokens limit. The context string is never truncated and is always kept at the top of the prompt. 
+Old messages are removed one at a time once your prompt reaches the 2048 tokens limit. The context string is never truncated out and is always kept at the top of the prompt. 
 
 #### I am running pygmalion-6b locally and my responses are really bad. Why is that?
 
