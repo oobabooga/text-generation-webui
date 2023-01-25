@@ -204,8 +204,8 @@ def generate_reply(question, tokens, inference_settings, selected_model, eos_tok
     # Generate the reply 1 token at a time
     else:
         yield formatted_outputs(question, model_name)
-        preset = preset.replace('max_new_tokens=tokens', 'max_new_tokens=1')
-        for i in tqdm(range(tokens)):
+        preset = preset.replace('max_new_tokens=tokens', 'max_new_tokens=8')
+        for i in tqdm(range(tokens//8+1)):
             output = eval(f"model.generate(input_ids, eos_token_id={n}, stopping_criteria=stopping_criteria_list, {preset}){cuda}")
             reply = decode(output[0])
             if eos_token is not None and reply[-1] == eos_token:
