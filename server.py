@@ -598,7 +598,7 @@ else:
         cont_event = cont.click(generate_reply, [output_textbox, length_slider, preset_menu, model_menu], [output_textbox, markdown, html], show_progress=args.no_stream)
         stop.click(None, None, None, cancels=[gen_event, gen_event2, cont_event])
 
-interface.queue(max_size=1)
+interface.queue()
 if args.listen:
     interface.launch(share=args.share, server_name="0.0.0.0")
 else:
