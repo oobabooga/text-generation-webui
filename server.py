@@ -37,7 +37,7 @@ parser.add_argument('--share', action='store_true', help='Create a public URL. T
 args = parser.parse_args()
 
 if (args.chat or args.cai_chat) and not args.no_stream:
-    print("Warning: chat mode currently becomes a lot slower with text streaming on.\nConsider starting the web UI with the --no-stream option.\n")
+    print("Warning: chat mode currently becomes somewhat slower with text streaming on.\nConsider starting the web UI with the --no-stream option.\n")
 
 settings = {
     'max_new_tokens': 200,
@@ -581,7 +581,7 @@ else:
         cont_event = cont.click(generate_reply, [output_textbox, length_slider, preset_menu, model_menu], [output_textbox, markdown, html], show_progress=args.no_stream)
         stop.click(None, None, None, cancels=[gen_event, gen_event2, cont_event])
 
-interface.queue()
+interface.queue(max_size=1)
 if args.listen:
     interface.launch(share=args.share, server_name="0.0.0.0")
 else:
