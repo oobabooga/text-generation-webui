@@ -4,7 +4,7 @@ A gradio web UI for running large language models like gpt-j-6B, gpt-neo, opt, g
 
 Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.com/AUTOMATIC1111/stable-diffusion-webui) of text generation.
 
-**[Try it on Google Colab.](https://colab.research.google.com/github/oobabooga/AI-Notebooks/blob/main/Colab-TextGen-GPU.ipynb)**
+[[Try it on Google Colab]](https://colab.research.google.com/github/oobabooga/AI-Notebooks/blob/main/Colab-TextGen-GPU.ipynb) | [[discussion]](https://github.com/oobabooga/text-generation-webui/issues/14)
 
 |![Image1](https://github.com/oobabooga/screenshots/raw/main/qa.png) | ![Image2](https://github.com/oobabooga/screenshots/raw/main/cai3.png) |
 |:---:|:---:|
@@ -17,7 +17,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * Chat mode for conversation and role playing.
 * Generate nice HTML output for GPT-4chan.
 * Generate Markdown output for [GALACTICA](https://github.com/paperswithcode/galai), including LaTeX support.
-* Support for [Pygmalion](https://huggingface.co/models?search=pygmalionai/pygmalion) and custom characters in JSON format (just place the files under `characters/`).
+* Support for [Pygmalion](https://huggingface.co/models?search=pygmalionai/pygmalion) and custom characters in JSON format ([see the FAQ](https://github.com/oobabooga/text-generation-webui/wiki/Pygmalion-chat-model-FAQ)).
 * Stream the text output in real time.
 * Load parameter presets from text files.
 * Load large models in 8-bit mode.
@@ -139,6 +139,8 @@ Out of memory errors? [Check this guide](https://github.com/oobabooga/text-gener
 ## Presets
 
 Inference settings presets can be created under `presets/` as text files. These files are detected automatically at startup.
+
+By default, 10 presets by NovelAI and KoboldAI are included. These were selected out of a sample of 43 presets after applying a K-Means clustering algorithm and selecting the elements closest to the average of each cluster.
 
 ## System requirements
 
