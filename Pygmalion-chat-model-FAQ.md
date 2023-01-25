@@ -18,3 +18,10 @@ Those are simply added to the the Context field when you load a character.
 
 Old messages are removed one at a time once your prompt reaches the 2048 tokens limit. The context string is never truncated and is always kept at the top of the prompt. 
 
+#### I am running pygmalion-6b locally and my responses are really bad. Why is that?
+
+Try using the first commit of the model, which can be downloaded like this:
+
+`python download-model.py PygmalionAI/pygmalion-6b --branch b8344bb4eb76a437797ad3b19420a13922aaabe1`
+
+See these discussions for more information: [GitHub](https://github.com/oobabooga/text-generation-webui/issues/14), [HuggingFace](https://huggingface.co/PygmalionAI/pygmalion-6b/discussions/8#63d09347623a3d1d1174efa9)
