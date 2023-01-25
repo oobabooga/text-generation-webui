@@ -357,12 +357,21 @@ if args.chat or args.cai_chat:
         else:
             return _history, last[0]
 
-    def clear():
-        global history
-        history = []
-
     def clear_html():
         return generate_chat_html([], "", "", character)
+
+    def clear_chat_log(_character, name1, name2):
+        global history
+        if _character != 'None':
+            load_character(_character, name1, name2)
+        else:
+            history = []
+
+        _history = remove_example_dialogue_from_history(history)
+        if args.cai_chat:
+            return generate_chat_html(_history, name1, name2, character)
+        else:
+            return _history
 
     def redraw_html(name1, name2):
         global history
@@ -493,14 +502,12 @@ if args.chat or args.cai_chat:
         if args.cai_chat:
             gen_event = btn.click(cai_chatbot_wrapper, input_params, display1, show_progress=args.no_stream, api_name="textgen")
             gen_event2 = textbox.submit(cai_chatbot_wrapper, input_params, display1, show_progress=args.no_stream)
-            btn_clear.click(clear_html, [], display1, show_progress=False)
         else:
             gen_event = btn.click(chatbot_wrapper, input_params, display1, show_progress=args.no_stream, api_name="textgen")
             gen_event2 = textbox.submit(chatbot_wrapper, input_params, display1, show_progress=args.no_stream)
-            btn_clear.click(lambda x: "", display1, display1, show_progress=False)
         gen_event3 = btn_regenerate.click(regenerate_wrapper, input_params, display1, show_progress=args.no_stream)
 
-        btn_clear.click(clear)
+        btn_clear.click(clear_chat_log, [character_menu, name1, name2], display1)
         btn_remove_last.click(remove_last_message, [name1, name2], [display1, textbox], show_progress=False)
         btn.click(lambda x: "", textbox, textbox, show_progress=False)
         btn_regenerate.click(lambda x: "", textbox, textbox, show_progress=False)
