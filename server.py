@@ -66,6 +66,13 @@ if args.settings is not None and Path(args.settings).exists():
         if item in settings:
             settings[item] = new_settings[item]
 
+if args.cpu:
+    device = "cpu"
+elif torch.cuda.is_available():
+    device = "cuda"
+else:
+    device = "cpu"
+
 def load_model(model_name):
     print(f"Loading {model_name}...")
     t0 = time.time()
@@ -75,10 +82,11 @@ def load_model(model_name):
         if Path(f"torch-dumps/{model_name}.pt").exists():
             print("Loading in .pt format...")
             model = torch.load(Path(f"torch-dumps/{model_name}.pt"))
+            model.to(device)
         elif model_name.lower().startswith(('gpt-neo', 'opt-', 'galactica')) and any(size in model_name.lower() for size in ('13b', '20b', '30b')):
             model = AutoModelForCausalLM.from_pretrained(Path(f"models/{model_name}"), device_map='auto', load_in_8bit=True)
         else:
-            model = AutoModelForCausalLM.from_pretrained(Path(f"models/{model_name}"), low_cpu_mem_usage=True, torch_dtype=torch.float16).cuda()
+            model = AutoModelForCausalLM.from_pretrained(Path(f"models/{model_name}"), low_cpu_mem_usage=True, torch_dtype=torch.float16).to(device)
 
     # Custom
     else:
@@ -110,11 +118,10 @@ def load_model(model_name):
                 settings.append("torch_dtype=torch.float16")
 
         settings = ', '.join(set(settings))
-        if args.cpu is None or args.auto_devices is None:
-            cuda = ".cuda()"
+        if args.auto_devices:
+            command = f"{command}(Path(f'models/{model_name}'), {settings})"
         else:
-            cuda = ""
-        command = f"{command}(Path(f'models/{model_name}'), {settings}){cuda}"
+            command = f"{command}(Path(f'models/{model_name}'), {settings}).to(device)"
         model = eval(command)
 
     # Loading the tokenizer
@@ -145,11 +152,9 @@ def fix_galactica(s):
     return s
 
 def encode(prompt, tokens):
-    if args.cpu:
-        input_ids = tokenizer.encode(str(prompt), return_tensors='pt', truncation=True, max_length=2048-tokens)
-    else:
+    if torch.cuda.is_available():
         torch.cuda.empty_cache()
-        input_ids = tokenizer.encode(str(prompt), return_tensors='pt', truncation=True, max_length=2048-tokens).cuda()
+    input_ids = tokenizer.encode(str(prompt), return_tensors='pt', truncation=True, max_length=2048-tokens).to(device)
     return input_ids
 
 def decode(output_ids):
@@ -178,21 +183,21 @@ def generate_reply(question, tokens, inference_settings, selected_model, eos_tok
         model = tokenizer = None
         if not args.cpu:
             gc.collect()
-            torch.cuda.empty_cache()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
         model, tokenizer = load_model(model_name)
     if inference_settings != loaded_preset:
         with open(Path(f'presets/{inference_settings}.txt'), 'r') as infile:
             preset = infile.read()
         loaded_preset = inference_settings
 
-    cuda = "" if args.cpu else ".cuda()"
     n = None if eos_token is None else tokenizer.encode(eos_token, return_tensors='pt')[0][-1]
     input_ids = encode(question, tokens)
 
     # Generate the entire reply at once
     if args.no_stream:
         t0 = time.time()
-        output = eval(f"model.generate(input_ids, eos_token_id={n}, {preset}){cuda}")
+        output = eval(f"model.generate(input_ids, eos_token_id={n}, {preset})")
         reply = decode(output[0])
         t1 = time.time()
         print(f"Output generated in {(t1-t0):.2f} seconds ({(len(output[0])-len(input_ids[0]))/(t1-t0):.2f} it/s)")
@@ -203,7 +208,7 @@ def generate_reply(question, tokens, inference_settings, selected_model, eos_tok
         yield formatted_outputs(question, model_name)
         preset = preset.replace('max_new_tokens=tokens', 'max_new_tokens=1')
         for i in tqdm(range(tokens)):
-            output = eval(f"model.generate(input_ids, {preset}){cuda}")
+            output = eval(f"model.generate(input_ids, {preset})")
             reply = decode(output[0])
             if eos_token is not None and reply[-1] == eos_token:
                 break
