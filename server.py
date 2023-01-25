@@ -22,7 +22,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--model', type=str, help='Name of the model to load by default.')
 parser.add_argument('--notebook', action='store_true', help='Launch the web UI in notebook mode, where the output is written to the same text box as the input.')
 parser.add_argument('--chat', action='store_true', help='Launch the web UI in chat mode.')
-parser.add_argument('--cai-chat', action='store_true', help='Launch the web UI in chat mode with a style similar to Character.AI\'s. If the file profile.png or profile.jpg exists in the same folder as server.py, this image will be used as the bot\'s profile picture.')
+parser.add_argument('--cai-chat', action='store_true', help='Launch the web UI in chat mode with a style similar to Character.AI\'s. If the file img-bot.png or img-bot.jpg exists in the same folder as server.py, this image will be used as the bot\'s profile picture. Similarly, img-you.png or img-you.jpg will be used as your profile picture.')
 parser.add_argument('--cpu', action='store_true', help='Use the CPU to generate text.')
 parser.add_argument('--load-in-8bit', action='store_true', help='Load the model with 8-bit precision.')
 parser.add_argument('--auto-devices', action='store_true', help='Automatically split the model across the available GPU(s) and CPU.')
@@ -80,7 +80,6 @@ def load_model(model_name):
             model = AutoModelForCausalLM.from_pretrained(Path(f"models/{model_name}"), device_map='auto', load_in_8bit=True)
         else:
             model = AutoModelForCausalLM.from_pretrained(Path(f"models/{model_name}"), low_cpu_mem_usage=True, torch_dtype=torch.float16).cuda()
-
     # Custom
     else:
         settings = ["low_cpu_mem_usage=True"]
@@ -186,8 +185,9 @@ def generate_reply(question, tokens, inference_settings, selected_model, eos_tok
         t = encode(stopping_string, 0, add_special_tokens=False)
         stopping_criteria_list = transformers.StoppingCriteriaList([
             _SentinelTokenStoppingCriteria(
-            sentinel_token_ids=t,
-            starting_idx=len(input_ids[0]))
+                sentinel_token_ids=t,
+                starting_idx=len(input_ids[0])
+            )
         ])
     else:
         stopping_criteria_list = None
@@ -366,7 +366,6 @@ if args.chat or args.cai_chat:
             load_character(_character, name1, name2)
         else:
             history = []
-
         _history = remove_example_dialogue_from_history(history)
         if args.cai_chat:
             return generate_chat_html(_history, name1, name2, character)

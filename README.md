@@ -113,6 +113,8 @@ Then browse to
 
 `http://localhost:7860/?__theme=dark`
 
+
+
 Optionally, you can use the following command-line flags:
 
 | Flag        | Description |
@@ -121,7 +123,7 @@ Optionally, you can use the following command-line flags:
 | `--model MODEL`    | Name of the model to load by default. |
 | `--notebook`  | Launch the web UI in notebook mode, where the output is written to the same text box as the input. |
 | `--chat`      | Launch the web UI in chat mode.|
-| `--cai-chat`  | Launch the web UI in chat mode with a style similar to Character.AI's. If the file profile.png or profile.jpg exists in the same folder as server.py, this image will be used as the bot's profile picture. |
+| `--cai-chat`  | Launch the web UI in chat mode with a style similar to Character.AI's. If the file img-bot.png or img-bot.jpg exists in the same folder as server.py, this image will be used as the bot's profile picture. Similarly, img-you.png or img-you.jpg will be used as your profile picture. |
 | `--cpu`       | Use the CPU to generate text.|
 | `--load-in-8bit`  | Load the model with 8-bit precision.|
 | `--auto-devices` | Automatically split the model across the available GPU(s) and CPU.|

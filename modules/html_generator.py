@@ -196,7 +196,7 @@ def generate_chat_html(history, name1, name2, character):
       border-radius: 50%;
     }
 
-    .circle-bot img {
+    .circle-bot img, .circle-you img {
       border-radius: 50%;
       width: 100%;
       height: 100%;
@@ -225,13 +225,19 @@ def generate_chat_html(history, name1, name2, character):
             f"characters/{character}.png",
             f"characters/{character}.jpg",
             f"characters/{character}.jpeg",
-            "profile.png",
-            "profile.jpg",
-            "profile.jpeg",
+            "img_bot.png",
+            "img_bot.jpg",
+            "img_bot.jpeg"
             ]:
         
         if Path(i).exists():
             img = f'<img src="file/{i}">'
+            break
+
+    img_you = ''
+    for i in ["img_me.png", "img_me.jpg", "img_me.jpeg"]:
+        if Path(i).exists():
+            img_you = f'<img src="file/{i}">'
             break
 
     for i,_row in enumerate(history[::-1]):
@@ -262,6 +268,7 @@ def generate_chat_html(history, name1, name2, character):
             output += f"""
                   <div class="message">
                     <div class="circle-you">
+                      {img_you}
                     </div>
                     <div class="text">
                       <div class="username">
