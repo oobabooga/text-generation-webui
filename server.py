@@ -34,6 +34,7 @@ parser.add_argument('--no-stream', action='store_true', help='Don\'t stream the 
 parser.add_argument('--settings', type=str, help='Load the default interface settings from this json file. See settings-template.json for an example.')
 parser.add_argument('--listen', action='store_true', help='Make the web UI reachable from your local network.')
 parser.add_argument('--share', action='store_true', help='Create a public URL. This is useful for running the web UI on Google Colab or similar.')
+parser.add_argument('--verbose', action='store_true', help='Print the prompts to the terminal.')
 args = parser.parse_args()
 
 if (args.chat or args.cai_chat) and not args.no_stream:
@@ -163,6 +164,9 @@ def formatted_outputs(reply, model_name):
 
 def generate_reply(question, tokens, inference_settings, selected_model, eos_token=None, stopping_string=None):
     global model, tokenizer, model_name, loaded_preset, preset
+
+    if args.verbose:
+        print(f"\n\n{question}\n--------------------\n")
 
     if selected_model != model_name:
         model_name = selected_model
