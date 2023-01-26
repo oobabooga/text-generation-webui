@@ -9,6 +9,6 @@ See also [this discussion](https://github.com/oobabooga/text-generation-webui/is
 
     !git clone https://github.com/oobabooga/text-generation-webui
     %cd text-generation-webui
-    !python download-model.py PygmalionAI/pygmalion-1.3b
     !pip install -r requirements.txt
+    !python download-model.py PygmalionAI/pygmalion-1.3b
     !python server.py --cai-chat --share 
