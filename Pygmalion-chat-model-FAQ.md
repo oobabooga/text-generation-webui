@@ -13,11 +13,11 @@ You have two options:
 
 Put an image called `img_you.jpg` or `img_you.png` into the `text-generation-webui` folder.
 
-#### I have imported my character and can't see the `example_dialogue`.
+#### I imported my character but I can't see the `example_dialogue`.
 
-The `example_dialogue` from your JSON character is parsed, added to the chat history, and kept hidden. You can check it by downloading your chat history and seeing the lines before `<|BEGIN-VISIBLE-CHAT|>`, or by starting the web UI with the `--verbose` option that will make your prompts be printed in the terminal.
+The `example_dialogue` from your JSON character is parsed, added to the chat history, and kept hidden. To view it, you can either download your chat history and view the lines before `<|BEGIN-VISIBLE-CHAT|>`, or start the web UI with the `--verbose` option to print your prompts in the terminal.
 
-Note that for the example dialogue to be parsed correctly, your name in the web UI (usually `You`) must match your name in the example dialogue.
+Note that for the example dialogue to be parsed correctly, your name in the web UI (usually `You`) must match the name used in the example dialogue.
 
 #### Where are the `world_scenario` and `char_persona` fields?
 
@@ -29,7 +29,7 @@ Those are simply added to the the Context field when you load a character.
 
 #### Is the chat history truncated in the prompt?
 
-Old messages are removed one at a time once your prompt reaches the 2048 tokens limit. The context string is never truncated out and is always kept at the top of the prompt. 
+Once your prompt reaches the 2048 token limit, old messages will be removed one at a time. The context string will always stay at the top of the prompt and will never be truncated.
 
 #### I am running pygmalion-6b locally and my responses are really short. Why is that?
 
