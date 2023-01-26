@@ -1,17 +1,17 @@
 #### How to import my character?
 
-Place the JSON file into the `characters` folder, or upload directly from the web UI by clicking on the "Upload character" tab at the bottom of the interface.
+Put the JSON file in the `characters` folder, or upload it directly from the web UI by clicking on the "Upload character" tab at the bottom.
 
-#### How to add a profile picture for my character?
+#### How do I add a profile picture for my character?
 
 You have two options:
 
-* Place an image with the same name as your character's JSON file into the `characters` folder. For instance, `Character.jpg` if your bot is `Character.json`.
-* Place an image called `img_bot.jpg` into the `text-generation-webui` folder. This image will be used for ALL bots that do not have their own profile picture. 
+* Put an image with the same name as your character's JSON file into the `characters` folder. For example, if your bot is `Character.json`, add `Character.jpg` or `Character.png` to the folder.
+* Put an image called `img_bot.jpg` or `img_bot.png` into the `text-generation-webui` folder. This image will be used as the profile picture for any bots that don't have one.
 
-#### How to add a profile picture for myself?
+#### How do I add a profile picture for myself?
 
-Put an image called `img_you.jpg` into the `text-generation-webui` folder.
+Put an image called `img_you.jpg` or `img_you.png` into the `text-generation-webui` folder.
 
 #### I have imported my character and can't see the `example_dialogue`.
 
