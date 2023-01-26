@@ -13,7 +13,7 @@ You have two options:
 
 Put an image called `img_you.jpg` or `img_you.png` into the `text-generation-webui` folder.
 
-#### I imported my character but I can't see the `example_dialogue`.
+#### I have imported my character but I can't see the `example_dialogue`.
 
 The `example_dialogue` from your JSON character is parsed, added to the chat history, and kept hidden. To view it, you can either download your chat history and view the lines before `<|BEGIN-VISIBLE-CHAT|>`, or start the web UI with the `--verbose` option to print your prompts in the terminal.
 
