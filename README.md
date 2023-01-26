@@ -33,7 +33,7 @@ Open a terminal and copy and paste these commands one at a time ([install conda]
 ```
 conda create -n textgen
 conda activate textgen
-conda install pytorch torchvision torchaudio pytorch-cuda=11.7 git -c pytorch -c nvidia
+conda install torchvision torchaudio pytorch-cuda=11.7 git -c pytorch -c nvidia
 git clone https://github.com/oobabooga/text-generation-webui
 cd text-generation-webui
 pip install -r requirements.txt
