@@ -4,7 +4,7 @@ Place the JSON file into the `characters` folder. If you want, you can also plac
 
 #### I have imported my character and can't see the `example_dialogue`.
 
-The `example_dialogue` from your JSON character is parsed, added to the chat history, and kept hidden. You can check it by downloading your chat history and seeing the lines before `<|BEGIN-VISIBLE-CHAT|>`.
+The `example_dialogue` from your JSON character is parsed, added to the chat history, and kept hidden. You can check it by downloading your chat history and seeing the lines before `<|BEGIN-VISIBLE-CHAT|>`, or by starting the web UI with the `--verbose` option that will make your prompts be printed in the terminal.
 
 #### Where are the `world_scenario` and `char_persona` fields?
 
