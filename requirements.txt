@@ -62,7 +62,7 @@ torch==1.13.1
 torchaudio==0.13.1
 torchvision==0.14.1
 tqdm==4.64.1
-transformers==4.25.1
+transformers==4.26.0
 uc-micro-py==1.0.1
 uvicorn==0.20.0
 websockets==10.4
