@@ -18,7 +18,7 @@ Those are simply added to the the Context field when you load a character.
 
 Old messages are removed one at a time once your prompt reaches the 2048 tokens limit. The context string is never truncated out and is always kept at the top of the prompt. 
 
-#### I am running pygmalion-6b locally and my responses are really bad. Why is that?
+#### I am running pygmalion-6b locally and my responses are really short. Why is that?
 
 Try using the first commit of the model, which can be downloaded like this:
 
