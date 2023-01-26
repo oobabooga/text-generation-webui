@@ -177,7 +177,7 @@ def generate_reply(question, tokens, inference_settings, selected_model, eos_tok
         loaded_preset = inference_settings
 
     cuda = "" if args.cpu else ".cuda()"
-    n = None if eos_token is None else tokenizer.encode(eos_token, return_tensors='pt')[0][-1]
+    n = tokenizer.eos_token_id if eos_token is None else tokenizer.encode(eos_token, return_tensors='pt')[0][-1]
     input_ids = encode(question, tokens)
     # The stopping_criteria code below was copied from
     # https://github.com/PygmalionAI/gradio-ui/blob/master/src/model.py
@@ -208,10 +208,10 @@ def generate_reply(question, tokens, inference_settings, selected_model, eos_tok
         for i in tqdm(range(tokens//8+1)):
             output = eval(f"model.generate(input_ids, eos_token_id={n}, stopping_criteria=stopping_criteria_list, {preset}){cuda}")
             reply = decode(output[0])
-            if eos_token is not None and reply[-1] == eos_token:
-                break
             yield formatted_outputs(reply, model_name)
             input_ids = output
+            if output[0][-1] == n:
+                break
 
 def get_available_models():
     return sorted(set([item.replace('.pt', '') for item in map(lambda x : str(x.name), list(Path('models/').glob('*'))+list(Path('torch-dumps/').glob('*'))) if not item.endswith('.txt')]), key=str.lower)
