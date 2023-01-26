@@ -135,6 +135,7 @@ Optionally, you can use the following command-line flags:
 | `--settings SETTINGS_FILE` | Load the default interface settings from this json file. See `settings-template.json` for an example.|
 | `--listen`   | Make the web UI reachable from your local network.|
 | `--share`   | Create a public URL. This is useful for running the web UI on Google Colab or similar. |
+| `--verbose`   | Print the prompts to the terminal. |
 
 Out of memory errors? [Check this guide](https://github.com/oobabooga/text-generation-webui/wiki/Low-VRAM-guide).
 
