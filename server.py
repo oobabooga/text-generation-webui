@@ -371,8 +371,8 @@ if args.chat or args.cai_chat:
             yield generate_chat_html(_history, name1, name2, character)
 
     def regenerate_wrapper(text, tokens, inference_settings, selected_model, name1, name2, context, check, history_size):
-        last = history['internal'].pop()
-        history['visible'].pop()
+        last = history['visible'].pop()
+        history['internal'].pop()
         text = last[0]
         if args.cai_chat:
             for i in cai_chatbot_wrapper(text, tokens, inference_settings, selected_model, name1, name2, context, check, history_size):
