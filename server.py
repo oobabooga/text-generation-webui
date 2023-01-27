@@ -231,7 +231,6 @@ def apply_extensions(text, typ):
     for ext in sorted(extension_state, key=lambda x : extension_state[x][1]):
         if extension_state[ext][0] == True:
             ext_string = f"extensions.{ext}.script"
-            exec(f"import {ext_string}")
             if typ == "input":
                 text = eval(f"{ext_string}.input_modifier(text)")
             else:
@@ -258,8 +257,11 @@ extension_state = {}
 if args.extensions is not None:
     for i,ext in enumerate(args.extensions.split(',')):
         if ext in available_extensions:
-            print(f'The extension "{ext}" is enabled.')
+            print(f'Loading the extension "{ext}"... ', end='')
+            ext_string = f"extensions.{ext}.script"
+            exec(f"import {ext_string}")
             extension_state[ext] = [True, i]
+            print(f'Ok.')
 
 # Choosing the default model
 if args.model is not None:
