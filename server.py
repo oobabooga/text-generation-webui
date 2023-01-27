@@ -443,7 +443,7 @@ if args.chat or args.cai_chat:
         if not Path('logs').exists():
             Path('logs').mkdir()
         with open(Path('logs/conversation.json'), 'w') as f:
-            f.write(json.dumps({'data': history['internal']}, indent=2))
+            f.write(json.dumps({'data': history['internal'], 'data_visible': history['visible']}))
         return Path('logs/conversation.json')
 
     def upload_history(file, name1, name2):
@@ -453,6 +453,10 @@ if args.chat or args.cai_chat:
             j = json.loads(file)
             if 'data' in j:
                 history['internal'] = j['data']
+                if 'data_visible' in j:
+                    history['visible'] = j['data_visible']
+                else:
+                    history['visible'] = history['internal']
             # Compatibility with Pygmalion AI's official web UI
             elif 'chat' in j:
                 history['internal'] = [':'.join(x.split(':')[1:]).strip() for x in j['chat']]
@@ -462,6 +466,7 @@ if args.chat or args.cai_chat:
                     history['internal'] = [[history['internal'][i], history['internal'][i+1]] for i in range(0, len(history['internal'])-1, 2)]
         except:
             history['internal'] = tokenize_dialogue(file, name1, name2)
+            history['visible'] = history['internal']
 
     def load_character(_character, name1, name2):
         global history, character
