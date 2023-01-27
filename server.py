@@ -8,6 +8,7 @@ import json
 import sys
 from sys import exit
 from pathlib import Path
+import copy
 import gradio as gr
 import warnings
 from tqdm import tqdm
@@ -458,7 +459,7 @@ if args.chat or args.cai_chat:
                 if 'data_visible' in j:
                     history['visible'] = j['data_visible']
                 else:
-                    history['visible'] = history['internal']
+                    history['visible'] = copy.deepcopy(history['internal'])
             # Compatibility with Pygmalion AI's official web UI
             elif 'chat' in j:
                 history['internal'] = [':'.join(x.split(':')[1:]).strip() for x in j['chat']]
@@ -468,7 +469,7 @@ if args.chat or args.cai_chat:
                     history['internal'] = [[history['internal'][i], history['internal'][i+1]] for i in range(0, len(history['internal'])-1, 2)]
         except:
             history['internal'] = tokenize_dialogue(file, name1, name2)
-            history['visible'] = history['internal']
+            history['visible'] = copy.deepcopy(history['internal'])
 
     def load_character(_character, name1, name2):
         global history, character
