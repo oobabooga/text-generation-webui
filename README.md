@@ -133,6 +133,7 @@ Optionally, you can use the following command-line flags:
 | `--cpu-memory CPU_MEMORY`    | Maximum CPU memory in GiB to allocate for offloaded weights. Must be an integer number. Defaults to 99.|
 | `--no-stream`   | Don't stream the text output in real time. This improves the text generation performance.|
 | `--settings SETTINGS_FILE` | Load the default interface settings from this json file. See `settings-template.json` for an example.|
+| `--extensions EXTENSIONS` | The list of extensions to load. If you want to load more than one extension, write the names separated by commas and between quotation marks, "like,this". |
 | `--listen`   | Make the web UI reachable from your local network.|
 | `--share`   | Create a public URL. This is useful for running the web UI on Google Colab or similar. |
 | `--verbose`   | Print the prompts to the terminal. |
