@@ -446,7 +446,7 @@ if args.chat or args.cai_chat:
                     _history.append(entry)
                 entry = ['', '']
 
-        print(f"\nDialogue tokenized to:\n\n", end='')
+        print(f"\nDialogue tokenized to (formatted as [question, reply]):\n\n", end='')
         for i in _history:
             print(i)
         print("--------------------\n", end='')
