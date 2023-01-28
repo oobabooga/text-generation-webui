@@ -580,11 +580,15 @@ if args.chat or args.cai_chat:
         with gr.Row():
             check = gr.Checkbox(value=settings[f'stop_at_newline{suffix}'], label='Stop generating at new line character?')
         with gr.Row():
-            with gr.Tab('Upload chat history'):
-                upload = gr.File(type='binary')
-            with gr.Tab('Download chat history'):
-                download = gr.File()
-                save_btn = gr.Button(value="Click me")
+            with gr.Tab('Chat history'):
+                with gr.Row():
+                    with gr.Column():
+                        gr.Markdown('Upload')
+                        upload = gr.File(type='binary')
+                    with gr.Column():
+                        gr.Markdown('Download')
+                        download = gr.File()
+                        save_btn = gr.Button(value="Click me")
             with gr.Tab('Upload character'):
                 with gr.Row():
                     with gr.Column():
