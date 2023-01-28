@@ -39,7 +39,7 @@ parser.add_argument('--no-stream', action='store_true', help='Don\'t stream the 
 parser.add_argument('--settings', type=str, help='Load the default interface settings from this json file. See settings-template.json for an example.')
 parser.add_argument('--extensions', type=str, help='The list of extensions to load. If you want to load more than one extension, write the names separated by commas and between quotation marks, "like,this".')
 parser.add_argument('--listen', action='store_true', help='Make the web UI reachable from your local network.')
-parser.add_argument('--listen-port', type=int, choices=range(0, 65535), help='The listening port the server will use.')
+parser.add_argument('--listen-port', type=int, help='The listening port the server will use.')
 parser.add_argument('--share', action='store_true', help='Create a public URL. This is useful for running the web UI on Google Colab or similar.')
 parser.add_argument('--verbose', action='store_true', help='Print the prompts to the terminal.')
 args = parser.parse_args()
