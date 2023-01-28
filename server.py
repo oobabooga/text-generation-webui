@@ -650,4 +650,4 @@ interface.queue()
 if args.listen:
     interface.launch(share=args.share, server_name="0.0.0.0", server_port=args.listen_port)
 else:
-    interface.launch(share=args.share)
+    interface.launch(share=args.share, server_port=args.listen_port)
