@@ -606,6 +606,29 @@ if args.chat or args.cai_chat:
             with gr.Tab('Upload TavernAI Character Card'):
                 upload_img_tavern = gr.File(type='binary')
 
+        if args.extensions is not None:
+            extensions_ui_elements = []
+            gr.Markdown('## Extensions parameters')
+            for ext in sorted(extension_state, key=lambda x : extension_state[x][1]):
+                if extension_state[ext][0] == True:
+                    params = eval(f"extensions.{ext}.script.params")
+                    for param in params:
+                        if type(params[param] == str):
+                            extensions_ui_elements.append(gr.Textbox(value=params[param], label=param))
+
+            def update_extensions_parameters(*kwargs):
+                i = 0
+                for ext in sorted(extension_state, key=lambda x : extension_state[x][1]):
+                    if extension_state[ext][0] == True:
+                        params = eval(f"extensions.{ext}.script.params")
+                        for param in params:
+                            if len(kwargs) >= i+1:
+                                params[param] = eval(f"kwargs[{i}]")
+                                i += 1
+
+            btn_extensions = gr.Button("Apply")
+            btn_extensions.click(update_extensions_parameters, [*extensions_ui_elements], [])
+
         input_params = [textbox, length_slider, preset_menu, model_menu, name1, name2, context, check, history_size_slider]
         if args.cai_chat:
             gen_event = btn.click(cai_chatbot_wrapper, input_params, display1, show_progress=args.no_stream, api_name="textgen")
