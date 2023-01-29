@@ -135,7 +135,7 @@ Optionally, you can use the following command-line flags:
 | `--settings SETTINGS_FILE` | Load the default interface settings from this json file. See `settings-template.json` for an example.|
 | `--extensions EXTENSIONS` | The list of extensions to load. If you want to load more than one extension, write the names separated by commas and between quotation marks, "like,this". |
 | `--listen`   | Make the web UI reachable from your local network.|
-|  `--listen-port LISTEN_PORT` | The listening port the server will use. |
+|  `--listen-port LISTEN_PORT` | The listening port that the server will use. |
 | `--share`   | Create a public URL. This is useful for running the web UI on Google Colab or similar. |
 | `--verbose`   | Print the prompts to the terminal. |
 
