@@ -613,8 +613,12 @@ if args.chat or args.cai_chat:
                 if extension_state[ext][0] == True:
                     params = eval(f"extensions.{ext}.script.params")
                     for param in params:
-                        if type(params[param] == str):
+                        if type(params[param]) == str:
                             extensions_ui_elements.append(gr.Textbox(value=params[param], label=param))
+                        elif type(params[param]) in [int, float]:
+                            extensions_ui_elements.append(gr.Number(value=params[param], label=param))
+                        elif type(params[param]) == bool:
+                            extensions_ui_elements.append(gr.Checkbox(value=params[param], label=param))
 
             def update_extensions_parameters(*kwargs):
                 i = 0
