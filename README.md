@@ -155,6 +155,8 @@ Check the [wiki](https://github.com/oobabooga/text-generation-webui/wiki/System-
 
 Pull requests, suggestions, and issue reports are welcome.
 
+Before reporting a bug, make sure that you have created a conda environment and installed the dependencies exactly as in the *Installation* section above.
+
 ## Credits
 
 - NovelAI and KoboldAI presets: https://github.com/KoboldAI/KoboldAI-Client/wiki/Settings-Presets
