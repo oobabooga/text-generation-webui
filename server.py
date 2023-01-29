@@ -274,7 +274,6 @@ def create_extensions_block():
     update_extensions_parameters(*default_values)
     btn_extensions = gr.Button("Apply")
     btn_extensions.click(update_extensions_parameters, [*extensions_ui_elements], [])
-    return extensions_ui_elements, btn_extensions
 
 def get_available_models():
     return sorted(set([item.replace('.pt', '') for item in map(lambda x : str(x.name), list(Path('models/').glob('*'))+list(Path('torch-dumps/').glob('*'))) if not item.endswith('.txt')]), key=str.lower)
@@ -661,7 +660,7 @@ if args.chat or args.cai_chat:
                 upload_img_tavern = gr.File(type='binary')
 
         if args.extensions is not None:
-            extensions_ui_elements, btn_extensions = create_extensions_block()
+            create_extensions_block()
 
         input_params = [textbox, length_slider, preset_menu, model_menu, name1, name2, context, check, history_size_slider]
         if args.cai_chat:
@@ -719,7 +718,7 @@ elif args.notebook:
                     create_refresh_button(preset_menu, lambda : None, lambda : {"choices": get_available_presets()}, "refresh-button")
 
         if args.extensions is not None:
-            extensions_ui_elements, btn_extensions = create_extensions_block()
+            create_extensions_block()
 
         gen_event = buttons["Generate"].click(generate_reply, [textbox, length_slider, preset_menu, model_menu], [textbox, markdown, html], show_progress=args.no_stream, api_name="textgen")
         gen_event2 = textbox.submit(generate_reply, [textbox, length_slider, preset_menu, model_menu], [textbox, markdown, html], show_progress=args.no_stream)
@@ -745,7 +744,7 @@ else:
                     with gr.Column():
                         buttons["Stop"] = gr.Button("Stop")
                 if args.extensions is not None:
-                    extensions_ui_elements, btn_extensions = create_extensions_block()
+                    create_extensions_block()
 
             with gr.Column():
                 with gr.Tab('Raw'):
