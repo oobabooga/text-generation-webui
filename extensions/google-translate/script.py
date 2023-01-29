@@ -12,11 +12,11 @@ def input_modifier(string):
     they are fed into the model.
     """ 
 
-    return translator.translate(string, dest='en').text
+    return translator.translate(string, src=params['language string'], dest='en').text
 
 def output_modifier(string):
     """
     This function is applied to the model outputs.
     """
 
-    return translator.translate(string, dest=params['language string']).text
+    return translator.translate(string, src="en", dest=params['language string']).text
