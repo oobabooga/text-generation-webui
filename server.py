@@ -326,6 +326,7 @@ loaded_preset = None
 default_text = settings['prompt_gpt4chan'] if model_name.lower().startswith(('gpt4chan', 'gpt-4chan', '4chan')) else settings['prompt']
 description = f"\n\n# Text generation lab\nGenerate text using Large Language Models.\n"
 css = ".my-4 {margin-top: 0} .py-6 {padding-top: 2.5rem} #refresh-button {flex: none; margin: 0; padding: 0; min-width: 50px; border: none; box-shadow: none; border-radius: 0} #download-label, #upload-label {min-height: 0}"
+buttons = {}
 
 if args.chat or args.cai_chat:
     history = {'internal': [], 'visible': []}
@@ -431,6 +432,22 @@ if args.chat or args.cai_chat:
         else:
             return history['visible'], last[0]
 
+    def send_last_reply_to_input():
+        if len(history['visible']) > 0:
+            return history['visible'][-1][1]
+        else:
+            return ''
+
+    def replace_last_reply(text, name1, name2):
+        if len(history['visible']) > 0:
+            history['visible'][-1][1] = text
+            history['internal'][-1][1] = apply_extensions(text, "input")
+
+        if args.cai_chat:
+            return generate_chat_html(history['visible'], name1, name2, character)
+        else:
+            return history['visible']
+
     def clear_html():
         return generate_chat_html([], "", "", character)
 
@@ -534,7 +551,7 @@ if args.chat or args.cai_chat:
             if 'example_dialogue' in data and data['example_dialogue'] != '':
                 history['internal'] = tokenize_dialogue(data['example_dialogue'], name1, name2)
             if 'char_greeting' in data and len(data['char_greeting'].strip()) > 0:
-                history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', apply_extensions(data['char_greeting'], "output")]]
+                history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', data['char_greeting']]]
                 history['visible'] += [['', apply_extensions(data['char_greeting'], "output")]]
             else:
                 history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', "Hello there!"]]
@@ -588,12 +605,15 @@ if args.chat or args.cai_chat:
         else:
             display1 = gr.Chatbot()
         textbox = gr.Textbox(label='Input')
-        btn = gr.Button("Generate")
+        buttons["Generate"] = gr.Button("Generate")
         with gr.Row():
-            stop = gr.Button("Stop")
-            btn_regenerate = gr.Button("Regenerate")
-            btn_remove_last = gr.Button("Remove last")
-            btn_clear = gr.Button("Clear history")
+            buttons["Stop"] = gr.Button("Stop")
+            buttons["Regenerate"] = gr.Button("Regenerate")
+            buttons["Remove last"] = gr.Button("Remove last")
+            buttons["Clear"] = gr.Button("Clear history")
+        with gr.Row():
+            buttons["Send last reply to input"] = gr.Button("Send last reply to input")
+            buttons["Replace last reply"] = gr.Button("Replace last reply")
 
         with gr.Row():
             with gr.Column():
@@ -625,7 +645,7 @@ if args.chat or args.cai_chat:
                     with gr.Column():
                         gr.Markdown('Download')
                         download = gr.File()
-                        save_btn = gr.Button(value="Click me")
+                        buttons["Download"] = gr.Button(value="Click me")
             with gr.Tab('Upload character'):
                 with gr.Row():
                     with gr.Column():
@@ -634,7 +654,7 @@ if args.chat or args.cai_chat:
                     with gr.Column():
                         gr.Markdown('2. Select your character\'s profile picture (optional)')
                         upload_img = gr.File(type='binary')
-                upload_btn = gr.Button(value="Submit")
+                buttons["Upload character"] = gr.Button(value="Submit")
             with gr.Tab('Upload your profile picture'):
                 upload_img_me = gr.File(type='binary')
             with gr.Tab('Upload TavernAI Character Card'):
@@ -645,23 +665,26 @@ if args.chat or args.cai_chat:
 
         input_params = [textbox, length_slider, preset_menu, model_menu, name1, name2, context, check, history_size_slider]
         if args.cai_chat:
-            gen_event = btn.click(cai_chatbot_wrapper, input_params, display1, show_progress=args.no_stream, api_name="textgen")
+            gen_event = buttons["Generate"].click(cai_chatbot_wrapper, input_params, display1, show_progress=args.no_stream, api_name="textgen")
             gen_event2 = textbox.submit(cai_chatbot_wrapper, input_params, display1, show_progress=args.no_stream)
         else:
-            gen_event = btn.click(chatbot_wrapper, input_params, display1, show_progress=args.no_stream, api_name="textgen")
+            gen_event = buttons["Generate"].click(chatbot_wrapper, input_params, display1, show_progress=args.no_stream, api_name="textgen")
             gen_event2 = textbox.submit(chatbot_wrapper, input_params, display1, show_progress=args.no_stream)
-        gen_event3 = btn_regenerate.click(regenerate_wrapper, input_params, display1, show_progress=args.no_stream)
+        gen_event3 = buttons["Regenerate"].click(regenerate_wrapper, input_params, display1, show_progress=args.no_stream)
 
-        btn_clear.click(clear_chat_log, [character_menu, name1, name2], display1)
-        btn_remove_last.click(remove_last_message, [name1, name2], [display1, textbox], show_progress=False)
-        btn.click(lambda x: "", textbox, textbox, show_progress=False)
-        btn_regenerate.click(lambda x: "", textbox, textbox, show_progress=False)
+        buttons["Send last reply to input"].click(send_last_reply_to_input, [], textbox, show_progress=args.no_stream)
+        buttons["Replace last reply"].click(replace_last_reply, [textbox, name1, name2], display1, show_progress=args.no_stream)
+
+        buttons["Clear"].click(clear_chat_log, [character_menu, name1, name2], display1)
+        buttons["Remove last"].click(remove_last_message, [name1, name2], [display1, textbox], show_progress=False)
+        for i in ["Generate", "Regenerate", "Replace last reply"]:
+            buttons[i].click(lambda x: "", textbox, textbox, show_progress=False)
         textbox.submit(lambda x: "", textbox, textbox, show_progress=False)
-        stop.click(None, None, None, cancels=[gen_event, gen_event2, gen_event3])
-        save_btn.click(save_history, inputs=[], outputs=[download])
+        buttons["Stop"].click(None, None, None, cancels=[gen_event, gen_event2, gen_event3])
+        buttons["Download"].click(save_history, inputs=[], outputs=[download])
         character_menu.change(load_character, [character_menu, name1, name2], [name2, context, display1])
         upload.upload(upload_history, [upload, name1, name2], [])
-        upload_btn.click(upload_character, [upload_char, upload_img], [character_menu])
+        buttons["Upload character"].click(upload_character, [upload_char, upload_img], [character_menu])
         upload_img_tavern.upload(upload_tavern_character, [upload_img_tavern, name1, name2], [character_menu])
         upload_img_me.upload(upload_your_profile_picture, [upload_img_me], [])
 
@@ -681,8 +704,8 @@ elif args.notebook:
             markdown = gr.Markdown()
         with gr.Tab('HTML'):
             html = gr.HTML()
-        btn = gr.Button("Generate")
-        stop = gr.Button("Stop")
+        buttons["Generate"] = gr.Button("Generate")
+        buttons["Stop"] = gr.Button("Stop")
 
         length_slider = gr.Slider(minimum=settings['max_new_tokens_min'], maximum=settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=settings['max_new_tokens'])
         with gr.Row():
@@ -698,9 +721,9 @@ elif args.notebook:
         if args.extensions is not None:
             extensions_ui_elements, btn_extensions = create_extensions_block()
 
-        gen_event = btn.click(generate_reply, [textbox, length_slider, preset_menu, model_menu], [textbox, markdown, html], show_progress=args.no_stream, api_name="textgen")
+        gen_event = buttons["Generate"].click(generate_reply, [textbox, length_slider, preset_menu, model_menu], [textbox, markdown, html], show_progress=args.no_stream, api_name="textgen")
         gen_event2 = textbox.submit(generate_reply, [textbox, length_slider, preset_menu, model_menu], [textbox, markdown, html], show_progress=args.no_stream)
-        stop.click(None, None, None, cancels=[gen_event, gen_event2])
+        buttons["Stop"].click(None, None, None, cancels=[gen_event, gen_event2])
 
 else:
     with gr.Blocks(css=css, analytics_enabled=False) as interface:
@@ -715,12 +738,12 @@ else:
                 with gr.Row():
                     model_menu = gr.Dropdown(choices=available_models, value=model_name, label='Model')
                     create_refresh_button(model_menu, lambda : None, lambda : {"choices": get_available_models()}, "refresh-button")
-                btn = gr.Button("Generate")
+                buttons["Generate"] = gr.Button("Generate")
                 with gr.Row():
                     with gr.Column():
                         cont = gr.Button("Continue")
                     with gr.Column():
-                        stop = gr.Button("Stop")
+                        buttons["Stop"] = gr.Button("Stop")
                 if args.extensions is not None:
                     extensions_ui_elements, btn_extensions = create_extensions_block()
 
@@ -732,10 +755,10 @@ else:
                 with gr.Tab('HTML'):
                     html = gr.HTML()
 
-        gen_event = btn.click(generate_reply, [textbox, length_slider, preset_menu, model_menu], [output_textbox, markdown, html], show_progress=args.no_stream, api_name="textgen")
+        gen_event = buttons["Generate"].click(generate_reply, [textbox, length_slider, preset_menu, model_menu], [output_textbox, markdown, html], show_progress=args.no_stream, api_name="textgen")
         gen_event2 = textbox.submit(generate_reply, [textbox, length_slider, preset_menu, model_menu], [output_textbox, markdown, html], show_progress=args.no_stream)
         cont_event = cont.click(generate_reply, [output_textbox, length_slider, preset_menu, model_menu], [output_textbox, markdown, html], show_progress=args.no_stream)
-        stop.click(None, None, None, cancels=[gen_event, gen_event2, cont_event])
+        buttons["Stop"].click(None, None, None, cancels=[gen_event, gen_event2, cont_event])
 
 interface.queue()
 if args.listen:
