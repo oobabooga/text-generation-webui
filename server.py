@@ -499,8 +499,8 @@ if args.chat or args.cai_chat:
             if 'example_dialogue' in data and data['example_dialogue'] != '':
                 history['internal'] = tokenize_dialogue(data['example_dialogue'], name1, name2)
             if 'char_greeting' in data and len(data['char_greeting'].strip()) > 0:
-                history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', data['char_greeting']]]
-                history['visible'] += [['', data['char_greeting']]]
+                history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', apply_extensions(data['char_greeting'], "output")]]
+                history['visible'] += [['', apply_extensions(data['char_greeting'], "output")]]
             else:
                 history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', "Hello there!"]]
                 history['visible'] += [['', "Hello there!"]]
