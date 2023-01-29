@@ -72,8 +72,7 @@ if args.settings is not None and Path(args.settings).exists():
     with open(Path(args.settings), 'r') as f:
         new_settings = json.load(f)
     for item in new_settings:
-        if item in settings:
-            settings[item] = new_settings[item]
+        settings[item] = new_settings[item]
 
 def load_model(model_name):
     print(f"Loading {model_name}...")
@@ -608,17 +607,21 @@ if args.chat or args.cai_chat:
 
         if args.extensions is not None:
             extensions_ui_elements = []
+            default_values = []
             gr.Markdown('## Extensions parameters')
             for ext in sorted(extension_state, key=lambda x : extension_state[x][1]):
                 if extension_state[ext][0] == True:
                     params = eval(f"extensions.{ext}.script.params")
                     for param in params:
+                        _id = f"{ext}-{param}"
+                        default_value = settings[_id] if _id in settings else params[param]
+                        default_values.append(default_value)
                         if type(params[param]) == str:
-                            extensions_ui_elements.append(gr.Textbox(value=params[param], label=param))
+                            extensions_ui_elements.append(gr.Textbox(value=default_value, label=f"{ext}-{param}"))
                         elif type(params[param]) in [int, float]:
-                            extensions_ui_elements.append(gr.Number(value=params[param], label=param))
+                            extensions_ui_elements.append(gr.Number(value=default_value, label=f"{ext}-{param}"))
                         elif type(params[param]) == bool:
-                            extensions_ui_elements.append(gr.Checkbox(value=params[param], label=param))
+                            extensions_ui_elements.append(gr.Checkbox(value=default_value, label=f"{ext}-{param}"))
 
             def update_extensions_parameters(*kwargs):
                 i = 0
@@ -630,6 +633,7 @@ if args.chat or args.cai_chat:
                                 params[param] = eval(f"kwargs[{i}]")
                                 i += 1
 
+            update_extensions_parameters(*default_values)
             btn_extensions = gr.Button("Apply")
             btn_extensions.click(update_extensions_parameters, [*extensions_ui_elements], [])
 
