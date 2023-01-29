@@ -515,7 +515,7 @@ if args.chat or args.cai_chat:
         else:
             return name2, context, history['visible']
 
-    def upload_character(json_file, img):
+    def upload_character(json_file, img, tavern=False):
         json_file = json_file if type(json_file) == str else json_file.decode('utf-8')
         data = json.loads(json_file)
         outfile_name = data["char_name"]
@@ -523,6 +523,8 @@ if args.chat or args.cai_chat:
         while Path(f'characters/{outfile_name}.json').exists():
             outfile_name = f'{data["char_name"]}_{i:03d}'
             i += 1
+        if tavern:
+            outfile_name = f'TavernAI-{outfile_name}'
         with open(Path(f'characters/{outfile_name}.json'), 'w') as f:
             f.write(json_file)
         if img is not None:
@@ -538,7 +540,7 @@ if args.chat or args.cai_chat:
         _json = json.loads(decoded_string)
         _json = {"char_name": _json['name'], "char_persona": _json['description'], "char_greeting": _json["first_mes"], "example_dialogue": _json['mes_example'], "world_scenario": _json['scenario']}
         _json['example_dialogue'] = _json['example_dialogue'].replace('{{user}}', name1).replace('{{char}}', _json['char_name'])
-        return upload_character(json.dumps(_json), img)
+        return upload_character(json.dumps(_json), img, tavern=True)
 
     def upload_your_profile_picture(img):
         img = Image.open(io.BytesIO(img))
