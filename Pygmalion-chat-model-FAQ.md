@@ -4,8 +4,9 @@ Put the JSON file in the `characters` folder, or upload it directly from the web
 
 #### How do I add a profile picture for my character?
 
-You have two options:
+You have three options:
 
+* Upload any image (any format, any size) along with your JSON directly in the web UI.
 * Put an image with the same name as your character's JSON file into the `characters` folder. For example, if your bot is `Character.json`, add `Character.jpg` or `Character.png` to the folder.
 * Put an image called `img_bot.jpg` or `img_bot.png` into the `text-generation-webui` folder. This image will be used as the profile picture for any bots that don't have one.
 
@@ -15,7 +16,7 @@ Put an image called `img_you.jpg` or `img_you.png` into the `text-generation-web
 
 #### I have imported my character but I can't see the `example_dialogue`.
 
-The `example_dialogue` from your JSON character is parsed, added to the chat history, and kept hidden. To view it, you can either download your chat history and view the lines before `<|BEGIN-VISIBLE-CHAT|>`, or start the web UI with the `--verbose` option to print your prompts in the terminal.
+The `example_dialogue` from your JSON character is parsed, added to the chat history, and kept hidden. You can check the parsed output in the terminal, where it is always printed whenever you load a character.
 
 Note that for the example dialogue to be parsed correctly, your name in the web UI (usually `You`) must match the name used in the example dialogue.
 
