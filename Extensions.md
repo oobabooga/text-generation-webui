@@ -44,7 +44,7 @@ params = {
 }
 ```
 
-where the values must be numbers, strings, or booleans. These web UI will create fields for you to change these parameters interactively.
+where the values must be numbers, strings, or booleans. The web UI will create fields for you to change these parameters interactively.
 
 ## Activating an extension
 
