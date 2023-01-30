@@ -63,5 +63,5 @@ python server.py --extensions pretty,enthusiasm # First apply pretty, then enthu
 
 |Extension|Description|
 |---------|-----------|
-|[google_translate](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/google_translate/script.py)| Automatically translates inputs and outputs using Google Translate|
-|[example](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/example/script.py)| Just a very simple example|
+|[google_translate](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/google_translate/script.py)| Automatically translates inputs and outputs using Google Translate.|
+|[example](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/example/script.py)| Just a very simple example.|
