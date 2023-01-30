@@ -24,6 +24,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * Split large models across your GPU(s), CPU, and disk.
 * CPU mode.
 * Get responses via API.
+* Support for extensions ([guide](https://github.com/oobabooga/text-generation-webui/wiki/Extensions))
 * Works on Google Colab ([see the full guide](https://github.com/oobabooga/text-generation-webui/wiki/Running-on-Colab)).
 
 ## Installation
