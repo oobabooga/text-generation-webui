@@ -38,13 +38,21 @@ Marie Antoinette will become very enthusiastic in all her messages.
 
 ```
 params = {
-    'description1': value1,
-    'description1': value2,
+    'name1': value1,
+    'name2': value2,
     ...
 }
 ```
 
 where the values must be numbers, strings, or booleans. The web UI will create fields for you to change these parameters interactively.
+
+You can define default values for extension parameters in a `settings.json` file like this:
+
+```
+google_translate-language string: "fr"
+``` 
+
+where `google_translate` is the name of the extension, `language string` is the name of the parameter, and `"fr"` is the value.
 
 ## Activating an extension
 
