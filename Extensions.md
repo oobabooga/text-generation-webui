@@ -2,7 +2,7 @@ This web UI supports extensions. They can be used to modify your prompt or the m
 
 ## Creating an extension
 
-In order to create an extension, create a folder under `extensions` and put a file named `script.py` in there. 
+In order to create an extension, create a folder under `extensions` and put a file named `script.py` in that folder. For instance, `extensions/my_extension`. 
 
 ## Extension functions
 
