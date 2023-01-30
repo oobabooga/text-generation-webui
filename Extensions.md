@@ -34,7 +34,7 @@ Marie Antoinette will become very enthusiastic in all her messages.
 
 ## Extension parameters
 
-The `script.py` file may also contain a `params` dict in the format
+`script.py` may also contain a `params` dict in the format
 
 ```
 params = {
