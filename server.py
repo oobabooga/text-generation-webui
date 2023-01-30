@@ -682,10 +682,10 @@ if args.chat or args.cai_chat:
             gen_events.append(buttons["Generate"].click(chatbot_wrapper, input_params, display, show_progress=args.no_stream, api_name="textgen"))
             gen_events.append(textbox.submit(chatbot_wrapper, input_params, display, show_progress=args.no_stream))
         gen_events.append(buttons["Regenerate"].click(regenerate_wrapper, input_params, display, show_progress=args.no_stream))
+        gen_events.append(buttons["Impersonate"].click(impersonate_wrapper, input_params, textbox, show_progress=args.no_stream))
 
         buttons["Send last reply to input"].click(send_last_reply_to_input, [], textbox, show_progress=args.no_stream)
         buttons["Replace last reply"].click(replace_last_reply, [textbox, name1, name2], display, show_progress=args.no_stream)
-        buttons["Impersonate"].click(impersonate_wrapper, input_params, textbox, show_progress=args.no_stream)
         buttons["Clear"].click(clear_chat_log, [character_menu, name1, name2], display)
         buttons["Remove last"].click(remove_last_message, [name1, name2], [display, textbox], show_progress=False)
         buttons["Stop"].click(None, None, None, cancels=gen_events)
