@@ -8,7 +8,6 @@ import json
 import io
 import base64
 import sys
-from sys import exit
 from pathlib import Path
 from PIL import Image
 import copy
@@ -69,8 +68,7 @@ settings = {
 }
 
 if args.settings is not None and Path(args.settings).exists():
-    with open(Path(args.settings), 'r') as f:
-        new_settings = json.load(f)
+    new_settings = json.loads(open(Path(args.settings), 'r').read())
     for item in new_settings:
         settings[item] = new_settings[item]
 
@@ -96,20 +94,14 @@ def load_model(model_name):
             settings.append("torch_dtype=torch.float32")
         else:
             settings.append("device_map='auto'")
-            if args.gpu_memory is not None:
-                if args.cpu_memory is not None:
-                    settings.append(f"max_memory={{0: '{args.gpu_memory}GiB', 'cpu': '{args.cpu_memory}GiB'}}")
-                else:
-                    settings.append(f"max_memory={{0: '{args.gpu_memory}GiB', 'cpu': '99GiB'}}")
+            settings.append("load_in_8bit=True" if args.load_in_8bit else "torch_dtype=torch.float16")
+
+            if args.gpu_memory and args.cpu_memory:
+                settings.append(f"max_memory={{0: '{args.gpu_memory}GiB', 'cpu': '{args.cpu_memory}GiB'}}")
+            elif args.gpu_memory:
+                settings.append(f"max_memory={{0: '{args.gpu_memory}GiB', 'cpu': '99GiB'}}")
             if args.disk:
-                if args.disk_cache_dir is not None:
-                    settings.append(f"offload_folder='{args.disk_cache_dir}'")
-                else:
-                    settings.append("offload_folder='cache'")
-            if args.load_in_8bit:
-                settings.append("load_in_8bit=True")
-            else:
-                settings.append("torch_dtype=torch.float16")
+                settings.append(f"offload_folder='{args.disk_cache_dir or 'cache'}'")
 
         settings = ', '.join(set(settings))
         command = f"{command}(Path(f'models/{model_name}'), {settings})"
@@ -307,7 +299,7 @@ if args.model is not None:
 else:
     if len(available_models) == 0:
         print("No models are available! Please download at least one.")
-        exit(0)
+        sys.exit(0)
     elif len(available_models) == 1:
         i = 0
     else:
@@ -566,8 +558,7 @@ if args.chat or args.cai_chat:
         history['visible'] = []
         if _character != 'None':
             character = _character
-            with open(Path(f'characters/{_character}.json'), 'r') as f:
-                data = json.loads(f.read())
+            data = json.loads(open(Path(f'characters/{_character}.json'), 'r').read())
             name2 = data['char_name']
             if 'char_persona' in data and data['char_persona'] != '':
                 context += f"{data['char_name']}'s Persona: {data['char_persona']}\n"
