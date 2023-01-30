@@ -519,10 +519,14 @@ if args.chat or args.cai_chat:
                     _history.append(entry)
                 entry = ['', '']
 
-        print(f"\nDialogue tokenized to (formatted as [question, reply]):\n\n", end='')
-        for i in _history:
-            print(i)
-        print("--------------------\n", end='')
+        print(f"\033[1;32;1m\nDialogue tokenized to:\033[0;37;0m\n", end='')
+        for row in _history:
+            for column in row:
+                print("\n")
+                for line in column.strip().split('\n'):
+                    print("|  "+line+"\n")
+                print("|\n")
+            print("------------------------------")
 
         return _history
 
