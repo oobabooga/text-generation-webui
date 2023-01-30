@@ -63,7 +63,7 @@ where `google_translate` is the name of the extension, `language string` is the 
 
 ## Activating an extension
 
-In order to use your extension, start the web UI with the `--extensions` flag. For instance, if your extension was created in the `extensions/enthusiasm` folder, use
+In order to use your extension, start the web UI with the `--extensions` flag. For instance, if your extension was created in the folder `extensions/enthusiasm`, use
 
 `python server.py --extensions enthusiasm`
 
