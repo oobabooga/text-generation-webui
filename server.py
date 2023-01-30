@@ -339,7 +339,7 @@ if args.chat or args.cai_chat:
         text = text.strip()
         return text
 
-    def generate_chat_prompt(text, tokens, name1, name2, context, history_size):
+    def generate_chat_prompt(text, tokens, name1, name2, context, history_size, impersonate=False):
         text = clean_chat_message(text)
 
         rows = [f"{context.strip()}\n"]
@@ -354,15 +354,43 @@ if args.chat or args.cai_chat:
             i -= 1
             if history_size != 0 and count >= history_size:
                 break
-        rows.append(f"{name1}: {text}\n")
-        rows.append(apply_extensions(f"{name2}:", "bot_prefix"))
 
-        while len(rows) > 3 and len(encode(''.join(rows), tokens)[0]) >= 2048-tokens:
+        if not impersonate:
+            rows.append(f"{name1}: {text}\n")
+            rows.append(apply_extensions(f"{name2}:", "bot_prefix"))
+            limit = 3
+        else:
+            rows.append(f"{name1}:")
+            limit = 2
+
+        while len(rows) > limit and len(encode(''.join(rows), tokens)[0]) >= 2048-tokens:
             rows.pop(1)
             rows.pop(1)
 
         question = ''.join(rows)
         return question
+
+    def extract_message_from_reply(question, reply, current, other, check, extensions=False):
+        next_character_found = False
+        previous_idx = [m.start() for m in re.finditer(f"(^|\n){current}:", question)]
+        idx = [m.start() for m in re.finditer(f"(^|\n){current}:", reply)]
+        idx = idx[len(previous_idx)-1]
+
+        if extensions:
+            reply = reply[idx + 1 + len(apply_extensions(f"{current}:", "bot_prefix")):]
+        else:
+            reply = reply[idx + 1 + len(f"{current}:"):]
+
+        if check:
+            reply = reply.split('\n')[0].strip()
+        else:
+            idx = reply.find(f"\n{other}:")
+            if idx != -1:
+                reply = reply[:idx]
+                next_character_found = True
+            reply = clean_chat_message(reply)
+
+        return reply, next_character_found
 
     def chatbot_wrapper(text, tokens, inference_settings, selected_model, name1, name2, context, check, history_size):
         original_text = text
@@ -372,39 +400,21 @@ if args.chat or args.cai_chat:
         history['visible'].append(['', ''])
         eos_token = '\n' if check else None
         for reply in generate_reply(question, tokens, inference_settings, selected_model, eos_token=eos_token, stopping_string=f"\n{name1}:"):
-            next_character_found = False
-
-            previous_idx = [m.start() for m in re.finditer(f"(^|\n){name2}:", question)]
-            idx = [m.start() for m in re.finditer(f"(^|\n){name2}:", reply)]
-            idx = idx[len(previous_idx)-1]
-
-            reply = reply[idx + 1 + len(apply_extensions(f"{name2}:", "bot_prefix")):]
-            if check:
-                reply = reply.split('\n')[0].strip()
-            else:
-                idx = reply.find(f"\n{name1}:")
-                if idx != -1:
-                    reply = reply[:idx]
-                    next_character_found = True
-                reply = clean_chat_message(reply)
-
+            reply, next_character_found = extract_message_from_reply(question, reply, name2, name1, check, extensions=True)
             history['internal'][-1] = [text, reply]
             history['visible'][-1] = [original_text, apply_extensions(reply, "output")]
+            yield history['visible']
             if next_character_found:
                 break
 
-            # Prevent the chat log from flashing if something like "\nYo" is generated just
-            # before "\nYou:" is completed
-            tmp = f"\n{name1}:"
-            next_character_substring_found = False
-            for j in range(1, len(tmp)):
-                if reply[-j:] == tmp[:j]:
-                    next_character_substring_found = True
-
-            if not next_character_substring_found:
-                yield history['visible']
-
-        yield history['visible']
+    def impersonate_wrapper(text, tokens, inference_settings, selected_model, name1, name2, context, check, history_size):
+        question = generate_chat_prompt(text, tokens, name1, name2, context, history_size, impersonate=True)
+        eos_token = '\n' if check else None
+        for reply in generate_reply(question, tokens, inference_settings, selected_model, eos_token=eos_token, stopping_string=f"\n{name2}:"):
+            reply, next_character_found = extract_message_from_reply(question, reply, name1, name2, check, extensions=False)
+            yield apply_extensions(reply, "output")
+            if next_character_found:
+                break
 
     def cai_chatbot_wrapper(text, tokens, inference_settings, selected_model, name1, name2, context, check, history_size):
         for _history in chatbot_wrapper(text, tokens, inference_settings, selected_model, name1, name2, context, check, history_size):
@@ -614,6 +624,7 @@ if args.chat or args.cai_chat:
         with gr.Row():
             buttons["Send last reply to input"] = gr.Button("Send last reply to input")
             buttons["Replace last reply"] = gr.Button("Replace last reply")
+            buttons["Impersonate"] = gr.Button("Impersonate")
 
         with gr.Row():
             with gr.Column():
@@ -674,6 +685,7 @@ if args.chat or args.cai_chat:
 
         buttons["Send last reply to input"].click(send_last_reply_to_input, [], textbox, show_progress=args.no_stream)
         buttons["Replace last reply"].click(replace_last_reply, [textbox, name1, name2], display, show_progress=args.no_stream)
+        buttons["Impersonate"].click(impersonate_wrapper, input_params, textbox, show_progress=args.no_stream)
         buttons["Clear"].click(clear_chat_log, [character_menu, name1, name2], display)
         buttons["Remove last"].click(remove_last_message, [name1, name2], [display, textbox], show_progress=False)
         buttons["Stop"].click(None, None, None, cancels=gen_events)
