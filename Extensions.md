@@ -1,5 +1,12 @@
 This web UI supports extensions. They can be used to modify your prompt or the model's output.
 
+## Examples
+
+|Extension|Description|
+|---------|-----------|
+|[google_translate](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/google_translate/script.py)| Automatically translates inputs and outputs using Google Translate.|
+|[example](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/example/script.py)| Just a very simple example.|
+
 ## Creating an extension
 
 In order to create an extension, create a folder under `extensions` and put a file named `script.py` in that folder. For instance, `extensions/my_extension`. 
@@ -67,9 +74,3 @@ python server.py --extensions enthusiasm,pretty # First apply enthusiasm, then p
 python server.py --extensions pretty,enthusiasm # First apply pretty, then enthusiasm
 ```
 
-## Examples
-
-|Extension|Description|
-|---------|-----------|
-|[google_translate](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/google_translate/script.py)| Automatically translates inputs and outputs using Google Translate.|
-|[example](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/example/script.py)| Just a very simple example.|
