@@ -364,6 +364,8 @@ if args.chat or args.cai_chat:
 
     def extract_message_from_reply(question, reply, current, other, check, extensions=False):
         next_character_found = False
+        substring_found = False
+
         previous_idx = [m.start() for m in re.finditer(f"(^|\n){current}:", question)]
         idx = [m.start() for m in re.finditer(f"(^|\n){current}:", reply)]
         idx = idx[len(previous_idx)-1]
@@ -372,7 +374,7 @@ if args.chat or args.cai_chat:
             reply = reply[idx + 1 + len(apply_extensions(f"{current}:", "bot_prefix")):]
         else:
             reply = reply[idx + 1 + len(f"{current}:"):]
-
+        
         if check:
             reply = reply.split('\n')[0].strip()
         else:
@@ -385,7 +387,6 @@ if args.chat or args.cai_chat:
             # Detect if something like "\nYo" is generated just before
             # "\nYou:" is completed
             tmp = f"\n{other}:"
-            substring_found = False
             for j in range(1, len(tmp)):
                 if reply[-j:] == tmp[:j]:
                     substring_found = True
