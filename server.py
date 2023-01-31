@@ -373,6 +373,8 @@ if args.chat or args.cai_chat:
         else:
             reply = reply[idx + 1 + len(f"{current}:"):]
 
+        substring_found = False
+        
         if check:
             reply = reply.split('\n')[0].strip()
         else:
@@ -385,7 +387,6 @@ if args.chat or args.cai_chat:
             # Detect if something like "\nYo" is generated just before
             # "\nYou:" is completed
             tmp = f"\n{other}:"
-            substring_found = False
             for j in range(1, len(tmp)):
                 if reply[-j:] == tmp[:j]:
                     substring_found = True
