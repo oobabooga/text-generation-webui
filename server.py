@@ -314,7 +314,7 @@ def generate_reply(question, tokens, inference_settings, selected_model, eos_tok
         t0 = time.time()
         if args.deepspeed:
             with torch.no_grad():
-                output = eval(f"model.generate(input_ids, eos_token_id={n}, stopping_criteria=stopping_criteria_list, {preset})")
+                output = eval(f"model.generate(input_ids, synced_gpus=True, eos_token_id={n}, stopping_criteria=stopping_criteria_list, {preset})")
         else:
             output = eval(f"model.generate(input_ids, eos_token_id={n}, stopping_criteria=stopping_criteria_list, {preset}){cuda}")
         reply = decode(output[0])
@@ -331,7 +331,7 @@ def generate_reply(question, tokens, inference_settings, selected_model, eos_tok
         for i in tqdm(range(tokens//8+1)):
             if args.deepspeed:
                 with torch.no_grad():
-                    output = eval(f"model.generate(input_ids, eos_token_id={n}, stopping_criteria=stopping_criteria_list, {preset})")
+                    output = eval(f"model.generate(input_ids, synced_gpus=True, eos_token_id={n}, stopping_criteria=stopping_criteria_list, {preset})")
             else:
                 output = eval(f"model.generate(input_ids, eos_token_id={n}, stopping_criteria=stopping_criteria_list, {preset}){cuda}")
             reply = decode(output[0])
