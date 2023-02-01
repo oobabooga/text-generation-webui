@@ -8,6 +8,7 @@ import json
 import io
 import base64
 import sys
+import os
 from pathlib import Path
 from PIL import Image
 import copy
@@ -15,7 +16,7 @@ import gradio as gr
 import warnings
 from tqdm import tqdm
 import transformers
-from transformers import AutoTokenizer, AutoModelForCausalLM
+from transformers import AutoTokenizer, AutoModelForCausalLM, AutoConfig
 from modules.html_generator import *
 from modules.ui import *
 from modules.stopping_criteria import _SentinelTokenStoppingCriteria
@@ -34,6 +35,9 @@ parser.add_argument('--disk', action='store_true', help='If the model is too lar
 parser.add_argument('--disk-cache-dir', type=str, help='Directory to save the disk cache to. Defaults to "cache/".')
 parser.add_argument('--gpu-memory', type=int, help='Maximum GPU memory in GiB to allocate. This is useful if you get out of memory errors while trying to generate text. Must be an integer number.')
 parser.add_argument('--cpu-memory', type=int, help='Maximum CPU memory in GiB to allocate for offloaded weights. Must be an integer number. Defaults to 99.')
+parser.add_argument('--deepspeed', action='store_true', help='Enable the use of DeepSpeed ZeRO-3 for inference via the Transformers integration.')
+parser.add_argument('--nvme-offload-dir', type=str, help='Directory to use for DeepSpeed ZeRO-3 NVME offloading.')
+parser.add_argument('--local_rank', type=int, default=0, help='Optional argument for DeepSpeed distributed setups.')
 parser.add_argument('--no-stream', action='store_true', help='Don\'t stream the text output in real time. This improves the text generation performance.')
 parser.add_argument('--settings', type=str, help='Load the default interface settings from this json file. See settings-template.json for an example.')
 parser.add_argument('--extensions', type=str, help='The list of extensions to load. If you want to load more than one extension, write the names separated by commas and between quotation marks, "like,this".')
@@ -72,12 +76,98 @@ if args.settings is not None and Path(args.settings).exists():
     for item in new_settings:
         settings[item] = new_settings[item]
 
+
+if args.deepspeed:
+    import deepspeed
+    from transformers.deepspeed import HfDeepSpeedConfig, is_deepspeed_zero3_enabled
+
+    # Distributed setup
+    if args.local_rank is not None:
+        local_rank = args.local_rank
+    else:
+        local_rank = int(os.getenv("LOCAL_RANK", "0"))
+    world_size = int(os.getenv("WORLD_SIZE", "1"))
+    torch.cuda.set_device(local_rank)
+    deepspeed.init_distributed()
+
+    # DeepSpeed configration
+    # https://huggingface.co/docs/transformers/main_classes/deepspeed
+    train_batch_size = 1 * world_size
+    if args.nvme_offload_dir:
+        ds_config = {
+            "fp16": {
+                "enabled": True,
+            },
+            "bf16": {
+                "enabled": False,
+            },
+            "zero_optimization": {
+                "stage": 3,
+                "offload_param": {
+                    "device": "nvme",
+                    "nvme_path": args.nvme_offload_dir,
+                    "pin_memory": True,
+                    "buffer_count": 5,
+                    "buffer_size": 1e9,
+                    "max_in_cpu": 1e9
+                },
+                "overlap_comm": True,
+                "reduce_bucket_size": "auto",
+                "contiguous_gradients": True,
+                "sub_group_size": 1e8,
+                "stage3_prefetch_bucket_size": "auto",
+                "stage3_param_persistence_threshold": "auto",
+                "stage3_max_live_parameters": "auto",
+                "stage3_max_reuse_distance": "auto",
+            },
+            "aio": {
+                "block_size": 262144,
+                "queue_depth": 32,
+                "thread_count": 1,
+                "single_submit": False,
+                "overlap_events": True
+            },
+            "steps_per_print": 2000,
+            "train_batch_size": train_batch_size,
+            "train_micro_batch_size_per_gpu": 1,
+            "wall_clock_breakdown": False
+        }
+    else:
+        ds_config = {
+            "fp16": {
+                "enabled": True,
+            },
+            "bf16": {
+                "enabled": False,
+            },
+            "zero_optimization": {
+                "stage": 3,
+                "offload_param": {
+                    "device": "cpu",
+                    "pin_memory": True
+                },
+                "overlap_comm": True,
+                "contiguous_gradients": True,
+                "reduce_bucket_size": "auto",
+                "stage3_prefetch_bucket_size": "auto",
+                "stage3_param_persistence_threshold": "auto",
+                "stage3_max_live_parameters": "auto",
+                "stage3_max_reuse_distance": "auto",
+            },
+            "steps_per_print": 2000,
+            "train_batch_size": train_batch_size,
+            "train_micro_batch_size_per_gpu": 1,
+            "wall_clock_breakdown": False
+        }
+    dschf = HfDeepSpeedConfig(ds_config) # Keep this object alive for the Transformers integration
+
+
 def load_model(model_name):
     print(f"Loading {model_name}...")
     t0 = time.time()
 
     # Default settings
-    if not (args.cpu or args.load_in_8bit or args.auto_devices or args.disk or args.gpu_memory is not None or args.cpu_memory is not None):
+    if not (args.cpu or args.load_in_8bit or args.auto_devices or args.disk or args.gpu_memory is not None or args.cpu_memory is not None or args.deepspeed):
         if Path(f"torch-dumps/{model_name}.pt").exists():
             print("Loading in .pt format...")
             model = torch.load(Path(f"torch-dumps/{model_name}.pt"))
@@ -85,6 +175,18 @@ def load_model(model_name):
             model = AutoModelForCausalLM.from_pretrained(Path(f"models/{model_name}"), device_map='auto', load_in_8bit=True)
         else:
             model = AutoModelForCausalLM.from_pretrained(Path(f"models/{model_name}"), low_cpu_mem_usage=True, torch_dtype=torch.float16).cuda()
+
+    # DeepSpeed ZeRO-3
+    elif args.deepspeed:
+        model = AutoModelForCausalLM.from_pretrained(Path(f"models/{model_name}", no_split_module_classes=["GPTJBlock"]))
+        model = deepspeed.initialize(model=model,
+                                     config_params=ds_config,
+                                     model_parameters=None,
+                                     optimizer=None,
+                                     lr_scheduler=None)[0]
+        model.module.eval() # Inference
+        print(f"DeepSpeed ZeRO-3 is enabled: {is_deepspeed_zero3_enabled()}")
+
     # Custom
     else:
         command = "AutoModelForCausalLM.from_pretrained"
@@ -190,7 +292,10 @@ def generate_reply(question, tokens, inference_settings, selected_model, eos_tok
 
     cuda = "" if args.cpu else ".cuda()"
     n = tokenizer.eos_token_id if eos_token is None else tokenizer.encode(eos_token, return_tensors='pt')[0][-1]
-    input_ids = encode(question, tokens)
+    if args.deepspeed:
+        input_ids = encode(question, tokens).to(device=local_rank)
+    else:
+        input_ids = encode(question, tokens)
     if stopping_string is not None:
         # The stopping_criteria code below was copied from
         # https://github.com/PygmalionAI/gradio-ui/blob/master/src/model.py
@@ -207,7 +312,11 @@ def generate_reply(question, tokens, inference_settings, selected_model, eos_tok
     # Generate the entire reply at once
     if args.no_stream:
         t0 = time.time()
-        output = eval(f"model.generate(input_ids, eos_token_id={n}, stopping_criteria=stopping_criteria_list, {preset}){cuda}")
+        if args.deepspeed:
+            with torch.no_grad():
+                output = eval(f"model.generate(input_ids, eos_token_id={n}, stopping_criteria=stopping_criteria_list, {preset})")
+        else:
+            output = eval(f"model.generate(input_ids, eos_token_id={n}, stopping_criteria=stopping_criteria_list, {preset}){cuda}")
         reply = decode(output[0])
         t1 = time.time()
         print(f"Output generated in {(t1-t0):.2f} seconds ({(len(output[0])-len(input_ids[0]))/(t1-t0):.2f} it/s)")
@@ -220,7 +329,11 @@ def generate_reply(question, tokens, inference_settings, selected_model, eos_tok
         yield formatted_outputs(original_question, model_name)
         preset = preset.replace('max_new_tokens=tokens', 'max_new_tokens=8')
         for i in tqdm(range(tokens//8+1)):
-            output = eval(f"model.generate(input_ids, eos_token_id={n}, stopping_criteria=stopping_criteria_list, {preset}){cuda}")
+            if args.deepspeed:
+                with torch.no_grad():
+                    output = eval(f"model.generate(input_ids, eos_token_id={n}, stopping_criteria=stopping_criteria_list, {preset})")
+            else:
+                output = eval(f"model.generate(input_ids, eos_token_id={n}, stopping_criteria=stopping_criteria_list, {preset}){cuda}")
             reply = decode(output[0])
             if not (args.chat or args.cai_chat):
                 reply = original_question + apply_extensions(reply[len(question):], "output")
