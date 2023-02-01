@@ -88,7 +88,7 @@ def load_model(model_name):
     # Custom
     else:
         command = "AutoModelForCausalLM.from_pretrained"
-        settings = []
+        settings = ["low_cpu_mem_usage=True"]
 
         if args.cpu:
             settings.append("low_cpu_mem_usage=True")
