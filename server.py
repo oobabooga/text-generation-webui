@@ -215,10 +215,9 @@ def generate_reply(question, tokens, inference_settings, selected_model, eos_tok
             preset = infile.read()
         loaded_preset = inference_settings
 
-    cuda = "" if args.cpu else ".cuda()"
-    n = tokenizer.eos_token_id if eos_token is None else tokenizer.encode(eos_token, return_tensors='pt')[0][-1]
     input_ids = encode(question, tokens)
-
+    cuda = "" if (args.cpu or args.deepspeed) else ".cuda()"
+    n = tokenizer.eos_token_id if eos_token is None else tokenizer.encode(eos_token, return_tensors='pt')[0][-1]
     if stopping_string is not None:
         # The stopping_criteria code below was copied from
         # https://github.com/PygmalionAI/gradio-ui/blob/master/src/model.py
@@ -232,14 +231,15 @@ def generate_reply(question, tokens, inference_settings, selected_model, eos_tok
     else:
         stopping_criteria_list = None
 
+    generate_params = [f"eos_token_id={n}", "stopping_criteria=stopping_criteria_list"]
+    if args.deepspeed:
+        generate_params.append("synced_gpus=True")
+
     # Generate the entire reply at once
     if args.no_stream:
         t0 = time.time()
         with torch.no_grad():
-            if not args.deepspeed:
-                output = eval(f"model.generate(input_ids, eos_token_id={n}, stopping_criteria=stopping_criteria_list, {preset}){cuda}")
-            else:
-                output = eval(f"model.generate(input_ids, synced_gpus=True, eos_token_id={n}, stopping_criteria=stopping_criteria_list, {preset})")
+            output = eval(f"model.generate(input_ids, {','.join(generate_params)}, {preset}){cuda}")
         reply = decode(output[0])
         t1 = time.time()
         print(f"Output generated in {(t1-t0):.2f} seconds ({(len(output[0])-len(input_ids[0]))/(t1-t0):.2f} it/s)")
@@ -253,10 +253,7 @@ def generate_reply(question, tokens, inference_settings, selected_model, eos_tok
         preset = preset.replace('max_new_tokens=tokens', 'max_new_tokens=8')
         for i in tqdm(range(tokens//8+1)):
             with torch.no_grad():
-                if not args.deepspeed:
-                    output = eval(f"model.generate(input_ids, eos_token_id={n}, stopping_criteria=stopping_criteria_list, {preset}){cuda}")
-                else:
-                    output = eval(f"model.generate(input_ids, synced_gpus=True, eos_token_id={n}, stopping_criteria=stopping_criteria_list, {preset})")
+                output = eval(f"model.generate(input_ids, {','.join(generate_params)}, {preset}){cuda}")
             reply = decode(output[0])
             if not (args.chat or args.cai_chat):
                 reply = original_question + apply_extensions(reply[len(question):], "output")
