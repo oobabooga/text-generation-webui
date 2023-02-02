@@ -36,9 +36,9 @@ parser.add_argument('--disk-cache-dir', type=str, help='Directory to save the di
 parser.add_argument('--gpu-memory', type=int, help='Maximum GPU memory in GiB to allocate. This is useful if you get out of memory errors while trying to generate text. Must be an integer number.')
 parser.add_argument('--cpu-memory', type=int, help='Maximum CPU memory in GiB to allocate for offloaded weights. Must be an integer number. Defaults to 99.')
 parser.add_argument('--deepspeed', action='store_true', help='Enable the use of DeepSpeed ZeRO-3 for inference via the Transformers integration.')
-parser.add_argument('--nvme-offload-dir', type=str, help='Directory to use for DeepSpeed ZeRO-3 NVME offloading.')
-parser.add_argument('--bf16', action='store_true', help='Instantiate the model with bfloat16 precision. Requires NVIDIA Ampere GPU.')
-parser.add_argument('--local_rank', type=int, default=0, help='Optional argument for DeepSpeed distributed setups.')
+parser.add_argument('--nvme-offload-dir', type=str, help='DeepSpeed: Directory to use for ZeRO-3 NVME offloading.')
+parser.add_argument('--bf16', action='store_true', help='DeepSpeed: Instantiate the model with bfloat16 precision. Requires NVIDIA Ampere GPU.')
+parser.add_argument('--local-rank', type=int, default=0, help='DeepSpeed: Optional argument for distributed setups.')
 parser.add_argument('--no-stream', action='store_true', help='Don\'t stream the text output in real time. This improves the text generation performance.')
 parser.add_argument('--settings', type=str, help='Load the default interface settings from this json file. See settings-template.json for an example.')
 parser.add_argument('--extensions', type=str, help='The list of extensions to load. If you want to load more than one extension, write the names separated by commas and between quotation marks, "like,this".')
@@ -77,10 +77,10 @@ if args.settings is not None and Path(args.settings).exists():
     for item in new_settings:
         settings[item] = new_settings[item]
 
-
 if args.deepspeed:
     import deepspeed
     from transformers.deepspeed import HfDeepSpeedConfig, is_deepspeed_zero3_enabled
+    from modules.deepseed_config import generate_ds_config
 
     # Distributed setup
     if args.local_rank is not None:
@@ -90,84 +90,8 @@ if args.deepspeed:
     world_size = int(os.getenv("WORLD_SIZE", "1"))
     torch.cuda.set_device(local_rank)
     deepspeed.init_distributed()
-
-    # DeepSpeed configration
-    # https://huggingface.co/docs/transformers/main_classes/deepspeed
-    if args.bf16:
-        ds_fp16 = False
-        ds_bf16 = True
-    else:
-        ds_fp16 = True
-        ds_bf16 = False
-    train_batch_size = 1 * world_size
-    if args.nvme_offload_dir:
-        ds_config = {
-            "fp16": {
-                "enabled": ds_fp16,
-            },
-            "bf16": {
-                "enabled": ds_bf16,
-            },
-            "zero_optimization": {
-                "stage": 3,
-                "offload_param": {
-                    "device": "nvme",
-                    "nvme_path": args.nvme_offload_dir,
-                    "pin_memory": True,
-                    "buffer_count": 5,
-                    "buffer_size": 1e9,
-                    "max_in_cpu": 1e9
-                },
-                "overlap_comm": True,
-                "reduce_bucket_size": "auto",
-                "contiguous_gradients": True,
-                "sub_group_size": 1e8,
-                "stage3_prefetch_bucket_size": "auto",
-                "stage3_param_persistence_threshold": "auto",
-                "stage3_max_live_parameters": "auto",
-                "stage3_max_reuse_distance": "auto",
-            },
-            "aio": {
-                "block_size": 262144,
-                "queue_depth": 32,
-                "thread_count": 1,
-                "single_submit": False,
-                "overlap_events": True
-            },
-            "steps_per_print": 2000,
-            "train_batch_size": train_batch_size,
-            "train_micro_batch_size_per_gpu": 1,
-            "wall_clock_breakdown": False
-        }
-    else:
-        ds_config = {
-            "fp16": {
-                "enabled": ds_fp16,
-            },
-            "bf16": {
-                "enabled": ds_bf16,
-            },
-            "zero_optimization": {
-                "stage": 3,
-                "offload_param": {
-                    "device": "cpu",
-                    "pin_memory": True
-                },
-                "overlap_comm": True,
-                "contiguous_gradients": True,
-                "reduce_bucket_size": "auto",
-                "stage3_prefetch_bucket_size": "auto",
-                "stage3_param_persistence_threshold": "auto",
-                "stage3_max_live_parameters": "auto",
-                "stage3_max_reuse_distance": "auto",
-            },
-            "steps_per_print": 2000,
-            "train_batch_size": train_batch_size,
-            "train_micro_batch_size_per_gpu": 1,
-            "wall_clock_breakdown": False
-        }
+    ds_config = generate_ds_config(args.bf16, 1 * world_size, nvme_offload_dir)
     dschf = HfDeepSpeedConfig(ds_config) # Keep this object alive for the Transformers integration
-
 
 def load_model(model_name):
     print(f"Loading {model_name}...")
