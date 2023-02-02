@@ -20,7 +20,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * Support for [Pygmalion](https://huggingface.co/models?search=pygmalionai/pygmalion) and custom characters in JSON or TavernAI Character Card formats ([see the FAQ](https://github.com/oobabooga/text-generation-webui/wiki/Pygmalion-chat-model-FAQ)).
 * Stream the text output in real time.
 * Load parameter presets from text files.
-* Load large models in 8-bit mode.
+* Load large models in 8-bit mode ([see here](https://github.com/oobabooga/text-generation-webui/issues/20#issuecomment-1411650652) if you are on Windows).
 * Split large models across your GPU(s), CPU, and disk.
 * CPU mode.
 * Get responses via API.
