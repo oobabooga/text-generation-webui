@@ -3,4 +3,4 @@ bitsandbytes==0.36.0.post2
 deepspeed==0.8.0
 gradio==3.15.0
 transformers==4.25.1
-bs4
+beautifulsoup4
