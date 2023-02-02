@@ -1,7 +1,0 @@
-__pycache__/
-!models/place-your-models-here.txt
-models/*
-!torch-dumps/place-your-models-here.txt
-torch-dumps/*
-cache/
-logs/
