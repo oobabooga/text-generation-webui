@@ -9,6 +9,7 @@ import io
 import base64
 import sys
 import os
+from datetime import datetime
 from pathlib import Path
 from PIL import Image
 import copy
@@ -563,11 +564,12 @@ if args.chat or args.cai_chat:
         return _history
 
     def save_history():
+        fname = f"{character or ''}{'_' if character else ''}{datetime.now().strftime('%Y%m%d-%H:%M:%S')}.json"
         if not Path('logs').exists():
             Path('logs').mkdir()
-        with open(Path('logs/conversation.json'), 'w') as f:
+        with open(Path(f'logs/{fname}'), 'w') as f:
             f.write(json.dumps({'data': history['internal'], 'data_visible': history['visible']}))
-        return Path('logs/conversation.json')
+        return Path(f'logs/{fname}')
 
     def upload_history(file, name1, name2):
         global history
