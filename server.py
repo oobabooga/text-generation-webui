@@ -658,7 +658,7 @@ if args.chat or args.cai_chat:
         print(f'Profile picture saved to "img_me.png"')
 
     suffix = '_pygmalion' if 'pygmalion' in model_name.lower() else ''
-    with gr.Blocks(css=css+".h-\[40vh\] {height: 66.67vh} .gradio-container {max-width: 800px; margin-left: auto; margin-right: auto}", analytics_enabled=False) as interface:
+    with gr.Blocks(css=css+".h-\[40vh\] {height: 66.67vh} .gradio-container {max-width: 800px; margin-left: auto; margin-right: auto} .w-screen {width: unset}", analytics_enabled=False) as interface:
         if args.cai_chat:
             display = gr.HTML(value=generate_chat_html([], "", "", character))
         else:
