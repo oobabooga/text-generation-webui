@@ -13,7 +13,7 @@ In order to create an extension, create a folder under `extensions` and put a fi
 
 ## Extension functions
 
-The `script.py` file may contain three functions:
+`script.py` may contain three functions:
 
 #### input_modifier
 
