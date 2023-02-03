@@ -242,7 +242,7 @@ def generate_reply(question, tokens, inference_settings, selected_model, eos_tok
             output = eval(f"model.generate(input_ids, {','.join(generate_params)}, {preset}){cuda}")
         reply = decode(output[0])
         t1 = time.time()
-        print(f"Output generated in {(t1-t0):.2f} seconds ({(len(output[0])-len(input_ids[0]))/(t1-t0):.2f} it/s)")
+        print(f"Output generated in {(t1-t0):.2f} seconds ({(len(output[0])-len(input_ids[0]))/(t1-t0)/8:.2f} it/s, {len(output[0])-len(input_ids[0])} tokens)")
         if not (args.chat or args.cai_chat):
             reply = original_question + apply_extensions(reply[len(question):], "output")
         yield formatted_outputs(reply, model_name)
