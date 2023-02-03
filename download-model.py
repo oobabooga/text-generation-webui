@@ -71,7 +71,9 @@ if __name__ == '__main__':
     for link in links:
         href = link.get('href')[1:]
         if href.startswith(f'{model}/resolve/{branch}'):
-            if href.endswith(('.json', '.txt')) or (href.endswith('.bin') and 'pytorch_model' in href):
+            is_pytorch = href.endswith('.bin') and 'pytorch_model' in href
+            is_safetensors = href.endswith('.safetensors') and 'model' in href
+            if href.endswith(('.json', '.txt')) or is_pytorch or is_safetensors:
                 downloads.append(f'https://huggingface.co/{href}')
 
     # Downloading the files
