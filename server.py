@@ -23,7 +23,7 @@ from modules.stopping_criteria import _SentinelTokenStoppingCriteria
 
 transformers.logging.set_verbosity_error()
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(formatter_class=lambda prog: argparse.HelpFormatter(prog,max_help_position=54))
 parser.add_argument('--model', type=str, help='Name of the model to load by default.')
 parser.add_argument('--notebook', action='store_true', help='Launch the web UI in notebook mode, where the output is written to the same text box as the input.')
 parser.add_argument('--chat', action='store_true', help='Launch the web UI in chat mode.')
@@ -136,8 +136,7 @@ def load_model(model_name):
             if args.disk:
                 settings.append(f"offload_folder='{args.disk_cache_dir or 'cache'}'")
 
-        settings = ', '.join(set(settings))
-        command = f"{command}(Path(f'models/{model_name}'), {settings})"
+        command = f"{command}(Path(f'models/{model_name}'), {','.join(set(settings))})"
         model = eval(command)
 
     # Loading the tokenizer
