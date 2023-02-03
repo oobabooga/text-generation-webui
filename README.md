@@ -17,7 +17,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * Chat mode for conversation and role playing.
 * Generate nice HTML output for GPT-4chan.
 * Generate Markdown output for [GALACTICA](https://github.com/paperswithcode/galai), including LaTeX support.
-* Support for [Pygmalion](https://huggingface.co/models?search=pygmalionai/pygmalion) and custom characters in JSON or TavernAI Character Card formats ([see the FAQ](https://github.com/oobabooga/text-generation-webui/wiki/Pygmalion-chat-model-FAQ)).
+* Support for [Pygmalion](https://huggingface.co/models?search=pygmalionai/pygmalion) and custom characters in JSON or TavernAI Character Card formats ([FAQ](https://github.com/oobabooga/text-generation-webui/wiki/Pygmalion-chat-model-FAQ)).
 * Stream the text output in real time.
 * Load parameter presets from text files.
 * Load large models in 8-bit mode ([see here](https://github.com/oobabooga/text-generation-webui/issues/20#issuecomment-1411650652) if you are on Windows).
@@ -25,7 +25,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * CPU mode.
 * Get responses via API.
 * Support for extensions ([guide](https://github.com/oobabooga/text-generation-webui/wiki/Extensions)).
-* Works on Google Colab ([see the full guide](https://github.com/oobabooga/text-generation-webui/wiki/Running-on-Colab)).
+* Works on Google Colab ([guide](https://github.com/oobabooga/text-generation-webui/wiki/Running-on-Colab)).
 
 ## Installation
 
