@@ -571,7 +571,7 @@ if args.chat or args.cai_chat:
             f.write(json.dumps({'data': history['internal'], 'data_visible': history['visible']}))
         return Path(f'logs/{fname}')
 
-    def upload_history(file, name1, name2):
+    def load_history(file, name1, name2):
         global history
         file = file.decode('utf-8')
         try:
@@ -587,8 +587,11 @@ if args.chat or args.cai_chat:
                 history['internal'] = [':'.join(x.split(':')[1:]).strip() for x in j['chat']]
                 if len(j['chat']) > 0 and j['chat'][0].startswith(f'{name2}:'):
                     history['internal'] = [['<|BEGIN-VISIBLE-CHAT|>', history['internal'][0]]] + [[history['internal'][i], history['internal'][i+1]] for i in range(1, len(history['internal'])-1, 2)]
+                    history['visible'] = copy.deepcopy(history['internal'])
+                    history['visible'][0][0] = ''
                 else:
                     history['internal'] = [[history['internal'][i], history['internal'][i+1]] for i in range(0, len(history['internal'])-1, 2)]
+                    history['visible'] = copy.deepcopy(history['internal'])
         except:
             history['internal'] = tokenize_dialogue(file, name1, name2)
             history['visible'] = copy.deepcopy(history['internal'])
@@ -745,7 +748,7 @@ if args.chat or args.cai_chat:
         textbox.submit(lambda x: "", textbox, textbox, show_progress=False)
         character_menu.change(load_character, [character_menu, name1, name2], [name2, context, display])
         upload_img_tavern.upload(upload_tavern_character, [upload_img_tavern, name1, name2], [character_menu])
-        upload.upload(upload_history, [upload, name1, name2], [])
+        upload.upload(load_history, [upload, name1, name2], [])
         upload_img_me.upload(upload_your_profile_picture, [upload_img_me], [])
 
         if args.cai_chat:
