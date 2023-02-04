@@ -564,7 +564,7 @@ if args.chat or args.cai_chat:
         return _history
 
     def save_history():
-        fname = f"{character or ''}{'_' if character else ''}{datetime.now().strftime('%Y%m%d-%H:%M:%S')}.json"
+        fname = f"{character or ''}{'_' if character else ''}{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
         if not Path('logs').exists():
             Path('logs').mkdir()
         with open(Path(f'logs/{fname}'), 'w') as f:
