@@ -532,7 +532,7 @@ if args.chat or args.cai_chat:
         dialogue = re.sub('<START>', '', dialogue)
         dialogue = re.sub('<start>', '', dialogue)
         dialogue = re.sub('(\n|^)[Aa]non:', '\\1You:', dialogue)
-        dialogue = re.sub('(\n|^)\[CHARACTER\]:', f'\\1{name2}:', dialogue)
+        dialogue = re.sub('(\n|^)\[CHARACTER\]:', f'\\g<1>{name2}:', dialogue)
         idx = [m.start() for m in re.finditer(f"(^|\n)({name1}|{name2}):", dialogue)]
         if len(idx) == 0:
             return _history
