@@ -667,16 +667,17 @@ if args.chat or args.cai_chat:
         else:
             display = gr.Chatbot()
         textbox = gr.Textbox(label='Input')
-        buttons["Generate"] = gr.Button("Generate")
         with gr.Row():
             buttons["Stop"] = gr.Button("Stop")
+            buttons["Generate"] = gr.Button("Generate")
             buttons["Regenerate"] = gr.Button("Regenerate")
+        with gr.Row():
+            buttons["Impersonate"] = gr.Button("Impersonate")
             buttons["Remove last"] = gr.Button("Remove last")
             buttons["Clear"] = gr.Button("Clear history")
         with gr.Row():
             buttons["Send last reply to input"] = gr.Button("Send last reply to input")
             buttons["Replace last reply"] = gr.Button("Replace last reply")
-            buttons["Impersonate"] = gr.Button("Impersonate")
 
         with gr.Row():
             with gr.Column():
