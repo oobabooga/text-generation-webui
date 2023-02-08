@@ -161,6 +161,6 @@ Before reporting a bug, make sure that you have created a conda environment and 
 ## Credits
 
 - NovelAI and KoboldAI presets: https://github.com/KoboldAI/KoboldAI-Client/wiki/Settings-Presets
-- Pygmalion preset, code for early stopping in chat mode: https://github.com/PygmalionAI/gradio-ui/
+- Pygmalion preset, code for early stopping in chat mode, code for some of the sliders: https://github.com/PygmalionAI/gradio-ui/
 - Verbose preset: Anonymous 4chan user.
 - Gradio dropdown menu refresh button: https://github.com/AUTOMATIC1111/stable-diffusion-webui
