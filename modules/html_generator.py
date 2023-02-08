@@ -234,10 +234,10 @@ def generate_chat_html(history, name1, name2, character):
             img = f'<img src="file/{i}">'
             break
 
-    img_you = ''
+    img_me = ''
     for i in ["img_me.png", "img_me.jpg", "img_me.jpeg"]:
         if Path(i).exists():
-            img_you = f'<img src="file/{i}">'
+            img_me = f'<img src="file/{i}">'
             break
 
     for i,_row in enumerate(history[::-1]):
@@ -268,7 +268,7 @@ def generate_chat_html(history, name1, name2, character):
             output += f"""
                   <div class="message">
                     <div class="circle-you">
-                      {img_you}
+                      {img_me}
                     </div>
                     <div class="text">
                       <div class="username">
