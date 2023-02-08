@@ -267,7 +267,7 @@ def generate_reply(question, tokens, do_sample, max_new_tokens, temperature, top
         f"typical_p={typical_p}",
         f"repetition_penalty={repetition_penalty}",
         f"top_k={top_k}",
-        f"min_length={min_length}",
+        f"min_length={min_length if args.no_stream else 0}",
         f"no_repeat_ngram_size={no_repeat_ngram_size}",
         f"num_beams={num_beams}",
         f"length_penalty={length_penalty}",
