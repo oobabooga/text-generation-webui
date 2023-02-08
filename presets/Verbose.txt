@@ -1,6 +1,5 @@
 num_beams=10,
-min_length=tokens,
-max_new_tokens=tokens,
+min_length=200,
 length_penalty =1.4,
 no_repeat_ngram_size=2,
 early_stopping=True,

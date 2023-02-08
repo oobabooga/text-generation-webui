@@ -150,6 +150,40 @@ def load_model(model_name):
     print(f"Loaded the model in {(time.time()-t0):.2f} seconds.")
     return model, tokenizer
 
+def load_model_wrapper(selected_model):
+    global model_name, model, tokenizer
+
+    if selected_model != model_name:
+        model_name = selected_model
+        model = tokenizer = None
+        if not args.cpu:
+            gc.collect()
+            torch.cuda.empty_cache()
+        model, tokenizer = load_model(model_name)
+
+def load_preset_values(preset_menu, return_dict=False):
+    settings = {
+        'do_sample': True,
+        'temperature': 1,
+        'top_p': 1,
+        'typical_p': 1,
+        'repetition_penalty': 1,
+        'top_k': 50,
+    }
+    with open(Path(f'presets/{preset_menu}.txt'), 'r') as infile:
+        preset = infile.read()
+    for i in preset.split(','):
+        i = i.strip().split('=')
+        if len(i) == 2 and i[0].strip() != 'tokens':
+            settings[i[0].strip()] = eval(i[1].strip())
+
+    settings['temperature'] = min(1.99, settings['temperature'])
+
+    if return_dict:
+        return settings
+    else:
+        return settings['do_sample'], settings['temperature'], settings['top_p'], settings['typical_p'], settings['repetition_penalty'], settings['top_k']
+
 # Removes empty replies from gpt4chan outputs
 def fix_gpt4chan(s):
     for i in range(10):
@@ -194,26 +228,14 @@ def formatted_outputs(reply, model_name):
     else:
         return reply
 
-def generate_reply(question, tokens, inference_settings, selected_model, eos_token=None, stopping_string=None):
-    global model, tokenizer, model_name, loaded_preset, preset
+def generate_reply(question, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, eos_token=None, stopping_string=None):
+    global model_name, model, tokenizer
 
     original_question = question
     if not (args.chat or args.cai_chat):
         question = apply_extensions(question, "input")
     if args.verbose:
         print(f"\n\n{question}\n--------------------\n")
-
-    if selected_model != model_name:
-        model_name = selected_model
-        model = tokenizer = None
-        if not args.cpu:
-            gc.collect()
-            torch.cuda.empty_cache()
-        model, tokenizer = load_model(model_name)
-    if inference_settings != loaded_preset:
-        with open(Path(f'presets/{inference_settings}.txt'), 'r') as infile:
-            preset = infile.read()
-        loaded_preset = inference_settings
 
     input_ids = encode(question, tokens)
     cuda = "" if (args.cpu or args.deepspeed) else ".cuda()"
@@ -231,15 +253,29 @@ def generate_reply(question, tokens, inference_settings, selected_model, eos_tok
     else:
         stopping_criteria_list = None
 
-    generate_params = [f"eos_token_id={n}", "stopping_criteria=stopping_criteria_list"]
+    generate_params = [
+        f"eos_token_id={n}",
+        f"stopping_criteria=stopping_criteria_list",
+        f"do_sample={do_sample}",
+        f"temperature={temperature}",
+        f"top_p={top_p}",
+        f"typical_p={typical_p}",
+        f"repetition_penalty={repetition_penalty}",
+        f"top_k={top_k}",
+    ]
+
     if args.deepspeed:
         generate_params.append("synced_gpus=True")
+    if args.no_stream:
+        generate_params.append(f"max_new_tokens=tokens")
+    else:
+        generate_params.append(f"max_new_tokens=8")
 
     # Generate the entire reply at once
     if args.no_stream:
         t0 = time.time()
         with torch.no_grad():
-            output = eval(f"model.generate(input_ids, {','.join(generate_params)}, {preset}){cuda}")
+            output = eval(f"model.generate(input_ids, {','.join(generate_params)}){cuda}")
         reply = decode(output[0])
         t1 = time.time()
         print(f"Output generated in {(t1-t0):.2f} seconds ({(len(output[0])-len(input_ids[0]))/(t1-t0)/8:.2f} it/s, {len(output[0])-len(input_ids[0])} tokens)")
@@ -250,10 +286,9 @@ def generate_reply(question, tokens, inference_settings, selected_model, eos_tok
     # Generate the reply 1 token at a time
     else:
         yield formatted_outputs(original_question, model_name)
-        preset = preset.replace('max_new_tokens=tokens', 'max_new_tokens=8')
         for i in tqdm(range(tokens//8+1)):
             with torch.no_grad():
-                output = eval(f"model.generate(input_ids, {','.join(generate_params)}, {preset}){cuda}")
+                output = eval(f"model.generate(input_ids, {','.join(generate_params)}){cuda}")
             reply = decode(output[0])
             if not (args.chat or args.cai_chat):
                 reply = original_question + apply_extensions(reply[len(question):], "output")
@@ -285,6 +320,18 @@ def update_extensions_parameters(*kwargs):
                     params[param] = eval(f"kwargs[{i}]")
                     i += 1
 
+def get_available_models():
+    return sorted(set([item.replace('.pt', '') for item in map(lambda x : str(x.name), list(Path('models/').glob('*'))+list(Path('torch-dumps/').glob('*'))) if not item.endswith('.txt')]), key=str.lower)
+
+def get_available_presets():
+    return sorted(set(map(lambda x : '.'.join(str(x.name).split('.')[:-1]), Path('presets').glob('*.txt'))), key=str.lower)
+
+def get_available_characters():
+    return ["None"] + sorted(set(map(lambda x : '.'.join(str(x.name).split('.')[:-1]), Path('characters').glob('*.json'))), key=str.lower)
+
+def get_available_extensions():
+    return sorted(set(map(lambda x : x.parts[1], Path('extensions').glob('*/script.py'))), key=str.lower)
+
 def create_extensions_block():
     extensions_ui_elements = []
     default_values = []
@@ -307,18 +354,331 @@ def create_extensions_block():
     btn_extensions = gr.Button("Apply")
     btn_extensions.click(update_extensions_parameters, [*extensions_ui_elements], [])
 
-def get_available_models():
-    return sorted(set([item.replace('.pt', '') for item in map(lambda x : str(x.name), list(Path('models/').glob('*'))+list(Path('torch-dumps/').glob('*'))) if not item.endswith('.txt')]), key=str.lower)
+def create_settings_menus():
+    defaults = load_preset_values(settings[f'preset{suffix}'], return_dict=True)
 
-def get_available_presets():
-    return sorted(set(map(lambda x : '.'.join(str(x.name).split('.')[:-1]), Path('presets').glob('*.txt'))), key=str.lower)
+    with gr.Row():
+        with gr.Column():
+            with gr.Row():
+                model_menu = gr.Dropdown(choices=available_models, value=model_name, label='Model')
+                create_refresh_button(model_menu, lambda : None, lambda : {"choices": get_available_models()}, "refresh-button")
+        with gr.Column():
+            with gr.Row():
+                preset_menu = gr.Dropdown(choices=available_presets, value=settings[f'preset{suffix}'], label='Generation parameters preset')
+                create_refresh_button(preset_menu, lambda : None, lambda : {"choices": get_available_presets()}, "refresh-button")
 
-def get_available_characters():
-    return ["None"] + sorted(set(map(lambda x : '.'.join(str(x.name).split('.')[:-1]), Path('characters').glob('*.json'))), key=str.lower)
+    with gr.Accordion("Custom generation parameters", open=False):
+        with gr.Row():
+            with gr.Column():
+                do_sample = gr.Checkbox(value=defaults['do_sample'], label="do_sample")
+                temperature = gr.Slider(0.01, 1.99, value=defaults['temperature'], step=0.01, label="temperature")
+                top_p = gr.Slider(0.0,1.0,value=defaults['top_p'],step=0.01,label="top_p")
+            with gr.Column():
+                typical_p = gr.Slider(0.0,1.0,value=defaults['typical_p'],step=0.01,label="typical_p")
+                repetition_penalty = gr.Slider(1.0,5.0,value=defaults['repetition_penalty'],step=0.01,label="repetition_penalty")
+                top_k = gr.Slider(0,200,value=defaults['top_k'],step=1,label="top_k")
 
-def get_available_extensions():
-    return sorted(set(map(lambda x : x.parts[1], Path('extensions').glob('*/script.py'))), key=str.lower)
+    model_menu.change(load_model_wrapper, [model_menu], [])
+    preset_menu.change(load_preset_values, [preset_menu], [do_sample, temperature, top_p, typical_p, repetition_penalty, top_k])
+    return preset_menu, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k
 
+# This gets the new line characters right.
+def clean_chat_message(text):
+    text = text.replace('\n', '\n\n')
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    text = text.strip()
+    return text
+
+def generate_chat_prompt(text, tokens, name1, name2, context, history_size, impersonate=False):
+    text = clean_chat_message(text)
+
+    rows = [f"{context.strip()}\n"]
+    i = len(history['internal'])-1
+    count = 0
+    while i >= 0 and len(encode(''.join(rows), tokens)[0]) < 2048-tokens:
+        rows.insert(1, f"{name2}: {history['internal'][i][1].strip()}\n")
+        count += 1
+        if not (history['internal'][i][0] == '<|BEGIN-VISIBLE-CHAT|>'):
+            rows.insert(1, f"{name1}: {history['internal'][i][0].strip()}\n")
+            count += 1
+        i -= 1
+        if history_size != 0 and count >= history_size:
+            break
+
+    if not impersonate:
+        rows.append(f"{name1}: {text}\n")
+        rows.append(apply_extensions(f"{name2}:", "bot_prefix"))
+        limit = 3
+    else:
+        rows.append(f"{name1}:")
+        limit = 2
+
+    while len(rows) > limit and len(encode(''.join(rows), tokens)[0]) >= 2048-tokens:
+        rows.pop(1)
+        rows.pop(1)
+
+    question = ''.join(rows)
+    return question
+
+def extract_message_from_reply(question, reply, current, other, check, extensions=False):
+    next_character_found = False
+    substring_found = False
+
+    previous_idx = [m.start() for m in re.finditer(f"(^|\n){current}:", question)]
+    idx = [m.start() for m in re.finditer(f"(^|\n){current}:", reply)]
+    idx = idx[len(previous_idx)-1]
+
+    if extensions:
+        reply = reply[idx + 1 + len(apply_extensions(f"{current}:", "bot_prefix")):]
+    else:
+        reply = reply[idx + 1 + len(f"{current}:"):]
+
+    if check:
+        reply = reply.split('\n')[0].strip()
+    else:
+        idx = reply.find(f"\n{other}:")
+        if idx != -1:
+            reply = reply[:idx]
+            next_character_found = True
+        reply = clean_chat_message(reply)
+
+        # Detect if something like "\nYo" is generated just before
+        # "\nYou:" is completed
+        tmp = f"\n{other}:"
+        for j in range(1, len(tmp)):
+            if reply[-j:] == tmp[:j]:
+                substring_found = True
+
+    return reply, next_character_found, substring_found
+
+def chatbot_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, name1, name2, context, check, history_size):
+    original_text = text
+    text = apply_extensions(text, "input")
+    question = generate_chat_prompt(text, tokens, name1, name2, context, history_size)
+    history['internal'].append(['', ''])
+    history['visible'].append(['', ''])
+    eos_token = '\n' if check else None
+    for reply in generate_reply(question, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, eos_token=eos_token, stopping_string=f"\n{name1}:"):
+        reply, next_character_found, substring_found = extract_message_from_reply(question, reply, name2, name1, check, extensions=True)
+        history['internal'][-1] = [text, reply]
+        history['visible'][-1] = [original_text, apply_extensions(reply, "output")]
+        if not substring_found:
+            yield history['visible']
+        if next_character_found:
+            break
+    yield history['visible']
+
+def impersonate_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, name1, name2, context, check, history_size):
+    question = generate_chat_prompt(text, tokens, name1, name2, context, history_size, impersonate=True)
+    eos_token = '\n' if check else None
+    for reply in generate_reply(question, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, eos_token=eos_token, stopping_string=f"\n{name2}:"):
+        reply, next_character_found, substring_found = extract_message_from_reply(question, reply, name1, name2, check, extensions=False)
+        if not substring_found:
+            yield apply_extensions(reply, "output")
+        if next_character_found:
+            break
+    yield apply_extensions(reply, "output")
+
+def cai_chatbot_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, name1, name2, context, check, history_size):
+    for _history in chatbot_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, name1, name2, context, check, history_size):
+        yield generate_chat_html(_history, name1, name2, character)
+
+def regenerate_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, name1, name2, context, check, history_size):
+    last = history['visible'].pop()
+    history['internal'].pop()
+    text = last[0]
+    if args.cai_chat:
+        for i in cai_chatbot_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, name1, name2, context, check, history_size):
+            yield i
+    else:
+        for i in chatbot_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, name1, name2, context, check, history_size):
+            yield i
+
+def remove_last_message(name1, name2):
+    if not history['internal'][-1][0] == '<|BEGIN-VISIBLE-CHAT|>':
+        last = history['visible'].pop()
+        history['internal'].pop()
+    else:
+        last = ['', '']
+    if args.cai_chat:
+        return generate_chat_html(history['visible'], name1, name2, character), last[0]
+    else:
+        return history['visible'], last[0]
+
+def send_last_reply_to_input():
+    if len(history['visible']) > 0:
+        return history['visible'][-1][1]
+    else:
+        return ''
+
+def replace_last_reply(text, name1, name2):
+    if len(history['visible']) > 0:
+        history['visible'][-1][1] = text
+        history['internal'][-1][1] = apply_extensions(text, "input")
+
+    if args.cai_chat:
+        return generate_chat_html(history['visible'], name1, name2, character)
+    else:
+        return history['visible']
+
+def clear_html():
+    return generate_chat_html([], "", "", character)
+
+def clear_chat_log(_character, name1, name2):
+    global history
+    if _character != 'None':
+        for i in range(len(history['internal'])):
+            if '<|BEGIN-VISIBLE-CHAT|>' in history['internal'][i][0]:
+                history['visible'] = [['', history['internal'][i][1]]]
+                history['internal'] = history['internal'][:i+1]
+                break
+    else:
+        history['internal'] = []
+        history['visible'] = []
+    if args.cai_chat:
+        return generate_chat_html(history['visible'], name1, name2, character)
+    else:
+        return history['visible'] 
+
+def redraw_html(name1, name2):
+    global history
+    return generate_chat_html(history['visible'], name1, name2, character)
+
+def tokenize_dialogue(dialogue, name1, name2):
+    _history = []
+
+    dialogue = re.sub('<START>', '', dialogue)
+    dialogue = re.sub('<start>', '', dialogue)
+    dialogue = re.sub('(\n|^)[Aa]non:', '\\1You:', dialogue)
+    dialogue = re.sub('(\n|^)\[CHARACTER\]:', f'\\g<1>{name2}:', dialogue)
+    idx = [m.start() for m in re.finditer(f"(^|\n)({name1}|{name2}):", dialogue)]
+    if len(idx) == 0:
+        return _history
+
+    messages = []
+    for i in range(len(idx)-1):
+        messages.append(dialogue[idx[i]:idx[i+1]].strip())
+    messages.append(dialogue[idx[-1]:].strip())
+
+    entry = ['', '']
+    for i in messages:
+        if i.startswith(f'{name1}:'):
+            entry[0] = i[len(f'{name1}:'):].strip()
+        elif i.startswith(f'{name2}:'):
+            entry[1] = i[len(f'{name2}:'):].strip()
+            if not (len(entry[0]) == 0 and len(entry[1]) == 0):
+                _history.append(entry)
+            entry = ['', '']
+
+    print(f"\033[1;32;1m\nDialogue tokenized to:\033[0;37;0m\n", end='')
+    for row in _history:
+        for column in row:
+            print("\n")
+            for line in column.strip().split('\n'):
+                print("|  "+line+"\n")
+            print("|\n")
+        print("------------------------------")
+
+    return _history
+
+def save_history():
+    fname = f"{character or ''}{'_' if character else ''}{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
+    if not Path('logs').exists():
+        Path('logs').mkdir()
+    with open(Path(f'logs/{fname}'), 'w') as f:
+        f.write(json.dumps({'data': history['internal'], 'data_visible': history['visible']}))
+    return Path(f'logs/{fname}')
+
+def load_history(file, name1, name2):
+    global history
+    file = file.decode('utf-8')
+    try:
+        j = json.loads(file)
+        if 'data' in j:
+            history['internal'] = j['data']
+            if 'data_visible' in j:
+                history['visible'] = j['data_visible']
+            else:
+                history['visible'] = copy.deepcopy(history['internal'])
+        # Compatibility with Pygmalion AI's official web UI
+        elif 'chat' in j:
+            history['internal'] = [':'.join(x.split(':')[1:]).strip() for x in j['chat']]
+            if len(j['chat']) > 0 and j['chat'][0].startswith(f'{name2}:'):
+                history['internal'] = [['<|BEGIN-VISIBLE-CHAT|>', history['internal'][0]]] + [[history['internal'][i], history['internal'][i+1]] for i in range(1, len(history['internal'])-1, 2)]
+                history['visible'] = copy.deepcopy(history['internal'])
+                history['visible'][0][0] = ''
+            else:
+                history['internal'] = [[history['internal'][i], history['internal'][i+1]] for i in range(0, len(history['internal'])-1, 2)]
+                history['visible'] = copy.deepcopy(history['internal'])
+    except:
+        history['internal'] = tokenize_dialogue(file, name1, name2)
+        history['visible'] = copy.deepcopy(history['internal'])
+
+def load_character(_character, name1, name2):
+    global history, character
+    context = ""
+    history['internal'] = []
+    history['visible'] = []
+    if _character != 'None':
+        character = _character
+        data = json.loads(open(Path(f'characters/{_character}.json'), 'r').read())
+        name2 = data['char_name']
+        if 'char_persona' in data and data['char_persona'] != '':
+            context += f"{data['char_name']}'s Persona: {data['char_persona']}\n"
+        if 'world_scenario' in data and data['world_scenario'] != '':
+            context += f"Scenario: {data['world_scenario']}\n"
+        context = f"{context.strip()}\n<START>\n"
+        if 'example_dialogue' in data and data['example_dialogue'] != '':
+            history['internal'] = tokenize_dialogue(data['example_dialogue'], name1, name2)
+        if 'char_greeting' in data and len(data['char_greeting'].strip()) > 0:
+            history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', data['char_greeting']]]
+            history['visible'] += [['', apply_extensions(data['char_greeting'], "output")]]
+        else:
+            history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', "Hello there!"]]
+            history['visible'] += [['', "Hello there!"]]
+    else:
+        character = None
+        context = settings['context_pygmalion']
+        name2 = settings['name2_pygmalion']
+
+    if args.cai_chat:
+        return name2, context, generate_chat_html(history['visible'], name1, name2, character)
+    else:
+        return name2, context, history['visible']
+
+def upload_character(json_file, img, tavern=False):
+    json_file = json_file if type(json_file) == str else json_file.decode('utf-8')
+    data = json.loads(json_file)
+    outfile_name = data["char_name"]
+    i = 1
+    while Path(f'characters/{outfile_name}.json').exists():
+        outfile_name = f'{data["char_name"]}_{i:03d}'
+        i += 1
+    if tavern:
+        outfile_name = f'TavernAI-{outfile_name}'
+    with open(Path(f'characters/{outfile_name}.json'), 'w') as f:
+        f.write(json_file)
+    if img is not None:
+        img = Image.open(io.BytesIO(img))
+        img.save(Path(f'characters/{outfile_name}.png'))
+    print(f'New character saved to "characters/{outfile_name}.json".')
+    return outfile_name
+
+def upload_tavern_character(img, name1, name2):
+    _img = Image.open(io.BytesIO(img))
+    _img.getexif()
+    decoded_string = base64.b64decode(_img.info['chara'])
+    _json = json.loads(decoded_string)
+    _json = {"char_name": _json['name'], "char_persona": _json['description'], "char_greeting": _json["first_mes"], "example_dialogue": _json['mes_example'], "world_scenario": _json['scenario']}
+    _json['example_dialogue'] = _json['example_dialogue'].replace('{{user}}', name1).replace('{{char}}', _json['char_name'])
+    return upload_character(json.dumps(_json), img, tavern=True)
+
+def upload_your_profile_picture(img):
+    img = Image.open(io.BytesIO(img))
+    img.save(Path(f'img_me.png'))
+    print(f'Profile picture saved to "img_me.png"')
+
+# Global variables
 available_models = get_available_models()
 available_presets = get_available_presets()
 available_characters = get_available_characters()
@@ -360,307 +720,11 @@ css = ".my-4 {margin-top: 0} .py-6 {padding-top: 2.5rem} #refresh-button {flex: 
 buttons = {}
 gen_events = []
 
+suffix = '_pygmalion' if 'pygmalion' in model_name.lower() else ''
+history = {'internal': [], 'visible': []}
+character = None
+
 if args.chat or args.cai_chat:
-    history = {'internal': [], 'visible': []}
-    character = None
-
-    # This gets the new line characters right.
-    def clean_chat_message(text):
-        text = text.replace('\n', '\n\n')
-        text = re.sub(r"\n{3,}", "\n\n", text)
-        text = text.strip()
-        return text
-
-    def generate_chat_prompt(text, tokens, name1, name2, context, history_size, impersonate=False):
-        text = clean_chat_message(text)
-
-        rows = [f"{context.strip()}\n"]
-        i = len(history['internal'])-1
-        count = 0
-        while i >= 0 and len(encode(''.join(rows), tokens)[0]) < 2048-tokens:
-            rows.insert(1, f"{name2}: {history['internal'][i][1].strip()}\n")
-            count += 1
-            if not (history['internal'][i][0] == '<|BEGIN-VISIBLE-CHAT|>'):
-                rows.insert(1, f"{name1}: {history['internal'][i][0].strip()}\n")
-                count += 1
-            i -= 1
-            if history_size != 0 and count >= history_size:
-                break
-
-        if not impersonate:
-            rows.append(f"{name1}: {text}\n")
-            rows.append(apply_extensions(f"{name2}:", "bot_prefix"))
-            limit = 3
-        else:
-            rows.append(f"{name1}:")
-            limit = 2
-
-        while len(rows) > limit and len(encode(''.join(rows), tokens)[0]) >= 2048-tokens:
-            rows.pop(1)
-            rows.pop(1)
-
-        question = ''.join(rows)
-        return question
-
-    def extract_message_from_reply(question, reply, current, other, check, extensions=False):
-        next_character_found = False
-        substring_found = False
-
-        previous_idx = [m.start() for m in re.finditer(f"(^|\n){current}:", question)]
-        idx = [m.start() for m in re.finditer(f"(^|\n){current}:", reply)]
-        idx = idx[len(previous_idx)-1]
-
-        if extensions:
-            reply = reply[idx + 1 + len(apply_extensions(f"{current}:", "bot_prefix")):]
-        else:
-            reply = reply[idx + 1 + len(f"{current}:"):]
-
-        if check:
-            reply = reply.split('\n')[0].strip()
-        else:
-            idx = reply.find(f"\n{other}:")
-            if idx != -1:
-                reply = reply[:idx]
-                next_character_found = True
-            reply = clean_chat_message(reply)
-
-            # Detect if something like "\nYo" is generated just before
-            # "\nYou:" is completed
-            tmp = f"\n{other}:"
-            for j in range(1, len(tmp)):
-                if reply[-j:] == tmp[:j]:
-                    substring_found = True
-
-        return reply, next_character_found, substring_found
-
-    def chatbot_wrapper(text, tokens, inference_settings, selected_model, name1, name2, context, check, history_size):
-        original_text = text
-        text = apply_extensions(text, "input")
-        question = generate_chat_prompt(text, tokens, name1, name2, context, history_size)
-        history['internal'].append(['', ''])
-        history['visible'].append(['', ''])
-        eos_token = '\n' if check else None
-        for reply in generate_reply(question, tokens, inference_settings, selected_model, eos_token=eos_token, stopping_string=f"\n{name1}:"):
-            reply, next_character_found, substring_found = extract_message_from_reply(question, reply, name2, name1, check, extensions=True)
-            history['internal'][-1] = [text, reply]
-            history['visible'][-1] = [original_text, apply_extensions(reply, "output")]
-            if not substring_found:
-                yield history['visible']
-            if next_character_found:
-                break
-        yield history['visible']
-
-    def impersonate_wrapper(text, tokens, inference_settings, selected_model, name1, name2, context, check, history_size):
-        question = generate_chat_prompt(text, tokens, name1, name2, context, history_size, impersonate=True)
-        eos_token = '\n' if check else None
-        for reply in generate_reply(question, tokens, inference_settings, selected_model, eos_token=eos_token, stopping_string=f"\n{name2}:"):
-            reply, next_character_found, substring_found = extract_message_from_reply(question, reply, name1, name2, check, extensions=False)
-            if not substring_found:
-                yield apply_extensions(reply, "output")
-            if next_character_found:
-                break
-        yield apply_extensions(reply, "output")
-
-    def cai_chatbot_wrapper(text, tokens, inference_settings, selected_model, name1, name2, context, check, history_size):
-        for _history in chatbot_wrapper(text, tokens, inference_settings, selected_model, name1, name2, context, check, history_size):
-            yield generate_chat_html(_history, name1, name2, character)
-
-    def regenerate_wrapper(text, tokens, inference_settings, selected_model, name1, name2, context, check, history_size):
-        last = history['visible'].pop()
-        history['internal'].pop()
-        text = last[0]
-        if args.cai_chat:
-            for i in cai_chatbot_wrapper(text, tokens, inference_settings, selected_model, name1, name2, context, check, history_size):
-                yield i
-        else:
-            for i in chatbot_wrapper(text, tokens, inference_settings, selected_model, name1, name2, context, check, history_size):
-                yield i
-
-    def remove_last_message(name1, name2):
-        if not history['internal'][-1][0] == '<|BEGIN-VISIBLE-CHAT|>':
-            last = history['visible'].pop()
-            history['internal'].pop()
-        else:
-            last = ['', '']
-        if args.cai_chat:
-            return generate_chat_html(history['visible'], name1, name2, character), last[0]
-        else:
-            return history['visible'], last[0]
-
-    def send_last_reply_to_input():
-        if len(history['visible']) > 0:
-            return history['visible'][-1][1]
-        else:
-            return ''
-
-    def replace_last_reply(text, name1, name2):
-        if len(history['visible']) > 0:
-            history['visible'][-1][1] = text
-            history['internal'][-1][1] = apply_extensions(text, "input")
-
-        if args.cai_chat:
-            return generate_chat_html(history['visible'], name1, name2, character)
-        else:
-            return history['visible']
-
-    def clear_html():
-        return generate_chat_html([], "", "", character)
-
-    def clear_chat_log(_character, name1, name2):
-        global history
-        if _character != 'None':
-            for i in range(len(history['internal'])):
-                if '<|BEGIN-VISIBLE-CHAT|>' in history['internal'][i][0]:
-                    history['visible'] = [['', history['internal'][i][1]]]
-                    history['internal'] = history['internal'][:i+1]
-                    break
-        else:
-            history['internal'] = []
-            history['visible'] = []
-        if args.cai_chat:
-            return generate_chat_html(history['visible'], name1, name2, character)
-        else:
-            return history['visible'] 
-
-    def redraw_html(name1, name2):
-        global history
-        return generate_chat_html(history['visible'], name1, name2, character)
-
-    def tokenize_dialogue(dialogue, name1, name2):
-        _history = []
-
-        dialogue = re.sub('<START>', '', dialogue)
-        dialogue = re.sub('<start>', '', dialogue)
-        dialogue = re.sub('(\n|^)[Aa]non:', '\\1You:', dialogue)
-        dialogue = re.sub('(\n|^)\[CHARACTER\]:', f'\\g<1>{name2}:', dialogue)
-        idx = [m.start() for m in re.finditer(f"(^|\n)({name1}|{name2}):", dialogue)]
-        if len(idx) == 0:
-            return _history
-
-        messages = []
-        for i in range(len(idx)-1):
-            messages.append(dialogue[idx[i]:idx[i+1]].strip())
-        messages.append(dialogue[idx[-1]:].strip())
-
-        entry = ['', '']
-        for i in messages:
-            if i.startswith(f'{name1}:'):
-                entry[0] = i[len(f'{name1}:'):].strip()
-            elif i.startswith(f'{name2}:'):
-                entry[1] = i[len(f'{name2}:'):].strip()
-                if not (len(entry[0]) == 0 and len(entry[1]) == 0):
-                    _history.append(entry)
-                entry = ['', '']
-
-        print(f"\033[1;32;1m\nDialogue tokenized to:\033[0;37;0m\n", end='')
-        for row in _history:
-            for column in row:
-                print("\n")
-                for line in column.strip().split('\n'):
-                    print("|  "+line+"\n")
-                print("|\n")
-            print("------------------------------")
-
-        return _history
-
-    def save_history():
-        fname = f"{character or ''}{'_' if character else ''}{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
-        if not Path('logs').exists():
-            Path('logs').mkdir()
-        with open(Path(f'logs/{fname}'), 'w') as f:
-            f.write(json.dumps({'data': history['internal'], 'data_visible': history['visible']}))
-        return Path(f'logs/{fname}')
-
-    def load_history(file, name1, name2):
-        global history
-        file = file.decode('utf-8')
-        try:
-            j = json.loads(file)
-            if 'data' in j:
-                history['internal'] = j['data']
-                if 'data_visible' in j:
-                    history['visible'] = j['data_visible']
-                else:
-                    history['visible'] = copy.deepcopy(history['internal'])
-            # Compatibility with Pygmalion AI's official web UI
-            elif 'chat' in j:
-                history['internal'] = [':'.join(x.split(':')[1:]).strip() for x in j['chat']]
-                if len(j['chat']) > 0 and j['chat'][0].startswith(f'{name2}:'):
-                    history['internal'] = [['<|BEGIN-VISIBLE-CHAT|>', history['internal'][0]]] + [[history['internal'][i], history['internal'][i+1]] for i in range(1, len(history['internal'])-1, 2)]
-                    history['visible'] = copy.deepcopy(history['internal'])
-                    history['visible'][0][0] = ''
-                else:
-                    history['internal'] = [[history['internal'][i], history['internal'][i+1]] for i in range(0, len(history['internal'])-1, 2)]
-                    history['visible'] = copy.deepcopy(history['internal'])
-        except:
-            history['internal'] = tokenize_dialogue(file, name1, name2)
-            history['visible'] = copy.deepcopy(history['internal'])
-
-    def load_character(_character, name1, name2):
-        global history, character
-        context = ""
-        history['internal'] = []
-        history['visible'] = []
-        if _character != 'None':
-            character = _character
-            data = json.loads(open(Path(f'characters/{_character}.json'), 'r').read())
-            name2 = data['char_name']
-            if 'char_persona' in data and data['char_persona'] != '':
-                context += f"{data['char_name']}'s Persona: {data['char_persona']}\n"
-            if 'world_scenario' in data and data['world_scenario'] != '':
-                context += f"Scenario: {data['world_scenario']}\n"
-            context = f"{context.strip()}\n<START>\n"
-            if 'example_dialogue' in data and data['example_dialogue'] != '':
-                history['internal'] = tokenize_dialogue(data['example_dialogue'], name1, name2)
-            if 'char_greeting' in data and len(data['char_greeting'].strip()) > 0:
-                history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', data['char_greeting']]]
-                history['visible'] += [['', apply_extensions(data['char_greeting'], "output")]]
-            else:
-                history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', "Hello there!"]]
-                history['visible'] += [['', "Hello there!"]]
-        else:
-            character = None
-            context = settings['context_pygmalion']
-            name2 = settings['name2_pygmalion']
-
-        if args.cai_chat:
-            return name2, context, generate_chat_html(history['visible'], name1, name2, character)
-        else:
-            return name2, context, history['visible']
-
-    def upload_character(json_file, img, tavern=False):
-        json_file = json_file if type(json_file) == str else json_file.decode('utf-8')
-        data = json.loads(json_file)
-        outfile_name = data["char_name"]
-        i = 1
-        while Path(f'characters/{outfile_name}.json').exists():
-            outfile_name = f'{data["char_name"]}_{i:03d}'
-            i += 1
-        if tavern:
-            outfile_name = f'TavernAI-{outfile_name}'
-        with open(Path(f'characters/{outfile_name}.json'), 'w') as f:
-            f.write(json_file)
-        if img is not None:
-            img = Image.open(io.BytesIO(img))
-            img.save(Path(f'characters/{outfile_name}.png'))
-        print(f'New character saved to "characters/{outfile_name}.json".')
-        return outfile_name
-
-    def upload_tavern_character(img, name1, name2):
-        _img = Image.open(io.BytesIO(img))
-        _img.getexif()
-        decoded_string = base64.b64decode(_img.info['chara'])
-        _json = json.loads(decoded_string)
-        _json = {"char_name": _json['name'], "char_persona": _json['description'], "char_greeting": _json["first_mes"], "example_dialogue": _json['mes_example'], "world_scenario": _json['scenario']}
-        _json['example_dialogue'] = _json['example_dialogue'].replace('{{user}}', name1).replace('{{char}}', _json['char_name'])
-        return upload_character(json.dumps(_json), img, tavern=True)
-
-    def upload_your_profile_picture(img):
-        img = Image.open(io.BytesIO(img))
-        img.save(Path(f'img_me.png'))
-        print(f'Profile picture saved to "img_me.png"')
-
-    suffix = '_pygmalion' if 'pygmalion' in model_name.lower() else ''
     with gr.Blocks(css=css+".h-\[40vh\] {height: 66.67vh} .gradio-container {max-width: 800px; margin-left: auto; margin-right: auto} .w-screen {width: unset}", analytics_enabled=False) as interface:
         if args.cai_chat:
             display = gr.HTML(value=generate_chat_html([], "", "", character))
@@ -681,15 +745,11 @@ if args.chat or args.cai_chat:
 
         with gr.Row():
             with gr.Column():
-                length_slider = gr.Slider(minimum=settings['max_new_tokens_min'], maximum=settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=settings['max_new_tokens'])
-                with gr.Row():
-                    model_menu = gr.Dropdown(choices=available_models, value=model_name, label='Model')
-                    create_refresh_button(model_menu, lambda : None, lambda : {"choices": get_available_models()}, "refresh-button")
+                max_new_tokens = gr.Slider(minimum=settings['max_new_tokens_min'], maximum=settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=settings['max_new_tokens'])
             with gr.Column():
                 history_size_slider = gr.Slider(minimum=settings['history_size_min'], maximum=settings['history_size_max'], step=1, label='Chat history size in prompt (0 for no limit)', value=settings['history_size'])
-                with gr.Row():
-                    preset_menu = gr.Dropdown(choices=available_presets, value=settings[f'preset{suffix}'], label='Generation parameters preset')
-                    create_refresh_button(preset_menu, lambda : None, lambda : {"choices": get_available_presets()}, "refresh-button")
+
+        preset_menu, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k = create_settings_menus()
 
         name1 = gr.Textbox(value=settings[f'name1{suffix}'], lines=1, label='Your name')
         name2 = gr.Textbox(value=settings[f'name2{suffix}'], lines=1, label='Bot\'s name')
@@ -727,7 +787,7 @@ if args.chat or args.cai_chat:
         if args.extensions is not None:
             create_extensions_block()
 
-        input_params = [textbox, length_slider, preset_menu, model_menu, name1, name2, context, check, history_size_slider]
+        input_params = [textbox, max_new_tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, name1, name2, context, check, history_size_slider]
         if args.cai_chat:
             gen_events.append(buttons["Generate"].click(cai_chatbot_wrapper, input_params, display, show_progress=args.no_stream, api_name="textgen"))
             gen_events.append(textbox.submit(cai_chatbot_wrapper, input_params, display, show_progress=args.no_stream))
@@ -768,25 +828,19 @@ elif args.notebook:
             markdown = gr.Markdown()
         with gr.Tab('HTML'):
             html = gr.HTML()
+
         buttons["Generate"] = gr.Button("Generate")
         buttons["Stop"] = gr.Button("Stop")
 
-        length_slider = gr.Slider(minimum=settings['max_new_tokens_min'], maximum=settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=settings['max_new_tokens'])
-        with gr.Row():
-            with gr.Column():
-                with gr.Row():
-                    model_menu = gr.Dropdown(choices=available_models, value=model_name, label='Model')
-                    create_refresh_button(model_menu, lambda : None, lambda : {"choices": get_available_models()}, "refresh-button")
-            with gr.Column():
-                with gr.Row():
-                    preset_menu = gr.Dropdown(choices=available_presets, value=settings['preset'], label='Generation parameters preset')
-                    create_refresh_button(preset_menu, lambda : None, lambda : {"choices": get_available_presets()}, "refresh-button")
+        max_new_tokens = gr.Slider(minimum=settings['max_new_tokens_min'], maximum=settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=settings['max_new_tokens'])
+
+        preset_menu, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k = create_settings_menus()
 
         if args.extensions is not None:
             create_extensions_block()
 
-        gen_events.append(buttons["Generate"].click(generate_reply, [textbox, length_slider, preset_menu, model_menu], [textbox, markdown, html], show_progress=args.no_stream, api_name="textgen"))
-        gen_events.append(textbox.submit(generate_reply, [textbox, length_slider, preset_menu, model_menu], [textbox, markdown, html], show_progress=args.no_stream))
+        gen_events.append(buttons["Generate"].click(generate_reply, [textbox, max_new_tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k], [textbox, markdown, html], show_progress=args.no_stream, api_name="textgen"))
+        gen_events.append(textbox.submit(generate_reply, [textbox, max_new_tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k], [textbox, markdown, html], show_progress=args.no_stream))
         buttons["Stop"].click(None, None, None, cancels=gen_events)
 
 else:
@@ -795,19 +849,15 @@ else:
         with gr.Row():
             with gr.Column():
                 textbox = gr.Textbox(value=default_text, lines=15, label='Input')
-                length_slider = gr.Slider(minimum=settings['max_new_tokens_min'], maximum=settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=settings['max_new_tokens'])
-                with gr.Row():
-                    preset_menu = gr.Dropdown(choices=available_presets, value=settings['preset'], label='Generation parameters preset')
-                    create_refresh_button(preset_menu, lambda : None, lambda : {"choices": get_available_presets()}, "refresh-button")
-                with gr.Row():
-                    model_menu = gr.Dropdown(choices=available_models, value=model_name, label='Model')
-                    create_refresh_button(model_menu, lambda : None, lambda : {"choices": get_available_models()}, "refresh-button")
+                max_new_tokens = gr.Slider(minimum=settings['max_new_tokens_min'], maximum=settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=settings['max_new_tokens'])
                 buttons["Generate"] = gr.Button("Generate")
                 with gr.Row():
                     with gr.Column():
                         buttons["Continue"] = gr.Button("Continue")
                     with gr.Column():
                         buttons["Stop"] = gr.Button("Stop")
+
+                preset_menu, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k = create_settings_menus()
                 if args.extensions is not None:
                     create_extensions_block()
 
@@ -819,13 +869,17 @@ else:
                 with gr.Tab('HTML'):
                     html = gr.HTML()
 
-        gen_events.append(buttons["Generate"].click(generate_reply, [textbox, length_slider, preset_menu, model_menu], [output_textbox, markdown, html], show_progress=args.no_stream, api_name="textgen"))
-        gen_events.append(textbox.submit(generate_reply, [textbox, length_slider, preset_menu, model_menu], [output_textbox, markdown, html], show_progress=args.no_stream))
-        gen_events.append(buttons["Continue"].click(generate_reply, [output_textbox, length_slider, preset_menu, model_menu], [output_textbox, markdown, html], show_progress=args.no_stream))
+        gen_events.append(buttons["Generate"].click(generate_reply, [textbox, max_new_tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k], [output_textbox, markdown, html], show_progress=args.no_stream, api_name="textgen"))
+        gen_events.append(textbox.submit(generate_reply, [textbox, max_new_tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k], [output_textbox, markdown, html], show_progress=args.no_stream))
+        gen_events.append(buttons["Continue"].click(generate_reply, [output_textbox, max_new_tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k], [output_textbox, markdown, html], show_progress=args.no_stream))
         buttons["Stop"].click(None, None, None, cancels=gen_events)
 
 interface.queue()
 if args.listen:
-    interface.launch(share=args.share, server_name="0.0.0.0", server_port=args.listen_port)
+    interface.launch(prevent_thread_lock=True, share=args.share, server_name="0.0.0.0", server_port=args.listen_port)
 else:
-    interface.launch(share=args.share, server_port=args.listen_port)
+    interface.launch(prevent_thread_lock=True, share=args.share, server_port=args.listen_port)
+
+# I think that I will need this later
+while True:
+    time.sleep(0.5)
