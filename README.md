@@ -158,6 +158,13 @@ Pull requests, suggestions, and issue reports are welcome.
 
 Before reporting a bug, make sure that you have created a conda environment and installed the dependencies exactly as in the *Installation* section above.
 
+These issues are known:
+
+* 8-bit doesn't work properly on Windows or older GPUs.
+* Deepspeed doesn't work properly on Windows.
+
+For these two, please try commenting on an existing issue instead of creating a new one.
+
 ## Credits
 
 - NovelAI and KoboldAI presets: https://github.com/KoboldAI/KoboldAI-Client/wiki/Settings-Presets
