@@ -274,8 +274,6 @@ def generate_reply(question, tokens, do_sample, max_new_tokens, temperature, top
         f"early_stopping={early_stopping}",
     ]
 
-    print(generate_params)
-
     if args.deepspeed:
         generate_params.append("synced_gpus=True")
     if args.no_stream:
@@ -395,7 +393,7 @@ def create_settings_menus():
         with gr.Row():
             with gr.Column():
                 num_beams = gr.Slider(0, 20, step=1, value=defaults["num_beams"], label="num_beams")
-                length_penalty = gr.Slider(0, 5, value=defaults["length_penalty"], label="length_penalty")
+                length_penalty = gr.Slider(-5, 5, value=defaults["length_penalty"], label="length_penalty")
             with gr.Column():
                 min_length = gr.Slider(0, 2000, step=1, value=defaults["min_length"] if args.no_stream else 0, label="min_length", interactive=args.no_stream)
                 early_stopping = gr.Checkbox(value=defaults["early_stopping"], label="early_stopping")
