@@ -387,7 +387,7 @@ def create_settings_menus():
                 top_p = gr.Slider(0.0,1.0,value=defaults['top_p'],step=0.01,label="top_p")
                 typical_p = gr.Slider(0.0,1.0,value=defaults['typical_p'],step=0.01,label="typical_p")
             with gr.Column():
-                repetition_penalty = gr.Slider(1.0,5.0,value=defaults['repetition_penalty'],step=0.01,label="repetition_penalty")
+                repetition_penalty = gr.Slider(1.0,4.99,value=defaults['repetition_penalty'],step=0.01,label="repetition_penalty")
                 top_k = gr.Slider(0,200,value=defaults['top_k'],step=1,label="top_k")
                 no_repeat_ngram_size = gr.Slider(0, 20, step=1, value=defaults["no_repeat_ngram_size"], label="no_repeat_ngram_size")
 
