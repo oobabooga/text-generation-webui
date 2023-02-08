@@ -12,7 +12,7 @@ You have three options:
 
 #### How do I add a profile picture for myself?
 
-Put an image called `img_you.jpg` or `img_you.png` into the `text-generation-webui` folder.
+Put an image called `img_me.jpg` or `img_me.png` into the `text-generation-webui` folder.
 
 #### I have imported my character but I can't see the `example_dialogue`.
 
