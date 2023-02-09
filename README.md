@@ -1,6 +1,6 @@
 # Text generation web UI
 
-A gradio web UI for running large language models like gpt-j-6B, gpt-neo, opt, galactica, and pygmalion on your own computer.
+A gradio web UI for running Large Language Models like gpt-j-6B, gpt-neo, opt, galactica, and pygmalion.
 
 Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.com/AUTOMATIC1111/stable-diffusion-webui) of text generation.
 
