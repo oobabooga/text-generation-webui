@@ -27,7 +27,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * Supports extensions ([guide](https://github.com/oobabooga/text-generation-webui/wiki/Extensions)).
 * Works on Google Colab ([guide](https://github.com/oobabooga/text-generation-webui/wiki/Running-on-Colab)).
 
-## Installation
+## Installation option 1: conda
 
 Open a terminal and copy and paste these commands one at a time ([install conda](https://docs.conda.io/en/latest/miniconda.html) first if you don't have it already):
 
@@ -50,6 +50,15 @@ conda install pytorch torchvision torchaudio git -c pytorch
 ```
 
 Once you have completed these steps, you should be able to start the web UI. However, you will first need to download a model.
+
+## Installation option 2: 1-click Windows installer
+
+[oobabooga-windows.zip](https://github.com/oobabooga/text-generation-webui/releases/download/windows/oobabooga-windows.zip)
+
+Just download the zip above, extract it, and double click on "install". The web UI and all its dependencies will be installed in the same folder.
+
+* To download a model, double click on "download-model"
+* To start the web UI, double click on "start-webui" 
 
 ## Downloading models
 
