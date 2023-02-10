@@ -1,6 +1,5 @@
 params = {
-    "input suffix": " *I say as I make a funny face*",
-    "bot prefix": " *I speak in a cute way*",
+    "soft prompt": " *I speak in an annoyingly cute way*",
 }
 
 def input_modifier(string):
@@ -9,7 +8,7 @@ def input_modifier(string):
     they are fed into the model.
     """ 
 
-    return string + params["input suffix"]
+    return string
 
 def output_modifier(string):
     """
@@ -25,4 +24,4 @@ def bot_prefix_modifier(string):
     behavior.
     """
 
-    return string + params["bot prefix"]
+    return string + params["soft prompt"]
