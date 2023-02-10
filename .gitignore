@@ -1,0 +1,4 @@
+.DS_Store
+__pycache__
+models/*
+!models/place-your-models-here.txt

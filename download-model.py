@@ -6,20 +6,16 @@ python download-model.py facebook/opt-1.3b
 
 '''
 
-import requests 
-from bs4 import BeautifulSoup 
-import multiprocessing
-import tqdm
 import sys
-import argparse
-from pathlib import Path
 import re
+import multiprocessing
+import requests
+from pathlib import Path
+from bs4 import BeautifulSoup
+from argparse_module import args
+import tqdm
 
-parser = argparse.ArgumentParser()
-parser.add_argument('MODEL', type=str)
-parser.add_argument('--branch', type=str, default='main', help='Name of the Git branch to download from.')
-parser.add_argument('--threads', type=int, default=1, help='Number of files to download simultaneously.')
-args = parser.parse_args()
+
 
 def get_file(args):
     url = args[0]
