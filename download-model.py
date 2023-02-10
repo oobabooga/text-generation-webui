@@ -5,15 +5,15 @@ Example:
 python download-model.py facebook/opt-1.3b
 
 '''
-
-import requests 
-from bs4 import BeautifulSoup 
-import multiprocessing
-import tqdm
-import sys
 import argparse
-from pathlib import Path
+import multiprocessing
 import re
+import sys
+from pathlib import Path
+
+import requests
+import tqdm
+from bs4 import BeautifulSoup
 
 parser = argparse.ArgumentParser()
 parser.add_argument('MODEL', type=str)

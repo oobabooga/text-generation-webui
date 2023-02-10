@@ -1,26 +1,30 @@
-import re
-import gc
-import time
-import glob
-import torch
 import argparse
-import json
-import io
 import base64
-import sys
+import copy
+import gc
+import glob
+import io
+import json
 import os
+import re
+import sys
+import time
+import warnings
 from datetime import datetime
 from pathlib import Path
-from PIL import Image
-import copy
+
 import gradio as gr
-import warnings
-from tqdm import tqdm
+import torch
 import transformers
-from transformers import AutoTokenizer, AutoModelForCausalLM, AutoConfig
+from PIL import Image
+from tqdm import tqdm
+from transformers import AutoConfig
+from transformers import AutoModelForCausalLM
+from transformers import AutoTokenizer
+
 from modules.html_generator import *
-from modules.ui import *
 from modules.stopping_criteria import _SentinelTokenStoppingCriteria
+from modules.ui import *
 
 transformers.logging.set_verbosity_error()
 
