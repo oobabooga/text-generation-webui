@@ -4,9 +4,9 @@ This is a library for formatting GPT-4chan and chat outputs as nice HTML.
 
 '''
 
+import copy
 import re
 from pathlib import Path
-import copy
 
 def generate_basic_html(s):
     s = '\n'.join([f'<p style="margin-bottom: 20px">{line}</p>' for line in s.split('\n')])

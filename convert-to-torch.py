@@ -6,11 +6,12 @@ python convert-to-torch.py models/opt-1.3b
  
 The output will be written to torch-dumps/name-of-the-model.pt
 '''
- 
-from transformers import AutoModelForCausalLM
-import torch
-from sys import argv
+
 from pathlib import Path
+from sys import argv
+
+import torch
+from transformers import AutoModelForCausalLM
  
 path = Path(argv[1])
 model_name = path.name
