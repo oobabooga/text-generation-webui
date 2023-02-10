@@ -51,14 +51,18 @@ conda install pytorch torchvision torchaudio git -c pytorch
 
 Once you have completed these steps, you should be able to start the web UI. However, you will first need to download a model.
 
-## Installation option 2: 1-click Windows installer
+## Installation option 2: 1-click installers
 
-[oobabooga-windows.zip](https://github.com/oobabooga/text-generation-webui/releases/download/windows/oobabooga-windows.zip)
+[oobabooga-windows.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga-windows.zip)
+
+[oobabooga-linux.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga-linux.zip)
 
 Just download the zip above, extract it, and double click on "install". The web UI and all its dependencies will be installed in the same folder.
 
 * To download a model, double click on "download-model"
 * To start the web UI, double click on "start-webui" 
+
+This only works for NVIDIA GPUs or CPU mode at the moment.
 
 ## Downloading models
 
