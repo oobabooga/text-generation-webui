@@ -67,8 +67,6 @@ Just download the zip above, extract it, and double click on "install". The web 
 * To download a model, double click on "download-model"
 * To start the web UI, double click on "start-webui" 
 
-This only works for NVIDIA GPUs or CPU mode at the moment.
-
 ## Downloading models
 
 Models should be placed under `models/model-name`. For instance, `models/gpt-j-6B` for [GPT-J 6B](https://huggingface.co/EleutherAI/gpt-j-6B/tree/main).
