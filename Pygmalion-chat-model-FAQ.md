@@ -26,7 +26,8 @@ Those are simply added to the the Context field when you load a character.
 
 #### How can I create a character?
 
-[Pygmalion JSON character creator](https://oobabooga.github.io/character-creator.html)
+* [Pygmalion JSON character creator](https://oobabooga.github.io/character-creator.html)
+* [AI Character Editor](https://zoltanai.github.io/character-editor/)
 
 #### Is the chat history truncated in the prompt?
 
