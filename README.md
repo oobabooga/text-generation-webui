@@ -57,7 +57,7 @@ Once you have completed these steps, you should be able to start the web UI. How
 
 [oobabooga-linux.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga-linux.zip)
 
-Just download the appropriate zip above, extract it, and double click on "install". The web UI and all its dependencies will be installed in the same folder.
+Just download the zip above, extract it, and double click on "install". The web UI and all its dependencies will be installed in the same folder.
 
 * To download a model, double click on "download-model"
 * To start the web UI, double click on "start-webui" 
