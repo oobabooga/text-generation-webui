@@ -1,4 +1,4 @@
-do_sample=True,
-top_p=1,
-typical_p=0.3,
-temperature=0.7,
+do_sample=True
+top_p=1
+typical_p=0.3
+temperature=0.7

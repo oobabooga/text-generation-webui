@@ -182,8 +182,8 @@ def load_preset_values(preset_menu, return_dict=False):
     }
     with open(Path(f'presets/{preset_menu}.txt'), 'r') as infile:
         preset = infile.read()
-    for i in preset.split(','):
-        i = i.strip().split('=')
+    for i in preset.splitlines():
+        i = i.rstrip(',').strip().split('=')
         if len(i) == 2 and i[0].strip() != 'tokens':
             generate_params[i[0].strip()] = eval(i[1].strip())
 

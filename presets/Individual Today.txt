@@ -1,6 +1,6 @@
-do_sample=True,
-top_p=0.9,
-top_k=50,
-temperature=1.39,
-repetition_penalty=1.08,
-typical_p=0.2,
+do_sample=True
+top_p=0.9
+top_k=50
+temperature=1.39
+repetition_penalty=1.08
+typical_p=0.2
