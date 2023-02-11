@@ -186,4 +186,5 @@ For these two, please try commenting on an existing issue instead of creating a 
 - NovelAI and KoboldAI presets: https://github.com/KoboldAI/KoboldAI-Client/wiki/Settings-Presets
 - Pygmalion preset, code for early stopping in chat mode, code for some of the sliders: https://github.com/PygmalionAI/gradio-ui/
 - Verbose preset: Anonymous 4chan user.
+- Instruct-Joi preset: https://huggingface.co/Rallio67/joi\_12B\_instruct\_alpha
 - Gradio dropdown menu refresh button: https://github.com/AUTOMATIC1111/stable-diffusion-webui
