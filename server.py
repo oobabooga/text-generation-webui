@@ -537,7 +537,10 @@ def send_last_reply_to_input():
 
 def replace_last_reply(text, name1, name2):
     if len(history['visible']) > 0:
-        history['visible'][-1][1] = text
+        if args.cai_chat:
+            history['visible'][-1][1] = text
+        else:
+            history['visible'][-1] = (history['visible'][-1][0], text)
         history['internal'][-1][1] = apply_extensions(text, "input")
 
     if args.cai_chat:
