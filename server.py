@@ -749,7 +749,12 @@ model, tokenizer = load_model(model_name)
 loaded_preset = None
 
 # UI settings
-default_text = settings['prompt_gpt4chan'] if model_name.lower().startswith(('gpt4chan', 'gpt-4chan', '4chan')) else settings['prompt']
+if model_name.lower().startswith(('gpt4chan', 'gpt-4chan', '4chan')):
+    default_text = settings['prompt_gpt4chan']
+elif re.match('(rosey|chip|joi)_.*_instruct.*', model_name.lower()) is not None:
+    default_text = 'User: \n'
+else:
+    default_text = settings['prompt']
 description = f"\n\n# Text generation lab\nGenerate text using Large Language Models.\n"
 css = ".my-4 {margin-top: 0} .py-6 {padding-top: 2.5rem} #refresh-button {flex: none; margin: 0; padding: 0; min-width: 50px; border: none; box-shadow: none; border-radius: 0} #download-label, #upload-label {min-height: 0}"
 suffix = '_pygmalion' if 'pygmalion' in model_name.lower() else ''
