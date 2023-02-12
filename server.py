@@ -120,6 +120,9 @@ def load_model(model_name):
     else:
         command = "AutoModelForCausalLM.from_pretrained"
         params = ["low_cpu_mem_usage=True"]
+        if not args.cpu and not torch.cuda.is_available():
+            print("Warning: no GPU has been detected.\nFalling back to CPU mode.\n")
+            args.cpu = True
 
         if args.cpu:
             params.append("low_cpu_mem_usage=True")
