@@ -113,7 +113,7 @@ python download-model.py EleutherAI/gpt-j-6B --text-only
 
 #### Converting to pytorch (optional)
 
-The script `convert-to-torch.py` allows you to convert models to .pt format, which is sometimes 10x faster to load to the GPU:
+The script `convert-to-torch.py` allows you to convert models to .pt format, which can be a lot faster to load to the GPU:
 
     python convert-to-torch.py models/model-name
 
