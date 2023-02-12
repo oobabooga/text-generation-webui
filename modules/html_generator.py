@@ -9,7 +9,7 @@ import re
 from pathlib import Path
 
 def generate_basic_html(s):
-    s = '\n'.join([f'<p style="margin-bottom: 20px">{line}</p>' for line in s.split('\n')])
+    s = '\n'.join([f'<p style="margin-bottom: 22px">{line}</p>' for line in s.split('\n')])
     s = f'<div style="max-width: 600px; margin-left: auto; margin-right: auto; background-color:#efefef; color:#0b0f19; padding:3em; font-size:1.1em; font-family: helvetica">{s}</div>'
     return s
 
@@ -177,7 +177,7 @@ def generate_chat_html(history, name1, name2, character):
     .message {
       display: grid;
       grid-template-columns: 50px 1fr;
-      padding-bottom: 20px;
+      padding-bottom: 22px;
       font-size: 15px;
       font-family: helvetica;
     }   
