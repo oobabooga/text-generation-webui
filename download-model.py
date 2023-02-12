@@ -19,6 +19,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('MODEL', type=str)
 parser.add_argument('--branch', type=str, default='main', help='Name of the Git branch to download from.')
 parser.add_argument('--threads', type=int, default=1, help='Number of files to download simultaneously.')
+parser.add_argument('--text-only', action='store_true', help='Only download text files (txt/json).')
 args = parser.parse_args()
 
 def get_file(args):
@@ -84,15 +85,18 @@ if __name__ == '__main__':
             is_text = re.match(".*\.(txt|json)", fname)
 
             if is_text or is_safetensors or is_pytorch:
-                downloads.append(f'https://huggingface.co/{href}')
                 if is_text:
+                    downloads.append(f'https://huggingface.co/{href}')
                     classifications.append('text')
-                elif is_safetensors:
-                    has_safetensors = True
-                    classifications.append('safetensors')
-                elif is_pytorch:
-                    has_pytorch = True
-                    classifications.append('pytorch')
+                    continue
+                if not args.text_only:
+                    downloads.append(f'https://huggingface.co/{href}')
+                    if is_safetensors:
+                        has_safetensors = True
+                        classifications.append('safetensors')
+                    elif is_pytorch:
+                        has_pytorch = True
+                        classifications.append('pytorch')
 
     # If both pytorch and safetensors are available, download safetensors only
     if has_pytorch and has_safetensors:
