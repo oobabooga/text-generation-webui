@@ -1,5 +1,5 @@
 params = {
-    "soft prompt": " *I speak in an annoyingly cute way*",
+    "bias string": " *I speak in an annoyingly cute way*",
 }
 
 def input_modifier(string):
@@ -24,4 +24,4 @@ def bot_prefix_modifier(string):
     behavior.
     """
 
-    return string + params["soft prompt"]
+    return string + params["bias string"]
