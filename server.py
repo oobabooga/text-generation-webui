@@ -538,8 +538,8 @@ def remove_last_message(name1, name2):
         return history['visible'], last[0]
 
 def send_last_reply_to_input():
-    if len(history['visible']) > 0:
-        return history['visible'][-1][1]
+    if len(history['internal']) > 0:
+        return history['internal'][-1][1]
     else:
         return ''
 
