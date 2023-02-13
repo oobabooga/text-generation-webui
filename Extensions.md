@@ -5,7 +5,7 @@ This web UI supports extensions. They can be used to modify your prompt or the m
 |Extension|Description|
 |---------|-----------|
 |[google_translate](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/google_translate/script.py)| Automatically translates inputs and outputs using Google Translate.|
-|[softprompt](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/softprompt/script.py)| Just a very simple example that implements soft prompts.|
+|[character_bias](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/character_bias/script.py)| Just a very simple example that biases the bot's responses in chat mode.|
 
 ## Creating an extension
 
