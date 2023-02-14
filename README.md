@@ -89,7 +89,7 @@ For instance:
 
     python download-model.py facebook/opt-1.3b
 
-If you want to download a model manually, note that all you need are the json, txt, and pytorch\*.bin files. The remaining files are not necessary.
+If you want to download a model manually, note that all you need are the json, txt, and pytorch\*.bin (or model*.safetensors) files. The remaining files are not necessary.
 
 #### GPT-4chan
 
