@@ -55,8 +55,6 @@ pip3 install torch torchvision torchaudio --extra-index-url https://download.pyt
 conda install pytorch torchvision torchaudio git -c pytorch
 ```
 
-Once you have completed these steps, you should be able to start the web UI. However, you will first need to download a model.
-
 ## Installation option 2: one-click installers
 
 [oobabooga-windows.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga-windows.zip)
@@ -83,7 +81,7 @@ Models should be placed under `models/model-name`. For instance, `models/gpt-j-6
 * [\*-Erebus](https://huggingface.co/models?search=erebus)
 * [Pygmalion](https://huggingface.co/models?search=pygmalion)
 
-You can automatically download a model from HF using the script `download-model.py`. Its usage is very simple:
+You can automatically download a model from HF using the script `download-model.py`:
 
     python download-model.py organization/model
 
