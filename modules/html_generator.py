@@ -10,7 +10,7 @@ from pathlib import Path
 
 def generate_basic_html(s):
     s = '\n'.join([f'<p style="margin-bottom: 22px">{line}</p>' for line in s.split('\n')])
-    s = f'<div style="max-width: 600px; margin-left: auto; margin-right: auto; background-color:#efefef; color:#0b0f19; padding:3em; font-size:1.1em; font-family: helvetica">{s}</div>'
+    s = f'<div style="max-width: 600px; margin-left: auto; margin-right: auto; background-color:#efefef; color:#0b0f19; padding:3em; font-size:1.1em; font-family: helvetica; line-height: 1.428571429">{s}</div>'
     return s
 
 def process_post(post, c):
@@ -180,6 +180,7 @@ def generate_chat_html(history, name1, name2, character):
       padding-bottom: 22px;
       font-size: 15px;
       font-family: helvetica;
+      line-height: 1.428571429;
     }   
         
     .circle-you {
