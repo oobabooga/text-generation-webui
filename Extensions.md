@@ -4,8 +4,10 @@ This web UI supports extensions. They can be used to modify your prompt or the m
 
 |Extension|Description|
 |---------|-----------|
-|[google_translate](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/google_translate/script.py)| Automatically translates inputs and outputs using Google Translate.|
 |[character_bias](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/character_bias/script.py)| Just a very simple example that biases the bot's responses in chat mode.|
+|[google_translate](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/google_translate/script.py)| Automatically translates inputs and outputs using Google Translate.|
+|[silero_tts](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/silero_tts/script.py)| Text-to-speech extension using [Silero](https://github.com/snakers4/silero-models). When used in chat mode, replaces the responses with an audio widget.|
+
 
 ## Creating an extension
 
