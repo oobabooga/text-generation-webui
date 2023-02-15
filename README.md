@@ -15,7 +15,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * Switch between different models using a dropdown menu.
 * Notebook mode that resembles OpenAI's playground.
 * Chat mode for conversation and role playing.
-* Advanced chat features (send images, get audio responses with TTS)
+* Advanced chat features (send images, get audio responses with TTS).
 * Generate nice HTML output for GPT-4chan.
 * Generate Markdown output for [GALACTICA](https://github.com/paperswithcode/galai), including LaTeX support.
 * Support for [Pygmalion](https://huggingface.co/models?search=pygmalionai/pygmalion) and custom characters in JSON or TavernAI Character Card formats ([FAQ](https://github.com/oobabooga/text-generation-webui/wiki/Pygmalion-chat-model-FAQ)).
