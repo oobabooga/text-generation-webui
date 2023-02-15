@@ -884,7 +884,7 @@ if args.chat or args.cai_chat:
         with gr.Row():
             buttons["Impersonate"] = gr.Button("Impersonate")
             buttons["Remove last"] = gr.Button("Remove last")
-            buttons["Clear"] = gr.Button("Clear history")
+            buttons["Clear history"] = gr.Button("Clear history")
         with gr.Row():
             buttons["Send last reply to input"] = gr.Button("Send last reply to input")
             buttons["Replace last reply"] = gr.Button("Replace last reply")
@@ -951,7 +951,7 @@ if args.chat or args.cai_chat:
 
         buttons["Send last reply to input"].click(send_last_reply_to_input, [], textbox, show_progress=args.no_stream)
         buttons["Replace last reply"].click(replace_last_reply, [textbox, name1, name2], display, show_progress=args.no_stream)
-        buttons["Clear"].click(clear_chat_log, [character_menu, name1, name2], display)
+        buttons["Clear history"].click(clear_chat_log, [character_menu, name1, name2], display)
         buttons["Remove last"].click(remove_last_message, [name1, name2], [display, textbox], show_progress=False)
         buttons["Download"].click(save_history, inputs=[], outputs=[download])
         buttons["Upload character"].click(upload_character, [upload_char, upload_img], [character_menu])
@@ -960,6 +960,7 @@ if args.chat or args.cai_chat:
         for i in ["Generate", "Regenerate", "Replace last reply"]:
             buttons[i].click(lambda x: "", textbox, textbox, show_progress=False)
             buttons[i].click(lambda : save_history(timestamp=False), [], [], show_progress=False)
+        buttons["Clear history"].click(lambda : save_history(timestamp=False), [], [], show_progress=False)
         textbox.submit(lambda x: "", textbox, textbox, show_progress=False)
         textbox.submit(lambda : save_history(timestamp=False), [], [], show_progress=False)
 
