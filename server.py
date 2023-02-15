@@ -427,7 +427,7 @@ def get_available_softprompts():
 def create_extensions_block():
     extensions_ui_elements = []
     default_values = []
-    if not args.chat or args.cai_chat:
+    if not (args.chat or args.cai_chat):
         gr.Markdown('## Extensions parameters')
     for ext in sorted(extension_state, key=lambda x : extension_state[x][1]):
         if extension_state[ext][0] == True:
