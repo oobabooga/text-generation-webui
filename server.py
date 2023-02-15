@@ -101,7 +101,6 @@ if args.deepspeed:
 
 if args.picture and (args.cai_chat or args.chat):
     import modules.bot_picture as bot_picture
-    blip = bot_picture.load_model()
 
 def load_model(model_name):
     print(f"Loading {model_name}...")
@@ -567,11 +566,11 @@ def extract_message_from_reply(question, reply, current, other, check, extension
 
     return reply, next_character_found, substring_found
 
-def chatbot_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, history_size, picture):
-    original_text = text
-
+def chatbot_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, history_size, picture=None):
     if args.picture and picture is not None:
-        text, original_text = generate_chat_picture(picture, name1, name2)
+        text, visible_text = generate_chat_picture(picture, name1, name2)
+    else:
+        visible_text = text
 
     text = apply_extensions(text, "input")
     question = generate_chat_prompt(text, tokens, name1, name2, context, history_size)
@@ -581,14 +580,14 @@ def chatbot_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p,
     for reply in generate_reply(question, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, eos_token=eos_token, stopping_string=f"\n{name1}:"):
         reply, next_character_found, substring_found = extract_message_from_reply(question, reply, name2, name1, check, extensions=True)
         history['internal'][-1] = [text, reply]
-        history['visible'][-1] = [original_text, apply_extensions(reply, "output")]
+        history['visible'][-1] = [visible_text, apply_extensions(reply, "output")]
         if not substring_found:
-            yield history['visible'], None
+            yield history['visible']
         if next_character_found:
             break
-    yield history['visible'], None
+    yield history['visible']
 
-def impersonate_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, history_size, picture):
+def impersonate_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, history_size, picture=None):
     question = generate_chat_prompt(text, tokens, name1, name2, context, history_size, impersonate=True)
     eos_token = '\n' if check else None
     for reply in generate_reply(question, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, eos_token=eos_token, stopping_string=f"\n{name2}:"):
@@ -599,20 +598,20 @@ def impersonate_wrapper(text, tokens, do_sample, max_new_tokens, temperature, to
             break
     yield apply_extensions(reply, "output")
 
-def cai_chatbot_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, history_size, picture):
-    for _history, _ in chatbot_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, history_size, picture):
-        yield generate_chat_html(_history, name1, name2, character), None
+def cai_chatbot_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, history_size, picture=None):
+    for _history in chatbot_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, history_size, picture):
+        yield generate_chat_html(_history, name1, name2, character)
 
-def regenerate_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, history_size, picture):
+def regenerate_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, history_size, picture=None):
     last = history['visible'].pop()
     history['internal'].pop()
     text = last[0]
     if args.cai_chat:
-        for i, _ in cai_chatbot_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, history_size, picture):
-            yield i, None
+        for i in cai_chatbot_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, history_size, picture):
+            yield i
     else:
-        for i, _ in chatbot_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, history_size, picture):
-            yield i, None
+        for i in chatbot_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, history_size, picture):
+            yield i
 
 def remove_last_message(name1, name2):
     if not history['internal'][-1][0] == '<|BEGIN-VISIBLE-CHAT|>':
@@ -802,12 +801,12 @@ def upload_your_profile_picture(img):
     print(f'Profile picture saved to "img_me.png"')
 
 def generate_chat_picture(picture, name1, name2):
-    text = f'*{name1} sends {name2} a picture that contains the following: "{blip(picture)}"*'        
+    text = f'*{name1} sends {name2} a picture that contains the following: "{bot_picture.caption_image(picture)}"*'
     buffer = BytesIO()
     picture.save(buffer, format="JPEG")
     img_str = base64.b64encode(buffer.getvalue()).decode('utf-8')
-    original_text = f'<img src="data:image/jpeg;base64,{img_str}">'
-    return text, original_text
+    visible_text = f'<img src="data:image/jpeg;base64,{img_str}">'
+    return text, visible_text
 
 # Global variables
 available_models = get_available_models()
@@ -881,7 +880,7 @@ if args.chat or args.cai_chat:
             buttons["Replace last reply"] = gr.Button("Replace last reply")
         if args.picture:
             with gr.Row():
-                picture_select = gr.Image(label="Send a picture", type='pil', display_label=True)
+                picture_select = gr.Image(label="Send a picture", type='pil')
 
         with gr.Row():
             with gr.Column():
@@ -927,17 +926,20 @@ if args.chat or args.cai_chat:
         if args.extensions is not None:
             create_extensions_block()
 
-        input_params = [textbox, max_new_tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, history_size_slider, picture_select]
-        output_params = [display, picture_select]
+        input_params = [textbox, max_new_tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, history_size_slider]
+        if args.picture:
+            input_params.append(picture_select)
         if args.cai_chat:
-            gen_events.append(buttons["Generate"].click(cai_chatbot_wrapper, input_params, output_params, show_progress=args.no_stream, api_name="textgen"))
-            gen_events.append(textbox.submit(cai_chatbot_wrapper, input_params, output_params, show_progress=args.no_stream))
-            picture_select.upload(cai_chatbot_wrapper, input_params, output_params, show_progress=args.no_stream)
+            gen_events.append(buttons["Generate"].click(cai_chatbot_wrapper, input_params, display, show_progress=args.no_stream, api_name="textgen"))
+            gen_events.append(textbox.submit(cai_chatbot_wrapper, input_params, display, show_progress=args.no_stream))
+            if args.picture:
+                picture_select.upload(cai_chatbot_wrapper, input_params, display, show_progress=args.no_stream)
         else:
-            gen_events.append(buttons["Generate"].click(chatbot_wrapper, input_params, output_params, show_progress=args.no_stream, api_name="textgen"))
-            gen_events.append(textbox.submit(chatbot_wrapper, input_params, output_params, show_progress=args.no_stream))
-            picture_select.upload(chatbot_wrapper, input_params, output_params, show_progress=args.no_stream)
-        gen_events.append(buttons["Regenerate"].click(regenerate_wrapper, input_params, output_params, show_progress=args.no_stream))
+            gen_events.append(buttons["Generate"].click(chatbot_wrapper, input_params, display, show_progress=args.no_stream, api_name="textgen"))
+            gen_events.append(textbox.submit(chatbot_wrapper, input_params, display, show_progress=args.no_stream))
+            if args.picture:
+                picture_select.upload(chatbot_wrapper, input_params, display, show_progress=args.no_stream)
+        gen_events.append(buttons["Regenerate"].click(regenerate_wrapper, input_params, display, show_progress=args.no_stream))
         gen_events.append(buttons["Impersonate"].click(impersonate_wrapper, input_params, textbox, show_progress=args.no_stream))
 
         buttons["Send last reply to input"].click(send_last_reply_to_input, [], textbox, show_progress=args.no_stream)
@@ -949,11 +951,14 @@ if args.chat or args.cai_chat:
         buttons["Upload character"].click(upload_character, [upload_char, upload_img], [character_menu])
         for i in ["Generate", "Regenerate", "Replace last reply"]:
             buttons[i].click(lambda x: "", textbox, textbox, show_progress=False)
+
         textbox.submit(lambda x: "", textbox, textbox, show_progress=False)
         character_menu.change(load_character, [character_menu, name1, name2], [name2, context, display])
         upload_img_tavern.upload(upload_tavern_character, [upload_img_tavern, name1, name2], [character_menu])
         upload.upload(load_history, [upload, name1, name2], [])
         upload_img_me.upload(upload_your_profile_picture, [upload_img_me], [])
+        if args.picture:
+            picture_select.upload(lambda : None, [], [picture_select], show_progress=False)
 
         if args.cai_chat:
             upload.upload(redraw_html, [name1, name2], [display])

@@ -4,5 +4,4 @@ bitsandbytes==0.37.0
 gradio==3.15.0
 numpy
 safetensors==0.2.8
-nataili_blip
 git+https://github.com/huggingface/transformers
