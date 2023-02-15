@@ -217,6 +217,12 @@ def generate_chat_html(history, name1, name2, character):
 
     .body {
     }
+
+    .body img {
+      max-width: 300px;
+      max-height: 300px;
+      border-radius: 20px;
+    }
     """
 
     output = ''
