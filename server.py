@@ -859,7 +859,8 @@ else:
     default_text = settings['prompt']
 description = f"\n\n# Text generation lab\nGenerate text using Large Language Models.\n"
 css = ".my-4 {margin-top: 0} .py-6 {padding-top: 2.5rem} #refresh-button {flex: none; margin: 0; padding: 0; min-width: 50px; border: none; box-shadow: none; border-radius: 0} #download-label, #upload-label {min-height: 0}"
-chat_css = ".h-\[40vh\] {height: 66.67vh} .gradio-container {max-width: 800px; margin-left: auto; margin-right: auto} .w-screen {width: unset}"
+chat_css = ".h-\[40vh\] {height: 66.67vh} .gradio-container {max-width: 800px; margin-left: auto; margin-right: auto} .w-screen {width: unset} div.svelte-362y77>*, div.svelte-362y77>.form>* {flex-wrap: nowrap}"
+
 suffix = '_pygmalion' if 'pygmalion' in model_name.lower() else ''
 buttons = {}
 gen_events = []

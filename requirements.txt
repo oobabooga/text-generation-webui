@@ -1,7 +1,7 @@
 accelerate==0.15.0
 beautifulsoup4
 bitsandbytes==0.37.0
-gradio==3.15.0
+gradio==3.18.0
 numpy
 safetensors==0.2.8
 git+https://github.com/huggingface/transformers

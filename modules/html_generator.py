@@ -215,13 +215,19 @@ def generate_chat_html(history, name1, name2, character):
       font-weight: bold;
     }
 
-    .body {
+    .message-body {
     }
 
-    .body img {
+    .message-body img {
       max-width: 300px;
       max-height: 300px;
       border-radius: 20px;
+    }
+
+    .message-body p {
+      margin-bottom: 0 !important;
+      font-size: 15px !important;
+      line-height: 1.428571429 !important;
     }
     """
 
@@ -263,7 +269,7 @@ def generate_chat_html(history, name1, name2, character):
                   <div class="username">
                     {name2}
                   </div>
-                  <div class="body">
+                  <div class="message-body">
                     {p}
                   </div>
                 </div>
@@ -281,7 +287,7 @@ def generate_chat_html(history, name1, name2, character):
                       <div class="username">
                         {name1}
                       </div>
-                      <div class="body">
+                      <div class="message-body">
                         {p}
                       </div>
                     </div>
