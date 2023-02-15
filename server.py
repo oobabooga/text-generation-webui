@@ -957,12 +957,13 @@ if args.chat or args.cai_chat:
         buttons["Stop"].click(None, None, None, cancels=gen_events)
         buttons["Download"].click(save_history, inputs=[], outputs=[download])
         buttons["Upload character"].click(upload_character, [upload_char, upload_img], [character_menu])
+
         for i in ["Generate", "Regenerate", "Replace last reply"]:
             buttons[i].click(lambda x: "", textbox, textbox, show_progress=False)
             buttons[i].click(lambda : save_history(timestamp=False), [], [], show_progress=False)
-
         textbox.submit(lambda x: "", textbox, textbox, show_progress=False)
         textbox.submit(lambda : save_history(timestamp=False), [], [], show_progress=False)
+
         character_menu.change(load_character, [character_menu, name1, name2], [name2, context, display])
         upload_img_tavern.upload(upload_tavern_character, [upload_img_tavern, name1, name2], [character_menu])
         upload.upload(load_history, [upload, name1, name2], [])
