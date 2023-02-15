@@ -36,6 +36,7 @@ parser.add_argument('--model', type=str, help='Name of the model to load by defa
 parser.add_argument('--notebook', action='store_true', help='Launch the web UI in notebook mode, where the output is written to the same text box as the input.')
 parser.add_argument('--chat', action='store_true', help='Launch the web UI in chat mode.')
 parser.add_argument('--cai-chat', action='store_true', help='Launch the web UI in chat mode with a style similar to Character.AI\'s. If the file img_bot.png or img_bot.jpg exists in the same folder as server.py, this image will be used as the bot\'s profile picture. Similarly, img_me.png or img_me.jpg will be used as your profile picture.')
+parser.add_argument('--picture', action='store_true', help='Adds an ability to send pictures in chat UI modes.')
 parser.add_argument('--cpu', action='store_true', help='Use the CPU to generate text.')
 parser.add_argument('--load-in-8bit', action='store_true', help='Load the model with 8-bit precision.')
 parser.add_argument('--bf16', action='store_true', help='Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU.')
@@ -54,7 +55,6 @@ parser.add_argument('--listen', action='store_true', help='Make the web UI reach
 parser.add_argument('--listen-port', type=int, help='The listening port that the server will use.')
 parser.add_argument('--share', action='store_true', help='Create a public URL. This is useful for running the web UI on Google Colab or similar.')
 parser.add_argument('--verbose', action='store_true', help='Print the prompts to the terminal.')
-parser.add_argument('--picture', action='store_true', help='Adds an ability to send pictures in chat UI modes.')
 args = parser.parse_args()
 
 if (args.chat or args.cai_chat) and not args.no_stream:
@@ -564,6 +564,14 @@ def extract_message_from_reply(question, reply, current, other, check, extension
 
     return reply, next_character_found, substring_found
 
+def generate_chat_picture(picture, name1, name2):
+    text = f'*{name1} sends {name2} a picture that contains the following: "{bot_picture.caption_image(picture)}"*'
+    buffer = BytesIO()
+    picture.save(buffer, format="JPEG")
+    img_str = base64.b64encode(buffer.getvalue()).decode('utf-8')
+    visible_text = f'<img src="data:image/jpeg;base64,{img_str}">'
+    return text, visible_text
+
 def chatbot_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, chat_prompt_size, picture=None):
     if args.picture and picture is not None:
         text, visible_text = generate_chat_picture(picture, name1, name2)
@@ -602,7 +610,13 @@ def cai_chatbot_wrapper(text, tokens, do_sample, max_new_tokens, temperature, to
 
 def regenerate_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, chat_prompt_size, picture=None):
     last = history['visible'].pop()
-    history['internal'].pop()
+
+    # Fix for when the last sent message was an image
+    if last[0].startswith('<img src="'):
+        last[0] = history['internal'].pop()[0]
+    else:
+        history['internal'].pop()
+
     text = last[0]
     function_call = "cai_chatbot_wrapper" if args.cai_chat else "chatbot_wrapper"
     for i in eval(function_call)(text, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, chat_prompt_size, picture):
@@ -800,14 +814,6 @@ def upload_your_profile_picture(img):
     img = Image.open(io.BytesIO(img))
     img.save(Path(f'img_me.png'))
     print(f'Profile picture saved to "img_me.png"')
-
-def generate_chat_picture(picture, name1, name2):
-    text = f'*{name1} sends {name2} a picture that contains the following: "{bot_picture.caption_image(picture)}"*'
-    buffer = BytesIO()
-    picture.save(buffer, format="JPEG")
-    img_str = base64.b64encode(buffer.getvalue()).decode('utf-8')
-    visible_text = f'<img src="data:image/jpeg;base64,{img_str}">'
-    return text, visible_text
 
 # Global variables
 available_models = get_available_models()
