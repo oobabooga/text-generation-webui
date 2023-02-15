@@ -427,7 +427,8 @@ def get_available_softprompts():
 def create_extensions_block():
     extensions_ui_elements = []
     default_values = []
-    gr.Markdown('## Extensions parameters')
+    if not args.chat or args.cai_chat:
+        gr.Markdown('## Extensions parameters')
     for ext in sorted(extension_state, key=lambda x : extension_state[x][1]):
         if extension_state[ext][0] == True:
             params = eval(f"extensions.{ext}.script.params")
@@ -893,49 +894,52 @@ if args.chat or args.cai_chat:
             with gr.Row():
                 picture_select = gr.Image(label="Send a picture", type='pil')
 
-        with gr.Row():
-            with gr.Column():
-                max_new_tokens = gr.Slider(minimum=settings['max_new_tokens_min'], maximum=settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=settings['max_new_tokens'])
-            with gr.Column():
-                chat_prompt_size_slider = gr.Slider(minimum=settings['chat_prompt_size_min'], maximum=settings['chat_prompt_size_max'], step=1, label='Maximum prompt size in tokens', value=settings['chat_prompt_size'])
+        with gr.Tab("Chat settings"):
+            name1 = gr.Textbox(value=settings[f'name1{suffix}'], lines=1, label='Your name')
+            name2 = gr.Textbox(value=settings[f'name2{suffix}'], lines=1, label='Bot\'s name')
+            context = gr.Textbox(value=settings[f'context{suffix}'], lines=2, label='Context')
+            with gr.Row():
+                character_menu = gr.Dropdown(choices=available_characters, value="None", label='Character')
+                create_refresh_button(character_menu, lambda : None, lambda : {"choices": get_available_characters()}, "refresh-button")
 
-        preset_menu, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping = create_settings_menus()
+            with gr.Row():
+                check = gr.Checkbox(value=settings[f'stop_at_newline{suffix}'], label='Stop generating at new line character?')
+            with gr.Row():
+                with gr.Tab('Chat history'):
+                    with gr.Row():
+                        with gr.Column():
+                            gr.Markdown('Upload')
+                            upload = gr.File(type='binary')
+                        with gr.Column():
+                            gr.Markdown('Download')
+                            download = gr.File()
+                            buttons["Download"] = gr.Button(value="Click me")
+                with gr.Tab('Upload character'):
+                    with gr.Row():
+                        with gr.Column():
+                            gr.Markdown('1. Select the JSON file')
+                            upload_char = gr.File(type='binary')
+                        with gr.Column():
+                            gr.Markdown('2. Select your character\'s profile picture (optional)')
+                            upload_img = gr.File(type='binary')
+                    buttons["Upload character"] = gr.Button(value="Submit")
+                with gr.Tab('Upload your profile picture'):
+                    upload_img_me = gr.File(type='binary')
+                with gr.Tab('Upload TavernAI Character Card'):
+                    upload_img_tavern = gr.File(type='binary')
 
-        name1 = gr.Textbox(value=settings[f'name1{suffix}'], lines=1, label='Your name')
-        name2 = gr.Textbox(value=settings[f'name2{suffix}'], lines=1, label='Bot\'s name')
-        context = gr.Textbox(value=settings[f'context{suffix}'], lines=2, label='Context')
-        with gr.Row():
-            character_menu = gr.Dropdown(choices=available_characters, value="None", label='Character')
-            create_refresh_button(character_menu, lambda : None, lambda : {"choices": get_available_characters()}, "refresh-button")
+        with gr.Tab("Generation settings"):
+            with gr.Row():
+                with gr.Column():
+                    max_new_tokens = gr.Slider(minimum=settings['max_new_tokens_min'], maximum=settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=settings['max_new_tokens'])
+                with gr.Column():
+                    chat_prompt_size_slider = gr.Slider(minimum=settings['chat_prompt_size_min'], maximum=settings['chat_prompt_size_max'], step=1, label='Maximum prompt size in tokens', value=settings['chat_prompt_size'])
 
-        with gr.Row():
-            check = gr.Checkbox(value=settings[f'stop_at_newline{suffix}'], label='Stop generating at new line character?')
-        with gr.Row():
-            with gr.Tab('Chat history'):
-                with gr.Row():
-                    with gr.Column():
-                        gr.Markdown('Upload')
-                        upload = gr.File(type='binary')
-                    with gr.Column():
-                        gr.Markdown('Download')
-                        download = gr.File()
-                        buttons["Download"] = gr.Button(value="Click me")
-            with gr.Tab('Upload character'):
-                with gr.Row():
-                    with gr.Column():
-                        gr.Markdown('1. Select the JSON file')
-                        upload_char = gr.File(type='binary')
-                    with gr.Column():
-                        gr.Markdown('2. Select your character\'s profile picture (optional)')
-                        upload_img = gr.File(type='binary')
-                buttons["Upload character"] = gr.Button(value="Submit")
-            with gr.Tab('Upload your profile picture'):
-                upload_img_me = gr.File(type='binary')
-            with gr.Tab('Upload TavernAI Character Card'):
-                upload_img_tavern = gr.File(type='binary')
+            preset_menu, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping = create_settings_menus()
 
         if args.extensions is not None:
-            create_extensions_block()
+            with gr.Tab("Extensions"):
+                create_extensions_block()
 
         input_params = [textbox, max_new_tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, chat_prompt_size_slider]
         if args.picture:
