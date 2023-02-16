@@ -24,4 +24,4 @@ def bot_prefix_modifier(string):
     behavior.
     """
 
-    return string + params["bias string"]
+    return f'{string} {params["bias string"].strip()} '
