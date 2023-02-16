@@ -505,9 +505,6 @@ def clean_chat_message(text):
     return text
 
 def generate_chat_prompt(text, tokens, name1, name2, context, chat_prompt_size, impersonate=False):
-    if 'pygmalion' in model_name.lower():
-        name1 = "You"
-
     text = clean_chat_message(text)
     rows = [f"{context.strip()}\n"]
     i = len(history['internal'])-1
@@ -576,6 +573,9 @@ def generate_chat_picture(picture, name1, name2):
     return text, visible_text
 
 def chatbot_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, chat_prompt_size, picture=None):
+    if 'pygmalion' in model_name.lower():
+        name1 = "You"
+
     if args.picture and picture is not None:
         text, visible_text = generate_chat_picture(picture, name1, name2)
     else:
