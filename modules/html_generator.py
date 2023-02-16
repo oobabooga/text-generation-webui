@@ -9,8 +9,24 @@ import re
 from pathlib import Path
 
 def generate_basic_html(s):
-    s = '\n'.join([f'<p style="margin-bottom: 22px">{line}</p>' for line in s.split('\n')])
-    s = f'<div style="max-width: 600px; margin-left: auto; margin-right: auto; background-color:#efefef; color:#0b0f19; padding:3em; font-size:1.1em; font-family: helvetica; line-height: 1.428571429">{s}</div>'
+    css = """
+    .container {
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+        background-color: #D9D9D9;
+        padding:3em;
+    }
+    .container p {
+        font-size: 14px !important;
+        color: black !important;
+        font-family: helvetica !important;
+        line-height: 1.428571429 !important;
+        margin-bottom: 22px;
+    }
+    """
+    s = '\n'.join([f'<p>{line}</p>' for line in s.split('\n')])
+    s = f'<style>{css}</style><div class="container">{s}</div>'
     return s
 
 def process_post(post, c):
