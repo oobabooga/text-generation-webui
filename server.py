@@ -505,8 +505,10 @@ def clean_chat_message(text):
     return text
 
 def generate_chat_prompt(text, tokens, name1, name2, context, chat_prompt_size, impersonate=False):
-    text = clean_chat_message(text)
+    if 'pygmalion' in model_name.lower():
+        name1 = "You"
 
+    text = clean_chat_message(text)
     rows = [f"{context.strip()}\n"]
     i = len(history['internal'])-1
     count = 0
