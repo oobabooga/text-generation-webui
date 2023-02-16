@@ -6,7 +6,7 @@ import torch
 torch._C._jit_set_profiling_mode(False)
 
 params = {
-    'speaker': 'en_21',
+    'speaker': 'en_56',
     'language': 'en',
     'model_id': 'v3_en',
     'sample_rate': 48000,
