@@ -868,7 +868,7 @@ else:
     default_text = settings['prompt']
 description = f"\n\n# Text generation lab\nGenerate text using Large Language Models.\n"
 css = ".tabs.svelte-710i53 {margin-top: 0} .py-6 {padding-top: 2.5rem} #refresh-button {flex: none; margin: 0; padding: 0; min-width: 50px; border: none; box-shadow: none; border-radius: 0} #download-label, #upload-label {min-height: 0}"
-chat_css = ".h-\[40vh\] {height: 66.67vh} .gradio-container {max-width: 800px; margin-left: auto; margin-right: auto} .w-screen {width: unset} div.svelte-362y77>*, div.svelte-362y77>.form>* {flex-wrap: nowrap}"
+chat_css = ".h-\[40vh\], .wrap.svelte-byatnx.svelte-byatnx.svelte-byatnx {height: 66.67vh} .gradio-container {max-width: 800px; margin-left: auto; margin-right: auto} .w-screen {width: unset} div.svelte-362y77>*, div.svelte-362y77>.form>* {flex-wrap: nowrap}"
 
 suffix = '_pygmalion' if 'pygmalion' in model_name.lower() else ''
 buttons = {}
@@ -885,7 +885,7 @@ if args.chat or args.cai_chat:
         if args.cai_chat:
             display = gr.HTML(value=generate_chat_html(history['visible'], settings[f'name1{suffix}'], settings[f'name2{suffix}'], character))
         else:
-            display = gr.Chatbot()
+            display = gr.Chatbot(value=history['visible'])
         textbox = gr.Textbox(label='Input')
         with gr.Row():
             buttons["Stop"] = gr.Button("Stop")
