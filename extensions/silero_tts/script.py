@@ -6,6 +6,7 @@ import torch
 torch._C._jit_set_profiling_mode(False)
 
 params = {
+    'activate': True,
     'speaker': 'en_56',
     'language': 'en',
     'model_id': 'v3_en',
@@ -51,6 +52,9 @@ def output_modifier(string):
             model = load_model()
             current_params = params.copy()
             break
+
+    if params['activate'] == False:
+        return string
 
     string = remove_surrounded_chars(string)
     string = string.replace('"', '')
