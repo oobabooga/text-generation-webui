@@ -6,11 +6,15 @@ This is a library for formatting GPT-4chan and chat outputs as nice HTML.
 
 import base64
 import copy
+import os
 import re
 from io import BytesIO
 from pathlib import Path
 
 from PIL import Image
+
+# This is to store chat profile pictures as base64-encoded thumbnails
+image_cache = {}
 
 def generate_basic_html(s):
     css = """
@@ -182,11 +186,16 @@ def generate_4chan_html(f):
     return output
 
 def image_to_base64(path):
-    img = Image.open(path)
-    img.thumbnail((100, 100))
-    img_buffer = BytesIO()
-    img.convert('RGB').save(img_buffer, format='PNG')
-    return base64.b64encode(img_buffer.getvalue()).decode("utf-8")
+    mtime = os.stat(path).st_mtime
+
+    if (path in image_cache and mtime != image_cache[path][0]) or (path not in image_cache):
+        img = Image.open(path)
+        img.thumbnail((100, 100))
+        img_buffer = BytesIO()
+        img.convert('RGB').save(img_buffer, format='PNG')
+        image_cache[path] = [mtime, base64.b64encode(img_buffer.getvalue()).decode("utf-8")]
+
+    return image_cache[path][1]
 
 def generate_chat_html(history, name1, name2, character):
     css = """
