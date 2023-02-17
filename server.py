@@ -1072,9 +1072,6 @@ if args.listen:
 else:
     interface.launch(prevent_thread_lock=True, share=args.share, server_port=args.listen_port)
 
-# This is to make Google Colab happy
-encode("Hello world")
-
 # I think that I will need this later
 while True:
     time.sleep(0.5)
