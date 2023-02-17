@@ -489,7 +489,7 @@ def create_settings_menus():
 
         gr.Markdown('Upload a soft prompt (.zip format):')
         with gr.Row():
-            upload_softprompt = gr.File(type='binary')
+            upload_softprompt = gr.File(type='binary', file_types=[".zip"])
 
     model_menu.change(load_model_wrapper, [model_menu], [model_menu], show_progress=True)
     preset_menu.change(load_preset_values, [preset_menu], [do_sample, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping])
@@ -938,7 +938,7 @@ if args.chat or args.cai_chat:
                     with gr.Row():
                         with gr.Column():
                             gr.Markdown('Upload')
-                            upload = gr.File(type='binary')
+                            upload = gr.File(type='binary', file_types=[".json", ".txt"])
                         with gr.Column():
                             gr.Markdown('Download')
                             download = gr.File()
@@ -947,15 +947,15 @@ if args.chat or args.cai_chat:
                     with gr.Row():
                         with gr.Column():
                             gr.Markdown('1. Select the JSON file')
-                            upload_char = gr.File(type='binary')
+                            upload_char = gr.File(type='binary', file_types=[".json"])
                         with gr.Column():
                             gr.Markdown('2. Select your character\'s profile picture (optional)')
-                            upload_img = gr.File(type='binary')
+                            upload_img = gr.File(type='binary', file_types=["image"])
                     buttons["Upload character"] = gr.Button(value="Submit")
                 with gr.Tab('Upload your profile picture'):
-                    upload_img_me = gr.File(type='binary')
+                    upload_img_me = gr.File(type='binary', file_types=["image"])
                 with gr.Tab('Upload TavernAI Character Card'):
-                    upload_img_tavern = gr.File(type='binary')
+                    upload_img_tavern = gr.File(type='binary', file_types=["image"])
 
         with gr.Tab("Generation settings"):
             with gr.Row():
@@ -978,7 +978,7 @@ if args.chat or args.cai_chat:
         gen_events.append(buttons["Generate"].click(eval(function_call), input_params, display, show_progress=args.no_stream, api_name="textgen"))
         gen_events.append(textbox.submit(eval(function_call), input_params, display, show_progress=args.no_stream))
         if args.picture:
-            gen_events.append(picture_select.change(eval(function_call), input_params, display, show_progress=args.no_stream))
+            picture_select.upload(eval(function_call), input_params, display, show_progress=args.no_stream)
         gen_events.append(buttons["Regenerate"].click(regenerate_wrapper, input_params, display, show_progress=args.no_stream))
         gen_events.append(buttons["Impersonate"].click(impersonate_wrapper, input_params, textbox, show_progress=args.no_stream))
         buttons["Stop"].click(stop_everything_event, [], [], cancels=gen_events)
