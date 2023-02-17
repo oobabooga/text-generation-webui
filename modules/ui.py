@@ -26,7 +26,6 @@ css = """
   min-height: 0
 }
 #accordion {
-  background-color: transparent;
 }
 """
 
