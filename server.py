@@ -460,7 +460,7 @@ def create_settings_menus():
                 preset_menu = gr.Dropdown(choices=available_presets, value=settings[f'preset{suffix}'], label='Generation parameters preset')
                 create_refresh_button(preset_menu, lambda : None, lambda : {"choices": get_available_presets()}, "refresh-button")
 
-    with gr.Accordion("Custom generation parameters", open=False):
+    with gr.Accordion("Custom generation parameters", open=False, elem_id="accordion"):
         with gr.Row():
             with gr.Column():
                 do_sample = gr.Checkbox(value=generate_params['do_sample'], label="do_sample")
@@ -482,7 +482,7 @@ def create_settings_menus():
                 min_length = gr.Slider(0, 2000, step=1, value=generate_params["min_length"] if args.no_stream else 0, label="min_length", interactive=args.no_stream)
                 early_stopping = gr.Checkbox(value=generate_params["early_stopping"], label="early_stopping")
 
-    with gr.Accordion("Soft prompt", open=False):
+    with gr.Accordion("Soft prompt", open=False, elem_id="accordion"):
         with gr.Row():
             softprompts_menu = gr.Dropdown(choices=available_softprompts, value="None", label='Soft prompt')
             create_refresh_button(softprompts_menu, lambda : None, lambda : {"choices": get_available_softprompts()}, "refresh-button")
@@ -890,8 +890,6 @@ elif re.match('(rosey|chip|joi)_.*_instruct.*', model_name.lower()) is not None:
 else:
     default_text = settings['prompt']
 description = f"\n\n# Text generation lab\nGenerate text using Large Language Models.\n"
-css = ".tabs.svelte-710i53 {margin-top: 0} .py-6 {padding-top: 2.5rem} #refresh-button {flex: none; margin: 0; padding: 0; min-width: 50px; border: none; box-shadow: none; border-radius: 0} #download-label, #upload-label {min-height: 0}"
-chat_css = ".h-\[40vh\], .wrap.svelte-byatnx.svelte-byatnx.svelte-byatnx {height: 66.67vh} .gradio-container {max-width: 800px; margin-left: auto; margin-right: auto} .w-screen {width: unset} div.svelte-362y77>*, div.svelte-362y77>.form>* {flex-wrap: nowrap}"
 
 suffix = '_pygmalion' if 'pygmalion' in model_name.lower() else ''
 buttons = {}
