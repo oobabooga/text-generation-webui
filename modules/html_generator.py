@@ -4,6 +4,7 @@ This is a library for formatting GPT-4chan and chat outputs as nice HTML.
 
 '''
 
+import base64
 import copy
 import re
 from pathlib import Path
@@ -260,7 +261,12 @@ def generate_chat_html(history, name1, name2, character):
             ]:
         
         if Path(i).exists():
-            img = f'<img src="file/{i}">'
+            with open(i, "rb") as image_file:
+                encoded_string = base64.b64encode(image_file.read())
+            if i.endswith('png'):
+                img = f'<img src="data:image/png;base64,{encoded_string.decode("utf-8")}">'
+            elif i.endswith('jpg') or i.endswith('jpeg'):
+                img = f'<img src="data:image/jpg;base64,{encoded_string.decode("utf-8")}">'
             break
 
     img_me = ''
