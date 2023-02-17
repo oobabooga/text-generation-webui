@@ -494,7 +494,7 @@ def create_settings_menus():
     model_menu.change(load_model_wrapper, [model_menu], [model_menu], show_progress=True)
     preset_menu.change(load_preset_values, [preset_menu], [do_sample, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping])
     softprompts_menu.change(load_soft_prompt, [softprompts_menu], [softprompts_menu], show_progress=True)
-    upload_softprompt.upload(upload_soft_prompt, [upload_softprompt], [softprompts_menu])
+    upload_softprompt.change(upload_soft_prompt, [upload_softprompt], [softprompts_menu])
     return preset_menu, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping
 
 # This gets the new line characters right.
@@ -572,7 +572,14 @@ def generate_chat_picture(picture, name1, name2):
     visible_text = f'<img src="data:image/jpeg;base64,{img_str}">'
     return text, visible_text
 
+def stop_everything_event():
+    global stop_everything
+    stop_everything = True
+
 def chatbot_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, chat_prompt_size, picture=None):
+    global stop_everything
+    stop_everything = False
+
     if 'pygmalion' in model_name.lower():
         name1 = "You"
 
@@ -583,13 +590,24 @@ def chatbot_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p,
 
     text = apply_extensions(text, "input")
     question = generate_chat_prompt(text, tokens, name1, name2, context, chat_prompt_size)
-    history['internal'].append(['', ''])
-    history['visible'].append(['', ''])
     eos_token = '\n' if check else None
+    first = True
     for reply in generate_reply(question, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, eos_token=eos_token, stopping_string=f"\n{name1}:"):
         reply, next_character_found, substring_found = extract_message_from_reply(question, reply, name2, name1, check, extensions=True)
+        visible_reply = apply_extensions(reply, "output")
+
+        # We need this global variable to handle the Stop event,
+        # otherwise gradio gets confused
+        if stop_everything:
+            return history['visible']
+
+        if first:
+            first = False
+            history['internal'].append(['', ''])
+            history['visible'].append(['', ''])
+
         history['internal'][-1] = [text, reply]
-        history['visible'][-1] = [visible_text, apply_extensions(reply, "output")]
+        history['visible'][-1] = [visible_text, visible_reply]
         if not substring_found:
             yield history['visible']
         if next_character_found:
@@ -859,8 +877,10 @@ else:
         print()
     model_name = available_models[i]
 model, tokenizer = load_model(model_name)
-loaded_preset = soft_prompt_tensor = None
+loaded_preset = None
+soft_prompt_tensor = None
 soft_prompt = False
+stop_everything = False
 
 # UI settings
 if model_name.lower().startswith(('gpt4chan', 'gpt-4chan', '4chan')):
@@ -960,10 +980,10 @@ if args.chat or args.cai_chat:
         gen_events.append(buttons["Generate"].click(eval(function_call), input_params, display, show_progress=args.no_stream, api_name="textgen"))
         gen_events.append(textbox.submit(eval(function_call), input_params, display, show_progress=args.no_stream))
         if args.picture:
-            picture_select.upload(eval(function_call), input_params, display, show_progress=args.no_stream)
+            gen_events.append(picture_select.change(eval(function_call), input_params, display, show_progress=args.no_stream))
         gen_events.append(buttons["Regenerate"].click(regenerate_wrapper, input_params, display, show_progress=args.no_stream))
         gen_events.append(buttons["Impersonate"].click(impersonate_wrapper, input_params, textbox, show_progress=args.no_stream))
-        buttons["Stop"].click(None, None, None, cancels=gen_events)
+        buttons["Stop"].click(stop_everything_event, [], [], cancels=gen_events)
 
         buttons["Send last reply to input"].click(send_last_reply_to_input, [], textbox, show_progress=args.no_stream)
         buttons["Replace last reply"].click(replace_last_reply, [textbox, name1, name2], display, show_progress=args.no_stream)
@@ -981,17 +1001,17 @@ if args.chat or args.cai_chat:
         textbox.submit(lambda : save_history(timestamp=False), [], [], show_progress=False)
 
         character_menu.change(load_character, [character_menu, name1, name2], [name2, context, display])
-        upload_img_tavern.upload(upload_tavern_character, [upload_img_tavern, name1, name2], [character_menu])
-        upload.upload(load_history, [upload, name1, name2], [])
-        upload_img_me.upload(upload_your_profile_picture, [upload_img_me], [])
+        upload_img_tavern.change(upload_tavern_character, [upload_img_tavern, name1, name2], [character_menu])
+        upload.change(load_history, [upload, name1, name2], [])
+        upload_img_me.change(upload_your_profile_picture, [upload_img_me], [])
         if args.picture:
-            picture_select.upload(lambda : None, [], [picture_select], show_progress=False)
+            picture_select.change(lambda : None, [], [picture_select], show_progress=False)
         if args.cai_chat:
-            upload.upload(redraw_html, [name1, name2], [display])
-            upload_img_me.upload(redraw_html, [name1, name2], [display])
+            upload.change(redraw_html, [name1, name2], [display])
+            upload_img_me.change(redraw_html, [name1, name2], [display])
         else:
-            upload.upload(lambda : history['visible'], [], [display])
-            upload_img_me.upload(lambda : history['visible'], [], [display])
+            upload.change(lambda : history['visible'], [], [display])
+            upload_img_me.change(lambda : history['visible'], [], [display])
 
 elif args.notebook:
     with gr.Blocks(css=css, analytics_enabled=False) as interface:
