@@ -13,19 +13,20 @@ css = """
     background-color: #ffffff1f;
 }
 #refresh-button {
-    flex: none;
-     margin: 0;
-     padding: 0;
-     min-width: 50px;
-     border: none;
-     box-shadow: none;
-     border-radius: 10px;
-     background-color: #0000000d;
+  flex: none;
+  margin: 0;
+  padding: 0;
+  min-width: 50px;
+  border: none;
+  box-shadow: none;
+  border-radius: 10px;
+  background-color: #0000000d;
 }
 #download-label, #upload-label {
-    min-height: 0
+  min-height: 0
 }
 #accordion {
+  background-color: transparent;
 }
 """
 

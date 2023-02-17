@@ -468,19 +468,18 @@ def create_settings_menus():
                 top_p = gr.Slider(0.0,1.0,value=generate_params['top_p'],step=0.01,label="top_p")
                 typical_p = gr.Slider(0.0,1.0,value=generate_params['typical_p'],step=0.01,label="typical_p")
             with gr.Column():
-                repetition_penalty = gr.Slider(1.0,4.99,value=generate_params['repetition_penalty'],step=0.01,label="repetition_penalty")
                 top_k = gr.Slider(0,200,value=generate_params['top_k'],step=1,label="top_k")
+                repetition_penalty = gr.Slider(1.0,4.99,value=generate_params['repetition_penalty'],step=0.01,label="repetition_penalty")
                 no_repeat_ngram_size = gr.Slider(0, 20, step=1, value=generate_params["no_repeat_ngram_size"], label="no_repeat_ngram_size")
-                penalty_alpha = gr.Slider(0, 5, value=generate_params["penalty_alpha"], label="penalty_alpha")
-
-        gr.Markdown("Special parameters (only use them if you really need them):")
-        with gr.Row():
-            with gr.Column():
-                num_beams = gr.Slider(0, 20, step=1, value=generate_params["num_beams"], label="num_beams")
-                length_penalty = gr.Slider(-5, 5, value=generate_params["length_penalty"], label="length_penalty")
-            with gr.Column():
                 min_length = gr.Slider(0, 2000, step=1, value=generate_params["min_length"] if args.no_stream else 0, label="min_length", interactive=args.no_stream)
-                early_stopping = gr.Checkbox(value=generate_params["early_stopping"], label="early_stopping")
+
+        gr.Markdown("Contrastive search:")
+        penalty_alpha = gr.Slider(0, 5, value=generate_params["penalty_alpha"], label="penalty_alpha")
+
+        gr.Markdown("Beam search (uses a lot of VRAM):")
+        num_beams = gr.Slider(1, 20, step=1, value=generate_params["num_beams"], label="num_beams")
+        length_penalty = gr.Slider(-5, 5, value=generate_params["length_penalty"], label="length_penalty")
+        early_stopping = gr.Checkbox(value=generate_params["early_stopping"], label="early_stopping")
 
     with gr.Accordion("Soft prompt", open=False, elem_id="accordion"):
         with gr.Row():
