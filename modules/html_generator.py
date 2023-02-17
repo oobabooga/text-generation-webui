@@ -7,7 +7,10 @@ This is a library for formatting GPT-4chan and chat outputs as nice HTML.
 import base64
 import copy
 import re
+from io import BytesIO
 from pathlib import Path
+
+from PIL import Image
 
 def generate_basic_html(s):
     css = """
@@ -178,6 +181,13 @@ def generate_4chan_html(f):
 
     return output
 
+def image_to_base64(path):
+    img = Image.open(path)
+    img.thumbnail((100, 100))
+    img_buffer = BytesIO()
+    img.convert('RGB').save(img_buffer, format='PNG')
+    return base64.b64encode(img_buffer.getvalue()).decode("utf-8")
+
 def generate_chat_html(history, name1, name2, character):
     css = """
     .chat {
@@ -251,6 +261,7 @@ def generate_chat_html(history, name1, name2, character):
     output = ''
     output += f'<style>{css}</style><div class="chat" id="chat">'
     img = ''
+
     for i in [
             f"characters/{character}.png",
             f"characters/{character}.jpg",
@@ -259,20 +270,17 @@ def generate_chat_html(history, name1, name2, character):
             "img_bot.jpg",
             "img_bot.jpeg"
             ]:
-        
-        if Path(i).exists():
-            with open(i, "rb") as image_file:
-                encoded_string = base64.b64encode(image_file.read())
-            if i.endswith('png'):
-                img = f'<img src="data:image/png;base64,{encoded_string.decode("utf-8")}">'
-            elif i.endswith('jpg') or i.endswith('jpeg'):
-                img = f'<img src="data:image/jpg;base64,{encoded_string.decode("utf-8")}">'
+
+        path = Path(i)
+        if path.exists():
+            img = f'<img src="data:image/png;base64,{image_to_base64(path)}">'
             break
 
     img_me = ''
     for i in ["img_me.png", "img_me.jpg", "img_me.jpeg"]:
-        if Path(i).exists():
-            img_me = f'<img src="file/{i}">'
+        path = Path(i)
+        if path.exists():
+            img_me = f'<img src="data:image/png;base64,{image_to_base64(path)}">'
             break
 
     for i,_row in enumerate(history[::-1]):
