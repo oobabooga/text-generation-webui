@@ -24,7 +24,7 @@ def generate_basic_html(s):
     .container p {
         font-size: 14px !important;
         color: black !important;
-        font-family: helvetica !important;
+        font-family: Helvetica, Arial, sans-serif !important;
         line-height: 1.428571429 !important;
         margin-bottom: 22px;
     }
@@ -206,7 +206,7 @@ def generate_chat_html(history, name1, name2, character):
       grid-template-columns: 60px 1fr;
       padding-bottom: 22px;
       font-size: 15px;
-      font-family: helvetica;
+      font-family: Helvetica, Arial, sans-serif;
       line-height: 1.428571429;
     }   
         
