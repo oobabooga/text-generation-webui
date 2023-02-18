@@ -250,6 +250,8 @@ def fix_galactica(s):
     s = s.replace(r'\(', r'$')
     s = s.replace(r'\)', r'$')
     s = s.replace(r'$$', r'$')
+    s = re.sub(r'\n', r'\n\n', s)
+    s = re.sub(r"\n{3,}", "\n\n", s)
     return s
 
 def get_max_prompt_length(tokens):
@@ -755,7 +757,7 @@ def save_history(timestamp=True):
     if not Path('logs').exists():
         Path('logs').mkdir()
     with open(Path(f'logs/{fname}'), 'w') as f:
-        f.write(json.dumps({'data': history['internal'], 'data_visible': history['visible']}))
+        f.write(json.dumps({'data': history['internal'], 'data_visible': history['visible']}, indent=2))
     return Path(f'logs/{fname}')
 
 def load_history(file, name1, name2):

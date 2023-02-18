@@ -86,10 +86,10 @@ def generate_4chan_html(f):
         margin-top: 4px;
         overflow-x: hidden;
         overflow-y: hidden;
-        padding-bottom: 2px;
+        padding-bottom: 4px;
         padding-left: 2px;
         padding-right: 2px;
-        padding-top: 2px;
+        padding-top: 4px;
     }
 
     #parent #container .number {
@@ -97,6 +97,7 @@ def generate_4chan_html(f):
         font-family: arial, helvetica, sans-serif;
         font-size: 13.3333px;
         width: 342.65px;
+        margin-right: 7px;
     }
 
     #parent #container .op {
