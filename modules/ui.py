@@ -27,6 +27,9 @@ css = """
 }
 #accordion {
 }
+.dark svg {
+  fill: white;
+}
 """
 
 chat_css = """
