@@ -53,11 +53,12 @@ def process_post(post, c):
 
 def generate_4chan_html(f):
     css = """
-    #container {
+
+    #parent #container {
         background-color: #eef2ff;
         padding: 17px;
     }
-    .reply {
+    #parent #container .reply {
         background-color: rgb(214, 218, 240);
         border-bottom-color: rgb(183, 197, 217);
         border-bottom-style: solid;
@@ -92,14 +93,14 @@ def generate_4chan_html(f):
         padding-top: 2px;
     }
 
-    .number {
+    #parent #container .number {
         color: rgb(0, 0, 0);
         font-family: arial, helvetica, sans-serif;
         font-size: 13.3333px;
         width: 342.65px;
     }
 
-    .op {
+    #parent #container .op {
         color: rgb(0, 0, 0);
         font-family: arial, helvetica, sans-serif;
         font-size: 13.3333px;
@@ -111,11 +112,11 @@ def generate_4chan_html(f):
         overflow-y: hidden;
     }
 
-    .op blockquote {
-        margin-left:7px;
+    #parent #container .op blockquote {
+        margin-left: 0px !important;
     }
 
-    .name {
+    #parent #container .name {
         color: rgb(17, 119, 67);
         font-family: arial, helvetica, sans-serif;
         font-size: 13.3333px;
@@ -123,7 +124,7 @@ def generate_4chan_html(f):
         margin-left: 7px;
     }
 
-    .quote {
+    #parent #container .quote {
         color: rgb(221, 0, 0);
         font-family: arial, helvetica, sans-serif;
         font-size: 13.3333px;
@@ -133,17 +134,27 @@ def generate_4chan_html(f):
         text-decoration-thickness: auto;
     }
 
-    .greentext {
+    #parent #container .greentext {
         color: rgb(120, 153, 34);
         font-family: arial, helvetica, sans-serif;
         font-size: 13.3333px;
     }
 
-    blockquote {
+    #parent #container blockquote {
+        margin: 0px !important;
         margin-block-start: 1em;
         margin-block-end: 1em;
         margin-inline-start: 40px;
         margin-inline-end: 40px;
+        margin-top: 13.33px !important;
+        margin-bottom: 13.33px !important;
+        margin-left: 40px !important;
+        margin-right: 40px !important;
+    }
+
+    #parent #container .message {
+        color: black;
+        border: none;
     }
     """
 
@@ -173,10 +184,10 @@ def generate_4chan_html(f):
             posts[i] = f'<div class="reply">{posts[i]}</div>\n'
     
     output = ''
-    output += f'<style>{css}</style><div id="container">'
+    output += f'<style>{css}</style><div id="parent"><div id="container">'
     for post in posts:
         output += post
-    output += '</div>'
+    output += '</div></div>'
     output = output.split('\n')
     for i in range(len(output)):
         output[i] = re.sub(r'^(&gt;(.*?)(<br>|</div>))', r'<span class="greentext">\1</span>', output[i])

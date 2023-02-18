@@ -10,7 +10,7 @@ css = """
     padding-top: 2.5rem
 }
 .dark #refresh-button {
-    background-color: #ffffff1f;
+    background-color: rgb(55, 65, 81);
 }
 #refresh-button {
   flex: none;
