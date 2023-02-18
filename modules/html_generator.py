@@ -22,14 +22,13 @@ def generate_basic_html(s):
         max-width: 600px;
         margin-left: auto;
         margin-right: auto;
-        background-color: #D9D9D9;
+        background-color: rgb(31, 41, 55);
         padding:3em;
     }
     .container p {
         font-size: 14px !important;
-        color: black !important;
+        color: white !important;
         font-family: Helvetica, Arial, sans-serif !important;
-        line-height: 1.428571429 !important;
         margin-bottom: 22px;
     }
     """
