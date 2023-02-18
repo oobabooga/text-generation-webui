@@ -30,6 +30,11 @@ css = """
 .dark svg {
   fill: white;
 }
+svg {
+  display: unset !important;
+  vertical-align: middle !important;
+  margin: 5px;
+}
 """
 
 chat_css = """
