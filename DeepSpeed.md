@@ -6,7 +6,7 @@ As far as I know, DeepSpeed is only available for Linux at the moment.
 
 ### How to use it
 
-1. Install deepspeed: 
+1. Install DeepSpeed: 
 
 ```
 pip install deepspeed
