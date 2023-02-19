@@ -1,4 +1,4 @@
-An alternative way of reducing the GPU memory usage of models is to use `DeepSpeed ZeRO-3` optimization.
+An alternative way of reducing the GPU memory usage of models is to use the `DeepSpeed ZeRO-3` optimization.
 
 With this, I have been able to load a 6b model (pygmalion-6b) with less than 6GB of VRAM. The speed of text generation is very decent and much better than what would be accomplished with `--auto-devices --gpu-memory 6`.
 
