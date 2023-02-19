@@ -367,7 +367,7 @@ def generate_reply(question, tokens, do_sample, max_new_tokens, temperature, top
         t1 = time.time()
         print(f"Output generated in {(t1-t0):.2f} seconds ({(len(output)-len(input_ids[0]))/(t1-t0)/8:.2f} it/s, {len(output)-len(input_ids[0])} tokens)")
 
-    # Generate the reply 1 token at a time
+    # Generate the reply 8 tokens at a time
     else:
         yield formatted_outputs(original_question, model_name)
         for i in tqdm(range(tokens//8+1)):
