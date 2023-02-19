@@ -26,10 +26,10 @@ def generate_basic_html(s):
         padding:3em;
     }
     .container p {
-        font-size: 14px !important;
+        font-size: 16px !important;
         color: white !important;
-        font-family: Helvetica, Arial, sans-serif !important;
         margin-bottom: 22px;
+        line-height: 1.4 !important;
     }
     """
     s = '\n'.join([f'<p>{line}</p>' for line in s.split('\n')])
