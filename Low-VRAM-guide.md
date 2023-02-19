@@ -22,3 +22,7 @@ As a desperate last measure, you can split the model across your GPU, CPU, and d
 `python server.py --auto-devices --disk`
 
 With this, I am able to load a 30b model into my RTX 3090, but it takes 10 seconds to generate 1 word.
+
+### DeepSpeed (experimental)
+
+An experimental alternative to all of the above is to use DeepSpeed: [guide](https://github.com/oobabooga/text-generation-webui/wiki/DeepSpeed).
