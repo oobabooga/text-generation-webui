@@ -181,7 +181,7 @@ Before reporting a bug, make sure that you have created a conda environment and 
 These issues are known:
 
 * 8-bit doesn't work properly on Windows or older GPUs.
-* Deepspeed doesn't work properly on Windows.
+* DeepSpeed doesn't work properly on Windows.
 
 For these two, please try commenting on an existing issue instead of creating a new one.
 
