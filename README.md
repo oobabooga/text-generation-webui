@@ -24,11 +24,11 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * Load large models in 8-bit mode ([see here](https://github.com/oobabooga/text-generation-webui/issues/20#issuecomment-1411650652) if you are on Windows).
 * Split large models across your GPU(s), CPU, and disk.
 * CPU mode.
-* DeepSpeed ZeRO-3 offload ([guide](https://github.com/oobabooga/text-generation-webui/wiki/DeepSpeed)).
-* Get responses via API.
+* [DeepSpeed ZeRO-3 offload](https://github.com/oobabooga/text-generation-webui/wiki/DeepSpeed).
+* [Get responses via API](https://github.com/oobabooga/text-generation-webui/blob/main/api-example.py).
 * Supports softprompts.
-* Supports extensions ([guide](https://github.com/oobabooga/text-generation-webui/wiki/Extensions)).
-* Works on Google Colab ([guide](https://github.com/oobabooga/text-generation-webui/wiki/Running-on-Colab)).
+* [Supports extensions](https://github.com/oobabooga/text-generation-webui/wiki/Extensions).
+* [Works on Google Colab](https://github.com/oobabooga/text-generation-webui/wiki/Running-on-Colab).
 
 ## Installation option 1: conda
 
