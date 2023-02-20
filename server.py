@@ -609,6 +609,8 @@ def chatbot_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p,
         text, visible_text = generate_chat_picture(picture, name1, name2)
     else:
         visible_text = text
+        if args.chat:
+            visible_text = visible_text.replace('\n', '<br>')
 
     text = apply_extensions(text, "input")
     question = generate_chat_prompt(text, tokens, name1, name2, context, chat_prompt_size)
@@ -617,6 +619,8 @@ def chatbot_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p,
     for reply in generate_reply(question, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, eos_token=eos_token, stopping_string=f"\n{name1}:"):
         reply, next_character_found, substring_found = extract_message_from_reply(question, reply, name2, name1, check, extensions=True)
         visible_reply = apply_extensions(reply, "output")
+        if args.chat:
+            visible_reply = visible_reply.replace('\n', '<br>')
 
         # We need this global variable to handle the Stop event,
         # otherwise gradio gets confused
