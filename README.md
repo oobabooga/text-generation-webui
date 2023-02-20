@@ -112,14 +112,6 @@ After downloading the model, follow these steps:
 python download-model.py EleutherAI/gpt-j-6B --text-only
 ```
 
-#### Converting to pytorch (optional)
-
-The script `convert-to-torch.py` allows you to convert models to .pt format, which can be a lot faster to load to the GPU:
-
-    python convert-to-torch.py models/model-name
-
-The output model will be saved to `torch-dumps/model-name.pt`. When you load a new model, the web UI first looks for this .pt file; if it is not found, it loads the model as usual from `models/model-name`. 
-
 ## Starting the web UI
 
     conda activate textgen
