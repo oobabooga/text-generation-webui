@@ -276,6 +276,15 @@ def generate_chat_html(history, name1, name2, character):
       font-size: 15px !important;
       line-height: 1.428571429 !important;
     }
+
+    .dark .message-body p em {
+      color: rgb(138, 138, 138) !important;
+    }
+
+    .message-body p em {
+      color: rgb(110, 110, 110) !important;
+    }
+
     """
 
     output = ''
