@@ -224,7 +224,7 @@ def generate_chat_html(history, name1, name2, character):
     .message {
       display: grid;
       grid-template-columns: 60px 1fr;
-      padding-bottom: 22px;
+      padding-bottom: 25px;
       font-size: 15px;
       font-family: Helvetica, Arial, sans-serif;
       line-height: 1.428571429;
