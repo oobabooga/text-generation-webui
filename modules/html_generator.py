@@ -233,7 +233,7 @@ def generate_chat_html(history, name1, name2, character):
     .circle-you {
       width: 50px;
       height: 50px;
-      background-color: rgb(244, 78, 59);
+      background-color: rgb(238, 78, 59);
       border-radius: 50%;
     }
           
