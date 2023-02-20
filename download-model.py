@@ -71,7 +71,7 @@ def select_model_from_default_options():
 
     print()
     print("Input> ", end='')
-    choice = input()[0]
+    choice = input()[0].strip().upper()
     if choice == char:
         print("""\nThen type the name of your desired Hugging Face model in the format organization/name.
 
