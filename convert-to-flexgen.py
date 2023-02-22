@@ -45,9 +45,9 @@ if __name__ == '__main__':
     model_name = path.name
 
     print(f"Loading {model_name}...")
-    disable_torch_init()
-    model = AutoModelForCausalLM.from_pretrained(path, torch_dtype=torch.float16, _fast_init=True)
-    restore_torch_init()
+    #disable_torch_init()
+    model = AutoModelForCausalLM.from_pretrained(path, torch_dtype=torch.float16, low_cpu_mem_usage=True)
+    #restore_torch_init()
 
     tokenizer = AutoTokenizer.from_pretrained(path)
 
