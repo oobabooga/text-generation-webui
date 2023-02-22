@@ -55,7 +55,7 @@ the percentage of activations on GPU
 the percentage of activations on CPU
 ```
 
-In my experiments with opt-30b using a RTX 3090 on Linux, I obtained these results:
+In my experiments with opt-30b using a RTX 3090 on Linux, I have obtained these results:
 
 * `--flexgen --compress-weight --percent 0 100 100 0 100 0`: 0.99 seconds per token.
 * `--flexgen --compress-weight --percent 100 0 100 0 100 0`: 0.765 seconds per token.
