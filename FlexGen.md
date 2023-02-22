@@ -28,13 +28,13 @@ The output will be saved to `models/opt-1.3b-np/`.
 The basic command is the following one:
 
 ```
-python server.py --listen --model opt-1.3b  --flexgen
+python server.py --model opt-1.3b  --flexgen
 ```
 
 For large models, the CPU memory usage may be too high and your computer may freeze. If that happens, you can try this:
 
 ```
-python server.py --listen --model opt-1.3b  --flexgen --compress-weight
+python server.py --model opt-1.3b  --flexgen --compress-weight
 ```
 
 With this second command, I was seemingly able to run both OPT-6.7b and OPT-13b with **2GB VRAM**, and the speed was good. I have to double check this later, because it's a miracle.
@@ -42,7 +42,7 @@ With this second command, I was seemingly able to run both OPT-6.7b and OPT-13b 
 You can also manually set the offload strategy with
 
 ```
-python server.py --listen --model opt-1.3b  --flexgen --percent 0 0 100 0 100 0
+python server.py --model opt-1.3b  --flexgen --percent 0 0 100 0 100 0
 ```
 
 Those six numbers are:
