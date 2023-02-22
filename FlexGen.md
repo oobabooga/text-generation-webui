@@ -7,6 +7,7 @@ https://github.com/FMInference/FlexGen
 ```
 conda activate textgen
 git clone https://github.com/FMInference/FlexGen
+cd Flexgen
 python setup.py build
 python setup.py install
 ```
