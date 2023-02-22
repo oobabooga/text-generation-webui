@@ -37,7 +37,7 @@ For large models, the CPU memory usage may be too high and your computer may fre
 python server.py --model opt-1.3b  --flexgen --compress-weight
 ```
 
-With this second command, I was seemingly able to run both OPT-6.7b and OPT-13b with **2GB VRAM**, and the speed was good. I have to double check this later, because it's a miracle.
+With this second command, I was seemingly able to run both OPT-6.7b and OPT-13B with **2GB VRAM**, and the speed was good. I have to double check this later, because it's a miracle.
 
 You can also manually set the offload strategy with
 
