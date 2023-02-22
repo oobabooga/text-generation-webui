@@ -55,6 +55,10 @@ the percentage of activations on GPU
 the percentage of activations on CPU
 ```
 
+If the sum of the first 2 numbers is less than 100, the remaining layers will be offloaded to the disk, by default into the `text-generation-webui/cache` folder.
+
+## Performance
+
 In my experiments with opt-30b using a RTX 3090 on Linux, I have obtained these results:
 
 * `--flexgen --compress-weight --percent 0 100 100 0 100 0`: 0.99 seconds per token.
