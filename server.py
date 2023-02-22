@@ -502,7 +502,7 @@ def create_extensions_block():
     btn_extensions.click(update_extensions_parameters, [*extensions_ui_elements], [])
 
 def create_settings_menus():
-    generate_params = load_preset_values(settings[f'preset{suffix}'] if not args.flexgen else 'FlexGen', return_dict=True)
+    generate_params = load_preset_values(settings[f'preset{suffix}'] if not args.flexgen else 'Naive', return_dict=True)
 
     with gr.Row():
         with gr.Column():
@@ -511,7 +511,7 @@ def create_settings_menus():
                 create_refresh_button(model_menu, lambda : None, lambda : {"choices": get_available_models()}, "refresh-button")
         with gr.Column():
             with gr.Row():
-                preset_menu = gr.Dropdown(choices=available_presets, value=settings[f'preset{suffix}'] if not args.flexgen else 'FlexGen', label='Generation parameters preset')
+                preset_menu = gr.Dropdown(choices=available_presets, value=settings[f'preset{suffix}'] if not args.flexgen else 'Naive', label='Generation parameters preset')
                 create_refresh_button(preset_menu, lambda : None, lambda : {"choices": get_available_presets()}, "refresh-button")
 
     with gr.Accordion("Custom generation parameters", open=False, elem_id="accordion"):
