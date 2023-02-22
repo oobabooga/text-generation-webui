@@ -46,6 +46,7 @@ parser.add_argument('--disk-cache-dir', type=str, help='Directory to save the di
 parser.add_argument('--gpu-memory', type=int, help='Maximum GPU memory in GiB to allocate. This is useful if you get out of memory errors while trying to generate text. Must be an integer number.')
 parser.add_argument('--cpu-memory', type=int, help='Maximum CPU memory in GiB to allocate for offloaded weights. Must be an integer number. Defaults to 99.')
 parser.add_argument('--flexgen', action='store_true', help='Enable the use of FlexGen offloading.')
+parser.add_argument('--percent', nargs="+", type=int, default=[0, 100, 100, 0, 100, 0], help='FlexGen: allocation percentages. Must be 6 numbers separated by spaces.')
 parser.add_argument('--deepspeed', action='store_true', help='Enable the use of DeepSpeed ZeRO-3 for inference via the Transformers integration.')
 parser.add_argument('--nvme-offload-dir', type=str, help='DeepSpeed: Directory to use for ZeRO-3 NVME offloading.')
 parser.add_argument('--local_rank', type=int, default=0, help='DeepSpeed: Optional argument for distributed setups.')
@@ -126,9 +127,9 @@ def load_model(model_name):
 
         # Offloading policy
         policy = Policy(1, 1,
-                        100, 0,
-                        100, 0,
-                        100, 0,
+                        args.percent[0], args.percent[1],
+                        args.percent[2], args.percent[3],
+                        args.percent[4], args.percent[5],
                         overlap=True, sep_layer=True, pin_weight=True,
                         cpu_cache_compute=False, attn_sparsity=1.0,
                         compress_weight=False,
