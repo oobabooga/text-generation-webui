@@ -46,7 +46,8 @@ parser.add_argument('--disk-cache-dir', type=str, default="cache", help='Directo
 parser.add_argument('--gpu-memory', type=int, help='Maximum GPU memory in GiB to allocate. This is useful if you get out of memory errors while trying to generate text. Must be an integer number.')
 parser.add_argument('--cpu-memory', type=int, help='Maximum CPU memory in GiB to allocate for offloaded weights. Must be an integer number. Defaults to 99.')
 parser.add_argument('--flexgen', action='store_true', help='Enable the use of FlexGen offloading.')
-parser.add_argument('--percent', nargs="+", type=int, default=[0, 100, 100, 0, 100, 0], help='FlexGen: allocation percentages. Must be 6 numbers separated by spaces.')
+parser.add_argument('--percent', nargs="+", type=int, default=[0, 100, 100, 0, 100, 0], help='FlexGen: allocation percentages. Must be 6 numbers separated by spaces (default: %(default)s).')
+parser.add_argument("--compress-weight", action="store_true", help="FlexGen: Whether to compress weight (default: %(default)s).")
 parser.add_argument('--deepspeed', action='store_true', help='Enable the use of DeepSpeed ZeRO-3 for inference via the Transformers integration.')
 parser.add_argument('--nvme-offload-dir', type=str, help='DeepSpeed: Directory to use for ZeRO-3 NVME offloading.')
 parser.add_argument('--local_rank', type=int, default=0, help='DeepSpeed: Optional argument for distributed setups.')
@@ -132,7 +133,7 @@ def load_model(model_name):
                         args.percent[4], args.percent[5],
                         overlap=True, sep_layer=True, pin_weight=True,
                         cpu_cache_compute=False, attn_sparsity=1.0,
-                        compress_weight=False,
+                        compress_weight=args.compress_weight,
                         comp_weight_config=CompressionConfig(
                             num_bits=4, group_size=64,
                             group_dim=0, symmetric=False),
