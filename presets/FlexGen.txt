@@ -1,0 +1,2 @@
+do_sample=True
+temperature=0.5
