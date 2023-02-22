@@ -55,11 +55,10 @@ the percentage of activations on GPU
 the percentage of activations on CPU
 ```
 
-Note that, as said in FlexGen's guide,
+In my experiments with opt-30b using a RTX 3090 on Linux, I obtained these results:
 
->The idea of high-throughput generation is to offload parameters and attention cache as much as possible to the CPU and disk if necessary.
-
-The model seems to become *slower* if you allocate more weights to the GPU, contrary to other offloading strategies. 
+* `--flexgen --compress-weight --percent 0 100 100 0 100 0`: 0.99 seconds per token.
+* `--flexgen --compress-weight --percent 100 0 100 0 100 0`: 0.765 seconds per token.
 
 ## Limitations
 
