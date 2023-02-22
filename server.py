@@ -469,7 +469,7 @@ def update_extensions_parameters(*kwargs):
                     i += 1
 
 def get_available_models():
-    return sorted([item.name for item in list(Path('models/').glob('*')) if not item.name.endswith('.txt')], key=str.lower)
+    return sorted([item.name for item in list(Path('models/').glob('*')) if not item.name.endswith(('.txt', '-np'))], key=str.lower)
 
 def get_available_presets():
     return sorted(set(map(lambda x : '.'.join(str(x.name).split('.')[:-1]), Path('presets').glob('*.txt'))), key=str.lower)
