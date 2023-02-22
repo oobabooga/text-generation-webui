@@ -55,6 +55,12 @@ the percentage of activations on GPU
 the percentage of activations on CPU
 ```
 
+Note that, as said in FlexGen's guide,
+
+>The idea of high-throughput generation is to offload parameters and attention cache as much as possible to the CPU and disk if necessary.
+
+The model seems to become *slower* if you allocate more weights to the GPU, contrary to other offloading strategies. 
+
 ## Limitations
 
 * Only works with the OPT models.
