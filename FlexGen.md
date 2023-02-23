@@ -40,7 +40,7 @@ With this second command, I was able to run both OPT-6.7b and OPT-13B with **2GB
 You can also manually set the offload strategy with
 
 ```
-python server.py --model opt-1.3b  --flexgen --percent 0 0 100 0 100 0
+python server.py --model opt-1.3b  --flexgen --percent 0 100 100 0 100 0
 ```
 
 where the six numbers after `--percent` are:
