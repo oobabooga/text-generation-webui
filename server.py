@@ -187,8 +187,7 @@ else:
 
 if shared.args.chat or shared.args.cai_chat:
     with gr.Blocks(css=ui.css+ui.chat_css, analytics_enabled=False) as interface:
-        if Path(f'logs/persistent.json').exists():
-            chat.load_history(open(Path(f'logs/persistent.json'), 'rb').read(), shared.settings[f'name1{suffix}'], shared.settings[f'name2{suffix}'])
+        interface.load(lambda : chat.load_default_history(shared.settings[f'name1{suffix}'], shared.settings[f'name2{suffix}']), None, None)
         if shared.args.cai_chat:
             display = gr.HTML(value=generate_chat_html(shared.history['visible'], shared.settings[f'name1{suffix}'], shared.settings[f'name2{suffix}'], shared.character))
         else:
@@ -290,12 +289,12 @@ if shared.args.chat or shared.args.cai_chat:
         upload_img_me.upload(chat.upload_your_profile_picture, [upload_img_me], [])
         if shared.args.picture:
             picture_select.upload(lambda : None, [], [picture_select], show_progress=False)
-        if shared.args.cai_chat:
-            upload_chat_history.upload(chat.redraw_html, [name1, name2], [display])
-            upload_img_me.upload(chat.redraw_html, [name1, name2], [display])
-        else:
-            upload_chat_history.upload(lambda : shared.history['visible'], [], [display])
-            upload_img_me.upload(lambda : shared.history['visible'], [], [display])
+
+        reload_func = chat.redraw_html if shared.args.cai_chat else lambda : shared.history['visible']
+        reload_inputs = [name1, name2] if shared.args.cai_chat else []
+        upload_chat_history.upload(reload_func, reload_inputs, [display])
+        upload_img_me.upload(reload_func, reload_inputs, [display])
+        interface.load(reload_func, reload_inputs, [display], show_progress=False)
 
 elif shared.args.notebook:
     with gr.Blocks(css=ui.css, analytics_enabled=False) as interface:

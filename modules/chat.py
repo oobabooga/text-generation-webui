@@ -300,6 +300,10 @@ def load_history(file, name1, name2):
         shared.history['internal'] = tokenize_dialogue(file, name1, name2)
         shared.history['visible'] = copy.deepcopy(shared.history['internal'])
 
+def load_default_history(name1, name2):
+    if Path(f'logs/persistent.json').exists():
+        load_history(open(Path(f'logs/persistent.json'), 'rb').read(), name1, name2)
+
 def load_character(_character, name1, name2):
     context = ""
     shared.history['internal'] = []
