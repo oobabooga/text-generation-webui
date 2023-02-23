@@ -4,6 +4,16 @@ import modules.shared as shared
 extension_state = {}
 available_extensions = []
 
+def load_extensions():
+    global extension_state
+    for i,ext in enumerate(shared.args.extensions.split(',')):
+        if ext in available_extensions:
+            print(f'Loading the extension "{ext}"... ', end='')
+            ext_string = f"extensions.{ext}.script"
+            exec(f"import {ext_string}")
+            extension_state[ext] = [True, i]
+            print(f'Ok.')
+
 def apply_extensions(text, typ):
     for ext in sorted(extension_state, key=lambda x : extension_state[x][1]):
         if extension_state[ext][0] == True:
@@ -25,16 +35,6 @@ def update_extensions_parameters(*kwargs):
                 if len(kwargs) >= i+1:
                     params[param] = eval(f"kwargs[{i}]")
                     i += 1
-
-def load_extensions():
-    global extension_state
-    for i,ext in enumerate(shared.args.extensions.split(',')):
-        if ext in available_extensions:
-            print(f'Loading the extension "{ext}"... ', end='')
-            ext_string = f"extensions.{ext}.script"
-            exec(f"import {ext_string}")
-            extension_state[ext] = [True, i]
-            print(f'Ok.')
 
 def get_params(name):
     return eval(f"extensions.{name}.script.params")
