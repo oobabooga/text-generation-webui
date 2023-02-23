@@ -186,10 +186,9 @@ else:
     default_text = shared.settings['prompt']
 
 if shared.args.chat or shared.args.cai_chat:
-    if Path(f'logs/persistent.json').exists():
-        chat.load_history(open(Path(f'logs/persistent.json'), 'rb').read(), shared.settings[f'name1{suffix}'], shared.settings[f'name2{suffix}'])
-
     with gr.Blocks(css=ui.css+ui.chat_css, analytics_enabled=False) as interface:
+        if Path(f'logs/persistent.json').exists():
+            chat.load_history(open(Path(f'logs/persistent.json'), 'rb').read(), shared.settings[f'name1{suffix}'], shared.settings[f'name2{suffix}'])
         if shared.args.cai_chat:
             display = gr.HTML(value=generate_chat_html(shared.history['visible'], shared.settings[f'name1{suffix}'], shared.settings[f'name2{suffix}'], shared.character))
         else:

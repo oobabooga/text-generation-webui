@@ -159,7 +159,7 @@ def cai_chatbot_wrapper(text, tokens, do_sample, max_new_tokens, temperature, to
         yield generate_chat_html(_history, name1, name2, shared.character)
 
 def regenerate_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, chat_prompt_size, picture=None):
-    if shared.character is not None and len(shared.history['visible']) == 1:
+    if shared.character != 'None' and len(shared.history['visible']) == 1:
         if shared.args.cai_chat:
             yield generate_chat_html(shared.history['visible'], name1, name2, shared.character)
         else:
@@ -265,10 +265,11 @@ def tokenize_dialogue(dialogue, name1, name2):
     return _history
 
 def save_history(timestamp=True):
+    prefix = '' if shared.character == 'None' else f"{shared.character}_"
     if timestamp:
-        fname = f"{shared.character or ''}{'_' if shared.character else ''}{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
+        fname = f"{prefix}{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
     else:
-        fname = f"{shared.character or ''}{'_' if shared.character else ''}persistent.json"
+        fname = f"{prefix}persistent.json"
     if not Path('logs').exists():
         Path('logs').mkdir()
     with open(Path(f'logs/{fname}'), 'w') as f:
