@@ -142,6 +142,9 @@ Optionally, you can use the following command-line flags:
 | `--disk-cache-dir DISK_CACHE_DIR` | Directory to save the disk cache to. Defaults to `cache/`. |
 | `--gpu-memory GPU_MEMORY` | Maximum GPU memory in GiB to allocate. This is useful if you get out of memory errors while trying to generate text. Must be an integer number. |
 | `--cpu-memory CPU_MEMORY`    | Maximum CPU memory in GiB to allocate for offloaded weights. Must be an integer number. Defaults to 99.|
+| `--flexgen`                   |         Enable the use of FlexGen offloading. |
+|  `--percent PERCENT [PERCENT ...]`    |  FlexGen: allocation percentages. Must be 6 numbers separated by spaces (default: 0, 100, 100, 0, 100, 0). |
+|  `--compress-weight`                  |  FlexGen: Whether to compress weight (default: False).|
 | `--deepspeed`    | Enable the use of DeepSpeed ZeRO-3 for inference via the Transformers integration. |
 | `--nvme-offload-dir NVME_OFFLOAD_DIR`    | DeepSpeed: Directory to use for ZeRO-3 NVME offloading. |
 | `--local_rank LOCAL_RANK`    | DeepSpeed: Optional argument for distributed setups. |
