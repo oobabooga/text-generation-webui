@@ -7,8 +7,11 @@ from pathlib import Path
 import modules.shared as shared
 import numpy as np
 import torch
+import transformers
 from transformers import AutoModelForCausalLM
 from transformers import AutoTokenizer
+
+transformers.logging.set_verbosity_error()
 
 local_rank = None
 

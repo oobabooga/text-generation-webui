@@ -6,7 +6,27 @@ model_name = ""
 soft_prompt_tensor = None
 soft_prompt = False
 stop_everything = False
-settings = {}
+
+settings = {
+    'max_new_tokens': 200,
+    'max_new_tokens_min': 1,
+    'max_new_tokens_max': 2000,
+    'preset': 'NovelAI-Sphinx Moth',
+    'name1': 'Person 1',
+    'name2': 'Person 2',
+    'context': 'This is a conversation between two people.',
+    'prompt': 'Common sense questions and answers\n\nQuestion: \nFactual answer:',
+    'prompt_gpt4chan': '-----\n--- 865467536\nInput text\n--- 865467537\n',
+    'stop_at_newline': True,
+    'chat_prompt_size': 2048,
+    'chat_prompt_size_min': 0,
+    'chat_prompt_size_max': 2048,
+    'preset_pygmalion': 'Pygmalion',
+    'name1_pygmalion': 'You',
+    'name2_pygmalion': 'Kawaii',
+    'context_pygmalion': "Kawaii's persona: Kawaii is a cheerful person who loves to make others smile. She is an optimist who loves to spread happiness and positivity wherever she goes.\n<START>",
+    'stop_at_newline_pygmalion': False,
+}
 
 parser = argparse.ArgumentParser(formatter_class=lambda prog: argparse.HelpFormatter(prog,max_help_position=54))
 parser.add_argument('--model', type=str, help='Name of the model to load by default.')

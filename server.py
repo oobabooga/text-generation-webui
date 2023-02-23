@@ -9,7 +9,6 @@ from pathlib import Path
 
 import gradio as gr
 import torch
-import transformers
 
 import modules.chat as chat
 import modules.extensions as extensions_module
@@ -23,32 +22,9 @@ from modules.models import load_model
 from modules.models import load_soft_prompt
 from modules.text_generation import generate_reply
 
-transformers.logging.set_verbosity_error()
-
 if (shared.args.chat or shared.args.cai_chat) and not shared.args.no_stream:
     print("Warning: chat mode currently becomes somewhat slower with text streaming on.\nConsider starting the web UI with the --no-stream option.\n")
     
-shared.settings = {
-    'max_new_tokens': 200,
-    'max_new_tokens_min': 1,
-    'max_new_tokens_max': 2000,
-    'preset': 'NovelAI-Sphinx Moth',
-    'name1': 'Person 1',
-    'name2': 'Person 2',
-    'context': 'This is a conversation between two people.',
-    'prompt': 'Common sense questions and answers\n\nQuestion: \nFactual answer:',
-    'prompt_gpt4chan': '-----\n--- 865467536\nInput text\n--- 865467537\n',
-    'stop_at_newline': True,
-    'chat_prompt_size': 2048,
-    'chat_prompt_size_min': 0,
-    'chat_prompt_size_max': 2048,
-    'preset_pygmalion': 'Pygmalion',
-    'name1_pygmalion': 'You',
-    'name2_pygmalion': 'Kawaii',
-    'context_pygmalion': "Kawaii's persona: Kawaii is a cheerful person who loves to make others smile. She is an optimist who loves to spread happiness and positivity wherever she goes.\n<START>",
-    'stop_at_newline_pygmalion': False,
-}
-
 if shared.args.settings is not None and Path(shared.args.settings).exists():
     new_settings = json.loads(open(Path(shared.args.settings), 'r').read())
     for item in new_settings:
