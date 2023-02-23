@@ -54,9 +54,7 @@ the percentage of activations on GPU
 the percentage of activations on CPU
 ```
 
-You should typically only change the first two numbers. 
-
-If their sum is less than 100, the remaining layers will be offloaded to the disk, by default into the `text-generation-webui/cache` folder.
+You should typically only change the first two numbers. If their sum is less than 100, the remaining layers will be offloaded to the disk, by default into the `text-generation-webui/cache` folder.
 
 ## Performance
 
