@@ -8,6 +8,7 @@ https://github.com/PygmalionAI/gradio-ui/
 import torch
 import transformers
 
+
 class _SentinelTokenStoppingCriteria(transformers.StoppingCriteria):
 
     def __init__(self, sentinel_token_ids: torch.LongTensor,

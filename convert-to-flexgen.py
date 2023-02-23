@@ -6,15 +6,13 @@ Converts a transformers model to a format compatible with flexgen.
 
 import argparse
 import os
-import numpy as np
 from pathlib import Path
-from sys import argv
 
+import numpy as np
 import torch
 from tqdm import tqdm
-from transformers import AutoModelForCausalLM
-from transformers import AutoTokenizer
- 
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
 parser = argparse.ArgumentParser(formatter_class=lambda prog: argparse.HelpFormatter(prog,max_help_position=54))
 parser.add_argument('MODEL', type=str, default=None, nargs='?', help="Path to the input model.")
 args = parser.parse_args()
@@ -32,7 +30,6 @@ def disable_torch_init():
 
     torch_layer_norm_init_backup = torch.nn.LayerNorm.reset_parameters
     setattr(torch.nn.LayerNorm, "reset_parameters", lambda self: None)
-
 
 def restore_torch_init():
     """Rollback the change made by disable_torch_init."""
