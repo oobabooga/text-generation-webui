@@ -97,12 +97,10 @@ def generate_chat_picture(picture, name1, name2):
     return text, visible_text
 
 def stop_everything_event():
-    global stop_everything
-    stop_everything = True
+    shared.stop_everything = True
 
 def chatbot_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, chat_prompt_size, picture=None):
-    global stop_everything
-    stop_everything = False
+    shared.stop_everything = False
 
     if 'pygmalion' in shared.model_name.lower():
         name1 = "You"
@@ -126,7 +124,7 @@ def chatbot_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p,
 
         # We need this global variable to handle the Stop event,
         # otherwise gradio gets confused
-        if stop_everything:
+        if shared.stop_everything:
             return shared.history['visible']
 
         if first:
@@ -215,7 +213,7 @@ def clear_chat_log(name1, name2):
     if shared.character != 'None':
         for i in range(len(shared.history['internal'])):
             if '<|BEGIN-VISIBLE-CHAT|>' in shared.history['internal'][i][0]:
-                shared.history['visible'] = [['', shared.history['internal'][i][1]]]
+                shared.history['visible'] = [['', apply_extensions(shared.history['internal'][i][1], "output")]]
                 shared.history['internal'] = shared.history['internal'][:i+1]
                 break
     else:

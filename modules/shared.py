@@ -5,11 +5,11 @@ tokenizer = None
 model_name = ""
 soft_prompt_tensor = None
 soft_prompt = False
-stop_everything = False
 
 # Chat variables
 history = {'internal': [], 'visible': []}
 character = 'None'
+stop_everything = False
 
 settings = {
     'max_new_tokens': 200,
