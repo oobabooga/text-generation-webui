@@ -10,7 +10,6 @@ Optionally, you can also add the --share flag to generate a public gradio URL,
 allowing you to use the API remotely.
 
 '''
-
 import requests
 
 # Server address

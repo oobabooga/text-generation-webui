@@ -3,13 +3,12 @@
 Converts a transformers model to a format compatible with flexgen.
 
 '''
-
 import argparse
 import os
-import numpy as np
 from pathlib import Path
 from sys import argv
 
+import numpy as np
 import torch
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM

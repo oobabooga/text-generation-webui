@@ -10,7 +10,6 @@ Based on the original script by 81300:
 https://gist.github.com/81300/fe5b08bff1cba45296a829b9d6b0f303
 
 '''
-
 import argparse
 from pathlib import Path
 from sys import argv

@@ -4,7 +4,6 @@ This code was copied from
 https://github.com/PygmalionAI/gradio-ui/
 
 '''
-
 import torch
 import transformers
 
