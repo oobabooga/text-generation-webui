@@ -1,6 +1,5 @@
 import torch
-from transformers import BlipForConditionalGeneration
-from transformers import BlipProcessor
+from transformers import BlipForConditionalGeneration, BlipProcessor
 
 processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
 model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base", torch_dtype=torch.float32).to("cpu")

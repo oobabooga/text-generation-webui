@@ -14,12 +14,9 @@ import modules.chat as chat
 import modules.extensions as extensions_module
 import modules.shared as shared
 import modules.ui as ui
-from modules.extensions import extension_state
-from modules.extensions import load_extensions
-from modules.extensions import update_extensions_parameters
+from modules.extensions import extension_state, load_extensions, update_extensions_parameters
 from modules.html_generator import generate_chat_html
-from modules.models import load_model
-from modules.models import load_soft_prompt
+from modules.models import load_model, load_soft_prompt
 from modules.text_generation import generate_reply
 
 if (shared.args.chat or shared.args.cai_chat) and not shared.args.no_stream:

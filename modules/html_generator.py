@@ -3,6 +3,7 @@
 This is a library for formatting GPT-4chan and chat outputs as nice HTML.
 
 '''
+
 import base64
 import os
 import re

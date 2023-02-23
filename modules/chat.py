@@ -7,13 +7,12 @@ from datetime import datetime
 from io import BytesIO
 from pathlib import Path
 
+from PIL import Image
+
 import modules.shared as shared
 from modules.extensions import apply_extensions
 from modules.html_generator import generate_chat_html
-from modules.text_generation import encode
-from modules.text_generation import generate_reply
-from modules.text_generation import get_max_prompt_length
-from PIL import Image
+from modules.text_generation import encode, generate_reply, get_max_prompt_length
 
 if shared.args.picture and (shared.args.cai_chat or shared.args.chat):
     import modules.bot_picture as bot_picture

@@ -1,6 +1,5 @@
-import modules.shared as shared
-
 import extensions
+import modules.shared as shared
 
 extension_state = {}
 available_extensions = []

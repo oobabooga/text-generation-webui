@@ -4,23 +4,27 @@ import time
 import zipfile
 from pathlib import Path
 
-import modules.shared as shared
 import numpy as np
 import torch
 import transformers
-from transformers import AutoModelForCausalLM
-from transformers import AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+import modules.shared as shared
 
 transformers.logging.set_verbosity_error()
 
 local_rank = None
 
 if shared.args.flexgen:
-    from flexgen.flex_opt import (Policy, OptLM, TorchDevice, TorchDisk, TorchMixedDevice, CompressionConfig, Env, get_opt_config)
+    from flexgen.flex_opt import (CompressionConfig, Env, OptLM, Policy,
+                                  TorchDevice, TorchDisk, TorchMixedDevice,
+                                  get_opt_config)
 
 if shared.args.deepspeed:
     import deepspeed
-    from transformers.deepspeed import HfDeepSpeedConfig, is_deepspeed_zero3_enabled
+    from transformers.deepspeed import (HfDeepSpeedConfig,
+                                        is_deepspeed_zero3_enabled)
+
     from modules.deepspeed_parameters import generate_ds_config
 
     # Distributed setup

@@ -10,13 +10,13 @@ Based on the original script by 81300:
 https://gist.github.com/81300/fe5b08bff1cba45296a829b9d6b0f303
 
 '''
+
 import argparse
 from pathlib import Path
 
 import torch
-from transformers import AutoModelForCausalLM
-from transformers import AutoTokenizer
- 
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
 parser = argparse.ArgumentParser(formatter_class=lambda prog: argparse.HelpFormatter(prog,max_help_position=54))
 parser.add_argument('MODEL', type=str, default=None, nargs='?', help="Path to the input model.")
 parser.add_argument('--output', type=str, default=None, help='Path to the output folder (default: models/{model_name}_safetensors).')

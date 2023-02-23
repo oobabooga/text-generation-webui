@@ -1,16 +1,17 @@
 import re
 import time
 
-import modules.shared as shared
 import numpy as np
 import torch
 import transformers
+from tqdm import tqdm
+
+import modules.shared as shared
 from modules.extensions import apply_extensions
-from modules.html_generator import generate_4chan_html
-from modules.html_generator import generate_basic_html
+from modules.html_generator import generate_4chan_html, generate_basic_html
 from modules.models import local_rank
 from modules.stopping_criteria import _SentinelTokenStoppingCriteria
-from tqdm import tqdm
+
 
 def get_max_prompt_length(tokens):
     max_length = 2048-tokens
