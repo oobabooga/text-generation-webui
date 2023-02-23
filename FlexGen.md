@@ -6,10 +6,9 @@ https://github.com/FMInference/FlexGen
 
 ```
 conda activate textgen
-git clone https://github.com/FMInference/FlexGen
-cd Flexgen
-python setup.py build
-python setup.py install
+git clone https://github.com/FMInference/FlexGen.git
+cd FlexGen
+pip3 install -e .
 ```
 
 ## Converting a model
