@@ -1,7 +1,6 @@
 import gc
 import io
 import json
-import os
 import re
 import sys
 import time
@@ -9,13 +8,8 @@ import zipfile
 from pathlib import Path
 
 import gradio as gr
-import numpy as np
 import torch
 import transformers
-from PIL import Image
-from transformers import AutoConfig
-from transformers import AutoModelForCausalLM
-from transformers import AutoTokenizer
 
 import modules.chat as chat
 import modules.extensions as extensions_module
@@ -25,6 +19,8 @@ from modules.extensions import extension_state
 from modules.extensions import load_extensions
 from modules.extensions import update_extensions_parameters
 from modules.html_generator import generate_chat_html
+from modules.models import load_model
+from modules.models import load_soft_prompt
 from modules.text_generation import generate_reply
 
 transformers.logging.set_verbosity_error()
@@ -32,7 +28,7 @@ transformers.logging.set_verbosity_error()
 if (shared.args.chat or shared.args.cai_chat) and not shared.args.no_stream:
     print("Warning: chat mode currently becomes somewhat slower with text streaming on.\nConsider starting the web UI with the --no-stream option.\n")
     
-settings = {
+shared.settings = {
     'max_new_tokens': 200,
     'max_new_tokens_min': 1,
     'max_new_tokens_max': 2000,
@@ -56,154 +52,12 @@ settings = {
 if shared.args.settings is not None and Path(shared.args.settings).exists():
     new_settings = json.loads(open(Path(shared.args.settings), 'r').read())
     for item in new_settings:
-        settings[item] = new_settings[item]
-
-if shared.args.flexgen:
-    from flexgen.flex_opt import (Policy, OptLM, TorchDevice, TorchDisk, TorchMixedDevice, CompressionConfig, Env, Task, get_opt_config)
-
-if shared.args.deepspeed:
-    import deepspeed
-    from transformers.deepspeed import HfDeepSpeedConfig, is_deepspeed_zero3_enabled
-    from modules.deepspeed_parameters import generate_ds_config
-
-    # Distributed setup
-    local_rank = shared.args.local_rank if shared.args.local_rank is not None else int(os.getenv("LOCAL_RANK", "0"))
-    world_size = int(os.getenv("WORLD_SIZE", "1"))
-    torch.cuda.set_device(local_rank)
-    deepspeed.init_distributed()
-    ds_config = generate_ds_config(shared.args.bf16, 1 * world_size, shared.args.nvme_offload_dir)
-    dschf = HfDeepSpeedConfig(ds_config) # Keep this object alive for the Transformers integration
-
-def load_model(model_name):
-    print(f"Loading {model_name}...")
-    t0 = time.time()
-
-    # Default settings
-    if not (shared.args.cpu or shared.args.load_in_8bit or shared.args.auto_devices or shared.args.disk or shared.args.gpu_memory is not None or shared.args.cpu_memory is not None or shared.args.deepspeed or shared.args.flexgen):
-        if any(size in shared.model_name.lower() for size in ('13b', '20b', '30b')):
-            model = AutoModelForCausalLM.from_pretrained(Path(f"models/{shared.model_name}"), device_map='auto', load_in_8bit=True)
-        else:
-            model = AutoModelForCausalLM.from_pretrained(Path(f"models/{shared.model_name}"), low_cpu_mem_usage=True, torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16).cuda()
-
-    # FlexGen
-    elif shared.args.flexgen:
-        gpu = TorchDevice("cuda:0")
-        cpu = TorchDevice("cpu")
-        disk = TorchDisk(shared.args.disk_cache_dir)
-        env = Env(gpu=gpu, cpu=cpu, disk=disk, mixed=TorchMixedDevice([gpu, cpu, disk]))
-
-        # Offloading policy
-        policy = Policy(1, 1,
-                        shared.args.percent[0], shared.args.percent[1],
-                        shared.args.percent[2], shared.args.percent[3],
-                        shared.args.percent[4], shared.args.percent[5],
-                        overlap=True, sep_layer=True, pin_weight=True,
-                        cpu_cache_compute=False, attn_sparsity=1.0,
-                        compress_weight=shared.args.compress_weight,
-                        comp_weight_config=CompressionConfig(
-                            num_bits=4, group_size=64,
-                            group_dim=0, symmetric=False),
-                        compress_cache=False,
-                        comp_cache_config=CompressionConfig(
-                            num_bits=4, group_size=64,
-                            group_dim=2, symmetric=False))
-
-        opt_config = get_opt_config(f"facebook/{shared.model_name}")
-        model = OptLM(opt_config, env, "models", policy)
-        model.init_all_weights()
-
-    # DeepSpeed ZeRO-3
-    elif shared.args.deepspeed:
-        model = AutoModelForCausalLM.from_pretrained(Path(f"models/{shared.model_name}"), torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16)
-        model = deepspeed.initialize(model=model, config_params=ds_config, model_parameters=None, optimizer=None, lr_scheduler=None)[0]
-        model.module.eval() # Inference
-        print(f"DeepSpeed ZeRO-3 is enabled: {is_deepspeed_zero3_enabled()}")
-
-    # Custom
-    else:
-        command = "AutoModelForCausalLM.from_pretrained"
-        params = ["low_cpu_mem_usage=True"]
-        if not shared.args.cpu and not torch.cuda.is_available():
-            print("Warning: no GPU has been detected.\nFalling back to CPU mode.\n")
-            shared.args.cpu = True
-
-        if shared.args.cpu:
-            params.append("low_cpu_mem_usage=True")
-            params.append("torch_dtype=torch.float32")
-        else:
-            params.append("device_map='auto'")
-            params.append("load_in_8bit=True" if shared.args.load_in_8bit else "torch_dtype=torch.bfloat16" if shared.args.bf16 else "torch_dtype=torch.float16")
-
-            if shared.args.gpu_memory:
-                params.append(f"max_memory={{0: '{shared.args.gpu_memory or '99'}GiB', 'cpu': '{shared.args.cpu_memory or '99'}GiB'}}")
-            elif not shared.args.load_in_8bit:
-                total_mem = (torch.cuda.get_device_properties(0).total_memory/(1024*1024))
-                suggestion = round((total_mem-1000)/1000)*1000
-                if total_mem-suggestion < 800:
-                    suggestion -= 1000
-                suggestion = int(round(suggestion/1000))
-                print(f"\033[1;32;1mAuto-assiging --gpu-memory {suggestion} for your GPU to try to prevent out-of-memory errors.\nYou can manually set other values.\033[0;37;0m")
-                params.append(f"max_memory={{0: '{suggestion}GiB', 'cpu': '{shared.args.cpu_memory or '99'}GiB'}}")
-            if shared.args.disk:
-                params.append(f"offload_folder='{shared.args.disk_cache_dir}'")
-
-        command = f"{command}(Path(f'models/{shared.model_name}'), {', '.join(set(params))})"
-        model = eval(command)
-
-    # Loading the tokenizer
-    if shared.model_name.lower().startswith(('gpt4chan', 'gpt-4chan', '4chan')) and Path(f"models/gpt-j-6B/").exists():
-        tokenizer = AutoTokenizer.from_pretrained(Path("models/gpt-j-6B/"))
-    else:
-        tokenizer = AutoTokenizer.from_pretrained(Path(f"models/{shared.model_name}/"))
-    tokenizer.truncation_side = 'left'
-
-    print(f"Loaded the model in {(time.time()-t0):.2f} seconds.")
-    return model, tokenizer
-
-def load_soft_prompt(name):
-    if name == 'None':
-        shared.soft_prompt = False
-        shared.soft_prompt_tensor = None
-    else:
-        with zipfile.ZipFile(Path(f'softprompts/{name}.zip')) as zf:
-            zf.extract('tensor.npy')
-            zf.extract('meta.json')
-            j = json.loads(open('meta.json', 'r').read())
-            print(f"\nLoading the softprompt \"{name}\".")
-            for field in j:
-                if field != 'name':
-                    if type(j[field]) is list:
-                        print(f"{field}: {', '.join(j[field])}")
-                    else:
-                        print(f"{field}: {j[field]}")
-            print()
-            tensor = np.load('tensor.npy')
-            Path('tensor.npy').unlink()
-            Path('meta.json').unlink()
-        tensor = torch.Tensor(tensor).to(device=shared.model.device, dtype=shared.model.dtype)
-        tensor = torch.reshape(tensor, (1, tensor.shape[0], tensor.shape[1]))
-
-        shared.soft_prompt = True
-        shared.soft_prompt_tensor = tensor
-
-    return name
-
-def upload_soft_prompt(file):
-    with zipfile.ZipFile(io.BytesIO(file)) as zf:
-        zf.extract('meta.json')
-        j = json.loads(open('meta.json', 'r').read())
-        name = j['name']
-        Path('meta.json').unlink()
-
-    with open(Path(f'softprompts/{name}.zip'), 'wb') as f:
-        f.write(file)
-
-    return name
+        shared.settings[item] = new_settings[item]
 
 def load_model_wrapper(selected_model):
     if selected_model != shared.model_name:
         shared.model_name = selected_model
-        model = shared.tokenizer = None
+        shared.model = shared.tokenizer = None
         if not shared.args.cpu:
             gc.collect()
             torch.cuda.empty_cache()
@@ -240,6 +94,18 @@ def load_preset_values(preset_menu, return_dict=False):
     else:
         return generate_params['do_sample'], generate_params['temperature'], generate_params['top_p'], generate_params['typical_p'], generate_params['repetition_penalty'], generate_params['top_k'], generate_params['min_length'], generate_params['no_repeat_ngram_size'], generate_params['num_beams'], generate_params['penalty_alpha'], generate_params['length_penalty'], generate_params['early_stopping']
 
+def upload_soft_prompt(file):
+    with zipfile.ZipFile(io.BytesIO(file)) as zf:
+        zf.extract('meta.json')
+        j = json.loads(open('meta.json', 'r').read())
+        name = j['name']
+        Path('meta.json').unlink()
+
+    with open(Path(f'softprompts/{name}.zip'), 'wb') as f:
+        f.write(file)
+
+    return name
+
 def get_available_models():
     return sorted([item.name for item in list(Path('models/').glob('*')) if not item.name.endswith(('.txt', '-np'))], key=str.lower)
 
@@ -265,7 +131,7 @@ def create_extensions_block():
             params = extensions_module.get_params(ext)
             for param in params:
                 _id = f"{ext}-{param}"
-                default_value = settings[_id] if _id in settings else params[param]
+                default_value = shared.settings[_id] if _id in shared.settings else params[param]
                 default_values.append(default_value)
                 if type(params[param]) == str:
                     extensions_ui_elements.append(gr.Textbox(value=default_value, label=f"{ext}-{param}"))
@@ -279,7 +145,7 @@ def create_extensions_block():
     btn_extensions.click(update_extensions_parameters, [*extensions_ui_elements], [])
 
 def create_settings_menus():
-    generate_params = load_preset_values(settings[f'preset{suffix}'] if not shared.args.flexgen else 'Naive', return_dict=True)
+    generate_params = load_preset_values(shared.settings[f'preset{suffix}'] if not shared.args.flexgen else 'Naive', return_dict=True)
 
     with gr.Row():
         with gr.Column():
@@ -288,7 +154,7 @@ def create_settings_menus():
                 ui.create_refresh_button(model_menu, lambda : None, lambda : {"choices": get_available_models()}, "refresh-button")
         with gr.Column():
             with gr.Row():
-                preset_menu = gr.Dropdown(choices=available_presets, value=settings[f'preset{suffix}'] if not shared.args.flexgen else 'Naive', label='Generation parameters preset')
+                preset_menu = gr.Dropdown(choices=available_presets, value=shared.settings[f'preset{suffix}'] if not shared.args.flexgen else 'Naive', label='Generation parameters preset')
                 ui.create_refresh_button(preset_menu, lambda : None, lambda : {"choices": get_available_presets()}, "refresh-button")
 
     with gr.Accordion("Custom generation parameters", open=False, elem_id="accordion"):
@@ -360,11 +226,11 @@ shared.model, shared.tokenizer = load_model(shared.model_name)
 
 # UI settings
 if shared.model_name.lower().startswith(('gpt4chan', 'gpt-4chan', '4chan')):
-    default_text = settings['prompt_gpt4chan']
+    default_text = shared.settings['prompt_gpt4chan']
 elif re.match('(rosey|chip|joi)_.*_instruct.*', shared.model_name.lower()) is not None:
     default_text = 'User: \n'
 else:
-    default_text = settings['prompt']
+    default_text = shared.settings['prompt']
 description = f"\n\n# Text generation lab\nGenerate text using Large Language Models.\n"
 
 suffix = '_pygmalion' if 'pygmalion' in shared.model_name.lower() else ''
@@ -374,11 +240,11 @@ gen_events = []
 if shared.args.chat or shared.args.cai_chat:
 
     if Path(f'logs/persistent.json').exists():
-        chat.load_history(open(Path(f'logs/persistent.json'), 'rb').read(), settings[f'name1{suffix}'], settings[f'name2{suffix}'])
+        chat.load_history(open(Path(f'logs/persistent.json'), 'rb').read(), shared.settings[f'name1{suffix}'], shared.settings[f'name2{suffix}'])
 
     with gr.Blocks(css=ui.css+ui.chat_css, analytics_enabled=False) as interface:
         if shared.args.cai_chat:
-            display = gr.HTML(value=generate_chat_html(chat.history['visible'], settings[f'name1{suffix}'], settings[f'name2{suffix}'], chat.character))
+            display = gr.HTML(value=generate_chat_html(chat.history['visible'], shared.settings[f'name1{suffix}'], shared.settings[f'name2{suffix}'], chat.character))
         else:
             display = gr.Chatbot(value=chat.history['visible'])
         textbox = gr.Textbox(label='Input')
@@ -398,15 +264,15 @@ if shared.args.chat or shared.args.cai_chat:
                 picture_select = gr.Image(label="Send a picture", type='pil')
 
         with gr.Tab("Chat settings"):
-            name1 = gr.Textbox(value=settings[f'name1{suffix}'], lines=1, label='Your name')
-            name2 = gr.Textbox(value=settings[f'name2{suffix}'], lines=1, label='Bot\'s name')
-            context = gr.Textbox(value=settings[f'context{suffix}'], lines=2, label='Context')
+            name1 = gr.Textbox(value=shared.settings[f'name1{suffix}'], lines=1, label='Your name')
+            name2 = gr.Textbox(value=shared.settings[f'name2{suffix}'], lines=1, label='Bot\'s name')
+            context = gr.Textbox(value=shared.settings[f'context{suffix}'], lines=2, label='Context')
             with gr.Row():
                 character_menu = gr.Dropdown(choices=available_characters, value="None", label='Character')
                 ui.create_refresh_button(character_menu, lambda : None, lambda : {"choices": get_available_characters()}, "refresh-button")
 
             with gr.Row():
-                check = gr.Checkbox(value=settings[f'stop_at_newline{suffix}'], label='Stop generating at new line character?')
+                check = gr.Checkbox(value=shared.settings[f'stop_at_newline{suffix}'], label='Stop generating at new line character?')
             with gr.Row():
                 with gr.Tab('Chat history'):
                     with gr.Row():
@@ -434,9 +300,9 @@ if shared.args.chat or shared.args.cai_chat:
         with gr.Tab("Generation settings"):
             with gr.Row():
                 with gr.Column():
-                    max_new_tokens = gr.Slider(minimum=settings['max_new_tokens_min'], maximum=settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=settings['max_new_tokens'])
+                    max_new_tokens = gr.Slider(minimum=shared.settings['max_new_tokens_min'], maximum=shared.settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=shared.settings['max_new_tokens'])
                 with gr.Column():
-                    chat_prompt_size_slider = gr.Slider(minimum=settings['chat_prompt_size_min'], maximum=settings['chat_prompt_size_max'], step=1, label='Maximum prompt size in tokens', value=settings['chat_prompt_size'])
+                    chat_prompt_size_slider = gr.Slider(minimum=shared.settings['chat_prompt_size_min'], maximum=shared.settings['chat_prompt_size_max'], step=1, label='Maximum prompt size in tokens', value=shared.settings['chat_prompt_size'])
 
             preset_menu, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping = create_settings_menus()
 
@@ -498,7 +364,7 @@ elif shared.args.notebook:
         buttons["Generate"] = gr.Button("Generate")
         buttons["Stop"] = gr.Button("Stop")
 
-        max_new_tokens = gr.Slider(minimum=settings['max_new_tokens_min'], maximum=settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=settings['max_new_tokens'])
+        max_new_tokens = gr.Slider(minimum=shared.settings['max_new_tokens_min'], maximum=shared.settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=shared.settings['max_new_tokens'])
 
         preset_menu, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping = create_settings_menus()
 
@@ -515,7 +381,7 @@ else:
         with gr.Row():
             with gr.Column():
                 textbox = gr.Textbox(value=default_text, lines=15, label='Input')
-                max_new_tokens = gr.Slider(minimum=settings['max_new_tokens_min'], maximum=settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=settings['max_new_tokens'])
+                max_new_tokens = gr.Slider(minimum=shared.settings['max_new_tokens_min'], maximum=shared.settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=shared.settings['max_new_tokens'])
                 buttons["Generate"] = gr.Button("Generate")
                 with gr.Row():
                     with gr.Column():

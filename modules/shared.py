@@ -6,6 +6,7 @@ model_name = ""
 soft_prompt_tensor = None
 soft_prompt = False
 stop_everything = False
+settings = {}
 
 parser = argparse.ArgumentParser(formatter_class=lambda prog: argparse.HelpFormatter(prog,max_help_position=54))
 parser.add_argument('--model', type=str, help='Name of the model to load by default.')

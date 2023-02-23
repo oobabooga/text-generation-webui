@@ -6,7 +6,6 @@ Converts a transformers model to a format compatible with flexgen.
 import argparse
 import os
 from pathlib import Path
-from sys import argv
 
 import numpy as np
 import torch

@@ -1,6 +1,4 @@
-import requests
 import torch
-from PIL import Image
 from transformers import BlipForConditionalGeneration
 from transformers import BlipProcessor
 

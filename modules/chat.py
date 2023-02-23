@@ -1,7 +1,10 @@
+import base64
+import copy
 import io
 import json
 import re
 from datetime import datetime
+from io import BytesIO
 from pathlib import Path
 
 import modules.shared as shared
@@ -10,6 +13,7 @@ from modules.html_generator import generate_chat_html
 from modules.text_generation import encode
 from modules.text_generation import generate_reply
 from modules.text_generation import get_max_prompt_length
+from PIL import Image
 
 if shared.args.picture and (shared.args.cai_chat or shared.args.chat):
     import modules.bot_picture as bot_picture
@@ -328,8 +332,8 @@ def load_character(_character, name1, name2):
             history['visible'] += [['', "Hello there!"]]
     else:
         character = None
-        context = settings['context_pygmalion']
-        name2 = settings['name2_pygmalion']
+        context = shared.settings['context_pygmalion']
+        name2 = shared.settings['name2_pygmalion']
 
     if Path(f'logs/{character}_persistent.json').exists():
         load_history(open(Path(f'logs/{character}_persistent.json'), 'rb').read(), name1, name2)
