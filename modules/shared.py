@@ -7,6 +7,10 @@ soft_prompt_tensor = None
 soft_prompt = False
 stop_everything = False
 
+# Chat variables
+history = {'internal': [], 'visible': []}
+character = 'None'
+
 settings = {
     'max_new_tokens': 200,
     'max_new_tokens_min': 1,

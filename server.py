@@ -191,9 +191,9 @@ if shared.args.chat or shared.args.cai_chat:
 
     with gr.Blocks(css=ui.css+ui.chat_css, analytics_enabled=False) as interface:
         if shared.args.cai_chat:
-            display = gr.HTML(value=generate_chat_html(chat.history['visible'], shared.settings[f'name1{suffix}'], shared.settings[f'name2{suffix}'], chat.character))
+            display = gr.HTML(value=generate_chat_html(shared.history['visible'], shared.settings[f'name1{suffix}'], shared.settings[f'name2{suffix}'], shared.character))
         else:
-            display = gr.Chatbot(value=chat.history['visible'])
+            display = gr.Chatbot(value=shared.history['visible'])
         textbox = gr.Textbox(label='Input')
         with gr.Row():
             buttons["Stop"] = gr.Button("Stop")
@@ -272,7 +272,7 @@ if shared.args.chat or shared.args.cai_chat:
 
         buttons["Send last reply to input"].click(chat.send_last_reply_to_input, [], textbox, show_progress=shared.args.no_stream)
         buttons["Replace last reply"].click(chat.replace_last_reply, [textbox, name1, name2], display, show_progress=shared.args.no_stream)
-        buttons["Clear history"].click(chat.clear_chat_log, [character_menu, name1, name2], display)
+        buttons["Clear history"].click(chat.clear_chat_log, [name1, name2], display)
         buttons["Remove last"].click(chat.remove_last_message, [name1, name2], [display, textbox], show_progress=False)
         buttons["Download"].click(chat.save_history, inputs=[], outputs=[download])
         buttons["Upload character"].click(chat.upload_character, [upload_char, upload_img], [character_menu])
@@ -295,8 +295,8 @@ if shared.args.chat or shared.args.cai_chat:
             upload_chat_history.upload(chat.redraw_html, [name1, name2], [display])
             upload_img_me.upload(chat.redraw_html, [name1, name2], [display])
         else:
-            upload_chat_history.upload(lambda : chat.history['visible'], [], [display])
-            upload_img_me.upload(lambda : chat.history['visible'], [], [display])
+            upload_chat_history.upload(lambda : shared.history['visible'], [], [display])
+            upload_img_me.upload(lambda : shared.history['visible'], [], [display])
 
 elif shared.args.notebook:
     with gr.Blocks(css=ui.css, analytics_enabled=False) as interface:
