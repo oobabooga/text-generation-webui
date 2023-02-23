@@ -6,10 +6,13 @@ from pathlib import Path
 
 import modules.shared as shared
 from modules.extensions import apply_extensions
-from modules.html_generator import *
-from modules.prompt import encode
-from modules.prompt import generate_reply
-from modules.prompt import get_max_prompt_length
+from modules.html_generator import generate_chat_html
+from modules.text_generation import encode
+from modules.text_generation import generate_reply
+from modules.text_generation import get_max_prompt_length
+
+if shared.args.picture and (shared.args.cai_chat or shared.args.chat):
+    import modules.bot_picture as bot_picture
 
 history = {'internal': [], 'visible': []}
 character = None

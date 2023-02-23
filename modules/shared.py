@@ -1,7 +1,5 @@
 import argparse
 
-global tokenizer
-
 model = None
 tokenizer = None
 model_name = ""

@@ -4,7 +4,8 @@ import modules.shared as shared
 import torch
 import transformers
 from modules.extensions import apply_extensions
-from modules.html_generator import *
+from modules.html_generator import generate_4chan_html
+from modules.html_generator import generate_basic_html
 from modules.stopping_criteria import _SentinelTokenStoppingCriteria
 from tqdm import tqdm
 
