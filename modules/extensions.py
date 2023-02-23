@@ -1,5 +1,6 @@
 import extensions
 import modules.shared as shared
+import gradio as gr
 
 extension_state = {}
 available_extensions = []
@@ -38,3 +39,26 @@ def update_extensions_parameters(*kwargs):
 
 def get_params(name):
     return eval(f"extensions.{name}.script.params")
+
+def create_extensions_block():
+    extensions_ui_elements = []
+    default_values = []
+    if not (shared.args.chat or shared.args.cai_chat):
+        gr.Markdown('## Extensions parameters')
+    for ext in sorted(extension_state, key=lambda x : extension_state[x][1]):
+        if extension_state[ext][0] == True:
+            params = get_params(ext)
+            for param in params:
+                _id = f"{ext}-{param}"
+                default_value = shared.settings[_id] if _id in shared.settings else params[param]
+                default_values.append(default_value)
+                if type(params[param]) == str:
+                    extensions_ui_elements.append(gr.Textbox(value=default_value, label=f"{ext}-{param}"))
+                elif type(params[param]) in [int, float]:
+                    extensions_ui_elements.append(gr.Number(value=default_value, label=f"{ext}-{param}"))
+                elif type(params[param]) == bool:
+                    extensions_ui_elements.append(gr.Checkbox(value=default_value, label=f"{ext}-{param}"))
+
+    update_extensions_parameters(*default_values)
+    btn_extensions = gr.Button("Apply")
+    btn_extensions.click(update_extensions_parameters, [*extensions_ui_elements], [])
