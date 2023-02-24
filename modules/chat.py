@@ -24,26 +24,23 @@ def clean_chat_message(text):
     text = text.strip()
     return text
 
-def generate_chat_prompt(text, tokens, name1, name2, context, chat_prompt_size, impersonate=False):
-    text = clean_chat_message(text)
+def generate_chat_prompt(user_input, tokens, name1, name2, context, chat_prompt_size, impersonate=False):
+    user_input = clean_chat_message(user_input)
     rows = [f"{context.strip()}\n"]
-    i = len(shared.history['internal'])-1
-    count = 0
 
     if shared.soft_prompt:
-        chat_prompt_size -= shared.soft_prompt_tensor.shape[1]
+       chat_prompt_size -= shared.soft_prompt_tensor.shape[1]
     max_length = min(get_max_prompt_length(tokens), chat_prompt_size)
 
+    i = len(shared.history['internal'])-1
     while i >= 0 and len(encode(''.join(rows), tokens)[0]) < max_length:
         rows.insert(1, f"{name2}: {shared.history['internal'][i][1].strip()}\n")
-        count += 1
         if not (shared.history['internal'][i][0] == '<|BEGIN-VISIBLE-CHAT|>'):
             rows.insert(1, f"{name1}: {shared.history['internal'][i][0].strip()}\n")
-            count += 1
         i -= 1
 
     if not impersonate:
-        rows.append(f"{name1}: {text}\n")
+        rows.append(f"{name1}: {user_input}\n")
         rows.append(apply_extensions(f"{name2}:", "bot_prefix"))
         limit = 3
     else:
@@ -52,10 +49,9 @@ def generate_chat_prompt(text, tokens, name1, name2, context, chat_prompt_size, 
 
     while len(rows) > limit and len(encode(''.join(rows), tokens)[0]) >= max_length:
         rows.pop(1)
-        rows.pop(1)
 
-    question = ''.join(rows)
-    return question
+    prompt = ''.join(rows)
+    return prompt
 
 def extract_message_from_reply(question, reply, current, other, check, extensions=False):
     next_character_found = False
@@ -101,23 +97,27 @@ def stop_everything_event():
 
 def chatbot_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, chat_prompt_size, picture=None):
     shared.stop_everything = False
+    just_started = True
+    eos_token = '\n' if check else None
 
     if 'pygmalion' in shared.model_name.lower():
         name1 = "You"
 
+    # Create the prompt
     if shared.args.picture and picture is not None:
         text, visible_text = generate_chat_picture(picture, name1, name2)
     else:
         visible_text = text
         if shared.args.chat:
             visible_text = visible_text.replace('\n', '<br>')
-
     text = apply_extensions(text, "input")
-    question = generate_chat_prompt(text, tokens, name1, name2, context, chat_prompt_size)
-    eos_token = '\n' if check else None
-    first = True
-    for reply in generate_reply(question, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, eos_token=eos_token, stopping_string=f"\n{name1}:"):
-        reply, next_character_found, substring_found = extract_message_from_reply(question, reply, name2, name1, check, extensions=True)
+    prompt = generate_chat_prompt(text, tokens, name1, name2, context, chat_prompt_size)
+
+    # Generate
+    for reply in generate_reply(prompt, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, eos_token=eos_token, stopping_string=f"\n{name1}:"):
+
+        # Extracting the reply
+        reply, next_character_found, substring_found = extract_message_from_reply(prompt, reply, name2, name1, check, extensions=True)
         visible_reply = apply_extensions(reply, "output")
         if shared.args.chat:
             visible_reply = visible_reply.replace('\n', '<br>')
@@ -126,9 +126,8 @@ def chatbot_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p,
         # otherwise gradio gets confused
         if shared.stop_everything:
             return shared.history['visible']
-
-        if first:
-            first = False
+        if just_started:
+            just_started = False
             shared.history['internal'].append(['', ''])
             shared.history['visible'].append(['', ''])
 
@@ -144,10 +143,10 @@ def impersonate_wrapper(text, tokens, do_sample, max_new_tokens, temperature, to
     if 'pygmalion' in shared.model_name.lower():
         name1 = "You"
 
-    question = generate_chat_prompt(text, tokens, name1, name2, context, chat_prompt_size, impersonate=True)
+    prompt = generate_chat_prompt(text, tokens, name1, name2, context, chat_prompt_size, impersonate=True)
     eos_token = '\n' if check else None
-    for reply in generate_reply(question, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, eos_token=eos_token, stopping_string=f"\n{name2}:"):
-        reply, next_character_found, substring_found = extract_message_from_reply(question, reply, name1, name2, check, extensions=False)
+    for reply in generate_reply(prompt, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, eos_token=eos_token, stopping_string=f"\n{name2}:"):
+        reply, next_character_found, substring_found = extract_message_from_reply(prompt, reply, name1, name2, check, extensions=False)
         if not substring_found:
             yield reply
         if next_character_found:
