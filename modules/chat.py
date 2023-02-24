@@ -140,11 +140,13 @@ def chatbot_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p,
     yield shared.history['visible']
 
 def impersonate_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, chat_prompt_size, picture=None):
+    eos_token = '\n' if check else None
+
     if 'pygmalion' in shared.model_name.lower():
         name1 = "You"
 
     prompt = generate_chat_prompt(text, tokens, name1, name2, context, chat_prompt_size, impersonate=True)
-    eos_token = '\n' if check else None
+
     for reply in generate_reply(prompt, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, eos_token=eos_token, stopping_string=f"\n{name2}:"):
         reply, next_character_found, substring_found = extract_message_from_reply(prompt, reply, name1, name2, check, extensions=False)
         if not substring_found:
