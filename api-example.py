@@ -41,7 +41,6 @@ response = requests.post(f"http://{server}:7860/run/textgen", json={
         prompt,
         params['max_new_tokens'],
         params['do_sample'],
-        params['max_new_tokens'],
         params['temperature'],
         params['top_p'],
         params['typical_p'],
