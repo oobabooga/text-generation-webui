@@ -1,5 +1,4 @@
 accelerate==0.16.0
-beautifulsoup4
 bitsandbytes==0.37.0
 gradio==3.18.0
 numpy
