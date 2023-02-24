@@ -10,16 +10,17 @@ def load_extensions():
     for i, name in enumerate(shared.args.extensions):
         if name in available_extensions:
             print(f'Loading the extension "{name}"... ', end='')
-            import_string = f"extensions.{name}.script"
-            exec(f"import {import_string}")
+            exec(f"import extensions.{name}.script")
             state[name] = [True, i]
             print(f'Ok.')
 
+# This iterator returns the extensions in the order specified in the command-line
 def iterator():
     for name in sorted(state, key=lambda x : state[x][1]):
         if state[name][0] == True:
             yield eval(f"extensions.{name}.script"), name
 
+# Extension functions that map string -> string
 def apply_extensions(text, typ):
     for extension, _ in iterator():
         if typ == "input" and hasattr(extension, "input_modifier"):
