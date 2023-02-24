@@ -72,14 +72,14 @@ def formatted_outputs(reply, model_name):
     else:
         return reply
 
-def generate_reply(question, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, eos_token=None, stopping_string=None):
+def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, eos_token=None, stopping_string=None):
     original_question = question
     if not (shared.args.chat or shared.args.cai_chat):
         question = apply_extensions(question, "input")
     if shared.args.verbose:
         print(f"\n\n{question}\n--------------------\n")
 
-    input_ids = encode(question, tokens)
+    input_ids = encode(question, max_new_tokens)
     cuda = "" if (shared.args.cpu or shared.args.deepspeed or shared.args.flexgen) else ".cuda()"
     if not shared.args.flexgen:
         n = shared.tokenizer.eos_token_id if eos_token is None else shared.tokenizer.encode(eos_token, return_tensors='pt')[0][-1]
@@ -126,7 +126,7 @@ def generate_reply(question, tokens, do_sample, max_new_tokens, temperature, top
     if shared.args.deepspeed:
         generate_params.append("synced_gpus=True")
     if shared.args.no_stream:
-        generate_params.append("max_new_tokens=tokens")
+        generate_params.append("max_new_tokens=max_new_tokens")
     else:
         generate_params.append("max_new_tokens=8")
 
@@ -156,7 +156,7 @@ def generate_reply(question, tokens, do_sample, max_new_tokens, temperature, top
     # Generate the reply 8 tokens at a time
     else:
         yield formatted_outputs(original_question, shared.model_name)
-        for i in tqdm(range(tokens//8+1)):
+        for i in tqdm(range(max_new_tokens//8+1)):
             with torch.no_grad():
                 output = eval(f"shared.model.generate({', '.join(generate_params)}){cuda}")[0]
             if shared.soft_prompt:

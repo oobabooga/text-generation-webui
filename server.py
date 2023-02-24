@@ -252,7 +252,7 @@ if shared.args.chat or shared.args.cai_chat:
             with gr.Tab("Extensions"):
                 extensions_module.create_extensions_block()
 
-        input_params = [shared.gradio[i] for i in ['textbox', 'max_new_tokens', 'do_sample', 'max_new_tokens', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping', 'name1', 'name2', 'context', 'check', 'chat_prompt_size_slider']]
+        input_params = [shared.gradio[i] for i in ['textbox', 'max_new_tokens', 'do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping', 'name1', 'name2', 'context', 'check', 'chat_prompt_size_slider']]
         if shared.args.picture:
             input_params.append(shared.gradio['picture_select'])
         function_call = "chat.cai_chatbot_wrapper" if shared.args.cai_chat else "chat.chatbot_wrapper"
@@ -312,7 +312,7 @@ elif shared.args.notebook:
         if shared.args.extensions is not None:
             extensions_module.create_extensions_block()
 
-        input_params = [shared.gradio[k] for k in ('textbox', 'max_new_tokens', 'do_sample', 'max_new_tokens', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping')]
+        input_params = [shared.gradio[k] for k in ('textbox', 'max_new_tokens', 'do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping')]
         output_params = [shared.gradio[k] for k in ["textbox", "markdown", "html"]]
         gen_events.append(shared.gradio["Generate"].click(generate_reply, input_params, output_params, show_progress=shared.args.no_stream, api_name="textgen"))
         gen_events.append(shared.gradio['textbox'].submit(generate_reply, input_params, output_params, show_progress=shared.args.no_stream))
@@ -344,7 +344,7 @@ else:
                 with gr.Tab('HTML'):
                     shared.gradio['html'] = gr.HTML()
 
-        input_params = [shared.gradio[k] for k in ['textbox', 'max_new_tokens', 'do_sample', 'max_new_tokens', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping']]
+        input_params = [shared.gradio[k] for k in ['textbox', 'max_new_tokens', 'do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping']]
         output_params = [shared.gradio[k] for k in ['output_textbox', 'markdown', 'html']]
         gen_events.append(shared.gradio['Generate'].click(generate_reply, input_params, output_params, show_progress=shared.args.no_stream, api_name="textgen"))
         gen_events.append(shared.gradio['textbox'].submit(generate_reply, input_params, output_params, show_progress=shared.args.no_stream))
