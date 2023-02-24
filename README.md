@@ -79,6 +79,7 @@ Models should be placed under `models/model-name`. For instance, `models/gpt-j-6
 
 * [GPT-J 6B](https://huggingface.co/EleutherAI/gpt-j-6B/tree/main)
 * [GPT-Neo](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads&search=eleutherai+%2F+gpt-neo)
+* [Pythia](https://huggingface.co/models?search=eleutherai/pythia)
 * [OPT](https://huggingface.co/models?search=facebook/opt)
 * [GALACTICA](https://huggingface.co/models?search=facebook/galactica)
 * [\*-Erebus](https://huggingface.co/models?search=erebus)
