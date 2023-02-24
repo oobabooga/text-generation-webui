@@ -253,7 +253,7 @@ def tokenize_dialogue(dialogue, name1, name2):
                 _history.append(entry)
             entry = ['', '']
 
-    print(f"\033[1;32;1m\nDialogue tokenized to:\033[0;37;0m\n", end='')
+    print("\033[1;32;1m\nDialogue tokenized to:\033[0;37;0m\n", end='')
     for row in _history:
         for column in row:
             print("\n")
@@ -301,8 +301,8 @@ def load_history(file, name1, name2):
         shared.history['visible'] = copy.deepcopy(shared.history['internal'])
 
 def load_default_history(name1, name2):
-    if Path(f'logs/persistent.json').exists():
-        load_history(open(Path(f'logs/persistent.json'), 'rb').read(), name1, name2)
+    if Path('logs/persistent.json').exists():
+        load_history(open(Path('logs/persistent.json'), 'rb').read(), name1, name2)
     else:
         shared.history['internal'] = []
         shared.history['visible'] = []
@@ -370,5 +370,5 @@ def upload_tavern_character(img, name1, name2):
 
 def upload_your_profile_picture(img):
     img = Image.open(io.BytesIO(img))
-    img.save(Path(f'img_me.png'))
-    print(f'Profile picture saved to "img_me.png"')
+    img.save(Path('img_me.png'))
+    print('Profile picture saved to "img_me.png"')

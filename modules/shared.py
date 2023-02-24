@@ -11,6 +11,9 @@ history = {'internal': [], 'visible': []}
 character = 'None'
 stop_everything = False
 
+# UI elements (buttons, sliders, HTML, etc)
+gradio = {}
+
 settings = {
     'max_new_tokens': 200,
     'max_new_tokens_min': 1,

@@ -126,9 +126,9 @@ def generate_reply(question, tokens, do_sample, max_new_tokens, temperature, top
     if shared.args.deepspeed:
         generate_params.append("synced_gpus=True")
     if shared.args.no_stream:
-        generate_params.append(f"max_new_tokens=tokens")
+        generate_params.append("max_new_tokens=tokens")
     else:
-        generate_params.append(f"max_new_tokens=8")
+        generate_params.append("max_new_tokens=8")
 
     if shared.soft_prompt:
         inputs_embeds, filler_input_ids = generate_softprompt_input_tensors(input_ids)

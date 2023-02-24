@@ -13,7 +13,7 @@ def load_extensions():
             print(f'Loading the extension "{name}"... ', end='')
             exec(f"import extensions.{name}.script")
             state[name] = [True, i]
-            print(f'Ok.')
+            print('Ok.')
 
 # This iterator returns the extensions in the order specified in the command-line
 def iterator():
