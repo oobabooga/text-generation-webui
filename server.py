@@ -294,7 +294,7 @@ if shared.args.chat or shared.args.cai_chat:
         reload_inputs = [name1, name2] if shared.args.cai_chat else []
         upload_chat_history.upload(reload_func, reload_inputs, [display])
         upload_img_me.upload(reload_func, reload_inputs, [display])
-        interface.load(reload_func, reload_inputs, [display], show_progress=False)
+        interface.load(reload_func, reload_inputs, [display], show_progress=True)
 
 elif shared.args.notebook:
     with gr.Blocks(css=ui.css, analytics_enabled=False) as interface:
