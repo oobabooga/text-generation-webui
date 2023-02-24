@@ -7,7 +7,7 @@ available_extensions = []
 
 def load_extensions():
     global extension_state
-    for i,ext in enumerate(shared.args.extensions.split(',')):
+    for i,ext in enumerate(shared.args.extensions):
         if ext in available_extensions:
             print(f'Loading the extension "{ext}"... ', end='')
             ext_string = f"extensions.{ext}.script"
