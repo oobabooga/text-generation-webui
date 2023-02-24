@@ -1,6 +1,7 @@
 import asyncio
 from pathlib import Path
 
+import gradio as gr
 import torch
 
 torch._C._jit_set_profiling_mode(False)
@@ -81,3 +82,12 @@ def bot_prefix_modifier(string):
     """
 
     return string
+
+def ui():
+    # Gradio elements
+    activate = gr.Checkbox(value=params['activate'], label='Activate TTS')
+    voice = gr.Dropdown(value=params['speaker'], choices=[f'en_{i}' for i in range(1, 118)], label='TTS voice')
+
+    # Event functions to update the parameters in the backend
+    activate.change(lambda x: params.update({"activate": x}), activate, None)
+    voice.change(lambda x: params.update({"speaker": x}), voice, None)

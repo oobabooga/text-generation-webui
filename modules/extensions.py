@@ -32,31 +32,15 @@ def apply_extensions(text, typ):
             text = extension.bot_prefix_modifier(text)
     return text
 
-def update_extensions_parameters(*args):
-    i = 0
-    for extension, _ in iterator():
-        for param in extension.params:
-            if len(args) >= i+1:
-                extension.params[param] = eval(f"args[{i}]")
-                i += 1
-
 def create_extensions_block():
-    extensions_ui_elements = []
-    default_values = []
-    if not (shared.args.chat or shared.args.cai_chat):
-        gr.Markdown('## Extensions parameters')
+    # Updating the default values
     for extension, name in iterator():
         for param in extension.params:
             _id = f"{name}-{param}"
-            default_value = shared.settings[_id] if _id in shared.settings else extension.params[param]
-            default_values.append(default_value)
-            if type(extension.params[param]) == str:
-                extensions_ui_elements.append(gr.Textbox(value=default_value, label=f"{name}-{param}"))
-            elif type(extension.params[param]) in [int, float]:
-                extensions_ui_elements.append(gr.Number(value=default_value, label=f"{name}-{param}"))
-            elif type(extension.params[param]) == bool:
-                extensions_ui_elements.append(gr.Checkbox(value=default_value, label=f"{name}-{param}"))
+            if _id in shared.settings:
+                extension.params[param] = shared.settings[_id]
 
-    update_extensions_parameters(*default_values)
-    btn_extensions = gr.Button("Apply")
-    btn_extensions.click(update_extensions_parameters, [*extensions_ui_elements], [])
+    # Creating the extension ui elements
+    for extension, name in iterator():
+        if hasattr(extension, "ui"):
+            extension.ui()

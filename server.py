@@ -247,7 +247,7 @@ if shared.args.chat or shared.args.cai_chat:
                 with gr.Column():
                     shared.gradio['chat_prompt_size_slider'] = gr.Slider(minimum=shared.settings['chat_prompt_size_min'], maximum=shared.settings['chat_prompt_size_max'], step=1, label='Maximum prompt size in tokens', value=shared.settings['chat_prompt_size'])
 
-        create_settings_menus()
+            create_settings_menus()
         if shared.args.extensions is not None:
             with gr.Tab('Extensions'):
                 extensions_module.create_extensions_block()
@@ -351,7 +351,6 @@ else:
         shared.gradio['Stop'].click(None, None, None, cancels=gen_events)
 
 shared.gradio['interface'].queue()
-print([key for key in shared.gradio])
 if shared.args.listen:
     shared.gradio['interface'].launch(prevent_thread_lock=True, share=shared.args.share, server_name='0.0.0.0', server_port=shared.args.listen_port)
 else:
