@@ -72,7 +72,7 @@ In order to use your extension, start the web UI with the `--extensions` flag. F
 You can activate more than one extension at a time. In this case, they will be applied in the order that you specify:
 
 ```
-python server.py --extensions enthusiasm,pretty # First apply enthusiasm, then pretty
-python server.py --extensions pretty,enthusiasm # First apply pretty, then enthusiasm
+python server.py --extensions enthusiasm translate # First apply enthusiasm, then translate
+python server.py --extensions translate enthusiasm # First apply translate, then enthusiasm
 ```
 
