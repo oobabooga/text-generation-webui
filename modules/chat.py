@@ -92,17 +92,6 @@ def generate_chat_picture(picture, name1, name2):
     visible_text = f'<img src="data:image/jpeg;base64,{img_str}">'
     return text, visible_text
 
-def preprocess_chat_input(text, tokens, name1, name2, context, chat_prompt_size):
-    if shared.args.picture and picture is not None:
-        text, visible_text = generate_chat_picture(picture, name1, name2)
-    else:
-        visible_text = text
-        if shared.args.chat:
-            visible_text = visible_text.replace('\n', '<br>')
-    text = apply_extensions(text, "input")
-    prompt = generate_chat_prompt(text, tokens, name1, name2, context, chat_prompt_size)
-    return text, visible_text, prompt
-
 def stop_everything_event():
     shared.stop_everything = True
 
@@ -114,7 +103,14 @@ def chatbot_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p,
     if 'pygmalion' in shared.model_name.lower():
         name1 = "You"
 
-    text, visible_text, prompt = preprocess_chat_input(text, tokens, name1, name2, context, chat_prompt_size)
+    if shared.args.picture and picture is not None:
+        text, visible_text = generate_chat_picture(picture, name1, name2)
+    else:
+        visible_text = text
+        if shared.args.chat:
+            visible_text = visible_text.replace('\n', '<br>')
+    text = apply_extensions(text, "input")
+    prompt = generate_chat_prompt(text, tokens, name1, name2, context, chat_prompt_size)
 
     # Generate
     for reply in generate_reply(prompt, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, eos_token=eos_token, stopping_string=f"\n{name1}:"):
