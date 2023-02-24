@@ -305,7 +305,6 @@ elif shared.args.notebook:
 
         shared.gradio['Generate'] = gr.Button('Generate')
         shared.gradio['Stop'] = gr.Button('Stop')
-
         shared.gradio['max_new_tokens'] = gr.Slider(minimum=shared.settings['max_new_tokens_min'], maximum=shared.settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=shared.settings['max_new_tokens'])
 
         create_settings_menus()
