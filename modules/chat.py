@@ -4,18 +4,15 @@ import io
 import json
 import re
 from datetime import datetime
-from io import BytesIO
 from pathlib import Path
 
 from PIL import Image
 
 import modules.shared as shared
+import modules.extensions as extensions_module
 from modules.extensions import apply_extensions
 from modules.html_generator import generate_chat_html
 from modules.text_generation import encode, generate_reply, get_max_prompt_length
-
-if shared.args.picture and (shared.args.cai_chat or shared.args.chat):
-    import modules.bot_picture as bot_picture
 
 # This gets the new line characters right.
 def clean_chat_message(text):
@@ -24,16 +21,16 @@ def clean_chat_message(text):
     text = text.strip()
     return text
 
-def generate_chat_prompt(user_input, tokens, name1, name2, context, chat_prompt_size, impersonate=False):
+def generate_chat_prompt(user_input, max_new_tokens, name1, name2, context, chat_prompt_size, impersonate=False):
     user_input = clean_chat_message(user_input)
     rows = [f"{context.strip()}\n"]
 
     if shared.soft_prompt:
        chat_prompt_size -= shared.soft_prompt_tensor.shape[1]
-    max_length = min(get_max_prompt_length(tokens), chat_prompt_size)
+    max_length = min(get_max_prompt_length(max_new_tokens), chat_prompt_size)
 
     i = len(shared.history['internal'])-1
-    while i >= 0 and len(encode(''.join(rows), tokens)[0]) < max_length:
+    while i >= 0 and len(encode(''.join(rows), max_new_tokens)[0]) < max_length:
         rows.insert(1, f"{name2}: {shared.history['internal'][i][1].strip()}\n")
         if not (shared.history['internal'][i][0] == '<|BEGIN-VISIBLE-CHAT|>'):
             rows.insert(1, f"{name1}: {shared.history['internal'][i][0].strip()}\n")
@@ -47,7 +44,7 @@ def generate_chat_prompt(user_input, tokens, name1, name2, context, chat_prompt_
         rows.append(f"{name1}:")
         limit = 2
 
-    while len(rows) > limit and len(encode(''.join(rows), tokens)[0]) >= max_length:
+    while len(rows) > limit and len(encode(''.join(rows), max_new_tokens)[0]) >= max_length:
         rows.pop(1)
 
     prompt = ''.join(rows)
@@ -84,81 +81,87 @@ def extract_message_from_reply(question, reply, current, other, check, extension
 
     return reply, next_character_found, substring_found
 
-def generate_chat_picture(picture, name1, name2):
-    text = f'*{name1} sends {name2} a picture that contains the following: "{bot_picture.caption_image(picture)}"*'
-    buffer = BytesIO()
-    picture.save(buffer, format="JPEG")
-    img_str = base64.b64encode(buffer.getvalue()).decode('utf-8')
-    visible_text = f'<img src="data:image/jpeg;base64,{img_str}">'
-    return text, visible_text
-
 def stop_everything_event():
     shared.stop_everything = True
 
-def chatbot_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, chat_prompt_size, picture=None):
+def chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, chat_prompt_size, chat_generation_attempts=1):
     shared.stop_everything = False
     just_started = True
     eos_token = '\n' if check else None
-
     if 'pygmalion' in shared.model_name.lower():
         name1 = "You"
 
-    if shared.args.picture and picture is not None:
-        text, visible_text = generate_chat_picture(picture, name1, name2)
-    else:
+    # Check if any extension wants to hijack this function call
+    visible_text = None
+    custom_prompt_generator = None
+    for extension, _ in extensions_module.iterator():
+        if hasattr(extension, 'input_hijack') and extension.input_hijack['state'] == True:
+            text, visible_text = extension.input_hijack['value']
+        if custom_prompt_generator is None and hasattr(extension, 'custom_prompt_generator'):
+            custom_prompt_generator = extension.custom_prompt_generator
+
+    if visible_text is None:
         visible_text = text
         if shared.args.chat:
             visible_text = visible_text.replace('\n', '<br>')
-    text = apply_extensions(text, "input")
-    prompt = generate_chat_prompt(text, tokens, name1, name2, context, chat_prompt_size)
+        text = apply_extensions(text, "input")
+
+    if custom_prompt_generator is None:
+        prompt = generate_chat_prompt(text, max_new_tokens, name1, name2, context, chat_prompt_size)
+    else:
+        prompt = custom_prompt_generator(text, max_new_tokens, name1, name2, context, chat_prompt_size)
 
     # Generate
-    for reply in generate_reply(prompt, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, eos_token=eos_token, stopping_string=f"\n{name1}:"):
+    reply = ' '
+    for i in range(chat_generation_attempts):
+        for reply in generate_reply(prompt+reply, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, eos_token=eos_token, stopping_string=f"\n{name1}:"):
 
-        # Extracting the reply
-        reply, next_character_found, substring_found = extract_message_from_reply(prompt, reply, name2, name1, check, extensions=True)
-        visible_reply = apply_extensions(reply, "output")
-        if shared.args.chat:
-            visible_reply = visible_reply.replace('\n', '<br>')
+            # Extracting the reply
+            reply, next_character_found, substring_found = extract_message_from_reply(prompt, reply, name2, name1, check, extensions=True)
+            visible_reply = apply_extensions(reply, "output")
+            if shared.args.chat:
+                visible_reply = visible_reply.replace('\n', '<br>')
 
-        # We need this global variable to handle the Stop event,
-        # otherwise gradio gets confused
-        if shared.stop_everything:
-            return shared.history['visible']
-        if just_started:
-            just_started = False
-            shared.history['internal'].append(['', ''])
-            shared.history['visible'].append(['', ''])
+            # We need this global variable to handle the Stop event,
+            # otherwise gradio gets confused
+            if shared.stop_everything:
+                return shared.history['visible']
+            if just_started:
+                just_started = False
+                shared.history['internal'].append(['', ''])
+                shared.history['visible'].append(['', ''])
 
-        shared.history['internal'][-1] = [text, reply]
-        shared.history['visible'][-1] = [visible_text, visible_reply]
-        if not substring_found:
-            yield shared.history['visible']
-        if next_character_found:
-            break
-    yield shared.history['visible']
+            shared.history['internal'][-1] = [text, reply]
+            shared.history['visible'][-1] = [visible_text, visible_reply]
+            if not substring_found:
+                yield shared.history['visible']
+            if next_character_found:
+                break
+        yield shared.history['visible']
 
-def impersonate_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, chat_prompt_size, picture=None):
+def impersonate_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, chat_prompt_size, generation_attempts=1):
     eos_token = '\n' if check else None
 
     if 'pygmalion' in shared.model_name.lower():
         name1 = "You"
 
-    prompt = generate_chat_prompt(text, tokens, name1, name2, context, chat_prompt_size, impersonate=True)
+    prompt = generate_chat_prompt(text, max_new_tokens, name1, name2, context, chat_prompt_size, impersonate=True)
 
-    for reply in generate_reply(prompt, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, eos_token=eos_token, stopping_string=f"\n{name2}:"):
-        reply, next_character_found, substring_found = extract_message_from_reply(prompt, reply, name1, name2, check, extensions=False)
-        if not substring_found:
-            yield reply
-        if next_character_found:
-            break
-    yield reply
+    reply = ' '
+    for i in range(generation_attempts):
+        for reply in generate_reply(prompt+reply, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, eos_token=eos_token, stopping_string=f"\n{name2}:"):
+            reply, next_character_found, substring_found = extract_message_from_reply(prompt, reply, name1, name2, check, extensions=False)
+            if not substring_found:
+                yield reply
+            if next_character_found:
+                break
+        yield reply
 
-def cai_chatbot_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, chat_prompt_size, picture=None):
-    for _history in chatbot_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, chat_prompt_size, picture):
+def cai_chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, chat_prompt_size, chat_generation_attempts=1):
+    for _history in chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, chat_prompt_size, chat_generation_attempts):
         yield generate_chat_html(_history, name1, name2, shared.character)
 
-def regenerate_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, chat_prompt_size, picture=None):
+def regenerate_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, chat_prompt_size, chat_generation_attempts=1):
     if shared.character != 'None' and len(shared.history['visible']) == 1:
         if shared.args.cai_chat:
             yield generate_chat_html(shared.history['visible'], name1, name2, shared.character)
@@ -168,7 +171,7 @@ def regenerate_wrapper(text, tokens, do_sample, max_new_tokens, temperature, top
         last_visible = shared.history['visible'].pop()
         last_internal = shared.history['internal'].pop()
 
-        for _history in chatbot_wrapper(last_internal[0], tokens, do_sample, max_new_tokens, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, chat_prompt_size, picture):
+        for _history in chatbot_wrapper(last_internal[0], max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, chat_prompt_size, chat_generation_attempts):
             if shared.args.cai_chat:
                 shared.history['visible'][-1] = [last_visible[0], _history[-1][1]]
                 yield generate_chat_html(shared.history['visible'], name1, name2, shared.character)
@@ -253,7 +256,7 @@ def tokenize_dialogue(dialogue, name1, name2):
                 _history.append(entry)
             entry = ['', '']
 
-    print(f"\033[1;32;1m\nDialogue tokenized to:\033[0;37;0m\n", end='')
+    print("\033[1;32;1m\nDialogue tokenized to:\033[0;37;0m\n", end='')
     for row in _history:
         for column in row:
             print("\n")
@@ -301,8 +304,8 @@ def load_history(file, name1, name2):
         shared.history['visible'] = copy.deepcopy(shared.history['internal'])
 
 def load_default_history(name1, name2):
-    if Path(f'logs/persistent.json').exists():
-        load_history(open(Path(f'logs/persistent.json'), 'rb').read(), name1, name2)
+    if Path('logs/persistent.json').exists():
+        load_history(open(Path('logs/persistent.json'), 'rb').read(), name1, name2)
     else:
         shared.history['internal'] = []
         shared.history['visible'] = []
@@ -370,5 +373,5 @@ def upload_tavern_character(img, name1, name2):
 
 def upload_your_profile_picture(img):
     img = Image.open(io.BytesIO(img))
-    img.save(Path(f'img_me.png'))
-    print(f'Profile picture saved to "img_me.png"')
+    img.save(Path('img_me.png'))
+    print('Profile picture saved to "img_me.png"')

@@ -117,7 +117,7 @@ def load_model(model_name):
         model = eval(command)
 
     # Loading the tokenizer
-    if shared.model_name.lower().startswith(('gpt4chan', 'gpt-4chan', '4chan')) and Path(f"models/gpt-j-6B/").exists():
+    if shared.model_name.lower().startswith(('gpt4chan', 'gpt-4chan', '4chan')) and Path("models/gpt-j-6B/").exists():
         tokenizer = AutoTokenizer.from_pretrained(Path("models/gpt-j-6B/"))
     else:
         tokenizer = AutoTokenizer.from_pretrained(Path(f"models/{shared.model_name}/"))

@@ -1,3 +1,5 @@
+import gradio as gr
+
 params = {
     "bias string": " *I speak in an annoyingly cute way*",
 }
@@ -25,3 +27,10 @@ def bot_prefix_modifier(string):
     """
 
     return f'{string} {params["bias string"].strip()} '
+
+def ui():
+    # Gradio elements
+    string = gr.Textbox(value=params["bias string"], label='Character bias')
+
+    # Event functions to update the parameters in the backend
+    string.change(lambda x: params.update({"bias string": x}), string, None)
