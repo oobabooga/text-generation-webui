@@ -16,6 +16,11 @@ input_hijack = {
     'value': ["", ""]
 }
 
+prompt_hijack = {
+    'state': False,
+    'value': ""
+}
+
 def generate_chat_picture(picture, name1, name2):
     text = f'*{name1} sends {name2} a picture that contains the following: "{caption_image(picture)}"*'
     buffer = BytesIO()
