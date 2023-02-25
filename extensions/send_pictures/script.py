@@ -9,9 +9,11 @@ from modules.bot_picture import caption_image
 params = {
 }
 
+# If 'state' is True, will hijack the next chatbot wrapper call
+# with a custom input text
 input_hijack = {
     'state': False,
-    'value': []
+    'value': ["", ""]
 }
 
 def generate_chat_picture(picture, name1, name2):
