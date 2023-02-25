@@ -103,9 +103,9 @@ def chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical
 
     if visible_text is None:
         visible_text = text
-        if shared.args.chat:
-            visible_text = visible_text.replace('\n', '<br>')
-        text = apply_extensions(text, "input")
+    if shared.args.chat:
+        visible_text = visible_text.replace('\n', '<br>')
+    text = apply_extensions(text, "input")
 
     if custom_prompt_generator is None:
         prompt = generate_chat_prompt(text, max_new_tokens, name1, name2, context, chat_prompt_size)
