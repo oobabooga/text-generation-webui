@@ -198,7 +198,7 @@ if shared.args.chat or shared.args.cai_chat:
             shared.gradio['Impersonate'] = gr.Button('Impersonate')
             shared.gradio['Regenerate'] = gr.Button('Regenerate')
         with gr.Row():
-            shared.gradio['Send last reply to input'] = gr.Button('Send last reply to input')
+            shared.gradio['Copy last reply'] = gr.Button('Copy last reply')
             shared.gradio['Replace last reply'] = gr.Button('Replace last reply')
             shared.gradio['Remove last'] = gr.Button('Remove last')
             shared.gradio['Clear history'] = gr.Button('Clear history')
@@ -258,7 +258,7 @@ if shared.args.chat or shared.args.cai_chat:
         gen_events.append(shared.gradio['Impersonate'].click(chat.impersonate_wrapper, shared.input_params, shared.gradio['textbox'], show_progress=shared.args.no_stream))
         shared.gradio['Stop'].click(chat.stop_everything_event, [], [], cancels=gen_events)
 
-        shared.gradio['Send last reply to input'].click(chat.send_last_reply_to_input, [], shared.gradio['textbox'], show_progress=shared.args.no_stream)
+        shared.gradio['Copy last reply'].click(chat.send_last_reply_to_input, [], shared.gradio['textbox'], show_progress=shared.args.no_stream)
         shared.gradio['Replace last reply'].click(chat.replace_last_reply, [shared.gradio['textbox'], shared.gradio['name1'], shared.gradio['name2']], shared.gradio['display'], show_progress=shared.args.no_stream)
         shared.gradio['Clear history'].click(chat.clear_chat_log, [shared.gradio['name1'], shared.gradio['name2']], shared.gradio['display'])
         shared.gradio['Remove last'].click(chat.remove_last_message, [shared.gradio['name1'], shared.gradio['name2']], [shared.gradio['display'], shared.gradio['textbox']], show_progress=False)
