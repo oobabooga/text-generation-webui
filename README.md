@@ -6,6 +6,8 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 
 [[Try it on Google Colab]](https://colab.research.google.com/github/oobabooga/AI-Notebooks/blob/main/Colab-TextGen-GPU.ipynb)
 
+**[News (February 25th, 2023): new extensions implementation.](https://github.com/oobabooga/text-generation-webui/wiki/Extensions)**
+
 |![Image1](https://github.com/oobabooga/screenshots/raw/main/qa.png) | ![Image2](https://github.com/oobabooga/screenshots/raw/main/cai3.png) |
 |:---:|:---:|
 |![Image3](https://github.com/oobabooga/screenshots/raw/main/gpt4chan.png) | ![Image4](https://github.com/oobabooga/screenshots/raw/main/galactica.png) |
@@ -28,7 +30,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * [DeepSpeed ZeRO-3 offload](https://github.com/oobabooga/text-generation-webui/wiki/DeepSpeed).
 * [Get responses via API](https://github.com/oobabooga/text-generation-webui/blob/main/api-example.py).
 * Supports softprompts.
-* [Supports extensions](https://github.com/oobabooga/text-generation-webui/wiki/Extensions).
+* [Supports extensions](https://github.com/oobabooga/text-generation-webui/wiki/Extensions)
 * [Works on Google Colab](https://github.com/oobabooga/text-generation-webui/wiki/Running-on-Colab).
 
 ## Installation option 1: conda
