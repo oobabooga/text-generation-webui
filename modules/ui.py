@@ -27,6 +27,7 @@ css = """
 }
 #accordion {
 }
+/*
 .dark svg {
   fill: white;
 }
@@ -35,6 +36,10 @@ svg {
   vertical-align: middle !important;
   margin: 5px;
 }
+*/
+ol li p, ul li p {
+    display: inline-block;
+}
 """
 
 chat_css = """
@@ -42,9 +47,9 @@ chat_css = """
     height: 66.67vh
 }
 .gradio-container {
-    max-width: 800px;
-     margin-left: auto;
-     margin-right: auto
+    max-width: 800px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
 }
 .w-screen {
     width: unset
