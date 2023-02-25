@@ -91,8 +91,9 @@ def chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical
     visible_text = None
     prompt = None
     for extension, _ in extensions_module.iterator():
-        if hasattr(extension, 'input_hijack') and extension.input_hijack['state'] == True:
-            extension.input_hijack['state'] = False
+        if hasattr(extension, 'input_hijack') and extension.input_hijack['state'] in ['temporary', 'permanent']:
+            if extension.input_hijack['state'] == 'temporary':
+                extension.input_hijack['state'] = 'off'
             values = extension.input_hijack['value']
             if len(values) == 2:
                 text, visible_text = values
@@ -102,7 +103,9 @@ def chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical
                     shared.history['internal'].append([text, reply])
                     shared.history['visible'].append([visible_text, visible_reply])
                 return shared.history['visible']
-        if hasattr(extension, 'prompt_hijack') and extension.prompt_hijack['state'] == True:
+        if hasattr(extension, 'prompt_hijack') and extension.prompt_hijack['state'] in ['temporary', 'permanent']:
+            if extension.prompt_hijack['state'] == 'temporary':
+                extension.prompt_hijack['state'] = 'off'
             prompt = extension.prompt_hijack['value']
                 
     just_started = True

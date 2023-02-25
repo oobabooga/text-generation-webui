@@ -9,15 +9,16 @@ from modules.bot_picture import caption_image
 params = {
 }
 
-# If 'state' is True, will hijack the next chatbot wrapper call
-# with a custom input text
+# If 'state' is 'temporary' or 'permanent', will hijack the next
+# chatbot wrapper call with a custom input text and optionally
+# custom output text
 input_hijack = {
-    'state': False,
-    'value': ["", ""]
+    'state': 'off',
+    'value': []
 }
 
 prompt_hijack = {
-    'state': False,
+    'state': 'off',
     'value': ""
 }
 
