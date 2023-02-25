@@ -96,6 +96,7 @@ def chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical
     custom_prompt_generator = None
     for extension, _ in extensions_module.iterator():
         if hasattr(extension, 'input_hijack') and extension.input_hijack['state'] == True:
+            extension.input_hijack['state'] = False
             text, visible_text = extension.input_hijack['value']
         if custom_prompt_generator is None and hasattr(extension, 'custom_prompt_generator'):
             custom_prompt_generator = extension.custom_prompt_generator
