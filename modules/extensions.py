@@ -1,5 +1,3 @@
-import gradio as gr
-
 import extensions
 import modules.shared as shared
 

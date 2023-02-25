@@ -185,7 +185,6 @@ else:
 
 if shared.args.chat or shared.args.cai_chat:
     with gr.Blocks(css=ui.css+ui.chat_css, analytics_enabled=False) as shared.gradio['interface']:
-        shared.gradio['interface'].load(lambda : chat.load_default_history(shared.settings[f'name1{suffix}'], shared.settings[f'name2{suffix}']), None, None)
         if shared.args.cai_chat:
             shared.gradio['display'] = gr.HTML(value=generate_chat_html(shared.history['visible'], shared.settings[f'name1{suffix}'], shared.settings[f'name2{suffix}'], shared.character))
         else:
@@ -202,10 +201,6 @@ if shared.args.chat or shared.args.cai_chat:
         with gr.Row():
             shared.gradio['Send last reply to input'] = gr.Button('Send last reply to input')
             shared.gradio['Replace last reply'] = gr.Button('Replace last reply')
-        if shared.args.picture:
-            with gr.Row():
-                shared.gradio['picture_select'] = gr.Image(label='Send a picture', type='pil')
-
         with gr.Tab('Chat settings'):
             shared.gradio['name1'] = gr.Textbox(value=shared.settings[f'name1{suffix}'], lines=1, label='Your name')
             shared.gradio['name2'] = gr.Textbox(value=shared.settings[f'name2{suffix}'], lines=1, label='Bot\'s name')
@@ -246,23 +241,19 @@ if shared.args.chat or shared.args.cai_chat:
                     shared.gradio['max_new_tokens'] = gr.Slider(minimum=shared.settings['max_new_tokens_min'], maximum=shared.settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=shared.settings['max_new_tokens'])
                 with gr.Column():
                     shared.gradio['chat_prompt_size_slider'] = gr.Slider(minimum=shared.settings['chat_prompt_size_min'], maximum=shared.settings['chat_prompt_size_max'], step=1, label='Maximum prompt size in tokens', value=shared.settings['chat_prompt_size'])
-
             create_settings_menus()
+
+        shared.input_params = [shared.gradio[k] for k in ['textbox', 'max_new_tokens', 'do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping', 'name1', 'name2', 'context', 'check', 'chat_prompt_size_slider']]
         if shared.args.extensions is not None:
             with gr.Tab('Extensions'):
                 extensions_module.create_extensions_block()
 
-        input_params = [shared.gradio[i] for i in ['textbox', 'max_new_tokens', 'do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping', 'name1', 'name2', 'context', 'check', 'chat_prompt_size_slider']]
-        if shared.args.picture:
-            input_params.append(shared.gradio['picture_select'])
         function_call = 'chat.cai_chatbot_wrapper' if shared.args.cai_chat else 'chat.chatbot_wrapper'
 
-        gen_events.append(shared.gradio['Generate'].click(eval(function_call), input_params, shared.gradio['display'], show_progress=shared.args.no_stream, api_name='textgen'))
-        gen_events.append(shared.gradio['textbox'].submit(eval(function_call), input_params, shared.gradio['display'], show_progress=shared.args.no_stream))
-        if shared.args.picture:
-            shared.gradio['picture_select'].upload(eval(function_call), input_params, shared.gradio['display'], show_progress=shared.args.no_stream)
-        gen_events.append(shared.gradio['Regenerate'].click(chat.regenerate_wrapper, input_params, shared.gradio['display'], show_progress=shared.args.no_stream))
-        gen_events.append(shared.gradio['Impersonate'].click(chat.impersonate_wrapper, input_params, shared.gradio['textbox'], show_progress=shared.args.no_stream))
+        gen_events.append(shared.gradio['Generate'].click(eval(function_call), shared.input_params, shared.gradio['display'], show_progress=shared.args.no_stream, api_name='textgen'))
+        gen_events.append(shared.gradio['textbox'].submit(eval(function_call), shared.input_params, shared.gradio['display'], show_progress=shared.args.no_stream))
+        gen_events.append(shared.gradio['Regenerate'].click(chat.regenerate_wrapper, shared.input_params, shared.gradio['display'], show_progress=shared.args.no_stream))
+        gen_events.append(shared.gradio['Impersonate'].click(chat.impersonate_wrapper, shared.input_params, shared.gradio['textbox'], show_progress=shared.args.no_stream))
         shared.gradio['Stop'].click(chat.stop_everything_event, [], [], cancels=gen_events)
 
         shared.gradio['Send last reply to input'].click(chat.send_last_reply_to_input, [], shared.gradio['textbox'], show_progress=shared.args.no_stream)
@@ -284,13 +275,13 @@ if shared.args.chat or shared.args.cai_chat:
         shared.gradio['upload_chat_history'].upload(chat.load_history, [shared.gradio['upload_chat_history'], shared.gradio['name1'], shared.gradio['name2']], [])
         shared.gradio['upload_img_tavern'].upload(chat.upload_tavern_character, [shared.gradio['upload_img_tavern'], shared.gradio['name1'], shared.gradio['name2']], [shared.gradio['character_menu']])
         shared.gradio['upload_img_me'].upload(chat.upload_your_profile_picture, [shared.gradio['upload_img_me']], [])
-        if shared.args.picture:
-            shared.gradio['picture_select'].upload(lambda : None, [], [shared.gradio['picture_select']], show_progress=False)
 
         reload_func = chat.redraw_html if shared.args.cai_chat else lambda : shared.history['visible']
         reload_inputs = [shared.gradio['name1'], shared.gradio['name2']] if shared.args.cai_chat else []
         shared.gradio['upload_chat_history'].upload(reload_func, reload_inputs, [shared.gradio['display']])
         shared.gradio['upload_img_me'].upload(reload_func, reload_inputs, [shared.gradio['display']])
+
+        shared.gradio['interface'].load(lambda : chat.load_default_history(shared.settings[f'name1{suffix}'], shared.settings[f'name2{suffix}']), None, None)
         shared.gradio['interface'].load(reload_func, reload_inputs, [shared.gradio['display']], show_progress=True)
 
 elif shared.args.notebook:
@@ -311,10 +302,10 @@ elif shared.args.notebook:
         if shared.args.extensions is not None:
             extensions_module.create_extensions_block()
 
-        input_params = [shared.gradio[k] for k in ('textbox', 'max_new_tokens', 'do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping')]
+        shared.input_params = [shared.gradio[k] for k in ['textbox', 'max_new_tokens', 'do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping']]
         output_params = [shared.gradio[k] for k in ['textbox', 'markdown', 'html']]
-        gen_events.append(shared.gradio['Generate'].click(generate_reply, input_params, output_params, show_progress=shared.args.no_stream, api_name='textgen'))
-        gen_events.append(shared.gradio['textbox'].submit(generate_reply, input_params, output_params, show_progress=shared.args.no_stream))
+        gen_events.append(shared.gradio['Generate'].click(generate_reply, shared.input_params, output_params, show_progress=shared.args.no_stream, api_name='textgen'))
+        gen_events.append(shared.gradio['textbox'].submit(generate_reply, shared.input_params, output_params, show_progress=shared.args.no_stream))
         shared.gradio['Stop'].click(None, None, None, cancels=gen_events)
 
 else:
@@ -343,11 +334,11 @@ else:
                 with gr.Tab('HTML'):
                     shared.gradio['html'] = gr.HTML()
 
-        input_params = [shared.gradio[k] for k in ['textbox', 'max_new_tokens', 'do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping']]
+        shared.input_params = [shared.gradio[k] for k in ['textbox', 'max_new_tokens', 'do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping']]
         output_params = [shared.gradio[k] for k in ['output_textbox', 'markdown', 'html']]
-        gen_events.append(shared.gradio['Generate'].click(generate_reply, input_params, output_params, show_progress=shared.args.no_stream, api_name='textgen'))
-        gen_events.append(shared.gradio['textbox'].submit(generate_reply, input_params, output_params, show_progress=shared.args.no_stream))
-        gen_events.append(shared.gradio['Continue'].click(generate_reply, [shared.gradio['output_textbox']] + input_params[1:], output_params, show_progress=shared.args.no_stream))
+        gen_events.append(shared.gradio['Generate'].click(generate_reply, shared.input_params, output_params, show_progress=shared.args.no_stream, api_name='textgen'))
+        gen_events.append(shared.gradio['textbox'].submit(generate_reply, shared.input_params, output_params, show_progress=shared.args.no_stream))
+        gen_events.append(shared.gradio['Continue'].click(generate_reply, [shared.gradio['output_textbox']] + shared.input_params[1:], output_params, show_progress=shared.args.no_stream))
         shared.gradio['Stop'].click(None, None, None, cancels=gen_events)
 
 shared.gradio['interface'].queue()
