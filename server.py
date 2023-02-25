@@ -194,14 +194,14 @@ if shared.args.chat or shared.args.cai_chat:
         with gr.Row():
             shared.gradio['Stop'] = gr.Button('Stop')
             shared.gradio['Generate'] = gr.Button('Generate')
-            shared.gradio['Regenerate'] = gr.Button('Regenerate')
         with gr.Row():
             shared.gradio['Impersonate'] = gr.Button('Impersonate')
-            shared.gradio['Remove last'] = gr.Button('Remove last')
-            shared.gradio['Clear history'] = gr.Button('Clear history')
+            shared.gradio['Regenerate'] = gr.Button('Regenerate')
         with gr.Row():
             shared.gradio['Send last reply to input'] = gr.Button('Send last reply to input')
             shared.gradio['Replace last reply'] = gr.Button('Replace last reply')
+            shared.gradio['Remove last'] = gr.Button('Remove last')
+            shared.gradio['Clear history'] = gr.Button('Clear history')
         with gr.Tab('Chat settings'):
             shared.gradio['name1'] = gr.Textbox(value=shared.settings[f'name1{suffix}'], lines=1, label='Your name')
             shared.gradio['name2'] = gr.Textbox(value=shared.settings[f'name2{suffix}'], lines=1, label='Bot\'s name')
