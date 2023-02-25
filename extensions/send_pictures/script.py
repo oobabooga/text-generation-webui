@@ -2,6 +2,7 @@ import base64
 from io import BytesIO
 
 import gradio as gr
+
 import modules.chat as chat
 import modules.shared as shared
 from modules.bot_picture import caption_image
