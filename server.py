@@ -110,13 +110,13 @@ def create_settings_menus():
     with gr.Accordion('Custom generation parameters', open=False, elem_id='accordion'):
         with gr.Row():
             with gr.Column():
-                shared.gradio['do_sample'] = gr.Checkbox(value=generate_params['do_sample'], label='do_sample')
-                shared.gradio['top_k'] = gr.Slider(0,200,value=generate_params['top_k'],step=1,label='top_k')
-                shared.gradio['repetition_penalty'] = gr.Slider(1.0,4.99,value=generate_params['repetition_penalty'],step=0.01,label='repetition_penalty')
-                shared.gradio['typical_p'] = gr.Slider(0.0,1.0,value=generate_params['typical_p'],step=0.01,label='typical_p')
-            with gr.Column():
                 shared.gradio['temperature'] = gr.Slider(0.01, 1.99, value=generate_params['temperature'], step=0.01, label='temperature')
+                shared.gradio['repetition_penalty'] = gr.Slider(1.0,4.99,value=generate_params['repetition_penalty'],step=0.01,label='repetition_penalty')
+                shared.gradio['top_k'] = gr.Slider(0,200,value=generate_params['top_k'],step=1,label='top_k')
                 shared.gradio['top_p'] = gr.Slider(0.0,1.0,value=generate_params['top_p'],step=0.01,label='top_p')
+            with gr.Column():
+                shared.gradio['do_sample'] = gr.Checkbox(value=generate_params['do_sample'], label='do_sample')
+                shared.gradio['typical_p'] = gr.Slider(0.0,1.0,value=generate_params['typical_p'],step=0.01,label='typical_p')
                 shared.gradio['no_repeat_ngram_size'] = gr.Slider(0, 20, step=1, value=generate_params['no_repeat_ngram_size'], label='no_repeat_ngram_size')
                 shared.gradio['min_length'] = gr.Slider(0, 2000, step=1, value=generate_params['min_length'] if shared.args.no_stream else 0, label='min_length', interactive=shared.args.no_stream)
 
