@@ -14,12 +14,7 @@ params = {
 # custom output text
 input_hijack = {
     'state': 'off',
-    'value': []
-}
-
-prompt_hijack = {
-    'state': 'off',
-    'value': ""
+    'value': ["", ""]
 }
 
 def generate_chat_picture(picture, name1, name2):
