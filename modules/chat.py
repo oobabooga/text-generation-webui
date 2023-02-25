@@ -112,7 +112,7 @@ def chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical
         prompt = custom_prompt_generator(text, max_new_tokens, name1, name2, context, chat_prompt_size)
 
     # Generate
-    reply = ''
+    reply = ' '
     for i in range(chat_generation_attempts):
         for reply in generate_reply(prompt+reply, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, eos_token=eos_token, stopping_string=f"\n{name1}:"):
 
@@ -147,7 +147,7 @@ def impersonate_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typ
 
     prompt = generate_chat_prompt(text, max_new_tokens, name1, name2, context, chat_prompt_size, impersonate=True)
 
-    reply = ''
+    reply = ' '
     for i in range(generation_attempts):
         for reply in generate_reply(prompt+reply, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, eos_token=eos_token, stopping_string=f"\n{name2}:"):
             reply, next_character_found, substring_found = extract_message_from_reply(prompt, reply, name1, name2, check, extensions=False)
