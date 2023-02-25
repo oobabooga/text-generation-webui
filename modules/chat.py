@@ -135,7 +135,7 @@ def chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical
 
             shared.history['internal'][-1] = [text, reply]
             shared.history['visible'][-1] = [visible_text, visible_reply]
-            if not substring_found:
+            if not substring_found and not shared.args.no_stream:
                 yield shared.history['visible']
             if next_character_found:
                 break
