@@ -94,13 +94,13 @@ def chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical
 
     # Check if any extension wants to hijack this function call
     visible_text = None
-    custom_prompt_generator = None
+    custom_generate_chat_prompt = None
     for extension, _ in extensions_module.iterator():
         if hasattr(extension, 'input_hijack') and extension.input_hijack['state'] == True:
             extension.input_hijack['state'] = False
             text, visible_text = extension.input_hijack['value']
-        if custom_prompt_generator is None and hasattr(extension, 'custom_prompt_generator'):
-            custom_prompt_generator = extension.custom_prompt_generator
+        if custom_generate_chat_prompt is None and hasattr(extension, 'custom_generate_chat_prompt'):
+            custom_generate_chat_prompt = extension.custom_generate_chat_prompt
 
     if visible_text is None:
         visible_text = text
@@ -108,10 +108,10 @@ def chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical
         visible_text = visible_text.replace('\n', '<br>')
     text = apply_extensions(text, "input")
 
-    if custom_prompt_generator is None:
+    if custom_generate_chat_prompt is None:
         prompt = generate_chat_prompt(text, max_new_tokens, name1, name2, context, chat_prompt_size)
     else:
-        prompt = custom_prompt_generator(text, max_new_tokens, name1, name2, context, chat_prompt_size)
+        prompt = custom_generate_chat_prompt(text, max_new_tokens, name1, name2, context, chat_prompt_size)
 
     # Generate
     reply = ''
