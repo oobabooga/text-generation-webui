@@ -33,10 +33,11 @@ def apply_extensions(text, typ):
 def create_extensions_block():
     # Updating the default values
     for extension, name in iterator():
-        for param in extension.params:
-            _id = f"{name}-{param}"
-            if _id in shared.settings:
-                extension.params[param] = shared.settings[_id]
+        if hasattr(extension, 'params'):
+            for param in extension.params:
+                _id = f"{name}-{param}"
+                if _id in shared.settings:
+                    extension.params[param] = shared.settings[_id]
 
     # Creating the extension ui elements
     for extension, name in iterator():

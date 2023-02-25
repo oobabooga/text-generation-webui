@@ -2,13 +2,11 @@ import base64
 from io import BytesIO
 
 import gradio as gr
+import torch
+from transformers import BlipForConditionalGeneration, BlipProcessor
 
 import modules.chat as chat
 import modules.shared as shared
-from modules.bot_picture import caption_image
-
-params = {
-}
 
 # If 'state' is True, will hijack the next chat generation with
 # custom input text
@@ -16,6 +14,14 @@ input_hijack = {
     'state': False,
     'value': ["", ""]
 }
+
+processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
+model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base", torch_dtype=torch.float32).to("cpu")
+
+def caption_image(raw_image):
+    inputs = processor(raw_image.convert('RGB'), return_tensors="pt").to("cpu", torch.float32)
+    out = model.generate(**inputs, max_new_tokens=100)
+    return processor.decode(out[0], skip_special_tokens=True)
 
 def generate_chat_picture(picture, name1, name2):
     text = f'*{name1} sends {name2} a picture that contains the following: "{caption_image(picture)}"*'
