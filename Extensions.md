@@ -90,7 +90,7 @@ python server.py --extensions translate enthusiasm # First apply translate, then
 
 ## `custom_generate_chat_prompt` example
 
-The code below just reproduces the default prompt generator in `modules/chat.py`. You can modify the function freely to come up with your own prompts for chat mode.
+Below is an extension that just reproduces the default prompt generator in `modules/chat.py`. You can modify it freely to come up with your own prompts for chat mode.
 
 ```python
 import gradio as gr
