@@ -189,7 +189,7 @@ if shared.args.chat or shared.args.cai_chat:
         if shared.args.cai_chat:
             shared.gradio['display'] = gr.HTML(value=generate_chat_html(shared.history['visible'], shared.settings[f'name1{suffix}'], shared.settings[f'name2{suffix}'], shared.character))
         else:
-            shared.gradio['display'] = gr.Chatbot(value=shared.history['visible'])
+            shared.gradio['display'] = gr.Chatbot(value=shared.history['visible']).style(color_map=("#326efd", "#212528"))
         shared.gradio['textbox'] = gr.Textbox(label='Input')
         with gr.Row():
             shared.gradio['Stop'] = gr.Button('Stop')
