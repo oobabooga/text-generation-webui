@@ -28,7 +28,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * [DeepSpeed ZeRO-3 offload](https://github.com/oobabooga/text-generation-webui/wiki/DeepSpeed).
 * [Get responses via API](https://github.com/oobabooga/text-generation-webui/blob/main/api-example.py).
 * Supports softprompts.
-* [Supports extensions](https://github.com/oobabooga/text-generation-webui/wiki/Extensions)
+* [Supports extensions](https://github.com/oobabooga/text-generation-webui/wiki/Extensions).
 * [Works on Google Colab](https://github.com/oobabooga/text-generation-webui/wiki/Running-on-Colab).
 
 ## Installation option 1: conda
@@ -184,7 +184,7 @@ For these two, please try commenting on an existing issue instead of creating a 
 ## Credits
 
 - NovelAI and KoboldAI presets: https://github.com/KoboldAI/KoboldAI-Client/wiki/Settings-Presets
-- Pygmalion preset, code for early stopping in chat mode, code for some of the sliders: https://github.com/PygmalionAI/gradio-ui/
+- Pygmalion preset, code for early stopping in chat mode, code for some of the sliders, --chat mode colors: https://github.com/PygmalionAI/gradio-ui/
 - Verbose preset: Anonymous 4chan user.
 - Instruct-Joi preset: https://huggingface.co/Rallio67/joi_12B_instruct_alpha
 - Gradio dropdown menu refresh button: https://github.com/AUTOMATIC1111/stable-diffusion-webui
