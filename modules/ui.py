@@ -27,7 +27,6 @@ css = """
 }
 #accordion {
 }
-/*
 .dark svg {
   fill: white;
 }
@@ -36,7 +35,6 @@ svg {
   vertical-align: middle !important;
   margin: 5px;
 }
-*/
 ol li p, ul li p {
     display: inline-block;
 }
