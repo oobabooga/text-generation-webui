@@ -1,5 +1,3 @@
-# Extensions
-
 This web UI supports extensions. They are simply files under 
 
 ```
