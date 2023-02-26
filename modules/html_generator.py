@@ -200,7 +200,7 @@ def image_to_base64(path):
 
     if (path in image_cache and mtime != image_cache[path][0]) or (path not in image_cache):
         img = Image.open(path)
-        img.thumbnail((100, 100))
+        img.thumbnail((200, 200))
         img_buffer = BytesIO()
         img.convert('RGB').save(img_buffer, format='PNG')
         image_cache[path] = [mtime, base64.b64encode(img_buffer.getvalue()).decode("utf-8")]
