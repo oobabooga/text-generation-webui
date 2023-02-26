@@ -59,7 +59,7 @@ input_hijack = {
     'value': ["", ""]
 }
 ```
-This is only relevant in chat mode. If your extension sets `input_hijack['state']` to `True` at any moment, the next call for `modules.chat.chatbot_wrapper` will use the vales inside `input_hijack['value']` as the user input for the text generation. See the `send_pictures` extension above for an example.
+This is only relevant in chat mode. If your extension sets `input_hijack['state']` to `True` at any moment, the next call to `modules.chat.chatbot_wrapper` will use the vales inside `input_hijack['value']` as the user input for text generation. See the `send_pictures` extension above for an example.
 
 ## The `bot_prefix_modifier`
 
@@ -90,7 +90,7 @@ python server.py --extensions translate enthusiasm # First apply translate, then
 
 ## `custom_generate_chat_prompt` example
 
-Below is an extension that just reproduces the default prompt generator in `modules/chat.py`. You can modify it freely to come up with your own prompts for chat mode.
+Below is an extension that just reproduces the default prompt generator in `modules/chat.py`. You can modify it freely to come up with your own prompts in chat mode.
 
 ```python
 import gradio as gr
