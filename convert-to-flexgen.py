@@ -53,7 +53,7 @@ if __name__ == '__main__':
         os.mkdir(out_folder)
 
     print(f"Saving the converted model to {out_folder}...")
-    for name, param in tqdm(list(model.model.named_parameters())):
+    for name, param in tqdm(list(model.named_parameters())):
         name = name.replace("decoder.final_layer_norm", "decoder.layer_norm")
         param_path = os.path.join(out_folder, name)
         with open(param_path, "wb") as f:
