@@ -22,8 +22,10 @@ def get_max_prompt_length(tokens):
 
 def encode(prompt, tokens_to_generate=0, add_special_tokens=True):
     input_ids = shared.tokenizer.encode(str(prompt), return_tensors='pt', truncation=True, max_length=get_max_prompt_length(tokens_to_generate), add_special_tokens=add_special_tokens)
-    if shared.args.cpu or shared.args.flexgen:
+    if shared.args.cpu:
         return input_ids
+    elif shared.args.flexgen:
+        return input_ids.numpy()
     elif shared.args.deepspeed:
         return input_ids.to(device=local_rank)
     else:
@@ -86,10 +88,7 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
 
     input_ids = encode(question, max_new_tokens)
     cuda = "" if (shared.args.cpu or shared.args.deepspeed or shared.args.flexgen) else ".cuda()"
-    if not shared.args.flexgen:
-        n = shared.tokenizer.eos_token_id if eos_token is None else shared.tokenizer.encode(eos_token, return_tensors='pt')[0][-1]
-    else:
-        n = shared.tokenizer(eos_token).input_ids[0] if eos_token else None
+    n = shared.tokenizer.eos_token_id if eos_token is None else encode(eos_token)[0][-1]
 
     if stopping_string is not None:
         # The stopping_criteria code below was copied from
@@ -173,11 +172,13 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
             yield formatted_outputs(reply, shared.model_name)
 
             if not shared.args.flexgen:
+                if output[-1] == n:
+                    break
                 input_ids = torch.reshape(output, (1, output.shape[0]))
             else:
+                if np.count_nonzero(input_ids[0] == n) < np.count_nonzero(output == n):
+                    break
                 input_ids = np.reshape(output, (1, output.shape[0]))
+
             if shared.soft_prompt:
                 inputs_embeds, filler_input_ids = generate_softprompt_input_tensors(input_ids)
-
-            if output[-1] == n:
-                break
