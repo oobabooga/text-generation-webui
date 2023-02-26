@@ -22,6 +22,8 @@ command-line flag.
 |[google_translate](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/google_translate/script.py)| Automatically translates inputs and outputs using Google Translate.|
 |[silero_tts](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/silero_tts/script.py)| Text-to-speech extension using [Silero](https://github.com/snakers4/silero-models). When used in chat mode, it replaces the responses with an audio widget.|
 |[send_pictures](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/send_pictures/script.py)| Creates an image upload field that can be used to send images to the bot in chat mode. Captions are automatically generated using BLIP. Author: [@SillyLossy](https://github.com/sillylossy).|
+|[gallery](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/gallery/script.py)| Creates a gallery with the chat characters and their pictures. |
+
 
 ## How to write an extension
 
