@@ -1,7 +1,8 @@
 import gradio as gr
 
 params = {
-    "bias string": " *I speak in an annoyingly cute way*",
+    "activate": True,
+    "bias string": " *I am so happy*",
 }
 
 def input_modifier(string):
@@ -26,11 +27,16 @@ def bot_prefix_modifier(string):
     behavior.
     """
 
-    return f'{string} {params["bias string"].strip()} '
+    if params['activate'] == True:
+        return f'{string} {params["bias string"].strip()} '
+    else:
+        return string
 
 def ui():
     # Gradio elements
+    activate = gr.Checkbox(value=params['activate'], label='Activate character bias')
     string = gr.Textbox(value=params["bias string"], label='Character bias')
 
     # Event functions to update the parameters in the backend
     string.change(lambda x: params.update({"bias string": x}), string, None)
+    activate.change(lambda x: params.update({"activate": x}), activate, None)
