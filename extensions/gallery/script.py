@@ -29,6 +29,10 @@ def generate_html():
       background-color: gray;
     }
 
+    .character-gallery tr {
+      cursor: pointer;
+    }
+
     .character-gallery .image-td {
       width: 150px;
     }
@@ -45,7 +49,7 @@ def generate_html():
     for file in Path("characters").glob("*"):
         if file.name.endswith(".json"):
             character = file.name.replace(".json", "")
-            table_html += "<tr>"
+            table_html += f'<tr onclick=\'document.getElementById("character-menu").children[1].children[1].value = "{character}"; document.getElementById("character-menu").children[1].children[1].dispatchEvent(new Event("change"));\'>'
             image_html = "<div class='placeholder'></div>"
 
             for i in [
@@ -62,7 +66,7 @@ def generate_html():
                     except:
                         continue
 
-            table_html += f'<td class="image-td"=>{image_html}</td><td class="character-td">{character}</td>'
+            table_html += f'<td class="image-td">{image_html}</td><td class="character-td">{character}</td>'
             table_html += "</tr>"
     table_html += "</table></div>"
 
