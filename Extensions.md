@@ -48,7 +48,7 @@ params = {
 This dicionary can be used to make the extension parameters customizable by adding entries to a `settings.json` file like this:
 
 ```python
-google_translate-language string: "fr",
+"google_translate-language string": "fr",
 ``` 
 
 #### `input_hijack` dictionary
