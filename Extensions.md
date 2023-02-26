@@ -35,7 +35,7 @@ command-line flag.
 | `def bot_prefix_modifier(string)`  | Applied in chat mode to the prefix for the bot's reply (more on that below). |
 | `def custom_generate_chat_prompt(...)` | Overrides the prompt generator in chat mode. |
 
-Additionally, the script may define two special global variables. 
+Additionally, the script may define two special global variables:
 
 #### `params` dictionary
 
