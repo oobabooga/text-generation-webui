@@ -164,7 +164,7 @@ def cai_chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typ
         yield generate_chat_html(_history, name1, name2, shared.character)
 
 def regenerate_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, chat_prompt_size, chat_generation_attempts=1):
-    if shared.character != 'None' and len(shared.history['visible']) == 1:
+    if (shared.character != 'None' and len(shared.history['visible']) == 1) or len(shared.history['internal']) == 0:
         if shared.args.cai_chat:
             yield generate_chat_html(shared.history['visible'], name1, name2, shared.character)
         else:
@@ -182,7 +182,7 @@ def regenerate_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typi
                 yield shared.history['visible']
 
 def remove_last_message(name1, name2):
-    if not shared.history['internal'][-1][0] == '<|BEGIN-VISIBLE-CHAT|>':
+    if len(shared.history['visible']) > 0 and not shared.history['internal'][-1][0] == '<|BEGIN-VISIBLE-CHAT|>':
         last = shared.history['visible'].pop()
         shared.history['internal'].pop()
     else:
