@@ -28,7 +28,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * [DeepSpeed ZeRO-3 offload](https://github.com/oobabooga/text-generation-webui/wiki/DeepSpeed).
 * [Get responses via API](https://github.com/oobabooga/text-generation-webui/blob/main/api-example.py).
 * Supports softprompts.
-* [Supports extensions](https://github.com/oobabooga/text-generation-webui/wiki/Extensions)
+* [Supports extensions](https://github.com/oobabooga/text-generation-webui/wiki/Extensions).
 * [Works on Google Colab](https://github.com/oobabooga/text-generation-webui/wiki/Running-on-Colab).
 
 ## Installation option 1: conda
