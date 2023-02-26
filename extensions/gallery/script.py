@@ -1,5 +1,3 @@
-import json
-import os
 from pathlib import Path
 
 import gradio as gr
@@ -46,7 +44,6 @@ def generate_html():
     # Iterate through files in image folder
     for file in Path("characters").glob("*"):
         if file.name.endswith(".json"):
-            json_name = file.name
             character = file.name.replace(".json", "")
             table_html += "<tr>"
             image_html = "<div class='placeholder'></div>"
