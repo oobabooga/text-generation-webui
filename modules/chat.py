@@ -216,11 +216,16 @@ def clear_html():
 
 def clear_chat_log(name1, name2):
     if shared.character != 'None':
+        found = False
         for i in range(len(shared.history['internal'])):
             if '<|BEGIN-VISIBLE-CHAT|>' in shared.history['internal'][i][0]:
                 shared.history['visible'] = [['', apply_extensions(shared.history['internal'][i][1], "output")]]
                 shared.history['internal'] = shared.history['internal'][:i+1]
+                found = True
                 break
+        if not found:
+            shared.history['visible'] = []
+            shared.history['internal'] = []
     else:
         shared.history['internal'] = []
         shared.history['visible'] = []
