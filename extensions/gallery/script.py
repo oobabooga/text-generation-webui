@@ -10,7 +10,7 @@ def generate_html():
       .character-gallery {
         margin: 1rem 0;
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(4, minmax(150px, 1fr));
         grid-column-gap: 0.4rem;
         grid-row-gap: 1.2rem;
       }
