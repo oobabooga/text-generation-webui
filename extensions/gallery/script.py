@@ -19,7 +19,7 @@ def generate_html():
         cursor: pointer;
         text-align: center;
         position: relative;
-        opacity: 0.75;
+        opacity: 0.85;
       }
 
       .character-container:hover {
@@ -34,7 +34,7 @@ def generate_html():
         margin: 0 auto;
         border-radius: 1rem;
         border: 3px solid white;
-        box-shadow: 5px 5px 2px 0px rgb(0 0 0 / 50%);
+        box-shadow: 5px 5px 8px 0px rgb(0 0 0 / 50%);
       }
 
       .character-name {
