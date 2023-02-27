@@ -1,5 +1,6 @@
 accelerate==0.16.0
 bitsandbytes==0.37.0
+flexgen==0.1.6
 gradio==3.18.0
 numpy
 safetensors==0.2.8
