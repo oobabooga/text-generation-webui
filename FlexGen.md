@@ -4,12 +4,7 @@ https://github.com/FMInference/FlexGen
 
 ## Installation
 
-```
-conda activate textgen
-git clone https://github.com/FMInference/FlexGen.git
-cd FlexGen
-pip3 install -e .
-```
+No additional installation steps are necessary. FlexGen is in the `requirements.txt` file for this project.
 
 ## Converting a model
 
