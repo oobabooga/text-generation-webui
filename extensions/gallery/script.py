@@ -7,49 +7,52 @@ from modules.html_generator import image_to_base64
 
 def generate_html():
     css = """
-    .character-gallery table {
-      border-collapse: collapse;
-      table-layout: fixed;
-      width: 100%;
-    }
+      .character-gallery {
+        margin: 1rem 0;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        grid-column-gap: 0.4rem;
+        grid-row-gap: 1.2rem;
+      }
 
-    .character-gallery th, .character-gallery td {
-      padding: 8px;
-    }
+      .character-container {
+        cursor: pointer;
+        text-align: center;
+        position: relative;
+        opacity: 0.75;
+      }
 
-    .character-gallery img {
-      width: 150px;
-      height: 200px;
-      object-fit: cover;
-    }
+      .character-container:hover {
+        opacity: 1;
+      }
 
-    .character-gallery .placeholder {
-      width: 150px;
-      height: 200px;
-      background-color: gray;
-    }
+      .character-container .placeholder, .character-container img {
+        width: 150px;
+        height: 200px;
+        background-color: gray;
+        object-fit: cover;
+        margin: 0 auto;
+        border-radius: 1rem;
+        border: 3px solid white;
+        box-shadow: 5px 5px 2px 0px rgb(0 0 0 / 50%);
+      }
 
-    .character-gallery tr {
-      cursor: pointer;
-    }
-
-    .character-gallery .image-td {
-      width: 150px;
-    }
-
-    .character-gallery .character-td {
-      text-align: center !important;
-    }
-
+      .character-name {
+        margin-top: 0.2rem;
+        display: block;
+        font-size: 1.2rem;
+        font-weight: 600;
+        overflow-wrap: anywhere;
+      }
     """
 
-    table_html = f'<style>{css}</style><div class="character-gallery"><table>'
+    container_html = f'<style>{css}</style><div class="character-gallery">'
 
     # Iterate through files in image folder
     for file in Path("characters").glob("*"):
         if file.name.endswith(".json"):
             character = file.name.replace(".json", "")
-            table_html += f'<tr onclick=\'document.getElementById("character-menu").children[1].children[1].value = "{character}"; document.getElementById("character-menu").children[1].children[1].dispatchEvent(new Event("change"));\'>'
+            container_html += f'<div class="character-container" onclick=\'document.getElementById("character-menu").children[1].children[1].value = "{character}"; document.getElementById("character-menu").children[1].children[1].dispatchEvent(new Event("change"));\'>'
             image_html = "<div class='placeholder'></div>"
 
             for i in [
@@ -66,11 +69,11 @@ def generate_html():
                     except:
                         continue
 
-            table_html += f'<td class="image-td">{image_html}</td><td class="character-td">{character}</td>'
-            table_html += "</tr>"
-    table_html += "</table></div>"
+            container_html += f'{image_html} <span class="character-name">{character}</span>'
+            container_html += "</div>"
 
-    return table_html
+    container_html += "</div>"
+    return container_html
 
 def ui():
     with gr.Accordion("Character gallery"):
