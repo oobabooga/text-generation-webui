@@ -42,6 +42,7 @@ def generate_html():
         display: block;
         font-size: 1.2rem;
         font-weight: 600;
+        overflow-wrap: anywhere;
       }
     """
 
