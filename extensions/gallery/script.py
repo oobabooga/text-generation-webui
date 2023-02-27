@@ -49,7 +49,7 @@ def generate_html():
     container_html = f'<style>{css}</style><div class="character-gallery">'
 
     # Iterate through files in image folder
-    for file in Path("characters").glob("*"):
+    for file in sorted(Path("characters").glob("*")):
         if file.name.endswith(".json"):
             character = file.name.replace(".json", "")
             container_html += f'<div class="character-container" onclick=\'document.getElementById("character-menu").children[1].children[1].value = "{character}"; document.getElementById("character-menu").children[1].children[1].dispatchEvent(new Event("change"));\'>'
