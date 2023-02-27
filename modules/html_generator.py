@@ -4,15 +4,13 @@ This is a library for formatting GPT-4chan and chat outputs as nice HTML.
 
 '''
 
-import base64
 import os
 import re
-from io import BytesIO
 from pathlib import Path
 
 from PIL import Image
 
-# This is to store chat profile pictures as base64-encoded thumbnails
+# This is to store the paths to the thumbnails of the profile pictures
 image_cache = {}
 
 def generate_basic_html(s):
@@ -195,15 +193,18 @@ def generate_4chan_html(f):
 
     return output
 
-def image_to_base64(path):
-    mtime = os.stat(path).st_mtime
+def get_image_cache(path):
+    cache_folder = Path("cache")
+    if not cache_folder.exists():
+        cache_folder.mkdir()
 
+    mtime = os.stat(path).st_mtime
     if (path in image_cache and mtime != image_cache[path][0]) or (path not in image_cache):
         img = Image.open(path)
         img.thumbnail((200, 200))
-        img_buffer = BytesIO()
-        img.convert('RGB').save(img_buffer, format='PNG')
-        image_cache[path] = [mtime, base64.b64encode(img_buffer.getvalue()).decode("utf-8")]
+        output_file = Path(f'cache/{path.name}_cache.png')
+        img.convert('RGB').save(output_file, format='PNG')
+        image_cache[path] = [mtime, output_file.as_posix()]
 
     return image_cache[path][1]
 
@@ -301,14 +302,14 @@ def generate_chat_html(history, name1, name2, character):
 
         path = Path(i)
         if path.exists():
-            img = f'<img src="data:image/png;base64,{image_to_base64(path)}">'
+            img = f'<img src="file/{get_image_cache(path)}">'
             break
 
     img_me = ''
     for i in ["img_me.png", "img_me.jpg", "img_me.jpeg"]:
         path = Path(i)
         if path.exists():
-            img_me = f'<img src="data:image/png;base64,{image_to_base64(path)}">'
+            img_me = f'<img src="file/{get_image_cache(path)}">'
             break
 
     for i,_row in enumerate(history[::-1]):

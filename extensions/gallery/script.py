@@ -2,7 +2,7 @@ from pathlib import Path
 
 import gradio as gr
 
-from modules.html_generator import image_to_base64
+from modules.html_generator import get_image_cache
 
 
 def generate_html():
@@ -64,7 +64,7 @@ def generate_html():
                 path = Path(i)
                 if path.exists():
                     try:
-                        image_html = f'<img src="data:image/png;base64,{image_to_base64(path)}">'
+                        image_html = f'<img src="file/{get_image_cache(path)}">'
                         break
                     except:
                         continue
