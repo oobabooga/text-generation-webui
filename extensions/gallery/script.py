@@ -34,11 +34,11 @@ def generate_html():
         margin: 0 auto;
         border-radius: 1rem;
         border: 3px solid white;
-        box-shadow: 5px 5px 8px 0px rgb(0 0 0 / 50%);
+        box-shadow: 3px 3px 6px 0px rgb(0 0 0 / 50%);
       }
 
       .character-name {
-        margin-top: 0.2rem;
+        margin-top: 0.3rem;
         display: block;
         font-size: 1.2rem;
         font-weight: 600;
