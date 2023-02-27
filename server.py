@@ -201,7 +201,10 @@ if shared.args.chat or shared.args.cai_chat:
             shared.gradio['Copy last reply'] = gr.Button('Copy last reply')
             shared.gradio['Replace last reply'] = gr.Button('Replace last reply')
             shared.gradio['Remove last'] = gr.Button('Remove last')
+
             shared.gradio['Clear history'] = gr.Button('Clear history')
+            shared.gradio['Clear history-cancel'] = gr.Button('Cancel', visible=False)
+            shared.gradio['Clear history-confirm'] = gr.Button('Confirm', variant="stop", visible=False)
         with gr.Tab('Chat settings'):
             shared.gradio['name1'] = gr.Textbox(value=shared.settings[f'name1{suffix}'], lines=1, label='Your name')
             shared.gradio['name2'] = gr.Textbox(value=shared.settings[f'name2{suffix}'], lines=1, label='Bot\'s name')
@@ -260,7 +263,14 @@ if shared.args.chat or shared.args.cai_chat:
 
         shared.gradio['Copy last reply'].click(chat.send_last_reply_to_input, [], shared.gradio['textbox'], show_progress=shared.args.no_stream)
         shared.gradio['Replace last reply'].click(chat.replace_last_reply, [shared.gradio['textbox'], shared.gradio['name1'], shared.gradio['name2']], shared.gradio['display'], show_progress=shared.args.no_stream)
-        shared.gradio['Clear history'].click(chat.clear_chat_log, [shared.gradio['name1'], shared.gradio['name2']], shared.gradio['display'])
+
+        # Clear history with confirmation
+        clear_arr = [shared.gradio[k] for k in ['Clear history-confirm', 'Clear history', 'Clear history-cancel']]
+        shared.gradio['Clear history'].click(lambda :[gr.update(visible=True), gr.update(visible=False), gr.update(visible=True)], None, clear_arr)
+        shared.gradio['Clear history-confirm'].click(chat.clear_chat_log, [shared.gradio['name1'], shared.gradio['name2']], shared.gradio['display'])
+        shared.gradio['Clear history-confirm'].click(lambda :[gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, clear_arr)
+        shared.gradio['Clear history-cancel'].click(lambda :[gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, clear_arr)
+
         shared.gradio['Remove last'].click(chat.remove_last_message, [shared.gradio['name1'], shared.gradio['name2']], [shared.gradio['display'], shared.gradio['textbox']], show_progress=False)
         shared.gradio['download_button'].click(chat.save_history, inputs=[], outputs=[shared.gradio['download']])
         shared.gradio['Upload character'].click(chat.upload_character, [shared.gradio['upload_json'], shared.gradio['upload_img_bot']], [shared.gradio['character_menu']])
