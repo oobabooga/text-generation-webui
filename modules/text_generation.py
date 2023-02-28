@@ -87,9 +87,17 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
                              alpha_presence = 0.25, # Presence Penalty (as in GPT-3)
                              token_ban = [0], # ban the generation of some tokens
                              token_stop = []) # stop generation whenever you see any token here
-        reply = question + shared.model.generate(question, token_count=max_new_tokens, args=args, callback=None)
-        yield formatted_outputs(reply, None)
-        return formatted_outputs(reply, None)
+
+        if shared.args.no_stream:
+            reply = question + shared.model.generate(question, token_count=max_new_tokens, args=args, callback=None)
+            yield formatted_outputs(reply, None)
+            return formatted_outputs(reply, None)
+        else:
+            for i in range(max_new_tokens//8):
+                reply = question + shared.model.generate(question, token_count=8, args=args, callback=None)
+                yield formatted_outputs(reply, None)
+                question = reply
+            return formatted_outputs(reply, None)
 
     original_question = question
     if not (shared.args.chat or shared.args.cai_chat):
