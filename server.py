@@ -203,8 +203,8 @@ if shared.args.chat or shared.args.cai_chat:
             shared.gradio['Remove last'] = gr.Button('Remove last')
 
             shared.gradio['Clear history'] = gr.Button('Clear history')
-            shared.gradio['Clear history-cancel'] = gr.Button('Cancel', visible=False)
             shared.gradio['Clear history-confirm'] = gr.Button('Confirm', variant="stop", visible=False)
+            shared.gradio['Clear history-cancel'] = gr.Button('Cancel', visible=False)
         with gr.Tab('Chat settings'):
             shared.gradio['name1'] = gr.Textbox(value=shared.settings[f'name1{suffix}'], lines=1, label='Your name')
             shared.gradio['name2'] = gr.Textbox(value=shared.settings[f'name2{suffix}'], lines=1, label='Bot\'s name')
