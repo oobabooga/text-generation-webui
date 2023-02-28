@@ -331,6 +331,7 @@ def load_character(_character, name1, name2):
             context += f"Scenario: {data['world_scenario']}\n"
         context = f"{context.strip()}\n<START>\n"
         if 'example_dialogue' in data and data['example_dialogue'] != '':
+            data['example_dialogue'] = data['example_dialogue'].replace('{{user}}', name1).replace('{{char}}', name2)
             context += f"{data['example_dialogue'].strip()}\n"
         if 'char_greeting' in data and len(data['char_greeting'].strip()) > 0:
             shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', data['char_greeting']]]
@@ -375,7 +376,6 @@ def upload_tavern_character(img, name1, name2):
     decoded_string = base64.b64decode(_img.info['chara'])
     _json = json.loads(decoded_string)
     _json = {"char_name": _json['name'], "char_persona": _json['description'], "char_greeting": _json["first_mes"], "example_dialogue": _json['mes_example'], "world_scenario": _json['scenario']}
-    _json['example_dialogue'] = _json['example_dialogue'].replace('{{user}}', name1).replace('{{char}}', _json['char_name'])
     return upload_character(json.dumps(_json), img, tavern=True)
 
 def upload_your_profile_picture(img):
