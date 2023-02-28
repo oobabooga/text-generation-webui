@@ -79,27 +79,9 @@ def load_model(model_name):
 
     # RMKV model (not on HuggingFace)
     elif shared.is_RWKV:
-        import types
-        np.set_printoptions(precision=4, suppress=True, linewidth=200)
+        from modules.RWKV import load_RWKV_model
 
-        os.environ['RWKV_JIT_ON'] = '1'
-        os.environ["RWKV_CUDA_ON"] = '0' #  '1' : use CUDA kernel for seq mode (much faster)
-
-        from rwkv.model import RWKV
-        from rwkv.utils import PIPELINE, PIPELINE_ARGS
-
-        model = RWKV(model='models/RWKV-4-Pile-169M-20220807-8023.pth', strategy='cuda fp16')
-
-        out, state = model.forward([187, 510, 1563, 310, 247], None)   # use 20B_tokenizer.json
-        print(out.detach().cpu().numpy())                   # get logits
-        out, state = model.forward([187, 510], None)
-        out, state = model.forward([1563], state)           # RNN has state (use deepcopy if you want to clone it)
-        out, state = model.forward([310, 247], state)
-        print(out.detach().cpu().numpy())                   # same result as above
-
-        pipeline = PIPELINE(model, "20B_tokenizer.json")
-
-        return pipeline, None
+        return load_RWKV_model(Path('models/RWKV-4-Pile-169M-20220807-8023.pth')), None
 
     # Custom
     else:

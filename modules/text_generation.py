@@ -82,17 +82,14 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
         torch.cuda.empty_cache()
 
     if shared.is_RWKV:
-        def my_print(s):
-            print(s, end='', flush=True)
         args = PIPELINE_ARGS(temperature = temperature, top_p = top_p,
                              alpha_frequency = 0.25, # Frequency Penalty (as in GPT-3)
                              alpha_presence = 0.25, # Presence Penalty (as in GPT-3)
                              token_ban = [0], # ban the generation of some tokens
                              token_stop = []) # stop generation whenever you see any token here
         reply = question + shared.model.generate(question, token_count=max_new_tokens, args=args, callback=None)
-        print(formatted_outputs(reply, None))
         yield formatted_outputs(reply, None)
-    return formatted_outputs(reply, None)
+        return formatted_outputs(reply, None)
 
     original_question = question
     if not (shared.args.chat or shared.args.cai_chat):
