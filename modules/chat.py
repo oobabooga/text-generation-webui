@@ -332,6 +332,7 @@ def load_character(_character, name1, name2):
         context = f"{context.strip()}\n<START>\n"
         if 'example_dialogue' in data and data['example_dialogue'] != '':
             data['example_dialogue'] = data['example_dialogue'].replace('{{user}}', name1).replace('{{char}}', name2)
+            data['example_dialogue'] = data['example_dialogue'].replace('<USER>', name1).replace('<BOT>', name2)
             context += f"{data['example_dialogue'].strip()}\n"
         if 'char_greeting' in data and len(data['char_greeting'].strip()) > 0:
             shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', data['char_greeting']]]
