@@ -151,7 +151,18 @@ available_characters = get_available_characters()
 available_softprompts = get_available_softprompts()
 
 extensions_module.available_extensions = get_available_extensions()
-if shared.args.extensions is not None:
+# Activate the default extensions
+if shared.args.chat or shared.args.cai_chat:
+    for extension in shared.settings['chat_default_extensions']:
+        shared.args.extensions = shared.args.extensions or []
+        if extension not in shared.args.extensions:
+            shared.args.extensions.append(extension)
+else:
+    for extension in shared.settings['default_extensions']:
+        shared.args.extensions = shared.args.extensions or []
+        if extension not in shared.args.extensions:
+            shared.args.extensions.append(extension)
+if shared.args.extensions is not None and len(shared.args.extensions) > 0:
     extensions_module.load_extensions()
 
 # Choosing the default model

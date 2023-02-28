@@ -39,6 +39,8 @@ settings = {
     'name2_pygmalion': 'Kawaii',
     'context_pygmalion': "Kawaii's persona: Kawaii is a cheerful person who loves to make others smile. She is an optimist who loves to spread happiness and positivity wherever she goes.\n<START>",
     'stop_at_newline_pygmalion': False,
+    'default_extensions': [],
+    'chat_default_extensions': ["gallery"],
 }
 
 parser = argparse.ArgumentParser(formatter_class=lambda prog: argparse.HelpFormatter(prog,max_help_position=54))
