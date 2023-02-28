@@ -38,8 +38,10 @@ def load_model(model_name):
     print(f"Loading {model_name}...")
     t0 = time.time()
 
+    shared.is_RWKV = model_name.lower().startswith('rwkv-')
+
     # Default settings
-    if not (shared.args.cpu or shared.args.load_in_8bit or shared.args.auto_devices or shared.args.disk or shared.args.gpu_memory is not None or shared.args.cpu_memory is not None or shared.args.deepspeed or shared.args.flexgen):
+    if not (shared.args.cpu or shared.args.load_in_8bit or shared.args.auto_devices or shared.args.disk or shared.args.gpu_memory is not None or shared.args.cpu_memory is not None or shared.args.deepspeed or shared.args.flexgen or shared.is_RWKV):
         if any(size in shared.model_name.lower() for size in ('13b', '20b', '30b')):
             model = AutoModelForCausalLM.from_pretrained(Path(f"models/{shared.model_name}"), device_map='auto', load_in_8bit=True)
         else:
@@ -74,6 +76,30 @@ def load_model(model_name):
         model = deepspeed.initialize(model=model, config_params=ds_config, model_parameters=None, optimizer=None, lr_scheduler=None)[0]
         model.module.eval() # Inference
         print(f"DeepSpeed ZeRO-3 is enabled: {is_deepspeed_zero3_enabled()}")
+
+    # RMKV model (not on HuggingFace)
+    elif shared.is_RWKV:
+        import types
+        np.set_printoptions(precision=4, suppress=True, linewidth=200)
+
+        os.environ['RWKV_JIT_ON'] = '1'
+        os.environ["RWKV_CUDA_ON"] = '0' #  '1' : use CUDA kernel for seq mode (much faster)
+
+        from rwkv.model import RWKV
+        from rwkv.utils import PIPELINE, PIPELINE_ARGS
+
+        model = RWKV(model='models/RWKV-4-Pile-169M-20220807-8023.pth', strategy='cuda fp16')
+
+        out, state = model.forward([187, 510, 1563, 310, 247], None)   # use 20B_tokenizer.json
+        print(out.detach().cpu().numpy())                   # get logits
+        out, state = model.forward([187, 510], None)
+        out, state = model.forward([1563], state)           # RNN has state (use deepcopy if you want to clone it)
+        out, state = model.forward([310, 247], state)
+        print(out.detach().cpu().numpy())                   # same result as above
+
+        pipeline = PIPELINE(model, "20B_tokenizer.json")
+
+        return pipeline, None
 
     # Custom
     else:
