@@ -36,10 +36,10 @@ class RWKVModel:
         args = PIPELINE_ARGS(
             temperature = temperature,
             top_p = top_p,
-            alpha_frequency = 0.25, # Frequency Penalty (as in GPT-3)
-            alpha_presence = 0.25, # Presence Penalty (as in GPT-3)
-            token_ban = [0], # ban the generation of some tokens
-            token_stop = []
+            alpha_frequency = alpha_frequency, # Frequency Penalty (as in GPT-3)
+            alpha_presence = alpha_presence, # Presence Penalty (as in GPT-3)
+            token_ban = token_ban, # ban the generation of some tokens
+            token_stop = token_stop
         )
 
         return self.model.generate(context, token_count=token_count, args=args, callback=callback)
