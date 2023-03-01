@@ -16,11 +16,20 @@ os.environ["RWKV_CUDA_ON"] = '0' #  '1' : use CUDA kernel for seq mode (much fas
 from rwkv.model import RWKV
 from rwkv.utils import PIPELINE, PIPELINE_ARGS
 
+class RWKVModel:
+    def __init__(self):
+        pass
 
-def load_RWKV_model(path):
-    print(f'strategy={"cpu" if shared.args.cpu else "cuda"} {"fp32" if shared.args.cpu else "bf16" if shared.args.bf16 else "fp16"}')
+    @classmethod
+    def from_pretrained(self, path, dtype="fp16", device="cuda"):
+        tokenizer_path = Path(f"{path.parent}/20B_tokenizer.json")
 
-    model = RWKV(model=path.as_posix(), strategy=f'{"cpu" if shared.args.cpu else "cuda"} {"fp32" if shared.args.cpu else "bf16" if shared.args.bf16 else "fp16"}')
-    pipeline = PIPELINE(model, Path("models/20B_tokenizer.json").as_posix())
+        model = RWKV(model=path.as_posix(), strategy=f'{device} {dtype}')
+        pipeline = PIPELINE(model, tokenizer_path.as_posix())
 
-    return pipeline
+        result = self()
+        result.model = pipeline
+        return result
+
+    def generate(self, context, **kwargs):
+        return self.model.generate(context, **kwargs)

@@ -79,9 +79,11 @@ def load_model(model_name):
 
     # RMKV model (not on HuggingFace)
     elif shared.is_RWKV:
-        from modules.RWKV import load_RWKV_model
+        from modules.RWKV import RWKVModel
 
-        return load_RWKV_model(Path(f'models/{model_name}')), None
+        model = RWKVModel.from_pretrained(Path(f'models/{model_name}'), dtype="fp32" if shared.args.cpu else "bf16" if shared.args.bf16 else "fp16", device="cpu" if shared.args.cpu else "cuda")
+
+        return model, None
 
     # Custom
     else:
