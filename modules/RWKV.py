@@ -16,6 +16,7 @@ os.environ["RWKV_CUDA_ON"] = '0' #  '1' : use CUDA kernel for seq mode (much fas
 from rwkv.model import RWKV
 from rwkv.utils import PIPELINE, PIPELINE_ARGS
 
+
 class RWKVModel:
     def __init__(self):
         pass

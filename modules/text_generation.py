@@ -5,8 +5,8 @@ import time
 import numpy as np
 import torch
 import transformers
-from tqdm import tqdm
 from rwkv.utils import PIPELINE, PIPELINE_ARGS
+from tqdm import tqdm
 
 import modules.shared as shared
 from modules.extensions import apply_extensions
