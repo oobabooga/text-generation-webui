@@ -29,7 +29,7 @@ class RWKVModel:
         pipeline = PIPELINE(model, tokenizer_path.as_posix())
 
         result = self()
-        result.model = pipeline
+        result.pipeline = pipeline
         return result
 
     def generate(self, context, token_count=20, temperature=1, top_p=1, alpha_frequency=0.25, alpha_presence=0.25, token_ban=[0], token_stop=[], callback=None):
@@ -42,4 +42,4 @@ class RWKVModel:
             token_stop = token_stop
         )
 
-        return self.model.generate(context, token_count=token_count, args=args, callback=callback)
+        return self.pipeline.generate(context, token_count=token_count, args=args, callback=callback)
