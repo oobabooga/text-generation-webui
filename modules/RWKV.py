@@ -42,4 +42,4 @@ class RWKVModel:
             token_stop = token_stop
         )
 
-        return self.pipeline.generate(context, token_count=token_count, args=args, callback=callback)
+        return context+self.pipeline.generate(context, token_count=token_count, args=args, callback=callback)
