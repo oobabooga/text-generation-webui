@@ -25,8 +25,8 @@ class RWKVModel:
     def from_pretrained(self, path, dtype="fp16", device="cuda"):
         tokenizer_path = Path(f"{path.parent}/20B_tokenizer.json")
 
-        model = RWKV(model=path.as_posix(), strategy=f'{device} {dtype}')
-        pipeline = PIPELINE(model, tokenizer_path.as_posix())
+        model = RWKV(model=os.path.abspath(path), strategy=f'{device} {dtype}')
+        pipeline = PIPELINE(model, os.path.abspath(tokenizer_path))
 
         result = self()
         result.pipeline = pipeline
