@@ -5,6 +5,7 @@ import time
 import numpy as np
 import torch
 import transformers
+from rwkv.utils import PIPELINE, PIPELINE_ARGS
 from tqdm import tqdm
 
 import modules.shared as shared
@@ -21,6 +22,9 @@ def get_max_prompt_length(tokens):
     return max_length
 
 def encode(prompt, tokens_to_generate=0, add_special_tokens=True):
+    if shared.is_RWKV:
+        return prompt
+
     input_ids = shared.tokenizer.encode(str(prompt), return_tensors='pt', truncation=True, max_length=get_max_prompt_length(tokens_to_generate), add_special_tokens=add_special_tokens)
     if shared.args.cpu:
         return input_ids
@@ -79,6 +83,17 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
     gc.collect()
     if not shared.args.cpu:
         torch.cuda.empty_cache()
+
+    if shared.is_RWKV:
+        if shared.args.no_stream:
+            reply = shared.model.generate(question, token_count=max_new_tokens, temperature=temperature, top_p=top_p)
+            yield formatted_outputs(reply, None)
+        else:
+            for i in range(max_new_tokens//8):
+                reply = shared.model.generate(question, token_count=8, temperature=temperature, top_p=top_p)
+                yield formatted_outputs(reply, None)
+                question = reply
+        return formatted_outputs(reply, None)
 
     original_question = question
     if not (shared.args.chat or shared.args.cai_chat):

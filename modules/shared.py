@@ -5,6 +5,7 @@ tokenizer = None
 model_name = ""
 soft_prompt_tensor = None
 soft_prompt = False
+is_RWKV = False
 
 # Chat variables
 history = {'internal': [], 'visible': []}
