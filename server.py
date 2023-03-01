@@ -219,7 +219,7 @@ if shared.args.chat or shared.args.cai_chat:
         with gr.Tab('Chat settings'):
             shared.gradio['name1'] = gr.Textbox(value=shared.settings[f'name1{suffix}'], lines=1, label='Your name')
             shared.gradio['name2'] = gr.Textbox(value=shared.settings[f'name2{suffix}'], lines=1, label='Bot\'s name')
-            shared.gradio['context'] = gr.Textbox(value=shared.settings[f'context{suffix}'], lines=2, label='Context')
+            shared.gradio['context'] = gr.Textbox(value=shared.settings[f'context{suffix}'], lines=5, label='Context')
             with gr.Row():
                 shared.gradio['character_menu'] = gr.Dropdown(choices=available_characters, value='None', label='Character', elem_id='character-menu')
                 ui.create_refresh_button(shared.gradio['character_menu'], lambda : None, lambda : {'choices': get_available_characters()}, 'refresh-button')
