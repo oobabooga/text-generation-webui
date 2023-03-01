@@ -3,6 +3,6 @@ bitsandbytes==0.37.0
 flexgen==0.1.6
 gradio==3.18.0
 numpy
-rwkv==0.0.5
+rwkv
 safetensors==0.2.8
 git+https://github.com/huggingface/transformers
