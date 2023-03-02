@@ -28,7 +28,10 @@ if shared.args.settings is not None and Path(shared.args.settings).exists():
         shared.settings[item] = new_settings[item]
 
 def get_available_models():
-    return sorted([item.name for item in list(Path('models/').glob('*')) if not item.name.endswith(('.txt', '-np'))], key=str.lower)
+    if shared.args.flexgen:
+        return sorted([re.sub('-np$', '', item.name) for item in list(Path('models/').glob('*')) if item.name.endswith('-np')], key=str.lower)
+    else:
+        return sorted([item.name for item in list(Path('models/').glob('*')) if not item.name.endswith(('.txt', '-np'))], key=str.lower)
 
 def get_available_presets():
     return sorted(set(map(lambda x : '.'.join(str(x.name).split('.')[:-1]), Path('presets').glob('*.txt'))), key=str.lower)

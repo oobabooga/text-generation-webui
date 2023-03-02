@@ -1,6 +1,6 @@
 accelerate==0.16.0
 bitsandbytes==0.37.0
-flexgen==0.1.6
+flexgen==0.1.7
 gradio==3.18.0
 numpy
 rwkv==0.0.6
