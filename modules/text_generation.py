@@ -92,7 +92,7 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
                 reply = shared.model.generate(question, token_count=8, temperature=temperature, top_p=top_p)
                 yield formatted_outputs(reply, shared.model_name)
                 question = reply
-        return formatted_outputs(reply, shared.model_name)
+        return
 
     original_question = question
     if not (shared.args.chat or shared.args.cai_chat):
