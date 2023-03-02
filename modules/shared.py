@@ -22,12 +22,9 @@ settings = {
     'max_new_tokens': 200,
     'max_new_tokens_min': 1,
     'max_new_tokens_max': 2000,
-    'preset': 'NovelAI-Sphinx Moth',
     'name1': 'Person 1',
     'name2': 'Person 2',
     'context': 'This is a conversation between two people.',
-    'prompt': 'Common sense questions and answers\n\nQuestion: \nFactual answer:',
-    'prompt_gpt4chan': '-----\n--- 865467536\nInput text\n--- 865467537\n',
     'stop_at_newline': True,
     'chat_prompt_size': 2048,
     'chat_prompt_size_min': 0,
@@ -35,13 +32,23 @@ settings = {
     'chat_generation_attempts': 1,
     'chat_generation_attempts_min': 1,
     'chat_generation_attempts_max': 5,
-    'preset_pygmalion': 'Pygmalion',
     'name1_pygmalion': 'You',
     'name2_pygmalion': 'Kawaii',
     'context_pygmalion': "Kawaii's persona: Kawaii is a cheerful person who loves to make others smile. She is an optimist who loves to spread happiness and positivity wherever she goes.\n<START>",
     'stop_at_newline_pygmalion': False,
     'default_extensions': [],
     'chat_default_extensions': ["gallery"],
+    'presets': {
+        'default': 'NovelAI-Sphinx Moth',
+        'pygmalion-*': 'Pygmalion',
+        'RWKV-*': 'Naive',
+        '(rosey|chip|joi)_.*_instruct.*': 'Instruct Joi (Contrastive Search)'
+    },
+    'prompts': {
+        'default': 'Common sense questions and answers\n\nQuestion: \nFactual answer:',
+        '^(gpt4chan|gpt-4chan|4chan)': '-----\n--- 865467536\nInput text\n--- 865467537\n',
+        '(rosey|chip|joi)_.*_instruct.*': 'User: \n'
+    }
 }
 
 parser = argparse.ArgumentParser(formatter_class=lambda prog: argparse.HelpFormatter(prog,max_help_position=54))
