@@ -1,10 +1,7 @@
 import os
-import time
-import types
 from pathlib import Path
 
 import numpy as np
-import torch
 
 import modules.shared as shared
 
