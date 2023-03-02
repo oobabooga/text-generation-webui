@@ -102,8 +102,8 @@ def get_download_links_from_huggingface(model, branch):
         content = requests.get(f"{base}{page}").content
         dict = json.loads(content)
 
-        for i in range(len(dict['items'])):
-            fname = dict['items'][i]['path']
+        for i in range(len(dict)):
+            fname = dict[i]['path']
 
             is_pytorch = re.match("pytorch_model.*\.bin", fname)
             is_safetensors = re.match("model.*\.safetensors", fname)
@@ -123,7 +123,8 @@ def get_download_links_from_huggingface(model, branch):
                         has_pytorch = True
                         classifications.append('pytorch')
 
-        page = dict['nextUrl']
+        #page = dict['nextUrl']
+        page = None
 
     # If both pytorch and safetensors are available, download safetensors only
     if has_pytorch and has_safetensors:
