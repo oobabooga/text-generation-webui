@@ -139,7 +139,7 @@ def chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical
                 yield shared.history['visible']
             if next_character_found:
                 break
-        yield shared.history['visible']
+    yield shared.history['visible']
 
 def impersonate_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, chat_prompt_size, chat_generation_attempts=1):
     eos_token = '\n' if check else None
