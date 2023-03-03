@@ -70,7 +70,7 @@ class LLaMAModel:
         pass
 
     @classmethod
-    def from_pretrained(self, path, max_seq_len=512, max_batch_size=32):
+    def from_pretrained(self, path, max_seq_len=2048, max_batch_size=1):
         tokenizer_path = path / "tokenizer.model"
         path = os.path.abspath(path)
         tokenizer_path = os.path.abspath(tokenizer_path)
