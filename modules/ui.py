@@ -59,6 +59,9 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 .api-docs.svelte-1iguv9h.svelte-1iguv9h.svelte-1iguv9h {
     display: grid;
 }
+.pending.svelte-1ed2p3z {
+    opacity: 1;
+}
 """
 
 class ToolButton(gr.Button, gr.components.FormComponent):
