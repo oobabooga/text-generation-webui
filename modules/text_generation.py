@@ -21,7 +21,7 @@ def get_max_prompt_length(tokens):
     return max_length
 
 def encode(prompt, tokens_to_generate=0, add_special_tokens=True):
-    if shared.is_RWKV:
+    if shared.is_RWKV or shared.is_LLaMA:
         return prompt
 
     input_ids = shared.tokenizer.encode(str(prompt), return_tensors='pt', truncation=True, max_length=get_max_prompt_length(tokens_to_generate), add_special_tokens=add_special_tokens)
