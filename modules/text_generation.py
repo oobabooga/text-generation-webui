@@ -83,7 +83,7 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
     if not shared.args.cpu:
         torch.cuda.empty_cache()
 
-    if shared.is_RWKV:
+    if shared.is_RWKV or shared.is_LLaMA:
         if shared.args.no_stream:
             reply = shared.model.generate(question, token_count=max_new_tokens, temperature=temperature, top_p=top_p)
             yield formatted_outputs(reply, shared.model_name)
