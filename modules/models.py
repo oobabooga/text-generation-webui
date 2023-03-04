@@ -58,7 +58,7 @@ def load_model(model_name):
                         shared.args.percent[0], shared.args.percent[1],
                         shared.args.percent[2], shared.args.percent[3],
                         shared.args.percent[4], shared.args.percent[5],
-                        overlap=True, sep_layer=True, pin_weight=True,
+                        overlap=True, sep_layer=True, pin_weight=shared.args.pin_weight,
                         cpu_cache_compute=False, attn_sparsity=1.0,
                         compress_weight=shared.args.compress_weight,
                         comp_weight_config=CompressionConfig(
