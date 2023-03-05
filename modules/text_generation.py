@@ -115,7 +115,6 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
     input_ids = encode(question, max_new_tokens)
     cuda = "" if (shared.args.cpu or shared.args.deepspeed or shared.args.flexgen) else ".cuda()"
     n = shared.tokenizer.eos_token_id if eos_token is None else encode(eos_token)[0][-1]
-
     if stopping_string is not None:
         # The stopping_criteria code below was copied from
         # https://github.com/PygmalionAI/gradio-ui/blob/master/src/model.py
@@ -152,14 +151,12 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
             f"temperature={temperature}",
             f"stop={n}",
         ]
-
     if shared.args.deepspeed:
         generate_params.append("synced_gpus=True")
     if shared.args.no_stream:
         generate_params.append("max_new_tokens=max_new_tokens")
     else:
         generate_params.append("max_new_tokens=8")
-
     if shared.soft_prompt:
         inputs_embeds, filler_input_ids = generate_softprompt_input_tensors(input_ids)
         generate_params.insert(0, "inputs_embeds=inputs_embeds")
