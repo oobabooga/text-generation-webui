@@ -127,8 +127,8 @@ def chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical
 
             # Extracting the reply
             reply, next_character_found, substring_found = extract_message_from_reply(prompt, reply, name1, name2, check)
-            reply = re.sub("(<USER>|<user>|{{user}})", name1_original, reply)
-            visible_reply = apply_extensions(reply, "output")
+            visible_reply = re.sub("(<USER>|<user>|{{user}})", name1_original, reply)
+            visible_reply = apply_extensions(visible_reply, "output")
             if shared.args.chat:
                 visible_reply = visible_reply.replace('\n', '<br>')
 
