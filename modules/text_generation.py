@@ -81,11 +81,13 @@ def formatted_outputs(reply, model_name):
     else:
         return reply
 
-def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, eos_token=None, stopping_string=None):
+def clear_torch_cache():
     gc.collect()
     if not shared.args.cpu:
         torch.cuda.empty_cache()
 
+def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, eos_token=None, stopping_string=None):
+    clear_torch_cache()
     t0 = time.time()
 
     # These models are not part of Hugging Face, so we handle them
@@ -98,6 +100,7 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
             yield formatted_outputs(reply, shared.model_name)
         else:
             for i in tqdm(range(max_new_tokens//8+1)):
+                clear_torch_cache()
                 reply = shared.model.generate(question, token_count=8, temperature=temperature, top_p=top_p)
                 yield formatted_outputs(reply, shared.model_name)
                 question = reply
@@ -183,6 +186,8 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
     else:
         yield formatted_outputs(original_question, shared.model_name)
         for i in tqdm(range(max_new_tokens//8+1)):
+            clear_torch_cache()
+
             with torch.no_grad():
                 output = eval(f"shared.model.generate({', '.join(generate_params)}){cuda}")[0]
             if shared.soft_prompt:
