@@ -6,7 +6,6 @@ model_name = ""
 soft_prompt_tensor = None
 soft_prompt = False
 is_RWKV = False
-is_LLaMA = False
 
 # Chat variables
 history = {'internal': [], 'visible': []}
@@ -43,7 +42,6 @@ settings = {
         'default': 'NovelAI-Sphinx Moth',
         'pygmalion-*': 'Pygmalion',
         'RWKV-*': 'Naive',
-        'llama-*': 'Naive',
         '(rosey|chip|joi)_.*_instruct.*': 'Instruct Joi (Contrastive Search)'
     },
     'prompts': {
