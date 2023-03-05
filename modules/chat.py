@@ -51,23 +51,29 @@ def generate_chat_prompt(user_input, max_new_tokens, name1, name2, context, chat
     prompt = ''.join(rows)
     return prompt
 
-def extract_message_from_reply(question, reply, current, other, check, extensions=False):
+def extract_message_from_reply(question, reply, name1, name2, check, impersonate=False):
     next_character_found = False
     substring_found = False
 
-    previous_idx = [m.start() for m in re.finditer(f"(^|\n){re.escape(current)}:", question)]
-    idx = [m.start() for m in re.finditer(f"(^|\n){re.escape(current)}:", reply)]
-    idx = idx[len(previous_idx)-1]
+    asker = name1 if not impersonate else name2
+    replier = name2 if not impersonate else name1
 
-    if extensions:
-        reply = reply[idx + 1 + len(apply_extensions(f"{current}:", "bot_prefix")):]
+    previous_idx = [m.start() for m in re.finditer(f"(^|\n){re.escape(replier)}:", question)]
+    idx = [m.start() for m in re.finditer(f"(^|\n){re.escape(replier)}:", reply)]
+    idx = idx[max(len(previous_idx)-1, 0)]
+
+    if not impersonate:
+        reply = reply[idx + 1 + len(apply_extensions(f"{replier}:", "bot_prefix")):]
     else:
-        reply = reply[idx + 1 + len(f"{current}:"):]
+        reply = reply[idx + 1 + len(f"{replier}:"):]
 
     if check:
-        reply = reply.split('\n')[0].strip()
+        lines = reply.split('\n')
+        reply = lines[0].strip()
+        if len(lines) > 1:
+            next_character_found = True
     else:
-        idx = reply.find(f"\n{other}:")
+        idx = reply.find(f"\n{asker}:")
         if idx != -1:
             reply = reply[:idx]
             next_character_found = True
@@ -75,7 +81,7 @@ def extract_message_from_reply(question, reply, current, other, check, extension
 
         # Detect if something like "\nYo" is generated just before
         # "\nYou:" is completed
-        tmp = f"\n{other}:"
+        tmp = f"\n{asker}:"
         for j in range(1, len(tmp)):
             if reply[-j:] == tmp[:j]:
                 substring_found = True
@@ -89,6 +95,7 @@ def chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical
     shared.stop_everything = False
     just_started = True
     eos_token = '\n' if check else None
+    name1_original = name1
     if 'pygmalion' in shared.model_name.lower():
         name1 = "You"
 
@@ -119,7 +126,8 @@ def chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical
         for reply in generate_reply(f"{prompt}{' ' if len(reply) > 0 else ''}{reply}", max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, eos_token=eos_token, stopping_string=f"\n{name1}:"):
 
             # Extracting the reply
-            reply, next_character_found, substring_found = extract_message_from_reply(prompt, reply, name2, name1, check, extensions=True)
+            reply, next_character_found, substring_found = extract_message_from_reply(prompt, reply, name1, name2, check)
+            reply = re.sub("(<USER>|<user>|{{user}})", name1_original, reply)
             visible_reply = apply_extensions(reply, "output")
             if shared.args.chat:
                 visible_reply = visible_reply.replace('\n', '<br>')
@@ -139,6 +147,7 @@ def chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical
                 yield shared.history['visible']
             if next_character_found:
                 break
+
     yield shared.history['visible']
 
 def impersonate_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, chat_prompt_size, chat_generation_attempts=1):
@@ -152,7 +161,7 @@ def impersonate_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typ
     reply = ''
     for i in range(chat_generation_attempts):
         for reply in generate_reply(prompt+reply, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, eos_token=eos_token, stopping_string=f"\n{name2}:"):
-            reply, next_character_found, substring_found = extract_message_from_reply(prompt, reply, name1, name2, check, extensions=False)
+            reply, next_character_found, substring_found = extract_message_from_reply(prompt, reply, name1, name2, check, impersonate=True)
             if not substring_found:
                 yield reply
             if next_character_found:
