@@ -1,3 +1,10 @@
+'''
+
+Contributed by SagsMug. Thank you SagsMug.
+https://github.com/oobabooga/text-generation-webui/pull/175
+
+'''
+
 import string
 import random
 import websockets
