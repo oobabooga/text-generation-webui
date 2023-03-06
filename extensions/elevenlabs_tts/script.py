@@ -15,13 +15,14 @@ params = {
     'api_key': '12345',
     'selected_voice': 'None',
 }
+
 initial_voice = ['None']
 wav_idx = 0
 user = ElevenLabsUser(params['api_key'])
 user_info = None
 
 
-"Check if the API is valid and refresh the UI accordingly."
+# Check if the API is valid and refresh the UI accordingly.
 def check_valid_api():
     
     global user, user_info, params
@@ -38,7 +39,7 @@ def check_valid_api():
         print('Got an API Key!')
         return gr.update(value='Connected')
     
-"Once the API is verified, get the available voices and update the dropdown list"    
+# Once the API is verified, get the available voices and update the dropdown list
 def refresh_voices():
     
     global user, user_info
@@ -73,6 +74,7 @@ def output_modifier(string):
     """
     This function is applied to the model outputs.
     """
+
     global params, wav_idx, user, user_info
     
     if params['activate'] == False:
@@ -89,18 +91,17 @@ def output_modifier(string):
     if string == '':
         string = 'empty reply, try regenerating'
         
-    output_file = Path('extensions/elevenlabs_tts/outputs/{}.wav'.format(wav_idx))
+    output_file = Path(f'extensions/elevenlabs_tts/outputs/{wav_idx:06d}.wav'.format(wav_idx))
     voice = user.get_voices_by_name(params['selected_voice'])[0]
     audio_data = voice.generate_audio_bytes(string)
-    save_bytes_to_path("extensions/elevenlabs_tts/outputs/{}.wav".format(wav_idx), audio_data)
-
+    save_bytes_to_path(Path(f'extensions/elevenlabs_tts/outputs/{wav_idx:06d}.wav'), audio_data)
 
     string = f'<audio src="file/{output_file.as_posix()}" controls></audio>'
     wav_idx += 1
     return string
 
-
 def ui():
+
     # Gradio elements
     with gr.Row():
         activate = gr.Checkbox(value=params['activate'], label='Activate TTS')
@@ -109,10 +110,10 @@ def ui():
     with gr.Row():
         api_key = gr.Textbox(placeholder="Enter your API key.", label='API Key')
         connect = gr.Button(value='Connect')
+
     # Event functions to update the parameters in the backend
     activate.change(lambda x: params.update({'activate': x}), activate, None)
     voice.change(lambda x: params.update({'selected_voice': x}), voice, None)
     api_key.change(lambda x: params.update({'api_key': x}), api_key, None)
     connect.click(check_valid_api, [], connection_status)
     connect.click(refresh_voices, [], voice)
-
