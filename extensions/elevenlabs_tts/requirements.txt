@@ -1,0 +1,3 @@
+elevenlabslib
+soundfile
+sounddevice
