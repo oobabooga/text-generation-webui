@@ -4,6 +4,8 @@
 
 https://github.com/BlinkDL/RWKV-LM
 
+https://github.com/BlinkDL/ChatRWKV
+
 ## Using RWKV in the web UI
 
 #### 1. Download the model
