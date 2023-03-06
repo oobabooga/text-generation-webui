@@ -82,8 +82,8 @@ Models should be placed under `models/model-name`. For instance, `models/gpt-j-6
 * [Pythia](https://huggingface.co/models?search=eleutherai/pythia)
 * [OPT](https://huggingface.co/models?search=facebook/opt)
 * [GALACTICA](https://huggingface.co/models?search=facebook/galactica)
-* [\*-Erebus](https://huggingface.co/models?search=erebus)
-* [Pygmalion](https://huggingface.co/models?search=pygmalion)
+* [\*-Erebus](https://huggingface.co/models?search=erebus) (NSFW)
+* [Pygmalion](https://huggingface.co/models?search=pygmalion) (NSFW)
 
 You can automatically download a model from HF using the script `download-model.py`:
 
