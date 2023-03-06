@@ -34,7 +34,7 @@ As you would with any other model, for instance, with
 python server.py --listen  --no-stream --model RWKV-4-Pile-169M-20220807-8023.pth
 ```
 
-#### Setting a custom strategy
+## Setting a custom strategy
 
 It is possible to control the offloading strategy for the model with the `--rwkv-strategy` flag. Possible values include:
 
@@ -47,6 +47,6 @@ It is possible to control the offloading strategy for the model with the `--rwkv
 
 See the README of the PyPl package for more details: https://pypi.org/project/rwkv/
 
-#### Compiling the CUDA kernel
+## Compiling the CUDA kernel
 
 You can compile the CUDA kernel for the model with the `--rwkv-cuda-on` flag. This should improve the performance a lot but I haven't be able to get it to work yet.
