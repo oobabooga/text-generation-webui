@@ -79,11 +79,12 @@ def load_model(model_name):
 
     # RMKV model (not on HuggingFace)
     elif shared.is_RWKV:
-        from modules.RWKV import RWKVModel
+        from modules.RWKV import RWKVModel, RWKVTokenizer
 
         model = RWKVModel.from_pretrained(Path(f'models/{model_name}'), dtype="fp32" if shared.args.cpu else "bf16" if shared.args.bf16 else "fp16", device="cpu" if shared.args.cpu else "cuda")
+        tokenizer = RWKVTokenizer.from_pretrained(Path('models'))
 
-        return model, None
+        return model, tokenizer
 
     # Custom
     else:

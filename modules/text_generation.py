@@ -21,21 +21,19 @@ def get_max_prompt_length(tokens):
     return max_length
 
 def encode(prompt, tokens_to_generate=0, add_special_tokens=True):
-
-    # These models do not have explicit tokenizers for now, so
-    # we return an estimate for the number of tokens
     if shared.is_RWKV:
-        return np.zeros((1, len(prompt)//4))
-
-    input_ids = shared.tokenizer.encode(str(prompt), return_tensors='pt', truncation=True, max_length=get_max_prompt_length(tokens_to_generate), add_special_tokens=add_special_tokens)
-    if shared.args.cpu:
-        return input_ids
-    elif shared.args.flexgen:
-        return input_ids.numpy()
-    elif shared.args.deepspeed:
-        return input_ids.to(device=local_rank)
+        input_ids = shared.tokenizer.encode(str(prompt))
+        input_ids = np.array(input_ids).reshape(1, len(input_ids))
     else:
-        return input_ids.cuda()
+        input_ids = shared.tokenizer.encode(str(prompt), return_tensors='pt', truncation=True, max_length=get_max_prompt_length(tokens_to_generate), add_special_tokens=add_special_tokens)
+        if shared.args.cpu:
+            return input_ids
+        elif shared.args.flexgen:
+            return input_ids.numpy()
+        elif shared.args.deepspeed:
+            return input_ids.to(device=local_rank)
+        else:
+            return input_ids.cuda()
 
 def decode(output_ids):
     reply = shared.tokenizer.decode(output_ids, skip_special_tokens=True)
