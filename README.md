@@ -21,7 +21,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * Advanced chat features (send images, get audio responses with TTS).
 * Stream the text output in real time.
 * Load parameter presets from text files.
-* Load large models in 8-bit mode (see [here](https://github.com/oobabooga/text-generation-webui/issues/20#issuecomment-1411650652) and [here](https://www.reddit.com/r/PygmalionAI/comments/1115gom/running_pygmalion_6b_with_8gb_of_vram/) if you are on Windows).
+* Load large models in 8-bit mode (see [here](https://github.com/oobabooga/text-generation-webui/issues/147#issuecomment-1456040134), [here](https://github.com/oobabooga/text-generation-webui/issues/20#issuecomment-1411650652) and [here](https://www.reddit.com/r/PygmalionAI/comments/1115gom/running_pygmalion_6b_with_8gb_of_vram/) if you are on Windows).
 * Split large models across your GPU(s), CPU, and disk.
 * CPU mode.
 * [FlexGen offload](https://github.com/oobabooga/text-generation-webui/wiki/FlexGen).
