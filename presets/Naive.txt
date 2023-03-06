@@ -1,3 +1,3 @@
 do_sample=True
-top_p=0.95
-temperature=0.8
+top_p=0.85
+temperature=1
