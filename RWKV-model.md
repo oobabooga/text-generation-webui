@@ -4,7 +4,7 @@
 
 https://github.com/BlinkDL/RWKV-LM
 
-## Using RWKV in the web UI
+# Using RWKV in the web UI
 
 ### 1. Download the model
 
