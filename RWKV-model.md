@@ -39,24 +39,13 @@ python server.py --listen  --no-stream --model RWKV-4-Pile-169M-20220807-8023.pt
 It is possible to control the offloading strategy for the model with the `--rwkv-strategy` flag. Possible values include:
 
 ```
-"cpu fp32"
-"cuda fp16"
-"cuda fp16 *30 -> cpu fp32"
+"cpu fp32" # CPU mode
+"cuda fp16" # GPU mode with float16 precision
+"cuda fp16 *30 -> cpu fp32" # GPU+CPU offloading. The higher the number after *, the higher the GPU allocation.
+"cuda fp16i8" # GPU mode with 8-bit precision
 ```
 
-For instance,
-
-```
-python server.py --listen  --no-stream --rwkv-strategy "cuda fp16"
-```
-
-will run the model in the CPU, whereas
-
-```
-python server.py --listen  --no-stream --rwkv-strategy "cuda fp16 *30 -> cpu fp32"
-```
-
-will split the layers across the CPU and GPU. The higher the number (in this case, `30`), the more memory will be allocated to the GPU.
+See the README of the PyPl package for more details: https://pypi.org/project/rwkv/
 
 #### Compiling the CUDA kernel
 
