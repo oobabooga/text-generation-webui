@@ -113,7 +113,7 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
 
     input_ids = encode(question, max_new_tokens)
     cuda = "" if (shared.args.cpu or shared.args.deepspeed or shared.args.flexgen) else ".cuda()"
-    n = torch.tensor(shared.tokenizer.eos_token_id) if eos_token is None else encode(eos_token)[0][-1]
+    n = shared.tokenizer.eos_token_id if eos_token is None else int(encode(eos_token)[0][-1])
     if stopping_string is not None:
         # The stopping_criteria code below was copied from
         # https://github.com/PygmalionAI/gradio-ui/blob/master/src/model.py
@@ -195,7 +195,7 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
             yield formatted_outputs(reply, shared.model_name)
 
             if not shared.args.flexgen:
-                if output[-1].to("cpu") == n.to("cpu"):
+                if output[-1] == n:
                     break
                 input_ids = torch.reshape(output, (1, output.shape[0]))
             else:
