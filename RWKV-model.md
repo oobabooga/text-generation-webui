@@ -47,13 +47,13 @@ It is possible to control the offloading strategy for the model with the `--rwkv
 For instance,
 
 ```
-python server.py --listen  --no-stream --model RWKV-4-Pile-169M-20220807-8023.pth --rwkv-strategy "cuda fp16"
+python server.py --listen  --no-stream --rwkv-strategy "cuda fp16"
 ```
 
 will run the model in the CPU, whereas
 
 ```
-python server.py --listen  --no-stream --model RWKV-4-Pile-169M-20220807-8023.pth --rwkv-strategy "cuda fp16 *30 -> cpu fp32"
+python server.py --listen  --no-stream --rwkv-strategy "cuda fp16 *30 -> cpu fp32"
 ```
 
 will split the layers across the CPU and GPU. The higher the number (in this case, `30`), the more memory will be allocated to the GPU.
