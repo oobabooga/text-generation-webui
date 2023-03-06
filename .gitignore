@@ -1,6 +1,7 @@
 cache/*
 characters/*
 extensions/silero_tts/outputs/*
+extensions/elevenlabs/outputs/*
 logs/*
 models/*
 softprompts/*
