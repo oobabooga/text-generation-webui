@@ -49,4 +49,4 @@ See the README of the PyPl package for more details: https://pypi.org/project/rw
 
 #### Compiling the CUDA kernel
 
-WIP
+You can compile the CUDA kernel for the model with the `--rwkv-cuda-on` flag. This should improve the performance a lot but I haven't be able to get it to work yet.
