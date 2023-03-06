@@ -38,7 +38,7 @@ python server.py --listen  --no-stream --model RWKV-4-Pile-169M-20220807-8023.pt
 
 ## Setting a custom strategy
 
-It is possible to control the offloading and precision strategy for the model with the `--rwkv-strategy` flag. Possible values include:
+It is possible to have very fine control over the offloading and precision for the model with the `--rwkv-strategy` flag. Possible values include:
 
 ```
 "cpu fp32" # CPU mode
