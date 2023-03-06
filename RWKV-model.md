@@ -4,9 +4,9 @@
 
 https://github.com/BlinkDL/RWKV-LM
 
-# Using RWKV in the web UI
+## Using RWKV in the web UI
 
-### 1. Download the model
+#### 1. Download the model
 
 It is available in different sizes:
 
@@ -20,13 +20,13 @@ There are also older releases with smaller sizes like:
 
 Download the chosen .pth and put it directly in the `models` folder. 
 
-### 2. Download the tokenizer
+#### 2. Download the tokenizer
 
 And also put it directly in the `models` folder. Make sure to not rename it. It should be called `20B_tokenizer.json`.
 
 [20B_tokenizer.json](https://raw.githubusercontent.com/BlinkDL/ChatRWKV/main/v2/20B_tokenizer.json)
 
-### 3. Launch the web UI
+#### 3. Launch the web UI
 
 As you would with any other model, for instance with
 
@@ -34,7 +34,7 @@ As you would with any other model, for instance with
 python server.py --listen  --no-stream --model RWKV-4-Pile-169M-20220807-8023.pth
 ```
 
-### Setting a custom strategy
+#### Setting a custom strategy
 
 It is possible to control the offloading strategy for the model with the `--rwkv-strategy` flag. Possible values include:
 
@@ -58,6 +58,6 @@ python server.py --listen  --no-stream --model RWKV-4-Pile-169M-20220807-8023.pt
 
 will split the layers across the CPU and GPU. The higher the number (in this case, `30`), the more memory will be allocated to the GPU.
 
-### Compiling the CUDA kernel
+#### Compiling the CUDA kernel
 
 WIP
