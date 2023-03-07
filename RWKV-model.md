@@ -30,7 +30,7 @@ Also put it directly in the `models` folder. Make sure to not rename it. It shou
 
 #### 3. Launch the web UI
 
-As you would with any other model, for instance, with
+No additional steps are required. Just launch it as you would with any other model.
 
 ```
 python server.py --listen  --no-stream --model RWKV-4-Pile-169M-20220807-8023.pth
