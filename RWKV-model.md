@@ -47,7 +47,7 @@ It is possible to have very fine control over the offloading and precision for t
 "cuda fp16i8" # GPU mode with 8-bit precision
 ```
 
-See the README of the PyPl package for more details: https://pypi.org/project/rwkv/
+See the README for the PyPl package for more details: https://pypi.org/project/rwkv/
 
 ## Compiling the CUDA kernel
 
