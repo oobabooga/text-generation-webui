@@ -1,5 +1,7 @@
 import os
 from pathlib import Path
+from queue import Queue
+from threading import Thread
 
 import numpy as np
 from tokenizers import Tokenizer
@@ -33,7 +35,7 @@ class RWKVModel:
         result.pipeline = pipeline
         return result
 
-    def generate(self, context, token_count=20, temperature=1, top_p=1, top_k=50, alpha_frequency=0.1, alpha_presence=0.1, token_ban=[0], token_stop=[], callback=None):
+    def generate(self, context="", token_count=20, temperature=1, top_p=1, top_k=50, alpha_frequency=0.1, alpha_presence=0.1, token_ban=[0], token_stop=[], callback=None):
         args = PIPELINE_ARGS(
             temperature = temperature,
             top_p = top_p,
@@ -45,6 +47,13 @@ class RWKVModel:
         )
 
         return context+self.pipeline.generate(context, token_count=token_count, args=args, callback=callback)
+
+    def generate_with_streaming(self, **kwargs):
+        iterable = Iteratorize(self.generate, kwargs, callback=None)
+        reply = kwargs['context']
+        for token in iterable:
+            reply += token
+            yield reply
 
 class RWKVTokenizer:
     def __init__(self):
@@ -64,3 +73,38 @@ class RWKVTokenizer:
 
     def decode(self, ids):
         return self.tokenizer.decode(ids)
+
+class Iteratorize:
+
+    """
+    Transforms a function that takes a callback
+    into a lazy iterator (generator).
+    """
+
+    def __init__(self, func, kwargs={}, callback=None):
+        self.mfunc=func
+        self.c_callback=callback
+        self.q = Queue(maxsize=1)
+        self.sentinel = object()
+        self.kwargs = kwargs
+
+        def _callback(val):
+            self.q.put(val)
+
+        def gentask():
+            ret = self.mfunc(callback=_callback, **self.kwargs)
+            self.q.put(self.sentinel)
+            if self.c_callback:
+                self.c_callback(ret)
+
+        Thread(target=gentask).start()
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        obj = self.q.get(True,None)
+        if obj is self.sentinel:
+            raise StopIteration
+        else:
+            return obj

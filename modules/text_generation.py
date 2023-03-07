@@ -92,17 +92,17 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
     # separately and terminate the function call earlier
     if shared.is_RWKV:
         if shared.args.no_stream:
-            reply = shared.model.generate(question, token_count=max_new_tokens, temperature=temperature, top_p=top_p, top_k=top_k)
-            t1 = time.time()
-            print(f"Output generated in {(t1-t0):.2f} seconds.")
+            reply = shared.model.generate(context=question, token_count=max_new_tokens, temperature=temperature, top_p=top_p, top_k=top_k)
             yield formatted_outputs(reply, shared.model_name)
         else:
             yield formatted_outputs(question, shared.model_name)
-            for i in tqdm(range(max_new_tokens//8+1)):
-                clear_torch_cache()
-                reply = shared.model.generate(question, token_count=8, temperature=temperature, top_p=top_p, top_k=top_k)
+            # RWKV has proper streaming, which is very nice.
+            # No need to generate 8 tokens at a time.
+            for reply in shared.model.generate_with_streaming(context=question, token_count=max_new_tokens, temperature=temperature, top_p=top_p, top_k=top_k):
                 yield formatted_outputs(reply, shared.model_name)
-                question = reply
+
+        t1 = time.time()
+        print(f"Output generated in {(t1-t0):.2f} seconds.")
         return
 
     original_question = question
