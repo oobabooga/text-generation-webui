@@ -5,11 +5,13 @@ https://github.com/oobabooga/text-generation-webui/pull/175
 
 '''
 
-import string
-import random
-import websockets
-import json
 import asyncio
+import json
+import random
+import string
+
+import websockets
+
 
 def random_hash():
     letters = string.ascii_lowercase + string.digits
