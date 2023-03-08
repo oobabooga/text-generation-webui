@@ -62,7 +62,7 @@ def remove_surrounded_chars(string):
             new_string += char
     return new_string
 
-def input_modifier(string):
+def input_modifier(string, additional_params={}):
     """
     This function is applied to your text inputs before
     they are fed into the model.
@@ -70,7 +70,7 @@ def input_modifier(string):
 
     return string
 
-def output_modifier(string):
+def output_modifier(string, additional_params={}):
     """
     This function is applied to the model outputs.
     """

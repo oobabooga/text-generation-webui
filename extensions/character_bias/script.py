@@ -5,7 +5,7 @@ params = {
     "bias string": " *I am so happy*",
 }
 
-def input_modifier(string):
+def input_modifier(string, additional_params={}):
     """
     This function is applied to your text inputs before
     they are fed into the model.
@@ -13,14 +13,14 @@ def input_modifier(string):
 
     return string
 
-def output_modifier(string):
+def output_modifier(string, additional_params={}):
     """
     This function is applied to the model outputs.
     """
 
     return string
 
-def bot_prefix_modifier(string):
+def bot_prefix_modifier(string, additional_params={}):
     """
     This function is only applied in chat mode. It modifies
     the prefix text for the Bot and can be used to bias its

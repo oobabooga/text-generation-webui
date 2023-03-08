@@ -172,7 +172,7 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
 
         reply = decode(output)
         if not (shared.args.chat or shared.args.cai_chat):
-            reply = original_question + apply_extensions(reply[len(question):], "output")
+            reply = original_question + apply_extensions(reply[len(question):], "output", {"is_final_output": True })
 
         t1 = time.time()
         print(f"Output generated in {(t1-t0):.2f} seconds ({(len(output)-len(input_ids[0]))/(t1-t0)/8:.2f} it/s, {len(output)-len(input_ids[0])} tokens)")
@@ -191,7 +191,7 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
 
             reply = decode(output)
             if not (shared.args.chat or shared.args.cai_chat):
-                reply = original_question + apply_extensions(reply[len(question):], "output")
+                reply = original_question + apply_extensions(reply[len(question):], "output", { "max_new_tokens": max_new_tokens, "num_tokens_generated": len(output)-len(input_ids[0])})
             yield formatted_outputs(reply, shared.model_name)
 
             if not shared.args.flexgen:

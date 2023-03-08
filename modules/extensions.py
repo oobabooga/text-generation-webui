@@ -20,14 +20,18 @@ def iterator():
             yield eval(f"extensions.{name}.script"), name
 
 # Extension functions that map string -> string
-def apply_extensions(text, typ):
+def apply_extensions(text, typ, additional_params={}):
     for extension, _ in iterator():
         if typ == "input" and hasattr(extension, "input_modifier"):
-            text = extension.input_modifier(text)
+            text = extension.input_modifier(text, additional_params)
         elif typ == "output" and hasattr(extension, "output_modifier"):
-            text = extension.output_modifier(text)
+            text = extension.output_modifier(text, additional_params)
         elif typ == "bot_prefix" and hasattr(extension, "bot_prefix_modifier"):
-            text = extension.bot_prefix_modifier(text)
+            text = extension.bot_prefix_modifier(text, additional_params)
+        elif typ == "load_history" and hasattr(extension, "load_history_modifier"):
+            text = extension.load_history_modifier(text, additional_params)
+        elif typ == "load_visible_history" and hasattr(extension, "load_visible_history_modifier"):
+            text = extension.load_visible_history_modifier(text, additional_params)
     return text
 
 def create_extensions_block():

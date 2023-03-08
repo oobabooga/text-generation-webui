@@ -318,6 +318,9 @@ def load_history(file, name1, name2):
     except:
         shared.history['internal'] = tokenize_dialogue(file, name1, name2)
         shared.history['visible'] = copy.deepcopy(shared.history['internal'])
+    # Run through extensions
+    shared.history['internal'] = apply_extensions(shared.history['internal'], "load_history")
+    shared.history['visible'] = apply_extensions(shared.history['visible'], "load_visible_history")
 
 def load_default_history(name1, name2):
     if Path('logs/persistent.json').exists():
@@ -345,7 +348,7 @@ def load_character(_character, name1, name2):
             context += f"{data['example_dialogue'].strip()}\n"
         if 'char_greeting' in data and len(data['char_greeting'].strip()) > 0:
             shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', data['char_greeting']]]
-            shared.history['visible'] += [['', apply_extensions(data['char_greeting'], "output")]]
+            shared.history['visible'] += [['', apply_extensions(data['char_greeting'], "output"), {"is_final_output": True}]]
         else:
             shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', "Hello there!"]]
             shared.history['visible'] += [['', "Hello there!"]]
