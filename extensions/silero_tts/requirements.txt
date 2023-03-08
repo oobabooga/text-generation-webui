@@ -4,3 +4,4 @@ pydub
 PyYAML
 torch
 torchaudio
+simpleaudio

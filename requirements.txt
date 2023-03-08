@@ -6,3 +6,4 @@ numpy
 rwkv==0.0.6
 safetensors==0.2.8
 git+https://github.com/huggingface/transformers
+tensorboard

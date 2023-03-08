@@ -182,6 +182,7 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
     # Generate the reply 8 tokens at a time
     else:
         yield formatted_outputs(original_question, shared.model_name)
+        shared.still_streaming = True
         for i in tqdm(range(max_new_tokens//8+1)):
             with torch.no_grad():
                 output = eval(f"shared.model.generate({', '.join(generate_params)}){cuda}")[0]
@@ -191,8 +192,7 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
             reply = decode(output)
             if not (shared.args.chat or shared.args.cai_chat):
                 reply = original_question + apply_extensions(reply[len(question):], "output")
-            yield formatted_outputs(reply, shared.model_name)
-
+            
             if not shared.args.flexgen:
                 if output[-1] == n:
                     break
@@ -201,6 +201,13 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
                 if np.count_nonzero(input_ids[0] == n) < np.count_nonzero(output == n):
                     break
                 input_ids = np.reshape(output, (1, output.shape[0]))
+                
+            #Mid-stream yield, ran if no breaks
+            yield formatted_outputs(reply, shared.model_name)
 
             if shared.soft_prompt:
                 inputs_embeds, filler_input_ids = generate_softprompt_input_tensors(input_ids)
+                
+        #Stream finished from max tokens or break. Do final yield.
+        shared.still_streaming = False
+        yield formatted_outputs(reply, shared.model_name)

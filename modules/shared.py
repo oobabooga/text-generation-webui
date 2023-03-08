@@ -12,6 +12,7 @@ is_LLaMA = False
 history = {'internal': [], 'visible': []}
 character = 'None'
 stop_everything = False
+still_streaming = False
 
 # UI elements (buttons, sliders, HTML, etc)
 gradio = {}
