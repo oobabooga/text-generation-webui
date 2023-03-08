@@ -20,7 +20,7 @@ There are also older releases with smaller sizes like:
 
 * https://huggingface.co/BlinkDL/rwkv-4-pile-169m/resolve/main/RWKV-4-Pile-169M-20220807-8023.pth
 
-Download the chosen .pth and put it directly in the `models` folder. 
+Download the chosen `.pth` and put it directly in the `models` folder. 
 
 #### 2. Download the tokenizer
 
