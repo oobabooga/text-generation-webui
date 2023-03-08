@@ -22,8 +22,14 @@ if (shared.args.chat or shared.args.cai_chat) and not shared.args.no_stream:
     print('Warning: chat mode currently becomes somewhat slower with text streaming on.\nConsider starting the web UI with the --no-stream option.\n')
     
 # Loading custom settings
+settings_file = None
 if shared.args.settings is not None and Path(shared.args.settings).exists():
-    new_settings = json.loads(open(Path(shared.args.settings), 'r').read())
+    settings_file = Path(shared.args.settings)
+elif Path('settings.json').exists():
+    settings_file = Path('settings.json')
+if settings_file is not None:
+    print(f"Loading settings from {settings_file}...")
+    new_settings = json.loads(open(settings_file, 'r').read())
     for item in new_settings:
         shared.settings[item] = new_settings[item]
 

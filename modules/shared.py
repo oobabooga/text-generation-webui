@@ -6,7 +6,6 @@ model_name = ""
 soft_prompt_tensor = None
 soft_prompt = False
 is_RWKV = False
-is_LLaMA = False
 
 # Chat variables
 history = {'internal': [], 'visible': []}
@@ -44,7 +43,6 @@ settings = {
         'default': 'NovelAI-Sphinx Moth',
         'pygmalion-*': 'Pygmalion',
         'RWKV-*': 'Naive',
-        'llama-*': 'Naive',
         '(rosey|chip|joi)_.*_instruct.*': 'Instruct Joi (Contrastive Search)'
     },
     'prompts': {
@@ -84,9 +82,10 @@ parser.add_argument("--pin-weight", type=str2bool, nargs="?", const=True, defaul
 parser.add_argument('--deepspeed', action='store_true', help='Enable the use of DeepSpeed ZeRO-3 for inference via the Transformers integration.')
 parser.add_argument('--nvme-offload-dir', type=str, help='DeepSpeed: Directory to use for ZeRO-3 NVME offloading.')
 parser.add_argument('--local_rank', type=int, default=0, help='DeepSpeed: Optional argument for distributed setups.')
-parser.add_argument('--rwkv-strategy', type=str, default=None, help='The strategy to use while loading RWKV models. Examples: "cpu fp32", "cuda fp16", "cuda fp16 *30 -> cpu fp32".')
+parser.add_argument('--rwkv-strategy', type=str, default=None, help='RWKV: The strategy to use while loading the model. Examples: "cpu fp32", "cuda fp16", "cuda fp16i8".')
+parser.add_argument('--rwkv-cuda-on', action='store_true', help='RWKV: Compile the CUDA kernel for better performance.')
 parser.add_argument('--no-stream', action='store_true', help='Don\'t stream the text output in real time. This improves the text generation performance.')
-parser.add_argument('--settings', type=str, help='Load the default interface settings from this json file. See settings-template.json for an example.')
+parser.add_argument('--settings', type=str, help='Load the default interface settings from this json file. See settings-template.json for an example. If you create a file called settings.json, this file will be loaded by default without the need to use the --settings flag.')
 parser.add_argument('--extensions', type=str, nargs="+", help='The list of extensions to load. If you want to load more than one extension, write the names separated by spaces.')
 parser.add_argument('--listen', action='store_true', help='Make the web UI reachable from your local network.')
 parser.add_argument('--listen-port', type=int, help='The listening port that the server will use.')

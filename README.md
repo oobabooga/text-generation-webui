@@ -21,12 +21,13 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * Advanced chat features (send images, get audio responses with TTS).
 * Stream the text output in real time.
 * Load parameter presets from text files.
-* Load large models in 8-bit mode (see [here](https://github.com/oobabooga/text-generation-webui/issues/20#issuecomment-1411650652) and [here](https://www.reddit.com/r/PygmalionAI/comments/1115gom/running_pygmalion_6b_with_8gb_of_vram/) if you are on Windows).
+* Load large models in 8-bit mode (see [here](https://github.com/oobabooga/text-generation-webui/issues/147#issuecomment-1456040134), [here](https://github.com/oobabooga/text-generation-webui/issues/20#issuecomment-1411650652) and [here](https://www.reddit.com/r/PygmalionAI/comments/1115gom/running_pygmalion_6b_with_8gb_of_vram/) if you are on Windows).
 * Split large models across your GPU(s), CPU, and disk.
 * CPU mode.
 * [FlexGen offload](https://github.com/oobabooga/text-generation-webui/wiki/FlexGen).
 * [DeepSpeed ZeRO-3 offload](https://github.com/oobabooga/text-generation-webui/wiki/DeepSpeed).
-* [Get responses via API](https://github.com/oobabooga/text-generation-webui/blob/main/api-example.py).
+* Get responses via API, [with](https://github.com/oobabooga/text-generation-webui/blob/main/api-example-streaming.py) or [without](https://github.com/oobabooga/text-generation-webui/blob/main/api-example.py) streaming.
+* [Supports the RWKV model](https://github.com/oobabooga/text-generation-webui/wiki/RWKV-model).
 * Supports softprompts.
 * [Supports extensions](https://github.com/oobabooga/text-generation-webui/wiki/Extensions).
 * [Works on Google Colab](https://github.com/oobabooga/text-generation-webui/wiki/Running-on-Colab).
@@ -82,8 +83,8 @@ Models should be placed under `models/model-name`. For instance, `models/gpt-j-6
 * [Pythia](https://huggingface.co/models?search=eleutherai/pythia)
 * [OPT](https://huggingface.co/models?search=facebook/opt)
 * [GALACTICA](https://huggingface.co/models?search=facebook/galactica)
-* [\*-Erebus](https://huggingface.co/models?search=erebus)
-* [Pygmalion](https://huggingface.co/models?search=pygmalion)
+* [\*-Erebus](https://huggingface.co/models?search=erebus) (NSFW)
+* [Pygmalion](https://huggingface.co/models?search=pygmalion) (NSFW)
 
 You can automatically download a model from HF using the script `download-model.py`:
 
@@ -149,9 +150,10 @@ Optionally, you can use the following command-line flags:
 | `--deepspeed`    | Enable the use of DeepSpeed ZeRO-3 for inference via the Transformers integration. |
 | `--nvme-offload-dir NVME_OFFLOAD_DIR`    | DeepSpeed: Directory to use for ZeRO-3 NVME offloading. |
 | `--local_rank LOCAL_RANK`    | DeepSpeed: Optional argument for distributed setups. |
-| `--rwkv-strategy RWKV_STRATEGY`         |    The strategy to use while loading RWKV models. Examples: `"cpu fp32"`, `"cuda fp16"`, `"cuda fp16 *30 -> cpu fp32"`. |
+|  `--rwkv-strategy RWKV_STRATEGY`         |    RWKV: The strategy to use while loading the model. Examples: "cpu fp32", "cuda fp16", "cuda fp16i8". |
+|  `--rwkv-cuda-on`                        |   RWKV: Compile the CUDA kernel for better performance. |
 | `--no-stream`   | Don't stream the text output in real time. This improves the text generation performance.|
-| `--settings SETTINGS_FILE` | Load the default interface settings from this json file. See `settings-template.json` for an example.|
+| `--settings SETTINGS_FILE` | Load the default interface settings from this json file. See `settings-template.json` for an example. If you create a file called `settings.json`, this file will be loaded by default without the need to use the `--settings` flag.|
 |  `--extensions EXTENSIONS [EXTENSIONS ...]` |  The list of extensions to load. If you want to load more than one extension, write the names separated by spaces. |
 | `--listen`   | Make the web UI reachable from your local network.|
 |  `--listen-port LISTEN_PORT` | The listening port that the server will use. |

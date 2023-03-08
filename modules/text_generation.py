@@ -21,21 +21,20 @@ def get_max_prompt_length(tokens):
     return max_length
 
 def encode(prompt, tokens_to_generate=0, add_special_tokens=True):
-
-    # These models do not have explicit tokenizers for now, so
-    # we return an estimate for the number of tokens
-    if shared.is_RWKV or shared.is_LLaMA:
-        return np.zeros((1, len(prompt)//4))
-
-    input_ids = shared.tokenizer.encode(str(prompt), return_tensors='pt', truncation=True, max_length=get_max_prompt_length(tokens_to_generate), add_special_tokens=add_special_tokens)
-    if shared.args.cpu:
+    if shared.is_RWKV:
+        input_ids = shared.tokenizer.encode(str(prompt))
+        input_ids = np.array(input_ids).reshape(1, len(input_ids))
         return input_ids
-    elif shared.args.flexgen:
-        return input_ids.numpy()
-    elif shared.args.deepspeed:
-        return input_ids.to(device=local_rank)
     else:
-        return input_ids.cuda()
+        input_ids = shared.tokenizer.encode(str(prompt), return_tensors='pt', truncation=True, max_length=get_max_prompt_length(tokens_to_generate), add_special_tokens=add_special_tokens)
+        if shared.args.cpu:
+            return input_ids
+        elif shared.args.flexgen:
+            return input_ids.numpy()
+        elif shared.args.deepspeed:
+            return input_ids.to(device=local_rank)
+        else:
+            return input_ids.cuda()
 
 def decode(output_ids):
     reply = shared.tokenizer.decode(output_ids, skip_special_tokens=True)
@@ -81,26 +80,30 @@ def formatted_outputs(reply, model_name):
     else:
         return reply
 
-def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, eos_token=None, stopping_string=None):
+def clear_torch_cache():
     gc.collect()
     if not shared.args.cpu:
         torch.cuda.empty_cache()
 
+def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, eos_token=None, stopping_string=None):
+    clear_torch_cache()
     t0 = time.time()
 
     # These models are not part of Hugging Face, so we handle them
     # separately and terminate the function call earlier
-    if shared.is_RWKV or shared.is_LLaMA:
+    if shared.is_RWKV:
         if shared.args.no_stream:
-            reply = shared.model.generate(question, token_count=max_new_tokens, temperature=temperature, top_p=top_p)
-            t1 = time.time()
-            print(f"Output generated in {(t1-t0):.2f} seconds.")
+            reply = shared.model.generate(context=question, token_count=max_new_tokens, temperature=temperature, top_p=top_p, top_k=top_k)
             yield formatted_outputs(reply, shared.model_name)
         else:
-            for i in tqdm(range(max_new_tokens//8+1)):
-                reply = shared.model.generate(question, token_count=8, temperature=temperature, top_p=top_p)
+            yield formatted_outputs(question, shared.model_name)
+            # RWKV has proper streaming, which is very nice.
+            # No need to generate 8 tokens at a time.
+            for reply in shared.model.generate_with_streaming(context=question, token_count=max_new_tokens, temperature=temperature, top_p=top_p, top_k=top_k):
                 yield formatted_outputs(reply, shared.model_name)
-                question = reply
+
+        t1 = time.time()
+        print(f"Output generated in {(t1-t0):.2f} seconds.")
         return
 
     original_question = question
@@ -111,8 +114,7 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
 
     input_ids = encode(question, max_new_tokens)
     cuda = "" if (shared.args.cpu or shared.args.deepspeed or shared.args.flexgen) else ".cuda()"
-    n = shared.tokenizer.eos_token_id if eos_token is None else encode(eos_token)[0][-1]
-
+    n = shared.tokenizer.eos_token_id if eos_token is None else int(encode(eos_token)[0][-1])
     if stopping_string is not None:
         # The stopping_criteria code below was copied from
         # https://github.com/PygmalionAI/gradio-ui/blob/master/src/model.py
@@ -149,14 +151,12 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
             f"temperature={temperature}",
             f"stop={n}",
         ]
-
     if shared.args.deepspeed:
         generate_params.append("synced_gpus=True")
     if shared.args.no_stream:
         generate_params.append("max_new_tokens=max_new_tokens")
     else:
         generate_params.append("max_new_tokens=8")
-
     if shared.soft_prompt:
         inputs_embeds, filler_input_ids = generate_softprompt_input_tensors(input_ids)
         generate_params.insert(0, "inputs_embeds=inputs_embeds")
@@ -184,6 +184,8 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
         yield formatted_outputs(original_question, shared.model_name)
         shared.still_streaming = True
         for i in tqdm(range(max_new_tokens//8+1)):
+            clear_torch_cache()
+
             with torch.no_grad():
                 output = eval(f"shared.model.generate({', '.join(generate_params)}){cuda}")[0]
             if shared.soft_prompt:
