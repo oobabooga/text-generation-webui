@@ -195,8 +195,8 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
         for output in eval(f"generate_with_streaming({', '.join(generate_params)})"):
             if shared.soft_prompt:
                 output = torch.cat((input_ids[0], output[filler_input_ids.shape[1]:]))
-
             reply = decode(output)
+
             if not (shared.args.chat or shared.args.cai_chat):
                 reply = original_question + apply_extensions(reply[len(question):], "output")
             yield formatted_outputs(reply, shared.model_name)
@@ -213,16 +213,16 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
                 output = eval(f"shared.model.generate({', '.join(generate_params)})")[0]
             if shared.soft_prompt:
                 output = torch.cat((input_ids[0], output[filler_input_ids.shape[1]:]))
-
             reply = decode(output)
+
             if not (shared.args.chat or shared.args.cai_chat):
                 reply = original_question + apply_extensions(reply[len(question):], "output")
             yield formatted_outputs(reply, shared.model_name)
 
             if np.count_nonzero(input_ids[0] == n) < np.count_nonzero(output == n):
                 break
-            input_ids = np.reshape(output, (1, output.shape[0]))
 
+            input_ids = np.reshape(output, (1, output.shape[0]))
             if shared.soft_prompt:
                 inputs_embeds, filler_input_ids = generate_softprompt_input_tensors(input_ids)
 
