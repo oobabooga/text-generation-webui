@@ -115,7 +115,8 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
         print(f"\n\n{question}\n--------------------\n")
 
     input_ids = encode(question, max_new_tokens)
-    original_input_ids = output = input_ids
+    original_input_ids = input_ids
+    output = input_ids[0]
     cuda = "" if (shared.args.cpu or shared.args.deepspeed or shared.args.flexgen) else ".cuda()"
     n = shared.tokenizer.eos_token_id if eos_token is None else int(encode(eos_token)[0][-1])
     if stopping_string is not None:
@@ -186,7 +187,8 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
             if 'stopping_criteria' not in kwargs:
                 kwargs['stopping_criteria'] = []
             kwargs['stopping_criteria'].append(Stream(callback_func=callback))
-            shared.model.generate(**kwargs)[0]
+            clear_torch_cache()
+            shared.model.generate(**kwargs)
 
         def generate_with_streaming(**kwargs):
             return Iteratorize(generate_with_callback, kwargs, callback=None)
@@ -208,7 +210,6 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
     else:
         for i in range(max_new_tokens//8+1):
             clear_torch_cache()
-
             with torch.no_grad():
                 output = eval(f"shared.model.generate({', '.join(generate_params)})")[0]
             if shared.soft_prompt:
