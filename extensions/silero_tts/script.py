@@ -1,4 +1,3 @@
-import asyncio
 from pathlib import Path
 
 import gradio as gr
@@ -68,7 +67,7 @@ def output_modifier(string):
         string = 'empty reply, try regenerating'
 
     output_file = Path(f'extensions/silero_tts/outputs/{wav_idx:06d}.wav')
-    audio = model.save_wav(text=string, speaker=params['speaker'], sample_rate=int(params['sample_rate']), audio_path=str(output_file))
+    model.save_wav(text=string, speaker=params['speaker'], sample_rate=int(params['sample_rate']), audio_path=str(output_file))
 
     string = f'<audio src="file/{output_file.as_posix()}" controls></audio>'
     wav_idx += 1
