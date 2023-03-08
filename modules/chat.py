@@ -123,6 +123,7 @@ def chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical
     # Generate
     reply = ''
     for i in range(chat_generation_attempts):
+        visible_reply = None
         for reply in generate_reply(f"{prompt}{' ' if len(reply) > 0 else ''}{reply}", max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, eos_token=eos_token, stopping_string=f"\n{name1}:"):
 
             # Extracting the reply
@@ -147,6 +148,11 @@ def chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical
                 yield shared.history['visible']
             if next_character_found:
                 break
+        if not visible_reply is None:
+            visible_reply = apply_extensions(visible_reply, "output", {
+                "is_final_output": True,
+            })
+            shared.history['visible'][-1] = [visible_text, visible_reply]
 
     yield shared.history['visible']
 

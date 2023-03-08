@@ -8,6 +8,7 @@ torch._C._jit_set_profiling_mode(False)
 
 params = {
     'activate': True,
+    'autoplay': True,
     'speaker': 'en_56',
     'language': 'en',
     'model_id': 'v3_en',
@@ -19,7 +20,7 @@ voices_by_gender = ['en_99', 'en_45', 'en_18', 'en_117', 'en_49', 'en_51', 'en_6
 wav_idx = 0
 
 def load_model():
-    model, example_text = torch.hub.load(repo_or_dir='snakers4/silero-models', model='silero_tts', language=params['language'], speaker=params['model_id'])
+    model, _ = torch.hub.load(repo_or_dir='snakers4/silero-models', model='silero_tts', language=params['language'], speaker=params['model_id'])
     model.to(params['device'])
     return model
 model = load_model()
@@ -66,16 +67,56 @@ def output_modifier(string, additional_params={}):
 
     if string == '':
         string = 'empty reply, try regenerating'
+        return string
 
     output_file = Path(f'extensions/silero_tts/outputs/{wav_idx:06d}.wav')
-    audio = model.save_wav(text=string, speaker=params['speaker'], sample_rate=int(params['sample_rate']), audio_path=str(output_file))
 
-    string = f'<audio src="file/{output_file.as_posix()}" controls></audio>'
-    wav_idx += 1
+    # If this is not the final output, don't generate audio
+    if "is_final_output" not in additional_params or additional_params["is_final_output"] == False:
+        return string
+
+    # filter out all non-ascii characters
+    filtered_string = ''.join([i if ord(i) < 128 else ' ' for i in string])
+    if len(filtered_string) != 0:
+        generate_audio(filtered_string, output_file)
+        wav_idx += 1
+
+        autoplay = 'autoplay' if params['autoplay'] else ''
+        string += f'<br><br><audio src="file/{output_file.as_posix()}" controls {autoplay}></audio>'
 
     return string
 
-def bot_prefix_modifier(string):
+def load_visible_history_modifier(text: list[list[str]], additional_params={}):
+    """
+    This function is applied to the text in the visible history
+    before it is displayed.
+    """
+
+    for idx, block in enumerate(text):
+        # Remove autoplay from audio tags
+        for i, line in enumerate(block):
+            block[i] = line.replace('controls autoplay>', 'controls>')
+        text[idx] = block
+
+    return text
+
+
+
+def generate_audio(string, output_file):
+    """
+    This function is used to save the audio in the background.
+    """
+
+    # Remove starting dots as they cause issues with the TTS
+    while string[0] == '.': string = string[1:]
+
+    model.save_wav(text=string, speaker=params['speaker'], sample_rate=int(
+        params['sample_rate']), audio_path=str(output_file))
+    # Play the audio stream
+    # audio_stream = model
+    #     text=string, speaker=params['speaker'], sample_rate=int(params['sample_rate']))
+
+def bot_prefix_modifier(string, additional_params={}):
     """
     This function is only applied in chat mode. It modifies
     the prefix text for the Bot and can be used to bias its
