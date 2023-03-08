@@ -93,11 +93,11 @@ def output_modifier(string):
     string ='<speak>'+prosody+xmlesc(string)+'</prosody></speak>'
         
     output_file = Path(f'extensions/silero_tts/outputs/{wav_idx:06d}.wav')
-    model.save_wav(text=string, speaker=params['speaker'], sample_rate=int(params['sample_rate']), audio_path=str(output_file))
+    model.save_wav(ssml_text=string, speaker=params['speaker'], sample_rate=int(params['sample_rate']), audio_path=str(output_file))
     string = f'<audio src="file/{output_file.as_posix()}" controls></audio>'
     
     #reset if too many wavs. set max to -1 for unlimited.
-    if wav_idx < params['max_wavs'] and params['max_wavs'] > 0:
+    if wav_idx < params['max_wavs'] or params['max_wavs'] < 0:
         #only increment if starting a new stream, else replace during streaming. Does not update duration on webui sometimes?
         if not shared.still_streaming:
             wav_idx += 1
