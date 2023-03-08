@@ -5,13 +5,13 @@ import time
 import numpy as np
 import torch
 import transformers
-from tqdm import tqdm
 
 import modules.shared as shared
+from modules.callbacks import (Iteratorize, Stream,
+                               _SentinelTokenStoppingCriteria)
 from modules.extensions import apply_extensions
 from modules.html_generator import generate_4chan_html, generate_basic_html
 from modules.models import local_rank
-from modules.stopping_criteria import _SentinelTokenStoppingCriteria
 
 
 def get_max_prompt_length(tokens):
@@ -103,7 +103,9 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
                 yield formatted_outputs(reply, shared.model_name)
 
         t1 = time.time()
-        print(f"Output generated in {(t1-t0):.2f} seconds.")
+        output = encode(reply)[0]
+        input_ids = encode(question)
+        print(f"Output generated in {(t1-t0):.2f} seconds ({(len(output)-len(input_ids[0]))/(t1-t0):.2f} tokens/s, {len(output)-len(input_ids[0])} tokens)")
         return
 
     original_question = question
@@ -113,6 +115,7 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
         print(f"\n\n{question}\n--------------------\n")
 
     input_ids = encode(question, max_new_tokens)
+    original_input_ids = input_ids
     cuda = "" if (shared.args.cpu or shared.args.deepspeed or shared.args.flexgen) else ".cuda()"
     n = shared.tokenizer.eos_token_id if eos_token is None else int(encode(eos_token)[0][-1])
     if stopping_string is not None:
@@ -126,10 +129,11 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
             )
         ])
     else:
-        stopping_criteria_list = None
+        stopping_criteria_list = []
 
     if not shared.args.flexgen:
         generate_params = [
+            f"max_new_tokens=max_new_tokens",
             f"eos_token_id={n}",
             f"stopping_criteria=stopping_criteria_list",
             f"do_sample={do_sample}",
@@ -147,24 +151,21 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
         ]
     else:
         generate_params = [
+            f"max_new_tokens={max_new_tokens if shared.args.no_stream else 8}",
             f"do_sample={do_sample}",
             f"temperature={temperature}",
             f"stop={n}",
         ]
     if shared.args.deepspeed:
         generate_params.append("synced_gpus=True")
-    if shared.args.no_stream:
-        generate_params.append("max_new_tokens=max_new_tokens")
-    else:
-        generate_params.append("max_new_tokens=8")
     if shared.soft_prompt:
         inputs_embeds, filler_input_ids = generate_softprompt_input_tensors(input_ids)
         generate_params.insert(0, "inputs_embeds=inputs_embeds")
-        generate_params.insert(0, "filler_input_ids")
+        generate_params.insert(0, "inputs=filler_input_ids")
     else:
-        generate_params.insert(0, "input_ids")
+        generate_params.insert(0, "inputs=input_ids")
 
-    # Generate the entire reply at once
+    # Generate the entire reply at once.
     if shared.args.no_stream:
         with torch.no_grad():
             output = eval(f"shared.model.generate({', '.join(generate_params)}){cuda}")[0]
@@ -175,18 +176,45 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
         if not (shared.args.chat or shared.args.cai_chat):
             reply = original_question + apply_extensions(reply[len(question):], "output")
 
-        t1 = time.time()
-        print(f"Output generated in {(t1-t0):.2f} seconds ({(len(output)-len(input_ids[0]))/(t1-t0)/8:.2f} it/s, {len(output)-len(input_ids[0])} tokens)")
         yield formatted_outputs(reply, shared.model_name)
 
-    # Generate the reply 8 tokens at a time
-    else:
+    # Stream the reply 1 token at a time.
+    # This is based on the trick of using 'stopping_criteria' to create an iterator.
+    elif not shared.args.flexgen:
+
+        def generate_with_callback(callback=None, **kwargs):
+            if 'stopping_criteria' not in kwargs:
+                kwargs['stopping_criteria'] = []
+            kwargs['stopping_criteria'].append(Stream(callback_func=callback))
+            shared.model.generate(**kwargs)[0]
+
+        def generate_with_streaming(**kwargs):
+            return Iteratorize(generate_with_callback, kwargs, callback=None)
+
         yield formatted_outputs(original_question, shared.model_name)
-        for i in tqdm(range(max_new_tokens//8+1)):
+        for output in eval(f"generate_with_streaming({', '.join(generate_params)})"):
+            if shared.soft_prompt:
+                output = torch.cat((input_ids[0], output[filler_input_ids.shape[1]:]))
+
+            reply = decode(output)
+            if not (shared.args.chat or shared.args.cai_chat):
+                reply = original_question + apply_extensions(reply[len(question):], "output")
+            yield formatted_outputs(reply, shared.model_name)
+
+            if not shared.args.flexgen:
+                if output[-1] == n:
+                    break
+            else:
+                if np.count_nonzero(input_ids[0] == n) < np.count_nonzero(output == n):
+                    break
+
+    # Stream the output naively for FlexGen since it doesn't support 'stopping_criteria'
+    else:
+        for i in range(max_new_tokens//8+1):
             clear_torch_cache()
 
             with torch.no_grad():
-                output = eval(f"shared.model.generate({', '.join(generate_params)}){cuda}")[0]
+                output = eval(f"shared.model.generate({', '.join(generate_params)})")[0]
             if shared.soft_prompt:
                 output = torch.cat((input_ids[0], output[filler_input_ids.shape[1]:]))
 
@@ -206,3 +234,7 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
 
             if shared.soft_prompt:
                 inputs_embeds, filler_input_ids = generate_softprompt_input_tensors(input_ids)
+
+    t1 = time.time()
+    print(f"Output generated in {(t1-t0):.2f} seconds ({(len(output)-len(original_input_ids[0]))/(t1-t0):.2f} tokens/s, {len(output)-len(original_input_ids[0])} tokens)")
+    return
