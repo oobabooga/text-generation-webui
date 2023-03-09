@@ -1,3 +1,7 @@
+LLaMA is a Large Language Model developed Meta AI. 
+
+It was trained on more tokens than previous models. The result is that the smallest version with 7 billion parameters has similar performance to GPT-3 with 175 billion parameters.
+
 ## Installation
 
 1. Uninstall your existing `transformers` (if any) and install this patched version:
