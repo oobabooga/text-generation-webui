@@ -29,9 +29,9 @@ The script will create two new folders:
 mv /path/to/outputs/tokenizer/* /path/to/outputs/llama-7b
 ```
 
-4. Move the `llama-7b` folder inside your `text-generation-webui/models` folder
+4. Move the `llama-7b` folder inside your `text-generation-webui/models` folder.
 
-5. Launch the web UI
+5. Launch the web UI:
 
 ```
 python server.py --model llama-7b
