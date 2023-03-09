@@ -18,6 +18,8 @@ from modules.html_generator import generate_chat_html
 from modules.models import load_model, load_soft_prompt
 from modules.text_generation import generate_reply
 
+PROJ_NAME='Oobabooga'
+
 if (shared.args.chat or shared.args.cai_chat) and not shared.args.no_stream:
     print('Warning: chat mode currently becomes somewhat slower with text streaming on.\nConsider starting the web UI with the --no-stream option.\n')
     
@@ -201,7 +203,7 @@ description = '\n\n# Text generation lab\nGenerate text using Large Language Mod
 suffix = '_pygmalion' if 'pygmalion' in shared.model_name.lower() else ''
 
 if shared.args.chat or shared.args.cai_chat:
-    with gr.Blocks(css=ui.css+ui.chat_css, analytics_enabled=False) as shared.gradio['interface']:
+    with gr.Blocks(css=ui.css+ui.chat_css, analytics_enabled=False, title=PROJ_NAME) as shared.gradio['interface']:
         if shared.args.cai_chat:
             shared.gradio['display'] = gr.HTML(value=generate_chat_html(shared.history['visible'], shared.settings[f'name1{suffix}'], shared.settings[f'name2{suffix}'], shared.character))
         else:
@@ -313,7 +315,7 @@ if shared.args.chat or shared.args.cai_chat:
         shared.gradio['interface'].load(reload_func, reload_inputs, [shared.gradio['display']], show_progress=True)
 
 elif shared.args.notebook:
-    with gr.Blocks(css=ui.css, analytics_enabled=False) as shared.gradio['interface']:
+    with gr.Blocks(css=ui.css, analytics_enabled=False, title=PROJ_NAME) as shared.gradio['interface']:
         gr.Markdown(description)
         with gr.Tab('Raw'):
             shared.gradio['textbox'] = gr.Textbox(value=default_text, lines=23)
@@ -337,7 +339,7 @@ elif shared.args.notebook:
         shared.gradio['Stop'].click(None, None, None, cancels=gen_events)
 
 else:
-    with gr.Blocks(css=ui.css, analytics_enabled=False) as shared.gradio['interface']:
+    with gr.Blocks(css=ui.css, analytics_enabled=False, title=PROJ_NAME) as shared.gradio['interface']:
         gr.Markdown(description)
         with gr.Row():
             with gr.Column():
