@@ -187,7 +187,7 @@ For these two, please try commenting on an existing issue instead of creating a 
 
 ## Credits
 
+- Gradio dropdown menu refresh button: https://github.com/AUTOMATIC1111/stable-diffusion-webui
+- Verbose preset: Anonymous 4chan user.
 - NovelAI and KoboldAI presets: https://github.com/KoboldAI/KoboldAI-Client/wiki/Settings-Presets
 - Pygmalion preset, code for early stopping in chat mode, code for some of the sliders, --chat mode colors: https://github.com/PygmalionAI/gradio-ui/
-- Verbose preset: Anonymous 4chan user.
-- Gradio dropdown menu refresh button: https://github.com/AUTOMATIC1111/stable-diffusion-webui
