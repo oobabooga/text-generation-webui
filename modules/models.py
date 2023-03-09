@@ -89,7 +89,7 @@ def load_model(model_name):
 
     # 4-bit LLaMA
     elif shared.args.load_in_4bit:
-        sys.path.append(os.path.abspath(Path("repositories/GPTQ-for-LLaMa")))
+        sys.path.insert(0, os.path.abspath(Path("repositories/GPTQ-for-LLaMa")))
 
         from llama import load_quant
 
