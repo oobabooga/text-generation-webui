@@ -23,7 +23,7 @@ The script will create two new folders:
 /path/to/outputs/tokenizer
 ```
 
-3. Move the contents of `/path/to/outputs/tokenizer` to `/path/to/outputs/llama-7b`:
+3. Move the files inside `/path/to/outputs/tokenizer` to `/path/to/outputs/llama-7b`:
 
 ```
 mv /path/to/outputs/tokenizer/* /path/to/outputs/llama-7b
