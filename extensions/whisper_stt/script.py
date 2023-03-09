@@ -1,15 +1,10 @@
 import gradio as gr
 import speech_recognition as sr
 
-
 input_hijack = {
     'state': False,
     'value': ["", ""]
 }
-
-
-def input_modifier(string):
-    return string
 
 
 def do_stt():
@@ -30,7 +25,13 @@ def do_stt():
     return transcription
 
 
+def update_hijack(val):
+    input_hijack.update({"state": True, "value": [val, val]})
+    return val
+
+
 def ui():
     speech_button = gr.Button(value="🎙️")
-    output_transcription = gr.Textbox(label="STT-Preview", placeholder="Speech Preview. Click \"Generate\" to send")
+    output_transcription = gr.Textbox(label="STT-Input", placeholder="Speech Preview. Click \"Generate\" to send", interactive=True)
+    output_transcription.change(fn=update_hijack, inputs=[output_transcription])
     speech_button.click(do_stt, outputs=[output_transcription])
