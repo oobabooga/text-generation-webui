@@ -1,5 +1,0 @@
-top_p=0.95
-temperature=0.5
-penalty_alpha=0.6
-top_k=4
-repetition_penalty=1.03
