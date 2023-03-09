@@ -11,11 +11,11 @@ def do_stt():
     transcription = ""
     r = sr.Recognizer()
     with sr.Microphone() as source:
-        r.adjust_for_ambient_noise(source)
+        r.adjust_for_ambient_noise(source, 0.2)
         audio = r.listen(source)
 
     try:
-        transcription = r.recognize_whisper(audio, language="english", model="tiny.en")
+        transcription = r.recognize_whisper(audio, language="english", model="base.en")
     except sr.UnknownValueError:
         print("Whisper could not understand audio")
     except sr.RequestError as e:
