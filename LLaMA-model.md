@@ -20,7 +20,7 @@ pip install git+https://github.com/zphang/transformers@llama_push
 python convert_llama_weights_to_hf.py --input_dir /path/to/LLaMA --model_size 7B --output_dir /path/to/outputs
 ```
 
-The script will create two new folders:
+Two folders will be created at the end:
 
 ```
 /path/to/outputs/llama-7b
