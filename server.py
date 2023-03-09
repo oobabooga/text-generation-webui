@@ -197,11 +197,12 @@ shared.model, shared.tokenizer = load_model(shared.model_name)
 gen_events = []
 default_preset = shared.settings['presets'][next((k for k in shared.settings['presets'] if re.match(k.lower(), shared.model_name.lower())), 'default')]
 default_text = shared.settings['prompts'][next((k for k in shared.settings['prompts'] if re.match(k.lower(), shared.model_name.lower())), 'default')]
+title ='Text generation web UI'
 description = '\n\n# Text generation lab\nGenerate text using Large Language Models.\n'
 suffix = '_pygmalion' if 'pygmalion' in shared.model_name.lower() else ''
 
 if shared.args.chat or shared.args.cai_chat:
-    with gr.Blocks(css=ui.css+ui.chat_css, analytics_enabled=False) as shared.gradio['interface']:
+    with gr.Blocks(css=ui.css+ui.chat_css, analytics_enabled=False, title=title) as shared.gradio['interface']:
         if shared.args.cai_chat:
             shared.gradio['display'] = gr.HTML(value=generate_chat_html(shared.history['visible'], shared.settings[f'name1{suffix}'], shared.settings[f'name2{suffix}'], shared.character))
         else:
@@ -313,7 +314,7 @@ if shared.args.chat or shared.args.cai_chat:
         shared.gradio['interface'].load(reload_func, reload_inputs, [shared.gradio['display']], show_progress=True)
 
 elif shared.args.notebook:
-    with gr.Blocks(css=ui.css, analytics_enabled=False) as shared.gradio['interface']:
+    with gr.Blocks(css=ui.css, analytics_enabled=False, title=title) as shared.gradio['interface']:
         gr.Markdown(description)
         with gr.Tab('Raw'):
             shared.gradio['textbox'] = gr.Textbox(value=default_text, lines=23)
@@ -337,7 +338,7 @@ elif shared.args.notebook:
         shared.gradio['Stop'].click(None, None, None, cancels=gen_events)
 
 else:
-    with gr.Blocks(css=ui.css, analytics_enabled=False) as shared.gradio['interface']:
+    with gr.Blocks(css=ui.css, analytics_enabled=False, title=title) as shared.gradio['interface']:
         gr.Markdown(description)
         with gr.Row():
             with gr.Column():
