@@ -43,4 +43,4 @@ python server.py --model llama-7b
 
 ## 4-bit installation
 
-TODO
+WIP https://github.com/oobabooga/text-generation-webui/pull/206
