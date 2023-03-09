@@ -12,7 +12,7 @@ pip install git+https://github.com/zphang/transformers@llama_push
 ```
 
 
-2. Convert the model that you, a fellow academic, downloaded using Facebook's official link using this script:
+2. Convert the model that you, a fellow academic, downloaded using Meta's official link using this script:
 
 [convert_llama_weights_to_hf.py](https://github.com/zphang/transformers/blob/llama_push/src/transformers/models/llama/convert_llama_weights_to_hf.py)
 
