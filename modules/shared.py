@@ -42,7 +42,6 @@ settings = {
         'default': 'NovelAI-Sphinx Moth',
         'pygmalion-*': 'Pygmalion',
         'RWKV-*': 'Naive',
-        '(rosey|chip|joi)_.*_instruct.*': 'Instruct Joi (Contrastive Search)'
     },
     'prompts': {
         'default': 'Common sense questions and answers\n\nQuestion: \nFactual answer:',
