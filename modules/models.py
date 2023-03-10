@@ -88,9 +88,13 @@ def load_model(model_name):
         return model, tokenizer
 
     # 4-bit LLaMA
-    elif shared.args.llama_bits>0:
+    elif shared.args.llama_bits>0 or shared.args.load_in_4bit:
         sys.path.insert(0, os.path.abspath(Path("repositories/GPTQ-for-LLaMa")))
-        bits = shared.args.llama_bits
+        if shared.args.load_in_4bit:
+            bits = 4
+        else:
+            bits = shared.args.llama_bits
+        
 
         from llama import load_quant
 
