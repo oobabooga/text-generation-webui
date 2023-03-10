@@ -109,6 +109,7 @@ def load_model(model_name):
 
         # check root of models folder, and model path root
         paths = [  f"{path_to_model}/{pt_model}", f"models/{pt_model}" ]
+        pt_path = None
         for path in [ Path(p) for p in paths ]:
             if path.exists():
                 pt_path = path
