@@ -63,7 +63,7 @@ python setup_cuda.py install
 
 You are going to need to have a C++ compiler installed into your system for the last command. On Linux, `sudo apt install build-essential` or equivalent is enough.
 
-2. Ensure that you have the [converted](https://github.com/oobabooga/text-generation-webui/wiki/LLaMA-model/_edit#convert_llama_weights_to_hfpy) 16-bit model into your `models` folder. For instance, `models/llama-7b`.
+2. Ensure that you have the [converted](https://github.com/oobabooga/text-generation-webui/wiki/LLaMA-model#convert_llama_weights_to_hfpy) 16-bit model into your `models` folder. For instance, `models/llama-7b`.
 
 3. Place the corresponding 4-bit model directly into your `models` folder. For instance, `models/llama-7b-4bit.pt`. You can find pre-converted models here: https://huggingface.co/decapoda-research
 
