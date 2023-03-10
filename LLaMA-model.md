@@ -55,6 +55,7 @@ GPTQ is a clever quantization algorithm that lightly reoptimizes the weights dur
 
 ```
 mkdir repositories
+cd repositories
 git clone https://github.com/qwopqwop200/GPTQ-for-LLaMa
 cd GPTQ-for-LLaMa
 python setup_cuda.py install
