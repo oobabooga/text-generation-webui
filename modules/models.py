@@ -105,6 +105,9 @@ def load_model(model_name):
         if not Path(f"models/{pt_model}").exists():
             print(f"Could not find models/{pt_model}, exiting...")
             exit()
+        elif pt_model == '':
+            print(f"Could not find the .pt model for {model_name}, exiting...")
+            exit()
 
         model = load_quant(path_to_model, Path(f"models/{pt_model}"), 4)
         model = model.to(torch.device('cuda:0'))
