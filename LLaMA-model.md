@@ -2,6 +2,8 @@ LLaMA is a Large Language Model developed by Meta AI.
 
 It was trained on more tokens than previous models. The result is that the smallest version with 7 billion parameters has similar performance to GPT-3 with 175 billion parameters.
 
+Throughout this tutorial, we are going to use `llama-7b` as an example, but the process is the same for all other sizes.
+
 ## Installation
 
 1. Uninstall your existing `transformers` (if any) and install this patched version:
