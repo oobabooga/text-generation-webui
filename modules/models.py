@@ -110,7 +110,19 @@ def load_model(model_name):
             exit()
 
         model = load_quant(path_to_model, Path(f"models/{pt_model}"), 4)
-        model = model.to(torch.device('cuda:0'))
+
+        if shared.args.gpu_memory:
+            import accelerate
+
+            max_memory = {}
+            for i in range(len(shared.args.gpu_memory)):
+                max_memory[i] = f"{shared.args.gpu_memory[i]}GiB"
+            max_memory['cpu'] = f"{shared.args.cpu_memory or '99'}GiB"
+
+            device_map = accelerate.infer_auto_device_map(model, max_memory=max_memory, no_split_module_classes=["LLaMADecoderLayer"])
+            model = accelerate.dispatch_model(model, device_map=device_map)
+        else:
+            model = model.to(torch.device('cuda:0'))
 
     # Custom
     else:
