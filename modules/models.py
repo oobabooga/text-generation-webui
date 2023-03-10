@@ -118,7 +118,7 @@ def load_model(model_name):
             max_memory['cpu'] = f"{shared.args.cpu_memory or '99'}GiB"
 
             import accelerate
-            device_map = accelerate.infer_auto_device_map(model, max_memory=max_memory)
+            device_map = accelerate.infer_auto_device_map(model, max_memory=max_memory, no_split_module_classes=["LLaMADecoderLayer"])
             model = accelerate.dispatch_model(model, device_map=device_map)
         else:
             model = model.to(torch.device('cuda:0'))
