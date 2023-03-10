@@ -69,7 +69,11 @@ You are going to need to have a C++ compiler installed into your system for the 
 
 3. Place the corresponding 4-bit model directly into your `models` folder. For instance, `models/llama-7b-4bit.pt`. You can find pre-converted models here: https://huggingface.co/decapoda-research
 
-**Your `models` folder should contain both `llama-7b` and `llama-7b-4bit.pt` side by side.**
+> **Warning**
+> Your `models` folder should contain both `llama-7b` and `llama-7b-4bit.pt` side by side.
+
+> **Warning**
+> This is a warning
 
 5. Start the web UI with `--load-in-4bit`:
 
