@@ -104,13 +104,11 @@ def load_model(model_name):
         elif path_to_model.name.lower().startswith('llama-65b'):
             pt_model = 'llama-65b-4bit.pt'
         else:
-            print(f"Could not find the .pt model for {model_name}, exiting...")
-            exit()
+            pt_model = f'{model_name}-4bit.pt'
 
-        # check root of models folder, and model path root
-        paths = [  f"{path_to_model}/{pt_model}", f"models/{pt_model}" ]
+        # Try to find the .pt both in models/ and in the subfolder
         pt_path = None
-        for path in [ Path(p) for p in paths ]:
+        for path in [Path(p) for p in [f"models/{pt_model}", f"{path_to_model}/{pt_model}"]]:
             if path.exists():
                 pt_path = path
 
