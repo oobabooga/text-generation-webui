@@ -6,7 +6,7 @@ Throughout this tutorial, we are going to use `llama-7b` as an example, but the 
 
 ## Installation
 
-1. Uninstall your existing `transformers` (if any) and install this patched version:
+1. Uninstall your existing `transformers` (if any) and install the patched version:
 
 ```
 pip uninstall transformers
@@ -14,7 +14,7 @@ pip install git+https://github.com/zphang/transformers@llama_push
 ```
 
 
-2. Use this script to convert the model in `.pth` format that you, a fellow academic, downloaded using Meta's official link:
+2. Use the script below to convert the model in `.pth` format that you, a fellow academic, downloaded using Meta's official link:
 
 ### [convert_llama_weights_to_hf.py](https://github.com/zphang/transformers/blob/llama_push/src/transformers/models/llama/convert_llama_weights_to_hf.py)
 
