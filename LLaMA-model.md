@@ -1,4 +1,4 @@
-LLaMA is a Large Language Model developed Meta AI. 
+LLaMA is a Large Language Model developed by Meta AI. 
 
 It was trained on more tokens than previous models. The result is that the smallest version with 7 billion parameters has similar performance to GPT-3 with 175 billion parameters.
 
@@ -12,7 +12,7 @@ pip install git+https://github.com/zphang/transformers@llama_push
 ```
 
 
-2. Convert the model that you, a fellow academic, downloaded using Meta's official link using this script:
+2. Use this script to convert the model that you, a fellow academic, downloaded using Meta's official link:
 
 ### [convert_llama_weights_to_hf.py](https://github.com/zphang/transformers/blob/llama_push/src/transformers/models/llama/convert_llama_weights_to_hf.py)
 
@@ -43,7 +43,7 @@ python server.py --model llama-7b
 
 ## 4-bit mode
 
-In 4-bit mode, it is possible to load LLaMA models with 1/4 of the regular VRAM usage. So LLaMA-7B uses less than 6GB VRAM and LLaMA-30B uses less than 24GB VRAM.
+In 4-bit mode, it is possible to load LLaMA models with just 25% of the regular VRAM usage. So LLaMA-7B fits into a 6GB GPU, and LLaMA-30B fits into a 24GB GPU.
 
 This is possible thanks to [@qwopqwop200](https://github.com/qwopqwop200/GPTQ-for-LLaMa)'s adaptation of the GPTQ algorithm for LLaMA: https://github.com/qwopqwop200/GPTQ-for-LLaMa
 
@@ -69,11 +69,9 @@ pip uninstall transformers
 pip install git+https://github.com/zphang/transformers@llama_push
 ```
 
-3. Place the desired LLaMA model converted using the newest [convert_llama_weights_to_hf.py](https://github.com/zphang/transformers/blob/llama_push/src/transformers/models/llama/convert_llama_weights_to_hf.py) script into your `models` folder. For instance, `models/llama-7b`.
+3. Place the LLaMA model that you [converted](https://github.com/oobabooga/text-generation-webui/wiki/LLaMA-model/_edit#convert_llama_weights_to_hfpy) using `convert_llama_weights_to_hf.py` into the `models` folder. For instance, `models/llama-7b`.
 
-4. Place the corresponding 4-bit model directly into your `models` folder. For instance, `models/llama-7b-4bit.pt`. https://huggingface.co/decapoda-research
-
-The 4-bit models can be found here: https://huggingface.co/decapoda-research
+4. Place the corresponding 4-bit model directly into your `models` folder. For instance, `models/llama-7b-4bit.pt`. You can find pre-converted models here: https://huggingface.co/decapoda-research
 
 5. Start the web UI with `--load-in-4bit`:
 
