@@ -77,4 +77,4 @@ You are going to need to have a C++ compiler installed into your system for the 
 python server.py --model llama-7b --load-in-4bit
 ```
 
-For more information, check the comments in the PR for this: https://github.com/oobabooga/text-generation-webui/pull/206.
+For more information, check the comments in this PR: https://github.com/oobabooga/text-generation-webui/pull/206.
