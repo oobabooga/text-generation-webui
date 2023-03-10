@@ -14,12 +14,6 @@ You have three options:
 
 Put an image called `img_me.jpg` or `img_me.png` into the `text-generation-webui` folder.
 
-#### I have imported my character but I can't see the `example_dialogue`.
-
-The `example_dialogue` from your JSON character is parsed, added to the chat history, and kept hidden. You can check the parsed output in the terminal, where it is always printed whenever you load a character.
-
-Note that for the example dialogue to be parsed correctly, your name in the web UI (usually `You`) must match the name used in the example dialogue.
-
 #### Where are the `world_scenario` and `char_persona` fields?
 
 Those are simply added to the the Context field when you load a character.
