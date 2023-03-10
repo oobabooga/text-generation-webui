@@ -54,7 +54,7 @@ The third line assumes that you have an NVIDIA GPU.
 pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/rocm5.2
 ```
   	  
-* If you are running in CPU mode, replace the third command with this one:
+* If you are running it in CPU mode, replace the third command with this one:
 
 ```
 conda install pytorch torchvision torchaudio git -c pytorch
