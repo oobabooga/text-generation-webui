@@ -111,6 +111,7 @@ def load_model(model_name):
 
         model = load_quant(path_to_model, Path(f"models/{pt_model}"), 4)
 
+        # Multi-GPU setup
         if shared.args.gpu_memory:
             import accelerate
 
@@ -121,6 +122,8 @@ def load_model(model_name):
 
             device_map = accelerate.infer_auto_device_map(model, max_memory=max_memory, no_split_module_classes=["LLaMADecoderLayer"])
             model = accelerate.dispatch_model(model, device_map=device_map)
+
+        # Single GPU
         else:
             model = model.to(torch.device('cuda:0'))
 
