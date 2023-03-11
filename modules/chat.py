@@ -120,6 +120,9 @@ def chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical
     else:
         prompt = custom_generate_chat_prompt(text, max_new_tokens, name1, name2, context, chat_prompt_size)
 
+    #display user input and "*is typing...*" imediately
+    yield shared.history['visible']+[[visible_text, '*Is typing...*']]
+
     # Generate
     reply = ''
     for i in range(chat_generation_attempts):
