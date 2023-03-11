@@ -116,7 +116,7 @@ def load_model(model_name):
             print(f"Could not find {pt_model}, exiting...")
             exit()
 
-        model = load_quant(path_to_model, Path(f"models/{pt_model}"), 4)
+        model = load_quant(path_to_model, pt_path, 4)
 
         # Multi-GPU setup
         if shared.args.gpu_memory:
