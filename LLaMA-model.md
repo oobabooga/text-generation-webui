@@ -51,9 +51,9 @@ This is possible thanks to [@qwopqwop200](https://github.com/qwopqwop200/GPTQ-fo
 
 GPTQ is a clever quantization algorithm that lightly reoptimizes the weights during quantization so that the accuracy loss is compensated relative to a round-to-nearest quantization. See the paper for more details: https://arxiv.org/abs/2210.17323
 
-#### Installation
+### Step 1: Installation
 
-1. Clone [GPTQ-for-LLaMa](https://github.com/qwopqwop200/GPTQ-for-LLaMa) into the `text-generation-webui/repositories` subfolder and install it:
+Clone [GPTQ-for-LLaMa](https://github.com/qwopqwop200/GPTQ-for-LLaMa) into the `text-generation-webui/repositories` subfolder and install it:
 
 ```
 mkdir repositories
@@ -65,18 +65,34 @@ python setup_cuda.py install
 
 You are going to need to have a C++ compiler installed into your system for the last command. On Linux, `sudo apt install build-essential` or equivalent is enough.
 
-2. Ensure that you have the [converted](https://github.com/oobabooga/text-generation-webui/wiki/LLaMA-model#convert_llama_weights_to_hfpy) 16-bit model into your `models` folder. For instance, `models/llama-7b`.
+### Step 2: set up the weights
 
-3. Place the corresponding 4-bit model directly into your `models` folder. For instance, `models/llama-7b-4bit.pt`. You can find pre-converted models here: https://huggingface.co/decapoda-research
+#### Option 1: the easy way 
 
-> **Important**
-> 
-> Your `models` folder should contain both `llama-7b` and `llama-7b-4bit.pt` side by side.
-
-5. Start the web UI with `--load-in-4bit`:
+1. Download the tokenizer/config files for the model size of your choice from [decapoda-research](https://huggingface.co/decapoda-research):
 
 ```
-python server.py --model llama-7b --load-in-4bit
+python download-model.py --text-only decapoda-research/llama-7b-hf
+```
+
+2. Place a pre-converted 4-bit model also in your `models` folder. For instance, `models/llama-7b-4bit.pt`. You can find pre-converted models here (look for repositories with names ending in `-int4`): https://huggingface.co/decapoda-research
+
+3. Start the web UI:
+
+```
+python server.py --load-in-4bit --model llama-7b-hf
+```
+
+#### Option 2: the hard way 
+
+1. [Convert](https://github.com/oobabooga/text-generation-webui/wiki/LLaMA-model#convert_llama_weights_to_hfpy) the base `.pth` model yourself to create the tokenizer/config files and place them into `models/llama-7b`.
+
+2. Place a pre-converted 4-bit model also in your `models` folder. For instance, `models/llama-7b-4bit.pt`. You can find pre-converted models here (look for repositories with names ending in `-int4`): https://huggingface.co/decapoda-research
+
+3. Start the web UI:
+
+```
+python server.py --load-in-4bit --model llama-7b
 ```
 
 For more information, check out the comments in this PR: https://github.com/oobabooga/text-generation-webui/pull/206.
