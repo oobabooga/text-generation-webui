@@ -22,7 +22,7 @@ command-line flag.
 |[elevenlabs_tts](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/elevenlabs_tts)| Text-to-speech extension using the [ElevenLabs](https://beta.elevenlabs.io/) API. You need an API key to use it. Author: [@MetaIX](https://github.com/MetaIX). |
 |[send_pictures](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/send_pictures/script.py)| Creates an image upload field that can be used to send images to the bot in chat mode. Captions are automatically generated using BLIP. Author: [@SillyLossy](https://github.com/sillylossy).|
 |[gallery](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/gallery/script.py)| Creates a gallery with the chat characters and their pictures. |
-
+|[llama_prompts](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/llama_prompts)| Creates a dropdown menu with a selection of interesting prompts to choose from. Based on [devbrones/llama-prompts](https://github.com/devbrones/llama-prompts). Only applies in regular or `--notebook` mode. |
 
 ## How to write an extension
 
