@@ -120,7 +120,7 @@ def chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical
     else:
         prompt = custom_generate_chat_prompt(text, max_new_tokens, name1, name2, context, chat_prompt_size)
 
-    #display user input and "*is typing...*" imediately
+    # Display user input and "*is typing...*" imediately
     yield shared.history['visible']+[[visible_text, '*Is typing...*']]
 
     # Generate
@@ -160,6 +160,9 @@ def impersonate_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typ
         name1 = "You"
 
     prompt = generate_chat_prompt(text, max_new_tokens, name1, name2, context, chat_prompt_size, impersonate=True)
+
+    # Display "*is typing...*" imediately
+    yield '*Is typing...*'
 
     reply = ''
     for i in range(chat_generation_attempts):
