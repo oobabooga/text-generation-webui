@@ -3,7 +3,8 @@ bitsandbytes==0.37.0
 flexgen==0.1.7
 gradio==3.18.0
 numpy
+requests
 rwkv==0.1.0
 safetensors==0.2.8
 sentencepiece
-git+https://github.com/oobabooga/transformers@llama_push
+git+https://github.com/zphang/transformers@llama_push

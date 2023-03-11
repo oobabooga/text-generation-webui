@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 import time
 import zipfile
 from pathlib import Path
@@ -41,7 +42,7 @@ def load_model(model_name):
     shared.is_RWKV = model_name.lower().startswith('rwkv-')
 
     # Default settings
-    if not (shared.args.cpu or shared.args.load_in_8bit or shared.args.auto_devices or shared.args.disk or shared.args.gpu_memory is not None or shared.args.cpu_memory is not None or shared.args.deepspeed or shared.args.flexgen or shared.is_RWKV):
+    if not (shared.args.cpu or shared.args.load_in_8bit or shared.args.load_in_4bit or shared.args.auto_devices or shared.args.disk or shared.args.gpu_memory is not None or shared.args.cpu_memory is not None or shared.args.deepspeed or shared.args.flexgen or shared.is_RWKV):
         if any(size in shared.model_name.lower() for size in ('13b', '20b', '30b')):
             model = AutoModelForCausalLM.from_pretrained(Path(f"models/{shared.model_name}"), device_map='auto', load_in_8bit=True)
         else:
@@ -85,6 +86,53 @@ def load_model(model_name):
         tokenizer = RWKVTokenizer.from_pretrained(Path('models'))
 
         return model, tokenizer
+
+    # 4-bit LLaMA
+    elif shared.args.load_in_4bit:
+        sys.path.insert(0, os.path.abspath(Path("repositories/GPTQ-for-LLaMa")))
+
+        from llama import load_quant
+
+        path_to_model = Path(f'models/{model_name}')
+        pt_model = ''
+        if path_to_model.name.lower().startswith('llama-7b'):
+            pt_model = 'llama-7b-4bit.pt'
+        elif path_to_model.name.lower().startswith('llama-13b'):
+            pt_model = 'llama-13b-4bit.pt'
+        elif path_to_model.name.lower().startswith('llama-30b'):
+            pt_model = 'llama-30b-4bit.pt'
+        elif path_to_model.name.lower().startswith('llama-65b'):
+            pt_model = 'llama-65b-4bit.pt'
+        else:
+            pt_model = f'{model_name}-4bit.pt'
+
+        # Try to find the .pt both in models/ and in the subfolder
+        pt_path = None
+        for path in [Path(p) for p in [f"models/{pt_model}", f"{path_to_model}/{pt_model}"]]:
+            if path.exists():
+                pt_path = path
+
+        if not pt_path:
+            print(f"Could not find {pt_model}, exiting...")
+            exit()
+
+        model = load_quant(path_to_model, Path(f"models/{pt_model}"), 4)
+
+        # Multi-GPU setup
+        if shared.args.gpu_memory:
+            import accelerate
+
+            max_memory = {}
+            for i in range(len(shared.args.gpu_memory)):
+                max_memory[i] = f"{shared.args.gpu_memory[i]}GiB"
+            max_memory['cpu'] = f"{shared.args.cpu_memory or '99'}GiB"
+
+            device_map = accelerate.infer_auto_device_map(model, max_memory=max_memory, no_split_module_classes=["LLaMADecoderLayer"])
+            model = accelerate.dispatch_model(model, device_map=device_map)
+
+        # Single GPU
+        else:
+            model = model.to(torch.device('cuda:0'))
 
     # Custom
     else:
