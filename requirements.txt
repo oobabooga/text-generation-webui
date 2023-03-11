@@ -5,6 +5,5 @@ gradio==3.18.0
 numpy
 rwkv==0.1.0
 safetensors==0.2.8
-tensorboard
 sentencepiece
 git+https://github.com/oobabooga/transformers@llama_push
