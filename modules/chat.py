@@ -84,6 +84,7 @@ def extract_message_from_reply(question, reply, name1, name2, check, impersonate
         tmp = f"\n{asker}:"
         for j in range(1, len(tmp)):
             if reply[-j:] == tmp[:j]:
+                reply = reply[:-j]
                 substring_found = True
 
     return reply, next_character_found, substring_found
