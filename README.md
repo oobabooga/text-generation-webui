@@ -62,9 +62,9 @@ conda install pytorch torchvision torchaudio git -c pytorch
 
 ## Installation option 2: one-click installers
 
-[oobabooga-windows.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga-windows.zip)
+[oobabooga-windows.zip](https://github.com/oobabooga/one-click-installers/archive/refs/heads/oobabooga-windows.zip)
 
-[oobabooga-linux.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga-linux.zip)
+[oobabooga-linux.zip](https://github.com/oobabooga/one-click-installers/archive/refs/heads/oobabooga-linux.zip)
 
 Just download the zip above, extract it, and double click on "install". The web UI and all its dependencies will be installed in the same folder.
 
