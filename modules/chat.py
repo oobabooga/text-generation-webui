@@ -298,7 +298,7 @@ def save_history(timestamp=True):
         fname = f"{prefix}persistent.json"
     if not Path('logs').exists():
         Path('logs').mkdir()
-    with open(Path(f'logs/{fname}'), 'w') as f:
+    with open(Path(f'logs/{fname}'), 'w', encoding='utf-8') as f:
         f.write(json.dumps({'data': shared.history['internal'], 'data_visible': shared.history['visible']}, indent=2))
     return Path(f'logs/{fname}')
 
@@ -339,7 +339,7 @@ def load_character(_character, name1, name2):
     shared.history['visible'] = []
     if _character != 'None':
         shared.character = _character
-        data = json.loads(open(Path(f'characters/{_character}.json'), 'r').read())
+        data = json.loads(open(Path(f'characters/{_character}.json'), 'r', encoding='utf-8').read())
         name2 = data['char_name']
         if 'char_persona' in data and data['char_persona'] != '':
             context += f"{data['char_name']}'s Persona: {data['char_persona']}\n"
@@ -379,7 +379,7 @@ def upload_character(json_file, img, tavern=False):
         i += 1
     if tavern:
         outfile_name = f'TavernAI-{outfile_name}'
-    with open(Path(f'characters/{outfile_name}.json'), 'w') as f:
+    with open(Path(f'characters/{outfile_name}.json'), 'w', encoding='utf-8') as f:
         f.write(json_file)
     if img is not None:
         img = Image.open(io.BytesIO(img))
