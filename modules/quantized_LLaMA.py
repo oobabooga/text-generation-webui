@@ -16,7 +16,7 @@ def load_quantized_LLaMA(model_name):
     if shared.args.load_in_4bit:
         bits = 4
     else:
-        bits = shared.args.llama_bits
+        bits = shared.args.gptq_bits
 
     path_to_model = Path(f'models/{model_name}')
     pt_model = ''

@@ -42,7 +42,7 @@ def load_model(model_name):
     shared.is_RWKV = model_name.lower().startswith('rwkv-')
 
     # Default settings
-    if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.load_in_4bit, shared.args.llama_bits > 0, shared.args.auto_devices, shared.args.disk, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None, shared.args.deepspeed, shared.args.flexgen, shared.is_RWKV]):
+    if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.load_in_4bit, shared.args.gptq_bits > 0, shared.args.auto_devices, shared.args.disk, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None, shared.args.deepspeed, shared.args.flexgen, shared.is_RWKV]):
         if any(size in shared.model_name.lower() for size in ('13b', '20b', '30b')):
             model = AutoModelForCausalLM.from_pretrained(Path(f"models/{shared.model_name}"), device_map='auto', load_in_8bit=True)
         else:
@@ -88,7 +88,7 @@ def load_model(model_name):
         return model, tokenizer
 
     # 4-bit LLaMA
-    elif shared.args.llama_bits > 0 or shared.args.load_in_4bit:
+    elif shared.args.gptq_bits > 0 or shared.args.load_in_4bit:
         from modules.quantized_LLaMA import load_quantized_LLaMA
 
         model = load_quantized_LLaMA(model_name)
