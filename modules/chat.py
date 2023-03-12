@@ -59,7 +59,6 @@ def generate_chat_prompt(user_input, max_new_tokens, name1, name2, context, chat
 
 def extract_message_from_reply(question, reply, name1, name2, check, impersonate=False):
     next_character_found = False
-    substring_found = False
 
     asker = name1 if not impersonate else name2
     replier = name2 if not impersonate else name1
@@ -85,15 +84,15 @@ def extract_message_from_reply(question, reply, name1, name2, check, impersonate
             next_character_found = True
         reply = clean_chat_message(reply)
 
-        # Detect if something like "\nYo" is generated just before
-        # "\nYou:" is completed
-        tmp = f"\n{asker}:"
-        for j in range(1, len(tmp)):
-            if reply[-j:] == tmp[:j]:
+        # If something like "\nYo" is generated just before "\nYou:"
+        # is completed, trim it
+        next_turn = f"\n{asker}:"
+        for j in range(len(next_turn)-1, 0, -1):
+            if reply[-j:] == next_turn[:j]:
                 reply = reply[:-j]
-                substring_found = True
+                break
 
-    return reply, next_character_found, substring_found
+    return reply, next_character_found
 
 def stop_everything_event():
     shared.stop_everything = True
@@ -137,7 +136,7 @@ def chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical
         for reply in generate_reply(f"{prompt}{' ' if len(reply) > 0 else ''}{reply}", max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, eos_token=eos_token, stopping_string=f"\n{name1}:"):
 
             # Extracting the reply
-            reply, next_character_found, substring_found = extract_message_from_reply(prompt, reply, name1, name2, check)
+            reply, next_character_found = extract_message_from_reply(prompt, reply, name1, name2, check)
             visible_reply = re.sub("(<USER>|<user>|{{user}})", name1_original, reply)
             visible_reply = apply_extensions(visible_reply, "output")
             if shared.args.chat:
@@ -154,7 +153,7 @@ def chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical
 
             shared.history['internal'][-1] = [text, reply]
             shared.history['visible'][-1] = [visible_text, visible_reply]
-            if not substring_found and not shared.args.no_stream:
+            if not shared.args.no_stream:
                 yield shared.history['visible']
             if next_character_found:
                 break
@@ -175,9 +174,8 @@ def impersonate_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typ
     reply = ''
     for i in range(chat_generation_attempts):
         for reply in generate_reply(prompt+reply, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, eos_token=eos_token, stopping_string=f"\n{name2}:"):
-            reply, next_character_found, substring_found = extract_message_from_reply(prompt, reply, name1, name2, check, impersonate=True)
-            if not substring_found:
-                yield reply
+            reply, next_character_found = extract_message_from_reply(prompt, reply, name1, name2, check, impersonate=True)
+            yield reply
             if next_character_found:
                 break
         yield reply
