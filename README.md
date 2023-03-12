@@ -139,7 +139,7 @@ Optionally, you can use the following command-line flags:
 | `--cpu`       | Use the CPU to generate text.|
 | `--load-in-8bit`  | Load the model with 8-bit precision.|
 | `--load-in-4bit`  | Load the model with 4-bit precision. Currently only works with LLaMA.|
-| `--gptq-bits`  |  Load a pre-quantized model with specified precision. 2, 3, 4 and 8bit are supported. Currently only works with LLaMA. |
+| `--gptq-bits GPTQ_BITS`  |  Load a pre-quantized model with specified precision. 2, 3, 4 and 8 (bit) are supported. Currently only works with LLaMA. |
 | `--bf16`  | Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU. |
 | `--auto-devices` | Automatically split the model across the available GPU(s) and CPU.|
 | `--disk` | If the model is too large for your GPU(s) and CPU combined, send the remaining layers to the disk. |
