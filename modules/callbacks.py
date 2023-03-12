@@ -64,6 +64,7 @@ class Iteratorize:
                 ret = self.mfunc(callback=_callback, **self.kwargs)
             except ValueError:
                 pass
+            clear_torch_cache()
             self.q.put(self.sentinel)
             if self.c_callback:
                 self.c_callback(ret)

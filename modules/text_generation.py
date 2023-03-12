@@ -92,21 +92,22 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
     # These models are not part of Hugging Face, so we handle them
     # separately and terminate the function call earlier
     if shared.is_RWKV:
-        if shared.args.no_stream:
-            reply = shared.model.generate(context=question, token_count=max_new_tokens, temperature=temperature, top_p=top_p, top_k=top_k)
-            yield formatted_outputs(reply, shared.model_name)
-        else:
-            yield formatted_outputs(question, shared.model_name)
-            # RWKV has proper streaming, which is very nice.
-            # No need to generate 8 tokens at a time.
-            for reply in shared.model.generate_with_streaming(context=question, token_count=max_new_tokens, temperature=temperature, top_p=top_p, top_k=top_k):
+        try:
+            if shared.args.no_stream:
+                reply = shared.model.generate(context=question, token_count=max_new_tokens, temperature=temperature, top_p=top_p, top_k=top_k)
                 yield formatted_outputs(reply, shared.model_name)
-
-        t1 = time.time()
-        output = encode(reply)[0]
-        input_ids = encode(question)
-        print(f"Output generated in {(t1-t0):.2f} seconds ({(len(output)-len(input_ids[0]))/(t1-t0):.2f} tokens/s, {len(output)-len(input_ids[0])} tokens)")
-        return
+            else:
+                yield formatted_outputs(question, shared.model_name)
+                # RWKV has proper streaming, which is very nice.
+                # No need to generate 8 tokens at a time.
+                for reply in shared.model.generate_with_streaming(context=question, token_count=max_new_tokens, temperature=temperature, top_p=top_p, top_k=top_k):
+                    yield formatted_outputs(reply, shared.model_name)
+        finally:
+            t1 = time.time()
+            output = encode(reply)[0]
+            input_ids = encode(question)
+            print(f"Output generated in {(t1-t0):.2f} seconds ({(len(output)-len(input_ids[0]))/(t1-t0):.2f} tokens/s, {len(output)-len(input_ids[0])} tokens)")
+            return
 
     original_question = question
     if not (shared.args.chat or shared.args.cai_chat):
