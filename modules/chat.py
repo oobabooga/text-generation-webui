@@ -92,7 +92,7 @@ def extract_message_from_reply(question, reply, name1, name2, check, impersonate
 def stop_everything_event():
     shared.stop_everything = True
 
-def chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, chat_prompt_size, chat_generation_attempts=1):
+def chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, chat_prompt_size, chat_generation_attempts=1, regenerate=False):
     shared.stop_everything = False
     just_started = True
     eos_token = '\n' if check else None
@@ -121,8 +121,9 @@ def chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical
     else:
         prompt = custom_generate_chat_prompt(text, max_new_tokens, name1, name2, context, chat_prompt_size)
 
-    # Display user input and "*is typing...*" imediately
-    yield shared.history['visible']+[[visible_text, '*Is typing...*']]
+    if not regenerate:
+        # Display user input and "*is typing...*" imediately
+        yield shared.history['visible']+[[visible_text, '*Is typing...*']]
 
     # Generate
     reply = ''
@@ -189,7 +190,7 @@ def regenerate_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typi
         last_visible = shared.history['visible'].pop()
         last_internal = shared.history['internal'].pop()
 
-        for _history in chatbot_wrapper(last_internal[0], max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, chat_prompt_size, chat_generation_attempts):
+        for _history in chatbot_wrapper(last_internal[0], max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, chat_prompt_size, chat_generation_attempts, regenerate=True):
             if shared.args.cai_chat:
                 shared.history['visible'][-1] = [last_visible[0], _history[-1][1]]
                 yield generate_chat_html(shared.history['visible'], name1, name2, shared.character)
