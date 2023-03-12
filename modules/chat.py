@@ -321,7 +321,7 @@ def load_history(file, name1, name2):
 
 def load_default_history(name1, name2):
     if Path('logs/persistent.json').exists():
-        load_history(open(Path('logs/persistent.json'), 'rb', encoding='utf-8').read(), name1, name2)
+        load_history(open(Path('logs/persistent.json'), 'rb').read(), name1, name2)
     else:
         shared.history['internal'] = []
         shared.history['visible'] = []
@@ -355,7 +355,7 @@ def load_character(_character, name1, name2):
         name2 = shared.settings['name2_pygmalion']
 
     if Path(f'logs/{shared.character}_persistent.json').exists():
-        load_history(open(Path(f'logs/{shared.character}_persistent.json'), 'rb', encoding='utf-8').read(), name1, name2)
+        load_history(open(Path(f'logs/{shared.character}_persistent.json'), 'rb').read(), name1, name2)
 
     if shared.args.cai_chat:
         return name2, context, generate_chat_html(shared.history['visible'], name1, name2, shared.character)
