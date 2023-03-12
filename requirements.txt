@@ -8,4 +8,5 @@ rwkv==0.1.0
 safetensors==0.2.8
 sentencepiece
 tqdm
+markdown
 git+https://github.com/zphang/transformers@llama_push
