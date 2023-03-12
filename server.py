@@ -18,9 +18,6 @@ from modules.html_generator import generate_chat_html
 from modules.models import load_model, load_soft_prompt
 from modules.text_generation import generate_reply
 
-if (shared.args.chat or shared.args.cai_chat) and not shared.args.no_stream:
-    print('Warning: chat mode currently becomes somewhat slower with text streaming on.\nConsider starting the web UI with the --no-stream option.\n')
-    
 # Loading custom settings
 settings_file = None
 if shared.args.settings is not None and Path(shared.args.settings).exists():
