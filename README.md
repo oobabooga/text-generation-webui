@@ -1,6 +1,6 @@
 # Text generation web UI
 
-A gradio web UI for running Large Language Models like GPT-J 6B, OPT, GALACTICA, GPT-Neo, and Pygmalion.
+A gradio web UI for running Large Language Models like GPT-J 6B, OPT, GALACTICA, LLaMA, and Pygmalion.
 
 Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.com/AUTOMATIC1111/stable-diffusion-webui) of text generation.
 
@@ -27,6 +27,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * [FlexGen offload](https://github.com/oobabooga/text-generation-webui/wiki/FlexGen).
 * [DeepSpeed ZeRO-3 offload](https://github.com/oobabooga/text-generation-webui/wiki/DeepSpeed).
 * Get responses via API, [with](https://github.com/oobabooga/text-generation-webui/blob/main/api-example-streaming.py) or [without](https://github.com/oobabooga/text-generation-webui/blob/main/api-example.py) streaming.
+* [Supports the LLaMA model, including 4-bit mode](https://github.com/oobabooga/text-generation-webui/wiki/LLaMA-model).
 * [Supports the RWKV model](https://github.com/oobabooga/text-generation-webui/wiki/RWKV-model).
 * Supports softprompts.
 * [Supports extensions](https://github.com/oobabooga/text-generation-webui/wiki/Extensions).
@@ -53,7 +54,7 @@ The third line assumes that you have an NVIDIA GPU.
 pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/rocm5.2
 ```
   	  
-* If you are running in CPU mode, replace the third command with this one:
+* If you are running it in CPU mode, replace the third command with this one:
 
 ```
 conda install pytorch torchvision torchaudio git -c pytorch
@@ -137,6 +138,8 @@ Optionally, you can use the following command-line flags:
 | `--cai-chat`  | Launch the web UI in chat mode with a style similar to Character.AI's. If the file `img_bot.png` or `img_bot.jpg` exists in the same folder as server.py, this image will be used as the bot's profile picture. Similarly, `img_me.png` or `img_me.jpg` will be used as your profile picture. |
 | `--cpu`       | Use the CPU to generate text.|
 | `--load-in-8bit`  | Load the model with 8-bit precision.|
+| `--load-in-4bit`  | Load the model with 4-bit precision. Currently only works with LLaMA.|
+| `--gptq-bits GPTQ_BITS`  |  Load a pre-quantized model with specified precision. 2, 3, 4 and 8 (bit) are supported. Currently only works with LLaMA. |
 | `--bf16`  | Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU. |
 | `--auto-devices` | Automatically split the model across the available GPU(s) and CPU.|
 | `--disk` | If the model is too large for your GPU(s) and CPU combined, send the remaining layers to the disk. |
@@ -176,14 +179,10 @@ Check the [wiki](https://github.com/oobabooga/text-generation-webui/wiki/System-
 
 Pull requests, suggestions, and issue reports are welcome.
 
-Before reporting a bug, make sure that you have created a conda environment and installed the dependencies exactly as in the *Installation* section above.
+Before reporting a bug, make sure that you have:
 
-These issues are known:
-
-* 8-bit doesn't work properly on Windows or older GPUs.
-* DeepSpeed doesn't work properly on Windows.
-
-For these two, please try commenting on an existing issue instead of creating a new one.
+1. Created a conda environment and installed the dependencies exactly as in the *Installation* section above.
+2. [Searched](https://github.com/oobabooga/text-generation-webui/issues) to see if an issue already exists for the issue you encountered.
 
 ## Credits
 

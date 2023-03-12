@@ -29,6 +29,7 @@
     "prompts": {
         "default": "Common sense questions and answers\n\nQuestion: \nFactual answer:",
         "^(gpt4chan|gpt-4chan|4chan)": "-----\n--- 865467536\nInput text\n--- 865467537\n",
-        "(rosey|chip|joi)_.*_instruct.*": "User: \n"
+        "(rosey|chip|joi)_.*_instruct.*": "User: \n",
+        "oasst-*": "<|prompter|>Write a story about future of AI development<|endoftext|><|assistant|>"
     }
 }

@@ -5,7 +5,9 @@ Example:
 python download-model.py facebook/opt-1.3b
 
 '''
+
 import argparse
+import base64
 import json
 import multiprocessing
 import re
@@ -93,23 +95,28 @@ facebook/opt-1.3b
 def get_download_links_from_huggingface(model, branch):
     base = "https://huggingface.co"
     page = f"/api/models/{model}/tree/{branch}?cursor="
+    cursor = b""
 
     links = []
     classifications = []
     has_pytorch = False
     has_safetensors = False
-    while page is not None:
-        content = requests.get(f"{base}{page}").content
+    while True:
+        content = requests.get(f"{base}{page}{cursor.decode()}").content
+
         dict = json.loads(content)
+        if len(dict) == 0:
+            break
 
         for i in range(len(dict)):
             fname = dict[i]['path']
 
             is_pytorch = re.match("pytorch_model.*\.bin", fname)
             is_safetensors = re.match("model.*\.safetensors", fname)
-            is_text = re.match(".*\.(txt|json)", fname)
+            is_tokenizer = re.match("tokenizer.*\.model", fname)
+            is_text = re.match(".*\.(txt|json)", fname) or is_tokenizer
 
-            if is_text or is_safetensors or is_pytorch:
+            if any((is_pytorch, is_safetensors, is_text, is_tokenizer)):
                 if is_text:
                     links.append(f"https://huggingface.co/{model}/resolve/{branch}/{fname}")
                     classifications.append('text')
@@ -123,8 +130,9 @@ def get_download_links_from_huggingface(model, branch):
                         has_pytorch = True
                         classifications.append('pytorch')
 
-        #page = dict['nextUrl']
-        page = None
+        cursor = base64.b64encode(f'{{"file_name":"{dict[-1]["path"]}"}}'.encode()) + b':50'
+        cursor = base64.b64encode(cursor)
+        cursor = cursor.replace(b'=', b'%3D')
 
     # If both pytorch and safetensors are available, download safetensors only
     if has_pytorch and has_safetensors:

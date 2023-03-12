@@ -1,12 +1,11 @@
 import os
 from pathlib import Path
-from queue import Queue
-from threading import Thread
 
 import numpy as np
 from tokenizers import Tokenizer
 
 import modules.shared as shared
+from modules.callbacks import Iteratorize
 
 np.set_printoptions(precision=4, suppress=True, linewidth=200)
 
@@ -49,11 +48,11 @@ class RWKVModel:
         return context+self.pipeline.generate(context, token_count=token_count, args=args, callback=callback)
 
     def generate_with_streaming(self, **kwargs):
-        iterable = Iteratorize(self.generate, kwargs, callback=None)
-        reply = kwargs['context']
-        for token in iterable:
-            reply += token
-            yield reply
+        with Iteratorize(self.generate, kwargs, callback=None) as generator:
+            reply = kwargs['context']
+            for token in generator:
+                reply += token
+                yield reply
 
 class RWKVTokenizer:
     def __init__(self):
@@ -73,38 +72,3 @@ class RWKVTokenizer:
 
     def decode(self, ids):
         return self.tokenizer.decode(ids)
-
-class Iteratorize:
-
-    """
-    Transforms a function that takes a callback
-    into a lazy iterator (generator).
-    """
-
-    def __init__(self, func, kwargs={}, callback=None):
-        self.mfunc=func
-        self.c_callback=callback
-        self.q = Queue(maxsize=1)
-        self.sentinel = object()
-        self.kwargs = kwargs
-
-        def _callback(val):
-            self.q.put(val)
-
-        def gentask():
-            ret = self.mfunc(callback=_callback, **self.kwargs)
-            self.q.put(self.sentinel)
-            if self.c_callback:
-                self.c_callback(ret)
-
-        Thread(target=gentask).start()
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        obj = self.q.get(True,None)
-        if obj is self.sentinel:
-            raise StopIteration
-        else:
-            return obj
