@@ -1,4 +1,4 @@
-If you are having trouble following the installation instructions in the README, Reddit user [Technical_Leather949](https://www.reddit.com/user/Technical_Leather949/) has kindly created a more detailed and step by step guide covering:
+If you are having trouble following the installation instructions in the README, Reddit user [Technical_Leather949](https://www.reddit.com/user/Technical_Leather949/) has created a more detailed, step-by-step guide covering:
 
 * Windows installation
 * 8-bit mode on Windows
