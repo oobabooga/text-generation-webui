@@ -1,5 +1,4 @@
 git+https://github.com/Uberi/speech_recognition.git@010382b
-PyAudio
 openai-whisper
 soundfile
 ffmpeg

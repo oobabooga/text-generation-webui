@@ -7,22 +7,24 @@ input_hijack = {
 }
 
 
-def do_stt():
+def do_stt(audio, text_state=""):
     transcription = ""
     r = sr.Recognizer()
-    with sr.Microphone() as source:
-        r.adjust_for_ambient_noise(source, 0.2)
-        audio = r.listen(source)
+
+    # Convert to AudioData
+    audio_data = sr.AudioData(sample_rate=audio[0], frame_data=audio[1], sample_width=4)
 
     try:
-        transcription = r.recognize_whisper(audio, language="english", model="base.en")
+        transcription = r.recognize_whisper(audio_data, language="english", model="base.en")
     except sr.UnknownValueError:
         print("Whisper could not understand audio")
     except sr.RequestError as e:
         print("Could not request results from Whisper", e)
 
     input_hijack.update({"state": True, "value": [transcription, transcription]})
-    return transcription
+
+    text_state += transcription + " "
+    return text_state, text_state
 
 
 def update_hijack(val):
@@ -31,7 +33,12 @@ def update_hijack(val):
 
 
 def ui():
-    speech_button = gr.Button(value="🎙️")
-    output_transcription = gr.Textbox(label="STT-Input", placeholder="Speech Preview. Click \"Generate\" to send", interactive=True)
-    output_transcription.change(fn=update_hijack, inputs=[output_transcription])
-    speech_button.click(do_stt, outputs=[output_transcription])
+    tr_state = gr.State(value="")
+    output_transcription = gr.Textbox(label="STT-Input",
+                                      placeholder="Speech Preview. Click \"Generate\" to send",
+                                      interactive=True)
+    output_transcription.change(fn=update_hijack, inputs=[output_transcription], outputs=[tr_state])
+    with gr.Row():
+        audio = gr.Audio(source="microphone")
+        transcribe_button = gr.Button(value="Transcribe")
+        transcribe_button.click(do_stt, inputs=[audio, tr_state], outputs=[output_transcription, tr_state])
