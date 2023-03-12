@@ -84,6 +84,7 @@ def extract_message_from_reply(question, reply, name1, name2, check, impersonate
         tmp = f"\n{asker}:"
         for j in range(1, len(tmp)):
             if reply[-j:] == tmp[:j]:
+                reply = reply[:-j]
                 substring_found = True
 
     return reply, next_character_found, substring_found
@@ -91,7 +92,7 @@ def extract_message_from_reply(question, reply, name1, name2, check, impersonate
 def stop_everything_event():
     shared.stop_everything = True
 
-def chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, chat_prompt_size, chat_generation_attempts=1):
+def chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, chat_prompt_size, chat_generation_attempts=1, regenerate=False):
     shared.stop_everything = False
     just_started = True
     eos_token = '\n' if check else None
@@ -119,6 +120,10 @@ def chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical
         prompt = generate_chat_prompt(text, max_new_tokens, name1, name2, context, chat_prompt_size)
     else:
         prompt = custom_generate_chat_prompt(text, max_new_tokens, name1, name2, context, chat_prompt_size)
+
+    if not regenerate:
+        # Display user input and "*is typing...*" imediately
+        yield shared.history['visible']+[[visible_text, '*Is typing...*']]
 
     # Generate
     reply = ''
@@ -158,6 +163,9 @@ def impersonate_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typ
 
     prompt = generate_chat_prompt(text, max_new_tokens, name1, name2, context, chat_prompt_size, impersonate=True)
 
+    # Display "*is typing...*" imediately
+    yield '*Is typing...*'
+
     reply = ''
     for i in range(chat_generation_attempts):
         for reply in generate_reply(prompt+reply, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, eos_token=eos_token, stopping_string=f"\n{name2}:"):
@@ -182,7 +190,7 @@ def regenerate_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typi
         last_visible = shared.history['visible'].pop()
         last_internal = shared.history['internal'].pop()
 
-        for _history in chatbot_wrapper(last_internal[0], max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, chat_prompt_size, chat_generation_attempts):
+        for _history in chatbot_wrapper(last_internal[0], max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, chat_prompt_size, chat_generation_attempts, regenerate=True):
             if shared.args.cai_chat:
                 shared.history['visible'][-1] = [last_visible[0], _history[-1][1]]
                 yield generate_chat_html(shared.history['visible'], name1, name2, shared.character)
@@ -291,7 +299,7 @@ def save_history(timestamp=True):
         fname = f"{prefix}persistent.json"
     if not Path('logs').exists():
         Path('logs').mkdir()
-    with open(Path(f'logs/{fname}'), 'w') as f:
+    with open(Path(f'logs/{fname}'), 'w', encoding='utf-8') as f:
         f.write(json.dumps({'data': shared.history['internal'], 'data_visible': shared.history['visible']}, indent=2))
     return Path(f'logs/{fname}')
 
@@ -332,7 +340,7 @@ def load_character(_character, name1, name2):
     shared.history['visible'] = []
     if _character != 'None':
         shared.character = _character
-        data = json.loads(open(Path(f'characters/{_character}.json'), 'r').read())
+        data = json.loads(open(Path(f'characters/{_character}.json'), 'r', encoding='utf-8').read())
         name2 = data['char_name']
         if 'char_persona' in data and data['char_persona'] != '':
             context += f"{data['char_name']}'s Persona: {data['char_persona']}\n"
@@ -372,7 +380,7 @@ def upload_character(json_file, img, tavern=False):
         i += 1
     if tavern:
         outfile_name = f'TavernAI-{outfile_name}'
-    with open(Path(f'characters/{outfile_name}.json'), 'w') as f:
+    with open(Path(f'characters/{outfile_name}.json'), 'w', encoding='utf-8') as f:
         f.write(json_file)
     if img is not None:
         img = Image.open(io.BytesIO(img))
