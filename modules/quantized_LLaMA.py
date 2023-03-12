@@ -41,7 +41,7 @@ def load_quantized_LLaMA(model_name):
         print(f"Could not find {pt_model}, exiting...")
         exit()
 
-    model = load_quant(path_to_model, pt_path, bits)
+    model = load_quant(path_to_model, str(pt_path), bits)
 
     # Multi-GPU setup
     if shared.args.gpu_memory:
