@@ -1,11 +1,12 @@
+import re
+import time
 from pathlib import Path
 
 import gradio as gr
 import torch
-import time
-import re
-import modules.shared as shared
+
 import modules.chat as chat
+import modules.shared as shared
 
 torch._C._jit_set_profiling_mode(False)
 
