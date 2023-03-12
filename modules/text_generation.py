@@ -187,7 +187,6 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
 
         yield formatted_outputs(original_question, shared.model_name)
         for output in eval(f"generate_with_streaming({', '.join(generate_params)})"):
-            print(print('Used vram in gib:', torch.cuda.memory_allocated() / 1024**3))
             if shared.soft_prompt:
                 output = torch.cat((input_ids[0], output[filler_input_ids.shape[1]:]))
             reply = decode(output)

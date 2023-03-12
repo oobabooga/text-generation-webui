@@ -49,7 +49,7 @@ class Iteratorize:
     def __init__(self, func, kwargs={}, callback=None):
         self.mfunc=func
         self.c_callback=callback
-        self.q = Queue(maxsize=1)
+        self.q = Queue()
         self.sentinel = object()
         self.kwargs = kwargs
 
@@ -73,3 +73,6 @@ class Iteratorize:
             raise StopIteration
         else:
             return obj
+
+    def __del__(self):
+        pass
