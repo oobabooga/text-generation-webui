@@ -2,8 +2,10 @@ from pathlib import Path
 
 import gradio as gr
 import torch
-
+import time
+import re
 import modules.shared as shared
+import modules.chat as chat
 
 torch._C._jit_set_profiling_mode(False)
 
@@ -54,19 +56,57 @@ def remove_surrounded_chars(string):
             new_string += char
     return new_string
 
+def remove_tts_from_history():
+    suffix = '_pygmalion' if 'pygmalion' in shared.model_name.lower() else ''
+    for i, entry in enumerate(shared.history['internal']):
+        reply = entry[1]
+        reply = re.sub("(<USER>|<user>|{{user}})", shared.settings[f'name1{suffix}'], reply)
+        if shared.args.chat:
+            reply = reply.replace('\n', '<br>')
+        shared.history['visible'][i][1] = reply
+
+    if shared.args.cai_chat:
+        return chat.generate_chat_html(shared.history['visible'], shared.settings[f'name1{suffix}'], shared.settings[f'name1{suffix}'], shared.character)
+    else:
+        return shared.history['visible']
+
+def toggle_text_in_history():
+    suffix = '_pygmalion' if 'pygmalion' in shared.model_name.lower() else ''
+    audio_str='\n\n' # The '\n\n' used after </audio>
+    if shared.args.chat:
+         audio_str='<br><br>'
+
+    if params['show_text']==True:
+        #for i, entry in enumerate(shared.history['internal']):
+        for i, entry in enumerate(shared.history['visible']):
+            vis_reply = entry[1]
+            if vis_reply.startswith('<audio'):
+                reply = shared.history['internal'][i][1]
+                reply = re.sub("(<USER>|<user>|{{user}})", shared.settings[f'name1{suffix}'], reply)
+                if shared.args.chat:
+                    reply = reply.replace('\n', '<br>')
+                shared.history['visible'][i][1] = vis_reply.split(audio_str,1)[0]+audio_str+reply
+    else:
+        for i, entry in enumerate(shared.history['visible']):
+            vis_reply = entry[1]
+            if vis_reply.startswith('<audio'):
+                shared.history['visible'][i][1] = vis_reply.split(audio_str,1)[0]+audio_str
+
+    if shared.args.cai_chat:
+        return chat.generate_chat_html(shared.history['visible'], shared.settings[f'name1{suffix}'], shared.settings[f'name1{suffix}'], shared.character)
+    else:
+        return shared.history['visible']
+
 def input_modifier(string):
     """
     This function is applied to your text inputs before
     they are fed into the model.
     """
 
-    # Remove autoplay from previous
-    if len(shared.history['internal'])>0:
-        [text, reply] = shared.history['internal'][-1]
+    # Remove autoplay from previous chat history
+    if (shared.args.chat or shared.args.cai_chat)and len(shared.history['internal'])>0:
         [visible_text, visible_reply] = shared.history['visible'][-1]
-        rep_clean = reply.replace('controls autoplay>','controls>')
         vis_rep_clean = visible_reply.replace('controls autoplay>','controls>')
-        shared.history['internal'][-1] = [text, rep_clean]
         shared.history['visible'][-1] = [visible_text, vis_rep_clean]
 
     return string
@@ -99,24 +139,21 @@ def output_modifier(string):
         string = 'empty reply, try regenerating'
         silent_string = True
 
-    # x-slow, slow, medium, fast, x-fast
-    # x-low, low, medium, high, x-high
     pitch = params['voice_pitch']
     speed = params['voice_speed']
     prosody=f'<prosody rate="{speed}" pitch="{pitch}">'
     string = '<speak>'+prosody+xmlesc(string)+'</prosody></speak>'
 
-    current_msg_id = len(shared.history['visible']) # Check length here, since output_modifier can run many times on the same message
-    output_file = Path(f'extensions/silero_tts/outputs/{shared.character}_{current_msg_id:06d}.wav')
     if not shared.still_streaming and not silent_string:
+        output_file = Path(f'extensions/silero_tts/outputs/{shared.character}_{int(time.time())}.wav')
         model.save_wav(ssml_text=string, speaker=params['speaker'], sample_rate=int(params['sample_rate']), audio_path=str(output_file))
-        string = f'<audio id="audio_{current_msg_id:06d}" src="file/{output_file.as_posix()}" controls autoplay></audio>\n\n'
+        autoplay_str = ' autoplay' if params['autoplay'] else ''
+        string = f'<audio src="file/{output_file.as_posix()}" controls{autoplay_str}></audio>\n\n'
     else:
         # Placeholder so text doesn't shift around so much
         string = '<audio controls></audio>\n\n'
 
     if params['show_text']:
-        #string += f'*[{current_msg_id}]:*'+orig_string #Debug, looks like there is a delay in "current_msg_id" being updated when switching characters (updates after new message sent). Can't find the source. "shared.character" is updating properly.
         string += orig_string
 
     return string
@@ -133,16 +170,34 @@ def bot_prefix_modifier(string):
 def ui():
     # Gradio elements
     with gr.Accordion("Silero TTS"):
-        activate = gr.Checkbox(value=params['activate'], label='Activate TTS')
+        with gr.Row():
+            activate = gr.Checkbox(value=params['activate'], label='Activate TTS')
+            autoplay = gr.Checkbox(value=params['autoplay'], label='Play TTS automatically')
         show_text = gr.Checkbox(value=params['show_text'], label='Show message text under audio player')
-        autoplay = gr.Checkbox(value=params['autoplay'], label='Play TTS automatically')
         voice = gr.Dropdown(value=params['speaker'], choices=voices_by_gender, label='TTS voice')
-        v_pitch = gr.Dropdown(value=params['voice_pitch'], choices=voice_pitches, label='Voice pitch')
-        v_speed = gr.Dropdown(value=params['voice_speed'], choices=voice_speeds, label='Voice speed')
+        with gr.Row():
+            v_pitch = gr.Dropdown(value=params['voice_pitch'], choices=voice_pitches, label='Voice pitch')
+            v_speed = gr.Dropdown(value=params['voice_speed'], choices=voice_speeds, label='Voice speed')
+        with gr.Row():
+            convert = gr.Button('Permanently replace chat history audio with message text')
+            convert_confirm = gr.Button('Confirm (cannot be undone)', variant="stop", visible=False)
+            convert_cancel = gr.Button('Cancel', visible=False)
+
+    # Convert history with confirmation
+    convert_arr = [convert_confirm, convert, convert_cancel]
+    convert.click(lambda :[gr.update(visible=True), gr.update(visible=False), gr.update(visible=True)], None, convert_arr)
+    convert_confirm.click(lambda :[gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr)
+    convert_confirm.click(remove_tts_from_history, [], shared.gradio['display'])
+    convert_confirm.click(lambda : chat.save_history(timestamp=False), [], [], show_progress=False)
+    convert_cancel.click(lambda :[gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr)
+
+    # Toggle message text in history
+    show_text.change(lambda x: params.update({"show_text": x}), show_text, None)
+    show_text.change(toggle_text_in_history, [], shared.gradio['display'])
+    show_text.change(lambda : chat.save_history(timestamp=False), [], [], show_progress=False)
 
     # Event functions to update the parameters in the backend
     activate.change(lambda x: params.update({"activate": x}), activate, None)
-    show_text.change(lambda x: params.update({"show_text": x}), show_text, None)
     autoplay.change(lambda x: params.update({"autoplay": x}), autoplay, None)
     voice.change(lambda x: params.update({"speaker": x}), voice, None)
     v_pitch.change(lambda x: params.update({"voice_pitch": x}), v_pitch, None)
