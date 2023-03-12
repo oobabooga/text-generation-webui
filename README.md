@@ -179,14 +179,10 @@ Check the [wiki](https://github.com/oobabooga/text-generation-webui/wiki/System-
 
 Pull requests, suggestions, and issue reports are welcome.
 
-Before reporting a bug, make sure that you have created a conda environment and installed the dependencies exactly as in the *Installation* section above.
+Before reporting a bug, make sure that you have:
 
-These issues are known:
-
-* 8-bit doesn't work properly on Windows or older GPUs.
-* DeepSpeed doesn't work properly on Windows.
-
-For these two, please try commenting on an existing issue instead of creating a new one.
+1. Created a conda environment and installed the dependencies exactly as in the *Installation* section above.
+2. [Searched](https://github.com/oobabooga/text-generation-webui/issues) to see if an issue already exists for the issue you encountered.
 
 ## Credits
 
