@@ -50,11 +50,11 @@ class RWKVModel:
         return context+self.pipeline.generate(context, token_count=token_count, args=args, callback=callback)
 
     def generate_with_streaming(self, **kwargs):
-        iterable = Iteratorize(self.generate, kwargs, callback=None)
-        reply = kwargs['context']
-        for token in iterable:
-            reply += token
-            yield reply
+        with Iteratorize(self.generate, kwargs, callback=None) as generator:
+            reply = kwargs['context']
+            for token in generator:
+                reply += token
+                yield reply
 
 class RWKVTokenizer:
     def __init__(self):

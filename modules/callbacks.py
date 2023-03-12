@@ -1,3 +1,4 @@
+import gc
 from queue import Queue
 from threading import Thread
 
@@ -5,7 +6,6 @@ import torch
 import transformers
 
 import modules.shared as shared
-
 
 # Copied from https://github.com/PygmalionAI/gradio-ui/
 class _SentinelTokenStoppingCriteria(transformers.StoppingCriteria):
@@ -52,17 +52,24 @@ class Iteratorize:
         self.q = Queue()
         self.sentinel = object()
         self.kwargs = kwargs
+        self.stop_now = False
 
         def _callback(val):
+            if self.stop_now:
+                raise ValueError
             self.q.put(val)
 
         def gentask():
-            ret = self.mfunc(callback=_callback, **self.kwargs)
+            try:
+                ret = self.mfunc(callback=_callback, **self.kwargs)
+            except ValueError:
+                pass
             self.q.put(self.sentinel)
             if self.c_callback:
                 self.c_callback(ret)
 
-        Thread(target=gentask).start()
+        self.thread = Thread(target=gentask)
+        self.thread.start()
 
     def __iter__(self):
         return self
@@ -75,4 +82,16 @@ class Iteratorize:
             return obj
 
     def __del__(self):
-        pass
+        clear_torch_cache()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.stop_now = True
+        clear_torch_cache()
+
+def clear_torch_cache():
+    gc.collect()
+    if not shared.args.cpu:
+        torch.cuda.empty_cache()

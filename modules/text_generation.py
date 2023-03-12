@@ -186,17 +186,18 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
             return Iteratorize(generate_with_callback, kwargs, callback=None)
 
         yield formatted_outputs(original_question, shared.model_name)
-        for output in eval(f"generate_with_streaming({', '.join(generate_params)})"):
-            if shared.soft_prompt:
-                output = torch.cat((input_ids[0], output[filler_input_ids.shape[1]:]))
-            reply = decode(output)
+        with eval(f"generate_with_streaming({', '.join(generate_params)})") as generator:
+            for output in generator:
+                if shared.soft_prompt:
+                    output = torch.cat((input_ids[0], output[filler_input_ids.shape[1]:]))
+                reply = decode(output)
 
-            if not (shared.args.chat or shared.args.cai_chat):
-                reply = original_question + apply_extensions(reply[len(question):], "output")
-            yield formatted_outputs(reply, shared.model_name)
+                if not (shared.args.chat or shared.args.cai_chat):
+                    reply = original_question + apply_extensions(reply[len(question):], "output")
+                yield formatted_outputs(reply, shared.model_name)
 
-            if output[-1] == n:
-                break
+                if output[-1] == n:
+                    break
 
     # Stream the output naively for FlexGen since it doesn't support 'stopping_criteria'
     else:
