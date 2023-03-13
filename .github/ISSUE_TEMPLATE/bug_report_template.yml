@@ -1,0 +1,65 @@
+name: "\U0001F41E Bug report"
+description: Report a bug on Gradio
+labels: [ "bug" ]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: Describe the bug
+      description: A clear and concise description of what the bug is. If you intend to submit a PR for this issue, tell us in the description. Thanks!
+      placeholder: Bug description
+    validations:
+      required: true
+  - type: checkboxes
+    attributes:
+      label: Is there an existing issue for this?
+      description: Please search to see if an issue already exists for the issue you encountered.
+      options:
+        - label: I have searched the existing issues
+          required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Please provide a link to a repo or REPL that can reproduce the problem you ran into. Or provide the Python code below that can be run to reproduce the issue. 
+      placeholder: Reproduction
+    validations:
+      required: true
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot
+      description: "If possible, please include screenshot(s) so that we can understand what the issue is."
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: "Please include the full stacktrace of the errors you get from Python or Javascript. If you are running in a colab notebooks, you can get the logs with by setting `debug=True`, i.e: `gradio.Interface.launch(debug=True)`"
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: system-info
+    attributes:
+      label: System Info
+      description: Please share your system info with us, you can get the Gradio version with `gradio.__version__`
+      render: shell
+      placeholder: Gradio version, Operating System, Browser
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: Select the severity of this issue
+      options:
+        - annoying
+        - serious, but I can work around it
+        - blocking upgrade to latest gradio version
+        - blocking all usage of gradio
+    validations:
+      required: true
