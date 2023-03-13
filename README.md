@@ -157,7 +157,7 @@ Optionally, you can use the following command-line flags:
 | `--local_rank LOCAL_RANK`    | DeepSpeed: Optional argument for distributed setups. |
 |  `--rwkv-strategy RWKV_STRATEGY`         |    RWKV: The strategy to use while loading the model. Examples: "cpu fp32", "cuda fp16", "cuda fp16i8". |
 |  `--rwkv-cuda-on`                        |   RWKV: Compile the CUDA kernel for better performance. |
-| `--no-stream`   | Don't stream the text output in real time. This improves the text generation performance.|
+| `--no-stream`   | Don't stream the text output in real time. |
 | `--settings SETTINGS_FILE` | Load the default interface settings from this json file. See `settings-template.json` for an example. If you create a file called `settings.json`, this file will be loaded by default without the need to use the `--settings` flag.|
 |  `--extensions EXTENSIONS [EXTENSIONS ...]` |  The list of extensions to load. If you want to load more than one extension, write the names separated by spaces. |
 | `--listen`   | Make the web UI reachable from your local network.|
