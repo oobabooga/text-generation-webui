@@ -13,5 +13,4 @@ A clear and concise description of what you want to be implemented.
 
 **Additional Context**
 
-Any additional information or context that might be helpful, including relevant external URLs and screenshots if any.
-
+If applicable, please provide any extra information, external links, or screenshots that could be useful.
