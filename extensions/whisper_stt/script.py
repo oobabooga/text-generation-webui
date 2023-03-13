@@ -32,13 +32,23 @@ def update_hijack(val):
     return val
 
 
+def auto_transcribe(audio, audio_auto, text_state=""):
+    if audio is None:
+        return "", ""
+    if audio_auto:
+        return do_stt(audio, text_state)
+    return "", ""
+
+
 def ui():
     tr_state = gr.State(value="")
     output_transcription = gr.Textbox(label="STT-Input",
                                       placeholder="Speech Preview. Click \"Generate\" to send",
                                       interactive=True)
     output_transcription.change(fn=update_hijack, inputs=[output_transcription], outputs=[tr_state])
+    audio_auto = gr.Checkbox(label="Auto-Transcribe", value=True)
     with gr.Row():
         audio = gr.Audio(source="microphone")
+        audio.change(fn=auto_transcribe, inputs=[audio, audio_auto, tr_state], outputs=[output_transcription, tr_state])
         transcribe_button = gr.Button(value="Transcribe")
         transcribe_button.click(do_stt, inputs=[audio, tr_state], outputs=[output_transcription, tr_state])
