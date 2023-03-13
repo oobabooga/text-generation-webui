@@ -89,9 +89,9 @@ def load_model(model_name):
 
     # Quantized model
     elif shared.args.gptq_bits > 0:
-        from modules.quant_loader import load_quant
+        from modules.quant_loader import load_quantized
 
-        model = load_quant(model_name, shared.args.gptq_model_type)
+        model = load_quantized(model_name, shared.args.gptq_model_type)
 
     # Custom
     else:

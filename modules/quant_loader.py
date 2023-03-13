@@ -10,7 +10,7 @@ sys.path.insert(0, str(Path("repositories/GPTQ-for-LLaMa")))
 
 
 # 4-bit LLaMA
-def load_quant(model_name, model_type):
+def load_quantized(model_name, model_type):
     if model_type == 'llama':
         from llama import load_quant
     elif model_type == 'opt':
