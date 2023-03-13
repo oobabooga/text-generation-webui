@@ -1,4 +1,3 @@
-import os
 import sys
 from pathlib import Path
 
@@ -7,7 +6,7 @@ import torch
 
 import modules.shared as shared
 
-sys.path.insert(0, os.path.abspath(Path("repositories/GPTQ-for-LLaMa")))
+sys.path.insert(0, str(Path("repositories/GPTQ-for-LLaMa")))
 from llama import load_quant
 
 
@@ -41,9 +40,9 @@ def load_quantized_LLaMA(model_name):
         print(f"Could not find {pt_model}, exiting...")
         exit()
 
-    model = load_quant(path_to_model, os.path.abspath(pt_path), bits)
+    model = load_quant(str(path_to_model), str(pt_path), bits)
 
-    # Multi-GPU setup
+    # Multiple GPUs or GPU+CPU
     if shared.args.gpu_memory:
         max_memory = {}
         for i in range(len(shared.args.gpu_memory)):

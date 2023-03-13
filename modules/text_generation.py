@@ -37,9 +37,13 @@ def encode(prompt, tokens_to_generate=0, add_special_tokens=True):
             return input_ids.cuda()
 
 def decode(output_ids):
-    reply = shared.tokenizer.decode(output_ids, skip_special_tokens=True)
-    reply = reply.replace(r'<|endoftext|>', '')
-    return reply
+    # Open Assistant relies on special tokens like <|endoftext|>
+    if re.match('oasst-*', shared.model_name.lower()):
+        return shared.tokenizer.decode(output_ids, skip_special_tokens=False)
+    else:
+        reply = shared.tokenizer.decode(output_ids, skip_special_tokens=True)
+        reply = reply.replace(r'<|endoftext|>', '')
+        return reply
 
 def generate_softprompt_input_tensors(input_ids):
     inputs_embeds = shared.model.transformer.wte(input_ids)
@@ -119,7 +123,9 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
     original_input_ids = input_ids
     output = input_ids[0]
     cuda = "" if (shared.args.cpu or shared.args.deepspeed or shared.args.flexgen) else ".cuda()"
-    n = shared.tokenizer.eos_token_id if eos_token is None else int(encode(eos_token)[0][-1])
+    eos_token_ids = [shared.tokenizer.eos_token_id] if shared.tokenizer.eos_token_id is not None else []
+    if eos_token is not None:
+        eos_token_ids.append(int(encode(eos_token)[0][-1]))
     stopping_criteria_list = transformers.StoppingCriteriaList()
     if stopping_string is not None:
         # Copied from https://github.com/PygmalionAI/gradio-ui/blob/master/src/model.py
@@ -129,7 +135,7 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
     if not shared.args.flexgen:
         generate_params = [
             f"max_new_tokens=max_new_tokens",
-            f"eos_token_id={n}",
+            f"eos_token_id={eos_token_ids}",
             f"stopping_criteria=stopping_criteria_list",
             f"do_sample={do_sample}",
             f"temperature={temperature}",
@@ -149,7 +155,7 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
             f"max_new_tokens={max_new_tokens if shared.args.no_stream else 8}",
             f"do_sample={do_sample}",
             f"temperature={temperature}",
-            f"stop={n}",
+            f"stop={eos_token_ids[-1]}",
         ]
     if shared.args.deepspeed:
         generate_params.append("synced_gpus=True")
@@ -196,10 +202,12 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
 
                     if not (shared.args.chat or shared.args.cai_chat):
                         reply = original_question + apply_extensions(reply[len(question):], "output")
+
+                    if output[-1] in eos_token_ids:
+                        break
                     yield formatted_outputs(reply, shared.model_name)
 
-                    if output[-1] == n:
-                        break
+                yield formatted_outputs(reply, shared.model_name)
 
         # Stream the output naively for FlexGen since it doesn't support 'stopping_criteria'
         else:
@@ -213,14 +221,16 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
 
                 if not (shared.args.chat or shared.args.cai_chat):
                     reply = original_question + apply_extensions(reply[len(question):], "output")
-                yield formatted_outputs(reply, shared.model_name)
 
-                if np.count_nonzero(input_ids[0] == n) < np.count_nonzero(output == n):
+                if np.count_nonzero(np.isin(input_ids[0], eos_token_ids)) < np.count_nonzero(np.isin(output, eos_token_ids)):
                     break
+                yield formatted_outputs(reply, shared.model_name)
 
                 input_ids = np.reshape(output, (1, output.shape[0]))
                 if shared.soft_prompt:
                     inputs_embeds, filler_input_ids = generate_softprompt_input_tensors(input_ids)
+
+            yield formatted_outputs(reply, shared.model_name)
 
     finally:
         t1 = time.time()
