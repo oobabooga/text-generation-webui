@@ -6,11 +6,12 @@ labels: ''
 assignees: ''
 
 ---
-- [ ] I have searched to see if a similar issue already exists.
 
+**Description**
 
-**Is your feature request related to a problem? Please describe.**  
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+A clear and concise description of what you want to be implemented.
 
-**Describe the feature you'd like**  
-A clear and concise description of what you want to happen.
+**Additional Context**
+
+Any additional information or context that might be helpful, including relevant external URLs and screenshots if any.
+
