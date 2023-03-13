@@ -25,10 +25,10 @@ class RWKVModel:
         tokenizer_path = Path(f"{path.parent}/20B_tokenizer.json")
 
         if shared.args.rwkv_strategy is None:
-            model = RWKV(model=os.path.abspath(path), strategy=f'{device} {dtype}')
+            model = RWKV(model=str(path), strategy=f'{device} {dtype}')
         else:
-            model = RWKV(model=os.path.abspath(path), strategy=shared.args.rwkv_strategy)
-        pipeline = PIPELINE(model, os.path.abspath(tokenizer_path))
+            model = RWKV(model=str(path), strategy=shared.args.rwkv_strategy)
+        pipeline = PIPELINE(model, str(tokenizer_path))
 
         result = self()
         result.pipeline = pipeline
@@ -61,7 +61,7 @@ class RWKVTokenizer:
     @classmethod
     def from_pretrained(self, path):
         tokenizer_path = path / "20B_tokenizer.json"
-        tokenizer = Tokenizer.from_file(os.path.abspath(tokenizer_path))
+        tokenizer = Tokenizer.from_file(str(tokenizer_path))
 
         result = self()
         result.tokenizer = tokenizer

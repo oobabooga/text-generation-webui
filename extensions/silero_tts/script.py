@@ -1,4 +1,3 @@
-import os
 import time
 from pathlib import Path
 
@@ -113,7 +112,7 @@ def output_modifier(string):
         output_file = Path(f'extensions/silero_tts/outputs/{shared.character}_{int(time.time())}.wav')
         prosody = '<prosody rate="{}" pitch="{}">'.format(params['voice_speed'], params['voice_pitch'])
         silero_input = f'<speak>{prosody}{xmlesc(string)}</prosody></speak>'
-        model.save_wav(ssml_text=silero_input, speaker=params['speaker'], sample_rate=int(params['sample_rate']), audio_path=os.path.abspath(output_file))
+        model.save_wav(ssml_text=silero_input, speaker=params['speaker'], sample_rate=int(params['sample_rate']), audio_path=str(output_file))
 
         autoplay = 'autoplay' if params['autoplay'] else ''
         string = f'<audio src="file/{output_file.as_posix()}" controls {autoplay}></audio>'
