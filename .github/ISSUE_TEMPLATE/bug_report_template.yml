@@ -46,7 +46,7 @@ body:
     id: system-info
     attributes:
       label: System Info
-      description: Please share your system info with us: operating system and GPU brand/model.
+      description: "Please share your system info with us: operating system and GPU brand/model."
       render: shell
       placeholder: 
     validations:
