@@ -1,4 +1,4 @@
-import re
+import os
 import time
 from pathlib import Path
 
@@ -12,7 +12,7 @@ torch._C._jit_set_profiling_mode(False)
 
 params = {
     'activate': True,
-    'speaker': 'en_5',
+    'speaker': 'en_56',
     'language': 'en',
     'model_id': 'v3_en',
     'sample_rate': 48000,
@@ -27,7 +27,6 @@ current_params = params.copy()
 voices_by_gender = ['en_99', 'en_45', 'en_18', 'en_117', 'en_49', 'en_51', 'en_68', 'en_0', 'en_26', 'en_56', 'en_74', 'en_5', 'en_38', 'en_53', 'en_21', 'en_37', 'en_107', 'en_10', 'en_82', 'en_16', 'en_41', 'en_12', 'en_67', 'en_61', 'en_14', 'en_11', 'en_39', 'en_52', 'en_24', 'en_97', 'en_28', 'en_72', 'en_94', 'en_36', 'en_4', 'en_43', 'en_88', 'en_25', 'en_65', 'en_6', 'en_44', 'en_75', 'en_91', 'en_60', 'en_109', 'en_85', 'en_101', 'en_108', 'en_50', 'en_96', 'en_64', 'en_92', 'en_76', 'en_33', 'en_116', 'en_48', 'en_98', 'en_86', 'en_62', 'en_54', 'en_95', 'en_55', 'en_111', 'en_3', 'en_83', 'en_8', 'en_47', 'en_59', 'en_1', 'en_2', 'en_7', 'en_9', 'en_13', 'en_15', 'en_17', 'en_19', 'en_20', 'en_22', 'en_23', 'en_27', 'en_29', 'en_30', 'en_31', 'en_32', 'en_34', 'en_35', 'en_40', 'en_42', 'en_46', 'en_57', 'en_58', 'en_63', 'en_66', 'en_69', 'en_70', 'en_71', 'en_73', 'en_77', 'en_78', 'en_79', 'en_80', 'en_81', 'en_84', 'en_87', 'en_89', 'en_90', 'en_93', 'en_100', 'en_102', 'en_103', 'en_104', 'en_105', 'en_106', 'en_110', 'en_112', 'en_113', 'en_114', 'en_115']
 voice_pitches = ['x-low', 'low', 'medium', 'high', 'x-high']
 voice_speeds = ['x-slow', 'slow', 'medium', 'fast', 'x-fast']
-last_msg_id = 0
 
 # Used for making text xml compatible, needed for voice pitch and speed control
 table = str.maketrans({
@@ -57,46 +56,21 @@ def remove_surrounded_chars(string):
             new_string += char
     return new_string
 
-def remove_tts_from_history():
-    suffix = '_pygmalion' if 'pygmalion' in shared.model_name.lower() else ''
+def remove_tts_from_history(name1, name2):
     for i, entry in enumerate(shared.history['internal']):
-        reply = entry[1]
-        reply = re.sub("(<USER>|<user>|{{user}})", shared.settings[f'name1{suffix}'], reply)
-        if shared.args.chat:
-            reply = reply.replace('\n', '<br>')
-        shared.history['visible'][i][1] = reply
+        shared.history['visible'][i][1] = entry[1]
+    return chat.generate_chat_output(shared.history['visible'], name1, name2, shared.character)
 
-    if shared.args.cai_chat:
-        return chat.generate_chat_html(shared.history['visible'], shared.settings[f'name1{suffix}'], shared.settings[f'name1{suffix}'], shared.character)
-    else:
-        return shared.history['visible']
-
-def toggle_text_in_history():
-    suffix = '_pygmalion' if 'pygmalion' in shared.model_name.lower() else ''
-    audio_str='\n\n' # The '\n\n' used after </audio>
-    if shared.args.chat:
-         audio_str='<br><br>'
-
-    if params['show_text']==True:
-        #for i, entry in enumerate(shared.history['internal']):
-        for i, entry in enumerate(shared.history['visible']):
-            vis_reply = entry[1]
-            if vis_reply.startswith('<audio'):
+def toggle_text_in_history(name1, name2):
+    for i, entry in enumerate(shared.history['visible']):
+        visible_reply = entry[1]
+        if visible_reply.startswith('<audio'):
+            if params['show_text']:
                 reply = shared.history['internal'][i][1]
-                reply = re.sub("(<USER>|<user>|{{user}})", shared.settings[f'name1{suffix}'], reply)
-                if shared.args.chat:
-                    reply = reply.replace('\n', '<br>')
-                shared.history['visible'][i][1] = vis_reply.split(audio_str,1)[0]+audio_str+reply
-    else:
-        for i, entry in enumerate(shared.history['visible']):
-            vis_reply = entry[1]
-            if vis_reply.startswith('<audio'):
-                shared.history['visible'][i][1] = vis_reply.split(audio_str,1)[0]+audio_str
-
-    if shared.args.cai_chat:
-        return chat.generate_chat_html(shared.history['visible'], shared.settings[f'name1{suffix}'], shared.settings[f'name1{suffix}'], shared.character)
-    else:
-        return shared.history['visible']
+                shared.history['visible'][i][1] = f"{visible_reply.split('</audio>')[0]}</audio>\n\n{reply}"
+            else:
+                shared.history['visible'][i][1] = f"{visible_reply.split('</audio>')[0]}</audio>"
+    return chat.generate_chat_output(shared.history['visible'], name1, name2, shared.character)
 
 def input_modifier(string):
     """
@@ -104,11 +78,9 @@ def input_modifier(string):
     they are fed into the model.
     """
 
-    # Remove autoplay from previous chat history
-    if (shared.args.chat or shared.args.cai_chat)and len(shared.history['internal'])>0:
-        [visible_text, visible_reply] = shared.history['visible'][-1]
-        vis_rep_clean = visible_reply.replace('controls autoplay>','controls>')
-        shared.history['visible'][-1] = [visible_text, vis_rep_clean]
+    # Remove autoplay from the last reply
+    if (shared.args.chat or shared.args.cai_chat) and len(shared.history['internal']) > 0:
+        shared.history['visible'][-1][1] = shared.history['visible'][-1][1].replace('controls autoplay>','controls>')
 
     return string
 
@@ -128,34 +100,25 @@ def output_modifier(string):
     if params['activate'] == False:
         return string
 
-    orig_string = string
+    original_string = string
     string = remove_surrounded_chars(string)
     string = string.replace('"', '')
     string = string.replace('“', '')
     string = string.replace('\n', ' ')
     string = string.strip()
 
-    silent_string = False # Used to prevent unnecessary audio file generation
     if string == '':
-        string = 'empty reply, try regenerating'
-        silent_string = True
-
-    pitch = params['voice_pitch']
-    speed = params['voice_speed']
-    prosody=f'<prosody rate="{speed}" pitch="{pitch}">'
-    string = '<speak>'+prosody+xmlesc(string)+'</prosody></speak>'
-
-    if not shared.still_streaming and not silent_string:
-        output_file = Path(f'extensions/silero_tts/outputs/{shared.character}_{int(time.time())}.wav')
-        model.save_wav(ssml_text=string, speaker=params['speaker'], sample_rate=int(params['sample_rate']), audio_path=str(output_file))
-        autoplay_str = ' autoplay' if params['autoplay'] else ''
-        string = f'<audio src="file/{output_file.as_posix()}" controls{autoplay_str}></audio>\n\n'
+        string = '*Empty reply, try regenerating*'
     else:
-        # Placeholder so text doesn't shift around so much
-        string = '<audio controls></audio>\n\n'
+        output_file = Path(f'extensions/silero_tts/outputs/{shared.character}_{int(time.time())}.wav')
+        prosody = '<prosody rate="{}" pitch="{}">'.format(params['voice_speed'], params['voice_pitch'])
+        silero_input = f'<speak>{prosody}{xmlesc(string)}</prosody></speak>'
+        model.save_wav(ssml_text=silero_input, speaker=params['speaker'], sample_rate=int(params['sample_rate']), audio_path=os.path.abspath(output_file))
 
-    if params['show_text']:
-        string += orig_string
+        autoplay = 'autoplay' if params['autoplay'] else ''
+        string = f'<audio src="file/{output_file.as_posix()}" controls {autoplay}></audio>'
+        if params['show_text']:
+            string += f'\n\n{original_string}'
 
     return string
 
@@ -180,21 +143,21 @@ def ui():
             v_pitch = gr.Dropdown(value=params['voice_pitch'], choices=voice_pitches, label='Voice pitch')
             v_speed = gr.Dropdown(value=params['voice_speed'], choices=voice_speeds, label='Voice speed')
         with gr.Row():
-            convert = gr.Button('Permanently replace chat history audio with message text')
-            convert_confirm = gr.Button('Confirm (cannot be undone)', variant="stop", visible=False)
+            convert = gr.Button('Permanently replace audios with the message texts')
             convert_cancel = gr.Button('Cancel', visible=False)
+            convert_confirm = gr.Button('Confirm (cannot be undone)', variant="stop", visible=False)
 
     # Convert history with confirmation
     convert_arr = [convert_confirm, convert, convert_cancel]
     convert.click(lambda :[gr.update(visible=True), gr.update(visible=False), gr.update(visible=True)], None, convert_arr)
     convert_confirm.click(lambda :[gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr)
-    convert_confirm.click(remove_tts_from_history, [], shared.gradio['display'])
+    convert_confirm.click(remove_tts_from_history, [shared.gradio['name1'], shared.gradio['name2']], shared.gradio['display'])
     convert_confirm.click(lambda : chat.save_history(timestamp=False), [], [], show_progress=False)
     convert_cancel.click(lambda :[gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr)
 
     # Toggle message text in history
     show_text.change(lambda x: params.update({"show_text": x}), show_text, None)
-    show_text.change(toggle_text_in_history, [], shared.gradio['display'])
+    show_text.change(toggle_text_in_history, [shared.gradio['name1'], shared.gradio['name2']], shared.gradio['display'])
     show_text.change(lambda : chat.save_history(timestamp=False), [], [], show_progress=False)
 
     # Event functions to update the parameters in the backend

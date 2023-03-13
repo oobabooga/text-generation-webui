@@ -189,7 +189,6 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
             def generate_with_streaming(**kwargs):
                 return Iteratorize(generate_with_callback, kwargs, callback=None)
 
-            shared.still_streaming = True
             yield formatted_outputs(original_question, shared.model_name)
             with eval(f"generate_with_streaming({', '.join(generate_params)})") as generator:
                 for output in generator:
@@ -204,12 +203,10 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
                         break
                     yield formatted_outputs(reply, shared.model_name)
 
-                shared.still_streaming = False
                 yield formatted_outputs(reply, shared.model_name)
 
         # Stream the output naively for FlexGen since it doesn't support 'stopping_criteria'
         else:
-            shared.still_streaming = True
             for i in range(max_new_tokens//8+1):
                 clear_torch_cache()
                 with torch.no_grad():
@@ -229,7 +226,6 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
                 if shared.soft_prompt:
                     inputs_embeds, filler_input_ids = generate_softprompt_input_tensors(input_ids)
 
-            shared.still_streaming = False
             yield formatted_outputs(reply, shared.model_name)
 
     finally:
