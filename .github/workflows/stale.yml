@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/stale@v5
         with:
-          days-before-issue-stale: -1
+          days-before-issue-stale: 30
           days-before-issue-close: 30
           stale-issue-label: "stale"
           stale-issue-message: "This issue is stale because it has been open for 30 days with no activity."
