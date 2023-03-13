@@ -42,7 +42,7 @@ def load_quantized_LLaMA(model_name):
 
     model = load_quant(path_to_model, str(pt_path), bits)
 
-    # Multi-GPU setup
+    # Multiple GPUs or GPU+CPU
     if shared.args.gpu_memory:
         max_memory = {}
         for i in range(len(shared.args.gpu_memory)):
