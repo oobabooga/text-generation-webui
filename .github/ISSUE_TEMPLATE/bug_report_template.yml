@@ -25,7 +25,7 @@ body:
     id: reproduction
     attributes:
       label: Reproduction
-      description: Please provide the steps necessary to reproduce your issue, including the command-line flags that were used (like `--chat`, `--gpu-memory`, etc).
+      description: Please provide the steps necessary to reproduce your issue, including the command-line flags that were used (`--chat`, `--gpu-memory`, etc).
       placeholder: Reproduction
     validations:
       required: true
