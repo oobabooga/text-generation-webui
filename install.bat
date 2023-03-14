@@ -81,8 +81,8 @@ if exist text-generation-webui\ (
   cd text-generation-webui
 )
 call python -m pip install -r requirements.txt --upgrade
-call python -m pip install -r extensions\google_translate\requirements.txt
-call python -m pip install -r extensions\silero_tts\requirements.txt
+call python -m pip install -r extensions\google_translate\requirements.txt --upgrade
+call python -m pip install -r extensions\silero_tts\requirements.txt --upgrade
 
 cd ..
 del .tmp1 .tmp2
