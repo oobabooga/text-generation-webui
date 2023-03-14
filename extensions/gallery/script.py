@@ -50,8 +50,8 @@ def generate_html():
 
     # Iterate through files in image folder
     for file in sorted(Path("characters").glob("*")):
-        if file.name.endswith(".json"):
-            character = file.name.replace(".json", "")
+        if file.suffix in [".json", ".yml", ".yaml"]:
+            character = file.name.replace(file.suffix, "")
             container_html += f'<div class="character-container" onclick=\'document.getElementById("character-menu").children[1].children[1].value = "{character}"; document.getElementById("character-menu").children[1].children[1].dispatchEvent(new Event("change"));\'>'
             image_html = "<div class='placeholder'></div>"
 

@@ -2,6 +2,7 @@ import base64
 import copy
 import io
 import json
+import yaml
 import re
 from datetime import datetime
 from pathlib import Path
@@ -336,7 +337,13 @@ def load_character(_character, name1, name2):
     shared.history['visible'] = []
     if _character != 'None':
         shared.character = _character
-        data = json.loads(open(Path(f'characters/{_character}.json'), 'r', encoding='utf-8').read())
+        
+        extensions = ["yml", "yaml", "json"]
+        for extension in extensions:
+            filepath = Path(f'characters/{_character}.{extension}')
+            if filepath.exists():
+                break
+        data = yaml.safe_load(open(filepath, 'r', encoding='utf-8').read())
         name2 = data['char_name']
         if 'char_persona' in data and data['char_persona'] != '':
             context += f"{data['char_name']}'s Persona: {data['char_persona']}\n"
