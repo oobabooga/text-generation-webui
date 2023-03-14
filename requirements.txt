@@ -1,5 +1,5 @@
 accelerate==0.17.0
-bitsandbytes==0.37.0
+bitsandbytes==0.37.1
 flexgen==0.1.7
 gradio==3.18.0
 numpy
