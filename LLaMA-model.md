@@ -10,7 +10,7 @@ Throughout this tutorial, we are going to use `llama-7b` as an example, but the 
 
 ```
 pip uninstall transformers
-pip install git+https://github.com/zphang/transformers@llama_push
+pip install git+https://github.com/zphang/transformers.git@68d640f7c368bcaaaecfc678f11908ebbd3d6176
 ```
 
 
