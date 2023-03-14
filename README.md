@@ -140,7 +140,7 @@ Optionally, you can use the following command-line flags:
 | `--cai-chat`  | Launch the web UI in chat mode with a style similar to Character.AI's. If the file `img_bot.png` or `img_bot.jpg` exists in the same folder as server.py, this image will be used as the bot's profile picture. Similarly, `img_me.png` or `img_me.jpg` will be used as your profile picture. |
 | `--cpu`       | Use the CPU to generate text.|
 | `--load-in-8bit`  | Load the model with 8-bit precision.|
-| `--load-in-4bit`  | Load the model with 4-bit precision. Currently only works with LLaMA.|
+| `--load-in-4bit`  | DEPRECATED: use `--gptq-bits 4` instead. |
 | `--gptq-bits GPTQ_BITS`  |  Load a pre-quantized model with specified precision. 2, 3, 4 and 8 (bit) are supported. Currently only works with LLaMA and OPT. |
 | `--gptq-model-type MODEL_TYPE`  |  Model type of pre-quantized model. Currently only LLaMa and OPT are supported. |
 | `--bf16`  | Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU. |
