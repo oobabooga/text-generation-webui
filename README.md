@@ -60,7 +60,9 @@ pip3 install torch torchvision torchaudio --extra-index-url https://download.pyt
 conda install pytorch torchvision torchaudio git -c pytorch
 ```
 
-See also: [Installation instructions for human beings](https://github.com/oobabooga/text-generation-webui/wiki/Installation-instructions-for-human-beings).
+> **Note**
+> 1. If you are on Windows, it may be easier to run the commands above in an WSL environment. The performance may also be better.
+> 2. For more detailed, user-contributed guide, see: [Installation instructions for human beings](https://github.com/oobabooga/text-generation-webui/wiki/Installation-instructions-for-human-beings).
 
 ## Installation option 2: one-click installers
 
