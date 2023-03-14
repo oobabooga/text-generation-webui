@@ -60,8 +60,7 @@ pip3 install torch torchvision torchaudio --extra-index-url https://download.pyt
 conda install pytorch torchvision torchaudio git -c pytorch
 ```
 
-See also: [Installation instructions for human beings
-](https://github.com/oobabooga/text-generation-webui/wiki/Installation-instructions-for-human-beings)
+See also: [Installation instructions for human beings](https://github.com/oobabooga/text-generation-webui/wiki/Installation-instructions-for-human-beings).
 
 ## Installation option 2: one-click installers
 
@@ -132,39 +131,41 @@ Then browse to
 
 Optionally, you can use the following command-line flags:
 
-| Flag                                       | Description                                                                                                                                                                                                                                                                                   |
-|--------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `-h`, `--help`                             | show this help message and exit                                                                                                                                                                                                                                                               |
-| `--model MODEL`                            | Name of the model to load by default.                                                                                                                                                                                                                                                         |
-| `--notebook`                               | Launch the web UI in notebook mode, where the output is written to the same text box as the input.                                                                                                                                                                                            |
-| `--chat`                                   | Launch the web UI in chat mode.                                                                                                                                                                                                                                                               |
-| `--cai-chat`                               | Launch the web UI in chat mode with a style similar to Character.AI's. If the file `img_bot.png` or `img_bot.jpg` exists in the same folder as server.py, this image will be used as the bot's profile picture. Similarly, `img_me.png` or `img_me.jpg` will be used as your profile picture. |
-| `--cpu`                                    | Use the CPU to generate text.                                                                                                                                                                                                                                                                 |
-| `--load-in-8bit`                           | Load the model with 8-bit precision.                                                                                                                                                                                                                                                          |
-| `--gptq-bits GPTQ_BITS`                    | Load a pre-quantized model with specified precision. 2, 3, 4 and 8 (bit) are supported. Currently only works with LLaMA and OPT.                                                                                                                                                              |
-| `--gptq-model-type MODEL_TYPE`             | Model type of pre-quantized model. Currently only LLaMa and OPT are supported.                                                                                                                                                                                                                |
-| `--bf16`                                   | Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU.                                                                                                                                                                                                                           |
-| `--auto-devices`                           | Automatically split the model across the available GPU(s) and CPU.                                                                                                                                                                                                                            |
-| `--disk`                                   | If the model is too large for your GPU(s) and CPU combined, send the remaining layers to the disk.                                                                                                                                                                                            |
-| `--disk-cache-dir DISK_CACHE_DIR`          | Directory to save the disk cache to. Defaults to `cache/`.                                                                                                                                                                                                                                    |
-| `--gpu-memory GPU_MEMORY [GPU_MEMORY ...]` | Maxmimum GPU memory in GiB to be allocated per GPU. Example: `--gpu-memory 10` for a single GPU, `--gpu-memory 10 5` for two GPUs.                                                                                                                                                            |
-| `--cpu-memory CPU_MEMORY`                  | Maximum CPU memory in GiB to allocate for offloaded weights. Must be an integer number. Defaults to 99.                                                                                                                                                                                       |
-| `--flexgen`                                | Enable the use of FlexGen offloading.                                                                                                                                                                                                                                                         |
-| `--percent PERCENT [PERCENT ...]`          | FlexGen: allocation percentages. Must be 6 numbers separated by spaces (default: 0, 100, 100, 0, 100, 0).                                                                                                                                                                                     |
-| `--compress-weight`                        | FlexGen: Whether to compress weight (default: False).                                                                                                                                                                                                                                         |
-| `--pin-weight [PIN_WEIGHT]`                | FlexGen: whether to pin weights (setting this to False reduces CPU memory by 20%).                                                                                                                                                                                                            |
-| `--deepspeed`                              | Enable the use of DeepSpeed ZeRO-3 for inference via the Transformers integration.                                                                                                                                                                                                            |
-| `--nvme-offload-dir NVME_OFFLOAD_DIR`      | DeepSpeed: Directory to use for ZeRO-3 NVME offloading.                                                                                                                                                                                                                                       |
-| `--local_rank LOCAL_RANK`                  | DeepSpeed: Optional argument for distributed setups.                                                                                                                                                                                                                                          |
-| `--rwkv-strategy RWKV_STRATEGY`            | RWKV: The strategy to use while loading the model. Examples: "cpu fp32", "cuda fp16", "cuda fp16i8".                                                                                                                                                                                          |
-| `--rwkv-cuda-on`                           | RWKV: Compile the CUDA kernel for better performance.                                                                                                                                                                                                                                         |
-| `--no-stream`                              | Don't stream the text output in real time. This improves the text generation performance.                                                                                                                                                                                                     |
-| `--settings SETTINGS_FILE`                 | Load the default interface settings from this json file. See `settings-template.json` for an example. If you create a file called `settings.json`, this file will be loaded by default without the need to use the `--settings` flag.                                                         |
-| `--extensions EXTENSIONS [EXTENSIONS ...]` | The list of extensions to load. If you want to load more than one extension, write the names separated by spaces.                                                                                                                                                                             |
-| `--listen`                                 | Make the web UI reachable from your local network.                                                                                                                                                                                                                                            |
-| `--listen-port LISTEN_PORT`                | The listening port that the server will use.                                                                                                                                                                                                                                                  |
-| `--share`                                  | Create a public URL. This is useful for running the web UI on Google Colab or similar.                                                                                                                                                                                                        |
-| `--verbose`                                | Print the prompts to the terminal.                                                                                                                                                                                                                                                            |
+| Flag        | Description |
+|-------------|-------------|
+| `-h`, `--help`  | show this help message and exit |
+| `--model MODEL`    | Name of the model to load by default. |
+| `--notebook`  | Launch the web UI in notebook mode, where the output is written to the same text box as the input. |
+| `--chat`      | Launch the web UI in chat mode.|
+| `--cai-chat`  | Launch the web UI in chat mode with a style similar to Character.AI's. If the file `img_bot.png` or `img_bot.jpg` exists in the same folder as server.py, this image will be used as the bot's profile picture. Similarly, `img_me.png` or `img_me.jpg` will be used as your profile picture. |
+| `--cpu`       | Use the CPU to generate text.|
+| `--load-in-8bit`  | Load the model with 8-bit precision.|
+| `--load-in-4bit`  | Load the model with 4-bit precision. Currently only works with LLaMA.|
+| `--gptq-bits GPTQ_BITS`  |  Load a pre-quantized model with specified precision. 2, 3, 4 and 8 (bit) are supported. Currently only works with LLaMA and OPT. |
+| `--gptq-model-type MODEL_TYPE`  |  Model type of pre-quantized model. Currently only LLaMa and OPT are supported. |
+| `--bf16`  | Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU. |
+| `--auto-devices` | Automatically split the model across the available GPU(s) and CPU.|
+| `--disk` | If the model is too large for your GPU(s) and CPU combined, send the remaining layers to the disk. |
+| `--disk-cache-dir DISK_CACHE_DIR` | Directory to save the disk cache to. Defaults to `cache/`. |
+|  `--gpu-memory GPU_MEMORY [GPU_MEMORY ...]` |  Maxmimum GPU memory in GiB to be allocated per GPU. Example: `--gpu-memory 10` for a single GPU, `--gpu-memory 10 5` for two GPUs. |
+| `--cpu-memory CPU_MEMORY`    | Maximum CPU memory in GiB to allocate for offloaded weights. Must be an integer number. Defaults to 99.|
+| `--flexgen`                   |         Enable the use of FlexGen offloading. |
+|  `--percent PERCENT [PERCENT ...]`    |  FlexGen: allocation percentages. Must be 6 numbers separated by spaces (default: 0, 100, 100, 0, 100, 0). |
+|  `--compress-weight`                  |  FlexGen: Whether to compress weight (default: False).|
+|  `--pin-weight [PIN_WEIGHT]`          |       FlexGen: whether to pin weights (setting this to False reduces CPU memory by 20%). |
+| `--deepspeed`    | Enable the use of DeepSpeed ZeRO-3 for inference via the Transformers integration. |
+| `--nvme-offload-dir NVME_OFFLOAD_DIR`    | DeepSpeed: Directory to use for ZeRO-3 NVME offloading. |
+| `--local_rank LOCAL_RANK`    | DeepSpeed: Optional argument for distributed setups. |
+|  `--rwkv-strategy RWKV_STRATEGY`         |    RWKV: The strategy to use while loading the model. Examples: "cpu fp32", "cuda fp16", "cuda fp16i8". |
+|  `--rwkv-cuda-on`                        |   RWKV: Compile the CUDA kernel for better performance. |
+| `--no-stream`   | Don't stream the text output in real time. |
+| `--settings SETTINGS_FILE` | Load the default interface settings from this json file. See `settings-template.json` for an example. If you create a file called `settings.json`, this file will be loaded by default without the need to use the `--settings` flag.|
+|  `--extensions EXTENSIONS [EXTENSIONS ...]` |  The list of extensions to load. If you want to load more than one extension, write the names separated by spaces. |
+| `--listen`   | Make the web UI reachable from your local network.|
+|  `--listen-port LISTEN_PORT` | The listening port that the server will use. |
+| `--share`   | Create a public URL. This is useful for running the web UI on Google Colab or similar. |
+| `--auto-launch` | Open the web UI in the default browser upon launch. |
+| `--verbose`   | Print the prompts to the terminal. |
 
 Out of memory errors? [Check this guide](https://github.com/oobabooga/text-generation-webui/wiki/Low-VRAM-guide).
 

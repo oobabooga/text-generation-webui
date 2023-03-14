@@ -11,6 +11,7 @@ is_RWKV = False
 history = {'internal': [], 'visible': []}
 character = 'None'
 stop_everything = False
+processing_message = '*Is typing...*'
 
 # UI elements (buttons, sliders, HTML, etc)
 gradio = {}
@@ -85,12 +86,12 @@ parser.add_argument('--nvme-offload-dir', type=str, help='DeepSpeed: Directory t
 parser.add_argument('--local_rank', type=int, default=0, help='DeepSpeed: Optional argument for distributed setups.')
 parser.add_argument('--rwkv-strategy', type=str, default=None, help='RWKV: The strategy to use while loading the model. Examples: "cpu fp32", "cuda fp16", "cuda fp16i8".')
 parser.add_argument('--rwkv-cuda-on', action='store_true', help='RWKV: Compile the CUDA kernel for better performance.')
-parser.add_argument('--no-stream', action='store_true', help='Don\'t stream the text output in real time. This improves the text generation performance.')
+parser.add_argument('--no-stream', action='store_true', help='Don\'t stream the text output in real time.')
 parser.add_argument('--settings', type=str, help='Load the default interface settings from this json file. See settings-template.json for an example. If you create a file called settings.json, this file will be loaded by default without the need to use the --settings flag.')
 parser.add_argument('--extensions', type=str, nargs="+", help='The list of extensions to load. If you want to load more than one extension, write the names separated by spaces.')
 parser.add_argument('--listen', action='store_true', help='Make the web UI reachable from your local network.')
 parser.add_argument('--listen-port', type=int, help='The listening port that the server will use.')
 parser.add_argument('--share', action='store_true', help='Create a public URL. This is useful for running the web UI on Google Colab or similar.')
+parser.add_argument('--auto-launch', action='store_true', default=False, help='Open the web UI in the default browser upon launch.')
 parser.add_argument('--verbose', action='store_true', help='Print the prompts to the terminal.')
-parser.add_argument('--auto-launch', action='store_true', default=False, help='Open the web UI in the default browser upon launch')
 args = parser.parse_args()

@@ -57,7 +57,7 @@ def remove_surrounded_chars(string):
 
 def remove_tts_from_history(name1, name2):
     for i, entry in enumerate(shared.history['internal']):
-        shared.history['visible'][i][1] = entry[1]
+        shared.history['visible'][i] = [shared.history['visible'][i][0], entry[1]]
     return chat.generate_chat_output(shared.history['visible'], name1, name2, shared.character)
 
 def toggle_text_in_history(name1, name2):
@@ -66,9 +66,9 @@ def toggle_text_in_history(name1, name2):
         if visible_reply.startswith('<audio'):
             if params['show_text']:
                 reply = shared.history['internal'][i][1]
-                shared.history['visible'][i][1] = f"{visible_reply.split('</audio>')[0]}</audio>\n\n{reply}"
+                shared.history['visible'][i] = [shared.history['visible'][i][0], f"{visible_reply.split('</audio>')[0]}</audio>\n\n{reply}"]
             else:
-                shared.history['visible'][i][1] = f"{visible_reply.split('</audio>')[0]}</audio>"
+                shared.history['visible'][i] = [shared.history['visible'][i][0], f"{visible_reply.split('</audio>')[0]}</audio>"]
     return chat.generate_chat_output(shared.history['visible'], name1, name2, shared.character)
 
 def input_modifier(string):
@@ -79,8 +79,9 @@ def input_modifier(string):
 
     # Remove autoplay from the last reply
     if (shared.args.chat or shared.args.cai_chat) and len(shared.history['internal']) > 0:
-        shared.history['visible'][-1][1] = shared.history['visible'][-1][1].replace('controls autoplay>','controls>')
+        shared.history['visible'][-1] = [shared.history['visible'][-1][0], shared.history['visible'][-1][1].replace('controls autoplay>','controls>')]
 
+    shared.processing_message = "*Is recording a voice message...*"
     return string
 
 def output_modifier(string):
@@ -119,6 +120,7 @@ def output_modifier(string):
         if params['show_text']:
             string += f'\n\n{original_string}'
 
+    shared.processing_message = "*Is typing...*"
     return string
 
 def bot_prefix_modifier(string):

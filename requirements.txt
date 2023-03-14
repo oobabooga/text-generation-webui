@@ -1,11 +1,11 @@
-accelerate==0.17.0
-bitsandbytes==0.37.0
+accelerate==0.17.1
+bitsandbytes==0.37.1
 flexgen==0.1.7
 gradio==3.18.0
 numpy
 requests
-rwkv==0.3.1
+rwkv==0.4.2
 safetensors==0.3.0
 sentencepiece
 tqdm
-git+https://github.com/zphang/transformers@llama_push
+git+https://github.com/zphang/transformers.git@68d640f7c368bcaaaecfc678f11908ebbd3d6176

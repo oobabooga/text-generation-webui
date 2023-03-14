@@ -123,7 +123,7 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
     original_input_ids = input_ids
     output = input_ids[0]
     cuda = "" if (shared.args.cpu or shared.args.deepspeed or shared.args.flexgen) else ".cuda()"
-    eos_token_ids = [shared.tokenizer.eos_token_id]
+    eos_token_ids = [shared.tokenizer.eos_token_id] if shared.tokenizer.eos_token_id is not None else []
     if eos_token is not None:
         eos_token_ids.append(int(encode(eos_token)[0][-1]))
     stopping_criteria_list = transformers.StoppingCriteriaList()
