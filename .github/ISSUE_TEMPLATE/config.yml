@@ -1,6 +1,0 @@
-blank_issues_enabled: true
-version: 2.1
-contact_links:
-  - name: Forum
-    url: https://github.com/oobabooga/text-generation-webui/discussions
-    about: General usage questions and community discussions
