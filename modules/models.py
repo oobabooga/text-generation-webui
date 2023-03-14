@@ -1,6 +1,5 @@
 import json
 import os
-import sys
 import time
 import zipfile
 from pathlib import Path
@@ -35,6 +34,7 @@ if shared.args.deepspeed:
     ds_config = generate_ds_config(shared.args.bf16, 1 * world_size, shared.args.nvme_offload_dir)
     dschf = HfDeepSpeedConfig(ds_config) # Keep this object alive for the Transformers integration
 
+
 def load_model(model_name):
     print(f"Loading {model_name}...")
     t0 = time.time()
@@ -42,7 +42,7 @@ def load_model(model_name):
     shared.is_RWKV = model_name.lower().startswith('rwkv-')
 
     # Default settings
-    if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.load_in_4bit, shared.args.gptq_bits > 0, shared.args.auto_devices, shared.args.disk, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None, shared.args.deepspeed, shared.args.flexgen, shared.is_RWKV]):
+    if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.gptq_bits, shared.args.auto_devices, shared.args.disk, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None, shared.args.deepspeed, shared.args.flexgen, shared.is_RWKV]):
         if any(size in shared.model_name.lower() for size in ('13b', '20b', '30b')):
             model = AutoModelForCausalLM.from_pretrained(Path(f"models/{shared.model_name}"), device_map='auto', load_in_8bit=True)
         else:
@@ -87,11 +87,11 @@ def load_model(model_name):
 
         return model, tokenizer
 
-    # 4-bit LLaMA
-    elif shared.args.gptq_bits > 0 or shared.args.load_in_4bit:
-        from modules.quantized_LLaMA import load_quantized_LLaMA
+    # Quantized model
+    elif shared.args.gptq_bits > 0:
+        from modules.GPTQ_loader import load_quantized
 
-        model = load_quantized_LLaMA(model_name)
+        model = load_quantized(model_name)
 
     # Custom
     else:
