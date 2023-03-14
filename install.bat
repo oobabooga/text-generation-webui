@@ -80,7 +80,7 @@ if exist text-generation-webui\ (
   git clone https://github.com/oobabooga/text-generation-webui.git
   cd text-generation-webui
 )
-call python -m pip install -r requirements.txt
+call python -m pip install -r requirements.txt --upgrade
 call python -m pip install -r extensions\google_translate\requirements.txt
 call python -m pip install -r extensions\silero_tts\requirements.txt
 
