@@ -2,7 +2,7 @@
 name: Feature request
 about: Suggest an improvement or new feature for the web UI
 title: ''
-labels: ''
+labels: 'enhancement'
 assignees: ''
 
 ---
