@@ -69,6 +69,7 @@ parser.add_argument('--chat', action='store_true', help='Launch the web UI in ch
 parser.add_argument('--cai-chat', action='store_true', help='Launch the web UI in chat mode with a style similar to Character.AI\'s. If the file img_bot.png or img_bot.jpg exists in the same folder as server.py, this image will be used as the bot\'s profile picture. Similarly, img_me.png or img_me.jpg will be used as your profile picture.')
 parser.add_argument('--cpu', action='store_true', help='Use the CPU to generate text.')
 parser.add_argument('--load-in-8bit', action='store_true', help='Load the model with 8-bit precision.')
+parser.add_argument('--load-in-4bit', action='store_true', help='DEPRECATED: use --gptq-bits 4 instead.')
 parser.add_argument('--gptq-bits', type=int, default=0, help='Load a pre-quantized model with specified precision. 2, 3, 4 and 8bit are supported. Currently only works with LLaMA and OPT.')
 parser.add_argument('--gptq-model-type', type=str, help='Model type of pre-quantized model. Currently only LLaMa and OPT are supported.')
 parser.add_argument('--bf16', action='store_true', help='Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU.')
@@ -95,3 +96,8 @@ parser.add_argument('--share', action='store_true', help='Create a public URL. T
 parser.add_argument('--auto-launch', action='store_true', default=False, help='Open the web UI in the default browser upon launch.')
 parser.add_argument('--verbose', action='store_true', help='Print the prompts to the terminal.')
 args = parser.parse_args()
+
+# Provisional, this will be deleted later
+if args.load_in_4bit:
+    print("Warning: --load-in-4bit is deprecated and will be removed. Use --gptq-bits 4 instead.\n")
+    args.gptq_bits = 4
