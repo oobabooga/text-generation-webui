@@ -4,7 +4,7 @@ flexgen==0.1.7
 gradio==3.18.0
 numpy
 requests
-rwkv==0.3.1
+rwkv==0.4.2
 safetensors==0.3.0
 sentencepiece
 tqdm
