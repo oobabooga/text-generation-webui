@@ -11,6 +11,7 @@ is_RWKV = False
 history = {'internal': [], 'visible': []}
 character = 'None'
 stop_everything = False
+processing_message = '*Is typing...*'
 
 # UI elements (buttons, sliders, HTML, etc)
 gradio = {}
