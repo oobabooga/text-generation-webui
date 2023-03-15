@@ -1,6 +1,4 @@
-These are the VRAM and RAM requirements (in MiB) to run some examples of models **in 16-bit (default) precision**.
-
-#### GPU mode (default)
+These are the VRAM and RAM requirements (in MiB) to run some examples of models **in 16-bit (default) precision**:
 
 | model                  |   VRAM (GPU) |     RAM |
 |:-----------------------|-------------:|--------:|
@@ -31,7 +29,7 @@ Allows you to load models that would not normally fit into your GPU. Enabled by 
 | opt-13b        |      12528.1 | 1152.39 |
 | gpt-neox-20b   |      20384   | 2291.7  |
 
-#### CPU mode
+#### CPU mode (32-bit precision)
 
 A lot slower, but does not require a GPU. 
 
