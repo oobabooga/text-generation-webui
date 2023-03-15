@@ -6,30 +6,18 @@ This is a library for formatting GPT-4chan and chat outputs as nice HTML.
 
 import os
 import re
-import markdown
 from pathlib import Path
 
+import markdown
 from PIL import Image
 
 # This is to store the paths to the thumbnails of the profile pictures
 image_cache = {}
 
 def generate_basic_html(s):
-    css = """
-    .container {
-        max-width: 600px;
-        margin-left: auto;
-        margin-right: auto;
-        background-color: rgb(31, 41, 55);
-        padding:3em;
-    }
-    .container p {
-        font-size: 16px !important;
-        color: white !important;
-        margin-bottom: 22px;
-        line-height: 1.4 !important;
-    }
-    """
+    with open(Path(__file__).resolve().parent / '../css/html_readable_style.css', 'r') as f:
+        css = f.read()
+
     s = '\n'.join([f'<p>{line}</p>' for line in s.split('\n')])
     s = f'<style>{css}</style><div class="container">{s}</div>'
     return s
@@ -49,7 +37,7 @@ def process_post(post, c):
     return src
 
 def generate_4chan_html(f):
-    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../css/html_4chan_style.css'), 'r') as f:
+    with open(Path(__file__).resolve().parent / '../css/html_4chan_style.css', 'r') as f:
         css = f.read()
 
     posts = []
@@ -113,7 +101,7 @@ def load_html_image(paths):
     return ''
 
 def generate_chat_html(history, name1, name2, character):
-    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../css/html_chat_style.css'), 'r') as f:
+    with open(Path(__file__).resolve().parent / '../css/html_chat_style.css', 'r') as f:
         css = f.read()
         
     output = f'<style>{css}</style><div class="chat" id="chat">'
