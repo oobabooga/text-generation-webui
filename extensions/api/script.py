@@ -75,7 +75,15 @@ class Handler(BaseHTTPRequestHandler):
 def run_server():
     server_addr = ('0.0.0.0' if shared.args.listen else '127.0.0.1', params['port'])
     server = ThreadingHTTPServer(server_addr, Handler)
-    print(f'Starting KoboldAI compatible api at http://{server_addr[0]}:{server_addr[1]}/api')
+    if shared.args.share: 
+        try:
+            from flask_cloudflared import  _run_cloudflared
+            public_url = _run_cloudflared(params['port'], params['port'] + 1)
+            print(f'Starting KoboldAI compatible api at {public_url}/api')
+        except ImportError:
+            print('You should install flask_cloudflared manually')
+    else:
+        print(f'Starting KoboldAI compatible api at http://{server_addr[0]}:{server_addr[1]}/api')
     server.serve_forever()
 
 def ui():
