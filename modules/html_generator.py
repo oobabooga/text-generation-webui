@@ -101,7 +101,7 @@ def load_html_image(paths):
     return ''
 
 def generate_chat_html(history, name1, name2, character):
-    with open(Path(__file__).resolve().parent / '../css/html_chat_style.css', 'r') as f:
+    with open(Path(__file__).resolve().parent / '../css/html_cai_style.css', 'r') as f:
         css = f.read()
         
     output = f'<style>{css}</style><div class="chat" id="chat">'
