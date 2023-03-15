@@ -1,5 +1,3 @@
-# Windows Subsystem for Linux (Ubuntu) Installation Guide
-
 Here's an easy-to-follow, step-by-step guide for installing Windows Subsystem for Linux (WSL) with Ubuntu on Windows 10/11:
 
 ## Step 1: Enable WSL
