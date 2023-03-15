@@ -23,6 +23,7 @@ command-line flag.
 |[send_pictures](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/send_pictures/script.py)| Creates an image upload field that can be used to send images to the bot in chat mode. Captions are automatically generated using BLIP. Author: [@SillyLossy](https://github.com/sillylossy).|
 |[gallery](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/gallery/script.py)| Creates a gallery with the chat characters and their pictures. |
 |[llama_prompts](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/llama_prompts)| Creates a dropdown menu with a selection of interesting prompts to choose from. Based on [devbrones/llama-prompts](https://github.com/devbrones/llama-prompts). Only applies in regular or `--notebook` mode. |
+|[api](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/api)| Creates an API similar to the one provided by KoboldAI. Works with TavernAI: start the web UI with `python server.py --no-stream --extensions api` and set the API URL to `http://127.0.0.1:5000/api`. Author: [@mayaeary](https://github.com/mayaeary).|
 
 ## How to write an extension
 
