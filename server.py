@@ -240,9 +240,6 @@ if shared.args.chat or shared.args.cai_chat:
                         shared.gradio['chat_generation_attempts'] = gr.Slider(minimum=shared.settings['chat_generation_attempts_min'], maximum=shared.settings['chat_generation_attempts_max'], value=shared.settings['chat_generation_attempts'], step=1, label='Generation attempts (for longer replies)')
                         shared.gradio['check'] = gr.Checkbox(value=shared.settings[f'stop_at_newline{suffix}'], label='Stop generating at new line character?')
 
-            if shared.args.extensions is not None:
-                extensions_module.create_extensions_block()
-
         with gr.Tab("Chat settings", elem_id="chat-settings"):
             shared.gradio['name1'] = gr.Textbox(value=shared.settings[f'name1{suffix}'], lines=1, label='Your name')
             shared.gradio['name2'] = gr.Textbox(value=shared.settings[f'name2{suffix}'], lines=1, label='Bot\'s name')
@@ -277,6 +274,9 @@ if shared.args.chat or shared.args.cai_chat:
 
         with gr.Tab("Settings", elem_id="settings"):
             create_settings_menus(default_preset)
+
+        if shared.args.extensions is not None:
+            extensions_module.create_extensions_block()
 
         function_call = 'chat.cai_chatbot_wrapper' if shared.args.cai_chat else 'chat.chatbot_wrapper'
         shared.input_params = [shared.gradio[k] for k in ['textbox', 'max_new_tokens', 'do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping', 'name1', 'name2', 'context', 'check', 'chat_prompt_size_slider', 'chat_generation_attempts']]
@@ -340,11 +340,11 @@ elif shared.args.notebook:
             shared.gradio['max_new_tokens'] = gr.Slider(minimum=shared.settings['max_new_tokens_min'], maximum=shared.settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=shared.settings['max_new_tokens'])
 
             create_model_and_preset_menus()
-            if shared.args.extensions is not None:
-                extensions_module.create_extensions_block()
-
         with gr.Tab("Settings", elem_id="settings"):
             create_settings_menus(default_preset)
+
+        if shared.args.extensions is not None:
+            extensions_module.create_extensions_block()
 
         shared.input_params = [shared.gradio[k] for k in ['textbox', 'max_new_tokens', 'do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping']]
         output_params = [shared.gradio[k] for k in ['textbox', 'markdown', 'html']]
@@ -368,8 +368,6 @@ else:
                             shared.gradio['Stop'] = gr.Button('Stop')
 
                     create_model_and_preset_menus()
-                    if shared.args.extensions is not None:
-                        extensions_module.create_extensions_block()
 
                 with gr.Column():
                     with gr.Tab('Raw'):
@@ -380,6 +378,9 @@ else:
                         shared.gradio['html'] = gr.HTML()
         with gr.Tab("Settings", elem_id="settings"):
             create_settings_menus(default_preset)
+
+        if shared.args.extensions is not None:
+            extensions_module.create_extensions_block()
 
         shared.input_params = [shared.gradio[k] for k in ['textbox', 'max_new_tokens', 'do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping']]
         output_params = [shared.gradio[k] for k in ['output_textbox', 'markdown', 'html']]

@@ -1,3 +1,5 @@
+import gradio as gr
+
 import extensions
 import modules.shared as shared
 
@@ -40,6 +42,8 @@ def create_extensions_block():
                     extension.params[param] = shared.settings[_id]
 
     # Creating the extension ui elements
-    for extension, name in iterator():
-        if hasattr(extension, "ui"):
-            extension.ui()
+    with gr.Box(elem_id="#extensions"):
+        gr.Markdown("Extensions")
+        for extension, name in iterator():
+            if hasattr(extension, "ui"):
+                extension.ui()
