@@ -40,7 +40,7 @@ Open a terminal and copy and paste these commands one at a time ([install conda]
 ```
 conda create -n textgen
 conda activate textgen
-conda install torchvision torchaudio pytorch-cuda=11.7 git -c pytorch -c nvidia
+conda install torchvision=0.14.1 torchaudio=0.13.1 pytorch-cuda=11.7 git -c pytorch -c nvidia
 git clone https://github.com/oobabooga/text-generation-webui
 cd text-generation-webui
 pip install -r requirements.txt
@@ -51,17 +51,18 @@ The third line assumes that you have an NVIDIA GPU.
 * If you have an AMD GPU, replace the third command with this one:
 
 ```
-pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/rocm5.2
+pip3 install torch torchvision=0.14.1 torchaudio=0.13.1 --extra-index-url https://download.pytorch.org/whl/rocm5.2
 ```
   	  
 * If you are running it in CPU mode, replace the third command with this one:
 
 ```
-conda install pytorch torchvision torchaudio git -c pytorch
+conda install pytorch torchvision=0.14.1 torchaudio=0.13.1 git -c pytorch
 ```
 
 > **Note**
-> 1. If you are on Windows, it may be easier to run the commands above in a WSL environment. The performance may also be better.
+> 1. If you are on Windows, it may be easier to run the commands above in a WSL environment. The performance may also be better. A full guide can be found here: [Windows Subsystem for Linux (Ubuntu) Installation Guide
+](https://github.com/oobabooga/text-generation-webui/wiki/Windows-Subsystem-for-Linux-(Ubuntu)-Installation-Guide).
 > 2. For a more detailed, user-contributed guide, see: [Installation instructions for human beings](https://github.com/oobabooga/text-generation-webui/wiki/Installation-instructions-for-human-beings).
 
 ## Installation option 2: one-click installers
