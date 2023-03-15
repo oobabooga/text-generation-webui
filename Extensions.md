@@ -12,7 +12,7 @@ which can be invoked with the
 
 command-line flag.
 
-## Examples
+## Gallery
 
 |Extension|Description|
 |---------|-----------|
