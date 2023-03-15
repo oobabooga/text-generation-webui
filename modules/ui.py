@@ -9,7 +9,9 @@ with open(Path(__file__).resolve().parent / '../css/main.css', 'r') as f:
 with open(Path(__file__).resolve().parent / '../css/chat.css', 'r') as f:
     chat_css = f.read()
 with open(Path(__file__).resolve().parent / '../css/main.js', 'r') as f:
-    page_js = f.read()
+    main_js = f.read()
+with open(Path(__file__).resolve().parent / '../css/chat.js', 'r') as f:
+    chat_js = f.read()
 
 class ToolButton(gr.Button, gr.components.FormComponent):
     """Small button with single emoji as text, fits inside gradio forms"""

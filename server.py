@@ -115,36 +115,37 @@ def create_model_and_preset_menus():
 def create_settings_menus(default_preset):
     generate_params = load_preset_values(default_preset if not shared.args.flexgen else 'Naive', return_dict=True)
 
-    with gr.Box():
-        gr.Markdown('Custom generation parameters')
-        with gr.Row():
-            with gr.Column():
-                shared.gradio['temperature'] = gr.Slider(0.01, 1.99, value=generate_params['temperature'], step=0.01, label='temperature')
-                shared.gradio['top_p'] = gr.Slider(0.0,1.0,value=generate_params['top_p'],step=0.01,label='top_p')
-                shared.gradio['top_k'] = gr.Slider(0,200,value=generate_params['top_k'],step=1,label='top_k')
-                shared.gradio['typical_p'] = gr.Slider(0.0,1.0,value=generate_params['typical_p'],step=0.01,label='typical_p')
-            with gr.Column():
-                shared.gradio['repetition_penalty'] = gr.Slider(1.0, 1.5, value=generate_params['repetition_penalty'],step=0.01,label='repetition_penalty')
-                shared.gradio['encoder_repetition_penalty'] = gr.Slider(0.8, 1.5, value=generate_params['encoder_repetition_penalty'],step=0.01,label='encoder_repetition_penalty')
-                shared.gradio['no_repeat_ngram_size'] = gr.Slider(0, 20, step=1, value=generate_params['no_repeat_ngram_size'], label='no_repeat_ngram_size')
-                shared.gradio['min_length'] = gr.Slider(0, 2000, step=1, value=generate_params['min_length'] if shared.args.no_stream else 0, label='min_length', interactive=shared.args.no_stream)
-        shared.gradio['do_sample'] = gr.Checkbox(value=generate_params['do_sample'], label='do_sample')
+    with gr.Row():
+        with gr.Column():
+            with gr.Box():
+                gr.Markdown('Custom generation parameters')
+                with gr.Row():
+                    with gr.Column():
+                        shared.gradio['temperature'] = gr.Slider(0.01, 1.99, value=generate_params['temperature'], step=0.01, label='temperature')
+                        shared.gradio['top_p'] = gr.Slider(0.0,1.0,value=generate_params['top_p'],step=0.01,label='top_p')
+                        shared.gradio['top_k'] = gr.Slider(0,200,value=generate_params['top_k'],step=1,label='top_k')
+                        shared.gradio['typical_p'] = gr.Slider(0.0,1.0,value=generate_params['typical_p'],step=0.01,label='typical_p')
+                    with gr.Column():
+                        shared.gradio['repetition_penalty'] = gr.Slider(1.0, 1.5, value=generate_params['repetition_penalty'],step=0.01,label='repetition_penalty')
+                        shared.gradio['encoder_repetition_penalty'] = gr.Slider(0.8, 1.5, value=generate_params['encoder_repetition_penalty'],step=0.01,label='encoder_repetition_penalty')
+                        shared.gradio['no_repeat_ngram_size'] = gr.Slider(0, 20, step=1, value=generate_params['no_repeat_ngram_size'], label='no_repeat_ngram_size')
+                        shared.gradio['min_length'] = gr.Slider(0, 2000, step=1, value=generate_params['min_length'] if shared.args.no_stream else 0, label='min_length', interactive=shared.args.no_stream)
+                shared.gradio['do_sample'] = gr.Checkbox(value=generate_params['do_sample'], label='do_sample')
+        with gr.Column():
+            with gr.Box():
+                gr.Markdown('Contrastive search')
+                shared.gradio['penalty_alpha'] = gr.Slider(0, 5, value=generate_params['penalty_alpha'], label='penalty_alpha')
 
-    with gr.Box():
-        gr.Markdown('Contrastive search:')
-        shared.gradio['penalty_alpha'] = gr.Slider(0, 5, value=generate_params['penalty_alpha'], label='penalty_alpha')
+            with gr.Box():
+                gr.Markdown('Beam search (uses a lot of VRAM)')
+                with gr.Row():
+                    with gr.Column():
+                        shared.gradio['num_beams'] = gr.Slider(1, 20, step=1, value=generate_params['num_beams'], label='num_beams')
+                    with gr.Column():
+                        shared.gradio['length_penalty'] = gr.Slider(-5, 5, value=generate_params['length_penalty'], label='length_penalty')
+                shared.gradio['early_stopping'] = gr.Checkbox(value=generate_params['early_stopping'], label='early_stopping')
 
-    with gr.Box():
-        gr.Markdown('Beam search (uses a lot of VRAM):')
-        with gr.Row():
-            with gr.Column():
-                shared.gradio['num_beams'] = gr.Slider(1, 20, step=1, value=generate_params['num_beams'], label='num_beams')
-            with gr.Column():
-                shared.gradio['length_penalty'] = gr.Slider(-5, 5, value=generate_params['length_penalty'], label='length_penalty')
-        shared.gradio['early_stopping'] = gr.Checkbox(value=generate_params['early_stopping'], label='early_stopping')
-
-    with gr.Box():
-        gr.Markdown('Soft prompt')
+    with gr.Accordion('Soft prompt', open=False):
         with gr.Row():
             shared.gradio['softprompts_menu'] = gr.Dropdown(choices=available_softprompts, value='None', label='Soft prompt')
             ui.create_refresh_button(shared.gradio['softprompts_menu'], lambda : None, lambda : {'choices': get_available_softprompts()}, 'refresh-button')
@@ -320,7 +321,7 @@ if shared.args.chat or shared.args.cai_chat:
         shared.gradio['upload_img_me'].upload(reload_func, reload_inputs, [shared.gradio['display']])
         shared.gradio['Stop'].click(reload_func, reload_inputs, [shared.gradio['display']])
 
-        shared.gradio['interface'].load(None, None, None, _js=f"() => {{{ui.page_js}}}")
+        shared.gradio['interface'].load(None, None, None, _js=f"() => {{{ui.main_js+ui.chat_js}}}")
         shared.gradio['interface'].load(lambda : chat.load_default_history(shared.settings[f'name1{suffix}'], shared.settings[f'name2{suffix}']), None, None)
         shared.gradio['interface'].load(reload_func, reload_inputs, [shared.gradio['display']], show_progress=True)
 
@@ -351,7 +352,7 @@ elif shared.args.notebook:
         gen_events.append(shared.gradio['Generate'].click(generate_reply, shared.input_params, output_params, show_progress=shared.args.no_stream, api_name='textgen'))
         gen_events.append(shared.gradio['textbox'].submit(generate_reply, shared.input_params, output_params, show_progress=shared.args.no_stream))
         shared.gradio['Stop'].click(None, None, None, cancels=gen_events)
-        shared.gradio['interface'].load(None, None, None, _js=f"() => {{{ui.page_js}}}")
+        shared.gradio['interface'].load(None, None, None, _js=f"() => {{{ui.main_js}}}")
 
 else:
     with gr.Blocks(css=ui.css, analytics_enabled=False, title=title) as shared.gradio['interface']:
@@ -387,7 +388,7 @@ else:
         gen_events.append(shared.gradio['textbox'].submit(generate_reply, shared.input_params, output_params, show_progress=shared.args.no_stream))
         gen_events.append(shared.gradio['Continue'].click(generate_reply, [shared.gradio['output_textbox']] + shared.input_params[1:], output_params, show_progress=shared.args.no_stream))
         shared.gradio['Stop'].click(None, None, None, cancels=gen_events)
-        shared.gradio['interface'].load(None, None, None, _js=f"() => {{{ui.page_js}}}")
+        shared.gradio['interface'].load(None, None, None, _js=f"() => {{{ui.main_js}}}")
 
 shared.gradio['interface'].queue()
 if shared.args.listen:
