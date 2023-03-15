@@ -1,4 +1,4 @@
-These are the VRAM and RAM requirements (in MiB) to run some examples of models.
+These are the VRAM and RAM requirements (in MiB) to run some examples of models **in 16-bit (default) precision**.
 
 #### GPU mode (default)
 
