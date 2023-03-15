@@ -60,6 +60,8 @@ You can launch your WSL Ubuntu installation by selecting the Ubuntu app (like an
 sudo apt install [missing package]
 ```
 
+If you face any issues or need to troubleshoot, you can always refer to the official Microsoft documentation for WSL: https://docs.microsoft.com/en-us/windows/wsl/
+
 ## Bonus: Port Forwarding
 
 By default, you won't be able to access the webui from another device on your local network. You will need to setup the appropriate port forwarding using the following command (using PowerShell or Terminal with administrator privileges). 
@@ -68,4 +70,4 @@ By default, you won't be able to access the webui from another device on your lo
 netsh interface portproxy add v4tov4 listenaddress=0.0.0.0 listenport=7860 connectaddress=localhost connectport=7860
 ```
 
-If you face any issues or need to troubleshoot, you can always refer to the official Microsoft documentation for WSL: https://docs.microsoft.com/en-us/windows/wsl/
+
