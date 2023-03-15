@@ -14,12 +14,16 @@ from PIL import Image
 # This is to store the paths to the thumbnails of the profile pictures
 image_cache = {}
 
-def generate_basic_html(s):
-    with open(Path(__file__).resolve().parent / '../css/html_readable_style.css', 'r') as f:
-        css = f.read()
+with open(Path(__file__).resolve().parent / '../css/html_readable_style.css', 'r') as f:
+    readable_css = f.read()
+with open(Path(__file__).resolve().parent / '../css/html_4chan_style.css', 'r') as css_f:
+    _4chan_css = css_f.read()
+with open(Path(__file__).resolve().parent / '../css/html_cai_style.css', 'r') as f:
+    cai_css = f.read()
 
+def generate_basic_html(s):
     s = '\n'.join([f'<p>{line}</p>' for line in s.split('\n')])
-    s = f'<style>{css}</style><div class="container">{s}</div>'
+    s = f'<style>{readable_css}</style><div class="container">{s}</div>'
     return s
 
 def process_post(post, c):
@@ -37,9 +41,6 @@ def process_post(post, c):
     return src
 
 def generate_4chan_html(f):
-    with open(Path(__file__).resolve().parent / '../css/html_4chan_style.css', 'r') as css_f:
-        css = css_f.read()
-
     posts = []
     post = ''
     c = -2
@@ -66,7 +67,7 @@ def generate_4chan_html(f):
             posts[i] = f'<div class="reply">{posts[i]}</div>\n'
     
     output = ''
-    output += f'<style>{css}</style><div id="parent"><div id="container">'
+    output += f'<style>{_4chan_css}</style><div id="parent"><div id="container">'
     for post in posts:
         output += post
     output += '</div></div>'
@@ -101,10 +102,7 @@ def load_html_image(paths):
     return ''
 
 def generate_chat_html(history, name1, name2, character):
-    with open(Path(__file__).resolve().parent / '../css/html_cai_style.css', 'r') as f:
-        css = f.read()
-        
-    output = f'<style>{css}</style><div class="chat" id="chat">'
+    output = f'<style>{cai_css}</style><div class="chat" id="chat">'
     
     img_bot = load_html_image([f"characters/{character}.{ext}" for ext in ['png', 'jpg', 'jpeg']] + ["img_bot.png","img_bot.jpg","img_bot.jpeg"])
     img_me = load_html_image(["img_me.png", "img_me.jpg", "img_me.jpeg"])
