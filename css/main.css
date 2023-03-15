@@ -33,7 +33,7 @@ svg {
 ol li p, ul li p {
     display: inline-block;
 }
-#main, #settings, #extensions, #chat-settings {
+#main, #settings, #chat-settings {
   border: 0;
 }
 

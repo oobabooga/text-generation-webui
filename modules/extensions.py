@@ -42,7 +42,7 @@ def create_extensions_block():
                     extension.params[param] = shared.settings[_id]
 
     # Creating the extension ui elements
-    with gr.Box(elem_id="#extensions"):
+    with gr.Box(elem_id="extensions"):
         gr.Markdown("Extensions")
         for extension, name in iterator():
             if hasattr(extension, "ui"):
