@@ -1,0 +1,53 @@
+name: "Bug report"
+description: Report a bug
+labels: [ "bug" ]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: Describe the bug
+      description: A clear and concise description of what the bug is.
+      placeholder: Bug description
+    validations:
+      required: true
+  - type: checkboxes
+    attributes:
+      label: Is there an existing issue for this?
+      description: Please search to see if an issue already exists for the issue you encountered.
+      options:
+        - label: I have searched the existing issues
+          required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Please provide the steps necessary to reproduce your issue.
+      placeholder: Reproduction
+    validations:
+      required: true
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot
+      description: "If possible, please include screenshot(s) so that we can understand what the issue is."
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: "Please include the full stacktrace of the errors you get in the command-line (if any)."
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: system-info
+    attributes:
+      label: System Info
+      description: "Please share your system info with us: operating system, GPU brand, and GPU model. If you are using a Google Colab notebook, mention that instead."
+      render: shell
+      placeholder: 
+    validations:
+      required: true

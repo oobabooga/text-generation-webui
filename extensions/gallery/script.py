@@ -76,7 +76,7 @@ def generate_html():
     return container_html
 
 def ui():
-    with gr.Accordion("Character gallery"):
+    with gr.Accordion("Character gallery", open=False):
         update = gr.Button("Refresh")
         gallery = gr.HTML(value=generate_html())
     update.click(generate_html, [], gallery)

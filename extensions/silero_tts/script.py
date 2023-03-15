@@ -81,6 +81,7 @@ def input_modifier(string):
     if (shared.args.chat or shared.args.cai_chat) and len(shared.history['internal']) > 0:
         shared.history['visible'][-1] = [shared.history['visible'][-1][0], shared.history['visible'][-1][1].replace('controls autoplay>','controls>')]
 
+    shared.processing_message = "*Is recording a voice message...*"
     return string
 
 def output_modifier(string):
@@ -119,6 +120,7 @@ def output_modifier(string):
         if params['show_text']:
             string += f'\n\n{original_string}'
 
+    shared.processing_message = "*Is typing...*"
     return string
 
 def bot_prefix_modifier(string):

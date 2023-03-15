@@ -60,7 +60,9 @@ pip3 install torch torchvision torchaudio --extra-index-url https://download.pyt
 conda install pytorch torchvision torchaudio git -c pytorch
 ```
 
-See also: [Installation instructions for human beings](https://github.com/oobabooga/text-generation-webui/wiki/Installation-instructions-for-human-beings).
+> **Note**
+> 1. If you are on Windows, it may be easier to run the commands above in a WSL environment. The performance may also be better.
+> 2. For a more detailed, user-contributed guide, see: [Installation instructions for human beings](https://github.com/oobabooga/text-generation-webui/wiki/Installation-instructions-for-human-beings).
 
 ## Installation option 2: one-click installers
 
@@ -140,8 +142,9 @@ Optionally, you can use the following command-line flags:
 | `--cai-chat`  | Launch the web UI in chat mode with a style similar to Character.AI's. If the file `img_bot.png` or `img_bot.jpg` exists in the same folder as server.py, this image will be used as the bot's profile picture. Similarly, `img_me.png` or `img_me.jpg` will be used as your profile picture. |
 | `--cpu`       | Use the CPU to generate text.|
 | `--load-in-8bit`  | Load the model with 8-bit precision.|
-| `--load-in-4bit`  | Load the model with 4-bit precision. Currently only works with LLaMA.|
-| `--gptq-bits GPTQ_BITS`  |  Load a pre-quantized model with specified precision. 2, 3, 4 and 8 (bit) are supported. Currently only works with LLaMA. |
+| `--load-in-4bit`  | DEPRECATED: use `--gptq-bits 4` instead. |
+| `--gptq-bits GPTQ_BITS`  |  Load a pre-quantized model with specified precision. 2, 3, 4 and 8 (bit) are supported. Currently only works with LLaMA and OPT. |
+| `--gptq-model-type MODEL_TYPE`  |  Model type of pre-quantized model. Currently only LLaMa and OPT are supported. |
 | `--bf16`  | Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU. |
 | `--auto-devices` | Automatically split the model across the available GPU(s) and CPU.|
 | `--disk` | If the model is too large for your GPU(s) and CPU combined, send the remaining layers to the disk. |
