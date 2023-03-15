@@ -37,8 +37,8 @@ def process_post(post, c):
     return src
 
 def generate_4chan_html(f):
-    with open(Path(__file__).resolve().parent / '../css/html_4chan_style.css', 'r') as f:
-        css = f.read()
+    with open(Path(__file__).resolve().parent / '../css/html_4chan_style.css', 'r') as css_f:
+        css = css_f.read()
 
     posts = []
     post = ''
