@@ -7,28 +7,40 @@ import torch
 import modules.shared as shared
 
 sys.path.insert(0, str(Path("repositories/GPTQ-for-LLaMa")))
-from llama import load_quant
+import llama
+import opt
 
 
-# 4-bit LLaMA
-def load_quantized_LLaMA(model_name):
-    if shared.args.load_in_4bit:
-        bits = 4
+def load_quantized(model_name):
+    if not shared.args.gptq_model_type:
+        # Try to determine model type from model name
+        model_type = model_name.split('-')[0].lower()
+        if model_type not in ('llama', 'opt'):
+            print("Can't determine model type from model name. Please specify it manually using --gptq-model-type "
+                  "argument")
+            exit()
     else:
-        bits = shared.args.gptq_bits
+        model_type = shared.args.gptq_model_type.lower()
+
+    if model_type == 'llama':
+        load_quant = llama.load_quant
+    elif model_type == 'opt':
+        load_quant = opt.load_quant
+    else:
+        print("Unknown pre-quantized model type specified. Only 'llama' and 'opt' are supported")
+        exit()
 
     path_to_model = Path(f'models/{model_name}')
-    pt_model = ''
     if path_to_model.name.lower().startswith('llama-7b'):
-        pt_model = f'llama-7b-{bits}bit.pt'
+        pt_model = f'llama-7b-{shared.args.gptq_bits}bit.pt'
     elif path_to_model.name.lower().startswith('llama-13b'):
-        pt_model = f'llama-13b-{bits}bit.pt'
+        pt_model = f'llama-13b-{shared.args.gptq_bits}bit.pt'
     elif path_to_model.name.lower().startswith('llama-30b'):
-        pt_model = f'llama-30b-{bits}bit.pt'
+        pt_model = f'llama-30b-{shared.args.gptq_bits}bit.pt'
     elif path_to_model.name.lower().startswith('llama-65b'):
-        pt_model = f'llama-65b-{bits}bit.pt'
+        pt_model = f'llama-65b-{shared.args.gptq_bits}bit.pt'
     else:
-        pt_model = f'{model_name}-{bits}bit.pt'
+        pt_model = f'{model_name}-{shared.args.gptq_bits}bit.pt'
 
     # Try to find the .pt both in models/ and in the subfolder
     pt_path = None
@@ -40,7 +52,7 @@ def load_quantized_LLaMA(model_name):
         print(f"Could not find {pt_model}, exiting...")
         exit()
 
-    model = load_quant(str(path_to_model), str(pt_path), bits)
+    model = load_quant(str(path_to_model), str(pt_path), shared.args.gptq_bits)
 
     # Multiple GPUs or GPU+CPU
     if shared.args.gpu_memory:
