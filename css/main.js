@@ -11,8 +11,8 @@ let extensions = document.getElementById('extensions');
 main_parent.addEventListener('click', function(e) {
     // Check if the main element is visible
     if (main.offsetHeight > 0 && main.offsetWidth > 0) {
-        extensions.style.visibility = 'visible';
+        extensions.style.display = 'block';
     } else {
-        extensions.style.visibility = 'hidden';
+        extensions.style.display = 'none';
     }
 });
