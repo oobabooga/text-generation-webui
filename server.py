@@ -159,6 +159,24 @@ def create_settings_menus(default_preset):
     shared.gradio['softprompts_menu'].change(load_soft_prompt, [shared.gradio['softprompts_menu']], [shared.gradio['softprompts_menu']], show_progress=True)
     shared.gradio['upload_softprompt'].upload(upload_soft_prompt, [shared.gradio['upload_softprompt']], [shared.gradio['softprompts_menu']])
 
+def set_interface_arguments(interface_mode, extensions, cmd_active):
+    modes = ["default", "notebook", "chat", "cai_chat"]
+    cmd_list = vars(shared.args)
+    cmd_list = [k for k in cmd_list if type(cmd_list[k]) is bool and k not in modes]
+
+    shared.args.extensions = extensions
+    for k in modes[1:]:
+        exec(f"shared.args.{k} = False")
+    if interface_mode != "default":
+        exec(f"shared.args.{interface_mode} = True")
+
+    for k in cmd_list:
+        exec(f"shared.args.{k} = False")
+    for k in cmd_active:
+        exec(f"shared.args.{k} = True")
+
+    shared.need_restart = True
+
 available_models = get_available_models()
 available_presets = get_available_presets()
 available_characters = get_available_characters()
@@ -384,31 +402,24 @@ def create_interface():
             shared.gradio['interface'].load(None, None, None, _js=f"() => {{{ui.main_js}}}")
 
         with gr.Tab("Interface mode", elem_id="interface-mode"):
-            def set_interface_mode(mode, choices, stream):
-                shared.args.extensions = choices
-                shared.args.no_stream = stream
-                for k in ["notebook", "chat", "cai_chat"]:
-                    exec(f"shared.args.{k} = False")
-                if mode != "default":
-                    exec(f"shared.args.{mode} = True")
-                shared.need_restart = True
-
-            extensions = get_available_extensions()
             modes = ["default", "notebook", "chat", "cai_chat"]
             current_mode = "default"
-            for mode in modes:
-                if hasattr(shared.args, mode) and eval(f"shared.args.{mode}"):
+            for mode in modes[1:]:
+                if eval(f"shared.args.{mode}"):
                     current_mode = mode
+                    break
+            cmd_list = vars(shared.args)
+            cmd_list = [k for k in cmd_list if type(cmd_list[k]) is bool and k not in modes]
+            active_cmd_list = [k for k in cmd_list if vars(shared.args)[k]]
 
             gr.Markdown("*Experimental*")
-            modes_menu = gr.Dropdown(choices=modes, value=current_mode, label="Mode")
-            group = gr.CheckboxGroup(choices=extensions, value=shared.args.extensions, label="Available extensions")
+            shared.gradio['interface_modes_menu'] = gr.Dropdown(choices=modes, value=current_mode, label="Mode")
+            shared.gradio['extensions_menu'] = gr.CheckboxGroup(choices=get_available_extensions(), value=shared.args.extensions, label="Available extensions")
+            shared.gradio['cmd_arguments_menu'] = gr.CheckboxGroup(choices=cmd_list, value=active_cmd_list, label="Boolean command-line flags")
+            shared.gradio['reset_interface'] = gr.Button("Apply and restart the interface", type="primary")
 
-            with gr.Box():
-                stream = gr.Checkbox(label='no-stream', value=shared.args.no_stream)
-            kill = gr.Button("Apply and restart the interface")
-            kill.click(set_interface_mode, [modes_menu, group, stream], None)
-            kill.click(lambda : None, None, None, _js='() => {document.body.innerHTML=\'<h1 style="font-family:monospace;margin-top:20%;color:lightgray;text-align:center;">Reloading...</h1>\'; setTimeout(function(){location.reload()},2500)}')
+            shared.gradio['reset_interface'].click(set_interface_arguments, [shared.gradio[k] for k in ['interface_modes_menu', 'extensions_menu', 'cmd_arguments_menu']], None)
+            shared.gradio['reset_interface'].click(lambda : None, None, None, _js='() => {document.body.innerHTML=\'<h1 style="font-family:monospace;margin-top:20%;color:lightgray;text-align:center;">Reloading...</h1>\'; setTimeout(function(){location.reload()},2500)}')
 
         if shared.args.extensions is not None:
             extensions_module.create_extensions_block()
