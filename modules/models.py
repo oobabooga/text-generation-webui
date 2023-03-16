@@ -16,12 +16,7 @@ transformers.logging.set_verbosity_error()
 local_rank = None
 
 if shared.args.flexgen:
-    from flexgen.flex_opt import (
-        CompressionConfig,
-        ExecutionEnv,
-        OptLM,
-        Policy,
-    )
+    from flexgen.flex_opt import CompressionConfig, ExecutionEnv, OptLM, Policy
 
 if shared.args.deepspeed:
     import deepspeed
