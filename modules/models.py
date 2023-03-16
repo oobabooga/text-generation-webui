@@ -13,6 +13,8 @@ import modules.shared as shared
 
 transformers.logging.set_verbosity_error()
 
+local_rank = None
+
 if shared.args.flexgen:
     from flexgen.flex_opt import CompressionConfig, ExecutionEnv, OptLM, Policy
 
@@ -38,30 +40,39 @@ if shared.args.deepspeed:
         ds_config
     )  # Keep this object alive for the Transformers integration
 
+
 def load_RMVK_tokenizer():
     from modules.RWKV import RWKVTokenizer
+
     tokenizer = RWKVTokenizer.from_pretrained(Path("models"))
 
     return tokenizer
 
+
 def load_hf_tokenizer(model_name):
-    is_gpt_4chan = shared.model_name.lower().startswith(("gpt4chan", "gpt-4chan", "4chan"))
+    is_gpt_4chan = shared.model_name.lower().startswith(
+        ("gpt4chan", "gpt-4chan", "4chan")
+    )
     is_gpt_j_6B_available = Path("models/gpt-j-6B/").exists()
 
     if is_gpt_4chan and is_gpt_j_6B_available:
-        tokenizer = AutoTokenizer.from_pretrained(Path("models/gpt-j-6B/"))
+        tokenizer_path = Path("models/gpt-j-6B/")
     else:
-        tokenizer = AutoTokenizer.from_pretrained(Path(f"models/{model_name}/"))
+        tokenizer_path = Path(f"models/{model_name}/")
+
+    tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
+    if not (is_gpt_4chan and is_gpt_j_6B_available):
         tokenizer.truncation_side = "left"
 
     return tokenizer
+
 
 def load_tokenizer(model_name):
     if shared.is_RWKV:
         return load_RMVK_tokenizer()
     else:
         return load_hf_tokenizer(model_name)
-    
+
 
 def load_deepspeed_model(model_name):
     model = AutoModelForCausalLM.from_pretrained(
@@ -79,6 +90,7 @@ def load_deepspeed_model(model_name):
     print(f"DeepSpeed ZeRO-3 is enabled: {is_deepspeed_zero3_enabled()}")
 
     return model
+
 
 def load_flexgen_model(model_name):
     # Initialize environment
@@ -113,6 +125,7 @@ def load_flexgen_model(model_name):
 
     return model
 
+
 def load_RWKV_model(model_name):
     from modules.RWKV import RWKVModel
 
@@ -124,81 +137,125 @@ def load_RWKV_model(model_name):
 
     return model
 
+
 def load_default_model(model_name):
-    if any(size in model_name.lower() for size in ("13b", "20b", "30b")):
-            model = AutoModelForCausalLM.from_pretrained(
-                Path(f"models/{model_name}"),
-                device_map="auto",
-                load_in_8bit=True,
-            )
+    model_path = Path(f"models/{model_name}")
+    is_large_model = any(size in model_name.lower() for size in ("13b", "20b", "30b"))
+
+    if is_large_model:
+        params = {
+            "device_map": "auto",
+            "load_in_8bit": True,
+        }
     else:
-        model = AutoModelForCausalLM.from_pretrained(
-            Path(f"models/{model_name}"),
-            low_cpu_mem_usage=True,
-            torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16,
-        ).cuda()
+        params = {
+            "low_cpu_mem_usage": True,
+            "torch_dtype": torch.bfloat16 if shared.args.bf16 else torch.float16,
+        }
+
+    model = AutoModelForCausalLM.from_pretrained(model_path, **params)
+    if not is_large_model:
+        model = model.cuda()
 
     return model
 
-def load_custom_model(model_name):
-    command = "AutoModelForCausalLM.from_pretrained"
-    params = ["low_cpu_mem_usage=True"]
+
+def check_for_GPU():
     if not shared.args.cpu and not torch.cuda.is_available():
         print(
             "Warning: torch.cuda.is_available() returned False.\nThis means that no GPU has been detected.\nFalling back to CPU mode.\n"
         )
-        shared.args.cpu = True
+    shared.args.cpu = True
+
+
+def suggested_GPU_memory():
+    total_mem = torch.cuda.get_device_properties(0).total_memory / (1024 * 1024)
+    suggestion = round((total_mem - 1000) / 1000) * 1000
+    if total_mem - suggestion < 800:
+        suggestion -= 1000
+    suggestion = int(round(suggestion / 1000))
+    print(
+        f"\033[1;32;1mAuto-assiging --gpu-memory {suggestion} for your GPU to try to prevent out-of-memory errors.\nYou can manually set other values.\033[0;37;0m"
+    )
+
+    return suggestion
+
+
+def load_custom_model(model_name):
+    params = {"low_cpu_mem_usage": True}
+
+    check_for_GPU()
 
     if shared.args.cpu:
-        params.append("low_cpu_mem_usage=True")
-        params.append("torch_dtype=torch.float32")
-    else:
-        params.append("device_map='auto'")
-        params.append(
-            "load_in_8bit=True"
-            if shared.args.load_in_8bit
-            else "torch_dtype=torch.bfloat16"
-            if shared.args.bf16
-            else "torch_dtype=torch.float16"
+        params.update(
+            {
+                "low_cpu_mem_usage": True,
+                "torch_dtype": torch.float32,
+            }
         )
+    else:
+        params.update(
+            {
+                "device_map": "auto",
+            }
+        )
+
+        if shared.args.load_in_8bit:
+            params.update(
+                {
+                    "load_in_8bit": True,
+                }
+            )
+        elif shared.args.bf16:
+            params.update(
+                {
+                    "torch_dtype": torch.bfloat16,
+                }
+            )
+        else:
+            params.update(
+                {
+                    "torch_dtype": torch.float16,
+                }
+            )
 
         if shared.args.gpu_memory:
             memory_map = shared.args.gpu_memory
-            max_memory = f"max_memory={{0: '{memory_map[0]}GiB'"
-            for i in range(1, len(memory_map)):
-                max_memory += f", {i}: '{memory_map[i]}GiB'"
-            max_memory += f", 'cpu': '{shared.args.cpu_memory or '99'}GiB'}}"
-            params.append(max_memory)
+            max_memory = {
+                gpu_device: f"{memory}GiB"
+                for gpu_device, memory in enumerate(memory_map)
+            }
+            max_memory.update({"cpu": f"{shared.args.cpu_memory or '99'}GiB"})
+
+            params.update({"max_memory": max_memory})
+
         elif not shared.args.load_in_8bit:
-            total_mem = torch.cuda.get_device_properties(0).total_memory / (
-                1024 * 1024
+            suggested = suggested_GPU_memory()
+            params.update(
+                {
+                    "max_memory": {
+                        0: f"{suggested}GiB",
+                        "cpu": f"{shared.args.cpu_memory or '99'}GiB",
+                    }
+                }
             )
-            suggestion = round((total_mem - 1000) / 1000) * 1000
-            if total_mem - suggestion < 800:
-                suggestion -= 1000
-            suggestion = int(round(suggestion / 1000))
-            print(
-                f"\033[1;32;1mAuto-assiging --gpu-memory {suggestion} for your GPU to try to prevent out-of-memory errors.\nYou can manually set other values.\033[0;37;0m"
-            )
-            params.append(
-                f"max_memory={{0: '{suggestion}GiB', 'cpu': '{shared.args.cpu_memory or '99'}GiB'}}"
-            )
+
         if shared.args.disk:
-            params.append(f"offload_folder='{shared.args.disk_cache_dir}'")
+            params.update({"offload_folder": shared.args.disk_cache_dir})
 
-        command = (
-            f"{command}(Path(f'models/{model_name}'), {', '.join(set(params))})"
-        )
-        model = eval(command)
+    model = AutoModelForCausalLM.from_pretrained(
+        Path(f"models/{model_name}"), **params
+    )
 
-        return model
+    return model
+
 
 def load_model(model_name):
     print(f"Loading {model_name}...")
     t0 = time.time()
 
     shared.is_RWKV = model_name.lower().startswith("rwkv-")
-    
+
     defaul_options_selected = not any(
         [
             shared.args.cpu,
@@ -211,12 +268,13 @@ def load_model(model_name):
             shared.args.deepspeed,
             shared.args.flexgen,
             shared.is_RWKV,
-        ])
+        ]
+    )
 
     # RMKV model (not on HuggingFace)
     if shared.is_RWKV:
         model = load_RWKV_model(model_name)
-    
+
     # Default settings
     elif defaul_options_selected:
         model = load_default_model(model_name)
@@ -232,12 +290,12 @@ def load_model(model_name):
     # Quantized model
     elif shared.args.gptq_bits > 0:
         from modules.GPTQ_loader import load_quantized
+
         model = load_quantized(model_name)
 
     # Custom
     else:
         model = load_custom_model(model_name)
-
 
     tokenizer = load_tokenizer(model_name)
 
