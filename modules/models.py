@@ -7,8 +7,9 @@ from pathlib import Path
 import numpy as np
 import torch
 import transformers
-from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, AutoConfig
-from accelerate import infer_auto_device_map, init_empty_weights, load_checkpoint_and_dispatch
+from accelerate import infer_auto_device_map, init_empty_weights
+from transformers import (AutoConfig, AutoModelForCausalLM, AutoTokenizer,
+                          BitsAndBytesConfig)
 
 import modules.shared as shared
 
@@ -113,23 +114,20 @@ def load_model(model_name):
 
             if shared.args.gpu_memory:
                 memory_map = shared.args.gpu_memory
-                max_memory = { 0: f'{memory_map[0]}GiB' }
-                for i in range(1, len(memory_map)):
+                max_memory = {}
+                for i in range(len(memory_map)):
                     max_memory[i] = f'{memory_map[i]}GiB'
                 max_memory['cpu'] = f'{shared.args.cpu_memory or 99}GiB'
                 params['max_memory'] = max_memory
             else:
-                total_mem = (torch.cuda.get_device_properties(0).total_memory / (1024 * 1024))
-                suggestion = round((total_mem - 1000) / 1000) * 1000
+                total_mem = (torch.cuda.get_device_properties(0).total_memory / (1024*1024))
+                suggestion = round((total_mem-1000) / 1000) * 1000
                 if total_mem - suggestion < 800:
                     suggestion -= 1000
                 suggestion = int(round(suggestion/1000))
                 print(f"\033[1;32;1mAuto-assiging --gpu-memory {suggestion} for your GPU to try to prevent out-of-memory errors.\nYou can manually set other values.\033[0;37;0m")
                 
-                max_memory = { 
-                    0: f'{suggestion}GiB',
-                    'cpu': f'{shared.args.cpu_memory or 99}GiB'
-                }
+                max_memory = {0: f'{suggestion}GiB', 'cpu': f'{shared.args.cpu_memory or 99}GiB'}
                 params['max_memory'] = max_memory
 
             if shared.args.disk:
