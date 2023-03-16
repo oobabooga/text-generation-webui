@@ -21,7 +21,6 @@ if shared.args.flexgen:
         ExecutionEnv,
         OptLM,
         Policy,
-        str2bool,
     )
 
 if shared.args.deepspeed:
