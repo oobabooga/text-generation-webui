@@ -19,6 +19,9 @@ gradio = {}
 # Generation input parameters
 input_params = []
 
+# For restarting the interface
+need_restart = False
+
 settings = {
     'max_new_tokens': 200,
     'max_new_tokens_min': 1,

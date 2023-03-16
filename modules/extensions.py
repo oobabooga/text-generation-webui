@@ -11,9 +11,12 @@ def load_extensions():
     for i, name in enumerate(shared.args.extensions):
         if name in available_extensions:
             print(f'Loading the extension "{name}"... ', end='')
-            exec(f"import extensions.{name}.script")
-            state[name] = [True, i]
-            print('Ok.')
+            try:
+                exec(f"import extensions.{name}.script")
+                state[name] = [True, i]
+                print('Ok.')
+            except:
+                print('Fail.')
 
 # This iterator returns the extensions in the order specified in the command-line
 def iterator():
@@ -42,8 +45,9 @@ def create_extensions_block():
                     extension.params[param] = shared.settings[_id]
 
     # Creating the extension ui elements
-    with gr.Box(elem_id="extensions"):
-        gr.Markdown("Extensions")
-        for extension, name in iterator():
-            if hasattr(extension, "ui"):
-                extension.ui()
+    if len(state) > 0:
+        with gr.Box(elem_id="extensions"):
+            gr.Markdown("Extensions")
+            for extension, name in iterator():
+                if hasattr(extension, "ui"):
+                    extension.ui()
