@@ -403,7 +403,7 @@ def create_interface():
             group = gr.CheckboxGroup(choices=extensions, value=shared.args.extensions, label="Available extensions")
             kill = gr.Button("Apply and restart the interface")
             kill.click(set_interface_mode, [modes_menu, group], None)
-            kill.click(lambda : None, None, None, _js='() => {document.body.innerHTML=\'<h1 style="font-family:monospace;margin-top:20%;color:lightgray;text-align:center;">Reloading...</h1>\'; setTimeout(function(){location.reload()},2000)}')
+            kill.click(lambda : None, None, None, _js='() => {document.body.innerHTML=\'<h1 style="font-family:monospace;margin-top:20%;color:lightgray;text-align:center;">Reloading...</h1>\'; setTimeout(function(){location.reload()},2500)}')
 
         if shared.args.extensions is not None:
             extensions_module.create_extensions_block()
