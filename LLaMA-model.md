@@ -10,13 +10,13 @@ Throughout this tutorial, we are going to use `llama-7b` as an example, but the 
 
 ```
 pip uninstall transformers
-pip install git+https://github.com/zphang/transformers.git@68d640f7c368bcaaaecfc678f11908ebbd3d6176
+pip install git+https://github.com/huggingface/transformers
 ```
 
 
 2. Use the script below to convert the model in `.pth` format that you, a fellow academic, downloaded using Meta's official link:
 
-### [convert_llama_weights_to_hf.py](https://github.com/zphang/transformers/blob/llama_push/src/transformers/models/llama/convert_llama_weights_to_hf.py)
+### [convert_llama_weights_to_hf.py](https://github.com/huggingface/transformers/blob/main/src/transformers/models/llama/convert_llama_weights_to_hf.py)
 
 ```
 python convert_llama_weights_to_hf.py --input_dir /path/to/LLaMA --model_size 7B --output_dir /path/to/outputs
