@@ -12,9 +12,9 @@ https://github.com/BlinkDL/ChatRWKV
 
 It is available in different sizes:
 
-* https://huggingface.co/BlinkDL/rwkv-4-pile-3b/resolve/main/RWKV-4-Pile-3B-20221110-ctx4096.pth
-* https://huggingface.co/BlinkDL/rwkv-4-pile-7b/resolve/main/RWKV-4-Pile-7B-20230109-ctx4096.pth
-* https://huggingface.co/BlinkDL/rwkv-4-pile-14b/resolve/main/RWKV-4-Pile-14B-20230228-ctx4096-test663.pth
+* https://huggingface.co/BlinkDL/rwkv-4-pile-3b/
+* https://huggingface.co/BlinkDL/rwkv-4-pile-7b/
+* https://huggingface.co/BlinkDL/rwkv-4-pile-14b/
 
 There are also older releases with smaller sizes like:
 
