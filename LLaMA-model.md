@@ -6,7 +6,7 @@ Throughout this tutorial, we are going to use `llama-7b` as an example, but the 
 
 ## Installation
 
-1. Uninstall your existing `transformers` (if any) and install the patched version:
+1. Uninstall your existing `transformers` (if any) and install the dev branch:
 
 ```
 pip uninstall transformers
