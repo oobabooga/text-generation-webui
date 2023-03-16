@@ -399,6 +399,7 @@ def create_interface():
                 if hasattr(shared.args, mode) and eval(f"shared.args.{mode}"):
                     current_mode = mode
 
+            gr.Markdown("*Experimental*")
             modes_menu = gr.Dropdown(choices=modes, value=current_mode, label="Mode")
             group = gr.CheckboxGroup(choices=extensions, value=shared.args.extensions, label="Available extensions")
             kill = gr.Button("Apply and restart the interface")
