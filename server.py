@@ -384,8 +384,9 @@ def create_interface():
             shared.gradio['interface'].load(None, None, None, _js=f"() => {{{ui.main_js}}}")
 
         with gr.Tab("Interface mode", elem_id="interface-mode"):
-            def set_interface_mode(mode, choices):
+            def set_interface_mode(mode, choices, stream):
                 shared.args.extensions = choices
+                shared.args.no_stream = stream
                 for k in ["notebook", "chat", "cai_chat"]:
                     exec(f"shared.args.{k} = False")
                 if mode != "default":
@@ -402,8 +403,11 @@ def create_interface():
             gr.Markdown("*Experimental*")
             modes_menu = gr.Dropdown(choices=modes, value=current_mode, label="Mode")
             group = gr.CheckboxGroup(choices=extensions, value=shared.args.extensions, label="Available extensions")
+
+            with gr.Box():
+                stream = gr.Checkbox(label='no-stream', value=shared.args.no_stream)
             kill = gr.Button("Apply and restart the interface")
-            kill.click(set_interface_mode, [modes_menu, group], None)
+            kill.click(set_interface_mode, [modes_menu, group, stream], None)
             kill.click(lambda : None, None, None, _js='() => {document.body.innerHTML=\'<h1 style="font-family:monospace;margin-top:20%;color:lightgray;text-align:center;">Reloading...</h1>\'; setTimeout(function(){location.reload()},2500)}')
 
         if shared.args.extensions is not None:
