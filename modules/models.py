@@ -63,9 +63,9 @@ def load_tokenizer(model_name):
         return load_hf_tokenizer(model_name)
     
 
-def load_deepspeed_model():
+def load_deepspeed_model(model_name):
     model = AutoModelForCausalLM.from_pretrained(
-        Path(f"models/{shared.model_name}"),
+        Path(f"models/{model_name}"),
         torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16,
     )
     model = deepspeed.initialize(
