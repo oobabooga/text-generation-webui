@@ -38,15 +38,168 @@ if shared.args.deepspeed:
         ds_config
     )  # Keep this object alive for the Transformers integration
 
+def load_RMVK_tokenizer():
+    from modules.RWKV import RWKVTokenizer
+    tokenizer = RWKVTokenizer.from_pretrained(Path("models"))
+
+    return tokenizer
+
+def load_hf_tokenizer(model_name):
+    is_gpt_4chan = shared.model_name.lower().startswith(("gpt4chan", "gpt-4chan", "4chan"))
+    is_gpt_j_6B_available = Path("models/gpt-j-6B/").exists()
+
+    if is_gpt_4chan and is_gpt_j_6B_available:
+        tokenizer = AutoTokenizer.from_pretrained(Path("models/gpt-j-6B/"))
+    else:
+        tokenizer = AutoTokenizer.from_pretrained(Path(f"models/{model_name}/"))
+        tokenizer.truncation_side = "left"
+
+    return tokenizer
+
+def load_tokenizer(model_name):
+    if shared.is_RWKV:
+        return load_RMVK_tokenizer()
+    else:
+        return load_hf_tokenizer(model_name)
+    
+
+def load_deepspeed_model():
+    model = AutoModelForCausalLM.from_pretrained(
+        Path(f"models/{shared.model_name}"),
+        torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16,
+    )
+    model = deepspeed.initialize(
+        model=model,
+        config_params=ds_config,
+        model_parameters=None,
+        optimizer=None,
+        lr_scheduler=None,
+    )[0]
+    model.module.eval()  # Inference
+    print(f"DeepSpeed ZeRO-3 is enabled: {is_deepspeed_zero3_enabled()}")
+
+    return model
+
+def load_flexgen_model(model_name):
+    # Initialize environment
+    env = ExecutionEnv.create(shared.args.disk_cache_dir)
+
+    # Offloading policy
+    policy = Policy(
+        1,
+        1,
+        shared.args.percent[0],
+        shared.args.percent[1],
+        shared.args.percent[2],
+        shared.args.percent[3],
+        shared.args.percent[4],
+        shared.args.percent[5],
+        overlap=True,
+        sep_layer=True,
+        pin_weight=shared.args.pin_weight,
+        cpu_cache_compute=False,
+        attn_sparsity=1.0,
+        compress_weight=shared.args.compress_weight,
+        comp_weight_config=CompressionConfig(
+            num_bits=4, group_size=64, group_dim=0, symmetric=False
+        ),
+        compress_cache=False,
+        comp_cache_config=CompressionConfig(
+            num_bits=4, group_size=64, group_dim=2, symmetric=False
+        ),
+    )
+
+    model = OptLM(f"facebook/{model_name}", env, "models", policy)
+
+    return model
+
+def load_RWKV_model(model_name):
+    from modules.RWKV import RWKVModel
+
+    model = RWKVModel.from_pretrained(
+        Path(f"models/{model_name}"),
+        dtype="fp32" if shared.args.cpu else "bf16" if shared.args.bf16 else "fp16",
+        device="cpu" if shared.args.cpu else "cuda",
+    )
+
+    return model
+
+def load_default_model(model_name):
+    if any(size in model_name.lower() for size in ("13b", "20b", "30b")):
+            model = AutoModelForCausalLM.from_pretrained(
+                Path(f"models/{model_name}"),
+                device_map="auto",
+                load_in_8bit=True,
+            )
+    else:
+        model = AutoModelForCausalLM.from_pretrained(
+            Path(f"models/{model_name}"),
+            low_cpu_mem_usage=True,
+            torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16,
+        ).cuda()
+
+    return model
+
+def load_custom_model(model_name):
+    command = "AutoModelForCausalLM.from_pretrained"
+    params = ["low_cpu_mem_usage=True"]
+    if not shared.args.cpu and not torch.cuda.is_available():
+        print(
+            "Warning: torch.cuda.is_available() returned False.\nThis means that no GPU has been detected.\nFalling back to CPU mode.\n"
+        )
+        shared.args.cpu = True
+
+    if shared.args.cpu:
+        params.append("low_cpu_mem_usage=True")
+        params.append("torch_dtype=torch.float32")
+    else:
+        params.append("device_map='auto'")
+        params.append(
+            "load_in_8bit=True"
+            if shared.args.load_in_8bit
+            else "torch_dtype=torch.bfloat16"
+            if shared.args.bf16
+            else "torch_dtype=torch.float16"
+        )
+
+        if shared.args.gpu_memory:
+            memory_map = shared.args.gpu_memory
+            max_memory = f"max_memory={{0: '{memory_map[0]}GiB'"
+            for i in range(1, len(memory_map)):
+                max_memory += f", {i}: '{memory_map[i]}GiB'"
+            max_memory += f", 'cpu': '{shared.args.cpu_memory or '99'}GiB'}}"
+            params.append(max_memory)
+        elif not shared.args.load_in_8bit:
+            total_mem = torch.cuda.get_device_properties(0).total_memory / (
+                1024 * 1024
+            )
+            suggestion = round((total_mem - 1000) / 1000) * 1000
+            if total_mem - suggestion < 800:
+                suggestion -= 1000
+            suggestion = int(round(suggestion / 1000))
+            print(
+                f"\033[1;32;1mAuto-assiging --gpu-memory {suggestion} for your GPU to try to prevent out-of-memory errors.\nYou can manually set other values.\033[0;37;0m"
+            )
+            params.append(
+                f"max_memory={{0: '{suggestion}GiB', 'cpu': '{shared.args.cpu_memory or '99'}GiB'}}"
+            )
+        if shared.args.disk:
+            params.append(f"offload_folder='{shared.args.disk_cache_dir}'")
+
+        command = (
+            f"{command}(Path(f'models/{model_name}'), {', '.join(set(params))})"
+        )
+        model = eval(command)
+
+        return model
 
 def load_model(model_name):
     print(f"Loading {model_name}...")
     t0 = time.time()
 
     shared.is_RWKV = model_name.lower().startswith("rwkv-")
-
-    # Default settings
-    if not any(
+    
+    defaul_options_selected = not any(
         [
             shared.args.cpu,
             shared.args.load_in_8bit,
@@ -58,149 +211,35 @@ def load_model(model_name):
             shared.args.deepspeed,
             shared.args.flexgen,
             shared.is_RWKV,
-        ]
-    ):
-        if any(size in shared.model_name.lower() for size in ("13b", "20b", "30b")):
-            model = AutoModelForCausalLM.from_pretrained(
-                Path(f"models/{shared.model_name}"),
-                device_map="auto",
-                load_in_8bit=True,
-            )
-        else:
-            model = AutoModelForCausalLM.from_pretrained(
-                Path(f"models/{shared.model_name}"),
-                low_cpu_mem_usage=True,
-                torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16,
-            ).cuda()
+        ])
+
+    # RMKV model (not on HuggingFace)
+    if shared.is_RWKV:
+        model = load_RWKV_model(model_name)
+    
+    # Default settings
+    elif defaul_options_selected:
+        model = load_default_model(model_name)
 
     # FlexGen
     elif shared.args.flexgen:
-        # Initialize environment
-        env = ExecutionEnv.create(shared.args.disk_cache_dir)
-
-        # Offloading policy
-        policy = Policy(
-            1,
-            1,
-            shared.args.percent[0],
-            shared.args.percent[1],
-            shared.args.percent[2],
-            shared.args.percent[3],
-            shared.args.percent[4],
-            shared.args.percent[5],
-            overlap=True,
-            sep_layer=True,
-            pin_weight=shared.args.pin_weight,
-            cpu_cache_compute=False,
-            attn_sparsity=1.0,
-            compress_weight=shared.args.compress_weight,
-            comp_weight_config=CompressionConfig(
-                num_bits=4, group_size=64, group_dim=0, symmetric=False
-            ),
-            compress_cache=False,
-            comp_cache_config=CompressionConfig(
-                num_bits=4, group_size=64, group_dim=2, symmetric=False
-            ),
-        )
-
-        model = OptLM(f"facebook/{shared.model_name}", env, "models", policy)
+        model = load_flexgen_model(model_name)
 
     # DeepSpeed ZeRO-3
     elif shared.args.deepspeed:
-        model = AutoModelForCausalLM.from_pretrained(
-            Path(f"models/{shared.model_name}"),
-            torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16,
-        )
-        model = deepspeed.initialize(
-            model=model,
-            config_params=ds_config,
-            model_parameters=None,
-            optimizer=None,
-            lr_scheduler=None,
-        )[0]
-        model.module.eval()  # Inference
-        print(f"DeepSpeed ZeRO-3 is enabled: {is_deepspeed_zero3_enabled()}")
-
-    # RMKV model (not on HuggingFace)
-    elif shared.is_RWKV:
-        from modules.RWKV import RWKVModel, RWKVTokenizer
-
-        model = RWKVModel.from_pretrained(
-            Path(f"models/{model_name}"),
-            dtype="fp32" if shared.args.cpu else "bf16" if shared.args.bf16 else "fp16",
-            device="cpu" if shared.args.cpu else "cuda",
-        )
-        tokenizer = RWKVTokenizer.from_pretrained(Path("models"))
-
-        return model, tokenizer
+        model = load_deepspeed_model(model_name)
 
     # Quantized model
     elif shared.args.gptq_bits > 0:
         from modules.GPTQ_loader import load_quantized
-
         model = load_quantized(model_name)
 
     # Custom
     else:
-        command = "AutoModelForCausalLM.from_pretrained"
-        params = ["low_cpu_mem_usage=True"]
-        if not shared.args.cpu and not torch.cuda.is_available():
-            print(
-                "Warning: torch.cuda.is_available() returned False.\nThis means that no GPU has been detected.\nFalling back to CPU mode.\n"
-            )
-            shared.args.cpu = True
+        model = load_custom_model(model_name)
 
-        if shared.args.cpu:
-            params.append("low_cpu_mem_usage=True")
-            params.append("torch_dtype=torch.float32")
-        else:
-            params.append("device_map='auto'")
-            params.append(
-                "load_in_8bit=True"
-                if shared.args.load_in_8bit
-                else "torch_dtype=torch.bfloat16"
-                if shared.args.bf16
-                else "torch_dtype=torch.float16"
-            )
 
-            if shared.args.gpu_memory:
-                memory_map = shared.args.gpu_memory
-                max_memory = f"max_memory={{0: '{memory_map[0]}GiB'"
-                for i in range(1, len(memory_map)):
-                    max_memory += f", {i}: '{memory_map[i]}GiB'"
-                max_memory += f", 'cpu': '{shared.args.cpu_memory or '99'}GiB'}}"
-                params.append(max_memory)
-            elif not shared.args.load_in_8bit:
-                total_mem = torch.cuda.get_device_properties(0).total_memory / (
-                    1024 * 1024
-                )
-                suggestion = round((total_mem - 1000) / 1000) * 1000
-                if total_mem - suggestion < 800:
-                    suggestion -= 1000
-                suggestion = int(round(suggestion / 1000))
-                print(
-                    f"\033[1;32;1mAuto-assiging --gpu-memory {suggestion} for your GPU to try to prevent out-of-memory errors.\nYou can manually set other values.\033[0;37;0m"
-                )
-                params.append(
-                    f"max_memory={{0: '{suggestion}GiB', 'cpu': '{shared.args.cpu_memory or '99'}GiB'}}"
-                )
-            if shared.args.disk:
-                params.append(f"offload_folder='{shared.args.disk_cache_dir}'")
-
-        command = (
-            f"{command}(Path(f'models/{shared.model_name}'), {', '.join(set(params))})"
-        )
-        model = eval(command)
-
-    # Loading the tokenizer
-    if (
-        shared.model_name.lower().startswith(("gpt4chan", "gpt-4chan", "4chan"))
-        and Path("models/gpt-j-6B/").exists()
-    ):
-        tokenizer = AutoTokenizer.from_pretrained(Path("models/gpt-j-6B/"))
-    else:
-        tokenizer = AutoTokenizer.from_pretrained(Path(f"models/{shared.model_name}/"))
-    tokenizer.truncation_side = "left"
+    tokenizer = load_tokenizer(model_name)
 
     print(f"Loaded the model in {(time.time()-t0):.2f} seconds.")
     return model, tokenizer
