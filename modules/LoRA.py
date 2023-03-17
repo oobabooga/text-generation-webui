@@ -13,5 +13,6 @@ def add_lora_to_model(lora_name):
         print("Reloading the model to remove the LoRA...")
         shared.model, shared.tokenizer = load_model(shared.model_name)
     else:
+        # Why doesn't this work in 16-bit mode?
         print(f"Adding the LoRA {lora_name} to the model...")
         shared.model = PeftModel.from_pretrained(shared.model, Path(f"loras/{lora_name}"))
