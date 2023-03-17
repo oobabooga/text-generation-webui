@@ -12,7 +12,8 @@ import modules.extensions as extensions_module
 import modules.shared as shared
 from modules.extensions import apply_extensions
 from modules.html_generator import generate_chat_html
-from modules.text_generation import encode, generate_reply, get_max_prompt_length
+from modules.text_generation import (encode, generate_reply,
+                                     get_max_prompt_length)
 
 
 # This gets the new line characters right.

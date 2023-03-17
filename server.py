@@ -15,9 +15,9 @@ import modules.extensions as extensions_module
 import modules.shared as shared
 import modules.ui as ui
 from modules.html_generator import generate_chat_html
+from modules.LoRA import add_lora_to_model
 from modules.models import load_model, load_soft_prompt
 from modules.text_generation import generate_reply
-from modules.LoRA import add_lora_to_model
 
 # Loading custom settings
 settings_file = None
