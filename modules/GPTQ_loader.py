@@ -61,7 +61,7 @@ def load_quantized(model_name):
             max_memory[i] = f"{shared.args.gpu_memory[i]}GiB"
         max_memory['cpu'] = f"{shared.args.cpu_memory or '99'}GiB"
 
-        device_map = accelerate.infer_auto_device_map(model, max_memory=max_memory, no_split_module_classes=["LLaMADecoderLayer"])
+        device_map = accelerate.infer_auto_device_map(model, max_memory=max_memory, no_split_module_classes=["LlamaDecoderLayer"])
         model = accelerate.dispatch_model(model, device_map=device_map)
 
     # Single GPU
