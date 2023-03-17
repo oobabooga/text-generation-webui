@@ -17,10 +17,10 @@ set gpuchoice=!gpuchoice:a=A!
 set gpuchoice=!gpuchoice:b=B!
 
 if "%gpuchoice%" == "A" (
-    set "PACKAGES_TO_INSTALL=torchvision=0.14.1 torchaudio=0.13.1 pytorch-cuda=11.7 conda git"
+    set "PACKAGES_TO_INSTALL=pytorch torchvision torchaudio pytorch-cuda=11.7 conda git"
     set "CHANNEL=-c nvidia"
 ) else if "%gpuchoice%" == "B" (
-    set "PACKAGES_TO_INSTALL=torchvision=0.14.1 torchaudio=0.13.1 pytorch conda git"
+    set "PACKAGES_TO_INSTALL=pytorch torchvision torchaudio cpuonly conda git"
     set "CHANNEL="
 ) else (
     echo Invalid choice. Exiting...
