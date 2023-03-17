@@ -43,7 +43,7 @@ The recommended installation methods are the following:
 
 Conda can be downloaded here: https://docs.conda.io/en/latest/miniconda.html
 
-On Linux or WSL, it can be installed with these two commands:
+On Linux or WSL, it can be automatically installed with these two commands:
 
 ```
 curl -sL "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh" > "Miniconda3.sh"
