@@ -34,39 +34,45 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * [Extensions](https://github.com/oobabooga/text-generation-webui/wiki/Extensions).
 * [Works on Google Colab](https://github.com/oobabooga/text-generation-webui/wiki/Running-on-Colab).
 
-## Installation option 1: conda
+## Installation
 
-Open a terminal and copy and paste these commands one at a time ([install conda](https://docs.conda.io/en/latest/miniconda.html) first if you don't have it already):
+The recommended installation methods are the following:
+
+* Linux and macOS: using conda natively.
+* Windows: using conda on WSL ([WSL installation guide](https://github.com/oobabooga/text-generation-webui/wiki/Windows-Subsystem-for-Linux-(Ubuntu)-Installation-Guide)).
+
+Conda can be downloaded here: https://docs.conda.io/en/latest/miniconda.html
+
+#### 1. Create a new conda environment
 
 ```
-conda create -n textgen
+conda create -n textgen python=3.10.9
 conda activate textgen
-conda install torchvision=0.14.1 torchaudio=0.13.1 pytorch-cuda=11.7 git -c pytorch -c nvidia
+```
+
+#### 2. Install Pytorch
+
+| System | GPU | Command |
+|--------|---------|---------|
+| Linux/WSL | NVIDIA | `conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvidia` |
+| Linux | AMD | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.4.2` |
+| MacOS + MPS (untested) | Any | `conda install pytorch torchvision torchaudio -c pytorch` |
+
+The up to date commands can be found here: https://pytorch.org/get-started/locally/
+
+#### 3. Install the web UI
+
+```
 git clone https://github.com/oobabooga/text-generation-webui
 cd text-generation-webui
 pip install -r requirements.txt
 ```
 
-The third line assumes that you have an NVIDIA GPU. 
+### Alternative: native Windows installation
 
-* If you have an AMD GPU, replace the third command with this one:
+As an alternative to the recommended WSL method, you can install the web UI natively on Windows using this guide. It will be a lot harder and the performance may be slower: [Installation instructions for human beings](https://github.com/oobabooga/text-generation-webui/wiki/Installation-instructions-for-human-beings).
 
-```
-pip3 install torch torchvision=0.14.1 torchaudio=0.13.1 --extra-index-url https://download.pytorch.org/whl/rocm5.2
-```
-  	  
-* If you are running it in CPU mode, replace the third command with this one:
-
-```
-conda install pytorch torchvision=0.14.1 torchaudio=0.13.1 git -c pytorch
-```
-
-> **Note**
-> 1. If you are on Windows, it may be easier to run the commands above in a WSL environment. The performance may also be better. A full guide can be found here: [Windows Subsystem for Linux (Ubuntu) Installation Guide
-](https://github.com/oobabooga/text-generation-webui/wiki/Windows-Subsystem-for-Linux-(Ubuntu)-Installation-Guide).
-> 2. For a more detailed, user-contributed guide, see: [Installation instructions for human beings](https://github.com/oobabooga/text-generation-webui/wiki/Installation-instructions-for-human-beings).
-
-## Installation option 2: one-click installers
+### Alternative: one click installers
 
 [oobabooga-windows.zip](https://github.com/oobabooga/one-click-installers/archive/refs/heads/oobabooga-windows.zip)
 
@@ -76,6 +82,10 @@ Just download the zip above, extract it, and double click on "install". The web 
 
 * To download a model, double click on "download-model"
 * To start the web UI, double click on "start-webui" 
+
+Source codes: https://github.com/oobabooga/one-click-installers
+
+This method lags behind the newest developments and does not support 8-bit mode on Windows without additional set up.
 
 ## Downloading models
 
