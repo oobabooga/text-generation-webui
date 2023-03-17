@@ -1,6 +1,6 @@
 '''
 
-This is a library for formatting GPT-4chan and chat outputs as nice HTML.
+This is a library for formatting text outputs as nice HTML.
 
 '''
 
@@ -21,10 +21,26 @@ with open(Path(__file__).resolve().parent / '../css/html_4chan_style.css', 'r') 
 with open(Path(__file__).resolve().parent / '../css/html_cai_style.css', 'r') as f:
     cai_css = f.read()
 
-def generate_basic_html(s):
-    s = '\n'.join([f'<p>{line}</p>' for line in s.split('\n')])
-    s = f'<style>{readable_css}</style><div class="container">{s}</div>'
-    return s
+def fix_newlines(string):
+    string = string.replace('\n', '\n\n')
+    string = re.sub(r"\n{3,}", "\n\n", string)
+    string = string.strip()
+    return string
+
+# This could probably be generalized and improved
+def convert_to_markdown(string):
+    string = string.replace('\\begin{code}', '```')
+    string = string.replace('\\end{code}', '```')
+    string = string.replace('\\begin{blockquote}', '> ')
+    string = string.replace('\\end{blockquote}', '')
+    string = re.sub(r"(.)```", r"\1\n```", string)
+#    string = fix_newlines(string)
+    return markdown.markdown(string, extensions=['fenced_code']) 
+
+def generate_basic_html(string):
+    string = convert_to_markdown(string)
+    string = f'<style>{readable_css}</style><div class="container">{string}</div>'
+    return string
 
 def process_post(post, c):
     t = post.split('\n')
@@ -108,7 +124,7 @@ def generate_chat_html(history, name1, name2, character):
     img_me = load_html_image(["img_me.png", "img_me.jpg", "img_me.jpeg"])
 
     for i,_row in enumerate(history[::-1]):
-        row = [markdown.markdown(re.sub(r"(.)```", r"\1\n```", entry), extensions=['fenced_code']) for entry in _row]
+        row = [convert_to_markdown(entry) for entry in _row]
         
         output += f"""
               <div class="message">

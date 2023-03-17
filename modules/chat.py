@@ -11,17 +11,10 @@ from PIL import Image
 import modules.extensions as extensions_module
 import modules.shared as shared
 from modules.extensions import apply_extensions
-from modules.html_generator import generate_chat_html
+from modules.html_generator import fix_newlines, generate_chat_html
 from modules.text_generation import (encode, generate_reply,
                                      get_max_prompt_length)
 
-
-# This gets the new line characters right.
-def clean_chat_message(text):
-    text = text.replace('\n', '\n\n')
-    text = re.sub(r"\n{3,}", "\n\n", text)
-    text = text.strip()
-    return text
 
 def generate_chat_output(history, name1, name2, character):
     if shared.args.cai_chat:
@@ -30,7 +23,7 @@ def generate_chat_output(history, name1, name2, character):
         return history
 
 def generate_chat_prompt(user_input, max_new_tokens, name1, name2, context, chat_prompt_size, impersonate=False):
-    user_input = clean_chat_message(user_input)
+    user_input = fix_newlines(user_input)
     rows = [f"{context.strip()}\n"]
 
     if shared.soft_prompt:
@@ -83,7 +76,7 @@ def extract_message_from_reply(question, reply, name1, name2, check, impersonate
         if idx != -1:
             reply = reply[:idx]
             next_character_found = True
-        reply = clean_chat_message(reply)
+        reply = fix_newlines(reply)
 
         # If something like "\nYo" is generated just before "\nYou:"
         # is completed, trim it
