@@ -2,7 +2,8 @@ import argparse
 
 model = None
 tokenizer = None
-model_name = ""
+model_name = "None"
+lora_name = "None"
 soft_prompt_tensor = None
 soft_prompt = False
 is_RWKV = False
@@ -52,6 +53,10 @@ settings = {
         '^(gpt4chan|gpt-4chan|4chan)': '-----\n--- 865467536\nInput text\n--- 865467537\n',
         '(rosey|chip|joi)_.*_instruct.*': 'User: \n',
         'oasst-*': '<|prompter|>Write a story about future of AI development<|endoftext|><|assistant|>'
+    },
+    'lora_prompts': {
+        'default': 'Common sense questions and answers\n\nQuestion: \nFactual answer:',
+        'alpaca-lora-7b': "Below is an instruction that describes a task. Write a response that appropriately completes the request.\n### Instruction:\nWrite a poem about the transformers Python library. \nMention the word \"large language models\" in that poem.\n### Response:\n"
     }
 }
 
@@ -67,6 +72,7 @@ def str2bool(v):
 
 parser = argparse.ArgumentParser(formatter_class=lambda prog: argparse.HelpFormatter(prog,max_help_position=54))
 parser.add_argument('--model', type=str, help='Name of the model to load by default.')
+parser.add_argument('--lora', type=str, help='Name of the LoRA to apply to the model by default.')
 parser.add_argument('--notebook', action='store_true', help='Launch the web UI in notebook mode, where the output is written to the same text box as the input.')
 parser.add_argument('--chat', action='store_true', help='Launch the web UI in chat mode.')
 parser.add_argument('--cai-chat', action='store_true', help='Launch the web UI in chat mode with a style similar to Character.AI\'s. If the file img_bot.png or img_bot.jpg exists in the same folder as server.py, this image will be used as the bot\'s profile picture. Similarly, img_me.png or img_me.jpg will be used as your profile picture.')

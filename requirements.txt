@@ -4,6 +4,7 @@ flexgen==0.1.7
 gradio==3.18.0
 markdown
 numpy
+peft==0.2.0
 requests
 rwkv==0.4.2
 safetensors==0.3.0
