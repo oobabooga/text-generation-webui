@@ -281,6 +281,13 @@ def tokenize_dialogue(dialogue, name1, name2):
 
     return _history
 
+def update_history_context(context: str):
+    shared.history['context'] = context
+
+def update_history_names(name1: str, name2: str):
+    shared.history['name1'] = name1
+    shared.history['name2'] = name2
+
 def save_history(timestamp=True):
     prefix = '' if shared.character == 'None' else f"{shared.character}_"
     if timestamp:
@@ -290,13 +297,22 @@ def save_history(timestamp=True):
     if not Path('logs').exists():
         Path('logs').mkdir()
     with open(Path(f'logs/{fname}'), 'w', encoding='utf-8') as f:
-        f.write(json.dumps({'data': shared.history['internal'], 'data_visible': shared.history['visible']}, indent=2))
+        data = {'data': shared.history['internal'],
+                'data_visible': shared.history['visible'],
+                'context': shared.history['context'],
+                'name1': shared.history['name1'],
+                'name2': shared.history['name2']}
+        f.write(json.dumps(data, indent=2))
     return Path(f'logs/{fname}')
 
-def load_history(file, name1, name2):
+def load_history(file, name1, name2, context):
     file = file.decode('utf-8')
     try:
         j = json.loads(file)
+        name1 = j.get('name1', name1)
+        name2 = j.get('name2', name1)
+        context = j.get('context', context)
+
         if 'data' in j:
             shared.history['internal'] = j['data']
             if 'data_visible' in j:
@@ -316,13 +332,17 @@ def load_history(file, name1, name2):
     except:
         shared.history['internal'] = tokenize_dialogue(file, name1, name2)
         shared.history['visible'] = copy.deepcopy(shared.history['internal'])
+        context = shared.settings['context']
 
-def load_default_history(name1, name2):
+    return name1, name2, context
+
+def load_default_history(name1, name2, context):
     if Path('logs/persistent.json').exists():
-        load_history(open(Path('logs/persistent.json'), 'rb').read(), name1, name2)
+        load_history(open(Path('logs/persistent.json'), 'rb').read(), name1, name2, context)
     else:
         shared.history['internal'] = []
         shared.history['visible'] = []
+        return name1, name2, context
 
 def load_character(_character, name1, name2):
     context = ""

@@ -355,8 +355,17 @@ def create_interface():
             shared.gradio['textbox'].submit(lambda x: '', shared.gradio['textbox'], shared.gradio['textbox'], show_progress=False)
             shared.gradio['textbox'].submit(lambda : chat.save_history(timestamp=False), [], [], show_progress=False)
 
+            # Keep context and names up to date for when they're downloaded as part of history
+            shared.gradio['context'].change(chat.update_history_context,
+                                            [shared.gradio['context']], [], show_progress=False)
+            update_name_args = dict(fn=chat.update_history_names,
+                                    inputs=[shared.gradio['name1'], shared.gradio['name2']],
+                                    outputs=[], show_progress=False)
+            shared.gradio['name1'].change(**update_name_args)
+            shared.gradio['name2'].change(**update_name_args)
+
             shared.gradio['character_menu'].change(chat.load_character, [shared.gradio['character_menu'], shared.gradio['name1'], shared.gradio['name2']], [shared.gradio['name2'], shared.gradio['context'], shared.gradio['display']])
-            shared.gradio['upload_chat_history'].upload(chat.load_history, [shared.gradio['upload_chat_history'], shared.gradio['name1'], shared.gradio['name2']], [])
+            shared.gradio['upload_chat_history'].upload(chat.load_history, [shared.gradio['upload_chat_history'], shared.gradio['name1'], shared.gradio['name2'], shared.gradio['context']], [shared.gradio['name1'], shared.gradio['name2'], shared.gradio['context']])
             shared.gradio['upload_img_tavern'].upload(chat.upload_tavern_character, [shared.gradio['upload_img_tavern'], shared.gradio['name1'], shared.gradio['name2']], [shared.gradio['character_menu']])
             shared.gradio['upload_img_me'].upload(chat.upload_your_profile_picture, [shared.gradio['upload_img_me']], [])
 
@@ -367,7 +376,7 @@ def create_interface():
             shared.gradio['Stop'].click(reload_func, reload_inputs, [shared.gradio['display']])
 
             shared.gradio['interface'].load(None, None, None, _js=f"() => {{{ui.main_js+ui.chat_js}}}")
-            shared.gradio['interface'].load(lambda : chat.load_default_history(shared.settings[f'name1{suffix}'], shared.settings[f'name2{suffix}']), None, None)
+            shared.gradio['interface'].load(lambda : chat.load_default_history(shared.settings[f'name1{suffix}'], shared.settings[f'name2{suffix}'], shared.settings['context']), None, None)
             shared.gradio['interface'].load(reload_func, reload_inputs, [shared.gradio['display']], show_progress=True)
 
         elif shared.args.notebook:
