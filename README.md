@@ -43,7 +43,18 @@ The recommended installation methods are the following:
 
 Conda can be downloaded here: https://docs.conda.io/en/latest/miniconda.html
 
+On Linux or WSL, it can be installed with these two commands:
+
+```
+curl -sL "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh" > "Miniconda3.sh"
+bash Miniconda3.sh
+```
+
+Source: https://educe-ubc.github.io/conda.html
+
 #### 1. Create a new conda environment
+
+Now you need to copy and paste these commands one at a time in your terminal window. Start by creating a new conda environment:
 
 ```
 conda create -n textgen python=3.10.9
