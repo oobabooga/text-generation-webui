@@ -32,6 +32,11 @@
   fill: white;
 }
 
+.dark a {
+  color: white !important;
+  text-decoration: none !important;
+}
+
 svg {
   display: unset !important;
   vertical-align: middle !important;
