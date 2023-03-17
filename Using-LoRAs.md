@@ -13,7 +13,7 @@ pip install -r requirements.txt
 python download-model.py tloen/alpaca-lora-7b
 ```
 
-3. Load llama-7b in 8-bit mode (it only seems to work in 8-bit mode, probably a bug in [LoRA.py](https://github.com/oobabooga/text-generation-webui/blob/main/modules/LoRA.py))
+3. Load llama-7b in 8-bit mode (it only seems to work in 8-bit mode, is it a bug in [LoRA.py](https://github.com/oobabooga/text-generation-webui/blob/main/modules/LoRA.py) or is that how LoRAs work?)
 
 ```
 python server.py --model llama-7b --load-in-8bit
