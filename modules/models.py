@@ -11,6 +11,8 @@ from accelerate import infer_auto_device_map, init_empty_weights
 from transformers import (AutoConfig, AutoModelForCausalLM, AutoTokenizer,
                           BitsAndBytesConfig)
 
+from peft import PeftModel
+
 import modules.shared as shared
 
 transformers.logging.set_verbosity_error()
