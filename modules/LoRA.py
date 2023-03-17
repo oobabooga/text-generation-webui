@@ -15,4 +15,8 @@ def add_lora_to_model(lora_name):
     else:
         # Why doesn't this work in 16-bit mode?
         print(f"Adding the LoRA {lora_name} to the model...")
-        shared.model = PeftModel.from_pretrained(shared.model, Path(f"loras/{lora_name}"))
+
+        params = {}
+        #params['device_map'] = {'': 0}
+        #params['dtype'] = shared.model.dtype
+        shared.model = PeftModel.from_pretrained(shared.model, Path(f"loras/{lora_name}"), **params)
