@@ -1,3 +1,5 @@
+Based on https://github.com/tloen/alpaca-lora
+
 ## Instructions
 1. Re-install the requirements
 
@@ -16,6 +18,13 @@ python download-model.py tloen/alpaca-lora-7b
 ```
 python server.py --model llama-7b --load-in-8bit
 ```
+
+Alternatively, load the interface in CPU mode. It also works:
+
+```
+python server.py --model llama-7b --cpu
+```
+
 
 4. Select the LoRA in the Parameters tab.
 
