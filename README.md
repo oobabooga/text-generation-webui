@@ -21,7 +21,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * Advanced chat features (send images, get audio responses with TTS).
 * Stream the text output in real time.
 * Load parameter presets from text files.
-* Load large models in 8-bit mode (see [here](https://github.com/oobabooga/text-generation-webui/issues/147#issuecomment-1456040134), [here](https://github.com/oobabooga/text-generation-webui/issues/20#issuecomment-1411650652) and [here](https://www.reddit.com/r/PygmalionAI/comments/1115gom/running_pygmalion_6b_with_8gb_of_vram/) if you are on Windows).
+* Load large models in 8-bit mode.
 * Split large models across your GPU(s), CPU, and disk.
 * CPU mode.
 * [FlexGen offload](https://github.com/oobabooga/text-generation-webui/wiki/FlexGen).
@@ -54,8 +54,6 @@ Source: https://educe-ubc.github.io/conda.html
 
 #### 1. Create a new conda environment
 
-Now you need to copy and paste these commands one at a time in your terminal window. Start by creating a new conda environment:
-
 ```
 conda create -n textgen python=3.10.9
 conda activate textgen
@@ -79,6 +77,8 @@ cd text-generation-webui
 pip install -r requirements.txt
 ```
 
+If you experience bitsandbytes issues on WSL while trying to use `--load-in-8bit`, see this thread: https://github.com/microsoft/WSL/issues/5548#issuecomment-1292858815
+
 ### Alternative: native Windows installation
 
 As an alternative to the recommended WSL method, you can install the web UI natively on Windows using this guide. It will be a lot harder and the performance may be slower: [Installation instructions for human beings](https://github.com/oobabooga/text-generation-webui/wiki/Installation-instructions-for-human-beings).
@@ -96,7 +96,11 @@ Just download the zip above, extract it, and double click on "install". The web 
 
 Source codes: https://github.com/oobabooga/one-click-installers
 
-This method lags behind the newest developments and does not support 8-bit mode on Windows without additional set up.
+This method lags behind the newest developments and does not support 8-bit mode on Windows without additional set up: https://github.com/oobabooga/text-generation-webui/issues/147#issuecomment-1456040134, https://github.com/oobabooga/text-generation-webui/issues/20#issuecomment-1411650652
+
+### Alternative: Docker
+
+https://github.com/oobabooga/text-generation-webui/issues/174, https://github.com/oobabooga/text-generation-webui/issues/87
 
 ## Downloading models
 
