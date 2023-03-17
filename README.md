@@ -38,7 +38,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 
 The recommended installation methods are the following:
 
-* Linux and macOS: using conda natively.
+* Linux and MacOS: using conda natively.
 * Windows: using conda on WSL ([WSL installation guide](https://github.com/oobabooga/text-generation-webui/wiki/Windows-Subsystem-for-Linux-(Ubuntu)-Installation-Guide)).
 
 Conda can be downloaded here: https://docs.conda.io/en/latest/miniconda.html
@@ -72,7 +72,7 @@ pip install -r requirements.txt
 
 As an alternative to the recommended WSL method, you can install the web UI natively on Windows using this guide. It will be a lot harder and the performance may be slower: [Installation instructions for human beings](https://github.com/oobabooga/text-generation-webui/wiki/Installation-instructions-for-human-beings).
 
-### Alternative: one click installers
+### Alternative: one-click installers
 
 [oobabooga-windows.zip](https://github.com/oobabooga/one-click-installers/archive/refs/heads/oobabooga-windows.zip)
 
