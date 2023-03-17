@@ -28,10 +28,10 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * [DeepSpeed ZeRO-3 offload](https://github.com/oobabooga/text-generation-webui/wiki/DeepSpeed).
 * Get responses via API, [with](https://github.com/oobabooga/text-generation-webui/blob/main/api-example-streaming.py) or [without](https://github.com/oobabooga/text-generation-webui/blob/main/api-example.py) streaming.
 * [LLaMA model, including 4-bit mode](https://github.com/oobabooga/text-generation-webui/wiki/LLaMA-model).
-* [LoRAs](https://github.com/oobabooga/text-generation-webui/wiki/Using-LoRAs).
 * [RWKV model](https://github.com/oobabooga/text-generation-webui/wiki/RWKV-model).
-* Softprompts.
-* [Extensions](https://github.com/oobabooga/text-generation-webui/wiki/Extensions).
+* [Supports LoRAs](https://github.com/oobabooga/text-generation-webui/wiki/Using-LoRAs).
+* Supports softprompts.
+* [Supports extensions](https://github.com/oobabooga/text-generation-webui/wiki/Extensions).
 * [Works on Google Colab](https://github.com/oobabooga/text-generation-webui/wiki/Running-on-Colab).
 
 ## Installation
