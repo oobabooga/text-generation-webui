@@ -225,10 +225,16 @@ else:
         print()
     shared.model_name = available_models[i]
 shared.model, shared.tokenizer = load_model(shared.model_name)
+if shared.args.lora:
+    shared.lora_name = shared.args.lora
+    print(f"Adding the LoRA {shared.lora_name} to the model...")
+    add_lora_to_model(shared.lora_name)
 
 # Default UI settings
 default_preset = shared.settings['presets'][next((k for k in shared.settings['presets'] if re.match(k.lower(), shared.model_name.lower())), 'default')]
-default_text = shared.settings['prompts'][next((k for k in shared.settings['prompts'] if re.match(k.lower(), shared.model_name.lower())), 'default')]
+default_text = shared.settings['lora_prompts'][next((k for k in shared.settings['lora_prompts'] if re.match(k.lower(), shared.lora_name.lower())), 'default')]
+if default_text == '':
+    default_text = shared.settings['prompts'][next((k for k in shared.settings['prompts'] if re.match(k.lower(), shared.model_name.lower())), 'default')]
 title ='Text generation web UI'
 description = '\n\n# Text generation lab\nGenerate text using Large Language Models.\n'
 suffix = '_pygmalion' if 'pygmalion' in shared.model_name.lower() else ''
