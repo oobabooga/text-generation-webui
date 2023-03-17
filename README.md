@@ -89,17 +89,15 @@ This method lags behind the newest developments and does not support 8-bit mode 
 
 ## Downloading models
 
-Models should be placed under `models/model-name`. For instance, `models/gpt-j-6B` for [GPT-J 6B](https://huggingface.co/EleutherAI/gpt-j-6B/tree/main).
-
-#### Hugging Face
+Models should be placed inside the `models` folder.
 
 [Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads) is the main place to download models. These are some noteworthy examples:
 
-* [GPT-J 6B](https://huggingface.co/EleutherAI/gpt-j-6B/tree/main)
-* [GPT-Neo](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads&search=eleutherai+%2F+gpt-neo)
 * [Pythia](https://huggingface.co/models?search=eleutherai/pythia)
 * [OPT](https://huggingface.co/models?search=facebook/opt)
 * [GALACTICA](https://huggingface.co/models?search=facebook/galactica)
+* [GPT-J 6B](https://huggingface.co/EleutherAI/gpt-j-6B/tree/main)
+* [GPT-Neo](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads&search=eleutherai+%2F+gpt-neo)
 * [\*-Erebus](https://huggingface.co/models?search=erebus) (NSFW)
 * [Pygmalion](https://huggingface.co/models?search=pygmalion) (NSFW)
 
@@ -113,7 +111,7 @@ For instance:
 
 If you want to download a model manually, note that all you need are the json, txt, and pytorch\*.bin (or model*.safetensors) files. The remaining files are not necessary.
 
-#### GPT-4chan
+### GPT-4chan
 
 [GPT-4chan](https://huggingface.co/ykilcher/gpt-4chan) has been shut down from Hugging Face, so you need to download it elsewhere. You have two options:
 
