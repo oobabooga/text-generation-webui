@@ -1,7 +1,3 @@
-Based on https://github.com/tloen/alpaca-lora/
-
-Probably not the best way to do it. WIP. Suggestions are welcome.
-
 ## Instructions
 1. Re-install the requirements
 
@@ -24,7 +20,7 @@ python server.py --model llama-7b --load-in-8bit
 4. Select the LoRA in the Parameters tab.
 
 ## Prompt
-For this particular LoRA, apparently the prompt must be formatted like this:
+For this particular LoRA, the prompt must be formatted like this:
 
 ```
 Below is an instruction that describes a task. Write a response that appropriately completes the request.
