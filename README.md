@@ -19,7 +19,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * Generate Markdown output for [GALACTICA](https://github.com/paperswithcode/galai), including LaTeX support.
 * Support for [Pygmalion](https://huggingface.co/models?search=pygmalionai/pygmalion) and custom characters in JSON or TavernAI Character Card formats ([FAQ](https://github.com/oobabooga/text-generation-webui/wiki/Pygmalion-chat-model-FAQ)).
 * Advanced chat features (send images, get audio responses with TTS).
-* Stream the text output in real time.
+* Stream the text output in real time very efficiently.
 * Load parameter presets from text files.
 * Load large models in 8-bit mode.
 * Split large models across your GPU(s), CPU, and disk.
