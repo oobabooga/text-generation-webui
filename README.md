@@ -21,7 +21,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * Advanced chat features (send images, get audio responses with TTS).
 * Stream the text output in real time.
 * Load parameter presets from text files.
-* Load large models in 8-bit mode (see [here](https://github.com/oobabooga/text-generation-webui/issues/147#issuecomment-1456040134), [here](https://github.com/oobabooga/text-generation-webui/issues/20#issuecomment-1411650652) and [here](https://www.reddit.com/r/PygmalionAI/comments/1115gom/running_pygmalion_6b_with_8gb_of_vram/) if you are on Windows).
+* Load large models in 8-bit mode.
 * Split large models across your GPU(s), CPU, and disk.
 * CPU mode.
 * [FlexGen offload](https://github.com/oobabooga/text-generation-webui/wiki/FlexGen).
@@ -34,39 +34,56 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * [Extensions](https://github.com/oobabooga/text-generation-webui/wiki/Extensions).
 * [Works on Google Colab](https://github.com/oobabooga/text-generation-webui/wiki/Running-on-Colab).
 
-## Installation option 1: conda
+## Installation
 
-Open a terminal and copy and paste these commands one at a time ([install conda](https://docs.conda.io/en/latest/miniconda.html) first if you don't have it already):
+The recommended installation methods are the following:
+
+* Linux and MacOS: using conda natively.
+* Windows: using conda on WSL ([WSL installation guide](https://github.com/oobabooga/text-generation-webui/wiki/Windows-Subsystem-for-Linux-(Ubuntu)-Installation-Guide)).
+
+Conda can be downloaded here: https://docs.conda.io/en/latest/miniconda.html
+
+On Linux or WSL, it can be installed with these two commands:
 
 ```
-conda create -n textgen
+curl -sL "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh" > "Miniconda3.sh"
+bash Miniconda3.sh
+```
+
+Source: https://educe-ubc.github.io/conda.html
+
+#### 1. Create a new conda environment
+
+```
+conda create -n textgen python=3.10.9
 conda activate textgen
-conda install torchvision=0.14.1 torchaudio=0.13.1 pytorch-cuda=11.7 git -c pytorch -c nvidia
+```
+
+#### 2. Install Pytorch
+
+| System | GPU | Command |
+|--------|---------|---------|
+| Linux/WSL | NVIDIA | `conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvidia` |
+| Linux | AMD | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.4.2` |
+| MacOS + MPS (untested) | Any | `conda install pytorch torchvision torchaudio -c pytorch` |
+
+The up to date commands can be found here: https://pytorch.org/get-started/locally/
+
+#### 3. Install the web UI
+
+```
 git clone https://github.com/oobabooga/text-generation-webui
 cd text-generation-webui
 pip install -r requirements.txt
 ```
 
-The third line assumes that you have an NVIDIA GPU. 
+If you experience bitsandbytes issues on WSL while trying to use `--load-in-8bit`, see this thread: https://github.com/microsoft/WSL/issues/5548#issuecomment-1292858815
 
-* If you have an AMD GPU, replace the third command with this one:
+### Alternative: native Windows installation
 
-```
-pip3 install torch torchvision=0.14.1 torchaudio=0.13.1 --extra-index-url https://download.pytorch.org/whl/rocm5.2
-```
-  	  
-* If you are running it in CPU mode, replace the third command with this one:
+As an alternative to the recommended WSL method, you can install the web UI natively on Windows using this guide. It will be a lot harder and the performance may be slower: [Installation instructions for human beings](https://github.com/oobabooga/text-generation-webui/wiki/Installation-instructions-for-human-beings).
 
-```
-conda install pytorch torchvision=0.14.1 torchaudio=0.13.1 git -c pytorch
-```
-
-> **Note**
-> 1. If you are on Windows, it may be easier to run the commands above in a WSL environment. The performance may also be better. A full guide can be found here: [Windows Subsystem for Linux (Ubuntu) Installation Guide
-](https://github.com/oobabooga/text-generation-webui/wiki/Windows-Subsystem-for-Linux-(Ubuntu)-Installation-Guide).
-> 2. For a more detailed, user-contributed guide, see: [Installation instructions for human beings](https://github.com/oobabooga/text-generation-webui/wiki/Installation-instructions-for-human-beings).
-
-## Installation option 2: one-click installers
+### Alternative: one-click installers
 
 [oobabooga-windows.zip](https://github.com/oobabooga/one-click-installers/archive/refs/heads/oobabooga-windows.zip)
 
@@ -77,19 +94,25 @@ Just download the zip above, extract it, and double click on "install". The web 
 * To download a model, double click on "download-model"
 * To start the web UI, double click on "start-webui" 
 
+Source codes: https://github.com/oobabooga/one-click-installers
+
+This method lags behind the newest developments and does not support 8-bit mode on Windows without additional set up: https://github.com/oobabooga/text-generation-webui/issues/147#issuecomment-1456040134, https://github.com/oobabooga/text-generation-webui/issues/20#issuecomment-1411650652
+
+### Alternative: Docker
+
+https://github.com/oobabooga/text-generation-webui/issues/174, https://github.com/oobabooga/text-generation-webui/issues/87
+
 ## Downloading models
 
-Models should be placed under `models/model-name`. For instance, `models/gpt-j-6B` for [GPT-J 6B](https://huggingface.co/EleutherAI/gpt-j-6B/tree/main).
-
-#### Hugging Face
+Models should be placed inside the `models` folder.
 
 [Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads) is the main place to download models. These are some noteworthy examples:
 
-* [GPT-J 6B](https://huggingface.co/EleutherAI/gpt-j-6B/tree/main)
-* [GPT-Neo](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads&search=eleutherai+%2F+gpt-neo)
 * [Pythia](https://huggingface.co/models?search=eleutherai/pythia)
 * [OPT](https://huggingface.co/models?search=facebook/opt)
 * [GALACTICA](https://huggingface.co/models?search=facebook/galactica)
+* [GPT-J 6B](https://huggingface.co/EleutherAI/gpt-j-6B/tree/main)
+* [GPT-Neo](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads&search=eleutherai+%2F+gpt-neo)
 * [\*-Erebus](https://huggingface.co/models?search=erebus) (NSFW)
 * [Pygmalion](https://huggingface.co/models?search=pygmalion) (NSFW)
 
@@ -103,7 +126,7 @@ For instance:
 
 If you want to download a model manually, note that all you need are the json, txt, and pytorch\*.bin (or model*.safetensors) files. The remaining files are not necessary.
 
-#### GPT-4chan
+### GPT-4chan
 
 [GPT-4chan](https://huggingface.co/ykilcher/gpt-4chan) has been shut down from Hugging Face, so you need to download it elsewhere. You have two options:
 
