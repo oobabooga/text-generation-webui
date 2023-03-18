@@ -88,4 +88,4 @@ and ran the script with
 python finetune.py
 ```
 
-It just worked. It runs at 22.32s/it, with 1170 iterations in total, so about 7 hours and a half of training to get a LoRA. RTX 3090, 18153MiB VRAM used, drawing maximum power (350W, room heater mode).
+It just worked. It runs at 22.32s/it, with 1170 iterations in total, so about 7 hours and a half for training a LoRA. RTX 3090, 18153MiB VRAM used, drawing maximum power (350W, room heater mode).
