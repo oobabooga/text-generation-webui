@@ -6,7 +6,6 @@ markdown
 numpy
 peft==0.2.0
 requests
-rwkv==0.4.2
 safetensors==0.3.0
 sentencepiece
 tqdm
