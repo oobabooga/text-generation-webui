@@ -79,7 +79,7 @@ cd text-generation-webui
 pip install -r requirements.txt
 ```
 
-If you experience bitsandbytes issues on WSL while trying to use `--load-in-8bit`, see this thread: https://github.com/microsoft/WSL/issues/5548#issuecomment-1292858815
+If you experience bitsandbytes issues on WSL while trying to use `--load-in-8bit`, see this comment: https://github.com/TimDettmers/bitsandbytes/issues/156#issuecomment-1462329713
 
 ### Alternative: native Windows installation
 
