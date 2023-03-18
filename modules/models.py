@@ -47,7 +47,12 @@ def load_model(model_name):
         if any(size in shared.model_name.lower() for size in ('13b', '20b', '30b')):
             model = AutoModelForCausalLM.from_pretrained(Path(f"models/{shared.model_name}"), device_map='auto', load_in_8bit=True)
         else:
-            model = AutoModelForCausalLM.from_pretrained(Path(f"models/{shared.model_name}"), low_cpu_mem_usage=True, torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16).cuda()
+            model = AutoModelForCausalLM.from_pretrained(Path(f"models/{shared.model_name}"), low_cpu_mem_usage=True, torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16)
+            if torch.has_mps:
+                device = torch.device('mps')
+                model = model.to(device)
+            else:
+                model = model.cuda()
 
     # FlexGen
     elif shared.args.flexgen:
@@ -97,7 +102,7 @@ def load_model(model_name):
     # Custom
     else:
         params = {"low_cpu_mem_usage": True}
-        if not shared.args.cpu and not torch.cuda.is_available():
+        if not any((shared.args.cpu, torch.cuda.is_available(), torch.has_mps)):
             print("Warning: torch.cuda.is_available() returned False.\nThis means that no GPU has been detected.\nFalling back to CPU mode.\n")
             shared.args.cpu = True
 
