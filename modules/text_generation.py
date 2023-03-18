@@ -39,7 +39,6 @@ def encode(prompt, tokens_to_generate=0, add_special_tokens=True):
         else:
             return input_ids.cuda()
 
-
 def decode(output_ids):
     # Open Assistant relies on special tokens like <|endoftext|>
     if re.match('(oasst|galactica)-*', shared.model_name.lower()):

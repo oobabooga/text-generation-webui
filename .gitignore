@@ -9,6 +9,8 @@ torch-dumps/*
 *pycache*
 */*pycache*
 */*/pycache*
+venv/
+.venv/
 
 settings.json
 img_bot*
@@ -19,6 +21,3 @@ img_me*
 !models/place-your-models-here.txt
 !softprompts/place-your-softprompts-here.txt
 !torch-dumps/place-your-pt-models-here.txt
-
-venv/
-.venv/
