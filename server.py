@@ -296,7 +296,7 @@ def create_interface():
                             with gr.Column():
                                 gr.Markdown('Download')
                                 shared.gradio['download'] = gr.File()
-                                shared.gradio['download_button'] = gr.Button(value='Click me')
+                                shared.gradio['download_button'] = gr.Button(value='Click here to download the chat history')
                     with gr.Tab('Upload character'):
                         with gr.Row():
                             with gr.Column():
