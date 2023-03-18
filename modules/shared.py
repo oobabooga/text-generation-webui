@@ -30,7 +30,7 @@ settings = {
     'name1': 'Person 1',
     'name2': 'Person 2',
     'context': 'This is a conversation between two people.',
-    'stop_at_newline': True,
+    'stop_at_newline': False,
     'chat_prompt_size': 2048,
     'chat_prompt_size_min': 0,
     'chat_prompt_size_max': 2048,
