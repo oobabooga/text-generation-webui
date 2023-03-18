@@ -67,7 +67,9 @@ conda activate textgen
 | Linux | AMD | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.4.2` |
 | MacOS + MPS (untested) | Any | `conda install pytorch torchvision torchaudio -c pytorch` |
 
-The up to date commands can be found here: https://pytorch.org/get-started/locally/
+The up to date commands can be found here: https://pytorch.org/get-started/locally/. 
+
+MacOS users, refer to the comments here: https://github.com/oobabooga/text-generation-webui/pull/393
 
 #### 3. Install the web UI
 
