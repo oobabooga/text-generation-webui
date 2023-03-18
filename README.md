@@ -63,7 +63,7 @@ conda activate textgen
 
 | System | GPU | Command |
 |--------|---------|---------|
-| Linux/WSL | NVIDIA | `conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvidia` |
+| Linux/WSL | NVIDIA | `conda install torchvision=0.14.1 torchaudio=0.13.1 pytorch-cuda=11.7 -c pytorch -c nvidia` |
 | Linux | AMD | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.4.2` |
 | MacOS + MPS (untested) | Any | `conda install pytorch torchvision torchaudio -c pytorch` |
 
