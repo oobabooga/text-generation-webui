@@ -57,3 +57,35 @@ print(f"Generated {len(sentence)} tokens from '{sentence}'")
 output = model(sentences=sentence).predict()
 print(f"Predicted {len(output)} tokens for '{sentence}':\n{output}")
 ```
+
+## Training a LoRA
+
+For now there is no menu in the interface for training a new LoRA, but it's really easy to do with the `alpaca-lora` code.
+
+All I had to do was
+
+```
+conda activate textgen
+git clone 'https://github.com/tloen/alpaca-lora'
+```
+
+then I edited those two lines in `alpaca-lora/finetune.py` to use my existing `llama-7b` folder instead of downloading everything from decapoda:
+
+```
+model = LlamaForCausalLM.from_pretrained(
+    "models/llama-7b",
+    load_in_8bit=True,
+    device_map="auto",
+)
+tokenizer = LlamaTokenizer.from_pretrained(
+    "models/llama-7b", add_eos_token=True
+)
+```
+
+and ran the script with 
+
+```
+python finetune.py
+```
+
+It just worked. It runs at 22.32s/it, with 1170 iterations in total, so about 7 hours and a half of training to get a LoRA. RTX 3090, 18153MiB VRAM used, drawing maximum power (350W, room heater mode).
