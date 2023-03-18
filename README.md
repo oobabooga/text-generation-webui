@@ -148,6 +148,7 @@ python download-model.py EleutherAI/gpt-j-6B --text-only
 ## Starting the web UI
 
     conda activate textgen
+    cd text-generation-webui
     python server.py
 
 Then browse to 
