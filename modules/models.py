@@ -46,15 +46,17 @@ def load_model(model_name):
     if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.gptq_bits, shared.args.auto_devices, shared.args.disk, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None, shared.args.deepspeed, shared.args.flexgen, shared.is_RWKV]):
         if any(size in shared.model_name.lower() for size in ('13b', '20b', '30b')):
             model = AutoModelForCausalLM.from_pretrained(Path(f"models/{shared.model_name}"), device_map='auto', load_in_8bit=True)
-        if torch.has_mps:
-            model = AutoModelForCausalLM.from_pretrained(
-                Path(f"models/{shared.model_name}"),low_cpu_mem_usage=True,
-                torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16
-            )
-            device = torch.device('mps')
-            model = model.to(device)
         else:
-            model = AutoModelForCausalLM.from_pretrained(Path(f"models/{shared.model_name}"), low_cpu_mem_usage=True, torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16).cuda()
+            model = AutoModelForCausalLM.from_pretrained(
+                Path(f"models/{shared.model_name}"),
+                low_cpu_mem_usage=True, torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16
+            )
+            if torch.has_mps:
+                device = torch.device('mps')
+                model = model.to(device)
+            else:
+                model = model.cuda()
+
 
     # FlexGen
     elif shared.args.flexgen:
