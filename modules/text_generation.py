@@ -136,7 +136,9 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
         t = encode(stopping_string, 0, add_special_tokens=False)
         stopping_criteria_list.append(_SentinelTokenStoppingCriteria(sentinel_token_ids=t, starting_idx=len(input_ids[0])))
 
-    generate_params = {}
+    generate_params = {
+        'use_cache': not shared.args.no_cache,
+    }
     if not shared.args.flexgen:
         generate_params.update({
             "max_new_tokens": max_new_tokens,
