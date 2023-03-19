@@ -1,14 +1,11 @@
-import json
 import base64
-import requests
 import io
-
-from io import BytesIO
-from PIL import Image, PngImagePlugin
 from pathlib import Path
 
 import gradio as gr
+import requests
 import torch
+from PIL import Image
 
 import modules.chat as chat
 import modules.shared as shared
