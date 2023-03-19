@@ -8,6 +8,8 @@ params = {
     'port': 5000,
 }
 
+server = None
+
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == '/api/v1/model':
@@ -73,6 +75,7 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def run_server():
+    global server
     server_addr = ('0.0.0.0' if shared.args.listen else '127.0.0.1', params['port'])
     server = ThreadingHTTPServer(server_addr, Handler)
     if shared.args.share: 
@@ -87,4 +90,5 @@ def run_server():
     server.serve_forever()
 
 def ui():
-    Thread(target=run_server, daemon=True).start()
+    if server is None:
+        Thread(target=run_server, daemon=True).start()
