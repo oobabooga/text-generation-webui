@@ -33,12 +33,15 @@ def encode(prompt, tokens_to_generate=0, add_special_tokens=True):
             return input_ids.numpy()
         elif shared.args.deepspeed:
             return input_ids.to(device=local_rank)
+        elif torch.has_mps:
+            device = torch.device('mps')
+            return input_ids.to(device)
         else:
             return input_ids.cuda()
 
 def decode(output_ids):
     # Open Assistant relies on special tokens like <|endoftext|>
-    if re.match('oasst-*', shared.model_name.lower()):
+    if re.match('(oasst|galactica)-*', shared.model_name.lower()):
         return shared.tokenizer.decode(output_ids, skip_special_tokens=False)
     else:
         reply = shared.tokenizer.decode(output_ids, skip_special_tokens=True)
@@ -89,7 +92,7 @@ def clear_torch_cache():
     if not shared.args.cpu:
         torch.cuda.empty_cache()
 
-def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, eos_token=None, stopping_string=None):
+def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, eos_token=None, stopping_string=None):
     clear_torch_cache()
     t0 = time.time()
 
@@ -101,7 +104,8 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
                 reply = shared.model.generate(context=question, token_count=max_new_tokens, temperature=temperature, top_p=top_p, top_k=top_k)
                 yield formatted_outputs(reply, shared.model_name)
             else:
-                yield formatted_outputs(question, shared.model_name)
+                if not (shared.args.chat or shared.args.cai_chat):
+                    yield formatted_outputs(question, shared.model_name)
                 # RWKV has proper streaming, which is very nice.
                 # No need to generate 8 tokens at a time.
                 for reply in shared.model.generate_with_streaming(context=question, token_count=max_new_tokens, temperature=temperature, top_p=top_p, top_k=top_k):
@@ -143,6 +147,7 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
             "top_p": top_p,
             "typical_p": typical_p,
             "repetition_penalty": repetition_penalty,
+            "encoder_repetition_penalty": encoder_repetition_penalty,
             "top_k": top_k,
             "min_length": min_length if shared.args.no_stream else 0,
             "no_repeat_ngram_size": no_repeat_ngram_size,
@@ -196,7 +201,8 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
             def generate_with_streaming(**kwargs):
                 return Iteratorize(generate_with_callback, kwargs, callback=None)
 
-            yield formatted_outputs(original_question, shared.model_name)
+            if not (shared.args.chat or shared.args.cai_chat):
+                yield formatted_outputs(original_question, shared.model_name)
             with generate_with_streaming(**generate_params) as generator:
                 for output in generator:
                     if shared.soft_prompt:

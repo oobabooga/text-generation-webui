@@ -1,8 +1,8 @@
 from pathlib import Path
 
 import gradio as gr
-from elevenlabslib import *
-from elevenlabslib.helpers import *
+from elevenlabslib import ElevenLabsUser
+from elevenlabslib.helpers import save_bytes_to_path
 
 params = {
     'activate': True,

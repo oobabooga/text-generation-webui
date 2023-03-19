@@ -1,0 +1,25 @@
+.h-\[40vh\], .wrap.svelte-byatnx.svelte-byatnx.svelte-byatnx {
+    height: 66.67vh
+}
+
+.gradio-container {
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+.w-screen {
+    width: unset
+}
+
+div.svelte-362y77>*, div.svelte-362y77>.form>* {
+    flex-wrap: nowrap
+}
+
+/* fixes the API documentation in chat mode */
+.api-docs.svelte-1iguv9h.svelte-1iguv9h.svelte-1iguv9h {
+    display: grid;
+}
+
+.pending.svelte-1ed2p3z {
+    opacity: 1;
+}

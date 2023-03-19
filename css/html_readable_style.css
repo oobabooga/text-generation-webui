@@ -1,0 +1,14 @@
+.container {
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    background-color: rgb(31, 41, 55);
+    padding:3em;
+}
+
+.container p {
+    font-size: 16px !important;
+    color: white !important;
+    margin-bottom: 22px;
+    line-height: 1.4 !important;
+}

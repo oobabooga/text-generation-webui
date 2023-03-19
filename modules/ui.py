@@ -1,68 +1,17 @@
+from pathlib import Path
+
 import gradio as gr
 
 refresh_symbol = '\U0001f504'  # 🔄
 
-css = """
-.tabs.svelte-710i53 {
-    margin-top: 0
-}
-.py-6 {
-    padding-top: 2.5rem
-}
-.dark #refresh-button {
-    background-color: #ffffff1f;
-}
-#refresh-button {
-  flex: none;
-  margin: 0;
-  padding: 0;
-  min-width: 50px;
-  border: none;
-  box-shadow: none;
-  border-radius: 10px;
-  background-color: #0000000d;
-}
-#download-label, #upload-label {
-  min-height: 0
-}
-#accordion {
-}
-.dark svg {
-  fill: white;
-}
-svg {
-  display: unset !important;
-  vertical-align: middle !important;
-  margin: 5px;
-}
-ol li p, ul li p {
-    display: inline-block;
-}
-"""
-
-chat_css = """
-.h-\[40vh\], .wrap.svelte-byatnx.svelte-byatnx.svelte-byatnx {
-    height: 66.67vh
-}
-.gradio-container {
-    max-width: 800px !important;
-    margin-left: auto !important;
-    margin-right: auto !important;
-}
-.w-screen {
-    width: unset
-}
-div.svelte-362y77>*, div.svelte-362y77>.form>* {
-    flex-wrap: nowrap
-}
-/* fixes the API documentation in chat mode */
-.api-docs.svelte-1iguv9h.svelte-1iguv9h.svelte-1iguv9h {
-    display: grid;
-}
-.pending.svelte-1ed2p3z {
-    opacity: 1;
-}
-"""
+with open(Path(__file__).resolve().parent / '../css/main.css', 'r') as f:
+    css = f.read()
+with open(Path(__file__).resolve().parent / '../css/chat.css', 'r') as f:
+    chat_css = f.read()
+with open(Path(__file__).resolve().parent / '../css/main.js', 'r') as f:
+    main_js = f.read()
+with open(Path(__file__).resolve().parent / '../css/chat.js', 'r') as f:
+    chat_js = f.read()
 
 class ToolButton(gr.Button, gr.components.FormComponent):
     """Small button with single emoji as text, fits inside gradio forms"""
