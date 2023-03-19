@@ -25,6 +25,17 @@ python server.py --auto-devices --gpu-memory 8
 
 where the number is in GiB.
 
+For finer control, you can also specify the unit in MiB explicitly:
+
+```
+python server.py --auto-devices --gpu-memory 8722MiB
+python server.py --auto-devices --gpu-memory 4725MiB
+python server.py --auto-devices --gpu-memory 3500MiB
+...
+```
+
+Additionally, you can also set the `--no-cache` value to reduce the GPU usage while generating text at a performance cost. This may allow you to set a higher value for `--gpu-memory`, resulting in a net performance gain.
+
 ### Send layers to a disk cache
 
 As a desperate last measure, you can split the model across your GPU, CPU, and disk:
