@@ -37,6 +37,7 @@ def apply_extensions(text, typ):
     return text
 
 def create_extensions_block():
+    global setup_called
     # Updating the default values
     for extension, name in iterator():
         if hasattr(extension, 'params'):
