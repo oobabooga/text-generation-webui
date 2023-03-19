@@ -63,13 +63,14 @@ conda activate textgen
 
 | System | GPU | Command |
 |--------|---------|---------|
-| Linux/WSL | NVIDIA | `conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvidia` |
+| Linux/WSL | NVIDIA | `pip3 install torch torchvision torchaudio` |
 | Linux | AMD | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.4.2` |
-| MacOS + MPS (untested) | Any | `conda install pytorch torchvision torchaudio -c pytorch` |
+| MacOS + MPS (untested) | Any | `pip3 install torch torchvision torchaudio` |
 
 The up to date commands can be found here: https://pytorch.org/get-started/locally/. 
 
 MacOS users, refer to the comments here: https://github.com/oobabooga/text-generation-webui/pull/393
+
 
 #### 3. Install the web UI
 
@@ -79,7 +80,9 @@ cd text-generation-webui
 pip install -r requirements.txt
 ```
 
-If you experience bitsandbytes issues on WSL while trying to use `--load-in-8bit`, see this comment: https://github.com/TimDettmers/bitsandbytes/issues/156#issuecomment-1462329713
+> **Note**
+> 
+> For bitsandbytes and `--load-in-8bit` to work on Linux/WSL, this dirty fix is currently necessary: https://github.com/oobabooga/text-generation-webui/issues/400#issuecomment-1474876859
 
 ### Alternative: native Windows installation
 
