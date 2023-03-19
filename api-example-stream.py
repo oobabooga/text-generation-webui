@@ -44,14 +44,14 @@ async def run(context):
                 case "send_hash":
                     await websocket.send(json.dumps({
                         "session_hash": session,
-                        "fn_index": 7
+                        "fn_index": 9
                     }))
                 case "estimation":
                     pass
                 case "send_data":
                     await websocket.send(json.dumps({
                         "session_hash": session,
-                        "fn_index": 7,
+                        "fn_index": 9,
                         "data": [
                             context,
                             params['max_new_tokens'],
