@@ -4,17 +4,20 @@ It was trained on more tokens than previous models. The result is that the small
 
 Throughout this tutorial, we are going to use `llama-7b` as an example, but the process is the same for all other sizes.
 
-## Installation
+## Getting the weights in Hugging Face format
 
-1. Uninstall your existing `transformers` (if any) and install the dev branch:
+#### Option 1: from Decapoda Research (easy way)
+
+Simply run one of these commands to get the pre-converted weights:
 
 ```
-pip uninstall transformers
-pip install git+https://github.com/huggingface/transformers
+python download-model.py decapoda-research/llama-7b-hf
+python download-model.py decapoda-research/llama-13b-hf
 ```
 
+#### Option 2: convert the weights yourself
 
-2. Use the script below to convert the model in `.pth` format that you, a fellow academic, downloaded using Meta's official link:
+1. Use the script below to convert the model in `.pth` format that you, a fellow academic, downloaded using Meta's official link:
 
 ### [convert_llama_weights_to_hf.py](https://github.com/huggingface/transformers/blob/main/src/transformers/models/llama/convert_llama_weights_to_hf.py)
 
@@ -29,18 +32,18 @@ Two folders will be created at the end:
 /path/to/outputs/tokenizer
 ```
 
-3. Move the files inside `/path/to/outputs/tokenizer` to `/path/to/outputs/llama-7b`:
+2. Move the files inside `/path/to/outputs/tokenizer` to `/path/to/outputs/llama-7b`:
 
 ```
 mv /path/to/outputs/tokenizer/* /path/to/outputs/llama-7b
 ```
 
-4. Move the `llama-7b` folder inside your `text-generation-webui/models` folder.
+3. Move the `llama-7b` folder inside your `text-generation-webui/models` folder.
 
-5. Launch the web UI:
+## Starting the web UI
 
-```
-python server.py --model llama-7b
+```python
+python server.py --model llama-7b # use llama-7b-hf if you downloaded from decapoda
 ```
 
 ## 4-bit mode
