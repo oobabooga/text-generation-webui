@@ -46,15 +46,18 @@ def create_extensions_block():
                 if _id in shared.settings:
                     extension.params[param] = shared.settings[_id]
 
+    should_display_ui = False
     # Running setup function
     if not setup_called:
         for extension, name in iterator():
             if hasattr(extension, "setup"):
                 extension.setup()
+            if hasattr(extension, "ui"):
+                should_display_ui = True
         setup_called = True
 
     # Creating the extension ui elements
-    if len(state) > 0:
+    if should_display_ui:
         with gr.Box(elem_id="extensions"):
             gr.Markdown("Extensions")
             for extension, name in iterator():
