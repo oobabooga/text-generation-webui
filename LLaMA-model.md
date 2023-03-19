@@ -51,6 +51,19 @@ This is possible thanks to [@qwopqwop200](https://github.com/qwopqwop200/GPTQ-fo
 
 GPTQ is a clever quantization algorithm that lightly reoptimizes the weights during quantization so that the accuracy loss is compensated relative to a round-to-nearest quantization. See the paper for more details: https://arxiv.org/abs/2210.17323
 
+### Step 0: install nvcc
+
+```
+conda activate textgen
+conda install -c conda-forge cudatoolkit-dev
+```
+
+The command above takes some 10 minutes to run and shows no progress bar or updates along the way.
+
+Once it finishes, restart your computer or WSL before proceeding to the next step.
+
+See this issue for more details: https://github.com/oobabooga/text-generation-webui/issues/416#issuecomment-1475078571
+
 ### Step 1: Installation
 
 Clone [GPTQ-for-LLaMa](https://github.com/qwopqwop200/GPTQ-for-LLaMa) into the `text-generation-webui/repositories` subfolder and install it:
