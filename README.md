@@ -202,7 +202,7 @@ Optionally, you can use the following command-line flags:
 | `--auto-launch`  | Open the web UI in the default browser upon launch. |
 | `--verbose`      | Print the prompts to the terminal. |
 
-Out of memory errors? [Check this guide](https://github.com/oobabooga/text-generation-webui/wiki/Low-VRAM-guide).
+Out of memory errors? [Check the low VRAM guide](https://github.com/oobabooga/text-generation-webui/wiki/Low-VRAM-guide).
 
 ## Presets
 
