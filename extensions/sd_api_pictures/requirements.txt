@@ -1,5 +1,0 @@
-gradio
-modules
-Pillow
-requests
-torch
