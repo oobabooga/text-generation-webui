@@ -102,7 +102,7 @@ python server.py --gptq-bits 4 --model llama-7b-hf
 
 ### CPU offloading
 
-It is possible to offload part of the layers of the 4-bit model to the CPU with the `--gptq-pre-layer` flag. 
+It is possible to offload part of the layers of the 4-bit model to the CPU with the `--gptq-pre-layer` flag. The higher the number after `--gptq-pre-layer`, the more layers will be allocated to the GPU.
 
 With this command, I can run llama-7b with 4GB VRAM:
 
@@ -110,4 +110,10 @@ With this command, I can run llama-7b with 4GB VRAM:
 python server.py --model llama-7b-hf --gptq-bits 4 --gptq-pre-layer 20
 ```
 
-The higher the number, the more layers will be allocated to the GPU.
+This is the performance:
+
+```
+Output generated in 123.79 seconds (1.61 tokens/s, 199 tokens)
+```
+
+
