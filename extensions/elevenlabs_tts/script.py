@@ -4,6 +4,8 @@ import gradio as gr
 from elevenlabslib import ElevenLabsUser
 from elevenlabslib.helpers import save_bytes_to_path
 
+import modules.shared as shared
+
 params = {
     'activate': True,
     'api_key': '12345',
