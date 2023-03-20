@@ -76,6 +76,7 @@ mkdir repositories
 cd repositories
 git clone https://github.com/qwopqwop200/GPTQ-for-LLaMa
 cd GPTQ-for-LLaMa
+git reset --hard 468c47c01b4fe370616747b6d69a2d3f48bab5e4
 python setup_cuda.py install
 ```
 
