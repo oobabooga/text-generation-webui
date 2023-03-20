@@ -11,4 +11,5 @@ safetensors==0.3.0
 sentencepiece
 tqdm
 datasets
+llamacpp>=0.1.9
 git+https://github.com/huggingface/transformers
