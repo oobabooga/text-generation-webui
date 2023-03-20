@@ -42,7 +42,8 @@ def load_model(model_name):
     t0 = time.time()
 
     shared.is_RWKV = 'rwkv-' in model_name.lower()
-    shared.is_llamacpp = model_name.lower().startswith('llamacpp-')
+    shared.is_llamacpp = model_name.lower().startswith('llamacpp-') or \
+                         model_name.lower().startswith('alpaca-cpp-')
 
     # Default settings
     if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.wbits, shared.args.auto_devices, shared.args.disk, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None, shared.args.deepspeed, shared.args.flexgen, shared.is_RWKV, shared.is_llamacpp]):
@@ -104,7 +105,13 @@ def load_model(model_name):
     # LLAMACPP model
     elif shared.is_llamacpp:
         from modules.llamacpp_model import LlamaCppModel
-        model, tokenizer = LlamaCppModel.from_pretrained(Path(f'models/{model_name}/ggml-model-q4_0.bin'))
+
+        if model_name.lower().startswith('alpaca-'):
+            model_file = f'models/{model_name}/ggml-alpaca-7b-q4.bin'
+        else:
+            model_file = f'models/{model_name}/ggml-model-q4_0.bin'
+
+        model, tokenizer = LlamaCppModel.from_pretrained(Path(model_file))
         return model, tokenizer
 
     # Custom
