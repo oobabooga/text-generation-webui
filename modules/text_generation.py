@@ -111,7 +111,7 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
                 # No need to generate 8 tokens at a time.
                 for reply in shared.model.generate_with_streaming(context=question, token_count=max_new_tokens, temperature=temperature, top_p=top_p, top_k=top_k):
                     yield formatted_outputs(reply, shared.model_name)
-        except:
+        except Exception:
             traceback.print_exc()
         finally:
             t1 = time.time()
@@ -246,7 +246,7 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
 
             yield formatted_outputs(reply, shared.model_name)
 
-    except:
+    except Exception:
         traceback.print_exc()
     finally:
         t1 = time.time()
