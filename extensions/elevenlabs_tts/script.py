@@ -15,7 +15,10 @@ wav_idx = 0
 user = ElevenLabsUser(params['api_key'])
 user_info = None
 
-
+if not shared.args.no_stream:
+    print("Please add --no-stream. This extension is not meant to be used with streaming.")
+    raise ValueError
+    
 # Check if the API is valid and refresh the UI accordingly.
 def check_valid_api():
     
