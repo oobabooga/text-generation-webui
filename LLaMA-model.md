@@ -84,8 +84,6 @@ You are going to need to have a C++ compiler installed into your system for the 
 
 ### Step 2: set up the weights
 
-#### Option 1: the easy way 
-
 1. Download the tokenizer/config files for the model size of your choice from [decapoda-research](https://huggingface.co/decapoda-research):
 
 ```
@@ -98,18 +96,6 @@ python download-model.py --text-only decapoda-research/llama-7b-hf
 
 ```
 python server.py --load-in-4bit --model llama-7b-hf
-```
-
-#### Option 2: the hard way 
-
-1. [Convert](https://github.com/oobabooga/text-generation-webui/wiki/LLaMA-model#convert_llama_weights_to_hfpy) the base `.pth` model yourself to create the tokenizer/config files and place them into `models/llama-7b`.
-
-2. Place a pre-converted 4-bit model also in your `models` folder. For instance, `models/llama-7b-4bit.pt`. You can find pre-converted models here (look for repositories with names ending in `-int4`): https://huggingface.co/decapoda-research
-
-3. Start the web UI:
-
-```
-python server.py --load-in-4bit --model llama-7b
 ```
 
 For more information, check out the comments in this PR: https://github.com/oobabooga/text-generation-webui/pull/206.
