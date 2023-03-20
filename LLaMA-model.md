@@ -54,7 +54,9 @@ This is possible thanks to [@qwopqwop200](https://github.com/qwopqwop200/GPTQ-fo
 
 GPTQ is a clever quantization algorithm that lightly reoptimizes the weights during quantization so that the accuracy loss is compensated relative to a round-to-nearest quantization. See the paper for more details: https://arxiv.org/abs/2210.17323
 
-### Step 0: install nvcc
+### Installation
+
+#### Step 0: install nvcc
 
 ```
 conda activate textgen
@@ -67,7 +69,7 @@ Once it finishes, restart your computer or WSL before proceeding to the next ste
 
 See this issue for more details: https://github.com/oobabooga/text-generation-webui/issues/416#issuecomment-1475078571
 
-### Step 1: Installation
+#### Step 1: Installation
 
 Clone [GPTQ-for-LLaMa](https://github.com/qwopqwop200/GPTQ-for-LLaMa) into the `text-generation-webui/repositories` subfolder and install it:
 
@@ -82,7 +84,7 @@ python setup_cuda.py install
 
 You are going to need to have a C++ compiler installed into your system for the last command. On Linux, `sudo apt install build-essential` or equivalent is enough.
 
-### Step 2: set up the weights
+#### Step 2: set up the weights
 
 1. Download the tokenizer/config files for the model size of your choice from [decapoda-research](https://huggingface.co/decapoda-research):
 
@@ -98,4 +100,14 @@ python download-model.py --text-only decapoda-research/llama-7b-hf
 python server.py --gptq-bits 4 --model llama-7b-hf
 ```
 
-For more information, check out the comments in this PR: https://github.com/oobabooga/text-generation-webui/pull/206.
+### CPU offloading
+
+It is possible to offload part of the layers of the 4-bit model to the CPU with the `--gptq-pre-layer` flag. 
+
+With this command, I can run llama-7b with 4GB VRAM:
+
+```
+python server.py --model llama-7b-hf --gptq-bits 4 --gptq-pre-layer 20
+```
+
+The higher the number, the more layers will be allocated to the GPU.
