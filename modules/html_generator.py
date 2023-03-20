@@ -142,22 +142,23 @@ def generate_chat_html(history, name1, name2, character):
               </div>
             """
 
-        if not (i == len(history)-1 and len(row[0]) == 0):
-            output += f"""
-                  <div class="message">
-                    <div class="circle-you">
-                      {img_me}
-                    </div>
-                    <div class="text">
-                      <div class="username">
-                        {name1}
-                      </div>
-                      <div class="message-body">
-                        {row[0]}
-                      </div>
-                    </div>
+        if not row[0]:  # don't display empty user messages
+            continue
+        output += f"""
+              <div class="message">
+                <div class="circle-you">
+                  {img_me}
+                </div>
+                <div class="text">
+                  <div class="username">
+                    {name1}
                   </div>
-                """
+                  <div class="message-body">
+                    {row[0]}
+                  </div>
+                </div>
+              </div>
+            """
 
     output += "</div>"
     return output
