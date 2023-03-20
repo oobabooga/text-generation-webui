@@ -95,7 +95,7 @@ python download-model.py --text-only decapoda-research/llama-7b-hf
 3. Start the web UI:
 
 ```
-python server.py --load-in-4bit --model llama-7b-hf
+python server.py --gptq-bits 4 --model llama-7b-hf
 ```
 
 For more information, check out the comments in this PR: https://github.com/oobabooga/text-generation-webui/pull/206.
