@@ -1,3 +1,5 @@
+import traceback
+
 import gradio as gr
 
 import extensions
@@ -17,6 +19,7 @@ def load_extensions():
                 print('Ok.')
             except:
                 print('Fail.')
+                traceback.print_exc()
 
 # This iterator returns the extensions in the order specified in the command-line
 def iterator():
