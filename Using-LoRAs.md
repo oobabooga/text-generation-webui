@@ -1,13 +1,7 @@
 Based on https://github.com/tloen/alpaca-lora
 
 ## Instructions
-1. Re-install the requirements
-
-```
-pip install -r requirements.txt
-```
-
-2. Download the LoRA
+1. Download the LoRA
 
 ```
 python download-model.py tloen/alpaca-lora-7b
