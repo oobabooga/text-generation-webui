@@ -12,7 +12,7 @@ import gradio as gr
 import modules.extensions as extensions_module
 from modules import chat, shared, training, ui
 from modules.html_generator import generate_chat_html
-from modules.LoRA import add_lora_to_model
+from modules.LoRA import add_lora_to_model, reload_model
 from modules.models import load_model, load_soft_prompt
 from modules.text_generation import (clear_torch_cache, generate_reply,
                                      stop_everything_event)
@@ -211,6 +211,8 @@ def create_settings_menus(default_preset):
         with gr.Row():
             shared.gradio['upload_softprompt'] = gr.File(type='binary', file_types=['.zip'])
 
+    shared.gradio['unload_model_fn'] = unload_model # make unload & reload functions shared, 
+    shared.gradio['reload_model_fn'] = reload_model # so that any ext importing shared can access them
     shared.gradio['model_menu'].change(load_model_wrapper, [shared.gradio['model_menu']], [shared.gradio['model_menu']], show_progress=True)
     shared.gradio['preset_menu'].change(load_preset_values, [shared.gradio['preset_menu']], [shared.gradio[k] for k in ['do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping']])
     shared.gradio['lora_menu'].change(load_lora_wrapper, [shared.gradio['lora_menu']], [shared.gradio['lora_menu']], show_progress=True)
