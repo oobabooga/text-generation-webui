@@ -23,7 +23,7 @@ Observations:
 python server.py --model llama-7b-hf --cpu --lora alpaca-lora-7b
 ```
 
-2. Alternatively, you can also select the LoRA in the "Parameters" tab.
+2. Instead of using the `--lora` command-line flag, you can also select the LoRA in the "Parameters" tab of the interface.
 
 ## Prompt
 For this particular LoRA, the prompt must be formatted like this:
