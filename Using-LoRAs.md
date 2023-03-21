@@ -7,7 +7,7 @@ Based on https://github.com/tloen/alpaca-lora
 python download-model.py tloen/alpaca-lora-7b
 ```
 
-3. Load llama-7b in 8-bit mode (it only seems to work in 8-bit mode, not sure if that's a bug in [LoRA.py](https://github.com/oobabooga/text-generation-webui/blob/main/modules/LoRA.py) or if it's just how LoRAs work.)
+2. Load llama-7b in 8-bit mode (it only seems to work in 8-bit mode, not sure if that's a bug in [LoRA.py](https://github.com/oobabooga/text-generation-webui/blob/main/modules/LoRA.py) or if it's just how LoRAs work.)
 
 ```
 python server.py --model llama-7b --load-in-8bit
@@ -20,7 +20,7 @@ python server.py --model llama-7b --cpu
 ```
 
 
-4. Select the LoRA in the Parameters tab.
+3. Select the LoRA in the Parameters tab.
 
 ## Prompt
 For this particular LoRA, the prompt must be formatted like this:
