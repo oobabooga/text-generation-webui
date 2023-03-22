@@ -1,10 +1,14 @@
-import os, asyncio
+import asyncio
+from os import getcwd
+from os.path import dirname, relpath
 from threading import Thread
+
+from modules import shared
 
 from .src.i18n import get_i18n
 from .src.get_creds import get_creds
 
-path = os.path.dirname(os.path.relpath(__file__, os.getcwd()))
+path = dirname(relpath(__file__, getcwd()))
 
 t = get_i18n()
 
@@ -13,7 +17,7 @@ try:
   from pyrogram import Client
   from pyrogram.errors.exceptions import bad_request_400
 except ModuleNotFoundError:
-  raise ModuleNotFoundError(t['error']['dependencies_not_installed'].replace('/path/', path))
+  raise ModuleNotFoundError(t('error.dependencies_not_installed', {'/path/': path}))
 
 async def pyrogram_main() -> None:
   try:
@@ -22,8 +26,9 @@ async def pyrogram_main() -> None:
       "plugins": {"root": f"{path}/plugins"}
     }
     app = Client(f"{path}/textgen", **creds)
+    shared.character = 'Example'
   except bad_request_400.ApiIdInvalid:
-    raise Exception(t['error']['credential_file']['is_invalid'])
+    raise Exception(t('error.credential_file.is_invalid'))
 
   async with app:
     try:
@@ -31,7 +36,7 @@ async def pyrogram_main() -> None:
     except ConnectionError:
       pass
     while True:
-        await asyncio.sleep(1)
+      await asyncio.sleep(1)
 
 def start_bot() -> None:
   uvloop.install()
