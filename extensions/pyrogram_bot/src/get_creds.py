@@ -22,6 +22,6 @@ def get_creds(path) -> dict[str, str]:
         creds[line[0]] = line[1]
 
   if len(creds.keys()) < 3:
-    raise Exception(t['error']['credential_file']['have_no_needed_content'].replace('/path/', path))
+    raise Exception(t['error']['credential_file']['is_invalid'])
 
   return creds
