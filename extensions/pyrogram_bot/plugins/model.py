@@ -1,54 +1,55 @@
-import os
+from os import getcwd, listdir
+from os.path import dirname, isdir, join
 
 from modules import shared
 
 from ..src.i18n import get_i18n
 
-path = os.path.dirname(__file__)
-
+root_path = dirname(dirname(__file__))
 t = get_i18n()
 
 try:
-  from pyrogram import Client, StopPropagation, filters
+  from pyrogram import Client, filters
   from pyrogram.types import Message
 except:
-  raise Exception(t['error']['dependencies_not_installed'].replace('/path/', path))
+  raise ModuleNotFoundError(t('error.dependencies_not_installed', {'/path/': root_path}))
 
 @Client.on_message(filters.command(["models"]))
 async def index(_: Client, msg: Message) -> None:
-  models_dir = os.getcwd() + '/models'
+  model_path = join(getcwd(), 'models')
+  print('model_path', model_path, flush=True)
+
   models = []
 
-  for model in os.listdir(models_dir):
-    if os.path.isdir(os.path.join(models_dir, model)):
-      if model == shared.model_name:
-        models.append(f"**{model}**")
-      else:
-        models.append(model)
-        
-  answer = t['model']['index'] + '\n'.join(models)
-  await msg.reply(answer)
+  for model in listdir(model_path):
+    if not isdir(join(model_path, model)):
+      continue
 
-  raise StopPropagation
+    if model == shared.model_name:
+      model = f"**{model}**"
+
+    models.append(model)
+
+  models.sort()
+
+  answer = t('model.index') + '\n'.join(models)
+  await msg.reply(answer)
+  msg.stop_propagation()
 
 
 @Client.on_message(filters.command(["model"]))
 async def get(_: Client, msg: Message) -> None:
-  answer = t['model']['get'].replace('/name/', shared.model_name)
-  await msg.reply(answer)
+  await msg.reply(t('model.get', {'/name/': shared.model_name}))
+  msg.stop_propagation()
 
-  raise StopPropagation
+# @Client.on_message(filters.command(["set_model"]))
+# async def put(_: Client, msg: Message) -> None:
+#   if msg.command[1]+'.json' in listdir(getcwd() + '/characters'):
+#     shared.character = msg.command[1]
+#     status = 'succesful'
+#   else:
+#     status = 'failed'
 
-@Client.on_message(filters.command(["set_model"]))
-async def put(_: Client, msg: Message) -> None:
-
-  if msg.command[1]+'.json' in os.listdir(os.getcwd() + '/characters'):
-    shared.character = msg.command[1]
-    status = 'succesful'
-  else:
-    status = 'failed'
-  
-  answer = t['model']['put'][status].replace('/name/', shared.character)
-  await msg.reply(answer)
-
-  raise StopPropagation
+#   answer = t.model['put'][status].replace('/name/', shared.character)
+#   await msg.reply(answer)
+  msg.stop_propagation()

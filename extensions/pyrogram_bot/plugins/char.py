@@ -1,50 +1,57 @@
-import os
+from os import getcwd, listdir
+from os.path import dirname, join
 
 from modules import shared
 
 from ..src.i18n import get_i18n
 
-path = os.path.dirname(__file__)
-
+root_path = dirname(dirname(__file__))
 t = get_i18n()
 
 try:
-  from pyrogram import Client, StopPropagation, filters
+  from pyrogram import Client, filters
   from pyrogram.types import Message
 except:
-  raise Exception(t['error']['dependencies_not_installed'].replace('/path/', path))
+  raise ModuleNotFoundError(t('error.dependencies_not_installed', {'/path/': root_path}))
 
 @Client.on_message(filters.command(["characters"]))
 async def index(_: Client, msg: Message) -> None:
+  char_path = join(getcwd(), 'characters')
+
   chars = []
-  for file in os.listdir(os.getcwd() + '/characters'):
-    if file.endswith('.json'):
-      chars.append(file.replace('.json', ''))
+
+  for char_filename in listdir(char_path):
+    if not '.json' in char_filename:
+      continue
+
+    char = char_filename.replace('.json', '')
+    if char == shared.character:
+      char = f"**{char}**"
+
+    chars.append(char)
 
   chars.sort()
 
-  answer = t['character']['index'] + '\n'.join(chars)
+  answer = t('character.index') + '\n'.join(chars)
   await msg.reply(answer)
-
-  raise StopPropagation
+  msg.stop_propagation()
 
 @Client.on_message(filters.command(["character"]))
 async def get(_: Client, msg: Message) -> None:
-  answer = t['character']['get'].replace('/name/', shared.character)
-  await msg.reply(answer)
-
-  raise StopPropagation
+  await msg.reply(t('character.get', {'/name/': shared.character}))
+  msg.stop_propagation()
 
 @Client.on_message(filters.command(["set_character"]))
 async def put(_: Client, msg: Message) -> None:
+  char_filename = msg.command[1]+'.json'
+  char_path = join(getcwd(), 'characters')
+  char_exists = char_filename in listdir(char_path)
 
-  if msg.command[1]+'.json' in os.listdir(os.getcwd() + '/characters'):
+  status = 'failed'
+  if char_exists:
     shared.character = msg.command[1]
     status = 'succesful'
-  else:
-    status = 'failed'
 
-  answer = t['character']['put'][status].replace('/name/', shared.character)
+  answer = t(f'character.put.{status}', {'/name/': shared.character})
   await msg.reply(answer)
-
-  raise StopPropagation
+  msg.stop_propagation()
