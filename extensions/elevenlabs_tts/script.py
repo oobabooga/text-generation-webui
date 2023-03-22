@@ -4,6 +4,8 @@ import gradio as gr
 from elevenlabslib import ElevenLabsUser
 from elevenlabslib.helpers import save_bytes_to_path
 
+import re
+
 import modules.shared as shared
 
 params = {
@@ -52,14 +54,10 @@ def refresh_voices():
         return
 
 def remove_surrounded_chars(string):
-    new_string = ""
-    in_star = False
-    for char in string:
-        if char == '*':
-            in_star = not in_star
-        elif not in_star:
-            new_string += char
-    return new_string
+    # regexp is way faster than repeated string concatenation!
+    # this expression matches to 'as few symbols as possible (0 upwards) between any asterisks' OR
+    # 'as few symbols as possible (0 upwards) between an asterisk and the end of the string'
+    return re.sub('\*[^\*]*?(\*|$)','',string)
 
 def input_modifier(string):
     """

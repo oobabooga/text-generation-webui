@@ -4,6 +4,7 @@ from io import BytesIO
 import gradio as gr
 import torch
 from transformers import BlipForConditionalGeneration, BlipProcessor
+from PIL import Image
 
 import modules.chat as chat
 import modules.shared as shared
@@ -25,10 +26,20 @@ def caption_image(raw_image):
 
 def generate_chat_picture(picture, name1, name2):
     text = f'*{name1} sends {name2} a picture that contains the following: "{caption_image(picture)}"*'
+    # lower the resolution of sent images for the chat, otherwise the log size gets out of control quickly with all the base64 values in visible history
+    width, height = picture.size
+    if (width > 300):
+        height = int(height * (300 / width))
+        width = 300
+    elif (height > 300):
+        width = int(width * (300 / height))
+        height = 300        
+    newsize = (width, height)
+    picture = picture.resize(newsize, Image.LANCZOS)
     buffer = BytesIO()
     picture.save(buffer, format="JPEG")
     img_str = base64.b64encode(buffer.getvalue()).decode('utf-8')
-    visible_text = f'<img src="data:image/jpeg;base64,{img_str}">'
+    visible_text = f'<img src="data:image/jpeg;base64,{img_str}" alt="{text}">'
     return text, visible_text
 
 def ui():
