@@ -15,13 +15,14 @@ from modules.html_generator import generate_4chan_html, generate_basic_html
 from modules.models import local_rank
 
 
-def get_max_prompt_length(tokens):
+def get_max_prompt_length(tokens:int):
     max_length = 2048-tokens
+    assert max_length > 0 
     if shared.soft_prompt:
         max_length -= shared.soft_prompt_tensor.shape[1]
     return max_length
 
-def encode(prompt, tokens_to_generate=0, add_special_tokens=True):
+def encode(prompt, tokens_to_generate:int=0, add_special_tokens:bool=True):
     if shared.is_RWKV:
         input_ids = shared.tokenizer.encode(str(prompt))
         input_ids = np.array(input_ids).reshape(1, len(input_ids))
@@ -40,7 +41,7 @@ def encode(prompt, tokens_to_generate=0, add_special_tokens=True):
         else:
             return input_ids.cuda()
 
-def decode(output_ids):
+def decode(output_ids:torch.Tensor)->str:
     # Open Assistant relies on special tokens like <|endoftext|>
     if re.match('(oasst|galactica)-*', shared.model_name.lower()):
         return shared.tokenizer.decode(output_ids, skip_special_tokens=False)
@@ -75,7 +76,7 @@ def fix_galactica(s):
     s = re.sub(r"\n{3,}", "\n\n", s)
     return s
 
-def formatted_outputs(reply, model_name):
+def formatted_outputs(reply, model_name:str):
     if not (shared.args.chat or shared.args.cai_chat):
         if model_name.lower().startswith('galactica'):
             reply = fix_galactica(reply)
@@ -93,7 +94,7 @@ def clear_torch_cache():
     if not shared.args.cpu:
         torch.cuda.empty_cache()
 
-def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, eos_token=None, stopping_string=None):
+def generate_reply(question, max_new_tokens:int, do_sample:bool, temperature:float, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, eos_token=None, stopping_string=None):
     clear_torch_cache()
     t0 = time.time()
 
