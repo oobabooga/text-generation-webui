@@ -1,0 +1,28 @@
+{
+  "en": {
+    "message": {},
+    "model": {
+      "index": "Present models:\n\n",
+      "get": "At present moment using model: **/name/**",
+      "put": {
+        "succesful": "Model chaged succesfully to: **/name/**",
+        "failed": "Failed to change model"
+      }
+    },    
+    "character": {
+      "index": "Present characters:\n\n",
+      "get": "At present moment using character: **/name/**",
+      "put": {
+        "succesful": "Character chaged succesfully to: **/name/**",
+        "failed": "Failed to change model"
+      }
+    },
+    "error": {
+      "dependencies_not_installed": "Mandatory dependencies not installed. Come to /path/ and run `pip install -r requirements.txt`",
+      "credential_file": {
+        "not_found": "Credential file not found. Come to /path/, create file named `credentials` from `credentials.example` and fill with needed data.",
+        "have_no_needed_content": "\nAcquire credentials and store to /path//credentials:\n    Telegram API key and API hash from this link: https://my.telegram.org/apps\n    Bot token from telegram bot BotFather\n"
+      }
+    }
+  }  
+}
