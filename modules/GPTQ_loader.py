@@ -13,7 +13,7 @@ import llama_inference_offload
 import opt
 
 
-def load_quantized(model_name):
+def load_quantized(model_name:str):
     if not shared.args.gptq_model_type:
         # Try to determine model type from model name
         model_type = model_name.split('-')[0].lower()
