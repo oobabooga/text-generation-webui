@@ -89,15 +89,7 @@ def get_SD_pictures(description):
             image.save(output_file.as_posix())
             pic_id += 1
         # lower the resolution of received images for the chat, otherwise the log size gets out of control quickly with all the base64 values in visible history
-        width, height = image.size
-        if (width > 300):
-            height = int(height * (300 / width))
-            width = 300
-        elif (height > 300):
-            width = int(width * (300 / height))
-            height = 300        
-        newsize = (width, height)
-        image = image.resize(newsize, Image.LANCZOS)
+        image.thumbnail((300, 300))
         buffered = io.BytesIO()
         image.save(buffered, format="JPEG")
         buffered.seek(0)
