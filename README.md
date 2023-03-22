@@ -201,6 +201,7 @@ Optionally, you can use the following command-line flags:
 |  `--listen-port LISTEN_PORT` | The listening port that the server will use. |
 | `--share`        | Create a public URL. This is useful for running the web UI on Google Colab or similar. |
 | `--auto-launch`  | Open the web UI in the default browser upon launch. |
+| `--seed SEED`    | Specify a seed to generate output deterministically. |
 | `--verbose`      | Print the prompts to the terminal. |
 
 Out of memory errors? [Check the low VRAM guide](https://github.com/oobabooga/text-generation-webui/wiki/Low-VRAM-guide).
