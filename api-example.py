@@ -32,6 +32,7 @@ params = {
     'penalty_alpha': 0,
     'length_penalty': 1,
     'early_stopping': False,
+    'seed': -1,
 }
 
 # Input prompt
@@ -54,6 +55,7 @@ response = requests.post(f"http://{server}:7860/run/textgen", json={
         params['penalty_alpha'],
         params['length_penalty'],
         params['early_stopping'],
+        params['seed'],
     ]
 }).json()
 

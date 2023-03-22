@@ -94,8 +94,15 @@ def clear_torch_cache():
     if not shared.args.cpu:
         torch.cuda.empty_cache()
 
-def generate_reply(question:str, max_new_tokens:int, do_sample:bool, temperature:float, top_p:float, typical_p:float, repetition_penalty:float, encoder_repetition_penalty:float, top_k:int, min_length, no_repeat_ngram_size:int, num_beams:int, penalty_alpha:float, length_penalty:float, early_stopping, eos_token=None, stopping_string=None):
+def set_manual_seed(seed):
+    if seed != -1:
+        torch.manual_seed(seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(seed)
+
+def generate_reply(question:str, max_new_tokens:int, do_sample:bool, temperature:float, top_p:float, typical_p:float, repetition_penalty:float, encoder_repetition_penalty:float, top_k:int, min_length, no_repeat_ngram_size:int, num_beams:int, penalty_alpha:float, length_penalty:float, early_stopping, seed:int, eos_token=None, stopping_string=None):
     clear_torch_cache()
+    set_manual_seed(seed)
     t0 = time.time()
 
     # These models are not part of Hugging Face, so we handle them
