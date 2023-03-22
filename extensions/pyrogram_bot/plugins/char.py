@@ -19,19 +19,13 @@ async def index(_: Client, msg: Message) -> None:
   chars = []
   for file in os.listdir(os.getcwd() + '/characters'):
     if file.endswith('.json'):
-      char = (
-        file
-          .replace('.json', '')
-          .replace('-', ' ')
-          .replace('Z ', 'NSFW ')
-      )
-      chars.append(char)
-      
+      chars.append(file.replace('.json', ''))
+
   chars.sort()
 
   answer = t['character']['index'] + '\n'.join(chars)
   await msg.reply(answer)
-  
+
   raise StopPropagation
 
 @Client.on_message(filters.command(["character"]))
@@ -49,7 +43,7 @@ async def put(_: Client, msg: Message) -> None:
     status = 'succesful'
   else:
     status = 'failed'
-  
+
   answer = t['character']['put'][status].replace('/name/', shared.character)
   await msg.reply(answer)
 
