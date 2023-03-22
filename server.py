@@ -104,7 +104,7 @@ def load_preset_values(preset_menu:str, return_dict:bool=False)->dict:
     else:
         return preset_menu, generate_params['do_sample'], generate_params['temperature'], generate_params['top_p'], generate_params['typical_p'], generate_params['repetition_penalty'], generate_params['encoder_repetition_penalty'], generate_params['top_k'], generate_params['min_length'], generate_params['no_repeat_ngram_size'], generate_params['num_beams'], generate_params['penalty_alpha'], generate_params['length_penalty'], generate_params['early_stopping']
 
-def upload_soft_prompt(file):
+def upload_soft_prompt(file:bytes)->str:
     with zipfile.ZipFile(io.BytesIO(file)) as zf:
         zf.extract('meta.json')
         j = json.loads(open('meta.json', 'r').read())
@@ -127,7 +127,7 @@ def create_model_and_preset_menus():
                 shared.gradio['preset_menu'] = gr.Dropdown(choices=available_presets, value=default_preset if not shared.args.flexgen else 'Naive', label='Generation parameters preset')
                 ui.create_refresh_button(shared.gradio['preset_menu'], lambda : None, lambda : {'choices': get_available_presets()}, 'refresh-button')
 
-def create_settings_menus(default_preset):
+def create_settings_menus(default_preset:str):
     generate_params = load_preset_values(default_preset if not shared.args.flexgen else 'Naive', return_dict=True)
 
     with gr.Row():
@@ -184,7 +184,7 @@ def create_settings_menus(default_preset):
     shared.gradio['softprompts_menu'].change(load_soft_prompt, [shared.gradio['softprompts_menu']], [shared.gradio['softprompts_menu']], show_progress=True)
     shared.gradio['upload_softprompt'].upload(upload_soft_prompt, [shared.gradio['upload_softprompt']], [shared.gradio['softprompts_menu']])
 
-def set_interface_arguments(interface_mode, extensions, cmd_active):
+def set_interface_arguments(interface_mode:str, extensions:list, cmd_active:list):
     modes = ["default", "notebook", "chat", "cai_chat"]
     cmd_list = vars(shared.args)
     cmd_list = [k for k in cmd_list if type(cmd_list[k]) is bool and k not in modes]
