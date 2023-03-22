@@ -2,12 +2,11 @@ import base64
 from io import BytesIO
 
 import gradio as gr
-import torch
-from transformers import BlipForConditionalGeneration, BlipProcessor
-from PIL import Image
-
 import modules.chat as chat
 import modules.shared as shared
+import torch
+from PIL import Image
+from transformers import BlipForConditionalGeneration, BlipProcessor
 
 # If 'state' is True, will hijack the next chat generation with
 # custom input text given by 'value' in the format [text, visible_text]

@@ -4,12 +4,11 @@ import re
 from pathlib import Path
 
 import gradio as gr
+import modules.chat as chat
+import modules.shared as shared
 import requests
 import torch
 from PIL import Image
-
-import modules.chat as chat
-import modules.shared as shared
 
 torch._C._jit_set_profiling_mode(False)
 
@@ -32,7 +31,6 @@ picture_response = False # specifies if the next model response should appear as
 pic_id = 0
 
 def remove_surrounded_chars(string):
-    # regexp is way faster than repeated string concatenation!
     # this expression matches to 'as few symbols as possible (0 upwards) between any asterisks' OR
     # 'as few symbols as possible (0 upwards) between an asterisk and the end of the string'
     return re.sub('\*[^\*]*?(\*|$)','',string)

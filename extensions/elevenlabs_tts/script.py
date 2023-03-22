@@ -1,12 +1,10 @@
+import re
 from pathlib import Path
 
 import gradio as gr
+import modules.shared as shared
 from elevenlabslib import ElevenLabsUser
 from elevenlabslib.helpers import save_bytes_to_path
-
-import re
-
-import modules.shared as shared
 
 params = {
     'activate': True,
@@ -54,7 +52,6 @@ def refresh_voices():
         return
 
 def remove_surrounded_chars(string):
-    # regexp is way faster than repeated string concatenation!
     # this expression matches to 'as few symbols as possible (0 upwards) between any asterisks' OR
     # 'as few symbols as possible (0 upwards) between an asterisk and the end of the string'
     return re.sub('\*[^\*]*?(\*|$)','',string)
