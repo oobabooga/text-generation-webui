@@ -37,7 +37,7 @@ if shared.args.deepspeed:
     dschf = HfDeepSpeedConfig(ds_config) # Keep this object alive for the Transformers integration
 
 
-def load_model(model_name):
+def load_model(model_name:str):
     print(f"Loading {model_name}...")
     t0 = time.time()
 
@@ -168,7 +168,7 @@ def load_model(model_name):
     print(f"Loaded the model in {(time.time()-t0):.2f} seconds.")
     return model, tokenizer
 
-def load_soft_prompt(name):
+def load_soft_prompt(name:str)->str:
     if name == 'None':
         shared.soft_prompt = False
         shared.soft_prompt_tensor = None

@@ -4,7 +4,7 @@ import modules.shared as shared
 from modules.models import load_model
 
 
-def add_lora_to_model(lora_name):
+def add_lora_to_model(lora_name:str):
 
     from peft import PeftModel
 
