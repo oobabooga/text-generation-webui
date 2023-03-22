@@ -1,0 +1,33 @@
+FROM nvidia/cuda:11.7.1-devel-ubuntu22.04
+
+WORKDIR /app
+
+RUN apt update -y && \
+    apt upgrade -y && \
+    apt install -y wget libxml2 g++ wget git python3-pip && \
+    wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
+    chmod +x Miniconda3-latest-Linux-x86_64.sh && \
+    ./Miniconda3-latest-Linux-x86_64.sh -b -p /root/miniconda3 && \
+    rm Miniconda3-latest-Linux-x86_64.sh && \
+    apt clean && \
+    rm -rf /var/lib/apt/lists/*
+
+ENV PATH="/root/miniconda3/bin:${PATH}"
+ENV CUDA_HOME=/usr/local/cuda-11.7
+
+RUN conda create -n textgen python=3.10.9 -y && \
+    conda init bash && \
+    . /root/miniconda3/etc/profile.d/conda.sh && \
+    conda activate textgen && \
+    git clone https://github.com/oobabooga/text-generation-webui && \
+    pip3 install -r text-generation-webui/requirements.txt && \
+    conda install -c conda-forge cudatoolkit-dev -y && \
+    pip3 install torch torchvision torchaudio && \
+    git clone https://github.com/qwopqwop200/GPTQ-for-LLaMa && \
+    pip3 install -r GPTQ-for-LLaMa/requirements.txt && \
+    python3 GPTQ-for-LLaMa/setup_cuda.py install && \
+    conda clean -afy
+
+WORKDIR /app/text-generation-webui
+
+CMD ["python3", "server.py", "--model", "llama-7b-hf", "--gptq-bits", "4", "--gptq-pre-layer", "30", "--listen"]
