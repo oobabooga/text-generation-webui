@@ -14,8 +14,8 @@ torch._C._jit_set_profiling_mode(False)
 
 # parameters which can be customized in settings.json of webui  
 params = {
-    'enable_SD_api': False,
-    'address': 'http://127.0.0.1:7860',
+    'address': '127.0.0.1:7860',
+    'manage_VRAM': True,
     'save_img': False,
     'SD_model': 'NeverEndingDream', # not really used right now
     'prompt_prefix': '(Masterpiece:1.1), (solo:1.3), detailed, intricate, colorful',
@@ -42,8 +42,6 @@ def input_modifier(string):
     they are fed into the model.
     """
     global params, picture_response
-    if not params['enable_SD_api']:
-        return string
 
     commands = ['send', 'mail', 'me']
     mediums = ['image', 'pic', 'picture', 'photo']
@@ -66,6 +64,14 @@ def get_SD_pictures(description):
 
     global params, pic_id
 
+    if params['manage_VRAM']:
+        shared.gradio['unload_model_fn']()
+        response = requests.post(url=f'http://{params["address"]}/sdapi/v1/reload-checkpoint', json='')
+        response.raise_for_status()
+        r = response.json()
+        del response
+        del r
+
     payload = {
         "prompt": params['prompt_prefix'] + description,
         "seed": -1,
@@ -78,7 +84,9 @@ def get_SD_pictures(description):
         "negative_prompt": params['negative_prompt']
     }
     
-    response = requests.post(url=f'{params["address"]}/sdapi/v1/txt2img', json=payload)
+    print(f'Prompting the image generator via the API on {params["address"]}…')
+    response = requests.post(url=f'http://{params["address"]}/sdapi/v1/txt2img', json=payload)
+    response.raise_for_status()
     r = response.json()
 
     visible_result = ""
@@ -96,6 +104,14 @@ def get_SD_pictures(description):
         image_bytes = buffered.getvalue()
         img_str = "data:image/jpeg;base64," + base64.b64encode(image_bytes).decode()
         visible_result = visible_result + f'<img src="{img_str}" alt="{description}">\n'
+
+    if params['manage_VRAM']:
+        response = requests.post(url=f'http://{params["address"]}/sdapi/v1/unload-checkpoint', json='')
+        response.raise_for_status()
+        r = response.json()
+        del response
+        del r
+        shared.gradio['reload_model_fn']()
     
     return visible_result
 
@@ -143,16 +159,39 @@ def force_pic():
     global picture_response
     picture_response = True
 
+def filter_address(address):
+    address = address.strip()
+    address = re.sub('http(s)?:\/\/|\/$','',address) # remove starting http:// OR https:// OR trailing slash
+    return address
+
+def SD_api_address_update(address):
+    
+    global params
+    
+    msg = "✔️ API connection established"
+    address = filter_address(address)
+    params.update({"address": address})
+    try:
+        response = requests.get(url=f'http://{params["address"]}/sdapi/v1/sd-models')
+        response.raise_for_status()
+        r = response.json()
+    except:
+        msg = "❌ No SD API endpoint on:"
+
+    return gr.Textbox.update(label=msg)
+
+
+
 def ui():
 
     # Gradio elements
     with gr.Accordion("Stable Diffusion api integration", open=True):
         with gr.Row():
             with gr.Column():
-                enable = gr.Checkbox(value=params['enable_SD_api'], label='Activate SD Api integration')
+                manage_VRAM = gr.Checkbox(value=params['manage_VRAM'], label='Manage VRAM')
                 save_img = gr.Checkbox(value=params['save_img'], label='Keep original received images in the outputs subdir')
             with gr.Column():
-                address = gr.Textbox(placeholder=params['address'], value=params['address'], label='Stable Diffusion host address')
+                address = gr.Textbox(placeholder=params['address'], value=params['address'], label='Automatic1111\'s WebUI host address:port')
         
         with gr.Row():
             force_btn = gr.Button("Force the next response to be a picture")
@@ -166,9 +205,10 @@ def ui():
                 # model = gr.Dropdown(value=SD_models[0], choices=SD_models, label='Model')
     
     # Event functions to update the parameters in the backend
-    enable.change(lambda x: params.update({"enable_SD_api": x}), enable, None)
+    manage_VRAM.change(lambda x: params.update({"manage_VRAM": x}), manage_VRAM, None)
     save_img.change(lambda x: params.update({"save_img": x}), save_img, None)
-    address.change(lambda x: params.update({"address": x}), address, None)
+    address.change(lambda x: params.update({"address": filter_address(x)}), address, None)
+    address.submit(fn=SD_api_address_update, inputs=address, outputs=address)
     prompt_prefix.change(lambda x: params.update({"prompt_prefix": x}), prompt_prefix, None)
     negative_prompt.change(lambda x: params.update({"negative_prompt": x}), negative_prompt, None)
     dimensions.change(lambda x: params.update({"side_length": x}), dimensions, None)
