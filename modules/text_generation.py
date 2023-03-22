@@ -58,7 +58,7 @@ def generate_softprompt_input_tensors(input_ids):
     return inputs_embeds, filler_input_ids
 
 # Removes empty replies from gpt4chan outputs
-def fix_gpt4chan(s):
+def fix_gpt4chan(s:str)->str:
     for i in range(10):
         s = re.sub("--- [0-9]*\n>>[0-9]*\n---", "---", s)
         s = re.sub("--- [0-9]*\n *\n---", "---", s)
@@ -66,7 +66,7 @@ def fix_gpt4chan(s):
     return s
 
 # Fix the LaTeX equations in galactica
-def fix_galactica(s):
+def fix_galactica(s:str)->str:
     s = s.replace(r'\[', r'$')
     s = s.replace(r'\]', r'$')
     s = s.replace(r'\(', r'$')
@@ -76,7 +76,7 @@ def fix_galactica(s):
     s = re.sub(r"\n{3,}", "\n\n", s)
     return s
 
-def formatted_outputs(reply, model_name:str):
+def formatted_outputs(reply, model_name:str)->str:
     if not (shared.args.chat or shared.args.cai_chat):
         if model_name.lower().startswith('galactica'):
             reply = fix_galactica(reply)
@@ -94,7 +94,7 @@ def clear_torch_cache():
     if not shared.args.cpu:
         torch.cuda.empty_cache()
 
-def generate_reply(question, max_new_tokens:int, do_sample:bool, temperature:float, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, eos_token=None, stopping_string=None):
+def generate_reply(question:str, max_new_tokens:int, do_sample:bool, temperature:float, top_p:float, typical_p:float, repetition_penalty:float, encoder_repetition_penalty:float, top_k:int, min_length, no_repeat_ngram_size:int, num_beams:int, penalty_alpha:float, length_penalty:float, early_stopping, eos_token=None, stopping_string=None):
     clear_torch_cache()
     t0 = time.time()
 
