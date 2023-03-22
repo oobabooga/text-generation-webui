@@ -11,15 +11,20 @@ t = get_i18n()
 try:
   import uvloop
   from pyrogram import Client
-except:
-  raise Exception(t['error']['dependencies_not_installed'].replace('/path/', path))
+  from pyrogram.errors.exceptions import bad_request_400
+except ModuleNotFoundError:
+  raise ModuleNotFoundError(t['error']['dependencies_not_installed'].replace('/path/', path))
 
 async def pyrogram_main() -> None:
-  creds = get_creds(path)
-  creds.update({
-    "plugins": {"root": f"{path}/plugins"}
-  })
-  app = Client(f"{path}/textgen", **creds)
+  try:
+    creds = {
+      **get_creds(path),
+      "plugins": {"root": f"{path}/plugins"}
+    }
+    app = Client(f"{path}/textgen", **creds)
+  except bad_request_400.ApiIdInvalid:
+    raise Exception(t['error']['credential_file']['is_invalid'])
+
   async with app:
     try:
       await app.start()
