@@ -31,25 +31,25 @@ if settings_file is not None:
     for item in new_settings:
         shared.settings[item] = new_settings[item]
 
-def get_available_models():
+def get_available_models()->list:
     if shared.args.flexgen:
         return sorted([re.sub('-np$', '', item.name) for item in list(Path('models/').glob('*')) if item.name.endswith('-np')], key=str.lower)
     else:
         return sorted([re.sub('.pth$', '', item.name) for item in list(Path('models/').glob('*')) if not item.name.endswith(('.txt', '-np', '.pt', '.json'))], key=str.lower)
 
-def get_available_presets():
+def get_available_presets()->list:
     return sorted(set(map(lambda x : '.'.join(str(x.name).split('.')[:-1]), Path('presets').glob('*.txt'))), key=str.lower)
 
-def get_available_characters():
+def get_available_characters()->list:
     return ['None'] + sorted(set(map(lambda x : '.'.join(str(x.name).split('.')[:-1]), Path('characters').glob('*.json'))), key=str.lower)
 
-def get_available_extensions():
+def get_available_extensions()->list:
     return sorted(set(map(lambda x : x.parts[1], Path('extensions').glob('*/script.py'))), key=str.lower)
 
-def get_available_softprompts():
+def get_available_softprompts()->list:
     return ['None'] + sorted(set(map(lambda x : '.'.join(str(x.name).split('.')[:-1]), Path('softprompts').glob('*.zip'))), key=str.lower)
 
-def get_available_loras():
+def get_available_loras()->list:
     return ['None'] + sorted([item.name for item in list(Path('loras/').glob('*')) if not item.name.endswith(('.txt', '-np', '.pt', '.json'))], key=str.lower)
 
 def load_model_wrapper(selected_model):
@@ -74,7 +74,7 @@ def load_lora_wrapper(selected_lora):
 
     return selected_lora, default_text
 
-def load_preset_values(preset_menu, return_dict=False):
+def load_preset_values(preset_menu:str, return_dict:bool=False)->dict:
     generate_params = {
         'do_sample': True,
         'temperature': 1,
