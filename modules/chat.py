@@ -16,13 +16,13 @@ from modules.text_generation import (encode, generate_reply,
                                      get_max_prompt_length)
 
 
-def generate_chat_output(history, name1, name2, character):
+def generate_chat_output(history:str, name1:str, name2:str, character:str)->str:
     if shared.args.cai_chat:
         return generate_chat_html(history, name1, name2, character)
     else:
         return history
 
-def generate_chat_prompt(user_input, max_new_tokens, name1, name2, context, chat_prompt_size, impersonate=False):
+def generate_chat_prompt(user_input:str, max_new_tokens:int, name1:str, name2:str, context:str, chat_prompt_size:int, impersonate:bool=False):
     user_input = fix_newlines(user_input)
     rows = [f"{context.strip()}\n"]
 
@@ -192,7 +192,7 @@ def regenerate_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typi
                 shared.history['visible'][-1] = (last_visible[0], _history[-1][1])
             yield generate_chat_output(shared.history['visible'], name1, name2, shared.character)
 
-def remove_last_message(name1, name2):
+def remove_last_message(name1:str, name2:str)->str:
     if len(shared.history['visible']) > 0 and not shared.history['internal'][-1][0] == '<|BEGIN-VISIBLE-CHAT|>':
         last = shared.history['visible'].pop()
         shared.history['internal'].pop()
@@ -210,7 +210,7 @@ def send_last_reply_to_input():
     else:
         return ''
 
-def replace_last_reply(text, name1, name2):
+def replace_last_reply(text:str, name1:str, name2:str):
     if len(shared.history['visible']) > 0:
         if shared.args.cai_chat:
             shared.history['visible'][-1][1] = text
@@ -223,7 +223,7 @@ def replace_last_reply(text, name1, name2):
 def clear_html():
     return generate_chat_html([], "", "", shared.character)
 
-def clear_chat_log(name1, name2):
+def clear_chat_log(name1:str, name2:str):
     if shared.character != 'None':
         found = False
         for i in range(len(shared.history['internal'])):
@@ -241,10 +241,10 @@ def clear_chat_log(name1, name2):
 
     return generate_chat_output(shared.history['visible'], name1, name2, shared.character)
 
-def redraw_html(name1, name2):
+def redraw_html(name1:str, name2:str)->str:
     return generate_chat_html(shared.history['visible'], name1, name2, shared.character)
 
-def tokenize_dialogue(dialogue, name1, name2):
+def tokenize_dialogue(dialogue:str, name1:str, name2:str):
     _history = []
 
     dialogue = re.sub('<START>', '', dialogue)
@@ -281,7 +281,7 @@ def tokenize_dialogue(dialogue, name1, name2):
 
     return _history
 
-def save_history(timestamp=True):
+def save_history(timestamp:bool=True):
     prefix = '' if shared.character == 'None' else f"{shared.character}_"
     if timestamp:
         fname = f"{prefix}{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
@@ -293,7 +293,7 @@ def save_history(timestamp=True):
         f.write(json.dumps({'data': shared.history['internal'], 'data_visible': shared.history['visible']}, indent=2))
     return Path(f'logs/{fname}')
 
-def load_history(file, name1, name2):
+def load_history(file:bytes, name1:str, name2:str):
     file = file.decode('utf-8')
     try:
         j = json.loads(file)
@@ -317,14 +317,14 @@ def load_history(file, name1, name2):
         shared.history['internal'] = tokenize_dialogue(file, name1, name2)
         shared.history['visible'] = copy.deepcopy(shared.history['internal'])
 
-def load_default_history(name1, name2):
+def load_default_history(name1:str, name2:str):
     if Path('logs/persistent.json').exists():
         load_history(open(Path('logs/persistent.json'), 'rb').read(), name1, name2)
     else:
         shared.history['internal'] = []
         shared.history['visible'] = []
 
-def load_character(_character, name1, name2):
+def load_character(_character:str, name1:str, name2:str):
     context = ""
     shared.history['internal'] = []
     shared.history['visible'] = []
@@ -378,7 +378,7 @@ def upload_character(json_file, img, tavern=False):
     print(f'New character saved to "characters/{outfile_name}.json".')
     return outfile_name
 
-def upload_tavern_character(img, name1, name2):
+def upload_tavern_character(img, name1:str, name2:str):
     _img = Image.open(io.BytesIO(img))
     _img.getexif()
     decoded_string = base64.b64decode(_img.info['chara'])

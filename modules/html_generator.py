@@ -118,7 +118,7 @@ def load_html_image(paths:list)->str:
               return f'<img src="file/{get_image_cache(path)}">'
     return ''
 
-def generate_chat_html(history:list, name1:str, name2:str, character:str)->str:
+def generate_chat_html(history:str, name1:str, name2:str, character:str)->str:
     output = f'<style>{cai_css}</style><div class="chat" id="chat">'
 
     img_bot = load_html_image([f"characters/{character}.{ext}" for ext in ['png', 'jpg', 'jpeg']] + ["img_bot.png","img_bot.jpg","img_bot.jpeg"])
