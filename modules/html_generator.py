@@ -21,14 +21,14 @@ with open(Path(__file__).resolve().parent / '../css/html_4chan_style.css', 'r') 
 with open(Path(__file__).resolve().parent / '../css/html_cai_style.css', 'r') as f:
     cai_css = f.read()
 
-def fix_newlines(string):
+def fix_newlines(string:str)->str:
     string = string.replace('\n', '\n\n')
     string = re.sub(r"\n{3,}", "\n\n", string)
     string = string.strip()
     return string
 
 # This could probably be generalized and improved
-def convert_to_markdown(string):
+def convert_to_markdown(string:str)->str:
     string = string.replace('\\begin{code}', '```')
     string = string.replace('\\end{code}', '```')
     string = string.replace('\\begin{blockquote}', '> ')
@@ -37,12 +37,13 @@ def convert_to_markdown(string):
 #    string = fix_newlines(string)
     return markdown.markdown(string, extensions=['fenced_code']) 
 
-def generate_basic_html(string):
+def generate_basic_html(string:str):
     string = convert_to_markdown(string)
     string = f'<style>{readable_css}</style><div class="container">{string}</div>'
     return string
 
-def process_post(post, c):
+# Where is 'c' used? 
+def process_post(post:str, c):
     t = post.split('\n')
     number = t[0].split(' ')[1]
     if len(t) > 1:
@@ -56,7 +57,7 @@ def process_post(post, c):
     src = f'<span class="name">Anonymous </span> <span class="number">No.{number}</span>\n{src}'
     return src
 
-def generate_4chan_html(f):
+def generate_4chan_html(f)->str:
     posts = []
     post = ''
     c = -2
@@ -95,7 +96,7 @@ def generate_4chan_html(f):
 
     return output
 
-def get_image_cache(path):
+def get_image_cache(path:str)->str:
     cache_folder = Path("cache")
     if not cache_folder.exists():
         cache_folder.mkdir()
@@ -110,19 +111,18 @@ def get_image_cache(path):
 
     return image_cache[path][1]
 
-def load_html_image(paths):
+def load_html_image(paths:list)->str:
     for str_path in paths:
           path = Path(str_path)
           if path.exists():
               return f'<img src="file/{get_image_cache(path)}">'
     return ''
 
-def generate_chat_html(history, name1, name2, character):
+def generate_chat_html(history:list, name1:str, name2:str, character:str)->str:
     output = f'<style>{cai_css}</style><div class="chat" id="chat">'
-    
+
     img_bot = load_html_image([f"characters/{character}.{ext}" for ext in ['png', 'jpg', 'jpeg']] + ["img_bot.png","img_bot.jpg","img_bot.jpeg"])
     img_me = load_html_image(["img_me.png", "img_me.jpg", "img_me.jpeg"])
-
     for i,_row in enumerate(history[::-1]):
         row = [convert_to_markdown(entry) for entry in _row]
         
