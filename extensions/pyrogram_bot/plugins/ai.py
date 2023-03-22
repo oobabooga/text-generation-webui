@@ -1,12 +1,21 @@
-import os
+import asyncio
+from os import getcwd
+from os.path import dirname, join
+from json import loads as parse
 
-from modules.text_generation import generate_reply
+from modules import shared, text_generation
 
 from ..src.i18n import get_i18n
 
-path = os.path.dirname(__file__)
+root_path = dirname(dirname(__file__))
 
 t = get_i18n()
+
+try:
+  from pyrogram import Client, filters
+  from pyrogram.types import Message, User
+except:
+  raise ModuleNotFoundError(t('error.dependencies_not_installed', {'/path/': root_path}))
 
 parameters = {
   'max_length': 200,
@@ -17,84 +26,114 @@ parameters = {
   'top_k': 0,
 }
 
-try:
-  from pyrogram import Client, filters
-  from pyrogram.types import Message
-except:
-  raise Exception(t['error']['dependencies_not_installed'].replace('/path/', path))
-
-def message_text(msg: Message) -> str:
-  if msg.text: return msg.text
+def prepare_message_text(msg: Message) -> str:
+  if msg.text:    return msg.text
   if msg.caption: return msg.caption
   return ''
 
-def message_sender(msg: Message) -> str:
-  if msg.sender_chat:
-    return msg.sender_chat.title
-
+def prepare_message_sender(msg: Message, bot: User) -> str:
   if msg.from_user:
-    user = msg.from_user
-
-    if user.username:  
-      return user.username
-      
-    return user.first_name
-  
+    if msg.from_user.id == bot.id:
+      return shared.settings['name2_pygmalion']
+    return 'You'
   return ''
-    
-def format_message(msg: Message) -> str:
-  author = message_sender(msg)
-  text = message_text(msg)
+
+def prepare_telegram_message(msg: Message, bot: User) -> str:
+  author = prepare_message_sender(msg, bot)
+  text = prepare_message_text(msg)
 
   if author:
     return f'{author}: {text}'
 
   return ''
 
-async def format_question(app: Client, msg: Message) -> str:
+async def prepare_message_history(app: Client, msg: Message) -> str:
   ids = [i for i in range(msg.id, msg.id-10, -1)]
-  messages = await app.get_messages(msg.chat.id, ids)
-  messages = list(map(format_message, messages))
+  messages, bot = await asyncio.gather(*[
+    app.get_messages(msg.chat.id, ids),
+    app.get_me()
+  ])
+  messages = [prepare_telegram_message(message, bot) for message in messages]
   messages = [x for x in messages if x]
   question = '\n'.join(messages)
 
+
+  print('+++++++++++++++++++++++++++++++++++++++++++++++++', flush=True)
+  print(question, flush=True)
+  print('+++++++++++++++++++++++++++++++++++++++++++++++++', flush=True)
   return question
 
-def format_answer(answer: str) -> str:
+def replace_all(string: str, replaceable: dict[str, str]) -> str:
+  for before, after in replaceable.items():
+    string = string.replace(before, after)
+  return string
+
+def prepare_char_persona() -> str:
+  char = {}
+  char_path = join(getcwd(), 'characters', f'{shared.character}.json')
+  with open(char_path, 'r') as char_file:
+    char_json = char_file.read()
+    char = parse(char_json)
+
+  shared.settings['name2_pygmalion'] = char['char_name']
+
+  dialogues = replace_all(char['example_dialogue'], {
+    '{{user}}': 'You',
+    '{{char}}': char['char_name'],
+  })
+  prompt = (
+    f"{char['char_name']}'s Persona: {char['char_persona']}\n"
+    f"Scenario: {char['world_scenario']}\n\n"
+    f"{dialogues}"
+  )
+
+  print('=================================================', flush=True)
+  print(prompt, flush=True)
+  print('=================================================', flush=True)
+  return prompt
+
+def prepare_answer(answer: str, question: str) -> str:
+  answer = answer.replace(question, '')
   if answer == '':        return 'empty'
   if len(answer) >= 4095: return answer[-4095:]
 
   return answer
 
 def generate_bot_reply(question: str) -> str:
-  generator = generate_reply(
-    question=question, 
-    max_new_tokens = parameters.get('max_length', 200), 
-    do_sample=True, 
-    temperature=parameters.get('temperature', 0.5), 
-    top_p=parameters.get('top_p', 1), 
-    typical_p=parameters.get('typical_p', 1), 
-    repetition_penalty=parameters.get('repetition_penalty', 1.1), 
-    encoder_repetition_penalty=1, 
-    top_k=parameters.get('top_k', 0), 
-    min_length=0, 
-    no_repeat_ngram_size=0, 
-    num_beams=1, 
-    penalty_alpha=0, 
-    length_penalty=1,
-    early_stopping=False,
-  )
-
   answer = ''
-  for a in generator:
+  for a in text_generation.generate_reply(
+    question = question,
+    max_new_tokens  = parameters.get('max_length', 200),
+    temperature = parameters.get('temperature', 0.5),
+    top_p = parameters.get('top_p', 1),
+    typical_p = parameters.get('typical_p', 1),
+    repetition_penalty = parameters.get('repetition_penalty', 1.1),
+    top_k = parameters.get('top_k', 0),
+    encoder_repetition_penalty = 1,
+    do_sample = True,
+    min_length = 0,
+    no_repeat_ngram_size = 0,
+    num_beams = 1,
+    penalty_alpha = 0,
+    length_penalty = 1,
+    early_stopping = False,
+  ):
     answer = a
-  
+
   return answer
 
-@Client.on_message(filters.user(600432868), group=999)
+@Client.on_message(filters.chat(-1001278730263), group=999)
 async def send_reply(app: Client, msg: Message) -> None:
-  question = await format_question(app, msg)
-  answer = generate_bot_reply(question)
-  answer = format_answer(answer)
+  persona = prepare_char_persona()
+  message_history = await prepare_message_history(app, msg)
 
+  question = (
+    f"{persona}\n"
+    f"{message_history }\n"
+    f"{shared.settings['name2_pygmalion']}\n"
+  )
+
+  ai_answer = generate_bot_reply(question)
+  answer = prepare_answer(ai_answer, question)
   await msg.reply(answer)
+  msg.stop_propagation()
