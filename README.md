@@ -41,7 +41,7 @@ The recommended installation methods are the following:
 * Linux and MacOS: using conda natively.
 * Windows: using conda on WSL ([WSL installation guide](https://github.com/oobabooga/text-generation-webui/wiki/Windows-Subsystem-for-Linux-(Ubuntu)-Installation-Guide)).
 
-Conda can be downloaded here: https://docs.conda.io/en/latest/miniconda.html
+Conda can be downloaded here: <https://docs.conda.io/en/latest/miniconda.html>
 
 On Linux or WSL, it can be automatically installed with these two commands:
 
@@ -50,7 +50,7 @@ curl -sL "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh"
 bash Miniconda3.sh
 ```
 
-Source: https://educe-ubc.github.io/conda.html
+Source: <https://educe-ubc.github.io/conda.html>
 
 #### 1. Create a new conda environment
 
@@ -67,10 +67,9 @@ conda activate textgen
 | Linux | AMD | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.4.2` |
 | MacOS + MPS (untested) | Any | `pip3 install torch torchvision torchaudio` |
 
-The up to date commands can be found here: https://pytorch.org/get-started/locally/. 
+The up to date commands can be found here: <https://pytorch.org/get-started/locally/>.
 
-MacOS users, refer to the comments here: https://github.com/oobabooga/text-generation-webui/pull/393
-
+MacOS users, refer to the comments here: <https://github.com/oobabooga/text-generation-webui/pull/393>
 
 #### 3. Install the web UI
 
@@ -81,8 +80,10 @@ pip install -r requirements.txt
 ```
 
 > **Note**
-> 
-> For bitsandbytes and `--load-in-8bit` to work on Linux/WSL, this dirty fix is currently necessary: https://github.com/oobabooga/text-generation-webui/issues/400#issuecomment-1474876859
+>
+> For bitsandbytes and `--load-in-8bit` to work on Linux/WSL, this dirty fix is currently necessary: <https://github.com/oobabooga/text-generation-webui/issues/400#issuecomment-1474876859>
+>
+> Also, the generation of GPU device matters. Bitsandbytes is currently built for GPU devices of 2018 vintage and newer. If you have an older device of the maxwell, pascal generation you may find a fix here: <https://github.com/james-things/bitsandbytes-prebuilt-all_arch>
 
 ### Alternative: native Windows installation
 
@@ -97,15 +98,15 @@ As an alternative to the recommended WSL method, you can install the web UI nati
 Just download the zip above, extract it, and double click on "install". The web UI and all its dependencies will be installed in the same folder.
 
 * To download a model, double click on "download-model"
-* To start the web UI, double click on "start-webui" 
+* To start the web UI, double click on "start-webui"
 
-Source codes: https://github.com/oobabooga/one-click-installers
+Source codes: <https://github.com/oobabooga/one-click-installers>
 
-This method lags behind the newest developments and does not support 8-bit mode on Windows without additional set up: https://github.com/oobabooga/text-generation-webui/issues/147#issuecomment-1456040134, https://github.com/oobabooga/text-generation-webui/issues/20#issuecomment-1411650652
+This method lags behind the newest developments and does not support 8-bit mode on Windows without additional set up: <https://github.com/oobabooga/text-generation-webui/issues/147#issuecomment-1456040134>, <https://github.com/oobabooga/text-generation-webui/issues/20#issuecomment-1411650652>
 
 ### Alternative: Docker
 
-https://github.com/oobabooga/text-generation-webui/issues/174, https://github.com/oobabooga/text-generation-webui/issues/87
+<https://github.com/oobabooga/text-generation-webui/issues/174>, <https://github.com/oobabooga/text-generation-webui/issues/87>
 
 ## Downloading models
 
@@ -156,11 +157,9 @@ python download-model.py EleutherAI/gpt-j-6B --text-only
     cd text-generation-webui
     python server.py
 
-Then browse to 
+Then browse to
 
 `http://localhost:7860/?__theme=dark`
-
-
 
 Optionally, you can use the following command-line flags:
 
@@ -226,7 +225,7 @@ Before reporting a bug, make sure that you have:
 
 ## Credits
 
-- Gradio dropdown menu refresh button, code for reloading the interface: https://github.com/AUTOMATIC1111/stable-diffusion-webui
-- Verbose preset: Anonymous 4chan user.
-- NovelAI and KoboldAI presets: https://github.com/KoboldAI/KoboldAI-Client/wiki/Settings-Presets
-- Pygmalion preset, code for early stopping in chat mode, code for some of the sliders, --chat mode colors: https://github.com/PygmalionAI/gradio-ui/
+* Gradio dropdown menu refresh button, code for reloading the interface: <https://github.com/AUTOMATIC1111/stable-diffusion-webui>
+* Verbose preset: Anonymous 4chan user.
+* NovelAI and KoboldAI presets: <https://github.com/KoboldAI/KoboldAI-Client/wiki/Settings-Presets>
+* Pygmalion preset, code for early stopping in chat mode, code for some of the sliders, --chat mode colors: <https://github.com/PygmalionAI/gradio-ui/>
