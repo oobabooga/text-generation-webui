@@ -8,7 +8,7 @@ def get_creds(path) -> dict[str, str]:
   credentials_path=f'{path}/credentials'
 
   if not os.path.isfile(credentials_path):
-    raise Exception(t['error']['credential_file']['not_found'].replace('/path/', path))
+    raise Exception(t('error.credential_file.not_found', {'/path/': path}))
 
   creds: dict[str, str] = {}
 
@@ -22,6 +22,6 @@ def get_creds(path) -> dict[str, str]:
         creds[line[0]] = line[1]
 
   if len(creds.keys()) < 3:
-    raise Exception(t['error']['credential_file']['is_invalid'])
+    raise Exception(t('error.credential_file.is_invalid'))
 
   return creds
