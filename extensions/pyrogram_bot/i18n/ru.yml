@@ -1,0 +1,20 @@
+message:
+model:
+  index: "Установленные модели:\n\n"
+  get: "В данный момент используется модель: **/name/**"
+  put:
+    succesful: "Модель изменена на: **/name/**"
+    failed: "При изменении модели произошла ошибка"
+
+character:
+  index: "Установленные персонажи:\n\n"
+  get: "В данный момент используется персонаж: **/name/**"
+  put:
+    succesful: "Персонаж изменена на: **/name/**"
+    failed: "При изменении персонажа произошла ошибка"
+
+error:
+  dependencies_not_installed: "Необходимые зависимости не установлены. Пройдите в папку /path/ и запустите `pip install -r requirements.txt`"
+  credential_file:
+    not_found: "Файл с реквизитами не найден. Пройдите в папку /path/ запустите `cp credentials.example credentials` и заполните необходимой информацией."
+    is_invalid: "Реквизиты невалидны. Пожалуйста проверьте или получите новые:\n    Telegram API key и API hash по этой ссылке: https://my.telegram.org/apps\n    Bot token от telegram бота BotFather\n"
