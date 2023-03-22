@@ -1,0 +1,17 @@
+version: "3.3"  # optional since v1.27.0
+services:
+  text-generation-webui:
+    build: .
+    ports:
+      - "8889:8888"
+    stdin_open: true
+    tty: true
+    volumes:
+      - .:/app
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['0']
+              capabilities: [gpu]
