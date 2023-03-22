@@ -1,4 +1,5 @@
-message: {}
+message:
+  wait_for_reply: "Please wait, I will answer soon~"
 model:
   index: "Present models:\n\n"
   get: "At present moment using model: **/name/**"

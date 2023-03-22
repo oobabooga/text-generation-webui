@@ -57,10 +57,6 @@ async def prepare_message_history(app: Client, msg: Message) -> str:
   messages = [x for x in messages if x]
   question = '\n'.join(messages)
 
-
-  print('+++++++++++++++++++++++++++++++++++++++++++++++++', flush=True)
-  print(question, flush=True)
-  print('+++++++++++++++++++++++++++++++++++++++++++++++++', flush=True)
   return question
 
 def replace_all(string: str, replaceable: dict[str, str]) -> str:
@@ -87,9 +83,6 @@ def prepare_char_persona() -> str:
     f"{dialogues}"
   )
 
-  print('=================================================', flush=True)
-  print(prompt, flush=True)
-  print('=================================================', flush=True)
   return prompt
 
 def prepare_answer(answer: str, question: str) -> str:
@@ -118,12 +111,14 @@ def generate_bot_reply(question: str) -> str:
     length_penalty = 1,
     early_stopping = False,
   ):
+    print(a, flush=True)
     answer = a
 
   return answer
 
-@Client.on_message(filters.chat(-1001278730263), group=999)
+@Client.on_message(filters.chat(-1001957763023), group=999)
 async def send_reply(app: Client, msg: Message) -> None:
+  new_msg = await msg.reply(t('message.wait_for_reply'))
   persona = prepare_char_persona()
   message_history = await prepare_message_history(app, msg)
 
@@ -135,5 +130,5 @@ async def send_reply(app: Client, msg: Message) -> None:
 
   ai_answer = generate_bot_reply(question)
   answer = prepare_answer(ai_answer, question)
-  await msg.reply(answer)
+  new_msg.edit(answer)
   msg.stop_propagation()
