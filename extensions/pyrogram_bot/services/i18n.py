@@ -5,7 +5,7 @@ from typing import Callable, NewType
 
 root_folder = dirname(dirname(__file__))
 
-def get_i18n(lang = 'ru') -> Callable[[str, dict[str, str]], str]:
+def get_i18n(lang = 'en') -> Callable[[str, dict[str, str]], str]:
   file_path = f"{root_folder}/i18n/{lang}.yml"
 
   dict_parsed = {}
