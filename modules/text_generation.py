@@ -99,7 +99,7 @@ def set_manual_seed(seed):
         if torch.cuda.is_available():
             torch.cuda.manual_seed_all(seed)
 
-def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, eos_token=None, stopping_string=None):
+def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, eos_token=None, stopping_strings=None):
     clear_torch_cache()
     set_manual_seed(seed)
     t0 = time.time()
@@ -142,9 +142,8 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
     if eos_token is not None:
         eos_token_ids.append(int(encode(eos_token)[0][-1]))
     stopping_criteria_list = transformers.StoppingCriteriaList()
-    if stopping_string is not None:
-        # Copied from https://github.com/PygmalionAI/gradio-ui/blob/master/src/model.py
-        t = encode(stopping_string, 0, add_special_tokens=False)
+    if type(stopping_strings) is list and len(stopping_strings) > 0:
+        t = [encode(string, 0, add_special_tokens=False) for string in stopping_strings]
         stopping_criteria_list.append(_SentinelTokenStoppingCriteria(sentinel_token_ids=t, starting_idx=len(input_ids[0])))
 
     generate_params = {}
