@@ -1,5 +1,5 @@
 message:
-  wait_for_reply: "Please wait, I will answer soon~"
+  is_typing: "Is typing..."
 model:
   index: "Present models:\n\n"
   get: "At present moment using model: **/name/**"
