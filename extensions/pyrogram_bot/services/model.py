@@ -2,6 +2,7 @@ from os import getcwd, listdir
 from os.path import dirname, join, isdir
 
 from modules import shared
+from server import load_model_wrapper
 
 from .i18n import get_i18n
 
@@ -26,14 +27,13 @@ def get_models() -> list[str]:
 
   return models
 
-def set_model(input_char_name: str) -> bool:
-  char_filename = input_char_name+'.json'
-  char_path = join(getcwd(), 'characters')
-  char_exists = char_filename in listdir(char_path)
+def set_model(input_model_name: str) -> bool:
+  model_path = join(getcwd(), 'models')
+  model_exists = input_model_name in listdir(model_path)
 
   status = False
-  if char_exists:
-    shared.character = input_char_name
+  if model_exists:
+    load_model_wrapper(input_model_name)
     status = True
 
   return status
