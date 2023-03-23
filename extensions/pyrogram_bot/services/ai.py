@@ -5,14 +5,14 @@ from json import loads as parse
 
 from modules import shared, text_generation
 
-from ..src.i18n import get_i18n
+from .i18n import get_i18n
 
 root_path = dirname(dirname(__file__))
 
 t = get_i18n()
 
 try:
-  from pyrogram import Client, filters
+  from pyrogram import Client
   from pyrogram.types import Message, User
 except:
   raise ModuleNotFoundError(t('error.dependencies_not_installed', {'/path/': root_path}))
@@ -116,19 +116,9 @@ def generate_bot_reply(question: str) -> str:
 
   return answer
 
-@Client.on_message(filters.chat(-1001957763023), group=999)
-async def send_reply(app: Client, msg: Message) -> None:
-  new_msg = await msg.reply(t('message.wait_for_reply'))
-  persona = prepare_char_persona()
-  message_history = await prepare_message_history(app, msg)
-
-  question = (
+def prepare_ai_prompt(persona:str, message_history: str) -> str:
+  return (
     f"{persona}\n"
-    f"{message_history }\n"
+    f"{message_history}\n"
     f"{shared.settings['name2_pygmalion']}\n"
   )
-
-  ai_answer = generate_bot_reply(question)
-  answer = prepare_answer(ai_answer, question)
-  new_msg.edit(answer)
-  msg.stop_propagation()
