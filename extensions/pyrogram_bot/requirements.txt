@@ -1,6 +1,10 @@
+# Pyrogram
 pysocks==1.7.1
 pyaes==1.6.1
 TgCrypto==1.2.5
 Pyrogram==2.0.102
+
+# Other libs
 uvloop==0.17.0
 PyYAML==6.0
+python-dotenv==1.0.0
