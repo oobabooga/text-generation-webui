@@ -1,6 +1,8 @@
 message:
   is_typing: "Is typing..."
+
 model:
+  is: "Model"
   index: "Present models:\n\n"
   get: "At present moment using model: **/name/**"
   put:
@@ -8,11 +10,18 @@ model:
     failed: "Failed to change model"
 
 character:
+  is: "Character"
   index: "Present characters:\n\n"
   get: "At present moment using character: **/name/**"
   put:
     succesful: "Character chaged succesfully to: **/name/**"
     failed: "Failed to change model"
+
+lang:
+  is: "Language"
+  en: "English"
+  ru: "Russian"
+
 error:
   dependencies_not_installed: "Mandatory dependencies not installed. Come to /path/ and run `pip install -r requirements.txt`"
   credential_file:
