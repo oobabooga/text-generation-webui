@@ -72,19 +72,20 @@ def extract_message_from_reply(question, reply, name1, name2, check, impersonate
         if len(lines) > 1:
             next_character_found = True
     else:
-        idx = reply.find(f"\n{asker}:")
-        if idx != -1:
-            reply = reply[:idx]
-            next_character_found = True
-        reply = fix_newlines(reply)
+        for string in [f"\n{asker}:", f"\n{replier}:"]:
+            idx = reply.find(string)
+            if idx != -1:
+                reply = reply[:idx]
+                next_character_found = True
+            reply = fix_newlines(reply)
 
         # If something like "\nYo" is generated just before "\nYou:"
         # is completed, trim it
-        next_turn = f"\n{asker}:"
-        for j in range(len(next_turn)-1, 0, -1):
-            if reply[-j:] == next_turn[:j]:
-                reply = reply[:-j]
-                break
+        for next_turn in [f"\n{asker}:", f"\n{replier}:"]:
+            for j in range(len(next_turn)-1, 0, -1):
+                if reply[-j:] == next_turn[:j]:
+                    reply = reply[:-j]
+                    break
 
     return reply, next_character_found
 
@@ -127,7 +128,7 @@ def chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical
     # Generate
     reply = ''
     for i in range(chat_generation_attempts):
-        for reply in generate_reply(f"{prompt}{' ' if len(reply) > 0 else ''}{reply}", max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, eos_token=eos_token, stopping_string=f"\n{name1}:"):
+        for reply in generate_reply(f"{prompt}{' ' if len(reply) > 0 else ''}{reply}", max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, eos_token=eos_token, stopping_strings=[f"\n{name1}:", f"\n{name2}:"]):
 
             # Extracting the reply
             reply, next_character_found = extract_message_from_reply(prompt, reply, name1, name2, check)
@@ -166,7 +167,7 @@ def impersonate_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typ
     # Yield *Is typing...*
     yield shared.processing_message
     for i in range(chat_generation_attempts):
-        for reply in generate_reply(prompt+reply, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, eos_token=eos_token, stopping_string=f"\n{name2}:"):
+        for reply in generate_reply(prompt+reply, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, eos_token=eos_token, stopping_strings=[f"\n{name1}:", f"\n{name2}:"]):
             reply, next_character_found = extract_message_from_reply(prompt, reply, name1, name2, check, impersonate=True)
             yield reply
             if next_character_found:
