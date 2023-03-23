@@ -220,6 +220,7 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
             if not (shared.args.chat or shared.args.cai_chat):
                 yield formatted_outputs(original_question, shared.model_name)
             with generate_with_streaming(**generate_params) as generator:
+                reply = ''
                 for output in generator:
                     if shared.soft_prompt:
                         output = torch.cat((input_ids[0], output[filler_input_ids.shape[1]:]))

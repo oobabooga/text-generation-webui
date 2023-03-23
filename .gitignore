@@ -8,6 +8,7 @@ loras/*
 models/*
 softprompts/*
 torch-dumps/*
+repositories/*
 *pycache*
 */*pycache*
 */*/pycache*
