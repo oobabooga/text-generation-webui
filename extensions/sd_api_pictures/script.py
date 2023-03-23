@@ -1,14 +1,14 @@
 import base64
 import io
+import re
 from pathlib import Path
 
 import gradio as gr
+import modules.chat as chat
+import modules.shared as shared
 import requests
 import torch
 from PIL import Image
-
-import modules.chat as chat
-import modules.shared as shared
 
 torch._C._jit_set_profiling_mode(False)
 
@@ -31,14 +31,9 @@ picture_response = False # specifies if the next model response should appear as
 pic_id = 0
 
 def remove_surrounded_chars(string):
-    new_string = ""
-    in_star = False
-    for char in string:
-        if char == '*':
-            in_star = not in_star
-        elif not in_star:
-            new_string += char
-    return new_string
+    # this expression matches to 'as few symbols as possible (0 upwards) between any asterisks' OR
+    # 'as few symbols as possible (0 upwards) between an asterisk and the end of the string'
+    return re.sub('\*[^\*]*?(\*|$)','',string)
 
 # I don't even need input_hijack for this as visible text will be commited to history as the unmodified string
 def input_modifier(string):
@@ -54,6 +49,8 @@ def input_modifier(string):
     mediums = ['image', 'pic', 'picture', 'photo']
     subjects = ['yourself', 'own']
     lowstr = string.lower()
+
+    # TODO: refactor out to separate handler and also replace detection with a regexp
     if any(command in lowstr for command in commands) and any(case in lowstr for case in mediums): # trigger the generation if a command signature and a medium signature is found
         picture_response = True
         shared.args.no_stream = True                                                               # Disable streaming cause otherwise the SD-generated picture would return as a dud
@@ -91,9 +88,8 @@ def get_SD_pictures(description):
             output_file = Path(f'extensions/sd_api_pictures/outputs/{pic_id:06d}.png')
             image.save(output_file.as_posix())
             pic_id += 1
-        # lower the resolution of received images for the chat, otherwise the history size gets out of control quickly with all the base64 values
-        newsize = (300, 300)
-        image = image.resize(newsize, Image.LANCZOS)
+        # lower the resolution of received images for the chat, otherwise the log size gets out of control quickly with all the base64 values in visible history
+        image.thumbnail((300, 300))
         buffered = io.BytesIO()
         image.save(buffered, format="JPEG")
         buffered.seek(0)
