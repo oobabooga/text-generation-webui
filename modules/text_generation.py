@@ -93,8 +93,15 @@ def clear_torch_cache():
     if not shared.args.cpu:
         torch.cuda.empty_cache()
 
-def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, eos_token=None, stopping_string=None):
+def set_manual_seed(seed):
+    if seed != -1:
+        torch.manual_seed(seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(seed)
+
+def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, eos_token=None, stopping_string=None):
     clear_torch_cache()
+    set_manual_seed(seed)
     t0 = time.time()
 
     # These models are not part of Hugging Face, so we handle them
@@ -129,6 +136,7 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
     input_ids = encode(question, max_new_tokens)
     original_input_ids = input_ids
     output = input_ids[0]
+
     cuda = not any((shared.args.cpu, shared.args.deepspeed, shared.args.flexgen))
     eos_token_ids = [shared.tokenizer.eos_token_id] if shared.tokenizer.eos_token_id is not None else []
     if eos_token is not None:
@@ -139,9 +147,7 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
         t = encode(stopping_string, 0, add_special_tokens=False)
         stopping_criteria_list.append(_SentinelTokenStoppingCriteria(sentinel_token_ids=t, starting_idx=len(input_ids[0])))
 
-    generate_params = {
-        'use_cache': not shared.args.no_cache,
-    }
+    generate_params = {}
     if not shared.args.flexgen:
         generate_params.update({
             "max_new_tokens": max_new_tokens,
@@ -168,6 +174,8 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
             "temperature": temperature,
             "stop": eos_token_ids[-1],
         })
+    if shared.args.no_cache:
+        generate_params.update({"use_cache": False})
     if shared.args.deepspeed:
         generate_params.update({"synced_gpus": True})
     if shared.soft_prompt:
@@ -187,9 +195,12 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
             if shared.soft_prompt:
                 output = torch.cat((input_ids[0], output[filler_input_ids.shape[1]:]))
 
-            reply = decode(output)
             if not (shared.args.chat or shared.args.cai_chat):
-                reply = original_question + apply_extensions(reply[len(question):], "output")
+                new_tokens = len(output) - len(input_ids[0])
+                reply = decode(output[-new_tokens:])
+                reply = original_question + apply_extensions(reply, "output")
+            else:
+                reply = decode(output)
 
             yield formatted_outputs(reply, shared.model_name)
 
@@ -212,10 +223,12 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
                 for output in generator:
                     if shared.soft_prompt:
                         output = torch.cat((input_ids[0], output[filler_input_ids.shape[1]:]))
-                    reply = decode(output)
-
                     if not (shared.args.chat or shared.args.cai_chat):
-                        reply = original_question + apply_extensions(reply[len(question):], "output")
+                        new_tokens = len(output) - len(input_ids[0])
+                        reply = decode(output[-new_tokens:])
+                        reply = original_question + apply_extensions(reply, "output")
+                    else:
+                        reply = decode(output)
 
                     if output[-1] in eos_token_ids:
                         break
@@ -231,10 +244,12 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
                     output = shared.model.generate(**generate_params)[0]
                 if shared.soft_prompt:
                     output = torch.cat((input_ids[0], output[filler_input_ids.shape[1]:]))
-                reply = decode(output)
-
                 if not (shared.args.chat or shared.args.cai_chat):
-                    reply = original_question + apply_extensions(reply[len(question):], "output")
+                    new_tokens = len(output) - len(original_input_ids[0])
+                    reply = decode(output[-new_tokens:])
+                    reply = original_question + apply_extensions(reply, "output")
+                else:
+                    reply = decode(output)
 
                 if np.count_nonzero(np.isin(input_ids[0], eos_token_ids)) < np.count_nonzero(np.isin(output, eos_token_ids)):
                     break
@@ -243,6 +258,10 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
                 input_ids = np.reshape(output, (1, output.shape[0]))
                 if shared.soft_prompt:
                     inputs_embeds, filler_input_ids = generate_softprompt_input_tensors(input_ids)
+                    generate_params.update({"inputs_embeds": inputs_embeds})
+                    generate_params.update({"inputs": filler_input_ids})
+                else:
+                    generate_params.update({"inputs": input_ids})
 
             yield formatted_outputs(reply, shared.model_name)
 
