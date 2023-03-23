@@ -13,7 +13,6 @@ python download-model.py tloen/alpaca-lora-7b
 python server.py --model llama-7b-hf --lora alpaca-lora-7b
 python server.py --model llama-7b-hf --load-in-8bit --lora alpaca-lora-7b
 python server.py --model llama-7b-hf --cpu --lora alpaca-lora-7b
-
 ```
 
 * 4-bit mode doesn't work with LoRAs yet.
