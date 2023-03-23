@@ -7,23 +7,18 @@ Based on https://github.com/tloen/alpaca-lora
 python download-model.py tloen/alpaca-lora-7b
 ```
 
-2. Load the LoRA in 8-bit mode (it only seems to work in 8-bit mode, not sure if that's a bug in [LoRA.py](https://github.com/oobabooga/text-generation-webui/blob/main/modules/LoRA.py) or if it's just how LoRAs work.)
+2. Load the LoRA. 16-bit, 8-bit, and CPU modes work:
 
 ```
+python server.py --model llama-7b-hf --lora alpaca-lora-7b
 python server.py --model llama-7b-hf --load-in-8bit --lora alpaca-lora-7b
-```
-
-------
-
-Observations:
-
-1. CPU mode seems to also work:
-
-```
 python server.py --model llama-7b-hf --cpu --lora alpaca-lora-7b
+
 ```
 
-2. Instead of using the `--lora` command-line flag, you can also select the LoRA in the "Parameters" tab of the interface.
+* 4-bit mode doesn't work with LoRAs yet.
+
+* Instead of using the `--lora` command-line flag, you can also select the LoRA in the "Parameters" tab of the interface.
 
 ## Prompt
 For this particular LoRA, the prompt must be formatted like this:
