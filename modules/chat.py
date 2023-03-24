@@ -34,12 +34,12 @@ def generate_chat_prompt(user_input, max_new_tokens, name1, name2, context, chat
     while i >= 0 and len(encode(''.join(rows), max_new_tokens)[0]) < max_length:
         rows.insert(1, f"{name2}: {shared.history['internal'][i][1].strip()}\n")
         prev_user_input = shared.history['internal'][i][0]
-        if prev_user_input and not shared.history['internal'][i][0] == '<|BEGIN-VISIBLE-CHAT|>':
-            rows.insert(1, f"{name1}: {shared.history['internal'][i][0].strip()}\n")
+        if len(prev_user_input) > 0 and prev_user_input != '<|BEGIN-VISIBLE-CHAT|>':
+            rows.insert(1, f"{name1}: {prev_user_input.strip()}\n")
         i -= 1
 
     if not impersonate:
-        if user_input:
+        if len(user_input) > 0:
             rows.append(f"{name1}: {user_input}\n")
         rows.append(apply_extensions(f"{name2}:", "bot_prefix"))
         limit = 3
