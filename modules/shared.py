@@ -82,6 +82,7 @@ parser.add_argument('--load-in-8bit', action='store_true', help='Load the model 
 parser.add_argument('--load-in-4bit', action='store_true', help='DEPRECATED: use --gptq-bits 4 instead.')
 parser.add_argument('--gptq-bits', type=int, default=0, help='GPTQ: Load a pre-quantized model with specified precision. 2, 3, 4 and 8bit are supported. Currently only works with LLaMA and OPT.')
 parser.add_argument('--gptq-model-type', type=str, help='GPTQ: Model type of pre-quantized model. Currently only LLaMa and OPT are supported.')
+parser.add_argument('--gptq-group-size', type=int, default=-1, help='GPTQ: Group size.')
 parser.add_argument('--gptq-pre-layer', type=int, default=0, help='GPTQ: The number of layers to preload.')
 parser.add_argument('--bf16', action='store_true', help='Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU.')
 parser.add_argument('--auto-devices', action='store_true', help='Automatically split the model across the available GPU(s) and CPU.')
