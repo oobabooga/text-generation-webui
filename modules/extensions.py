@@ -1,3 +1,5 @@
+import traceback
+
 import gradio as gr
 
 import extensions
@@ -18,6 +20,7 @@ def load_extensions():
                 print('Ok.')
             except:
                 print('Fail.')
+                traceback.print_exc()
 
 # This iterator returns the extensions in the order specified in the command-line
 def iterator():
@@ -38,6 +41,7 @@ def apply_extensions(text, typ):
 
 def create_extensions_block():
     global setup_called
+
     # Updating the default values
     for extension, name in iterator():
         if hasattr(extension, 'params'):
@@ -47,6 +51,7 @@ def create_extensions_block():
                     extension.params[param] = shared.settings[_id]
 
     should_display_ui = False
+
     # Running setup function
     if not setup_called:
         for extension, name in iterator():
