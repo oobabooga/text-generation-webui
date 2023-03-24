@@ -3,11 +3,11 @@ services:
   text-generation-webui:
     build: .
     ports:
-      - "8889:8888"
+      - "7860:7860"
     stdin_open: true
     tty: true
     volumes:
-      - .:/app
+      - ./models:/app/models
     deploy:
       resources:
         reservations:
