@@ -1,6 +1,8 @@
+import re
 from pathlib import Path
 
 import gradio as gr
+import modules.shared as shared
 from elevenlabslib import ElevenLabsUser
 from elevenlabslib.helpers import save_bytes_to_path
 
@@ -15,7 +17,10 @@ wav_idx = 0
 user = ElevenLabsUser(params['api_key'])
 user_info = None
 
-
+if not shared.args.no_stream:
+    print("Please add --no-stream. This extension is not meant to be used with streaming.")
+    raise ValueError
+    
 # Check if the API is valid and refresh the UI accordingly.
 def check_valid_api():
     
@@ -47,14 +52,9 @@ def refresh_voices():
         return
 
 def remove_surrounded_chars(string):
-    new_string = ""
-    in_star = False
-    for char in string:
-        if char == '*':
-            in_star = not in_star
-        elif not in_star:
-            new_string += char
-    return new_string
+    # this expression matches to 'as few symbols as possible (0 upwards) between any asterisks' OR
+    # 'as few symbols as possible (0 upwards) between an asterisk and the end of the string'
+    return re.sub('\*[^\*]*?(\*|$)','',string)
 
 def input_modifier(string):
     """

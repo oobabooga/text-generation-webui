@@ -1,3 +1,5 @@
+import traceback
+
 import gradio as gr
 
 import extensions
@@ -5,6 +7,7 @@ import modules.shared as shared
 
 state = {}
 available_extensions = []
+setup_called = False
 
 def load_extensions():
     global state
@@ -17,6 +20,7 @@ def load_extensions():
                 print('Ok.')
             except:
                 print('Fail.')
+                traceback.print_exc()
 
 # This iterator returns the extensions in the order specified in the command-line
 def iterator():
@@ -36,6 +40,8 @@ def apply_extensions(text, typ):
     return text
 
 def create_extensions_block():
+    global setup_called
+
     # Updating the default values
     for extension, name in iterator():
         if hasattr(extension, 'params'):
@@ -44,8 +50,19 @@ def create_extensions_block():
                 if _id in shared.settings:
                     extension.params[param] = shared.settings[_id]
 
+    should_display_ui = False
+
+    # Running setup function
+    if not setup_called:
+        for extension, name in iterator():
+            if hasattr(extension, "setup"):
+                extension.setup()
+            if hasattr(extension, "ui"):
+                should_display_ui = True
+        setup_called = True
+
     # Creating the extension ui elements
-    if len(state) > 0:
+    if should_display_ui:
         with gr.Box(elem_id="extensions"):
             gr.Markdown("Extensions")
             for extension, name in iterator():

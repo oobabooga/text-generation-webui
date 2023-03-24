@@ -119,13 +119,13 @@ def load_html_image(paths):
 
 def generate_chat_html(history, name1, name2, character):
     output = f'<style>{cai_css}</style><div class="chat" id="chat">'
-    
+
     img_bot = load_html_image([f"characters/{character}.{ext}" for ext in ['png', 'jpg', 'jpeg']] + ["img_bot.png","img_bot.jpg","img_bot.jpeg"])
     img_me = load_html_image(["img_me.png", "img_me.jpg", "img_me.jpeg"])
 
     for i,_row in enumerate(history[::-1]):
         row = [convert_to_markdown(entry) for entry in _row]
-        
+
         output += f"""
               <div class="message">
                 <div class="circle-bot">
@@ -142,22 +142,24 @@ def generate_chat_html(history, name1, name2, character):
               </div>
             """
 
-        if not (i == len(history)-1 and len(row[0]) == 0):
-            output += f"""
-                  <div class="message">
-                    <div class="circle-you">
-                      {img_me}
-                    </div>
-                    <div class="text">
-                      <div class="username">
-                        {name1}
-                      </div>
-                      <div class="message-body">
-                        {row[0]}
-                      </div>
-                    </div>
+        if len(row[0]) == 0: # don't display empty user messages
+            continue
+
+        output += f"""
+              <div class="message">
+                <div class="circle-you">
+                  {img_me}
+                </div>
+                <div class="text">
+                  <div class="username">
+                    {name1}
                   </div>
-                """
+                  <div class="message-body">
+                    {row[0]}
+                  </div>
+                </div>
+              </div>
+            """
 
     output += "</div>"
     return output

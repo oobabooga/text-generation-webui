@@ -1,11 +1,11 @@
+import re
 import time
 from pathlib import Path
 
 import gradio as gr
-import torch
-
 import modules.chat as chat
 import modules.shared as shared
+import torch
 
 torch._C._jit_set_profiling_mode(False)
 
@@ -46,14 +46,9 @@ def load_model():
 model = load_model()
 
 def remove_surrounded_chars(string):
-    new_string = ""
-    in_star = False
-    for char in string:
-        if char == '*':
-            in_star = not in_star
-        elif not in_star:
-            new_string += char
-    return new_string
+    # this expression matches to 'as few symbols as possible (0 upwards) between any asterisks' OR
+    # 'as few symbols as possible (0 upwards) between an asterisk and the end of the string'
+    return re.sub('\*[^\*]*?(\*|$)','',string)
 
 def remove_tts_from_history(name1, name2):
     for i, entry in enumerate(shared.history['internal']):

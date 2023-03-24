@@ -2,7 +2,9 @@ cache/*
 characters/*
 extensions/silero_tts/outputs/*
 extensions/elevenlabs_tts/outputs/*
+extensions/sd_api_pictures/outputs/*
 logs/*
+loras/*
 models/*
 softprompts/*
 torch-dumps/*
@@ -18,6 +20,7 @@ img_me*
 
 !characters/Example.json
 !characters/Example.png
+!loras/place-your-loras-here.txt
 !models/place-your-models-here.txt
 !softprompts/place-your-softprompts-here.txt
 !torch-dumps/place-your-pt-models-here.txt

@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import time
 import zipfile
 from pathlib import Path
@@ -120,11 +121,12 @@ def load_model(model_name):
                 params["torch_dtype"] = torch.float16
 
             if shared.args.gpu_memory:
-                memory_map = shared.args.gpu_memory
+                memory_map = list(map(lambda x : x.strip(), shared.args.gpu_memory))
+                max_cpu_memory = shared.args.cpu_memory.strip() if shared.args.cpu_memory is not None else '99GiB'
                 max_memory = {}
                 for i in range(len(memory_map)):
-                    max_memory[i] = f'{memory_map[i]}GiB'
-                max_memory['cpu'] = f'{shared.args.cpu_memory or 99}GiB'
+                    max_memory[i] = f'{memory_map[i]}GiB' if not re.match('.*ib$', memory_map[i].lower()) else memory_map[i]
+                max_memory['cpu'] = max_cpu_memory
                 params['max_memory'] = max_memory
             elif shared.args.auto_devices:
                 total_mem = (torch.cuda.get_device_properties(0).total_memory / (1024*1024))
