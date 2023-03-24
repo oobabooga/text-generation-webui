@@ -2,19 +2,26 @@ from pathlib import Path
 
 import modules.shared as shared
 from modules.models import load_model
+from modules.text_generation import clear_torch_cache
 
+
+def reload_model():
+    shared.model = shared.tokenizer = None
+    clear_torch_cache()
+    shared.model, shared.tokenizer = load_model(shared.model_name)
 
 def add_lora_to_model(lora_name):
 
     from peft import PeftModel
 
-    # Is there a more efficient way of returning to the base model?
-    if lora_name == "None":
-        print("Reloading the model to remove the LoRA...")
-        shared.model, shared.tokenizer = load_model(shared.model_name)
-    else:
+    # If a LoRA had been previously loaded, or if we want
+    # to unload a LoRA, reload the model
+    if shared.lora_name != "None" or lora_name == "None":
+        reload_model()
+    shared.lora_name = lora_name
+
+    if lora_name != "None":
         print(f"Adding the LoRA {lora_name} to the model...")
-        
         params = {}
         if not shared.args.cpu:
             params['dtype'] = shared.model.dtype

@@ -116,10 +116,11 @@ def get_download_links_from_huggingface(model, branch):
 
             is_pytorch = re.match("(pytorch|adapter)_model.*\.bin", fname)
             is_safetensors = re.match("model.*\.safetensors", fname)
+            is_pt = re.match(".*\.pt", fname)
             is_tokenizer = re.match("tokenizer.*\.model", fname)
             is_text = re.match(".*\.(txt|json|py)", fname) or is_tokenizer
 
-            if any((is_pytorch, is_safetensors, is_text, is_tokenizer)):
+            if any((is_pytorch, is_safetensors, is_pt, is_tokenizer, is_text)):
                 if is_text:
                     links.append(f"https://huggingface.co/{model}/resolve/{branch}/{fname}")
                     classifications.append('text')
@@ -132,7 +133,8 @@ def get_download_links_from_huggingface(model, branch):
                     elif is_pytorch:
                         has_pytorch = True
                         classifications.append('pytorch')
-
+                    elif is_pt:
+                        classifications.append('pt')
 
         cursor = base64.b64encode(f'{{"file_name":"{dict[-1]["path"]}"}}'.encode()) + b':50'
         cursor = base64.b64encode(cursor)
