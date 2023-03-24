@@ -1,7 +1,6 @@
 @echo off
 
 SET TextOnly=False &REM True or False for Text only mode
-SET ModelName="chansung/alpaca-lora-13b" &REM HuggingFace model repo eg. "facebook/opt-1.3b"
 
 cd /D "%~dp0"
 
@@ -18,11 +17,11 @@ cd text-generation-webui || goto end
 goto %TextOnly%
 
 :False
-call python download-model.py %ModelName%
+call python download-model.py
 goto end
 
 :True
-call python download-model.py %ModelName% --text-only
+call python download-model.py --text-only
 
 :end
 pause
