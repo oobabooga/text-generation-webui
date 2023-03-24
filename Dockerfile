@@ -5,7 +5,7 @@ RUN apt-get update && \
     apt-get install --no-install-recommends -y git ninja-build build-essential python3-dev python3-pip && \
     rm -rf /var/lib/apt/lists/*
 
-RUN pip3 install torch ninja torchvision torchaudio
+RUN --mount=type=cache,target=/root/.cache/pip pip3 install torch ninja torchvision torchaudio
 RUN git clone https://github.com/qwopqwop200/GPTQ-for-LLaMa /build
 
 WORKDIR /build
@@ -13,10 +13,11 @@ WORKDIR /build
 ARG GPTQ_SHA=468c47c01b4fe370616747b6d69a2d3f48bab5e4
 RUN git reset --hard ${GPTQ_SHA}
 
-RUN pip3 install -r requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip pip3 install -r requirements.txt
 
 # https://developer.nvidia.com/cuda-gpus
-ARG TORCH_CUDA_ARCH_LIST="7.5"
+#ARG TORCH_CUDA_ARCH_LIST="7.5"
+ARG TORCH_CUDA_ARCH_LIST="3.5;5.0;6.0;6.1;7.0;7.5;8.0;8.6+PTX"
 RUN python3 setup_cuda.py bdist_wheel -d .
 
 FROM ubuntu:22.04
