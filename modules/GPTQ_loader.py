@@ -14,7 +14,7 @@ import opt
 
 
 def load_quantized(model_name):
-    if not shared.args.gptq_model_type:
+    if not shared.args.model_type:
         # Try to determine model type from model name
         model_type = model_name.split('-')[0].lower()
         if model_type not in ('llama', 'opt'):
@@ -22,10 +22,10 @@ def load_quantized(model_name):
                   "argument")
             exit()
     else:
-        model_type = shared.args.gptq_model_type.lower()
+        model_type = shared.args.model_type.lower()
 
     if model_type == 'llama':
-        if not shared.args.gptq_pre_layer:
+        if not shared.args.pre_layer:
             load_quant = llama.load_quant
         else:
             load_quant = llama_inference_offload.load_quant
@@ -37,15 +37,15 @@ def load_quantized(model_name):
 
     path_to_model = Path(f'models/{model_name}')
     if path_to_model.name.lower().startswith('llama-7b'):
-        pt_model = f'llama-7b-{shared.args.gptq_bits}bit.pt'
+        pt_model = f'llama-7b-{shared.args.wbits}bit.pt'
     elif path_to_model.name.lower().startswith('llama-13b'):
-        pt_model = f'llama-13b-{shared.args.gptq_bits}bit.pt'
+        pt_model = f'llama-13b-{shared.args.wbits}bit.pt'
     elif path_to_model.name.lower().startswith('llama-30b'):
-        pt_model = f'llama-30b-{shared.args.gptq_bits}bit.pt'
+        pt_model = f'llama-30b-{shared.args.wbits}bit.pt'
     elif path_to_model.name.lower().startswith('llama-65b'):
-        pt_model = f'llama-65b-{shared.args.gptq_bits}bit.pt'
+        pt_model = f'llama-65b-{shared.args.wbits}bit.pt'
     else:
-        pt_model = f'{model_name}-{shared.args.gptq_bits}bit.pt'
+        pt_model = f'{model_name}-{shared.args.wbits}bit.pt'
 
     # Try to find the .pt both in models/ and in the subfolder
     pt_path = None
@@ -58,10 +58,10 @@ def load_quantized(model_name):
         exit()
 
     # qwopqwop200's offload
-    if shared.args.gptq_pre_layer:
-        model = load_quant(str(path_to_model), str(pt_path), shared.args.gptq_bits, shared.args.gptq_pre_layer)
+    if shared.args.pre_layer:
+        model = load_quant(str(path_to_model), str(pt_path), shared.args.wbits, shared.args.pre_layer)
     else:
-        model = load_quant(str(path_to_model), str(pt_path), shared.args.gptq_bits)
+        model = load_quant(str(path_to_model), str(pt_path), shared.args.wbits)
 
         # accelerate offload (doesn't work properly)
         if shared.args.gpu_memory:
