@@ -233,9 +233,7 @@ else:
     shared.model_name = available_models[i]
 shared.model, shared.tokenizer = load_model(shared.model_name)
 if shared.args.lora:
-    print(shared.args.lora)
-    shared.lora_name = shared.args.lora
-    add_lora_to_model(shared.lora_name)
+    add_lora_to_model(shared.args.lora)
 
 # Default UI settings
 default_preset = shared.settings['presets'][next((k for k in shared.settings['presets'] if re.match(k.lower(), shared.model_name.lower())), 'default')]
