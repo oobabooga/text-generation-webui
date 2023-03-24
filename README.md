@@ -107,14 +107,25 @@ As an alternative to the recommended WSL method, you can install the web UI nati
 
 ### Alternative: Docker
 
-requirements: docker/docker-compose/buildkit
+dependencies:
 ```bash
+yay -S docker docker-compose buildkit nvidia-container-runtime
+sudo systemctl restart docker # required by nvidia-container-runtime
+```
+
+```bash
+pip3 install tqdm
 python download-model.py --text-only decapoda-research/llama-7b-hf
 cd models/
 wget https://huggingface.co/decapoda-research/llama-7b-hf-int4/resolve/main/llama-7b-4bit.pt
 sed -i 's/LLaMATokenizer/LlamaTokenizer/g' models/llama-7b-hf/tokenizer_config.json
 ```
 
+edit docker-compose values to your needs
+- specify your cuda version ( lookup gfx card: https://developer.nvidia.com/cuda-gpus ) TORCH_CUDA_ARCH_LIST: 7.5
+- CLI_ARGS to specify how to run it
+  - 4GB vram: CLI_ARGS: --model llama-7b-hf --gptq-bits 4 --gptq-pre-layer 20 --listen --auto-devices
+  - 6GB vram: CLI_ARGS: --model llama-7b-hf --gptq-bits 4 --gptq-pre-layer 32 --listen --auto-devices
 ```bash
 docker-compose up
 ```
