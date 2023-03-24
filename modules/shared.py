@@ -52,7 +52,8 @@ settings = {
         'default': 'Common sense questions and answers\n\nQuestion: \nFactual answer:',
         '^(gpt4chan|gpt-4chan|4chan)': '-----\n--- 865467536\nInput text\n--- 865467537\n',
         '(rosey|chip|joi)_.*_instruct.*': 'User: \n',
-        'oasst-*': '<|prompter|>Write a story about future of AI development<|endoftext|><|assistant|>'
+        'oasst-*': '<|prompter|>Write a story about future of AI development<|endoftext|><|assistant|>',
+        'alpaca-*': "Below is an instruction that describes a task. Write a response that appropriately completes the request.\n### Instruction:\nWrite a poem about the transformers Python library. \nMention the word \"large language models\" in that poem.\n### Response:\n",
     },
     'lora_prompts': {
         'default': 'Common sense questions and answers\n\nQuestion: \nFactual answer:',
