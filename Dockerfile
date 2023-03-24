@@ -16,7 +16,7 @@ RUN git reset --hard ${GPTQ_SHA}
 RUN --mount=type=cache,target=/root/.cache/pip pip3 install -r requirements.txt
 
 # https://developer.nvidia.com/cuda-gpus
-#ARG TORCH_CUDA_ARCH_LIST="7.5"
+# for a rtx 2060: ARG TORCH_CUDA_ARCH_LIST="7.5"
 ARG TORCH_CUDA_ARCH_LIST="3.5;5.0;6.0;6.1;7.0;7.5;8.0;8.6+PTX"
 RUN python3 setup_cuda.py bdist_wheel -d .
 

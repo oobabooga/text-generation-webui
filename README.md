@@ -107,7 +107,17 @@ As an alternative to the recommended WSL method, you can install the web UI nati
 
 ### Alternative: Docker
 
-https://github.com/oobabooga/text-generation-webui/issues/174, https://github.com/oobabooga/text-generation-webui/issues/87
+requirements: docker/docker-compose/buildkit
+```bash
+python download-model.py --text-only decapoda-research/llama-7b-hf
+cd models/
+wget https://huggingface.co/decapoda-research/llama-7b-hf-int4/resolve/main/llama-7b-4bit.pt
+sed -i 's/LLaMATokenizer/LlamaTokenizer/g' models/llama-7b-hf/tokenizer_config.json
+```
+
+```bash
+docker-compose up
+```
 
 ## Downloading models
 

@@ -1,7 +1,13 @@
-version: "3.3"  # optional since v1.27.0
+version: "3.3"
 services:
   text-generation-webui:
-    build: .
+    build:
+      context: .
+      args:
+        # specify which cuda version your card supports: https://developer.nvidia.com/cuda-gpus
+        TORCH_CUDA_ARCH_LIST: 7.5
+    environment:
+      CLI_ARGS: --model llama-7b-hf --gptq-bits 4 --gptq-pre-layer 32 --listen --auto-devices
     ports:
       - "7860:7860"
     stdin_open: true
