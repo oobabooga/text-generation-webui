@@ -36,22 +36,27 @@ def load_quantized(model_name):
         exit()
 
     path_to_model = Path(f'models/{model_name}')
-    if path_to_model.name.lower().startswith('llama-7b'):
-        pt_model = f'llama-7b-{shared.args.gptq_bits}bit.pt'
-    elif path_to_model.name.lower().startswith('llama-13b'):
-        pt_model = f'llama-13b-{shared.args.gptq_bits}bit.pt'
-    elif path_to_model.name.lower().startswith('llama-30b'):
-        pt_model = f'llama-30b-{shared.args.gptq_bits}bit.pt'
-    elif path_to_model.name.lower().startswith('llama-65b'):
-        pt_model = f'llama-65b-{shared.args.gptq_bits}bit.pt'
-    else:
-        pt_model = f'{model_name}-{shared.args.gptq_bits}bit.pt'
-
-    # Try to find the .pt both in models/ and in the subfolder
+    found_pts = list(path_to_model.glob("*.pt"))
     pt_path = None
-    for path in [Path(p) for p in [f"models/{pt_model}", f"{path_to_model}/{pt_model}"]]:
-        if path.exists():
-            pt_path = path
+
+    if len(found_pts) == 1:
+        pt_path = found_pts[0]
+    else:
+        if path_to_model.name.lower().startswith('llama-7b'):
+            pt_model = f'llama-7b-{shared.args.gptq_bits}bit.pt'
+        elif path_to_model.name.lower().startswith('llama-13b'):
+            pt_model = f'llama-13b-{shared.args.gptq_bits}bit.pt'
+        elif path_to_model.name.lower().startswith('llama-30b'):
+            pt_model = f'llama-30b-{shared.args.gptq_bits}bit.pt'
+        elif path_to_model.name.lower().startswith('llama-65b'):
+            pt_model = f'llama-65b-{shared.args.gptq_bits}bit.pt'
+        else:
+            pt_model = f'{model_name}-{shared.args.gptq_bits}bit.pt'
+
+        # Try to find the .pt both in models/ and in the subfolder
+        for path in [Path(p) for p in [f"models/{pt_model}", f"{path_to_model}/{pt_model}"]]:
+            if path.exists():
+                pt_path = path
 
     if not pt_path:
         print(f"Could not find {pt_model}, exiting...")
@@ -59,9 +64,9 @@ def load_quantized(model_name):
 
     # qwopqwop200's offload
     if shared.args.gptq_pre_layer:
-        model = load_quant(str(path_to_model), str(pt_path), shared.args.gptq_bits, shared.args.gptq_pre_layer)
+        model = load_quant(str(path_to_model), str(pt_path), shared.args.gptq_bits, shared.args.gptq_pre_layer, 128)
     else:
-        model = load_quant(str(path_to_model), str(pt_path), shared.args.gptq_bits)
+        model = load_quant(str(path_to_model), str(pt_path), shared.args.gptq_bits, 128)
 
         # accelerate offload (doesn't work properly)
         if shared.args.gpu_memory:
