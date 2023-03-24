@@ -51,20 +51,8 @@ def generate_chat_prompt(user_input, max_new_tokens, name1, name2, context, chat
     prompt = ''.join(rows)
     return prompt
 
-def extract_message_from_reply(question, reply, name1, name2, check, impersonate=False):
+def extract_message_from_reply(reply, name1, name2, check):
     next_character_found = False
-
-    asker = name1 if not impersonate else name2
-    replier = name2 if not impersonate else name1
-
-    previous_idx = [m.start() for m in re.finditer(f"(^|\n){re.escape(replier)}:", question)]
-    idx = [m.start() for m in re.finditer(f"(^|\n){re.escape(replier)}:", reply)]
-    idx = idx[max(len(previous_idx)-1, 0)]
-
-    if not impersonate:
-        reply = reply[idx + 1 + len(apply_extensions(f"{replier}:", "bot_prefix")):]
-    else:
-        reply = reply[idx + 1 + len(f"{replier}:"):]
 
     if check:
         lines = reply.split('\n')
@@ -72,21 +60,22 @@ def extract_message_from_reply(question, reply, name1, name2, check, impersonate
         if len(lines) > 1:
             next_character_found = True
     else:
-        for string in [f"\n{asker}:", f"\n{replier}:"]:
+        for string in [f"\n{name1}:", f"\n{name2}:"]:
             idx = reply.find(string)
             if idx != -1:
                 reply = reply[:idx]
                 next_character_found = True
-            reply = fix_newlines(reply)
 
         # If something like "\nYo" is generated just before "\nYou:"
         # is completed, trim it
-        for next_turn in [f"\n{asker}:", f"\n{replier}:"]:
-            for j in range(len(next_turn)-1, 0, -1):
-                if reply[-j:] == next_turn[:j]:
-                    reply = reply[:-j]
-                    break
+        if not next_character_found:
+            for string in [f"\n{name1}:", f"\n{name2}:"]:
+                for j in range(len(string)-1, 0, -1):
+                    if reply[-j:] == string[:j]:
+                        reply = reply[:-j]
+                        break
 
+    reply = fix_newlines(reply)
     return reply, next_character_found
 
 def stop_everything_event():
@@ -131,7 +120,7 @@ def chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical
         for reply in generate_reply(f"{prompt}{' ' if len(reply) > 0 else ''}{reply}", max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, eos_token=eos_token, stopping_strings=[f"\n{name1}:", f"\n{name2}:"]):
 
             # Extracting the reply
-            reply, next_character_found = extract_message_from_reply(prompt, reply, name1, name2, check)
+            reply, next_character_found = extract_message_from_reply(reply, name1, name2, check)
             visible_reply = re.sub("(<USER>|<user>|{{user}})", name1_original, reply)
             visible_reply = apply_extensions(visible_reply, "output")
             if shared.args.chat:
@@ -168,7 +157,7 @@ def impersonate_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typ
     yield shared.processing_message
     for i in range(chat_generation_attempts):
         for reply in generate_reply(prompt+reply, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, eos_token=eos_token, stopping_strings=[f"\n{name1}:", f"\n{name2}:"]):
-            reply, next_character_found = extract_message_from_reply(prompt, reply, name1, name2, check, impersonate=True)
+            reply, next_character_found = extract_message_from_reply(reply, name1, name2, check)
             yield reply
             if next_character_found:
                 break
