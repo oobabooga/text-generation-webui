@@ -101,6 +101,10 @@ Just download the zip above, extract it, and double click on "install". The web 
 
 Source codes: https://github.com/oobabooga/one-click-installers
 
+> **Note**
+> 
+> To get 8-bit and 4-bit models working in your 1-click Windows installation, you can use the [one-click-bandaid](https://github.com/ClayShoaf/oobabooga-one-click-bandaid).
+
 This method lags behind the newest developments and does not support 8-bit mode on Windows without additional set up: https://github.com/oobabooga/text-generation-webui/issues/147#issuecomment-1456040134, https://github.com/oobabooga/text-generation-webui/issues/20#issuecomment-1411650652
 
 ### Alternative: Docker
