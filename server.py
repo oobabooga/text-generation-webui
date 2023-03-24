@@ -60,7 +60,6 @@ def load_model_wrapper(selected_model):
     return selected_model
 
 def load_lora_wrapper(selected_lora):
-    shared.lora_name = selected_lora
     add_lora_to_model(selected_lora)
     default_text = shared.settings['lora_prompts'][next((k for k in shared.settings['lora_prompts'] if re.match(k.lower(), shared.lora_name.lower())), 'default')]
 
