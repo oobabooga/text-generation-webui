@@ -1,5 +1,7 @@
 @echo off
 
+cd /D "%~dp0"
+
 set MAMBA_ROOT_PREFIX=%cd%\installer_files\mamba
 set INSTALL_ENV_DIR=%cd%\installer_files\env
 
