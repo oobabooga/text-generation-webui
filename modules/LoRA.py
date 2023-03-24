@@ -14,7 +14,11 @@ def add_lora_to_model(lora_name):
 
     from peft import PeftModel
 
-    reload_model()
+    # If a LoRA had been previously loaded, or if we want
+    # to unload a LoRA, reload the model
+    if shared.lora_name != "None" or lora_name == "None":
+        reload_model()
+    shared.lora_name = lora_name
 
     if lora_name != "None":
         print(f"Adding the LoRA {lora_name} to the model...")
