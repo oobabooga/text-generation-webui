@@ -64,9 +64,9 @@ def load_quantized(model_name):
 
     # qwopqwop200's offload
     if shared.args.gptq_pre_layer:
-        model = load_quant(str(path_to_model), str(pt_path), shared.args.gptq_bits, 128, shared.args.gptq_pre_layer)
+        model = load_quant(str(path_to_model), str(pt_path), shared.args.gptq_bits, shared.args.gptq_group_size, shared.args.gptq_pre_layer)
     else:
-        model = load_quant(str(path_to_model), str(pt_path), shared.args.gptq_bits, 128)
+        model = load_quant(str(path_to_model), str(pt_path), shared.args.gptq_bits, shared.args.gptq_group_size)
 
         # accelerate offload (doesn't work properly)
         if shared.args.gpu_memory:
