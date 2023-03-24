@@ -5,6 +5,8 @@ from threading import Thread
 import torch
 import transformers
 
+import modules.shared as shared
+
 
 # Copied from https://github.com/PygmalionAI/gradio-ui/
 class _SentinelTokenStoppingCriteria(transformers.StoppingCriteria):
