@@ -50,3 +50,7 @@ ol li p, ul li p {
 #main, #parameters, #chat-settings, #interface-mode, #lora {
   border: 0;
 }
+
+.gradio-container-3-18-0 .prose * h1, h2, h3, h4 {
+  color: white;
+}

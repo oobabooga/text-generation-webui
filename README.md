@@ -84,10 +84,6 @@ pip install -r requirements.txt
 > 
 > For bitsandbytes and `--load-in-8bit` to work on Linux/WSL, this dirty fix is currently necessary: https://github.com/oobabooga/text-generation-webui/issues/400#issuecomment-1474876859
 
-### Alternative: native Windows installation
-
-As an alternative to the recommended WSL method, you can install the web UI natively on Windows using this guide. It will be a lot harder and the performance may be slower: [Installation instructions for human beings](https://github.com/oobabooga/text-generation-webui/wiki/Installation-instructions-for-human-beings).
-
 ### Alternative: one-click installers
 
 [oobabooga-windows.zip](https://github.com/oobabooga/one-click-installers/archive/refs/heads/oobabooga-windows.zip)
@@ -101,7 +97,13 @@ Just download the zip above, extract it, and double click on "install". The web 
 
 Source codes: https://github.com/oobabooga/one-click-installers
 
-This method lags behind the newest developments and does not support 8-bit mode on Windows without additional set up: https://github.com/oobabooga/text-generation-webui/issues/147#issuecomment-1456040134, https://github.com/oobabooga/text-generation-webui/issues/20#issuecomment-1411650652
+> **Note**
+> 
+> To get 8-bit and 4-bit models working in your 1-click Windows installation, you can use the [one-click-bandaid](https://github.com/ClayShoaf/oobabooga-one-click-bandaid).
+
+### Alternative: native Windows installation
+
+As an alternative to the recommended WSL method, you can install the web UI natively on Windows using this guide. It will be a lot harder and the performance may be slower: [Installation instructions for human beings](https://github.com/oobabooga/text-generation-webui/wiki/Installation-instructions-for-human-beings).
 
 ### Alternative: Docker
 
@@ -175,15 +177,17 @@ Optionally, you can use the following command-line flags:
 | `--cpu`          | Use the CPU to generate text.|
 | `--load-in-8bit` | Load the model with 8-bit precision.|
 | `--load-in-4bit` | DEPRECATED: use `--gptq-bits 4` instead. |
-| `--gptq-bits GPTQ_BITS` |  Load a pre-quantized model with specified precision. 2, 3, 4 and 8 (bit) are supported. Currently only works with LLaMA and OPT. |
-| `--gptq-model-type MODEL_TYPE` |  Model type of pre-quantized model. Currently only LLaMa and OPT are supported. |
+| `--gptq-bits GPTQ_BITS` |  GPTQ: Load a pre-quantized model with specified precision. 2, 3, 4 and 8 (bit) are supported. Currently only works with LLaMA and OPT. |
+| `--gptq-model-type MODEL_TYPE` |  GPTQ: Model type of pre-quantized model. Currently only LLaMa and OPT are supported. |
+| `--gptq-pre-layer GPTQ_PRE_LAYER` |  GPTQ: The number of layers to preload. |
 | `--bf16`         | Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU. |
 | `--auto-devices` | Automatically split the model across the available GPU(s) and CPU.|
 | `--disk`         | If the model is too large for your GPU(s) and CPU combined, send the remaining layers to the disk. |
 | `--disk-cache-dir DISK_CACHE_DIR` | Directory to save the disk cache to. Defaults to `cache/`. |
-|  `--gpu-memory GPU_MEMORY [GPU_MEMORY ...]` |  Maxmimum GPU memory in GiB to be allocated per GPU. Example: `--gpu-memory 10` for a single GPU, `--gpu-memory 10 5` for two GPUs. |
+|  `--gpu-memory GPU_MEMORY [GPU_MEMORY ...]` |  Maxmimum GPU memory in GiB to be allocated per GPU. Example: `--gpu-memory 10` for a single GPU, `--gpu-memory 10 5` for two GPUs. You can also set values in MiB like `--gpu-memory 3500MiB`. |
 | `--cpu-memory CPU_MEMORY` | Maximum CPU memory in GiB to allocate for offloaded weights. Must be an integer number. Defaults to 99.|
-| `--flexgen`      |         Enable the use of FlexGen offloading. |
+| `--no-cache`     | Set `use_cache` to False while generating text. This reduces the VRAM usage a bit with a performance cost. |
+| `--flexgen`      | Enable the use of FlexGen offloading. |
 |  `--percent PERCENT [PERCENT ...]` |  FlexGen: allocation percentages. Must be 6 numbers separated by spaces (default: 0, 100, 100, 0, 100, 0). |
 |  `--compress-weight` |  FlexGen: Whether to compress weight (default: False).|
 |  `--pin-weight [PIN_WEIGHT]` |       FlexGen: whether to pin weights (setting this to False reduces CPU memory by 20%). |
@@ -201,7 +205,7 @@ Optionally, you can use the following command-line flags:
 | `--auto-launch`  | Open the web UI in the default browser upon launch. |
 | `--verbose`      | Print the prompts to the terminal. |
 
-Out of memory errors? [Check this guide](https://github.com/oobabooga/text-generation-webui/wiki/Low-VRAM-guide).
+Out of memory errors? [Check the low VRAM guide](https://github.com/oobabooga/text-generation-webui/wiki/Low-VRAM-guide).
 
 ## Presets
 

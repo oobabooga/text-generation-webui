@@ -57,6 +57,7 @@ class Handler(BaseHTTPRequestHandler):
                 penalty_alpha=0, 
                 length_penalty=1,
                 early_stopping=False,
+                seed=-1,
             )
 
             answer = ''

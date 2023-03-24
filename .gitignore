@@ -2,6 +2,7 @@ cache/*
 characters/*
 extensions/silero_tts/outputs/*
 extensions/elevenlabs_tts/outputs/*
+extensions/sd_api_pictures/outputs/*
 logs/*
 loras/*
 models/*

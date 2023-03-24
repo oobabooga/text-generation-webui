@@ -51,20 +51,8 @@ def generate_chat_prompt(user_input, max_new_tokens, name1, name2, context, chat
     prompt = ''.join(rows)
     return prompt
 
-def extract_message_from_reply(question, reply, name1, name2, check, impersonate=False):
+def extract_message_from_reply(reply, name1, name2, check):
     next_character_found = False
-
-    asker = name1 if not impersonate else name2
-    replier = name2 if not impersonate else name1
-
-    previous_idx = [m.start() for m in re.finditer(f"(^|\n){re.escape(replier)}:", question)]
-    idx = [m.start() for m in re.finditer(f"(^|\n){re.escape(replier)}:", reply)]
-    idx = idx[max(len(previous_idx)-1, 0)]
-
-    if not impersonate:
-        reply = reply[idx + 1 + len(apply_extensions(f"{replier}:", "bot_prefix")):]
-    else:
-        reply = reply[idx + 1 + len(f"{replier}:"):]
 
     if check:
         lines = reply.split('\n')
@@ -72,26 +60,28 @@ def extract_message_from_reply(question, reply, name1, name2, check, impersonate
         if len(lines) > 1:
             next_character_found = True
     else:
-        idx = reply.find(f"\n{asker}:")
-        if idx != -1:
-            reply = reply[:idx]
-            next_character_found = True
-        reply = fix_newlines(reply)
+        for string in [f"\n{name1}:", f"\n{name2}:"]:
+            idx = reply.find(string)
+            if idx != -1:
+                reply = reply[:idx]
+                next_character_found = True
 
         # If something like "\nYo" is generated just before "\nYou:"
         # is completed, trim it
-        next_turn = f"\n{asker}:"
-        for j in range(len(next_turn)-1, 0, -1):
-            if reply[-j:] == next_turn[:j]:
-                reply = reply[:-j]
-                break
+        if not next_character_found:
+            for string in [f"\n{name1}:", f"\n{name2}:"]:
+                for j in range(len(string)-1, 0, -1):
+                    if reply[-j:] == string[:j]:
+                        reply = reply[:-j]
+                        break
 
+    reply = fix_newlines(reply)
     return reply, next_character_found
 
 def stop_everything_event():
     shared.stop_everything = True
 
-def chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, chat_prompt_size, chat_generation_attempts=1, regenerate=False):
+def chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, name1, name2, context, check, chat_prompt_size, chat_generation_attempts=1, regenerate=False):
     shared.stop_everything = False
     just_started = True
     eos_token = '\n' if check else None
@@ -125,12 +115,13 @@ def chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical
         yield shared.history['visible']+[[visible_text, shared.processing_message]]
 
     # Generate
-    reply = ''
+    cumulative_reply = ''
     for i in range(chat_generation_attempts):
-        for reply in generate_reply(f"{prompt}{' ' if len(reply) > 0 else ''}{reply}", max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, eos_token=eos_token, stopping_string=f"\n{name1}:"):
+        for reply in generate_reply(f"{prompt}{' ' if len(cumulative_reply) > 0 else ''}{cumulative_reply}", max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, eos_token=eos_token, stopping_strings=[f"\n{name1}:", f"\n{name2}:"]):
+            reply = cumulative_reply + reply
 
             # Extracting the reply
-            reply, next_character_found = extract_message_from_reply(prompt, reply, name1, name2, check)
+            reply, next_character_found = extract_message_from_reply(reply, name1, name2, check)
             visible_reply = re.sub("(<USER>|<user>|{{user}})", name1_original, reply)
             visible_reply = apply_extensions(visible_reply, "output")
             if shared.args.chat:
@@ -152,9 +143,11 @@ def chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical
             if next_character_found:
                 break
 
+        cumulative_reply = reply
+
     yield shared.history['visible']
 
-def impersonate_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, chat_prompt_size, chat_generation_attempts=1):
+def impersonate_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, name1, name2, context, check, chat_prompt_size, chat_generation_attempts=1):
     eos_token = '\n' if check else None
 
     if 'pygmalion' in shared.model_name.lower():
@@ -162,22 +155,27 @@ def impersonate_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typ
 
     prompt = generate_chat_prompt(text, max_new_tokens, name1, name2, context, chat_prompt_size, impersonate=True)
 
-    reply = ''
     # Yield *Is typing...*
     yield shared.processing_message
+
+    cumulative_reply = ''
     for i in range(chat_generation_attempts):
-        for reply in generate_reply(prompt+reply, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, eos_token=eos_token, stopping_string=f"\n{name2}:"):
-            reply, next_character_found = extract_message_from_reply(prompt, reply, name1, name2, check, impersonate=True)
+        for reply in generate_reply(f"{prompt}{' ' if len(cumulative_reply) > 0 else ''}{cumulative_reply}", max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, eos_token=eos_token, stopping_strings=[f"\n{name1}:", f"\n{name2}:"]):
+            reply = cumulative_reply + reply
+            reply, next_character_found = extract_message_from_reply(reply, name1, name2, check)
             yield reply
             if next_character_found:
                 break
-        yield reply
 
-def cai_chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, chat_prompt_size, chat_generation_attempts=1):
-    for _history in chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, chat_prompt_size, chat_generation_attempts):
+        cumulative_reply = reply
+
+    yield reply
+
+def cai_chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, name1, name2, context, check, chat_prompt_size, chat_generation_attempts=1):
+    for _history in chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, name1, name2, context, check, chat_prompt_size, chat_generation_attempts):
         yield generate_chat_html(_history, name1, name2, shared.character)
 
-def regenerate_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, chat_prompt_size, chat_generation_attempts=1):
+def regenerate_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, name1, name2, context, check, chat_prompt_size, chat_generation_attempts=1):
     if (shared.character != 'None' and len(shared.history['visible']) == 1) or len(shared.history['internal']) == 0:
         yield generate_chat_output(shared.history['visible'], name1, name2, shared.character)
     else:
@@ -185,7 +183,7 @@ def regenerate_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typi
         last_internal = shared.history['internal'].pop()
         # Yield '*Is typing...*'
         yield generate_chat_output(shared.history['visible']+[[last_visible[0], shared.processing_message]], name1, name2, shared.character)
-        for _history in chatbot_wrapper(last_internal[0], max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, name1, name2, context, check, chat_prompt_size, chat_generation_attempts, regenerate=True):
+        for _history in chatbot_wrapper(last_internal[0], max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, name1, name2, context, check, chat_prompt_size, chat_generation_attempts, regenerate=True):
             if shared.args.cai_chat:
                 shared.history['visible'][-1] = [last_visible[0], _history[-1][1]]
             else:
