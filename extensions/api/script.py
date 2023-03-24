@@ -1,8 +1,9 @@
+import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
+
 from modules import shared
-from modules.text_generation import generate_reply, encode
-import json
+from modules.text_generation import encode, generate_reply
 
 params = {
     'port': 5000,
