@@ -104,20 +104,32 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
     set_manual_seed(seed)
     t0 = time.time()
 
+    original_question = question
+    if not (shared.args.chat or shared.args.cai_chat):
+        question = apply_extensions(question, "input")
+    if shared.args.verbose:
+        print(f"\n\n{question}\n--------------------\n")
+
     # These models are not part of Hugging Face, so we handle them
     # separately and terminate the function call earlier
     if shared.is_RWKV:
         try:
             if shared.args.no_stream:
                 reply = shared.model.generate(context=question, token_count=max_new_tokens, temperature=temperature, top_p=top_p, top_k=top_k)
+                if not (shared.args.chat or shared.args.cai_chat):
+                    reply = original_question + apply_extensions(reply, "output")
                 yield formatted_outputs(reply, shared.model_name)
             else:
                 if not (shared.args.chat or shared.args.cai_chat):
                     yield formatted_outputs(question, shared.model_name)
+
                 # RWKV has proper streaming, which is very nice.
                 # No need to generate 8 tokens at a time.
                 for reply in shared.model.generate_with_streaming(context=question, token_count=max_new_tokens, temperature=temperature, top_p=top_p, top_k=top_k):
+                    if not (shared.args.chat or shared.args.cai_chat):
+                        reply = original_question + apply_extensions(reply, "output")
                     yield formatted_outputs(reply, shared.model_name)
+
         except Exception:
             traceback.print_exc()
         finally:
@@ -126,12 +138,6 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
             input_ids = encode(question)
             print(f"Output generated in {(t1-t0):.2f} seconds ({(len(output)-len(input_ids[0]))/(t1-t0):.2f} tokens/s, {len(output)-len(input_ids[0])} tokens)")
             return
-
-    original_question = question
-    if not (shared.args.chat or shared.args.cai_chat):
-        question = apply_extensions(question, "input")
-    if shared.args.verbose:
-        print(f"\n\n{question}\n--------------------\n")
 
     input_ids = encode(question, max_new_tokens)
     original_input_ids = input_ids
@@ -194,12 +200,10 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
             if shared.soft_prompt:
                 output = torch.cat((input_ids[0], output[filler_input_ids.shape[1]:]))
 
+            new_tokens = len(output) - len(input_ids[0])
+            reply = decode(output[-new_tokens:])
             if not (shared.args.chat or shared.args.cai_chat):
-                new_tokens = len(output) - len(input_ids[0])
-                reply = decode(output[-new_tokens:])
                 reply = original_question + apply_extensions(reply, "output")
-            else:
-                reply = decode(output)
 
             yield formatted_outputs(reply, shared.model_name)
 
@@ -222,12 +226,11 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
                 for output in generator:
                     if shared.soft_prompt:
                         output = torch.cat((input_ids[0], output[filler_input_ids.shape[1]:]))
+
+                    new_tokens = len(output) - len(input_ids[0])
+                    reply = decode(output[-new_tokens:])
                     if not (shared.args.chat or shared.args.cai_chat):
-                        new_tokens = len(output) - len(input_ids[0])
-                        reply = decode(output[-new_tokens:])
                         reply = original_question + apply_extensions(reply, "output")
-                    else:
-                        reply = decode(output)
 
                     if output[-1] in eos_token_ids:
                         break
@@ -243,12 +246,11 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
                     output = shared.model.generate(**generate_params)[0]
                 if shared.soft_prompt:
                     output = torch.cat((input_ids[0], output[filler_input_ids.shape[1]:]))
+
+                new_tokens = len(output) - len(original_input_ids[0])
+                reply = decode(output[-new_tokens:])
                 if not (shared.args.chat or shared.args.cai_chat):
-                    new_tokens = len(output) - len(original_input_ids[0])
-                    reply = decode(output[-new_tokens:])
                     reply = original_question + apply_extensions(reply, "output")
-                else:
-                    reply = decode(output)
 
                 if np.count_nonzero(np.isin(input_ids[0], eos_token_ids)) < np.count_nonzero(np.isin(output, eos_token_ids)):
                     break
