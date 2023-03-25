@@ -53,24 +53,19 @@ if "%PACKAGES_TO_INSTALL%" NEQ "" (
     )
 
     @rem create micromamba hook
-    if not exist "%MAMBA_ROOT_PREFIX%\condabin\mamba_hook.bat" (
+    if not exist "%MAMBA_ROOT_PREFIX%\condabin\micromamba.bat" (
       call "%MAMBA_ROOT_PREFIX%\micromamba.exe" shell hook >nul 2>&1
     )
 
-    @rem activate base micromamba env
-    call "%MAMBA_ROOT_PREFIX%\condabin\mamba_hook.bat" || ( echo Micromamba hook not found. && goto end )
-
     @rem create the installer env
     if not exist "%INSTALL_ENV_DIR%" (
-        call micromamba create -y --prefix "%INSTALL_ENV_DIR%"
+      echo Packages to install: %PACKAGES_TO_INSTALL%
+      call "%MAMBA_ROOT_PREFIX%\micromamba.exe" create -y --prefix "%INSTALL_ENV_DIR%" %CHANNEL% %PACKAGES_TO_INSTALL%
     )
-    @rem activate installer env
-    call micromamba activate "%INSTALL_ENV_DIR%" || ( echo %INSTALL_ENV_DIR% not found. && goto end )
-
-    echo "Packages to install: %PACKAGES_TO_INSTALL%"
-
-    call micromamba install -y %CHANNEL% %PACKAGES_TO_INSTALL%
 )
+
+@rem activate installer env
+call "%MAMBA_ROOT_PREFIX%\condabin\micromamba.bat" activate "%INSTALL_ENV_DIR%" || ( echo MicroMamba hook not found. && goto end )
 
 @rem clone the repository and install the pip requirements
 if exist text-generation-webui\ (
