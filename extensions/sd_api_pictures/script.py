@@ -15,12 +15,14 @@ torch._C._jit_set_profiling_mode(False)
 # parameters which can be customized in settings.json of webui  
 params = {
     'address': '127.0.0.1:7860',
+    'mode': 0, # modes of operation: 0 (Manual only), 1 (Immersive/Interactive - looks for words to trigger), 2 (Picturebook Adventure - Always on)
     'manage_VRAM': True,
     'save_img': False,
-    'SD_model': 'NeverEndingDream', # not really used right now
-    'prompt_prefix': '(Masterpiece:1.1), (solo:1.3), detailed, intricate, colorful',
+    'SD_model': 'NeverEndingDream', # not used right now
+    'prompt_prefix': '(Masterpiece:1.1), detailed, intricate, colorful',
     'negative_prompt': '(worst quality, low quality:1.3)',
-    'side_length': 512,
+    'width': 512,
+    'height': 512,
     'restore_faces': False
 }
 
@@ -35,24 +37,23 @@ def remove_surrounded_chars(string):
     # 'as few symbols as possible (0 upwards) between an asterisk and the end of the string'
     return re.sub('\*[^\*]*?(\*|$)','',string)
 
-# I don't even need input_hijack for this as visible text will be commited to history as the unmodified string
 def input_modifier(string):
     """
     This function is applied to your text inputs before
     they are fed into the model.
     """
-    global params, picture_response
+    global params
+    if (not params['mode']==1):
+        return string
 
+    # TODO: refactor out to separate handler and also replace detection with a regexp
     commands = ['send', 'mail', 'me']
     mediums = ['image', 'pic', 'picture', 'photo']
     subjects = ['yourself', 'own']
     lowstr = string.lower()
 
-    # TODO: refactor out to separate handler and also replace detection with a regexp
-    if any(command in lowstr for command in commands) and any(case in lowstr for case in mediums): # trigger the generation if a command signature and a medium signature is found
-        picture_response = True
-        shared.args.no_stream = True                                                               # Disable streaming cause otherwise the SD-generated picture would return as a dud
-        shared.processing_message = "*Is sending a picture...*"
+    if (params['mode']==1) and any(command in lowstr for command in commands) and any(case in lowstr for case in mediums): # trigger the generation if a command signature and a medium signature is found
+        toggle_generation(True)
         string = "Please provide a detailed description of your surroundings, how you look and the situation you're in and what you are doing right now"
         if any(target in lowstr for target in subjects):                                           # the focus of the image should be on the sending character
             string = "Please provide a detailed and vivid description of how you look and what you are wearing"
@@ -78,8 +79,8 @@ def get_SD_pictures(description):
         "sampler_name": "DPM++ 2M Karras",
         "steps": 32,
         "cfg_scale": 7,
-        "width": params['side_length'],
-        "height": params['side_length'],
+        "width": params['width'],
+        "height": params['height'],
         "restore_faces": params['restore_faces'],
         "negative_prompt": params['negative_prompt']
     }
@@ -121,7 +122,7 @@ def output_modifier(string):
     """
     This function is applied to the model outputs.
     """
-    global pic_id, picture_response, streaming_state
+    global pic_id, picture_response, params
 
     if not picture_response:
         return string
@@ -135,16 +136,16 @@ def output_modifier(string):
     if string == '':
         string = 'no viable description in reply, try regenerating'
 
-    # I can't for the love of all that's holy get the name from shared.gradio['name1'], so for now it will be like this
-    text = f'*Description: "{string}"*'
+    text = ""
+    if (params['mode']<2):
+        toggle_generation(False)
+        text = f'*Sends a picture which portrays: “{string}”*'
+    else:
+        text = string
 
-    image = get_SD_pictures(string)
+    string = get_SD_pictures(string) + "\n" + text
 
-    picture_response = False
-
-    shared.processing_message = "*Is typing...*"
-    shared.args.no_stream = streaming_state
-    return image + "\n" + text
+    return string 
 
 def bot_prefix_modifier(string):
     """
@@ -155,9 +156,18 @@ def bot_prefix_modifier(string):
 
     return string
 
-def force_pic():
-    global picture_response
-    picture_response = True
+def toggle_generation(*args):
+    global picture_response, shared, streaming_state
+    if not args:
+        picture_response = not picture_response
+    else:
+        picture_response = args[0]
+
+    shared.args.no_stream = True if picture_response else streaming_state # Disable streaming cause otherwise the SD-generated picture would return as a dud
+    shared.processing_message = "*Is sending a picture...*" if picture_response else "*Is typing...*"
+    btn_text = "Suppress the picture response" if picture_response else "Force the picture response"
+    
+    return btn_text
 
 def filter_address(address):
     address = address.strip()
@@ -168,7 +178,7 @@ def SD_api_address_update(address):
     
     global params
     
-    msg = "✔️ API connection established"
+    msg = "✔️ SD API is found on:"
     address = filter_address(address)
     params.update({"address": address})
     try:
@@ -185,35 +195,35 @@ def SD_api_address_update(address):
 def ui():
 
     # Gradio elements
-    with gr.Accordion("Stable Diffusion api integration", open=True):
+    gr.Markdown('### Stable Diffusion API Pictures')
+    with gr.Accordion("Parameters", open=True):
         with gr.Row():
+            address = gr.Textbox(placeholder=params['address'], value=params['address'], label='Automatic1111\'s WebUI address')
+            mode = gr.Dropdown(["Manual", "Immersive \ Interactive", "Picturebook \ Adventure"], value="Manual", label="Mode of operation", type="index")
             with gr.Column():
                 manage_VRAM = gr.Checkbox(value=params['manage_VRAM'], label='Manage VRAM')
                 save_img = gr.Checkbox(value=params['save_img'], label='Keep original received images in the outputs subdir')
-            with gr.Column():
-                address = gr.Textbox(placeholder=params['address'], value=params['address'], label='Automatic1111\'s WebUI host address:port')
-        
-        with gr.Row():
-            force_btn = gr.Button("Force the next response to be a picture")
-            generate_now_btn = gr.Button("Generate an image response to the input")
+
+            toggle_gen = gr.Button("Force (Suppress) the picture response")
 
         with gr.Accordion("Generation parameters", open=False):
             prompt_prefix = gr.Textbox(placeholder=params['prompt_prefix'], value=params['prompt_prefix'], label='Prompt Prefix (best used to describe the look of the character)')
             with gr.Row():
                 negative_prompt = gr.Textbox(placeholder=params['negative_prompt'], value=params['negative_prompt'], label='Negative Prompt')
-                dimensions = gr.Slider(256,702,value=params['side_length'],step=64,label='Image dimensions')
-                # model = gr.Dropdown(value=SD_models[0], choices=SD_models, label='Model')
+                with gr.Column():
+                    width = gr.Slider(256,704,value=params['width'],step=64,label='Width')
+                    height = gr.Slider(256,704,value=params['height'],step=64,label='Height')
     
     # Event functions to update the parameters in the backend
+    address.change(lambda x: params.update({"address": filter_address(x)}), address, None)
+    mode.change(lambda x: params.update({"mode": x }), mode, None)
     manage_VRAM.change(lambda x: params.update({"manage_VRAM": x}), manage_VRAM, None)
     save_img.change(lambda x: params.update({"save_img": x}), save_img, None)
-    address.change(lambda x: params.update({"address": filter_address(x)}), address, None)
+    
     address.submit(fn=SD_api_address_update, inputs=address, outputs=address)
     prompt_prefix.change(lambda x: params.update({"prompt_prefix": x}), prompt_prefix, None)
     negative_prompt.change(lambda x: params.update({"negative_prompt": x}), negative_prompt, None)
-    dimensions.change(lambda x: params.update({"side_length": x}), dimensions, None)
-    # model.change(lambda x: params.update({"SD_model": x}), model, None)
-
-    force_btn.click(force_pic)
-    generate_now_btn.click(force_pic)
-    generate_now_btn.click(eval('chat.cai_chatbot_wrapper'), shared.input_params, shared.gradio['display'], show_progress=shared.args.no_stream)
+    width.change(lambda x: params.update({"width": x}), width, None)
+    height.change(lambda x: params.update({"height": x}), height, None)
+    
+    toggle_gen.click(fn=toggle_generation, inputs=None, outputs=toggle_gen)
