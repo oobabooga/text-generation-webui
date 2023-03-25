@@ -66,7 +66,7 @@ def load_quantized(model_name):
                 break
 
     if not pt_path:
-        print(f"Could not find the quantized model in .pt or .safetensors format, exiting...")
+        print("Could not find the quantized model in .pt or .safetensors format, exiting...")
         exit()
 
     # qwopqwop200's offload
