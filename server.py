@@ -461,4 +461,8 @@ while True:
     if shared.need_restart:
         shared.need_restart = False
         shared.gradio['interface'].close()
+        if shared.args.wait_before_restart is not None:
+            print(f"Waiting {shared.args.wait_before_restart} second for gradio to free port")
+            time.sleep(shared.args.wait_before_restart)
+        print("restarting web ui")
         create_interface()
