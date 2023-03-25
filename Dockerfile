@@ -10,7 +10,7 @@ RUN git clone https://github.com/qwopqwop200/GPTQ-for-LLaMa /build
 
 WORKDIR /build
 
-ARG GPTQ_SHA=468c47c01b4fe370616747b6d69a2d3f48bab5e4
+ARG GPTQ_SHA
 RUN git reset --hard ${GPTQ_SHA}
 
 RUN --mount=type=cache,target=/root/.cache/pip pip3 install -r requirements.txt
