@@ -16,8 +16,11 @@ import opt
 def load_quantized(model_name):
     if not shared.args.model_type:
         # Try to determine model type from model name
-        model_type = model_name.split('-')[0].lower()
-        if model_type not in ('llama', 'opt'):
+        if model_name.lower().startswith(('llama', 'alpaca')):
+            model_type = 'llama'
+        elif model_name.lower().startswith(('opt', 'galactica')):
+            model_type = 'opt'
+        else:
             print("Can't determine model type from model name. Please specify it manually using --model_type "
                   "argument")
             exit()
