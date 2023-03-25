@@ -251,6 +251,7 @@ if shared.args.load_character and (shared.args.chat or shared.args.cai_chat):
         shared.args.load_character = shared.args.load_character[:-5]
     # Check for existing character
     if shared.args.load_character in available_characters:
+        print("Loading character " + shared.args.load_character)
         shared.settings[f'name2{suffix}'], shared.settings[f'context{suffix}'], shared.gradio['display'] = chat.load_character(shared.args.load_character, shared.settings['name1'], '')
     else:
         print("Character " + shared.args.load_character + " not found, ignoring.")
