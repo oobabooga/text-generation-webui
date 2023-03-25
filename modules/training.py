@@ -14,27 +14,27 @@ def get_json_dataset(path: str):
 def create_train_interface():
     with gr.Tab('Train LoRA', elem_id='lora-train-tab'):
         loraName = gr.Textbox(label="Name", info="The name of your new LoRA file")
-        # TODO: Add explanations of batch sizes and recommendations. Note that batch/microBatch determines gradient accumulation and explain what that means. Note the effects on VRAM usage from changing these values.
-        microBatchSize = gr.Slider(label='Micro Batch Size', value=4, minimum=1, maximum=128, step=1, info='(TODO)')
-        batchSize = gr.Slider(label='Batch Size', value=128, minimum=1, maximum=1024, step=4, info='(TODO)')
+        # TODO: Implement multi-device support.
+        microBatchSize = gr.Slider(label='Micro Batch Size', value=4, minimum=1, maximum=128, step=1, info='Per-device batch size (NOTE: multiple devices not yet implemented). Increasing this will increase VRAM usage.')
+        batchSize = gr.Slider(label='Batch Size', value=128, minimum=1, maximum=1024, step=4, info='Global batch size. The two batch sizes together determine gradient accumulation (gradientAccum = batch / microBatch). Higher gradient accum values lead to better quality training.')
         epochs = gr.Slider(label='Epochs', value=1, minimum=1, maximum=1000, info='Number of times every entry in the dataset should be fed into training. So 1 means feed each item in once, 5 means feed it in five times, etc.')
         learningRate = gr.Textbox(label='Learning Rate', value='3e-4', info='Learning rate, in scientific notation. 3e-4 is a good starting base point. 1e-2 is extremely high, 1e-6 is extremely low.')
         # TODO: What is the actual maximum rank? Likely distinct per model. This might be better to somehow be on a log scale.
         loraRank = gr.Slider(label='LoRA Rank', value=8, minimum=1, maximum=1024, step=4, info='LoRA Rank, or dimension count. Higher values produce a larger file with better control over the model\'s content. Smaller values produce a smaller file with less overall control. Small values like 4 or 8 are great for stylistic guidance, high values like 128 or 256 are good for teaching content upgrades. Higher ranks also require higher VRAM.')
         loraAlpha = gr.Slider(label='LoRA Alpha', value=16, minimum=1, maximum=2048, step=4, info='LoRA Alpha. This divided by the rank becomes the scaling of the LoRA. Higher means stronger. A good standard value is twice your Rank.')
-        # TODO: Better explain what this does.
+        # TODO: Better explain what this does, in terms of real world effect especially.
         loraDropout = gr.Slider(label='LoRA Dropout', minimum=0.0, maximum=1.0, step=0.025, value=0.05, info='Percentage probability for dropout of LoRA layers.')
         cutoffLen = gr.Slider(label='Cutoff Length', minimum=1,maximum=2048, value=256, step=32, info='Cutoff length for text input. Essentially, how long of a line of text to feed in at a time. Higher values require drastically more VRAM.')
         with gr.Row():
             datasetFunction = get_json_dataset('training/datasets')
-            dataset = gr.Dropdown(choices=datasetFunction(), value='None', label='Dataset')
+            dataset = gr.Dropdown(choices=datasetFunction(), value='None', label='Dataset', info='The dataset file to use for training.')
             ui.create_refresh_button(dataset, lambda : None, lambda : {'choices': datasetFunction()}, 'refresh-button')
         with gr.Row():
-            evalDataset = gr.Dropdown(choices=datasetFunction(), value='None', label='Evaluation Dataset')
+            evalDataset = gr.Dropdown(choices=datasetFunction(), value='None', label='Evaluation Dataset', info='The dataset file used to evaluate the model after training.')
             ui.create_refresh_button(evalDataset, lambda : None, lambda : {'choices': datasetFunction()}, 'refresh-button')
         with gr.Row():
             formatsFunction = get_json_dataset('training/formats')
-            format = gr.Dropdown(choices=formatsFunction(), value='None', label='Data Format')
+            format = gr.Dropdown(choices=formatsFunction(), value='None', label='Data Format', info='The format file used to decide how to format the dataset input.')
             ui.create_refresh_button(format, lambda : None, lambda : {'choices': formatsFunction()}, 'refresh-button')
         startButton = gr.Button("Start LoRA Training")
         output = gr.Markdown(value="(...)")
