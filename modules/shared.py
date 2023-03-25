@@ -84,7 +84,6 @@ parser.add_argument('--gptq-bits', type=int, default=0, help='DEPRECATED: use --
 parser.add_argument('--gptq-model-type', type=str, help='DEPRECATED: use --model_type instead.')
 parser.add_argument('--gptq-group-size', type=int, default=-1, help='DEPRECATED: use --groupsize instead.')
 parser.add_argument('--gptq-pre-layer', type=int, default=0, help='DEPRECATED: use --pre_layer instead.')
-
 parser.add_argument('--wbits', type=int, default=0, help='GPTQ: Load a pre-quantized model with specified precision. 2, 3, 4 and 8bit are supported. Currently only works with LLaMA and OPT.')
 parser.add_argument('--model_type', type=str, help='GPTQ: Model type of pre-quantized model. Currently only LLaMa and OPT are supported.')
 parser.add_argument('--groupsize', type=int, default=-1, help='GPTQ: Group size.')
