@@ -41,7 +41,7 @@ RUN git reset --hard ${WEBUI_SHA}
 RUN --mount=type=cache,target=/root/.cache/pip pip3 install -r requirements.txt
 
 COPY --from=builder /build /app/repositories/GPTQ-for-LLaMa
-RUN --mount=type=cache,target=/root/.cache/pip pip install /app/repositories/GPTQ-for-LLaMa/*.whl
+RUN --mount=type=cache,target=/root/.cache/pip pip3 install /app/repositories/GPTQ-for-LLaMa/*.whl
 
 ENV CLI_ARGS=""
 ENV NVIDIA_VISIBLE_DEVICES=all
