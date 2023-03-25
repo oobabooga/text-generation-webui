@@ -82,7 +82,6 @@ parser.add_argument('--load-in-8bit', action='store_true', help='Load the model 
 
 parser.add_argument('--gptq-bits', type=int, default=0, help='DEPRECATED: use --wbits instead.')
 parser.add_argument('--gptq-model-type', type=str, help='DEPRECATED: use --model_type instead.')
-parser.add_argument('--gptq-group-size', type=int, default=-1, help='DEPRECATED: use --groupsize instead.')
 parser.add_argument('--gptq-pre-layer', type=int, default=0, help='DEPRECATED: use --pre_layer instead.')
 parser.add_argument('--wbits', type=int, default=0, help='GPTQ: Load a pre-quantized model with specified precision. 2, 3, 4 and 8bit are supported. Currently only works with LLaMA and OPT.')
 parser.add_argument('--model_type', type=str, help='GPTQ: Model type of pre-quantized model. Currently only LLaMa and OPT are supported.')
@@ -116,7 +115,7 @@ parser.add_argument('--verbose', action='store_true', help='Print the prompts to
 args = parser.parse_args()
 
 # Provisional, this will be deleted later
-deprecated_dict = {'gptq_bits': ['wbits', 0], 'gptq_model_type': ['model_type', None], 'gptq_group_size': ['groupsize', -1], 'gptq_pre_layer': ['prelayer', 0]}
+deprecated_dict = {'gptq_bits': ['wbits', 0], 'gptq_model_type': ['model_type', None], 'gptq_pre_layer': ['prelayer', 0]}
 for k in deprecated_dict:
     if eval(f"args.{k}") != deprecated_dict[k][1]:
         print(f"Warning: --{k} is deprecated and will be removed. Use --{deprecated_dict[k][0]} instead.")
