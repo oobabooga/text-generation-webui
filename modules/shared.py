@@ -106,6 +106,7 @@ parser.add_argument('--listen-port', type=int, help='The listening port that the
 parser.add_argument('--share', action='store_true', help='Create a public URL. This is useful for running the web UI on Google Colab or similar.')
 parser.add_argument('--auto-launch', action='store_true', default=False, help='Open the web UI in the default browser upon launch.')
 parser.add_argument('--verbose', action='store_true', help='Print the prompts to the terminal.')
+parser.add_argument('--load-character', type=str, help='Loads a character.json from the `characters` directory, requires --chat or --cai-chat')
 args = parser.parse_args()
 
 # Provisional, this will be deleted later
