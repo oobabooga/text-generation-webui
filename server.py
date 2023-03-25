@@ -8,10 +8,8 @@ from pathlib import Path
 
 import gradio as gr
 
-import modules.chat as chat
+from modules import chat, shared, ui, training
 import modules.extensions as extensions_module
-import modules.shared as shared
-import modules.ui as ui
 from modules.html_generator import generate_chat_html
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, load_soft_prompt
@@ -443,6 +441,9 @@ def create_interface():
 
             shared.gradio['reset_interface'].click(set_interface_arguments, [shared.gradio[k] for k in ['interface_modes_menu', 'extensions_menu', 'cmd_arguments_menu']], None)
             shared.gradio['reset_interface'].click(lambda : None, None, None, _js='() => {document.body.innerHTML=\'<h1 style="font-family:monospace;margin-top:20%;color:lightgray;text-align:center;">Reloading...</h1>\'; setTimeout(function(){location.reload()},2500)}')
+        
+        with gr.Tab("Training", elem_id="training-tab"):
+            training.create_train_interface()
 
         if shared.args.extensions is not None:
             extensions_module.create_extensions_block()
