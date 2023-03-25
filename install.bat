@@ -94,14 +94,14 @@ if not exist GPTQ-for-LLaMa\ (
   git clone https://github.com/qwopqwop200/GPTQ-for-LLaMa.git
   cd GPTQ-for-LLaMa || goto end
   git reset --hard 468c47c01b4fe370616747b6d69a2d3f48bab5e4
-  pip install -r requirements.txt
+  call python -m pip install -r requirements.txt
   call python setup_cuda.py install
   if not exist "%INSTALL_ENV_DIR%\lib\site-packages\quant_cuda-0.0.0-py3.10-win-amd64.egg" (
     echo CUDA kernal compilation failed. Will try to install from wheel.
-    pip install unzip
+    call python -m pip install unzip
     curl -LO https://github.com/oobabooga/text-generation-webui/files/11023775/quant_cuda-0.0.0-cp310-cp310-win_amd64.whl.zip
     unzip quant_cuda-0.0.0-cp310-cp310-win_amd64.whl.zip
-    pip install quant_cuda-0.0.0-cp310-cp310-win_amd64.whl || ( echo Wheel installation failed. && goto end )
+    call python -m pip install quant_cuda-0.0.0-cp310-cp310-win_amd64.whl || ( echo Wheel installation failed. && goto end )
   )
   cd ..
 )
@@ -112,7 +112,6 @@ curl -LO https://github.com/DeXtmL/bitsandbytes-win-prebuilt/raw/main/libbitsand
 curl -LO https://github.com/james-things/bitsandbytes-prebuilt-all_arch/raw/main/0.37.0/libbitsandbytes_cudaall.dll
 mv libbitsandbytes_cpu.dll "%INSTALL_ENV_DIR%\lib\site-packages\bitsandbytes"
 mv libbitsandbytes_cudaall.dll "%INSTALL_ENV_DIR%\lib\site-packages\bitsandbytes"
-pip install sed
 sed -i "s/if not torch.cuda.is_available(): return 'libsbitsandbytes_cpu.so', None, None, None, None/if torch.cuda.is_available(): return 'libbitsandbytes_cudaall.dll', None, None, None, None\n    else: return 'libbitsandbytes_cpu.dll', None, None, None, None/g" "%INSTALL_ENV_DIR%\lib\site-packages\bitsandbytes\cuda_setup\main.py"
 sed -i "s/ct.cdll.LoadLibrary(binary_path)/ct.cdll.LoadLibrary(str(binary_path))/g" "%INSTALL_ENV_DIR%\lib\site-packages\bitsandbytes\cuda_setup\main.py"
 
