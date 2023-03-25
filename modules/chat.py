@@ -238,6 +238,9 @@ def clear_chat_log(name1, name2):
     else:
         shared.history['internal'] = []
         shared.history['visible'] = []
+        
+    # Save cleared logs
+    save_history(timestamp=False)
 
     return generate_chat_output(shared.history['visible'], name1, name2, shared.character)
 
@@ -282,11 +285,10 @@ def tokenize_dialogue(dialogue, name1, name2):
     return _history
 
 def save_history(timestamp=True):
-    prefix = '' if shared.character == 'None' else f"{shared.character}_"
     if timestamp:
-        fname = f"{prefix}{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
+        fname = f"{log_file_prefix()}{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
     else:
-        fname = f"{prefix}persistent.json"
+        fname = f"{log_file_prefix()}persistent.json"
     if not Path('logs').exists():
         Path('logs').mkdir()
     with open(Path(f'logs/{fname}'), 'w', encoding='utf-8') as f:
@@ -318,11 +320,15 @@ def load_history(file, name1, name2):
         shared.history['visible'] = copy.deepcopy(shared.history['internal'])
 
 def load_default_history(name1, name2):
-    if Path('logs/persistent.json').exists():
-        load_history(open(Path('logs/persistent.json'), 'rb').read(), name1, name2)
+    if Path(f'logs/{log_file_prefix()}persistent.json').exists():
+        load_history(open(Path(f'logs/{log_file_prefix()}persistent.json'), 'rb').read(), name1, name2)
     else:
         shared.history['internal'] = []
         shared.history['visible'] = []
+
+def log_file_prefix():
+    prefix = '' if shared.character == 'None' else f"{shared.character}_"
+    return prefix
 
 def load_character(_character, name1, name2):
     context = ""
@@ -348,12 +354,15 @@ def load_character(_character, name1, name2):
             shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', "Hello there!"]]
             shared.history['visible'] += [['', "Hello there!"]]
     else:
-        shared.character = None
+        shared.character = 'None'
         context = shared.settings['context_pygmalion']
         name2 = shared.settings['name2_pygmalion']
 
-    if Path(f'logs/{shared.character}_persistent.json').exists():
-        load_history(open(Path(f'logs/{shared.character}_persistent.json'), 'rb').read(), name1, name2)
+    if Path(f'logs/{log_file_prefix()}persistent.json').exists():
+        load_history(open(Path(f'logs/{log_file_prefix()}persistent.json'), 'rb').read(), name1, name2)
+    else:
+        # Create .json log files if they don't already exist
+        save_history(timestamp=False)
 
     if shared.args.cai_chat:
         return name2, context, generate_chat_html(shared.history['visible'], name1, name2, shared.character)
