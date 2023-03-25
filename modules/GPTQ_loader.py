@@ -58,7 +58,6 @@ def load_quantized(model_name):
             pt_model = f'{model_name}-{shared.args.wbits}bit'
 
         # Try to find the .safetensors or .pt both in models/ and in the subfolder
-        pt_path = None
         for path in [Path(p+ext) for ext in ['.safetensors', '.pt'] for p in [f"models/{pt_model}", f"{path_to_model}/{pt_model}"]]:
             if path.exists():
                 print(f"Found {path}")
