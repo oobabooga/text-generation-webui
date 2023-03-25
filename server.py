@@ -244,6 +244,17 @@ title ='Text generation web UI'
 description = '\n\n# Text generation lab\nGenerate text using Large Language Models.\n'
 suffix = '_pygmalion' if 'pygmalion' in shared.model_name.lower() else ''
 
+# Load default character if provided and chat is enabled
+if shared.args.load_character and (shared.args.chat or shared.args.cai_chat):
+    # Remove .json if they included it
+    if shared.args.load_character.lower().endswith('.json'):
+        shared.args.load_character = shared.args.load_character[:-5]
+    # Check for existing character
+    if shared.args.load_character in available_characters:
+        shared.settings[f'name2{suffix}'], shared.gradio['context'], shared.gradio['display'] = chat.load_character(shared.args.load_character, shared.settings['name1'], '')
+    else:
+        print("Character " + shared.args.load_character + " not found, ignoring.")
+
 def create_interface():
 
     gen_events = []
