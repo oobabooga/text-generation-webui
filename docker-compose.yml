@@ -6,10 +6,11 @@ services:
       args:
         # specify which cuda version your card supports: https://developer.nvidia.com/cuda-gpus
         TORCH_CUDA_ARCH_LIST: ${TORCH_CUDA_ARCH_LIST}
+        GPTQ_SHA: ${GPTQ_SHA}
     environment:
       CLI_ARGS: ${CLI_ARGS}
     ports:
-      - "7860:7860"
+      - "${HOST_PORT}:${CONTAINER_PORT}"
     stdin_open: true
     tty: true
     volumes:
