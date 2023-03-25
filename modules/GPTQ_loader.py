@@ -35,6 +35,7 @@ def load_quantized(model_name):
         print("Unknown pre-quantized model type specified. Only 'llama' and 'opt' are supported")
         exit()
 
+    # Now we are going to try to locate the quantized model file.
     path_to_model = Path(f'models/{model_name}')
     found_pts = list(path_to_model.glob("*.pt"))
     found_safetensors = list(path_to_model.glob("*.safetensors"))
@@ -46,15 +47,15 @@ def load_quantized(model_name):
         pt_path = found_safetensors[0]
     else:
         if path_to_model.name.lower().startswith('llama-7b'):
-            pt_model = f'llama-7b-{shared.args.gptq_bits}bit'
+            pt_model = f'llama-7b-{shared.args.wbits}bit'
         elif path_to_model.name.lower().startswith('llama-13b'):
-            pt_model = f'llama-13b-{shared.args.gptq_bits}bit'
+            pt_model = f'llama-13b-{shared.args.wbits}bit'
         elif path_to_model.name.lower().startswith('llama-30b'):
-            pt_model = f'llama-30b-{shared.args.gptq_bits}bit'
+            pt_model = f'llama-30b-{shared.args.wbits}bit'
         elif path_to_model.name.lower().startswith('llama-65b'):
-            pt_model = f'llama-65b-{shared.args.gptq_bits}bit'
+            pt_model = f'llama-65b-{shared.args.wbits}bit'
         else:
-            pt_model = f'{model_name}-{shared.args.gptq_bits}bit'
+            pt_model = f'{model_name}-{shared.args.wbits}bit'
 
         # Try to find the .safetensors or .pt both in models/ and in the subfolder
         pt_path = None
@@ -65,7 +66,7 @@ def load_quantized(model_name):
                 break
 
     if not pt_path:
-        print(f"Could not find {pt_model}, exiting...")
+        print(f"Could not find the quantized model in .pt or .safetensors format, exiting...")
         exit()
 
     # qwopqwop200's offload
