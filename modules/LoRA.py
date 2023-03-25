@@ -32,7 +32,7 @@ def add_lora_to_model(lora_name):
             elif shared.args.load_in_8bit:
                 params['device_map'] = {'': 0}
             
-        shared.model = PeftModel.from_pretrained(shared.model, Path(f"loras/{lora_name}"), **params)
+        shared.model = PeftModel.from_pretrained(shared.model, Path(f"{shared.args.lora_dir}/{lora_name}"), **params)
         if not shared.args.load_in_8bit and not shared.args.cpu:
             shared.model.half()
             if not hasattr(shared.model, "hf_device_map"):
