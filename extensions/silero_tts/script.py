@@ -41,7 +41,12 @@ def xmlesc(txt):
     return txt.translate(table)
 
 def load_model():
-    model, example_text = torch.hub.load(repo_or_dir='snakers4/silero-models', model='silero_tts', language=params['language'], speaker=params['model_id'])
+    cache_path='C:/Users/USER/.cache/torch/hub/snakers4_silero-models_master/'
+    model_path = cache_path + "src/silero/model/" + params['model_id'] + ".pt"
+    if Path(model_path).is_file():
+        model, example_text = torch.hub.load(repo_or_dir=cache_path, model='silero_tts', language=params['language'], speaker=params['model_id'], source='local', path = model_path, force_reload = True)
+    else:
+        model, example_text = torch.hub.load(repo_or_dir='snakers4/silero-models', model='silero_tts', language=params['language'], speaker=params['model_id'])
     model.to(params['device'])
     return model
 model = load_model()
