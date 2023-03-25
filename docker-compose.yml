@@ -5,7 +5,7 @@ services:
       context: .
       args:
         # specify which cuda version your card supports: https://developer.nvidia.com/cuda-gpus
-        TORCH_CUDA_ARCH_LIST: 7.5
+        TORCH_CUDA_ARCH_LIST: ${TORCH_CUDA_ARCH_LIST}
     environment:
       CLI_ARGS: --model llama-7b-hf --gptq-bits 4 --gptq-pre-layer 20 --listen --auto-devices
     ports:

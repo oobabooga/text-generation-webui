@@ -121,11 +121,11 @@ wget https://huggingface.co/decapoda-research/llama-7b-hf-int4/resolve/main/llam
 sed -i 's/LLaMATokenizer/LlamaTokenizer/g' models/llama-7b-hf/tokenizer_config.json
 ```
 
-edit docker-compose values to your needs
-- specify your cuda version ( lookup gfx card: https://developer.nvidia.com/cuda-gpus ) TORCH_CUDA_ARCH_LIST: 7.5
-- CLI_ARGS to specify how to run it
-  - 4GB vram: CLI_ARGS: --model llama-7b-hf --gptq-bits 4 --gptq-pre-layer 20 --listen --auto-devices
-  - 6GB vram: CLI_ARGS: --model llama-7b-hf --gptq-bits 4 --gptq-pre-layer 32 --listen --auto-devices
+edit .env values to your needs
+```bash
+cp .env.example .env
+nano .env
+```
 ```bash
 docker-compose up
 ```
