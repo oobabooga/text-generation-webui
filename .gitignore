@@ -1,5 +1,6 @@
 cache
 characters
+training/datasets
 extensions/silero_tts/outputs
 extensions/elevenlabs_tts/outputs
 extensions/sd_api_pictures/outputs
