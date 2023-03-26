@@ -21,8 +21,6 @@ conda install -c conda-forge cudatoolkit-dev
 
 The command above takes some 10 minutes to run and shows no progress bar or updates along the way.
 
-Once it finishes, restart your computer or WSL before proceeding to the next step.
-
 See this issue for more details: https://github.com/oobabooga/text-generation-webui/issues/416#issuecomment-1475078571
 
 #### Step 1: install GPTQ-for-LLaMa
