@@ -60,7 +60,7 @@ python server.py --model llama-13b-4bit-128g --wbits 4 --groupsize 128
 
 ### CPU offloading
 
-It is possible to offload part of the layers of the 4-bit model to the CPU with the `--gptq-pre-layer` flag. The higher the number after `--pre_layer`, the more layers will be allocated to the GPU.
+It is possible to offload part of the layers of the 4-bit model to the CPU with the `--pre_layer` flag. The higher the number after `--pre_layer`, the more layers will be allocated to the GPU.
 
 With this command, I can run llama-7b with 4GB VRAM:
 
