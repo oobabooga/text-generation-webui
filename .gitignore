@@ -3,6 +3,7 @@ characters/*
 extensions/silero_tts/outputs/*
 extensions/elevenlabs_tts/outputs/*
 extensions/sd_api_pictures/outputs/*
+extensions/long_term_memory/user_data/*
 logs/*
 loras/*
 models/*

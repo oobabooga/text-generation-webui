@@ -1,0 +1,5 @@
+numpy==1.24.2
+pytest==7.2.2
+scikit-learn==1.2.2
+sentence-transformers==2.2.2
+zarr==2.14.2
