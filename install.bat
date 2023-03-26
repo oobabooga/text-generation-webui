@@ -111,7 +111,7 @@ mv libbitsandbytes_cpu.dll "%INSTALL_ENV_DIR%\lib\site-packages\bitsandbytes"
 mv libbitsandbytes_cudaall.dll "%INSTALL_ENV_DIR%\lib\site-packages\bitsandbytes"
 sed -i "s/if not torch.cuda.is_available(): return 'libsbitsandbytes_cpu.so', None, None, None, None/if torch.cuda.is_available(): return 'libbitsandbytes_cudaall.dll', None, None, None, None\n    else: return 'libbitsandbytes_cpu.dll', None, None, None, None/g" "%INSTALL_ENV_DIR%\lib\site-packages\bitsandbytes\cuda_setup\main.py"
 sed -i "s/ct.cdll.LoadLibrary(binary_path)/ct.cdll.LoadLibrary(str(binary_path))/g" "%INSTALL_ENV_DIR%\lib\site-packages\bitsandbytes\cuda_setup\main.py"
-sed -i "s/make_quant(model, layers, wbits, groupsize, faster=args.faster_kernel)/make_quant(model, layers, wbits, groupsize)/g" "%INSTALL_ENV_DIR%\..\..\text-generation-webui\repositories\GPTQ-for-LLaMa\llama.py"
+sed -i "s/make_quant(model, layers, wbits, groupsize, faster=args.faster_kernel)/make_quant(model, layers, wbits, groupsize, faster=("args" in globals() and args.faster_kernel))/g" "%INSTALL_ENV_DIR%\..\..\text-generation-webui\repositories\GPTQ-for-LLaMa\llama.py"
 
 :end
 pause
