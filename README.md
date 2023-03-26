@@ -1,6 +1,6 @@
 # Text Generation Web UI with Long-Term Memory
 
-Welcome to the experimental repository for a modified Text Generation Web UI, featuring a long-term memory (LTM) module. The goal of the LTM module is to enable the chatbot to "remember" conversations long-term. Please note that this is an early-stage experimental project, and perfect results should not be expected.
+Welcome to the experimental repository for the Text Generation Web UI with a long-term memory (LTM) extension. The goal of the LTM extension is to enable the chatbot to "remember" conversations long-term. Please note that this is an early-stage experimental project, and perfect results should not be expected.
 
 ## How to Run
 1. Follow the instructions in [oobabooga's  original repository](https://github.com/oobabooga/text-generation-webui) until you can chat with a chatbot.
@@ -9,7 +9,7 @@ Welcome to the experimental repository for a modified Text Generation Web UI, fe
 pip install -r extensions/long_term_memory/requirements.txt
 python -m pytest -v extensions/long_term_memory/
 ```
-3. Run the server with the LTM module. If all goes well, you should see it reporting "ok"
+3. Run the server with the LTM extension. If all goes well, you should see it reporting "ok"
 ```bash
 python server.py --chat --extensions long_term_memory
 ```
@@ -24,7 +24,7 @@ python server.py --chat --extensions long_term_memory
 - Limited scalability: Appending to the persistent LTM database is reasonably efficient, but we currently load all LTM embeddings in RAM, which consumes memory. Additionally, we perform a linear search across all embeddings during each chat round.
 
 ## How the Chatbot Sees the LTM
-Chatbots are typically given a fixed, "context" text block that persists across the entire chat. The memory module augments this context block by dynamically injecting a relevant long-term memory.
+Chatbots are typically given a fixed, "context" text block that persists across the entire chat. The LTM extension augments this context block by dynamically injecting a relevant long-term memory.
 
 ### Example of a typical context block:
 ```markdown
