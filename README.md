@@ -29,8 +29,6 @@ Chatbots are typically given a fixed, "context" text block that persists across 
 ### Example of a typical context block:
 ```markdown
 The following is a conversation between Anon and Miku. Miku likes Anon but is very shy.
-Anon: What is your favorite color?
-Miku: /think *Does this mean he likes me?* My favorite color is pink!
 ```
 
 ### Example of an augmented context block:
@@ -41,8 +39,6 @@ Miku's memory log:
 
 During conversations between Anon and Miku, Miku will try to remember the memory described above and naturally integrate it with the conversation.
 The following is a conversation between Anon and Miku. Miku likes Anon but is very shy.
-Anon: What is your favorite color?
-Miku: /think *Does this mean he likes me?* My favorite color is pink!
 ```
 
 ## How It Works Behind the Scenes
