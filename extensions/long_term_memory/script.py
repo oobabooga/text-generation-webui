@@ -146,7 +146,6 @@ def custom_generate_chat_prompt(
             print("-----------------------")
 
     # Store Anon's input directly into LTM
-    print("length of input", len(user_input))
     if len(user_input) >= MINIMUM_MESSAGE_LENGTH_FOR_LTM:
         memory_database.add(name1, user_input)
         print("-----------------------")
