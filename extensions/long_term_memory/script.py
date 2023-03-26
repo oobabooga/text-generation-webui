@@ -53,16 +53,20 @@ params = {
 
 # === Display important notes to the user ===
 print()
-print("------------------------")
-print("IMPORTANT NOTES TO USER:")
-print("------------------------")
+print("-----------------------------------------")
+print("IMPORTANT LONG TERM MEMORY NOTES TO USER:")
+print("-----------------------------------------")
 print(
     "Please remember that LTM-stored memories will only be visible to "
     "the bot during your NEXT session. This prevents the loaded memory "
     "from being flooded with messages from the current conversation which "
     "would defeat the original purpose of this module."
 )
-print("------------------------")
+print(
+    f"Messages shorter than {MINIMUM_MESSAGE_LENGTH_FOR_LTM} chars will NOT "
+    "be stored. This can be adjusted in extensions/long_term_memory/script.py"
+)
+print("-----------------------------------------")
 
 
 # === Hooks to oobaboogs UI ===
