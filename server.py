@@ -426,7 +426,7 @@ def create_interface():
                                 pass
 
                     with gr.Column(scale=1):
-                        gr.Markdown("\n")
+                        gr.HTML('<div style="padding-bottom: 13px"></div>')
                         shared.gradio['max_new_tokens'] = gr.Slider(minimum=shared.settings['max_new_tokens_min'], maximum=shared.settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=shared.settings['max_new_tokens'])
 
                         create_prompt_menus()
