@@ -16,8 +16,8 @@ python server.py --chat --extensions long_term_memory
 4. Chat normally with the chatbot and observe the console for LTM write/load status. Please note that LTM-stored memories will only be visible to the chatbot during your NEXT session. Additionally please use the same name for yourself across sessions, otherwise the chatbot may get confused when trying to understand memories (example: if you have used "anon" as your name in the past, don't use "Anon" in the future)
 5. Memories will be saved in `extensions/long_term_memory/user_data/bot_memories/`. Back them up if you plan to mess with the code. If you want to fully reset your bot's memories, simply delete the files inside that directory.
 
-## Tips (credit to Anons from /g/'s /lmg/)
-- If you're running on Windows, the LTM's extensions's dependencies may override the version of pytorch needed to run your LLMs. If this is the case, try reinstalling the original version of pytorch manually:
+## Tips for Windows Users (credit to Anons from /g/'s /lmg/)
+- The LTM's extensions's dependencies may override the version of pytorch needed to run your LLMs. If this is the case, try reinstalling the original version of pytorch manually:
 ```bash
 pip install torch-1.12.0+cu113 # or whichever version of pytorch was uninstalled
 ```
