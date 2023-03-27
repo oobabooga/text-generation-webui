@@ -5,8 +5,9 @@ import gradio as gr
 import modules.chat as chat
 import modules.shared as shared
 import torch
+import requests
 from PIL import Image
-from transformers import BlipForConditionalGeneration, BlipProcessor
+from transformers import BlipForConditionalGeneration, BlipProcessor, ViTFeatureExtractor, AutoTokenizer, VisionEncoderDecoderModel
 
 # If 'state' is True, will hijack the next chat generation with
 # custom input text given by 'value' in the format [text, visible_text]
@@ -15,16 +16,43 @@ input_hijack = {
     'value': ["", ""]
 }
 
-processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
-model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base", torch_dtype=torch.float32).to("cpu")
+# Indicate img2txt model from Huggingface using this string ("user/model" syntax)
+
+model_str = "Salesforce/blip-image-captioning-large"
+model_str_alt = "nlpconnect/vit-gpt2-image-captioning"
+
+processor = BlipProcessor.from_pretrained(model_str)
+model = BlipForConditionalGeneration.from_pretrained(model_str, torch_dtype=torch.float32).to("cpu")
+
+feature_extractor = ViTFeatureExtractor.from_pretrained(model_str_alt)
+tokenizer = AutoTokenizer.from_pretrained(model_str_alt)
+model_alt = VisionEncoderDecoderModel.from_pretrained(model_str_alt, torch_dtype=torch.float32).to("cpu")
+
+model_alt.eval()
+
+# Function for vit-gpt2 prediction
+
+def predict(image):
+
+    pixel_values = feature_extractor(images=image, return_tensors="pt").pixel_values
+
+    with torch.no_grad():
+        output_ids = model.generate(pixel_values, max_length=16, num_beams=4, return_dict_in_generate=True).sequences
+
+    preds = tokenizer.batch_decode(output_ids, skip_special_tokens=True)
+    preds = [pred.strip() for pred in preds]
+
+    return preds
 
 def caption_image(raw_image):
     inputs = processor(raw_image.convert('RGB'), return_tensors="pt").to("cpu", torch.float32)
-    out = model.generate(**inputs, max_new_tokens=100)
+    inputs_alt = predict(raw_image.convert('RGB'))
+    out = model.generate(**inputs, max_new_tokens=128)
     return processor.decode(out[0], skip_special_tokens=True)
 
 def generate_chat_picture(picture, name1, name2):
-    text = f'*{name1} sends {name2} a picture that contains the following: "{caption_image(picture)}"*'
+    # merge the two predicted captions for the final text
+    text = f'*{name1} sends {name2} a picture that contains: {caption_image(picture)}; {predict(picture)}*'
     # lower the resolution of sent images for the chat, otherwise the log size gets out of control quickly with all the base64 values in visible history
     picture.thumbnail((300, 300))
     buffer = BytesIO()
