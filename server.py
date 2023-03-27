@@ -468,6 +468,9 @@ def create_interface():
             shared.gradio['Stop'].click(None, None, None, cancels=gen_events)
             shared.gradio['interface'].load(None, None, None, _js=f"() => {{{ui.main_js}}}")
 
+        with gr.Tab("Training", elem_id="training-tab"):
+            training.create_train_interface()
+
         with gr.Tab("Interface mode", elem_id="interface-mode"):
             modes = ["default", "notebook", "chat", "cai_chat"]
             current_mode = "default"
@@ -488,9 +491,6 @@ def create_interface():
             shared.gradio['reset_interface'].click(set_interface_arguments, [shared.gradio[k] for k in ['interface_modes_menu', 'extensions_menu', 'cmd_arguments_menu']], None)
             shared.gradio['reset_interface'].click(lambda : None, None, None, _js='() => {document.body.innerHTML=\'<h1 style="font-family:monospace;margin-top:20%;color:lightgray;text-align:center;">Reloading...</h1>\'; setTimeout(function(){location.reload()},2500)}')
         
-        with gr.Tab("Training", elem_id="training-tab"):
-            training.create_train_interface()
-
         if shared.args.extensions is not None:
             extensions_module.create_extensions_block()
 
