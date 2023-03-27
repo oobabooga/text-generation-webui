@@ -135,7 +135,7 @@ def save_prompt(text):
     fname = f"{datetime.now().strftime('%Y-%m-%d-%H:%M:%S')}.txt"
     with open(Path(f'prompts/{fname}'), 'w', encoding='utf-8') as f:
         f.write(text)
-    return f"Saved prompt to prompts/{fname}"
+    return f"Saved to prompts/{fname}"
 
 def load_prompt(fname):
     if fname in ['None', '']:
