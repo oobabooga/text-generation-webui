@@ -240,8 +240,6 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
                         break
                     yield formatted_outputs(reply, shared.model_name)
 
-                yield formatted_outputs(reply, shared.model_name)
-
         # Stream the output naively for FlexGen since it doesn't support 'stopping_criteria'
         else:
             for i in range(max_new_tokens//8+1):
