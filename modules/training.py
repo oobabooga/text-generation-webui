@@ -19,7 +19,7 @@ def create_train_interface():
             microBatchSize = gr.Slider(label='Micro Batch Size', value=4, minimum=1, maximum=128, step=1, info='Per-device batch size (NOTE: multiple devices not yet implemented). Increasing this will increase VRAM usage.')
             batchSize = gr.Slider(label='Batch Size', value=128, minimum=1, maximum=1024, step=4, info='Global batch size. The two batch sizes together determine gradient accumulation (gradientAccum = batch / microBatch). Higher gradient accum values lead to better quality training.')
         with gr.Row():
-            epochs = gr.Number(label='Epochs', value=1, minimum=1, maximum=1000, info='Number of times every entry in the dataset should be fed into training. So 1 means feed each item in once, 5 means feed it in five times, etc.')
+            epochs = gr.Number(label='Epochs', value=1, info='Number of times every entry in the dataset should be fed into training. So 1 means feed each item in once, 5 means feed it in five times, etc.')
             learningRate = gr.Textbox(label='Learning Rate', value='3e-4', info='Learning rate, in scientific notation. 3e-4 is a good starting base point. 1e-2 is extremely high, 1e-6 is extremely low.')
         # TODO: What is the actual maximum rank? Likely distinct per model. This might be better to somehow be on a log scale.
         loraRank = gr.Slider(label='LoRA Rank', value=8, minimum=1, maximum=1024, step=4, info='LoRA Rank, or dimension count. Higher values produce a larger file with better control over the model\'s content. Smaller values produce a smaller file with less overall control. Small values like 4 or 8 are great for stylistic guidance, high values like 128 or 256 are good for teaching content upgrades. Higher ranks also require higher VRAM.')
@@ -50,6 +50,7 @@ def cleanPath(basePath: str, path: str):
     return f'{Path(basePath).absolute()}/{path}'
 
 def do_train(loraName: str, microBatchSize: int, batchSize: int, epochs: int, learningRate: float, loraRank: int, loraAlpha: int, loraDropout: float, cutoffLen: int, dataset: str, evalDataset: str, format: str):
+    yield "Prepping..."
     # Input validation / processing
     # TODO: --lora-dir PR once pulled will need to be applied here
     loraName = f"loras/{cleanPath(None, loraName)}"
@@ -80,6 +81,7 @@ def do_train(loraName: str, microBatchSize: int, batchSize: int, epochs: int, le
     def generate_and_tokenize_prompt(data_point):
         prompt = generate_prompt(data_point)
         return tokenize(prompt)
+    print("Loading datasets...")
     data = load_dataset("json", data_files=cleanPath('training/datasets', f'{dataset}.json'))
     train_data = data['train'].shuffle().map(generate_and_tokenize_prompt)
     if evalDataset == 'None':
@@ -89,7 +91,9 @@ def do_train(loraName: str, microBatchSize: int, batchSize: int, epochs: int, le
         evalData = evalData['train'].shuffle().map(generate_and_tokenize_prompt)
     # Start prepping the model itself
     if not hasattr(shared.model, 'lm_head') or hasattr(shared.model.lm_head, 'weight'):
+        print("Getting model ready...")
         prepare_model_for_int8_training(shared.model)
+    print("Prepping for training...")
     config = LoraConfig(
         r=loraRank,
         lora_alpha=loraAlpha,
@@ -121,7 +125,7 @@ def do_train(loraName: str, microBatchSize: int, batchSize: int, epochs: int, le
             save_total_limit=3,
             load_best_model_at_end=True if evalData is not None else False,
             # TODO: Enable multi-device support
-            ddp_find_unused_parameters=None,
+            ddp_find_unused_parameters=None
         ),
         data_collator=transformers.DataCollatorForLanguageModeling(shared.tokenizer, mlm=False),
     )
@@ -133,6 +137,11 @@ def do_train(loraName: str, microBatchSize: int, batchSize: int, epochs: int, le
     if torch.__version__ >= "2" and sys.platform != "win32":
         loraModel = torch.compile(loraModel)
     # Actually start and run and save at the end
+    # TODO: save/load checkpoints to resume from?
+    print("Starting training...")
+    yield "Running..."
     trainer.train()
+    print("Training complete, saving...")
     loraModel.save_pretrained(loraName)
-    return "Done!"
+    print("Training complete!")
+    yield f"Done! Lora saved to `{loraName}`"
