@@ -188,13 +188,15 @@ def do_train(loraName: str, microBatchSize: int, batchSize: int, epochs: int, le
             timeElapsed = time.perf_counter() - startTime
             if timeElapsed <= 0:
                 timerInfo = ""
+                totalTimeEstimate = 999
             else:
                 its = CURRENT_STEPS / timeElapsed
                 if its > 1:
                     timerInfo = f"`{its:.2f}` it/s"
                 else:
                     timerInfo = f"`{1.0/its:.2f}` s/it"
-            yield f"Running... **{CURRENT_STEPS}** / **{MAX_STEPS}** ... {timerInfo}, `{timeElapsed:.1f}` seconds"
+                totalTimeEstimate = (1.0/its) * (MAX_STEPS)
+            yield f"Running... **{CURRENT_STEPS}** / **{MAX_STEPS}** ... {timerInfo}, `{timeElapsed:.0f}`/`{totalTimeEstimate:.0f}` seconds"
     print("Training complete, saving...")
     loraModel.save_pretrained(loraName)
     if WANT_INTERRUPT:
