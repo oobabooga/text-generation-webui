@@ -113,13 +113,10 @@ yay -S docker docker-compose buildkit nvidia-container-runtime
 sudo systemctl restart docker # required by nvidia-container-runtime
 ```
 
-```bash
-pip3 install tqdm
-python download-model.py --text-only decapoda-research/llama-7b-hf
-cd models/
-wget https://huggingface.co/decapoda-research/llama-7b-hf-int4/resolve/main/llama-7b-4bit.pt
-sed -i 's/LLaMATokenizer/LlamaTokenizer/g' models/llama-7b-hf/tokenizer_config.json
-```
+Converted without group-size (better for the 7b model): https://github.com/oobabooga/text-generation-webui/pull/530#issuecomment-1483891617
+Converted with group-size (better from 13b upwards): https://github.com/oobabooga/text-generation-webui/pull/530#issuecomment-1483941105
+
+download and place the folders inside the models folder
 
 edit .env values to your needs
 ```bash
@@ -127,7 +124,7 @@ cp .env.example .env
 nano .env
 ```
 ```bash
-docker-compose up
+docker-compose up --build
 ```
 
 ## Downloading models
