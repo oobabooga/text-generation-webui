@@ -369,19 +369,22 @@ def create_interface():
 
         elif shared.args.notebook:
             with gr.Tab("Text generation", elem_id="main"):
-                with gr.Tab('Raw'):
-                    shared.gradio['textbox'] = gr.Textbox(value=default_text, lines=25)
-                with gr.Tab('Markdown'):
-                    shared.gradio['markdown'] = gr.Markdown()
-                with gr.Tab('HTML'):
-                    shared.gradio['html'] = gr.HTML()
-
                 with gr.Row():
-                    shared.gradio['Stop'] = gr.Button('Stop')
-                    shared.gradio['Generate'] = gr.Button('Generate')
-                shared.gradio['max_new_tokens'] = gr.Slider(minimum=shared.settings['max_new_tokens_min'], maximum=shared.settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=shared.settings['max_new_tokens'])
+                    with gr.Column(scale=4):
+                        with gr.Tab('Raw'):
+                            shared.gradio['textbox'] = gr.Textbox(value=default_text, elem_id="textbox", lines=25)
+                        with gr.Tab('Markdown'):
+                            shared.gradio['markdown'] = gr.Markdown()
+                        with gr.Tab('HTML'):
+                            shared.gradio['html'] = gr.HTML()
 
-                create_model_and_preset_menus()
+                        with gr.Row():
+                            shared.gradio['Stop'] = gr.Button('Stop')
+                            shared.gradio['Generate'] = gr.Button('Generate')
+                    with gr.Column(scale=1):
+                        shared.gradio['max_new_tokens'] = gr.Slider(minimum=shared.settings['max_new_tokens_min'], maximum=shared.settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=shared.settings['max_new_tokens'])
+
+                        create_model_and_preset_menus()
             with gr.Tab("Parameters", elem_id="parameters"):
                 create_settings_menus(default_preset)
 
