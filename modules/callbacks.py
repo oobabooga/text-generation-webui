@@ -54,7 +54,7 @@ class Iteratorize:
         self.stop_now = False
 
         def _callback(val):
-            if self.stop_now:
+            if self.stop_now or shared.stop_everything:
                 raise ValueError
             self.q.put(val)
 
