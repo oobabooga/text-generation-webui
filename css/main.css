@@ -37,12 +37,6 @@
   text-decoration: none !important;
 }
 
-svg {
-  display: unset !important;
-  vertical-align: middle !important;
-  margin: 5px;
-}
-
 ol li p, ul li p {
     display: inline-block;
 }
@@ -63,4 +57,9 @@ ol li p, ul li p {
 #extensions {
   padding: 15px;
   padding: 15px;
+}
+
+span.math.inline {
+  font-size: 27px;
+  vertical-align: baseline !important;
 }
