@@ -1,5 +1,5 @@
 accelerate==0.17.1
-bitsandbytes==0.37.1
+bitsandbytes==0.37.2
 flexgen==0.1.7
 gradio==3.23.0
 markdown
