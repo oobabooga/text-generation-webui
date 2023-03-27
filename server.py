@@ -417,8 +417,12 @@ def create_interface():
                             shared.gradio['html'] = gr.HTML()
 
                         with gr.Row():
-                            shared.gradio['Generate'] = gr.Button('Generate')
-                            shared.gradio['Stop'] = gr.Button('Stop')
+                            with gr.Column():
+                                with gr.Row():
+                                    shared.gradio['Generate'] = gr.Button('Generate')
+                                    shared.gradio['Stop'] = gr.Button('Stop')
+                            with gr.Column():
+                                pass
 
                     with gr.Column(scale=1):
                         gr.Markdown("\n")
