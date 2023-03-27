@@ -7,6 +7,7 @@ import modules.shared as shared
 
 state = {}
 available_extensions = []
+setup_called = False
 
 def load_extensions():
     global state
@@ -39,6 +40,8 @@ def apply_extensions(text, typ):
     return text
 
 def create_extensions_block():
+    global setup_called
+
     # Updating the default values
     for extension, name in iterator():
         if hasattr(extension, 'params'):
@@ -47,10 +50,21 @@ def create_extensions_block():
                 if _id in shared.settings:
                     extension.params[param] = shared.settings[_id]
 
+    should_display_ui = False
+
+    # Running setup function
+    if not setup_called:
+        for extension, name in iterator():
+            if hasattr(extension, "setup"):
+                extension.setup()
+            if hasattr(extension, "ui"):
+                should_display_ui = True
+        setup_called = True
+
     # Creating the extension ui elements
-    if len(state) > 0:
-        with gr.Box(elem_id="extensions"):
-            gr.Markdown("Extensions")
+    if should_display_ui:
+        with gr.Column(elem_id="extensions"):
             for extension, name in iterator():
+                gr.Markdown(f"\n### {name}")
                 if hasattr(extension, "ui"):
                     extension.ui()
