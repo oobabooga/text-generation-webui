@@ -157,7 +157,7 @@ def create_prompt_menus():
                 shared.gradio['save_prompt'] = gr.Button('Save prompt')
                 shared.gradio['status'] = gr.Markdown('Ready')
 
-    shared.gradio['prompt_menu'].change(load_prompt, [shared.gradio['prompt_menu']], [shared.gradio['textbox']], show_progress=True)
+    shared.gradio['prompt_menu'].change(load_prompt, [shared.gradio['prompt_menu']], [shared.gradio['textbox']], show_progress=False)
     shared.gradio['save_prompt'].click(save_prompt, [shared.gradio['textbox']], [shared.gradio['status']], show_progress=False)
 
 def create_settings_menus(default_preset):
