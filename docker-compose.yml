@@ -14,7 +14,13 @@ services:
     stdin_open: true
     tty: true
     volumes:
+      - ./characters:/app/characters
+      - ./extensions:/app/extensions
+      - ./loras:/app/loras
       - ./models:/app/models
+      - ./presets:/app/presets
+      - ./prompts:/app/prompts
+      - ./softprompts:/app/softprompts
     deploy:
       resources:
         reservations:
