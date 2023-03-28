@@ -87,8 +87,35 @@ def bot_prefix_modifier(string):
 def ui():
     """Adds the LTM-specific settings."""
     with gr.Accordion("Long Term Memory settings", open=True):
-        update = gr.Button("Force load memories")
+        update = gr.Button("Force reload memories")
+        with gr.Row():
+            destroy = gr.Button("Destroy all memories")
+            destroy_confirm = gr.Button(
+                "THIS IS IRREVERSIBLE, ARE YOU SURE?", variant="stop", visible=False
+            )
+            destroy_cancel = gr.Button("Cancel", visible=False)
+            destroy_elems = [destroy_confirm, destroy, destroy_cancel]
+
+    # Update memories
     update.click(memory_database.reload_embeddings_from_disk, [], [])
+
+    # Clear memory with confirmation
+    destroy.click(
+        lambda: [gr.update(visible=True), gr.update(visible=False), gr.update(visible=True)],
+        None,
+        destroy_elems,
+    )
+    destroy_confirm.click(
+        lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)],
+        None,
+        destroy_elems,
+    )
+    destroy_confirm.click(memory_database.destroy_all_memories, [], [])
+    destroy_cancel.click(
+        lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)],
+        None,
+        destroy_elems,
+    )
 
 
 def custom_generate_chat_prompt(

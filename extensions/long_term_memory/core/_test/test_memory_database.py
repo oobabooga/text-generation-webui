@@ -211,3 +211,52 @@ def test_reload_embeddings_from_disk(tmp_path):
 
     ### Ensure integrity of the LTM database ###
     _validate_database_integrity(tmp_path, len(MEMORY_LIST))
+
+
+def test_destroy_all_memories(tmp_path):
+    """Ensures LTM database can destroy all memories."""
+
+    ### Populating all memories ###
+    # Attach to the database (will create a new one)
+    ltm_database = LtmDatabase(tmp_path)
+
+    # Destroy all memories on fresh database, shouldn't change anything
+    ltm_database.destroy_all_memories()
+
+    # Add some memories
+    for name, message in MEMORY_LIST:
+        ltm_database.add(name, message)
+
+    # Reload embeddings from disk, now all LTMs should be queryable
+    ltm_database.reload_embeddings_from_disk()
+    _validate_memories(ltm_database)
+
+    # Ensure integrity of the LTM database
+    _validate_database_integrity(tmp_path, len(MEMORY_LIST))
+
+    ### Destroying all memories ###
+    # Destroy all memories on a populated database
+    ltm_database.destroy_all_memories()
+
+    # Validate all memories are actually destroyed
+    # Vectors in-memory
+    (query_response, score) = ltm_database.query(QUERY_MESSAGES[0])
+    assert not query_response
+    assert pytest.approx(1, abs=0.001) == score
+    # Vectors on-disk
+    _validate_database_integrity(tmp_path, 0)
+
+    ### Populating all memories again ###
+    # Attach to the database (will create a new one)
+    ltm_database = LtmDatabase(tmp_path)
+
+    # Add some memories
+    for name, message in MEMORY_LIST:
+        ltm_database.add(name, message)
+
+    # Reload embeddings from disk, now all LTMs should be queryable
+    ltm_database.reload_embeddings_from_disk()
+    _validate_memories(ltm_database)
+
+    # Ensure integrity of the LTM database
+    _validate_database_integrity(tmp_path, len(MEMORY_LIST))

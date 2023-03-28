@@ -10,6 +10,8 @@ CREATE_TABLE_QUERY = """
     )
     """
 
+DROP_TABLE_QUERY = "DROP TABLE IF EXISTS long_term_memory"
+
 INSERT_DATA_QUERY = """
     INSERT INTO long_term_memory (id, name, message, timestamp)
     VALUES(?, ?, ?, CURRENT_TIMESTAMP)

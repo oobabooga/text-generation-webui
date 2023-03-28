@@ -18,6 +18,7 @@ from extensions.long_term_memory.constants import (
 )
 from extensions.long_term_memory.core.queries import (
     CREATE_TABLE_QUERY,
+    DROP_TABLE_QUERY,
     FETCH_DATA_QUERY,
     INSERT_DATA_QUERY,
 )
@@ -33,7 +34,7 @@ class LtmDatabase:
 
         if not self.database_path.exists() and not self.embeddings_path.exists():
             print("No existing memories found, will create a new database.")
-            self._create_new_database()
+            self._destroy_and_recreate_database(do_sql_drop=False)
         elif self.database_path.exists() and not self.embeddings_path.exists():
             raise RuntimeError(
                 "ERROR: Inconsistent state detected: "
@@ -66,16 +67,18 @@ class LtmDatabase:
             n_neighbors=1, algorithm="brute", metric="cosine", n_jobs=-1
         )
 
-    def _create_new_database(self) -> None:
-        """Creates a new LTM database.
+    def _destroy_and_recreate_database(self, do_sql_drop=False) -> None:
+        """Destroys and re-creates a new LTM database.
 
-        WARNING: THIS WILL DESTROY ANY EXISTING EMBEDDINGS DATABASE.
+        WARNING: THIS WILL DESTROY ANY EXISTING LONG TERM MEMORY DATABASE.
                  DO NOT CALL THIS METHOD YOURSELF UNLESS YOU KNOW EXACTLY
                  WHAT YOU'RE DOING!
         """
         # Create new sqlite table to store the textual memories
         sql_conn = sqlite3.connect(self.database_path)
         with sql_conn:
+            if do_sql_drop:
+                sql_conn.execute(DROP_TABLE_QUERY)
             sql_conn.execute(CREATE_TABLE_QUERY)
 
         # Create new embeddings db to store the fuzzy keys for the
@@ -149,7 +152,7 @@ class LtmDatabase:
         """Reloads all embeddings from disk into memory."""
         print("--------------------------------")
         print("Loading all embeddings from disk")
-        print("---")
+        print("--------------------------------")
         num_prior_embeddings = self.message_embeddings.shape[0]
         self.message_embeddings = zarr.open(self.embeddings_path, mode="r")[:]
         num_curr_embeddings = self.message_embeddings.shape[0]
@@ -157,3 +160,18 @@ class LtmDatabase:
         print(f"Before: {num_prior_embeddings} embeddings in memory")
         print(f"After: {num_curr_embeddings} embeddings in memory")
         print("--------------------------------")
+
+    def destroy_all_memories(self) -> None:
+        """Deletes all embeddings from memory AND disk."""
+        print("--------------------------------------------------")
+        print("Destroying all memories, I hope you backed them up")
+        print("--------------------------------------------------")
+        self.message_embeddings = None
+        self.disk_embeddings = None
+
+        self._destroy_and_recreate_database(do_sql_drop=True)
+
+        self.disk_embeddings = zarr.open(self.embeddings_path, mode="a")
+        self.message_embeddings = zarr.open(self.embeddings_path, mode="r")[:]
+        print("DONE!")
+        print("--------------------------------------------------")
