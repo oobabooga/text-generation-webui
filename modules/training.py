@@ -92,8 +92,7 @@ def do_train(lora_name: str, micro_batch_size: int, batch_size: int, epochs: int
 
     # == Input validation / processing ==
     yield "Prepping..."
-    # TODO: --lora-dir PR once pulled will need to be applied here
-    lora_name = f"loras/{clean_path(None, lora_name)}"
+    lora_name = f"{shared.args.lora_dir}/{clean_path(None, lora_name)}"
     if dataset is None:
         return "**Missing dataset choice input, cannot continue.**"
     if format is None:
