@@ -19,9 +19,7 @@ MAX_STEPS = 0
 CURRENT_GRADIENT_ACCUM = 1
 
 def get_json_dataset(path: str):
-    def get_set():
-        return ['None'] + sorted(set(map(lambda x : '.'.join(str(x.name).split('.')[:-1]), Path(path).glob('*.json'))), key=str.lower)
-    return get_set
+    return ['None'] + sorted(set(map(lambda x : '.'.join(str(x.name).split('.')[:-1]), Path(path).glob('*.json'))), key=str.lower)
 
 def create_train_interface():
     with gr.Tab('Train LoRA', elem_id='lora-train-tab'):
@@ -32,7 +30,7 @@ def create_train_interface():
             batch_size = gr.Slider(label='Batch Size', value=128, minimum=1, maximum=1024, step=4, info='Global batch size. The two batch sizes together determine gradient accumulation (gradientAccum = batch / microBatch). Higher gradient accum values lead to better quality training.')
 
         with gr.Row():
-            epochs = gr.Number(label='Epochs', value=1, info='Number of times every entry in the dataset should be fed into training. So 1 means feed each item in once, 5 means feed it in five times, etc.')
+            epochs = gr.Number(label='Epochs', value=3, info='Number of times every entry in the dataset should be fed into training. So 1 means feed each item in once, 5 means feed it in five times, etc.')
             learning_rate = gr.Textbox(label='Learning Rate', value='3e-4', info='Learning rate, in scientific notation. 3e-4 is a good starting base point. 1e-2 is extremely high, 1e-6 is extremely low.')
 
         # TODO: What is the actual maximum rank? Likely distinct per model. This might be better to somehow be on a log scale.
@@ -43,21 +41,19 @@ def create_train_interface():
         cutoff_len = gr.Slider(label='Cutoff Length', minimum=1,maximum=2048, value=256, step=32, info='Cutoff length for text input. Essentially, how long of a line of text to feed in at a time. Higher values require drastically more VRAM.')
 
         with gr.Row():
-            dataset_function = get_json_dataset('training/datasets')
-            dataset = gr.Dropdown(choices=dataset_function(), value='None', label='Dataset', info='The dataset file to use for training.')
-            ui.create_refresh_button(dataset, lambda : None, lambda : {'choices': dataset_function()}, 'refresh-button')
-            eval_dataset = gr.Dropdown(choices=dataset_function(), value='None', label='Evaluation Dataset', info='The dataset file used to evaluate the model after training.')
-            ui.create_refresh_button(eval_dataset, lambda : None, lambda : {'choices': dataset_function()}, 'refresh-button')
-            formats_function = get_json_dataset('training/formats')
-            format = gr.Dropdown(choices=formats_function(), value='None', label='Data Format', info='The format file used to decide how to format the dataset input.')
-            ui.create_refresh_button(format, lambda : None, lambda : {'choices': formats_function()}, 'refresh-button')
+            dataset = gr.Dropdown(choices=get_json_dataset('training/datasets'), value='None', label='Dataset', info='The dataset file to use for training.')
+            ui.create_refresh_button(dataset, lambda : None, lambda : {'choices': get_json_dataset('training/datasets')}, 'refresh-button')
+            eval_dataset = gr.Dropdown(choices=get_json_dataset('training/datasets'), value='None', label='Evaluation Dataset', info='The dataset file used to evaluate the model after training.')
+            ui.create_refresh_button(eval_dataset, lambda : None, lambda : {'choices': get_json_dataset('training/datasets')}, 'refresh-button')
+            format = gr.Dropdown(choices=get_json_dataset('training/formats'), value='None', label='Data Format', info='The format file used to decide how to format the dataset input.')
+            ui.create_refresh_button(format, lambda : None, lambda : {'choices': get_json_dataset('training/formats')}, 'refresh-button')
 
         with gr.Row():
             start_button = gr.Button("Start LoRA Training")
             stop_button = gr.Button("Interrupt")
 
         output = gr.Markdown(value="Ready")
-        startEvent = start_button.click(do_train, [lora_name, micro_batch_size, batch_size, epochs, learning_rate, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format], [output])
+        start_button.click(do_train, [lora_name, micro_batch_size, batch_size, epochs, learning_rate, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format], [output])
         stop_button.click(do_interrupt, [], [], cancels=[], queue=False)
 
 def do_interrupt():
