@@ -37,7 +37,7 @@ def predict(image):
     pixel_values = feature_extractor(images=image, return_tensors="pt").pixel_values
 
     with torch.no_grad():
-        output_ids = model.generate(pixel_values, max_length=16, num_beams=4, return_dict_in_generate=True).sequences
+        output_ids = model_alt.generate(pixel_values, max_length=24, num_beams=4, return_dict_in_generate=True).sequences
 
     preds = tokenizer.batch_decode(output_ids, skip_special_tokens=True)
     preds = [pred.strip() for pred in preds]
@@ -52,7 +52,7 @@ def caption_image(raw_image):
 
 def generate_chat_picture(picture, name1, name2):
     # merge the two predicted captions for the final text
-    text = f'*{name1} sends {name2} a picture that contains: {caption_image(picture)}; {predict(picture)}*'
+    text = f'*{name1} sends {name2} a picture that contains: {caption_image(picture)}; {predict(picture)[0]}*'
     # lower the resolution of sent images for the chat, otherwise the log size gets out of control quickly with all the base64 values in visible history
     picture.thumbnail((300, 300))
     buffer = BytesIO()
