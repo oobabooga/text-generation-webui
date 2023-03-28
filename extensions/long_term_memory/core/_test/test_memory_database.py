@@ -37,16 +37,14 @@ NUM_RANDOM_MESSAGES = 50
 RANDOM_MESSAGE_LENGTH = 300
 
 
-def _validate_memories(tmp_path):
+def _validate_memories(ltm_database):
     # Testing helper that ensures proper behavior when database contains
     # all the memories from MEMORY_LIST
-
-    # Re-attach to the database to simulate a restart
-    ltm_database = LtmDatabase(tmp_path)
 
     # Sanity check: verify we can find exact matches
     for actual_name, actual_message in MEMORY_LIST:
         (query_response, score) = ltm_database.query(actual_message)
+        assert query_response
         assert actual_name == query_response["name"]
         assert actual_message == query_response["message"]
         assert pytest.approx(0, abs=0.001) == score
@@ -109,7 +107,7 @@ def test_typical_usage(tmp_path):
     assert pytest.approx(1, abs=0.001) == score
 
     ### Mock user session 2 ###
-    _validate_memories(tmp_path)
+    _validate_memories(LtmDatabase(tmp_path))
 
     ### Ensure integrity of the LTM database ###
     _validate_database_integrity(tmp_path, len(MEMORY_LIST))
@@ -130,7 +128,7 @@ def test_duplicate_messages(tmp_path):
         ltm_database.add(name, message)
 
     ### Mock user session 2 ###
-    _validate_memories(tmp_path)
+    _validate_memories(LtmDatabase(tmp_path))
 
     ### Ensure integrity of the LTM database ###
     _validate_database_integrity(tmp_path, len(MEMORY_LIST))
@@ -181,8 +179,35 @@ def test_extended_usage(tmp_path):
         ltm_database.add("RandomBot", message)
 
     ### Mock user session 2 ###
-    _validate_memories(tmp_path)
+    _validate_memories(LtmDatabase(tmp_path))
 
     ### Ensure integrity of the LTM database ###
     num_expected_elems = 2 * NUM_RANDOM_MESSAGES + len(MEMORY_LIST)
     _validate_database_integrity(tmp_path, num_expected_elems)
+
+
+def test_reload_embeddings_from_disk(tmp_path):
+    """Ensures LTM database can reload embeddings from disk correctly."""
+
+    ### Mock user session 1 ###
+    # Attach to the database (will create a new one)
+    ltm_database = LtmDatabase(tmp_path)
+
+    # Add some memories
+    for name, message in MEMORY_LIST:
+        ltm_database.add(name, message)
+
+    # Querying LTM should STILL return an empty query response and a
+    # "maximum distance" score since no LTM is actually queryable yet.
+    # Once the user restarts their session, all LTMs will be queryable
+    (query_response, score) = ltm_database.query(QUERY_MESSAGES[0])
+    assert not query_response
+    assert pytest.approx(1, abs=0.001) == score
+
+    # Reload embeddings from disk, now all LTMs should be queryable
+    ltm_database.reload_embeddings_from_disk()
+    # NOTE: we reuse the original ltm_database object for this check
+    _validate_memories(ltm_database)
+
+    ### Ensure integrity of the LTM database ###
+    _validate_database_integrity(tmp_path, len(MEMORY_LIST))

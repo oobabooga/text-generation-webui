@@ -3,6 +3,8 @@
 import pathlib
 import pprint
 
+import gradio as gr
+
 import modules.shared as shared
 from modules.chat import generate_chat_prompt
 from modules.html_generator import fix_newlines
@@ -80,6 +82,13 @@ def bot_prefix_modifier(string):
         bias_string = params["bias string"].strip()
         return f"{string} {bias_string} "
     return string
+
+
+def ui():
+    """Adds the LTM-specific settings."""
+    with gr.Accordion("Long Term Memory settings", open=True):
+        update = gr.Button("Force load memories")
+    update.click(memory_database.reload_embeddings_from_disk, [], [])
 
 
 def custom_generate_chat_prompt(

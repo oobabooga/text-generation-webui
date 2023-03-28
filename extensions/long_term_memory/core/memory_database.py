@@ -144,3 +144,16 @@ class LtmDatabase:
             "timestamp": timestamp,
         }
         return (query_response, match_score)
+
+    def reload_embeddings_from_disk(self) -> None:
+        """Reloads all embeddings from disk into memory."""
+        print("--------------------------------")
+        print("Loading all embeddings from disk")
+        print("---")
+        num_prior_embeddings = self.message_embeddings.shape[0]
+        self.message_embeddings = zarr.open(self.embeddings_path, mode="r")[:]
+        num_curr_embeddings = self.message_embeddings.shape[0]
+        print("DONE!")
+        print(f"Before: {num_prior_embeddings} embeddings in memory")
+        print(f"After: {num_curr_embeddings} embeddings in memory")
+        print("--------------------------------")
