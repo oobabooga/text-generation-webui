@@ -498,16 +498,21 @@ def create_interface():
         if shared.args.extensions is not None:
             extensions_module.create_extensions_block()
 
+    # Authentication
+    auth = None
+    if shared.args.gradio_auth_path is not None:
+        gradio_auth_creds = []
+        with open(shared.args.gradio_auth_path, 'r', encoding="utf8") as file:
+            for line in file.readlines():
+                gradio_auth_creds += [x.strip() for x in line.split(',') if x.strip()]
+        auth = [tuple(cred.split(':')) for cred in gradio_auth_creds]
+
     # Launch the interface
-    gradio_auth_creds = []
-    with open(shared.args.gradio_auth_path, 'r', encoding="utf8") as file:
-        for line in file.readlines():
-            gradio_auth_creds += [x.strip() for x in line.split(',') if x.strip()]
     shared.gradio['interface'].queue()
     if shared.args.listen:
-        shared.gradio['interface'].launch(prevent_thread_lock=True, share=shared.args.share, server_name='0.0.0.0', server_port=shared.args.listen_port, inbrowser=shared.args.auto_launch, auth=[tuple(cred.split(':')) for cred in gradio_auth_creds] if gradio_auth_creds else None)
+        shared.gradio['interface'].launch(prevent_thread_lock=True, share=shared.args.share, server_name='0.0.0.0', server_port=shared.args.listen_port, inbrowser=shared.args.auto_launch, auth=auth)
     else:
-        shared.gradio['interface'].launch(prevent_thread_lock=True, share=shared.args.share, server_port=shared.args.listen_port, inbrowser=shared.args.auto_launch, auth=[tuple(cred.split(':')) for cred in gradio_auth_creds] if gradio_auth_creds else None)
+        shared.gradio['interface'].launch(prevent_thread_lock=True, share=shared.args.share, server_port=shared.args.listen_port, inbrowser=shared.args.auto_launch, auth=auth)
 
 create_interface()
 
