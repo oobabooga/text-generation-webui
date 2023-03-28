@@ -27,7 +27,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * [FlexGen offload](https://github.com/oobabooga/text-generation-webui/wiki/FlexGen).
 * [DeepSpeed ZeRO-3 offload](https://github.com/oobabooga/text-generation-webui/wiki/DeepSpeed).
 * Get responses via API, [with](https://github.com/oobabooga/text-generation-webui/blob/main/api-example-streaming.py) or [without](https://github.com/oobabooga/text-generation-webui/blob/main/api-example.py) streaming.
-* [LLaMA model, including 4-bit mode](https://github.com/oobabooga/text-generation-webui/wiki/LLaMA-model).
+* [LLaMA model, including 4-bit GPTQ support](https://github.com/oobabooga/text-generation-webui/wiki/LLaMA-model).
 * [RWKV model](https://github.com/oobabooga/text-generation-webui/wiki/RWKV-model).
 * [Supports LoRAs](https://github.com/oobabooga/text-generation-webui/wiki/Using-LoRAs).
 * Supports softprompts.
@@ -176,10 +176,10 @@ Optionally, you can use the following command-line flags:
 | `--cai-chat`     | Launch the web UI in chat mode with a style similar to Character.AI's. If the file `img_bot.png` or `img_bot.jpg` exists in the same folder as server.py, this image will be used as the bot's profile picture. Similarly, `img_me.png` or `img_me.jpg` will be used as your profile picture. |
 | `--cpu`          | Use the CPU to generate text.|
 | `--load-in-8bit` | Load the model with 8-bit precision.|
-| `--load-in-4bit` | DEPRECATED: use `--gptq-bits 4` instead. |
-| `--gptq-bits GPTQ_BITS` |  GPTQ: Load a pre-quantized model with specified precision. 2, 3, 4 and 8 (bit) are supported. Currently only works with LLaMA and OPT. |
-| `--gptq-model-type MODEL_TYPE` |  GPTQ: Model type of pre-quantized model. Currently only LLaMa and OPT are supported. |
-| `--gptq-pre-layer GPTQ_PRE_LAYER` |  GPTQ: The number of layers to preload. |
+| `--wbits WBITS`            | GPTQ: Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported. |
+| `--model_type MODEL_TYPE`  | GPTQ: Model type of pre-quantized model. Currently only LLaMA and OPT are supported. |
+| `--groupsize GROUPSIZE`    | GPTQ: Group size. |
+| `--pre_layer PRE_LAYER`    | GPTQ: The number of layers to preload. |
 | `--bf16`         | Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU. |
 | `--auto-devices` | Automatically split the model across the available GPU(s) and CPU.|
 | `--disk`         | If the model is too large for your GPU(s) and CPU combined, send the remaining layers to the disk. |
@@ -198,12 +198,15 @@ Optionally, you can use the following command-line flags:
 |  `--rwkv-cuda-on` |   RWKV: Compile the CUDA kernel for better performance. |
 | `--no-stream`    | Don't stream the text output in real time. |
 | `--settings SETTINGS_FILE` | Load the default interface settings from this json file. See `settings-template.json` for an example. If you create a file called `settings.json`, this file will be loaded by default without the need to use the `--settings` flag.|
-|  `--extensions EXTENSIONS [EXTENSIONS ...]` |  The list of extensions to load. If you want to load more than one extension, write the names separated by spaces. |
-| `--listen`       | Make the web UI reachable from your local network.|
-|  `--listen-port LISTEN_PORT` | The listening port that the server will use. |
-| `--share`        | Create a public URL. This is useful for running the web UI on Google Colab or similar. |
-| `--auto-launch`  | Open the web UI in the default browser upon launch. |
-| `--verbose`      | Print the prompts to the terminal. |
+|  `--extensions EXTENSIONS [EXTENSIONS ...]` | The list of extensions to load. If you want to load more than one extension, write the names separated by spaces. |
+|  `--model-dir MODEL_DIR`                    | Path to directory with all the models |
+|  `--lora-dir LORA_DIR`                      | Path to directory with all the loras |
+|  `--verbose`                                | Print the prompts to the terminal. |
+|  `--listen`                                 | Make the web UI reachable from your local network. |
+|  `--listen-port LISTEN_PORT`                | The listening port that the server will use. |
+|  `--share`                                  | Create a public URL. This is useful for running the web UI on Google Colab or similar. |
+|  `--auto-launch`                            | Open the web UI in the default browser upon launch. |
+|  `--gradio-auth-path GRADIO_AUTH_PATH`      | Set the gradio authentication file path. The file should contain one or more user:password pairs in this format: "u1:p1,u2:p2,u3:p3" |
 
 Out of memory errors? [Check the low VRAM guide](https://github.com/oobabooga/text-generation-webui/wiki/Low-VRAM-guide).
 

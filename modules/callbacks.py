@@ -25,7 +25,7 @@ class _SentinelTokenStoppingCriteria(transformers.StoppingCriteria):
                 if trimmed_sample.shape[-1] < self.sentinel_token_ids[i].shape[-1]:
                     continue
                 for window in trimmed_sample.unfold(0, self.sentinel_token_ids[i].shape[-1], 1):
-                    if torch.all(torch.eq(self.sentinel_token_ids[i], window)):
+                    if torch.all(torch.eq(self.sentinel_token_ids[i][0], window)):
                         return True
         return False
 
@@ -54,7 +54,7 @@ class Iteratorize:
         self.stop_now = False
 
         def _callback(val):
-            if self.stop_now:
+            if self.stop_now or shared.stop_everything:
                 raise ValueError
             self.q.put(val)
 
