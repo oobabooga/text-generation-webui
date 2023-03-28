@@ -2,10 +2,10 @@
 FROM nvidia/cuda:11.7.0-devel-ubuntu22.04 as builder
 
 RUN apt-get update && \
-    apt-get install --no-install-recommends -y git ninja-build build-essential python3-dev python3-pip && \
+    apt-get install --no-install-recommends -y git build-essential python3-dev python3-pip && \
     rm -rf /var/lib/apt/lists/*
 
-RUN --mount=type=cache,target=/root/.cache/pip pip3 install torch ninja torchvision torchaudio
+RUN --mount=type=cache,target=/root/.cache/pip pip3 install torch torchvision torchaudio
 RUN git clone https://github.com/qwopqwop200/GPTQ-for-LLaMa /build
 
 WORKDIR /build
