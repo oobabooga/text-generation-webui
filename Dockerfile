@@ -47,4 +47,10 @@ ENV CLI_ARGS=""
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
 
+RUN --mount=type=cache,target=/root/.cache/pip cd extensions/api && pip3 install -r requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip cd extensions/elevenlabs_tts && pip3 install -r requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip cd extensions/google_translate && pip3 install -r requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip cd extensions/silero_tts && pip3 install -r requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip cd extensions/whisper_stt && pip3 install -r requirements.txt
+
 CMD python3 server.py ${CLI_ARGS}
