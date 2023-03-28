@@ -198,12 +198,15 @@ Optionally, you can use the following command-line flags:
 |  `--rwkv-cuda-on` |   RWKV: Compile the CUDA kernel for better performance. |
 | `--no-stream`    | Don't stream the text output in real time. |
 | `--settings SETTINGS_FILE` | Load the default interface settings from this json file. See `settings-template.json` for an example. If you create a file called `settings.json`, this file will be loaded by default without the need to use the `--settings` flag.|
-|  `--extensions EXTENSIONS [EXTENSIONS ...]` |  The list of extensions to load. If you want to load more than one extension, write the names separated by spaces. |
-| `--listen`       | Make the web UI reachable from your local network.|
-|  `--listen-port LISTEN_PORT` | The listening port that the server will use. |
-| `--share`        | Create a public URL. This is useful for running the web UI on Google Colab or similar. |
-| `--auto-launch`  | Open the web UI in the default browser upon launch. |
-| `--verbose`      | Print the prompts to the terminal. |
+|  `--extensions EXTENSIONS [EXTENSIONS ...]` | The list of extensions to load. If you want to load more than one extension, write the names separated by spaces. |
+|  `--model-dir MODEL_DIR`                    | Path to directory with all the models |
+|  `--lora-dir LORA_DIR`                      | Path to directory with all the loras |
+|  `--verbose`                                | Print the prompts to the terminal. |
+|  `--listen`                                 | Make the web UI reachable from your local network. |
+|  `--listen-port LISTEN_PORT`                | The listening port that the server will use. |
+|  `--share`                                  | Create a public URL. This is useful for running the web UI on Google Colab or similar. |
+|  `--auto-launch`                            | Open the web UI in the default browser upon launch. |
+|  `--gradio-auth-path GRADIO_AUTH_PATH`      | set gradio authentication file path ex. "/path/to/auth/file" with format like "u1:p1,u2:p2,u3:p3" |
 
 Out of memory errors? [Check the low VRAM guide](https://github.com/oobabooga/text-generation-webui/wiki/Low-VRAM-guide).
 
