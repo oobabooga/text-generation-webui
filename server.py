@@ -14,7 +14,8 @@ import modules.extensions as extensions_module
 from modules.html_generator import generate_chat_html
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, load_soft_prompt
-from modules.text_generation import clear_torch_cache, generate_reply
+from modules.text_generation import (clear_torch_cache, generate_reply,
+                                     stop_everything_event)
 
 # Loading custom settings
 settings_file = None
@@ -133,7 +134,7 @@ def save_prompt(text):
     fname = f"{datetime.now().strftime('%Y-%m-%d-%H:%M:%S')}.txt"
     with open(Path(f'prompts/{fname}'), 'w', encoding='utf-8') as f:
         f.write(text)
-    return f"Saved prompt to prompts/{fname}"
+    return f"Saved to prompts/{fname}"
 
 def load_prompt(fname):
     if fname in ['None', '']:
@@ -154,7 +155,7 @@ def create_prompt_menus():
                 shared.gradio['save_prompt'] = gr.Button('Save prompt')
                 shared.gradio['status'] = gr.Markdown('Ready')
 
-    shared.gradio['prompt_menu'].change(load_prompt, [shared.gradio['prompt_menu']], [shared.gradio['textbox']], show_progress=True)
+    shared.gradio['prompt_menu'].change(load_prompt, [shared.gradio['prompt_menu']], [shared.gradio['textbox']], show_progress=False)
     shared.gradio['save_prompt'].click(save_prompt, [shared.gradio['textbox']], [shared.gradio['status']], show_progress=False)
 
 def create_settings_menus(default_preset):
@@ -364,7 +365,7 @@ def create_interface():
             gen_events.append(shared.gradio['textbox'].submit(eval(function_call), shared.input_params, shared.gradio['display'], show_progress=shared.args.no_stream))
             gen_events.append(shared.gradio['Regenerate'].click(chat.regenerate_wrapper, shared.input_params, shared.gradio['display'], show_progress=shared.args.no_stream))
             gen_events.append(shared.gradio['Impersonate'].click(chat.impersonate_wrapper, shared.input_params, shared.gradio['textbox'], show_progress=shared.args.no_stream))
-            shared.gradio['Stop'].click(chat.stop_everything_event, [], [], cancels=gen_events, queue=False)
+            shared.gradio['Stop'].click(stop_everything_event, [], [], queue=False, cancels=gen_events if shared.args.no_stream else None)
 
             shared.gradio['Copy last reply'].click(chat.send_last_reply_to_input, [], shared.gradio['textbox'], show_progress=shared.args.no_stream)
             shared.gradio['Replace last reply'].click(chat.replace_last_reply, [shared.gradio['textbox'], shared.gradio['name1'], shared.gradio['name2']], shared.gradio['display'], show_progress=shared.args.no_stream)
@@ -415,11 +416,15 @@ def create_interface():
                             shared.gradio['html'] = gr.HTML()
 
                         with gr.Row():
-                            shared.gradio['Generate'] = gr.Button('Generate')
-                            shared.gradio['Stop'] = gr.Button('Stop')
+                            with gr.Column():
+                                with gr.Row():
+                                    shared.gradio['Generate'] = gr.Button('Generate')
+                                    shared.gradio['Stop'] = gr.Button('Stop')
+                            with gr.Column():
+                                pass
 
                     with gr.Column(scale=1):
-                        gr.Markdown("\n")
+                        gr.HTML('<div style="padding-bottom: 13px"></div>')
                         shared.gradio['max_new_tokens'] = gr.Slider(minimum=shared.settings['max_new_tokens_min'], maximum=shared.settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=shared.settings['max_new_tokens'])
 
                         create_prompt_menus()
@@ -431,7 +436,7 @@ def create_interface():
             output_params = [shared.gradio[k] for k in ['textbox', 'markdown', 'html']]
             gen_events.append(shared.gradio['Generate'].click(generate_reply, shared.input_params, output_params, show_progress=shared.args.no_stream, api_name='textgen'))
             gen_events.append(shared.gradio['textbox'].submit(generate_reply, shared.input_params, output_params, show_progress=shared.args.no_stream))
-            shared.gradio['Stop'].click(None, None, None, cancels=gen_events)
+            shared.gradio['Stop'].click(stop_everything_event, [], [], queue=False, cancels=gen_events if shared.args.no_stream else None)
             shared.gradio['interface'].load(None, None, None, _js=f"() => {{{ui.main_js}}}")
 
         else:
@@ -465,7 +470,7 @@ def create_interface():
             gen_events.append(shared.gradio['Generate'].click(generate_reply, shared.input_params, output_params, show_progress=shared.args.no_stream, api_name='textgen'))
             gen_events.append(shared.gradio['textbox'].submit(generate_reply, shared.input_params, output_params, show_progress=shared.args.no_stream))
             gen_events.append(shared.gradio['Continue'].click(generate_reply, [shared.gradio['output_textbox']] + shared.input_params[1:], output_params, show_progress=shared.args.no_stream))
-            shared.gradio['Stop'].click(None, None, None, cancels=gen_events)
+            shared.gradio['Stop'].click(stop_everything_event, [], [], queue=False, cancels=gen_events if shared.args.no_stream else None)
             shared.gradio['interface'].load(None, None, None, _js=f"() => {{{ui.main_js}}}")
 
         with gr.Tab("Training", elem_id="training-tab"):
