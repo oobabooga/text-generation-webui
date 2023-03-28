@@ -9,8 +9,8 @@ from pathlib import Path
 
 import gradio as gr
 
-from modules import chat, shared, ui, training
 import modules.extensions as extensions_module
+from modules import chat, shared, training, ui
 from modules.html_generator import generate_chat_html
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, load_soft_prompt
