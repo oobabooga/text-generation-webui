@@ -163,7 +163,10 @@ def load_model(model_name):
         tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/gpt-j-6B/"))
     else:
         tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/{shared.model_name}/"))
+
     tokenizer.truncation_side = 'left'
+    if type(tokenizer) is transformers.LlamaTokenizer:
+        tokenizer.decode_with_prefix_space = True # This is to handle LLaMA adding spaces everywhere
 
     print(f"Loaded the model in {(time.time()-t0):.2f} seconds.")
     return model, tokenizer

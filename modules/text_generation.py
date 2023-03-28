@@ -28,6 +28,11 @@ def encode(prompt, tokens_to_generate=0, add_special_tokens=True):
         return input_ids
     else:
         input_ids = shared.tokenizer.encode(str(prompt), return_tensors='pt', truncation=True, max_length=get_max_prompt_length(tokens_to_generate), add_special_tokens=add_special_tokens)
+
+        # Handle LLaMA adding a space to the prompt for no reason
+        if prompt[0] != ' ' and decode(input_ids[0])[0] == ' ':
+            input_ids = input_ids[:,1:]
+
         if shared.args.cpu:
             return input_ids
         elif shared.args.flexgen:
