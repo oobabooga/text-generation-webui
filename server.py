@@ -31,9 +31,9 @@ if settings_file is not None:
 
 def get_available_models():
     if shared.args.flexgen:
-        return sorted([re.sub('-np$', '', item.name) for item in list(Path('models/').glob('*')) if item.name.endswith('-np')], key=str.lower)
+        return sorted([re.sub('-np$', '', item.name) for item in list(Path(f'{shared.args.model_dir}/').glob('*')) if item.name.endswith('-np')], key=str.lower)
     else:
-        return sorted([re.sub('.pth$', '', item.name) for item in list(Path('models/').glob('*')) if not item.name.endswith(('.txt', '-np', '.pt', '.json'))], key=str.lower)
+        return sorted([re.sub('.pth$', '', item.name) for item in list(Path(f'{shared.args.model_dir}/').glob('*')) if not item.name.endswith(('.txt', '-np', '.pt', '.json'))], key=str.lower)
 
 def get_available_presets():
     return sorted(set(map(lambda x : '.'.join(str(x.name).split('.')[:-1]), Path('presets').glob('*.txt'))), key=str.lower)
@@ -55,7 +55,7 @@ def get_available_softprompts():
     return ['None'] + sorted(set(map(lambda x : '.'.join(str(x.name).split('.')[:-1]), Path('softprompts').glob('*.zip'))), key=str.lower)
 
 def get_available_loras():
-    return ['None'] + sorted([item.name for item in list(Path('loras/').glob('*')) if not item.name.endswith(('.txt', '-np', '.pt', '.json'))], key=str.lower)
+    return ['None'] + sorted([item.name for item in list(Path('shared.args.lora_dir').glob('*')) if not item.name.endswith(('.txt', '-np', '.pt', '.json'))], key=str.lower)
 
 def unload_model():
     shared.model = shared.tokenizer = None
@@ -499,12 +499,21 @@ def create_interface():
         if shared.args.extensions is not None:
             extensions_module.create_extensions_block()
 
+    # Authentication
+    auth = None
+    if shared.args.gradio_auth_path is not None:
+        gradio_auth_creds = []
+        with open(shared.args.gradio_auth_path, 'r', encoding="utf8") as file:
+            for line in file.readlines():
+                gradio_auth_creds += [x.strip() for x in line.split(',') if x.strip()]
+        auth = [tuple(cred.split(':')) for cred in gradio_auth_creds]
+
     # Launch the interface
     shared.gradio['interface'].queue()
     if shared.args.listen:
-        shared.gradio['interface'].launch(prevent_thread_lock=True, share=shared.args.share, server_name='0.0.0.0', server_port=shared.args.listen_port, inbrowser=shared.args.auto_launch)
+        shared.gradio['interface'].launch(prevent_thread_lock=True, share=shared.args.share, server_name='0.0.0.0', server_port=shared.args.listen_port, inbrowser=shared.args.auto_launch, auth=auth)
     else:
-        shared.gradio['interface'].launch(prevent_thread_lock=True, share=shared.args.share, server_port=shared.args.listen_port, inbrowser=shared.args.auto_launch)
+        shared.gradio['interface'].launch(prevent_thread_lock=True, share=shared.args.share, server_port=shared.args.listen_port, inbrowser=shared.args.auto_launch, auth=auth)
 
 create_interface()
 
