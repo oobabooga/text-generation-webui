@@ -65,7 +65,7 @@ def load_quantized(model_name):
         model_type = shared.args.model_type.lower()
 
     if model_type == 'llama' and shared.args.pre_layer:
-        oad_quant = llama_inference_offload.load_quant
+        load_quant = llama_inference_offload.load_quant
     elif model_type in ('llama', 'opt', 'gptj'):
         load_quant = _load_quant
     else:
