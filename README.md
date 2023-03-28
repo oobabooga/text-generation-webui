@@ -206,7 +206,7 @@ Optionally, you can use the following command-line flags:
 |  `--listen-port LISTEN_PORT`                | The listening port that the server will use. |
 |  `--share`                                  | Create a public URL. This is useful for running the web UI on Google Colab or similar. |
 |  `--auto-launch`                            | Open the web UI in the default browser upon launch. |
-|  `--gradio-auth-path GRADIO_AUTH_PATH`      | set gradio authentication file path ex. "/path/to/auth/file" with format like "u1:p1,u2:p2,u3:p3" |
+|  `--gradio-auth-path GRADIO_AUTH_PATH`      | Set the gradio authentication file path. The file should contain one or more user:password pairs in this format: "u1:p1,u2:p2,u3:p3" |
 
 Out of memory errors? [Check the low VRAM guide](https://github.com/oobabooga/text-generation-webui/wiki/Low-VRAM-guide).
 
