@@ -21,6 +21,7 @@ services:
       - ./presets:/app/presets
       - ./prompts:/app/prompts
       - ./softprompts:/app/softprompts
+      - ./training:/app/training
     deploy:
       resources:
         reservations:
