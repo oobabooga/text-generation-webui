@@ -25,35 +25,40 @@ def get_json_dataset(path: str):
 
 def create_train_interface():
     with gr.Tab('Train LoRA', elem_id='lora-train-tab'):
-        loraName = gr.Textbox(label="Name", info="The name of your new LoRA file")
+        lora_name = gr.Textbox(label="Name", info="The name of your new LoRA file")
         with gr.Row():
             # TODO: Implement multi-device support.
-            microBatchSize = gr.Slider(label='Micro Batch Size', value=4, minimum=1, maximum=128, step=1, info='Per-device batch size (NOTE: multiple devices not yet implemented). Increasing this will increase VRAM usage.')
-            batchSize = gr.Slider(label='Batch Size', value=128, minimum=1, maximum=1024, step=4, info='Global batch size. The two batch sizes together determine gradient accumulation (gradientAccum = batch / microBatch). Higher gradient accum values lead to better quality training.')
+            micro_batch_size = gr.Slider(label='Micro Batch Size', value=4, minimum=1, maximum=128, step=1, info='Per-device batch size (NOTE: multiple devices not yet implemented). Increasing this will increase VRAM usage.')
+            batch_size = gr.Slider(label='Batch Size', value=128, minimum=1, maximum=1024, step=4, info='Global batch size. The two batch sizes together determine gradient accumulation (gradientAccum = batch / microBatch). Higher gradient accum values lead to better quality training.')
+
         with gr.Row():
             epochs = gr.Number(label='Epochs', value=1, info='Number of times every entry in the dataset should be fed into training. So 1 means feed each item in once, 5 means feed it in five times, etc.')
-            learningRate = gr.Textbox(label='Learning Rate', value='3e-4', info='Learning rate, in scientific notation. 3e-4 is a good starting base point. 1e-2 is extremely high, 1e-6 is extremely low.')
+            learning_rate = gr.Textbox(label='Learning Rate', value='3e-4', info='Learning rate, in scientific notation. 3e-4 is a good starting base point. 1e-2 is extremely high, 1e-6 is extremely low.')
+
         # TODO: What is the actual maximum rank? Likely distinct per model. This might be better to somehow be on a log scale.
-        loraRank = gr.Slider(label='LoRA Rank', value=8, minimum=1, maximum=1024, step=4, info='LoRA Rank, or dimension count. Higher values produce a larger file with better control over the model\'s content. Smaller values produce a smaller file with less overall control. Small values like 4 or 8 are great for stylistic guidance, high values like 128 or 256 are good for teaching content upgrades. Higher ranks also require higher VRAM.')
-        loraAlpha = gr.Slider(label='LoRA Alpha', value=16, minimum=1, maximum=2048, step=4, info='LoRA Alpha. This divided by the rank becomes the scaling of the LoRA. Higher means stronger. A good standard value is twice your Rank.')
+        lora_rank = gr.Slider(label='LoRA Rank', value=8, minimum=1, maximum=1024, step=4, info='LoRA Rank, or dimension count. Higher values produce a larger file with better control over the model\'s content. Smaller values produce a smaller file with less overall control. Small values like 4 or 8 are great for stylistic guidance, high values like 128 or 256 are good for teaching content upgrades. Higher ranks also require higher VRAM.')
+        lora_alpha = gr.Slider(label='LoRA Alpha', value=16, minimum=1, maximum=2048, step=4, info='LoRA Alpha. This divided by the rank becomes the scaling of the LoRA. Higher means stronger. A good standard value is twice your Rank.')
         # TODO: Better explain what this does, in terms of real world effect especially.
-        loraDropout = gr.Slider(label='LoRA Dropout', minimum=0.0, maximum=1.0, step=0.025, value=0.05, info='Percentage probability for dropout of LoRA layers.')
-        cutoffLen = gr.Slider(label='Cutoff Length', minimum=1,maximum=2048, value=256, step=32, info='Cutoff length for text input. Essentially, how long of a line of text to feed in at a time. Higher values require drastically more VRAM.')
+        lora_dropout = gr.Slider(label='LoRA Dropout', minimum=0.0, maximum=1.0, step=0.025, value=0.05, info='Percentage probability for dropout of LoRA layers.')
+        cutoff_len = gr.Slider(label='Cutoff Length', minimum=1,maximum=2048, value=256, step=32, info='Cutoff length for text input. Essentially, how long of a line of text to feed in at a time. Higher values require drastically more VRAM.')
+
         with gr.Row():
-            datasetFunction = get_json_dataset('training/datasets')
-            dataset = gr.Dropdown(choices=datasetFunction(), value='None', label='Dataset', info='The dataset file to use for training.')
-            ui.create_refresh_button(dataset, lambda : None, lambda : {'choices': datasetFunction()}, 'refresh-button')
-            evalDataset = gr.Dropdown(choices=datasetFunction(), value='None', label='Evaluation Dataset', info='The dataset file used to evaluate the model after training.')
-            ui.create_refresh_button(evalDataset, lambda : None, lambda : {'choices': datasetFunction()}, 'refresh-button')
-            formatsFunction = get_json_dataset('training/formats')
-            format = gr.Dropdown(choices=formatsFunction(), value='None', label='Data Format', info='The format file used to decide how to format the dataset input.')
-            ui.create_refresh_button(format, lambda : None, lambda : {'choices': formatsFunction()}, 'refresh-button')
+            dataset_function = get_json_dataset('training/datasets')
+            dataset = gr.Dropdown(choices=dataset_function(), value='None', label='Dataset', info='The dataset file to use for training.')
+            ui.create_refresh_button(dataset, lambda : None, lambda : {'choices': dataset_function()}, 'refresh-button')
+            eval_dataset = gr.Dropdown(choices=dataset_function(), value='None', label='Evaluation Dataset', info='The dataset file used to evaluate the model after training.')
+            ui.create_refresh_button(eval_dataset, lambda : None, lambda : {'choices': dataset_function()}, 'refresh-button')
+            formats_function = get_json_dataset('training/formats')
+            format = gr.Dropdown(choices=formats_function(), value='None', label='Data Format', info='The format file used to decide how to format the dataset input.')
+            ui.create_refresh_button(format, lambda : None, lambda : {'choices': formats_function()}, 'refresh-button')
+
         with gr.Row():
-            startButton = gr.Button("Start LoRA Training")
-            stopButton = gr.Button("Interrupt")
+            start_button = gr.Button("Start LoRA Training")
+            stop_button = gr.Button("Interrupt")
+
         output = gr.Markdown(value="Ready")
-        startEvent = startButton.click(do_train, [loraName, microBatchSize, batchSize, epochs, learningRate, loraRank, loraAlpha, loraDropout, cutoffLen, dataset, evalDataset, format], [output])
-        stopButton.click(doInterrupt, [], [], cancels=[], queue=False)
+        startEvent = start_button.click(do_train, [lora_name, micro_batch_size, batch_size, epochs, learning_rate, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format], [output])
+        stop_button.click(doInterrupt, [], [], cancels=[], queue=False)
 
 def doInterrupt():
     global WANT_INTERRUPT
@@ -74,108 +79,119 @@ class Callbacks(transformers.TrainerCallback):
             control.should_epoch_stop = True
             control.should_training_stop = True
 
-def cleanPath(basePath: str, path: str):
+def cleanPath(base_path: str, path: str):
     """"Strips unusual symbols and forcibly builds a path as relative to the intended directory."""
     # TODO: Probably could do with a security audit to guarantee there's no ways this can be bypassed to target an unwanted path.
     # Or swap it to a strict whitelist of [a-zA-Z_0-9]
     path = path.replace('\\', '/').replace('..', '_')
-    if basePath is None:
+    if base_path is None:
         return path
-    return f'{Path(basePath).absolute()}/{path}'
+    return f'{Path(base_path).absolute()}/{path}'
 
-def do_train(loraName: str, microBatchSize: int, batchSize: int, epochs: int, learningRate: float, loraRank: int, loraAlpha: int, loraDropout: float, cutoffLen: int, dataset: str, evalDataset: str, format: str):
+def do_train(lora_name: str, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: float, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str):
     global WANT_INTERRUPT, CURRENT_STEPS, MAX_STEPS, CURRENT_GRADIENT_ACCUM
     WANT_INTERRUPT = False
     CURRENT_STEPS = 0
     MAX_STEPS = 0
-    yield "Prepping..."
+
     # == Input validation / processing ==
+    yield "Prepping..."
     # TODO: --lora-dir PR once pulled will need to be applied here
-    loraName = f"loras/{cleanPath(None, loraName)}"
+    lora_name = f"loras/{cleanPath(None, lora_name)}"
     if dataset is None:
         return "**Missing dataset choice input, cannot continue.**"
     if format is None:
         return "**Missing format choice input, cannot continue.**"
-    gradientAccumulationSteps = batchSize // microBatchSize
-    CURRENT_GRADIENT_ACCUM = gradientAccumulationSteps
-    actualLR = float(learningRate)
+    gradient_accumulation_steps = batch_size // micro_batch_size
+    CURRENT_GRADIENT_ACCUM = gradient_accumulation_steps
+    actual_lr = float(learning_rate)
     shared.tokenizer.pad_token = 0
     shared.tokenizer.padding_side = "left"
+
     # == Prep the dataset, format, etc ==
     with open(cleanPath('training/formats', f'{format}.json'), 'r') as formatFile:
-        formatData: dict[str, str] = json.load(formatFile)
+        format_data: dict[str, str] = json.load(formatFile)
+
     def tokenize(prompt):
-        result = shared.tokenizer(prompt, truncation=True, max_length=cutoffLen + 1, padding="max_length")
+        result = shared.tokenizer(prompt, truncation=True, max_length=cutoff_len + 1, padding="max_length")
         return {
             "input_ids": result["input_ids"][:-1],
             "attention_mask": result["attention_mask"][:-1],
         }
+
     def generate_prompt(data_point: dict[str, str]):
-        for options, data in formatData.items():
+        for options, data in format_data.items():
             if set(options.split(',')) == set(x[0] for x in data_point.items() if len(x[1].strip()) > 0):
                 for key, val in data_point.items():
                     data = data.replace(f'%{key}%', val)
             return data
-        raise RuntimeError(f'Data-point "{data_point}" has no keyset match within format "{list(formatData.keys())}"')
+        raise RuntimeError(f'Data-point "{data_point}" has no keyset match within format "{list(format_data.keys())}"')
+
     def generate_and_tokenize_prompt(data_point):
         prompt = generate_prompt(data_point)
         return tokenize(prompt)
+
     print("Loading datasets...")
     data = load_dataset("json", data_files=cleanPath('training/datasets', f'{dataset}.json'))
     train_data = data['train'].shuffle().map(generate_and_tokenize_prompt)
-    if evalDataset == 'None':
-        evalData = None
+
+    if eval_dataset == 'None':
+        eval_data = None
     else:
-        evalData = load_dataset("json", data_files=cleanPath('training/datasets', f'{evalDataset}.json'))
-        evalData = evalData['train'].shuffle().map(generate_and_tokenize_prompt)
+        eval_data = load_dataset("json", data_files=cleanPath('training/datasets', f'{eval_dataset}.json'))
+        eval_data = eval_data['train'].shuffle().map(generate_and_tokenize_prompt)
+    
     # == Start prepping the model itself ==
     if not hasattr(shared.model, 'lm_head') or hasattr(shared.model.lm_head, 'weight'):
         print("Getting model ready...")
         prepare_model_for_int8_training(shared.model)
+    
     print("Prepping for training...")
     config = LoraConfig(
-        r=loraRank,
-        lora_alpha=loraAlpha,
+        r=lora_rank,
+        lora_alpha=lora_alpha,
         # TODO: Should target_modules be configurable?
         target_modules=[ "q_proj", "v_proj" ],
-        lora_dropout=loraDropout,
+        lora_dropout=lora_dropout,
         bias="none",
         task_type="CAUSAL_LM"
     )
-    loraModel = get_peft_model(shared.model, config)
+    lora_model = get_peft_model(shared.model, config)
     trainer = transformers.Trainer(
-        model=loraModel,
+        model=lora_model,
         train_dataset=train_data,
-        eval_dataset=evalData,
+        eval_dataset=eval_data,
         args=transformers.TrainingArguments(
-            per_device_train_batch_size=microBatchSize,
-            gradient_accumulation_steps=gradientAccumulationSteps,
+            per_device_train_batch_size=micro_batch_size,
+            gradient_accumulation_steps=gradient_accumulation_steps,
             # TODO: Should more of these be configurable? Probably.
             warmup_steps=100,
             num_train_epochs=epochs,
-            learning_rate=actualLR,
+            learning_rate=actual_lr,
             fp16=True,
             logging_steps=20,
-            evaluation_strategy="steps" if evalData is not None else "no",
+            evaluation_strategy="steps" if eval_data is not None else "no",
             save_strategy="steps",
-            eval_steps=200 if evalData is not None else None,
+            eval_steps=200 if eval_data is not None else None,
             save_steps=200,
-            output_dir=loraName,
+            output_dir=lora_name,
             save_total_limit=3,
-            load_best_model_at_end=True if evalData is not None else False,
+            load_best_model_at_end=True if eval_data is not None else False,
             # TODO: Enable multi-device support
             ddp_find_unused_parameters=None
         ),
         data_collator=transformers.DataCollatorForLanguageModeling(shared.tokenizer, mlm=False),
         callbacks=list([Callbacks()])
     )
-    loraModel.config.use_cache = False
-    old_state_dict = loraModel.state_dict
-    loraModel.state_dict = (
+
+    lora_model.config.use_cache = False
+    old_state_dict = lora_model.state_dict
+    lora_model.state_dict = (
         lambda self, *_, **__: get_peft_model_state_dict(self, old_state_dict())
-    ).__get__(loraModel, type(loraModel))
+    ).__get__(lora_model, type(lora_model))
+
     if torch.__version__ >= "2" and sys.platform != "win32":
-        loraModel = torch.compile(loraModel)
+        lora_model = torch.compile(lora_model)
 
     # == Main run and monitor loop ==
     # TODO: save/load checkpoints to resume from?
@@ -210,11 +226,11 @@ def do_train(loraName: str, microBatchSize: int, batchSize: int, epochs: int, le
             yield f"Running... **{CURRENT_STEPS}** / **{MAX_STEPS}** ... {timerInfo}, `{timeElapsed:.0f}`/`{totalTimeEstimate:.0f}` seconds"
 
     print("Training complete, saving...")
-    loraModel.save_pretrained(loraName)
+    lora_model.save_pretrained(lora_name)
 
     if WANT_INTERRUPT:
         print("Training interrupted.")
-        yield f"Interrupted. Incomplete LoRA saved to `{loraName}`"
+        yield f"Interrupted. Incomplete LoRA saved to `{lora_name}`"
     else:
         print("Training complete!")
-        yield f"Done! LoRA saved to `{loraName}`"
+        yield f"Done! LoRA saved to `{lora_name}`"
