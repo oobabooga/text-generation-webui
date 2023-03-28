@@ -52,7 +52,7 @@ def caption_image(raw_image):
 
 def generate_chat_picture(picture, name1, name2):
     # merge the two predicted captions for the final text
-    text = f'*{name1} sends {name2} a picture that contains: {caption_image(picture)}; {predict(picture)[0]}*'
+    text = f'*{name1} sends {name2} a picture that contains {caption_image(picture)}, alternatively appearing to be {predict(picture)[0]}*'
     # lower the resolution of sent images for the chat, otherwise the log size gets out of control quickly with all the base64 values in visible history
     picture.thumbnail((300, 300))
     buffer = BytesIO()
