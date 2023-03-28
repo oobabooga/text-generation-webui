@@ -9,10 +9,8 @@ from pathlib import Path
 
 import gradio as gr
 
-import modules.chat as chat
 import modules.extensions as extensions_module
-import modules.shared as shared
-import modules.ui as ui
+from modules import chat, shared, training, ui
 from modules.html_generator import generate_chat_html
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, load_soft_prompt
@@ -57,7 +55,7 @@ def get_available_softprompts():
     return ['None'] + sorted(set(map(lambda x : '.'.join(str(x.name).split('.')[:-1]), Path('softprompts').glob('*.zip'))), key=str.lower)
 
 def get_available_loras():
-    return ['None'] + sorted([item.name for item in list(Path('shared.args.lora_dir').glob('*')) if not item.name.endswith(('.txt', '-np', '.pt', '.json'))], key=str.lower)
+    return ['None'] + sorted([item.name for item in list(Path(shared.args.lora_dir).glob('*')) if not item.name.endswith(('.txt', '-np', '.pt', '.json'))], key=str.lower)
 
 def unload_model():
     shared.model = shared.tokenizer = None
@@ -474,6 +472,9 @@ def create_interface():
             gen_events.append(shared.gradio['Continue'].click(generate_reply, [shared.gradio['output_textbox']] + shared.input_params[1:], output_params, show_progress=shared.args.no_stream))
             shared.gradio['Stop'].click(stop_everything_event, [], [], queue=False, cancels=gen_events if shared.args.no_stream else None)
             shared.gradio['interface'].load(None, None, None, _js=f"() => {{{ui.main_js}}}")
+
+        with gr.Tab("Training", elem_id="training-tab"):
+            training.create_train_interface()
 
         with gr.Tab("Interface mode", elem_id="interface-mode"):
             modes = ["default", "notebook", "chat", "cai_chat"]
