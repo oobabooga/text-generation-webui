@@ -58,9 +58,9 @@ def create_train_interface():
 
         output = gr.Markdown(value="Ready")
         startEvent = start_button.click(do_train, [lora_name, micro_batch_size, batch_size, epochs, learning_rate, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format], [output])
-        stop_button.click(doInterrupt, [], [], cancels=[], queue=False)
+        stop_button.click(do_interrupt, [], [], cancels=[], queue=False)
 
-def doInterrupt():
+def do_interrupt():
     global WANT_INTERRUPT
     WANT_INTERRUPT = True
 
@@ -79,7 +79,7 @@ class Callbacks(transformers.TrainerCallback):
             control.should_epoch_stop = True
             control.should_training_stop = True
 
-def cleanPath(base_path: str, path: str):
+def clean_path(base_path: str, path: str):
     """"Strips unusual symbols and forcibly builds a path as relative to the intended directory."""
     # TODO: Probably could do with a security audit to guarantee there's no ways this can be bypassed to target an unwanted path.
     # Or swap it to a strict whitelist of [a-zA-Z_0-9]
@@ -97,7 +97,7 @@ def do_train(lora_name: str, micro_batch_size: int, batch_size: int, epochs: int
     # == Input validation / processing ==
     yield "Prepping..."
     # TODO: --lora-dir PR once pulled will need to be applied here
-    lora_name = f"loras/{cleanPath(None, lora_name)}"
+    lora_name = f"loras/{clean_path(None, lora_name)}"
     if dataset is None:
         return "**Missing dataset choice input, cannot continue.**"
     if format is None:
@@ -109,7 +109,7 @@ def do_train(lora_name: str, micro_batch_size: int, batch_size: int, epochs: int
     shared.tokenizer.padding_side = "left"
 
     # == Prep the dataset, format, etc ==
-    with open(cleanPath('training/formats', f'{format}.json'), 'r') as formatFile:
+    with open(clean_path('training/formats', f'{format}.json'), 'r') as formatFile:
         format_data: dict[str, str] = json.load(formatFile)
 
     def tokenize(prompt):
@@ -132,13 +132,13 @@ def do_train(lora_name: str, micro_batch_size: int, batch_size: int, epochs: int
         return tokenize(prompt)
 
     print("Loading datasets...")
-    data = load_dataset("json", data_files=cleanPath('training/datasets', f'{dataset}.json'))
+    data = load_dataset("json", data_files=clean_path('training/datasets', f'{dataset}.json'))
     train_data = data['train'].shuffle().map(generate_and_tokenize_prompt)
 
     if eval_dataset == 'None':
         eval_data = None
     else:
-        eval_data = load_dataset("json", data_files=cleanPath('training/datasets', f'{eval_dataset}.json'))
+        eval_data = load_dataset("json", data_files=clean_path('training/datasets', f'{eval_dataset}.json'))
         eval_data = eval_data['train'].shuffle().map(generate_and_tokenize_prompt)
     
     # == Start prepping the model itself ==
