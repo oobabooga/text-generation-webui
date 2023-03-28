@@ -1,0 +1,6 @@
+Below is an instruction that describes a task. Write a response that appropriately completes the request.
+### Instruction:
+Write a poem about the transformers Python library. 
+Mention the word "large language models" in that poem.
+### Response:
+

@@ -99,9 +99,13 @@ def set_manual_seed(seed):
         if torch.cuda.is_available():
             torch.cuda.manual_seed_all(seed)
 
+def stop_everything_event():
+    shared.stop_everything = True
+
 def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, eos_token=None, stopping_strings=[]):
     clear_torch_cache()
     set_manual_seed(seed)
+    shared.stop_everything = False
     t0 = time.time()
 
     original_question = question
@@ -235,8 +239,6 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
                     if output[-1] in eos_token_ids:
                         break
                     yield formatted_outputs(reply, shared.model_name)
-
-                yield formatted_outputs(reply, shared.model_name)
 
         # Stream the output naively for FlexGen since it doesn't support 'stopping_criteria'
         else:
