@@ -18,11 +18,11 @@ def add_lora_to_model(lora_name):
 
     # If a LoRA had been previously loaded, or if we want
     # to unload a LoRA, reload the model
-    if shared.lora_name != "None" or lora_name == "None":
+    if shared.lora_name not in ['None', ''] or lora_name in ['None', '']:
         reload_model()
     shared.lora_name = lora_name
 
-    if lora_name != "None":
+    if lora_name not in ['None', '']:
         print(f"Adding the LoRA {lora_name} to the model...")
         params = {}
         if not shared.args.cpu:
