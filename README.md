@@ -177,7 +177,7 @@ Optionally, you can use the following command-line flags:
 | `--cpu`          | Use the CPU to generate text.|
 | `--load-in-8bit` | Load the model with 8-bit precision.|
 | `--wbits WBITS`            | GPTQ: Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported. |
-| `--model_type MODEL_TYPE`  | GPTQ: Model type of pre-quantized model. Currently only LLaMA and OPT are supported. |
+| `--model_type MODEL_TYPE`  | GPTQ: Model type of pre-quantized model. Currently LLaMA, OPT, and GPT-J are supported. |
 | `--groupsize GROUPSIZE`    | GPTQ: Group size. |
 | `--pre_layer PRE_LAYER`    | GPTQ: The number of layers to preload. |
 | `--bf16`         | Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU. |

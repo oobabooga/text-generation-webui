@@ -48,7 +48,6 @@ def _load_quant(model, checkpoint, wbits, groupsize=-1, faster_kernel=False, exc
 
     return model
 
-
 def load_quantized(model_name):
     if not shared.args.model_type:
         # Try to determine model type from model name
