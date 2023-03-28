@@ -5,14 +5,15 @@ from pathlib import Path
 import accelerate
 import torch
 import transformers
-from transformers import AutoConfig, AutoModelForCausalLM 
+from transformers import AutoConfig, AutoModelForCausalLM
 
 import modules.shared as shared
 
 sys.path.insert(0, str(Path("repositories/GPTQ-for-LLaMa")))
 import llama_inference_offload
-from quant import make_quant
 from modelutils import find_layers
+from quant import make_quant
+
 
 def _load_quant(model, checkpoint, wbits, groupsize=-1, faster_kernel=False, exclude_layers=['lm_head'], kernel_switch_threshold=128):
     config = AutoConfig.from_pretrained(model)
