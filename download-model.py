@@ -149,13 +149,6 @@ def download_files(file_list, output_folder, num_threads=8):
     thread_map(lambda url: get_file(url, output_folder), file_list, max_workers=num_threads, verbose=False)
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('MODEL', type=str, default=None, nargs='?')
-    parser.add_argument('--branch', type=str, default='main', help='Name of the Git branch to download from.')
-    parser.add_argument('--threads', type=int, default=1, help='Number of files to download simultaneously.')
-    parser.add_argument('--text-only', action='store_true', help='Only download text files (txt/json).')
-    args = parser.parse_args()
-
     model = args.MODEL
     branch = args.branch
     if model is None:
