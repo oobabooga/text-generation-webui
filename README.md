@@ -57,10 +57,9 @@ Source codes: https://github.com/oobabooga/one-click-installers
 
 ### Manual installation using Conda
 
-These are the recommended installation methods:
+Recommended if you have some experience with the command-line.
 
-* Linux and MacOS: using conda natively.
-* Windows: using conda on WSL ([WSL installation guide](https://github.com/oobabooga/text-generation-webui/wiki/Windows-Subsystem-for-Linux-(Ubuntu)-Installation-Guide)).
+On Windows, I additionally recommend carrying out the installation on WSL instead of the base system: [WSL installation guide](https://github.com/oobabooga/text-generation-webui/wiki/Windows-Subsystem-for-Linux-(Ubuntu)-Installation-Guide).
 
 Conda can be downloaded here: https://docs.conda.io/en/latest/miniconda.html
 
