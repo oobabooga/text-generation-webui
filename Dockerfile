@@ -31,7 +31,7 @@ RUN apt-get update && \
 
 RUN --mount=type=cache,target=/root/.cache/pip pip3 install torch torchvision torchaudio
 
-RUN git clone https://github.com/oobabooga/text-generation-webui /app
+COPY . /app/
 
 WORKDIR /app
 
