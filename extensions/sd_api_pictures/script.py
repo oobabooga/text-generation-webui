@@ -16,7 +16,7 @@ torch._C._jit_set_profiling_mode(False)
 params = {
     'address': '127.0.0.1:7860',
     'mode': 0, # modes of operation: 0 (Manual only), 1 (Immersive/Interactive - looks for words to trigger), 2 (Picturebook Adventure - Always on)
-    'manage_VRAM': True,
+    'manage_VRAM': False,
     'save_img': False,
     'SD_model': 'NeverEndingDream', # not used right now
     'prompt_prefix': '(Masterpiece:1.1), detailed, intricate, colorful',
@@ -25,6 +25,47 @@ params = {
     'height': 512,
     'restore_faces': False
 }
+
+def update_params(): # somewhy the default extension params dict is not changed by settings.json, thus update it forcefully
+    ext_name = "sd_api_pictures"
+    for sett in shared.settings:
+        if sett.startswith(f'{ext_name}-'):
+            params.update({sett.replace(f'{ext_name}-',''): shared.settings[sett]})
+update_params()
+
+def give_VRAM_priority(actor):
+    
+    global shared, params
+
+    if (actor == 'SD'):
+        shared.gradio['unload_model_fn']()
+        print("Requesting Auto1111 to re-load last checkpoint used…")
+        response = requests.post(url=f'http://{params["address"]}/sdapi/v1/reload-checkpoint', json='')
+        response.raise_for_status()
+
+    elif (actor == 'LLM'):
+        print("Requesting Auto1111 to vacate VRAM…")
+        response = requests.post(url=f'http://{params["address"]}/sdapi/v1/unload-checkpoint', json='')
+        response.raise_for_status()
+        shared.gradio['reload_model_fn']()
+
+    elif (actor == 'set'):
+        print("VRAM mangement activated -- requesting Auto1111 to vacate VRAM…")
+        response = requests.post(url=f'http://{params["address"]}/sdapi/v1/unload-checkpoint', json='')
+        response.raise_for_status()
+
+    elif (actor == 'reset'):
+        print("VRAM mangement deactivated -- requesting Auto1111 to reload checkpoint")
+        response = requests.post(url=f'http://{params["address"]}/sdapi/v1/reload-checkpoint', json='')
+        response.raise_for_status()
+
+    else:
+        raise RuntimeError(f'Managing VRAM: "{actor}" is not a known state!')
+
+    response.raise_for_status()
+    del response
+
+if params['manage_VRAM']: give_VRAM_priority('set')
 
 SD_models = ['NeverEndingDream'] # TODO: get with http://{address}}/sdapi/v1/sd-models and allow user to select
 
@@ -65,13 +106,7 @@ def get_SD_pictures(description):
 
     global params, pic_id
 
-    if params['manage_VRAM']:
-        shared.gradio['unload_model_fn']()
-        response = requests.post(url=f'http://{params["address"]}/sdapi/v1/reload-checkpoint', json='')
-        response.raise_for_status()
-        r = response.json()
-        del response
-        del r
+    if params['manage_VRAM']: give_VRAM_priority('SD')
 
     payload = {
         "prompt": params['prompt_prefix'] + description,
@@ -106,13 +141,7 @@ def get_SD_pictures(description):
         img_str = "data:image/jpeg;base64," + base64.b64encode(image_bytes).decode()
         visible_result = visible_result + f'<img src="{img_str}" alt="{description}">\n'
 
-    if params['manage_VRAM']:
-        response = requests.post(url=f'http://{params["address"]}/sdapi/v1/unload-checkpoint', json='')
-        response.raise_for_status()
-        r = response.json()
-        del response
-        del r
-        shared.gradio['reload_model_fn']()
+    if params['manage_VRAM']: give_VRAM_priority('LLM')
     
     return visible_result
 
@@ -195,14 +224,14 @@ def SD_api_address_update(address):
 def ui():
 
     # Gradio elements
-    gr.Markdown('### Stable Diffusion API Pictures')
+    # gr.Markdown('### Stable Diffusion API Pictures') # Currently the name of extension is shown as the title
     with gr.Accordion("Parameters", open=True):
         with gr.Row():
             address = gr.Textbox(placeholder=params['address'], value=params['address'], label='Automatic1111\'s WebUI address')
             mode = gr.Dropdown(["Manual", "Immersive \ Interactive", "Picturebook \ Adventure"], value="Manual", label="Mode of operation", type="index")
             with gr.Column():
                 manage_VRAM = gr.Checkbox(value=params['manage_VRAM'], label='Manage VRAM')
-                save_img = gr.Checkbox(value=params['save_img'], label='Keep original received images in the outputs subdir')
+                save_img = gr.Checkbox(value=params['save_img'], label='Keep original images and use them in chat')
 
             toggle_gen = gr.Button("Force (Suppress) the picture response")
 
@@ -216,8 +245,10 @@ def ui():
     
     # Event functions to update the parameters in the backend
     address.change(lambda x: params.update({"address": filter_address(x)}), address, None)
-    mode.change(lambda x: params.update({"mode": x }), mode, None)
+    mode.select(lambda x: params.update({"mode": x }), mode, None)
+    mode.select(lambda x: toggle_generation(x>1), inputs=mode, outputs=toggle_gen)
     manage_VRAM.change(lambda x: params.update({"manage_VRAM": x}), manage_VRAM, None)
+    manage_VRAM.change(lambda x: give_VRAM_priority('set' if x else 'reset'), inputs=manage_VRAM, outputs=None)
     save_img.change(lambda x: params.update({"save_img": x}), save_img, None)
     
     address.submit(fn=SD_api_address_update, inputs=address, outputs=address)
