@@ -9,7 +9,6 @@ python download-model.py facebook/opt-1.3b
 import argparse
 import base64
 import json
-import multiprocessing
 import re
 import sys
 from pathlib import Path
