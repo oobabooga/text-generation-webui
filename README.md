@@ -61,6 +61,8 @@ Recommended if you have some experience with the command-line.
 
 On Windows, I additionally recommend carrying out the installation on WSL instead of the base system: [WSL installation guide](https://github.com/oobabooga/text-generation-webui/wiki/Windows-Subsystem-for-Linux-(Ubuntu)-Installation-Guide).
 
+#### 0. Install Conda
+
 Conda can be downloaded here: https://docs.conda.io/en/latest/miniconda.html
 
 On Linux or WSL, it can be automatically installed with these two commands:
