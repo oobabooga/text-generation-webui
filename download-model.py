@@ -8,6 +8,7 @@ python download-model.py facebook/opt-1.3b
 
 import argparse
 import base64
+import datetime
 import json
 import multiprocessing
 import re
@@ -22,6 +23,7 @@ parser.add_argument('MODEL', type=str, default=None, nargs='?')
 parser.add_argument('--branch', type=str, default='main', help='Name of the Git branch to download from.')
 parser.add_argument('--threads', type=int, default=1, help='Number of files to download simultaneously.')
 parser.add_argument('--text-only', action='store_true', help='Only download text files (txt/json).')
+parser.add_argument('--output', type=str, default=None, help='The folder where the model should be saved.')
 args = parser.parse_args()
 
 def get_file(args):
@@ -169,13 +171,24 @@ if __name__ == '__main__':
                 sys.exit()
 
     links, is_lora = get_download_links_from_huggingface(model, branch)
-    base_folder = 'models' if not is_lora else 'loras'
-    if branch != 'main':
-        output_folder = Path(base_folder) / (model.split('/')[-1] + f'_{branch}')
+
+    if args.output is not None:
+        base_folder = args.output
     else:
-        output_folder = Path(base_folder) / model.split('/')[-1]
+        base_folder = 'models' if not is_lora else 'loras'
+
+    output_folder = f"{'_'.join(model.split('/')[-2:])}"
+    if branch != 'main':
+        output_folder += f'_{branch}'
+
+    # Creating the folder and writing the metadata
+    output_folder = Path(base_folder) / output_folder
     if not output_folder.exists():
         output_folder.mkdir()
+    with open(output_folder / 'huggingface-metadata.txt', 'w') as f:
+        f.write(f'url: https://huggingface.co/{model}\n')
+        f.write(f'branch: {branch}\n')
+        f.write(f'download date: {str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))}\n')
 
     # Downloading the files
     print(f"Downloading the model to {output_folder}")
