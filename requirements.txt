@@ -10,4 +10,5 @@ rwkv==0.7.1
 safetensors==0.3.0
 sentencepiece
 tqdm
+datasets
 git+https://github.com/huggingface/transformers

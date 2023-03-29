@@ -9,10 +9,8 @@ from pathlib import Path
 
 import gradio as gr
 
-import modules.chat as chat
 import modules.extensions as extensions_module
-import modules.shared as shared
-import modules.ui as ui
+from modules import chat, shared, training, ui
 from modules.html_generator import generate_chat_html
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, load_soft_prompt
@@ -57,7 +55,7 @@ def get_available_softprompts():
     return ['None'] + sorted(set(map(lambda x : '.'.join(str(x.name).split('.')[:-1]), Path('softprompts').glob('*.zip'))), key=str.lower)
 
 def get_available_loras():
-    return ['None'] + sorted([item.name for item in list(Path('shared.args.lora_dir').glob('*')) if not item.name.endswith(('.txt', '-np', '.pt', '.json'))], key=str.lower)
+    return ['None'] + sorted([item.name for item in list(Path(shared.args.lora_dir).glob('*')) if not item.name.endswith(('.txt', '-np', '.pt', '.json'))], key=str.lower)
 
 def unload_model():
     shared.model = shared.tokenizer = None
@@ -475,6 +473,9 @@ def create_interface():
             shared.gradio['Stop'].click(stop_everything_event, [], [], queue=False, cancels=gen_events if shared.args.no_stream else None)
             shared.gradio['interface'].load(None, None, None, _js=f"() => {{{ui.main_js}}}")
 
+        with gr.Tab("Training", elem_id="training-tab"):
+            training.create_train_interface()
+
         with gr.Tab("Interface mode", elem_id="interface-mode"):
             modes = ["default", "notebook", "chat", "cai_chat"]
             current_mode = "default"
@@ -493,7 +494,7 @@ def create_interface():
             shared.gradio['reset_interface'] = gr.Button("Apply and restart the interface", type="primary")
 
             shared.gradio['reset_interface'].click(set_interface_arguments, [shared.gradio[k] for k in ['interface_modes_menu', 'extensions_menu', 'cmd_arguments_menu']], None)
-            shared.gradio['reset_interface'].click(lambda : None, None, None, _js='() => {document.body.innerHTML=\'<h1 style="font-family:monospace;margin-top:20%;color:lightgray;text-align:center;">Reloading...</h1>\'; setTimeout(function(){location.reload()},2500)}')
+            shared.gradio['reset_interface'].click(lambda : None, None, None, _js='() => {document.body.innerHTML=\'<h1 style="font-family:monospace;margin-top:20%;color:lightgray;text-align:center;">Reloading...</h1>\'; setTimeout(function(){location.reload()},2500); return []}')
 
         if shared.args.extensions is not None:
             extensions_module.create_extensions_block()
