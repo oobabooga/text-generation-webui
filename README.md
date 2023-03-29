@@ -113,7 +113,25 @@ As an alternative to the recommended WSL method, you can install the web UI nati
 
 ### Alternative: Docker
 
-https://github.com/oobabooga/text-generation-webui/issues/174, https://github.com/oobabooga/text-generation-webui/issues/87
+dependencies:
+```bash
+yay -S docker docker-compose buildkit nvidia-container-runtime
+sudo systemctl restart docker # required by nvidia-container-runtime
+```
+
+Converted without group-size (better for the 7b model): https://github.com/oobabooga/text-generation-webui/pull/530#is>
+Converted with group-size (better from 13b upwards): https://github.com/oobabooga/text-generation-webui/pull/530#issue>
+
+download and place the folders inside the models folder
+
+edit .env values to your needs
+```bash
+cp .env.example .env
+nano .env
+```
+```bash
+docker-compose up --build
+```
 
 ## Downloading models
 
