@@ -1,6 +1,7 @@
 import base64
 import io
 import re
+import time
 from pathlib import Path
 
 import gradio as gr
@@ -9,6 +10,7 @@ import modules.shared as shared
 import requests
 import torch
 from PIL import Image
+from datetime import date
 
 torch._C._jit_set_profiling_mode(False)
 
@@ -71,7 +73,6 @@ SD_models = ['NeverEndingDream'] # TODO: get with http://{address}}/sdapi/v1/sd-
 
 streaming_state = shared.args.no_stream # remember if chat streaming was enabled
 picture_response = False # specifies if the next model response should appear as a picture
-pic_id = 0
 
 def remove_surrounded_chars(string):
     # this expression matches to 'as few symbols as possible (0 upwards) between any asterisks' OR
@@ -104,7 +105,7 @@ def input_modifier(string):
 # Get and save the Stable Diffusion-generated picture
 def get_SD_pictures(description):
 
-    global params, pic_id
+    global params
 
     if params['manage_VRAM']: give_VRAM_priority('SD')
 
@@ -129,10 +130,10 @@ def get_SD_pictures(description):
     for img_str in r['images']:
         image = Image.open(io.BytesIO(base64.b64decode(img_str.split(",",1)[0])))
         if params['save_img']:
-            output_file = Path(f'extensions/sd_api_pictures/outputs/{pic_id:06d}.png')
+            output_file = Path(f'extensions/sd_api_pictures/outputs/{date.today().strftime("%Y_%m_%d")}/{shared.character}_{int(time.time())}.png')
+            output_file.parent.mkdir(parents=True, exist_ok=True)
             image.save(output_file.as_posix())
-            visible_result = visible_result + f'<img src="/file/extensions/sd_api_pictures/outputs/{pic_id:06d}.png" alt="{description}" style="max-width: unset; max-height: unset;">\n'
-            pic_id += 1
+            visible_result = visible_result + f'<img src="/file/extensions/sd_api_pictures/outputs/{date.today().strftime("%Y_%m_%d")}/{shared.character}_{int(time.time())}.png" alt="{description}" style="max-width: unset; max-height: unset;">\n'
         else:
             # lower the resolution of received images for the chat, otherwise the log size gets out of control quickly with all the base64 values in visible history
             image.thumbnail((300, 300))
@@ -153,7 +154,7 @@ def output_modifier(string):
     """
     This function is applied to the model outputs.
     """
-    global pic_id, picture_response, params
+    global picture_response, params
 
     if not picture_response:
         return string
