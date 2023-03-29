@@ -7,7 +7,7 @@ import modules.shared as shared
 
 state = {}
 available_extensions = []
-setup_called = False
+setup_called = set()
 
 def load_extensions():
     global state
@@ -53,13 +53,12 @@ def create_extensions_block():
     should_display_ui = False
 
     # Running setup function
-    if not setup_called:
-        for extension, name in iterator():
-            if hasattr(extension, "setup"):
-                extension.setup()
-            if hasattr(extension, "ui"):
-                should_display_ui = True
-        setup_called = True
+    for extension, name in iterator():
+        if hasattr(extension, "ui"):
+            should_display_ui = True
+        if extension not in setup_called and hasattr(extension, "setup"):
+            setup_called.add(extension)
+            extension.setup()
 
     # Creating the extension ui elements
     if should_display_ui:
