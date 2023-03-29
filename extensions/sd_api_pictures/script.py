@@ -131,15 +131,17 @@ def get_SD_pictures(description):
         if params['save_img']:
             output_file = Path(f'extensions/sd_api_pictures/outputs/{pic_id:06d}.png')
             image.save(output_file.as_posix())
+            visible_result = visible_result + f'<img src="/file/extensions/sd_api_pictures/outputs/{pic_id:06d}.png" alt="{description}" style="max-width: unset; max-height: unset;">\n'
             pic_id += 1
-        # lower the resolution of received images for the chat, otherwise the log size gets out of control quickly with all the base64 values in visible history
-        image.thumbnail((300, 300))
-        buffered = io.BytesIO()
-        image.save(buffered, format="JPEG")
-        buffered.seek(0)
-        image_bytes = buffered.getvalue()
-        img_str = "data:image/jpeg;base64," + base64.b64encode(image_bytes).decode()
-        visible_result = visible_result + f'<img src="{img_str}" alt="{description}">\n'
+        else:
+            # lower the resolution of received images for the chat, otherwise the log size gets out of control quickly with all the base64 values in visible history
+            image.thumbnail((300, 300))
+            buffered = io.BytesIO()
+            image.save(buffered, format="JPEG")
+            buffered.seek(0)
+            image_bytes = buffered.getvalue()
+            img_str = "data:image/jpeg;base64," + base64.b64encode(image_bytes).decode()
+            visible_result = visible_result + f'<img src="{img_str}" alt="{description}">\n'
 
     if params['manage_VRAM']: give_VRAM_priority('LLM')
     
