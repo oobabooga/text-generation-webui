@@ -7,6 +7,7 @@ lora_name = "None"
 soft_prompt_tensor = None
 soft_prompt = False
 is_RWKV = False
+is_external_api = False
 
 # Chat variables
 history = {'internal': [], 'visible': []}

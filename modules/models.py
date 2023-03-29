@@ -39,6 +39,12 @@ if shared.args.deepspeed:
 
 def load_model(model_name):
     print(f"Loading {model_name}...")
+
+    shared.is_external_api = model_name.startswith("http")
+    if shared.is_external_api:
+        print(f"Using external api: {model_name}")
+        return None, None
+
     t0 = time.time()
 
     shared.is_RWKV = model_name.lower().startswith('rwkv-')

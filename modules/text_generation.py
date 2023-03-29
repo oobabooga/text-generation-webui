@@ -114,6 +114,46 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
     if shared.args.verbose:
         print(f"\n\n{question}\n--------------------\n")
 
+    if shared.is_external_api:
+        # does not support streaming yet
+        import requests
+        import json
+        try:
+            data = {
+                "text": question,
+                "out_seq_length": max_new_tokens,
+                "min_gen_length": min_length,
+                "num_beams": num_beams,
+                "length_penalty": length_penalty,
+                "no_repeat_ngram_size": no_repeat_ngram_size,
+                "temperature": temperature,
+                "topk": top_k,
+                "topp": top_p,
+                "seed": seed,
+            }
+
+            res = requests.post(f"{shared.model_name}/generate", json=data).content.decode()
+            res = json.loads(res)
+            original_reply = res['text'][0]
+            # support masked models
+            original_reply = original_reply.replace("[[gMASK]]","")
+            reply = apply_extensions(original_reply, "output")
+            if not (shared.args.chat or shared.args.cai_chat):
+                if "MASK" in original_question:
+                    reply = original_question.replace("[gMASK]", reply).replace("[MASK]", reply)
+                else:
+                    reply = original_question + reply
+                yield formatted_outputs(reply, shared.model_name)
+            # in chat, I cannot think of a proper way to support mask, so just use the reply as is
+            yield formatted_outputs(reply, shared.model_name)
+            
+        except Exception:
+            traceback.print_exc()
+        finally:
+            t1 = time.time()
+            print(f"Output generated in {(t1-t0):.2f} seconds ({(len(original_reply))/(t1-t0):.2f} words/s, {len(original_reply)} words)")
+            return
+
     # These models are not part of Hugging Face, so we handle them
     # separately and terminate the function call earlier
     if shared.is_RWKV:

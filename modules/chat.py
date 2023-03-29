@@ -31,7 +31,7 @@ def generate_chat_prompt(user_input, max_new_tokens, name1, name2, context, chat
     max_length = min(get_max_prompt_length(max_new_tokens), chat_prompt_size)
 
     i = len(shared.history['internal'])-1
-    while i >= 0 and len(encode(''.join(rows), max_new_tokens)[0]) < max_length:
+    while i >= 0 and (shared.is_external_api or len(encode(''.join(rows), max_new_tokens)[0]) < max_length):
         rows.insert(1, f"{name2}: {shared.history['internal'][i][1].strip()}\n")
         prev_user_input = shared.history['internal'][i][0]
         if len(prev_user_input) > 0 and prev_user_input != '<|BEGIN-VISIBLE-CHAT|>':
@@ -47,13 +47,17 @@ def generate_chat_prompt(user_input, max_new_tokens, name1, name2, context, chat
         rows.append(f"{name1}:")
         limit = 2
 
-    while len(rows) > limit and len(encode(''.join(rows), max_new_tokens)[0]) >= max_length:
+    while len(rows) > limit and not shared.is_external_api and len(encode(''.join(rows), max_new_tokens)[0]) >= max_length:
         rows.pop(1)
 
     prompt = ''.join(rows)
     return prompt
 
 def extract_message_from_reply(reply, name1, name2, check):
+    # hack: glm doesn't like to generate newlines
+    if shared.is_external_api:
+        reply = reply.replace(" ", "\n") 
+
     next_character_found = False
 
     if check:
