@@ -36,7 +36,28 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 
 ## Installation
 
-The recommended installation methods are the following:
+### One-click installers
+
+[oobabooga-windows.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga-windows.zip)
+
+Just download the zip above, extract it, and double click on "install". The web UI and all its dependencies will be installed in the same folder.
+
+* To download a model, double click on "download-model"
+* To start the web UI, double click on "start-webui" 
+
+Source codes: https://github.com/oobabooga/one-click-installers
+
+> **Note**
+> 
+> Thanks to [@jllllll](https://github.com/jllllll) and [@ClayShoaf](https://github.com/ClayShoaf), the Windows 1-click installer now sets up 8-bit and 4-bit requirements out of the box. No additional installation steps are necessary.
+
+> **Note**
+> 
+> There is no need to run the installer as admin.
+
+### Manual installation using Conda
+
+These are the recommended installation methods:
 
 * Linux and MacOS: using conda natively.
 * Windows: using conda on WSL ([WSL installation guide](https://github.com/oobabooga/text-generation-webui/wiki/Windows-Subsystem-for-Linux-(Ubuntu)-Installation-Guide)).
@@ -84,24 +105,8 @@ pip install -r requirements.txt
 > 
 > For bitsandbytes and `--load-in-8bit` to work on Linux/WSL, this dirty fix is currently necessary: https://github.com/oobabooga/text-generation-webui/issues/400#issuecomment-1474876859
 
-### Alternative: one-click installers
 
-[oobabooga-windows.zip](https://github.com/oobabooga/one-click-installers/archive/refs/heads/oobabooga-windows.zip)
-
-[oobabooga-linux.zip](https://github.com/oobabooga/one-click-installers/archive/refs/heads/oobabooga-linux.zip)
-
-Just download the zip above, extract it, and double click on "install". The web UI and all its dependencies will be installed in the same folder.
-
-* To download a model, double click on "download-model"
-* To start the web UI, double click on "start-webui" 
-
-Source codes: https://github.com/oobabooga/one-click-installers
-
-> **Note**
-> 
-> To get 8-bit and 4-bit models working in your 1-click Windows installation, you can use the [one-click-bandaid](https://github.com/ClayShoaf/oobabooga-one-click-bandaid).
-
-### Alternative: native Windows installation
+### Alternative: manual Windows installation
 
 As an alternative to the recommended WSL method, you can install the web UI natively on Windows using this guide. It will be a lot harder and the performance may be slower: [Installation instructions for human beings](https://github.com/oobabooga/text-generation-webui/wiki/Installation-instructions-for-human-beings).
 
