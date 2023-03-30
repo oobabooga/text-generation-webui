@@ -1,3 +1,7 @@
+*Installation instructions updated on March 30th, 2023*
+
+-----
+
 LLaMA is a Large Language Model developed by Meta AI. 
 
 It was trained on more tokens than previous models. The result is that the smallest version with 7 billion parameters has similar performance to GPT-3 with 175 billion parameters.
@@ -32,6 +36,7 @@ mkdir repositories
 cd repositories
 git clone https://github.com/qwopqwop200/GPTQ-for-LLaMa
 cd GPTQ-for-LLaMa
+git checkout cuda
 python setup_cuda.py install
 ```
 
