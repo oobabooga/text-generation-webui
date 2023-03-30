@@ -42,7 +42,7 @@ settings = {
     'presets': {
         'default': 'NovelAI-Sphinx Moth',
         '.*(alpaca|llama)': "LLaMA-Precise",
-        '.*pygmalion': 'Pygmalion',
+        '.*pygmalion': 'NovelAI-Storywriter',
         '.*RWKV': 'Naive',
     },
     'prompts': {
