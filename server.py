@@ -283,8 +283,22 @@ else:
     default_text = load_prompt(shared.settings['prompts'][next((k for k in shared.settings['prompts'] if re.match(k.lower(), shared.model_name.lower())), 'default')])
 title ='Text generation web UI'
 
-def create_interface():
+def generate_reply_wrapper(*args):
+    stopping_strings = list(map(lambda x: x.strip(), filter(
+        lambda x: x != '', args[-1].split(","))))
+    cummulative = ""
+    md_cummulative = ""
+    html_cummulative = ""
+    for continuation, md_continuation, html_continuation in generate_reply(*args[:-1], stopping_strings=['\nUser:']):
+        cummulative += continuation
+        md_cummulative += md_continuation
+        html_cummulative += html_continuation
+        yield (continuation, md_continuation, html_continuation)
+        if any(map(lambda x: cummulative.endswith(x), stopping_strings)):
+            break
+    return cummulative, md_cummulative, html_cummulative
 
+def create_interface():
     gen_events = []
     if shared.args.extensions is not None and len(shared.args.extensions) > 0:
         extensions_module.load_extensions()
@@ -425,16 +439,17 @@ def create_interface():
                     with gr.Column(scale=1):
                         gr.HTML('<div style="padding-bottom: 13px"></div>')
                         shared.gradio['max_new_tokens'] = gr.Slider(minimum=shared.settings['max_new_tokens_min'], maximum=shared.settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=shared.settings['max_new_tokens'])
+                        shared.gradio['stopping_strings'] = gr.Textbox(label='Stopping Strings', value='')
 
                         create_prompt_menus()
 
             with gr.Tab("Parameters", elem_id="parameters"):
                 create_settings_menus(default_preset)
 
-            shared.input_params = [shared.gradio[k] for k in ['textbox', 'max_new_tokens', 'do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping', 'seed']]
+            shared.input_params = [shared.gradio[k] for k in ['textbox', 'max_new_tokens', 'do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping', 'seed', 'stopping_strings']]
             output_params = [shared.gradio[k] for k in ['textbox', 'markdown', 'html']]
-            gen_events.append(shared.gradio['Generate'].click(generate_reply, shared.input_params, output_params, show_progress=shared.args.no_stream, api_name='textgen'))
-            gen_events.append(shared.gradio['textbox'].submit(generate_reply, shared.input_params, output_params, show_progress=shared.args.no_stream))
+            gen_events.append(shared.gradio['Generate'].click(generate_reply_wrapper, shared.input_params, output_params, show_progress=shared.args.no_stream, api_name='textgen'))
+            gen_events.append(shared.gradio['textbox'].submit(generate_reply_wrapper, shared.input_params, output_params, show_progress=shared.args.no_stream))
             shared.gradio['Stop'].click(stop_everything_event, [], [], queue=False, cancels=gen_events if shared.args.no_stream else None)
             shared.gradio['interface'].load(None, None, None, _js=f"() => {{{ui.main_js}}}")
 
@@ -444,6 +459,7 @@ def create_interface():
                     with gr.Column():
                         shared.gradio['textbox'] = gr.Textbox(value=default_text, lines=15, label='Input')
                         shared.gradio['max_new_tokens'] = gr.Slider(minimum=shared.settings['max_new_tokens_min'], maximum=shared.settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=shared.settings['max_new_tokens'])
+                        shared.gradio['stopping_strings'] = gr.Textbox(label='Stopping Strings', value='')
                         shared.gradio['Generate'] = gr.Button('Generate')
                         with gr.Row():
                             with gr.Column():
@@ -464,11 +480,13 @@ def create_interface():
             with gr.Tab("Parameters", elem_id="parameters"):
                 create_settings_menus(default_preset)
 
-            shared.input_params = [shared.gradio[k] for k in ['textbox', 'max_new_tokens', 'do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping', 'seed']]
+            shared.input_params = [shared.gradio[k] for k in ['textbox', 'max_new_tokens', 'do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty',
+                                                              'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping', 'seed', 'stopping_strings']]
+
             output_params = [shared.gradio[k] for k in ['output_textbox', 'markdown', 'html']]
-            gen_events.append(shared.gradio['Generate'].click(generate_reply, shared.input_params, output_params, show_progress=shared.args.no_stream, api_name='textgen'))
-            gen_events.append(shared.gradio['textbox'].submit(generate_reply, shared.input_params, output_params, show_progress=shared.args.no_stream))
-            gen_events.append(shared.gradio['Continue'].click(generate_reply, [shared.gradio['output_textbox']] + shared.input_params[1:], output_params, show_progress=shared.args.no_stream))
+            gen_events.append(shared.gradio['Generate'].click(generate_reply_wrapper, shared.input_params, output_params, show_progress=shared.args.no_stream, api_name='textgen'))
+            gen_events.append(shared.gradio['textbox'].submit(generate_reply_wrapper, shared.input_params, output_params, show_progress=shared.args.no_stream))
+            gen_events.append(shared.gradio['Continue'].click(generate_reply_wrapper, [shared.gradio['output_textbox']] + shared.input_params[1:], output_params, show_progress=shared.args.no_stream))
             shared.gradio['Stop'].click(stop_everything_event, [], [], queue=False, cancels=gen_events if shared.args.no_stream else None)
             shared.gradio['interface'].load(None, None, None, _js=f"() => {{{ui.main_js}}}")
 
