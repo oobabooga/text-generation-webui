@@ -41,7 +41,7 @@ settings = {
     'chat_default_extensions': ["gallery"],
     'presets': {
         'default': 'NovelAI-Sphinx Moth',
-        '(alpaca-*|llama-*)': "LLaMA-Precise",
+        '.*(alpaca|llama)': "LLaMA-Precise",
         '.*pygmalion': 'Pygmalion',
         '.*RWKV': 'Naive',
     },
