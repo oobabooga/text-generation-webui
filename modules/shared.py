@@ -37,27 +37,22 @@ settings = {
     'chat_generation_attempts': 1,
     'chat_generation_attempts_min': 1,
     'chat_generation_attempts_max': 5,
-    'name1_pygmalion': 'You',
-    'name2_pygmalion': 'Kawaii',
-    'context_pygmalion': "Kawaii's persona: Kawaii is a cheerful person who loves to make others smile. She is an optimist who loves to spread happiness and positivity wherever she goes.\n<START>",
-    'stop_at_newline_pygmalion': False,
     'default_extensions': [],
     'chat_default_extensions': ["gallery"],
     'presets': {
         'default': 'NovelAI-Sphinx Moth',
-        'pygmalion-*': 'Pygmalion',
-        'RWKV-*': 'Naive',
+        '.*pygmalion': 'Pygmalion',
+        '.*RWKV': 'Naive',
     },
     'prompts': {
-        'default': 'Common sense questions and answers\n\nQuestion: \nFactual answer:',
-        '^(gpt4chan|gpt-4chan|4chan)': '-----\n--- 865467536\nInput text\n--- 865467537\n',
-        '(rosey|chip|joi)_.*_instruct.*': 'User: \n',
-        'oasst-*': '<|prompter|>Write a story about future of AI development<|endoftext|><|assistant|>',
-        'alpaca-*': "Below is an instruction that describes a task. Write a response that appropriately completes the request.\n### Instruction:\nWrite a poem about the transformers Python library. \nMention the word \"large language models\" in that poem.\n### Response:\n",
+        'default': 'QA',
+        '.*(gpt4chan|gpt-4chan|4chan)': 'GPT-4chan',
+        '.*oasst': 'Open Assistant',
+        '.*alpaca': "Alpaca",
     },
     'lora_prompts': {
-        'default': 'Common sense questions and answers\n\nQuestion: \nFactual answer:',
-        '(alpaca-lora-7b|alpaca-lora-13b|alpaca-lora-30b)': "Below is an instruction that describes a task. Write a response that appropriately completes the request.\n### Instruction:\nWrite a poem about the transformers Python library. \nMention the word \"large language models\" in that poem.\n### Response:\n"
+        'default': 'QA',
+        '.*(alpaca-lora-7b|alpaca-lora-13b|alpaca-lora-30b)': "Alpaca",
     }
 }
 
@@ -84,7 +79,7 @@ parser.add_argument('--gptq-bits', type=int, default=0, help='DEPRECATED: use --
 parser.add_argument('--gptq-model-type', type=str, help='DEPRECATED: use --model_type instead.')
 parser.add_argument('--gptq-pre-layer', type=int, default=0, help='DEPRECATED: use --pre_layer instead.')
 parser.add_argument('--wbits', type=int, default=0, help='GPTQ: Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported.')
-parser.add_argument('--model_type', type=str, help='GPTQ: Model type of pre-quantized model. Currently only LLaMA and OPT are supported.')
+parser.add_argument('--model_type', type=str, help='GPTQ: Model type of pre-quantized model. Currently LLaMA, OPT, and GPT-J are supported.')
 parser.add_argument('--groupsize', type=int, default=-1, help='GPTQ: Group size.')
 parser.add_argument('--pre_layer', type=int, default=0, help='GPTQ: The number of layers to preload.')
 

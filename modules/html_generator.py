@@ -34,7 +34,7 @@ def convert_to_markdown(string):
     string = string.replace('\\begin{blockquote}', '> ')
     string = string.replace('\\end{blockquote}', '')
     string = re.sub(r"(.)```", r"\1\n```", string)
-#    string = fix_newlines(string)
+    string = fix_newlines(string)
     return markdown.markdown(string, extensions=['fenced_code']) 
 
 def generate_basic_html(string):
