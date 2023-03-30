@@ -1,3 +1,4 @@
+from os import environ as env
 from ..client import Client as app
 from ..services.ai import (
   prepare_char_persona,
@@ -7,7 +8,7 @@ from ..services.ai import (
   prepare_answer
 )
 
-@app.on_message(app.filters.chat(-1001957763023), group=999)
+@app.on_message(app.filters.chat(app.allowed_chat), group=999)
 async def send_reply(app: app, msg: app.types.Message) -> None:
   new_msg = await msg.reply(app.t('message.is_typing'))
 
