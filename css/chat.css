@@ -23,3 +23,16 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 .pending.svelte-1ed2p3z {
     opacity: 1;
 }
+
+#extensions {
+  padding: 0;
+  padding: 0;
+}
+
+#gradio-chatbot {
+  height: 66.67vh;
+}
+
+.wrap.svelte-6roggh.svelte-6roggh {
+  max-height: 92.5%;
+}

@@ -41,14 +41,14 @@ def load_model(model_name):
     print(f"Loading {model_name}...")
     t0 = time.time()
 
-    shared.is_RWKV = model_name.lower().startswith('rwkv-')
+    shared.is_RWKV = 'rwkv-' in model_name.lower()
 
     # Default settings
-    if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.gptq_bits, shared.args.auto_devices, shared.args.disk, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None, shared.args.deepspeed, shared.args.flexgen, shared.is_RWKV]):
+    if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.wbits, shared.args.auto_devices, shared.args.disk, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None, shared.args.deepspeed, shared.args.flexgen, shared.is_RWKV]):
         if any(size in shared.model_name.lower() for size in ('13b', '20b', '30b')):
-            model = AutoModelForCausalLM.from_pretrained(Path(f"models/{shared.model_name}"), device_map='auto', load_in_8bit=True)
+            model = AutoModelForCausalLM.from_pretrained(Path(f"{shared.args.model_dir}/{shared.model_name}"), device_map='auto', load_in_8bit=True)
         else:
-            model = AutoModelForCausalLM.from_pretrained(Path(f"models/{shared.model_name}"), low_cpu_mem_usage=True, torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16)
+            model = AutoModelForCausalLM.from_pretrained(Path(f"{shared.args.model_dir}/{shared.model_name}"), low_cpu_mem_usage=True, torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16)
             if torch.has_mps:
                 device = torch.device('mps')
                 model = model.to(device)
@@ -76,11 +76,11 @@ def load_model(model_name):
                             num_bits=4, group_size=64,
                             group_dim=2, symmetric=False))
 
-        model = OptLM(f"facebook/{shared.model_name}", env, "models", policy)
+        model = OptLM(f"facebook/{shared.model_name}", env, shared.args.model_dir, policy)
 
     # DeepSpeed ZeRO-3
     elif shared.args.deepspeed:
-        model = AutoModelForCausalLM.from_pretrained(Path(f"models/{shared.model_name}"), torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16)
+        model = AutoModelForCausalLM.from_pretrained(Path(f"{shared.args.model_dir}/{shared.model_name}"), torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16)
         model = deepspeed.initialize(model=model, config_params=ds_config, model_parameters=None, optimizer=None, lr_scheduler=None)[0]
         model.module.eval() # Inference
         print(f"DeepSpeed ZeRO-3 is enabled: {is_deepspeed_zero3_enabled()}")
@@ -89,13 +89,13 @@ def load_model(model_name):
     elif shared.is_RWKV:
         from modules.RWKV import RWKVModel, RWKVTokenizer
 
-        model = RWKVModel.from_pretrained(Path(f'models/{model_name}'), dtype="fp32" if shared.args.cpu else "bf16" if shared.args.bf16 else "fp16", device="cpu" if shared.args.cpu else "cuda")
-        tokenizer = RWKVTokenizer.from_pretrained(Path('models'))
+        model = RWKVModel.from_pretrained(Path(f'{shared.args.model_dir}/{model_name}'), dtype="fp32" if shared.args.cpu else "bf16" if shared.args.bf16 else "fp16", device="cpu" if shared.args.cpu else "cuda")
+        tokenizer = RWKVTokenizer.from_pretrained(Path(shared.args.model_dir))
 
         return model, tokenizer
 
     # Quantized model
-    elif shared.args.gptq_bits > 0:
+    elif shared.args.wbits > 0:
         from modules.GPTQ_loader import load_quantized
 
         model = load_quantized(model_name)
@@ -142,7 +142,7 @@ def load_model(model_name):
             if shared.args.disk:
                 params["offload_folder"] = shared.args.disk_cache_dir
 
-        checkpoint = Path(f'models/{shared.model_name}')
+        checkpoint = Path(f'{shared.args.model_dir}/{shared.model_name}')
 
         if shared.args.load_in_8bit and params.get('max_memory', None) is not None and params['device_map'] == 'auto':
             config = AutoConfig.from_pretrained(checkpoint)
@@ -159,10 +159,10 @@ def load_model(model_name):
         model = AutoModelForCausalLM.from_pretrained(checkpoint, **params)
 
     # Loading the tokenizer
-    if shared.model_name.lower().startswith(('gpt4chan', 'gpt-4chan', '4chan')) and Path("models/gpt-j-6B/").exists():
-        tokenizer = AutoTokenizer.from_pretrained(Path("models/gpt-j-6B/"))
+    if any((k in shared.model_name.lower() for k in ['gpt4chan', 'gpt-4chan'])) and Path(f"{shared.args.model_dir}/gpt-j-6B/").exists():
+        tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/gpt-j-6B/"))
     else:
-        tokenizer = AutoTokenizer.from_pretrained(Path(f"models/{shared.model_name}/"))
+        tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/{shared.model_name}/"))
     tokenizer.truncation_side = 'left'
 
     print(f"Loaded the model in {(time.time()-t0):.2f} seconds.")

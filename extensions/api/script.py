@@ -1,8 +1,9 @@
+import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
+
 from modules import shared
-from modules.text_generation import generate_reply, encode
-import json
+from modules.text_generation import encode, generate_reply
 
 params = {
     'port': 5000,
@@ -42,14 +43,14 @@ class Handler(BaseHTTPRequestHandler):
 
             generator = generate_reply(
                 question = prompt, 
-                max_new_tokens = body.get('max_length', 200), 
+                max_new_tokens = int(body.get('max_length', 200)), 
                 do_sample=True, 
-                temperature=body.get('temperature', 0.5), 
-                top_p=body.get('top_p', 1), 
-                typical_p=body.get('typical', 1), 
-                repetition_penalty=body.get('rep_pen', 1.1), 
+                temperature=float(body.get('temperature', 0.5)), 
+                top_p=float(body.get('top_p', 1)), 
+                typical_p=float(body.get('typical', 1)), 
+                repetition_penalty=float(body.get('rep_pen', 1.1)), 
                 encoder_repetition_penalty=1, 
-                top_k=body.get('top_k', 0), 
+                top_k=int(body.get('top_k', 0)), 
                 min_length=0, 
                 no_repeat_ngram_size=0, 
                 num_beams=1, 
@@ -61,7 +62,10 @@ class Handler(BaseHTTPRequestHandler):
 
             answer = ''
             for a in generator:
-                answer = a[0]
+                if isinstance(a, str):
+                    answer = a
+                else:
+                    answer = a[0]
 
             response = json.dumps({
                 'results': [{
@@ -87,5 +91,5 @@ def run_server():
         print(f'Starting KoboldAI compatible api at http://{server_addr[0]}:{server_addr[1]}/api')
     server.serve_forever()
 
-def ui():
+def setup():
     Thread(target=run_server, daemon=True).start()

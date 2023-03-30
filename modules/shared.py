@@ -27,9 +27,9 @@ settings = {
     'max_new_tokens': 200,
     'max_new_tokens_min': 1,
     'max_new_tokens_max': 2000,
-    'name1': 'Person 1',
-    'name2': 'Person 2',
-    'context': 'This is a conversation between two people.',
+    'name1': 'You',
+    'name2': 'Assistant',
+    'context': 'This is a conversation with your Assistant. The Assistant is very helpful and is eager to chat with you and answer your questions.',
     'stop_at_newline': False,
     'chat_prompt_size': 2048,
     'chat_prompt_size_min': 0,
@@ -37,26 +37,22 @@ settings = {
     'chat_generation_attempts': 1,
     'chat_generation_attempts_min': 1,
     'chat_generation_attempts_max': 5,
-    'name1_pygmalion': 'You',
-    'name2_pygmalion': 'Kawaii',
-    'context_pygmalion': "Kawaii's persona: Kawaii is a cheerful person who loves to make others smile. She is an optimist who loves to spread happiness and positivity wherever she goes.\n<START>",
-    'stop_at_newline_pygmalion': False,
     'default_extensions': [],
     'chat_default_extensions': ["gallery"],
     'presets': {
         'default': 'NovelAI-Sphinx Moth',
-        'pygmalion-*': 'Pygmalion',
-        'RWKV-*': 'Naive',
+        '.*pygmalion': 'NovelAI-Storywriter',
+        '.*RWKV': 'Naive',
     },
     'prompts': {
-        'default': 'Common sense questions and answers\n\nQuestion: \nFactual answer:',
-        '^(gpt4chan|gpt-4chan|4chan)': '-----\n--- 865467536\nInput text\n--- 865467537\n',
-        '(rosey|chip|joi)_.*_instruct.*': 'User: \n',
-        'oasst-*': '<|prompter|>Write a story about future of AI development<|endoftext|><|assistant|>'
+        'default': 'QA',
+        '.*(gpt4chan|gpt-4chan|4chan)': 'GPT-4chan',
+        '.*oasst': 'Open Assistant',
+        '.*alpaca': "Alpaca",
     },
     'lora_prompts': {
-        'default': 'Common sense questions and answers\n\nQuestion: \nFactual answer:',
-        '(alpaca-lora-7b|alpaca-lora-13b|alpaca-lora-30b)': "Below is an instruction that describes a task. Write a response that appropriately completes the request.\n### Instruction:\nWrite a poem about the transformers Python library. \nMention the word \"large language models\" in that poem.\n### Response:\n"
+        'default': 'QA',
+        '.*(alpaca-lora-7b|alpaca-lora-13b|alpaca-lora-30b)': "Alpaca",
     }
 }
 
@@ -78,10 +74,15 @@ parser.add_argument('--chat', action='store_true', help='Launch the web UI in ch
 parser.add_argument('--cai-chat', action='store_true', help='Launch the web UI in chat mode with a style similar to Character.AI\'s. If the file img_bot.png or img_bot.jpg exists in the same folder as server.py, this image will be used as the bot\'s profile picture. Similarly, img_me.png or img_me.jpg will be used as your profile picture.')
 parser.add_argument('--cpu', action='store_true', help='Use the CPU to generate text.')
 parser.add_argument('--load-in-8bit', action='store_true', help='Load the model with 8-bit precision.')
-parser.add_argument('--load-in-4bit', action='store_true', help='DEPRECATED: use --gptq-bits 4 instead.')
-parser.add_argument('--gptq-bits', type=int, default=0, help='GPTQ: Load a pre-quantized model with specified precision. 2, 3, 4 and 8bit are supported. Currently only works with LLaMA and OPT.')
-parser.add_argument('--gptq-model-type', type=str, help='GPTQ: Model type of pre-quantized model. Currently only LLaMa and OPT are supported.')
-parser.add_argument('--gptq-pre-layer', type=int, default=0, help='GPTQ: The number of layers to preload.')
+
+parser.add_argument('--gptq-bits', type=int, default=0, help='DEPRECATED: use --wbits instead.')
+parser.add_argument('--gptq-model-type', type=str, help='DEPRECATED: use --model_type instead.')
+parser.add_argument('--gptq-pre-layer', type=int, default=0, help='DEPRECATED: use --pre_layer instead.')
+parser.add_argument('--wbits', type=int, default=0, help='GPTQ: Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported.')
+parser.add_argument('--model_type', type=str, help='GPTQ: Model type of pre-quantized model. Currently LLaMA, OPT, and GPT-J are supported.')
+parser.add_argument('--groupsize', type=int, default=-1, help='GPTQ: Group size.')
+parser.add_argument('--pre_layer', type=int, default=0, help='GPTQ: The number of layers to preload.')
+
 parser.add_argument('--bf16', action='store_true', help='Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU.')
 parser.add_argument('--auto-devices', action='store_true', help='Automatically split the model across the available GPU(s) and CPU.')
 parser.add_argument('--disk', action='store_true', help='If the model is too large for your GPU(s) and CPU combined, send the remaining layers to the disk.')
@@ -101,14 +102,19 @@ parser.add_argument('--rwkv-cuda-on', action='store_true', help='RWKV: Compile t
 parser.add_argument('--no-stream', action='store_true', help='Don\'t stream the text output in real time.')
 parser.add_argument('--settings', type=str, help='Load the default interface settings from this json file. See settings-template.json for an example. If you create a file called settings.json, this file will be loaded by default without the need to use the --settings flag.')
 parser.add_argument('--extensions', type=str, nargs="+", help='The list of extensions to load. If you want to load more than one extension, write the names separated by spaces.')
+parser.add_argument("--model-dir", type=str, default='models/', help="Path to directory with all the models")
+parser.add_argument("--lora-dir", type=str, default='loras/', help="Path to directory with all the loras")
+parser.add_argument('--verbose', action='store_true', help='Print the prompts to the terminal.')
 parser.add_argument('--listen', action='store_true', help='Make the web UI reachable from your local network.')
 parser.add_argument('--listen-port', type=int, help='The listening port that the server will use.')
 parser.add_argument('--share', action='store_true', help='Create a public URL. This is useful for running the web UI on Google Colab or similar.')
 parser.add_argument('--auto-launch', action='store_true', default=False, help='Open the web UI in the default browser upon launch.')
-parser.add_argument('--verbose', action='store_true', help='Print the prompts to the terminal.')
+parser.add_argument("--gradio-auth-path", type=str, help='Set the gradio authentication file path. The file should contain one or more user:password pairs in this format: "u1:p1,u2:p2,u3:p3"', default=None)
 args = parser.parse_args()
 
 # Provisional, this will be deleted later
-if args.load_in_4bit:
-    print("Warning: --load-in-4bit is deprecated and will be removed. Use --gptq-bits 4 instead.\n")
-    args.gptq_bits = 4
+deprecated_dict = {'gptq_bits': ['wbits', 0], 'gptq_model_type': ['model_type', None], 'gptq_pre_layer': ['prelayer', 0]}
+for k in deprecated_dict:
+    if eval(f"args.{k}") != deprecated_dict[k][1]:
+        print(f"Warning: --{k} is deprecated and will be removed. Use --{deprecated_dict[k][0]} instead.")
+        exec(f"args.{deprecated_dict[k][0]} = args.{k}")
