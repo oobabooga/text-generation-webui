@@ -74,5 +74,6 @@ The roadmap will be driven based on user feedback. Potential updates include:
 
 ### Longer-Term (depending on interest/level of use)
 - Integrate the system with [llama.cpp](https://github.com/ggerganov/llama.cpp).
+- Merge the extension with oobabooga's original repo (depending on performance, level of interest, etc)
 - Use a Large Language Model (LLM) to summarize raw text into more useful memories directly. This may be challenging just as an oobabooga extension.
 - Scaling the backend.
