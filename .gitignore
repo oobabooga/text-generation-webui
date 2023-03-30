@@ -16,6 +16,7 @@ torch-dumps/*
 */*/pycache*
 venv/
 .venv/
+.env
 
 settings.json
 img_bot*
