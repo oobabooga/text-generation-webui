@@ -93,6 +93,7 @@ def get_download_links_from_huggingface(model, branch):
     cursor = b""
 
     links = []
+    sha256 = []
     classifications = []
     has_pytorch = False
     has_pt = False
@@ -117,6 +118,8 @@ def get_download_links_from_huggingface(model, branch):
             is_text = re.match(".*\.(txt|json|py|md)", fname) or is_tokenizer
 
             if any((is_pytorch, is_safetensors, is_pt, is_tokenizer, is_text)):
+                if 'lfs' in dict[i]:
+                    sha256.append([fname, dict[i]['lfs']['oid']])
                 if is_text:
                     links.append(f"https://huggingface.co/{model}/resolve/{branch}/{fname}")
                     classifications.append('text')
@@ -143,7 +146,7 @@ def get_download_links_from_huggingface(model, branch):
             if classifications[i] in ['pytorch', 'pt']:
                 links.pop(i)
 
-    return links, is_lora
+    return links, sha256, is_lora
 
 def download_files(file_list, output_folder, num_threads=8):
     thread_map(lambda url: get_file(url, output_folder), file_list, max_workers=num_threads)
@@ -166,7 +169,7 @@ if __name__ == '__main__':
                 print(f"Error: {err_branch}")
                 sys.exit()
 
-    links, is_lora = get_download_links_from_huggingface(model, branch)
+    links, sha256, is_lora = get_download_links_from_huggingface(model, branch)
 
     if args.output is not None:
         base_folder = args.output
@@ -185,6 +188,11 @@ if __name__ == '__main__':
         f.write(f'url: https://huggingface.co/{model}\n')
         f.write(f'branch: {branch}\n')
         f.write(f'download date: {str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))}\n')
+        sha256_str = ''
+        for i in range(len(sha256)):
+            sha256_str += f'    {sha256[i][1]} {sha256[i][0]}\n'
+        if sha256_str != '':
+            f.write(f'sha256sum:\n{sha256_str}')
 
     # Downloading the files
     print(f"Downloading the model to {output_folder}")
