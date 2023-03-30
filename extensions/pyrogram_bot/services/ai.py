@@ -42,7 +42,7 @@ def prepare_telegram_message(msg: Message, bot: User) -> str:
   author = prepare_message_sender(msg, bot)
   text = prepare_message_text(msg)
 
-  if author:
+  if not msg.command and author:
     return f'{author}: {text}'
 
   return ''
