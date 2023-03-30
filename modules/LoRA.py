@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import torch
+from peft import PeftModel
 
 import modules.shared as shared
 from modules.models import load_model
@@ -13,8 +14,6 @@ def reload_model():
     shared.model, shared.tokenizer = load_model(shared.model_name)
 
 def add_lora_to_model(lora_name):
-
-    from peft import PeftModel
 
     # If a LoRA had been previously loaded, or if we want
     # to unload a LoRA, reload the model
