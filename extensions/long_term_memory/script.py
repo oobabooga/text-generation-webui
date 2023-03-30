@@ -40,9 +40,15 @@ MEMORY_SCORE_THRESHOLD = 0.60
 # === Internal constants (don't change these without good reason) ===
 _MIN_ROWS_TILL_RESPONSE = 5
 _LAST_BOT_MESSAGE_INDEX = -3
+_LTM_STATS_TEMPLATE = """
+{num_memories_seen_by_bot} memories are loaded in the bot
+{num_memories_in_ram} memories are loaded in RAM
+{num_memories_on_disk} memories are saved to disk
+"""
 
 
 # === Module-level variables ===
+current_memory_text = "(None)"
 memory_database = LtmDatabase(
     pathlib.Path("./extensions/long_term_memory/user_data/bot_memories/")
 )
@@ -71,6 +77,20 @@ print(
 print("-----------------------------------------")
 
 
+def _get_current_memory_text():
+    return current_memory_text
+
+
+def _get_current_ltm_stats():
+    ltm_stats = {
+        "num_memories_seen_by_bot": 0 if _get_current_memory_text() == "(None)" else 1,
+        "num_memories_in_ram": memory_database.message_embeddings.shape[0],
+        "num_memories_on_disk": memory_database.disk_embeddings.shape[0],
+    }
+    ltm_stats_str = _LTM_STATS_TEMPLATE.format(**ltm_stats)
+    return ltm_stats_str
+
+
 # === Hooks to oobaboogs UI ===
 def bot_prefix_modifier(string):
     """
@@ -87,17 +107,37 @@ def bot_prefix_modifier(string):
 def ui():
     """Adds the LTM-specific settings."""
     with gr.Accordion("Long Term Memory settings", open=True):
-        update = gr.Button("Force reload memories")
         with gr.Row():
-            destroy = gr.Button("Destroy all memories")
+            update = gr.Button("Force reload memories")
+    with gr.Accordion(
+        "Long Term Memory debug status (must manually refresh)", open=True
+    ):
+        with gr.Row():
+            current_memory = gr.Textbox(
+                value=_get_current_memory_text(),
+                label="Current memory loaded by bot",
+            )
+            current_ltm_stats = gr.Textbox(
+                value=_get_current_ltm_stats(),
+                label="LTM statistics",
+            )
+        with gr.Row():
+            refresh_debug = gr.Button("Refresh")
+    with gr.Accordion("Long Term Memory DANGER ZONE", open=False):
+        with gr.Row():
+            destroy = gr.Button("Destroy all memories", variant="stop")
             destroy_confirm = gr.Button(
                 "THIS IS IRREVERSIBLE, ARE YOU SURE?", variant="stop", visible=False
             )
-            destroy_cancel = gr.Button("Cancel", visible=False)
+            destroy_cancel = gr.Button("Do Not Delete", visible=False)
             destroy_elems = [destroy_confirm, destroy, destroy_cancel]
 
     # Update memories
     update.click(memory_database.reload_embeddings_from_disk, [], [])
+
+    # Update debug info
+    refresh_debug.click(fn=_get_current_memory_text, outputs=[current_memory])
+    refresh_debug.click(fn=_get_current_ltm_stats, outputs=[current_ltm_stats])
 
     # Clear memory with confirmation
     destroy.click(
@@ -135,6 +175,9 @@ def custom_generate_chat_prompt(
     # === Fetch the "best" memory from LTM, if there is one ===
     (fetched_memory, distance_score) = memory_database.query(user_input)
     memory_context = None
+
+    global current_memory_text
+    current_memory_text = "(None)"
     if fetched_memory and distance_score < MEMORY_SCORE_THRESHOLD:
         time_difference = get_time_difference_message(fetched_memory["timestamp"])
         memory_context = FETCHED_MEMORY_TEMPLATE.format(
@@ -147,6 +190,7 @@ def custom_generate_chat_prompt(
         print("----------------------------")
         print("NEW MEMORY LOADED IN CHATBOT")
         pprint.pprint(fetched_memory)
+        current_memory_text = fetched_memory["message"]
         print("score", distance_score)
         print("----------------------------")
 
