@@ -37,20 +37,29 @@
   text-decoration: none !important;
 }
 
-svg {
-  display: unset !important;
-  vertical-align: middle !important;
-  margin: 5px;
-}
-
 ol li p, ul li p {
     display: inline-block;
 }
 
-#main, #parameters, #chat-settings, #interface-mode, #lora {
+#main, #parameters, #chat-settings, #interface-mode, #lora, #training-tab {
   border: 0;
 }
 
 .gradio-container-3-18-0 .prose * h1, h2, h3, h4 {
   color: white;
+}
+
+.gradio-container {
+  max-width: 100% !important;
+  padding-top: 0 !important;
+}
+
+#extensions {
+  padding: 15px;
+  padding: 15px;
+}
+
+span.math.inline {
+  font-size: 27px;
+  vertical-align: baseline !important;
 }

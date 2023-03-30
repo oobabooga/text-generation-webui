@@ -1,4 +1,5 @@
 import gc
+import traceback
 from queue import Queue
 from threading import Thread
 
@@ -54,7 +55,7 @@ class Iteratorize:
         self.stop_now = False
 
         def _callback(val):
-            if self.stop_now:
+            if self.stop_now or shared.stop_everything:
                 raise ValueError
             self.q.put(val)
 
@@ -63,6 +64,10 @@ class Iteratorize:
                 ret = self.mfunc(callback=_callback, **self.kwargs)
             except ValueError:
                 pass
+            except:
+                traceback.print_exc()
+                pass
+
             clear_torch_cache()
             self.q.put(self.sentinel)
             if self.c_callback:
