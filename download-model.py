@@ -146,7 +146,7 @@ def get_download_links_from_huggingface(model, branch):
     return links, is_lora
 
 def download_files(file_list, output_folder, num_threads=8):
-    thread_map(lambda url: get_file(url, output_folder), file_list, max_workers=num_threads, verbose=False)
+    thread_map(lambda url: get_file(url, output_folder), file_list, max_workers=num_threads)
 
 if __name__ == '__main__':
     model = args.MODEL
@@ -189,3 +189,4 @@ if __name__ == '__main__':
     # Downloading the files
     print(f"Downloading the model to {output_folder}")
     download_files(links, output_folder, args.threads)
+    print()
