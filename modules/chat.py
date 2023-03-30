@@ -321,6 +321,11 @@ def load_default_history(name1, name2):
         shared.history['visible'] = []
 
 def load_character(_character, name1, name2):
+
+    def apply_dialogue_format(text: str):
+        text = text.replace('{{user}}', name1).replace('{{char}}', name2)
+        return text.replace('<USER>', name1).replace('<BOT>', name2)
+
     context = ""
     shared.history['internal'] = []
     shared.history['visible'] = []
@@ -329,15 +334,17 @@ def load_character(_character, name1, name2):
         data = json.loads(open(Path(f'characters/{_character}.json'), 'r', encoding='utf-8').read())
         name2 = data['char_name']
         if 'char_persona' in data and data['char_persona'] != '':
+            data['char_persona'] = apply_dialogue_format(data['char_persona'])
             context += f"{data['char_name']}'s Persona: {data['char_persona']}\n"
         if 'world_scenario' in data and data['world_scenario'] != '':
+            data['world_scenario'] = apply_dialogue_format(data['world_scenario'])
             context += f"Scenario: {data['world_scenario']}\n"
         context = f"{context.strip()}\n<START>\n"
         if 'example_dialogue' in data and data['example_dialogue'] != '':
-            data['example_dialogue'] = data['example_dialogue'].replace('{{user}}', name1).replace('{{char}}', name2)
-            data['example_dialogue'] = data['example_dialogue'].replace('<USER>', name1).replace('<BOT>', name2)
+            data['example_dialogue'] = apply_dialogue_format(data['example_dialogue'])
             context += f"{data['example_dialogue'].strip()}\n"
         if 'char_greeting' in data and len(data['char_greeting'].strip()) > 0:
+            data['char_greeting'] = apply_dialogue_format(data['char_greeting'])
             shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', data['char_greeting']]]
             shared.history['visible'] += [['', apply_extensions(data['char_greeting'], "output")]]
         else:
