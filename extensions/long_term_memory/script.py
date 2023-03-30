@@ -1,5 +1,6 @@
 """Extension that allows us to fetch and store memories from/to LTM."""
 
+import json
 import pathlib
 import pprint
 
@@ -16,39 +17,22 @@ from extensions.long_term_memory.utils.timestamp_parsing import (
 )
 
 
-# === Constants (feel free to play around with these) ===
-# The LTM sub-context to be injected into the bot's fixed context.
-FETCHED_MEMORY_TEMPLATE = """
-{name2}'s memory log:
-{time_difference}, {memory_name} said:
-"{memory_message}"
-
-During conversations between {name1} and {name2}, {name2} will try to remember the memory described above and naturally integrate it with the conversation.
-"""
-
-# How long a message must be for it to be considered for LTM storage.
-# Lower this value to allow "shorter" memories to get recorded by LTM.
-MINIMUM_MESSAGE_LENGTH_FOR_LTM = 100
-
-# Controls how "similar" your last message has to be to some LTM message to
-# be loaded into the context. It represents the cosine distance, where "lower"
-# means "more similar".
-# Lower this value to increase the strictness of the check.
-MEMORY_SCORE_THRESHOLD = 0.60
-
-
 # === Internal constants (don't change these without good reason) ===
+_CONFIG_PATH = "ltm_config.json"
 _MIN_ROWS_TILL_RESPONSE = 5
 _LAST_BOT_MESSAGE_INDEX = -3
-_LTM_STATS_TEMPLATE = """
-{num_memories_seen_by_bot} memories are loaded in the bot
+_LTM_STATS_TEMPLATE = """{num_memories_seen_by_bot} memories are loaded in the bot
 {num_memories_in_ram} memories are loaded in RAM
-{num_memories_on_disk} memories are saved to disk
-"""
+{num_memories_on_disk} memories are saved to disk"""
+with open(_CONFIG_PATH, "rt") as handle:
+    _CONFIG = json.load(handle)
 
 
 # === Module-level variables ===
-current_memory_text = "(None)"
+debug_texts = {
+    "current_memory_text": "(None)",
+    "current_context_block": "(None)",
+}
 memory_database = LtmDatabase(
     pathlib.Path("./extensions/long_term_memory/user_data/bot_memories/")
 )
@@ -70,18 +54,20 @@ print(
     "from being flooded with messages from the current conversation which "
     "would defeat the original purpose of this module."
 )
-print(
-    f"Messages shorter than {MINIMUM_MESSAGE_LENGTH_FOR_LTM} chars will NOT "
-    "be stored. This can be adjusted in extensions/long_term_memory/script.py"
-)
+print("----------")
+print("LTM CONFIG")
+print("----------")
+print("change these values in ltm_config.json")
+pprint.pprint(_CONFIG)
+print("----------")
 print("-----------------------------------------")
 
 
-def _get_current_memory_text():
-    return current_memory_text
+def _get_current_memory_text() -> str:
+    return debug_texts["current_memory_text"]
 
 
-def _get_current_ltm_stats():
+def _get_current_ltm_stats() -> str:
     ltm_stats = {
         "num_memories_seen_by_bot": 0 if _get_current_memory_text() == "(None)" else 1,
         "num_memories_in_ram": memory_database.message_embeddings.shape[0],
@@ -89,6 +75,32 @@ def _get_current_ltm_stats():
     }
     ltm_stats_str = _LTM_STATS_TEMPLATE.format(**ltm_stats)
     return ltm_stats_str
+
+
+def _get_current_context_block() -> str:
+    return debug_texts["current_context_block"]
+
+
+def _build_augmented_context(memory_context: str, original_context: str) -> str:
+    injection_location = _CONFIG["ltm_context"]["injection_location"]
+    if injection_location == "BEFORE_NORMAL_CONTEXT":
+        augmented_context = f"{memory_context.strip()}\n{original_context.strip()}"
+    elif injection_location == "AFTER_NORMAL_CONTEXT_BUT_BEFORE_MESSAGES":
+        if "<START>" not in original_context:
+            raise ValueError(
+                "Cannot use AFTER_NORMAL_CONTEXT_BUT_BEFORE_MESSAGES, "
+                "<START> token not found in context. Please make sure you're "
+                "using a proper character json and that you're NOT using the "
+                "generic 'Assistant' sample character"
+            )
+
+        split_index = original_context.index("<START>")
+        augmented_context = original_context[:split_index] + \
+                memory_context.strip() + "\n" + original_context[split_index:]
+    else:
+        raise ValueError(f"Invalid injection_location: {injection_location}")
+
+    return augmented_context
 
 
 # === Hooks to oobaboogs UI ===
@@ -122,6 +134,11 @@ def ui():
                 label="LTM statistics",
             )
         with gr.Row():
+            current_context_block = gr.Textbox(
+                value=_get_current_context_block(),
+                label="Current FIXED context block (ONLY includes example convos)"
+            )
+        with gr.Row():
             refresh_debug = gr.Button("Refresh")
     with gr.Accordion("Long Term Memory DANGER ZONE", open=False):
         with gr.Row():
@@ -138,6 +155,7 @@ def ui():
     # Update debug info
     refresh_debug.click(fn=_get_current_memory_text, outputs=[current_memory])
     refresh_debug.click(fn=_get_current_ltm_stats, outputs=[current_ltm_stats])
+    refresh_debug.click(fn=_get_current_context_block, outputs=[current_context_block])
 
     # Clear memory with confirmation
     destroy.click(
@@ -176,11 +194,11 @@ def custom_generate_chat_prompt(
     (fetched_memory, distance_score) = memory_database.query(user_input)
     memory_context = None
 
-    global current_memory_text
-    current_memory_text = "(None)"
-    if fetched_memory and distance_score < MEMORY_SCORE_THRESHOLD:
+    debug_texts["current_memory_text"] = "(None)"
+
+    if fetched_memory and distance_score < _CONFIG["ltm_reads"]["max_cosine_distance"]:
         time_difference = get_time_difference_message(fetched_memory["timestamp"])
-        memory_context = FETCHED_MEMORY_TEMPLATE.format(
+        memory_context = _CONFIG["ltm_context"]["template"].format(
             name1=name1,
             name2=name2,
             time_difference=time_difference,
@@ -190,16 +208,15 @@ def custom_generate_chat_prompt(
         print("----------------------------")
         print("NEW MEMORY LOADED IN CHATBOT")
         pprint.pprint(fetched_memory)
-        current_memory_text = fetched_memory["message"]
+        debug_texts["current_memory_text"] = fetched_memory["message"]
         print("score", distance_score)
         print("----------------------------")
 
     # === Call oobabooga's original generate_chat_prompt ===
-    augmented_context = (
-        f"{memory_context.strip()} {context.strip()}\n"
-        if memory_context is not None
-        else context
-    )
+    augmented_context = context
+    if memory_context is not None:
+        augmented_context = _build_augmented_context(memory_context, context)
+    debug_texts["current_context_block"] = augmented_context
 
     (prompt, prompt_rows) = generate_chat_prompt(
         user_input,
@@ -220,7 +237,7 @@ def custom_generate_chat_prompt(
         clean_bot_message = clean_character_message(name2, bot_message)
 
         # Store bot message into LTM
-        if len(clean_bot_message) >= MINIMUM_MESSAGE_LENGTH_FOR_LTM:
+        if len(clean_bot_message) >= _CONFIG["ltm_writes"]["min_message_length"]:
             memory_database.add(name2, clean_bot_message)
             print("-----------------------")
             print("NEW MEMORY SAVED to LTM")
@@ -230,7 +247,7 @@ def custom_generate_chat_prompt(
             print("-----------------------")
 
     # Store Anon's input directly into LTM
-    if len(user_input) >= MINIMUM_MESSAGE_LENGTH_FOR_LTM:
+    if len(user_input) >= _CONFIG["ltm_writes"]["min_message_length"]:
         memory_database.add(name1, user_input)
         print("-----------------------")
         print("NEW MEMORY SAVED to LTM")

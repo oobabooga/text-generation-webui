@@ -1,0 +1,12 @@
+{
+    "ltm_context": {
+        "injection_location": "BEFORE_NORMAL_CONTEXT",
+        "template": "{name2}'s memory log:\n{time_difference}, {memory_name} said:\n\"{memory_message}\"\nDuring conversations between {name1} and {name2}, {name2} will try to remember the memory described above and naturally integrate it with the conversation."
+    },
+    "ltm_writes": {
+        "min_message_length": 100
+    },
+    "ltm_reads": {
+        "max_cosine_distance": 0.60
+    }
+}
