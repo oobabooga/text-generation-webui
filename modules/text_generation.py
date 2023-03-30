@@ -42,7 +42,7 @@ def encode(prompt, tokens_to_generate=0, add_special_tokens=True):
 
 def decode(output_ids):
     # Open Assistant relies on special tokens like <|endoftext|>
-    if re.match('(oasst|galactica)-*', shared.model_name.lower()):
+    if re.match('.*(oasst|galactica)-*', shared.model_name.lower()):
         return shared.tokenizer.decode(output_ids, skip_special_tokens=False)
     else:
         reply = shared.tokenizer.decode(output_ids, skip_special_tokens=True)
@@ -77,10 +77,10 @@ def fix_galactica(s):
 
 def formatted_outputs(reply, model_name):
     if not (shared.args.chat or shared.args.cai_chat):
-        if model_name.lower().startswith('galactica'):
+        if 'galactica' in model_name.lower():
             reply = fix_galactica(reply)
             return reply, reply, generate_basic_html(reply)
-        elif model_name.lower().startswith(('gpt4chan', 'gpt-4chan', '4chan')):
+        elif any((k in shared.model_name.lower() for k in ['gpt4chan', 'gpt-4chan'])):
             reply = fix_gpt4chan(reply)
             return reply, 'Only applicable for GALACTICA models.', generate_4chan_html(reply)
         else:
