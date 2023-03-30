@@ -93,6 +93,7 @@ cd repositories || goto end
 if not exist GPTQ-for-LLaMa\ (
   git clone https://github.com/qwopqwop200/GPTQ-for-LLaMa.git
   cd GPTQ-for-LLaMa || goto end
+  git checkout cuda
   call python -m pip install -r requirements.txt
   call python setup_cuda.py install
   if not exist "%INSTALL_ENV_DIR%\lib\site-packages\quant_cuda-0.0.0-py3.10-win-amd64.egg" (
