@@ -37,10 +37,6 @@ settings = {
     'chat_generation_attempts': 1,
     'chat_generation_attempts_min': 1,
     'chat_generation_attempts_max': 5,
-    'name1_pygmalion': 'You',
-    'name2_pygmalion': 'Kawaii',
-    'context_pygmalion': "Kawaii's persona: Kawaii is a cheerful person who loves to make others smile. She is an optimist who loves to spread happiness and positivity wherever she goes.\n<START>",
-    'stop_at_newline_pygmalion': False,
     'default_extensions': [],
     'chat_default_extensions': ["gallery"],
     'presets': {
