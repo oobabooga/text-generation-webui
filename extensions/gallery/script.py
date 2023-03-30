@@ -3,80 +3,65 @@ from pathlib import Path
 import gradio as gr
 
 from modules.html_generator import get_image_cache
+import modules.shared as shared
+import modules.chat as chat
 
 
 def generate_html():
+    # This is an ugly hack to deal with the preview window.
+    # In theory, since we're using elem_id, it shouldn't mess with any other gallery previews in any other extensions.
     css = """
-      .character-gallery {
-        margin: 1rem 0;
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        grid-column-gap: 0.4rem;
-        grid-row-gap: 1.2rem;
-      }
-
-      .character-container {
-        cursor: pointer;
-        text-align: center;
-        position: relative;
-        opacity: 0.85;
-      }
-
-      .character-container:hover {
-        opacity: 1;
-      }
-
-      .character-container .placeholder, .character-container img {
-        width: 150px;
-        height: 200px;
-        background-color: gray;
-        object-fit: cover;
-        margin: 0 auto;
-        border-radius: 1rem;
-        border: 3px solid white;
-        box-shadow: 3px 3px 6px 0px rgb(0 0 0 / 50%);
-      }
-
-      .character-name {
-        margin-top: 0.3rem;
-        display: block;
-        font-size: 1.2rem;
-        font-weight: 600;
-        overflow-wrap: anywhere;
+      div#extension_gallery div.preview {
+        display: none !important;
       }
     """
 
-    container_html = f'<style>{css}</style><div class="character-gallery">'
+    container_html = f'<style>{css}</style>'
+    return container_html
 
-    # Iterate through files in image folder
+
+def gallery_select(evt: gr.SelectData):
+    result = chat.load_character(evt.value, shared.settings['name1'], shared.settings['name2'])
+    return result + (gr.Dropdown.update(value=evt.value), gr.Gallery.update(value=build_gallery()), )
+
+
+def build_gallery():
+    imgs = [('extensions/gallery/no_image.png', 'None')]
     for file in sorted(Path("characters").glob("*")):
         if file.name.endswith(".json"):
             character = file.name.replace(".json", "")
-            container_html += f'<div class="character-container" onclick=\'document.getElementById("character-menu").children[1].children[1].value = "{character}"; document.getElementById("character-menu").children[1].children[1].dispatchEvent(new Event("change"));\'>'
-            image_html = "<div class='placeholder'></div>"
 
             for i in [
-                    f"characters/{character}.png",
-                    f"characters/{character}.jpg",
-                    f"characters/{character}.jpeg",
-                    ]:
+                f"characters/{character}.png",
+                f"characters/{character}.jpg",
+                f"characters/{character}.jpeg",
+            ]:
 
                 path = Path(i)
+                image_src = "extensions/gallery/no_image.png"
                 if path.exists():
                     try:
-                        image_html = f'<img src="file/{get_image_cache(path)}">'
+                        image_src = get_image_cache(path)
                         break
                     except:
                         continue
+            imgs.append((image_src, character))
 
-            container_html += f'{image_html} <span class="character-name">{character}</span>'
-            container_html += "</div>"
+    return imgs
 
-    container_html += "</div>"
-    return container_html
+
+def update_gallery():
+    return gr.Gallery.update(value=build_gallery())
+
 
 def ui():
     with gr.Accordion("Character gallery", open=False):
         update = gr.Button("Refresh")
         gallery = gr.HTML(value=generate_html())
-    update.click(generate_html, [], gallery)
+        imgs = build_gallery()
+        new_gallery = gr.Gallery(imgs, show_label=False, elem_id="extension_gallery")
+    update.click(update_gallery, [], new_gallery)
+    new_gallery.style(grid=5, height="100%")
+    new_gallery.select(gallery_select, None,
+                       [shared.gradio['name2'], shared.gradio['context'], shared.gradio['display'],
+                        shared.gradio['character_menu'], new_gallery])
