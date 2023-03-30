@@ -35,7 +35,7 @@ def get_file(url, output_folder):
         # Check if the file has already been downloaded completely
         r = requests.head(url)
         total_size = int(r.headers.get('content-length', 0))
-        if output_path.stat().st_size == total_size:
+        if output_path.stat().st_size >= total_size:
             return
         # Otherwise, resume the download from where it left off
         headers = {'Range': f'bytes={output_path.stat().st_size}-'}
@@ -215,7 +215,6 @@ if __name__ == '__main__':
     print(f"Downloading the model to {output_folder}")
     download_files(links, output_folder, args.threads)
     
-    print('\n')
     # Validate the checksums
     validated = True
     for i in range(len(sha256)):
@@ -228,3 +227,5 @@ if __name__ == '__main__':
     
     if validated:
         print('[+] Validated checksums of all model files!')
+    else:
+        print('[-] Rerun the download-model.py with --clean flag')
