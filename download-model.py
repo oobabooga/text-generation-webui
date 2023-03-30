@@ -17,6 +17,7 @@ from pathlib import Path
 import requests
 import tqdm
 from tqdm.contrib.concurrent import thread_map
+import hashlib
 
 parser = argparse.ArgumentParser()
 parser.add_argument('MODEL', type=str, default=None, nargs='?')
@@ -213,4 +214,17 @@ if __name__ == '__main__':
     # Downloading the files
     print(f"Downloading the model to {output_folder}")
     download_files(links, output_folder, args.threads)
-    print()
+    
+    print('\n')
+    # Validate the checksums
+    validated = True
+    for i in range(len(sha256)):
+        with open(output_folder / sha256[i][0], "rb") as f:
+            bytes = f.read()
+            file_hash = hashlib.sha256(bytes).hexdigest()
+            if file_hash != sha256[i][1]:
+                print(f'[!] Checksum for {sha256[i][0]} failed!')
+                validated = False
+    
+    if validated:
+        print('[+] Validated checksums of all model files!')
