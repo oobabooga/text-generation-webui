@@ -73,9 +73,7 @@ def load_model_wrapper(selected_model):
 
 def load_lora_wrapper(selected_lora):
     add_lora_to_model(selected_lora)
-    default_text = shared.settings['lora_prompts'][next((k for k in shared.settings['lora_prompts'] if re.match(k.lower(), shared.lora_name.lower())), 'default')]
-
-    return selected_lora, default_text
+    return selected_lora
 
 def load_preset_values(preset_menu, return_dict=False):
     generate_params = {
@@ -141,7 +139,10 @@ def load_prompt(fname):
         return ''
     else:
         with open(Path(f'prompts/{fname}.txt'), 'r', encoding='utf-8') as f:
-            return f.read()
+            text = f.read()
+            if text[-1] == '\n':
+                text = text[:-1]
+            return text
         
 def create_prompt_menus():
     with gr.Row():
@@ -212,7 +213,7 @@ def create_settings_menus(default_preset):
 
     shared.gradio['model_menu'].change(load_model_wrapper, [shared.gradio['model_menu']], [shared.gradio['model_menu']], show_progress=True)
     shared.gradio['preset_menu'].change(load_preset_values, [shared.gradio['preset_menu']], [shared.gradio[k] for k in ['do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping']])
-    shared.gradio['lora_menu'].change(load_lora_wrapper, [shared.gradio['lora_menu']], [shared.gradio['lora_menu'], shared.gradio['textbox']], show_progress=True)
+    shared.gradio['lora_menu'].change(load_lora_wrapper, [shared.gradio['lora_menu']], [shared.gradio['lora_menu']], show_progress=True)
     shared.gradio['softprompts_menu'].change(load_soft_prompt, [shared.gradio['softprompts_menu']], [shared.gradio['softprompts_menu']], show_progress=True)
     shared.gradio['upload_softprompt'].upload(upload_soft_prompt, [shared.gradio['upload_softprompt']], [shared.gradio['softprompts_menu']])
 
@@ -277,11 +278,10 @@ if shared.args.lora:
 # Default UI settings
 default_preset = shared.settings['presets'][next((k for k in shared.settings['presets'] if re.match(k.lower(), shared.model_name.lower())), 'default')]
 if shared.lora_name != "None":
-    default_text = shared.settings['lora_prompts'][next((k for k in shared.settings['lora_prompts'] if re.match(k.lower(), shared.lora_name.lower())), 'default')]
+    default_text = load_prompt(shared.settings['lora_prompts'][next((k for k in shared.settings['lora_prompts'] if re.match(k.lower(), shared.lora_name.lower())), 'default')])
 else:
-    default_text = shared.settings['prompts'][next((k for k in shared.settings['prompts'] if re.match(k.lower(), shared.model_name.lower())), 'default')]
+    default_text = load_prompt(shared.settings['prompts'][next((k for k in shared.settings['prompts'] if re.match(k.lower(), shared.model_name.lower())), 'default')])
 title ='Text generation web UI'
-description = '\n\n# Text generation lab\nGenerate text using Large Language Models.\n'
 
 def create_interface():
 
