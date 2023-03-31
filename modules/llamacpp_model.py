@@ -1,4 +1,5 @@
 import llamacpp
+import os
 
 from modules.callbacks import Iteratorize
 
@@ -29,6 +30,7 @@ class LlamaCppModel:
     def from_pretrained(self, path):
         params = llamacpp.InferenceParams()
         params.path_model = str(path)
+        params.n_threads = os.cpu_count()
 
         _model = llamacpp.LlamaInference(params)
 
