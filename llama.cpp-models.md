@@ -10,15 +10,15 @@ pip install -r requirements.txt --upgrade
 
 2. Follow the instructions in the llama.cpp README to generate the `ggml-model-q4_0.bin` file: https://github.com/ggerganov/llama.cpp#usage
 
-3. Create a folder with name starting in `llamacpp` inside `models/`. For instance, `models/llamacpp-7b`
+3. Create a folder inside `models/` for your model and put `ggml-model-q4_0.bin` in it. For instance, `models/llamacpp-7b/ggml-model-q4_0.bin`.
 
-4. Place `ggml-model-q4_0.bin` inside that folder.
-
-5. Start the web UI normally:
+4. Start the web UI normally:
 
 ```
 python server.py --model llamacpp-7b
 ```
+
+**This procedure should work for any `ggml*.bin` file.**
 
 ## Performance
 
