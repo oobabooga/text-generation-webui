@@ -13,7 +13,7 @@ python -m pytest -v extensions/long_term_memory/
 ```bash
 python server.py --chat --extensions long_term_memory
 ```
-4. Chat normally with the chatbot and observe the console for LTM write/load status. Please note that LTM-stored memories will only be visible to the chatbot during your NEXT session. Additionally please use the same name for yourself across sessions, otherwise the chatbot may get confused when trying to understand memories (example: if you have used "anon" as your name in the past, don't use "Anon" in the future)
+4. Chat normally with the chatbot and observe the console for LTM write/load status. Please note that LTM-stored memories will only be visible to the chatbot during your NEXT session, though this behavior can be overridden via the UI. Additionally please use the same name for yourself across sessions, otherwise the chatbot may get confused when trying to understand memories (example: if you have used "anon" as your name in the past, don't use "Anon" in the future)
 5. Memories will be saved in `extensions/long_term_memory/user_data/bot_memories/`. Back them up if you plan to mess with the code. If you want to fully reset your bot's memories, simply delete the files inside that directory.
 
 ## Tips for Windows Users (credit to Anons from /g/'s /lmg/)
@@ -23,7 +23,7 @@ pip install torch-1.12.0+cu113 # or whichever version of pytorch was uninstalled
 ```
 
 ## Limitations
-- This project has been tested on Ubuntu LTS 22.04. Compatibility with Windows or macOS is unknown.
+- This project has been tested on Ubuntu LTS 22.04. Other people have tested it successfully on Windows. Compatibility with macOS is unknown.
 - There's one universal LTM database, so it's recommended to stick with just one character. If you don't, all characters will see the memories of others.
 - The system can only load one "memory" at any given time, and each memory sticks around for one message.
 - Memories themselves are past raw conversations filtered solely on length, and some may be irrelevant or filler text.
