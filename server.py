@@ -166,7 +166,7 @@ def create_settings_menus(default_preset):
         with gr.Column():
             create_model_and_preset_menus()
         with gr.Column():
-            shared.gradio['seed'] = gr.Number(value=-1, label='Seed (-1 for random)')
+            shared.gradio['seed'] = gr.Number(value=shared.settings['seed'], label='Seed (-1 for random)')
 
     with gr.Row():
         with gr.Column():
@@ -408,7 +408,7 @@ def create_interface():
                 with gr.Row():
                     with gr.Column(scale=4):
                         with gr.Tab('Raw'):
-                            shared.gradio['textbox'] = gr.Textbox(value=default_text, elem_id="textbox", lines=25)
+                            shared.gradio['textbox'] = gr.Textbox(value=default_text, elem_id="textbox", lines=27)
                         with gr.Tab('Markdown'):
                             shared.gradio['markdown'] = gr.Markdown()
                         with gr.Tab('HTML'):
@@ -442,7 +442,7 @@ def create_interface():
             with gr.Tab("Text generation", elem_id="main"):
                 with gr.Row():
                     with gr.Column():
-                        shared.gradio['textbox'] = gr.Textbox(value=default_text, lines=15, label='Input')
+                        shared.gradio['textbox'] = gr.Textbox(value=default_text, lines=21, label='Input')
                         shared.gradio['max_new_tokens'] = gr.Slider(minimum=shared.settings['max_new_tokens_min'], maximum=shared.settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=shared.settings['max_new_tokens'])
                         shared.gradio['Generate'] = gr.Button('Generate')
                         with gr.Row():
@@ -455,7 +455,7 @@ def create_interface():
 
                     with gr.Column():
                         with gr.Tab('Raw'):
-                            shared.gradio['output_textbox'] = gr.Textbox(lines=25, label='Output')
+                            shared.gradio['output_textbox'] = gr.Textbox(lines=27, label='Output')
                         with gr.Tab('Markdown'):
                             shared.gradio['markdown'] = gr.Markdown()
                         with gr.Tab('HTML'):
