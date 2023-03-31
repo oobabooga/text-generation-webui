@@ -17,6 +17,7 @@ torch-dumps
 venv/
 .venv/
 .env
+.vscode
 repositories
 
 settings.json
