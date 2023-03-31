@@ -15,6 +15,7 @@ torch-dumps
 */*/pycache*
 venv/
 .venv/
+.vscode
 repositories
 
 settings.json
