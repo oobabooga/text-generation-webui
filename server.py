@@ -166,7 +166,7 @@ def create_settings_menus(default_preset):
         with gr.Column():
             create_model_and_preset_menus()
         with gr.Column():
-            shared.gradio['seed'] = gr.Number(value=-1, label='Seed (-1 for random)')
+            shared.gradio['seed'] = gr.Number(value=shared.settings['seed'], label='Seed (-1 for random)')
 
     with gr.Row():
         with gr.Column():
