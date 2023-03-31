@@ -34,7 +34,7 @@ class RWKVModel:
         result.pipeline = pipeline
         return result
 
-    def generate(self, context="", token_count=20, temperature=1, top_p=1, top_k=50, alpha_frequency=0.1, alpha_presence=0.1, token_ban=[0], token_stop=[], callback=None):
+    def generate(self, context="", token_count=20, temperature=1, top_p=1, top_k=50, repetition_penalty=None, alpha_frequency=0.1, alpha_presence=0.1, token_ban=[0], token_stop=[], callback=None):
         args = PIPELINE_ARGS(
             temperature = temperature,
             top_p = top_p,
