@@ -1,8 +1,11 @@
 from pathlib import Path
+
 import gradio as gr
-from modules.html_generator import get_image_cache
+
 from modules.chat import load_character
+from modules.html_generator import get_image_cache
 from modules.shared import gradio, settings
+
 
 def generate_css():
     css = """
