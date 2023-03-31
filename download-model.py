@@ -97,6 +97,7 @@ def get_download_links_from_huggingface(model, branch):
     classifications = []
     has_pytorch = False
     has_pt = False
+    has_ggml = False
     has_safetensors = False
     is_lora = False
     while True:
@@ -114,6 +115,7 @@ def get_download_links_from_huggingface(model, branch):
             is_pytorch = re.match("(pytorch|adapter)_model.*\.bin", fname)
             is_safetensors = re.match(".*\.safetensors", fname)
             is_pt = re.match(".*\.pt", fname)
+            is_ggml = re.match(".*\.bin", fname)
             is_tokenizer = re.match("tokenizer.*\.model", fname)
             is_text = re.match(".*\.(txt|json|py|md)", fname) or is_tokenizer
 
@@ -135,6 +137,9 @@ def get_download_links_from_huggingface(model, branch):
                     elif is_pt:
                         has_pt = True
                         classifications.append('pt')
+                    elif is_ggml:
+                        has_ggml = True
+                        classifications.append('ggml')
 
         cursor = base64.b64encode(f'{{"file_name":"{dict[-1]["path"]}"}}'.encode()) + b':50'
         cursor = base64.b64encode(cursor)
