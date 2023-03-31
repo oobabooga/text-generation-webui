@@ -1,5 +1,5 @@
 # GPTQ-for-LLaMa and Text Generation WebUI Dockerfile
-FROM nvidia/cuda:11.7.0-devel-ubuntu22.04 as builder
+FROM nvidia/cuda:11.8.0-devel-ubuntu22.04 as builder
 
 RUN apt-get update && \
     apt-get install --no-install-recommends -y git build-essential python3-dev python3-pip && \
@@ -11,7 +11,7 @@ RUN git clone https://github.com/qwopqwop200/GPTQ-for-LLaMa /build
 WORKDIR /build
 
 ARG GPTQ_SHA
-RUN git reset --hard ${GPTQ_SHA}
+RUN git checkout ${GPTQ_SHA}
 
 RUN --mount=type=cache,target=/root/.cache/pip pip3 install -r requirements.txt
 
@@ -20,7 +20,7 @@ RUN --mount=type=cache,target=/root/.cache/pip pip3 install -r requirements.txt
 ARG TORCH_CUDA_ARCH_LIST="3.5;5.0;6.0;6.1;7.0;7.5;8.0;8.6+PTX"
 RUN python3 setup_cuda.py bdist_wheel -d .
 
-FROM nvidia/cuda:11.7.0-devel-ubuntu22.04
+FROM nvidia/cuda:11.8.0-devel-ubuntu22.04
 
 LABEL maintainer="Your Name <your.email@example.com>"
 LABEL description="Docker image for GPTQ-for-LLaMa and Text Generation WebUI"
