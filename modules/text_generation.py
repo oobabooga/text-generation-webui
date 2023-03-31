@@ -119,7 +119,7 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
     if any((shared.is_RWKV, shared.is_llamacpp)):
         try:
             if shared.args.no_stream:
-                reply = shared.model.generate(context=question, token_count=max_new_tokens, temperature=temperature, top_p=top_p, top_k=top_k)
+                reply = shared.model.generate(context=question, token_count=max_new_tokens, temperature=temperature, top_p=top_p, top_k=top_k, repetition_penalty=repetition_penalty)
                 if not (shared.args.chat or shared.args.cai_chat):
                     reply = original_question + apply_extensions(reply, "output")
                 yield formatted_outputs(reply, shared.model_name)
