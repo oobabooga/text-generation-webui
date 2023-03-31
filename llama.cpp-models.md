@@ -19,3 +19,9 @@ pip install -r requirements.txt --upgrade
 ```
 python server.py --model llamacpp-7b
 ```
+
+## Performance
+
+This was the performance of llama-7b int4 on my i5-12400F:
+
+> Output generated in 44.10 seconds (4.53 tokens/s, 200 tokens)
