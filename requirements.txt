@@ -2,6 +2,7 @@ accelerate==0.18.0
 bitsandbytes==0.37.2
 flexgen==0.1.7
 gradio==3.23.0
+llamacpp==0.1.10
 markdown
 numpy
 peft==0.2.0
@@ -11,5 +12,4 @@ safetensors==0.3.0
 sentencepiece
 tqdm
 datasets
-llamacpp>=0.1.9
 git+https://github.com/huggingface/transformers

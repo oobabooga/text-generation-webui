@@ -1,9 +1,9 @@
-import os
 from pathlib import Path
-import modules.shared as shared
-from modules.callbacks import Iteratorize
 
 import llamacpp
+
+import modules.shared as shared
+from modules.callbacks import Iteratorize
 
 
 class LlamaCppTokenizer:
@@ -37,19 +37,19 @@ class LlamaCppModel:
 
         result = self()
         result.model = _model
+        result.params = params
 
         tokenizer = LlamaCppTokenizer.from_model(_model)
         return result, tokenizer
 
-    # TODO: Allow passing in params for each inference
-    def generate(self, context="", num_tokens=10, callback=None):
-        # params = self.params
-        # params.n_predict = token_count
-        # params.top_p = top_p
-        # params.top_k = top_k
-        # params.temp = temperature
-        # params.repeat_penalty = repetition_penalty
-        # params.repeat_last_n = repeat_last_n
+    def generate(self, context="", token_count=20, temperature=1, top_p=1, top_k=50, repetition_penalty=1, callback=None):
+        params = self.params
+        params.n_predict = token_count
+        params.top_p = top_p
+        params.top_k = top_k
+        params.temp = temperature
+        params.repeat_penalty = repetition_penalty
+        #params.repeat_last_n = repeat_last_n
 
         # model.params = params
         self.model.add_bos()
@@ -58,7 +58,7 @@ class LlamaCppModel:
         output = ""
         is_end_of_text = False
         ctr = 0
-        while ctr < num_tokens and not is_end_of_text:
+        while ctr < token_count and not is_end_of_text:
             if self.model.has_unconsumed_input():
                 self.model.ingest_all_pending_input()
             else:
@@ -68,14 +68,13 @@ class LlamaCppModel:
                 is_end_of_text = token == self.model.token_eos()
                 if callback:
                     callback(text)
-                output += text
                 ctr += 1
 
         return output
 
     def generate_with_streaming(self, **kwargs):
         with Iteratorize(self.generate, kwargs, callback=None) as generator:
-            reply = kwargs['context']
+            reply = ''
             for token in generator:
                 reply += token
                 yield reply
