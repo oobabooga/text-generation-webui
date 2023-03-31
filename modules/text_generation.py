@@ -130,7 +130,7 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
 
                 # RWKV has proper streaming, which is very nice.
                 # No need to generate 8 tokens at a time.
-                for reply in shared.model.generate(context=question, token_count=max_new_tokens, temperature=temperature, top_p=top_p, top_k=top_k, repetition_penalty=repetition_penalty):
+                for reply in shared.model.generate_with_streaming(context=question, token_count=max_new_tokens, temperature=temperature, top_p=top_p, top_k=top_k, repetition_penalty=repetition_penalty):
                     output = original_question+reply
                     if not (shared.args.chat or shared.args.cai_chat):
                         reply = original_question + apply_extensions(reply, "output")
