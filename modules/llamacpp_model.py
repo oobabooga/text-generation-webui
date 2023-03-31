@@ -1,8 +1,5 @@
-from pathlib import Path
-
 import llamacpp
 
-import modules.shared as shared
 from modules.callbacks import Iteratorize
 
 
@@ -65,6 +62,7 @@ class LlamaCppModel:
                 self.model.eval()
                 token = self.model.sample()
                 text = self.model.token_to_str(token)
+                output += text
                 is_end_of_text = token == self.model.token_eos()
                 if callback:
                     callback(text)
