@@ -27,6 +27,7 @@ settings = {
     'max_new_tokens': 200,
     'max_new_tokens_min': 1,
     'max_new_tokens_max': 2000,
+    'seed': -1,
     'name1': 'You',
     'name2': 'Assistant',
     'context': 'This is a conversation with your Assistant. The Assistant is very helpful and is eager to chat with you and answer your questions.',
@@ -41,7 +42,7 @@ settings = {
     'chat_default_extensions': ["gallery"],
     'presets': {
         'default': 'NovelAI-Sphinx Moth',
-        '.*pygmalion': 'Pygmalion',
+        '.*pygmalion': 'NovelAI-Storywriter',
         '.*RWKV': 'Naive',
     },
     'prompts': {
