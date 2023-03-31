@@ -5,7 +5,8 @@
 @rem using micromamba (an 8mb static-linked single-file binary, conda replacement).
 @rem This enables a user to install this project without manually installing conda and git.
 
-echo WARNING: This script relies on Micromamba which may have issues on some systems when installed under a path with spaces.&& echo.
+echo WARNING: This script relies on Micromamba which may have issues on some systems when installed under a path with spaces.
+echo          May also have issues with long paths.&& echo.
 
 echo What is your GPU?
 echo.
