@@ -47,6 +47,39 @@ During conversations between Anon and Miku, Miku will try to remember the memory
 The following is a conversation between Anon and Miku. Miku likes Anon but is very shy.
 ```
 
+## Configuration
+You can configure the behavior of the LTM extension by modifying the `ltm_config.json` file. The following is a typical example:
+```javascript
+{
+    "ltm_context": {
+        "injection_location": "BEFORE_NORMAL_CONTEXT",
+        "template": "{name2}'s memory log:\n{time_difference}, {memory_name} said:\n\"{memory_message}\"\nDuring conversations between {name1} and {name2}, {name2} will try to remember the memory described above and naturally integrate it with the conversation."
+    },
+    "ltm_writes": {
+        "min_message_length": 100
+    },
+    "ltm_reads": {
+        "max_cosine_distance": 0.60
+    }
+}
+```
+### `ltm_context.injection_location`
+One of two values, `BEFORE_NORMAL_CONTEXT` or `AFTER_NORMAL_CONTEXT_BUT_BEFORE_MESSAGES`. They behave as written on the tin.
+
+### `ltm_context.template`
+This defines the sub-context that's injected into the original context. Note the embedded params surrounded by `{}`, the system will automatically fill these in for you based on the memory it fetches, you don't actually fill the values in yourself here. You also don't have to place all of these params, just place what you need:
+- `{name1}` is the current user's name
+- `{name2}` is the current bot's name
+- `{memory_name}` is the name of the entitiy that said the `{memory_message}`, which doesn't have to be `{name1}` or `{name2}`
+- `{memory_message}` is the actual memory message
+- `{time_difference}` is how long ago the memory was made (example: "4 days ago")
+
+### `ltm_writes.min_message_length`
+How long a message must be for it to be considered for LTM storage. Lower this value to allow "shorter" memories to get recorded by LTM.
+
+### `ltm_reads.max_cosine_distance`
+Controls how "similar" your last message has to be to the "best" LTM message to be loaded into the context. It represents the cosine distance, where "lower" means "more similar". Lower this value to reduce how often memories get loaded into the bot.
+
 ## How It Works Behind the Scenes
 ### Database
 - [zarr](https://zarr.readthedocs.io/en/stable/) is used to store embedding vectors on disk.
