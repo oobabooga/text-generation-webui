@@ -18,6 +18,10 @@ def generate_css():
         display: none !important;
       }
 
+      .character-gallery button.gallery-item {
+        display: contents;
+      }
+
       .character-container {
         cursor: pointer;
         text-align: center;
