@@ -41,7 +41,7 @@ settings = {
     'chat_default_extensions': ["gallery"],
     'presets': {
         'default': 'NovelAI-Sphinx Moth',
-        '.*pygmalion': 'Pygmalion',
+        '.*pygmalion': 'NovelAI-Storywriter',
         '.*RWKV': 'Naive',
     },
     'prompts': {
