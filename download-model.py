@@ -34,7 +34,7 @@ def get_file(url, output_folder):
     output_path = output_folder / filename
     if output_path.exists() and not args.clean:
         # Check if the file has already been downloaded completely
-        r = requests.head(url)
+        r = requests.get(url, stream=True)
         total_size = int(r.headers.get('content-length', 0))
         if output_path.stat().st_size >= total_size:
             return
