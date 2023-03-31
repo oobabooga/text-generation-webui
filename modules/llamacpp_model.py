@@ -48,7 +48,7 @@ class LlamaCppModel:
         params.repeat_penalty = repetition_penalty
         #params.repeat_last_n = repeat_last_n
 
-        # model.params = params
+        #self.model.params = params
         self.model.add_bos()
         self.model.update_input(context)
 
