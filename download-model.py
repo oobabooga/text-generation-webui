@@ -26,6 +26,7 @@ parser.add_argument('--threads', type=int, default=1, help='Number of files to d
 parser.add_argument('--text-only', action='store_true', help='Only download text files (txt/json).')
 parser.add_argument('--output', type=str, default=None, help='The folder where the model should be saved.')
 parser.add_argument('--clean', action='store_true', help='Does not resume the previous download.')
+parser.add_argument('--check', action='store_true', help='Validates the checksums of model files.')
 args = parser.parse_args()
 
 def get_file(url, output_folder):
@@ -215,17 +216,18 @@ if __name__ == '__main__':
     print(f"Downloading the model to {output_folder}")
     download_files(links, output_folder, args.threads)
     
-    # Validate the checksums
-    validated = True
-    for i in range(len(sha256)):
-        with open(output_folder / sha256[i][0], "rb") as f:
-            bytes = f.read()
-            file_hash = hashlib.sha256(bytes).hexdigest()
-            if file_hash != sha256[i][1]:
-                print(f'[!] Checksum for {sha256[i][0]} failed!')
-                validated = False
-    
-    if validated:
-        print('[+] Validated checksums of all model files!')
-    else:
-        print('[-] Rerun the download-model.py with --clean flag')
+    if args.check:
+        # Validate the checksums
+        validated = True
+        for i in range(len(sha256)):
+            with open(output_folder / sha256[i][0], "rb") as f:
+                bytes = f.read()
+                file_hash = hashlib.sha256(bytes).hexdigest()
+                if file_hash != sha256[i][1]:
+                    print(f'[!] Checksum for {sha256[i][0]} failed!')
+                    validated = False
+        
+        if validated:
+            print('[+] Validated checksums of all model files!')
+        else:
+            print('[-] Rerun the download-model.py with --clean flag')
