@@ -20,10 +20,10 @@ params = {
     'autoplay': True,
     'voice_pitch': 'medium',
     'voice_speed': 'medium',
-    'local_cache_path': 'C:/Users/USER/.cache/torch/hub/snakers4_silero-models_master/' # re-define this path to your local cache via settings.json
+    'local_cache_path': '' # User can override the default cache path to something other via settings.json
 }
 
-def update_params(): # somewhy the default extension params dict is not changed by settings.json, thus update it forcefully
+def update_params(): # somewhy the params dict is not changed by settings.json in time, thus we need to update it right now forcefully
     ext_name = "silero_tts"
     for sett in shared.settings:
         if sett.startswith(f'{ext_name}-'):
@@ -49,12 +49,13 @@ def xmlesc(txt):
     return txt.translate(table)
 
 def load_model():
-    model_path = params['local_cache_path'] + "src/silero/model/" + params['model_id'] + ".pt"
+    torch_cache_path = torch.hub.get_dir() if params['local_cache_path'] == '' else params['local_cache_path']
+    model_path = torch_cache_path + "/snakers4_silero-models_master/src/silero/model/" + params['model_id'] + ".pt"
     if Path(model_path).is_file():
-        print(f'\nUsing Silero TTS cached checkpoint found at {params["local_cache_path"]}')
-        model, example_text = torch.hub.load(repo_or_dir=params['local_cache_path'], model='silero_tts', language=params['language'], speaker=params['model_id'], source='local', path = model_path, force_reload = True)
+        print(f'\nUsing Silero TTS cached checkpoint found at {torch_cache_path}')
+        model, example_text = torch.hub.load(repo_or_dir=torch_cache_path+'/snakers4_silero-models_master/', model='silero_tts', language=params['language'], speaker=params['model_id'], source='local', path = model_path, force_reload = True)
     else:
-        print(f'\nSilero TTS cache not found at {params["local_cache_path"]}. Attempting to download...')
+        print(f'\nSilero TTS cache not found at {torch_cache_path}. Attempting to download...')
         model, example_text = torch.hub.load(repo_or_dir='snakers4/silero-models', model='silero_tts', language=params['language'], speaker=params['model_id'])
     model.to(params['device'])
     return model
