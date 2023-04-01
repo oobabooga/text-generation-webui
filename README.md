@@ -126,9 +126,6 @@ Models should be placed inside the `models` folder.
 * [OPT](https://huggingface.co/models?search=facebook/opt)
 * [GALACTICA](https://huggingface.co/models?search=facebook/galactica)
 * [GPT-J 6B](https://huggingface.co/EleutherAI/gpt-j-6B/tree/main)
-* [GPT-Neo](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads&search=eleutherai+%2F+gpt-neo)
-* [\*-Erebus](https://huggingface.co/models?search=erebus) (NSFW)
-* [Pygmalion](https://huggingface.co/models?search=pygmalion) (NSFW)
 
 You can automatically download a model from HF using the script `download-model.py`:
 
