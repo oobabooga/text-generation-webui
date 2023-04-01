@@ -244,7 +244,7 @@ available_loras = get_available_loras()
 
 # Default extensions
 extensions_module.available_extensions = get_available_extensions()
-if shared.args.chat or shared.args.cai_chat:
+if shared.is_chat():
     for extension in shared.settings['chat_default_extensions']:
         shared.args.extensions = shared.args.extensions or []
         if extension not in shared.args.extensions:
@@ -290,8 +290,8 @@ def create_interface():
     if shared.args.extensions is not None and len(shared.args.extensions) > 0:
         extensions_module.load_extensions()
 
-    with gr.Blocks(css=ui.css if not any((shared.args.chat, shared.args.cai_chat)) else ui.css+ui.chat_css, analytics_enabled=False, title=title) as shared.gradio['interface']:
-        if shared.args.chat or shared.args.cai_chat:
+    with gr.Blocks(css=ui.css if not shared.is_chat() else ui.css+ui.chat_css, analytics_enabled=False, title=title) as shared.gradio['interface']:
+        if shared.is_chat():
             with gr.Tab("Text generation", elem_id="main"):
                 if shared.args.cai_chat:
                     shared.gradio['display'] = gr.HTML(value=generate_chat_html(shared.history['visible'], shared.settings['name1'], shared.settings['name2'], shared.character))

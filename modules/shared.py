@@ -129,10 +129,12 @@ parser.add_argument("--gradio-auth-path", type=str, help='Set the gradio authent
 
 args = parser.parse_args()
 
-
 # Provisional, this will be deleted later
 deprecated_dict = {'gptq_bits': ['wbits', 0], 'gptq_model_type': ['model_type', None], 'gptq_pre_layer': ['prelayer', 0]}
 for k in deprecated_dict:
     if eval(f"args.{k}") != deprecated_dict[k][1]:
         print(f"Warning: --{k} is deprecated and will be removed. Use --{deprecated_dict[k][0]} instead.")
         exec(f"args.{deprecated_dict[k][0]} = args.{k}")
+
+def is_chat():
+    return any((args.chat, args.cai_chat))
