@@ -1,7 +1,8 @@
 Based on https://github.com/tloen/alpaca-lora
 
 ## Instructions
-1. Download the LoRA
+
+1. Download a LoRA, for instance:
 
 ```
 python download-model.py tloen/alpaca-lora-7b
@@ -11,16 +12,16 @@ python download-model.py tloen/alpaca-lora-7b
 
 ```
 python server.py --model llama-7b-hf --lora alpaca-lora-7b
-python server.py --model llama-7b-hf --load-in-8bit --lora alpaca-lora-7b
-python server.py --model llama-7b-hf --cpu --lora alpaca-lora-7b
+python server.py --model llama-7b-hf --lora alpaca-lora-7b --load-in-8bit
+python server.py --model llama-7b-hf --lora alpaca-lora-7b --cpu
 ```
 
-* 4-bit mode doesn't work with LoRAs yet.
+* 4-bit mode doesn't cleanly work with LoRAs yet, but this patch can be used: https://github.com/johnsmith0031/alpaca_lora_4bit
 
 * Instead of using the `--lora` command-line flag, you can also select the LoRA in the "Parameters" tab of the interface.
 
 ## Prompt
-For this particular LoRA, the prompt must be formatted like this:
+For the Alpaca LoRA in particular, the prompt must be formatted like this:
 
 ```
 Below is an instruction that describes a task. Write a response that appropriately completes the request.
@@ -51,16 +52,19 @@ print(f"Predicted {len(output)} tokens for '{sentence}':\n{output}")
 
 ## Training a LoRA
 
-For now there is no menu in the interface for training a new LoRA, but it's really easy to do with the `alpaca-lora` code.
+The Training tab in the interface can be used to train a LoRA. The parameters are self-documenting and good defaults are included.
 
-All I had to do was
+This was contributed by [mcmonkey4eva](https://github.com/mcmonkey4eva) in this PR: [#570](https://github.com/oobabooga/text-generation-webui/pull/570).
+
+
+#### Using the original alpaca-lora code
 
 ```
 conda activate textgen
-git clone 'https://github.com/tloen/alpaca-lora'
+git clone https://github.com/tloen/alpaca-lora
 ```
 
-then I edited those two lines in `alpaca-lora/finetune.py` to use my existing `llama-7b` folder instead of downloading everything from decapoda:
+Edit those two lines in `alpaca-lora/finetune.py` to use your existing model folder instead of downloading everything from decapoda:
 
 ```
 model = LlamaForCausalLM.from_pretrained(
@@ -73,10 +77,10 @@ tokenizer = LlamaTokenizer.from_pretrained(
 )
 ```
 
-and ran the script with 
+Run the script with:
 
 ```
 python finetune.py
 ```
 
-It just worked. It runs at 22.32s/it, with 1170 iterations in total, so about 7 hours and a half for training a LoRA. RTX 3090, 18153MiB VRAM used, drawing maximum power (350W, room heater mode).
+It just works. It runs at 22.32s/it, with 1170 iterations in total, so about 7 hours and a half for training a LoRA. RTX 3090, 18153MiB VRAM used, drawing maximum power (350W, room heater mode).
