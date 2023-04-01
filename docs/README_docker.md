@@ -73,7 +73,10 @@ sudo systemctl restart docker # required by nvidia-container-runtime
 ## prepare environment & startup
 
 ### place models in models folder
-download and place the models inside the models folder
+download and place the models inside the models folder. tested with:
+
+https://github.com/oobabooga/text-generation-webui/pull/530#issuecomment-1483891617
+https://github.com/oobabooga/text-generation-webui/pull/530#issuecomment-1483941105
 
 ### prepare .env file
 edit .env values to your needs
