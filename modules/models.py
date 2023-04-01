@@ -41,10 +41,11 @@ def load_model(model_name):
     print(f"Loading {model_name}...")
     t0 = time.time()
 
-    shared.is_RWKV = model_name.lower().startswith('rwkv-')
+    shared.is_RWKV = 'rwkv-' in model_name.lower()
+    shared.is_llamacpp = model_name.lower().startswith(('llamacpp', 'alpaca-cpp'))
 
     # Default settings
-    if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.wbits, shared.args.auto_devices, shared.args.disk, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None, shared.args.deepspeed, shared.args.flexgen, shared.is_RWKV]):
+    if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.wbits, shared.args.auto_devices, shared.args.disk, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None, shared.args.deepspeed, shared.args.flexgen, shared.is_RWKV, shared.is_llamacpp]):
         if any(size in shared.model_name.lower() for size in ('13b', '20b', '30b')):
             model = AutoModelForCausalLM.from_pretrained(Path(f"{shared.args.model_dir}/{shared.model_name}"), device_map='auto', load_in_8bit=True)
         else:
@@ -99,6 +100,18 @@ def load_model(model_name):
         from modules.GPTQ_loader import load_quantized
 
         model = load_quantized(model_name)
+
+    # llamacpp model
+    elif shared.is_llamacpp:
+        from modules.llamacpp_model import LlamaCppModel
+
+        if model_name.lower().startswith('alpaca-cpp'):
+            model_file = f'models/{model_name}/ggml-alpaca-7b-q4.bin'
+        else:
+            model_file = f'models/{model_name}/ggml-model-q4_0.bin'
+
+        model, tokenizer = LlamaCppModel.from_pretrained(Path(model_file))
+        return model, tokenizer
 
     # Custom
     else:
@@ -159,7 +172,7 @@ def load_model(model_name):
         model = AutoModelForCausalLM.from_pretrained(checkpoint, **params)
 
     # Loading the tokenizer
-    if shared.model_name.lower().startswith(('gpt4chan', 'gpt-4chan', '4chan')) and Path(f"{shared.args.model_dir}/gpt-j-6B/").exists():
+    if any((k in shared.model_name.lower() for k in ['gpt4chan', 'gpt-4chan'])) and Path(f"{shared.args.model_dir}/gpt-j-6B/").exists():
         tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/gpt-j-6B/"))
     else:
         tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/{shared.model_name}/"))

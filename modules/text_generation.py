@@ -22,7 +22,7 @@ def get_max_prompt_length(tokens):
     return max_length
 
 def encode(prompt, tokens_to_generate=0, add_special_tokens=True):
-    if shared.is_RWKV:
+    if any((shared.is_RWKV, shared.is_llamacpp)):
         input_ids = shared.tokenizer.encode(str(prompt))
         input_ids = np.array(input_ids).reshape(1, len(input_ids))
         return input_ids
@@ -42,7 +42,7 @@ def encode(prompt, tokens_to_generate=0, add_special_tokens=True):
 
 def decode(output_ids):
     # Open Assistant relies on special tokens like <|endoftext|>
-    if re.match('(oasst|galactica)-*', shared.model_name.lower()):
+    if re.match('.*(oasst|galactica)-*', shared.model_name.lower()):
         return shared.tokenizer.decode(output_ids, skip_special_tokens=False)
     else:
         reply = shared.tokenizer.decode(output_ids, skip_special_tokens=True)
@@ -77,10 +77,10 @@ def fix_galactica(s):
 
 def formatted_outputs(reply, model_name):
     if not (shared.args.chat or shared.args.cai_chat):
-        if model_name.lower().startswith('galactica'):
+        if 'galactica' in model_name.lower():
             reply = fix_galactica(reply)
             return reply, reply, generate_basic_html(reply)
-        elif model_name.lower().startswith(('gpt4chan', 'gpt-4chan', '4chan')):
+        elif any((k in shared.model_name.lower() for k in ['gpt4chan', 'gpt-4chan'])):
             reply = fix_gpt4chan(reply)
             return reply, 'Only applicable for GALACTICA models.', generate_4chan_html(reply)
         else:
@@ -116,10 +116,10 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
 
     # These models are not part of Hugging Face, so we handle them
     # separately and terminate the function call earlier
-    if shared.is_RWKV:
+    if any((shared.is_RWKV, shared.is_llamacpp)):
         try:
             if shared.args.no_stream:
-                reply = shared.model.generate(context=question, token_count=max_new_tokens, temperature=temperature, top_p=top_p, top_k=top_k)
+                reply = shared.model.generate(context=question, token_count=max_new_tokens, temperature=temperature, top_p=top_p, top_k=top_k, repetition_penalty=repetition_penalty)
                 if not (shared.args.chat or shared.args.cai_chat):
                     reply = original_question + apply_extensions(reply, "output")
                 yield formatted_outputs(reply, shared.model_name)

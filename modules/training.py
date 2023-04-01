@@ -2,6 +2,7 @@ import json
 import sys
 import threading
 import time
+import traceback
 from pathlib import Path
 
 import gradio as gr
@@ -119,7 +120,7 @@ def do_train(lora_name: str, micro_batch_size: int, batch_size: int, epochs: int
         }
 
     # == Prep the dataset, format, etc ==
-    if raw_text_file is not None:
+    if raw_text_file not in ['None', '']:
         print("Loading raw text file dataset...")
         with open(clean_path('training/datasets', f'{raw_text_file}.txt'), 'r') as file:
             raw_text = file.read()
@@ -136,15 +137,16 @@ def do_train(lora_name: str, micro_batch_size: int, batch_size: int, epochs: int
         del text_chunks
 
     else:
-        with open(clean_path('training/formats', f'{format}.json'), 'r') as formatFile:
-            format_data: dict[str, str] = json.load(formatFile)
-
-        if dataset is None:
+        if dataset in ['None', '']:
             yield "**Missing dataset choice input, cannot continue.**"
             return
-        if format is None:
+
+        if format in ['None', '']:
             yield "**Missing format choice input, cannot continue.**"
             return
+
+        with open(clean_path('training/formats', f'{format}.json'), 'r') as formatFile:
+            format_data: dict[str, str] = json.load(formatFile)
 
         def generate_prompt(data_point: dict[str, str]):
             for options, data in format_data.items():
@@ -183,7 +185,13 @@ def do_train(lora_name: str, micro_batch_size: int, batch_size: int, epochs: int
         bias="none",
         task_type="CAUSAL_LM"
     )
-    lora_model = get_peft_model(shared.model, config)
+
+    try:
+        lora_model = get_peft_model(shared.model, config)
+    except:
+        yield traceback.format_exc()
+        return
+
     trainer = transformers.Trainer(
         model=lora_model,
         train_dataset=train_data,
