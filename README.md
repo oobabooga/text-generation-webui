@@ -122,7 +122,7 @@ Models should be placed inside the `models` folder.
 
 [Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads) is the main place to download models. These are some examples:
 
-* [Pythia](https://huggingface.co/models?search=eleutherai/pythia)
+* [Pythia](https://huggingface.co/models?sort=downloads&search=eleutherai%2Fpythia+deduped)
 * [OPT](https://huggingface.co/models?search=facebook/opt)
 * [GALACTICA](https://huggingface.co/models?search=facebook/galactica)
 * [GPT-J 6B](https://huggingface.co/EleutherAI/gpt-j-6B/tree/main)
