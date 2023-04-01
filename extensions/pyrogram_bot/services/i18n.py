@@ -1,7 +1,7 @@
 import yaml
 from os.path import dirname
 
-from typing import Callable, NewType
+from typing import Callable
 
 root_folder = dirname(dirname(__file__))
 
@@ -13,7 +13,7 @@ def get_i18n(lang = 'en') -> Callable[[str, dict[str, str]], str]:
     file_content = file.read()
     dict_parsed = yaml.load(file_content, Loader=yaml.FullLoader)
 
-  def t(address: str, replaceble: dict[str, str] = {}) -> str:
+  def t(_, address: str, replaceble: dict[str, str] = {}) -> str:
     result = dict_parsed
 
     for i in address.split('.'):
