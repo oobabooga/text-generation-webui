@@ -1,61 +1,46 @@
-import asyncio, threading
+import asyncio
 from os import getcwd, environ as env
-from os.path import dirname, relpath
+from os.path import dirname, relpath, join
 
-from modules import shared
+from pyrogram import Client as PyroClient, filters
+from pyrogram.handlers import MessageHandler
 
+from .controllers import ai, get_chars, get_models, set_char, set_model, info, gradio, settings
 from .services.i18n import get_i18n
 
-path = dirname(relpath(__file__, getcwd()))
-lang = "en"
-t = get_i18n(lang)
+allowed_chat = int(env["TELEGRAM_CHAT_ID"])
+bot_owner = int(env["TELEGRAM_BOT_OWNER_ID"])
 
-try:
-  from pyrogram import Client, filters, types
-  from pyrogram.errors.exceptions import bad_request_400
-  from dotenv import load_dotenv
-  load_dotenv()
+class Client(PyroClient):
+  lang = "en"
+  t = get_i18n(lang)
+  cwd = dirname(relpath(__file__, getcwd()))
 
-except ModuleNotFoundError:
-  raise ModuleNotFoundError(t("error.dependencies_not_installed", { "/path/": path }))
+  def __init__(self):
+    super().__init__(
+      join(self.cwd, 'textgen'),
+      api_id    = int(env["TELEGRAM_API_ID"]),
+      api_hash  = str(env["TELEGRAM_API_HASH"]),
+      bot_token = str(env["TELEGRAM_BOT_TOKEN"]),
+    )
 
-class Client(Client):
-  filters = filters
-  types = types
-  cwd = path
-  lang = lang
-  t = t
-  owner = int(env["TELEGRAM_BOT_OWNER_ID"])
-  allowed_chat = int(env["TELEGRAM_CHAT_ID"])
-
-  def __init__(self, **kwargs) -> Client:
+  async def run(self):
     try:
-      shared.character = "Example"
-
-      creds = {
-        **kwargs,
-        "api_id": env["TELEGRAM_API_ID"],
-        "api_hash": env["TELEGRAM_API_HASH"],
-        "bot_token": env["TELEGRAM_BOT_TOKEN"],
-        "plugins": {
-          "root": f"{path}/controllers"
-        }
-      }
-
-      super().__init__(f"{path}/textgen", **creds)
-    except bad_request_400.ApiIdInvalid:
-      raise Exception(t("error.credential_file.is_invalid"))
-
-  def change_lang(self, lang="en") -> None:
-    self.lang = lang
-    self.t = get_i18n(lang)
-
-  async def run(self, stop_event: threading.Event):
-    async with self:
       await self.start()
+      self.set_routes()
 
-      while not stop_event.is_set():
+      while True:
         await asyncio.sleep(1)
-      else:
-        print("stopping", flush=True)
-        await self.stop()
+
+    except Exception as e:
+      print(e, flush=True)
+
+  def set_routes(self):
+    self.add_handler(MessageHandler(get_chars, filters.command(["characters"])))
+    self.add_handler(MessageHandler(set_char,  filters.command(["set_character"])))
+    self.add_handler(MessageHandler(get_models,filters.command(["models"])))
+    self.add_handler(MessageHandler(set_model, filters.command(["set_model"])))
+    self.add_handler(MessageHandler(gradio,    filters.command(["gradio"])))
+    self.add_handler(MessageHandler(settings,  filters.command(["settings"])))
+    self.add_handler(MessageHandler(info,      filters.command(["info"])))
+    self.add_handler(MessageHandler(ai,        filters.chat(allowed_chat)), 100)
