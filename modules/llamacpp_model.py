@@ -1,5 +1,8 @@
+import multiprocessing
+
 import llamacpp
 
+from modules import shared
 from modules.callbacks import Iteratorize
 
 
@@ -29,6 +32,7 @@ class LlamaCppModel:
     def from_pretrained(self, path):
         params = llamacpp.InferenceParams()
         params.path_model = str(path)
+        params.n_threads = shared.args.threads or multiprocessing.cpu_count() // 2
 
         _model = llamacpp.LlamaInference(params)
 
