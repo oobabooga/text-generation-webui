@@ -1,6 +1,6 @@
 # Text Generation Web UI with Long-Term Memory
 
-Welcome to the experimental repository for the Text Generation Web UI with a long-term memory (LTM) extension. The goal of the LTM extension is to enable the chatbot to "remember" conversations long-term. Please note that this is an early-stage experimental project, and perfect results should not be expected.
+Welcome to the experimental repository for the Text Generation Web UI with a long-term memory (LTM) extension. The goal of the LTM extension is to enable the chatbot to "remember" conversations long-term. Please note that this is an early-stage experimental project, and perfect results should not be expected. This project has been tested on Ubuntu LTS 22.04. Other people have tested it successfully on Windows. Compatibility with macOS is unknown.
 
 ## How to Run
 1. Follow the instructions in [oobabooga's  original repository](https://github.com/oobabooga/text-generation-webui) until you can chat with a chatbot.
@@ -22,10 +22,14 @@ python server.py --chat --extensions long_term_memory
 pip install torch-1.12.0+cu113 # or whichever version of pytorch was uninstalled
 ```
 
+## Features
+- Memories are fetched using a semantic search, which understands the "actual meaning" of the messages.
+- Ability to load an arbitrary number of "memories".
+- Other configuration options, see below.
+
 ## Limitations
-- This project has been tested on Ubuntu LTS 22.04. Other people have tested it successfully on Windows. Compatibility with macOS is unknown.
-- There's one universal LTM database, so it's recommended to stick with just one character. If you don't, all characters will see the memories of others.
-- The system can only load one "memory" at any given time, and each memory sticks around for one message.
+- There's one universal LTM database, so it's recommended to stick with just one character. If you don't, all characters will see the memories of others. This will be addressed soon.
+- Each memory sticks around for one message.
 - Memories themselves are past raw conversations filtered solely on length, and some may be irrelevant or filler text.
 - Limited scalability: Appending to the persistent LTM database is reasonably efficient, but we currently load all LTM embeddings in RAM, which consumes memory. Additionally, we perform a linear search across all embeddings during each chat round.
 
@@ -53,24 +57,31 @@ You can configure the behavior of the LTM extension by modifying the `ltm_config
 {
     "ltm_context": {
         "injection_location": "BEFORE_NORMAL_CONTEXT",
-        "template": "{name2}'s memory log:\n{time_difference}, {memory_name} said:\n\"{memory_message}\"\nDuring conversations between {name1} and {name2}, {name2} will try to remember the memory described above and naturally integrate it with the conversation."
+        "memory_context_template": "{name2}'s memory log:\n{all_memories}\nDuring conversations between {name1} and {name2}, {name2} will try to remember the memory described above and naturally integrate it with the conversation.",
+        "memory_template": "{time_difference}, {memory_name} said:\n\"{memory_message}\""
     },
     "ltm_writes": {
         "min_message_length": 100
     },
     "ltm_reads": {
-        "max_cosine_distance": 0.60
+        "max_cosine_distance": 0.60,
+        "num_memories_to_fetch": 2,
+        "memory_length_cutoff_in_chars": 1000
     }
 }
 ```
 ### `ltm_context.injection_location`
 One of two values, `BEFORE_NORMAL_CONTEXT` or `AFTER_NORMAL_CONTEXT_BUT_BEFORE_MESSAGES`. They behave as written on the tin.
 
-### `ltm_context.template`
+### `ltm_context.memory_context_template`
 This defines the sub-context that's injected into the original context. Note the embedded params surrounded by `{}`, the system will automatically fill these in for you based on the memory it fetches, you don't actually fill the values in yourself here. You also don't have to place all of these params, just place what you need:
 - `{name1}` is the current user's name
 - `{name2}` is the current bot's name
-- `{memory_name}` is the name of the entitiy that said the `{memory_message}`, which doesn't have to be `{name1}` or `{name2}`
+- `{all_memories}` is the concatenated list of ALL relevant memories fetched by LTM 
+
+### `ltm_context.memory_template`
+This defines an individual memory's format. Similar rules apply.
+- `{memory_name}` is the name of the entity that said the `{memory_message}`, which doesn't have to be `{name1}` or `{name2}`
 - `{memory_message}` is the actual memory message
 - `{time_difference}` is how long ago the memory was made (example: "4 days ago")
 
@@ -79,6 +90,12 @@ How long a message must be for it to be considered for LTM storage. Lower this v
 
 ### `ltm_reads.max_cosine_distance`
 Controls how "similar" your last message has to be to the "best" LTM message to be loaded into the context. It represents the cosine distance, where "lower" means "more similar". Lower this value to reduce how often memories get loaded into the bot.
+
+### `ltm_reads.num_memories_to_fetch`
+The (maximum) number of memories to fetch from LTM. Raise this number to fetch more (relevant) memories, however, this will consume more of your fixed context budget.
+
+### `ltm_reads.memory_length_cutoff_in_chars`
+A hard cutoff for each memory's length. This prevents very long memories from flooding and consuming the full context.
 
 ## How It Works Behind the Scenes
 ### Database

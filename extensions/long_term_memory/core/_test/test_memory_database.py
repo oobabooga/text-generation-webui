@@ -15,6 +15,7 @@ from extensions.long_term_memory.constants import (
 )
 
 
+# Single query test data
 MEMORY_LIST = [
     ("Anon", "a"),
     ("Anon", "hello"),
@@ -33,9 +34,34 @@ QUERY_MESSAGES = [
 ]
 EXPECTED_MEMORY_INDICES = [5, 6, 4, 2]
 
+# Multi-query test data
+MEMORY_LIST_FOR_MULTI_FETCH = [
+    ("Miku", "You shouldn't be fetching this message!"),
+    ("Miku", "EEEKKK! Why is there a spider on the window??!"),
+    ("Miku", "THE SPIDER IS STILL ON THE WINDOW DO SOMETHING ABOUT IT!"),
+    ("Miku", "I actually like spiders!"),
+]
+QUERY_MESSAGE_FOR_MULTI_FETCH = "There's a spider on the window"
+TEST_PARAMS_FOR_MULTI_FETCH = [
+    {
+        "num_memories_to_fetch": 2,
+        "expected_indices": [1, 2],
+    },
+    {
+        "num_memories_to_fetch": 3,
+        "expected_indices": [1, 2, 3],
+    }
+]
+
+# Additional testing params
 NUM_RANDOM_MESSAGES = 50
 RANDOM_MESSAGE_LENGTH = 300
 
+
+def _get_single_response(ltm_database, actual_message):
+    query_responses = ltm_database.query(actual_message)
+    assert 1 == len(query_responses)
+    return query_responses[0]
 
 def _validate_memories(ltm_database):
     # Testing helper that ensures proper behavior when database contains
@@ -43,7 +69,7 @@ def _validate_memories(ltm_database):
 
     # Sanity check: verify we can find exact matches
     for actual_name, actual_message in MEMORY_LIST:
-        (query_response, score) = ltm_database.query(actual_message)
+        (query_response, score) = _get_single_response(ltm_database, actual_message)
         assert query_response
         assert actual_name == query_response["name"]
         assert actual_message == query_response["message"]
@@ -51,7 +77,7 @@ def _validate_memories(ltm_database):
 
     # Verify we can find similar messages in a fuzzy manner
     for query_text, memory_index in zip(QUERY_MESSAGES, EXPECTED_MEMORY_INDICES):
-        (query_response, score) = ltm_database.query(query_text)
+        (query_response, _) = _get_single_response(ltm_database, query_text)
         (actual_name, actual_message) = MEMORY_LIST[memory_index]
         assert actual_name == query_response["name"]
         assert actual_message == query_response["message"]
@@ -89,22 +115,20 @@ def test_typical_usage(tmp_path):
     # Attach to the database (will create a new one)
     ltm_database = LtmDatabase(tmp_path)
 
-    # Querying LTM should return an empty response and a "maximum distance"
-    # score since we have no LTMs yet.
-    (query_response, score) = ltm_database.query(QUERY_MESSAGES[0])
+    # Querying LTM should return an empty list
+    # since we have no LTMs yet.
+    query_response = ltm_database.query(QUERY_MESSAGES[0])
     assert not query_response
-    assert pytest.approx(1, abs=0.001) == score
 
     # Add some memories
     for name, message in MEMORY_LIST:
         ltm_database.add(name, message)
 
-    # Querying LTM should STILL return an empty query response and a
-    # "maximum distance" score since no LTM is actually queryable yet.
-    # Once the user restarts their session, all LTMs will be queryable
-    (query_response, score) = ltm_database.query(QUERY_MESSAGES[0])
+    # Querying LTM should STILL return an empty list since no LTM is
+    # actually queryable yet. Once the user restarts their session,
+    # all LTMs will be queryable
+    query_response = ltm_database.query(QUERY_MESSAGES[0])
     assert not query_response
-    assert pytest.approx(1, abs=0.001) == score
 
     ### Mock user session 2 ###
     _validate_memories(LtmDatabase(tmp_path))
@@ -115,6 +139,7 @@ def test_typical_usage(tmp_path):
 
 def test_duplicate_messages(tmp_path):
     """Ensures we gracefully reject duplicate messages."""
+
     ### Mock user session 1 ###
     # Attach to the database (will create a new one)
     ltm_database = LtmDatabase(tmp_path)
@@ -197,12 +222,11 @@ def test_reload_embeddings_from_disk(tmp_path):
     for name, message in MEMORY_LIST:
         ltm_database.add(name, message)
 
-    # Querying LTM should STILL return an empty query response and a
-    # "maximum distance" score since no LTM is actually queryable yet.
-    # Once the user restarts their session, all LTMs will be queryable
-    (query_response, score) = ltm_database.query(QUERY_MESSAGES[0])
-    assert not query_response
-    assert pytest.approx(1, abs=0.001) == score
+    # Querying LTM should STILL return an empty list since no LTM is
+    # actually queryable yet. Once the user restarts their session,
+    # all LTMs will be queryable
+    query_responses = ltm_database.query(QUERY_MESSAGES[0])
+    assert not query_responses
 
     # Reload embeddings from disk, now all LTMs should be queryable
     ltm_database.reload_embeddings_from_disk()
@@ -213,8 +237,11 @@ def test_reload_embeddings_from_disk(tmp_path):
     _validate_database_integrity(tmp_path, len(MEMORY_LIST))
 
 
-def test_destroy_all_memories(tmp_path):
-    """Ensures LTM database can destroy all memories."""
+def test_destroy_fake_memories(tmp_path):
+    """Ensures LTM database can destroy all (fake) memories.
+
+    Your actual memories are safe, this test does not touch them.
+    """
 
     ### Populating all memories ###
     # Attach to the database (will create a new one)
@@ -240,9 +267,9 @@ def test_destroy_all_memories(tmp_path):
 
     # Validate all memories are actually destroyed
     # Vectors in-memory
-    (query_response, score) = ltm_database.query(QUERY_MESSAGES[0])
-    assert not query_response
-    assert pytest.approx(1, abs=0.001) == score
+    query_responses = ltm_database.query(QUERY_MESSAGES[0])
+    assert not query_responses
+
     # Vectors on-disk
     _validate_database_integrity(tmp_path, 0)
 
@@ -260,3 +287,23 @@ def test_destroy_all_memories(tmp_path):
 
     # Ensure integrity of the LTM database
     _validate_database_integrity(tmp_path, len(MEMORY_LIST))
+
+
+def test_multi_fetch(tmp_path):
+    """Verify we can fetch multiple messages at once."""
+    # Add all data
+    ltm_database = LtmDatabase(tmp_path)
+    for name, message in MEMORY_LIST_FOR_MULTI_FETCH:
+        ltm_database.add(name, message)
+
+    # Query to validate
+    for test_params in TEST_PARAMS_FOR_MULTI_FETCH:
+        expected_responses = [MEMORY_LIST_FOR_MULTI_FETCH[i][1] \
+                for i in test_params["expected_indices"]]
+
+        val_ltm_database = LtmDatabase(tmp_path, test_params["num_memories_to_fetch"])
+        query_responses = val_ltm_database.query(QUERY_MESSAGE_FOR_MULTI_FETCH)
+        assert test_params["num_memories_to_fetch"] == len(query_responses)
+
+        for (query_response, _) in query_responses:
+            assert query_response["message"] in expected_responses
