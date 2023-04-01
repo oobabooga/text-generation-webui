@@ -12,28 +12,28 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 
 ## Features
 
-* Switch between different models using a dropdown menu.
-* Notebook mode that resembles OpenAI's playground.
-* Chat mode for conversation and role playing.
-* Generate nice HTML output for GPT-4chan.
-* Generate Markdown output for [GALACTICA](https://github.com/paperswithcode/galai), including LaTeX support.
-* Support for [Pygmalion](https://huggingface.co/models?search=pygmalionai/pygmalion) and custom characters in JSON or TavernAI Character Card formats ([FAQ](https://github.com/oobabooga/text-generation-webui/wiki/Pygmalion-chat-model-FAQ)).
-* Advanced chat features (send images, get audio responses with TTS).
-* Stream the text output in real time very efficiently.
-* Load parameter presets from text files.
-* Load large models in 8-bit mode.
-* Split large models across your GPU(s), CPU, and disk.
-* CPU mode.
-* [FlexGen offload](https://github.com/oobabooga/text-generation-webui/wiki/FlexGen).
-* [DeepSpeed ZeRO-3 offload](https://github.com/oobabooga/text-generation-webui/wiki/DeepSpeed).
-* Get responses via API, [with](https://github.com/oobabooga/text-generation-webui/blob/main/api-example-streaming.py) or [without](https://github.com/oobabooga/text-generation-webui/blob/main/api-example.py) streaming.
-* [LLaMA model, including 4-bit GPTQ support](https://github.com/oobabooga/text-generation-webui/wiki/LLaMA-model).
-* [llama.cpp support](https://github.com/oobabooga/text-generation-webui/wiki/llama.cpp-models). **\*NEW!\***
-* [RWKV model](https://github.com/oobabooga/text-generation-webui/wiki/RWKV-model).
-* [Supports LoRAs](https://github.com/oobabooga/text-generation-webui/wiki/Using-LoRAs).
-* Supports softprompts.
-* [Supports extensions](https://github.com/oobabooga/text-generation-webui/wiki/Extensions).
-* [Works on Google Colab](https://github.com/oobabooga/text-generation-webui/wiki/Running-on-Colab).
+* Dropdown menu for switching between models
+* Notebook mode that resembles OpenAI's playground
+* Chat mode for conversation and role playing
+* Nice HTML output for GPT-4chan
+* Markdown output for [GALACTICA](https://github.com/paperswithcode/galai), including LaTeX rendering
+* Custom chat characters in JSON format ([FAQ](https://github.com/oobabooga/text-generation-webui/wiki/Custom-characters-FAQ))
+* Advanced chat features (send images, get audio responses with TTS)
+* Very efficient text streaming
+* Parameter presets
+* 8-bit mode
+* Layers splitting across GPU(s), CPU, and disk
+* CPU mode
+* [FlexGen](https://github.com/oobabooga/text-generation-webui/wiki/FlexGen)
+* [DeepSpeed ZeRO-3](https://github.com/oobabooga/text-generation-webui/wiki/DeepSpeed)
+* API [with](https://github.com/oobabooga/text-generation-webui/blob/main/api-example-streaming.py) streaming and [without](https://github.com/oobabooga/text-generation-webui/blob/main/api-example.py) streaming
+* [LLaMA model, including 4-bit GPTQ](https://github.com/oobabooga/text-generation-webui/wiki/LLaMA-model)
+* [llama.cpp](https://github.com/oobabooga/text-generation-webui/wiki/llama.cpp-models) **\*NEW!\***
+* [RWKV model](https://github.com/oobabooga/text-generation-webui/wiki/RWKV-model)
+* [LoRa (loading and training)](https://github.com/oobabooga/text-generation-webui/wiki/Using-LoRAs)
+* Softprompts
+* [Extensions](https://github.com/oobabooga/text-generation-webui/wiki/Extensions)
+* [Google Colab](https://github.com/oobabooga/text-generation-webui/wiki/Running-on-Colab)
 
 ## Installation
 
@@ -62,9 +62,9 @@ Recommended if you have some experience with the command-line.
 
 On Windows, I additionally recommend carrying out the installation on WSL instead of the base system: [WSL installation guide](https://github.com/oobabooga/text-generation-webui/wiki/Windows-Subsystem-for-Linux-(Ubuntu)-Installation-Guide).
 
-#### 0. Install Conda
+0. Install Conda
 
-Conda can be downloaded here: https://docs.conda.io/en/latest/miniconda.html
+https://docs.conda.io/en/latest/miniconda.html
 
 On Linux or WSL, it can be automatically installed with these two commands:
 
@@ -75,14 +75,14 @@ bash Miniconda3.sh
 
 Source: https://educe-ubc.github.io/conda.html
 
-#### 1. Create a new conda environment
+1. Create a new conda environment
 
 ```
 conda create -n textgen python=3.10.9
 conda activate textgen
 ```
 
-#### 2. Install Pytorch
+2. Install Pytorch
 
 | System | GPU | Command |
 |--------|---------|---------|
@@ -95,7 +95,7 @@ The up to date commands can be found here: https://pytorch.org/get-started/local
 MacOS users, refer to the comments here: https://github.com/oobabooga/text-generation-webui/pull/393
 
 
-#### 3. Install the web UI
+3. Install the web UI
 
 ```
 git clone https://github.com/oobabooga/text-generation-webui
@@ -120,27 +120,24 @@ https://github.com/oobabooga/text-generation-webui/issues/174, https://github.co
 
 Models should be placed inside the `models` folder.
 
-[Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads) is the main place to download models. These are some noteworthy examples:
+[Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads) is the main place to download models. These are some examples:
 
-* [Pythia](https://huggingface.co/models?search=eleutherai/pythia)
+* [Pythia](https://huggingface.co/models?sort=downloads&search=eleutherai%2Fpythia+deduped)
 * [OPT](https://huggingface.co/models?search=facebook/opt)
 * [GALACTICA](https://huggingface.co/models?search=facebook/galactica)
 * [GPT-J 6B](https://huggingface.co/EleutherAI/gpt-j-6B/tree/main)
-* [GPT-Neo](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads&search=eleutherai+%2F+gpt-neo)
-* [\*-Erebus](https://huggingface.co/models?search=erebus) (NSFW)
-* [Pygmalion](https://huggingface.co/models?search=pygmalion) (NSFW)
 
 You can automatically download a model from HF using the script `download-model.py`:
 
     python download-model.py organization/model
 
-For instance:
+For example:
 
     python download-model.py facebook/opt-1.3b
 
 If you want to download a model manually, note that all you need are the json, txt, and pytorch\*.bin (or model*.safetensors) files. The remaining files are not necessary.
 
-### GPT-4chan
+#### GPT-4chan
 
 [GPT-4chan](https://huggingface.co/ykilcher/gpt-4chan) has been shut down from Hugging Face, so you need to download it elsewhere. You have two options:
 
@@ -169,9 +166,9 @@ Then browse to
 
 `http://localhost:7860/?__theme=dark`
 
-
-
 Optionally, you can use the following command-line flags:
+
+#### Basic settings
 
 | Flag             | Description |
 |------------------|-------------|
@@ -187,29 +184,64 @@ Optionally, you can use the following command-line flags:
 | `--settings SETTINGS_FILE` | Load the default interface settings from this json file. See `settings-template.json` for an example. If you create a file called `settings.json`, this file will be loaded by default without the need to use the `--settings` flag.|
 |  `--extensions EXTENSIONS [EXTENSIONS ...]` | The list of extensions to load. If you want to load more than one extension, write the names separated by spaces. |
 |  `--verbose`                                | Print the prompts to the terminal. |
+
+#### Accelerate/transformers
+
+| Flag             | Description |
+|------------------|-------------|
 | `--cpu`          | Use the CPU to generate text.|
 | `--auto-devices` | Automatically split the model across the available GPU(s) and CPU.|
 |  `--gpu-memory GPU_MEMORY [GPU_MEMORY ...]` |  Maxmimum GPU memory in GiB to be allocated per GPU. Example: `--gpu-memory 10` for a single GPU, `--gpu-memory 10 5` for two GPUs. You can also set values in MiB like `--gpu-memory 3500MiB`. |
-| `--cpu-memory CPU_MEMORY` | Maximum CPU memory in GiB to allocate for offloaded weights. Must be an integer number. Defaults to 99.|
+| `--cpu-memory CPU_MEMORY` | Maximum CPU memory in GiB to allocate for offloaded weights. Same as above.|
 | `--disk`         | If the model is too large for your GPU(s) and CPU combined, send the remaining layers to the disk. |
 | `--disk-cache-dir DISK_CACHE_DIR` | Directory to save the disk cache to. Defaults to `cache/`. |
 | `--load-in-8bit` | Load the model with 8-bit precision.|
 | `--bf16`         | Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU. |
 | `--no-cache`     | Set `use_cache` to False while generating text. This reduces the VRAM usage a bit with a performance cost. |
+
+#### llama.cpp
+
+| Flag             | Description |
+|------------------|-------------|
 | `--threads`     | Number of threads to use in llama.cpp. |
+
+#### GPTQ
+
+| Flag             | Description |
+|------------------|-------------|
 | `--wbits WBITS`            | GPTQ: Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported. |
 | `--model_type MODEL_TYPE`  | GPTQ: Model type of pre-quantized model. Currently LLaMA, OPT, and GPT-J are supported. |
 | `--groupsize GROUPSIZE`    | GPTQ: Group size. |
 | `--pre_layer PRE_LAYER`    | GPTQ: The number of layers to preload. |
+
+#### FlexGen
+
+| Flag             | Description |
+|------------------|-------------|
 | `--flexgen`      | Enable the use of FlexGen offloading. |
 |  `--percent PERCENT [PERCENT ...]` |  FlexGen: allocation percentages. Must be 6 numbers separated by spaces (default: 0, 100, 100, 0, 100, 0). |
 |  `--compress-weight` |  FlexGen: Whether to compress weight (default: False).|
 |  `--pin-weight [PIN_WEIGHT]` |       FlexGen: whether to pin weights (setting this to False reduces CPU memory by 20%). |
+
+#### DeepSpeed
+
+| Flag             | Description |
+|------------------|-------------|
 | `--deepspeed`    | Enable the use of DeepSpeed ZeRO-3 for inference via the Transformers integration. |
 | `--nvme-offload-dir NVME_OFFLOAD_DIR` | DeepSpeed: Directory to use for ZeRO-3 NVME offloading. |
 | `--local_rank LOCAL_RANK` | DeepSpeed: Optional argument for distributed setups. |
+
+#### RWKV
+
+| Flag             | Description |
+|------------------|-------------|
 |  `--rwkv-strategy RWKV_STRATEGY` |    RWKV: The strategy to use while loading the model. Examples: "cpu fp32", "cuda fp16", "cuda fp16i8". |
 |  `--rwkv-cuda-on` |   RWKV: Compile the CUDA kernel for better performance. |
+
+#### Gradio
+
+| Flag             | Description |
+|------------------|-------------|
 |  `--listen`                                 | Make the web UI reachable from your local network. |
 |  `--listen-port LISTEN_PORT`                | The listening port that the server will use. |
 |  `--share`                                  | Create a public URL. This is useful for running the web UI on Google Colab or similar. |
@@ -223,6 +255,8 @@ Out of memory errors? [Check the low VRAM guide](https://github.com/oobabooga/te
 Inference settings presets can be created under `presets/` as text files. These files are detected automatically at startup.
 
 By default, 10 presets by NovelAI and KoboldAI are included. These were selected out of a sample of 43 presets after applying a K-Means clustering algorithm and selecting the elements closest to the average of each cluster.
+
+[Visualization](https://user-images.githubusercontent.com/112222186/228956352-1addbdb9-2456-465a-b51d-089f462cd385.png)
 
 ## System requirements
 
