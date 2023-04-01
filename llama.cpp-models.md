@@ -18,7 +18,8 @@ pip install -r requirements.txt --upgrade
 python server.py --model llamacpp-7b
 ```
 
-**This procedure should work for any `ggml*.bin` file.**
+* This procedure should work for any `ggml*.bin` file.
+* You can change the number of threads with `--threads N`.
 
 ## Performance
 
