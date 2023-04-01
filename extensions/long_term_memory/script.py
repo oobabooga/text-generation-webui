@@ -3,6 +3,7 @@
 import json
 import pathlib
 import pprint
+from typing import List, Tuple
 
 import gradio as gr
 
@@ -31,10 +32,12 @@ with open(_CONFIG_PATH, "rt") as handle:
 # === Module-level variables ===
 debug_texts = {
     "current_memory_text": "(None)",
+    "num_memories_loaded": 0,
     "current_context_block": "(None)",
 }
 memory_database = LtmDatabase(
-    pathlib.Path("./extensions/long_term_memory/user_data/bot_memories/")
+    pathlib.Path("./extensions/long_term_memory/user_data/bot_memories/"),
+    num_memories_to_fetch=_CONFIG["ltm_reads"]["num_memories_to_fetch"],
 )
 # This bias string is currently unused, feel free to try using it
 params = {
@@ -52,7 +55,8 @@ print(
     "Please remember that LTM-stored memories will only be visible to "
     "the bot during your NEXT session. This prevents the loaded memory "
     "from being flooded with messages from the current conversation which "
-    "would defeat the original purpose of this module."
+    "would defeat the original purpose of this module. This can be overridden "
+    "by pressing 'Force reload memories'"
 )
 print("----------")
 print("LTM CONFIG")
@@ -67,9 +71,13 @@ def _get_current_memory_text() -> str:
     return debug_texts["current_memory_text"]
 
 
+def _get_num_memories_loaded() -> int:
+    return debug_texts["num_memories_loaded"]
+
+
 def _get_current_ltm_stats() -> str:
     ltm_stats = {
-        "num_memories_seen_by_bot": 0 if _get_current_memory_text() == "(None)" else 1,
+        "num_memories_seen_by_bot": _get_num_memories_loaded(),
         "num_memories_in_ram": memory_database.message_embeddings.shape[0],
         "num_memories_on_disk": memory_database.disk_embeddings.shape[0],
     }
@@ -176,6 +184,48 @@ def ui():
     )
 
 
+def _build_memory_context(fetched_memories: List[Tuple[str, float]], name1: str, name2: str):
+    memory_length_cutoff = _CONFIG["ltm_reads"]["memory_length_cutoff_in_chars"]
+
+    # Build all the individual memory strings
+    memory_strs = []
+    distance_scores = []
+    debug_texts["current_memory_text"] = "(None)"
+    debug_texts["num_memories_loaded"] = 0
+    for (fetched_memory, distance_score) in fetched_memories:
+        if fetched_memory and distance_score < _CONFIG["ltm_reads"]["max_cosine_distance"]:
+            time_difference = get_time_difference_message(fetched_memory["timestamp"])
+            memory_str = _CONFIG["ltm_context"]["memory_template"].format(
+                time_difference=time_difference,
+                memory_name=fetched_memory["name"],
+                memory_message=fetched_memory["message"][:memory_length_cutoff],
+            )
+            memory_strs.append(memory_str)
+            distance_scores.append(distance_score)
+
+    # No memories fetched, we'll have no memory_context
+    if not memory_strs:
+        return None
+
+    # Now inject all memory strings into the wider memory context
+    joined_memory_strs = "\n".join(memory_strs)
+    memory_context = _CONFIG["ltm_context"]["memory_context_template"].format(
+        name1=name1,
+        name2=name2,
+        all_memories=joined_memory_strs,
+    )
+
+    # Report debugging info to user
+    print("------------------------------")
+    print("NEW MEMORIES LOADED IN CHATBOT")
+    pprint.pprint(joined_memory_strs)
+    debug_texts["current_memory_text"] = joined_memory_strs
+    debug_texts["num_memories_loaded"] = len(memory_strs)
+    print("scores (in order)", distance_scores)
+    print("------------------------------")
+    return memory_context
+
+
 def custom_generate_chat_prompt(
     user_input,
     max_new_tokens,
@@ -191,26 +241,10 @@ def custom_generate_chat_prompt(
     user_input = fix_newlines(user_input)
 
     # === Fetch the "best" memory from LTM, if there is one ===
-    (fetched_memory, distance_score) = memory_database.query(user_input)
-    memory_context = None
-
-    debug_texts["current_memory_text"] = "(None)"
-
-    if fetched_memory and distance_score < _CONFIG["ltm_reads"]["max_cosine_distance"]:
-        time_difference = get_time_difference_message(fetched_memory["timestamp"])
-        memory_context = _CONFIG["ltm_context"]["template"].format(
-            name1=name1,
-            name2=name2,
-            time_difference=time_difference,
-            memory_name=fetched_memory["name"],
-            memory_message=fetched_memory["message"],
-        )
-        print("----------------------------")
-        print("NEW MEMORY LOADED IN CHATBOT")
-        pprint.pprint(fetched_memory)
-        debug_texts["current_memory_text"] = fetched_memory["message"]
-        print("score", distance_score)
-        print("----------------------------")
+    fetched_memories = memory_database.query(
+        user_input,
+    )
+    memory_context = _build_memory_context(fetched_memories, name1, name2)
 
     # === Call oobabooga's original generate_chat_prompt ===
     augmented_context = context

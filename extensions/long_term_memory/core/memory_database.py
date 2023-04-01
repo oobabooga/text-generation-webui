@@ -2,7 +2,7 @@
 
 import pathlib
 import sqlite3
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 
 import numpy as np
 from sentence_transformers import SentenceTransformer
@@ -27,7 +27,7 @@ from extensions.long_term_memory.core.queries import (
 class LtmDatabase:
     """API over an LTM database."""
 
-    def __init__(self, directory: pathlib.Path):
+    def __init__(self, directory: pathlib.Path, num_memories_to_fetch: int=1):
         """Loads all resources."""
         self.database_path = directory / DATABASE_NAME
         self.embeddings_path = directory / EMBEDDINGS_NAME
@@ -64,7 +64,10 @@ class LtmDatabase:
             SENTENCE_TRANSFORMER_MODEL, device="cpu"
         )
         self.embedding_searcher = NearestNeighbors(
-            n_neighbors=1, algorithm="brute", metric="cosine", n_jobs=-1
+            n_neighbors=num_memories_to_fetch,
+            algorithm="brute",
+            metric="cosine",
+            n_jobs=-1,
         )
 
     def _destroy_and_recreate_database(self, do_sql_drop=False) -> None:
@@ -120,11 +123,11 @@ class LtmDatabase:
             # Save memory to persistent storage, if not a dupe
             self.disk_embeddings.append(new_message_embedding)
 
-    def query(self, query_text: str) -> Tuple[Dict[str, str], float]:
+    def query(self, query_text: str) -> List[Tuple[Dict[str, str], float]]:
         """Queries for the most similar sentence from the LTM database."""
         # If no LTM features are loaded, return nothing.
         if self.message_embeddings.shape[0] == 0:
-            return ({}, 1.0)
+            return []
 
         # Create the query embedding
         query_text_embedding = self.sentence_embedder.encode(query_text)
@@ -132,21 +135,24 @@ class LtmDatabase:
 
         # Find the most relevant memory's index
         self.embedding_searcher.fit(self.message_embeddings)
-        (match_score, embedding_index) = self.embedding_searcher.kneighbors(
+        (match_scores, embedding_indices) = self.embedding_searcher.kneighbors(
             query_text_embedding
         )
 
-        # Retrieve the actual memory given the index
-        with self.sql_conn as cursor:
-            response = cursor.execute(FETCH_DATA_QUERY, (int(embedding_index),))
-            (name, message, timestamp) = response.fetchone()
+        all_query_responses = []
+        for (match_score, embedding_index) in zip(match_scores[0], embedding_indices[0]):
+            with self.sql_conn as cursor:
+                response = cursor.execute(FETCH_DATA_QUERY, (int(embedding_index),))
+                (name, message, timestamp) = response.fetchone()
 
-        query_response = {
-            "name": name,
-            "message": message,
-            "timestamp": timestamp,
-        }
-        return (query_response, match_score)
+            query_response = {
+                "name": name,
+                "message": message,
+                "timestamp": timestamp,
+            }
+            all_query_responses.append((query_response, match_score))
+
+        return all_query_responses
 
     def reload_embeddings_from_disk(self) -> None:
         """Reloads all embeddings from disk into memory."""
