@@ -12,11 +12,14 @@ from telegram.ext import Updater
 
 params = {
     "token": "",
-    'bot_mode': "answer", #TBC, planed "chat" mode
-    'bot_context': "Bot persona: Bot is cyber-assistant who help User.\nWorld scenario: This is conversation between User and Bot.\n<START>", #context for bot, added before <START>
-    'user_prefix': "\nUser: ", #Adding before user message
-    'user_postfix': "", #Adding after user message
-    'bot_prefix': "\nBot: ", #Adding before bot message
+    'bot_mode': "chat", #"chat" or "promt"
+    'bot_context': """Answerer's Persona: Answerer is girl whos primary target is find answers. 
+Answerer like to learn something new nad give correctly answers.
+Scenario: This is an real world.
+<START>
+""", #context for bot, added before <START>
+    'name1': "Answerer", #Adding bot name
+    'name2': "You", #Adding user name
     'bot_welcome': {"en": "Hi! I am you cyber-assistant!",
                     "ru": "Привет! Я ваш кибер-асистент!", },  # Bot welcome message!
 }
@@ -25,15 +28,22 @@ params = {
 class tg_Handler():
     # =============================================================================
     # start bot
-    def __init__(self, bot_mode: str, bot_context: str, user_prefix: str, user_postfix: str,
-                 bot_prefix: str, bot_welcome):
+    def __init__(self, bot_mode: str, bot_context: str, name2: str,
+                 name1: str, bot_welcome):
         self.bot_mode = bot_mode
         self.bot_context = bot_context
-        self.user_prefix = user_prefix
-        self.user_postfix = user_postfix
-        self.bot_prefix = bot_prefix
+        self.name2 = name2
+        self.name1 = name1
         self.bot_welcome = bot_welcome
         self.user_history = {}
+        self.stoping_strings = []
+        self.eos_token = None
+        if self.bot_mode == "chat":
+            self.stoping_strings = [f"\n{self.name2}:", f"\n{self.name1}:"]
+            self.eos_token = '\n'
+        elif self.bot_mode == "promt":
+            self.stoping_strings = []
+            self.eos_token = None
         self.button = InlineKeyboardMarkup([[InlineKeyboardButton(text=("Reset memory bot memory (not chat)"), callback_data='Reset'),
                        InlineKeyboardButton(text=("Continue previous message"), callback_data='Continue')]])
 
@@ -92,16 +102,17 @@ class tg_Handler():
         else:
             history = ''
         if mode == "chat":
-            prompt = self.bot_context + history + self.user_prefix + user_text + self.user_postfix + self.bot_prefix
+            prompt = self.bot_context + history + "\n" + self.name2 + ":" + user_text + "\n" + self.name1 + ":"
         else:
             prompt = self.bot_context + history
         generator = generate_reply(
-            question=prompt, stopping_strings=['\n'], max_new_tokens=256,
+            question=prompt, max_new_tokens=256,
             do_sample=True, temperature=0.6, top_p=0.1, top_k=40, typical_p=1,
             repetition_penalty=1.1, encoder_repetition_penalty=1,
             min_length=0, no_repeat_ngram_size=0,
             num_beams=1, penalty_alpha=0, length_penalty=1.1,
             early_stopping=True, seed=-1,
+            eos_token=self.eos_token, stopping_strings=self.stoping_strings
         )
         answer = ''
         for a in generator:
@@ -114,8 +125,8 @@ class tg_Handler():
 
 
 def run_server():
-    tg_server = tg_Handler(params['bot_mode'], params['bot_context'], params['user_prefix'],
-                           params['user_postfix'], params['bot_prefix'], params['bot_welcome'])
+    tg_server = tg_Handler(params['bot_mode'], params['bot_context'], params['name2'],
+                           params['name1'], params['bot_welcome'])
     tg_server.run_telegramm_bot(params['token'])
 
 
