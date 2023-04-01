@@ -12,28 +12,28 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 
 ## Features
 
-* Switch between different models using a dropdown menu.
-* Notebook mode that resembles OpenAI's playground.
-* Chat mode for conversation and role playing.
-* Generate nice HTML output for GPT-4chan.
-* Generate Markdown output for [GALACTICA](https://github.com/paperswithcode/galai), including LaTeX support.
-* Support for [Pygmalion](https://huggingface.co/models?search=pygmalionai/pygmalion) and custom characters in JSON or TavernAI Character Card formats ([FAQ](https://github.com/oobabooga/text-generation-webui/wiki/Pygmalion-chat-model-FAQ)).
-* Advanced chat features (send images, get audio responses with TTS).
-* Stream the text output in real time very efficiently.
-* Load parameter presets from text files.
-* Load large models in 8-bit mode.
-* Split large models across your GPU(s), CPU, and disk.
-* CPU mode.
-* [FlexGen offload](https://github.com/oobabooga/text-generation-webui/wiki/FlexGen).
-* [DeepSpeed ZeRO-3 offload](https://github.com/oobabooga/text-generation-webui/wiki/DeepSpeed).
-* Get responses via API, [with](https://github.com/oobabooga/text-generation-webui/blob/main/api-example-streaming.py) or [without](https://github.com/oobabooga/text-generation-webui/blob/main/api-example.py) streaming.
-* [LLaMA model, including 4-bit GPTQ support](https://github.com/oobabooga/text-generation-webui/wiki/LLaMA-model).
-* [llama.cpp support](https://github.com/oobabooga/text-generation-webui/wiki/llama.cpp-models). **\*NEW!\***
-* [RWKV model](https://github.com/oobabooga/text-generation-webui/wiki/RWKV-model).
-* [Supports LoRAs](https://github.com/oobabooga/text-generation-webui/wiki/Using-LoRAs).
-* Supports softprompts.
-* [Supports extensions](https://github.com/oobabooga/text-generation-webui/wiki/Extensions).
-* [Works on Google Colab](https://github.com/oobabooga/text-generation-webui/wiki/Running-on-Colab).
+* Dropdown menu for switching between models
+* Notebook mode that resembles OpenAI's playground
+* Chat mode for conversation and role playing
+* Nice HTML output for GPT-4chan
+* Markdown output for [GALACTICA](https://github.com/paperswithcode/galai), including LaTeX rendering
+* Custom chat characters in JSON format ([FAQ](https://github.com/oobabooga/text-generation-webui/wiki/Pygmalion-chat-model-FAQ))
+* Advanced chat features (send images, get audio responses with TTS)
+* Very efficient text streaming
+* Parameter presets
+* 8-bit mode
+* Layers splitting across GPU(s), CPU, and disk
+* CPU mode
+* [FlexGen](https://github.com/oobabooga/text-generation-webui/wiki/FlexGen)
+* [DeepSpeed ZeRO-3](https://github.com/oobabooga/text-generation-webui/wiki/DeepSpeed)
+* API [with](https://github.com/oobabooga/text-generation-webui/blob/main/api-example-streaming.py) streaming and [without](https://github.com/oobabooga/text-generation-webui/blob/main/api-example.py) streaming
+* [LLaMA model, including 4-bit GPTQ](https://github.com/oobabooga/text-generation-webui/wiki/LLaMA-model)
+* [llama.cpp](https://github.com/oobabooga/text-generation-webui/wiki/llama.cpp-models) **\*NEW!\***
+* [RWKV model](https://github.com/oobabooga/text-generation-webui/wiki/RWKV-model)
+* [LoRa (loading and training)](https://github.com/oobabooga/text-generation-webui/wiki/Using-LoRAs)
+* Softprompts
+* [Extensions](https://github.com/oobabooga/text-generation-webui/wiki/Extensions)
+* [Google Colab](https://github.com/oobabooga/text-generation-webui/wiki/Running-on-Colab)
 
 ## Installation
 
@@ -64,7 +64,7 @@ On Windows, I additionally recommend carrying out the installation on WSL instea
 
 #### 0. Install Conda
 
-Conda can be downloaded here: https://docs.conda.io/en/latest/miniconda.html
+https://docs.conda.io/en/latest/miniconda.html
 
 On Linux or WSL, it can be automatically installed with these two commands:
 
@@ -134,13 +134,13 @@ You can automatically download a model from HF using the script `download-model.
 
     python download-model.py organization/model
 
-For instance:
+For example:
 
     python download-model.py facebook/opt-1.3b
 
 If you want to download a model manually, note that all you need are the json, txt, and pytorch\*.bin (or model*.safetensors) files. The remaining files are not necessary.
 
-### GPT-4chan
+#### GPT-4chan
 
 [GPT-4chan](https://huggingface.co/ykilcher/gpt-4chan) has been shut down from Hugging Face, so you need to download it elsewhere. You have two options:
 
@@ -168,8 +168,6 @@ python download-model.py EleutherAI/gpt-j-6B --text-only
 Then browse to 
 
 `http://localhost:7860/?__theme=dark`
-
-
 
 Optionally, you can use the following command-line flags:
 
@@ -260,6 +258,8 @@ Out of memory errors? [Check the low VRAM guide](https://github.com/oobabooga/te
 Inference settings presets can be created under `presets/` as text files. These files are detected automatically at startup.
 
 By default, 10 presets by NovelAI and KoboldAI are included. These were selected out of a sample of 43 presets after applying a K-Means clustering algorithm and selecting the elements closest to the average of each cluster.
+
+[Visualization](https://user-images.githubusercontent.com/112222186/228956352-1addbdb9-2456-465a-b51d-089f462cd385.png)
 
 ## System requirements
 
