@@ -27,7 +27,7 @@ def prepare_message() -> list[str]:
 async def action(app, msg: Message) -> None:
   new_msg = await msg.reply(app.t('message.is_typing'))
 
-  answer = app.t('model.index') + '\n'.join(prepare_message())
+  answer = app.t('character.index') + '\n'.join(prepare_message())
 
   await new_msg.edit(answer)
   msg.stop_propagation()
