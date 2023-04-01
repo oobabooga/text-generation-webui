@@ -1,3 +1,5 @@
+JSON characters are currently based on the format used by the Pygmalion model.
+
 #### How to import my character?
 
 Put the JSON file in the `characters` folder, or upload it directly from the web UI by clicking on the "Upload character" tab at the bottom.
@@ -20,17 +22,9 @@ Those are simply added to the the Context field when you load a character.
 
 #### How can I create a character?
 
-* [Pygmalion JSON character creator](https://oobabooga.github.io/character-creator.html)
+* [JSON character creator](https://oobabooga.github.io/character-creator.html)
 * [AI Character Editor](https://zoltanai.github.io/character-editor/)
 
 #### Is the chat history truncated in the prompt?
 
 Once your prompt reaches the 2048 token limit, old messages will be removed one at a time. The context string will always stay at the top of the prompt and will never be truncated.
-
-#### I am running pygmalion-6b locally and my responses are really short. Why is that?
-
-Try using the first commit of the model, which can be downloaded like this:
-
-`python download-model.py PygmalionAI/pygmalion-6b --branch b8344bb4eb76a437797ad3b19420a13922aaabe1`
-
-See these discussions for more information: [GitHub](https://github.com/oobabooga/text-generation-webui/issues/14), [HuggingFace](https://huggingface.co/PygmalionAI/pygmalion-6b/discussions/8#63d09347623a3d1d1174efa9)
