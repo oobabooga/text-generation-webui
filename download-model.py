@@ -92,8 +92,8 @@ def select_model_from_default_options():
         print("""\nThen type the name of your desired Hugging Face model in the format organization/name.
 
 Examples:
-PygmalionAI/pygmalion-6b
 facebook/opt-1.3b
+EleutherAI/pythia-1.4b-deduped
 """)
 
         print("Input> ", end='')
