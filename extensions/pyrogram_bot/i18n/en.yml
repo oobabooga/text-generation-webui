@@ -23,7 +23,4 @@ lang:
   ru: "Russian"
 
 error:
-  dependencies_not_installed: "Mandatory dependencies not installed. Come to /path/ and run `pip install -r requirements.txt`"
-  credential_file:
-    not_found: "Credential file not found. Come to /path/, run `cp credentials.example credentials` and fill with needed data."
-    is_invalid: "Credentials are invalid. Please, check it or acquire them:\n    Telegram API key and API hash from this link: https://my.telegram.org/apps\n    Bot token from telegram bot BotFather\n"
+  credentials_not_found: "\nCredentials are invalid or not found. Please, check it in `.env` or acquire new here:\n    Telegram API key and API hash from this link: https://my.telegram.org/apps\n    Bot token from telegram bot BotFather\n"
