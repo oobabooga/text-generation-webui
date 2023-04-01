@@ -1,31 +1,24 @@
-import asyncio, atexit, threading, uvloop
+import asyncio
+from threading import Thread, Event
+
+import dotenv, uvloop
+dotenv.load_dotenv()
+
+from modules import shared
+shared.character = "Example"
 
 from .client import Client
 
-stop_event = threading.Event()
-running = threading.Event()
+running = Event()
 
-async def pyrogram_main() -> None:
+def establish_loop() -> None:
   running.set()
-  app = Client()
-  await app.run(stop_event)
 
-def start_bot() -> None:
   uvloop.install()
   loop = asyncio.new_event_loop()
   asyncio.set_event_loop(loop)
-  loop.run_until_complete(pyrogram_main())
+  loop.run_until_complete(Client().run())
 
-def exit_handle():
-  print('\nGracefully stopping pyrogram bot.\n', flush=True)
-  stop_event.set()
-
-def ui() -> None:
+def setup() -> None:
   if not running.is_set():
-    threading\
-      .Thread(target=start_bot, daemon=True, name="pyrogram_thread")\
-      .start()
-    atexit.register(exit_handle)
-
-if __name__=="__main__":
-  start_bot()
+    Thread(target=establish_loop, daemon=True).start()
