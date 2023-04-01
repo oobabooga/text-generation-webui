@@ -1,21 +1,18 @@
+from pyrogram.types import Message
+
 from modules import shared
 
-from ..client import Client as app
-
-@app.on_message(app.filters.command(['gradio']))
-async def gradio(_: app, msg: app.types.Message) -> None:
+async def gradio(_, msg: Message) -> None:
   print(shared.gradio, flush=True)
   await msg.reply(shared.gradio)
   msg.stop_propagation()
 
-@app.on_message(app.filters.command(['settings']))
-async def settings(_: app, msg: app.types.Message) -> None:
+async def settings(_, msg: Message) -> None:
   print(shared.settings, flush=True)
   await msg.reply(shared.settings)
   msg.stop_propagation()
 
-@app.on_message(app.filters.command(['info']))
-async def settings(_: app, msg: app.types.Message) -> None:
+async def info(app, msg: Message) -> None:
   t = app.t
   answer = ''
   answer_dict = {
