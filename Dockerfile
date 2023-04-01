@@ -10,8 +10,8 @@ RUN git clone https://github.com/qwopqwop200/GPTQ-for-LLaMa /build
 
 WORKDIR /build
 
-ARG GPTQ_SHA
-RUN git checkout ${GPTQ_SHA}
+ARG GPTQ_VERSION
+RUN git checkout ${GPTQ_VERSION}
 
 RUN --mount=type=cache,target=/root/.cache/pip pip3 install -r requirements.txt
 
@@ -35,8 +35,8 @@ COPY . /app/
 
 WORKDIR /app
 
-ARG WEBUI_SHA=HEAD
-RUN git reset --hard ${WEBUI_SHA}
+ARG WEBUI_VERSION
+RUN git reset --hard ${WEBUI_VERSION}
 
 RUN --mount=type=cache,target=/root/.cache/pip pip3 install -r requirements.txt
 
