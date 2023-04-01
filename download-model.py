@@ -197,20 +197,7 @@ if __name__ == '__main__':
     output_folder = f"{'_'.join(model.split('/')[-2:])}"
     if branch != 'main':
         output_folder += f'_{branch}'
-
-    # Creating the folder and writing the metadata
     output_folder = Path(base_folder) / output_folder
-    if not output_folder.exists():
-        output_folder.mkdir()
-    with open(output_folder / 'huggingface-metadata.txt', 'w') as f:
-        f.write(f'url: https://huggingface.co/{model}\n')
-        f.write(f'branch: {branch}\n')
-        f.write(f'download date: {str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))}\n')
-        sha256_str = ''
-        for i in range(len(sha256)):
-            sha256_str += f'    {sha256[i][1]} {sha256[i][0]}\n'
-        if sha256_str != '':
-            f.write(f'sha256sum:\n{sha256_str}')
 
     if args.check:
         # Validate the checksums
@@ -238,6 +225,20 @@ if __name__ == '__main__':
             print('[-] Invalid checksums. Rerun download-model.py with the --clean flag.')
 
     else:
+
+        # Creating the folder and writing the metadata
+        if not output_folder.exists():
+            output_folder.mkdir()
+        with open(output_folder / 'huggingface-metadata.txt', 'w') as f:
+            f.write(f'url: https://huggingface.co/{model}\n')
+            f.write(f'branch: {branch}\n')
+            f.write(f'download date: {str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))}\n')
+            sha256_str = ''
+            for i in range(len(sha256)):
+                sha256_str += f'    {sha256[i][1]} {sha256[i][0]}\n'
+            if sha256_str != '':
+                f.write(f'sha256sum:\n{sha256_str}')
+
         # Downloading the files
         print(f"Downloading the model to {output_folder}")
         download_files(links, output_folder, args.threads)
