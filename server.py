@@ -166,7 +166,7 @@ def create_settings_menus(default_preset):
         with gr.Column():
             create_model_and_preset_menus()
         with gr.Column():
-            shared.gradio['seed'] = gr.Number(value=-1, label='Seed (-1 for random)')
+            shared.gradio['seed'] = gr.Number(value=shared.settings['seed'], label='Seed (-1 for random)')
 
     with gr.Row():
         with gr.Column():
@@ -217,10 +217,11 @@ def create_settings_menus(default_preset):
     shared.gradio['softprompts_menu'].change(load_soft_prompt, [shared.gradio['softprompts_menu']], [shared.gradio['softprompts_menu']], show_progress=True)
     shared.gradio['upload_softprompt'].upload(upload_soft_prompt, [shared.gradio['upload_softprompt']], [shared.gradio['softprompts_menu']])
 
-def set_interface_arguments(interface_mode, extensions, cmd_active):
+def set_interface_arguments(interface_mode, extensions, bool_active):
     modes = ["default", "notebook", "chat", "cai_chat"]
     cmd_list = vars(shared.args)
-    cmd_list = [k for k in cmd_list if type(cmd_list[k]) is bool and k not in modes]
+    bool_list = [k for k in cmd_list if type(cmd_list[k]) is bool and k not in modes]
+    #int_list = [k for k in cmd_list if type(k) is int]
 
     shared.args.extensions = extensions
     for k in modes[1:]:
@@ -228,9 +229,9 @@ def set_interface_arguments(interface_mode, extensions, cmd_active):
     if interface_mode != "default":
         exec(f"shared.args.{interface_mode} = True")
 
-    for k in cmd_list:
+    for k in bool_list:
         exec(f"shared.args.{k} = False")
-    for k in cmd_active:
+    for k in bool_active:
         exec(f"shared.args.{k} = True")
 
     shared.need_restart = True
@@ -408,7 +409,7 @@ def create_interface():
                 with gr.Row():
                     with gr.Column(scale=4):
                         with gr.Tab('Raw'):
-                            shared.gradio['textbox'] = gr.Textbox(value=default_text, elem_id="textbox", lines=25)
+                            shared.gradio['textbox'] = gr.Textbox(value=default_text, elem_id="textbox", lines=27)
                         with gr.Tab('Markdown'):
                             shared.gradio['markdown'] = gr.Markdown()
                         with gr.Tab('HTML'):
@@ -442,7 +443,7 @@ def create_interface():
             with gr.Tab("Text generation", elem_id="main"):
                 with gr.Row():
                     with gr.Column():
-                        shared.gradio['textbox'] = gr.Textbox(value=default_text, lines=15, label='Input')
+                        shared.gradio['textbox'] = gr.Textbox(value=default_text, lines=21, label='Input')
                         shared.gradio['max_new_tokens'] = gr.Slider(minimum=shared.settings['max_new_tokens_min'], maximum=shared.settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=shared.settings['max_new_tokens'])
                         shared.gradio['Generate'] = gr.Button('Generate')
                         with gr.Row():
@@ -455,7 +456,7 @@ def create_interface():
 
                     with gr.Column():
                         with gr.Tab('Raw'):
-                            shared.gradio['output_textbox'] = gr.Textbox(lines=25, label='Output')
+                            shared.gradio['output_textbox'] = gr.Textbox(lines=27, label='Output')
                         with gr.Tab('Markdown'):
                             shared.gradio['markdown'] = gr.Markdown()
                         with gr.Tab('HTML'):
@@ -483,16 +484,17 @@ def create_interface():
                     current_mode = mode
                     break
             cmd_list = vars(shared.args)
-            cmd_list = [k for k in cmd_list if type(cmd_list[k]) is bool and k not in modes]
-            active_cmd_list = [k for k in cmd_list if vars(shared.args)[k]]
+            bool_list = [k for k in cmd_list if type(cmd_list[k]) is bool and k not in modes]
+            bool_active = [k for k in bool_list if vars(shared.args)[k]]
+            #int_list = [k for k in cmd_list if type(k) is int]
 
             gr.Markdown("*Experimental*")
             shared.gradio['interface_modes_menu'] = gr.Dropdown(choices=modes, value=current_mode, label="Mode")
             shared.gradio['extensions_menu'] = gr.CheckboxGroup(choices=get_available_extensions(), value=shared.args.extensions, label="Available extensions")
-            shared.gradio['cmd_arguments_menu'] = gr.CheckboxGroup(choices=cmd_list, value=active_cmd_list, label="Boolean command-line flags")
+            shared.gradio['bool_menu'] = gr.CheckboxGroup(choices=bool_list, value=bool_active, label="Boolean command-line flags")
             shared.gradio['reset_interface'] = gr.Button("Apply and restart the interface", type="primary")
 
-            shared.gradio['reset_interface'].click(set_interface_arguments, [shared.gradio[k] for k in ['interface_modes_menu', 'extensions_menu', 'cmd_arguments_menu']], None)
+            shared.gradio['reset_interface'].click(set_interface_arguments, [shared.gradio[k] for k in ['interface_modes_menu', 'extensions_menu', 'bool_menu']], None)
             shared.gradio['reset_interface'].click(lambda : None, None, None, _js='() => {document.body.innerHTML=\'<h1 style="font-family:monospace;margin-top:20%;color:lightgray;text-align:center;">Reloading...</h1>\'; setTimeout(function(){location.reload()},2500); return []}')
 
         if shared.args.extensions is not None:
