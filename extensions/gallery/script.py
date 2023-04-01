@@ -2,19 +2,19 @@ from pathlib import Path
 
 import gradio as gr
 
-from modules.chat import load_character
 from modules.html_generator import get_image_cache
-from modules.shared import gradio, settings
+from modules.shared import gradio
 
 
 def generate_css():
     css = """
-      .character-gallery > .gallery {
+      .character-gallery .gallery {
         margin: 1rem 0;
         display: grid !important;
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
         grid-column-gap: 0.4rem;
         grid-row-gap: 1.2rem;
+        padding: 0;
       }
 
       .character-gallery > .label {
@@ -50,12 +50,87 @@ def generate_css():
       .character-name {
         margin-top: 0.3rem;
         display: block;
-        font-size: 1.2rem;
+        font-size: 1rem;
+        line-height: 1.2rem;
         font-weight: 600;
         overflow-wrap: anywhere;
+
+        transition-duration: 300ms;
+        transition-property: top font-size;
+        transition-timing-function: ease-out;
+        position: relative;
+        top: 0rem;
+        text-align: center;
+        width: 100%;
+      }
+
+      .character-container > img {
+        transition-duration: 300ms;
+        transition-property: transform, box-shadow;
+        transition-timing-function: ease-out;
+        transform: rotate3d(1, 1, 1, 0deg) scale3d(1, 1, 1);
+      }
+
+      .character-container > div {
+        position: relative;
+        width: 100%;
+
+      }
+
+      .character-container > img:hover {
+        transition-duration: 150ms;
+        box-shadow: 0 5px 20px 5px #00000044;
+        transform: rotate3d(1, 1, 1, 2deg);
+      }
+
+      .character-container > img.character-selected {
+        transition-duration: 150ms;
+        box-shadow: 0 5px 20px 5px #00000088;
+        transform: scale3d(1.04, 1.04, 1.04)
+      }
+
+      .character-container > img.character-selected + div .character-name {
+        transition-duration: 150ms;
+        font-size: 1.05rem;
+        top: 0.3rem;
       }
     """
     return css
+
+
+def generate_js():
+    js = """
+    function loadjs() {
+      document.querySelector("script#character-gallery-script")?.remove();
+
+      var js = document.createElement("script");
+      js.id = "character-gallery-script"
+      js.textContent = `
+        function checkActive(e) {
+          let element = document.querySelector(".character-container > img.character-selected");
+          element?.classList.remove("character-selected");
+          e.currentTarget.querySelector("img").classList.add("character-selected");
+        }
+      `;
+      document.head.appendChild(js);
+
+      function update() {
+        let element = document.querySelector(".character-container > img.character-selected");
+        element?.classList.remove("character-selected");
+        let currentCharacter = document.querySelector("div#character-menu span.single-select")?.innerText;
+        document.querySelector(".character-container[item-data=\\""+currentCharacter+"\\"] img")?.classList.add("character-selected")
+      }
+      
+      document.querySelectorAll("div.character-gallery div.paginate > button").forEach(
+        e => e.addEventListener("click", update)
+      )
+
+      update();
+      //alert("JS Inserted");
+    }
+    loadjs();
+    """
+    return js
 
 
 def generate_html():
@@ -64,7 +139,7 @@ def generate_html():
     for file in sorted(Path("characters").glob("*")):
         if file.name.endswith(".json"):
             character = file.name.replace(".json", "")
-            container_html = f'<div class="character-container">'
+            container_html = f'<div class="character-container" item-data="{character}" onclick="checkActive(event)">'
             image_html = "<div class='placeholder'></div>"
 
             for i in [
@@ -81,7 +156,7 @@ def generate_html():
                     except:
                         continue
 
-            container_html += f'{image_html} <span class="character-name">{character}</span>'
+            container_html += f'{image_html} <div><span class="character-name">{character}</span></div>'
             container_html += "</div>"
             cards.append([container_html, character])
 
@@ -95,7 +170,7 @@ def select_character(evt: gr.SelectData):
 def ui():
     with gr.Accordion("Character gallery", open=False):
         update = gr.Button("Refresh")
-        gr.HTML(value="<style>"+generate_css()+"</style>")
+        gr.HTML(value="<style>"+generate_css()+"</style>"+f"<img src onerror='{generate_js()}'>")
         gallery = gr.Dataset(components=[gr.HTML(visible=False)],
             label="",
             samples=generate_html(),
