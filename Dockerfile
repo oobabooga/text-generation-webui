@@ -36,7 +36,7 @@ COPY . /app/
 WORKDIR /app
 
 ARG WEBUI_VERSION
-RUN git reset --hard ${WEBUI_VERSION}
+RUN test -n "${WEBUI_VERSION}" && git reset --hard ${WEBUI_VERSION}
 
 RUN --mount=type=cache,target=/root/.cache/pip pip3 install -r requirements.txt
 
