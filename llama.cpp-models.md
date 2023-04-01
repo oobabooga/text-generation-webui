@@ -26,3 +26,9 @@ python server.py --model llamacpp-7b
 This was the performance of llama-7b int4 on my i5-12400F:
 
 > Output generated in 44.10 seconds (4.53 tokens/s, 200 tokens)
+
+## Limitations
+
+The parameter sliders in the interface (temperature, top_p, top_k, etc) are completely ignored. So only the default parameters in llama.cpp can be used.
+
+This should be improved soon when llamacpp-python receives an update.
