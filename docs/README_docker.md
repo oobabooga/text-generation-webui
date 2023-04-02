@@ -66,7 +66,9 @@ reboot
 ```
 ### docker & container toolkit
 ```bash
-yay -S docker docker-compose buildkit nvidia-container-runtime
+yay -S docker docker-compose buildkit gcc nvidia-docker
+sudo usermod -aG docker $USER
+newgrp docker
 sudo systemctl restart docker # required by nvidia-container-runtime
 ```
 
