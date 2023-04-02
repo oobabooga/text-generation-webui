@@ -2,11 +2,11 @@ import base64
 import copy
 import io
 import json
-import yaml
 import re
 from datetime import datetime
 from pathlib import Path
 
+import yaml
 from PIL import Image
 
 import modules.extensions as extensions_module
