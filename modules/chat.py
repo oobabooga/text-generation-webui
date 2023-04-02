@@ -323,6 +323,7 @@ def load_history(file, name1, name2):
         shared.history['visible'] = copy.deepcopy(shared.history['internal'])
 
 def load_default_history(name1, name2):
+    shared.character = 'None'
     if Path('logs/persistent.json').exists():
         load_history(open(Path('logs/persistent.json'), 'rb').read(), name1, name2)
     else:
@@ -367,7 +368,7 @@ def load_character(_character, name1, name2):
             shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', data[greeting_field]]]
             shared.history['visible'] += [['', apply_extensions(data[greeting_field], "output")]]
     else:
-        shared.character = None
+        shared.character = 'None'
         context = shared.settings['context']
         name2 = shared.settings['name2']
 
