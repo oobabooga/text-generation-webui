@@ -15,7 +15,7 @@ from telegram.ext import Updater
 from telegram import Message
 
 params = {
-    "token": "TELEGRAM_TOKEN", # Telegram bot token! Ask https://t.me/BotFather to get!
+    "token": "<TELEGRAM_TOKEN>", # Telegram bot token! Ask https://t.me/BotFather to get!
     'character_to_load': "Example", #character file from text-generation-webui/characters without ".json"
     'bot_mode': "chat", #"chat" or "notebook"
     'bot_welcome': {"en": "Hi! I am you cyber-assistant!",
@@ -63,7 +63,6 @@ class TelegramBotWrapper():
         self.button = InlineKeyboardMarkup(
             [[InlineKeyboardButton(text=("▶Continue"), callback_data='Continue'),
               InlineKeyboardButton(text=("🔄Regenerate"), callback_data='Regen'),
-              InlineKeyboardButton(text=("✂Cut off"), callback_data='CutDel'),
               InlineKeyboardButton(text=("🚫Reset memory"), callback_data='Reset'),
               InlineKeyboardButton(text=("❔Help"), callback_data='Help'),
               ]])
@@ -150,20 +149,20 @@ class TelegramBotWrapper():
         elif option == "Regen":
             if chatId in self.user_history.keys():
                 context.bot.editMessageText(msg_text + '\n' + self.name2 + " retyping...", chatId, msg_id, reply_markup=self.button)
-                answer = self.generate_answer(user_text='continue', chatId=chatId)
-                self.user_history[chatId] = self.user_history[chatId].replace(self.name2 + ":" + msg_text, "")
+                self.user_history[chatId] = self.user_history[chatId].replace(msg_text, "")
+                answer = self.generate_answer(user_text='', chatId=chatId)
                 context.bot.editMessageText(answer, chatId, msg_id, reply_markup=self.button)
             else:
                 context.bot.editMessageText(msg_text + "\n<HISTORY LOST>" , chatId, msg_id, reply_markup=self.button)
         elif option == "Cutoff":
             if chatId in self.user_history.keys():
-                self.user_history[chatId] = self.user_history[chatId].replace(self.name2 + ":" + msg_text, "")
+                self.user_history[chatId] = self.user_history[chatId].replace(msg_text, "")
                 context.bot.editMessageText("✂" + msg_text + "✂", chatId, msg_id, reply_markup=self.button)
             else:
-                context.bot.editMessageText(msg_text + "\n<HISTORY LOST>" , chatId, msg_id, reply_markup=self.button)
+                context.bot.editMessageText(msg_text + "\n<HISTORY LOST>", chatId, msg_id, reply_markup=self.button)
         elif option == "CutDel":
             if chatId in self.user_history.keys():
-                self.user_history[chatId] = self.user_history[chatId].replace(self.name2 + ":" + msg_text, "")
+                self.user_history[chatId] = self.user_history[chatId].replace(msg_text, "")
             context.bot.delete_message(chatId, msg_id)
         elif option == "Continue":
             message = context.bot.send_message(chat_id=chatId, text=self.name2 + " typing...")
@@ -182,7 +181,7 @@ class TelegramBotWrapper():
             self.user_history[chatId] = ''
         if user_text != "":
             if self.bot_mode == "notebook":
-                self.user_history[chatId] = self.user_history[chatId] + "\n" + user_text
+                self.user_history[chatId] = self.user_history[chatId] + user_text
             else:
                 self.user_history[chatId] = self.user_history[chatId] + "\n" + self.name1 + ":" + user_text + "\n" + self.name2 + ":"
         prompt = self.bot_context + "\n" + self.user_history[chatId]
@@ -199,7 +198,8 @@ class TelegramBotWrapper():
         for a in generator:
             answer = a
         self.user_history[chatId] = self.user_history[chatId] + answer
-        if answer in ["", " ", "\n", "\n ", " \n"]:
+        if len(answer) < 3:
+            print(answer)
             answer = "Empty answer."
         return answer
 
