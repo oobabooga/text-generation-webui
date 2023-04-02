@@ -2,6 +2,7 @@ from threading import Thread
 from modules.text_generation import generate_reply
 from pathlib import Path
 import json
+from os import listdir
 from telegram import Update
 from telegram import InlineKeyboardButton
 from telegram import InlineKeyboardMarkup
@@ -11,10 +12,11 @@ from telegram.ext import CommandHandler
 from telegram.ext import MessageHandler
 from telegram.ext import CallbackQueryHandler
 from telegram.ext import Updater
+from telegram import Message
 
 params = {
-    "token": "PLACE_TELEGRAM_TOKEN_HERE", # Telegram bot token! Ask https://t.me/BotFather to get!
-    'character_to_load': "Example", #"chat" or "notebook"
+    "token": "TELEGRAM_TOKEN", # Telegram bot token! Ask https://t.me/BotFather to get!
+    'character_to_load': "Example", #character file from text-generation-webui/characters without ".json"
     'bot_mode': "chat", #"chat" or "notebook"
     'bot_welcome': {"en": "Hi! I am you cyber-assistant!",
                     "ru": "Привет! Я ваш кибер-асистент!", },  # Bot welcome message!
@@ -28,6 +30,11 @@ char = {
 
 
 class TelegramBotWrapper():
+    user_history = {}
+    user_last_message_id = {}
+    help = """This is telegram_bot extension for https://github.com/oobabooga/text-generation-webui
+/reset for reset bot memory about conversation"""
+
     # init
     def __init__(self, bot_mode="chat", bot_context="", name2="Bot",
                  name1="You", **kwargs):
@@ -51,14 +58,16 @@ class TelegramBotWrapper():
             self.bot_welcome = kwargs["bot_welcome"]
         else:
             self.bot_welcome = {"en": "Hi!", "ru": "Привет!", }
-        self.user_history = {}
+        #init user variables
         # Set buttoms default list
         self.button = InlineKeyboardMarkup(
             [[InlineKeyboardButton(text=("▶Continue"), callback_data='Continue'),
-              InlineKeyboardButton(text=("✂Cut off mem"), callback_data='Cutoff'),
-              InlineKeyboardButton(text=("❌Cut+Delete"), callback_data='CutDel'),
+              InlineKeyboardButton(text=("🔄Regenerate"), callback_data='Regen'),
+              InlineKeyboardButton(text=("✂Cut off"), callback_data='CutDel'),
               InlineKeyboardButton(text=("🚫Reset memory"), callback_data='Reset'),
+              InlineKeyboardButton(text=("❔Help"), callback_data='Help'),
               ]])
+        self.empty_button = InlineKeyboardMarkup([[]])
         # Set load char char_file exist, overwrite raw style
         if "char_file" in kwargs:
             self.load_char_from_file(kwargs["char_file"])
@@ -68,13 +77,15 @@ class TelegramBotWrapper():
     def run_telegramm_bot(self, bot_token: str):
         self.updater = Updater(token=bot_token, use_context=True)
         self.updater.dispatcher.add_handler(CommandHandler('start', self.send_welcome_message))
+        self.updater.dispatcher.add_handler(CommandHandler('reset', self.reset_history_command))
+        self.updater.dispatcher.add_handler(CommandHandler('load_char', self.load_char_command))
         self.updater.dispatcher.add_handler(MessageHandler(Filters.text, self.cb_get_message))
         self.updater.dispatcher.add_handler(CallbackQueryHandler(self.cb_opt_button))
         self.updater.start_polling()
         print("Telegramm bot started!", self.updater)
 
     # =============================================================================
-    # Text message handler
+    # Command handler
     def send_welcome_message(self, upd: Update, context: CallbackContext):
         if upd.message.from_user.language_code in self.bot_welcome.keys():
             message_text = self.bot_welcome[upd.message.from_user.language_code]
@@ -82,6 +93,21 @@ class TelegramBotWrapper():
             message_text = self.bot_welcome['en']
         context.bot.send_message(chat_id=upd.effective_chat.id, text=message_text)
 
+    def load_char_command(self, upd: Update, context: CallbackContext):
+        chatId = upd.message.chat.id
+        print(chatId)
+
+    def reset_history_command(self, upd: Update, context: CallbackContext):
+        chatId = upd.message.chat.id
+        if chatId in self.user_history.keys():
+            self.user_history[chatId] = ''
+        if chatId in self.user_history.keys():
+            self.user_history[chatId] = ''
+        message = context.bot.send_message(chat_id=chatId, text="<CONVERSATION CONTEXT DELETE, BOT LOST HIS MEMORY>\n/start")
+        self.user_last_message_update(context, chatId, message.message_id)
+
+    # =============================================================================
+    # Text message handler
     def cb_get_message(self, upd: Update, context: CallbackContext):
         Thread(target=self.tr_get_message, args=(upd, context)).start()
 
@@ -91,7 +117,18 @@ class TelegramBotWrapper():
         message = context.bot.send_message(chat_id=chatId, text=self.name2 + " typing...")
         answer = self.generate_answer(user_text=user_text, chatId=chatId)
         context.bot.editMessageText(chat_id=chatId, message_id=message.message_id, text=answer, reply_markup=self.button)
-        #context.bot.send_message(chat_id=chatId, text=answer, reply_markup=self.button)
+        self.user_last_message_update(context, chatId, message.message_id)
+
+    def user_last_message_update(self, context: CallbackContext, chatId: int, message_id: int):
+        if chatId in self.user_last_message_id.keys():
+            if message_id != self.user_last_message_id[chatId]:
+                try:
+                    context.bot.editMessageReplyMarkup(chat_id=chatId, message_id=self.user_last_message_id[chatId],
+                                                       reply_markup=self.empty_button)
+                except Exception as e:
+                    print(e)# bad WA, but possible
+        if message_id != -1:
+            self.user_last_message_id[chatId] = message_id
 
     # =============================================================================
     # button handler
@@ -109,10 +146,21 @@ class TelegramBotWrapper():
             if chatId in self.user_history.keys():
                 self.user_history[chatId] = ''
             context.bot.send_message(chat_id=chatId, text="<CONVERSATION CONTEXT DELETE, BOT LOST HIS MEMORY>\n/start")
+            self.user_last_message_update(context, chatId, -1)
+        elif option == "Regen":
+            if chatId in self.user_history.keys():
+                context.bot.editMessageText(msg_text + '\n' + self.name2 + " retyping...", chatId, msg_id, reply_markup=self.button)
+                answer = self.generate_answer(user_text='continue', chatId=chatId)
+                self.user_history[chatId] = self.user_history[chatId].replace(self.name2 + ":" + msg_text, "")
+                context.bot.editMessageText(answer, chatId, msg_id, reply_markup=self.button)
+            else:
+                context.bot.editMessageText(msg_text + "\n<HISTORY LOST>" , chatId, msg_id, reply_markup=self.button)
         elif option == "Cutoff":
             if chatId in self.user_history.keys():
                 self.user_history[chatId] = self.user_history[chatId].replace(self.name2 + ":" + msg_text, "")
-            context.bot.editMessageText("✂" + msg_text + "✂", chatId, msg_id, reply_markup=self.button)
+                context.bot.editMessageText("✂" + msg_text + "✂", chatId, msg_id, reply_markup=self.button)
+            else:
+                context.bot.editMessageText(msg_text + "\n<HISTORY LOST>" , chatId, msg_id, reply_markup=self.button)
         elif option == "CutDel":
             if chatId in self.user_history.keys():
                 self.user_history[chatId] = self.user_history[chatId].replace(self.name2 + ":" + msg_text, "")
@@ -122,6 +170,10 @@ class TelegramBotWrapper():
             answer = self.generate_answer(user_text='continue', chatId=chatId)
             context.bot.editMessageText(chat_id=chatId, message_id=message.message_id, text=answer,
                                         reply_markup=self.button)
+            self.user_last_message_update(context, chatId, message.message_id)
+        elif option == "Help":
+            context.bot.send_message(chat_id=chatId, text=self.help)
+
 
     # =============================================================================
     # answer generator
