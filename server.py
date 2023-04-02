@@ -292,13 +292,13 @@ def create_interface():
 
     with gr.Blocks(css=ui.css if not shared.is_chat() else ui.css+ui.chat_css, analytics_enabled=False, title=title) as shared.gradio['interface']:
         if shared.is_chat():
+            shared.gradio['Chat input'] = gr.State()
             with gr.Tab("Text generation", elem_id="main"):
                 if shared.args.cai_chat:
                     shared.gradio['display'] = gr.HTML(value=generate_chat_html(shared.history['visible'], shared.settings['name1'], shared.settings['name2'], shared.character))
                 else:
                     shared.gradio['display'] = gr.Chatbot(value=shared.history['visible'], elem_id="gradio-chatbot")
                 shared.gradio['textbox'] = gr.Textbox(label='Input')
-                shared.gradio['Chat input'] = shared.gradio['textbox']
                 with gr.Row():
                     shared.gradio['Generate'] = gr.Button('Generate')
                     shared.gradio['Stop'] = gr.Button('Stop', elem_id="stop")
@@ -362,13 +362,12 @@ def create_interface():
             function_call = 'chat.cai_chatbot_wrapper' if shared.args.cai_chat else 'chat.chatbot_wrapper'
             shared.input_params = [shared.gradio[k] for k in ['Chat input', 'max_new_tokens', 'do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping', 'seed', 'name1', 'name2', 'context', 'check', 'chat_prompt_size_slider', 'chat_generation_attempts']]
 
-            def set_chat_input():
-                shared.gradio['Chat input'] = shared.gradio['textbox']
-                return ""
-            
-            gen_events.append(shared.gradio['Generate'].click(set_chat_input, None, shared.gradio['textbox'], show_progress=False))
+            def set_chat_input(textbox):
+                return textbox, ""
+
+            gen_events.append(shared.gradio['Generate'].click(set_chat_input, shared.gradio['textbox'], [shared.gradio['Chat input'], shared.gradio['textbox']], show_progress=False))
             gen_events.append(shared.gradio['Generate'].click(eval(function_call), shared.input_params, shared.gradio['display'], show_progress=shared.args.no_stream))
-            gen_events.append(shared.gradio['textbox'].submit(set_chat_input, None, shared.gradio['textbox'], show_progress=False))
+            gen_events.append(shared.gradio['textbox'].submit(set_chat_input, shared.gradio['textbox'], [shared.gradio['Chat input'], shared.gradio['textbox']], show_progress=False))
             gen_events.append(shared.gradio['textbox'].submit(eval(function_call), shared.input_params, shared.gradio['display'], show_progress=shared.args.no_stream))
             gen_events.append(shared.gradio['Regenerate'].click(chat.regenerate_wrapper, shared.input_params, shared.gradio['display'], show_progress=shared.args.no_stream))
             gen_events.append(shared.gradio['Impersonate'].click(chat.impersonate_wrapper, shared.input_params, shared.gradio['textbox'], show_progress=shared.args.no_stream))
