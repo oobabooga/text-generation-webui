@@ -16,7 +16,7 @@ torch._C._jit_set_profiling_mode(False)
 
 # parameters which can be customized in settings.json of webui  
 params = {
-    'address': '127.0.0.1:7860',
+    'address': 'http://127.0.0.1:7860',
     'mode': 0, # modes of operation: 0 (Manual only), 1 (Immersive/Interactive - looks for words to trigger), 2 (Picturebook Adventure - Always on)
     'manage_VRAM': False,
     'save_img': False,
@@ -25,7 +25,11 @@ params = {
     'negative_prompt': '(worst quality, low quality:1.3)',
     'width': 512,
     'height': 512,
-    'restore_faces': False
+    'restore_faces': False,
+    'seed': -1,
+    'sampler_name': 'DPM++ 2M Karras',
+    'steps': 32,
+    'cfg_scale': 7
 }
 
 def update_params(): # somewhy the default extension params dict is not changed by settings.json, thus update it forcefully
@@ -39,26 +43,26 @@ def give_VRAM_priority(actor):
     
     global shared, params
 
-    if (actor == 'SD'):
+    if actor == 'SD':
         shared.gradio['unload_model_fn']()
         print("Requesting Auto1111 to re-load last checkpoint used…")
-        response = requests.post(url=f'http://{params["address"]}/sdapi/v1/reload-checkpoint', json='')
+        response = requests.post(url=f'{params["address"]}/sdapi/v1/reload-checkpoint', json='')
         response.raise_for_status()
 
-    elif (actor == 'LLM'):
+    elif actor == 'LLM':
         print("Requesting Auto1111 to vacate VRAM…")
-        response = requests.post(url=f'http://{params["address"]}/sdapi/v1/unload-checkpoint', json='')
+        response = requests.post(url=f'{params["address"]}/sdapi/v1/unload-checkpoint', json='')
         response.raise_for_status()
         shared.gradio['reload_model_fn']()
 
-    elif (actor == 'set'):
+    elif actor == 'set':
         print("VRAM mangement activated -- requesting Auto1111 to vacate VRAM…")
-        response = requests.post(url=f'http://{params["address"]}/sdapi/v1/unload-checkpoint', json='')
+        response = requests.post(url=f'{params["address"]}/sdapi/v1/unload-checkpoint', json='')
         response.raise_for_status()
 
-    elif (actor == 'reset'):
+    elif actor == 'reset':
         print("VRAM mangement deactivated -- requesting Auto1111 to reload checkpoint")
-        response = requests.post(url=f'http://{params["address"]}/sdapi/v1/reload-checkpoint', json='')
+        response = requests.post(url=f'{params["address"]}/sdapi/v1/reload-checkpoint', json='')
         response.raise_for_status()
 
     else:
@@ -85,7 +89,7 @@ def input_modifier(string):
     they are fed into the model.
     """
     global params
-    if (not params['mode']==1):
+    if not params['mode'] == 1: # if not in immersive/interactive mode, do nothing
         return string
 
     # TODO: refactor out to separate handler and also replace detection with a regexp
@@ -111,18 +115,18 @@ def get_SD_pictures(description):
 
     payload = {
         "prompt": params['prompt_prefix'] + description,
-        "seed": -1,
-        "sampler_name": "DPM++ 2M Karras",
-        "steps": 32,
-        "cfg_scale": 7,
+        "seed": params['seed'],
+        "sampler_name": params['sampler'],
+        "steps": params['steps'],
+        "cfg_scale": params['cfg_scale'],
         "width": params['width'],
         "height": params['height'],
         "restore_faces": params['restore_faces'],
         "negative_prompt": params['negative_prompt']
     }
     
-    print(f'Prompting the image generator via the API on {params["address"]}…')
-    response = requests.post(url=f'http://{params["address"]}/sdapi/v1/txt2img', json=payload)
+    print(f'Prompting the image generator via the API on {params["address"]}...')
+    response = requests.post(url=f'{params["address"]}/sdapi/v1/txt2img', json=payload)
     response.raise_for_status()
     r = response.json()
 
@@ -203,7 +207,8 @@ def toggle_generation(*args):
 
 def filter_address(address):
     address = address.strip()
-    address = re.sub('http(s)?:\/\/|\/$','',address) # remove starting http:// OR https:// OR trailing slash
+    # address = re.sub('http(s)?:\/\/|\/$','',address) # remove starting http:// OR https:// OR trailing slash
+    address = re.sub('\/$', '', address) # remove trailing /s
     return address
 
 def SD_api_address_update(address):
@@ -214,7 +219,7 @@ def SD_api_address_update(address):
     address = filter_address(address)
     params.update({"address": address})
     try:
-        response = requests.get(url=f'http://{params["address"]}/sdapi/v1/sd-models')
+        response = requests.get(url=f'{params["address"]}/sdapi/v1/sd-models')
         response.raise_for_status()
         r = response.json()
     except:
