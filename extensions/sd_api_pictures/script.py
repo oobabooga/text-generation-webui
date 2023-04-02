@@ -27,7 +27,7 @@ params = {
     'height': 512,
     'restore_faces': False,
     'seed': -1,
-    'sampler_name': 'DPM++ 2M Karras',
+    'sampler_name': 'DDIM', 
     'steps': 32,
     'cfg_scale': 7
 }
@@ -73,6 +73,7 @@ def give_VRAM_priority(actor):
 
 if params['manage_VRAM']: give_VRAM_priority('set')
 
+samplers = ['DDIM', 'DPM++ 2M Karras'] # TODO: get the availible samplers with http://{address}}/sdapi/v1/samplers
 SD_models = ['NeverEndingDream'] # TODO: get with http://{address}}/sdapi/v1/sd-models and allow user to select
 
 streaming_state = shared.args.no_stream # remember if chat streaming was enabled
@@ -116,7 +117,7 @@ def get_SD_pictures(description):
     payload = {
         "prompt": params['prompt_prefix'] + description,
         "seed": params['seed'],
-        "sampler_name": params['sampler'],
+        "sampler_name": params['sampler_name'],
         "steps": params['steps'],
         "cfg_scale": params['cfg_scale'],
         "width": params['width'],
@@ -209,6 +210,7 @@ def filter_address(address):
     address = address.strip()
     # address = re.sub('http(s)?:\/\/|\/$','',address) # remove starting http:// OR https:// OR trailing slash
     address = re.sub('\/$', '', address) # remove trailing /s
+    if not address.startswith('http'): address = 'http://' + address
     return address
 
 def SD_api_address_update(address):
@@ -246,10 +248,16 @@ def ui():
         with gr.Accordion("Generation parameters", open=False):
             prompt_prefix = gr.Textbox(placeholder=params['prompt_prefix'], value=params['prompt_prefix'], label='Prompt Prefix (best used to describe the look of the character)')
             with gr.Row():
-                negative_prompt = gr.Textbox(placeholder=params['negative_prompt'], value=params['negative_prompt'], label='Negative Prompt')
+                with gr.Column():
+                    negative_prompt = gr.Textbox(placeholder=params['negative_prompt'], value=params['negative_prompt'], label='Negative Prompt')
+                    sampler_name = gr.Textbox(placeholder=params['sampler_name'], value=params['sampler_name'], label='Sampler')
                 with gr.Column():
                     width = gr.Slider(256,704,value=params['width'],step=64,label='Width')
                     height = gr.Slider(256,704,value=params['height'],step=64,label='Height')
+            with gr.Row():
+                steps = gr.Number(label="Steps:", value=params['steps'])
+                seed = gr.Number(label="Seed:", value=params['seed'])
+                cfg_scale = gr.Number(label="CFG Scale:", value=params['cfg_scale'])
     
     # Event functions to update the parameters in the backend
     address.change(lambda x: params.update({"address": filter_address(x)}), address, None)
@@ -265,4 +273,9 @@ def ui():
     width.change(lambda x: params.update({"width": x}), width, None)
     height.change(lambda x: params.update({"height": x}), height, None)
     
+    sampler_name.change(lambda x: params.update({"sampler_name": x}), sampler_name, None)
+    steps.change(lambda x: params.update({"steps": x}), steps, None)
+    seed.change(lambda x: params.update({"seed": x}), seed, None)
+    cfg_scale.change(lambda x: params.update({"cfg_scale": x}), cfg_scale, None)
+
     toggle_gen.click(fn=toggle_generation, inputs=None, outputs=toggle_gen)
