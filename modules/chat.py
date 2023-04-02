@@ -6,6 +6,7 @@ import re
 from datetime import datetime
 from pathlib import Path
 
+import yaml
 from PIL import Image
 
 import modules.extensions as extensions_module
@@ -322,39 +323,54 @@ def load_history(file, name1, name2):
         shared.history['visible'] = copy.deepcopy(shared.history['internal'])
 
 def load_default_history(name1, name2):
+    shared.character = 'None'
     if Path('logs/persistent.json').exists():
         load_history(open(Path('logs/persistent.json'), 'rb').read(), name1, name2)
     else:
         shared.history['internal'] = []
         shared.history['visible'] = []
 
-def load_character(_character, name1, name2):
+def build_pygmalion_style_context(data):
     context = ""
+    if 'char_persona' in data and data['char_persona'] != '':
+        context += f"{data['char_name']}'s Persona: {data['char_persona']}\n"
+    if 'world_scenario' in data and data['world_scenario'] != '':
+        context += f"Scenario: {data['world_scenario']}\n"
+    context = f"{context.strip()}\n<START>\n"
+    return context
+
+def load_character(_character, name1, name2):
     shared.history['internal'] = []
     shared.history['visible'] = []
     if _character != 'None':
         shared.character = _character
-        data = json.loads(open(Path(f'characters/{_character}.json'), 'r', encoding='utf-8').read())
-        name2 = data['char_name']
-        if 'char_persona' in data and data['char_persona'] != '':
-            context += f"{data['char_name']}'s Persona: {data['char_persona']}\n"
-        if 'world_scenario' in data and data['world_scenario'] != '':
-            context += f"Scenario: {data['world_scenario']}\n"
-        context = f"{context.strip()}\n<START>\n"
+        
+        for extension in  ["yml", "yaml", "json"]:
+            filepath = Path(f'characters/{_character}.{extension}')
+            if filepath.exists():
+                break
+        data = yaml.safe_load(open(filepath, 'r', encoding='utf-8').read())
+
+        if 'context' in data:
+            context = f"{data['context'].strip()}\n\n"
+            name2 = data['name']
+            greeting_field = 'greeting'
+        else:
+            context = build_pygmalion_style_context(data)
+            name2 = data['char_name']
+            greeting_field = 'char_greeting'
+
         if 'example_dialogue' in data and data['example_dialogue'] != '':
             data['example_dialogue'] = data['example_dialogue'].replace('{{user}}', name1).replace('{{char}}', name2)
             data['example_dialogue'] = data['example_dialogue'].replace('<USER>', name1).replace('<BOT>', name2)
             context += f"{data['example_dialogue'].strip()}\n"
-        if 'char_greeting' in data and len(data['char_greeting'].strip()) > 0:
-            shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', data['char_greeting']]]
-            shared.history['visible'] += [['', apply_extensions(data['char_greeting'], "output")]]
-        else:
-            shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', "Hello there!"]]
-            shared.history['visible'] += [['', "Hello there!"]]
+        if greeting_field in data and len(data[greeting_field].strip()) > 0:
+            shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', data[greeting_field]]]
+            shared.history['visible'] += [['', apply_extensions(data[greeting_field], "output")]]
     else:
-        shared.character = None
-        context = shared.settings['context_pygmalion']
-        name2 = shared.settings['name2_pygmalion']
+        shared.character = 'None'
+        context = shared.settings['context']
+        name2 = shared.settings['name2']
 
     if Path(f'logs/{shared.character}_persistent.json').exists():
         load_history(open(Path(f'logs/{shared.character}_persistent.json'), 'rb').read(), name1, name2)
