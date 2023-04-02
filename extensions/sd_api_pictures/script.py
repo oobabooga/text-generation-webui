@@ -84,6 +84,10 @@ def remove_surrounded_chars(string):
     # 'as few symbols as possible (0 upwards) between an asterisk and the end of the string'
     return re.sub('\*[^\*]*?(\*|$)','',string)
 
+def triggers_are_in(string):
+    string = remove_surrounded_chars(string)
+    return bool(re.search('(?aims)(send|mail|message|me)\\b.+?\\b(image|pic(ture)?|photo|snap(shot)?|selfie|meme)s?\\b', string))
+
 def input_modifier(string):
     """
     This function is applied to your text inputs before
@@ -93,17 +97,14 @@ def input_modifier(string):
     if not params['mode'] == 1: # if not in immersive/interactive mode, do nothing
         return string
 
-    # TODO: refactor out to separate handler and also replace detection with a regexp
-    commands = ['send', 'mail', 'me']
-    mediums = ['image', 'pic', 'picture', 'photo']
-    subjects = ['yourself', 'own']
-    lowstr = string.lower()
-
-    if (params['mode']==1) and any(command in lowstr for command in commands) and any(case in lowstr for case in mediums): # trigger the generation if a command signature and a medium signature is found
+    if triggers_are_in(string): # if we're in it, check for trigger words
         toggle_generation(True)
-        string = "Please provide a detailed description of your surroundings, how you look and the situation you're in and what you are doing right now"
-        if any(target in lowstr for target in subjects):                                           # the focus of the image should be on the sending character
-            string = "Please provide a detailed and vivid description of how you look and what you are wearing"
+        string = string.lower()
+        if "of" in string:
+            subject = string.split('of', 1)[1]
+            string = "Please provide a detailed and vivid description of " + subject
+        else:
+            string = "Please provide a detailed description of your appearance, your surroundings and what you are doing right now"
 
     return string
 
@@ -172,7 +173,8 @@ def output_modifier(string):
 
     if string == '':
         string = 'no viable description in reply, try regenerating'
-
+        return string
+    
     text = ""
     if (params['mode']<2):
         toggle_generation(False)
