@@ -41,6 +41,10 @@ python setup_cuda.py install
 
 You are going to need to have a C++ compiler installed into your system for the last command. On Linux, `sudo apt install build-essential` or equivalent is enough.
 
+> **Note**
+> 
+> I am using my own fork of GPTQ-for-LLaMa until qwopqwop200's branch becomes more stable. It corresponds to commit `a6f363e3f93b9fb5c26064b5ac7ed58d22e3f773` in the `cuda` branch of his repository.
+
 #### Step 2: get the pre-converted weights
 
 * Converted without `group-size` (better for the 7b model): https://github.com/oobabooga/text-generation-webui/pull/530#issuecomment-1483891617
