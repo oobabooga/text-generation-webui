@@ -34,7 +34,7 @@ class RWKVModel:
         result.pipeline = pipeline
         return result
 
-    def generate(self, context="", token_count=20, temperature=1, top_p=1, top_k=50, alpha_frequency=0.1, alpha_presence=0.1, token_ban=[0], token_stop=[], callback=None):
+    def generate(self, context="", token_count=20, temperature=1, top_p=1, top_k=50, repetition_penalty=None, alpha_frequency=0.1, alpha_presence=0.1, token_ban=[0], token_stop=[], callback=None):
         args = PIPELINE_ARGS(
             temperature = temperature,
             top_p = top_p,
@@ -45,11 +45,11 @@ class RWKVModel:
             token_stop = token_stop
         )
 
-        return context+self.pipeline.generate(context, token_count=token_count, args=args, callback=callback)
+        return self.pipeline.generate(context, token_count=token_count, args=args, callback=callback)
 
     def generate_with_streaming(self, **kwargs):
         with Iteratorize(self.generate, kwargs, callback=None) as generator:
-            reply = kwargs['context']
+            reply = ''
             for token in generator:
                 reply += token
                 yield reply

@@ -1,6 +1,7 @@
 import gc
 import re
 import time
+import traceback
 
 import numpy as np
 import torch
@@ -21,7 +22,7 @@ def get_max_prompt_length(tokens):
     return max_length
 
 def encode(prompt, tokens_to_generate=0, add_special_tokens=True):
-    if shared.is_RWKV:
+    if any((shared.is_RWKV, shared.is_llamacpp)):
         input_ids = shared.tokenizer.encode(str(prompt))
         input_ids = np.array(input_ids).reshape(1, len(input_ids))
         return input_ids
@@ -33,12 +34,15 @@ def encode(prompt, tokens_to_generate=0, add_special_tokens=True):
             return input_ids.numpy()
         elif shared.args.deepspeed:
             return input_ids.to(device=local_rank)
+        elif torch.has_mps:
+            device = torch.device('mps')
+            return input_ids.to(device)
         else:
             return input_ids.cuda()
 
 def decode(output_ids):
     # Open Assistant relies on special tokens like <|endoftext|>
-    if re.match('oasst-*', shared.model_name.lower()):
+    if re.match('.*(oasst|galactica)-*', shared.model_name.lower()):
         return shared.tokenizer.decode(output_ids, skip_special_tokens=False)
     else:
         reply = shared.tokenizer.decode(output_ids, skip_special_tokens=True)
@@ -72,11 +76,11 @@ def fix_galactica(s):
     return s
 
 def formatted_outputs(reply, model_name):
-    if not (shared.args.chat or shared.args.cai_chat):
-        if model_name.lower().startswith('galactica'):
+    if not shared.is_chat():
+        if 'galactica' in model_name.lower():
             reply = fix_galactica(reply)
             return reply, reply, generate_basic_html(reply)
-        elif model_name.lower().startswith(('gpt4chan', 'gpt-4chan', '4chan')):
+        elif any((k in shared.model_name.lower() for k in ['gpt4chan', 'gpt-4chan'])):
             reply = fix_gpt4chan(reply)
             return reply, 'Only applicable for GALACTICA models.', generate_4chan_html(reply)
         else:
@@ -89,48 +93,69 @@ def clear_torch_cache():
     if not shared.args.cpu:
         torch.cuda.empty_cache()
 
-def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, eos_token=None, stopping_string=None):
+def set_manual_seed(seed):
+    if seed != -1:
+        torch.manual_seed(seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(seed)
+
+def stop_everything_event():
+    shared.stop_everything = True
+
+def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, eos_token=None, stopping_strings=[]):
     clear_torch_cache()
+    set_manual_seed(seed)
+    shared.stop_everything = False
     t0 = time.time()
 
-    # These models are not part of Hugging Face, so we handle them
-    # separately and terminate the function call earlier
-    if shared.is_RWKV:
-        try:
-            if shared.args.no_stream:
-                reply = shared.model.generate(context=question, token_count=max_new_tokens, temperature=temperature, top_p=top_p, top_k=top_k)
-                yield formatted_outputs(reply, shared.model_name)
-            else:
-                if not (shared.args.chat or shared.args.cai_chat):
-                    yield formatted_outputs(question, shared.model_name)
-                # RWKV has proper streaming, which is very nice.
-                # No need to generate 8 tokens at a time.
-                for reply in shared.model.generate_with_streaming(context=question, token_count=max_new_tokens, temperature=temperature, top_p=top_p, top_k=top_k):
-                    yield formatted_outputs(reply, shared.model_name)
-        finally:
-            t1 = time.time()
-            output = encode(reply)[0]
-            input_ids = encode(question)
-            print(f"Output generated in {(t1-t0):.2f} seconds ({(len(output)-len(input_ids[0]))/(t1-t0):.2f} tokens/s, {len(output)-len(input_ids[0])} tokens)")
-            return
-
     original_question = question
-    if not (shared.args.chat or shared.args.cai_chat):
+    if not shared.is_chat():
         question = apply_extensions(question, "input")
     if shared.args.verbose:
         print(f"\n\n{question}\n--------------------\n")
 
+    # These models are not part of Hugging Face, so we handle them
+    # separately and terminate the function call earlier
+    if any((shared.is_RWKV, shared.is_llamacpp)):
+        try:
+            if shared.args.no_stream:
+                reply = shared.model.generate(context=question, token_count=max_new_tokens, temperature=temperature, top_p=top_p, top_k=top_k, repetition_penalty=repetition_penalty)
+                output = original_question+reply
+                if not shared.is_chat():
+                    reply = original_question + apply_extensions(reply, "output")
+                yield formatted_outputs(reply, shared.model_name)
+            else:
+                if not shared.is_chat():
+                    yield formatted_outputs(question, shared.model_name)
+
+                # RWKV has proper streaming, which is very nice.
+                # No need to generate 8 tokens at a time.
+                for reply in shared.model.generate_with_streaming(context=question, token_count=max_new_tokens, temperature=temperature, top_p=top_p, top_k=top_k, repetition_penalty=repetition_penalty):
+                    output = original_question+reply
+                    if not shared.is_chat():
+                        reply = original_question + apply_extensions(reply, "output")
+                    yield formatted_outputs(reply, shared.model_name)
+
+        except Exception:
+            traceback.print_exc()
+        finally:
+            t1 = time.time()
+            original_tokens = len(encode(original_question)[0])
+            new_tokens = len(encode(output)[0]) - original_tokens
+            print(f"Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens})")
+            return
+
     input_ids = encode(question, max_new_tokens)
     original_input_ids = input_ids
     output = input_ids[0]
+
     cuda = not any((shared.args.cpu, shared.args.deepspeed, shared.args.flexgen))
     eos_token_ids = [shared.tokenizer.eos_token_id] if shared.tokenizer.eos_token_id is not None else []
     if eos_token is not None:
         eos_token_ids.append(int(encode(eos_token)[0][-1]))
     stopping_criteria_list = transformers.StoppingCriteriaList()
-    if stopping_string is not None:
-        # Copied from https://github.com/PygmalionAI/gradio-ui/blob/master/src/model.py
-        t = encode(stopping_string, 0, add_special_tokens=False)
+    if type(stopping_strings) is list and len(stopping_strings) > 0:
+        t = [encode(string, 0, add_special_tokens=False) for string in stopping_strings]
         stopping_criteria_list.append(_SentinelTokenStoppingCriteria(sentinel_token_ids=t, starting_idx=len(input_ids[0])))
 
     generate_params = {}
@@ -160,6 +185,8 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
             "temperature": temperature,
             "stop": eos_token_ids[-1],
         })
+    if shared.args.no_cache:
+        generate_params.update({"use_cache": False})
     if shared.args.deepspeed:
         generate_params.update({"synced_gpus": True})
     if shared.soft_prompt:
@@ -179,9 +206,10 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
             if shared.soft_prompt:
                 output = torch.cat((input_ids[0], output[filler_input_ids.shape[1]:]))
 
-            reply = decode(output)
-            if not (shared.args.chat or shared.args.cai_chat):
-                reply = original_question + apply_extensions(reply[len(question):], "output")
+            new_tokens = len(output) - len(input_ids[0])
+            reply = decode(output[-new_tokens:])
+            if not shared.is_chat():
+                reply = original_question + apply_extensions(reply, "output")
 
             yield formatted_outputs(reply, shared.model_name)
 
@@ -198,22 +226,21 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
             def generate_with_streaming(**kwargs):
                 return Iteratorize(generate_with_callback, kwargs, callback=None)
 
-            if not (shared.args.chat or shared.args.cai_chat):
+            if not shared.is_chat():
                 yield formatted_outputs(original_question, shared.model_name)
             with generate_with_streaming(**generate_params) as generator:
                 for output in generator:
                     if shared.soft_prompt:
                         output = torch.cat((input_ids[0], output[filler_input_ids.shape[1]:]))
-                    reply = decode(output)
 
-                    if not (shared.args.chat or shared.args.cai_chat):
-                        reply = original_question + apply_extensions(reply[len(question):], "output")
+                    new_tokens = len(output) - len(input_ids[0])
+                    reply = decode(output[-new_tokens:])
+                    if not shared.is_chat():
+                        reply = original_question + apply_extensions(reply, "output")
 
                     if output[-1] in eos_token_ids:
                         break
                     yield formatted_outputs(reply, shared.model_name)
-
-                yield formatted_outputs(reply, shared.model_name)
 
         # Stream the output naively for FlexGen since it doesn't support 'stopping_criteria'
         else:
@@ -223,10 +250,11 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
                     output = shared.model.generate(**generate_params)[0]
                 if shared.soft_prompt:
                     output = torch.cat((input_ids[0], output[filler_input_ids.shape[1]:]))
-                reply = decode(output)
 
-                if not (shared.args.chat or shared.args.cai_chat):
-                    reply = original_question + apply_extensions(reply[len(question):], "output")
+                new_tokens = len(output) - len(original_input_ids[0])
+                reply = decode(output[-new_tokens:])
+                if not shared.is_chat():
+                    reply = original_question + apply_extensions(reply, "output")
 
                 if np.count_nonzero(np.isin(input_ids[0], eos_token_ids)) < np.count_nonzero(np.isin(output, eos_token_ids)):
                     break
@@ -235,10 +263,18 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
                 input_ids = np.reshape(output, (1, output.shape[0]))
                 if shared.soft_prompt:
                     inputs_embeds, filler_input_ids = generate_softprompt_input_tensors(input_ids)
+                    generate_params.update({"inputs_embeds": inputs_embeds})
+                    generate_params.update({"inputs": filler_input_ids})
+                else:
+                    generate_params.update({"inputs": input_ids})
 
             yield formatted_outputs(reply, shared.model_name)
 
+    except Exception:
+        traceback.print_exc()
     finally:
         t1 = time.time()
-        print(f"Output generated in {(t1-t0):.2f} seconds ({(len(output)-len(original_input_ids[0]))/(t1-t0):.2f} tokens/s, {len(output)-len(original_input_ids[0])} tokens)")
+        original_tokens = len(original_input_ids[0])
+        new_tokens = len(output)-original_tokens
+        print(f"Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens})")
         return

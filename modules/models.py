@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import time
 import zipfile
 from pathlib import Path
@@ -7,7 +8,9 @@ from pathlib import Path
 import numpy as np
 import torch
 import transformers
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from accelerate import infer_auto_device_map, init_empty_weights
+from transformers import (AutoConfig, AutoModelForCausalLM, AutoTokenizer,
+                          BitsAndBytesConfig)
 
 import modules.shared as shared
 
@@ -16,8 +19,7 @@ transformers.logging.set_verbosity_error()
 local_rank = None
 
 if shared.args.flexgen:
-    from flexgen.flex_opt import (CompressionConfig, ExecutionEnv, OptLM,
-                                  Policy, str2bool)
+    from flexgen.flex_opt import CompressionConfig, ExecutionEnv, OptLM, Policy
 
 if shared.args.deepspeed:
     import deepspeed
@@ -39,14 +41,20 @@ def load_model(model_name):
     print(f"Loading {model_name}...")
     t0 = time.time()
 
-    shared.is_RWKV = model_name.lower().startswith('rwkv-')
+    shared.is_RWKV = 'rwkv-' in model_name.lower()
+    shared.is_llamacpp = len(list(Path(f'models/{model_name}').glob('ggml*.bin'))) > 0
 
     # Default settings
-    if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.gptq_bits, shared.args.auto_devices, shared.args.disk, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None, shared.args.deepspeed, shared.args.flexgen, shared.is_RWKV]):
+    if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.wbits, shared.args.auto_devices, shared.args.disk, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None, shared.args.deepspeed, shared.args.flexgen, shared.is_RWKV, shared.is_llamacpp]):
         if any(size in shared.model_name.lower() for size in ('13b', '20b', '30b')):
-            model = AutoModelForCausalLM.from_pretrained(Path(f"models/{shared.model_name}"), device_map='auto', load_in_8bit=True)
+            model = AutoModelForCausalLM.from_pretrained(Path(f"{shared.args.model_dir}/{shared.model_name}"), device_map='auto', load_in_8bit=True)
         else:
-            model = AutoModelForCausalLM.from_pretrained(Path(f"models/{shared.model_name}"), low_cpu_mem_usage=True, torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16).cuda()
+            model = AutoModelForCausalLM.from_pretrained(Path(f"{shared.args.model_dir}/{shared.model_name}"), low_cpu_mem_usage=True, torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16)
+            if torch.has_mps:
+                device = torch.device('mps')
+                model = model.to(device)
+            else:
+                model = model.cuda()
 
     # FlexGen
     elif shared.args.flexgen:
@@ -69,11 +77,11 @@ def load_model(model_name):
                             num_bits=4, group_size=64,
                             group_dim=2, symmetric=False))
 
-        model = OptLM(f"facebook/{shared.model_name}", env, "models", policy)
+        model = OptLM(f"facebook/{shared.model_name}", env, shared.args.model_dir, policy)
 
     # DeepSpeed ZeRO-3
     elif shared.args.deepspeed:
-        model = AutoModelForCausalLM.from_pretrained(Path(f"models/{shared.model_name}"), torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16)
+        model = AutoModelForCausalLM.from_pretrained(Path(f"{shared.args.model_dir}/{shared.model_name}"), torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16)
         model = deepspeed.initialize(model=model, config_params=ds_config, model_parameters=None, optimizer=None, lr_scheduler=None)[0]
         model.module.eval() # Inference
         print(f"DeepSpeed ZeRO-3 is enabled: {is_deepspeed_zero3_enabled()}")
@@ -82,58 +90,90 @@ def load_model(model_name):
     elif shared.is_RWKV:
         from modules.RWKV import RWKVModel, RWKVTokenizer
 
-        model = RWKVModel.from_pretrained(Path(f'models/{model_name}'), dtype="fp32" if shared.args.cpu else "bf16" if shared.args.bf16 else "fp16", device="cpu" if shared.args.cpu else "cuda")
-        tokenizer = RWKVTokenizer.from_pretrained(Path('models'))
+        model = RWKVModel.from_pretrained(Path(f'{shared.args.model_dir}/{model_name}'), dtype="fp32" if shared.args.cpu else "bf16" if shared.args.bf16 else "fp16", device="cpu" if shared.args.cpu else "cuda")
+        tokenizer = RWKVTokenizer.from_pretrained(Path(shared.args.model_dir))
 
         return model, tokenizer
 
     # Quantized model
-    elif shared.args.gptq_bits > 0:
+    elif shared.args.wbits > 0:
         from modules.GPTQ_loader import load_quantized
 
         model = load_quantized(model_name)
 
+    # llamacpp model
+    elif shared.is_llamacpp:
+        from modules.llamacpp_model import LlamaCppModel
+
+        model_file = list(Path(f'models/{model_name}').glob('ggml*.bin'))[0]
+        print(f"llama.cpp weights detected: {model_file}\n")
+
+        model, tokenizer = LlamaCppModel.from_pretrained(model_file)
+        return model, tokenizer
+
     # Custom
     else:
-        command = "AutoModelForCausalLM.from_pretrained"
-        params = ["low_cpu_mem_usage=True"]
-        if not shared.args.cpu and not torch.cuda.is_available():
-            print("Warning: no GPU has been detected.\nFalling back to CPU mode.\n")
+        params = {"low_cpu_mem_usage": True}
+        if not any((shared.args.cpu, torch.cuda.is_available(), torch.has_mps)):
+            print("Warning: torch.cuda.is_available() returned False.\nThis means that no GPU has been detected.\nFalling back to CPU mode.\n")
             shared.args.cpu = True
 
         if shared.args.cpu:
-            params.append("low_cpu_mem_usage=True")
-            params.append("torch_dtype=torch.float32")
+            params["torch_dtype"] = torch.float32
         else:
-            params.append("device_map='auto'")
-            params.append("load_in_8bit=True" if shared.args.load_in_8bit else "torch_dtype=torch.bfloat16" if shared.args.bf16 else "torch_dtype=torch.float16")
+            params["device_map"] = 'auto'
+            if shared.args.load_in_8bit and any((shared.args.auto_devices, shared.args.gpu_memory)):
+                params['quantization_config'] = BitsAndBytesConfig(load_in_8bit=True, llm_int8_enable_fp32_cpu_offload=True)
+            elif shared.args.load_in_8bit:
+                params['quantization_config'] = BitsAndBytesConfig(load_in_8bit=True)
+            elif shared.args.bf16:
+                params["torch_dtype"] = torch.bfloat16
+            else:
+                params["torch_dtype"] = torch.float16
 
             if shared.args.gpu_memory:
-                memory_map = shared.args.gpu_memory
-                max_memory = f"max_memory={{0: '{memory_map[0]}GiB'"
-                for i in range(1, len(memory_map)):
-                    max_memory += (f", {i}: '{memory_map[i]}GiB'")
-                max_memory += (f", 'cpu': '{shared.args.cpu_memory or '99'}GiB'}}")
-                params.append(max_memory)
-            elif not shared.args.load_in_8bit:
-                total_mem = (torch.cuda.get_device_properties(0).total_memory/(1024*1024))
-                suggestion = round((total_mem-1000)/1000)*1000
-                if total_mem-suggestion < 800:
+                memory_map = list(map(lambda x : x.strip(), shared.args.gpu_memory))
+                max_cpu_memory = shared.args.cpu_memory.strip() if shared.args.cpu_memory is not None else '99GiB'
+                max_memory = {}
+                for i in range(len(memory_map)):
+                    max_memory[i] = f'{memory_map[i]}GiB' if not re.match('.*ib$', memory_map[i].lower()) else memory_map[i]
+                max_memory['cpu'] = max_cpu_memory
+                params['max_memory'] = max_memory
+            elif shared.args.auto_devices:
+                total_mem = (torch.cuda.get_device_properties(0).total_memory / (1024*1024))
+                suggestion = round((total_mem-1000) / 1000) * 1000
+                if total_mem - suggestion < 800:
                     suggestion -= 1000
                 suggestion = int(round(suggestion/1000))
                 print(f"\033[1;32;1mAuto-assiging --gpu-memory {suggestion} for your GPU to try to prevent out-of-memory errors.\nYou can manually set other values.\033[0;37;0m")
-                params.append(f"max_memory={{0: '{suggestion}GiB', 'cpu': '{shared.args.cpu_memory or '99'}GiB'}}")
-            if shared.args.disk:
-                params.append(f"offload_folder='{shared.args.disk_cache_dir}'")
+                
+                max_memory = {0: f'{suggestion}GiB', 'cpu': f'{shared.args.cpu_memory or 99}GiB'}
+                params['max_memory'] = max_memory
 
-        command = f"{command}(Path(f'models/{shared.model_name}'), {', '.join(set(params))})"
-        model = eval(command)
+            if shared.args.disk:
+                params["offload_folder"] = shared.args.disk_cache_dir
+
+        checkpoint = Path(f'{shared.args.model_dir}/{shared.model_name}')
+
+        if shared.args.load_in_8bit and params.get('max_memory', None) is not None and params['device_map'] == 'auto':
+            config = AutoConfig.from_pretrained(checkpoint)
+            with init_empty_weights():
+                model = AutoModelForCausalLM.from_config(config)
+            model.tie_weights()
+            params['device_map'] = infer_auto_device_map(
+                model, 
+                dtype=torch.int8, 
+                max_memory=params['max_memory'],
+                no_split_module_classes = model._no_split_modules
+            )
+
+        model = AutoModelForCausalLM.from_pretrained(checkpoint, **params)
 
     # Loading the tokenizer
-    if shared.model_name.lower().startswith(('gpt4chan', 'gpt-4chan', '4chan')) and Path("models/gpt-j-6B/").exists():
-        tokenizer = AutoTokenizer.from_pretrained(Path("models/gpt-j-6B/"))
+    if any((k in shared.model_name.lower() for k in ['gpt4chan', 'gpt-4chan'])) and Path(f"{shared.args.model_dir}/gpt-j-6B/").exists():
+        tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/gpt-j-6B/"))
     else:
-        tokenizer = AutoTokenizer.from_pretrained(Path(f"models/{shared.model_name}/"))
+        tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/{shared.model_name}/"))
     tokenizer.truncation_side = 'left'
 
     print(f"Loaded the model in {(time.time()-t0):.2f} seconds.")

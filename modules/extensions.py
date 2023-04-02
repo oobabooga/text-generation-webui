@@ -1,17 +1,26 @@
+import traceback
+
+import gradio as gr
+
 import extensions
 import modules.shared as shared
 
 state = {}
 available_extensions = []
+setup_called = set()
 
 def load_extensions():
     global state
     for i, name in enumerate(shared.args.extensions):
         if name in available_extensions:
             print(f'Loading the extension "{name}"... ', end='')
-            exec(f"import extensions.{name}.script")
-            state[name] = [True, i]
-            print('Ok.')
+            try:
+                exec(f"import extensions.{name}.script")
+                state[name] = [True, i]
+                print('Ok.')
+            except:
+                print('Fail.')
+                traceback.print_exc()
 
 # This iterator returns the extensions in the order specified in the command-line
 def iterator():
@@ -31,6 +40,8 @@ def apply_extensions(text, typ):
     return text
 
 def create_extensions_block():
+    global setup_called
+
     # Updating the default values
     for extension, name in iterator():
         if hasattr(extension, 'params'):
@@ -39,7 +50,20 @@ def create_extensions_block():
                 if _id in shared.settings:
                     extension.params[param] = shared.settings[_id]
 
-    # Creating the extension ui elements
+    should_display_ui = False
+
+    # Running setup function
     for extension, name in iterator():
         if hasattr(extension, "ui"):
-            extension.ui()
+            should_display_ui = True
+        if extension not in setup_called and hasattr(extension, "setup"):
+            setup_called.add(extension)
+            extension.setup()
+
+    # Creating the extension ui elements
+    if should_display_ui:
+        with gr.Column(elem_id="extensions"):
+            for extension, name in iterator():
+                gr.Markdown(f"\n### {name}")
+                if hasattr(extension, "ui"):
+                    extension.ui()

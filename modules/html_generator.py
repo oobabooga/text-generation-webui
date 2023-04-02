@@ -1,6 +1,6 @@
 '''
 
-This is a library for formatting GPT-4chan and chat outputs as nice HTML.
+This is a library for formatting text outputs as nice HTML.
 
 '''
 
@@ -14,13 +14,33 @@ from PIL import Image
 # This is to store the paths to the thumbnails of the profile pictures
 image_cache = {}
 
-def generate_basic_html(s):
-    with open(Path(__file__).resolve().parent / '../css/html_readable_style.css', 'r') as f:
-        css = f.read()
+with open(Path(__file__).resolve().parent / '../css/html_readable_style.css', 'r') as f:
+    readable_css = f.read()
+with open(Path(__file__).resolve().parent / '../css/html_4chan_style.css', 'r') as css_f:
+    _4chan_css = css_f.read()
+with open(Path(__file__).resolve().parent / '../css/html_cai_style.css', 'r') as f:
+    cai_css = f.read()
 
-    s = '\n'.join([f'<p>{line}</p>' for line in s.split('\n')])
-    s = f'<style>{css}</style><div class="container">{s}</div>'
-    return s
+def fix_newlines(string):
+    string = string.replace('\n', '\n\n')
+    string = re.sub(r"\n{3,}", "\n\n", string)
+    string = string.strip()
+    return string
+
+# This could probably be generalized and improved
+def convert_to_markdown(string):
+    string = string.replace('\\begin{code}', '```')
+    string = string.replace('\\end{code}', '```')
+    string = string.replace('\\begin{blockquote}', '> ')
+    string = string.replace('\\end{blockquote}', '')
+    string = re.sub(r"(.)```", r"\1\n```", string)
+    string = fix_newlines(string)
+    return markdown.markdown(string, extensions=['fenced_code']) 
+
+def generate_basic_html(string):
+    string = convert_to_markdown(string)
+    string = f'<style>{readable_css}</style><div class="container">{string}</div>'
+    return string
 
 def process_post(post, c):
     t = post.split('\n')
@@ -37,9 +57,6 @@ def process_post(post, c):
     return src
 
 def generate_4chan_html(f):
-    with open(Path(__file__).resolve().parent / '../css/html_4chan_style.css', 'r') as f:
-        css = f.read()
-
     posts = []
     post = ''
     c = -2
@@ -66,7 +83,7 @@ def generate_4chan_html(f):
             posts[i] = f'<div class="reply">{posts[i]}</div>\n'
     
     output = ''
-    output += f'<style>{css}</style><div id="parent"><div id="container">'
+    output += f'<style>{_4chan_css}</style><div id="parent"><div id="container">'
     for post in posts:
         output += post
     output += '</div></div>'
@@ -101,17 +118,14 @@ def load_html_image(paths):
     return ''
 
 def generate_chat_html(history, name1, name2, character):
-    with open(Path(__file__).resolve().parent / '../css/html_cai_style.css', 'r') as f:
-        css = f.read()
-        
-    output = f'<style>{css}</style><div class="chat" id="chat">'
-    
+    output = f'<style>{cai_css}</style><div class="chat" id="chat">'
+
     img_bot = load_html_image([f"characters/{character}.{ext}" for ext in ['png', 'jpg', 'jpeg']] + ["img_bot.png","img_bot.jpg","img_bot.jpeg"])
     img_me = load_html_image(["img_me.png", "img_me.jpg", "img_me.jpeg"])
 
     for i,_row in enumerate(history[::-1]):
-        row = [markdown.markdown(re.sub(r"(.)```", r"\1\n```", entry), extensions=['fenced_code']) for entry in _row]
-        
+        row = [convert_to_markdown(entry) for entry in _row]
+
         output += f"""
               <div class="message">
                 <div class="circle-bot">
@@ -128,22 +142,24 @@ def generate_chat_html(history, name1, name2, character):
               </div>
             """
 
-        if not (i == len(history)-1 and len(row[0]) == 0):
-            output += f"""
-                  <div class="message">
-                    <div class="circle-you">
-                      {img_me}
-                    </div>
-                    <div class="text">
-                      <div class="username">
-                        {name1}
-                      </div>
-                      <div class="message-body">
-                        {row[0]}
-                      </div>
-                    </div>
+        if len(row[0]) == 0: # don't display empty user messages
+            continue
+
+        output += f"""
+              <div class="message">
+                <div class="circle-you">
+                  {img_me}
+                </div>
+                <div class="text">
+                  <div class="username">
+                    {name1}
                   </div>
-                """
+                  <div class="message-body">
+                    {row[0]}
+                  </div>
+                </div>
+              </div>
+            """
 
     output += "</div>"
     return output

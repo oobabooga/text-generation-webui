@@ -13,7 +13,7 @@ jobs:
       - uses: actions/stale@v5
         with:
           stale-issue-message: ""
-          close-issue-message: "This issue has been closed due to inactivity for 30 days. If you believe it is still relevant, you can reopen it (if you are the author) or leave a comment below."
+          close-issue-message: "This issue has been closed due to inactivity for 30 days. If you believe it is still relevant, please leave a comment below."
           days-before-issue-stale: 30
           days-before-issue-close: 0
           stale-issue-label: "stale"

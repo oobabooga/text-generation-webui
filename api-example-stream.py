@@ -34,6 +34,7 @@ async def run(context):
         'penalty_alpha': 0,
         'length_penalty': 1,
         'early_stopping': False,
+        'seed': -1,
     }
     session = random_hash()
 
@@ -44,14 +45,14 @@ async def run(context):
                 case "send_hash":
                     await websocket.send(json.dumps({
                         "session_hash": session,
-                        "fn_index": 7
+                        "fn_index": 12
                     }))
                 case "estimation":
                     pass
                 case "send_data":
                     await websocket.send(json.dumps({
                         "session_hash": session,
-                        "fn_index": 7,
+                        "fn_index": 12,
                         "data": [
                             context,
                             params['max_new_tokens'],
@@ -68,6 +69,7 @@ async def run(context):
                             params['penalty_alpha'],
                             params['length_penalty'],
                             params['early_stopping'],
+                            params['seed'],
                         ]
                     }))
                 case "process_starts":

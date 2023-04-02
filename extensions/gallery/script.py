@@ -2,17 +2,27 @@ from pathlib import Path
 
 import gradio as gr
 
+from modules.chat import load_character
 from modules.html_generator import get_image_cache
+from modules.shared import gradio, settings
 
 
-def generate_html():
+def generate_css():
     css = """
-      .character-gallery {
+      .character-gallery > .gallery {
         margin: 1rem 0;
-        display: grid;
+        display: grid !important;
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
         grid-column-gap: 0.4rem;
         grid-row-gap: 1.2rem;
+      }
+
+      .character-gallery > .label {
+        display: none !important;
+      }
+
+      .character-gallery button.gallery-item {
+        display: contents;
       }
 
       .character-container {
@@ -45,14 +55,16 @@ def generate_html():
         overflow-wrap: anywhere;
       }
     """
+    return css
 
-    container_html = f'<style>{css}</style><div class="character-gallery">'
 
+def generate_html():
+    cards = []
     # Iterate through files in image folder
     for file in sorted(Path("characters").glob("*")):
         if file.suffix in [".json", ".yml", ".yaml"]:
             character = file.name.replace(file.suffix, "")
-            container_html += f'<div class="character-container" onclick=\'document.getElementById("character-menu").children[1].children[1].value = "{character}"; document.getElementById("character-menu").children[1].children[1].dispatchEvent(new Event("change"));\'>'
+            container_html = f'<div class="character-container">'
             image_html = "<div class='placeholder'></div>"
 
             for i in [
@@ -71,12 +83,24 @@ def generate_html():
 
             container_html += f'{image_html} <span class="character-name">{character}</span>'
             container_html += "</div>"
+            cards.append([container_html, character])
 
-    container_html += "</div>"
-    return container_html
+    return cards
+
+
+def select_character(evt: gr.SelectData):
+    return (evt.value[1])
+
 
 def ui():
     with gr.Accordion("Character gallery", open=False):
         update = gr.Button("Refresh")
-        gallery = gr.HTML(value=generate_html())
+        gr.HTML(value="<style>"+generate_css()+"</style>")
+        gallery = gr.Dataset(components=[gr.HTML(visible=False)],
+            label="",
+            samples=generate_html(),
+            elem_classes=["character-gallery"],
+            samples_per_page=50
+        )
     update.click(generate_html, [], gallery)
+    gallery.select(select_character, None, gradio['character_menu'])

@@ -2,11 +2,11 @@ import base64
 from io import BytesIO
 
 import gradio as gr
-import torch
-from transformers import BlipForConditionalGeneration, BlipProcessor
-
 import modules.chat as chat
 import modules.shared as shared
+import torch
+from PIL import Image
+from transformers import BlipForConditionalGeneration, BlipProcessor
 
 # If 'state' is True, will hijack the next chat generation with
 # custom input text given by 'value' in the format [text, visible_text]
@@ -25,10 +25,12 @@ def caption_image(raw_image):
 
 def generate_chat_picture(picture, name1, name2):
     text = f'*{name1} sends {name2} a picture that contains the following: "{caption_image(picture)}"*'
+    # lower the resolution of sent images for the chat, otherwise the log size gets out of control quickly with all the base64 values in visible history
+    picture.thumbnail((300, 300))
     buffer = BytesIO()
     picture.save(buffer, format="JPEG")
     img_str = base64.b64encode(buffer.getvalue()).decode('utf-8')
-    visible_text = f'<img src="data:image/jpeg;base64,{img_str}">'
+    visible_text = f'<img src="data:image/jpeg;base64,{img_str}" alt="{text}">'
     return text, visible_text
 
 def ui():
