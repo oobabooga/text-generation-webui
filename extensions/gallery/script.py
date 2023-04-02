@@ -63,7 +63,7 @@ def generate_html():
     # Iterate through files in image folder
     for file in sorted(Path("characters").glob("*")):
         if file.suffix in [".json", ".yml", ".yaml"]:
-            character = file.name.replace(file.suffix, "")
+            character = file.stem
             container_html = f'<div class="character-container">'
             image_html = "<div class='placeholder'></div>"
 
