@@ -115,5 +115,5 @@ mv /path/to/outputs/tokenizer/* /path/to/outputs/llama-7b
 ### Starting the web UI
 
 ```python
-python server.py --model llama-7b # use llama-7b-hf if you downloaded from decapoda
+python server.py --model llama-7b
 ```
