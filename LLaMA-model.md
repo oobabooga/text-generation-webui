@@ -36,7 +36,6 @@ mkdir repositories
 cd repositories
 git clone https://github.com/oobabooga/GPTQ-for-LLaMa.git -b cuda
 cd GPTQ-for-LLaMa
-git checkout cuda
 python setup_cuda.py install
 ```
 
