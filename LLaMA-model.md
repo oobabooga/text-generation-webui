@@ -1,4 +1,4 @@
-*Installation instructions updated on April 2nd, 2023*
+*4-bit installation instructions updated on April 2nd, 2023*
 
 -----
 
