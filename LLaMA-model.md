@@ -83,18 +83,9 @@ For regular 16-bit/8-bit inference.
 
 ### Getting the weights
 
-#### Option 1: from Decapoda Research (easy way)
+#### Option 1: easy way
 
-Simply run one of these commands to get the pre-converted weights:
-
-```
-python download-model.py decapoda-research/llama-7b-hf
-python download-model.py decapoda-research/llama-13b-hf
-```
-
-> **Note**
-> 
-> You need to manually replace `LLaMATokenizer` with `LlamaTokenizer` in the `tokenizer_config.json` file that will be downloaded.
+https://github.com/oobabooga/text-generation-webui/pull/530#issuecomment-1484235789
 
 #### Option 2: convert the weights yourself
 
