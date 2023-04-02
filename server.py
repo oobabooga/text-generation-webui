@@ -280,6 +280,8 @@ if shared.args.lora:
 default_preset = shared.settings['presets'][next((k for k in shared.settings['presets'] if re.match(k.lower(), shared.model_name.lower())), 'default')]
 if shared.lora_name != "None":
     default_text = load_prompt(shared.settings['lora_prompts'][next((k for k in shared.settings['lora_prompts'] if re.match(k.lower(), shared.lora_name.lower())), 'default')])
+elif (shared.args.cai_chat or shared.args.chat):
+    default_text = ''
 else:
     default_text = load_prompt(shared.settings['prompts'][next((k for k in shared.settings['prompts'] if re.match(k.lower(), shared.model_name.lower())), 'default')])
 title ='Text generation web UI'
