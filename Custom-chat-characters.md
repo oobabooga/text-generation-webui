@@ -29,9 +29,3 @@ Once your prompt reaches the 2048 token limit, old messages will be removed one 
 #### Pygmalion characters
 
 These are also supported out of the box. Simply put the JSON file in the `characters` folder, or upload it directly from the web UI by clicking on the "Upload character" tab at the bottom.
-
-Characters in this format can be created with the following tools:
-
-* [JSON character creator](https://oobabooga.github.io/character-creator.html)
-* [AI Character Editor](https://zoltanai.github.io/character-editor/)
-
