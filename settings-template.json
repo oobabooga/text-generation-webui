@@ -2,9 +2,11 @@
     "max_new_tokens": 200,
     "max_new_tokens_min": 1,
     "max_new_tokens_max": 2000,
+    "seed": -1,
     "name1": "You",
     "name2": "Assistant",
     "context": "This is a conversation with your Assistant. The Assistant is very helpful and is eager to chat with you and answer your questions.",
+    "greeting": "Hello there!",
     "stop_at_newline": false,
     "chat_prompt_size": 2048,
     "chat_prompt_size_min": 0,
@@ -18,7 +20,7 @@
     ],
     "presets": {
         "default": "NovelAI-Sphinx Moth",
-        ".*pygmalion": "Pygmalion",
+        ".*pygmalion": "NovelAI-Storywriter",
         ".*RWKV": "Naive"
     },
     "prompts": {
