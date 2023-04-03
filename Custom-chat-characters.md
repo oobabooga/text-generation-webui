@@ -26,6 +26,6 @@ Put an image called `img_me.jpg` or `img_me.png` into the `text-generation-webui
 
 Once your prompt reaches the 2048 token limit, old messages will be removed one at a time. The context string will always stay at the top of the prompt and will never get truncated.
 
-#### Pygmalion characters
+#### Pygmalion format characters
 
 These are also supported out of the box. Simply put the JSON file in the `characters` folder, or upload it directly from the web UI by clicking on the "Upload character" tab at the bottom.
