@@ -318,7 +318,7 @@ def create_interface():
             with gr.Tab("Character", elem_id="chat-settings"):
                 shared.gradio['name1'] = gr.Textbox(value=shared.settings['name1'], lines=1, label='Your name')
                 shared.gradio['name2'] = gr.Textbox(value=shared.settings['name2'], lines=1, label='Bot\'s name')
-                shared.gradio['greeting'] = gr.Textbox(value="Hello there!", lines=1, label='Character Greeting')
+                shared.gradio['greeting'] = gr.Textbox(value=shared.settings['greeting'], lines=1, label='Character Greeting')
                 shared.gradio['context'] = gr.Textbox(value=shared.settings['context'], lines=5, label='Context')
                 with gr.Row():
                     shared.gradio['character_menu'] = gr.Dropdown(choices=available_characters, value='None', label='Character', elem_id='character-menu')
@@ -397,7 +397,7 @@ def create_interface():
             shared.gradio['textbox'].submit(lambda x: '', shared.gradio['textbox'], shared.gradio['textbox'], show_progress=False)
             shared.gradio['textbox'].submit(lambda : chat.save_history(timestamp=False), [], [], show_progress=False)
 
-            shared.gradio['character_menu'].change(chat.load_character, [shared.gradio['character_menu'], shared.gradio['name1'], shared.gradio['name2'], shared.gradio['greeting']], [shared.gradio['name1'], shared.gradio['name2'], shared.gradio['greeting'], shared.gradio['context'], shared.gradio['display']])
+            shared.gradio['character_menu'].change(chat.load_character, [shared.gradio[k] for k in ['character_menu', 'name1', 'name2', 'greeting']], [shared.gradio[k] for k in ['name1', 'name2', 'greeting', 'context', 'display']])
             shared.gradio['upload_chat_history'].upload(chat.load_history, [shared.gradio['upload_chat_history'], shared.gradio['name1'], shared.gradio['name2']], [])
             shared.gradio['upload_img_tavern'].upload(chat.upload_tavern_character, [shared.gradio['upload_img_tavern'], shared.gradio['name1'], shared.gradio['name2']], [shared.gradio['character_menu']])
             shared.gradio['upload_img_me'].upload(chat.upload_your_profile_picture, [shared.gradio['upload_img_me']], [])

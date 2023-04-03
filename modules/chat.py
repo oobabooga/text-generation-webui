@@ -374,11 +374,11 @@ def load_character(_character, name1, name2, greeting):
             context += f"{data['example_dialogue'].strip()}\n"
 
         if greeting_field in data and len(data[greeting_field].strip()) > 0:
-            greeting=data['char_greeting']  
+            greeting = data['char_greeting']  
             shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', data[greeting_field]]]
             shared.history['visible'] += [['', apply_extensions(data[greeting_field], "output")]]
         else:
-            greeting=""
+            greeting = ""
 
     else:
         shared.character = 'None'
