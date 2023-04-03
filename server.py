@@ -335,6 +335,7 @@ def create_interface():
                                 shared.gradio['download'] = gr.File()
                                 shared.gradio['download_button'] = gr.Button(value='Click me')
                     with gr.Tab('Upload character'):
+                        gr.Markdown("# JSON format")
                         with gr.Row():
                             with gr.Column():
                                 gr.Markdown('1. Select the JSON file')
@@ -343,10 +344,11 @@ def create_interface():
                                 gr.Markdown('2. Select your character\'s profile picture (optional)')
                                 shared.gradio['upload_img_bot'] = gr.File(type='binary', file_types=['image'])
                         shared.gradio['Upload character'] = gr.Button(value='Submit')
+
+                        gr.Markdown("# TavernAI PNG format")
+                        shared.gradio['upload_img_tavern'] = gr.File(type='binary', file_types=['image'])
                     with gr.Tab('Upload your profile picture'):
                         shared.gradio['upload_img_me'] = gr.File(type='binary', file_types=['image'])
-                    with gr.Tab('Upload TavernAI Character Card'):
-                        shared.gradio['upload_img_tavern'] = gr.File(type='binary', file_types=['image'])
 
             with gr.Tab("Parameters", elem_id="parameters"):
                 with gr.Box():
