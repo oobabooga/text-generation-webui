@@ -24,7 +24,7 @@ Put an image called `img_me.jpg` or `img_me.png` into the `text-generation-webui
 
 #### Is the chat history truncated in the prompt?
 
-Once your prompt reaches the 2048 token limit, old messages will be removed one at a time. The context string will always stay at the top of the prompt and will never be truncated.
+Once your prompt reaches the 2048 token limit, old messages will be removed one at a time. The context string will always stay at the top of the prompt and will never get truncated.
 
 #### Pygmalion characters
 
