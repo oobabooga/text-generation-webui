@@ -279,11 +279,10 @@ def tokenize_dialogue(dialogue, name1, name2):
     return history
 
 def save_history(timestamp=True):
-    prefix = '' if shared.character == 'None' else f"{shared.character}_"
     if timestamp:
-        fname = f"{prefix}{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
+        fname = f"{shared.character}_{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
     else:
-        fname = f"{prefix}persistent.json"
+        fname = f"{shared.character}_persistent.json"
     if not Path('logs').exists():
         Path('logs').mkdir()
     with open(Path(f'logs/{fname}'), 'w', encoding='utf-8') as f:
@@ -313,14 +312,6 @@ def load_history(file, name1, name2):
     except:
         shared.history['internal'] = tokenize_dialogue(file, name1, name2)
         shared.history['visible'] = copy.deepcopy(shared.history['internal'])
-
-def load_default_history(name1, name2):
-    shared.character = 'None'
-    if Path('logs/persistent.json').exists():
-        load_history(open(Path('logs/persistent.json'), 'rb').read(), name1, name2)
-    else:
-        shared.history['internal'] = []
-        shared.history['visible'] = []
 
 def replace_character_names(text, name1, name2):
     text = text.replace('{{user}}', name1).replace('{{char}}', name2)
@@ -382,6 +373,9 @@ def load_character(character, name1, name2):
         return name1, name2, greeting, context, generate_chat_html(shared.history['visible'], name1, name2, shared.character)
     else:
         return name1, name2, greeting, context, shared.history['visible']
+
+def load_default_history(name1, name2):
+    load_character("None", name1, name2)
 
 def upload_character(json_file, img, tavern=False):
     json_file = json_file if type(json_file) == str else json_file.decode('utf-8')
