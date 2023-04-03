@@ -349,11 +349,12 @@ def load_character(_character, name1, name2):
     if _character != 'None':
         shared.character = _character
 
-        for extension in  ["yml", "yaml", "json"]:
+        for extension in ["yml", "yaml", "json"]:
             filepath = Path(f'characters/{_character}.{extension}')
             if filepath.exists():
                 break
-        data = yaml.safe_load(open(filepath, 'r', encoding='utf-8').read())
+        file_contents = open(filepath, 'r', encoding='utf-8').read()
+        data = json.loads(file_contents) if extension == "json" else yaml.safe_load(file_contents)
 
         name2 = data['name'] if 'name' in data else data['char_name']
         for field in ['context', 'greeting', 'example_dialogue', 'char_persona', 'char_greeting', 'world_scenario']:
