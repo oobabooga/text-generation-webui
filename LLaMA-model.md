@@ -83,11 +83,11 @@ For regular 16-bit/8-bit inference.
 
 ### Getting the weights
 
-Option 1: easy way
+#### Option 1: easy way
 
 https://github.com/oobabooga/text-generation-webui/pull/530#issuecomment-1484235789
 
-Option 2: convert the weights yourself
+#### Option 2: convert the weights yourself
 
 1. Use the script below to convert the model in `.pth` format that you, a fellow academic, downloaded using Meta's official link:
 
