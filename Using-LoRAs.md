@@ -54,7 +54,7 @@ print(f"Predicted {len(output)} tokens for '{sentence}':\n{output}")
 
 The Training tab in the interface can be used to train a LoRA. The parameters are self-documenting and good defaults are included.
 
-This was contributed by [mcmonkey4eva](https://github.com/mcmonkey4eva) in this PR: [#570](https://github.com/oobabooga/text-generation-webui/pull/570).
+This was contributed by [mcmonkey4eva](https://github.com/mcmonkey4eva) in PR [#570](https://github.com/oobabooga/text-generation-webui/pull/570).
 
 
 #### Using the original alpaca-lora code
