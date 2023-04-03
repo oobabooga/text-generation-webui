@@ -1,4 +1,4 @@
-Custom chat mode characters are defined by `.yaml` files inside the `characters` folder.
+Custom chat mode characters are defined by `.yaml` files inside the `characters` folder. An example is included: [Example.yaml](https://github.com/oobabooga/text-generation-webui/blob/main/characters/Example.yaml)
 
 The following fields may be defined:
 
@@ -9,7 +9,12 @@ The following fields may be defined:
 | `greeting` (optional) | The character's opening message when a new conversation is started. |
 | `example_dialogue` (optional) | A few example messages to guide the model. |
 
-An example is included: [Example.yaml](https://github.com/oobabooga/text-generation-webui/blob/main/characters/Example.yaml)
+#### Special tokens
+
+* `{{char}}` or `<BOT>`: are replaced with the character's name
+* `{{user}}` or `<USER>`: are replaced with your name
+
+These replacements happen when the character is loaded, and they apply to the `context`, `greeting`, and `example_dialogue` fields.
 
 #### How do I add a profile picture for my character?
 
