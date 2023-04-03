@@ -86,7 +86,10 @@ def remove_surrounded_chars(string):
 
 def triggers_are_in(string):
     string = remove_surrounded_chars(string)
-    return bool(re.search('(?aims)(send|mail|message|me)\\b.+?\\b(image|pic(ture)?|photo|snap(shot)?|selfie|meme)s?\\b', string))
+    # regex searches for send|main|message|me (at the end of the word) followed by
+    # a whole word of image|pic|picture|photo|snap|snapshot|selfie|meme(s),
+    # (?aims) are regex parser flags
+    return bool(re.search('(?aims)(send|mail|message|me)\\b.+?\\b(image|pic(ture)?|photo|snap(shot)?|selfie|meme)s?\\b', string)) 
 
 def input_modifier(string):
     """
@@ -101,7 +104,7 @@ def input_modifier(string):
         toggle_generation(True)
         string = string.lower()
         if "of" in string:
-            subject = string.split('of', 1)[1]
+            subject = string.split('of', 1)[1] # subdivide the string once by the first 'of' instance and get what's coming after it
             string = "Please provide a detailed and vivid description of " + subject
         else:
             string = "Please provide a detailed description of your appearance, your surroundings and what you are doing right now"
@@ -205,9 +208,6 @@ def toggle_generation(*args):
 
     shared.args.no_stream = True if picture_response else streaming_state # Disable streaming cause otherwise the SD-generated picture would return as a dud
     shared.processing_message = "*Is sending a picture...*" if picture_response else "*Is typing...*"
-    btn_text = "Suppress the picture response" if picture_response else "Force the picture response"
-    
-    return btn_text
 
 def filter_address(address):
     address = address.strip()
@@ -240,13 +240,14 @@ def ui():
     # gr.Markdown('### Stable Diffusion API Pictures') # Currently the name of extension is shown as the title
     with gr.Accordion("Parameters", open=True):
         with gr.Row():
-            address = gr.Textbox(placeholder=params['address'], value=params['address'], label='Automatic1111\'s WebUI address')
-            mode = gr.Dropdown(["Manual", "Immersive \ Interactive", "Picturebook \ Adventure"], value="Manual", label="Mode of operation", type="index")
-            with gr.Column():
+            address = gr.Textbox(placeholder=params['address'], value=params['address'], label='Auto1111\'s WebUI address')
+            mode = gr.Dropdown(["Manual", "Immersive/Interactive", "Picturebook/Adventure"], value="Manual", label="Mode of operation", type="index")
+            with gr.Column(scale=1, min_width=300):
                 manage_VRAM = gr.Checkbox(value=params['manage_VRAM'], label='Manage VRAM')
                 save_img = gr.Checkbox(value=params['save_img'], label='Keep original images and use them in chat')
 
-            toggle_gen = gr.Button("Force (Suppress) the picture response")
+            force_pic = gr.Button("Force the picture response")
+            suppr_pic = gr.Button("Suppress the picture response")
 
         with gr.Accordion("Generation parameters", open=False):
             prompt_prefix = gr.Textbox(placeholder=params['prompt_prefix'], value=params['prompt_prefix'], label='Prompt Prefix (best used to describe the look of the character)')
@@ -265,7 +266,7 @@ def ui():
     # Event functions to update the parameters in the backend
     address.change(lambda x: params.update({"address": filter_address(x)}), address, None)
     mode.select(lambda x: params.update({"mode": x }), mode, None)
-    mode.select(lambda x: toggle_generation(x>1), inputs=mode, outputs=toggle_gen)
+    mode.select(lambda x: toggle_generation(x>1), inputs=mode, outputs=None)
     manage_VRAM.change(lambda x: params.update({"manage_VRAM": x}), manage_VRAM, None)
     manage_VRAM.change(lambda x: give_VRAM_priority('set' if x else 'reset'), inputs=manage_VRAM, outputs=None)
     save_img.change(lambda x: params.update({"save_img": x}), save_img, None)
@@ -281,4 +282,5 @@ def ui():
     seed.change(lambda x: params.update({"seed": x}), seed, None)
     cfg_scale.change(lambda x: params.update({"cfg_scale": x}), cfg_scale, None)
 
-    toggle_gen.click(fn=toggle_generation, inputs=None, outputs=toggle_gen)
+    force_pic.click(lambda x: toggle_generation(True), inputs=force_pic, outputs=None)
+    suppr_pic.click(lambda x: toggle_generation(False), inputs=suppr_pic, outputs=None)
