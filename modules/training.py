@@ -20,7 +20,7 @@ MAX_STEPS = 0
 CURRENT_GRADIENT_ACCUM = 1
 
 def get_dataset(path: str, ext: str):
-    return ['None'] + sorted(set(map(lambda x : '.'.join(str(x.name).split('.')[:-1]), Path(path).glob(f'*.{ext}'))), key=str.lower)
+    return ['None'] + sorted(set((k.stem for k in Path(path).glob(f'*.{ext}'))), key=str.lower)
 
 def create_train_interface():
     with gr.Tab('Train LoRA', elem_id='lora-train-tab'):
@@ -104,7 +104,7 @@ def do_train(lora_name: str, micro_batch_size: int, batch_size: int, epochs: int
     actual_lr = float(learning_rate)
 
     if cutoff_len <= 0 or micro_batch_size <= 0 or batch_size <= 0 or actual_lr <= 0 or lora_rank <= 0 or lora_alpha <= 0:
-        yield f"Cannot input zeroes."
+        yield "Cannot input zeroes."
         return
 
     gradient_accumulation_steps = batch_size // micro_batch_size
