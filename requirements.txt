@@ -2,7 +2,7 @@ accelerate==0.18.0
 bitsandbytes==0.37.2
 datasets
 flexgen==0.1.7
-gradio==3.24.0
+gradio==3.24.1
 llamacpp==0.1.11
 markdown
 numpy
