@@ -317,7 +317,7 @@ def create_interface():
 
             with gr.Tab("Character", elem_id="chat-settings"):
                 shared.gradio['name1'] = gr.Textbox(value=shared.settings['name1'], lines=1, label='Your name')
-                shared.gradio['name2'] = gr.Textbox(value=shared.settings['name2'], lines=1, label='Character''s name')
+                shared.gradio['name2'] = gr.Textbox(value=shared.settings['name2'], lines=1, label='Character\'s name')
                 shared.gradio['greeting'] = gr.Textbox(value=shared.settings['greeting'], lines=2, label='Greeting')
                 shared.gradio['context'] = gr.Textbox(value=shared.settings['context'], lines=8, label='Context')
                 with gr.Row():
