@@ -212,7 +212,7 @@ Optionally, you can use the following command-line flags:
 | `--wbits WBITS`            | GPTQ: Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported. |
 | `--model_type MODEL_TYPE`  | GPTQ: Model type of pre-quantized model. Currently LLaMA, OPT, and GPT-J are supported. |
 | `--groupsize GROUPSIZE`    | GPTQ: Group size. |
-| `--pre_layer PRE_LAYER`    | GPTQ: The number of layers to preload. |
+| `--pre_layer PRE_LAYER`    | GPTQ: The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models. |
 
 #### FlexGen
 
