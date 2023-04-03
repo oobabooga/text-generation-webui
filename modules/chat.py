@@ -336,13 +336,12 @@ def build_pygmalion_style_context(data):
     return context
 
 def load_character(character, name1, name2):
+    shared.character = character
     shared.history['internal'] = []
     shared.history['visible'] = []
     greeting = ""
 
     if character != 'None':
-        shared.character = character
-
         for extension in  ["yml", "yaml", "json"]:
             filepath = Path(f'characters/{character}.{extension}')
             if filepath.exists():
@@ -369,7 +368,6 @@ def load_character(character, name1, name2):
         if greeting_field in data and len(data[greeting_field].strip()) > 0:
             greeting = data[greeting_field]  
     else:
-        shared.character = 'None'
         context = shared.settings['context']
         name2 = shared.settings['name2']
         greeting = shared.settings['greeting'] 
