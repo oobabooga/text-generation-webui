@@ -1,4 +1,3 @@
-import re
 import time
 from pathlib import Path
 
@@ -6,6 +5,8 @@ import gradio as gr
 import modules.chat as chat
 import modules.shared as shared
 import torch
+
+from extensions.silero_tts import tts_preprocessor
 
 torch._C._jit_set_profiling_mode(False)
 
@@ -45,11 +46,6 @@ def load_model():
     model.to(params['device'])
     return model
 model = load_model()
-
-def remove_surrounded_chars(string):
-    # this expression matches to 'as few symbols as possible (0 upwards) between any asterisks' OR
-    # 'as few symbols as possible (0 upwards) between an asterisk and the end of the string'
-    return re.sub('\*[^\*]*?(\*|$)','',string)
 
 def remove_tts_from_history(name1, name2):
     for i, entry in enumerate(shared.history['internal']):
@@ -98,11 +94,7 @@ def output_modifier(string):
         return string
 
     original_string = string
-    string = remove_surrounded_chars(string)
-    string = string.replace('"', '')
-    string = string.replace('“', '')
-    string = string.replace('\n', ' ')
-    string = string.strip()
+    string = tts_preprocessor.preprocess(string)
 
     if string == '':
         string = '*Empty reply, try regenerating*'
