@@ -7,6 +7,7 @@ lora_name = "None"
 soft_prompt_tensor = None
 soft_prompt = False
 is_RWKV = False
+is_llamacpp = False
 
 # Chat variables
 history = {'internal': [], 'visible': []}
@@ -31,6 +32,7 @@ settings = {
     'name1': 'You',
     'name2': 'Assistant',
     'context': 'This is a conversation with your Assistant. The Assistant is very helpful and is eager to chat with you and answer your questions.',
+    'greeting': 'Hello there!',
     'stop_at_newline': False,
     'chat_prompt_size': 2048,
     'chat_prompt_size_min': 0,
@@ -85,8 +87,8 @@ parser.add_argument('--verbose', action='store_true', help='Print the prompts to
 # Accelerate/transformers
 parser.add_argument('--cpu', action='store_true', help='Use the CPU to generate text.')
 parser.add_argument('--auto-devices', action='store_true', help='Automatically split the model across the available GPU(s) and CPU.')
-parser.add_argument('--gpu-memory', type=str, nargs="+", help='Maxmimum GPU memory in GiB to be allocated per GPU. Example: --gpu-memory 10 for a single GPU, --gpu-memory 10 5 for two GPUs.')
-parser.add_argument('--cpu-memory', type=str, help='Maximum CPU memory in GiB to allocate for offloaded weights. Must be an integer number. Defaults to 99.')
+parser.add_argument('--gpu-memory', type=str, nargs="+", help='Maxmimum GPU memory in GiB to be allocated per GPU. Example: --gpu-memory 10 for a single GPU, --gpu-memory 10 5 for two GPUs. You can also set values in MiB like --gpu-memory 3500MiB.')
+parser.add_argument('--cpu-memory', type=str, help='Maximum CPU memory in GiB to allocate for offloaded weights. Same as above.')
 parser.add_argument('--disk', action='store_true', help='If the model is too large for your GPU(s) and CPU combined, send the remaining layers to the disk.')
 parser.add_argument('--disk-cache-dir', type=str, default="cache", help='Directory to save the disk cache to. Defaults to "cache".')
 parser.add_argument('--load-in-8bit', action='store_true', help='Load the model with 8-bit precision.')
@@ -100,7 +102,7 @@ parser.add_argument('--threads', type=int, default=0, help='Number of threads to
 parser.add_argument('--wbits', type=int, default=0, help='GPTQ: Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported.')
 parser.add_argument('--model_type', type=str, help='GPTQ: Model type of pre-quantized model. Currently LLaMA, OPT, and GPT-J are supported.')
 parser.add_argument('--groupsize', type=int, default=-1, help='GPTQ: Group size.')
-parser.add_argument('--pre_layer', type=int, default=0, help='GPTQ: The number of layers to preload.')
+parser.add_argument('--pre_layer', type=int, default=0, help='GPTQ: The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models.')
 parser.add_argument('--gptq-bits', type=int, default=0, help='DEPRECATED: use --wbits instead.')
 parser.add_argument('--gptq-model-type', type=str, help='DEPRECATED: use --model_type instead.')
 parser.add_argument('--gptq-pre-layer', type=int, default=0, help='DEPRECATED: use --pre_layer instead.')
@@ -129,10 +131,12 @@ parser.add_argument("--gradio-auth-path", type=str, help='Set the gradio authent
 
 args = parser.parse_args()
 
-
 # Provisional, this will be deleted later
 deprecated_dict = {'gptq_bits': ['wbits', 0], 'gptq_model_type': ['model_type', None], 'gptq_pre_layer': ['prelayer', 0]}
 for k in deprecated_dict:
     if eval(f"args.{k}") != deprecated_dict[k][1]:
         print(f"Warning: --{k} is deprecated and will be removed. Use --{deprecated_dict[k][0]} instead.")
         exec(f"args.{deprecated_dict[k][0]} = args.{k}")
+
+def is_chat():
+    return any((args.chat, args.cai_chat))
