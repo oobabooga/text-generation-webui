@@ -35,7 +35,7 @@ def generate_chat_prompt(user_input, max_new_tokens, name1, name2, context, chat
     while i >= 0 and len(encode(''.join(rows), max_new_tokens)[0]) < max_length:
         rows.insert(1, f"{name2}: {shared.history['internal'][i][1].strip()}\n")
         prev_user_input = shared.history['internal'][i][0]
-        if len(prev_user_input) > 0 and prev_user_input != '<|BEGIN-VISIBLE-CHAT|>':
+        if prev_user_input not in ['', '<|BEGIN-VISIBLE-CHAT|>']:
             rows.insert(1, f"{name1}: {prev_user_input.strip()}\n")
         i -= 1
 
@@ -198,7 +198,7 @@ def regenerate_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typi
             yield generate_chat_output(shared.history['visible'], name1, name2, shared.character)
 
 def remove_last_message(name1, name2):
-    if len(shared.history['visible']) > 0 and not shared.history['internal'][-1][0] == '<|BEGIN-VISIBLE-CHAT|>':
+    if len(shared.history['visible']) > 0 and shared.history['internal'][-1][0] != '<|BEGIN-VISIBLE-CHAT|>':
         last = shared.history['visible'].pop()
         shared.history['internal'].pop()
     else:
@@ -229,20 +229,12 @@ def clear_html():
     return generate_chat_html([], "", "", shared.character)
 
 def clear_chat_log(name1, name2, greeting):
-    if shared.character != 'None':
-        found = False
-        for i in range(len(shared.history['internal'])):
-            if '<|BEGIN-VISIBLE-CHAT|>' in shared.history['internal'][i][0]:
-                shared.history['visible'] =  [['', apply_extensions(greeting, "output")]]
-                shared.history['internal'] = [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
-                found = True
-                break
-        if not found:
-            shared.history['visible'] = []
-            shared.history['internal'] = []
-    else:
-        shared.history['internal'] = []
-        shared.history['visible'] = []
+    shared.history['visible'] = []
+    shared.history['internal'] = []
+
+    if greeting != '':
+        shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
+        shared.history['visible'] += [['', apply_extensions(greeting, "output")]]
 
     return generate_chat_output(shared.history['visible'], name1, name2, shared.character)
 
