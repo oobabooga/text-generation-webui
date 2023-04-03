@@ -228,13 +228,13 @@ def replace_last_reply(text, name1, name2):
 def clear_html():
     return generate_chat_html([], "", "", shared.character)
 
-def clear_chat_log(name1, name2):
+def clear_chat_log(name1, name2, greeting):
     if shared.character != 'None':
         found = False
         for i in range(len(shared.history['internal'])):
             if '<|BEGIN-VISIBLE-CHAT|>' in shared.history['internal'][i][0]:
-                shared.history['visible'] = [['', apply_extensions(shared.history['internal'][i][1], "output")]]
-                shared.history['internal'] = [shared.history['internal'][i]]
+                shared.history['visible'] =  [['', apply_extensions(greeting, "output")]]
+                shared.history['internal'] = [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
                 found = True
                 break
         if not found:
@@ -343,7 +343,7 @@ def build_pygmalion_style_context(data):
     context = f"{context.strip()}\n<START>\n"
     return context
 
-def load_character(_character, name1, name2):
+def load_character(_character, name1, name2, greeting):
     shared.history['internal'] = []
     shared.history['visible'] = []
     if _character != 'None':
@@ -355,7 +355,10 @@ def load_character(_character, name1, name2):
                 break
         data = yaml.safe_load(open(filepath, 'r', encoding='utf-8').read())
 
+        if 'your_name' in data and data['your_name'] != '':
+            name1 = data['your_name']
         name2 = data['name'] if 'name' in data else data['char_name']
+
         for field in ['context', 'greeting', 'example_dialogue', 'char_persona', 'char_greeting', 'world_scenario']:
             if field in data:
                 data[field] = replace_character_names(data[field], name1, name2)
@@ -369,21 +372,27 @@ def load_character(_character, name1, name2):
 
         if 'example_dialogue' in data and data['example_dialogue'] != '':
             context += f"{data['example_dialogue'].strip()}\n"
+
         if greeting_field in data and len(data[greeting_field].strip()) > 0:
+            greeting=data['char_greeting']  
             shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', data[greeting_field]]]
             shared.history['visible'] += [['', apply_extensions(data[greeting_field], "output")]]
+        else:
+            greeting=""
+
     else:
         shared.character = 'None'
         context = shared.settings['context']
         name2 = shared.settings['name2']
+        greeting = shared.settings['greeting'] 
 
     if Path(f'logs/{shared.character}_persistent.json').exists():
         load_history(open(Path(f'logs/{shared.character}_persistent.json'), 'rb').read(), name1, name2)
 
     if shared.args.cai_chat:
-        return name2, context, generate_chat_html(shared.history['visible'], name1, name2, shared.character)
+        return name1, name2, greeting, context, generate_chat_html(shared.history['visible'], name1, name2, shared.character)
     else:
-        return name2, context, shared.history['visible']
+        return name1, name2, greeting, context, shared.history['visible']
 
 def upload_character(json_file, img, tavern=False):
     json_file = json_file if type(json_file) == str else json_file.decode('utf-8')
