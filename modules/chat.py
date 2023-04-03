@@ -179,8 +179,8 @@ def impersonate_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typ
     yield reply
 
 def cai_chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, name1, name2, context, stop_at_newline, chat_prompt_size, chat_generation_attempts=1):
-    for _history in chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, name1, name2, context, stop_at_newline, chat_prompt_size, chat_generation_attempts):
-        yield generate_chat_html(_history, name1, name2, shared.character)
+    for history in chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, name1, name2, context, stop_at_newline, chat_prompt_size, chat_generation_attempts):
+        yield generate_chat_html(history, name1, name2, shared.character)
 
 def regenerate_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, name1, name2, context, stop_at_newline, chat_prompt_size, chat_generation_attempts=1):
     if (shared.character != 'None' and len(shared.history['visible']) == 1) or len(shared.history['internal']) == 0:
@@ -190,11 +190,11 @@ def regenerate_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typi
         last_internal = shared.history['internal'].pop()
         # Yield '*Is typing...*'
         yield generate_chat_output(shared.history['visible']+[[last_visible[0], shared.processing_message]], name1, name2, shared.character)
-        for _history in chatbot_wrapper(last_internal[0], max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, name1, name2, context, stop_at_newline, chat_prompt_size, chat_generation_attempts, regenerate=True):
+        for history in chatbot_wrapper(last_internal[0], max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, name1, name2, context, stop_at_newline, chat_prompt_size, chat_generation_attempts, regenerate=True):
             if shared.args.cai_chat:
-                shared.history['visible'][-1] = [last_visible[0], _history[-1][1]]
+                shared.history['visible'][-1] = [last_visible[0], history[-1][1]]
             else:
-                shared.history['visible'][-1] = (last_visible[0], _history[-1][1])
+                shared.history['visible'][-1] = (last_visible[0], history[-1][1])
             yield generate_chat_output(shared.history['visible'], name1, name2, shared.character)
 
 def remove_last_message(name1, name2):
@@ -250,7 +250,7 @@ def redraw_html(name1, name2):
     return generate_chat_html(shared.history['visible'], name1, name2, shared.character)
 
 def tokenize_dialogue(dialogue, name1, name2):
-    _history = []
+    history = []
 
     dialogue = re.sub('<START>', '', dialogue)
     dialogue = re.sub('<start>', '', dialogue)
@@ -258,7 +258,7 @@ def tokenize_dialogue(dialogue, name1, name2):
     dialogue = re.sub('(\n|^)\[CHARACTER\]:', f'\\g<1>{name2}:', dialogue)
     idx = [m.start() for m in re.finditer(f"(^|\n)({re.escape(name1)}|{re.escape(name2)}):", dialogue)]
     if len(idx) == 0:
-        return _history
+        return history
 
     messages = []
     for i in range(len(idx)-1):
@@ -272,11 +272,11 @@ def tokenize_dialogue(dialogue, name1, name2):
         elif i.startswith(f'{name2}:'):
             entry[1] = i[len(f'{name2}:'):].strip()
             if not (len(entry[0]) == 0 and len(entry[1]) == 0):
-                _history.append(entry)
+                history.append(entry)
             entry = ['', '']
 
     print("\033[1;32;1m\nDialogue tokenized to:\033[0;37;0m\n", end='')
-    for row in _history:
+    for row in history:
         for column in row:
             print("\n")
             for line in column.strip().split('\n'):
@@ -284,7 +284,7 @@ def tokenize_dialogue(dialogue, name1, name2):
             print("|\n")
         print("------------------------------")
 
-    return _history
+    return history
 
 def save_history(timestamp=True):
     prefix = '' if shared.character == 'None' else f"{shared.character}_"
