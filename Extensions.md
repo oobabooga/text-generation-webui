@@ -27,6 +27,8 @@ command-line flag.
 |[whisper_stt](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/whisper_stt)| Allows you to enter your inputs in chat mode using your microphone. Author: [@EliasVincent](https://github.com/EliasVincent).|
 |[sd_api_pictures](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/sd_api_pictures)| Allows you to request pictures from the bot in chat mode, which will be generated using the AUTOMATIC1111 Stable Diffusion API. See examples [here](https://github.com/oobabooga/text-generation-webui/pull/309). Author: [@Brawlence](https://github.com/Brawlence).|
 |[long_term_memory](https://github.com/wawawario2/long_term_memory) | A sophisticated extension that creates a long term memory for bots in chat mode. Author: [@wawawario2](https://github.com/wawawario2). |
+|[complex_memory](https://github.com/theubie/complex_memory) | A KoboldAI-like memory extension. You create memories that are injected into the context of the conversation, for prompting based on keywords. Author: [@theubie](https://github.com/theubie). |
+
 
 ## How to write an extension
 
