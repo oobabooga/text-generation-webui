@@ -335,14 +335,16 @@ def build_pygmalion_style_context(data):
     context = f"{context.strip()}\n<START>\n"
     return context
 
-def load_character(_character, name1, name2, greeting):
+def load_character(character, name1, name2):
     shared.history['internal'] = []
     shared.history['visible'] = []
-    if _character != 'None':
-        shared.character = _character
+    greeting = ""
+
+    if character != 'None':
+        shared.character = character
 
         for extension in  ["yml", "yaml", "json"]:
-            filepath = Path(f'characters/{_character}.{extension}')
+            filepath = Path(f'characters/{character}.{extension}')
             if filepath.exists():
                 break
         data = yaml.safe_load(open(filepath, 'r', encoding='utf-8').read())
@@ -366,10 +368,6 @@ def load_character(_character, name1, name2, greeting):
             context += f"{data['example_dialogue'].strip()}\n"
         if greeting_field in data and len(data[greeting_field].strip()) > 0:
             greeting = data[greeting_field]  
-            shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', data[greeting_field]]]
-            shared.history['visible'] += [['', apply_extensions(data[greeting_field], "output")]]
-        else:
-            greeting = ""
     else:
         shared.character = 'None'
         context = shared.settings['context']
@@ -378,6 +376,9 @@ def load_character(_character, name1, name2, greeting):
 
     if Path(f'logs/{shared.character}_persistent.json').exists():
         load_history(open(Path(f'logs/{shared.character}_persistent.json'), 'rb').read(), name1, name2)
+    elif greeting != "":
+        shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
+        shared.history['visible'] += [['', apply_extensions(greeting, "output")]]
 
     if shared.args.cai_chat:
         return name1, name2, greeting, context, generate_chat_html(shared.history['visible'], name1, name2, shared.character)
