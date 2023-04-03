@@ -5,9 +5,9 @@ The following fields may be defined:
 | Field | Description |
 |-------|-------------|
 | `name` | The character's name. |
-| `context` | A string that appears at the top of the prompt. Usually contains a description of the character's personality. |
+| `context` | A string that appears at the top of the prompt. It usually contains a description of the character's personality. |
 | `greeting` (optional) | The character's opening message when a new conversation is started. |
-| `example_dialogue` (optional) | A few example messages to orient the model towards the desired reply format. |
+| `example_dialogue` (optional) | A few example messages to guide the model. |
 
 An example is included: [Example.yaml](https://github.com/oobabooga/text-generation-webui/blob/main/characters/Example.yaml)
 
