@@ -370,7 +370,6 @@ def load_character(_character, name1, name2, greeting):
             shared.history['visible'] += [['', apply_extensions(data[greeting_field], "output")]]
         else:
             greeting = ""
-
     else:
         shared.character = 'None'
         context = shared.settings['context']
