@@ -16,7 +16,7 @@ GPTQ is a clever quantization algorithm that lightly reoptimizes the weights dur
 
 ### Installation
 
-Step 0: install nvcc
+#### Step 0: install nvcc
 
 ```
 conda activate textgen
@@ -27,7 +27,7 @@ The command above takes some 10 minutes to run and shows no progress bar or upda
 
 See this issue for more details: https://github.com/oobabooga/text-generation-webui/issues/416#issuecomment-1475078571
 
-Step 1: install GPTQ-for-LLaMa
+#### Step 1: install GPTQ-for-LLaMa
 
 Clone [GPTQ-for-LLaMa](https://github.com/qwopqwop200/GPTQ-for-LLaMa) into the `text-generation-webui/repositories` subfolder and install it:
 
@@ -43,12 +43,12 @@ You are going to need to have a C++ compiler installed into your system for the 
 
 **Note**: I am using my own fork of GPTQ-for-LLaMa until qwopqwop200's branch becomes more stable. It corresponds to commit `a6f363e3f93b9fb5c26064b5ac7ed58d22e3f773` in the `cuda` branch of his repository.
 
-Step 2: get the pre-converted weights
+#### Step 2: get the pre-converted weights
 
 * Converted without `group-size` (better for the 7b model): https://github.com/oobabooga/text-generation-webui/pull/530#issuecomment-1483891617
 * Converted with `group-size` (better from 13b upwards): https://github.com/oobabooga/text-generation-webui/pull/530#issuecomment-1483941105 
 
-Step 3: Start the web UI:
+#### Step 3: Start the web UI:
 
 For the models converted without `group-size`:
 
