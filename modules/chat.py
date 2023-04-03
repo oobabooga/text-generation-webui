@@ -35,7 +35,7 @@ def generate_chat_prompt(user_input, max_new_tokens, name1, name2, context, chat
     while i >= 0 and len(encode(''.join(rows), max_new_tokens)[0]) < max_length:
         rows.insert(1, f"{name2}: {shared.history['internal'][i][1].strip()}\n")
         prev_user_input = shared.history['internal'][i][0]
-        if len(prev_user_input) > 0 and prev_user_input != '<|BEGIN-VISIBLE-CHAT|>':
+        if prev_user_input not in ['', '<|BEGIN-VISIBLE-CHAT|>']:
             rows.insert(1, f"{name1}: {prev_user_input.strip()}\n")
         i -= 1
 
@@ -198,7 +198,7 @@ def regenerate_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typi
             yield generate_chat_output(shared.history['visible'], name1, name2, shared.character)
 
 def remove_last_message(name1, name2):
-    if len(shared.history['visible']) > 0 and not shared.history['internal'][-1][0] == '<|BEGIN-VISIBLE-CHAT|>':
+    if len(shared.history['visible']) > 0 and shared.history['internal'][-1][0] != '<|BEGIN-VISIBLE-CHAT|>':
         last = shared.history['visible'].pop()
         shared.history['internal'].pop()
     else:
@@ -228,21 +228,13 @@ def replace_last_reply(text, name1, name2):
 def clear_html():
     return generate_chat_html([], "", "", shared.character)
 
-def clear_chat_log(name1, name2):
-    if shared.character != 'None':
-        found = False
-        for i in range(len(shared.history['internal'])):
-            if '<|BEGIN-VISIBLE-CHAT|>' in shared.history['internal'][i][0]:
-                shared.history['visible'] = [['', apply_extensions(shared.history['internal'][i][1], "output")]]
-                shared.history['internal'] = [shared.history['internal'][i]]
-                found = True
-                break
-        if not found:
-            shared.history['visible'] = []
-            shared.history['internal'] = []
-    else:
-        shared.history['internal'] = []
-        shared.history['visible'] = []
+def clear_chat_log(name1, name2, greeting):
+    shared.history['visible'] = []
+    shared.history['internal'] = []
+
+    if greeting != '':
+        shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
+        shared.history['visible'] += [['', apply_extensions(greeting, "output")]]
 
     return generate_chat_output(shared.history['visible'], name1, name2, shared.character)
 
@@ -287,11 +279,10 @@ def tokenize_dialogue(dialogue, name1, name2):
     return history
 
 def save_history(timestamp=True):
-    prefix = '' if shared.character == 'None' else f"{shared.character}_"
     if timestamp:
-        fname = f"{prefix}{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
+        fname = f"{shared.character}_{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
     else:
-        fname = f"{prefix}persistent.json"
+        fname = f"{shared.character}_persistent.json"
     if not Path('logs').exists():
         Path('logs').mkdir()
     with open(Path(f'logs/{fname}'), 'w', encoding='utf-8') as f:
@@ -322,14 +313,6 @@ def load_history(file, name1, name2):
         shared.history['internal'] = tokenize_dialogue(file, name1, name2)
         shared.history['visible'] = copy.deepcopy(shared.history['internal'])
 
-def load_default_history(name1, name2):
-    shared.character = 'None'
-    if Path('logs/persistent.json').exists():
-        load_history(open(Path('logs/persistent.json'), 'rb').read(), name1, name2)
-    else:
-        shared.history['internal'] = []
-        shared.history['visible'] = []
-
 def replace_character_names(text, name1, name2):
     text = text.replace('{{user}}', name1).replace('{{char}}', name2)
     return text.replace('<USER>', name1).replace('<BOT>', name2)
@@ -343,20 +326,24 @@ def build_pygmalion_style_context(data):
     context = f"{context.strip()}\n<START>\n"
     return context
 
-def load_character(_character, name1, name2):
+def load_character(character, name1, name2):
+    shared.character = character
     shared.history['internal'] = []
     shared.history['visible'] = []
-    if _character != 'None':
-        shared.character = _character
+    greeting = ""
 
+    if character != 'None':
         for extension in ["yml", "yaml", "json"]:
-            filepath = Path(f'characters/{_character}.{extension}')
+            filepath = Path(f'characters/{character}.{extension}')
             if filepath.exists():
                 break
         file_contents = open(filepath, 'r', encoding='utf-8').read()
         data = json.loads(file_contents) if extension == "json" else yaml.safe_load(file_contents)
 
+        if 'your_name' in data and data['your_name'] != '':
+            name1 = data['your_name']
         name2 = data['name'] if 'name' in data else data['char_name']
+
         for field in ['context', 'greeting', 'example_dialogue', 'char_persona', 'char_greeting', 'world_scenario']:
             if field in data:
                 data[field] = replace_character_names(data[field], name1, name2)
@@ -371,20 +358,25 @@ def load_character(_character, name1, name2):
         if 'example_dialogue' in data and data['example_dialogue'] != '':
             context += f"{data['example_dialogue'].strip()}\n"
         if greeting_field in data and len(data[greeting_field].strip()) > 0:
-            shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', data[greeting_field]]]
-            shared.history['visible'] += [['', apply_extensions(data[greeting_field], "output")]]
+            greeting = data[greeting_field]  
     else:
-        shared.character = 'None'
         context = shared.settings['context']
         name2 = shared.settings['name2']
+        greeting = shared.settings['greeting'] 
 
     if Path(f'logs/{shared.character}_persistent.json').exists():
         load_history(open(Path(f'logs/{shared.character}_persistent.json'), 'rb').read(), name1, name2)
+    elif greeting != "":
+        shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
+        shared.history['visible'] += [['', apply_extensions(greeting, "output")]]
 
     if shared.args.cai_chat:
-        return name2, context, generate_chat_html(shared.history['visible'], name1, name2, shared.character)
+        return name1, name2, greeting, context, generate_chat_html(shared.history['visible'], name1, name2, shared.character)
     else:
-        return name2, context, shared.history['visible']
+        return name1, name2, greeting, context, shared.history['visible']
+
+def load_default_history(name1, name2):
+    load_character("None", name1, name2)
 
 def upload_character(json_file, img, tavern=False):
     json_file = json_file if type(json_file) == str else json_file.decode('utf-8')
