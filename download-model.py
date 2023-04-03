@@ -63,16 +63,17 @@ def sanitize_branch_name(branch_name):
 
 def select_model_from_default_options():
     models = {
-        "Pygmalion 6B original": ("PygmalionAI", "pygmalion-6b", "b8344bb4eb76a437797ad3b19420a13922aaabe1"),
-        "Pygmalion 6B main": ("PygmalionAI", "pygmalion-6b", "main"),
-        "Pygmalion 6B dev": ("PygmalionAI", "pygmalion-6b", "dev"),
-        "Pygmalion 2.7B": ("PygmalionAI", "pygmalion-2.7b", "main"),
-        "Pygmalion 1.3B": ("PygmalionAI", "pygmalion-1.3b", "main"),
-        "Pygmalion 350m": ("PygmalionAI", "pygmalion-350m", "main"),
-        "OPT 6.7b": ("facebook", "opt-6.7b", "main"),
-        "OPT 2.7b": ("facebook", "opt-2.7b", "main"),
-        "OPT 1.3b": ("facebook", "opt-1.3b", "main"),
-        "OPT 350m": ("facebook", "opt-350m", "main"),
+        "OPT 6.7B": ("facebook", "opt-6.7b", "main"),
+        "OPT 2.7B": ("facebook", "opt-2.7b", "main"),
+        "OPT 1.3B": ("facebook", "opt-1.3b", "main"),
+        "OPT 350M": ("facebook", "opt-350m", "main"),
+        "GALACTICA 6.7B": ("facebook", "galactica-6.7b", "main"),
+        "GALACTICA 1.3B": ("facebook", "galactica-1.3b", "main"),
+        "GALACTICA 125M": ("facebook", "galactica-125m", "main"),
+        "Pythia-6.9B-deduped": ("EleutherAI", "pythia-6.9b-deduped", "main"),
+        "Pythia-2.8B-deduped": ("EleutherAI", "pythia-2.8b-deduped", "main"),
+        "Pythia-1.4B-deduped": ("EleutherAI", "pythia-1.4b-deduped", "main"),
+        "Pythia-410M-deduped": ("EleutherAI", "pythia-410m-deduped", "main"),
     }
     choices = {}
 
@@ -91,8 +92,8 @@ def select_model_from_default_options():
         print("""\nThen type the name of your desired Hugging Face model in the format organization/name.
 
 Examples:
-PygmalionAI/pygmalion-6b
 facebook/opt-1.3b
+EleutherAI/pythia-1.4b-deduped
 """)
 
         print("Input> ", end='')
