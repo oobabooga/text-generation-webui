@@ -334,7 +334,7 @@ def load_character(character, name1, name2):
 
     if character != 'None':
         for extension in ["yml", "yaml", "json"]:
-            filepath = Path(f'characters/{_character}.{extension}')
+            filepath = Path(f'characters/{character}.{extension}')
             if filepath.exists():
                 break
         file_contents = open(filepath, 'r', encoding='utf-8').read()
