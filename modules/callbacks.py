@@ -12,7 +12,7 @@ import modules.shared as shared
 # Copied from https://github.com/PygmalionAI/gradio-ui/
 class _SentinelTokenStoppingCriteria(transformers.StoppingCriteria):
 
-    def __init__(self, sentinel_token_ids: list[torch.LongTensor], starting_idx: int):
+    def __init__(self, sentinel_token_ids: list, starting_idx: int):
         transformers.StoppingCriteria.__init__(self)
         self.sentinel_token_ids = sentinel_token_ids
         self.starting_idx = starting_idx

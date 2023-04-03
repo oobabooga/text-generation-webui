@@ -6,6 +6,7 @@ import re
 from datetime import datetime
 from pathlib import Path
 
+import yaml
 from PIL import Image
 
 import modules.extensions as extensions_module
@@ -22,7 +23,7 @@ def generate_chat_output(history, name1, name2, character):
     else:
         return history
 
-def generate_chat_prompt(user_input, max_new_tokens, name1, name2, context, chat_prompt_size, impersonate=False):
+def generate_chat_prompt(user_input, max_new_tokens, name1, name2, context, chat_prompt_size, impersonate=False, also_return_rows=False):
     user_input = fix_newlines(user_input)
     rows = [f"{context.strip()}\n"]
 
@@ -51,7 +52,11 @@ def generate_chat_prompt(user_input, max_new_tokens, name1, name2, context, chat
         rows.pop(1)
 
     prompt = ''.join(rows)
-    return prompt
+
+    if also_return_rows:
+        return prompt, rows
+    else:
+        return prompt
 
 def extract_message_from_reply(reply, name1, name2, check):
     next_character_found = False
@@ -115,6 +120,7 @@ def chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical
     # Generate
     cumulative_reply = ''
     for i in range(chat_generation_attempts):
+        reply = None
         for reply in generate_reply(f"{prompt}{' ' if len(cumulative_reply) > 0 else ''}{cumulative_reply}", max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, eos_token=eos_token, stopping_strings=[f"\n{name1}:", f"\n{name2}:"]):
             reply = cumulative_reply + reply
 
@@ -141,7 +147,8 @@ def chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical
             if next_character_found:
                 break
 
-        cumulative_reply = reply
+        if reply is not None:
+            cumulative_reply = reply
 
     yield shared.history['visible']
 
@@ -158,6 +165,7 @@ def impersonate_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typ
 
     cumulative_reply = ''
     for i in range(chat_generation_attempts):
+        reply = None
         for reply in generate_reply(f"{prompt}{' ' if len(cumulative_reply) > 0 else ''}{cumulative_reply}", max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, eos_token=eos_token, stopping_strings=[f"\n{name1}:", f"\n{name2}:"]):
             reply = cumulative_reply + reply
             reply, next_character_found = extract_message_from_reply(reply, name1, name2, check)
@@ -165,7 +173,8 @@ def impersonate_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typ
             if next_character_found:
                 break
 
-        cumulative_reply = reply
+        if reply is not None:
+            cumulative_reply = reply
 
     yield reply
 
@@ -314,46 +323,57 @@ def load_history(file, name1, name2):
         shared.history['visible'] = copy.deepcopy(shared.history['internal'])
 
 def load_default_history(name1, name2):
+    shared.character = 'None'
     if Path('logs/persistent.json').exists():
         load_history(open(Path('logs/persistent.json'), 'rb').read(), name1, name2)
     else:
         shared.history['internal'] = []
         shared.history['visible'] = []
 
-def load_character(_character, name1, name2):
+def replace_character_names(text, name1, name2):
+    text = text.replace('{{user}}', name1).replace('{{char}}', name2)
+    return text.replace('<USER>', name1).replace('<BOT>', name2)
 
-    def apply_dialogue_format(text: str):
-        text = text.replace('{{user}}', name1).replace('{{char}}', name2)
-        return text.replace('<USER>', name1).replace('<BOT>', name2)
-
+def build_pygmalion_style_context(data):
     context = ""
+    if 'char_persona' in data and data['char_persona'] != '':
+        context += f"{data['char_name']}'s Persona: {data['char_persona']}\n"
+    if 'world_scenario' in data and data['world_scenario'] != '':
+        context += f"Scenario: {data['world_scenario']}\n"
+    context = f"{context.strip()}\n<START>\n"
+    return context
+
+def load_character(_character, name1, name2):
     shared.history['internal'] = []
     shared.history['visible'] = []
     if _character != 'None':
         shared.character = _character
-        data = json.loads(open(Path(f'characters/{_character}.json'), 'r', encoding='utf-8').read())
-        name2 = data['char_name']
-        if 'char_persona' in data and data['char_persona'] != '':
-            data['char_persona'] = apply_dialogue_format(data['char_persona'])
-            context += f"{data['char_name']}'s Persona: {data['char_persona']}\n"
-        if 'world_scenario' in data and data['world_scenario'] != '':
-            data['world_scenario'] = apply_dialogue_format(data['world_scenario'])
-            context += f"Scenario: {data['world_scenario']}\n"
-        context = f"{context.strip()}\n<START>\n"
+
+        for extension in  ["yml", "yaml", "json"]:
+            filepath = Path(f'characters/{_character}.{extension}')
+            if filepath.exists():
+                break
+        data = yaml.safe_load(open(filepath, 'r', encoding='utf-8').read())
+
+        name2 = data['name'] if 'name' in data else data['char_name']
+        for field in ['context', 'greeting', 'example_dialogue', 'char_persona', 'char_greeting', 'world_scenario']:
+            if field in data:
+                data[field] = replace_character_names(data[field], name1, name2)
+
+        if 'context' in data:
+            context = f"{data['context'].strip()}\n\n"
+            greeting_field = 'greeting'
+        else:
+            context = build_pygmalion_style_context(data)
+            greeting_field = 'char_greeting'
+
         if 'example_dialogue' in data and data['example_dialogue'] != '':
             data['example_dialogue'] = apply_dialogue_format(data['example_dialogue'])
             context += f"{data['example_dialogue'].strip()}\n"
-        if 'char_greeting' in data and len(data['char_greeting'].strip()) > 0:
-            data['char_greeting'] = apply_dialogue_format(data['char_greeting'])
-            shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', data['char_greeting']]]
-            shared.history['visible'] += [['', apply_extensions(data['char_greeting'], "output")]]
-        else:
-            shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', "Hello there!"]]
-            shared.history['visible'] += [['', "Hello there!"]]
     else:
-        shared.character = None
-        context = shared.settings['context_pygmalion']
-        name2 = shared.settings['name2_pygmalion']
+        shared.character = 'None'
+        context = shared.settings['context']
+        name2 = shared.settings['name2']
 
     if Path(f'logs/{shared.character}_persistent.json').exists():
         load_history(open(Path(f'logs/{shared.character}_persistent.json'), 'rb').read(), name1, name2)

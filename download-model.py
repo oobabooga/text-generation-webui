@@ -9,6 +9,7 @@ python download-model.py facebook/opt-1.3b
 import argparse
 import base64
 import datetime
+import hashlib
 import json
 import re
 import sys
@@ -24,11 +25,28 @@ parser.add_argument('--branch', type=str, default='main', help='Name of the Git 
 parser.add_argument('--threads', type=int, default=1, help='Number of files to download simultaneously.')
 parser.add_argument('--text-only', action='store_true', help='Only download text files (txt/json).')
 parser.add_argument('--output', type=str, default=None, help='The folder where the model should be saved.')
+parser.add_argument('--clean', action='store_true', help='Does not resume the previous download.')
+parser.add_argument('--check', action='store_true', help='Validates the checksums of model files.')
 args = parser.parse_args()
 
 def get_file(url, output_folder):
-    r = requests.get(url, stream=True)
-    with open(output_folder / Path(url.rsplit('/', 1)[1]), 'wb') as f:
+    filename = Path(url.rsplit('/', 1)[1])
+    output_path = output_folder / filename
+    if output_path.exists() and not args.clean:
+        # Check if the file has already been downloaded completely
+        r = requests.get(url, stream=True)
+        total_size = int(r.headers.get('content-length', 0))
+        if output_path.stat().st_size >= total_size:
+            return
+        # Otherwise, resume the download from where it left off
+        headers = {'Range': f'bytes={output_path.stat().st_size}-'}
+        mode = 'ab'
+    else:
+        headers = {}
+        mode = 'wb'
+
+    r = requests.get(url, stream=True, headers=headers)
+    with open(output_path, mode) as f:
         total_size = int(r.headers.get('content-length', 0))
         block_size = 1024
         with tqdm.tqdm(total=total_size, unit='iB', unit_scale=True, bar_format='{l_bar}{bar}| {n_fmt:6}/{total_fmt:6} {rate_fmt:6}') as t:
@@ -45,16 +63,17 @@ def sanitize_branch_name(branch_name):
 
 def select_model_from_default_options():
     models = {
-        "Pygmalion 6B original": ("PygmalionAI", "pygmalion-6b", "b8344bb4eb76a437797ad3b19420a13922aaabe1"),
-        "Pygmalion 6B main": ("PygmalionAI", "pygmalion-6b", "main"),
-        "Pygmalion 6B dev": ("PygmalionAI", "pygmalion-6b", "dev"),
-        "Pygmalion 2.7B": ("PygmalionAI", "pygmalion-2.7b", "main"),
-        "Pygmalion 1.3B": ("PygmalionAI", "pygmalion-1.3b", "main"),
-        "Pygmalion 350m": ("PygmalionAI", "pygmalion-350m", "main"),
-        "OPT 6.7b": ("facebook", "opt-6.7b", "main"),
-        "OPT 2.7b": ("facebook", "opt-2.7b", "main"),
-        "OPT 1.3b": ("facebook", "opt-1.3b", "main"),
-        "OPT 350m": ("facebook", "opt-350m", "main"),
+        "OPT 6.7B": ("facebook", "opt-6.7b", "main"),
+        "OPT 2.7B": ("facebook", "opt-2.7b", "main"),
+        "OPT 1.3B": ("facebook", "opt-1.3b", "main"),
+        "OPT 350M": ("facebook", "opt-350m", "main"),
+        "GALACTICA 6.7B": ("facebook", "galactica-6.7b", "main"),
+        "GALACTICA 1.3B": ("facebook", "galactica-1.3b", "main"),
+        "GALACTICA 125M": ("facebook", "galactica-125m", "main"),
+        "Pythia-6.9B-deduped": ("EleutherAI", "pythia-6.9b-deduped", "main"),
+        "Pythia-2.8B-deduped": ("EleutherAI", "pythia-2.8b-deduped", "main"),
+        "Pythia-1.4B-deduped": ("EleutherAI", "pythia-1.4b-deduped", "main"),
+        "Pythia-410M-deduped": ("EleutherAI", "pythia-410m-deduped", "main"),
     }
     choices = {}
 
@@ -73,8 +92,8 @@ def select_model_from_default_options():
         print("""\nThen type the name of your desired Hugging Face model in the format organization/name.
 
 Examples:
-PygmalionAI/pygmalion-6b
 facebook/opt-1.3b
+EleutherAI/pythia-1.4b-deduped
 """)
 
         print("Input> ", end='')
@@ -97,6 +116,7 @@ def get_download_links_from_huggingface(model, branch):
     classifications = []
     has_pytorch = False
     has_pt = False
+    has_ggml = False
     has_safetensors = False
     is_lora = False
     while True:
@@ -114,6 +134,7 @@ def get_download_links_from_huggingface(model, branch):
             is_pytorch = re.match("(pytorch|adapter)_model.*\.bin", fname)
             is_safetensors = re.match(".*\.safetensors", fname)
             is_pt = re.match(".*\.pt", fname)
+            is_ggml = re.match("ggml.*\.bin", fname)
             is_tokenizer = re.match("tokenizer.*\.model", fname)
             is_text = re.match(".*\.(txt|json|py|md)", fname) or is_tokenizer
 
@@ -135,6 +156,9 @@ def get_download_links_from_huggingface(model, branch):
                     elif is_pt:
                         has_pt = True
                         classifications.append('pt')
+                    elif is_ggml:
+                        has_ggml = True
+                        classifications.append('ggml')
 
         cursor = base64.b64encode(f'{{"file_name":"{dict[-1]["path"]}"}}'.encode()) + b':50'
         cursor = base64.b64encode(cursor)
@@ -149,7 +173,7 @@ def get_download_links_from_huggingface(model, branch):
     return links, sha256, is_lora
 
 def download_files(file_list, output_folder, num_threads=8):
-    thread_map(lambda url: get_file(url, output_folder), file_list, max_workers=num_threads)
+    thread_map(lambda url: get_file(url, output_folder), file_list, max_workers=num_threads, disable=True)
 
 if __name__ == '__main__':
     model = args.MODEL
@@ -179,22 +203,48 @@ if __name__ == '__main__':
     output_folder = f"{'_'.join(model.split('/')[-2:])}"
     if branch != 'main':
         output_folder += f'_{branch}'
-
-    # Creating the folder and writing the metadata
     output_folder = Path(base_folder) / output_folder
-    if not output_folder.exists():
-        output_folder.mkdir()
-    with open(output_folder / 'huggingface-metadata.txt', 'w') as f:
-        f.write(f'url: https://huggingface.co/{model}\n')
-        f.write(f'branch: {branch}\n')
-        f.write(f'download date: {str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))}\n')
-        sha256_str = ''
-        for i in range(len(sha256)):
-            sha256_str += f'    {sha256[i][1]} {sha256[i][0]}\n'
-        if sha256_str != '':
-            f.write(f'sha256sum:\n{sha256_str}')
 
-    # Downloading the files
-    print(f"Downloading the model to {output_folder}")
-    download_files(links, output_folder, args.threads)
-    print()
+    if args.check:
+        # Validate the checksums
+        validated = True
+        for i in range(len(sha256)):
+            fpath = (output_folder / sha256[i][0])
+
+            if not fpath.exists():
+                print(f"The following file is missing: {fpath}")
+                validated = False
+                continue
+
+            with open(output_folder / sha256[i][0], "rb") as f:
+                bytes = f.read()
+                file_hash = hashlib.sha256(bytes).hexdigest()
+                if file_hash != sha256[i][1]:
+                    print(f'Checksum failed: {sha256[i][0]}  {sha256[i][1]}')
+                    validated = False
+                else:
+                    print(f'Checksum validated: {sha256[i][0]}  {sha256[i][1]}')
+        
+        if validated:
+            print('[+] Validated checksums of all model files!')
+        else:
+            print('[-] Invalid checksums. Rerun download-model.py with the --clean flag.')
+
+    else:
+
+        # Creating the folder and writing the metadata
+        if not output_folder.exists():
+            output_folder.mkdir()
+        with open(output_folder / 'huggingface-metadata.txt', 'w') as f:
+            f.write(f'url: https://huggingface.co/{model}\n')
+            f.write(f'branch: {branch}\n')
+            f.write(f'download date: {str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))}\n')
+            sha256_str = ''
+            for i in range(len(sha256)):
+                sha256_str += f'    {sha256[i][1]} {sha256[i][0]}\n'
+            if sha256_str != '':
+                f.write(f'sha256sum:\n{sha256_str}')
+
+        # Downloading the files
+        print(f"Downloading the model to {output_folder}")
+        download_files(links, output_folder, args.threads)
