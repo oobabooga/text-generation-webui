@@ -53,14 +53,17 @@ def create_train_interface():
             with gr.Row():
                 raw_text_file = gr.Dropdown(choices=get_dataset('training/datasets', 'txt'), value='None', label='Text File', info='The raw text file to use for training.')
                 ui.create_refresh_button(raw_text_file, lambda : None, lambda : {'choices': get_dataset('training/datasets', 'txt')}, 'refresh-button')
-                overlap_len = gr.Slider(label='Overlap Length', minimum=0,maximum=512, value=128, step=16, info='Overlap length - ie how many tokens from the prior chunk of text to include into the next chunk. (The chunks themselves will be of a size determined by Cutoff Length above). Setting overlap to exactly half the cutoff length may be ideal.')
+            with gr.Row():
+                overlap_len = gr.Slider(label='Overlap Length', minimum=0, maximum=512, value=128, step=16, info='Overlap length - ie how many tokens from the prior chunk of text to include into the next chunk. (The chunks themselves will be of a size determined by Cutoff Length above). Setting overlap to exactly half the cutoff length may be ideal.')
+                newline_favor_len = gr.Slider(label='Prefer Newline Cut Length', minimum=0, maximum=512, value=128, step=16, info='Length (in characters, not tokens) of the maximum distance to shift an overlap cut by to ensure chunks cut at newlines. If too low, cuts may occur in the middle of lines.')
 
         with gr.Row():
             start_button = gr.Button("Start LoRA Training")
             stop_button = gr.Button("Interrupt")
 
         output = gr.Markdown(value="Ready")
-        start_button.click(do_train, [lora_name, micro_batch_size, batch_size, epochs, learning_rate, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, raw_text_file, overlap_len], [output])
+        start_button.click(do_train, [lora_name, micro_batch_size, batch_size, epochs, learning_rate, lora_rank, lora_alpha, lora_dropout,
+                                      cutoff_len, dataset, eval_dataset, format, raw_text_file, overlap_len, newline_favor_len], [output])
         stop_button.click(do_interrupt, [], [], cancels=[], queue=False)
 
 def do_interrupt():
@@ -91,8 +94,8 @@ def clean_path(base_path: str, path: str):
         return path
     return f'{Path(base_path).absolute()}/{path}'
 
-def do_train(lora_name: str, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lora_rank: int,
-             lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, raw_text_file: str, overlap_len: int):
+def do_train(lora_name: str, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lora_rank: int, lora_alpha: int, lora_dropout: float,
+             cutoff_len: int, dataset: str, eval_dataset: str, format: str, raw_text_file: str, overlap_len: int, newline_favor_len: int):
     global WANT_INTERRUPT, CURRENT_STEPS, MAX_STEPS, CURRENT_GRADIENT_ACCUM
     WANT_INTERRUPT = False
     CURRENT_STEPS = 0
@@ -126,15 +129,20 @@ def do_train(lora_name: str, micro_batch_size: int, batch_size: int, epochs: int
             raw_text = file.read()
         tokens = shared.tokenizer.encode(raw_text)
         del raw_text # Note: could be a gig for a large dataset, so delete redundant data as we go to be safe on RAM
+
         tokens = list(split_chunks(tokens, cutoff_len - overlap_len))
         for i in range(1, len(tokens)):
             tokens[i] = tokens[i - 1][-overlap_len:] + tokens[i]
         text_chunks = [shared.tokenizer.decode(x) for x in tokens]
         del tokens
-        data = Dataset.from_list([tokenize(x) for x in text_chunks])
-        train_data = data.shuffle()
-        eval_data = None
+
+        if newline_favor_len > 0:
+            text_chunks = [cut_chunk_for_newline(x, newline_favor_len) for x in text_chunks]
+
+        train_data = Dataset.from_list([tokenize(x) for x in text_chunks])
         del text_chunks
+        train_data = train_data.shuffle()
+        eval_data = None
 
     else:
         if dataset in ['None', '']:
@@ -273,3 +281,16 @@ def do_train(lora_name: str, micro_batch_size: int, batch_size: int, epochs: int
 def split_chunks(arr, step):
     for i in range(0, len(arr), step):
         yield arr[i:i + step]
+
+def cut_chunk_for_newline(chunk: str, max_length: int):
+    if '\n' not in chunk:
+        return chunk
+    first_newline = chunk.index('\n')
+    if first_newline < max_length:
+        chunk = chunk[first_newline + 1:]
+    if '\n' not in chunk:
+        return chunk
+    last_newline = chunk.rindex('\n')
+    if len(chunk) - last_newline < max_length:
+        chunk = chunk[:last_newline]
+    return chunk
