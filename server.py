@@ -286,7 +286,7 @@ else:
 title ='Text generation web UI'
 
 # Load default character if provided and chat is enabled
-if shared.args.load_character and (shared.is_chat()):
+if shared.args.load_character and shared.is_chat():
     # Remove file extension if they included it, there's probably a python one-liner for this...
     for suffix in ('.json', '.yaml', '.yml'):
         shared.args.load_character = shared.args.load_character.removesuffix(suffix)
@@ -294,6 +294,7 @@ if shared.args.load_character and (shared.is_chat()):
     # Check for existing character
     if shared.args.load_character in available_characters:
         print("Loading character " + shared.args.load_character)
+        shared.character = shared.args.load_character
     else:
         print("Character " + shared.args.load_character + " not found, ignoring.")
 
@@ -333,7 +334,7 @@ def create_interface():
                 shared.gradio['greeting'] = gr.Textbox(value=shared.settings['greeting'], lines=2, label='Greeting')
                 shared.gradio['context'] = gr.Textbox(value=shared.settings['context'], lines=8, label='Context')
                 with gr.Row():
-                    shared.gradio['character_menu'] = gr.Dropdown(choices=available_characters, value=shared.character, label='Character', elem_id='character-menu')
+                    shared.gradio['character_menu'] = gr.Dropdown(choices=available_characters, value=shared.character or 'None', label='Character', elem_id='character-menu')
                     ui.create_refresh_button(shared.gradio['character_menu'], lambda : None, lambda : {'choices': get_available_characters()}, 'refresh-button')
 
                 with gr.Row():

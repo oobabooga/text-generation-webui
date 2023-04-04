@@ -227,7 +227,7 @@ def replace_last_reply(text, name1, name2):
 
 def clear_html():
     return generate_chat_html([], "", "", shared.character)
-        
+
 def clear_chat_log(name1, name2, greeting):
     shared.history['visible'] = []
     shared.history['internal'] = []
@@ -283,9 +283,9 @@ def tokenize_dialogue(dialogue, name1, name2):
 
 def save_history(timestamp=True):
     if timestamp:
-        fname = f"{log_file_prefix()}{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
+        fname = f"{shared.character}_{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
     else:
-        fname = f"{log_file_prefix()}persistent.json"
+        fname = f"{shared.character}_persistent.json"
         
     if not Path('logs').exists():
         Path('logs').mkdir()
@@ -316,10 +316,6 @@ def load_history(file, name1, name2):
     except:
         shared.history['internal'] = tokenize_dialogue(file, name1, name2)
         shared.history['visible'] = copy.deepcopy(shared.history['internal'])
-
-def log_file_prefix():
-    prefix = '' if shared.character == 'None' else f"{shared.character}_"
-    return prefix
 
 def replace_character_names(text, name1, name2):
     text = text.replace('{{user}}', name1).replace('{{char}}', name2)
@@ -372,13 +368,14 @@ def load_character(character, name1, name2):
         name2 = shared.settings['name2']
         greeting = shared.settings['greeting'] 
 
-    if Path(f'logs/{log_file_prefix()}persistent.json').exists():
-        load_history(open(Path(f'logs/{log_file_prefix()}persistent.json'), 'rb').read(), name1, name2)
+    if Path(f'logs/{shared.character}_persistent.json').exists():
+        load_history(open(Path(f'logs/{shared.character}_persistent.json'), 'rb').read(), name1, name2)
     else:
         if greeting != "":
             shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
             shared.history['visible'] += [['', apply_extensions(greeting, "output")]]
-        # Create .json log files if they don't already exist
+        
+        # Create .json log files since they don't already exist
         save_history(timestamp=False)
 
     if shared.args.cai_chat:
@@ -387,7 +384,7 @@ def load_character(character, name1, name2):
         return name1, name2, greeting, context, shared.history['visible']
 
 def load_default_history(name1, name2):
-    load_character(shared.args.load_character or "None", name1, name2)
+    load_character(shared.character or "None", name1, name2)
 
 def upload_character(json_file, img, tavern=False):
     json_file = json_file if type(json_file) == str else json_file.decode('utf-8')
