@@ -38,6 +38,7 @@ def preprocess(string):
     string = string.replace('“', '')
     string = string.replace('\n', ' ')
     string = remove_commas(string)
+    string = replace_negative(string)
     string = replace_roman(string)
     string = hyphen_range_to(string)
     string = num_to_words(string)
@@ -62,8 +63,13 @@ def remove_surrounded_chars(string):
     return re.sub(r'\*[^*]*?(\*|$)', '', string)
 
 
+def replace_negative(string):
+    return re.sub(r'(\s)(-)(\d+)([\s,.?!)"\'\]>])', r'\1negative \3\4', string)
+
+
 def replace_roman(string):
-    pattern = re.compile(r'\s[IVXLCDM]+[\s,.?!)"\'\]>]')
+    # find a string of roman numerals. Only 2 or more, to avoid capturing I
+    pattern = re.compile(r'\s[IVXLCDM]{2,}[\s,.?!)"\'\]>]')
     result = string
     while True:
         match = pattern.search(result)
