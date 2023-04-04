@@ -227,22 +227,6 @@ def replace_last_reply(text, name1, name2):
 
 def clear_html():
     return generate_chat_html([], "", "", shared.character)
-
-def clear_chat_log(name1, name2):
-    if shared.character != 'None':
-        found = False
-        for i in range(len(shared.history['internal'])):
-            if '<|BEGIN-VISIBLE-CHAT|>' in shared.history['internal'][i][0]:
-                shared.history['visible'] = [['', apply_extensions(shared.history['internal'][i][1], "output")]]
-                shared.history['internal'] = [shared.history['internal'][i]]
-                found = True
-                break
-        if not found:
-            shared.history['visible'] = []
-            shared.history['internal'] = []
-    else:
-        shared.history['internal'] = []
-        shared.history['visible'] = []
         
 def clear_chat_log(name1, name2, greeting):
     shared.history['visible'] = []
@@ -251,6 +235,7 @@ def clear_chat_log(name1, name2, greeting):
     if greeting != '':
         shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
         shared.history['visible'] += [['', apply_extensions(greeting, "output")]]
+    
     # Save cleared logs
     save_history(timestamp=False)
 
@@ -402,7 +387,7 @@ def load_character(character, name1, name2):
         return name1, name2, greeting, context, shared.history['visible']
 
 def load_default_history(name1, name2):
-    load_character("None", name1, name2)
+    load_character(shared.args.load_character or "None", name1, name2)
 
 def upload_character(json_file, img, tavern=False):
     json_file = json_file if type(json_file) == str else json_file.decode('utf-8')

@@ -286,14 +286,14 @@ else:
 title ='Text generation web UI'
 
 # Load default character if provided and chat is enabled
-if shared.args.load_character and (shared.args.chat or shared.args.cai_chat):
-    # Remove .json if they included it
-    if shared.args.load_character.lower().endswith('.json'):
-        shared.args.load_character = shared.args.load_character[:-5]
+if shared.args.load_character and (shared.is_chat()):
+    # Remove file extension if they included it, there's probably a python one-liner for this...
+    for suffix in ('.json', '.yaml', '.yml'):
+        shared.args.load_character = shared.args.load_character.removesuffix(suffix)
+
     # Check for existing character
     if shared.args.load_character in available_characters:
         print("Loading character " + shared.args.load_character)
-        shared.settings[f'name2{suffix}'], shared.settings[f'context{suffix}'], shared.gradio['display'] = chat.load_character(shared.args.load_character, shared.settings['name1'], '')
     else:
         print("Character " + shared.args.load_character + " not found, ignoring.")
 
