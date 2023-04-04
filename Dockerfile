@@ -20,7 +20,7 @@ RUN --mount=type=cache,target=/root/.cache/pip pip3 install -r requirements.txt
 ARG TORCH_CUDA_ARCH_LIST="3.5;5.0;6.0;6.1;7.0;7.5;8.0;8.6+PTX"
 RUN python3 setup_cuda.py bdist_wheel -d .
 
-FROM nvidia/cuda:11.8.0-devel-ubuntu22.04
+FROM nvidia/cuda:11.8.0-runtime-ubuntu22.04
 
 LABEL maintainer="Your Name <your.email@example.com>"
 LABEL description="Docker image for GPTQ-for-LLaMa and Text Generation WebUI"
@@ -44,8 +44,6 @@ COPY --from=builder /build /app/repositories/GPTQ-for-LLaMa
 RUN --mount=type=cache,target=/root/.cache/pip pip3 install /app/repositories/GPTQ-for-LLaMa/*.whl
 
 ENV CLI_ARGS=""
-ENV NVIDIA_VISIBLE_DEVICES=all
-ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
 
 RUN --mount=type=cache,target=/root/.cache/pip cd extensions/api && pip3 install -r requirements.txt
 RUN --mount=type=cache,target=/root/.cache/pip cd extensions/elevenlabs_tts && pip3 install -r requirements.txt
