@@ -11,7 +11,7 @@ WORKDIR /build
 ARG GPTQ_VERSION
 RUN git checkout ${GPTQ_VERSION}
 
-RUN virtualenv /build/venv
+RUN python3 -m venv /build/venv
 RUN . /build/venv/bin/activate && \
     pip3 install torch torchvision torchaudio && \
     pip3 install -r requirements.txt
