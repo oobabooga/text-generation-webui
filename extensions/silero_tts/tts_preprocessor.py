@@ -1,5 +1,4 @@
 import re
-import locale
 from num2words import num2words
 
 
