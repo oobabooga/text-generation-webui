@@ -64,6 +64,6 @@ span.math.inline {
   vertical-align: baseline !important;
 }
 
-div.svelte-15lo0d8 {
+div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
   flex-wrap: nowrap;
 }
