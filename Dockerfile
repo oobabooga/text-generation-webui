@@ -13,6 +13,7 @@ RUN git checkout ${GPTQ_VERSION}
 
 RUN python3 -m venv /build/venv
 RUN . /build/venv/bin/activate && \
+    pip3 install --upgrade pip setuptools && \
     pip3 install torch torchvision torchaudio && \
     pip3 install -r requirements.txt
 
@@ -42,6 +43,7 @@ RUN test -n "${WEBUI_VERSION}" && git reset --hard ${WEBUI_VERSION} || echo "Usi
 
 RUN virtualenv /app/venv
 RUN . /app/venv/bin/activate && \
+    pip3 install --upgrade pip setuptools && \
     pip3 install torch torchvision torchaudio && \
     pip3 install -r requirements.txt
 
