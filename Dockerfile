@@ -4,8 +4,6 @@ RUN apt-get update && \
     apt-get install --no-install-recommends -y git build-essential python3-dev python3-pip && \
     rm -rf /var/lib/apt/lists/*
 
-RUN --mount=type=cache,target=/root/.cache/pip pip3 install virtualenv
-
 RUN git clone https://github.com/qwopqwop200/GPTQ-for-LLaMa /build
 
 WORKDIR /build
