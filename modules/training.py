@@ -252,28 +252,28 @@ def do_train(lora_name: str, micro_batch_size: int, batch_size: int, epochs: int
 
     thread = threading.Thread(target=threadedRun)
     thread.start()
-    lastStep = 0
-    startTime = time.perf_counter()
+    last_step = 0
+    start_time = time.perf_counter()
 
     while thread.is_alive():
         time.sleep(0.5)
         if WANT_INTERRUPT:
             yield "Interrupting, please wait... *(Run will stop after the current training step completes.)*"
 
-        elif CURRENT_STEPS != lastStep:
-            lastStep = CURRENT_STEPS
-            timeElapsed = time.perf_counter() - startTime
-            if timeElapsed <= 0:
-                timerInfo = ""
-                totalTimeEstimate = 999
+        elif CURRENT_STEPS != last_step:
+            last_step = CURRENT_STEPS
+            time_elapsed = time.perf_counter() - start_time
+            if time_elapsed <= 0:
+                timer_info = ""
+                total_time_estimate = 999
             else:
-                its = CURRENT_STEPS / timeElapsed
+                its = CURRENT_STEPS / time_elapsed
                 if its > 1:
-                    timerInfo = f"`{its:.2f}` it/s"
+                    timer_info = f"`{its:.2f}` it/s"
                 else:
-                    timerInfo = f"`{1.0/its:.2f}` s/it"
-                totalTimeEstimate = (1.0/its) * (MAX_STEPS)
-            yield f"Running... **{CURRENT_STEPS}** / **{MAX_STEPS}** ... {timerInfo}, `{timeElapsed:.0f}`/`{totalTimeEstimate:.0f}` seconds"
+                    timer_info = f"`{1.0/its:.2f}` s/it"
+                total_time_estimate = (1.0/its) * (MAX_STEPS)
+            yield f"Running... **{CURRENT_STEPS}** / **{MAX_STEPS}** ... {timer_info}, {format_time(time_elapsed)} / {format_time(total_time_estimate)} ... {format_time(total_time_estimate - time_elapsed)} remaining"
 
     print("Training complete, saving...")
     lora_model.save_pretrained(lora_name)
@@ -301,3 +301,12 @@ def cut_chunk_for_newline(chunk: str, max_length: int):
     if len(chunk) - last_newline < max_length:
         chunk = chunk[:last_newline]
     return chunk
+
+def format_time(seconds: float):
+    if seconds < 120:
+        return f"`{seconds:.0f}` seconds"
+    minutes = seconds / 60
+    if minutes < 120:
+        return f"`{minutes:.0f}` minutes"
+    hours = minutes / 60
+    return f"`{hours:.0f}` hours"
