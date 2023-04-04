@@ -33,6 +33,8 @@ alphabet_map = {
 
 
 def preprocess(string):
+    # the order for some of these matter
+    # For example, you need to remove the commas in numbers before expanding them
     string = remove_surrounded_chars(string)
     string = string.replace('"', '')
     string = string.replace('“', '')
@@ -47,11 +49,14 @@ def preprocess(string):
     # try to say the abbreviation or spell it out as I've done below is not agreed upon
 
     # For now, expand abbreviations to pronunciations
+    # replace_abbreviations adds a lot of unnecessary whitespace to ensure separation
     string = replace_abbreviations(string)
 
     # cleanup whitespaces
+    # remove whitespace before punctuation
     string = re.sub(r'\s+([,.?!\'])', r'\1', string)
     string = string.strip()
+    # compact whitespace
     string = ' '.join(string.split())
 
     return string
@@ -64,11 +69,13 @@ def remove_surrounded_chars(string):
 
 
 def replace_negative(string):
+    # handles situations like -5. -5 would become negative 5, which would then be expanded to negative five
     return re.sub(r'(\s)(-)(\d+)([\s,.?!)"\'\]>])', r'\1negative \3\4', string)
 
 
 def replace_roman(string):
-    # find a string of roman numerals. Only 2 or more, to avoid capturing I
+    # find a string of roman numerals.
+    # Only 2 or more, to avoid capturing I and single character abbreviations, like names
     pattern = re.compile(r'\s[IVXLCDM]{2,}[\s,.?!)"\'\]>]')
     result = string
     while True:
@@ -107,7 +114,8 @@ def num_to_words(text):
 
 
 def replace_abbreviations(string):
-    pattern = re.compile(r'(^|[\s("\'\[<])([A-Z]{2,4})([\s,.?!)"\'\]>]|$)')
+    # abbreviations 1 to 4 characters long. It will get things like A and I, but those are pronounced with their letter
+    pattern = re.compile(r'(^|[\s("\'\[<])([A-Z]{1,4})([\s,.?!)"\'\]>]|$)')
     result = string
     while True:
         match = pattern.search(result)
@@ -138,7 +146,8 @@ def match_mapping(char, result):
 
 
 def remove_commas(text):
-    import re
+    # This handles American locale numbers
+    # TODO This should probably be adapted to detect locale
     pattern = re.compile(r'(\d),(\d)')
     result = pattern.sub(r'\1\2', text)
     return result
