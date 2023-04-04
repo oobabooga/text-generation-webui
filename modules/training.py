@@ -243,6 +243,9 @@ def do_train(lora_name: str, micro_batch_size: int, batch_size: int, epochs: int
     # TODO: save/load checkpoints to resume from?
     print("Starting training...")
     yield "Starting..."
+    if WANT_INTERRUPT:
+        yield "Interrupted before start."
+        return
 
     def threadedRun():
         trainer.train()
@@ -256,6 +259,7 @@ def do_train(lora_name: str, micro_batch_size: int, batch_size: int, epochs: int
         time.sleep(0.5)
         if WANT_INTERRUPT:
             yield "Interrupting, please wait... *(Run will stop after the current training step completes.)*"
+
         elif CURRENT_STEPS != lastStep:
             lastStep = CURRENT_STEPS
             timeElapsed = time.perf_counter() - startTime
