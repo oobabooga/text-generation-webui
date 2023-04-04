@@ -53,10 +53,12 @@ RUN . /app/venv/bin/activate && \
 
 ENV CLI_ARGS=""
 
-RUN --mount=type=cache,target=/root/.cache/pip . /app/venv/bin/activate cd extensions/api && pip3 install -r requirements.txt
-RUN --mount=type=cache,target=/root/.cache/pip . /app/venv/bin/activate cd extensions/elevenlabs_tts && pip3 install -r requirements.txt
-RUN --mount=type=cache,target=/root/.cache/pip . /app/venv/bin/activate cd extensions/google_translate && pip3 install -r requirements.txt
-RUN --mount=type=cache,target=/root/.cache/pip . /app/venv/bin/activate cd extensions/silero_tts && pip3 install -r requirements.txt
-RUN --mount=type=cache,target=/root/.cache/pip . /app/venv/bin/activate cd extensions/whisper_stt && pip3 install -r requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip . /app/venv/bin/activate && cd extensions/api && pip3 install -r requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip . /app/venv/bin/activate && cd extensions/elevenlabs_tts && pip3 install -r requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip . /app/venv/bin/activate && cd extensions/google_translate && pip3 install -r requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip . /app/venv/bin/activate && cd extensions/silero_tts && pip3 install -r requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip . /app/venv/bin/activate && cd extensions/whisper_stt && pip3 install -r requirements.txt
+
+RUN cp /app/venv/lib/python3.10/site-packages/bitsandbytes/libbitsandbytes_cuda118.so /app/venv/lib/python3.10/site-packages/bitsandbytes/libbitsandbytes_cpu.so
 
 CMD . /app/venv/bin/activate && python3 server.py ${CLI_ARGS}

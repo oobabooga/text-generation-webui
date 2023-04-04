@@ -50,7 +50,7 @@ sudo tee /etc/apt/sources.list.d/nvidia.list > /dev/null
 
 sudo apt update
 
-sudo apt install nvidia-docker2 -y
+sudo apt install nvidia-docker2 nvidia-container-runtime -y
 sudo systemctl restart docker
 ```
 
@@ -77,8 +77,12 @@ sudo systemctl restart docker # required by nvidia-container-runtime
 ### place models in models folder
 download and place the models inside the models folder. tested with:
 
+4bit
 https://github.com/oobabooga/text-generation-webui/pull/530#issuecomment-1483891617
 https://github.com/oobabooga/text-generation-webui/pull/530#issuecomment-1483941105
+
+8bit:
+https://github.com/oobabooga/text-generation-webui/pull/530#issuecomment-1484235789
 
 ### prepare .env file
 edit .env values to your needs
