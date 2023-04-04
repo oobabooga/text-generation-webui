@@ -60,7 +60,7 @@ data="{
 }"
 
 # Make HTTP request and extract generated text
-response=$(curl -s -X POST "http://${server:-127.0.0.1}:7860/run/textgen" \
+response=$(curl -s -X POST "http://${server:-127.0.0.1}:${port:-7860}/run/textgen" \
     -H "Content-Type: application/json" \
     -d "$data")
 
