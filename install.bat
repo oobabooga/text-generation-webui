@@ -48,11 +48,11 @@ if "%PACKAGES_TO_INSTALL%" NEQ "" (
         echo "Downloading Micromamba from %MICROMAMBA_DOWNLOAD_URL% to %MAMBA_ROOT_PREFIX%\micromamba.exe"
 
         mkdir "%MAMBA_ROOT_PREFIX%"
-        call curl -Lk "%MICROMAMBA_DOWNLOAD_URL%" > "%MAMBA_ROOT_PREFIX%\micromamba.exe" || ( echo Micromamba failed to download. && goto end )
+        call curl -Lk "%MICROMAMBA_DOWNLOAD_URL%" > "%MAMBA_ROOT_PREFIX%\micromamba.exe" || ( echo. && echo Micromamba failed to download. && goto end )
 
         @rem test the mamba binary
         echo Micromamba version:
-        call "%MAMBA_ROOT_PREFIX%\micromamba.exe" --version || ( echo Micromamba not found. && goto end )
+        call "%MAMBA_ROOT_PREFIX%\micromamba.exe" --version || ( echo. && echo Micromamba not found. && goto end )
     )
 
     @rem create micromamba hook
@@ -63,12 +63,15 @@ if "%PACKAGES_TO_INSTALL%" NEQ "" (
     @rem create the installer env
     if not exist "%INSTALL_ENV_DIR%" (
       echo Packages to install: %PACKAGES_TO_INSTALL%
-      call "%MAMBA_ROOT_PREFIX%\micromamba.exe" create -y --prefix "%INSTALL_ENV_DIR%" %CHANNEL% %PACKAGES_TO_INSTALL%
+      call "%MAMBA_ROOT_PREFIX%\micromamba.exe" create -y --prefix "%INSTALL_ENV_DIR%" %CHANNEL% %PACKAGES_TO_INSTALL% || ( echo. && echo Conda environment creation failed. && goto end )
     )
 )
 
+@rem check if conda environment was actually created
+if not exist "%INSTALL_ENV_DIR%\python.exe" ( echo. && echo Conda environment is empty. && goto end )
+
 @rem activate installer env
-call "%MAMBA_ROOT_PREFIX%\condabin\micromamba.bat" activate "%INSTALL_ENV_DIR%" || ( echo MicroMamba hook not found. && goto end )
+call "%MAMBA_ROOT_PREFIX%\condabin\micromamba.bat" activate "%INSTALL_ENV_DIR%" || ( echo. && echo MicroMamba hook not found. && goto end )
 
 @rem clone the repository and install the pip requirements
 if exist text-generation-webui\ (
@@ -101,7 +104,7 @@ if not exist GPTQ-for-LLaMa\ (
   call python setup_cuda.py install
   if not exist "%INSTALL_ENV_DIR%\lib\site-packages\quant_cuda-0.0.0-py3.10-win-amd64.egg" (
     echo CUDA kernal compilation failed. Will try to install from wheel.
-    call python -m pip install https://github.com/jllllll/GPTQ-for-LLaMa-Wheels/raw/main/quant_cuda-0.0.0-cp310-cp310-win_amd64.whl || ( echo Wheel installation failed. && goto end )
+    call python -m pip install https://github.com/jllllll/GPTQ-for-LLaMa-Wheels/raw/main/quant_cuda-0.0.0-cp310-cp310-win_amd64.whl || ( echo. && echo Wheel installation failed. && goto end )
   )
 )
 
