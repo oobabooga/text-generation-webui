@@ -48,7 +48,11 @@ def preprocess(string):
     # For now, expand abbreviations to pronunciations
     string = replace_abbreviations(string)
 
+    # cleanup whitespaces
+    string = re.sub(r'\s+([,.?!\'])', r'\1', string)
     string = string.strip()
+    string = ' '.join(string.split())
+
     return string
 
 
@@ -97,7 +101,7 @@ def num_to_words(text):
 
 
 def replace_abbreviations(string):
-    pattern = re.compile(r'[\s("\'\[<][A-Z]{2,4}[\s,.?!)"\'\]>]')
+    pattern = re.compile(r'(^|[\s("\'\[<])([A-Z]{2,4})([\s,.?!)"\'\]>]|$)')
     result = string
     while True:
         match = pattern.search(result)
