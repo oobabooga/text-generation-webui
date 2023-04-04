@@ -109,6 +109,20 @@ def do_train(lora_name: str, micro_batch_size: int, batch_size: int, epochs: int
     lora_name = f"{shared.args.lora_dir}/{clean_path(None, lora_name)}"
     actual_lr = float(learning_rate)
 
+    if type(shared.model).__name__ != "LlamaForCausalLM":
+        yield "LoRA training has only currently been validated for LLaMA models. Unexpected errors may follow. *(Will continue anyway in 2 seconds)*"
+        print("Warning: LoRA training has only currently been validated for LLaMA models.")
+        time.sleep(2)
+
+    if shared.args.wbits > 0 or shared.args.gptq_bits > 0:
+        yield "LoRA training does not yet support 4bit. Please use `--load-in-8bit` for now."
+        return
+
+    elif not shared.args.load_in_8bit:
+        yield "It is highly recommended you use `--load-in-8bit` for LoRA training. *(Will continue anyway in 2 seconds, press `Interrupt` to stop.)*"
+        print("Warning: It is highly recommended you use `--load-in-8bit` for LoRA training.")
+        time.sleep(2) # Give it a moment for the message to show in UI before continuing
+
     if cutoff_len <= 0 or micro_batch_size <= 0 or batch_size <= 0 or actual_lr <= 0 or lora_rank <= 0 or lora_alpha <= 0:
         yield "Cannot input zeroes."
         return
@@ -247,10 +261,10 @@ def do_train(lora_name: str, micro_batch_size: int, batch_size: int, epochs: int
         yield "Interrupted before start."
         return
 
-    def threadedRun():
+    def threaded_run():
         trainer.train()
 
-    thread = threading.Thread(target=threadedRun)
+    thread = threading.Thread(target=threaded_run)
     thread.start()
     last_step = 0
     start_time = time.perf_counter()
