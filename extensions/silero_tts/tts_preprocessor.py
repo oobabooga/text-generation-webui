@@ -1,4 +1,5 @@
 import re
+import locale
 from num2words import num2words
 
 
@@ -39,7 +40,7 @@ def preprocess(string):
     string = string.replace('"', '')
     string = string.replace('“', '')
     string = string.replace('\n', ' ')
-    string = remove_commas(string)
+    string = convert_num_locale(string)
     string = replace_negative(string)
     string = replace_roman(string)
     string = hyphen_range_to(string)
@@ -108,8 +109,9 @@ def hyphen_range_to(text):
 
 
 def num_to_words(text):
-    pattern = re.compile(r'\d+')
-    result = pattern.sub(lambda x: num2words(int(x.group())), text)
+    # 1000 or 10.23
+    pattern = re.compile(r'\d+\.\d+|\d+')
+    result = pattern.sub(lambda x: num2words(float(x.group())), text)
     return result
 
 
@@ -145,11 +147,23 @@ def match_mapping(char, result):
     return result + char
 
 
-def remove_commas(text):
-    # This handles American locale numbers
-    # TODO This should probably be adapted to detect locale
+def convert_num_locale(text):
+    # This detects locale and converts it to American without comma separators
+    pattern = re.compile(r'(?:\s|^)\d{1,3}(?:\.\d{3})*(?:,\d+)?(?:\s|$)')
+    result = text
+    while True:
+        match = pattern.search(result)
+        if match is None:
+            break
+
+        start = match.start()
+        end = match.end()
+        result = result[0:start] + result[start:end].replace('.', '').replace(',', '.') + result[end:len(result)]
+
+    # removes comma separators from existing American numbers
     pattern = re.compile(r'(\d),(\d)')
-    result = pattern.sub(r'\1\2', text)
+    result = pattern.sub(r'\1\2', result)
+
     return result
 
 
