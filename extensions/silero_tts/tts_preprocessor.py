@@ -28,7 +28,7 @@ alphabet_map = {
     "W": " Double You ",
     "X": " Ex ",
     "Y": " Why ",
-    "Z": "Zed"  # Zed is weird, as I (da3dsoul) am American, but most of the voice models sound British, so it matches
+    "Z": " Zed "  # Zed is weird, as I (da3dsoul) am American, but most of the voice models sound British, so it matches
 }
 
 
