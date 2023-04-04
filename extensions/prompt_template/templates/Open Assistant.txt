@@ -1,0 +1,1 @@
+<|prompter|>%input%<|endoftext|><|assistant|>
