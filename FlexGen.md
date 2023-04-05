@@ -53,7 +53,7 @@ You should typically only change the first two numbers. If their sum is less tha
 
 ## Performance
 
-In my experiments with OPT-30b using a RTX 3090 on Linux, I have obtained these results:
+In my experiments with OPT-30B using a RTX 3090 on Linux, I have obtained these results:
 
 * `--flexgen --compress-weight --percent 0 100 100 0 100 0`: 0.99 seconds per token.
 * `--flexgen --compress-weight --percent 100 0 100 0 100 0`: 0.765 seconds per token.
