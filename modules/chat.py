@@ -332,7 +332,7 @@ def generate_pfp_cache(character):
             return img
     return None
 
-def load_character(character, name1, name2, instruct=False):
+def load_character(character, name1, name2, mode):
     shared.character = character
     shared.history['internal'] = []
     shared.history['visible'] = []
@@ -345,7 +345,7 @@ def load_character(character, name1, name2, instruct=False):
         Path("cache/pfp_character.png").unlink()
 
     if character != 'None':
-        folder = "characters" if not instruct else "characters/instruction-following"
+        folder = 'characters' if not mode == 'instruct' else 'characters/instruction-following'
         picture = generate_pfp_cache(character)
         for extension in ["yml", "yaml", "json"]:
             filepath = Path(f'{folder}/{character}.{extension}')
@@ -386,10 +386,10 @@ def load_character(character, name1, name2, instruct=False):
         shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
         shared.history['visible'] += [['', apply_extensions(greeting, "output")]]
 
-    return name1, name2, picture, greeting, context, end_of_turn, chat_html_wrapper(shared.history['visible'], name1, name2, reset_cache=True)
+    return name1, name2, picture, greeting, context, end_of_turn, chat_html_wrapper(shared.history['visible'], name1, name2, mode, reset_cache=True)
 
 def load_default_history(name1, name2):
-    load_character("None", name1, name2)
+    load_character("None", name1, name2, "chat")
 
 def upload_character(json_file, img, tavern=False):
     json_file = json_file if type(json_file) == str else json_file.decode('utf-8')

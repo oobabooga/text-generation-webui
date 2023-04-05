@@ -203,8 +203,7 @@ def generate_cai_chat_html(history, name1, name2, reset_cache=False):
 def generate_chat_html(history, name1, name2):
     return generate_cai_chat_html(history, name1, name2)
 
-def chat_html_wrapper(history, name1, name2, mode="cai-chat", reset_cache=False):
-
+def chat_html_wrapper(history, name1, name2, mode, reset_cache=False):
     if mode == "cai-chat":
         return generate_cai_chat_html(history, name1, name2, reset_cache)
     elif mode == "chat":
