@@ -21,6 +21,8 @@ with open(Path(__file__).resolve().parent / '../css/html_4chan_style.css', 'r') 
     _4chan_css = css_f.read()
 with open(Path(__file__).resolve().parent / '../css/html_cai_style.css', 'r') as f:
     cai_css = f.read()
+with open(Path(__file__).resolve().parent / '../css/html_instruct_style.css', 'r') as f:
+    instruct_css = f.read()
 
 def fix_newlines(string):
     string = string.replace('\n', '\n\n')
@@ -117,11 +119,43 @@ def get_image_cache(path):
 
     return image_cache[path][1]
 
-def generate_chat_html(history, name1, name2, reset_cache=False):
+def generate_instruct_html(history):
+    output = f'<style>{instruct_css}</style><div class="chat" id="chat">'
+    for i,_row in enumerate(history[::-1]):
+        row = [convert_to_markdown(entry) for entry in _row]
+
+        output += f"""
+              <div class="assistant-message">
+                <div class="text">
+                  <div class="message-body">
+                    {row[1]}
+                  </div>
+                </div>
+              </div>
+            """
+
+        if len(row[0]) == 0: # don't display empty user messages
+            continue
+
+        output += f"""
+              <div class="user-message">
+                <div class="text">
+                  <div class="message-body">
+                    {row[0]}
+                  </div>
+                </div>
+              </div>
+            """
+
+    output += "</div>"
+
+    return output
+
+def generate_cai_chat_html(history, name1, name2, reset_cache=False):
     output = f'<style>{cai_css}</style><div class="chat" id="chat">'
 
     # The time.time() is to prevent the brower from caching the image
-    suffix = f"?{time.time()}" if reset_cache else ''
+    suffix = f"?{time.time()}" if reset_cache else f"?{name2}"
     img_bot = f'<img src="file/cache/pfp_character.png{suffix}">' if Path("cache/pfp_character.png").exists() else ''
     img_me = f'<img src="file/cache/pfp_me.png{suffix}">' if Path("cache/pfp_me.png").exists() else ''
 
@@ -165,3 +199,16 @@ def generate_chat_html(history, name1, name2, reset_cache=False):
 
     output += "</div>"
     return output
+
+def generate_chat_html(history, name1, name2):
+    return generate_cai_chat_html(history, name1, name2)
+
+def chat_html_wrapper(history, name1, name2, mode, reset_cache=False):
+    if mode == "cai-chat":
+        return generate_cai_chat_html(history, name1, name2, reset_cache)
+    elif mode == "chat":
+        return generate_chat_html(history, name1, name2)
+    elif mode == "instruct":
+        return generate_instruct_html(history)
+    else:
+        return ''
