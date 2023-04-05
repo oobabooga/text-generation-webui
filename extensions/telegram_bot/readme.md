@@ -25,3 +25,4 @@ TBC:
 - limit of simultaneously threading to prevent overloading. Queue or something other. 
 - history uprade: loacal cache 
 - message_id sequence history cache lead to "remove last message" button 
+- separated telegram_settings.json file 
