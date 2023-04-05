@@ -17,9 +17,9 @@ from modules.text_generation import (encode, generate_reply,
                                      get_max_prompt_length)
 
 
-def generate_chat_output(history, name1, name2, character):
+def generate_chat_output(history, name1, name2):
     if shared.args.cai_chat:
-        return generate_chat_html(history, name1, name2, character)
+        return generate_chat_html(history, name1, name2)
     else:
         return history
 
@@ -180,22 +180,22 @@ def impersonate_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typ
 
 def cai_chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, name1, name2, context, stop_at_newline, chat_prompt_size, chat_generation_attempts=1):
     for history in chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, name1, name2, context, stop_at_newline, chat_prompt_size, chat_generation_attempts):
-        yield generate_chat_html(history, name1, name2, shared.character)
+        yield generate_chat_html(history, name1, name2)
 
 def regenerate_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, name1, name2, context, stop_at_newline, chat_prompt_size, chat_generation_attempts=1):
     if (shared.character != 'None' and len(shared.history['visible']) == 1) or len(shared.history['internal']) == 0:
-        yield generate_chat_output(shared.history['visible'], name1, name2, shared.character)
+        yield generate_chat_output(shared.history['visible'], name1, name2)
     else:
         last_visible = shared.history['visible'].pop()
         last_internal = shared.history['internal'].pop()
         # Yield '*Is typing...*'
-        yield generate_chat_output(shared.history['visible']+[[last_visible[0], shared.processing_message]], name1, name2, shared.character)
+        yield generate_chat_output(shared.history['visible']+[[last_visible[0], shared.processing_message]], name1, name2)
         for history in chatbot_wrapper(last_internal[0], max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, name1, name2, context, stop_at_newline, chat_prompt_size, chat_generation_attempts, regenerate=True):
             if shared.args.cai_chat:
                 shared.history['visible'][-1] = [last_visible[0], history[-1][1]]
             else:
                 shared.history['visible'][-1] = (last_visible[0], history[-1][1])
-            yield generate_chat_output(shared.history['visible'], name1, name2, shared.character)
+            yield generate_chat_output(shared.history['visible'], name1, name2)
 
 def remove_last_message(name1, name2):
     if len(shared.history['visible']) > 0 and shared.history['internal'][-1][0] != '<|BEGIN-VISIBLE-CHAT|>':
@@ -205,7 +205,7 @@ def remove_last_message(name1, name2):
         last = ['', '']
 
     if shared.args.cai_chat:
-        return generate_chat_html(shared.history['visible'], name1, name2, shared.character), last[0]
+        return generate_chat_html(shared.history['visible'], name1, name2), last[0]
     else:
         return shared.history['visible'], last[0]
 
@@ -223,10 +223,10 @@ def replace_last_reply(text, name1, name2):
             shared.history['visible'][-1] = (shared.history['visible'][-1][0], text)
         shared.history['internal'][-1][1] = apply_extensions(text, "input")
 
-    return generate_chat_output(shared.history['visible'], name1, name2, shared.character)
+    return generate_chat_output(shared.history['visible'], name1, name2)
 
 def clear_html():
-    return generate_chat_html([], "", "", shared.character)
+    return generate_chat_html([], "", "")
 
 def clear_chat_log(name1, name2, greeting):
     shared.history['visible'] = []
@@ -236,10 +236,10 @@ def clear_chat_log(name1, name2, greeting):
         shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
         shared.history['visible'] += [['', apply_extensions(greeting, "output")]]
 
-    return generate_chat_output(shared.history['visible'], name1, name2, shared.character)
+    return generate_chat_output(shared.history['visible'], name1, name2)
 
 def redraw_html(name1, name2):
-    return generate_chat_html(shared.history['visible'], name1, name2, shared.character)
+    return generate_chat_html(shared.history['visible'], name1, name2)
 
 def tokenize_dialogue(dialogue, name1, name2):
     history = []
@@ -326,13 +326,32 @@ def build_pygmalion_style_context(data):
     context = f"{context.strip()}\n<START>\n"
     return context
 
+def generate_pfp_cache(character):
+    cache_folder = Path("cache")
+    if not cache_folder.exists():
+        cache_folder.mkdir()
+
+    for path in [Path(f"characters/{character}.{extension}") for extension in ['png', 'jpg', 'jpeg']]:
+        if path.exists():
+            img = Image.open(path)
+            img.thumbnail((200, 200))
+            img.save(Path('cache/pfp_character.png'), format='PNG')
+            return img
+    return None
+
 def load_character(character, name1, name2):
     shared.character = character
     shared.history['internal'] = []
     shared.history['visible'] = []
     greeting = ""
+    picture = None
+
+    # Deleting the profile picture cache, if any
+    if Path("cache/pfp_character.png").exists():
+        Path("cache/pfp_character.png").unlink()
 
     if character != 'None':
+        picture = generate_pfp_cache(character)
         for extension in ["yml", "yaml", "json"]:
             filepath = Path(f'characters/{character}.{extension}')
             if filepath.exists():
@@ -371,9 +390,9 @@ def load_character(character, name1, name2):
         shared.history['visible'] += [['', apply_extensions(greeting, "output")]]
 
     if shared.args.cai_chat:
-        return name1, name2, greeting, context, generate_chat_html(shared.history['visible'], name1, name2, shared.character)
+        return name1, name2, picture, greeting, context, generate_chat_html(shared.history['visible'], name1, name2)
     else:
-        return name1, name2, greeting, context, shared.history['visible']
+        return name1, name2, picture, greeting, context, shared.history['visible']
 
 def load_default_history(name1, name2):
     load_character("None", name1, name2)
@@ -405,6 +424,14 @@ def upload_tavern_character(img, name1, name2):
     return upload_character(json.dumps(_json), img, tavern=True)
 
 def upload_your_profile_picture(img):
-    img = Image.open(io.BytesIO(img))
-    img.save(Path('img_me.png'))
-    print('Profile picture saved to "img_me.png"')
+    cache_folder = Path("cache")
+    if not cache_folder.exists():
+        cache_folder.mkdir()
+
+    if img == None:
+        if Path("cache/pfp_me.png").exists():
+            Path("cache/pfp_me.png").unlink()
+    else:
+        img.thumbnail((200, 200))
+        img.save(Path('cache/pfp_me.png'))
+        print('Profile picture saved to "cache/pfp_me.png"')

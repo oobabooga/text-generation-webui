@@ -6,6 +6,7 @@ This is a library for formatting text outputs as nice HTML.
 
 import os
 import re
+import time
 from pathlib import Path
 
 import markdown
@@ -110,18 +111,12 @@ def get_image_cache(path):
 
     return image_cache[path][1]
 
-def load_html_image(paths):
-    for str_path in paths:
-          path = Path(str_path)
-          if path.exists():
-              return f'<img src="file/{get_image_cache(path)}">'
-    return ''
-
-def generate_chat_html(history, name1, name2, character):
+def generate_chat_html(history, name1, name2):
     output = f'<style>{cai_css}</style><div class="chat" id="chat">'
 
-    img_bot = load_html_image([f"characters/{character}.{ext}" for ext in ['png', 'jpg', 'jpeg']] + ["img_bot.png","img_bot.jpg","img_bot.jpeg"])
-    img_me = load_html_image(["img_me.png", "img_me.jpg", "img_me.jpeg"])
+    # The time.time() is to prevent the brower from caching the image
+    img_bot = f'<img src="file/cache/pfp_character.png?{time.time()}">' if Path("cache/pfp_character.png").exists() else ''
+    img_me = f'<img src="file/cache/pfp_me.png?{time.time()}">' if Path("cache/pfp_me.png").exists() else ''
 
     for i,_row in enumerate(history[::-1]):
         row = [convert_to_markdown(entry) for entry in _row]

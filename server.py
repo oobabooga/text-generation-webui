@@ -8,6 +8,7 @@ from datetime import datetime
 from pathlib import Path
 
 import gradio as gr
+from PIL import Image
 
 import modules.extensions as extensions_module
 from modules import chat, shared, training, ui
@@ -296,7 +297,7 @@ def create_interface():
             shared.gradio['Chat input'] = gr.State()
             with gr.Tab("Text generation", elem_id="main"):
                 if shared.args.cai_chat:
-                    shared.gradio['display'] = gr.HTML(value=generate_chat_html(shared.history['visible'], shared.settings['name1'], shared.settings['name2'], shared.character))
+                    shared.gradio['display'] = gr.HTML(value=generate_chat_html(shared.history['visible'], shared.settings['name1'], shared.settings['name2']))
                 else:
                     shared.gradio['display'] = gr.Chatbot(value=shared.history['visible'], elem_id="gradio-chatbot")
                 shared.gradio['textbox'] = gr.Textbox(label='Input')
@@ -316,10 +317,15 @@ def create_interface():
                     shared.gradio['Clear history-cancel'] = gr.Button('Cancel', visible=False)
 
             with gr.Tab("Character", elem_id="chat-settings"):
-                shared.gradio['name1'] = gr.Textbox(value=shared.settings['name1'], lines=1, label='Your name')
-                shared.gradio['name2'] = gr.Textbox(value=shared.settings['name2'], lines=1, label='Character\'s name')
-                shared.gradio['greeting'] = gr.Textbox(value=shared.settings['greeting'], lines=2, label='Greeting')
-                shared.gradio['context'] = gr.Textbox(value=shared.settings['context'], lines=8, label='Context')
+                with gr.Row():
+                    with gr.Column(scale=8):
+                        shared.gradio['name1'] = gr.Textbox(value=shared.settings['name1'], lines=1, label='Your name')
+                        shared.gradio['name2'] = gr.Textbox(value=shared.settings['name2'], lines=1, label='Character\'s name')
+                        shared.gradio['greeting'] = gr.Textbox(value=shared.settings['greeting'], lines=2, label='Greeting')
+                        shared.gradio['context'] = gr.Textbox(value=shared.settings['context'], lines=8, label='Context')
+                    with gr.Column(scale=1):
+                        shared.gradio['character_picture'] = gr.Image(label='Character picture', type="pil")
+                        shared.gradio['your_picture'] = gr.Image(label='Your picture', type="pil", value=Image.open(Path("cache/pfp_me.png")) if Path("cache/pfp_me.png").exists() else None)
                 with gr.Row():
                     shared.gradio['character_menu'] = gr.Dropdown(choices=available_characters, value='None', label='Character', elem_id='character-menu')
                     ui.create_refresh_button(shared.gradio['character_menu'], lambda : None, lambda : {'choices': get_available_characters()}, 'refresh-button')
@@ -347,8 +353,6 @@ def create_interface():
 
                         gr.Markdown("# TavernAI PNG format")
                         shared.gradio['upload_img_tavern'] = gr.File(type='binary', file_types=['image'])
-                    with gr.Tab('Upload your profile picture'):
-                        shared.gradio['upload_img_me'] = gr.File(type='binary', file_types=['image'])
 
             with gr.Tab("Parameters", elem_id="parameters"):
                 with gr.Box():
@@ -399,15 +403,15 @@ def create_interface():
             shared.gradio['textbox'].submit(lambda x: '', shared.gradio['textbox'], shared.gradio['textbox'], show_progress=False)
             shared.gradio['textbox'].submit(lambda : chat.save_history(timestamp=False), [], [], show_progress=False)
 
-            shared.gradio['character_menu'].change(chat.load_character, [shared.gradio[k] for k in ['character_menu', 'name1', 'name2']], [shared.gradio[k] for k in ['name1', 'name2', 'greeting', 'context', 'display']])
+            shared.gradio['character_menu'].change(chat.load_character, [shared.gradio[k] for k in ['character_menu', 'name1', 'name2']], [shared.gradio[k] for k in ['name1', 'name2', 'character_picture', 'greeting', 'context', 'display']])
             shared.gradio['upload_chat_history'].upload(chat.load_history, [shared.gradio['upload_chat_history'], shared.gradio['name1'], shared.gradio['name2']], [])
             shared.gradio['upload_img_tavern'].upload(chat.upload_tavern_character, [shared.gradio['upload_img_tavern'], shared.gradio['name1'], shared.gradio['name2']], [shared.gradio['character_menu']])
-            shared.gradio['upload_img_me'].upload(chat.upload_your_profile_picture, [shared.gradio['upload_img_me']], [])
+            shared.gradio['your_picture'].change(chat.upload_your_profile_picture, shared.gradio['your_picture'], [])
 
             reload_func = chat.redraw_html if shared.args.cai_chat else lambda : shared.history['visible']
             reload_inputs = [shared.gradio['name1'], shared.gradio['name2']] if shared.args.cai_chat else []
             shared.gradio['upload_chat_history'].upload(reload_func, reload_inputs, [shared.gradio['display']])
-            shared.gradio['upload_img_me'].upload(reload_func, reload_inputs, [shared.gradio['display']])
+            shared.gradio['your_picture'].change(reload_func, reload_inputs, [shared.gradio['display']])
             shared.gradio['Stop'].click(reload_func, reload_inputs, [shared.gradio['display']])
 
             shared.gradio['interface'].load(None, None, None, _js=f"() => {{{ui.main_js+ui.chat_js}}}")
