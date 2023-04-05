@@ -1,3 +1,7 @@
+import os
+
+os.environ['GRADIO_ANALYTICS_ENABLED'] = 'False'
+
 import io
 import json
 import re
