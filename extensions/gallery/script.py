@@ -66,13 +66,7 @@ def generate_html():
             container_html = '<div class="character-container">'
             image_html = "<div class='placeholder'></div>"
 
-            for i in [
-                    f"characters/{character}.png",
-                    f"characters/{character}.jpg",
-                    f"characters/{character}.jpeg",
-                    ]:
-
-                path = Path(i)
+            for path in [Path(f"characters/{character}.{extension}") for extension in ['png', 'jpg', 'jpeg']]:
                 if path.exists():
                     image_html = f'<img src="file/{get_image_cache(path)}">'
                     break
