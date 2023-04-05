@@ -22,4 +22,6 @@ TBC:
 - replace "X typing" by yield from generator
 - group chat mode (now all chat members is one entity "you" at bot perception)
 - change characters during session
-- find out something about limit of simultaneously threading to not overload GPU. Queue or something other.
+- limit of simultaneously threading to prevent overloading. Queue or something other. 
+- history uprade: loacal cache 
+- message_id sequence history cache lead to "remove last message" button 
