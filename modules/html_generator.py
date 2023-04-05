@@ -6,10 +6,11 @@ This is a library for formatting text outputs as nice HTML.
 
 import os
 import re
+import time
 from pathlib import Path
 
 import markdown
-from PIL import Image
+from PIL import Image, ImageOps
 
 # This is to store the paths to the thumbnails of the profile pictures
 image_cache = {}
@@ -95,6 +96,13 @@ def generate_4chan_html(f):
 
     return output
 
+def make_thumbnail(image):
+    image = image.resize((350, round(image.size[1]/image.size[0]*350)), Image.Resampling.LANCZOS)
+    if image.size[1] > 470:
+        image = ImageOps.fit(image, (350, 470), Image.ANTIALIAS)
+
+    return image
+
 def get_image_cache(path):
     cache_folder = Path("cache")
     if not cache_folder.exists():
@@ -102,26 +110,20 @@ def get_image_cache(path):
 
     mtime = os.stat(path).st_mtime
     if (path in image_cache and mtime != image_cache[path][0]) or (path not in image_cache):
-        img = Image.open(path)
-        img.thumbnail((200, 200))
+        img = make_thumbnail(Image.open(path))
         output_file = Path(f'cache/{path.name}_cache.png')
         img.convert('RGB').save(output_file, format='PNG')
         image_cache[path] = [mtime, output_file.as_posix()]
 
     return image_cache[path][1]
 
-def load_html_image(paths):
-    for str_path in paths:
-          path = Path(str_path)
-          if path.exists():
-              return f'<img src="file/{get_image_cache(path)}">'
-    return ''
-
-def generate_chat_html(history, name1, name2, character):
+def generate_chat_html(history, name1, name2, reset_cache=False):
     output = f'<style>{cai_css}</style><div class="chat" id="chat">'
 
-    img_bot = load_html_image([f"characters/{character}.{ext}" for ext in ['png', 'jpg', 'jpeg']] + ["img_bot.png","img_bot.jpg","img_bot.jpeg"])
-    img_me = load_html_image(["img_me.png", "img_me.jpg", "img_me.jpeg"])
+    # The time.time() is to prevent the brower from caching the image
+    suffix = f"?{time.time()}" if reset_cache else ''
+    img_bot = f'<img src="file/cache/pfp_character.png{suffix}">' if Path("cache/pfp_character.png").exists() else ''
+    img_me = f'<img src="file/cache/pfp_me.png{suffix}">' if Path("cache/pfp_me.png").exists() else ''
 
     for i,_row in enumerate(history[::-1]):
         row = [convert_to_markdown(entry) for entry in _row]

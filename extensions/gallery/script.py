@@ -142,19 +142,10 @@ def generate_html():
             container_html = f'<div class="character-container" item-data="{character}" onclick="checkActive(event)">'
             image_html = "<div class='placeholder'></div>"
 
-            for i in [
-                    f"characters/{character}.png",
-                    f"characters/{character}.jpg",
-                    f"characters/{character}.jpeg",
-                    ]:
-
-                path = Path(i)
+            for path in [Path(f"characters/{character}.{extension}") for extension in ['png', 'jpg', 'jpeg']]:
                 if path.exists():
-                    try:
-                        image_html = f'<img src="file/{get_image_cache(path)}">'
-                        break
-                    except:
-                        continue
+                    image_html = f'<img src="file/{get_image_cache(path)}">'
+                    break
 
             container_html += f'{image_html} <div><span class="character-name">{character}</span></div>'
             container_html += "</div>"

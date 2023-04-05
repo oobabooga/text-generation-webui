@@ -175,7 +175,7 @@ Optionally, you can use the following command-line flags:
 | `-h`, `--help`   | show this help message and exit |
 | `--notebook`     | Launch the web UI in notebook mode, where the output is written to the same text box as the input. |
 | `--chat`         | Launch the web UI in chat mode.|
-| `--cai-chat`     | Launch the web UI in chat mode with a style similar to Character.AI's. If the file `img_bot.png` or `img_bot.jpg` exists in the same folder as server.py, this image will be used as the bot's profile picture. Similarly, `img_me.png` or `img_me.jpg` will be used as your profile picture. |
+| `--cai-chat`     | Launch the web UI in chat mode with a style similar to the Character.AI website. |
 | `--model MODEL`  | Name of the model to load by default. |
 | `--lora LORA`    | Name of the LoRA to apply to the model by default. |
 |  `--model-dir MODEL_DIR`                    | Path to directory with all the models |
@@ -212,7 +212,7 @@ Optionally, you can use the following command-line flags:
 | `--wbits WBITS`            | GPTQ: Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported. |
 | `--model_type MODEL_TYPE`  | GPTQ: Model type of pre-quantized model. Currently LLaMA, OPT, and GPT-J are supported. |
 | `--groupsize GROUPSIZE`    | GPTQ: Group size. |
-| `--pre_layer PRE_LAYER`    | GPTQ: The number of layers to preload. |
+| `--pre_layer PRE_LAYER`    | GPTQ: The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models. |
 
 #### FlexGen
 
