@@ -175,7 +175,6 @@ Optionally, you can use the following command-line flags:
 | `-h`, `--help`   | show this help message and exit |
 | `--notebook`     | Launch the web UI in notebook mode, where the output is written to the same text box as the input. |
 | `--chat`         | Launch the web UI in chat mode.|
-| `--cai-chat`     | Launch the web UI in chat mode with a style similar to the Character.AI website. |
 | `--model MODEL`  | Name of the model to load by default. |
 | `--lora LORA`    | Name of the LoRA to apply to the model by default. |
 |  `--model-dir MODEL_DIR`                    | Path to directory with all the models |
