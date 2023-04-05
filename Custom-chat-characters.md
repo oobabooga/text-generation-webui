@@ -19,14 +19,7 @@ These replacements happen when the character is loaded, and they apply to the `c
 
 #### How do I add a profile picture for my character?
 
-You have two options:
-
-* Put an image with the same name as your character's yaml file into the `characters` folder. For example, if your bot is `Character.yaml`, add `Character.jpg` or `Character.png` to the folder.
-* Put an image called `img_bot.jpg` or `img_bot.png` into the `text-generation-webui` folder. This image will be used as the profile picture for any bots that don't have one.
-
-#### How do I add a profile picture for myself?
-
-Put an image called `img_me.jpg` or `img_me.png` into the `text-generation-webui` folder.
+Put an image with the same name as your character's yaml file into the `characters` folder. For example, if your bot is `Character.yaml`, add `Character.jpg` or `Character.png` to the folder.
 
 #### Is the chat history truncated in the prompt?
 
