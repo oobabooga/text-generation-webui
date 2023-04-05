@@ -139,7 +139,7 @@ def create_model_and_preset_menus():
                 ui.create_refresh_button(shared.gradio['preset_menu'], lambda : None, lambda : {'choices': get_available_presets()}, 'refresh-button')
 
 def save_prompt(text):
-    fname = f"{datetime.now().strftime('%Y-%m-%d-%H:%M:%S')}.txt"
+    fname = f"{datetime.now().strftime('%Y-%m-%d-%H%M%S')}.txt"
     with open(Path(f'prompts/{fname}'), 'w', encoding='utf-8') as f:
         f.write(text)
     return f"Saved to prompts/{fname}"
