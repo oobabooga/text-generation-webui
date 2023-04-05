@@ -2,9 +2,8 @@ from pathlib import Path
 
 import gradio as gr
 
-from modules.chat import load_character
 from modules.html_generator import get_image_cache
-from modules.shared import gradio, settings
+from modules.shared import gradio
 
 
 def generate_css():
@@ -64,7 +63,7 @@ def generate_html():
     for file in sorted(Path("characters").glob("*")):
         if file.suffix in [".json", ".yml", ".yaml"]:
             character = file.stem
-            container_html = f'<div class="character-container">'
+            container_html = '<div class="character-container">'
             image_html = "<div class='placeholder'></div>"
 
             for i in [
@@ -75,11 +74,8 @@ def generate_html():
 
                 path = Path(i)
                 if path.exists():
-                    try:
-                        image_html = f'<img src="file/{get_image_cache(path)}">'
-                        break
-                    except:
-                        continue
+                    image_html = f'<img src="file/{get_image_cache(path)}">'
+                    break
 
             container_html += f'{image_html} <span class="character-name">{character}</span>'
             container_html += "</div>"
