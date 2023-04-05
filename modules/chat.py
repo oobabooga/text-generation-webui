@@ -423,7 +423,7 @@ def upload_tavern_character(img, name1, name2):
     _json = {"char_name": _json['name'], "char_persona": _json['description'], "char_greeting": _json["first_mes"], "example_dialogue": _json['mes_example'], "world_scenario": _json['scenario']}
     return upload_character(json.dumps(_json), img, tavern=True)
 
-def upload_your_profile_picture(img):
+def upload_your_profile_picture(img, name1, name2):
     cache_folder = Path("cache")
     if not cache_folder.exists():
         cache_folder.mkdir()
@@ -435,3 +435,8 @@ def upload_your_profile_picture(img):
         img = make_thumbnail(img)
         img.save(Path('cache/pfp_me.png'))
         print('Profile picture saved to "cache/pfp_me.png"')
+
+    if shared.args.cai_chat:
+        return generate_chat_html(shared.history['visible'], name1, name2, reset_cache=True)
+    else:
+        return shared.history['visible']
