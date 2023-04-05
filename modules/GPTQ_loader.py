@@ -74,7 +74,7 @@ def load_quantized(model_name):
         exit()
 
     # Now we are going to try to locate the quantized model file.
-    path_to_model = Path(f'models/{model_name}')
+    path_to_model = Path(f"{shared.args.model_dir}/{shared.model_name}")
     found_pts = list(path_to_model.glob("*.pt"))
     found_safetensors = list(path_to_model.glob("*.safetensors"))
     pt_path = None
