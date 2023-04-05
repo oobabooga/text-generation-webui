@@ -1,12 +1,29 @@
 #!/bin/bash
 
-# Make sure to start the web UI with the following flags:
-#
-# python server.py --model MODEL --listen --no-stream
+usage='
+This is a bash script using the API for oobabooga/text-generation-webui.
+
+Make sure to start the web UI with the following flags:
+
+python server.py --model MODEL --listen --no-stream
+
+Optionally, you can also add the --share flag to generate a public gradio URL,
+allowing you to use the API remotely.
+
+Usage: bash ./api-bash-script.sh [PRESET] PROMPT
+
+Examples:
+
+preset="NovelAI-Sphinx Moth"
+prompt="This is a conversation with your Assistant. The Assistant is very helpful and is eager to chat with you and answer your questions.\nYou: Explain quantum computing in simple terms\nAssistant:"
+server=127.0.0.1 port=7860 seed=-1 bash ./api-bash-script.sh "$preset" "$prompt"
+
+The word bash can be left out if you made the script executable (chmod +x api-bash-script.sh).
+'
 
 # If no arguments were passed, display a usage message and exit with an error code
 if [[ "$#" -eq 0 ]]; then
-    echo "Usage: $0 [preset] prompt"
+    echo "$usage"
     exit 1
 fi
 
