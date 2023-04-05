@@ -11,7 +11,7 @@ def get_prompt_by_name(name):
         return df[df['Prompt name'] == name].iloc[0]['Prompt'].replace('\\n', '\n')
 
 def ui():
-    if not shared.args.chat or shared.args.cai_chat:
+    if not shared.is_chat():
         choices = ['None'] + list(df['Prompt name'])
 
         prompts_menu = gr.Dropdown(value=choices[0], choices=choices, label='Prompt')
