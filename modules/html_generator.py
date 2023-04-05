@@ -96,6 +96,13 @@ def generate_4chan_html(f):
 
     return output
 
+def make_thumbnail(image):
+    image = image.resize((350, round(image.size[1]/image.size[0]*350)), Image.Resampling.LANCZOS)
+    if image.size[1] > 470:
+        image = ImageOps.fit(image, (350, 470), Image.ANTIALIAS)
+
+    return image
+
 def get_image_cache(path):
     cache_folder = Path("cache")
     if not cache_folder.exists():
@@ -103,8 +110,7 @@ def get_image_cache(path):
 
     mtime = os.stat(path).st_mtime
     if (path in image_cache and mtime != image_cache[path][0]) or (path not in image_cache):
-        img = Image.open(path)
-        img = ImageOps.fit(img, (350, 470), Image.ANTIALIAS)
+        img = make_thumbnail(Image.open(path))
         output_file = Path(f'cache/{path.name}_cache.png')
         img.convert('RGB').save(output_file, format='PNG')
         image_cache[path] = [mtime, output_file.as_posix()]
