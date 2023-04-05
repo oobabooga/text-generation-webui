@@ -406,7 +406,7 @@ def create_interface():
             shared.gradio['character_menu'].change(chat.load_character, [shared.gradio[k] for k in ['character_menu', 'name1', 'name2']], [shared.gradio[k] for k in ['name1', 'name2', 'character_picture', 'greeting', 'context', 'display']])
             shared.gradio['upload_chat_history'].upload(chat.load_history, [shared.gradio['upload_chat_history'], shared.gradio['name1'], shared.gradio['name2']], [])
             shared.gradio['upload_img_tavern'].upload(chat.upload_tavern_character, [shared.gradio['upload_img_tavern'], shared.gradio['name1'], shared.gradio['name2']], [shared.gradio['character_menu']])
-            shared.gradio['your_picture'].change(chat.upload_your_profile_picture, shared.gradio['your_picture'], [])
+            shared.gradio['your_picture'].change(chat.upload_your_profile_picture, shared.gradio['your_picture'], None)
 
             reload_func = chat.redraw_html if shared.args.cai_chat else lambda : shared.history['visible']
             reload_inputs = [shared.gradio['name1'], shared.gradio['name2']] if shared.args.cai_chat else []

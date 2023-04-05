@@ -10,7 +10,7 @@ import time
 from pathlib import Path
 
 import markdown
-from PIL import Image
+from PIL import Image, ImageOps
 
 # This is to store the paths to the thumbnails of the profile pictures
 image_cache = {}
@@ -104,7 +104,7 @@ def get_image_cache(path):
     mtime = os.stat(path).st_mtime
     if (path in image_cache and mtime != image_cache[path][0]) or (path not in image_cache):
         img = Image.open(path)
-        img.thumbnail((200, 200))
+        img = ImageOps.fit(img, (350, 470), Image.ANTIALIAS)
         output_file = Path(f'cache/{path.name}_cache.png')
         img.convert('RGB').save(output_file, format='PNG')
         image_cache[path] = [mtime, output_file.as_posix()]

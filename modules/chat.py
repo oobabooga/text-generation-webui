@@ -7,7 +7,7 @@ from datetime import datetime
 from pathlib import Path
 
 import yaml
-from PIL import Image
+from PIL import Image, ImageOps
 
 import modules.extensions as extensions_module
 import modules.shared as shared
@@ -334,7 +334,7 @@ def generate_pfp_cache(character):
     for path in [Path(f"characters/{character}.{extension}") for extension in ['png', 'jpg', 'jpeg']]:
         if path.exists():
             img = Image.open(path)
-            img.thumbnail((200, 200))
+            img = ImageOps.fit(img, (350, 470), Image.ANTIALIAS)
             img.save(Path('cache/pfp_character.png'), format='PNG')
             return img
     return None
@@ -432,6 +432,6 @@ def upload_your_profile_picture(img):
         if Path("cache/pfp_me.png").exists():
             Path("cache/pfp_me.png").unlink()
     else:
-        img.thumbnail((200, 200))
+        img = ImageOps.fit(img, (350, 470), Image.ANTIALIAS)
         img.save(Path('cache/pfp_me.png'))
         print('Profile picture saved to "cache/pfp_me.png"')
