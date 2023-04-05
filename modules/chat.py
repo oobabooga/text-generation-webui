@@ -390,7 +390,7 @@ def load_character(character, name1, name2):
         shared.history['visible'] += [['', apply_extensions(greeting, "output")]]
 
     if shared.args.cai_chat:
-        return name1, name2, picture, greeting, context, generate_chat_html(shared.history['visible'], name1, name2)
+        return name1, name2, picture, greeting, context, generate_chat_html(shared.history['visible'], name1, name2, reset_cache=True)
     else:
         return name1, name2, picture, greeting, context, shared.history['visible']
 
