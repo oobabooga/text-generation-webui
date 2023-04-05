@@ -85,7 +85,7 @@ def load_lora_wrapper(selected_lora):
     add_lora_to_model(selected_lora)
     return selected_lora
 
-def load_preset_values(preset_menu, return_dict=False):
+def load_preset_values(preset_menu):
     generate_params = {
         'do_sample': True,
         'temperature': 1,
@@ -110,10 +110,7 @@ def load_preset_values(preset_menu, return_dict=False):
 
     generate_params['temperature'] = min(1.99, generate_params['temperature'])
 
-    if return_dict:
-        return generate_params
-    else:
-        return generate_params['do_sample'], generate_params['temperature'], generate_params['top_p'], generate_params['typical_p'], generate_params['repetition_penalty'], generate_params['encoder_repetition_penalty'], generate_params['top_k'], generate_params['min_length'], generate_params['no_repeat_ngram_size'], generate_params['num_beams'], generate_params['penalty_alpha'], generate_params['length_penalty'], generate_params['early_stopping']
+    return generate_params
 
 def upload_soft_prompt(file):
     with zipfile.ZipFile(io.BytesIO(file)) as zf:
@@ -170,7 +167,8 @@ def create_prompt_menus():
     shared.gradio['save_prompt'].click(save_prompt, [shared.gradio['textbox']], [shared.gradio['status']], show_progress=False)
 
 def create_settings_menus(default_preset):
-    generate_params = load_preset_values(default_preset if not shared.args.flexgen else 'Naive', return_dict=True)
+    generate_params = load_preset_values(default_preset if not shared.args.flexgen else 'Naive')
+    shared.gradio['generation_state'] = gr.State(generate_params)
 
     with gr.Row():
         with gr.Column():
@@ -221,8 +219,26 @@ def create_settings_menus(default_preset):
         with gr.Row():
             shared.gradio['upload_softprompt'] = gr.File(type='binary', file_types=['.zip'])
 
+    def update_dict(_dict, k, v):
+        _dict[k] = v
+        return _dict
+
+    for k in ['do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping']:
+        if type(shared.gradio[k]) is gr.Checkbox:
+            shared.gradio[k].change(
+                lambda state, value, copy=k: update_dict(state, copy, value),
+                inputs=[shared.gradio['generation_state'], shared.gradio[k]],
+                outputs=shared.gradio['generation_state'],
+            )
+        else:
+            shared.gradio[k].release(
+                lambda state, value, copy=k: update_dict(state, copy, value),
+                inputs=[shared.gradio['generation_state'], shared.gradio[k]],
+                outputs=shared.gradio['generation_state'],
+            )
+
     shared.gradio['model_menu'].change(load_model_wrapper, [shared.gradio['model_menu']], [shared.gradio['model_menu']], show_progress=True)
-    shared.gradio['preset_menu'].change(load_preset_values, [shared.gradio['preset_menu']], [shared.gradio[k] for k in ['do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping']])
+    shared.gradio['preset_menu'].change(load_preset_values, [shared.gradio['preset_menu']], [shared.gradio[k] for k in ['generation_state']])
     shared.gradio['lora_menu'].change(load_lora_wrapper, [shared.gradio['lora_menu']], [shared.gradio['lora_menu']], show_progress=True)
     shared.gradio['softprompts_menu'].change(load_soft_prompt, [shared.gradio['softprompts_menu']], [shared.gradio['softprompts_menu']], show_progress=True)
     shared.gradio['upload_softprompt'].upload(upload_soft_prompt, [shared.gradio['upload_softprompt']], [shared.gradio['softprompts_menu']])
@@ -376,7 +392,7 @@ def create_interface():
 
                 create_settings_menus(default_preset)
 
-            shared.input_params = [shared.gradio[k] for k in ['Chat input', 'max_new_tokens', 'do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping', 'seed', 'name1', 'name2', 'context', 'check', 'chat_prompt_size_slider', 'chat_generation_attempts', 'Chat mode', 'end_of_turn']]
+            shared.input_params = [shared.gradio[k] for k in ['Chat input', 'max_new_tokens', 'generation_state', 'seed', 'name1', 'name2', 'context', 'check', 'chat_prompt_size_slider', 'chat_generation_attempts', 'Chat mode', 'end_of_turn']]
 
             def set_chat_input(textbox):
                 return textbox, ""
@@ -456,7 +472,7 @@ def create_interface():
             with gr.Tab("Parameters", elem_id="parameters"):
                 create_settings_menus(default_preset)
 
-            shared.input_params = [shared.gradio[k] for k in ['textbox', 'max_new_tokens', 'do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping', 'seed']]
+            shared.input_params = [shared.gradio[k] for k in ['textbox', 'max_new_tokens', 'generation_state', 'seed']]
             output_params = [shared.gradio[k] for k in ['textbox', 'markdown', 'html']]
             gen_events.append(shared.gradio['Generate'].click(generate_reply, shared.input_params, output_params, show_progress=shared.args.no_stream, api_name='textgen'))
             gen_events.append(shared.gradio['textbox'].submit(generate_reply, shared.input_params, output_params, show_progress=shared.args.no_stream))
@@ -489,7 +505,7 @@ def create_interface():
             with gr.Tab("Parameters", elem_id="parameters"):
                 create_settings_menus(default_preset)
 
-            shared.input_params = [shared.gradio[k] for k in ['textbox', 'max_new_tokens', 'do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping', 'seed']]
+            shared.input_params = [shared.gradio[k] for k in ['textbox', 'max_new_tokens', 'generation_state', 'seed']]
             output_params = [shared.gradio[k] for k in ['output_textbox', 'markdown', 'html']]
             gen_events.append(shared.gradio['Generate'].click(generate_reply, shared.input_params, output_params, show_progress=shared.args.no_stream, api_name='textgen'))
             gen_events.append(shared.gradio['textbox'].submit(generate_reply, shared.input_params, output_params, show_progress=shared.args.no_stream))
