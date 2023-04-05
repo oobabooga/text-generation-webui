@@ -74,7 +74,7 @@ def load_quantized(model_name):
         exit()
 
     # Now we are going to try to locate the quantized model file.
-    path_to_model = Path(f'models/{model_name}')
+    path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
     found_pts = list(path_to_model.glob("*.pt"))
     found_safetensors = list(path_to_model.glob("*.safetensors"))
     pt_path = None
@@ -95,8 +95,8 @@ def load_quantized(model_name):
         else:
             pt_model = f'{model_name}-{shared.args.wbits}bit'
 
-        # Try to find the .safetensors or .pt both in models/ and in the subfolder
-        for path in [Path(p+ext) for ext in ['.safetensors', '.pt'] for p in [f"models/{pt_model}", f"{path_to_model}/{pt_model}"]]:
+        # Try to find the .safetensors or .pt both in the model dir and in the subfolder
+        for path in [Path(p+ext) for ext in ['.safetensors', '.pt'] for p in [f"{shared.args.model_dir}/{pt_model}", f"{path_to_model}/{pt_model}"]]:
             if path.exists():
                 print(f"Found {path}")
                 pt_path = path

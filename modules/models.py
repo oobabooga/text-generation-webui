@@ -42,7 +42,7 @@ def load_model(model_name):
     t0 = time.time()
 
     shared.is_RWKV = 'rwkv-' in model_name.lower()
-    shared.is_llamacpp = len(list(Path(f'models/{model_name}').glob('ggml*.bin'))) > 0
+    shared.is_llamacpp = len(list(Path(f'{shared.args.model_dir}/{model_name}').glob('ggml*.bin'))) > 0
 
     # Default settings
     if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.wbits, shared.args.auto_devices, shared.args.disk, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None, shared.args.deepspeed, shared.args.flexgen, shared.is_RWKV, shared.is_llamacpp]):
@@ -105,7 +105,7 @@ def load_model(model_name):
     elif shared.is_llamacpp:
         from modules.llamacpp_model import LlamaCppModel
 
-        model_file = list(Path(f'models/{model_name}').glob('ggml*.bin'))[0]
+        model_file = list(Path(f'{shared.args.model_dir}/{model_name}').glob('ggml*.bin'))[0]
         print(f"llama.cpp weights detected: {model_file}\n")
 
         model, tokenizer = LlamaCppModel.from_pretrained(model_file)
