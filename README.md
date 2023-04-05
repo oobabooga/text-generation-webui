@@ -62,7 +62,7 @@ Recommended if you have some experience with the command-line.
 
 On Windows, I additionally recommend carrying out the installation on WSL instead of the base system: [WSL installation guide](https://github.com/oobabooga/text-generation-webui/wiki/WSL-installation-guide).
 
-0. Install Conda
+#### 0. Install Conda
 
 https://docs.conda.io/en/latest/miniconda.html
 
@@ -75,14 +75,14 @@ bash Miniconda3.sh
 
 Source: https://educe-ubc.github.io/conda.html
 
-1. Create a new conda environment
+#### 1. Create a new conda environment
 
 ```
 conda create -n textgen python=3.10.9
 conda activate textgen
 ```
 
-2. Install Pytorch
+#### 2. Install Pytorch
 
 | System | GPU | Command |
 |--------|---------|---------|
@@ -92,10 +92,12 @@ conda activate textgen
 
 The up to date commands can be found here: https://pytorch.org/get-started/locally/. 
 
-MacOS users, refer to the comments here: https://github.com/oobabooga/text-generation-webui/pull/393
+#### 2.1 Special instructions
 
+* MacOS users: https://github.com/oobabooga/text-generation-webui/pull/393
+* AMD users: https://rentry.org/eq3hg
 
-3. Install the web UI
+#### 3. Install the web UI
 
 ```
 git clone https://github.com/oobabooga/text-generation-webui
