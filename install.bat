@@ -17,8 +17,8 @@ set /p "gpuchoice=Input> "
 set gpuchoice=%gpuchoice:~0,1%
 
 if /I "%gpuchoice%" == "A" (
-    set "PACKAGES_TO_INSTALL=python=3.10.9 torchvision torchaudio pytorch-cuda=11.7 cuda-toolkit conda-forge::ninja conda-forge::git"
-    set "CHANNEL=-c pytorch -c nvidia/label/cuda-11.7.0 -c nvidia"
+    set "PACKAGES_TO_INSTALL=python=3.10.9 pytorch[version=2,build=py3.10_cuda11.7*] torchvision torchaudio pytorch-cuda=11.7 cuda-toolkit ninja git"
+    set "CHANNEL=-c pytorch -c nvidia/label/cuda-11.7.0 -c nvidia -c conda-forge"
 ) else if /I "%gpuchoice%" == "B" (
     set "PACKAGES_TO_INSTALL=pytorch torchvision torchaudio cpuonly git"
     set "CHANNEL=-c conda-forge -c pytorch"
