@@ -538,7 +538,8 @@ def create_interface():
             else:
                 shared.gradio[k].release(lambda state, value, copy=k: change_dict_value(state, copy, value), inputs=[shared.gradio['generate_state'], shared.gradio[k]], outputs=shared.gradio['generate_state'])
 
-        api.create_apis()
+        if not shared.is_chat():
+            api.create_apis()
 
     # Authentication
     auth = None
