@@ -161,7 +161,8 @@ def impersonate_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typ
     if 'pygmalion' in shared.model_name.lower():
         name1 = "You"
 
-    prompt = generate_chat_prompt(text, max_new_tokens, name1, name2, context, chat_prompt_size, impersonate=True, end_of_turn=end_of_turn)
+    kwargs = {'is_instruct': mode == 'instruct', 'end_of_turn': end_of_turn, 'impersonate': True}
+    prompt = generate_chat_prompt(text, max_new_tokens, name1, name2, context, chat_prompt_size, **kwargs)
 
     # Yield *Is typing...*
     yield shared.processing_message
