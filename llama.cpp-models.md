@@ -29,8 +29,6 @@ This was the performance of llama-7b int4 on my i5-12400F:
 
 ## Limitations
 
-The sliders are now used (temperature, top_p, top_k, and repetition_penalty only), and the 2048 context size can be used.
-
 ~* The parameter sliders in the interface (temperature, top_p, top_k, etc) are completely ignored. So only the default parameters in llama.cpp can be used.~
 
 ~* Only 512 tokens of context can be used.~
