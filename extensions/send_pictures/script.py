@@ -3,8 +3,7 @@ from io import BytesIO
 
 import numpy as np
 import gradio as gr
-import modules.chat as chat
-import modules.shared as shared
+from modules import chat, shared
 import torch
 import requests
 from PIL import Image

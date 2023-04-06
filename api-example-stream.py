@@ -36,6 +36,7 @@ async def run(context):
         'early_stopping': False,
         'seed': -1,
     }
+    payload = json.dumps([context, params])
     session = random_hash()
 
     async with websockets.connect(f"ws://{server}:7860/queue/join") as websocket:
@@ -54,22 +55,7 @@ async def run(context):
                         "session_hash": session,
                         "fn_index": 12,
                         "data": [
-                            context,
-                            params['max_new_tokens'],
-                            params['do_sample'],
-                            params['temperature'],
-                            params['top_p'],
-                            params['typical_p'],
-                            params['repetition_penalty'],
-                            params['encoder_repetition_penalty'],
-                            params['top_k'],
-                            params['min_length'],
-                            params['no_repeat_ngram_size'],
-                            params['num_beams'],
-                            params['penalty_alpha'],
-                            params['length_penalty'],
-                            params['early_stopping'],
-                            params['seed'],
+                            payload
                         ]
                     }))
                 case "process_starts":
