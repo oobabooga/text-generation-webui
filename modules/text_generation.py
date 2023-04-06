@@ -102,10 +102,10 @@ def set_manual_seed(seed):
 def stop_everything_event():
     shared.stop_everything = True
 
-def generate_reply(question, generation_params, eos_token=None, stopping_strings=[]):
-    max_new_tokens = generation_params['max_new_tokens']
-    seed = generation_params['seed']
-    print(generation_params)
+def generate_reply(question, generate_params, eos_token=None, stopping_strings=[]):
+    max_new_tokens = generate_params['max_new_tokens']
+    seed = generate_params['seed']
+    print(generate_params)
     print('---------------')
     clear_torch_cache()
     set_manual_seed(seed)
@@ -124,8 +124,8 @@ def generate_reply(question, generation_params, eos_token=None, stopping_strings
     if any((shared.is_RWKV, shared.is_llamacpp)):
 
         for k in ['temperature', 'top_p', 'top_k', 'repetition_penalty']:
-            updated_params[k] = generation_params[k]
-        updated_params["token_count"] = generation_params["max_new_tokens"]
+            updated_params[k] = generate_params[k]
+        updated_params["token_count"] = generate_params["max_new_tokens"]
 
         try:
             if shared.args.no_stream:
@@ -173,14 +173,14 @@ def generate_reply(question, generation_params, eos_token=None, stopping_strings
         updated_params["eos_token_id"] = eos_token_ids
         updated_params["stopping_criteria"] = stopping_criteria_list
         for k in ["do_sample", "temperature", "top_p", "typical_p", "repetition_penalty", "encoder_repetition_penalty", "top_k", "min_length", "no_repeat_ngram_size", "num_beams", "penalty_alpha", "length_penalty", "early_stopping"]:
-            updated_params[k] = generation_params[k]
+            updated_params[k] = generate_params[k]
 
         if shared.args.no_stream:
             updated_params["min_length"] = 0
     else:
         for k in ["do_sample", "temperature"]:
-            updated_params[k] = generation_params[k]
-        updated_params["stop"] = generation_params["eos_token_ids"][-1]
+            updated_params[k] = generate_params[k]
+        updated_params["stop"] = generate_params["eos_token_ids"][-1]
         if not shared.args.no_stream:
             updated_params["max_new_tokens"] = 8
     print(updated_params)
