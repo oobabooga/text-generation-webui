@@ -85,7 +85,7 @@ def load_lora_wrapper(selected_lora):
     add_lora_to_model(selected_lora)
     return selected_lora
 
-def load_preset_values(preset_menu, state):
+def load_preset_values(preset_menu, state, return_dict=False):
     generate_params = {
         'do_sample': True,
         'temperature': 1,
@@ -109,8 +109,11 @@ def load_preset_values(preset_menu, state):
             generate_params[i[0].strip()] = eval(i[1].strip())
     generate_params['temperature'] = min(1.99, generate_params['temperature'])
 
-    state.update(generate_params)
-    return generate_params, [gr.update(value=state[k]) for k in generate_params]
+    if return_dict:
+        return generate_params
+    else:
+        state.update(generate_params)
+        return state, *[generate_params[k] for k in ['do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping']]
 
 def upload_soft_prompt(file):
     with zipfile.ZipFile(io.BytesIO(file)) as zf:
@@ -167,7 +170,7 @@ def create_prompt_menus():
     shared.gradio['save_prompt'].click(save_prompt, [shared.gradio['textbox']], [shared.gradio['status']], show_progress=False)
 
 def create_settings_menus(default_preset):
-    generate_params, _ = load_preset_values(default_preset if not shared.args.flexgen else 'Naive', {})
+    generate_params = load_preset_values(default_preset if not shared.args.flexgen else 'Naive', {}, return_dict=True)
     for k in ['max_new_tokens', 'seed', 'stop_at_newline', 'chat_prompt_size', 'chat_generation_attempts']:
         generate_params[k] = shared.settings[k]
     shared.gradio['generation_state'] = gr.State(generate_params)
@@ -222,7 +225,7 @@ def create_settings_menus(default_preset):
             shared.gradio['upload_softprompt'] = gr.File(type='binary', file_types=['.zip'])
 
     shared.gradio['model_menu'].change(load_model_wrapper, shared.gradio['model_menu'], shared.gradio['model_menu'], show_progress=True)
-    shared.gradio['preset_menu'].change(load_preset_values, shared.gradio['preset_menu'], [shared.gradio[k] for k in ['generation_state'] + [k for k in shared.gradio['generation_state']][0:10]])
+    shared.gradio['preset_menu'].change(load_preset_values, [shared.gradio[k] for k in ['preset_menu', 'generation_state']], [shared.gradio[k] for k in ['generation_state', 'do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping']])
     shared.gradio['lora_menu'].change(load_lora_wrapper, shared.gradio['lora_menu'], shared.gradio['lora_menu'], show_progress=True)
     shared.gradio['softprompts_menu'].change(load_soft_prompt, shared.gradio['softprompts_menu'], shared.gradio['softprompts_menu'], show_progress=True)
     shared.gradio['upload_softprompt'].upload(upload_soft_prompt, shared.gradio['upload_softprompt'], shared.gradio['softprompts_menu'])
