@@ -12,45 +12,51 @@ from PIL import Image
 import modules.extensions as extensions_module
 import modules.shared as shared
 from modules.extensions import apply_extensions
-from modules.html_generator import fix_newlines, generate_chat_html
+from modules.html_generator import (fix_newlines, chat_html_wrapper,
+                                    make_thumbnail)
 from modules.text_generation import (encode, generate_reply,
                                      get_max_prompt_length)
 
 
-def generate_chat_output(history, name1, name2, character):
-    if shared.args.cai_chat:
-        return generate_chat_html(history, name1, name2, character)
-    else:
-        return history
-
-def generate_chat_prompt(user_input, max_new_tokens, name1, name2, context, chat_prompt_size, impersonate=False, also_return_rows=False):
+def generate_chat_prompt(user_input, max_new_tokens, name1, name2, context, chat_prompt_size, is_instruct, end_of_turn="", impersonate=False, also_return_rows=False):
     user_input = fix_newlines(user_input)
     rows = [f"{context.strip()}\n"]
 
+    # Finding the maximum prompt size
     if shared.soft_prompt:
        chat_prompt_size -= shared.soft_prompt_tensor.shape[1]
     max_length = min(get_max_prompt_length(max_new_tokens), chat_prompt_size)
 
+    if is_instruct:
+        prefix1 = f"{name1}\n"
+        prefix2 = f"{name2}\n"
+    else:
+        prefix1 = f"{name1}: "
+        prefix2 = f"{name2}: "
+
     i = len(shared.history['internal'])-1
     while i >= 0 and len(encode(''.join(rows), max_new_tokens)[0]) < max_length:
-        rows.insert(1, f"{name2}: {shared.history['internal'][i][1].strip()}\n")
-        prev_user_input = shared.history['internal'][i][0]
-        if prev_user_input not in ['', '<|BEGIN-VISIBLE-CHAT|>']:
-            rows.insert(1, f"{name1}: {prev_user_input.strip()}\n")
+        rows.insert(1, f"{prefix2}{shared.history['internal'][i][1].strip()}{end_of_turn}\n")
+        string = shared.history['internal'][i][0]
+        if string not in ['', '<|BEGIN-VISIBLE-CHAT|>']:
+            rows.insert(1, f"{prefix1}{string.strip()}{end_of_turn}\n")
         i -= 1
 
-    if not impersonate:
-        if len(user_input) > 0:
-            rows.append(f"{name1}: {user_input}\n")
-        rows.append(apply_extensions(f"{name2}:", "bot_prefix"))
-        limit = 3
-    else:
-        rows.append(f"{name1}:")
+    if impersonate:
+        rows.append(f"{prefix1.strip() if not is_instruct else prefix1}")
         limit = 2
+    else:
+
+        # Adding the user message
+        if len(user_input) > 0:
+            rows.append(f"{prefix1}{user_input}{end_of_turn}\n")
+
+        # Adding the Character prefix
+        rows.append(apply_extensions(f"{prefix2.strip() if not is_instruct else prefix2}", "bot_prefix"))
+        limit = 3
 
     while len(rows) > limit and len(encode(''.join(rows), max_new_tokens)[0]) >= max_length:
         rows.pop(1)
-
     prompt = ''.join(rows)
 
     if also_return_rows:
@@ -85,7 +91,7 @@ def extract_message_from_reply(reply, name1, name2, stop_at_newline):
     reply = fix_newlines(reply)
     return reply, next_character_found
 
-def chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, name1, name2, context, stop_at_newline, chat_prompt_size, chat_generation_attempts=1, regenerate=False):
+def chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, name1, name2, context, stop_at_newline, chat_prompt_size, chat_generation_attempts=1, regenerate=False, mode="cai-chat", end_of_turn=""):
     just_started = True
     eos_token = '\n' if stop_at_newline else None
     name1_original = name1
@@ -104,14 +110,13 @@ def chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical
 
     if visible_text is None:
         visible_text = text
-    if shared.args.chat:
-        visible_text = visible_text.replace('\n', '<br>')
     text = apply_extensions(text, "input")
 
+    is_instruct = mode == 'instruct'
     if custom_generate_chat_prompt is None:
-        prompt = generate_chat_prompt(text, max_new_tokens, name1, name2, context, chat_prompt_size)
+        prompt = generate_chat_prompt(text, max_new_tokens, name1, name2, context, chat_prompt_size, is_instruct, end_of_turn=end_of_turn)
     else:
-        prompt = custom_generate_chat_prompt(text, max_new_tokens, name1, name2, context, chat_prompt_size)
+        prompt = custom_generate_chat_prompt(text, max_new_tokens, name1, name2, context, chat_prompt_size, is_instruct, end_of_turn=end_of_turn)
 
     # Yield *Is typing...*
     if not regenerate:
@@ -128,8 +133,6 @@ def chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical
             reply, next_character_found = extract_message_from_reply(reply, name1, name2, stop_at_newline)
             visible_reply = re.sub("(<USER>|<user>|{{user}})", name1_original, reply)
             visible_reply = apply_extensions(visible_reply, "output")
-            if shared.args.chat:
-                visible_reply = visible_reply.replace('\n', '<br>')
 
             # We need this global variable to handle the Stop event,
             # otherwise gradio gets confused
@@ -152,13 +155,13 @@ def chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical
 
     yield shared.history['visible']
 
-def impersonate_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, name1, name2, context, stop_at_newline, chat_prompt_size, chat_generation_attempts=1):
+def impersonate_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, name1, name2, context, stop_at_newline, chat_prompt_size, chat_generation_attempts=1, mode="cai-chat", end_of_turn=""):
     eos_token = '\n' if stop_at_newline else None
 
     if 'pygmalion' in shared.model_name.lower():
         name1 = "You"
 
-    prompt = generate_chat_prompt(text, max_new_tokens, name1, name2, context, chat_prompt_size, impersonate=True)
+    prompt = generate_chat_prompt(text, max_new_tokens, name1, name2, context, chat_prompt_size, impersonate=True, end_of_turn=end_of_turn)
 
     # Yield *Is typing...*
     yield shared.processing_message
@@ -178,36 +181,30 @@ def impersonate_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typ
 
     yield reply
 
-def cai_chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, name1, name2, context, stop_at_newline, chat_prompt_size, chat_generation_attempts=1):
-    for history in chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, name1, name2, context, stop_at_newline, chat_prompt_size, chat_generation_attempts):
-        yield generate_chat_html(history, name1, name2, shared.character)
+def cai_chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, name1, name2, context, stop_at_newline, chat_prompt_size, chat_generation_attempts=1, mode="cai-chat", end_of_turn=""):
+    for history in chatbot_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, name1, name2, context, stop_at_newline, chat_prompt_size, chat_generation_attempts, regenerate=False, mode=mode, end_of_turn=end_of_turn):
+        yield chat_html_wrapper(history, name1, name2, mode)
 
-def regenerate_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, name1, name2, context, stop_at_newline, chat_prompt_size, chat_generation_attempts=1):
+def regenerate_wrapper(text, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, name1, name2, context, stop_at_newline, chat_prompt_size, chat_generation_attempts=1, mode="cai-chat", end_of_turn=""):
     if (shared.character != 'None' and len(shared.history['visible']) == 1) or len(shared.history['internal']) == 0:
-        yield generate_chat_output(shared.history['visible'], name1, name2, shared.character)
+        yield chat_html_wrapper(shared.history['visible'], name1, name2, mode)
     else:
         last_visible = shared.history['visible'].pop()
         last_internal = shared.history['internal'].pop()
         # Yield '*Is typing...*'
-        yield generate_chat_output(shared.history['visible']+[[last_visible[0], shared.processing_message]], name1, name2, shared.character)
-        for history in chatbot_wrapper(last_internal[0], max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, name1, name2, context, stop_at_newline, chat_prompt_size, chat_generation_attempts, regenerate=True):
-            if shared.args.cai_chat:
-                shared.history['visible'][-1] = [last_visible[0], history[-1][1]]
-            else:
-                shared.history['visible'][-1] = (last_visible[0], history[-1][1])
-            yield generate_chat_output(shared.history['visible'], name1, name2, shared.character)
+        yield chat_html_wrapper(shared.history['visible']+[[last_visible[0], shared.processing_message]], name1, name2, mode)
+        for history in chatbot_wrapper(last_internal[0], max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, name1, name2, context, stop_at_newline, chat_prompt_size, chat_generation_attempts, regenerate=True, mode=mode, end_of_turn=end_of_turn):
+            shared.history['visible'][-1] = [last_visible[0], history[-1][1]]
+            yield chat_html_wrapper(shared.history['visible'], name1, name2, mode)
 
-def remove_last_message(name1, name2):
+def remove_last_message(name1, name2, mode):
     if len(shared.history['visible']) > 0 and shared.history['internal'][-1][0] != '<|BEGIN-VISIBLE-CHAT|>':
         last = shared.history['visible'].pop()
         shared.history['internal'].pop()
     else:
         last = ['', '']
 
-    if shared.args.cai_chat:
-        return generate_chat_html(shared.history['visible'], name1, name2, shared.character), last[0]
-    else:
-        return shared.history['visible'], last[0]
+    return chat_html_wrapper(shared.history['visible'], name1, name2, mode), last[0]
 
 def send_last_reply_to_input():
     if len(shared.history['internal']) > 0:
@@ -215,20 +212,17 @@ def send_last_reply_to_input():
     else:
         return ''
 
-def replace_last_reply(text, name1, name2):
+def replace_last_reply(text, name1, name2, mode):
     if len(shared.history['visible']) > 0:
-        if shared.args.cai_chat:
-            shared.history['visible'][-1][1] = text
-        else:
-            shared.history['visible'][-1] = (shared.history['visible'][-1][0], text)
+        shared.history['visible'][-1][1] = text
         shared.history['internal'][-1][1] = apply_extensions(text, "input")
 
-    return generate_chat_output(shared.history['visible'], name1, name2, shared.character)
+    return chat_html_wrapper(shared.history['visible'], name1, name2, mode)
 
 def clear_html():
-    return generate_chat_html([], "", "", shared.character)
+    return chat_html_wrapper([], "", "")
 
-def clear_chat_log(name1, name2, greeting):
+def clear_chat_log(name1, name2, greeting, mode):
     shared.history['visible'] = []
     shared.history['internal'] = []
 
@@ -236,12 +230,12 @@ def clear_chat_log(name1, name2, greeting):
         shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
         shared.history['visible'] += [['', apply_extensions(greeting, "output")]]
 
-    return generate_chat_output(shared.history['visible'], name1, name2, shared.character)
+    return chat_html_wrapper(shared.history['visible'], name1, name2, mode)
 
-def redraw_html(name1, name2):
-    return generate_chat_html(shared.history['visible'], name1, name2, shared.character)
+def redraw_html(name1, name2, mode):
+    return chat_html_wrapper(shared.history['visible'], name1, name2, mode)
 
-def tokenize_dialogue(dialogue, name1, name2):
+def tokenize_dialogue(dialogue, name1, name2, mode):
     history = []
 
     dialogue = re.sub('<START>', '', dialogue)
@@ -326,15 +320,35 @@ def build_pygmalion_style_context(data):
     context = f"{context.strip()}\n<START>\n"
     return context
 
-def load_character(character, name1, name2):
+def generate_pfp_cache(character):
+    cache_folder = Path("cache")
+    if not cache_folder.exists():
+        cache_folder.mkdir()
+
+    for path in [Path(f"characters/{character}.{extension}") for extension in ['png', 'jpg', 'jpeg']]:
+        if path.exists():
+            img = make_thumbnail(Image.open(path))
+            img.save(Path('cache/pfp_character.png'), format='PNG')
+            return img
+    return None
+
+def load_character(character, name1, name2, mode):
     shared.character = character
     shared.history['internal'] = []
     shared.history['visible'] = []
-    greeting = ""
+    context = greeting = end_of_turn = ""
+    greeting_field = 'greeting'
+    picture = None
+
+    # Deleting the profile picture cache, if any
+    if Path("cache/pfp_character.png").exists():
+        Path("cache/pfp_character.png").unlink()
 
     if character != 'None':
+        folder = 'characters' if not mode == 'instruct' else 'characters/instruction-following'
+        picture = generate_pfp_cache(character)
         for extension in ["yml", "yaml", "json"]:
-            filepath = Path(f'characters/{character}.{extension}')
+            filepath = Path(f'{folder}/{character}.{extension}')
             if filepath.exists():
                 break
         file_contents = open(filepath, 'r', encoding='utf-8').read()
@@ -350,19 +364,21 @@ def load_character(character, name1, name2):
 
         if 'context' in data:
             context = f"{data['context'].strip()}\n\n"
-            greeting_field = 'greeting'
-        else:
+        elif "char_persona" in data:
             context = build_pygmalion_style_context(data)
             greeting_field = 'char_greeting'
 
-        if 'example_dialogue' in data and data['example_dialogue'] != '':
+        if 'example_dialogue' in data:
             context += f"{data['example_dialogue'].strip()}\n"
-        if greeting_field in data and len(data[greeting_field].strip()) > 0:
+        if greeting_field in data:
             greeting = data[greeting_field]  
+        if 'end_of_turn' in data:
+            end_of_turn = data['end_of_turn']  
     else:
         context = shared.settings['context']
         name2 = shared.settings['name2']
         greeting = shared.settings['greeting'] 
+        end_of_turn = shared.settings['end_of_turn']
 
     if Path(f'logs/{shared.character}_persistent.json').exists():
         load_history(open(Path(f'logs/{shared.character}_persistent.json'), 'rb').read(), name1, name2)
@@ -370,13 +386,10 @@ def load_character(character, name1, name2):
         shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
         shared.history['visible'] += [['', apply_extensions(greeting, "output")]]
 
-    if shared.args.cai_chat:
-        return name1, name2, greeting, context, generate_chat_html(shared.history['visible'], name1, name2, shared.character)
-    else:
-        return name1, name2, greeting, context, shared.history['visible']
+    return name1, name2, picture, greeting, context, end_of_turn, chat_html_wrapper(shared.history['visible'], name1, name2, mode, reset_cache=True)
 
 def load_default_history(name1, name2):
-    load_character("None", name1, name2)
+    load_character("None", name1, name2, "chat")
 
 def upload_character(json_file, img, tavern=False):
     json_file = json_file if type(json_file) == str else json_file.decode('utf-8')
@@ -404,7 +417,17 @@ def upload_tavern_character(img, name1, name2):
     _json = {"char_name": _json['name'], "char_persona": _json['description'], "char_greeting": _json["first_mes"], "example_dialogue": _json['mes_example'], "world_scenario": _json['scenario']}
     return upload_character(json.dumps(_json), img, tavern=True)
 
-def upload_your_profile_picture(img):
-    img = Image.open(io.BytesIO(img))
-    img.save(Path('img_me.png'))
-    print('Profile picture saved to "img_me.png"')
+def upload_your_profile_picture(img, name1, name2, mode):
+    cache_folder = Path("cache")
+    if not cache_folder.exists():
+        cache_folder.mkdir()
+
+    if img == None:
+        if Path("cache/pfp_me.png").exists():
+            Path("cache/pfp_me.png").unlink()
+    else:
+        img = make_thumbnail(img)
+        img.save(Path('cache/pfp_me.png'))
+        print('Profile picture saved to "cache/pfp_me.png"')
+
+    return chat_html_wrapper(shared.history['visible'], name1, name2, mode, reset_cache=True)
