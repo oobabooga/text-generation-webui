@@ -96,7 +96,7 @@ def extract_message_from_reply(reply, name1, name2, stop_at_newline):
     reply = fix_newlines(reply)
     return reply, next_character_found
 
-def chatbot_wrapper(text, generate_params, name1, name2, context, regenerate=False, mode="cai-chat", end_of_turn=""):
+def chatbot_wrapper(text, generate_params, name1, name2, context, mode, end_of_turn, regenerate=False):
     stop_at_newline = generate_params['stop_at_newline']
     max_new_tokens = generate_params['max_new_tokens']
     chat_prompt_size = generate_params['chat_prompt_size']
@@ -165,7 +165,7 @@ def chatbot_wrapper(text, generate_params, name1, name2, context, regenerate=Fal
 
     yield shared.history['visible']
 
-def impersonate_wrapper(text, generate_params, name1, name2, context, mode="cai-chat", end_of_turn=""):
+def impersonate_wrapper(text, generate_params, name1, name2, context, mode, end_of_turn):
     stop_at_newline = generate_params['stop_at_newline']
     max_new_tokens = generate_params['max_new_tokens']
     chat_prompt_size = generate_params['chat_prompt_size']
@@ -196,11 +196,11 @@ def impersonate_wrapper(text, generate_params, name1, name2, context, mode="cai-
 
     yield reply
 
-def cai_chatbot_wrapper(text, generate_params, name1, name2, context, mode="cai-chat", end_of_turn=""):
-    for history in chatbot_wrapper(text, generate_params, name1, name2, context, regenerate=False, mode=mode, end_of_turn=end_of_turn):
+def cai_chatbot_wrapper(text, generate_params, name1, name2, context, mode, end_of_turn):
+    for history in chatbot_wrapper(text, generate_params, name1, name2, context, mode, end_of_turn, regenerate=False):
         yield chat_html_wrapper(history, name1, name2, mode)
 
-def regenerate_wrapper(text, generate_params, name1, name2, context, mode="cai-chat", end_of_turn=""):
+def regenerate_wrapper(text, generate_params, name1, name2, context, mode, end_of_turn):
     if (shared.character != 'None' and len(shared.history['visible']) == 1) or len(shared.history['internal']) == 0:
         yield chat_html_wrapper(shared.history['visible'], name1, name2, mode)
     else:
@@ -208,7 +208,7 @@ def regenerate_wrapper(text, generate_params, name1, name2, context, mode="cai-c
         last_internal = shared.history['internal'].pop()
         # Yield '*Is typing...*'
         yield chat_html_wrapper(shared.history['visible']+[[last_visible[0], shared.processing_message]], name1, name2, mode)
-        for history in chatbot_wrapper(last_internal[0], generate_params, name1, name2, context, regenerate=True, mode=mode, end_of_turn=end_of_turn):
+        for history in chatbot_wrapper(last_internal[0], generate_params, name1, name2, context, mode, end_of_turn, regenerate=True):
             shared.history['visible'][-1] = [last_visible[0], history[-1][1]]
             yield chat_html_wrapper(shared.history['visible'], name1, name2, mode)
 
