@@ -28,6 +28,10 @@ def encode(prompt, tokens_to_generate=0, add_special_tokens=True):
         return input_ids
     else:
         input_ids = shared.tokenizer.encode(str(prompt), return_tensors='pt', truncation=True, max_length=get_max_prompt_length(tokens_to_generate), add_special_tokens=add_special_tokens)
+
+        if type(shared.tokenizer) is transformers.LlamaTokenizer and input_ids[0][0] == 29871:
+            input_ids = input_ids[:,1:]
+
         if shared.args.cpu:
             return input_ids
         elif shared.args.flexgen:
@@ -102,10 +106,11 @@ def set_manual_seed(seed):
 def stop_everything_event():
     shared.stop_everything = True
 
-def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typical_p, repetition_penalty, encoder_repetition_penalty, top_k, min_length, no_repeat_ngram_size, num_beams, penalty_alpha, length_penalty, early_stopping, seed, eos_token=None, stopping_strings=[]):
+def generate_reply(question, generate_state, eos_token=None, stopping_strings=[]):
     clear_torch_cache()
-    set_manual_seed(seed)
+    set_manual_seed(generate_state['seed'])
     shared.stop_everything = False
+    generate_params = {}
     t0 = time.time()
 
     original_question = question
@@ -117,9 +122,12 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
     # These models are not part of Hugging Face, so we handle them
     # separately and terminate the function call earlier
     if any((shared.is_RWKV, shared.is_llamacpp)):
+        for k in ['temperature', 'top_p', 'top_k', 'repetition_penalty']:
+            generate_params[k] = generate_state[k]
+        generate_params["token_count"] = generate_state["max_new_tokens"]
         try:
             if shared.args.no_stream:
-                reply = shared.model.generate(context=question, token_count=max_new_tokens, temperature=temperature, top_p=top_p, top_k=top_k, repetition_penalty=repetition_penalty)
+                reply = shared.model.generate(context=question, **generate_params)
                 output = original_question+reply
                 if not shared.is_chat():
                     reply = original_question + apply_extensions(reply, "output")
@@ -130,7 +138,7 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
 
                 # RWKV has proper streaming, which is very nice.
                 # No need to generate 8 tokens at a time.
-                for reply in shared.model.generate_with_streaming(context=question, token_count=max_new_tokens, temperature=temperature, top_p=top_p, top_k=top_k, repetition_penalty=repetition_penalty):
+                for reply in shared.model.generate_with_streaming(context=question, **generate_params):
                     output = original_question+reply
                     if not shared.is_chat():
                         reply = original_question + apply_extensions(reply, "output")
@@ -145,7 +153,7 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
             print(f"Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens})")
             return
 
-    input_ids = encode(question, max_new_tokens)
+    input_ids = encode(question, generate_state['max_new_tokens'])
     original_input_ids = input_ids
     output = input_ids[0]
 
@@ -158,33 +166,21 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
         t = [encode(string, 0, add_special_tokens=False) for string in stopping_strings]
         stopping_criteria_list.append(_SentinelTokenStoppingCriteria(sentinel_token_ids=t, starting_idx=len(input_ids[0])))
 
-    generate_params = {}
+    generate_params["max_new_tokens"] = generate_state['max_new_tokens']
     if not shared.args.flexgen:
-        generate_params.update({
-            "max_new_tokens": max_new_tokens,
-            "eos_token_id": eos_token_ids,
-            "stopping_criteria": stopping_criteria_list,
-            "do_sample": do_sample,
-            "temperature": temperature,
-            "top_p": top_p,
-            "typical_p": typical_p,
-            "repetition_penalty": repetition_penalty,
-            "encoder_repetition_penalty": encoder_repetition_penalty,
-            "top_k": top_k,
-            "min_length": min_length if shared.args.no_stream else 0,
-            "no_repeat_ngram_size": no_repeat_ngram_size,
-            "num_beams": num_beams,
-            "penalty_alpha": penalty_alpha,
-            "length_penalty": length_penalty,
-            "early_stopping": early_stopping,
-        })
+        for k in ["do_sample", "temperature", "top_p", "typical_p", "repetition_penalty", "encoder_repetition_penalty", "top_k", "min_length", "no_repeat_ngram_size", "num_beams", "penalty_alpha", "length_penalty", "early_stopping"]:
+            generate_params[k] = generate_state[k]
+        generate_params["eos_token_id"] = eos_token_ids
+        generate_params["stopping_criteria"] = stopping_criteria_list
+        if shared.args.no_stream:
+            generate_params["min_length"] = 0
     else:
-        generate_params.update({
-            "max_new_tokens": max_new_tokens if shared.args.no_stream else 8,
-            "do_sample": do_sample,
-            "temperature": temperature,
-            "stop": eos_token_ids[-1],
-        })
+        for k in ["do_sample", "temperature"]:
+            generate_params[k] = generate_state[k]
+        generate_params["stop"] = generate_state["eos_token_ids"][-1]
+        if not shared.args.no_stream:
+            generate_params["max_new_tokens"] = 8
+
     if shared.args.no_cache:
         generate_params.update({"use_cache": False})
     if shared.args.deepspeed:
@@ -244,7 +240,7 @@ def generate_reply(question, max_new_tokens, do_sample, temperature, top_p, typi
 
         # Stream the output naively for FlexGen since it doesn't support 'stopping_criteria'
         else:
-            for i in range(max_new_tokens//8+1):
+            for i in range(generate_state['max_new_tokens']//8+1):
                 clear_torch_cache()
                 with torch.no_grad():
                     output = shared.model.generate(**generate_params)[0]
