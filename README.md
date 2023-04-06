@@ -31,7 +31,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * [LLaMA model, including 4-bit GPTQ](https://github.com/oobabooga/text-generation-webui/wiki/LLaMA-model)
 * [llama.cpp](https://github.com/oobabooga/text-generation-webui/wiki/llama.cpp-models) **\*NEW!\***
 * [RWKV model](https://github.com/oobabooga/text-generation-webui/wiki/RWKV-model)
-* [LoRa (loading and training)](https://github.com/oobabooga/text-generation-webui/wiki/Using-LoRAs)
+* [LoRA (loading and training)](https://github.com/oobabooga/text-generation-webui/wiki/Using-LoRAs)
 * Softprompts
 * [Extensions](https://github.com/oobabooga/text-generation-webui/wiki/Extensions)
 * [Google Colab](https://github.com/oobabooga/text-generation-webui/wiki/Running-on-Colab)
@@ -119,6 +119,15 @@ As an alternative to the recommended WSL method, you can install the web UI nati
 
 https://github.com/oobabooga/text-generation-webui/issues/174, https://github.com/oobabooga/text-generation-webui/issues/87
 
+### Updating the requirements
+
+From time to time, the `requirements.txt` changes. To update, use this command:
+
+```
+conda activate textgen
+cd text-generation-webui
+pip install -r requirements.txt --upgrade
+```
 ## Downloading models
 
 Models should be placed inside the `models` folder.
