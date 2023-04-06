@@ -8,7 +8,7 @@ markdown
 numpy
 peft==0.2.0
 requests
-rwkv==0.7.2
+rwkv==0.7.3
 safetensors==0.3.0
 sentencepiece
 pyyaml
