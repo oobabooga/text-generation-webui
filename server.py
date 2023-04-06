@@ -515,7 +515,6 @@ def create_interface():
             cmd_list = vars(shared.args)
             bool_list = [k for k in cmd_list if type(cmd_list[k]) is bool and k not in modes]
             bool_active = [k for k in bool_list if vars(shared.args)[k]]
-            #int_list = [k for k in cmd_list if type(k) is int]
 
             gr.Markdown("*Experimental*")
             shared.gradio['interface_modes_menu'] = gr.Dropdown(choices=modes, value=current_mode, label="Mode")
