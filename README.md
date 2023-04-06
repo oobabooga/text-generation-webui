@@ -248,7 +248,7 @@ Optionally, you can use the following command-line flags:
 |  `--listen-port LISTEN_PORT`                | The listening port that the server will use. |
 |  `--share`                                  | Create a public URL. This is useful for running the web UI on Google Colab or similar. |
 |  `--auto-launch`                            | Open the web UI in the default browser upon launch. |
-|  `--gradio-auth-path GRADIO_AUTH_PATH`      | Set the gradio authentication file path. The file should contain one or more user:password pairs in this format: "u1:p1,u2:p2,u3:p3" |
+|  `--gradio-auth-path GRADIO_AUTH_PATH`      | Set the gradio authentication file path. The file should contain one or more user:password pairs in this format: "u1:p1,u2:p2,u3:p3". Note that due to a gradio bug in all versions above 3.20.*, this will cause login page not work when reverse proxied with subpath. Downgrade your gradio version to 3.20.* will fix the issue.|
 
 Out of memory errors? [Check the low VRAM guide](https://github.com/oobabooga/text-generation-webui/wiki/Low-VRAM-guide).
 
