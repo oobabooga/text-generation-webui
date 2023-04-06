@@ -1,6 +1,7 @@
 import re
 import sys
 from pathlib import Path
+import inspect
 
 import accelerate
 import torch
@@ -33,7 +34,22 @@ def _load_quant(model, checkpoint, wbits, groupsize=-1, exclude_layers=['lm_head
     for name in exclude_layers:
         if name in layers:
             del layers[name]
-    make_quant(model, layers, wbits, groupsize)
+    
+    gptq_args = inspect.getfullargspec(make_quant).args
+
+    make_quant_kwargs = {
+        'module': model, 
+        'names': layers,
+        'bits': wbits,
+    }
+    if 'groupsize' in gptq_args:
+        make_quant_kwargs['groupsize'] = groupsize
+    if 'faster' in gptq_args:
+        make_quant_kwargs['faster'] = faster_kernel
+    if 'kernel_switch_threshold' in gptq_args:
+        make_quant_kwargs['kernel_switch_threshold'] = kernel_switch_threshold
+    
+    make_quant(**make_quant_kwargs)
 
     del layers
 
