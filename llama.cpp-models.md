@@ -1,6 +1,6 @@
 ## Using llama.cpp in the web UI
 
-1. Re-install the requirements to get `llamacpp` intalled:
+1. Re-install the requirements to get [llama-cpp-python](https://github.com/abetlen/llama-cpp-python) intalled:
 
 ```
 pip install -r requirements.txt --upgrade
