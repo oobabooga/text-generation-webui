@@ -5,7 +5,9 @@ import torch
 
 import tts_preprocessor
 
+
 torch._C._jit_set_profiling_mode(False)
+
 
 params = {
     'activate': True,
@@ -34,14 +36,17 @@ table = str.maketrans({
     '"': "&quot;",
 })
 
+
 def xmlesc(txt):
     return txt.translate(table)
+
 
 def load_model():
     model, example_text = torch.hub.load(repo_or_dir='snakers4/silero-models', model='silero_tts', language=params['language'], speaker=params['model_id'])
     model.to(params['device'])
     return model
 model = load_model()
+
 
 def output_modifier(string):
     """
@@ -69,6 +74,7 @@ def output_modifier(string):
             string += f'\n\n{original_string}\n\nProcessed:\n{processed_string}'
 
     print(string)
+
 
 if __name__ == '__main__':
     import sys

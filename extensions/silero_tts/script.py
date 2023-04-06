@@ -6,7 +6,9 @@ import torch
 from extensions.silero_tts import tts_preprocessor
 from modules import chat, shared
 
+
 torch._C._jit_set_profiling_mode(False)
+
 
 params = {
     'activate': True,
@@ -36,8 +38,10 @@ table = str.maketrans({
     '"': "&quot;",
 })
 
+
 def xmlesc(txt):
     return txt.translate(table)
+
 
 def load_model():
     model, example_text = torch.hub.load(repo_or_dir='snakers4/silero-models', model='silero_tts', language=params['language'], speaker=params['model_id'])
@@ -45,10 +49,12 @@ def load_model():
     return model
 model = load_model()
 
+
 def remove_tts_from_history(name1, name2):
     for i, entry in enumerate(shared.history['internal']):
         shared.history['visible'][i] = [shared.history['visible'][i][0], entry[1]]
     return chat.generate_chat_output(shared.history['visible'], name1, name2, shared.character)
+
 
 def toggle_text_in_history(name1, name2):
     for i, entry in enumerate(shared.history['visible']):
@@ -60,6 +66,7 @@ def toggle_text_in_history(name1, name2):
             else:
                 shared.history['visible'][i] = [shared.history['visible'][i][0], f"{visible_reply.split('</audio>')[0]}</audio>"]
     return chat.generate_chat_output(shared.history['visible'], name1, name2, shared.character)
+
 
 def input_modifier(string):
     """
@@ -74,6 +81,7 @@ def input_modifier(string):
     shared.processing_message = "*Is recording a voice message...*"
     shared.args.no_stream = True # Disable streaming cause otherwise the audio output will stutter and begin anew every time the message is being updated
     return string
+
 
 def output_modifier(string):
     """
@@ -111,6 +119,7 @@ def output_modifier(string):
     shared.args.no_stream = streaming_state # restore the streaming option to the previous value
     return string
 
+
 def bot_prefix_modifier(string):
     """
     This function is only applied in chat mode. It modifies
@@ -120,21 +129,25 @@ def bot_prefix_modifier(string):
 
     return string
 
+
 def ui():
     # Gradio elements
     with gr.Accordion("Silero TTS"):
         with gr.Row():
             activate = gr.Checkbox(value=params['activate'], label='Activate TTS')
             autoplay = gr.Checkbox(value=params['autoplay'], label='Play TTS automatically')
+
         show_text = gr.Checkbox(value=params['show_text'], label='Show message text under audio player')
         voice = gr.Dropdown(value=params['speaker'], choices=voices_by_gender, label='TTS voice')
         with gr.Row():
             v_pitch = gr.Dropdown(value=params['voice_pitch'], choices=voice_pitches, label='Voice pitch')
             v_speed = gr.Dropdown(value=params['voice_speed'], choices=voice_speeds, label='Voice speed')
+
         with gr.Row():
             convert = gr.Button('Permanently replace audios with the message texts')
             convert_cancel = gr.Button('Cancel', visible=False)
             convert_confirm = gr.Button('Confirm (cannot be undone)', variant="stop", visible=False)
+
 
     # Convert history with confirmation
     convert_arr = [convert_confirm, convert, convert_cancel]
