@@ -102,7 +102,9 @@ def set_manual_seed(seed):
 def stop_everything_event():
     shared.stop_everything = True
 
-def generate_reply(question, max_new_tokens, generation_params, seed, eos_token=None, stopping_strings=[]):
+def generate_reply(question, generation_params, eos_token=None, stopping_strings=[]):
+    max_new_tokens = generation_params['max_new_tokens']
+    seed = generation_params['seed']
     print(generation_params)
     print('---------------')
     clear_torch_cache()

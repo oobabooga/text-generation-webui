@@ -168,6 +168,8 @@ def create_prompt_menus():
 
 def create_settings_menus(default_preset):
     generate_params = load_preset_values(default_preset if not shared.args.flexgen else 'Naive')
+    for k in ['max_new_tokens', 'seed', 'stop_at_newline', 'chat_prompt_size', 'chat_generation_attempts']:
+        generate_params[k] = shared.settings[k]
     shared.gradio['generation_state'] = gr.State(generate_params)
 
     with gr.Row():
@@ -219,23 +221,6 @@ def create_settings_menus(default_preset):
         with gr.Row():
             shared.gradio['upload_softprompt'] = gr.File(type='binary', file_types=['.zip'])
 
-    def update_dict(_dict, k, v):
-        _dict[k] = v
-        return _dict
-
-    for k in ['do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping']:
-        if type(shared.gradio[k]) is gr.Checkbox:
-            shared.gradio[k].change(
-                lambda state, value, copy=k: update_dict(state, copy, value),
-                inputs=[shared.gradio['generation_state'], shared.gradio[k]],
-                outputs=shared.gradio['generation_state'],
-            )
-        else:
-            shared.gradio[k].release(
-                lambda state, value, copy=k: update_dict(state, copy, value),
-                inputs=[shared.gradio['generation_state'], shared.gradio[k]],
-                outputs=shared.gradio['generation_state'],
-            )
 
     shared.gradio['model_menu'].change(load_model_wrapper, [shared.gradio['model_menu']], [shared.gradio['model_menu']], show_progress=True)
     shared.gradio['preset_menu'].change(load_preset_values, [shared.gradio['preset_menu']], [shared.gradio[k] for k in ['generation_state']])
@@ -388,11 +373,11 @@ def create_interface():
                             shared.gradio['chat_prompt_size_slider'] = gr.Slider(minimum=shared.settings['chat_prompt_size_min'], maximum=shared.settings['chat_prompt_size_max'], step=1, label='Maximum prompt size in tokens', value=shared.settings['chat_prompt_size'])
                         with gr.Column():
                             shared.gradio['chat_generation_attempts'] = gr.Slider(minimum=shared.settings['chat_generation_attempts_min'], maximum=shared.settings['chat_generation_attempts_max'], value=shared.settings['chat_generation_attempts'], step=1, label='Generation attempts (for longer replies)')
-                            shared.gradio['check'] = gr.Checkbox(value=shared.settings['stop_at_newline'], label='Stop generating at new line character?')
+                            shared.gradio['stop_at_newline'] = gr.Checkbox(value=shared.settings['stop_at_newline'], label='Stop generating at new line character?')
 
                 create_settings_menus(default_preset)
 
-            shared.input_params = [shared.gradio[k] for k in ['Chat input', 'max_new_tokens', 'generation_state', 'seed', 'name1', 'name2', 'context', 'check', 'chat_prompt_size_slider', 'chat_generation_attempts', 'Chat mode', 'end_of_turn']]
+            shared.input_params = [shared.gradio[k] for k in ['Chat input', 'generation_state', 'name1', 'name2', 'context', 'Chat mode', 'end_of_turn']]
 
             def set_chat_input(textbox):
                 return textbox, ""
@@ -472,7 +457,7 @@ def create_interface():
             with gr.Tab("Parameters", elem_id="parameters"):
                 create_settings_menus(default_preset)
 
-            shared.input_params = [shared.gradio[k] for k in ['textbox', 'max_new_tokens', 'generation_state', 'seed']]
+            shared.input_params = [shared.gradio[k] for k in ['textbox', 'generation_state']]
             output_params = [shared.gradio[k] for k in ['textbox', 'markdown', 'html']]
             gen_events.append(shared.gradio['Generate'].click(generate_reply, shared.input_params, output_params, show_progress=shared.args.no_stream))
             gen_events.append(shared.gradio['textbox'].submit(generate_reply, shared.input_params, output_params, show_progress=shared.args.no_stream))
@@ -505,7 +490,7 @@ def create_interface():
             with gr.Tab("Parameters", elem_id="parameters"):
                 create_settings_menus(default_preset)
 
-            shared.input_params = [shared.gradio[k] for k in ['textbox', 'max_new_tokens', 'generation_state', 'seed']]
+            shared.input_params = [shared.gradio[k] for k in ['textbox', 'generation_state']]
             output_params = [shared.gradio[k] for k in ['output_textbox', 'markdown', 'html']]
             gen_events.append(shared.gradio['Generate'].click(generate_reply, shared.input_params, output_params, show_progress=shared.args.no_stream))
             gen_events.append(shared.gradio['textbox'].submit(generate_reply, shared.input_params, output_params, show_progress=shared.args.no_stream))
@@ -539,6 +524,27 @@ def create_interface():
 
         if shared.args.extensions is not None:
             extensions_module.create_extensions_block()
+
+        def update_dict(_dict, k, v):
+            _dict[k] = v
+            return _dict
+
+        print([k for k in shared.gradio])
+        for k in ['do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping', 'max_new_tokens', 'seed', 'stop_at_newline', 'chat_prompt_size', 'chat_generation_attempts']:
+            if k not in shared.gradio:
+                continue
+            if type(shared.gradio[k]) in [gr.Checkbox, gr.Number]:
+                shared.gradio[k].change(
+                    lambda state, value, copy=k: update_dict(state, copy, value),
+                    inputs=[shared.gradio['generation_state'], shared.gradio[k]],
+                    outputs=shared.gradio['generation_state'],
+                )
+            else:
+                shared.gradio[k].release(
+                    lambda state, value, copy=k: update_dict(state, copy, value),
+                    inputs=[shared.gradio['generation_state'], shared.gradio[k]],
+                    outputs=shared.gradio['generation_state'],
+                )
 
     # Authentication
     auth = None
