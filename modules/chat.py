@@ -97,13 +97,8 @@ def extract_message_from_reply(reply, name1, name2, stop_at_newline):
     return reply, next_character_found
 
 def chatbot_wrapper(text, generate_params, name1, name2, context, mode, end_of_turn, regenerate=False):
-    stop_at_newline = generate_params['stop_at_newline']
-    max_new_tokens = generate_params['max_new_tokens']
-    chat_prompt_size = generate_params['chat_prompt_size']
-    chat_generation_attempts = generate_params['chat_generation_attempts']
-
     just_started = True
-    eos_token = '\n' if stop_at_newline else None
+    eos_token = '\n' if generate_params['stop_at_newline'] else None
     name1_original = name1
     if 'pygmalion' in shared.model_name.lower():
         name1 = "You"
@@ -124,9 +119,9 @@ def chatbot_wrapper(text, generate_params, name1, name2, context, mode, end_of_t
 
     kwargs = {'end_of_turn': end_of_turn, 'is_instruct': mode == 'instruct'}
     if custom_generate_chat_prompt is None:
-        prompt = generate_chat_prompt(text, max_new_tokens, name1, name2, context, chat_prompt_size, **kwargs)
+        prompt = generate_chat_prompt(text, generate_params['max_new_tokens'], name1, name2, context, generate_params['chat_prompt_size'], **kwargs)
     else:
-        prompt = custom_generate_chat_prompt(text, max_new_tokens, name1, name2, context, chat_prompt_size, **kwargs)
+        prompt = custom_generate_chat_prompt(text, generate_params['max_new_tokens'], name1, name2, context, generate_params['chat_prompt_size'], **kwargs)
 
     # Yield *Is typing...*
     if not regenerate:
@@ -134,13 +129,13 @@ def chatbot_wrapper(text, generate_params, name1, name2, context, mode, end_of_t
 
     # Generate
     cumulative_reply = ''
-    for i in range(chat_generation_attempts):
+    for i in range(generate_params['chat_generation_attempts']):
         reply = None
         for reply in generate_reply(f"{prompt}{' ' if len(cumulative_reply) > 0 else ''}{cumulative_reply}", generate_params, eos_token=eos_token, stopping_strings=[f"\n{name1}:", f"\n{name2}:"]):
             reply = cumulative_reply + reply
 
             # Extracting the reply
-            reply, next_character_found = extract_message_from_reply(reply, name1, name2, stop_at_newline)
+            reply, next_character_found = extract_message_from_reply(reply, name1, name2, generate_params['stop_at_newline'])
             visible_reply = re.sub("(<USER>|<user>|{{user}})", name1_original, reply)
             visible_reply = apply_extensions(visible_reply, "output")
 
@@ -166,27 +161,22 @@ def chatbot_wrapper(text, generate_params, name1, name2, context, mode, end_of_t
     yield shared.history['visible']
 
 def impersonate_wrapper(text, generate_params, name1, name2, context, mode, end_of_turn):
-    stop_at_newline = generate_params['stop_at_newline']
-    max_new_tokens = generate_params['max_new_tokens']
-    chat_prompt_size = generate_params['chat_prompt_size']
-    chat_generation_attempts = generate_params['chat_generation_attempts']
-
-    eos_token = '\n' if stop_at_newline else None
+    eos_token = '\n' if generate_params['stop_at_newline'] else None
 
     if 'pygmalion' in shared.model_name.lower():
         name1 = "You"
 
-    prompt = generate_chat_prompt(text, max_new_tokens, name1, name2, context, chat_prompt_size, impersonate=True, end_of_turn=end_of_turn)
+    prompt = generate_chat_prompt(text, generate_params['max_new_tokens'], name1, name2, context, generate_params['chat_prompt_size'], impersonate=True, end_of_turn=end_of_turn)
 
     # Yield *Is typing...*
     yield shared.processing_message
 
     cumulative_reply = ''
-    for i in range(chat_generation_attempts):
+    for i in range(generate_params['chat_generation_attempts']):
         reply = None
         for reply in generate_reply(f"{prompt}{' ' if len(cumulative_reply) > 0 else ''}{cumulative_reply}", generate_params, eos_token=eos_token, stopping_strings=[f"\n{name1}:", f"\n{name2}:"]):
             reply = cumulative_reply + reply
-            reply, next_character_found = extract_message_from_reply(reply, name1, name2, stop_at_newline)
+            reply, next_character_found = extract_message_from_reply(reply, name1, name2, generate_params['stop_at_newline'])
             yield reply
             if next_character_found:
                 break
