@@ -42,15 +42,19 @@
     color: rgb(110, 110, 110) !important;
 }
 
-.assistant-message {
+.gradio-container .chat .assistant-message {
   padding: 15px;
+  border-radius: 20px;
+  background-color: #0000000f;
+  margin-bottom: 17.5px;
 }
 
-.user-message {
+.gradio-container .chat .user-message {
   padding: 15px;
-  background-color: #f1f1f1;
+  border-radius: 20px;
+  margin-bottom: 17.5px !important;
 }
 
-.dark .user-message {
-  background-color: #ffffff1a;
+.dark .chat .assistant-message {
+  background-color: #ffffff21;
 }
