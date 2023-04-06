@@ -1,10 +1,12 @@
 ## Using llama.cpp in the web UI
 
-1. Re-install the requirements to get [llama-cpp-python](https://github.com/abetlen/llama-cpp-python) intalled:
+1. Install [llama-cpp-python](https://github.com/abetlen/llama-cpp-python):
 
 ```
-pip install -r requirements.txt --upgrade
+pip install llama-cpp-python==0.1.23
 ```
+
+(this has been left out of requirements.txt for now because it seems to break the one-click-installer)
 
 2. Follow the instructions in the llama.cpp README to generate the `ggml-model-q4_0.bin` file: https://github.com/ggerganov/llama.cpp#usage
 
