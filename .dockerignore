@@ -1,2 +1,4 @@
 /loras
 /models
+.env
+Dockerfile
