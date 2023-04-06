@@ -16,7 +16,7 @@ from modelutils import find_layers
 from quant import make_quant
 
 
-def _load_quant(model, checkpoint, wbits, groupsize=-1, exclude_layers=['lm_head']):
+def _load_quant(model, checkpoint, wbits, groupsize=-1, faster_kernel=False, exclude_layers=['lm_head'], kernel_switch_threshold=128):
     config = AutoConfig.from_pretrained(model)
     def noop(*args, **kwargs):
         pass
@@ -126,7 +126,8 @@ def load_quantized(model_name):
     if shared.args.pre_layer:
         model = load_quant(str(path_to_model), str(pt_path), shared.args.wbits, shared.args.groupsize, shared.args.pre_layer)
     else:
-        model = load_quant(str(path_to_model), str(pt_path), shared.args.wbits, shared.args.groupsize)
+        threshold = False if model_type == 'gptj' else 128
+        model = load_quant(str(path_to_model), str(pt_path), shared.args.wbits, shared.args.groupsize, kernel_switch_threshold=threshold)
 
         # accelerate offload (doesn't work properly)
         if shared.args.gpu_memory:
