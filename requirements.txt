@@ -3,7 +3,6 @@ bitsandbytes==0.37.2
 datasets
 flexgen==0.1.7
 gradio==3.24.1
-llama-cpp-python==0.1.23
 markdown
 numpy
 peft==0.2.0
