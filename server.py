@@ -15,7 +15,7 @@ import gradio as gr
 from PIL import Image
 
 import modules.extensions as extensions_module
-from modules import chat, shared, training, ui
+from modules import chat, shared, training, ui, api
 from modules.html_generator import chat_html_wrapper
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, load_soft_prompt
@@ -537,6 +537,8 @@ def create_interface():
                 shared.gradio[k].change(lambda state, value, copy=k: change_dict_value(state, copy, value), inputs=[shared.gradio['generate_state'], shared.gradio[k]], outputs=shared.gradio['generate_state'])
             else:
                 shared.gradio[k].release(lambda state, value, copy=k: change_dict_value(state, copy, value), inputs=[shared.gradio['generate_state'], shared.gradio[k]], outputs=shared.gradio['generate_state'])
+
+        api.create_apis()
 
     # Authentication
     auth = None
