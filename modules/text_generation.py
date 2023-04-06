@@ -102,11 +102,11 @@ def set_manual_seed(seed):
 def stop_everything_event():
     shared.stop_everything = True
 
-def generate_reply(question, generate_params, eos_token=None, stopping_strings=[]):
+def generate_reply(question, generate_state, eos_token=None, stopping_strings=[]):
     clear_torch_cache()
-    set_manual_seed(generate_params['seed'])
+    set_manual_seed(generate_state['seed'])
     shared.stop_everything = False
-    updated_params = {}
+    generate_params = {}
     t0 = time.time()
 
     original_question = question
@@ -119,11 +119,11 @@ def generate_reply(question, generate_params, eos_token=None, stopping_strings=[
     # separately and terminate the function call earlier
     if any((shared.is_RWKV, shared.is_llamacpp)):
         for k in ['temperature', 'top_p', 'top_k', 'repetition_penalty']:
-            updated_params[k] = generate_params[k]
-        updated_params["token_count"] = generate_params["max_new_tokens"]
+            generate_params[k] = generate_state[k]
+        generate_params["token_count"] = generate_state["max_new_tokens"]
         try:
             if shared.args.no_stream:
-                reply = shared.model.generate(context=question, **updated_params)
+                reply = shared.model.generate(context=question, **generate_params)
                 output = original_question+reply
                 if not shared.is_chat():
                     reply = original_question + apply_extensions(reply, "output")
@@ -134,7 +134,7 @@ def generate_reply(question, generate_params, eos_token=None, stopping_strings=[
 
                 # RWKV has proper streaming, which is very nice.
                 # No need to generate 8 tokens at a time.
-                for reply in shared.model.generate_with_streaming(context=question, **updated_params):
+                for reply in shared.model.generate_with_streaming(context=question, **generate_params):
                     output = original_question+reply
                     if not shared.is_chat():
                         reply = original_question + apply_extensions(reply, "output")
@@ -149,7 +149,7 @@ def generate_reply(question, generate_params, eos_token=None, stopping_strings=[
             print(f"Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens})")
             return
 
-    input_ids = encode(question, generate_params['max_new_tokens'])
+    input_ids = encode(question, generate_state['max_new_tokens'])
     original_input_ids = input_ids
     output = input_ids[0]
 
@@ -162,37 +162,37 @@ def generate_reply(question, generate_params, eos_token=None, stopping_strings=[
         t = [encode(string, 0, add_special_tokens=False) for string in stopping_strings]
         stopping_criteria_list.append(_SentinelTokenStoppingCriteria(sentinel_token_ids=t, starting_idx=len(input_ids[0])))
 
-    updated_params["max_new_tokens"] = generate_params['max_new_tokens']
+    generate_params["max_new_tokens"] = generate_state['max_new_tokens']
     if not shared.args.flexgen:
         for k in ["do_sample", "temperature", "top_p", "typical_p", "repetition_penalty", "encoder_repetition_penalty", "top_k", "min_length", "no_repeat_ngram_size", "num_beams", "penalty_alpha", "length_penalty", "early_stopping"]:
-            updated_params[k] = generate_params[k]
-        updated_params["eos_token_id"] = eos_token_ids
-        updated_params["stopping_criteria"] = stopping_criteria_list
+            generate_params[k] = generate_state[k]
+        generate_params["eos_token_id"] = eos_token_ids
+        generate_params["stopping_criteria"] = stopping_criteria_list
         if shared.args.no_stream:
-            updated_params["min_length"] = 0
+            generate_params["min_length"] = 0
     else:
         for k in ["do_sample", "temperature"]:
-            updated_params[k] = generate_params[k]
-        updated_params["stop"] = generate_params["eos_token_ids"][-1]
+            generate_params[k] = generate_state[k]
+        generate_params["stop"] = generate_state["eos_token_ids"][-1]
         if not shared.args.no_stream:
-            updated_params["max_new_tokens"] = 8
+            generate_params["max_new_tokens"] = 8
 
     if shared.args.no_cache:
-        updated_params.update({"use_cache": False})
+        generate_params.update({"use_cache": False})
     if shared.args.deepspeed:
-        updated_params.update({"synced_gpus": True})
+        generate_params.update({"synced_gpus": True})
     if shared.soft_prompt:
         inputs_embeds, filler_input_ids = generate_softprompt_input_tensors(input_ids)
-        updated_params.update({"inputs_embeds": inputs_embeds})
-        updated_params.update({"inputs": filler_input_ids})
+        generate_params.update({"inputs_embeds": inputs_embeds})
+        generate_params.update({"inputs": filler_input_ids})
     else:
-        updated_params.update({"inputs": input_ids})
+        generate_params.update({"inputs": input_ids})
 
     try:
         # Generate the entire reply at once.
         if shared.args.no_stream:
             with torch.no_grad():
-                output = shared.model.generate(**updated_params)[0]
+                output = shared.model.generate(**generate_params)[0]
                 if cuda:
                     output = output.cuda()
             if shared.soft_prompt:
@@ -220,7 +220,7 @@ def generate_reply(question, generate_params, eos_token=None, stopping_strings=[
 
             if not shared.is_chat():
                 yield formatted_outputs(original_question, shared.model_name)
-            with generate_with_streaming(**updated_params) as generator:
+            with generate_with_streaming(**generate_params) as generator:
                 for output in generator:
                     if shared.soft_prompt:
                         output = torch.cat((input_ids[0], output[filler_input_ids.shape[1]:]))
@@ -236,10 +236,10 @@ def generate_reply(question, generate_params, eos_token=None, stopping_strings=[
 
         # Stream the output naively for FlexGen since it doesn't support 'stopping_criteria'
         else:
-            for i in range(generate_params['max_new_tokens']//8+1):
+            for i in range(generate_state['max_new_tokens']//8+1):
                 clear_torch_cache()
                 with torch.no_grad():
-                    output = shared.model.generate(**updated_params)[0]
+                    output = shared.model.generate(**generate_params)[0]
                 if shared.soft_prompt:
                     output = torch.cat((input_ids[0], output[filler_input_ids.shape[1]:]))
 
@@ -255,10 +255,10 @@ def generate_reply(question, generate_params, eos_token=None, stopping_strings=[
                 input_ids = np.reshape(output, (1, output.shape[0]))
                 if shared.soft_prompt:
                     inputs_embeds, filler_input_ids = generate_softprompt_input_tensors(input_ids)
-                    updated_params.update({"inputs_embeds": inputs_embeds})
-                    updated_params.update({"inputs": filler_input_ids})
+                    generate_params.update({"inputs_embeds": inputs_embeds})
+                    generate_params.update({"inputs": filler_input_ids})
                 else:
-                    updated_params.update({"inputs": input_ids})
+                    generate_params.update({"inputs": input_ids})
 
             yield formatted_outputs(reply, shared.model_name)
 
