@@ -2,11 +2,9 @@ import time
 from pathlib import Path
 
 import gradio as gr
-import modules.chat as chat
-import modules.shared as shared
 import torch
-
 from extensions.silero_tts import tts_preprocessor
+from modules import chat, shared
 
 torch._C._jit_set_profiling_mode(False)
 

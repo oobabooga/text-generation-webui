@@ -1,6 +1,6 @@
 import re
-from num2words import num2words
 
+from num2words import num2words
 
 alphabet_map = {
     "A": " Ei ",
