@@ -24,7 +24,6 @@ def generate_chat_prompt(user_input, max_new_tokens, name1, name2, context, chat
     impersonate = kwargs['impersonate'] if 'impersonate' in kwargs else False
     also_return_rows = kwargs['also_return_rows'] if 'also_return_rows' in kwargs else False
 
-    user_input = fix_newlines(user_input)
     rows = [f"{context.strip()}\n"]
 
     # Finding the maximum prompt size
@@ -51,8 +50,8 @@ def generate_chat_prompt(user_input, max_new_tokens, name1, name2, context, chat
         rows.append(f"{prefix1.strip() if not is_instruct else prefix1}")
         limit = 2
     else:
-
         # Adding the user message
+        user_input = fix_newlines(user_input)
         if len(user_input) > 0:
             rows.append(f"{prefix1}{user_input}{end_of_turn}\n")
 
@@ -92,12 +91,14 @@ def extract_message_from_reply(reply, name1, name2, stop_at_newline):
                     if reply[-j:] == string[:j]:
                         reply = reply[:-j]
                         break
+                else:
+                    continue
+                break
 
     reply = fix_newlines(reply)
     return reply, next_character_found
 
 def chatbot_wrapper(text, generate_state, name1, name2, context, mode, end_of_turn, regenerate=False):
-    just_started = True
     eos_token = '\n' if generate_state['stop_at_newline'] else None
     name1_original = name1
     if 'pygmalion' in shared.model_name.lower():
@@ -129,6 +130,7 @@ def chatbot_wrapper(text, generate_state, name1, name2, context, mode, end_of_tu
 
     # Generate
     cumulative_reply = ''
+    just_started = True
     for i in range(generate_state['chat_generation_attempts']):
         reply = None
         for reply in generate_reply(f"{prompt}{' ' if len(cumulative_reply) > 0 else ''}{cumulative_reply}", generate_state, eos_token=eos_token, stopping_strings=[f"\n{name1}:", f"\n{name2}:"]):
@@ -162,7 +164,6 @@ def chatbot_wrapper(text, generate_state, name1, name2, context, mode, end_of_tu
 
 def impersonate_wrapper(text, generate_state, name1, name2, context, mode, end_of_turn):
     eos_token = '\n' if generate_state['stop_at_newline'] else None
-
     if 'pygmalion' in shared.model_name.lower():
         name1 = "You"
 
@@ -187,7 +188,7 @@ def impersonate_wrapper(text, generate_state, name1, name2, context, mode, end_o
     yield reply
 
 def cai_chatbot_wrapper(text, generate_state, name1, name2, context, mode, end_of_turn):
-    for history in chatbot_wrapper(text, generate_state, name1, name2, context, mode, end_of_turn, regenerate=False):
+    for history in chatbot_wrapper(text, generate_state, name1, name2, context, mode, end_of_turn):
         yield chat_html_wrapper(history, name1, name2, mode)
 
 def regenerate_wrapper(text, generate_state, name1, name2, context, mode, end_of_turn):
