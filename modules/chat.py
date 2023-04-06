@@ -17,6 +17,14 @@ from modules.html_generator import (fix_newlines, chat_html_wrapper,
 from modules.text_generation import (encode, generate_reply,
                                      get_max_prompt_length)
 
+#put stopping_strings up here so its easier to add more, 3rd and 4th are for vicuna
+def stopping_strings(name1, name2):
+    return [
+        f"\n{name1}:",
+        f"\n{name2}:",
+        f"\n### Human:",
+        f"\n### Assistant:"
+    ]
 
 def generate_chat_prompt(user_input, max_new_tokens, name1, name2, context, chat_prompt_size, **kwargs):
     is_instruct = kwargs['is_instruct'] if 'is_instruct' in kwargs else False
@@ -77,7 +85,7 @@ def extract_message_from_reply(reply, name1, name2, stop_at_newline):
         if len(lines) > 1:
             next_character_found = True
     else:
-        for string in [f"\n{name1}:", f"\n{name2}:"]:
+        for string in stopping_strings(name1, name2):
             idx = reply.find(string)
             if idx != -1:
                 reply = reply[:idx]
@@ -86,7 +94,7 @@ def extract_message_from_reply(reply, name1, name2, stop_at_newline):
         # If something like "\nYo" is generated just before "\nYou:"
         # is completed, trim it
         if not next_character_found:
-            for string in [f"\n{name1}:", f"\n{name2}:"]:
+            for string in stopping_strings(name1, name2):
                 for j in range(len(string)-1, 0, -1):
                     if reply[-j:] == string[:j]:
                         reply = reply[:-j]
@@ -133,7 +141,7 @@ def chatbot_wrapper(text, generate_state, name1, name2, context, mode, end_of_tu
     just_started = True
     for i in range(generate_state['chat_generation_attempts']):
         reply = None
-        for reply in generate_reply(f"{prompt}{' ' if len(cumulative_reply) > 0 else ''}{cumulative_reply}", generate_state, eos_token=eos_token, stopping_strings=[f"\n{name1}:", f"\n{name2}:"]):
+        for reply in generate_reply(f"{prompt}{' ' if len(cumulative_reply) > 0 else ''}{cumulative_reply}", generate_state, eos_token=eos_token, stopping_strings=stopping_strings(name1, name2)):
             reply = cumulative_reply + reply
 
             # Extracting the reply
@@ -175,7 +183,7 @@ def impersonate_wrapper(text, generate_state, name1, name2, context, mode, end_o
     cumulative_reply = ''
     for i in range(generate_state['chat_generation_attempts']):
         reply = None
-        for reply in generate_reply(f"{prompt}{' ' if len(cumulative_reply) > 0 else ''}{cumulative_reply}", generate_state, eos_token=eos_token, stopping_strings=[f"\n{name1}:", f"\n{name2}:"]):
+        for reply in generate_reply(f"{prompt}{' ' if len(cumulative_reply) > 0 else ''}{cumulative_reply}", generate_state, eos_token=eos_token, stopping_strings=stopping_strings):
             reply = cumulative_reply + reply
             reply, next_character_found = extract_message_from_reply(reply, name1, name2, generate_state['stop_at_newline'])
             yield reply
