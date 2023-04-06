@@ -1,5 +1,3 @@
-Available after [#447](https://github.com/oobabooga/text-generation-webui/pull/447) thanks to [@thomasantony](https://github.com/thomasantony) and his [llamacpp-python](https://github.com/thomasantony/llamacpp-python) library.
-
 ## Using llama.cpp in the web UI
 
 1. Re-install the requirements to get `llamacpp` intalled:
@@ -25,7 +23,7 @@ python server.py --model llamacpp-7b
 
 This was the performance of llama-7b int4 on my i5-12400F:
 
-> Output generated in 44.10 seconds (4.53 tokens/s, 200 tokens)
+> Output generated in 33.07 seconds (6.05 tokens/s, 200 tokens, context 17)
 
 ## Limitations
 
