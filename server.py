@@ -55,7 +55,10 @@ def get_available_characters():
     return ['None'] + sorted(set((k.stem for k in paths if k.stem != "instruction-following")), key=str.lower)
 
 def get_available_instruction_templates():
-    paths = (x for x in Path('characters/instruction-following').iterdir() if x.suffix in ('.json', '.yaml', '.yml'))
+    path = "characters/instruction-following"
+    paths = []
+    if os.path.exists(path):
+        paths = (x for x in Path(path).iterdir() if x.suffix in ('.json', '.yaml', '.yml'))
     return ['None'] + sorted(set((k.stem for k in paths)), key=str.lower)
 
 def get_available_extensions():
