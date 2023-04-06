@@ -103,7 +103,7 @@ def load_model(model_name):
 
     # llamacpp model
     elif shared.is_llamacpp:
-        from modules.llamacpp_model import LlamaCppModel
+        from modules.llamacpp_model_alternative import LlamaCppModel
 
         model_file = list(Path(f'{shared.args.model_dir}/{model_name}').glob('ggml*.bin'))[0]
         print(f"llama.cpp weights detected: {model_file}\n")
