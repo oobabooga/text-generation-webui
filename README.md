@@ -119,6 +119,15 @@ As an alternative to the recommended WSL method, you can install the web UI nati
 
 https://github.com/oobabooga/text-generation-webui/issues/174, https://github.com/oobabooga/text-generation-webui/issues/87
 
+### Updating the requirements
+
+From time to time, the `requirements.txt` changes. To update, use this command:
+
+```
+conda activate textgen
+cd text-generation-webui
+pip install -r requirements.txt --upgrade
+```
 ## Downloading models
 
 Models should be placed inside the `models` folder.
