@@ -102,7 +102,7 @@ def chatbot_wrapper(text, generate_state, name1, name2, context, mode, end_of_tu
     if mode == 'instruct':
         stopping_strings = [f"\n{name1}", f"\n{name2}"]
     else:
-        stopping_strings = [f"\n{name1}:", f"\n{name2}"]
+        stopping_strings = [f"\n{name1}:", f"\n{name2}:"]
         
     eos_token = '\n' if generate_state['stop_at_newline'] else None
     name1_original = name1
@@ -171,7 +171,7 @@ def impersonate_wrapper(text, generate_state, name1, name2, context, mode, end_o
     if mode == 'instruct':
         stopping_strings = [f"\n{name1}", f"\n{name2}"]
     else:
-        stopping_strings = [f"\n{name1}:", f"\n{name2}"]
+        stopping_strings = [f"\n{name1}:", f"\n{name2}:"]
         
     eos_token = '\n' if generate_state['stop_at_newline'] else None
     if 'pygmalion' in shared.model_name.lower():
