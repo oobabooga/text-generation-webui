@@ -1,12 +1,10 @@
 '''
-Based on 
+Based on
 https://github.com/abetlen/llama-cpp-python
 
 Documentation:
 https://abetlen.github.io/llama-cpp-python/
 '''
-
-import multiprocessing
 
 from llama_cpp import Llama
 
@@ -31,7 +29,7 @@ class LlamaCppModel:
         self.model = Llama(**params)
 
         # This is ugly, but the model and the tokenizer are the same object in this library.
-        return result, result 
+        return result, result
 
     def encode(self, string):
         if type(string) is str:

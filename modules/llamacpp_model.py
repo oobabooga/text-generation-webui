@@ -50,9 +50,9 @@ class LlamaCppModel:
         params.top_k = top_k
         params.temp = temperature
         params.repeat_penalty = repetition_penalty
-        #params.repeat_last_n = repeat_last_n
+        # params.repeat_last_n = repeat_last_n
 
-        #self.model.params = params
+        # self.model.params = params
         self.model.add_bos()
         self.model.update_input(context)
 

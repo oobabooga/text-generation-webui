@@ -66,6 +66,7 @@ def predict(image):
 
 
 # Function for BLIP captioning
+
 def caption_image(raw_image):
 
     inputs = processor(raw_image.convert('RGB'), return_tensors="pt").to("cpu", torch.float32)
@@ -73,6 +74,7 @@ def caption_image(raw_image):
     out = model.generate(**inputs, max_new_tokens=24)
     
     return processor.decode(out[0], skip_special_tokens=True)
+
 
 
 # Function determining UI output and the text passed to the LLM
@@ -134,4 +136,4 @@ def ui():
     picture_select.upload(eval(function_call), shared.input_params, shared.gradio['display'], show_progress=shared.args.no_stream)
 
     # Clear the picture from the upload field
-    picture_select.upload(lambda : None, [], [picture_select], show_progress=False)
+    picture_select.upload(lambda: None, [], [picture_select], show_progress=False)
