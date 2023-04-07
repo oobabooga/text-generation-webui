@@ -4,11 +4,11 @@ import re
 from pathlib import Path
 
 import gradio as gr
-import modules.chat as chat
-import modules.shared as shared
 import requests
 import torch
 from PIL import Image
+
+from modules import chat, shared
 
 torch._C._jit_set_profiling_mode(False)
 

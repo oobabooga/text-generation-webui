@@ -1,6 +1,7 @@
 import gradio as gr
-import modules.shared as shared
 import pandas as pd
+
+import modules.shared as shared
 
 df = pd.read_csv("https://raw.githubusercontent.com/devbrones/llama-prompts/main/prompts/prompts.csv")
 

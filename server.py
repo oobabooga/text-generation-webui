@@ -15,7 +15,7 @@ import gradio as gr
 from PIL import Image
 
 import modules.extensions as extensions_module
-from modules import chat, shared, training, ui, api
+from modules import api, chat, shared, training, ui
 from modules.html_generator import chat_html_wrapper
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, load_soft_prompt
