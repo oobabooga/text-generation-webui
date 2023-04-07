@@ -2,8 +2,7 @@ import re
 
 from num2words import num2words
 
-#punctuation = r'[\s,.?!/)"\'\]>]“”'
-punctuation = r'[\s,.?!/)"\'\]>]'
+punctuation = r'[\s,.?!/)\'\]>]'
 alphabet_map = {
     "A": " Ei ",
     "B": " Bee ",
@@ -39,7 +38,8 @@ def preprocess(string):
     # For example, you need to remove the commas in numbers before expanding them
     string = remove_surrounded_chars(string)
     string = string.replace('"', '')
-    string = string.replace('“', '')
+    string = string.replace('\u201D', '').replace('\u201C', '')  # right and left quote
+    string = string.replace('\u201F', '')  # italic looking quote
     string = string.replace('\n', ' ')
     string = convert_num_locale(string)
     string = replace_negative(string)
@@ -53,6 +53,7 @@ def preprocess(string):
     # For now, expand abbreviations to pronunciations
     # replace_abbreviations adds a lot of unnecessary whitespace to ensure separation
     string = replace_abbreviations(string)
+    string = replace_lowercase_abbreviations(string)
 
     # cleanup whitespaces
     # remove whitespace before punctuation
@@ -118,7 +119,7 @@ def num_to_words(text):
 
 def replace_abbreviations(string):
     # abbreviations 1 to 4 characters long. It will get things like A and I, but those are pronounced with their letter
-    pattern = re.compile(rf'(^|[\s("\'\[<])([A-Z]{{1,4}})({punctuation}|$)')
+    pattern = re.compile(rf'(^|[\s(.\'\[<])([A-Z]{{1,4}})({punctuation}|$)')
     result = string
     while True:
         match = pattern.search(result)
@@ -132,25 +133,41 @@ def replace_abbreviations(string):
     return result
 
 
-def replace_abbreviation(string):
-    result = ""
-    for char in string:
-        result = match_mapping(char, result)
+def replace_lowercase_abbreviations(string):
+    # abbreviations 1 to 4 characters long, separated by dots i.e. e.g.
+    pattern = re.compile(rf'(^|[\s(.\'\[<])(([a-z]\.){{1,4}})({punctuation}|$)')
+    result = string
+    while True:
+        match = pattern.search(result)
+        if match is None:
+            break
+
+        start = match.start()
+        end = match.end()
+        result = result[0:start] + replace_abbreviation(result[start:end].upper()) + result[end:len(result)]
 
     return result
 
 
-def match_mapping(char, result):
+def replace_abbreviation(string):
+    result = ""
+    for char in string:
+        result += match_mapping(char)
+
+    return result
+
+
+def match_mapping(char):
     for mapping in alphabet_map.keys():
         if char == mapping:
-            return result + alphabet_map[char]
+            return alphabet_map[char]
 
-    return result + char
+    return char
 
 
 def convert_num_locale(text):
     # This detects locale and converts it to American without comma separators
-    pattern = re.compile(r'(?:\s|^)\d{1,3}(?:\.\d{3})*(?:,\d+)?(?:\s|$)')
+    pattern = re.compile(r'(?:\s|^)\d{1,3}(?:\.\d{3})+(,\d+)(?:\s|$)')
     result = text
     while True:
         match = pattern.search(result)
