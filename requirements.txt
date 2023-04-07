@@ -3,14 +3,13 @@ bitsandbytes==0.37.2
 datasets
 flexgen==0.1.7
 gradio==3.24.1
-llamacpp==0.1.11
 markdown
 numpy
 peft==0.2.0
 requests
-rwkv==0.7.2
+rwkv==0.7.3
 safetensors==0.3.0
 sentencepiece
 pyyaml
 tqdm
-git+https://github.com/huggingface/transformers@9eae4aa57650c1dbe1becd4e0979f6ad1e572ac0
+git+https://github.com/huggingface/transformers

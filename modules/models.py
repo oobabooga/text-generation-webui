@@ -10,7 +10,7 @@ import torch
 import transformers
 from accelerate import infer_auto_device_map, init_empty_weights
 from transformers import (AutoConfig, AutoModelForCausalLM, AutoTokenizer,
-                          BitsAndBytesConfig)
+                          BitsAndBytesConfig, LlamaTokenizer)
 
 import modules.shared as shared
 
@@ -34,7 +34,7 @@ if shared.args.deepspeed:
     torch.cuda.set_device(local_rank)
     deepspeed.init_distributed()
     ds_config = generate_ds_config(shared.args.bf16, 1 * world_size, shared.args.nvme_offload_dir)
-    dschf = HfDeepSpeedConfig(ds_config) # Keep this object alive for the Transformers integration
+    dschf = HfDeepSpeedConfig(ds_config)  # Keep this object alive for the Transformers integration
 
 
 def load_model(model_name):
@@ -83,7 +83,7 @@ def load_model(model_name):
     elif shared.args.deepspeed:
         model = AutoModelForCausalLM.from_pretrained(Path(f"{shared.args.model_dir}/{shared.model_name}"), torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16)
         model = deepspeed.initialize(model=model, config_params=ds_config, model_parameters=None, optimizer=None, lr_scheduler=None)[0]
-        model.module.eval() # Inference
+        model.module.eval()  # Inference
         print(f"DeepSpeed ZeRO-3 is enabled: {is_deepspeed_zero3_enabled()}")
 
     # RMKV model (not on HuggingFace)
@@ -103,7 +103,7 @@ def load_model(model_name):
 
     # llamacpp model
     elif shared.is_llamacpp:
-        from modules.llamacpp_model import LlamaCppModel
+        from modules.llamacpp_model_alternative import LlamaCppModel
 
         model_file = list(Path(f'{shared.args.model_dir}/{model_name}').glob('ggml*.bin'))[0]
         print(f"llama.cpp weights detected: {model_file}\n")
@@ -132,7 +132,7 @@ def load_model(model_name):
                 params["torch_dtype"] = torch.float16
 
             if shared.args.gpu_memory:
-                memory_map = list(map(lambda x : x.strip(), shared.args.gpu_memory))
+                memory_map = list(map(lambda x: x.strip(), shared.args.gpu_memory))
                 max_cpu_memory = shared.args.cpu_memory.strip() if shared.args.cpu_memory is not None else '99GiB'
                 max_memory = {}
                 for i in range(len(memory_map)):
@@ -140,13 +140,13 @@ def load_model(model_name):
                 max_memory['cpu'] = max_cpu_memory
                 params['max_memory'] = max_memory
             elif shared.args.auto_devices:
-                total_mem = (torch.cuda.get_device_properties(0).total_memory / (1024*1024))
-                suggestion = round((total_mem-1000) / 1000) * 1000
+                total_mem = (torch.cuda.get_device_properties(0).total_memory / (1024 * 1024))
+                suggestion = round((total_mem - 1000) / 1000) * 1000
                 if total_mem - suggestion < 800:
                     suggestion -= 1000
-                suggestion = int(round(suggestion/1000))
+                suggestion = int(round(suggestion / 1000))
                 print(f"\033[1;32;1mAuto-assiging --gpu-memory {suggestion} for your GPU to try to prevent out-of-memory errors.\nYou can manually set other values.\033[0;37;0m")
-                
+
                 max_memory = {0: f'{suggestion}GiB', 'cpu': f'{shared.args.cpu_memory or 99}GiB'}
                 params['max_memory'] = max_memory
 
@@ -161,10 +161,10 @@ def load_model(model_name):
                 model = AutoModelForCausalLM.from_config(config)
             model.tie_weights()
             params['device_map'] = infer_auto_device_map(
-                model, 
-                dtype=torch.int8, 
+                model,
+                dtype=torch.int8,
                 max_memory=params['max_memory'],
-                no_split_module_classes = model._no_split_modules
+                no_split_module_classes=model._no_split_modules
             )
 
         model = AutoModelForCausalLM.from_pretrained(checkpoint, **params)
@@ -172,12 +172,15 @@ def load_model(model_name):
     # Loading the tokenizer
     if any((k in shared.model_name.lower() for k in ['gpt4chan', 'gpt-4chan'])) and Path(f"{shared.args.model_dir}/gpt-j-6B/").exists():
         tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/gpt-j-6B/"))
+    elif type(model) is transformers.LlamaForCausalLM:
+        tokenizer = LlamaTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/{shared.model_name}/"), clean_up_tokenization_spaces=True)
     else:
         tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/{shared.model_name}/"))
     tokenizer.truncation_side = 'left'
 
     print(f"Loaded the model in {(time.time()-t0):.2f} seconds.")
     return model, tokenizer
+
 
 def load_soft_prompt(name):
     if name == 'None':

@@ -9,6 +9,7 @@ state = {}
 available_extensions = []
 setup_called = set()
 
+
 def load_extensions():
     global state
     for i, name in enumerate(shared.args.extensions):
@@ -23,12 +24,16 @@ def load_extensions():
                 traceback.print_exc()
 
 # This iterator returns the extensions in the order specified in the command-line
+
+
 def iterator():
-    for name in sorted(state, key=lambda x : state[x][1]):
-        if state[name][0] == True:
+    for name in sorted(state, key=lambda x: state[x][1]):
+        if state[name][0]:
             yield eval(f"extensions.{name}.script"), name
 
 # Extension functions that map string -> string
+
+
 def apply_extensions(text, typ):
     for extension, _ in iterator():
         if typ == "input" and hasattr(extension, "input_modifier"):
@@ -38,6 +43,7 @@ def apply_extensions(text, typ):
         elif typ == "bot_prefix" and hasattr(extension, "bot_prefix_modifier"):
             text = extension.bot_prefix_modifier(text)
     return text
+
 
 def create_extensions_block():
     global setup_called

@@ -33,6 +33,7 @@ settings = {
     'name2': 'Assistant',
     'context': 'This is a conversation with your Assistant. The Assistant is very helpful and is eager to chat with you and answer your questions.',
     'greeting': 'Hello there!',
+    'end_of_turn': '',
     'stop_at_newline': False,
     'chat_prompt_size': 2048,
     'chat_prompt_size_min': 0,
@@ -44,6 +45,7 @@ settings = {
     'chat_default_extensions': ["gallery"],
     'presets': {
         'default': 'NovelAI-Sphinx Moth',
+        '.*(alpaca|llama)': "LLaMA-Precise",
         '.*pygmalion': 'NovelAI-Storywriter',
         '.*RWKV': 'Naive',
     },
@@ -59,6 +61,7 @@ settings = {
     }
 }
 
+
 def str2bool(v):
     if isinstance(v, bool):
         return v
@@ -69,12 +72,13 @@ def str2bool(v):
     else:
         raise argparse.ArgumentTypeError('Boolean value expected.')
 
-parser = argparse.ArgumentParser(formatter_class=lambda prog: argparse.HelpFormatter(prog,max_help_position=54))
+
+parser = argparse.ArgumentParser(formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=54))
 
 # Basic settings
 parser.add_argument('--notebook', action='store_true', help='Launch the web UI in notebook mode, where the output is written to the same text box as the input.')
-parser.add_argument('--chat', action='store_true', help='Launch the web UI in chat mode.')
-parser.add_argument('--cai-chat', action='store_true', help='Launch the web UI in chat mode with a style similar to the Character.AI website.')
+parser.add_argument('--chat', action='store_true', help='Launch the web UI in chat mode with a style similar to the Character.AI website.')
+parser.add_argument('--cai-chat', action='store_true', help='DEPRECATED: use --chat instead.')
 parser.add_argument('--model', type=str, help='Name of the model to load by default.')
 parser.add_argument('--lora', type=str, help='Name of the LoRA to apply to the model by default.')
 parser.add_argument("--model-dir", type=str, default='models/', help="Path to directory with all the models")
@@ -131,12 +135,18 @@ parser.add_argument("--gradio-auth-path", type=str, help='Set the gradio authent
 
 args = parser.parse_args()
 
-# Provisional, this will be deleted later
+# Deprecation warnings for parameters that have been renamed
 deprecated_dict = {'gptq_bits': ['wbits', 0], 'gptq_model_type': ['model_type', None], 'gptq_pre_layer': ['prelayer', 0]}
 for k in deprecated_dict:
     if eval(f"args.{k}") != deprecated_dict[k][1]:
         print(f"Warning: --{k} is deprecated and will be removed. Use --{deprecated_dict[k][0]} instead.")
         exec(f"args.{deprecated_dict[k][0]} = args.{k}")
 
+# Deprecation warnings for parameters that have been removed
+if args.cai_chat:
+    print("Warning: --cai-chat is deprecated. Use --chat instead.")
+    args.chat = True
+
+
 def is_chat():
-    return any((args.chat, args.cai_chat))
+    return args.chat
