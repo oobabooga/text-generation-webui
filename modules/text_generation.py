@@ -127,22 +127,22 @@ def generate_reply(question, generate_state, eos_token=None, stopping_strings=[]
 
     original_question = question
     if not shared.is_chat():
-        question = apply_extensions(question, "input")
+        question = apply_extensions(question, 'input')
     if shared.args.verbose:
-        print(f"\n\n{question}\n--------------------\n")
+        print(f'\n\n{question}\n--------------------\n')
 
     # These models are not part of Hugging Face, so we handle them
     # separately and terminate the function call earlier
     if any((shared.is_RWKV, shared.is_llamacpp)):
         for k in ['temperature', 'top_p', 'top_k', 'repetition_penalty']:
             generate_params[k] = generate_state[k]
-        generate_params["token_count"] = generate_state["max_new_tokens"]
+        generate_params['token_count'] = generate_state['max_new_tokens']
         try:
             if shared.args.no_stream:
                 reply = shared.model.generate(context=question, **generate_params)
                 output = original_question + reply
                 if not shared.is_chat():
-                    reply = original_question + apply_extensions(reply, "output")
+                    reply = original_question + apply_extensions(reply, 'output')
                 yield formatted_outputs(reply, shared.model_name)
             else:
                 if not shared.is_chat():
@@ -153,7 +153,7 @@ def generate_reply(question, generate_state, eos_token=None, stopping_strings=[]
                 for reply in shared.model.generate_with_streaming(context=question, **generate_params):
                     output = original_question + reply
                     if not shared.is_chat():
-                        reply = original_question + apply_extensions(reply, "output")
+                        reply = original_question + apply_extensions(reply, 'output')
                     yield formatted_outputs(reply, shared.model_name)
 
         except Exception:
@@ -162,7 +162,7 @@ def generate_reply(question, generate_state, eos_token=None, stopping_strings=[]
             t1 = time.time()
             original_tokens = len(encode(original_question)[0])
             new_tokens = len(encode(output)[0]) - original_tokens
-            print(f"Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens})")
+            print(f'Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens})')
             return
 
     input_ids = encode(question, generate_state['max_new_tokens'])
@@ -178,31 +178,30 @@ def generate_reply(question, generate_state, eos_token=None, stopping_strings=[]
         t = [encode(string, 0, add_special_tokens=False) for string in stopping_strings]
         stopping_criteria_list.append(_SentinelTokenStoppingCriteria(sentinel_token_ids=t, starting_idx=len(input_ids[0])))
 
-    generate_params["max_new_tokens"] = generate_state['max_new_tokens']
     if not shared.args.flexgen:
-        for k in ["do_sample", "temperature", "top_p", "typical_p", "repetition_penalty", "encoder_repetition_penalty", "top_k", "min_length", "no_repeat_ngram_size", "num_beams", "penalty_alpha", "length_penalty", "early_stopping"]:
+        for k in ['max_new_tokens', 'do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping']:
             generate_params[k] = generate_state[k]
-        generate_params["eos_token_id"] = eos_token_ids
-        generate_params["stopping_criteria"] = stopping_criteria_list
+        generate_params['eos_token_id'] = eos_token_ids
+        generate_params['stopping_criteria'] = stopping_criteria_list
         if shared.args.no_stream:
-            generate_params["min_length"] = 0
+            generate_params['min_length'] = 0
     else:
-        for k in ["do_sample", "temperature"]:
+        for k in ['max_new_tokens', 'do_sample', 'temperature']:
             generate_params[k] = generate_state[k]
-        generate_params["stop"] = generate_state["eos_token_ids"][-1]
+        generate_params['stop'] = generate_state['eos_token_ids'][-1]
         if not shared.args.no_stream:
-            generate_params["max_new_tokens"] = 8
+            generate_params['max_new_tokens'] = 8
 
     if shared.args.no_cache:
-        generate_params.update({"use_cache": False})
+        generate_params.update({'use_cache': False})
     if shared.args.deepspeed:
-        generate_params.update({"synced_gpus": True})
+        generate_params.update({'synced_gpus': True})
     if shared.soft_prompt:
         inputs_embeds, filler_input_ids = generate_softprompt_input_tensors(input_ids)
-        generate_params.update({"inputs_embeds": inputs_embeds})
-        generate_params.update({"inputs": filler_input_ids})
+        generate_params.update({'inputs_embeds': inputs_embeds})
+        generate_params.update({'inputs': filler_input_ids})
     else:
-        generate_params.update({"inputs": input_ids})
+        generate_params.update({'inputs': input_ids})
 
     try:
         # Generate the entire reply at once.
@@ -217,7 +216,7 @@ def generate_reply(question, generate_state, eos_token=None, stopping_strings=[]
             new_tokens = len(output) - len(input_ids[0])
             reply = decode(output[-new_tokens:])
             if not shared.is_chat():
-                reply = original_question + apply_extensions(reply, "output")
+                reply = original_question + apply_extensions(reply, 'output')
 
             yield formatted_outputs(reply, shared.model_name)
 
@@ -244,7 +243,7 @@ def generate_reply(question, generate_state, eos_token=None, stopping_strings=[]
                     new_tokens = len(output) - len(input_ids[0])
                     reply = decode(output[-new_tokens:])
                     if not shared.is_chat():
-                        reply = original_question + apply_extensions(reply, "output")
+                        reply = original_question + apply_extensions(reply, 'output')
 
                     if output[-1] in eos_token_ids:
                         break
@@ -262,7 +261,7 @@ def generate_reply(question, generate_state, eos_token=None, stopping_strings=[]
                 new_tokens = len(output) - len(original_input_ids[0])
                 reply = decode(output[-new_tokens:])
                 if not shared.is_chat():
-                    reply = original_question + apply_extensions(reply, "output")
+                    reply = original_question + apply_extensions(reply, 'output')
 
                 if np.count_nonzero(np.isin(input_ids[0], eos_token_ids)) < np.count_nonzero(np.isin(output, eos_token_ids)):
                     break
@@ -271,10 +270,10 @@ def generate_reply(question, generate_state, eos_token=None, stopping_strings=[]
                 input_ids = np.reshape(output, (1, output.shape[0]))
                 if shared.soft_prompt:
                     inputs_embeds, filler_input_ids = generate_softprompt_input_tensors(input_ids)
-                    generate_params.update({"inputs_embeds": inputs_embeds})
-                    generate_params.update({"inputs": filler_input_ids})
+                    generate_params.update({'inputs_embeds': inputs_embeds})
+                    generate_params.update({'inputs': filler_input_ids})
                 else:
-                    generate_params.update({"inputs": input_ids})
+                    generate_params.update({'inputs': input_ids})
 
             yield formatted_outputs(reply, shared.model_name)
 
@@ -284,5 +283,5 @@ def generate_reply(question, generate_state, eos_token=None, stopping_strings=[]
         t1 = time.time()
         original_tokens = len(original_input_ids[0])
         new_tokens = len(output) - original_tokens
-        print(f"Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens})")
+        print(f'Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens})')
         return
