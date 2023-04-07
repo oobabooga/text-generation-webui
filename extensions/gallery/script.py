@@ -30,6 +30,7 @@ def generate_css():
         text-align: center;
         position: relative;
         opacity: 0.85;
+        perspective: 20px;
       }
 
       .character-container:hover {
@@ -68,24 +69,17 @@ def generate_css():
         transition-duration: 300ms;
         transition-property: transform, box-shadow;
         transition-timing-function: ease-out;
-        transform: rotate3d(1, 1, 1, 0deg) scale3d(1, 1, 1);
+        transform: scale3d(1, 1, 1);
       }
 
-      .character-container > div {
+      .character-container > div:has(.character-name) {
         position: relative;
         width: 100%;
-
-      }
-
-      .character-container > img:hover {
-        transition-duration: 150ms;
-        box-shadow: 0 5px 20px 5px #00000044;
-        transform: rotate3d(1, 1, 1, 2deg);
       }
 
       .character-container > img.character-selected {
         transition-duration: 150ms;
-        box-shadow: 0 5px 20px 5px #00000088;
+        box-shadow: 0 4px 10px 4px #00000077;
         transform: scale3d(1.04, 1.04, 1.04)
       }
 
@@ -93,6 +87,14 @@ def generate_css():
         transition-duration: 150ms;
         font-size: 1.05rem;
         top: 0.3rem;
+      }
+
+      .character-container .glow {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        left: 0;
+        top: 0;
       }
     """
     return css
@@ -125,6 +127,33 @@ def generate_js():
         e => e.addEventListener("click", update)
       )
 
+      function init() {
+        let containers = document.querySelectorAll(".character-container")
+        containers.forEach(container => {
+          let inner = container.querySelector("img, div.placeholder");
+
+          let counter = 0, updateRate = 5;
+          let isTimeToUpdate = () => counter++ % updateRate === 0;
+
+          let onMouseEnterHandler = event => update(event);
+          let onMouseLeaveHandler = () => { inner.style = ""; container.querySelector(".glow").style.backgroundImage = ""; }
+          let onMouseMoveHandler = event => isTimeToUpdate() ? update(event) : null;
+
+          let update = function(event) {
+            let x = ((-event.offsetY / container.offsetHeight) + 0.5).toFixed(2);
+            let y = ((event.offsetX / container.offsetWidth) - 0.5).toFixed(2);
+            inner.style.transform = "rotateX(" + x + "deg) rotateY(" + y + "deg) scale3d(1.03, 1.03, 1.03)";
+
+            container.querySelector(".glow").style.backgroundImage = `radial-gradient(circle at ${event.offsetX}px ${event.offsetY}px, #ffffff55, #00000000 50%)`;
+          };
+
+          container.onmouseenter = onMouseEnterHandler;
+          container.onmouseleave = onMouseLeaveHandler;
+          container.onmousemove = onMouseMoveHandler;
+        });
+      }
+
+      init();
       update();
       //alert("JS Inserted");
     }
@@ -144,7 +173,7 @@ def generate_html():
 
             for path in [Path(f"characters/{character}.{extension}") for extension in ['png', 'jpg', 'jpeg']]:
                 if path.exists():
-                    image_html = f'<img src="file/{get_image_cache(path)}">'
+                    image_html = f'<img src="file/{get_image_cache(path)}"><div class="glow"></div>'
                     break
 
             container_html += f'{image_html} <div><span class="character-name">{character}</span></div>'
@@ -161,7 +190,7 @@ def select_character(evt: gr.SelectData):
 def ui():
     with gr.Accordion("Character gallery", open=False):
         update = gr.Button("Refresh")
-        gr.HTML(value="<style>"+generate_css()+"</style>"+f"<img src onerror='{generate_js()}'>")
+        gr.HTML(value="<style>"+generate_css()+"</style>" + "<img src onerror='"+generate_js()+"'>")
         gallery = gr.Dataset(components=[gr.HTML(visible=False)],
             label="",
             samples=generate_html(),
