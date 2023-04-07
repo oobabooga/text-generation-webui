@@ -83,9 +83,12 @@ For regular 16-bit/8-bit inference.
 
 ### Getting the weights
 
-#### Option 1: easy way
+#### Option 1: pre-converted weights
 
-https://github.com/oobabooga/text-generation-webui/pull/530#issuecomment-1484235789
+* Torrent: https://github.com/oobabooga/text-generation-webui/pull/530#issuecomment-1484235789
+* Direct download: https://huggingface.co/Neko-Institute-of-Science
+
+(both are from the same author)
 
 #### Option 2: convert the weights yourself
 
