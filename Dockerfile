@@ -1,7 +1,7 @@
 FROM nvidia/cuda:11.8.0-devel-ubuntu22.04 as builder
 
 RUN apt-get update && \
-    apt-get install --no-install-recommends -y git build-essential python3-dev python3-venv && \
+    apt-get install --no-install-recommends -y git vim build-essential python3-dev python3-venv && \
     rm -rf /var/lib/apt/lists/*
 
 RUN git clone https://github.com/oobabooga/GPTQ-for-LLaMa /build
