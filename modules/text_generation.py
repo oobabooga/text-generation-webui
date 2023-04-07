@@ -16,10 +16,11 @@ from modules.models import local_rank
 
 
 def get_max_prompt_length(tokens):
-    max_length = 2048-tokens
+    max_length = 2048 - tokens
     if shared.soft_prompt:
         max_length -= shared.soft_prompt_tensor.shape[1]
     return max_length
+
 
 def encode(prompt, tokens_to_generate=0, add_special_tokens=True):
     if any((shared.is_RWKV, shared.is_llamacpp)):
@@ -30,7 +31,7 @@ def encode(prompt, tokens_to_generate=0, add_special_tokens=True):
         input_ids = shared.tokenizer.encode(str(prompt), return_tensors='pt', truncation=True, max_length=get_max_prompt_length(tokens_to_generate), add_special_tokens=add_special_tokens)
 
         if type(shared.tokenizer) is transformers.LlamaTokenizer and input_ids[0][0] == 29871:
-            input_ids = input_ids[:,1:]
+            input_ids = input_ids[:, 1:]
 
         if shared.args.cpu:
             return input_ids
@@ -44,6 +45,7 @@ def encode(prompt, tokens_to_generate=0, add_special_tokens=True):
         else:
             return input_ids.cuda()
 
+
 def decode(output_ids):
     # Open Assistant relies on special tokens like <|endoftext|>
     if re.match('.*(oasst|galactica)-*', shared.model_name.lower()):
@@ -53,14 +55,17 @@ def decode(output_ids):
         reply = reply.replace(r'<|endoftext|>', '')
         return reply
 
+
 def generate_softprompt_input_tensors(input_ids):
     inputs_embeds = shared.model.transformer.wte(input_ids)
     inputs_embeds = torch.cat((shared.soft_prompt_tensor, inputs_embeds), dim=1)
     filler_input_ids = torch.zeros((1, inputs_embeds.shape[1]), dtype=input_ids.dtype).to(shared.model.device)
-    #filler_input_ids += shared.model.config.bos_token_id # setting dummy input_ids to bos tokens
+    # filler_input_ids += shared.model.config.bos_token_id # setting dummy input_ids to bos tokens
     return inputs_embeds, filler_input_ids
 
 # Removes empty replies from gpt4chan outputs
+
+
 def fix_gpt4chan(s):
     for i in range(10):
         s = re.sub("--- [0-9]*\n>>[0-9]*\n---", "---", s)
@@ -69,6 +74,8 @@ def fix_gpt4chan(s):
     return s
 
 # Fix the LaTeX equations in galactica
+
+
 def fix_galactica(s):
     s = s.replace(r'\[', r'$')
     s = s.replace(r'\]', r'$')
@@ -78,6 +85,7 @@ def fix_galactica(s):
     s = re.sub(r'\n', r'\n\n', s)
     s = re.sub(r"\n{3,}", "\n\n", s)
     return s
+
 
 def formatted_outputs(reply, model_name):
     if not shared.is_chat():
@@ -92,10 +100,12 @@ def formatted_outputs(reply, model_name):
     else:
         return reply
 
+
 def clear_torch_cache():
     gc.collect()
     if not shared.args.cpu:
         torch.cuda.empty_cache()
+
 
 def set_manual_seed(seed):
     if seed != -1:
@@ -103,8 +113,10 @@ def set_manual_seed(seed):
         if torch.cuda.is_available():
             torch.cuda.manual_seed_all(seed)
 
+
 def stop_everything_event():
     shared.stop_everything = True
+
 
 def generate_reply(question, generate_state, eos_token=None, stopping_strings=[]):
     clear_torch_cache()
@@ -128,7 +140,7 @@ def generate_reply(question, generate_state, eos_token=None, stopping_strings=[]
         try:
             if shared.args.no_stream:
                 reply = shared.model.generate(context=question, **generate_params)
-                output = original_question+reply
+                output = original_question + reply
                 if not shared.is_chat():
                     reply = original_question + apply_extensions(reply, "output")
                 yield formatted_outputs(reply, shared.model_name)
@@ -139,7 +151,7 @@ def generate_reply(question, generate_state, eos_token=None, stopping_strings=[]
                 # RWKV has proper streaming, which is very nice.
                 # No need to generate 8 tokens at a time.
                 for reply in shared.model.generate_with_streaming(context=question, **generate_params):
-                    output = original_question+reply
+                    output = original_question + reply
                     if not shared.is_chat():
                         reply = original_question + apply_extensions(reply, "output")
                     yield formatted_outputs(reply, shared.model_name)
@@ -240,7 +252,7 @@ def generate_reply(question, generate_state, eos_token=None, stopping_strings=[]
 
         # Stream the output naively for FlexGen since it doesn't support 'stopping_criteria'
         else:
-            for i in range(generate_state['max_new_tokens']//8+1):
+            for i in range(generate_state['max_new_tokens'] // 8 + 1):
                 clear_torch_cache()
                 with torch.no_grad():
                     output = shared.model.generate(**generate_params)[0]
@@ -271,6 +283,6 @@ def generate_reply(question, generate_state, eos_token=None, stopping_strings=[]
     finally:
         t1 = time.time()
         original_tokens = len(original_input_ids[0])
-        new_tokens = len(output)-original_tokens
+        new_tokens = len(output) - original_tokens
         print(f"Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens})")
         return

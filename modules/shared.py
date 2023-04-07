@@ -61,6 +61,7 @@ settings = {
     }
 }
 
+
 def str2bool(v):
     if isinstance(v, bool):
         return v
@@ -71,7 +72,8 @@ def str2bool(v):
     else:
         raise argparse.ArgumentTypeError('Boolean value expected.')
 
-parser = argparse.ArgumentParser(formatter_class=lambda prog: argparse.HelpFormatter(prog,max_help_position=54))
+
+parser = argparse.ArgumentParser(formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=54))
 
 # Basic settings
 parser.add_argument('--notebook', action='store_true', help='Launch the web UI in notebook mode, where the output is written to the same text box as the input.')
@@ -144,6 +146,7 @@ for k in deprecated_dict:
 if args.cai_chat:
     print("Warning: --cai-chat is deprecated. Use --chat instead.")
     args.chat = True
+
 
 def is_chat():
     return args.chat

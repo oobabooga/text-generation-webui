@@ -2,7 +2,7 @@ import re
 
 from num2words import num2words
 
-#punctuation = r'[\s,.?!/)"\'\]>]“”'
+# punctuation = r'[\s,.?!/)"\'\]>]“”'
 punctuation = r'[\s,.?!/)"\'\]>]'
 alphabet_map = {
     "A": " Ei ",
@@ -87,7 +87,7 @@ def replace_roman(string):
 
         start = match.start()
         end = match.end()
-        result = result[0:start+1] + str(roman_to_int(result[start+1:end-1])) + result[end-1:len(result)]
+        result = result[0:start + 1] + str(roman_to_int(result[start + 1:end - 1])) + result[end - 1:len(result)]
 
     return result
 

@@ -17,10 +17,12 @@ input_hijack = {
 processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
 model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base", torch_dtype=torch.float32).to("cpu")
 
+
 def caption_image(raw_image):
     inputs = processor(raw_image.convert('RGB'), return_tensors="pt").to("cpu", torch.float32)
     out = model.generate(**inputs, max_new_tokens=100)
     return processor.decode(out[0], skip_special_tokens=True)
+
 
 def generate_chat_picture(picture, name1, name2):
     text = f'*{name1} sends {name2} a picture that contains the following: "{caption_image(picture)}"*'
@@ -32,6 +34,7 @@ def generate_chat_picture(picture, name1, name2):
     visible_text = f'<img src="data:image/jpeg;base64,{img_str}" alt="{text}">'
     return text, visible_text
 
+
 def ui():
     picture_select = gr.Image(label='Send a picture', type='pil')
 
@@ -42,4 +45,4 @@ def ui():
     picture_select.upload(chat.cai_chatbot_wrapper, shared.input_params, shared.gradio['display'], show_progress=shared.args.no_stream)
 
     # Clear the picture from the upload field
-    picture_select.upload(lambda : None, [], [picture_select], show_progress=False)
+    picture_select.upload(lambda: None, [], [picture_select], show_progress=False)
