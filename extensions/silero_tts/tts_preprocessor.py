@@ -2,13 +2,13 @@ import re
 
 from num2words import num2words
 
-
+punctuation = r'[\s,.?!/)"\'\]>]'
 alphabet_map = {
     "A": " Ei ",
     "B": " Bee ",
     "C": " See ",
     "D": " Dee ",
-    "E": " Ii ",
+    "E": " Eee ",
     "F": " Eff ",
     "G": " Jee ",
     "H": " Eich ",
@@ -19,13 +19,13 @@ alphabet_map = {
     "M": " Emm ",
     "N": " Enn ",
     "O": " Ohh ",
-    "P": " Pii ",
+    "P": " Pee ",
     "Q": " Queue ",
     "R": " Are ",
     "S": " Ess ",
     "T": " Tee ",
     "U": " You ",
-    "V": " Vii ",
+    "V": " Vee ",
     "W": " Double You ",
     "X": " Ex ",
     "Y": " Why ",
@@ -55,7 +55,7 @@ def preprocess(string):
 
     # cleanup whitespaces
     # remove whitespace before punctuation
-    string = re.sub(r'\s+([,.?!\'])', r'\1', string)
+    string = re.sub(rf'\s+({punctuation})', r'\1', string)
     string = string.strip()
     # compact whitespace
     string = ' '.join(string.split())
@@ -71,13 +71,13 @@ def remove_surrounded_chars(string):
 
 def replace_negative(string):
     # handles situations like -5. -5 would become negative 5, which would then be expanded to negative five
-    return re.sub(r'(\s)(-)(\d+)([\s,.?!)"\'\]>])', r'\1negative \3\4', string)
+    return re.sub(rf'(\s)(-)(\d+)({punctuation})', r'\1negative \3\4', string)
 
 
 def replace_roman(string):
     # find a string of roman numerals.
     # Only 2 or more, to avoid capturing I and single character abbreviations, like names
-    pattern = re.compile(r'\s[IVXLCDM]{2,}[\s,.?!)"\'\]>]')
+    pattern = re.compile(rf'\s[IVXLCDM]{{2,}}{punctuation}')
     result = string
     while True:
         match = pattern.search(result)
@@ -117,7 +117,7 @@ def num_to_words(text):
 
 def replace_abbreviations(string):
     # abbreviations 1 to 4 characters long. It will get things like A and I, but those are pronounced with their letter
-    pattern = re.compile(r'(^|[\s("\'\[<])([A-Z]{1,4})([\s,.?!)"\'\]>]|$)')
+    pattern = re.compile(rf'(^|[\s("\'\[<])([A-Z]{{1,4}})({punctuation}|$)')
     result = string
     while True:
         match = pattern.search(result)
