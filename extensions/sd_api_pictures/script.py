@@ -176,4 +176,4 @@ def ui():
 
     force_btn.click(force_pic)
     generate_now_btn.click(force_pic)
-    generate_now_btn.click(eval('chat.cai_chatbot_wrapper'), shared.input_params, shared.gradio['display'], show_progress=shared.args.no_stream)
+    generate_now_btn.click(chat.cai_chatbot_wrapper, shared.input_params, shared.gradio['display'], show_progress=shared.args.no_stream)

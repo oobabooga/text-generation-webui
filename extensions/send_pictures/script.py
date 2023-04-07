@@ -2,11 +2,10 @@ import base64
 from io import BytesIO
 
 import gradio as gr
-import modules.chat as chat
-import modules.shared as shared
 import torch
-from PIL import Image
 from transformers import BlipForConditionalGeneration, BlipProcessor
+
+from modules import chat, shared
 
 # If 'state' is True, will hijack the next chat generation with
 # custom input text given by 'value' in the format [text, visible_text]
@@ -36,13 +35,11 @@ def generate_chat_picture(picture, name1, name2):
 def ui():
     picture_select = gr.Image(label='Send a picture', type='pil')
 
-    function_call = 'chat.cai_chatbot_wrapper' if shared.args.cai_chat else 'chat.chatbot_wrapper'
-
     # Prepare the hijack with custom inputs
     picture_select.upload(lambda picture, name1, name2: input_hijack.update({"state": True, "value": generate_chat_picture(picture, name1, name2)}), [picture_select, shared.gradio['name1'], shared.gradio['name2']], None)
 
     # Call the generation function
-    picture_select.upload(eval(function_call), shared.input_params, shared.gradio['display'], show_progress=shared.args.no_stream)
+    picture_select.upload(chat.cai_chatbot_wrapper, shared.input_params, shared.gradio['display'], show_progress=shared.args.no_stream)
 
     # Clear the picture from the upload field
     picture_select.upload(lambda : None, [], [picture_select], show_progress=False)
