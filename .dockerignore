@@ -1,7 +1,6 @@
 .env
 Dockerfile
 /characters
-/extensions
 /loras
 /models
 /presets

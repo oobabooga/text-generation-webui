@@ -30,8 +30,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 RUN --mount=type=cache,target=/root/.cache/pip pip3 install virtualenv
-
-COPY . /app/
+RUN mkdir /app
 
 WORKDIR /app
 
@@ -41,21 +40,29 @@ RUN test -n "${WEBUI_VERSION}" && git reset --hard ${WEBUI_VERSION} || echo "Usi
 RUN virtualenv /app/venv
 RUN . /app/venv/bin/activate && \
     pip3 install --upgrade pip setuptools && \
-    pip3 install torch torchvision torchaudio && \
-    pip3 install -r requirements.txt
+    pip3 install torch torchvision torchaudio
 
 COPY --from=builder /build /app/repositories/GPTQ-for-LLaMa
 RUN . /app/venv/bin/activate && \
     pip3 install /app/repositories/GPTQ-for-LLaMa/*.whl
 
-ENV CLI_ARGS=""
-
+COPY extensions/api/requirements.txt /app/extensions/api/requirements.txt
+COPY extensions/elevenlabs_tts/requirements.txt /app/extensions/elevenlabs_tts/requirements.txt
+COPY extensions/google_translate/requirements.txt /app/extensions/google_translate/requirements.txt
+COPY extensions/silero_tts/requirements.txt /app/extensions/silero_tts/requirements.txt
+COPY extensions/whisper_stt/requirements.txt /app/extensions/whisper_stt/requirements.txt
 RUN --mount=type=cache,target=/root/.cache/pip . /app/venv/bin/activate && cd extensions/api && pip3 install -r requirements.txt
 RUN --mount=type=cache,target=/root/.cache/pip . /app/venv/bin/activate && cd extensions/elevenlabs_tts && pip3 install -r requirements.txt
 RUN --mount=type=cache,target=/root/.cache/pip . /app/venv/bin/activate && cd extensions/google_translate && pip3 install -r requirements.txt
 RUN --mount=type=cache,target=/root/.cache/pip . /app/venv/bin/activate && cd extensions/silero_tts && pip3 install -r requirements.txt
 RUN --mount=type=cache,target=/root/.cache/pip . /app/venv/bin/activate && cd extensions/whisper_stt && pip3 install -r requirements.txt
 
+COPY requirements.txt /app/requirements.txt
+RUN . /app/venv/bin/activate && \
+    pip3 install -r requirements.txt
+
 RUN cp /app/venv/lib/python3.10/site-packages/bitsandbytes/libbitsandbytes_cuda118.so /app/venv/lib/python3.10/site-packages/bitsandbytes/libbitsandbytes_cpu.so
 
+COPY . /app/
+ENV CLI_ARGS=""
 CMD . /app/venv/bin/activate && python3 server.py ${CLI_ARGS}
