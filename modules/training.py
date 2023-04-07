@@ -152,7 +152,7 @@ def do_train(lora_name: str, micro_batch_size: int, batch_size: int, epochs: int
     # == Prep the dataset, format, etc ==
     if raw_text_file not in ['None', '']:
         print("Loading raw text file dataset...")
-        with open(clean_path('training/datasets', f'{raw_text_file}.txt'), 'r') as file:
+        with open(clean_path('training/datasets', f'{raw_text_file}.txt'), 'r', encoding='utf-8') as file:
             raw_text = file.read()
         tokens = shared.tokenizer.encode(raw_text)
         del raw_text  # Note: could be a gig for a large dataset, so delete redundant data as we go to be safe on RAM
