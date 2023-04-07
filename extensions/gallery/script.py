@@ -132,7 +132,7 @@ def generate_js():
         containers.forEach(container => {
           let inner = container.querySelector("img, div.placeholder");
 
-          let counter = 0, updateRate = 5;
+          let counter = 0, updateRate = 2;
           let isTimeToUpdate = () => counter++ % updateRate === 0;
 
           let onMouseEnterHandler = event => update(event);
