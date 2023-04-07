@@ -117,7 +117,7 @@ As an alternative to the recommended WSL method, you can install the web UI nati
 
 ### Alternative: Docker
 
-https://github.com/oobabooga/text-generation-webui/issues/174, https://github.com/oobabooga/text-generation-webui/issues/87
+[docker/docker-compose instructions](docs/README_docker.md)
 
 ### Updating the requirements
 
