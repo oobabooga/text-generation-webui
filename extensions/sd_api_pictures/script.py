@@ -2,61 +2,66 @@ import base64
 import io
 import re
 import time
+from datetime import date
 from pathlib import Path
 
 import gradio as gr
-import modules.chat as chat
-import modules.shared as shared
 import requests
 import torch
 from PIL import Image
-from datetime import date
+
+import modules.shared as shared
+from modules.models import reload_model, unload_model
 
 torch._C._jit_set_profiling_mode(False)
 
-# parameters which can be customized in settings.json of webui  
+# parameters which can be customized in settings.json of webui
 params = {
     'address': 'http://127.0.0.1:7860',
-    'mode': 0, # modes of operation: 0 (Manual only), 1 (Immersive/Interactive - looks for words to trigger), 2 (Picturebook Adventure - Always on)
+    'mode': 0,  # modes of operation: 0 (Manual only), 1 (Immersive/Interactive - looks for words to trigger), 2 (Picturebook Adventure - Always on)
     'manage_VRAM': False,
     'save_img': False,
-    'SD_model': 'NeverEndingDream', # not used right now
+    'SD_model': 'NeverEndingDream',  # not used right now
     'prompt_prefix': '(Masterpiece:1.1), detailed, intricate, colorful',
     'negative_prompt': '(worst quality, low quality:1.3)',
     'width': 512,
     'height': 512,
     'restore_faces': False,
     'seed': -1,
-    'sampler_name': 'DDIM', 
+    'sampler_name': 'DDIM',
     'steps': 32,
     'cfg_scale': 7
 }
 
-def update_params(): # somewhy the default extension params dict is not changed by settings.json, thus update it forcefully
+
+def update_params():  # somewhy the default extension params dict is not changed by settings.json, thus update it forcefully
     ext_name = "sd_api_pictures"
     for sett in shared.settings:
         if sett.startswith(f'{ext_name}-'):
-            params.update({sett.replace(f'{ext_name}-',''): shared.settings[sett]})
+            params.update({sett.replace(f'{ext_name}-', ''): shared.settings[sett]})
+
+
 update_params()
 
+
 def give_VRAM_priority(actor):
-    
+
     global shared, params
 
     if actor == 'SD':
-        shared.gradio['unload_model_fn']()
-        print("Requesting Auto1111 to re-load last checkpoint used…")
+        unload_model()
+        print("Requesting Auto1111 to re-load last checkpoint used...")
         response = requests.post(url=f'{params["address"]}/sdapi/v1/reload-checkpoint', json='')
         response.raise_for_status()
 
     elif actor == 'LLM':
-        print("Requesting Auto1111 to vacate VRAM…")
+        print("Requesting Auto1111 to vacate VRAM...")
         response = requests.post(url=f'{params["address"]}/sdapi/v1/unload-checkpoint', json='')
         response.raise_for_status()
-        shared.gradio['reload_model_fn']()
+        reload_model()
 
     elif actor == 'set':
-        print("VRAM mangement activated -- requesting Auto1111 to vacate VRAM…")
+        print("VRAM mangement activated -- requesting Auto1111 to vacate VRAM...")
         response = requests.post(url=f'{params["address"]}/sdapi/v1/unload-checkpoint', json='')
         response.raise_for_status()
 
@@ -71,25 +76,30 @@ def give_VRAM_priority(actor):
     response.raise_for_status()
     del response
 
-if params['manage_VRAM']: give_VRAM_priority('set')
 
-samplers = ['DDIM', 'DPM++ 2M Karras'] # TODO: get the availible samplers with http://{address}}/sdapi/v1/samplers
-SD_models = ['NeverEndingDream'] # TODO: get with http://{address}}/sdapi/v1/sd-models and allow user to select
+if params['manage_VRAM']:
+    give_VRAM_priority('set')
 
-streaming_state = shared.args.no_stream # remember if chat streaming was enabled
-picture_response = False # specifies if the next model response should appear as a picture
+samplers = ['DDIM', 'DPM++ 2M Karras']  # TODO: get the availible samplers with http://{address}}/sdapi/v1/samplers
+SD_models = ['NeverEndingDream']  # TODO: get with http://{address}}/sdapi/v1/sd-models and allow user to select
+
+streaming_state = shared.args.no_stream  # remember if chat streaming was enabled
+picture_response = False  # specifies if the next model response should appear as a picture
+
 
 def remove_surrounded_chars(string):
     # this expression matches to 'as few symbols as possible (0 upwards) between any asterisks' OR
     # 'as few symbols as possible (0 upwards) between an asterisk and the end of the string'
-    return re.sub('\*[^\*]*?(\*|$)','',string)
+    return re.sub('\*[^\*]*?(\*|$)', '', string)
+
 
 def triggers_are_in(string):
     string = remove_surrounded_chars(string)
     # regex searches for send|main|message|me (at the end of the word) followed by
     # a whole word of image|pic|picture|photo|snap|snapshot|selfie|meme(s),
     # (?aims) are regex parser flags
-    return bool(re.search('(?aims)(send|mail|message|me)\\b.+?\\b(image|pic(ture)?|photo|snap(shot)?|selfie|meme)s?\\b', string)) 
+    return bool(re.search('(?aims)(send|mail|message|me)\\b.+?\\b(image|pic(ture)?|photo|snap(shot)?|selfie|meme)s?\\b', string))
+
 
 def input_modifier(string):
     """
@@ -97,14 +107,14 @@ def input_modifier(string):
     they are fed into the model.
     """
     global params
-    if not params['mode'] == 1: # if not in immersive/interactive mode, do nothing
+    if not params['mode'] == 1:  # if not in immersive/interactive mode, do nothing
         return string
 
-    if triggers_are_in(string): # if we're in it, check for trigger words
+    if triggers_are_in(string):  # if we're in it, check for trigger words
         toggle_generation(True)
         string = string.lower()
         if "of" in string:
-            subject = string.split('of', 1)[1] # subdivide the string once by the first 'of' instance and get what's coming after it
+            subject = string.split('of', 1)[1]  # subdivide the string once by the first 'of' instance and get what's coming after it
             string = "Please provide a detailed and vivid description of " + subject
         else:
             string = "Please provide a detailed description of your appearance, your surroundings and what you are doing right now"
@@ -112,11 +122,14 @@ def input_modifier(string):
     return string
 
 # Get and save the Stable Diffusion-generated picture
+
+
 def get_SD_pictures(description):
 
     global params
 
-    if params['manage_VRAM']: give_VRAM_priority('SD')
+    if params['manage_VRAM']:
+        give_VRAM_priority('SD')
 
     payload = {
         "prompt": params['prompt_prefix'] + description,
@@ -129,7 +142,7 @@ def get_SD_pictures(description):
         "restore_faces": params['restore_faces'],
         "negative_prompt": params['negative_prompt']
     }
-    
+
     print(f'Prompting the image generator via the API on {params["address"]}...')
     response = requests.post(url=f'{params["address"]}/sdapi/v1/txt2img', json=payload)
     response.raise_for_status()
@@ -137,7 +150,7 @@ def get_SD_pictures(description):
 
     visible_result = ""
     for img_str in r['images']:
-        image = Image.open(io.BytesIO(base64.b64decode(img_str.split(",",1)[0])))
+        image = Image.open(io.BytesIO(base64.b64decode(img_str.split(",", 1)[0])))
         if params['save_img']:
             variadic = f'{date.today().strftime("%Y_%m_%d")}/{shared.character}_{int(time.time())}'
             output_file = Path(f'extensions/sd_api_pictures/outputs/{variadic}.png')
@@ -154,12 +167,15 @@ def get_SD_pictures(description):
             img_str = "data:image/jpeg;base64," + base64.b64encode(image_bytes).decode()
             visible_result = visible_result + f'<img src="{img_str}" alt="{description}">\n'
 
-    if params['manage_VRAM']: give_VRAM_priority('LLM')
-    
+    if params['manage_VRAM']:
+        give_VRAM_priority('LLM')
+
     return visible_result
 
 # TODO: how do I make the UI history ignore the resulting pictures (I don't want HTML to appear in history)
 # and replace it with 'text' for the purposes of logging?
+
+
 def output_modifier(string):
     """
     This function is applied to the model outputs.
@@ -178,9 +194,9 @@ def output_modifier(string):
     if string == '':
         string = 'no viable description in reply, try regenerating'
         return string
-    
+
     text = ""
-    if (params['mode']<2):
+    if (params['mode'] < 2):
         toggle_generation(False)
         text = f'*Sends a picture which portrays: “{string}”*'
     else:
@@ -188,7 +204,8 @@ def output_modifier(string):
 
     string = get_SD_pictures(string) + "\n" + text
 
-    return string 
+    return string
+
 
 def bot_prefix_modifier(string):
     """
@@ -199,6 +216,7 @@ def bot_prefix_modifier(string):
 
     return string
 
+
 def toggle_generation(*args):
     global picture_response, shared, streaming_state
     if not args:
@@ -206,32 +224,34 @@ def toggle_generation(*args):
     else:
         picture_response = args[0]
 
-    shared.args.no_stream = True if picture_response else streaming_state # Disable streaming cause otherwise the SD-generated picture would return as a dud
+    shared.args.no_stream = True if picture_response else streaming_state  # Disable streaming cause otherwise the SD-generated picture would return as a dud
     shared.processing_message = "*Is sending a picture...*" if picture_response else "*Is typing...*"
+
 
 def filter_address(address):
     address = address.strip()
     # address = re.sub('http(s)?:\/\/|\/$','',address) # remove starting http:// OR https:// OR trailing slash
-    address = re.sub('\/$', '', address) # remove trailing /s
-    if not address.startswith('http'): address = 'http://' + address
+    address = re.sub('\/$', '', address)  # remove trailing /s
+    if not address.startswith('http'):
+        address = 'http://' + address
     return address
 
+
 def SD_api_address_update(address):
-    
+
     global params
-    
+
     msg = "✔️ SD API is found on:"
     address = filter_address(address)
     params.update({"address": address})
     try:
         response = requests.get(url=f'{params["address"]}/sdapi/v1/sd-models')
         response.raise_for_status()
-        r = response.json()
+        # r = response.json()
     except:
         msg = "❌ No SD API endpoint on:"
 
     return gr.Textbox.update(label=msg)
-
 
 
 def ui():
@@ -256,27 +276,27 @@ def ui():
                     negative_prompt = gr.Textbox(placeholder=params['negative_prompt'], value=params['negative_prompt'], label='Negative Prompt')
                     sampler_name = gr.Textbox(placeholder=params['sampler_name'], value=params['sampler_name'], label='Sampler')
                 with gr.Column():
-                    width = gr.Slider(256,704,value=params['width'],step=64,label='Width')
-                    height = gr.Slider(256,704,value=params['height'],step=64,label='Height')
+                    width = gr.Slider(256, 704, value=params['width'], step=64, label='Width')
+                    height = gr.Slider(256, 704, value=params['height'], step=64, label='Height')
             with gr.Row():
                 steps = gr.Number(label="Steps:", value=params['steps'])
                 seed = gr.Number(label="Seed:", value=params['seed'])
                 cfg_scale = gr.Number(label="CFG Scale:", value=params['cfg_scale'])
-    
+
     # Event functions to update the parameters in the backend
     address.change(lambda x: params.update({"address": filter_address(x)}), address, None)
-    mode.select(lambda x: params.update({"mode": x }), mode, None)
-    mode.select(lambda x: toggle_generation(x>1), inputs=mode, outputs=None)
+    mode.select(lambda x: params.update({"mode": x}), mode, None)
+    mode.select(lambda x: toggle_generation(x > 1), inputs=mode, outputs=None)
     manage_VRAM.change(lambda x: params.update({"manage_VRAM": x}), manage_VRAM, None)
     manage_VRAM.change(lambda x: give_VRAM_priority('set' if x else 'reset'), inputs=manage_VRAM, outputs=None)
     save_img.change(lambda x: params.update({"save_img": x}), save_img, None)
-    
+
     address.submit(fn=SD_api_address_update, inputs=address, outputs=address)
     prompt_prefix.change(lambda x: params.update({"prompt_prefix": x}), prompt_prefix, None)
     negative_prompt.change(lambda x: params.update({"negative_prompt": x}), negative_prompt, None)
     width.change(lambda x: params.update({"width": x}), width, None)
     height.change(lambda x: params.update({"height": x}), height, None)
-    
+
     sampler_name.change(lambda x: params.update({"sampler_name": x}), sampler_name, None)
     steps.change(lambda x: params.update({"steps": x}), steps, None)
     seed.change(lambda x: params.update({"seed": x}), seed, None)
