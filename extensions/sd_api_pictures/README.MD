@@ -11,14 +11,14 @@ An extension to [oobabooga's textgen-webui](https://github.com/oobabooga/text-ge
 
 </details>
 
-Load it in the `--chat` or `--cai-chat` mode with `--extension sd_api_pictures` alongside `send_pictures` (it's not really required, but completes the picture, *pun intended*).  
+Load it in the `--chat` mode with `--extension sd_api_pictures` alongside `send_pictures` (it's not really required, but completes the picture, *pun intended*).  
 
 The image generation is triggered either:  
-- manually through the 'Force the picture response' button while in Manual or Interactive modes OR  
-- automatically in Immersive/Interactive mode if the words `'send|main|message|me'` are followed by `'image|pic|picture|photo|snap|snapshot|selfie|meme'` in the user's prompt  
+- manually through the 'Force the picture response' button while in `Manual` or `Immersive/Interactive` modes OR  
+- automatically in `Immersive/Interactive` mode if the words `'send|main|message|me'` are followed by `'image|pic|picture|photo|snap|snapshot|selfie|meme'` in the user's prompt  
 - always on in Picturebook/Adventure mode (if not currently suppressed by 'Suppress the picture response')  
 
-## Prerequisits
+## Prerequisites
 
 One needs an available instance of Automatic1111's webui running with an `--api` flag. Ain't tested with a notebook / cloud hosted one but should be possible.   
 To run it locally in parallel on the same machine, specify custom `--listen-port` for either Auto1111's or ooba's webUIs.  
