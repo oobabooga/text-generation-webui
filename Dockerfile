@@ -4,12 +4,9 @@ RUN apt-get update && \
     apt-get install --no-install-recommends -y git build-essential python3-dev python3-venv && \
     rm -rf /var/lib/apt/lists/*
 
-RUN git clone https://github.com/qwopqwop200/GPTQ-for-LLaMa /build
+RUN git clone https://github.com/oobabooga/GPTQ-for-LLaMa /build
 
 WORKDIR /build
-
-ARG GPTQ_VERSION
-RUN git checkout ${GPTQ_VERSION}
 
 RUN python3 -m venv /build/venv
 RUN . /build/venv/bin/activate && \
