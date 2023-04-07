@@ -83,7 +83,7 @@ def generate_css():
         transform: scale3d(1.04, 1.04, 1.04)
       }
 
-      .character-container > img.character-selected + div .character-name {
+      .character-container > img.character-selected ~ div .character-name {
         transition-duration: 150ms;
         font-size: 1.05rem;
         top: 0.3rem;
