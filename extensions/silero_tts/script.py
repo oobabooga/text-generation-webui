@@ -7,7 +7,6 @@ from extensions.silero_tts import tts_preprocessor
 from modules import chat, shared
 from modules.html_generator import chat_html_wrapper
 
-
 torch._C._jit_set_profiling_mode(False)
 
 
