@@ -276,8 +276,8 @@ def ui():
                     negative_prompt = gr.Textbox(placeholder=params['negative_prompt'], value=params['negative_prompt'], label='Negative Prompt')
                     sampler_name = gr.Textbox(placeholder=params['sampler_name'], value=params['sampler_name'], label='Sampler')
                 with gr.Column():
-                    width = gr.Slider(256, 704, value=params['width'], step=64, label='Width')
-                    height = gr.Slider(256, 704, value=params['height'], step=64, label='Height')
+                    width = gr.Slider(256, 768, value=params['width'], step=64, label='Width')
+                    height = gr.Slider(256, 768, value=params['height'], step=64, label='Height')
             with gr.Row():
                 steps = gr.Number(label="Steps:", value=params['steps'])
                 seed = gr.Number(label="Seed:", value=params['seed'])
