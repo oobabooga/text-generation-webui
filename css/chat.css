@@ -36,3 +36,8 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 .wrap.svelte-6roggh.svelte-6roggh {
   max-height: 92.5%;
 }
+
+/* This is for the microphone button in the whisper extension */
+.sm.svelte-1ipelgc {
+  width: 100%;
+}

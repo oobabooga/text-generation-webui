@@ -6,10 +6,11 @@ This is a library for formatting text outputs as nice HTML.
 
 import os
 import re
+import time
 from pathlib import Path
 
 import markdown
-from PIL import Image
+from PIL import Image, ImageOps
 
 # This is to store the paths to the thumbnails of the profile pictures
 image_cache = {}
@@ -20,6 +21,9 @@ with open(Path(__file__).resolve().parent / '../css/html_4chan_style.css', 'r') 
     _4chan_css = css_f.read()
 with open(Path(__file__).resolve().parent / '../css/html_cai_style.css', 'r') as f:
     cai_css = f.read()
+with open(Path(__file__).resolve().parent / '../css/html_instruct_style.css', 'r') as f:
+    instruct_css = f.read()
+
 
 def fix_newlines(string):
     string = string.replace('\n', '\n\n')
@@ -28,6 +32,8 @@ def fix_newlines(string):
     return string
 
 # This could probably be generalized and improved
+
+
 def convert_to_markdown(string):
     string = string.replace('\\begin{code}', '```')
     string = string.replace('\\end{code}', '```')
@@ -35,12 +41,14 @@ def convert_to_markdown(string):
     string = string.replace('\\end{blockquote}', '')
     string = re.sub(r"(.)```", r"\1\n```", string)
     string = fix_newlines(string)
-    return markdown.markdown(string, extensions=['fenced_code']) 
+    return markdown.markdown(string, extensions=['fenced_code'])
+
 
 def generate_basic_html(string):
     string = convert_to_markdown(string)
     string = f'<style>{readable_css}</style><div class="container">{string}</div>'
     return string
+
 
 def process_post(post, c):
     t = post.split('\n')
@@ -55,6 +63,7 @@ def process_post(post, c):
     src = f'<blockquote class="message">{src}\n'
     src = f'<span class="name">Anonymous </span> <span class="number">No.{number}</span>\n{src}'
     return src
+
 
 def generate_4chan_html(f):
     posts = []
@@ -81,7 +90,7 @@ def generate_4chan_html(f):
             posts[i] = f'<div class="op">{posts[i]}</div>\n'
         else:
             posts[i] = f'<div class="reply">{posts[i]}</div>\n'
-    
+
     output = ''
     output += f'<style>{_4chan_css}</style><div id="parent"><div id="container">'
     for post in posts:
@@ -95,6 +104,15 @@ def generate_4chan_html(f):
 
     return output
 
+
+def make_thumbnail(image):
+    image = image.resize((350, round(image.size[1] / image.size[0] * 350)), Image.Resampling.LANCZOS)
+    if image.size[1] > 470:
+        image = ImageOps.fit(image, (350, 470), Image.ANTIALIAS)
+
+    return image
+
+
 def get_image_cache(path):
     cache_folder = Path("cache")
     if not cache_folder.exists():
@@ -102,28 +120,56 @@ def get_image_cache(path):
 
     mtime = os.stat(path).st_mtime
     if (path in image_cache and mtime != image_cache[path][0]) or (path not in image_cache):
-        img = Image.open(path)
-        img.thumbnail((200, 200))
+        img = make_thumbnail(Image.open(path))
         output_file = Path(f'cache/{path.name}_cache.png')
         img.convert('RGB').save(output_file, format='PNG')
         image_cache[path] = [mtime, output_file.as_posix()]
 
     return image_cache[path][1]
 
-def load_html_image(paths):
-    for str_path in paths:
-          path = Path(str_path)
-          if path.exists():
-              return f'<img src="file/{get_image_cache(path)}">'
-    return ''
 
-def generate_chat_html(history, name1, name2, character):
+def generate_instruct_html(history):
+    output = f'<style>{instruct_css}</style><div class="chat" id="chat">'
+    for i, _row in enumerate(history[::-1]):
+        row = [convert_to_markdown(entry) for entry in _row]
+
+        output += f"""
+              <div class="assistant-message">
+                <div class="text">
+                  <div class="message-body">
+                    {row[1]}
+                  </div>
+                </div>
+              </div>
+            """
+
+        if len(row[0]) == 0:  # don't display empty user messages
+            continue
+
+        output += f"""
+              <div class="user-message">
+                <div class="text">
+                  <div class="message-body">
+                    {row[0]}
+                  </div>
+                </div>
+              </div>
+            """
+
+    output += "</div>"
+
+    return output
+
+
+def generate_cai_chat_html(history, name1, name2, reset_cache=False):
     output = f'<style>{cai_css}</style><div class="chat" id="chat">'
 
-    img_bot = load_html_image([f"characters/{character}.{ext}" for ext in ['png', 'jpg', 'jpeg']] + ["img_bot.png","img_bot.jpg","img_bot.jpeg"])
-    img_me = load_html_image(["img_me.png", "img_me.jpg", "img_me.jpeg"])
+    # The time.time() is to prevent the brower from caching the image
+    suffix = f"?{time.time()}" if reset_cache else f"?{name2}"
+    img_bot = f'<img src="file/cache/pfp_character.png{suffix}">' if Path("cache/pfp_character.png").exists() else ''
+    img_me = f'<img src="file/cache/pfp_me.png{suffix}">' if Path("cache/pfp_me.png").exists() else ''
 
-    for i,_row in enumerate(history[::-1]):
+    for i, _row in enumerate(history[::-1]):
         row = [convert_to_markdown(entry) for entry in _row]
 
         output += f"""
@@ -142,7 +188,7 @@ def generate_chat_html(history, name1, name2, character):
               </div>
             """
 
-        if len(row[0]) == 0: # don't display empty user messages
+        if len(row[0]) == 0:  # don't display empty user messages
             continue
 
         output += f"""
@@ -163,3 +209,18 @@ def generate_chat_html(history, name1, name2, character):
 
     output += "</div>"
     return output
+
+
+def generate_chat_html(history, name1, name2):
+    return generate_cai_chat_html(history, name1, name2)
+
+
+def chat_html_wrapper(history, name1, name2, mode, reset_cache=False):
+    if mode == "cai-chat":
+        return generate_cai_chat_html(history, name1, name2, reset_cache)
+    elif mode == "chat":
+        return generate_chat_html(history, name1, name2)
+    elif mode == "instruct":
+        return generate_instruct_html(history)
+    else:
+        return ''

@@ -15,9 +15,10 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * Dropdown menu for switching between models
 * Notebook mode that resembles OpenAI's playground
 * Chat mode for conversation and role playing
+* Instruct mode compatible with Alpaca and Open Assistant formats **\*NEW!\***
 * Nice HTML output for GPT-4chan
 * Markdown output for [GALACTICA](https://github.com/paperswithcode/galai), including LaTeX rendering
-* Custom chat characters in JSON format ([FAQ](https://github.com/oobabooga/text-generation-webui/wiki/Custom-characters-FAQ))
+* [Custom chat characters](https://github.com/oobabooga/text-generation-webui/wiki/Custom-chat-characters)
 * Advanced chat features (send images, get audio responses with TTS)
 * Very efficient text streaming
 * Parameter presets
@@ -26,11 +27,11 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * CPU mode
 * [FlexGen](https://github.com/oobabooga/text-generation-webui/wiki/FlexGen)
 * [DeepSpeed ZeRO-3](https://github.com/oobabooga/text-generation-webui/wiki/DeepSpeed)
-* API [with](https://github.com/oobabooga/text-generation-webui/blob/main/api-example-streaming.py) streaming and [without](https://github.com/oobabooga/text-generation-webui/blob/main/api-example.py) streaming
+* API [with](https://github.com/oobabooga/text-generation-webui/blob/main/api-example-stream.py) streaming and [without](https://github.com/oobabooga/text-generation-webui/blob/main/api-example.py) streaming
 * [LLaMA model, including 4-bit GPTQ](https://github.com/oobabooga/text-generation-webui/wiki/LLaMA-model)
 * [llama.cpp](https://github.com/oobabooga/text-generation-webui/wiki/llama.cpp-models) **\*NEW!\***
 * [RWKV model](https://github.com/oobabooga/text-generation-webui/wiki/RWKV-model)
-* [LoRa (loading and training)](https://github.com/oobabooga/text-generation-webui/wiki/Using-LoRAs)
+* [LoRA (loading and training)](https://github.com/oobabooga/text-generation-webui/wiki/Using-LoRAs)
 * Softprompts
 * [Extensions](https://github.com/oobabooga/text-generation-webui/wiki/Extensions)
 * [Google Colab](https://github.com/oobabooga/text-generation-webui/wiki/Running-on-Colab)
@@ -60,9 +61,9 @@ Source codes: https://github.com/oobabooga/one-click-installers
 
 Recommended if you have some experience with the command-line.
 
-On Windows, I additionally recommend carrying out the installation on WSL instead of the base system: [WSL installation guide](https://github.com/oobabooga/text-generation-webui/wiki/Windows-Subsystem-for-Linux-(Ubuntu)-Installation-Guide).
+On Windows, I additionally recommend carrying out the installation on WSL instead of the base system: [WSL installation guide](https://github.com/oobabooga/text-generation-webui/wiki/WSL-installation-guide).
 
-0. Install Conda
+#### 0. Install Conda
 
 https://docs.conda.io/en/latest/miniconda.html
 
@@ -75,14 +76,14 @@ bash Miniconda3.sh
 
 Source: https://educe-ubc.github.io/conda.html
 
-1. Create a new conda environment
+#### 1. Create a new conda environment
 
 ```
 conda create -n textgen python=3.10.9
 conda activate textgen
 ```
 
-2. Install Pytorch
+#### 2. Install Pytorch
 
 | System | GPU | Command |
 |--------|---------|---------|
@@ -92,10 +93,12 @@ conda activate textgen
 
 The up to date commands can be found here: https://pytorch.org/get-started/locally/. 
 
-MacOS users, refer to the comments here: https://github.com/oobabooga/text-generation-webui/pull/393
+#### 2.1 Special instructions
 
+* MacOS users: https://github.com/oobabooga/text-generation-webui/pull/393
+* AMD users: https://rentry.org/eq3hg
 
-3. Install the web UI
+#### 3. Install the web UI
 
 ```
 git clone https://github.com/oobabooga/text-generation-webui
@@ -114,8 +117,26 @@ As an alternative to the recommended WSL method, you can install the web UI nati
 
 ### Alternative: Docker
 
-https://github.com/oobabooga/text-generation-webui/issues/174, https://github.com/oobabooga/text-generation-webui/issues/87
+```
+cp .env.example .env
+docker compose up --build
+```
 
+Make sure to edit `.env.example` and set the appropriate CUDA version for your GPU.
+
+You need to have docker compose v2.17 or higher installed in your system. For installation instructions, see [Docker compose installation](https://github.com/oobabooga/text-generation-webui/wiki/Docker-compose-installation).
+
+Contributed by [@loeken](https://github.com/loeken) in [#633](https://github.com/oobabooga/text-generation-webui/pull/633)
+
+### Updating the requirements
+
+From time to time, the `requirements.txt` changes. To update, use this command:
+
+```
+conda activate textgen
+cd text-generation-webui
+pip install -r requirements.txt --upgrade
+```
 ## Downloading models
 
 Models should be placed inside the `models` folder.
@@ -170,83 +191,82 @@ Optionally, you can use the following command-line flags:
 
 #### Basic settings
 
-| Flag             | Description |
-|------------------|-------------|
-| `-h`, `--help`   | show this help message and exit |
-| `--notebook`     | Launch the web UI in notebook mode, where the output is written to the same text box as the input. |
-| `--chat`         | Launch the web UI in chat mode.|
-| `--cai-chat`     | Launch the web UI in chat mode with a style similar to Character.AI's. If the file `img_bot.png` or `img_bot.jpg` exists in the same folder as server.py, this image will be used as the bot's profile picture. Similarly, `img_me.png` or `img_me.jpg` will be used as your profile picture. |
-| `--model MODEL`  | Name of the model to load by default. |
-| `--lora LORA`    | Name of the LoRA to apply to the model by default. |
-|  `--model-dir MODEL_DIR`                    | Path to directory with all the models |
-|  `--lora-dir LORA_DIR`                      | Path to directory with all the loras |
-| `--no-stream`    | Don't stream the text output in real time. |
-| `--settings SETTINGS_FILE` | Load the default interface settings from this json file. See `settings-template.json` for an example. If you create a file called `settings.json`, this file will be loaded by default without the need to use the `--settings` flag.|
-|  `--extensions EXTENSIONS [EXTENSIONS ...]` | The list of extensions to load. If you want to load more than one extension, write the names separated by spaces. |
-|  `--verbose`                                | Print the prompts to the terminal. |
+| Flag                                       | Description |
+|--------------------------------------------|-------------|
+| `-h`, `--help`                             | Show this help message and exit. |
+| `--notebook`                               | Launch the web UI in notebook mode, where the output is written to the same text box as the input. |
+| `--chat`                                   | Launch the web UI in chat mode. |
+| `--model MODEL`                            | Name of the model to load by default. |
+| `--lora LORA`                              | Name of the LoRA to apply to the model by default. |
+| `--model-dir MODEL_DIR`                    | Path to directory with all the models. |
+| `--lora-dir LORA_DIR`                      | Path to directory with all the loras. |
+| `--no-stream`                              | Don't stream the text output in real time. |
+| `--settings SETTINGS_FILE`                 | Load the default interface settings from this json file. See `settings-template.json` for an example. If you create a file called `settings.json`, this file will be loaded by default without the need to use the `--settings` flag. |
+| `--extensions EXTENSIONS [EXTENSIONS ...]` | The list of extensions to load. If you want to load more than one extension, write the names separated by spaces. |
+| `--verbose`                                | Print the prompts to the terminal. |
 
 #### Accelerate/transformers
 
-| Flag             | Description |
-|------------------|-------------|
-| `--cpu`          | Use the CPU to generate text.|
-| `--auto-devices` | Automatically split the model across the available GPU(s) and CPU.|
-|  `--gpu-memory GPU_MEMORY [GPU_MEMORY ...]` |  Maxmimum GPU memory in GiB to be allocated per GPU. Example: `--gpu-memory 10` for a single GPU, `--gpu-memory 10 5` for two GPUs. You can also set values in MiB like `--gpu-memory 3500MiB`. |
-| `--cpu-memory CPU_MEMORY` | Maximum CPU memory in GiB to allocate for offloaded weights. Same as above.|
-| `--disk`         | If the model is too large for your GPU(s) and CPU combined, send the remaining layers to the disk. |
-| `--disk-cache-dir DISK_CACHE_DIR` | Directory to save the disk cache to. Defaults to `cache/`. |
-| `--load-in-8bit` | Load the model with 8-bit precision.|
-| `--bf16`         | Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU. |
-| `--no-cache`     | Set `use_cache` to False while generating text. This reduces the VRAM usage a bit with a performance cost. |
+| Flag                                        | Description |
+|---------------------------------------------|-------------|
+| `--cpu`                                     | Use the CPU to generate text. |
+| `--auto-devices`                            | Automatically split the model across the available GPU(s) and CPU. |
+|  `--gpu-memory GPU_MEMORY [GPU_MEMORY ...]` | Maxmimum GPU memory in GiB to be allocated per GPU. Example: `--gpu-memory 10` for a single GPU, `--gpu-memory 10 5` for two GPUs. You can also set values in MiB like `--gpu-memory 3500MiB`. |
+| `--cpu-memory CPU_MEMORY`                   | Maximum CPU memory in GiB to allocate for offloaded weights. Same as above.|
+| `--disk`                                    | If the model is too large for your GPU(s) and CPU combined, send the remaining layers to the disk. |
+| `--disk-cache-dir DISK_CACHE_DIR`           | Directory to save the disk cache to. Defaults to `cache/`. |
+| `--load-in-8bit`                            | Load the model with 8-bit precision.|
+| `--bf16`                                    | Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU. |
+| `--no-cache`                                | Set `use_cache` to False while generating text. This reduces the VRAM usage a bit with a performance cost. |
 
 #### llama.cpp
 
-| Flag             | Description |
-|------------------|-------------|
-| `--threads`     | Number of threads to use in llama.cpp. |
+| Flag        | Description |
+|-------------|-------------|
+| `--threads` | Number of threads to use in llama.cpp. |
 
 #### GPTQ
 
-| Flag             | Description |
-|------------------|-------------|
-| `--wbits WBITS`            | GPTQ: Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported. |
-| `--model_type MODEL_TYPE`  | GPTQ: Model type of pre-quantized model. Currently LLaMA, OPT, and GPT-J are supported. |
-| `--groupsize GROUPSIZE`    | GPTQ: Group size. |
-| `--pre_layer PRE_LAYER`    | GPTQ: The number of layers to preload. |
+| Flag                      | Description |
+|---------------------------|-------------|
+| `--wbits WBITS`           | GPTQ: Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported. |
+| `--model_type MODEL_TYPE` | GPTQ: Model type of pre-quantized model. Currently LLaMA, OPT, and GPT-J are supported. |
+| `--groupsize GROUPSIZE`   | GPTQ: Group size. |
+| `--pre_layer PRE_LAYER`   | GPTQ: The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models. |
 
 #### FlexGen
 
 | Flag             | Description |
 |------------------|-------------|
-| `--flexgen`      | Enable the use of FlexGen offloading. |
-|  `--percent PERCENT [PERCENT ...]` |  FlexGen: allocation percentages. Must be 6 numbers separated by spaces (default: 0, 100, 100, 0, 100, 0). |
-|  `--compress-weight` |  FlexGen: Whether to compress weight (default: False).|
-|  `--pin-weight [PIN_WEIGHT]` |       FlexGen: whether to pin weights (setting this to False reduces CPU memory by 20%). |
+| `--flexgen`                       | Enable the use of FlexGen offloading. |
+| `--percent PERCENT [PERCENT ...]` | FlexGen: allocation percentages. Must be 6 numbers separated by spaces (default: 0, 100, 100, 0, 100, 0). |
+| `--compress-weight`               | FlexGen: Whether to compress weight (default: False).|
+| `--pin-weight [PIN_WEIGHT]`       | FlexGen: whether to pin weights (setting this to False reduces CPU memory by 20%). |
 
 #### DeepSpeed
 
-| Flag             | Description |
-|------------------|-------------|
-| `--deepspeed`    | Enable the use of DeepSpeed ZeRO-3 for inference via the Transformers integration. |
+| Flag                                  | Description |
+|---------------------------------------|-------------|
+| `--deepspeed`                         | Enable the use of DeepSpeed ZeRO-3 for inference via the Transformers integration. |
 | `--nvme-offload-dir NVME_OFFLOAD_DIR` | DeepSpeed: Directory to use for ZeRO-3 NVME offloading. |
-| `--local_rank LOCAL_RANK` | DeepSpeed: Optional argument for distributed setups. |
+| `--local_rank LOCAL_RANK`             | DeepSpeed: Optional argument for distributed setups. |
 
 #### RWKV
 
-| Flag             | Description |
-|------------------|-------------|
-|  `--rwkv-strategy RWKV_STRATEGY` |    RWKV: The strategy to use while loading the model. Examples: "cpu fp32", "cuda fp16", "cuda fp16i8". |
-|  `--rwkv-cuda-on` |   RWKV: Compile the CUDA kernel for better performance. |
+| Flag                            | Description |
+|---------------------------------|-------------|
+| `--rwkv-strategy RWKV_STRATEGY` | RWKV: The strategy to use while loading the model. Examples: "cpu fp32", "cuda fp16", "cuda fp16i8". |
+| `--rwkv-cuda-on`                | RWKV: Compile the CUDA kernel for better performance. |
 
 #### Gradio
 
-| Flag             | Description |
-|------------------|-------------|
-|  `--listen`                                 | Make the web UI reachable from your local network. |
-|  `--listen-port LISTEN_PORT`                | The listening port that the server will use. |
-|  `--share`                                  | Create a public URL. This is useful for running the web UI on Google Colab or similar. |
-|  `--auto-launch`                            | Open the web UI in the default browser upon launch. |
-|  `--gradio-auth-path GRADIO_AUTH_PATH`      | Set the gradio authentication file path. The file should contain one or more user:password pairs in this format: "u1:p1,u2:p2,u3:p3" |
+| Flag                                  | Description |
+|---------------------------------------|-------------|
+| `--listen`                            | Make the web UI reachable from your local network. |
+| `--listen-port LISTEN_PORT`           | The listening port that the server will use. |
+| `--share`                             | Create a public URL. This is useful for running the web UI on Google Colab or similar. |
+| `--auto-launch`                       | Open the web UI in the default browser upon launch. |
+| `--gradio-auth-path GRADIO_AUTH_PATH` | Set the gradio authentication file path. The file should contain one or more user:password pairs in this format: "u1:p1,u2:p2,u3:p3" |
 
 Out of memory errors? [Check the low VRAM guide](https://github.com/oobabooga/text-generation-webui/wiki/Low-VRAM-guide).
 

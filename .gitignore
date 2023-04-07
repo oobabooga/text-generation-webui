@@ -7,6 +7,7 @@ extensions/sd_api_pictures/outputs
 logs
 loras
 models
+repositories
 softprompts
 torch-dumps
 *pycache*
@@ -15,7 +16,9 @@ torch-dumps
 venv/
 .venv/
 .vscode
-repositories
+*.bak
+*.ipynb
+*.log
 
 settings.json
 img_bot*
