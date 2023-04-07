@@ -1,0 +1,10 @@
+.env
+Dockerfile
+/characters
+/extensions
+/loras
+/models
+/presets
+/prompts
+/softprompts
+/training
