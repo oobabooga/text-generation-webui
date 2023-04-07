@@ -17,6 +17,7 @@ def random_hash():
     letters = string.ascii_lowercase + string.digits
     return ''.join(random.choice(letters) for i in range(9))
 
+
 async def run(context):
     server = "127.0.0.1"
     params = {
@@ -36,11 +37,12 @@ async def run(context):
         'early_stopping': False,
         'seed': -1,
     }
+    payload = json.dumps([context, params])
     session = random_hash()
 
     async with websockets.connect(f"ws://{server}:7860/queue/join") as websocket:
         while content := json.loads(await websocket.recv()):
-            #Python3.10 syntax, replace with if elif on older
+            # Python3.10 syntax, replace with if elif on older
             match content["msg"]:
                 case "send_hash":
                     await websocket.send(json.dumps({
@@ -54,34 +56,20 @@ async def run(context):
                         "session_hash": session,
                         "fn_index": 12,
                         "data": [
-                            context,
-                            params['max_new_tokens'],
-                            params['do_sample'],
-                            params['temperature'],
-                            params['top_p'],
-                            params['typical_p'],
-                            params['repetition_penalty'],
-                            params['encoder_repetition_penalty'],
-                            params['top_k'],
-                            params['min_length'],
-                            params['no_repeat_ngram_size'],
-                            params['num_beams'],
-                            params['penalty_alpha'],
-                            params['length_penalty'],
-                            params['early_stopping'],
-                            params['seed'],
+                            payload
                         ]
                     }))
                 case "process_starts":
                     pass
                 case "process_generating" | "process_completed":
                     yield content["output"]["data"][0]
-                    # You can search for your desired end indicator and 
+                    # You can search for your desired end indicator and
                     #  stop generation by closing the websocket here
                     if (content["msg"] == "process_completed"):
                         break
 
 prompt = "What I would like to say is the following: "
+
 
 async def get_result():
     async for response in run(prompt):

@@ -41,7 +41,7 @@ ol li p, ul li p {
     display: inline-block;
 }
 
-#main, #parameters, #chat-settings, #interface-mode, #lora, #training-tab {
+#main, #parameters, #chat-settings, #interface-mode, #lora, #training-tab, #model-tab {
   border: 0;
 }
 

@@ -64,6 +64,15 @@
     line-height: 1.428571429 !important;
 }
 
+.message-body li {
+    margin-top: 0.5em !important;
+    margin-bottom: 0.5em !important;
+}
+
+.message-body li > p {
+    display: inline !important;
+}
+
 .dark .message-body p em {
     color: rgb(138, 138, 138) !important;
 }

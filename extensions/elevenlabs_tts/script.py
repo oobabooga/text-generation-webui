@@ -20,16 +20,18 @@ user_info = None
 if not shared.args.no_stream:
     print("Please add --no-stream. This extension is not meant to be used with streaming.")
     raise ValueError
-    
+
 # Check if the API is valid and refresh the UI accordingly.
+
+
 def check_valid_api():
-    
+
     global user, user_info, params
 
     user = ElevenLabsUser(params['api_key'])
     user_info = user._get_subscription_data()
     print('checking api')
-    if params['activate'] == False:
+    if not params['activate']:
         return gr.update(value='Disconnected')
     elif user_info is None:
         print('Incorrect API Key')
@@ -37,24 +39,28 @@ def check_valid_api():
     else:
         print('Got an API Key!')
         return gr.update(value='Connected')
-    
+
 # Once the API is verified, get the available voices and update the dropdown list
+
+
 def refresh_voices():
-    
+
     global user, user_info
-    
+
     your_voices = [None]
     if user_info is not None:
         for voice in user.get_available_voices():
             your_voices.append(voice.initialName)
-        return  gr.Dropdown.update(choices=your_voices)
+        return gr.Dropdown.update(choices=your_voices)
     else:
         return
+
 
 def remove_surrounded_chars(string):
     # this expression matches to 'as few symbols as possible (0 upwards) between any asterisks' OR
     # 'as few symbols as possible (0 upwards) between an asterisk and the end of the string'
-    return re.sub('\*[^\*]*?(\*|$)','',string)
+    return re.sub('\*[^\*]*?(\*|$)', '', string)
+
 
 def input_modifier(string):
     """
@@ -64,16 +70,17 @@ def input_modifier(string):
 
     return string
 
+
 def output_modifier(string):
     """
     This function is applied to the model outputs.
     """
 
     global params, wav_idx, user, user_info
-    
-    if params['activate'] == False:
+
+    if not params['activate']:
         return string
-    elif user_info == None:
+    elif user_info is None:
         return string
 
     string = remove_surrounded_chars(string)
@@ -84,7 +91,7 @@ def output_modifier(string):
 
     if string == '':
         string = 'empty reply, try regenerating'
-        
+
     output_file = Path(f'extensions/elevenlabs_tts/outputs/{wav_idx:06d}.wav'.format(wav_idx))
     voice = user.get_voices_by_name(params['selected_voice'])[0]
     audio_data = voice.generate_audio_bytes(string)
@@ -93,6 +100,7 @@ def output_modifier(string):
     string = f'<audio src="file/{output_file.as_posix()}" controls></audio>'
     wav_idx += 1
     return string
+
 
 def ui():
 
