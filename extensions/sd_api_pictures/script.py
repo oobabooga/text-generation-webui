@@ -34,18 +34,7 @@ params = {
 }
 
 
-def update_params():  # somewhy the default extension params dict is not changed by settings.json, thus update it forcefully
-    ext_name = "sd_api_pictures"
-    for sett in shared.settings:
-        if sett.startswith(f'{ext_name}-'):
-            params.update({sett.replace(f'{ext_name}-', ''): shared.settings[sett]})
-
-
-update_params()
-
-
 def give_VRAM_priority(actor):
-
     global shared, params
 
     if actor == 'SD':
@@ -122,8 +111,6 @@ def input_modifier(string):
     return string
 
 # Get and save the Stable Diffusion-generated picture
-
-
 def get_SD_pictures(description):
 
     global params
@@ -174,8 +161,6 @@ def get_SD_pictures(description):
 
 # TODO: how do I make the UI history ignore the resulting pictures (I don't want HTML to appear in history)
 # and replace it with 'text' for the purposes of logging?
-
-
 def output_modifier(string):
     """
     This function is applied to the model outputs.
