@@ -119,7 +119,7 @@ As an alternative to the recommended WSL method, you can install the web UI nati
 
 ```
 cp .env.example .env
-docker-compose up --build
+docker compose up --build
 ```
 
 Make sure to edit `.env.example` and set the appropriate CUDA version for your GPU.
