@@ -2,6 +2,7 @@ import re
 
 from num2words import num2words
 
+
 punctuation = r'[\s,.?!/)\'\]>]'
 alphabet_map = {
     "A": " Ei ",
@@ -69,6 +70,26 @@ def remove_surrounded_chars(string):
     # this expression matches to 'as few symbols as possible (0 upwards) between any asterisks' OR
     # 'as few symbols as possible (0 upwards) between an asterisk and the end of the string'
     return re.sub(r'\*[^*]*?(\*|$)', '', string)
+
+
+def convert_num_locale(text):
+    # This detects locale and converts it to American without comma separators
+    pattern = re.compile(r'(?:\s|^)\d{1,3}(?:\.\d{3})+(,\d+)(?:\s|$)')
+    result = text
+    while True:
+        match = pattern.search(result)
+        if match is None:
+            break
+
+        start = match.start()
+        end = match.end()
+        result = result[0:start] + result[start:end].replace('.', '').replace(',', '.') + result[end:len(result)]
+
+    # removes comma separators from existing American numbers
+    pattern = re.compile(r'(\d),(\d)')
+    result = pattern.sub(r'\1\2', result)
+
+    return result
 
 
 def replace_negative(string):
@@ -163,26 +184,6 @@ def match_mapping(char):
             return alphabet_map[char]
 
     return char
-
-
-def convert_num_locale(text):
-    # This detects locale and converts it to American without comma separators
-    pattern = re.compile(r'(?:\s|^)\d{1,3}(?:\.\d{3})+(,\d+)(?:\s|$)')
-    result = text
-    while True:
-        match = pattern.search(result)
-        if match is None:
-            break
-
-        start = match.start()
-        end = match.end()
-        result = result[0:start] + result[start:end].replace('.', '').replace(',', '.') + result[end:len(result)]
-
-    # removes comma separators from existing American numbers
-    pattern = re.compile(r'(\d),(\d)')
-    result = pattern.sub(r'\1\2', result)
-
-    return result
 
 
 def __main__(args):
