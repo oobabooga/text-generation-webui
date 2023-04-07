@@ -330,7 +330,7 @@ def create_interface():
                 shared.gradio['display'] = gr.HTML(value=chat_html_wrapper(shared.history['visible'], shared.settings['name1'], shared.settings['name2'], 'cai-chat'))
                 shared.gradio['textbox'] = gr.Textbox(label='Input')
                 with gr.Row():
-                    shared.gradio['Generate'] = gr.Button('Generate')
+                    shared.gradio['Generate'] = gr.Button('Generate', elem_id='Generate')
                     shared.gradio['Stop'] = gr.Button('Stop', elem_id="stop")
                 with gr.Row():
                     shared.gradio['Impersonate'] = gr.Button('Impersonate')
