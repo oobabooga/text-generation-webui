@@ -87,10 +87,10 @@ def ui():
         update = gr.Button("Refresh")
         gr.HTML(value="<style>" + generate_css() + "</style>")
         gallery = gr.Dataset(components=[gr.HTML(visible=False)],
-            label="",
-            samples=generate_html(),
-            elem_classes=["character-gallery"],
-            samples_per_page=50
-        )
+                             label="",
+                             samples=generate_html(),
+                             elem_classes=["character-gallery"],
+                             samples_per_page=50
+                             )
     update.click(generate_html, [], gallery)
     gallery.select(select_character, None, gradio['character_menu'])

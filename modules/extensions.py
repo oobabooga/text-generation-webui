@@ -28,7 +28,7 @@ def load_extensions():
 
 def iterator():
     for name in sorted(state, key=lambda x: state[x][1]):
-        if state[name][0] == True:
+        if state[name][0]:
             yield eval(f"extensions.{name}.script"), name
 
 # Extension functions that map string -> string
