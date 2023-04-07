@@ -118,9 +118,11 @@ As an alternative to the recommended WSL method, you can install the web UI nati
 ### Alternative: Docker
 
 ```
-cp .env.example .env # make sure to edit it and set the appropriate CUDA version for your GPU
+cp .env.example .env
 docker-compose up --build
 ```
+
+Make sure to edit `.env.example` and set the appropriate CUDA version for your GPU.
 
 You need to have docker compose v2.17 or higher installed in your system. For installation instructions, see [Docker compose installation](https://github.com/oobabooga/text-generation-webui/wiki/Docker-compose-installation).
 
