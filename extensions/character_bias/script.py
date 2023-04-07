@@ -5,13 +5,15 @@ params = {
     "bias string": " *I am so happy*",
 }
 
+
 def input_modifier(string):
     """
     This function is applied to your text inputs before
     they are fed into the model.
-    """ 
+    """
 
     return string
+
 
 def output_modifier(string):
     """
@@ -20,6 +22,7 @@ def output_modifier(string):
 
     return string
 
+
 def bot_prefix_modifier(string):
     """
     This function is only applied in chat mode. It modifies
@@ -27,10 +30,11 @@ def bot_prefix_modifier(string):
     behavior.
     """
 
-    if params['activate'] == True:
+    if params['activate']:
         return f'{string} {params["bias string"].strip()} '
     else:
         return string
+
 
 def ui():
     # Gradio elements
