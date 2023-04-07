@@ -12,10 +12,11 @@ HOW TO USE:
 
 FEATURES:
 - chat and notebook modes
-- session (chat history) for all users are separative (by chat_id)
+- session for all users are separative (by chat_id)
+- local session history - conversation won't to be lost
 - nice "X typing" during generating (users will not think that bot is stuck)
 - you can use .json characters!!!
-- reset history button, remove single bot (not yours) message from history, continue bot's previous message
+- regenerate last message, remove last messages from history, reset history button, continue previous message
 - threading: you can send few message simultaneously and bot will answer them all - but GPU may be overloaded and some message may stuck!!!
 
 TBC:
@@ -23,6 +24,6 @@ TBC:
 - group chat mode (now all chat members is one entity "you" at bot perception)
 - change characters during session
 - limit of simultaneously threading to prevent overloading. Queue or something other. 
-- history uprade: loacal cache 
-- message_id sequence history cache lead to "remove last message" button 
-- separated telegram_settings.json file 
+- history uprade: loacal cache - DONE!
+- message_id sequence history cache lead to "remove last message" button - DONE!
+- separated telegram_settings.json file
