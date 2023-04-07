@@ -206,7 +206,7 @@ def cai_chatbot_wrapper(text, generate_state, name1, name2, context, mode, end_o
 
 
 def regenerate_wrapper(text, generate_state, name1, name2, context, mode, end_of_turn):
-    if (shared.character != 'None' and len(shared.history['visible']) == 1) or len(shared.history['internal']) == 0:
+    if (len(shared.history['visible']) == 1 and not shared.history['visible'][0][0]) or len(shared.history['internal']) == 0:
         yield chat_html_wrapper(shared.history['visible'], name1, name2, mode)
     else:
         last_visible = shared.history['visible'].pop()
