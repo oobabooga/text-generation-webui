@@ -2,6 +2,7 @@ import re
 
 from num2words import num2words
 
+#punctuation = r'[\s,.?!/)"\'\]>]“”'
 punctuation = r'[\s,.?!/)"\'\]>]'
 alphabet_map = {
     "A": " Ei ",
