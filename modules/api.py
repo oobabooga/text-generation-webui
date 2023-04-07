@@ -28,6 +28,7 @@ def generate_reply_wrapper(string):
     for i in generate_reply(params[0], generate_params):
         yield i
 
+
 def create_apis():
     t1 = gr.Textbox(visible=False)
     t2 = gr.Textbox(visible=False)

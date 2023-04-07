@@ -85,7 +85,7 @@ def select_character(evt: gr.SelectData):
 def ui():
     with gr.Accordion("Character gallery", open=False):
         update = gr.Button("Refresh")
-        gr.HTML(value="<style>"+generate_css()+"</style>")
+        gr.HTML(value="<style>" + generate_css() + "</style>")
         gallery = gr.Dataset(components=[gr.HTML(visible=False)],
             label="",
             samples=generate_html(),

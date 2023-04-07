@@ -29,6 +29,7 @@ parser.add_argument('--clean', action='store_true', help='Does not resume the pr
 parser.add_argument('--check', action='store_true', help='Validates the checksums of model files.')
 args = parser.parse_args()
 
+
 def get_file(url, output_folder):
     filename = Path(url.rsplit('/', 1)[1])
     output_path = output_folder / filename
@@ -54,12 +55,14 @@ def get_file(url, output_folder):
                 t.update(len(data))
                 f.write(data)
 
+
 def sanitize_branch_name(branch_name):
     pattern = re.compile(r"^[a-zA-Z0-9._-]+$")
     if pattern.match(branch_name):
         return branch_name
     else:
         raise ValueError("Invalid branch name. Only alphanumeric characters, period, underscore and dash are allowed.")
+
 
 def select_model_from_default_options():
     models = {
@@ -78,11 +81,11 @@ def select_model_from_default_options():
     choices = {}
 
     print("Select the model that you want to download:\n")
-    for i,name in enumerate(models):
-        char = chr(ord('A')+i)
+    for i, name in enumerate(models):
+        char = chr(ord('A') + i)
         choices[char] = name
         print(f"{char}) {name}")
-    char = chr(ord('A')+len(models))
+    char = chr(ord('A') + len(models))
     print(f"{char}) None of the above")
 
     print()
@@ -105,6 +108,7 @@ EleutherAI/pythia-1.4b-deduped
         branch = arr[2]
 
     return model, branch
+
 
 def get_download_links_from_huggingface(model, branch):
     base = "https://huggingface.co"
@@ -166,14 +170,16 @@ def get_download_links_from_huggingface(model, branch):
 
     # If both pytorch and safetensors are available, download safetensors only
     if (has_pytorch or has_pt) and has_safetensors:
-        for i in range(len(classifications)-1, -1, -1):
+        for i in range(len(classifications) - 1, -1, -1):
             if classifications[i] in ['pytorch', 'pt']:
                 links.pop(i)
 
     return links, sha256, is_lora
 
+
 def download_files(file_list, output_folder, num_threads=8):
     thread_map(lambda url: get_file(url, output_folder), file_list, max_workers=num_threads, disable=True)
+
 
 if __name__ == '__main__':
     model = args.MODEL
@@ -224,7 +230,7 @@ if __name__ == '__main__':
                     validated = False
                 else:
                     print(f'Checksum validated: {sha256[i][0]}  {sha256[i][1]}')
-        
+
         if validated:
             print('[+] Validated checksums of all model files!')
         else:
