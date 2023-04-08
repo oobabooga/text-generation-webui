@@ -13,6 +13,7 @@ with open(Path(__file__).resolve().parent / '../css/main.js', 'r') as f:
 with open(Path(__file__).resolve().parent / '../css/chat.js', 'r') as f:
     chat_js = f.read()
 
+
 class ToolButton(gr.Button, gr.components.FormComponent):
     """Small button with single emoji as text, fits inside gradio forms"""
 
@@ -21,6 +22,7 @@ class ToolButton(gr.Button, gr.components.FormComponent):
 
     def get_block_name(self):
         return "button"
+
 
 def create_refresh_button(refresh_component, refresh_method, refreshed_args, elem_id):
     def refresh():
