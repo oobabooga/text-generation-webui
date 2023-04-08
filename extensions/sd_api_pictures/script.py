@@ -6,12 +6,11 @@ from datetime import date
 from pathlib import Path
 
 import gradio as gr
+import modules.shared as shared
 import requests
 import torch
-from PIL import Image
-
-import modules.shared as shared
 from modules.models import reload_model, unload_model
+from PIL import Image
 
 torch._C._jit_set_profiling_mode(False)
 
@@ -95,7 +94,9 @@ def input_modifier(string):
     This function is applied to your text inputs before
     they are fed into the model.
     """
+
     global params
+
     if not params['mode'] == 1:  # if not in immersive/interactive mode, do nothing
         return string
 
@@ -165,6 +166,7 @@ def output_modifier(string):
     """
     This function is applied to the model outputs.
     """
+
     global picture_response, params
 
     if not picture_response:
@@ -204,6 +206,7 @@ def bot_prefix_modifier(string):
 
 def toggle_generation(*args):
     global picture_response, shared, streaming_state
+
     if not args:
         picture_response = not picture_response
     else:
