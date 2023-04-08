@@ -7,6 +7,8 @@
     "name2": "Assistant",
     "context": "This is a conversation with your Assistant. The Assistant is very helpful and is eager to chat with you and answer your questions.",
     "greeting": "Hello there!",
+    "end_of_turn": "",
+    "custom_stopping_string": "### Human, ### Assistant",
     "stop_at_newline": false,
     "chat_prompt_size": 2048,
     "chat_prompt_size_min": 0,
@@ -20,6 +22,7 @@
     ],
     "presets": {
         "default": "NovelAI-Sphinx Moth",
+        ".*(alpaca|llama)": "LLaMA-Precise",
         ".*pygmalion": "NovelAI-Storywriter",
         ".*RWKV": "Naive"
     },

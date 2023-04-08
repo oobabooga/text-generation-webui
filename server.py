@@ -377,7 +377,10 @@ def create_interface():
                             shared.gradio['chat_prompt_size_slider'] = gr.Slider(minimum=shared.settings['chat_prompt_size_min'], maximum=shared.settings['chat_prompt_size_max'], step=1, label='Maximum prompt size in tokens', value=shared.settings['chat_prompt_size'])
                         with gr.Column():
                             shared.gradio['chat_generation_attempts'] = gr.Slider(minimum=shared.settings['chat_generation_attempts_min'], maximum=shared.settings['chat_generation_attempts_max'], value=shared.settings['chat_generation_attempts'], step=1, label='Generation attempts (for longer replies)')
-                            shared.gradio['stop_at_newline'] = gr.Checkbox(value=shared.settings['stop_at_newline'], label='Stop generating at new line character?')
+                            shared.gradio['stop_at_newline'] = gr.Checkbox(value=shared.settings['stop_at_newline'], label='Stop generating at new line character')
+                        with gr.Column():
+                            shared.gradio['custom_stopping_strings'] = gr.Textbox(value=shared.settings["custom_stopping_string"], lines=1, label='Custom stopping string in addition to the defaults, separated by ", "', interactive=True)
+                            shared.gradio['apply_stopping_strings'] = gr.Button(value='Apply new stopping strings')
 
                 create_settings_menus(default_preset)
 
@@ -385,6 +388,15 @@ def create_interface():
 
             def set_chat_input(textbox):
                 return textbox, ""
+            
+            def format_stopping_strings(name1, name2, custom_stopping_strings):
+                stopping_strings = [name1, name2] + custom_stopping_strings.split(", ")
+                for i in range(len(stopping_strings)):
+                    stopping_strings[i] = f"\n{stopping_strings[i]}:"
+                shared.stopping_strings = stopping_strings
+            
+            #initialize stopping strings on boot
+            format_stopping_strings(shared.settings['name1'], shared.settings['name2'], shared.settings["custom_stopping_string"])
 
             gen_events.append(shared.gradio['Generate'].click(set_chat_input, shared.gradio['textbox'], [shared.gradio['Chat input'], shared.gradio['textbox']], show_progress=False))
             gen_events.append(shared.gradio['Generate'].click(chat.cai_chatbot_wrapper, shared.input_params, shared.gradio['display'], show_progress=shared.args.no_stream))
@@ -396,6 +408,7 @@ def create_interface():
 
             shared.gradio['Copy last reply'].click(chat.send_last_reply_to_input, [], shared.gradio['textbox'], show_progress=shared.args.no_stream)
             shared.gradio['Replace last reply'].click(chat.replace_last_reply, [shared.gradio[k] for k in ['textbox', 'name1', 'name2', 'Chat mode']], shared.gradio['display'], show_progress=shared.args.no_stream)
+            shared.gradio['apply_stopping_strings'].click(format_stopping_strings, [shared.gradio['name1'], shared.gradio['name2'], shared.gradio['custom_stopping_strings']], [])
 
             # Clear history with confirmation
             clear_arr = [shared.gradio[k] for k in ['Clear history-confirm', 'Clear history', 'Clear history-cancel']]

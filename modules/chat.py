@@ -70,6 +70,7 @@ def generate_chat_prompt(user_input, max_new_tokens, name1, name2, context, chat
 
 def extract_message_from_reply(reply, name1, name2, stop_at_newline):
     next_character_found = False
+    stopping_strings = shared.stopping_strings
 
     if stop_at_newline:
         lines = reply.split('\n')
@@ -77,7 +78,7 @@ def extract_message_from_reply(reply, name1, name2, stop_at_newline):
         if len(lines) > 1:
             next_character_found = True
     else:
-        for string in [f"\n{name1}:", f"\n{name2}:"]:
+        for string in stopping_strings:
             idx = reply.find(string)
             if idx != -1:
                 reply = reply[:idx]
@@ -86,7 +87,7 @@ def extract_message_from_reply(reply, name1, name2, stop_at_newline):
         # If something like "\nYo" is generated just before "\nYou:"
         # is completed, trim it
         if not next_character_found:
-            for string in [f"\n{name1}:", f"\n{name2}:"]:
+            for string in stopping_strings:
                 for j in range(len(string)-1, 0, -1):
                     if reply[-j:] == string[:j]:
                         reply = reply[:-j]
@@ -99,10 +100,10 @@ def extract_message_from_reply(reply, name1, name2, stop_at_newline):
     return reply, next_character_found
 
 def chatbot_wrapper(text, generate_state, name1, name2, context, mode, end_of_turn, regenerate=False):
-    if mode == 'instruct':
-        stopping_strings = [f"\n{name1}", f"\n{name2}"]
-    else:
-        stopping_strings = [f"\n{name1}:", f"\n{name2}:"]
+    stopping_strings = shared.stopping_strings
+    if mode == "instruct":
+        for i in range(len(stopping_strings)):
+            stopping_strings[i] = stopping_strings[i].strip(":")
         
     eos_token = '\n' if generate_state['stop_at_newline'] else None
     name1_original = name1
@@ -168,10 +169,10 @@ def chatbot_wrapper(text, generate_state, name1, name2, context, mode, end_of_tu
     yield shared.history['visible']
 
 def impersonate_wrapper(text, generate_state, name1, name2, context, mode, end_of_turn):
-    if mode == 'instruct':
-        stopping_strings = [f"\n{name1}", f"\n{name2}"]
-    else:
-        stopping_strings = [f"\n{name1}:", f"\n{name2}:"]
+    stopping_strings = shared.stopping_strings
+    if mode == "instruct":
+        for i in range(len(stopping_strings)):
+            stopping_strings[i] = stopping_strings[i].strip(":")
         
     eos_token = '\n' if generate_state['stop_at_newline'] else None
     if 'pygmalion' in shared.model_name.lower():

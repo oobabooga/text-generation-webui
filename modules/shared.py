@@ -20,6 +20,7 @@ gradio = {}
 
 # Generation input parameters
 input_params = []
+stopping_strings = []
 
 # For restarting the interface
 need_restart = False
@@ -34,6 +35,7 @@ settings = {
     'context': 'This is a conversation with your Assistant. The Assistant is very helpful and is eager to chat with you and answer your questions.',
     'greeting': 'Hello there!',
     'end_of_turn': '',
+    'custom_stopping_string': '### Human, ### Assistant',
     'stop_at_newline': False,
     'chat_prompt_size': 2048,
     'chat_prompt_size_min': 0,
