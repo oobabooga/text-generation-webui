@@ -19,7 +19,7 @@ venv/
 *.bak
 *.ipynb
 *.log
-
+webui.conf
 settings.json
 img_bot*
 img_me*
