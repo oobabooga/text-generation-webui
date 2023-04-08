@@ -1,4 +1,3 @@
-import gc
 import re
 import time
 import traceback
@@ -12,7 +11,7 @@ from modules.callbacks import (Iteratorize, Stream,
                                _SentinelTokenStoppingCriteria)
 from modules.extensions import apply_extensions
 from modules.html_generator import generate_4chan_html, generate_basic_html
-from modules.models import local_rank
+from modules.models import clear_torch_cache, local_rank
 
 
 def get_max_prompt_length(tokens):
@@ -99,12 +98,6 @@ def formatted_outputs(reply, model_name):
             return reply, 'Only applicable for GALACTICA models.', generate_basic_html(reply)
     else:
         return reply
-
-
-def clear_torch_cache():
-    gc.collect()
-    if not shared.args.cpu:
-        torch.cuda.empty_cache()
 
 
 def set_manual_seed(seed):

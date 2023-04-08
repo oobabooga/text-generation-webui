@@ -12,7 +12,7 @@ from PIL import Image
 import modules.extensions as extensions_module
 import modules.shared as shared
 from modules.extensions import apply_extensions
-from modules.html_generator import (fix_newlines, chat_html_wrapper,
+from modules.html_generator import (chat_html_wrapper, fix_newlines,
                                     make_thumbnail)
 from modules.text_generation import (encode, generate_reply,
                                      get_max_prompt_length)

@@ -4,14 +4,7 @@ import torch
 from peft import PeftModel
 
 import modules.shared as shared
-from modules.models import load_model
-from modules.text_generation import clear_torch_cache
-
-
-def reload_model():
-    shared.model = shared.tokenizer = None
-    clear_torch_cache()
-    shared.model, shared.tokenizer = load_model(shared.model_name)
+from modules.models import reload_model
 
 
 def add_lora_to_model(lora_name):

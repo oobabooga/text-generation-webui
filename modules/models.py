@@ -1,3 +1,4 @@
+import gc
 import json
 import os
 import re
@@ -16,11 +17,10 @@ import modules.shared as shared
 
 transformers.logging.set_verbosity_error()
 
-local_rank = None
-
 if shared.args.flexgen:
     from flexgen.flex_opt import CompressionConfig, ExecutionEnv, OptLM, Policy
 
+local_rank = None
 if shared.args.deepspeed:
     import deepspeed
     from transformers.deepspeed import (HfDeepSpeedConfig,
@@ -180,6 +180,22 @@ def load_model(model_name):
 
     print(f"Loaded the model in {(time.time()-t0):.2f} seconds.")
     return model, tokenizer
+
+
+def clear_torch_cache():
+    gc.collect()
+    if not shared.args.cpu:
+        torch.cuda.empty_cache()
+
+
+def unload_model():
+    shared.model = shared.tokenizer = None
+    clear_torch_cache()
+
+
+def reload_model():
+    unload_model()
+    shared.model, shared.tokenizer = load_model(shared.model_name)
 
 
 def load_soft_prompt(name):

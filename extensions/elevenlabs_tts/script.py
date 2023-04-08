@@ -2,9 +2,10 @@ import re
 from pathlib import Path
 
 import gradio as gr
-import modules.shared as shared
 from elevenlabslib import ElevenLabsUser
 from elevenlabslib.helpers import save_bytes_to_path
+
+import modules.shared as shared
 
 params = {
     'activate': True,
