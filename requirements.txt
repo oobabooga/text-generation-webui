@@ -5,6 +5,7 @@ flexgen==0.1.7
 gradio==3.24.1
 markdown
 numpy
+Pillow>=9.5.0
 peft==0.2.0
 requests
 rwkv==0.7.3
