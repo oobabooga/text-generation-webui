@@ -194,8 +194,7 @@ def unload_model():
 
 
 def reload_model():
-    shared.model = shared.tokenizer = None
-    clear_torch_cache()
+    unload_model()
     shared.model, shared.tokenizer = load_model(shared.model_name)
 
 
