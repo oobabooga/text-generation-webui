@@ -18,9 +18,8 @@ import modules.extensions as extensions_module
 from modules import api, chat, shared, training, ui
 from modules.html_generator import chat_html_wrapper
 from modules.LoRA import add_lora_to_model
-from modules.models import load_model, load_soft_prompt
-from modules.text_generation import (clear_torch_cache, generate_reply,
-                                     stop_everything_event)
+from modules.models import load_model, load_soft_prompt, unload_model
+from modules.text_generation import generate_reply, stop_everything_event
 
 # Loading custom settings
 settings_file = None
@@ -77,11 +76,6 @@ def get_available_softprompts():
 
 def get_available_loras():
     return ['None'] + sorted([item.name for item in list(Path(shared.args.lora_dir).glob('*')) if not item.name.endswith(('.txt', '-np', '.pt', '.json'))], key=str.lower)
-
-
-def unload_model():
-    shared.model = shared.tokenizer = None
-    clear_torch_cache()
 
 
 def load_model_wrapper(selected_model):
