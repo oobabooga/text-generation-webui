@@ -22,29 +22,21 @@ params = {
 
 
 class TelegramBotWrapper():
-    ######
-    updater = None  # telegram updater object, will be initiated later
-    users: dict = {}  # dict of User data dict
-    history_dir_path = "extensions/telegram_bot/history"
-    default_user_data = {"name1": "You",  # user name
-                         "name2": "Bot",  # bot name
-                         "context": "",  # context of conversation, example: "Conversation between Bot and You"
-                         "history": [],  # "history": [["Hi!", "Hi there!","Who are you?", "I am you assistant."]],
-                         "msg_id": [],  # "msgid": [143, 144, 145, 146],
-                         "greeting": 'Hi',
-                         }
+    # #
+    users: dict = {}  # dict of User data dicts, here placed all users session info.
+    default_users_data = {"name1": "You",  # user name
+                          "name2": "Bot",  # bot name
+                          "context": "",  # context of conversation, example: "Conversation between Bot and You"
+                          "history": [],  # "history": [["Hi!", "Hi there!","Who are you?", "I am you assistant."]],
+                          "msg_id": [],  # "msgid": [143, 144, 145, 146],
+                          "greeting": 'Hi',  # just greeting message from bot
+                          }
 
-    #    class User:
-    #        def __init__(self, name1="You", name2="Bot", context="", history=None, msg_id=None, greeting="Hi"):
-    #            self.name1 = name1  # user name
-    #            self.name2 = name2 # bot name
-    #            self.context = context  # context of conversation, example: "Conversation between Bot and You"
-    #            self.history = [] if history is None else history  # chat history
-    #            self.msg_id = [] if msg_id is None else msg_id  # message id's sequence
-    #            self.greeting = greeting  # greeting
 
     def __init__(self, bot_mode="chat", char_file="Example", ):
-        # Set chat context and names, raw style
+        # Set bot paths, can be changed later
+        self.history_dir_path = "extensions/telegram_bot/history"
+        self.default_token_file_path = "extensions/telegram_bot/telegram_token.txt"
         # Set bot_mode and eos presets, default_char
         self.bot_mode = bot_mode
         self.char_file = char_file
@@ -65,8 +57,12 @@ class TelegramBotWrapper():
                   ]])
 
     # =============================================================================
-    # Run bot with token!!!
-    def run_telegram_bot(self, bot_token: str):
+    # Run bot with token! Initiate updater obj!
+    def run_telegram_bot(self, bot_token="", token_file=""):
+        if bot_token == "":
+            if token_file == "":
+                token_file = self.default_token_file_path
+            bot_token = open(token_file, "r", encoding='utf-8').read()
         self.updater = Updater(token=bot_token, use_context=True)
         self.updater.dispatcher.add_handler(CommandHandler(['start', 'reset'], self.cb_get_command))
         self.updater.dispatcher.add_handler(MessageHandler(Filters.text, self.cb_get_message))
@@ -94,7 +90,7 @@ class TelegramBotWrapper():
                     context.bot.editMessageReplyMarkup(chat_id=chat_id, message_id=self.users[chat_id]["msg_id"][-1],
                                                        reply_markup=None)
                 except Exception as e:
-                    print(e)
+                    print("last_message_markup_clean", e)
 
     def reset_history_button(self, upd: Update, context: CallbackContext):
         chat_id = upd.callback_query.message.chat.id
@@ -109,21 +105,29 @@ class TelegramBotWrapper():
         chat_id = upd.callback_query.message.chat.id
         self.last_message_markup_clean(context, chat_id)
         char_file = upd.message.text.split("_LOAD:")[-1]
-        self.users[chat_id] = self.load_char_dict(char_file=char_file)
+        self.users[chat_id] = self.load_char_file(char_file=char_file)
+        context.bot.send_message(chat_id=chat_id, text="<NEW CHAR LOADED>\nSend /start or any text for new session.")
+
+    def load_char_message(self, upd: Update, context: CallbackContext):
+        chat_id = upd.message.chat.id
+        self.last_message_markup_clean(context, chat_id)
+        char_file = upd.message.text.split("_LOAD:")[-1].strip().lstrip()
+        self.users[chat_id] = self.load_char_file(char_file=char_file)
         context.bot.send_message(chat_id=chat_id, text="<NEW CHAR LOADED>\nSend /start or any text for new session.")
 
     def init_user_or_load_history(self, chat_id):
-        print("__name__", __name__)
         if chat_id not in self.users.keys():
+            #If not exist - check history file
             if exists(f"{self.history_dir_path}/{chat_id}.json"):
                 try:
                     data = open(Path(f'{self.history_dir_path}/{chat_id}.json'), 'r', encoding='utf-8').read()
                     self.users[chat_id] = json.loads(data)
                 except Exception as e:
                     print("user_init", e)
-                    self.users[chat_id] = self.load_char_dict(char_file=self.char_file)
+                    self.users[chat_id] = self.load_char_file(char_file=self.char_file)
+            # If no history file - load default char
             else:
-                self.users[chat_id] = self.load_char_dict(char_file=self.char_file)
+                self.users[chat_id] = self.load_char_file(char_file=self.char_file)
 
     def save_user_history(self, chat_id):
         if chat_id in self.users.keys():
@@ -136,6 +140,11 @@ class TelegramBotWrapper():
         Thread(target=self.tr_get_message, args=(upd, context)).start()
 
     def tr_get_message(self, upd: Update, context: CallbackContext):
+        # If starts with _LOAD: - loading char!
+        if upd.message.text.startswith("_LOAD:"):
+            self.load_char_message(upd, context)
+            return True
+        # If not char load - continue generating
         user_text = upd.message.text
         chat_id = upd.message.chat.id
         self.init_user_or_load_history(chat_id) #  if no such user - load char
@@ -148,6 +157,7 @@ class TelegramBotWrapper():
         self.last_message_markup_clean(context, chat_id)
         self.users[chat_id]["msg_id"].append(message.message_id)
         self.save_user_history(chat_id)
+        return True
 
     # =============================================================================
     # button handler
@@ -171,7 +181,8 @@ class TelegramBotWrapper():
             self.save_user_history(chat_id)
         elif option == "Regen":  # Regenerate is like others generating, but delete previous bot answer
                 # add pretty "retyping"
-                context.bot.editMessageText(msg_text + '\n' + "retyping...", chat_id, msg_id, reply_markup=self.button)
+                context.bot.editMessageText(msg_text + '\n' + self.users[chat_id]["name2"] + " retyping...",
+                                            chat_id, msg_id, reply_markup=self.button)
                 # remove last bot answer, read and remove last user reply
                 self.users[chat_id]["history"].pop()
                 user_in = self.users[chat_id]["history"].pop().replace(self.users[chat_id]["name1"] + ": ", "")
@@ -204,11 +215,12 @@ class TelegramBotWrapper():
                 context.bot.editMessageText(msg_text + "\n<HISTORY LOST>", chat_id, msg_id, reply_markup=self.button)
         elif option == "Chars":
             char_list = listdir("characters")
-            text = "Send me ome of this string:"
+            text = "Send me one of following string to load new character:"
             for char in char_list:
-                if char[-5:] == json:
+                if char[-5:] == ".json":
                     text += "\n_LOAD:" + char.replace(".json", "")
-            print(text)
+            if len(text) > 4000:
+                text = text[:4000] + "\n<TRUNCATED, TOO LONG LIST>"
             context.bot.send_message(chat_id=chat_id, text=text)
 
     # =============================================================================
@@ -255,9 +267,9 @@ class TelegramBotWrapper():
 
     # =============================================================================
     # load characters char_file.json from ./characters
-    def load_char_dict(self, char_file):
+    def load_char_file(self, char_file):
         # Copy default user data
-        user = self.default_user_data.copy()
+        user = self.default_users_data.copy()
         # Try to read char file. If reading fail - return default user data
         try:
             data = json.loads(open(Path(f'characters/{char_file}.json'), 'r', encoding='utf-8').read())
@@ -285,14 +297,14 @@ class TelegramBotWrapper():
                 user["context"] += '\n' + data['char_greeting'].strip()
                 user["greeting"] = data['char_greeting'].strip()
         except Exception as e:
-            print("load_char_dict", e)
+            print("load_char_file", e)
         return user
 
 
 def run_server():
     # example with char load context:
     tg_server = TelegramBotWrapper(bot_mode=params['bot_mode'], char_file=params['character_to_load'])
-    tg_server.run_telegram_bot(params['token'])
+    tg_server.run_telegram_bot()  # by default - read in extensions/telegram_bot/telegram_token.txt
 
 
 def setup():
