@@ -124,9 +124,9 @@ class TelegramBotWrapper():
     def init_user_or_load_history(self, chat_id):
         if chat_id not in self.users.keys():
             #If not exist - check history file
-            if exists(f"{self.history_dir_path}/{chat_id}"):
+            if exists(f"{self.history_dir_path}/{chat_id}.json"):
                 try:
-                    data = open(Path(f'{self.history_dir_path}/{chat_id}'), 'r', encoding='utf-8').read()
+                    data = open(Path(f'{self.history_dir_path}/{chat_id}.json'), 'r', encoding='utf-8').read()
                     self.users[chat_id] = json.loads(data)
                 except Exception as e:
                     print("user_init", e)
