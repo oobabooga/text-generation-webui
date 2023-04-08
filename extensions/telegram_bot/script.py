@@ -17,7 +17,7 @@ from telegram.ext import Updater
 params = {
     "token": "TELEGRAM_TOKEN",  # Telegram bot token! Ask https://t.me/BotFather to get!
     'bot_mode': "chat",  # chat, chat-restricted, notebook
-    'character_to_load': "Example",  # character file from text-generation-webui/characters without ".json"
+    'character_to_load': "Example.json",  # character json file from text-generation-webui/characters
 }
 
 
@@ -37,6 +37,7 @@ class TelegramBotWrapper():
         # Set bot paths, can be changed later
         self.history_dir_path = "extensions/telegram_bot/history"
         self.default_token_file_path = "extensions/telegram_bot/telegram_token.txt"
+        self.characters_dir_path = "characters"
         # Set bot_mode and eos presets, default_char
         self.bot_mode = bot_mode
         self.char_file = char_file
@@ -53,6 +54,7 @@ class TelegramBotWrapper():
             self.button = InlineKeyboardMarkup(
                 [[InlineKeyboardButton(text=("▶Continue"), callback_data='Continue'),
                   InlineKeyboardButton(text=("🔄Regenerate"), callback_data='Regen'),
+                  InlineKeyboardButton(text=("✂Cutoff"), callback_data='Cutoff'),
                   InlineKeyboardButton(text=("🚫Reset memory"), callback_data='Reset'),
                   ]])
 
@@ -101,33 +103,37 @@ class TelegramBotWrapper():
             self.users[chat_id]["msg_id"] = []
         context.bot.send_message(chat_id=chat_id, text="<BOT LOST MEMORY!>\nSend /start or any text for new session.")
 
-    def load_char_button(self, upd: Update, context: CallbackContext):
-        chat_id = upd.callback_query.message.chat.id
-        self.last_message_markup_clean(context, chat_id)
-        char_file = upd.message.text.split("_LOAD:")[-1]
-        self.users[chat_id] = self.load_char_file(char_file=char_file)
-        context.bot.send_message(chat_id=chat_id, text="<NEW CHAR LOADED>\nSend /start or any text for new session.")
+    def get_characters_json_list(self) -> list:
+        file_list = listdir(self.characters_dir_path)
+        char_list = []
+        i = 1
+        for file_name in file_list:
+            if file_name[-5:] == ".json":
+                i += 1
+                char_list.append(file_name)
+        return char_list
 
     def load_char_message(self, upd: Update, context: CallbackContext):
         chat_id = upd.message.chat.id
         self.last_message_markup_clean(context, chat_id)
-        char_file = upd.message.text.split("_LOAD:")[-1].strip().lstrip()
-        self.users[chat_id] = self.load_char_file(char_file=char_file)
+        char_list = self.get_characters_json_list()
+        char_file = char_list[int(upd.message.text.split("_LOAD_")[-1].strip().lstrip())]
+        self.users[chat_id] = self.load_char_json_file(char_file=char_file)
         context.bot.send_message(chat_id=chat_id, text="<NEW CHAR LOADED>\nSend /start or any text for new session.")
 
     def init_user_or_load_history(self, chat_id):
         if chat_id not in self.users.keys():
             #If not exist - check history file
-            if exists(f"{self.history_dir_path}/{chat_id}.json"):
+            if exists(f"{self.history_dir_path}/{chat_id}"):
                 try:
-                    data = open(Path(f'{self.history_dir_path}/{chat_id}.json'), 'r', encoding='utf-8').read()
+                    data = open(Path(f'{self.history_dir_path}/{chat_id}'), 'r', encoding='utf-8').read()
                     self.users[chat_id] = json.loads(data)
                 except Exception as e:
                     print("user_init", e)
-                    self.users[chat_id] = self.load_char_file(char_file=self.char_file)
+                    self.users[chat_id] = self.load_char_json_file(char_file=self.char_file)
             # If no history file - load default char
             else:
-                self.users[chat_id] = self.load_char_file(char_file=self.char_file)
+                self.users[chat_id] = self.load_char_json_file(char_file=self.char_file)
 
     def save_user_history(self, chat_id):
         if chat_id in self.users.keys():
@@ -140,8 +146,8 @@ class TelegramBotWrapper():
         Thread(target=self.tr_get_message, args=(upd, context)).start()
 
     def tr_get_message(self, upd: Update, context: CallbackContext):
-        # If starts with _LOAD: - loading char!
-        if upd.message.text.startswith("_LOAD:"):
+        # If starts with _LOAD_ - loading char!
+        if upd.message.text.startswith("/_LOAD_") and self.bot_mode != "chat-restricted":
             self.load_char_message(upd, context)
             return True
         # If not char load - continue generating
@@ -214,14 +220,15 @@ class TelegramBotWrapper():
             else:
                 context.bot.editMessageText(msg_text + "\n<HISTORY LOST>", chat_id, msg_id, reply_markup=self.button)
         elif option == "Chars":
-            char_list = listdir("characters")
-            text = "Send me one of following string to load new character:"
-            for char in char_list:
-                if char[-5:] == ".json":
-                    text += "\n_LOAD:" + char.replace(".json", "")
-            if len(text) > 4000:
-                text = text[:4000] + "\n<TRUNCATED, TOO LONG LIST>"
-            context.bot.send_message(chat_id=chat_id, text=text)
+            char_list = self.get_characters_json_list()
+            to_send = []
+            for i, char in enumerate(char_list):
+                to_send.append("/_LOAD_" + str(i) + " " + char.replace(".json", ""))
+                if i % 50 == 0 and i != 0:
+                    context.bot.send_message(chat_id=chat_id, text="\n".join(to_send))
+                    to_send = []
+            if len(to_send) > 0:
+                context.bot.send_message(chat_id=chat_id, text="\n".join(to_send))
 
     # =============================================================================
     # answer generator
@@ -267,12 +274,12 @@ class TelegramBotWrapper():
 
     # =============================================================================
     # load characters char_file.json from ./characters
-    def load_char_file(self, char_file):
+    def load_char_json_file(self, char_file):
         # Copy default user data
         user = self.default_users_data.copy()
         # Try to read char file. If reading fail - return default user data
         try:
-            data = json.loads(open(Path(f'characters/{char_file}.json'), 'r', encoding='utf-8').read())
+            data = json.loads(open(Path(f'{self.characters_dir_path}/{char_file}'), 'r', encoding='utf-8').read())
             #  load persona and scenario
             if 'you_name' in data and data['you_name'] != '':
                 user["name2"] = data['char_name']
@@ -297,7 +304,7 @@ class TelegramBotWrapper():
                 user["context"] += '\n' + data['char_greeting'].strip()
                 user["greeting"] = data['char_greeting'].strip()
         except Exception as e:
-            print("load_char_file", e)
+            print("load_char_json_file", e)
         return user
 
 
