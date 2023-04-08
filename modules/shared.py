@@ -7,7 +7,8 @@ def get_args_from_file(filepath):
     if os.path.exists(filepath):
         with open(filepath, 'r') as f:
             for line in f:
-                args_list.extend(line.split())
+                line_args = line.split()
+                args_list.extend(line_args)
     return args_list
 
 
