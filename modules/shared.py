@@ -1,4 +1,15 @@
 import argparse
+import os
+import sys
+
+def get_args_from_file(filepath):
+    args_list = []
+    if os.path.exists(filepath):
+        with open(filepath, 'r') as f:
+            for line in f:
+                args_list.extend(line.split())
+    return args_list
+
 
 model = None
 tokenizer = None
@@ -133,7 +144,12 @@ parser.add_argument('--share', action='store_true', help='Create a public URL. T
 parser.add_argument('--auto-launch', action='store_true', default=False, help='Open the web UI in the default browser upon launch.')
 parser.add_argument("--gradio-auth-path", type=str, help='Set the gradio authentication file path. The file should contain one or more user:password pairs in this format: "u1:p1,u2:p2,u3:p3"', default=None)
 
-args = parser.parse_args()
+webui_args = get_args_from_file('webui.conf')
+cli_args = sys.argv[1:]
+
+combined_args = webui_args + cli_args
+
+args = parser.parse_args(combined_args)
 
 # Deprecation warnings for parameters that have been renamed
 deprecated_dict = {'gptq_bits': ['wbits', 0], 'gptq_model_type': ['model_type', None], 'gptq_pre_layer': ['prelayer', 0]}
