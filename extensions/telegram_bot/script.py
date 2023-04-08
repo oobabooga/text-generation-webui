@@ -4,6 +4,7 @@ from pathlib import Path
 import json
 from os import listdir
 from os.path import exists
+from copy import deepcopy
 from telegram import Update
 from telegram import InlineKeyboardButton
 from telegram import InlineKeyboardMarkup
@@ -276,7 +277,7 @@ class TelegramBotWrapper():
     # load characters char_file.json from ./characters
     def load_char_json_file(self, char_file):
         # Copy default user data
-        user = self.default_users_data.copy()
+        user = deepcopy(self.default_users_data.copy())
         # Try to read char file. If reading fail - return default user data
         try:
             data = json.loads(open(Path(f'{self.characters_dir_path}/{char_file}'), 'r', encoding='utf-8').read())
