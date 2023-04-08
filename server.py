@@ -398,13 +398,13 @@ def create_interface():
             reload_inputs = [shared.gradio[k] for k in ['name1', 'name2', 'Chat mode']]
 
             gen_events.append(shared.gradio['Generate'].click(
-                lambda x : (x, ''), shared.gradio['textbox'], [shared.gradio['Chat input'], shared.gradio['textbox']], show_progress=False).then(
+                lambda x: (x, ''), shared.gradio['textbox'], [shared.gradio['Chat input'], shared.gradio['textbox']], show_progress=False).then(
                 chat.cai_chatbot_wrapper, shared.input_params, shared.gradio['display'], show_progress=shared.args.no_stream).then(
                 lambda: chat.save_history(timestamp=False), [], [], show_progress=False)
             )
 
             gen_events.append(shared.gradio['textbox'].submit(
-                lambda x : (x, ''), shared.gradio['textbox'], [shared.gradio['Chat input'], shared.gradio['textbox']], show_progress=False).then(
+                lambda x: (x, ''), shared.gradio['textbox'], [shared.gradio['Chat input'], shared.gradio['textbox']], show_progress=False).then(
                 chat.cai_chatbot_wrapper, shared.input_params, shared.gradio['display'], show_progress=shared.args.no_stream).then(
                 lambda: chat.save_history(timestamp=False), [], [], show_progress=False)
             )

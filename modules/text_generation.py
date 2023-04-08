@@ -63,8 +63,6 @@ def generate_softprompt_input_tensors(input_ids):
     return inputs_embeds, filler_input_ids
 
 # Removes empty replies from gpt4chan outputs
-
-
 def fix_gpt4chan(s):
     for i in range(10):
         s = re.sub("--- [0-9]*\n>>[0-9]*\n---", "---", s)
@@ -73,8 +71,6 @@ def fix_gpt4chan(s):
     return s
 
 # Fix the LaTeX equations in galactica
-
-
 def fix_galactica(s):
     s = s.replace(r'\[', r'$')
     s = s.replace(r'\]', r'$')
