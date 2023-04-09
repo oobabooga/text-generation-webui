@@ -323,16 +323,6 @@ def load_history(file, name1, name2):
                 shared.history['visible'] = j['data_visible']
             else:
                 shared.history['visible'] = copy.deepcopy(shared.history['internal'])
-        # Compatibility with Pygmalion AI's official web UI
-        elif 'chat' in j:
-            shared.history['internal'] = [':'.join(x.split(':')[1:]).strip() for x in j['chat']]
-            if len(j['chat']) > 0 and j['chat'][0].startswith(f'{name2}:'):
-                shared.history['internal'] = [['<|BEGIN-VISIBLE-CHAT|>', shared.history['internal'][0]]] + [[shared.history['internal'][i], shared.history['internal'][i + 1]] for i in range(1, len(shared.history['internal']) - 1, 2)]
-                shared.history['visible'] = copy.deepcopy(shared.history['internal'])
-                shared.history['visible'][0][0] = ''
-            else:
-                shared.history['internal'] = [[shared.history['internal'][i], shared.history['internal'][i + 1]] for i in range(0, len(shared.history['internal']) - 1, 2)]
-                shared.history['visible'] = copy.deepcopy(shared.history['internal'])
     except:
         shared.history['internal'] = tokenize_dialogue(file, name1, name2)
         shared.history['visible'] = copy.deepcopy(shared.history['internal'])
