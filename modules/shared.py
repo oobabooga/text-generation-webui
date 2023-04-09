@@ -8,6 +8,8 @@ def get_args_from_file(filepath):
     if os.path.exists(filepath):
         with open(filepath, 'r') as f:
             for line in f:
+                if line.startswith('#'):
+                    continue
                 line_args = line.split()
                 line_args = [arg.strip('\'\"') for arg in line_args]
                 args_list.extend(line_args)
