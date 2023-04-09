@@ -9,6 +9,7 @@ In order to create the image as described in the main README, you must have dock
 Docker Compose version v2.17.2
 ```
 
+# Intructions by [@loeken](https://github.com/loeken)
 
 - [Ubuntu 22.04](#ubuntu-2204)
   - [0. youtube video](#0-youtube-video)
