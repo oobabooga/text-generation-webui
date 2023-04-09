@@ -2,19 +2,6 @@ import argparse
 import os
 import sys
 
-# Function to read options from .conf files
-def get_args_from_file(filepath):
-    args_list = []
-    if os.path.exists(filepath):
-        with open(filepath, 'r') as f:
-            for line in f:
-                if line.startswith('#'):
-                    continue
-                line_args = line.split()
-                line_args = [arg.strip('\'\"') for arg in line_args]
-                args_list.extend(line_args)
-    return args_list
-
 # Default settings
 model = None
 tokenizer = None
@@ -78,6 +65,7 @@ settings = {
 }
 
 
+# Function to convert a string to a boolean value.
 def str2bool(v):
     if isinstance(v, bool):
         return v
@@ -87,6 +75,18 @@ def str2bool(v):
         return False
     else:
         raise argparse.ArgumentTypeError('Boolean value expected.')
+
+# Function to read options from .conf files
+def get_args_from_file(filepath):
+    args_list = []
+    with open(filepath, 'r') as f:
+        for line in f:
+            if line.startswith('#'):
+                continue
+            line_args = line.split()
+            line_args = [arg.strip('\'\"') for arg in line_args]
+            args_list.extend(line_args)
+    return args_list
 
 
 parser = argparse.ArgumentParser(formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=54))
