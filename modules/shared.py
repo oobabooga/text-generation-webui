@@ -11,7 +11,6 @@ soft_prompt_tensor = None
 soft_prompt = False
 is_RWKV = False
 is_llamacpp = False
-no_config = False
 
 # Chat variables
 history = {'internal': [], 'visible': []}
@@ -155,8 +154,8 @@ parser.add_argument('--auto-launch', action='store_true', default=False, help='O
 parser.add_argument("--gradio-auth-path", type=str, help='Set the gradio authentication file path. The file should contain one or more user:password pairs in this format: "u1:p1,u2:p2,u3:p3"', default=None)
 
 # Configuration
-parser.add_argument('--no-config', action='store_true', help='Ignore the default configuration file')
-parser.add_argument('--config', nargs='+', help='Locations of configuration files to source')
+parser.add_argument('--no-config', action='store_true', default=False, help='Ignore the default configuration file.')
+parser.add_argument('--config', nargs='+', help='Locations of configuration files to source.')
 
 args = parser.parse_args()
 
