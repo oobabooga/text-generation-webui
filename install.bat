@@ -80,6 +80,7 @@ if exist text-generation-webui\ (
 ) else (
   git clone https://github.com/oobabooga/text-generation-webui.git
   call python -m pip install https://github.com/jllllll/bitsandbytes-windows-webui/raw/main/bitsandbytes-0.37.2-py3-none-any.whl
+  call python -m pip install https://github.com/abetlen/llama-cpp-python/raw/main/wheels/llama_cpp_python-0.1.26-cp310-cp310-win_amd64.whl --no-deps  
   cd text-generation-webui || goto end
 )
 call python -m pip install -r requirements.txt --upgrade
