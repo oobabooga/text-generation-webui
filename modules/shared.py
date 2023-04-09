@@ -2,6 +2,7 @@ import argparse
 import os
 import sys
 
+# Function to read options from .conf files
 def get_args_from_file(filepath):
     args_list = []
     if os.path.exists(filepath):
