@@ -13,6 +13,7 @@ from transformers import (AutoConfig, AutoModelForCausalLM, AutoTokenizer,
                           BitsAndBytesConfig, LlamaTokenizer)
 
 import modules.shared as shared
+from modules import llama_attn_hijack
 
 transformers.logging.set_verbosity_error()
 
@@ -179,6 +180,9 @@ def load_model(model_name):
     tokenizer.truncation_side = 'left'
 
     print(f"Loaded the model in {(time.time()-t0):.2f} seconds.")
+
+    llama_attn_hijack.hijack_llama_attention()
+
     return model, tokenizer
 
 

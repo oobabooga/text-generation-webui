@@ -98,6 +98,7 @@ parser.add_argument('--disk-cache-dir', type=str, default="cache", help='Directo
 parser.add_argument('--load-in-8bit', action='store_true', help='Load the model with 8-bit precision.')
 parser.add_argument('--bf16', action='store_true', help='Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU.')
 parser.add_argument('--no-cache', action='store_true', help='Set use_cache to False while generating text. This reduces the VRAM usage a bit at a performance cost.')
+parser.add_argument('--xformers', action='store_true', help="Use xformer's memory efficient attention. This should increase your tokens/s.")
 
 # llama.cpp
 parser.add_argument('--threads', type=int, default=0, help='Number of threads to use in llama.cpp.')
