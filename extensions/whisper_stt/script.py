@@ -1,5 +1,6 @@
 import gradio as gr
 import speech_recognition as sr
+from modules import shared
 
 input_hijack = {
     'state': False,
@@ -7,7 +8,7 @@ input_hijack = {
 }
 
 
-def do_stt(audio, text_state=""):
+def do_stt(audio):
     transcription = ""
     r = sr.Recognizer()
 
@@ -21,34 +22,23 @@ def do_stt(audio, text_state=""):
     except sr.RequestError as e:
         print("Could not request results from Whisper", e)
 
-    input_hijack.update({"state": True, "value": [transcription, transcription]})
-
-    text_state += transcription + " "
-    return text_state, text_state
+    return transcription
 
 
-def update_hijack(val):
-    input_hijack.update({"state": True, "value": [val, val]})
-    return val
-
-
-def auto_transcribe(audio, audio_auto, text_state=""):
+def auto_transcribe(audio, auto_submit):
     if audio is None:
         return "", ""
-    if audio_auto:
-        return do_stt(audio, text_state)
-    return "", ""
+
+    transcription = do_stt(audio)
+    if auto_submit:
+        input_hijack.update({"state": True, "value": [transcription, transcription]})
+
+    return transcription, None
 
 
 def ui():
-    tr_state = gr.State(value="")
-    output_transcription = gr.Textbox(label="STT-Input",
-                                      placeholder="Speech Preview. Click \"Generate\" to send",
-                                      interactive=True)
-    output_transcription.change(fn=update_hijack, inputs=[output_transcription], outputs=[tr_state])
-    audio_auto = gr.Checkbox(label="Auto-Transcribe", value=True)
     with gr.Row():
         audio = gr.Audio(source="microphone")
-        audio.change(fn=auto_transcribe, inputs=[audio, audio_auto, tr_state], outputs=[output_transcription, tr_state])
-        transcribe_button = gr.Button(value="Transcribe")
-        transcribe_button.click(do_stt, inputs=[audio, tr_state], outputs=[output_transcription, tr_state])
+        auto_submit = gr.Checkbox(label='Submit the transcribed audio automatically', value=True)
+    audio.change(fn=auto_transcribe, inputs=[audio, auto_submit], outputs=[shared.gradio['textbox'], audio])
+    audio.change(None, auto_submit, None, _js="(check) => {if (check) { document.getElementById('Generate').click() }}")

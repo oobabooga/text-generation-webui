@@ -1,8 +1,8 @@
-from pathlib import Path
+import multiprocessing
 
 import llamacpp
 
-import modules.shared as shared
+from modules import shared
 from modules.callbacks import Iteratorize
 
 
@@ -32,6 +32,7 @@ class LlamaCppModel:
     def from_pretrained(self, path):
         params = llamacpp.InferenceParams()
         params.path_model = str(path)
+        params.n_threads = shared.args.threads or multiprocessing.cpu_count() // 2
 
         _model = llamacpp.LlamaInference(params)
 
@@ -49,9 +50,9 @@ class LlamaCppModel:
         params.top_k = top_k
         params.temp = temperature
         params.repeat_penalty = repetition_penalty
-        #params.repeat_last_n = repeat_last_n
+        # params.repeat_last_n = repeat_last_n
 
-        # model.params = params
+        # self.model.params = params
         self.model.add_bos()
         self.model.update_input(context)
 
@@ -65,6 +66,7 @@ class LlamaCppModel:
                 self.model.eval()
                 token = self.model.sample()
                 text = self.model.token_to_str(token)
+                output += text
                 is_end_of_text = token == self.model.token_eos()
                 if callback:
                     callback(text)

@@ -41,7 +41,7 @@ ol li p, ul li p {
     display: inline-block;
 }
 
-#main, #parameters, #chat-settings, #interface-mode, #lora, #training-tab {
+#main, #parameters, #chat-settings, #interface-mode, #lora, #training-tab, #model-tab {
   border: 0;
 }
 
@@ -62,4 +62,8 @@ ol li p, ul li p {
 span.math.inline {
   font-size: 27px;
   vertical-align: baseline !important;
+}
+
+div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
+  flex-wrap: nowrap;
 }
