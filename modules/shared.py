@@ -78,7 +78,7 @@ def str2bool(v):
         raise argparse.ArgumentTypeError('Boolean value expected.')
 
 # Function to read options from .conf files
-def get_args_from_file(filepath):
+def get_args_from_file(filepath, verbose):
     args_list = []
     with open(filepath, 'r') as f:
         for line in f:
@@ -87,6 +87,10 @@ def get_args_from_file(filepath):
             line_args = line.split()
             line_args = [arg.strip('\'\"') for arg in line_args]
             args_list.extend(line_args)
+
+    if verbose:
+        print(f"Loaded arguments from {filepath}")
+
     return args_list
 
 
@@ -175,7 +179,7 @@ for config_file in config_files:
     if not os.path.exists(config_file):
         print(f"Error: Configuration file {config_file} does not exist.")
         sys.exit(1)
-    combined_args = combined_args + get_args_from_file(config_file)
+    combined_args = combined_args + get_args_from_file(config_file, args.verbose)
 
 # Add command line arguments to combined_args
 combined_args = combined_args + sys.argv[1:]
