@@ -414,7 +414,7 @@ def load_character(character, name1, name2, mode):
 
 
 def load_default_history(name1, name2):
-    load_character("None", name1, name2, "chat")
+    return load_character(shared.character or "None", name1, name2, "chat")
 
 
 def upload_character(json_file, img, tavern=False):
