@@ -171,8 +171,9 @@ def chatbot_wrapper(text, generate_state, name1, name2, context, mode, end_of_tu
                     shared.history['visible'].append(['', ''])
 
             if _continue:
-                shared.history['internal'][-1] = [text, f'{last_reply[0]} {reply}']
-                shared.history['visible'][-1] = [visible_text, f'{last_reply[1]} {visible_reply}']
+                sep = list(map(lambda x : ' ' if x[-1] != ' ' else '', last_reply))
+                shared.history['internal'][-1] = [text, f'{last_reply[0]}{sep[0]}{reply}']
+                shared.history['visible'][-1] = [visible_text, f'{last_reply[1]}{sep[1]}{visible_reply}']
             else:
                 shared.history['internal'][-1] = [text, reply]
                 shared.history['visible'][-1] = [visible_text, visible_reply]
