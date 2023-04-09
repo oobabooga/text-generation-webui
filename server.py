@@ -327,8 +327,9 @@ def create_interface():
                     shared.gradio['Generate'] = gr.Button('Generate', elem_id='Generate')
                     shared.gradio['Stop'] = gr.Button('Stop', elem_id="stop")
                 with gr.Row():
-                    shared.gradio['Impersonate'] = gr.Button('Impersonate')
                     shared.gradio['Regenerate'] = gr.Button('Regenerate')
+                    shared.gradio['Continue'] = gr.Button('Continue')
+                    shared.gradio['Impersonate'] = gr.Button('Impersonate')
                 with gr.Row():
                     shared.gradio['Copy last reply'] = gr.Button('Copy last reply')
                     shared.gradio['Replace last reply'] = gr.Button('Replace last reply')
@@ -411,7 +412,11 @@ def create_interface():
 
             gen_events.append(shared.gradio['Regenerate'].click(
                 chat.regenerate_wrapper, shared.input_params, shared.gradio['display'], show_progress=shared.args.no_stream).then(
-                lambda x: '', shared.gradio['textbox'], shared.gradio['textbox'], show_progress=False).then(
+                lambda: chat.save_history(timestamp=False), None, None, show_progress=False)
+            )
+
+            gen_events.append(shared.gradio['Continue'].click(
+                chat.continue_wrapper, shared.input_params, shared.gradio['display'], show_progress=shared.args.no_stream).then(
                 lambda: chat.save_history(timestamp=False), None, None, show_progress=False)
             )
 
