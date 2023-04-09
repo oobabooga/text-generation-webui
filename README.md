@@ -271,8 +271,8 @@ To save configuration options for `server.py` and ensure their persistence acros
 
 | Flag                                  | Description |
 |---------------------------------------|-------------|
+| `--config CONFIG_PATH`                | Path(s) to configuration files to source options from. |
 | `--no-config`                         | Ignore the default configuration file `webui.conf`. |
-| `--config`                            | Locations of configuration files to source options from. |
 
 Out of memory errors? [Check the low VRAM guide](https://github.com/oobabooga/text-generation-webui/wiki/Low-VRAM-guide).
 
