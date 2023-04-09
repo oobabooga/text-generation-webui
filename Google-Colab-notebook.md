@@ -12,4 +12,4 @@ It is based on the [original notebook](https://colab.research.google.com/github/
     %cd text-generation-webui
     !pip install -r requirements.txt
     !python download-model.py PygmalionAI/pygmalion-1.3b
-    !python server.py --cai-chat --share 
+    !python server.py --chat --share 
