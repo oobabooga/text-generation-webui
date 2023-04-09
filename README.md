@@ -1,10 +1,8 @@
 # Text generation web UI
 
-A gradio web UI for running Large Language Models like LLaMA, llama.cpp, GPT-J, OPT, and GALACTICA.
+A gradio web UI for running Large Language Models like LLaMA, llama.cpp, GPT-J, Pythia, OPT, and GALACTICA.
 
 Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.com/AUTOMATIC1111/stable-diffusion-webui) of text generation.
-
-[[Try it on Google Colab]](https://colab.research.google.com/github/oobabooga/AI-Notebooks/blob/main/Colab-TextGen-GPU.ipynb)
 
 |![Image1](https://github.com/oobabooga/screenshots/raw/main/qa.png) | ![Image2](https://github.com/oobabooga/screenshots/raw/main/cai3.png) |
 |:---:|:---:|
@@ -34,7 +32,6 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * [LoRA (loading and training)](https://github.com/oobabooga/text-generation-webui/wiki/Using-LoRAs)
 * Softprompts
 * [Extensions](https://github.com/oobabooga/text-generation-webui/wiki/Extensions)
-* [Google Colab](https://github.com/oobabooga/text-generation-webui/wiki/Running-on-Colab)
 
 ## Installation
 
