@@ -2,7 +2,7 @@
 Downloads models from Hugging Face to models/model-name.
 
 Example:
-python download_model.py facebook/opt-1.3b
+python download-model.py facebook/opt-1.3b
 
 '''
 
