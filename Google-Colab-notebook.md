@@ -1,6 +1,6 @@
-#### Pygmalion chat notebook
+This example Colab notebook runs the Pygmalion conversational model in chat mode: 
 
-This is an example Colab notebook that runs the Pygmalion conversational model in chat mode: https://colab.research.google.com/github/oobabooga/AI-Notebooks/blob/main/Colab-TextGen-GPU.ipynb
+https://colab.research.google.com/github/oobabooga/AI-Notebooks/blob/main/Colab-TextGen-GPU.ipynb
 
 Just execute all cells and a gradio URL will automatically appear at the bottom in 5 minutes.
 
