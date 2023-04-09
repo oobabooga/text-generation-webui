@@ -21,6 +21,7 @@ def hijack_llama_attention():
         print("Replaced attention with xformers_attention")
     elif shared.args.sdp_attention:
         transformers.models.llama.modeling_llama.LlamaAttention.forward = sdp_attention_forward
+        print("Replaced attention with sdp_attention")
 
 def xformers_forward(
     self,
