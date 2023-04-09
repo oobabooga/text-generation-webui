@@ -149,10 +149,32 @@ parser.add_argument('--share', action='store_true', help='Create a public URL. T
 parser.add_argument('--auto-launch', action='store_true', default=False, help='Open the web UI in the default browser upon launch.')
 parser.add_argument("--gradio-auth-path", type=str, help='Set the gradio authentication file path. The file should contain one or more user:password pairs in this format: "u1:p1,u2:p2,u3:p3"', default=None)
 
-# Get and parse arguments
-webui_args = get_args_from_file('webui.conf')
-cli_args = sys.argv[1:]
-combined_args = webui_args + cli_args
+args = parser.parse_args()
+
+# Build config_files array
+if not args.no_config and os.path.exists('webui.conf'):
+    # webui.conf exists & no_config = False
+    config_files = ['webui.conf']
+else:
+    # webui.conf is missing or no_config = True
+    config_files = []
+
+if args.config:
+    # Append any files provided with --config
+    config_files.extend(args.config)
+
+# Build combined_args from contents of config_files
+combined_args = []
+for config_file in config_files:
+    # Ensure config file exist
+    if not os.path.exists(config_file):
+        print(f"Error: Configuration file {config_file} does not exist.")
+        sys.exit(1)
+    combined_args = combined_args + get_args_from_file(config_file)
+
+# Add command line arguments to combined_args
+combined_args = combined_args + sys.argv[1:]
+
 args = parser.parse_args(combined_args)
 
 # Deprecation warnings for parameters that have been renamed
