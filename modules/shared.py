@@ -150,6 +150,10 @@ parser.add_argument('--share', action='store_true', help='Create a public URL. T
 parser.add_argument('--auto-launch', action='store_true', default=False, help='Open the web UI in the default browser upon launch.')
 parser.add_argument("--gradio-auth-path", type=str, help='Set the gradio authentication file path. The file should contain one or more user:password pairs in this format: "u1:p1,u2:p2,u3:p3"', default=None)
 
+# Configuration
+parser.add_argument('--no-config', action='store_true', help='Ignore the default configuration file')
+parser.add_argument('--config', nargs='+', help='Locations of configuration files to source')
+
 args = parser.parse_args()
 
 # Build config_files array
