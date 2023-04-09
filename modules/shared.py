@@ -15,7 +15,7 @@ def get_args_from_file(filepath):
                 args_list.extend(line_args)
     return args_list
 
-
+# Default settings
 model = None
 tokenizer = None
 model_name = "None"
@@ -149,11 +149,10 @@ parser.add_argument('--share', action='store_true', help='Create a public URL. T
 parser.add_argument('--auto-launch', action='store_true', default=False, help='Open the web UI in the default browser upon launch.')
 parser.add_argument("--gradio-auth-path", type=str, help='Set the gradio authentication file path. The file should contain one or more user:password pairs in this format: "u1:p1,u2:p2,u3:p3"', default=None)
 
+# Get and parse arguments
 webui_args = get_args_from_file('webui.conf')
 cli_args = sys.argv[1:]
-
 combined_args = webui_args + cli_args
-
 args = parser.parse_args(combined_args)
 
 # Deprecation warnings for parameters that have been renamed
