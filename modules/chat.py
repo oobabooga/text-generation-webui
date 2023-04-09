@@ -62,12 +62,12 @@ def generate_chat_prompt(user_input, max_new_tokens, name1, name2, context, chat
 
         # Adding the Character prefix
         rows.append(apply_extensions(f"{prefix2.strip() if not is_instruct else prefix2}", "bot_prefix"))
-
         limit = 3
 
     while len(rows) > limit and len(encode(''.join(rows), max_new_tokens)[0]) >= max_length:
         rows.pop(1)
     prompt = ''.join(rows)
+
     if also_return_rows:
         return prompt, rows
     else:
