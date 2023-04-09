@@ -39,6 +39,10 @@
     display: inline !important;
 }
 
+.message-body code {
+    overflow-x: auto;
+}
+
 .dark .message-body p em {
     color: rgb(138, 138, 138) !important;
 }

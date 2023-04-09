@@ -11,7 +11,7 @@
 
 .message {
     display: grid;
-    grid-template-columns: 60px 1fr;
+    grid-template-columns: 60px minmax(0, 1fr);
     padding-bottom: 25px;
     font-size: 15px;
     font-family: Helvetica, Arial, sans-serif;
@@ -71,6 +71,10 @@
 
 .message-body li > p {
     display: inline !important;
+}
+
+.message-body code {
+    overflow-x: auto;
 }
 
 .dark .message-body p em {
