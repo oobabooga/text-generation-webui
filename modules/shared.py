@@ -8,6 +8,7 @@ def get_args_from_file(filepath):
         with open(filepath, 'r') as f:
             for line in f:
                 line_args = line.split()
+                line_args = [arg.strip('\'\"') for arg in line_args]
                 args_list.extend(line_args)
     return args_list
 
