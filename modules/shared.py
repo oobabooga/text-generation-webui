@@ -11,6 +11,7 @@ soft_prompt_tensor = None
 soft_prompt = False
 is_RWKV = False
 is_llamacpp = False
+no_config = False
 
 # Chat variables
 history = {'internal': [], 'visible': []}
