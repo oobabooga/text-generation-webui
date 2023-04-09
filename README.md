@@ -265,6 +265,15 @@ Optionally, you can use the following command-line flags:
 | `--auto-launch`                       | Open the web UI in the default browser upon launch. |
 | `--gradio-auth-path GRADIO_AUTH_PATH` | Set the gradio authentication file path. The file should contain one or more user:password pairs in this format: "u1:p1,u2:p2,u3:p3" |
 
+#### Configuration
+
+To save configuration options for `server.py` and ensure their persistence across different sessions, create a file named `webui.conf` within the project directory.
+
+| Flag                                  | Description |
+|---------------------------------------|-------------|
+| `--no-config`                         | Ignore the default configuration file `webui.conf`. |
+| `--config`                            | Locations of configuration files to source options from. |
+
 Out of memory errors? [Check the low VRAM guide](https://github.com/oobabooga/text-generation-webui/wiki/Low-VRAM-guide).
 
 ## Presets
