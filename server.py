@@ -195,9 +195,9 @@ def download_model_wrapper(repo_id):
                     is_lora = True
             repo_dir_name = repo_id.replace("/", "--")
             if is_lora is True:
-                models_dir = ".loras"
+                models_dir = "loras"
             else:
-                models_dir = ".models"
+                models_dir = "models"
             if not os.path.exists(models_dir):
                 os.makedirs(models_dir)
             repo_dir = os.path.join(models_dir, repo_dir_name)
