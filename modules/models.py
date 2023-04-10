@@ -170,6 +170,10 @@ def load_model(model_name):
 
         model = AutoModelForCausalLM.from_pretrained(checkpoint, **params)
 
+    # Hijack attention with xformers
+    if any((shared.args.xformers, shared.args.sdp_attention)):
+        llama_attn_hijack.hijack_llama_attention()
+
     # Loading the tokenizer
     if any((k in shared.model_name.lower() for k in ['gpt4chan', 'gpt-4chan'])) and Path(f"{shared.args.model_dir}/gpt-j-6B/").exists():
         tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/gpt-j-6B/"))
@@ -179,9 +183,8 @@ def load_model(model_name):
         tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/{shared.model_name}/"))
     tokenizer.truncation_side = 'left'
 
-    print(f"Loaded the model in {(time.time()-t0):.2f} seconds.")
 
-    llama_attn_hijack.hijack_llama_attention()
+    print(f"Loaded the model in {(time.time()-t0):.2f} seconds.")
 
     return model, tokenizer
 

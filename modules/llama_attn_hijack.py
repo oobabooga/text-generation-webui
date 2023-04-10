@@ -9,11 +9,13 @@ from typing import Tuple
 
 import modules.shared as shared
 
+
 if shared.args.xformers:
     try:
         import xformers.ops
     except Exception:
         print("🔴 xformers not found! Please install it before trying to use it.", file=sys.stderr)
+
 
 def hijack_llama_attention():
     if shared.args.xformers:
@@ -22,6 +24,7 @@ def hijack_llama_attention():
     elif shared.args.sdp_attention:
         transformers.models.llama.modeling_llama.LlamaAttention.forward = sdp_attention_forward
         print("Replaced attention with sdp_attention")
+
 
 def xformers_forward(
     self,
@@ -103,6 +106,7 @@ def xformers_forward(
     attn_output = self.o_proj(attn_output)
 
     return attn_output, attn_weights, past_key_value
+
 
 def sdp_attention_forward(
     self,
