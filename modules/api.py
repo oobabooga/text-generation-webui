@@ -62,7 +62,7 @@ def create_apis():
     t2 = gr.Textbox(visible=False)
     dummy = gr.Button(visible=False)
 
-    input_params = [t1] 
+    input_params = [t1]
     output_params = [t2] + [shared.gradio[k] for k in ['display']] if chat_api else [shared.gradio[k] for k in ['markdown', 'html']]
     dummy.click(generate_reply_wrapper, input_params, output_params, api_name='textgen')
 
