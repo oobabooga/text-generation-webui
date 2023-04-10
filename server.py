@@ -15,8 +15,6 @@ from datetime import datetime
 from pathlib import Path
 
 import gradio as gr
-import requests
-from huggingface_hub import HfApi
 from PIL import Image
 
 import modules.extensions as extensions_module
