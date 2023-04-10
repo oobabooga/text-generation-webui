@@ -71,6 +71,7 @@ def give_VRAM_priority(actor):
     del response
 
 
+
 if params['manage_VRAM']:
     give_VRAM_priority('set')
 
@@ -279,9 +280,17 @@ def SD_api_address_update(address):
 
     return gr.Textbox.update(label=msg)
 
-def ui():
 
+def ui():
+    # Gradio elements
+    # gr.Markdown('### Stable Diffusion API Pictures') # Currently the name of extension is shown as the title
     with gr.Accordion("Parameters", open=True):
+        with gr.Row():
+            address = gr.Textbox(placeholder=params['address'], value=params['address'], label='Auto1111\'s WebUI address')
+            mode = gr.Dropdown(["Manual", "Immersive/Interactive", "Picturebook/Adventure"], value="Manual", label="Mode of operation", type="index")
+            with gr.Column(scale=1, min_width=300):
+                manage_VRAM = gr.Checkbox(value=params['manage_VRAM'], label='Manage VRAM')
+                save_img = gr.Checkbox(value=params['save_img'], label='Keep original images and use them in chat')
 
         with gr.Row():
             generate_now_btn = gr.Button("Generate from input")
@@ -289,13 +298,6 @@ def ui():
             force_pic = gr.Button("Force the picture response")
             suppr_pic = gr.Button("Suppress the picture response")
 
-        with gr.Row():
-            address = gr.Textbox(placeholder=params['address'], value=params['address'], label='Auto1111\'s WebUI address')
-            mode = gr.Dropdown(["Manual", "Immersive/Interactive", "Picturebook/Adventure"], value="Manual", label="Mode of operation", type="index")
-            
-            with gr.Column(scale=1, min_width=300):
-                manage_VRAM = gr.Checkbox(value=params['manage_VRAM'], label='Manage VRAM')
-                save_img = gr.Checkbox(value=params['save_img'], label='Keep original images and use them in chat')
 
         with gr.Accordion("Generation parameters", open=False):
             with gr.Row():
