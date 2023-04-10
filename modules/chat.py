@@ -286,7 +286,7 @@ def clear_chat_log(name1, name2, greeting, mode):
         shared.history['visible'] += [['', apply_extensions(greeting, "output")]]
     
     # Save cleared logs
-    save_history(timestamp=False)
+    save_history(mode)
 
     return chat_html_wrapper(shared.history['visible'], name1, name2, mode)
 
@@ -332,15 +332,23 @@ def tokenize_dialogue(dialogue, name1, name2, mode):
     return history
 
 
-def save_history(timestamp=True):
-    if timestamp:
-        fname = f"{shared.character}_{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
+def save_history(mode, timestamp=False):
+    # Instruct mode histories should not be saved as if
+    # Alpaca or Vicuna were characters
+    if mode == 'instruct':
+        if not timestamp:
+            return
+        fname = f"Instruct_{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
     else:
-        fname = f"{shared.character}_persistent.json"
+        if timestamp:
+            fname = f"{shared.character}_{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
+        else:
+            fname = f"{shared.character}_persistent.json"
     if not Path('logs').exists():
         Path('logs').mkdir()
     with open(Path(f'logs/{fname}'), 'w', encoding='utf-8') as f:
         f.write(json.dumps({'data': shared.history['internal'], 'data_visible': shared.history['visible']}, indent=2))
+
     return Path(f'logs/{fname}')
 
 
@@ -389,8 +397,6 @@ def generate_pfp_cache(character):
 
 def load_character(character, name1, name2, mode):
     shared.character = character
-    shared.history['internal'] = []
-    shared.history['visible'] = []
     context = greeting = end_of_turn = ""
     greeting_field = 'greeting'
     picture = None
@@ -435,18 +441,22 @@ def load_character(character, name1, name2, mode):
         greeting = shared.settings['greeting']
         end_of_turn = shared.settings['end_of_turn']
 
-    if Path(f'logs/{shared.character}_persistent.json').exists():
-        load_history(open(Path(f'logs/{shared.character}_persistent.json'), 'rb').read(), name1, name2)
-    else:
-        # Insert greeting if it exists
-        if greeting != "":
-            shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
-            shared.history['visible'] += [['', apply_extensions(greeting, "output")]]
-        
-        # Create .json log files since they don't already exist
-        save_history(timestamp=False)
+    if mode != 'instruct':
+        shared.history['internal'] = []
+        shared.history['visible'] = []
 
-    return name1, name2, picture, greeting, context, end_of_turn, chat_html_wrapper(shared.history['visible'], name1, name2, mode, reset_cache=True)
+        if Path(f'logs/{shared.character}_persistent.json').exists():
+            load_history(open(Path(f'logs/{shared.character}_persistent.json'), 'rb').read(), name1, name2)
+        else:
+            # Insert greeting if it exists
+            if greeting != "":
+                shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
+                shared.history['visible'] += [['', apply_extensions(greeting, "output")]]
+            
+            # Create .json log files since they don't already exist
+            save_history(mode)
+
+    return name1, name2, picture, greeting, context, end_of_turn, chat_html_wrapper(shared.history['visible'], name1, name2, mode)
 
 
 def load_default_history(name1, name2):

@@ -19,7 +19,7 @@
         "gallery"
     ],
     "presets": {
-        "default": "NovelAI-Sphinx Moth",
+        "default": "Default",
         ".*pygmalion": "NovelAI-Storywriter",
         ".*RWKV": "Naive"
     },

@@ -384,7 +384,7 @@ def create_interface():
                     shared.gradio['Clear history-cancel'] = gr.Button('Cancel', visible=False)
 
                 shared.gradio["Chat mode"] = gr.Radio(choices=["cai-chat", "chat", "instruct"], value="cai-chat", label="Mode")
-                shared.gradio["Instruction templates"] = gr.Dropdown(choices=get_available_instruction_templates(), label="Instruction template", value="None", visible=False)
+                shared.gradio["Instruction templates"] = gr.Dropdown(choices=get_available_instruction_templates(), label="Instruction template", value="None", visible=False, info="Change this according to the model/LoRA that you are using.")
 
             with gr.Tab("Character", elem_id="chat-settings"):
                 with gr.Row():
@@ -445,34 +445,34 @@ def create_interface():
             gen_events.append(shared.gradio['Generate'].click(
                 lambda x: (x, ''), shared.gradio['textbox'], [shared.gradio['Chat input'], shared.gradio['textbox']], show_progress=False).then(
                 chat.cai_chatbot_wrapper, shared.input_params, shared.gradio['display'], show_progress=shared.args.no_stream).then(
-                lambda: chat.save_history(timestamp=False), None, None, show_progress=False)
+                chat.save_history, shared.gradio['Chat mode'], None, show_progress=False)
             )
 
             gen_events.append(shared.gradio['textbox'].submit(
                 lambda x: (x, ''), shared.gradio['textbox'], [shared.gradio['Chat input'], shared.gradio['textbox']], show_progress=False).then(
                 chat.cai_chatbot_wrapper, shared.input_params, shared.gradio['display'], show_progress=shared.args.no_stream).then(
-                lambda: chat.save_history(timestamp=False), None, None, show_progress=False)
+                chat.save_history, shared.gradio['Chat mode'], None, show_progress=False)
             )
 
             gen_events.append(shared.gradio['Regenerate'].click(
                 chat.regenerate_wrapper, shared.input_params, shared.gradio['display'], show_progress=shared.args.no_stream).then(
-                lambda: chat.save_history(timestamp=False), None, None, show_progress=False)
+                chat.save_history, shared.gradio['Chat mode'], None, show_progress=False)
             )
 
             gen_events.append(shared.gradio['Continue'].click(
                 chat.continue_wrapper, shared.input_params, shared.gradio['display'], show_progress=shared.args.no_stream).then(
-                lambda: chat.save_history(timestamp=False), None, None, show_progress=False)
+                chat.save_history, shared.gradio['Chat mode'], None, show_progress=False)
             )
 
             shared.gradio['Replace last reply'].click(
                 chat.replace_last_reply, [shared.gradio[k] for k in ['textbox', 'name1', 'name2', 'Chat mode']], shared.gradio['display'], show_progress=shared.args.no_stream).then(
                 lambda x: '', shared.gradio['textbox'], shared.gradio['textbox'], show_progress=False).then(
-                lambda: chat.save_history(timestamp=False), None, None, show_progress=False)
+                chat.save_history, shared.gradio['Chat mode'], None, show_progress=False)
 
             shared.gradio['Clear history-confirm'].click(
                 lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, clear_arr).then(
                 chat.clear_chat_log, [shared.gradio[k] for k in ['name1', 'name2', 'greeting', 'Chat mode']], shared.gradio['display']).then(
-                lambda: chat.save_history(timestamp=False), None, None, show_progress=False)
+                chat.save_history, shared.gradio['Chat mode'], None, show_progress=False)
 
             shared.gradio['Stop'].click(
                 stop_everything_event, None, None, queue=False, cancels=gen_events if shared.args.no_stream else None).then(
@@ -480,6 +480,7 @@ def create_interface():
 
             shared.gradio['Chat mode'].change(
                 lambda x: gr.update(visible=x == 'instruct'), shared.gradio['Chat mode'], shared.gradio['Instruction templates']).then(
+                lambda x: gr.update(interactive=x != 'instruct'), shared.gradio['Chat mode'], shared.gradio['character_menu']).then(
                 chat.redraw_html, reload_inputs, shared.gradio['display'])
 
             shared.gradio['Instruction templates'].change(
@@ -495,7 +496,7 @@ def create_interface():
             shared.gradio['Clear history'].click(lambda: [gr.update(visible=True), gr.update(visible=False), gr.update(visible=True)], None, clear_arr)
             shared.gradio['Clear history-cancel'].click(lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, clear_arr)
             shared.gradio['Remove last'].click(chat.remove_last_message, [shared.gradio[k] for k in ['name1', 'name2', 'Chat mode']], [shared.gradio['display'], shared.gradio['textbox']], show_progress=False)
-            shared.gradio['download_button'].click(chat.save_history, inputs=None, outputs=[shared.gradio['download']])
+            shared.gradio['download_button'].click(lambda x: chat.save_history(x, timestamp=True), shared.gradio['Chat mode'], shared.gradio['download'])
             shared.gradio['Upload character'].click(chat.upload_character, [shared.gradio['upload_json'], shared.gradio['upload_img_bot']], [shared.gradio['character_menu']])
             shared.gradio['character_menu'].change(chat.load_character, [shared.gradio[k] for k in ['character_menu', 'name1', 'name2', 'Chat mode']], [shared.gradio[k] for k in ['name1', 'name2', 'character_picture', 'greeting', 'context', 'end_of_turn', 'display']])
             shared.gradio['upload_img_tavern'].upload(chat.upload_tavern_character, [shared.gradio['upload_img_tavern'], shared.gradio['name1'], shared.gradio['name2']], [shared.gradio['character_menu']])
