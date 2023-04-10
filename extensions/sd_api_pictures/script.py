@@ -129,13 +129,7 @@ def input_modifier(string):
 
     return string
 
-# Get and save the Stable Diffusion-generated picture
-def get_SD_pictures(description):
-   
-    global params
-
-    if params['manage_VRAM']:
-        give_VRAM_priority('SD')
+def apply_settings():
 
     payload_options = {
         "sd_model_checkpoint": params['sd_model_checkpoint']
@@ -146,7 +140,18 @@ def get_SD_pictures(description):
     print(f'Updating parameters via the API on {params["address"]}...')
     response = requests.post(url=f'{params["address"]}/sdapi/v1/options', json=payload_options)
     response.raise_for_status()
-    r = response.json()
+    r = response.json()    
+
+
+# Get and save the Stable Diffusion-generated picture
+def get_SD_pictures(description):
+   
+    global params
+
+    if params['manage_VRAM']:
+        give_VRAM_priority('SD')
+
+
 
     payload = {
 
@@ -174,7 +179,7 @@ def get_SD_pictures(description):
     response.raise_for_status()
     r = response.json()
 
-
+    # This is broken for me please check where I messed up. I am sorry.
     visible_result = ""
     for img_str in r['images']:
         image = Image.open(io.BytesIO(base64.b64decode(img_str.split(",", 1)[0])))
@@ -316,7 +321,8 @@ def ui():
                     denoising_strength = gr.Slider(0, 1, value=params['denoising_strength'], step=0.01, label='Denoising strength')
                     hr_second_pass_steps = gr.Slider(0, 30, value=params['hr_second_pass_steps'], step=1, label='HR second pass steps')
                     hr_scale = gr.Slider(0, 4, value=params['hr_scale'], step=0.5, label='HR scale')
-                
+                with gr.Column():
+                    Apply = gr.Button("Aplly Settings")
             with gr.Row():
                 sd_model_checkpoint = gr.Dropdown(label="model", choices=sd_models)
                 sampler_index = gr.Dropdown(label="sampler", choices=samplers)
@@ -356,7 +362,4 @@ def ui():
     suppr_pic.click(lambda x: toggle_generation(False), inputs=suppr_pic, outputs=None)
     generate_now_btn.click(lambda x: toggle_generation(True), inputs=generate_now_btn, outputs=None)    
     generate_now_btn.click(eval('chat.chatbot_wrapper'), shared.input_params, shared.gradio['display'], show_progress=shared.args.no_stream)
-
-
-      
-    
+    Apply.click(lambda x: apply_settings(), inputs=Apply, outputs=None)
