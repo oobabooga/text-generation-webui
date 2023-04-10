@@ -284,6 +284,9 @@ def clear_chat_log(name1, name2, greeting, mode):
     if greeting != '':
         shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
         shared.history['visible'] += [['', apply_extensions(greeting, "output")]]
+    
+    # Save cleared logs
+    save_history(timestamp=False)
 
     return chat_html_wrapper(shared.history['visible'], name1, name2, mode)
 
@@ -434,9 +437,14 @@ def load_character(character, name1, name2, mode):
 
     if Path(f'logs/{shared.character}_persistent.json').exists():
         load_history(open(Path(f'logs/{shared.character}_persistent.json'), 'rb').read(), name1, name2)
-    elif greeting != "":
-        shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
-        shared.history['visible'] += [['', apply_extensions(greeting, "output")]]
+    else:
+        # Insert greeting if it exists
+        if greeting != "":
+            shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
+            shared.history['visible'] += [['', apply_extensions(greeting, "output")]]
+        
+        # Create .json log files since they don't already exist
+        save_history(timestamp=False)
 
     return name1, name2, picture, greeting, context, end_of_turn, chat_html_wrapper(shared.history['visible'], name1, name2, mode, reset_cache=True)
 
