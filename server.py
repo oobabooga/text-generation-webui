@@ -570,6 +570,8 @@ def create_interface():
 
         if not shared.is_chat():
             api.create_apis()
+        else:
+            api.create_chat_apis()
 
     # Authentication
     auth = None

@@ -50,3 +50,6 @@ response = requests.post(f"http://{server}:7860/run/textgen", json={
 
 reply = response["data"][0]
 print(reply)
+
+# For chat API, prompt is in data[0] and the reply is in data[1]
+print(response["data"])
