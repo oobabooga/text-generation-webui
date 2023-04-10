@@ -1,3 +1,4 @@
+import random
 import re
 import time
 import traceback
@@ -63,8 +64,6 @@ def generate_softprompt_input_tensors(input_ids):
     return inputs_embeds, filler_input_ids
 
 # Removes empty replies from gpt4chan outputs
-
-
 def fix_gpt4chan(s):
     for i in range(10):
         s = re.sub("--- [0-9]*\n>>[0-9]*\n---", "---", s)
@@ -73,8 +72,6 @@ def fix_gpt4chan(s):
     return s
 
 # Fix the LaTeX equations in galactica
-
-
 def fix_galactica(s):
     s = s.replace(r'\[', r'$')
     s = s.replace(r'\]', r'$')
@@ -101,10 +98,13 @@ def formatted_outputs(reply, model_name):
 
 
 def set_manual_seed(seed):
-    if seed != -1:
-        torch.manual_seed(seed)
-        if torch.cuda.is_available():
-            torch.cuda.manual_seed_all(seed)
+    seed = int(seed)
+    if seed == -1:
+        seed = random.randint(1, 2**31)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+    return seed
 
 
 def stop_everything_event():
@@ -113,7 +113,7 @@ def stop_everything_event():
 
 def generate_reply(question, generate_state, eos_token=None, stopping_strings=[]):
     clear_torch_cache()
-    set_manual_seed(generate_state['seed'])
+    seed = set_manual_seed(generate_state['seed'])
     shared.stop_everything = False
     generate_params = {}
     t0 = time.time()
@@ -155,7 +155,7 @@ def generate_reply(question, generate_state, eos_token=None, stopping_strings=[]
             t1 = time.time()
             original_tokens = len(encode(original_question)[0])
             new_tokens = len(encode(output)[0]) - original_tokens
-            print(f'Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens})')
+            print(f'Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens}, seed {seed})')
             return
 
     input_ids = encode(question, generate_state['max_new_tokens'])
@@ -276,5 +276,5 @@ def generate_reply(question, generate_state, eos_token=None, stopping_strings=[]
         t1 = time.time()
         original_tokens = len(original_input_ids[0])
         new_tokens = len(output) - original_tokens
-        print(f'Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens})')
+        print(f'Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens}, seed {seed})')
         return
