@@ -3,7 +3,7 @@
 1. Install [llama-cpp-python](https://github.com/abetlen/llama-cpp-python):
 
 ```
-pip install llama-cpp-python==0.1.23
+pip install -U llama-cpp-python
 ```
 
 (this has been left out of requirements.txt for now because it seems to break the one-click-installer)
