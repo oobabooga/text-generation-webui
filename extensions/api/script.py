@@ -57,6 +57,7 @@ class Handler(BaseHTTPRequestHandler):
                 'length_penalty': float(body.get('length_penalty', 1)),
                 'early_stopping': bool(body.get('early_stopping', False)),
                 'seed': int(body.get('seed', -1)),
+                'add_bos_token': int(body.get('add_bos_token', True)),
             }
 
             generator = generate_reply(
