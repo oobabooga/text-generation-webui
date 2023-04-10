@@ -14,6 +14,7 @@ from transformers import (AutoConfig, AutoModelForCausalLM, AutoTokenizer,
                           BitsAndBytesConfig, LlamaTokenizer)
 
 import modules.shared as shared
+from modules import llama_attn_hijack
 
 transformers.logging.set_verbosity_error()
 
@@ -169,11 +170,23 @@ def load_model(model_name):
 
         model = AutoModelForCausalLM.from_pretrained(checkpoint, **params)
 
+    # Hijack attention with xformers
+    if any((shared.args.xformers, shared.args.sdp_attention)):
+        llama_attn_hijack.hijack_llama_attention()
+
     # Loading the tokenizer
     if any((k in shared.model_name.lower() for k in ['gpt4chan', 'gpt-4chan'])) and Path(f"{shared.args.model_dir}/gpt-j-6B/").exists():
         tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/gpt-j-6B/"))
     elif type(model) is transformers.LlamaForCausalLM:
         tokenizer = LlamaTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/{shared.model_name}/"), clean_up_tokenization_spaces=True)
+        # Leaving this here until the LLaMA tokenizer gets figured out.
+        # For some people this fixes things, for others it causes an error.
+        try:
+            tokenizer.eos_token_id = 2
+            tokenizer.bos_token_id = 1
+            tokenizer.pad_token_id = 0
+        except:
+            pass
     else:
         tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/{shared.model_name}/"))
     tokenizer.truncation_side = 'left'
