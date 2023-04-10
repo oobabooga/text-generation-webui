@@ -218,8 +218,8 @@ def create_model_menus():
         with gr.Column():
             with gr.Row():
                 with gr.Column():
-                    shared.gradio['custom_model_menu'] = gr.Textbox(label="Download Custom Model",
-                                                                    info="Enter Hugging Face username/model path e.g: facebook/galactica-125m")
+                    shared.gradio['custom_model_menu'] = gr.Textbox(label="Download custom model or LoRA",
+                                                                    info="Enter Hugging Face username/model path, e.g: facebook/galactica-125m")
                 with gr.Column():
                     shared.gradio['download_button'] = gr.Button("Download")
                     shared.gradio['download_status'] = gr.Markdown()
