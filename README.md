@@ -72,9 +72,10 @@ bash Miniconda3.sh
 ```
 Source: https://educe-ubc.github.io/conda.html
 
-#### 0.1 (Ubuntu) Install build tools
+#### 0.1 (Ubuntu/WSL) Install build tools
+
 ```
-sudo apt-get update && sudo apt-get install build-essential
+sudo apt install build-essential
 ```
 
 
