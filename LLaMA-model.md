@@ -84,7 +84,9 @@ For regular 16-bit/8-bit inference.
 * Torrent: https://github.com/oobabooga/text-generation-webui/pull/530#issuecomment-1484235789
 * Direct download: https://huggingface.co/Neko-Institute-of-Science
 
-(both are from the same author)
+Both are from the same author. 
+
+**Note**: the tokenizer files in those sources seem to be incorrect for now: https://github.com/oobabooga/text-generation-webui/issues/931#issuecomment-1501259027
 
 #### Option 2: convert the weights yourself
 
@@ -93,20 +95,7 @@ For regular 16-bit/8-bit inference.
 ### [convert_llama_weights_to_hf.py](https://github.com/huggingface/transformers/blob/main/src/transformers/models/llama/convert_llama_weights_to_hf.py)
 
 ```
-python convert_llama_weights_to_hf.py --input_dir /path/to/LLaMA --model_size 7B --output_dir /path/to/outputs
-```
-
-Two folders will be created at the end:
-
-```
-/path/to/outputs/llama-7b
-/path/to/outputs/tokenizer
-```
-
-2. Move the files inside `/path/to/outputs/tokenizer` to `/path/to/outputs/llama-7b`:
-
-```
-mv /path/to/outputs/tokenizer/* /path/to/outputs/llama-7b
+python convert_llama_weights_to_hf.py --input_dir /path/to/LLaMA --model_size 7B --output_dir /tmp/llama-7b-converted
 ```
 
 3. Move the `llama-7b` folder inside your `text-generation-webui/models` folder.
