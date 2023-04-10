@@ -182,8 +182,6 @@ def generate_reply(question, generate_state, eos_token=None, stopping_strings=[]
             generate_params[k] = generate_state[k]
         generate_params['eos_token_id'] = eos_token_ids
         generate_params['stopping_criteria'] = stopping_criteria_list
-        if shared.args.no_stream:
-            generate_params['min_length'] = 0
     else:
         for k in ['max_new_tokens', 'do_sample', 'temperature']:
             generate_params[k] = generate_state[k]
