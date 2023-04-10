@@ -67,3 +67,13 @@ span.math.inline {
 div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
   flex-wrap: nowrap;
 }
+
+.header_bar {
+  background-color: #f7f7f7;
+  margin-bottom: 40px;
+}
+
+.dark .header_bar {
+  border: none !important;
+  background-color: #8080802b;
+}

@@ -1,3 +1,4 @@
+import random
 import re
 import time
 import traceback
@@ -21,7 +22,7 @@ def get_max_prompt_length(tokens):
     return max_length
 
 
-def encode(prompt, tokens_to_generate=0, add_special_tokens=True):
+def encode(prompt, tokens_to_generate=0, add_special_tokens=True, add_bos_token=True):
     if any((shared.is_RWKV, shared.is_llamacpp)):
         input_ids = shared.tokenizer.encode(str(prompt))
         input_ids = np.array(input_ids).reshape(1, len(input_ids))
@@ -29,6 +30,12 @@ def encode(prompt, tokens_to_generate=0, add_special_tokens=True):
     else:
         input_ids = shared.tokenizer.encode(str(prompt), return_tensors='pt', truncation=True, max_length=get_max_prompt_length(tokens_to_generate), add_special_tokens=add_special_tokens)
 
+        # This is a hack for making replies more creative.
+        if not add_bos_token and input_ids[0][0] == shared.tokenizer.bos_token_id:
+            input_ids = input_ids[:, 1:]
+
+        # Llama adds this extra token when the first character is '\n', and this
+        # compromises the stopping criteria, so we just remove it
         if type(shared.tokenizer) is transformers.LlamaTokenizer and input_ids[0][0] == 29871:
             input_ids = input_ids[:, 1:]
 
@@ -97,10 +104,13 @@ def formatted_outputs(reply, model_name):
 
 
 def set_manual_seed(seed):
-    if seed != -1:
-        torch.manual_seed(seed)
-        if torch.cuda.is_available():
-            torch.cuda.manual_seed_all(seed)
+    seed = int(seed)
+    if seed == -1:
+        seed = random.randint(1, 2**31)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+    return seed
 
 
 def stop_everything_event():
@@ -109,7 +119,7 @@ def stop_everything_event():
 
 def generate_reply(question, generate_state, eos_token=None, stopping_strings=[]):
     clear_torch_cache()
-    set_manual_seed(generate_state['seed'])
+    seed = set_manual_seed(generate_state['seed'])
     shared.stop_everything = False
     generate_params = {}
     t0 = time.time()
@@ -151,10 +161,10 @@ def generate_reply(question, generate_state, eos_token=None, stopping_strings=[]
             t1 = time.time()
             original_tokens = len(encode(original_question)[0])
             new_tokens = len(encode(output)[0]) - original_tokens
-            print(f'Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens})')
+            print(f'Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens}, seed {seed})')
             return
 
-    input_ids = encode(question, generate_state['max_new_tokens'])
+    input_ids = encode(question, generate_state['max_new_tokens'], add_bos_token=generate_state['add_bos_token'])
     original_input_ids = input_ids
     output = input_ids[0]
 
@@ -172,8 +182,6 @@ def generate_reply(question, generate_state, eos_token=None, stopping_strings=[]
             generate_params[k] = generate_state[k]
         generate_params['eos_token_id'] = eos_token_ids
         generate_params['stopping_criteria'] = stopping_criteria_list
-        if shared.args.no_stream:
-            generate_params['min_length'] = 0
     else:
         for k in ['max_new_tokens', 'do_sample', 'temperature']:
             generate_params[k] = generate_state[k]
@@ -272,5 +280,5 @@ def generate_reply(question, generate_state, eos_token=None, stopping_strings=[]
         t1 = time.time()
         original_tokens = len(original_input_ids[0])
         new_tokens = len(output) - original_tokens
-        print(f'Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens})')
+        print(f'Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens}, seed {seed})')
         return

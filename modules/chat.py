@@ -22,6 +22,7 @@ def generate_chat_prompt(user_input, max_new_tokens, name1, name2, context, chat
     is_instruct = kwargs['is_instruct'] if 'is_instruct' in kwargs else False
     end_of_turn = kwargs['end_of_turn'] if 'end_of_turn' in kwargs else ''
     impersonate = kwargs['impersonate'] if 'impersonate' in kwargs else False
+    _continue = kwargs['_continue'] if '_continue' in kwargs else False
     also_return_rows = kwargs['also_return_rows'] if 'also_return_rows' in kwargs else False
     rows = [f"{context.strip()}\n"]
 
@@ -39,7 +40,10 @@ def generate_chat_prompt(user_input, max_new_tokens, name1, name2, context, chat
 
     i = len(shared.history['internal']) - 1
     while i >= 0 and len(encode(''.join(rows), max_new_tokens)[0]) < max_length:
-        rows.insert(1, f"{prefix2}{shared.history['internal'][i][1].strip()}{end_of_turn}\n")
+        if _continue and i == len(shared.history['internal']) - 1:
+            rows.insert(1, f"{prefix2}{shared.history['internal'][i][1]}")
+        else:
+            rows.insert(1, f"{prefix2}{shared.history['internal'][i][1].strip()}{end_of_turn}\n")
         string = shared.history['internal'][i][0]
         if string not in ['', '<|BEGIN-VISIBLE-CHAT|>']:
             rows.insert(1, f"{prefix1}{string.strip()}{end_of_turn}\n")
@@ -48,6 +52,8 @@ def generate_chat_prompt(user_input, max_new_tokens, name1, name2, context, chat
     if impersonate:
         rows.append(f"{prefix1.strip() if not is_instruct else prefix1}")
         limit = 2
+    elif _continue:
+        limit = 3
     else:
         # Adding the user message
         user_input = fix_newlines(user_input)
@@ -99,7 +105,7 @@ def extract_message_from_reply(reply, name1, name2, stop_at_newline):
     return reply, next_character_found
 
 
-def chatbot_wrapper(text, generate_state, name1, name2, context, mode, end_of_turn, regenerate=False):
+def chatbot_wrapper(text, generate_state, name1, name2, context, mode, end_of_turn, regenerate=False, _continue=False):
     if mode == 'instruct':
         stopping_strings = [f"\n{name1}", f"\n{name2}"]
     else:
@@ -107,6 +113,7 @@ def chatbot_wrapper(text, generate_state, name1, name2, context, mode, end_of_tu
 
     # Defining some variables
     cumulative_reply = ''
+    last_reply = [shared.history['internal'][-1][1], shared.history['visible'][-1][1]] if _continue else None
     just_started = True
     name1_original = name1
     visible_text = custom_generate_chat_prompt = None
@@ -124,17 +131,22 @@ def chatbot_wrapper(text, generate_state, name1, name2, context, mode, end_of_tu
 
     if visible_text is None:
         visible_text = text
-    text = apply_extensions(text, "input")
+    if not _continue:
+        text = apply_extensions(text, "input")
 
     # Generating the prompt
-    kwargs = {'end_of_turn': end_of_turn, 'is_instruct': mode == 'instruct'}
+    kwargs = {
+        'end_of_turn': end_of_turn,
+        'is_instruct': mode == 'instruct',
+        '_continue': _continue
+    }
     if custom_generate_chat_prompt is None:
         prompt = generate_chat_prompt(text, generate_state['max_new_tokens'], name1, name2, context, generate_state['chat_prompt_size'], **kwargs)
     else:
         prompt = custom_generate_chat_prompt(text, generate_state['max_new_tokens'], name1, name2, context, generate_state['chat_prompt_size'], **kwargs)
 
     # Yield *Is typing...*
-    if not regenerate:
+    if not any((regenerate, _continue)):
         yield shared.history['visible'] + [[visible_text, shared.processing_message]]
 
     # Generate
@@ -154,11 +166,17 @@ def chatbot_wrapper(text, generate_state, name1, name2, context, mode, end_of_tu
                 return shared.history['visible']
             if just_started:
                 just_started = False
-                shared.history['internal'].append(['', ''])
-                shared.history['visible'].append(['', ''])
+                if not _continue:
+                    shared.history['internal'].append(['', ''])
+                    shared.history['visible'].append(['', ''])
 
-            shared.history['internal'][-1] = [text, reply]
-            shared.history['visible'][-1] = [visible_text, visible_reply]
+            if _continue:
+                sep = list(map(lambda x : ' ' if x[-1] != ' ' else '', last_reply))
+                shared.history['internal'][-1] = [text, f'{last_reply[0]}{sep[0]}{reply}']
+                shared.history['visible'][-1] = [visible_text, f'{last_reply[1]}{sep[1]}{visible_reply}']
+            else:
+                shared.history['internal'][-1] = [text, reply]
+                shared.history['visible'][-1] = [visible_text, visible_reply]
             if not shared.args.no_stream:
                 yield shared.history['visible']
             if next_character_found:
@@ -220,6 +238,16 @@ def regenerate_wrapper(text, generate_state, name1, name2, context, mode, end_of
             yield chat_html_wrapper(shared.history['visible'], name1, name2, mode)
 
 
+def continue_wrapper(text, generate_state, name1, name2, context, mode, end_of_turn):
+    if (len(shared.history['visible']) == 1 and not shared.history['visible'][0][0]) or len(shared.history['internal']) == 0:
+        yield chat_html_wrapper(shared.history['visible'], name1, name2, mode)
+    else:
+        # Yield ' ...'
+        yield chat_html_wrapper(shared.history['visible'][:-1] + [[shared.history['visible'][-1][0], shared.history['visible'][-1][1] + ' ...']], name1, name2, mode)
+        for history in chatbot_wrapper(shared.history['internal'][-1][0], generate_state, name1, name2, context, mode, end_of_turn, _continue=True):
+            yield chat_html_wrapper(shared.history['visible'], name1, name2, mode)
+
+
 def remove_last_message(name1, name2, mode):
     if len(shared.history['visible']) > 0 and shared.history['internal'][-1][0] != '<|BEGIN-VISIBLE-CHAT|>':
         last = shared.history['visible'].pop()
@@ -256,6 +284,9 @@ def clear_chat_log(name1, name2, greeting, mode):
     if greeting != '':
         shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
         shared.history['visible'] += [['', apply_extensions(greeting, "output")]]
+    
+    # Save cleared logs
+    save_history(mode)
 
     return chat_html_wrapper(shared.history['visible'], name1, name2, mode)
 
@@ -301,15 +332,23 @@ def tokenize_dialogue(dialogue, name1, name2, mode):
     return history
 
 
-def save_history(timestamp=True):
-    if timestamp:
-        fname = f"{shared.character}_{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
+def save_history(mode, timestamp=False):
+    # Instruct mode histories should not be saved as if
+    # Alpaca or Vicuna were characters
+    if mode == 'instruct':
+        if not timestamp:
+            return
+        fname = f"Instruct_{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
     else:
-        fname = f"{shared.character}_persistent.json"
+        if timestamp:
+            fname = f"{shared.character}_{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
+        else:
+            fname = f"{shared.character}_persistent.json"
     if not Path('logs').exists():
         Path('logs').mkdir()
     with open(Path(f'logs/{fname}'), 'w', encoding='utf-8') as f:
         f.write(json.dumps({'data': shared.history['internal'], 'data_visible': shared.history['visible']}, indent=2))
+
     return Path(f'logs/{fname}')
 
 
@@ -358,8 +397,6 @@ def generate_pfp_cache(character):
 
 def load_character(character, name1, name2, mode):
     shared.character = character
-    shared.history['internal'] = []
-    shared.history['visible'] = []
     context = greeting = end_of_turn = ""
     greeting_field = 'greeting'
     picture = None
@@ -404,13 +441,22 @@ def load_character(character, name1, name2, mode):
         greeting = shared.settings['greeting']
         end_of_turn = shared.settings['end_of_turn']
 
-    if Path(f'logs/{shared.character}_persistent.json').exists():
-        load_history(open(Path(f'logs/{shared.character}_persistent.json'), 'rb').read(), name1, name2)
-    elif greeting != "":
-        shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
-        shared.history['visible'] += [['', apply_extensions(greeting, "output")]]
+    if mode != 'instruct':
+        shared.history['internal'] = []
+        shared.history['visible'] = []
 
-    return name1, name2, picture, greeting, context, end_of_turn, chat_html_wrapper(shared.history['visible'], name1, name2, mode, reset_cache=True)
+        if Path(f'logs/{shared.character}_persistent.json').exists():
+            load_history(open(Path(f'logs/{shared.character}_persistent.json'), 'rb').read(), name1, name2)
+        else:
+            # Insert greeting if it exists
+            if greeting != "":
+                shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
+                shared.history['visible'] += [['', apply_extensions(greeting, "output")]]
+            
+            # Create .json log files since they don't already exist
+            save_history(mode)
+
+    return name1, name2, picture, greeting, context, end_of_turn, chat_html_wrapper(shared.history['visible'], name1, name2, mode)
 
 
 def load_default_history(name1, name2):

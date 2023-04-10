@@ -22,10 +22,10 @@ server = "127.0.0.1"
 params = {
     'max_new_tokens': 200,
     'do_sample': True,
-    'temperature': 0.5,
-    'top_p': 0.9,
+    'temperature': 0.72,
+    'top_p': 0.73,
     'typical_p': 1,
-    'repetition_penalty': 1.05,
+    'repetition_penalty': 1.1,
     'encoder_repetition_penalty': 1.0,
     'top_k': 0,
     'min_length': 0,
