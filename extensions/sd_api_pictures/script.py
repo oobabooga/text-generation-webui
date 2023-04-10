@@ -1,12 +1,13 @@
 import base64
 import io
 import re
-import time
-from datetime import date
 from pathlib import Path
+from datetime import date
+import time
 
 import gradio as gr
 import modules.shared as shared
+import modules.chat as chat
 import requests
 import torch
 from modules.models import reload_model, unload_model
@@ -16,22 +17,27 @@ torch._C._jit_set_profiling_mode(False)
 
 # parameters which can be customized in settings.json of webui
 params = {
-    'address': 'http://127.0.0.1:7860',
-    'mode': 0,  # modes of operation: 0 (Manual only), 1 (Immersive/Interactive - looks for words to trigger), 2 (Picturebook Adventure - Always on)
-    'manage_VRAM': False,
-    'save_img': False,
-    'SD_model': 'NeverEndingDream',  # not used right now
-    'prompt_prefix': '(Masterpiece:1.1), detailed, intricate, colorful',
-    'negative_prompt': '(worst quality, low quality:1.3)',
-    'width': 512,
-    'height': 512,
-    'restore_faces': False,
-    'seed': -1,
-    'sampler_name': 'DDIM',
-    'steps': 32,
-    'cfg_scale': 7
+    "address": "http://127.0.0.1:7860",
+    "mode": 0,  # modes of operation: 0 (Manual only), 1 (Immersive/Interactive - looks for words to trigger), 2 (Picturebook Adventure - Always on)
+    "manage_VRAM": False,
+    "save_img": False,
+    "sd_model_chekpoint": "dreamlikeDiffusion10_10.ckpt [0aecbcfa2c]",
+    "prompt_prefix": "(Masterpiece:1.1), detailed, intricate, colorful",
+    "negative_prompt": "(worst quality, low quality:1.3)",
+    "enable_hr": False,
+    "denoising_strength": 0.36,
+    "hr_scale": 2,
+    "hr_upscaler": "4x_NMKD-Superscale-SP_178000_G",
+    "hr_second_pass_steps": 0,
+    "seed": -1,
+    "batch_size": 1,
+    "steps": 36,
+    "cfg_scale": 7,
+    "width": 512,
+    "height": 768,
+    "restore_faces": False,
+    "sampler_index": "DPM++ SDE Karras"  
 }
-
 
 def give_VRAM_priority(actor):
     global shared, params
@@ -68,8 +74,19 @@ def give_VRAM_priority(actor):
 if params['manage_VRAM']:
     give_VRAM_priority('set')
 
-samplers = ['DDIM', 'DPM++ 2M Karras']  # TODO: get the availible samplers with http://{address}}/sdapi/v1/samplers
-SD_models = ['NeverEndingDream']  # TODO: get with http://{address}}/sdapi/v1/sd-models and allow user to select
+
+#list all upscalers to pass them on the buttom
+res_upscalers = requests.get(url=f'{params["address"]}/sdapi/v1/upscalers')
+upscalers = [upscaler['name'] for upscaler in res_upscalers.json()]
+#list samplers
+res_samplers = requests.get(url=f'{params["address"]}/sdapi/v1/samplers')
+samplers = [sampler['name'] for sampler in res_samplers.json()]
+#format the name of the checkpoint to pass on the options
+def format_model_name_and_hash(item):
+    return f"{item['model_name']} {item['hash']}"
+#get the models 
+res_models = requests.get(url=f'{params["address"]}/sdapi/v1/sd-models')
+sd_models = [format_model_name_and_hash(model) for model in res_models.json()]
 
 streaming_state = shared.args.no_stream  # remember if chat streaming was enabled
 picture_response = False  # specifies if the next model response should appear as a picture
@@ -113,28 +130,50 @@ def input_modifier(string):
 
 # Get and save the Stable Diffusion-generated picture
 def get_SD_pictures(description):
-
+   
     global params
 
     if params['manage_VRAM']:
         give_VRAM_priority('SD')
 
+    payload_options = {
+        "sd_model_checkpoint": params['sd_model_checkpoint']
+        #"sd_vae": params['sd_vae']
+    }
+
+
+    print(f'Updating parameters via the API on {params["address"]}...')
+    response = requests.post(url=f'{params["address"]}/sdapi/v1/options', json=payload_options)
+    response.raise_for_status()
+    r = response.json()
+
     payload = {
+
         "prompt": params['prompt_prefix'] + description,
+        "negative_prompt": params['negative_prompt'],
         "seed": params['seed'],
-        "sampler_name": params['sampler_name'],
-        "steps": params['steps'],
+        "sampler_index": params['sampler_index'],
+        "steps": params['steps'], 
         "cfg_scale": params['cfg_scale'],
         "width": params['width'],
         "height": params['height'],
         "restore_faces": params['restore_faces'],
-        "negative_prompt": params['negative_prompt']
+        "enable_hr": params['enable_hr'],
+        "hr_upscaler": params['hr_upscaler'],
+        "hr_scale": params['hr_scale'],
+        "restore_faces": params['restore_faces'],
+        "batch_size": params['batch_size'],
+        "denoising_strength": params['denoising_strength'],
+        "hr_second_pass_steps": params['hr_second_pass_steps']
+                 
     }
 
     print(f'Prompting the image generator via the API on {params["address"]}...')
     response = requests.post(url=f'{params["address"]}/sdapi/v1/txt2img', json=payload)
     response.raise_for_status()
     r = response.json()
+
+
 
     visible_result = ""
     for img_str in r['images']:
@@ -147,7 +186,7 @@ def get_SD_pictures(description):
             visible_result = visible_result + f'<img src="/file/extensions/sd_api_pictures/outputs/{variadic}.png" alt="{description}" style="max-width: unset; max-height: unset;">\n'
         else:
             # lower the resolution of received images for the chat, otherwise the log size gets out of control quickly with all the base64 values in visible history
-            image.thumbnail((300, 300))
+            image.thumbnail((400, 400))
             buffered = io.BytesIO()
             image.save(buffered, format="JPEG")
             buffered.seek(0)
@@ -155,8 +194,8 @@ def get_SD_pictures(description):
             img_str = "data:image/jpeg;base64," + base64.b64encode(image_bytes).decode()
             visible_result = visible_result + f'<img src="{img_str}" alt="{description}">\n'
 
-    if params['manage_VRAM']:
-        give_VRAM_priority('LLM')
+        if params['manage_VRAM']:
+            give_VRAM_priority('LLM')
 
     return visible_result
 
@@ -241,36 +280,51 @@ def SD_api_address_update(address):
 
     return gr.Textbox.update(label=msg)
 
-
 def ui():
 
-    # Gradio elements
-    # gr.Markdown('### Stable Diffusion API Pictures') # Currently the name of extension is shown as the title
     with gr.Accordion("Parameters", open=True):
+
+        with gr.Row():
+            generate_now_btn = gr.Button("Generate from input")
+        with gr.Row():    
+            force_pic = gr.Button("Force the picture response")
+            suppr_pic = gr.Button("Suppress the picture response")
+
         with gr.Row():
             address = gr.Textbox(placeholder=params['address'], value=params['address'], label='Auto1111\'s WebUI address')
             mode = gr.Dropdown(["Manual", "Immersive/Interactive", "Picturebook/Adventure"], value="Manual", label="Mode of operation", type="index")
+            
             with gr.Column(scale=1, min_width=300):
                 manage_VRAM = gr.Checkbox(value=params['manage_VRAM'], label='Manage VRAM')
                 save_img = gr.Checkbox(value=params['save_img'], label='Keep original images and use them in chat')
 
-            force_pic = gr.Button("Force the picture response")
-            suppr_pic = gr.Button("Suppress the picture response")
-
         with gr.Accordion("Generation parameters", open=False):
-            prompt_prefix = gr.Textbox(placeholder=params['prompt_prefix'], value=params['prompt_prefix'], label='Prompt Prefix (best used to describe the look of the character)')
             with gr.Row():
                 with gr.Column():
-                    negative_prompt = gr.Textbox(placeholder=params['negative_prompt'], value=params['negative_prompt'], label='Negative Prompt')
-                    sampler_name = gr.Textbox(placeholder=params['sampler_name'], value=params['sampler_name'], label='Sampler')
-                with gr.Column():
-                    width = gr.Slider(256, 768, value=params['width'], step=64, label='Width')
-                    height = gr.Slider(256, 768, value=params['height'], step=64, label='Height')
-            with gr.Row():
-                steps = gr.Number(label="Steps:", value=params['steps'])
-                seed = gr.Number(label="Seed:", value=params['seed'])
-                cfg_scale = gr.Number(label="CFG Scale:", value=params['cfg_scale'])
+                    width = gr.Slider(256, 1024, value=params['width'], step=64, label='Image width')
+                    height = gr.Slider(256, 1024, value=params['height'], step=64, label='Image height')
+                    seed = gr.Number(label="Seed:", value=params['seed'])
+                    cfg_scale = gr.Number(label="CFG Scale:", value=params['cfg_scale'])
+                    steps = gr.Number(label="Steps:", value=params['steps'])
+                    batch_size = gr.Slider(1, 6, value=params['batch_size'], step=1, label='batch size')
 
+                with gr.Column():
+                    restore_faces = gr.Checkbox(value=params['restore_faces'], label='Restore faces')
+                    enable_hr = gr.Checkbox(value=params['enable_hr'], label='Enable High Resolution')
+                    hr_upscaler = gr.Dropdown(label="Upscaler", choices=upscalers)
+                    denoising_strength = gr.Slider(0, 1, value=params['denoising_strength'], step=0.01, label='Denoising strength')
+                    hr_second_pass_steps = gr.Slider(0, 30, value=params['hr_second_pass_steps'], step=1, label='HR second pass steps')
+                    hr_scale = gr.Slider(0, 4, value=params['hr_scale'], step=0.5, label='HR scale')
+                
+            with gr.Row():
+                sd_model_checkpoint = gr.Dropdown(label="model", choices=sd_models)
+                sampler_index = gr.Dropdown(label="sampler", choices=samplers)
+                  
+            with gr.Accordion("Prompt settigns", open=False):
+                prompt_prefix = gr.Textbox(placeholder=params['prompt_prefix'], value=params['prompt_prefix'], label='Prompt Prefix (best used to describe the look of the character)')
+                with gr.Row():
+                    negative_prompt = gr.Textbox(placeholder=params['negative_prompt'], value=params['negative_prompt'], label='Negative Prompt')
+             
     # Event functions to update the parameters in the backend
     address.change(lambda x: params.update({"address": filter_address(x)}), address, None)
     mode.select(lambda x: params.update({"mode": x}), mode, None)
@@ -278,17 +332,30 @@ def ui():
     manage_VRAM.change(lambda x: params.update({"manage_VRAM": x}), manage_VRAM, None)
     manage_VRAM.change(lambda x: give_VRAM_priority('set' if x else 'reset'), inputs=manage_VRAM, outputs=None)
     save_img.change(lambda x: params.update({"save_img": x}), save_img, None)
-
+    sd_model_checkpoint.change(lambda x: params.update({"sd_model_checkpoint": x}), sd_model_checkpoint, None)
     address.submit(fn=SD_api_address_update, inputs=address, outputs=address)
     prompt_prefix.change(lambda x: params.update({"prompt_prefix": x}), prompt_prefix, None)
     negative_prompt.change(lambda x: params.update({"negative_prompt": x}), negative_prompt, None)
     width.change(lambda x: params.update({"width": x}), width, None)
-    height.change(lambda x: params.update({"height": x}), height, None)
-
-    sampler_name.change(lambda x: params.update({"sampler_name": x}), sampler_name, None)
+    height.change(lambda x: params.update({"height": x}), height, None)    
+    batch_size.change(lambda x: params.update({"batch_size": x}), batch_size, None)
+    hr_upscaler.change(lambda x: params.update({"hr_upscaler": x}), hr_upscaler, None)
+    restore_faces.change(lambda x: params.update({"restore_faces": x}), restore_faces, None)
+    enable_hr.change(lambda x: params.update({"enable_hr": x}), enable_hr, None)
+    denoising_strength.change(lambda x: params.update({"denoising_strength": x}), denoising_strength, None)
+    hr_second_pass_steps.change(lambda x: params.update({"hr_second_pass_steps": x}), hr_second_pass_steps, None)
+    hr_scale.change(lambda x: params.update({"hr_scale": x}), hr_scale, None)
+    sampler_index.change(lambda x: params.update({"sampler_index": x}), sampler_index, None)
     steps.change(lambda x: params.update({"steps": x}), steps, None)
     seed.change(lambda x: params.update({"seed": x}), seed, None)
     cfg_scale.change(lambda x: params.update({"cfg_scale": x}), cfg_scale, None)
 
+    #update the buttoms
     force_pic.click(lambda x: toggle_generation(True), inputs=force_pic, outputs=None)
     suppr_pic.click(lambda x: toggle_generation(False), inputs=suppr_pic, outputs=None)
+    generate_now_btn.click(lambda x: toggle_generation(True), inputs=generate_now_btn, outputs=None)    
+    generate_now_btn.click(eval('chat.chatbot_wrapper'), shared.input_params, shared.gradio['display'], show_progress=shared.args.no_stream)
+
+
+      
+    
