@@ -13,7 +13,7 @@ if shared.args.xformers:
     try:
         import xformers.ops
     except Exception:
-        print("Please install xformers before trying to use it", file=sys.stderr)
+        print("🔴 xformers not found! Please install it before trying to use it.", file=sys.stderr)
 
 def hijack_llama_attention():
     if shared.args.xformers:
