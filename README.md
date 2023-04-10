@@ -70,8 +70,13 @@ On Linux or WSL, it can be automatically installed with these two commands:
 curl -sL "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh" > "Miniconda3.sh"
 bash Miniconda3.sh
 ```
-
 Source: https://educe-ubc.github.io/conda.html
+
+#### 0.1 (Ubuntu) Install build tools
+```
+sudo apt-get update && sudo apt-get install build-essential
+```
+
 
 #### 1. Create a new conda environment
 
