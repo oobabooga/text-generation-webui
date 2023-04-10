@@ -1,12 +1,10 @@
 ## Using llama.cpp in the web UI
 
-1. Install [llama-cpp-python](https://github.com/abetlen/llama-cpp-python):
+1. Re-install the requirements.txt:
 
 ```
-pip install -U llama-cpp-python
+pip install -r requirements.txt -U
 ```
-
-(this has been left out of requirements.txt for now because it seems to break the one-click-installer)
 
 2. Follow the instructions in the llama.cpp README to generate the `ggml-model-q4_0.bin` file: https://github.com/ggerganov/llama.cpp#usage
 
@@ -18,7 +16,7 @@ pip install -U llama-cpp-python
 python server.py --model llamacpp-7b
 ```
 
-* This procedure should work for any `ggml*.bin` file.
+* This procedure should work for any `ggml*.bin` file. Just put it in a folder, and use the name of this folder as the argument after `--model` or as the model loaded inside the interface.
 * You can change the number of threads with `--threads N`.
 
 ## Performance
