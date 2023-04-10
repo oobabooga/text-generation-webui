@@ -174,7 +174,6 @@ def get_SD_pictures(description):
     r = response.json()
 
 
-
     visible_result = ""
     for img_str in r['images']:
         image = Image.open(io.BytesIO(base64.b64decode(img_str.split(",", 1)[0])))
@@ -194,8 +193,8 @@ def get_SD_pictures(description):
             img_str = "data:image/jpeg;base64," + base64.b64encode(image_bytes).decode()
             visible_result = visible_result + f'<img src="{img_str}" alt="{description}">\n'
 
-        if params['manage_VRAM']:
-            give_VRAM_priority('LLM')
+    if params['manage_VRAM']:
+        give_VRAM_priority('LLM')
 
     return visible_result
 
