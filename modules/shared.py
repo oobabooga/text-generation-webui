@@ -35,6 +35,7 @@ settings = {
     'greeting': 'Hello there!',
     'end_of_turn': '',
     'stop_at_newline': False,
+    'add_bos_token': True,
     'chat_prompt_size': 2048,
     'chat_prompt_size_min': 0,
     'chat_prompt_size_max': 2048,
