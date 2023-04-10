@@ -21,6 +21,9 @@ from modules.LoRA import add_lora_to_model
 from modules.models import load_model, load_soft_prompt, unload_model
 from modules.text_generation import generate_reply, stop_everything_event
 
+#adding for the ability for clean popup alerts
+import tkinter.messagebox as messagebox
+
 # Loading custom settings
 settings_file = None
 if shared.args.settings is not None and Path(shared.args.settings).exists():
@@ -124,7 +127,24 @@ def load_preset_values(preset_menu, state, return_dict=False):
         state.update(generate_params)
         return state, *[generate_params[k] for k in ['do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping']]
 
+def save_file_event(textbox, output_name):
+    if output_name:
+        filename = f"{output_name}.txt"
+    else:
+        filename = f"{datetime.now().strftime('%Y-%m-%d-%H%M%S')}.txt"
+    file_dir = os.path.join(os.getcwd(), "OutputExport")
+    if not os.path.exists(file_dir):
+        os.makedirs(file_dir)
+    file_path = os.path.join(file_dir, filename)
+    with open(file_path, "w") as f:
+        f.write(textbox)
+        #save_status.value = f"**Save of {filename} successful.**"
+    return f"Save of {filename} successful."
 
+def open_output_dir():
+    output_dir = os.path.join(os.getcwd(), "OutputExport")
+    os.startfile(output_dir)
+		
 def upload_soft_prompt(file):
     with zipfile.ZipFile(io.BytesIO(file)) as zf:
         zf.extract('meta.json')
@@ -170,13 +190,23 @@ def create_prompt_menus():
 
         with gr.Column():
             with gr.Row():
-                shared.gradio['prompt_name'] = gr.Textbox(type='text', lines=1, label='Custom Prompt Name')
-            with gr.Column():
+                shared.gradio['prompt_name'] = gr.Textbox(type='text', lines=1, label='Save Custom Prompt Name')
+            with gr.Column(elem_id="PromptSaveRow"):
                 shared.gradio['save_prompt'] = gr.Button('Save prompt')
-                shared.gradio['status'] = gr.Markdown('Ready')
+                shared.gradio['status'] = gr.Markdown('Status: Ready')
+            with gr.Row():
+                shared.gradio['OutputName'] = gr.Textbox(value="", elem_id="OutputName", lines=1, label="Save Notebook Output Name")
+            with gr.Row():
+                shared.gradio['Save'] = gr.Button('Save')
+                shared.gradio['OutputDir'] = gr.Button('Open Output Directory')
+            with gr.Row(elem_id="OutputSaveRow"):
+                save_status = gr.Markdown('Status: Ready')
+                shared.gradio['SaveStatus'] = save_status
 
     shared.gradio['prompt_menu'].change(load_prompt, [shared.gradio['prompt_menu']], [shared.gradio['textbox']], show_progress=False)
     shared.gradio['save_prompt'].click(save_prompt, [shared.gradio['textbox'], shared.gradio['prompt_name']], [shared.gradio['status']], show_progress=False)
+    shared.gradio['Save'].click(save_file_event, [shared.gradio['textbox'], shared.gradio['OutputName']], [shared.gradio['SaveStatus']], show_progress=False)
+    shared.gradio['OutputDir'].click(open_output_dir)
 
 def refresh_prompts():
     shared.gradio['refresh_button'].call()
@@ -471,7 +501,7 @@ def create_interface():
                 with gr.Row():
                     with gr.Column(scale=4):
                         with gr.Tab('Raw'):
-                            shared.gradio['textbox'] = gr.Textbox(value=default_text, elem_id="textbox", lines=27)
+                            shared.gradio['textbox'] = gr.Textbox(value=default_text, elem_id="textbox", lines=27, label="Notebook")
                         with gr.Tab('Markdown'):
                             shared.gradio['markdown'] = gr.Markdown()
                         with gr.Tab('HTML'):
