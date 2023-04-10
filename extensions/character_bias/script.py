@@ -20,6 +20,7 @@ params = {
     "use custom string": False,
 }
 
+
 def input_modifier(string):
     """
     This function is applied to your text inputs before
@@ -27,11 +28,13 @@ def input_modifier(string):
     """
     return string
 
+
 def output_modifier(string):
     """
     This function is applied to the model outputs.
     """
     return string
+
 
 def bot_prefix_modifier(string):
     """
@@ -46,6 +49,7 @@ def bot_prefix_modifier(string):
             return f'{string} {params["bias string"].strip()} '
     else:
         return string
+
 
 def ui():
     # Gradio elements
