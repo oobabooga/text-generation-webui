@@ -60,6 +60,11 @@ Recommended if you have some experience with the command-line.
 
 On Windows, I additionally recommend carrying out the installation on WSL instead of the base system: [WSL installation guide](https://github.com/oobabooga/text-generation-webui/wiki/WSL-installation-guide).
 
+Make sure you also have some sort of build environment for C++. If you installed Ubuntu on WSL you can run 
+```
+sudo apt install build-essential
+```
+
 #### 0. Install Conda
 
 https://docs.conda.io/en/latest/miniconda.html
