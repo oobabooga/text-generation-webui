@@ -29,7 +29,7 @@ def generate_chat_prompt(user_input, max_new_tokens, name1, name2, context, chat
     # Finding the maximum prompt size
     if shared.soft_prompt:
         chat_prompt_size -= shared.soft_prompt_tensor.shape[1]
-    max_length = min(get_max_prompt_length(max_new_tokens), chat_prompt_size)
+    max_length = min(get_max_prompt_length(0), chat_prompt_size)
 
     if is_instruct:
         prefix1 = f"{name1}\n"
