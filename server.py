@@ -24,6 +24,7 @@ from modules.LoRA import add_lora_to_model
 from modules.models import load_model, load_soft_prompt, unload_model
 from modules.text_generation import generate_reply, stop_everything_event
 
+
 # Loading custom settings
 settings_file = None
 if shared.args.settings is not None and Path(shared.args.settings).exists():
@@ -196,7 +197,7 @@ def download_model_wrapper(repo_id):
             yield("Checking previously downloaded files")
             downloader.check_model_files(model, branch, links, sha256, output_folder)
         else:
-            yield("Downloading files")
+            yield(f"Downloading files to {output_folder}")
             downloader.download_model_files(model, branch, links, sha256, output_folder, threads=1)
             yield("Done!")
     except:
@@ -220,7 +221,7 @@ def create_model_menus():
                     shared.gradio['custom_model_menu'] = gr.Textbox(label="Download Custom Model",
                                                                     info="Enter Hugging Face username/model path e.g: facebook/galactica-125m")
                 with gr.Column():
-                    shared.gradio['download_button'] = gr.Button("Download", show_progress=True)
+                    shared.gradio['download_button'] = gr.Button("Download")
                     shared.gradio['download_status'] = gr.Markdown()
         with gr.Column():
             pass
