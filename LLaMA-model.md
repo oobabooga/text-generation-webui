@@ -103,5 +103,5 @@ python convert_llama_weights_to_hf.py --input_dir /path/to/LLaMA --model_size 7B
 ### Starting the web UI
 
 ```python
-python server.py --model llama-7b
+python server.py --model llama-7b-converted
 ```
