@@ -186,7 +186,7 @@ def load_model(model_name):
             tokenizer.bos_token_id = 1
             tokenizer.pad_token_id = 0
         except:
-            continue
+            pass
     else:
         tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/{shared.model_name}/"))
     tokenizer.truncation_side = 'left'
