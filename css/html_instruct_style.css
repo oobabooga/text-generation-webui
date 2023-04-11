@@ -42,7 +42,7 @@
 .message-body code {
     overflow-x: auto;
 }
-.message-body code:not([class^='language-']) {
+.message-body :not(pre) > code {
     white-space: normal !important;
 }
 
