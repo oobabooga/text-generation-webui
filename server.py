@@ -366,9 +366,8 @@ def list_interface_input_elements(chat=False):
 
 def gather_interface_values(*args):
     output = {}
-    for i, el in enumerate(shared.input_elements):
-        output[el] = args[i]
-    print(output)
+    for i, element in enumerate(shared.input_elements):
+        output[element] = args[i]
     return output
 
 
