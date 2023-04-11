@@ -10,6 +10,7 @@ import modules.shared as shared
 import requests
 import torch
 import json
+import yaml
 from modules.models import reload_model, unload_model
 from PIL import Image
 
@@ -156,13 +157,20 @@ def create_suffix():
     params['positive_suffix'] = ""
     params['negative_suffix'] = ""
     _character = shared.character
-    data = json.loads(open(Path(f'characters/{_character}.json'), 'r', encoding='utf-8').read())
+    for extension in  ["yml", "yaml", "json"]:
+        filepath = Path(f'characters/{_character}.{extension}')
+        if filepath.exists():
+            if extension is "json":
+                data = json.loads(open(filepath, 'r', encoding='utf-8').read())
+            else:
+                data = yaml.safe_load(open(filepath, 'r', encoding='utf-8').read())
+            break
     if params['nsfw']:
         params['positive_suffix'] = params['nsfw_prompts'] + ", " + params['prompt_translation_negative']
         params['negative_suffix'] = params['anti_nsfw_prompts'] + ", " + params['prompt_translation_negative']
     if params['characterfocus']:
         params['positive_suffix'] = data['positive_sd'] + ", " + params['prompt_translation_positive']
-        params['negative_suffix'] = data['negative_sd'] + ", " + params['nsfw_prompts'] + ", " + params['prompt_translation_negative']
+        params['negative_suffix'] = data['negative_sd'] + ", " + params['prompt_translation_negative']
         if params['nsfw']:
             params['positive_suffix'] = params['nsfw_prompts'] + ", " + data['positive_sd'] + ", " + params['prompt_translation_positive']
             params['negative_suffix'] = params['anti_nsfw_prompts'] + ", " + data['negative_sd'] + ", " + params['prompt_translation_negative']
