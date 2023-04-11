@@ -2,7 +2,7 @@ You have now entered a hidden corner of the internet.
 
 A confusing yet intriguing realm of paradoxes and contradictions.
 
-A place where you will find out that what you thought you knew, you in fact didn't know, and what you didn't know was right in front of you all along.
+A place where you will find out that what you thought you knew, you in fact didn't know, and what you didn't know was in front of you all along.
 
 ![](https://i.pinimg.com/originals/6e/e2/7b/6ee27bad351d3aca470d80f1033ba9c6.jpg)
 
