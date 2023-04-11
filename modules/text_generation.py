@@ -197,6 +197,8 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
             generate_params[k] = state[k]
         generate_params['eos_token_id'] = eos_token_ids
         generate_params['stopping_criteria'] = stopping_criteria_list
+        if state['ban_eos_token']:
+            generate_params['suppress_tokens'] = [shared.tokenizer.eos_token_id]
     else:
         for k in ['max_new_tokens', 'do_sample', 'temperature']:
             generate_params[k] = state[k]
