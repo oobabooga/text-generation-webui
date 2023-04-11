@@ -54,11 +54,11 @@ Whenever the Activate SD translations box is checked, the extension will load th
 {
 	"pairs": [{
 		"descriptive_word": ["tennis"],
-		"SD_positive_translation": "1ball, 2rackets, (net)",
+		"SD_positive_translation": "tennis ball, rackets, (net), <lora:povTennisPlaying_lora:0.5>",
 		"SD_negative_translation": ""
 	        },
 		{"descriptive_word": ["soccer","football"],
-		"SD_positive_translation": "((soccer)), 2nets",
+		"SD_positive_translation": "((soccer)), nets",
 		"SD_negative_translation": ""
 	    }]
 }
