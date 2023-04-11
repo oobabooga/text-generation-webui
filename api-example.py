@@ -35,6 +35,8 @@ params = {
     'length_penalty': 1,
     'early_stopping': False,
     'seed': -1,
+    'add_bos_token': True,
+    'custom_stopping_strings': [],
 }
 
 # Input prompt
