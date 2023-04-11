@@ -34,6 +34,38 @@ The model input is modified only in the interactive mode; other two are unaffect
 Connection check (insert the Auto1111's address and press Enter):  
 ![API-check](https://raw.githubusercontent.com/Brawlence/texgen-webui-SD_api_pics/main/illust/API-check.gif) 
 
+### Character sheet Stable Diffusion tags
+
+To help your character maintain a better fixed image, add positive_sd and negative_sd to your character's json file to have Stable Diffusion tags that define their appearance automatically added to Stable Diffusion prompts whenever the extension detects the character is referring to itself, ex:
+
+```json
+{
+	"positive_sd": "24 year old, asian, long blond hair, ((twintail)), blue eyes, soft skin, height 5'8, woman, <lora:shojovibe_v11:0.1>",
+	"negative_sd": "old, elderly, child, deformed, cross-eyed"
+}
+```
+If clothing and accessories are permanently affixed and will never be changed in any picture you will request of that character, feel free to add them to this tag too. The extension prompts the character to describe what it is wearing whenever a picture of itself is requested as to keep that aspect dynamic, so adding it in the character json makes it more static.
+
+### Description to Stable Diffusion translation
+
+Whenever the Activate SD translations box is checked, the extension will load the translations.json file when a picture is requested, and will check in both the request to the language model, as well as the response of the language model, for specific words listed in the translations.json file and will add words or tags to the Stable Diffusion prompt accordingly, ex:
+
+```json
+{
+	"pairs": [{
+		"descriptive_word": ["tennis"],
+		"SD_positive_translation": "1ball, 2rackets, (net)",
+		"SD_negative_translation": ""
+	        },
+		{"descriptive_word": ["soccer","football"],
+		"SD_positive_translation": "((soccer)), 2nets",
+		"SD_negative_translation": ""
+	    }]
+}
+```
+
+The tags can also include Stable Diffusion LORAs if you have any that are relevant.
+
 ### Persistents settings
 
 Create or modify the `settings.json` in the `text-generation-webui` root directory to override the defaults
@@ -44,6 +76,8 @@ present in script.py, ex:
     "sd_api_pictures-manage_VRAM": 1,
     "sd_api_pictures-save_img": 1,
     "sd_api_pictures-prompt_prefix": "(Masterpiece:1.1), detailed, intricate, colorful, (solo:1.1)",
+    "sd_api_pictures-nsfw_prompts": "nsfw, naked",
+    "sd_api_pictures-anti_nsfw_prompts": "young, old",
     "sd_api_pictures-sampler_name": "DPM++ 2M Karras"
 }
 ```
