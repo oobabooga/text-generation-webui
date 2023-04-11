@@ -100,10 +100,10 @@ def load_quantized(model_name):
     found_safetensors = list(path_to_model.glob("*.safetensors"))
     pt_path = None
 
-    if len(found_pts) == 1:
-        pt_path = found_pts[0]
-    elif len(found_safetensors) == 1:
-        pt_path = found_safetensors[0]
+    if len(found_pts) > 0:
+        pt_path = found_pts[-1]
+    elif len(found_safetensors) > 0:
+        pt_path = found_safetensors[-1]
     else:
         if path_to_model.name.lower().startswith('llama-7b'):
             pt_model = f'llama-7b-{shared.args.wbits}bit'
@@ -119,13 +119,14 @@ def load_quantized(model_name):
         # Try to find the .safetensors or .pt both in the model dir and in the subfolder
         for path in [Path(p + ext) for ext in ['.safetensors', '.pt'] for p in [f"{shared.args.model_dir}/{pt_model}", f"{path_to_model}/{pt_model}"]]:
             if path.exists():
-                print(f"Found {path}")
                 pt_path = path
                 break
 
     if not pt_path:
         print("Could not find the quantized model in .pt or .safetensors format, exiting...")
         exit()
+    else:
+        print(f"Found the following quantized model: {pt_path}")
 
     # qwopqwop200's offload
     if model_type == 'llama' and shared.args.pre_layer:

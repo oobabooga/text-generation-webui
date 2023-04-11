@@ -238,7 +238,7 @@ def do_train(lora_name: str, micro_batch_size: int, batch_size: int, epochs: int
             warmup_steps=100,
             num_train_epochs=epochs,
             learning_rate=actual_lr,
-            fp16=True,
+            fp16=False if shared.args.cpu else True,
             logging_steps=20,
             evaluation_strategy="steps" if eval_data is not None else "no",
             save_strategy="steps",
@@ -248,7 +248,8 @@ def do_train(lora_name: str, micro_batch_size: int, batch_size: int, epochs: int
             save_total_limit=3,
             load_best_model_at_end=True if eval_data is not None else False,
             # TODO: Enable multi-device support
-            ddp_find_unused_parameters=None
+            ddp_find_unused_parameters=None,
+            no_cuda=shared.args.cpu
         ),
         data_collator=transformers.DataCollatorForLanguageModeling(shared.tokenizer, mlm=False),
         callbacks=list([Callbacks()])
