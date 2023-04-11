@@ -174,10 +174,14 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
     eos_token_ids = [shared.tokenizer.eos_token_id] if shared.tokenizer.eos_token_id is not None else []
     if eos_token is not None:
         eos_token_ids.append(int(encode(eos_token)[0][-1]))
+
+    # Handling the stopping strings
     stopping_criteria_list = transformers.StoppingCriteriaList()
-    if type(stopping_strings) is list and len(stopping_strings) > 0:
-        t = [encode(string, 0, add_special_tokens=False) for string in stopping_strings]
-        stopping_criteria_list.append(_SentinelTokenStoppingCriteria(sentinel_token_ids=t, starting_idx=len(input_ids[0])))
+    for st in [stopping_strings, state['custom_stopping_strings']]:
+        if type(st) is list and len(st) > 0:
+            sentinel_token_ids = [encode(string, 0, add_special_tokens=False) for string in st]
+            stopping_criteria_list.append(_SentinelTokenStoppingCriteria(sentinel_token_ids=sentinel_token_ids, starting_idx=len(input_ids[0])))
+            break
 
     if not shared.args.flexgen:
         for k in ['max_new_tokens', 'do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping']:

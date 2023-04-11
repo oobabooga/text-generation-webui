@@ -74,8 +74,18 @@ def generate_chat_prompt(user_input, max_new_tokens, name1, name2, context, chat
         return prompt
 
 
+def get_stopping_strings(state):
+    if state['mode'] == 'instruct':
+        stopping_strings = [f"\n{state['name1']}", f"\n{state['name2']}"]
+    else:
+        stopping_strings = [f"\n{state['name1']}:", f"\n{state['name2']}:"]
+    stopping_strings += state['custom_stopping_strings']
+    return stopping_strings
+
+
 def extract_message_from_reply(reply, state):
     next_character_found = False
+    stopping_strings = get_stopping_strings(state)
 
     if state['stop_at_newline']:
         lines = reply.split('\n')
@@ -83,7 +93,7 @@ def extract_message_from_reply(reply, state):
         if len(lines) > 1:
             next_character_found = True
     else:
-        for string in [f"\n{state['name1']}:", f"\n{state['name2']}:"]:
+        for string in stopping_strings:
             idx = reply.find(string)
             if idx != -1:
                 reply = reply[:idx]
@@ -92,7 +102,7 @@ def extract_message_from_reply(reply, state):
         # If something like "\nYo" is generated just before "\nYou:"
         # is completed, trim it
         if not next_character_found:
-            for string in [f"\n{state['name1']}:", f"\n{state['name2']}:"]:
+            for string in stopping_strings:
                 for j in range(len(string) - 1, 0, -1):
                     if reply[-j:] == string[:j]:
                         reply = reply[:-j]
@@ -106,10 +116,6 @@ def extract_message_from_reply(reply, state):
 
 
 def chatbot_wrapper(text, state, regenerate=False, _continue=False):
-    if state['mode'] == 'instruct':
-        stopping_strings = [f"\n{state['name1']}", f"\n{state['name2']}"]
-    else:
-        stopping_strings = [f"\n{state['name1']}:", f"\n{state['name2']}:"]
 
     # Defining some variables
     cumulative_reply = ''
@@ -117,6 +123,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False):
     just_started = True
     visible_text = custom_generate_chat_prompt = None
     eos_token = '\n' if state['stop_at_newline'] else None
+    stopping_strings = get_stopping_strings(state)
 
     # Check if any extension wants to hijack this function call
     for extension, _ in extensions_module.iterator():
@@ -186,15 +193,12 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False):
 
 
 def impersonate_wrapper(text, state):
-    if state['mode'] == 'instruct':
-        stopping_strings = [f"\n{state['name1']}", f"\n{state['name2']}"]
-    else:
-        stopping_strings = [f"\n{state['name1']}:", f"\n{state['name2']}:"]
 
     # Defining some variables
     cumulative_reply = ''
     eos_token = '\n' if state['stop_at_newline'] else None
     prompt = generate_chat_prompt(text, state['max_new_tokens'], state['name1'], state['name2'], state['context'], state['chat_prompt_size'], end_of_turn=state['end_of_turn'], impersonate=True)
+    stopping_strings = get_stopping_strings(state)
 
     # Yield *Is typing...*
     yield shared.processing_message

@@ -34,6 +34,7 @@ settings = {
     'context': 'This is a conversation with your Assistant. The Assistant is very helpful and is eager to chat with you and answer your questions.',
     'greeting': 'Hello there!',
     'end_of_turn': '',
+    'custom_stopping_strings': '',
     'stop_at_newline': False,
     'add_bos_token': True,
     'chat_prompt_size': 2048,
