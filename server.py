@@ -232,9 +232,8 @@ def create_model_menus():
 
 
 def create_settings_menus(default_preset):
+
     generate_params = load_preset_values(default_preset if not shared.args.flexgen else 'Naive', {}, return_dict=True)
-    for k in ['max_new_tokens', 'seed', 'stop_at_newline', 'chat_prompt_size', 'chat_generation_attempts', 'add_bos_token']:
-        generate_params[k] = shared.settings[k]
 
     with gr.Row():
         with gr.Column():
