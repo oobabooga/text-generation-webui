@@ -130,15 +130,16 @@ def input_modifier(string):
         toggle_generation(True)
         string = string.lower()
         if "of" in string:
-            subject = string.split('of', 1)[1]  # subdivide the string once by the first 'of' instance and get what's coming after it
-            string = "Please provide a detailed and vivid description of " + subject
+            if any(target in string for target in subjects):                                           # the focus of the image should be on the sending character
+                params['characterfocus'] = True
+                string = string.replace("yourself","you")
+                after_you = string.split("you")[1]
+                string = "Describe what you are currently wearing, your environment and yourself performing the following action: " + after_you
+            else:
+                subject = string.split('of', 1)[1]  # subdivide the string once by the first 'of' instance and get what's coming after it
+                string = "Please provide a detailed and vivid description of " + subject
         else:
             string = "Please provide a detailed description of your appearance, your surroundings and what you are doing right now"
-        if any(target in string for target in subjects):                                           # the focus of the image should be on the sending character
-            params['characterfocus'] = True
-            string = string.replace("yourself","you")
-            before_marker, subject_marker, after_marker = string.partition("you")
-            string = "Describe what you are currently wearing, your environment and yourself performing the following action: " + after_marker
         if params['translations']:           # If any of the words in the prompt match the translations and the translations are on, add those to the SD prompt
             tpatterns = json.loads(open(Path(f'extensions/sd_api_pictures/translations.json'), 'r', encoding='utf-8').read())
             for word_pair in tpatterns['pairs']:
