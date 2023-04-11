@@ -9,8 +9,9 @@ import gradio as gr
 import modules.shared as shared
 import requests
 import torch
+import json
 from modules.models import reload_model, unload_model
-from PIL import Image
+from PIL import Image, PngImagePlugin
 
 torch._C._jit_set_profiling_mode(False)
 
@@ -19,16 +20,16 @@ params = {
     'address': 'http://127.0.0.1:7860',
     'mode': 0,  # modes of operation: 0 (Manual only), 1 (Immersive/Interactive - looks for words to trigger), 2 (Picturebook Adventure - Always on)
     'manage_VRAM': False,
-    'save_img': False,
+    'save_img': True,
     'SD_model': 'NeverEndingDream',  # not used right now
-    'prompt_prefix': '(Masterpiece:1.1), detailed, intricate, colorful',
-    'negative_prompt': '(worst quality, low quality:1.3)',
+    'prompt_prefix': '(Masterpiece:1.1), detailed, intricate, colorful ',
+    'negative_prompt': 'blender, cropped, lowres, poorly drawn face, out of frame, poorly drawn hands, blurry, bad art, blurred, text, watermark, disfigured, deformed, closed eyes, lowres, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry',
     'width': 512,
-    'height': 512,
+    'height': 768,
     'restore_faces': False,
     'seed': -1,
-    'sampler_name': 'DDIM',
-    'steps': 32,
+    'sampler_name': 'DPM++ 2M Karras',
+    'steps': 20,
     'cfg_scale': 7
 }
 
@@ -143,7 +144,13 @@ def get_SD_pictures(description):
             variadic = f'{date.today().strftime("%Y_%m_%d")}/{shared.character}_{int(time.time())}'
             output_file = Path(f'extensions/sd_api_pictures/outputs/{variadic}.png')
             output_file.parent.mkdir(parents=True, exist_ok=True)
-            image.save(output_file.as_posix())
+            png_payload = {
+               "image": "data:image/png;base64," + img_str
+            }  
+            response2 = requests.post(url=f'{params["address"]}/sdapi/v1/png-info', json=png_payload)
+            pnginfo = PngImagePlugin.PngInfo()
+            pnginfo.add_text("parameters", response2.json().get("info"))
+            image.save(output_file.as_posix(), pnginfo=pnginfo)
             visible_result = visible_result + f'<img src="/file/extensions/sd_api_pictures/outputs/{variadic}.png" alt="{description}" style="max-width: unset; max-height: unset;">\n'
         else:
             # lower the resolution of received images for the chat, otherwise the log size gets out of control quickly with all the base64 values in visible history
