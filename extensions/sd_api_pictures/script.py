@@ -9,6 +9,7 @@ import gradio as gr
 import modules.shared as shared
 import requests
 import torch
+import json
 from modules.models import reload_model, unload_model
 from PIL import Image
 
@@ -29,7 +30,18 @@ params = {
     'seed': -1,
     'sampler_name': 'DDIM',
     'steps': 32,
-    'cfg_scale': 7
+    'cfg_scale': 7,
+    'characterfocus': False,
+    'nsfw': False,
+    'translations': False,
+    'character': "",
+    'anti_nsfw_prompts': '',
+    'nsfw_prompts': '',
+    'prompt_translation_positive': "",
+    'prompt_translation_negative': "",
+    'positive_suffix': "",
+    'negative_suffix': ""
+
 }
 
 
@@ -75,6 +87,16 @@ streaming_state = shared.args.no_stream  # remember if chat streaming was enable
 picture_response = False  # specifies if the next model response should appear as a picture
 
 
+def add_translations(description):
+    global params
+    if params['translations']:
+        tpatterns = json.loads(open(Path(f'extensions/sd_api_pictures/translations.json'), 'r', encoding='utf-8').read())
+        for word_pair in tpatterns['pairs']:
+            if any(target in description for target in word_pair['descriptive_word']):
+                params['positive_suffix'] = params['positive_suffix'] + ", " + word_pair['SD_positive_translation']
+                params['negative_suffix'] = params['negative_suffix'] + ", " + word_pair['SD_negative_translation']
+
+
 def remove_surrounded_chars(string):
     # this expression matches to 'as few symbols as possible (0 upwards) between any asterisks' OR
     # 'as few symbols as possible (0 upwards) between an asterisk and the end of the string'
@@ -99,6 +121,10 @@ def input_modifier(string):
 
     if not params['mode'] == 1:  # if not in immersive/interactive mode, do nothing
         return string
+    params['characterfocus'] = False
+    params['prompt_translation_positive'] = ""
+    params['prompt_translation_negative'] = ""
+    subjects = ['yourself', 'you']
 
     if triggers_are_in(string):  # if we're in it, check for trigger words
         toggle_generation(True)
@@ -108,8 +134,38 @@ def input_modifier(string):
             string = "Please provide a detailed and vivid description of " + subject
         else:
             string = "Please provide a detailed description of your appearance, your surroundings and what you are doing right now"
+        if any(target in string for target in subjects):                                           # the focus of the image should be on the sending character
+            params['characterfocus'] = True
+            string = string.replace("yourself","you")
+            before_marker, subject_marker, after_marker = string.partition("you")
+            string = "Describe what you are currently wearing, your environment and yourself performing the following action: " + after_marker
+        if params['translations']:           # If any of the words in the prompt match the translations and the translations are on, add those to the SD prompt
+            tpatterns = json.loads(open(Path(f'extensions/sd_api_pictures/translations.json'), 'r', encoding='utf-8').read())
+            for word_pair in tpatterns['pairs']:
+                if any(target in string for target in word_pair['descriptive_word']):
+                    params['prompt_translation_positive'] = word_pair['SD_positive_translation']
+                    params['prompt_translation_negative'] = word_pair['SD_negative_translation']
 
     return string
+
+
+# Add NSFW tags if NSFW is enabled, add character sheet tags if character is describing itself
+def create_suffix():
+    global params
+    params['positive_suffix'] = ""
+    params['negative_suffix'] = ""
+    _character = shared.character
+    data = json.loads(open(Path(f'characters/{_character}.json'), 'r', encoding='utf-8').read())
+    if params['nsfw']:
+        params['positive_suffix'] = params['nsfw_prompts'] + ", " + params['prompt_translation_negative']
+        params['negative_suffix'] = params['anti_nsfw_prompts'] + ", " + params['prompt_translation_negative']
+    if params['characterfocus']:
+        params['positive_suffix'] = data['positive_sd'] + ", " + params['prompt_translation_positive']
+        params['negative_suffix'] = data['negative_sd'] + ", " + params['nsfw_prompts'] + ", " + params['prompt_translation_negative']
+        if params['nsfw']:
+            params['positive_suffix'] = params['nsfw_prompts'] + ", " + data['positive_sd'] + ", " + params['prompt_translation_positive']
+            params['negative_suffix'] = params['anti_nsfw_prompts'] + ", " + data['negative_sd'] + ", " + params['prompt_translation_negative']
+
 
 # Get and save the Stable Diffusion-generated picture
 def get_SD_pictures(description):
@@ -119,8 +175,11 @@ def get_SD_pictures(description):
     if params['manage_VRAM']:
         give_VRAM_priority('SD')
 
+    create_suffix()
+    add_translations(description)
+
     payload = {
-        "prompt": params['prompt_prefix'] + description,
+        "prompt": params['prompt_prefix'] + ", " + description + ", " + params['positive_suffix'],
         "seed": params['seed'],
         "sampler_name": params['sampler_name'],
         "steps": params['steps'],
@@ -128,7 +187,7 @@ def get_SD_pictures(description):
         "width": params['width'],
         "height": params['height'],
         "restore_faces": params['restore_faces'],
-        "negative_prompt": params['negative_prompt']
+        "negative_prompt": params['negative_prompt'] + ", " + params['negative_suffix']
     }
 
     print(f'Prompting the image generator via the API on {params["address"]}...')
@@ -253,6 +312,8 @@ def ui():
             with gr.Column(scale=1, min_width=300):
                 manage_VRAM = gr.Checkbox(value=params['manage_VRAM'], label='Manage VRAM')
                 save_img = gr.Checkbox(value=params['save_img'], label='Keep original images and use them in chat')
+                nsfw = gr.Checkbox(value=params['nsfw'], label='Add NSFW tags in prompt')
+                translations = gr.Checkbox(value=params['translations'], label='Activate SD translations')
 
             force_pic = gr.Button("Force the picture response")
             suppr_pic = gr.Button("Suppress the picture response")
@@ -280,6 +341,8 @@ def ui():
     save_img.change(lambda x: params.update({"save_img": x}), save_img, None)
 
     address.submit(fn=SD_api_address_update, inputs=address, outputs=address)
+    nsfw.change(lambda x: params.update({"nsfw": x}), nsfw, None)
+    translations.change(lambda x: params.update({"translations": x}), translations, None)
     prompt_prefix.change(lambda x: params.update({"prompt_prefix": x}), prompt_prefix, None)
     negative_prompt.change(lambda x: params.update({"negative_prompt": x}), negative_prompt, None)
     width.change(lambda x: params.update({"width": x}), width, None)
