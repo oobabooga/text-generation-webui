@@ -20,7 +20,6 @@ gradio = {}
 
 # Generation input parameters
 input_params = []
-stopping_strings = []
 
 # For restarting the interface
 need_restart = False

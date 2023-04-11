@@ -467,7 +467,6 @@ def create_interface():
             clear_arr = [shared.gradio[k] for k in ['Clear history-confirm', 'Clear history', 'Clear history-cancel']]
             reload_inputs = [shared.gradio[k] for k in ['name1', 'name2', 'mode']]
 
-
             gen_events.append(shared.gradio['Generate'].click(
                 gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
                 lambda x: (x, ''), shared.gradio['textbox'], [shared.gradio['Chat input'], shared.gradio['textbox']], show_progress=False).then(
