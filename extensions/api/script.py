@@ -57,12 +57,13 @@ class Handler(BaseHTTPRequestHandler):
                 'length_penalty': float(body.get('length_penalty', 1)),
                 'early_stopping': bool(body.get('early_stopping', False)),
                 'seed': int(body.get('seed', -1)),
+                'add_bos_token': int(body.get('add_bos_token', True)),
+                'custom_stopping_strings': body.get('custom_stopping_strings', []),
             }
 
             generator = generate_reply(
                 prompt,
                 generate_params,
-                stopping_strings=body.get('stopping_strings', []),
             )
 
             answer = ''
