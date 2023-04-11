@@ -19,7 +19,7 @@ torch._C._jit_set_profiling_mode(False)
 # parameters which can be customized in settings.json of webui
 params = {
     'address': 'http://127.0.0.1:7860',
-    'mode': 0,  # modes of operation: 0 (Manual only), 1 (Immersive/Interactive - looks for words to trigger), 2 (Picturebook Adventure - Always on)
+    'mode': 1,  # modes of operation: 0 (Manual only), 1 (Immersive/Interactive - looks for words to trigger), 2 (Picturebook Adventure - Always on)
     'manage_VRAM': False,
     'save_img': False,
     'SD_model': 'NeverEndingDream',  # not used right now
@@ -111,22 +111,12 @@ def triggers_are_in(string):
     # (?aims) are regex parser flags
     return bool(re.search('(?aims)(send|mail|message|me)\\b.+?\\b(image|pic(ture)?|photo|snap(shot)?|selfie|meme)s?\\b', string))
 
-
-def input_modifier(string):
-    """
-    This function is applied to your text inputs before
-    they are fed into the model.
-    """
-
-    global params
-
-    if not params['mode'] == 1:  # if not in immersive/interactive mode, do nothing
-        return string
+def if_of_is_in(string):
+    toggle_generation(False)
+    subjects = ['yourself', 'you']
     params['characterfocus'] = False
     params['prompt_translation_positive'] = ""
     params['prompt_translation_negative'] = ""
-    subjects = ['yourself', 'you']
-
     if triggers_are_in(string):  # if we're in it, check for trigger words
         toggle_generation(True)
         string = string.lower()
@@ -150,8 +140,29 @@ def input_modifier(string):
                 if any(target in string for target in word_pair['descriptive_word']):
                     params['prompt_translation_positive'] = word_pair['SD_positive_translation']
                     params['prompt_translation_negative'] = word_pair['SD_negative_translation']
+        return string
+    else:
+        return string
 
-    return string
+def input_modifier(string):
+    """
+    This function is applied to your text inputs before
+    they are fed into the model.
+    """
+
+    global params
+
+    if params['mode'] == 1:  # if not in immersive/interactive mode, do nothing
+            return if_of_is_in(string)
+    if params['mode'] == 2:
+        params['characterfocus'] = False
+        toggle_generation(True)
+        string = string.lower()
+        return string
+    if params['mode'] == 0:
+        toggle_generation(False)
+        return string
+
 
 
 # Add NSFW tags if NSFW is enabled, add character sheet tags if character is describing itself
