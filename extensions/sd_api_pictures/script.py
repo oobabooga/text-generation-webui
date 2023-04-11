@@ -37,7 +37,7 @@ params = {
     'translations': False,
     'character': "",
     'anti_nsfw_prompts': '',
-    'nsfw_prompts': '',
+    'nsfw_prompts': '(nsfw, nude, naked:1.2)',
     'prompt_translation_positive': "",
     'prompt_translation_negative': "",
     'positive_suffix': "",
@@ -134,11 +134,14 @@ def input_modifier(string):
             if any(target in string for target in subjects):                                           # the focus of the image should be on the sending character
                 params['characterfocus'] = True
                 string = string.replace("yourself","you")
-                after_you = string.split("you")[1]
-                string = "Describe what you are currently wearing, your environment and yourself performing the following action: " + after_you
+                after_you = string.split("you", 1)[1] # subdivide the string once by the first 'you' instance and get what's coming after it
+                if after_you != '':
+                    string = "Describe what you are currently wearing, your environment and yourself performing the following action: " + after_you.strip()
+                else:
+                    string = "Describe what you are currently wearing, your environment and yourself"
             else:
                 subject = string.split('of', 1)[1]  # subdivide the string once by the first 'of' instance and get what's coming after it
-                string = "Please provide a detailed and vivid description of " + subject
+                string = "Please provide a detailed and vivid description of " + subject.strip()
         else:
             string = "Please provide a detailed description of your appearance, your surroundings and what you are doing right now"
         if params['translations']:           # If any of the words in the prompt match the translations and the translations are on, add those to the SD prompt
@@ -156,24 +159,32 @@ def create_suffix():
     global params
     params['positive_suffix'] = ""
     params['negative_suffix'] = ""
-    _character = shared.character
-    for extension in  ["yml", "yaml", "json"]:
-        filepath = Path(f'characters/{_character}.{extension}')
-        if filepath.exists():
-            if extension is "json":
-                data = json.loads(open(filepath, 'r', encoding='utf-8').read())
-            else:
-                data = yaml.safe_load(open(filepath, 'r', encoding='utf-8').read())
-            break
+
+    # load character data from json, yaml, or yml file
+    if shared.character != 'None':
+        found_file = False
+        folder1 = 'characters'
+        folder2 = 'characters/instruction-following'
+        for folder in [folder1, folder2]:
+            for extension in ["yml", "yaml", "json"]:
+                filepath = Path(f'{folder}/{shared.character}.{extension}')
+                if filepath.exists():
+                    found_file = True
+                    break
+            if found_file:
+                break
+        file_contents = open(filepath, 'r', encoding='utf-8').read()
+        data = json.loads(file_contents) if extension == "json" else yaml.safe_load(file_contents)
+
     if params['nsfw']:
-        params['positive_suffix'] = params['nsfw_prompts'] + ", " + params['prompt_translation_negative']
+        params['positive_suffix'] = params['nsfw_prompts'] + ", " + params['prompt_translation_positive']
         params['negative_suffix'] = params['anti_nsfw_prompts'] + ", " + params['prompt_translation_negative']
     if params['characterfocus']:
-        params['positive_suffix'] = data['positive_sd'] + ", " + params['prompt_translation_positive']
-        params['negative_suffix'] = data['negative_sd'] + ", " + params['prompt_translation_negative']
+        params['positive_suffix'] = data['positive_sd'] + ", " + params['prompt_translation_positive'] if 'positive_sd' in data else params['prompt_translation_positive']
+        params['negative_suffix'] = data['negative_sd'] + ", " + params['nsfw_prompts'] + ", " + params['prompt_translation_negative'] if 'positive_sd' in data else params['nsfw_prompts'] + ", " + params['prompt_translation_negative']
         if params['nsfw']:
-            params['positive_suffix'] = params['nsfw_prompts'] + ", " + data['positive_sd'] + ", " + params['prompt_translation_positive']
-            params['negative_suffix'] = params['anti_nsfw_prompts'] + ", " + data['negative_sd'] + ", " + params['prompt_translation_negative']
+            params['positive_suffix'] = params['nsfw_prompts'] + ", " + data['positive_sd'] + ", " + params['prompt_translation_positive'] if 'positive_sd' in data else params['nsfw_prompts'] + ", " + params['prompt_translation_positive']
+            params['negative_suffix'] = params['anti_nsfw_prompts'] + ", " + data['negative_sd'] + ", " + params['prompt_translation_negative'] if 'positive_sd' in data else params['anti_nsfw_prompts'] + ", " + params['prompt_translation_negative']
 
 
 # Get and save the Stable Diffusion-generated picture
