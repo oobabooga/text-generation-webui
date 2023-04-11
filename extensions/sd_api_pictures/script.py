@@ -35,9 +35,6 @@ params = {
 }
 
 
-
-
-
 def give_VRAM_priority(actor):
     global shared, params
 
@@ -130,7 +127,7 @@ def input_modifier(string):
 
     if triggers_are_in(string):  # if we're in it, check for trigger words
         toggle_generation(True)
-        string = f"\n{name2}: *Translates 3 INPUTs to image prompt format. The prompts are descriptive and ALWAYS include a detailed description the subject of the image in the prompt. Any references in the second person like \"you\", \"your\", or \"yourself\" are about {name2} and include detailed information about {name2}'s hair, body type, clothing, surroundings, etc.*\nINPUT: send me a picture of a cool looking crystal\n{name2}: (crystal), diamond cut, reflective rock, transparent gemstone, beautiful sparkling gem, ultra detailed, volumetric lighting, professional photography\nINPUT: show me an image of Brad Pitt\n{name2}: portrait photo of (Brad Pitt), man, brown hair, short hair, athletic build, handsome, fashionable clothes, photo realistic, detailed skin, masterpiece, cinematic lighting\nINPUT: " + string
+        string = f"\n{name2}: *Translates 3 INPUTs to image prompt format. The prompts are descriptive and ALWAYS include a detailed description of the subject of the image in the prompt. Any references in the second person like \"you\", \"your\", or \"yourself\" are about {name2} and include detailed information about {name2}'s hair, body type, clothing, surroundings, etc.*\nINPUT: send me a picture of a cool looking crystal\n{name2}: (crystal), diamond cut, reflective rock, transparent gemstone, beautiful sparkling gem, ultra detailed, volumetric lighting, professional photography\nINPUT: show me an image of Brad Pitt\n{name2}: portrait photo of (Brad Pitt), man, brown hair, short hair, athletic build, handsome, fashionable clothes, photo realistic, detailed skin, masterpiece, cinematic lighting\nINPUT: " + string
 
     return string
 
