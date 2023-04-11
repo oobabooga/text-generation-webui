@@ -164,7 +164,11 @@ def generate_reply(question, generate_state, eos_token=None, stopping_strings=[]
             print(f'Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens}, seed {seed})')
             return
 
-    input_ids = encode(question, generate_state['max_new_tokens'], add_bos_token=generate_state['add_bos_token'])
+    try:
+        input_ids = encode(question, generate_state['max_new_tokens'], add_bos_token=generate_state['add_bos_token'])
+    except Exception:
+        input_ids = encode(question, generate_state['max_new_tokens'])
+
     original_input_ids = input_ids
     output = input_ids[0]
 
