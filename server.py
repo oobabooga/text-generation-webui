@@ -184,22 +184,22 @@ def download_model_wrapper(repo_id):
         branch = "main"
         check = False
 
-        yield("Cleaning up the model/branch names")
+        yield ("Cleaning up the model/branch names")
         model, branch = downloader.sanitize_model_and_branch_names(model, branch)
 
-        yield("Getting the download links from Hugging Face")
+        yield ("Getting the download links from Hugging Face")
         links, sha256, is_lora = downloader.get_download_links_from_huggingface(model, branch, text_only=False)
 
-        yield("Getting the output folder")
+        yield ("Getting the output folder")
         output_folder = downloader.get_output_folder(model, branch, is_lora)
 
         if check:
-            yield("Checking previously downloaded files")
+            yield ("Checking previously downloaded files")
             downloader.check_model_files(model, branch, links, sha256, output_folder)
         else:
-            yield(f"Downloading files to {output_folder}")
+            yield (f"Downloading files to {output_folder}")
             downloader.download_model_files(model, branch, links, sha256, output_folder, threads=1)
-            yield("Done!")
+            yield ("Done!")
     except:
         yield traceback.format_exc()
 
@@ -377,11 +377,12 @@ def create_interface():
         extensions_module.load_extensions()
 
     with gr.Blocks(css=ui.css if not shared.is_chat() else ui.css + ui.chat_css, analytics_enabled=False, title=title) as shared.gradio['interface']:
-        shared.input_elements = list_interface_input_elements(chat=True)
-        shared.gradio['interface_state'] = gr.State({k: None for k in shared.input_elements})
-
         if shared.is_chat():
+
+            shared.input_elements = list_interface_input_elements(chat=True)
+            shared.gradio['interface_state'] = gr.State({k: None for k in shared.input_elements})
             shared.gradio['Chat input'] = gr.State()
+
             with gr.Tab("Text generation", elem_id="main"):
                 shared.gradio['display'] = gr.HTML(value=chat_html_wrapper(shared.history['visible'], shared.settings['name1'], shared.settings['name2'], 'cai-chat'))
                 shared.gradio['textbox'] = gr.Textbox(label='Input')

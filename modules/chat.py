@@ -168,7 +168,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False):
                     shared.history['visible'].append(['', ''])
 
             if _continue:
-                sep = list(map(lambda x : ' ' if x[-1] != ' ' else '', last_reply))
+                sep = list(map(lambda x: ' ' if x[-1] != ' ' else '', last_reply))
                 shared.history['internal'][-1] = [text, f'{last_reply[0]}{sep[0]}{reply}']
                 shared.history['visible'][-1] = [visible_text, f'{last_reply[1]}{sep[1]}{visible_reply}']
             else:
@@ -278,7 +278,7 @@ def clear_chat_log(name1, name2, greeting, mode):
     if greeting != '':
         shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
         shared.history['visible'] += [['', apply_extensions(greeting, "output")]]
-    
+
     # Save cleared logs
     save_history(mode)
 
@@ -446,7 +446,7 @@ def load_character(character, name1, name2, mode):
             if greeting != "":
                 shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
                 shared.history['visible'] += [['', apply_extensions(greeting, "output")]]
-            
+
             # Create .json log files since they don't already exist
             save_history(mode)
 

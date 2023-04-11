@@ -69,6 +69,7 @@ def generate_softprompt_input_tensors(input_ids):
     # filler_input_ids += shared.model.config.bos_token_id # setting dummy input_ids to bos tokens
     return inputs_embeds, filler_input_ids
 
+
 # Removes empty replies from gpt4chan outputs
 def fix_gpt4chan(s):
     for i in range(10):
@@ -76,6 +77,7 @@ def fix_gpt4chan(s):
         s = re.sub("--- [0-9]*\n *\n---", "---", s)
         s = re.sub("--- [0-9]*\n\n\n---", "---", s)
     return s
+
 
 # Fix the LaTeX equations in galactica
 def fix_galactica(s):
