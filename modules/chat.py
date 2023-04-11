@@ -56,7 +56,6 @@ def generate_chat_prompt(user_input, max_new_tokens, name1, name2, context, chat
         limit = 3
     else:
         # Adding the user message
-        user_input = fix_newlines(user_input)
         if len(user_input) > 0:
             rows.append(f"{prefix1}{user_input}{end_of_turn}\n")
 
