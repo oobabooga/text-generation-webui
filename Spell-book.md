@@ -105,7 +105,7 @@ python download-model.py facebook/galactica-125m --threads 8
 #### The web UI can be used a backend for other frontends
 
 ```
-python server.py --api
+python server.py --extensions api
 ```
 
 It works out of the box with
