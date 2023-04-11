@@ -41,6 +41,9 @@
 .message-body code {
     overflow-x: auto;
 }
+.message-body code:not([class^='language-']) {
+    white-space: normal !important;
+}
 
 .dark .message-body p em {
     color: rgb(138, 138, 138) !important;
