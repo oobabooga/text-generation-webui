@@ -181,7 +181,7 @@ def create_suffix():
         params['negative_suffix'] = params['anti_nsfw_prompts'] + ", " + params['prompt_translation_negative']
     if params['characterfocus']:
         params['positive_suffix'] = data['positive_sd'] + ", " + params['prompt_translation_positive'] if 'positive_sd' in data else params['prompt_translation_positive']
-        params['negative_suffix'] = data['negative_sd'] + ", " + params['nsfw_prompts'] + ", " + params['prompt_translation_negative'] if 'positive_sd' in data else params['nsfw_prompts'] + ", " + params['prompt_translation_negative']
+        params['negative_suffix'] = data['negative_sd'] + ", " + params['prompt_translation_negative'] if 'positive_sd' in data else params['prompt_translation_negative']
         if params['nsfw']:
             params['positive_suffix'] = params['nsfw_prompts'] + ", " + data['positive_sd'] + ", " + params['prompt_translation_positive'] if 'positive_sd' in data else params['nsfw_prompts'] + ", " + params['prompt_translation_positive']
             params['negative_suffix'] = params['anti_nsfw_prompts'] + ", " + data['negative_sd'] + ", " + params['prompt_translation_negative'] if 'positive_sd' in data else params['anti_nsfw_prompts'] + ", " + params['prompt_translation_negative']
