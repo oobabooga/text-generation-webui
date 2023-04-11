@@ -10,6 +10,7 @@
     "end_of_turn": "",
     "custom_stopping_string": "### Human, ### Assistant",
     "stop_at_newline": false,
+    "add_bos_token": true,
     "chat_prompt_size": 2048,
     "chat_prompt_size_min": 0,
     "chat_prompt_size_max": 2048,
@@ -21,7 +22,7 @@
         "gallery"
     ],
     "presets": {
-        "default": "NovelAI-Sphinx Moth",
+        "default": "Default",
         ".*(alpaca|llama)": "LLaMA-Precise",
         ".*pygmalion": "NovelAI-Storywriter",
         ".*RWKV": "Naive"

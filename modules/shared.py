@@ -37,6 +37,7 @@ settings = {
     'end_of_turn': '',
     'custom_stopping_string': '### Human, ### Assistant',
     'stop_at_newline': False,
+    'add_bos_token': True,
     'chat_prompt_size': 2048,
     'chat_prompt_size_min': 0,
     'chat_prompt_size_max': 2048,
@@ -46,7 +47,7 @@ settings = {
     'default_extensions': [],
     'chat_default_extensions': ["gallery"],
     'presets': {
-        'default': 'NovelAI-Sphinx Moth',
+        'default': 'Default',
         '.*(alpaca|llama)': "LLaMA-Precise",
         '.*pygmalion': 'NovelAI-Storywriter',
         '.*RWKV': 'Naive',
@@ -91,7 +92,7 @@ parser.add_argument('--extensions', type=str, nargs="+", help='The list of exten
 parser.add_argument('--verbose', action='store_true', help='Print the prompts to the terminal.')
 
 # Accelerate/transformers
-parser.add_argument('--cpu', action='store_true', help='Use the CPU to generate text.')
+parser.add_argument('--cpu', action='store_true', help='Use the CPU to generate text. Warning: Training on CPU is extremely slow.')
 parser.add_argument('--auto-devices', action='store_true', help='Automatically split the model across the available GPU(s) and CPU.')
 parser.add_argument('--gpu-memory', type=str, nargs="+", help='Maxmimum GPU memory in GiB to be allocated per GPU. Example: --gpu-memory 10 for a single GPU, --gpu-memory 10 5 for two GPUs. You can also set values in MiB like --gpu-memory 3500MiB.')
 parser.add_argument('--cpu-memory', type=str, help='Maximum CPU memory in GiB to allocate for offloaded weights. Same as above.')

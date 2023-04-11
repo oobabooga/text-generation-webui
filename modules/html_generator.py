@@ -164,10 +164,9 @@ def generate_instruct_html(history):
 def generate_cai_chat_html(history, name1, name2, reset_cache=False):
     output = f'<style>{cai_css}</style><div class="chat" id="chat">'
 
-    # The time.time() is to prevent the brower from caching the image
-    suffix = f"?{time.time()}" if reset_cache else f"?{name2}"
-    img_bot = f'<img src="file/cache/pfp_character.png{suffix}">' if Path("cache/pfp_character.png").exists() else ''
-    img_me = f'<img src="file/cache/pfp_me.png{suffix}">' if Path("cache/pfp_me.png").exists() else ''
+    # We use ?name2 and ?time.time() to force the browser to reset caches
+    img_bot = f'<img src="file/cache/pfp_character.png?{name2}">' if Path("cache/pfp_character.png").exists() else ''
+    img_me = f'<img src="file/cache/pfp_me.png?{time.time() if reset_cache else ""}">' if Path("cache/pfp_me.png").exists() else ''
 
     for i, _row in enumerate(history[::-1]):
         row = [convert_to_markdown(entry) for entry in _row]

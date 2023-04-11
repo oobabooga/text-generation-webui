@@ -1,5 +1,4 @@
 accelerate==0.18.0
-bitsandbytes==0.37.2
 datasets
 flexgen==0.1.7
 gradio==3.24.1
@@ -14,3 +13,6 @@ sentencepiece
 pyyaml
 tqdm
 git+https://github.com/huggingface/transformers
+bitsandbytes==0.37.2; platform_system != "Windows"
+llama-cpp-python==0.1.30; platform_system != "Windows"
+https://github.com/abetlen/llama-cpp-python/releases/download/v0.1.30/llama_cpp_python-0.1.30-cp310-cp310-win_amd64.whl; platform_system == "Windows"

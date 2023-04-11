@@ -20,17 +20,6 @@ import tqdm
 from tqdm.contrib.concurrent import thread_map
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument('MODEL', type=str, default=None, nargs='?')
-parser.add_argument('--branch', type=str, default='main', help='Name of the Git branch to download from.')
-parser.add_argument('--threads', type=int, default=1, help='Number of files to download simultaneously.')
-parser.add_argument('--text-only', action='store_true', help='Only download text files (txt/json).')
-parser.add_argument('--output', type=str, default=None, help='The folder where the model should be saved.')
-parser.add_argument('--clean', action='store_true', help='Does not resume the previous download.')
-parser.add_argument('--check', action='store_true', help='Validates the checksums of model files.')
-args = parser.parse_args()
-
-
 def select_model_from_default_options():
     models = {
         "OPT 6.7B": ("facebook", "opt-6.7b", "main"),
@@ -244,6 +233,17 @@ def check_model_files(model, branch, links, sha256, output_folder):
 
 
 if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('MODEL', type=str, default=None, nargs='?')
+    parser.add_argument('--branch', type=str, default='main', help='Name of the Git branch to download from.')
+    parser.add_argument('--threads', type=int, default=1, help='Number of files to download simultaneously.')
+    parser.add_argument('--text-only', action='store_true', help='Only download text files (txt/json).')
+    parser.add_argument('--output', type=str, default=None, help='The folder where the model should be saved.')
+    parser.add_argument('--clean', action='store_true', help='Does not resume the previous download.')
+    parser.add_argument('--check', action='store_true', help='Validates the checksums of model files.')
+    args = parser.parse_args()
+
     branch = args.branch
     model = args.MODEL
     if model is None:
