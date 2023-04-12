@@ -65,6 +65,7 @@ def create_train_interface():
                 ui.create_refresh_button(eval_dataset, lambda: None, lambda: {'choices': get_dataset('training/datasets', 'json')}, 'refresh-button')
                 format = gr.Dropdown(choices=get_dataset('training/formats', 'json'), value='None', label='Data Format', info='The format file used to decide how to format the dataset input.')
                 ui.create_refresh_button(format, lambda: None, lambda: {'choices': get_dataset('training/formats', 'json')}, 'refresh-button')
+            eval_steps = gr.Number(label='Evaluate every n steps', value=100, info='If an evaluation dataset is given, test it every time this many steps pass.')
 
         with gr.Tab(label="Raw Text File"):
             with gr.Row():
@@ -80,7 +81,7 @@ def create_train_interface():
 
         output = gr.Markdown(value="Ready")
         start_button.click(do_train, [lora_name, micro_batch_size, batch_size, epochs, learning_rate, lora_rank, lora_alpha, lora_dropout,
-                                      cutoff_len, dataset, eval_dataset, format, raw_text_file, overlap_len, newline_favor_len, do_shuffle], [output])
+                                      cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, do_shuffle], [output])
         stop_button.click(do_interrupt, [], [], cancels=[], queue=False)
 
 
@@ -117,7 +118,7 @@ def clean_path(base_path: str, path: str):
 
 
 def do_train(lora_name: str, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lora_rank: int, lora_alpha: int, lora_dropout: float,
-             cutoff_len: int, dataset: str, eval_dataset: str, format: str, raw_text_file: str, overlap_len: int, newline_favor_len: int, do_shuffle: bool):
+             cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, do_shuffle: bool):
     global WANT_INTERRUPT, CURRENT_STEPS, MAX_STEPS, CURRENT_GRADIENT_ACCUM
     WANT_INTERRUPT = False
     CURRENT_STEPS = 0
@@ -263,8 +264,9 @@ def do_train(lora_name: str, micro_batch_size: int, batch_size: int, epochs: int
             logging_steps=20,
             evaluation_strategy="steps" if eval_data is not None else "no",
             save_strategy="steps",
-            eval_steps=200 if eval_data is not None else None,
             save_steps=200,
+            eval_steps=eval_steps // gradient_accumulation_steps if eval_data is not None else None,
+            save_strategy="no",
             output_dir=lora_name,
             save_total_limit=3,
             load_best_model_at_end=True if eval_data is not None else False,
