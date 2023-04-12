@@ -289,7 +289,9 @@ Check the [wiki](https://github.com/oobabooga/text-generation-webui/wiki/System-
 
 ## Contributing
 
-Pull requests, suggestions, and issue reports are welcome.
+Pull requests, suggestions, and issue reports are welcome. 
+
+You are also welcome to review open pull requests.
 
 Before reporting a bug, make sure that you have:
 
