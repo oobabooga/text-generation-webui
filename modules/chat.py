@@ -139,10 +139,11 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False):
         text = apply_extensions(text, "input")
 
     # Generating the prompt
+    kwargs = {'_continue': _continue}
     if custom_generate_chat_prompt is None:
-        prompt = generate_chat_prompt(text, state)
+        prompt = generate_chat_prompt(text, state, **kwargs)
     else:
-        prompt = custom_generate_chat_prompt(text, state)
+        prompt = custom_generate_chat_prompt(text, state, **kwargs)
 
     # Yield *Is typing...*
     if not any((regenerate, _continue)):
