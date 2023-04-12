@@ -115,6 +115,7 @@ parser.add_argument('--wbits', type=int, default=0, help='GPTQ: Load a pre-quant
 parser.add_argument('--model_type', type=str, help='GPTQ: Model type of pre-quantized model. Currently LLaMA, OPT, and GPT-J are supported.')
 parser.add_argument('--groupsize', type=int, default=-1, help='GPTQ: Group size.')
 parser.add_argument('--pre_layer', type=int, default=0, help='GPTQ: The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models.')
+parser.add_argument('--warmup_autotune', action=argparse.BooleanOptionalAction, default=True, help='GPTQ: Enable warmup autotune. Only usable for triton.')
 parser.add_argument('--gptq-bits', type=int, default=0, help='DEPRECATED: use --wbits instead.')
 parser.add_argument('--gptq-model-type', type=str, help='DEPRECATED: use --model_type instead.')
 parser.add_argument('--gptq-pre-layer', type=int, default=0, help='DEPRECATED: use --pre_layer instead.')

@@ -61,6 +61,16 @@ def _load_quant(model, checkpoint, wbits, groupsize=-1, faster_kernel=False, exc
         model.load_state_dict(safe_load(checkpoint), strict=False)
     else:
         model.load_state_dict(torch.load(checkpoint), strict=False)
+
+    try:
+        from quant import autotune_warmup, make_quant_attn
+        # triton branch
+        make_quant_attn(model)
+        if shared.args.warmup_autotune:
+            autotune_warmup(model)
+    except ImportError:  # not triton branch
+        pass
+
     model.seqlen = 2048
     print('Done.')
 
@@ -94,33 +104,52 @@ def load_quantized(model_name):
         print("Unknown pre-quantized model type specified. Only 'llama', 'opt' and 'gptj' are supported")
         exit()
 
-    # Now we are going to try to locate the quantized model file.
+    # Now we are going to try to locate the quantized model file. I think it's cleaner and supports the new name containing groupsize
     path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
-    found_pts = list(path_to_model.glob("*.pt"))
-    found_safetensors = list(path_to_model.glob("*.safetensors"))
     pt_path = None
+    priority_name_list = [
+        Path(f'{shared.args.model_dir}/{model_name}/{shared.args.wbits}bit-{shared.args.groupsize}g.safetensors'),
+        Path(f'{shared.args.model_dir}/{model_name}/{shared.args.wbits}bit-{shared.args.groupsize}g.pt'),
+        Path(f'{shared.args.model_dir}/{model_name}/{shared.args.wbits}bit.safetensors'),
+        Path(f'{shared.args.model_dir}/{model_name}/{shared.args.wbits}bit.pt'),
+        Path(f'{shared.args.model_dir}/{model_name}-{shared.args.wbits}bit-{shared.args.groupsize}g.safetensors'),
+        Path(f'{shared.args.model_dir}/{model_name}-{shared.args.wbits}bit-{shared.args.groupsize}g.pt'),
+        Path(f'{shared.args.model_dir}/{model_name}-{shared.args.wbits}bit.safetensors'),
+        Path(f'{shared.args.model_dir}/{model_name}-{shared.args.wbits}bit.pt'),
+    ]
+    for path in priority_name_list:
+        if path.exists():
+            pt_path = path
+            break
 
-    if len(found_pts) > 0:
-        pt_path = found_pts[-1]
-    elif len(found_safetensors) > 0:
-        pt_path = found_safetensors[-1]
-    else:
-        if path_to_model.name.lower().startswith('llama-7b'):
-            pt_model = f'llama-7b-{shared.args.wbits}bit'
-        elif path_to_model.name.lower().startswith('llama-13b'):
-            pt_model = f'llama-13b-{shared.args.wbits}bit'
-        elif path_to_model.name.lower().startswith('llama-30b'):
-            pt_model = f'llama-30b-{shared.args.wbits}bit'
-        elif path_to_model.name.lower().startswith('llama-65b'):
-            pt_model = f'llama-65b-{shared.args.wbits}bit'
+    # For compatibility, do we really need this?
+    if not pt_path:
+        path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
+        found_pts = list(path_to_model.glob("*.pt"))
+        found_safetensors = list(path_to_model.glob("*.safetensors"))
+        pt_path = None
+
+        if len(found_pts) > 0:
+            pt_path = found_pts[-1]
+        elif len(found_safetensors) > 0:
+            pt_path = found_safetensors[-1]
         else:
-            pt_model = f'{model_name}-{shared.args.wbits}bit'
+            if path_to_model.name.lower().startswith('llama-7b'):
+                pt_model = f'llama-7b-{shared.args.wbits}bit'
+            elif path_to_model.name.lower().startswith('llama-13b'):
+                pt_model = f'llama-13b-{shared.args.wbits}bit'
+            elif path_to_model.name.lower().startswith('llama-30b'):
+                pt_model = f'llama-30b-{shared.args.wbits}bit'
+            elif path_to_model.name.lower().startswith('llama-65b'):
+                pt_model = f'llama-65b-{shared.args.wbits}bit'
+            else:
+                pt_model = f'{model_name}-{shared.args.wbits}bit'
 
-        # Try to find the .safetensors or .pt both in the model dir and in the subfolder
-        for path in [Path(p + ext) for ext in ['.safetensors', '.pt'] for p in [f"{shared.args.model_dir}/{pt_model}", f"{path_to_model}/{pt_model}"]]:
-            if path.exists():
-                pt_path = path
-                break
+            # Try to find the .safetensors or .pt both in the model dir and in the subfolder
+            for path in [Path(p + ext) for ext in ['.safetensors', '.pt'] for p in [f"{shared.args.model_dir}/{pt_model}", f"{path_to_model}/{pt_model}"]]:
+                if path.exists():
+                    pt_path = path
+                    break
 
     if not pt_path:
         print("Could not find the quantized model in .pt or .safetensors format, exiting...")
