@@ -111,38 +111,50 @@ def triggers_are_in(string):
     # (?aims) are regex parser flags
     return bool(re.search('(?aims)(send|mail|message|me)\\b.+?\\b(image|pic(ture)?|photo|snap(shot)?|selfie|meme)s?\\b', string))
 
+
+def request_generation(case,string):
+    if case == 1: # Character has been asked to send a picture of itself
+        toggle_generation(True)
+        params['characterfocus'] = True
+        string = string.replace("yourself","you")
+        after_you = string.split("you", 1)[1] # subdivide the string once by the first 'you' instance and get what's coming after it
+        if after_you != '':
+            string = "Describe what you are currently wearing, your environment and yourself performing the following action: " + after_you.strip()
+        else:
+            string = "Describe what you are currently wearing, your environment and yourself"
+    elif case == 2: # Character has been asked to send a picture of something else
+        toggle_generation(True)
+        subject = string.split('of', 1)[1]  # subdivide the string once by the first 'of' instance and get what's coming after it
+        string = "Please provide a detailed and vivid description of " + subject.strip()
+    elif case == 3: # Character has been asked to send a picture of nothing in particular
+        toggle_generation(True)
+        string = "Please provide a detailed description of your appearance, your surroundings and what you are doing right now"
+    return string
+
+
 def string_evaluation(string):
-    toggle_generation(False)
+    input_type = 0
     subjects = ['yourself', 'you']
     params['characterfocus'] = False
     params['prompt_translation_positive'] = ""
     params['prompt_translation_negative'] = ""
-    if triggers_are_in(string):  # if we're in it, check for trigger words
-        toggle_generation(True)
+    if triggers_are_in(string):  # check for trigger words for generation
         string = string.lower()
         if "of" in string:
-            if any(target in string for target in subjects):                                           # the focus of the image should be on the sending character
-                params['characterfocus'] = True
-                string = string.replace("yourself","you")
-                after_you = string.split("you", 1)[1] # subdivide the string once by the first 'you' instance and get what's coming after it
-                if after_you != '':
-                    string = "Describe what you are currently wearing, your environment and yourself performing the following action: " + after_you.strip()
-                else:
-                    string = "Describe what you are currently wearing, your environment and yourself"
+            if any(target in string for target in subjects): # the focus of the image should be on the sending character
+                input_type = 1 
             else:
-                subject = string.split('of', 1)[1]  # subdivide the string once by the first 'of' instance and get what's coming after it
-                string = "Please provide a detailed and vivid description of " + subject.strip()
+                input_type = 2
         else:
-            string = "Please provide a detailed description of your appearance, your surroundings and what you are doing right now"
-        if params['translations']:           # If any of the words in the prompt match the translations and the translations are on, add those to the SD prompt
+            input_type = 3
+        if params['translations']: # If any of the words in the prompt match the translations and the translations are on, add those to the SD prompt
             tpatterns = json.loads(open(Path(f'extensions/sd_api_pictures/translations.json'), 'r', encoding='utf-8').read())
             for word_pair in tpatterns['pairs']:
                 if any(target in string for target in word_pair['descriptive_word']):
                     params['prompt_translation_positive'] = word_pair['SD_positive_translation']
                     params['prompt_translation_negative'] = word_pair['SD_negative_translation']
-        return string
-    else:
-        return string
+    return request_generation(input_type,string)
+
 
 def input_modifier(string):
     """
