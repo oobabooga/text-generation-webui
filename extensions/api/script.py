@@ -40,6 +40,25 @@ def get_generate_params(data):
 
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
+        if self.path == '/api/v1/model':
+            self.send_response(200)
+            self.end_headers()
+            response = json.dumps({
+                'result': shared.model_name
+            })
+
+            self.wfile.write(response.encode('utf-8'))
+        else:
+            self.send_error(404)
+
+    def do_POST(self):
+        content_length = int(self.headers['Content-Length'])
+        body = json.loads(self.rfile.read(content_length).decode('utf-8'))
+
+        if self.path == '/api/v1/generate':
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
             prompt = body['prompt']
             prompt_lines = [k.strip() for k in prompt.split('\n')]
 
