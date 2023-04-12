@@ -51,14 +51,13 @@ async def exe_websocket(websocket):
         'max_new_tokens': 1800,
         'temperature': 0.8,
         'top_p': 0.9,
-        'rep_pen': 1.1
+        'rep_pen': 1.1,
+        custom_stopping_strings: ["\nYou", "\nYou:", "You:"]
     }
-    custom_stopping_strings = ["\nYou", "\nYou:", "You:"]
     
     data = {
         'prompt': prompt,
-        **generate_params,
-        'custom_stopping_strings': custom_stopping_strings
+        **generate_params
     }
 
     await websocket.send(json.dumps(data))
