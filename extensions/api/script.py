@@ -141,6 +141,9 @@ def run_http_server():
     if shared.args.share:
         try:
             from flask_cloudflared import _run_cloudflared
+            public_url = _run_cloudflared(params['port'], params['port'] + 1)
+            print(f'Starting KoboldAI compatible api at {public_url}/api')
+        except ImportError:
             print('You should install flask_cloudflared manually')
     else:
         print(f'Starting KoboldAI compatible api at http://{server_addr[0]}:{server_addr[1]}/api')
