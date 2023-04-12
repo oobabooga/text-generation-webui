@@ -59,6 +59,8 @@ class Handler(BaseHTTPRequestHandler):
                 'seed': int(body.get('seed', -1)),
                 'add_bos_token': int(body.get('add_bos_token', True)),
                 'custom_stopping_strings': body.get('custom_stopping_strings', []),
+                'truncation_length': int(body.get('truncation_length', 2048)),
+                'ban_eos_token': bool(body.get('ban_eos_token', False)),
             }
 
             generator = generate_reply(
