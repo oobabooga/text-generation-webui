@@ -14,7 +14,7 @@ import getpass
 import websockets
 
 async def connect():
-    uri = "wss://example.com:5001/wsapi"
+    uri = "wss://example.com:4999/wsapi"
     username = ""
     password = ""
     is_authenticated = False
