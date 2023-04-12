@@ -23,6 +23,8 @@ from modules import shared, ui
 WANT_INTERRUPT = False
 
 
+PARAMETERS = ["lora_name", "always_override", "save_steps", "micro_batch_size", "batch_size", "epochs", "learning_rate", "lora_rank", "lora_alpha",
+              "lora_dropout", "cutoff_len", "dataset", "eval_dataset", "format", "eval_steps", "raw_text_file", "overlap_len", "newline_favor_len", "do_shuffle"]
 MODEL_CLASSES = { # Mapping of Python class names to peft IDs
     "LlamaForCausalLM": "llama",
     "OPTForCausalLM": "opt",
@@ -30,8 +32,12 @@ MODEL_CLASSES = { # Mapping of Python class names to peft IDs
 }
 
 
-def get_dataset(path: str, ext: str):
+def get_datasets(path: str, ext: str):
     return ['None'] + sorted(set([k.stem for k in Path(path).glob(f'*.{ext}') if k.stem != 'put-trainer-datasets-here']), key=str.lower)
+
+
+def get_available_loras():
+    return ['None'] + sorted([item.name for item in list(Path(shared.args.lora_dir).glob('*')) if not item.name.endswith(('.txt', '-np', '.pt', '.json'))], key=str.lower)
 
 
 def create_train_interface():
@@ -40,6 +46,8 @@ def create_train_interface():
             lora_name = gr.Textbox(label='Name', info='The name of your new LoRA file')
             always_override = gr.Checkbox(label='Override Existing Files', value=True, info='If the name given is the same as an existing file, checking this will replace that file. Leaving unchecked will load that file and continue from it (will use the original rank/alpha/dropout) (NOTE: Currently broken).')
             save_steps = gr.Number(label='Save every n steps', value=0, info='If above 0, a checkpoint of the LoRA will be saved every time this many steps pass.')
+            copy_from = gr.Dropdown(label='Copy parameters from', value='None', choices=get_available_loras())
+            ui.create_refresh_button(copy_from, lambda: None, lambda: {'choices': get_available_loras()}, 'refresh-button')
 
         with gr.Row():
             # TODO: Implement multi-device support.
@@ -60,18 +68,18 @@ def create_train_interface():
 
         with gr.Tab(label="Formatted Dataset"):
             with gr.Row():
-                dataset = gr.Dropdown(choices=get_dataset('training/datasets', 'json'), value='None', label='Dataset', info='The dataset file to use for training.')
-                ui.create_refresh_button(dataset, lambda: None, lambda: {'choices': get_dataset('training/datasets', 'json')}, 'refresh-button')
-                eval_dataset = gr.Dropdown(choices=get_dataset('training/datasets', 'json'), value='None', label='Evaluation Dataset', info='The (optional) dataset file used to evaluate the model after training.')
-                ui.create_refresh_button(eval_dataset, lambda: None, lambda: {'choices': get_dataset('training/datasets', 'json')}, 'refresh-button')
-                format = gr.Dropdown(choices=get_dataset('training/formats', 'json'), value='None', label='Data Format', info='The format file used to decide how to format the dataset input.')
-                ui.create_refresh_button(format, lambda: None, lambda: {'choices': get_dataset('training/formats', 'json')}, 'refresh-button')
+                dataset = gr.Dropdown(choices=get_datasets('training/datasets', 'json'), value='None', label='Dataset', info='The dataset file to use for training.')
+                ui.create_refresh_button(dataset, lambda: None, lambda: {'choices': get_datasets('training/datasets', 'json')}, 'refresh-button')
+                eval_dataset = gr.Dropdown(choices=get_datasets('training/datasets', 'json'), value='None', label='Evaluation Dataset', info='The (optional) dataset file used to evaluate the model after training.')
+                ui.create_refresh_button(eval_dataset, lambda: None, lambda: {'choices': get_datasets('training/datasets', 'json')}, 'refresh-button')
+                format = gr.Dropdown(choices=get_datasets('training/formats', 'json'), value='None', label='Data Format', info='The format file used to decide how to format the dataset input.')
+                ui.create_refresh_button(format, lambda: None, lambda: {'choices': get_datasets('training/formats', 'json')}, 'refresh-button')
             eval_steps = gr.Number(label='Evaluate every n steps', value=100, info='If an evaluation dataset is given, test it every time this many steps pass.')
 
         with gr.Tab(label="Raw Text File"):
             with gr.Row():
-                raw_text_file = gr.Dropdown(choices=get_dataset('training/datasets', 'txt'), value='None', label='Text File', info='The raw text file to use for training.')
-                ui.create_refresh_button(raw_text_file, lambda: None, lambda: {'choices': get_dataset('training/datasets', 'txt')}, 'refresh-button')
+                raw_text_file = gr.Dropdown(choices=get_datasets('training/datasets', 'txt'), value='None', label='Text File', info='The raw text file to use for training.')
+                ui.create_refresh_button(raw_text_file, lambda: None, lambda: {'choices': get_datasets('training/datasets', 'txt')}, 'refresh-button')
             with gr.Row():
                 overlap_len = gr.Slider(label='Overlap Length', minimum=0, maximum=512, value=128, step=16, info='Overlap length - ie how many tokens from the prior chunk of text to include into the next chunk. (The chunks themselves will be of a size determined by Cutoff Length below). Setting overlap to exactly half the cutoff length may be ideal.')
                 newline_favor_len = gr.Slider(label='Prefer Newline Cut Length', minimum=0, maximum=512, value=128, step=16, info='Length (in characters, not tokens) of the maximum distance to shift an overlap cut by to ensure chunks cut at newlines. If too low, cuts may occur in the middle of lines.')
@@ -81,9 +89,17 @@ def create_train_interface():
             stop_button = gr.Button("Interrupt")
 
         output = gr.Markdown(value="Ready")
-        start_button.click(do_train, [lora_name, always_override, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lora_rank, lora_alpha, lora_dropout,
-                                      cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, do_shuffle], [output])
+        all_params = [lora_name, always_override, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lora_rank, lora_alpha, lora_dropout,
+                                      cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, do_shuffle]
+        start_button.click(do_train, all_params, [output])
         stop_button.click(do_interrupt, [], [], cancels=[], queue=False)
+
+        def do_copy_params(lora_name: str):
+            with open(f"{shared.args.lora_dir}/{clean_path(None, lora_name)}/training_parameters.json", 'r', encoding='utf-8') as formatFile:
+                params: dict[str, str] = json.load(formatFile)
+            return [params[x] for x in PARAMETERS]
+        
+        copy_from.change(do_copy_params, [copy_from], all_params)
 
 
 def do_interrupt():
@@ -293,6 +309,11 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
     if torch.__version__ >= "2" and sys.platform != "win32":
         lora_model = torch.compile(lora_model)
+
+    # == Save parameters for reuse ==
+    with open(f"{lora_file_path}/training_parameters.json", 'w', encoding='utf-8') as file:
+        vars = locals()
+        json.dump({x: vars[x] for x in PARAMETERS}, file)
 
     # == Main run and monitor loop ==
     # TODO: save/load checkpoints to resume from?
