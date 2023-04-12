@@ -12,12 +12,25 @@ from datasets import Dataset, load_dataset
 from peft import (LoraConfig, get_peft_model, get_peft_model_state_dict,
                   prepare_model_for_int8_training)
 
+try: # This mapping is from a very recent commit, not yet released.
+    from peft.utils.other import TRANSFORMERS_MODELS_TO_LORA_TARGET_MODULES_MAPPING as model_to_lora_modules
+except: # So good backup for the 3 safe model types if not yet available.
+    standard_modules = ["q_proj", "v_proj"]
+    model_to_lora_modules = { "llama": standard_modules, "opt": standard_modules, "gptj": standard_modules }
+
 from modules import shared, ui
 
 WANT_INTERRUPT = False
 CURRENT_STEPS = 0
 MAX_STEPS = 0
 CURRENT_GRADIENT_ACCUM = 1
+
+
+MODEL_CLASSES = { # Mapping of Python class names to peft IDs
+    "LlamaForCausalLM": "llama",
+    "OPTForCausalLM": "opt",
+    "GPTJForCausalLM": "gptj"
+}
 
 
 def get_dataset(path: str, ext: str):
@@ -115,13 +128,16 @@ def do_train(lora_name: str, micro_batch_size: int, batch_size: int, epochs: int
     actual_lr = float(learning_rate)
 
     model_type = type(shared.model).__name__
-    if model_type != "LlamaForCausalLM":
+    if model_type in MODEL_CLASSES:
+        model_id = MODEL_CLASSES[model_type]
+    else:
+        model_id == "llama"
         if model_type == "PeftModelForCausalLM":
             yield "You are trying to train a LoRA while you already have another LoRA loaded. This will work, but may have unexpected effects. *(Will continue anyway in 5 seconds, press `Interrupt` to stop.)*"
             print("Warning: Training LoRA over top of another LoRA. May have unexpected effects.")
         else:
-            yield "LoRA training has only currently been validated for LLaMA models. Unexpected errors may follow. *(Will continue anyway in 5 seconds, press `Interrupt` to stop.)*"
-            print(f"Warning: LoRA training has only currently been validated for LLaMA models. (Found model type: {model_type})")
+            yield "LoRA training has only currently been validated for LLaMA, OPT, and GPT-J models. Unexpected errors may follow. *(Will continue anyway in 5 seconds, press `Interrupt` to stop.)*"
+            print(f"Warning: LoRA training has only currently been validated for LLaMA, OPT, and GPT-J models. (Found model type: {model_type})")
         time.sleep(5)
 
     if shared.args.wbits > 0 or shared.args.gptq_bits > 0:
@@ -215,8 +231,7 @@ def do_train(lora_name: str, micro_batch_size: int, batch_size: int, epochs: int
     config = LoraConfig(
         r=lora_rank,
         lora_alpha=lora_alpha,
-        # TODO: Should target_modules be configurable?
-        target_modules=["q_proj", "v_proj"],
+        target_modules=model_to_lora_modules[model_id],
         lora_dropout=lora_dropout,
         bias="none",
         task_type="CAUSAL_LM"
