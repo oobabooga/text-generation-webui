@@ -298,6 +298,7 @@ def create_model_menus():
     with gr.Row():
         with gr.Column():
             with gr.Box():
+                gr.Markdown('Transformers parameters')
                 with gr.Row():
                     with gr.Column():
                         for i in range(len(total_mem)):
@@ -313,6 +314,7 @@ def create_model_menus():
 
         with gr.Column():
             with gr.Box():
+                gr.Markdown('GPTQ parameters')
                 with gr.Row():
                     with gr.Column():
                         components['wbits'] = gr.Dropdown(label="wbits", choices=["None", 1, 2, 3, 4, 8], value=shared.args.wbits if shared.args.wbits > 0 else "None")
