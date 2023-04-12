@@ -100,42 +100,58 @@ python server.py --extensions translate enthusiasm # First apply translate, then
 Below is an extension that just reproduces the default prompt generator in `modules/chat.py`. You can modify it freely to come up with your own prompts in chat mode.
 
 ```python
-import gradio as gr
-import modules.shared as shared
-from modules.chat import clean_chat_message
-from modules.extensions import apply_extensions
-from modules.text_generation import encode, get_max_prompt_length
+def custom_generate_chat_prompt(user_input, state, **kwargs):
+    impersonate = kwargs['impersonate'] if 'impersonate' in kwargs else False
+    _continue = kwargs['_continue'] if '_continue' in kwargs else False
+    also_return_rows = kwargs['also_return_rows'] if 'also_return_rows' in kwargs else False
+    is_instruct = state['mode'] == 'instruct'
+    rows = [f"{state['context'].strip()}\n"]
 
-
-def custom_generate_chat_prompt(user_input, max_new_tokens, name1, name2, context, chat_prompt_size, impersonate=False):
-    user_input = clean_chat_message(user_input)
-    rows = [f"{context.strip()}\n"]
-
+    # Finding the maximum prompt size
+    chat_prompt_size = state['chat_prompt_size']
     if shared.soft_prompt:
-       chat_prompt_size -= shared.soft_prompt_tensor.shape[1]
-    max_length = min(get_max_prompt_length(max_new_tokens), chat_prompt_size)
+        chat_prompt_size -= shared.soft_prompt_tensor.shape[1]
+    max_length = min(get_max_prompt_length(state), chat_prompt_size)
 
-    i = len(shared.history['internal'])-1
-    while i >= 0 and len(encode(''.join(rows), max_new_tokens)[0]) < max_length:
-        rows.insert(1, f"{name2}: {shared.history['internal'][i][1].strip()}\n")
-        if not (shared.history['internal'][i][0] == '<|BEGIN-VISIBLE-CHAT|>'):
-            rows.insert(1, f"{name1}: {shared.history['internal'][i][0].strip()}\n")
+    if is_instruct:
+        prefix1 = f"{state['name1']}\n"
+        prefix2 = f"{state['name2']}\n"
+    else:
+        prefix1 = f"{state['name1']}: "
+        prefix2 = f"{state['name2']}: "
+
+    i = len(shared.history['internal']) - 1
+    while i >= 0 and len(encode(''.join(rows))[0]) < max_length:
+        if _continue and i == len(shared.history['internal']) - 1:
+            rows.insert(1, f"{prefix2}{shared.history['internal'][i][1]}")
+        else:
+            rows.insert(1, f"{prefix2}{shared.history['internal'][i][1].strip()}{state['end_of_turn']}\n")
+        string = shared.history['internal'][i][0]
+        if string not in ['', '<|BEGIN-VISIBLE-CHAT|>']:
+            rows.insert(1, f"{prefix1}{string.strip()}{state['end_of_turn']}\n")
         i -= 1
 
-    if not impersonate:
-        rows.append(f"{name1}: {user_input}\n")
-        rows.append(apply_extensions(f"{name2}:", "bot_prefix"))
+    if impersonate:
+        rows.append(f"{prefix1.strip() if not is_instruct else prefix1}")
+        limit = 2
+    elif _continue:
         limit = 3
     else:
-        rows.append(f"{name1}:")
-        limit = 2
+        # Adding the user message
+        user_input = fix_newlines(user_input)
+        if len(user_input) > 0:
+            rows.append(f"{prefix1}{user_input}{state['end_of_turn']}\n")
 
-    while len(rows) > limit and len(encode(''.join(rows), max_new_tokens)[0]) >= max_length:
+        # Adding the Character prefix
+        rows.append(apply_extensions(f"{prefix2.strip() if not is_instruct else prefix2}", "bot_prefix"))
+        limit = 3
+
+    while len(rows) > limit and len(encode(''.join(rows))[0]) >= max_length:
         rows.pop(1)
-
     prompt = ''.join(rows)
-    return prompt
 
-def ui():
-    pass
+    if also_return_rows:
+        return prompt, rows
+    else:
+        return prompt
 ```
