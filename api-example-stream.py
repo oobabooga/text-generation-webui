@@ -1,82 +1,91 @@
-'''
-
-Contributed by SagsMug. Thank you SagsMug.
-https://github.com/oobabooga/text-generation-webui/pull/175
-
-'''
-
 import asyncio
 import json
-import random
-import string
+import websockets
+import sys
+def printonce(message):
+    if not hasattr(printonce, "printed"):
+        printonce.printed = set()
+    if message not in printonce.printed:
+        print(message)
+        printonce.printed.add(message)
 
+import base64
+import getpass
 import websockets
 
-
-def random_hash():
-    letters = string.ascii_lowercase + string.digits
-    return ''.join(random.choice(letters) for i in range(9))
-
-
-async def run(context):
-    server = "127.0.0.1"
-    params = {
-        'max_new_tokens': 200,
-        'do_sample': True,
-        'temperature': 0.5,
-        'top_p': 0.9,
-        'typical_p': 1,
-        'repetition_penalty': 1.05,
-        'encoder_repetition_penalty': 1.0,
-        'top_k': 0,
-        'min_length': 0,
-        'no_repeat_ngram_size': 0,
-        'num_beams': 1,
-        'penalty_alpha': 0,
-        'length_penalty': 1,
-        'early_stopping': False,
-        'seed': -1,
-    }
-    payload = json.dumps([context, params])
-    session = random_hash()
-
-    async with websockets.connect(f"ws://{server}:7860/queue/join") as websocket:
-        while content := json.loads(await websocket.recv()):
-            # Python3.10 syntax, replace with if elif on older
-            match content["msg"]:
-                case "send_hash":
-                    await websocket.send(json.dumps({
-                        "session_hash": session,
-                        "fn_index": 12
-                    }))
-                case "estimation":
-                    pass
-                case "send_data":
-                    await websocket.send(json.dumps({
-                        "session_hash": session,
-                        "fn_index": 12,
-                        "data": [
-                            payload
-                        ]
-                    }))
-                case "process_starts":
-                    pass
-                case "process_generating" | "process_completed":
-                    yield content["output"]["data"][0]
-                    # You can search for your desired end indicator and
-                    #  stop generation by closing the websocket here
-                    if (content["msg"] == "process_completed"):
+async def connect():
+    uri = "wss://example.com:5001/wsapi"
+    username = ""
+    password = ""
+    is_authenticated = False
+    while not is_authenticated:
+        try:
+            headers = {}
+            if username and password:
+                headers['Authorization'] = f'Basic {base64.b64encode(f"{username}:{password}".encode()).decode()}'
+            async with websockets.connect(uri, extra_headers=headers) as websocket:
+                is_authenticated = True
+                await exe_websocket(websocket)
+                pass
+        except websockets.exceptions.InvalidHandshake as e:
+            if isinstance(e, websockets.exceptions.InvalidStatusCode) and e.status_code == 401:
+                if not username and not password:
+                    headers = {k.lower(): v for k, v in dict(e.headers).items()}
+                    if 'www-authenticate' in headers and 'asic' in headers['www-authenticate']:
+                        print("This server requires authentication.")
+                        username = input("Enter your username: ")
+                        password = getpass.getpass("Enter your password: ")
+                    else:
+                        print("Server is not configured with basic authentication.")
                         break
+                else:
+                    print("Authentication failed. Please try again.")
+                    username = input("Enter your username: ")
+                    password = getpass.getpass("Enter your password: ")
+            else:
+                raise e
 
-prompt = "What I would like to say is the following: "
+async def exe_websocket(websocket):
+    prompt = """Once upon a time"""
+    generate_params = {
+        'max_new_tokens': 1800,
+        'temperature': 0.8,
+        'top_p': 0.9,
+        'rep_pen': 1.1
+    }
+    stopping_strings = ["\nYou", "\nYou:", "You:"]
+    
+    data = {
+        'prompt': prompt,
+        **generate_params,
+        'stopping_strings': stopping_strings
+    }
 
+    await websocket.send(json.dumps(data))
+    print(prompt, end="")
+    
+    current_prompt = prompt
+    while True:
+        try:
+            response = await websocket.recv()
+        except websockets.exceptions.ConnectionClosedError as e:
+            print(f"WS connection closed while recv(): {str(e)}")
+            break
+        except websockets.exceptions.ConnectionClosedOK:
+            break
+        parsed_response = json.loads(response)
 
-async def get_result():
-    async for response in run(prompt):
-        # Print intermediate steps
-        print(response)
+        if "generation_complete" in parsed_response and parsed_response["generation_complete"]:
+            print("\n\nServer: generation_complete\n")
+            break
 
-    # Print final result
-    print(response)
+        if "text" in parsed_response:
+            full_text = parsed_response["text"]
+            new_tokens = full_text[len(current_prompt):]
+            print(new_tokens, end="")
+            sys.stdout.flush()
+            current_prompt = full_text
+        elif "error" in parsed_response:
+            print(f"Error: {parsed_response['error']}")
 
-asyncio.run(get_result())
+asyncio.run(connect())
