@@ -196,7 +196,7 @@ def do_train(lora_name: str, micro_batch_size: int, batch_size: int, epochs: int
             yield "**Missing format choice input, cannot continue.**"
             return
 
-        with open(clean_path('training/formats', f'{format}.json'), 'r') as formatFile:
+        with open(clean_path('training/formats', f'{format}.json'), 'r', encoding='utf-8') as formatFile:
             format_data: dict[str, str] = json.load(formatFile)
 
         def generate_prompt(data_point: dict[str, str]):
