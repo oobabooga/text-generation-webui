@@ -281,12 +281,11 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         args=transformers.TrainingArguments(
             per_device_train_batch_size=micro_batch_size,
             gradient_accumulation_steps=gradient_accumulation_steps,
-            # TODO: Should more of these be configurable? Probably.
             warmup_steps=100,
             num_train_epochs=epochs,
             learning_rate=actual_lr,
             fp16=False if shared.args.cpu else True,
-            logging_steps=20,
+            logging_steps=5,
             evaluation_strategy="steps" if eval_data is not None else "no",
             eval_steps=eval_steps // gradient_accumulation_steps if eval_data is not None else None,
             save_strategy="steps",
@@ -316,7 +315,6 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         json.dump({x: vars[x] for x in PARAMETERS}, file)
 
     # == Main run and monitor loop ==
-    # TODO: save/load checkpoints to resume from?
     print("Starting training...")
     yield "Starting..."
     if WANT_INTERRUPT:
