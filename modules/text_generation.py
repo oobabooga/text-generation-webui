@@ -14,6 +14,9 @@ from modules.extensions import apply_extensions
 from modules.html_generator import generate_4chan_html, generate_basic_html
 from modules.models import clear_torch_cache, local_rank
 
+import os
+from playsound import playsound
+
 
 def get_max_prompt_length(state):
     max_length = state['truncation_length'] - state['max_new_tokens']
@@ -170,6 +173,10 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
             original_tokens = len(encode(original_question)[0])
             new_tokens = len(encode(output)[0]) - original_tokens
             print(f'Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens}, seed {seed})')
+
+            if os.path.exists("notification.mp3"):
+                playsound('notification.mp3')
+
             return
 
     input_ids = encode(question, add_bos_token=state['add_bos_token'], truncation_length=get_max_prompt_length(state))
@@ -298,4 +305,8 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
         original_tokens = len(original_input_ids[0])
         new_tokens = len(output) - original_tokens
         print(f'Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens}, seed {seed})')
+
+        if os.path.exists("notification.mp3"):
+            playsound('notification.mp3')
+
         return
