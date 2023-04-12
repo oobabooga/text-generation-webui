@@ -81,6 +81,19 @@ class Handler(BaseHTTPRequestHandler):
                 }]
             })
             self.wfile.write(response.encode('utf-8'))
+        elif self.path == '/api/v1/token-count':
+            # Not compatible with KoboldAI api
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+
+            tokens = encode(body['prompt'])[0]
+            response = json.dumps({
+                'results': [{
+                    'tokens': len(tokens)
+                }]
+            })
+            self.wfile.write(response.encode('utf-8'))
         else:
             self.send_error(404)
 
