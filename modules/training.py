@@ -36,7 +36,10 @@ def get_dataset(path: str, ext: str):
 
 def create_train_interface():
     with gr.Tab('Train LoRA', elem_id='lora-train-tab'):
-        lora_name = gr.Textbox(label="Name", info="The name of your new LoRA file")
+        with gr.Row():
+            lora_name = gr.Textbox(label="Name", info="The name of your new LoRA file")
+            save_steps = gr.Number(label='Save every n steps', value=0, info='If above 0, a checkpoint of the LoRA will be saved every time this many steps pass.')
+
         with gr.Row():
             # TODO: Implement multi-device support.
             micro_batch_size = gr.Slider(label='Micro Batch Size', value=4, minimum=1, maximum=128, step=1, info='Per-device batch size (NOTE: multiple devices not yet implemented). Increasing this will increase VRAM usage.')
@@ -77,7 +80,7 @@ def create_train_interface():
             stop_button = gr.Button("Interrupt")
 
         output = gr.Markdown(value="Ready")
-        start_button.click(do_train, [lora_name, micro_batch_size, batch_size, epochs, learning_rate, lora_rank, lora_alpha, lora_dropout,
+        start_button.click(do_train, [lora_name, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lora_rank, lora_alpha, lora_dropout,
                                       cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, do_shuffle], [output])
         stop_button.click(do_interrupt, [], [], cancels=[], queue=False)
 
@@ -98,7 +101,7 @@ def clean_path(base_path: str, path: str):
     return f'{Path(base_path).absolute()}/{path}'
 
 
-def do_train(lora_name: str, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lora_rank: int, lora_alpha: int, lora_dropout: float,
+def do_train(lora_name: str, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lora_rank: int, lora_alpha: int, lora_dropout: float,
              cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, do_shuffle: bool):
     global WANT_INTERRUPT
     WANT_INTERRUPT = False
@@ -263,12 +266,10 @@ def do_train(lora_name: str, micro_batch_size: int, batch_size: int, epochs: int
             fp16=False if shared.args.cpu else True,
             logging_steps=20,
             evaluation_strategy="steps" if eval_data is not None else "no",
-            save_strategy="steps",
-            save_steps=200,
             eval_steps=eval_steps // gradient_accumulation_steps if eval_data is not None else None,
-            save_strategy="no",
+            save_strategy="steps",
+            save_steps=save_steps // gradient_accumulation_steps,
             output_dir=lora_name,
-            save_total_limit=3,
             load_best_model_at_end=True if eval_data is not None else False,
             # TODO: Enable multi-device support
             ddp_find_unused_parameters=None,
