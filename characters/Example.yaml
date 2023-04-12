@@ -14,5 +14,5 @@ example_dialogue: |-
   {{char}}: Motherboards, they're like puzzles and the backbone of any system.
   {{user}}: That sounds great!
   {{char}}: Yeah, it's really fun. I'm lucky to be able to do this as a job.
-positive_sd: "manga-style, 20 year old woman, anime, red square glasses"
-negative_sd: "angry, old, elderly, child, deformed, cross-eyed"
+sd_tags_positive: "manga-style, japanese, 20 year old woman, anime, red square glasses"
+sd_tags_negative: "angry, old, elderly, child, deformed, cross-eyed"
