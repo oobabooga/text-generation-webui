@@ -15,7 +15,7 @@ import websockets
 # Note, Gradio may pick a different fn value as the definition of the Gradio app changes.
 # You can always launch the web UI and inspect the websocket stream using your browser's dev tools
 # to determine what value Gradio expects here.
-GRADIO_FN = 8
+GRADIO_FN = 29
 
 
 def random_hash():
@@ -41,6 +41,10 @@ async def run(context):
         'length_penalty': 1,
         'early_stopping': False,
         'seed': -1,
+        'add_bos_token': True,
+        'truncation_length': 2048,
+        'custom_stopping_strings': [],
+        'ban_eos_token': False
     }
     payload = json.dumps([context, params])
     session = random_hash()
