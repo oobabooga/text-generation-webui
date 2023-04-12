@@ -40,8 +40,8 @@ To help your character maintain a better fixed image, add positive_sd and negati
 
 ```json
 {
-	"positive_sd": "24 year old, asian, long blond hair, ((twintail)), blue eyes, soft skin, height 5'8, woman, <lora:shojovibe_v11:0.1>",
-	"negative_sd": "old, elderly, child, deformed, cross-eyed"
+	"sd_tags_positive": "24 year old, asian, long blond hair, ((twintail)), blue eyes, soft skin, height 5'8, woman, <lora:shojovibe_v11:0.1>",
+	"sd_tags_negative": "old, elderly, child, deformed, cross-eyed"
 }
 ```
 If clothing and accessories are permanently affixed and will never be changed in any picture you will request of that character, feel free to add them to this tag too. The extension prompts the character to describe what it is wearing whenever a picture of itself is requested as to keep that aspect dynamic, so adding it in the character json makes it more static.
