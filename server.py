@@ -301,7 +301,7 @@ def create_model_menus():
                 with gr.Row():
                     with gr.Column():
                         for i in range(len(total_mem)):
-                            components[f'gpu_memory_{i}'] = gr.Slider(label="gpu-memory in MiB", maximum=total_mem[i], value=default_gpu_mem[i])
+                            components[f'gpu_memory_{i}'] = gr.Slider(label=f"gpu-memory in MiB for device :{i}", maximum=total_mem[i], value=default_gpu_mem[i])
                         components['cpu_memory'] = gr.Slider(label="cpu-memory in MiB", maximum=total_cpu_mem, value=default_cpu_mem)
 
                     with gr.Column():
