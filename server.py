@@ -207,6 +207,7 @@ def download_model_wrapper(repo_id):
         yield traceback.format_exc()
 
 
+# Model parameters: list the relevant interface elements
 def list_model_parameters():
     parameters = ['cpu_memory', 'auto_devices', 'disk', 'cpu', 'bf16', 'load_in_8bit', 'wbits', 'groupsize', 'model_type', 'pre_layer']
     for i in range(torch.cuda.device_count()):
@@ -214,9 +215,8 @@ def list_model_parameters():
     return parameters
 
 
-# Update the command-line arguments based on the interface values
+# Model parameters: update the command-line arguments based on the interface values
 def update_model_parameters(*args):
-
     args = list(args) # the values of the parameters
     elements = list_model_parameters() # the names of the parameters
 
@@ -254,8 +254,8 @@ def update_model_parameters(*args):
     else:
         shared.args.gpu_memory = None
 
-def create_model_menus():
 
+def create_model_menus():
     # Finding the default values for the GPU and CPU memories
     total_mem = []
     for i in range(torch.cuda.device_count()):
