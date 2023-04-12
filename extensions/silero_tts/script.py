@@ -165,13 +165,13 @@ def ui():
     convert_arr = [convert_confirm, convert, convert_cancel]
     convert.click(lambda: [gr.update(visible=True), gr.update(visible=False), gr.update(visible=True)], None, convert_arr)
     convert_confirm.click(lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr)
-    convert_confirm.click(remove_tts_from_history, [shared.gradio[k] for k in ['name1', 'name2', 'Chat mode']], shared.gradio['display'])
+    convert_confirm.click(remove_tts_from_history, [shared.gradio[k] for k in ['name1', 'name2', 'mode']], shared.gradio['display'])
     convert_confirm.click(lambda: chat.save_history(timestamp=False), [], [], show_progress=False)
     convert_cancel.click(lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr)
 
     # Toggle message text in history
     show_text.change(lambda x: params.update({"show_text": x}), show_text, None)
-    show_text.change(toggle_text_in_history, [shared.gradio[k] for k in ['name1', 'name2', 'Chat mode']], shared.gradio['display'])
+    show_text.change(toggle_text_in_history, [shared.gradio[k] for k in ['name1', 'name2', 'mode']], shared.gradio['display'])
     show_text.change(lambda: chat.save_history(timestamp=False), [], [], show_progress=False)
 
     # Event functions to update the parameters in the backend
