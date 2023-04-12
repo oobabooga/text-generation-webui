@@ -8,7 +8,6 @@ import json
 import math
 import os
 import re
-import sys
 import time
 import traceback
 import zipfile
@@ -209,16 +208,26 @@ def download_model_wrapper(repo_id):
 
 
 def list_model_parameters():
-    return ['gpu_memory', 'cpu_memory', 'auto_devices', 'disk', 'cpu', 'bf16', 'load_in_8bit', 'wbits', 'groupsize', 'model_type', 'pre_layer']
+    parameters = ['cpu_memory', 'auto_devices', 'disk', 'cpu', 'bf16', 'load_in_8bit', 'wbits', 'groupsize', 'model_type', 'pre_layer']
+    for i in range(torch.cuda.device_count()):
+        parameters.append(f'gpu_memory_{i}')
+    return parameters
 
 
 # Update the command-line arguments based on the interface values
 def update_model_parameters(*args):
-    args = list(args)
-    elements = list_model_parameters()
 
+    args = list(args) # the values of the parameters
+    elements = list_model_parameters() # the names of the parameters
+
+    gpu_memories = []
     for i, element in enumerate(elements):
-        if element in ['gpu_memory', 'cpu_memory'] and args[i] == 0:
+
+        if element.startswith('gpu_memory'):
+            gpu_memories.append(args[i])
+            continue
+
+        if element == 'cpu_memory' and args[i] == 0:
             args[i] = None
         if element == 'wbits' and args[i] == 'None':
             args[i] = 0
@@ -228,25 +237,41 @@ def update_model_parameters(*args):
             args[i] = None
         if element in ['wbits', 'groupsize', 'pre_layer']:
             args[i] = int(args[i])
-        if element == 'gpu_memory' and args[i] is not None:
-            args[i] = [f"{args[i]}MiB"]
         elif element == 'cpu_memory' and args[i] is not None:
             args[i] = f"{args[i]}MiB"
 
         #print(element, repr(eval(f"shared.args.{element}")), repr(args[i]))
         #print(f"shared.args.{element} = args[i]")
         exec(f"shared.args.{element} = args[i]")
-    #print()
+
+    found_positive = False
+    for i in gpu_memories:
+        if i > 0:
+            found_positive = True
+            break
+    if found_positive:
+        shared.args.gpu_memory = [f"{i}MiB" for i in gpu_memories]
+    else:
+        shared.args.gpu_memory = None
 
 def create_model_menus():
 
     # Finding the default values for the GPU and CPU memories
-    total_mem = math.floor(torch.cuda.get_device_properties(0).total_memory / (1024*1024))
-    total_cpu_mem = math.floor(psutil.virtual_memory().total / (1024*1024))
+    total_mem = []
+    for i in range(torch.cuda.device_count()):
+        total_mem.append(math.floor(torch.cuda.get_device_properties(i).total_memory / (1024*1024)))
+
+    default_gpu_mem = []
     if shared.args.gpu_memory is not None and len(shared.args.gpu_memory) > 0:
-        default_gpu_mem = re.sub('[a-zA-Z ]', '', shared.args.gpu_memory[0])
-    else:
-        default_gpu_mem = 0
+        for i in shared.args.gpu_memory:
+            if 'mib' in i.lower():
+                default_gpu_mem.append(int(re.sub('[a-zA-Z ]', '', i)))
+            else:
+                default_gpu_mem.append(int(re.sub('[a-zA-Z ]', '', i))*1000)
+    while len(default_gpu_mem) < len(total_mem):
+        default_gpu_mem.append(0)
+
+    total_cpu_mem = math.floor(psutil.virtual_memory().total / (1024*1024))
     if shared.args.cpu_memory is not None:
         default_cpu_mem = re.sub('[a-zA-Z ]', '', shared.args.cpu_memory)
     else:
@@ -275,7 +300,8 @@ def create_model_menus():
             with gr.Box():
                 with gr.Row():
                     with gr.Column():
-                        components['gpu_memory'] = gr.Slider(label="gpu-memory in MiB", maximum=total_mem, value=default_gpu_mem)
+                        for i in range(len(total_mem)):
+                            components[f'gpu_memory_{i}'] = gr.Slider(label="gpu-memory in MiB", maximum=total_mem[i], value=default_gpu_mem[i])
                         components['cpu_memory'] = gr.Slider(label="cpu-memory in MiB", maximum=total_cpu_mem, value=default_cpu_mem)
 
                     with gr.Column():
