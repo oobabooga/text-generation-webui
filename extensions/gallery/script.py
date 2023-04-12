@@ -155,7 +155,6 @@ def generate_js():
 
       init();
       update();
-      //alert("JS Inserted");
     }
     loadjs();
     """
