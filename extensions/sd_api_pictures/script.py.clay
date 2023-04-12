@@ -2,6 +2,8 @@ import base64
 import io
 import re
 import time
+import json
+import yaml
 from datetime import date
 from pathlib import Path
 
@@ -31,6 +33,9 @@ params = {
     'steps': 32,
     'cfg_scale': 7
 }
+
+
+
 
 
 def give_VRAM_priority(actor):
@@ -86,7 +91,7 @@ def triggers_are_in(string):
     # regex searches for send|main|message|me (at the end of the word) followed by
     # a whole word of image|pic|picture|photo|snap|snapshot|selfie|meme(s),
     # (?aims) are regex parser flags
-    return bool(re.search('(?aims)(send|mail|message|me)\\b.+?\\b(image|pic(ture)?|photo|snap(shot)?|selfie|meme)s?\\b', string))
+    return bool(re.search('(?aims)(send|mail|message|me)\\b.+?\\b(image|pic(ture)?|photo|snap(shot)?|selfie|meme|painting)s?\\b', string))
 
 
 def input_modifier(string):
@@ -94,6 +99,29 @@ def input_modifier(string):
     This function is applied to your text inputs before
     they are fed into the model.
     """
+    # Because it is impossible to get 'name2' unless this is called ultimately by server.py, this little workaround will get the name of the bot
+    # I mostly stole this from chat.load_character(), but getting the proper folder name has the same sort of problem as 'name2'
+    if shared.character != 'None':
+        found_file=False
+        folder1 = 'characters'
+        folder2 = 'characters/instruction-following'
+        for folder in [folder1, folder2]:
+            for extension in ["yml", "yaml", "json"]:
+                filepath = Path(f'{folder}/{shared.character}.{extension}')
+                if filepath.exists():
+                    found_file = True
+                    break
+            if found_file:
+                break
+        file_contents = open(filepath, 'r', encoding='utf-8').read()
+        data = json.loads(file_contents) if extension == "json" else yaml.safe_load(file_contents)
+    
+        if 'your_name' in data and data['your_name'] != '':
+            name1 = data['your_name']
+        name2 = data['name'] if 'name' in data else (data['char_name'] if 'char_name' in data else "Assistant")
+    else:
+        name2 = "Assistant"
+
 
     global params
 
@@ -102,12 +130,7 @@ def input_modifier(string):
 
     if triggers_are_in(string):  # if we're in it, check for trigger words
         toggle_generation(True)
-        string = string.lower()
-        if "of" in string:
-            subject = string.split('of', 1)[1]  # subdivide the string once by the first 'of' instance and get what's coming after it
-            string = "Please provide a detailed and vivid description of " + subject
-        else:
-            string = "Please provide a detailed description of your appearance, your surroundings and what you are doing right now"
+        string = f"\n{name2}: *Translates 3 INPUTs to image prompt format. The prompts are descriptive and ALWAYS include a detailed description the subject of the image in the prompt. Any references in the second person like \"you\", \"your\", or \"yourself\" are about {name2} and include detailed information about {name2}'s hair, body type, clothing, surroundings, etc.*\nINPUT: send me a picture of a cool looking crystal\n{name2}: (crystal), diamond cut, reflective rock, transparent gemstone, beautiful sparkling gem, ultra detailed, volumetric lighting, professional photography\nINPUT: show me an image of Brad Pitt\n{name2}: portrait photo of (Brad Pitt), man, brown hair, short hair, athletic build, handsome, fashionable clothes, photo realistic, detailed skin, masterpiece, cinematic lighting\nINPUT: " + string
 
     return string
 
@@ -185,7 +208,7 @@ def output_modifier(string):
     text = ""
     if (params['mode'] < 2):
         toggle_generation(False)
-        text = f'*Sends a picture which portrays: “{string}”*'
+        text = f'*Image Description: “{string}”*'
     else:
         text = string
 
