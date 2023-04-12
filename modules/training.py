@@ -10,7 +10,7 @@ import torch
 import transformers
 from datasets import Dataset, load_dataset
 from peft import (LoraConfig, get_peft_model, get_peft_model_state_dict,
-                  prepare_model_for_int8_training)
+                  PeftModel, prepare_model_for_int8_training)
 
 try: # This mapping is from a very recent commit, not yet released.
     from peft.utils.other import TRANSFORMERS_MODELS_TO_LORA_TARGET_MODULES_MAPPING as model_to_lora_modules
@@ -37,7 +37,8 @@ def get_dataset(path: str, ext: str):
 def create_train_interface():
     with gr.Tab('Train LoRA', elem_id='lora-train-tab'):
         with gr.Row():
-            lora_name = gr.Textbox(label="Name", info="The name of your new LoRA file")
+            lora_name = gr.Textbox(label='Name', info='The name of your new LoRA file')
+            always_override = gr.Checkbox(label='Override Existing Files', value=True, info='If the name given is the same as an existing file, checking this will replace that file. Leaving unchecked will load that file and continue from it (will use the original rank/alpha/dropout) (NOTE: Currently broken).')
             save_steps = gr.Number(label='Save every n steps', value=0, info='If above 0, a checkpoint of the LoRA will be saved every time this many steps pass.')
 
         with gr.Row():
@@ -80,7 +81,7 @@ def create_train_interface():
             stop_button = gr.Button("Interrupt")
 
         output = gr.Markdown(value="Ready")
-        start_button.click(do_train, [lora_name, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lora_rank, lora_alpha, lora_dropout,
+        start_button.click(do_train, [lora_name, always_override, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lora_rank, lora_alpha, lora_dropout,
                                       cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, do_shuffle], [output])
         stop_button.click(do_interrupt, [], [], cancels=[], queue=False)
 
@@ -101,14 +102,14 @@ def clean_path(base_path: str, path: str):
     return f'{Path(base_path).absolute()}/{path}'
 
 
-def do_train(lora_name: str, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lora_rank: int, lora_alpha: int, lora_dropout: float,
+def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lora_rank: int, lora_alpha: int, lora_dropout: float,
              cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, do_shuffle: bool):
     global WANT_INTERRUPT
     WANT_INTERRUPT = False
 
     # == Input validation / processing ==
     yield "Prepping..."
-    lora_name = f"{shared.args.lora_dir}/{clean_path(None, lora_name)}"
+    lora_file_path = f"{shared.args.lora_dir}/{clean_path(None, lora_name)}"
     actual_lr = float(learning_rate)
 
     model_type = type(shared.model).__name__
@@ -226,7 +227,12 @@ def do_train(lora_name: str, save_steps: int, micro_batch_size: int, batch_size:
     )
 
     try:
-        lora_model = get_peft_model(shared.model, config)
+        if not always_override and Path(f"{lora_file_path}/adapter_model.bin").is_file():
+            print("Loading existing LoRA file...")
+            lora_model = PeftModel.from_pretrained(shared.model, lora_file_path)
+        else:
+            print("Creating new LoRA model...")
+            lora_model = get_peft_model(shared.model, config)
     except:
         yield traceback.format_exc()
         return
@@ -269,7 +275,7 @@ def do_train(lora_name: str, save_steps: int, micro_batch_size: int, batch_size:
             eval_steps=eval_steps // gradient_accumulation_steps if eval_data is not None else None,
             save_strategy="steps",
             save_steps=save_steps // gradient_accumulation_steps,
-            output_dir=lora_name,
+            output_dir=lora_file_path,
             load_best_model_at_end=True if eval_data is not None else False,
             # TODO: Enable multi-device support
             ddp_find_unused_parameters=None,
@@ -325,14 +331,14 @@ def do_train(lora_name: str, save_steps: int, micro_batch_size: int, batch_size:
             yield f"Running... **{tracked.current_steps}** / **{tracked.max_steps}** ... {timer_info}, {format_time(time_elapsed)} / {format_time(total_time_estimate)} ... {format_time(total_time_estimate - time_elapsed)} remaining"
 
     print("Training complete, saving...")
-    lora_model.save_pretrained(lora_name)
+    lora_model.save_pretrained(lora_file_path)
 
     if WANT_INTERRUPT:
         print("Training interrupted.")
-        yield f"Interrupted. Incomplete LoRA saved to `{lora_name}`"
+        yield f"Interrupted. Incomplete LoRA saved to `{lora_file_path}`"
     else:
         print("Training complete!")
-        yield f"Done! LoRA saved to `{lora_name}`"
+        yield f"Done! LoRA saved to `{lora_file_path}`"
 
 
 def split_chunks(arr, step):
