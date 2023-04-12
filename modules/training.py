@@ -21,9 +21,6 @@ except: # So good backup for the 3 safe model types if not yet available.
 from modules import shared, ui
 
 WANT_INTERRUPT = False
-CURRENT_STEPS = 0
-MAX_STEPS = 0
-CURRENT_GRADIENT_ACCUM = 1
 
 
 MODEL_CLASSES = { # Mapping of Python class names to peft IDs
@@ -90,22 +87,6 @@ def do_interrupt():
     WANT_INTERRUPT = True
 
 
-class Callbacks(transformers.TrainerCallback):
-    def on_step_begin(self, args: transformers.TrainingArguments, state: transformers.TrainerState, control: transformers.TrainerControl, **kwargs):
-        global CURRENT_STEPS, MAX_STEPS
-        CURRENT_STEPS = state.global_step * CURRENT_GRADIENT_ACCUM
-        MAX_STEPS = state.max_steps * CURRENT_GRADIENT_ACCUM
-        if WANT_INTERRUPT:
-            control.should_epoch_stop = True
-            control.should_training_stop = True
-
-    def on_substep_end(self, args: transformers.TrainingArguments, state: transformers.TrainerState, control: transformers.TrainerControl, **kwargs):
-        global CURRENT_STEPS
-        CURRENT_STEPS += 1
-        if WANT_INTERRUPT:
-            control.should_epoch_stop = True
-            control.should_training_stop = True
-
 
 def clean_path(base_path: str, path: str):
     """"Strips unusual symbols and forcibly builds a path as relative to the intended directory."""
@@ -119,10 +100,8 @@ def clean_path(base_path: str, path: str):
 
 def do_train(lora_name: str, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lora_rank: int, lora_alpha: int, lora_dropout: float,
              cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, do_shuffle: bool):
-    global WANT_INTERRUPT, CURRENT_STEPS, MAX_STEPS, CURRENT_GRADIENT_ACCUM
+    global WANT_INTERRUPT
     WANT_INTERRUPT = False
-    CURRENT_STEPS = 0
-    MAX_STEPS = 0
 
     # == Input validation / processing ==
     yield "Prepping..."
@@ -249,6 +228,27 @@ def do_train(lora_name: str, micro_batch_size: int, batch_size: int, epochs: int
         yield traceback.format_exc()
         return
 
+    class Tracked():
+        def __init__(self):
+            self.current_steps = 0
+            self.max_steps = 0
+
+    tracked = Tracked()
+
+    class Callbacks(transformers.TrainerCallback):
+        def on_step_begin(self, args: transformers.TrainingArguments, state: transformers.TrainerState, control: transformers.TrainerControl, **kwargs):
+            tracked.current_steps = state.global_step * CURRENT_GRADIENT_ACCUM
+            tracked.max_steps = state.max_steps * CURRENT_GRADIENT_ACCUM
+            if WANT_INTERRUPT:
+                control.should_epoch_stop = True
+                control.should_training_stop = True
+
+        def on_substep_end(self, args: transformers.TrainingArguments, state: transformers.TrainerState, control: transformers.TrainerControl, **kwargs):
+            tracked.current_steps += 1
+            if WANT_INTERRUPT:
+                control.should_epoch_stop = True
+                control.should_training_stop = True
+
     trainer = transformers.Trainer(
         model=lora_model,
         train_dataset=train_data,
@@ -308,20 +308,20 @@ def do_train(lora_name: str, micro_batch_size: int, batch_size: int, epochs: int
         if WANT_INTERRUPT:
             yield "Interrupting, please wait... *(Run will stop after the current training step completes.)*"
 
-        elif CURRENT_STEPS != last_step:
-            last_step = CURRENT_STEPS
+        elif tracked.current_steps != last_step:
+            last_step = tracked.current_steps
             time_elapsed = time.perf_counter() - start_time
             if time_elapsed <= 0:
                 timer_info = ""
                 total_time_estimate = 999
             else:
-                its = CURRENT_STEPS / time_elapsed
+                its = tracked.current_steps / time_elapsed
                 if its > 1:
                     timer_info = f"`{its:.2f}` it/s"
                 else:
                     timer_info = f"`{1.0/its:.2f}` s/it"
-                total_time_estimate = (1.0 / its) * (MAX_STEPS)
-            yield f"Running... **{CURRENT_STEPS}** / **{MAX_STEPS}** ... {timer_info}, {format_time(time_elapsed)} / {format_time(total_time_estimate)} ... {format_time(total_time_estimate - time_elapsed)} remaining"
+                total_time_estimate = (1.0 / its) * (tracked.max_steps)
+            yield f"Running... **{tracked.current_steps}** / **{tracked.max_steps}** ... {timer_info}, {format_time(time_elapsed)} / {format_time(total_time_estimate)} ... {format_time(total_time_estimate - time_elapsed)} remaining"
 
     print("Training complete, saving...")
     lora_model.save_pretrained(lora_name)
