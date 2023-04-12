@@ -14,7 +14,7 @@ import getpass
 import websockets
 
 async def connect():
-    uri = "wss://example.com:4999/wsapi"
+    uri = "wss://example.com:5001/wsapi"
     username = ""
     password = ""
     is_authenticated = False
@@ -53,12 +53,12 @@ async def exe_websocket(websocket):
         'top_p': 0.9,
         'rep_pen': 1.1
     }
-    custom_stopping_strings = ["\nYou", "\nYou:", "You:"]
+    stopping_strings = ["\nYou", "\nYou:", "You:"]
     
     data = {
         'prompt': prompt,
         **generate_params,
-        'custom_stopping_strings': custom_stopping_strings
+        'stopping_strings': stopping_strings
     }
 
     await websocket.send(json.dumps(data))
