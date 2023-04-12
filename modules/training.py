@@ -53,8 +53,9 @@ def create_train_interface():
         lora_rank = gr.Slider(label='LoRA Rank', value=32, minimum=0, maximum=1024, step=4, info='LoRA Rank, or dimension count. Higher values produce a larger file with better control over the model\'s content. Smaller values produce a smaller file with less overall control. Small values like 4 or 8 are great for stylistic guidance, high values like 128 or 256 are good for teaching content upgrades. Higher ranks also require higher VRAM.')
         lora_alpha = gr.Slider(label='LoRA Alpha', value=64, minimum=0, maximum=2048, step=4, info='LoRA Alpha. This divided by the rank becomes the scaling of the LoRA. Higher means stronger. A good standard value is twice your Rank.')
         # TODO: Better explain what this does, in terms of real world effect especially.
-        lora_dropout = gr.Slider(label='LoRA Dropout', minimum=0.0, maximum=1.0, step=0.025, value=0.05, info='Percentage probability for dropout of LoRA layers.')
+        lora_dropout = gr.Slider(label='LoRA Dropout', minimum=0.0, maximum=1.0, step=0.025, value=0.05, info='Percentage probability for dropout of LoRA layers. This can help reduce overfitting. Most users should leave at default.')
         cutoff_len = gr.Slider(label='Cutoff Length', minimum=0, maximum=2048, value=256, step=32, info='Cutoff length for text input. Essentially, how long of a line of text to feed in at a time. Higher values require drastically more VRAM.')
+        do_shuffle = gr.Checkbox(label='Shuffle Dataset', value=True, info='If checked, the dataset will be randomly shuffled. This can help reduce overfitting.')
 
         with gr.Tab(label="Formatted Dataset"):
             with gr.Row():
@@ -79,7 +80,7 @@ def create_train_interface():
 
         output = gr.Markdown(value="Ready")
         start_button.click(do_train, [lora_name, micro_batch_size, batch_size, epochs, learning_rate, lora_rank, lora_alpha, lora_dropout,
-                                      cutoff_len, dataset, eval_dataset, format, raw_text_file, overlap_len, newline_favor_len], [output])
+                                      cutoff_len, dataset, eval_dataset, format, raw_text_file, overlap_len, newline_favor_len, do_shuffle], [output])
         stop_button.click(do_interrupt, [], [], cancels=[], queue=False)
 
 
@@ -116,7 +117,7 @@ def clean_path(base_path: str, path: str):
 
 
 def do_train(lora_name: str, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lora_rank: int, lora_alpha: int, lora_dropout: float,
-             cutoff_len: int, dataset: str, eval_dataset: str, format: str, raw_text_file: str, overlap_len: int, newline_favor_len: int):
+             cutoff_len: int, dataset: str, eval_dataset: str, format: str, raw_text_file: str, overlap_len: int, newline_favor_len: int, do_shuffle: bool):
     global WANT_INTERRUPT, CURRENT_STEPS, MAX_STEPS, CURRENT_GRADIENT_ACCUM
     WANT_INTERRUPT = False
     CURRENT_STEPS = 0
@@ -184,7 +185,6 @@ def do_train(lora_name: str, micro_batch_size: int, batch_size: int, epochs: int
 
         train_data = Dataset.from_list([tokenize(x) for x in text_chunks])
         del text_chunks
-        train_data = train_data.shuffle()
         eval_data = None
 
     else:
@@ -214,13 +214,18 @@ def do_train(lora_name: str, micro_batch_size: int, batch_size: int, epochs: int
 
         print("Loading JSON datasets...")
         data = load_dataset("json", data_files=clean_path('training/datasets', f'{dataset}.json'))
-        train_data = data['train'].shuffle().map(generate_and_tokenize_prompt)
+        train_data = data['train'].map(generate_and_tokenize_prompt)
 
         if eval_dataset == 'None':
             eval_data = None
         else:
             eval_data = load_dataset("json", data_files=clean_path('training/datasets', f'{eval_dataset}.json'))
-            eval_data = eval_data['train'].shuffle().map(generate_and_tokenize_prompt)
+            eval_data = eval_data['train'].map(generate_and_tokenize_prompt)
+            if do_shuffle:
+                eval_data = eval_data.shuffle()
+
+    if do_shuffle:
+        train_data = train_data.shuffle()
 
     # == Start prepping the model itself ==
     if not hasattr(shared.model, 'lm_head') or hasattr(shared.model.lm_head, 'weight'):
