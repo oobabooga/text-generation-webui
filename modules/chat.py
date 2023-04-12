@@ -171,7 +171,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False):
                     shared.history['visible'].append(['', ''])
 
             if _continue:
-                sep = list(map(lambda x: ' ' if x[-1] != ' ' else '', last_reply))
+                sep = list(map(lambda x: ' ' if len(x) > 0 and x[-1] != ' ' else '', last_reply))
                 shared.history['internal'][-1] = [text, f'{last_reply[0]}{sep[0]}{reply}']
                 shared.history['visible'][-1] = [visible_text, f'{last_reply[1]}{sep[1]}{visible_reply}']
             else:
@@ -264,6 +264,21 @@ def replace_last_reply(text, name1, name2, mode):
         shared.history['visible'][-1][1] = text
         shared.history['internal'][-1][1] = apply_extensions(text, "input")
 
+    return chat_html_wrapper(shared.history['visible'], name1, name2, mode)
+
+
+def send_dummy_message(text, name1, name2, mode):
+    shared.history['visible'].append([text, ''])
+    shared.history['internal'].append([apply_extensions(text, "input"), ''])
+    return chat_html_wrapper(shared.history['visible'], name1, name2, mode)
+
+
+def send_dummy_reply(text, name1, name2, mode):
+    if len(shared.history['visible']) > 0 and not shared.history['visible'][-1][1] == '':
+        shared.history['visible'].append(['', ''])
+        shared.history['internal'].append(['', ''])
+    shared.history['visible'][-1][1] = text
+    shared.history['internal'][-1][1] = apply_extensions(text, "input")
     return chat_html_wrapper(shared.history['visible'], name1, name2, mode)
 
 

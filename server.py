@@ -399,13 +399,15 @@ def create_interface():
                     shared.gradio['Continue'] = gr.Button('Continue')
                     shared.gradio['Impersonate'] = gr.Button('Impersonate')
                 with gr.Row():
-                    shared.gradio['Copy last reply'] = gr.Button('Copy last reply')
+                    shared.gradio['Send dummy message'] = gr.Button('Send dummy message')
+                    shared.gradio['Send dummy reply'] = gr.Button('Send dummy reply')
                     shared.gradio['Replace last reply'] = gr.Button('Replace last reply')
-                    shared.gradio['Remove last'] = gr.Button('Remove last')
-
+                    shared.gradio['Copy last reply'] = gr.Button('Copy last reply')
+                with gr.Row():
                     shared.gradio['Clear history'] = gr.Button('Clear history')
                     shared.gradio['Clear history-confirm'] = gr.Button('Confirm', variant="stop", visible=False)
                     shared.gradio['Clear history-cancel'] = gr.Button('Cancel', visible=False)
+                    shared.gradio['Remove last'] = gr.Button('Remove last')
 
                 shared.gradio["mode"] = gr.Radio(choices=["cai-chat", "chat", "instruct"], value="cai-chat", label="Mode")
                 shared.gradio["Instruction templates"] = gr.Dropdown(choices=get_available_instruction_templates(), label="Instruction template", value="None", visible=False, info="Change this according to the model/LoRA that you are using.")
@@ -499,6 +501,16 @@ def create_interface():
 
             shared.gradio['Replace last reply'].click(
                 chat.replace_last_reply, [shared.gradio[k] for k in ['textbox', 'name1', 'name2', 'mode']], shared.gradio['display'], show_progress=shared.args.no_stream).then(
+                lambda x: '', shared.gradio['textbox'], shared.gradio['textbox'], show_progress=False).then(
+                chat.save_history, shared.gradio['mode'], None, show_progress=False)
+
+            shared.gradio['Send dummy message'].click(
+                chat.send_dummy_message, [shared.gradio[k] for k in ['textbox', 'name1', 'name2', 'mode']], shared.gradio['display'], show_progress=shared.args.no_stream).then(
+                lambda x: '', shared.gradio['textbox'], shared.gradio['textbox'], show_progress=False).then(
+                chat.save_history, shared.gradio['mode'], None, show_progress=False)
+
+            shared.gradio['Send dummy reply'].click(
+                chat.send_dummy_reply, [shared.gradio[k] for k in ['textbox', 'name1', 'name2', 'mode']], shared.gradio['display'], show_progress=shared.args.no_stream).then(
                 lambda x: '', shared.gradio['textbox'], shared.gradio['textbox'], show_progress=False).then(
                 chat.save_history, shared.gradio['mode'], None, show_progress=False)
 
