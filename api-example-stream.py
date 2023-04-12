@@ -52,7 +52,7 @@ async def exe_websocket(websocket):
         'temperature': 0.8,
         'top_p': 0.9,
         'rep_pen': 1.1,
-        custom_stopping_strings: ["\nYou", "\nYou:", "You:"]
+        'custom_stopping_strings': ["\nYou", "\nYou:", "You:"]
     }
     
     data = {
