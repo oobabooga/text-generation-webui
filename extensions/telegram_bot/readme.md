@@ -11,17 +11,18 @@ HOW TO USE:
 FEATURES:
 - chat and notebook modes
 - session for all users are separative (by chat_id)
-- local session history - conversation won't to be lost 
+- local session history - conversation won't be lost. Separated history between users and chars.
 - nice "X typing" during generating (users will not think that bot is stuck)
 - regenerate last message, remove last messages from history, reset history button, continue previous message
 - you can load new characters from text-generation-webui\characters with "_LOAD:" command!!!
-- threading: you can send few message simultaneously and bot will answer them all - but be carefully, GPU may be overloaded and some message may stuck!!!
+- chatting # prefix for impersonate: "#You" or "#Castle guard" or "#Alice thoughts about me"
+
 
 TBC:
 - replace "X typing" by yield from generator
-- group chat mode (testing, checking)
-- change characters during session - DONE! (due to "_LOAD:" message)
-- limit of simultaneously threading to prevent overloading. Queue or something other. 
+- group chat mode (need to be tested, does current workflow is ok?)
+- change characters during session - DONE! (due to "/load:" command)
+- limit of simultaneously threading to prevent overloading - DONE! (one thread allowed, if someone find out that 2 generator thread faster - function will be rewrited) 
 - history upgrade: local cache - DONE!
 - message_id sequence history cache lead to "remove last message" button - DONE!
 - separated telegram_settings.json file - DONE! (telegram_token.txt)
