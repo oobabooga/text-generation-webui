@@ -36,7 +36,7 @@ params = {
     "width": 512,
     "height": 768,
     "restore_faces": False,
-    "sampler_index": "DPM++ SDE Karras"  
+    "sampler_name": "DPM++ SDE Karras"  
 }
 
 def give_VRAM_priority(actor):
@@ -158,7 +158,7 @@ def get_SD_pictures(description):
         "prompt": params['prompt_prefix'] + description,
         "negative_prompt": params['negative_prompt'],
         "seed": params['seed'],
-        "sampler_index": params['sampler_index'],
+        "sampler_name": params['sampler_name'],
         "steps": params['steps'], 
         "cfg_scale": params['cfg_scale'],
         "width": params['width'],
@@ -179,7 +179,7 @@ def get_SD_pictures(description):
     response.raise_for_status()
     r = response.json()
 
-    # This is broken for me please check where I messed up. I am sorry.
+    
     visible_result = ""
     for img_str in r['images']:
         image = Image.open(io.BytesIO(base64.b64decode(img_str.split(",", 1)[0])))
@@ -191,7 +191,7 @@ def get_SD_pictures(description):
             visible_result = visible_result + f'<img src="/file/extensions/sd_api_pictures/outputs/{variadic}.png" alt="{description}" style="max-width: unset; max-height: unset;">\n'
         else:
             # lower the resolution of received images for the chat, otherwise the log size gets out of control quickly with all the base64 values in visible history
-            image.thumbnail((400, 400))
+            image.thumbnail((300, 300))
             buffered = io.BytesIO()
             image.save(buffered, format="JPEG")
             buffered.seek(0)
@@ -322,10 +322,10 @@ def ui():
                     hr_second_pass_steps = gr.Slider(0, 30, value=params['hr_second_pass_steps'], step=1, label='HR second pass steps')
                     hr_scale = gr.Slider(0, 4, value=params['hr_scale'], step=0.5, label='HR scale')
                 with gr.Column():
-                    Apply = gr.Button("Aplly Settings")
+                    Apply = gr.Button("Apply Settings")
             with gr.Row():
                 sd_model_checkpoint = gr.Dropdown(label="model", choices=sd_models)
-                sampler_index = gr.Dropdown(label="sampler", choices=samplers)
+                sampler_name = gr.Dropdown(label="sampler", choices=samplers)
                   
             with gr.Accordion("Prompt settigns", open=False):
                 prompt_prefix = gr.Textbox(placeholder=params['prompt_prefix'], value=params['prompt_prefix'], label='Prompt Prefix (best used to describe the look of the character)')
@@ -352,7 +352,7 @@ def ui():
     denoising_strength.change(lambda x: params.update({"denoising_strength": x}), denoising_strength, None)
     hr_second_pass_steps.change(lambda x: params.update({"hr_second_pass_steps": x}), hr_second_pass_steps, None)
     hr_scale.change(lambda x: params.update({"hr_scale": x}), hr_scale, None)
-    sampler_index.change(lambda x: params.update({"sampler_index": x}), sampler_index, None)
+    sampler_name.change(lambda x: params.update({"sampler_name": x}), sampler_name, None)
     steps.change(lambda x: params.update({"steps": x}), steps, None)
     seed.change(lambda x: params.update({"seed": x}), seed, None)
     cfg_scale.change(lambda x: params.update({"cfg_scale": x}), cfg_scale, None)
