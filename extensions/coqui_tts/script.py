@@ -1,6 +1,6 @@
 import time
 from pathlib import Path
-from modules import chat, shared
+from modules import chat, shared, tts_preprocessor
 from modules.html_generator import chat_html_wrapper
 
 import gradio as gr
@@ -10,18 +10,17 @@ from TTS.api import TTS
 # Running a multi-speaker and multilingual model
 params = {
     'activate': True,
-    'speaker': 'en_49',
-    'language': 'en',
-    'model_id': 'tts_models/en/ek1/tacotron2',
-    'sample_rate': 48000,
-    'device': 'cpu',
+    'speaker': None,
+    'language': None,
+    'model_id': 'tts_models/en/ljspeech/tacotron2-DDC',
+    'Cuda': True,
     'show_text': True,
     'autoplay': True,
-    'voice_pitch': 'medium',
-    'voice_speed': 'medium',
 }
 
 current_params = params.copy()
+speakers = []
+languages = []
 models = [
     'tts_models/en/ek1/tacotron2',
     'tts_models/en/ljspeech/tacotron2-DDC',
@@ -44,17 +43,22 @@ models = [
 
 def load_model():
     # Init TTS
-    tts = TTS(params['model_id'])
-    temp_speaker = tts.speakers if tts.speakers is not None else []
-    temp_speaker = params['speaker'] if params['speaker'] in temp_speaker else temp_speaker[0] if len(temp_speaker) > 0 else None
+    global speakers, languages
+    tts = TTS(params['model_id'], gpu=params['Cuda'])
+    if tts is not None and tts.synthesizer is not None and tts.synthesizer.tts_config is not None and hasattr(tts.synthesizer.tts_config, 'num_chars'):
+        tts.synthesizer.tts_config.num_chars = 250
 
-    temp_language = tts.languages if tts.languages is not None else []
-    temp_language = params['language'] if params['language'] in temp_language else temp_language[0] if len(temp_language) > 0 else None
+    speakers = tts.speakers if tts.speakers is not None else []
+    temp_speaker = params['speaker'] if params['speaker'] in speakers else speakers[0] if len(speakers) > 0 else None
+
+    languages = tts.languages if tts.languages is not None else []
+    temp_language = params['language'] if params['language'] in languages else languages[0] if len(languages) > 0 else None
 
     return tts, temp_speaker, temp_language
 
 
 model, speaker, language = load_model()
+streaming_state = shared.args.no_stream  # remember if chat streaming was enabled
 
 
 def remove_tts_from_history(name1, name2, mode):
@@ -107,7 +111,10 @@ def output_modifier(string):
         return string
 
     original_string = string
-    # string = tts_preprocessor.preprocess(string)
+    # we don't need to handle numbers. The text normalizer in coqui does it better
+    string = tts_preprocessor.replace_invalid_chars(string)
+    string = tts_preprocessor.replace_abbreviations(string)
+    string = tts_preprocessor.clean_whitespace(string)
 
     if string == '':
         string = '*Empty reply, try regenerating*'
@@ -173,6 +180,14 @@ def ui():
     # Event functions to update the parameters in the backend
     activate.change(lambda x: params.update({"activate": x}), activate, None)
     autoplay.change(lambda x: params.update({"autoplay": x}), autoplay, None)
-    model_dropdown.change(lambda x: params.update({"model_id": x}), model_dropdown, None)
+    model_dropdown.change(lambda x: update_model(x, voice, lang), model_dropdown, None)
     voice.change(lambda x: params.update({"speaker": x}), voice, None)
     lang.change(lambda x: params.update({"language": x}), lang, None)
+
+
+def update_model(x, speaker_dropdown, language_dropdown):
+    params.update({"model_id": x})
+    global model, speaker, language, speakers, languages
+    model, speaker, language = load_model()
+    speaker_dropdown.update(value=speaker, choices=speakers)
+    language_dropdown.update(value=language, choices=languages)

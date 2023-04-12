@@ -2,18 +2,17 @@ from TTS.api import TTS
 from pathlib import Path
 import time
 
+from modules import tts_preprocessor
+
 # Running a multi-speaker and multilingual model
 params = {
     'activate': True,
-    'speaker': 'en_49',
-    'language': 'en',
+    'speaker': None,
+    'language': None,
     'model_id': 'tts_models/en/ek1/tacotron2',
-    'sample_rate': 48000,
-    'device': 'cpu',
+    'Cuda': True,
     'show_text': True,
     'autoplay': True,
-    'voice_pitch': 'medium',
-    'voice_speed': 'medium',
 }
 
 voices_by_gender = [
@@ -38,7 +37,10 @@ voices_by_gender = [
 
 def load_model():
     # Init TTS
-    tts = TTS(params['model_id'])
+    tts = TTS(params['model_id'], gpu=params['Cuda'])
+    if tts is not None and tts.synthesizer is not None and tts.synthesizer.tts_config is not None and hasattr(tts.synthesizer.tts_config, 'num_chars'):
+        tts.synthesizer.tts_config.num_chars = 1000
+
     temp_speaker = tts.speakers if tts.speakers is not None else []
     temp_speaker = params['speaker'] if params['speaker'] in temp_speaker else temp_speaker[0] if len(temp_speaker) > 0 else None
 
@@ -59,7 +61,10 @@ def output_modifier(string):
     global model, speaker, language, params
 
     original_string = string
-    # string = tts_preprocessor.preprocess(string)
+    # we don't need to handle numbers. The text normalizer in coqui does it better
+    string = tts_preprocessor.replace_invalid_chars(string)
+    string = tts_preprocessor.replace_abbreviations(string)
+    string = tts_preprocessor.clean_whitespace(string)
     processed_string = string
 
     if string == '':

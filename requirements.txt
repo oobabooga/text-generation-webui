@@ -3,6 +3,7 @@ datasets
 flexgen==0.1.7
 gradio==3.24.1
 markdown
+num2words
 numpy
 Pillow>=9.5.0
 peft==0.2.0

@@ -33,19 +33,11 @@ alphabet_map = {
 }
 
 
-def preprocess(string):
+def preprocess_all(string):
     # the order for some of these matter
     # For example, you need to remove the commas in numbers before expanding them
-    string = remove_surrounded_chars(string)
-    string = string.replace('"', '')
-    string = string.replace('\u201D', '').replace('\u201C', '')  # right and left quote
-    string = string.replace('\u201F', '')  # italic looking quote
-    string = string.replace('\n', ' ')
-    string = convert_num_locale(string)
-    string = replace_negative(string)
-    string = replace_roman(string)
-    string = hyphen_range_to(string)
-    string = num_to_words(string)
+    string = replace_invalid_chars(string)
+    string = replace_numbers(string)
 
     # TODO Try to use a ML predictor to expand abbreviations. It's hard, dependent on context, and whether to actually
     # try to say the abbreviation or spell it out as I've done below is not agreed upon
@@ -53,15 +45,29 @@ def preprocess(string):
     # For now, expand abbreviations to pronunciations
     # replace_abbreviations adds a lot of unnecessary whitespace to ensure separation
     string = replace_abbreviations(string)
-    string = replace_lowercase_abbreviations(string)
 
     # cleanup whitespaces
-    # remove whitespace before punctuation
-    string = re.sub(rf'\s+({punctuation})', r'\1', string)
-    string = string.strip()
-    # compact whitespace
-    string = ' '.join(string.split())
+    string = clean_whitespace(string)
 
+    return string
+
+
+def replace_invalid_chars(string):
+    string = remove_surrounded_chars(string)
+    string = string.replace('"', '')
+    string = string.replace('`', '')
+    string = string.replace('\u201D', '').replace('\u201C', '')  # right and left quote
+    string = string.replace('\u201F', '')  # italic looking quote
+    string = string.replace('\n', ' ')
+    return string
+
+
+def replace_numbers(string):
+    string = convert_num_locale(string)
+    string = replace_negative(string)
+    string = replace_roman(string)
+    string = hyphen_range_to(string)
+    string = num_to_words(string)
     return string
 
 
@@ -138,6 +144,12 @@ def num_to_words(text):
 
 
 def replace_abbreviations(string):
+    string = replace_uppercase_abbreviations(string)
+    string = replace_lowercase_abbreviations(string)
+    return string
+
+
+def replace_uppercase_abbreviations(string):
     # abbreviations 1 to 4 characters long. It will get things like A and I, but those are pronounced with their letter
     pattern = re.compile(rf'(^|[\s(.\'\[<])([A-Z]{{1,4}})({punctuation}|$)')
     result = string
@@ -185,8 +197,17 @@ def match_mapping(char):
     return char
 
 
+def clean_whitespace(string):
+    # remove whitespace before punctuation
+    string = re.sub(rf'\s+({punctuation})', r'\1', string)
+    string = string.strip()
+    # compact whitespace
+    string = ' '.join(string.split())
+    return string
+
+
 def __main__(args):
-    print(preprocess(args[1]))
+    print(preprocess_all(args[1]))
 
 
 if __name__ == "__main__":

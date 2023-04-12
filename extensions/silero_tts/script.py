@@ -4,13 +4,13 @@ from pathlib import Path
 import gradio as gr
 import torch
 
-from extensions.silero_tts import tts_preprocessor
-from modules import chat, shared
+from modules import chat, shared, tts_preprocessor
 from modules.html_generator import chat_html_wrapper
 
 torch._C._jit_set_profiling_mode(False)
 
 
+model = None
 params = {
     'activate': True,
     'speaker': 'en_56',
@@ -108,7 +108,7 @@ def output_modifier(string):
         return string
 
     original_string = string
-    string = tts_preprocessor.preprocess(string)
+    string = tts_preprocessor.preprocess_all(string)
 
     if string == '':
         string = '*Empty reply, try regenerating*'
