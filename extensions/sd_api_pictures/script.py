@@ -37,7 +37,7 @@ params = {
     'translations': False,
     'character': "",
     'anti_nsfw_prompts': '',
-    'nsfw_prompts': '(nsfw, nude, naked:1.2)',
+    'nsfw_prompts': 'nsfw',
     'prompt_translation_positive': "",
     'prompt_translation_negative': "",
     'positive_suffix': "",
@@ -111,7 +111,7 @@ def triggers_are_in(string):
     # (?aims) are regex parser flags
     return bool(re.search('(?aims)(send|mail|message|me)\\b.+?\\b(image|pic(ture)?|photo|snap(shot)?|selfie|meme)s?\\b', string))
 
-def if_of_is_in(string):
+def string_evaluation(string):
     toggle_generation(False)
     subjects = ['yourself', 'you']
     params['characterfocus'] = False
@@ -152,18 +152,14 @@ def input_modifier(string):
 
     global params
 
-    if params['mode'] == 1:  # if not in immersive/interactive mode, do nothing
-            return if_of_is_in(string)
+    if params['mode'] == 1:  # For immersive/interactive mode, send to string evaluation
+            return string_evaluation(string)
     if params['mode'] == 2:
         params['characterfocus'] = False
-        toggle_generation(True)
         string = string.lower()
         return string
     if params['mode'] == 0:
-        toggle_generation(False)
         return string
-
-
 
 # Add NSFW tags if NSFW is enabled, add character sheet tags if character is describing itself
 def create_suffix():
@@ -191,11 +187,11 @@ def create_suffix():
         params['positive_suffix'] = params['nsfw_prompts'] + ", " + params['prompt_translation_positive']
         params['negative_suffix'] = params['anti_nsfw_prompts'] + ", " + params['prompt_translation_negative']
     if params['characterfocus']:
-        params['positive_suffix'] = data['positive_sd'] + ", " + params['prompt_translation_positive'] if 'positive_sd' in data else params['prompt_translation_positive']
-        params['negative_suffix'] = data['negative_sd'] + ", " + params['prompt_translation_negative'] if 'positive_sd' in data else params['prompt_translation_negative']
+        params['positive_suffix'] = data['sd_tags_positive'] + ", " + params['prompt_translation_positive'] if 'sd_tags_positive' in data else params['prompt_translation_positive']
+        params['negative_suffix'] = data['sd_tags_negative'] + ", " + params['prompt_translation_negative'] if 'sd_tags_negative' in data else params['prompt_translation_negative']
         if params['nsfw']:
-            params['positive_suffix'] = params['nsfw_prompts'] + ", " + data['positive_sd'] + ", " + params['prompt_translation_positive'] if 'positive_sd' in data else params['nsfw_prompts'] + ", " + params['prompt_translation_positive']
-            params['negative_suffix'] = params['anti_nsfw_prompts'] + ", " + data['negative_sd'] + ", " + params['prompt_translation_negative'] if 'positive_sd' in data else params['anti_nsfw_prompts'] + ", " + params['prompt_translation_negative']
+            params['positive_suffix'] = params['nsfw_prompts'] + ", " + data['sd_tags_positive'] + ", " + params['prompt_translation_positive'] if 'sd_tags_positive' in data else params['nsfw_prompts'] + ", " + params['prompt_translation_positive']
+            params['negative_suffix'] = params['anti_nsfw_prompts'] + ", " + data['sd_tags_negative'] + ", " + params['prompt_translation_negative'] if 'sd_tags_positive' in data else params['anti_nsfw_prompts'] + ", " + params['prompt_translation_negative']
 
 
 # Get and save the Stable Diffusion-generated picture
