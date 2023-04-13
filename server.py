@@ -1,6 +1,7 @@
 import os
 
 os.environ['GRADIO_ANALYTICS_ENABLED'] = 'False'
+os.environ['BITSANDBYTES_NOWELCOME'] = '1'
 
 import importlib
 import io
