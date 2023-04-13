@@ -5,6 +5,7 @@ os.environ['GRADIO_ANALYTICS_ENABLED'] = 'False'
 import importlib
 import io
 import json
+import math
 import os
 import re
 import sys
@@ -15,6 +16,8 @@ from datetime import datetime
 from pathlib import Path
 
 import gradio as gr
+import psutil
+import torch
 from PIL import Image
 
 import modules.extensions as extensions_module
@@ -37,11 +40,18 @@ if settings_file is not None:
         shared.settings[item] = new_settings[item]
 
 
+def special_sort(model_name):
+    if '_' in model_name:
+        return ('_'.join(model_name.split('_')[1:])).lower()
+    else:
+        return model_name.lower()
+
+
 def get_available_models():
     if shared.args.flexgen:
-        return sorted([re.sub('-np$', '', item.name) for item in list(Path(f'{shared.args.model_dir}/').glob('*')) if item.name.endswith('-np')], key=str.lower)
+        return sorted([re.sub('-np$', '', item.name) for item in list(Path(f'{shared.args.model_dir}/').glob('*')) if item.name.endswith('-np')], key=special_sort)
     else:
-        return sorted([re.sub('.pth$', '', item.name) for item in list(Path(f'{shared.args.model_dir}/').glob('*')) if not item.name.endswith(('.txt', '-np', '.pt', '.json'))], key=str.lower)
+        return sorted([re.sub('.pth$', '', item.name) for item in list(Path(f'{shared.args.model_dir}/').glob('*')) if not item.name.endswith(('.txt', '-np', '.pt', '.json'))], key=special_sort)
 
 
 def get_available_presets():
@@ -78,18 +88,20 @@ def get_available_softprompts():
 
 
 def get_available_loras():
-    return ['None'] + sorted([item.name for item in list(Path(shared.args.lora_dir).glob('*')) if not item.name.endswith(('.txt', '-np', '.pt', '.json'))], key=str.lower)
+    return ['None'] + sorted([item.name for item in list(Path(shared.args.lora_dir).glob('*')) if not item.name.endswith(('.txt', '-np', '.pt', '.json'))], key=special_sort)
 
 
 def load_model_wrapper(selected_model):
-    if selected_model != shared.model_name:
+    try:
+        yield f"Loading {selected_model}..."
         shared.model_name = selected_model
-
         unload_model()
         if selected_model != '':
             shared.model, shared.tokenizer = load_model(shared.model_name)
 
-    return selected_model
+        yield f"Successfully loaded {selected_model}"
+    except:
+        yield traceback.format_exc()
 
 
 def load_lora_wrapper(selected_lora):
@@ -203,31 +215,146 @@ def download_model_wrapper(repo_id):
         yield traceback.format_exc()
 
 
-def create_model_menus():
-    with gr.Row():
-        with gr.Column():
-            with gr.Row():
-                shared.gradio['model_menu'] = gr.Dropdown(choices=available_models, value=shared.model_name, label='Model')
-                ui.create_refresh_button(shared.gradio['model_menu'], lambda: None, lambda: {'choices': get_available_models()}, 'refresh-button')
-        with gr.Column():
-            with gr.Row():
-                shared.gradio['lora_menu'] = gr.Dropdown(choices=available_loras, value=shared.lora_name, label='LoRA')
-                ui.create_refresh_button(shared.gradio['lora_menu'], lambda: None, lambda: {'choices': get_available_loras()}, 'refresh-button')
-    with gr.Row():
-        with gr.Column():
-            with gr.Row():
-                with gr.Column():
-                    shared.gradio['custom_model_menu'] = gr.Textbox(label="Download custom model or LoRA",
-                                                                    info="Enter Hugging Face username/model path, e.g: facebook/galactica-125m")
-                with gr.Column():
-                    shared.gradio['download_button'] = gr.Button("Download")
-                    shared.gradio['download_status'] = gr.Markdown()
-        with gr.Column():
-            pass
+# Model parameters: list the relevant interface elements
+def list_model_parameters():
+    parameters = ['cpu_memory', 'auto_devices', 'disk', 'cpu', 'bf16', 'load_in_8bit', 'wbits', 'groupsize', 'model_type', 'pre_layer']
+    for i in range(torch.cuda.device_count()):
+        parameters.append(f'gpu_memory_{i}')
+    return parameters
 
-    shared.gradio['model_menu'].change(load_model_wrapper, shared.gradio['model_menu'], shared.gradio['model_menu'], show_progress=True)
+
+# Model parameters: update the command-line arguments based on the interface values
+def update_model_parameters(*args):
+    args = list(args) # the values of the parameters
+    elements = list_model_parameters() # the names of the parameters
+
+    gpu_memories = []
+    for i, element in enumerate(elements):
+
+        if element.startswith('gpu_memory'):
+            gpu_memories.append(args[i])
+            continue
+
+        if element == 'cpu_memory' and args[i] == 0:
+            args[i] = None
+        if element == 'wbits' and args[i] == 'None':
+            args[i] = 0
+        if element == 'groupsize' and args[i] == 'None':
+            args[i] = -1
+        if element == 'model_type' and args[i] == 'None':
+            args[i] = None
+        if element in ['wbits', 'groupsize', 'pre_layer']:
+            args[i] = int(args[i])
+        elif element == 'cpu_memory' and args[i] is not None:
+            args[i] = f"{args[i]}MiB"
+
+        #print(element, repr(eval(f"shared.args.{element}")), repr(args[i]))
+        #print(f"shared.args.{element} = args[i]")
+        exec(f"shared.args.{element} = args[i]")
+
+    found_positive = False
+    for i in gpu_memories:
+        if i > 0:
+            found_positive = True
+            break
+    if found_positive:
+        shared.args.gpu_memory = [f"{i}MiB" for i in gpu_memories]
+    else:
+        shared.args.gpu_memory = None
+
+
+def create_model_menus():
+    # Finding the default values for the GPU and CPU memories
+    total_mem = []
+    for i in range(torch.cuda.device_count()):
+        total_mem.append(math.floor(torch.cuda.get_device_properties(i).total_memory / (1024*1024)))
+
+    default_gpu_mem = []
+    if shared.args.gpu_memory is not None and len(shared.args.gpu_memory) > 0:
+        for i in shared.args.gpu_memory:
+            if 'mib' in i.lower():
+                default_gpu_mem.append(int(re.sub('[a-zA-Z ]', '', i)))
+            else:
+                default_gpu_mem.append(int(re.sub('[a-zA-Z ]', '', i))*1000)
+    while len(default_gpu_mem) < len(total_mem):
+        default_gpu_mem.append(0)
+
+    total_cpu_mem = math.floor(psutil.virtual_memory().total / (1024*1024))
+    if shared.args.cpu_memory is not None:
+        default_cpu_mem = re.sub('[a-zA-Z ]', '', shared.args.cpu_memory)
+    else:
+        default_cpu_mem = 0
+
+    components = {}
+    with gr.Row():
+        with gr.Column():
+            with gr.Row():
+                with gr.Column():
+                    with gr.Row():
+                        shared.gradio['model_menu'] = gr.Dropdown(choices=available_models, value=shared.model_name, label='Model')
+                        ui.create_refresh_button(shared.gradio['model_menu'], lambda: None, lambda: {'choices': get_available_models()}, 'refresh-button')
+
+                with gr.Column():
+                    with gr.Row():
+                        shared.gradio['lora_menu'] = gr.Dropdown(choices=available_loras, value=shared.lora_name, label='LoRA')
+                        ui.create_refresh_button(shared.gradio['lora_menu'], lambda: None, lambda: {'choices': get_available_loras()}, 'refresh-button')
+
+        with gr.Column():
+            unload = gr.Button("Unload the model")
+            reload = gr.Button("Reload the model")
+
+    with gr.Row():
+        with gr.Column():
+            with gr.Box():
+                gr.Markdown('Transformers parameters')
+                with gr.Row():
+                    with gr.Column():
+                        for i in range(len(total_mem)):
+                            components[f'gpu_memory_{i}'] = gr.Slider(label=f"gpu-memory in MiB for device :{i}", maximum=total_mem[i], value=default_gpu_mem[i])
+                        components['cpu_memory'] = gr.Slider(label="cpu-memory in MiB", maximum=total_cpu_mem, value=default_cpu_mem)
+
+                    with gr.Column():
+                        components['auto_devices'] = gr.Checkbox(label="auto-devices", value=shared.args.auto_devices)
+                        components['disk'] = gr.Checkbox(label="disk", value=shared.args.disk)
+                        components['cpu'] = gr.Checkbox(label="cpu", value=shared.args.cpu)
+                        components['bf16'] = gr.Checkbox(label="bf16", value=shared.args.bf16)
+                        components['load_in_8bit'] = gr.Checkbox(label="load-in-8bit", value=shared.args.load_in_8bit)
+
+        with gr.Column():
+            with gr.Box():
+                gr.Markdown('GPTQ parameters')
+                with gr.Row():
+                    with gr.Column():
+                        components['wbits'] = gr.Dropdown(label="wbits", choices=["None", 1, 2, 3, 4, 8], value=shared.args.wbits if shared.args.wbits > 0 else "None")
+                        components['groupsize'] = gr.Dropdown(label="groupsize", choices=["None", 32, 64, 128], value=shared.args.groupsize if shared.args.groupsize > 0 else "None")
+
+                    with gr.Column():
+                        components['model_type'] = gr.Dropdown(label="model_type", choices=["None", "llama", "opt", "gpt-j"], value=shared.args.model_type or "None")
+                        components['pre_layer'] = gr.Slider(label="pre_layer", minimum=0, maximum=100, value=shared.args.pre_layer)
+
+    with gr.Row():
+        with gr.Column():
+            shared.gradio['custom_model_menu'] = gr.Textbox(label="Download custom model or LoRA", info="Enter Hugging Face username/model path, e.g: facebook/galactica-125m")
+            shared.gradio['download_button'] = gr.Button("Download")
+
+        with gr.Column():
+            shared.gradio['model_status'] = gr.Markdown('No model is loaded' if shared.model_name == 'None' else 'Ready')
+
+    shared.gradio['model_menu'].change(
+        update_model_parameters, [components[k] for k in list_model_parameters()], None).then(
+        load_model_wrapper, shared.gradio['model_menu'], shared.gradio['model_status'], show_progress=True)
+
+    unload.click(
+        unload_model, None, None).then(
+        lambda: "Model unloaded", None, shared.gradio['model_status'])
+
+    reload.click(
+        unload_model, None, None).then(
+        update_model_parameters, [components[k] for k in list_model_parameters()], None).then(
+        load_model_wrapper, shared.gradio['model_menu'], shared.gradio['model_status'], show_progress=True)
+
     shared.gradio['lora_menu'].change(load_lora_wrapper, shared.gradio['lora_menu'], shared.gradio['lora_menu'], show_progress=True)
-    shared.gradio['download_button'].click(download_model_wrapper, shared.gradio['custom_model_menu'], shared.gradio['download_status'], show_progress=False)
+    shared.gradio['download_button'].click(download_model_wrapper, shared.gradio['custom_model_menu'], shared.gradio['model_status'], show_progress=False)
 
 
 def create_settings_menus(default_preset):
@@ -333,7 +460,8 @@ else:
 # Default model
 if shared.args.model is not None:
     shared.model_name = shared.args.model
-else:
+    shared.model, shared.tokenizer = load_model(shared.model_name)
+elif shared.args.model_menu:
     if len(available_models) == 0:
         print('No models are available! Please download at least one.')
         sys.exit(0)
@@ -347,8 +475,9 @@ else:
         i = int(input()) - 1
         print()
     shared.model_name = available_models[i]
-shared.model, shared.tokenizer = load_model(shared.model_name)
-if shared.args.lora:
+    shared.model, shared.tokenizer = load_model(shared.model_name)
+
+if shared.args.model is not None and shared.args.lora:
     add_lora_to_model(shared.args.lora)
 
 # Default UI settings
@@ -372,12 +501,12 @@ def create_interface():
             shared.gradio['interface_state'] = gr.State({k: None for k in shared.input_elements})
             shared.gradio['Chat input'] = gr.State()
 
-            with gr.Tab("Text generation", elem_id="main"):
+            with gr.Tab('Text generation', elem_id='main'):
                 shared.gradio['display'] = gr.HTML(value=chat_html_wrapper(shared.history['visible'], shared.settings['name1'], shared.settings['name2'], 'cai-chat'))
                 shared.gradio['textbox'] = gr.Textbox(label='Input')
                 with gr.Row():
                     shared.gradio['Generate'] = gr.Button('Generate', elem_id='Generate')
-                    shared.gradio['Stop'] = gr.Button('Stop', elem_id="stop")
+                    shared.gradio['Stop'] = gr.Button('Stop', elem_id='stop')
                 with gr.Row():
                     shared.gradio['Regenerate'] = gr.Button('Regenerate')
                     shared.gradio['Continue'] = gr.Button('Continue')
@@ -389,24 +518,24 @@ def create_interface():
                     shared.gradio['Copy last reply'] = gr.Button('Copy last reply')
                 with gr.Row():
                     shared.gradio['Clear history'] = gr.Button('Clear history')
-                    shared.gradio['Clear history-confirm'] = gr.Button('Confirm', variant="stop", visible=False)
+                    shared.gradio['Clear history-confirm'] = gr.Button('Confirm', variant='stop', visible=False)
                     shared.gradio['Clear history-cancel'] = gr.Button('Cancel', visible=False)
                     shared.gradio['Remove last'] = gr.Button('Remove last')
 
-                shared.gradio["mode"] = gr.Radio(choices=["cai-chat", "chat", "instruct"], value="cai-chat", label="Mode")
-                shared.gradio["Instruction templates"] = gr.Dropdown(choices=get_available_instruction_templates(), label="Instruction template", value="None", visible=False, info="Change this according to the model/LoRA that you are using.")
+                shared.gradio['mode'] = gr.Radio(choices=['cai-chat', 'chat', 'instruct'], value=shared.settings['mode'], label='Mode')
+                shared.gradio['Instruction templates'] = gr.Dropdown(choices=get_available_instruction_templates(), label='Instruction template', value='None', visible=False, info='Change this according to the model/LoRA that you are using.')
 
-            with gr.Tab("Character", elem_id="chat-settings"):
+            with gr.Tab('Character', elem_id='chat-settings'):
                 with gr.Row():
                     with gr.Column(scale=8):
                         shared.gradio['name1'] = gr.Textbox(value=shared.settings['name1'], lines=1, label='Your name')
                         shared.gradio['name2'] = gr.Textbox(value=shared.settings['name2'], lines=1, label='Character\'s name')
                         shared.gradio['greeting'] = gr.Textbox(value=shared.settings['greeting'], lines=4, label='Greeting')
                         shared.gradio['context'] = gr.Textbox(value=shared.settings['context'], lines=4, label='Context')
-                        shared.gradio['end_of_turn'] = gr.Textbox(value=shared.settings["end_of_turn"], lines=1, label='End of turn string')
+                        shared.gradio['end_of_turn'] = gr.Textbox(value=shared.settings['end_of_turn'], lines=1, label='End of turn string')
                     with gr.Column(scale=1):
-                        shared.gradio['character_picture'] = gr.Image(label='Character picture', type="pil")
-                        shared.gradio['your_picture'] = gr.Image(label='Your picture', type="pil", value=Image.open(Path("cache/pfp_me.png")) if Path("cache/pfp_me.png").exists() else None)
+                        shared.gradio['character_picture'] = gr.Image(label='Character picture', type='pil')
+                        shared.gradio['your_picture'] = gr.Image(label='Your picture', type='pil', value=Image.open(Path('cache/pfp_me.png')) if Path('cache/pfp_me.png').exists() else None)
                 with gr.Row():
                     shared.gradio['character_menu'] = gr.Dropdown(choices=available_characters, value='None', label='Character', elem_id='character-menu')
                     ui.create_refresh_button(shared.gradio['character_menu'], lambda: None, lambda: {'choices': get_available_characters()}, 'refresh-button')
@@ -422,7 +551,7 @@ def create_interface():
                                 shared.gradio['download'] = gr.File()
                                 shared.gradio['download_button'] = gr.Button(value='Click me')
                     with gr.Tab('Upload character'):
-                        gr.Markdown("# JSON format")
+                        gr.Markdown('# JSON format')
                         with gr.Row():
                             with gr.Column():
                                 gr.Markdown('1. Select the JSON file')
@@ -432,7 +561,7 @@ def create_interface():
                                 shared.gradio['upload_img_bot'] = gr.File(type='binary', file_types=['image'])
                         shared.gradio['Upload character'] = gr.Button(value='Submit')
 
-                        gr.Markdown("# TavernAI PNG format")
+                        gr.Markdown('# TavernAI PNG format')
                         shared.gradio['upload_img_tavern'] = gr.File(type='binary', file_types=['image'])
 
             with gr.Tab("Parameters", elem_id="parameters"):
@@ -648,7 +777,7 @@ def create_interface():
                     current_mode = mode
                     break
             cmd_list = vars(shared.args)
-            bool_list = [k for k in cmd_list if type(cmd_list[k]) is bool and k not in modes]
+            bool_list = [k for k in cmd_list if type(cmd_list[k]) is bool and k not in modes + list_model_parameters()]
             bool_active = [k for k in bool_list if vars(shared.args)[k]]
 
             gr.Markdown("*Experimental*")

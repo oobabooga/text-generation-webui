@@ -32,7 +32,7 @@ settings = {
     'name1': 'You',
     'name2': 'Assistant',
     'context': 'This is a conversation with your Assistant. The Assistant is very helpful and is eager to chat with you and answer your questions.',
-    'greeting': 'Hello there!',
+    'greeting': '',
     'end_of_turn': '',
     'custom_stopping_strings': '',
     'stop_at_newline': False,
@@ -41,6 +41,7 @@ settings = {
     'truncation_length': 2048,
     'truncation_length_min': 0,
     'truncation_length_max': 4096,
+    'mode': 'cai-chat',
     'chat_prompt_size': 2048,
     'chat_prompt_size_min': 0,
     'chat_prompt_size_max': 2048,
@@ -89,6 +90,7 @@ parser.add_argument('--model', type=str, help='Name of the model to load by defa
 parser.add_argument('--lora', type=str, help='Name of the LoRA to apply to the model by default.')
 parser.add_argument("--model-dir", type=str, default='models/', help="Path to directory with all the models")
 parser.add_argument("--lora-dir", type=str, default='loras/', help="Path to directory with all the loras")
+parser.add_argument('--model-menu', action='store_true', help='Show a model menu in the terminal when the web UI is first launched.')
 parser.add_argument('--no-stream', action='store_true', help='Don\'t stream the text output in real time.')
 parser.add_argument('--settings', type=str, help='Load the default interface settings from this json file. See settings-template.json for an example. If you create a file called settings.json, this file will be loaded by default without the need to use the --settings flag.')
 parser.add_argument('--extensions', type=str, nargs="+", help='The list of extensions to load. If you want to load more than one extension, write the names separated by spaces.')
@@ -116,9 +118,6 @@ parser.add_argument('--model_type', type=str, help='GPTQ: Model type of pre-quan
 parser.add_argument('--groupsize', type=int, default=-1, help='GPTQ: Group size.')
 parser.add_argument('--pre_layer', type=int, default=0, help='GPTQ: The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models.')
 parser.add_argument('--warmup_autotune', action=argparse.BooleanOptionalAction, default=True, help='GPTQ: Enable warmup autotune. Only usable for triton.')
-parser.add_argument('--gptq-bits', type=int, default=0, help='DEPRECATED: use --wbits instead.')
-parser.add_argument('--gptq-model-type', type=str, help='DEPRECATED: use --model_type instead.')
-parser.add_argument('--gptq-pre-layer', type=int, default=0, help='DEPRECATED: use --pre_layer instead.')
 
 # FlexGen
 parser.add_argument('--flexgen', action='store_true', help='Enable the use of FlexGen offloading.')
@@ -145,7 +144,7 @@ parser.add_argument("--gradio-auth-path", type=str, help='Set the gradio authent
 args = parser.parse_args()
 
 # Deprecation warnings for parameters that have been renamed
-deprecated_dict = {'gptq_bits': ['wbits', 0], 'gptq_model_type': ['model_type', None], 'gptq_pre_layer': ['prelayer', 0]}
+deprecated_dict = {}
 for k in deprecated_dict:
     if eval(f"args.{k}") != deprecated_dict[k][1]:
         print(f"Warning: --{k} is deprecated and will be removed. Use --{deprecated_dict[k][0]} instead.")
