@@ -78,8 +78,9 @@ def _load_quant(model, checkpoint, wbits, groupsize=-1, faster_kernel=False, exc
 
 
 def load_quantized(model_name):
+
+    # Find the model type
     if not shared.args.model_type:
-        # Try to determine model type from model name
         name = model_name.lower()
         if any((k in name for k in ['llama', 'alpaca', 'vicuna'])):
             model_type = 'llama'
@@ -94,6 +95,7 @@ def load_quantized(model_name):
     else:
         model_type = shared.args.model_type.lower()
 
+    # Select the appropriate load_quant function
     if shared.args.pre_layer and model_type == 'llama':
         load_quant = llama_inference_offload.load_quant
     elif model_type in ('llama', 'opt', 'gptj'):
@@ -104,7 +106,7 @@ def load_quantized(model_name):
         print("Unknown pre-quantized model type specified. Only 'llama', 'opt' and 'gptj' are supported")
         exit()
 
-    # Now we are going to try to locate the quantized model file. I think it's cleaner and supports the new name containing groupsize
+    # Locate the quantized model file
     path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
     pt_path = None
     priority_name_list = [
@@ -118,7 +120,8 @@ def load_quantized(model_name):
             pt_path = path
             break
 
-    # For compatibility, do we really need this?
+    # If the model hasn't been found with a well-behaved name, pick the last .pt
+    # or the last .safetensors found in its folder as a last resort
     if not pt_path:
         path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
         found_pts = list(path_to_model.glob("*.pt"))
@@ -129,23 +132,6 @@ def load_quantized(model_name):
             pt_path = found_pts[-1]
         elif len(found_safetensors) > 0:
             pt_path = found_safetensors[-1]
-        else:
-            if path_to_model.name.lower().startswith('llama-7b'):
-                pt_model = f'llama-7b-{shared.args.wbits}bit'
-            elif path_to_model.name.lower().startswith('llama-13b'):
-                pt_model = f'llama-13b-{shared.args.wbits}bit'
-            elif path_to_model.name.lower().startswith('llama-30b'):
-                pt_model = f'llama-30b-{shared.args.wbits}bit'
-            elif path_to_model.name.lower().startswith('llama-65b'):
-                pt_model = f'llama-65b-{shared.args.wbits}bit'
-            else:
-                pt_model = f'{model_name}-{shared.args.wbits}bit'
-
-            # Try to find the .safetensors or .pt both in the model dir and in the subfolder
-            for path in [Path(p + ext) for ext in ['.safetensors', '.pt'] for p in [f"{shared.args.model_dir}/{pt_model}", f"{path_to_model}/{pt_model}"]]:
-                if path.exists():
-                    pt_path = path
-                    break
 
     if not pt_path:
         print("Could not find the quantized model in .pt or .safetensors format, exiting...")
