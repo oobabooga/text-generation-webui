@@ -171,22 +171,6 @@ def load_prompt(fname):
             return text
 
 
-def create_prompt_menus():
-    with gr.Row():
-        with gr.Column():
-            with gr.Row():
-                shared.gradio['prompt_menu'] = gr.Dropdown(choices=get_available_prompts(), value='None', label='Prompt')
-                ui.create_refresh_button(shared.gradio['prompt_menu'], lambda: None, lambda: {'choices': get_available_prompts()}, 'refresh-button')
-
-        with gr.Column():
-            with gr.Column():
-                shared.gradio['save_prompt'] = gr.Button('Save prompt')
-                shared.gradio['status'] = gr.Markdown('Ready')
-
-    shared.gradio['prompt_menu'].change(load_prompt, [shared.gradio['prompt_menu']], [shared.gradio['textbox']], show_progress=False)
-    shared.gradio['save_prompt'].click(save_prompt, [shared.gradio['textbox']], [shared.gradio['status']], show_progress=False)
-
-
 def download_model_wrapper(repo_id):
     try:
         downloader = importlib.import_module("download-model")
@@ -687,8 +671,11 @@ def create_interface():
                     with gr.Column(scale=1):
                         gr.HTML('<div style="padding-bottom: 13px"></div>')
                         shared.gradio['max_new_tokens'] = gr.Slider(minimum=shared.settings['max_new_tokens_min'], maximum=shared.settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=shared.settings['max_new_tokens'])
-
-                        create_prompt_menus()
+                        with gr.Row():
+                            shared.gradio['prompt_menu'] = gr.Dropdown(choices=get_available_prompts(), value='None', label='Prompt')
+                            ui.create_refresh_button(shared.gradio['prompt_menu'], lambda: None, lambda: {'choices': get_available_prompts()}, 'refresh-button')
+                        shared.gradio['save_prompt'] = gr.Button('Save prompt')
+                        shared.gradio['status'] = gr.Markdown('')
 
             with gr.Tab("Parameters", elem_id="parameters"):
                 create_settings_menus(default_preset)
@@ -709,6 +696,8 @@ def create_interface():
             )
 
             shared.gradio['Stop'].click(stop_everything_event, None, None, queue=False, cancels=gen_events if shared.args.no_stream else None)
+            shared.gradio['prompt_menu'].change(load_prompt, [shared.gradio['prompt_menu']], [shared.gradio['textbox']], show_progress=False)
+            shared.gradio['save_prompt'].click(save_prompt, [shared.gradio['textbox']], [shared.gradio['status']], show_progress=False)
             shared.gradio['interface'].load(None, None, None, _js=f"() => {{{ui.main_js}}}")
 
         else:
@@ -719,20 +708,31 @@ def create_interface():
                     with gr.Column():
                         shared.gradio['textbox'] = gr.Textbox(value=default_text, lines=21, label='Input')
                         shared.gradio['max_new_tokens'] = gr.Slider(minimum=shared.settings['max_new_tokens_min'], maximum=shared.settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=shared.settings['max_new_tokens'])
-                        shared.gradio['Generate'] = gr.Button('Generate')
                         with gr.Row():
                             with gr.Column():
+                                shared.gradio['Generate'] = gr.Button('Generate')
                                 shared.gradio['Continue'] = gr.Button('Continue')
+
                             with gr.Column():
                                 shared.gradio['Stop'] = gr.Button('Stop')
+                                shared.gradio['save_prompt'] = gr.Button('Save prompt')
 
-                        create_prompt_menus()
+                        with gr.Row():
+                            with gr.Column():
+                                with gr.Row():
+                                    shared.gradio['prompt_menu'] = gr.Dropdown(choices=get_available_prompts(), value='None', label='Prompt')
+                                    ui.create_refresh_button(shared.gradio['prompt_menu'], lambda: None, lambda: {'choices': get_available_prompts()}, 'refresh-button')
+
+                            with gr.Column():
+                                shared.gradio['status'] = gr.Markdown('')
 
                     with gr.Column():
                         with gr.Tab('Raw'):
                             shared.gradio['output_textbox'] = gr.Textbox(lines=27, label='Output')
+
                         with gr.Tab('Markdown'):
                             shared.gradio['markdown'] = gr.Markdown()
+
                         with gr.Tab('HTML'):
                             shared.gradio['html'] = gr.HTML()
 
@@ -761,6 +761,8 @@ def create_interface():
             )
 
             shared.gradio['Stop'].click(stop_everything_event, None, None, queue=False, cancels=gen_events if shared.args.no_stream else None)
+            shared.gradio['prompt_menu'].change(load_prompt, [shared.gradio['prompt_menu']], [shared.gradio['textbox']], show_progress=False)
+            shared.gradio['save_prompt'].click(save_prompt, [shared.gradio['textbox']], [shared.gradio['status']], show_progress=False)
             shared.gradio['interface'].load(None, None, None, _js=f"() => {{{ui.main_js}}}")
 
         with gr.Tab("Model", elem_id="model-tab"):
