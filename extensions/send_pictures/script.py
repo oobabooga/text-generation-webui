@@ -5,6 +5,7 @@ import os
 import gradio as gr
 import tensorflow as tf
 from modules import chat, shared
+from modules.ui import gather_interface_values
 import torch
 from transformers import BlipForConditionalGeneration, BlipProcessor, ViTFeatureExtractor, AutoTokenizer, \
     VisionEncoderDecoderModel
@@ -310,14 +311,10 @@ def ui():
     booru_args[2].change(lambda x: params.update({"booru_h5": x}), booru_args[2], None)
     booru_args[3].change(lambda x: params.update({"booru_tags": x}), booru_args[3], None)
 
-    # Prepare the hijack with custom inputs
-    picture_select.upload(lambda picture, name1, name2: input_hijack.update(
-        {"state": True, "value": generate_chat_picture(picture, name1, name2)}),
-                          [picture_select, shared.gradio['name1'], shared.gradio['name2']], None)
-
-    # Call the generation function
-    picture_select.upload(eval(function_call), shared.input_params, shared.gradio['display'],
-                          show_progress=shared.args.no_stream)
-
-    # Clear the picture from the upload field
-    picture_select.upload(lambda: None, [], [picture_select], show_progress=False)
+    # Prepare the input hijack, update the interface values, call the generation function, and clear the picture
+    picture_select.upload(
+        lambda picture, name1, name2: input_hijack.update({"state": True, "value": generate_chat_picture(picture, name1, name2)}), [picture_select, shared.gradio['name1'], shared.gradio['name2']], None).then(
+        gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
+        chat.cai_chatbot_wrapper, shared.input_params, shared.gradio['display'], show_progress=shared.args.no_stream).then(
+        lambda: None, None, picture_select, show_progress=False)
+        
