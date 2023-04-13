@@ -329,7 +329,7 @@ def create_model_menus():
                         components['groupsize'] = gr.Dropdown(label="groupsize", choices=["None", 32, 64, 128], value=shared.args.groupsize if shared.args.groupsize > 0 else "None")
 
                     with gr.Column():
-                        components['model_type'] = gr.Dropdown(label="model_type", choices=["None", "llama", "opt", "gpt-j"], value=shared.args.model_type or "None")
+                        components['model_type'] = gr.Dropdown(label="model_type", choices=["None", "llama", "opt", "gptj"], value=shared.args.model_type or "None")
                         components['pre_layer'] = gr.Slider(label="pre_layer", minimum=0, maximum=100, value=shared.args.pre_layer)
 
     with gr.Row():
