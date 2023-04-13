@@ -131,8 +131,12 @@ def load_quantized(model_name):
         pt_path = None
 
         if len(found_pts) > 0:
+            if len(found_pts) > 1:
+                print('Warning: more than one .pt model has been found. The last one will be selected. It could be wrong.')
             pt_path = found_pts[-1]
         elif len(found_safetensors) > 0:
+            if len(found_pts) > 1:
+                print('Warning: more than one .safetensors model has been found. The last one will be selected. It could be wrong.')
             pt_path = found_safetensors[-1]
 
     if not pt_path:
