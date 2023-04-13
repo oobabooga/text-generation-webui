@@ -115,6 +115,8 @@ def load_quantized(model_name):
         for group in ([f'-{shared.args.groupsize}g', ''] if shared.args.groupsize > 0 else [''])
         for hyphen in ['-', f'/{model_name}-', '/']
     ]
+    if shared.args.groupsize > 0:
+        priority_name_list = [i for i in priority_name_list if str(shared.args.groupsize) in i.name] + [i for i in priority_name_list if str(shared.args.groupsize) not in i.name]
     for path in priority_name_list:
         if path.exists():
             pt_path = path
