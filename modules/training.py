@@ -141,7 +141,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             print(f"Warning: LoRA training has only currently been validated for LLaMA, OPT, and GPT-J models. (Found model type: {model_type})")
         time.sleep(5)
 
-    if shared.args.wbits > 0 or shared.args.gptq_bits > 0:
+    if shared.args.wbits > 0:
         yield "LoRA training does not yet support 4bit. Please use `--load-in-8bit` for now."
         return
 
