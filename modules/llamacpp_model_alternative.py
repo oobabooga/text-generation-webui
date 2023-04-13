@@ -24,7 +24,8 @@ class LlamaCppModel:
             'model_path': str(path),
             'n_ctx': 2048,
             'seed': 0,
-            'n_threads': shared.args.threads or None
+            'n_threads': shared.args.threads or None,
+            'n_batch': shared.args.nbatch
         }
         self.model = Llama(**params)
 

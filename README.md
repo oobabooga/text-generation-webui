@@ -230,6 +230,7 @@ Optionally, you can use the following command-line flags:
 | Flag        | Description |
 |-------------|-------------|
 | `--threads` | Number of threads to use in llama.cpp. |
+| `--nbatch` | Processing batch size for llama.cpp. |
 
 #### GPTQ
 

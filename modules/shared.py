@@ -111,6 +111,7 @@ parser.add_argument('--sdp-attention', action='store_true', help="Use torch 2.0'
 
 # llama.cpp
 parser.add_argument('--threads', type=int, default=0, help='Number of threads to use in llama.cpp.')
+parser.add_argument('--nbatch', type=int, default=8, help='Processing batch size for llama.cpp.')
 
 # GPTQ
 parser.add_argument('--wbits', type=int, default=0, help='GPTQ: Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported.')
