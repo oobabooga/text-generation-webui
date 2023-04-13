@@ -28,10 +28,11 @@ class TelegramBotWrapper:
     # Default error messages
     GENERATOR_FAIL = "<GENERATION FAIL>"
     GENERATOR_EMPTY_ANSWER = "<EMPTY ANSWER>"
-    UNKNOWN_TEMPLATE = "UNKNOWN TEMPLATE"
-    # Supplementary structure and data
-    _impersonate_prefix = "#"
+    UNKNOWN_TEMPLATE = "<UNKNOWN TEMPLATE>"
+    # Supplementary structure
     users: dict = {}  # dict of User data dicts, here placed all users' session info.
+    # Internal, changeable settings
+    impersonate_prefix = "#"  # Prefix for "impersonate" messages during chatting
     default_users_data = {  # data template for user. if no default char or default char file - use this as main.
         "name1": "You",  # username
         "name2": "Bot",  # bot name
@@ -42,21 +43,74 @@ class TelegramBotWrapper:
         "greeting": 'Hi',  # just greeting message from bot
     }
     default_messages_template = {  # dict of messages templates for various situations. Use _VAR_ replacement
-        "lost": "\n<MEMORY LOST!>\nSend /start or any text for new session.",
-        "retyping": "<i>\n_NAME2_ retyping...</i>",
-        "typing": "<i>\n_NAME2_ typing...</i>",
-        "load_char": "<CHARACTER _NAME2_ LOADED!>\n_GREETING_.",
-        "reset": "<MEMORY RESET!>\nSend /start or any text for new session.",
-        "start": "<CHARACTER _NAME2_ LOADED>\nSend /start or message.",
+        "lost": "\n<MEMORY LOST!>\nSend /start or any text for new session.",  # When button refers to non-existing data
+        "retyping": "<i>\n_NAME2_ retyping...</i>",  # added when "regenerate button" working
+        "typing": "<i>\n_NAME2_ typing...</i>",  # added when generating working
+        "load_char": "<CHARACTER _NAME2_ LOADED!>\n_GREETING_.",  # When new char loaded
+        "reset": "<MEMORY RESET!>\nSend /start or any text for new session.",  # When history cleared
+        "start": "<CHARACTER _NAME2_ LOADED>\nSend /start or message.",  # New conversation started (not used now)
+    }
+    # generation_params = {  # dict of generation params, the same as in webui. Optimized for llama and low GPU RAM
+    #     "max_new_tokens": 1024,
+    #     "do_sample": True,
+    #     "temperature": 0.72,
+    #     "top_p": 0.73,
+    #     "top_k": 0,
+    #     "typical_p": 1,
+    #     "repetition_penalty": 1.1,
+    #     "encoder_repetition_penalty": 1,
+    #     "min_length": 0,
+    #     "no_repeat_ngram_size": 0,
+    #     "num_beams": 1,
+    #     "penalty_alpha": 0,
+    #     "length_penalty": 1,
+    #     "early_stopping": False,
+    #     "seed": -1,
+    #     "add_bos_token": True,
+    #     "custom_stopping_strings": []
+    # }
+    generation_params = {
+        'max_new_tokens': 200,
+        'seed': -1.0,
+        'temperature': 0.72,
+        'top_p': 0.73,
+        'top_k': 0,
+        'typical_p': 1,
+        'repetition_penalty': 1.18,
+        'encoder_repetition_penalty': 1,
+        'no_repeat_ngram_size': 0,
+        'min_length': 0,
+        'do_sample': True,
+        'penalty_alpha': 0,
+        'num_beams': 1,
+        'length_penalty': 1,
+        'early_stopping': False,
+        'add_bos_token': True,
+        'ban_eos_token': False,
+        'truncation_length': 1024,
+        'custom_stopping_strings': [],
+        'end_of_turn': '',
+        'chat_prompt_size': 1024,
+        'chat_generation_attempts': 1,
+        'stop_at_newline': False,
     }
 
     def __init__(self,
                  bot_mode="chat",  # bot mode - chat, chat-restricted, notebook
+                 characters_dir_path="characters",  # there stored characters json files
                  default_char_json="Example.json",  # name of default char.json file
                  history_dir_path="extensions/telegram_bot/history",  # there stored users history
                  default_token_file_path="extensions/telegram_bot/telegram_token.txt",  # there stored tg token
-                 characters_dir_path="characters",  # there stored characters json files
                  ):
+        """
+        Init telegram bot class. Use run_telegram_bot() to initiate bot.
+        :param bot_mode: bot mode (chat, chat-restricted, notebook). Default is "chat".
+        :param characters_dir_path: place where stored characters .json files. Default is "chat".
+        :param default_char_json: name of default character.json file. Default is "chat".
+        :param history_dir_path: place where stored chat history. Default is "extensions/telegram_bot/history".
+        :param default_token_file_path: path to token file. Default is "extensions/telegram_bot/telegram_token.txt".
+        :return: None
+        """
         # Set paths to history, default token file, characters dir
         self.history_dir_path = history_dir_path
         self.default_token_file_path = default_token_file_path
@@ -66,7 +120,7 @@ class TelegramBotWrapper:
         self.default_char_json = default_char_json
         self.load_cmd = "load"
         # Set buttons default list - if chat-restricted user can't change char or get help.
-        if self.bot_mode == "chat":
+        if self.bot_mode == "chat":  # chat give widest range of options
             self.button = InlineKeyboardMarkup(
                 [[InlineKeyboardButton(text="▶Continue", callback_data='Continue'),
                   InlineKeyboardButton(text="🔄Regenerate", callback_data='Regen'),
@@ -75,7 +129,7 @@ class TelegramBotWrapper:
                   InlineKeyboardButton(text="🎭Chars", callback_data='Chars'),
                   ]])
             self.button_start = None
-        if self.bot_mode == "chat-restricted":
+        if self.bot_mode == "chat-restricted":  # you cant change char in restricted chat mode
             self.button = InlineKeyboardMarkup(
                 [[InlineKeyboardButton(text="▶Continue", callback_data='Continue'),
                   InlineKeyboardButton(text="🔄Regenerate", callback_data='Regen'),
@@ -83,7 +137,7 @@ class TelegramBotWrapper:
                   InlineKeyboardButton(text="🚫Reset memory", callback_data='Reset'),
                   ]])
             self.button_start = None
-        if self.bot_mode == "notebook":
+        if self.bot_mode == "notebook":  # in notebook mode buttons restricted much more
             self.button = InlineKeyboardMarkup(
                 [[InlineKeyboardButton(text="▶Continue", callback_data='Continue'),
                   InlineKeyboardButton(text="🚫Reset memory", callback_data='Reset'),
@@ -97,6 +151,12 @@ class TelegramBotWrapper:
     # =============================================================================
     # Run bot with token! Initiate updater obj!
     def run_telegram_bot(self, bot_token="", token_file_name=""):
+        """
+        This method starts telegram bot. Overwrite self.updater if exist
+        :param bot_token: if bot_token given - use it to initiate
+        :param token_file_name: if token not given - read token from this file and use it to initiate
+        :return: None
+        """
         if bot_token == "":
             token_file_name = self.default_token_file_path if token_file_name == "" else token_file_name
             with open(token_file_name, "r", encoding='utf-8') as token_file:
@@ -123,8 +183,8 @@ class TelegramBotWrapper:
     # =============================================================================
     # Additional telegram actions
     def last_message_markup_clean(self, context: CallbackContext, chat_id: int):
-        # delete buttons if there is user and user have at least one message id
         if chat_id in self.users:
+            # delete buttons if user exist and have at least one message_id in "msg_id"
             if len(self.users[chat_id]["msg_id"]) > 0:
                 try:
                     last_msg = self.users[chat_id]["msg_id"][-1]
@@ -133,7 +193,7 @@ class TelegramBotWrapper:
                     print("last_message_markup_clean", e)
 
     def def_msg(self, request: str, chat_id: int):
-        # made default message from default_messages_template or return "unknown"
+        # made default message from default_messages_template or return UNKNOWN_TEMPLATE
         if request in self.default_messages_template and chat_id in self.users:
             msg = self.default_messages_template[request]
             msg = msg.replace("_CHAT_ID_", str(chat_id))
@@ -326,23 +386,25 @@ class TelegramBotWrapper:
             sleep(1)
         self.generator_lock.acquire(timeout=600)
         try:
-            # Preprocessing user text:
-            # If notebook - append to history only user text;
+            # Append user_in history
             self.users[chat_id]["user_in"].append(user_in)
+            # Preprocessing: add user_in to history in right order:
             if self.bot_mode == "notebook":
+                # If notebook mode - append to history only user_in, no additional preparing;
                 self.users[chat_id]["history"].append(user_in)
-            # If user_in starts with prefix - impersonate-like (useful if you try to get "environment/impersonate view")
-            elif user_in.startswith(self._impersonate_prefix):
-                # adding "" history line to prevent bug in history sequence, user_in is prefix for bot
+            elif user_in.startswith(self.impersonate_prefix):
+                # If user_in starts with prefix - impersonate-like (if you try to get "impersonate view")
+                # adding "" line to prevent bug in history sequence, user_in is prefix for bot answer
                 self.users[chat_id]["history"].append("")
-                self.users[chat_id]["history"].append(user_in + ":")
-            # if user_in is "" - no user text, it is like continue generation
+                self.users[chat_id]["history"].append(user_in[len(self.impersonate_prefix):] + ":")
             elif user_in == "":
-                # adding "" history line to prevent bug in history sequence
+                # if user_in is "" - no user text, it is like continue generation
+                # adding "" history line to prevent bug in history sequence, add "name2:" prefix for generation
                 self.users[chat_id]["history"].append("")
                 self.users[chat_id]["history"].append(self.users[chat_id]["name2"] + ":")
-            # If not notebook then chat - add "name1&2:" to user and bot message (generation from name2 point of view);
             else:
+                # If not notebook/impersonate/continue mode then use ordinary chat preparing
+                # add "name1&2:" to user and bot message (generation from name2 point of view);
                 self.users[chat_id]["history"].append(self.users[chat_id]["name1"] + ":" + user_in)
                 self.users[chat_id]["history"].append(self.users[chat_id]["name2"] + ":")
             # Set eos_token and stopping_strings.
@@ -352,28 +414,23 @@ class TelegramBotWrapper:
                 # don't know why, but better works without stopping_strings
                 # stopping_strings = [f'\n{self.users[chat_id]["name2"]}:', f'\n{self.users[chat_id]["name1"]}:']
                 eos_token = '\n'
-            # Make prompt
+            # Make prompt: context + conversation history
             prompt = self.users[chat_id]["context"] + "\n" + "\n".join(self.users[chat_id]["history"])
             # Generate!
             generator = generate_reply(
-                question=prompt, max_new_tokens=1024,
-                do_sample=True, temperature=0.72, top_p=0.73, top_k=0, typical_p=1,
-                repetition_penalty=1.1, encoder_repetition_penalty=1,
-                min_length=0, no_repeat_ngram_size=0,
-                num_beams=1, penalty_alpha=0, length_penalty=1,
-                early_stopping=False, seed=-1,
+                question=prompt, state=self.generation_params,
                 eos_token=eos_token, stopping_strings=stopping_strings
             )
             # This is "bad" implementation of getting answer
             for a in generator:
                 answer = a
-            # If generation result - zero - return  "Empty answer."
+            # If generation result zero length - return  "Empty answer."
             if len(answer) < 1:
                 answer = self.GENERATOR_EMPTY_ANSWER
         except Exception as e:
             print("generate_answer", e)
         finally:
-            # anyway, release generator lock and return something
+            # anyway, release generator lock. Then return
             self.generator_lock.release()
             if answer not in [self.GENERATOR_EMPTY_ANSWER, self.GENERATOR_FAIL]:
                 # if everything ok - add generated answer in history and return last message
