@@ -111,12 +111,10 @@ def load_quantized(model_name):
     pt_path = None
     priority_name_list = [
         Path(f'{shared.args.model_dir}/{model_name}{hyphen}{shared.args.wbits}bit{group}{ext}')
-        for ext in ['.safetensors', '.pt']
         for group in ([f'-{shared.args.groupsize}g', ''] if shared.args.groupsize > 0 else [''])
+        for ext in ['.safetensors', '.pt']
         for hyphen in ['-', f'/{model_name}-', '/']
     ]
-    if shared.args.groupsize > 0:
-        priority_name_list = [i for i in priority_name_list if str(shared.args.groupsize) in i.name] + [i for i in priority_name_list if str(shared.args.groupsize) not in i.name]
     for path in priority_name_list:
         if path.exists():
             pt_path = path
