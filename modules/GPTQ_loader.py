@@ -108,14 +108,10 @@ def load_quantized(model_name):
     path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
     pt_path = None
     priority_name_list = [
-        Path(f'{shared.args.model_dir}/{model_name}/{shared.args.wbits}bit-{shared.args.groupsize}g.safetensors'),
-        Path(f'{shared.args.model_dir}/{model_name}/{shared.args.wbits}bit-{shared.args.groupsize}g.pt'),
-        Path(f'{shared.args.model_dir}/{model_name}/{shared.args.wbits}bit.safetensors'),
-        Path(f'{shared.args.model_dir}/{model_name}/{shared.args.wbits}bit.pt'),
-        Path(f'{shared.args.model_dir}/{model_name}-{shared.args.wbits}bit-{shared.args.groupsize}g.safetensors'),
-        Path(f'{shared.args.model_dir}/{model_name}-{shared.args.wbits}bit-{shared.args.groupsize}g.pt'),
-        Path(f'{shared.args.model_dir}/{model_name}-{shared.args.wbits}bit.safetensors'),
-        Path(f'{shared.args.model_dir}/{model_name}-{shared.args.wbits}bit.pt'),
+        Path(f'{shared.args.model_dir}/{model_name}{hyphen}{shared.args.wbits}bit{group}{ext}')
+        for ext in ['.safetensors', '.pt']
+        for group in ([f'-{shared.args.groupsize}g', ''] if shared.args.groupsize > 0 else [''])
+        for hyphen in ['-', f'/{model_name}-', '/']
     ]
     for path in priority_name_list:
         if path.exists():
