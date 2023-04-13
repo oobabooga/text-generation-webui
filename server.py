@@ -8,6 +8,7 @@ import json
 import math
 import os
 import re
+import sys
 import time
 import traceback
 import zipfile
@@ -453,8 +454,24 @@ else:
 if shared.args.model is not None:
     shared.model_name = shared.args.model
     shared.model, shared.tokenizer = load_model(shared.model_name)
-    if shared.args.lora:
-        add_lora_to_model(shared.args.lora)
+elif shared.args.model_menu:
+    if len(available_models) == 0:
+        print('No models are available! Please download at least one.')
+        sys.exit(0)
+    elif len(available_models) == 1:
+        i = 0
+    else:
+        print('The following models are available:\n')
+        for i, model in enumerate(available_models):
+            print(f'{i+1}. {model}')
+        print(f'\nWhich one do you want to load? 1-{len(available_models)}\n')
+        i = int(input()) - 1
+        print()
+    shared.model_name = available_models[i]
+    shared.model, shared.tokenizer = load_model(shared.model_name)
+
+if shared.args.model is not None and shared.args.lora:
+    add_lora_to_model(shared.args.lora)
 
 # Default UI settings
 default_preset = shared.settings['presets'][next((k for k in shared.settings['presets'] if re.match(k.lower(), shared.model_name.lower())), 'default')]
