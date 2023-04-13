@@ -239,7 +239,7 @@ Optionally, you can use the following command-line flags:
 | `--model_type MODEL_TYPE` | GPTQ: Model type of pre-quantized model. Currently LLaMA, OPT, and GPT-J are supported. |
 | `--groupsize GROUPSIZE`   | GPTQ: Group size. |
 | `--pre_layer PRE_LAYER`   | GPTQ: The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models. |
-| `--warmup_autotune`       | GPTQ: Enable warmup autotune. Only usable for triton. |
+| `--no-warmup_autotune`    | GPTQ: Disable warmup autotune for triton. |
 
 #### FlexGen
 
