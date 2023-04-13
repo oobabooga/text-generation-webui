@@ -35,6 +35,10 @@ params = {
     'length_penalty': 1,
     'early_stopping': False,
     'seed': -1,
+    'add_bos_token': True,
+    'custom_stopping_strings': [],
+    'truncation_length': 2048,
+    'ban_eos_token': False,
 }
 
 # Input prompt

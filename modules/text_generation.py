@@ -15,20 +15,20 @@ from modules.html_generator import generate_4chan_html, generate_basic_html
 from modules.models import clear_torch_cache, local_rank
 
 
-def get_max_prompt_length(tokens):
-    max_length = 2048 - tokens
+def get_max_prompt_length(state):
+    max_length = state['truncation_length'] - state['max_new_tokens']
     if shared.soft_prompt:
         max_length -= shared.soft_prompt_tensor.shape[1]
     return max_length
 
 
-def encode(prompt, tokens_to_generate=0, add_special_tokens=True, add_bos_token=True):
+def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_length=None):
     if any((shared.is_RWKV, shared.is_llamacpp)):
         input_ids = shared.tokenizer.encode(str(prompt))
         input_ids = np.array(input_ids).reshape(1, len(input_ids))
         return input_ids
     else:
-        input_ids = shared.tokenizer.encode(str(prompt), return_tensors='pt', truncation=True, max_length=get_max_prompt_length(tokens_to_generate), add_special_tokens=add_special_tokens)
+        input_ids = shared.tokenizer.encode(str(prompt), return_tensors='pt', add_special_tokens=add_special_tokens)
 
         # This is a hack for making replies more creative.
         if not add_bos_token and input_ids[0][0] == shared.tokenizer.bos_token_id:
@@ -39,17 +39,21 @@ def encode(prompt, tokens_to_generate=0, add_special_tokens=True, add_bos_token=
         if type(shared.tokenizer) is transformers.LlamaTokenizer and input_ids[0][0] == 29871:
             input_ids = input_ids[:, 1:]
 
-        if shared.args.cpu:
-            return input_ids
-        elif shared.args.flexgen:
-            return input_ids.numpy()
-        elif shared.args.deepspeed:
-            return input_ids.to(device=local_rank)
-        elif torch.has_mps:
-            device = torch.device('mps')
-            return input_ids.to(device)
-        else:
-            return input_ids.cuda()
+    # Handling truncation
+    if truncation_length is not None:
+        input_ids = input_ids[:, -truncation_length:]
+
+    if any((shared.is_RWKV, shared.is_llamacpp, shared.args.cpu)):
+        return input_ids
+    elif shared.args.flexgen:
+        return input_ids.numpy()
+    elif shared.args.deepspeed:
+        return input_ids.to(device=local_rank)
+    elif torch.has_mps:
+        device = torch.device('mps')
+        return input_ids.to(device)
+    else:
+        return input_ids.cuda()
 
 
 def decode(output_ids):
@@ -69,6 +73,7 @@ def generate_softprompt_input_tensors(input_ids):
     # filler_input_ids += shared.model.config.bos_token_id # setting dummy input_ids to bos tokens
     return inputs_embeds, filler_input_ids
 
+
 # Removes empty replies from gpt4chan outputs
 def fix_gpt4chan(s):
     for i in range(10):
@@ -76,6 +81,7 @@ def fix_gpt4chan(s):
         s = re.sub("--- [0-9]*\n *\n---", "---", s)
         s = re.sub("--- [0-9]*\n\n\n---", "---", s)
     return s
+
 
 # Fix the LaTeX equations in galactica
 def fix_galactica(s):
@@ -117,9 +123,15 @@ def stop_everything_event():
     shared.stop_everything = True
 
 
-def generate_reply(question, generate_state, eos_token=None, stopping_strings=[]):
+def generate_reply(question, state, eos_token=None, stopping_strings=[]):
+
+    if shared.model_name == 'None':
+        print("No model is loaded! Select one in the Model tab.")
+        yield formatted_outputs(question, shared.model_name)
+        return
+
     clear_torch_cache()
-    seed = set_manual_seed(generate_state['seed'])
+    seed = set_manual_seed(state['seed'])
     shared.stop_everything = False
     generate_params = {}
     t0 = time.time()
@@ -127,15 +139,17 @@ def generate_reply(question, generate_state, eos_token=None, stopping_strings=[]
     original_question = question
     if not shared.is_chat():
         question = apply_extensions(question, 'input')
-    if shared.args.verbose:
-        print(f'\n\n{question}\n--------------------\n')
 
     # These models are not part of Hugging Face, so we handle them
     # separately and terminate the function call earlier
     if any((shared.is_RWKV, shared.is_llamacpp)):
+
+        if shared.args.verbose:
+            print(f'\n\n{question}\n--------------------\n')
+
         for k in ['temperature', 'top_p', 'top_k', 'repetition_penalty']:
-            generate_params[k] = generate_state[k]
-        generate_params['token_count'] = generate_state['max_new_tokens']
+            generate_params[k] = state[k]
+        generate_params['token_count'] = state['max_new_tokens']
         try:
             if shared.args.no_stream:
                 reply = shared.model.generate(context=question, **generate_params)
@@ -164,28 +178,37 @@ def generate_reply(question, generate_state, eos_token=None, stopping_strings=[]
             print(f'Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens}, seed {seed})')
             return
 
-    input_ids = encode(question, generate_state['max_new_tokens'], add_bos_token=generate_state['add_bos_token'])
+    input_ids = encode(question, add_bos_token=state['add_bos_token'], truncation_length=get_max_prompt_length(state))
     original_input_ids = input_ids
     output = input_ids[0]
+
+    if shared.args.verbose:
+        print(f'\n\n{decode(input_ids[0])}\n--------------------\n')
 
     cuda = not any((shared.args.cpu, shared.args.deepspeed, shared.args.flexgen))
     eos_token_ids = [shared.tokenizer.eos_token_id] if shared.tokenizer.eos_token_id is not None else []
     if eos_token is not None:
         eos_token_ids.append(int(encode(eos_token)[0][-1]))
+
+    # Handling the stopping strings
     stopping_criteria_list = transformers.StoppingCriteriaList()
-    if type(stopping_strings) is list and len(stopping_strings) > 0:
-        t = [encode(string, 0, add_special_tokens=False) for string in stopping_strings]
-        stopping_criteria_list.append(_SentinelTokenStoppingCriteria(sentinel_token_ids=t, starting_idx=len(input_ids[0])))
+    for st in [stopping_strings, state['custom_stopping_strings']]:
+        if type(st) is list and len(st) > 0:
+            sentinel_token_ids = [encode(string, add_special_tokens=False) for string in st]
+            stopping_criteria_list.append(_SentinelTokenStoppingCriteria(sentinel_token_ids=sentinel_token_ids, starting_idx=len(input_ids[0])))
+            break
 
     if not shared.args.flexgen:
         for k in ['max_new_tokens', 'do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping']:
-            generate_params[k] = generate_state[k]
+            generate_params[k] = state[k]
         generate_params['eos_token_id'] = eos_token_ids
         generate_params['stopping_criteria'] = stopping_criteria_list
+        if state['ban_eos_token']:
+            generate_params['suppress_tokens'] = [shared.tokenizer.eos_token_id]
     else:
         for k in ['max_new_tokens', 'do_sample', 'temperature']:
-            generate_params[k] = generate_state[k]
-        generate_params['stop'] = generate_state['eos_token_ids'][-1]
+            generate_params[k] = state[k]
+        generate_params['stop'] = state['eos_token_ids'][-1]
         if not shared.args.no_stream:
             generate_params['max_new_tokens'] = 8
 
@@ -248,7 +271,7 @@ def generate_reply(question, generate_state, eos_token=None, stopping_strings=[]
 
         # Stream the output naively for FlexGen since it doesn't support 'stopping_criteria'
         else:
-            for i in range(generate_state['max_new_tokens'] // 8 + 1):
+            for i in range(state['max_new_tokens'] // 8 + 1):
                 clear_torch_cache()
                 with torch.no_grad():
                     output = shared.model.generate(**generate_params)[0]

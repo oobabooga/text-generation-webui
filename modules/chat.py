@@ -18,35 +18,35 @@ from modules.text_generation import (encode, generate_reply,
                                      get_max_prompt_length)
 
 
-def generate_chat_prompt(user_input, max_new_tokens, name1, name2, context, chat_prompt_size, **kwargs):
-    is_instruct = kwargs['is_instruct'] if 'is_instruct' in kwargs else False
-    end_of_turn = kwargs['end_of_turn'] if 'end_of_turn' in kwargs else ''
+def generate_chat_prompt(user_input, state, **kwargs):
     impersonate = kwargs['impersonate'] if 'impersonate' in kwargs else False
     _continue = kwargs['_continue'] if '_continue' in kwargs else False
     also_return_rows = kwargs['also_return_rows'] if 'also_return_rows' in kwargs else False
-    rows = [f"{context.strip()}\n"]
+    is_instruct = state['mode'] == 'instruct'
+    rows = [f"{state['context'].strip()}\n"]
 
     # Finding the maximum prompt size
+    chat_prompt_size = state['chat_prompt_size']
     if shared.soft_prompt:
         chat_prompt_size -= shared.soft_prompt_tensor.shape[1]
-    max_length = min(get_max_prompt_length(max_new_tokens), chat_prompt_size)
+    max_length = min(get_max_prompt_length(state), chat_prompt_size)
 
     if is_instruct:
-        prefix1 = f"{name1}\n"
-        prefix2 = f"{name2}\n"
+        prefix1 = f"{state['name1']}\n"
+        prefix2 = f"{state['name2']}\n"
     else:
-        prefix1 = f"{name1}: "
-        prefix2 = f"{name2}: "
+        prefix1 = f"{state['name1']}: "
+        prefix2 = f"{state['name2']}: "
 
     i = len(shared.history['internal']) - 1
-    while i >= 0 and len(encode(''.join(rows), max_new_tokens)[0]) < max_length:
+    while i >= 0 and len(encode(''.join(rows))[0]) < max_length:
         if _continue and i == len(shared.history['internal']) - 1:
             rows.insert(1, f"{prefix2}{shared.history['internal'][i][1]}")
         else:
-            rows.insert(1, f"{prefix2}{shared.history['internal'][i][1].strip()}{end_of_turn}\n")
+            rows.insert(1, f"{prefix2}{shared.history['internal'][i][1].strip()}{state['end_of_turn']}\n")
         string = shared.history['internal'][i][0]
         if string not in ['', '<|BEGIN-VISIBLE-CHAT|>']:
-            rows.insert(1, f"{prefix1}{string.strip()}{end_of_turn}\n")
+            rows.insert(1, f"{prefix1}{string.strip()}{state['end_of_turn']}\n")
         i -= 1
 
     if impersonate:
@@ -58,13 +58,13 @@ def generate_chat_prompt(user_input, max_new_tokens, name1, name2, context, chat
         # Adding the user message
         user_input = fix_newlines(user_input)
         if len(user_input) > 0:
-            rows.append(f"{prefix1}{user_input}{end_of_turn}\n")
+            rows.append(f"{prefix1}{user_input}{state['end_of_turn']}\n")
 
         # Adding the Character prefix
         rows.append(apply_extensions(f"{prefix2.strip() if not is_instruct else prefix2}", "bot_prefix"))
         limit = 3
 
-    while len(rows) > limit and len(encode(''.join(rows), max_new_tokens)[0]) >= max_length:
+    while len(rows) > limit and len(encode(''.join(rows))[0]) >= max_length:
         rows.pop(1)
     prompt = ''.join(rows)
 
@@ -74,16 +74,26 @@ def generate_chat_prompt(user_input, max_new_tokens, name1, name2, context, chat
         return prompt
 
 
-def extract_message_from_reply(reply, name1, name2, stop_at_newline):
-    next_character_found = False
+def get_stopping_strings(state):
+    if state['mode'] == 'instruct':
+        stopping_strings = [f"\n{state['name1']}", f"\n{state['name2']}"]
+    else:
+        stopping_strings = [f"\n{state['name1']}:", f"\n{state['name2']}:"]
+    stopping_strings += state['custom_stopping_strings']
+    return stopping_strings
 
-    if stop_at_newline:
+
+def extract_message_from_reply(reply, state):
+    next_character_found = False
+    stopping_strings = get_stopping_strings(state)
+
+    if state['stop_at_newline']:
         lines = reply.split('\n')
         reply = lines[0].strip()
         if len(lines) > 1:
             next_character_found = True
     else:
-        for string in [f"\n{name1}:", f"\n{name2}:"]:
+        for string in stopping_strings:
             idx = reply.find(string)
             if idx != -1:
                 reply = reply[:idx]
@@ -92,7 +102,7 @@ def extract_message_from_reply(reply, name1, name2, stop_at_newline):
         # If something like "\nYo" is generated just before "\nYou:"
         # is completed, trim it
         if not next_character_found:
-            for string in [f"\n{name1}:", f"\n{name2}:"]:
+            for string in stopping_strings:
                 for j in range(len(string) - 1, 0, -1):
                     if reply[-j:] == string[:j]:
                         reply = reply[:-j]
@@ -105,21 +115,20 @@ def extract_message_from_reply(reply, name1, name2, stop_at_newline):
     return reply, next_character_found
 
 
-def chatbot_wrapper(text, generate_state, name1, name2, context, mode, end_of_turn, regenerate=False, _continue=False):
-    if mode == 'instruct':
-        stopping_strings = [f"\n{name1}", f"\n{name2}"]
-    else:
-        stopping_strings = [f"\n{name1}:", f"\n{name2}:"]
+def chatbot_wrapper(text, state, regenerate=False, _continue=False):
+
+    if shared.model_name == 'None':
+        print("No model is loaded! Select one in the Model tab.")
+        yield shared.history['visible']
+        return
 
     # Defining some variables
     cumulative_reply = ''
     last_reply = [shared.history['internal'][-1][1], shared.history['visible'][-1][1]] if _continue else None
     just_started = True
-    name1_original = name1
     visible_text = custom_generate_chat_prompt = None
-    eos_token = '\n' if generate_state['stop_at_newline'] else None
-    if 'pygmalion' in shared.model_name.lower():
-        name1 = "You"
+    eos_token = '\n' if state['stop_at_newline'] else None
+    stopping_strings = get_stopping_strings(state)
 
     # Check if any extension wants to hijack this function call
     for extension, _ in extensions_module.iterator():
@@ -135,29 +144,25 @@ def chatbot_wrapper(text, generate_state, name1, name2, context, mode, end_of_tu
         text = apply_extensions(text, "input")
 
     # Generating the prompt
-    kwargs = {
-        'end_of_turn': end_of_turn,
-        'is_instruct': mode == 'instruct',
-        '_continue': _continue
-    }
+    kwargs = {'_continue': _continue}
     if custom_generate_chat_prompt is None:
-        prompt = generate_chat_prompt(text, generate_state['max_new_tokens'], name1, name2, context, generate_state['chat_prompt_size'], **kwargs)
+        prompt = generate_chat_prompt(text, state, **kwargs)
     else:
-        prompt = custom_generate_chat_prompt(text, generate_state['max_new_tokens'], name1, name2, context, generate_state['chat_prompt_size'], **kwargs)
+        prompt = custom_generate_chat_prompt(text, state, **kwargs)
 
     # Yield *Is typing...*
     if not any((regenerate, _continue)):
         yield shared.history['visible'] + [[visible_text, shared.processing_message]]
 
     # Generate
-    for i in range(generate_state['chat_generation_attempts']):
+    for i in range(state['chat_generation_attempts']):
         reply = None
-        for reply in generate_reply(f"{prompt}{' ' if len(cumulative_reply) > 0 else ''}{cumulative_reply}", generate_state, eos_token=eos_token, stopping_strings=stopping_strings):
+        for reply in generate_reply(f"{prompt}{' ' if len(cumulative_reply) > 0 else ''}{cumulative_reply}", state, eos_token=eos_token, stopping_strings=stopping_strings):
             reply = cumulative_reply + reply
 
             # Extracting the reply
-            reply, next_character_found = extract_message_from_reply(reply, name1, name2, generate_state['stop_at_newline'])
-            visible_reply = re.sub("(<USER>|<user>|{{user}})", name1_original, reply)
+            reply, next_character_found = extract_message_from_reply(reply, state)
+            visible_reply = re.sub("(<USER>|<user>|{{user}})", state['name1'], reply)
             visible_reply = apply_extensions(visible_reply, "output")
 
             # We need this global variable to handle the Stop event,
@@ -171,7 +176,7 @@ def chatbot_wrapper(text, generate_state, name1, name2, context, mode, end_of_tu
                     shared.history['visible'].append(['', ''])
 
             if _continue:
-                sep = list(map(lambda x : ' ' if x[-1] != ' ' else '', last_reply))
+                sep = list(map(lambda x: ' ' if len(x) > 0 and x[-1] != ' ' else '', last_reply))
                 shared.history['internal'][-1] = [text, f'{last_reply[0]}{sep[0]}{reply}']
                 shared.history['visible'][-1] = [visible_text, f'{last_reply[1]}{sep[1]}{visible_reply}']
             else:
@@ -188,28 +193,27 @@ def chatbot_wrapper(text, generate_state, name1, name2, context, mode, end_of_tu
     yield shared.history['visible']
 
 
-def impersonate_wrapper(text, generate_state, name1, name2, context, mode, end_of_turn):
-    if mode == 'instruct':
-        stopping_strings = [f"\n{name1}", f"\n{name2}"]
-    else:
-        stopping_strings = [f"\n{name1}:", f"\n{name2}:"]
+def impersonate_wrapper(text, state):
+
+    if shared.model_name == 'None':
+        print("No model is loaded! Select one in the Model tab.")
+        yield ''
+        return
 
     # Defining some variables
     cumulative_reply = ''
-    eos_token = '\n' if generate_state['stop_at_newline'] else None
-    if 'pygmalion' in shared.model_name.lower():
-        name1 = "You"
-
-    prompt = generate_chat_prompt(text, generate_state['max_new_tokens'], name1, name2, context, generate_state['chat_prompt_size'], impersonate=True, end_of_turn=end_of_turn)
+    eos_token = '\n' if state['stop_at_newline'] else None
+    prompt = generate_chat_prompt(text, state, impersonate=True)
+    stopping_strings = get_stopping_strings(state)
 
     # Yield *Is typing...*
     yield shared.processing_message
 
-    for i in range(generate_state['chat_generation_attempts']):
+    for i in range(state['chat_generation_attempts']):
         reply = None
-        for reply in generate_reply(f"{prompt}{' ' if len(cumulative_reply) > 0 else ''}{cumulative_reply}", generate_state, eos_token=eos_token, stopping_strings=stopping_strings):
+        for reply in generate_reply(f"{prompt}{' ' if len(cumulative_reply) > 0 else ''}{cumulative_reply}", state, eos_token=eos_token, stopping_strings=stopping_strings):
             reply = cumulative_reply + reply
-            reply, next_character_found = extract_message_from_reply(reply, name1, name2, generate_state['stop_at_newline'])
+            reply, next_character_found = extract_message_from_reply(reply, state)
             yield reply
             if next_character_found:
                 break
@@ -220,32 +224,32 @@ def impersonate_wrapper(text, generate_state, name1, name2, context, mode, end_o
     yield reply
 
 
-def cai_chatbot_wrapper(text, generate_state, name1, name2, context, mode, end_of_turn):
-    for history in chatbot_wrapper(text, generate_state, name1, name2, context, mode, end_of_turn):
-        yield chat_html_wrapper(history, name1, name2, mode)
+def cai_chatbot_wrapper(text, state):
+    for history in chatbot_wrapper(text, state):
+        yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'])
 
 
-def regenerate_wrapper(text, generate_state, name1, name2, context, mode, end_of_turn):
+def regenerate_wrapper(text, state):
     if (len(shared.history['visible']) == 1 and not shared.history['visible'][0][0]) or len(shared.history['internal']) == 0:
-        yield chat_html_wrapper(shared.history['visible'], name1, name2, mode)
+        yield chat_html_wrapper(shared.history['visible'], state['name1'], state['name2'], state['mode'])
     else:
         last_visible = shared.history['visible'].pop()
         last_internal = shared.history['internal'].pop()
         # Yield '*Is typing...*'
-        yield chat_html_wrapper(shared.history['visible'] + [[last_visible[0], shared.processing_message]], name1, name2, mode)
-        for history in chatbot_wrapper(last_internal[0], generate_state, name1, name2, context, mode, end_of_turn, regenerate=True):
+        yield chat_html_wrapper(shared.history['visible'] + [[last_visible[0], shared.processing_message]], state['name1'], state['name2'], state['mode'])
+        for history in chatbot_wrapper(last_internal[0], state, regenerate=True):
             shared.history['visible'][-1] = [last_visible[0], history[-1][1]]
-            yield chat_html_wrapper(shared.history['visible'], name1, name2, mode)
+            yield chat_html_wrapper(shared.history['visible'], state['name1'], state['name2'], state['mode'])
 
 
-def continue_wrapper(text, generate_state, name1, name2, context, mode, end_of_turn):
+def continue_wrapper(text, state):
     if (len(shared.history['visible']) == 1 and not shared.history['visible'][0][0]) or len(shared.history['internal']) == 0:
-        yield chat_html_wrapper(shared.history['visible'], name1, name2, mode)
+        yield chat_html_wrapper(shared.history['visible'], state['name1'], state['name2'], state['mode'])
     else:
         # Yield ' ...'
-        yield chat_html_wrapper(shared.history['visible'][:-1] + [[shared.history['visible'][-1][0], shared.history['visible'][-1][1] + ' ...']], name1, name2, mode)
-        for history in chatbot_wrapper(shared.history['internal'][-1][0], generate_state, name1, name2, context, mode, end_of_turn, _continue=True):
-            yield chat_html_wrapper(shared.history['visible'], name1, name2, mode)
+        yield chat_html_wrapper(shared.history['visible'][:-1] + [[shared.history['visible'][-1][0], shared.history['visible'][-1][1] + ' ...']], state['name1'], state['name2'], state['mode'])
+        for history in chatbot_wrapper(shared.history['internal'][-1][0], state, _continue=True):
+            yield chat_html_wrapper(shared.history['visible'], state['name1'], state['name2'], state['mode'])
 
 
 def remove_last_message(name1, name2, mode):
@@ -273,6 +277,21 @@ def replace_last_reply(text, name1, name2, mode):
     return chat_html_wrapper(shared.history['visible'], name1, name2, mode)
 
 
+def send_dummy_message(text, name1, name2, mode):
+    shared.history['visible'].append([text, ''])
+    shared.history['internal'].append([apply_extensions(text, "input"), ''])
+    return chat_html_wrapper(shared.history['visible'], name1, name2, mode)
+
+
+def send_dummy_reply(text, name1, name2, mode):
+    if len(shared.history['visible']) > 0 and not shared.history['visible'][-1][1] == '':
+        shared.history['visible'].append(['', ''])
+        shared.history['internal'].append(['', ''])
+    shared.history['visible'][-1][1] = text
+    shared.history['internal'][-1][1] = apply_extensions(text, "input")
+    return chat_html_wrapper(shared.history['visible'], name1, name2, mode)
+
+
 def clear_html():
     return chat_html_wrapper([], "", "")
 
@@ -284,7 +303,7 @@ def clear_chat_log(name1, name2, greeting, mode):
     if greeting != '':
         shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
         shared.history['visible'] += [['', apply_extensions(greeting, "output")]]
-    
+
     # Save cleared logs
     save_history(mode)
 
@@ -452,7 +471,7 @@ def load_character(character, name1, name2, mode):
             if greeting != "":
                 shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
                 shared.history['visible'] += [['', apply_extensions(greeting, "output")]]
-            
+
             # Create .json log files since they don't already exist
             save_history(mode)
 

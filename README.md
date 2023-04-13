@@ -13,7 +13,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * Dropdown menu for switching between models
 * Notebook mode that resembles OpenAI's playground
 * Chat mode for conversation and role playing
-* Instruct mode compatible with Alpaca and Open Assistant formats **\*NEW!\***
+* Instruct mode compatible with Alpaca, Vicuna, and Open Assistant formats **\*NEW!\***
 * Nice HTML output for GPT-4chan
 * Markdown output for [GALACTICA](https://github.com/paperswithcode/galai), including LaTeX rendering
 * [Custom chat characters](https://github.com/oobabooga/text-generation-webui/wiki/Custom-chat-characters)
@@ -125,7 +125,7 @@ cp .env.example .env
 docker compose up --build
 ```
 
-Make sure to edit `.env.example` and set the appropriate CUDA version for your GPU.
+Make sure to edit `.env.example` and set the appropriate CUDA version for your GPU, which can be found on [developer.nvidia.com](https://developer.nvidia.com/cuda-gpus).
 
 You need to have docker compose v2.17 or higher installed in your system. For installation instructions, see [Docker compose installation](https://github.com/oobabooga/text-generation-webui/wiki/Docker-compose-installation).
 
@@ -203,6 +203,7 @@ Optionally, you can use the following command-line flags:
 | `--lora LORA`                              | Name of the LoRA to apply to the model by default. |
 | `--model-dir MODEL_DIR`                    | Path to directory with all the models. |
 | `--lora-dir LORA_DIR`                      | Path to directory with all the loras. |
+| `--model-menu`                             | Show a model menu in the terminal when the web UI is first launched. |
 | `--no-stream`                              | Don't stream the text output in real time. |
 | `--settings SETTINGS_FILE`                 | Load the default interface settings from this json file. See `settings-template.json` for an example. If you create a file called `settings.json`, this file will be loaded by default without the need to use the `--settings` flag. |
 | `--extensions EXTENSIONS [EXTENSIONS ...]` | The list of extensions to load. If you want to load more than one extension, write the names separated by spaces. |
@@ -238,6 +239,7 @@ Optionally, you can use the following command-line flags:
 | `--model_type MODEL_TYPE` | GPTQ: Model type of pre-quantized model. Currently LLaMA, OPT, and GPT-J are supported. |
 | `--groupsize GROUPSIZE`   | GPTQ: Group size. |
 | `--pre_layer PRE_LAYER`   | GPTQ: The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models. |
+| `--no-warmup_autotune`    | GPTQ: Disable warmup autotune for triton. |
 
 #### FlexGen
 
@@ -289,7 +291,9 @@ Check the [wiki](https://github.com/oobabooga/text-generation-webui/wiki/System-
 
 ## Contributing
 
-Pull requests, suggestions, and issue reports are welcome.
+Pull requests, suggestions, and issue reports are welcome. 
+
+You are also welcome to review open pull requests.
 
 Before reporting a bug, make sure that you have:
 

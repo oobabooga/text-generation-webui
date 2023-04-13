@@ -40,5 +40,7 @@ def ui():
     with gr.Row():
         audio = gr.Audio(source="microphone")
         auto_submit = gr.Checkbox(label='Submit the transcribed audio automatically', value=True)
-    audio.change(fn=auto_transcribe, inputs=[audio, auto_submit], outputs=[shared.gradio['textbox'], audio])
-    audio.change(None, auto_submit, None, _js="(check) => {if (check) { document.getElementById('Generate').click() }}")
+
+    audio.change(
+        auto_transcribe, [audio, auto_submit], [shared.gradio['textbox'], audio]).then(
+        None, auto_submit, None, _js="(check) => {if (check) { document.getElementById('Generate').click() }}")
