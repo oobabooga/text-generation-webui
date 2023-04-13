@@ -11,7 +11,12 @@ from transformers import AutoConfig, AutoModelForCausalLM
 import modules.shared as shared
 
 sys.path.insert(0, str(Path("repositories/GPTQ-for-LLaMa")))
-import llama_inference_offload
+try:
+    import llama_inference_offload
+except ImportError:
+    shared.clone_and_import('https://github.com/oobabooga/GPTQ-for-LLaMa', str(Path.cwd() / "repositories/GPTQ-for-LLaMa"), 'llama_inference_offload')
+    
+
 from modelutils import find_layers
 from quant import make_quant
 

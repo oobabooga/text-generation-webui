@@ -1,3 +1,7 @@
+import sys
+import subprocess
+import importlib
+
 import argparse
 
 model = None
@@ -158,3 +162,10 @@ if args.cai_chat:
 
 def is_chat():
     return args.chat
+
+
+def clone_and_import(repo_url, local_path, module_name):
+    subprocess.run(["git", "clone", repo_url, local_path])
+    sys.path.insert(0, local_path)
+    module = importlib.import_module(module_name)
+    return module
