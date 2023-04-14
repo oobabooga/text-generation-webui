@@ -321,7 +321,7 @@ def create_model_menus():
     with gr.Row():
         with gr.Column():
             shared.gradio['custom_model_menu'] = gr.Textbox(label="Download custom model or LoRA", info="Enter Hugging Face username/model path, e.g: facebook/galactica-125m")
-            shared.gradio['download_button'] = gr.Button("Download")
+            shared.gradio['download_model_button'] = gr.Button("Download")
 
         with gr.Column():
             shared.gradio['model_status'] = gr.Markdown('No model is loaded' if shared.model_name == 'None' else 'Ready')
@@ -346,7 +346,7 @@ def create_model_menus():
         load_model_wrapper, shared.gradio['model_menu'], shared.gradio['model_status'], show_progress=True)
 
     shared.gradio['lora_menu_apply'].click(load_lora_wrapper, shared.gradio['lora_menu'], shared.gradio['model_status'], show_progress=False)
-    shared.gradio['download_button'].click(download_model_wrapper, shared.gradio['custom_model_menu'], shared.gradio['model_status'], show_progress=False)
+    shared.gradio['download_model_button'].click(download_model_wrapper, shared.gradio['custom_model_menu'], shared.gradio['model_status'], show_progress=False)
 
 
 def create_settings_menus(default_preset):
