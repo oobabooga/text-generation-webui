@@ -47,7 +47,7 @@ class Handler(BaseHTTPRequestHandler):
                 'temperature': float(body.get('temperature', 0.5)),
                 'top_p': float(body.get('top_p', 1)),
                 'typical_p': float(body.get('typical', 1)),
-                'repetition_penalty': float(body.get('rep_pen', 1.1)),
+                'repetition_penalty': float(body.get('repetition_penalty', 1.1)),
                 'encoder_repetition_penalty': 1,
                 'top_k': int(body.get('top_k', 0)),
                 'min_length': int(body.get('min_length', 0)),
