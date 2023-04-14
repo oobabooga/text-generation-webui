@@ -432,8 +432,8 @@ def create_interface():
     # Defining some variables
     gen_events = []
     default_preset = shared.settings['presets'][next((k for k in shared.settings['presets'] if re.match(k.lower(), shared.model_name.lower())), 'default')]
-    if False: #shared.lora_name != "None":
-        default_text = load_prompt(shared.settings['lora_prompts'][next((k for k in shared.settings['lora_prompts'] if re.match(k.lower(), shared.lora_name.lower())), 'default')])
+    if len(shared.lora_names) == 1:
+        default_text = load_prompt(shared.settings['lora_prompts'][next((k for k in shared.settings['lora_prompts'] if re.match(k.lower(), shared.lora_names[0].lower())), 'default')])
     else:
         default_text = load_prompt(shared.settings['prompts'][next((k for k in shared.settings['prompts'] if re.match(k.lower(), shared.model_name.lower())), 'default')])
     title = 'Text generation web UI'
@@ -848,7 +848,7 @@ if __name__ == "__main__":
         # Load the model
         shared.model, shared.tokenizer = load_model(shared.model_name)
         if shared.args.lora:
-            add_lora_to_model(shared.args.lora)
+            add_lora_to_model([shared.args.lora])
 
     # Launch the web UI
     create_interface()

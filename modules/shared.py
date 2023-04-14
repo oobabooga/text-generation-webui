@@ -68,7 +68,7 @@ settings = {
     },
     'lora_prompts': {
         'default': 'QA',
-        '.*(alpaca-lora-7b|alpaca-lora-13b|alpaca-lora-30b)': "Alpaca",
+        '.*alpaca': "Alpaca",
     }
 }
 
