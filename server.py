@@ -544,6 +544,7 @@ def create_interface():
         elif shared.args.notebook:
             shared.input_elements = ui.list_interface_input_elements(chat=False)
             shared.gradio['interface_state'] = gr.State({k: None for k in shared.input_elements})
+            shared.gradio['last_input'] = gr.State('')
             with gr.Tab("Text generation", elem_id="main"):
                 with gr.Row():
                     with gr.Column(scale=4):
@@ -561,6 +562,8 @@ def create_interface():
                                 with gr.Row():
                                     shared.gradio['Generate'] = gr.Button('Generate')
                                     shared.gradio['Stop'] = gr.Button('Stop')
+                                    shared.gradio['Undo'] = gr.Button('Undo')
+                                    shared.gradio['Regenerate'] = gr.Button('Regenerate')
 
                             with gr.Column():
                                 pass
@@ -582,6 +585,7 @@ def create_interface():
         else:
             shared.input_elements = ui.list_interface_input_elements(chat=False)
             shared.gradio['interface_state'] = gr.State({k: None for k in shared.input_elements})
+            shared.gradio['last_input'] = gr.State('')
             with gr.Tab("Text generation", elem_id="main"):
                 with gr.Row():
                     with gr.Column():
@@ -748,27 +752,40 @@ def create_interface():
         # notebook/default modes event handlers
         else:
             shared.input_params = [shared.gradio[k] for k in ['textbox', 'interface_state']]
+
             if shared.args.notebook:
                 output_params = [shared.gradio[k] for k in ['textbox', 'markdown', 'html']]
             else:
                 output_params = [shared.gradio[k] for k in ['output_textbox', 'markdown', 'html']]
-                gen_events.append(shared.gradio['Continue'].click(
-                    ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
-                    generate_reply, [shared.gradio['output_textbox']] + shared.input_params[1:], output_params, show_progress=shared.args.no_stream)  # .then(
-                    # None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[1]; element.scrollTop = element.scrollHeight}")
-                )
 
             gen_events.append(shared.gradio['Generate'].click(
+                lambda x: x, shared.gradio['textbox'], shared.gradio['last_input']).then(
                 ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
                 generate_reply, shared.input_params, output_params, show_progress=shared.args.no_stream)  # .then(
                 # None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[0]; element.scrollTop = element.scrollHeight}")
             )
 
             gen_events.append(shared.gradio['textbox'].submit(
+                lambda x: x, shared.gradio['textbox'], shared.gradio['last_input']).then(
                 ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
                 generate_reply, shared.input_params, output_params, show_progress=shared.args.no_stream)  # .then(
                 # None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[0]; element.scrollTop = element.scrollHeight}")
             )
+
+            if shared.args.notebook:
+                shared.gradio['Undo'].click(lambda x: x, shared.gradio['last_input'], shared.gradio['textbox'], show_progress=False)
+                gen_events.append(shared.gradio['Regenerate'].click(
+                    lambda x: x, shared.gradio['last_input'], shared.gradio['textbox'], show_progress=False).then(
+                    ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
+                    generate_reply, shared.input_params, output_params, show_progress=shared.args.no_stream)  # .then(
+                    # None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[0]; element.scrollTop = element.scrollHeight}")
+                )
+            else:
+                gen_events.append(shared.gradio['Continue'].click(
+                    ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
+                    generate_reply, [shared.gradio['output_textbox']] + shared.input_params[1:], output_params, show_progress=shared.args.no_stream)  # .then(
+                    # None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[1]; element.scrollTop = element.scrollHeight}")
+                )
 
             shared.gradio['Stop'].click(stop_everything_event, None, None, queue=False, cancels=gen_events if shared.args.no_stream else None)
             shared.gradio['prompt_menu'].change(load_prompt, [shared.gradio['prompt_menu']], [shared.gradio['textbox']], show_progress=False)
