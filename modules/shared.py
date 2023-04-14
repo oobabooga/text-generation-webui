@@ -1,9 +1,12 @@
 import argparse
+from pathlib import Path
+
+import yaml
 
 model = None
 tokenizer = None
 model_name = "None"
-lora_name = "None"
+lora_names = []
 soft_prompt_tensor = None
 soft_prompt = False
 is_RWKV = False
@@ -42,6 +45,7 @@ settings = {
     'truncation_length_min': 0,
     'truncation_length_max': 4096,
     'mode': 'cai-chat',
+    'instruction_template': 'None',
     'chat_prompt_size': 2048,
     'chat_prompt_size_min': 0,
     'chat_prompt_size_max': 2048,
@@ -64,7 +68,7 @@ settings = {
     },
     'lora_prompts': {
         'default': 'QA',
-        '.*(alpaca-lora-7b|alpaca-lora-13b|alpaca-lora-30b)': "Alpaca",
+        '.*alpaca': "Alpaca",
     }
 }
 
@@ -143,6 +147,7 @@ parser.add_argument('--auto-launch', action='store_true', default=False, help='O
 parser.add_argument("--gradio-auth-path", type=str, help='Set the gradio authentication file path. The file should contain one or more user:password pairs in this format: "u1:p1,u2:p2,u3:p3"', default=None)
 
 args = parser.parse_args()
+args_defaults = parser.parse_args([])
 
 # Deprecation warnings for parameters that have been renamed
 deprecated_dict = {}
@@ -159,3 +164,21 @@ if args.cai_chat:
 
 def is_chat():
     return args.chat
+
+
+# Loading model-specific settings (default)
+with Path(f'{args.model_dir}/config.yaml') as p:
+    if p.exists():
+        model_config = yaml.safe_load(open(p, 'r').read())
+    else:
+        model_config = {}
+
+# Applying user-defined model settings
+with Path(f'{args.model_dir}/config-user.yaml') as p:
+    if p.exists():
+        user_config = yaml.safe_load(open(p, 'r').read())
+        for k in user_config:
+            if k in model_config:
+                model_config[k].update(user_config[k])
+            else:
+                model_config[k] = user_config[k]
