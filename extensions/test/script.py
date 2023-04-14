@@ -1,8 +1,11 @@
 import os
 import json
+import csv
+import re
 
 import gradio as gr
 import modules.shared as shared
+import pyparsing as pp
 import modules.ui
 
 from modules.chat import chatbot_wrapper
@@ -50,7 +53,7 @@ def get_presets():
         preset = file[:-4]
         presets.append(preset)
         custom_state = load_preset_values(preset, custom_state)[0]
-    return ",".join(presets)
+    return ", ".join(presets)
 
 def get_params(*args):
     global custom_state
@@ -61,16 +64,18 @@ def run(x="",y=""):
     global custom_state
     global custom_output
 
-    output = "<table border=1><thead><tr><th></th>"
-    x_strings = x.split(",")
-    y_strings = y.split(",")
+    output = "<style>table {border-collapse: collapse;border: 1px solid black;}th, td {border: 1px solid black;padding: 5px;}</style><table><thead><tr><th></th>"
+
+    x_strings = pp.common.comma_separated_list.parseString(x).asList()
+    y_strings = pp.common.comma_separated_list.parseString(y).asList()
+
     for i in y_strings:
-        output = output + f"<th>{i}</th>"
+        output = output + f"<th>{i.strip()}</th>"
     output = output + "</thead><tbody>"
     for i in x_strings:
         output = output + f"<tr><th>{i}</th>"
         for j in y_strings:
-            custom_state = load_preset_values(j, custom_state)[0]
+            custom_state = load_preset_values(j.strip(), custom_state)[0]
             for new in chatbot_wrapper(i.strip(), custom_state):
                 custom_output = new
             output = output + f"<td>{custom_state['name1']}: {custom_output[-1][0]}<br><br>{custom_state['name2']}: {custom_output[-1][1]}</td>"
