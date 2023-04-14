@@ -265,6 +265,7 @@ Optionally, you can use the following command-line flags:
 | Flag                                  | Description |
 |---------------------------------------|-------------|
 | `--listen`                            | Make the web UI reachable from your local network. |
+| `--listen-host LISTEN_HOST`           | The hostname that the server will use. |
 | `--listen-port LISTEN_PORT`           | The listening port that the server will use. |
 | `--share`                             | Create a public URL. This is useful for running the web UI on Google Colab or similar. |
 | `--auto-launch`                       | Open the web UI in the default browser upon launch. |
