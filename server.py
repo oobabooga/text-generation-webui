@@ -186,31 +186,28 @@ def download_model_wrapper(repo_id):
 # Update the command-line arguments based on the interface values
 def update_model_parameters(state):
     elements = ui.list_model_elements()  # the names of the parameters
-
     gpu_memories = []
     for i, element in enumerate(elements):
-
         if element not in state:
             continue
 
         value = state[element]
-
         if element.startswith('gpu_memory'):
             gpu_memories.append(value)
             continue
 
-        if element == 'cpu_memory' and value == 0:
-            value = None
         if element == 'wbits' and value == 'None':
             value = 0
         if element == 'groupsize' and value == 'None':
             value = -1
-        if element == 'model_type' and value == 'None':
-            value = None
         if element in ['wbits', 'groupsize', 'pre_layer']:
             value = int(value)
+        if element == 'cpu_memory' and value == 0:
+            value = None
         elif element == 'cpu_memory' and value is not None:
             value = f"{value}MiB"
+        if element == 'model_type' and value == 'None':
+            value = None
 
         exec(f"shared.args.{element} = value")
 
