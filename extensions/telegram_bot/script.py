@@ -4,6 +4,7 @@ from time import sleep
 from modules.text_generation import generate_reply
 from pathlib import Path
 import json
+import yaml
 from os import listdir
 from os.path import exists
 from copy import deepcopy
@@ -20,7 +21,7 @@ from telegram.ext import Updater
 params = {
     "token": "TELEGRAM_TOKEN",  # Telegram bot token! Ask https://t.me/BotFather to get!
     'bot_mode': "chat",  # chat, chat-restricted, notebook
-    'character_to_load': "Example.json",  # character json file from text-generation-webui/characters
+    'character_to_load': "Example.yaml",  # character json file from text-generation-webui/characters
 }
 
 
@@ -50,25 +51,6 @@ class TelegramBotWrapper:
         "reset": "<MEMORY RESET!>\nSend /start or any text for new session.",  # When history cleared
         "start": "<CHARACTER _NAME2_ LOADED>\nSend /start or message.",  # New conversation started (not used now)
     }
-    # generation_params = {  # dict of generation params, the same as in webui. Optimized for llama and low GPU RAM
-    #     "max_new_tokens": 1024,
-    #     "do_sample": True,
-    #     "temperature": 0.72,
-    #     "top_p": 0.73,
-    #     "top_k": 0,
-    #     "typical_p": 1,
-    #     "repetition_penalty": 1.1,
-    #     "encoder_repetition_penalty": 1,
-    #     "min_length": 0,
-    #     "no_repeat_ngram_size": 0,
-    #     "num_beams": 1,
-    #     "penalty_alpha": 0,
-    #     "length_penalty": 1,
-    #     "early_stopping": False,
-    #     "seed": -1,
-    #     "add_bos_token": True,
-    #     "custom_stopping_strings": []
-    # }
     generation_params = {
         'max_new_tokens': 200,
         'seed': -1.0,
@@ -97,7 +79,7 @@ class TelegramBotWrapper:
 
     def __init__(self,
                  bot_mode="chat",  # bot mode - chat, chat-restricted, notebook
-                 characters_dir_path="characters",  # there stored characters json files
+                 characters_dir_path="characters",  # there stored characters files
                  default_char_json="Example.json",  # name of default char.json file
                  history_dir_path="extensions/telegram_bot/history",  # there stored users history
                  default_token_file_path="extensions/telegram_bot/telegram_token.txt",  # there stored tg token
@@ -120,7 +102,7 @@ class TelegramBotWrapper:
         self.default_char_json = default_char_json
         self.load_cmd = "load"
         # Set buttons default list - if chat-restricted user can't change char or get help.
-        if self.bot_mode == "chat":  # chat give widest range of options
+        if self.bot_mode == "chat":  # chat option
             self.button = InlineKeyboardMarkup(
                 [[InlineKeyboardButton(text="▶Continue", callback_data='Continue'),
                   InlineKeyboardButton(text="🔄Regenerate", callback_data='Regen'),
@@ -129,7 +111,7 @@ class TelegramBotWrapper:
                   InlineKeyboardButton(text="🎭Chars", callback_data='Chars'),
                   ]])
             self.button_start = None
-        if self.bot_mode == "chat-restricted":  # you cant change char in restricted chat mode
+        if self.bot_mode == "chat-restricted":  # you can't change char in restricted chat mode
             self.button = InlineKeyboardMarkup(
                 [[InlineKeyboardButton(text="▶Continue", callback_data='Continue'),
                   InlineKeyboardButton(text="🔄Regenerate", callback_data='Regen'),
@@ -152,7 +134,7 @@ class TelegramBotWrapper:
     # Run bot with token! Initiate updater obj!
     def run_telegram_bot(self, bot_token="", token_file_name=""):
         """
-        This method starts telegram bot. Overwrite self.updater if exist
+        This method starts telegram bot. Overwrite "self.updater" if exist
         :param bot_token: if bot_token given - use it to initiate
         :param token_file_name: if token not given - read token from this file and use it to initiate
         :return: None
@@ -218,12 +200,12 @@ class TelegramBotWrapper:
         send_text = self.def_msg("reset", chat_id)
         context.bot.send_message(text=send_text, chat_id=chat_id)
 
-    def get_characters_json_list(self) -> list:
+    def get_characters_files_list(self) -> list:
         file_list = listdir(self.characters_dir_path)
         char_list = []
         i = 1
         for file_name in file_list:
-            if file_name[-5:] == ".json":
+            if file_name.split(".")[-1] in ["json", "yaml", ".yml"]:
                 i += 1
                 char_list.append(file_name)
         return char_list
@@ -231,9 +213,9 @@ class TelegramBotWrapper:
     def load_char_message(self, upd: Update, context: CallbackContext):
         chat_id = upd.message.chat.id
         self.last_message_markup_clean(context, chat_id)
-        char_list = self.get_characters_json_list()
+        char_list = self.get_characters_files_list()
         char_file = char_list[int(upd.message.text.split(self.load_cmd)[-1].strip().lstrip())]
-        self.users[chat_id] = self.load_char_json_file(char_file=char_file)
+        self.users[chat_id] = self.load_char_file(char_file=char_file)
         if exists(f'{self.history_dir_path}/{chat_id}{self.users[chat_id]["name2"]}.json'):
             self.load_user_history(chat_id, self.users[chat_id]["name2"])
         send_text = self.def_msg("load_char", chat_id)
@@ -242,7 +224,7 @@ class TelegramBotWrapper:
     def init_user(self, chat_id):
         if chat_id not in self.users:
             # If user not exist - first load default char
-            self.users[chat_id] = self.load_char_json_file(char_file=self.default_char_json)
+            self.users[chat_id] = self.load_char_file(char_file=self.default_char_json)
             # If exist default history file (ID.json) - load it and overwrite default char
             if exists(f'{self.history_dir_path}/{chat_id}.json'):
                 self.load_user_history(chat_id)
@@ -364,7 +346,7 @@ class TelegramBotWrapper:
                 context.bot.editMessageText(text=send_text, chat_id=chat_id,
                                             message_id=msg_id, reply_markup=self.button)
         elif option == "Chars":
-            char_list = self.get_characters_json_list()
+            char_list = self.get_characters_files_list()
             to_send = []
             for i, char in enumerate(char_list):
                 to_send.append("/" + self.load_cmd + str(i) + " " + char.replace(".json", ""))
@@ -440,41 +422,45 @@ class TelegramBotWrapper:
                 return answer
 
     # =============================================================================
-    # load characters char_file.json from ./characters
-    def load_char_json_file(self, char_file):
-        # Copy default user data
+    # load characters char_file from ./characters
+    def load_char_file(self, char_file:str):
+        # Copy default user data. If reading will fail - return default user data
         user = deepcopy(self.default_users_data.copy())
-        # Try to read char file. If reading fail - return default user data
         try:
+            # Try to read char file.
             char_file_path = Path(f'{self.characters_dir_path}/{char_file}')
             with open(char_file_path, 'r', encoding='utf-8') as user_file:
-                data = json.loads(user_file.read())
+                if char_file.split(".")[-1] == "json":
+                    data = json.loads(user_file.read())
+                else:
+                    data = yaml.safe_load(user_file.read())
             #  load persona and scenario
-            if 'you_name' in data and data['you_name'] != '':
-                user["name2"] = data['char_name']
-            else:
-                user["name1"] = "You"
-            if 'char_name' in data and data['char_name'] != '':
-                user["name2"] = data['char_name']
-            if 'char_persona' in data and data['char_persona'] != '':
-                user["context"] += f"{data['char_name']}'s Persona: {data['char_persona']}\n"
-            if 'world_scenario' in data and data['world_scenario'] != '':
-                user["context"] += f"Scenario: {data['world_scenario']}\n"
+            if 'you_name' in data: user["name1"] = data['you_name']
+            if 'char_name' in data: user["name2"] = data['char_name']
+            if 'name' in data: user["name2"] = data['name']
+            if 'char_persona' in data:
+                user["context"] += f"{data['char_name']}'s Persona: {data['char_persona'].strip()}\n"
+            if 'world_scenario' in data:
+                user["context"] += f"Scenario: {data['world_scenario'].strip()}\n"
             #  add dialogue examples
-            if 'example_dialogue' in data and data['example_dialogue'] != '':
+            if 'example_dialogue' in data:
                 data['example_dialogue'] = data['example_dialogue'].replace('{{user}}', user["name1"])
                 data['example_dialogue'] = data['example_dialogue'].replace('{{char}}', user["name2"])
                 data['example_dialogue'] = data['example_dialogue'].replace('<USER>', user["name1"])
                 data['example_dialogue'] = data['example_dialogue'].replace('<BOT>', user["name2"])
                 user["context"] += f"{data['example_dialogue'].strip()}\n"
-            #  after <START> add char greeting
+            #  add <START>, add char greeting
             user["context"] += f"{user['context'].strip()}\n<START>\n"
-            if 'char_greeting' in data and len(data['char_greeting'].strip()) > 0:
+            if 'char_greeting' in data:
                 user["context"] += '\n' + data['char_greeting'].strip()
                 user["greeting"] = data['char_greeting'].strip()
+            if 'greeting' in data:
+                user["context"] += '\n' + data['greeting'].strip()
+                user["greeting"] = data['greeting'].strip()
         except Exception as e:
             print("load_char_json_file", e)
-        return user
+        finally:
+            return user
 
 
 def run_server():
