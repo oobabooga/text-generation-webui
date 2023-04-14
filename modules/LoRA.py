@@ -28,7 +28,7 @@ def add_lora_to_model(lora_names):
         shared.model.disable_adapter()
 
     if len(lora_names) > 0:
-        print(f"Loading the model with the LoRA(s) {lora_names} added...")
+        print("Applying the following LoRAs to {}: {}".format(shared.model_name, ', '.join(lora_names)))
         params = {}
         if not shared.args.cpu:
             params['dtype'] = shared.model.dtype

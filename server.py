@@ -89,8 +89,7 @@ def load_model_wrapper(selected_model):
 
 
 def load_lora_wrapper(selected_loras):
-    lora_list = '\n'.join(selected_loras)
-    yield (f"Applying the following LoRAs to {shared.model_name}:\n\n{lora_list}")
+    yield ("Applying the following LoRAs to {}:\n\n{}".format(shared.model_name, '\n'.join(selected_loras)))
     add_lora_to_model(selected_loras)
     yield ("Successfuly applied the LoRAs")
 
@@ -281,7 +280,7 @@ def create_model_menus():
                         ui.create_refresh_button(shared.gradio['lora_menu'], lambda: None, lambda: {'choices': get_available_loras(), 'value': shared.lora_names}, 'refresh-button')
 
         with gr.Column():
-            shared.gradio['lora_menu_apply'] = gr.Button(value='Apply selected LoRAs')
+            shared.gradio['lora_menu_apply'] = gr.Button(value='Apply the selected LoRAs')
             with gr.Row():
                 unload = gr.Button("Unload the model")
                 reload = gr.Button("Reload the model")
