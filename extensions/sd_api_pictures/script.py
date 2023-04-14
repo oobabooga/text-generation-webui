@@ -198,7 +198,7 @@ def create_suffix():
     if params['nsfw']:
         params['positive_suffix'] = params['nsfw_prompts'] + ", " + params['prompt_translation_positive']
         params['negative_suffix'] = params['anti_nsfw_prompts'] + ", " + params['prompt_translation_negative']
-    if params['characterfocus']:
+    if params['characterfocus'] and shared.character != 'None'
         params['positive_suffix'] = data['sd_tags_positive'] + ", " + params['prompt_translation_positive'] if 'sd_tags_positive' in data else params['prompt_translation_positive']
         params['negative_suffix'] = data['sd_tags_negative'] + ", " + params['prompt_translation_negative'] if 'sd_tags_negative' in data else params['prompt_translation_negative']
         if params['nsfw']:
