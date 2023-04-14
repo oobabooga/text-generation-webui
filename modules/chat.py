@@ -79,7 +79,7 @@ def get_stopping_strings(state):
         stopping_strings = [f"\n{state['name1']}", f"\n{state['name2']}"]
     else:
         stopping_strings = [f"\n{state['name1']}:", f"\n{state['name2']}:"]
-    stopping_strings += state['custom_stopping_strings']
+    stopping_strings += eval(f"[{state['custom_stopping_strings']}]")
     return stopping_strings
 
 
