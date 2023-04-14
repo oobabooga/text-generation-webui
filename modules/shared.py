@@ -1,4 +1,7 @@
 import argparse
+from pathlib import Path
+
+import yaml
 
 model = None
 tokenizer = None
@@ -42,6 +45,7 @@ settings = {
     'truncation_length_min': 0,
     'truncation_length_max': 4096,
     'mode': 'cai-chat',
+    'instruction_template': 'None',
     'chat_prompt_size': 2048,
     'chat_prompt_size_min': 0,
     'chat_prompt_size_max': 2048,
@@ -136,6 +140,7 @@ parser.add_argument('--rwkv-cuda-on', action='store_true', help='RWKV: Compile t
 
 # Gradio
 parser.add_argument('--listen', action='store_true', help='Make the web UI reachable from your local network.')
+parser.add_argument('--listen-host', type=str, help='The hostname that the server will use.')
 parser.add_argument('--listen-port', type=int, help='The listening port that the server will use.')
 parser.add_argument('--share', action='store_true', help='Create a public URL. This is useful for running the web UI on Google Colab or similar.')
 parser.add_argument('--auto-launch', action='store_true', default=False, help='Open the web UI in the default browser upon launch.')
@@ -158,3 +163,21 @@ if args.cai_chat:
 
 def is_chat():
     return args.chat
+
+
+# Loading model-specific settings (default)
+with Path(f'{args.model_dir}/config.yaml') as p:
+    if p.exists():
+        model_config = yaml.safe_load(open(p, 'r').read())
+    else:
+        model_config = {}
+
+# Applying user-defined model settings
+with Path(f'{args.model_dir}/config-user.yaml') as p:
+    if p.exists():
+        user_config = yaml.safe_load(open(p, 'r').read())
+        for k in user_config:
+            if k in model_config:
+                model_config[k].update(user_config[k])
+            else:
+                model_config[k] = user_config[k]

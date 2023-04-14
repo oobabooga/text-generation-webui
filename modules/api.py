@@ -5,6 +5,9 @@ import gradio as gr
 from modules import shared
 from modules.text_generation import generate_reply
 
+# set this to True to rediscover the fn_index using the browser DevTools
+VISIBLE = False
+
 
 def generate_reply_wrapper(string):
     generate_params = {
@@ -30,9 +33,9 @@ def generate_reply_wrapper(string):
 
 
 def create_apis():
-    t1 = gr.Textbox(visible=False)
-    t2 = gr.Textbox(visible=False)
-    dummy = gr.Button(visible=False)
+    t1 = gr.Textbox(visible=VISIBLE)
+    t2 = gr.Textbox(visible=VISIBLE)
+    dummy = gr.Button(visible=VISIBLE)
 
     input_params = [t1]
     output_params = [t2] + [shared.gradio[k] for k in ['markdown', 'html']]

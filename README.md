@@ -109,11 +109,6 @@ cd text-generation-webui
 pip install -r requirements.txt
 ```
 
-> **Note**
-> 
-> For bitsandbytes and `--load-in-8bit` to work on Linux/WSL, this dirty fix is currently necessary: https://github.com/oobabooga/text-generation-webui/issues/400#issuecomment-1474876859
-
-
 ### Alternative: manual Windows installation
 
 As an alternative to the recommended WSL method, you can install the web UI natively on Windows using this guide. It will be a lot harder and the performance may be slower: [Windows installation guide](https://github.com/oobabooga/text-generation-webui/wiki/Windows-installation-guide).
@@ -270,6 +265,7 @@ Optionally, you can use the following command-line flags:
 | Flag                                  | Description |
 |---------------------------------------|-------------|
 | `--listen`                            | Make the web UI reachable from your local network. |
+| `--listen-host LISTEN_HOST`           | The hostname that the server will use. |
 | `--listen-port LISTEN_PORT`           | The listening port that the server will use. |
 | `--share`                             | Create a public URL. This is useful for running the web UI on Google Colab or similar. |
 | `--auto-launch`                       | Open the web UI in the default browser upon launch. |
