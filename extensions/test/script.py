@@ -75,6 +75,7 @@ def run(x="",y=""):
                 custom_output = new
             output = output + f"<td>{custom_state['name1']}: {custom_output[-1][0]}<br><br>{custom_state['name2']}: {custom_output[-1][1]}</td>"
             custom_output.pop()
+            shared.history['internal'].pop()
         output = output + "</tr>"
     output = output + "</tbody></table>"
     return output
@@ -87,7 +88,7 @@ def ui():
     prompt = gr.Textbox(value="name1", label='Input Prompt', interactive=True)
     with gr.Row():
         presets_box = gr.Textbox(placeholder="presets go here...", label='Presets', interactive=True)
-        refresh_presets = gr.Button("🔄")
+        refresh_presets = modules.ui.ToolButton(value='\U0001f504', elem_id='refresh-button')
         refresh_presets.click(fn=get_presets, outputs=presets_box)
     with gr.Accordion("flippity floppity", open=True):
         make_state = gr.Button("make_state")
