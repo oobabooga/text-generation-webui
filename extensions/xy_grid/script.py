@@ -97,19 +97,18 @@ def gradio_sucks(flubby):
     return flubby
 
 def ui():
-    butt="name1"
-    prompt = gr.Textbox(value="name1", label='Input Prompt', interactive=True)
-    with gr.Row():
-        presets_box = gr.Textbox(placeholder="presets go here...", label='Presets', interactive=True)
-        refresh_presets = modules.ui.ToolButton(value='\U0001f504', elem_id='refresh-button')
-        refresh_presets.click(fn=get_presets, outputs=presets_box)
-    with gr.Accordion("flippity floppity", open=True):
+    with gr.Accordion("XY Grid", open=False):
+        prompt = gr.Textbox(value="name1", label='Input Prompt', interactive=True)
+        with gr.Row():
+            presets_box = gr.Textbox(placeholder="presets go here...", label='Presets', interactive=True)
+            refresh_presets = modules.ui.ToolButton(value='\U0001f504', elem_id='refresh-button')
+            refresh_presets.click(fn=get_presets, outputs=presets_box)
         make_state = gr.Button("make_state")
-        test_output = gr.Button("test_output")
+        generate_grid = gr.Button("generate_grid")
         tester = gr.HTML(value="what the fuck is happening?")
         state = gr.HTML(value="the state will go here")
         custom_chat = gr.HTML(value="for the love of God, is this actually going to work???")
 
     prompt.change(gradio_sucks, prompt, tester)
     make_state.click(get_params, [shared.gradio[k] for k in shared.input_elements], state)
-    test_output.click(run, [prompt, presets_box], custom_chat)
+    generate_grid.click(get_params, [shared.gradio[k] for k in shared.input_elements], state).then(run, [prompt, presets_box], custom_chat)
