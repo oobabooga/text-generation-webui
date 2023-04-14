@@ -102,6 +102,7 @@ def load_model(model_name):
         # Monkey patch
         if shared.args.monkey_patch:
             from modules.monkey_patch_gptq_lora import load_model_llama
+
             model, tokenizer = load_model_llama(model_name)
             return model, tokenizer
 

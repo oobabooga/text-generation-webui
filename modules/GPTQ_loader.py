@@ -64,6 +64,7 @@ def _load_quant(model, checkpoint, wbits, groupsize=-1, faster_kernel=False, exc
 
     try:
         from quant import autotune_warmup, make_quant_attn
+
         # triton branch
         make_quant_attn(model)
         if not shared.args.no_warmup_autotune:
