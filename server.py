@@ -43,19 +43,11 @@ if settings_file is not None:
         shared.settings[item] = new_settings[item]
 
 
-def special_sort(model_name):
-    return model_name.lower()
-    if '_' in model_name:
-        return ('_'.join(model_name.split('_')[1:])).lower()
-    else:
-        return model_name.lower()
-
-
 def get_available_models():
     if shared.args.flexgen:
-        return sorted([re.sub('-np$', '', item.name) for item in list(Path(f'{shared.args.model_dir}/').glob('*')) if item.name.endswith('-np')], key=special_sort)
+        return sorted([re.sub('-np$', '', item.name) for item in list(Path(f'{shared.args.model_dir}/').glob('*')) if item.name.endswith('-np')], key=str.lower)
     else:
-        return sorted([re.sub('.pth$', '', item.name) for item in list(Path(f'{shared.args.model_dir}/').glob('*')) if not item.name.endswith(('.txt', '-np', '.pt', '.json'))], key=special_sort)
+        return sorted([re.sub('.pth$', '', item.name) for item in list(Path(f'{shared.args.model_dir}/').glob('*')) if not item.name.endswith(('.txt', '-np', '.pt', '.json'))], key=str.lower)
 
 
 def get_available_presets():
@@ -337,11 +329,8 @@ def create_model_menus():
         with gr.Column():
             shared.gradio['model_status'] = gr.Markdown('No model is loaded' if shared.model_name == 'None' else 'Ready')
 
-    # This event handler has 6 steps:
-    # 1. Get the current values in the interface into the 'interface_state' dict
-    # 2. Update the 'interface_state' dict with model defaults (if any)
-    # 3. Update the interface values based on the updated 'interface_state' dict
-    # 4. ...
+    # In this event handler, the interface state is read and updated
+    # with the model defaults (if any), and then the model is loaded
     shared.gradio['model_menu'].change(
         ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
         load_model_specific_settings, [shared.gradio[k] for k in ['model_menu', 'interface_state']], shared.gradio['interface_state']).then(
@@ -623,7 +612,7 @@ def create_interface():
             with gr.Tab("Parameters", elem_id="parameters"):
                 create_settings_menus(default_preset)
 
-        # Create normal (?) mode interface
+        # Create default mode interface
         else:
             shared.input_elements = ui.list_interface_input_elements(chat=False)
             shared.gradio['interface_state'] = gr.State({k: None for k in shared.input_elements})
