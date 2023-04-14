@@ -42,7 +42,7 @@ class Handler(BaseHTTPRequestHandler):
 
             prompt = '\n'.join(prompt_lines)
             generate_params = {
-                'max_new_tokens': int(body.get('max_length', 200)),
+                'max_new_tokens': int(body.get('max_new_tokens', 200)),
                 'do_sample': bool(body.get('do_sample', True)),
                 'temperature': float(body.get('temperature', 0.5)),
                 'top_p': float(body.get('top_p', 1)),
