@@ -1,3 +1,9 @@
+.*:
+  wbits: 'None'
+  model_type: 'None'
+  groupsize: 'None'
+  pre_layer: 0
+  mode: 'cai-chat'
 .*-4bit-128g:
   wbits: 4
   groupsize: 128

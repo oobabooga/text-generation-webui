@@ -236,19 +236,12 @@ def update_model_parameters(state):
 def load_model_specific_settings(model, state):
     settings = shared.model_config
     model = model.lower()
-    mode_has_been_set = False
 
     for pat in settings:
         if re.match(pat, model.lower()):
             for k in settings[pat]:
                 if k in state:
                     state[k] = settings[pat][k]
-                    if k == 'mode':
-                        mode_has_been_set = True
-
-    # We want the default chat mode to be cai-chat
-    if 'mode' in state and not mode_has_been_set:
-        state['mode'] = 'cai-chat'
 
     return state
 
