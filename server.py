@@ -107,9 +107,9 @@ def load_model_wrapper(selected_model):
         yield traceback.format_exc()
 
 
-def load_lora_wrapper(selected_lora):
-    add_lora_to_model(selected_lora)
-    return selected_lora
+def load_lora_wrapper(selected_loras):
+    add_lora_to_model(selected_loras)
+    return selected_loras
 
 
 def load_preset_values(preset_menu, state, return_dict=False):
@@ -281,10 +281,10 @@ def create_model_menus():
                         shared.gradio['model_menu'] = gr.Dropdown(choices=available_models, value=shared.model_name, label='Model')
                         ui.create_refresh_button(shared.gradio['model_menu'], lambda: None, lambda: {'choices': get_available_models()}, 'refresh-button')
 
-                with gr.Column():
                     with gr.Row():
-                        shared.gradio['lora_menu'] = gr.Dropdown(choices=available_loras, value=shared.lora_name, label='LoRA')
-                        ui.create_refresh_button(shared.gradio['lora_menu'], lambda: None, lambda: {'choices': get_available_loras()}, 'refresh-button')
+                        shared.gradio['lora_menu'] = gr.Dropdown(multiselect=True, choices=available_loras, value=shared.lora_names, label='LoRA(s)')
+                        ui.create_refresh_button(shared.gradio['lora_menu'], lambda: None, lambda: {'choices': get_available_loras(), 'value': shared.lora_names}, 'refresh-button')
+                        shared.gradio['lora_menu_apply'] = gr.Button(value='Apply LoRA model selection')
 
         with gr.Column():
             unload = gr.Button("Unload the model")
@@ -340,7 +340,7 @@ def create_model_menus():
         update_model_parameters, [components[k] for k in list_model_parameters()], None).then(
         load_model_wrapper, shared.gradio['model_menu'], shared.gradio['model_status'], show_progress=True)
 
-    shared.gradio['lora_menu'].change(load_lora_wrapper, shared.gradio['lora_menu'], shared.gradio['lora_menu'], show_progress=True)
+    shared.gradio['lora_menu_apply'].click(load_lora_wrapper, shared.gradio['lora_menu'], shared.gradio['lora_menu'], show_progress=True)
     shared.gradio['download_button'].click(download_model_wrapper, shared.gradio['custom_model_menu'], shared.gradio['model_status'], show_progress=False)
 
 
@@ -474,8 +474,8 @@ if shared.model_name != 'None':
 
 # Default UI settings
 default_preset = shared.settings['presets'][next((k for k in shared.settings['presets'] if re.match(k.lower(), shared.model_name.lower())), 'default')]
-if shared.lora_name != "None":
-    default_text = load_prompt(shared.settings['lora_prompts'][next((k for k in shared.settings['lora_prompts'] if re.match(k.lower(), shared.lora_name.lower())), 'default')])
+if len(shared.lora_names) > 0:
+    default_text = load_prompt(shared.settings['lora_prompts'][next((k for k in shared.settings['lora_prompts'] if any(re.match(k.lower(), name.lower()) for name in shared.lora_names)), 'default')])
 else:
     default_text = load_prompt(shared.settings['prompts'][next((k for k in shared.settings['prompts'] if re.match(k.lower(), shared.model_name.lower())), 'default')])
 title = 'Text generation web UI'
