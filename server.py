@@ -1,6 +1,9 @@
 import os
+import warnings
 
 os.environ['GRADIO_ANALYTICS_ENABLED'] = 'False'
+os.environ['BITSANDBYTES_NOWELCOME'] = '1'
+warnings.filterwarnings('ignore', category=UserWarning, message='TypedStorage is deprecated')
 
 import importlib
 import io
@@ -40,11 +43,18 @@ if settings_file is not None:
         shared.settings[item] = new_settings[item]
 
 
+def special_sort(model_name):
+    if '_' in model_name:
+        return ('_'.join(model_name.split('_')[1:])).lower()
+    else:
+        return model_name.lower()
+
+
 def get_available_models():
     if shared.args.flexgen:
-        return sorted([re.sub('-np$', '', item.name) for item in list(Path(f'{shared.args.model_dir}/').glob('*')) if item.name.endswith('-np')], key=str.lower)
+        return sorted([re.sub('-np$', '', item.name) for item in list(Path(f'{shared.args.model_dir}/').glob('*')) if item.name.endswith('-np')], key=special_sort)
     else:
-        return sorted([re.sub('.pth$', '', item.name) for item in list(Path(f'{shared.args.model_dir}/').glob('*')) if not item.name.endswith(('.txt', '-np', '.pt', '.json'))], key=str.lower)
+        return sorted([re.sub('.pth$', '', item.name) for item in list(Path(f'{shared.args.model_dir}/').glob('*')) if not item.name.endswith(('.txt', '-np', '.pt', '.json'))], key=special_sort)
 
 
 def get_available_presets():
@@ -81,7 +91,7 @@ def get_available_softprompts():
 
 
 def get_available_loras():
-    return ['None'] + sorted([item.name for item in list(Path(shared.args.lora_dir).glob('*')) if not item.name.endswith(('.txt', '-np', '.pt', '.json'))], key=str.lower)
+    return ['None'] + sorted([item.name for item in list(Path(shared.args.lora_dir).glob('*')) if not item.name.endswith(('.txt', '-np', '.pt', '.json'))], key=special_sort)
 
 
 def load_model_wrapper(selected_model):
@@ -164,22 +174,6 @@ def load_prompt(fname):
             return text
 
 
-def create_prompt_menus():
-    with gr.Row():
-        with gr.Column():
-            with gr.Row():
-                shared.gradio['prompt_menu'] = gr.Dropdown(choices=get_available_prompts(), value='None', label='Prompt')
-                ui.create_refresh_button(shared.gradio['prompt_menu'], lambda: None, lambda: {'choices': get_available_prompts()}, 'refresh-button')
-
-        with gr.Column():
-            with gr.Column():
-                shared.gradio['save_prompt'] = gr.Button('Save prompt')
-                shared.gradio['status'] = gr.Markdown('Ready')
-
-    shared.gradio['prompt_menu'].change(load_prompt, [shared.gradio['prompt_menu']], [shared.gradio['textbox']], show_progress=False)
-    shared.gradio['save_prompt'].click(save_prompt, [shared.gradio['textbox']], [shared.gradio['status']], show_progress=False)
-
-
 def download_model_wrapper(repo_id):
     try:
         downloader = importlib.import_module("download-model")
@@ -208,17 +202,27 @@ def download_model_wrapper(repo_id):
         yield traceback.format_exc()
 
 
+# Model parameters: list the relevant interface elements
 def list_model_parameters():
-    return ['gpu_memory', 'cpu_memory', 'auto_devices', 'disk', 'cpu', 'bf16', 'load_in_8bit', 'wbits', 'groupsize', 'model_type', 'pre_layer']
+    parameters = ['cpu_memory', 'auto_devices', 'disk', 'cpu', 'bf16', 'load_in_8bit', 'wbits', 'groupsize', 'model_type', 'pre_layer']
+    for i in range(torch.cuda.device_count()):
+        parameters.append(f'gpu_memory_{i}')
+    return parameters
 
 
-# Update the command-line arguments based on the interface values
+# Model parameters: update the command-line arguments based on the interface values
 def update_model_parameters(*args):
-    args = list(args)
-    elements = list_model_parameters()
+    args = list(args)  # the values of the parameters
+    elements = list_model_parameters()  # the names of the parameters
 
+    gpu_memories = []
     for i, element in enumerate(elements):
-        if element in ['gpu_memory', 'cpu_memory'] and args[i] == 0:
+
+        if element.startswith('gpu_memory'):
+            gpu_memories.append(args[i])
+            continue
+
+        if element == 'cpu_memory' and args[i] == 0:
             args[i] = None
         if element == 'wbits' and args[i] == 'None':
             args[i] = 0
@@ -228,25 +232,41 @@ def update_model_parameters(*args):
             args[i] = None
         if element in ['wbits', 'groupsize', 'pre_layer']:
             args[i] = int(args[i])
-        if element == 'gpu_memory' and args[i] is not None:
-            args[i] = [f"{args[i]}MiB"]
         elif element == 'cpu_memory' and args[i] is not None:
             args[i] = f"{args[i]}MiB"
 
-        #print(element, repr(eval(f"shared.args.{element}")), repr(args[i]))
-        #print(f"shared.args.{element} = args[i]")
+        # print(element, repr(eval(f"shared.args.{element}")), repr(args[i]))
+        # print(f"shared.args.{element} = args[i]")
         exec(f"shared.args.{element} = args[i]")
-    #print()
+
+    found_positive = False
+    for i in gpu_memories:
+        if i > 0:
+            found_positive = True
+            break
+    if found_positive:
+        shared.args.gpu_memory = [f"{i}MiB" for i in gpu_memories]
+    else:
+        shared.args.gpu_memory = None
+
 
 def create_model_menus():
-
     # Finding the default values for the GPU and CPU memories
-    total_mem = math.floor(torch.cuda.get_device_properties(0).total_memory / (1024*1024))
-    total_cpu_mem = math.floor(psutil.virtual_memory().total / (1024*1024))
+    total_mem = []
+    for i in range(torch.cuda.device_count()):
+        total_mem.append(math.floor(torch.cuda.get_device_properties(i).total_memory / (1024 * 1024)))
+
+    default_gpu_mem = []
     if shared.args.gpu_memory is not None and len(shared.args.gpu_memory) > 0:
-        default_gpu_mem = re.sub('[a-zA-Z ]', '', shared.args.gpu_memory[0])
-    else:
-        default_gpu_mem = 0
+        for i in shared.args.gpu_memory:
+            if 'mib' in i.lower():
+                default_gpu_mem.append(int(re.sub('[a-zA-Z ]', '', i)))
+            else:
+                default_gpu_mem.append(int(re.sub('[a-zA-Z ]', '', i)) * 1000)
+    while len(default_gpu_mem) < len(total_mem):
+        default_gpu_mem.append(0)
+
+    total_cpu_mem = math.floor(psutil.virtual_memory().total / (1024 * 1024))
     if shared.args.cpu_memory is not None:
         default_cpu_mem = re.sub('[a-zA-Z ]', '', shared.args.cpu_memory)
     else:
@@ -273,9 +293,11 @@ def create_model_menus():
     with gr.Row():
         with gr.Column():
             with gr.Box():
+                gr.Markdown('Transformers parameters')
                 with gr.Row():
                     with gr.Column():
-                        components['gpu_memory'] = gr.Slider(label="gpu-memory in MiB", maximum=total_mem, value=default_gpu_mem)
+                        for i in range(len(total_mem)):
+                            components[f'gpu_memory_{i}'] = gr.Slider(label=f"gpu-memory in MiB for device :{i}", maximum=total_mem[i], value=default_gpu_mem[i])
                         components['cpu_memory'] = gr.Slider(label="cpu-memory in MiB", maximum=total_cpu_mem, value=default_cpu_mem)
 
                     with gr.Column():
@@ -287,13 +309,14 @@ def create_model_menus():
 
         with gr.Column():
             with gr.Box():
+                gr.Markdown('GPTQ parameters')
                 with gr.Row():
                     with gr.Column():
                         components['wbits'] = gr.Dropdown(label="wbits", choices=["None", 1, 2, 3, 4, 8], value=shared.args.wbits if shared.args.wbits > 0 else "None")
                         components['groupsize'] = gr.Dropdown(label="groupsize", choices=["None", 32, 64, 128], value=shared.args.groupsize if shared.args.groupsize > 0 else "None")
 
                     with gr.Column():
-                        components['model_type'] = gr.Dropdown(label="model_type", choices=["None", "llama", "opt", "gpt-j"], value=shared.args.model_type or "None")
+                        components['model_type'] = gr.Dropdown(label="model_type", choices=["None", "llama", "opt", "gptj"], value=shared.args.model_type or "None")
                         components['pre_layer'] = gr.Slider(label="pre_layer", minimum=0, maximum=100, value=shared.args.pre_layer)
 
     with gr.Row():
@@ -421,9 +444,30 @@ else:
         if extension not in shared.args.extensions:
             shared.args.extensions.append(extension)
 
-# Default model
+# Model defined through --model
 if shared.args.model is not None:
     shared.model_name = shared.args.model
+
+# Only one model is available
+elif len(available_models) == 1:
+    shared.model_name = available_models[0]
+
+# Select the model from a command-line menu
+elif shared.args.model_menu:
+    if len(available_models) == 0:
+        print('No models are available! Please download at least one.')
+        sys.exit(0)
+    else:
+        print('The following models are available:\n')
+        for i, model in enumerate(available_models):
+            print(f'{i+1}. {model}')
+        print(f'\nWhich one do you want to load? 1-{len(available_models)}\n')
+        i = int(input()) - 1
+        print()
+    shared.model_name = available_models[i]
+
+# If any model has been selected, load it
+if shared.model_name != 'None':
     shared.model, shared.tokenizer = load_model(shared.model_name)
     if shared.args.lora:
         add_lora_to_model(shared.args.lora)
@@ -635,8 +679,11 @@ def create_interface():
                     with gr.Column(scale=1):
                         gr.HTML('<div style="padding-bottom: 13px"></div>')
                         shared.gradio['max_new_tokens'] = gr.Slider(minimum=shared.settings['max_new_tokens_min'], maximum=shared.settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=shared.settings['max_new_tokens'])
-
-                        create_prompt_menus()
+                        with gr.Row():
+                            shared.gradio['prompt_menu'] = gr.Dropdown(choices=get_available_prompts(), value='None', label='Prompt')
+                            ui.create_refresh_button(shared.gradio['prompt_menu'], lambda: None, lambda: {'choices': get_available_prompts()}, 'refresh-button')
+                        shared.gradio['save_prompt'] = gr.Button('Save prompt')
+                        shared.gradio['status'] = gr.Markdown('')
 
             with gr.Tab("Parameters", elem_id="parameters"):
                 create_settings_menus(default_preset)
@@ -646,17 +693,19 @@ def create_interface():
 
             gen_events.append(shared.gradio['Generate'].click(
                 ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
-                generate_reply, shared.input_params, output_params, show_progress=shared.args.no_stream)#.then(
-                #None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[0]; element.scrollTop = element.scrollHeight}")
+                generate_reply, shared.input_params, output_params, show_progress=shared.args.no_stream)  # .then(
+                # None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[0]; element.scrollTop = element.scrollHeight}")
             )
 
             gen_events.append(shared.gradio['textbox'].submit(
                 ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
-                generate_reply, shared.input_params, output_params, show_progress=shared.args.no_stream)#.then(
-                #None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[0]; element.scrollTop = element.scrollHeight}")
+                generate_reply, shared.input_params, output_params, show_progress=shared.args.no_stream)  # .then(
+                # None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[0]; element.scrollTop = element.scrollHeight}")
             )
 
             shared.gradio['Stop'].click(stop_everything_event, None, None, queue=False, cancels=gen_events if shared.args.no_stream else None)
+            shared.gradio['prompt_menu'].change(load_prompt, [shared.gradio['prompt_menu']], [shared.gradio['textbox']], show_progress=False)
+            shared.gradio['save_prompt'].click(save_prompt, [shared.gradio['textbox']], [shared.gradio['status']], show_progress=False)
             shared.gradio['interface'].load(None, None, None, _js=f"() => {{{ui.main_js}}}")
 
         else:
@@ -667,20 +716,31 @@ def create_interface():
                     with gr.Column():
                         shared.gradio['textbox'] = gr.Textbox(value=default_text, lines=21, label='Input')
                         shared.gradio['max_new_tokens'] = gr.Slider(minimum=shared.settings['max_new_tokens_min'], maximum=shared.settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=shared.settings['max_new_tokens'])
-                        shared.gradio['Generate'] = gr.Button('Generate')
                         with gr.Row():
                             with gr.Column():
+                                shared.gradio['Generate'] = gr.Button('Generate')
                                 shared.gradio['Continue'] = gr.Button('Continue')
+
                             with gr.Column():
                                 shared.gradio['Stop'] = gr.Button('Stop')
+                                shared.gradio['save_prompt'] = gr.Button('Save prompt')
 
-                        create_prompt_menus()
+                        with gr.Row():
+                            with gr.Column():
+                                with gr.Row():
+                                    shared.gradio['prompt_menu'] = gr.Dropdown(choices=get_available_prompts(), value='None', label='Prompt')
+                                    ui.create_refresh_button(shared.gradio['prompt_menu'], lambda: None, lambda: {'choices': get_available_prompts()}, 'refresh-button')
+
+                            with gr.Column():
+                                shared.gradio['status'] = gr.Markdown('')
 
                     with gr.Column():
                         with gr.Tab('Raw'):
                             shared.gradio['output_textbox'] = gr.Textbox(lines=27, label='Output')
+
                         with gr.Tab('Markdown'):
                             shared.gradio['markdown'] = gr.Markdown()
+
                         with gr.Tab('HTML'):
                             shared.gradio['html'] = gr.HTML()
 
@@ -692,23 +752,25 @@ def create_interface():
 
             gen_events.append(shared.gradio['Generate'].click(
                 ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
-                generate_reply, shared.input_params, output_params, show_progress=shared.args.no_stream)#.then(
-                #None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[1]; element.scrollTop = element.scrollHeight}")
+                generate_reply, shared.input_params, output_params, show_progress=shared.args.no_stream)  # .then(
+                # None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[1]; element.scrollTop = element.scrollHeight}")
             )
 
             gen_events.append(shared.gradio['textbox'].submit(
                 ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
-                generate_reply, shared.input_params, output_params, show_progress=shared.args.no_stream)#.then(
-                #None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[1]; element.scrollTop = element.scrollHeight}")
+                generate_reply, shared.input_params, output_params, show_progress=shared.args.no_stream)  # .then(
+                # None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[1]; element.scrollTop = element.scrollHeight}")
             )
 
             gen_events.append(shared.gradio['Continue'].click(
                 ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
-                generate_reply, [shared.gradio['output_textbox']] + shared.input_params[1:], output_params, show_progress=shared.args.no_stream)#.then(
-                #None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[1]; element.scrollTop = element.scrollHeight}")
+                generate_reply, [shared.gradio['output_textbox']] + shared.input_params[1:], output_params, show_progress=shared.args.no_stream)  # .then(
+                # None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[1]; element.scrollTop = element.scrollHeight}")
             )
 
             shared.gradio['Stop'].click(stop_everything_event, None, None, queue=False, cancels=gen_events if shared.args.no_stream else None)
+            shared.gradio['prompt_menu'].change(load_prompt, [shared.gradio['prompt_menu']], [shared.gradio['textbox']], show_progress=False)
+            shared.gradio['save_prompt'].click(save_prompt, [shared.gradio['textbox']], [shared.gradio['status']], show_progress=False)
             shared.gradio['interface'].load(None, None, None, _js=f"() => {{{ui.main_js}}}")
 
         with gr.Tab("Model", elem_id="model-tab"):
@@ -757,7 +819,7 @@ def create_interface():
     # Launch the interface
     shared.gradio['interface'].queue()
     if shared.args.listen:
-        shared.gradio['interface'].launch(prevent_thread_lock=True, share=shared.args.share, server_name='0.0.0.0', server_port=shared.args.listen_port, inbrowser=shared.args.auto_launch, auth=auth)
+        shared.gradio['interface'].launch(prevent_thread_lock=True, share=shared.args.share, server_name=shared.args.listen_host or '0.0.0.0', server_port=shared.args.listen_port, inbrowser=shared.args.auto_launch, auth=auth)
     else:
         shared.gradio['interface'].launch(prevent_thread_lock=True, share=shared.args.share, server_port=shared.args.listen_port, inbrowser=shared.args.auto_launch, auth=auth)
 
