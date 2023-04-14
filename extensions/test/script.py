@@ -15,10 +15,10 @@ def get_params(*args):
 def pause_here(text):
     global custom_state
     global custom_output
-    text = "what's it like to take a shit?"
+    text = "what's it like to fly?"
     for new in chatbot_wrapper(text, custom_state):
         custom_output = new
-    print("anny errors?")
+    temp
 
 def poop_test(flubby):
     return flubby
