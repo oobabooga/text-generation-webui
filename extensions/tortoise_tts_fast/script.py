@@ -126,11 +126,11 @@ def output_modifier(string):
     if string == '':
         string = '*Empty reply, try regenerating*'
     else:
-        output_dir = Path(f'extensions/tortoise_tts/outputs/parts')
+        output_dir = Path(f'extensions/tortoise_tts_fast/outputs/parts')
         if not output_dir.is_dir():
             output_dir.mkdir(parents=True, exist_ok=True)
 
-        output_file = Path(f'extensions/tortoise_tts/outputs/test_{int(time.time())}.wav')
+        output_file = Path(f'extensions/tortoise_tts_fast/outputs/test_{int(time.time())}.wav')
 
         if '|' in string:
             texts = string.split('|')
@@ -182,7 +182,7 @@ def ui():
 
         show_text = gr.Checkbox(value=params['show_text'], label='Show message text under audio player')
         voice_dropdown = gr.Dropdown(value=params['voice'], choices=voices, label='Voice')
-        preset_dropdown = gr.Textbox(value=params['preset'], choices=voices, label='Preset')
+        preset_dropdown = gr.Dropdown(value=params['preset'], choices=presets, label='Preset')
         device_textbox = gr.Textbox(value=params['device'], label='Device')
 
         with gr.Row():

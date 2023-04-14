@@ -1,10 +1,9 @@
+import os
+
 import torch
 import torchaudio
-
-# needs to be before the tortoise stuff to properly import
-import os
 import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), 'tortoise'))
+sys.path.append(os.path.join(sys.path[0], 'tortoise'))
 
 from tortoise import api
 from tortoise.utils.audio import load_voices
@@ -57,6 +56,8 @@ voices = [
     'william'
 ]
 
+presets = ['ultra_fast', 'fast', 'standard', 'high_quality']
+
 
 def load_model():
     # Init TTS
@@ -86,16 +87,16 @@ def output_modifier(string):
     if string == '':
         string = '*Empty reply, try regenerating*'
     else:
-        output_dir = Path(f'extensions/tortoise_tts/outputs/parts')
+        output_dir = Path(f'extensions/tortoise_tts_fast/outputs/parts')
         if not output_dir.is_dir():
             output_dir.mkdir(parents=True, exist_ok=True)
 
-        output_file = Path(f'extensions/tortoise_tts/outputs/test_{int(time.time())}.wav')
+        output_file = Path(f'extensions/tortoise_tts_fast/outputs/test_{int(time.time())}.wav')
 
         if '|' in string:
             texts = string.split('|')
         else:
-            texts = split_and_recombine_text(string, desired_length=10, max_length=400)
+            texts = split_and_recombine_text(string, desired_length=100, max_length=400)
 
         all_parts = []
         for j, text in enumerate(texts):

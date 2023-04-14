@@ -5,6 +5,7 @@ extensions/silero_tts/outputs/*.wav
 extensions/elevenlabs_tts/outputs/*.wav
 extensions/sd_api_pictures/outputs/*.wav
 extensions/tortoise_tts/tortoise/**/*
+extensions/tortoise_tts_fast/tortoise/**/*
 logs
 loras
 models
