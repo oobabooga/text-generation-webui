@@ -6,7 +6,7 @@ import yaml
 model = None
 tokenizer = None
 model_name = "None"
-lora_name = "None"
+lora_names = []
 soft_prompt_tensor = None
 soft_prompt = False
 is_RWKV = False
@@ -68,7 +68,7 @@ settings = {
     },
     'lora_prompts': {
         'default': 'QA',
-        '.*(alpaca-lora-7b|alpaca-lora-13b|alpaca-lora-30b)': "Alpaca",
+        '.*alpaca': "Alpaca",
     }
 }
 

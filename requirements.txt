@@ -5,13 +5,13 @@ gradio==3.24.1
 markdown
 numpy
 Pillow>=9.5.0
-peft==0.2.0
 requests
 rwkv==0.7.3
 safetensors==0.3.0
 sentencepiece
 pyyaml
 tqdm
+git+https://github.com/huggingface/peft
 transformers==4.28.0
 bitsandbytes==0.38.1; platform_system != "Windows"
 llama-cpp-python==0.1.33; platform_system != "Windows"
