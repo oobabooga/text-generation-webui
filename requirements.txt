@@ -1,4 +1,5 @@
 accelerate==0.18.0
+colorama
 datasets
 flexgen==0.1.7
 gradio==3.24.1
@@ -12,6 +13,7 @@ sentencepiece
 pyyaml
 tqdm
 git+https://github.com/huggingface/peft
+git+https://github.com/sterlind/GPTQ-for-LLaMa.git@lora_4bit
 transformers==4.28.0
 bitsandbytes==0.38.1; platform_system != "Windows"
 llama-cpp-python==0.1.33; platform_system != "Windows"
