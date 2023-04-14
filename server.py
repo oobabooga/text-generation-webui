@@ -30,18 +30,6 @@ from modules.LoRA import add_lora_to_model
 from modules.models import load_model, load_soft_prompt, unload_model
 from modules.text_generation import generate_reply, stop_everything_event
 
-# Loading custom settings
-settings_file = None
-if shared.args.settings is not None and Path(shared.args.settings).exists():
-    settings_file = Path(shared.args.settings)
-elif Path('settings.json').exists():
-    settings_file = Path('settings.json')
-if settings_file is not None:
-    print(f"Loading settings from {settings_file}...")
-    new_settings = json.loads(open(settings_file, 'r').read())
-    for item in new_settings:
-        shared.settings[item] = new_settings[item]
-
 
 def get_available_models():
     if shared.args.flexgen:
@@ -273,12 +261,12 @@ def create_model_menus():
             with gr.Row():
                 with gr.Column():
                     with gr.Row():
-                        shared.gradio['model_menu'] = gr.Dropdown(choices=available_models, value=shared.model_name, label='Model')
+                        shared.gradio['model_menu'] = gr.Dropdown(choices=get_available_models(), value=shared.model_name, label='Model')
                         ui.create_refresh_button(shared.gradio['model_menu'], lambda: None, lambda: {'choices': get_available_models()}, 'refresh-button')
 
                 with gr.Column():
                     with gr.Row():
-                        shared.gradio['lora_menu'] = gr.Dropdown(choices=available_loras, value=shared.lora_name, label='LoRA')
+                        shared.gradio['lora_menu'] = gr.Dropdown(choices=get_available_loras(), value=shared.lora_name, label='LoRA')
                         ui.create_refresh_button(shared.gradio['lora_menu'], lambda: None, lambda: {'choices': get_available_loras()}, 'refresh-button')
 
         with gr.Column():
@@ -352,7 +340,7 @@ def create_settings_menus(default_preset):
     with gr.Row():
         with gr.Column():
             with gr.Row():
-                shared.gradio['preset_menu'] = gr.Dropdown(choices=available_presets, value=default_preset if not shared.args.flexgen else 'Naive', label='Generation parameters preset')
+                shared.gradio['preset_menu'] = gr.Dropdown(choices=get_available_presets(), value=default_preset if not shared.args.flexgen else 'Naive', label='Generation parameters preset')
                 ui.create_refresh_button(shared.gradio['preset_menu'], lambda: None, lambda: {'choices': get_available_presets()}, 'refresh-button')
         with gr.Column():
             shared.gradio['seed'] = gr.Number(value=shared.settings['seed'], label='Seed (-1 for random)')
@@ -395,7 +383,7 @@ def create_settings_menus(default_preset):
 
     with gr.Accordion('Soft prompt', open=False):
         with gr.Row():
-            shared.gradio['softprompts_menu'] = gr.Dropdown(choices=available_softprompts, value='None', label='Soft prompt')
+            shared.gradio['softprompts_menu'] = gr.Dropdown(choices=get_available_softprompts(), value='None', label='Soft prompt')
             ui.create_refresh_button(shared.gradio['softprompts_menu'], lambda: None, lambda: {'choices': get_available_softprompts()}, 'refresh-button')
 
         gr.Markdown('Upload a soft prompt (.zip format):')
@@ -426,64 +414,27 @@ def set_interface_arguments(interface_mode, extensions, bool_active):
     shared.need_restart = True
 
 
-available_models = get_available_models()
-available_presets = get_available_presets()
-available_characters = get_available_characters()
-available_softprompts = get_available_softprompts()
-available_loras = get_available_loras()
-
-# Default extensions
-extensions_module.available_extensions = get_available_extensions()
-if shared.is_chat():
-    for extension in shared.settings['chat_default_extensions']:
-        shared.args.extensions = shared.args.extensions or []
-        if extension not in shared.args.extensions:
-            shared.args.extensions.append(extension)
-else:
-    for extension in shared.settings['default_extensions']:
-        shared.args.extensions = shared.args.extensions or []
-        if extension not in shared.args.extensions:
-            shared.args.extensions.append(extension)
-
-# Model defined through --model
-if shared.args.model is not None:
-    shared.model_name = shared.args.model
-
-# Only one model is available
-elif len(available_models) == 1:
-    shared.model_name = available_models[0]
-
-# Select the model from a command-line menu
-elif shared.args.model_menu:
-    if len(available_models) == 0:
-        print('No models are available! Please download at least one.')
-        sys.exit(0)
-    else:
-        print('The following models are available:\n')
-        for i, model in enumerate(available_models):
-            print(f'{i+1}. {model}')
-        print(f'\nWhich one do you want to load? 1-{len(available_models)}\n')
-        i = int(input()) - 1
-        print()
-    shared.model_name = available_models[i]
-
-# If any model has been selected, load it
-if shared.model_name != 'None':
-    shared.model, shared.tokenizer = load_model(shared.model_name)
-    if shared.args.lora:
-        add_lora_to_model(shared.args.lora)
-
-# Default UI settings
-default_preset = shared.settings['presets'][next((k for k in shared.settings['presets'] if re.match(k.lower(), shared.model_name.lower())), 'default')]
-if shared.lora_name != "None":
-    default_text = load_prompt(shared.settings['lora_prompts'][next((k for k in shared.settings['lora_prompts'] if re.match(k.lower(), shared.lora_name.lower())), 'default')])
-else:
-    default_text = load_prompt(shared.settings['prompts'][next((k for k in shared.settings['prompts'] if re.match(k.lower(), shared.model_name.lower())), 'default')])
-title = 'Text generation web UI'
-
-
 def create_interface():
+
+    # Defining some variables
     gen_events = []
+    default_preset = shared.settings['presets'][next((k for k in shared.settings['presets'] if re.match(k.lower(), shared.model_name.lower())), 'default')]
+    if shared.lora_name != "None":
+        default_text = load_prompt(shared.settings['lora_prompts'][next((k for k in shared.settings['lora_prompts'] if re.match(k.lower(), shared.lora_name.lower())), 'default')])
+    else:
+        default_text = load_prompt(shared.settings['prompts'][next((k for k in shared.settings['prompts'] if re.match(k.lower(), shared.model_name.lower())), 'default')])
+    title = 'Text generation web UI'
+
+    # Authentication variables
+    auth = None
+    if shared.args.gradio_auth_path is not None:
+        gradio_auth_creds = []
+        with open(shared.args.gradio_auth_path, 'r', encoding="utf8") as file:
+            for line in file.readlines():
+                gradio_auth_creds += [x.strip() for x in line.split(',') if x.strip()]
+        auth = [tuple(cred.split(':')) for cred in gradio_auth_creds]
+
+    # Importing the extension files and executing their setup() functions
     if shared.args.extensions is not None and len(shared.args.extensions) > 0:
         extensions_module.load_extensions()
 
@@ -536,7 +487,7 @@ def create_interface():
                         shared.gradio['your_picture'] = gr.Image(label='Your picture', type='pil', value=Image.open(Path('cache/pfp_me.png')) if Path('cache/pfp_me.png').exists() else None)
 
                 with gr.Row():
-                    shared.gradio['character_menu'] = gr.Dropdown(choices=available_characters, value='None', label='Character', elem_id='character-menu')
+                    shared.gradio['character_menu'] = gr.Dropdown(choices=get_available_characters(), value='None', label='Character', elem_id='character-menu')
                     ui.create_refresh_button(shared.gradio['character_menu'], lambda: None, lambda: {'choices': get_available_characters()}, 'refresh-button')
 
                 with gr.Row():
@@ -815,15 +766,6 @@ def create_interface():
             shared.gradio['save_prompt'].click(save_prompt, [shared.gradio['textbox']], [shared.gradio['status']], show_progress=False)
             shared.gradio['interface'].load(None, None, None, _js=f"() => {{{ui.main_js}}}")
 
-    # Defining some authentication variables
-    auth = None
-    if shared.args.gradio_auth_path is not None:
-        gradio_auth_creds = []
-        with open(shared.args.gradio_auth_path, 'r', encoding="utf8") as file:
-            for line in file.readlines():
-                gradio_auth_creds += [x.strip() for x in line.split(',') if x.strip()]
-        auth = [tuple(cred.split(':')) for cred in gradio_auth_creds]
-
     # Launch the interface
     shared.gradio['interface'].queue()
     if shared.args.listen:
@@ -832,11 +774,68 @@ def create_interface():
         shared.gradio['interface'].launch(prevent_thread_lock=True, share=shared.args.share, server_port=shared.args.listen_port, inbrowser=shared.args.auto_launch, auth=auth)
 
 
-create_interface()
+if __name__ == "__main__":
 
-while True:
-    time.sleep(0.5)
-    if shared.need_restart:
-        shared.need_restart = False
-        shared.gradio['interface'].close()
-        create_interface()
+    # Loading custom settings
+    settings_file = None
+    if shared.args.settings is not None and Path(shared.args.settings).exists():
+        settings_file = Path(shared.args.settings)
+    elif Path('settings.json').exists():
+        settings_file = Path('settings.json')
+    if settings_file is not None:
+        print(f"Loading settings from {settings_file}...")
+        new_settings = json.loads(open(settings_file, 'r').read())
+        for item in new_settings:
+            shared.settings[item] = new_settings[item]
+
+    # Default extensions
+    extensions_module.available_extensions = get_available_extensions()
+    if shared.is_chat():
+        for extension in shared.settings['chat_default_extensions']:
+            shared.args.extensions = shared.args.extensions or []
+            if extension not in shared.args.extensions:
+                shared.args.extensions.append(extension)
+    else:
+        for extension in shared.settings['default_extensions']:
+            shared.args.extensions = shared.args.extensions or []
+            if extension not in shared.args.extensions:
+                shared.args.extensions.append(extension)
+
+    available_models = get_available_models()
+
+    # Model defined through --model
+    if shared.args.model is not None:
+        shared.model_name = shared.args.model
+
+    # Only one model is available
+    elif len(available_models) == 1:
+        shared.model_name = available_models[0]
+
+    # Select the model from a command-line menu
+    elif shared.args.model_menu:
+        if len(available_models) == 0:
+            print('No models are available! Please download at least one.')
+            sys.exit(0)
+        else:
+            print('The following models are available:\n')
+            for i, model in enumerate(available_models):
+                print(f'{i+1}. {model}')
+            print(f'\nWhich one do you want to load? 1-{len(available_models)}\n')
+            i = int(input()) - 1
+            print()
+        shared.model_name = available_models[i]
+
+    # If any model has been selected, load it
+    if shared.model_name != 'None':
+        shared.model, shared.tokenizer = load_model(shared.model_name)
+        if shared.args.lora:
+            add_lora_to_model(shared.args.lora)
+
+    # Launch the web UI
+    create_interface()
+    while True:
+        time.sleep(0.5)
+        if shared.need_restart:
+            shared.need_restart = False
+            shared.gradio['interface'].close()
+            create_interface()
