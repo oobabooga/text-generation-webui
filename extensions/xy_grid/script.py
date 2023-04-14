@@ -74,13 +74,21 @@ def run(x="",y=""):
     output = output + "</thead><tbody>"
     for i in x_strings:
         output = output + f"<tr><th>{i}</th>"
-        for j in y_strings:
-            custom_state = load_preset_values(j.strip(), custom_state)[0]
-            for new in chatbot_wrapper(i.strip(), custom_state):
-                custom_output = new
-            output = output + f"<td>{custom_state['name1']}: {custom_output[-1][0]}<br><br>{custom_state['name2']}: {custom_output[-1][1]}</td>"
-            custom_output.pop()
-            shared.history['internal'].pop()
+        if y_strings[0] != '':
+            for j in y_strings:
+                custom_state = load_preset_values(j.strip(), custom_state)[0]
+                for new in chatbot_wrapper(i.strip(), custom_state):
+                    custom_output = new
+                output = output + f"<td>{custom_state['name1']}: {custom_output[-1][0]}<br><br>{custom_state['name2']}: {custom_output[-1][1]}</td>"
+                custom_output.pop()
+                shared.history['internal'].pop()
+            output = output + "</tr>"
+        else:
+                for new in chatbot_wrapper(i.strip(), custom_state):
+                    custom_output = new
+                output = output + f"<td>{custom_state['name1']}: {custom_output[-1][0]}<br><br>{custom_state['name2']}: {custom_output[-1][1]}</td>"
+                custom_output.pop()
+                shared.history['internal'].pop()
         output = output + "</tr>"
     output = output + "</tbody></table>"
     return output
