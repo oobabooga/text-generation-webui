@@ -189,6 +189,10 @@ def update_model_parameters(state):
 
     gpu_memories = []
     for i, element in enumerate(elements):
+
+        if element not in state:
+            continue
+
         value = state[element]
 
         if element.startswith('gpu_memory'):
@@ -221,15 +225,23 @@ def update_model_parameters(state):
         shared.args.gpu_memory = None
 
 
-def load_model_specific_settings(model, state):
+def get_model_specific_settings(model):
     settings = shared.model_config
-    model = model.lower()
+    model_settings = {}
 
     for pat in settings:
         if re.match(pat, model.lower()):
             for k in settings[pat]:
-                if k in state:
-                    state[k] = settings[pat][k]
+                model_settings[k] = settings[pat][k]
+
+    return model_settings
+
+
+def load_model_specific_settings(model, state, return_dict=False):
+    model_settings = get_model_specific_settings(model)
+    for k in model_settings:
+        if k in state:
+            state[k] = model_settings[k]
 
     return state
 
@@ -471,7 +483,7 @@ def create_interface():
                     shared.gradio['Remove last'] = gr.Button('Remove last')
 
                 shared.gradio['mode'] = gr.Radio(choices=['cai-chat', 'chat', 'instruct'], value=shared.settings['mode'], label='Mode')
-                shared.gradio['instruction_template'] = gr.Dropdown(choices=get_available_instruction_templates(), label='Instruction template', value='None', visible=False, info='Change this according to the model/LoRA that you are using.')
+                shared.gradio['instruction_template'] = gr.Dropdown(choices=get_available_instruction_templates(), label='Instruction template', value=shared.settings['instruction_template'], visible=shared.settings['mode'] == 'instruct', info='Change this according to the model/LoRA that you are using.')
 
             with gr.Tab('Character', elem_id='chat-settings'):
                 with gr.Row():
@@ -827,6 +839,12 @@ if __name__ == "__main__":
 
     # If any model has been selected, load it
     if shared.model_name != 'None':
+
+        model_settings = get_model_specific_settings(shared.model_name)
+        shared.settings.update(model_settings)  # hijacking the interface defaults
+        update_model_parameters(model_settings)  # hijacking the command-line arguments
+
+        # Load the model
         shared.model, shared.tokenizer = load_model(shared.model_name)
         if shared.args.lora:
             add_lora_to_model(shared.args.lora)
