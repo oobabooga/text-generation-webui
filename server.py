@@ -195,7 +195,7 @@ def download_model_wrapper(repo_id):
         yield traceback.format_exc()
 
 
-# Model parameters: update the command-line arguments based on the interface values
+# Update the command-line arguments based on the interface values
 def update_model_parameters(state):
     elements = ui.list_model_elements()  # the names of the parameters
 
@@ -501,15 +501,18 @@ def create_interface():
                 with gr.Row():
                     shared.gradio['Generate'] = gr.Button('Generate', elem_id='Generate')
                     shared.gradio['Stop'] = gr.Button('Stop', elem_id='stop')
+
                 with gr.Row():
                     shared.gradio['Regenerate'] = gr.Button('Regenerate')
                     shared.gradio['Continue'] = gr.Button('Continue')
                     shared.gradio['Impersonate'] = gr.Button('Impersonate')
+
                 with gr.Row():
                     shared.gradio['Send dummy message'] = gr.Button('Send dummy message')
                     shared.gradio['Send dummy reply'] = gr.Button('Send dummy reply')
                     shared.gradio['Replace last reply'] = gr.Button('Replace last reply')
                     shared.gradio['Copy last reply'] = gr.Button('Copy last reply')
+
                 with gr.Row():
                     shared.gradio['Clear history'] = gr.Button('Clear history')
                     shared.gradio['Clear history-confirm'] = gr.Button('Confirm', variant='stop', visible=False)
@@ -527,9 +530,11 @@ def create_interface():
                         shared.gradio['greeting'] = gr.Textbox(value=shared.settings['greeting'], lines=4, label='Greeting')
                         shared.gradio['context'] = gr.Textbox(value=shared.settings['context'], lines=4, label='Context')
                         shared.gradio['end_of_turn'] = gr.Textbox(value=shared.settings['end_of_turn'], lines=1, label='End of turn string')
+
                     with gr.Column(scale=1):
                         shared.gradio['character_picture'] = gr.Image(label='Character picture', type='pil')
                         shared.gradio['your_picture'] = gr.Image(label='Your picture', type='pil', value=Image.open(Path('cache/pfp_me.png')) if Path('cache/pfp_me.png').exists() else None)
+
                 with gr.Row():
                     shared.gradio['character_menu'] = gr.Dropdown(choices=available_characters, value='None', label='Character', elem_id='character-menu')
                     ui.create_refresh_button(shared.gradio['character_menu'], lambda: None, lambda: {'choices': get_available_characters()}, 'refresh-button')
@@ -540,21 +545,24 @@ def create_interface():
                             with gr.Column():
                                 gr.Markdown('Upload')
                                 shared.gradio['upload_chat_history'] = gr.File(type='binary', file_types=['.json', '.txt'])
+
                             with gr.Column():
                                 gr.Markdown('Download')
                                 shared.gradio['download'] = gr.File()
                                 shared.gradio['download_button'] = gr.Button(value='Click me')
+
                     with gr.Tab('Upload character'):
                         gr.Markdown('# JSON format')
                         with gr.Row():
                             with gr.Column():
                                 gr.Markdown('1. Select the JSON file')
                                 shared.gradio['upload_json'] = gr.File(type='binary', file_types=['.json'])
+
                             with gr.Column():
                                 gr.Markdown('2. Select your character\'s profile picture (optional)')
                                 shared.gradio['upload_img_bot'] = gr.File(type='binary', file_types=['image'])
-                        shared.gradio['Upload character'] = gr.Button(value='Submit')
 
+                        shared.gradio['Upload character'] = gr.Button(value='Submit')
                         gr.Markdown('# TavernAI PNG format')
                         shared.gradio['upload_img_tavern'] = gr.File(type='binary', file_types=['image'])
 
@@ -565,6 +573,7 @@ def create_interface():
                         with gr.Column():
                             shared.gradio['max_new_tokens'] = gr.Slider(minimum=shared.settings['max_new_tokens_min'], maximum=shared.settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=shared.settings['max_new_tokens'])
                             shared.gradio['chat_prompt_size'] = gr.Slider(minimum=shared.settings['chat_prompt_size_min'], maximum=shared.settings['chat_prompt_size_max'], step=1, label='Maximum prompt size in tokens', value=shared.settings['chat_prompt_size'])
+
                         with gr.Column():
                             shared.gradio['chat_generation_attempts'] = gr.Slider(minimum=shared.settings['chat_generation_attempts_min'], maximum=shared.settings['chat_generation_attempts_max'], value=shared.settings['chat_generation_attempts'], step=1, label='Generation attempts (for longer replies)')
                             shared.gradio['stop_at_newline'] = gr.Checkbox(value=shared.settings['stop_at_newline'], label='Stop generating at new line character')
@@ -580,8 +589,10 @@ def create_interface():
                     with gr.Column(scale=4):
                         with gr.Tab('Raw'):
                             shared.gradio['textbox'] = gr.Textbox(value=default_text, elem_id="textbox", lines=27)
+
                         with gr.Tab('Markdown'):
                             shared.gradio['markdown'] = gr.Markdown()
+
                         with gr.Tab('HTML'):
                             shared.gradio['html'] = gr.HTML()
 
@@ -590,6 +601,7 @@ def create_interface():
                                 with gr.Row():
                                     shared.gradio['Generate'] = gr.Button('Generate')
                                     shared.gradio['Stop'] = gr.Button('Stop')
+
                             with gr.Column():
                                 pass
 
@@ -599,6 +611,7 @@ def create_interface():
                         with gr.Row():
                             shared.gradio['prompt_menu'] = gr.Dropdown(choices=get_available_prompts(), value='None', label='Prompt')
                             ui.create_refresh_button(shared.gradio['prompt_menu'], lambda: None, lambda: {'choices': get_available_prompts()}, 'refresh-button')
+
                         shared.gradio['save_prompt'] = gr.Button('Save prompt')
                         shared.gradio['status'] = gr.Markdown('')
 
