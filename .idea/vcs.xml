@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project version="4">
-  <component name="VcsDirectoryMappings">
-    <mapping directory="" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/models/oasst-llama13b-4bit-128g" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/models/vicuna-13b-GPTQ-4bit-128g" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/repositories/GPTQ-for-LLaMa" vcs="Git" />
-  </component>
-</project>
