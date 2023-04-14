@@ -32,7 +32,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
 
-            prompt = body['prompt']
+            prompt = body["data"]["prompt"]
             prompt_lines = [k.strip() for k in prompt.split('\n')]
 
             max_context = body.get('max_context_length', 2048)
@@ -42,25 +42,25 @@ class Handler(BaseHTTPRequestHandler):
 
             prompt = '\n'.join(prompt_lines)
             generate_params = {
-                'max_new_tokens': int(body.get('max_length', 200)),
-                'do_sample': bool(body.get('do_sample', True)),
-                'temperature': float(body.get('temperature', 0.5)),
-                'top_p': float(body.get('top_p', 1)),
-                'typical_p': float(body.get('typical', 1)),
-                'repetition_penalty': float(body.get('rep_pen', 1.1)),
-                'encoder_repetition_penalty': 1,
-                'top_k': int(body.get('top_k', 0)),
-                'min_length': int(body.get('min_length', 0)),
-                'no_repeat_ngram_size': int(body.get('no_repeat_ngram_size', 0)),
-                'num_beams': int(body.get('num_beams', 1)),
-                'penalty_alpha': float(body.get('penalty_alpha', 0)),
-                'length_penalty': float(body.get('length_penalty', 1)),
-                'early_stopping': bool(body.get('early_stopping', False)),
-                'seed': int(body.get('seed', -1)),
-                'add_bos_token': int(body.get('add_bos_token', True)),
-                'custom_stopping_strings': body.get('custom_stopping_strings', []),
-                'truncation_length': int(body.get('truncation_length', 2048)),
-                'ban_eos_token': bool(body.get('ban_eos_token', False)),
+                'max_new_tokens': int(body["data"]["params"].get('max_length', 200)),
+                'do_sample': bool(body["data"]["params"].get('do_sample', True)),
+                'temperature': float(body["data"]["params"].get('temperature', 0.5)),
+                'top_p': float(body["data"]["params"].get('top_p', 1)),
+                'typical_p': float(body["data"]["params"].get('typical', 1)),
+                'repetition_penalty': float(body["data"]["params"].get('rep_pen', 1.1)),
+                'encoder_repetition_penalty': int(body["data"]["params"].get('encoder_repetition_penalty', 1)),
+                'top_k': int(body["data"]["params"].get('top_k', 0)),
+                'min_length': int(body["data"]["params"].get('min_length', 0)),
+                'no_repeat_ngram_size': int(body["data"]["params"].get('no_repeat_ngram_size', 0)),
+                'num_beams': int(body["data"]["params"].get('num_beams', 1)),
+                'penalty_alpha': float(body["data"]["params"].get('penalty_alpha', 0)),
+                'length_penalty': float(body["data"]["params"].get('length_penalty', 1)),
+                'early_stopping': bool(body["data"]["params"].get('early_stopping', False)),
+                'seed': int(body["data"]["params"].get('seed', -1)),
+                'add_bos_token': int(body["data"]["params"].get('add_bos_token', True)),
+                'custom_stopping_strings': body["data"]["params"].get('custom_stopping_strings', []),
+                'truncation_length': int(body["data"]["params"].get('truncation_length', 2048)),
+                'ban_eos_token': bool(body["data"]["params"].get('ban_eos_token', False)),
             }
 
             generator = generate_reply(
@@ -105,11 +105,11 @@ def run_server():
         try:
             from flask_cloudflared import _run_cloudflared
             public_url = _run_cloudflared(params['port'], params['port'] + 1)
-            print(f'Starting KoboldAI compatible api at {public_url}/api')
+            print(f'Starting API at {public_url}/api')
         except ImportError:
             print('You should install flask_cloudflared manually')
     else:
-        print(f'Starting KoboldAI compatible api at http://{server_addr[0]}:{server_addr[1]}/api')
+        print(f'Starting API at http://{server_addr[0]}:{server_addr[1]}/api')
     server.serve_forever()
 
 
