@@ -6,7 +6,6 @@
   mode: 'cai-chat'
 llama-[0-9]*b-4bit$:
   wbits: 4
-  groupsize: -1
   model_type: 'llama'
 .*-(4bit|int4)-(gr128|128g):
   wbits: 4
