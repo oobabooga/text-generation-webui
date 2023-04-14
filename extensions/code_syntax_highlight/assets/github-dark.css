@@ -1,0 +1,82 @@
+/* 
+ * This is a modified version of the "GitHub Dark" highlight.js theme to work with Gradio
+ * https://github.com/highlightjs/highlight.js/blob/main/src/styles/github-dark.css
+ */
+
+.hljs {
+    color: #c9d1d9 !important;
+    /* background: #0d1117; */
+}
+.hljs-doctag,
+.hljs-keyword,
+.hljs-meta .hljs-keyword,
+.hljs-template-tag,
+.hljs-template-variable,
+.hljs-type,
+.hljs-variable.language_ {
+    color: #ff7b72 !important;
+}
+.hljs-title,
+.hljs-title.class_,
+.hljs-title.class_.inherited__,
+.hljs-title.function_ {
+    color: #d2a8ff !important;
+}
+.hljs-attr,
+.hljs-attribute,
+.hljs-literal,
+.hljs-meta,
+.hljs-number,
+.hljs-operator,
+.hljs-selector-attr,
+.hljs-selector-class,
+.hljs-selector-id,
+.hljs-variable {
+    color: #79c0ff !important;
+}
+.hljs-meta .hljs-string,
+.hljs-regexp,
+.hljs-string {
+    color: #a5d6ff !important;
+}
+.hljs-built_in,
+.hljs-symbol {
+    color: #ffa657 !important;
+}
+.hljs-code,
+.hljs-comment,
+.hljs-formula {
+    color: #8b949e !important;
+}
+.hljs-name,
+.hljs-quote,
+.hljs-selector-pseudo,
+.hljs-selector-tag {
+    color: #7ee787 !important;
+}
+.hljs-subst {
+    color: #c9d1d9 !important;
+}
+.hljs-section {
+    color: #1f6feb !important;
+    font-weight: 700 !important;
+}
+.hljs-bullet {
+    color: #f2cc60 !important;
+}
+.hljs-emphasis {
+    color: #c9d1d9 !important;
+    font-style: italic !important;
+}
+.hljs-strong {
+    color: #c9d1d9 !important;
+    font-weight: 700 !important;
+}
+.hljs-addition {
+    color: #aff5b4 !important;
+    background-color: #033a16 !important;
+}
+.hljs-deletion {
+    color: #ffdcd7 !important;
+    background-color: #67060c !important;
+}
