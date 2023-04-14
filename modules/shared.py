@@ -1,4 +1,7 @@
 import argparse
+from pathlib import Path
+
+import yaml
 
 model = None
 tokenizer = None
@@ -42,6 +45,7 @@ settings = {
     'truncation_length_min': 0,
     'truncation_length_max': 4096,
     'mode': 'cai-chat',
+    'instruction_template': 'None',
     'chat_prompt_size': 2048,
     'chat_prompt_size_min': 0,
     'chat_prompt_size_max': 2048,
@@ -159,3 +163,21 @@ if args.cai_chat:
 
 def is_chat():
     return args.chat
+
+
+# Loading model-specific settings (default)
+with Path(f'{args.model_dir}/config.yaml') as p:
+    if p.exists():
+        model_config = yaml.safe_load(open(p, 'r').read())
+    else:
+        model_config = {}
+
+# Applying user-defined model settings
+with Path(f'{args.model_dir}/config-user.yaml') as p:
+    if p.exists():
+        user_config = yaml.safe_load(open(p, 'r').read())
+        for k in user_config:
+            if k in model_config:
+                model_config[k].update(user_config[k])
+            else:
+                model_config[k] = user_config[k]
