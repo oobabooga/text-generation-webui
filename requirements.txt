@@ -1,7 +1,7 @@
 accelerate==0.18.0
 datasets
 flexgen==0.1.7
-gradio==3.24.1
+gradio==3.26.0
 markdown
 numpy
 Pillow>=9.5.0
