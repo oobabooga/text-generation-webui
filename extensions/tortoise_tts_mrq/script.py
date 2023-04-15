@@ -22,6 +22,7 @@ params = {
     'voice_dir': None,
     'voice': 'emma',
     'preset': 'standard',
+    'low_vram': False,
     'seed': None,
     'device': 'cuda',
     'sentence_length': 10,
@@ -83,7 +84,7 @@ presets = ['ultra_fast', 'fast', 'standard', 'high_quality']
 def load_model():
     # Init TTS
     models_dir = shared.args.model_dir if hasattr(shared.args, 'models_dir') and shared.args.models_dir is not None else api.MODELS_DIR
-    tts = api.TextToSpeech(models_dir=models_dir, device=params['device'])
+    tts = api.TextToSpeech(minor_optimizations=not params['low_vram'], models_dir=models_dir, device=params['device'])
     samples, latents = load_voices(voices=[params['voice']],
                                    extra_voice_dirs=[params['voice_dir']] if params['voice_dir'] is not None else [])
 

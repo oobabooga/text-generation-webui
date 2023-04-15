@@ -13,6 +13,7 @@ params = {
     'speaker': None,
     'language': None,
     'model_id': 'tts_models/en/ljspeech/tacotron2-DDC',
+    'voice_clone_reference_path': None,
     'Cuda': True,
     'show_text': True,
     'autoplay': True,
@@ -120,7 +121,11 @@ def output_modifier(string):
         string = '*Empty reply, try regenerating*'
     else:
         output_file = Path(f'extensions/coqui_tts/outputs/{shared.character}_{int(time.time())}.wav')
-        model.tts_to_file(text=string, speaker=speaker, language=language, file_path=str(output_file))
+        if params['voice_clone_reference_path'] is not None:
+            model.tts_with_vc_to_file(text=string, language=language, speaker_wav=params['voice_clone_reference_path'],
+                                      file_path=str(output_file))
+        else:
+            model.tts_to_file(text=string, speaker=speaker, language=language, file_path=str(output_file))
 
         autoplay = 'autoplay' if current_params['autoplay'] else ''
         string = f'<audio src="file/{output_file.as_posix()}" controls {autoplay}></audio>'
