@@ -2,6 +2,7 @@ import torch
 import torchaudio
 
 from .tortoise.tortoise import api
+from .tortoise.tortoise.models import utils
 from .tortoise.tortoise.utils.audio import load_voices
 from .tortoise.tortoise.utils.text import split_and_recombine_text
 
@@ -19,6 +20,7 @@ params = {
     'voice': 'emma',
     'preset': 'standard',
     'device': 'cuda',
+    'sentence_length': 10,
     'show_text': True,
     'autoplay': True,
 }
@@ -61,9 +63,10 @@ presets = ['ultra_fast', 'fast', 'standard', 'high_quality']
 
 def load_model():
     # Init TTS
-    models_dir = shared.args.model_dir if shared.args.models_dir is not None else api.MODELS_DIR
+    models_dir = shared.args.model_dir if shared.args.models_dir is not None else utils.MODELS_DIR
     tts = api.TextToSpeech(models_dir=models_dir, device=params['device'])
-    samples, latents = load_voices(voices=[params['voice']], extra_voice_dirs=[params['voice_dir']])
+    samples, latents = load_voices(voices=[params['voice']],
+                                   extra_voice_dirs=[params['voice_dir']] if params['voice_dir'] is not None else [])
 
     return tts, samples, latents
 
@@ -132,7 +135,7 @@ def output_modifier(string):
         if '|' in string:
             texts = string.split('|')
         else:
-            texts = split_and_recombine_text(string, desired_length=10, max_length=400)
+            texts = split_and_recombine_text(string, desired_length=params['sentence_length'], max_length=1000)
 
         all_parts = []
         for j, text in enumerate(texts):
