@@ -4,6 +4,8 @@
     margin-right: auto;
     background-color: rgb(31, 41, 55);
     padding:3em;
+    word-break: break-word;
+    overflow-wrap: anywhere;
 }
 
 .container p {
