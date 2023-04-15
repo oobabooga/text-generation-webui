@@ -18,3 +18,11 @@
 .container li > p {
     display: inline !important;
 }
+
+.container code {
+    overflow-x: auto;
+}
+
+.container :not(pre) > code {
+    white-space: normal !important;
+}
