@@ -86,11 +86,11 @@ def output_modifier(string):
     if string == '':
         string = '*Empty reply, try regenerating*'
     else:
-        output_dir = Path(f'extensions/tortoise_tts/outputs/parts')
+        output_dir = Path(f'extensions/tortoise_tts_mrq/outputs/parts')
         if not output_dir.is_dir():
             output_dir.mkdir(parents=True, exist_ok=True)
 
-        output_file = Path(f'extensions/tortoise_tts/outputs/test_{int(time.time())}.wav')
+        output_file = Path(f'extensions/tortoise_tts_mrq/outputs/test_{int(time.time())}.wav')
 
         if '|' in string:
             texts = string.split('|')

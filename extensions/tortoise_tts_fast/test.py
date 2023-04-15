@@ -17,7 +17,7 @@ from modules import tts_preprocessor
 params = {
     'activate': True,
     'voice': 'emma',
-    'preset': 'standard',
+    'preset': 'ultra_fast',
     'device': 'cuda',
     'show_text': True,
     'autoplay': True,
