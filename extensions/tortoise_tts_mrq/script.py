@@ -1,14 +1,9 @@
 import torch
 import torchaudio
 
-# needs to be before the tortoise stuff to properly import
-import os
-import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), 'tortoise'))
-
-from tortoise import api
-from tortoise.utils.audio import load_voices
-from tortoise.utils.text import split_and_recombine_text
+from .tortoise.tortoise import api
+from .tortoise.tortoise.utils.audio import load_voices
+from .tortoise.tortoise.utils.text import split_and_recombine_text
 
 from pathlib import Path
 import time
@@ -20,6 +15,7 @@ import gradio as gr
 
 params = {
     'activate': True,
+    'voice_dir': None,
     'voice': 'emma',
     'preset': 'standard',
     'device': 'cuda',
@@ -65,8 +61,9 @@ presets = ['ultra_fast', 'fast', 'standard', 'high_quality']
 
 def load_model():
     # Init TTS
-    tts = api.TextToSpeech()
-    samples, latents = load_voices(voices=[params['voice']])
+    models_dir = shared.args.model_dir if shared.args.models_dir is not None else api.MODELS_DIR
+    tts = api.TextToSpeech(models_dir=models_dir, device=params['device'])
+    samples, latents = load_voices(voices=[params['voice']], extra_voice_dirs=[params['voice_dir']])
 
     return tts, samples, latents
 
