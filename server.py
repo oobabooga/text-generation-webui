@@ -221,10 +221,11 @@ def update_model_parameters(state, initial=False):
             found_positive = True
             break
 
-    if found_positive:
-        shared.args.gpu_memory = [f"{i}MiB" for i in gpu_memories]
-    else:
-        shared.args.gpu_memory = None
+    if not (initial and vars(shared.args)['gpu_memory'] != vars(shared.args_defaults)['gpu_memory']):
+        if found_positive:
+            shared.args.gpu_memory = [f"{i}MiB" for i in gpu_memories]
+        else:
+            shared.args.gpu_memory = None
 
 
 def get_model_specific_settings(model):
