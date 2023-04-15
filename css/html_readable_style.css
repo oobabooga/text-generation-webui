@@ -4,6 +4,8 @@
     margin-right: auto;
     background-color: rgb(31, 41, 55);
     padding:3em;
+    word-break: break-word;
+    overflow-wrap: anywhere;
 }
 
 .container p {
@@ -11,4 +13,16 @@
     color: white !important;
     margin-bottom: 22px;
     line-height: 1.4 !important;
+}
+
+.container li > p {
+    display: inline !important;
+}
+
+.container code {
+    overflow-x: auto;
+}
+
+.container :not(pre) > code {
+    white-space: normal !important;
 }
