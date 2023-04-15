@@ -55,7 +55,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
     if impersonate:
         min_rows = 2
-        rows.append(f"{prefix1.strip() if not is_instruct else prefix1}")
+        rows.append(prefix1)
     elif not _continue:
 
         # Adding the user message
@@ -204,16 +204,22 @@ def impersonate_wrapper(text, state):
 
     # Defining some variables
     cumulative_reply = ''
-    eos_token = '\n' if state['stop_at_newline'] else None
-    prompt = generate_chat_prompt(text, state, impersonate=True)
+    eos_token = '\n' if state['stop_at_newline'] else None    
+    prompt = generate_chat_prompt('', state, impersonate=True)
     stopping_strings = get_stopping_strings(state)
 
-    # Yield *Is typing...*
-    yield shared.processing_message
+    # Yield {text} *Is typing...*
+    yield f"{text} {shared.processing_message}"
+
+    # Replay starts with current input
+    cumulative_reply = text
 
     for i in range(state['chat_generation_attempts']):
         reply = None
-        for reply in generate_reply(f"{prompt}{' ' if len(cumulative_reply) > 0 else ''}{cumulative_reply}", state, eos_token=eos_token, stopping_strings=stopping_strings):
+        # Only add space for consecutive generations, in non instruct mode there should already be space ("You: ")
+        full_prompt = f"{prompt}{cumulative_reply}{' ' if i > 0 and len(cumulative_reply) > 0 else ''}"
+
+        for reply in generate_reply(full_prompt, state, eos_token=eos_token, stopping_strings=stopping_strings):
             reply = cumulative_reply + reply
             reply, next_character_found = extract_message_from_reply(reply, state)
             yield reply
@@ -223,7 +229,7 @@ def impersonate_wrapper(text, state):
         if reply is not None:
             cumulative_reply = reply
 
-    yield reply
+    yield cumulative_reply
 
 
 def cai_chatbot_wrapper(text, state):
