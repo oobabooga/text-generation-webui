@@ -83,8 +83,9 @@ presets = ['ultra_fast', 'fast', 'standard', 'high_quality']
 
 def load_model():
     # Init TTS
-    models_dir = shared.args.model_dir if hasattr(shared.args, 'models_dir') and shared.args.models_dir is not None else utils.MODELS_DIR
-    tts = api.TextToSpeech(models_dir=models_dir, device=params['device'])
+    models_dir = shared.args.model_dir if hasattr(shared.args, 'model_dir') and shared.args.model_dir is not None else \
+        utils.MODELS_DIR
+    tts = api.TextToSpeech(models_dir=os.path.join(models_dir, 'tortoise'), device=params['device'])
     samples, latents = load_voices(voices=[params['voice']],
                                    extra_voice_dirs=[params['voice_dir']] if params['voice_dir'] is not None else [])
 
