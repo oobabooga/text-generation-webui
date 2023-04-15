@@ -1,6 +1,10 @@
+import os
+import sys
+
 import torch
 import torchaudio
 
+sys.path.append(os.path.join(os.path.dirname(__file__), 'tortoise'))
 from .tortoise.tortoise import api
 from .tortoise.tortoise.utils.audio import load_voices
 from .tortoise.tortoise.utils.text import split_and_recombine_text
@@ -78,7 +82,7 @@ presets = ['ultra_fast', 'fast', 'standard', 'high_quality']
 
 def load_model():
     # Init TTS
-    models_dir = shared.args.model_dir if shared.args.models_dir is not None else api.MODELS_DIR
+    models_dir = shared.args.model_dir if hasattr(shared.args, 'models_dir') and shared.args.models_dir is not None else api.MODELS_DIR
     tts = api.TextToSpeech(models_dir=models_dir, device=params['device'])
     samples, latents = load_voices(voices=[params['voice']],
                                    extra_voice_dirs=[params['voice_dir']] if params['voice_dir'] is not None else [])
