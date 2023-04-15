@@ -147,6 +147,7 @@ parser.add_argument('--auto-launch', action='store_true', default=False, help='O
 parser.add_argument("--gradio-auth-path", type=str, help='Set the gradio authentication file path. The file should contain one or more user:password pairs in this format: "u1:p1,u2:p2,u3:p3"', default=None)
 
 args = parser.parse_args()
+args_defaults = parser.parse_args([])
 
 # Deprecation warnings for parameters that have been renamed
 deprecated_dict = {}
