@@ -15,7 +15,7 @@ pip install deepspeed
 2. Start the web UI replacing `python` with `deepspeed --num_gpus=1` and adding the `--deepspeed` flag. Example:
 
 ```
-deepspeed --num_gpus=1 server.py --deepspeed --cai-chat --model gpt-j-6B
+deepspeed --num_gpus=1 server.py --deepspeed --chat --model gpt-j-6B
 ```
 
 ### Learn more
