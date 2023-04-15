@@ -39,6 +39,10 @@ def generate_reply_wrapper(string):
         generate_params[k] = params[1][k]
     
     if chat_api['enabled']:
+        # Overwrite values from UI with values sent to API method
+        for k in params[1]:
+            chat_api.update({k: params[1][k]})
+
         # Back up the old no_stream value and set no_stream to True (required for API to work correctly)
         no_stream = shared.args.no_stream
         shared.args.no_stream = True
@@ -74,14 +78,11 @@ def create_apis():
 def create_chat_apis():
     global chat_api
     
+    # Set up the chat_api dict
     for k in shared.input_elements:
-        # Set up the chat_api dict
         chat_api.update({k: shared.gradio[k].value})
 
     chat_api['enabled'] = True
-
-    # Default for this comes in as None if this value isn't provided, which causes errors in chat.extract_message_from_reply
-    chat_api.update({'custom_stopping_strings': chat_api['custom_stopping_strings'] if chat_api['custom_stopping_strings'] else ''})
 
     # Set up change event listeners for the fields we care about for chat
     shared.gradio['name1'].change(lambda x: chat_api.update({'name1': x}), shared.gradio['name1'], [])

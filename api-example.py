@@ -36,7 +36,7 @@ params = {
     'early_stopping': False,
     'seed': -1,
     'add_bos_token': True,
-    'custom_stopping_strings': [],
+    'custom_stopping_strings': '',
     'truncation_length': 2048,
     'ban_eos_token': False,
 }
