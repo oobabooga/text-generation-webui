@@ -12,3 +12,7 @@
     margin-bottom: 22px;
     line-height: 1.4 !important;
 }
+
+.container li > p {
+    display: inline !important;
+}
