@@ -73,7 +73,8 @@ def _load_quant(model, checkpoint, wbits, groupsize=-1, faster_kernel=False, exc
         model.load_state_dict(torch.load(checkpoint), strict=False)
 
     if is_triton:
-        quant.make_quant_attn(model)
+        if not shared.args.no_quant_attn:
+            quant.make_quant_attn(model)
         if eval and not shared.args.no_fused_mlp:
             quant.make_fused_mlp(model)
 
