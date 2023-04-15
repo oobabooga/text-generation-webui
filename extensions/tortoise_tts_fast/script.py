@@ -1,61 +1,79 @@
-import time
-from pathlib import Path
-
-import gradio as gr
 import torch
+import torchaudio
+
+# needs to be before the tortoise stuff to properly import
+import os
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), 'tortoise'))
+
+from tortoise import api
+from tortoise.utils.audio import load_voices
+from tortoise.utils.text import split_and_recombine_text
+
+from pathlib import Path
+import time
 
 from modules import chat, shared, tts_preprocessor
 from modules.html_generator import chat_html_wrapper
 
-torch._C._jit_set_profiling_mode(False)
+import gradio as gr
 
-
-model = None
 params = {
     'activate': True,
-    'speaker': 'en_56',
-    'language': 'en',
-    'model_id': 'v3_en',
-    'sample_rate': 48000,
-    'device': 'cpu',
-    'show_text': False,
+    'voice': 'emma',
+    'preset': 'standard',
+    'device': 'cuda',
+    'show_text': True,
     'autoplay': True,
-    'voice_pitch': 'medium',
-    'voice_speed': 'medium',
-    'local_cache_path': ''  # User can override the default cache path to something other via settings.json
 }
 
-current_params = params.copy()
-voices_by_gender = ['en_99', 'en_45', 'en_18', 'en_117', 'en_49', 'en_51', 'en_68', 'en_0', 'en_26', 'en_56', 'en_74', 'en_5', 'en_38', 'en_53', 'en_21', 'en_37', 'en_107', 'en_10', 'en_82', 'en_16', 'en_41', 'en_12', 'en_67', 'en_61', 'en_14', 'en_11', 'en_39', 'en_52', 'en_24', 'en_97', 'en_28', 'en_72', 'en_94', 'en_36', 'en_4', 'en_43', 'en_88', 'en_25', 'en_65', 'en_6', 'en_44', 'en_75', 'en_91', 'en_60', 'en_109', 'en_85', 'en_101', 'en_108', 'en_50', 'en_96', 'en_64', 'en_92', 'en_76', 'en_33', 'en_116', 'en_48', 'en_98', 'en_86', 'en_62', 'en_54', 'en_95', 'en_55', 'en_111', 'en_3', 'en_83', 'en_8', 'en_47', 'en_59', 'en_1', 'en_2', 'en_7', 'en_9', 'en_13', 'en_15', 'en_17', 'en_19', 'en_20', 'en_22', 'en_23', 'en_27', 'en_29', 'en_30', 'en_31', 'en_32', 'en_34', 'en_35', 'en_40', 'en_42', 'en_46', 'en_57', 'en_58', 'en_63', 'en_66', 'en_69', 'en_70', 'en_71', 'en_73', 'en_77', 'en_78', 'en_79', 'en_80', 'en_81', 'en_84', 'en_87', 'en_89', 'en_90', 'en_93', 'en_100', 'en_102', 'en_103', 'en_104', 'en_105', 'en_106', 'en_110', 'en_112', 'en_113', 'en_114', 'en_115']
-voice_pitches = ['x-low', 'low', 'medium', 'high', 'x-high']
-voice_speeds = ['x-slow', 'slow', 'medium', 'fast', 'x-fast']
-streaming_state = shared.args.no_stream  # remember if chat streaming was enabled
+voices = [
+    'angie',
+    'applejack',
+    'cond_latent_example',
+    'daniel',
+    'deniro',
+    'emma',
+    'freeman',
+    'geralt',
+    'halle',
+    'jlaw',
+    'lj',
+    'mol',
+    'myself',
+    'pat',
+    'pat2',
+    'rainbow',
+    'snakes',
+    'tim_reynolds',
+    'tom',
+    'train_atkins',
+    'train_daws',
+    'train_dotrice',
+    'train_dreams',
+    'train_empire',
+    'train_grace',
+    'train_kennard',
+    'train_lescault',
+    'train_mouse',
+    'weaver',
+    'william'
+]
 
-# Used for making text xml compatible, needed for voice pitch and speed control
-table = str.maketrans({
-    "<": "&lt;",
-    ">": "&gt;",
-    "&": "&amp;",
-    "'": "&apos;",
-    '"': "&quot;",
-})
-
-
-def xmlesc(txt):
-    return txt.translate(table)
+presets = ['ultra_fast', 'fast', 'standard', 'high_quality']
 
 
 def load_model():
-    torch_cache_path = torch.hub.get_dir() if params['local_cache_path'] == '' else params['local_cache_path']
-    model_path = torch_cache_path + "/snakers4_silero-models_master/src/silero/model/" + params['model_id'] + ".pt"
-    if Path(model_path).is_file():
-        print(f'\nUsing Silero TTS cached checkpoint found at {torch_cache_path}')
-        model, example_text = torch.hub.load(repo_or_dir=torch_cache_path + '/snakers4_silero-models_master/', model='silero_tts', language=params['language'], speaker=params['model_id'], source='local', path=model_path, force_reload=True)
-    else:
-        print(f'\nSilero TTS cache not found at {torch_cache_path}. Attempting to download...')
-        model, example_text = torch.hub.load(repo_or_dir='snakers4/silero-models', model='silero_tts', language=params['language'], speaker=params['model_id'])
-    model.to(params['device'])
-    return model
+    # Init TTS
+    tts = api.TextToSpeech()
+    samples, latents = load_voices(voices=[params['voice']])
+
+    return tts, samples, latents
+
+
+model, voice_samples, conditioning_latents = load_model()
+current_params = params.copy()
+streaming_state = shared.args.no_stream  # remember if chat streaming was enabled
 
 
 def remove_tts_from_history(name1, name2, mode):
@@ -96,27 +114,39 @@ def output_modifier(string):
     This function is applied to the model outputs.
     """
 
-    global model, current_params, streaming_state
-
-    for i in params:
-        if params[i] != current_params[i]:
-            model = load_model()
-            current_params = params.copy()
-            break
-
-    if not params['activate']:
-        return string
+    global model, voice_samples, conditioning_latents, params
 
     original_string = string
-    string = tts_preprocessor.preprocess_all(string)
+    # we don't need to handle numbers. The text normalizer in coqui does it better
+    string = tts_preprocessor.replace_invalid_chars(string)
+    string = tts_preprocessor.replace_abbreviations(string)
+    string = tts_preprocessor.clean_whitespace(string)
+    processed_string = string
 
     if string == '':
         string = '*Empty reply, try regenerating*'
     else:
-        output_file = Path(f'extensions/silero_tts/outputs/{shared.character}_{int(time.time())}.wav')
-        prosody = '<prosody rate="{}" pitch="{}">'.format(params['voice_speed'], params['voice_pitch'])
-        silero_input = f'<speak>{prosody}{xmlesc(string)}</prosody></speak>'
-        model.save_wav(ssml_text=silero_input, speaker=params['speaker'], sample_rate=int(params['sample_rate']), audio_path=str(output_file))
+        output_dir = Path(f'extensions/tortoise_tts_fast/outputs/parts')
+        if not output_dir.is_dir():
+            output_dir.mkdir(parents=True, exist_ok=True)
+
+        output_file = Path(f'extensions/tortoise_tts_fast/outputs/test_{int(time.time())}.wav')
+
+        if '|' in string:
+            texts = string.split('|')
+        else:
+            texts = split_and_recombine_text(string, desired_length=10, max_length=400)
+
+        all_parts = []
+        for j, text in enumerate(texts):
+            gen = model.tts_with_preset(text, voice_samples=voice_samples, conditioning_latents=conditioning_latents,
+                                        preset=params['preset'], k=1, use_deterministic_seed=int(time.time()))
+            gen = gen.squeeze(0).cpu()
+            torchaudio.save(output_dir.joinpath(f'{j}_{int(time.time())}.wav'), gen, 24000)
+            all_parts.append(gen)
+
+        full_audio = torch.cat(all_parts, dim=-1)
+        torchaudio.save(str(output_file), full_audio, 24000)
 
         autoplay = 'autoplay' if params['autoplay'] else ''
         string = f'<audio src="file/{output_file.as_posix()}" controls {autoplay}></audio>'
@@ -139,22 +169,21 @@ def bot_prefix_modifier(string):
 
 
 def setup():
-    global model
-    model = load_model()
+    global model, voice_samples, conditioning_latents
+    model, voice_samples, conditioning_latents = load_model()
 
 
 def ui():
     # Gradio elements
-    with gr.Accordion("Silero TTS"):
+    with gr.Accordion("Tortoise TTS"):
         with gr.Row():
             activate = gr.Checkbox(value=params['activate'], label='Activate TTS')
             autoplay = gr.Checkbox(value=params['autoplay'], label='Play TTS automatically')
 
         show_text = gr.Checkbox(value=params['show_text'], label='Show message text under audio player')
-        voice = gr.Dropdown(value=params['speaker'], choices=voices_by_gender, label='TTS voice')
-        with gr.Row():
-            v_pitch = gr.Dropdown(value=params['voice_pitch'], choices=voice_pitches, label='Voice pitch')
-            v_speed = gr.Dropdown(value=params['voice_speed'], choices=voice_speeds, label='Voice speed')
+        voice_dropdown = gr.Dropdown(value=params['voice'], choices=voices, label='Voice')
+        preset_dropdown = gr.Dropdown(value=params['preset'], choices=presets, label='Preset')
+        device_textbox = gr.Textbox(value=params['device'], label='Device')
 
         with gr.Row():
             convert = gr.Button('Permanently replace audios with the message texts')
@@ -177,6 +206,12 @@ def ui():
     # Event functions to update the parameters in the backend
     activate.change(lambda x: params.update({"activate": x}), activate, None)
     autoplay.change(lambda x: params.update({"autoplay": x}), autoplay, None)
-    voice.change(lambda x: params.update({"speaker": x}), voice, None)
-    v_pitch.change(lambda x: params.update({"voice_pitch": x}), v_pitch, None)
-    v_speed.change(lambda x: params.update({"voice_speed": x}), v_speed, None)
+    voice_dropdown.change(lambda x: update_model(x), voice_dropdown, None)
+    preset_dropdown.change(lambda x: params.update({"preset": x}), preset_dropdown, None)
+    device_textbox.change(lambda x: params.update({"device": x}), device_textbox, None)
+
+
+def update_model(x):
+    params.update({"voice": x})
+    global model, voice_samples, conditioning_latents
+    model, voice_samples, conditioning_latents = load_model()
