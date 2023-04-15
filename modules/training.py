@@ -1,4 +1,5 @@
 import json
+import math
 import sys
 import threading
 import time
@@ -297,9 +298,9 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             fp16=False if shared.args.cpu else True,
             logging_steps=5,
             evaluation_strategy="steps" if eval_data is not None else "no",
-            eval_steps=eval_steps // gradient_accumulation_steps if eval_data is not None else None,
+            eval_steps=math.ceil(eval_steps / gradient_accumulation_steps) if eval_data is not None else None,
             save_strategy="steps",
-            save_steps=save_steps // gradient_accumulation_steps,
+            save_steps=math.ceil(save_steps / gradient_accumulation_steps),
             output_dir=lora_file_path,
             load_best_model_at_end=True if eval_data is not None else False,
             # TODO: Enable multi-device support
