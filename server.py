@@ -321,7 +321,7 @@ def create_model_menus():
     with gr.Row():
         with gr.Column():
             shared.gradio['custom_model_menu'] = gr.Textbox(label="Download custom model or LoRA", info="Enter Hugging Face username/model path, e.g: facebook/galactica-125m")
-            shared.gradio['download_button'] = gr.Button("Download")
+            shared.gradio['download_model_button'] = gr.Button("Download")
 
         with gr.Column():
             shared.gradio['model_status'] = gr.Markdown('No model is loaded' if shared.model_name == 'None' else 'Ready')
@@ -346,7 +346,7 @@ def create_model_menus():
         load_model_wrapper, shared.gradio['model_menu'], shared.gradio['model_status'], show_progress=True)
 
     shared.gradio['lora_menu_apply'].click(load_lora_wrapper, shared.gradio['lora_menu'], shared.gradio['model_status'], show_progress=False)
-    shared.gradio['download_button'].click(download_model_wrapper, shared.gradio['custom_model_menu'], shared.gradio['model_status'], show_progress=False)
+    shared.gradio['download_model_button'].click(download_model_wrapper, shared.gradio['custom_model_menu'], shared.gradio['model_status'], show_progress=False)
 
 
 def create_settings_menus(default_preset):
@@ -466,25 +466,25 @@ def create_interface():
                 shared.gradio['display'] = gr.HTML(value=chat_html_wrapper(shared.history['visible'], shared.settings['name1'], shared.settings['name2'], 'cai-chat'))
                 shared.gradio['textbox'] = gr.Textbox(label='Input')
                 with gr.Row():
-                    shared.gradio['Generate'] = gr.Button('Generate', elem_id='Generate')
                     shared.gradio['Stop'] = gr.Button('Stop', elem_id='stop')
-
-                with gr.Row():
-                    shared.gradio['Regenerate'] = gr.Button('Regenerate')
+                    shared.gradio['Generate'] = gr.Button('Generate', elem_id='Generate')
                     shared.gradio['Continue'] = gr.Button('Continue')
-                    shared.gradio['Impersonate'] = gr.Button('Impersonate')
 
                 with gr.Row():
+                    shared.gradio['Copy last reply'] = gr.Button('Copy last reply')
+                    shared.gradio['Regenerate'] = gr.Button('Regenerate')
+                    shared.gradio['Replace last reply'] = gr.Button('Replace last reply')
+
+                with gr.Row():
+                    shared.gradio['Impersonate'] = gr.Button('Impersonate')
                     shared.gradio['Send dummy message'] = gr.Button('Send dummy message')
                     shared.gradio['Send dummy reply'] = gr.Button('Send dummy reply')
-                    shared.gradio['Replace last reply'] = gr.Button('Replace last reply')
-                    shared.gradio['Copy last reply'] = gr.Button('Copy last reply')
 
                 with gr.Row():
+                    shared.gradio['Remove last'] = gr.Button('Remove last')
                     shared.gradio['Clear history'] = gr.Button('Clear history')
                     shared.gradio['Clear history-confirm'] = gr.Button('Confirm', variant='stop', visible=False)
                     shared.gradio['Clear history-cancel'] = gr.Button('Cancel', visible=False)
-                    shared.gradio['Remove last'] = gr.Button('Remove last')
 
                 shared.gradio['mode'] = gr.Radio(choices=['cai-chat', 'chat', 'instruct'], value=shared.settings['mode'], label='Mode')
                 shared.gradio['instruction_template'] = gr.Dropdown(choices=get_available_instruction_templates(), label='Instruction template', value=shared.settings['instruction_template'], visible=shared.settings['mode'] == 'instruct', info='Change this according to the model/LoRA that you are using.')
