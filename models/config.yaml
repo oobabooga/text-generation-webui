@@ -1,0 +1,35 @@
+.*:
+  wbits: 'None'
+  model_type: 'None'
+  groupsize: 'None'
+  pre_layer: 0
+  mode: 'cai-chat'
+llama-[0-9]*b-4bit$:
+  wbits: 4
+  model_type: 'llama'
+.*-(4bit|int4)-(gr128|128g):
+  wbits: 4
+  groupsize: 128
+.*-(gr128|128g)-(4bit|int4):
+  wbits: 4
+  groupsize: 128
+.*-3bit-(gr128|128g):
+  wbits: 3
+  groupsize: 128
+.*-(gr128|128g)-3bit:
+  wbits: 3
+  groupsize: 128
+.*oasst-sft-1-pythia-12b:
+  mode: 'instruct'
+  instruction_template: 'Open Assistant'
+.*vicuna:
+  mode: 'instruct'
+  instruction_template: 'Vicuna'
+.*alpaca:
+  mode: 'instruct'
+  instruction_template: 'Alpaca'
+.*alpaca-native-4bit:
+  mode: 'instruct'
+  instruction_template: 'Alpaca'
+  wbits: 4
+  groupsize: 128

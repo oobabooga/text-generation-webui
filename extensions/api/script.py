@@ -57,12 +57,15 @@ class Handler(BaseHTTPRequestHandler):
                 'length_penalty': float(body.get('length_penalty', 1)),
                 'early_stopping': bool(body.get('early_stopping', False)),
                 'seed': int(body.get('seed', -1)),
+                'add_bos_token': int(body.get('add_bos_token', True)),
+                'custom_stopping_strings': body.get('custom_stopping_strings', []),
+                'truncation_length': int(body.get('truncation_length', 2048)),
+                'ban_eos_token': bool(body.get('ban_eos_token', False)),
             }
 
             generator = generate_reply(
                 prompt,
                 generate_params,
-                stopping_strings=body.get('stopping_strings', []),
             )
 
             answer = ''
@@ -75,6 +78,19 @@ class Handler(BaseHTTPRequestHandler):
             response = json.dumps({
                 'results': [{
                     'text': answer[len(prompt):]
+                }]
+            })
+            self.wfile.write(response.encode('utf-8'))
+        elif self.path == '/api/v1/token-count':
+            # Not compatible with KoboldAI api
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+
+            tokens = encode(body['prompt'])[0]
+            response = json.dumps({
+                'results': [{
+                    'tokens': len(tokens)
                 }]
             })
             self.wfile.write(response.encode('utf-8'))

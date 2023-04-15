@@ -6,6 +6,7 @@ import torch
 from transformers import BlipForConditionalGeneration, BlipProcessor
 
 from modules import chat, shared
+from modules.ui import gather_interface_values
 
 # If 'state' is True, will hijack the next chat generation with
 # custom input text given by 'value' in the format [text, visible_text]
@@ -38,11 +39,9 @@ def generate_chat_picture(picture, name1, name2):
 def ui():
     picture_select = gr.Image(label='Send a picture', type='pil')
 
-    # Prepare the hijack with custom inputs
-    picture_select.upload(lambda picture, name1, name2: input_hijack.update({"state": True, "value": generate_chat_picture(picture, name1, name2)}), [picture_select, shared.gradio['name1'], shared.gradio['name2']], None)
-
-    # Call the generation function
-    picture_select.upload(chat.cai_chatbot_wrapper, shared.input_params, shared.gradio['display'], show_progress=shared.args.no_stream)
-
-    # Clear the picture from the upload field
-    picture_select.upload(lambda: None, [], [picture_select], show_progress=False)
+    # Prepare the input hijack, update the interface values, call the generation function, and clear the picture
+    picture_select.upload(
+        lambda picture, name1, name2: input_hijack.update({"state": True, "value": generate_chat_picture(picture, name1, name2)}), [picture_select, shared.gradio['name1'], shared.gradio['name2']], None).then(
+        gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
+        chat.cai_chatbot_wrapper, shared.input_params, shared.gradio['display'], show_progress=shared.args.no_stream).then(
+        lambda: None, None, picture_select, show_progress=False)

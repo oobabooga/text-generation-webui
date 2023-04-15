@@ -8,6 +8,9 @@ from modules.chat import chatbot_wrapper, save_history
 
 chat_api = False
 
+# set this to True to rediscover the fn_index using the browser DevTools
+VISIBLE = False
+
 def generate_reply_wrapper(string):
     global chat_api
 
@@ -58,9 +61,10 @@ def generate_reply_wrapper(string):
 def create_apis():
     global chat_api
 
-    t1 = gr.Textbox(visible=False)
-    t2 = gr.Textbox(visible=False)
-    dummy = gr.Button(visible=False)
+    t1 = gr.Textbox(visible=VISIBLE)
+    t2 = gr.Textbox(visible=VISIBLE)
+    dummy = gr.Button(visible=VISIBLE)
+
 
     input_params = [t1]
     output_params = [t2] + [shared.gradio[k] for k in ['display']] if chat_api else [shared.gradio[k] for k in ['markdown', 'html']]

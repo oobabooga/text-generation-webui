@@ -7,6 +7,8 @@
     padding-right: 20px;
     display: flex;
     flex-direction: column-reverse;
+    word-break: break-word;
+    overflow-wrap: anywhere;
 }
 
 .message {
@@ -25,9 +27,7 @@
 .message-body {}
 
 .message-body p {
-    margin-bottom: 0 !important;
     font-size: 15px !important;
-    line-height: 1.428571429 !important;
 }
 
 .message-body li {
@@ -37,6 +37,13 @@
 
 .message-body li > p {
     display: inline !important;
+}
+
+.message-body code {
+    overflow-x: auto;
+}
+.message-body :not(pre) > code {
+    white-space: normal !important;
 }
 
 .dark .message-body p em {
@@ -51,15 +58,16 @@
   padding: 15px;
   border-radius: 20px;
   background-color: #0000000f;
-  margin-bottom: 17.5px;
+  margin-top: 9px !important;
+  margin-bottom: 18px !important;
 }
 
 .gradio-container .chat .user-message {
   padding: 15px;
   border-radius: 20px;
-  margin-bottom: 17.5px !important;
+  margin-bottom: 9px !important;
 }
 
 .dark .chat .assistant-message {
-  background-color: #ffffff21;
+  background-color: #374151;
 }
