@@ -31,6 +31,13 @@ voice_pitches = ['x-low', 'low', 'medium', 'high', 'x-high']
 voice_speeds = ['x-slow', 'slow', 'medium', 'fast', 'x-fast']
 streaming_state = shared.args.no_stream  # remember if chat streaming was enabled
 
+# Add french TTS
+if 'tts_french' in shared.args.extensions:
+    params['speaker'] = 'fr_0'
+    params['language'] = 'fr'
+    params['model_id'] = 'v3_fr'
+    voices_by_gender = ['fr_0', 'fr_1', 'fr_2', 'fr_3', 'fr_4', 'fr_5']
+
 # Used for making text xml compatible, needed for voice pitch and speed control
 table = str.maketrans({
     "<": "&lt;",
