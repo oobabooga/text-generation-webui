@@ -287,14 +287,15 @@ Check the [wiki](https://github.com/oobabooga/text-generation-webui/wiki/System-
 
 ## Contributing
 
-Pull requests, suggestions, and issue reports are welcome. 
+Contributions to this project are welcome.
 
-You are also welcome to review open pull requests.
-
-Before reporting a bug, make sure that you have:
-
-1. Created a conda environment and installed the dependencies exactly as in the *Installation* section above.
-2. [Searched](https://github.com/oobabooga/text-generation-webui/issues) to see if an issue already exists for the issue you encountered.
+| Way to contribute | Tier |
+|-----------------|-------------|
+| Submit a pull request that fixes a problem | ⭐⭐⭐⭐⭐ | 
+| Test and review an open pull request | ⭐⭐⭐⭐⭐ |
+| Submit a bug report after searching to make sure that you are the first person to report this bug | ⭐⭐⭐⭐ |
+| Submit a feature request that you think is relevant | ⭐⭐⭐⭐ |
+| Submit a duplicate bug report | 🥲 |
 
 ## Credits
 
