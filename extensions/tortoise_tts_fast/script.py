@@ -19,10 +19,26 @@ params = {
     'voice_dir': None,
     'voice': 'emma',
     'preset': 'standard',
+    'seed': None,
     'device': 'cuda',
     'sentence_length': 10,
     'show_text': True,
     'autoplay': True,
+    'tuning_settings': {
+        'verbose': False,
+        'k': 1,
+        'num_autoregressive_samples': None,
+        'temperature': None,
+        'length_penalty': None,
+        'repetition_penalty': None,
+        'top_p': None,
+        'max_mel_tokens': None,
+        'cvvp_amount': None,
+        'diffusion_iterations': None,
+        'cond_free': None,
+        'cond_free_k': None,
+        'diffusion_temperature': None
+    }
 }
 
 voices = [
@@ -137,16 +153,32 @@ def output_modifier(string):
         else:
             texts = split_and_recombine_text(string, desired_length=params['sentence_length'], max_length=1000)
 
-        all_parts = []
-        for j, text in enumerate(texts):
-            gen = model.tts_with_preset(text, voice_samples=voice_samples, conditioning_latents=conditioning_latents,
-                                        preset=params['preset'], k=1, use_deterministic_seed=int(time.time()))
-            gen = gen.squeeze(0).cpu()
-            torchaudio.save(output_dir.joinpath(f'{j}_{int(time.time())}.wav'), gen, 24000)
-            all_parts.append(gen)
+        gen_kwargs = {
+            'use_deterministic_seed': int(time.time()) if params['seed'] is None else params['seed']
+        }
 
-        full_audio = torch.cat(all_parts, dim=-1)
-        torchaudio.save(str(output_file), full_audio, 24000)
+        for option in params['tuning_settings'].keys():
+            if params['tuning_settings'][option] is not None:
+                gen_kwargs[option] = params['tuning_settings'][option]
+
+        all_parts = []
+        # only cat if it's needed
+        if len(texts) > 1:
+            for j, text in enumerate(texts):
+                gen = model.tts_with_preset(text, voice_samples=voice_samples, conditioning_latents=conditioning_latents,
+                                            **gen_kwargs)
+                gen = gen.squeeze(0).cpu()
+                torchaudio.save(output_dir.joinpath(f'{j}_{int(time.time())}.wav'), gen, 24000)
+                all_parts.append(gen)
+
+            full_audio = torch.cat(all_parts, dim=-1)
+            torchaudio.save(str(output_file), full_audio, 24000)
+        elif len(texts) == 1:
+            text = texts[1]
+            gen = model.tts_with_preset(text, voice_samples=voice_samples, conditioning_latents=conditioning_latents,
+                                        **gen_kwargs)
+            gen = gen.squeeze(0).cpu()
+            torchaudio.save(str(output_file), gen, 24000)
 
         autoplay = 'autoplay' if params['autoplay'] else ''
         string = f'<audio src="file/{output_file.as_posix()}" controls {autoplay}></audio>'
