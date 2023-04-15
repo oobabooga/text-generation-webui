@@ -293,7 +293,7 @@ Contributions to this project are welcome.
 |-----------------|-------------|
 | Submit a pull request that fixes a problem or adds a new feature. | ⭐⭐⭐⭐⭐ |
 | Test and review an open pull request. | ⭐⭐⭐⭐⭐ |
-| Submit a bug report after searching to make sure that you are the first person to report this bug. | ⭐⭐⭐⭐ |
+| Submit a bug report after searching to make sure that it has not been reported before. | ⭐⭐⭐⭐ |
 | Submit a feature request that you think is relevant. | ⭐⭐⭐⭐ |
 | Submit a duplicate bug report. | 🥲 |
 
