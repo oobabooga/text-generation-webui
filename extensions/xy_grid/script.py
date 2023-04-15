@@ -1,5 +1,6 @@
 import os
 import json
+import datetime
 
 import gradio as gr
 import modules.shared as shared
@@ -12,7 +13,8 @@ from pathlib import Path
 custom_state = {}
 custom_output = []
 
-def load_preset_values(preset_menu, state, return_dict=False):
+# I had to steal this from server.py because the program freaks out if I try to `import server`
+def load_preset_values(preset_menu, state):
     generate_params = {
         'do_sample': True,
         'temperature': 1,
@@ -36,13 +38,11 @@ def load_preset_values(preset_menu, state, return_dict=False):
             generate_params[i[0].strip()] = eval(i[1].strip())
     generate_params['temperature'] = min(1.99, generate_params['temperature'])
 
-    if return_dict:
-        return generate_params
-    else:
-        state.update(generate_params)
-        return state, *[generate_params[k] for k in ['do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping']]
+    state.update(generate_params)
+    return state, *[generate_params[k] for k in ['do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping']]
 
 
+# Get all of the presets from the presets folder
 def get_presets():
     global custom_state
     presets = []
@@ -53,17 +53,22 @@ def get_presets():
         custom_state = load_preset_values(preset, custom_state)[0]
     return ", ".join(presets)
 
+# This is a workaround function because gradio has to access parameters if you want them to be current
 def get_params(*args):
     global custom_state
     custom_state = modules.ui.gather_interface_values(*args)
     return json.dumps(custom_state)
 
-def run(x="",y=""):
+# The main function that generates the output, formats the html table, and returns it to the interface
+def run(x="", y=""):
     global custom_state
     global custom_output
+    custom_state['seed'] = "420691337"
+    
 
     output = "<style>table {border-collapse: collapse;border: 1px solid black;}th, td {border: 1px solid black;padding: 5px;}</style><table><thead><tr><th></th>"
 
+    # Have to format the strings because gradio makes it difficult to pass lists around
     x_strings = pp.common.comma_separated_list.parseString(x).asList()
     y_strings = pp.common.comma_separated_list.parseString(y).asList()
 
@@ -75,38 +80,46 @@ def run(x="",y=""):
         if y_strings[0] != '':
             for j in y_strings:
                 custom_state = load_preset_values(j.strip(), custom_state)[0]
+
+                # This is the part that actually does the generating
                 for new in chatbot_wrapper(i.strip(), custom_state):
                     custom_output = new
-                output = output + f"<td>{custom_state['name1']}: {custom_output[-1][0]}<br><br>{custom_state['name2']}: {custom_output[-1][1]}</td>"
+
+                output = output + f"<td><b>{custom_state['name1']}:</b> {custom_output[-1][0]}<br><b>{custom_state['name2']}:</b> {custom_output[-1][1]}</td>"
                 custom_output.pop()
                 shared.history['internal'].pop()
+
             output = output + "</tr>"
         else:
                 for new in chatbot_wrapper(i.strip(), custom_state):
                     custom_output = new
-                output = output + f"<td>{custom_state['name1']}: {custom_output[-1][0]}<br><br>{custom_state['name2']}: {custom_output[-1][1]}</td>"
+                output = output + f"<td><b>{custom_state['name1']}:</b> {custom_output[-1][0]}<br><b>{custom_state['name2']}:</b> {custom_output[-1][1]}</td>"
                 custom_output.pop()
                 shared.history['internal'].pop()
         output = output + "</tr>"
     output = output + "</tbody></table>"
+
+    # Save the output to a file
+    # Useful for large grids that don't display well in gradio
+    save_filename = f"{datetime.datetime.now().strftime('%Y_%m_%d_%f')}.html"
+    with open(Path(f"extensions/xy_grid/outputs/{save_filename}"), 'w') as outfile:
+        outfile.write(output)
+
+    # Trying to include a link to easily open the html file in a new tab, but I think this is gonna be more confusing than I expected
+    output = output + f"<br><br><a href=\"file/extensions/xy_grid/outputs/{save_filename}\" target=\"_blank\">open html file</a>"
     return output
 
-def gradio_sucks(flubby):
-    return flubby
-
+# Create the interface for the extension (this runs first)
 def ui():
-    with gr.Accordion("XY Grid", open=False):
-        prompt = gr.Textbox(value="name1", label='Input Prompt', interactive=True)
+    with gr.Accordion("XY Grid", open=True):
+        prompt = gr.Textbox(placeholder="Comma separated prompts go here...", label='Input Prompts', interactive=True)
         with gr.Row():
-            presets_box = gr.Textbox(placeholder="presets go here...", label='Presets', interactive=True)
+            presets_box = gr.Textbox(placeholder="Presets go here. Click the buttton to the right...", label='Presets', interactive=True)
             refresh_presets = modules.ui.ToolButton(value='\U0001f504', elem_id='refresh-button')
             refresh_presets.click(fn=get_presets, outputs=presets_box)
-        make_state = gr.Button("make_state")
         generate_grid = gr.Button("generate_grid")
-        tester = gr.HTML(value="what the fuck is happening?")
-        state = gr.HTML(value="the state will go here")
-        custom_chat = gr.HTML(value="for the love of God, is this actually going to work???")
+        with gr.Accordion("Generation Parameters for testing", open=False):
+            state = gr.HTML(value="the state will go here")
+        custom_chat = gr.HTML(value="")
 
-    prompt.change(gradio_sucks, prompt, tester)
-    make_state.click(get_params, [shared.gradio[k] for k in shared.input_elements], state)
     generate_grid.click(get_params, [shared.gradio[k] for k in shared.input_elements], state).then(run, [prompt, presets_box], custom_chat)
