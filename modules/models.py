@@ -45,17 +45,14 @@ def load_model(model_name):
     shared.is_RWKV = 'rwkv-' in model_name.lower()
     shared.is_llamacpp = len(list(Path(f'{shared.args.model_dir}/{model_name}').glob('ggml*.bin'))) > 0
 
-    # Default settings
+    # Load the model in simple 16-bit mode by default
     if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.wbits, shared.args.auto_devices, shared.args.disk, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None, shared.args.deepspeed, shared.args.flexgen, shared.is_RWKV, shared.is_llamacpp]):
-        if any(size in shared.model_name.lower() for size in ('13b', '20b', '30b')):
-            model = AutoModelForCausalLM.from_pretrained(Path(f"{shared.args.model_dir}/{shared.model_name}"), device_map='auto', load_in_8bit=True)
+        model = AutoModelForCausalLM.from_pretrained(Path(f"{shared.args.model_dir}/{shared.model_name}"), low_cpu_mem_usage=True, torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16)
+        if torch.has_mps:
+            device = torch.device('mps')
+            model = model.to(device)
         else:
-            model = AutoModelForCausalLM.from_pretrained(Path(f"{shared.args.model_dir}/{shared.model_name}"), low_cpu_mem_usage=True, torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16)
-            if torch.has_mps:
-                device = torch.device('mps')
-                model = model.to(device)
-            else:
-                model = model.cuda()
+            model = model.cuda()
 
     # FlexGen
     elif shared.args.flexgen:
