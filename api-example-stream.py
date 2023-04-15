@@ -43,8 +43,9 @@ async def run(context):
         'seed': -1,
         'add_bos_token': True,
         'truncation_length': 2048,
-        'custom_stopping_strings': [],
-        'ban_eos_token': False
+        'ban_eos_token': False,
+        'skip_special_tokens': True,
+        'custom_stopping_strings': []
     }
     payload = json.dumps([context, params])
     session = random_hash()
