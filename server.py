@@ -21,6 +21,7 @@ from pathlib import Path
 import gradio as gr
 import psutil
 import torch
+import yaml
 from PIL import Image
 
 import modules.extensions as extensions_module
@@ -221,10 +222,11 @@ def update_model_parameters(state, initial=False):
             found_positive = True
             break
 
-    if found_positive:
-        shared.args.gpu_memory = [f"{i}MiB" for i in gpu_memories]
-    else:
-        shared.args.gpu_memory = None
+    if not (initial and vars(shared.args)['gpu_memory'] != vars(shared.args_defaults)['gpu_memory']):
+        if found_positive:
+            shared.args.gpu_memory = [f"{i}MiB" for i in gpu_memories]
+        else:
+            shared.args.gpu_memory = None
 
 
 def get_model_specific_settings(model):
@@ -232,7 +234,7 @@ def get_model_specific_settings(model):
     model_settings = {}
 
     for pat in settings:
-        if re.match(pat, model.lower()):
+        if re.match(pat.lower(), model.lower()):
             for k in settings[pat]:
                 model_settings[k] = settings[pat][k]
 
@@ -246,6 +248,29 @@ def load_model_specific_settings(model, state, return_dict=False):
             state[k] = model_settings[k]
 
     return state
+
+
+def save_model_settings(model, state):
+    if model == 'None':
+        yield ("Not saving the settings because no model is loaded.")
+        return
+
+    with Path(f'{shared.args.model_dir}/config-user.yaml') as p:
+        if p.exists():
+            user_config = yaml.safe_load(open(p, 'r').read())
+        else:
+            user_config = {}
+
+        if model not in user_config:
+            user_config[model] = {}
+
+        for k in ui.list_model_elements():
+            user_config[model][k] = state[k]
+
+        with open(p, 'w') as f:
+            f.write(yaml.dump(user_config))
+
+        yield (f"Settings for {model} saved to {p}")
 
 
 def create_model_menus():
@@ -284,10 +309,12 @@ def create_model_menus():
                         ui.create_refresh_button(shared.gradio['lora_menu'], lambda: None, lambda: {'choices': get_available_loras(), 'value': shared.lora_names}, 'refresh-button')
 
         with gr.Column():
-            shared.gradio['lora_menu_apply'] = gr.Button(value='Apply the selected LoRAs')
+            with gr.Row():
+                shared.gradio['lora_menu_apply'] = gr.Button(value='Apply the selected LoRAs')
             with gr.Row():
                 unload = gr.Button("Unload the model")
                 reload = gr.Button("Reload the model")
+                save_settings = gr.Button("Save current settings for this model")
 
     with gr.Row():
         with gr.Column():
@@ -343,7 +370,11 @@ def create_model_menus():
         unload_model, None, None).then(
         ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
         update_model_parameters, shared.gradio['interface_state'], None).then(
-        load_model_wrapper, shared.gradio['model_menu'], shared.gradio['model_status'], show_progress=True)
+        load_model_wrapper, shared.gradio['model_menu'], shared.gradio['model_status'], show_progress=False)
+
+    save_settings.click(
+        ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
+        save_model_settings, [shared.gradio[k] for k in ['model_menu', 'interface_state']], shared.gradio['model_status'], show_progress=False)
 
     shared.gradio['lora_menu_apply'].click(load_lora_wrapper, shared.gradio['lora_menu'], shared.gradio['model_status'], show_progress=False)
     shared.gradio['download_model_button'].click(download_model_wrapper, shared.gradio['custom_model_menu'], shared.gradio['model_status'], show_progress=False)
@@ -466,25 +497,25 @@ def create_interface():
                 shared.gradio['display'] = gr.HTML(value=chat_html_wrapper(shared.history['visible'], shared.settings['name1'], shared.settings['name2'], 'cai-chat'))
                 shared.gradio['textbox'] = gr.Textbox(label='Input')
                 with gr.Row():
-                    shared.gradio['Generate'] = gr.Button('Generate', elem_id='Generate')
                     shared.gradio['Stop'] = gr.Button('Stop', elem_id='stop')
-
-                with gr.Row():
-                    shared.gradio['Regenerate'] = gr.Button('Regenerate')
+                    shared.gradio['Generate'] = gr.Button('Generate', elem_id='Generate')
                     shared.gradio['Continue'] = gr.Button('Continue')
-                    shared.gradio['Impersonate'] = gr.Button('Impersonate')
 
                 with gr.Row():
+                    shared.gradio['Copy last reply'] = gr.Button('Copy last reply')
+                    shared.gradio['Regenerate'] = gr.Button('Regenerate')
+                    shared.gradio['Replace last reply'] = gr.Button('Replace last reply')
+
+                with gr.Row():
+                    shared.gradio['Impersonate'] = gr.Button('Impersonate')
                     shared.gradio['Send dummy message'] = gr.Button('Send dummy message')
                     shared.gradio['Send dummy reply'] = gr.Button('Send dummy reply')
-                    shared.gradio['Replace last reply'] = gr.Button('Replace last reply')
-                    shared.gradio['Copy last reply'] = gr.Button('Copy last reply')
 
                 with gr.Row():
+                    shared.gradio['Remove last'] = gr.Button('Remove last')
                     shared.gradio['Clear history'] = gr.Button('Clear history')
                     shared.gradio['Clear history-confirm'] = gr.Button('Confirm', variant='stop', visible=False)
                     shared.gradio['Clear history-cancel'] = gr.Button('Cancel', visible=False)
-                    shared.gradio['Remove last'] = gr.Button('Remove last')
 
                 shared.gradio['mode'] = gr.Radio(choices=['cai-chat', 'chat', 'instruct'], value=shared.settings['mode'], label='Mode')
                 shared.gradio['instruction_template'] = gr.Dropdown(choices=get_available_instruction_templates(), label='Instruction template', value=shared.settings['instruction_template'], visible=shared.settings['mode'] == 'instruct', info='Change this according to the model/LoRA that you are using.')
