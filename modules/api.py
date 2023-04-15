@@ -30,9 +30,6 @@ def generate_reply_wrapper(string):
         'length_penalty': 1,
         'no_repeat_ngram_size': 0,
         'early_stopping': False,
-        'stop_at_newline': False,
-        "chat_prompt_size": 2048,
-        "chat_generation_attempts": 1,
     }
     params = json.loads(string)
     for k in params[1]:
