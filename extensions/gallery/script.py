@@ -45,8 +45,7 @@ def select_character(evt: gr.SelectData):
 def ui():
     with gr.Accordion("Character gallery", open=False):
         update = gr.Button("Refresh")
-        gr.HTML(value=f"""<link rel='stylesheet' href='file/{Path('extensions/gallery/resources/gallery.css').as_posix()}'>
-                <img src onerror='{load_js()}'>""")
+        gr.HTML(value=f"""<link rel='stylesheet' href='file/{Path('extensions/gallery/resources/gallery.css').as_posix()}'><img src onerror='{load_js()}'>""")
         gallery = gr.Dataset(components=[gr.HTML(visible=False)],
                              label="",
                              samples=generate_html(),
