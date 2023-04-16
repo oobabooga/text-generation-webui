@@ -21,6 +21,8 @@ with open(Path(__file__).resolve().parent / '../css/html_4chan_style.css', 'r') 
     _4chan_css = css_f.read()
 with open(Path(__file__).resolve().parent / '../css/html_cai_style.css', 'r') as f:
     cai_css = f.read()
+with open(Path(__file__).resolve().parent / '../css/html_bubble_chat_style.css', 'r') as f:
+    bubble_chat_css = f.read()
 with open(Path(__file__).resolve().parent / '../css/html_instruct_style.css', 'r') as f:
     instruct_css = f.read()
 
@@ -210,8 +212,37 @@ def generate_cai_chat_html(history, name1, name2, reset_cache=False):
     return output
 
 
-def generate_chat_html(history, name1, name2):
-    return generate_cai_chat_html(history, name1, name2)
+def generate_chat_html(history, name1, name2, reset_cache=False):
+    output = f'<style>{bubble_chat_css}</style><div class="chat" id="chat">'
+
+    for i, _row in enumerate(history[::-1]):
+        row = [convert_to_markdown(entry) for entry in _row]
+
+        output += f"""
+              <div class="message">
+                <div class="text-bot">
+                  <div class="message-body">
+                    {row[1]}
+                  </div>
+                </div>
+              </div>
+            """
+
+        if len(row[0]) == 0:  # don't display empty user messages
+            continue
+
+        output += f"""
+              <div class="message">
+                <div class="text-you">
+                  <div class="message-body">
+                    {row[0]}
+                  </div>
+                </div>
+              </div>
+            """
+
+    output += "</div>"
+    return output
 
 
 def chat_html_wrapper(history, name1, name2, mode, reset_cache=False):
