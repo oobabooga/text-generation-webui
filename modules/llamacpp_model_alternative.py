@@ -6,7 +6,7 @@ Documentation:
 https://abetlen.github.io/llama-cpp-python/
 '''
 
-from llama_cpp import Llama
+from llama_cpp import Llama, LlamaCache
 
 from modules import shared
 from modules.callbacks import Iteratorize
@@ -27,6 +27,7 @@ class LlamaCppModel:
             'n_threads': shared.args.threads or None
         }
         self.model = Llama(**params)
+        self.model.set_cache(LlamaCache)
 
         # This is ugly, but the model and the tokenizer are the same object in this library.
         return result, result
