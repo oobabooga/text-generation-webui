@@ -1,6 +1,4 @@
-## 4-bit mode
-
-In 4-bit mode, the LLaMA models are loaded with just 25% of their regular VRAM usage. So LLaMA-7B fits into a 6GB GPU, and LLaMA-30B fits into a 24GB GPU.
+In 4-bit mode, models are loaded with just 25% of their regular VRAM usage. So LLaMA-7B fits into a 6GB GPU, and LLaMA-30B fits into a 24GB GPU.
 
 This is possible thanks to [@qwopqwop200](https://github.com/qwopqwop200/GPTQ-for-LLaMa)'s adaptation of the GPTQ algorithm for LLaMA: https://github.com/qwopqwop200/GPTQ-for-LLaMa
 
@@ -21,7 +19,7 @@ See this issue for more details: https://github.com/oobabooga/text-generation-we
 
 #### Step 1: install GPTQ-for-LLaMa
 
-Clone [GPTQ-for-LLaMa](https://github.com/qwopqwop200/GPTQ-for-LLaMa) into the `text-generation-webui/repositories` subfolder and install it:
+Clone the GPTQ-for-LLaMa repository into the `text-generation-webui/repositories` subfolder and install it:
 
 ```
 mkdir repositories
@@ -33,25 +31,35 @@ python setup_cuda.py install
 
 You are going to need to have a C++ compiler installed into your system for the last command. On Linux, `sudo apt install build-essential` or equivalent is enough.
 
-**Note**: I am using my own fork of GPTQ-for-LLaMa until qwopqwop200's branch becomes more stable. It corresponds to commit `a6f363e3f93b9fb5c26064b5ac7ed58d22e3f773` in the `cuda` branch of his repository.
+https://github.com/oobabooga/GPTQ-for-LLaMa corresponds to commit `a6f363e3f93b9fb5c26064b5ac7ed58d22e3f773` in the `cuda` branch of the original repository and is recommended by default for stability. Some models might require you to use the up-to-date CUDA or triton branches:
+
+https://github.com/qwopqwop200/GPTQ-for-LLaMa
 
 #### Step 2: get the pre-converted weights
 
 * Converted without `group-size` (better for the 7b model): https://github.com/oobabooga/text-generation-webui/pull/530#issuecomment-1483891617
 * Converted with `group-size` (better from 13b upwards): https://github.com/oobabooga/text-generation-webui/pull/530#issuecomment-1483941105 
 
+Note: the tokenizer files in those torrents are not up to date.
+
 #### Step 3: Start the web UI:
 
 For the models converted without `group-size`:
 
 ```
-python server.py --model llama-7b-4bit --wbits 4 
+python server.py --model llama-7b-4bit 
 ```
 
 For the models converted with `group-size`:
 
 ```
-python server.py --model llama-13b-4bit-128g --wbits 4 --groupsize 128 
+python server.py --model llama-13b-4bit-128g 
+```
+
+The command-line flags `--wbits` and `--groupsize` are automatically detected based on the folder names, but you can also specify them manually like 
+
+```
+python server.py --model llama-13b-4bit-128g --wbits 4 --groupsize 128
 ```
 
 ### CPU offloading
@@ -61,7 +69,7 @@ It is possible to offload part of the layers of the 4-bit model to the CPU with 
 With this command, I can run llama-7b with 4GB VRAM:
 
 ```
-python server.py --model llama-7b-4bit --wbits 4 --pre_layer 20
+python server.py --model llama-7b-4bit --pre_layer 20
 ```
 
 This is the performance:
