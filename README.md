@@ -219,6 +219,7 @@ Optionally, you can use the following command-line flags:
 | `--no-cache`                                | Set `use_cache` to False while generating text. This reduces the VRAM usage a bit with a performance cost. |
 | `--xformers`                                | Use xformer's memory efficient attention. This should increase your tokens/s. |
 | `--sdp-attention`                           | Use torch 2.0's sdp attention. |
+| `--trust-remote-code`                       | Set trust_remote_code=True while loading a model. Necessary for ChatGLM. |
 
 #### llama.cpp
 
