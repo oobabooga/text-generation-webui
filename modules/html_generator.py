@@ -33,15 +33,20 @@ def fix_newlines(string):
     string = string.strip()
     return string
 
-# This could probably be generalized and improved
-
+def replace_blockquote(m):
+    return m.group().replace('\n', '\n> ').replace('\\begin{blockquote}', '').replace('\\end{blockquote}', '')
 
 def convert_to_markdown(string):
+
+    # Blockquote
+    pattern = re.compile(r'\\begin{blockquote}(.*?)\\end{blockquote}', re.DOTALL)
+    string = pattern.sub(replace_blockquote, string)
+
+    # Code
     string = string.replace('\\begin{code}', '```')
     string = string.replace('\\end{code}', '```')
-    string = string.replace('\\begin{blockquote}', '> ')
-    string = string.replace('\\end{blockquote}', '')
     string = re.sub(r"(.)```", r"\1\n```", string)
+
     string = fix_newlines(string)
     return markdown.markdown(string, extensions=['fenced_code'])
 
