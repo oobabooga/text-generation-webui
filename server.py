@@ -214,7 +214,7 @@ def update_model_parameters(state, initial=False):
         elif element == 'cpu_memory' and value is not None:
             value = f"{value}MiB"
 
-        exec(f"shared.args.{element} = value")
+        setattr(shared.args, element, value)
 
     found_positive = False
     for i in gpu_memories:
@@ -449,14 +449,14 @@ def set_interface_arguments(interface_mode, extensions, bool_active):
 
     shared.args.extensions = extensions
     for k in modes[1:]:
-        exec(f"shared.args.{k} = False")
+        setattr(shared.args, k, False)
     if interface_mode != "default":
-        exec(f"shared.args.{interface_mode} = True")
+        setattr(shared.args, interface_mode, True)
 
     for k in bool_list:
-        exec(f"shared.args.{k} = False")
+        setattr(shared.args, k, False)
     for k in bool_active:
-        exec(f"shared.args.{k} = True")
+        setattr(shared.args, k, True)
 
     shared.need_restart = True
 
@@ -673,7 +673,7 @@ def create_interface():
             modes = ["default", "notebook", "chat", "cai_chat"]
             current_mode = "default"
             for mode in modes[1:]:
-                if eval(f"shared.args.{mode}"):
+                if getattr(shared.args, mode):
                     current_mode = mode
                     break
             cmd_list = vars(shared.args)
