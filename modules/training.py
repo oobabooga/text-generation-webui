@@ -68,6 +68,7 @@ def create_train_interface():
         # TODO: What is the actual maximum rank? Likely distinct per model. This might be better to somehow be on a log scale.
         lora_rank = gr.Slider(label='LoRA Rank', value=32, minimum=0, maximum=1024, step=4, info='LoRA Rank, or dimension count. Higher values produce a larger file with better control over the model\'s content. Smaller values produce a smaller file with less overall control. Small values like 4 or 8 are great for stylistic guidance, higher values like 128 or 256 are good for teaching content upgrades, extremely high values (1024+) are difficult to train but may improve fine-detail learning for large datasets. Higher ranks also require higher VRAM.')
         lora_alpha = gr.Slider(label='LoRA Alpha', value=64, minimum=0, maximum=2048, step=4, info='LoRA Alpha. This divided by the rank becomes the scaling of the LoRA. Higher means stronger. A good standard value is twice your Rank.')
+
         # TODO: Better explain what this does, in terms of real world effect especially.
         lora_dropout = gr.Slider(label='LoRA Dropout', minimum=0.0, maximum=1.0, step=0.025, value=0.05, info='Percentage probability for dropout of LoRA layers. This can help reduce overfitting. Most users should leave at default.')
         cutoff_len = gr.Slider(label='Cutoff Length', minimum=0, maximum=2048, value=256, step=32, info='Cutoff length for text input. Essentially, how long of a line of text to feed in at a time. Higher values require drastically more VRAM.')
@@ -100,9 +101,6 @@ def create_train_interface():
             stop_button = gr.Button("Interrupt")
 
         output = gr.Markdown(value="Ready")
-        all_params = [lora_name, always_override, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, do_shuffle, higher_rank_limit]
-        start_button.click(do_train, all_params, [output])
-        stop_button.click(do_interrupt, [], [], cancels=[], queue=False)
 
         def do_copy_params(lora_name: str):
             with open(f"{shared.args.lora_dir}/{clean_path(None, lora_name)}/training_parameters.json", 'r', encoding='utf-8') as formatFile:
@@ -110,12 +108,14 @@ def create_train_interface():
 
             return [params[x] for x in PARAMETERS]
 
-        copy_from.change(do_copy_params, [copy_from], all_params)
-
         def change_rank_limit(use_higher_ranks: bool):
             mult = 2 if use_higher_ranks else 1
             return {"maximum": 1024 * mult, "__type__": "update"}, {"maximum": 2048 * mult, "__type__": "update"}
 
+        all_params = [lora_name, always_override, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, do_shuffle, higher_rank_limit]
+        copy_from.change(do_copy_params, copy_from, all_params)
+        start_button.click(do_train, all_params, output)
+        stop_button.click(do_interrupt, None, None, queue=False)
         higher_rank_limit.change(change_rank_limit, [higher_rank_limit], [lora_rank, lora_alpha])
 
 
@@ -144,8 +144,8 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     yield "Prepping..."
     lora_file_path = f"{shared.args.lora_dir}/{clean_path(None, lora_name)}"
     actual_lr = float(learning_rate)
-
     model_type = type(shared.model).__name__
+
     if model_type in MODEL_CLASSES:
         model_id = MODEL_CLASSES[model_type]
     else:
