@@ -1,1 +1,1 @@
-html2text
+trafilatura
