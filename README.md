@@ -26,7 +26,8 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * [FlexGen](https://github.com/oobabooga/text-generation-webui/wiki/FlexGen)
 * [DeepSpeed ZeRO-3](https://github.com/oobabooga/text-generation-webui/wiki/DeepSpeed)
 * API [with](https://github.com/oobabooga/text-generation-webui/blob/main/api-example-stream.py) streaming and [without](https://github.com/oobabooga/text-generation-webui/blob/main/api-example.py) streaming
-* [LLaMA model, including 4-bit GPTQ](https://github.com/oobabooga/text-generation-webui/wiki/LLaMA-model)
+* [LLaMA model](https://github.com/oobabooga/text-generation-webui/wiki/LLaMA-model)
+* [4-bit GPTQ mode](https://github.com/oobabooga/text-generation-webui/wiki/GPTQ-models-(4-bit-mode)) for LLaMA, OPT, and GPT-J
 * [llama.cpp](https://github.com/oobabooga/text-generation-webui/wiki/llama.cpp-models) **\*NEW!\***
 * [RWKV model](https://github.com/oobabooga/text-generation-webui/wiki/RWKV-model)
 * [LoRA (loading and training)](https://github.com/oobabooga/text-generation-webui/wiki/Using-LoRAs)
