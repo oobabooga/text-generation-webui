@@ -41,6 +41,7 @@ settings = {
     'stop_at_newline': False,
     'add_bos_token': True,
     'ban_eos_token': False,
+    'skip_special_tokens': True,
     'truncation_length': 2048,
     'truncation_length_min': 0,
     'truncation_length_max': 4096,
@@ -152,9 +153,9 @@ args_defaults = parser.parse_args([])
 # Deprecation warnings for parameters that have been renamed
 deprecated_dict = {}
 for k in deprecated_dict:
-    if eval(f"args.{k}") != deprecated_dict[k][1]:
+    if getattr(args, k) != deprecated_dict[k][1]:
         print(f"Warning: --{k} is deprecated and will be removed. Use --{deprecated_dict[k][0]} instead.")
-        exec(f"args.{deprecated_dict[k][0]} = args.{k}")
+        setattr(args, deprecated_dict[k][0], getattr(args, k))
 
 # Deprecation warnings for parameters that have been removed
 if args.cai_chat:
