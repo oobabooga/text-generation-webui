@@ -42,3 +42,6 @@ llama-[0-9]*b-4bit$:
   instruction_template: 'Alpaca'
   skip_special_tokens: false
   custom_stopping_strings: '"### End"'
+.*koala:
+  mode: 'instruct'
+  instruction_template: 'Koala'
