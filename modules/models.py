@@ -10,8 +10,8 @@ import numpy as np
 import torch
 import transformers
 from accelerate import infer_auto_device_map, init_empty_weights
-from transformers import (AutoConfig, AutoModelForCausalLM, AutoTokenizer,
-                          BitsAndBytesConfig, LlamaTokenizer, AutoModel)
+from transformers import (AutoConfig, AutoModel, AutoModelForCausalLM,
+                          AutoTokenizer, BitsAndBytesConfig, LlamaTokenizer)
 
 import modules.shared as shared
 from modules import llama_attn_hijack
