@@ -120,7 +120,7 @@ def extract_message_from_reply(reply, state):
 
 def chatbot_wrapper(text, state, regenerate=False, _continue=False):
 
-    if shared.model_name == 'None':
+    if shared.model_name == 'None' or shared.model is None:
         print("No model is loaded! Select one in the Model tab.")
         yield shared.history['visible']
         return
@@ -198,7 +198,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False):
 
 def impersonate_wrapper(text, state):
 
-    if shared.model_name == 'None':
+    if shared.model_name == 'None' or shared.model is None:
         print("No model is loaded! Select one in the Model tab.")
         yield ''
         return
