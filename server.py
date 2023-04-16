@@ -455,6 +455,8 @@ def create_interface():
         extensions_module.load_extensions()
 
     with gr.Blocks(css=ui.css if not shared.is_chat() else ui.css + ui.chat_css, analytics_enabled=False, title=title) as shared.gradio['interface']:
+        if os.path.exists("notification.mp3"):
+            shared.gradio['audio_notification'] = gr.Audio(interactive=False, value="notification.mp3", elem_id="audio_notification", visible=False)
 
         # Create chat mode interface
         if shared.is_chat():
@@ -678,26 +680,26 @@ def create_interface():
                 ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
                 lambda x: (x, ''), shared.gradio['textbox'], [shared.gradio['Chat input'], shared.gradio['textbox']], show_progress=False).then(
                 chat.cai_chatbot_wrapper, shared.input_params, shared.gradio['display'], show_progress=shared.args.no_stream).then(
-                chat.save_history, shared.gradio['mode'], None, show_progress=False)
+                chat.save_history, shared.gradio['mode'], None, show_progress=False, _js="() => {document.querySelector('#audio_notification audio')?.play();}")
             )
 
             gen_events.append(shared.gradio['textbox'].submit(
                 ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
                 lambda x: (x, ''), shared.gradio['textbox'], [shared.gradio['Chat input'], shared.gradio['textbox']], show_progress=False).then(
                 chat.cai_chatbot_wrapper, shared.input_params, shared.gradio['display'], show_progress=shared.args.no_stream).then(
-                chat.save_history, shared.gradio['mode'], None, show_progress=False)
+                chat.save_history, shared.gradio['mode'], None, show_progress=False, _js="() => {document.querySelector('#audio_notification audio')?.play();}")
             )
 
             gen_events.append(shared.gradio['Regenerate'].click(
                 ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
                 chat.regenerate_wrapper, shared.input_params, shared.gradio['display'], show_progress=shared.args.no_stream).then(
-                chat.save_history, shared.gradio['mode'], None, show_progress=False)
+                chat.save_history, shared.gradio['mode'], None, show_progress=False, _js="() => {document.querySelector('#audio_notification audio')?.play();}")
             )
 
             gen_events.append(shared.gradio['Continue'].click(
                 ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
                 chat.continue_wrapper, shared.input_params, shared.gradio['display'], show_progress=shared.args.no_stream).then(
-                chat.save_history, shared.gradio['mode'], None, show_progress=False)
+                chat.save_history, shared.gradio['mode'], None, show_progress=False, _js="() => {document.querySelector('#audio_notification audio')?.play();}")
             )
 
             gen_events.append(shared.gradio['Impersonate'].click(
