@@ -13,8 +13,7 @@ from PIL import Image
 import modules.extensions as extensions_module
 import modules.shared as shared
 from modules.extensions import apply_extensions
-from modules.html_generator import (chat_html_wrapper, fix_newlines,
-                                    make_thumbnail)
+from modules.html_generator import chat_html_wrapper, make_thumbnail
 from modules.text_generation import (encode, generate_reply,
                                      get_max_prompt_length)
 
@@ -60,7 +59,6 @@ def generate_chat_prompt(user_input, state, **kwargs):
     elif not _continue:
 
         # Adding the user message
-        user_input = fix_newlines(user_input)
         if len(user_input) > 0:
             rows.append(f"{prefix1}{user_input}{state['end_of_turn']}\n")
 
@@ -114,7 +112,6 @@ def extract_message_from_reply(reply, state):
                     continue
                 break
 
-    reply = fix_newlines(reply)
     return reply, next_character_found
 
 
