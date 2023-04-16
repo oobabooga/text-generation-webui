@@ -12,10 +12,10 @@ import string
 
 import websockets
 
-# Note, Gradio may pick a different fn value as the definition of the Gradio app changes.
-# You can always launch the web UI and inspect the websocket stream using your browser's dev tools
-# to determine what value Gradio expects here.
-GRADIO_FN = 29
+# Gradio changes this index from time to time. To rediscover it, set VISIBLE = False in
+# modules/api.py and use the dev tools to inspect the request made after clicking on the
+# button called "Run" at the bottom of the UI
+GRADIO_FN = 34
 
 
 def random_hash():
