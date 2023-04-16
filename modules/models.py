@@ -11,7 +11,7 @@ import torch
 import transformers
 from accelerate import infer_auto_device_map, init_empty_weights
 from transformers import (AutoConfig, AutoModelForCausalLM, AutoTokenizer,
-                          BitsAndBytesConfig, LlamaTokenizer)
+                          BitsAndBytesConfig, LlamaTokenizer, AutoModel)
 
 import modules.shared as shared
 from modules import llama_attn_hijack
@@ -44,9 +44,10 @@ def load_model(model_name):
 
     shared.is_RWKV = 'rwkv-' in model_name.lower()
     shared.is_llamacpp = len(list(Path(f'{shared.args.model_dir}/{model_name}').glob('ggml*.bin'))) > 0
-
+    shared.is_chatglm = 'glm' in model_name.lower()
+    
     # Load the model in simple 16-bit mode by default
-    if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.wbits, shared.args.auto_devices, shared.args.disk, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None, shared.args.deepspeed, shared.args.flexgen, shared.is_RWKV, shared.is_llamacpp]):
+    if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.wbits, shared.args.auto_devices, shared.args.disk, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None, shared.args.deepspeed, shared.args.flexgen, shared.is_RWKV, shared.is_llamacpp, shared.is_chatglm]):
         model = AutoModelForCausalLM.from_pretrained(Path(f"{shared.args.model_dir}/{shared.model_name}"), low_cpu_mem_usage=True, torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16)
         if torch.has_mps:
             device = torch.device('mps')
@@ -109,6 +110,13 @@ def load_model(model_name):
         model, tokenizer = LlamaCppModel.from_pretrained(model_file)
         return model, tokenizer
 
+    # chatGLM model
+    elif shared.is_chatglm:
+        model = AutoModel.from_pretrained(Path(f'{shared.args.model_dir}/{shared.model_name}'), trust_remote_code=True).cuda().half()
+        tokenizer = AutoTokenizer.from_pretrained(Path(f'{shared.args.model_dir}/{shared.model_name}'), trust_remote_code=True)
+        print('ChatGLM - May Execute Remote Code')
+        return model, tokenizer
+      
     # Custom
     else:
         params = {"low_cpu_mem_usage": True}
