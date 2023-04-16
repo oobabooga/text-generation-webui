@@ -33,3 +33,6 @@ llama-[0-9]*b-4bit$:
   instruction_template: 'Alpaca'
   wbits: 4
   groupsize: 128
+.*chatglm:
+  mode: 'instruct'
+  instruction_template: 'ChatGLM'
