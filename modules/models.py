@@ -46,7 +46,7 @@ def load_model(model_name):
     shared.is_llamacpp = len(list(Path(f'{shared.args.model_dir}/{model_name}').glob('ggml*.bin'))) > 0
 
     # Load the model in simple 16-bit mode by default
-    if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.wbits, shared.args.auto_devices, shared.args.disk, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None, shared.args.deepspeed, shared.args.flexgen, shared.is_RWKV, shared.is_llamacpp]):
+    if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.wbits, shared.args.gptq_triton, shared.args.auto_devices, shared.args.disk, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None, shared.args.deepspeed, shared.args.flexgen, shared.is_RWKV, shared.is_llamacpp]):
         model = AutoModelForCausalLM.from_pretrained(Path(f"{shared.args.model_dir}/{shared.model_name}"), low_cpu_mem_usage=True, torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16)
         if torch.has_mps:
             device = torch.device('mps')
@@ -92,6 +92,12 @@ def load_model(model_name):
         tokenizer = RWKVTokenizer.from_pretrained(Path(shared.args.model_dir))
 
         return model, tokenizer
+
+    # GPTQ-triton quantized model
+    elif shared.args.gptq_triton:
+        from modules.GPTQ_triton_loader import load_quantized
+
+        model = load_quantized(model_name)
 
     # Quantized model
     elif shared.args.wbits > 0:

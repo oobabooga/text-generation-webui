@@ -122,6 +122,7 @@ parser.add_argument('--model_type', type=str, help='GPTQ: Model type of pre-quan
 parser.add_argument('--groupsize', type=int, default=-1, help='GPTQ: Group size.')
 parser.add_argument('--pre_layer', type=int, default=0, help='GPTQ: The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models.')
 parser.add_argument('--no-warmup_autotune', action='store_true', help='GPTQ: Disable warmup autotune for triton.')
+parser.add_argument('--gptq-triton', action='store_true', help='GPTQ: Use GPTQ-triton.')
 
 # FlexGen
 parser.add_argument('--flexgen', action='store_true', help='Enable the use of FlexGen offloading.')
