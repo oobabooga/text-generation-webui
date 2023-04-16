@@ -49,7 +49,8 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
         string = shared.history['internal'][i][0]
         if string not in ['', '<|BEGIN-VISIBLE-CHAT|>']:
-            rows.insert(1, f"{prefix1}{string.strip()}{state['end_of_turn']}\n")
+            this_prefix1 = prefix1.replace('<|round|>', f'{i}')  # for ChatGLM
+            rows.insert(1, f"{this_prefix1}{string.strip()}{state['end_of_turn']}\n")
 
         i -= 1
 
@@ -60,7 +61,8 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
         # Adding the user message
         if len(user_input) > 0:
-            rows.append(f"{prefix1}{user_input}{state['end_of_turn']}\n")
+            this_prefix1 = prefix1.replace('<|round|>', f'{len(shared.history["internal"])}')  # for ChatGLM
+            rows.append(f"{this_prefix1}{user_input}{state['end_of_turn']}\n")
 
         # Adding the Character prefix
         rows.append(apply_extensions(f"{prefix2.strip() if not is_instruct else prefix2}", "bot_prefix"))

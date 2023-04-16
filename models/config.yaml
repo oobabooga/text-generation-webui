@@ -45,3 +45,6 @@ llama-[0-9]*b-4bit$:
 .*koala:
   mode: 'instruct'
   instruction_template: 'Koala'
+.*chatglm:
+  mode: 'instruct'
+  instruction_template: 'ChatGLM'
