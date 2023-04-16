@@ -33,6 +33,23 @@ You are going to need to have a C++ compiler installed into your system for the 
 
 https://github.com/oobabooga/GPTQ-for-LLaMa corresponds to commit `a6f363e3f93b9fb5c26064b5ac7ed58d22e3f773` in the `cuda` branch of the original repository and is recommended by default for stability. Some models might require you to use the up-to-date CUDA or triton branches:
 
+```
+cd repositories
+rm -r GPTQ-for-LLaMa
+pip uninstall -y quant-cuda
+git clone https://github.com/qwopqwop200/GPTQ-for-LLaMa.git -b cuda
+...
+```
+
+```
+cd repositories
+rm -r GPTQ-for-LLaMa
+pip uninstall -y quant-cuda
+git clone https://github.com/qwopqwop200/GPTQ-for-LLaMa.git -b triton
+...
+```
+
+
 https://github.com/qwopqwop200/GPTQ-for-LLaMa
 
 #### Step 2: get the pre-converted weights
