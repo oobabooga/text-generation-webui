@@ -16,6 +16,8 @@ from modelutils import find_layers
 from quant import make_quant
 
 
+# This function is a replacement for the load_quant function in the
+# GPTQ-for_LLaMa repository. It supports more models and branches.
 def _load_quant(model, checkpoint, wbits, groupsize=-1, faster_kernel=False, exclude_layers=['lm_head'], kernel_switch_threshold=128):
 
     def noop(*args, **kwargs):
@@ -78,8 +80,8 @@ def _load_quant(model, checkpoint, wbits, groupsize=-1, faster_kernel=False, exc
     return model
 
 
+# Used to locate the .pt/.safetensors quantized file
 def find_quantized_model_file(model_name):
-
     path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
     pt_path = None
     priority_name_list = [
@@ -112,6 +114,7 @@ def find_quantized_model_file(model_name):
     return pt_path
 
 
+# The function that loads the model in modules/models.py
 def load_quantized(model_name):
 
     # Find the model type
