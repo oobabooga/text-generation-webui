@@ -41,9 +41,6 @@ def generate_reply_wrapper(string):
     }
     params = json.loads(string)
 
-    for k in params[1]:
-        generate_params[k] = params[1][k]
-    
     if chat_api['enabled']:
         # Overwrite values from UI with values sent to API method
         for k in params[1]:
