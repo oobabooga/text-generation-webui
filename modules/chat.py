@@ -438,6 +438,8 @@ def load_character(character, name1, name2, mode):
         name2 = data['name'] if 'name' in data else data['char_name']
         if 'your_name' in data and data['your_name'] != '':
             name1 = data['your_name']
+        else:
+            name1 = shared.settings['name1']
 
         for field in ['context', 'greeting', 'example_dialogue', 'char_persona', 'char_greeting', 'world_scenario']:
             if field in data:
