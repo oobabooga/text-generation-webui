@@ -4,9 +4,9 @@ This is possible thanks to [@qwopqwop200](https://github.com/qwopqwop200/GPTQ-fo
 
 GPTQ is a clever quantization algorithm that lightly reoptimizes the weights during quantization so that the accuracy loss is compensated relative to a round-to-nearest quantization. See the paper for more details: https://arxiv.org/abs/2210.17323
 
-### Installation
+## Installation
 
-#### Step 0: install nvcc
+### Step 0: install nvcc
 
 ```
 conda activate textgen
@@ -17,7 +17,7 @@ The command above takes some 10 minutes to run and shows no progress bar or upda
 
 See this issue for more details: https://github.com/oobabooga/text-generation-webui/issues/416#issuecomment-1475078571
 
-#### Step 1: install GPTQ-for-LLaMa
+### Step 1: install GPTQ-for-LLaMa
 
 Clone the GPTQ-for-LLaMa repository into the `text-generation-webui/repositories` subfolder and install it:
 
@@ -52,14 +52,14 @@ git clone https://github.com/qwopqwop200/GPTQ-for-LLaMa.git -b triton
 
 https://github.com/qwopqwop200/GPTQ-for-LLaMa
 
-#### Step 2: get the pre-converted weights
+### Step 2: get the pre-converted weights
 
 * Converted without `group-size` (better for the 7b model): https://github.com/oobabooga/text-generation-webui/pull/530#issuecomment-1483891617
 * Converted with `group-size` (better from 13b upwards): https://github.com/oobabooga/text-generation-webui/pull/530#issuecomment-1483941105 
 
 Note: the tokenizer files in those torrents are not up to date.
 
-#### Step 3: Start the web UI:
+### Step 3: Start the web UI:
 
 For the models converted without `group-size`:
 
@@ -79,7 +79,7 @@ The command-line flags `--wbits` and `--groupsize` are automatically detected ba
 python server.py --model llama-13b-4bit-128g --wbits 4 --groupsize 128
 ```
 
-### CPU offloading
+## CPU offloading
 
 It is possible to offload part of the layers of the 4-bit model to the CPU with the `--pre_layer` flag. The higher the number after `--pre_layer`, the more layers will be allocated to the GPU.
 
@@ -93,4 +93,36 @@ This is the performance:
 
 ```
 Output generated in 123.79 seconds (1.61 tokens/s, 199 tokens)
+```
+
+## Using LoRAs in 4-bit mode
+
+At the moment, this feature is not officially supported by the relevant libraries, but a patch exists and is supported by this web UI: https://github.com/johnsmith0031/alpaca_lora_4bit
+
+In order to use it:
+
+1. Make sure that your requirements are up to date:
+
+```
+cd text-generation-webui
+pip install -r requirements.txt --upgrade
+```
+
+2. Clone `johnsmith0031/alpaca_lora_4bit` into the repositories folder:
+
+```
+cd text-generation-webui/repositories
+git clone https://github.com/johnsmith0031/alpaca_lora_4bit
+```
+
+3. Install https://github.com/sterlind/GPTQ-for-LLaMa with this command:
+
+```
+pip install git+https://github.com/sterlind/GPTQ-for-LLaMa.git@lora_4bit
+```
+
+4. Start the UI with the `--monkey-patch` flag:
+
+```
+python server.py --model llama-7b-4bit-128g --listen --lora tloen_alpaca-lora-7b --monkey-patch
 ```
