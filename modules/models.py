@@ -99,6 +99,16 @@ def load_model(model_name):
 
         return model, tokenizer
 
+    # llamacpp model
+    elif shared.is_llamacpp:
+        from modules.llamacpp_model_alternative import LlamaCppModel
+
+        model_file = list(Path(f'{shared.args.model_dir}/{model_name}').glob('ggml*.bin'))[0]
+        print(f"llama.cpp weights detected: {model_file}\n")
+
+        model, tokenizer = LlamaCppModel.from_pretrained(model_file)
+        return model, tokenizer
+
     # Quantized model
     elif shared.args.wbits > 0:
 
@@ -115,16 +125,6 @@ def load_model(model_name):
             from modules.GPTQ_loader import load_quantized
 
             model = load_quantized(model_name)
-
-    # llamacpp model
-    elif shared.is_llamacpp:
-        from modules.llamacpp_model_alternative import LlamaCppModel
-
-        model_file = list(Path(f'{shared.args.model_dir}/{model_name}').glob('ggml*.bin'))[0]
-        print(f"llama.cpp weights detected: {model_file}\n")
-
-        model, tokenizer = LlamaCppModel.from_pretrained(model_file)
-        return model, tokenizer
 
     # Custom
     else:
