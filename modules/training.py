@@ -14,6 +14,7 @@ from peft import (LoraConfig, PeftModel, get_peft_model,
                   get_peft_model_state_dict, prepare_model_for_int8_training)
 
 from modules import shared, ui
+from modules.evaluate import calculate_perplexity
 
 # This mapping is from a very recent commit, not yet released.
 # If not available, default to a backup map for the 3 safe model types.
@@ -87,9 +88,9 @@ def create_train_interface():
 
             eval_steps = gr.Number(label='Evaluate every n steps', value=100, info='If an evaluation dataset is given, test it every time this many steps pass.')
 
-        with gr.Tab(label="Raw Text File"):
+        with gr.Tab(label="Raw text file"):
             with gr.Row():
-                raw_text_file = gr.Dropdown(choices=get_datasets('training/datasets', 'txt'), value='None', label='Text File', info='The raw text file to use for training.')
+                raw_text_file = gr.Dropdown(choices=get_datasets('training/datasets', 'txt'), value='None', label='Text file', info='The raw text file to use for training.')
                 ui.create_refresh_button(raw_text_file, lambda: None, lambda: {'choices': get_datasets('training/datasets', 'txt')}, 'refresh-button')
 
             with gr.Row():
@@ -102,26 +103,46 @@ def create_train_interface():
 
         output = gr.Markdown(value="Ready")
 
-        def do_copy_params(lora_name: str):
-            with open(f"{shared.args.lora_dir}/{clean_path(None, lora_name)}/training_parameters.json", 'r', encoding='utf-8') as formatFile:
-                params: dict[str, str] = json.load(formatFile)
+    with gr.Tab('Evaluate the current model', elem_id='lora-train-tab'):
+        with gr.Row():
+            with gr.Column():
+                evaluate_text_file = gr.Dropdown(choices=get_datasets('training/datasets', 'txt'), value='None', label='Text file', info='The raw text file on which the model will be evaluated.')
+                context_length = gr.Slider(label='Context length', minimum=0, maximum=2048, value=256, step=16)
+                window_length = gr.Slider(label='Window length', minimum=1, maximum=2048, value=1, step=1)
+                with gr.Row():
+                    start_evaluation = gr.Button("Start model evaluation")
+                    stop_evaluation = gr.Button("Interrupt")
 
-            return [params[x] for x in PARAMETERS]
+            with gr.Column():
+                evaluation_output = gr.Markdown(value="Ready")
 
-        def change_rank_limit(use_higher_ranks: bool):
-            mult = 2 if use_higher_ranks else 1
-            return {"maximum": 1024 * mult, "__type__": "update"}, {"maximum": 2048 * mult, "__type__": "update"}
+    # Training events
+    all_params = [lora_name, always_override, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, do_shuffle, higher_rank_limit]
+    copy_from.change(do_copy_params, copy_from, all_params)
+    start_button.click(do_train, all_params, output)
+    stop_button.click(do_interrupt, None, None, queue=False)
+    higher_rank_limit.change(change_rank_limit, [higher_rank_limit], [lora_rank, lora_alpha])
 
-        all_params = [lora_name, always_override, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, do_shuffle, higher_rank_limit]
-        copy_from.change(do_copy_params, copy_from, all_params)
-        start_button.click(do_train, all_params, output)
-        stop_button.click(do_interrupt, None, None, queue=False)
-        higher_rank_limit.change(change_rank_limit, [higher_rank_limit], [lora_rank, lora_alpha])
+    # Evaluation events
+    ev = start_evaluation.click(calculate_perplexity, [evaluate_text_file, context_length, window_length], evaluation_output, show_progress=False)
+    stop_evaluation.click(None, None, None, cancels=[ev])
 
 
 def do_interrupt():
     global WANT_INTERRUPT
     WANT_INTERRUPT = True
+
+
+def do_copy_params(lora_name: str):
+    with open(f"{shared.args.lora_dir}/{clean_path(None, lora_name)}/training_parameters.json", 'r', encoding='utf-8') as formatFile:
+        params: dict[str, str] = json.load(formatFile)
+
+    return [params[x] for x in PARAMETERS]
+
+
+def change_rank_limit(use_higher_ranks: bool):
+    mult = 2 if use_higher_ranks else 1
+    return {"maximum": 1024 * mult, "__type__": "update"}, {"maximum": 2048 * mult, "__type__": "update"}
 
 
 def clean_path(base_path: str, path: str):
