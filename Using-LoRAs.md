@@ -16,7 +16,7 @@ python server.py --model llama-7b-hf --lora alpaca-lora-7b --load-in-8bit
 python server.py --model llama-7b-hf --lora alpaca-lora-7b --cpu
 ```
 
-* 4-bit mode doesn't cleanly work with LoRAs yet, but this patch can be used: https://github.com/johnsmith0031/alpaca_lora_4bit
+* For using LoRAs in 4-bit mode, follow these special instructions: https://github.com/oobabooga/text-generation-webui/wiki/GPTQ-models-(4-bit-mode)#using-loras-in-4-bit-mode
 
 * Instead of using the `--lora` command-line flag, you can also select the LoRA in the "Parameters" tab of the interface.
 
@@ -58,6 +58,8 @@ This was contributed by [mcmonkey4eva](https://github.com/mcmonkey4eva) in PR [#
 
 
 #### Using the original alpaca-lora code
+
+Kept here for reference. The Training tab has much more features than this method.
 
 ```
 conda activate textgen
