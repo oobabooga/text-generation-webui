@@ -238,7 +238,7 @@ Optionally, you can use the following command-line flags:
 | `--pre_layer PRE_LAYER`   | GPTQ: The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models. |
 | `--no-quant_attn`         | GPTQ: Disable quant attention for triton. If you encounter incoherent results try disabling this. |
 | `--no-warmup_autotune`    | GPTQ: Disable warmup autotune for triton. |
-| `--no-fused_mlp`          | GPTQ: Disable fused mlp for triton. If you encounter "Unexpected mma -> mma layout conversion" try disabling this. |
+| `--no-fused_mlp`          | GPTQ: Disable fused mlp for triton. If you encounter "Unexpected mma -> mma layout conversion" try disabling this. Disabling may also help model splitting for multi-gpu setups.|
 | `--monkey-patch`          | GPTQ: Apply the monkey patch for using LoRAs with quantized models. |
 
 #### FlexGen
