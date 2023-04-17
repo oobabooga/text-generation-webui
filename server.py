@@ -36,7 +36,7 @@ def get_available_models():
     if shared.args.flexgen:
         return sorted([re.sub('-np$', '', item.name) for item in list(Path(f'{shared.args.model_dir}/').glob('*')) if item.name.endswith('-np')], key=str.lower)
     else:
-        return sorted([re.sub('.pth$', '', item.name) for item in list(Path(f'{shared.args.model_dir}/').glob('*')) if not item.name.endswith(('.txt', '-np', '.pt', '.json'))], key=str.lower)
+        return sorted([re.sub('.pth$', '', item.name) for item in list(Path(f'{shared.args.model_dir}/').glob('*')) if not item.name.endswith(('.txt', '-np', '.pt', '.json', '.yaml'))], key=str.lower)
 
 
 def get_available_presets():
@@ -73,7 +73,7 @@ def get_available_softprompts():
 
 
 def get_available_loras():
-    return ['None'] + sorted([item.name for item in list(Path(shared.args.lora_dir).glob('*')) if not item.name.endswith(('.txt', '-np', '.pt', '.json'))], key=str.lower)
+    return sorted([item.name for item in list(Path(shared.args.lora_dir).glob('*')) if not item.name.endswith(('.txt', '-np', '.pt', '.json'))], key=str.lower)
 
 
 def load_model_wrapper(selected_model):
@@ -214,7 +214,7 @@ def update_model_parameters(state, initial=False):
         elif element == 'cpu_memory' and value is not None:
             value = f"{value}MiB"
 
-        exec(f"shared.args.{element} = value")
+        setattr(shared.args, element, value)
 
     found_positive = False
     for i in gpu_memories:
@@ -421,12 +421,16 @@ def create_settings_menus(default_preset):
                         shared.gradio['length_penalty'] = gr.Slider(-5, 5, value=generate_params['length_penalty'], label='length_penalty')
                 shared.gradio['early_stopping'] = gr.Checkbox(value=generate_params['early_stopping'], label='early_stopping')
 
-            with gr.Group():
+            with gr.Box():
                 with gr.Row():
-                    shared.gradio['add_bos_token'] = gr.Checkbox(value=shared.settings['add_bos_token'], label='Add the bos_token to the beginning of prompts', info='Disabling this can make the replies more creative.')
-                    shared.gradio['ban_eos_token'] = gr.Checkbox(value=shared.settings['ban_eos_token'], label='Ban the eos_token', info='This forces the model to never end the generation prematurely.')
-                shared.gradio['truncation_length'] = gr.Slider(value=shared.settings['truncation_length'], minimum=shared.settings['truncation_length_min'], maximum=shared.settings['truncation_length_max'], step=1, label='Truncate the prompt up to this length', info='The leftmost tokens are removed if the prompt exceeds this length. Most models require this to be at most 2048.')
-                shared.gradio['custom_stopping_strings'] = gr.Textbox(lines=1, value=shared.settings["custom_stopping_strings"] or None, label='Custom stopping strings', info='In addition to the defaults. Written between "" and separated by commas. For instance: "\\nYour Assistant:", "\\nThe assistant:"')
+                    with gr.Column():
+                        shared.gradio['truncation_length'] = gr.Slider(value=shared.settings['truncation_length'], minimum=shared.settings['truncation_length_min'], maximum=shared.settings['truncation_length_max'], step=1, label='Truncate the prompt up to this length', info='The leftmost tokens are removed if the prompt exceeds this length. Most models require this to be at most 2048.')
+                        shared.gradio['custom_stopping_strings'] = gr.Textbox(lines=1, value=shared.settings["custom_stopping_strings"] or None, label='Custom stopping strings', info='In addition to the defaults. Written between "" and separated by commas. For instance: "\\nYour Assistant:", "\\nThe assistant:"')
+                    with gr.Column():
+                        shared.gradio['add_bos_token'] = gr.Checkbox(value=shared.settings['add_bos_token'], label='Add the bos_token to the beginning of prompts', info='Disabling this can make the replies more creative.')
+                        shared.gradio['ban_eos_token'] = gr.Checkbox(value=shared.settings['ban_eos_token'], label='Ban the eos_token', info='Forces the model to never end the generation prematurely.')
+
+                        shared.gradio['skip_special_tokens'] = gr.Checkbox(value=shared.settings['skip_special_tokens'], label='Skip special tokens', info='Some specific models need this unset.')
 
     with gr.Accordion('Soft prompt', open=False):
         with gr.Row():
@@ -449,14 +453,14 @@ def set_interface_arguments(interface_mode, extensions, bool_active):
 
     shared.args.extensions = extensions
     for k in modes[1:]:
-        exec(f"shared.args.{k} = False")
+        setattr(shared.args, k, False)
     if interface_mode != "default":
-        exec(f"shared.args.{interface_mode} = True")
+        setattr(shared.args, interface_mode, True)
 
     for k in bool_list:
-        exec(f"shared.args.{k} = False")
+        setattr(shared.args, k, False)
     for k in bool_active:
-        exec(f"shared.args.{k} = True")
+        setattr(shared.args, k, True)
 
     shared.need_restart = True
 
@@ -673,7 +677,7 @@ def create_interface():
             modes = ["default", "notebook", "chat", "cai_chat"]
             current_mode = "default"
             for mode in modes[1:]:
-                if eval(f"shared.args.{mode}"):
+                if getattr(shared.args, mode):
                     current_mode = mode
                     break
             cmd_list = vars(shared.args)
@@ -766,7 +770,7 @@ def create_interface():
                 chat.redraw_html, reload_inputs, shared.gradio['display'])
 
             shared.gradio['instruction_template'].change(
-                lambda character, name1, name2, mode: chat.load_character(character, name1, name2, mode), [shared.gradio[k] for k in ['instruction_template', 'name1', 'name2', 'mode']], [shared.gradio[k] for k in ['name1', 'name2', 'character_picture', 'greeting', 'context', 'end_of_turn', 'display']]).then(
+                chat.load_character, [shared.gradio[k] for k in ['instruction_template', 'name1', 'name2', 'mode']], [shared.gradio[k] for k in ['name1', 'name2', 'character_picture', 'greeting', 'context', 'end_of_turn', 'display']]).then(
                 chat.redraw_html, reload_inputs, shared.gradio['display'])
 
             shared.gradio['upload_chat_history'].upload(
@@ -784,6 +788,7 @@ def create_interface():
             shared.gradio['your_picture'].change(chat.upload_your_profile_picture, [shared.gradio[k] for k in ['your_picture', 'name1', 'name2', 'mode']], shared.gradio['display'])
 
             shared.gradio['interface'].load(None, None, None, _js=f"() => {{{ui.main_js+ui.chat_js}}}")
+            shared.gradio['interface'].load(chat.load_character, [shared.gradio[k] for k in ['instruction_template', 'name1', 'name2', 'mode']], [shared.gradio[k] for k in ['name1', 'name2', 'character_picture', 'greeting', 'context', 'end_of_turn', 'display']])
             shared.gradio['interface'].load(chat.load_default_history, [shared.gradio[k] for k in ['name1', 'name2']], None)
             shared.gradio['interface'].load(chat.redraw_html, reload_inputs, shared.gradio['display'], show_progress=True)
 

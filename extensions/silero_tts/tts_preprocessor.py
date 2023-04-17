@@ -66,8 +66,14 @@ def preprocess(string):
 
 
 def remove_surrounded_chars(string):
-    # this expression matches to 'as few symbols as possible (0 upwards) between any asterisks' OR
-    # 'as few symbols as possible (0 upwards) between an asterisk and the end of the string'
+    # first this expression will check if there is a string nested exclusively between a alt=
+    # and a style= string. This would correspond to only a the alt text of an embedded image
+    # If it matches it will only keep that part as the string, and rend it for further processing
+    # Afterwards this expression matches to 'as few symbols as possible (0 upwards) between any 
+    # asterisks' OR' as few symbols as possible (0 upwards) between an asterisk and the end of the string'
+    if re.search(r'(?<=alt=)(.*)(?=style=)', string, re.DOTALL):
+        m = re.search(r'(?<=alt=)(.*)(?=style=)', string, re.DOTALL)
+        string = m.group(0)
     return re.sub(r'\*[^*]*?(\*|$)', '', string)
 
 
