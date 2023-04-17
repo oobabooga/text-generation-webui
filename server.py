@@ -832,7 +832,8 @@ def create_interface():
             shared.gradio['Stop'].click(stop_everything_event, None, None, queue=False, cancels=gen_events if shared.args.no_stream else None)
             shared.gradio['prompt_menu'].change(load_prompt, [shared.gradio['prompt_menu']], [shared.gradio['textbox']], show_progress=False)
             shared.gradio['save_prompt'].click(save_prompt, [shared.gradio['textbox']], [shared.gradio['status']], show_progress=False)
-            shared.gradio['interface'].load(None, None, None, _js=f"() => {{{ui.main_js}}}")
+            # Use a dummy output to avoid Gradio throwing a JavaScript TypeError in the browser console when calling 'forEach()' on the undefined 'outputs' value
+            shared.gradio['interface'].load(None, None, gr.Label(visible=False), _js=f"() => {{{ui.main_js}}}")
 
     # Launch the interface
     shared.gradio['interface'].queue()
