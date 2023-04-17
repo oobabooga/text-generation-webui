@@ -12,7 +12,7 @@ which can be invoked with the
 
 command-line flag.
 
-## [text-generation-webui-extensions](https://github.com/oobabooga/text-generation-webui-extensions/blob/main/README.md)
+## [text-generation-webui-extensions](https://github.com/oobabooga/text-generation-webui-extensions)
 
 The link above contains a directory of user extensions for text-generation-webui.
 
