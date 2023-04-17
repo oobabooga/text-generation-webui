@@ -41,7 +41,6 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
     i = len(shared.history['internal']) - 1
     while i >= 0 and len(encode(''.join(rows))[0]) < max_length:
-
         if _continue and i == len(shared.history['internal']) - 1:
             rows.insert(1, f"{prefix2}{shared.history['internal'][i][1]}")
         else:
@@ -433,12 +432,12 @@ def load_character(character, name1, name2, mode):
             filepath = Path(f'{folder}/{character}.{extension}')
             if filepath.exists():
                 break
+
         file_contents = open(filepath, 'r', encoding='utf-8').read()
         data = json.loads(file_contents) if extension == "json" else yaml.safe_load(file_contents)
-
+        name2 = data['name'] if 'name' in data else data['char_name']
         if 'your_name' in data and data['your_name'] != '':
             name1 = data['your_name']
-        name2 = data['name'] if 'name' in data else data['char_name']
 
         for field in ['context', 'greeting', 'example_dialogue', 'char_persona', 'char_greeting', 'world_scenario']:
             if field in data:
@@ -452,10 +451,13 @@ def load_character(character, name1, name2, mode):
 
         if 'example_dialogue' in data:
             context += f"{data['example_dialogue'].strip()}\n"
+
         if greeting_field in data:
             greeting = data[greeting_field]
+
         if 'end_of_turn' in data:
             end_of_turn = data['end_of_turn']
+
     else:
         context = shared.settings['context']
         name2 = shared.settings['name2']
@@ -465,7 +467,6 @@ def load_character(character, name1, name2, mode):
     if mode != 'instruct':
         shared.history['internal'] = []
         shared.history['visible'] = []
-
         if Path(f'logs/{shared.character}_persistent.json').exists():
             load_history(open(Path(f'logs/{shared.character}_persistent.json'), 'rb').read(), name1, name2)
         else:
