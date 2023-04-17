@@ -12,24 +12,23 @@ which can be invoked with the
 
 command-line flag.
 
-## Gallery
+## [text-generation-webui-extensions](https://github.com/oobabooga/text-generation-webui-extensions/blob/main/README.md)
+
+The link above contains a directory of user extensions for text-generation-webui.
+
+## Built-in extensions
 
 |Extension|Description|
 |---------|-----------|
-|[character_bias](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/character_bias/script.py)| Just a very simple example that biases the bot's responses in chat mode.|
-|[google_translate](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/google_translate/script.py)| Automatically translates inputs and outputs using Google Translate.|
-|[silero_tts](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/silero_tts/script.py)| Text-to-speech extension using [Silero](https://github.com/snakers4/silero-models). When used in chat mode, it replaces the responses with an audio widget. Authors: me and [@xanthousm](https://github.com/xanthousm). |
+|[google_translate](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/google_translate)| Automatically translates inputs and outputs using Google Translate.|
+|[character_bias](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/character_bias)| Just a very simple example that biases the bot's responses in chat mode.|
+|[gallery](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/gallery/)| Creates a gallery with the chat characters and their pictures. |
+|[silero_tts](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/silero_tts)| Text-to-speech extension using [Silero](https://github.com/snakers4/silero-models). When used in chat mode, it replaces the responses with an audio widget. |
 |[elevenlabs_tts](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/elevenlabs_tts)| Text-to-speech extension using the [ElevenLabs](https://beta.elevenlabs.io/) API. You need an API key to use it. Author: [@MetaIX](https://github.com/MetaIX). |
-|[send_pictures](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/send_pictures/script.py)| Creates an image upload field that can be used to send images to the bot in chat mode. Captions are automatically generated using BLIP. Author: [@SillyLossy](https://github.com/sillylossy).|
-|[gallery](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/gallery/script.py)| Creates a gallery with the chat characters and their pictures. |
-|[llama_prompts](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/llama_prompts)| Creates a dropdown menu with a selection of interesting prompts to choose from. Based on [devbrones/llama-prompts](https://github.com/devbrones/llama-prompts). Only applies in regular or `--notebook` mode. |
+|[send_pictures](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/send_pictures/)| Creates an image upload field that can be used to send images to the bot in chat mode. Captions are automatically generated using BLIP. Author: [@SillyLossy](https://github.com/sillylossy).|
 |[api](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/api)| Creates an API similar to the one provided by KoboldAI. Works with TavernAI: start the web UI with `python server.py --no-stream --extensions api` and set the API URL to `http://127.0.0.1:5000/api`. Author: [@mayaeary](https://github.com/mayaeary).|
 |[whisper_stt](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/whisper_stt)| Allows you to enter your inputs in chat mode using your microphone. Author: [@EliasVincent](https://github.com/EliasVincent).|
 |[sd_api_pictures](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/sd_api_pictures)| Allows you to request pictures from the bot in chat mode, which will be generated using the AUTOMATIC1111 Stable Diffusion API. See examples [here](https://github.com/oobabooga/text-generation-webui/pull/309). Author: [@Brawlence](https://github.com/Brawlence).|
-|[long_term_memory](https://github.com/wawawario2/long_term_memory) | A sophisticated extension that creates a long term memory for bots in chat mode. Author: [@wawawario2](https://github.com/wawawario2). |
-|[complex_memory](https://github.com/theubie/complex_memory) | A KoboldAI-like memory extension. You create memories that are injected into the context of the conversation, for prompting based on keywords. Author: [@theubie](https://github.com/theubie). |
-|[telegram_bot](https://github.com/innightwolfsleep/text-generation-webui-telegram_bot) | Provides a cai-chat like telegram bot interface. Author: [@innightwolfsleep](https://github.com/innightwolfsleep). |
-
 
 ## How to write an extension
 
