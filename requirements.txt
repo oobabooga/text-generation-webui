@@ -1,7 +1,8 @@
 accelerate==0.18.0
+colorama
 datasets
 flexgen==0.1.7
-gradio==3.25
+gradio==3.25.0
 markdown
 numpy
 Pillow>=9.5.0

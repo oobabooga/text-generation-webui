@@ -101,9 +101,20 @@ def load_model(model_name):
 
     # Quantized model
     elif shared.args.wbits > 0:
-        from modules.GPTQ_loader import load_quantized
 
-        model = load_quantized(model_name)
+        # Monkey patch
+        if shared.args.monkey_patch:
+            print("Warning: applying the monkey patch for using LoRAs in 4-bit mode.\nIt may cause undefined behavior outside its intended scope.")
+            from modules.monkey_patch_gptq_lora import load_model_llama
+
+            model, tokenizer = load_model_llama(model_name)
+            return model, tokenizer
+
+        # No monkey patch
+        else:
+            from modules.GPTQ_loader import load_quantized
+
+            model = load_quantized(model_name)
 
     # llamacpp model
     elif shared.is_llamacpp:

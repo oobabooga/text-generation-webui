@@ -237,6 +237,7 @@ Optionally, you can use the following command-line flags:
 | `--groupsize GROUPSIZE`   | GPTQ: Group size. |
 | `--pre_layer PRE_LAYER`   | GPTQ: The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models. |
 | `--no-warmup_autotune`    | GPTQ: Disable warmup autotune for triton. |
+| `--monkey-patch`          | GPTQ: Apply the monkey patch for using LoRAs with quantized models. |
 
 #### FlexGen
 
