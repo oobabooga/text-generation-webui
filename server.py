@@ -110,6 +110,7 @@ def load_preset_values(preset_menu, state, return_dict=False):
         'length_penalty': 1,
         'no_repeat_ngram_size': 0,
         'early_stopping': False,
+        'custom_stopping_strings': None,
     }
     with open(Path(f'presets/{preset_menu}.txt'), 'r') as infile:
         preset = infile.read()
@@ -119,11 +120,16 @@ def load_preset_values(preset_menu, state, return_dict=False):
             generate_params[i[0].strip()] = eval(i[1].strip())
     generate_params['temperature'] = min(1.99, generate_params['temperature'])
 
+    # convert custom_stopping_strings to string, must enclose in single quotes
+    # custom_stopping_strings='"\nYou:", "\nChatBot:"'
+    if generate_params['custom_stopping_strings'] is not None:
+        generate_params['custom_stopping_strings'] = str(generate_params['custom_stopping_strings']).replace('\n', '\\n')
+
     if return_dict:
         return generate_params
     else:
         state.update(generate_params)
-        return state, *[generate_params[k] for k in ['do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping']]
+        return state, *[generate_params[k] for k in ['do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping', 'custom_stopping_strings']]
 
 
 def upload_soft_prompt(file):
@@ -425,7 +431,7 @@ def create_settings_menus(default_preset):
                 with gr.Row():
                     with gr.Column():
                         shared.gradio['truncation_length'] = gr.Slider(value=shared.settings['truncation_length'], minimum=shared.settings['truncation_length_min'], maximum=shared.settings['truncation_length_max'], step=1, label='Truncate the prompt up to this length', info='The leftmost tokens are removed if the prompt exceeds this length. Most models require this to be at most 2048.')
-                        shared.gradio['custom_stopping_strings'] = gr.Textbox(lines=1, value=shared.settings["custom_stopping_strings"] or None, label='Custom stopping strings', info='In addition to the defaults. Written between "" and separated by commas. For instance: "\\nYour Assistant:", "\\nThe assistant:"')
+                        shared.gradio['custom_stopping_strings'] = gr.Textbox(lines=1, value=generate_params['custom_stopping_strings'] or None, label='custom_stopping_strings', info='In addition to the defaults. Written between "" and separated by commas. For instance: "\\nYour Assistant:", "\\nThe assistant:"')
                     with gr.Column():
                         shared.gradio['add_bos_token'] = gr.Checkbox(value=shared.settings['add_bos_token'], label='Add the bos_token to the beginning of prompts', info='Disabling this can make the replies more creative.')
                         shared.gradio['ban_eos_token'] = gr.Checkbox(value=shared.settings['ban_eos_token'], label='Ban the eos_token', info='Forces the model to never end the generation prematurely.')
@@ -441,7 +447,7 @@ def create_settings_menus(default_preset):
         with gr.Row():
             shared.gradio['upload_softprompt'] = gr.File(type='binary', file_types=['.zip'])
 
-    shared.gradio['preset_menu'].change(load_preset_values, [shared.gradio[k] for k in ['preset_menu', 'interface_state']], [shared.gradio[k] for k in ['interface_state', 'do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping']])
+    shared.gradio['preset_menu'].change(load_preset_values, [shared.gradio[k] for k in ['preset_menu', 'interface_state']], [shared.gradio[k] for k in ['interface_state', 'do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping', 'custom_stopping_strings']])
     shared.gradio['softprompts_menu'].change(load_soft_prompt, shared.gradio['softprompts_menu'], shared.gradio['softprompts_menu'], show_progress=True)
     shared.gradio['upload_softprompt'].upload(upload_soft_prompt, shared.gradio['upload_softprompt'], shared.gradio['softprompts_menu'])
 
