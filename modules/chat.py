@@ -1,3 +1,4 @@
+import ast
 import base64
 import copy
 import io
@@ -12,8 +13,7 @@ from PIL import Image
 import modules.extensions as extensions_module
 import modules.shared as shared
 from modules.extensions import apply_extensions
-from modules.html_generator import (chat_html_wrapper, fix_newlines,
-                                    make_thumbnail)
+from modules.html_generator import chat_html_wrapper, make_thumbnail
 from modules.text_generation import (encode, generate_reply,
                                      get_max_prompt_length)
 
@@ -24,6 +24,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
     also_return_rows = kwargs['also_return_rows'] if 'also_return_rows' in kwargs else False
     is_instruct = state['mode'] == 'instruct'
     rows = [f"{state['context'].strip()}\n"]
+    min_rows = 3
 
     # Finding the maximum prompt size
     chat_prompt_size = state['chat_prompt_size']
@@ -40,31 +41,33 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
     i = len(shared.history['internal']) - 1
     while i >= 0 and len(encode(''.join(rows))[0]) < max_length:
+
         if _continue and i == len(shared.history['internal']) - 1:
             rows.insert(1, f"{prefix2}{shared.history['internal'][i][1]}")
         else:
             rows.insert(1, f"{prefix2}{shared.history['internal'][i][1].strip()}{state['end_of_turn']}\n")
+
         string = shared.history['internal'][i][0]
         if string not in ['', '<|BEGIN-VISIBLE-CHAT|>']:
-            rows.insert(1, f"{prefix1}{string.strip()}{state['end_of_turn']}\n")
+            this_prefix1 = prefix1.replace('<|round|>', f'{i}')  # for ChatGLM
+            rows.insert(1, f"{this_prefix1}{string.strip()}{state['end_of_turn']}\n")
+
         i -= 1
 
     if impersonate:
+        min_rows = 2
         rows.append(f"{prefix1.strip() if not is_instruct else prefix1}")
-        limit = 2
-    elif _continue:
-        limit = 3
-    else:
+    elif not _continue:
+
         # Adding the user message
-        user_input = fix_newlines(user_input)
         if len(user_input) > 0:
-            rows.append(f"{prefix1}{user_input}{state['end_of_turn']}\n")
+            this_prefix1 = prefix1.replace('<|round|>', f'{len(shared.history["internal"])}')  # for ChatGLM
+            rows.append(f"{this_prefix1}{user_input}{state['end_of_turn']}\n")
 
         # Adding the Character prefix
         rows.append(apply_extensions(f"{prefix2.strip() if not is_instruct else prefix2}", "bot_prefix"))
-        limit = 3
 
-    while len(rows) > limit and len(encode(''.join(rows))[0]) >= max_length:
+    while len(rows) > min_rows and len(encode(''.join(rows))[0]) >= max_length:
         rows.pop(1)
     prompt = ''.join(rows)
 
@@ -79,7 +82,7 @@ def get_stopping_strings(state):
         stopping_strings = [f"\n{state['name1']}", f"\n{state['name2']}"]
     else:
         stopping_strings = [f"\n{state['name1']}:", f"\n{state['name2']}:"]
-    stopping_strings += eval(f"[{state['custom_stopping_strings']}]")
+    stopping_strings += ast.literal_eval(f"[{state['custom_stopping_strings']}]")
     return stopping_strings
 
 
@@ -111,13 +114,12 @@ def extract_message_from_reply(reply, state):
                     continue
                 break
 
-    reply = fix_newlines(reply)
     return reply, next_character_found
 
 
 def chatbot_wrapper(text, state, regenerate=False, _continue=False):
 
-    if shared.model_name == 'None':
+    if shared.model_name == 'None' or shared.model is None:
         print("No model is loaded! Select one in the Model tab.")
         yield shared.history['visible']
         return
@@ -195,7 +197,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False):
 
 def impersonate_wrapper(text, state):
 
-    if shared.model_name == 'None':
+    if shared.model_name == 'None' or shared.model is None:
         print("No model is loaded! Select one in the Model tab.")
         yield ''
         return

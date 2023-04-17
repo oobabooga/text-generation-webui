@@ -41,6 +41,7 @@ settings = {
     'stop_at_newline': False,
     'add_bos_token': True,
     'ban_eos_token': False,
+    'skip_special_tokens': True,
     'truncation_length': 2048,
     'truncation_length_min': 0,
     'truncation_length_max': 4096,
@@ -112,6 +113,7 @@ parser.add_argument('--bf16', action='store_true', help='Load the model with bfl
 parser.add_argument('--no-cache', action='store_true', help='Set use_cache to False while generating text. This reduces the VRAM usage a bit at a performance cost.')
 parser.add_argument('--xformers', action='store_true', help="Use xformer's memory efficient attention. This should increase your tokens/s.")
 parser.add_argument('--sdp-attention', action='store_true', help="Use torch 2.0's sdp attention.")
+parser.add_argument('--trust-remote-code', action='store_true', help="Set trust_remote_code=True while loading a model. Necessary for ChatGLM.")
 
 # llama.cpp
 parser.add_argument('--threads', type=int, default=0, help='Number of threads to use in llama.cpp.')
@@ -153,14 +155,18 @@ args_defaults = parser.parse_args([])
 # Deprecation warnings for parameters that have been renamed
 deprecated_dict = {}
 for k in deprecated_dict:
-    if eval(f"args.{k}") != deprecated_dict[k][1]:
+    if getattr(args, k) != deprecated_dict[k][1]:
         print(f"Warning: --{k} is deprecated and will be removed. Use --{deprecated_dict[k][0]} instead.")
-        exec(f"args.{deprecated_dict[k][0]} = args.{k}")
+        setattr(args, deprecated_dict[k][0], getattr(args, k))
 
 # Deprecation warnings for parameters that have been removed
 if args.cai_chat:
     print("Warning: --cai-chat is deprecated. Use --chat instead.")
     args.chat = True
+
+# Security warnings
+if args.trust_remote_code:
+    print("Warning: trust_remote_code is enabled. This is dangerous.")
 
 
 def is_chat():

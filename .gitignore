@@ -24,3 +24,4 @@ settings.json
 img_bot*
 img_me*
 prompts/[0-9]*
+models/config-user.yaml

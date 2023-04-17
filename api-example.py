@@ -39,6 +39,7 @@ params = {
     'custom_stopping_strings': [],
     'truncation_length': 2048,
     'ban_eos_token': False,
+    'skip_special_tokens': True,
 }
 
 # Input prompt
