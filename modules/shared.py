@@ -158,17 +158,19 @@ args_defaults = parser.parse_args([])
 deprecated_dict = {}
 for k in deprecated_dict:
     if getattr(args, k) != deprecated_dict[k][1]:
-        print(f"Warning: --{k} is deprecated and will be removed. Use --{deprecated_dict[k][0]} instead.")
+        print(f"Warning: --{k} is deprecated and will be removed. Use --{deprecated_dict[k][0]} instead.\n")
         setattr(args, deprecated_dict[k][0], getattr(args, k))
 
 # Deprecation warnings for parameters that have been removed
 if args.cai_chat:
-    print("Warning: --cai-chat is deprecated. Use --chat instead.")
+    print("Warning: --cai-chat is deprecated. Use --chat instead.\n")
     args.chat = True
 
 # Security warnings
 if args.trust_remote_code:
-    print("Warning: trust_remote_code is enabled. This is dangerous.")
+    print("Warning: trust_remote_code is enabled. This is dangerous.\n")
+if args.share:
+    print("Warning: the gradio \"share link\" feature downloads a proprietary and\nunaudited blob to create a reverse tunnel. This is potentially dangerous.\n")
 
 
 def is_chat():
