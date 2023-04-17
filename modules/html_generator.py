@@ -33,8 +33,10 @@ def fix_newlines(string):
     string = string.strip()
     return string
 
+
 def replace_blockquote(m):
     return m.group().replace('\n', '\n> ').replace('\\begin{blockquote}', '').replace('\\end{blockquote}', '')
+
 
 def convert_to_markdown(string):
 
