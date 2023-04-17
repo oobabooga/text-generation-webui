@@ -10,8 +10,8 @@ import numpy as np
 import torch
 import transformers
 from accelerate import infer_auto_device_map, init_empty_weights
-from transformers import (AutoConfig, AutoModelForCausalLM, AutoTokenizer,
-                          BitsAndBytesConfig, LlamaTokenizer)
+from transformers import (AutoConfig, AutoModel, AutoModelForCausalLM,
+                          AutoTokenizer, BitsAndBytesConfig, LlamaTokenizer)
 
 import modules.shared as shared
 from modules import llama_attn_hijack
@@ -44,10 +44,16 @@ def load_model(model_name):
 
     shared.is_RWKV = 'rwkv-' in model_name.lower()
     shared.is_llamacpp = len(list(Path(f'{shared.args.model_dir}/{model_name}').glob('ggml*.bin'))) > 0
+    if 'chatglm' in model_name.lower():
+        LoaderClass = AutoModel
+        trust_remote_code = shared.args.trust_remote_code
+    else:
+        LoaderClass = AutoModelForCausalLM
+        trust_remote_code = False
 
     # Load the model in simple 16-bit mode by default
     if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.wbits, shared.args.auto_devices, shared.args.disk, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None, shared.args.deepspeed, shared.args.flexgen, shared.is_RWKV, shared.is_llamacpp]):
-        model = AutoModelForCausalLM.from_pretrained(Path(f"{shared.args.model_dir}/{shared.model_name}"), low_cpu_mem_usage=True, torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16)
+        model = LoaderClass.from_pretrained(Path(f"{shared.args.model_dir}/{shared.model_name}"), low_cpu_mem_usage=True, torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16, trust_remote_code=trust_remote_code)
         if torch.has_mps:
             device = torch.device('mps')
             model = model.to(device)
@@ -79,7 +85,7 @@ def load_model(model_name):
 
     # DeepSpeed ZeRO-3
     elif shared.args.deepspeed:
-        model = AutoModelForCausalLM.from_pretrained(Path(f"{shared.args.model_dir}/{shared.model_name}"), torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16)
+        model = LoaderClass.from_pretrained(Path(f"{shared.args.model_dir}/{shared.model_name}"), torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16)
         model = deepspeed.initialize(model=model, config_params=ds_config, model_parameters=None, optimizer=None, lr_scheduler=None)[0]
         model.module.eval()  # Inference
         print(f"DeepSpeed ZeRO-3 is enabled: {is_deepspeed_zero3_enabled()}")
@@ -93,12 +99,6 @@ def load_model(model_name):
 
         return model, tokenizer
 
-    # Quantized model
-    elif shared.args.wbits > 0:
-        from modules.GPTQ_loader import load_quantized
-
-        model = load_quantized(model_name)
-
     # llamacpp model
     elif shared.is_llamacpp:
         from modules.llamacpp_model_alternative import LlamaCppModel
@@ -108,6 +108,23 @@ def load_model(model_name):
 
         model, tokenizer = LlamaCppModel.from_pretrained(model_file)
         return model, tokenizer
+
+    # Quantized model
+    elif shared.args.wbits > 0:
+
+        # Monkey patch
+        if shared.args.monkey_patch:
+            print("Warning: applying the monkey patch for using LoRAs in 4-bit mode.\nIt may cause undefined behavior outside its intended scope.")
+            from modules.monkey_patch_gptq_lora import load_model_llama
+
+            model, tokenizer = load_model_llama(model_name)
+            return model, tokenizer
+
+        # No monkey patch
+        else:
+            from modules.GPTQ_loader import load_quantized
+
+            model = load_quantized(model_name)
 
     # Custom
     else:
@@ -120,6 +137,7 @@ def load_model(model_name):
             params["torch_dtype"] = torch.float32
         else:
             params["device_map"] = 'auto'
+            params["trust_remote_code"] = trust_remote_code
             if shared.args.load_in_8bit and any((shared.args.auto_devices, shared.args.gpu_memory)):
                 params['quantization_config'] = BitsAndBytesConfig(load_in_8bit=True, llm_int8_enable_fp32_cpu_offload=True)
             elif shared.args.load_in_8bit:
@@ -156,7 +174,7 @@ def load_model(model_name):
         if shared.args.load_in_8bit and params.get('max_memory', None) is not None and params['device_map'] == 'auto':
             config = AutoConfig.from_pretrained(checkpoint)
             with init_empty_weights():
-                model = AutoModelForCausalLM.from_config(config)
+                model = LoaderClass.from_config(config)
             model.tie_weights()
             params['device_map'] = infer_auto_device_map(
                 model,
@@ -165,7 +183,7 @@ def load_model(model_name):
                 no_split_module_classes=model._no_split_modules
             )
 
-        model = AutoModelForCausalLM.from_pretrained(checkpoint, **params)
+        model = LoaderClass.from_pretrained(checkpoint, **params)
 
     # Hijack attention with xformers
     if any((shared.args.xformers, shared.args.sdp_attention)):
@@ -185,7 +203,7 @@ def load_model(model_name):
         except:
             pass
     else:
-        tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/{shared.model_name}/"))
+        tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/{shared.model_name}/"), trust_remote_code=trust_remote_code)
 
     print(f"Loaded the model in {(time.time()-t0):.2f} seconds.")
     return model, tokenizer

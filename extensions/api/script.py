@@ -61,6 +61,7 @@ class Handler(BaseHTTPRequestHandler):
                 'custom_stopping_strings': body.get('custom_stopping_strings', []),
                 'truncation_length': int(body.get('truncation_length', 2048)),
                 'ban_eos_token': bool(body.get('ban_eos_token', False)),
+                'skip_special_tokens': bool(body.get('skip_special_tokens', True)),
             }
 
             generator = generate_reply(

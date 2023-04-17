@@ -17,7 +17,7 @@ def load_extensions():
             print(f'Loading the extension "{name}"... ', end='')
             try:
                 exec(f"import extensions.{name}.script")
-                extension = eval(f"extensions.{name}.script")
+                extension = getattr(extensions, name).script
                 if extension not in setup_called and hasattr(extension, "setup"):
                     setup_called.add(extension)
                     extension.setup()
@@ -32,7 +32,7 @@ def load_extensions():
 def iterator():
     for name in sorted(state, key=lambda x: state[x][1]):
         if state[name][0]:
-            yield eval(f"extensions.{name}.script"), name
+            yield getattr(extensions, name).script, name
 
 
 # Extension functions that map string -> string
