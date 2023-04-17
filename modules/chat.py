@@ -13,8 +13,7 @@ from PIL import Image
 import modules.extensions as extensions_module
 import modules.shared as shared
 from modules.extensions import apply_extensions
-from modules.html_generator import (chat_html_wrapper, fix_newlines,
-                                    make_thumbnail)
+from modules.html_generator import chat_html_wrapper, make_thumbnail
 from modules.text_generation import (encode, generate_reply,
                                      get_max_prompt_length)
 
@@ -50,7 +49,8 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
         string = shared.history['internal'][i][0]
         if string not in ['', '<|BEGIN-VISIBLE-CHAT|>']:
-            rows.insert(1, f"{prefix1}{string.strip()}{state['end_of_turn']}\n")
+            this_prefix1 = prefix1.replace('<|round|>', f'{i}')  # for ChatGLM
+            rows.insert(1, f"{this_prefix1}{string.strip()}{state['end_of_turn']}\n")
 
         i -= 1
 
@@ -60,9 +60,9 @@ def generate_chat_prompt(user_input, state, **kwargs):
     elif not _continue:
 
         # Adding the user message
-        user_input = fix_newlines(user_input)
         if len(user_input) > 0:
-            rows.append(f"{prefix1}{user_input}{state['end_of_turn']}\n")
+            this_prefix1 = prefix1.replace('<|round|>', f'{len(shared.history["internal"])}')  # for ChatGLM
+            rows.append(f"{this_prefix1}{user_input}{state['end_of_turn']}\n")
 
         # Adding the Character prefix
         rows.append(apply_extensions(f"{prefix2.strip() if not is_instruct else prefix2}", "bot_prefix"))
@@ -114,13 +114,12 @@ def extract_message_from_reply(reply, state):
                     continue
                 break
 
-    reply = fix_newlines(reply)
     return reply, next_character_found
 
 
 def chatbot_wrapper(text, state, regenerate=False, _continue=False):
 
-    if shared.model_name == 'None':
+    if shared.model_name == 'None' or shared.model is None:
         print("No model is loaded! Select one in the Model tab.")
         yield shared.history['visible']
         return
@@ -198,7 +197,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False):
 
 def impersonate_wrapper(text, state):
 
-    if shared.model_name == 'None':
+    if shared.model_name == 'None' or shared.model is None:
         print("No model is loaded! Select one in the Model tab.")
         yield ''
         return

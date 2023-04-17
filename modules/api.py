@@ -10,24 +10,32 @@ VISIBLE = False
 
 
 def generate_reply_wrapper(string):
+
+    # Provide defaults so as to not break the API on the client side when new parameters are added
     generate_params = {
+        'max_new_tokens': 200,
         'do_sample': True,
-        'temperature': 1,
+        'temperature': 0.5,
         'top_p': 1,
         'typical_p': 1,
-        'repetition_penalty': 1,
+        'repetition_penalty': 1.1,
         'encoder_repetition_penalty': 1,
-        'top_k': 50,
+        'top_k': 0,
+        'min_length': 0,
+        'no_repeat_ngram_size': 0,
         'num_beams': 1,
         'penalty_alpha': 0,
-        'min_length': 0,
         'length_penalty': 1,
-        'no_repeat_ngram_size': 0,
         'early_stopping': False,
+        'seed': -1,
+        'add_bos_token': True,
+        'custom_stopping_strings': [],
+        'truncation_length': 2048,
+        'ban_eos_token': False,
+        'skip_special_tokens': True,
     }
     params = json.loads(string)
-    for k in params[1]:
-        generate_params[k] = params[1][k]
+    generate_params.update(params[1])
     for i in generate_reply(params[0], generate_params):
         yield i
 

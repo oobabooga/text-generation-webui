@@ -4,6 +4,8 @@
   groupsize: 'None'
   pre_layer: 0
   mode: 'cai-chat'
+  skip_special_tokens: true
+  custom_stopping_strings: ''
 llama-[0-9]*b-4bit$:
   wbits: 4
   model_type: 'llama'
@@ -33,3 +35,16 @@ llama-[0-9]*b-4bit$:
   instruction_template: 'Alpaca'
   wbits: 4
   groupsize: 128
+.*(galactica|oasst):
+  skip_special_tokens: false
+.*dolly-v[0-9]-[0-9]*b:
+  mode: 'instruct'
+  instruction_template: 'Alpaca'
+  skip_special_tokens: false
+  custom_stopping_strings: '"### End"'
+.*koala:
+  mode: 'instruct'
+  instruction_template: 'Koala'
+.*chatglm:
+  mode: 'instruct'
+  instruction_template: 'ChatGLM'
