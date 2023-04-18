@@ -37,7 +37,7 @@ def create_train_interface():
     with gr.Tab('Train LoRA', elem_id='lora-train-tab'):
         with gr.Row():
             lora_name = gr.Textbox(label='Name', info='The name of your new LoRA file')
-            always_override = gr.Checkbox(label='Override Existing Files', value=False, info='If the name given is the same as an existing file, checking this will replace that file. Leaving unchecked will load that file and continue from it (will use the original rank/alpha/dropout) (NOTE: Currently broken).')
+            always_override = gr.Checkbox(label='Override Existing Files', value=False, info='If the name given is the same as an existing file, checking this will replace that file. Leaving unchecked will load that file and continue from it (must use the same rank value as the original had).')
             save_steps = gr.Number(label='Save every n steps', value=0, info='If above 0, a checkpoint of the LoRA will be saved every time this many steps pass.')
 
         with gr.Row():
