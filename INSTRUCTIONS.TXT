@@ -1,0 +1,30 @@
+Thank you for downloading oobabooga/text-generation-webui.
+
+# Installation
+
+Simply run the "start" script.
+
+# Updating
+
+Run the "update" script. This will only install the updates, so it should
+be much faster than the initial installation.
+
+May need to delete the 'text-generation-webui\repositories\GPTQ-for-LLaMa'
+folder if GPTQ-for-LLaMa needs to be updated.
+
+# Adding flags like --chat, --notebook, etc
+
+Edit the "start" script using a text editor and add the desired flags
+to the line that says
+
+run_cmd("python server.py --auto-devices --chat --model-menu")
+
+For instance, to add the --notebook flag, change it to
+
+run_cmd("python server.py --auto-devices --notebook --model-menu")
+
+# Running an interactive shell
+
+In order to run an interactive shell in the miniconda environment, run
+the "cmd" script. This is useful for installing additional requirements
+manually.
