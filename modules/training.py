@@ -344,10 +344,6 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     )
 
     lora_model.config.use_cache = False
-    old_state_dict = lora_model.state_dict
-    lora_model.state_dict = (
-        lambda self, *_, **__: get_peft_model_state_dict(self, old_state_dict())
-    ).__get__(lora_model, type(lora_model))
 
     if torch.__version__ >= "2" and sys.platform != "win32":
         lora_model = torch.compile(lora_model)
@@ -396,8 +392,6 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
     print("Training complete, saving...")
     lora_model.save_pretrained(lora_file_path)
-    # Temporary workaround for peft bug
-    torch.save(trainer.model.state_dict(), f"{lora_file_path}/adapter_model.bin")
 
     if WANT_INTERRUPT:
         print("Training interrupted.")
