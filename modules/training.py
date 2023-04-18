@@ -10,20 +10,8 @@ import gradio as gr
 import torch
 import transformers
 from datasets import Dataset, load_dataset
-from peft import (LoraConfig, PeftModel, get_peft_model,
-                  get_peft_model_state_dict, prepare_model_for_int8_training)
 
 from modules import shared, ui
-
-# This mapping is from a very recent commit, not yet released.
-# If not available, default to a backup map for the 3 safe model types.
-try:
-    from peft.utils.other import \
-        TRANSFORMERS_MODELS_TO_LORA_TARGET_MODULES_MAPPING as \
-        model_to_lora_modules
-except:
-    standard_modules = ["q_proj", "v_proj"]
-    model_to_lora_modules = {"llama": standard_modules, "opt": standard_modules, "gptj": standard_modules}
 
 WANT_INTERRUPT = False
 
@@ -137,6 +125,37 @@ def clean_path(base_path: str, path: str):
 
 def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lora_rank: int, lora_alpha: int, lora_dropout: float,
              cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, do_shuffle: bool, higher_rank_limit: bool):
+    if shared.args.monkey_patch:
+        from monkeypatch.peft_tuners_lora_monkey_patch import replace_peft_model_with_gptq_lora_model
+        replace_peft_model_with_gptq_lora_model()
+
+        if False: #ft_config.flash_attention:
+            from monkeypatch.llama_flash_attn_monkey_patch import replace_llama_attn_with_flash_attn
+            replace_llama_attn_with_flash_attn()
+        elif shared.args.xformers:
+            from monkeypatch.llama_attn_hijack_xformers import hijack_llama_attention
+            hijack_llama_attention()
+
+        import autograd_4bit
+        if False:#ft_config.backend.lower() == 'triton':
+            autograd_4bit.switch_backend_to('triton')
+        else:
+            autograd_4bit.switch_backend_to('cuda')
+        from autograd_4bit import load_llama_model_4bit_low_ram
+
+        from peft import (LoraConfig, PeftModel, get_peft_model,
+                    get_peft_model_state_dict, prepare_model_for_int8_training)
+
+        # This mapping is from a very recent commit, not yet released.
+        # If not available, default to a backup map for the 3 safe model types.
+        try:
+            from peft.utils.other import \
+                TRANSFORMERS_MODELS_TO_LORA_TARGET_MODULES_MAPPING as \
+                model_to_lora_modules
+        except:
+            standard_modules = ["q_proj", "v_proj"]
+            model_to_lora_modules = {"llama": standard_modules, "opt": standard_modules, "gptj": standard_modules}
+
     global WANT_INTERRUPT
     WANT_INTERRUPT = False
 
@@ -158,8 +177,8 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             print(f"Warning: LoRA training has only currently been validated for LLaMA, OPT, and GPT-J models. (Found model type: {model_type})")
         time.sleep(5)
 
-    if shared.args.wbits > 0:
-        yield "LoRA training does not yet support 4bit. Please use `--load-in-8bit` for now."
+    if shared.args.wbits > 0 and not shared.args.monkey_patch: # TODO: better check for 4-bit models
+        yield "LoRA training in 4-bit requires loading with `--monkey-patch`"
         return
 
     elif not shared.args.load_in_8bit:
@@ -269,6 +288,13 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     except:
         yield traceback.format_exc()
         return
+    
+    if shared.args.monkey_patch:
+        for n, m in lora_model.named_modules():
+            if '4bit' in str(type(m)):
+                if m.is_v1_model:
+                    m.zeros = m.zeros.half()
+                m.scales = m.scales.half()
 
     class Tracked():
         def __init__(self):
