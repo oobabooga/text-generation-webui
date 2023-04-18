@@ -46,17 +46,9 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 
 Just download the zip above, extract it, and double click on "start". The web UI and all its dependencies will be installed in the same folder.
 
-Source codes: https://github.com/oobabooga/one-click-installers
-
-> **Note**
-> 
-> Thanks to [@jllllll](https://github.com/jllllll) and [@ClayShoaf](https://github.com/ClayShoaf), the Windows 1-click installer now sets up 8-bit and 4-bit requirements out of the box. No additional installation steps are necessary.
->
-> Thanks to [@xNul](https://github.com/xNul), Linux and MacOS installers are now also available.
-
-> **Note**
-> 
-> There is no need to run the installer as admin.
+* The source codes are here: https://github.com/oobabooga/one-click-installers
+* Huge thanks to [@jllllll](https://github.com/jllllll), [@ClayShoaf](https://github.com/ClayShoaf), and [@xNul](https://github.com/xNul) for their contributions to these installers.
+* There is no need to run the installers as admin.
 
 ### Manual installation using Conda
 
