@@ -4,7 +4,7 @@ import warnings
 os.environ['GRADIO_ANALYTICS_ENABLED'] = 'False'
 os.environ['BITSANDBYTES_NOWELCOME'] = '1'
 warnings.filterwarnings('ignore', category=UserWarning, message='TypedStorage is deprecated')
-from modules import dirty_patch_gradio
+#from modules import dirty_patch_gradio
 
 import importlib
 import io
