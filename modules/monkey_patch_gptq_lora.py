@@ -8,6 +8,7 @@ from alpaca_lora_4bit.autograd_4bit import (Autograd4bitQuantLinear,
                              find_layers, make_quant_for_4bit_autograd)
 from alpaca_lora_4bit.monkeypatch.peft_tuners_lora_monkey_patch import replace_peft_model_with_int4_lora_model
 from alpaca_lora_4bit.models import Linear4bitLt
+from alpaca_lora_4bit.amp_wrapper import AMPWrapper
 
 import time
 import accelerate
@@ -60,12 +61,16 @@ def load_model_4bit_low_ram(config_path, model_path, groupsize=-1, device_map="a
         device_map=device_map
     )
 
+    model.half()
     for n, m in model.named_modules():
         if isinstance(m, Autograd4bitQuantLinear):
             if m.is_v1_model:
                 m.zeros = m.zeros.half()
             m.scales = m.scales.half()
             m.bias = m.bias.half()
+
+    wrapper = AMPWrapper(model)
+    wrapper.apply_generate()
 
     try:
         tokenizer = AutoTokenizer.from_pretrained(config_path)
