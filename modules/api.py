@@ -36,7 +36,7 @@ def generate_reply_wrapper(string):
     }
     params = json.loads(string)
     generate_params.update(params[1])
-    for i in generate_reply(params[0], generate_params):
+    for i in generate_reply(params[0], generate_params, None, generate_params['custom_stopping_strings']):
         yield i
 
 
