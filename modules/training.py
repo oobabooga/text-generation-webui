@@ -191,7 +191,6 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         return
 
     gradient_accumulation_steps = batch_size // micro_batch_size
-    CURRENT_GRADIENT_ACCUM = gradient_accumulation_steps
     shared.tokenizer.pad_token = 0
     shared.tokenizer.padding_side = "left"
 
@@ -302,14 +301,17 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             self.max_steps = 0
 
     tracked = Tracked()
+    actual_save_steps = math.ceil(save_steps / gradient_accumulation_steps)
 
     class Callbacks(transformers.TrainerCallback):
         def on_step_begin(self, args: transformers.TrainingArguments, state: transformers.TrainerState, control: transformers.TrainerControl, **kwargs):
-            tracked.current_steps = state.global_step * CURRENT_GRADIENT_ACCUM
-            tracked.max_steps = state.max_steps * CURRENT_GRADIENT_ACCUM
+            tracked.current_steps = state.global_step * gradient_accumulation_steps
+            tracked.max_steps = state.max_steps * gradient_accumulation_steps
             if WANT_INTERRUPT:
                 control.should_epoch_stop = True
                 control.should_training_stop = True
+            elif state.global_step > 0 and actual_save_steps > 0 and state.global_step % actual_save_steps == 0:
+                lora_model.save_pretrained(f"{lora_file_path}/checkpoint-{tracked.current_steps}/")
 
         def on_substep_end(self, args: transformers.TrainingArguments, state: transformers.TrainerState, control: transformers.TrainerControl, **kwargs):
             tracked.current_steps += 1
@@ -331,8 +333,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             logging_steps=5,
             evaluation_strategy="steps" if eval_data is not None else "no",
             eval_steps=math.ceil(eval_steps / gradient_accumulation_steps) if eval_data is not None else None,
-            save_strategy="steps",
-            save_steps=math.ceil(save_steps / gradient_accumulation_steps),
+            save_strategy="no",
             output_dir=lora_file_path,
             load_best_model_at_end=True if eval_data is not None else False,
             # TODO: Enable multi-device support
