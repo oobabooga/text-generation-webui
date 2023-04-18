@@ -1,10 +1,21 @@
 import os
+import requests
 import warnings
 
 os.environ['GRADIO_ANALYTICS_ENABLED'] = 'False'
 os.environ['BITSANDBYTES_NOWELCOME'] = '1'
 warnings.filterwarnings('ignore', category=UserWarning, message='TypedStorage is deprecated')
-#from modules import dirty_patch_gradio
+
+# This is a hack to prevent Gradio from phoning home when it gets imported
+def my_get(url, **kwargs):
+    print('Gradio HTTP request redirected to localhost :)')
+    kwargs.setdefault('allow_redirects', True)
+    return requests.api.request('get', 'http://127.0.0.1/', **kwargs)
+
+original_get = requests.get
+requests.get = my_get
+import gradio as gr
+requests.get = original_get
 
 import importlib
 import io
@@ -19,7 +30,6 @@ import zipfile
 from datetime import datetime
 from pathlib import Path
 
-import gradio as gr
 import psutil
 import torch
 import yaml
