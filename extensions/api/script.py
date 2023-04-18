@@ -78,7 +78,7 @@ class Handler(BaseHTTPRequestHandler):
 
             response = json.dumps({
                 'results': [{
-                    'text': answer
+                    'text': answer[len(prompt):]
                 }]
             })
             self.wfile.write(response.encode('utf-8'))
