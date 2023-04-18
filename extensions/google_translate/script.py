@@ -87,6 +87,8 @@ def input_modifier(string):
     This function is applied to your text inputs before
     they are fed into the model.
     """
+    if params['language string'] == "en": return string # no translation needed
+
     if params['translator'] == "GoogleTranslator":
         #print("GoogleTranslator using")
         return GoogleTranslator(source=params['language string'], target='en').translate(string)
@@ -107,6 +109,8 @@ def output_modifier(string):
     """
     This function is applied to the model outputs.
     """
+    if params['language string'] == "en": return string  # no translation needed
+
     if params['translator'] == "GoogleTranslator":
         return GoogleTranslator(target=params['language string'], source='en').translate(string)
     if params['translator'] == "DeeplTranslator":
