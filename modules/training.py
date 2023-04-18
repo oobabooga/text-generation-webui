@@ -149,7 +149,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     if model_type in MODEL_CLASSES:
         model_id = MODEL_CLASSES[model_type]
     else:
-        model_id == "llama"
+        model_id = "llama"
         if model_type == "PeftModelForCausalLM":
             yield "You are trying to train a LoRA while you already have another LoRA loaded. This will work, but may have unexpected effects. *(Will continue anyway in 5 seconds, press `Interrupt` to stop.)*"
             print("Warning: Training LoRA over top of another LoRA. May have unexpected effects.")
