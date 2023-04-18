@@ -114,10 +114,20 @@ def load_model(model_name):
 
         # Monkey patch
         if shared.args.monkey_patch:
-            print("Warning: applying the monkey patch for using LoRAs in 4-bit mode.\nIt may cause undefined behavior outside its intended scope.")
-            from modules.monkey_patch_gptq_lora import load_model_llama
 
-            model, tokenizer = load_model_llama(model_name)
+            # detect if alpaca_lora_4bit is not installed
+            try:
+                import alpaca_lora_4bit
+            except ImportError:
+                print("Error: alpaca_lora_4bit is not installed.\n Please install it with "\
+                      "`pip install git+https://github.com/johnsmith0031/alpaca_lora_4bit.git@winglian-setup_pip`.\n"\
+                      "Note that It use different version of peft which may cause compatibility issues.")
+                exit(1)
+
+            print("Warning: applying the monkey patch for using LoRAs in 4-bit mode.\nIt may cause undefined behavior outside its intended scope.")
+            from modules.monkey_patch_gptq_lora import load_model_4bit_gptq
+
+            model, tokenizer = load_model_4bit_gptq(model_name)
             return model, tokenizer
 
         # No monkey patch

@@ -124,6 +124,7 @@ parser.add_argument('--model_type', type=str, help='Model type of pre-quantized 
 parser.add_argument('--groupsize', type=int, default=-1, help='Group size.')
 parser.add_argument('--pre_layer', type=int, default=0, help='The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models.')
 parser.add_argument('--monkey-patch', action='store_true', help='Apply the monkey patch for using LoRAs with quantized models.')
+parser.add_argument('--is-v1-model', action='store_true', help='Loading v1 model or not. Supported by monkey patch.')
 parser.add_argument('--no-quant_attn', action='store_true', help='(triton) Disable quant attention. If you encounter incoherent results try disabling this.')
 parser.add_argument('--no-warmup_autotune', action='store_true', help='(triton) Disable warmup autotune.')
 parser.add_argument('--no-fused_mlp', action='store_true', help='(triton) Disable fused mlp. If you encounter "Unexpected mma -> mma layout conversion" try disabling this.')
