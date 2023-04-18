@@ -1,3 +1,14 @@
+Docker Compose is a way of installing and launching the web UI in an isolated Ubuntu image using only a few commands.
+
+In order to create the image as described in the main README, you must have docker compose 2.17 or higher:
+
+```
+~$ docker compose version
+Docker Compose version v2.17.2
+```
+
+# Intructions by [@loeken](https://github.com/loeken)
+
 - [Ubuntu 22.04](#ubuntu-2204)
   - [0. youtube video](#0-youtube-video)
   - [1. update the drivers](#1-update-the-drivers)
