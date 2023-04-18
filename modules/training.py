@@ -143,18 +143,18 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             autograd_4bit.switch_backend_to('cuda')
         from autograd_4bit import load_llama_model_4bit_low_ram
 
-        from peft import (LoraConfig, PeftModel, get_peft_model,
-                    get_peft_model_state_dict, prepare_model_for_int8_training)
+    from peft import (LoraConfig, PeftModel, get_peft_model,
+                get_peft_model_state_dict, prepare_model_for_int8_training)
 
-        # This mapping is from a very recent commit, not yet released.
-        # If not available, default to a backup map for the 3 safe model types.
-        try:
-            from peft.utils.other import \
-                TRANSFORMERS_MODELS_TO_LORA_TARGET_MODULES_MAPPING as \
-                model_to_lora_modules
-        except:
-            standard_modules = ["q_proj", "v_proj"]
-            model_to_lora_modules = {"llama": standard_modules, "opt": standard_modules, "gptj": standard_modules}
+    # This mapping is from a very recent commit, not yet released.
+    # If not available, default to a backup map for the 3 safe model types.
+    try:
+        from peft.utils.other import \
+            TRANSFORMERS_MODELS_TO_LORA_TARGET_MODULES_MAPPING as \
+            model_to_lora_modules
+    except:
+        standard_modules = ["q_proj", "v_proj"]
+        model_to_lora_modules = {"llama": standard_modules, "opt": standard_modules, "gptj": standard_modules}
 
     global WANT_INTERRUPT
     WANT_INTERRUPT = False
