@@ -32,6 +32,9 @@ class RWKVModel:
 
         result = self()
         result.pipeline = pipeline
+        result.model = model
+        result.cached_context = ""
+        result.cached_model_state = None
         return result
 
     def generate(self, context="", token_count=20, temperature=1, top_p=1, top_k=50, repetition_penalty=None, alpha_frequency=0.1, alpha_presence=0.1, token_ban=[0], token_stop=[], callback=None):
@@ -45,7 +48,15 @@ class RWKVModel:
             token_stop=token_stop
         )
 
-        return self.pipeline.generate(context, token_count=token_count, args=args, callback=callback)
+        if self.cached_context != "":
+            if context.startswith(self.cached_context):
+                context = context[len(self.cached_context):]
+            else:
+                self.cached_context = ""
+                self.cached_model_state = None
+
+        out = self.generate_from_cached_state(context, token_count=token_count, args=args, callback=callback)
+        return out
 
     def generate_with_streaming(self, **kwargs):
         with Iteratorize(self.generate, kwargs, callback=None) as generator:
@@ -53,6 +64,53 @@ class RWKVModel:
             for token in generator:
                 reply += token
                 yield reply
+
+    # Similar to the PIPELINE.generate, but lets us maintain the cached_model_state
+    def generate_from_cached_state(self, ctx="", token_count=20, args=None, callback=None):
+        all_tokens = []
+        out_str = ''
+        occurrence = {}
+        state = self.cached_model_state
+
+        for i in range(token_count):
+
+            # forward
+            tokens = self.pipeline.encode(ctx) if i == 0 else [token]
+            while len(tokens) > 0:
+                out, state = self.model.forward(tokens[:args.chunk_len], state)
+                tokens = tokens[args.chunk_len:]
+
+            # cache the model state after scanning the context
+            # we don't cache the state after processing our own generated tokens because 
+            # the output string might be post-processed arbitrarily. Therefore, what's fed into the model 
+            # on the next round of chat might be slightly different what what it output on the previous round
+            if i == 0:
+                self.cached_context += ctx
+                self.cached_model_state = state
+            
+            # adjust probabilities
+            for n in args.token_ban:
+                out[n] = -float('inf')
+            for n in occurrence:
+                out[n] -= (args.alpha_presence + occurrence[n] * args.alpha_frequency)
+            
+            # sampler
+            token = self.pipeline.sample_logits(out, temperature=args.temperature, top_p=args.top_p, top_k=args.top_k)
+            if token in args.token_stop:
+                break
+            all_tokens += [token]
+            if token not in occurrence:
+                occurrence[token] = 1
+            else:
+                occurrence[token] += 1
+            
+            # output
+            tmp = self.pipeline.decode([token])
+            if '\ufffd' not in tmp: # is valid utf-8 string?
+                if callback:
+                    callback(tmp)
+                out_str += tmp
+        return out_str
 
 
 class RWKVTokenizer:
