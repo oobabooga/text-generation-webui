@@ -4,6 +4,8 @@ from deep_translator import GoogleTranslator, DeeplTranslator, LibreTranslator
 import os
 import json
 
+from modules.text_generation import encode, generate_reply
+
 path_settings_json =  "extensions/google_translate/settings.json"
 
 params = {
@@ -14,6 +16,70 @@ params = {
 }
 
 language_codes = {'Afrikaans': 'af', 'Albanian': 'sq', 'Amharic': 'am', 'Arabic': 'ar', 'Armenian': 'hy', 'Azerbaijani': 'az', 'Basque': 'eu', 'Belarusian': 'be', 'Bengali': 'bn', 'Bosnian': 'bs', 'Bulgarian': 'bg', 'Catalan': 'ca', 'Cebuano': 'ceb', 'Chinese (Simplified)': 'zh-CN', 'Chinese (Traditional)': 'zh-TW', 'Corsican': 'co', 'Croatian': 'hr', 'Czech': 'cs', 'Danish': 'da', 'Dutch': 'nl', 'English': 'en', 'Esperanto': 'eo', 'Estonian': 'et', 'Finnish': 'fi', 'French': 'fr', 'Frisian': 'fy', 'Galician': 'gl', 'Georgian': 'ka', 'German': 'de', 'Greek': 'el', 'Gujarati': 'gu', 'Haitian Creole': 'ht', 'Hausa': 'ha', 'Hawaiian': 'haw', 'Hebrew': 'iw', 'Hindi': 'hi', 'Hmong': 'hmn', 'Hungarian': 'hu', 'Icelandic': 'is', 'Igbo': 'ig', 'Indonesian': 'id', 'Irish': 'ga', 'Italian': 'it', 'Japanese': 'ja', 'Javanese': 'jw', 'Kannada': 'kn', 'Kazakh': 'kk', 'Khmer': 'km', 'Korean': 'ko', 'Kurdish': 'ku', 'Kyrgyz': 'ky', 'Lao': 'lo', 'Latin': 'la', 'Latvian': 'lv', 'Lithuanian': 'lt', 'Luxembourgish': 'lb', 'Macedonian': 'mk', 'Malagasy': 'mg', 'Malay': 'ms', 'Malayalam': 'ml', 'Maltese': 'mt', 'Maori': 'mi', 'Marathi': 'mr', 'Mongolian': 'mn', 'Myanmar (Burmese)': 'my', 'Nepali': 'ne', 'Norwegian': 'no', 'Nyanja (Chichewa)': 'ny', 'Pashto': 'ps', 'Persian': 'fa', 'Polish': 'pl', 'Portuguese (Portugal, Brazil)': 'pt', 'Punjabi': 'pa', 'Romanian': 'ro', 'Russian': 'ru', 'Samoan': 'sm', 'Scots Gaelic': 'gd', 'Serbian': 'sr', 'Sesotho': 'st', 'Shona': 'sn', 'Sindhi': 'sd', 'Sinhala (Sinhalese)': 'si', 'Slovak': 'sk', 'Slovenian': 'sl', 'Somali': 'so', 'Spanish': 'es', 'Sundanese': 'su', 'Swahili': 'sw', 'Swedish': 'sv', 'Tagalog (Filipino)': 'tl', 'Tajik': 'tg', 'Tamil': 'ta', 'Telugu': 'te', 'Thai': 'th', 'Turkish': 'tr', 'Ukrainian': 'uk', 'Urdu': 'ur', 'Uzbek': 'uz', 'Vietnamese': 'vi', 'Welsh': 'cy', 'Xhosa': 'xh', 'Yiddish': 'yi', 'Yoruba': 'yo', 'Zulu': 'zu'}
+
+# tpl for local
+tpl = "Below is an instruction that describes a task. Write a response that appropriately completes the request.\n"
+tpl += "### Instruction:\nTranslate phrase from {0} to {1}\n"
+tpl += "### Input:\n{2}\n"
+tpl += "### Response:"
+tpl_alpaca = tpl
+
+def language_code_to_lang(langcode:str):
+    for i in language_codes.keys():
+        if language_codes[i] == langcode:
+            return i
+    return ""
+
+def local_translator(from_lang:str,to_lang:str,string:str,prompt_tpl:str,body:dict = None):
+    prompt = prompt_tpl.format(
+        language_code_to_lang(from_lang),
+        language_code_to_lang(to_lang),
+        string
+    )
+
+    print("LocalTranslation prompt:",prompt)
+
+    if body is None:
+        body = {}
+
+    generate_params = {
+        'max_new_tokens': int(body.get('max_length', 200)),
+        'do_sample': bool(body.get('do_sample', True)),
+        'temperature': float(body.get('temperature', 0.5)),
+        'top_p': float(body.get('top_p', 0.2)),
+        'typical_p': float(body.get('typical', 1)),
+        'repetition_penalty': float(body.get('rep_pen', 1.1)),
+        'encoder_repetition_penalty': 1,
+        'top_k': int(body.get('top_k', 30)),
+        'min_length': int(body.get('min_length', 0)),
+        'no_repeat_ngram_size': int(body.get('no_repeat_ngram_size', 0)),
+        'num_beams': int(body.get('num_beams', 1)),
+        'penalty_alpha': float(body.get('penalty_alpha', 0)),
+        'length_penalty': float(body.get('length_penalty', 1)),
+        'early_stopping': bool(body.get('early_stopping', True)),
+        'seed': int(body.get('seed', -1)),
+        'add_bos_token': int(body.get('add_bos_token', True)),
+        'custom_stopping_strings': body.get('custom_stopping_strings', []),
+        'truncation_length': int(body.get('truncation_length', 2048)),
+        'ban_eos_token': bool(body.get('ban_eos_token', False)),
+        'skip_special_tokens': bool(body.get('skip_special_tokens', True)),
+    }
+
+    generator = generate_reply(
+        prompt,
+        generate_params,
+    )
+
+    answer = ''
+    for a in generator:
+        if isinstance(a, str):
+            answer = a
+        else:
+            answer = a[0]
+
+    print("LocalTranslation answer:", answer)
+
+    return answer
 
 
 def input_modifier(string):
@@ -32,6 +98,10 @@ def input_modifier(string):
         custom_url = params['custom_url']
         if custom_url == "": custom_url = "https://translate.argosopentech.com/"
         return LibreTranslator(source=params['language string'], target='en', custom_url = params['custom_url']).translate(string)
+    if params['translator'] == "LocalAlpaca":
+        #print("GoogleTranslator using")
+        #return GoogleTranslator(source=params['language string'], target='en').translate(string)
+        return local_translator(params['language string'],'en',string,tpl_alpaca)
 
 def output_modifier(string):
     """
@@ -46,7 +116,10 @@ def output_modifier(string):
         custom_url = params['custom_url']
         if custom_url == "": custom_url = "https://translate.argosopentech.com/"
         return LibreTranslator(target=params['language string'], source='en', custom_url = custom_url).translate(string)
-
+    if params['translator'] == "LocalAlpaca":
+        #print("GoogleTranslator using")
+        #return GoogleTranslator(source=params['language string'], target='en').translate(string)
+        return local_translator('en',params['language string'],string,tpl_alpaca)
 
 def bot_prefix_modifier(string):
     """
@@ -69,7 +142,7 @@ def ui():
     language.change(lambda x: params_update({"language string": language_codes[x]}), language, None)
 
     # DeeplTranslator not work for now; api key required
-    translator = gr.Dropdown(value=params['translator'], choices=["GoogleTranslator", "LibreTranslator"], label='Translator')
+    translator = gr.Dropdown(value=params['translator'], choices=["GoogleTranslator", "LibreTranslator", "LocalAlpaca"], label='Translator')
 
     translator.change(lambda x: params_update({"translator": x}), translator, None)
 
