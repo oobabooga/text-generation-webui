@@ -120,7 +120,7 @@ As an alternative to the recommended WSL method, you can install the web UI nati
 ### Alternative: Docker
 
 ```
-cp docker/{Dockerfile,docker-compose.yml,.dockerignore} .
+ln -s docker/{Dockerfile,docker-compose.yml,.dockerignore} .
 cp docker/.env.example .env
 # Edit .env and set TORCH_CUDA_ARCH_LIST based on your GPU model
 docker compose up --build
