@@ -38,18 +38,21 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 
 ### One-click installers
 
-[oobabooga-windows.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga-windows.zip)
+[oobabooga-windows.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga_windows.zip)
 
-Just download the zip above, extract it, and double click on "install". The web UI and all its dependencies will be installed in the same folder.
+[oobabooga-linux.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga_linux.zip)
 
-* To download a model, double click on "download-model"
-* To start the web UI, double click on "start-webui" 
+[oobabooga-macos.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga_macos.zip)
+
+Just download the zip above, extract it, and double click on "start". The web UI and all its dependencies will be installed in the same folder.
 
 Source codes: https://github.com/oobabooga/one-click-installers
 
 > **Note**
 > 
 > Thanks to [@jllllll](https://github.com/jllllll) and [@ClayShoaf](https://github.com/ClayShoaf), the Windows 1-click installer now sets up 8-bit and 4-bit requirements out of the box. No additional installation steps are necessary.
+>
+> Thanks to [@xNul](https://github.com/xNul), Linux and MacOS installers are now also available.
 
 > **Note**
 > 
