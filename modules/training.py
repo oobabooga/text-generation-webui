@@ -37,7 +37,7 @@ def create_train_interface():
     with gr.Tab('Train LoRA', elem_id='lora-train-tab'):
         with gr.Row():
             lora_name = gr.Textbox(label='Name', info='The name of your new LoRA file')
-            always_override = gr.Checkbox(label='Override Existing Files', value=True, info='If the name given is the same as an existing file, checking this will replace that file. Leaving unchecked will load that file and continue from it (will use the original rank/alpha/dropout) (NOTE: Currently broken).')
+            always_override = gr.Checkbox(label='Override Existing Files', value=False, info='If the name given is the same as an existing file, checking this will replace that file. Leaving unchecked will load that file and continue from it (will use the original rank/alpha/dropout) (NOTE: Currently broken).')
             save_steps = gr.Number(label='Save every n steps', value=0, info='If above 0, a checkpoint of the LoRA will be saved every time this many steps pass.')
 
         with gr.Row():
@@ -129,22 +129,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         from monkeypatch.peft_tuners_lora_monkey_patch import replace_peft_model_with_gptq_lora_model
         replace_peft_model_with_gptq_lora_model()
 
-        if False: #ft_config.flash_attention:
-            from monkeypatch.llama_flash_attn_monkey_patch import replace_llama_attn_with_flash_attn
-            replace_llama_attn_with_flash_attn()
-        elif shared.args.xformers:
-            from monkeypatch.llama_attn_hijack_xformers import hijack_llama_attention
-            hijack_llama_attention()
-
-        import autograd_4bit
-        if False:#ft_config.backend.lower() == 'triton':
-            autograd_4bit.switch_backend_to('triton')
-        else:
-            autograd_4bit.switch_backend_to('cuda')
-        from autograd_4bit import load_llama_model_4bit_low_ram
-
-    from peft import (LoraConfig, PeftModel, get_peft_model,
-                get_peft_model_state_dict, prepare_model_for_int8_training)
+    from peft import LoraConfig, get_peft_model, set_peft_model_state_dict, prepare_model_for_int8_training
 
     # This mapping is from a very recent commit, not yet released.
     # If not available, default to a backup map for the 3 safe model types.
@@ -278,12 +263,12 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     )
 
     try:
+        print("Creating LoRA model...")
+        lora_model = get_peft_model(shared.model, config)
         if not always_override and Path(f"{lora_file_path}/adapter_model.bin").is_file():
-            print("Loading existing LoRA file...")
-            lora_model = PeftModel.from_pretrained(shared.model, lora_file_path)
-        else:
-            print("Creating new LoRA model...")
-            lora_model = get_peft_model(shared.model, config)
+            print("Loading existing LoRA data...")
+            state_dict_peft = torch.load(f"{lora_file_path}/adapter_model.bin")
+            set_peft_model_state_dict(lora_model, state_dict_peft)
     except:
         yield traceback.format_exc()
         return
@@ -326,7 +311,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         args=transformers.TrainingArguments(
             per_device_train_batch_size=micro_batch_size,
             gradient_accumulation_steps=gradient_accumulation_steps,
-            warmup_steps=100,
+            warmup_steps=1,
             num_train_epochs=epochs,
             learning_rate=actual_lr,
             fp16=False if shared.args.cpu else True,
