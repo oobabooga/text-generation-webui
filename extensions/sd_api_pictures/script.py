@@ -27,6 +27,11 @@ params = {
     'negative_prompt': '(worst quality, low quality:1.3)',
     'width': 512,
     'height': 512,
+    'denoising_strength': 0.7,
+    'restore_faces': False,
+    'enable_hr': False,
+    'hr_upscaler': 'ESRGAN_4x',
+    'hr_scale': '1.0',
     'seed': -1,
     'sampler_name': 'DDIM',
     'steps': 32,
@@ -100,7 +105,7 @@ def add_translations(description,triggered_array):
                 triggered_array[i] = 1
         i = i + 1
     return triggered_array
-
+            
 def remove_surrounded_chars(string):
     # this expression matches to 'as few symbols as possible (0 upwards) between any asterisks' OR
     # 'as few symbols as possible (0 upwards) between an asterisk and the end of the string'
@@ -219,7 +224,12 @@ def get_SD_pictures(description):
     payload = {
         "prompt": params['prompt_prefix'] + ", " + description + ", " + params['positive_suffix'],
         "seed": params['seed'],
+        "denoising_strength": params['denoising_strength'],
         "sampler_name": params['sampler_name'],
+        "enable_hr": params['enable_hr'],
+        "hr_scale": params['hr_scale'],
+        "hr_upscaler": params['hr_upscaler'],
+        "denoising_strength": params['denoising_strength'],
         "steps": params['steps'],
         "cfg_scale": params['cfg_scale'],
         "width": params['width'],
@@ -344,6 +354,7 @@ def SD_api_address_update(address):
 
     return gr.Textbox.update(label=msg)
 
+
 def ui():
 
     # Gradio elements
@@ -351,7 +362,8 @@ def ui():
     with gr.Accordion("Parameters", open=True):
         with gr.Row():
             address = gr.Textbox(placeholder=params['address'], value=params['address'], label='Auto1111\'s WebUI address')
-            mode = gr.Dropdown(["Manual", "Immersive/Interactive", "Picturebook/Adventure"], value="Manual", label="Mode of operation", type="index")
+            modes_list = ["Manual", "Immersive/Interactive", "Picturebook/Adventure"]
+            mode = gr.Dropdown(modes_list, value=modes_list[params['mode']], label="Mode of operation", type="index")
             with gr.Column(scale=1, min_width=300):
                 manage_VRAM = gr.Checkbox(value=params['manage_VRAM'], label='Manage VRAM')
                 save_img = gr.Checkbox(value=params['save_img'], label='Keep original images and use them in chat')
@@ -379,6 +391,14 @@ def ui():
                 steps = gr.Number(label="Steps:", value=params['steps'])
                 seed = gr.Number(label="Seed:", value=params['seed'])
                 cfg_scale = gr.Number(label="CFG Scale:", value=params['cfg_scale'])
+            with gr.Row():
+                with gr.Column(visible=params['enable_hr'], elem_id="txt2img_hires_fix") as hr_options:
+                    hr_scale = gr.Slider(1, 4, value=params['hr_scale'], step=0.1, label='Upscale by')
+                    denoising_strength = gr.Slider(0, 1, value=params['denoising_strength'], step=0.01, label='Denoising strength')
+                    hr_upscaler = gr.Textbox(placeholder=params['hr_upscaler'], value=params['hr_upscaler'], label='Upscaler')                    
+                with gr.Column():
+                    enable_hr = gr.Checkbox(value=params['enable_hr'], label='Hires. fix')
+                    restore_faces = gr.Checkbox(value=params['restore_faces'], label='Restore faces')
 
     # Event functions to update the parameters in the backend
     address.change(lambda x: params.update({"address": filter_address(x)}), address, None)
@@ -397,6 +417,12 @@ def ui():
     secondary_negative_prompt.change(lambda x: params.update({"secondary_negative_prompt": x}), secondary_negative_prompt, None)
     width.change(lambda x: params.update({"width": x}), width, None)
     height.change(lambda x: params.update({"height": x}), height, None)
+    hr_scale.change(lambda x: params.update({"hr_scale": x}), hr_scale, None)
+    denoising_strength.change(lambda x: params.update({"denoising_strength": x}), denoising_strength, None)
+    restore_faces.change(lambda x: params.update({"restore_faces": x}), restore_faces, None)
+    hr_upscaler.change(lambda x: params.update({"hr_upscaler": x}), hr_upscaler, None)
+    enable_hr.change(lambda x: params.update({"enable_hr": x}), enable_hr, None)
+    enable_hr.change(lambda x: hr_options.update(visible=params["enable_hr"]), enable_hr, hr_options)
 
     sampler_name.change(lambda x: params.update({"sampler_name": x}), sampler_name, None)
     steps.change(lambda x: params.update({"steps": x}), steps, None)
