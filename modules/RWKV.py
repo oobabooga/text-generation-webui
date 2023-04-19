@@ -36,6 +36,7 @@ class RWKVModel:
         result.model = model
         result.cached_context = ""
         result.cached_model_state = None
+        result.cached_output_logits = None
         return result
 
     def generate(self, context="", token_count=20, temperature=1, top_p=1, top_k=50, repetition_penalty=None, alpha_frequency=0.1, alpha_presence=0.1, token_ban=[0], token_stop=[], callback=None):
@@ -55,6 +56,7 @@ class RWKVModel:
             else:
                 self.cached_context = ""
                 self.cached_model_state = None
+                self.cached_output_logits = None
 
         out = self.generate_from_cached_state(context, token_count=token_count, args=args, callback=callback)
         return out
@@ -73,6 +75,12 @@ class RWKVModel:
         occurrence = {}
         state = copy.deepcopy(self.cached_model_state) if self.cached_model_state is not None else None
 
+        # if we ended up with an empty context, just reuse the cached logits
+        # this can happen if a user undoes a message and then sends the exact message again
+        # in that case the full context ends up being the same as the cached_context, so the remaining context is empty.
+        if ctx == "":
+            out = self.cached_output_logits
+
         for i in range(token_count):
 
             # forward
@@ -88,6 +96,7 @@ class RWKVModel:
             if i == 0:
                 self.cached_context += ctx
                 self.cached_model_state = copy.deepcopy(state)
+                self.cached_output_logits = copy.deepcopy(out)
             
             # adjust probabilities
             for n in args.token_ban:
