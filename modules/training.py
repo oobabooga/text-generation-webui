@@ -160,7 +160,12 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
     # == Input validation / processing ==
     yield "Prepping..."
-    lora_file_path = f"{shared.args.lora_dir}/{clean_path(None, lora_name)}"
+    lora_file_path = clean_path(None, lora_name)
+    if lora_file_path.strip() == '':
+        yield "Missing or invalid LoRA file name input."
+        return
+
+    lora_file_path = f"{shared.args.lora_dir}/{lora_file_path}"
     actual_lr = float(learning_rate)
     model_type = type(shared.model).__name__
 
