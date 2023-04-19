@@ -29,7 +29,6 @@ params = {
     'restore_faces': False,
     'enable_hr': False,
     'hr_upscaler': 'ESRGAN_4x',
-    'override_settings_restore_afterwards': True,
     'hr_scale': '1.0',
     'seed': -1,
     'sampler_name': 'DDIM',
