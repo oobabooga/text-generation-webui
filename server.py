@@ -17,6 +17,10 @@ requests.get = my_get
 import gradio as gr
 requests.get = original_get
 
+# This fixes LaTeX rendering on some systems
+import matplotlib
+matplotlib.use('Agg')
+
 import importlib
 import io
 import json
