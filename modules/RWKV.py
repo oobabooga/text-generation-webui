@@ -1,4 +1,5 @@
 import os
+import copy
 from pathlib import Path
 
 import numpy as np
@@ -70,7 +71,7 @@ class RWKVModel:
         all_tokens = []
         out_str = ''
         occurrence = {}
-        state = self.cached_model_state
+        state = copy.deepcopy(self.cached_model_state) if self.cached_model_state is not None else None
 
         for i in range(token_count):
 
@@ -86,7 +87,7 @@ class RWKVModel:
             # on the next round of chat might be slightly different what what it output on the previous round
             if i == 0:
                 self.cached_context += ctx
-                self.cached_model_state = state
+                self.cached_model_state = copy.deepcopy(state)
             
             # adjust probabilities
             for n in args.token_ban:
