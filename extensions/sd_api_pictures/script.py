@@ -358,7 +358,7 @@ def ui():
             suppr_pic = gr.Button("Suppress the picture response")
 
         with gr.Accordion("Generation parameters", open=False):
-            prompt_prefix = gr.Textbox(placeholder=params['prompt_prefix'], value=params['prompt_prefix'], label='Prompt Prefix (best used to describe the look of the character)')
+            prompt_prefix = gr.Textbox(placeholder=params['prompt_prefix'], value=params['prompt_prefix'], label='Prompt Prefix')
             with gr.Row():
                 with gr.Column():
                     negative_prompt = gr.Textbox(placeholder=params['negative_prompt'], value=params['negative_prompt'], label='Negative Prompt')
