@@ -104,3 +104,6 @@ footer {
   display: none !important;
 }
 
+button {
+  font-size: 14px !important;
+}

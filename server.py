@@ -513,7 +513,7 @@ def create_interface():
                 shared.gradio['textbox'] = gr.Textbox(label='Input')
                 with gr.Row():
                     shared.gradio['Stop'] = gr.Button('Stop', elem_id='stop')
-                    shared.gradio['Generate'] = gr.Button('Generate', elem_id='Generate')
+                    shared.gradio['Generate'] = gr.Button('Generate', elem_id='Generate', variant='primary')
                     shared.gradio['Continue'] = gr.Button('Continue')
 
                 with gr.Row():
@@ -613,7 +613,7 @@ def create_interface():
                         with gr.Row():
                             with gr.Column():
                                 with gr.Row():
-                                    shared.gradio['Generate'] = gr.Button('Generate')
+                                    shared.gradio['Generate'] = gr.Button('Generate', variant='primary')
                                     shared.gradio['Stop'] = gr.Button('Stop')
                                     shared.gradio['Undo'] = gr.Button('Undo')
                                     shared.gradio['Regenerate'] = gr.Button('Regenerate')
@@ -645,7 +645,7 @@ def create_interface():
                         shared.gradio['textbox'] = gr.Textbox(value=default_text, elem_classes="textbox_default", lines=27, label='Input')
                         shared.gradio['max_new_tokens'] = gr.Slider(minimum=shared.settings['max_new_tokens_min'], maximum=shared.settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=shared.settings['max_new_tokens'])
                         with gr.Row():
-                            shared.gradio['Generate'] = gr.Button('Generate')
+                            shared.gradio['Generate'] = gr.Button('Generate', variant='primary')
                             shared.gradio['Stop'] = gr.Button('Stop')
                             shared.gradio['Continue'] = gr.Button('Continue')
                             shared.gradio['save_prompt'] = gr.Button('Save prompt')
