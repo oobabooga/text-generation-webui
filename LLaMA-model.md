@@ -14,7 +14,13 @@ This guide will cover usage through the official `transformers` implementation. 
 
 ### Option 2: convert the weights yourself
 
-1. Use the script below to convert the model in `.pth` format that you, a fellow academic, downloaded using Meta's official link:
+1. Install the `protobuf` library:
+
+```
+pip install protobuf
+```
+
+2. Use the script below to convert the model in `.pth` format that you, a fellow academic, downloaded using Meta's official link:
 
 ### [convert_llama_weights_to_hf.py](https://github.com/huggingface/transformers/blob/main/src/transformers/models/llama/convert_llama_weights_to_hf.py)
 
