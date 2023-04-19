@@ -93,18 +93,29 @@ def create_train_interface():
 
         output = gr.Markdown(value="Ready")
 
-        def do_copy_params(lora_name: str):
-            with open(f"{shared.args.lora_dir}/{clean_path(None, lora_name)}/training_parameters.json", 'r', encoding='utf-8') as formatFile:
-                params: dict[str, str] = json.load(formatFile)
+        def do_copy_params(lora_name: str, *args):
+            f_name = f"{shared.args.lora_dir}/{clean_path(None, lora_name)}/training_parameters.json"
+            if Path(f_name).is_file():
+                with open(f_name, 'r', encoding='utf-8') as format_file:
+                    params: dict[str, str] = json.load(format_file)
+            else:
+                params = {}
 
-            return [params[x] for x in PARAMETERS]
+            result = list()
+            for i in range (0, len(PARAMETERS)):
+                key = PARAMETERS[i]
+                if key in params:
+                    result.append(params[key])
+                else:
+                    result.append(args[i])
+            return result
 
         def change_rank_limit(use_higher_ranks: bool):
             mult = 2 if use_higher_ranks else 1
             return {"maximum": 1024 * mult, "__type__": "update"}, {"maximum": 2048 * mult, "__type__": "update"}
 
         all_params = [lora_name, always_override, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, do_shuffle, higher_rank_limit, warmup_steps]
-        copy_from.change(do_copy_params, copy_from, all_params)
+        copy_from.change(do_copy_params, [copy_from] + all_params, all_params)
         start_button.click(do_train, all_params, output)
         stop_button.click(do_interrupt, None, None, queue=False)
         higher_rank_limit.change(change_rank_limit, [higher_rank_limit], [lora_rank, lora_alpha])
