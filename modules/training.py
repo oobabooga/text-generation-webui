@@ -305,6 +305,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         def __init__(self):
             self.current_steps = 0
             self.max_steps = 0
+            self.did_save = False
 
     tracked = Tracked()
     actual_save_steps = math.ceil(save_steps / gradient_accumulation_steps)
@@ -370,6 +371,10 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
     def threaded_run():
         trainer.train()
+        # Note: save in the thread in case the gradio thread breaks (eg browser closed)
+        lora_model.save_pretrained(lora_file_path)
+        print("LoRA training run is completed and saved.")
+        tracked.did_save = True
 
     thread = threading.Thread(target=threaded_run)
     thread.start()
@@ -398,8 +403,10 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
             yield f"Running... **{tracked.current_steps}** / **{tracked.max_steps}** ... {timer_info}, {format_time(time_elapsed)} / {format_time(total_time_estimate)} ... {format_time(total_time_estimate - time_elapsed)} remaining"
 
-    print("Training complete, saving...")
-    lora_model.save_pretrained(lora_file_path)
+    # Saving in the train thread might fail if an error occurs, so save here if so.
+    if not tracked.did_save:
+        print("Training complete, saving...")
+        lora_model.save_pretrained(lora_file_path)
 
     if WANT_INTERRUPT:
         print("Training interrupted.")
