@@ -4,6 +4,7 @@ from threading import Thread
 
 from modules import shared
 from modules.text_generation import encode, generate_reply
+from modules.chat import extract_message_from_reply
 
 params = {
     'port': 5000,
@@ -58,10 +59,14 @@ class Handler(BaseHTTPRequestHandler):
                 'early_stopping': bool(body.get('early_stopping', False)),
                 'seed': int(body.get('seed', -1)),
                 'add_bos_token': int(body.get('add_bos_token', True)),
-                'custom_stopping_strings': body.get('custom_stopping_strings', []),
+                'custom_stopping_strings': body.get('custom_stopping_strings', ''),
                 'truncation_length': int(body.get('truncation_length', 2048)),
                 'ban_eos_token': bool(body.get('ban_eos_token', False)),
                 'skip_special_tokens': bool(body.get('skip_special_tokens', True)),
+                'mode': 'instruct',
+                'name1': '### Human:',
+                'name2': '### Assistant:',
+                'stop_at_newline': False,
             }
 
             generator = generate_reply(
@@ -76,9 +81,10 @@ class Handler(BaseHTTPRequestHandler):
                 else:
                     answer = a[0]
 
+            reply, _ = extract_message_from_reply(answer, generate_params)
             response = json.dumps({
                 'results': [{
-                    'text': answer[len(prompt):]
+                    'text': reply
                 }]
             })
             self.wfile.write(response.encode('utf-8'))
