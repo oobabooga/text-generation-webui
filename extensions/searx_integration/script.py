@@ -20,70 +20,72 @@ params = { # These can all be set in the settings.yml file
     'max_bytes_for_fetched_pages': 5000,
     'searx_instance': "",
     'max_bytes_total': 50000,
-    'extra_query_information': "!ddg",
+    'extra_query_information': "",
     'removal_list': ['\t', '\n', '\\n', '\\t'],
     'number_of_results': 1,
     'console_display': False
 }
 
 initial_context = "This is new information from after your knowledge cutoff date about"
-do_search = False
 
 def get_search_term(string): # This checks if you say "search ... about" something, and if the "Activate Searx integration" checkbox is ticked will search about that
 
-    global do_search
+    interfering_symbols = ['\"', '\'']
     commands = ['search', 'tell me', 'give me a summary']
     marker = ['about']
     lowstr = string.lower()
+    for s in interfering_symbols:
+        lowstr = lowstr.replace(s, '')
     if any(command in lowstr for command in commands) and any(case in lowstr for case in marker):
         print("Found search term")
-        do_search = True
         subject = string.split('about',1)[1]
         return subject
 
 
 def search_string(search_term): # This is the main logic that sends the API request to Searx and returns the text to add to the context
 
-    global do_search
     print("Searching about" + search_term + "...")
-    do_search = False
     query = search_term + " " + params['extra_query_information']
     r = requests.get(params['searx_instance'], params={'q': query,'format': 'json','pageno': '1'})
-    searchdata = r.json()
-    searchdata = searchdata['results']
-    new_context = initial_context + search_term + ":\n"
-    if params['include_first_results']:
-        i = 0
-        while i < params['number_of_results']:
-            webpage = trafilatura.fetch_url(searchdata[i]['url'])
-            page_content = trafilatura.extract(webpage, include_comments=False, include_tables=False, no_fallback=True)
-    #        page_content = html2text.html2text(str(weburl.read()))
-    #        page_content = re.sub(r"[\n\t]*", "",page_content)
-    #        for s in params['removal_list']:
-    #            page_content = page_content.replace(s, '')
-            page_content = io.StringIO(page_content)
-            new_context = new_context + page_content.read(params['max_bytes_for_fetched_pages'])
-            i = i + 1
-    if params['include_result_summary']:
-        for result in searchdata:
-            if 'content' in result:
-                summary = result['content']
-                new_context = new_context + "\n" + summary
-    new_context = io.StringIO(new_context)
-    new_context = new_context.read(params['max_bytes_total'])
-    new_context = new_context + "\n"
-    if params['console_display']:
-        print(new_context)
-    return new_context
+    try:
+        searchdata = r.json()
+        searchdata = searchdata['results']
+    except:
+        new_context = "Tell me that you could not find the results I asked for"
+    else:
+        new_context = initial_context + search_term + ":\n"
+        if params['include_first_results']:
+            i = 0
+            while i < params['number_of_results']:
+                webpage = trafilatura.fetch_url(searchdata[i]['url'])
+                page_content = trafilatura.extract(webpage, include_comments=False, include_tables=False, no_fallback=True)
+                page_content = io.StringIO(page_content)
+                new_context = new_context + page_content.read(params['max_bytes_for_fetched_pages'])
+                i = i + 1
+        if params['include_result_summary']:
+            for result in searchdata:
+                if 'content' in result:
+                    summary = result['content']
+                    new_context = new_context + "\n" + summary
+        new_context = io.StringIO(new_context)
+        new_context = new_context.read(params['max_bytes_total'])
+        new_context = new_context + "\n"
+    finally:
+        if params['console_display']:
+            print(new_context)
+        return new_context
 
 
 def input_modifier(string):
 
     if params['enable_search'] and params['searx_instance']:
         search_term = get_search_term(string)
-        if do_search:
+        if search_term:
             search_result = search_string(search_term)
-            string = search_result + "\n\nUsing the information I just gave you, and not adding any thing new, respond to this request:" + string
+            if search_result == "Tell me that you could not find the results I asked for": # If it failed to get a result, ask the LLM to tell user it did
+                string = search_result
+            else:
+                string = search_result + "\n\nUsing the information I just gave you, and not adding any thing new, respond to this request:" + string
     return string
 
 
