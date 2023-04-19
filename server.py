@@ -325,7 +325,7 @@ def create_model_menus():
             with gr.Row():
                 unload = gr.Button("Unload the model")
                 reload = gr.Button("Reload the model")
-                save_settings = gr.Button("Save current settings for this model")
+                save_settings = gr.Button("Save settings for this model")
 
     with gr.Row():
         with gr.Column():
@@ -428,9 +428,9 @@ def create_settings_menus(default_preset):
                 with gr.Row():
                     with gr.Column():
                         shared.gradio['num_beams'] = gr.Slider(1, 20, step=1, value=generate_params['num_beams'], label='num_beams')
-                    with gr.Column():
                         shared.gradio['length_penalty'] = gr.Slider(-5, 5, value=generate_params['length_penalty'], label='length_penalty')
-                shared.gradio['early_stopping'] = gr.Checkbox(value=generate_params['early_stopping'], label='early_stopping')
+                    with gr.Column():
+                        shared.gradio['early_stopping'] = gr.Checkbox(value=generate_params['early_stopping'], label='early_stopping')
 
             with gr.Box():
                 with gr.Row():
@@ -500,7 +500,7 @@ def create_interface():
     if shared.args.extensions is not None and len(shared.args.extensions) > 0:
         extensions_module.load_extensions()
 
-    with gr.Blocks(css=ui.css if not shared.is_chat() else ui.css + ui.chat_css, analytics_enabled=False, title=title) as shared.gradio['interface']:
+    with gr.Blocks(css=ui.css if not shared.is_chat() else ui.css + ui.chat_css, analytics_enabled=False, title=title, theme=ui.theme) as shared.gradio['interface']:
 
         # Create chat mode interface
         if shared.is_chat():
@@ -602,7 +602,7 @@ def create_interface():
                 with gr.Row():
                     with gr.Column(scale=4):
                         with gr.Tab('Raw'):
-                            shared.gradio['textbox'] = gr.Textbox(value=default_text, elem_id="textbox", lines=27)
+                            shared.gradio['textbox'] = gr.Textbox(value=default_text, elem_classes="textbox", lines=27)
 
                         with gr.Tab('Markdown'):
                             shared.gradio['markdown'] = gr.Markdown()
@@ -642,16 +642,13 @@ def create_interface():
             with gr.Tab("Text generation", elem_id="main"):
                 with gr.Row():
                     with gr.Column():
-                        shared.gradio['textbox'] = gr.Textbox(value=default_text, lines=21, label='Input')
+                        shared.gradio['textbox'] = gr.Textbox(value=default_text, elem_classes="textbox_default", lines=27, label='Input')
                         shared.gradio['max_new_tokens'] = gr.Slider(minimum=shared.settings['max_new_tokens_min'], maximum=shared.settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=shared.settings['max_new_tokens'])
                         with gr.Row():
-                            with gr.Column():
-                                shared.gradio['Generate'] = gr.Button('Generate')
-                                shared.gradio['Continue'] = gr.Button('Continue')
-
-                            with gr.Column():
-                                shared.gradio['Stop'] = gr.Button('Stop')
-                                shared.gradio['save_prompt'] = gr.Button('Save prompt')
+                            shared.gradio['Generate'] = gr.Button('Generate')
+                            shared.gradio['Stop'] = gr.Button('Stop')
+                            shared.gradio['Continue'] = gr.Button('Continue')
+                            shared.gradio['save_prompt'] = gr.Button('Save prompt')
 
                         with gr.Row():
                             with gr.Column():
@@ -664,7 +661,7 @@ def create_interface():
 
                     with gr.Column():
                         with gr.Tab('Raw'):
-                            shared.gradio['output_textbox'] = gr.Textbox(lines=27, label='Output')
+                            shared.gradio['output_textbox'] = gr.Textbox(elem_classes="textbox_default_output", lines=27, label='Output')
 
                         with gr.Tab('Markdown'):
                             shared.gradio['markdown'] = gr.Markdown()
