@@ -88,14 +88,18 @@ streaming_state = shared.args.no_stream  # remember if chat streaming was enable
 picture_response = False  # specifies if the next model response should appear as a picture
 
 
-def add_translations(description):
+def add_translations(description,triggered_array):
     global params
-    if params['translations']:
-        tpatterns = json.loads(open(Path(f'extensions/sd_api_pictures/translations.json'), 'r', encoding='utf-8').read())
-        for word_pair in tpatterns['pairs']:
+    tpatterns = json.loads(open(Path(f'extensions/sd_api_pictures/translations.json'), 'r', encoding='utf-8').read())
+    i = 0
+    for word_pair in tpatterns['pairs']:
+        if triggered_array[i] != 1:
             if any(target in description for target in word_pair['descriptive_word']):
                 params['positive_suffix'] = params['positive_suffix'] + ", " + word_pair['SD_positive_translation']
                 params['negative_suffix'] = params['negative_suffix'] + ", " + word_pair['SD_negative_translation']
+                triggered_array[i] = 1
+        i = i + 1
+    return triggered_array
 
 def remove_surrounded_chars(string):
     # this expression matches to 'as few symbols as possible (0 upwards) between any asterisks' OR
@@ -206,8 +210,11 @@ def get_SD_pictures(description):
         give_VRAM_priority('SD')
 
     create_suffix()
-    add_translations(initial_string)
-    add_translations(description)
+    if params['translations']:
+        tpatterns = json.loads(open(Path(f'extensions/sd_api_pictures/translations.json'), 'r', encoding='utf-8').read())
+        triggered_array = [0] * len(tpatterns['pairs'])
+        triggered_array = add_translations(initial_string,triggered_array)
+        add_translations(description,triggered_array)
 
     payload = {
         "prompt": params['prompt_prefix'] + ", " + description + ", " + params['positive_suffix'],
