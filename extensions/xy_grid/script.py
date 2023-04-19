@@ -147,7 +147,7 @@ def run(constant_seed, seed_value, use_history, x="", y=""):
 
     if axis_type['x'] == axis_type['y']:
         return "<h1><span style=\"color: red;\">ERROR: both axes cannot be the same setting</span>"
-    
+
     # Run as if x axis is prompts
     elif axis_type['x'] == "prompts":
         for i in x_strings:
@@ -160,7 +160,7 @@ def run(constant_seed, seed_value, use_history, x="", y=""):
 
                     # parse the type of the Y axis and alter custom_state accordingly
                     parse_axis("y", i)
-                    
+
                     # This was at the top of the function, but for some reason it broke with a recent update
                     if not use_history:
                         shared.history['internal'] = shared.history['internal'][:1]
@@ -271,7 +271,7 @@ def run(constant_seed, seed_value, use_history, x="", y=""):
                 shared.history['internal'].pop()
 
             output = output + "</tr>"
-        
+
         elif y_strings != '':
             for i in y_strings:
                 # parse the types of the axes and alter custom_state accordingly
@@ -280,7 +280,7 @@ def run(constant_seed, seed_value, use_history, x="", y=""):
                 # This was at the top of the function, but for some reason it broke with a recent update
                 if not use_history:
                     shared.history['internal'] = shared.history['internal'][:1]
-                    
+
                 # Run the actual text generator
                 for new in chatbot_wrapper(custom_state['textbox'].strip(), custom_state):
                     gen_output = new
@@ -405,7 +405,7 @@ def ui():
     shared.gradio['wbits'].change(lambda x: custom_state.update({'wbits': x}), shared.gradio['wbits'], [])
     shared.gradio['your_picture'].change(lambda x: custom_state.update({'your_picture': x}), shared.gradio['your_picture'], [])
 
-    with gr.Accordion("XY Grid", open=True):
+    with gr.Accordion("XY Grid", open=False):
 
         # Axis selections and inputs
         with gr.Row():
@@ -428,7 +428,7 @@ def ui():
         seed_input.change(toggle_visible, seed_input, seed_value)
         swap_xy.click(swap_axes, [x_type, x_input, y_type, y_input], [x_type, x_input, x_input, y_type, y_input, y_input])
 
-        generate_grid = gr.Button("generate_grid")
+        generate_grid = gr.Button("Generate Grid")
         custom_chat = gr.HTML(value="")
 
         generate_grid.click(run, [seed_input, seed_value, use_history, x_input, y_input], custom_chat)
