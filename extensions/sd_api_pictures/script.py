@@ -23,21 +23,20 @@ params = {
     'manage_VRAM': False,
     'save_img': False,
     'SD_model': 'NeverEndingDream',  # not used right now
-    'prompt_prefix': '(Masterpiece:1.1), detailed, intricate, colorful',
+    'prompt_prefix': '(Masterpiece:1.1), detailed, intricate',
     'negative_prompt': '(worst quality, low quality:1.3)',
     'width': 512,
     'height': 512,
-    'restore_faces': False,
     'seed': -1,
     'sampler_name': 'DDIM',
     'steps': 32,
     'cfg_scale': 7,
     'characterfocus': False,
-    'nsfw': False,
+    'secondary_prompt': False,
     'translations': False,
     'character': "",
-    'anti_nsfw_prompts': '',
-    'nsfw_prompts': 'nsfw',
+    'secondary_negative_prompt': '',
+    'secondary_positive_prompt': '',
     'prompt_translation_positive': "",
     'prompt_translation_negative': "",
     'positive_suffix': "",
@@ -83,6 +82,7 @@ if params['manage_VRAM']:
 
 samplers = ['DDIM', 'DPM++ 2M Karras']  # TODO: get the availible samplers with http://{address}}/sdapi/v1/samplers
 SD_models = ['NeverEndingDream']  # TODO: get with http://{address}}/sdapi/v1/sd-models and allow user to select
+initial_string = ""
 
 streaming_state = shared.args.no_stream  # remember if chat streaming was enabled
 picture_response = False  # specifies if the next model response should appear as a picture
@@ -97,7 +97,6 @@ def add_translations(description):
                 params['positive_suffix'] = params['positive_suffix'] + ", " + word_pair['SD_positive_translation']
                 params['negative_suffix'] = params['negative_suffix'] + ", " + word_pair['SD_negative_translation']
 
-
 def remove_surrounded_chars(string):
     # this expression matches to 'as few symbols as possible (0 upwards) between any asterisks' OR
     # 'as few symbols as possible (0 upwards) between an asterisk and the end of the string'
@@ -111,7 +110,6 @@ def triggers_are_in(string):
     # (?aims) are regex parser flags
     return bool(re.search('(?aims)(send|mail|message|me)\\b.+?\\b(image|pic(ture)?|photo|snap(shot)?|selfie|meme)s?\\b', string))
 
-
 def request_generation(case,string):
     if case == 1: # Character has been asked to send a picture of itself
         toggle_generation(True)
@@ -121,18 +119,18 @@ def request_generation(case,string):
         if after_you != '':
             string = "Describe what you are currently wearing, your environment and yourself performing the following action: " + after_you.strip()
         else:
-            string = "Describe what you are currently wearing, your environment and yourself"
+            string = "Describe what you are currently wearing, your environment and yourself."
     elif case == 2: # Character has been asked to send a picture of something else
         toggle_generation(True)
         subject = string.split('of', 1)[1]  # subdivide the string once by the first 'of' instance and get what's coming after it
         string = "Please provide a detailed and vivid description of " + subject.strip()
     elif case == 3: # Character has been asked to send a picture of nothing in particular
         toggle_generation(True)
-        string = "Please provide a detailed description of your appearance, your surroundings and what you are doing right now"
+        string = "Please provide a detailed description of your appearance, your surroundings and what you are doing right now."
     return string
 
-
 def string_evaluation(string):
+    orig_string = string
     input_type = 0
     subjects = ['yourself', 'you']
     params['characterfocus'] = False
@@ -147,14 +145,7 @@ def string_evaluation(string):
                 input_type = 2
         else:
             input_type = 3
-        if params['translations']: # If any of the words in the prompt match the translations and the translations are on, add those to the SD prompt
-            tpatterns = json.loads(open(Path(f'extensions/sd_api_pictures/translations.json'), 'r', encoding='utf-8').read())
-            for word_pair in tpatterns['pairs']:
-                if any(target in string for target in word_pair['descriptive_word']):
-                    params['prompt_translation_positive'] = word_pair['SD_positive_translation']
-                    params['prompt_translation_negative'] = word_pair['SD_negative_translation']
     return request_generation(input_type,string)
-
 
 def input_modifier(string):
     """
@@ -162,8 +153,8 @@ def input_modifier(string):
     they are fed into the model.
     """
 
-    global params
-
+    global params, initial_string
+    initial_string = string
     if params['mode'] == 1:  # For immersive/interactive mode, send to string evaluation
             return string_evaluation(string)
     if params['mode'] == 2:
@@ -195,26 +186,27 @@ def create_suffix():
         file_contents = open(filepath, 'r', encoding='utf-8').read()
         data = json.loads(file_contents) if extension == "json" else yaml.safe_load(file_contents)
 
-    if params['nsfw']:
-        params['positive_suffix'] = params['nsfw_prompts'] + ", " + params['prompt_translation_positive']
-        params['negative_suffix'] = params['anti_nsfw_prompts'] + ", " + params['prompt_translation_negative']
-    if params['characterfocus'] and shared.character != 'None'
+    if params['secondary_prompt']:
+        params['positive_suffix'] = params['secondary_positive_prompt'] + ", " + params['prompt_translation_positive']
+        params['negative_suffix'] = params['secondary_negative_prompt'] + ", " + params['prompt_translation_negative']
+    if params['characterfocus'] and shared.character != 'None':
         params['positive_suffix'] = data['sd_tags_positive'] + ", " + params['prompt_translation_positive'] if 'sd_tags_positive' in data else params['prompt_translation_positive']
         params['negative_suffix'] = data['sd_tags_negative'] + ", " + params['prompt_translation_negative'] if 'sd_tags_negative' in data else params['prompt_translation_negative']
-        if params['nsfw']:
-            params['positive_suffix'] = params['nsfw_prompts'] + ", " + data['sd_tags_positive'] + ", " + params['prompt_translation_positive'] if 'sd_tags_positive' in data else params['nsfw_prompts'] + ", " + params['prompt_translation_positive']
-            params['negative_suffix'] = params['anti_nsfw_prompts'] + ", " + data['sd_tags_negative'] + ", " + params['prompt_translation_negative'] if 'sd_tags_negative' in data else params['anti_nsfw_prompts'] + ", " + params['prompt_translation_negative']
+        if params['secondary_prompt']:
+            params['positive_suffix'] = params['secondary_positive_prompt'] + ", " + data['sd_tags_positive'] + ", " + params['prompt_translation_positive'] if 'sd_tags_positive' in data else params['secondary_positive_prompt'] + ", " + params['prompt_translation_positive']
+            params['negative_suffix'] = params['secondary_negative_prompt'] + ", " + data['sd_tags_negative'] + ", " + params['prompt_translation_negative'] if 'sd_tags_negative' in data else params['secondary_negative_prompt'] + ", " + params['prompt_translation_negative']
 
 
 # Get and save the Stable Diffusion-generated picture
 def get_SD_pictures(description):
 
-    global params
+    global params, initial_string
 
     if params['manage_VRAM']:
         give_VRAM_priority('SD')
 
     create_suffix()
+    add_translations(initial_string)
     add_translations(description)
 
     payload = {
@@ -226,6 +218,7 @@ def get_SD_pictures(description):
         "width": params['width'],
         "height": params['height'],
         "restore_faces": params['restore_faces'],
+        "override_settings_restore_afterwards": True,
         "negative_prompt": params['negative_prompt'] + ", " + params['negative_suffix']
     }
 
@@ -236,14 +229,19 @@ def get_SD_pictures(description):
 
     visible_result = ""
     for img_str in r['images']:
-        image = Image.open(io.BytesIO(base64.b64decode(img_str.split(",", 1)[0])))
         if params['save_img']:
+            img_data = base64.b64decode(img_str)
+
             variadic = f'{date.today().strftime("%Y_%m_%d")}/{shared.character}_{int(time.time())}'
             output_file = Path(f'extensions/sd_api_pictures/outputs/{variadic}.png')
             output_file.parent.mkdir(parents=True, exist_ok=True)
-            image.save(output_file.as_posix())
+
+            with open(output_file.as_posix(), 'wb') as f:
+                f.write(img_data)
+
             visible_result = visible_result + f'<img src="/file/extensions/sd_api_pictures/outputs/{variadic}.png" alt="{description}" style="max-width: unset; max-height: unset;">\n'
         else:
+            image = Image.open(io.BytesIO(base64.b64decode(img_str.split(",", 1)[0])))
             # lower the resolution of received images for the chat, otherwise the log size gets out of control quickly with all the base64 values in visible history
             image.thumbnail((300, 300))
             buffered = io.BytesIO()
@@ -252,7 +250,7 @@ def get_SD_pictures(description):
             image_bytes = buffered.getvalue()
             img_str = "data:image/jpeg;base64," + base64.b64encode(image_bytes).decode()
             visible_result = visible_result + f'<img src="{img_str}" alt="{description}">\n'
-
+            
     if params['manage_VRAM']:
         give_VRAM_priority('LLM')
 
@@ -339,7 +337,6 @@ def SD_api_address_update(address):
 
     return gr.Textbox.update(label=msg)
 
-
 def ui():
 
     # Gradio elements
@@ -351,14 +348,14 @@ def ui():
             with gr.Column(scale=1, min_width=300):
                 manage_VRAM = gr.Checkbox(value=params['manage_VRAM'], label='Manage VRAM')
                 save_img = gr.Checkbox(value=params['save_img'], label='Keep original images and use them in chat')
-                nsfw = gr.Checkbox(value=params['nsfw'], label='Add NSFW tags in prompt')
+                secondary_prompt = gr.Checkbox(value=params['secondary_prompt'], label='Add secondary tags in prompt')
                 translations = gr.Checkbox(value=params['translations'], label='Activate SD translations')
 
             force_pic = gr.Button("Force the picture response")
             suppr_pic = gr.Button("Suppress the picture response")
 
         with gr.Accordion("Generation parameters", open=False):
-            prompt_prefix = gr.Textbox(placeholder=params['prompt_prefix'], value=params['prompt_prefix'], label='Prompt Prefix')
+            prompt_prefix = gr.Textbox(placeholder=params['prompt_prefix'], value=params['prompt_prefix'], label='Prompt Prefix (best used to describe the look of the character)')
             with gr.Row():
                 with gr.Column():
                     negative_prompt = gr.Textbox(placeholder=params['negative_prompt'], value=params['negative_prompt'], label='Negative Prompt')
@@ -366,6 +363,11 @@ def ui():
                 with gr.Column():
                     width = gr.Slider(256, 768, value=params['width'], step=64, label='Width')
                     height = gr.Slider(256, 768, value=params['height'], step=64, label='Height')
+            with gr.Row():
+                with gr.Column():
+                    secondary_positive_prompt = gr.Textbox(placeholder=params['secondary_positive_prompt'], value=params['secondary_positive_prompt'], label='Secondary positive prompt')
+                with gr.Column():
+                    secondary_negative_prompt = gr.Textbox(placeholder=params['secondary_negative_prompt'], value=params['secondary_negative_prompt'], label='Secondary negative prompt')
             with gr.Row():
                 steps = gr.Number(label="Steps:", value=params['steps'])
                 seed = gr.Number(label="Seed:", value=params['seed'])
@@ -380,10 +382,12 @@ def ui():
     save_img.change(lambda x: params.update({"save_img": x}), save_img, None)
 
     address.submit(fn=SD_api_address_update, inputs=address, outputs=address)
-    nsfw.change(lambda x: params.update({"nsfw": x}), nsfw, None)
+    negative_prompt.change(lambda x: params.update({"negative_prompt": x}), negative_prompt, None)
     translations.change(lambda x: params.update({"translations": x}), translations, None)
     prompt_prefix.change(lambda x: params.update({"prompt_prefix": x}), prompt_prefix, None)
     negative_prompt.change(lambda x: params.update({"negative_prompt": x}), negative_prompt, None)
+    secondary_positive_prompt.change(lambda x: params.update({"secondary_positive_prompt": x}), secondary_positive_prompt, None)
+    secondary_negative_prompt.change(lambda x: params.update({"secondary_negative_prompt": x}), secondary_negative_prompt, None)
     width.change(lambda x: params.update({"width": x}), width, None)
     height.change(lambda x: params.update({"height": x}), height, None)
 
