@@ -25,7 +25,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * CPU mode
 * [FlexGen](https://github.com/oobabooga/text-generation-webui/wiki/FlexGen)
 * [DeepSpeed ZeRO-3](https://github.com/oobabooga/text-generation-webui/wiki/DeepSpeed)
-* API [with](https://github.com/oobabooga/text-generation-webui/blob/main/api-example-stream.py) streaming and [without](https://github.com/oobabooga/text-generation-webui/blob/main/api-example.py) streaming
+* API [with](https://github.com/oobabooga/text-generation-webui/blob/main/api-example-stream.py) streaming and [without](https://github.com/oobabooga/text-generation-webui/blob/main/api-example.py) streaming, as described on [Huggingface](https://huggingface.co/docs/transformers/main_classes/text_generation)
 * [LLaMA model](https://github.com/oobabooga/text-generation-webui/wiki/LLaMA-model)
 * [4-bit GPTQ mode](https://github.com/oobabooga/text-generation-webui/wiki/GPTQ-models-(4-bit-mode))
 * [llama.cpp](https://github.com/oobabooga/text-generation-webui/wiki/llama.cpp-models)
