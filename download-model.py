@@ -81,7 +81,7 @@ def sanitize_model_and_branch_names(model, branch):
 
 def get_download_links_from_huggingface(model, branch, text_only=False):
     base = "https://huggingface.co"
-    page = f"/api/models/{model}/tree/{branch}?cursor="
+    page = f"/api/models/{model}/tree/{branch}"
     cursor = b""
 
     links = []
@@ -93,7 +93,10 @@ def get_download_links_from_huggingface(model, branch, text_only=False):
     has_safetensors = False
     is_lora = False
     while True:
-        content = requests.get(f"{base}{page}{cursor.decode()}").content
+        url = f"{base}{page}" + (f"?cursor={cursor.decode()}" if cursor else "")
+        r = requests.get(url)
+        r.raise_for_status()
+        content = r.content
 
         dict = json.loads(content)
         if len(dict) == 0:

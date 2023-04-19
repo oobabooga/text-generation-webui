@@ -5,8 +5,6 @@ import torch
 
 from modules import shared
 
-refresh_symbol = '\U0001f504'  # 🔄
-
 with open(Path(__file__).resolve().parent / '../css/main.css', 'r') as f:
     css = f.read()
 with open(Path(__file__).resolve().parent / '../css/chat.css', 'r') as f:
@@ -16,6 +14,14 @@ with open(Path(__file__).resolve().parent / '../css/main.js', 'r') as f:
 with open(Path(__file__).resolve().parent / '../css/chat.js', 'r') as f:
     chat_js = f.read()
 
+refresh_symbol = '\U0001f504'  # 🔄
+theme = gr.themes.Default(
+    font=['Helvetica', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+    font_mono=['IBM Plex Mono', 'ui-monospace', 'Consolas', 'monospace'],
+).set(
+    border_color_primary='#c5c5d2',
+    button_large_padding='6px 12px'
+)
 
 def list_model_elements():
     elements = ['cpu_memory', 'auto_devices', 'disk', 'cpu', 'bf16', 'load_in_8bit', 'wbits', 'groupsize', 'model_type', 'pre_layer']

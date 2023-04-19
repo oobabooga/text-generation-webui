@@ -127,7 +127,7 @@ def do_copy_params(lora_name: str, *args):
         params = {}
 
     result = list()
-    for i in range (0, len(PARAMETERS)):
+    for i in range(0, len(PARAMETERS)):
         key = PARAMETERS[i]
         if key in params:
             result.append(params[key])
@@ -294,7 +294,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     except:
         yield traceback.format_exc()
         return
-    
+
     if shared.args.monkey_patch:
         for n, m in lora_model.named_modules():
             if '4bit' in str(type(m)):

@@ -44,7 +44,7 @@ settings = {
     'skip_special_tokens': True,
     'truncation_length': 2048,
     'truncation_length_min': 0,
-    'truncation_length_max': 4096,
+    'truncation_length_max': 8192,
     'mode': 'cai-chat',
     'instruction_template': 'None',
     'chat_prompt_size': 2048,
