@@ -15,7 +15,7 @@ from modules import shared, ui
 
 WANT_INTERRUPT = False
 
-PARAMETERS = ["lora_name", "always_override", "save_steps", "micro_batch_size", "batch_size", "epochs", "learning_rate", "lora_rank", "lora_alpha", "lora_dropout", "cutoff_len", "dataset", "eval_dataset", "format", "eval_steps", "raw_text_file", "overlap_len", "newline_favor_len", "do_shuffle", "higher_rank_limit"]
+PARAMETERS = ["lora_name", "always_override", "save_steps", "micro_batch_size", "batch_size", "epochs", "learning_rate", "lora_rank", "lora_alpha", "lora_dropout", "cutoff_len", "dataset", "eval_dataset", "format", "eval_steps", "raw_text_file", "overlap_len", "newline_favor_len", "do_shuffle", "higher_rank_limit", "warmup_steps"]
 
 # Mapping of Python class names to peft IDs
 MODEL_CLASSES = {
@@ -81,6 +81,7 @@ def create_train_interface():
 
         with gr.Accordion(label='Advanced Options', open=False):
             lora_dropout = gr.Slider(label='LoRA Dropout', minimum=0.0, maximum=1.0, step=0.025, value=0.05, info='Percentage probability for dropout of LoRA layers. This can help reduce overfitting. Most users should leave at default.')
+            warmup_steps = gr.Number(label='Warmup Steps', value=100, info='For this many steps at the start, the learning rate will be lower than normal. This helps the trainer prepare the model and precompute statistics to improve the quality of training after the start.')
 
             with gr.Row():
                 do_shuffle = gr.Checkbox(label='Shuffle Dataset', value=True, info='If checked, the dataset will be randomly shuffled. This can help reduce overfitting.')
@@ -102,7 +103,7 @@ def create_train_interface():
             mult = 2 if use_higher_ranks else 1
             return {"maximum": 1024 * mult, "__type__": "update"}, {"maximum": 2048 * mult, "__type__": "update"}
 
-        all_params = [lora_name, always_override, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, do_shuffle, higher_rank_limit]
+        all_params = [lora_name, always_override, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, do_shuffle, higher_rank_limit, warmup_steps]
         copy_from.change(do_copy_params, copy_from, all_params)
         start_button.click(do_train, all_params, output)
         stop_button.click(do_interrupt, None, None, queue=False)
@@ -126,7 +127,7 @@ def clean_path(base_path: str, path: str):
 
 
 def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lora_rank: int, lora_alpha: int, lora_dropout: float,
-             cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, do_shuffle: bool, higher_rank_limit: bool):
+             cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, do_shuffle: bool, higher_rank_limit: bool, warmup_steps: int):
     if shared.args.monkey_patch:
         from monkeypatch.peft_tuners_lora_monkey_patch import replace_peft_model_with_gptq_lora_model
         replace_peft_model_with_gptq_lora_model()
@@ -313,7 +314,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         args=transformers.TrainingArguments(
             per_device_train_batch_size=micro_batch_size,
             gradient_accumulation_steps=gradient_accumulation_steps,
-            warmup_steps=1,
+            warmup_steps=math.ceil(warmup_steps / gradient_accumulation_steps),
             num_train_epochs=epochs,
             learning_rate=actual_lr,
             fp16=False if shared.args.cpu else True,
