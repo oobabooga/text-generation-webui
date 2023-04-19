@@ -10,8 +10,19 @@ import gradio as gr
 import torch
 import transformers
 from datasets import Dataset, load_dataset
+from peft import LoraConfig, get_peft_model, set_peft_model_state_dict, prepare_model_for_int8_training
 
 from modules import shared, ui
+
+# This mapping is from a very recent commit, not yet released.
+# If not available, default to a backup map for the 3 safe model types.
+try:
+    from peft.utils.other import \
+        TRANSFORMERS_MODELS_TO_LORA_TARGET_MODULES_MAPPING as \
+        model_to_lora_modules
+except:
+    standard_modules = ["q_proj", "v_proj"]
+    model_to_lora_modules = {"llama": standard_modules, "opt": standard_modules, "gptj": standard_modules}
 
 WANT_INTERRUPT = False
 
@@ -141,21 +152,10 @@ def clean_path(base_path: str, path: str):
 
 
 def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lr_scheduler_type: str, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, do_shuffle: bool, higher_rank_limit: bool, warmup_steps: int):
+
     if shared.args.monkey_patch:
         from monkeypatch.peft_tuners_lora_monkey_patch import replace_peft_model_with_gptq_lora_model
         replace_peft_model_with_gptq_lora_model()
-
-    from peft import LoraConfig, get_peft_model, set_peft_model_state_dict, prepare_model_for_int8_training
-
-    # This mapping is from a very recent commit, not yet released.
-    # If not available, default to a backup map for the 3 safe model types.
-    try:
-        from peft.utils.other import \
-            TRANSFORMERS_MODELS_TO_LORA_TARGET_MODULES_MAPPING as \
-            model_to_lora_modules
-    except:
-        standard_modules = ["q_proj", "v_proj"]
-        model_to_lora_modules = {"llama": standard_modules, "opt": standard_modules, "gptj": standard_modules}
 
     global WANT_INTERRUPT
     WANT_INTERRUPT = False
