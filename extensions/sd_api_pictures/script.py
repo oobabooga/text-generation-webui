@@ -88,9 +88,8 @@ streaming_state = shared.args.no_stream  # remember if chat streaming was enable
 picture_response = False  # specifies if the next model response should appear as a picture
 
 
-def add_translations(description,triggered_array):
+def add_translations(description,triggered_array,tpatterns):
     global params
-    tpatterns = json.loads(open(Path(f'extensions/sd_api_pictures/translations.json'), 'r', encoding='utf-8').read())
     i = 0
     for word_pair in tpatterns['pairs']:
         if triggered_array[i] != 1:
@@ -213,8 +212,8 @@ def get_SD_pictures(description):
     if params['translations']:
         tpatterns = json.loads(open(Path(f'extensions/sd_api_pictures/translations.json'), 'r', encoding='utf-8').read())
         triggered_array = [0] * len(tpatterns['pairs'])
-        triggered_array = add_translations(initial_string,triggered_array)
-        add_translations(description,triggered_array)
+        triggered_array = add_translations(initial_string,triggered_array,tpatterns)
+        add_translations(description,triggered_array,tpatterns)
 
     payload = {
         "prompt": params['prompt_prefix'] + ", " + description + ", " + params['positive_suffix'],
