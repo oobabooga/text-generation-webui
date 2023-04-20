@@ -117,7 +117,7 @@ def create_train_interface():
                     stop_evaluation = gr.Button("Interrupt")
 
             with gr.Column():
-                evaluation_table = gr.Markdown(value=generate_markdown_table())
+                evaluation_table = gr.Dataframe(value=generate_markdown_table())
                 evaluation_log = gr.Markdown(value = '')
 
     # Training events

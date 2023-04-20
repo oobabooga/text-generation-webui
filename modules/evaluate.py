@@ -67,14 +67,14 @@ def calculate_perplexity(models, input_dataset, stride):
                 shared.model_name = model
                 unload_model()
                 shared.model, shared.tokenizer = load_model(shared.model_name)
-                cumulative_log += f"Processing {model}...\n"
-                yield cumulative_log + "Tokenizing the input dataset...\n"
-                encodings = encode(text, add_special_tokens=False)
             except:
                 cumulative_log += f"Failed to load {model}. Moving on.\n"
                 yield cumulative_log
                 continue
 
+        cumulative_log += f"Processing {model}...\n"
+        yield cumulative_log + "Tokenizing the input dataset...\n"
+        encodings = encode(text, add_special_tokens=False)
         max_length = shared.model.config.max_position_embeddings
         seq_len = encodings.shape[1]
         nlls = []
@@ -134,8 +134,4 @@ def is_in_past_evaluations(model, dataset, stride):
 
 def generate_markdown_table():
     sorted_df = past_evaluations.sort_values(by=['Dataset', 'Stride', 'Perplexity', 'Date'])
-    markdown_table = '|Model|LoRAs|Dataset|Stride|Perplexity|Date|\n|-----|------|------|-----|-----|------|\n'
-    for row in sorted_df.itertuples():
-        markdown_table += '|{}|{}|{}|{}|{}|{}|\n'.format(row.Model, row.LoRAs, row.Dataset, row.Stride, row.Perplexity, row.Date)
-
-    return markdown_table
+    return sorted_df
