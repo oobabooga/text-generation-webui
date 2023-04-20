@@ -1,25 +1,23 @@
 '''
-
 This is an example on how to use the API for oobabooga/text-generation-webui.
-
 Make sure to start the web UI with the following flags:
-
-python server.py --model MODEL --listen --no-stream
-
+python server.py --model MODEL --extensions api
 Optionally, you can also add the --share flag to generate a public gradio URL,
 allowing you to use the API remotely.
-
 '''
-import json
-
 import requests
+
+
 
 # Server address
 server = "127.0.0.1"
+port = 5000
+prompt = "What I would like to say is the following: "
 
 # Generation parameters
 # Reference: https://huggingface.co/docs/transformers/main_classes/text_generation#transformers.GenerationConfig
 params = {
+    'prompt': prompt,
     'max_new_tokens': 200,
     'do_sample': True,
     'temperature': 0.72,
@@ -42,16 +40,7 @@ params = {
     'stopping_strings': [],
 }
 
-# Input prompt
-prompt = "What I would like to say is the following: "
 
-payload = json.dumps([prompt, params])
-
-response = requests.post(f"http://{server}:7860/run/textgen", json={
-    "data": [
-        payload
-    ]
-}).json()
-
-reply = response["data"][0]
+response = requests.post(f"http://{server}:{port}/api/v1/generate", json=params).json()
+reply = response['results'][0]['text']
 print(reply)
