@@ -10,17 +10,6 @@ from modules.text_generation import encode
 past_evaluations = []
 
 
-def generate_markdown_table():
-    if len(past_evaluations) == 0:
-        return ''
-
-    markdown_table = '|Model|LoRAs|Input file|Stride|Perplexity|\n|-----|-----|------|------|-----|\n'
-    for evaluation in past_evaluations:
-        markdown_table += '|{}|{}|{}|{}|{}|\n'.format(*evaluation)
-
-    return markdown_table
-
-
 def calculate_perplexity(input_dataset, stride):
     '''
     Based on:
@@ -75,3 +64,14 @@ def calculate_perplexity(input_dataset, stride):
     ppl = torch.exp(torch.stack(nlls).mean())
     past_evaluations.append([shared.model_name, ', '.join(shared.lora_names), input_dataset, stride, ppl])
     yield generate_markdown_table()
+
+
+def generate_markdown_table():
+    if len(past_evaluations) == 0:
+        return ''
+
+    markdown_table = '|Model|LoRAs|Input file|Stride|Perplexity|\n|-----|-----|------|------|-----|\n'
+    for evaluation in past_evaluations:
+        markdown_table += '|{}|{}|{}|{}|{}|\n'.format(*evaluation)
+
+    return markdown_table
