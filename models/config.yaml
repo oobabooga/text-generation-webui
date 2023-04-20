@@ -62,3 +62,10 @@ llama-[0-9]*b-4bit$:
 .*stablelm-tuned:
   mode: 'instruct'
   instruction_template: 'StableLM'
+  truncation_length: 4096
+  chat_prompt_size: 4096
+  chat_prompt_size_max: 4096
+.*stablelm-base:
+  truncation_length: 4096
+  chat_prompt_size: 4096
+  chat_prompt_size_max: 4096
