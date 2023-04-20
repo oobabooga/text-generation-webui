@@ -15,7 +15,7 @@ from server import get_model_specific_settings, update_model_parameters
 
 def load_past_evaluations():
     if Path('logs/evaluations.csv').exists():
-        return pd.read_csv(Path('logs/evaluations.csv'))
+        return pd.read_csv(Path('logs/evaluations.csv'), dtype=str)
     else:
         return pd.DataFrame(columns=['Model', 'LoRAs', 'Dataset', 'Stride', 'Perplexity', 'Date'])
 past_evaluations = load_past_evaluations()
@@ -51,7 +51,7 @@ def calculate_perplexity(models, input_dataset, stride):
             text = f.read()
 
     for model in models:
-        if is_in_past_evaluations(model, input_dataset, str(stride)):
+        if is_in_past_evaluations(model, input_dataset, stride):
             cumulative_log += f"{model} has already been tested. Ignoring.\n"
             yield cumulative_log
             continue
@@ -100,7 +100,7 @@ def calculate_perplexity(models, input_dataset, stride):
                 break
 
         ppl = torch.exp(torch.stack(nlls).mean())
-        add_entry_to_past_evaluations(float(ppl), shared.model_name, input_dataset, str(stride))
+        add_entry_to_past_evaluations(float(ppl), shared.model_name, input_dataset, stride)
         save_past_evaluations()
         cumulative_log += f"Done.\n\n"
         yield cumulative_log
@@ -112,7 +112,7 @@ def add_entry_to_past_evaluations(perplexity, model, dataset, stride):
         'Model': model,
         'LoRAs': ', '.join(shared.lora_names) or '-',
         'Dataset': dataset,
-        'Stride': stride,
+        'Stride': str(stride),
         'Perplexity': perplexity,
         'Date': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     }
@@ -122,7 +122,7 @@ def add_entry_to_past_evaluations(perplexity, model, dataset, stride):
 def is_in_past_evaluations(model, dataset, stride):
     entries = past_evaluations[(past_evaluations['Model'] == model) &
                                (past_evaluations['Dataset'] == dataset) &
-                               (past_evaluations['Stride'] == stride)]
+                               (past_evaluations['Stride'] == str(stride))]
 
     if entries.shape[0] > 0:
         return True
