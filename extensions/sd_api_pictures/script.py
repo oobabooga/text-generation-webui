@@ -25,7 +25,7 @@ params = {
     'negative_prompt': '(worst quality, low quality:1.3)',
     'width': 512,
     'height': 512,
-    'denoising_strength': 0.7,
+    'denoising_strength': 0.61,
     'restore_faces': False,
     'enable_hr': False,
     'hr_upscaler': 'ESRGAN_4x',
@@ -77,7 +77,6 @@ SD_models = ['NeverEndingDream']  # TODO: get with http://{address}}/sdapi/v1/sd
 
 streaming_state = shared.args.no_stream  # remember if chat streaming was enabled
 picture_response = False  # specifies if the next model response should appear as a picture
-
 
 def remove_surrounded_chars(string):
     # this expression matches to 'as few symbols as possible (0 upwards) between any asterisks' OR
@@ -255,22 +254,15 @@ def SD_api_address_update(address):
 
     return gr.Textbox.update(label=msg)
 
-def check_mode():
-    if params['mode'] == 0:
-        return "Manual"
-    elif params['mode'] == 1:
-        return "Immersive/Interactive"
-    elif params['mode'] == 2:
-        return "Picturebook/Adventure"
-
 def ui():
 
     # Gradio elements
     # gr.Markdown('### Stable Diffusion API Pictures') # Currently the name of extension is shown as the title
-    with gr.Accordion("Parameters", open=True):
+    with gr.Accordion("Parameters", open=True, elem_classes="SDAP"):
         with gr.Row():
             address = gr.Textbox(placeholder=params['address'], value=params['address'], label='Auto1111\'s WebUI address')
-            mode = gr.Dropdown(["Manual", "Immersive/Interactive", "Picturebook/Adventure"], value=check_mode, label="Mode of operation", type="index")
+            modes_list = ["Manual", "Immersive/Interactive", "Picturebook/Adventure"]
+            mode = gr.Dropdown(modes_list, value=modes_list[params['mode']], label="Mode of operation", type="index")
             with gr.Column(scale=1, min_width=300):
                 manage_VRAM = gr.Checkbox(value=params['manage_VRAM'], label='Manage VRAM')
                 save_img = gr.Checkbox(value=params['save_img'], label='Keep original images and use them in chat')
@@ -280,25 +272,26 @@ def ui():
 
         with gr.Accordion("Generation parameters", open=False):
             prompt_prefix = gr.Textbox(placeholder=params['prompt_prefix'], value=params['prompt_prefix'], label='Prompt Prefix (best used to describe the look of the character)')
+            negative_prompt = gr.Textbox(placeholder=params['negative_prompt'], value=params['negative_prompt'], label='Negative Prompt')
             with gr.Row():
-                with gr.Column():
-                    negative_prompt = gr.Textbox(placeholder=params['negative_prompt'], value=params['negative_prompt'], label='Negative Prompt')
-                    sampler_name = gr.Textbox(placeholder=params['sampler_name'], value=params['sampler_name'], label='Sampler')
                 with gr.Column():
                     width = gr.Slider(256, 768, value=params['width'], step=64, label='Width')
                     height = gr.Slider(256, 768, value=params['height'], step=64, label='Height')
-            with gr.Row():
-                steps = gr.Number(label="Steps:", value=params['steps'])
-                seed = gr.Number(label="Seed:", value=params['seed'])
-                cfg_scale = gr.Number(label="CFG Scale:", value=params['cfg_scale'])
-            with gr.Row():
                 with gr.Column():
+                    sampler_name = gr.Textbox(placeholder=params['sampler_name'], value=params['sampler_name'], label='Sampling method', elem_id="sampler_box")
+                    steps = gr.Slider(1, 150, value=params['steps'], step=1, label="Sampling steps")
+            with gr.Row():
+                seed = gr.Number(label="Seed", value=params['seed'], elem_id="seed_box")
+                cfg_scale = gr.Number(label="CFG Scale", value=params['cfg_scale'], elem_id="cfg_box")
+                with gr.Column() as hr_options:
+                    restore_faces = gr.Checkbox(value=params['restore_faces'], label='Restore faces')
+                    enable_hr = gr.Checkbox(value=params['enable_hr'], label='Hires. fix')                    
+            with gr.Row(visible=params['enable_hr'], elem_classes="hires_opts") as hr_options:
                     hr_scale = gr.Slider(1, 4, value=params['hr_scale'], step=0.1, label='Upscale by')
                     denoising_strength = gr.Slider(0, 1, value=params['denoising_strength'], step=0.01, label='Denoising strength')
                     hr_upscaler = gr.Textbox(placeholder=params['hr_upscaler'], value=params['hr_upscaler'], label='Upscaler')                    
-                with gr.Column():
-                    enable_hr = gr.Checkbox(value=params['enable_hr'], label='Hires. fix')
-                    restore_faces = gr.Checkbox(value=params['restore_faces'], label='Restore faces')
+
+
     # Event functions to update the parameters in the backend
     address.change(lambda x: params.update({"address": filter_address(x)}), address, None)
     mode.select(lambda x: params.update({"mode": x}), mode, None)
@@ -317,7 +310,7 @@ def ui():
     restore_faces.change(lambda x: params.update({"restore_faces": x}), restore_faces, None)
     hr_upscaler.change(lambda x: params.update({"hr_upscaler": x}), hr_upscaler, None)
     enable_hr.change(lambda x: params.update({"enable_hr": x}), enable_hr, None)
-
+    enable_hr.change(lambda x: hr_options.update(visible=params["enable_hr"]), enable_hr, hr_options)
 
     sampler_name.change(lambda x: params.update({"sampler_name": x}), sampler_name, None)
     steps.change(lambda x: params.update({"steps": x}), steps, None)
