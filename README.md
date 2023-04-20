@@ -1,8 +1,8 @@
-# Text generation web UI
+# Text generation web UI | Now with Moderation!
 
-A gradio web UI for running Large Language Models like LLaMA, llama.cpp, GPT-J, Pythia, OPT, and GALACTICA.
+A [gradio web UI](https://gradio.app/) for running Large Language Models, with content moderation powered by [LanceDB](https://github.com/lancedb/lancedb).
 
-Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.com/AUTOMATIC1111/stable-diffusion-webui) of text generation.
+Built off of  [oobabooga's text-generation-webui](https://github.com/oobabooga/text-generation-webui).
 
 |![Image1](https://github.com/oobabooga/screenshots/raw/main/qa.png) | ![Image2](https://github.com/oobabooga/screenshots/raw/main/cai3.png) |
 |:---:|:---:|
@@ -10,124 +10,48 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 
 ## Features
 
-* Dropdown menu for switching between models
-* Notebook mode that resembles OpenAI's playground
-* Chat mode for conversation and role playing
-* Instruct mode compatible with Alpaca, Vicuna, Open Assistant, Dolly, Koala, and ChatGLM formats 
-* Nice HTML output for GPT-4chan
-* Markdown output for [GALACTICA](https://github.com/paperswithcode/galai), including LaTeX rendering
-* [Custom chat characters](https://github.com/oobabooga/text-generation-webui/wiki/Custom-chat-characters)
-* Advanced chat features (send images, get audio responses with TTS)
-* Very efficient text streaming
-* Parameter presets
-* 8-bit mode
-* Layers splitting across GPU(s), CPU, and disk
-* CPU mode
-* [FlexGen](https://github.com/oobabooga/text-generation-webui/wiki/FlexGen)
-* [DeepSpeed ZeRO-3](https://github.com/oobabooga/text-generation-webui/wiki/DeepSpeed)
-* API [with](https://github.com/oobabooga/text-generation-webui/blob/main/api-example-stream.py) streaming and [without](https://github.com/oobabooga/text-generation-webui/blob/main/api-example.py) streaming
-* [LLaMA model](https://github.com/oobabooga/text-generation-webui/wiki/LLaMA-model)
-* [4-bit GPTQ mode](https://github.com/oobabooga/text-generation-webui/wiki/GPTQ-models-(4-bit-mode))
-* [llama.cpp](https://github.com/oobabooga/text-generation-webui/wiki/llama.cpp-models)
-* [RWKV model](https://github.com/oobabooga/text-generation-webui/wiki/RWKV-model)
-* [LoRA (loading and training)](https://github.com/oobabooga/text-generation-webui/wiki/Using-LoRAs)
-* Softprompts
-* [Extensions](https://github.com/oobabooga/text-generation-webui/wiki/Extensions)
+* Chat moderation 
+    * toxicity, obscenity, threats, insults and identity hate [Jigsaw Dataset](https://www.kaggle.com/datasets/adldotori/all-in-one-jigsaw)
+    * Lightning fast chat moderation inference with [LanceDB](https://github.com/lancedb/lancedb)
+* Switch between models: Alpaca, Vicuna, Open Assistant, Dolly, Koala, and ChatGLM formats 
+* Efficient text streaming and parameter presets
+    * Layers splitting across GPU(s), CPU, and disk
+    * CPU mode
+* API [with](https://github.com/mrubash1/text-generation-webui/blob/main/api-example-stream.py) streaming and [without](https://github.com/mrubash1/text-generation-webui/blob/main/api-example.py) streaming
+* [LoRA (loading and training)](https://github.com/mrubash1/text-generation-webui/wiki/Using-LoRAs)
+* [Extensions](https://github.com/mrubash1/text-generation-webui/wiki/Extensions)
 
-## Installation
-
-### One-click installers
-
-| Windows | Linux | macOS |
-|-------|--------|--------|
-| [oobabooga-windows.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga_windows.zip) | [oobabooga-linux.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga_linux.zip) |[oobabooga-macos.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga_macos.zip) |
-
-Just download the zip above, extract it, and double click on "start". The web UI and all its dependencies will be installed in the same folder.
-
-* The source codes are here: https://github.com/oobabooga/one-click-installers
-* Huge thanks to [@jllllll](https://github.com/jllllll), [@ClayShoaf](https://github.com/ClayShoaf), and [@xNul](https://github.com/xNul) for their contributions to these installers.
-* There is no need to run the installers as admin.
+## Installation (Mac only)
 
 ### Manual installation using Conda
 
 Recommended if you have some experience with the command-line.
 
-On Windows, I additionally recommend carrying out the installation on WSL instead of the base system: [WSL installation guide](https://github.com/oobabooga/text-generation-webui/wiki/WSL-installation-guide).
-
-#### 0. Install Conda
-
-https://docs.conda.io/en/latest/miniconda.html
-
-On Linux or WSL, it can be automatically installed with these two commands:
-
-```
-curl -sL "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh" > "Miniconda3.sh"
-bash Miniconda3.sh
-```
-Source: https://educe-ubc.github.io/conda.html
-
-#### 0.1 (Ubuntu/WSL) Install build tools
-
-```
-sudo apt install build-essential
-```
+#### 0. [Install Conda](https://docs.conda.io/en/latest/miniconda.html)
 
 
 #### 1. Create a new conda environment
 
-```
+```bash
 conda create -n textgen python=3.10.9
 conda activate textgen
 ```
 
 #### 2. Install Pytorch
-
-| System | GPU | Command |
-|--------|---------|---------|
-| Linux/WSL | NVIDIA | `pip3 install torch torchvision torchaudio` |
-| Linux | AMD | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.4.2` |
-| MacOS + MPS (untested) | Any | `pip3 install torch torchvision torchaudio` |
+First you need to install macOS Ventura 13.3 Beta, **it does not work on 13.2.**
+Then you have to install torch dev version, it does not work on 2.0.0.
+```bash
+pip install -U --pre torch torchvision -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html
+```
 
 The up to date commands can be found here: https://pytorch.org/get-started/locally/. 
-
-#### 2.1 Special instructions
-
-* MacOS users: https://github.com/oobabooga/text-generation-webui/pull/393
-* AMD users: https://rentry.org/eq3hg
 
 #### 3. Install the web UI
 
 ```
-git clone https://github.com/oobabooga/text-generation-webui
+git clone https://github.com/mrubash1/text-generation-webui
 cd text-generation-webui
 pip install -r requirements.txt
-```
-
-### Alternative: manual Windows installation
-
-As an alternative to the recommended WSL method, you can install the web UI natively on Windows using this guide. It will be a lot harder and the performance may be slower: [Windows installation guide](https://github.com/oobabooga/text-generation-webui/wiki/Windows-installation-guide).
-
-### Alternative: Docker
-
-```
-ln -s docker/{Dockerfile,docker-compose.yml,.dockerignore} .
-cp docker/.env.example .env
-# Edit .env and set TORCH_CUDA_ARCH_LIST based on your GPU model
-docker compose up --build
-```
-
-You need to have docker compose v2.17 or higher installed in your system. To see how to install docker compose itself, see the guide in https://github.com/oobabooga/text-generation-webui/tree/main/docker.
-
-Contributed by [@loeken](https://github.com/loeken) in [#633](https://github.com/oobabooga/text-generation-webui/pull/633)
-
-### Updating the requirements
-
-From time to time, the `requirements.txt` changes. To update, use this command:
-
-```
-conda activate textgen
-cd text-generation-webui
-pip install -r requirements.txt --upgrade
 ```
 ## Downloading models
 
@@ -150,23 +74,17 @@ For example:
 
 If you want to download a model manually, note that all you need are the json, txt, and pytorch\*.bin (or model*.safetensors) files. The remaining files are not necessary.
 
-#### GPT-4chan
-
-[GPT-4chan](https://huggingface.co/ykilcher/gpt-4chan) has been shut down from Hugging Face, so you need to download it elsewhere. You have two options:
-
-* Torrent: [16-bit](https://archive.org/details/gpt4chan_model_float16) / [32-bit](https://archive.org/details/gpt4chan_model)
-* Direct download: [16-bit](https://theswissbay.ch/pdf/_notpdf_/gpt4chan_model_float16/) / [32-bit](https://theswissbay.ch/pdf/_notpdf_/gpt4chan_model/)
-
-The 32-bit version is only relevant if you intend to run the model in CPU mode. Otherwise, you should use the 16-bit version.
-
-After downloading the model, follow these steps:
-
-1. Place the files under `models/gpt4chan_model_float16` or `models/gpt4chan_model`.
-2. Place GPT-J 6B's config.json file in that same folder: [config.json](https://huggingface.co/EleutherAI/gpt-j-6B/raw/main/config.json).
-3. Download GPT-J 6B's tokenizer files (they will be automatically detected when you attempt to load GPT-4chan):
-
+## Build LanceDB for the Moderation API
+Download [Kaggle's all-in-one-jigsaw datase](https://www.kaggle.com/datasets/adldotori/all-in-one-jigsaw). To do programmaticaly :
+* Go to your Kaggle account settings (https://www.kaggle.com/<your_username>/account) and click on "Create New API Token" to download your kaggle.json file
+* Place the kaggle.json file in your home directory under a folder named .kaggle (e.g., /home/username/.kaggle/kaggle.json)
+* Set the file permissions for the kaggle.json file to read and write access only for the owner:
+```bash
+chmod 600 ~/.kaggle/kaggle.json
 ```
-python download-model.py EleutherAI/gpt-j-6B --text-only
+Now that your Kaggle API is set up, you can run
+```bash
+python build-lancedb.py
 ```
 
 ## Starting the web UI
@@ -215,49 +133,6 @@ Optionally, you can use the following command-line flags:
 | `--sdp-attention`                           | Use torch 2.0's sdp attention. |
 | `--trust-remote-code`                       | Set trust_remote_code=True while loading a model. Necessary for ChatGLM. |
 
-#### llama.cpp
-
-| Flag        | Description |
-|-------------|-------------|
-| `--threads` | Number of threads to use in llama.cpp. |
-
-#### GPTQ
-
-| Flag                      | Description |
-|---------------------------|-------------|
-| `--wbits WBITS`           | Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported. |
-| `--model_type MODEL_TYPE` | Model type of pre-quantized model. Currently LLaMA, OPT, and GPT-J are supported. |
-| `--groupsize GROUPSIZE`   | Group size. |
-| `--pre_layer PRE_LAYER`   | The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models. |
-| `--monkey-patch`          | Apply the monkey patch for using LoRAs with quantized models.
-| `--no-quant_attn`         | (triton) Disable quant attention. If you encounter incoherent results try disabling this.
-| `--no-warmup_autotune`    | (triton) Disable warmup autotune.
-| `--no-fused_mlp`          | (triton) Disable fused mlp. If you encounter "Unexpected mma -> mma layout conversion" try disabling this.
-
-#### FlexGen
-
-| Flag             | Description |
-|------------------|-------------|
-| `--flexgen`                       | Enable the use of FlexGen offloading. |
-| `--percent PERCENT [PERCENT ...]` | FlexGen: allocation percentages. Must be 6 numbers separated by spaces (default: 0, 100, 100, 0, 100, 0). |
-| `--compress-weight`               | FlexGen: Whether to compress weight (default: False).|
-| `--pin-weight [PIN_WEIGHT]`       | FlexGen: whether to pin weights (setting this to False reduces CPU memory by 20%). |
-
-#### DeepSpeed
-
-| Flag                                  | Description |
-|---------------------------------------|-------------|
-| `--deepspeed`                         | Enable the use of DeepSpeed ZeRO-3 for inference via the Transformers integration. |
-| `--nvme-offload-dir NVME_OFFLOAD_DIR` | DeepSpeed: Directory to use for ZeRO-3 NVME offloading. |
-| `--local_rank LOCAL_RANK`             | DeepSpeed: Optional argument for distributed setups. |
-
-#### RWKV
-
-| Flag                            | Description |
-|---------------------------------|-------------|
-| `--rwkv-strategy RWKV_STRATEGY` | RWKV: The strategy to use while loading the model. Examples: "cpu fp32", "cuda fp16", "cuda fp16i8". |
-| `--rwkv-cuda-on`                | RWKV: Compile the CUDA kernel for better performance. |
-
 #### Gradio
 
 | Flag                                  | Description |
@@ -271,32 +146,15 @@ Optionally, you can use the following command-line flags:
 
 Out of memory errors? [Check the low VRAM guide](https://github.com/oobabooga/text-generation-webui/wiki/Low-VRAM-guide).
 
-## Presets
-
-Inference settings presets can be created under `presets/` as text files. These files are detected automatically at startup.
-
-By default, 10 presets by NovelAI and KoboldAI are included. These were selected out of a sample of 43 presets after applying a K-Means clustering algorithm and selecting the elements closest to the average of each cluster.
-
-[Visualization](https://user-images.githubusercontent.com/112222186/228956352-1addbdb9-2456-465a-b51d-089f462cd385.png)
-
 ## System requirements
 
 Check the [wiki](https://github.com/oobabooga/text-generation-webui/wiki/System-requirements) for some examples of VRAM and RAM usage in both GPU and CPU mode.
 
 ## Contributing
 
-Pull requests, suggestions, and issue reports are welcome. 
-
-You are also welcome to review open pull requests.
-
-Before reporting a bug, make sure that you have:
-
-1. Created a conda environment and installed the dependencies exactly as in the *Installation* section above.
-2. [Searched](https://github.com/oobabooga/text-generation-webui/issues) to see if an issue already exists for the issue you encountered.
+Pull requests, suggestions, and issue reports are welcome. That said, encourage you to go to the source: [oobabooga's text-generation-webui](https://github.com/oobabooga/text-generation-webui) 
 
 ## Credits
 
-- Gradio dropdown menu refresh button, code for reloading the interface: https://github.com/AUTOMATIC1111/stable-diffusion-webui
-- Verbose preset: Anonymous 4chan user.
-- NovelAI and KoboldAI presets: https://github.com/KoboldAI/KoboldAI-Client/wiki/Settings-Presets
-- Code for early stopping in chat mode, code for some of the sliders: https://github.com/PygmalionAI/gradio-ui/
+- [oobabooga's text-generation-webui](https://github.com/oobabooga/text-generation-webui) and all the great contributors to text-generation-webui!
+- Incredible guidance, coding and advice from the [LanceDB and Eto Team](https://github.com/lancedb/lancedb): [Chang](https://github.com/changhiskhan) and [Lei](https://github.com/eddyxu) 
