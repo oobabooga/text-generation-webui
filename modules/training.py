@@ -103,15 +103,15 @@ def create_train_interface():
 
         output = gr.Markdown(value="Ready")
 
-    with gr.Tab('Evaluate the current model', elem_id='lora-train-tab'):
+    with gr.Tab('Evaluate the current model', elem_id='evaluate-tab'):
         with gr.Row():
             with gr.Column():
                 evaluate_text_file = gr.Dropdown(choices=get_datasets('training/datasets', 'txt'), value='None', label='Text file', info='The raw text file on which the model will be evaluated.')
-                context_length = gr.Slider(label='Context length', minimum=0, maximum=2048, value=256, step=16)
-                window_length = gr.Slider(label='Window length', minimum=1, maximum=2048, value=1, step=1)
+                stride_length = gr.Slider(label='Window length', minimum=1, maximum=2048, value=512, step=1)
                 with gr.Row():
                     start_evaluation = gr.Button("Start model evaluation")
                     stop_evaluation = gr.Button("Interrupt")
+                    clear_evaluations = gr.Button("Clear past evaluations")
 
             with gr.Column():
                 evaluation_output = gr.Markdown(value="Ready")
@@ -124,7 +124,7 @@ def create_train_interface():
     higher_rank_limit.change(change_rank_limit, [higher_rank_limit], [lora_rank, lora_alpha])
 
     # Evaluation events
-    ev = start_evaluation.click(calculate_perplexity, [evaluate_text_file, context_length, window_length], evaluation_output, show_progress=False)
+    ev = start_evaluation.click(calculate_perplexity, [evaluate_text_file, stride_length], evaluation_output, show_progress=False)
     stop_evaluation.click(None, None, None, cancels=[ev])
 
 
