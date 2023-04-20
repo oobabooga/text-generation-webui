@@ -111,7 +111,7 @@ def create_train_interface():
         with gr.Row():
             with gr.Column():
                 evaluate_text_file = gr.Dropdown(choices=['wikitext', 'ptb', 'ptb_new'] + get_datasets('training/datasets', 'txt')[1:], value='wikitext', label='Input dataset', info='The raw text file on which the model will be evaluated. The first options are automatically downloaded: wikitext, ptb, and ptb_new. The next options are your local text files under training/datasets.')
-                stride_length = gr.Slider(label='Stride', minimum=1, maximum=2048, value=512, step=1, info='Used to decrease the evaluation time at the cost of accuracy. 1 = most accurate. 512 is a common value.')
+                stride_length = gr.Slider(label='Stride', minimum=1, maximum=2048, value=512, step=1, info='Used to make the evaluation faster at the cost of accuracy. 1 = slowest but most accurate. 512 is a common value.')
                 with gr.Row():
                     start_evaluation = gr.Button("Start model evaluation")
                     stop_evaluation = gr.Button("Interrupt")
