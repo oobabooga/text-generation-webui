@@ -9,8 +9,17 @@ This guide will cover usage through the official `transformers` implementation. 
 
 ### Option 1: pre-converted weights
 
-* ~~Torrent: https://github.com/oobabooga/text-generation-webui/pull/530#issuecomment-1484235789~~ (the tokenizer files are broken)
+* Torrent: https://github.com/oobabooga/text-generation-webui/pull/530#issuecomment-1484235789
 * Direct download: https://huggingface.co/Neko-Institute-of-Science
+
+
+⚠️ The tokenizers for the sources above and also for many LLaMA fine tunes available on Hugging Face may be outdated, so I recommend downloading the following universal LLaMA tokenizer: 
+
+```
+python download-model.py oobabooga/llama-tokenizer
+```
+
+Once downloaded, it will be automatically detected used whenever you try to load any LLaMA model.
 
 ### Option 2: convert the weights yourself
 
