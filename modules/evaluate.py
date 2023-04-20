@@ -5,12 +5,15 @@ from datasets import load_dataset
 from tqdm import tqdm
 
 from modules import shared
+from modules.models import load_model, unload_model
 from modules.text_generation import encode
+from server import get_model_specific_settings, update_model_parameters, load_model_wrapper
+import traceback
 
-past_evaluations = []
+# Use it with past_evaluations[model][dataset][stride] = perplexity
+past_evaluations = {}
 
-
-def calculate_perplexity(input_dataset, stride):
+def calculate_perplexity(models, input_dataset, stride):
     '''
     Based on:
     https://huggingface.co/docs/transformers/perplexity#calculating-ppl-with-fixedlength-models
@@ -33,45 +36,73 @@ def calculate_perplexity(input_dataset, stride):
         with open(Path(f'training/datasets/{input_dataset}.txt'), 'r', encoding='utf-8') as f:
             text = f.read()
 
-    yield "Tokenizing the input dataset..."
-    encodings = encode(text, add_special_tokens=False)
-    max_length = shared.model.config.max_position_embeddings
-    seq_len = encodings.shape[1]
-    nlls = []
-    prev_end_loc = 0
-    for begin_loc in tqdm(range(0, seq_len, stride)):
-        yield f"Evaluating... {100*begin_loc/seq_len:.2f}%"
-        end_loc = min(begin_loc + max_length, seq_len)
-        trg_len = end_loc - prev_end_loc  # may be different from stride on last loop
-        input_ids = encodings[:, begin_loc:end_loc]
-        target_ids = input_ids.clone()
-        target_ids[:, :-trg_len] = -100
+    for model in models:
+        if is_in_past_evaluations(model, input_dataset, str(stride)):
+            yield f"{model} has already been tested. Ignoring."
+            continue
 
-        with torch.no_grad():
-            outputs = shared.model(input_ids, labels=target_ids)
+        yield f"Loading {model}..."
+        model_settings = get_model_specific_settings(model)
+        shared.settings.update(model_settings)  # hijacking the interface defaults
+        update_model_parameters(model_settings)  # hijacking the command-line arguments
+        for _ in load_model_wrapper(model):
+            pass
 
-            # loss is calculated using CrossEntropyLoss which averages over valid labels
-            # N.B. the model only calculates loss over trg_len - 1 labels, because it internally shifts the labels
-            # to the left by 1.
-            neg_log_likelihood = outputs.loss
+        yield "Tokenizing the input dataset..."
+        encodings = encode(text, add_special_tokens=False)
+        max_length = shared.model.config.max_position_embeddings
+        seq_len = encodings.shape[1]
+        nlls = []
+        prev_end_loc = 0
+        for begin_loc in tqdm(range(0, seq_len, stride)):
+            yield f"Evaluating... {100*begin_loc/seq_len:.2f}%"
+            end_loc = min(begin_loc + max_length, seq_len)
+            trg_len = end_loc - prev_end_loc  # may be different from stride on last loop
+            input_ids = encodings[:, begin_loc:end_loc]
+            target_ids = input_ids.clone()
+            target_ids[:, :-trg_len] = -100
 
-        nlls.append(neg_log_likelihood)
+            with torch.no_grad():
+                outputs = shared.model(input_ids, labels=target_ids)
 
-        prev_end_loc = end_loc
-        if end_loc == seq_len:
-            break
+                # loss is calculated using CrossEntropyLoss which averages over valid labels
+                # N.B. the model only calculates loss over trg_len - 1 labels, because it internally shifts the labels
+                # to the left by 1.
+                neg_log_likelihood = outputs.loss
 
-    ppl = torch.exp(torch.stack(nlls).mean())
-    past_evaluations.append([shared.model_name, ', '.join(shared.lora_names), input_dataset, stride, ppl])
+            nlls.append(neg_log_likelihood)
+
+            prev_end_loc = end_loc
+            if end_loc == seq_len:
+                break
+
+        ppl = torch.exp(torch.stack(nlls).mean())
+        add_entry_to_past_evaluations(float(ppl), model, input_dataset, stride)
+
     yield generate_markdown_table()
+
+
+def add_entry_to_past_evaluations(perplexity, model, dataset, stride):
+    past_evaluations.setdefault(model, {}).setdefault(dataset, {})[str(stride)] = perplexity
+
+
+def is_in_past_evaluations(model, dataset, stride):
+    return model in past_evaluations and dataset in past_evaluations[model] and stride in past_evaluations[model][dataset]
 
 
 def generate_markdown_table():
     if len(past_evaluations) == 0:
         return ''
 
-    markdown_table = '|Model|LoRAs|Input file|Stride|Perplexity|\n|-----|-----|------|------|-----|\n'
-    for evaluation in past_evaluations:
-        markdown_table += '|{}|{}|{}|{}|{}|\n'.format(*evaluation)
+    rows = []
+    for model in past_evaluations:
+        for dataset in past_evaluations[model]:
+            for stride in past_evaluations[model][dataset]:
+                rows.append((model, dataset, stride, past_evaluations[model][dataset][stride]))
+
+    rows = sorted(rows, key=lambda x : (x[2], x[3]))
+    markdown_table = '|Model|Input file|Stride|Perplexity|\n|-----|------|------|-----|\n'
+    for row in rows:
+        markdown_table += '|{}|{}|{}|{}|\n'.format(*row)
 
     return markdown_table
