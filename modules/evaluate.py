@@ -56,7 +56,7 @@ def calculate_perplexity(models, input_dataset, stride):
             yield cumulative_log
             continue
 
-        if model != 'Current model':
+        if model != 'current model':
             try:
                 yield cumulative_log + f"Loading {model}...\n"
                 model_settings = get_model_specific_settings(model)

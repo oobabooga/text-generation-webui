@@ -108,12 +108,13 @@ def create_train_interface():
     with gr.Tab('Perplexity evaluation', elem_id='evaluate-tab'):
         with gr.Row():
             with gr.Column():
-                models = gr.Dropdown(choices=['Current model'] + get_available_models(), label='Models', multiselect=True)
+                models = gr.Dropdown(get_available_models(), label='Models', multiselect=True)
                 evaluate_text_file = gr.Dropdown(choices=['wikitext', 'ptb', 'ptb_new'] + get_datasets('training/datasets', 'txt')[1:], value='wikitext', label='Input dataset', info='The raw text file on which the model will be evaluated. The first options are automatically downloaded: wikitext, ptb, and ptb_new. The next options are your local text files under training/datasets.')
                 stride_length = gr.Slider(label='Stride', minimum=1, maximum=2048, value=512, step=1, info='Used to make the evaluation faster at the cost of accuracy. 1 = slowest but most accurate. 512 is a common value.')
                 with gr.Row():
                     start_evaluation = gr.Button("Start model evaluation")
                     stop_evaluation = gr.Button("Interrupt")
+                    start_current_evaluation = gr.Button("Evaluate loaded model")
 
             with gr.Column():
                 evaluation_table = gr.Markdown(value=generate_markdown_table())
@@ -131,7 +132,13 @@ def create_train_interface():
         calculate_perplexity, [models, evaluate_text_file, stride_length], evaluation_log, show_progress=False).then(
         generate_markdown_table, None, evaluation_table, show_progress=False)
 
-    stop_evaluation.click(None, None, None, cancels=[ev])
+    tmp = gr.State('')
+    ev_cur = start_current_evaluation.click(
+        lambda: ['current model'], None, tmp).then(
+        calculate_perplexity, [tmp, evaluate_text_file, stride_length], evaluation_log, show_progress=False).then(
+        generate_markdown_table, None, evaluation_table, show_progress=False)
+
+    stop_evaluation.click(None, None, None, cancels=[ev, ev_cur])
 
 
 def do_interrupt():
