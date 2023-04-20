@@ -12,7 +12,7 @@ import modules.shared as shared
 
 sys.path.insert(0, str(Path("repositories/GPTQ-for-LLaMa")))
 import llama_inference_offload
-from modelutils import find_layers
+from utils.modelutils import find_layers
 
 try:
     from quant import make_quant
