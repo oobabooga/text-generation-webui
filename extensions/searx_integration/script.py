@@ -2,7 +2,6 @@ import urllib.request
 import trafilatura
 import json
 import requests
-import io
 import re
 
 import gradio as gr
@@ -59,16 +58,14 @@ def search_string(search_term): # This is the main logic that sends the API requ
             while i < params['number_of_results']:
                 webpage = trafilatura.fetch_url(searchdata[i]['url'])
                 page_content = trafilatura.extract(webpage, include_comments=False, include_tables=False, no_fallback=True)
-                page_content = io.StringIO(page_content)
-                new_context = new_context + page_content.read(params['max_bytes_for_fetched_pages'])
+                new_context = new_context + page_content[0:params['max_bytes_for_fetched_pages']]
                 i = i + 1
         if params['include_result_summary']:
             for result in searchdata:
                 if 'content' in result:
                     summary = result['content']
                     new_context = new_context + "\n" + summary
-        new_context = io.StringIO(new_context)
-        new_context = new_context.read(params['max_bytes_total'])
+        new_context = new_context[0:params['max_bytes_total']]
         new_context = new_context + "\n"
     finally:
         if params['console_display']:
