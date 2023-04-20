@@ -41,12 +41,17 @@ def calculate_perplexity(models, input_dataset, stride):
             yield f"{model} has already been tested. Ignoring."
             continue
 
-        yield f"Loading {model}..."
-        model_settings = get_model_specific_settings(model)
-        shared.settings.update(model_settings)  # hijacking the interface defaults
-        update_model_parameters(model_settings)  # hijacking the command-line arguments
-        for _ in load_model_wrapper(model):
-            pass
+        try:
+            yield f"Loading {model}..."
+            model_settings = get_model_specific_settings(model)
+            shared.settings.update(model_settings)  # hijacking the interface defaults
+            update_model_parameters(model_settings)  # hijacking the command-line arguments
+            shared.model_name = model
+            unload_model()
+            shared.model, shared.tokenizer = load_model(shared.model_name)
+        except:
+            yield f"Failed to load {model}. Moving on."
+            continue
 
         yield "Tokenizing the input dataset..."
         encodings = encode(text, add_special_tokens=False)
