@@ -47,7 +47,6 @@ def calculate_perplexity(input_dataset, stride):
     yield "Tokenizing the input dataset..."
     encodings = encode(text, add_special_tokens=False)
     max_length = shared.model.config.max_position_embeddings
-    stride = 512
     seq_len = encodings.shape[1]
     nlls = []
     prev_end_loc = 0
