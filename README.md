@@ -64,27 +64,28 @@ Models should be placed inside the `models` folder.
 * [GALACTICA](https://huggingface.co/models?search=facebook/galactica)
 * [GPT-J 6B](https://huggingface.co/EleutherAI/gpt-j-6B/tree/main)
 
-You can automatically download a model from HF using the script `download-model.py`:
-
-    python download-model.py organization/model
-
-For example:
-
-    python download-model.py facebook/opt-1.3b
+You can automatically download a model from HF using the script `download-model.py`, for example for Facebook opt-1.3b:
+```bash
+python download-model.py facebook/opt-1.3b
+```
 
 If you want to download a model manually, note that all you need are the json, txt, and pytorch\*.bin (or model*.safetensors) files. The remaining files are not necessary.
 
 ## Build LanceDB for the Moderation API
-Download [Kaggle's all-in-one-jigsaw datase](https://www.kaggle.com/datasets/adldotori/all-in-one-jigsaw). To do programmaticaly :
-* Go to your Kaggle account settings (https://www.kaggle.com/<your_username>/account) and click on "Create New API Token" to download your kaggle.json file
+Download [Kaggle's all-in-one-jigsaw dataset](https://www.kaggle.com/datasets/adldotori/all-in-one-jigsaw). To do programmaticaly :
+* Go to your Kaggle account settings (https://www.kaggle.com/<your_username>/account) and click on "Create New API Token" to download your kaggle.json file to ~/Downloads
 * Place the kaggle.json file in your home directory under a folder named .kaggle (e.g., /home/username/.kaggle/kaggle.json)
+```bash
+ mkdir ~/.kaggle 
+ mv ~/Downloads/kaggle.json ~/.kaggle/kaggle.json
+```
 * Set the file permissions for the kaggle.json file to read and write access only for the owner:
 ```bash
 chmod 600 ~/.kaggle/kaggle.json
 ```
-Now that your Kaggle API is set up, you can run
+Now that your Kaggle API is set up, you can build a vectorDB (1000 jigsaw samples by default, can increase to 2.2M at max, with overnight training)
 ```bash
-python build-lancedb.py
+python build-lancedb.py --samples_of_jigsaw_to_process 1000
 ```
 
 ## Starting the web UI

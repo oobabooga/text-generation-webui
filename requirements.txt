@@ -3,6 +3,8 @@ colorama
 datasets
 flexgen==0.1.7
 gradio==3.25.0
+kaggle
+lancedb
 markdown
 numpy
 Pillow>=9.5.0
