@@ -12,13 +12,14 @@ import modules.shared as shared
 
 sys.path.insert(0, str(Path("repositories/GPTQ-for-LLaMa")))
 import llama_inference_offload
-from utils.modelutils import find_layers
 
 try:
     from quant import make_quant
+    from modelutils import find_layers
     is_triton = False
 except ImportError:
     import quant
+    from utils.modelutils import find_layers
     is_triton = True
 
 
