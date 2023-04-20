@@ -13,7 +13,7 @@ from datasets import Dataset, load_dataset
 from peft import LoraConfig, get_peft_model, set_peft_model_state_dict, prepare_model_for_int8_training
 
 from modules import shared, ui
-from modules.evaluate import calculate_perplexity
+from modules.evaluate import calculate_perplexity, generate_markdown_table
 
 # This mapping is from a very recent commit, not yet released.
 # If not available, default to a backup map for the 3 safe model types.
@@ -110,15 +110,14 @@ def create_train_interface():
     with gr.Tab('Evaluate the current model', elem_id='evaluate-tab'):
         with gr.Row():
             with gr.Column():
-                evaluate_text_file = gr.Dropdown(choices=get_datasets('training/datasets', 'txt'), value='None', label='Text file', info='The raw text file on which the model will be evaluated.')
-                stride_length = gr.Slider(label='Window length', minimum=1, maximum=2048, value=512, step=1)
+                evaluate_text_file = gr.Dropdown(choices=['wikitext', 'ptb', 'ptb_new'] + get_datasets('training/datasets', 'txt')[1:], value='wikitext', label='Input dataset', info='The raw text file on which the model will be evaluated. The first options are automatically downloaded: wikitext, ptb, and ptb_new. The next options are your local text files under training/datasets.')
+                stride_length = gr.Slider(label='Stride', minimum=1, maximum=2048, value=512, step=1)
                 with gr.Row():
                     start_evaluation = gr.Button("Start model evaluation")
                     stop_evaluation = gr.Button("Interrupt")
-                    clear_evaluations = gr.Button("Clear past evaluations")
 
             with gr.Column():
-                evaluation_output = gr.Markdown(value="Ready")
+                evaluation_output = gr.Markdown(value=generate_markdown_table())
 
     # Training events
     all_params = [lora_name, always_override, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lr_scheduler_type, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, do_shuffle, higher_rank_limit, warmup_steps, optimizer]
