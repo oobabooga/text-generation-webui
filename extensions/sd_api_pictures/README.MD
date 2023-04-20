@@ -76,8 +76,8 @@ present in script.py, ex:
     "sd_api_pictures-manage_VRAM": 1,
     "sd_api_pictures-save_img": 1,
     "sd_api_pictures-prompt_prefix": "(Masterpiece:1.1), detailed, intricate, colorful, (solo:1.1)",
-    "sd_api_pictures-nsfw_prompts": "nsfw, naked",
-    "sd_api_pictures-anti_nsfw_prompts": "young, old",
+    "sd_api_pictures-secondary_positive_prompt": "nsfw, naked",
+    "sd_api_pictures-secondary_negative_prompt": "young, old",
     "sd_api_pictures-sampler_name": "DPM++ 2M Karras"
 }
 ```
