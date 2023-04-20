@@ -108,7 +108,7 @@ def create_train_interface():
     with gr.Tab('Perplexity evaluation', elem_id='evaluate-tab'):
         with gr.Row():
             with gr.Column():
-                models = gr.Dropdown(choices=get_available_models(), label='Models', multiselect=True)
+                models = gr.Dropdown(choices=['Current model'] + get_available_models(), label='Models', multiselect=True)
                 evaluate_text_file = gr.Dropdown(choices=['wikitext', 'ptb', 'ptb_new'] + get_datasets('training/datasets', 'txt')[1:], value='wikitext', label='Input dataset', info='The raw text file on which the model will be evaluated. The first options are automatically downloaded: wikitext, ptb, and ptb_new. The next options are your local text files under training/datasets.')
                 stride_length = gr.Slider(label='Stride', minimum=1, maximum=2048, value=512, step=1, info='Used to make the evaluation faster at the cost of accuracy. 1 = slowest but most accurate. 512 is a common value.')
                 with gr.Row():
@@ -116,7 +116,8 @@ def create_train_interface():
                     stop_evaluation = gr.Button("Interrupt")
 
             with gr.Column():
-                evaluation_output = gr.Markdown(value=generate_markdown_table())
+                evaluation_table = gr.Markdown(value=generate_markdown_table())
+                evaluation_log = gr.Markdown(value = '')
 
     # Training events
     all_params = [lora_name, always_override, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lr_scheduler_type, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, do_shuffle, higher_rank_limit, warmup_steps, optimizer]
@@ -126,7 +127,10 @@ def create_train_interface():
     higher_rank_limit.change(change_rank_limit, [higher_rank_limit], [lora_rank, lora_alpha])
 
     # Evaluation events
-    ev = start_evaluation.click(calculate_perplexity, [models, evaluate_text_file, stride_length], evaluation_output, show_progress=False)
+    ev = start_evaluation.click(
+        calculate_perplexity, [models, evaluate_text_file, stride_length], evaluation_log, show_progress=False).then(
+        generate_markdown_table, None, evaluation_table, show_progress=False)
+
     stop_evaluation.click(None, None, None, cancels=[ev])
 
 

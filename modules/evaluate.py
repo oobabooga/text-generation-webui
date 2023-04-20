@@ -1,5 +1,8 @@
+import datetime
+import traceback
 from pathlib import Path
 
+import pandas as pd
 import torch
 from datasets import load_dataset
 from tqdm import tqdm
@@ -7,11 +10,20 @@ from tqdm import tqdm
 from modules import shared
 from modules.models import load_model, unload_model
 from modules.text_generation import encode
-from server import get_model_specific_settings, update_model_parameters, load_model_wrapper
-import traceback
+from server import get_model_specific_settings, update_model_parameters
 
-# Use it with past_evaluations[model][dataset][stride] = perplexity
-past_evaluations = {}
+
+def load_past_evaluations():
+    if Path('logs/evaluations.csv').exists():
+        return pd.read_csv(Path('logs/evaluations.csv'))
+    else:
+        return pd.DataFrame(columns=['Model', 'LoRAs', 'Dataset', 'Stride', 'Perplexity', 'Date'])
+past_evaluations = load_past_evaluations()
+
+
+def save_past_evaluations():
+    past_evaluations.to_csv(Path('logs/evaluations.csv'), index=False)
+
 
 def calculate_perplexity(models, input_dataset, stride):
     '''
@@ -20,7 +32,9 @@ def calculate_perplexity(models, input_dataset, stride):
     '''
 
     global past_evaluations
-    yield "Loading the input dataset..."
+    cumulative_log = ''
+    cumulative_log += "Loading the input dataset...\n"
+    yield cumulative_log
 
     # Copied from https://github.com/qwopqwop200/GPTQ-for-LLaMa/blob/triton/utils/datautils.py
     if input_dataset == 'wikitext':
@@ -38,29 +52,33 @@ def calculate_perplexity(models, input_dataset, stride):
 
     for model in models:
         if is_in_past_evaluations(model, input_dataset, str(stride)):
-            yield f"{model} has already been tested. Ignoring."
+            cumulative_log += f"{model} has already been tested. Ignoring.\n"
+            yield cumulative_log
             continue
 
-        try:
-            yield f"Loading {model}..."
-            model_settings = get_model_specific_settings(model)
-            shared.settings.update(model_settings)  # hijacking the interface defaults
-            update_model_parameters(model_settings)  # hijacking the command-line arguments
-            shared.model_name = model
-            unload_model()
-            shared.model, shared.tokenizer = load_model(shared.model_name)
-        except:
-            yield f"Failed to load {model}. Moving on."
-            continue
+        if model != 'Current model':
+            try:
+                yield cumulative_log + f"Loading {model}...\n"
+                model_settings = get_model_specific_settings(model)
+                shared.settings.update(model_settings)  # hijacking the interface defaults
+                update_model_parameters(model_settings)  # hijacking the command-line arguments
+                shared.model_name = model
+                unload_model()
+                shared.model, shared.tokenizer = load_model(shared.model_name)
+            except:
+                cumulative_log += f"Failed to load {model}. Moving on.\n"
+                yield cumulative_log
+                continue
 
-        yield "Tokenizing the input dataset..."
+        cumulative_log += f"Processing {model}...\n"
+        yield cumulative_log + "Tokenizing the input dataset...\n"
         encodings = encode(text, add_special_tokens=False)
         max_length = shared.model.config.max_position_embeddings
         seq_len = encodings.shape[1]
         nlls = []
         prev_end_loc = 0
         for begin_loc in tqdm(range(0, seq_len, stride)):
-            yield f"Evaluating... {100*begin_loc/seq_len:.2f}%"
+            yield cumulative_log + f"Evaluating... {100*begin_loc/seq_len:.2f}%"
             end_loc = min(begin_loc + max_length, seq_len)
             trg_len = end_loc - prev_end_loc  # may be different from stride on last loop
             input_ids = encodings[:, begin_loc:end_loc]
@@ -82,32 +100,40 @@ def calculate_perplexity(models, input_dataset, stride):
                 break
 
         ppl = torch.exp(torch.stack(nlls).mean())
-        add_entry_to_past_evaluations(float(ppl), model, input_dataset, stride)
-
-    yield generate_markdown_table()
+        add_entry_to_past_evaluations(float(ppl), shared.model_name, input_dataset, str(stride))
+        save_past_evaluations()
+        cumulative_log += f"Done.\n\n"
+        yield cumulative_log
 
 
 def add_entry_to_past_evaluations(perplexity, model, dataset, stride):
-    past_evaluations.setdefault(model, {}).setdefault(dataset, {})[str(stride)] = perplexity
+    global past_evaluations
+    entry = {
+        'Model': model,
+        'LoRAs': ', '.join(shared.lora_names) or '-',
+        'Dataset': dataset,
+        'Stride': stride,
+        'Perplexity': perplexity,
+        'Date': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    }
+    past_evaluations = pd.concat([past_evaluations, pd.DataFrame([entry])], ignore_index=True)
 
 
 def is_in_past_evaluations(model, dataset, stride):
-    return model in past_evaluations and dataset in past_evaluations[model] and stride in past_evaluations[model][dataset]
+    entries = past_evaluations[(past_evaluations['Model'] == model) &
+                               (past_evaluations['Dataset'] == dataset) &
+                               (past_evaluations['Stride'] == stride)]
+
+    if entries.shape[0] > 0:
+        return True
+    else:
+        return False
 
 
 def generate_markdown_table():
-    if len(past_evaluations) == 0:
-        return ''
-
-    rows = []
-    for model in past_evaluations:
-        for dataset in past_evaluations[model]:
-            for stride in past_evaluations[model][dataset]:
-                rows.append((model, dataset, stride, past_evaluations[model][dataset][stride]))
-
-    rows = sorted(rows, key=lambda x : (x[2], x[3]))
-    markdown_table = '|Model|Input file|Stride|Perplexity|\n|-----|------|------|-----|\n'
-    for row in rows:
-        markdown_table += '|{}|{}|{}|{}|\n'.format(*row)
+    sorted_df = past_evaluations.sort_values(by=['Dataset', 'Perplexity', 'Date'])
+    markdown_table = '|Model|LoRAs|Dataset|Stride|Perplexity|Date|\n|-----|------|------|-----|-----|------|\n'
+    for row in sorted_df.itertuples():
+        markdown_table += '|{}|{}|{}|{}|{}|{}|\n'.format(row.Model, row.LoRAs, row.Dataset, row.Stride, row.Perplexity, row.Date)
 
     return markdown_table

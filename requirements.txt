@@ -5,12 +5,13 @@ flexgen==0.1.7
 gradio==3.25.0
 markdown
 numpy
+pandas
 Pillow>=9.5.0
+pyyaml
 requests
 rwkv==0.7.3
 safetensors==0.3.0
 sentencepiece
-pyyaml
 tqdm
 git+https://github.com/huggingface/peft
 transformers==4.28.1
