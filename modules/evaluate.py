@@ -15,7 +15,9 @@ from server import get_model_specific_settings, update_model_parameters
 
 def load_past_evaluations():
     if Path('logs/evaluations.csv').exists():
-        return pd.read_csv(Path('logs/evaluations.csv'), dtype=str)
+        df = pd.read_csv(Path('logs/evaluations.csv'), dtype=str)
+        df['Perplexity'] = pd.to_numeric(df['Perplexity'])
+        return df
     else:
         return pd.DataFrame(columns=['Model', 'LoRAs', 'Dataset', 'Stride', 'Perplexity', 'Date'])
 past_evaluations = load_past_evaluations()
@@ -65,14 +67,14 @@ def calculate_perplexity(models, input_dataset, stride):
                 shared.model_name = model
                 unload_model()
                 shared.model, shared.tokenizer = load_model(shared.model_name)
+                cumulative_log += f"Processing {model}...\n"
+                yield cumulative_log + "Tokenizing the input dataset...\n"
+                encodings = encode(text, add_special_tokens=False)
             except:
                 cumulative_log += f"Failed to load {model}. Moving on.\n"
                 yield cumulative_log
                 continue
 
-        cumulative_log += f"Processing {model}...\n"
-        yield cumulative_log + "Tokenizing the input dataset...\n"
-        encodings = encode(text, add_special_tokens=False)
         max_length = shared.model.config.max_position_embeddings
         seq_len = encodings.shape[1]
         nlls = []
@@ -102,7 +104,7 @@ def calculate_perplexity(models, input_dataset, stride):
         ppl = torch.exp(torch.stack(nlls).mean())
         add_entry_to_past_evaluations(float(ppl), shared.model_name, input_dataset, stride)
         save_past_evaluations()
-        cumulative_log += f"Done.\n\n"
+        cumulative_log += f"Done. The perplexity is: {float(ppl)}\n\n"
         yield cumulative_log
 
 
@@ -131,7 +133,7 @@ def is_in_past_evaluations(model, dataset, stride):
 
 
 def generate_markdown_table():
-    sorted_df = past_evaluations.sort_values(by=['Dataset', 'Perplexity', 'Date'])
+    sorted_df = past_evaluations.sort_values(by=['Dataset', 'Stride', 'Perplexity', 'Date'])
     markdown_table = '|Model|LoRAs|Dataset|Stride|Perplexity|Date|\n|-----|------|------|-----|-----|------|\n'
     for row in sorted_df.itertuples():
         markdown_table += '|{}|{}|{}|{}|{}|{}|\n'.format(row.Model, row.LoRAs, row.Dataset, row.Stride, row.Perplexity, row.Date)
