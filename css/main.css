@@ -56,7 +56,7 @@ ol li p, ul li p {
 
 #extensions {
   padding: 15px;
-  padding: 15px;
+  margin-bottom: 35px;
 }
 
 span.math.inline {
@@ -76,4 +76,34 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
 .dark .header_bar {
   border: none !important;
   background-color: #8080802b;
+}
+
+.textbox_default textarea {
+  height: calc(100vh - 391px);
+}
+
+.textbox_default_output textarea {
+  height: calc(100vh - 210px);
+}
+
+.textbox textarea {
+  height: calc(100vh - 261px);
+}
+
+.textbox_default textarea, .textbox_default_output textarea, .textbox textarea {
+  font-size: 16px !important;
+  color: #46464A !important;
+}
+
+.dark textarea {
+  color: #efefef !important;
+}
+
+/* Hide the gradio footer*/
+footer {
+  display: none !important;
+}
+
+button {
+  font-size: 14px !important;
 }
