@@ -59,7 +59,7 @@ def ui():
 
     is_add_system_orig = gr.Checkbox(value=params['is_add_system_orig'], label='Add system origin output to translation')
 
-    is_add_system_orig.change(lambda x: params_update({"is_add_system_orig": x}), is_translate_system, None)
+    is_add_system_orig.change(lambda x: params_update({"is_add_system_orig": x}), is_add_system_orig, None)
 
 
 def language_code_to_lang(langcode:str):
