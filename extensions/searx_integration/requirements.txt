@@ -1,1 +1,1 @@
-trafilatura
+bs4
