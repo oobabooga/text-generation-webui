@@ -1,0 +1,17 @@
+{
+	"name_for_human": "API",
+	"name_for_model": "api",
+	"description_for_human": "Creates an API similar to the one provided by KoboldAI. Works with TavernAI: start the web UI with python server.py --no-stream --extensions api and set the API URL to http://127.0.0.1:5000/api.",
+	"description_for_model": "Enables users to make API calls to the bot and receive responses in JSON format.",
+	"auth": {
+		"type": "none"
+	},
+	"api": {
+		"type": "",
+		"url": "",
+		"is_user_authenticated": false
+	},
+	"logo_url": "",
+	"contact_email": "",
+	"legal_info_url": "https://github.com/oobabooga/text-generation-webui/tree/main/extensions/api"
+}

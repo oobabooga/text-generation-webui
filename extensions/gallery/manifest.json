@@ -1,0 +1,17 @@
+{
+	"name_for_human": "Gallery",
+	"name_for_model": "gallery",
+	"description_for_human": "Creates a gallery with the chat characters and their pictures.",
+	"description_for_model": "Displays a gallery of chat characters and their profile pictures.",
+	"auth": {
+		"type": "none"
+	},
+	"api": {
+		"type": "",
+		"url": "",
+		"is_user_authenticated": false
+	},
+	"logo_url": "",
+	"contact_email": "",
+	"legal_info_url": "https://github.com/oobabooga/text-generation-webui/tree/main/extensions/api"
+}

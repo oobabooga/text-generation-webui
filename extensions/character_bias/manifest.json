@@ -1,0 +1,17 @@
+{
+	"name_for_human": "Character Bias",
+	"name_for_model": "character_bias",
+	"description_for_human": "Biases the bot's responses in chat mode.",
+	"description_for_model": "Biases the bot's responses in chat mode using a simple rule-based approach.",
+	"auth": {
+		"type": "none"
+	},
+	"api": {
+		"type": "",
+		"url": "",
+		"is_user_authenticated": false
+	},
+	"logo_url": "",
+	"contact_email": "",
+	"legal_info_url": "https://github.com/oobabooga/text-generation-webui/tree/main/extensions/api"
+}

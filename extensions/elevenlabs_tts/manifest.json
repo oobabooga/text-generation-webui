@@ -1,0 +1,17 @@
+{
+	"name_for_human": "Text-to-Speech (ElevenLabs)",
+	"name_for_model": "elevenlabs_tts",
+	"description_for_human": "Text-to-speech extension using the ElevenLabs API. You need an API key to use it.",
+	"description_for_model": "Converts text responses to audio using the ElevenLabs text-to-speech API.",
+	"auth": {
+		"type": "none"
+	},
+	"api": {
+		"type": "",
+		"url": "",
+		"is_user_authenticated": false
+	},
+	"logo_url": "",
+	"contact_email": "",
+	"legal_info_url": "https://github.com/oobabooga/text-generation-webui/tree/main/extensions/api"
+}

@@ -1,0 +1,17 @@
+{
+	"name_for_human": "Voice Input",
+	"name_for_model": "whisper_stt",
+	"description_for_human": "Allows you to enter your inputs in chat mode using your microphone.",
+	"description_for_model": "Allows users to input text in chat mode using their microphone, which is then converted to text using a speech-to-text engine.",
+	"auth": {
+		"type": "none"
+	},
+	"api": {
+		"type": "",
+		"url": "",
+		"is_user_authenticated": false
+	},
+	"logo_url": "",
+	"contact_email": "",
+	"legal_info_url": "https://github.com/oobabooga/text-generation-webui/tree/main/extensions/api"
+}

@@ -83,6 +83,34 @@ def get_available_extensions():
     return sorted(set(map(lambda x: x.parts[1], Path('extensions').glob('*/script.py'))), key=str.lower)
 
 
+def get_extension_manifest(extension_name):
+    manifest_path =  str(Path.cwd())+"/extensions/"+extension_name+'/manifest.json'
+    if not os.path.exists(manifest_path):
+        manifest = {'name':extension_name}
+    else:
+        with open(manifest_path, 'r') as f:
+            manifest = json.load(f)
+    return generate_extension_card(manifest)
+
+
+def generate_extension_card(manifest):
+    card = '<div class="card">'
+    card += '<div class="card-header">'
+    if 'name_for_human' in manifest:
+        card += f'<h3 class="card-title">{manifest["name_for_human"]}</h3>'
+    else:
+        card += f'<h3 class="card-title">{manifest["name"]}</h3>'
+    card += '</div>'
+    card += '<div class="card-body">'
+    if 'description_for_human' in manifest:
+        card += f'<p class="card-text">{manifest["description_for_human"]}</p>'
+    #add a button to view more info 
+    if 'legal_info_url' in manifest:
+        card += f'<a href="{manifest["legal_info_url"]}" target="_blank" class="float-right">+ Info</a>'
+    card += '</div>'
+    card += '</div>'
+    return gr.HTML(card)
+
 def get_available_softprompts():
     return ['None'] + sorted(set((k.stem for k in Path('softprompts').glob('*.zip'))), key=str.lower)
 
@@ -683,6 +711,38 @@ def create_interface():
         # Training tab
         with gr.Tab("Training", elem_id="training-tab"):
             training.create_train_interface()
+        with gr.Tab("Extensions", elem_id="extensions-tab"):
+            print("extensions")
+            print(get_available_extensions())
+            extension= get_available_extensions()
+            with gr.Row():
+                with gr.Column():
+                   
+                    count=0
+                    for extenson in extension:
+                        if count%3==0:
+                            with gr.Box():
+                                get_extension_manifest(extenson)
+                        
+                        count+=1
+                with gr.Column():
+                    
+                    count=0
+                    for extenson in extension:
+                        if count%3==1:
+                            with gr.Box():
+                                get_extension_manifest(extenson)
+                        
+                        count+=1
+                with gr.Column():
+                    
+                    count=0
+                    for extenson in extension:
+                        if count%3==2:
+                            with gr.Box():
+                                get_extension_manifest(extenson)
+                        count+=1
+               
 
         # Interface mode tab
         with gr.Tab("Interface mode", elem_id="interface-mode"):

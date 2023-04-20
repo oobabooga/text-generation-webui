@@ -1,0 +1,17 @@
+{
+	"name_for_human": "Google Translate",
+	"name_for_model": "google_translate",
+	"description_for_human": "Automatically translates inputs and outputs using Google Translate.",
+	"description_for_model": "Translates text inputs and outputs to/from various languages using Google Translate.",
+	"auth": {
+		"type": "none"
+	},
+	"api": {
+		"type": "",
+		"url": "",
+		"is_user_authenticated": false
+	},
+	"logo_url": "",
+	"contact_email": "",
+	"legal_info_url": "https://github.com/oobabooga/text-generation-webui/tree/main/extensions/api"
+}

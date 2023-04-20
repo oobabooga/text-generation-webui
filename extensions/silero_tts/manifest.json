@@ -1,0 +1,17 @@
+{
+	"name_for_human": "Text-to-Speech (Silero)",
+	"name_for_model": "silero_tts",
+	"description_for_human": "Text-to-speech extension using Silero. When used in chat mode, it replaces the responses with an audio widget.",
+	"description_for_model": "Converts text responses to audio using Silero's text-to-speech engine.",
+	"auth": {
+		"type": "none"
+	},
+	"api": {
+		"type": "",
+		"url": "",
+		"is_user_authenticated": false
+	},
+	"logo_url": "",
+	"contact_email": "",
+	"legal_info_url": "https://github.com/oobabooga/text-generation-webui/tree/main/extensions/api"
+}

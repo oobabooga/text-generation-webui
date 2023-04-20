@@ -1,0 +1,17 @@
+{
+	"name_for_human": "Image Request",
+	"name_for_model": "sd_api_pictures",
+	"description_for_human": "Allows you to request pictures from the bot in chat mode, which will be generated using the AUTOMATIC1111 Stable Diffusion API.",
+	"description_for_model": "Allows users to request pictures from the bot in chat mode, which are generated using the AUTOMATIC1111 Stable Diffusion API.",
+	"auth": {
+		"type": "none"
+	},
+	"api": {
+		"type": "",
+		"url": "",
+		"is_user_authenticated": false
+	},
+	"logo_url": "",
+	"contact_email": "",
+	"legal_info_url": "https://github.com/oobabooga/text-generation-webui/tree/main/extensions/api"
+}
