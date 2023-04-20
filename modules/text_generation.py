@@ -4,6 +4,7 @@ import re
 import time
 import traceback
 
+from gptcache.adapter import api
 import numpy as np
 import torch
 import transformers
@@ -179,6 +180,13 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
         yield formatted_outputs(question, shared.model_name)
         return
 
+    enable_gptcache = shared.args.enable_init_gptcache
+    cache_reply = api.get(question, enable_cache=state['enable_cache'], cache_skip=state['cache_skip']) if enable_gptcache else None
+    if cache_reply:
+        print("Cache hint")
+    origin_reply = ""
+    is_exception = False
+
     clear_torch_cache()
     seed = set_manual_seed(state['seed'])
     shared.stop_everything = False
@@ -198,7 +206,8 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
 
         try:
             if shared.args.no_stream:
-                reply = shared.model.generate(context=question, **generate_params)
+                reply = shared.model.generate(context=question, **generate_params) if cache_reply is None else cache_reply
+                origin_reply = reply
                 output = original_question + reply
                 if not shared.is_chat():
                     reply = original_question + apply_extensions('output', reply)
@@ -208,20 +217,31 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
                 if not shared.is_chat():
                     yield formatted_outputs(question, shared.model_name)
 
-                for reply in shared.model.generate_with_streaming(context=question, **generate_params):
+                if cache_reply is not None:
+                    reply = cache_reply
                     output = original_question + reply
                     if not shared.is_chat():
                         reply = original_question + apply_extensions('output', reply)
-
                     yield formatted_outputs(reply, shared.model_name)
+                else:
+                    for reply in shared.model.generate_with_streaming(context=question, **generate_params):
+                        origin_reply = reply
+                        output = original_question + reply
+                        if not shared.is_chat():
+                            reply = original_question + apply_extensions('output', reply)
+                        yield formatted_outputs(reply, shared.model_name)
 
         except Exception:
             traceback.print_exc()
+            is_exception = True
         finally:
             t1 = time.time()
+            if cache_reply is None and not is_exception and enable_gptcache:
+                api.put(original_question, origin_reply, enable_cache=state['enable_cache'])
             original_tokens = len(encode(original_question)[0])
             new_tokens = len(encode(output)[0]) - original_tokens
-            print(f'Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens}, seed {seed})')
+            print(
+                f'Output generated in {(t1 - t0):.2f} seconds ({new_tokens / (t1 - t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens}, seed {seed})')
             return
 
     # Encode the input
@@ -268,15 +288,20 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
     try:
         # Generate the entire reply at once.
         if shared.args.no_stream:
-            with torch.no_grad():
-                output = shared.model.generate(**generate_params)[0]
-                if cuda:
-                    output = output.cuda()
+            if cache_reply is None:
+                with torch.no_grad():
+                    output = shared.model.generate(**generate_params)[0]
+                    if cuda:
+                        output = output.cuda()
 
-            if shared.soft_prompt:
-                output = torch.cat((input_ids[0], output[filler_input_ids.shape[1]:]))
+                if shared.soft_prompt:
+                    output = torch.cat((input_ids[0], output[filler_input_ids.shape[1]:]))
 
-            reply = get_reply_from_output_ids(output, input_ids, original_question, state)
+                reply = get_reply_from_output_ids(output, input_ids, original_question, state)
+                origin_reply = reply
+            else:
+                reply = cache_reply
+
             yield formatted_outputs(reply, shared.model_name)
 
         # Stream the reply 1 token at a time.
@@ -295,46 +320,63 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
             if not shared.is_chat() and shared.model_type != 'HF_seq2seq':
                 yield formatted_outputs(original_question, shared.model_name)
 
-            with generate_with_streaming(**generate_params) as generator:
-                for output in generator:
+            if cache_reply is not None:
+                reply = cache_reply
+                if not shared.is_chat():
+                    reply = original_question + apply_extensions(reply, 'output')
+                yield formatted_outputs(reply, shared.model_name)
+            else:
+                with generate_with_streaming(**generate_params) as generator:
+                    for output in generator:
+                        if shared.soft_prompt:
+                            output = torch.cat((input_ids[0], output[filler_input_ids.shape[1]:]))
+
+                        reply = get_reply_from_output_ids(output, input_ids, original_question, state)
+                        origin_reply = reply
+                        if output[-1] in eos_token_ids:
+                            break
+
+                        yield formatted_outputs(reply, shared.model_name)
+
+        # Stream the output naively for FlexGen since it doesn't support 'stopping_criteria'
+        else:
+            if cache_reply is not None:
+                reply = cache_reply
+                if not shared.is_chat():
+                    reply = original_question + apply_extensions(reply, 'output')
+                yield formatted_outputs(reply, shared.model_name)
+            else:
+                for i in range(state['max_new_tokens'] // 8 + 1):
+                    clear_torch_cache()
+                    with torch.no_grad():
+                        output = shared.model.generate(**generate_params)[0]
+
                     if shared.soft_prompt:
                         output = torch.cat((input_ids[0], output[filler_input_ids.shape[1]:]))
 
                     reply = get_reply_from_output_ids(output, input_ids, original_question, state)
-                    if output[-1] in eos_token_ids:
+                    if np.count_nonzero(np.isin(input_ids[0], eos_token_ids)) < np.count_nonzero(np.isin(output, eos_token_ids)):
                         break
+                    origin_reply += reply
 
                     yield formatted_outputs(reply, shared.model_name)
-
-        # Stream the output naively for FlexGen since it doesn't support 'stopping_criteria'
-        else:
-            for i in range(state['max_new_tokens'] // 8 + 1):
-                clear_torch_cache()
-                with torch.no_grad():
-                    output = shared.model.generate(**generate_params)[0]
-
-                if shared.soft_prompt:
-                    output = torch.cat((input_ids[0], output[filler_input_ids.shape[1]:]))
-
-                reply = get_reply_from_output_ids(output, input_ids, original_question, state)
-                if np.count_nonzero(np.isin(input_ids[0], eos_token_ids)) < np.count_nonzero(np.isin(output, eos_token_ids)):
-                    break
+                    input_ids = np.reshape(output, (1, output.shape[0]))
+                    if shared.soft_prompt:
+                        inputs_embeds, filler_input_ids = generate_softprompt_input_tensors(input_ids)
+                        generate_params.update({'inputs_embeds': inputs_embeds})
+                        generate_params.update({'inputs': filler_input_ids})
+                    else:
+                        generate_params.update({'inputs': input_ids})
 
                 yield formatted_outputs(reply, shared.model_name)
-                input_ids = np.reshape(output, (1, output.shape[0]))
-                if shared.soft_prompt:
-                    inputs_embeds, filler_input_ids = generate_softprompt_input_tensors(input_ids)
-                    generate_params.update({'inputs_embeds': inputs_embeds})
-                    generate_params.update({'inputs': filler_input_ids})
-                else:
-                    generate_params.update({'inputs': input_ids})
-
-            yield formatted_outputs(reply, shared.model_name)
 
     except Exception:
         traceback.print_exc()
+        is_exception = True
     finally:
         t1 = time.time()
+        if cache_reply is None and not is_exception and enable_gptcache:
+            api.put(original_question, origin_reply, enable_cache=state['enable_cache'])
         original_tokens = len(original_input_ids[0])
         new_tokens = len(output) - (original_tokens if shared.model_type != 'HF_seq2seq' else 0)
         print(f'Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens}, seed {seed})')

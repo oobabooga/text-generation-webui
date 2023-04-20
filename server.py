@@ -2,6 +2,12 @@ import os
 import requests
 import warnings
 
+from gptcache import cache
+from gptcache.embedding import Onnx
+from gptcache.manager import manager_factory, CacheBase, VectorBase, get_data_manager
+from gptcache.processor.pre import get_prompt
+from gptcache.similarity_evaluation import SearchDistanceEvaluation
+
 os.environ['GRADIO_ANALYTICS_ENABLED'] = 'False'
 os.environ['BITSANDBYTES_NOWELCOME'] = '1'
 warnings.filterwarnings('ignore', category=UserWarning, message='TypedStorage is deprecated')
@@ -513,6 +519,13 @@ def create_interface():
 
     with gr.Blocks(css=ui.css if not shared.is_chat() else ui.css + ui.chat_css, analytics_enabled=False, title=title, theme=ui.theme) as shared.gradio['interface']:
 
+        with gr.Row(visible=shared.args.enable_init_gptcache):
+            with gr.Column(visible=shared.args.enable_init_gptcache):
+                shared.gradio['enable_cache'] = gr.Checkbox(value=shared.settings['enable_cache'], label='Enable GPTCache', info="If it is confirmed, the llm request will go to the cache, and the received request will be obtained from the cache first, and the model will be requested if it is not hit, and the model result will be placed in the cache")
+            with gr.Column(visible=shared.args.enable_init_gptcache):
+                shared.gradio['cache_skip'] = gr.Checkbox(value=shared.settings['cache_skip'], label='Skip to search GPTCache', info="If it is confirmed, the request will not search the cache data, but will store the results of llm's request in the cache")
+            gr.Markdown("")
+
         # Create chat mode interface
         if shared.is_chat():
             shared.input_elements = ui.list_interface_input_elements(chat=True)
@@ -922,6 +935,19 @@ if __name__ == "__main__":
             'character_menu': shared.args.character or shared.settings['character'],
             'instruction_template': shared.settings['instruction_template']
         })
+
+    if shared.args.enable_init_gptcache:
+        data_dir = "./cache_data"
+        Path(data_dir).mkdir(exist_ok=True)
+        onnx = Onnx()
+        data_manager = manager_factory(manager="sqlite,faiss", data_dir=data_dir, vector_params={"dimension": onnx.dimension})
+        cache.init(
+            cache_enable_func=lambda *args, **kwargs: kwargs.pop("enable_cache", True),
+            pre_embedding_func=get_prompt,
+            embedding_func=onnx.to_embeddings,
+            data_manager=data_manager,
+            similarity_evaluation=SearchDistanceEvaluation(),
+        )
 
     # Launch the web UI
     create_interface()
