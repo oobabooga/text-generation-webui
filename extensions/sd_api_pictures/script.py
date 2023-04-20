@@ -39,13 +39,13 @@ params = {
     'characterfocus': False,
     'secondary_prompt': False,
     'translations': False,
-    'character': "",
+    'character': '',
     'secondary_negative_prompt': '',
     'secondary_positive_prompt': '',
-    'prompt_translation_positive': "",
-    'prompt_translation_negative': "",
-    'positive_suffix': "",
-    'negative_suffix': ""
+    'prompt_translation_positive': '',
+    'prompt_translation_negative': '',
+    'positive_suffix': '',
+    'negative_suffix': '' 
 
 }
 
@@ -413,6 +413,7 @@ def ui():
     translations.change(lambda x: params.update({"translations": x}), translations, None)
     prompt_prefix.change(lambda x: params.update({"prompt_prefix": x}), prompt_prefix, None)
     negative_prompt.change(lambda x: params.update({"negative_prompt": x}), negative_prompt, None)
+    secondary_prompt.change(lambda x: params.update({"secondary_prompt": x}), secondary_prompt, None)
     secondary_positive_prompt.change(lambda x: params.update({"secondary_positive_prompt": x}), secondary_positive_prompt, None)
     secondary_negative_prompt.change(lambda x: params.update({"secondary_negative_prompt": x}), secondary_negative_prompt, None)
     width.change(lambda x: params.update({"width": x}), width, None)
