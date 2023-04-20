@@ -19,7 +19,7 @@ This guide will cover usage through the official `transformers` implementation. 
 python download-model.py oobabooga/llama-tokenizer
 ```
 
-Once downloaded, it will be automatically detected used whenever you try to load any LLaMA model.
+Once downloaded, it will be automatically detected and used whenever you try to load *any* LLaMA model.
 
 ### Option 2: convert the weights yourself
 
