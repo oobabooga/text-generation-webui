@@ -13,7 +13,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * Dropdown menu for switching between models
 * Notebook mode that resembles OpenAI's playground
 * Chat mode for conversation and role playing
-* Instruct mode compatible with Alpaca, Vicuna, and Open Assistant formats **\*NEW!\***
+* Instruct mode compatible with Alpaca, Vicuna, Open Assistant, Dolly, Koala, and ChatGLM formats 
 * Nice HTML output for GPT-4chan
 * Markdown output for [GALACTICA](https://github.com/paperswithcode/galai), including LaTeX rendering
 * [Custom chat characters](https://github.com/oobabooga/text-generation-webui/wiki/Custom-chat-characters)
@@ -26,8 +26,9 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * [FlexGen](https://github.com/oobabooga/text-generation-webui/wiki/FlexGen)
 * [DeepSpeed ZeRO-3](https://github.com/oobabooga/text-generation-webui/wiki/DeepSpeed)
 * API [with](https://github.com/oobabooga/text-generation-webui/blob/main/api-example-stream.py) streaming and [without](https://github.com/oobabooga/text-generation-webui/blob/main/api-example.py) streaming
-* [LLaMA model, including 4-bit GPTQ](https://github.com/oobabooga/text-generation-webui/wiki/LLaMA-model)
-* [llama.cpp](https://github.com/oobabooga/text-generation-webui/wiki/llama.cpp-models) **\*NEW!\***
+* [LLaMA model](https://github.com/oobabooga/text-generation-webui/wiki/LLaMA-model)
+* [4-bit GPTQ mode](https://github.com/oobabooga/text-generation-webui/wiki/GPTQ-models-(4-bit-mode))
+* [llama.cpp](https://github.com/oobabooga/text-generation-webui/wiki/llama.cpp-models)
 * [RWKV model](https://github.com/oobabooga/text-generation-webui/wiki/RWKV-model)
 * [LoRA (loading and training)](https://github.com/oobabooga/text-generation-webui/wiki/Using-LoRAs)
 * Softprompts
@@ -37,22 +38,15 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 
 ### One-click installers
 
-[oobabooga-windows.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga-windows.zip)
+| Windows | Linux | macOS |
+|-------|--------|--------|
+| [oobabooga-windows.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga_windows.zip) | [oobabooga-linux.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga_linux.zip) |[oobabooga-macos.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga_macos.zip) |
 
-Just download the zip above, extract it, and double click on "install". The web UI and all its dependencies will be installed in the same folder.
+Just download the zip above, extract it, and double click on "start". The web UI and all its dependencies will be installed in the same folder.
 
-* To download a model, double click on "download-model"
-* To start the web UI, double click on "start-webui" 
-
-Source codes: https://github.com/oobabooga/one-click-installers
-
-> **Note**
-> 
-> Thanks to [@jllllll](https://github.com/jllllll) and [@ClayShoaf](https://github.com/ClayShoaf), the Windows 1-click installer now sets up 8-bit and 4-bit requirements out of the box. No additional installation steps are necessary.
-
-> **Note**
-> 
-> There is no need to run the installer as admin.
+* The source codes are here: https://github.com/oobabooga/one-click-installers
+* Huge thanks to [@jllllll](https://github.com/jllllll), [@ClayShoaf](https://github.com/ClayShoaf), and [@xNul](https://github.com/xNul) for their contributions to these installers.
+* There is no need to run the installers as admin.
 
 ### Manual installation using Conda
 
@@ -116,13 +110,13 @@ As an alternative to the recommended WSL method, you can install the web UI nati
 ### Alternative: Docker
 
 ```
-cp .env.example .env
+ln -s docker/{Dockerfile,docker-compose.yml,.dockerignore} .
+cp docker/.env.example .env
+# Edit .env and set TORCH_CUDA_ARCH_LIST based on your GPU model
 docker compose up --build
 ```
 
-Make sure to edit `.env.example` and set the appropriate CUDA version for your GPU, which can be found on [developer.nvidia.com](https://developer.nvidia.com/cuda-gpus).
-
-You need to have docker compose v2.17 or higher installed in your system. For installation instructions, see [Docker compose installation](https://github.com/oobabooga/text-generation-webui/wiki/Docker-compose-installation).
+You need to have docker compose v2.17 or higher installed in your system. To see how to install docker compose itself, see the guide in https://github.com/oobabooga/text-generation-webui/tree/main/docker.
 
 Contributed by [@loeken](https://github.com/loeken) in [#633](https://github.com/oobabooga/text-generation-webui/pull/633)
 
@@ -219,6 +213,7 @@ Optionally, you can use the following command-line flags:
 | `--no-cache`                                | Set `use_cache` to False while generating text. This reduces the VRAM usage a bit with a performance cost. |
 | `--xformers`                                | Use xformer's memory efficient attention. This should increase your tokens/s. |
 | `--sdp-attention`                           | Use torch 2.0's sdp attention. |
+| `--trust-remote-code`                       | Set trust_remote_code=True while loading a model. Necessary for ChatGLM. |
 
 #### llama.cpp
 
@@ -230,11 +225,14 @@ Optionally, you can use the following command-line flags:
 
 | Flag                      | Description |
 |---------------------------|-------------|
-| `--wbits WBITS`           | GPTQ: Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported. |
-| `--model_type MODEL_TYPE` | GPTQ: Model type of pre-quantized model. Currently LLaMA, OPT, and GPT-J are supported. |
-| `--groupsize GROUPSIZE`   | GPTQ: Group size. |
-| `--pre_layer PRE_LAYER`   | GPTQ: The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models. |
-| `--no-warmup_autotune`    | GPTQ: Disable warmup autotune for triton. |
+| `--wbits WBITS`           | Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported. |
+| `--model_type MODEL_TYPE` | Model type of pre-quantized model. Currently LLaMA, OPT, and GPT-J are supported. |
+| `--groupsize GROUPSIZE`   | Group size. |
+| `--pre_layer PRE_LAYER`   | The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models. |
+| `--monkey-patch`          | Apply the monkey patch for using LoRAs with quantized models.
+| `--no-quant_attn`         | (triton) Disable quant attention. If you encounter incoherent results try disabling this.
+| `--no-warmup_autotune`    | (triton) Disable warmup autotune.
+| `--no-fused_mlp`          | (triton) Disable fused mlp. If you encounter "Unexpected mma -> mma layout conversion" try disabling this.
 
 #### FlexGen
 
@@ -287,15 +285,14 @@ Check the [wiki](https://github.com/oobabooga/text-generation-webui/wiki/System-
 
 ## Contributing
 
-Contributions to this project are welcome.
+Pull requests, suggestions, and issue reports are welcome. 
 
-| Way to contribute | Tier |
-|-----------------|-------------|
-| Submit a pull request that fixes a problem or adds a new feature. | ⭐⭐⭐⭐⭐ |
-| Test and review an open pull request. | ⭐⭐⭐⭐⭐ |
-| Submit a bug report after searching to make sure that it has not been reported before. | ⭐⭐⭐⭐ |
-| Submit a feature request that you think is relevant. | ⭐⭐⭐⭐ |
-| Submit a duplicate bug report. | 🥲 |
+You are also welcome to review open pull requests.
+
+Before reporting a bug, make sure that you have:
+
+1. Created a conda environment and installed the dependencies exactly as in the *Installation* section above.
+2. [Searched](https://github.com/oobabooga/text-generation-webui/issues) to see if an issue already exists for the issue you encountered.
 
 ## Credits
 

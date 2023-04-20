@@ -13,10 +13,18 @@ import modules.shared as shared
 sys.path.insert(0, str(Path("repositories/GPTQ-for-LLaMa")))
 import llama_inference_offload
 from modelutils import find_layers
-from quant import make_quant
+
+try:
+    from quant import make_quant
+    is_triton = False
+except ImportError:
+    import quant
+    is_triton = True
 
 
-def _load_quant(model, checkpoint, wbits, groupsize=-1, faster_kernel=False, exclude_layers=['lm_head'], kernel_switch_threshold=128):
+# This function is a replacement for the load_quant function in the
+# GPTQ-for_LLaMa repository. It supports more models and branches.
+def _load_quant(model, checkpoint, wbits, groupsize=-1, faster_kernel=False, exclude_layers=['lm_head'], kernel_switch_threshold=128, eval=True):
 
     def noop(*args, **kwargs):
         pass
@@ -31,27 +39,31 @@ def _load_quant(model, checkpoint, wbits, groupsize=-1, faster_kernel=False, exc
     torch.set_default_dtype(torch.half)
     model = AutoModelForCausalLM.from_config(config)
     torch.set_default_dtype(torch.float)
-    model = model.eval()
+    if eval:
+        model = model.eval()
     layers = find_layers(model)
     for name in exclude_layers:
         if name in layers:
             del layers[name]
 
-    gptq_args = inspect.getfullargspec(make_quant).args
+    if not is_triton:
+        gptq_args = inspect.getfullargspec(make_quant).args
 
-    make_quant_kwargs = {
-        'module': model,
-        'names': layers,
-        'bits': wbits,
-    }
-    if 'groupsize' in gptq_args:
-        make_quant_kwargs['groupsize'] = groupsize
-    if 'faster' in gptq_args:
-        make_quant_kwargs['faster'] = faster_kernel
-    if 'kernel_switch_threshold' in gptq_args:
-        make_quant_kwargs['kernel_switch_threshold'] = kernel_switch_threshold
+        make_quant_kwargs = {
+            'module': model,
+            'names': layers,
+            'bits': wbits,
+        }
+        if 'groupsize' in gptq_args:
+            make_quant_kwargs['groupsize'] = groupsize
+        if 'faster' in gptq_args:
+            make_quant_kwargs['faster'] = faster_kernel
+        if 'kernel_switch_threshold' in gptq_args:
+            make_quant_kwargs['kernel_switch_threshold'] = kernel_switch_threshold
 
-    make_quant(**make_quant_kwargs)
+        make_quant(**make_quant_kwargs)
+    else:
+        quant.make_quant_linear(model, layers, wbits, groupsize)
 
     del layers
 
@@ -62,14 +74,16 @@ def _load_quant(model, checkpoint, wbits, groupsize=-1, faster_kernel=False, exc
     else:
         model.load_state_dict(torch.load(checkpoint), strict=False)
 
-    try:
-        from quant import autotune_warmup, make_quant_attn
-        # triton branch
-        make_quant_attn(model)
+    if is_triton:
+        if not shared.args.no_quant_attn:
+            quant.make_quant_attn(model)
+        if eval and not shared.args.no_fused_mlp:
+            quant.make_fused_mlp(model)
+
         if not shared.args.no_warmup_autotune:
-            autotune_warmup(model)
-    except ImportError:  # not triton branch
-        pass
+            quant.autotune_warmup_linear(model, transpose=not eval)
+            if eval and not shared.args.no_fused_mlp:
+                quant.autotune_warmup_fused(model)
 
     model.seqlen = 2048
     print('Done.')
@@ -77,6 +91,41 @@ def _load_quant(model, checkpoint, wbits, groupsize=-1, faster_kernel=False, exc
     return model
 
 
+# Used to locate the .pt/.safetensors quantized file
+def find_quantized_model_file(model_name):
+    path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
+    pt_path = None
+    priority_name_list = [
+        Path(f'{shared.args.model_dir}/{model_name}{hyphen}{shared.args.wbits}bit{group}{ext}')
+        for group in ([f'-{shared.args.groupsize}g', ''] if shared.args.groupsize > 0 else [''])
+        for ext in ['.safetensors', '.pt']
+        for hyphen in ['-', f'/{model_name}-', '/']
+    ]
+    for path in priority_name_list:
+        if path.exists():
+            pt_path = path
+            break
+
+    # If the model hasn't been found with a well-behaved name, pick the last .pt
+    # or the last .safetensors found in its folder as a last resort
+    if not pt_path:
+        found_pts = list(path_to_model.glob("*.pt"))
+        found_safetensors = list(path_to_model.glob("*.safetensors"))
+        pt_path = None
+
+        if len(found_pts) > 0:
+            if len(found_pts) > 1:
+                print('Warning: more than one .pt model has been found. The last one will be selected. It could be wrong.')
+            pt_path = found_pts[-1]
+        elif len(found_safetensors) > 0:
+            if len(found_pts) > 1:
+                print('Warning: more than one .safetensors model has been found. The last one will be selected. It could be wrong.')
+            pt_path = found_safetensors[-1]
+
+    return pt_path
+
+
+# The function that loads the model in modules/models.py
 def load_quantized(model_name):
 
     # Find the model type
@@ -106,37 +155,9 @@ def load_quantized(model_name):
         print("Unknown pre-quantized model type specified. Only 'llama', 'opt' and 'gptj' are supported")
         exit()
 
-    # Locate the quantized model file
+    # Find the quantized model weights file (.pt/.safetensors)
     path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
-    pt_path = None
-    priority_name_list = [
-        Path(f'{shared.args.model_dir}/{model_name}{hyphen}{shared.args.wbits}bit{group}{ext}')
-        for group in ([f'-{shared.args.groupsize}g', ''] if shared.args.groupsize > 0 else [''])
-        for ext in ['.safetensors', '.pt']
-        for hyphen in ['-', f'/{model_name}-', '/']
-    ]
-    for path in priority_name_list:
-        if path.exists():
-            pt_path = path
-            break
-
-    # If the model hasn't been found with a well-behaved name, pick the last .pt
-    # or the last .safetensors found in its folder as a last resort
-    if not pt_path:
-        path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
-        found_pts = list(path_to_model.glob("*.pt"))
-        found_safetensors = list(path_to_model.glob("*.safetensors"))
-        pt_path = None
-
-        if len(found_pts) > 0:
-            if len(found_pts) > 1:
-                print('Warning: more than one .pt model has been found. The last one will be selected. It could be wrong.')
-            pt_path = found_pts[-1]
-        elif len(found_safetensors) > 0:
-            if len(found_pts) > 1:
-                print('Warning: more than one .safetensors model has been found. The last one will be selected. It could be wrong.')
-            pt_path = found_safetensors[-1]
-
+    pt_path = find_quantized_model_file(model_name)
     if not pt_path:
         print("Could not find the quantized model in .pt or .safetensors format, exiting...")
         exit()

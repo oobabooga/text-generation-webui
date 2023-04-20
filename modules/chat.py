@@ -13,8 +13,7 @@ from PIL import Image
 import modules.extensions as extensions_module
 import modules.shared as shared
 from modules.extensions import apply_extensions
-from modules.html_generator import (chat_html_wrapper, fix_newlines,
-                                    make_thumbnail)
+from modules.html_generator import chat_html_wrapper, make_thumbnail
 from modules.text_generation import (encode, generate_reply,
                                      get_max_prompt_length)
 
@@ -42,7 +41,6 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
     i = len(shared.history['internal']) - 1
     while i >= 0 and len(encode(''.join(rows))[0]) < max_length:
-
         if _continue and i == len(shared.history['internal']) - 1:
             rows.insert(1, f"{prefix2}{shared.history['internal'][i][1]}")
         else:
@@ -50,7 +48,8 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
         string = shared.history['internal'][i][0]
         if string not in ['', '<|BEGIN-VISIBLE-CHAT|>']:
-            rows.insert(1, f"{prefix1}{string.strip()}{state['end_of_turn']}\n")
+            this_prefix1 = prefix1.replace('<|round|>', f'{i}')  # for ChatGLM
+            rows.insert(1, f"{this_prefix1}{string.strip()}{state['end_of_turn']}\n")
 
         i -= 1
 
@@ -60,9 +59,9 @@ def generate_chat_prompt(user_input, state, **kwargs):
     elif not _continue:
 
         # Adding the user message
-        user_input = fix_newlines(user_input)
         if len(user_input) > 0:
-            rows.append(f"{prefix1}{user_input}{state['end_of_turn']}\n")
+            this_prefix1 = prefix1.replace('<|round|>', f'{len(shared.history["internal"])}')  # for ChatGLM
+            rows.append(f"{this_prefix1}{user_input}{state['end_of_turn']}\n")
 
         # Adding the Character prefix
         rows.append(apply_extensions(f"{prefix2.strip() if not is_instruct else prefix2}", "bot_prefix"))
@@ -114,13 +113,12 @@ def extract_message_from_reply(reply, state):
                     continue
                 break
 
-    reply = fix_newlines(reply)
     return reply, next_character_found
 
 
 def chatbot_wrapper(text, state, regenerate=False, _continue=False):
 
-    if shared.model_name == 'None':
+    if shared.model_name == 'None' or shared.model is None:
         print("No model is loaded! Select one in the Model tab.")
         yield shared.history['visible']
         return
@@ -198,7 +196,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False):
 
 def impersonate_wrapper(text, state):
 
-    if shared.model_name == 'None':
+    if shared.model_name == 'None' or shared.model is None:
         print("No model is loaded! Select one in the Model tab.")
         yield ''
         return
@@ -434,12 +432,14 @@ def load_character(character, name1, name2, mode):
             filepath = Path(f'{folder}/{character}.{extension}')
             if filepath.exists():
                 break
+
         file_contents = open(filepath, 'r', encoding='utf-8').read()
         data = json.loads(file_contents) if extension == "json" else yaml.safe_load(file_contents)
-
+        name2 = data['name'] if 'name' in data else data['char_name']
         if 'your_name' in data and data['your_name'] != '':
             name1 = data['your_name']
-        name2 = data['name'] if 'name' in data else data['char_name']
+        else:
+            name1 = shared.settings['name1']
 
         for field in ['context', 'greeting', 'example_dialogue', 'char_persona', 'char_greeting', 'world_scenario']:
             if field in data:
@@ -453,10 +453,13 @@ def load_character(character, name1, name2, mode):
 
         if 'example_dialogue' in data:
             context += f"{data['example_dialogue'].strip()}\n"
+
         if greeting_field in data:
             greeting = data[greeting_field]
+
         if 'end_of_turn' in data:
             end_of_turn = data['end_of_turn']
+
     else:
         context = shared.settings['context']
         name2 = shared.settings['name2']
@@ -466,7 +469,6 @@ def load_character(character, name1, name2, mode):
     if mode != 'instruct':
         shared.history['internal'] = []
         shared.history['visible'] = []
-
         if Path(f'logs/{shared.character}_persistent.json').exists():
             load_history(open(Path(f'logs/{shared.character}_persistent.json'), 'rb').read(), name1, name2)
         else:

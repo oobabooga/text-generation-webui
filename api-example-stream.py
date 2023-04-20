@@ -28,10 +28,10 @@ async def run(context):
     params = {
         'max_new_tokens': 200,
         'do_sample': True,
-        'temperature': 0.5,
-        'top_p': 0.9,
+        'temperature': 0.72,
+        'top_p': 0.73,
         'typical_p': 1,
-        'repetition_penalty': 1.05,
+        'repetition_penalty': 1.1,
         'encoder_repetition_penalty': 1.0,
         'top_k': 0,
         'min_length': 0,
@@ -43,8 +43,9 @@ async def run(context):
         'seed': -1,
         'add_bos_token': True,
         'truncation_length': 2048,
-        'custom_stopping_strings': [],
-        'ban_eos_token': False
+        'ban_eos_token': False,
+        'skip_special_tokens': True,
+        'stopping_strings': [],
     }
     payload = json.dumps([context, params])
     session = random_hash()
