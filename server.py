@@ -599,6 +599,7 @@ def create_interface():
 
                         with gr.Column():
                             shared.gradio['chat_generation_attempts'] = gr.Slider(minimum=shared.settings['chat_generation_attempts_min'], maximum=shared.settings['chat_generation_attempts_max'], value=shared.settings['chat_generation_attempts'], step=1, label='Generation attempts (for longer replies)')
+                            shared.gradio['chat_generation_improv_phrase'] = gr.Textbox(label='Improvisation phrase (appended bettween attemps to improve longer generations " and then...")', value=shared.settings['chat_generation_improv_phrase'], lines=1)
                             shared.gradio['stop_at_newline'] = gr.Checkbox(value=shared.settings['stop_at_newline'], label='Stop generating at new line character')
 
                 create_settings_menus(default_preset)

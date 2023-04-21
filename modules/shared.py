@@ -53,6 +53,7 @@ settings = {
     'chat_generation_attempts': 1,
     'chat_generation_attempts_min': 1,
     'chat_generation_attempts_max': 5,
+    'chat_generation_improv_phrase': '',
     'default_extensions': [],
     'chat_default_extensions': ["gallery"],
     'presets': {

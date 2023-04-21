@@ -158,6 +158,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False):
     # Generate
     for i in range(state['chat_generation_attempts']):
         reply = None
+        if i > 0 : cumulative_reply += state['chat_generation_improv_phrase']
         for reply in generate_reply(f"{prompt}{' ' if len(cumulative_reply) > 0 else ''}{cumulative_reply}", state, eos_token=eos_token, stopping_strings=stopping_strings):
             reply = cumulative_reply + reply
 
