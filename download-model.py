@@ -41,13 +41,18 @@ def select_model_from_default_options():
         char = chr(ord('A') + i)
         choices[char] = name
         print(f"{char}) {name}")
-    char = chr(ord('A') + len(models))
-    print(f"{char}) None of the above")
+    char_hugging = chr(ord('A') + len(models))
+    print(f"{char_hugging}) Manually specify a Hugging Face model")
+    char_exit = chr(ord('A') + len(models) + 1)
+    print(f"{char_exit}) Do not download a model")
 
     print()
     print("Input> ", end='')
     choice = input()[0].strip().upper()
-    if choice == char:
+    if choice == char_exit:
+        model = "EXIT"
+        branch = ""    
+    elif choice == char_hugging:
         print("""\nThen type the name of your desired Hugging Face model in the format organization/name.
 
 Examples:
@@ -251,6 +256,9 @@ if __name__ == '__main__':
     model = args.MODEL
     if model is None:
         model, branch = select_model_from_default_options()
+        
+    if model == "EXIT":
+        exit()
 
     # Cleaning up the model/branch names
     try:
