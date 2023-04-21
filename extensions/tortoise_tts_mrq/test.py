@@ -26,8 +26,8 @@ except ImportError:
 
 params = {
     'activate': True,
-    'voice_dir': '/media/da3dsoul/Golias/LLaMA/voices',
-    'model_dir': '/media/da3dsoul/Golias/LLaMA/models',
+    'voice_dir': None,
+    'model_dir': None,
     'output_dir': None,
     'voice': 'emma',
     'preset': 'ultra_fast',

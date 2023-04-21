@@ -22,7 +22,7 @@ from .tortoise.tortoise.utils import device
 
 params = {
     'activate': True,
-    'voice_dir': '/media/da3dsoul/Golias/LLaMA/voices',
+    'voice_dir': None,
     'output_dir': None,
     'voice': 'emma',
     'preset': 'ultra_fast',
