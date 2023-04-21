@@ -108,6 +108,10 @@ button {
   font-size: 14px !important;
 }
 
+.small-button {
+  max-width: 171px;
+}
+
 /* Align the elements for SD_api_picture extension */
 .SDAP #sampler_box {
   padding-top: var(--spacing-sm);

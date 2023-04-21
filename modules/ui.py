@@ -21,7 +21,8 @@ theme = gr.themes.Default(
 ).set(
     border_color_primary='#c5c5d2',
     button_large_padding='6px 12px',
-    body_text_color_subdued='#484848'
+    body_text_color_subdued='#484848',
+    background_fill_secondary='#eaeaea'
 )
 
 def list_model_elements():

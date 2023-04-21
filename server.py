@@ -615,15 +615,10 @@ def create_interface():
                             shared.gradio['html'] = gr.HTML()
 
                         with gr.Row():
-                            with gr.Column():
-                                with gr.Row():
-                                    shared.gradio['Generate'] = gr.Button('Generate', variant='primary')
-                                    shared.gradio['Stop'] = gr.Button('Stop')
-                                    shared.gradio['Undo'] = gr.Button('Undo')
-                                    shared.gradio['Regenerate'] = gr.Button('Regenerate')
-
-                            with gr.Column():
-                                pass
+                            shared.gradio['Generate'] = gr.Button('Generate', variant='primary', elem_classes="small-button")
+                            shared.gradio['Stop'] = gr.Button('Stop', elem_classes="small-button")
+                            shared.gradio['Undo'] = gr.Button('Undo', elem_classes="small-button")
+                            shared.gradio['Regenerate'] = gr.Button('Regenerate', elem_classes="small-button")
 
                     with gr.Column(scale=1):
                         gr.HTML('<div style="padding-bottom: 13px"></div>')
