@@ -53,7 +53,7 @@ def load_model(model_name):
 
     # Load the model in simple 16-bit mode by default
     if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.wbits, shared.args.auto_devices, shared.args.disk, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None, shared.args.deepspeed, shared.args.flexgen, shared.is_RWKV, shared.is_llamacpp]):
-        model = LoaderClass.from_pretrained(Path(f"{shared.args.model_dir}/{shared.model_name}"), low_cpu_mem_usage=True, torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16, trust_remote_code=trust_remote_code)
+        model = LoaderClass.from_pretrained(Path(f"{shared.args.model_dir}/{model_name}"), low_cpu_mem_usage=True, torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16, trust_remote_code=trust_remote_code)
         if torch.has_mps:
             device = torch.device('mps')
             model = model.to(device)
@@ -81,11 +81,11 @@ def load_model(model_name):
                             num_bits=4, group_size=64,
                             group_dim=2, symmetric=False))
 
-        model = OptLM(f"facebook/{shared.model_name}", env, shared.args.model_dir, policy)
+        model = OptLM(f"facebook/{model_name}", env, shared.args.model_dir, policy)
 
     # DeepSpeed ZeRO-3
     elif shared.args.deepspeed:
-        model = LoaderClass.from_pretrained(Path(f"{shared.args.model_dir}/{shared.model_name}"), torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16)
+        model = LoaderClass.from_pretrained(Path(f"{shared.args.model_dir}/{model_name}"), torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16)
         model = deepspeed.initialize(model=model, config_params=ds_config, model_parameters=None, optimizer=None, lr_scheduler=None)[0]
         model.module.eval()  # Inference
         print(f"DeepSpeed ZeRO-3 is enabled: {is_deepspeed_zero3_enabled()}")
@@ -169,7 +169,7 @@ def load_model(model_name):
             if shared.args.disk:
                 params["offload_folder"] = shared.args.disk_cache_dir
 
-        checkpoint = Path(f'{shared.args.model_dir}/{shared.model_name}')
+        checkpoint = Path(f'{shared.args.model_dir}/{model_name}')
 
         if shared.args.load_in_8bit and params.get('max_memory', None) is not None and params['device_map'] == 'auto':
             config = AutoConfig.from_pretrained(checkpoint)
@@ -190,7 +190,7 @@ def load_model(model_name):
         llama_attn_hijack.hijack_llama_attention()
 
     # Loading the tokenizer
-    if any((k in shared.model_name.lower() for k in ['gpt4chan', 'gpt-4chan'])) and Path(f"{shared.args.model_dir}/gpt-j-6B/").exists():
+    if any((k in model_name.lower() for k in ['gpt4chan', 'gpt-4chan'])) and Path(f"{shared.args.model_dir}/gpt-j-6B/").exists():
         tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/gpt-j-6B/"))
     elif type(model) is transformers.LlamaForCausalLM:
         tokenizer = None
@@ -205,7 +205,7 @@ def load_model(model_name):
         # Otherwise, load it from the model folder and hope that these
         # are not outdated tokenizer files.
         if tokenizer is None:
-            tokenizer = LlamaTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/{shared.model_name}/"), clean_up_tokenization_spaces=True)
+            tokenizer = LlamaTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/{model_name}/"), clean_up_tokenization_spaces=True)
             try:
                 tokenizer.eos_token_id = 2
                 tokenizer.bos_token_id = 1
@@ -213,7 +213,7 @@ def load_model(model_name):
             except:
                 pass
     else:
-        tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/{shared.model_name}/"), trust_remote_code=trust_remote_code)
+        tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/{model_name}/"), trust_remote_code=trust_remote_code)
 
     print(f"Loaded the model in {(time.time()-t0):.2f} seconds.")
     return model, tokenizer
