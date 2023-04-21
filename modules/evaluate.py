@@ -19,15 +19,15 @@ def load_past_evaluations():
         df['Perplexity'] = pd.to_numeric(df['Perplexity'])
         return df
     else:
-        return pd.DataFrame(columns=['Model', 'LoRAs', 'Dataset', 'Stride', 'Perplexity', 'Date'])
+        return pd.DataFrame(columns=['Model', 'LoRAs', 'Dataset', 'Perplexity', 'stride', 'max_length', 'Date', 'Comment'])
 past_evaluations = load_past_evaluations()
 
 
-def save_past_evaluations():
-    past_evaluations.to_csv(Path('logs/evaluations.csv'), index=False)
+def save_past_evaluations(df):
+    df.to_csv(Path('logs/evaluations.csv'), index=False)
 
 
-def calculate_perplexity(models, input_dataset, stride):
+def calculate_perplexity(models, input_dataset, stride, max_length):
     '''
     Based on:
     https://huggingface.co/docs/transformers/perplexity#calculating-ppl-with-fixedlength-models
@@ -53,7 +53,7 @@ def calculate_perplexity(models, input_dataset, stride):
             text = f.read()
 
     for model in models:
-        if is_in_past_evaluations(model, input_dataset, stride):
+        if is_in_past_evaluations(model, input_dataset, stride, max_length):
             cumulative_log += f"{model} has already been tested. Ignoring.\n"
             yield cumulative_log
             continue
@@ -75,8 +75,10 @@ def calculate_perplexity(models, input_dataset, stride):
         cumulative_log += f"Processing {model}...\n"
         yield cumulative_log + "Tokenizing the input dataset...\n"
         encodings = encode(text, add_special_tokens=False)
-        max_length = shared.model.config.max_position_embeddings
         seq_len = encodings.shape[1]
+        if max_length == 0:
+            max_length = shared.model.config.max_position_embeddings
+
         nlls = []
         prev_end_loc = 0
         for begin_loc in tqdm(range(0, seq_len, stride)):
@@ -102,29 +104,32 @@ def calculate_perplexity(models, input_dataset, stride):
                 break
 
         ppl = torch.exp(torch.stack(nlls).mean())
-        add_entry_to_past_evaluations(float(ppl), shared.model_name, input_dataset, stride)
-        save_past_evaluations()
+        add_entry_to_past_evaluations(float(ppl), shared.model_name, input_dataset, stride, max_length)
+        save_past_evaluations(past_evaluations)
         cumulative_log += f"Done. The perplexity is: {float(ppl)}\n\n"
         yield cumulative_log
 
 
-def add_entry_to_past_evaluations(perplexity, model, dataset, stride):
+def add_entry_to_past_evaluations(perplexity, model, dataset, stride, max_length):
     global past_evaluations
     entry = {
         'Model': model,
         'LoRAs': ', '.join(shared.lora_names) or '-',
         'Dataset': dataset,
-        'Stride': str(stride),
         'Perplexity': perplexity,
-        'Date': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        'stride': str(stride),
+        'max_length': str(max_length),
+        'Date': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'Comment': ''
     }
     past_evaluations = pd.concat([past_evaluations, pd.DataFrame([entry])], ignore_index=True)
 
 
-def is_in_past_evaluations(model, dataset, stride):
+def is_in_past_evaluations(model, dataset, stride, max_length):
     entries = past_evaluations[(past_evaluations['Model'] == model) &
                                (past_evaluations['Dataset'] == dataset) &
-                               (past_evaluations['Stride'] == str(stride))]
+                               (past_evaluations['max_length'] == str(max_length)) &
+                               (past_evaluations['stride'] == str(stride))]
 
     if entries.shape[0] > 0:
         return True
@@ -133,5 +138,5 @@ def is_in_past_evaluations(model, dataset, stride):
 
 
 def generate_markdown_table():
-    sorted_df = past_evaluations.sort_values(by=['Dataset', 'Stride', 'Perplexity', 'Date'])
+    sorted_df = past_evaluations.sort_values(by=['Dataset', 'stride', 'Perplexity', 'Date'])
     return sorted_df

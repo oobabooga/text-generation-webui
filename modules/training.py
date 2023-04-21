@@ -14,7 +14,7 @@ from peft import (LoraConfig, get_peft_model, prepare_model_for_int8_training,
                   set_peft_model_state_dict)
 
 from modules import shared, ui
-from modules.evaluate import calculate_perplexity, generate_markdown_table
+from modules.evaluate import calculate_perplexity, generate_markdown_table, save_past_evaluations
 from server import get_available_loras, get_available_models
 
 # This mapping is from a very recent commit, not yet released.
@@ -110,15 +110,20 @@ def create_train_interface():
             with gr.Column():
                 models = gr.Dropdown(get_available_models(), label='Models', multiselect=True)
                 evaluate_text_file = gr.Dropdown(choices=['wikitext', 'ptb', 'ptb_new'] + get_datasets('training/datasets', 'txt')[1:], value='wikitext', label='Input dataset', info='The raw text file on which the model will be evaluated. The first options are automatically downloaded: wikitext, ptb, and ptb_new. The next options are your local text files under training/datasets.')
-                stride_length = gr.Slider(label='Stride', minimum=1, maximum=2048, value=512, step=1, info='Used to make the evaluation faster at the cost of accuracy. 1 = slowest but most accurate. 512 is a common value.')
                 with gr.Row():
-                    start_evaluation = gr.Button("Evaluate selected models")
+                    stride_length = gr.Slider(label='Stride', minimum=1, maximum=2048, value=512, step=1, info='Used to make the evaluation faster at the cost of accuracy. 1 = slowest but most accurate. 512 is a common value.')
+                    max_length = gr.Slider(label='max_length', minimum=1, maximum=8096, value=0, step=1, info='The context for each evaluation. If set to 0, the maximum context length for the model will be used.')
+
+                with gr.Row():
                     start_current_evaluation = gr.Button("Evaluate loaded model")
+                    start_evaluation = gr.Button("Evaluate selected models")
                     stop_evaluation = gr.Button("Interrupt")
 
             with gr.Column():
-                evaluation_table = gr.Dataframe(value=generate_markdown_table())
                 evaluation_log = gr.Markdown(value = '')
+
+        evaluation_table = gr.Dataframe(value=generate_markdown_table(), interactive=True)
+        save_comments = gr.Button('Save comments')
 
     # Training events
     all_params = [lora_name, always_override, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lr_scheduler_type, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, do_shuffle, higher_rank_limit, warmup_steps, optimizer]
@@ -127,18 +132,21 @@ def create_train_interface():
     stop_button.click(do_interrupt, None, None, queue=False)
     higher_rank_limit.change(change_rank_limit, [higher_rank_limit], [lora_rank, lora_alpha])
 
-    # Evaluation events
-    ev = start_evaluation.click(
-        calculate_perplexity, [models, evaluate_text_file, stride_length], evaluation_log, show_progress=False).then(
-        generate_markdown_table, None, evaluation_table, show_progress=False)
+    # Evaluation events. For some reason, the interrupt event
+    # doesn't work with the .then() syntax, so I write them one
+    # by one in this ugly but functional way.
+    ev = start_evaluation.click(calculate_perplexity, [models, evaluate_text_file, stride_length, max_length], evaluation_log, show_progress=False)
+    start_evaluation.click(generate_markdown_table, None, evaluation_table, show_progress=False)
 
     tmp = gr.State('')
-    ev_cur = start_current_evaluation.click(
-        lambda: ['current model'], None, tmp).then(
-        calculate_perplexity, [tmp, evaluate_text_file, stride_length], evaluation_log, show_progress=False).then(
-        generate_markdown_table, None, evaluation_table, show_progress=False)
+    start_current_evaluation.click(lambda: ['current model'], None, tmp)
+    ev_cur = start_current_evaluation.click(calculate_perplexity, [tmp, evaluate_text_file, stride_length, max_length], evaluation_log, show_progress=False)
+    start_current_evaluation.click(generate_markdown_table, None, evaluation_table, show_progress=False)
 
-    stop_evaluation.click(None, None, None, cancels=[ev, ev_cur])
+    stop_evaluation.click(None, None, None, cancels=[ev, ev_cur], queue=False)
+    save_comments.click(
+        save_past_evaluations, evaluation_table, None).then(
+        lambda: "Comments saved.", None, evaluation_log, show_progress=False)
 
 
 def do_interrupt():
@@ -161,6 +169,7 @@ def do_copy_params(lora_name: str, *args):
             result.append(params[key])
         else:
             result.append(args[i])
+
     return result
 
 
