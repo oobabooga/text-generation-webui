@@ -133,6 +133,7 @@ def load_model():
         tts = api.TextToSpeech(minor_optimizations=not params['low_vram'], models_dir=api.MODELS_DIR, device=dev)
         samples, latents = audio.load_voice(voice=params['voice'], extra_voice_dirs=extra_voice_dirs, device=dev)
     except Exception as e:
+        print(e)
         return None, None, None
 
     return tts, samples, latents
