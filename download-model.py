@@ -81,7 +81,7 @@ def sanitize_model_and_branch_names(model, branch):
 
 def get_download_links_from_huggingface(model, branch, text_only=False):
     base = "https://huggingface.co"
-    page = f"/api/models/{model}/tree/{branch}?cursor="
+    page = f"/api/models/{model}/tree/{branch}"
     cursor = b""
 
     links = []
@@ -93,7 +93,10 @@ def get_download_links_from_huggingface(model, branch, text_only=False):
     has_safetensors = False
     is_lora = False
     while True:
-        content = requests.get(f"{base}{page}{cursor.decode()}").content
+        url = f"{base}{page}" + (f"?cursor={cursor.decode()}" if cursor else "")
+        r = requests.get(url)
+        r.raise_for_status()
+        content = r.content
 
         dict = json.loads(content)
         if len(dict) == 0:
@@ -108,7 +111,7 @@ def get_download_links_from_huggingface(model, branch, text_only=False):
             is_safetensors = re.match(".*\.safetensors", fname)
             is_pt = re.match(".*\.pt", fname)
             is_ggml = re.match("ggml.*\.bin", fname)
-            is_tokenizer = re.match("tokenizer.*\.model", fname)
+            is_tokenizer = re.match("(tokenizer|ice).*\.model", fname)
             is_text = re.match(".*\.(txt|json|py|md)", fname) or is_tokenizer
 
             if any((is_pytorch, is_safetensors, is_pt, is_ggml, is_tokenizer, is_text)):

@@ -41,9 +41,10 @@ settings = {
     'stop_at_newline': False,
     'add_bos_token': True,
     'ban_eos_token': False,
+    'skip_special_tokens': True,
     'truncation_length': 2048,
     'truncation_length_min': 0,
-    'truncation_length_max': 4096,
+    'truncation_length_max': 8192,
     'mode': 'cai-chat',
     'instruction_template': 'None',
     'chat_prompt_size': 2048,
@@ -112,16 +113,20 @@ parser.add_argument('--bf16', action='store_true', help='Load the model with bfl
 parser.add_argument('--no-cache', action='store_true', help='Set use_cache to False while generating text. This reduces the VRAM usage a bit at a performance cost.')
 parser.add_argument('--xformers', action='store_true', help="Use xformer's memory efficient attention. This should increase your tokens/s.")
 parser.add_argument('--sdp-attention', action='store_true', help="Use torch 2.0's sdp attention.")
+parser.add_argument('--trust-remote-code', action='store_true', help="Set trust_remote_code=True while loading a model. Necessary for ChatGLM.")
 
 # llama.cpp
 parser.add_argument('--threads', type=int, default=0, help='Number of threads to use in llama.cpp.')
 
 # GPTQ
-parser.add_argument('--wbits', type=int, default=0, help='GPTQ: Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported.')
-parser.add_argument('--model_type', type=str, help='GPTQ: Model type of pre-quantized model. Currently LLaMA, OPT, and GPT-J are supported.')
-parser.add_argument('--groupsize', type=int, default=-1, help='GPTQ: Group size.')
-parser.add_argument('--pre_layer', type=int, default=0, help='GPTQ: The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models.')
-parser.add_argument('--no-warmup_autotune', action='store_true', help='GPTQ: Disable warmup autotune for triton.')
+parser.add_argument('--wbits', type=int, default=0, help='Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported.')
+parser.add_argument('--model_type', type=str, help='Model type of pre-quantized model. Currently LLaMA, OPT, and GPT-J are supported.')
+parser.add_argument('--groupsize', type=int, default=-1, help='Group size.')
+parser.add_argument('--pre_layer', type=int, default=0, help='The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models.')
+parser.add_argument('--monkey-patch', action='store_true', help='Apply the monkey patch for using LoRAs with quantized models.')
+parser.add_argument('--no-quant_attn', action='store_true', help='(triton) Disable quant attention. If you encounter incoherent results try disabling this.')
+parser.add_argument('--no-warmup_autotune', action='store_true', help='(triton) Disable warmup autotune.')
+parser.add_argument('--no-fused_mlp', action='store_true', help='(triton) Disable fused mlp. If you encounter "Unexpected mma -> mma layout conversion" try disabling this.')
 
 # FlexGen
 parser.add_argument('--flexgen', action='store_true', help='Enable the use of FlexGen offloading.')
@@ -152,14 +157,20 @@ args_defaults = parser.parse_args([])
 # Deprecation warnings for parameters that have been renamed
 deprecated_dict = {}
 for k in deprecated_dict:
-    if eval(f"args.{k}") != deprecated_dict[k][1]:
-        print(f"Warning: --{k} is deprecated and will be removed. Use --{deprecated_dict[k][0]} instead.")
-        exec(f"args.{deprecated_dict[k][0]} = args.{k}")
+    if getattr(args, k) != deprecated_dict[k][1]:
+        print(f"Warning: --{k} is deprecated and will be removed. Use --{deprecated_dict[k][0]} instead.\n")
+        setattr(args, deprecated_dict[k][0], getattr(args, k))
 
 # Deprecation warnings for parameters that have been removed
 if args.cai_chat:
-    print("Warning: --cai-chat is deprecated. Use --chat instead.")
+    print("Warning: --cai-chat is deprecated. Use --chat instead.\n")
     args.chat = True
+
+# Security warnings
+if args.trust_remote_code:
+    print("Warning: trust_remote_code is enabled. This is dangerous.\n")
+if args.share:
+    print("Warning: the gradio \"share link\" feature downloads a proprietary and\nunaudited blob to create a reverse tunnel. This is potentially dangerous.\n")
 
 
 def is_chat():

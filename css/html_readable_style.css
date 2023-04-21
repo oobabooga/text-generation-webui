@@ -6,11 +6,12 @@
     padding:3em;
     word-break: break-word;
     overflow-wrap: anywhere;
+    color: #efefef !important;
 }
 
-.container p {
+.container p, .container li {
     font-size: 16px !important;
-    color: white !important;
+    color: #efefef !important;
     margin-bottom: 22px;
     line-height: 1.4 !important;
 }
