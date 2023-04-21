@@ -7,8 +7,6 @@ from modules import shared
 
 with open(Path(__file__).resolve().parent / '../css/main.css', 'r') as f:
     css = f.read()
-with open(Path(__file__).resolve().parent / '../css/main.css', 'r') as f:
-    css = css + f.read()
 with open(Path(__file__).resolve().parent / '../css/chat.css', 'r') as f:
     chat_css = f.read()
 with open(Path(__file__).resolve().parent / '../css/main.js', 'r') as f:
