@@ -27,7 +27,7 @@ def save_past_evaluations(df):
     df.to_csv(Path('logs/evaluations.csv'), index=False)
 
 
-def calculate_perplexity(models, input_dataset, stride, max_length):
+def calculate_perplexity(models, input_dataset, stride, _max_length):
     '''
     Based on:
     https://huggingface.co/docs/transformers/perplexity#calculating-ppl-with-fixedlength-models
@@ -53,7 +53,7 @@ def calculate_perplexity(models, input_dataset, stride, max_length):
             text = f.read()
 
     for model in models:
-        if is_in_past_evaluations(model, input_dataset, stride, max_length):
+        if is_in_past_evaluations(model, input_dataset, stride, _max_length):
             cumulative_log += f"{model} has already been tested. Ignoring.\n"
             yield cumulative_log
             continue
@@ -76,9 +76,7 @@ def calculate_perplexity(models, input_dataset, stride, max_length):
         yield cumulative_log + "Tokenizing the input dataset...\n"
         encodings = encode(text, add_special_tokens=False)
         seq_len = encodings.shape[1]
-        if max_length == 0:
-            max_length = shared.model.config.max_position_embeddings
-
+        max_length = _max_length or shared.model.config.max_position_embeddings
         nlls = []
         prev_end_loc = 0
         for begin_loc in tqdm(range(0, seq_len, stride)):
@@ -104,7 +102,7 @@ def calculate_perplexity(models, input_dataset, stride, max_length):
                 break
 
         ppl = torch.exp(torch.stack(nlls).mean())
-        add_entry_to_past_evaluations(float(ppl), shared.model_name, input_dataset, stride, max_length)
+        add_entry_to_past_evaluations(float(ppl), shared.model_name, input_dataset, stride, _max_length)
         save_past_evaluations(past_evaluations)
         cumulative_log += f"Done. The perplexity is: {float(ppl)}\n\n"
         yield cumulative_log
