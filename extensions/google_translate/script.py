@@ -15,7 +15,7 @@ params = {
     "is_translate_user": True,
     "is_translate_system": True,
     "is_add_system_orig": False,
-
+    "is_debug_console": False,
 }
 
 language_codes = {'Afrikaans': 'af', 'Albanian': 'sq', 'Amharic': 'am', 'Arabic': 'ar', 'Armenian': 'hy', 'Azerbaijani': 'az', 'Basque': 'eu', 'Belarusian': 'be', 'Bengali': 'bn', 'Bosnian': 'bs', 'Bulgarian': 'bg', 'Catalan': 'ca', 'Cebuano': 'ceb', 'Chinese (Simplified)': 'zh-CN', 'Chinese (Traditional)': 'zh-TW', 'Corsican': 'co', 'Croatian': 'hr', 'Czech': 'cs', 'Danish': 'da', 'Dutch': 'nl', 'English': 'en', 'Esperanto': 'eo', 'Estonian': 'et', 'Finnish': 'fi', 'French': 'fr', 'Frisian': 'fy', 'Galician': 'gl', 'Georgian': 'ka', 'German': 'de', 'Greek': 'el', 'Gujarati': 'gu', 'Haitian Creole': 'ht', 'Hausa': 'ha', 'Hawaiian': 'haw', 'Hebrew': 'iw', 'Hindi': 'hi', 'Hmong': 'hmn', 'Hungarian': 'hu', 'Icelandic': 'is', 'Igbo': 'ig', 'Indonesian': 'id', 'Irish': 'ga', 'Italian': 'it', 'Japanese': 'ja', 'Javanese': 'jw', 'Kannada': 'kn', 'Kazakh': 'kk', 'Khmer': 'km', 'Korean': 'ko', 'Kurdish': 'ku', 'Kyrgyz': 'ky', 'Lao': 'lo', 'Latin': 'la', 'Latvian': 'lv', 'Lithuanian': 'lt', 'Luxembourgish': 'lb', 'Macedonian': 'mk', 'Malagasy': 'mg', 'Malay': 'ms', 'Malayalam': 'ml', 'Maltese': 'mt', 'Maori': 'mi', 'Marathi': 'mr', 'Mongolian': 'mn', 'Myanmar (Burmese)': 'my', 'Nepali': 'ne', 'Norwegian': 'no', 'Nyanja (Chichewa)': 'ny', 'Pashto': 'ps', 'Persian': 'fa', 'Polish': 'pl', 'Portuguese (Portugal, Brazil)': 'pt', 'Punjabi': 'pa', 'Romanian': 'ro', 'Russian': 'ru', 'Samoan': 'sm', 'Scots Gaelic': 'gd', 'Serbian': 'sr', 'Sesotho': 'st', 'Shona': 'sn', 'Sindhi': 'sd', 'Sinhala (Sinhalese)': 'si', 'Slovak': 'sk', 'Slovenian': 'sl', 'Somali': 'so', 'Spanish': 'es', 'Sundanese': 'su', 'Swahili': 'sw', 'Swedish': 'sv', 'Tagalog (Filipino)': 'tl', 'Tajik': 'tg', 'Tamil': 'ta', 'Telugu': 'te', 'Thai': 'th', 'Turkish': 'tr', 'Ukrainian': 'uk', 'Urdu': 'ur', 'Uzbek': 'uz', 'Vietnamese': 'vi', 'Welsh': 'cy', 'Xhosa': 'xh', 'Yiddish': 'yi', 'Yoruba': 'yo', 'Zulu': 'zu'}
@@ -60,6 +60,11 @@ def ui():
     is_add_system_orig = gr.Checkbox(value=params['is_add_system_orig'], label='Add system origin output to translation')
 
     is_add_system_orig.change(lambda x: params_update({"is_add_system_orig": x}), is_add_system_orig, None)
+
+    is_debug_console = gr.Checkbox(value=params['is_debug_console'], label='Log translation debug info to console')
+
+    is_debug_console.change(lambda x: params_update({"is_debug_console": x}), is_debug_console, None)
+
 
 
 def language_code_to_lang(langcode:str):
@@ -128,21 +133,32 @@ def input_modifier(string):
     if not params['is_translate_user']: return string # no translation needed
     if params['language string'] == "en": return string # no translation needed
 
+    is_debug_console = params['is_debug_console']
+
+    if is_debug_console:
+        print("Input_modifier string BEFORE translate:",string)
+
+    res = ""
     if params['translator'] == "GoogleTranslator":
         #print("GoogleTranslator using")
-        return GoogleTranslator(source=params['language string'], target='en').translate(string)
+        res = GoogleTranslator(source=params['language string'], target='en').translate(string)
     if params['translator'] == "DeeplTranslator":
         #print("Deepl using")
-        return DeeplTranslator(source=params['language string'], target='en').translate(string)
+        res = DeeplTranslator(source=params['language string'], target='en').translate(string)
     if params['translator'] == "LibreTranslator":
         #print("LibreTranslator using input_modifier")
         custom_url = params['custom_url']
         if custom_url == "": custom_url = "https://translate.argosopentech.com/"
-        return LibreTranslator(source=params['language string'], target='en', custom_url = params['custom_url']).translate(string)
+        res = LibreTranslator(source=params['language string'], target='en', custom_url = params['custom_url']).translate(string)
     if params['translator'] == "LocalAlpaca":
         #print("GoogleTranslator using")
         #return GoogleTranslator(source=params['language string'], target='en').translate(string)
-        return local_translator(params['language string'],'en',string,tpl_alpaca)
+        res = local_translator(params['language string'],'en',string,tpl_alpaca)
+
+    if is_debug_console:
+        print("Input_modifier string AFTER translate:",res)
+
+    return res
 
 def output_modifier(string):
     """
@@ -150,6 +166,11 @@ def output_modifier(string):
     """
     if not params['is_translate_system']: return string  # no translation needed
     if params['language string'] == "en": return string  # no translation needed
+
+    is_debug_console = params['is_debug_console']
+
+    if is_debug_console:
+        print("Output_modifier string BEFORE translate:",string)
 
     res = ""
     if params['translator'] == "GoogleTranslator":
@@ -166,8 +187,12 @@ def output_modifier(string):
         #return GoogleTranslator(source=params['language string'], target='en').translate(string)
         res = local_translator('en',params['language string'],string,tpl_alpaca)
 
+    if is_debug_console:
+        print("Output_modifier string AFTER translate:",res)
+
     if params['is_add_system_orig']: # add original response
         res += "\n\n_({0})_".format(string)
+
 
     return res
 
