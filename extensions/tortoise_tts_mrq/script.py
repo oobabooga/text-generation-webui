@@ -4,98 +4,152 @@ import sys
 import torch
 import torchaudio
 
-sys.path.append(os.path.join(os.path.dirname(__file__), 'tortoise'))
-from .tortoise.tortoise import api
-from .tortoise.tortoise.utils.audio import load_voices
-from .tortoise.tortoise.utils.text import split_and_recombine_text
-
 from pathlib import Path
 import time
 
 from modules import chat, shared, tts_preprocessor
+from modules.models import reload_model as load_llm, unload_model as unload_llm
 from modules.html_generator import chat_html_wrapper
 
 import gradio as gr
 
+sys.path.append(os.path.join(os.path.dirname(__file__), 'tortoise'))
+from .tortoise.tortoise import api
+from .tortoise.tortoise.utils import audio
+from .tortoise.tortoise.utils.text import split_and_recombine_text
+from .tortoise.tortoise.utils import device
+
+
 params = {
     'activate': True,
-    'voice_dir': None,
+    'voice_dir': '/media/da3dsoul/Golias/LLaMA/voices',
+    'output_dir': None,
     'voice': 'emma',
-    'preset': 'standard',
-    'low_vram': False,
-    'seed': None,
+    'preset': 'ultra_fast',
+    'low_vram': True,
+    'model_swap': True,
+    'seed': 0,
     'device': 'cuda',
-    'sentence_length': 10,
+    'sentence_length': 100,
     'show_text': True,
     'autoplay': True,
     'tuning_settings': {
-        'verbose': False,
         'k': 1,
-        'num_autoregressive_samples': None,
-        'temperature': None,
-        'length_penalty': None,
-        'repetition_penalty': None,
-        'top_p': None,
-        'max_mel_tokens': None,
-        'cvvp_amount': None,
-        'diffusion_iterations': None,
+        'num_autoregressive_samples': 0,
+        'temperature': 0,
+        'length_penalty': 0,
+        'repetition_penalty': 0,
+        'top_p': 0,
+        'max_mel_tokens': 0,
+        'cvvp_amount': 0,
+        'diffusion_iterations': 0,
         'cond_free': None,
-        'cond_free_k': None,
-        'diffusion_temperature': None
+        'cond_free_k': 0,
+        'diffusion_temperature': 0,
+        'sampler': None
     }
 }
 
-voices = [
-    'angie',
-    'applejack',
-    'cond_latent_example',
-    'daniel',
-    'deniro',
-    'emma',
-    'freeman',
-    'geralt',
-    'halle',
-    'jlaw',
-    'lj',
-    'mol',
-    'myself',
-    'pat',
-    'pat2',
-    'rainbow',
-    'snakes',
-    'tim_reynolds',
-    'tom',
-    'train_atkins',
-    'train_daws',
-    'train_dotrice',
-    'train_dreams',
-    'train_empire',
-    'train_grace',
-    'train_kennard',
-    'train_lescault',
-    'train_mouse',
-    'weaver',
-    'william'
-]
+presets = ['ultra_fast', 'very_fast', 'fast', 'standard', 'high_quality']
+model = voice_samples = conditioning_latents = None
 
-presets = ['ultra_fast', 'fast', 'standard', 'high_quality']
+
+def set_preset(preset):
+    global params
+    settings = get_preset_settings(preset)
+    params['tuning_settings'].update(settings)
+
+
+def get_preset_settings(preset):
+    settings = {
+        'temperature': 0.8, 'length_penalty': 1.0, 'repetition_penalty': 2.0, 'top_p': 0.8, 'cond_free_k': 2.0,
+        'diffusion_temperature': 1.0, 'num_autoregressive_samples': 512, 'max_mel_tokens': 500, 'cvvp_amount': 0,
+        'diffusion_iterations': 100, 'cond_free': True
+    }
+    # Presets are defined here.
+    preset_options = {
+        'ultra_fast': {'num_autoregressive_samples': 16, 'diffusion_iterations': 30, 'cond_free': False},
+        'fast': {'num_autoregressive_samples': 96, 'diffusion_iterations': 80},
+        'standard': {'num_autoregressive_samples': 256, 'diffusion_iterations': 200},
+        'high_quality': {'num_autoregressive_samples': 256, 'diffusion_iterations': 400}
+    }
+
+    settings.update(preset_options[preset])
+    return settings
+
+
+def get_gen_kwargs(par):
+    gen_kwargs = {
+        'preset': par['preset'],
+        'use_deterministic_seed': int(time.time()) if par['seed'] is None or par['seed'] == 0 else par['seed'],
+        'k': 1
+    }
+
+    preset_options = get_preset_settings(par['preset'])
+
+    for option in par['tuning_settings'].keys():
+        opt: [float | int | str | bool | None] = par['tuning_settings'][option]
+        if opt is None:
+            continue
+
+        if isinstance(opt, (int, float)) and opt <= 0:
+            continue
+
+        if isinstance(opt, str) and opt == '':
+            continue
+
+        if option in preset_options.keys() and preset_options[option] == opt:
+            continue
+
+        gen_kwargs[option] = opt
+
+    return gen_kwargs
+
+
+def get_voices():
+    extra_voice_dirs = [params['voice_dir']] if params['voice_dir'] is not None and Path(params['voice_dir']).is_dir() else []
+    detected_voices = audio.get_voices(extra_voice_dirs=extra_voice_dirs, load_latents=False)
+    detected_voices = sorted(detected_voices.keys()) if len(detected_voices) > 0 else []
+    return detected_voices
 
 
 def load_model():
     # Init TTS
-    models_dir = shared.args.model_dir if hasattr(shared.args, 'model_dir') and shared.args.model_dir is not None else \
-        api.MODELS_DIR
-    tts = api.TextToSpeech(minor_optimizations=not params['low_vram'], models_dir=os.path.join(models_dir, 'tortoise'),
-                           device=params['device'])
-    samples, latents = load_voices(voices=[params['voice']],
-                                   extra_voice_dirs=[params['voice_dir']] if params['voice_dir'] is not None else [])
+    try:
+        global params
+        extra_voice_dirs = [params['voice_dir']] if params['voice_dir'] is not None else []
+        models_dir = shared.args.model_dir if hasattr(shared.args, 'model_dir') and shared.args.model_dir is not None else api.MODELS_DIR
+        if not Path(models_dir).is_dir():
+            Path(models_dir).mkdir(parents=True, exist_ok=True)
+
+        api.MODELS_DIR = os.path.join(models_dir, 'tortoise')
+        if params['device'] is not None and params['device'] != '':
+            device.set_device_name(params['device'])
+        dev = device.get_device()
+        tts = api.TextToSpeech(minor_optimizations=not params['low_vram'], models_dir=api.MODELS_DIR, device=dev)
+        samples, latents = audio.load_voice(voice=params['voice'], extra_voice_dirs=extra_voice_dirs, device=dev)
+    except Exception as e:
+        return None, None, None
 
     return tts, samples, latents
 
 
-model, voice_samples, conditioning_latents = load_model()
+def unload_model():
+    try:
+        global model, voice_samples, conditioning_latents
+        model = voice_samples = conditioning_latents = None
+        device.do_gc()
+    except:
+        pass
+
+
+voices = get_voices()
+set_preset(params['preset'])
+if not params['model_swap']:
+    model, voice_samples, conditioning_latents = load_model()
 current_params = params.copy()
 streaming_state = shared.args.no_stream  # remember if chat streaming was enabled
+controls = {}
 
 
 def remove_tts_from_history(name1, name2, mode):
@@ -136,64 +190,111 @@ def output_modifier(string):
     This function is applied to the model outputs.
     """
 
-    global model, voice_samples, conditioning_latents, params
+    try:
+        global model, voice_samples, conditioning_latents, params, current_params
 
-    original_string = string
-    # we don't need to handle numbers. The text normalizer in coqui does it better
-    string = tts_preprocessor.replace_invalid_chars(string)
-    string = tts_preprocessor.replace_abbreviations(string)
-    string = tts_preprocessor.clean_whitespace(string)
-    processed_string = string
+        refresh_model = False
 
-    if string == '':
-        string = '*Empty reply, try regenerating*'
-    else:
-        output_dir = Path(f'extensions/tortoise_tts_mrq/outputs/parts')
+        if params['voice'] != current_params['voice'] or params['low_vram'] != current_params['low_vram'] \
+                or params['device'] != current_params['device']:
+            refresh_model = True
+
+        for i in params:
+            if params[i] != current_params[i]:
+                current_params = params.copy()
+                break
+
+        if not current_params['activate']:
+            return string
+
+        if model is None:
+            refresh_model = True
+
+        if params['model_swap']:
+            unload_llm()
+            refresh_model = True
+
+        if refresh_model:
+            model, voice_samples, conditioning_latents = load_model()
+
+        if model is None:
+            return string
+
+        original_string = string
+        # we don't need to handle numbers. The text normalizer in tortoise does it better
+        string = tts_preprocessor.replace_invalid_chars(string)
+        string = tts_preprocessor.replace_abbreviations(string)
+        string = tts_preprocessor.clean_whitespace(string)
+
+        if string == '':
+            string = '*Empty reply, try regenerating*'
+            shared.args.no_stream = streaming_state  # restore the streaming option to the previous value
+            if params['model_swap']:
+                unload_model()
+                load_llm()
+
+            return string
+
+        out_dir_root = params['output_dir'] if params['output_dir'] is not None and Path(params['output_dir']).is_dir() \
+            else 'extensions/tortoise_tts_mrq/outputs'
+
+        output_dir = Path(out_dir_root).joinpath('parts')
         if not output_dir.is_dir():
             output_dir.mkdir(parents=True, exist_ok=True)
 
-        output_file = Path(f'extensions/tortoise_tts_mrq/outputs/test_{int(time.time())}.wav')
+        output_file = Path(out_dir_root).joinpath(f'test_{int(time.time())}.wav')
 
         if '|' in string:
             texts = string.split('|')
         else:
             texts = split_and_recombine_text(string, desired_length=params['sentence_length'], max_length=1000)
 
-        gen_kwargs = {
-            'use_deterministic_seed': int(time.time()) if params['seed'] is None else params['seed']
-        }
+        gen_kwargs = get_gen_kwargs(params)
 
-        for option in params['tuning_settings'].keys():
-            if params['tuning_settings'][option] is not None:
-                gen_kwargs[option] = params['tuning_settings'][option]
-
-        all_parts = []
-        # only cat if it's needed
-        if len(texts) > 1:
-            for j, text in enumerate(texts):
-                gen = model.tts_with_preset(text, voice_samples=voice_samples, conditioning_latents=conditioning_latents,
-                                            **gen_kwargs)
-                gen = gen.squeeze(0).cpu()
-                torchaudio.save(output_dir.joinpath(f'{j}_{int(time.time())}.wav'), gen, 24000)
-                all_parts.append(gen)
-
-            full_audio = torch.cat(all_parts, dim=-1)
-            torchaudio.save(str(output_file), full_audio, 24000)
-        elif len(texts) == 1:
-            text = texts[1]
-            gen = model.tts_with_preset(text, voice_samples=voice_samples, conditioning_latents=conditioning_latents,
-                                        **gen_kwargs)
-            gen = gen.squeeze(0).cpu()
-            torchaudio.save(str(output_file), gen, 24000)
+        generate_audio(model, voice_samples, conditioning_latents, output_dir, output_file, gen_kwargs, texts)
 
         autoplay = 'autoplay' if params['autoplay'] else ''
         string = f'<audio src="file/{output_file.as_posix()}" controls {autoplay}></audio>'
         if params['show_text']:
             string += f'\n\n{original_string}'
 
-    shared.processing_message = "*Is typing...*"
-    shared.args.no_stream = streaming_state  # restore the streaming option to the previous value
-    return string
+        shared.processing_message = "*Is typing...*"
+        shared.args.no_stream = streaming_state  # restore the streaming option to the previous value
+        if params['model_swap']:
+            unload_model()
+            load_llm()
+
+        return string
+    except Exception as e:
+        shared.processing_message = "*Is typing...*"
+        shared.args.no_stream = streaming_state  # restore the streaming option to the previous value
+        if params['model_swap']:
+            unload_model()
+            load_llm()
+        return str(e)
+
+
+def generate_audio(tts, samples, latents, output_dir, output_file, gen_kwargs, texts):
+    # only cat if it's needed
+    if len(texts) <= 0:
+        return
+
+    if len(texts) == 1:
+        text = texts[0]
+        gen = tts.tts_with_preset(text, voice_samples=samples, conditioning_latents=latents, **gen_kwargs)
+        gen = gen.squeeze(0).cpu()
+        torchaudio.save(str(output_file), gen, 24000)
+        return
+
+    all_parts = []
+    for j, text in enumerate(texts):
+        gen = tts.tts_with_preset(text, voice_samples=samples, conditioning_latents=latents, **gen_kwargs)
+        gen = gen.squeeze(0).cpu()
+        torchaudio.save(str(output_dir.joinpath(f'{j}_{int(time.time())}.wav')), gen, 24000)
+        all_parts.append(gen)
+
+    full_audio = torch.cat(all_parts, dim=-1)
+    torchaudio.save(str(output_file), full_audio, 24000)
 
 
 def bot_prefix_modifier(string):
@@ -207,49 +308,126 @@ def bot_prefix_modifier(string):
 
 
 def setup():
-    global model, voice_samples, conditioning_latents
-    model, voice_samples, conditioning_latents = load_model()
+    pass
 
 
 def ui():
+    global controls, params
     # Gradio elements
-    with gr.Accordion("Tortoise TTS"):
+    with gr.Accordion("Tortoise TTS MRQ"):
         with gr.Row():
-            activate = gr.Checkbox(value=params['activate'], label='Activate TTS')
-            autoplay = gr.Checkbox(value=params['autoplay'], label='Play TTS automatically')
+            controls['activate'] = gr.Checkbox(value=params['activate'], label='Activate TTS')
+            controls['autoplay'] = gr.Checkbox(value=params['autoplay'], label='Play TTS automatically')
 
-        show_text = gr.Checkbox(value=params['show_text'], label='Show message text under audio player')
-        voice_dropdown = gr.Dropdown(value=params['voice'], choices=voices, label='Voice')
-        preset_dropdown = gr.Dropdown(value=params['preset'], choices=presets, label='Preset')
-        device_textbox = gr.Textbox(value=params['device'], label='Device')
+        controls['show_text'] = gr.Checkbox(value=params['show_text'], label='Show message text under audio player')
+        controls['voice_dropdown'] = gr.Dropdown(value=params['voice'], choices=voices, label='Voice')
+        controls['voice_dir_textbox'] = gr.Textbox(value=params['voice_dir'], label='Custom Voices Directory')
+        controls['output_dir_textbox'] = gr.Textbox(value=params['output_dir'], label='Custom Output Directory')
+        controls['device_textbox'] = gr.Textbox(value=params['device'], label='Device')
+        controls['vram_checkbox'] = gr.Checkbox(value=params['low_vram'], label='Low VRAM')
+        controls['model_swap'] = gr.Checkbox(value=params['model_swap'], label='Unload LLM Model to save VRAM')
+        controls['seed_picker'] = gr.Number(value=params['seed'], precision=0, label='Seed', interactive=True)
+        controls['sentence_picker'] = gr.Number(value=params['sentence_length'], precision=0, label='Optimal Sentence Length', interactive=True)
+        controls['preset_dropdown'] = gr.Dropdown(value=params['preset'], choices=presets, label='Preset')
+        with gr.Accordion(label='Tuning Settings', open=False):
+            tune_settings: dict[str, float] = params['tuning_settings']
+            controls['num_autoregressive_samples'] = gr.Number(value=tune_settings['num_autoregressive_samples'], label='num_autoregressive_samples')
+            controls['temperature'] = gr.Number(value=tune_settings['temperature'], label='temperature')
+            controls['length_penalty'] = gr.Number(value=tune_settings['length_penalty'], label='length_penalty')
+            controls['repetition_penalty'] = gr.Number(value=tune_settings['repetition_penalty'], label='repetition_penalty')
+            controls['top_p'] = gr.Number(value=tune_settings['top_p'], label='top_p')
+            controls['max_mel_tokens'] = gr.Number(value=tune_settings['max_mel_tokens'], label='max_mel_tokens')
+            controls['cvvp_amount'] = gr.Number(value=tune_settings['cvvp_amount'], label='cvvp_amount')
+            controls['diffusion_iterations'] = gr.Number(value=tune_settings['diffusion_iterations'], label='diffusion_iterations')
+            controls['cond_free_k'] = gr.Number(value=tune_settings['cond_free_k'], label='cond_free_k')
+            controls['diffusion_temperature'] = gr.Number(value=tune_settings['diffusion_temperature'], label='diffusion_temperature')
+            controls['num_autoregressive_samples'].change(lambda x: params['tuning_settings'].update({'num_autoregressive_samples': x}), controls['num_autoregressive_samples'], outputs=None)
+            controls['temperature'].change(lambda x: params['tuning_settings'].update({'temperature': x}), controls['temperature'], outputs=None)
+            controls['length_penalty'].change(lambda x: params['tuning_settings'].update({'length_penalty': x}), controls['length_penalty'], outputs=None)
+            controls['repetition_penalty'].change(lambda x: params['tuning_settings'].update({'repetition_penalty': x}), controls['repetition_penalty'], outputs=None)
+            controls['top_p'].change(lambda x: params['tuning_settings'].update({'top_p': x}), controls['top_p'], outputs=None)
+            controls['max_mel_tokens'].change(lambda x: params['tuning_settings'].update({'max_mel_tokens': x}), controls['max_mel_tokens'], outputs=None)
+            controls['cvvp_amount'].change(lambda x: params['tuning_settings'].update({'cvvp_amount': x}), controls['cvvp_amount'], outputs=None)
+            controls['diffusion_iterations'].change(lambda x: params['tuning_settings'].update({'diffusion_iterations': x}), controls['diffusion_iterations'], outputs=None)
+            controls['cond_free_k'].change(lambda x: params['tuning_settings'].update({'cond_free_k': x}), controls['cond_free_k'], outputs=None)
+            controls['diffusion_temperature'].change(lambda x: params['tuning_settings'].update({'diffusion_temperature': x}), controls['diffusion_temperature'], outputs=None)
 
         with gr.Row():
-            convert = gr.Button('Permanently replace audios with the message texts')
-            convert_cancel = gr.Button('Cancel', visible=False)
-            convert_confirm = gr.Button('Confirm (cannot be undone)', variant="stop", visible=False)
+            controls['convert'] = gr.Button('Permanently replace audios with the message texts')
+            controls['convert_cancel'] = gr.Button('Cancel', visible=False)
+            controls['convert_confirm'] = gr.Button('Confirm (cannot be undone)', variant="stop", visible=False)
 
     # Convert history with confirmation
-    convert_arr = [convert_confirm, convert, convert_cancel]
-    convert.click(lambda: [gr.update(visible=True), gr.update(visible=False), gr.update(visible=True)], None, convert_arr)
-    convert_confirm.click(lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr)
-    convert_confirm.click(remove_tts_from_history, [shared.gradio[k] for k in ['name1', 'name2', 'mode']], shared.gradio['display'])
-    convert_confirm.click(lambda: chat.save_history(mode='chat', timestamp=False), [], [], show_progress=False)
-    convert_cancel.click(lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr)
+    controls['convert_arr'] = [controls['convert_confirm'], controls['convert'], controls['convert_cancel']]
+    controls['convert'].click(lambda: [gr.update(visible=True), gr.update(visible=False), gr.update(visible=True)], None, controls['convert_arr'])
+    controls['convert_confirm'].click(lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, controls['convert_arr'])
+    controls['convert_confirm'].click(remove_tts_from_history, [shared.gradio[k] for k in ['name1', 'name2', 'mode']], shared.gradio['display'])
+    controls['convert_confirm'].click(lambda: chat.save_history(mode='chat', timestamp=False), [], [], show_progress=False)
+    controls['convert_cancel'].click(lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, controls['convert_arr'])
 
     # Toggle message text in history
-    show_text.change(lambda x: params.update({"show_text": x}), show_text, None)
-    show_text.change(toggle_text_in_history, [shared.gradio[k] for k in ['name1', 'name2', 'mode']], shared.gradio['display'])
-    show_text.change(lambda: chat.save_history(mode='chat', timestamp=False), [], [], show_progress=False)
+    controls['show_text'].change(lambda x: params.update({"show_text": x}), controls['show_text'], None)
+    controls['show_text'].change(toggle_text_in_history, [shared.gradio[k] for k in ['name1', 'name2', 'mode']], shared.gradio['display'])
+    controls['show_text'].change(lambda: chat.save_history(mode='chat', timestamp=False), [], [], show_progress=False)
 
     # Event functions to update the parameters in the backend
-    activate.change(lambda x: params.update({"activate": x}), activate, None)
-    autoplay.change(lambda x: params.update({"autoplay": x}), autoplay, None)
-    voice_dropdown.change(lambda x: update_model(x), voice_dropdown, None)
-    preset_dropdown.change(lambda x: params.update({"preset": x}), preset_dropdown, None)
-    device_textbox.change(lambda x: params.update({"device": x}), device_textbox, None)
+    controls['activate'].change(lambda x: params.update({"activate": x}), controls['activate'], None)
+    controls['autoplay'].change(lambda x: params.update({"autoplay": x}), controls['autoplay'], None)
+    controls['voice_dropdown'].change(lambda x: params.update({"voice": x}), controls['voice_dropdown'], None)
+    controls['voice_dir_textbox'].change(update_voice_dir, [controls['voice_dir_textbox'], controls['voice_dropdown']], controls['voice_dropdown'])
+    controls['output_dir_textbox'].change(lambda x: params.update({'output_dir': x}), controls['output_dir_textbox'], None)
+    controls['preset_dropdown'].change(update_preset, controls['preset_dropdown'], outputs=[
+        controls['num_autoregressive_samples'],
+        controls['temperature'],
+        controls['length_penalty'],
+        controls['repetition_penalty'],
+        controls['top_p'],
+        controls['max_mel_tokens'],
+        controls['cvvp_amount'],
+        controls['diffusion_iterations'],
+        controls['cond_free_k'],
+        controls['diffusion_temperature']
+    ])
+    controls['device_textbox'].change(lambda x: params.update({"device": x}), controls['device_textbox'], None)
+    controls['vram_checkbox'].change(lambda x: params.update({'low_vram': x}), controls['vram_checkbox'], None)
+    controls['model_swap'].change(lambda x: params.update({'model_swap': x}), controls['model_swap'], None)
+    controls['seed_picker'].change(lambda x: params.update({'seed': x}), controls['seed_picker'], None)
+    controls['sentence_picker'].change(lambda x: params.update({'sentence_length': x}), controls['sentence_picker'], None)
 
 
-def update_model(x):
-    params.update({"voice": x})
-    global model, voice_samples, conditioning_latents
-    model, voice_samples, conditioning_latents = load_model()
+def update_voice_dir(x, voice):
+    global controls, params, voices
+    params.update({"voice_dir": x})
+    voices = get_voices()
+    controls['voice_dropdown'].choices = voices
+    value = voice if voice in voices else voices[0] if len(voices) > 0 else None
+    return gr.update(choices=voices, value=value, visible=True)
+
+
+def update_preset(preset):
+    global params
+    params.update({'preset': preset})
+    set_preset(preset)
+    tune: dict[str, float | int | str] = params['tuning_settings']
+    return [
+        # num_autoregressive_samples
+        gr.update(value=tune['num_autoregressive_samples'], visible=True),
+        # temperature
+        gr.update(value=tune['temperature'], visible=True),
+        # length_penalty
+        gr.update(value=tune['length_penalty'], visible=True),
+        # repetition_penalty
+        gr.update(value=tune['repetition_penalty'], visible=True),
+        # top_p
+        gr.update(value=tune['top_p'], visible=True),
+        # max_mel_tokens
+        gr.update(value=tune['max_mel_tokens'], visible=True),
+        # cvvp_amount
+        gr.update(value=tune['cvvp_amount'], visible=True),
+        # diffusion_iterations
+        gr.update(value=tune['diffusion_iterations'], visible=True),
+        # cond_free_k
+        gr.update(value=tune['cond_free_k'], visible=True),
+        # diffusion_temperature
+        gr.update(value=tune['diffusion_temperature'], visible=True)
+    ]

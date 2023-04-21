@@ -161,8 +161,12 @@ def ui():
 
         show_text = gr.Checkbox(value=params['show_text'], label='Show message text under audio player')
         model_dropdown = gr.Dropdown(value=params['model_id'], choices=models, label='Model')
-        voice = gr.Dropdown(value=params['speaker'], choices=model.speakers if model.speakers is not None else [], label='Speaker')
-        lang = gr.Dropdown(value=params['language'], choices=model.languages if model.languages is not None else [], label='Language')
+        speaker_dropdown = gr.Dropdown(value=params['speaker'],
+                                       choices=model.speakers if model.speakers is not None else [], label='Speaker')
+        language_dropdown = gr.Dropdown(value=params['language'],
+                                        choices=model.languages if model.languages is not None else [],
+                                        label='Language')
+        vc_textbox = gr.Textbox(value=params['voice_clone_reference_path'], label='Voice Clone Speaker Path')
 
         with gr.Row():
             convert = gr.Button('Permanently replace audios with the message texts')
@@ -174,25 +178,25 @@ def ui():
     convert.click(lambda: [gr.update(visible=True), gr.update(visible=False), gr.update(visible=True)], None, convert_arr)
     convert_confirm.click(lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr)
     convert_confirm.click(remove_tts_from_history, [shared.gradio[k] for k in ['name1', 'name2', 'mode']], shared.gradio['display'])
-    convert_confirm.click(lambda: chat.save_history(timestamp=False), [], [], show_progress=False)
+    convert_confirm.click(lambda: chat.save_history(mode='chat', timestamp=False), [], [], show_progress=False)
     convert_cancel.click(lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr)
 
     # Toggle message text in history
     show_text.change(lambda x: params.update({"show_text": x}), show_text, None)
     show_text.change(toggle_text_in_history, [shared.gradio[k] for k in ['name1', 'name2', 'mode']], shared.gradio['display'])
-    show_text.change(lambda: chat.save_history(timestamp=False), [], [], show_progress=False)
+    show_text.change(lambda: chat.save_history(mode='chat', timestamp=False), [], [], show_progress=False)
 
     # Event functions to update the parameters in the backend
     activate.change(lambda x: params.update({"activate": x}), activate, None)
     autoplay.change(lambda x: params.update({"autoplay": x}), autoplay, None)
-    model_dropdown.change(lambda x: update_model(x, voice, lang), model_dropdown, None)
-    voice.change(lambda x: params.update({"speaker": x}), voice, None)
-    lang.change(lambda x: params.update({"language": x}), lang, None)
+    model_dropdown.change(lambda x: update_model(x), model_dropdown, [speaker_dropdown, language_dropdown])
+    speaker_dropdown.change(lambda x: params.update({"speaker": x}), speaker_dropdown, None)
+    language_dropdown.change(lambda x: params.update({"language": x}), language_dropdown, None)
+    vc_textbox.change(lambda x: params.update({"voice_clone_reference_path": x}), vc_textbox, None)
 
 
 def update_model(x, speaker_dropdown, language_dropdown):
     params.update({"model_id": x})
     global model, speaker, language, speakers, languages
     model, speaker, language = load_model()
-    speaker_dropdown.update(value=speaker, choices=speakers)
-    language_dropdown.update(value=language, choices=languages)
+    return [gr.update(value=speaker, choices=speakers), gr.update(value=language, choices=languages)]
