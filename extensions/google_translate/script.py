@@ -132,6 +132,7 @@ def input_modifier(string):
     """
     if not params['is_translate_user']: return string # no translation needed
     if params['language string'] == "en": return string # no translation needed
+    if string == "": return string
 
     is_debug_console = params['is_debug_console']
 
@@ -166,6 +167,7 @@ def output_modifier(string):
     """
     if not params['is_translate_system']: return string  # no translation needed
     if params['language string'] == "en": return string  # no translation needed
+    if string == "": return string
 
     is_debug_console = params['is_debug_console']
 
