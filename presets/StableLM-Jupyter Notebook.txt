@@ -1,0 +1,5 @@
+max_new_tokens=128
+temperature=0.7
+top_k=0
+top_p=0.9
+do_sample=True

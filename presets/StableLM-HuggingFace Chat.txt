@@ -1,0 +1,6 @@
+max_new_tokens=1024
+do_sample=True
+top_p=0.95
+top_k=1000
+temperature=1.0
+num_beams=1
