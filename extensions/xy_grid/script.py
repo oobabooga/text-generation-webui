@@ -14,7 +14,7 @@ from pathlib import Path
 axis_type = {'x': "prompts", 'y': "presets"}
 custom_state = {}
 gen_output = []
-axis_options = ["prompts", "presets", "characters", "seed", "max_new_tokens", "temperature", "top_p", "top_k", "typical_p", "repetition_penalty", "encoder_repetition_penalty", "no_repeat_ngram_size", "min_length"]
+axis_options = ["prompts", "presets", "characters", "instruction template", "seed", "max_new_tokens", "temperature", "top_p", "top_k", "typical_p", "repetition_penalty", "encoder_repetition_penalty", "no_repeat_ngram_size", "min_length"]
 
 # I had to steal this from server.py because the program freaks out if I try to `import server`
 def load_preset_values(preset_menu, state):
@@ -49,7 +49,18 @@ def load_preset_values(preset_menu, state):
 # Get all of the characters from the character folder
 def get_characters():
     paths = (x for x in Path('characters').iterdir() if x.suffix in ('.json', '.yaml', '.yml'))
-    return ", ".join(['None'] + sorted(set((k.stem for k in paths if k.stem != "instruction-following")), key=str.lower))
+    instructors = []
+    filenames = sorted(os.listdir("characters/instruction-following/"))
+    for file in filenames:
+        instructor = "instruction-following/" + file[:-5]
+        instructors.append(instructor)
+    return ", ".join(['None'] + sorted(set((k.stem for k in paths if k.stem != "instruction-following")), key=str.lower) + instructors)
+
+
+# Get all of the instruction following templates from the character folder
+def get_instruct():
+    paths = (x for x in Path('characters/instruction-following').iterdir() if x.suffix in ('.json', '.yaml', '.yml'))
+    return ", ".join(['None'] + sorted(set((k.stem for k in paths)), key=str.lower))
 
 
 # Get all of the presets from the presets folder
@@ -70,6 +81,8 @@ def fill_axis(option):
         return gr.update(label=option, value=get_presets())
     elif option == "characters":
         return gr.update(label=option, value=get_characters())
+    elif option == "instruction template":
+        return gr.update(label=option, value=get_instruct())
     elif option == "prompts":
         return gr.update(label=option, value=custom_state['textbox'])
     else:
@@ -98,11 +111,28 @@ def parse_axis(axis, value):
             custom_state = load_preset_values(shared.gradio['preset_menu'].value, custom_state)[0]
     # CHARACTERS
     elif axis_type[axis] == "characters":
-        if value.strip() != "":
-            custom_state['character_menu'] = value.strip()
+        if value.split("/")[0] == "instruction-following":
+            custom_state['mode'] = "instruct"
         else:
-            custom_state['character_menu'] = shared.gradio["character_menu"].value
-        custom_state.update({k: v for k, v in zip(['name1', 'name2', 'character_picture', 'greeting', 'context', 'end_of_turn', 'display'], load_character(custom_state['character_menu'], custom_state['name1'], custom_state['name2'], custom_state['mode']))})
+            custom_state['mode'] = "cai-chat"
+        value = value.split("/")[-1]
+        if custom_state['mode'] == "instruct":
+            char_type = 'instruction_template'
+        else:
+            char_type = 'character_menu'
+        if value.strip() != "":
+            custom_state[char_type] = value.strip()
+        else:
+            custom_state[char_type] = shared.gradio[char_type].value
+        custom_state.update({k: v for k, v in zip(['name1', 'name2', 'character_picture', 'greeting', 'context', 'end_of_turn', 'display'], load_character(custom_state[char_type], custom_state['name1'], custom_state['name2'], custom_state['mode']))})
+    # INSTRUCT
+    elif axis_type[axis] == "instruction template":
+        custom_state['mode'] = 'instruct'
+        if value.strip() != "":
+            custom_state['instruction_template'] = value.strip()
+        else:
+            custom_state['instruction_template'] = shared.gradio["instruction_template"].value
+        custom_state.update({k: v for k, v in zip(['name1', 'name2', 'character_picture', 'greeting', 'context', 'end_of_turn', 'display'], load_character(custom_state['instruction_template'], custom_state['name1'], custom_state['name2'], custom_state['mode']))})
     # FLOATS
     elif axis_type[axis] in ("seed", "temperature", "top_p", "typical_p", "repetition_penalty", "encoder_repetition_penalty"):
         if value.strip() != "":
@@ -139,6 +169,7 @@ def run(constant_seed, seed_value, use_history, x="", y=""):
 
     temp_internal = shared.history['internal']
     temp_visible = shared.history['visible']
+    temp_custom_state = custom_state
 
     # Gather output json info, from before the X/Y parameters take effect
     output_json = {k: custom_state[k] for k in shared.input_elements}
@@ -187,7 +218,11 @@ def run(constant_seed, seed_value, use_history, x="", y=""):
                         gen_output = [['','']]
                     user_output = convert_to_markdown(gen_output[-1][0])
                     bot_output = convert_to_markdown(gen_output[-1][1])
-                    output = output + f"<td><h3><b>{custom_state['name1']}:</b></h3> {user_output}<br><h3><b>{custom_state['name2']}:</b></h3> {bot_output}</td>"
+
+                    if custom_state['mode'] == 'instruct':
+                        output = output + f"<td><b>{custom_state['name1']}</b> {user_output}<b>{custom_state['name2']}</b> {bot_output}</td>"
+                    else:
+                        output = output + f"<td><h3><b>{custom_state['name1']}:</b></h3> {user_output}<br><h3><b>{custom_state['name2']}:</b></h3> {bot_output}</td>"
 
                     # Remove the last outputs, so they don't influence future generations
                     gen_output.pop()
@@ -206,7 +241,11 @@ def run(constant_seed, seed_value, use_history, x="", y=""):
                     gen_output = [['','']]
                 user_output = convert_to_markdown(gen_output[-1][0])
                 bot_output = convert_to_markdown(gen_output[-1][1])
-                output = output + f"<td><h3><b>{custom_state['name1']}:</b></h3> {user_output}<br><h3><b>{custom_state['name2']}:</b></h3> {bot_output}</td>"
+
+                if custom_state['mode'] == 'instruct':
+                    output = output + f"<td><b>{custom_state['name1']}</b> {user_output}<b>{custom_state['name2']}</b> {bot_output}</td>"
+                else:
+                    output = output + f"<td><h3><b>{custom_state['name1']}:</b></h3> {user_output}<br><h3><b>{custom_state['name2']}:</b></h3> {bot_output}</td>"
 
                 # Remove the last outputs, so they don't influence future generations
                 gen_output.pop()
@@ -241,7 +280,11 @@ def run(constant_seed, seed_value, use_history, x="", y=""):
                         gen_output = [['','']]
                     user_output = convert_to_markdown(gen_output[-1][0])
                     bot_output = convert_to_markdown(gen_output[-1][1])
-                    output = output + f"<td><h3><b>{custom_state['name1']}:</b></h3> {user_output}<br><h3><b>{custom_state['name2']}:</b></h3> {bot_output}</td>"
+
+                    if custom_state['mode'] == 'instruct':
+                        output = output + f"<td><b>{custom_state['name1']}</b> {user_output}<b>{custom_state['name2']}</b> {bot_output}</td>"
+                    else:
+                        output = output + f"<td><h3><b>{custom_state['name1']}:</b></h3> {user_output}<br><h3><b>{custom_state['name2']}:</b></h3> {bot_output}</td>"
 
                     # Remove the last outputs, so they don't influence future generations
                     gen_output.pop()
@@ -259,7 +302,11 @@ def run(constant_seed, seed_value, use_history, x="", y=""):
                     gen_output = [['','']]
                 user_output = convert_to_markdown(gen_output[-1][0])
                 bot_output = convert_to_markdown(gen_output[-1][1])
-                output = output + f"<tr><tr><th>{i.strip()}</th><td><h3><b>{custom_state['name1']}:</b></h3> {user_output}<br><h3><b>{custom_state['name2']}:</b></h3> {bot_output}</td></tr>"
+
+                if custom_state['mode'] == 'instruct':
+                    output = output + f"<td><b>{custom_state['name1']}</b> {user_output}<b>{custom_state['name2']}</b> {bot_output}</td>"
+                else:
+                    output = output + f"<tr><tr><th>{i.strip()}</th><td><h3><b>{custom_state['name1']}:</b></h3> {user_output}<br><h3><b>{custom_state['name2']}:</b></h3> {bot_output}</td></tr>"
 
                 # Remove the last outputs, so they don't influence future generations
                 gen_output.pop()
@@ -292,7 +339,11 @@ def run(constant_seed, seed_value, use_history, x="", y=""):
                         gen_output = [['','']]
                     user_output = convert_to_markdown(gen_output[-1][0])
                     bot_output = convert_to_markdown(gen_output[-1][1])
-                    output = output + f"<td><h3><b>{custom_state['name1']}:</b></h3> {user_output}<br><h3><b>{custom_state['name2']}:</b></h3> {bot_output}</td>"
+
+                    if custom_state['mode'] == 'instruct':
+                        output = output + f"<td><b>{custom_state['name1']}</b> {user_output}<b>{custom_state['name2']}</b> {bot_output}</td>"
+                    else:
+                        output = output + f"<td><h3><b>{custom_state['name1']}:</b></h3> {user_output}<br><h3><b>{custom_state['name2']}:</b></h3> {bot_output}</td>"
 
                     # Remove the last outputs, so they don't influence future generations
                     gen_output.pop()
@@ -321,7 +372,11 @@ def run(constant_seed, seed_value, use_history, x="", y=""):
                     gen_output = [['','']]
                 user_output = convert_to_markdown(gen_output[-1][0])
                 bot_output = convert_to_markdown(gen_output[-1][1])
-                output = output + f"<td><h3><b>{custom_state['name1']}:</b></h3> {user_output}<br><h3><b>{custom_state['name2']}:</b></h3> {bot_output}</td>"
+
+                if custom_state['mode'] == 'instruct':
+                    output = output + f"<td><b>{custom_state['name1']}</b> {user_output}<b>{custom_state['name2']}</b> {bot_output}</td>"
+                else:
+                    output = output + f"<td><h3><b>{custom_state['name1']}:</b></h3> {user_output}<br><h3><b>{custom_state['name2']}:</b></h3> {bot_output}</td>"
 
                 # Remove the last outputs, so they don't influence future generations
                 gen_output.pop()
@@ -348,7 +403,11 @@ def run(constant_seed, seed_value, use_history, x="", y=""):
                     gen_output = [['','']]
                 user_output = convert_to_markdown(gen_output[-1][0])
                 bot_output = convert_to_markdown(gen_output[-1][1])
-                output = output + f"<tr><th>{i.strip()}</th><td><h3><b>{custom_state['name1']}:</b></h3> {user_output}<br><h3><b>{custom_state['name2']}:</b></h3> {bot_output}</td></tr>"
+
+                if custom_state['mode'] == 'instruct':
+                    output = output + f"<td><b>{custom_state['name1']}</b> {user_output}<b>{custom_state['name2']}</b> {bot_output}</td>"
+                else:
+                    output = output + f"<tr><th>{i.strip()}</th><td><h3><b>{custom_state['name1']}:</b></h3> {user_output}<br><h3><b>{custom_state['name2']}:</b></h3> {bot_output}</td></tr>"
 
                 # Remove the last outputs, so they don't influence future generations
                 gen_output.pop()
@@ -377,6 +436,7 @@ def run(constant_seed, seed_value, use_history, x="", y=""):
     custom_state['seed'] = -1
     shared.history['internal'] = temp_internal
     shared.history['visible'] = temp_visible
+    custom_state = temp_custom_state
     return output
 
 
@@ -463,8 +523,9 @@ def ui():
     shared.gradio['upload_softprompt'].change(lambda x: custom_state.update({'upload_softprompt': x}), shared.gradio['upload_softprompt'], [])
     shared.gradio['wbits'].change(lambda x: custom_state.update({'wbits': x}), shared.gradio['wbits'], [])
     shared.gradio['your_picture'].change(lambda x: custom_state.update({'your_picture': x}), shared.gradio['your_picture'], [])
+    shared.gradio['mode'].change(lambda x: custom_state.update({'mode': x}), shared.gradio['mode'], [])
 
-    with gr.Accordion("XY Grid", open=False):
+    with gr.Accordion("XY Grid", open=True):
 
         # Axis selections and inputs
         with gr.Row():
