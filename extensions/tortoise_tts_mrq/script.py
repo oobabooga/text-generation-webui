@@ -45,19 +45,38 @@ params = {
         'diffusion_iterations': 0,
         'cond_free': None,
         'cond_free_k': 0,
-        'diffusion_temperature': 0,
-        'sampler': None
+        'diffusion_temperature': 0
     }
 }
 
-presets = ['ultra_fast', 'very_fast', 'fast', 'standard', 'high_quality']
+preset_options = {
+    'ultra_fast': {'num_autoregressive_samples': 16, 'diffusion_iterations': 30, 'cond_free': False},
+    'fast': {'num_autoregressive_samples': 96, 'diffusion_iterations': 80},
+    'standard': {'num_autoregressive_samples': 256, 'diffusion_iterations': 200},
+    'high_quality': {'num_autoregressive_samples': 256, 'diffusion_iterations': 400}
+}
+presets = list(preset_options.keys())
 model = voice_samples = conditioning_latents = None
 
 
 def set_preset(preset):
     global params
     settings = get_preset_settings(preset)
-    params['tuning_settings'].update(settings)
+    for opt in settings.keys():
+        option = params['tuning_settings'][opt]
+        if option == settings[opt]:
+            continue
+
+        if isinstance(option, bool) and option is not None:
+            continue
+
+        if isinstance(option, str) and option is not None and option != '':
+            continue
+
+        if isinstance(option, (int, float)) and option > 0:
+            continue
+
+        params['tuning_settings'][opt] = settings[opt]
 
 
 def get_preset_settings(preset):
@@ -65,13 +84,6 @@ def get_preset_settings(preset):
         'temperature': 0.8, 'length_penalty': 1.0, 'repetition_penalty': 2.0, 'top_p': 0.8, 'cond_free_k': 2.0,
         'diffusion_temperature': 1.0, 'num_autoregressive_samples': 512, 'max_mel_tokens': 500, 'cvvp_amount': 0,
         'diffusion_iterations': 100, 'cond_free': True
-    }
-    # Presets are defined here.
-    preset_options = {
-        'ultra_fast': {'num_autoregressive_samples': 16, 'diffusion_iterations': 30, 'cond_free': False},
-        'fast': {'num_autoregressive_samples': 96, 'diffusion_iterations': 80},
-        'standard': {'num_autoregressive_samples': 256, 'diffusion_iterations': 200},
-        'high_quality': {'num_autoregressive_samples': 256, 'diffusion_iterations': 400}
     }
 
     settings.update(preset_options[preset])

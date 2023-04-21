@@ -9,8 +9,6 @@ import time
 
 from modules import tts_preprocessor
 
-import gradio as gr
-
 sys.path.append(os.path.join(os.path.dirname(__file__), 'tortoise'))
 try:
     from tortoise import api
@@ -55,14 +53,27 @@ params = {
     }
 }
 
-presets = ['ultra_fast', 'very_fast', 'fast', 'standard', 'high_quality']
 model = voice_samples = conditioning_latents = None
 
 
 def set_preset(preset):
     global params
     settings = get_preset_settings(preset)
-    params['tuning_settings'].update(settings)
+    for opt in settings.keys():
+        option = params['tuning_settings'][opt]
+        if option == settings[opt]:
+            continue
+
+        if isinstance(option, bool) and option is not None:
+            continue
+
+        if isinstance(option, str) and option is not None and option != '':
+            continue
+
+        if isinstance(option, (int, float)) and option > 0:
+            continue
+
+        params['tuning_settings'][opt] = settings[opt]
 
 
 def get_preset_settings(preset):
@@ -139,19 +150,11 @@ def load_model():
     return tts, samples, latents
 
 
-def unload_model():
-    try:
-        global model, voice_samples, conditioning_latents
-        model = voice_samples = conditioning_latents = None
-        device.do_gc()
-    except:
-        pass
-
-
 voices = get_voices()
 set_preset(params['preset'])
 if not params['model_swap']:
     model, voice_samples, conditioning_latents = load_model()
+
 current_params = params.copy()
 controls = {}
 
