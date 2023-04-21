@@ -24,6 +24,8 @@ past_evaluations = load_past_evaluations()
 
 
 def save_past_evaluations(df):
+    global past_evaluations
+    past_evaluations = df
     df.to_csv(Path('logs/evaluations.csv'), index=False)
 
 
