@@ -108,7 +108,10 @@ button {
   font-size: 14px !important;
 }
 
-
+.small-button {
+  max-width: 171px;
+}
 .float-right{
     float: right;
 }
+
