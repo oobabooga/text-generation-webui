@@ -51,7 +51,7 @@ def create_embeddings(
 def create_lancedb_table(
         data, 
         uri="~/.lancedb", 
-        name="jigsaw", 
+        name="jigsaw_small", 
         index_table=True, 
         num_partitions=4):
     print ("creating lancedb table", name)
@@ -101,6 +101,7 @@ def download_kaggle_dataset(dataset_path="adldotori/all-in-one-jigsaw", download
     else:
         print("Dataset already downloaded to", data_loading_path)
 
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Download Kaggle dataset, process with sentence transformer, then create LanceDB table")
@@ -119,7 +120,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
 
-    # works for jigsaw dataset, may not be valid for other Kaggle datasets
+    # string parsing works for jigsaw dataset, may not be valid for other Kaggle datasets
     data_loading_path = os.path.join(args.kaggle_download_path, args.kaggle_dataset_path.split('/')[-1].replace("-", "_") + ".csv")
     print ("Dataset Download path:", data_loading_path)
 
@@ -131,8 +132,10 @@ if __name__ == "__main__":
 
     data = create_embeddings(df, row_limit=args.samples_of_jigsaw_to_process, show_progress=True)
 
-    create_lancedb_table(data, 
-        uri="~/.lancedb", 
-        name="jigsaw", 
+    tbl = create_lancedb_table(data, 
+        uri=args.lancedb_uri, 
+        name=args.lancedb_table_name, 
         index_table=True, 
         num_partitions=4)
+    
+    print ('Done!')

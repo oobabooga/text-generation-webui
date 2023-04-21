@@ -66,6 +66,8 @@ Models should be placed inside the `models` folder.
 
 You can automatically download a model from HF using the script `download-model.py`, for example for Facebook opt-1.3b:
 ```bash
+conda activate textgen
+cd text-generation-webui
 python download-model.py facebook/opt-1.3b
 ```
 
@@ -85,14 +87,19 @@ chmod 600 ~/.kaggle/kaggle.json
 ```
 Now that your Kaggle API is set up, you can build a vectorDB (1000 jigsaw samples by default, can increase to 2.2M at max, with overnight training)
 ```bash
+
 python build-lancedb.py --samples_of_jigsaw_to_process 1000
 ```
 
-## Starting the web UI
+You can test a query by running
+```bash
+python modules/test_embeddings.py -q "I hate those people and everything they stand for"
+```
 
-    conda activate textgen
-    cd text-generation-webui
-    python server.py
+## Starting the web UI
+```bash
+python server.py
+```
 
 Then browse to 
 

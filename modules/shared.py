@@ -55,6 +55,10 @@ settings = {
     'chat_generation_attempts_max': 5,
     'default_extensions': [],
     'chat_default_extensions': ["gallery"],
+    'moderation': False,
+    "transformer_model_name":"paraphrase-albert-small-v2", 
+    "lancedb_uri":"~/.lancedb",
+    "lancedb_table_name":"jigsaw_small",
     'presets': {
         'default': 'Default',
         '.*(alpaca|llama)': "LLaMA-Precise",
@@ -114,6 +118,12 @@ parser.add_argument('--no-cache', action='store_true', help='Set use_cache to Fa
 parser.add_argument('--xformers', action='store_true', help="Use xformer's memory efficient attention. This should increase your tokens/s.")
 parser.add_argument('--sdp-attention', action='store_true', help="Use torch 2.0's sdp attention.")
 parser.add_argument('--trust-remote-code', action='store_true', help="Set trust_remote_code=True while loading a model. Necessary for ChatGLM.")
+
+# Moderation parameters
+parser.add_argument('--moderation',  type=bool, default=False, help="Turn on/off (True/False) the moderation feature. Default False")
+parser.add_argument("--transformer_model_name", type=str, required=False, default="paraphrase-albert-small-v2", help="The transformer model name in Hugging face user/model.")
+parser.add_argument("--lancedb_uri", type=str, required=False, default="~/.lancedb", help="The local path of the Lance DB storage.")
+parser.add_argument("--lancedb_table_name", type=str, required=False, default="jigsaw_small", help="The name of the Lance DB table.")
 
 # llama.cpp
 parser.add_argument('--threads', type=int, default=0, help='Number of threads to use in llama.cpp.')

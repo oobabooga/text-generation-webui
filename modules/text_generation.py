@@ -15,6 +15,10 @@ from modules.extensions import apply_extensions
 from modules.html_generator import generate_4chan_html, generate_basic_html
 from modules.models import clear_torch_cache, local_rank
 
+# moderation imports
+from modules.moderation import load_transformer_model, embed_func, connect_lancedb_table, run_query, moderation_scores, assess_prompt
+
+
 
 def get_max_prompt_length(state):
     max_length = state['truncation_length'] - state['max_new_tokens']
@@ -122,6 +126,19 @@ def set_manual_seed(seed):
 def stop_everything_event():
     shared.stop_everything = True
 
+def moderate_query(query,
+                   transformer_model, 
+                   lancedb_tbl):
+
+    df = run_query(query = query, 
+              model=transformer_model,
+              tbl=lancedb_tbl)
+    
+    moderation_dict = moderation_scores(df)
+    accept_prompt, prompt_rejection_reasons = assess_prompt(moderation_dict)
+
+    return accept_prompt, prompt_rejection_reasons
+
 
 def generate_reply(question, state, eos_token=None, stopping_strings=[]):
 
@@ -137,6 +154,24 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
     t0 = time.time()
 
     original_question = question
+
+    # Run moderation on the input if Moderation is on (flag is True)
+    if shared.moderation:
+        accept_prompt, prompt_rejection_reasons = moderate_query(original_question, 
+                                                                shared.transformer_model, 
+                                                                shared.lancedb_tbl)
+        
+        # if the prompt is not accepted due to Moderation, return the rejection reasons
+        if not accept_prompt:
+            reply="The prompt was rejected due to the following reasons: ".join(', '.join(prompt_rejection_reasons))
+            yield formatted_outputs(reply, shared.model_name)
+            return 
+        else:
+            pass
+    else:
+        pass
+
+
     if not shared.is_chat():
         question = apply_extensions(question, 'input')
 

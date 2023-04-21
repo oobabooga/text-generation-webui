@@ -172,6 +172,17 @@ def load_prompt(fname):
             return text
 
 
+def connect_lancedb(vector_db_uri = "~/.lancedb",
+                   table_name = "jigsaw_old",
+                   transformer_model_name = "paraphrase-albert-small-v2"):
+    lancedb_tbl=connect_lancedb_table(
+        uri = vector_db_uri,
+        name = table_name
+    )
+    transformer_model=load_transformer_model(name=transformer_model_name)
+    return transformer_model, lancedb_tbl
+
+
 def download_model_wrapper(repo_id):
     try:
         downloader = importlib.import_module("download-model")
@@ -503,6 +514,16 @@ def create_interface():
     # Importing the extension files and executing their setup() functions
     if shared.args.extensions is not None and len(shared.args.extensions) > 0:
         extensions_module.load_extensions()
+
+    # Load models for moderation if moderation is true
+    if shared.args.moderation:
+        shared.moderation=True
+        shared.transformer_model, shared.lancedb_tbl = connect_lancedb(
+            vector_db_uri = shared.lancedb_uri,
+            table_name = shared.lancedb_table_name,
+            transformer_model_name = shared.transformer_model_name)
+    else:
+        shared.moderation=False
 
     with gr.Blocks(css=ui.css if not shared.is_chat() else ui.css + ui.chat_css, analytics_enabled=False, title=title, theme=ui.theme) as shared.gradio['interface']:
 
