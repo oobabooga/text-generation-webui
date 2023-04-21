@@ -46,6 +46,10 @@ from modules.LoRA import add_lora_to_model
 from modules.models import load_model, load_soft_prompt, unload_model
 from modules.text_generation import generate_reply, stop_everything_event
 
+# moderation imports
+import lancedb
+from sentence_transformers import SentenceTransformer
+
 
 def get_available_models():
     if shared.args.flexgen:
@@ -175,11 +179,9 @@ def load_prompt(fname):
 def connect_lancedb(vector_db_uri = "~/.lancedb",
                    table_name = "jigsaw_old",
                    transformer_model_name = "paraphrase-albert-small-v2"):
-    lancedb_tbl=connect_lancedb_table(
-        uri = vector_db_uri,
-        name = table_name
-    )
-    transformer_model=load_transformer_model(name=transformer_model_name)
+    db = lancedb.connect(vector_db_uri)
+    lancedb_tbl = db.open_table(table_name)
+    transformer_model = SentenceTransformer(transformer_model_name)
     return transformer_model, lancedb_tbl
 
 
@@ -519,9 +521,9 @@ def create_interface():
     if shared.args.moderation:
         shared.moderation=True
         shared.transformer_model, shared.lancedb_tbl = connect_lancedb(
-            vector_db_uri = shared.lancedb_uri,
-            table_name = shared.lancedb_table_name,
-            transformer_model_name = shared.transformer_model_name)
+            vector_db_uri = shared.args.lancedb_uri,
+            table_name = shared.args.lancedb_table_name,
+            transformer_model_name = shared.args.transformer_model_name)
     else:
         shared.moderation=False
 

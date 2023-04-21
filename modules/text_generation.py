@@ -163,7 +163,7 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
         
         # if the prompt is not accepted due to Moderation, return the rejection reasons
         if not accept_prompt:
-            reply="The prompt was rejected due to the following reasons: ".join(', '.join(prompt_rejection_reasons))
+            reply="The prompt was rejected due to the following reasons: " + (', '.join(prompt_rejection_reasons))
             yield formatted_outputs(reply, shared.model_name)
             return 
         else:
