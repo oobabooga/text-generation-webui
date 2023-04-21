@@ -50,8 +50,7 @@ def select_model_from_default_options():
     print("Input> ", end='')
     choice = input()[0].strip().upper()
     if choice == char_exit:
-        model = "EXIT"
-        branch = ""    
+        exit()
     elif choice == char_hugging:
         print("""\nThen type the name of your desired Hugging Face model in the format organization/name.
 
@@ -256,9 +255,6 @@ if __name__ == '__main__':
     model = args.MODEL
     if model is None:
         model, branch = select_model_from_default_options()
-        
-    if model == "EXIT":
-        exit()
 
     # Cleaning up the model/branch names
     try:
