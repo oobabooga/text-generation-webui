@@ -104,8 +104,4 @@ python download-model.py facebook/galactica-125m --threads 8
 
 #### LoRAs work in 4-bit mode
 
-You need to follow these instructions
-
-https://github.com/oobabooga/text-generation-webui/wiki/GPTQ-models-(4-bit-mode)#using-loras-in-4-bit-mode
-
-and then start the web UI with the `--monkey-patch` flag.
+You need to follow [these instructions](GPTQ-models-(4-bit-mode).md#using-loras-in-4-bit-mode) and then start the web UI with the `--monkey-patch` flag.
