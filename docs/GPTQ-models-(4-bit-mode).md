@@ -31,7 +31,7 @@ See this issue for more details: https://github.com/oobabooga/text-generation-we
 
 ### Step 1: install GPTQ-for-LLaMa
 
-* Clone the GPTQ-for-LLaMa repository into the `text-generation-webui/repositories` subfolder and install it:
+Clone the GPTQ-for-LLaMa repository into the `text-generation-webui/repositories` subfolder and install it:
 
 ```
 mkdir repositories
