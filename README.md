@@ -32,7 +32,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * [RWKV model](https://github.com/oobabooga/text-generation-webui/wiki/RWKV-model)
 * [LoRA (loading and training)](https://github.com/oobabooga/text-generation-webui/wiki/Using-LoRAs)
 * Softprompts
-* [Extensions](https://github.com/oobabooga/text-generation-webui/wiki/Extensions)
+* [Extensions](https://github.com/oobabooga/text-generation-webui/wiki/Extensions) - see the [user extensions list](https://github.com/oobabooga/text-generation-webui-extensions)
 
 ## Installation
 
