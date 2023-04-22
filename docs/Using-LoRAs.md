@@ -54,8 +54,9 @@ print(f"Predicted {len(output)} tokens for '{sentence}':\n{output}")
 
 The Training tab in the interface can be used to train a LoRA. The parameters are self-documenting and good defaults are included.
 
-This was contributed by [mcmonkey4eva](https://github.com/mcmonkey4eva) in PR [#570](https://github.com/oobabooga/text-generation-webui/pull/570).
+You can interrupt and resume LoRA training in this tab. If the name and rank are the same, training will resume using the `adapter_model.bin` in your LoRA folder. You can resume from a past checkpoint by replacing this file using the contents of one of the checkpoint folders. Note that the learning rate and steps will be reset, and you may want to set the learning rate to the last reported rate in the console output.
 
+LoRA training was contributed by [mcmonkey4eva](https://github.com/mcmonkey4eva) in PR [#570](https://github.com/oobabooga/text-generation-webui/pull/570).
 
 #### Using the original alpaca-lora code
 
