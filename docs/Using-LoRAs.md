@@ -16,7 +16,7 @@ python server.py --model llama-7b-hf --lora alpaca-lora-7b --load-in-8bit
 python server.py --model llama-7b-hf --lora alpaca-lora-7b --cpu
 ```
 
-* For using LoRAs in 4-bit mode, follow these special instructions: https://github.com/oobabooga/text-generation-webui/wiki/GPTQ-models-(4-bit-mode)#using-loras-in-4-bit-mode
+* For using LoRAs in 4-bit mode, follow [these special instructions](GPTQ-models-(4-bit-mode).md#using-loras-in-4-bit-mode).
 
 * Instead of using the `--lora` command-line flag, you can also select the LoRA in the "Parameters" tab of the interface.
 
