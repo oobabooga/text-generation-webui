@@ -1,0 +1,111 @@
+completions:
+  model:
+  prompt: prompt
+  suffix: 
+  max_token: max_new_tokens
+  temperature: temperature
+  top_p: top_p
+  n: chat_generation_attempts
+  stream: # nostream
+  logprobs:
+  echo: # ~ischat
+  stop: custom_stopping_strings
+  presence_penalty: repetition_penalty
+  frequency_penalty: encoder_repetition_penalty
+  best_of: top_k
+  logit_bias: # ~suppress_tokens
+  user: 
+chat:
+  completions:
+    model:
+    messages: 
+    suffix: 
+    max_token: max_new_tokens
+    temperature: temperature
+    top_p: top_p
+    n: chat_generation_attempts
+    stream: # nostream
+    logprobs:
+    echo: # ~ischat
+    stop: custom_stopping_strings
+    presence_penalty: repetition_penalty
+    frequency_penalty: encoder_repetition_penalty
+    best_of: top_k
+    logit_bias: # ~suppress_tokens
+    user: 
+edits:
+  model:
+  input: 
+  instruction:
+  n: chat_generation_attempts
+  temperature: temperature
+  top_p: top_p
+images:
+  generations:
+    prompt: # 1000 chars
+    n: # 1-10
+    size: # 256x256, 512x512, or 1024x1024 (default)
+    response_format: # url or b64_json
+    user:
+  edits:
+    image: # image data string
+    mask: # optional image data string for alpha
+    prompt: # 1000 chars
+    n: # 1-10
+    size: # 256x256, 512x512, or 1024x1024 (default)
+    response_format: # url or b64_json
+    user:
+  variations:
+    image: # image data string
+    n: # 1-10
+    size: # 256x256, 512x512, or 1024x1024 (default)
+    response_format: # url or b64_json
+    user:
+embeddings:
+  model:
+  input:
+  user:
+audio:
+  transcriptions:
+    file:
+    model:
+    prompt:
+    response_format:
+    temperature:
+    language:
+  translations:
+    file:
+    model:
+    prompt:
+    response_format:
+    temperature:
+files:
+  file:
+  purpose:
+  file_id:
+    content:
+fine-tunes:
+  training_file:
+  validation_file:
+  model:
+  n_epochs:
+  batch_size:
+  learning_rate_multiplier:
+  prompt_loss_weight:
+  compute_classification_metrics:
+  classification_n_classes:
+  classification_positive_class:
+  classification_betas:
+  suffix:
+  fine_tune_id:
+    events:
+      stream:
+    cancel:
+models:
+  model:
+moderations:
+  input:
+  model:
+# deprecated
+engines:
+  engine_id:
