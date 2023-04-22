@@ -48,4 +48,4 @@ With this, I am able to load a 30b model into my RTX 3090, but it takes 10 secon
 
 ### DeepSpeed (experimental)
 
-An experimental alternative to all of the above is to use DeepSpeed: [guide](https://github.com/oobabooga/text-generation-webui/wiki/DeepSpeed).
+An experimental alternative to all of the above is to use DeepSpeed: [guide](DeepSpeed.md).
