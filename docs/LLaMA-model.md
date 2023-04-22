@@ -3,7 +3,7 @@ LLaMA is a Large Language Model developed by Meta AI.
 It was trained on more tokens than previous models. The result is that the smallest version with 7 billion parameters has similar performance to GPT-3 with 175 billion parameters.
 
 This guide will cover usage through the official `transformers` implementation. For 4-bit mode, head over to [GPTQ models (4 bit mode)
-](https://github.com/oobabooga/text-generation-webui/wiki/GPTQ-models-(4-bit-mode)).
+](GPTQ-models-(4-bit-mode).md).
 
 ## Getting the weights
 
