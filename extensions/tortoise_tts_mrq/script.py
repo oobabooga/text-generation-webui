@@ -55,8 +55,11 @@ preset_options = {
     'standard': {'num_autoregressive_samples': 256, 'diffusion_iterations': 200},
     'high_quality': {'num_autoregressive_samples': 256, 'diffusion_iterations': 400}
 }
+
 presets = list(preset_options.keys())
-model = voice_samples = conditioning_latents = None
+model = voice_samples = conditioning_latents = voices = current_params = None
+streaming_state = shared.args.no_stream  # remember if chat streaming was enabled
+controls = {}
 
 
 def set_preset(preset):
@@ -120,7 +123,7 @@ def get_gen_kwargs(par):
 
 def get_voices():
     extra_voice_dirs = [params['voice_dir']] if params['voice_dir'] is not None and Path(params['voice_dir']).is_dir() else []
-    detected_voices = audio.get_voices(extra_voice_dirs=extra_voice_dirs, load_latents=False)
+    detected_voices = audio.get_voices(extra_voice_dirs=extra_voice_dirs)
     detected_voices = sorted(detected_voices.keys()) if len(detected_voices) > 0 else []
     return detected_voices
 
@@ -139,7 +142,7 @@ def load_model():
             device.set_device_name(params['device'])
         dev = device.get_device()
         tts = api.TextToSpeech(minor_optimizations=not params['low_vram'], models_dir=api.MODELS_DIR, device=dev)
-        samples, latents = audio.load_voice(voice=params['voice'], extra_voice_dirs=extra_voice_dirs, device=dev)
+        samples, latents = audio.load_voice(voice=params['voice'], extra_voice_dirs=extra_voice_dirs)
     except Exception as e:
         return None, None, None
 
@@ -153,15 +156,6 @@ def unload_model():
         device.do_gc()
     except:
         pass
-
-
-voices = get_voices()
-set_preset(params['preset'])
-if not params['model_swap']:
-    model, voice_samples, conditioning_latents = load_model()
-current_params = params.copy()
-streaming_state = shared.args.no_stream  # remember if chat streaming was enabled
-controls = {}
 
 
 def remove_tts_from_history(name1, name2, mode):
@@ -320,7 +314,12 @@ def bot_prefix_modifier(string):
 
 
 def setup():
-    pass
+    global voices, model, voice_samples, conditioning_latents, current_params
+    current_params = params.copy()
+    voices = get_voices()
+    set_preset(params['preset'])
+    if not params['model_swap']:
+        model, voice_samples, conditioning_latents = load_model()
 
 
 def ui():

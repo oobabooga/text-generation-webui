@@ -61,8 +61,11 @@ preset_options = {
     "standard": {"num_autoregressive_samples": 256, "diffusion_iterations": 200},
     "high_quality": {"num_autoregressive_samples": 256, "diffusion_iterations": 400},
 }
+
 presets = list(preset_options.keys())
-model = voice_samples = conditioning_latents = None
+model = voice_samples = conditioning_latents = voices = current_params = None
+streaming_state = shared.args.no_stream  # remember if chat streaming was enabled
+controls = {}
 
 
 def set_preset(preset):
@@ -158,15 +161,6 @@ def unload_model():
         torch.cuda.empty_cache()
     except:
         pass
-
-
-voices = get_voices()
-set_preset(params['preset'])
-if not params['model_swap']:
-    model, voice_samples, conditioning_latents = load_model()
-current_params = params.copy()
-streaming_state = shared.args.no_stream  # remember if chat streaming was enabled
-controls = {}
 
 
 def remove_tts_from_history(name1, name2, mode):
@@ -324,7 +318,12 @@ def bot_prefix_modifier(string):
 
 
 def setup():
-    pass
+    global voices, model, voice_samples, conditioning_latents, current_params
+    current_params = params.copy()
+    voices = get_voices()
+    set_preset(params['preset'])
+    if not params['model_swap']:
+        model, voice_samples, conditioning_latents = load_model()
 
 
 def ui():
