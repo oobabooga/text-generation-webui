@@ -3,6 +3,7 @@
 ## Table of contents
 
 * [Custom-chat-characters](Custom-chat-characters.md)
+* [Docker Compose](Docker.md)
 * [DeepSpeed](DeepSpeed.md)
 * [Extensions](Extensions.md)
 * [FlexGen](FlexGen.md)
