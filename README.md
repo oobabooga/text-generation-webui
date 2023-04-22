@@ -230,9 +230,9 @@ Optionally, you can use the following command-line flags:
 | `--groupsize GROUPSIZE`   | Group size. |
 | `--pre_layer PRE_LAYER`   | The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models. |
 | `--monkey-patch`          | Apply the monkey patch for using LoRAs with quantized models.
-| `--no-quant_attn`         | (triton) Disable quant attention. If you encounter incoherent results try disabling this.
-| `--no-warmup_autotune`    | (triton) Disable warmup autotune.
-| `--no-fused_mlp`          | (triton) Disable fused mlp. If you encounter "Unexpected mma -> mma layout conversion" try disabling this.
+| `--quant_attn`         | (triton) Enable quant attention.
+| `--warmup_autotune`    | (triton) Enable warmup autotune.
+| `--fused_mlp`          | (triton) Enable fused mlp.
 
 #### FlexGen
 
