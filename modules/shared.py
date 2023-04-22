@@ -6,11 +6,10 @@ import yaml
 model = None
 tokenizer = None
 model_name = "None"
+model_type = None
 lora_names = []
 soft_prompt_tensor = None
 soft_prompt = False
-is_RWKV = False
-is_llamacpp = False
 
 # Chat variables
 history = {'internal': [], 'visible': []}
