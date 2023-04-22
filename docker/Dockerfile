@@ -8,6 +8,8 @@ RUN git clone https://github.com/oobabooga/GPTQ-for-LLaMa /build
 
 WORKDIR /build
 
+ARG GPTQ_FOR_LLAMA_VER=HEAD
+RUN git checkout ${GPTQ_FOR_LLAMA_VER}
 RUN python3 -m venv /build/venv
 RUN . /build/venv/bin/activate && \
     pip3 install --upgrade pip setuptools && \
@@ -15,8 +17,9 @@ RUN . /build/venv/bin/activate && \
     pip3 install -r requirements.txt
 
 # https://developer.nvidia.com/cuda-gpus
-# for a rtx 2060: ARG TORCH_CUDA_ARCH_LIST="7.5"
-ARG TORCH_CUDA_ARCH_LIST="3.5;5.0;6.0;6.1;7.0;7.5;8.0;8.6+PTX"
+# For older GPUs:
+# ARG TORCH_CUDA_ARCH_LIST="3.5;5.0;6.0;6.1;7.0;7.5;8.0;8.6+PTX"
+ARG TORCH_CUDA_ARCH_LIST="7.5"
 RUN . /build/venv/bin/activate && \
     python3 setup_cuda.py bdist_wheel -d .
 
