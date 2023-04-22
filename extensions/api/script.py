@@ -73,7 +73,7 @@ class Handler(BaseHTTPRequestHandler):
 
             response = json.dumps({
                 'results': [{
-                    'text': answer if shared.args.is_chat() else answer[len(prompt):]
+                    'text': answer if shared.is_chat() else answer[len(prompt):]
                 }]
             })
             self.wfile.write(response.encode('utf-8'))
