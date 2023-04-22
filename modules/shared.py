@@ -44,7 +44,7 @@ settings = {
     'skip_special_tokens': True,
     'truncation_length': 2048,
     'truncation_length_min': 0,
-    'truncation_length_max': 4096,
+    'truncation_length_max': 8192,
     'mode': 'cai-chat',
     'instruction_template': 'None',
     'chat_prompt_size': 2048,
@@ -125,9 +125,9 @@ parser.add_argument('--groupsize', type=int, default=-1, help='Group size.')
 parser.add_argument('--pre_layer', type=int, default=0, help='The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models.')
 parser.add_argument('--monkey-patch', action='store_true', help='Apply the monkey patch for using LoRAs with quantized models.')
 parser.add_argument('--is-v1-model', action='store_true', help='Loading v1 model or not. Supported by monkey patch.')
-parser.add_argument('--no-quant_attn', action='store_true', help='(triton) Disable quant attention. If you encounter incoherent results try disabling this.')
-parser.add_argument('--no-warmup_autotune', action='store_true', help='(triton) Disable warmup autotune.')
-parser.add_argument('--no-fused_mlp', action='store_true', help='(triton) Disable fused mlp. If you encounter "Unexpected mma -> mma layout conversion" try disabling this.')
+parser.add_argument('--quant_attn', action='store_true', help='(triton) Enable quant attention.')
+parser.add_argument('--warmup_autotune', action='store_true', help='(triton) Enable warmup autotune.')
+parser.add_argument('--fused_mlp', action='store_true', help='(triton) Enable fused mlp.')
 
 # FlexGen
 parser.add_argument('--flexgen', action='store_true', help='Enable the use of FlexGen offloading.')
