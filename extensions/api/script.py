@@ -70,19 +70,14 @@ class Handler(BaseHTTPRequestHandler):
                     answer = a
                 else:
                     answer = a[0]
-            if shared.args.chat:
-                response = json.dumps({
-                    'results': [{
-                        'text': answer
-                    }]
-                })
-            else:
-                response = json.dumps({
-                    'results': [{
-                        'text': answer[len(prompt):]
-                    }]
-                })
+
+            response = json.dumps({
+                'results': [{
+                    'text': answer if shared.args.chat else answer[len(prompt):]
+                }]
+            })
             self.wfile.write(response.encode('utf-8'))
+
         elif self.path == '/api/v1/token-count':
             # Not compatible with KoboldAI api
             self.send_response(200)
@@ -96,6 +91,7 @@ class Handler(BaseHTTPRequestHandler):
                 }]
             })
             self.wfile.write(response.encode('utf-8'))
+
         else:
             self.send_error(404)
 
