@@ -40,7 +40,7 @@ if shared.args.deepspeed:
 
 def find_model_type(model_name):
     model_name = model_name.lower()
-    if 'rwkv-' in model_name.lower():
+    if 'rwkv-' in model_name:
         return 'rwkv'
     elif len(list(Path(f'{shared.args.model_dir}/{model_name}').glob('*ggml*.bin'))) > 0:
         return 'llamacpp'
