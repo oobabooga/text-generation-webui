@@ -1,1 +1,1 @@
-Welcome to the text-generation-webui wiki!
+Moved to https://github.com/oobabooga/text-generation-webui/tree/main/docs
