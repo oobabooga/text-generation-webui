@@ -111,10 +111,21 @@ class LLaVAEmbedder:
         input_ids = encode(prompt, add_bos_token=state['add_bos_token'], truncation_length=get_max_prompt_length(state))[0]
         input_embeds = shared.model.model.embed_tokens(input_ids).to(self.projector_device)
 
-        image_features = self._extract_image_features(images).to(self.projector_device)
+        if input_ids[0] == LLaVAEmbedder.IM_PATCH.id:
+            # prompt got truncated in the middle of an image, remove the image data
+            im_end = torch.where(input_ids == LLaVAEmbedder.IM_END.id)[0][0]
+            input_ids = input_ids[im_end+1:]
+            input_embeds = input_embeds[im_end+1:]
+            leftover_images = torch.where(input_ids == LLaVAEmbedder.IM_START.id)[0].shape[0]
+            print(f"LLaVA - WARNING: removed {len(images) - leftover_images} image(s) from prompt. The generation might be broken, try decreasing max_new_tokens")
+            images = images[-leftover_images:]
+            if len(images) == 0:
+                return prompt, input_ids, input_embeds, 0
 
         total_embedded = 0
+        image_features = self._extract_image_features(images).to(self.projector_device)
         image_start_tokens = torch.where(input_ids == LLaVAEmbedder.IM_START.id)[0]
+
         if not torch.any(input_ids == LLaVAEmbedder.IM_PATCH.id) or len(image_start_tokens) == 0:
             # multimodal LLM, but the current prompt is not multimodal/truncated
             return prompt, input_ids, input_embeds, total_embedded
@@ -162,12 +173,12 @@ def add_chat_picture(picture, text, visible_text):
         visible_text = text
 
     if '<image>' in text:
-        text.replace('<image>', internal)
+        text = text.replace('<image>', internal)
     else:
         text = text + '\n' + internal
 
     if '<image>' in visible_text:
-        visible_text.replace('<image>', visible)
+        visible_text = visible_text.replace('<image>', visible)
     else:
         visible_text = visible_text + '\n' + visible
 
