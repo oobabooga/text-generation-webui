@@ -483,8 +483,8 @@ def load_character(character, name1, name2, mode):
     return name1, name2, picture, greeting, context, end_of_turn, chat_html_wrapper(shared.history['visible'], name1, name2, mode)
 
 
-def load_default_history(name1, name2):
-    load_character(shared.character or "None", name1, name2, "chat")
+def load_default_history(name1, name2, mode):
+    return load_character(shared.character or "None", name1, name2, mode)
 
 
 def upload_character(json_file, img, tavern=False):

@@ -806,8 +806,7 @@ def create_interface():
             if shared.settings['mode'] == 'instruct':
                 # Only force load instruction template if instruct mode comes in as default
                 shared.gradio['interface'].load(chat.load_character, [shared.gradio[k] for k in ['instruction_template', 'name1', 'name2', 'mode']], [shared.gradio[k] for k in ['name1', 'name2', 'character_picture', 'greeting', 'context', 'end_of_turn', 'display']])
-            shared.gradio['interface'].load(chat.load_default_history, [shared.gradio[k] for k in ['name1', 'name2']], None)
-            shared.gradio['interface'].load(chat.redraw_html, reload_inputs, shared.gradio['display'], show_progress=True)
+            shared.gradio['interface'].load(chat.load_default_history, [shared.gradio[k] for k in ['name1', 'name2', 'mode']], [shared.gradio[k] for k in ['name1', 'name2', 'character_picture', 'greeting', 'context', 'end_of_turn', 'display']])
 
         # notebook/default modes event handlers
         else:
