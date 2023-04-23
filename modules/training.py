@@ -25,7 +25,7 @@ try:
         model_to_lora_modules
 except:
     standard_modules = ["q_proj", "v_proj"]
-    model_to_lora_modules = {"llama": standard_modules, "opt": standard_modules, "gptj": standard_modules}
+    model_to_lora_modules = {"llama": standard_modules, "opt": standard_modules, "gptj": standard_modules, "gpt_neox": ["query_key_value"]}
 
 WANT_INTERRUPT = False
 
@@ -35,7 +35,8 @@ PARAMETERS = ["lora_name", "always_override", "save_steps", "micro_batch_size", 
 MODEL_CLASSES = {
     "LlamaForCausalLM": "llama",
     "OPTForCausalLM": "opt",
-    "GPTJForCausalLM": "gptj"
+    "GPTJForCausalLM": "gptj",
+    "GPTNeoXForCausalLM": "gpt_neox"
 }
 
 
