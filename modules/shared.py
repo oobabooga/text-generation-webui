@@ -150,6 +150,11 @@ parser.add_argument('--share', action='store_true', help='Create a public URL. T
 parser.add_argument('--auto-launch', action='store_true', default=False, help='Open the web UI in the default browser upon launch.')
 parser.add_argument("--gradio-auth-path", type=str, help='Set the gradio authentication file path. The file should contain one or more user:password pairs in this format: "u1:p1,u2:p2,u3:p3"', default=None)
 
+# API
+parser.add_argument('--api', action='store_true', help='Enable the API extension.')
+parser.add_argument('--public-api', action='store_true', help='Create a public URL for the API using Cloudfare.')
+
+
 args = parser.parse_args()
 args_defaults = parser.parse_args([])
 
@@ -170,6 +175,13 @@ if args.trust_remote_code:
     print("Warning: trust_remote_code is enabled. This is dangerous.\n")
 if args.share:
     print("Warning: the gradio \"share link\" feature downloads a proprietary and\nunaudited blob to create a reverse tunnel. This is potentially dangerous.\n")
+
+# Activating the API extension
+if args.api or args.public_api:
+    if args.extensions is None:
+        args.extensions = ['api']
+    elif 'api' not in args.extensions:
+        args.extensions.append('api')
 
 
 def is_chat():
