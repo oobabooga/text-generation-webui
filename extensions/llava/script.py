@@ -1,4 +1,5 @@
 import base64
+from dataclasses import dataclass
 from functools import partial
 from io import BytesIO
 import re
@@ -14,38 +15,129 @@ from PIL import Image
 from transformers import CLIPImageProcessor, CLIPVisionModel
 from huggingface_hub import hf_hub_download
 
-projector_device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-image_processor = CLIPImageProcessor.from_pretrained('openai/clip-vit-large-patch14', torch_dtype=torch.float16)
-vision_tower = CLIPVisionModel.from_pretrained('openai/clip-vit-large-patch14', torch_dtype=torch.float16).to(projector_device)
+params = {
+    "add_all_images_to_prompt": False,
+    # device to run CLIP on
+    "clip_device": None,
+    # bits to load clip in either 32 or 16 (it doesn't support 8-bit)
+    "clip_bits": 32,
+    # device to run projector on
+    "projector_device": None,
+    # projector bits, either 32 or 16
+    "projector_bits": 32
+}
 
-projector_path = hf_hub_download('liuhaotian/LLaVA-13b-pretrain-projector-v0', 'LLaVA-13b-pretrain-projector-v0-CC3M-595K-original_caption.bin')
-mm_projector = torch.nn.Linear(1024, 5120)
-projector_data = torch.load(projector_path)
-mm_projector.weight = torch.nn.Parameter(projector_data['model.mm_projector.weight'].to(dtype=torch.float16), False)
-mm_projector.bias = torch.nn.Parameter(projector_data['model.mm_projector.bias'].to(dtype=torch.float16), False)
-mm_projector = mm_projector.to(projector_device)
 
-
-# If 'state' is True, will hijack the next chat generation with
-# custom input text given by 'value' in the format [text, visible_text]
+# If 'state' is True, will hijack the next chat generation
 input_hijack = {
     'state': False,
     'value': ["", ""]
 }
 
-params = {
-    "add_all_images_to_prompt": False
-}
 
-DEFAULT_IMAGE_PATCH_TOKEN = "<im_patch>"
-DEFAULT_IM_START_TOKEN = "<im_start>"
-DEFAULT_IM_END_TOKEN = "<im_end>"
-IM_PATCH_ID = 32000
-IM_START_ID = 32001
-IM_END_ID = 32002
+# initialized in ui, so that params are loaded from settings
+llava_embedder = None
 
 
-def generate_chat_picture(picture, text, visible_text):
+@dataclass
+class Token:
+    token: str
+    id: int
+
+
+class LLaVAEmbedder:
+    IM_PATCH = Token("<im_patch>", 32000)
+    IM_START = Token("<im_start>", 32001)
+    IM_END = Token("<im_end>", 32002)
+    CLIP_VIT_HUB_NAME = 'openai/clip-vit-large-patch14'
+    PROJECTOR_HUB_NAME = 'liuhaotian/LLaVA-13b-pretrain-projector-v0'
+    PROJECTOR_FILE = 'LLaVA-13b-pretrain-projector-v0-CC3M-595K-original_caption.bin'
+
+    def __init__(self):
+        self.clip_device = self._get_device("clip_device")
+        self.clip_dtype = self._get_dtype("clip_bits")
+        self.projector_device = self._get_device("projector_device")
+        self.projector_dtype = self._get_dtype("projector_bits")
+        self.image_processor, self.vision_tower, self.mm_projector = self._load_models()
+        print(params, self.clip_device, self.clip_dtype, self.projector_device, self.projector_dtype)
+
+    def _get_device(self, setting_name):
+        if params[setting_name] is None:
+            return torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        return torch.device(params[setting_name])
+
+    def _get_dtype(self, setting_name):
+        return torch.float32 if int(params[setting_name]) == 32 else torch.float16
+
+    def _load_models(self):
+        image_processor = CLIPImageProcessor.from_pretrained(LLaVAEmbedder.CLIP_VIT_HUB_NAME, torch_dtype=self.clip_dtype)
+        vision_tower = CLIPVisionModel.from_pretrained(LLaVAEmbedder.CLIP_VIT_HUB_NAME, torch_dtype=self.clip_dtype).to(self.clip_device)
+
+        projector_path = hf_hub_download(LLaVAEmbedder.PROJECTOR_HUB_NAME, LLaVAEmbedder.PROJECTOR_FILE)
+        mm_projector = torch.nn.Linear(1024, 5120)
+        projector_data = torch.load(projector_path)
+        mm_projector.weight = torch.nn.Parameter(projector_data['model.mm_projector.weight'].to(dtype=self.projector_dtype), False)
+        mm_projector.bias = torch.nn.Parameter(projector_data['model.mm_projector.bias'].to(dtype=self.projector_dtype), False)
+        mm_projector = mm_projector.to(self.projector_device)
+        return image_processor, vision_tower, mm_projector
+
+    def _update_prompt(self, prompt, images):
+        for _ in images:
+            # replace the image token with the image patch token in the prompt (each occurrence)
+            replace_token = LLaVAEmbedder.IM_PATCH.token * 256
+            replace_token = LLaVAEmbedder.IM_START.token + replace_token + LLaVAEmbedder.IM_END.token
+            prompt = re.sub(r"<image:([A-Za-z0-9+/=]+)>", replace_token, prompt, 1)
+        return prompt
+
+    def _extract_image_features(self, images):
+        images = self.image_processor(images, return_tensors='pt')['pixel_values']
+        images = images.to(self.clip_device, dtype=self.clip_dtype)
+
+        with torch.no_grad():
+            image_forward_outs = self.vision_tower(images, output_hidden_states=True)
+            select_hidden_state_layer = -2
+            select_hidden_state = image_forward_outs.hidden_states[select_hidden_state_layer]
+            image_features = select_hidden_state[:, 1:].to(self.projector_device, dtype=self.projector_dtype)
+            image_features = self.mm_projector(image_features)
+        return image_features
+
+    def forward(self, prompt, images, state):
+        prompt = self._update_prompt(prompt, images)
+        input_ids = encode(prompt, add_bos_token=state['add_bos_token'], truncation_length=get_max_prompt_length(state))[0]
+        input_embeds = shared.model.model.embed_tokens(input_ids).to(self.projector_device)
+
+        image_features = self._extract_image_features(images).to(self.projector_device)
+
+        total_embedded = 0
+        image_start_tokens = torch.where(input_ids == LLaVAEmbedder.IM_START.id)[0]
+        if not torch.any(input_ids == LLaVAEmbedder.IM_PATCH.id) or len(image_start_tokens) == 0:
+            # multimodal LLM, but the current prompt is not multimodal/truncated
+            return prompt, input_ids, input_embeds, total_embedded
+
+        cur_image_idx = 0
+        if not params['add_all_images_to_prompt']:
+            image_start_tokens = [image_start_tokens[-1]]
+            cur_image_idx = -1
+
+        for image_start_token_pos in image_start_tokens:
+            cur_image_features = image_features[cur_image_idx]
+            num_patches = cur_image_features.shape[0]
+            input_embeds = torch.cat((input_embeds[:image_start_token_pos+1], cur_image_features, input_embeds[image_start_token_pos + num_patches + 1:]), dim=0)
+            cur_image_idx += 1
+            total_embedded += 1
+
+        return prompt, input_ids, input_embeds, total_embedded
+
+    @staticmethod
+    def len_in_tokens(text):
+        images = re.findall(r"<image:[A-Za-z0-9+/=]+>", text)
+        image_tokens = 0
+        for _ in images:
+            image_tokens += 258
+        return len(encode(re.sub(r"<image:[A-Za-z0-9+/=]+>", '', text))[0]) + image_tokens
+
+
+def add_chat_picture(picture, text, visible_text):
     # resize the image, so that shortest edge is at least 224 (size for CLIP), and at most 300 (to keep history manageable)
     max_hw, min_hw = max(picture.size), min(picture.size)
     aspect_ratio = max_hw / min_hw
@@ -76,12 +168,16 @@ def generate_chat_picture(picture, text, visible_text):
 
     return text, visible_text
 
-def len_in_tokens(text):
-    images = re.findall(r"<image:[A-Za-z0-9+/=]+>", text)
-    image_tokens = 0
-    for image in images:
-        image_tokens += 258
-    return len(encode(re.sub(r"<image:[A-Za-z0-9+/=]+>", '', text))[0]) + image_tokens
+
+def fix_picture_after_remove_last(text, visible_text):
+    image = re.search(r'<img src="data:image/jpeg;base64,([A-Za-z0-9+/=]+)">', text)
+    if image is None:
+        return text, visible_text
+    if visible_text is None:
+        visible_text = text
+    text = re.sub(r'<img src="data:image/jpeg;base64,([A-Za-z0-9+/=]+)">', "<image:\\1>", text)
+    return text, visible_text
+
 
 def custom_generate_chat_prompt(user_input, state, **kwargs):
     impersonate = kwargs['impersonate'] if 'impersonate' in kwargs else False
@@ -100,7 +196,7 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
     prefix2 = f"{state['name2']}: "
 
     i = len(shared.history['internal']) - 1
-    while i >= 0 and len_in_tokens(''.join(rows)) < max_length:
+    while i >= 0 and LLaVAEmbedder.len_in_tokens(''.join(rows)) < max_length:
         if _continue and i == len(shared.history['internal']) - 1:
             rows.insert(1, f"{prefix2}{shared.history['internal'][i][1]}")
         else:
@@ -123,7 +219,7 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
         # Adding the Character prefix
         rows.append(apply_extensions("bot_prefix", f"{prefix2}"))
 
-    while len(rows) > min_rows and len_in_tokens(''.join(rows)) >= max_length:
+    while len(rows) > min_rows and LLaVAEmbedder.len_in_tokens(''.join(rows)) >= max_length:
         rows.pop(1)
     prompt = ''.join(rows)
 
@@ -131,6 +227,7 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
         return prompt, rows
     else:
         return prompt
+
 
 def tokenizer_modifier(state, prompt, input_ids, input_embeds):
     global params
@@ -141,60 +238,25 @@ def tokenizer_modifier(state, prompt, input_ids, input_embeds):
     if len(images) == 0:
         return prompt, input_ids, input_embeds
 
-    for _ in images:
-        # replace the image token with the image patch token in the prompt (each occurrence)
-        replace_token = DEFAULT_IMAGE_PATCH_TOKEN * 256
-        replace_token = DEFAULT_IM_START_TOKEN + replace_token + DEFAULT_IM_END_TOKEN
-        prompt = re.sub(r"<image:([A-Za-z0-9+/=]+)>", replace_token, prompt, 1)
-    input_ids = encode(prompt, add_bos_token=state['add_bos_token'], truncation_length=get_max_prompt_length(state))
-    input_embeds = shared.model.model.embed_tokens(input_ids)
-
-    images = image_processor(images, return_tensors='pt')['pixel_values']
-    images = images.to(vision_tower.device, dtype=torch.float16)
-
-    with torch.no_grad():
-        image_forward_outs = vision_tower(images, output_hidden_states=True)
-        select_hidden_state_layer = -2
-        select_hidden_state = image_forward_outs.hidden_states[select_hidden_state_layer]
-        image_features = select_hidden_state[:, 1:].to(projector_device)
-        image_features = mm_projector(image_features)
-
-    new_input_embeds = []
-    cur_image_idx = 0
-    total_embedded = 0
-    for cur_input_ids, cur_input_embeds in zip(input_ids, input_embeds):
-        image_start_tokens = torch.where(cur_input_ids == IM_START_ID)[0]
-        if not torch.any(cur_input_ids == IM_PATCH_ID) or len(image_start_tokens) == 0:
-            # multimodal LLM, but the current sample is not multimodal/truncated
-            new_input_embeds.append(cur_input_embeds)
-            continue
-
-        if not params['add_all_images_to_prompt']:
-            image_start_tokens = [image_start_tokens[-1]]
-            cur_image_idx = -1
-
-        for image_start_token_pos in image_start_tokens:
-            cur_image_features = image_features[cur_image_idx]
-            num_patches = cur_image_features.shape[0]
-            cur_input_embeds = torch.cat((cur_input_embeds[:image_start_token_pos+1], cur_image_features, cur_input_embeds[image_start_token_pos + num_patches + 1:]), dim=0)
-            cur_image_idx += 1
-            total_embedded += 1
-        new_input_embeds.append(cur_input_embeds)
-    input_embeds = torch.stack(new_input_embeds, dim=0)
+    prompt, input_ids, input_embeds, total_embedded = llava_embedder.forward(prompt, images, state)
     print(f'Embedded {total_embedded} image(s) in {time.time()-start_ts:.2f}s')
-    return prompt, input_ids.to(shared.model.device), input_embeds.to(shared.model.device)
+    return prompt, input_ids.unsqueeze(0).to(shared.model.device), input_embeds.unsqueeze(0).to(shared.model.device)
 
 
 def ui():
+    global llava_embedder
+    llava_embedder = LLaVAEmbedder()
     with gr.Column():
         picture_select = gr.Image(label='Send a picture', type='pil')
         # I found that it doesn't deal super well with multiple images, and demo ui had a bug where it included only the last image anyway
         single_image_checkbox = gr.Checkbox(False, label='Embed all images, not only the last one')
     # Prepare the input hijack
     picture_select.upload(
-        lambda picture: input_hijack.update({"state": True, "value": partial(generate_chat_picture, picture)}),
+        lambda picture: input_hijack.update({"state": True, "value": partial(add_chat_picture, picture)}),
         [picture_select],
         None
     )
+    picture_select.clear(lambda: input_hijack.update({"state": False, "value": ["",""]}), None, None)
     single_image_checkbox.change(lambda x: params.update({"add_all_images_to_prompt": x}), single_image_checkbox, None)
     shared.gradio['Generate'].click(lambda: None, None, picture_select)
+    shared.gradio['Remove last'].click(lambda: input_hijack.update({"state": True, "value": fix_picture_after_remove_last}), None, None)
