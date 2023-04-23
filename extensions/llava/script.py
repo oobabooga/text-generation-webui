@@ -130,17 +130,21 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
 def tokenizer_modifier(state, prompt, input_ids, input_embeds):
     image_matches = re.finditer(r"<image:([A-Za-z0-9+/=]+)>", prompt)
     images = [Image.open(BytesIO(base64.b64decode(match.group(1)))) for match in image_matches]
-    
-    if len(images) > 0:
-        for image in images:
-            # replace the image token with the image patch token in the prompt (each occurrence)
-            replace_token = DEFAULT_IMAGE_PATCH_TOKEN * 256
-            replace_token = DEFAULT_IM_START_TOKEN + replace_token + DEFAULT_IM_END_TOKEN
-            prompt = re.sub(r"<image:([A-Za-z0-9+/=]+)>", replace_token, prompt, 1)
-        images = image_processor(images, return_tensors='pt')['pixel_values']
-        images = images.to(vision_tower.device, dtype=torch.float16)
+
+    if len(images) == 0:
+        return prompt, input_ids, input_embeds
+
+    for _ in images:
+        # replace the image token with the image patch token in the prompt (each occurrence)
+        replace_token = DEFAULT_IMAGE_PATCH_TOKEN * 256
+        replace_token = DEFAULT_IM_START_TOKEN + replace_token + DEFAULT_IM_END_TOKEN
+        prompt = re.sub(r"<image:([A-Za-z0-9+/=]+)>", replace_token, prompt, 1)
     input_ids = encode(prompt, add_bos_token=state['add_bos_token'], truncation_length=get_max_prompt_length(state))
-    inputs_embeds = shared.model.model.embed_tokens(input_ids)
+    input_embeds = shared.model.model.embed_tokens(input_ids)
+
+    images = image_processor(images, return_tensors='pt')['pixel_values']
+    images = images.to(vision_tower.device, dtype=torch.float16)
+
     with torch.no_grad():
         image_forward_outs = vision_tower(images, output_hidden_states=True)
         select_hidden_state_layer = -2
@@ -152,10 +156,9 @@ def tokenizer_modifier(state, prompt, input_ids, input_embeds):
 
     new_input_embeds = []
     cur_image_idx = 0
-    for cur_input_ids, cur_input_embeds in zip(input_ids, inputs_embeds):
-        if (cur_input_ids == IM_PATCH_ID).sum() == 0:
+    for cur_input_ids, cur_input_embeds in zip(input_ids, input_embeds):
+        if not torch.any(cur_input_ids == IM_PATCH_ID):
             # multimodal LLM, but the current sample is not multimodal
-            cur_input_embeds = cur_input_embeds + (0. * dummy_image_features).sum()
             new_input_embeds.append(cur_input_embeds)
             continue
         cur_image_features = image_features[cur_image_idx]
@@ -167,8 +170,8 @@ def tokenizer_modifier(state, prompt, input_ids, input_embeds):
             cur_new_input_embeds = torch.cat((cur_input_embeds[:image_start_token_pos+1], cur_image_features, cur_input_embeds[image_start_token_pos + num_patches + 1:]), dim=0)
             cur_image_idx += 1
         new_input_embeds.append(cur_new_input_embeds)
-    inputs_embeds = torch.stack(new_input_embeds, dim=0)
-    return prompt, input_ids.to(shared.model.device), inputs_embeds.to(shared.model.device)
+    input_embeds = torch.stack(new_input_embeds, dim=0)
+    return prompt, input_ids.to(shared.model.device), input_embeds.to(shared.model.device)
 
 
 def ui():
