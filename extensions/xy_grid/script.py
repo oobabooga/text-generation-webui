@@ -2,6 +2,7 @@ import os
 import json
 import datetime
 import random
+import time
 
 import gradio as gr
 import modules.shared as shared
@@ -11,6 +12,7 @@ from modules.chat import chatbot_wrapper, load_character
 from modules.html_generator import convert_to_markdown
 from pathlib import Path
 
+# Global variables
 axis_type = {'x': "prompts", 'y': "presets"}
 custom_state = {}
 gen_output = []
@@ -97,7 +99,7 @@ def set_axis(x, y):
 
 
 # Parse the type of the X axis and alter custom_state accordingly
-# If you want to add more axes, this is where you would do it. 
+# If you want to add more axes, this is where you would do it.
 # Add logic here and include it in axis_options
 def parse_axis(axis, value):
     global custom_state
@@ -146,274 +148,131 @@ def parse_axis(axis, value):
     return None
 
 
+# The main function that generates the grid
 def run(constant_seed, seed_value, use_history, x="", y=""):
-
     global custom_state
     global gen_output
     global axis_type
 
+    # Error handling
+    if axis_type['x'] == axis_type['y']:
+        return "<h1><span style=\"color: red;\">ERROR: both axes cannot be the same setting</span>"
+    if x.strip() == '' and y.strip() == '':
+        return "<h1><span style=\"color: red;\">ERROR: both fields are empty</span>"
+
     shared.args.no_stream = True
+
+    # Backup our parameters so we can put everything back how it was before we started
+    temp_internal = shared.history['internal'].copy()
+    temp_visible = shared.history['visible'].copy()
+    temp_custom_state = custom_state.copy()
+
+    # Handle the constant seed value
     if constant_seed:
         if seed_value == "-1":
             custom_state['seed'] = random.randint(1, 2**31)
         else:
             custom_state['seed'] = seed_value
 
-    temp_internal = shared.history['internal']
-    temp_visible = shared.history['visible']
-    temp_custom_state = custom_state.copy()
 
     # Gather output json info, from before the X/Y parameters take effect
     output_json = {k: custom_state[k] for k in shared.input_elements}
 
+    # This was causing problems when the custom stopping strings was set to None
     if custom_state['custom_stopping_strings'] is None:
         custom_state['custom_stopping_strings'] = ""
 
     # Have to format the strings because gradio makes it difficult to pass lists around
-    if x == "":
-        x_strings = ""
-    else:
-        x_strings = pp.common.comma_separated_list.parseString(x).asList()
-    if y == "":
-        y_strings = ""
-    else:
-        y_strings = pp.common.comma_separated_list.parseString(y).asList()
+    x_strings = pp.common.comma_separated_list.parseString(x).asList()
+    y_strings = pp.common.comma_separated_list.parseString(y).asList()
 
-    output =  "<style>table {border-collapse: collapse;border: 1px solid black;}th, td {border: 1px solid black;padding: 5px;} em {color: gray} body {font-family: 'Helvetica', Arial, sans-serif; }</style><table><thead>" + f"<tr><th>X={axis_type['x']}<br>Y={axis_type['y']}</th>"
+    # If someone uses "-1" for a seed axis, we don't want it generating a new seed for every cell of the grid
+    if axis_type['x'] == "seed":
+        x_strings = [str(random.randint(1, 2**31)) if seed in ('-1','-1.0') else seed for seed in x_strings]
+    if axis_type['y'] == "seed":
+        y_strings = [str(random.randint(1, 2**31)) if seed in ('-1','-1.0') else seed for seed in y_strings]
 
-    if axis_type['x'] == axis_type['y']:
-        return "<h1><span style=\"color: red;\">ERROR: both axes cannot be the same setting</span>"
-    
-    # Run as if x axis is prompts
-    elif axis_type['x'] == "prompts":
-        for i in x_strings:
-            output = output + f"<th>{i.strip()}</th>"
-        output = output + "</thead><tbody>"
-        if y_strings != '':
-            for i in y_strings:
-                output = output + f"<tr><th>{i.strip()}</th>"
-                for j in x_strings:
+    cell_count = len(x_strings) + 1
+    output =  "<style>table {table-layout: fixed; overflow: scroll; border-collapse: collapse;border: 1px solid black;} th {width: calc(100% / " + str(cell_count * len(x_strings)) + "); min-width: 100px; border: 1px solid black; padding: 5px;} td {width: calc(100% / " + str(cell_count) + "); min-width: 300px; border: 1px solid black; padding: 5px;} em {color: gray} body {font-family: 'Helvetica', Arial, sans-serif; }</style><table><thead>" + f"<tr><th>X={axis_type['x']}<br>Y={axis_type['y']}</th>"
 
-                    # parse the type of the Y axis and alter custom_state accordingly
-                    parse_axis("y", i)
-                    
-                    # This was at the top of the function, but for some reason it broke with a recent update
-                    if not use_history:
-                        shared.history['internal'] = shared.history['internal'][:1]
-                        shared.history['visible'] = shared.history['visible'][:1]
+    # Make the grid
+    for i in x_strings:
+        output = output + f"<th>{i.strip()}</th>"
+    output = output + "</thead><tbody>"
+    for i in y_strings:
+        output = output + f"<tr><th>{i.strip()}</th>"
+        for j in x_strings:
 
-                    # This is the part that actually does the generating
-                    for new in chatbot_wrapper(j.strip().strip('"'), custom_state):
-                        gen_output = new
-
-                    if len(gen_output) == 0:
-                        gen_output = [['','']]
-                    user_output = convert_to_markdown(gen_output[-1][0])
-                    bot_output = convert_to_markdown(gen_output[-1][1])
-
-                    if custom_state['mode'] == 'instruct':
-                        output = output + f"<td><b>{custom_state['name1']}</b> {user_output}<b>{custom_state['name2']}</b> {bot_output}</td>"
-                    else:
-                        output = output + f"<td><h3><b>{custom_state['name1']}:</b></h3> {user_output}<h3><b>{custom_state['name2']}:</b></h3> {bot_output}</td>"
-
-                    # Remove the last outputs, so they don't influence future generations
-                    gen_output.pop()
-                    if len(shared.history['internal']) > 1:
-                        shared.history['internal'].pop()
-
-                output = output + "</tr>"
-
-        else:
-            output = output + "<tr><th></th>"
-            for i in x_strings:
-                for new in chatbot_wrapper(i.strip().strip('"'), custom_state):
-                    gen_output = new
-
-                if len(gen_output) == 0:
-                    gen_output = [['','']]
-                user_output = convert_to_markdown(gen_output[-1][0])
-                bot_output = convert_to_markdown(gen_output[-1][1])
-
-                if custom_state['mode'] == 'instruct':
-                    output = output + f"<td><b>{custom_state['name1']}</b> {user_output}<b>{custom_state['name2']}</b> {bot_output}</td>"
-                else:
-                    output = output + f"<td><h3><b>{custom_state['name1']}:</b></h3> {user_output}<h3><b>{custom_state['name2']}:</b></h3> {bot_output}</td>"
-
-                # Remove the last outputs, so they don't influence future generations
-                gen_output.pop()
-                if len(shared.history['internal']) > 1:
-                    shared.history['internal'].pop()
-
-            output = output + "</tr>"
-
-    # Run as if y axis is prompts
-    elif axis_type['y'] == "prompts":
-        for i in x_strings:
-            output = output + f"<th>{i.strip()}</th>"
-        output = output + "</thead><tbody>"
-        if x_strings != '':
-            for i in y_strings:
-                output = output + f"<tr><th>{i.strip()}</th>"
-                for j in x_strings:
-
-                    # parse the type of the X axis and alter custom_state accordingly
-                    parse_axis("x", j)
-
-                    # This was at the top of the function, but for some reason it broke with a recent update
-                    if not use_history:
-                        shared.history['internal'] = shared.history['internal'][:1]
-                        shared.history['visible'] = shared.history['visible'][:1]
-
-                    # This is the part that actually does the generating
-                    for new in chatbot_wrapper(i.strip().strip('"'), custom_state):
-                        gen_output = new
-
-                    if len(gen_output) == 0:
-                        gen_output = [['','']]
-                    user_output = convert_to_markdown(gen_output[-1][0])
-                    bot_output = convert_to_markdown(gen_output[-1][1])
-
-                    if custom_state['mode'] == 'instruct':
-                        output = output + f"<td><b>{custom_state['name1']}</b> {user_output}<b>{custom_state['name2']}</b> {bot_output}</td>"
-                    else:
-                        output = output + f"<td><h3><b>{custom_state['name1']}:</b></h3> {user_output}<h3><b>{custom_state['name2']}:</b></h3> {bot_output}</td>"
-
-                    # Remove the last outputs, so they don't influence future generations
-                    gen_output.pop()
-                    if len(shared.history['internal']) > 1:
-                        shared.history['internal'].pop()
-
-                output = output + "</tr>"
-
-        else:
-            for i in y_strings:
-                for new in chatbot_wrapper(i.strip().strip('"'), custom_state):
-                    gen_output = new
-
-                if len(gen_output) == 0:
-                    gen_output = [['','']]
-                user_output = convert_to_markdown(gen_output[-1][0])
-                bot_output = convert_to_markdown(gen_output[-1][1])
-
-                if custom_state['mode'] == 'instruct':
-                    output = output + f"<tr><tr><th>{i.strip()}</th><td><b>{custom_state['name1']}</b> {user_output}<b>{custom_state['name2']}</b> {bot_output}</td></tr>"
-                else:
-                    output = output + f"<tr><tr><th>{i.strip()}</th><td><h3><b>{custom_state['name1']}:</b></h3> {user_output}<h3><b>{custom_state['name2']}:</b></h3> {bot_output}</td></tr>"
-
-                # Remove the last outputs, so they don't influence future generations
-                gen_output.pop()
-                if len(shared.history['internal']) > 1:
-                    shared.history['internal'].pop()
-
-    # Take the prompts from custom_state['textbox']
-    else:
-        for i in x_strings:
-            output = output + f"<th>{i.strip()}</th>"
-        output = output + "</thead><tbody>"
-        if y_strings != '' and x_strings != '':
-            for i in y_strings:
-                output = output + f"<tr><th>{i.strip()}</th>"
-                for j in x_strings:
-                    # parse the types of the axes and alter custom_state accordingly
-                    # in this case, we need to make sure we parse presets first, so it doesn't overwrite lower level settings
-                    if axis_type['y'] == "presets":
-                        parse_axis("y", i)
-                        parse_axis("x", j)
-                    else:
-                        parse_axis("x", j)
-                        parse_axis("y", i)
-
-                    # This was at the top of the function, but for some reason it broke with a recent update
-                    if not use_history:
-                        shared.history['internal'] = shared.history['internal'][:1]
-                        shared.history['visible'] = shared.history['visible'][:1]
-
-                    # This is the part that actually does the generating
-                    for new in chatbot_wrapper(custom_state['textbox'].strip(), custom_state):
-                        gen_output = new
-
-                    if len(gen_output) == 0:
-                        gen_output = [['','']]
-                    user_output = convert_to_markdown(gen_output[-1][0])
-                    bot_output = convert_to_markdown(gen_output[-1][1])
-
-                    if custom_state['mode'] == 'instruct':
-                        output = output + f"<td><b>{custom_state['name1']}</b> {user_output}<b>{custom_state['name2']}</b> {bot_output}</td>"
-                    else:
-                        output = output + f"<td><h3><b>{custom_state['name1']}:</b></h3> {user_output}<h3><b>{custom_state['name2']}:</b></h3> {bot_output}</td>"
-
-                    # Remove the last outputs, so they don't influence future generations
-                    gen_output.pop()
-                    if len(shared.history['internal']) > 1:
-                        shared.history['internal'].pop()
-
-                output = output + "</tr>"
-
-        elif x_strings != '':
-            output = output + "<tr><th></th>"
-            for j in x_strings:
-
-                # parse the types of the axes and alter custom_state accordingly
-                parse_axis("x", j)
-
-                # This was at the top of the function, but for some reason it broke with a recent update
-                if not use_history:
-                    shared.history['internal'] = shared.history['internal'][:1]
-                    shared.history['visible'] = shared.history['visible'][:1]
-
-                # Run the actual text generator
-                for new in chatbot_wrapper(custom_state['textbox'].strip(), custom_state):
-                    gen_output = new
-
-                if len(gen_output) == 0:
-                    gen_output = [['','']]
-                user_output = convert_to_markdown(gen_output[-1][0])
-                bot_output = convert_to_markdown(gen_output[-1][1])
-
-                if custom_state['mode'] == 'instruct':
-                    output = output + f"<td><b>{custom_state['name1']}</b> {user_output}<b>{custom_state['name2']}</b> {bot_output}</td>"
-                else:
-                    output = output + f"<td><h3><b>{custom_state['name1']}:</b></h3> {user_output}<h3><b>{custom_state['name2']}:</b></h3> {bot_output}</td>"
-
-                # Remove the last outputs, so they don't influence future generations
-                gen_output.pop()
-                if len(shared.history['internal']) > 1:
-                    shared.history['internal'].pop()
-
-            output = output + "</tr>"
-        
-        elif y_strings != '':
-            for i in y_strings:
-                # parse the types of the axes and alter custom_state accordingly
+            # parse the type of the axes and alter custom_state accordingly
+            if axis_type['x'] == "prompts":
                 parse_axis("y", i)
+            elif axis_type['y'] == "prompts":
+                parse_axis("x", j)
+            elif y_strings != '' and x_strings != '':
+                # in this case, we need to make sure we parse presets first, so it doesn't overwrite lower level settings
+                if axis_type['y'] == "presets":
+                    parse_axis("y", i)
+                    parse_axis("x", j)
+                else:
+                    parse_axis("x", j)
+                    parse_axis("y", i)
+            elif x_strings != '':
+                parse_axis("x", j)
+            elif y_strings != '':
+                parse_axis("y", i)
+            else:
+                return "<h1><span style=\"color: red;\">ERROR: unknown error</span>"
 
-                # This was at the top of the function, but for some reason it broke with a recent update
-                if not use_history:
-                    shared.history['internal'] = shared.history['internal'][:1]
-                    shared.history['visible'] = shared.history['visible'][:1]
-                    
-                # Run the actual text generator
+            # Determine whether or not we are including the character's chat history with the user
+            if not use_history:
+                shared.history['internal'] = shared.history['internal'][:1]
+                shared.history['visible'] = shared.history['visible'][:1]
+
+            # Clear all history for instruct mode
+            if custom_state['mode'] == "instruct":
+                shared.history['internal'].clear()
+                shared.history['visible'].clear()
+
+            # This is the part that actually does the generating
+            if axis_type['x'] == "prompts":
+                for new in chatbot_wrapper(j.strip().strip('"'), custom_state):
+                    gen_output = new
+            elif axis_type['y'] == "prompts":
+                for new in chatbot_wrapper(i.strip().strip('"'), custom_state):
+                    gen_output = new
+            else:
                 for new in chatbot_wrapper(custom_state['textbox'].strip(), custom_state):
                     gen_output = new
 
-                if len(gen_output) == 0:
-                    gen_output = [['','']]
-                user_output = convert_to_markdown(gen_output[-1][0])
-                bot_output = convert_to_markdown(gen_output[-1][1])
+            # Sometimes it the generation kicks back nothing and it causes problems
+            if len(gen_output) == 0:
+                gen_output = [['','']]
 
-                if custom_state['mode'] == 'instruct':
-                    output = output + f"<tr><th>{i.strip()}</th><td><b>{custom_state['name1']}</b> {user_output}<b>{custom_state['name2']}</b> {bot_output}</td></tr>"
-                else:
-                    output = output + f"<tr><th>{i.strip()}</th><td><h3><b>{custom_state['name1']}:</b></h3> {user_output}<h3><b>{custom_state['name2']}:</b></h3> {bot_output}</td></tr>"
+            # Turn the output into HTML for our table
+            user_output = convert_to_markdown(gen_output[-1][0])
+            bot_output = convert_to_markdown(gen_output[-1][1])
+            if custom_state['mode'] == 'instruct':
+                output = output + f"<td><h3><b>{custom_state['name1']}</b></h3> {user_output}<h3><b>{custom_state['name2']}</b></h3> {bot_output}</td>"
+            else:
+                output = output + f"<td><h3><b>{custom_state['name1']}:</b></h3> {user_output}<h3><b>{custom_state['name2']}:</b></h3> {bot_output}</td>"
 
-                # Remove the last outputs, so they don't influence future generations
-                gen_output.pop()
+            # Remove the last outputs, so they don't influence future generations
+            if custom_state['mode'] == 'instruct':
+                shared.history['internal'].clear()
+                shared.history['visible'].clear()
+            else:
                 if len(shared.history['internal']) > 1:
                     shared.history['internal'].pop()
+                elif len(shared.history['internal']) == 1:
+                    if shared.history['internal'] == gen_output:
+                        shared.history['internal'].clear()
+                if len(shared.history['visible']) > 1:
+                    shared.history['visible'].pop()
+                elif len(shared.history['visible']) == 1:
+                    if shared.history['visible'] == gen_output:
+                        shared.history['visible'].clear()
 
-        else:
-            return "<h1><span style=\"color: red;\">ERROR: both fields are empty</span>"
-
+        output = output + "</tr>"
     output = output + "</tbody></table>"
 
     # Save the output to a file
@@ -429,14 +288,12 @@ def run(constant_seed, seed_value, use_history, x="", y=""):
     # Include a link to the generated HTML file
     output = f"<h3><a href=\"file/extensions/xy_grid/outputs/{output_filename}.html\" target=\"_blank\">[ <em>open html file 🔗</em> ]</a></h3><br><br>" + output
 
-    # Clean up some of the changes that were made during this generation
-    custom_state['seed'] = -1
-    shared.history['internal'] = temp_internal
-    shared.history['visible'] = temp_visible
+    # Clean up the changes that were made during this generation
+    shared.history['internal'] = temp_internal.copy()
+    shared.history['visible'] = temp_visible.copy()
     custom_state = temp_custom_state.copy()
+
     return output
-
-
 
 
 # Necessary for some stuff because gradio
@@ -522,7 +379,8 @@ def ui():
     shared.gradio['your_picture'].change(lambda x: custom_state.update({'your_picture': x}), shared.gradio['your_picture'], [])
     shared.gradio['mode'].change(lambda x: custom_state.update({'mode': x}), shared.gradio['mode'], [])
 
-    with gr.Accordion("XY Grid", open=False):
+    # UI for the extension
+    with gr.Accordion("XY Grid", open=True):
 
         # Axis selections and inputs
         with gr.Row():
@@ -535,8 +393,9 @@ def ui():
         y_type.select(set_axis, [x_type, y_type], []).then(fill_axis, y_type, y_input)
         x_type.change(set_axis, [x_type, y_type], [])
         y_type.change(set_axis, [x_type, y_type], [])
+
         with gr.Row():
-            swap_xy = gr.Button(value='Swap X/Y Axes 🔀')
+            swap_xy = gr.Button(value='Swap X/Y Axes')
         with gr.Row():
             seed_input = gr.Checkbox(label='Use a constant seed', value=False)
             use_history = gr.Checkbox(label='Use character\'s chat history', value=False)
