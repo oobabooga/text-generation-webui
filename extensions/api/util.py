@@ -22,7 +22,7 @@ def build_parameters(body):
         'top_p': float(body.get('top_p', 1)),
         'typical_p': float(body.get('typical', 1)),
         'repetition_penalty': float(body.get('rep_pen', 1.1)),
-        'encoder_repetition_penalty': 1,
+        'encoder_repetition_penalty': float(body.get('encoder_repetition_penalty', 1.0)),
         'top_k': int(body.get('top_k', 0)),
         'min_length': int(body.get('min_length', 0)),
         'no_repeat_ngram_size': int(body.get('no_repeat_ngram_size', 0)),
