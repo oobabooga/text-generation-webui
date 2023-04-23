@@ -2,6 +2,7 @@ import base64
 from functools import partial
 from io import BytesIO
 import re
+import time
 import gradio as gr
 import torch
 
@@ -30,6 +31,10 @@ mm_projector = mm_projector.to(projector_device)
 input_hijack = {
     'state': False,
     'value': ["", ""]
+}
+
+params = {
+    "add_all_images_to_prompt": False
 }
 
 DEFAULT_IMAGE_PATCH_TOKEN = "<im_patch>"
@@ -128,6 +133,8 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
         return prompt
 
 def tokenizer_modifier(state, prompt, input_ids, input_embeds):
+    global params
+    start_ts = time.time()
     image_matches = re.finditer(r"<image:([A-Za-z0-9+/=]+)>", prompt)
     images = [Image.open(BytesIO(base64.b64decode(match.group(1)))) for match in image_matches]
 
@@ -151,35 +158,43 @@ def tokenizer_modifier(state, prompt, input_ids, input_embeds):
         select_hidden_state = image_forward_outs.hidden_states[select_hidden_state_layer]
         image_features = select_hidden_state[:, 1:].to(projector_device)
         image_features = mm_projector(image_features)
-        dummy_image_features = torch.zeros(256, 1024, device=projector_device, dtype=mm_projector.weight.dtype)
-        dummy_image_features = mm_projector(dummy_image_features)
 
     new_input_embeds = []
     cur_image_idx = 0
+    total_embedded = 0
     for cur_input_ids, cur_input_embeds in zip(input_ids, input_embeds):
-        if not torch.any(cur_input_ids == IM_PATCH_ID):
-            # multimodal LLM, but the current sample is not multimodal
+        image_start_tokens = torch.where(cur_input_ids == IM_START_ID)[0]
+        if not torch.any(cur_input_ids == IM_PATCH_ID) or len(image_start_tokens) == 0:
+            # multimodal LLM, but the current sample is not multimodal/truncated
             new_input_embeds.append(cur_input_embeds)
             continue
-        cur_image_features = image_features[cur_image_idx]
-        num_patches = cur_image_features.shape[0]
-        image_start_tokens = torch.where(cur_input_ids == IM_START_ID)[0]
+
+        if not params['add_all_images_to_prompt']:
+            image_start_tokens = [image_start_tokens[-1]]
+            cur_image_idx = -1
+
         for image_start_token_pos in image_start_tokens:
             cur_image_features = image_features[cur_image_idx]
             num_patches = cur_image_features.shape[0]
-            cur_new_input_embeds = torch.cat((cur_input_embeds[:image_start_token_pos+1], cur_image_features, cur_input_embeds[image_start_token_pos + num_patches + 1:]), dim=0)
+            cur_input_embeds = torch.cat((cur_input_embeds[:image_start_token_pos+1], cur_image_features, cur_input_embeds[image_start_token_pos + num_patches + 1:]), dim=0)
             cur_image_idx += 1
-        new_input_embeds.append(cur_new_input_embeds)
+            total_embedded += 1
+        new_input_embeds.append(cur_input_embeds)
     input_embeds = torch.stack(new_input_embeds, dim=0)
+    print(f'Embedded {total_embedded} image(s) in {time.time()-start_ts:.2f}s')
     return prompt, input_ids.to(shared.model.device), input_embeds.to(shared.model.device)
 
 
 def ui():
-    picture_select = gr.Image(label='Send a picture', type='pil')
+    with gr.Column():
+        picture_select = gr.Image(label='Send a picture', type='pil')
+        # I found that it doesn't deal super well with multiple images, and demo ui had a bug where it included only the last image anyway
+        single_image_checkbox = gr.Checkbox(False, label='Embed all images, not only the last one')
     # Prepare the input hijack
     picture_select.upload(
         lambda picture: input_hijack.update({"state": True, "value": partial(generate_chat_picture, picture)}),
         [picture_select],
         None
     )
+    single_image_checkbox.change(lambda x: params.update({"add_all_images_to_prompt": x}), single_image_checkbox, None)
     shared.gradio['Generate'].click(lambda: None, None, picture_select)
