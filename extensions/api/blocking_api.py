@@ -51,7 +51,6 @@ class Handler(BaseHTTPRequestHandler):
             })
             self.wfile.write(response.encode('utf-8'))
         elif self.path == '/api/v1/token-count':
-            # Not compatible with KoboldAI api
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
@@ -78,12 +77,12 @@ def _run_server(port: int, share: bool=False):
     if share:
         try:
             public_url = try_start_cloudflared(port, max_attempts=3, on_start=on_start)
-            print(f'Starting KoboldAI compatible api at {public_url}/api')
+            print(f'Starting API at {public_url}/api')
         except Exception:
             pass
     else:
         print(
-            f'Starting KoboldAI compatible api at http://{address}:{port}/api')
+            f'Starting API at http://{address}:{port}/api')
 
     server.serve_forever()
 

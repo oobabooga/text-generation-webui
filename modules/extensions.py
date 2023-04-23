@@ -14,7 +14,8 @@ def load_extensions():
     global state, setup_called
     for i, name in enumerate(shared.args.extensions):
         if name in available_extensions:
-            print(f'Loading the extension "{name}"... ', end='')
+            if name != 'api':
+                print(f'Loading the extension "{name}"... ', end='')
             try:
                 exec(f"import extensions.{name}.script")
                 extension = getattr(extensions, name).script
@@ -22,9 +23,11 @@ def load_extensions():
                     setup_called.add(extension)
                     extension.setup()
                 state[name] = [True, i]
-                print('Ok.')
+                if name != 'api':
+                    print('Ok.')
             except:
-                print('Fail.')
+                if name != 'api':
+                    print('Fail.')
                 traceback.print_exc()
 
 
