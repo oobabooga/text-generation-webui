@@ -41,6 +41,7 @@ The link above contains a directory of user extensions for text-generation-webui
 | `def output_modifier(string)`  | Modifies the output string before it is presented in the UI. In chat mode, it is applied to the bot's reply. Otherwise, it is applied to the entire output. |
 | `def bot_prefix_modifier(string)`  | Applied in chat mode to the prefix for the bot's reply (more on that below). |
 | `def custom_generate_chat_prompt(...)` | Overrides the prompt generator in chat mode. |
+| `def tokenizer_modifier(state, prompt, input_ids, input_embeds)` | Modifies the `input_ids`/`input_embeds` fed to the model. Should return `prompt`, `input_ids`, `input_embeds` |
 
 Additionally, the script may define two special global variables:
 
@@ -66,7 +67,7 @@ input_hijack = {
     'value': ["", ""]
 }
 ```
-This is only relevant in chat mode. If your extension sets `input_hijack['state']` to `True` at any moment, the next call to `modules.chat.chatbot_wrapper` will use the vales inside `input_hijack['value']` as the user input for text generation. See the `send_pictures` extension above for an example.
+This is only relevant in chat mode. If your extension sets `input_hijack['state']` to `True` at any moment, the next call to `modules.chat.chatbot_wrapper` will use the vales inside `input_hijack['value']` as the user input for text generation. Additionally, the extension can set value to be a callback, in the form of `def cb(text: str, visible_text: str) -> [str, str]`. See the `send_pictures` extension above for an example.
 
 ## The `bot_prefix_modifier`
 

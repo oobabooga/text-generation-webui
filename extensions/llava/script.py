@@ -4,14 +4,10 @@ from io import BytesIO
 import re
 import gradio as gr
 import torch
-from transformers import BlipForConditionalGeneration, BlipProcessor
 
-from modules import chat, shared
-from modules.ui import gather_interface_values
+from modules import shared
 from modules.extensions import apply_extensions
-from modules.text_generation import (encode, generate_reply,
-                                     get_max_prompt_length)
-from modules.chat import get_stopping_strings
+from modules.text_generation import (encode, get_max_prompt_length)
 from PIL import Image
 
 from transformers import CLIPImageProcessor, CLIPVisionModel
@@ -44,7 +40,7 @@ IM_START_ID = 32001
 IM_END_ID = 32002
 
 
-def generate_chat_picture(picture: Image.Image, text, visible_text):
+def generate_chat_picture(picture, text, visible_text):
     # resize the image, so that shortest edge is at least 224 (size for CLIP), and at most 300 (to keep history manageable)
     max_hw, min_hw = max(picture.size), min(picture.size)
     aspect_ratio = max_hw / min_hw
@@ -75,7 +71,7 @@ def generate_chat_picture(picture: Image.Image, text, visible_text):
 
     return text, visible_text
 
-def len_in_tokens(text: str):
+def len_in_tokens(text):
     images = re.findall(r"<image:[A-Za-z0-9+/=]+>", text)
     image_tokens = 0
     for image in images:
@@ -131,7 +127,7 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
     else:
         return prompt
 
-def tokenizer_modifier(state, prompt, input_ids, input_embedings):
+def tokenizer_modifier(state, prompt, input_ids, input_embeds):
     image_matches = re.finditer(r"<image:([A-Za-z0-9+/=]+)>", prompt)
     images = [Image.open(BytesIO(base64.b64decode(match.group(1)))) for match in image_matches]
     

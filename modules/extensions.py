@@ -68,11 +68,11 @@ def _apply_custom_generate_chat_prompt(text, state, **kwargs):
 
 
 # Extension functions that override the default tokenizer output
-def _apply_tokenizer_extensions(function_name, state, prompt, input_ids, input_embedings):
+def _apply_tokenizer_extensions(function_name, state, prompt, input_ids, input_embeds):
     for extension, _ in iterator():
         if hasattr(extension, function_name):
-            prompt, input_ids, input_embedings = getattr(extension, function_name)(state, prompt, input_ids, input_embedings)
-    return prompt, input_ids, input_embedings
+            prompt, input_ids, input_embeds = getattr(extension, function_name)(state, prompt, input_ids, input_embeds)
+    return prompt, input_ids, input_embeds
 
 
 EXTENSION_MAP = {
