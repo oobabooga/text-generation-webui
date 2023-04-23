@@ -275,4 +275,5 @@ def ui():
     picture_select.clear(lambda: input_hijack.update({"state": False, "value": ["",""]}), None, None)
     single_image_checkbox.change(lambda x: params.update({"add_all_images_to_prompt": x}), single_image_checkbox, None)
     shared.gradio['Generate'].click(lambda: None, None, picture_select)
+    shared.gradio['textbox'].submit(lambda: None, None, picture_select)
     shared.gradio['Remove last'].click(lambda: input_hijack.update({"state": True, "value": fix_picture_after_remove_last}), None, None)
