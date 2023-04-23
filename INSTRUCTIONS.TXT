@@ -14,7 +14,7 @@ folder if GPTQ-for-LLaMa needs to be updated.
 
 # Adding flags like --chat, --notebook, etc
 
-Edit the "start" script using a text editor and add the desired flags
+Edit the "webui.py" script using a text editor and add the desired flags
 to the line that says
 
 run_cmd("python server.py --auto-devices --chat --model-menu")
