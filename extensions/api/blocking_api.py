@@ -76,8 +76,7 @@ def _run_server(port: int, share: bool=False):
 
     if share:
         try:
-            public_url = try_start_cloudflared(port, max_attempts=3, on_start=on_start)
-            print(f'Starting API at {public_url}/api')
+            try_start_cloudflared(port, max_attempts=3, on_start=on_start)
         except Exception:
             pass
     else:
