@@ -9,6 +9,9 @@
 llama-[0-9]*b-4bit$:
   wbits: 4
   model_type: 'llama'
+gpt[-_]?4chan.*:
+  model_type: 'gptj'
+  mode: 'default'
 .*-(4bit|int4)-(gr128|128g):
   wbits: 4
   groupsize: 128

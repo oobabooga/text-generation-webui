@@ -50,7 +50,7 @@ def find_model_type(model_name):
         return 'chatglm'
     elif 'galactica' in model_name:
         return 'galactica'
-    elif any((k in model_name for k in ['gpt4chan', 'gpt-4chan'])):
+    elif any((k in model_name for k in ['gpt4chan', 'gpt-4chan', 'gpt_4chan'])):
         return 'gpt4chan'
     else:
         return 'HF_generic'
@@ -211,8 +211,13 @@ def load_model(model_name):
         llama_attn_hijack.hijack_llama_attention()
 
     # Loading the tokenizer
-    if shared.model_type == 'gpt4chan' and Path(f"{shared.args.model_dir}/gpt-j-6B/").exists():
-        tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/gpt-j-6B/"))
+    if shared.model_type == 'gpt4chan':
+        tokenizer_external_path = Path(f"{shared.args.model_dir}/gpt-j-6B/")
+        tokenizer_internal_path = Path(f"{shared.args.model_dir}/{model_name}/gpt-j-6B/")
+        if tokenizer_external_path.exists():
+            tokenizer = AutoTokenizer.from_pretrained(tokenizer_external_path)
+        elif tokenizer_internal_path.exists():
+            tokenizer = AutoTokenizer.from_pretrained(tokenizer_internal_path)
     elif type(model) is transformers.LlamaForCausalLM:
         tokenizer = None
 
