@@ -714,10 +714,6 @@ def create_interface():
         if shared.args.extensions is not None:
             extensions_module.create_extensions_block()
 
-        # Create the invisible elements that define the API
-        if not shared.is_chat():
-            api.create_apis()
-
         # chat mode event handlers
         if shared.is_chat():
             shared.input_params = [shared.gradio[k] for k in ['Chat input', 'interface_state']]
