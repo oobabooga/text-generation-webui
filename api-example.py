@@ -43,7 +43,7 @@ params = {
 }
 
 # Input prompt
-prompt = "What I would like to say is the following: "
+prompt = "In order to make homemade bread, follow these steps:\n1)"
 
 payload = json.dumps([prompt, params])
 

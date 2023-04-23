@@ -16,12 +16,12 @@ def build_parameters(body):
     prompt = '\n'.join(prompt_lines)
 
     generate_params = {
-        'max_new_tokens': int(body.get('max_length', 200)),
+        'max_new_tokens': int(body.get('max_new_tokens', body.get('max_length', 200))),
         'do_sample': bool(body.get('do_sample', True)),
         'temperature': float(body.get('temperature', 0.5)),
         'top_p': float(body.get('top_p', 1)),
-        'typical_p': float(body.get('typical', 1)),
-        'repetition_penalty': float(body.get('rep_pen', 1.1)),
+        'typical_p': float(body.get('typical_p', body.get('typical', 1))),
+        'repetition_penalty': float(body.get('repetition_penalty', body.get('rep_pen', 1.1))),
         'encoder_repetition_penalty': float(body.get('encoder_repetition_penalty', 1.0)),
         'top_k': int(body.get('top_k', 0)),
         'min_length': int(body.get('min_length', 0)),

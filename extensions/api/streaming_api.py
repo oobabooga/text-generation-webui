@@ -28,7 +28,7 @@ async def _handle_connection(websocket, path):
             prompt, generate_params, stopping_strings=stopping_strings)
 
         # As we stream, only send the new bytes.
-        skip_index = len(prompt)
+        skip_index = len(prompt) if not shared.is_chat() else 0
         message_num = 0
 
         for a in generator:
