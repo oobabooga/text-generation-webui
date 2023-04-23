@@ -1,19 +1,19 @@
 import base64
+import re
+import time
 from dataclasses import dataclass
 from functools import partial
 from io import BytesIO
-import re
-import time
+
 import gradio as gr
 import torch
+from huggingface_hub import hf_hub_download
+from PIL import Image
+from transformers import CLIPImageProcessor, CLIPVisionModel
 
 from modules import shared
 from modules.extensions import apply_extensions
-from modules.text_generation import (encode, get_max_prompt_length)
-from PIL import Image
-
-from transformers import CLIPImageProcessor, CLIPVisionModel
-from huggingface_hub import hf_hub_download
+from modules.text_generation import encode, get_max_prompt_length
 
 params = {
     "add_all_images_to_prompt": False,
