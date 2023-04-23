@@ -136,7 +136,7 @@ The [4-bit LoRA monkeypatch](GPTQ-models-(4-bit-mode).md#using-loras-in-4-bit-mo
 
 LoRA training was contributed by [mcmonkey4eva](https://github.com/mcmonkey4eva) in PR [#570](https://github.com/oobabooga/text-generation-webui/pull/570).
 
-#### Using the original alpaca-lora code
+### Using the original alpaca-lora code
 
 Kept here for reference. The Training tab has much more features than this method.
 

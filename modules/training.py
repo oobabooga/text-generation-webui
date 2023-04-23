@@ -18,7 +18,7 @@ from modules.evaluate import calculate_perplexity, generate_markdown_table, save
 from server import get_available_loras, get_available_models
 
 # This mapping is from a very recent commit, not yet released.
-# If not available, default to a backup map for the 3 safe model types.
+# If not available, default to a backup map for some common model types.
 try:
     from peft.utils.other import \
         TRANSFORMERS_MODELS_TO_LORA_TARGET_MODULES_MAPPING as \
@@ -225,8 +225,8 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
                 yield "Model ID not matched due to LoRA loading. Consider reloading base model. *(Will continue anyway in 5 seconds, press `Interrupt` to stop.)*"
                 print("Warning: Model ID not matched due to LoRA loading. Consider reloading base model.")
         else:
-            yield "LoRA training has only currently been validated for LLaMA, OPT, and GPT-J models. Unexpected errors may follow. *(Will continue anyway in 5 seconds, press `Interrupt` to stop.)*"
-            print(f"Warning: LoRA training has only currently been validated for LLaMA, OPT, and GPT-J models. (Found model type: {model_type})")
+            yield "LoRA training has only currently been validated for LLaMA, OPT, GPT-J, and GPT-NeoX models. Unexpected errors may follow. *(Will continue anyway in 5 seconds, press `Interrupt` to stop.)*"
+            print(f"Warning: LoRA training has only currently been validated for LLaMA, OPT, GPT-J, and GPT-NeoX models. (Found model type: {model_type})")
         time.sleep(5)
 
     if shared.args.wbits > 0 and not shared.args.monkey_patch:
