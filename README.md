@@ -269,6 +269,13 @@ Optionally, you can use the following command-line flags:
 | `--auto-launch`                       | Open the web UI in the default browser upon launch. |
 | `--gradio-auth-path GRADIO_AUTH_PATH` | Set the gradio authentication file path. The file should contain one or more user:password pairs in this format: "u1:p1,u2:p2,u3:p3" |
 
+#### API
+
+| Flag                                  | Description |
+|---------------------------------------|-------------|
+| `--api`                               | Enable the API extension. |
+| `--public-api`                        | Create a public URL for the API using Cloudfare. |
+
 Out of memory errors? [Check the low VRAM guide](docs/Low-VRAM-guide.md).
 
 ## Presets
