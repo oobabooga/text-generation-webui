@@ -4,6 +4,18 @@ This is possible thanks to [@qwopqwop200](https://github.com/qwopqwop200/GPTQ-fo
 
 GPTQ is a clever quantization algorithm that lightly reoptimizes the weights during quantization so that the accuracy loss is compensated relative to a round-to-nearest quantization. See the paper for more details: https://arxiv.org/abs/2210.17323
 
+## GPTQ-for-LLaMa branches
+
+Different branches of GPTQ-for-LLaMa are available:
+
+| Branch | Comment |
+|----|----|
+| [Old CUDA branch (recommended)](https://github.com/oobabooga/GPTQ-for-LLaMa/) | The fastest branch, works on Windows and Linux. |
+| [Up-to-date triton branch](https://github.com/qwopqwop200/GPTQ-for-LLaMa) | Slightly more precise than the old CUDA branch from 13b upwards, significantly more precise for 7b. 2x slower for small context size and only works on Linux. |
+| [Up-to-date CUDA branch](https://github.com/qwopqwop200/GPTQ-for-LLaMa/tree/cuda) | As precise as the up-to-date triton branch, 10x slower than the old cuda branch for small context size. |
+
+Overall, I recommend using the old CUDA branch. It is included by default in the one-click-installer for this web UI.
+
 ## Installation
 
 ### Step 0: install nvcc
@@ -31,7 +43,7 @@ python setup_cuda.py install
 
 You are going to need to have a C++ compiler installed into your system for the last command. On Linux, `sudo apt install build-essential` or equivalent is enough.
 
-https://github.com/oobabooga/GPTQ-for-LLaMa corresponds to commit `a6f363e3f93b9fb5c26064b5ac7ed58d22e3f773` in the `cuda` branch of the original repository and is recommended by default for stability. Some models might require you to use the up-to-date CUDA or triton branches:
+If you want to you to use the up-to-date CUDA or triton branches instead of the old CUDA branch, use these commands:
 
 ```
 cd repositories
@@ -57,7 +69,7 @@ https://github.com/qwopqwop200/GPTQ-for-LLaMa
 * Converted without `group-size` (better for the 7b model): https://github.com/oobabooga/text-generation-webui/pull/530#issuecomment-1483891617
 * Converted with `group-size` (better from 13b upwards): https://github.com/oobabooga/text-generation-webui/pull/530#issuecomment-1483941105 
 
-Note: the tokenizer files in those torrents are not up to date.
+⚠️ The tokenizer files in the sources above may be outdated. Make sure to obtain the universal LLaMA tokenizer as described [here](https://github.com/oobabooga/text-generation-webui/blob/main/docs/LLaMA-model.md#option-1-pre-converted-weights).
 
 ### Step 3: Start the web UI:
 
