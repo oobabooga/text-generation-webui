@@ -35,7 +35,7 @@ def run(context):
 
     if response.status_code == 200:
         result = response.json()['results'][0]['text']
-        print(prompt+result)
+        print(prompt + result)
 
 if __name__ == '__main__':
     prompt = "In order to make homemade bread, follow these steps:\n1)"
