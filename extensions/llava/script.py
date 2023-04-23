@@ -59,7 +59,6 @@ class LLaVAEmbedder:
         self.projector_device = self._get_device("projector_device")
         self.projector_dtype = self._get_dtype("projector_bits")
         self.image_processor, self.vision_tower, self.mm_projector = self._load_models()
-        print(params, self.clip_device, self.clip_dtype, self.projector_device, self.projector_dtype)
 
     def _get_device(self, setting_name):
         if params[setting_name] is None:
@@ -70,15 +69,21 @@ class LLaVAEmbedder:
         return torch.float32 if int(params[setting_name]) == 32 else torch.float16
 
     def _load_models(self):
+        start_ts = time.time()
+
+        print(f"LLaVA - Loading {LLaVAEmbedder.CLIP_VIT_HUB_NAME} as {self.clip_dtype} on {self.clip_device}...")
         image_processor = CLIPImageProcessor.from_pretrained(LLaVAEmbedder.CLIP_VIT_HUB_NAME, torch_dtype=self.clip_dtype)
         vision_tower = CLIPVisionModel.from_pretrained(LLaVAEmbedder.CLIP_VIT_HUB_NAME, torch_dtype=self.clip_dtype).to(self.clip_device)
 
+        print(f"LLaVA - Loading {LLaVAEmbedder.PROJECTOR_HUB_NAME} as {self.projector_dtype} on {self.projector_device}...")
         projector_path = hf_hub_download(LLaVAEmbedder.PROJECTOR_HUB_NAME, LLaVAEmbedder.PROJECTOR_FILE)
         mm_projector = torch.nn.Linear(1024, 5120)
         projector_data = torch.load(projector_path)
         mm_projector.weight = torch.nn.Parameter(projector_data['model.mm_projector.weight'].to(dtype=self.projector_dtype), False)
         mm_projector.bias = torch.nn.Parameter(projector_data['model.mm_projector.bias'].to(dtype=self.projector_dtype), False)
         mm_projector = mm_projector.to(self.projector_device)
+
+        print(f"LLaVA supporting models loaded, took {time.time() - start_ts:.2f} seconds")
         return image_processor, vision_tower, mm_projector
 
     def _update_prompt(self, prompt, images):
@@ -239,7 +244,7 @@ def tokenizer_modifier(state, prompt, input_ids, input_embeds):
         return prompt, input_ids, input_embeds
 
     prompt, input_ids, input_embeds, total_embedded = llava_embedder.forward(prompt, images, state)
-    print(f'Embedded {total_embedded} image(s) in {time.time()-start_ts:.2f}s')
+    print(f'LLaVA - Embedded {total_embedded} image(s) in {time.time()-start_ts:.2f}s')
     return prompt, input_ids.unsqueeze(0).to(shared.model.device), input_embeds.unsqueeze(0).to(shared.model.device)
 
 
