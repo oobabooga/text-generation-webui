@@ -1,5 +1,3 @@
-import json
-
 import requests
 
 # For local streaming, the websockets are hosted without ssl - http://
