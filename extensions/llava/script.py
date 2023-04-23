@@ -139,7 +139,6 @@ def tokenizer_modifier(state, prompt, input_ids, input_embeds):
             prompt = re.sub(r"<image:([A-Za-z0-9+/=]+)>", replace_token, prompt, 1)
         images = image_processor(images, return_tensors='pt')['pixel_values']
         images = images.to(vision_tower.device, dtype=torch.float16)
-    print(prompt)
     input_ids = encode(prompt, add_bos_token=state['add_bos_token'], truncation_length=get_max_prompt_length(state))
     inputs_embeds = shared.model.model.embed_tokens(input_ids)
     with torch.no_grad():
