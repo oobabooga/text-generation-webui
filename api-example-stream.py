@@ -42,6 +42,8 @@ async def run(context):
     async with websockets.connect(URI) as websocket:
         await websocket.send(json.dumps(request))
 
+        yield context # Remove this if you just want to see the reply
+
         while True:
             incoming_data = await websocket.recv()
             incoming_data = json.loads(incoming_data)
@@ -52,12 +54,13 @@ async def run(context):
                 case 'stream_end':
                     return
 
-prompt = "In order to make homemade bread, follow these steps:\n1)"
 
 async def print_response_stream(prompt):
     async for response in run(prompt):
         print(response, end='')
         sys.stdout.flush() # If we don't flush, we won't see tokens in realtime.
 
+
 if __name__ == '__main__':
+    prompt = "In order to make homemade bread, follow these steps:\n1)"
     asyncio.run(print_response_stream(prompt))
