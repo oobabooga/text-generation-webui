@@ -241,10 +241,8 @@ def continue_wrapper(text, state):
         yield chat_html_wrapper(shared.history['visible'], state['name1'], state['name2'], state['mode'])
     else:
         # Yield ' ...'
-        last_visible_user = shared.history['visible'][-1][0]
         yield chat_html_wrapper(shared.history['visible'][:-1] + [[shared.history['visible'][-1][0], shared.history['visible'][-1][1] + ' ...']], state['name1'], state['name2'], state['mode'])
         for history in chatbot_wrapper(shared.history['internal'][-1][0], state, _continue=True):
-            shared.history['visible'][-1] = [last_visible_user, history[-1][1]]
             yield chat_html_wrapper(shared.history['visible'], state['name1'], state['name2'], state['mode'])
 
 
