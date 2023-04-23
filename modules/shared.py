@@ -56,7 +56,7 @@ settings = {
     'chat_default_extensions': ["gallery"],
     'presets': {
         'default': 'Default',
-        '.*(alpaca|llama)': "LLaMA-Precise",
+        '.*(alpaca|llama|llava)': "LLaMA-Precise",
         '.*pygmalion': 'NovelAI-Storywriter',
         '.*RWKV': 'Naive',
     },
