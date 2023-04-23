@@ -135,7 +135,7 @@ def load_quantized(model_name):
     # Find the model type
     if not shared.args.model_type:
         name = model_name.lower()
-        if any((k in name for k in ['llama', 'alpaca', 'vicuna'])):
+        if any((k in name for k in ['llama', 'alpaca', 'vicuna', 'llava'])):
             model_type = 'llama'
         elif any((k in name for k in ['opt-', 'galactica'])):
             model_type = 'opt'
