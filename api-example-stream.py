@@ -18,12 +18,12 @@ async def run(context):
     # Note: the selected defaults change from time to time.
     request = {
         'prompt': context,
-        'max_length': 250,
+        'max_new_tokens': 250,
         'do_sample': True,
         'temperature': 1.3,
         'top_p': 0.1,
-        'typical': 1,
-        'rep_pen': 1.18,
+        'typical_p': 1,
+        'repetition_penalty': 1.18,
         'top_k': 40,
         'min_length': 0,
         'no_repeat_ngram_size': 0,
