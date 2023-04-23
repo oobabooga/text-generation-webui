@@ -1,1 +1,2 @@
 flask_cloudflared==0.0.12
+websockets==11.0.2

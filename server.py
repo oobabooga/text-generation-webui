@@ -40,7 +40,7 @@ import yaml
 from PIL import Image
 
 import modules.extensions as extensions_module
-from modules import api, chat, shared, training, ui
+from modules import chat, shared, training, ui
 from modules.html_generator import chat_html_wrapper
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, load_soft_prompt, unload_model
@@ -713,10 +713,6 @@ def create_interface():
         # Extensions block
         if shared.args.extensions is not None:
             extensions_module.create_extensions_block()
-
-        # Create the invisible elements that define the API
-        if not shared.is_chat():
-            api.create_apis()
 
         # chat mode event handlers
         if shared.is_chat():
