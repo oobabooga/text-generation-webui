@@ -70,6 +70,13 @@ class Handler(BaseHTTPRequestHandler):
 
             # Try to use openai defaults or map them to something with the same intent
 
+            stopping_strings = default(shared.settings, 'custom_stopping_strings', [])
+            if 'stop' in body:
+                if isinstance(body['stop'], str):
+                    stopping_strings = [body['stop']]
+                elif isinstance(body['stop'], list):
+                    stopping_strings = body['stop']
+
             req_params = {
                 'max_new_tokens': default(body, 'max_tokens', default(shared.settings, 'max_new_tokens', 16)),
                 'temperature': default(body, 'temperature', 1.0),
@@ -82,7 +89,7 @@ class Handler(BaseHTTPRequestHandler):
                 'encoder_repetition_penalty': default(body, 'frequency_penalty', 1.0),
                 # stopping strings are tricky to handle... not sure this ends up as expected wrt \n, quotes and spaces.
                 #'stopping_strings': default(body, 'stop', default(shared.settings, 'stopping_strings', '')),
-                'custom_stopping_strings': default(body, 'stop', default(shared.settings, 'custom_stopping_strings', [])),
+                'custom_stopping_strings': stopping_strings,
                 'suffix': body.get('suffix', None),
                 'stream': default(body, 'stream', False),
                 'echo': default(body, 'echo', False),
@@ -124,7 +131,10 @@ class Handler(BaseHTTPRequestHandler):
                 stream_object_type = 'text_completion.chunk'
                 object_type = 'text_completion'
 
-                prompt = body['prompt']
+                # ... encoded as a string, array of strings, array of tokens, or array of token arrays.
+                prompt = body['prompt'] # XXX this can be different types
+                if isinstance(prompt, list):
+                    prompt = ''.join(prompt)
 
                 token_count = len(encode(prompt)[0])
                 if token_count >= req_params['truncation_length']:
@@ -171,22 +181,19 @@ class Handler(BaseHTTPRequestHandler):
                 prompt = system_msg + '\n' +  chat_msg
                 token_count = len(encode(prompt)[0])
 
-            # XXX this is borken
-            #stopping_strings = '' #ast.literal_eval(f"[{req_params['custom_stopping_strings']}]")
-
             shared.args.no_stream = not req_params['stream']
             if not shared.args.no_stream:
                 shared.args.chat = True
                 # begin streaming
                 chunk = {
-                    "choices": [{
-                        "finish_reason": None,
-                        "index": 0
-                    }],
-                    "created": created_time,
                     "id": cmpl_id,
-                    "model": shared.model_name,
                     "object": stream_object_type,
+                    "created": created_time,
+                    "model": shared.model_name,
+                    "choices": [{
+                        "index": 0,
+                        "finish_reason": None,
+                    }],
                 }
 
                 if stream_object_type == 'text_completion.chunk':
@@ -200,8 +207,9 @@ class Handler(BaseHTTPRequestHandler):
 
                 response = 'data: ' + json.dumps(chunk) + '\n'
                 self.wfile.write(response.encode('utf-8'))
-                
-            generator = generate_reply(prompt, req_params, stopping_strings=req_params['custom_stopping_strings'])
+
+            # generate reply #######################################
+            generator = generate_reply(prompt, req_params, stopping_strings=stopping_strings)
 
             answer = ''
             seen_content = ''
@@ -211,9 +219,41 @@ class Handler(BaseHTTPRequestHandler):
                     answer = a
                 else:
                     answer = a[0]
+
+                stop_string_found = False
+
+                for string in stopping_strings:
+                    idx = answer.find(string)
+                    if idx != -1:
+                        answer = answer[:idx] # clip it.
+                        stop_string_found = True
+
+                if stop_string_found:
+                    break
+
+                # If something like "\nYo" is generated just before "\nYou:"
+                # is completed, buffer and generate more, don't send it
+                buffer_and_continue = False
+
+                for string in stopping_strings:
+                    for j in range(len(string) - 1, 0, -1):
+                        if answer[-j:] == string[:j]:
+                            buffer_and_continue = True
+                            break
+                    else:
+                        continue
+                    break
+
+                if buffer_and_continue:
+                    continue
+
                 if not shared.args.no_stream:
                     # Streaming
                     new_content = answer[len(seen_content):]
+
+                    if not new_content or chr(0xfffd) in new_content: # partial unicode character, don't send it yet.
+                        continue
+                    
                     seen_content = answer
                     chunk = {
                         "id": cmpl_id,
