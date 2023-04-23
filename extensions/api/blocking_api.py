@@ -72,7 +72,7 @@ def _run_server(port: int, share: bool=False):
     server = ThreadingHTTPServer((address, port), Handler)
 
     def on_start(public_url: str):
-        print(f'Starting streaming server at public url {public_url}/api')
+        print(f'Starting non-streaming server at public url {public_url}/api')
 
     if share:
         try:
