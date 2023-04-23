@@ -59,6 +59,7 @@ class Handler(BaseHTTPRequestHandler):
                 'truncation_length': int(body.get('truncation_length', 2048)),
                 'ban_eos_token': bool(body.get('ban_eos_token', False)),
                 'skip_special_tokens': bool(body.get('skip_special_tokens', True)),
+                'custom_stopping_strings': '',  # leave this blank
                 'stopping_strings': body.get('stopping_strings', []),
             }
             stopping_strings = generate_params.pop('stopping_strings')
@@ -72,10 +73,11 @@ class Handler(BaseHTTPRequestHandler):
 
             response = json.dumps({
                 'results': [{
-                    'text': answer[len(prompt):]
+                    'text': answer if shared.is_chat() else answer[len(prompt):]
                 }]
             })
             self.wfile.write(response.encode('utf-8'))
+
         elif self.path == '/api/v1/token-count':
             # Not compatible with KoboldAI api
             self.send_response(200)
@@ -89,6 +91,7 @@ class Handler(BaseHTTPRequestHandler):
                 }]
             })
             self.wfile.write(response.encode('utf-8'))
+
         else:
             self.send_error(404)
 

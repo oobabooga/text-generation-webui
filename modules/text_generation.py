@@ -24,7 +24,7 @@ def get_max_prompt_length(state):
 
 
 def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_length=None):
-    if any((shared.is_RWKV, shared.is_llamacpp)):
+    if shared.model_type in ['rwkv', 'llamacpp']:
         input_ids = shared.tokenizer.encode(str(prompt))
         input_ids = np.array(input_ids).reshape(1, len(input_ids))
         return input_ids
@@ -44,7 +44,7 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
     if truncation_length is not None:
         input_ids = input_ids[:, -truncation_length:]
 
-    if any((shared.is_RWKV, shared.is_llamacpp, shared.args.cpu)):
+    if shared.model_type in ['rwkv', 'llamacpp'] or shared.args.cpu:
         return input_ids
     elif shared.args.flexgen:
         return input_ids.numpy()
@@ -97,10 +97,10 @@ def fix_galactica(s):
 
 def formatted_outputs(reply, model_name):
     if not shared.is_chat():
-        if 'galactica' in model_name.lower():
+        if shared.model_type == 'galactica':
             reply = fix_galactica(reply)
             return reply, reply, generate_basic_html(reply)
-        elif any((k in shared.model_name.lower() for k in ['gpt4chan', 'gpt-4chan'])):
+        elif shared.model_type == 'gpt4chan':
             reply = fix_gpt4chan(reply)
             return reply, 'Only applicable for GALACTICA models.', generate_4chan_html(reply)
         else:
@@ -142,7 +142,7 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
 
     # These models are not part of Hugging Face, so we handle them
     # separately and terminate the function call earlier
-    if any((shared.is_RWKV, shared.is_llamacpp)):
+    if shared.model_type in ['rwkv', 'llamacpp']:
 
         if shared.args.verbose:
             print(f'\n\n{question}\n--------------------\n')

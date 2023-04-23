@@ -6,11 +6,10 @@ import yaml
 model = None
 tokenizer = None
 model_name = "None"
+model_type = None
 lora_names = []
 soft_prompt_tensor = None
 soft_prompt = False
-is_RWKV = False
-is_llamacpp = False
 
 # Chat variables
 history = {'internal': [], 'visible': []}
@@ -124,9 +123,9 @@ parser.add_argument('--model_type', type=str, help='Model type of pre-quantized 
 parser.add_argument('--groupsize', type=int, default=-1, help='Group size.')
 parser.add_argument('--pre_layer', type=int, default=0, help='The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models.')
 parser.add_argument('--monkey-patch', action='store_true', help='Apply the monkey patch for using LoRAs with quantized models.')
-parser.add_argument('--no-quant_attn', action='store_true', help='(triton) Disable quant attention. If you encounter incoherent results try disabling this.')
-parser.add_argument('--no-warmup_autotune', action='store_true', help='(triton) Disable warmup autotune.')
-parser.add_argument('--no-fused_mlp', action='store_true', help='(triton) Disable fused mlp. If you encounter "Unexpected mma -> mma layout conversion" try disabling this.')
+parser.add_argument('--quant_attn', action='store_true', help='(triton) Enable quant attention.')
+parser.add_argument('--warmup_autotune', action='store_true', help='(triton) Enable warmup autotune.')
+parser.add_argument('--fused_mlp', action='store_true', help='(triton) Enable fused mlp.')
 
 # FlexGen
 parser.add_argument('--flexgen', action='store_true', help='Enable the use of FlexGen offloading.')
