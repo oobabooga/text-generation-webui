@@ -25,7 +25,7 @@ class LlamaCppModel:
             'n_ctx': 2048,
             'seed': 0,
             'n_threads': shared.args.threads or None,
-            'n_batch': shared.args.nbatch
+            'n_batch': shared.args.n_batch
         }
         self.model = Llama(**params)
 
