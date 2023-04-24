@@ -24,7 +24,7 @@ def get_max_prompt_length(state):
 
 
 def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_length=None):
-    if any((shared.is_RWKV, shared.is_llamacpp)):
+    if shared.model_type in ['rwkv', 'llamacpp']:
         input_ids = shared.tokenizer.encode(str(prompt))
         input_ids = np.array(input_ids).reshape(1, len(input_ids))
         return input_ids
@@ -44,7 +44,7 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
     if truncation_length is not None:
         input_ids = input_ids[:, -truncation_length:]
 
-    if any((shared.is_RWKV, shared.is_llamacpp, shared.args.cpu)):
+    if shared.model_type in ['rwkv', 'llamacpp'] or shared.args.cpu:
         return input_ids
     elif shared.args.flexgen:
         return input_ids.numpy()
@@ -97,10 +97,10 @@ def fix_galactica(s):
 
 def formatted_outputs(reply, model_name):
     if not shared.is_chat():
-        if 'galactica' in model_name.lower():
+        if shared.model_type == 'galactica':
             reply = fix_galactica(reply)
             return reply, reply, generate_basic_html(reply)
-        elif any((k in shared.model_name.lower() for k in ['gpt4chan', 'gpt-4chan'])):
+        elif shared.model_type == 'gpt4chan':
             reply = fix_gpt4chan(reply)
             return reply, 'Only applicable for GALACTICA models.', generate_4chan_html(reply)
         else:
@@ -138,11 +138,11 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
 
     original_question = question
     if not shared.is_chat():
-        question = apply_extensions(question, 'input')
+        question = apply_extensions('input', question)
 
     # These models are not part of Hugging Face, so we handle them
     # separately and terminate the function call earlier
-    if any((shared.is_RWKV, shared.is_llamacpp)):
+    if shared.model_type in ['rwkv', 'llamacpp']:
 
         if shared.args.verbose:
             print(f'\n\n{question}\n--------------------\n')
@@ -155,7 +155,7 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
                 reply = shared.model.generate(context=question, **generate_params)
                 output = original_question + reply
                 if not shared.is_chat():
-                    reply = original_question + apply_extensions(reply, 'output')
+                    reply = original_question + apply_extensions('output', reply)
                 yield formatted_outputs(reply, shared.model_name)
             else:
                 if not shared.is_chat():
@@ -166,7 +166,7 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
                 for reply in shared.model.generate_with_streaming(context=question, **generate_params):
                     output = original_question + reply
                     if not shared.is_chat():
-                        reply = original_question + apply_extensions(reply, 'output')
+                        reply = original_question + apply_extensions('output', reply)
                     yield formatted_outputs(reply, shared.model_name)
 
         except Exception:
@@ -179,7 +179,6 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
             return
 
     input_ids = encode(question, add_bos_token=state['add_bos_token'], truncation_length=get_max_prompt_length(state))
-    original_input_ids = input_ids
     output = input_ids[0]
 
     if shared.args.verbose:
@@ -218,10 +217,16 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
         generate_params.update({'synced_gpus': True})
     if shared.soft_prompt:
         inputs_embeds, filler_input_ids = generate_softprompt_input_tensors(input_ids)
+        question, filler_input_ids, inputs_embeds = apply_extensions('tokenizer', state, question, filler_input_ids, inputs_embeds)
+        original_input_ids = input_ids
         generate_params.update({'inputs_embeds': inputs_embeds})
         generate_params.update({'inputs': filler_input_ids})
     else:
+        question, input_ids, inputs_embeds = apply_extensions('tokenizer', state, question, input_ids, None)
+        original_input_ids = input_ids
         generate_params.update({'inputs': input_ids})
+        if inputs_embeds is not None:
+            generate_params.update({'inputs_embeds': inputs_embeds})
 
     try:
         # Generate the entire reply at once.
@@ -237,7 +242,7 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
             new_tokens = len(output) - len(input_ids[0])
             reply = decode(output[-new_tokens:], state['skip_special_tokens'])
             if not shared.is_chat():
-                reply = original_question + apply_extensions(reply, 'output')
+                reply = original_question + apply_extensions('output', reply)
 
             yield formatted_outputs(reply, shared.model_name)
 
@@ -265,7 +270,7 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
                     new_tokens = len(output) - len(input_ids[0])
                     reply = decode(output[-new_tokens:], state['skip_special_tokens'])
                     if not shared.is_chat():
-                        reply = original_question + apply_extensions(reply, 'output')
+                        reply = original_question + apply_extensions('output', reply)
 
                     if output[-1] in eos_token_ids:
                         break
@@ -285,7 +290,7 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
                 new_tokens = len(output) - len(original_input_ids[0])
                 reply = decode(output[-new_tokens:], state['skip_special_tokens'])
                 if not shared.is_chat():
-                    reply = original_question + apply_extensions(reply, 'output')
+                    reply = original_question + apply_extensions('output', reply)
 
                 if np.count_nonzero(np.isin(input_ids[0], eos_token_ids)) < np.count_nonzero(np.isin(output, eos_token_ids)):
                     break

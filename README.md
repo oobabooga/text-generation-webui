@@ -220,6 +220,7 @@ Optionally, you can use the following command-line flags:
 | Flag        | Description |
 |-------------|-------------|
 | `--threads` | Number of threads to use in llama.cpp. |
+| `--n_batch` | Processing batch size for llama.cpp. |
 
 #### GPTQ
 
@@ -230,9 +231,9 @@ Optionally, you can use the following command-line flags:
 | `--groupsize GROUPSIZE`   | Group size. |
 | `--pre_layer PRE_LAYER`   | The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models. |
 | `--monkey-patch`          | Apply the monkey patch for using LoRAs with quantized models.
-| `--no-quant_attn`         | (triton) Disable quant attention. If you encounter incoherent results try disabling this.
-| `--no-warmup_autotune`    | (triton) Disable warmup autotune.
-| `--no-fused_mlp`          | (triton) Disable fused mlp. If you encounter "Unexpected mma -> mma layout conversion" try disabling this.
+| `--quant_attn`         | (triton) Enable quant attention.
+| `--warmup_autotune`    | (triton) Enable warmup autotune.
+| `--fused_mlp`          | (triton) Enable fused mlp.
 
 #### FlexGen
 
@@ -268,6 +269,13 @@ Optionally, you can use the following command-line flags:
 | `--share`                             | Create a public URL. This is useful for running the web UI on Google Colab or similar. |
 | `--auto-launch`                       | Open the web UI in the default browser upon launch. |
 | `--gradio-auth-path GRADIO_AUTH_PATH` | Set the gradio authentication file path. The file should contain one or more user:password pairs in this format: "u1:p1,u2:p2,u3:p3" |
+
+#### API
+
+| Flag                                  | Description |
+|---------------------------------------|-------------|
+| `--api`                               | Enable the API extension. |
+| `--public-api`                        | Create a public URL for the API using Cloudfare. |
 
 Out of memory errors? [Check the low VRAM guide](docs/Low-VRAM-guide.md).
 

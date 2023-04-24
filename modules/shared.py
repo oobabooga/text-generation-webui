@@ -6,11 +6,10 @@ import yaml
 model = None
 tokenizer = None
 model_name = "None"
+model_type = None
 lora_names = []
 soft_prompt_tensor = None
 soft_prompt = False
-is_RWKV = False
-is_llamacpp = False
 
 # Chat variables
 history = {'internal': [], 'visible': []}
@@ -20,6 +19,9 @@ processing_message = '*Is typing...*'
 
 # UI elements (buttons, sliders, HTML, etc)
 gradio = {}
+
+# For keeping the values of UI elements on page reload
+persistent_interface_state = {}
 
 # Generation input parameters
 input_params = []
@@ -57,7 +59,7 @@ settings = {
     'chat_default_extensions': ["gallery"],
     'presets': {
         'default': 'Default',
-        '.*(alpaca|llama)': "LLaMA-Precise",
+        '.*(alpaca|llama|llava)': "LLaMA-Precise",
         '.*pygmalion': 'NovelAI-Storywriter',
         '.*RWKV': 'Naive',
     },
@@ -117,6 +119,7 @@ parser.add_argument('--trust-remote-code', action='store_true', help="Set trust_
 
 # llama.cpp
 parser.add_argument('--threads', type=int, default=0, help='Number of threads to use in llama.cpp.')
+parser.add_argument('--n_batch', type=int, default=8, help='Processing batch size for llama.cpp.')
 
 # GPTQ
 parser.add_argument('--wbits', type=int, default=0, help='Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported.')
@@ -124,9 +127,9 @@ parser.add_argument('--model_type', type=str, help='Model type of pre-quantized 
 parser.add_argument('--groupsize', type=int, default=-1, help='Group size.')
 parser.add_argument('--pre_layer', type=int, default=0, help='The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models.')
 parser.add_argument('--monkey-patch', action='store_true', help='Apply the monkey patch for using LoRAs with quantized models.')
-parser.add_argument('--no-quant_attn', action='store_true', help='(triton) Disable quant attention. If you encounter incoherent results try disabling this.')
-parser.add_argument('--no-warmup_autotune', action='store_true', help='(triton) Disable warmup autotune.')
-parser.add_argument('--no-fused_mlp', action='store_true', help='(triton) Disable fused mlp. If you encounter "Unexpected mma -> mma layout conversion" try disabling this.')
+parser.add_argument('--quant_attn', action='store_true', help='(triton) Enable quant attention.')
+parser.add_argument('--warmup_autotune', action='store_true', help='(triton) Enable warmup autotune.')
+parser.add_argument('--fused_mlp', action='store_true', help='(triton) Enable fused mlp.')
 
 # FlexGen
 parser.add_argument('--flexgen', action='store_true', help='Enable the use of FlexGen offloading.')
@@ -151,6 +154,11 @@ parser.add_argument('--share', action='store_true', help='Create a public URL. T
 parser.add_argument('--auto-launch', action='store_true', default=False, help='Open the web UI in the default browser upon launch.')
 parser.add_argument("--gradio-auth-path", type=str, help='Set the gradio authentication file path. The file should contain one or more user:password pairs in this format: "u1:p1,u2:p2,u3:p3"', default=None)
 
+# API
+parser.add_argument('--api', action='store_true', help='Enable the API extension.')
+parser.add_argument('--public-api', action='store_true', help='Create a public URL for the API using Cloudfare.')
+
+
 args = parser.parse_args()
 args_defaults = parser.parse_args([])
 
@@ -171,6 +179,13 @@ if args.trust_remote_code:
     print("Warning: trust_remote_code is enabled. This is dangerous.\n")
 if args.share:
     print("Warning: the gradio \"share link\" feature downloads a proprietary and\nunaudited blob to create a reverse tunnel. This is potentially dangerous.\n")
+
+# Activating the API extension
+if args.api or args.public_api:
+    if args.extensions is None:
+        args.extensions = ['api']
+    elif 'api' not in args.extensions:
+        args.extensions.append('api')
 
 
 def is_chat():

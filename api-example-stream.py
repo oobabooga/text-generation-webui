@@ -1,39 +1,30 @@
-'''
-
-Contributed by SagsMug. Thank you SagsMug.
-https://github.com/oobabooga/text-generation-webui/pull/175
-
-'''
-
 import asyncio
 import json
-import random
-import string
+import sys
 
-import websockets
+try:
+    import websockets
+except ImportError:
+    print("Websockets package not found. Make sure it's installed.") 
 
-# Gradio changes this index from time to time. To rediscover it, set VISIBLE = False in
-# modules/api.py and use the dev tools to inspect the request made after clicking on the
-# button called "Run" at the bottom of the UI
-GRADIO_FN = 34
+# For local streaming, the websockets are hosted without ssl - ws://
+HOST = 'localhost:5005'
+URI = f'ws://{HOST}/api/v1/stream'
 
-
-def random_hash():
-    letters = string.ascii_lowercase + string.digits
-    return ''.join(random.choice(letters) for i in range(9))
-
+# For reverse-proxied streaming, the remote will likely host with ssl - wss://
+# URI = 'wss://your-uri-here.trycloudflare.com/api/v1/stream'
 
 async def run(context):
-    server = "127.0.0.1"
-    params = {
-        'max_new_tokens': 200,
+    # Note: the selected defaults change from time to time.
+    request = {
+        'prompt': context,
+        'max_new_tokens': 250,
         'do_sample': True,
-        'temperature': 0.72,
-        'top_p': 0.73,
+        'temperature': 1.3,
+        'top_p': 0.1,
         'typical_p': 1,
-        'repetition_penalty': 1.1,
-        'encoder_repetition_penalty': 1.0,
-        'top_k': 0,
+        'repetition_penalty': 1.18,
+        'top_k': 40,
         'min_length': 0,
         'no_repeat_ngram_size': 0,
         'num_beams': 1,
@@ -45,48 +36,31 @@ async def run(context):
         'truncation_length': 2048,
         'ban_eos_token': False,
         'skip_special_tokens': True,
-        'stopping_strings': [],
+        'stopping_strings': []
     }
-    payload = json.dumps([context, params])
-    session = random_hash()
 
-    async with websockets.connect(f"ws://{server}:7860/queue/join") as websocket:
-        while content := json.loads(await websocket.recv()):
-            # Python3.10 syntax, replace with if elif on older
-            match content["msg"]:
-                case "send_hash":
-                    await websocket.send(json.dumps({
-                        "session_hash": session,
-                        "fn_index": GRADIO_FN
-                    }))
-                case "estimation":
-                    pass
-                case "send_data":
-                    await websocket.send(json.dumps({
-                        "session_hash": session,
-                        "fn_index": GRADIO_FN,
-                        "data": [
-                            payload
-                        ]
-                    }))
-                case "process_starts":
-                    pass
-                case "process_generating" | "process_completed":
-                    yield content["output"]["data"][0]
-                    # You can search for your desired end indicator and
-                    #  stop generation by closing the websocket here
-                    if (content["msg"] == "process_completed"):
-                        break
+    async with websockets.connect(URI) as websocket:
+        await websocket.send(json.dumps(request))
 
-prompt = "What I would like to say is the following: "
+        yield context # Remove this if you just want to see the reply
+
+        while True:
+            incoming_data = await websocket.recv()
+            incoming_data = json.loads(incoming_data)
+
+            match incoming_data['event']:
+                case 'text_stream':
+                    yield incoming_data['text']
+                case 'stream_end':
+                    return
 
 
-async def get_result():
+async def print_response_stream(prompt):
     async for response in run(prompt):
-        # Print intermediate steps
-        print(response)
+        print(response, end='')
+        sys.stdout.flush() # If we don't flush, we won't see tokens in realtime.
 
-    # Print final result
-    print(response)
 
-asyncio.run(get_result())
+if __name__ == '__main__':
+    prompt = "In order to make homemade bread, follow these steps:\n1)"
+    asyncio.run(print_response_stream(prompt))
