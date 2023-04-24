@@ -31,12 +31,6 @@ def get_characters():
     return ", ".join(['None'] + sorted(set((k.stem for k in paths if k.stem != "instruction-following")), key=str.lower) + instructors)
 
 
-# Get all of the instruction following templates from the character folder
-def get_instruct():
-    paths = (x for x in Path('characters/instruction-following').iterdir() if x.suffix in ('.json', '.yaml', '.yml'))
-    return ", ".join(['None'] + sorted(set((k.stem for k in paths)), key=str.lower))
-
-
 # Get all of the presets from the presets folder
 def get_presets():
     presets = []
@@ -55,8 +49,6 @@ def fill_axis(option):
         return gr.update(label=option, value=get_presets())
     elif option == "characters":
         return gr.update(label=option, value=get_characters())
-    elif option == "instruction template":
-        return gr.update(label=option, value=get_instruct())
     elif option == "prompts":
         return gr.update(label=option, value=custom_state['textbox'])
     else:
@@ -80,7 +72,9 @@ def parse_axis(axis, value):
     # PRESETS
     if axis_type[axis] == "presets":
         if value.strip() != "":
-            custom_state = load_preset_values(value.strip(), custom_state)[0]
+            temp_dict = load_preset_values(value.strip(), custom_state, return_dict=True)
+            custom_state.update({k: temp_dict[k] for k in temp_dict.keys()})
+            custom_state['preset_menu'] = value.strip()
         else:
             custom_state = load_preset_values(shared.gradio['preset_menu'].value, custom_state)[0]
     # CHARACTERS
