@@ -11,13 +11,14 @@ import pyparsing as pp
 import modules.shared as shared
 from modules.chat import chatbot_wrapper, load_character
 from modules.html_generator import convert_to_markdown
-from server import load_preset_values
+from server import load_preset_values, stop_everything_event
 
 # Global variables
 axis_type = {'x': "prompts", 'y': "presets"}
 custom_state = {}
 gen_output = []
 axis_options = ["prompts", "presets", "characters", "seed", "max_new_tokens", "temperature", "top_p", "top_k", "typical_p", "repetition_penalty", "encoder_repetition_penalty", "no_repeat_ngram_size", "min_length"]
+is_paused = False
 
 
 # Get all of the characters from the character folder
@@ -116,9 +117,11 @@ def parse_axis(axis, value):
 
 # The main function that generates the grid
 def run(constant_seed, seed_value, use_history, x="", y=""):
+
     global custom_state
     global gen_output
     global axis_type
+    global is_paused
 
     # Error handling
     if axis_type['x'] == axis_type['y']:
@@ -221,6 +224,7 @@ def run(constant_seed, seed_value, use_history, x="", y=""):
                 output = output + f"<td><h3><b>{custom_state['name1']}</b></h3> {user_output}<h3><b>{custom_state['name2']}</b></h3> {bot_output}</td>"
             else:
                 output = output + f"<td><h3><b>{custom_state['name1']}:</b></h3> {user_output}<h3><b>{custom_state['name2']}:</b></h3> {bot_output}</td>"
+            yield output
 
             # Remove the last outputs, so they don't influence future generations
             if custom_state['mode'] == 'instruct':
@@ -237,6 +241,21 @@ def run(constant_seed, seed_value, use_history, x="", y=""):
                 elif len(shared.history['visible']) == 1:
                     if shared.history['visible'] == gen_output:
                         shared.history['visible'].clear()
+
+            # Check to see if the user stopped or paused the generation
+            if shared.stop_everything:
+                shared.history['internal'] = temp_internal.copy()
+                shared.history['visible'] = temp_visible.copy()
+                custom_state = temp_custom_state.copy()
+                return output
+            while is_paused:
+                if shared.stop_everything:
+                    shared.history['internal'] = temp_internal.copy()
+                    shared.history['visible'] = temp_visible.copy()
+                    custom_state = temp_custom_state.copy()
+                    return output
+
+
 
         output = output + "</tr>"
     output = output + "</tbody></table>"
@@ -259,7 +278,7 @@ def run(constant_seed, seed_value, use_history, x="", y=""):
     shared.history['visible'] = temp_visible.copy()
     custom_state = temp_custom_state.copy()
 
-    return output
+    yield output
 
 
 # Necessary for some stuff because gradio
@@ -272,11 +291,28 @@ def toggle_visible(var):
         custom_state['seed'] = -1
     return gr.update(visible=var)
 
+# These could be one function if gradio allowed me to pass boolean values with a button click
+# There are other workarounds, but they feel just as dirty
+def pause_switch():
+    global is_paused
+    is_paused = not is_paused
+    if is_paused:
+        return gr.update(value="Resume")
+    if not is_paused:
+        return gr.update(value="Pause")
+
+def unpause():
+    global is_paused
+    is_paused = False
+    return gr.update(value="Pause")
+
+
 
 # Create the interface for the extension (this runs first)
 def ui():
     global custom_state
     global axis_type
+
 
     # Grab all the variable from shared.gradio and put them in the custom_state dictionary
     custom_state.update({k: v for k, v in zip([key for key in shared.gradio if not isinstance(shared.gradio[key], (gr.Blocks, gr.Button, gr.State))], [shared.gradio[k].value for k in [key for key in shared.gradio] if not isinstance(shared.gradio[k], (gr.Blocks, gr.Button, gr.State))])})
@@ -371,6 +407,11 @@ def ui():
         swap_xy.click(swap_axes, [x_type, x_input, y_type, y_input], [x_type, x_input, x_input, y_type, y_input, y_input])
 
         generate_grid = gr.Button("generate_grid")
+        with gr.Row():
+            pause_gen = gr.Button(value='Pause')
+            stop_gen = gr.Button(value='Stop')
+        pause_gen.click(pause_switch, [], pause_gen, queue=False)
+        stop_gen.click(stop_everything_event, queue=False).then(unpause, [], pause_gen)
         custom_chat = gr.HTML(value="")
 
         generate_grid.click(run, [seed_input, seed_value, use_history, x_input, y_input], custom_chat)
