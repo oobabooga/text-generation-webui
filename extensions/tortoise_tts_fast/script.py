@@ -1,6 +1,7 @@
 import gc
 import os
 import sys
+import traceback
 
 import torch
 import torchaudio
@@ -281,7 +282,7 @@ def output_modifier(string):
         if params['model_swap']:
             unload_model()
             load_llm()
-        return str(e)
+        return traceback.format_exc()
 
 
 def generate_audio(tts, samples, latents, output_dir, output_file, gen_kwargs, texts):
@@ -345,14 +346,14 @@ def ui():
         controls['preset_dropdown'] = gr.Dropdown(value=params['preset'], choices=presets, label='Preset')
         with gr.Accordion(label='Tuning Settings', open=False):
             tune_settings: dict[str, (float | int | str | bool)] = params['tuning_settings']
-            controls['num_autoregressive_samples'] = gr.Number(value=tune_settings['num_autoregressive_samples'], label='num_autoregressive_samples')
+            controls['num_autoregressive_samples'] = gr.Number(value=tune_settings['num_autoregressive_samples'], label='num_autoregressive_samples', precision=0)
             controls['temperature'] = gr.Number(value=tune_settings['temperature'], label='temperature')
             controls['length_penalty'] = gr.Number(value=tune_settings['length_penalty'], label='length_penalty')
             controls['repetition_penalty'] = gr.Number(value=tune_settings['repetition_penalty'], label='repetition_penalty')
             controls['top_p'] = gr.Number(value=tune_settings['top_p'], label='top_p')
-            controls['max_mel_tokens'] = gr.Number(value=tune_settings['max_mel_tokens'], label='max_mel_tokens')
+            controls['max_mel_tokens'] = gr.Number(value=tune_settings['max_mel_tokens'], label='max_mel_tokens', precision=0)
             controls['cvvp_amount'] = gr.Number(value=tune_settings['cvvp_amount'], label='cvvp_amount')
-            controls['diffusion_iterations'] = gr.Number(value=tune_settings['diffusion_iterations'], label='diffusion_iterations')
+            controls['diffusion_iterations'] = gr.Number(value=tune_settings['diffusion_iterations'], label='diffusion_iterations', precision=0)
             controls['cond_free_k'] = gr.Number(value=tune_settings['cond_free_k'], label='cond_free_k')
             controls['diffusion_temperature'] = gr.Number(value=tune_settings['diffusion_temperature'], label='diffusion_temperature')
             controls['num_autoregressive_samples'].change(lambda x: params['tuning_settings'].update({'num_autoregressive_samples': x}), controls['num_autoregressive_samples'], outputs=None)
