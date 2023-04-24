@@ -1,6 +1,7 @@
 import json
+from functools import partial
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from threading import Thread
+from threading import Lock, Thread
 
 from modules import shared
 from modules.text_generation import encode, generate_reply
@@ -9,6 +10,10 @@ from extensions.api.util import build_parameters, try_start_cloudflared
 
 
 class Handler(BaseHTTPRequestHandler):
+    def __init__(self, lock, request, client_address, server):
+        self.lock = lock
+        super().__init__(request, client_address, server)
+        
     def do_GET(self):
         if self.path == '/api/v1/model':
             self.send_response(200)
@@ -36,13 +41,21 @@ class Handler(BaseHTTPRequestHandler):
 
             generator = generate_reply(
                 prompt, generate_params, stopping_strings=stopping_strings)
-
-            answer = ''
-            for a in generator:
-                if isinstance(a, str):
-                    answer = a
-                else:
-                    answer = a[0]
+            
+            def iterate_generator(generator):
+                answer = ''
+                for a in generator:
+                    if isinstance(a, str):
+                        answer = a
+                    else:
+                        answer = a[0]
+                return answer
+            
+            if shared.args.thread_safe:
+                with self.lock:
+                    answer = iterate_generator(generator)
+            else:
+                answer = iterate_generator(generator)   
 
             response = json.dumps({
                 'results': [{
@@ -69,7 +82,9 @@ class Handler(BaseHTTPRequestHandler):
 def _run_server(port: int, share: bool=False):
     address = '0.0.0.0' if shared.args.listen else '127.0.0.1'
 
-    server = ThreadingHTTPServer((address, port), Handler)
+    lock = Lock()
+    handler_threadsafe = partial(Handler,lock)
+    server = ThreadingHTTPServer((address, port), handler_threadsafe)
 
     def on_start(public_url: str):
         print(f'Starting non-streaming server at public url {public_url}/api')

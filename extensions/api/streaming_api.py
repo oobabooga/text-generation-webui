@@ -1,5 +1,6 @@
 import json
 import asyncio
+from functools import partial
 from websockets.server import serve
 from threading import Thread
 
@@ -11,13 +12,15 @@ from extensions.api.util import build_parameters, try_start_cloudflared
 PATH = '/api/v1/stream'
 
 
-async def _handle_connection(websocket, path):
+async def _handle_connection(websocket, path, context):
 
     if path != PATH:
         print(f'Streaming api: unknown path: {path}')
         return
 
     async for message in websocket:
+        lock = context
+
         message = json.loads(message)
 
         prompt = message['prompt']
@@ -31,23 +34,31 @@ async def _handle_connection(websocket, path):
         skip_index = len(prompt) if not shared.is_chat() else 0
         message_num = 0
 
-        for a in generator:
-            to_send = ''
-            if isinstance(a, str):
-                to_send = a[skip_index:]
-            else:
-                to_send = a[0][skip_index:]
+        async def iterate_generator(generator, skip_index, message_num):
+            for a in generator:
+                to_send = ''
+                if isinstance(a, str):
+                    to_send = a[skip_index:]
+                else:
+                    to_send = a[0][skip_index:]
 
-            await websocket.send(json.dumps({
-                'event': 'text_stream',
-                'message_num': message_num,
-                'text': to_send
-            }))
+                await websocket.send(json.dumps({
+                    'event': 'text_stream',
+                    'message_num': message_num,
+                    'text': to_send
+                }))
 
-            await asyncio.sleep(0)
+                await asyncio.sleep(0)
 
-            skip_index += len(to_send)
-            message_num += 1
+                skip_index += len(to_send)
+                message_num += 1
+            return to_send
+
+        if shared.args.thread_safe:  
+            async with lock:
+                to_send = await iterate_generator(generator, skip_index, message_num)
+        else:
+            to_send = await iterate_generator(generator, skip_index, message_num)
 
         await websocket.send(json.dumps({
             'event': 'stream_end',
@@ -56,7 +67,9 @@ async def _handle_connection(websocket, path):
 
 
 async def _run(host: str, port: int):
-    async with serve(_handle_connection, host, port):
+    lock = asyncio.Lock()
+    _handler_threadsafe = partial(_handle_connection, context=lock)
+    async with serve(_handler_threadsafe, host, port):
         await asyncio.Future()  # run forever
 
 

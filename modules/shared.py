@@ -159,6 +159,7 @@ parser.add_argument("--gradio-auth-path", type=str, help='Set the gradio authent
 # API
 parser.add_argument('--api', action='store_true', help='Enable the API extension.')
 parser.add_argument('--public-api', action='store_true', help='Create a public URL for the API using Cloudfare.')
+parser.add_argument('--thread-safe', action='store_true', help='Queue requests to API. Useful if multiple clients accessing API.')
 
 
 args = parser.parse_args()
