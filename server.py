@@ -32,6 +32,7 @@ import time
 import traceback
 import zipfile
 from datetime import datetime
+from functools import partial
 from pathlib import Path
 
 import psutil
@@ -846,6 +847,8 @@ def create_interface():
             shared.gradio['count_tokens'].click(count_tokens, shared.gradio['textbox'], shared.gradio['status'], show_progress=False)
             shared.gradio['interface'].load(None, None, None, _js=f"() => {{{ui.main_js}}}")
 
+        shared.gradio['interface'].load(partial(ui.apply_interface_values, {}, use_persistent=True), None, [shared.gradio[k] for k in ui.list_interface_input_elements(chat=shared.is_chat())], show_progress=False)
+
     # Launch the interface
     shared.gradio['interface'].queue()
     if shared.args.listen:
@@ -855,7 +858,6 @@ def create_interface():
 
 
 if __name__ == "__main__":
-
     # Loading custom settings
     settings_file = None
     if shared.args.settings is not None and Path(shared.args.settings).exists():
@@ -900,9 +902,11 @@ if __name__ == "__main__":
             print('The following models are available:\n')
             for i, model in enumerate(available_models):
                 print(f'{i+1}. {model}')
+
             print(f'\nWhich one do you want to load? 1-{len(available_models)}\n')
             i = int(input()) - 1
             print()
+
         shared.model_name = available_models[i]
 
     # If any model has been selected, load it

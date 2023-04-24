@@ -33,9 +33,10 @@ def list_model_elements():
 
 
 def list_interface_input_elements(chat=False):
-    elements = ['max_new_tokens', 'seed', 'temperature', 'top_p', 'top_k', 'typical_p', 'repetition_penalty', 'encoder_repetition_penalty', 'no_repeat_ngram_size', 'min_length', 'do_sample', 'penalty_alpha', 'num_beams', 'length_penalty', 'early_stopping', 'add_bos_token', 'ban_eos_token', 'truncation_length', 'custom_stopping_strings', 'skip_special_tokens']
+    elements = ['max_new_tokens', 'seed', 'temperature', 'top_p', 'top_k', 'typical_p', 'repetition_penalty', 'encoder_repetition_penalty', 'no_repeat_ngram_size', 'min_length', 'do_sample', 'penalty_alpha', 'num_beams', 'length_penalty', 'early_stopping', 'add_bos_token', 'ban_eos_token', 'truncation_length', 'custom_stopping_strings', 'skip_special_tokens', 'preset_menu']
     if chat:
-        elements += ['name1', 'name2', 'greeting', 'context', 'end_of_turn', 'chat_prompt_size', 'chat_generation_attempts', 'stop_at_newline', 'mode', 'instruction_template']
+        elements += ['name1', 'name2', 'greeting', 'context', 'end_of_turn', 'chat_prompt_size', 'chat_generation_attempts', 'stop_at_newline', 'mode', 'instruction_template', 'character_menu']
+
     elements += list_model_elements()
     return elements
 
@@ -44,11 +45,26 @@ def gather_interface_values(*args):
     output = {}
     for i, element in enumerate(shared.input_elements):
         output[element] = args[i]
+
+    shared.persistent_interface_state = output
     return output
 
 
-def apply_interface_values(state):
-    return [state[i] for i in list_interface_input_elements(chat=shared.is_chat())]
+def apply_interface_values(state, use_persistent=False):
+    if use_persistent:
+        state = shared.persistent_interface_state
+
+    elements = list_interface_input_elements(chat=shared.is_chat())
+    if len(state) == 0:
+        return [gr.update() for k in elements]  # Dummy, do nothing
+    else:
+        if use_persistent and 'mode' in state:
+            if state['mode'] == 'instruct':
+                return [state[k] if k not in ['character_menu'] else gr.update() for k in elements]
+            else:
+                return [state[k] if k not in ['instruction_template'] else gr.update() for k in elements]
+        else:
+            return [state[k] for k in elements]
 
 
 class ToolButton(gr.Button, gr.components.FormComponent):

@@ -20,6 +20,9 @@ processing_message = '*Is typing...*'
 # UI elements (buttons, sliders, HTML, etc)
 gradio = {}
 
+# For keeping the values of UI elements on page reload
+persistent_interface_state = {}
+
 # Generation input parameters
 input_params = []
 
