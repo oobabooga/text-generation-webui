@@ -143,7 +143,7 @@ def download_model():
 
 def run_model():
     os.chdir("text-generation-webui")
-    run_cmd("python server.py --chat --model-menu")
+    run_cmd("python server.py --chat --model-menu")  # put your flags here!
 
 
 if __name__ == "__main__":
