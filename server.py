@@ -806,7 +806,6 @@ def create_interface():
         # notebook/default modes event handlers
         else:
             shared.input_params = [shared.gradio[k] for k in ['textbox', 'interface_state']]
-
             if shared.args.notebook:
                 output_params = [shared.gradio[k] for k in ['textbox', 'markdown', 'html']]
             else:
@@ -908,7 +907,6 @@ if __name__ == "__main__":
 
     # If any model has been selected, load it
     if shared.model_name != 'None':
-
         model_settings = get_model_specific_settings(shared.model_name)
         shared.settings.update(model_settings)  # hijacking the interface defaults
         update_model_parameters(model_settings, initial=True)  # hijacking the command-line arguments
