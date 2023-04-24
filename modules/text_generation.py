@@ -131,9 +131,7 @@ def get_generate_params(state):
         generate_params['token_count'] = state['max_new_tokens']
         for k in ['temperature', 'top_p', 'top_k', 'repetition_penalty']:
             generate_params[k] = state[k]
-
     else:
-
         # FlexGen
         if shared.args.flexgen:
             for k in ['max_new_tokens', 'do_sample', 'temperature']:
@@ -150,11 +148,11 @@ def get_generate_params(state):
             if state['ban_eos_token']:
                 generate_params['suppress_tokens'] = [shared.tokenizer.eos_token_id]
 
-        if shared.args.no_cache:
-            generate_params.update({'use_cache': False})
+            if shared.args.no_cache:
+                generate_params.update({'use_cache': False})
 
-        if shared.args.deepspeed:
-            generate_params.update({'synced_gpus': True})
+            if shared.args.deepspeed:
+                generate_params.update({'synced_gpus': True})
 
     return generate_params
 
@@ -230,14 +228,14 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
             stopping_criteria_list.append(_SentinelTokenStoppingCriteria(sentinel_token_ids=sentinel_token_ids, starting_idx=len(input_ids[0])))
             break
 
-    # Update the generate parameters with the eos token and the stopping strings
+    # Update generate_params with the eos token and the stopping strings
     if shared.args.flexgen:
         generate_params['stop'] = eos_token_ids[-1]
     else:
         generate_params['eos_token_id'] = eos_token_ids
         generate_params['stopping_criteria'] = stopping_criteria_list
 
-    # Add the encoded tokens to the generate parameters
+    # Add the encoded tokens to generate_params
     if shared.soft_prompt:
         inputs_embeds, filler_input_ids = generate_softprompt_input_tensors(input_ids)
         question, filler_input_ids, inputs_embeds = apply_extensions('tokenizer', state, question, filler_input_ids, inputs_embeds)
