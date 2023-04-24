@@ -54,7 +54,8 @@ What's kinda working:
 
 | API endpoint | tested with | notes |
 | --- | --- | --- |
-| /v1/models | openai.Model.list() | returns the currently loaded model_name and 'gpt3.5-turbo' for some mock compatibility |
+| /v1/models | openai.Model.list() | returns the currently loaded model_name and some mock compatibility options |
+| /v1/models/{id} | openai.Model.get() | returns whatever you ask for, model does nothing yet anyways |
 | /v1/text_completion | openai.Completion.create() | the most tested |
 | /v1/chat/completions | openai.ChatCompletion.create() | may still have some issues with roles & stopping, something still isn't right. |
 
@@ -62,9 +63,7 @@ The model setting is ignored in completions, but you may need to adjust the maxi
 
 Not all parameters are mapped correctly, but temperature, top_p, max_tokens and stream, all work as expected. Sort of? streaming was a ... difficult situation, it seems the protocol has changed? I've stuffed it with two protocols I found...
 
-Still doesn't seem right at times and some clients I tested don't work at all yet (Ex. chatbot-ui).
-
-I'm attempting to get Auto-GPT or babyagi working, but need to setup other stuff too.
+Still doesn't seem right at times and some clients I tested don't work at all yet, see the Applications table for more details.
 
 Some hacky mappings:
 
@@ -84,18 +83,19 @@ defaults are mostly from openai, so are different.
 
 Everything needs OPENAI_API_KEY=dummy set.
 
-| Compatibility | App/lib | url | notes / setting |
+| Compatibility | Application/lib | url | notes / setting |
 | --- | --- | --- | --- |
-| ✅❌ | openai-python | (https://github.com/openai/openai-python) | only the 3 endpoints from above. OPENAI_API_BASE=http://127.0.0.1:5001/v1 |
-| ✅ | shell_gpt | (https://github.com/TheR1D/shell_gpt) | set OPENAI_API_HOST=http://127.0.0.1:5001 |
-| ✅ | gpt-shell | (https://github.com/jla/gpt-shell) | set OPENAI_API_BASE=http://127.0.0.1:5001/v1 |
-| ❌ | chatbot-ui | (https://github.com/mckaywrigley/chatbot-ui) | seems to hit the api, but no data back, hangs, OPENAI_API_HOST=http://127.0.0.1:5001 | 
+| ✅❌ | openai-python | https://github.com/openai/openai-python | only the endpoints from above are working. OPENAI_API_BASE=http://127.0.0.1:5001/v1 |
+| ✅ | shell_gpt | https://github.com/TheR1D/shell_gpt | set OPENAI_API_HOST=http://127.0.0.1:5001 |
+| ✅ | gpt-shell | https://github.com/jla/gpt-shell | set OPENAI_API_BASE=http://127.0.0.1:5001/v1 |
+| ❌ | chatbot-ui | https://github.com/mckaywrigley/chatbot-ui | hits the api, but nothing happens, hangs, OPENAI_API_HOST=http://127.0.0.1:5001 | 
+| ❓ | gpt-discord-bot | https://github.com/openai/gpt-discord-bot | unknown |
+| ❓ | Auto-GPT | https://github.com/Significant-Gravitas/Auto-GPT | unknown | 
+| ❓ | babyagi | https://github.com/yoheinakajima/babyagi | unknown |
 
 ## Future plans
-
-* work with Auto-GPT/babyagi
 * better error handling
-* model changing, something for loras
-* consider switching to FastAPI
+* model changing, esp. something for swapping loras 
+* consider switching to FastAPI + starlette for SSE
 * do something about rate limiting requests for completions, most systems will only be able handle a single request at a time before OOM
-* the whole api, model changing, images (stable diffusion), embeddings, audio, files, training, etc.
+* the whole api, images (stable diffusion), edits, embeddings, audio, files, fine-tunes, moderations, etc.

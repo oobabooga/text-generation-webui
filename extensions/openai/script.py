@@ -29,28 +29,44 @@ def default(dic, key, default):
 
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
-        if self.path == '/v1/models':
+        if self.path.startswith('/v1/models'):
+
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
-            response = json.dumps({
-                "object": "list",
-                "data": [
-                    {
-                    "id": shared.model_name,
+
+            # TODO: list all models and allow model changes via API? Lora's?
+            models = [{
+                "id": shared.model_name,
+                "object": "model",
+                "owned_by": "user",
+                "permission": []
+            }, { # these are expected by so much, so include it here as a dummy
+                "id": "gpt-35-turbo",
+                "object": "model",
+                "owned_by": "user",
+                "permission": []
+            }, { 
+                "id": "text-davinci-003",
+                "object": "model",
+                "owned_by": "user",
+                "permission": []
+            }]
+
+            response = ''
+            if self.path == '/v1/models':
+                response = json.dumps({
+                    "object": "list",
+                    "data": models,
+                })
+            else:
+                the_model_name = self.path[len('/v1/models/'):]
+                response = json.dumps({
+                    "id": the_model_name,
                     "object": "model",
-                    "owned_by": "free",
+                    "owned_by": "user",
                     "permission": []
-                    },
-                    { # this is expected by so much, so include it here as a dummy
-                    "id": "gpt-35-turbo",
-                    "object": "model",
-                    "owned_by": "openai",
-                    "permission": []
-                    }
-                    # TODO: list all models and allow model changes via API? Lora's?
-                ],
-            })
+                })
 
             self.wfile.write(response.encode('utf-8'))
         else:
@@ -154,7 +170,7 @@ class Handler(BaseHTTPRequestHandler):
 
                 messages = body['messages']
 
-                system_msg = ''
+                system_msg = '' # You are ChatGPT, a large language model trained by OpenAI. Answer as concisely as possible. Knowledge cutoff: {knowledge_cutoff} Current date: {current_date}
                 chat_msgs = []
 
                 for m in messages:
