@@ -113,9 +113,11 @@ def set_manual_seed(seed):
     seed = int(seed)
     if seed == -1:
         seed = random.randint(1, 2**31)
+
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
+
     return seed
 
 
