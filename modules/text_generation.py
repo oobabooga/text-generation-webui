@@ -1,3 +1,4 @@
+import ast
 import random
 import re
 import time
@@ -23,7 +24,7 @@ def get_max_prompt_length(state):
 
 
 def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_length=None):
-    if any((shared.is_RWKV, shared.is_llamacpp)):
+    if shared.model_type in ['rwkv', 'llamacpp']:
         input_ids = shared.tokenizer.encode(str(prompt))
         input_ids = np.array(input_ids).reshape(1, len(input_ids))
         return input_ids
@@ -43,7 +44,7 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
     if truncation_length is not None:
         input_ids = input_ids[:, -truncation_length:]
 
-    if any((shared.is_RWKV, shared.is_llamacpp, shared.args.cpu)):
+    if shared.model_type in ['rwkv', 'llamacpp'] or shared.args.cpu:
         return input_ids
     elif shared.args.flexgen:
         return input_ids.numpy()
@@ -56,14 +57,13 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
         return input_ids.cuda()
 
 
-def decode(output_ids):
-    # Open Assistant relies on special tokens like <|endoftext|>
-    if re.match('.*(oasst|galactica)-*', shared.model_name.lower()):
-        return shared.tokenizer.decode(output_ids, skip_special_tokens=False)
-    else:
+def decode(output_ids, skip_special_tokens=True):
+    if skip_special_tokens:
         reply = shared.tokenizer.decode(output_ids, skip_special_tokens=True)
         reply = reply.replace(r'<|endoftext|>', '')
         return reply
+    else:
+        return shared.tokenizer.decode(output_ids, skip_special_tokens=False)
 
 
 def generate_softprompt_input_tensors(input_ids):
@@ -97,10 +97,10 @@ def fix_galactica(s):
 
 def formatted_outputs(reply, model_name):
     if not shared.is_chat():
-        if 'galactica' in model_name.lower():
+        if shared.model_type == 'galactica':
             reply = fix_galactica(reply)
             return reply, reply, generate_basic_html(reply)
-        elif any((k in shared.model_name.lower() for k in ['gpt4chan', 'gpt-4chan'])):
+        elif shared.model_type == 'gpt4chan':
             reply = fix_gpt4chan(reply)
             return reply, 'Only applicable for GALACTICA models.', generate_4chan_html(reply)
         else:
@@ -125,7 +125,7 @@ def stop_everything_event():
 
 def generate_reply(question, state, eos_token=None, stopping_strings=[]):
 
-    if shared.model_name == 'None':
+    if shared.model_name == 'None' or shared.model is None:
         print("No model is loaded! Select one in the Model tab.")
         yield formatted_outputs(question, shared.model_name)
         return
@@ -138,11 +138,11 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
 
     original_question = question
     if not shared.is_chat():
-        question = apply_extensions(question, 'input')
+        question = apply_extensions('input', question)
 
     # These models are not part of Hugging Face, so we handle them
     # separately and terminate the function call earlier
-    if any((shared.is_RWKV, shared.is_llamacpp)):
+    if shared.model_type in ['rwkv', 'llamacpp']:
 
         if shared.args.verbose:
             print(f'\n\n{question}\n--------------------\n')
@@ -155,7 +155,7 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
                 reply = shared.model.generate(context=question, **generate_params)
                 output = original_question + reply
                 if not shared.is_chat():
-                    reply = original_question + apply_extensions(reply, 'output')
+                    reply = original_question + apply_extensions('output', reply)
                 yield formatted_outputs(reply, shared.model_name)
             else:
                 if not shared.is_chat():
@@ -166,7 +166,7 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
                 for reply in shared.model.generate_with_streaming(context=question, **generate_params):
                     output = original_question + reply
                     if not shared.is_chat():
-                        reply = original_question + apply_extensions(reply, 'output')
+                        reply = original_question + apply_extensions('output', reply)
                     yield formatted_outputs(reply, shared.model_name)
 
         except Exception:
@@ -179,11 +179,10 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
             return
 
     input_ids = encode(question, add_bos_token=state['add_bos_token'], truncation_length=get_max_prompt_length(state))
-    original_input_ids = input_ids
     output = input_ids[0]
 
     if shared.args.verbose:
-        print(f'\n\n{decode(input_ids[0])}\n--------------------\n')
+        print(f'\n\n{decode(input_ids[0], state["skip_special_tokens"])}\n--------------------\n')
 
     cuda = not any((shared.args.cpu, shared.args.deepspeed, shared.args.flexgen))
     eos_token_ids = [shared.tokenizer.eos_token_id] if shared.tokenizer.eos_token_id is not None else []
@@ -192,7 +191,7 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
 
     # Handling the stopping strings
     stopping_criteria_list = transformers.StoppingCriteriaList()
-    for st in [stopping_strings, eval(f"[{state['custom_stopping_strings']}]")]:
+    for st in (stopping_strings, ast.literal_eval(f"[{state['custom_stopping_strings']}]")):
         if type(st) is list and len(st) > 0:
             sentinel_token_ids = [encode(string, add_special_tokens=False) for string in st]
             stopping_criteria_list.append(_SentinelTokenStoppingCriteria(sentinel_token_ids=sentinel_token_ids, starting_idx=len(input_ids[0])))
@@ -208,7 +207,7 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
     else:
         for k in ['max_new_tokens', 'do_sample', 'temperature']:
             generate_params[k] = state[k]
-        generate_params['stop'] = state['eos_token_ids'][-1]
+        generate_params['stop'] = eos_token_ids[-1]
         if not shared.args.no_stream:
             generate_params['max_new_tokens'] = 8
 
@@ -218,10 +217,16 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
         generate_params.update({'synced_gpus': True})
     if shared.soft_prompt:
         inputs_embeds, filler_input_ids = generate_softprompt_input_tensors(input_ids)
+        question, filler_input_ids, inputs_embeds = apply_extensions('tokenizer', state, question, filler_input_ids, inputs_embeds)
+        original_input_ids = input_ids
         generate_params.update({'inputs_embeds': inputs_embeds})
         generate_params.update({'inputs': filler_input_ids})
     else:
+        question, input_ids, inputs_embeds = apply_extensions('tokenizer', state, question, input_ids, None)
+        original_input_ids = input_ids
         generate_params.update({'inputs': input_ids})
+        if inputs_embeds is not None:
+            generate_params.update({'inputs_embeds': inputs_embeds})
 
     try:
         # Generate the entire reply at once.
@@ -230,13 +235,14 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
                 output = shared.model.generate(**generate_params)[0]
                 if cuda:
                     output = output.cuda()
+
             if shared.soft_prompt:
                 output = torch.cat((input_ids[0], output[filler_input_ids.shape[1]:]))
 
             new_tokens = len(output) - len(input_ids[0])
-            reply = decode(output[-new_tokens:])
+            reply = decode(output[-new_tokens:], state['skip_special_tokens'])
             if not shared.is_chat():
-                reply = original_question + apply_extensions(reply, 'output')
+                reply = original_question + apply_extensions('output', reply)
 
             yield formatted_outputs(reply, shared.model_name)
 
@@ -255,18 +261,20 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
 
             if not shared.is_chat():
                 yield formatted_outputs(original_question, shared.model_name)
+
             with generate_with_streaming(**generate_params) as generator:
                 for output in generator:
                     if shared.soft_prompt:
                         output = torch.cat((input_ids[0], output[filler_input_ids.shape[1]:]))
 
                     new_tokens = len(output) - len(input_ids[0])
-                    reply = decode(output[-new_tokens:])
+                    reply = decode(output[-new_tokens:], state['skip_special_tokens'])
                     if not shared.is_chat():
-                        reply = original_question + apply_extensions(reply, 'output')
+                        reply = original_question + apply_extensions('output', reply)
 
                     if output[-1] in eos_token_ids:
                         break
+
                     yield formatted_outputs(reply, shared.model_name)
 
         # Stream the output naively for FlexGen since it doesn't support 'stopping_criteria'
@@ -275,18 +283,19 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
                 clear_torch_cache()
                 with torch.no_grad():
                     output = shared.model.generate(**generate_params)[0]
+
                 if shared.soft_prompt:
                     output = torch.cat((input_ids[0], output[filler_input_ids.shape[1]:]))
 
                 new_tokens = len(output) - len(original_input_ids[0])
-                reply = decode(output[-new_tokens:])
+                reply = decode(output[-new_tokens:], state['skip_special_tokens'])
                 if not shared.is_chat():
-                    reply = original_question + apply_extensions(reply, 'output')
+                    reply = original_question + apply_extensions('output', reply)
 
                 if np.count_nonzero(np.isin(input_ids[0], eos_token_ids)) < np.count_nonzero(np.isin(output, eos_token_ids)):
                     break
-                yield formatted_outputs(reply, shared.model_name)
 
+                yield formatted_outputs(reply, shared.model_name)
                 input_ids = np.reshape(output, (1, output.shape[0]))
                 if shared.soft_prompt:
                     inputs_embeds, filler_input_ids = generate_softprompt_input_tensors(input_ids)

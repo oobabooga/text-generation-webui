@@ -13,52 +13,46 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * Dropdown menu for switching between models
 * Notebook mode that resembles OpenAI's playground
 * Chat mode for conversation and role playing
-* Instruct mode compatible with Alpaca, Vicuna, and Open Assistant formats **\*NEW!\***
+* Instruct mode compatible with Alpaca, Vicuna, Open Assistant, Dolly, Koala, and ChatGLM formats 
 * Nice HTML output for GPT-4chan
 * Markdown output for [GALACTICA](https://github.com/paperswithcode/galai), including LaTeX rendering
-* [Custom chat characters](https://github.com/oobabooga/text-generation-webui/wiki/Custom-chat-characters)
+* [Custom chat characters](docs/Custom-chat-characters.md)
 * Advanced chat features (send images, get audio responses with TTS)
 * Very efficient text streaming
 * Parameter presets
 * 8-bit mode
 * Layers splitting across GPU(s), CPU, and disk
 * CPU mode
-* [FlexGen](https://github.com/oobabooga/text-generation-webui/wiki/FlexGen)
-* [DeepSpeed ZeRO-3](https://github.com/oobabooga/text-generation-webui/wiki/DeepSpeed)
+* [FlexGen](docs/FlexGen.md)
+* [DeepSpeed ZeRO-3](docs/DeepSpeed.md)
 * API [with](https://github.com/oobabooga/text-generation-webui/blob/main/api-example-stream.py) streaming and [without](https://github.com/oobabooga/text-generation-webui/blob/main/api-example.py) streaming
-* [LLaMA model, including 4-bit GPTQ](https://github.com/oobabooga/text-generation-webui/wiki/LLaMA-model)
-* [llama.cpp](https://github.com/oobabooga/text-generation-webui/wiki/llama.cpp-models) **\*NEW!\***
-* [RWKV model](https://github.com/oobabooga/text-generation-webui/wiki/RWKV-model)
-* [LoRA (loading and training)](https://github.com/oobabooga/text-generation-webui/wiki/Using-LoRAs)
+* [LLaMA model](docs/LLaMA-model.md)
+* [4-bit GPTQ mode](docs/GPTQ-models-(4-bit-mode).md)
+* [llama.cpp](docs/llama.cpp-models.md)
+* [RWKV model](docs/RWKV-model.md)
+* [LoRA (loading and training)](docs/Using-LoRAs.md)
 * Softprompts
-* [Extensions](https://github.com/oobabooga/text-generation-webui/wiki/Extensions)
+* [Extensions](docs/Extensions.md) - see the [user extensions list](https://github.com/oobabooga/text-generation-webui-extensions)
 
 ## Installation
 
 ### One-click installers
 
-[oobabooga-windows.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga-windows.zip)
+| Windows | Linux | macOS |
+|-------|--------|--------|
+| [oobabooga-windows.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga_windows.zip) | [oobabooga-linux.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga_linux.zip) |[oobabooga-macos.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga_macos.zip) |
 
-Just download the zip above, extract it, and double click on "install". The web UI and all its dependencies will be installed in the same folder.
+Just download the zip above, extract it, and double click on "start". The web UI and all its dependencies will be installed in the same folder.
 
-* To download a model, double click on "download-model"
-* To start the web UI, double click on "start-webui" 
-
-Source codes: https://github.com/oobabooga/one-click-installers
-
-> **Note**
-> 
-> Thanks to [@jllllll](https://github.com/jllllll) and [@ClayShoaf](https://github.com/ClayShoaf), the Windows 1-click installer now sets up 8-bit and 4-bit requirements out of the box. No additional installation steps are necessary.
-
-> **Note**
-> 
-> There is no need to run the installer as admin.
+* The source codes are here: https://github.com/oobabooga/one-click-installers
+* Huge thanks to [@jllllll](https://github.com/jllllll), [@ClayShoaf](https://github.com/ClayShoaf), and [@xNul](https://github.com/xNul) for their contributions to these installers.
+* There is no need to run the installers as admin.
 
 ### Manual installation using Conda
 
 Recommended if you have some experience with the command-line.
 
-On Windows, I additionally recommend carrying out the installation on WSL instead of the base system: [WSL installation guide](https://github.com/oobabooga/text-generation-webui/wiki/WSL-installation-guide).
+On Windows, I additionally recommend carrying out the installation on WSL instead of the base system: [WSL installation guide](https://github.com/oobabooga/text-generation-webui/blob/main/docs/WSL-installation-guide.md).
 
 #### 0. Install Conda
 
@@ -111,18 +105,18 @@ pip install -r requirements.txt
 
 ### Alternative: manual Windows installation
 
-As an alternative to the recommended WSL method, you can install the web UI natively on Windows using this guide. It will be a lot harder and the performance may be slower: [Windows installation guide](https://github.com/oobabooga/text-generation-webui/wiki/Windows-installation-guide).
+As an alternative to the recommended WSL method, you can install the web UI natively on Windows using this guide. It will be a lot harder and the performance may be slower: [Windows installation guide](https://github.com/oobabooga/text-generation-webui/blob/main/docs/Windows-installation-guide.md).
 
 ### Alternative: Docker
 
 ```
-cp .env.example .env
+ln -s docker/{Dockerfile,docker-compose.yml,.dockerignore} .
+cp docker/.env.example .env
+# Edit .env and set TORCH_CUDA_ARCH_LIST based on your GPU model
 docker compose up --build
 ```
 
-Make sure to edit `.env.example` and set the appropriate CUDA version for your GPU, which can be found on [developer.nvidia.com](https://developer.nvidia.com/cuda-gpus).
-
-You need to have docker compose v2.17 or higher installed in your system. For installation instructions, see [Docker compose installation](https://github.com/oobabooga/text-generation-webui/wiki/Docker-compose-installation).
+You need to have docker compose v2.17 or higher installed in your system. To see how to install docker compose itself, see the guide in [here](https://github.com/oobabooga/text-generation-webui/blob/main/docs/Docker.md).
 
 Contributed by [@loeken](https://github.com/loeken) in [#633](https://github.com/oobabooga/text-generation-webui/pull/633)
 
@@ -219,6 +213,7 @@ Optionally, you can use the following command-line flags:
 | `--no-cache`                                | Set `use_cache` to False while generating text. This reduces the VRAM usage a bit with a performance cost. |
 | `--xformers`                                | Use xformer's memory efficient attention. This should increase your tokens/s. |
 | `--sdp-attention`                           | Use torch 2.0's sdp attention. |
+| `--trust-remote-code`                       | Set trust_remote_code=True while loading a model. Necessary for ChatGLM. |
 
 #### llama.cpp
 
@@ -230,11 +225,14 @@ Optionally, you can use the following command-line flags:
 
 | Flag                      | Description |
 |---------------------------|-------------|
-| `--wbits WBITS`           | GPTQ: Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported. |
-| `--model_type MODEL_TYPE` | GPTQ: Model type of pre-quantized model. Currently LLaMA, OPT, and GPT-J are supported. |
-| `--groupsize GROUPSIZE`   | GPTQ: Group size. |
-| `--pre_layer PRE_LAYER`   | GPTQ: The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models. |
-| `--no-warmup_autotune`    | GPTQ: Disable warmup autotune for triton. |
+| `--wbits WBITS`           | Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported. |
+| `--model_type MODEL_TYPE` | Model type of pre-quantized model. Currently LLaMA, OPT, and GPT-J are supported. |
+| `--groupsize GROUPSIZE`   | Group size. |
+| `--pre_layer PRE_LAYER`   | The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models. |
+| `--monkey-patch`          | Apply the monkey patch for using LoRAs with quantized models.
+| `--quant_attn`         | (triton) Enable quant attention.
+| `--warmup_autotune`    | (triton) Enable warmup autotune.
+| `--fused_mlp`          | (triton) Enable fused mlp.
 
 #### FlexGen
 
@@ -271,7 +269,14 @@ Optionally, you can use the following command-line flags:
 | `--auto-launch`                       | Open the web UI in the default browser upon launch. |
 | `--gradio-auth-path GRADIO_AUTH_PATH` | Set the gradio authentication file path. The file should contain one or more user:password pairs in this format: "u1:p1,u2:p2,u3:p3" |
 
-Out of memory errors? [Check the low VRAM guide](https://github.com/oobabooga/text-generation-webui/wiki/Low-VRAM-guide).
+#### API
+
+| Flag                                  | Description |
+|---------------------------------------|-------------|
+| `--api`                               | Enable the API extension. |
+| `--public-api`                        | Create a public URL for the API using Cloudfare. |
+
+Out of memory errors? [Check the low VRAM guide](docs/Low-VRAM-guide.md).
 
 ## Presets
 
@@ -283,7 +288,7 @@ By default, 10 presets by NovelAI and KoboldAI are included. These were selected
 
 ## System requirements
 
-Check the [wiki](https://github.com/oobabooga/text-generation-webui/wiki/System-requirements) for some examples of VRAM and RAM usage in both GPU and CPU mode.
+Check the [wiki](docs/System-requirements.md) for some examples of VRAM and RAM usage in both GPU and CPU mode.
 
 ## Contributing
 

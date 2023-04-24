@@ -2,7 +2,7 @@
     margin-left: auto;
     margin-right: auto;
     max-width: 800px;
-    height: 66.67vh;
+    height: calc(100vh - 300px);
     overflow-y: auto;
     padding-right: 20px;
     display: flex;
