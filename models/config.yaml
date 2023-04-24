@@ -48,3 +48,7 @@ llama-[0-9]*b-4bit$:
 .*chatglm:
   mode: 'instruct'
   instruction_template: 'ChatGLM'
+.*llava:
+  mode: 'instruct'
+  model_type: 'llama'
+  instruction_template: 'LLaVA'
