@@ -711,10 +711,6 @@ def create_interface():
                 set_interface_arguments, [shared.gradio[k] for k in ['interface_modes_menu', 'extensions_menu', 'bool_menu']], None).then(
                 lambda: None, None, None, _js='() => {document.body.innerHTML=\'<h1 style="font-family:monospace;margin-top:20%;color:lightgray;text-align:center;">Reloading...</h1>\'; setTimeout(function(){location.reload()},2500); return []}')
 
-        # Extensions block
-        if shared.args.extensions is not None:
-            extensions_module.create_extensions_block()
-
         # chat mode event handlers
         if shared.is_chat():
             shared.input_params = [shared.gradio[k] for k in ['Chat input', 'interface_state']]
@@ -848,6 +844,9 @@ def create_interface():
             shared.gradio['interface'].load(None, None, None, _js=f"() => {{{ui.main_js}}}")
 
         shared.gradio['interface'].load(partial(ui.apply_interface_values, {}, use_persistent=True), None, [shared.gradio[k] for k in ui.list_interface_input_elements(chat=shared.is_chat())], show_progress=False)
+        # Extensions block
+        if shared.args.extensions is not None:
+            extensions_module.create_extensions_block()
 
     # Launch the interface
     shared.gradio['interface'].queue()
