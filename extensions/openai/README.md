@@ -68,13 +68,13 @@ I'm attempting to get Auto-GPT or babyagi working, but need to setup other stuff
 
 Some hacky mappings:
 
-frequency_penalty -> encoder_repetition_penalty # this seems to operate with a different scale and defaults, but I map it 1:1
-presence_penalty -> repetition_penalty # this seems to operate with a different scale and defaults, but I map it 1:1
-best_of -> top_k
-stop -> custom_stopping_strings, this is also stuffed with ['\nsystem', 'system:', '\nuser', 'user:', '\n###', '###'] for good measure.
-n -> 1 # it may be worth implementing this but I'm not sure how yet
-1.0 -> typical_p
-1 -> num_beams
+| frequency_penalty | encoder_repetition_penalty | this seems to operate with a different scale and defaults, but I map it 1:1 |
+| presence_penalty | repetition_penalty | this seems to operate with a different scale and defaults, but I map it 1:1 |
+| best_of | top_k | |
+| stop | custom_stopping_strings | this is also stuffed with ['\nsystem', 'system:', '\nuser', 'user:', '\n###', '###'] for good measure. |
+| n | 1 | it may be worth implementing this but I'm not sure how yet |
+| 1.0 | typical_p | |
+| 1 | num_beams | |
 
 defaults are mostly from openai, so are different.
 
