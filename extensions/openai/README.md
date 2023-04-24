@@ -68,6 +68,8 @@ I'm attempting to get Auto-GPT or babyagi working, but need to setup other stuff
 
 Some hacky mappings:
 
+| OpenAI | text-generation-webui | note |
+| --- | --- | --- |
 | frequency_penalty | encoder_repetition_penalty | this seems to operate with a different scale and defaults, but I map it 1:1 |
 | presence_penalty | repetition_penalty | this seems to operate with a different scale and defaults, but I map it 1:1 |
 | best_of | top_k | |
