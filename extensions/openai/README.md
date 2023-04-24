@@ -51,7 +51,9 @@ I may compile a list of these settings if it's worth while.
 ## Compatibility & not so compatibility
 
 What's kinda working:
+
 | API endpoint | tested with | notes |
+| --- | --- | --- |
 | /v1/models | openai.Model.list() | returns the currently loaded model_name and 'gpt3.5-turbo' for some mock compatibility |
 | /v1/text_completion | openai.Completion.create() | the most tested |
 | /v1/chat/completions | openai.ChatCompletion.create() | may still have some issues with roles & stopping, something still isn't right. |
