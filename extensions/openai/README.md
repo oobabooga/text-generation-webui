@@ -51,9 +51,10 @@ I may compile a list of these settings if it's worth while.
 ## Compatibility & not so compatibility
 
 What's kinda working:
-|/v1/models           | tested via openai.Model.list() (returns the currently loaded model_name and 'gpt3.5-turbo' for some mock compatibility) |
-|/v1/text_completion  | tested via openai.Completion.create() - this is the most tested end point. |
-|/v1/chat/completions | tested via openai.ChatCompletion.create() | it's always "system" instead of "assistant" not sure why |
+| API endpoint | tested with | notes |
+| /v1/models | openai.Model.list() | returns the currently loaded model_name and 'gpt3.5-turbo' for some mock compatibility |
+| /v1/text_completion | openai.Completion.create() | the most tested |
+| /v1/chat/completions | openai.ChatCompletion.create() | may still have some issues with roles & stopping, something still isn't right. |
 
 The model setting is ignored in completions, but you may need to adjust the maximum token length to fit the model (ie. set to <2048 tokens instead of 4096, 8k, etc).
 
@@ -68,7 +69,7 @@ Some hacky mappings:
 frequency_penalty -> encoder_repetition_penalty # this seems to operate with a different scale and defaults, but I map it 1:1
 presence_penalty -> repetition_penalty # this seems to operate with a different scale and defaults, but I map it 1:1
 best_of -> top_k
-stop -> custom_stopping_strings
+stop -> custom_stopping_strings, this is also stuffed with ['\nsystem', 'system:', '\nuser', 'user:', '\n###', '###'] for good measure.
 n -> 1 # it may be worth implementing this but I'm not sure how yet
 1.0 -> typical_p
 1 -> num_beams

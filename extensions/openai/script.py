@@ -10,6 +10,8 @@ params = {
     'port': 5001,
 }
 
+debug = False
+
 # little helper to get defaults if arg is present but None and should be the same type as default.
 def default(dic, key, default):
     val = dic.get(key, default)
@@ -58,8 +60,8 @@ class Handler(BaseHTTPRequestHandler):
         content_length = int(self.headers['Content-Length'])
         body = json.loads(self.rfile.read(content_length).decode('utf-8'))
 
-#       print(self.headers) # did you know... python-openai sends your linux kernel & python version?
-#       print(body)
+        if debug: print(self.headers) # did you know... python-openai sends your linux kernel & python version?
+        if debug: print(body)
 
         if self.path == '/v1/completions' or self.path == '/v1/chat/completions':
             # XXX model is ignored for now
@@ -89,7 +91,7 @@ class Handler(BaseHTTPRequestHandler):
                 'encoder_repetition_penalty': default(body, 'frequency_penalty', 1.0),
                 # stopping strings are tricky to handle... not sure this ends up as expected wrt \n, quotes and spaces.
                 #'stopping_strings': default(body, 'stop', default(shared.settings, 'stopping_strings', '')),
-                'custom_stopping_strings': stopping_strings,
+#                'custom_stopping_strings': stopping_strings,
                 'suffix': body.get('suffix', None),
                 'stream': default(body, 'stream', False),
                 'echo': default(body, 'echo', False),
@@ -112,11 +114,11 @@ class Handler(BaseHTTPRequestHandler):
                 'skip_special_tokens': True,
             }
 
-#            print ({'req_params': req_params})
-
             self.send_response(200)
             if req_params['stream']:
                 self.send_header('Content-Type', 'text/event-stream')
+                self.send_header('Cache-Control', 'no-cache')
+                #self.send_header('Connection', 'keep-alive')
             else:
                 self.send_header('Content-Type', 'application/json')
             self.end_headers()
@@ -142,6 +144,10 @@ class Handler(BaseHTTPRequestHandler):
                     prompt = prompt[-new_len:]
                     print(f"truncating prompt to {new_len} characters, was {token_count} tokens. Now: {len(encode(prompt)[0])} tokens.")
 
+                # pass with some expected stop strings.
+                stopping_strings += ['\nsystem', 'system:', '\nuser', 'user:', '\n###', '###']
+                req_params['custom_stopping_strings'] = stopping_strings
+                
             elif self.path == '/v1/chat/completions':
                 stream_object_type = 'chat.completions.chunk'
                 object_type = 'chat.completions'
@@ -178,8 +184,16 @@ class Handler(BaseHTTPRequestHandler):
                 if len(chat_msgs) > 0:
                     print(f"truncating chat messages, dropping {len(chat_msgs)} messages.")
 
-                prompt = system_msg + '\n' +  chat_msg
+                if system_msg:
+                    prompt = 'system: ' + system_msg + '\n' +  chat_msg + '\nassistant: '
+                else:
+                    prompt = chat_msg + '\nassistant: '
+
                 token_count = len(encode(prompt)[0])
+
+                # pass with some expected stop strings.
+                stopping_strings += ['\nsystem', 'system:', '\nuser', 'user:', '\n###', '###']
+                req_params['custom_stopping_strings'] = stopping_strings
 
             shared.args.no_stream = not req_params['stream']
             if not shared.args.no_stream:
@@ -209,6 +223,7 @@ class Handler(BaseHTTPRequestHandler):
                 self.wfile.write(response.encode('utf-8'))
 
             # generate reply #######################################
+            if debug: print ({'prompt': prompt, 'req_params': req_params, 'stopping_strings': stopping_strings})
             generator = generate_reply(prompt, req_params, stopping_strings=stopping_strings)
 
             answer = ''
@@ -300,10 +315,10 @@ class Handler(BaseHTTPRequestHandler):
                 response = 'data: ' + json.dumps(chunk) + '\ndata: [DONE]\n'
                 self.wfile.write(response.encode('utf-8'))
                 ###### Finished if streaming.
-#                print({'prompt': prompt}, req_params)
+                if debug: print({'response': answer})
                 return
             
-#            print({'prompt': prompt, 'answer': answer}, req_params)
+            if debug: print({'response': answer})
 
             completion_token_count = len(encode(answer)[0])
             stop_reason = "stop"
