@@ -482,11 +482,6 @@ def load_character(character, name1, name2, mode):
     return name1, name2, picture, greeting, context, end_of_turn, chat_html_wrapper(shared.history['visible'], name1, name2, mode)
 
 
-def load_default_history(name1, name2):
-    if len(shared.history['visible']) == 0 and len(shared.history['internal']) == 0:
-        load_character("None", name1, name2, "chat")
-
-
 def upload_character(json_file, img, tavern=False):
     json_file = json_file if type(json_file) == str else json_file.decode('utf-8')
     data = json.loads(json_file)
