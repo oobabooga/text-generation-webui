@@ -34,6 +34,7 @@ settings = {
     'max_new_tokens_min': 1,
     'max_new_tokens_max': 2000,
     'seed': -1,
+    'character': 'None',
     'name1': 'You',
     'name2': 'Assistant',
     'context': 'This is a conversation with your Assistant. The Assistant is very helpful and is eager to chat with you and answer your questions.',
@@ -93,6 +94,7 @@ parser = argparse.ArgumentParser(formatter_class=lambda prog: argparse.HelpForma
 parser.add_argument('--notebook', action='store_true', help='Launch the web UI in notebook mode, where the output is written to the same text box as the input.')
 parser.add_argument('--chat', action='store_true', help='Launch the web UI in chat mode with a style similar to the Character.AI website.')
 parser.add_argument('--cai-chat', action='store_true', help='DEPRECATED: use --chat instead.')
+parser.add_argument('--character', type=str, help='The name of the character to load in chat mode by default.')
 parser.add_argument('--model', type=str, help='Name of the model to load by default.')
 parser.add_argument('--lora', type=str, help='Name of the LoRA to apply to the model by default.')
 parser.add_argument("--model-dir", type=str, default='models/', help="Path to directory with all the models")

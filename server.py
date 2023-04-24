@@ -544,7 +544,7 @@ def create_interface():
                     shared.gradio['Clear history-cancel'] = gr.Button('Cancel', visible=False)
 
                 shared.gradio['mode'] = gr.Radio(choices=['cai-chat', 'chat', 'instruct'], value=shared.settings['mode'], label='Mode')
-                shared.gradio['instruction_template'] = gr.Dropdown(choices=get_available_instruction_templates(), label='Instruction template', value=shared.settings['instruction_template'], visible=shared.settings['mode'] == 'instruct', info='Change this according to the model/LoRA that you are using.')
+                shared.gradio['instruction_template'] = gr.Dropdown(choices=get_available_instruction_templates(), label='Instruction template', value='None', visible=shared.settings['mode'] == 'instruct', info='Change this according to the model/LoRA that you are using.')
 
             with gr.Tab('Character', elem_id='chat-settings'):
                 with gr.Row():
@@ -560,7 +560,7 @@ def create_interface():
                         shared.gradio['your_picture'] = gr.Image(label='Your picture', type='pil', value=Image.open(Path('cache/pfp_me.png')) if Path('cache/pfp_me.png').exists() else None)
 
                 with gr.Row():
-                    shared.gradio['character_menu'] = gr.Dropdown(choices=get_available_characters(), value='None', label='Character', elem_id='character-menu')
+                    shared.gradio['character_menu'] = gr.Dropdown(choices=get_available_characters(), label='Character', elem_id='character-menu')
                     ui.create_refresh_button(shared.gradio['character_menu'], lambda: None, lambda: {'choices': get_available_characters()}, 'refresh-button')
 
                 with gr.Row():
@@ -794,11 +794,7 @@ def create_interface():
             shared.gradio['character_menu'].change(chat.load_character, [shared.gradio[k] for k in ['character_menu', 'name1', 'name2', 'mode']], [shared.gradio[k] for k in ['name1', 'name2', 'character_picture', 'greeting', 'context', 'end_of_turn', 'display']])
             shared.gradio['upload_img_tavern'].upload(chat.upload_tavern_character, [shared.gradio['upload_img_tavern'], shared.gradio['name1'], shared.gradio['name2']], [shared.gradio['character_menu']])
             shared.gradio['your_picture'].change(chat.upload_your_profile_picture, [shared.gradio[k] for k in ['your_picture', 'name1', 'name2', 'mode']], shared.gradio['display'])
-
             shared.gradio['interface'].load(None, None, None, _js=f"() => {{{ui.main_js+ui.chat_js}}}")
-            shared.gradio['interface'].load(chat.load_character, [shared.gradio[k] for k in ['instruction_template', 'name1', 'name2', 'mode']], [shared.gradio[k] for k in ['name1', 'name2', 'character_picture', 'greeting', 'context', 'end_of_turn', 'display']])
-            shared.gradio['interface'].load(chat.load_default_history, [shared.gradio[k] for k in ['name1', 'name2']], None)
-            shared.gradio['interface'].load(chat.redraw_html, reload_inputs, shared.gradio['display'], show_progress=True)
 
         # notebook/default modes event handlers
         else:
@@ -918,6 +914,14 @@ if __name__ == "__main__":
         shared.model, shared.tokenizer = load_model(shared.model_name)
         if shared.args.lora:
             add_lora_to_model([shared.args.lora])
+
+    # Force a character to be loaded
+    if shared.is_chat():
+        shared.persistent_interface_state.update({
+            'mode': shared.settings['mode'],
+            'character_menu': shared.args.character or shared.settings['character'],
+            'instruction_template': shared.settings['instruction_template']
+        })
 
     # Launch the web UI
     create_interface()
