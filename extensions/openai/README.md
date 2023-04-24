@@ -80,6 +80,17 @@ Some hacky mappings:
 
 defaults are mostly from openai, so are different.
 
+### Applications
+
+Everything needs OPENAI_API_KEY=dummy set.
+
+| Compatibility | App/lib | url | notes / setting |
+| --- | --- | --- | --- |
+| ✅❌ | openai-python | (https://github.com/openai/openai-python) | only the 3 endpoints from above. OPENAI_API_BASE=http://127.0.0.1:5001/v1 |
+| ✅ | shell_gpt | (https://github.com/TheR1D/shell_gpt) | set OPENAI_API_HOST=http://127.0.0.1:5001 |
+| ✅ | gpt-shell | (https://github.com/jla/gpt-shell) | set OPENAI_API_BASE=http://127.0.0.1:5001/v1 |
+| ❌ | chatbot-ui | (https://github.com/mckaywrigley/chatbot-ui) | seems to hit the api, but no data back, hangs, OPENAI_API_HOST=http://127.0.0.1:5001 | 
+
 ## Future plans
 
 * work with Auto-GPT/babyagi
