@@ -17,11 +17,11 @@ folder if GPTQ-for-LLaMa needs to be updated.
 Edit the "webui.py" script using a text editor and add the desired flags
 to the line that says
 
-run_cmd("python server.py --auto-devices --chat --model-menu")
+run_cmd("python server.py --chat --model-menu")
 
 For instance, to add the --notebook flag, change it to
 
-run_cmd("python server.py --auto-devices --notebook --model-menu")
+run_cmd("python server.py --notebook --model-menu")
 
 # Running an interactive shell
 
