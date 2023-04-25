@@ -3,6 +3,7 @@
     "max_new_tokens_min": 1,
     "max_new_tokens_max": 2000,
     "seed": -1,
+    "character": "None",
     "name1": "You",
     "name2": "Assistant",
     "context": "This is a conversation with your Assistant. The Assistant is very helpful and is eager to chat with you and answer your questions.",
@@ -30,7 +31,7 @@
     ],
     "presets": {
         "default": "Default",
-        ".*(alpaca|llama)": "LLaMA-Precise",
+        ".*(alpaca|llama|llava)": "LLaMA-Precise",
         ".*pygmalion": "NovelAI-Storywriter",
         ".*RWKV": "Naive"
     },
