@@ -41,13 +41,17 @@ def select_model_from_default_options():
         char = chr(ord('A') + i)
         choices[char] = name
         print(f"{char}) {name}")
-    char = chr(ord('A') + len(models))
-    print(f"{char}) None of the above")
+    char_hugging = chr(ord('A') + len(models))
+    print(f"{char_hugging}) Manually specify a Hugging Face model")
+    char_exit = chr(ord('A') + len(models) + 1)
+    print(f"{char_exit}) Do not download a model")
 
     print()
     print("Input> ", end='')
     choice = input()[0].strip().upper()
-    if choice == char:
+    if choice == char_exit:
+        exit()
+    elif choice == char_hugging:
         print("""\nThen type the name of your desired Hugging Face model in the format organization/name.
 
 Examples:
@@ -81,7 +85,7 @@ def sanitize_model_and_branch_names(model, branch):
 
 def get_download_links_from_huggingface(model, branch, text_only=False):
     base = "https://huggingface.co"
-    page = f"/api/models/{model}/tree/{branch}?cursor="
+    page = f"/api/models/{model}/tree/{branch}"
     cursor = b""
 
     links = []
@@ -93,7 +97,10 @@ def get_download_links_from_huggingface(model, branch, text_only=False):
     has_safetensors = False
     is_lora = False
     while True:
-        content = requests.get(f"{base}{page}{cursor.decode()}").content
+        url = f"{base}{page}" + (f"?cursor={cursor.decode()}" if cursor else "")
+        r = requests.get(url)
+        r.raise_for_status()
+        content = r.content
 
         dict = json.loads(content)
         if len(dict) == 0:

@@ -38,13 +38,32 @@ if shared.args.deepspeed:
     dschf = HfDeepSpeedConfig(ds_config)  # Keep this object alive for the Transformers integration
 
 
+def find_model_type(model_name):
+    model_name = model_name.lower()
+    if 'rwkv-' in model_name:
+        return 'rwkv'
+    elif len(list(Path(f'{shared.args.model_dir}/{model_name}').glob('*ggml*.bin'))) > 0:
+        return 'llamacpp'
+    elif re.match('.*ggml.*\.bin', model_name):
+        return 'llamacpp'
+    elif 'chatglm' in model_name:
+        return 'chatglm'
+    elif 'galactica' in model_name:
+        return 'galactica'
+    elif 'llava' in model_name:
+        return 'llava'
+    elif any((k in model_name for k in ['gpt4chan', 'gpt-4chan'])):
+        return 'gpt4chan'
+    else:
+        return 'HF_generic'
+
+
 def load_model(model_name):
     print(f"Loading {model_name}...")
     t0 = time.time()
 
-    shared.is_RWKV = 'rwkv-' in model_name.lower()
-    shared.is_llamacpp = len(list(Path(f'{shared.args.model_dir}/{model_name}').glob('ggml*.bin'))) > 0
-    if 'chatglm' in model_name.lower():
+    shared.model_type = find_model_type(model_name)
+    if shared.model_type == 'chatglm':
         LoaderClass = AutoModel
         trust_remote_code = shared.args.trust_remote_code
     else:
@@ -52,8 +71,8 @@ def load_model(model_name):
         trust_remote_code = False
 
     # Load the model in simple 16-bit mode by default
-    if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.wbits, shared.args.auto_devices, shared.args.disk, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None, shared.args.deepspeed, shared.args.flexgen, shared.is_RWKV, shared.is_llamacpp]):
-        model = LoaderClass.from_pretrained(Path(f"{shared.args.model_dir}/{shared.model_name}"), low_cpu_mem_usage=True, torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16, trust_remote_code=trust_remote_code)
+    if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.wbits, shared.args.auto_devices, shared.args.disk, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None, shared.args.deepspeed, shared.args.flexgen, shared.model_type in ['rwkv', 'llamacpp']]):
+        model = LoaderClass.from_pretrained(Path(f"{shared.args.model_dir}/{model_name}"), low_cpu_mem_usage=True, torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16, trust_remote_code=trust_remote_code)
         if torch.has_mps:
             device = torch.device('mps')
             model = model.to(device)
@@ -81,17 +100,17 @@ def load_model(model_name):
                             num_bits=4, group_size=64,
                             group_dim=2, symmetric=False))
 
-        model = OptLM(f"facebook/{shared.model_name}", env, shared.args.model_dir, policy)
+        model = OptLM(f"facebook/{model_name}", env, shared.args.model_dir, policy)
 
     # DeepSpeed ZeRO-3
     elif shared.args.deepspeed:
-        model = LoaderClass.from_pretrained(Path(f"{shared.args.model_dir}/{shared.model_name}"), torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16)
+        model = LoaderClass.from_pretrained(Path(f"{shared.args.model_dir}/{model_name}"), torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16)
         model = deepspeed.initialize(model=model, config_params=ds_config, model_parameters=None, optimizer=None, lr_scheduler=None)[0]
         model.module.eval()  # Inference
         print(f"DeepSpeed ZeRO-3 is enabled: {is_deepspeed_zero3_enabled()}")
 
     # RMKV model (not on HuggingFace)
-    elif shared.is_RWKV:
+    elif shared.model_type == 'rwkv':
         from modules.RWKV import RWKVModel, RWKVTokenizer
 
         model = RWKVModel.from_pretrained(Path(f'{shared.args.model_dir}/{model_name}'), dtype="fp32" if shared.args.cpu else "bf16" if shared.args.bf16 else "fp16", device="cpu" if shared.args.cpu else "cuda")
@@ -99,21 +118,36 @@ def load_model(model_name):
 
         return model, tokenizer
 
-    # Quantized model
-    elif shared.args.wbits > 0:
-        from modules.GPTQ_loader import load_quantized
-
-        model = load_quantized(model_name)
-
     # llamacpp model
-    elif shared.is_llamacpp:
+    elif shared.model_type == 'llamacpp':
         from modules.llamacpp_model_alternative import LlamaCppModel
 
-        model_file = list(Path(f'{shared.args.model_dir}/{model_name}').glob('ggml*.bin'))[0]
-        print(f"llama.cpp weights detected: {model_file}\n")
+        path = Path(f'{shared.args.model_dir}/{model_name}')
+        if path.is_file():
+            model_file = path
+        else:
+            model_file = list(Path(f'{shared.args.model_dir}/{model_name}').glob('*ggml*.bin'))[0]
 
+        print(f"llama.cpp weights detected: {model_file}\n")
         model, tokenizer = LlamaCppModel.from_pretrained(model_file)
         return model, tokenizer
+
+    # Quantized model
+    elif shared.args.wbits > 0:
+
+        # Monkey patch
+        if shared.args.monkey_patch:
+            print("Warning: applying the monkey patch for using LoRAs in 4-bit mode.\nIt may cause undefined behavior outside its intended scope.")
+            from modules.monkey_patch_gptq_lora import load_model_llama
+
+            model, tokenizer = load_model_llama(model_name)
+            return model, tokenizer
+
+        # No monkey patch
+        else:
+            from modules.GPTQ_loader import load_quantized
+
+            model = load_quantized(model_name)
 
     # Custom
     else:
@@ -158,7 +192,7 @@ def load_model(model_name):
             if shared.args.disk:
                 params["offload_folder"] = shared.args.disk_cache_dir
 
-        checkpoint = Path(f'{shared.args.model_dir}/{shared.model_name}')
+        checkpoint = Path(f'{shared.args.model_dir}/{model_name}')
 
         if shared.args.load_in_8bit and params.get('max_memory', None) is not None and params['device_map'] == 'auto':
             config = AutoConfig.from_pretrained(checkpoint)
@@ -179,20 +213,31 @@ def load_model(model_name):
         llama_attn_hijack.hijack_llama_attention()
 
     # Loading the tokenizer
-    if any((k in shared.model_name.lower() for k in ['gpt4chan', 'gpt-4chan'])) and Path(f"{shared.args.model_dir}/gpt-j-6B/").exists():
+    if shared.model_type == 'gpt4chan' and Path(f"{shared.args.model_dir}/gpt-j-6B/").exists():
         tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/gpt-j-6B/"))
     elif type(model) is transformers.LlamaForCausalLM:
-        tokenizer = LlamaTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/{shared.model_name}/"), clean_up_tokenization_spaces=True)
-        # Leaving this here until the LLaMA tokenizer gets figured out.
-        # For some people this fixes things, for others it causes an error.
-        try:
-            tokenizer.eos_token_id = 2
-            tokenizer.bos_token_id = 1
-            tokenizer.pad_token_id = 0
-        except:
-            pass
+        tokenizer = None
+
+        # Try to load an universal LLaMA tokenizer
+        if shared.model_type != 'llava':
+            for p in [Path(f"{shared.args.model_dir}/llama-tokenizer/"), Path(f"{shared.args.model_dir}/oobabooga_llama-tokenizer/")]:
+                if p.exists():
+                    print(f"Loading the universal LLaMA tokenizer from {p}...")
+                    tokenizer = LlamaTokenizer.from_pretrained(p, clean_up_tokenization_spaces=True)
+                    break
+
+        # Otherwise, load it from the model folder and hope that these
+        # are not outdated tokenizer files.
+        if tokenizer is None:
+            tokenizer = LlamaTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/{model_name}/"), clean_up_tokenization_spaces=True)
+            try:
+                tokenizer.eos_token_id = 2
+                tokenizer.bos_token_id = 1
+                tokenizer.pad_token_id = 0
+            except:
+                pass
     else:
-        tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/{shared.model_name}/"), trust_remote_code=trust_remote_code)
+        tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/{model_name}/"), trust_remote_code=trust_remote_code)
 
     print(f"Loaded the model in {(time.time()-t0):.2f} seconds.")
     return model, tokenizer
