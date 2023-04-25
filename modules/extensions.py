@@ -32,9 +32,9 @@ def load_extensions():
             try:
                 exec(f"import extensions.{name}.script")
                 extension = getattr(extensions, name).script
+                apply_settings(extension, name)
                 if extension not in setup_called and hasattr(extension, "setup"):
                     setup_called.add(extension)
-                    apply_settings(extension, name)
                     extension.setup()
 
                 state[name] = [True, i]
