@@ -11,6 +11,18 @@ available_extensions = []
 setup_called = set()
 
 
+def apply_settings(extension, name):
+    if not hasattr(extension, 'params'):
+        return
+
+    for param in extension.params:
+        _id = f"{name}-{param}"
+        if _id not in shared.settings:
+            continue
+
+        extension.params[param] = shared.settings[_id]
+
+
 def load_extensions():
     global state, setup_called
     for i, name in enumerate(shared.args.extensions):
@@ -103,19 +115,6 @@ def apply_extensions(typ, *args, **kwargs):
     return EXTENSION_MAP[typ](*args, **kwargs)
 
 
-def apply_settings(extension, name):
-    # Updating the default values
-    if not hasattr(extension, 'params'):
-        return
-
-    for param in extension.params:
-        _id = f"{name}-{param}"
-        if _id not in shared.settings:
-            continue
-
-        extension.params[param] = shared.settings[_id]
-
-
 def create_extensions_block():
     global setup_called
 
@@ -123,6 +122,7 @@ def create_extensions_block():
     for extension, name in iterator():
         if hasattr(extension, "ui"):
             should_display_ui = True
+            break
 
     # Creating the extension ui elements
     if should_display_ui:
