@@ -42,7 +42,7 @@ class Handler(BaseHTTPRequestHandler):
                 "owned_by": "user",
                 "permission": []
             }, { # these are expected by so much, so include it here as a dummy
-                "id": "gpt-35-turbo",
+                "id": "gpt-3.5-turbo",
                 "object": "model",
                 "owned_by": "user",
                 "permission": []
@@ -171,6 +171,9 @@ class Handler(BaseHTTPRequestHandler):
                 messages = body['messages']
 
                 system_msg = '' # You are ChatGPT, a large language model trained by OpenAI. Answer as concisely as possible. Knowledge cutoff: {knowledge_cutoff} Current date: {current_date}
+                if body['prompt']: # Maybe they sent both? This is not documented in the API, but some clients seem to do this.
+                    system_msg = body['prompt']
+
                 chat_msgs = []
 
                 for m in messages:
