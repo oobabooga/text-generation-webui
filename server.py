@@ -39,6 +39,7 @@ import psutil
 import torch
 import yaml
 from PIL import Image
+from fastapi import FastAPI
 
 import modules.extensions as extensions_module
 from modules import chat, shared, training, ui
@@ -850,7 +851,10 @@ def create_interface():
         shared.gradio['interface'].launch(prevent_thread_lock=True, share=shared.args.share, server_name=shared.args.listen_host or '0.0.0.0', server_port=shared.args.listen_port, inbrowser=shared.args.auto_launch, auth=auth)
     else:
         shared.gradio['interface'].launch(prevent_thread_lock=True, share=shared.args.share, server_port=shared.args.listen_port, inbrowser=shared.args.auto_launch, auth=auth)
-
+    if shared.args.subpath:
+        app = FastAPI()
+        app.get("/")
+        shared.gradio['interface'] = gr.mount_gradio_app(app, shared.gradio['interface'], path=f"/{shared.args.subpath}")
 
 if __name__ == "__main__":
     # Loading custom settings
