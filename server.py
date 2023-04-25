@@ -928,12 +928,10 @@ if __name__ == "__main__":
         })
 
     # Launch the web UI
-    import time
     create_interface()
     while True:
         time.sleep(0.5)
         if shared.need_restart:
             shared.need_restart = False
             shared.gradio['interface'].close()
-            time.sleep(120)
             create_interface()
