@@ -1,9 +1,25 @@
 import os
+import requests
 import warnings
 
 os.environ['GRADIO_ANALYTICS_ENABLED'] = 'False'
 os.environ['BITSANDBYTES_NOWELCOME'] = '1'
 warnings.filterwarnings('ignore', category=UserWarning, message='TypedStorage is deprecated')
+
+# This is a hack to prevent Gradio from phoning home when it gets imported
+def my_get(url, **kwargs):
+    print('Gradio HTTP request redirected to localhost :)')
+    kwargs.setdefault('allow_redirects', True)
+    return requests.api.request('get', 'http://127.0.0.1/', **kwargs)
+
+original_get = requests.get
+requests.get = my_get
+import gradio as gr
+requests.get = original_get
+
+# This fixes LaTeX rendering on some systems
+import matplotlib
+matplotlib.use('Agg')
 
 import importlib
 import io
@@ -16,26 +32,28 @@ import time
 import traceback
 import zipfile
 from datetime import datetime
+from functools import partial
 from pathlib import Path
 
-import gradio as gr
 import psutil
 import torch
+import yaml
 from PIL import Image
 
 import modules.extensions as extensions_module
-from modules import api, chat, shared, training, ui
+from modules import chat, shared, training, ui
 from modules.html_generator import chat_html_wrapper
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, load_soft_prompt, unload_model
-from modules.text_generation import generate_reply, stop_everything_event
+from modules.text_generation import (encode, generate_reply,
+                                     stop_everything_event)
 
 
 def get_available_models():
     if shared.args.flexgen:
         return sorted([re.sub('-np$', '', item.name) for item in list(Path(f'{shared.args.model_dir}/').glob('*')) if item.name.endswith('-np')], key=str.lower)
     else:
-        return sorted([re.sub('.pth$', '', item.name) for item in list(Path(f'{shared.args.model_dir}/').glob('*')) if not item.name.endswith(('.txt', '-np', '.pt', '.json'))], key=str.lower)
+        return sorted([re.sub('.pth$', '', item.name) for item in list(Path(f'{shared.args.model_dir}/').glob('*')) if not item.name.endswith(('.txt', '-np', '.pt', '.json', '.yaml'))], key=str.lower)
 
 
 def get_available_presets():
@@ -72,7 +90,7 @@ def get_available_softprompts():
 
 
 def get_available_loras():
-    return ['None'] + sorted([item.name for item in list(Path(shared.args.lora_dir).glob('*')) if not item.name.endswith(('.txt', '-np', '.pt', '.json'))], key=str.lower)
+    return sorted([item.name for item in list(Path(shared.args.lora_dir).glob('*')) if not item.name.endswith(('.txt', '-np', '.pt', '.json'))], key=str.lower)
 
 
 def load_model_wrapper(selected_model):
@@ -156,6 +174,11 @@ def load_prompt(fname):
             return text
 
 
+def count_tokens(text):
+    tokens = len(encode(text)[0])
+    return f'{tokens} tokens in the input.'
+
+
 def download_model_wrapper(repo_id):
     try:
         downloader = importlib.import_module("download-model")
@@ -213,7 +236,7 @@ def update_model_parameters(state, initial=False):
         elif element == 'cpu_memory' and value is not None:
             value = f"{value}MiB"
 
-        exec(f"shared.args.{element} = value")
+        setattr(shared.args, element, value)
 
     found_positive = False
     for i in gpu_memories:
@@ -221,10 +244,11 @@ def update_model_parameters(state, initial=False):
             found_positive = True
             break
 
-    if found_positive:
-        shared.args.gpu_memory = [f"{i}MiB" for i in gpu_memories]
-    else:
-        shared.args.gpu_memory = None
+    if not (initial and vars(shared.args)['gpu_memory'] != vars(shared.args_defaults)['gpu_memory']):
+        if found_positive:
+            shared.args.gpu_memory = [f"{i}MiB" for i in gpu_memories]
+        else:
+            shared.args.gpu_memory = None
 
 
 def get_model_specific_settings(model):
@@ -232,7 +256,7 @@ def get_model_specific_settings(model):
     model_settings = {}
 
     for pat in settings:
-        if re.match(pat, model.lower()):
+        if re.match(pat.lower(), model.lower()):
             for k in settings[pat]:
                 model_settings[k] = settings[pat][k]
 
@@ -246,6 +270,29 @@ def load_model_specific_settings(model, state, return_dict=False):
             state[k] = model_settings[k]
 
     return state
+
+
+def save_model_settings(model, state):
+    if model == 'None':
+        yield ("Not saving the settings because no model is loaded.")
+        return
+
+    with Path(f'{shared.args.model_dir}/config-user.yaml') as p:
+        if p.exists():
+            user_config = yaml.safe_load(open(p, 'r').read())
+        else:
+            user_config = {}
+
+        if model not in user_config:
+            user_config[model] = {}
+
+        for k in ui.list_model_elements():
+            user_config[model][k] = state[k]
+
+        with open(p, 'w') as f:
+            f.write(yaml.dump(user_config))
+
+        yield (f"Settings for {model} saved to {p}")
 
 
 def create_model_menus():
@@ -284,10 +331,12 @@ def create_model_menus():
                         ui.create_refresh_button(shared.gradio['lora_menu'], lambda: None, lambda: {'choices': get_available_loras(), 'value': shared.lora_names}, 'refresh-button')
 
         with gr.Column():
-            shared.gradio['lora_menu_apply'] = gr.Button(value='Apply the selected LoRAs')
+            with gr.Row():
+                shared.gradio['lora_menu_apply'] = gr.Button(value='Apply the selected LoRAs')
             with gr.Row():
                 unload = gr.Button("Unload the model")
                 reload = gr.Button("Reload the model")
+                save_settings = gr.Button("Save settings for this model")
 
     with gr.Row():
         with gr.Column():
@@ -343,7 +392,11 @@ def create_model_menus():
         unload_model, None, None).then(
         ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
         update_model_parameters, shared.gradio['interface_state'], None).then(
-        load_model_wrapper, shared.gradio['model_menu'], shared.gradio['model_status'], show_progress=True)
+        load_model_wrapper, shared.gradio['model_menu'], shared.gradio['model_status'], show_progress=False)
+
+    save_settings.click(
+        ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
+        save_model_settings, [shared.gradio[k] for k in ['model_menu', 'interface_state']], shared.gradio['model_status'], show_progress=False)
 
     shared.gradio['lora_menu_apply'].click(load_lora_wrapper, shared.gradio['lora_menu'], shared.gradio['model_status'], show_progress=False)
     shared.gradio['download_model_button'].click(download_model_wrapper, shared.gradio['custom_model_menu'], shared.gradio['model_status'], show_progress=False)
@@ -386,16 +439,20 @@ def create_settings_menus(default_preset):
                 with gr.Row():
                     with gr.Column():
                         shared.gradio['num_beams'] = gr.Slider(1, 20, step=1, value=generate_params['num_beams'], label='num_beams')
-                    with gr.Column():
                         shared.gradio['length_penalty'] = gr.Slider(-5, 5, value=generate_params['length_penalty'], label='length_penalty')
-                shared.gradio['early_stopping'] = gr.Checkbox(value=generate_params['early_stopping'], label='early_stopping')
+                    with gr.Column():
+                        shared.gradio['early_stopping'] = gr.Checkbox(value=generate_params['early_stopping'], label='early_stopping')
 
-            with gr.Group():
+            with gr.Box():
                 with gr.Row():
-                    shared.gradio['add_bos_token'] = gr.Checkbox(value=shared.settings['add_bos_token'], label='Add the bos_token to the beginning of prompts', info='Disabling this can make the replies more creative.')
-                    shared.gradio['ban_eos_token'] = gr.Checkbox(value=shared.settings['ban_eos_token'], label='Ban the eos_token', info='This forces the model to never end the generation prematurely.')
-                shared.gradio['truncation_length'] = gr.Slider(value=shared.settings['truncation_length'], minimum=shared.settings['truncation_length_min'], maximum=shared.settings['truncation_length_max'], step=1, label='Truncate the prompt up to this length', info='The leftmost tokens are removed if the prompt exceeds this length. Most models require this to be at most 2048.')
-                shared.gradio['custom_stopping_strings'] = gr.Textbox(lines=1, value=shared.settings["custom_stopping_strings"] or None, label='Custom stopping strings', info='In addition to the defaults. Written between "" and separated by commas. For instance: "\\nYour Assistant:", "\\nThe assistant:"')
+                    with gr.Column():
+                        shared.gradio['truncation_length'] = gr.Slider(value=shared.settings['truncation_length'], minimum=shared.settings['truncation_length_min'], maximum=shared.settings['truncation_length_max'], step=1, label='Truncate the prompt up to this length', info='The leftmost tokens are removed if the prompt exceeds this length. Most models require this to be at most 2048.')
+                        shared.gradio['custom_stopping_strings'] = gr.Textbox(lines=1, value=shared.settings["custom_stopping_strings"] or None, label='Custom stopping strings', info='In addition to the defaults. Written between "" and separated by commas. For instance: "\\nYour Assistant:", "\\nThe assistant:"')
+                    with gr.Column():
+                        shared.gradio['add_bos_token'] = gr.Checkbox(value=shared.settings['add_bos_token'], label='Add the bos_token to the beginning of prompts', info='Disabling this can make the replies more creative.')
+                        shared.gradio['ban_eos_token'] = gr.Checkbox(value=shared.settings['ban_eos_token'], label='Ban the eos_token', info='Forces the model to never end the generation prematurely.')
+
+                        shared.gradio['skip_special_tokens'] = gr.Checkbox(value=shared.settings['skip_special_tokens'], label='Skip special tokens', info='Some specific models need this unset.')
 
     with gr.Accordion('Soft prompt', open=False):
         with gr.Row():
@@ -418,14 +475,14 @@ def set_interface_arguments(interface_mode, extensions, bool_active):
 
     shared.args.extensions = extensions
     for k in modes[1:]:
-        exec(f"shared.args.{k} = False")
+        setattr(shared.args, k, False)
     if interface_mode != "default":
-        exec(f"shared.args.{interface_mode} = True")
+        setattr(shared.args, interface_mode, True)
 
     for k in bool_list:
-        exec(f"shared.args.{k} = False")
+        setattr(shared.args, k, False)
     for k in bool_active:
-        exec(f"shared.args.{k} = True")
+        setattr(shared.args, k, True)
 
     shared.need_restart = True
 
@@ -454,7 +511,7 @@ def create_interface():
     if shared.args.extensions is not None and len(shared.args.extensions) > 0:
         extensions_module.load_extensions()
 
-    with gr.Blocks(css=ui.css if not shared.is_chat() else ui.css + ui.chat_css, analytics_enabled=False, title=title) as shared.gradio['interface']:
+    with gr.Blocks(css=ui.css if not shared.is_chat() else ui.css + ui.chat_css, analytics_enabled=False, title=title, theme=ui.theme) as shared.gradio['interface']:
 
         # Create chat mode interface
         if shared.is_chat():
@@ -467,7 +524,7 @@ def create_interface():
                 shared.gradio['textbox'] = gr.Textbox(label='Input')
                 with gr.Row():
                     shared.gradio['Stop'] = gr.Button('Stop', elem_id='stop')
-                    shared.gradio['Generate'] = gr.Button('Generate', elem_id='Generate')
+                    shared.gradio['Generate'] = gr.Button('Generate', elem_id='Generate', variant='primary')
                     shared.gradio['Continue'] = gr.Button('Continue')
 
                 with gr.Row():
@@ -487,7 +544,7 @@ def create_interface():
                     shared.gradio['Clear history-cancel'] = gr.Button('Cancel', visible=False)
 
                 shared.gradio['mode'] = gr.Radio(choices=['cai-chat', 'chat', 'instruct'], value=shared.settings['mode'], label='Mode')
-                shared.gradio['instruction_template'] = gr.Dropdown(choices=get_available_instruction_templates(), label='Instruction template', value=shared.settings['instruction_template'], visible=shared.settings['mode'] == 'instruct', info='Change this according to the model/LoRA that you are using.')
+                shared.gradio['instruction_template'] = gr.Dropdown(choices=get_available_instruction_templates(), label='Instruction template', value='None', visible=shared.settings['mode'] == 'instruct', info='Change this according to the model/LoRA that you are using.')
 
             with gr.Tab('Character', elem_id='chat-settings'):
                 with gr.Row():
@@ -503,7 +560,7 @@ def create_interface():
                         shared.gradio['your_picture'] = gr.Image(label='Your picture', type='pil', value=Image.open(Path('cache/pfp_me.png')) if Path('cache/pfp_me.png').exists() else None)
 
                 with gr.Row():
-                    shared.gradio['character_menu'] = gr.Dropdown(choices=get_available_characters(), value='None', label='Character', elem_id='character-menu')
+                    shared.gradio['character_menu'] = gr.Dropdown(choices=get_available_characters(), label='Character', elem_id='character-menu')
                     ui.create_refresh_button(shared.gradio['character_menu'], lambda: None, lambda: {'choices': get_available_characters()}, 'refresh-button')
 
                 with gr.Row():
@@ -556,7 +613,7 @@ def create_interface():
                 with gr.Row():
                     with gr.Column(scale=4):
                         with gr.Tab('Raw'):
-                            shared.gradio['textbox'] = gr.Textbox(value=default_text, elem_id="textbox", lines=27)
+                            shared.gradio['textbox'] = gr.Textbox(value=default_text, elem_classes="textbox", lines=27)
 
                         with gr.Tab('Markdown'):
                             shared.gradio['markdown'] = gr.Markdown()
@@ -565,15 +622,10 @@ def create_interface():
                             shared.gradio['html'] = gr.HTML()
 
                         with gr.Row():
-                            with gr.Column():
-                                with gr.Row():
-                                    shared.gradio['Generate'] = gr.Button('Generate')
-                                    shared.gradio['Stop'] = gr.Button('Stop')
-                                    shared.gradio['Undo'] = gr.Button('Undo')
-                                    shared.gradio['Regenerate'] = gr.Button('Regenerate')
-
-                            with gr.Column():
-                                pass
+                            shared.gradio['Generate'] = gr.Button('Generate', variant='primary', elem_classes="small-button")
+                            shared.gradio['Stop'] = gr.Button('Stop', elem_classes="small-button")
+                            shared.gradio['Undo'] = gr.Button('Undo', elem_classes="small-button")
+                            shared.gradio['Regenerate'] = gr.Button('Regenerate', elem_classes="small-button")
 
                     with gr.Column(scale=1):
                         gr.HTML('<div style="padding-bottom: 13px"></div>')
@@ -583,6 +635,7 @@ def create_interface():
                             ui.create_refresh_button(shared.gradio['prompt_menu'], lambda: None, lambda: {'choices': get_available_prompts()}, 'refresh-button')
 
                         shared.gradio['save_prompt'] = gr.Button('Save prompt')
+                        shared.gradio['count_tokens'] = gr.Button('Count tokens')
                         shared.gradio['status'] = gr.Markdown('')
 
             with gr.Tab("Parameters", elem_id="parameters"):
@@ -596,16 +649,14 @@ def create_interface():
             with gr.Tab("Text generation", elem_id="main"):
                 with gr.Row():
                     with gr.Column():
-                        shared.gradio['textbox'] = gr.Textbox(value=default_text, lines=21, label='Input')
+                        shared.gradio['textbox'] = gr.Textbox(value=default_text, elem_classes="textbox_default", lines=27, label='Input')
                         shared.gradio['max_new_tokens'] = gr.Slider(minimum=shared.settings['max_new_tokens_min'], maximum=shared.settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=shared.settings['max_new_tokens'])
                         with gr.Row():
-                            with gr.Column():
-                                shared.gradio['Generate'] = gr.Button('Generate')
-                                shared.gradio['Continue'] = gr.Button('Continue')
-
-                            with gr.Column():
-                                shared.gradio['Stop'] = gr.Button('Stop')
-                                shared.gradio['save_prompt'] = gr.Button('Save prompt')
+                            shared.gradio['Generate'] = gr.Button('Generate', variant='primary', elem_classes="small-button")
+                            shared.gradio['Stop'] = gr.Button('Stop', elem_classes="small-button")
+                            shared.gradio['Continue'] = gr.Button('Continue', elem_classes="small-button")
+                            shared.gradio['save_prompt'] = gr.Button('Save prompt', elem_classes="small-button")
+                            shared.gradio['count_tokens'] = gr.Button('Count tokens', elem_classes="small-button")
 
                         with gr.Row():
                             with gr.Column():
@@ -618,7 +669,7 @@ def create_interface():
 
                     with gr.Column():
                         with gr.Tab('Raw'):
-                            shared.gradio['output_textbox'] = gr.Textbox(lines=27, label='Output')
+                            shared.gradio['output_textbox'] = gr.Textbox(elem_classes="textbox_default_output", lines=27, label='Output')
 
                         with gr.Tab('Markdown'):
                             shared.gradio['markdown'] = gr.Markdown()
@@ -642,7 +693,7 @@ def create_interface():
             modes = ["default", "notebook", "chat", "cai_chat"]
             current_mode = "default"
             for mode in modes[1:]:
-                if eval(f"shared.args.{mode}"):
+                if getattr(shared.args, mode):
                     current_mode = mode
                     break
             cmd_list = vars(shared.args)
@@ -659,14 +710,6 @@ def create_interface():
             shared.gradio['reset_interface'].click(
                 set_interface_arguments, [shared.gradio[k] for k in ['interface_modes_menu', 'extensions_menu', 'bool_menu']], None).then(
                 lambda: None, None, None, _js='() => {document.body.innerHTML=\'<h1 style="font-family:monospace;margin-top:20%;color:lightgray;text-align:center;">Reloading...</h1>\'; setTimeout(function(){location.reload()},2500); return []}')
-
-        # Extensions block
-        if shared.args.extensions is not None:
-            extensions_module.create_extensions_block()
-
-        # Create the invisible elements that define the API
-        if not shared.is_chat():
-            api.create_apis()
 
         # chat mode event handlers
         if shared.is_chat():
@@ -736,7 +779,7 @@ def create_interface():
                 chat.redraw_html, reload_inputs, shared.gradio['display'])
 
             shared.gradio['instruction_template'].change(
-                lambda character, name1, name2, mode: chat.load_character(character, name1, name2, mode), [shared.gradio[k] for k in ['instruction_template', 'name1', 'name2', 'mode']], [shared.gradio[k] for k in ['name1', 'name2', 'character_picture', 'greeting', 'context', 'end_of_turn', 'display']]).then(
+                chat.load_character, [shared.gradio[k] for k in ['instruction_template', 'name1', 'name2', 'mode']], [shared.gradio[k] for k in ['name1', 'name2', 'character_picture', 'greeting', 'context', 'end_of_turn', 'display']]).then(
                 chat.redraw_html, reload_inputs, shared.gradio['display'])
 
             shared.gradio['upload_chat_history'].upload(
@@ -752,15 +795,11 @@ def create_interface():
             shared.gradio['character_menu'].change(chat.load_character, [shared.gradio[k] for k in ['character_menu', 'name1', 'name2', 'mode']], [shared.gradio[k] for k in ['name1', 'name2', 'character_picture', 'greeting', 'context', 'end_of_turn', 'display']])
             shared.gradio['upload_img_tavern'].upload(chat.upload_tavern_character, [shared.gradio['upload_img_tavern'], shared.gradio['name1'], shared.gradio['name2']], [shared.gradio['character_menu']])
             shared.gradio['your_picture'].change(chat.upload_your_profile_picture, [shared.gradio[k] for k in ['your_picture', 'name1', 'name2', 'mode']], shared.gradio['display'])
-
             shared.gradio['interface'].load(None, None, None, _js=f"() => {{{ui.main_js+ui.chat_js}}}")
-            shared.gradio['interface'].load(chat.load_default_history, [shared.gradio[k] for k in ['name1', 'name2']], None)
-            shared.gradio['interface'].load(chat.redraw_html, reload_inputs, shared.gradio['display'], show_progress=True)
 
         # notebook/default modes event handlers
         else:
             shared.input_params = [shared.gradio[k] for k in ['textbox', 'interface_state']]
-
             if shared.args.notebook:
                 output_params = [shared.gradio[k] for k in ['textbox', 'markdown', 'html']]
             else:
@@ -796,9 +835,15 @@ def create_interface():
                 )
 
             shared.gradio['Stop'].click(stop_everything_event, None, None, queue=False, cancels=gen_events if shared.args.no_stream else None)
-            shared.gradio['prompt_menu'].change(load_prompt, [shared.gradio['prompt_menu']], [shared.gradio['textbox']], show_progress=False)
-            shared.gradio['save_prompt'].click(save_prompt, [shared.gradio['textbox']], [shared.gradio['status']], show_progress=False)
+            shared.gradio['prompt_menu'].change(load_prompt, shared.gradio['prompt_menu'], shared.gradio['textbox'], show_progress=False)
+            shared.gradio['save_prompt'].click(save_prompt, shared.gradio['textbox'], shared.gradio['status'], show_progress=False)
+            shared.gradio['count_tokens'].click(count_tokens, shared.gradio['textbox'], shared.gradio['status'], show_progress=False)
             shared.gradio['interface'].load(None, None, None, _js=f"() => {{{ui.main_js}}}")
+
+        shared.gradio['interface'].load(partial(ui.apply_interface_values, {}, use_persistent=True), None, [shared.gradio[k] for k in ui.list_interface_input_elements(chat=shared.is_chat())], show_progress=False)
+        # Extensions block
+        if shared.args.extensions is not None:
+            extensions_module.create_extensions_block()
 
     # Launch the interface
     shared.gradio['interface'].queue()
@@ -809,7 +854,6 @@ def create_interface():
 
 
 if __name__ == "__main__":
-
     # Loading custom settings
     settings_file = None
     if shared.args.settings is not None and Path(shared.args.settings).exists():
@@ -854,14 +898,15 @@ if __name__ == "__main__":
             print('The following models are available:\n')
             for i, model in enumerate(available_models):
                 print(f'{i+1}. {model}')
+
             print(f'\nWhich one do you want to load? 1-{len(available_models)}\n')
             i = int(input()) - 1
             print()
+
         shared.model_name = available_models[i]
 
     # If any model has been selected, load it
     if shared.model_name != 'None':
-
         model_settings = get_model_specific_settings(shared.model_name)
         shared.settings.update(model_settings)  # hijacking the interface defaults
         update_model_parameters(model_settings, initial=True)  # hijacking the command-line arguments
@@ -870,6 +915,14 @@ if __name__ == "__main__":
         shared.model, shared.tokenizer = load_model(shared.model_name)
         if shared.args.lora:
             add_lora_to_model([shared.args.lora])
+
+    # Force a character to be loaded
+    if shared.is_chat():
+        shared.persistent_interface_state.update({
+            'mode': shared.settings['mode'],
+            'character_menu': shared.args.character or shared.settings['character'],
+            'instruction_template': shared.settings['instruction_template']
+        })
 
     # Launch the web UI
     create_interface()
