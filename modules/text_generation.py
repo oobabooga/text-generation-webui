@@ -66,6 +66,12 @@ def decode(output_ids, skip_special_tokens=True):
         return shared.tokenizer.decode(output_ids, skip_special_tokens=False)
 
 
+def decode_for_lm(output_ids, new_tokens, skip_special_tokens=True):
+    if shared.model_type != 'HF_seq2seq':
+        output_ids = output_ids[-new_tokens:]
+    return decode(output_ids, skip_special_tokens)
+
+
 def generate_softprompt_input_tensors(input_ids):
     inputs_embeds = shared.model.transformer.wte(input_ids)
     inputs_embeds = torch.cat((shared.soft_prompt_tensor, inputs_embeds), dim=1)
@@ -263,7 +269,7 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
                 output = torch.cat((input_ids[0], output[filler_input_ids.shape[1]:]))
 
             new_tokens = len(output) - len(input_ids[0])
-            reply = decode(output[-new_tokens:], state['skip_special_tokens'])
+            reply = decode_for_lm(output, new_tokens, state['skip_special_tokens'])
             if not shared.is_chat():
                 reply = original_question + apply_extensions('output', reply)
 
@@ -291,7 +297,7 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
                         output = torch.cat((input_ids[0], output[filler_input_ids.shape[1]:]))
 
                     new_tokens = len(output) - len(input_ids[0])
-                    reply = decode(output[-new_tokens:], state['skip_special_tokens'])
+                    reply = decode_for_lm(output, new_tokens, state['skip_special_tokens'])
                     if not shared.is_chat():
                         reply = original_question + apply_extensions('output', reply)
 
@@ -311,7 +317,7 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
                     output = torch.cat((input_ids[0], output[filler_input_ids.shape[1]:]))
 
                 new_tokens = len(output) - len(original_input_ids[0])
-                reply = decode(output[-new_tokens:], state['skip_special_tokens'])
+                reply = decode_for_lm(output, new_tokens, state['skip_special_tokens'])
                 if not shared.is_chat():
                     reply = original_question + apply_extensions('output', reply)
 
@@ -334,6 +340,6 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
     finally:
         t1 = time.time()
         original_tokens = len(original_input_ids[0])
-        new_tokens = len(output) - original_tokens
+        new_tokens = len(output) - (original_tokens if shared.model_type != 'HF_seq2seq' else 0)
         print(f'Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens}, seed {seed})')
         return
