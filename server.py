@@ -852,9 +852,9 @@ def create_interface():
     else:
         shared.gradio['interface'].launch(prevent_thread_lock=True, share=shared.args.share, server_port=shared.args.listen_port, inbrowser=shared.args.auto_launch, auth=auth)
     if shared.args.subpath:
-        app = FastAPI()
-        app.get("/")
-        shared.gradio['interface'] = gr.mount_gradio_app(app, shared.gradio['interface'], path=f"/{shared.args.subpath}")
+        redirector = FastAPI()
+        redirector.get("/")
+        mounted_app = gr.mount_gradio_app(redirector, shared.gradio['interface'], path=f"/{shared.args.subpath}")
 
 if __name__ == "__main__":
     # Loading custom settings
@@ -928,10 +928,12 @@ if __name__ == "__main__":
         })
 
     # Launch the web UI
+    import time
     create_interface()
     while True:
         time.sleep(0.5)
         if shared.need_restart:
             shared.need_restart = False
             shared.gradio['interface'].close()
+            time.sleep(120)
             create_interface()
