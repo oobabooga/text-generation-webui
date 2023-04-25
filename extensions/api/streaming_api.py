@@ -44,6 +44,8 @@ async def _handle_connection(websocket, path):
                 'text': to_send
             }))
 
+            await asyncio.sleep(0)
+
             skip_index += len(to_send)
             message_num += 1
 
