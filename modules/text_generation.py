@@ -113,9 +113,11 @@ def set_manual_seed(seed):
     seed = int(seed)
     if seed == -1:
         seed = random.randint(1, 2**31)
+
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
+
     return seed
 
 
@@ -123,8 +125,41 @@ def stop_everything_event():
     shared.stop_everything = True
 
 
-def generate_reply(question, state, eos_token=None, stopping_strings=[]):
+def get_generate_params(state):
+    generate_params = {}
 
+    # Models that are not on transformers
+    if shared.model_type in ['rwkv', 'llamacpp']:
+        generate_params['token_count'] = state['max_new_tokens']
+        for k in ['temperature', 'top_p', 'top_k', 'repetition_penalty']:
+            generate_params[k] = state[k]
+    else:
+        # FlexGen
+        if shared.args.flexgen:
+            for k in ['max_new_tokens', 'do_sample', 'temperature']:
+                generate_params[k] = state[k]
+
+            if not shared.args.no_stream:
+                generate_params['max_new_tokens'] = 8
+
+        # transformers
+        else:
+            for k in ['max_new_tokens', 'do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping']:
+                generate_params[k] = state[k]
+
+            if state['ban_eos_token']:
+                generate_params['suppress_tokens'] = [shared.tokenizer.eos_token_id]
+
+            if shared.args.no_cache:
+                generate_params.update({'use_cache': False})
+
+            if shared.args.deepspeed:
+                generate_params.update({'synced_gpus': True})
+
+    return generate_params
+
+
+def generate_reply(question, state, eos_token=None, stopping_strings=[]):
     if shared.model_name == 'None' or shared.model is None:
         print("No model is loaded! Select one in the Model tab.")
         yield formatted_outputs(question, shared.model_name)
@@ -133,40 +168,37 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
     clear_torch_cache()
     seed = set_manual_seed(state['seed'])
     shared.stop_everything = False
-    generate_params = {}
+    generate_params = get_generate_params(state)
     t0 = time.time()
 
+    # Preparing the input
     original_question = question
     if not shared.is_chat():
-        question = apply_extensions(question, 'input')
+        question = apply_extensions('input', question)
 
-    # These models are not part of Hugging Face, so we handle them
-    # separately and terminate the function call earlier
+    # If the model is not on transformers, handle it separately and end this
+    # function call earlier.
     if shared.model_type in ['rwkv', 'llamacpp']:
-
         if shared.args.verbose:
             print(f'\n\n{question}\n--------------------\n')
 
-        for k in ['temperature', 'top_p', 'top_k', 'repetition_penalty']:
-            generate_params[k] = state[k]
-        generate_params['token_count'] = state['max_new_tokens']
         try:
             if shared.args.no_stream:
                 reply = shared.model.generate(context=question, **generate_params)
                 output = original_question + reply
                 if not shared.is_chat():
-                    reply = original_question + apply_extensions(reply, 'output')
+                    reply = original_question + apply_extensions('output', reply)
+
                 yield formatted_outputs(reply, shared.model_name)
             else:
                 if not shared.is_chat():
                     yield formatted_outputs(question, shared.model_name)
 
-                # RWKV has proper streaming, which is very nice.
-                # No need to generate 8 tokens at a time.
                 for reply in shared.model.generate_with_streaming(context=question, **generate_params):
                     output = original_question + reply
                     if not shared.is_chat():
-                        reply = original_question + apply_extensions(reply, 'output')
+                        reply = original_question + apply_extensions('output', reply)
+
                     yield formatted_outputs(reply, shared.model_name)
 
         except Exception:
@@ -178,19 +210,19 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
             print(f'Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens}, seed {seed})')
             return
 
+    # Encode the input
     input_ids = encode(question, add_bos_token=state['add_bos_token'], truncation_length=get_max_prompt_length(state))
-    original_input_ids = input_ids
     output = input_ids[0]
-
+    cuda = not any((shared.args.cpu, shared.args.deepspeed, shared.args.flexgen))
     if shared.args.verbose:
         print(f'\n\n{decode(input_ids[0], state["skip_special_tokens"])}\n--------------------\n')
 
-    cuda = not any((shared.args.cpu, shared.args.deepspeed, shared.args.flexgen))
+    # Find the eos tokens
     eos_token_ids = [shared.tokenizer.eos_token_id] if shared.tokenizer.eos_token_id is not None else []
     if eos_token is not None:
         eos_token_ids.append(int(encode(eos_token)[0][-1]))
 
-    # Handling the stopping strings
+    # Create the StoppingCriteriaList with the stopping strings
     stopping_criteria_list = transformers.StoppingCriteriaList()
     for st in (stopping_strings, ast.literal_eval(f"[{state['custom_stopping_strings']}]")):
         if type(st) is list and len(st) > 0:
@@ -198,30 +230,26 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
             stopping_criteria_list.append(_SentinelTokenStoppingCriteria(sentinel_token_ids=sentinel_token_ids, starting_idx=len(input_ids[0])))
             break
 
-    if not shared.args.flexgen:
-        for k in ['max_new_tokens', 'do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping']:
-            generate_params[k] = state[k]
+    # Update generate_params with the eos token and the stopping strings
+    if shared.args.flexgen:
+        generate_params['stop'] = eos_token_ids[-1]
+    else:
         generate_params['eos_token_id'] = eos_token_ids
         generate_params['stopping_criteria'] = stopping_criteria_list
-        if state['ban_eos_token']:
-            generate_params['suppress_tokens'] = [shared.tokenizer.eos_token_id]
-    else:
-        for k in ['max_new_tokens', 'do_sample', 'temperature']:
-            generate_params[k] = state[k]
-        generate_params['stop'] = eos_token_ids[-1]
-        if not shared.args.no_stream:
-            generate_params['max_new_tokens'] = 8
 
-    if shared.args.no_cache:
-        generate_params.update({'use_cache': False})
-    if shared.args.deepspeed:
-        generate_params.update({'synced_gpus': True})
+    # Add the encoded tokens to generate_params
     if shared.soft_prompt:
         inputs_embeds, filler_input_ids = generate_softprompt_input_tensors(input_ids)
+        question, filler_input_ids, inputs_embeds = apply_extensions('tokenizer', state, question, filler_input_ids, inputs_embeds)
+        original_input_ids = input_ids
         generate_params.update({'inputs_embeds': inputs_embeds})
         generate_params.update({'inputs': filler_input_ids})
     else:
+        question, input_ids, inputs_embeds = apply_extensions('tokenizer', state, question, input_ids, None)
+        original_input_ids = input_ids
         generate_params.update({'inputs': input_ids})
+        if inputs_embeds is not None:
+            generate_params.update({'inputs_embeds': inputs_embeds})
 
     try:
         # Generate the entire reply at once.
@@ -237,7 +265,7 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
             new_tokens = len(output) - len(input_ids[0])
             reply = decode(output[-new_tokens:], state['skip_special_tokens'])
             if not shared.is_chat():
-                reply = original_question + apply_extensions(reply, 'output')
+                reply = original_question + apply_extensions('output', reply)
 
             yield formatted_outputs(reply, shared.model_name)
 
@@ -265,7 +293,7 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
                     new_tokens = len(output) - len(input_ids[0])
                     reply = decode(output[-new_tokens:], state['skip_special_tokens'])
                     if not shared.is_chat():
-                        reply = original_question + apply_extensions(reply, 'output')
+                        reply = original_question + apply_extensions('output', reply)
 
                     if output[-1] in eos_token_ids:
                         break
@@ -285,7 +313,7 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
                 new_tokens = len(output) - len(original_input_ids[0])
                 reply = decode(output[-new_tokens:], state['skip_special_tokens'])
                 if not shared.is_chat():
-                    reply = original_question + apply_extensions(reply, 'output')
+                    reply = original_question + apply_extensions('output', reply)
 
                 if np.count_nonzero(np.isin(input_ids[0], eos_token_ids)) < np.count_nonzero(np.isin(output, eos_token_ids)):
                     break

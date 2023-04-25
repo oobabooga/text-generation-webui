@@ -188,6 +188,7 @@ Optionally, you can use the following command-line flags:
 | `-h`, `--help`                             | Show this help message and exit. |
 | `--notebook`                               | Launch the web UI in notebook mode, where the output is written to the same text box as the input. |
 | `--chat`                                   | Launch the web UI in chat mode. |
+| `--character CHARACTER`                    | The name of the character to load in chat mode by default. |
 | `--model MODEL`                            | Name of the model to load by default. |
 | `--lora LORA`                              | Name of the LoRA to apply to the model by default. |
 | `--model-dir MODEL_DIR`                    | Path to directory with all the models. |
@@ -220,6 +221,7 @@ Optionally, you can use the following command-line flags:
 | Flag        | Description |
 |-------------|-------------|
 | `--threads` | Number of threads to use in llama.cpp. |
+| `--n_batch` | Processing batch size for llama.cpp. |
 
 #### GPTQ
 
@@ -268,6 +270,13 @@ Optionally, you can use the following command-line flags:
 | `--share`                             | Create a public URL. This is useful for running the web UI on Google Colab or similar. |
 | `--auto-launch`                       | Open the web UI in the default browser upon launch. |
 | `--gradio-auth-path GRADIO_AUTH_PATH` | Set the gradio authentication file path. The file should contain one or more user:password pairs in this format: "u1:p1,u2:p2,u3:p3" |
+
+#### API
+
+| Flag                                  | Description |
+|---------------------------------------|-------------|
+| `--api`                               | Enable the API extension. |
+| `--public-api`                        | Create a public URL for the API using Cloudfare. |
 
 Out of memory errors? [Check the low VRAM guide](docs/Low-VRAM-guide.md).
 

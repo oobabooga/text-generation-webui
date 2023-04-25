@@ -20,6 +20,9 @@ processing_message = '*Is typing...*'
 # UI elements (buttons, sliders, HTML, etc)
 gradio = {}
 
+# For keeping the values of UI elements on page reload
+persistent_interface_state = {}
+
 # Generation input parameters
 input_params = []
 
@@ -31,6 +34,7 @@ settings = {
     'max_new_tokens_min': 1,
     'max_new_tokens_max': 2000,
     'seed': -1,
+    'character': 'None',
     'name1': 'You',
     'name2': 'Assistant',
     'context': 'This is a conversation with your Assistant. The Assistant is very helpful and is eager to chat with you and answer your questions.',
@@ -56,7 +60,7 @@ settings = {
     'chat_default_extensions': ["gallery"],
     'presets': {
         'default': 'Default',
-        '.*(alpaca|llama)': "LLaMA-Precise",
+        '.*(alpaca|llama|llava)': "LLaMA-Precise",
         '.*pygmalion': 'NovelAI-Storywriter',
         '.*RWKV': 'Naive',
     },
@@ -90,6 +94,7 @@ parser = argparse.ArgumentParser(formatter_class=lambda prog: argparse.HelpForma
 parser.add_argument('--notebook', action='store_true', help='Launch the web UI in notebook mode, where the output is written to the same text box as the input.')
 parser.add_argument('--chat', action='store_true', help='Launch the web UI in chat mode with a style similar to the Character.AI website.')
 parser.add_argument('--cai-chat', action='store_true', help='DEPRECATED: use --chat instead.')
+parser.add_argument('--character', type=str, help='The name of the character to load in chat mode by default.')
 parser.add_argument('--model', type=str, help='Name of the model to load by default.')
 parser.add_argument('--lora', type=str, help='Name of the LoRA to apply to the model by default.')
 parser.add_argument("--model-dir", type=str, default='models/', help="Path to directory with all the models")
@@ -116,6 +121,7 @@ parser.add_argument('--trust-remote-code', action='store_true', help="Set trust_
 
 # llama.cpp
 parser.add_argument('--threads', type=int, default=0, help='Number of threads to use in llama.cpp.')
+parser.add_argument('--n_batch', type=int, default=8, help='Processing batch size for llama.cpp.')
 
 # GPTQ
 parser.add_argument('--wbits', type=int, default=0, help='Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported.')
@@ -150,6 +156,11 @@ parser.add_argument('--share', action='store_true', help='Create a public URL. T
 parser.add_argument('--auto-launch', action='store_true', default=False, help='Open the web UI in the default browser upon launch.')
 parser.add_argument("--gradio-auth-path", type=str, help='Set the gradio authentication file path. The file should contain one or more user:password pairs in this format: "u1:p1,u2:p2,u3:p3"', default=None)
 
+# API
+parser.add_argument('--api', action='store_true', help='Enable the API extension.')
+parser.add_argument('--public-api', action='store_true', help='Create a public URL for the API using Cloudfare.')
+
+
 args = parser.parse_args()
 args_defaults = parser.parse_args([])
 
@@ -170,6 +181,13 @@ if args.trust_remote_code:
     print("Warning: trust_remote_code is enabled. This is dangerous.\n")
 if args.share:
     print("Warning: the gradio \"share link\" feature downloads a proprietary and\nunaudited blob to create a reverse tunnel. This is potentially dangerous.\n")
+
+# Activating the API extension
+if args.api or args.public_api:
+    if args.extensions is None:
+        args.extensions = ['api']
+    elif 'api' not in args.extensions:
+        args.extensions.append('api')
 
 
 def is_chat():
