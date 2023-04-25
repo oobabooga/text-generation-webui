@@ -1,4 +1,4 @@
-document.getElementById("main").parentNode.childNodes[0].style = "border: none; background-color: #8080802b; margin-bottom: 40px";
+document.getElementById("main").parentNode.childNodes[0].classList.add("header_bar");
 document.getElementById("main").parentNode.style = "padding: 0; margin: 0";
 document.getElementById("main").parentNode.parentNode.parentNode.style = "padding: 0";
 
@@ -11,7 +11,7 @@ let extensions = document.getElementById('extensions');
 main_parent.addEventListener('click', function(e) {
     // Check if the main element is visible
     if (main.offsetHeight > 0 && main.offsetWidth > 0) {
-        extensions.style.display = 'block';
+        extensions.style.display = 'flex';
     } else {
         extensions.style.display = 'none';
     }

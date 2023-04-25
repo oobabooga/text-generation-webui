@@ -1,22 +1,53 @@
 from pathlib import Path
 
+import torch
+from peft import PeftModel
+
 import modules.shared as shared
-from modules.models import load_model
 
 
-def add_lora_to_model(lora_name):
+def add_lora_to_model(lora_names):
+    prior_set = set(shared.lora_names)
+    added_set = set(lora_names) - prior_set
+    removed_set = prior_set - set(lora_names)
+    shared.lora_names = list(lora_names)
 
-    from peft import PeftModel
+    # Nothing to do = skip.
+    if len(added_set) == 0 and len(removed_set) == 0:
+        return
 
-    # Is there a more efficient way of returning to the base model?
-    if lora_name == "None":
-        print("Reloading the model to remove the LoRA...")
-        shared.model, shared.tokenizer = load_model(shared.model_name)
-    else:
-        # Why doesn't this work in 16-bit mode?
-        print(f"Adding the LoRA {lora_name} to the model...")
+    # Only adding, and already peft? Do it the easy way.
+    if len(removed_set) == 0 and len(prior_set) > 0:
+        print(f"Adding the LoRA(s) named {added_set} to the model...")
+        for lora in added_set:
+            shared.model.load_adapter(Path(f"{shared.args.lora_dir}/{lora}"), lora)
+        return
 
+    # If removing anything, disable all and re-add.
+    if len(removed_set) > 0:
+        shared.model.disable_adapter()
+
+    if len(lora_names) > 0:
+        print("Applying the following LoRAs to {}: {}".format(shared.model_name, ', '.join(lora_names)))
         params = {}
-        params['device_map'] = {'': 0}
-        #params['dtype'] = shared.model.dtype
-        shared.model = PeftModel.from_pretrained(shared.model, Path(f"loras/{lora_name}"), **params)
+        if not shared.args.cpu:
+            params['dtype'] = shared.model.dtype
+            if hasattr(shared.model, "hf_device_map"):
+                params['device_map'] = {"base_model.model." + k: v for k, v in shared.model.hf_device_map.items()}
+            elif shared.args.load_in_8bit:
+                params['device_map'] = {'': 0}
+
+        shared.model = PeftModel.from_pretrained(shared.model, Path(f"{shared.args.lora_dir}/{lora_names[0]}"), **params)
+
+        for lora in lora_names[1:]:
+            shared.model.load_adapter(Path(f"{shared.args.lora_dir}/{lora}"), lora)
+
+        if not shared.args.load_in_8bit and not shared.args.cpu:
+            if not shared.args.monkey_patch:
+                shared.model.half()
+            if not hasattr(shared.model, "hf_device_map"):
+                if torch.has_mps:
+                    device = torch.device('mps')
+                    shared.model = shared.model.to(device)
+                else:
+                    shared.model = shared.model.cuda()
