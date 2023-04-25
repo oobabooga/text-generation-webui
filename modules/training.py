@@ -23,21 +23,22 @@ try:
     from peft.utils.other import \
         TRANSFORMERS_MODELS_TO_LORA_TARGET_MODULES_MAPPING as \
         model_to_lora_modules
+    from transformers.models.auto.modeling_auto import MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
+    MODEL_CLASSES = {v: k for k, v in MODEL_FOR_CAUSAL_LM_MAPPING_NAMES}
 except:
     standard_modules = ["q_proj", "v_proj"]
     model_to_lora_modules = {"llama": standard_modules, "opt": standard_modules, "gptj": standard_modules, "gpt_neox": ["query_key_value"]}
+    MODEL_CLASSES = {
+        "LlamaForCausalLM": "llama",
+        "OPTForCausalLM": "opt",
+        "GPTJForCausalLM": "gptj",
+        "GPTNeoXForCausalLM": "gpt_neox"
+    }
 
 WANT_INTERRUPT = False
 
 PARAMETERS = ["lora_name", "always_override", "save_steps", "micro_batch_size", "batch_size", "epochs", "learning_rate", "lr_scheduler_type", "lora_rank", "lora_alpha", "lora_dropout", "cutoff_len", "dataset", "eval_dataset", "format", "eval_steps", "raw_text_file", "overlap_len", "newline_favor_len", "do_shuffle", "higher_rank_limit", "warmup_steps", "optimizer"]
 
-# Mapping of Python class names to peft IDs
-MODEL_CLASSES = {
-    "LlamaForCausalLM": "llama",
-    "OPTForCausalLM": "opt",
-    "GPTJForCausalLM": "gptj",
-    "GPTNeoXForCausalLM": "gpt_neox"
-}
 
 
 def get_datasets(path: str, ext: str):
