@@ -6,6 +6,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path("repositories/alpaca_lora_4bit")))
 
 import autograd_4bit
+from amp_wrapper import AMPWrapper
 from autograd_4bit import (Autograd4bitQuantLinear,
                            load_llama_model_4bit_low_ram)
 from monkeypatch.peft_tuners_lora_monkey_patch import (
@@ -30,6 +31,10 @@ def load_model_llama(model_name):
             m.bias = m.bias.half()
     autograd_4bit.use_new = True
     autograd_4bit.auto_switch = True
+
+    model.half()
+    wrapper = AMPWrapper(model)
+    wrapper.apply_generate()
 
     try:
         tokenizer.eos_token_id = 2

@@ -12,7 +12,11 @@ import modules.shared as shared
 
 sys.path.insert(0, str(Path("repositories/GPTQ-for-LLaMa")))
 import llama_inference_offload
-from modelutils import find_layers
+
+try:
+    from modelutils import find_layers
+except ImportError:
+    from utils import find_layers
 
 try:
     from quant import make_quant
@@ -75,14 +79,14 @@ def _load_quant(model, checkpoint, wbits, groupsize=-1, faster_kernel=False, exc
         model.load_state_dict(torch.load(checkpoint), strict=False)
 
     if is_triton:
-        if not shared.args.no_quant_attn:
+        if shared.args.quant_attn:
             quant.make_quant_attn(model)
-        if eval and not shared.args.no_fused_mlp:
+        if eval and shared.args.fused_mlp:
             quant.make_fused_mlp(model)
 
-        if not shared.args.no_warmup_autotune:
+        if shared.args.warmup_autotune:
             quant.autotune_warmup_linear(model, transpose=not eval)
-            if eval and not shared.args.no_fused_mlp:
+            if eval and shared.args.fused_mlp:
                 quant.autotune_warmup_fused(model)
 
     model.seqlen = 2048
@@ -131,7 +135,7 @@ def load_quantized(model_name):
     # Find the model type
     if not shared.args.model_type:
         name = model_name.lower()
-        if any((k in name for k in ['llama', 'alpaca', 'vicuna'])):
+        if any((k in name for k in ['llama', 'alpaca', 'vicuna', 'llava'])):
             model_type = 'llama'
         elif any((k in name for k in ['opt-', 'galactica'])):
             model_type = 'opt'

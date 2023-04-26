@@ -1,4 +1,5 @@
 import traceback
+from functools import partial
 
 import gradio as gr
 
@@ -10,21 +11,39 @@ available_extensions = []
 setup_called = set()
 
 
+def apply_settings(extension, name):
+    if not hasattr(extension, 'params'):
+        return
+
+    for param in extension.params:
+        _id = f"{name}-{param}"
+        if _id not in shared.settings:
+            continue
+
+        extension.params[param] = shared.settings[_id]
+
+
 def load_extensions():
     global state, setup_called
     for i, name in enumerate(shared.args.extensions):
         if name in available_extensions:
-            print(f'Loading the extension "{name}"... ', end='')
+            if name != 'api':
+                print(f'Loading the extension "{name}"... ', end='')
             try:
                 exec(f"import extensions.{name}.script")
                 extension = getattr(extensions, name).script
+                apply_settings(extension, name)
                 if extension not in setup_called and hasattr(extension, "setup"):
                     setup_called.add(extension)
                     extension.setup()
+
                 state[name] = [True, i]
-                print('Ok.')
+                if name != 'api':
+                    print('Ok.')
             except:
-                print('Fail.')
+                if name != 'api':
+                    print('Fail.')
+
                 traceback.print_exc()
 
 
@@ -36,32 +55,74 @@ def iterator():
 
 
 # Extension functions that map string -> string
-def apply_extensions(text, typ):
+def _apply_string_extensions(function_name, text):
     for extension, _ in iterator():
-        if typ == "input" and hasattr(extension, "input_modifier"):
-            text = extension.input_modifier(text)
-        elif typ == "output" and hasattr(extension, "output_modifier"):
-            text = extension.output_modifier(text)
-        elif typ == "bot_prefix" and hasattr(extension, "bot_prefix_modifier"):
-            text = extension.bot_prefix_modifier(text)
+        if hasattr(extension, function_name):
+            text = getattr(extension, function_name)(text)
+
     return text
+
+
+# Input hijack of extensions
+def _apply_input_hijack(text, visible_text):
+    for extension, _ in iterator():
+        if hasattr(extension, 'input_hijack') and extension.input_hijack['state']:
+            extension.input_hijack['state'] = False
+            if callable(extension.input_hijack['value']):
+                text, visible_text = extension.input_hijack['value'](text, visible_text)
+            else:
+                text, visible_text = extension.input_hijack['value']
+
+    return text, visible_text
+
+
+# custom_generate_chat_prompt handling
+def _apply_custom_generate_chat_prompt(text, state, **kwargs):
+    custom_generate_chat_prompt = None
+    for extension, _ in iterator():
+        if custom_generate_chat_prompt is None and hasattr(extension, 'custom_generate_chat_prompt'):
+            custom_generate_chat_prompt = extension.custom_generate_chat_prompt
+
+    if custom_generate_chat_prompt is not None:
+        return custom_generate_chat_prompt(text, state, **kwargs)
+
+    return None
+
+
+# Extension functions that override the default tokenizer output
+def _apply_tokenizer_extensions(function_name, state, prompt, input_ids, input_embeds):
+    for extension, _ in iterator():
+        if hasattr(extension, function_name):
+            prompt, input_ids, input_embeds = getattr(extension, function_name)(state, prompt, input_ids, input_embeds)
+
+    return prompt, input_ids, input_embeds
+
+
+EXTENSION_MAP = {
+    "input": partial(_apply_string_extensions, "input_modifier"),
+    "output": partial(_apply_string_extensions, "output_modifier"),
+    "bot_prefix": partial(_apply_string_extensions, "bot_prefix_modifier"),
+    "tokenizer": partial(_apply_tokenizer_extensions, "tokenizer_modifier"),
+    "input_hijack": _apply_input_hijack,
+    "custom_generate_chat_prompt": _apply_custom_generate_chat_prompt
+}
+
+
+def apply_extensions(typ, *args, **kwargs):
+    if typ not in EXTENSION_MAP:
+        raise ValueError(f"Invalid extension type {typ}")
+
+    return EXTENSION_MAP[typ](*args, **kwargs)
 
 
 def create_extensions_block():
     global setup_called
 
-    # Updating the default values
-    for extension, name in iterator():
-        if hasattr(extension, 'params'):
-            for param in extension.params:
-                _id = f"{name}-{param}"
-                if _id in shared.settings:
-                    extension.params[param] = shared.settings[_id]
-
     should_display_ui = False
     for extension, name in iterator():
         if hasattr(extension, "ui"):
             should_display_ui = True
+            break
 
     # Creating the extension ui elements
     if should_display_ui:
