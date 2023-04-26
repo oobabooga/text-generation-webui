@@ -69,6 +69,11 @@ def get_reply_from_output_ids(output_ids, input_ids, original_question, state):
     else:
         new_tokens = len(output_ids) - len(input_ids[0])
         reply = decode(output_ids[-new_tokens:], state['skip_special_tokens'])
+
+        if type(shared.tokenizer) is transformers.LlamaTokenizer:
+            if len(original_question) > 0 and original_question[-1] not in [' ', '\n']:
+                reply = ' ' + reply
+
         if not shared.is_chat():
             reply = original_question + apply_extensions('output', reply)
 
