@@ -1,5 +1,4 @@
-from extensions.pseudocontext.instruct_models import InstructChunker, make_instruct_provider
-from .provider import PseudocontextProvider
+from .provider import PseudocontextProvider, make_instruct_provider
 
 provider = PseudocontextProvider()
 instruct_provider = make_instruct_provider()

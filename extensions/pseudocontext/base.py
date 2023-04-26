@@ -51,3 +51,10 @@ class Injector():
     
     def inject(self, text: str) -> str:
         pass
+    
+class Focuser():
+    def __init__(self):
+        pass
+    
+    def focus(texts: list[str]) -> list[str]:
+        pass

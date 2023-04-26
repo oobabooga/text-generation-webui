@@ -1,5 +1,9 @@
-from .base import Chunker, Embedder, Collecter, Retriever, Injector
-from .test_models import NaiveChunker, SentenceTransformerEmbedder, ChromaCollector, CosineSimilarityRetriever, NaiveInjector
+from ..base import Chunker, Embedder, Collecter, Retriever, Injector
+from ..chunker import NaiveChunker, InstructChunker
+from ..embedder import SentenceTransformerEmbedder
+from ..collector import ChromaCollector
+from ..retriever import CosineSimilarityRetriever, InstructRetriever
+from ..injector import NaiveInjector, InstructInjector
 
 class PseudocontextProvider():
     def __init__(self,
@@ -25,14 +29,17 @@ class PseudocontextProvider():
     def __exit__(self, type, value, trace):
         pass
         
-    # proof of concept, this will be replaced with more sophisticated chunker/retrievers and selecting the appropriate one based on settings
     def with_pseudocontext(self, prompt: str):
-        # chunk the context and prepare it for injection and add to the store
         self.injector.prepare(prompt)
-        # query the chunks to get relevant portions of the context
         relevant_context = self.retriever.retrieve()
-        print(relevant_context)
-        # clear the db for the next run
         self.collector.clear()
-        # inject the relevant context in the appropriate spot
         return self.injector.inject("\n".join(relevant_context))
+    
+def make_instruct_provider():
+    chunker = InstructChunker(chunk_len=700)
+    embedder = SentenceTransformerEmbedder()
+    collector = ChromaCollector(embedder)
+    retriever = InstructRetriever(collector, chunker)
+    injector = InstructInjector(chunker, collector)
+    instruct_provider = PseudocontextProvider(chunker=chunker, embedder=embedder, collector=collector, retriever=retriever, injector=injector)
+    return instruct_provider
