@@ -16,6 +16,7 @@ def input_modifier(string):
     """
 
     # Use data here
+    print(len(data), repr(data))
 
     return instruct_provider.with_pseudocontext(string)
 
@@ -25,4 +26,4 @@ def ui():
         pass
     else:
         data_input = gr.Textbox(lines=20, label='Input data')
-        data_input.change(lambda x: globals().update(data=x))
+        data_input.change(lambda x: globals().update(data=x), data_input, None)
