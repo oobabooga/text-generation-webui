@@ -10,8 +10,9 @@ import numpy as np
 import torch
 import transformers
 from accelerate import infer_auto_device_map, init_empty_weights
-from transformers import (AutoConfig, AutoModel, AutoModelForCausalLM, AutoModelForSeq2SeqLM,
-                          AutoTokenizer, BitsAndBytesConfig, LlamaTokenizer)
+from transformers import (AutoConfig, AutoModel, AutoModelForCausalLM,
+                          AutoModelForSeq2SeqLM, AutoTokenizer,
+                          BitsAndBytesConfig, LlamaTokenizer)
 
 import modules.shared as shared
 from modules import llama_attn_hijack
@@ -39,20 +40,20 @@ if shared.args.deepspeed:
 
 
 def find_model_type(model_name):
-    lower_model_name = model_name.lower()
-    if 'rwkv-' in lower_model_name:
+    model_name = model_name.lower()
+    if 'rwkv-' in model_name:
         return 'rwkv'
-    elif len(list(Path(f'{shared.args.model_dir}/{lower_model_name}').glob('*ggml*.bin'))) > 0:
+    elif len(list(Path(f'{shared.args.model_dir}/{model_name}').glob('*ggml*.bin'))) > 0:
         return 'llamacpp'
-    elif re.match('.*ggml.*\.bin', lower_model_name):
+    elif re.match('.*ggml.*\.bin', model_name):
         return 'llamacpp'
-    elif 'chatglm' in lower_model_name:
+    elif 'chatglm' in model_name:
         return 'chatglm'
-    elif 'galactica' in lower_model_name:
+    elif 'galactica' in model_name:
         return 'galactica'
-    elif 'llava' in lower_model_name:
+    elif 'llava' in model_name:
         return 'llava'
-    elif any((k in lower_model_name for k in ['gpt4chan', 'gpt-4chan'])):
+    elif any((k in model_name for k in ['gpt4chan', 'gpt-4chan'])):
         return 'gpt4chan'
     else:
         config = AutoConfig.from_pretrained(f"{shared.args.model_dir}/{model_name}")
