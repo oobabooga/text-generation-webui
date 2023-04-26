@@ -149,8 +149,7 @@ def load_model(model_name):
             print("Warning: applying the monkey patch for using LoRAs in 4-bit mode.\nIt may cause undefined behavior outside its intended scope.")
             from modules.monkey_patch_gptq_lora import load_model_llama
 
-            model, tokenizer = load_model_llama(model_name)
-            return model, tokenizer
+            model, _ = load_model_llama(model_name)
 
         # No monkey patch
         else:
