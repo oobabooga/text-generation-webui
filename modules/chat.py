@@ -17,7 +17,7 @@ from modules.text_generation import (encode, generate_reply,
                                      get_max_prompt_length)
 
 
-# Replace all pairs in dict in text
+# Replace multiple string pairs in a string
 def replace_all(text, dic):
     for i, j in dic.items():
         text = text.replace(i, j)
@@ -79,7 +79,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
     elif not _continue:
         # Adding the user message
         if len(user_input) > 0:
-            rows.append(replace_all(user_turn, {'<|user-message|>': user_input.strip(), '<|round|>': str(len(shared.history["internal"]))}))
+            rows.append(replace_all(user_turn, {'<|user-message|>': user_input, '<|round|>': str(len(shared.history["internal"]))}))
 
         # Adding the Character prefix
         rows.append(apply_extensions("bot_prefix", bot_turn_stripped))
