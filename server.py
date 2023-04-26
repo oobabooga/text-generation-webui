@@ -913,7 +913,7 @@ if __name__ == "__main__":
         # Load the model
         shared.model, shared.tokenizer = load_model(shared.model_name)
         if shared.args.lora:
-            add_lora_to_model([shared.args.lora])
+            add_lora_to_model(shared.args.lora)
 
     # Force a character to be loaded
     if shared.is_chat():
