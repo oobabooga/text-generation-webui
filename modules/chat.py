@@ -63,13 +63,13 @@ def generate_chat_prompt(user_input, state, **kwargs):
     i = len(shared.history['internal']) - 1
     while i >= 0 and len(encode(''.join(rows))[0]) < max_length:
         if _continue and i == len(shared.history['internal']) - 1:
-            rows.insert(1, bot_turn_stripped + shared.history['internal'][i][1])
+            rows.insert(1, bot_turn_stripped + shared.history['internal'][i][1].strip())
         else:
-            rows.insert(1, bot_turn.replace('<|bot-message|>', shared.history['internal'][i][1]))
+            rows.insert(1, bot_turn.replace('<|bot-message|>', shared.history['internal'][i][1].strip()))
 
         string = shared.history['internal'][i][0]
         if string not in ['', '<|BEGIN-VISIBLE-CHAT|>']:
-            rows.insert(1, replace_all(user_turn, {'<|user-message|>': string, '<|round|>': str(i)}))
+            rows.insert(1, replace_all(user_turn, {'<|user-message|>': string.strip(), '<|round|>': str(i)}))
 
         i -= 1
 
@@ -79,7 +79,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
     elif not _continue:
         # Adding the user message
         if len(user_input) > 0:
-            rows.append(replace_all(user_turn, {'<|user-message|>': user_input, '<|round|>': str(len(shared.history["internal"]))}))
+            rows.append(replace_all(user_turn, {'<|user-message|>': user_input.strip(), '<|round|>': str(len(shared.history["internal"]))}))
 
         # Adding the Character prefix
         rows.append(apply_extensions("bot_prefix", bot_turn_stripped))
