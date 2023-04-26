@@ -467,7 +467,7 @@ def load_character(character, name1, name2, mode):
         if 'context' in data:
             context = data['context']
             if mode != 'instruct':
-                context.strip() + '\n\n'
+                context = context.strip() + '\n\n'
         elif "char_persona" in data:
             context = build_pygmalion_style_context(data)
             greeting_field = 'char_greeting'
