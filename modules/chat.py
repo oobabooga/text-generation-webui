@@ -56,8 +56,8 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
     user_turn = replace_all(template.split('<|bot|>')[0], replacements)
     bot_turn = replace_all('<|bot|>' + template.split('<|bot|>')[1], replacements)
-    user_turn_stripped = replace_all(user_turn.split('<|user-message|>')[0], replacements)
-    bot_turn_stripped = replace_all(bot_turn.split('<|bot-message|>')[0], replacements)
+    user_turn_stripped = replace_all(user_turn.split('<|user-message|>')[0], replacements).rstrip(' ')
+    bot_turn_stripped = replace_all(bot_turn.split('<|bot-message|>')[0], replacements).rstrip(' ')
 
     # Building the prompt
     i = len(shared.history['internal']) - 1
