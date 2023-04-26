@@ -156,11 +156,18 @@ def upload_soft_prompt(file):
     return name
 
 
-def save_prompt(text):
-    fname = f"{datetime.now().strftime('%Y-%m-%d-%H%M%S')}.txt"
-    with open(Path(f'prompts/{fname}'), 'w', encoding='utf-8') as f:
-        f.write(text)
-    return f"Saved to prompts/{fname}"
+def open_save_prompt():
+    fname = f"{datetime.now().strftime('%Y-%m-%d-%H%M%S')}"
+    return shared.gradio['prompt_to_save'].update(value=fname,visible=True), shared.gradio['open_save_prompt'].update(visible=False), shared.gradio['save_prompt'].update(visible=True)
+
+def save_prompt(text, fname):
+    if(fname != ""):
+        with open(Path(f'prompts/{fname}.txt'), 'w', encoding='utf-8') as f:
+            f.write(text)
+        return f"Saved to prompts/{fname}.txt", shared.gradio['prompt_to_save'].update(visible=False), shared.gradio['open_save_prompt'].update(visible=True), shared.gradio['save_prompt'].update(visible=False)
+    else:
+        return f"Error: No prompt name given.", shared.gradio['prompt_to_save'].update(visible=True), shared.gradio['open_save_prompt'].update(visible=False), shared.gradio['save_prompt'].update(visible=True)
+
 
 
 def load_prompt(fname):
@@ -633,8 +640,9 @@ def create_interface():
                         with gr.Row():
                             shared.gradio['prompt_menu'] = gr.Dropdown(choices=get_available_prompts(), value='None', label='Prompt')
                             ui.create_refresh_button(shared.gradio['prompt_menu'], lambda: None, lambda: {'choices': get_available_prompts()}, 'refresh-button')
-
-                        shared.gradio['save_prompt'] = gr.Button('Save prompt')
+                        shared.gradio['open_save_prompt'] = gr.Button('Save prompt', elem_classes="small-button")
+                        shared.gradio['prompt_to_save'] = gr.Textbox(elem_classes="textbox_default",interactive=True, lines=1, label='Prompt name:',visible=False)
+                        shared.gradio['save_prompt'] = gr.Button('SAVE PROMPT',variant='stop', elem_classes="small-button", visible=False)
                         shared.gradio['count_tokens'] = gr.Button('Count tokens')
                         shared.gradio['status'] = gr.Markdown('')
 
@@ -655,8 +663,10 @@ def create_interface():
                             shared.gradio['Generate'] = gr.Button('Generate', variant='primary', elem_classes="small-button")
                             shared.gradio['Stop'] = gr.Button('Stop', elem_classes="small-button")
                             shared.gradio['Continue'] = gr.Button('Continue', elem_classes="small-button")
-                            shared.gradio['save_prompt'] = gr.Button('Save prompt', elem_classes="small-button")
+                            shared.gradio['open_save_prompt'] = gr.Button('Save prompt', elem_classes="small-button")
                             shared.gradio['count_tokens'] = gr.Button('Count tokens', elem_classes="small-button")
+                            shared.gradio['prompt_to_save'] = gr.Textbox(elem_classes="textbox_default",interactive=True, lines=1, label='Prompt name:',visible=False)
+                            shared.gradio['save_prompt'] = gr.Button('SAVE PROMPT',variant='stop', elem_classes="small-button", visible=False)
 
                         with gr.Row():
                             with gr.Column():
@@ -835,7 +845,8 @@ def create_interface():
 
             shared.gradio['Stop'].click(stop_everything_event, None, None, queue=False, cancels=gen_events if shared.args.no_stream else None)
             shared.gradio['prompt_menu'].change(load_prompt, shared.gradio['prompt_menu'], shared.gradio['textbox'], show_progress=False)
-            shared.gradio['save_prompt'].click(save_prompt, shared.gradio['textbox'], shared.gradio['status'], show_progress=False)
+            shared.gradio['open_save_prompt'].click(open_save_prompt, outputs=[shared.gradio['prompt_to_save'],shared.gradio['open_save_prompt'],shared.gradio['save_prompt']], show_progress=False)
+            shared.gradio['save_prompt'].click(save_prompt, inputs=[shared.gradio['textbox'], shared.gradio['prompt_to_save']],outputs=[shared.gradio['status'],shared.gradio['prompt_to_save'],shared.gradio['open_save_prompt'],shared.gradio['save_prompt']], show_progress=False)
             shared.gradio['count_tokens'].click(count_tokens, shared.gradio['textbox'], shared.gradio['status'], show_progress=False)
             shared.gradio['interface'].load(None, None, None, _js=f"() => {{{ui.main_js}}}")
 
