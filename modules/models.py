@@ -56,7 +56,7 @@ def find_model_type(model_name):
     elif any((k in model_name_lower for k in ['gpt4chan', 'gpt-4chan'])):
         return 'gpt4chan'
     else:
-        config = AutoConfig.from_pretrained(f"{shared.args.model_dir}/{model_name}")
+        config = AutoConfig.from_pretrained(Path(f'{shared.args.model_dir}/{model_name}'))
         # Not a "catch all", but fairly accurate
         if config.to_dict().get("is_encoder_decoder", False):
             return 'HF_seq2seq'
