@@ -40,20 +40,20 @@ if shared.args.deepspeed:
 
 
 def find_model_type(model_name):
-    model_name = model_name.lower()
-    if 'rwkv-' in model_name:
+    model_name_lower = model_name.lower()
+    if 'rwkv-' in model_name_lower:
         return 'rwkv'
     elif len(list(Path(f'{shared.args.model_dir}/{model_name}').glob('*ggml*.bin'))) > 0:
         return 'llamacpp'
-    elif re.match('.*ggml.*\.bin', model_name):
+    elif re.match('.*ggml.*\.bin', model_name_lower):
         return 'llamacpp'
-    elif 'chatglm' in model_name:
+    elif 'chatglm' in model_name_lower:
         return 'chatglm'
-    elif 'galactica' in model_name:
+    elif 'galactica' in model_name_lower:
         return 'galactica'
-    elif 'llava' in model_name:
+    elif 'llava' in model_name_lower:
         return 'llava'
-    elif any((k in model_name for k in ['gpt4chan', 'gpt-4chan'])):
+    elif any((k in model_name_lower for k in ['gpt4chan', 'gpt-4chan'])):
         return 'gpt4chan'
     else:
         config = AutoConfig.from_pretrained(f"{shared.args.model_dir}/{model_name}")
