@@ -1,3 +1,4 @@
 name: "GPT:"
 your_name: "USER:"
-context: "BEGINNING OF CONVERSATION:"
+context: "BEGINNING OF CONVERSATION: "
+turn_template: "<|user|> <|user-message|> <|bot|><|bot-message|></s>"
