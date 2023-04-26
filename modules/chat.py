@@ -56,8 +56,8 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
     user_turn = replace_all(template.split('<|bot|>')[0], replacements)
     bot_turn = replace_all('<|bot|>' + template.split('<|bot|>')[1], replacements)
-    user_turn_stripped = replace_all(user_turn.split('<|user-message|>')[0], replacements).rstrip(' ')
-    bot_turn_stripped = replace_all(bot_turn.split('<|bot-message|>')[0], replacements).rstrip(' ')
+    user_turn_stripped = replace_all(user_turn.split('<|user-message|>')[0], replacements)
+    bot_turn_stripped = replace_all(bot_turn.split('<|bot-message|>')[0], replacements)
 
     # Building the prompt
     i = len(shared.history['internal']) - 1
@@ -75,14 +75,14 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
     if impersonate:
         min_rows = 2
-        rows.append(user_turn_stripped)
+        rows.append(user_turn_stripped.rstrip(' '))
     elif not _continue:
         # Adding the user message
         if len(user_input) > 0:
             rows.append(replace_all(user_turn, {'<|user-message|>': user_input.strip(), '<|round|>': str(len(shared.history["internal"]))}))
 
         # Adding the Character prefix
-        rows.append(apply_extensions("bot_prefix", bot_turn_stripped))
+        rows.append(apply_extensions("bot_prefix", bot_turn_stripped.rstrip(' ')))
 
     while len(rows) > min_rows and len(encode(''.join(rows))[0]) >= max_length:
         rows.pop(1)
