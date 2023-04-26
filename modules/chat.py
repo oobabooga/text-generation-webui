@@ -485,6 +485,7 @@ def load_character(character, name1, name2, mode):
         context = shared.settings['context']
         name2 = shared.settings['name2']
         greeting = shared.settings['greeting']
+        turn_template = shared.settings['turn_template']
 
     if mode != 'instruct':
         shared.history['internal'] = []
