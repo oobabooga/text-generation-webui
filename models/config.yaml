@@ -27,6 +27,8 @@ llama-[0-9]*b-4bit$:
 .*vicuna:
   mode: 'instruct'
   instruction_template: 'Vicuna'
+anon8231489123_vicuna-13b-GPTQ-4bit-128g:
+  instruction_template: 'Vicuna-v0'
 .*alpaca:
   mode: 'instruct'
   instruction_template: 'Alpaca'
