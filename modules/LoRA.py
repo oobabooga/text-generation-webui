@@ -7,10 +7,10 @@ import modules.shared as shared
 
 
 def add_lora_to_model(lora_names):
-    shared.lora_names = list(lora_names)
     prior_set = set(shared.lora_names)
     added_set = set(lora_names) - prior_set
     removed_set = prior_set - set(lora_names)
+    shared.lora_names = list(lora_names)
 
     # If no LoRA needs to be added or removed, exit
     if len(added_set) == 0 and len(removed_set) == 0:
