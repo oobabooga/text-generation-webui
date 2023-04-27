@@ -1,0 +1,4 @@
+name: "### Response:"
+your_name: ""
+context: ""
+turn_template: "<|user-message|>\n\n<|bot|><|bot-message|>\n\n</s>"

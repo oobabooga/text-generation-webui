@@ -69,3 +69,7 @@ llama-[0-9]*b-4bit$:
   truncation_length: 4096
   chat_prompt_size: 4096
   chat_prompt_size_max: 4096
+.*wizardlm:
+  mode: 'instruct'
+  model_type: 'llama'
+  instruction_template: 'WizardLM'

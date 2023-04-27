@@ -71,7 +71,8 @@ settings = {
         '.*(gpt4chan|gpt-4chan|4chan)': 'GPT-4chan',
         '.*oasst': 'Open Assistant',
         '.*alpaca': "Alpaca",
-        '.*stablelm-tuned': "StableLM",
+        ".*stablelm-tuned": "StableLM",
+        ".*wizardlm": "WizardLM",
     },
     'lora_prompts': {
         'default': 'QA',
