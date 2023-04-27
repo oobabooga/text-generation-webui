@@ -122,7 +122,7 @@ def load_preset_values(preset_menu, state, return_dict=False):
         'encoder_repetition_penalty': 1,
         'top_k': 50,
         'eta_cutoff': 0,
-        'epsilon_cutoff' : 0,
+        'epsilon_cutoff': 0,
         'num_beams': 1,
         'penalty_alpha': 0,
         'min_length': 0,
@@ -427,8 +427,8 @@ def create_settings_menus(default_preset):
                         shared.gradio['top_k'] = gr.Slider(0, 200, value=generate_params['top_k'], step=1, label='top_k', info='Similar to top_p, but select instead only the top_k most likely tokens. Higher value = higher range of possible random results.')
 
                         shared.gradio['typical_p'] = gr.Slider(0.0, 1.0, value=generate_params['typical_p'], step=0.01, label='typical_p', info='If not set to 1, select only tokens that are at least this much more likely to appear than random tokens, given the prior text.')
-                        shared.gradio['epsilon_cutoff'] = gr.Slider(0.0000, 0.0009, value=generate_params['epsilon_cutoff'], step=0.0001, label='epsilon_cutoff', info='Generates more plausible long English documents according to humans, is better at breaking out of repetition. Recommended 0.0003-0.0009 with top_k, top_p off')
-                        shared.gradio['eta_cutoff'] = gr.Slider(0, 0.002, value=generate_params['eta_cutoff'], step=0.0005, label='eta_cutoff', info='A hybrid of locally typical sampling and epsilon sampling. Recommended 0.0003 - 0.002, with top_p, top_k off')
+                        shared.gradio['epsilon_cutoff'] = gr.Slider(0.0000, 0.0009, value=generate_params['epsilon_cutoff'], step=0.0001, label='epsilon_cutoff', info='Generates more plausible long English documents according to humans, is better at breaking out of repetition. Recommended 0.0003-0.0009 with top_k, top_p, typical_p off. Incompatible with llamacpp.')
+                        shared.gradio['eta_cutoff'] = gr.Slider(0, 0.002, value=generate_params['eta_cutoff'], step=0.0005, label='eta_cutoff', info='A hybrid of locally typical sampling and epsilon sampling. Recommended 0.0003 - 0.002, with top_p, top_k, typical_p off off. Incompatible with llamacpp.')
                    with gr.Column():
                         shared.gradio['repetition_penalty'] = gr.Slider(1.0, 1.5, value=generate_params['repetition_penalty'], step=0.01, label='repetition_penalty', info='Exponential penalty factor for repeating prior tokens. 1 means no penalty, higher value = less repetition, lower value = more repetition.')
                         shared.gradio['encoder_repetition_penalty'] = gr.Slider(0.8, 1.5, value=generate_params['encoder_repetition_penalty'], step=0.01, label='encoder_repetition_penalty', info='Also known as the "Hallucinations filter". Used to penalize tokens that are *not* in the prior text. Higher value = more likely to stay in context, lower value = more likely to diverge.')
