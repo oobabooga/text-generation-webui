@@ -1,3 +1,4 @@
-name: "\n<work>"
+name: "<work>"
 your_name: "Question:"
 context: ""
+turn_template: "<|user|>\n<|user-message|>\n\n<|bot|><|bot-message|>\n\n"
