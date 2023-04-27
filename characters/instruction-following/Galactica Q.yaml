@@ -1,4 +1,4 @@
 name: "A:"
 your_name: "Q:"
 context: ""
-turn_template: "<|user|>\n<|user-message|>\n\n<|bot|>\n<|bot-message|>\n\n"
+turn_template: "<|user|> <|user-message|>\n\n<|bot|><|bot-message|>\n\n"
