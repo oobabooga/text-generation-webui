@@ -205,11 +205,11 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
         if _continue and i == len(shared.history['internal']) - 1:
             rows.insert(1, f"{prefix2}{shared.history['internal'][i][1]}")
         else:
-            rows.insert(1, f"{prefix2}{shared.history['internal'][i][1].strip()}{state['end_of_turn']}\n")
+            rows.insert(1, f"{prefix2}{shared.history['internal'][i][1].strip()}\n")
 
         string = shared.history['internal'][i][0]
         if string != '':
-            rows.insert(1, f"{prefix1}{string.strip()}{state['end_of_turn']}\n")
+            rows.insert(1, f"{prefix1}{string.strip()}\n")
 
         i -= 1
 
@@ -219,7 +219,7 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
     elif not _continue:
         # Adding the user message
         if len(user_input) > 0:
-            rows.append(f"{prefix1}{user_input}{state['end_of_turn']}\n")
+            rows.append(f"{prefix1}{user_input}\n")
 
         # Adding the Character prefix
         rows.append(apply_extensions("bot_prefix", f"{prefix2}"))
