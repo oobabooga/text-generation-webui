@@ -58,12 +58,26 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
 
 
 def decode(output_ids, skip_special_tokens=True):
-    if skip_special_tokens:
-        reply = shared.tokenizer.decode(output_ids, skip_special_tokens=True)
-        reply = reply.replace(r'<|endoftext|>', '')
-        return reply
+    return shared.tokenizer.decode(output_ids, skip_special_tokens)
+
+
+def get_reply_from_output_ids(output_ids, input_ids, original_question, state):
+    if shared.model_type == 'HF_seq2seq':
+        reply = decode(output_ids, state['skip_special_tokens'])
+        if not shared.is_chat():
+            reply = apply_extensions('output', reply)
     else:
-        return shared.tokenizer.decode(output_ids, skip_special_tokens=False)
+        new_tokens = len(output_ids) - len(input_ids[0])
+        reply = decode(output_ids[-new_tokens:], state['skip_special_tokens'])
+
+        if type(shared.tokenizer) is transformers.LlamaTokenizer:
+            if len(original_question) > 0 and original_question[-1] not in [' ', '\n']:
+                reply = ' ' + reply
+
+        if not shared.is_chat():
+            reply = original_question + apply_extensions('output', reply)
+
+    return reply
 
 
 def generate_softprompt_input_tensors(input_ids):
@@ -262,11 +276,7 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
             if shared.soft_prompt:
                 output = torch.cat((input_ids[0], output[filler_input_ids.shape[1]:]))
 
-            new_tokens = len(output) - len(input_ids[0])
-            reply = decode(output[-new_tokens:], state['skip_special_tokens'])
-            if not shared.is_chat():
-                reply = original_question + apply_extensions('output', reply)
-
+            reply = get_reply_from_output_ids(output, input_ids, original_question, state)
             yield formatted_outputs(reply, shared.model_name)
 
         # Stream the reply 1 token at a time.
@@ -282,7 +292,7 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
             def generate_with_streaming(**kwargs):
                 return Iteratorize(generate_with_callback, kwargs, callback=None)
 
-            if not shared.is_chat():
+            if not shared.is_chat() and shared.model_type != 'HF_seq2seq':
                 yield formatted_outputs(original_question, shared.model_name)
 
             with generate_with_streaming(**generate_params) as generator:
@@ -290,11 +300,7 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
                     if shared.soft_prompt:
                         output = torch.cat((input_ids[0], output[filler_input_ids.shape[1]:]))
 
-                    new_tokens = len(output) - len(input_ids[0])
-                    reply = decode(output[-new_tokens:], state['skip_special_tokens'])
-                    if not shared.is_chat():
-                        reply = original_question + apply_extensions('output', reply)
-
+                    reply = get_reply_from_output_ids(output, input_ids, original_question, state)
                     if output[-1] in eos_token_ids:
                         break
 
@@ -310,11 +316,7 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
                 if shared.soft_prompt:
                     output = torch.cat((input_ids[0], output[filler_input_ids.shape[1]:]))
 
-                new_tokens = len(output) - len(original_input_ids[0])
-                reply = decode(output[-new_tokens:], state['skip_special_tokens'])
-                if not shared.is_chat():
-                    reply = original_question + apply_extensions('output', reply)
-
+                reply = get_reply_from_output_ids(output, input_ids, original_question, state)
                 if np.count_nonzero(np.isin(input_ids[0], eos_token_ids)) < np.count_nonzero(np.isin(output, eos_token_ids)):
                     break
 
@@ -334,6 +336,6 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
     finally:
         t1 = time.time()
         original_tokens = len(original_input_ids[0])
-        new_tokens = len(output) - original_tokens
+        new_tokens = len(output) - (original_tokens if shared.model_type != 'HF_seq2seq' else 0)
         print(f'Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens}, seed {seed})')
         return
