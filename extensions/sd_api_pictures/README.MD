@@ -46,6 +46,8 @@ Insert the Automatic1111's WebUI address and press Enter:
 ![API-check](https://raw.githubusercontent.com/Brawlence/SD_api_pics/main/illust/API-check.gif)  
 Green mark confirms the ability to communicate with Auto1111's API on this address. Red cross means something's not right (the ext won't work).
 
+> Note: the `--ssl-verify` parameter can be used to disable tls certificate chain validation, which makes it possible to use the [SDWUI Auto TLS-HTTPS Extension](https://github.com/papuSpartan/stable-diffusion-webui-auto-tls-https)
+
 ### Persistents settings
 
 Create or modify the `settings.json` in the `text-generation-webui` root directory to override the defaults
