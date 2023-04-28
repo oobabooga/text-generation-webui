@@ -1,0 +1,4 @@
+name: "<bot>"
+your_name: "<human>"
+context: "<prefix>You are a helpful chatbot name Stan</prefix>"
+turn_template: "<|user|><|user-message|><|bot|><|bot-message|>"
