@@ -155,6 +155,10 @@ parser.add_argument('--listen-port', type=int, help='The listening port that the
 parser.add_argument('--share', action='store_true', help='Create a public URL. This is useful for running the web UI on Google Colab or similar.')
 parser.add_argument('--auto-launch', action='store_true', default=False, help='Open the web UI in the default browser upon launch.')
 parser.add_argument("--gradio-auth-path", type=str, help='Set the gradio authentication file path. The file should contain one or more user:password pairs in this format: "u1:p1,u2:p2,u3:p3"', default=None)
+parser.add_argument("--ssl-keyfile", type=str, help="If a path to a file is provided, will use this as the private key file to create a local server running on https.", default=None)
+parser.add_argument("--ssl-certfile", type=str, help="If a path to a file is provided, will use this as the signed certificate for https. Needs to be provided if ssl_keyfile is provided.", default=None)
+parser.add_argument("--ssl-keyfile-password", type=str, help="If a password is provided, will use this with the ssl certificate for https.", default=None)
+parser.add_argument("--ssl-verify", type=bool, help="If False, skips certificate validation which allows self-signed certificates to be used.", default=None)
 
 # API
 parser.add_argument('--api', action='store_true', help='Enable the API extension.')
