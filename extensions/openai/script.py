@@ -130,6 +130,10 @@ class Handler(BaseHTTPRequestHandler):
                 'skip_special_tokens': True,
             }
 
+            # fixup 0.0 temperature
+            if req_params['temperature'] == 0.0:
+                req_params['temperature'] = 0.001
+
             self.send_response(200)
             if req_params['stream']:
                 self.send_header('Content-Type', 'text/event-stream')
@@ -171,7 +175,7 @@ class Handler(BaseHTTPRequestHandler):
                 messages = body['messages']
 
                 system_msg = '' # You are ChatGPT, a large language model trained by OpenAI. Answer as concisely as possible. Knowledge cutoff: {knowledge_cutoff} Current date: {current_date}
-                if body['prompt']: # Maybe they sent both? This is not documented in the API, but some clients seem to do this.
+                if 'prompt' in body: # Maybe they sent both? This is not documented in the API, but some clients seem to do this.
                     system_msg = body['prompt']
 
                 chat_msgs = []
