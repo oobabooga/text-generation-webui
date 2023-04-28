@@ -1,8 +1,9 @@
-version: "3.3"
+version: "3.8"
 services:
   text-generation-webui:
     build:
-      context: .
+      context: ..
+      dockerfile: docker/Dockerfile
       args:
         # specify which cuda version your card supports: https://developer.nvidia.com/cuda-gpus
         TORCH_CUDA_ARCH_LIST: ${TORCH_CUDA_ARCH_LIST}
@@ -14,14 +15,14 @@ services:
     stdin_open: true
     tty: true
     volumes:
-      - ./characters:/app/characters
-      - ./extensions:/app/extensions
-      - ./loras:/app/loras
-      - ./models:/app/models
-      - ./presets:/app/presets
-      - ./prompts:/app/prompts
-      - ./softprompts:/app/softprompts
-      - ./training:/app/training
+      - ../characters:/app/characters
+      - ../extensions:/app/extensions
+      - ../loras:/app/loras
+      - ${AI_MODELS_CACHE:-../models}:/app/models
+      - ../presets:/app/presets
+      - ../prompts:/app/prompts
+      - ../softprompts:/app/softprompts
+      - ../training:/app/training
     deploy:
       resources:
         reservations:
