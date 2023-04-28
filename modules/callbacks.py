@@ -23,7 +23,7 @@ class _SentinelTokenStoppingCriteria(transformers.StoppingCriteria):
             trimmed_len = trimmed_sample.shape[-1]
 
             if trimmed_len < self.shortest:
-                return False
+                continue
 
             for sentinel in self.sentinel_token_ids:
                 sentinel_len = sentinel.shape[-1]
