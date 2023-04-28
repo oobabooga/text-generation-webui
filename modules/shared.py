@@ -73,6 +73,9 @@ settings = {
         '.*alpaca': "Alpaca",
         ".*stablelm-tuned": "StableLM",
         ".*wizardlm": "WizardLM",
+        ".*galactica.*finetuned": "Galactica Finetuned",
+        ".*galactica.*-v2": "Galactica v2",
+        "(?!.*finetuned)(?!.*-v2).*galactica": "Galactica",
     },
     'lora_prompts': {
         'default': 'QA',
