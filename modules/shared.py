@@ -158,7 +158,7 @@ parser.add_argument("--gradio-auth-path", type=str, help='Set the gradio authent
 parser.add_argument("--ssl-keyfile", type=str, help="If a path to a file is provided, will use this as the private key file to create a local server running on https.", default=None)
 parser.add_argument("--ssl-certfile", type=str, help="If a path to a file is provided, will use this as the signed certificate for https. Needs to be provided if ssl_keyfile is provided.", default=None)
 parser.add_argument("--ssl-keyfile-password", type=str, help="If a password is provided, will use this with the ssl certificate for https.", default=None)
-parser.add_argument("--ssl-verify", type=bool, help="If False, skips certificate validation which allows self-signed certificates to be used.", default=None)
+parser.add_argument("--disable-ssl-verify", action="store_false", help="If passed, skips certificate validation which allows self-signed certificates to be used.", default=None)
 
 # API
 parser.add_argument('--api', action='store_true', help='Enable the API extension.')

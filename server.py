@@ -847,9 +847,9 @@ def create_interface():
     # Launch the interface
     shared.gradio['interface'].queue()
     if shared.args.listen:
-        shared.gradio['interface'].launch(prevent_thread_lock=True, share=shared.args.share, server_name=shared.args.listen_host or '0.0.0.0', server_port=shared.args.listen_port, inbrowser=shared.args.auto_launch, auth=auth, ssl_keyfile=shared.args.ssl_keyfile, ssl_certfile=shared.args.ssl_certfile, ssl_keyfile_password=shared.args.ssl_keyfile_password, ssl_verify=shared.args.ssl_verify)
+        shared.gradio['interface'].launch(prevent_thread_lock=True, share=shared.args.share, server_name=shared.args.listen_host or '0.0.0.0', server_port=shared.args.listen_port, inbrowser=shared.args.auto_launch, auth=auth, ssl_keyfile=shared.args.ssl_keyfile, ssl_certfile=shared.args.ssl_certfile, ssl_keyfile_password=shared.args.ssl_keyfile_password, ssl_verify=shared.args.disable_ssl_verify)
     else:
-        shared.gradio['interface'].launch(prevent_thread_lock=True, share=shared.args.share, server_port=shared.args.listen_port, inbrowser=shared.args.auto_launch, auth=auth, ssl_keyfile=shared.args.ssl_keyfile, ssl_certfile=shared.args.ssl_certfile, ssl_keyfile_password=shared.args.ssl_keyfile_password, ssl_verify=shared.args.ssl_verify)
+        shared.gradio['interface'].launch(prevent_thread_lock=True, share=shared.args.share, server_port=shared.args.listen_port, inbrowser=shared.args.auto_launch, auth=auth, ssl_keyfile=shared.args.ssl_keyfile, ssl_certfile=shared.args.ssl_certfile, ssl_keyfile_password=shared.args.ssl_keyfile_password, ssl_verify=shared.args.disable_ssl_verify)
 
 
 if __name__ == "__main__":

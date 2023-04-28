@@ -43,23 +43,23 @@ def give_VRAM_priority(actor):
     if actor == 'SD':
         unload_model()
         print("Requesting Auto1111 to re-load last checkpoint used...")
-        response = requests.post(url=f'{params["address"]}/sdapi/v1/reload-checkpoint', json='', verify=shared.args.ssl_verify)
+        response = requests.post(url=f'{params["address"]}/sdapi/v1/reload-checkpoint', json='', verify=shared.args.disable_ssl_verify)
         response.raise_for_status()
 
     elif actor == 'LLM':
         print("Requesting Auto1111 to vacate VRAM...")
-        response = requests.post(url=f'{params["address"]}/sdapi/v1/unload-checkpoint', json='', verify=shared.args.ssl_verify)
+        response = requests.post(url=f'{params["address"]}/sdapi/v1/unload-checkpoint', json='', verify=shared.args.disable_ssl_verify)
         response.raise_for_status()
         reload_model()
 
     elif actor == 'set':
         print("VRAM mangement activated -- requesting Auto1111 to vacate VRAM...")
-        response = requests.post(url=f'{params["address"]}/sdapi/v1/unload-checkpoint', json='', verify=shared.args.ssl_verify)
+        response = requests.post(url=f'{params["address"]}/sdapi/v1/unload-checkpoint', json='', verify=shared.args.disable_ssl_verify)
         response.raise_for_status()
 
     elif actor == 'reset':
         print("VRAM mangement deactivated -- requesting Auto1111 to reload checkpoint")
-        response = requests.post(url=f'{params["address"]}/sdapi/v1/reload-checkpoint', json='', verify=shared.args.ssl_verify)
+        response = requests.post(url=f'{params["address"]}/sdapi/v1/reload-checkpoint', json='', verify=shared.args.disable_ssl_verify)
         response.raise_for_status()
 
     else:
@@ -140,7 +140,7 @@ def get_SD_pictures(description):
     }
 
     print(f'Prompting the image generator via the API on {params["address"]}...')
-    response = requests.post(url=f'{params["address"]}/sdapi/v1/txt2img', json=payload, verify=shared.args.ssl_verify)
+    response = requests.post(url=f'{params["address"]}/sdapi/v1/txt2img', json=payload, verify=shared.args.disable_ssl_verify)
     response.raise_for_status()
     r = response.json()
 
@@ -246,7 +246,7 @@ def SD_api_address_update(address):
     address = filter_address(address)
     params.update({"address": address})
     try:
-        response = requests.get(url=f'{params["address"]}/sdapi/v1/sd-models', verify=shared.args.ssl_verify)
+        response = requests.get(url=f'{params["address"]}/sdapi/v1/sd-models', verify=shared.args.disable_ssl_verify)
         response.raise_for_status()
         # r = response.json()
     except:
