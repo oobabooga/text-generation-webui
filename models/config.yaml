@@ -88,3 +88,6 @@ llama-[0-9]*b-4bit$:
 (?!.*finetuned)(?!.*-v2).*galactica:
   mode: 'instruct'
   instruction_template: 'Galactica'
+.*guanaco:
+  mode: 'instruct'
+  instruction_template: 'Guanaco non-chat'
