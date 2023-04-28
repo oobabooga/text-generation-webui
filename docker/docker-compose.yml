@@ -30,3 +30,30 @@ services:
             - driver: nvidia
               device_ids: ['0']
               capabilities: [gpu]
+
+  # AMD GPUs / ROCm - start with: docker compose --project-directory docker up text-generation-webui-rocm
+  text-generation-webui-rocm:
+    profiles: ["rocm","amdgpu"]
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.amdgpu
+      args:
+        WEBUI_VERSION: ${WEBUI_VERSION}
+    env_file: .env
+    ports:
+      - "${HOST_PORT}:${CONTAINER_PORT}"
+      - "${HOST_API_PORT}:${CONTAINER_API_PORT}"
+    stdin_open: true
+    tty: true
+    volumes:
+      - ../characters:/app/characters
+      - ../extensions:/app/extensions
+      - ../loras:/app/loras
+      - ${AI_MODELS_CACHE:-../models}:/app/models
+      - ../presets:/app/presets
+      - ../prompts:/app/prompts
+      - ../softprompts:/app/softprompts
+      - ../training:/app/training
+    devices: # FIXME: Linux only device syntax
+      - /dev/dri:/dev/dri
+      - /dev/kfd:/dev/kfd
