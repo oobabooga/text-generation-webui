@@ -1,7 +1,8 @@
-
-from threading import Thread
 import time
+import traceback
+from threading import Thread
 from typing import Callable, Optional
+
 from modules.text_generation import encode
 
 
@@ -64,6 +65,7 @@ def _start_cloudflared(port: int, max_attempts: int = 3, on_start: Optional[Call
 
             return
         except Exception:
+            traceback.print_exc()
             time.sleep(3)
 
         raise Exception('Could not start cloudflared.')

@@ -190,7 +190,7 @@ Optionally, you can use the following command-line flags:
 | `--chat`                                   | Launch the web UI in chat mode. |
 | `--character CHARACTER`                    | The name of the character to load in chat mode by default. |
 | `--model MODEL`                            | Name of the model to load by default. |
-| `--lora LORA`                              | Name of the LoRA to apply to the model by default. |
+| `--lora LORA [LORA ...]`                   | The list of LoRAs to load. If you want to load more than one LoRA, write the names separated by spaces. |
 | `--model-dir MODEL_DIR`                    | Path to directory with all the models. |
 | `--lora-dir LORA_DIR`                      | Path to directory with all the loras. |
 | `--model-menu`                             | Show a model menu in the terminal when the web UI is first launched. |

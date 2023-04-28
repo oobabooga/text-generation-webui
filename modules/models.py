@@ -11,7 +11,8 @@ import torch
 import transformers
 from accelerate import infer_auto_device_map, init_empty_weights
 from transformers import (AutoConfig, AutoModel, AutoModelForCausalLM,
-                          AutoTokenizer, BitsAndBytesConfig, LlamaTokenizer)
+                          AutoModelForSeq2SeqLM, AutoTokenizer,
+                          BitsAndBytesConfig, LlamaTokenizer)
 
 import modules.shared as shared
 from modules import llama_attn_hijack
@@ -39,23 +40,28 @@ if shared.args.deepspeed:
 
 
 def find_model_type(model_name):
-    model_name = model_name.lower()
-    if 'rwkv-' in model_name:
+    model_name_lower = model_name.lower()
+    if 'rwkv-' in model_name_lower:
         return 'rwkv'
     elif len(list(Path(f'{shared.args.model_dir}/{model_name}').glob('*ggml*.bin'))) > 0:
         return 'llamacpp'
-    elif re.match('.*ggml.*\.bin', model_name):
+    elif re.match('.*ggml.*\.bin', model_name_lower):
         return 'llamacpp'
-    elif 'chatglm' in model_name:
+    elif 'chatglm' in model_name_lower:
         return 'chatglm'
-    elif 'galactica' in model_name:
+    elif 'galactica' in model_name_lower:
         return 'galactica'
-    elif 'llava' in model_name:
+    elif 'llava' in model_name_lower:
         return 'llava'
-    elif any((k in model_name for k in ['gpt4chan', 'gpt-4chan'])):
+    elif any((k in model_name_lower for k in ['gpt4chan', 'gpt-4chan'])):
         return 'gpt4chan'
     else:
-        return 'HF_generic'
+        config = AutoConfig.from_pretrained(Path(f'{shared.args.model_dir}/{model_name}'))
+        # Not a "catch all", but fairly accurate
+        if config.to_dict().get("is_encoder_decoder", False):
+            return 'HF_seq2seq'
+        else:
+            return 'HF_generic'
 
 
 def load_model(model_name):
@@ -66,6 +72,9 @@ def load_model(model_name):
     if shared.model_type == 'chatglm':
         LoaderClass = AutoModel
         trust_remote_code = shared.args.trust_remote_code
+    elif shared.model_type == 'HF_seq2seq':
+        LoaderClass = AutoModelForSeq2SeqLM
+        trust_remote_code = False
     else:
         LoaderClass = AutoModelForCausalLM
         trust_remote_code = False
@@ -140,8 +149,7 @@ def load_model(model_name):
             print("Warning: applying the monkey patch for using LoRAs in 4-bit mode.\nIt may cause undefined behavior outside its intended scope.")
             from modules.monkey_patch_gptq_lora import load_model_llama
 
-            model, tokenizer = load_model_llama(model_name)
-            return model, tokenizer
+            model, _ = load_model_llama(model_name)
 
         # No monkey patch
         else:
