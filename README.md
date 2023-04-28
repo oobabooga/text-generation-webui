@@ -113,7 +113,7 @@ As an alternative to the recommended WSL method, you can install the web UI nati
 ln -s docker/{Dockerfile,docker-compose.yml,.dockerignore} .
 cp docker/.env.example .env
 # Edit .env and set TORCH_CUDA_ARCH_LIST based on your GPU model
-docker compose up --build
+docker-compose up --build
 ```
 
 You need to have docker compose v2.17 or higher installed in your system. To see how to install docker compose itself, see the guide in [here](https://github.com/oobabooga/text-generation-webui/blob/main/docs/Docker.md).
