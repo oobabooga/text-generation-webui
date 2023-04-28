@@ -81,7 +81,7 @@ conda activate textgen
 ```
 
 #### 2. Install Pytorch
-
+AI_MODELS_CACHE
 | System | GPU | Command |
 |--------|---------|---------|
 | Linux/WSL | NVIDIA | `pip3 install torch torchvision torchaudio` |
@@ -109,16 +109,31 @@ As an alternative to the recommended WSL method, you can install the web UI nati
 
 ### Alternative: Docker
 
-```
-ln -s docker/{Dockerfile,docker-compose.yml,.dockerignore} .
-cp docker/.env.example .env
-# Edit .env and set TORCH_CUDA_ARCH_LIST based on your GPU model
-docker compose up --build
-```
-
 You need to have docker compose v2.17 or higher installed in your system. To see how to install docker compose itself, see the guide in [here](https://github.com/oobabooga/text-generation-webui/blob/main/docs/Docker.md).
 
-Contributed by [@loeken](https://github.com/loeken) in [#633](https://github.com/oobabooga/text-generation-webui/pull/633)
+#### Nvidia / CUDA
+```
+cp docker/.env.example docker/.env
+# Edit .env and set TORCH_CUDA_ARCH_LIST based on your GPU model
+docker compose --project-directory docker up --build # Nvidia / CUDA
+```
+
+#### AMD / ROCm (Linux only)
+```
+cp docker/.env.example docker/.env
+# Edit .env
+docker compose --project-directory docker up --build text-generation-webui-rocm # AMD / ROCm
+```
+
+#### Specifying an alternate path to models for docker via environment variable override
+By default, the docker images will look for AI models in the projects `./models` directory, however it is also possible to override this behaviour by specifying an alternate location for the models through setting the `AI_MODELS_CACHE` to that location, for example:
+```
+AI_MODELS_CACHE=~/source/ai-models-cache docker compose --project-directory docker up --build text-generation-webui-rocm # AMD / ROCm
+```
+
+Docker Compose and Nvidia configuration contributed by [@loeken](https://github.com/loeken) in [#633](https://github.com/oobabooga/text-generation-webui/pull/633)
+
+AMD/ROCm & AI_MODELS_CACHE configuration contributed by [@deftdawg](https://github.com/deftdawg)
 
 ### Updating the requirements
 
