@@ -81,7 +81,6 @@ conda activate textgen
 ```
 
 #### 2. Install Pytorch
-AI_MODELS_CACHE
 | System | GPU | Command |
 |--------|---------|---------|
 | Linux/WSL | NVIDIA | `pip3 install torch torchvision torchaudio` |
