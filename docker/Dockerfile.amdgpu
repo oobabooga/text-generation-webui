@@ -1,0 +1,50 @@
+FROM rocm/pytorch:rocm5.4.2_ubuntu20.04_py3.8_pytorch_2.0.0_preview
+
+LABEL maintainer="DeftDawg <deftdawg@gmail.com>"
+LABEL description="Docker/Podman image for Text Generation WebUI supporting ROCm / AMD GPUs"
+
+# NOTES:
+#
+# - Docker has a LOT of trouble downloading all of the layers of the rocm/pytorch image from DockerHub (https://github.com/RadeonOpenCompute/ROCm-docker/issues/92)
+#   because of this I ran it locally with Podman during development, it also downloads slowly but unlike docker it eventually completes.
+#
+# - Building with Podman 4.3.1 uses a LOT (> 400G) of disk space to build this image this is at least in part because the 
+#   base pyTorch/ROCm is almost 38G on it's own. (https://github.com/RadeonOpenCompute/ROCm/issues/2093) :\
+#
+# - To build and run in Podman without using docker-compose:
+#     podman build -f Dockerfile.amdgpu --build-arg CLI_ARGS="--listen" -t text-generation-webui-rocm
+#     export HOST_PORT=7860 CONTAINER_PORT=7860 HOST_API_PORT=5000 CONTAINER_API_PORT=5000
+#     podman run --name text-generation-webui-rocm --rm -it \
+#       --device=/dev/kfd --device=/dev/dri \
+#       -e CLI_ARGS='--listen' -e WEBUI_VERSION=HEAD -e CONTAINER_PORT=${CONTAINER_PORT} -e CONTAINER_API_PORT=${CONTAINER_API_PORT} \
+#       -p ${HOST_PORT}:${CONTAINER_PORT} -p ${HOST_API_PORT}:${CONTAINER_API_PORT} \
+#       --mount type=bind,source=${HOME}/source/ai-models-cache/,target=/app/models \
+#       text-generation-webui-rocm:latest
+#     # In the above podman run command, replace "${HOME}/source/ai-models-cache/" with whatever directory you keep your models in
+#
+
+RUN git clone https://github.com/oobabooga/text-generation-webui /app
+WORKDIR /app
+
+# Install ROCm enabled bitsandbytes to eliminate the following warning:
+# "UserWarning: The installed version of bitsandbytes was compiled without GPU support. 8-bit optimizers, 8-bit multiplication, and GPU quantization are unavailable."
+RUN git clone https://git.ecker.tech/mrq/bitsandbytes-rocm.git repositories/bitsandbytes && \
+    # FIXME: mirror to github - git.ecker.tech server not reliable, frequently returns http 500
+    cd repositories/bitsandbytes && \
+    make hip && \
+    CUDA_VERSION=$(rocminfo | grep -oE "gfx.*" | grep -v gfx000 | sort -u -t 'x' -k 2n | tail -1) python setup.py install
+
+RUN git clone https://github.com/WapaMario63/GPTQ-for-LLaMa-ROCm -b rocm repositories/GPTQ-for-LLaMa && \
+    cd repositories/GPTQ-for-LLaMa && \
+    python setup_rocm.py install
+
+RUN sed -i '/bitsandbytes/d' requirements.txt && \
+    # delete bitsandbytes; we will use the ROCm version we just installed instead
+    sed -i 's/^numpy.*/numpy==1.22.0/g' requirements.txt && \
+    # pin numpy > 1.20 for panadas and matplotlib AND <123.0 for scipy compatibility
+    echo "torch==$(pip show torch | grep 'Version:' | cut -d' ' -f2)" >> requirements.txt && \
+    # pin torch to ROCm version installed on the system
+    pip install -r requirements.txt
+
+ENV CLI_ARGS=""
+CMD bash -c "([ ! -e /dev/kfd ] || [ ! -d /dev/dri ]) && (echo '/dev/kfd and /dev/dri must be passed as devices' && exit 1) || python server.py ${CLI_ARGS}"
