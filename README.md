@@ -272,8 +272,8 @@ Optionally, you can use the following command-line flags:
 | `--gradio-auth-path GRADIO_AUTH_PATH` | Set the gradio authentication file path. The file should contain one or more user:password pairs in this format: "u1:p1,u2:p2,u3:p3" |
 | `--ssl-certfile`                      | If a path to a file is provided, will use this as the private key file to create a local server running on https. |
 | `--ssl-keyfile`                       | If a path to a file is provided, will use this as the signed certificate for https. Needs to be provided if ssl_keyfile is provided.|
-| `--ssl-verify`                        | If a password is provided, will use this with the ssl certificate for https. |
-| `--ssl-keyfile-password`              | If False, skips certificate validation which allows self-signed certificates to be used. |
+| `--disable-ssl-verify`                | If passed, skips certificate validation which allows self-signed certificates to be used. |
+| `--ssl-keyfile-password`              | If a password is provided, will use this with the ssl certificate for https. |
 
 #### API
 
