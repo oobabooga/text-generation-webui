@@ -15,9 +15,7 @@ class _SentinelTokenStoppingCriteria(transformers.StoppingCriteria):
         transformers.StoppingCriteria.__init__(self)
         self.sentinel_token_ids = sentinel_token_ids
         self.starting_idx = starting_idx
-        lens = [x.shape[-1] for x in sentinel_token_ids]
-        self.shortest = min(lens)
-        self.longest = max(lens)
+        self.shortest = min([x.shape[-1] for x in sentinel_token_ids])
 
     def __call__(self, input_ids: torch.LongTensor, _scores: torch.FloatTensor) -> bool:
         for sample in input_ids:
