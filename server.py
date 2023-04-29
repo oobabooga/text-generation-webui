@@ -183,8 +183,11 @@ def download_model_wrapper(repo_id):
     try:
         downloader = importlib.import_module("download-model")
 
-        model = repo_id
-        branch = "main"
+        repo_id_parts = repo_id.split(":")
+
+        model = repo_id_parts[0] if len(repo_id_parts) > 0 else repo_id
+        branch = repo_id_parts[1] if len(repo_id_parts) > 1 else "main"
+
         check = False
 
         yield ("Cleaning up the model/branch names")
