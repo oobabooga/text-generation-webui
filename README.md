@@ -222,6 +222,8 @@ Optionally, you can use the following command-line flags:
 |-------------|-------------|
 | `--threads` | Number of threads to use in llama.cpp. |
 | `--n_batch` | Processing batch size for llama.cpp. |
+| `--no_mmap` | Prevent usage of mmap for llama.cpp. |
+| `--mlock`   | Store model inside RAM for llama.cpp. |
 
 #### GPTQ
 

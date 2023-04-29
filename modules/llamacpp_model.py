@@ -27,7 +27,8 @@ class LlamaCppModel:
             'seed': 0,
             'n_threads': shared.args.threads or None,
             'n_batch': shared.args.n_batch,
-            'use_mmap': shared.args.no_mmap,
+            #invert it, so when no_mmap is used, it appears ticked in the inference tab
+            'use_mmap': not shared.args.no_mmap,
             'use_mlock': shared.args.mlock
         }
         # print(params)
