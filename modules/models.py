@@ -129,7 +129,7 @@ def load_model(model_name):
 
     # llamacpp model
     elif shared.model_type == 'llamacpp':
-        from modules.llamacpp_model_alternative import LlamaCppModel
+        from modules.llamacpp_model import LlamaCppModel
 
         path = Path(f'{shared.args.model_dir}/{model_name}')
         if path.is_file():

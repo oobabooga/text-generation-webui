@@ -121,7 +121,9 @@ parser.add_argument('--trust-remote-code', action='store_true', help="Set trust_
 
 # llama.cpp
 parser.add_argument('--threads', type=int, default=0, help='Number of threads to use in llama.cpp.')
-parser.add_argument('--n_batch', type=int, default=8, help='Processing batch size for llama.cpp.')
+parser.add_argument('--n_batch', type=int, default=512, help='Processing batch size for llama.cpp.')
+parser.add_argument('--no_mmap', action='store_false', help='Prevent usage of mmap for llama.cpp.')
+parser.add_argument('--mlock', action='store_true', help='Store model inside RAM for llama.cpp.')
 
 # GPTQ
 parser.add_argument('--wbits', type=int, default=0, help='Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported.')
