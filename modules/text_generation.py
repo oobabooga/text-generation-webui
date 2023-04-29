@@ -284,7 +284,7 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
         elif not shared.args.flexgen:
 
             def generate_with_callback(callback=None, **kwargs):
-                kwargs['stopping_criteria'].append(Stream(callback_func=callback))
+                kwargs['stopping_criteria'].insert(0, Stream(callback_func=callback))
                 clear_torch_cache()
                 with torch.no_grad():
                     shared.model.generate(**kwargs)
