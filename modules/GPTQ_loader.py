@@ -138,7 +138,7 @@ def load_quantized(model_name):
     # Find the model type
     if not shared.args.model_type:
         name = model_name.lower()
-        if any((k in name for k in ['opt-', 'opt_', 'opt1', 'opt3', 'optfor', 'galactica', 'galpaca', 'pygmalion-350m']])):
+        if any((k in name for k in ['opt-', 'opt_', 'opt1', 'opt3', 'optfor', 'galactica', 'galpaca', 'pygmalion-350m'])):
             model_type = 'opt'
         elif any((k in name for k in ['gpt-j', 'gptj', 'gpt4all-j', 'malion-6b', 'pygway'])):
             model_type = 'gptj'
