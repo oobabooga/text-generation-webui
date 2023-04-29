@@ -24,7 +24,7 @@ llama-[0-9]*b-4bit$:
 .*(oasst-sft-1-pythia-12b|oasst-sft-6-llama-30b):
   mode: 'instruct'
   instruction_template: 'Open Assistant'
-(?!.*v0)(?!.*1.1)(?!.*1_1).*vicuna:
+(?!.*v0)(?!.*1.1)(?!.*1_1)(?!.*stable).*vicuna:
   mode: 'instruct'
   instruction_template: 'Vicuna-v0'
 .*vicuna.*v0:
@@ -33,6 +33,9 @@ llama-[0-9]*b-4bit$:
 .*vicuna.*(1.1|1_1):
   mode: 'instruct'
   instruction_template: 'Vicuna-v1.1'
+.*stable.*vicuna:
+  mode: 'instruct'
+  instruction_template: 'StableVicuna'
 .*alpaca:
   mode: 'instruct'
   instruction_template: 'Alpaca'
