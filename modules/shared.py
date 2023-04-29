@@ -82,10 +82,12 @@ settings = {
         ".*galactica.*finetuned": "Galactica Finetuned",
         ".*galactica.*-v2": "Galactica v2",
         "(?!.*finetuned)(?!.*-v2).*galactica": "Galactica",
+        ".*baize": "Baize",
     },
     'lora_prompts': {
         'default': 'QA',
         '.*alpaca': "Alpaca",
+        '.*baize': "Baize",
     }
 }
 

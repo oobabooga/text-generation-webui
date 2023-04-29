@@ -94,3 +94,6 @@ llama-[0-9]*b-4bit$:
 .*guanaco:
   mode: 'instruct'
   instruction_template: 'Guanaco non-chat'
+.*baize:
+  mode: 'instruct'
+  instruction_template: 'Baize'

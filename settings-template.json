@@ -50,10 +50,12 @@
         ".*wizardlm": "WizardLM",
         ".*galactica.*finetuned": "Galactica Finetuned",
         ".*galactica.*-v2": "Galactica v2",
-        "(?!.*finetuned)(?!.*-v2).*galactica": "Galactica"
+        "(?!.*finetuned)(?!.*-v2).*galactica": "Galactica",
+        ".*baize": "Baize"
     },
     "lora_prompts": {
         "default": "QA",
-        ".*(alpaca-lora-7b|alpaca-lora-13b|alpaca-lora-30b)": "Alpaca"
+        ".*(alpaca-lora-7b|alpaca-lora-13b|alpaca-lora-30b)": "Alpaca",
+        ".*baize": "Baize"
     }
 }
