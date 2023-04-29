@@ -14,9 +14,9 @@ Chat & completions don't require anything extra installed unless you want to run
 
 ### Embeddings (alpha)
 
-Embeddings requires ```sentence-transformers``` installed, but the chat and completions will function without it loaded. The embeddings endpoint is currently using the HuggingFace model: ```sentence-transformers/all-MiniLM-L6-v2``` for embeddings, which must be installed separately. This produces 384 dimensional embeddings, which is different from OpenAI's ada model which produces 1536 dimensional embeddings. The model is small (~90MB) and fast. This model and embedding size may change in the future.
+Embeddings requires ```sentence-transformers``` installed, but the chat and completions will function without it loaded. The embeddings endpoint is currently using the HuggingFace model: ```sentence-transformers/all-MiniLM-L6-v2``` or ```sentence-transformers/all-mpnet-base-v2``` for embeddings, which must be installed separately. This produces 384 or 768 dimensional embeddings respectively, which is different from OpenAI's ada model which produces 1536 dimensional embeddings. The model is small and fast. This model and embedding size may change in the future.
 
-sentence-transformers/all-MiniLM-L6-v2 can be downloaded from the models's tab, or via download-model.py from the command line. Additionally, you will also need to download the 1_Pooling sub folder which isn't (as of 2023-04-29) downloaded automatically. It contains the config.json for the model, in the end you should have config.json file like this:
+sentence-transformers models can be downloaded from the models's tab, or via download-model.py from the command line. Additionally, you will also need to download the 1_Pooling sub folder which isn't (as of 2023-04-29) downloaded automatically. It contains the config.json for the model, in the end you should have config.json file like this (all-MiniLM-L6-v2 example):
 
 ```
 text-generation-webui$ ./download-model.py sentence-transformers/all-MiniLM-L6-v2

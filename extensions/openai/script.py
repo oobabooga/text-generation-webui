@@ -20,8 +20,11 @@ try:
 except ImportError:
     pass
 
-embedding_model_name = "sentence-transformers/all-MiniLM-L6-v2"
-embedding_model_path = "models/sentence-transformers_all-MiniLM-L6-v2"
+
+st_model_default = 0
+st_models = ["all-MiniLM-L6-v2", "all-mpnet-base-v2"]
+embedding_model_name = f"sentence-transformers/{st_models[st_model_default]}"
+embedding_model_path = f"models/sentence-transformers_{st_models[st_model_default]}"
 embedding_model = None
 
 standard_stopping_strings = ['\nsystem:', '\nuser:', '\nhuman:', '\nassistant:', '\n###', ]
