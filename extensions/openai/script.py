@@ -3,6 +3,7 @@ import json, time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
 
+
 from modules import shared
 from modules.text_generation import encode, generate_reply
 
@@ -11,6 +12,19 @@ params = {
 }
 
 debug = False
+
+# Optional, install the module and download the model to enable
+# v1/embeddings
+try:
+    from sentence_transformers import SentenceTransformer
+except ImportError:
+    pass
+
+embedding_model_name = "sentence-transformers/all-MiniLM-L6-v2"
+embedding_model_path = "models/sentence-transformers_all-MiniLM-L6-v2"
+embedding_model = None
+
+standard_stopping_strings = ['\nsystem:', '\nuser:', '\nhuman:', '\nassistant:', '\n###', ]
 
 # little helper to get defaults if arg is present but None and should be the same type as default.
 def default(dic, key, default):
@@ -36,18 +50,24 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
 
             # TODO: list all models and allow model changes via API? Lora's?
+            # This API should list capabilities, limits and pricing...
             models = [{
                 "id": shared.model_name,
                 "object": "model",
                 "owned_by": "user",
                 "permission": []
-            }, { # these are expected by so much, so include it here as a dummy
-                "id": "gpt-3.5-turbo",
+            }, { # these are expected by so much, so include some here as a dummy
+                "id": "gpt-3.5-turbo", # /v1/chat/completions
                 "object": "model",
                 "owned_by": "user",
                 "permission": []
             }, { 
-                "id": "text-davinci-003",
+                "id": "text-curie-001", # /v1/completions
+                "object": "model",
+                "owned_by": "user",
+                "permission": []
+            }, { 
+                "id": "text-embedding-ada-002", # /v1/embeddings
                 "object": "model",
                 "owned_by": "user",
                 "permission": []
@@ -95,8 +115,20 @@ class Handler(BaseHTTPRequestHandler):
                 elif isinstance(body['stop'], list):
                     stopping_strings = body['stop']
 
+            truncation_length = default(body, 'truncation_length', default(shared.settings, 'truncation_length', 2048))
+
+            default_max_tokens = 16 # completions default, chat default is 'inf' so we need to cap it.
+            if self.path == '/v1/chat/completions':
+                default_max_tokens = default(shared.settings, 'truncation_length', 2048) # the default for chat is "inf"
+
+            max_tokens = default(body, 'max_tokens', default(shared.settings, 'max_new_tokens', default_max_tokens))
+            
+            # hard scale this, assuming the given max is for GPT3/4
+            while truncation_length <= max_tokens:
+                max_tokens = max_tokens // 2
+
             req_params = {
-                'max_new_tokens': default(body, 'max_tokens', default(shared.settings, 'max_new_tokens', 16)),
+                'max_new_tokens': max_tokens,
                 'temperature': default(body, 'temperature', 1.0),
                 'top_p': default(body, 'top_p', 1.0),
                 'top_k': default(body, 'best_of', 1),
@@ -115,7 +147,7 @@ class Handler(BaseHTTPRequestHandler):
                 'seed': shared.settings.get('seed', -1),
                 #int(body.get('n', 1)) # perhaps this should be num_beams or chat_generation_attempts? 'n' doesn't have a direct map.
                 # unofficial, but it needs to get set anyways.
-                'truncation_length': default(body, 'truncation_length', default(shared.settings, 'truncation_length', 2048)),
+                'truncation_length': truncation_length,
                 # no more args.
                 'add_bos_token': shared.settings.get('add_bos_token', True),
                 'do_sample': True,
@@ -165,7 +197,8 @@ class Handler(BaseHTTPRequestHandler):
                     print(f"truncating prompt to {new_len} characters, was {token_count} tokens. Now: {len(encode(prompt)[0])} tokens.")
 
                 # pass with some expected stop strings.
-                stopping_strings += ['\nsystem', 'system:', '\nuser', 'user:', '\n###', '###']
+                # some strange cases of "##| Instruction: " sneaking through.
+                stopping_strings += standard_stopping_strings
                 req_params['custom_stopping_strings'] = stopping_strings
                 
             elif self.path == '/v1/chat/completions':
@@ -215,7 +248,8 @@ class Handler(BaseHTTPRequestHandler):
                 token_count = len(encode(prompt)[0])
 
                 # pass with some expected stop strings.
-                stopping_strings += ['\nsystem', 'system:', '\nuser', 'user:', '\n###', '###']
+                # some strange cases of "##| Instruction: " sneaking through.
+                stopping_strings += standard_stopping_strings
                 req_params['custom_stopping_strings'] = stopping_strings
 
             shared.args.no_stream = not req_params['stream']
@@ -371,6 +405,35 @@ class Handler(BaseHTTPRequestHandler):
 
             response = json.dumps(resp)
             self.wfile.write(response.encode('utf-8'))
+        elif self.path == '/v1/embeddings' and embedding_model != None:
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+
+            input = body['input']
+            #if type(body['input']) is list:
+
+            embedding = embedding_model.encode(input).tolist()
+
+            response = json.dumps({
+                "object": "list",
+                "data": [
+                    {
+                    "object": "embedding",
+                    "embedding": embedding,
+                    "index": 0
+                    }
+                ],
+                "model": body['model'],
+                "usage": {
+                    "prompt_tokens": 0,
+                    "total_tokens": 0,
+                }
+            })
+
+            if debug: print(f"Embeddings return length: {len(embedding)}")
+            self.wfile.write(response.encode('utf-8'))
+
         elif self.path == '/api/v1/token-count':
             # NOT STANDARD. lifted from the api extension, but it's still very useful to calculate tokenized length client side.
             self.send_response(200)
@@ -405,4 +468,14 @@ def run_server():
 
 
 def setup():
+    global embedding_model
+    try:
+        embedding_model = SentenceTransformer(embedding_model_path)
+        print(f"\nLoaded embedding model: {embedding_model_name}")
+    except:
+        print(f"\nFailed to load embedding model: {embedding_model_path}")
+        print(f"If you wish to use the embeddings API, download the model at {embedding_model_name}")
+        pass
+
     Thread(target=run_server, daemon=True).start()
+
