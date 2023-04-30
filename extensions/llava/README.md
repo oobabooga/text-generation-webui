@@ -6,7 +6,7 @@ Adds [LLaVA](https://github.com/haotian-liu/LLaVA) multimodality support to text
 https://user-images.githubusercontent.com/3718215/233817203-69b57e77-0c55-4fd6-b742-3204bb13b8fc.mp4
 
 ## Usage
-To run this extension, download LLaVA weights, for example from [here](https://huggingface.co/wojtab/llava-13b-v0-4bit-128g), and then start server.py with `--extensions llava` argument.
+To run this extension, download LLaVA weights, for example from [here](https://huggingface.co/wojtab/llava-13b-v0-4bit-128g) (note: it's a 4-bit GPTQ quantization, so you need working GPTQ), and then start server.py with `--extensions llava` argument.
 
 When in ui, go to instruct mode, and select LLaVA template, you also should add `"\n###"` to "Custom stopping strings" in parameters tab.
 
@@ -22,10 +22,12 @@ This extension uses following parameters (from settings.json):
 |---------|-----------|
 |`llava-clip_bits`|Number of bits to load CLIP feature extractor in (either 32 or 16, default=32)|
 |`llava-clip_device`|Torch device to run the extractor on, for example `cpu` or `cuda:0`, by default `cuda:0` if available|
+|`llava-clip_repo`|Huggingface repository of CLIP model, `openai/clip-vit-large-patch14` by default. There should be no need to change it|
 |`llava-projector_bits`|Number of bits to load CLIP->LLaMA feature projector in (either 32 or 16, default=32)|
-|`llava-projector_bits`|Torch device to run the CLIP->LLaMA feature projector on, for example `cpu` or `cuda:0`, by default `cuda:0` if available|
+|`llava-projector_device`|Torch device to run the CLIP->LLaMA feature projector on, for example `cpu` or `cuda:0`, by default `cuda:0` if available|
+|`llava-projector_repo`|Huggingface repository of multimodal projector, `liuhaotian/LLaVA-13b-delta-v0` by default. There should be no need to change it|
+|`llava-projector_filename`|The filename of multimodal projector weights, `mm_projector.bin` by default. There should be no need to change it|
 |`llava-add_all_images_to_prompt`|Default value of "Embed all images, not only the last one" checkbox|
-
 ## Technical description
 
 ### Original LLaVA
