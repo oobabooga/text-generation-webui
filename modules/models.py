@@ -152,6 +152,10 @@ def load_model(model_name):
             model, _ = load_model_llama(model_name)
 
         # No monkey patch
+        elif shared.args.autogptq:
+            from modules.AutoGPTQ_loader import load_quantized
+
+            model = load_quantized(model_name)
         else:
             from modules.GPTQ_loader import load_quantized
 
