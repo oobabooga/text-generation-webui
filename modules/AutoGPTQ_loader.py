@@ -1,5 +1,7 @@
 from auto_gptq import AutoGPTQForCausalLM, BaseQuantizeConfig
 from pathlib import Path
+import torch
+import re
 
 import modules.shared as shared
 
@@ -55,7 +57,30 @@ def load_quantized(model_name):
 
     #dev = "cpu" if shared.args.cpu else "cuda:0"  # cpu is not supported for now
 
-    dev = "cuda:0"
+    max_memory = None
+
+    if shared.args.gpu_memory:
+        memory_map = list(map(lambda x: x.strip(), shared.args.gpu_memory))
+        max_cpu_memory = shared.args.cpu_memory.strip() if shared.args.cpu_memory is not None else '99GiB'
+        max_memory = {}
+        for i in range(len(memory_map)):
+            max_memory[i] = f'{memory_map[i]}GiB' if not re.match('.*ib$', memory_map[i].lower()) else memory_map[i]
+        max_memory['cpu'] = max_cpu_memory
+    elif shared.args.auto_devices:
+        total_mem = (torch.cuda.get_device_properties(0).total_memory / (1024 * 1024))
+        suggestion = round((total_mem - 1000) / 1000) * 1000
+        if total_mem - suggestion < 800:
+            suggestion -= 1000
+        suggestion = int(round(suggestion / 1000))
+        print(
+            f"\033[1;32;1mAuto-assiging --gpu-memory {suggestion} for your GPU to try to prevent out-of-memory errors.\nYou can manually set other values.\033[0;37;0m")
+
+        max_memory = {0: f'{suggestion}GiB', 'cpu': f'{shared.args.cpu_memory or 99}GiB'}
+
+    if max_memory:
+        print(f'max_memory: {max_memory}')
+
+    dev = "cuda"
 
     print(f'Loading quantized model with AutoGPTQ from {model_file}')
     model = AutoGPTQForCausalLM.from_quantized(path_to_model,
@@ -64,5 +89,7 @@ def load_quantized(model_name):
                                                use_safetensors=safetensors,
                                                quantize_config=quantize_config,
                                                model_basename=model_file.stem,
-                                               trust_remote_code=shared.args.trust_remote_code)
+                                               trust_remote_code=shared.args.trust_remote_code,
+                                               max_memory=max_memory,
+                                               device_map=shared.args.autogptq_device_map)
     return model

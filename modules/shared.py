@@ -134,6 +134,7 @@ parser.add_argument('--warmup_autotune', action='store_true', help='(triton) Ena
 parser.add_argument('--fused_mlp', action='store_true', help='(triton) Enable fused mlp.')
 parser.add_argument('--autogptq', action='store_true', help='Enable AutoGPTQ.')
 parser.add_argument('--autogptq-triton', action='store_true', help='Enable Triton for AutoGPTQ.')
+parser.add_argument('--autogptq-device-map', type=str, default='', help='Device map for AutoGPTQ.')
 
 # FlexGen
 parser.add_argument('--flexgen', action='store_true', help='Enable the use of FlexGen offloading.')
