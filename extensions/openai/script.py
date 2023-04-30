@@ -413,7 +413,7 @@ class Handler(BaseHTTPRequestHandler):
 
             response = json.dumps(resp)
             self.wfile.write(response.encode('utf-8'))
-        elif self.path == '/v1/embeddings' and embedding_model != None:
+        elif '/embeddings' in self.path and embedding_model != None:
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
@@ -432,7 +432,7 @@ class Handler(BaseHTTPRequestHandler):
                     "index": 0
                     }
                 ],
-                "model": body['model'],
+                "model": "text-embedding-ada-002",
                 "usage": {
                     "prompt_tokens": 0,
                     "total_tokens": 0,
@@ -441,7 +441,7 @@ class Handler(BaseHTTPRequestHandler):
 
             if debug: print(f"Embeddings return length: {len(embedding)}")
             self.wfile.write(response.encode('utf-8'))
-        elif self.path == '/v1/moderations':
+        elif '/moderations' in self.path:
             # for now do nothing, just don't error.
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')

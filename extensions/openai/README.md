@@ -100,14 +100,14 @@ Everything needs OPENAI_API_KEY=dummy set.
 | Compatibility | Application/Library | url | notes / setting |
 | --- | --- | --- | --- |
 | ✅❌ | openai-python | https://github.com/openai/openai-python | only the endpoints from above are working. OPENAI_API_BASE=http://127.0.0.1:5001/v1 |
+| ✅❌ | openai-node | https://github.com/openai/openai-node | only the endpoints from above are working. environment variables don't seem to work by default, but can be configured like so: const openai OpenAI(Configuration({apiKey: process.env.OPENAI_API_KEY, basePath: process.env.OPENAI_API_BASE, })); |
 | ✅ | shell_gpt | https://github.com/TheR1D/shell_gpt | OPENAI_API_HOST=http://127.0.0.1:5001 |
 | ✅ | gpt-shell | https://github.com/jla/gpt-shell | OPENAI_API_BASE=http://127.0.0.1:5001/v1 |
 | ✅ | gpt-discord-bot | https://github.com/openai/gpt-discord-bot | OPENAI_API_BASE=http://127.0.0.1:5001/v1 |
+| ✅ | chatgpt-clone | https://github.com/xtekky/chatgpt-clone | OPENAI_API_BASE=http://127.0.0.1:5001/v1 or edit config.json |
 | ✅❌ | langchain | https://github.com/hwchase17/langchain | OPENAI_API_BASE=http://127.0.0.1:5001/v1 even with a good 30B-4bit model the result is poor so far. It assumes zero shot python/json coding. Some model tailored prompt formatting improves results greatly. |
 | ✅❌ | Auto-GPT | https://github.com/Significant-Gravitas/Auto-GPT | OPENAI_API_BASE=http://127.0.0.1:5001/v1 Same issues as langchain. Also assumes a 4k+ context |
-| ❌ | chatbot-ui | https://github.com/mckaywrigley/chatbot-ui | OPENAI_API_HOST=http://127.0.0.1:5001 hits the api, but nothing happens, hangs |
-| ❓ | babyagi | https://github.com/yoheinakajima/babyagi | unknown |
-| ❓ | openai-node | https://github.com/openai/openai-node | unknown |
+| ❓ | babyagi | https://github.com/yoheinakajima/babyagi | small change required to load OPENAI_API_BASE |
 
 ## Future plans
 * better error handling
