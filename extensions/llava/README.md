@@ -6,9 +6,7 @@ Adds [LLaVA](https://github.com/haotian-liu/LLaVA) multimodality support to text
 https://user-images.githubusercontent.com/3718215/233817203-69b57e77-0c55-4fd6-b742-3204bb13b8fc.mp4
 
 ## Usage
-To run this extension, download LLaVA weights, for example from [here](https://huggingface.co/wojtab/llava-13b-v0-4bit-128g) (note: it's a 4-bit GPTQ quantization, so you need working GPTQ), and then start server.py with `--extensions llava` argument.
-
-When in ui, go to instruct mode, and select LLaVA template, you also should add `"\n###"` to "Custom stopping strings" in parameters tab.
+To run this extension, download LLaVA weights, for example from [here](https://huggingface.co/wojtab/llava-13b-v0-4bit-128g) (note: it's a 4-bit [GPTQ quantization](https://github.com/oobabooga/text-generation-webui/tree/main/docs/GPTQ-models-(4-bit-mode).md), done on "old CUDA" branch), and then start server.py with `--extensions llava` argument.
 
 Do note, that each image takes up 258 tokens, so adjust max_new_tokens to be at most 1700 (recommended value is between 200 to 500), so the images don't get truncated.
 
