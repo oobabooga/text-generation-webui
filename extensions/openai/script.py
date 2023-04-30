@@ -44,6 +44,10 @@ def default(dic, key, default):
         val = default
     return val
 
+def clamp(value, minvalue, maxvalue):
+    return max(minvalue, min(value, maxvalue))
+
+
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path.startswith('/v1/models'):
@@ -118,15 +122,16 @@ class Handler(BaseHTTPRequestHandler):
                 elif isinstance(body['stop'], list):
                     stopping_strings = body['stop']
 
-            truncation_length = default(body, 'truncation_length', default(shared.settings, 'truncation_length', 2048))
+            truncation_length = default(shared.settings, 'truncation_length', 2048)
+            truncation_length = clamp(default(body, 'truncation_length', truncation_length), 1, truncation_length)
 
             default_max_tokens = 16 # completions default, chat default is 'inf' so we need to cap it.
             if 'chat' in self.path:
-                default_max_tokens = default(shared.settings, 'truncation_length', 2048) # the default for chat is "inf"
+                default_max_tokens = truncation_length # the default for chat is "inf"
 
             max_tokens = default(body, 'max_tokens', default(shared.settings, 'max_new_tokens', default_max_tokens))
             
-            # hard scale this, assuming the given max is for GPT3/4
+            # hard scale this, assuming the given max is for GPT3/4, perhaps inspect the requested model and lookup the context max
             while truncation_length <= max_tokens:
                 max_tokens = max_tokens // 2
 
@@ -135,14 +140,11 @@ class Handler(BaseHTTPRequestHandler):
                 'temperature': default(body, 'temperature', 1.0),
                 'top_p': default(body, 'top_p', 1.0),
                 'top_k': default(body, 'best_of', 1),
-                ### XXX not sure about this one, seems to be the right mapping, but the range is different (-2..2.0)
-                # 0 is default in openai, but 1.0 is default in other places. Maybe it's scaled?
-                'repetition_penalty': default(body, 'presence_penalty', 1.18), # 1.2 is the real default
-                ### XXX not sure about this one either, same questions. (-2..2.0), 0 is default not 1.0
-                'encoder_repetition_penalty': default(body, 'frequency_penalty', 1.0),
-                # stopping strings are tricky to handle... not sure this ends up as expected wrt \n, quotes and spaces.
-                #'stopping_strings': default(body, 'stop', default(shared.settings, 'stopping_strings', '')),
-#                'custom_stopping_strings': stopping_strings,
+                ### XXX not sure about this one, seems to be the right mapping, but the range is different (-2..2.0) vs 0..2
+                # 0 is default in openai, but 1.0 is default in other places. Maybe it's scaled? scale it.
+                'repetition_penalty': (default(body, 'presence_penalty', 0) + 2.36 ) / 2.0, # 0 the real default, 1.2 is the model default, but 1.18 works better.
+                ### XXX not sure about this one either, same questions. (-2..2.0), 0 is default not 1.0, scale it.
+                'encoder_repetition_penalty': (default(body, 'frequency_penalty', 0) + 2.0) / 2.0,
                 'suffix': body.get('suffix', None),
                 'stream': default(body, 'stream', False),
                 'echo': default(body, 'echo', False),
@@ -165,9 +167,9 @@ class Handler(BaseHTTPRequestHandler):
                 'skip_special_tokens': True,
             }
 
-            # fixup 0.0 temperature
-            if req_params['temperature'] == 0.0:
-                req_params['temperature'] = 0.001
+            # fixup absolute 0.0's
+            for par in ['temperature', 'repetition_penalty', 'encoder_repetition_penalty']:
+                req_params[par] = clamp(req_params[par], 0.001, 1.999)
 
             self.send_response(200)
             if req_params['stream']:
@@ -241,7 +243,7 @@ class Handler(BaseHTTPRequestHandler):
                 # ... encoded as a string, array of strings, array of tokens, or array of token arrays.
                 prompt = body['prompt'] # XXX this can be different types
                 if isinstance(prompt, list):
-                    prompt = ''.join(prompt)
+                    prompt = ''.join(prompt) # XXX this is wrong... need to split out to multiple calls?
 
                 token_count = len(encode(prompt)[0])
                 if token_count >= req_params['truncation_length']:
