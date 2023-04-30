@@ -53,7 +53,9 @@ def load_quantized(model_name):
             group_size=shared.args.groupsize
         )
 
-    dev = "cpu" if shared.args.cpu else "cuda:0"
+    #dev = "cpu" if shared.args.cpu else "cuda:0"  # cpu is not supported for now
+
+    dev = "cuda:0"
 
     print(f'Loading quantized model with AutoGPTQ from {model_file}')
     model = AutoGPTQForCausalLM.from_quantized(path_to_model,
