@@ -102,7 +102,7 @@ class Handler(BaseHTTPRequestHandler):
         if debug: print(self.headers) # did you know... python-openai sends your linux kernel & python version?
         if debug: print(body)
 
-        if self.path == '/v1/completions' or self.path == '/v1/chat/completions':
+        if '/completions' in self.path:
             # XXX model is ignored for now
             #model = body.get('model', shared.model_name) # ignored, use existing for now
             model = shared.model_name
@@ -121,7 +121,7 @@ class Handler(BaseHTTPRequestHandler):
             truncation_length = default(body, 'truncation_length', default(shared.settings, 'truncation_length', 2048))
 
             default_max_tokens = 16 # completions default, chat default is 'inf' so we need to cap it.
-            if self.path == '/v1/chat/completions':
+            if 'chat' in self.path:
                 default_max_tokens = default(shared.settings, 'truncation_length', 2048) # the default for chat is "inf"
 
             max_tokens = default(body, 'max_tokens', default(shared.settings, 'max_new_tokens', default_max_tokens))
@@ -184,27 +184,7 @@ class Handler(BaseHTTPRequestHandler):
             stream_object_type = ''
             object_type = ''
 
-            if self.path == '/v1/completions':
-                stream_object_type = 'text_completion.chunk'
-                object_type = 'text_completion'
-
-                # ... encoded as a string, array of strings, array of tokens, or array of token arrays.
-                prompt = body['prompt'] # XXX this can be different types
-                if isinstance(prompt, list):
-                    prompt = ''.join(prompt)
-
-                token_count = len(encode(prompt)[0])
-                if token_count >= req_params['truncation_length']:
-                    new_len = int(len(prompt) * (float(shared.settings['truncation_length'])  - req_params['max_new_tokens']) / token_count)
-                    prompt = prompt[-new_len:]
-                    print(f"truncating prompt to {new_len} characters, was {token_count} tokens. Now: {len(encode(prompt)[0])} tokens.")
-
-                # pass with some expected stop strings.
-                # some strange cases of "##| Instruction: " sneaking through.
-                stopping_strings += standard_stopping_strings
-                req_params['custom_stopping_strings'] = stopping_strings
-                
-            elif self.path == '/v1/chat/completions':
+            if 'chat' in self.path:
                 stream_object_type = 'chat.completions.chunk'
                 object_type = 'chat.completions'
 
@@ -254,6 +234,26 @@ class Handler(BaseHTTPRequestHandler):
                 # some strange cases of "##| Instruction: " sneaking through.
                 stopping_strings += standard_stopping_strings
                 req_params['custom_stopping_strings'] = stopping_strings
+            else:
+                stream_object_type = 'text_completion.chunk'
+                object_type = 'text_completion'
+
+                # ... encoded as a string, array of strings, array of tokens, or array of token arrays.
+                prompt = body['prompt'] # XXX this can be different types
+                if isinstance(prompt, list):
+                    prompt = ''.join(prompt)
+
+                token_count = len(encode(prompt)[0])
+                if token_count >= req_params['truncation_length']:
+                    new_len = int(len(prompt) * (float(shared.settings['truncation_length'])  - req_params['max_new_tokens']) / token_count)
+                    prompt = prompt[-new_len:]
+                    print(f"truncating prompt to {new_len} characters, was {token_count} tokens. Now: {len(encode(prompt)[0])} tokens.")
+
+                # pass with some expected stop strings.
+                # some strange cases of "##| Instruction: " sneaking through.
+                stopping_strings += standard_stopping_strings
+                req_params['custom_stopping_strings'] = stopping_strings
+                
 
             shared.args.no_stream = not req_params['stream']
             if not shared.args.no_stream:
@@ -288,6 +288,7 @@ class Handler(BaseHTTPRequestHandler):
 
             answer = ''
             seen_content = ''
+            longest_stop_len = max([ len(x) for x in stopping_strings ])
             
             for a in generator:
                 if isinstance(a, str):
@@ -296,9 +297,11 @@ class Handler(BaseHTTPRequestHandler):
                     answer = a[0]
 
                 stop_string_found = False
+                len_seen = len(seen_content)
+                search_start = max(len_seen - longest_stop_len, 0)
 
                 for string in stopping_strings:
-                    idx = answer.find(string)
+                    idx = answer.find(string, search_start)
                     if idx != -1:
                         answer = answer[:idx] # clip it.
                         stop_string_found = True
@@ -324,7 +327,7 @@ class Handler(BaseHTTPRequestHandler):
 
                 if not shared.args.no_stream:
                     # Streaming
-                    new_content = answer[len(seen_content):]
+                    new_content = answer[len_seen:]
 
                     if not new_content or chr(0xfffd) in new_content: # partial unicode character, don't send it yet.
                         continue
@@ -401,10 +404,10 @@ class Handler(BaseHTTPRequestHandler):
                 }
             }
 
-            if self.path == '/v1/completions':
-                resp["choices"][0]["text"] = answer
-            elif self.path == '/v1/chat/completions':
+            if 'chat' in self.path:
                 resp["choices"][0]["message"] = {"role": "assistant", "content": answer }
+            else:
+                resp["choices"][0]["text"] = answer
 
             response = json.dumps(resp)
             self.wfile.write(response.encode('utf-8'))
@@ -435,6 +438,38 @@ class Handler(BaseHTTPRequestHandler):
             })
 
             if debug: print(f"Embeddings return length: {len(embedding)}")
+            self.wfile.write(response.encode('utf-8'))
+        elif self.path == '/v1/moderations':
+            # for now do nothing, just don't error.
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+
+            response = json.dumps({
+                "id": "modr-5MWoLO",
+                "model": "text-moderation-001",
+                "results": [{
+                    "categories": {
+                        "hate": False,
+                        "hate/threatening": False,
+                        "self-harm": False,
+                        "sexual": False,
+                        "sexual/minors": False,
+                        "violence": False,
+                        "violence/graphic": False
+                    },
+                    "category_scores": {
+                        "hate": 0.0,
+                        "hate/threatening": 0.0,
+                        "self-harm": 0.0,
+                        "sexual": 0.0,
+                        "sexual/minors": 0.0,
+                        "violence": 0.0,
+                        "violence/graphic": 0.0
+                    },
+                    "flagged": False
+                }]
+            })
             self.wfile.write(response.encode('utf-8'))
 
         elif self.path == '/api/v1/token-count':
@@ -473,6 +508,7 @@ def run_server():
 def setup():
     global embedding_model
     try:
+        
         embedding_model = SentenceTransformer(embedding_model_path)
         print(f"\nLoaded embedding model: {embedding_model_name}")
     except:
