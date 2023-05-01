@@ -10,7 +10,7 @@ params = {
     'port': 5001,
 }
 
-debug = True
+debug = False
 
 # Optional, install the module and download the model to enable
 # v1/embeddings
