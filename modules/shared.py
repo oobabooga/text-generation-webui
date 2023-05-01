@@ -69,6 +69,7 @@ settings = {
         '.*(gpt4chan|gpt-4chan|4chan)': 'GPT-4chan',
         '.*oasst': 'Open Assistant',
         '.*alpaca': "Alpaca",
+        '.*metharme': 'Metharme',
     },
     'lora_prompts': {
         'default': 'QA',
