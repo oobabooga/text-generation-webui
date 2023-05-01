@@ -1,5 +1,4 @@
-import ast
-import json, time
+import json, time, os
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
 
@@ -11,7 +10,7 @@ params = {
     'port': 5001,
 }
 
-debug = False
+debug = True
 
 # Optional, install the module and download the model to enable
 # v1/embeddings
@@ -20,11 +19,9 @@ try:
 except ImportError:
     pass
 
-
-st_model_default = 0
-st_models = ["all-MiniLM-L6-v2", "all-mpnet-base-v2"]
-embedding_model_name = f"sentence-transformers/{st_models[st_model_default]}"
-embedding_model_path = f"models/sentence-transformers_{st_models[st_model_default]}"
+st_model = os.environ["EMBEDDING_MODEL"] if "EMBEDDING_MODEL" in os.environ else "all-mpnet-base-v2"
+embedding_model_name = f"sentence-transformers/{st_model}"
+embedding_model_path = f"models/sentence-transformers_{st_model}"
 embedding_model = None
 
 standard_stopping_strings = ['\nsystem:', '\nuser:', '\nhuman:', '\nassistant:', '\n###', ]
@@ -74,7 +71,7 @@ class Handler(BaseHTTPRequestHandler):
                 "owned_by": "user",
                 "permission": []
             }, { 
-                "id": "text-embedding-ada-002", # /v1/embeddings
+                "id": "text-davinci-002", # /v1/embeddings text-embedding-ada-002:1536, text-davinci-002:768
                 "object": "model",
                 "owned_by": "user",
                 "permission": []
@@ -106,7 +103,11 @@ class Handler(BaseHTTPRequestHandler):
         if debug: print(self.headers) # did you know... python-openai sends your linux kernel & python version?
         if debug: print(body)
 
-        if '/completions' in self.path:
+        if '/completions' in self.path or '/generate' in self.path:
+            is_legacy = '/generate' in self.path
+            is_chat = 'chat' in self.path
+            resp_list = 'data' if is_legacy else 'choices'
+
             # XXX model is ignored for now
             #model = body.get('model', shared.model_name) # ignored, use existing for now
             model = shared.model_name
@@ -125,11 +126,10 @@ class Handler(BaseHTTPRequestHandler):
             truncation_length = default(shared.settings, 'truncation_length', 2048)
             truncation_length = clamp(default(body, 'truncation_length', truncation_length), 1, truncation_length)
 
-            default_max_tokens = 16 # completions default, chat default is 'inf' so we need to cap it.
-            if 'chat' in self.path:
-                default_max_tokens = truncation_length # the default for chat is "inf"
+            default_max_tokens = truncation_length if is_chat else 16 # completions default, chat default is 'inf' so we need to cap it., the default for chat is "inf"
 
-            max_tokens = default(body, 'max_tokens', default(shared.settings, 'max_new_tokens', default_max_tokens))
+            max_tokens_str = 'length' if is_legacy else 'max_tokens'
+            max_tokens = default(body, max_tokens_str, default(shared.settings, 'max_new_tokens', default_max_tokens))
             
             # hard scale this, assuming the given max is for GPT3/4, perhaps inspect the requested model and lookup the context max
             while truncation_length <= max_tokens:
@@ -150,7 +150,7 @@ class Handler(BaseHTTPRequestHandler):
                 'echo': default(body, 'echo', False),
                 #####################################################
                 'seed': shared.settings.get('seed', -1),
-                #int(body.get('n', 1)) # perhaps this should be num_beams or chat_generation_attempts? 'n' doesn't have a direct map.
+                #int(body.get('n', 1)) # perhaps this should be num_beams or chat_generation_attempts? 'n' doesn't have a direct map
                 # unofficial, but it needs to get set anyways.
                 'truncation_length': truncation_length,
                 # no more args.
@@ -186,7 +186,7 @@ class Handler(BaseHTTPRequestHandler):
             stream_object_type = ''
             object_type = ''
 
-            if 'chat' in self.path:
+            if is_chat:
                 stream_object_type = 'chat.completions.chunk'
                 object_type = 'chat.completions'
 
@@ -241,7 +241,11 @@ class Handler(BaseHTTPRequestHandler):
                 object_type = 'text_completion'
 
                 # ... encoded as a string, array of strings, array of tokens, or array of token arrays.
-                prompt = body['prompt'] # XXX this can be different types
+                if is_legacy:
+                    prompt = body['context'] # Older engines.generate API
+                else:
+                    prompt = body['prompt'] # XXX this can be different types
+                    
                 if isinstance(prompt, list):
                     prompt = ''.join(prompt) # XXX this is wrong... need to split out to multiple calls?
 
@@ -266,19 +270,19 @@ class Handler(BaseHTTPRequestHandler):
                     "object": stream_object_type,
                     "created": created_time,
                     "model": shared.model_name,
-                    "choices": [{
+                    resp_list: [{
                         "index": 0,
                         "finish_reason": None,
                     }],
                 }
 
                 if stream_object_type == 'text_completion.chunk':
-                    chunk["choices"][0]["text"] = ""
+                    chunk[resp_list][0]["text"] = ""
                 else:
                     # This is coming back as "system" to the openapi cli, not sure why.
                     # So yeah... do both methods? delta and messages. 
-                    chunk["choices"][0]["message"] = {'role': 'assistant', 'content': ''}
-                    chunk["choices"][0]["delta"] = {'role': 'assistant', 'content': ''}
+                    chunk[resp_list][0]["message"] = {'role': 'assistant', 'content': ''}
+                    chunk[resp_list][0]["delta"] = {'role': 'assistant', 'content': ''}
                     #{ "role": "assistant" }
 
                 response = 'data: ' + json.dumps(chunk) + '\n'
@@ -340,17 +344,17 @@ class Handler(BaseHTTPRequestHandler):
                         "object": stream_object_type,
                         "created": created_time,
                         "model": shared.model_name,
-                        "choices": [{
+                        resp_list: [{
                             "index": 0,
                             "finish_reason": None,
                         }],
                     }
                     if stream_object_type == 'text_completion.chunk':
-                        chunk['choices'][0]['text'] = new_content
+                        chunk[resp_list][0]['text'] = new_content
                     else:
                         # So yeah... do both methods? delta and messages. 
-                        chunk['choices'][0]['message'] = { 'content': new_content }
-                        chunk['choices'][0]['delta'] = { 'content': new_content }
+                        chunk[resp_list][0]['message'] = { 'content': new_content }
+                        chunk[resp_list][0]['delta'] = { 'content': new_content }
                     response = 'data: ' + json.dumps(chunk) + '\n'
                     self.wfile.write(response.encode('utf-8'))
                     completion_token_count += len(encode(new_content)[0])
@@ -361,7 +365,7 @@ class Handler(BaseHTTPRequestHandler):
                     "object": stream_object_type,
                     "created": created_time,
                     "model": model, # TODO: add Lora info?
-                    "choices": [{
+                    resp_list: [{
                             "index": 0,
                             "finish_reason": "stop",
                     }],
@@ -372,11 +376,11 @@ class Handler(BaseHTTPRequestHandler):
                     }
                 }
                 if stream_object_type == 'text_completion.chunk':
-                    chunk['choices'][0]['text'] = ''
+                    chunk[resp_list][0]['text'] = ''
                 else:
                     # So yeah... do both methods? delta and messages. 
-                    chunk['choices'][0]['message'] = {'content': '' }
-                    chunk['choices'][0]['delta'] = {}
+                    chunk[resp_list][0]['message'] = {'content': '' }
+                    chunk[resp_list][0]['delta'] = {}
                 response = 'data: ' + json.dumps(chunk) + '\ndata: [DONE]\n'
                 self.wfile.write(response.encode('utf-8'))
                 ###### Finished if streaming.
@@ -395,7 +399,7 @@ class Handler(BaseHTTPRequestHandler):
                 "object": object_type,
                 "created": created_time,
                 "model": model, # TODO: add Lora info?
-                "choices": [{
+                resp_list: [{
                     "index": 0,
                     "finish_reason": stop_reason,
                 }],
@@ -406,10 +410,10 @@ class Handler(BaseHTTPRequestHandler):
                 }
             }
 
-            if 'chat' in self.path:
-                resp["choices"][0]["message"] = {"role": "assistant", "content": answer }
+            if is_chat:
+                resp[resp_list][0]["message"] = {"role": "assistant", "content": answer }
             else:
-                resp["choices"][0]["text"] = answer
+                resp[resp_list][0]["text"] = answer
 
             response = json.dumps(resp)
             self.wfile.write(response.encode('utf-8'))
@@ -418,28 +422,25 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
 
-            input = body['input']
-            #if type(body['input']) is list:
+            input = body['input'] if 'input' in body else body['text']
+            if type(input) is str:
+                input = [input]
 
-            embedding = embedding_model.encode(input).tolist()
+            embeddings = embedding_model.encode(input).tolist()
+
+            data = [ {"object": "embedding", "embedding": emb, "index": n } for n, emb in enumerate(embeddings) ]
 
             response = json.dumps({
                 "object": "list",
-                "data": [
-                    {
-                    "object": "embedding",
-                    "embedding": embedding,
-                    "index": 0
-                    }
-                ],
-                "model": "text-embedding-ada-002",
+                "data": data,
+                "model": st_model, # return the real model
                 "usage": {
                     "prompt_tokens": 0,
                     "total_tokens": 0,
                 }
             })
 
-            if debug: print(f"Embeddings return length: {len(embedding)}")
+            if debug: print(f"Embeddings return size: {len(embeddings[0])}, number: {len(embeddings)}")
             self.wfile.write(response.encode('utf-8'))
         elif '/moderations' in self.path:
             # for now do nothing, just don't error.
@@ -510,7 +511,6 @@ def run_server():
 def setup():
     global embedding_model
     try:
-        
         embedding_model = SentenceTransformer(embedding_model_path)
         print(f"\nLoaded embedding model: {embedding_model_name}")
     except:
