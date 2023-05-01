@@ -52,14 +52,16 @@ def set_quantize_config(model_name):
         with open(path_to_model / 'quantize_config.json') as f:
             conf = json.load(f)
             if conf:
-                shared.args.wbits = conf['bits']
-                shared.args.groupsize = conf['group_size']
-                print(f'Quantize config found for {model_name}. Setting wbits={shared.args.wbits} and groupsize={shared.args.groupsize}.')
+                shared.args.wbits = conf.get('bits', shared.args.wbits)
+                shared.args.groupsize = max(conf.get('group_size', shared.args.groupsize), 0)  # convert -1 to 0
+                shared.args.autogptq_act_order = conf.get('desc_act', shared.args.autogptq_act_order)
+                print(f'Quantize config found for {model_name}. Setting wbits={shared.args.wbits} and groupsize={shared.args.groupsize}. act-order={shared.args.autogptq_act_order}')
     except FileNotFoundError:
         print(f'No quantize config found for {model_name}.')
         return
     except JsonDecodeError:
         print(f'quantize_config.json invalid for {model_name}.')
+        return
 
 
 def load_quantized(model_name):
@@ -75,8 +77,9 @@ def load_quantized(model_name):
     quantize_config = None
     if not has_quantize_config(model_name):
         quantize_config = BaseQuantizeConfig(
-            bits=shared.args.wbits,
-            group_size=shared.args.groupsize
+            bits=bits if (bits := shared.args.wbits) else 4,  # we shouldn't be here if wbits is not set, but default to 4 anyway
+            group_size=gs if (gs := shared.args.groupsize) > 0 else -1,  # convert 0 to -1
+            desc_act=shared.args.autogptq_act_order
         )
 
     max_memory = None
@@ -95,7 +98,7 @@ def load_quantized(model_name):
             suggestion -= 1000
         suggestion = int(round(suggestion / 1000))
         print(
-            f"\033[1;32;1mAuto-assiging --gpu-memory {suggestion} for your GPU to try to prevent out-of-memory errors.\nYou can manually set other values.\033[0;37;0m")
+            f"\033[1;32;1mAuto-assigning --gpu-memory {suggestion} for your GPU to try to prevent out-of-memory errors.\nYou can manually set other values.\033[0;37;0m")
 
         max_memory = {0: f'{suggestion}GiB', 'cpu': f'{shared.args.cpu_memory or 99}GiB'}
 
