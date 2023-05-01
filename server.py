@@ -45,8 +45,7 @@ from modules import chat, shared, training, ui
 from modules.html_generator import chat_html_wrapper
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, load_soft_prompt, unload_model
-from modules.text_generation import (encode, generate_reply,
-                                     stop_everything_event)
+from modules.text_generation import (generate_reply, stop_everything_event)
 
 
 def get_available_models():
@@ -175,7 +174,7 @@ def load_prompt(fname):
 
 
 def count_tokens(text):
-    tokens = len(encode(text)[0])
+    tokens = extensions_module.apply_extensions('tokenized_length', text)
     return f'{tokens} tokens in the input.'
 
 
