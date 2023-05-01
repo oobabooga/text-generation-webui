@@ -43,9 +43,9 @@ def find_model_type(model_name):
     model_name_lower = model_name.lower()
     if 'rwkv-' in model_name_lower:
         return 'rwkv'
-    elif len(list(Path(f'{shared.args.model_dir}/{model_name}').glob('*ggml*.bin'))) > 0:
+    elif len(list(Path(f'{shared.args.model_dir}/{model_name}').glob('*ggml*.bin'))) > 0 and not shared.args.dont_load_cpu_model:
         return 'llamacpp'
-    elif re.match('.*ggml.*\.bin', model_name_lower):
+    elif re.match('.*ggml.*\.bin', model_name_lower) and not shared.args.dont_load_cpu_model:
         return 'llamacpp'
     elif 'chatglm' in model_name_lower:
         return 'chatglm'
@@ -161,8 +161,12 @@ def load_model(model_name):
     else:
         params = {"low_cpu_mem_usage": True}
         if not any((shared.args.cpu, torch.cuda.is_available(), torch.has_mps)):
-            print("Warning: torch.cuda.is_available() returned False.\nThis means that no GPU has been detected.\nFalling back to CPU mode.\n")
-            shared.args.cpu = True
+            if not shared.args.dont_load_cpu_model:
+                print("Warning: torch.cuda.is_available() returned False.\nThis means that no GPU has been detected.\nFalling back to CPU mode.\n")
+                shared.args.cpu = True
+            else:
+                print("Error: torch.cuda.is_available() returned False, and the user requested the CPU not be used. Aborting...")
+                raise AssertionError('User requested no CPU models be used, but a suitable GPU has not be detected. Aborting...')
 
         if shared.args.cpu:
             params["torch_dtype"] = torch.float32

@@ -104,6 +104,7 @@ parser.add_argument('--no-stream', action='store_true', help='Don\'t stream the 
 parser.add_argument('--settings', type=str, help='Load the default interface settings from this json file. See settings-template.json for an example. If you create a file called settings.json, this file will be loaded by default without the need to use the --settings flag.')
 parser.add_argument('--extensions', type=str, nargs="+", help='The list of extensions to load. If you want to load more than one extension, write the names separated by spaces.')
 parser.add_argument('--verbose', action='store_true', help='Print the prompts to the terminal.')
+parser.add_argument("--dont-load-cpu-model", action='store_true', help='Do not try and load a CPU model, if it is present in the directory.')
 
 # Accelerate/transformers
 parser.add_argument('--cpu', action='store_true', help='Use the CPU to generate text. Warning: Training on CPU is extremely slow.')
@@ -188,6 +189,15 @@ if args.api or args.public_api:
         args.extensions = ['api']
     elif 'api' not in args.extensions:
         args.extensions.append('api')
+
+
+if args.cpu and args.dont_load_cpu_model:
+    print("Error: --cpu and --dont-load-cpu-models conflict and can not be used simultaneously.")
+    raise ValueError("Error: --cpu and --dont-load-cpu-models conflict and can not be used simultaneously.")
+
+if "llamacpp" in args.model_type and args.dont_load_cpu_model:
+    print("Error: model type 'llamacpp' and --dont-load-cpu-models conflict and can not be used simultaneously.")
+    raise ValueError("Error: model type 'llamacpp' and --dont-load-cpu-models conflict and can not be used simultaneously.")
 
 
 def is_chat():
