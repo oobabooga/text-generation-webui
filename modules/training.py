@@ -411,8 +411,27 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     if WANT_INTERRUPT:
         yield "Interrupted before start."
         return
+    
+    def log_train_dataset(trainer):
+        import os
+        decoded_entries = []
+        # Try to decode the entries and write the log file
+        try:
+            # Iterate over the first 10 elements in the dataset (or fewer if there are less than 10)
+            for i in range(min(10, len(trainer.train_dataset))):
+                decoded_text = shared.tokenizer.decode(trainer.train_dataset[i]['input_ids'])
+                decoded_entries.append({"value": decoded_text})
+            if not os.path.exists('logs'):
+                os.makedirs('logs')
+            # Write the log file
+            with open(os.path.join('logs', 'train_dataset_sample.json'), 'w') as json_file:
+                json.dump(decoded_entries, json_file, indent=4)
+            print("Log file 'train_dataset_sample.json' created in the 'logs' directory.")
+        except Exception as e:
+            print(f"Failed to create log file due to error: {e}")
 
     def threaded_run():
+        log_train_dataset(trainer)
         trainer.train()
         # Note: save in the thread in case the gradio thread breaks (eg browser closed)
         lora_model.save_pretrained(lora_file_path)
