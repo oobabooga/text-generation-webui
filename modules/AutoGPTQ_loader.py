@@ -2,6 +2,7 @@ from auto_gptq import AutoGPTQForCausalLM, BaseQuantizeConfig
 from pathlib import Path
 import torch
 import re
+import json
 
 import modules.shared as shared
 
@@ -40,6 +41,27 @@ def find_quantized_model_file(model_name):
     return bin_path
 
 
+def has_quantize_config(model_name):
+    path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
+    return (path_to_model / 'quantize_config.json').exists()
+
+
+def set_quantize_config(model_name):
+    path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
+    try:
+        with open(path_to_model / 'quantize_config.json') as f:
+            conf = json.load(f)
+            if conf:
+                shared.args.wbits = conf['bits']
+                shared.args.groupsize = conf['group_size']
+                print(f'Quantize config found for {model_name}. Setting wbits={shared.args.wbits} and groupsize={shared.args.groupsize}.')
+    except FileNotFoundError:
+        print(f'No quantize config found for {model_name}.')
+        return
+    except JsonDecodeError:
+        print(f'quantize_config.json invalid for {model_name}.')
+
+
 def load_quantized(model_name):
     model_file = find_quantized_model_file(model_name)
     if model_file is None:
@@ -48,14 +70,14 @@ def load_quantized(model_name):
     safetensors = model_file.suffix == '.safetensors'
 
     path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
+
+    # check if model has quantize_config.json else use settings
     quantize_config = None
-    if not (path_to_model / 'quantize_config.json').exists():
+    if not has_quantize_config(model_name):
         quantize_config = BaseQuantizeConfig(
             bits=shared.args.wbits,
             group_size=shared.args.groupsize
         )
-
-    #dev = "cpu" if shared.args.cpu else "cuda:0"  # cpu is not supported for now
 
     max_memory = None
 
@@ -79,6 +101,8 @@ def load_quantized(model_name):
 
     if max_memory:
         print(f'max_memory: {max_memory}')
+
+    # dev = "cpu" if shared.args.cpu else "cuda:0"  # cpu is not supported for now
 
     dev = "cuda"
 
