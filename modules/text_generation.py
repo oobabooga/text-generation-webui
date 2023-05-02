@@ -229,7 +229,7 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
     output = input_ids[0]
     cuda = not any((shared.args.cpu, shared.args.deepspeed, shared.args.flexgen))
     if shared.args.verbose:
-        print(f'\n\n{decode(input_ids[0], state["skip_special_tokens"])}\n--------------------\n')
+        print(f'\n\n{decode(input_ids[0], False)}\n--------------------\n')
 
     # Find the eos tokens
     eos_token_ids = [shared.tokenizer.eos_token_id] if shared.tokenizer.eos_token_id is not None else []

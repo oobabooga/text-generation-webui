@@ -25,7 +25,7 @@ Once downloaded, it will be automatically applied to **every** `LlamaForCausalLM
 1. Install the `protobuf` library:
 
 ```
-pip install protobuf
+pip install protobuf==3.20.1
 ```
 
 2. Use the script below to convert the model in `.pth` format that you, a fellow academic, downloaded using Meta's official link:
