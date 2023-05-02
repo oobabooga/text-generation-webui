@@ -17,7 +17,7 @@ def load_pipeline(params: dict) -> Tuple[AbstractMultimodalPipeline, str]:
     available_pipeline_modules = _get_available_pipeline_modules()
     for name in available_pipeline_modules:
         try:
-            pipeline_modules[name] = import_module(f'extensions.llava.pipelines.{name}.pipelines')
+            pipeline_modules[name] = import_module(f'extensions.multimodal.pipelines.{name}.pipelines')
         except:
             print(f'Failed to get multimodal pipelines from {name}')
             traceback.print_exc()
