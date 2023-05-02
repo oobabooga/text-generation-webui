@@ -128,6 +128,6 @@ def create_extensions_block():
     if should_display_ui:
         with gr.Column(elem_id="extensions"):
             for extension, name in iterator():
-                gr.Markdown(f"\n### {name}")
                 if hasattr(extension, "ui"):
+                    gr.Markdown(f"\n### {name}")
                     extension.ui()
