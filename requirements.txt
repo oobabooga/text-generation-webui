@@ -2,7 +2,7 @@ accelerate==0.18.0
 colorama
 datasets
 flexgen==0.1.7
-gradio==3.25.0
+gradio==3.28.1
 markdown
 numpy
 pandas
