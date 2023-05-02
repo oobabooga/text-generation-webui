@@ -10,7 +10,7 @@ Pillow>=9.5.0
 pyyaml
 requests
 rwkv==0.7.3
-safetensors==0.3.0
+safetensors==0.3.1
 sentencepiece
 tqdm
 git+https://github.com/huggingface/peft
