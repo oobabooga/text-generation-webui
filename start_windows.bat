@@ -6,6 +6,10 @@ echo "%CD%"| findstr /C:" " >nul && echo This script relies on Miniconda which c
 
 set PATH=%PATH%;%SystemRoot%\system32
 
+@rem fix failed install when installing to a separate drive
+set TMP=%cd%\installer_files
+set TEMP=%cd%\installer_files
+
 @rem config
 set INSTALL_DIR=%cd%\installer_files
 set CONDA_ROOT_PREFIX=%cd%\installer_files\conda

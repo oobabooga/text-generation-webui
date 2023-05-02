@@ -9,15 +9,31 @@ import sys
 script_dir = os.getcwd()
 
 
-def run_cmd(cmd, capture_output=False, env=None):
+def run_cmd(cmd, assert_success=False, environment=False, capture_output=False, env=None):
+    # Use the conda environment
+    if environment:
+        conda_env_path = os.path.join(script_dir, "installer_files", "env")
+        if sys.platform.startswith("win"):
+            conda_bat_path = os.path.join(script_dir, "installer_files", "conda", "condabin", "conda.bat")
+            cmd = "\"" + conda_bat_path + "\" activate \"" + conda_env_path + "\" >nul && " + cmd
+        else:
+            conda_sh_path = os.path.join(script_dir, "installer_files", "conda", "etc", "profile.d", "conda.sh")
+            cmd = ". \"" + conda_sh_path + "\" && conda activate \"" + conda_env_path + "\" && " + cmd
+    
     # Run shell commands
-    return subprocess.run(cmd, shell=True, capture_output=capture_output, env=env)
+    result = subprocess.run(cmd, shell=True, capture_output=capture_output, env=env)
+    
+    # Assert the command ran successfully
+    if assert_success and result.returncode != 0:
+        print("Command '" + cmd + "' failed with exit status code '" + str(result.returncode) + "'. Exiting...")
+        sys.exit()
+    return result
 
 
 def check_env():
     # If we have access to conda, we are probably in an environment
-    conda_not_exist = run_cmd("conda", capture_output=True).returncode
-    if conda_not_exist:
+    conda_exist = run_cmd("conda", environment=True, capture_output=True).returncode == 0
+    if not conda_exist:
         print("Conda is not installed. Exiting...")
         sys.exit()
     
@@ -40,21 +56,21 @@ def install_dependencies():
 
     # Install the version of PyTorch needed
     if gpuchoice == "a":
-        run_cmd("conda install -y -k pytorch[version=2,build=py3.10_cuda11.7*] torchvision torchaudio pytorch-cuda=11.7 cuda-toolkit ninja git -c pytorch -c nvidia/label/cuda-11.7.0 -c nvidia")
+        run_cmd("conda install -y -k pytorch[version=2,build=py3.10_cuda11.7*] torchvision torchaudio pytorch-cuda=11.7 cuda-toolkit ninja git -c pytorch -c nvidia/label/cuda-11.7.0 -c nvidia", assert_success=True, environment=True)
     elif gpuchoice == "b":
         print("AMD GPUs are not supported. Exiting...")
         sys.exit()
     elif gpuchoice == "c" or gpuchoice == "d":
-        run_cmd("conda install -y -k pytorch torchvision torchaudio cpuonly git -c pytorch")
+        run_cmd("conda install -y -k pytorch torchvision torchaudio cpuonly git -c pytorch", assert_success=True, environment=True)
     else:
         print("Invalid choice. Exiting...")
         sys.exit()
 
     # Clone webui to our computer
-    run_cmd("git clone https://github.com/oobabooga/text-generation-webui.git")
+    run_cmd("git clone https://github.com/oobabooga/text-generation-webui.git", assert_success=True, environment=True)
     if sys.platform.startswith("win"):
         # Fix a bitsandbytes compatibility issue with Windows
-        run_cmd("python -m pip install https://github.com/jllllll/bitsandbytes-windows-webui/raw/main/bitsandbytes-0.38.1-py3-none-any.whl")
+        run_cmd("python -m pip install https://github.com/jllllll/bitsandbytes-windows-webui/raw/main/bitsandbytes-0.38.1-py3-none-any.whl", assert_success=True, environment=True)
     
     # Install the webui dependencies
     update_dependencies()
@@ -62,19 +78,19 @@ def install_dependencies():
 
 def update_dependencies():
     os.chdir("text-generation-webui")
-    run_cmd("git pull")
+    run_cmd("git pull", assert_success=True, environment=True)
 
     # Installs/Updates dependencies from all requirements.txt
-    run_cmd("python -m pip install -r requirements.txt --upgrade")
+    run_cmd("python -m pip install -r requirements.txt --upgrade", assert_success=True, environment=True)
     extensions = next(os.walk("extensions"))[1]
     for extension in extensions:
         extension_req_path = os.path.join("extensions", extension, "requirements.txt")
         if os.path.exists(extension_req_path):
-            run_cmd("python -m pip install -r " + extension_req_path + " --upgrade")
+            run_cmd("python -m pip install -r " + extension_req_path + " --upgrade", assert_success=True, environment=True)
 
     # The following dependencies are for CUDA, not CPU
     # Check if the package cpuonly exists to determine if torch uses CUDA or not
-    cpuonly_exist = not run_cmd("conda list cpuonly | grep cpuonly", capture_output=True).returncode
+    cpuonly_exist = run_cmd("conda list cpuonly | grep cpuonly", environment=True, capture_output=True).returncode == 0
     if cpuonly_exist:
         return
 
@@ -99,51 +115,52 @@ def update_dependencies():
     # Install GPTQ-for-LLaMa which enables 4bit CUDA quantization
     os.chdir("repositories")
     if not os.path.exists("GPTQ-for-LLaMa/"):
-        run_cmd("git clone https://github.com/oobabooga/GPTQ-for-LLaMa.git -b cuda")
+        run_cmd("git clone https://github.com/oobabooga/GPTQ-for-LLaMa.git -b cuda", assert_success=True, environment=True)
     
     # Install GPTQ-for-LLaMa dependencies
     os.chdir("GPTQ-for-LLaMa")
-    run_cmd("git pull")
-    run_cmd("python -m pip install -r requirements.txt")
+    run_cmd("git pull", assert_success=True, environment=True)
+    run_cmd("python -m pip install -r requirements.txt", assert_success=True, environment=True)
     
     # On some Linux distributions, g++ may not exist or be the wrong version to compile GPTQ-for-LLaMa
-    install_flag = True
     if sys.platform.startswith("linux"):
-        gxx_output = run_cmd("g++ --version", capture_output=True)
+        gxx_output = run_cmd("g++ --version", environment=True, capture_output=True)
         if gxx_output.returncode != 0 or b"g++ (GCC) 12" in gxx_output.stdout:
             # Install the correct version of g++
-            run_cmd("conda install -y -k gxx_linux-64=11.2.0")
-            
-            # Activate the conda environment to compile GPTQ-for-LLaMa
-            conda_env_path = os.path.join(script_dir, "installer_files", "env")
-            conda_sh_path = os.path.join(script_dir, "installer_files", "conda", "etc", "profile.d", "conda.sh")
-            run_cmd(". " + conda_sh_path + " && conda activate " + conda_env_path + " && python setup_cuda.py install")
-            install_flag = False
+            run_cmd("conda install -y -k gxx_linux-64=11.2.0", environment=True)
 
-    if install_flag:
-        run_cmd("python setup_cuda.py install")
-        install_flag = False
+    # Compile and install GPTQ-for-LLaMa
+    os.rename("setup_cuda.py", "setup.py")
+    run_cmd("python -m pip install .", environment=True)
+    
+    # Wheel installation can fail while in the build directory of a package with the same name
+    os.chdir("..")
     
     # If the path does not exist, then the install failed
     quant_cuda_path_regex = os.path.join(site_packages_path, "quant_cuda*/")
     if not glob.glob(quant_cuda_path_regex):
-        print("CUDA kernel compilation failed.")
+        print("ERROR: GPTQ CUDA kernel compilation failed.")
         # Attempt installation via alternative, Windows-specific method
         if sys.platform.startswith("win"):
             print("Attempting installation with wheel.")
-            result = run_cmd("python -m pip install https://github.com/jllllll/GPTQ-for-LLaMa-Wheels/raw/main/quant_cuda-0.0.0-cp310-cp310-win_amd64.whl")
-            if result.returncode == 1:
-                print("Wheel installation failed.")
+            result = run_cmd("python -m pip install https://github.com/jllllll/GPTQ-for-LLaMa-Wheels/raw/main/quant_cuda-0.0.0-cp310-cp310-win_amd64.whl", environment=True)
+            if result.returncode == 0:
+                print("Wheel installation success!")
+            else:
+                print("ERROR: GPTQ wheel installation failed. You will not be able to use GPTQ-based models.")
+        else:
+            print("You will not be able to use GPTQ-based models.")
+        print("Continuing with install..")
 
 
 def download_model():
     os.chdir("text-generation-webui")
-    run_cmd("python download-model.py")
+    run_cmd("python download-model.py", environment=True)
 
 
 def run_model():
     os.chdir("text-generation-webui")
-    run_cmd("python server.py --chat --model-menu")  # put your flags here!
+    run_cmd("python server.py --chat --model-menu", environment=True)  # put your flags here!
 
 
 if __name__ == "__main__":
