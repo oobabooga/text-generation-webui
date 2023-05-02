@@ -160,6 +160,8 @@ parser.add_argument("--gradio-auth-path", type=str, help='Set the gradio authent
 parser.add_argument('--api', action='store_true', help='Enable the API extension.')
 parser.add_argument('--public-api', action='store_true', help='Create a public URL for the API using Cloudfare.')
 
+# Multimodal
+parser.add_argument('--multimodal-pipeline', type=str, default=None, help='Select the multimodal pipeline.')
 
 args = parser.parse_args()
 args_defaults = parser.parse_args([])

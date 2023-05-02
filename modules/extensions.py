@@ -5,7 +5,6 @@ import gradio as gr
 
 import extensions
 import modules.shared as shared
-from modules.text_generation import encode
 
 
 state = {}
@@ -104,7 +103,7 @@ def _apply_custom_tokenized_length(prompt):
         if hasattr(extension, 'custom_tokenized_length'):
             return getattr(extension, 'custom_tokenized_length')(prompt)
 
-    return len(encode(prompt)[0])
+    return None
 
 
 EXTENSION_MAP = {

@@ -57,6 +57,14 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
         return input_ids.cuda()
 
 
+def get_encoded_length(prompt):
+    length_after_extensions = apply_extensions('tokenized_length', prompt)
+    if length_after_extensions is not None:
+        return length_after_extensions
+
+    return len(encode(prompt)[0])
+
+
 def decode(output_ids, skip_special_tokens=True):
     return shared.tokenizer.decode(output_ids, skip_special_tokens)
 
@@ -219,8 +227,8 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
             traceback.print_exc()
         finally:
             t1 = time.time()
-            original_tokens = apply_extensions('tokenized_length', original_question)
-            new_tokens = apply_extensions('tokenized_length', output) - original_tokens
+            original_tokens = get_encoded_length(original_question)
+            new_tokens = get_encoded_length(output) - original_tokens
             print(f'Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens}, seed {seed})')
             return
 

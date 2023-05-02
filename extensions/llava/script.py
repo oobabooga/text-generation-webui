@@ -187,6 +187,56 @@ def add_chat_picture(picture, text, visible_text):
     return text, visible_text
 
 
+def custom_generate_chat_prompt(user_input, state, **kwargs):
+    impersonate = kwargs['impersonate'] if 'impersonate' in kwargs else False
+    _continue = kwargs['_continue'] if '_continue' in kwargs else False
+    also_return_rows = kwargs['also_return_rows'] if 'also_return_rows' in kwargs else False
+    rows = [f"{state['context'].strip()}\n"]
+    min_rows = 3
+
+    # Finding the maximum prompt size
+    chat_prompt_size = state['chat_prompt_size']
+    if shared.soft_prompt:
+        chat_prompt_size -= shared.soft_prompt_tensor.shape[1]
+    max_length = min(get_max_prompt_length(state), chat_prompt_size)
+
+    prefix1 = f"{state['name1']}: "
+    prefix2 = f"{state['name2']}: "
+
+    i = len(shared.history['internal']) - 1
+    while i >= 0 and LLaVAEmbedder.len_in_tokens(''.join(rows)) < max_length:
+        if _continue and i == len(shared.history['internal']) - 1:
+            rows.insert(1, f"{prefix2}{shared.history['internal'][i][1]}")
+        else:
+            rows.insert(1, f"{prefix2}{shared.history['internal'][i][1].strip()}\n")
+
+        string = shared.history['internal'][i][0]
+        if string != '':
+            rows.insert(1, f"{prefix1}{string.strip()}\n")
+
+        i -= 1
+
+    if impersonate:
+        min_rows = 2
+        rows.append(f"{prefix1}")
+    elif not _continue:
+        # Adding the user message
+        if len(user_input) > 0:
+            rows.append(f"{prefix1}{user_input}\n")
+
+        # Adding the Character prefix
+        rows.append(apply_extensions("bot_prefix", f"{prefix2}"))
+
+    while len(rows) > min_rows and LLaVAEmbedder.len_in_tokens(''.join(rows)) >= max_length:
+        rows.pop(1)
+    prompt = ''.join(rows)
+
+    if also_return_rows:
+        return prompt, rows
+    else:
+        return prompt
+
+
 def tokenizer_modifier(state, prompt, input_ids, input_embeds):
     global params
     start_ts = time.time()
