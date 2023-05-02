@@ -3,7 +3,7 @@ from pathlib import Path
 
 import gradio as gr
 from elevenlabslib import ElevenLabsUser
-from elevenlabslib.helpers import save_bytes_to_path
+from elevenlabslib.helpers import save_audio_bytes
 
 import modules.shared as shared
 
@@ -96,7 +96,7 @@ def output_modifier(string):
     output_file = Path(f'extensions/elevenlabs_tts/outputs/{wav_idx:06d}.wav'.format(wav_idx))
     voice = user.get_voices_by_name(params['selected_voice'])[0]
     audio_data = voice.generate_audio_bytes(string)
-    save_bytes_to_path(Path(f'extensions/elevenlabs_tts/outputs/{wav_idx:06d}.wav'), audio_data)
+    save_audio_bytes(audio_data, str(output_file), 'wav')
 
     string = f'<audio src="file/{output_file.as_posix()}" controls></audio>'
     wav_idx += 1
