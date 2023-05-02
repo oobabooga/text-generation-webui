@@ -5,8 +5,6 @@ https://github.com/abetlen/llama-cpp-python
 Documentation:
 https://abetlen.github.io/llama-cpp-python/
 '''
-import multiprocessing
-
 from llama_cpp import Llama, LlamaCache
 
 from modules import shared
@@ -27,11 +25,9 @@ class LlamaCppModel:
             'seed': 0,
             'n_threads': shared.args.threads or None,
             'n_batch': shared.args.n_batch,
-            #invert it, so when no_mmap is used, it appears ticked in the inference tab
             'use_mmap': not shared.args.no_mmap,
             'use_mlock': shared.args.mlock
         }
-        # print(params)
         self.model = Llama(**params)
         self.model.set_cache(LlamaCache)
 
