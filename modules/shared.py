@@ -69,7 +69,7 @@ settings = {
     'prompts': {
         'default': 'QA',
         '.*(gpt4chan|gpt-4chan|4chan)': 'GPT-4chan',
-        '.*oasst': 'Open Assistant',
+        '.*(oasst|stablelm-7b-sft-v7-epoch-3)': 'Open Assistant',
         '.*alpaca': "Alpaca",
     },
     'lora_prompts': {
