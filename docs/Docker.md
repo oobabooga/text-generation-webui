@@ -100,7 +100,7 @@ nano .env
 
 ## 8. startup docker container
 ```bash
-docker-compose up --build
+docker compose up --build
 ```
 
 # Manjaro
@@ -166,7 +166,7 @@ download and place the models inside the models folder. tested with:
 
 ## 7. startup
 ```
-docker-compose up
+docker compose up
 ```
 
 # notes
