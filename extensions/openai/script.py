@@ -20,8 +20,6 @@ except ImportError:
     pass
 
 st_model = os.environ["OPENEDAI_EMBEDDING_MODEL"] if "OPENEDAI_EMBEDDING_MODEL" in os.environ else "all-mpnet-base-v2"
-embedding_model_name = f"sentence-transformers/{st_model}"
-embedding_model_path = f"models/sentence-transformers_{st_model}"
 embedding_model = None
 
 standard_stopping_strings = ['\nsystem:', '\nuser:', '\nhuman:', '\nassistant:', '\n###', ]
@@ -432,7 +430,6 @@ class Handler(BaseHTTPRequestHandler):
                 input = [input]
 
             embeddings = embedding_model.encode(input).tolist()
-            #embeddings += [0.0] * (1536 - len(embeddings[0])) # I hate this idea.
 
             data = [ {"object": "embedding", "embedding": emb, "index": n } for n, emb in enumerate(embeddings) ]
 
@@ -502,11 +499,10 @@ class Handler(BaseHTTPRequestHandler):
 def run_server():
     global embedding_model
     try:
-        embedding_model = SentenceTransformer(embedding_model_path)
-        print(f"\nLoaded embedding model: {embedding_model_name}, max sequence length: {embedding_model.max_seq_length}")
+        embedding_model = SentenceTransformer(st_model)
+        print(f"\nLoaded embedding model: {st_model}, max sequence length: {embedding_model.max_seq_length}")
     except:
-        print(f"\nFailed to load embedding model: {embedding_model_path}")
-        print(f"If you wish to use the embeddings API, download the model at {embedding_model_name}")
+        print(f"\nFailed to load embedding model: {st_model}")
         pass
 
     server_addr = ('0.0.0.0' if shared.args.listen else '127.0.0.1', params['port'])

@@ -13,7 +13,7 @@ pip3 install -r requirements.txt
 
 ### Embeddings (alpha)
 
-Embeddings requires ```sentence-transformers``` installed, but chat and completions will function without it loaded. The embeddings endpoint is currently using the HuggingFace model: ```sentence-transformers/all-mpnet-base-v2``` for embeddings, which must be installed separately. This produces 768 dimensional embeddings (the same as the text-davinci-002 embeddings), which is different from OpenAI's current default ```text-embedding-ada-002``` model which produces 1536 dimensional embeddings. The model is small-ish and fast-ish. This model and embedding size may change in the future.
+Embeddings requires ```sentence-transformers``` installed, but chat and completions will function without it loaded. The embeddings endpoint is currently using the HuggingFace model: ```sentence-transformers/all-mpnet-base-v2``` for embeddings. This produces 768 dimensional embeddings (the same as the text-davinci-002 embeddings), which is different from OpenAI's current default ```text-embedding-ada-002``` model which produces 1536 dimensional embeddings. The model is small-ish and fast-ish. This model and embedding size may change in the future.
 
 | model name | dimensions | input max tokens | speed | size | Avg. performance | 
 | --- | --- | --- | --- | --- | --- |
@@ -22,17 +22,7 @@ Embeddings requires ```sentence-transformers``` installed, but chat and completi
 | all-mpnet-base-v2 | 768 | 384 | 2800 | 420M | 63.3 |
 | all-MiniLM-L6-v2 | 384 | 256 | 14200 | 80M | 58.8 |
 
-In short, the all-MiniLM-L6-v2 model is 5x faster, 5x smaller ram, 2x smaller storage, and still offers good quality. Stats from (https://www.sbert.net/docs/pretrained_models.html). To change the model from the default you can set the environment variable OPENEDAI_EMBEDDING_MODEL, ex. "OPENEDAI_EMBEDDING_MODEL=all-MiniLM-L6-v2" after downloading the new model.
-
-sentence-transformers models can be downloaded from the models's tab in the UI, or via download-model.py from the command line. Additionally, you will also need to download the 1_Pooling sub folder which isn't (as of 2023-05-01) downloaded automatically. Something like this:
-
-```
-python3 download-model.py sentence-transformers/all-mpnet-base-v2
-# ...
-mkdir models/sentence-transformers_all-mpnet-base-v2/1_Pooling
-cd models/sentence-transformers_all-mpnet-base-v2/1_Pooling
-curl -O https://huggingface.co/sentence-transformers/all-mpnet-base-v2/raw/main/1_Pooling/config.json
-```
+In short, the all-MiniLM-L6-v2 model is 5x faster, 5x smaller ram, 2x smaller storage, and still offers good quality. Stats from (https://www.sbert.net/docs/pretrained_models.html). To change the model from the default you can set the environment variable OPENEDAI_EMBEDDING_MODEL, ex. "OPENEDAI_EMBEDDING_MODEL=all-MiniLM-L6-v2".
 
 Warning: You cannot mix embeddings from different models even if they have the same dimensions. They are not comparable.
 
