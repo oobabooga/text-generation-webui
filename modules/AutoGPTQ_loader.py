@@ -105,9 +105,9 @@ def load_quantized(model_name):
     if max_memory:
         print(f'max_memory: {max_memory}')
 
-    # dev = "cpu" if shared.args.cpu else "cuda:0"  # cpu is not supported for now
+    dev = "cpu" if shared.args.cpu else "cuda:0"  # cpu is not supported for now
 
-    dev = "cuda"
+    #dev = "cuda"
 
     print(f'Loading quantized model with AutoGPTQ from {model_file}')
     model = AutoGPTQForCausalLM.from_quantized(path_to_model,
@@ -118,5 +118,7 @@ def load_quantized(model_name):
                                                model_basename=model_file.stem,
                                                trust_remote_code=shared.args.trust_remote_code,
                                                max_memory=max_memory,
-                                               device_map=shared.args.autogptq_device_map)
+                                               device_map=shared.args.autogptq_device_map,
+                                               fused_attn=shared.args.quant_attn,
+                                               fused_mlp=shared.args.fused_mlp)
     return model
