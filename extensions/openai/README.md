@@ -15,14 +15,14 @@ pip3 install -r requirements.txt
 
 Embeddings requires ```sentence-transformers``` installed, but chat and completions will function without it loaded. The embeddings endpoint is currently using the HuggingFace model: ```sentence-transformers/all-mpnet-base-v2``` for embeddings, which must be installed separately. This produces 768 dimensional embeddings (the same as the text-davinci-002 embeddings), which is different from OpenAI's current default ```text-embedding-ada-002``` model which produces 1536 dimensional embeddings. The model is small-ish and fast-ish. This model and embedding size may change in the future.
 
-| model name | dimensions | speed | size | Avg. performance | 
-| --- | --- | --- | --- | --- |
-| text-embedding-ada-002 | 1536 | - | - | - |
-| text-davinci-002 | 768 | - | - | - |
-| all-mpnet-base-v2 | 768 | 2800 | 420M | 63.3 |
-| all-MiniLM-L6-v2 | 384 | 14200 | 80M | 58.8 |
+| model name | dimensions | input max tokens | speed | size | Avg. performance | 
+| --- | --- | --- | --- | --- | --- |
+| text-embedding-ada-002 | 1536 | 8192| - | - | - |
+| text-davinci-002 | 768 | 2046 | - | - | - |
+| all-mpnet-base-v2 | 768 | 384 | 2800 | 420M | 63.3 |
+| all-MiniLM-L6-v2 | 384 | 256 | 14200 | 80M | 58.8 |
 
-In short, the all-MiniLM-L6-v2 model is 5x faster, 5x smaller and still offers good quality. Stats from (https://www.sbert.net/docs/pretrained_models.html). To change the model you can set the environment variable EMBEDDING_MODEL, ex. "EMBEDDING_MODEL=all-MiniLM-L6-v2" after downloading the model.
+In short, the all-MiniLM-L6-v2 model is 5x faster, 5x smaller ram, 2x smaller storage, and still offers good quality. Stats from (https://www.sbert.net/docs/pretrained_models.html). To change the model from the default you can set the environment variable OPENEDAI_EMBEDDING_MODEL, ex. "OPENEDAI_EMBEDDING_MODEL=all-MiniLM-L6-v2" after downloading the new model.
 
 sentence-transformers models can be downloaded from the models's tab in the UI, or via download-model.py from the command line. Additionally, you will also need to download the 1_Pooling sub folder which isn't (as of 2023-05-01) downloaded automatically. Something like this:
 
@@ -33,6 +33,8 @@ mkdir models/sentence-transformers_all-mpnet-base-v2/1_Pooling
 cd models/sentence-transformers_all-mpnet-base-v2/1_Pooling
 curl -O https://huggingface.co/sentence-transformers/all-mpnet-base-v2/raw/main/1_Pooling/config.json
 ```
+
+Warning: You cannot mix embeddings from different models even if they have the same dimensions. They are not comparable.
 
 ### Client Application Setup
 
@@ -55,13 +57,22 @@ load_dotenv()
 import openai
 ```
 
-With the [official Node.js openai client](https://github.com/openai/openai-node) it is slightly more more complex because the environment variables are not used by default, so small code changes may be required to use the environment variables, like so:
+With the [official Node.js openai client](https://github.com/openai/openai-node) it is slightly more more complex because the environment variables are not used by default, so small source code changes may be required to use the environment variables, like so:
 
 ```
 const openai = OpenAI(Configuration({
   apiKey: process.env.OPENAI_API_KEY,
   basePath: process.env.OPENAI_API_BASE,
 }));
+```
+
+For apps made with the [chatgpt-api Node.js client library](https://github.com/transitive-bullshit/chatgpt-api):
+
+```
+const api = new ChatGPTAPI({
+  apiKey: process.env.OPENAI_API_KEY,
+  apiBaseUrl: process.env.OPENAI_API_BASE,
+})
 ```
 
 ## Compatibility & not so compatibility
@@ -86,14 +97,15 @@ Some hacky mappings:
 
 | OpenAI | text-generation-webui | note |
 | --- | --- | --- |
-| frequency_penalty | encoder_repetition_penalty | this seems to operate with a different scale and defaults, I try to scale it based on range & defaults |
-| presence_penalty | repetition_penalty | this seems to operate with a different scale and defaults, I try to scale it based on range & defaults |
+| frequency_penalty | encoder_repetition_penalty | this seems to operate with a different scale and defaults, I tried to scale it based on range & defaults, but the results are terrible. hardcoded to 1.18 until there is a better way |
+| presence_penalty | repetition_penalty | same issues as frequency_penalty, hardcoded to 1.0 |
 | best_of | top_k | |
 | stop | custom_stopping_strings | this is also stuffed with ['\nsystem:', '\nuser:', '\nhuman:', '\nassistant:', '\n###', ] for good measure. |
 | n | 1 | hardcoded, it may be worth implementing this but I'm not sure how yet |
 | 1.0 | typical_p | hardcoded |
 | 1 | num_beams | hardcoded |
 | max_tokens | max_new_tokens | max_tokens is scaled down by powers of 2 until it's smaller than truncation length. |
+| logprobs | - | ignored |
 
 defaults are mostly from openai, so are different. I use the openai defaults where I can and try to scale them to the webui defaults with the same intent.
 
@@ -104,7 +116,8 @@ Everything needs OPENAI_API_KEY=dummy set.
 | Compatibility | Application/Library | url | notes / setting |
 | --- | --- | --- | --- |
 | ✅❌ | openai-python | https://github.com/openai/openai-python | only the endpoints from above are working. OPENAI_API_BASE=http://127.0.0.1:5001/v1 |
-| ✅❌ | openai-node | https://github.com/openai/openai-node | only the endpoints from above are working. environment variables don't work by default, but can be configured like so:  |
+| ✅❌ | openai-node | https://github.com/openai/openai-node | only the endpoints from above are working. environment variables don't work by default, but can be configured (see above) |
+| ✅❌ | chatgpt-api | https://github.com/transitive-bullshit/chatgpt-api | only the endpoints from above are working. environment variables don't work by default, but can be configured (see above) |
 | ✅ | shell_gpt | https://github.com/TheR1D/shell_gpt | OPENAI_API_HOST=http://127.0.0.1:5001 |
 | ✅ | gpt-shell | https://github.com/jla/gpt-shell | OPENAI_API_BASE=http://127.0.0.1:5001/v1 |
 | ✅ | gpt-discord-bot | https://github.com/openai/gpt-discord-bot | OPENAI_API_BASE=http://127.0.0.1:5001/v1 |

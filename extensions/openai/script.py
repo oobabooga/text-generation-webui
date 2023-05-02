@@ -7,10 +7,10 @@ from modules import shared
 from modules.text_generation import encode, generate_reply
 
 params = {
-    'port': 5001,
+    'port': int(os.environ('OPENEDAI_PORT')) if 'OPENEDAI_PORT' in os.environ else 5001,
 }
 
-debug = False
+debug = True if 'OPENEDAI_DEBUG' in os.environ else False
 
 # Optional, install the module and download the model to enable
 # v1/embeddings
@@ -19,7 +19,7 @@ try:
 except ImportError:
     pass
 
-st_model = os.environ["EMBEDDING_MODEL"] if "EMBEDDING_MODEL" in os.environ else "all-mpnet-base-v2"
+st_model = os.environ["OPENEDAI_EMBEDDING_MODEL"] if "OPENEDAI_EMBEDDING_MODEL" in os.environ else "all-mpnet-base-v2"
 embedding_model_name = f"sentence-transformers/{st_model}"
 embedding_model_path = f"models/sentence-transformers_{st_model}"
 embedding_model = None
@@ -56,7 +56,12 @@ class Handler(BaseHTTPRequestHandler):
             # TODO: list all models and allow model changes via API? Lora's?
             # This API should list capabilities, limits and pricing...
             models = [{
-                "id": shared.model_name,
+                "id": shared.model_name, # The real chat/completions model
+                "object": "model",
+                "owned_by": "user",
+                "permission": []
+            }, { 
+                "id": st_model, # The real sentence transformer embeddings model
                 "object": "model",
                 "owned_by": "user",
                 "permission": []
@@ -66,7 +71,7 @@ class Handler(BaseHTTPRequestHandler):
                 "owned_by": "user",
                 "permission": []
             }, { 
-                "id": "text-curie-001", # /v1/completions
+                "id": "text-curie-001", # /v1/completions, 2k context
                 "object": "model",
                 "owned_by": "user",
                 "permission": []
@@ -142,9 +147,9 @@ class Handler(BaseHTTPRequestHandler):
                 'top_k': default(body, 'best_of', 1),
                 ### XXX not sure about this one, seems to be the right mapping, but the range is different (-2..2.0) vs 0..2
                 # 0 is default in openai, but 1.0 is default in other places. Maybe it's scaled? scale it.
-                'repetition_penalty': (default(body, 'presence_penalty', 0) + 2.36 ) / 2.0, # 0 the real default, 1.2 is the model default, but 1.18 works better.
+                'repetition_penalty': 1.18, # (default(body, 'presence_penalty', 0) + 2.0 ) / 2.0, # 0 the real default, 1.2 is the model default, but 1.18 works better.
                 ### XXX not sure about this one either, same questions. (-2..2.0), 0 is default not 1.0, scale it.
-                'encoder_repetition_penalty': (default(body, 'frequency_penalty', 0) + 2.0) / 2.0,
+                'encoder_repetition_penalty': 1.0, #(default(body, 'frequency_penalty', 0) + 2.0) / 2.0,
                 'suffix': body.get('suffix', None),
                 'stream': default(body, 'stream', False),
                 'echo': default(body, 'echo', False),
@@ -427,6 +432,7 @@ class Handler(BaseHTTPRequestHandler):
                 input = [input]
 
             embeddings = embedding_model.encode(input).tolist()
+            #embeddings += [0.0] * (1536 - len(embeddings[0])) # I hate this idea.
 
             data = [ {"object": "embedding", "embedding": emb, "index": n } for n, emb in enumerate(embeddings) ]
 
@@ -494,6 +500,15 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def run_server():
+    global embedding_model
+    try:
+        embedding_model = SentenceTransformer(embedding_model_path)
+        print(f"\nLoaded embedding model: {embedding_model_name}, max sequence length: {embedding_model.max_seq_length}")
+    except:
+        print(f"\nFailed to load embedding model: {embedding_model_path}")
+        print(f"If you wish to use the embeddings API, download the model at {embedding_model_name}")
+        pass
+
     server_addr = ('0.0.0.0' if shared.args.listen else '127.0.0.1', params['port'])
     server = ThreadingHTTPServer(server_addr, Handler)
     if shared.args.share:
@@ -509,14 +524,5 @@ def run_server():
 
 
 def setup():
-    global embedding_model
-    try:
-        embedding_model = SentenceTransformer(embedding_model_path)
-        print(f"\nLoaded embedding model: {embedding_model_name}")
-    except:
-        print(f"\nFailed to load embedding model: {embedding_model_path}")
-        print(f"If you wish to use the embeddings API, download the model at {embedding_model_name}")
-        pass
-
     Thread(target=run_server, daemon=True).start()
 
