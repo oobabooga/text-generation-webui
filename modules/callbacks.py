@@ -21,19 +21,18 @@ class _SentinelTokenStoppingCriteria(transformers.StoppingCriteria):
         for sample in input_ids:
             trimmed_sample = sample[self.starting_idx:]
             trimmed_len = trimmed_sample.shape[-1]
-
             if trimmed_len < self.shortest:
                 continue
 
             for sentinel in self.sentinel_token_ids:
                 sentinel_len = sentinel.shape[-1]
-
                 if trimmed_len < sentinel_len:
                     continue
 
                 window = trimmed_sample[-sentinel_len:]
                 if torch.all(torch.eq(sentinel, window)):
                     return True
+
         return False
 
 
