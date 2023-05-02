@@ -1,27 +1,15 @@
-import multiprocessing
+'''
+Based on
+https://github.com/abetlen/llama-cpp-python
 
-import llamacpp
+Documentation:
+https://abetlen.github.io/llama-cpp-python/
+'''
+
+from llama_cpp import Llama, LlamaCache
 
 from modules import shared
 from modules.callbacks import Iteratorize
-
-
-class LlamaCppTokenizer:
-    """A thin wrapper over the llamacpp tokenizer"""
-    def __init__(self, model: llamacpp.LlamaInference):
-        self._tokenizer = model.get_tokenizer()
-        self.eos_token_id = 2
-        self.bos_token_id = 0
-
-    @classmethod
-    def from_model(cls, model: llamacpp.LlamaInference):
-        return cls(model)
-
-    def encode(self, prompt: str):
-        return self._tokenizer.tokenize(prompt)
-
-    def decode(self, ids):
-        return self._tokenizer.detokenize(ids)
 
 
 class LlamaCppModel:
@@ -30,49 +18,46 @@ class LlamaCppModel:
 
     @classmethod
     def from_pretrained(self, path):
-        params = llamacpp.InferenceParams()
-        params.path_model = str(path)
-        params.n_threads = shared.args.threads or multiprocessing.cpu_count() // 2
-
-        _model = llamacpp.LlamaInference(params)
-
         result = self()
-        result.model = _model
-        result.params = params
 
-        tokenizer = LlamaCppTokenizer.from_model(_model)
-        return result, tokenizer
+        params = {
+            'model_path': str(path),
+            'n_ctx': 2048,
+            'seed': 0,
+            'n_threads': shared.args.threads or None,
+            'n_batch': shared.args.n_batch,
+            'use_mmap': not shared.args.no_mmap,
+            'use_mlock': shared.args.mlock
+        }
+        self.model = Llama(**params)
+        self.model.set_cache(LlamaCache)
+
+        # This is ugly, but the model and the tokenizer are the same object in this library.
+        return result, result
+
+    def encode(self, string):
+        if type(string) is str:
+            string = string.encode()
+        return self.model.tokenize(string)
 
     def generate(self, context="", token_count=20, temperature=1, top_p=1, top_k=50, repetition_penalty=1, callback=None):
-        params = self.params
-        params.n_predict = token_count
-        params.top_p = top_p
-        params.top_k = top_k
-        params.temp = temperature
-        params.repeat_penalty = repetition_penalty
-        # params.repeat_last_n = repeat_last_n
+        if type(context) is str:
+            context = context.encode()
+        tokens = self.model.tokenize(context)
 
-        # self.model.params = params
-        self.model.add_bos()
-        self.model.update_input(context)
+        output = b""
+        count = 0
+        for token in self.model.generate(tokens, top_k=top_k, top_p=top_p, temp=temperature, repeat_penalty=repetition_penalty):
+            text = self.model.detokenize([token])
+            output += text
+            if callback:
+                callback(text.decode())
 
-        output = ""
-        is_end_of_text = False
-        ctr = 0
-        while ctr < token_count and not is_end_of_text:
-            if self.model.has_unconsumed_input():
-                self.model.ingest_all_pending_input()
-            else:
-                self.model.eval()
-                token = self.model.sample()
-                text = self.model.token_to_str(token)
-                output += text
-                is_end_of_text = token == self.model.token_eos()
-                if callback:
-                    callback(text)
-                ctr += 1
+            count += 1
+            if count >= token_count or (token == self.model.token_eos()):
+                break
 
-        return output
+        return output.decode()
 
     def generate_with_streaming(self, **kwargs):
         with Iteratorize(self.generate, kwargs, callback=None) as generator:
