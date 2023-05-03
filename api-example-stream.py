@@ -25,6 +25,8 @@ async def run(context):
         'typical_p': 1,
         'repetition_penalty': 1.18,
         'top_k': 40,
+        'epsilon_cutoff': 0,
+        'eta_cutoff': 0,
         'min_length': 0,
         'no_repeat_ngram_size': 0,
         'num_beams': 1,
