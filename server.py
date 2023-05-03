@@ -94,16 +94,19 @@ def get_available_loras():
 
 
 def load_model_wrapper(selected_model):
-    try:
-        yield f"Loading {selected_model}..."
-        shared.model_name = selected_model
-        unload_model()
-        if selected_model != '':
-            shared.model, shared.tokenizer = load_model(shared.model_name)
+    if selected_model == 'None':
+        yield "No model selected"
+    else:
+        try:
+            yield f"Loading {selected_model}..."
+            shared.model_name = selected_model
+            unload_model()
+            if selected_model != '':
+                shared.model, shared.tokenizer = load_model(shared.model_name)
 
-        yield f"Successfully loaded {selected_model}"
-    except:
-        yield traceback.format_exc()
+            yield f"Successfully loaded {selected_model}"
+        except:
+            yield traceback.format_exc()
 
 
 def load_lora_wrapper(selected_loras):
@@ -334,6 +337,7 @@ def create_model_menus():
             with gr.Row():
                 shared.gradio['lora_menu_apply'] = gr.Button(value='Apply the selected LoRAs')
             with gr.Row():
+                load = gr.Button("Load the model")
                 unload = gr.Button("Unload the model")
                 reload = gr.Button("Reload the model")
                 save_settings = gr.Button("Save settings for this model")
@@ -376,11 +380,17 @@ def create_model_menus():
             shared.gradio['model_status'] = gr.Markdown('No model is loaded' if shared.model_name == 'None' else 'Ready')
 
     # In this event handler, the interface state is read and updated
-    # with the model defaults (if any), and then the model is loaded
+    # with the model defaults (if any)
     shared.gradio['model_menu'].change(
         ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
         load_model_specific_settings, [shared.gradio[k] for k in ['model_menu', 'interface_state']], shared.gradio['interface_state']).then(
         ui.apply_interface_values, shared.gradio['interface_state'], [shared.gradio[k] for k in ui.list_interface_input_elements(chat=shared.is_chat())], show_progress=False).then(
+        update_model_parameters, shared.gradio['interface_state'], None)
+
+    load.click(
+        ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
+        ui.apply_interface_values, shared.gradio['interface_state'],
+        [shared.gradio[k] for k in ui.list_interface_input_elements(chat=shared.is_chat())], show_progress=False).then(
         update_model_parameters, shared.gradio['interface_state'], None).then(
         load_model_wrapper, shared.gradio['model_menu'], shared.gradio['model_status'], show_progress=True)
 
