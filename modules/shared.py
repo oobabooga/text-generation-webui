@@ -122,7 +122,7 @@ parser.add_argument('--trust-remote-code', action='store_true', help="Set trust_
 # llama.cpp
 parser.add_argument('--threads', type=int, default=0, help='Number of threads to use.')
 parser.add_argument('--n_batch', type=int, default=512, help='Maximum number of prompt tokens to batch together when calling llama_eval.')
-parser.add_argument('--no_mmap', action='store_true', help='Prevent mmap from being used.')
+parser.add_argument('--no-mmap', action='store_true', help='Prevent mmap from being used.')
 parser.add_argument('--mlock', action='store_true', help='Force the system to keep the model in RAM.')
 
 # GPTQ
