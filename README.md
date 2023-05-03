@@ -222,7 +222,7 @@ Optionally, you can use the following command-line flags:
 |-------------|-------------|
 | `--threads` | Number of threads to use. |
 | `--n_batch` | Maximum number of prompt tokens to batch together when calling llama_eval. |
-| `--no-mmap` | Prevent mmap from being used. |
+| `--no_mmap` | Prevent mmap from being used. |
 | `--mlock`   | Force the system to keep the model in RAM. |
 
 #### GPTQ
