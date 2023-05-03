@@ -26,8 +26,6 @@ embedding_model = None
 standard_stopping_strings = ['\nsystem:', '\nuser:', '\nhuman:', '\nassistant:', '\n###', ]
 
 # little helper to get defaults if arg is present but None and should be the same type as default.
-
-
 def default(dic, key, default):
     val = dic.get(key, default)
     if type(val) != type(default):
@@ -124,7 +122,6 @@ class Handler(BaseHTTPRequestHandler):
             cmpl_id = "conv-%d" % (created_time)
 
             # Try to use openai defaults or map them to something with the same intent
-
             stopping_strings = default(shared.settings, 'custom_stopping_strings', [])
             if 'stop' in body:
                 if isinstance(body['stop'], str):
