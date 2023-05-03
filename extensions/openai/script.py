@@ -8,7 +8,7 @@ from modules import shared
 from modules.text_generation import encode, generate_reply
 
 params = {
-    'port': int(os.environ('OPENEDAI_PORT')) if 'OPENEDAI_PORT' in os.environ else 5001,
+    'port': int(os.environ.get('OPENEDAI_PORT')) if 'OPENEDAI_PORT' in os.environ else 5001,
 }
 
 debug = True if 'OPENEDAI_DEBUG' in os.environ else False
