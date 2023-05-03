@@ -25,6 +25,8 @@ def build_parameters(body):
         'repetition_penalty': float(body.get('repetition_penalty', body.get('rep_pen', 1.1))),
         'encoder_repetition_penalty': float(body.get('encoder_repetition_penalty', 1.0)),
         'top_k': int(body.get('top_k', 0)),
+        'epsilon_cutoff': int(body.get('epsilon_cutoff',0),
+        'eta_cutoff': int(body.get('eta_cutoff',0),
         'min_length': int(body.get('min_length', 0)),
         'no_repeat_ngram_size': int(body.get('no_repeat_ngram_size', 0)),
         'num_beams': int(body.get('num_beams', 1)),
