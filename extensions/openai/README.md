@@ -75,6 +75,7 @@ What's working:
 | /v1/models/{id} | openai.Model.get() | returns whatever you ask for, model does nothing yet anyways |
 | /v1/text_completion | openai.Completion.create() | the most tested, only supports single string input so far |
 | /v1/chat/completions | openai.ChatCompletion.create() | depending on the model, this may add leading linefeeds |
+| /v1/edits | openai.Edit.create() | Assumes an Alpaca type model using ### Instruction/Input/Response |
 | /v1/embeddings | openai.Embedding.create() | Using Sentence Transformer, dimensions are different and may never be directly comparable to openai embeddings. |
 | /v1/moderations | openai.Moderation.create() | does nothing. successfully. |
 | /v1/engines/\*/... completions, embeddings, generate | python-openai v0.25 and earlier | Legacy engines endpoints |
@@ -120,4 +121,4 @@ Everything needs OPENAI_API_KEY=dummy set.
 * model changing, esp. something for swapping loras or embedding models
 * consider switching to FastAPI + starlette for SSE (openai SSE seems non-standard)
 * do something about rate limiting or locking requests for completions, most systems will only be able handle a single request at a time before OOM
-* the whole api, images (stable diffusion), audio (whisper), fine-tunes (training), edits, files, etc.
+* the whole api, images (stable diffusion), audio (whisper), fine-tunes (training), files, etc.

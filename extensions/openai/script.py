@@ -425,6 +425,86 @@ class Handler(BaseHTTPRequestHandler):
 
             response = json.dumps(resp)
             self.wfile.write(response.encode('utf-8'))
+        elif '/edits' in self.path:
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+
+            created_time = int(time.time())
+
+            # Using Alpaca format, this may work with other models too.
+            edit_task = f"""\
+Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
+
+### Instruction:
+{body['instruction']}
+
+### Input:
+{body.get('input', '')}
+
+### Response:
+"""
+            truncation_length = default(shared.settings, 'truncation_length', 2048)
+
+            req_params = {
+                'max_new_tokens': truncation_length,
+                'temperature': clamp(default(body, 'temperature', 1.0), 0.001, 1.999),
+                'top_p': clamp(default(body, 'top_p', 1.0), 0.001, 1.0),
+                'top_k': 1,
+                'repetition_penalty': 1.18,
+                'encoder_repetition_penalty': 1.0,
+                'suffix': None,
+                'stream': False,
+                'echo': False,
+                'seed': shared.settings.get('seed', -1),
+                # 'n' : default(body, 'n', 1),  # 'n' doesn't have a direct map
+                'truncation_length': truncation_length,
+                'add_bos_token': shared.settings.get('add_bos_token', True),
+                'do_sample': True,
+                'typical_p': 1.0,
+                'min_length': 0,
+                'no_repeat_ngram_size': 0,
+                'num_beams': 1,
+                'penalty_alpha': 0.0,
+                'length_penalty': 1,
+                'early_stopping': False,
+                'ban_eos_token': False,
+                'skip_special_tokens': True,
+                'custom_stopping_strings': ['\n###'],
+            }
+
+            token_count = len(encode(edit_task)[0])
+
+            if debug:
+                print({'edit_template': edit_task, 'req_params': req_params, 'token_count': token_count})
+                
+            generator = generate_reply(edit_task, req_params)
+
+            answer = ''
+            for a in generator:
+                if isinstance(a, str):
+                    answer = a
+                else:
+                    answer = a[0]
+
+            completion_token_count = len(encode(answer)[0])
+
+            resp = {
+                "object": "edit",
+                "created": created_time,
+                "choices": [{
+                    "text": answer,
+                    "index": 0,
+                }],
+                "usage": {
+                    "prompt_tokens": token_count,
+                    "completion_tokens": completion_token_count,
+                    "total_tokens": token_count + completion_token_count
+                }
+            }
+
+            response = json.dumps(resp)
+            self.wfile.write(response.encode('utf-8'))
         elif '/embeddings' in self.path and embedding_model is not None:
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
