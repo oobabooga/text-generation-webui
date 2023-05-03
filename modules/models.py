@@ -19,9 +19,6 @@ from modules import llama_attn_hijack
 
 transformers.logging.set_verbosity_error()
 
-if shared.args.autogptq:
-    from modules import AutoGPTQ_loader
-
 if shared.args.flexgen:
     from flexgen.flex_opt import CompressionConfig, ExecutionEnv, OptLM, Policy
 
@@ -83,6 +80,7 @@ def load_model(model_name):
         trust_remote_code = False
 
     if shared.args.autogptq:
+        from modules import AutoGPTQ_loader
         AutoGPTQ_loader.set_quantize_config(model_name)
 
     # Load the model in simple 16-bit mode by default
