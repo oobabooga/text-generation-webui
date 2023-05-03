@@ -243,7 +243,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         return
 
     gradient_accumulation_steps = batch_size // micro_batch_size
-    shared.tokenizer.pad_token = 0
+    shared.tokenizer.pad_token_id = 0
     shared.tokenizer.padding_side = "left"
 
     def tokenize(prompt):
