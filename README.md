@@ -120,6 +120,15 @@ You need to have docker compose v2.17 or higher installed in your system. To see
 
 Contributed by [@loeken](https://github.com/loeken) in [#633](https://github.com/oobabooga/text-generation-webui/pull/633)
 
+If you would like to run with an alternative [GPTQ build](https://github.com/oobabooga/text-generation-webui/blob/main/docs/GPTQ-models-(4-bit-mode).md) then you can use one of the Dockerfile variants: `Dockerfile_GPTQ-triton` (shown below), `Dockerfile_GPTQ-cuda`, or `Dockerfile_4bit-monkeypatch`.
+```
+ln -s docker/{docker-compose.yml,.dockerignore} .
+ln -s docker/Dockerfile_GPTQ-triton Dockerfile
+cp docker/.env.example .env
+# Edit .env and set TORCH_CUDA_ARCH_LIST based on your GPU model
+docker compose up --build
+```
+
 ### Updating the requirements
 
 From time to time, the `requirements.txt` changes. To update, use this command:
