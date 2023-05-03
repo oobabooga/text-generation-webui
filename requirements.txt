@@ -2,7 +2,7 @@ accelerate==0.18.0
 colorama
 datasets
 flexgen==0.1.7
-gradio==3.25.0
+gradio==3.28.1
 markdown
 numpy
 pandas
@@ -10,11 +10,11 @@ Pillow>=9.5.0
 pyyaml
 requests
 rwkv==0.7.3
-safetensors==0.3.0
+safetensors==0.3.1
 sentencepiece
 tqdm
 git+https://github.com/huggingface/peft
 transformers==4.28.1
 bitsandbytes==0.38.1; platform_system != "Windows"
-llama-cpp-python==0.1.36; platform_system != "Windows"
-https://github.com/abetlen/llama-cpp-python/releases/download/v0.1.36/llama_cpp_python-0.1.36-cp310-cp310-win_amd64.whl; platform_system == "Windows"
+llama-cpp-python==0.1.41; platform_system != "Windows"
+https://github.com/abetlen/llama-cpp-python/releases/download/v0.1.41/llama_cpp_python-0.1.41-cp310-cp310-win_amd64.whl; platform_system == "Windows"
