@@ -25,7 +25,7 @@ def find_quantized_model_file(model_name):
     # If the model hasn't been found with a well-behaved name, pick the last .bin
     # or the last .safetensors found in its folder as a last resort
     if not bin_path:
-        found_bins = list(path_to_model.glob("*.bin"))
+        found_bins = [bin for bin in list(path_to_model.glob("*.bin")) if 'pytorch' not in bin.stem]  # ignore pytorch bins
         found_safetensors = list(path_to_model.glob("*.safetensors"))
         bin_path = None
 
