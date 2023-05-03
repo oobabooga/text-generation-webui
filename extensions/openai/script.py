@@ -8,7 +8,7 @@ from modules import shared
 from modules.text_generation import encode, generate_reply
 
 params = {
-    'port': int(os.environ('OPENEDAI_PORT')) if 'OPENEDAI_PORT' in os.environ else 5001,
+    'port': int(os.environ.get('OPENEDAI_PORT')) if 'OPENEDAI_PORT' in os.environ else 5001,
 }
 
 debug = True if 'OPENEDAI_DEBUG' in os.environ else False
@@ -23,7 +23,7 @@ except ImportError:
 st_model = os.environ["OPENEDAI_EMBEDDING_MODEL"] if "OPENEDAI_EMBEDDING_MODEL" in os.environ else "all-mpnet-base-v2"
 embedding_model = None
 
-standard_stopping_strings = ['\nsystem:', '\nuser:', '\nhuman:', '\nassistant:', '\n###', ]
+standard_stopping_strings = ['\n###System:', '\n###User:', '\n###Human:', '\n###Assistant:', '\n###Instruction:', '\n###Question:', '\n###Answer:', '\n###Response:', '\n### ', ]
 
 # little helper to get defaults if arg is present but None and should be the same type as default.
 def default(dic, key, default):
@@ -209,9 +209,9 @@ class Handler(BaseHTTPRequestHandler):
                     content = m['content']
                     # name = m.get('name', 'user')
                     if role == 'system':
-                        system_msg += content
+                        system_msg += content.strip()+'\n'
                     else:
-                        chat_msgs.extend([f"\n{role}: {content.strip()}"])  # Strip content? linefeed?
+                        chat_msgs.extend([f"### {role}:\n{content.strip()}\n"])
 
                 system_token_count = len(encode(system_msg)[0])
                 remaining_tokens = req_params['truncation_length'] - req_params['max_new_tokens'] - system_token_count
@@ -232,9 +232,9 @@ class Handler(BaseHTTPRequestHandler):
                     print(f"truncating chat messages, dropping {len(chat_msgs)} messages.")
 
                 if system_msg:
-                    prompt = 'system: ' + system_msg + '\n' + chat_msg + '\nassistant: '
+                    prompt = system_msg + chat_msg + '### Assistant:\n'
                 else:
-                    prompt = chat_msg + '\nassistant: '
+                    prompt = chat_msg + '### Assistant:\n'
 
                 token_count = len(encode(prompt)[0])
 
@@ -286,9 +286,9 @@ class Handler(BaseHTTPRequestHandler):
                 else:
                     # This is coming back as "system" to the openapi cli, not sure why.
                     # So yeah... do both methods? delta and messages.
-                    chunk[resp_list][0]["message"] = {'role': 'assistant', 'content': ''}
-                    chunk[resp_list][0]["delta"] = {'role': 'assistant', 'content': ''}
-                    # { "role": "assistant" }
+                    chunk[resp_list][0]["message"] = {'role': 'Assistant', 'content': ''}
+                    chunk[resp_list][0]["delta"] = {'role': 'Assistant', 'content': ''}
+                    # { "role": "Assistant" }
 
                 response = 'data: ' + json.dumps(chunk) + '\n'
                 self.wfile.write(response.encode('utf-8'))
@@ -304,9 +304,9 @@ class Handler(BaseHTTPRequestHandler):
 
             for a in generator:
                 if isinstance(a, str):
-                    answer = a
+                    answer = a[len(prompt):]
                 else:
-                    answer = a[0]
+                    answer = a[0][len(prompt):]
 
                 stop_string_found = False
                 len_seen = len(seen_content)
@@ -419,7 +419,7 @@ class Handler(BaseHTTPRequestHandler):
             }
 
             if is_chat:
-                resp[resp_list][0]["message"] = {"role": "assistant", "content": answer}
+                resp[resp_list][0]["message"] = {"role": "Assistant", "content": answer}
             else:
                 resp[resp_list][0]["text"] = answer
 
