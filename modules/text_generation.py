@@ -1,4 +1,5 @@
 import ast
+import logging
 import random
 import re
 import time
@@ -175,7 +176,7 @@ def get_generate_params(state):
 
 def generate_reply(question, state, eos_token=None, stopping_strings=[]):
     if shared.model_name == 'None' or shared.model is None:
-        print("No model is loaded! Select one in the Model tab.")
+        logging.error("No model is loaded! Select one in the Model tab.")
         yield formatted_outputs(question, shared.model_name)
         return
 

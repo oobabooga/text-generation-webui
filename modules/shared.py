@@ -1,4 +1,5 @@
 import argparse
+import logging
 from pathlib import Path
 
 import yaml
@@ -122,7 +123,7 @@ parser.add_argument('--trust-remote-code', action='store_true', help="Set trust_
 # llama.cpp
 parser.add_argument('--threads', type=int, default=0, help='Number of threads to use.')
 parser.add_argument('--n_batch', type=int, default=512, help='Maximum number of prompt tokens to batch together when calling llama_eval.')
-parser.add_argument('--no_mmap', action='store_true', help='Prevent mmap from being used.')
+parser.add_argument('--no-mmap', action='store_true', help='Prevent mmap from being used.')
 parser.add_argument('--mlock', action='store_true', help='Force the system to keep the model in RAM.')
 
 # GPTQ
@@ -170,19 +171,19 @@ args_defaults = parser.parse_args([])
 deprecated_dict = {}
 for k in deprecated_dict:
     if getattr(args, k) != deprecated_dict[k][1]:
-        print(f"Warning: --{k} is deprecated and will be removed. Use --{deprecated_dict[k][0]} instead.\n")
+        logging.warning(f"--{k} is deprecated and will be removed. Use --{deprecated_dict[k][0]} instead.")
         setattr(args, deprecated_dict[k][0], getattr(args, k))
 
 # Deprecation warnings for parameters that have been removed
 if args.cai_chat:
-    print("Warning: --cai-chat is deprecated. Use --chat instead.\n")
+    logging.warning("--cai-chat is deprecated. Use --chat instead.")
     args.chat = True
 
 # Security warnings
 if args.trust_remote_code:
-    print("Warning: trust_remote_code is enabled. This is dangerous.\n")
+    logging.warning("trust_remote_code is enabled. This is dangerous.")
 if args.share:
-    print("Warning: the gradio \"share link\" feature downloads a proprietary and\nunaudited blob to create a reverse tunnel. This is potentially dangerous.\n")
+    logging.warning("The gradio \"share link\" feature downloads a proprietary and unaudited blob to create a reverse tunnel. This is potentially dangerous.")
 
 # Activating the API extension
 if args.api or args.public_api:

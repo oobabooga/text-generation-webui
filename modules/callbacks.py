@@ -51,6 +51,8 @@ class Iteratorize:
     """
     Transforms a function that takes a callback
     into a lazy iterator (generator).
+
+    Adapted from: https://stackoverflow.com/a/9969000
     """
 
     def __init__(self, func, kwargs={}, callback=None):
