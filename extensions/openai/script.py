@@ -205,10 +205,10 @@ class Handler(BaseHTTPRequestHandler):
                 chat_msgs = []
 
                 for m in messages:
-                    role = m['role']
+                    role = m['role'].capitalize()
                     content = m['content']
                     # name = m.get('name', 'user')
-                    if role == 'system':
+                    if role == 'System':
                         system_msg += content.strip()+'\n'
                     else:
                         chat_msgs.extend([f"### {role}:\n{content.strip()}\n"])
