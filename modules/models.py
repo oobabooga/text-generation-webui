@@ -165,11 +165,12 @@ def load_model(model_name):
             logging.warning("torch.cuda.is_available() returned False. This means that no GPU has been detected. Falling back to CPU mode.")
             shared.args.cpu = True
 
+        params["trust_remote_code"] = trust_remote_code
+
         if shared.args.cpu:
             params["torch_dtype"] = torch.float32
         else:
             params["device_map"] = 'auto'
-            params["trust_remote_code"] = trust_remote_code
             if shared.args.load_in_8bit and any((shared.args.auto_devices, shared.args.gpu_memory)):
                 params['quantization_config'] = BitsAndBytesConfig(load_in_8bit=True, llm_int8_enable_fp32_cpu_offload=True)
             elif shared.args.load_in_8bit:
@@ -216,7 +217,7 @@ def load_model(model_name):
                 no_split_module_classes=model._no_split_modules
             )
 
-        model = LoaderClass.from_pretrained(checkpoint, trust_remote_code=trust_remote_code, **params)
+        model = LoaderClass.from_pretrained(checkpoint, **params)
 
     # Hijack attention with xformers
     if any((shared.args.xformers, shared.args.sdp_attention)):
