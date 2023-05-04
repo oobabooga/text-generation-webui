@@ -1,14 +1,17 @@
+import logging
 import os
 import requests
 import warnings
+import modules.logging_colors
 
 os.environ['GRADIO_ANALYTICS_ENABLED'] = 'False'
 os.environ['BITSANDBYTES_NOWELCOME'] = '1'
 warnings.filterwarnings('ignore', category=UserWarning, message='TypedStorage is deprecated')
+logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 
 # This is a hack to prevent Gradio from phoning home when it gets imported
 def my_get(url, **kwargs):
-    print('Gradio HTTP request redirected to localhost :)')
+    logging.info('Gradio HTTP request redirected to localhost :)')
     kwargs.setdefault('allow_redirects', True)
     return requests.api.request('get', 'http://127.0.0.1/', **kwargs)
 
@@ -17,9 +20,8 @@ requests.get = my_get
 import gradio as gr
 requests.get = original_get
 
-# This fixes LaTeX rendering on some systems
 import matplotlib
-matplotlib.use('Agg')
+matplotlib.use('Agg')  # This fixes LaTeX rendering on some systems
 
 import importlib
 import io
@@ -39,7 +41,6 @@ import psutil
 import torch
 import yaml
 from PIL import Image
-
 import modules.extensions as extensions_module
 from modules import chat, shared, training, ui
 from modules.html_generator import chat_html_wrapper
@@ -860,7 +861,7 @@ if __name__ == "__main__":
     elif Path('settings.json').exists():
         settings_file = Path('settings.json')
     if settings_file is not None:
-        print(f"Loading settings from {settings_file}...")
+        logging.info(f"Loading settings from {settings_file}...")
         new_settings = json.loads(open(settings_file, 'r').read())
         for item in new_settings:
             shared.settings[item] = new_settings[item]
@@ -891,7 +892,7 @@ if __name__ == "__main__":
     # Select the model from a command-line menu
     elif shared.args.model_menu:
         if len(available_models) == 0:
-            print('No models are available! Please download at least one.')
+            logging.error('No models are available! Please download at least one.')
             sys.exit(0)
         else:
             print('The following models are available:\n')
