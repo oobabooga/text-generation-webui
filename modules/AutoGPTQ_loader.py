@@ -10,6 +10,9 @@ import modules.shared as shared
 
 # Used to locate the .bin/.safetensors quantized file
 def find_quantized_model_file(model_name):
+    if shared.args.checkpoint:
+        return Path(shared.args.checkpoint)
+
     path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
     bin_path = None
     priority_name_list = [
