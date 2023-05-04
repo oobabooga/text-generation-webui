@@ -21,6 +21,8 @@ evaluation:
 import ctypes
 import os
 
+import torch.cuda
+
 from bitsandbytes_windows.paths import determine_cuda_runtime_lib_path
 
 
@@ -116,7 +118,10 @@ def get_compute_capability(cuda):
 
 def evaluate_cuda_setup():
     if os.name == "nt":
-        return "libbitsandbytes_cudaall.dll"  # $$$
+        if torch.cuda.is_available():
+            return "libbitsandbytes_cudaall.dll"  # $$$
+        else:
+            return "libbitsandbytes_cpu.dll"  # CPU support
 
     binary_name = "libbitsandbytes_cpu.so"
     # if not torch.cuda.is_available():

@@ -5,6 +5,8 @@ import os
 import shutil
 import sysconfig
 
+import torch.cuda
+
 
 def check_bitsandbytes():
     """
@@ -80,6 +82,3 @@ def setup_bitsandbytes_windows():
     bnb.mm_cublas = new_bnb.mm_cublas
     if cext.COMPILED_WITH_CUDA:
         bnb.adam = optim.adam
-
-
-
