@@ -24,9 +24,7 @@ class CUDALibrary_Singleton(object):
         os.add_dll_directory(os.path.join(os.path.dirname(torch.__file__), 'lib'))  # Add the torch cuda dlls to be discoverable
 
         if not binary_path.exists():
-            print(f"CUDA SETUP: TODO: compile library for specific version: {binary_name}")
             legacy_binary_name = "libbitsandbytes.so"
-            print(f"CUDA SETUP: Defaulting to {legacy_binary_name}...")
             binary_path = package_dir / legacy_binary_name
             if not binary_path.exists():
                 print(
@@ -37,7 +35,6 @@ class CUDALibrary_Singleton(object):
             # self.lib = ct.cdll.LoadLibrary(binary_path)
             self.lib = ct.cdll.LoadLibrary(str(binary_path))  # $$$
         else:
-            print(f"CUDA SETUP: Loading binary {binary_path}...")
             # self.lib = ct.cdll.LoadLibrary(binary_path)
             self.lib = ct.cdll.LoadLibrary(str(binary_path))  # $$$
 
