@@ -607,7 +607,8 @@ def run_server():
         except ImportError:
             print('You should install flask_cloudflared manually')
     else:
-        print(f'Starting OpenAI compatible api at http://{server_addr[0]}:{server_addr[1]}/')
+        print(f'Starting OpenAI compatible api:\nOPENAI_API_BASE=http://{server_addr[0]}:{server_addr[1]}/v1')
+        
     server.serve_forever()
 
 
