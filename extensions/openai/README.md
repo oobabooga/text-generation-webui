@@ -13,8 +13,6 @@ pip3 install -r requirements.txt
 
 It listens on tcp port 5001 by default. You can use the OPENEDAI_PORT environment variable to change this.
 
-Currently only works with --chat mode (fix coming soon) and may require an Alpaca model for best results.
-
 ### Embeddings (alpha)
 
 Embeddings requires ```sentence-transformers``` installed, but chat and completions will function without it loaded. The embeddings endpoint is currently using the HuggingFace model: ```sentence-transformers/all-mpnet-base-v2``` for embeddings. This produces 768 dimensional embeddings (the same as the text-davinci-002 embeddings), which is different from OpenAI's current default ```text-embedding-ada-002``` model which produces 1536 dimensional embeddings. The model is small-ish and fast-ish. This model and embedding size may change in the future.

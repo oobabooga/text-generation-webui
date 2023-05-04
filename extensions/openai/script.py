@@ -102,6 +102,15 @@ class Handler(BaseHTTPRequestHandler):
             self.send_error(404)
 
     def do_POST(self):
+        # ... haaack.
+        is_chat = shared.args.chat
+        try:
+            shared.args.chat = True
+            self.do_POST_wrap()
+        finally:
+            shared.args.chat = is_chat
+
+    def do_POST_wrap(self):
         content_length = int(self.headers['Content-Length'])
         body = json.loads(self.rfile.read(content_length).decode('utf-8'))
 
