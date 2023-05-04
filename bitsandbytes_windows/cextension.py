@@ -5,6 +5,8 @@ import os
 from pathlib import Path
 from warnings import warn
 
+import torch
+
 from bitsandbytes_windows.main import evaluate_cuda_setup
 
 
@@ -18,6 +20,8 @@ class CUDALibrary_Singleton(object):
         binary_name = evaluate_cuda_setup()
         package_dir = Path(__file__).parent
         binary_path = package_dir / binary_name
+
+        os.add_dll_directory(os.path.join(os.path.dirname(torch.__file__), 'lib'))  # Add the torch cuda dlls to be discoverable
 
         if not binary_path.exists():
             print(f"CUDA SETUP: TODO: compile library for specific version: {binary_name}")
@@ -35,8 +39,6 @@ class CUDALibrary_Singleton(object):
         else:
             print(f"CUDA SETUP: Loading binary {binary_path}...")
             # self.lib = ct.cdll.LoadLibrary(binary_path)
-            os.add_dll_directory('C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v11.0\\bin')
-            os.add_dll_directory('A:\\text-generation-webui\\venv\\Lib\\site-packages\\torch\\lib')
             self.lib = ct.cdll.LoadLibrary(str(binary_path))  # $$$
 
     @classmethod
