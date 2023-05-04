@@ -95,6 +95,9 @@ def _load_quant(model, checkpoint, wbits, groupsize=-1, faster_kernel=False, exc
 
 # Used to locate the .pt/.safetensors quantized file
 def find_quantized_model_file(model_name):
+    if shared.args.checkpoint:
+        return Path(shared.args.checkpoint)
+
     path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
     pt_path = None
     priority_name_list = [
