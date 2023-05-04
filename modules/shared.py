@@ -131,6 +131,7 @@ parser.add_argument('--wbits', type=int, default=0, help='Load a pre-quantized m
 parser.add_argument('--model_type', type=str, help='Model type of pre-quantized model. Currently LLaMA, OPT, and GPT-J are supported.')
 parser.add_argument('--groupsize', type=int, default=-1, help='Group size.')
 parser.add_argument('--pre_layer', type=int, default=0, help='The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models.')
+parser.add_argument('--checkpoint', type=str, help='The path to the quantized checkpoint file. If not specified, it will be automatically detected.')
 parser.add_argument('--monkey-patch', action='store_true', help='Apply the monkey patch for using LoRAs with quantized models.')
 parser.add_argument('--quant_attn', action='store_true', help='(triton) Enable quant attention.')
 parser.add_argument('--warmup_autotune', action='store_true', help='(triton) Enable warmup autotune.')

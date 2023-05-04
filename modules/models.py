@@ -54,10 +54,12 @@ def find_model_type(model_name):
         return 'galactica'
     elif 'llava' in model_name_lower:
         return 'llava'
+    elif 'oasst' in model_name_lower:
+        return 'oasst'
     elif any((k in model_name_lower for k in ['gpt4chan', 'gpt-4chan'])):
         return 'gpt4chan'
     else:
-        config = AutoConfig.from_pretrained(Path(f'{shared.args.model_dir}/{model_name}'))
+        config = AutoConfig.from_pretrained(Path(f'{shared.args.model_dir}/{model_name}'), trust_remote_code=shared.args.trust_remote_code)
         # Not a "catch all", but fairly accurate
         if config.to_dict().get("is_encoder_decoder", False):
             return 'HF_seq2seq'
@@ -70,15 +72,13 @@ def load_model(model_name):
     t0 = time.time()
 
     shared.model_type = find_model_type(model_name)
+    trust_remote_code = shared.args.trust_remote_code
     if shared.model_type == 'chatglm':
         LoaderClass = AutoModel
-        trust_remote_code = shared.args.trust_remote_code
     elif shared.model_type == 'HF_seq2seq':
         LoaderClass = AutoModelForSeq2SeqLM
-        trust_remote_code = False
     else:
         LoaderClass = AutoModelForCausalLM
-        trust_remote_code = False
 
     if shared.args.autogptq:
         from modules import AutoGPTQ_loader
@@ -235,7 +235,7 @@ def load_model(model_name):
         tokenizer = None
 
         # Try to load an universal LLaMA tokenizer
-        if shared.model_type != 'llava':
+        if shared.model_type not in ['llava', 'oasst']:
             for p in [Path(f"{shared.args.model_dir}/llama-tokenizer/"), Path(f"{shared.args.model_dir}/oobabooga_llama-tokenizer/")]:
                 if p.exists():
                     logging.info(f"Loading the universal LLaMA tokenizer from {p}...")
