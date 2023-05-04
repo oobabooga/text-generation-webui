@@ -16,5 +16,6 @@ tqdm
 git+https://github.com/huggingface/peft
 transformers==4.28.1
 bitsandbytes==0.38.1; platform_system != "Windows"
+bitsandbytes==0.37.2; platform_system == "Windows"  # Needs this version for bitsandbytes_windows, otherwise it errors out
 llama-cpp-python==0.1.41; platform_system != "Windows"
 https://github.com/abetlen/llama-cpp-python/releases/download/v0.1.41/llama_cpp_python-0.1.41-cp310-cp310-win_amd64.whl; platform_system == "Windows"

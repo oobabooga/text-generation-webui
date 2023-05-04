@@ -37,6 +37,9 @@ from datetime import datetime
 from functools import partial
 from pathlib import Path
 
+from bitsandbytes_windows.setup import setup_bitsandbytes_windows
+setup_bitsandbytes_windows()  # Setup and monkeypatching
+
 import psutil
 import torch
 import yaml
