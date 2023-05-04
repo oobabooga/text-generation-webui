@@ -233,10 +233,11 @@ Optionally, you can use the following command-line flags:
 | `--model_type MODEL_TYPE` | Model type of pre-quantized model. Currently LLaMA, OPT, and GPT-J are supported. |
 | `--groupsize GROUPSIZE`   | Group size. |
 | `--pre_layer PRE_LAYER`   | The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models. |
+| `--checkpoint CHECKPOINT` | The path to the quantized checkpoint file. If not specified, it will be automatically detected. |
 | `--monkey-patch`          | Apply the monkey patch for using LoRAs with quantized models.
-| `--quant_attn`         | (triton) Enable quant attention.
-| `--warmup_autotune`    | (triton) Enable warmup autotune.
-| `--fused_mlp`          | (triton) Enable fused mlp.
+| `--quant_attn`         | (triton) Enable quant attention. |
+| `--warmup_autotune`    | (triton) Enable warmup autotune. |
+| `--fused_mlp`          | (triton) Enable fused mlp. |
 
 #### FlexGen
 
