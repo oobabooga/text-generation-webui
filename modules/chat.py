@@ -3,6 +3,7 @@ import base64
 import copy
 import io
 import json
+import logging
 import re
 from datetime import datetime
 from pathlib import Path
@@ -138,7 +139,7 @@ def extract_message_from_reply(reply, state):
 
 def chatbot_wrapper(text, state, regenerate=False, _continue=False):
     if shared.model_name == 'None' or shared.model is None:
-        print("No model is loaded! Select one in the Model tab.")
+        logging.error("No model is loaded! Select one in the Model tab.")
         yield shared.history['visible']
         return
 
@@ -216,7 +217,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False):
 
 def impersonate_wrapper(text, state):
     if shared.model_name == 'None' or shared.model is None:
-        print("No model is loaded! Select one in the Model tab.")
+        logging.error("No model is loaded! Select one in the Model tab.")
         yield ''
         return
 
@@ -523,7 +524,7 @@ def upload_character(json_file, img, tavern=False):
         img = Image.open(io.BytesIO(img))
         img.save(Path(f'characters/{outfile_name}.png'))
 
-    print(f'New character saved to "characters/{outfile_name}.json".')
+    logging.info(f'New character saved to "characters/{outfile_name}.json".')
     return outfile_name
 
 
@@ -547,6 +548,6 @@ def upload_your_profile_picture(img, name1, name2, mode):
     else:
         img = make_thumbnail(img)
         img.save(Path('cache/pfp_me.png'))
-        print('Profile picture saved to "cache/pfp_me.png"')
+        logging.info('Profile picture saved to "cache/pfp_me.png"')
 
     return chat_html_wrapper(shared.history['visible'], name1, name2, mode, reset_cache=True)
