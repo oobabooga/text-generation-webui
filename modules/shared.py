@@ -138,6 +138,8 @@ parser.add_argument('--autogptq', action='store_true', help='Enable AutoGPTQ.')
 parser.add_argument('--autogptq-triton', action='store_true', help='Enable Triton for AutoGPTQ.')
 parser.add_argument('--autogptq-device-map', type=str, default='', help='Device map for AutoGPTQ.')
 parser.add_argument('--autogptq-act-order', action='store_true', help='Act-order or desc_act for AutoGPTQ.')
+parser.add_argument('--autogptq-cuda-tweak', action='store_true', help='Use potentially faster CUDA for AutoGPTQ.')
+parser.add_argument('--autogptq-compat', action='store_true', help='Use compatibility mode for AutoGPTQ.')
 
 # FlexGen
 parser.add_argument('--flexgen', action='store_true', help='Enable the use of FlexGen offloading.')

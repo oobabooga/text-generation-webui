@@ -110,15 +110,24 @@ def load_quantized(model_name):
     #dev = "cuda"
 
     print(f'Loading quantized model with AutoGPTQ from {model_file}')
-    model = AutoGPTQForCausalLM.from_quantized(path_to_model,
-                                               device=dev,
-                                               use_triton=shared.args.autogptq_triton,
-                                               use_safetensors=safetensors,
-                                               quantize_config=quantize_config,
-                                               model_basename=model_file.stem,
-                                               trust_remote_code=shared.args.trust_remote_code,
-                                               max_memory=max_memory,
-                                               device_map=shared.args.autogptq_device_map,
-                                               fused_attn=shared.args.quant_attn,
-                                               fused_mlp=shared.args.fused_mlp)
+
+    model = None
+
+    try:
+        model = AutoGPTQForCausalLM.from_quantized(path_to_model,
+                                                   device=dev,
+                                                   use_triton=shared.args.autogptq_triton,
+                                                   use_safetensors=safetensors,
+                                                   quantize_config=quantize_config,
+                                                   model_basename=model_file.stem,
+                                                   trust_remote_code=shared.args.trust_remote_code,
+                                                   max_memory=max_memory,
+                                                   device_map=shared.args.autogptq_device_map,
+                                                   fused_attn=shared.args.quant_attn,
+                                                   fused_mlp=shared.args.fused_mlp,
+                                                   use_cuda_fp16=shared.args.autogptq_cuda_tweak,
+                                                   strict=not shared.args.autogptq_compat)
+    except ValueError:
+        raise Exception('Could not load model. The model might be using old quantization. Use the --autogptq-compat flag.')
+
     return model
