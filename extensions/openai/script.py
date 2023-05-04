@@ -438,7 +438,7 @@ class Handler(BaseHTTPRequestHandler):
             edit_task = (
                 "Below is an instruction that describes a task, paired with an input that provides further context. "
                 "Write a response that appropriately completes the request.\n\n"
-                f"### Instruction:\n{instruction}\n\n### Input:\n{input}\n\n### Response:"
+                f"### Instruction:\n{instruction}\n\n### Input:\n{input}\n\n### Response:\n"
             )
 
             truncation_length = default(shared.settings, 'truncation_length', 2048)
