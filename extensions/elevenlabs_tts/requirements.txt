@@ -1,1 +1,1 @@
-elevenlabslib==0.6.*
+elevenlabs==0.2.*
