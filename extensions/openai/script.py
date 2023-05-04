@@ -304,9 +304,15 @@ class Handler(BaseHTTPRequestHandler):
 
             for a in generator:
                 if isinstance(a, str):
-                    answer = a[len(prompt):]
+                    if shared.args.chat:
+                        answer = a
+                    else:
+                        answer = a[len(prompt):]
                 else:
-                    answer = a[0][len(prompt):]
+                    if shared.args.chat:
+                        answer = a[0]
+                    else:
+                        answer = a[0][len(prompt):]
 
                 stop_string_found = False
                 len_seen = len(seen_content)
