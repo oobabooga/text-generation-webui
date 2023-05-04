@@ -1,3 +1,1 @@
-elevenlabslib
-soundfile
-sounddevice
+elevenlabslib==0.6.*
