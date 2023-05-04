@@ -54,6 +54,8 @@ def find_model_type(model_name):
         return 'galactica'
     elif 'llava' in model_name_lower:
         return 'llava'
+    elif 'oasst' in model_name_lower:
+        return 'oasst'
     elif any((k in model_name_lower for k in ['gpt4chan', 'gpt-4chan'])):
         return 'gpt4chan'
     else:
@@ -227,7 +229,7 @@ def load_model(model_name):
         tokenizer = None
 
         # Try to load an universal LLaMA tokenizer
-        if shared.model_type != 'llava':
+        if shared.model_type not in ['llava', 'oasst']:
             for p in [Path(f"{shared.args.model_dir}/llama-tokenizer/"), Path(f"{shared.args.model_dir}/oobabooga_llama-tokenizer/")]:
                 if p.exists():
                     logging.info(f"Loading the universal LLaMA tokenizer from {p}...")
