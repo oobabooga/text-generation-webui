@@ -173,4 +173,3 @@ def ui():
     show_text.change(lambda: chat.save_history(timestamp=False), [], [], show_progress=False)
     # Event functions to update the parameters in the backend
     autoplay.change(lambda x: params.update({"autoplay": x}), autoplay, None)
-    # check_valid_api()
