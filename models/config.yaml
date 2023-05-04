@@ -24,7 +24,6 @@ llama-[0-9]*b-4bit$:
 .*(oasst-sft-1-pythia-12b|oasst-sft-6-llama-30b):
   mode: 'instruct'
   instruction_template: 'Open Assistant'
-  custom_stopping_strings: '"<|endoftext|>"'
 .*vicuna:
   mode: 'instruct'
   instruction_template: 'Vicuna-v0'
