@@ -433,17 +433,14 @@ class Handler(BaseHTTPRequestHandler):
             created_time = int(time.time())
 
             # Using Alpaca format, this may work with other models too.
-            edit_task = f"""\
-Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
+            instruction = body['instruction']
+            input = body.get('input', '')
+            edit_task = (
+                "Below is an instruction that describes a task, paired with an input that provides further context. "
+                "Write a response that appropriately completes the request.\n\n"
+                f"### Instruction:\n{instruction}\n\n### Input:\n{input}\n\n### Response:"
+            )
 
-### Instruction:
-{body['instruction']}
-
-### Input:
-{body.get('input', '')}
-
-### Response:
-"""
             truncation_length = default(shared.settings, 'truncation_length', 2048)
 
             req_params = {
