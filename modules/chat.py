@@ -455,9 +455,18 @@ def load_character(character, name1, name2, mode):
 
         file_contents = open(filepath, 'r', encoding='utf-8').read()
         data = json.loads(file_contents) if extension == "json" else yaml.safe_load(file_contents)
-        name2 = data['name'] if 'name' in data else data['char_name']
-        if 'your_name' in data and data['your_name'] != '':
-            name1 = data['your_name']
+
+        # Finding the bot's name
+        for k in ['name', 'bot', '<|bot|>', 'char_name']:
+            if k in data and data[k] != '':
+                name2 = data[k]
+                break
+
+        # Find the user name (if any)
+        for k in ['your_name', 'user', '<|user|>']:
+            if k in data and data[k] != '':
+                name1 = data[k]
+                break
         else:
             name1 = shared.settings['name1']
 
