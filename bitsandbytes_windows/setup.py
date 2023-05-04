@@ -5,8 +5,6 @@ import os
 import shutil
 import sysconfig
 
-import torch.cuda
-
 
 def check_bitsandbytes():
     """
