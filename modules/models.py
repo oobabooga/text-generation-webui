@@ -147,7 +147,7 @@ def load_model(model_name):
 
         # Monkey patch
         if shared.args.monkey_patch:
-            logging.warning("Warning: applying the monkey patch for using LoRAs in 4-bit mode. It may cause undefined behavior outside its intended scope.")
+            logging.warning("Applying the monkey patch for using LoRAs in 4-bit mode. It may cause undefined behavior outside its intended scope.")
             from modules.monkey_patch_gptq_lora import load_model_llama
 
             model, _ = load_model_llama(model_name)
@@ -162,7 +162,7 @@ def load_model(model_name):
     else:
         params = {"low_cpu_mem_usage": True}
         if not any((shared.args.cpu, torch.cuda.is_available(), torch.has_mps)):
-            logging.warning("Warning: torch.cuda.is_available() returned False. This means that no GPU has been detected. Falling back to CPU mode.")
+            logging.warning("torch.cuda.is_available() returned False. This means that no GPU has been detected. Falling back to CPU mode.")
             shared.args.cpu = True
 
         if shared.args.cpu:
