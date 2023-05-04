@@ -62,6 +62,24 @@ def setup_bitsandbytes_windows():
     import bitsandbytes.nn as nn
     import bitsandbytes.nn.modules as new_nn
 
-    # nn (This is needed, otherwise Linear8bitLt will not be available for some reason)
+    # nn (This is needed, stuff isn't properly set in __init__.py)
+    nn.Int8Params = new_nn.Int8Params
     nn.Linear8bitLt = new_nn.Linear8bitLt
+    nn.StableEmbedding = new_nn.StableEmbedding
+
+    import bitsandbytes as bnb
+    import bitsandbytes.autograd._functions as new_bnb
+
+    import bitsandbytes.optim as optim
+
+    # bitsandbytes stuff
+    bnb.MatmulLtState = new_bnb.MatmulLtState
+    bnb.bmm_cublas = new_bnb.bmm_cublas
+    bnb.matmul = new_bnb.matmul
+    bnb.matmul_cublas = new_bnb.matmul_cublas
+    bnb.mm_cublas = new_bnb.mm_cublas
+    if cext.COMPILED_WITH_CUDA:
+        bnb.adam = optim.adam
+
+
 
