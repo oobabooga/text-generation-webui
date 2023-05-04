@@ -25,6 +25,7 @@ theme = gr.themes.Default(
     background_fill_secondary='#eaeaea'
 )
 
+
 def list_model_elements():
     elements = ['cpu_memory', 'auto_devices', 'disk', 'cpu', 'bf16', 'load_in_8bit', 'wbits', 'groupsize', 'model_type', 'pre_layer']
     for i in range(torch.cuda.device_count()):
