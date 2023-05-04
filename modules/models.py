@@ -231,7 +231,7 @@ def load_model(model_name):
     # Loading the tokenizer
     if shared.model_type == 'gpt4chan' and Path(f"{shared.args.model_dir}/gpt-j-6B/").exists():
         tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/gpt-j-6B/"))
-    elif type(model) is transformers.LlamaForCausalLM:
+    elif model.__class__.__name__ in ["LlamaForCausalLM", "LlamaGPTQForCausalLM"]:
         tokenizer = None
 
         # Try to load an universal LLaMA tokenizer
