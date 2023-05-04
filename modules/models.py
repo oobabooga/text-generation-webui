@@ -112,7 +112,7 @@ def load_model(model_name):
 
     # DeepSpeed ZeRO-3
     elif shared.args.deepspeed:
-        model = LoaderClass.from_pretrained(Path(f"{shared.args.model_dir}/{model_name}"), torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16)
+        model = LoaderClass.from_pretrained(Path(f"{shared.args.model_dir}/{model_name}"), torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16, trust_remote_code=trust_remote_code)
         model = deepspeed.initialize(model=model, config_params=ds_config, model_parameters=None, optimizer=None, lr_scheduler=None)[0]
         model.module.eval()  # Inference
         logging.info(f"DeepSpeed ZeRO-3 is enabled: {is_deepspeed_zero3_enabled()}")
@@ -202,7 +202,7 @@ def load_model(model_name):
 
         checkpoint = Path(f'{shared.args.model_dir}/{model_name}')
         if shared.args.load_in_8bit and params.get('max_memory', None) is not None and params['device_map'] == 'auto':
-            config = AutoConfig.from_pretrained(checkpoint)
+            config = AutoConfig.from_pretrained(checkpoint, trust_remote_code=trust_remote_code)
             with init_empty_weights():
                 model = LoaderClass.from_config(config)
 
@@ -214,7 +214,7 @@ def load_model(model_name):
                 no_split_module_classes=model._no_split_modules
             )
 
-        model = LoaderClass.from_pretrained(checkpoint, **params)
+        model = LoaderClass.from_pretrained(checkpoint, trust_remote_code=trust_remote_code, **params)
 
     # Hijack attention with xformers
     if any((shared.args.xformers, shared.args.sdp_attention)):
@@ -222,7 +222,7 @@ def load_model(model_name):
 
     # Loading the tokenizer
     if shared.model_type == 'gpt4chan' and Path(f"{shared.args.model_dir}/gpt-j-6B/").exists():
-        tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/gpt-j-6B/"))
+        tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/gpt-j-6B/"), trust_remote_code=trust_remote_code)
     elif type(model) is transformers.LlamaForCausalLM:
         tokenizer = None
 
