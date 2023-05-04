@@ -1,4 +1,5 @@
 import json
+import logging
 import math
 import sys
 import threading
@@ -23,21 +24,21 @@ try:
     from peft.utils.other import \
         TRANSFORMERS_MODELS_TO_LORA_TARGET_MODULES_MAPPING as \
         model_to_lora_modules
+    from transformers.models.auto.modeling_auto import MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
+    MODEL_CLASSES = {v: k for k, v in MODEL_FOR_CAUSAL_LM_MAPPING_NAMES}
 except:
     standard_modules = ["q_proj", "v_proj"]
     model_to_lora_modules = {"llama": standard_modules, "opt": standard_modules, "gptj": standard_modules, "gpt_neox": ["query_key_value"]}
+    MODEL_CLASSES = {
+        "LlamaForCausalLM": "llama",
+        "OPTForCausalLM": "opt",
+        "GPTJForCausalLM": "gptj",
+        "GPTNeoXForCausalLM": "gpt_neox"
+    }
 
 WANT_INTERRUPT = False
 
-PARAMETERS = ["lora_name", "always_override", "save_steps", "micro_batch_size", "batch_size", "epochs", "learning_rate", "lr_scheduler_type", "lora_rank", "lora_alpha", "lora_dropout", "cutoff_len", "dataset", "eval_dataset", "format", "eval_steps", "raw_text_file", "overlap_len", "newline_favor_len", "do_shuffle", "higher_rank_limit", "warmup_steps", "optimizer"]
-
-# Mapping of Python class names to peft IDs
-MODEL_CLASSES = {
-    "LlamaForCausalLM": "llama",
-    "OPTForCausalLM": "opt",
-    "GPTJForCausalLM": "gptj",
-    "GPTNeoXForCausalLM": "gpt_neox"
-}
+PARAMETERS = ["lora_name", "always_override", "save_steps", "micro_batch_size", "batch_size", "epochs", "learning_rate", "lr_scheduler_type", "lora_rank", "lora_alpha", "lora_dropout", "cutoff_len", "dataset", "eval_dataset", "format", "eval_steps", "raw_text_file", "overlap_len", "newline_favor_len", "higher_rank_limit", "warmup_steps", "optimizer"]
 
 
 def get_datasets(path: str, ext: str):
@@ -99,7 +100,6 @@ def create_train_interface():
             optimizer = gr.Dropdown(label='Optimizer', value='adamw_torch', choices=['adamw_hf', 'adamw_torch', 'adamw_torch_fused', 'adamw_torch_xla', 'adamw_apex_fused', 'adafactor', 'adamw_bnb_8bit', 'adamw_anyprecision', 'sgd', 'adagrad'], info='Different optimizer implementation options, for advanced users. Effects of different options are not well documented yet.')
 
             with gr.Row():
-                do_shuffle = gr.Checkbox(label='Shuffle Dataset', value=True, info='If checked, the dataset will be randomly shuffled. This can help reduce overfitting.')
                 higher_rank_limit = gr.Checkbox(label='Enable higher ranks', value=False, info='If checked, changes Rank/Alpha slider above to go much higher. This will not work without a datacenter-class GPU.')
 
         with gr.Row():
@@ -123,13 +123,13 @@ def create_train_interface():
                     stop_evaluation = gr.Button("Interrupt")
 
             with gr.Column():
-                evaluation_log = gr.Markdown(value = '')
+                evaluation_log = gr.Markdown(value='')
 
         evaluation_table = gr.Dataframe(value=generate_markdown_table(), interactive=True)
         save_comments = gr.Button('Save comments')
 
     # Training events
-    all_params = [lora_name, always_override, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lr_scheduler_type, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, do_shuffle, higher_rank_limit, warmup_steps, optimizer]
+    all_params = [lora_name, always_override, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lr_scheduler_type, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, higher_rank_limit, warmup_steps, optimizer]
     copy_from.change(do_copy_params, [copy_from] + all_params, all_params)
     start_button.click(do_train, all_params, output)
     stop_button.click(do_interrupt, None, None, queue=False)
@@ -192,7 +192,7 @@ def clean_path(base_path: str, path: str):
     return f'{Path(base_path).absolute()}/{path}'
 
 
-def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lr_scheduler_type: str, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, do_shuffle: bool, higher_rank_limit: bool, warmup_steps: int, optimizer: str):
+def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lr_scheduler_type: str, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, higher_rank_limit: bool, warmup_steps: int, optimizer: str):
 
     if shared.args.monkey_patch:
         from monkeypatch.peft_tuners_lora_monkey_patch import \
@@ -220,13 +220,14 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         if model_type == "PeftModelForCausalLM":
             if len(shared.args.lora_names) > 0:
                 yield "You are trying to train a LoRA while you already have another LoRA loaded. This will work, but may have unexpected effects. *(Will continue anyway in 5 seconds, press `Interrupt` to stop.)*"
-                print("Warning: Training LoRA over top of another LoRA. May have unexpected effects.")
+                logging.warning("Training LoRA over top of another LoRA. May have unexpected effects.")
             else:
                 yield "Model ID not matched due to LoRA loading. Consider reloading base model. *(Will continue anyway in 5 seconds, press `Interrupt` to stop.)*"
-                print("Warning: Model ID not matched due to LoRA loading. Consider reloading base model.")
+                logging.warning("Model ID not matched due to LoRA loading. Consider reloading base model.")
         else:
             yield "LoRA training has only currently been validated for LLaMA, OPT, GPT-J, and GPT-NeoX models. Unexpected errors may follow. *(Will continue anyway in 5 seconds, press `Interrupt` to stop.)*"
-            print(f"Warning: LoRA training has only currently been validated for LLaMA, OPT, GPT-J, and GPT-NeoX models. (Found model type: {model_type})")
+            logging.warning(f"LoRA training has only currently been validated for LLaMA, OPT, GPT-J, and GPT-NeoX models. (Found model type: {model_type})")
+
         time.sleep(5)
 
     if shared.args.wbits > 0 and not shared.args.monkey_patch:
@@ -235,7 +236,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
     elif not shared.args.load_in_8bit and shared.args.wbits <= 0:
         yield "It is highly recommended you use `--load-in-8bit` for LoRA training. *(Will continue anyway in 2 seconds, press `Interrupt` to stop.)*"
-        print("Warning: It is highly recommended you use `--load-in-8bit` for LoRA training.")
+        logging.warning("It is highly recommended you use `--load-in-8bit` for LoRA training.")
         time.sleep(2)  # Give it a moment for the message to show in UI before continuing
 
     if cutoff_len <= 0 or micro_batch_size <= 0 or batch_size <= 0 or actual_lr <= 0 or lora_rank <= 0 or lora_alpha <= 0:
@@ -243,7 +244,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         return
 
     gradient_accumulation_steps = batch_size // micro_batch_size
-    shared.tokenizer.pad_token = 0
+    shared.tokenizer.pad_token_id = 0
     shared.tokenizer.padding_side = "left"
 
     def tokenize(prompt):
@@ -255,7 +256,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
     # == Prep the dataset, format, etc ==
     if raw_text_file not in ['None', '']:
-        print("Loading raw text file dataset...")
+        logging.info("Loading raw text file dataset...")
         with open(clean_path('training/datasets', f'{raw_text_file}.txt'), 'r', encoding='utf-8') as file:
             raw_text = file.read()
 
@@ -299,7 +300,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             prompt = generate_prompt(data_point)
             return tokenize(prompt)
 
-        print("Loading JSON datasets...")
+        logging.info("Loading JSON datasets...")
         data = load_dataset("json", data_files=clean_path('training/datasets', f'{dataset}.json'))
         train_data = data['train'].map(generate_and_tokenize_prompt)
 
@@ -308,18 +309,13 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         else:
             eval_data = load_dataset("json", data_files=clean_path('training/datasets', f'{eval_dataset}.json'))
             eval_data = eval_data['train'].map(generate_and_tokenize_prompt)
-            if do_shuffle:
-                eval_data = eval_data.shuffle()
-
-    if do_shuffle:
-        train_data = train_data.shuffle()
 
     # == Start prepping the model itself ==
     if not hasattr(shared.model, 'lm_head') or hasattr(shared.model.lm_head, 'weight'):
-        print("Getting model ready...")
+        logging.info("Getting model ready...")
         prepare_model_for_int8_training(shared.model)
 
-    print("Prepping for training...")
+    logging.info("Prepping for training...")
     config = LoraConfig(
         r=lora_rank,
         lora_alpha=lora_alpha,
@@ -330,10 +326,10 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     )
 
     try:
-        print("Creating LoRA model...")
+        logging.info("Creating LoRA model...")
         lora_model = get_peft_model(shared.model, config)
         if not always_override and Path(f"{lora_file_path}/adapter_model.bin").is_file():
-            print("Loading existing LoRA data...")
+            logging.info("Loading existing LoRA data...")
             state_dict_peft = torch.load(f"{lora_file_path}/adapter_model.bin")
             set_peft_model_state_dict(lora_model, state_dict_peft)
     except:
@@ -411,7 +407,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         json.dump({x: vars[x] for x in PARAMETERS}, file)
 
     # == Main run and monitor loop ==
-    print("Starting training...")
+    logging.info("Starting training...")
     yield "Starting..."
     if WANT_INTERRUPT:
         yield "Interrupted before start."
@@ -421,7 +417,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         trainer.train()
         # Note: save in the thread in case the gradio thread breaks (eg browser closed)
         lora_model.save_pretrained(lora_file_path)
-        print("LoRA training run is completed and saved.")
+        logging.info("LoRA training run is completed and saved.")
         tracked.did_save = True
 
     thread = threading.Thread(target=threaded_run)
@@ -453,14 +449,14 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
     # Saving in the train thread might fail if an error occurs, so save here if so.
     if not tracked.did_save:
-        print("Training complete, saving...")
+        logging.info("Training complete, saving...")
         lora_model.save_pretrained(lora_file_path)
 
     if WANT_INTERRUPT:
-        print("Training interrupted.")
+        logging.info("Training interrupted.")
         yield f"Interrupted. Incomplete LoRA saved to `{lora_file_path}`"
     else:
-        print("Training complete!")
+        logging.info("Training complete!")
         yield f"Done! LoRA saved to `{lora_file_path}`"
 
 

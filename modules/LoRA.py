@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 import torch
@@ -12,23 +13,24 @@ def add_lora_to_model(lora_names):
     removed_set = prior_set - set(lora_names)
     shared.lora_names = list(lora_names)
 
-    # Nothing to do = skip.
+    # If no LoRA needs to be added or removed, exit
     if len(added_set) == 0 and len(removed_set) == 0:
         return
 
-    # Only adding, and already peft? Do it the easy way.
+    # Add a LoRA when another LoRA is already present
     if len(removed_set) == 0 and len(prior_set) > 0:
-        print(f"Adding the LoRA(s) named {added_set} to the model...")
+        logging.info(f"Adding the LoRA(s) named {added_set} to the model...")
         for lora in added_set:
             shared.model.load_adapter(Path(f"{shared.args.lora_dir}/{lora}"), lora)
+
         return
 
-    # If removing anything, disable all and re-add.
+    # If any LoRA needs to be removed, start over
     if len(removed_set) > 0:
         shared.model.disable_adapter()
 
     if len(lora_names) > 0:
-        print("Applying the following LoRAs to {}: {}".format(shared.model_name, ', '.join(lora_names)))
+        logging.info("Applying the following LoRAs to {}: {}".format(shared.model_name, ', '.join(lora_names)))
         params = {}
         if not shared.args.cpu:
             params['dtype'] = shared.model.dtype
@@ -43,8 +45,7 @@ def add_lora_to_model(lora_names):
             shared.model.load_adapter(Path(f"{shared.args.lora_dir}/{lora}"), lora)
 
         if not shared.args.load_in_8bit and not shared.args.cpu:
-            if not shared.args.monkey_patch:
-                shared.model.half()
+            shared.model.half()
             if not hasattr(shared.model, "hf_device_map"):
                 if torch.has_mps:
                     device = torch.device('mps')

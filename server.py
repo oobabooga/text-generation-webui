@@ -1,14 +1,17 @@
+import logging
 import os
 import requests
 import warnings
+import modules.logging_colors
 
 os.environ['GRADIO_ANALYTICS_ENABLED'] = 'False'
 os.environ['BITSANDBYTES_NOWELCOME'] = '1'
 warnings.filterwarnings('ignore', category=UserWarning, message='TypedStorage is deprecated')
+logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
 
 # This is a hack to prevent Gradio from phoning home when it gets imported
 def my_get(url, **kwargs):
-    print('Gradio HTTP request redirected to localhost :)')
+    logging.info('Gradio HTTP request redirected to localhost :)')
     kwargs.setdefault('allow_redirects', True)
     return requests.api.request('get', 'http://127.0.0.1/', **kwargs)
 
@@ -17,9 +20,8 @@ requests.get = my_get
 import gradio as gr
 requests.get = original_get
 
-# This fixes LaTeX rendering on some systems
 import matplotlib
-matplotlib.use('Agg')
+matplotlib.use('Agg')  # This fixes LaTeX rendering on some systems
 
 import importlib
 import io
@@ -362,7 +364,7 @@ def create_model_menus():
                 with gr.Row():
                     with gr.Column():
                         shared.gradio['wbits'] = gr.Dropdown(label="wbits", choices=["None", 1, 2, 3, 4, 8], value=shared.args.wbits if shared.args.wbits > 0 else "None")
-                        shared.gradio['groupsize'] = gr.Dropdown(label="groupsize", choices=["None", 32, 64, 128], value=shared.args.groupsize if shared.args.groupsize > 0 else "None")
+                        shared.gradio['groupsize'] = gr.Dropdown(label="groupsize", choices=["None", 32, 64, 128, 1024], value=shared.args.groupsize if shared.args.groupsize > 0 else "None")
 
                     with gr.Column():
                         shared.gradio['model_type'] = gr.Dropdown(label="model_type", choices=["None", "llama", "opt", "gptj"], value=shared.args.model_type or "None")
@@ -554,7 +556,7 @@ def create_interface():
                         shared.gradio['name2'] = gr.Textbox(value=shared.settings['name2'], lines=1, label='Character\'s name')
                         shared.gradio['greeting'] = gr.Textbox(value=shared.settings['greeting'], lines=4, label='Greeting')
                         shared.gradio['context'] = gr.Textbox(value=shared.settings['context'], lines=4, label='Context')
-                        shared.gradio['end_of_turn'] = gr.Textbox(value=shared.settings['end_of_turn'], lines=1, label='End of turn string')
+                        shared.gradio['turn_template'] = gr.Textbox(value=shared.settings['turn_template'], lines=1, label='Turn template', info='Used to precisely define the placement of spaces and new line characters in instruction prompts.')
 
                     with gr.Column(scale=1):
                         shared.gradio['character_picture'] = gr.Image(label='Character picture', type='pil')
@@ -779,7 +781,7 @@ def create_interface():
                 chat.redraw_html, reload_inputs, shared.gradio['display'])
 
             shared.gradio['instruction_template'].change(
-                chat.load_character, [shared.gradio[k] for k in ['instruction_template', 'name1', 'name2', 'mode']], [shared.gradio[k] for k in ['name1', 'name2', 'character_picture', 'greeting', 'context', 'end_of_turn', 'display']]).then(
+                chat.load_character, [shared.gradio[k] for k in ['instruction_template', 'name1', 'name2', 'mode']], [shared.gradio[k] for k in ['name1', 'name2', 'character_picture', 'greeting', 'context', 'turn_template', 'display']]).then(
                 chat.redraw_html, reload_inputs, shared.gradio['display'])
 
             shared.gradio['upload_chat_history'].upload(
@@ -792,7 +794,7 @@ def create_interface():
             shared.gradio['Remove last'].click(chat.remove_last_message, [shared.gradio[k] for k in ['name1', 'name2', 'mode']], [shared.gradio['display'], shared.gradio['textbox']], show_progress=False)
             shared.gradio['download_button'].click(lambda x: chat.save_history(x, timestamp=True), shared.gradio['mode'], shared.gradio['download'])
             shared.gradio['Upload character'].click(chat.upload_character, [shared.gradio['upload_json'], shared.gradio['upload_img_bot']], [shared.gradio['character_menu']])
-            shared.gradio['character_menu'].change(chat.load_character, [shared.gradio[k] for k in ['character_menu', 'name1', 'name2', 'mode']], [shared.gradio[k] for k in ['name1', 'name2', 'character_picture', 'greeting', 'context', 'end_of_turn', 'display']])
+            shared.gradio['character_menu'].change(chat.load_character, [shared.gradio[k] for k in ['character_menu', 'name1', 'name2', 'mode']], [shared.gradio[k] for k in ['name1', 'name2', 'character_picture', 'greeting', 'context', 'turn_template', 'display']])
             shared.gradio['upload_img_tavern'].upload(chat.upload_tavern_character, [shared.gradio['upload_img_tavern'], shared.gradio['name1'], shared.gradio['name2']], [shared.gradio['character_menu']])
             shared.gradio['your_picture'].change(chat.upload_your_profile_picture, [shared.gradio[k] for k in ['your_picture', 'name1', 'name2', 'mode']], shared.gradio['display'])
             shared.gradio['interface'].load(None, None, None, _js=f"() => {{{ui.main_js+ui.chat_js}}}")
@@ -864,7 +866,7 @@ if __name__ == "__main__":
     elif Path('settings.json').exists():
         settings_file = Path('settings.json')
     if settings_file is not None:
-        print(f"Loading settings from {settings_file}...")
+        logging.info(f"Loading settings from {settings_file}...")
         new_settings = json.loads(open(settings_file, 'r').read())
         for item in new_settings:
             shared.settings[item] = new_settings[item]
@@ -895,7 +897,7 @@ if __name__ == "__main__":
     # Select the model from a command-line menu
     elif shared.args.model_menu:
         if len(available_models) == 0:
-            print('No models are available! Please download at least one.')
+            logging.error('No models are available! Please download at least one.')
             sys.exit(0)
         else:
             print('The following models are available:\n')
@@ -917,7 +919,7 @@ if __name__ == "__main__":
         # Load the model
         shared.model, shared.tokenizer = load_model(shared.model_name)
         if shared.args.lora:
-            add_lora_to_model([shared.args.lora])
+            add_lora_to_model(shared.args.lora)
 
     # Force a character to be loaded
     if shared.is_chat():

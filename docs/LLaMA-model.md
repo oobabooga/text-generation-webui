@@ -12,7 +12,7 @@ This guide will cover usage through the official `transformers` implementation. 
 * Torrent: https://github.com/oobabooga/text-generation-webui/pull/530#issuecomment-1484235789
 * Direct download: https://huggingface.co/Neko-Institute-of-Science
 
-⚠️ The tokenizers for the sources above and also for many LLaMA fine-tunes available on Hugging Face may be outdated, so I recommend downloading the following universal LLaMA tokenizer: 
+⚠️ The tokenizers for the Torrent source above and also for many LLaMA fine-tunes available on Hugging Face may be outdated, so I recommend downloading the following universal LLaMA tokenizer: 
 
 ```
 python download-model.py oobabooga/llama-tokenizer
@@ -25,7 +25,7 @@ Once downloaded, it will be automatically applied to **every** `LlamaForCausalLM
 1. Install the `protobuf` library:
 
 ```
-pip install protobuf
+pip install protobuf==3.20.1
 ```
 
 2. Use the script below to convert the model in `.pth` format that you, a fellow academic, downloaded using Meta's official link:

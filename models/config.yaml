@@ -21,12 +21,12 @@ llama-[0-9]*b-4bit$:
 .*-(gr128|128g)-3bit:
   wbits: 3
   groupsize: 128
-.*oasst-sft-1-pythia-12b:
+.*(oasst-sft-1-pythia-12b|oasst-sft-6-llama-30b):
   mode: 'instruct'
   instruction_template: 'Open Assistant'
 .*vicuna:
   mode: 'instruct'
-  instruction_template: 'Vicuna'
+  instruction_template: 'Vicuna-v0'
 .*alpaca:
   mode: 'instruct'
   instruction_template: 'Alpaca'
@@ -52,3 +52,7 @@ llama-[0-9]*b-4bit$:
   mode: 'instruct'
   model_type: 'llama'
   instruction_template: 'LLaVA'
+  custom_stopping_strings: '"\n###"'
+.*raven:
+  mode: 'instruct'
+  instruction_template: 'RWKV-Raven'
