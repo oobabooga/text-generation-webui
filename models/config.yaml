@@ -21,7 +21,7 @@ llama-[0-9]*b-4bit$:
 .*-(gr128|128g)-3bit:
   wbits: 3
   groupsize: 128
-.*oasst-sft-1-pythia-12b:
+.*(oasst-sft-1-pythia-12b|oasst-sft-6-llama-30b):
   mode: 'instruct'
   instruction_template: 'Open Assistant'
 .*vicuna:
@@ -56,3 +56,6 @@ llama-[0-9]*b-4bit$:
 .*raven:
   mode: 'instruct'
   instruction_template: 'RWKV-Raven'
+.*moss-moon.*sft:
+  mode: 'instruct'
+  instruction_template: 'MOSS'

@@ -1,4 +1,5 @@
 import ast
+import logging
 import random
 import re
 import time
@@ -175,7 +176,7 @@ def get_generate_params(state):
 
 def generate_reply(question, state, eos_token=None, stopping_strings=[]):
     if shared.model_name == 'None' or shared.model is None:
-        print("No model is loaded! Select one in the Model tab.")
+        logging.error("No model is loaded! Select one in the Model tab.")
         yield formatted_outputs(question, shared.model_name)
         return
 
@@ -190,11 +191,12 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
     if not shared.is_chat():
         question = apply_extensions('input', question)
 
+    if shared.args.verbose:
+        print(f'\n\n{question}\n--------------------\n')
+
     # If the model is not on transformers, handle it separately and end this
     # function call earlier.
     if shared.model_type in ['rwkv', 'llamacpp']:
-        if shared.args.verbose:
-            print(f'\n\n{question}\n--------------------\n')
 
         try:
             if shared.args.no_stream:
@@ -228,8 +230,6 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
     input_ids = encode(question, add_bos_token=state['add_bos_token'], truncation_length=get_max_prompt_length(state))
     output = input_ids[0]
     cuda = not any((shared.args.cpu, shared.args.deepspeed, shared.args.flexgen))
-    if shared.args.verbose:
-        print(f'\n\n{decode(input_ids[0], False)}\n--------------------\n')
 
     # Find the eos tokens
     eos_token_ids = [shared.tokenizer.eos_token_id] if shared.tokenizer.eos_token_id is not None else []

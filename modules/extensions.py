@@ -1,3 +1,4 @@
+import logging
 import traceback
 from functools import partial
 
@@ -28,7 +29,7 @@ def load_extensions():
     for i, name in enumerate(shared.args.extensions):
         if name in available_extensions:
             if name != 'api':
-                print(f'Loading the extension "{name}"... ', end='')
+                logging.info(f'Loading the extension "{name}"...')
             try:
                 exec(f"import extensions.{name}.script")
                 extension = getattr(extensions, name).script
@@ -38,12 +39,8 @@ def load_extensions():
                     extension.setup()
 
                 state[name] = [True, i]
-                if name != 'api':
-                    print('Ok.')
             except:
-                if name != 'api':
-                    print('Fail.')
-
+                logging.error('Failed to load the extension "{name}".')
                 traceback.print_exc()
 
 
