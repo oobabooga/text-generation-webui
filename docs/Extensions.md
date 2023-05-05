@@ -127,7 +127,7 @@ def custom_generate_reply(question, original_question, seed, state, eos_token, s
 Below is an extension that just reproduces the default prompt generator in `modules/chat.py`. You can modify it freely to come up with your own prompts in chat mode.
 
 ```python
-def generate_chat_prompt(user_input, state, **kwargs):
+def custom_generate_chat_prompt(user_input, state, **kwargs):
     impersonate = kwargs['impersonate'] if 'impersonate' in kwargs else False
     _continue = kwargs['_continue'] if '_continue' in kwargs else False
     also_return_rows = kwargs['also_return_rows'] if 'also_return_rows' in kwargs else False
