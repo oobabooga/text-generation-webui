@@ -46,6 +46,7 @@ Most of these have been created by the extremely talented contributors that you 
 | `def input_modifier(string)`  | Modifies the input string before it enters the model. In chat mode, it is applied to the user message. Otherwise, it is applied to the entire prompt. |
 | `def output_modifier(string)`  | Modifies the output string before it is presented in the UI. In chat mode, it is applied to the bot's reply. Otherwise, it is applied to the entire output. |
 | `def bot_prefix_modifier(string)`  | Applied in chat mode to the prefix for the bot's reply (more on that below). |
+| `custom_generate_reply(...)` | Overrides the main text generation function. |
 | `def custom_generate_chat_prompt(...)` | Overrides the prompt generator in chat mode. |
 | `def tokenizer_modifier(state, prompt, input_ids, input_embeds)` | Modifies the `input_ids`/`input_embeds` fed to the model. Should return `prompt`, `input_ids`, `input_embeds`. See `llava` extension for an example |
 

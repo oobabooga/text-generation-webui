@@ -143,17 +143,19 @@ def stop_everything_event():
 
 
 def generate_reply(question, state, eos_token=None, stopping_strings=[]):
-    if shared.model_name == 'None' or shared.model is None:
-        logging.error("No model is loaded! Select one in the Model tab.")
-        yield formatted_outputs(question, shared.model_name)
-        return
+    generate_func = apply_extensions('custom_generate_reply')
+    if generate_func is None:
+        if shared.model_name == 'None' or shared.model is None:
+            logging.error("No model is loaded! Select one in the Model tab.")
+            yield formatted_outputs(question, shared.model_name)
+            return
 
-    if shared.model_type in ['rwkv', 'llamacpp']:
-        generate_func = generate_reply_custom
-    elif shared.args.flexgen:
-        generate_func = generate_reply_flexgen
-    else:
-        generate_func = generate_reply_HF
+        if shared.model_type in ['rwkv', 'llamacpp']:
+            generate_func = generate_reply_custom
+        elif shared.args.flexgen:
+            generate_func = generate_reply_flexgen
+        else:
+            generate_func = generate_reply_HF
 
     # Preparing the input
     original_question = question

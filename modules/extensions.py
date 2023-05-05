@@ -95,13 +95,23 @@ def _apply_tokenizer_extensions(function_name, state, prompt, input_ids, input_e
     return prompt, input_ids, input_embeds
 
 
+# Custom generate reply handling
+def _apply_custom_generate_reply():
+    for extension, _ in iterator():
+        if hasattr(extension, 'custom_generate_reply'):
+            return getattr(extension, 'custom_generate_reply')
+
+    return None
+
+
 EXTENSION_MAP = {
     "input": partial(_apply_string_extensions, "input_modifier"),
     "output": partial(_apply_string_extensions, "output_modifier"),
     "bot_prefix": partial(_apply_string_extensions, "bot_prefix_modifier"),
     "tokenizer": partial(_apply_tokenizer_extensions, "tokenizer_modifier"),
     "input_hijack": _apply_input_hijack,
-    "custom_generate_chat_prompt": _apply_custom_generate_chat_prompt
+    "custom_generate_chat_prompt": _apply_custom_generate_chat_prompt,
+    "custom_generate_reply": _apply_custom_generate_reply
 }
 
 
