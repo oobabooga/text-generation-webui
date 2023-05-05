@@ -281,6 +281,12 @@ Optionally, you can use the following command-line flags:
 | `--api`                               | Enable the API extension. |
 | `--public-api`                        | Create a public URL for the API using Cloudfare. |
 
+#### Multimodal
+
+| Flag                                  | Description |
+|---------------------------------------|-------------|
+| `--multimodal-pipeline PIPELINE`      | The multimodal pipeline to use, requires `--extensions multimodal` |
+
 Out of memory errors? [Check the low VRAM guide](docs/Low-VRAM-guide.md).
 
 ## Presets

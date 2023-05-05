@@ -1,14 +1,15 @@
 import base64
+import gradio as gr
+import logging
 import re
 import time
+import torch
 from functools import partial
 from io import BytesIO
 
-import gradio as gr
-import torch
-
 from modules import shared
 from extensions.multimodal.multimodal_embedder import MultimodalEmbedder
+
 
 params = {
     "add_all_images_to_prompt": False,
@@ -78,7 +79,7 @@ def tokenizer_modifier(state, prompt, input_ids, input_embeds):
         return prompt, input_ids, input_embeds
 
     prompt, input_ids, input_embeds, total_embedded = multimodal_embedder.forward(prompt, state, params)
-    print(f'Embedded {total_embedded} image(s) in {time.time()-start_ts:.2f}s')
+    logging.info(f'Embedded {total_embedded} image(s) in {time.time()-start_ts:.2f}s')
     return (prompt,
         input_ids.unsqueeze(0).to(shared.model.device, dtype=torch.int64),
         input_embeds.unsqueeze(0).to(shared.model.device, dtype=shared.model.dtype))

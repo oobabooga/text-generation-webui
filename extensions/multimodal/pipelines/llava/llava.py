@@ -1,3 +1,4 @@
+import logging
 import time
 import torch
 from abc import abstractmethod
@@ -25,11 +26,11 @@ class LLaVA_v0_Pipeline(AbstractMultimodalPipeline):
     def _load_models(self):
         start_ts = time.time()
 
-        print(f"LLaVA - Loading CLIP from {LLaVA_v0_Pipeline.CLIP_REPO} as {self.clip_dtype} on {self.clip_device}...")
+        logging.info(f"LLaVA - Loading CLIP from {LLaVA_v0_Pipeline.CLIP_REPO} as {self.clip_dtype} on {self.clip_device}...")
         image_processor = CLIPImageProcessor.from_pretrained(LLaVA_v0_Pipeline.CLIP_REPO, torch_dtype=self.clip_dtype)
         vision_tower = CLIPVisionModel.from_pretrained(LLaVA_v0_Pipeline.CLIP_REPO, torch_dtype=self.clip_dtype).to(self.clip_device)
 
-        print(f"LLaVA - Loading projector from {self.llava_projector_repo()} as {self.projector_dtype} on {self.projector_device}...")
+        logging.info(f"LLaVA - Loading projector from {self.llava_projector_repo()} as {self.projector_dtype} on {self.projector_device}...")
         projector_path = hf_hub_download(self.llava_projector_repo(), self.llava_projector_filename())
         mm_projector = torch.nn.Linear(*self.llava_projector_shape())
         projector_data = torch.load(projector_path)
@@ -37,7 +38,7 @@ class LLaVA_v0_Pipeline(AbstractMultimodalPipeline):
         mm_projector.bias = torch.nn.Parameter(projector_data['model.mm_projector.bias'].to(dtype=self.projector_dtype), False)
         mm_projector = mm_projector.to(self.projector_device)
 
-        print(f"LLaVA supporting models loaded, took {time.time() - start_ts:.2f} seconds")
+        logging.info(f"LLaVA supporting models loaded, took {time.time() - start_ts:.2f} seconds")
         return image_processor, vision_tower, mm_projector
 
     @staticmethod

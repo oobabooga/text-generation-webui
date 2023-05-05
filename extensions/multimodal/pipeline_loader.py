@@ -1,3 +1,4 @@
+import logging
 import traceback
 from importlib import import_module
 from pathlib import Path
@@ -19,8 +20,8 @@ def load_pipeline(params: dict) -> Tuple[AbstractMultimodalPipeline, str]:
         try:
             pipeline_modules[name] = import_module(f'extensions.multimodal.pipelines.{name}.pipelines')
         except:
-            print(f'Failed to get multimodal pipelines from {name}')
-            traceback.print_exc()
+            logging.warning(f'Failed to get multimodal pipelines from {name}')
+            logging.warning(traceback.format_exc())
 
     if shared.args.multimodal_pipeline is not None:
         for k in pipeline_modules:
@@ -46,5 +47,5 @@ def load_pipeline(params: dict) -> Tuple[AbstractMultimodalPipeline, str]:
         log = f'Multimodal - ERROR: Failed to load multimodal pipeline "{shared.args.multimodal_pipeline}", available pipelines are: {available}.'
     else:
         log = f'Multimodal - ERROR: Failed to determine multimodal pipeline for model {shared.args.model}, please select one manually using --multimodal-pipeline [PIPELINE]. Available pipelines are: {available}.'
-    print(f'{log} Please specify a correct pipeline, or disable the extension')
+    logging.critical(f'{log} Please specify a correct pipeline, or disable the extension')
     raise RuntimeError(f'{log} Please specify a correct pipeline, or disable the extension')

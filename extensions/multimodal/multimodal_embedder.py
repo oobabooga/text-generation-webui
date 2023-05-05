@@ -1,4 +1,5 @@
 import base64
+import logging
 import re
 import torch
 from dataclasses import dataclass
@@ -24,7 +25,7 @@ class MultimodalEmbedder:
     def __init__(self, params: dict):
         pipeline, source = load_pipeline(params)
         self.pipeline = pipeline
-        print(f'Multimodal: loaded pipeline {self.pipeline.name()} from pipelines/{source} ({self.pipeline.__class__.__name__})')
+        logging.info(f'Multimodal: loaded pipeline {self.pipeline.name()} from pipelines/{source} ({self.pipeline.__class__.__name__})')
 
     def _split_prompt(self, prompt: str, load_images: bool = False) -> List[PromptPart]:
         """Splits a prompt into a list of `PromptParts` to separate image data from text.
@@ -136,7 +137,7 @@ class MultimodalEmbedder:
 
         # notify user if we truncated an image
         if removed_images > 0:
-            print(f"Multimodal - WARNING: removed {removed_images} image(s) from prompt. Try decreasing max_new_tokens if generation is broken")
+            logging.warning(f"Multimodal: removed {removed_images} image(s) from prompt. Try decreasing max_new_tokens if generation is broken")
 
         return encoded
 
