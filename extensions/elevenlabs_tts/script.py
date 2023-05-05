@@ -18,15 +18,8 @@ wav_idx = 0
 user = ElevenLabsUser(params['api_key'])
 user_info = None
 
-if not shared.args.no_stream:
-    print("Please add --no-stream. This extension is not meant to be used with streaming.")
-    raise ValueError
-
 # Check if the API is valid and refresh the UI accordingly.
-
-
 def check_valid_api():
-
     global user, user_info, params
 
     user = ElevenLabsUser(params['api_key'])
@@ -41,9 +34,8 @@ def check_valid_api():
         print('Got an API Key!')
         return gr.update(value='Connected')
 
+
 # Once the API is verified, get the available voices and update the dropdown list
-
-
 def refresh_voices():
 
     global user, user_info
@@ -61,6 +53,11 @@ def remove_surrounded_chars(string):
     # this expression matches to 'as few symbols as possible (0 upwards) between any asterisks' OR
     # 'as few symbols as possible (0 upwards) between an asterisk and the end of the string'
     return re.sub('\*[^\*]*?(\*|$)', '', string)
+
+
+def state_modifier(state):
+    state['stream'] = False
+    return state
 
 
 def input_modifier(string):
@@ -109,6 +106,7 @@ def ui():
     with gr.Row():
         activate = gr.Checkbox(value=params['activate'], label='Activate TTS')
         connection_status = gr.Textbox(value='Disconnected', label='Connection Status')
+
     voice = gr.Dropdown(value=params['selected_voice'], choices=initial_voice, label='TTS Voice')
     with gr.Row():
         api_key = gr.Textbox(placeholder="Enter your API key.", label='API Key')

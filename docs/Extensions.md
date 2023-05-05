@@ -45,7 +45,9 @@ Most of these have been created by the extremely talented contributors that you 
 | `def ui()` | Creates custom gradio elements when the UI is launched. | 
 | `def input_modifier(string)`  | Modifies the input string before it enters the model. In chat mode, it is applied to the user message. Otherwise, it is applied to the entire prompt. |
 | `def output_modifier(string)`  | Modifies the output string before it is presented in the UI. In chat mode, it is applied to the bot's reply. Otherwise, it is applied to the entire output. |
+| `def state_modifier(state)`  | Modifies the dictionary containing the input parameters before it is used by the text generation functions. |
 | `def bot_prefix_modifier(string)`  | Applied in chat mode to the prefix for the bot's reply (more on that below). |
+| `def custom_generate_reply(...)` | Overrides the main text generation function. |
 | `def custom_generate_chat_prompt(...)` | Overrides the prompt generator in chat mode. |
 | `def tokenizer_modifier(state, prompt, input_ids, input_embeds)` | Modifies the `input_ids`/`input_embeds` fed to the model. Should return `prompt`, `input_ids`, `input_embeds`. See `multimodal` extension for an example |
 | `def custom_tokenized_length(prompt)` | Used in conjunction with `tokenizer_modifier`, returns the length in tokens of `prompt`. See `multimodal` extension for an example |
@@ -98,11 +100,37 @@ Marie Antoinette will become very enthusiastic in all her messages.
 
 In order to use your extension, you must start the web UI with the `--extensions` flag followed by the name of your extension (the folder under `text-generation-webui/extension` where `script.py` resides).
 
-You can activate more than one extension at a time by providing their names separated by spaces. The input, output and bot prefix modifiers will be applied in the specified order. For `custom_generate_chat_prompt`/`tokenizer_modifier`/`custom_tokenized_length`, only the first declaration encountered will be used and the rest will be ignored. 
+You can activate more than one extension at a time by providing their names separated by spaces. The input, output and bot prefix modifiers will be applied in the specified order. 
+
 
 ```
 python server.py --extensions enthusiasm translate # First apply enthusiasm, then translate
 python server.py --extensions translate enthusiasm # First apply translate, then enthusiasm
+```
+
+Do note, that for:
+- `custom_generate_chat_prompt`
+- `custom_generate_reply`
+- `tokenizer_modifier`
+- `custom_tokenized_length`
+
+only the first declaration encountered will be used and the rest will be ignored. 
+
+## `custom_generate_reply` example
+
+Once defined in a `script.py`, this function is executed in place of the main generation functions. You can use it to connect the web UI to an external API, or to load a custom model that is not supported yet.
+
+```python
+import datetime
+
+def custom_generate_reply(question, original_question, seed, state, eos_token, stopping_strings):
+    cumulative = ''
+    for i in range(10):
+        cumulative += f"Counting: {i}...\n"
+        yield cumulative
+
+    cumulative += f"Done! {str(datetime.datetime.now())}"
+    yield cumulative
 ```
 
 ## `custom_generate_chat_prompt` example
@@ -115,51 +143,64 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
     _continue = kwargs['_continue'] if '_continue' in kwargs else False
     also_return_rows = kwargs['also_return_rows'] if 'also_return_rows' in kwargs else False
     is_instruct = state['mode'] == 'instruct'
-    rows = [f"{state['context'].strip()}\n"]
+    rows = [state['context'] if is_instruct else f"{state['context'].strip()}\n"]
+    min_rows = 3
 
     # Finding the maximum prompt size
     chat_prompt_size = state['chat_prompt_size']
     if shared.soft_prompt:
         chat_prompt_size -= shared.soft_prompt_tensor.shape[1]
+
     max_length = min(get_max_prompt_length(state), chat_prompt_size)
 
-    if is_instruct:
-        prefix1 = f"{state['name1']}\n"
-        prefix2 = f"{state['name2']}\n"
+    # Building the turn templates
+    if 'turn_template' not in state or state['turn_template'] == '':
+        if is_instruct:
+            template = '<|user|>\n<|user-message|>\n<|bot|>\n<|bot-message|>\n'
+        else:
+            template = '<|user|>: <|user-message|>\n<|bot|>: <|bot-message|>\n'
     else:
-        prefix1 = f"{state['name1']}: "
-        prefix2 = f"{state['name2']}: "
+        template = state['turn_template'].replace(r'\n', '\n')
 
+    replacements = {
+        '<|user|>': state['name1'].strip(),
+        '<|bot|>': state['name2'].strip(),
+    }
+
+    user_turn = replace_all(template.split('<|bot|>')[0], replacements)
+    bot_turn = replace_all('<|bot|>' + template.split('<|bot|>')[1], replacements)
+    user_turn_stripped = replace_all(user_turn.split('<|user-message|>')[0], replacements)
+    bot_turn_stripped = replace_all(bot_turn.split('<|bot-message|>')[0], replacements)
+
+    # Building the prompt
     i = len(shared.history['internal']) - 1
     while i >= 0 and get_encoded_length(''.join(rows)) < max_length:
         if _continue and i == len(shared.history['internal']) - 1:
-            rows.insert(1, f"{prefix2}{shared.history['internal'][i][1]}")
+            rows.insert(1, bot_turn_stripped + shared.history['internal'][i][1].strip())
         else:
-            rows.insert(1, f"{prefix2}{shared.history['internal'][i][1].strip()}{state['end_of_turn']}\n")
+            rows.insert(1, bot_turn.replace('<|bot-message|>', shared.history['internal'][i][1].strip()))
+
         string = shared.history['internal'][i][0]
         if string not in ['', '<|BEGIN-VISIBLE-CHAT|>']:
-            rows.insert(1, f"{prefix1}{string.strip()}{state['end_of_turn']}\n")
+            rows.insert(1, replace_all(user_turn, {'<|user-message|>': string.strip(), '<|round|>': str(i)}))
+
         i -= 1
 
     if impersonate:
-        rows.append(f"{prefix1.strip() if not is_instruct else prefix1}")
-        limit = 2
-    elif _continue:
-        limit = 3
-    else:
+        min_rows = 2
+        rows.append(user_turn_stripped.rstrip(' '))
+    elif not _continue:
         # Adding the user message
-        user_input = fix_newlines(user_input)
         if len(user_input) > 0:
-            rows.append(f"{prefix1}{user_input}{state['end_of_turn']}\n")
+            rows.append(replace_all(user_turn, {'<|user-message|>': user_input.strip(), '<|round|>': str(len(shared.history["internal"]))}))
 
         # Adding the Character prefix
-        rows.append(apply_extensions(f"{prefix2.strip() if not is_instruct else prefix2}", "bot_prefix"))
-        limit = 3
+        rows.append(apply_extensions("bot_prefix", bot_turn_stripped.rstrip(' ')))
 
-    while len(rows) > limit and get_encoded_length(''.join(rows)) >= max_length:
+    while len(rows) > min_rows and get_encoded_length(''.join(rows)) >= max_length:
         rows.pop(1)
-    prompt = ''.join(rows)
 
+    prompt = ''.join(rows)
     if also_return_rows:
         return prompt, rows
     else:
