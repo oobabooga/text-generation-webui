@@ -110,6 +110,8 @@ python server.py --extensions translate enthusiasm # First apply translate, then
 
 Once defined in a `script.py`, this function is executed in place of the main generation functions. You can use it to connect the web UI to an external API, or to load a custom model that is not supported yet.
 
+Note that in chat mode, this function must only return the new text, whereas in other modes it must return the original prompt + the new text.
+
 ```python
 import datetime
 
