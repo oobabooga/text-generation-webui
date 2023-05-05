@@ -4,11 +4,12 @@ The following fields may be defined:
 
 | Field | Description |
 |-------|-------------|
-| `name` | The character's name. |
+| `name` or `bot` | The character's name. |
+| `your_name` or `user` (optional) | Your name. This overwrites what you had previously written in the `Your name` field in the interface. |
 | `context` | A string that appears at the top of the prompt. It usually contains a description of the character's personality. |
 | `greeting` (optional) | The character's opening message when a new conversation is started. |
 | `example_dialogue` (optional) | A few example messages to guide the model. |
-| `your_name` (optional) | Your name. This overwrites what you had previously written in the `Your name` field in the interface. |
+| `turn_template` (optional) | Used to define where the spaces and new line characters should be in Instruct mode. See the characters in `characters/instruction-following` for examples. |
 
 #### Special tokens
 

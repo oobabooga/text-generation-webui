@@ -1,4 +1,5 @@
 import ast
+import logging
 import random
 import re
 import time
@@ -176,7 +177,7 @@ def get_generate_params(state):
 
 def generate_reply(question, state, eos_token=None, stopping_strings=[]):
     if shared.model_name == 'None' or shared.model is None:
-        print("No model is loaded! Select one in the Model tab.")
+        logging.error("No model is loaded! Select one in the Model tab.")
         yield formatted_outputs(question, shared.model_name)
         return
 
@@ -191,11 +192,12 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
     if not shared.is_chat():
         question = apply_extensions('input', question)
 
+    if shared.args.verbose:
+        print(f'\n\n{question}\n--------------------\n')
+
     # If the model is not on transformers, handle it separately and end this
     # function call earlier.
     if shared.model_type in ['rwkv', 'llamacpp']:
-        if shared.args.verbose:
-            print(f'\n\n{question}\n--------------------\n')
 
         try:
             if shared.args.no_stream:
@@ -229,27 +231,11 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
     input_ids = encode(question, add_bos_token=state['add_bos_token'], truncation_length=get_max_prompt_length(state))
     output = input_ids[0]
     cuda = not any((shared.args.cpu, shared.args.deepspeed, shared.args.flexgen))
-    if shared.args.verbose:
-        print(f'\n\n{decode(input_ids[0], state["skip_special_tokens"])}\n--------------------\n')
 
     # Find the eos tokens
     eos_token_ids = [shared.tokenizer.eos_token_id] if shared.tokenizer.eos_token_id is not None else []
     if eos_token is not None:
         eos_token_ids.append(int(encode(eos_token)[0][-1]))
-
-    # Create the StoppingCriteriaList with the stopping strings
-    stopping_criteria_list = transformers.StoppingCriteriaList()
-    for st in (stopping_strings, ast.literal_eval(f"[{state['custom_stopping_strings']}]")):
-        if type(st) is list and len(st) > 0:
-            stopping_criteria_list.append(RegxStoppingCriteria(regx_string_list=st, starting_idx=len(input_ids[0])))
-            break
-
-    # Update generate_params with the eos token and the stopping strings
-    if shared.args.flexgen:
-        generate_params['stop'] = eos_token_ids[-1]
-    else:
-        generate_params['eos_token_id'] = eos_token_ids
-        generate_params['stopping_criteria'] = stopping_criteria_list
 
     # Add the encoded tokens to generate_params
     if shared.soft_prompt:
@@ -264,6 +250,20 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
         generate_params.update({'inputs': input_ids})
         if inputs_embeds is not None:
             generate_params.update({'inputs_embeds': inputs_embeds})
+
+    # Create the StoppingCriteriaList with the stopping strings (needs to be done after tokenizer extensions)
+    stopping_criteria_list = transformers.StoppingCriteriaList()
+    for st in (stopping_strings, ast.literal_eval(f"[{state['custom_stopping_strings']}]")):
+        if type(st) is list and len(st) > 0:
+            stopping_criteria_list.append(RegxStoppingCriteria(regx_string_list=st, starting_idx=len(input_ids[0])))
+            break
+
+    # Update generate_params with the eos token and the stopping strings
+    if shared.args.flexgen:
+        generate_params['stop'] = eos_token_ids[-1]
+    else:
+        generate_params['eos_token_id'] = eos_token_ids
+        generate_params['stopping_criteria'] = stopping_criteria_list
 
     try:
         # Generate the entire reply at once.
