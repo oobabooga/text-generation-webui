@@ -76,7 +76,7 @@ def toggle_text_in_history(name1, name2, mode):
 
 
 def state_modifier(state):
-#    state['stream'] = False
+    state['stream'] = False
     return state
 
 
