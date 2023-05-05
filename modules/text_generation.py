@@ -144,6 +144,7 @@ def stop_everything_event():
 
 def generate_reply(question, state, eos_token=None, stopping_strings=[]):
     generate_func = apply_extensions('custom_generate_reply')
+    state = apply_extensions('state', state)
     if generate_func is None:
         if shared.model_name == 'None' or shared.model is None:
             logging.error("No model is loaded! Select one in the Model tab.")

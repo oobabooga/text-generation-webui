@@ -171,7 +171,6 @@ class Handler(BaseHTTPRequestHandler):
                 'early_stopping': False,
                 'ban_eos_token': False,
                 'skip_special_tokens': True,
-                'stream': not shared.args.no_stream
             }
 
             # fixup absolute 0.0's
@@ -267,8 +266,7 @@ class Handler(BaseHTTPRequestHandler):
                 stopping_strings += standard_stopping_strings
                 req_params['custom_stopping_strings'] = stopping_strings
 
-            shared.args.no_stream = not req_params['stream']
-            if not shared.args.no_stream:
+            if req_params['stream']:
                 shared.args.chat = True
                 # begin streaming
                 chunk = {
@@ -338,7 +336,7 @@ class Handler(BaseHTTPRequestHandler):
                 if buffer_and_continue:
                     continue
 
-                if not shared.args.no_stream:
+                if req_params['stream']:
                     # Streaming
                     new_content = answer[len_seen:]
 
@@ -366,7 +364,7 @@ class Handler(BaseHTTPRequestHandler):
                     self.wfile.write(response.encode('utf-8'))
                     completion_token_count += len(encode(new_content)[0])
 
-            if not shared.args.no_stream:
+            if req_params['stream']:
                 chunk = {
                     "id": cmpl_id,
                     "object": stream_object_type,
