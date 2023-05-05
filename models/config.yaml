@@ -56,3 +56,6 @@ llama-[0-9]*b-4bit$:
 .*raven:
   mode: 'instruct'
   instruction_template: 'RWKV-Raven'
+.*moss-moon.*sft:
+  mode: 'instruct'
+  instruction_template: 'MOSS'
