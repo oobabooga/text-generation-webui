@@ -171,6 +171,7 @@ class Handler(BaseHTTPRequestHandler):
                 'early_stopping': False,
                 'ban_eos_token': False,
                 'skip_special_tokens': True,
+                'stream': not shared.args.no_stream
             }
 
             # fixup absolute 0.0's
