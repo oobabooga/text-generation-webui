@@ -67,7 +67,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send_error(404)
 
 
-def _run_server(port: int, share: bool=False):
+def _run_server(port: int, share: bool = False):
     address = '0.0.0.0' if shared.args.listen else '127.0.0.1'
 
     server = ThreadingHTTPServer((address, port), Handler)

@@ -15,6 +15,7 @@ def my_get(url, **kwargs):
     kwargs.setdefault('allow_redirects', True)
     return requests.api.request('get', 'http://127.0.0.1/', **kwargs)
 
+
 original_get = requests.get
 requests.get = my_get
 import gradio as gr
