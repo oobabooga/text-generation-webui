@@ -337,6 +337,9 @@ def generate_reply_flexgen(question, original_question, seed, state, eos_token=N
 
     t0 = time.time()
     try:
+        if not shared.is_chat():
+            yield question
+
         # Generate the entire reply at once.
         if not state['stream']:
             with torch.no_grad():
@@ -347,6 +350,9 @@ def generate_reply_flexgen(question, original_question, seed, state, eos_token=N
         # Stream the output naively for FlexGen since it doesn't support 'stopping_criteria'
         else:
             for i in range(state['max_new_tokens'] // 8 + 1):
+                if shared.stop_everything:
+                    break
+
                 clear_torch_cache()
                 with torch.no_grad():
                     output = shared.model.generate(**generate_params)[0]
@@ -354,7 +360,7 @@ def generate_reply_flexgen(question, original_question, seed, state, eos_token=N
                 if np.count_nonzero(np.isin(input_ids[0], eos_token_ids)) < np.count_nonzero(np.isin(output, eos_token_ids)):
                     break
 
-                yield get_reply_from_output_ids(output, input_ids, original_question, state)
+                yield get_reply_from_output_ids(output, original_input_ids, original_question, state)
                 input_ids = np.reshape(output, (1, output.shape[0]))
                 generate_params.update({'inputs': input_ids})
 
