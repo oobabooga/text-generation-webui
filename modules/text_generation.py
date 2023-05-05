@@ -21,6 +21,7 @@ def get_max_prompt_length(state):
     max_length = state['truncation_length'] - state['max_new_tokens']
     if shared.soft_prompt:
         max_length -= shared.soft_prompt_tensor.shape[1]
+
     return max_length
 
 
@@ -95,6 +96,7 @@ def fix_gpt4chan(s):
         s = re.sub("--- [0-9]*\n>>[0-9]*\n---", "---", s)
         s = re.sub("--- [0-9]*\n *\n---", "---", s)
         s = re.sub("--- [0-9]*\n\n\n---", "---", s)
+
     return s
 
 
