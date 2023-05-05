@@ -12,6 +12,12 @@ pip3 install -r requirements.txt
 ```
 
 It listens on tcp port 5001 by default. You can use the OPENEDAI_PORT environment variable to change this.
+To enable the basic txt2img Stable Diffusion API integration set: SD_WEBUI_URL.
+
+Example:
+```
+SD_WEBUI_URL=http://127.0.0.1:7861
+```
 
 ### Embeddings (alpha)
 
@@ -69,8 +75,6 @@ const api = new ChatGPTAPI({
 
 ## Compatibility & not so compatibility
 
-What's working:
-
 | API endpoint | tested with | notes |
 | --- | --- | --- |
 | /v1/models | openai.Model.list() | returns the currently loaded model_name and some mock compatibility options |
@@ -78,9 +82,15 @@ What's working:
 | /v1/text_completion | openai.Completion.create() | the most tested, only supports single string input so far |
 | /v1/chat/completions | openai.ChatCompletion.create() | depending on the model, this may add leading linefeeds |
 | /v1/edits | openai.Edit.create() | Assumes an Alpaca type model using ### Instruction/Input/Response |
+| /v1/images/generations | openai.Image.create() | a very basic wrapper calling out to Stable Diffusion, txt2img only |
 | /v1/embeddings | openai.Embedding.create() | Using Sentence Transformer, dimensions are different and may never be directly comparable to openai embeddings. |
 | /v1/moderations | openai.Moderation.create() | does nothing. successfully. |
 | /v1/engines/\*/... completions, embeddings, generate | python-openai v0.25 and earlier | Legacy engines endpoints |
+| /v1/images/edits | openai.Image.create_edit() | not supported |
+| /v1/images/variations | openai.Image.create_variation() | not supported |
+| /v1/audio/\* | openai.Audio.\* | not supported |
+| /v1/files\* | openai.Files.\* | not supported |
+| /v1/fine-tunes\* | openai.FineTune.\* | not supported |
 
 The model name setting is ignored in completions, but you may need to adjust the maximum token length to fit the model (ie. set to <2048 tokens instead of 4096, 8k, etc). To mitigate some of this, the max_tokens value is halved until it is less than truncation_length for the model (typically 2k).
 
@@ -123,7 +133,6 @@ Everything needs OPENAI_API_KEY=dummy set.
 * model changing, esp. something for swapping loras or embedding models
 * consider switching to FastAPI + starlette for SSE (openai SSE seems non-standard)
 * do something about rate limiting or locking requests for completions, most systems will only be able handle a single request at a time before OOM
-* the whole api, images (stable diffusion), audio (whisper), fine-tunes (training), files, etc.
 
 ## Bugs? Feedback? Comments? Pull requests?
 

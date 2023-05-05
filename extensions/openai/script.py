@@ -1,6 +1,7 @@
 import json
 import os
 import time
+import requests
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
 
@@ -111,11 +112,11 @@ class Handler(BaseHTTPRequestHandler):
             shared.args.chat = is_chat
 
     def do_POST_wrap(self):
+        if debug:
+            print(self.headers)  # did you know... python-openai sends your linux kernel & python version?
         content_length = int(self.headers['Content-Length'])
         body = json.loads(self.rfile.read(content_length).decode('utf-8'))
 
-        if debug:
-            print(self.headers)  # did you know... python-openai sends your linux kernel & python version?
         if debug:
             print(body)
 
@@ -508,6 +509,50 @@ class Handler(BaseHTTPRequestHandler):
                     "total_tokens": token_count + completion_token_count
                 }
             }
+
+            response = json.dumps(resp)
+            self.wfile.write(response.encode('utf-8'))
+        elif '/images/generations' in self.path and 'SD_WEBUI_URL' in os.environ:
+            # Stable Diffusion callout wrapper for txt2img
+            # Low effort implementation for compatibility. With only "prompt" being passed and assuming DALL-E
+            # the results will be limited and likely poor. SD has hundreds of models and dozens of settings.
+            # If you want high quality tailored results you should just use Stable Diffusion directly.
+            # it's too general an API to try and shape the result with specific tags like "masterpiece", etc,
+            # Will probably work best with the stock SD models.
+            # SD configuration is beyond the scope of this API.
+            # At this point I will not add the edits and variations endpoints (ie. img2img) because they
+            # require changing the form data handling to accept multipart form data. Perhaps later!
+
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+
+            width, height = [ int(x) for x in default(body, 'size', '1024x1024').split('x') ]  # ignore the restrictions on size
+            response_format = default(body, 'response_format', 'url')  # or b64_json
+            
+            payload = {
+                'prompt': body['prompt'],  # ignore prompt limit of 1000 characters
+                'width': width,
+                'height': height,
+                'batch_size': default(body, 'n', 1)  # ignore the batch limits of max 10
+            }
+
+            resp = {
+                'created': int(time.time()),
+                'data': []
+            }
+
+            # TODO: support SD_WEBUI_AUTH username:password pair.
+            sd_url = f"{os.environ['SD_WEBUI_URL']}/sdapi/v1/txt2img"
+
+            response = requests.post(url=sd_url, json=payload)
+            r = response.json()
+            # r['parameters']...
+            for b64_json in r['images']:
+                if response_format == 'b64_json':
+                    resp['data'].extend([{'b64_json': b64_json}])
+                else:
+                    resp['data'].extend([{'url': f'data:image/png;base64,{b64_json}'}])  # yeah it's lazy. requests.get() will not work with this
 
             response = json.dumps(resp)
             self.wfile.write(response.encode('utf-8'))
