@@ -113,10 +113,13 @@ Once defined in a `script.py`, this function is executed in place of the main ge
 import datetime
 
 def custom_generate_reply(question, original_question, seed, state, eos_token, stopping_strings):
+    cumulative = ''
     for i in range(10):
-        yield f"Counting: {i}..."
+        cumulative += f"Counting: {i}...\n"
+        yield cumulative
 
-    yield f"Done! {str(datetime.datetime.now())}"
+    cumulative += f"Done! {str(datetime.datetime.now())}"
+    yield cumulative
 ```
 
 ## `custom_generate_chat_prompt` example
