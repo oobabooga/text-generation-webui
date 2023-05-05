@@ -114,7 +114,7 @@ def get_download_links_from_huggingface(model, branch, text_only=False):
             is_pytorch = re.match("(pytorch|adapter)_model.*\.bin", fname)
             is_safetensors = re.match(".*\.safetensors", fname)
             is_pt = re.match(".*\.pt", fname)
-            is_ggml = re.match("ggml.*\.bin", fname)
+            is_ggml = re.match(".*ggml.*\.bin", fname)
             is_tokenizer = re.match("(tokenizer|ice).*\.model", fname)
             is_text = re.match(".*\.(txt|json|py|md)", fname) or is_tokenizer
 

@@ -39,7 +39,7 @@ async def run(context):
         'stopping_strings': []
     }
 
-    async with websockets.connect(URI) as websocket:
+    async with websockets.connect(URI, ping_interval=None) as websocket:
         await websocket.send(json.dumps(request))
 
         yield context # Remove this if you just want to see the reply
