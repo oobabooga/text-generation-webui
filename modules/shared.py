@@ -64,6 +64,7 @@ settings = {
         '.*(alpaca|llama|llava)': "LLaMA-Precise",
         '.*pygmalion': 'NovelAI-Storywriter',
         '.*RWKV': 'Naive',
+        '.*moss': 'MOSS',
     },
     'prompts': {
         'default': 'QA',
