@@ -127,7 +127,7 @@ cd text-generation-webui/repositories
 git clone https://github.com/johnsmith0031/alpaca_lora_4bit
 ```
 
-⚠️  I have tested it with the following commit specifically: `9fe5ab364280325f77da15f3541960960961d144`
+⚠️  I have tested it with the following commit specifically: `2f704b93c961bf202937b10aac9322b092afdce0`
 
 3. Install https://github.com/sterlind/GPTQ-for-LLaMa with this command:
 

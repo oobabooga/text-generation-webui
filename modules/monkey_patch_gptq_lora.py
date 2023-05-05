@@ -17,6 +17,7 @@ from modules.GPTQ_loader import find_quantized_model_file
 
 replace_peft_model_with_gptq_lora_model()
 
+
 def load_model_llama(model_name):
     config_path = str(Path(f'{shared.args.model_dir}/{model_name}'))
     model_path = str(find_quantized_model_file(model_name))
