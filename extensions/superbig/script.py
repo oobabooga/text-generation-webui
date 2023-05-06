@@ -4,6 +4,8 @@ import gradio as gr
 
 provider = PseudocontextProvider()
 
+data = ''
+
 def input_modifier(string):
     """
     This function is applied to your text inputs before
