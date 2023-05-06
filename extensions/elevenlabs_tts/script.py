@@ -89,7 +89,7 @@ def output_modifier(string):
     This function is applied to the model outputs.
     """
 
-    global params, wav_idx, streaming_state
+    global params, wav_idx
 
     if not params['activate']:
         return string
