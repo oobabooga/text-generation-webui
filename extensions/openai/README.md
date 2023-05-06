@@ -13,7 +13,7 @@ pip3 install -r requirements.txt
 
 It listens on tcp port 5001 by default. You can use the OPENEDAI_PORT environment variable to change this.
 
-To enable the bare bones image generation (txt2img) Stable Diffusion API integration set: SD_WEBUI_URL.
+To enable the bare bones image generation (txt2img) set: SD_WEBUI_URL to point to your Stable Diffusion API ([Automatic1111](https://github.com/AUTOMATIC1111/stable-diffusion-webui)).
 
 Example:
 ```
