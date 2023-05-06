@@ -23,7 +23,7 @@ class LlamaCppModel:
         params = {
             'model_path': str(path),
             'n_ctx': 2048,
-            'seed': 0,
+            'seed': -1,
             'n_threads': shared.args.threads or None,
             'n_batch': shared.args.n_batch,
             'use_mmap': not shared.args.no_mmap,
