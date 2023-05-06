@@ -3,6 +3,7 @@ import base64
 import copy
 import io
 import json
+import logging
 import re
 from datetime import datetime
 from pathlib import Path
@@ -17,12 +18,20 @@ from modules.text_generation import (encode, generate_reply,
                                      get_max_prompt_length)
 
 
+# Replace multiple string pairs in a string
+def replace_all(text, dic):
+    for i, j in dic.items():
+        text = text.replace(i, j)
+
+    return text
+
+
 def generate_chat_prompt(user_input, state, **kwargs):
     impersonate = kwargs['impersonate'] if 'impersonate' in kwargs else False
     _continue = kwargs['_continue'] if '_continue' in kwargs else False
     also_return_rows = kwargs['also_return_rows'] if 'also_return_rows' in kwargs else False
     is_instruct = state['mode'] == 'instruct'
-    rows = [f"{state['context'].strip()}\n"]
+    rows = [state['context'] if is_instruct else f"{state['context'].strip()}\n"]
     min_rows = 3
 
     # Finding the maximum prompt size
@@ -31,38 +40,50 @@ def generate_chat_prompt(user_input, state, **kwargs):
         chat_prompt_size -= shared.soft_prompt_tensor.shape[1]
 
     max_length = min(get_max_prompt_length(state), chat_prompt_size)
-    if is_instruct:
-        prefix1 = f"{state['name1']}\n"
-        prefix2 = f"{state['name2']}\n"
-    else:
-        prefix1 = f"{state['name1']}: "
-        prefix2 = f"{state['name2']}: "
 
+    # Building the turn templates
+    if 'turn_template' not in state or state['turn_template'] == '':
+        if is_instruct:
+            template = '<|user|>\n<|user-message|>\n<|bot|>\n<|bot-message|>\n'
+        else:
+            template = '<|user|>: <|user-message|>\n<|bot|>: <|bot-message|>\n'
+    else:
+        template = state['turn_template'].replace(r'\n', '\n')
+
+    replacements = {
+        '<|user|>': state['name1'].strip(),
+        '<|bot|>': state['name2'].strip(),
+    }
+
+    user_turn = replace_all(template.split('<|bot|>')[0], replacements)
+    bot_turn = replace_all('<|bot|>' + template.split('<|bot|>')[1], replacements)
+    user_turn_stripped = replace_all(user_turn.split('<|user-message|>')[0], replacements)
+    bot_turn_stripped = replace_all(bot_turn.split('<|bot-message|>')[0], replacements)
+
+    # Building the prompt
     i = len(shared.history['internal']) - 1
     while i >= 0 and len(encode(''.join(rows))[0]) < max_length:
         if _continue and i == len(shared.history['internal']) - 1:
-            rows.insert(1, f"{prefix2}{shared.history['internal'][i][1]}")
+            rows.insert(1, bot_turn_stripped + shared.history['internal'][i][1].strip())
         else:
-            rows.insert(1, f"{prefix2}{shared.history['internal'][i][1].strip()}{state['end_of_turn']}\n")
+            rows.insert(1, bot_turn.replace('<|bot-message|>', shared.history['internal'][i][1].strip()))
 
         string = shared.history['internal'][i][0]
         if string not in ['', '<|BEGIN-VISIBLE-CHAT|>']:
-            this_prefix1 = prefix1.replace('<|round|>', f'{i}')  # for ChatGLM
-            rows.insert(1, f"{this_prefix1}{string.strip()}{state['end_of_turn']}\n")
+            rows.insert(1, replace_all(user_turn, {'<|user-message|>': string.strip(), '<|round|>': str(i)}))
 
         i -= 1
 
     if impersonate:
         min_rows = 2
-        rows.append(f"{prefix1.strip() if not is_instruct else prefix1}")
+        rows.append(user_turn_stripped.rstrip(' '))
     elif not _continue:
         # Adding the user message
         if len(user_input) > 0:
-            this_prefix1 = prefix1.replace('<|round|>', f'{len(shared.history["internal"])}')  # for ChatGLM
-            rows.append(f"{this_prefix1}{user_input}{state['end_of_turn']}\n")
+            rows.append(replace_all(user_turn, {'<|user-message|>': user_input.strip(), '<|round|>': str(len(shared.history["internal"]))}))
 
         # Adding the Character prefix
-        rows.append(apply_extensions("bot_prefix", f"{prefix2.strip() if not is_instruct else prefix2}"))
+        rows.append(apply_extensions("bot_prefix", bot_turn_stripped.rstrip(' ')))
 
     while len(rows) > min_rows and len(encode(''.join(rows))[0]) >= max_length:
         rows.pop(1)
@@ -118,7 +139,7 @@ def extract_message_from_reply(reply, state):
 
 def chatbot_wrapper(text, state, regenerate=False, _continue=False):
     if shared.model_name == 'None' or shared.model is None:
-        print("No model is loaded! Select one in the Model tab.")
+        logging.error("No model is loaded! Select one in the Model tab.")
         yield shared.history['visible']
         return
 
@@ -196,7 +217,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False):
 
 def impersonate_wrapper(text, state):
     if shared.model_name == 'None' or shared.model is None:
-        print("No model is loaded! Select one in the Model tab.")
+        logging.error("No model is loaded! Select one in the Model tab.")
         yield ''
         return
 
@@ -416,7 +437,7 @@ def generate_pfp_cache(character):
 
 def load_character(character, name1, name2, mode):
     shared.character = character
-    context = greeting = end_of_turn = ""
+    context = greeting = turn_template = ""
     greeting_field = 'greeting'
     picture = None
 
@@ -434,9 +455,18 @@ def load_character(character, name1, name2, mode):
 
         file_contents = open(filepath, 'r', encoding='utf-8').read()
         data = json.loads(file_contents) if extension == "json" else yaml.safe_load(file_contents)
-        name2 = data['name'] if 'name' in data else data['char_name']
-        if 'your_name' in data and data['your_name'] != '':
-            name1 = data['your_name']
+
+        # Finding the bot's name
+        for k in ['name', 'bot', '<|bot|>', 'char_name']:
+            if k in data and data[k] != '':
+                name2 = data[k]
+                break
+
+        # Find the user name (if any)
+        for k in ['your_name', 'user', '<|user|>']:
+            if k in data and data[k] != '':
+                name1 = data[k]
+                break
         else:
             name1 = shared.settings['name1']
 
@@ -445,7 +475,9 @@ def load_character(character, name1, name2, mode):
                 data[field] = replace_character_names(data[field], name1, name2)
 
         if 'context' in data:
-            context = f"{data['context'].strip()}\n\n"
+            context = data['context']
+            if mode != 'instruct':
+                context = context.strip() + '\n\n'
         elif "char_persona" in data:
             context = build_pygmalion_style_context(data)
             greeting_field = 'char_greeting'
@@ -456,14 +488,14 @@ def load_character(character, name1, name2, mode):
         if greeting_field in data:
             greeting = data[greeting_field]
 
-        if 'end_of_turn' in data:
-            end_of_turn = data['end_of_turn']
+        if 'turn_template' in data:
+            turn_template = data['turn_template']
 
     else:
         context = shared.settings['context']
         name2 = shared.settings['name2']
         greeting = shared.settings['greeting']
-        end_of_turn = shared.settings['end_of_turn']
+        turn_template = shared.settings['turn_template']
 
     if mode != 'instruct':
         shared.history['internal'] = []
@@ -479,7 +511,7 @@ def load_character(character, name1, name2, mode):
             # Create .json log files since they don't already exist
             save_history(mode)
 
-    return name1, name2, picture, greeting, context, end_of_turn, chat_html_wrapper(shared.history['visible'], name1, name2, mode)
+    return name1, name2, picture, greeting, context, repr(turn_template)[1:-1], chat_html_wrapper(shared.history['visible'], name1, name2, mode)
 
 
 def upload_character(json_file, img, tavern=False):
@@ -501,7 +533,7 @@ def upload_character(json_file, img, tavern=False):
         img = Image.open(io.BytesIO(img))
         img.save(Path(f'characters/{outfile_name}.png'))
 
-    print(f'New character saved to "characters/{outfile_name}.json".')
+    logging.info(f'New character saved to "characters/{outfile_name}.json".')
     return outfile_name
 
 
@@ -525,6 +557,6 @@ def upload_your_profile_picture(img, name1, name2, mode):
     else:
         img = make_thumbnail(img)
         img.save(Path('cache/pfp_me.png'))
-        print('Profile picture saved to "cache/pfp_me.png"')
+        logging.info('Profile picture saved to "cache/pfp_me.png"')
 
     return chat_html_wrapper(shared.history['visible'], name1, name2, mode, reset_cache=True)

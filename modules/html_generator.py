@@ -49,7 +49,22 @@ def convert_to_markdown(string):
     string = string.replace('\\end{code}', '```')
     string = re.sub(r"(.)```", r"\1\n```", string)
 
-    string = fix_newlines(string)
+    result = ''
+    is_code = False
+    for line in string.split('\n'):
+        if line.lstrip(' ').startswith('```'):
+            is_code = not is_code
+
+        result += line
+        if is_code:
+            result += '\n'
+        else:
+            result += '\n\n'
+
+    if is_code:
+        result = result + '```'  # Unfinished code block
+
+    string = result.strip()
     return markdown.markdown(string, extensions=['fenced_code'])
 
 
