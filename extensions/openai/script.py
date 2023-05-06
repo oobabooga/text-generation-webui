@@ -515,12 +515,13 @@ class Handler(BaseHTTPRequestHandler):
             # Stable Diffusion callout wrapper for txt2img
             # Low effort implementation for compatibility. With only "prompt" being passed and assuming DALL-E
             # the results will be limited and likely poor. SD has hundreds of models and dozens of settings.
-            # If you want high quality tailored results you should just use Stable Diffusion directly.
+            # If you want high quality tailored results you should just use the Stable Diffusion API directly.
             # it's too general an API to try and shape the result with specific tags like "masterpiece", etc,
             # Will probably work best with the stock SD models.
             # SD configuration is beyond the scope of this API.
             # At this point I will not add the edits and variations endpoints (ie. img2img) because they
-            # require changing the form data handling to accept multipart form data. Perhaps later!
+            # require changing the form data handling to accept multipart form data, also to properly support
+            # url return types will require file management and a web serving files... Perhaps later!
 
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')

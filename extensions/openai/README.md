@@ -12,7 +12,8 @@ pip3 install -r requirements.txt
 ```
 
 It listens on tcp port 5001 by default. You can use the OPENEDAI_PORT environment variable to change this.
-To enable the basic txt2img Stable Diffusion API integration set: SD_WEBUI_URL.
+
+To enable the bare bones image generation (txt2img) Stable Diffusion API integration set: SD_WEBUI_URL.
 
 Example:
 ```
@@ -82,7 +83,7 @@ const api = new ChatGPTAPI({
 | /v1/text_completion | openai.Completion.create() | the most tested, only supports single string input so far |
 | /v1/chat/completions | openai.ChatCompletion.create() | depending on the model, this may add leading linefeeds |
 | /v1/edits | openai.Edit.create() | Assumes an Alpaca type model using ### Instruction/Input/Response |
-| /v1/images/generations | openai.Image.create() | a very basic wrapper calling out to Stable Diffusion, txt2img only |
+| /v1/images/generations | openai.Image.create() | Bare bones, no model configuration, response_format='b64_json' only. |
 | /v1/embeddings | openai.Embedding.create() | Using Sentence Transformer, dimensions are different and may never be directly comparable to openai embeddings. |
 | /v1/moderations | openai.Moderation.create() | does nothing. successfully. |
 | /v1/engines/\*/... completions, embeddings, generate | python-openai v0.25 and earlier | Legacy engines endpoints |
