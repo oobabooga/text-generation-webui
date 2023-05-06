@@ -28,6 +28,8 @@
 
 .message-body p {
     font-size: 15px !important;
+    line-height: 1.75 !important;
+    margin-bottom: 1.25em !important;
 }
 
 .message-body li {
@@ -70,4 +72,12 @@
 
 .dark .chat .assistant-message {
   background-color: #374151;
+}
+
+code {
+  background-color: white !important;
+}
+
+.dark code {
+  background-color: #1a212f !important;
 }
