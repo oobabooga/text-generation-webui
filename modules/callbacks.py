@@ -35,6 +35,22 @@ class _SentinelTokenStoppingCriteria(transformers.StoppingCriteria):
 
         return False
 
+class StoppingStringCriteria(transformers.StoppingCriteria):
+    def __init__(self, stopping_string_list: list, starting_idx: int):
+        import re
+        from .text_generation import decode
+        self.stopping_string_list = stopping_string_list
+        self.decode = decode
+        self.starting_idx = starting_idx
+
+    def __call__(self, input_ids: torch.LongTensor, _scores: torch.FloatTensor):
+        output_ids = input_ids[0][self.starting_idx:]
+        output_text = self.decode(output_ids)
+        for stopping_string in self.stopping_string_list:
+            if stopping_string in output_text:
+                return True
+        return False
+
 class RegxStoppingCriteria(transformers.StoppingCriteria):
     def __init__(self, regx_string_list: list, starting_idx: int):
         import re

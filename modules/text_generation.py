@@ -11,6 +11,7 @@ import transformers
 
 import modules.shared as shared
 from modules.callbacks import (Iteratorize, Stream,
+                               StoppingStringCriteria,
                                RegxStoppingCriteria,
                                _SentinelTokenStoppingCriteria)
 from modules.extensions import apply_extensions
@@ -255,7 +256,10 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
     stopping_criteria_list = transformers.StoppingCriteriaList()
     for st in (stopping_strings, ast.literal_eval(f"[{state['custom_stopping_strings']}]")):
         if type(st) is list and len(st) > 0:
-            stopping_criteria_list.append(RegxStoppingCriteria(regx_string_list=st, starting_idx=len(input_ids[0])))
+            if shared.args.regx_stopping_string:
+                stopping_criteria_list.append(RegxStoppingCriteria(regx_string_list=st, starting_idx=len(input_ids[0])))
+            else:
+                stopping_criteria_list.append(StoppingStringCriteria(stopping_string_list=st, starting_idx=len(input_ids[0])))
             break
 
     # Update generate_params with the eos token and the stopping strings
