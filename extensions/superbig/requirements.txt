@@ -1,0 +1,10 @@
+beautifulsoup4==4.12.2
+chromadb==0.3.18
+gradio==3.28.3
+hnswlib==0.7.0
+lxml==4.9.2
+posthog==2.4.2
+Requests==2.30.0
+sentence_transformers==2.2.2
+torch==2.0.0
+urlextract==1.8.0

@@ -1,1 +1,1 @@
-from .provider import PseudocontextProvider, make_instruct_provider
+from .provider import PseudocontextProvider
