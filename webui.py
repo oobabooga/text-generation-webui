@@ -130,7 +130,8 @@ def update_dependencies():
             run_cmd("conda install -y -k gxx_linux-64=11.2.0", environment=True)
 
     # Compile and install GPTQ-for-LLaMa
-    os.rename("setup_cuda.py", "setup.py")
+    if os.path.exists('setup_cuda.py'):
+        os.rename("setup_cuda.py", "setup.py")
     run_cmd("python -m pip install .", environment=True)
     
     # Wheel installation can fail while in the build directory of a package with the same name
