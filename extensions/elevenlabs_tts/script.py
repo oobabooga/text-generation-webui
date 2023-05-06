@@ -1,8 +1,8 @@
 import re
 from pathlib import Path
 
-import gradio as gr
 import elevenlabs
+import gradio as gr
 
 from modules import chat, shared
 from modules.html_generator import chat_html_wrapper
@@ -34,6 +34,7 @@ def refresh_voices_dd():
 def remove_tts_from_history(name1, name2, mode):
     for i, entry in enumerate(shared.history['internal']):
         shared.history['visible'][i] = [shared.history['visible'][i][0], entry[1]]
+
     return chat_html_wrapper(shared.history['visible'], name1, name2, mode)
 
 
@@ -50,6 +51,7 @@ def toggle_text_in_history(name1, name2, mode):
                 shared.history['visible'][i] = [
                     shared.history['visible'][i][0], f"{visible_reply.split('</audio>')[0]}</audio>"
                 ]
+
     return chat_html_wrapper(shared.history['visible'], name1, name2, mode)
 
 
@@ -75,8 +77,10 @@ def input_modifier(string):
             shared.history['visible'][-1][0],
             shared.history['visible'][-1][1].replace('controls autoplay>', 'controls>')
         ]
+
     if params['activate']:
         shared.processing_message = "*Is recording a voice message...*"
+
     return string
 
 
@@ -85,7 +89,7 @@ def output_modifier(string):
     This function is applied to the model outputs.
     """
 
-    global params, wav_idx
+    global params, wav_idx, streaming_state
 
     if not params['activate']:
         return string
@@ -96,7 +100,6 @@ def output_modifier(string):
     string = string.replace('“', '')
     string = string.replace('\n', ' ')
     string = string.strip()
-
     if string == '':
         string = 'empty reply, try regenerating'
 
@@ -128,16 +131,20 @@ def ui():
     if not voices:
         voices = refresh_voices()
         params['selected_voice'] = voices[0]
+
     # Gradio elements
     with gr.Row():
         activate = gr.Checkbox(value=params['activate'], label='Activate TTS')
         autoplay = gr.Checkbox(value=params['autoplay'], label='Play TTS automatically')
         show_text = gr.Checkbox(value=params['show_text'], label='Show message text under audio player')
+
     with gr.Row():
         voice = gr.Dropdown(value=params['selected_voice'], choices=voices, label='TTS Voice')
         refresh = gr.Button(value='Refresh')
+
     with gr.Row():
         api_key = gr.Textbox(placeholder="Enter your API key.", label='API Key')
+
     with gr.Row():
         convert = gr.Button('Permanently replace audios with the message texts')
         convert_cancel = gr.Button('Cancel', visible=False)
@@ -156,11 +163,12 @@ def ui():
     convert_confirm.click(
         remove_tts_from_history, [shared.gradio[k] for k in ['name1', 'name2', 'mode']], shared.gradio['display']
     )
-    convert_confirm.click(lambda: chat.save_history(timestamp=False), [], [], show_progress=False)
+    convert_confirm.click(chat.save_history, shared.gradio['mode'], [], show_progress=False)
     convert_cancel.click(
         lambda: [gr.update(visible=False), gr.update(visible=True),
                  gr.update(visible=False)], None, convert_arr
     )
+
     # Event functions to update the parameters in the backend
     activate.change(lambda x: params.update({'activate': x}), activate, None)
     voice.change(lambda x: params.update({'selected_voice': x}), voice, None)
@@ -172,6 +180,6 @@ def ui():
     show_text.change(
         toggle_text_in_history, [shared.gradio[k] for k in ['name1', 'name2', 'mode']], shared.gradio['display']
     )
-    show_text.change(lambda: chat.save_history(timestamp=False), [], [], show_progress=False)
+    show_text.change(chat.save_history, shared.gradio['mode'], [], show_progress=False)
     # Event functions to update the parameters in the backend
     autoplay.change(lambda x: params.update({"autoplay": x}), autoplay, None)
