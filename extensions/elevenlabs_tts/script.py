@@ -17,7 +17,6 @@ params = {
 
 voices = None
 wav_idx = 0
-streaming_state = shared.args.no_stream  # remember if chat streaming was enabled
 
 
 def refresh_voices():
@@ -60,6 +59,11 @@ def remove_surrounded_chars(string):
     return re.sub('\*[^\*]*?(\*|$)', '', string)
 
 
+def state_modifier(state):
+    state['stream'] = False
+    return state
+
+
 def input_modifier(string):
     """
     This function is applied to your text inputs before
@@ -73,7 +77,6 @@ def input_modifier(string):
         ]
     if params['activate']:
         shared.processing_message = "*Is recording a voice message...*"
-    shared.args.no_stream = True  # Disable streaming
     return string
 
 
@@ -117,7 +120,6 @@ def output_modifier(string):
         string += f'\n\n{original_string}'
 
     shared.processing_message = "*Is typing...*"
-    shared.args.no_stream = streaming_state  # restore the streaming option
     return string
 
 
