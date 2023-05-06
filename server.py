@@ -43,56 +43,11 @@ import torch
 import yaml
 from PIL import Image
 import modules.extensions as extensions_module
-from modules import chat, shared, training, ui
+from modules import chat, shared, training, ui, utils
 from modules.html_generator import chat_html_wrapper
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, load_soft_prompt, unload_model
-from modules.text_generation import (encode, generate_reply,
-                                     stop_everything_event)
-
-
-def get_available_models():
-    if shared.args.flexgen:
-        return sorted([re.sub('-np$', '', item.name) for item in list(Path(f'{shared.args.model_dir}/').glob('*')) if item.name.endswith('-np')], key=str.lower)
-    else:
-        return sorted([re.sub('.pth$', '', item.name) for item in list(Path(f'{shared.args.model_dir}/').glob('*')) if not item.name.endswith(('.txt', '-np', '.pt', '.json', '.yaml'))], key=str.lower)
-
-
-def get_available_presets():
-    return sorted(set((k.stem for k in Path('presets').glob('*.txt'))), key=str.lower)
-
-
-def get_available_prompts():
-    prompts = []
-    prompts += sorted(set((k.stem for k in Path('prompts').glob('[0-9]*.txt'))), key=str.lower, reverse=True)
-    prompts += sorted(set((k.stem for k in Path('prompts').glob('*.txt'))), key=str.lower)
-    prompts += ['None']
-    return prompts
-
-
-def get_available_characters():
-    paths = (x for x in Path('characters').iterdir() if x.suffix in ('.json', '.yaml', '.yml'))
-    return ['None'] + sorted(set((k.stem for k in paths if k.stem != "instruction-following")), key=str.lower)
-
-
-def get_available_instruction_templates():
-    path = "characters/instruction-following"
-    paths = []
-    if os.path.exists(path):
-        paths = (x for x in Path(path).iterdir() if x.suffix in ('.json', '.yaml', '.yml'))
-    return ['None'] + sorted(set((k.stem for k in paths)), key=str.lower)
-
-
-def get_available_extensions():
-    return sorted(set(map(lambda x: x.parts[1], Path('extensions').glob('*/script.py'))), key=str.lower)
-
-
-def get_available_softprompts():
-    return ['None'] + sorted(set((k.stem for k in Path('softprompts').glob('*.zip'))), key=str.lower)
-
-
-def get_available_loras():
-    return sorted([item.name for item in list(Path(shared.args.lora_dir).glob('*')) if not item.name.endswith(('.txt', '-np', '.pt', '.json'))], key=str.lower)
+from modules.text_generation import encode, generate_reply, stop_everything_event
 
 
 def load_model_wrapper(selected_model):
@@ -324,13 +279,13 @@ def create_model_menus():
             with gr.Row():
                 with gr.Column():
                     with gr.Row():
-                        shared.gradio['model_menu'] = gr.Dropdown(choices=get_available_models(), value=shared.model_name, label='Model')
-                        ui.create_refresh_button(shared.gradio['model_menu'], lambda: None, lambda: {'choices': get_available_models()}, 'refresh-button')
+                        shared.gradio['model_menu'] = gr.Dropdown(choices=utils.get_available_models(), value=shared.model_name, label='Model')
+                        ui.create_refresh_button(shared.gradio['model_menu'], lambda: None, lambda: {'choices': utils.get_available_models()}, 'refresh-button')
 
                 with gr.Column():
                     with gr.Row():
-                        shared.gradio['lora_menu'] = gr.Dropdown(multiselect=True, choices=get_available_loras(), value=shared.lora_names, label='LoRA(s)')
-                        ui.create_refresh_button(shared.gradio['lora_menu'], lambda: None, lambda: {'choices': get_available_loras(), 'value': shared.lora_names}, 'refresh-button')
+                        shared.gradio['lora_menu'] = gr.Dropdown(multiselect=True, choices=utils.get_available_loras(), value=shared.lora_names, label='LoRA(s)')
+                        ui.create_refresh_button(shared.gradio['lora_menu'], lambda: None, lambda: {'choices': utils.get_available_loras(), 'value': shared.lora_names}, 'refresh-button')
 
         with gr.Column():
             with gr.Row():
@@ -411,8 +366,8 @@ def create_settings_menus(default_preset):
     with gr.Row():
         with gr.Column():
             with gr.Row():
-                shared.gradio['preset_menu'] = gr.Dropdown(choices=get_available_presets(), value=default_preset if not shared.args.flexgen else 'Naive', label='Generation parameters preset')
-                ui.create_refresh_button(shared.gradio['preset_menu'], lambda: None, lambda: {'choices': get_available_presets()}, 'refresh-button')
+                shared.gradio['preset_menu'] = gr.Dropdown(choices=utils.get_available_presets(), value=default_preset if not shared.args.flexgen else 'Naive', label='Generation parameters preset')
+                ui.create_refresh_button(shared.gradio['preset_menu'], lambda: None, lambda: {'choices': utils.get_available_presets()}, 'refresh-button')
         with gr.Column():
             shared.gradio['seed'] = gr.Number(value=shared.settings['seed'], label='Seed (-1 for random)')
 
@@ -459,8 +414,8 @@ def create_settings_menus(default_preset):
 
     with gr.Accordion('Soft prompt', open=False):
         with gr.Row():
-            shared.gradio['softprompts_menu'] = gr.Dropdown(choices=get_available_softprompts(), value='None', label='Soft prompt')
-            ui.create_refresh_button(shared.gradio['softprompts_menu'], lambda: None, lambda: {'choices': get_available_softprompts()}, 'refresh-button')
+            shared.gradio['softprompts_menu'] = gr.Dropdown(choices=utils.get_available_softprompts(), value='None', label='Soft prompt')
+            ui.create_refresh_button(shared.gradio['softprompts_menu'], lambda: None, lambda: {'choices': utils.get_available_softprompts()}, 'refresh-button')
 
         gr.Markdown('Upload a soft prompt (.zip format):')
         with gr.Row():
@@ -547,7 +502,7 @@ def create_interface():
                     shared.gradio['Clear history-cancel'] = gr.Button('Cancel', visible=False)
 
                 shared.gradio['mode'] = gr.Radio(choices=['cai-chat', 'chat', 'instruct'], value=shared.settings['mode'], label='Mode')
-                shared.gradio['instruction_template'] = gr.Dropdown(choices=get_available_instruction_templates(), label='Instruction template', value='None', visible=shared.settings['mode'] == 'instruct', info='Change this according to the model/LoRA that you are using.')
+                shared.gradio['instruction_template'] = gr.Dropdown(choices=utils.get_available_instruction_templates(), label='Instruction template', value='None', visible=shared.settings['mode'] == 'instruct', info='Change this according to the model/LoRA that you are using.')
 
             with gr.Tab('Character', elem_id='chat-settings'):
                 with gr.Row():
@@ -563,8 +518,8 @@ def create_interface():
                         shared.gradio['your_picture'] = gr.Image(label='Your picture', type='pil', value=Image.open(Path('cache/pfp_me.png')) if Path('cache/pfp_me.png').exists() else None)
 
                 with gr.Row():
-                    shared.gradio['character_menu'] = gr.Dropdown(choices=get_available_characters(), label='Character', elem_id='character-menu')
-                    ui.create_refresh_button(shared.gradio['character_menu'], lambda: None, lambda: {'choices': get_available_characters()}, 'refresh-button')
+                    shared.gradio['character_menu'] = gr.Dropdown(choices=utils.get_available_characters(), label='Character', elem_id='character-menu')
+                    ui.create_refresh_button(shared.gradio['character_menu'], lambda: None, lambda: {'choices': utils.get_available_characters()}, 'refresh-button')
 
                 with gr.Row():
                     with gr.Tab('Chat history'):
@@ -634,8 +589,8 @@ def create_interface():
                         gr.HTML('<div style="padding-bottom: 13px"></div>')
                         shared.gradio['max_new_tokens'] = gr.Slider(minimum=shared.settings['max_new_tokens_min'], maximum=shared.settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=shared.settings['max_new_tokens'])
                         with gr.Row():
-                            shared.gradio['prompt_menu'] = gr.Dropdown(choices=get_available_prompts(), value='None', label='Prompt')
-                            ui.create_refresh_button(shared.gradio['prompt_menu'], lambda: None, lambda: {'choices': get_available_prompts()}, 'refresh-button')
+                            shared.gradio['prompt_menu'] = gr.Dropdown(choices=utils.get_available_prompts(), value='None', label='Prompt')
+                            ui.create_refresh_button(shared.gradio['prompt_menu'], lambda: None, lambda: {'choices': utils.get_available_prompts()}, 'refresh-button')
 
                         shared.gradio['save_prompt'] = gr.Button('Save prompt')
                         shared.gradio['count_tokens'] = gr.Button('Count tokens')
@@ -664,8 +619,8 @@ def create_interface():
                         with gr.Row():
                             with gr.Column():
                                 with gr.Row():
-                                    shared.gradio['prompt_menu'] = gr.Dropdown(choices=get_available_prompts(), value='None', label='Prompt')
-                                    ui.create_refresh_button(shared.gradio['prompt_menu'], lambda: None, lambda: {'choices': get_available_prompts()}, 'refresh-button')
+                                    shared.gradio['prompt_menu'] = gr.Dropdown(choices=utils.get_available_prompts(), value='None', label='Prompt')
+                                    ui.create_refresh_button(shared.gradio['prompt_menu'], lambda: None, lambda: {'choices': utils.get_available_prompts()}, 'refresh-button')
 
                             with gr.Column():
                                 shared.gradio['status'] = gr.Markdown('')
@@ -705,7 +660,7 @@ def create_interface():
 
             gr.Markdown("*Experimental*")
             shared.gradio['interface_modes_menu'] = gr.Dropdown(choices=modes, value=current_mode, label="Mode")
-            shared.gradio['extensions_menu'] = gr.CheckboxGroup(choices=get_available_extensions(), value=shared.args.extensions, label="Available extensions")
+            shared.gradio['extensions_menu'] = gr.CheckboxGroup(choices=utils.get_available_extensions(), value=shared.args.extensions, label="Available extensions")
             shared.gradio['bool_menu'] = gr.CheckboxGroup(choices=bool_list, value=bool_active, label="Boolean command-line flags")
             shared.gradio['reset_interface'] = gr.Button("Apply and restart the interface")
 
@@ -869,7 +824,7 @@ if __name__ == "__main__":
             shared.settings[item] = new_settings[item]
 
     # Default extensions
-    extensions_module.available_extensions = get_available_extensions()
+    extensions_module.available_extensions = utils.get_available_extensions()
     if shared.is_chat():
         for extension in shared.settings['chat_default_extensions']:
             shared.args.extensions = shared.args.extensions or []
@@ -881,7 +836,7 @@ if __name__ == "__main__":
             if extension not in shared.args.extensions:
                 shared.args.extensions.append(extension)
 
-    available_models = get_available_models()
+    available_models = utils.get_available_models()
 
     # Model defined through --model
     if shared.args.model is not None:
