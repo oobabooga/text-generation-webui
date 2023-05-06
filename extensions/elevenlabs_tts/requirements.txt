@@ -1,5 +1,1 @@
-<<<<<<< HEAD
 elevenlabs==0.2.*
-=======
-elevenlabslib==0.6.*
->>>>>>> 8a4e0af (Major refactor to use official API)
