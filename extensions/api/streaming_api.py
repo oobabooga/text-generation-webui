@@ -39,6 +39,9 @@ async def _handle_connection(websocket, path):
             else:
                 to_send = a[0][skip_index:]
 
+            if to_send.endswith("�"):
+                continue
+
             await websocket.send(json.dumps({
                 'event': 'text_stream',
                 'message_num': message_num,
