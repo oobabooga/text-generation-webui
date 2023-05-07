@@ -446,7 +446,7 @@ def load_character(character, name1, name2, mode):
         Path("cache/pfp_character.png").unlink()
 
     if character != 'None':
-        folder = 'characters' if not mode == 'instruct' else 'characters/instruction-following'
+        folder = 'characters' if mode != 'instruct' else 'characters/instruction-following'
         picture = generate_pfp_cache(character)
         for extension in ["yml", "yaml", "json"]:
             filepath = Path(f'{folder}/{character}.{extension}')
