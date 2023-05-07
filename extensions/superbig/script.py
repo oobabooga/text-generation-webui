@@ -1,11 +1,12 @@
-import datetime
 import re
 import textwrap
+from urllib.request import urlopen
 
 import chromadb
 import gradio as gr
 import posthog
 import torch
+from bs4 import BeautifulSoup
 from chromadb.config import Settings
 from modules import shared
 from sentence_transformers import SentenceTransformer
@@ -68,10 +69,40 @@ collector = ChromaCollector(embedder)
 
 def feed_data_into_collector(corpus):
     global collector
+
+    cumulative = ''
     chunk_len = 700
+    cumulative += "Breaking the input dataset...\n\n"
+    yield cumulative
     data_chunks = [corpus[i:i + chunk_len] for i in range(0, len(corpus), chunk_len)]
+    cumulative += f"{len(data_chunks)} chunks have been found.\n\nAdding the chunks to the database...\n\n"
+    yield cumulative
     collector.clear()
     collector.add(data_chunks)
+    cumulative += "Done."
+    yield cumulative
+
+
+def feed_file_into_collector(file):
+    yield 'Reading the input dataset...\n\n'
+    text = file.decode('utf-8')
+    for i in feed_data_into_collector(text):
+        yield i
+
+
+def feed_url_into_collector(url):
+    yield 'Loading the URL...'
+    html = urlopen(url).read()
+    soup = BeautifulSoup(html, features="html.parser")
+    for script in soup(["script", "style"]):
+        script.extract()
+
+    text = soup.get_text()
+    lines = (line.strip() for line in text.splitlines())
+    chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+    text = '\n\n'.join(chunk for chunk in chunks if chunk)
+    for i in feed_data_into_collector(text):
+        yield i
 
 
 def input_modifier(string):
@@ -133,11 +164,23 @@ def ui():
         # Chat mode has to be handled differently, probably using a custom_generate_chat_prompt
         pass
     else:
-        data_input = gr.Textbox(lines=20, label='Input data', info='Paste your input data below and then click on Apply before generating.')
         with gr.Row():
-            update = gr.Button('Apply')
-            last_updated = gr.Markdown()
+            with gr.Column():
+                with gr.Tab("Text input"):
+                    data_input = gr.Textbox(lines=20, label='Input data')
+                    update_data = gr.Button('Apply')
 
-        update.click(
-            feed_data_into_collector, data_input, None).then(
-            lambda: "Last updated on " + str(datetime.datetime.now()), None, last_updated, show_progress=False)
+                with gr.Tab("URL input"):
+                    url_input = gr.Textbox(lines=1, label='Input URL')
+                    update_url = gr.Button('Apply')
+
+                with gr.Tab("File input"):
+                    file_input = gr.File(label='Input file', type='binary')
+                    update_file = gr.Button('Apply')
+
+            with gr.Column():
+                last_updated = gr.Markdown()
+
+        update_data.click(feed_data_into_collector, data_input, last_updated, show_progress=False)
+        update_url.click(feed_url_into_collector, url_input, last_updated, show_progress=False)
+        update_file.click(feed_file_into_collector, file_input, last_updated, show_progress=False)
