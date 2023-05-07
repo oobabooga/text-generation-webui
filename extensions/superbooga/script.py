@@ -126,9 +126,9 @@ def feed_url_into_collector(urls, chunk_len):
 
 def apply_settings(_chunk_count):
     global chunk_count
-    chunk_count = _chunk_count
+    chunk_count = int(_chunk_count)
     settings_to_display = {
-        'chunk_count': int(chunk_count),
+        'chunk_count': chunk_count,
     }
     yield f"The following settings are now active: {str(settings_to_display)}"
 
