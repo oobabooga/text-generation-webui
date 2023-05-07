@@ -69,8 +69,9 @@ settings = {
     'prompts': {
         'default': 'QA',
         '.*(gpt4chan|gpt-4chan|4chan)': 'GPT-4chan',
-        '.*oasst': 'Open Assistant',
+        '.*(oasst|stablelm-7b-sft-v7-epoch-3)': 'Open Assistant',
         '.*(alpac|dolly)': "Alpaca",
+        '.*mpt-.*instruct': "Alpaca",
         "(?!.*v0)(?!.*1.1)(?!.*1_1)(?!.*stable).*vicuna": "Vicuna v0",
         ".*vicuna.*v0": "Vicuna v0",
         ".*vicuna.*(1.1|1_1)": "Vicuna v1.1",
@@ -83,6 +84,8 @@ settings = {
         ".*galactica.*-v2": "Galactica v2",
         "(?!.*finetuned)(?!.*-v2).*galactica": "Galactica",
         ".*baize": "Baize",
+        ".*mpt-.*instruct": "Alpaca",
+        ".*mpt-.*chat": "MPT-Chat",
     },
     'lora_prompts': {
         'default': 'QA',

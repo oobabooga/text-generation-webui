@@ -37,9 +37,10 @@
   groupsize: 128
 .*(gr1024|1024g|groupsize1024):
   groupsize: 1024
-.*(oasst-sft-1-pythia-12b|oasst-sft-6-llama-30b):
+.*(oasst|stablelm-7b-sft-v7-epoch-3):
   mode: 'instruct'
   instruction_template: 'Open Assistant'
+  skip_special_tokens: false
 (?!.*v0)(?!.*1.1)(?!.*1_1)(?!.*stable).*vicuna:
   mode: 'instruct'
   instruction_template: 'Vicuna-v0'
@@ -60,7 +61,7 @@
   instruction_template: 'Alpaca'
   wbits: 4
   groupsize: 128
-.*(galactica|oasst):
+.*galactica:
   skip_special_tokens: false
 .*dolly-v[0-9]-[0-9]*b:
   mode: 'instruct'
@@ -113,3 +114,9 @@
 .*baize:
   mode: 'instruct'
   instruction_template: 'Baize'
+.*mpt-.*instruct:
+  mode: 'instruct'
+  instruction_template: 'Alpaca'
+.*mpt-.*chat:
+  mode: 'instruct'
+  instruction_template: 'MPT-Chat'
