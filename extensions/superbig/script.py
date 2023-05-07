@@ -64,7 +64,6 @@ class SentenceTransformerEmbedder(Embedder):
 
 embedder = SentenceTransformerEmbedder()
 collector = ChromaCollector(embedder)
-global_data = ''
 
 
 def feed_data_into_collector(corpus):
@@ -86,7 +85,6 @@ def input_modifier(string):
         user_input = ''
 
     # Get the 5 most similar chunks
-    feed_data_into_collector(global_data)
     results = collector.get(user_input, n_results=5)
 
     # Make the replacements
@@ -141,5 +139,5 @@ def ui():
             last_updated = gr.Markdown()
 
         update.click(
-            lambda x: globals().update(global_data=x), data_input, None).then(
+            feed_data_into_collector, data_input, None).then(
             lambda: "Last updated on " + str(datetime.datetime.now()), None, last_updated, show_progress=False)
