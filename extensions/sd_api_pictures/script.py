@@ -75,7 +75,6 @@ if params['manage_VRAM']:
 samplers = ['DDIM', 'DPM++ 2M Karras']  # TODO: get the availible samplers with http://{address}}/sdapi/v1/samplers
 SD_models = ['NeverEndingDream']  # TODO: get with http://{address}}/sdapi/v1/sd-models and allow user to select
 
-streaming_state = shared.args.no_stream  # remember if chat streaming was enabled
 picture_response = False  # specifies if the next model response should appear as a picture
 
 def remove_surrounded_chars(string):
@@ -90,6 +89,13 @@ def triggers_are_in(string):
     # a whole word of image|pic|picture|photo|snap|snapshot|selfie|meme(s),
     # (?aims) are regex parser flags
     return bool(re.search('(?aims)(send|mail|message|me)\\b.+?\\b(image|pic(ture)?|photo|snap(shot)?|selfie|meme)s?\\b', string))
+
+
+def state_modifier(state):
+    if picture_response:
+        state['stream'] = False
+
+    return state
 
 
 def input_modifier(string):
@@ -218,14 +224,13 @@ def bot_prefix_modifier(string):
 
 
 def toggle_generation(*args):
-    global picture_response, shared, streaming_state
+    global picture_response, shared
 
     if not args:
         picture_response = not picture_response
     else:
         picture_response = args[0]
 
-    shared.args.no_stream = True if picture_response else streaming_state  # Disable streaming cause otherwise the SD-generated picture would return as a dud
     shared.processing_message = "*Is sending a picture...*" if picture_response else "*Is typing...*"
 
 
