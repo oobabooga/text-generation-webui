@@ -92,18 +92,25 @@ def feed_file_into_collector(file, chunk_len, chunk_count):
         yield i
 
 
-def feed_url_into_collector(url, chunk_len, chunk_count):
-    yield 'Loading the URL...'
-    html = urlopen(url).read()
-    soup = BeautifulSoup(html, features="html.parser")
-    for script in soup(["script", "style"]):
-        script.extract()
+def feed_url_into_collector(urls, chunk_len, chunk_count):
+    urls = urls.strip().split('\n')
+    all_text = ''
+    cumulative = ''
+    for url in urls:
+        cumulative += f'Loading {url}...\n\n'
+        yield cumulative
+        html = urlopen(url).read()
+        soup = BeautifulSoup(html, features="html.parser")
+        for script in soup(["script", "style"]):
+            script.extract()
 
-    text = soup.get_text()
-    lines = (line.strip() for line in text.splitlines())
-    chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
-    text = '\n\n'.join(chunk for chunk in chunks if chunk)
-    for i in feed_data_into_collector(text, chunk_len, chunk_count):
+        text = soup.get_text()
+        lines = (line.strip() for line in text.splitlines())
+        chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+        text = '\n\n'.join(chunk for chunk in chunks if chunk)
+        all_text += text
+
+    for i in feed_data_into_collector(all_text, chunk_len, chunk_count):
         yield i
 
 
@@ -173,7 +180,7 @@ def ui():
                     update_data = gr.Button('Apply')
 
                 with gr.Tab("URL input"):
-                    url_input = gr.Textbox(lines=1, label='Input URL')
+                    url_input = gr.Textbox(lines=10, label='Input URL', info='Enter one or more URLs separated by newline characters')
                     update_url = gr.Button('Apply')
 
                 with gr.Tab("File input"):
@@ -182,7 +189,7 @@ def ui():
 
                 with gr.Row():
                     chunk_len = gr.Number(value=700, label='Chunk length', info='In characters, not tokens')
-                    chunk_count  = gr.Number(value=5, label='Chunk count', info='The number of closest-matching chunks to include in the prompt')
+                    chunk_count = gr.Number(value=5, label='Chunk count', info='The number of closest-matching chunks to include in the prompt')
 
             with gr.Column():
                 last_updated = gr.Markdown()
