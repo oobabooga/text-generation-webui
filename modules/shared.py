@@ -86,6 +86,7 @@ settings = {
         ".*baize": "Baize",
         ".*mpt-.*instruct": "Alpaca",
         ".*mpt-.*chat": "MPT-Chat",
+        "(?!.*-flan-)(?!.*-t5-).*lamini-": "Alpaca",
     },
     'lora_prompts': {
         'default': 'QA',

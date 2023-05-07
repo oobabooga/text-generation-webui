@@ -53,7 +53,8 @@
         "(?!.*finetuned)(?!.*-v2).*galactica": "Galactica",
         ".*baize": "Baize",
         ".*mpt-.*instruct": "Alpaca",
-        ".*mpt-.*chat": "MPT-Chat"
+        ".*mpt-.*chat": "MPT-Chat",
+        "(?!.*-flan-)(?!.*-t5-).*lamini-": "Alpaca"
     },
     "lora_prompts": {
         "default": "QA",

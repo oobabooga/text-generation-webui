@@ -120,3 +120,6 @@
 .*mpt-.*chat:
   mode: 'instruct'
   instruction_template: 'MPT-Chat'
+(?!.*-flan-)(?!.*-t5-).*lamini-:
+  mode: 'instruct'
+  instruction_template: 'Alpaca'
