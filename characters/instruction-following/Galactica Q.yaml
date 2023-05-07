@@ -1,4 +1,4 @@
-name: "A:"
-your_name: "Q:"
-context: ""
+user: "Q:"
+bot: "A:"
 turn_template: "<|user|> <|user-message|>\n\n<|bot|><|bot-message|>\n\n"
+context: ""

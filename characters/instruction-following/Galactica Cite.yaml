@@ -1,4 +1,4 @@
-name: "[START_REF]"
-your_name: ""
-context: ""
+user: ""
+bot: "[START_REF]"
 turn_template: "<|user-message|> <|bot|><|bot-message|>\n\n"
+context: ""

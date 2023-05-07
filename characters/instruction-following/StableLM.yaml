@@ -1,5 +1,5 @@
-name: "<|ASSISTANT|>"
-your_name: "<|USER|>"
+user: "<|USER|>"
+bot: "<|ASSISTANT|>"
 context: |
   <|SYSTEM|># StableLM Tuned (Alpha version)
   - StableLM is a helpful and harmless open-source AI language model developed by StabilityAI.

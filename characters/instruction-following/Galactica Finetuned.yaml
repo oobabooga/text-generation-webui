@@ -1,4 +1,4 @@
-name: "<answer>"
-your_name: "<question>"
-context: ""
+user: "<question>"
+bot: "<answer>"
 turn_template: "<|user|><|user-message|><|bot|><|bot-message|>"
+context: ""

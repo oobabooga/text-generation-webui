@@ -1,4 +1,4 @@
-name: "### Response:"
-your_name: ""
-context: ""
+user: ""
+bot: "### Response:"
 turn_template: "<|user-message|>\n\n<|bot|><|bot-message|>\n\n</s>"
+context: ""

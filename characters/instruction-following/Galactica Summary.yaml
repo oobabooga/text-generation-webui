@@ -1,4 +1,4 @@
-name: "TLDR:"
-your_name: ""
-context: ""
+user: ""
+bot: "TLDR:"
 turn_template: "<|user-message|>\n\n<|bot|><|bot-message|>\n\n"
+context: ""
