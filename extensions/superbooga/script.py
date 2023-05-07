@@ -143,7 +143,6 @@ def input_modifier(string):
     return string
 
 
-
 def ui():
     with gr.Accordion("Click for more information...", open=False):
         gr.Markdown(textwrap.dedent("""
@@ -154,6 +153,8 @@ def ui():
 
         The database is then queried during inference time to get the excerpts that are closest to your input. The idea is to create
         an arbitrarily large pseudocontext.
+
+        It is a modified version of the superbig extension by kaiokendev: https://github.com/kaiokendev/superbig
 
         ## How to use it
 
