@@ -125,10 +125,10 @@ def apply_settings(_chunk_count):
 def input_modifier(string):
 
     # Find the user input
-    pattern = re.compile(r"<\|begin-user-input\|>(.*?)<\|end-user-input\|>")
+    pattern = re.compile(r"<\|begin-user-input\|>(.*?)<\|end-user-input\|>", re.DOTALL)
     match = re.search(pattern, string)
     if match:
-        user_input = match.group(1)
+        user_input = match.group(1).strip()
     else:
         user_input = ''
 
@@ -178,7 +178,9 @@ def ui():
         <|injection-point|>
 
         ### Input:
-        <|begin-user-input|>What datasets are mentioned in the paper above?<|end-user-input|>
+        <|begin-user-input|>
+        What datasets are mentioned in the paper above?
+        <|end-user-input|>
 
         ### Response:
         ```
