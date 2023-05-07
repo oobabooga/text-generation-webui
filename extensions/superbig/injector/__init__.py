@@ -1,1 +1,0 @@
-from .generic import GenericInjector

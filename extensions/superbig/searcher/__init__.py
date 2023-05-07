@@ -1,2 +1,0 @@
-from .cosine_similarity import CosineSimilaritySearcher
-from .asymmetric_similarity import AsymmetricSimilaritySearcher
