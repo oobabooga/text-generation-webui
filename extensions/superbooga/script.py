@@ -1,3 +1,4 @@
+import logging
 import re
 import textwrap
 from urllib.request import urlopen
@@ -12,7 +13,7 @@ from sentence_transformers import SentenceTransformer
 
 from modules import chat, shared
 
-print('Intercepting all calls to posthog :)')
+logging.info('Intercepting all calls to posthog :)')
 posthog.capture = lambda *args, **kwargs: None
 
 
@@ -164,11 +165,14 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
 
         add_chunks_to_collector(chunks)
         query = '\n'.join(shared.history['internal'][-1] + [user_input])
-        best_ids = collector.get_ids(query, n_results=len(shared.history['internal'])-1)
+        try:
+            best_ids = collector.get_ids(query, n_results=len(shared.history['internal'])-1)
 
-        # Sort the history by relevance instead of by chronological order,
-        # except for the latest message
-        state['history'] = [shared.history['internal'][id_] for id_ in best_ids[::-1]] + [shared.history['internal'][-1]]
+            # Sort the history by relevance instead of by chronological order,
+            # except for the latest message
+            state['history'] = [shared.history['internal'][id_] for id_ in best_ids[::-1]] + [shared.history['internal'][-1]]
+        except RuntimeError:
+            logging.error("Couldn't query the database, moving on...")
 
     return chat.generate_chat_prompt(user_input, state, **kwargs)
 
