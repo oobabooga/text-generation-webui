@@ -453,7 +453,7 @@ class Handler(BaseHTTPRequestHandler):
 
             def enc_emb(emb):
                 # If base64 is specified, encode. Otherwise, do nothing.
-                if body["encoding_format"] == "base64":
+                if body.get("encoding_format", "") == "base64":
                     return float_list_to_base64(emb)
                 else:
                     return emb
