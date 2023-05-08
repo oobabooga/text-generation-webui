@@ -251,23 +251,23 @@ def impersonate_wrapper(text, state):
 
 def cai_chatbot_wrapper(text, state):
     for history in chatbot_wrapper(text, state):
-        yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'])
+        yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'])
 
 
 def regenerate_wrapper(text, state):
     if (len(shared.history['visible']) == 1 and not shared.history['visible'][0][0]) or len(shared.history['internal']) == 0:
-        yield chat_html_wrapper(shared.history['visible'], state['name1'], state['name2'], state['mode'])
+        yield chat_html_wrapper(shared.history['visible'], state['name1'], state['name2'], state['mode'], state['chat_style'])
     else:
         for history in chatbot_wrapper('', state, regenerate=True):
-            yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'])
+            yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'])
 
 
 def continue_wrapper(text, state):
     if (len(shared.history['visible']) == 1 and not shared.history['visible'][0][0]) or len(shared.history['internal']) == 0:
-        yield chat_html_wrapper(shared.history['visible'], state['name1'], state['name2'], state['mode'])
+        yield chat_html_wrapper(shared.history['visible'], state['name1'], state['name2'], state['mode'], state['chat_style'])
     else:
         for history in chatbot_wrapper('', state, _continue=True):
-            yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'])
+            yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'])
 
 
 def remove_last_message(name1, name2, mode, style):
