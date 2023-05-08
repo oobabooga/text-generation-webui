@@ -319,12 +319,13 @@ def clear_chat_log(name1, name2, greeting, mode, style):
     shared.history['visible'] = []
     shared.history['internal'] = []
 
-    if greeting != '':
-        shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
-        shared.history['visible'] += [['', apply_extensions("output", greeting)]]
+    if mode != 'instruct':
+        if greeting != '':
+            shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
+            shared.history['visible'] += [['', apply_extensions("output", greeting)]]
 
-    # Save cleared logs
-    save_history(mode)
+        save_history(mode)
+
     return chat_html_wrapper(shared.history['visible'], name1, name2, mode, style)
 
 
