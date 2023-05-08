@@ -658,12 +658,13 @@ def create_interface():
 
         # Interface mode tab
         with gr.Tab("Interface mode", elem_id="interface-mode"):
-            modes = ["default", "notebook", "chat", "cai_chat"]
+            modes = ["default", "notebook", "chat"]
             current_mode = "default"
             for mode in modes[1:]:
                 if getattr(shared.args, mode):
                     current_mode = mode
                     break
+
             cmd_list = vars(shared.args)
             bool_list = [k for k in cmd_list if type(cmd_list[k]) is bool and k not in modes + ui.list_model_elements()]
             bool_active = [k for k in bool_list if vars(shared.args)[k]]
