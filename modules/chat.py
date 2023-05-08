@@ -36,7 +36,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
     _continue = kwargs['_continue'] if '_continue' in kwargs else False
     also_return_rows = kwargs['also_return_rows'] if 'also_return_rows' in kwargs else False
     is_instruct = state['mode'] == 'instruct'
-    rows = [state['context'] if is_instruct else f"{state['context'].strip()}\n"]
+    rows = [state['context_instruct'] if is_instruct else f"{state['context'].strip()}\n"]
     min_rows = 3
 
     # Finding the maximum prompt size
@@ -47,17 +47,17 @@ def generate_chat_prompt(user_input, state, **kwargs):
     max_length = min(get_max_prompt_length(state), chat_prompt_size)
 
     # Building the turn templates
-    if 'turn_template' not in state or state['turn_template'] == '':
-        if is_instruct:
+    if is_instruct:
+        if 'turn_template' not in state or state['turn_template'] == '':
             template = '<|user|>\n<|user-message|>\n<|bot|>\n<|bot-message|>\n'
         else:
-            template = '<|user|>: <|user-message|>\n<|bot|>: <|bot-message|>\n'
+            template = state['turn_template'].replace(r'\n', '\n')
     else:
-        template = state['turn_template'].replace(r'\n', '\n')
+        template = '<|user|>: <|user-message|>\n<|bot|>: <|bot-message|>\n'
 
     replacements = {
-        '<|user|>': state['name1'].strip(),
-        '<|bot|>': state['name2'].strip(),
+        '<|user|>': state['name1_instruct' if is_instruct else 'name1'].strip(),
+        '<|bot|>': state['name2_instruct' if is_instruct else 'name2'].strip(),
     }
 
     user_turn = replace_all(template.split('<|bot|>')[0], replacements)
@@ -102,7 +102,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
 def get_stopping_strings(state):
     if state['mode'] == 'instruct':
-        stopping_strings = [f"\n{state['name1']}", f"\n{state['name2']}"]
+        stopping_strings = [f"\n{state['name1_instruct']}", f"\n{state['name2_instruct']}"]
     else:
         stopping_strings = [f"\n{state['name1']}:", f"\n{state['name2']}:"]
 
@@ -472,8 +472,6 @@ def load_character(character, name1, name2, mode):
             if k in data and data[k] != '':
                 name1 = data[k]
                 break
-        else:
-            name1 = shared.settings['name1']
 
         for field in ['context', 'greeting', 'example_dialogue', 'char_persona', 'char_greeting', 'world_scenario']:
             if field in data:
