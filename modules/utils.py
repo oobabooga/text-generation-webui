@@ -15,9 +15,9 @@ def natural_keys(text):
 
 def get_available_models():
     if shared.args.flexgen:
-        return sorted([re.sub('-np$', '', item.name) for item in list(Path(f'{shared.args.model_dir}/').glob('*')) if item.name.endswith('-np')], key=natural_keys)
+        return sorted([re.sub('-np$', '', item.name) for item in list(Path(f'{shared.args.model_dir}/').glob('*')) if item.name.endswith('-np') and not item.name.startswith('.DS_Store')], key=natural_keys)
     else:
-        return sorted([re.sub('.pth$', '', item.name) for item in list(Path(f'{shared.args.model_dir}/').glob('*')) if not item.name.endswith(('.txt', '-np', '.pt', '.json', '.yaml'))], key=natural_keys)
+        return sorted([re.sub('.pth$', '', item.name) for item in list(Path(f'{shared.args.model_dir}/').glob('*')) if not item.name.endswith(('.txt', '-np', '.pt', '.json', '.yaml', '.DS_Store'))], key=natural_keys)
 
 
 def get_available_presets():
@@ -54,7 +54,7 @@ def get_available_softprompts():
 
 
 def get_available_loras():
-    return sorted([item.name for item in list(Path(shared.args.lora_dir).glob('*')) if not item.name.endswith(('.txt', '-np', '.pt', '.json'))], key=natural_keys)
+    return sorted([item.name for item in list(Path(shared.args.lora_dir).glob('*')) if not item.name.endswith(('.txt', '-np', '.pt', '.json', '.DS_Store'))], key=natural_keys)
 
 
 def get_datasets(path: str, ext: str):
