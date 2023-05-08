@@ -87,6 +87,8 @@ settings = {
         ".*mpt-.*instruct": "Alpaca",
         ".*mpt-.*chat": "MPT-Chat",
         "(?!.*-flan-)(?!.*-t5-).*lamini-": "Alpaca",
+        ".*incite.*chat": "INCITE-Chat",
+        ".*incite.*instruct": "INCITE-Instruct",
     },
     'lora_prompts': {
         'default': 'QA',

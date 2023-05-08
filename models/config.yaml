@@ -123,3 +123,9 @@
 (?!.*-flan-)(?!.*-t5-).*lamini-:
   mode: 'instruct'
   instruction_template: 'Alpaca'
+.*incite.*chat:
+  mode: 'instruct'
+  instruction_template: 'INCITE-Chat'
+.*incite.*instruct:
+  mode: 'instruct'
+  instruction_template: 'INCITE-Instruct'
