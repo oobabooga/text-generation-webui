@@ -36,7 +36,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
     _continue = kwargs['_continue'] if '_continue' in kwargs else False
     also_return_rows = kwargs['also_return_rows'] if 'also_return_rows' in kwargs else False
     is_instruct = state['mode'] == 'instruct'
-    rows = [state['context'] if is_instruct else f"{state['context'].strip()}\n"]
+    rows = [state['context_instruct'] if is_instruct else f"{state['context'].strip()}\n"]
     min_rows = 3
 
     # Finding the maximum prompt size
