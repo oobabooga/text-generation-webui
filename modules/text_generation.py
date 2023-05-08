@@ -12,7 +12,7 @@ import transformers
 import modules.shared as shared
 from modules.callbacks import (Iteratorize, Stream,
                                _SentinelTokenStoppingCriteria)
-from modules.extensions import apply_extensions
+from modules.extensions import apply_extensions, wrap_method
 from modules.html_generator import generate_4chan_html, generate_basic_html
 from modules.models import clear_torch_cache, local_rank
 
@@ -141,7 +141,7 @@ def set_manual_seed(seed):
 def stop_everything_event():
     shared.stop_everything = True
 
-
+@wrap_method
 def generate_reply(question, state, eos_token=None, stopping_strings=[]):
     state = apply_extensions('state', state)
     generate_func = apply_extensions('custom_generate_reply')

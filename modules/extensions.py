@@ -1,6 +1,7 @@
 import logging
+import inspect
 import traceback
-from functools import partial
+from functools import partial, wraps
 
 import gradio as gr
 
@@ -93,7 +94,7 @@ def _apply_state_modifier_extensions(state):
             state = getattr(extension, "state_modifier")(state)
 
     return state
- 
+
 
 # Extension functions that override the default tokenizer output
 def _apply_tokenizer_extensions(function_name, state, prompt, input_ids, input_embeds):
@@ -102,6 +103,62 @@ def _apply_tokenizer_extensions(function_name, state, prompt, input_ids, input_e
             prompt, input_ids, input_embeds = getattr(extension, function_name)(state, prompt, input_ids, input_embeds)
 
     return prompt, input_ids, input_embeds
+
+def wrap_method(wrapped_func):
+    """Decorates a method to be wrapped by extensions.
+
+    To mark a function to be wrappable by an extension, decorate it with @wrap_method
+
+    To wrap it from an extension, just define a method of the same name, prefixed with "wrap_".
+    It is possible to wrap multiple functions of the same name, but they do share their handlers.
+
+    Usage:
+        # In a module
+
+        @wrap_method
+        def my_function(a, b=None):
+            ...
+
+        # In an extension
+        def wrap_my_function(func, args, kwargs)
+            print("Function called with {args=} and {kwargs=}")
+            return func(*args, **kwargs)
+
+    """
+    def prepare_func_wrapper(extension_wrap_func, nested_func):
+        def f(*args, **kwargs):
+            return extension_wrap_func(func=nested_func, args=args, kwargs=kwargs)
+
+        return f
+
+    def base_wrapper(*args, **kwargs):
+        """Decorate the methods by a chain of extension methods."""
+        # Define the true method as the base method
+        func_ = wrapped_func
+
+        # For each extension, check if it wraps the method. Apply the wrapping iteratively
+        for extension, _ in iterator():
+            if hasattr(extension, f'wrap_{wrapped_func.__name__}'):
+                ext_wrapper = getattr(extension, f'wrap_{wrapped_func.__name__}')
+                func_ = prepare_func_wrapper(ext_wrapper, func_)
+
+        output = func_(*args, **kwargs)
+        return output
+
+
+    # Return a generator function if wrapped_func is also a generator function
+    # Gradio only streams generator functions
+    if inspect.isgeneratorfunction(wrapped_func):
+        @wraps(wrapped_func)
+        def wrapper(*args, **kwargs):
+            yield from base_wrapper(*args, **kwargs)
+    else:
+        @wraps(wrapped_func)
+        def wrapper(*args, **kwargs):
+            return base_wrapper(*args, **kwargs)
+
+
+    return wrapper
 
 
 # Custom generate reply handling
