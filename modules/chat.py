@@ -251,33 +251,33 @@ def impersonate_wrapper(text, state):
 
 def cai_chatbot_wrapper(text, state):
     for history in chatbot_wrapper(text, state):
-        yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'])
+        yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'])
 
 
 def regenerate_wrapper(text, state):
     if (len(shared.history['visible']) == 1 and not shared.history['visible'][0][0]) or len(shared.history['internal']) == 0:
-        yield chat_html_wrapper(shared.history['visible'], state['name1'], state['name2'], state['mode'])
+        yield chat_html_wrapper(shared.history['visible'], state['name1'], state['name2'], state['mode'], state['chat_style'])
     else:
         for history in chatbot_wrapper('', state, regenerate=True):
-            yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'])
+            yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'])
 
 
 def continue_wrapper(text, state):
     if (len(shared.history['visible']) == 1 and not shared.history['visible'][0][0]) or len(shared.history['internal']) == 0:
-        yield chat_html_wrapper(shared.history['visible'], state['name1'], state['name2'], state['mode'])
+        yield chat_html_wrapper(shared.history['visible'], state['name1'], state['name2'], state['mode'], state['chat_style'])
     else:
         for history in chatbot_wrapper('', state, _continue=True):
-            yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'])
+            yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'])
 
 
-def remove_last_message(name1, name2, mode):
+def remove_last_message(name1, name2, mode, style):
     if len(shared.history['visible']) > 0 and shared.history['internal'][-1][0] != '<|BEGIN-VISIBLE-CHAT|>':
         last = shared.history['visible'].pop()
         shared.history['internal'].pop()
     else:
         last = ['', '']
 
-    return chat_html_wrapper(shared.history['visible'], name1, name2, mode), last[0]
+    return chat_html_wrapper(shared.history['visible'], name1, name2, mode, style), last[0]
 
 
 def send_last_reply_to_input():
@@ -287,35 +287,35 @@ def send_last_reply_to_input():
         return ''
 
 
-def replace_last_reply(text, name1, name2, mode):
+def replace_last_reply(text, name1, name2, mode, style):
     if len(shared.history['visible']) > 0:
         shared.history['visible'][-1][1] = text
         shared.history['internal'][-1][1] = apply_extensions("input", text)
 
-    return chat_html_wrapper(shared.history['visible'], name1, name2, mode)
+    return chat_html_wrapper(shared.history['visible'], name1, name2, mode, style)
 
 
-def send_dummy_message(text, name1, name2, mode):
+def send_dummy_message(text, name1, name2, mode, style):
     shared.history['visible'].append([text, ''])
     shared.history['internal'].append([apply_extensions("input", text), ''])
-    return chat_html_wrapper(shared.history['visible'], name1, name2, mode)
+    return chat_html_wrapper(shared.history['visible'], name1, name2, mode, style)
 
 
-def send_dummy_reply(text, name1, name2, mode):
+def send_dummy_reply(text, name1, name2, mode, style):
     if len(shared.history['visible']) > 0 and not shared.history['visible'][-1][1] == '':
         shared.history['visible'].append(['', ''])
         shared.history['internal'].append(['', ''])
 
     shared.history['visible'][-1][1] = text
     shared.history['internal'][-1][1] = apply_extensions("input", text)
-    return chat_html_wrapper(shared.history['visible'], name1, name2, mode)
+    return chat_html_wrapper(shared.history['visible'], name1, name2, mode, style)
 
 
 def clear_html():
     return chat_html_wrapper([], "", "")
 
 
-def clear_chat_log(name1, name2, greeting, mode):
+def clear_chat_log(name1, name2, greeting, mode, style):
     shared.history['visible'] = []
     shared.history['internal'] = []
 
@@ -325,14 +325,14 @@ def clear_chat_log(name1, name2, greeting, mode):
 
     # Save cleared logs
     save_history(mode)
-    return chat_html_wrapper(shared.history['visible'], name1, name2, mode)
+    return chat_html_wrapper(shared.history['visible'], name1, name2, mode, style)
 
 
-def redraw_html(name1, name2, mode):
-    return chat_html_wrapper(shared.history['visible'], name1, name2, mode)
+def redraw_html(name1, name2, mode, style):
+    return chat_html_wrapper(shared.history['visible'], name1, name2, mode, style)
 
 
-def tokenize_dialogue(dialogue, name1, name2, mode):
+def tokenize_dialogue(dialogue, name1, name2, mode, style):
     history = []
     messages = []
     dialogue = re.sub('<START>', '', dialogue)
@@ -440,7 +440,7 @@ def generate_pfp_cache(character):
     return None
 
 
-def load_character(character, name1, name2, mode):
+def load_character(character, name1, name2, mode, style):
     shared.character = character
     context = greeting = turn_template = ""
     greeting_field = 'greeting'
@@ -514,7 +514,7 @@ def load_character(character, name1, name2, mode):
             # Create .json log files since they don't already exist
             save_history(mode)
 
-    return name1, name2, picture, greeting, context, repr(turn_template)[1:-1], chat_html_wrapper(shared.history['visible'], name1, name2, mode)
+    return name1, name2, picture, greeting, context, repr(turn_template)[1:-1], chat_html_wrapper(shared.history['visible'], name1, name2, mode, style)
 
 
 def upload_character(json_file, img, tavern=False):
@@ -549,7 +549,7 @@ def upload_tavern_character(img, name1, name2):
     return upload_character(json.dumps(_json), img, tavern=True)
 
 
-def upload_your_profile_picture(img, name1, name2, mode):
+def upload_your_profile_picture(img, name1, name2, mode, style):
     cache_folder = Path("cache")
     if not cache_folder.exists():
         cache_folder.mkdir()
@@ -562,4 +562,4 @@ def upload_your_profile_picture(img, name1, name2, mode):
         img.save(Path('cache/pfp_me.png'))
         logging.info('Profile picture saved to "cache/pfp_me.png"')
 
-    return chat_html_wrapper(shared.history['visible'], name1, name2, mode, reset_cache=True)
+    return chat_html_wrapper(shared.history['visible'], name1, name2, mode, style, reset_cache=True)
