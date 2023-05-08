@@ -47,17 +47,17 @@ def generate_chat_prompt(user_input, state, **kwargs):
     max_length = min(get_max_prompt_length(state), chat_prompt_size)
 
     # Building the turn templates
-    if 'turn_template' not in state or state['turn_template'] == '':
-        if is_instruct:
+    if is_instruct:
+        if 'turn_template' not in state or state['turn_template'] == '':
             template = '<|user|>\n<|user-message|>\n<|bot|>\n<|bot-message|>\n'
         else:
-            template = '<|user|>: <|user-message|>\n<|bot|>: <|bot-message|>\n'
+            template = state['turn_template'].replace(r'\n', '\n')
     else:
-        template = state['turn_template'].replace(r'\n', '\n')
+        template = '<|user|>: <|user-message|>\n<|bot|>: <|bot-message|>\n'
 
     replacements = {
-        '<|user|>': state['name1'].strip(),
-        '<|bot|>': state['name2'].strip(),
+        '<|user|>': state['name1_instruct' if is_instruct else 'name1'].strip(),
+        '<|bot|>': state['name2_instruct' if is_instruct else 'name2'].strip(),
     }
 
     user_turn = replace_all(template.split('<|bot|>')[0], replacements)
