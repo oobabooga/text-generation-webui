@@ -102,7 +102,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
 def get_stopping_strings(state):
     if state['mode'] == 'instruct':
-        stopping_strings = [f"\n{state['name1']}", f"\n{state['name2']}"]
+        stopping_strings = [f"\n{state['name1_instruct']}", f"\n{state['name2_instruct']}"]
     else:
         stopping_strings = [f"\n{state['name1']}:", f"\n{state['name2']}:"]
 
@@ -472,8 +472,6 @@ def load_character(character, name1, name2, mode):
             if k in data and data[k] != '':
                 name1 = data[k]
                 break
-        else:
-            name1 = shared.settings['name1']
 
         for field in ['context', 'greeting', 'example_dialogue', 'char_persona', 'char_greeting', 'world_scenario']:
             if field in data:
