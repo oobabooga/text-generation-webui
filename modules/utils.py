@@ -59,3 +59,7 @@ def get_available_loras():
 
 def get_datasets(path: str, ext: str):
     return ['None'] + sorted(set([k.stem for k in Path(path).glob(f'*.{ext}') if k.stem != 'put-trainer-datasets-here']), key=natural_keys)
+
+
+def get_available_chat_styles():
+    return sorted(set(('-'.join(k.stem.split('-')[1:]) for k in Path('css').glob('chat_style*.css'))), key=natural_keys)
