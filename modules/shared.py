@@ -189,12 +189,21 @@ if args.trust_remote_code:
 if args.share:
     logging.warning("The gradio \"share link\" feature downloads a proprietary and unaudited blob to create a reverse tunnel. This is potentially dangerous.")
 
+
+def add_extension(name):
+    if args.extensions is None:
+        args.extensions = [name]
+    elif 'api' not in args.extensions:
+        args.extensions.append(name)
+
+
 # Activating the API extension
 if args.api or args.public_api:
-    if args.extensions is None:
-        args.extensions = ['api']
-    elif 'api' not in args.extensions:
-        args.extensions.append('api')
+    add_extension('api')
+
+# Activating the multimodal extension
+if args.multimodal_pipeline is not None:
+    add_extension('multimodal')
 
 
 def is_chat():
