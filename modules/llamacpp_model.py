@@ -41,23 +41,23 @@ class LlamaCppModel:
         return self.model.tokenize(string)
 
     def generate(self, context="", token_count=20, temperature=1, top_p=1, top_k=50, repetition_penalty=1, callback=None):
-        if type(context) is str:
-            context = context.encode()
-        tokens = self.model.tokenize(context)
-
-        output = b""
-        count = 0
-        for token in self.model.generate(tokens, top_k=top_k, top_p=top_p, temp=temperature, repeat_penalty=repetition_penalty):
-            text = self.model.detokenize([token])
+        context = context if type(context) is str else context.decode()
+        completion_chunks = self.model.create_completion(
+            prompt=context,
+            max_tokens=token_count,
+            temperature=temperature,
+            top_p=top_p,
+            top_k=top_k,
+            repeat_penalty=repetition_penalty,
+            stream=True
+        )
+        output = ""
+        for completion_chunk in completion_chunks:
+            text = completion_chunk['choices'][0]['text']
             output += text
             if callback:
-                callback(text.decode())
-
-            count += 1
-            if count >= token_count or (token == self.model.token_eos()):
-                break
-
-        return output.decode()
+                callback(text)
+        return output
 
     def generate_with_streaming(self, **kwargs):
         with Iteratorize(self.generate, kwargs, callback=None) as generator:
