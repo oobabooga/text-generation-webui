@@ -714,6 +714,7 @@ def create_interface():
 
             gen_events.append(shared.gradio['Impersonate'].click(
                 ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
+                lambda x: x, shared.gradio['textbox'], shared.gradio['Chat input'], show_progress=False).then(
                 chat.impersonate_wrapper, shared.input_params, shared.gradio['textbox'], show_progress=False)
             )
 
