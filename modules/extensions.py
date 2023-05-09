@@ -41,7 +41,7 @@ def load_extensions():
 
                 state[name] = [True, i]
             except:
-                logging.error('Failed to load the extension "{name}".')
+                logging.error(f'Failed to load the extension "{name}".')
                 traceback.print_exc()
 
 

@@ -150,7 +150,7 @@ def stop_everything_event():
     shared.stop_everything = True
 
 
-def generate_reply(question, state, eos_token=None, stopping_strings=[]):
+def generate_reply(question, state, eos_token=None, stopping_strings=None):
     state = apply_extensions('state', state)
     generate_func = apply_extensions('custom_generate_reply')
     if generate_func is None:
@@ -181,7 +181,7 @@ def generate_reply(question, state, eos_token=None, stopping_strings=[]):
         yield formatted_outputs(reply, shared.model_name)
 
 
-def generate_reply_HF(question, original_question, seed, state, eos_token=None, stopping_strings=[]):
+def generate_reply_HF(question, original_question, seed, state, eos_token=None, stopping_strings=None):
     generate_params = {}
     for k in ['max_new_tokens', 'do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping']:
         generate_params[k] = state[k]
@@ -280,7 +280,7 @@ def generate_reply_HF(question, original_question, seed, state, eos_token=None, 
         return
 
 
-def generate_reply_custom(question, original_question, seed, state, eos_token=None, stopping_strings=[]):
+def generate_reply_custom(question, original_question, seed, state, eos_token=None, stopping_strings=None):
     seed = set_manual_seed(state['seed'])
     generate_params = {'token_count': state['max_new_tokens']}
     for k in ['temperature', 'top_p', 'top_k', 'repetition_penalty']:
@@ -317,7 +317,7 @@ def generate_reply_custom(question, original_question, seed, state, eos_token=No
         return
 
 
-def generate_reply_flexgen(question, original_question, seed, state, eos_token=None, stopping_strings=[]):
+def generate_reply_flexgen(question, original_question, seed, state, eos_token=None, stopping_strings=None):
     generate_params = {}
     for k in ['max_new_tokens', 'do_sample', 'temperature']:
         generate_params[k] = state[k]
