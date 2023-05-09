@@ -55,12 +55,12 @@ class Iteratorize:
     Adapted from: https://stackoverflow.com/a/9969000
     """
 
-    def __init__(self, func, kwargs={}, callback=None):
+    def __init__(self, func, kwargs=None, callback=None):
         self.mfunc = func
         self.c_callback = callback
         self.q = Queue()
         self.sentinel = object()
-        self.kwargs = kwargs
+        self.kwargs = kwargs or {}
         self.stop_now = False
 
         def _callback(val):

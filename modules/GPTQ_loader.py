@@ -35,7 +35,8 @@ except ImportError:
 
 # This function is a replacement for the load_quant function in the
 # GPTQ-for_LLaMa repository. It supports more models and branches.
-def _load_quant(model, checkpoint, wbits, groupsize=-1, faster_kernel=False, exclude_layers=['lm_head'], kernel_switch_threshold=128, eval=True):
+def _load_quant(model, checkpoint, wbits, groupsize=-1, faster_kernel=False, exclude_layers=None, kernel_switch_threshold=128, eval=True):
+    exclude_layers = exclude_layers or ['lm_head']
 
     def noop(*args, **kwargs):
         pass
