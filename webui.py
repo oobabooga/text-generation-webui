@@ -84,6 +84,9 @@ def update_dependencies():
     run_cmd("python -m pip install -r requirements.txt --upgrade", assert_success=True, environment=True)
     extensions = next(os.walk("extensions"))[1]
     for extension in extensions:
+        if extension in ['superbooga']:  # No wheels available for dependencies
+            continue
+            
         extension_req_path = os.path.join("extensions", extension, "requirements.txt")
         if os.path.exists(extension_req_path):
             run_cmd("python -m pip install -r " + extension_req_path + " --upgrade", assert_success=True, environment=True)
