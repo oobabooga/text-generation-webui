@@ -232,12 +232,8 @@ def impersonate_wrapper(text, state):
     prompt = generate_chat_prompt('', state, impersonate=True)
     stopping_strings = get_stopping_strings(state)
 
-    # Yield {text} *Is typing...*
-    yield f"{text} {shared.processing_message}"
-
-    # Replay starts with current input
+    yield text + '...'
     cumulative_reply = text
-
     for i in range(state['chat_generation_attempts']):
         reply = None
         for reply in generate_reply(f"{prompt}{' ' if len(cumulative_reply) > 0 else ''}{cumulative_reply}", state, eos_token=eos_token, stopping_strings=stopping_strings):
@@ -250,7 +246,7 @@ def impersonate_wrapper(text, state):
         if reply is not None:
             cumulative_reply = reply
 
-    yield cumulative_reply
+    yield reply
 
 
 def cai_chatbot_wrapper(text, state):
