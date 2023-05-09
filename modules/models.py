@@ -160,12 +160,14 @@ def load_model(model_name):
 
     # Custom
     else:
-        params = {"low_cpu_mem_usage": True}
+        params = {
+          "low_cpu_mem_usage": True,
+          "trust_remote_code": trust_remote_code
+        }
+        
         if not any((shared.args.cpu, torch.cuda.is_available(), torch.has_mps)):
             logging.warning("torch.cuda.is_available() returned False. This means that no GPU has been detected. Falling back to CPU mode.")
             shared.args.cpu = True
-
-        params["trust_remote_code"] = trust_remote_code
 
         if shared.args.cpu:
             params["torch_dtype"] = torch.float32
@@ -286,6 +288,7 @@ def load_soft_prompt(name):
                         logging.info(f"{field}: {', '.join(j[field])}")
                     else:
                         logging.info(f"{field}: {j[field]}")
+                        
             logging.info()
             tensor = np.load('tensor.npy')
             Path('tensor.npy').unlink()
