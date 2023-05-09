@@ -31,6 +31,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * [llama.cpp](docs/llama.cpp-models.md)
 * [RWKV model](docs/RWKV-model.md)
 * [LoRA (loading and training)](docs/Using-LoRAs.md)
+* [Multimodal pipelines, including LLaVA and MiniGPT-4](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/multimodal)
 * Softprompts
 * [Extensions](docs/Extensions.md) - see the [user extensions list](https://github.com/oobabooga/text-generation-webui-extensions)
 
