@@ -18,7 +18,7 @@ The WebUI seeks to make training your own LoRAs as easy as possible. It comes do
 - **3.1**: Load the WebUI, and your model.
     - Make sure you don't have any LoRAs already loaded (unless you want to train for multi-LoRA usage).
 - **3.2**: Open the `Training` tab at the top, `Train LoRA` sub-tab.
-- **3.3**: Fill in the name lof the LoRA, select your dataset in the dataset options.
+- **3.3**: Fill in the name of the LoRA, select your dataset in the dataset options.
 - **3.4**: Select other parameters to your preference. See [parameters below](#parameters).
 - **3.5**: click `Start LoRA Training`, and wait.
     - It can take a few hours for a large dataset, or just a few minute if doing a small run.

@@ -31,14 +31,14 @@ def refresh_voices_dd():
     return gr.Dropdown.update(value=all_voices[0], choices=all_voices)
 
 
-def remove_tts_from_history(name1, name2, mode):
+def remove_tts_from_history(name1, name2, mode, style):
     for i, entry in enumerate(shared.history['internal']):
         shared.history['visible'][i] = [shared.history['visible'][i][0], entry[1]]
 
-    return chat_html_wrapper(shared.history['visible'], name1, name2, mode)
+    return chat_html_wrapper(shared.history['visible'], name1, name2, mode, style)
 
 
-def toggle_text_in_history(name1, name2, mode):
+def toggle_text_in_history(name1, name2, mode, style):
     for i, entry in enumerate(shared.history['visible']):
         visible_reply = entry[1]
         if visible_reply.startswith('<audio'):
@@ -52,7 +52,7 @@ def toggle_text_in_history(name1, name2, mode):
                     shared.history['visible'][i][0], f"{visible_reply.split('</audio>')[0]}</audio>"
                 ]
 
-    return chat_html_wrapper(shared.history['visible'], name1, name2, mode)
+    return chat_html_wrapper(shared.history['visible'], name1, name2, mode, style)
 
 
 def remove_surrounded_chars(string):
@@ -161,7 +161,7 @@ def ui():
                  gr.update(visible=False)], None, convert_arr
     )
     convert_confirm.click(
-        remove_tts_from_history, [shared.gradio[k] for k in ['name1', 'name2', 'mode']], shared.gradio['display']
+        remove_tts_from_history, [shared.gradio[k] for k in ['name1', 'name2', 'mode', 'chat_style']], shared.gradio['display']
     )
     convert_confirm.click(chat.save_history, shared.gradio['mode'], [], show_progress=False)
     convert_cancel.click(
@@ -178,7 +178,7 @@ def ui():
     # Toggle message text in history
     show_text.change(lambda x: params.update({"show_text": x}), show_text, None)
     show_text.change(
-        toggle_text_in_history, [shared.gradio[k] for k in ['name1', 'name2', 'mode']], shared.gradio['display']
+        toggle_text_in_history, [shared.gradio[k] for k in ['name1', 'name2', 'mode', 'chat_style']], shared.gradio['display']
     )
     show_text.change(chat.save_history, shared.gradio['mode'], [], show_progress=False)
     # Event functions to update the parameters in the backend
