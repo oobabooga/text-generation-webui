@@ -58,6 +58,7 @@ class RWKVModel:
                 self.cached_model_state = None
                 self.cached_output_logits = None
 
+        # out = self.pipeline.generate(context, token_count=token_count, args=args, callback=callback)
         out = self.generate_from_cached_state(context, token_count=token_count, args=args, callback=callback)
         return out
 
@@ -120,6 +121,7 @@ class RWKVModel:
                 if callback:
                     callback(tmp)
                 out_str += tmp
+
         return out_str
 
 
