@@ -344,7 +344,6 @@ def create_model_menus():
         with gr.Column():
             shared.gradio['model_status'] = gr.Markdown('No model is loaded' if shared.model_name == 'None' else 'Ready')
 
-
     # In this event handler, the interface state is read and updated
     # with the model defaults (if any), and then the model is loaded
     # unless "autoload_model" is unchecked
