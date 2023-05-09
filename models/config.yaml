@@ -3,7 +3,7 @@
   model_type: 'None'
   groupsize: 'None'
   pre_layer: 0
-  mode: 'cai-chat'
+  mode: 'chat'
   skip_special_tokens: true
   custom_stopping_strings: ''
 llama-[0-9]*b-4bit$:
