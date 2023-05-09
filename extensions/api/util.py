@@ -1,7 +1,8 @@
-
-from threading import Thread
 import time
+import traceback
+from threading import Thread
 from typing import Callable, Optional
+
 from modules.text_generation import encode
 
 
@@ -31,7 +32,7 @@ def build_parameters(body):
         'length_penalty': float(body.get('length_penalty', 1)),
         'early_stopping': bool(body.get('early_stopping', False)),
         'seed': int(body.get('seed', -1)),
-        'add_bos_token': int(body.get('add_bos_token', True)),
+        'add_bos_token': bool(body.get('add_bos_token', True)),
         'truncation_length': int(body.get('truncation_length', 2048)),
         'ban_eos_token': bool(body.get('ban_eos_token', False)),
         'skip_special_tokens': bool(body.get('skip_special_tokens', True)),
@@ -64,6 +65,7 @@ def _start_cloudflared(port: int, max_attempts: int = 3, on_start: Optional[Call
 
             return
         except Exception:
+            traceback.print_exc()
             time.sleep(3)
 
         raise Exception('Could not start cloudflared.')

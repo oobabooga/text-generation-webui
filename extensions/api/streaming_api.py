@@ -23,6 +23,7 @@ async def _handle_connection(websocket, path):
         prompt = message['prompt']
         generate_params = build_parameters(message)
         stopping_strings = generate_params.pop('stopping_strings')
+        generate_params['stream'] = True
 
         generator = generate_reply(
             prompt, generate_params, stopping_strings=stopping_strings)
@@ -56,7 +57,7 @@ async def _handle_connection(websocket, path):
 
 
 async def _run(host: str, port: int):
-    async with serve(_handle_connection, host, port):
+    async with serve(_handle_connection, host, port, ping_interval=None):
         await asyncio.Future()  # run forever
 
 

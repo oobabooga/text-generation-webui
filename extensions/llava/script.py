@@ -21,10 +21,16 @@ params = {
     "clip_device": None,
     # bits to load clip in either 32 or 16 (it doesn't support 8-bit)
     "clip_bits": 32,
+    # clip repository
+    "clip_repo": "openai/clip-vit-large-patch14",
     # device to run projector on
     "projector_device": None,
     # projector bits, either 32 or 16
-    "projector_bits": 32
+    "projector_bits": 32,
+    # projector repository
+    "projector_repo": "liuhaotian/LLaVA-13b-delta-v0",
+    # file with the projector weights
+    "projector_file": "mm_projector.bin"
 }
 
 
@@ -49,9 +55,6 @@ class LLaVAEmbedder:
     IM_PATCH = Token("<im_patch>", 32000)
     IM_START = Token("<im_start>", 32001)
     IM_END = Token("<im_end>", 32002)
-    CLIP_VIT_HUB_NAME = 'openai/clip-vit-large-patch14'
-    PROJECTOR_HUB_NAME = 'liuhaotian/LLaVA-13b-pretrain-projector-v0'
-    PROJECTOR_FILE = 'LLaVA-13b-pretrain-projector-v0-CC3M-595K-original_caption.bin'
 
     def __init__(self):
         self.clip_device = self._get_device("clip_device")
@@ -71,12 +74,12 @@ class LLaVAEmbedder:
     def _load_models(self):
         start_ts = time.time()
 
-        print(f"LLaVA - Loading {LLaVAEmbedder.CLIP_VIT_HUB_NAME} as {self.clip_dtype} on {self.clip_device}...")
-        image_processor = CLIPImageProcessor.from_pretrained(LLaVAEmbedder.CLIP_VIT_HUB_NAME, torch_dtype=self.clip_dtype)
-        vision_tower = CLIPVisionModel.from_pretrained(LLaVAEmbedder.CLIP_VIT_HUB_NAME, torch_dtype=self.clip_dtype).to(self.clip_device)
+        print(f"LLaVA - Loading CLIP from {params['clip_repo']} as {self.clip_dtype} on {self.clip_device}...")
+        image_processor = CLIPImageProcessor.from_pretrained(params["clip_repo"], torch_dtype=self.clip_dtype)
+        vision_tower = CLIPVisionModel.from_pretrained(params["clip_repo"], torch_dtype=self.clip_dtype).to(self.clip_device)
 
-        print(f"LLaVA - Loading {LLaVAEmbedder.PROJECTOR_HUB_NAME} as {self.projector_dtype} on {self.projector_device}...")
-        projector_path = hf_hub_download(LLaVAEmbedder.PROJECTOR_HUB_NAME, LLaVAEmbedder.PROJECTOR_FILE)
+        print(f"LLaVA - Loading projector from {params['projector_repo']} as {self.projector_dtype} on {self.projector_device}...")
+        projector_path = hf_hub_download(params["projector_repo"], params["projector_file"])
         mm_projector = torch.nn.Linear(1024, 5120)
         projector_data = torch.load(projector_path)
         mm_projector.weight = torch.nn.Parameter(projector_data['model.mm_projector.weight'].to(dtype=self.projector_dtype), False)
@@ -205,11 +208,11 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
         if _continue and i == len(shared.history['internal']) - 1:
             rows.insert(1, f"{prefix2}{shared.history['internal'][i][1]}")
         else:
-            rows.insert(1, f"{prefix2}{shared.history['internal'][i][1].strip()}{state['end_of_turn']}\n")
+            rows.insert(1, f"{prefix2}{shared.history['internal'][i][1].strip()}\n")
 
         string = shared.history['internal'][i][0]
         if string != '':
-            rows.insert(1, f"{prefix1}{string.strip()}{state['end_of_turn']}\n")
+            rows.insert(1, f"{prefix1}{string.strip()}\n")
 
         i -= 1
 
@@ -219,7 +222,7 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
     elif not _continue:
         # Adding the user message
         if len(user_input) > 0:
-            rows.append(f"{prefix1}{user_input}{state['end_of_turn']}\n")
+            rows.append(f"{prefix1}{user_input}\n")
 
         # Adding the Character prefix
         rows.append(apply_extensions("bot_prefix", f"{prefix2}"))
@@ -245,7 +248,9 @@ def tokenizer_modifier(state, prompt, input_ids, input_embeds):
 
     prompt, input_ids, input_embeds, total_embedded = llava_embedder.forward(prompt, images, state)
     print(f'LLaVA - Embedded {total_embedded} image(s) in {time.time()-start_ts:.2f}s')
-    return prompt, input_ids.unsqueeze(0).to(shared.model.device), input_embeds.unsqueeze(0).to(shared.model.device)
+    return (prompt,
+        input_ids.unsqueeze(0).to(shared.model.device, dtype=torch.int64),
+        input_embeds.unsqueeze(0).to(shared.model.device, dtype=shared.model.dtype))
 
 
 def ui():
