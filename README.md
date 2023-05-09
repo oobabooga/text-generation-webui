@@ -286,7 +286,7 @@ Optionally, you can use the following command-line flags:
 
 | Flag                                  | Description |
 |---------------------------------------|-------------|
-| `--multimodal-pipeline PIPELINE`      | The multimodal pipeline to use, requires `--extensions multimodal` |
+| `--multimodal-pipeline PIPELINE`      | The multimodal pipeline to use. Examples: `llava-7b`, `llava-13b`. |
 
 Out of memory errors? [Check the low VRAM guide](docs/Low-VRAM-guide.md).
 
