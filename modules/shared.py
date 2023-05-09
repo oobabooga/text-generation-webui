@@ -31,6 +31,7 @@ input_params = []
 need_restart = False
 
 settings = {
+    'autoload_model': True,
     'max_new_tokens': 200,
     'max_new_tokens_min': 1,
     'max_new_tokens_max': 2000,
@@ -49,7 +50,8 @@ settings = {
     'truncation_length': 2048,
     'truncation_length_min': 0,
     'truncation_length_max': 8192,
-    'mode': 'cai-chat',
+    'mode': 'chat',
+    'chat_style': 'cai-chat',
     'instruction_template': 'None',
     'chat_prompt_size': 2048,
     'chat_prompt_size_min': 0,
@@ -70,11 +72,30 @@ settings = {
         'default': 'QA',
         '.*(gpt4chan|gpt-4chan|4chan)': 'GPT-4chan',
         '.*(oasst|stablelm-7b-sft-v7-epoch-3)': 'Open Assistant',
-        '.*alpaca': "Alpaca",
+        '.*(alpac|dolly)': "Alpaca",
+        '.*mpt-.*instruct': "Alpaca",
+        "(?!.*v0)(?!.*1.1)(?!.*1_1)(?!.*stable).*vicuna": "Vicuna v0",
+        ".*vicuna.*v0": "Vicuna v0",
+        ".*vicuna.*(1.1|1_1)": "Vicuna v1.1",
+        ".*stable.*vicuna": "StableVicuna",
+        ".*guanaco": "Guanaco-Chat",
+        ".*koala": "Koala",
+        ".*stablelm-tuned": "StableLM",
+        ".*wizardlm": "WizardLM",
+        ".*galactica.*finetuned": "Galactica Finetuned",
+        ".*galactica.*-v2": "Galactica v2",
+        "(?!.*finetuned)(?!.*-v2).*galactica": "Galactica",
+        ".*baize": "Baize",
+        ".*mpt-.*instruct": "Alpaca",
+        ".*mpt-.*chat": "MPT-Chat",
+        "(?!.*-flan-)(?!.*-t5-).*lamini-": "Alpaca",
+        ".*incite.*chat": "INCITE-Chat",
+        ".*incite.*instruct": "INCITE-Instruct",
     },
     'lora_prompts': {
         'default': 'QA',
         '.*alpaca': "Alpaca",
+        '.*baize': "Baize",
     }
 }
 
@@ -95,7 +116,6 @@ parser = argparse.ArgumentParser(formatter_class=lambda prog: argparse.HelpForma
 # Basic settings
 parser.add_argument('--notebook', action='store_true', help='Launch the web UI in notebook mode, where the output is written to the same text box as the input.')
 parser.add_argument('--chat', action='store_true', help='Launch the web UI in chat mode with a style similar to the Character.AI website.')
-parser.add_argument('--cai-chat', action='store_true', help='DEPRECATED: use --chat instead.')
 parser.add_argument('--character', type=str, help='The name of the character to load in chat mode by default.')
 parser.add_argument('--model', type=str, help='Name of the model to load by default.')
 parser.add_argument('--lora', type=str, nargs="+", help='The list of LoRAs to load. If you want to load more than one LoRA, write the names separated by spaces.')
@@ -165,6 +185,8 @@ parser.add_argument("--gradio-auth-path", type=str, help='Set the gradio authent
 parser.add_argument('--api', action='store_true', help='Enable the API extension.')
 parser.add_argument('--public-api', action='store_true', help='Create a public URL for the API using Cloudfare.')
 
+# Multimodal
+parser.add_argument('--multimodal-pipeline', type=str, default=None, help='The multimodal pipeline to use. Examples: llava-7b, llava-13b.')
 
 args = parser.parse_args()
 args_defaults = parser.parse_args([])
@@ -176,23 +198,27 @@ for k in deprecated_dict:
         logging.warning(f"--{k} is deprecated and will be removed. Use --{deprecated_dict[k][0]} instead.")
         setattr(args, deprecated_dict[k][0], getattr(args, k))
 
-# Deprecation warnings for parameters that have been removed
-if args.cai_chat:
-    logging.warning("--cai-chat is deprecated. Use --chat instead.")
-    args.chat = True
-
 # Security warnings
 if args.trust_remote_code:
     logging.warning("trust_remote_code is enabled. This is dangerous.")
 if args.share:
     logging.warning("The gradio \"share link\" feature downloads a proprietary and unaudited blob to create a reverse tunnel. This is potentially dangerous.")
 
+
+def add_extension(name):
+    if args.extensions is None:
+        args.extensions = [name]
+    elif 'api' not in args.extensions:
+        args.extensions.append(name)
+
+
 # Activating the API extension
 if args.api or args.public_api:
-    if args.extensions is None:
-        args.extensions = ['api']
-    elif 'api' not in args.extensions:
-        args.extensions.append('api')
+    add_extension('api')
+
+# Activating the multimodal extension
+if args.multimodal_pipeline is not None:
+    add_extension('multimodal')
 
 
 def is_chat():

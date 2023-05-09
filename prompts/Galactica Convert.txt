@@ -1,0 +1,9 @@
+Question: Translate the following Math formula:
+
+\[
+  \zeta(s) = \sum_{n=1}^{\infty} n^{-s}
+\]
+
+into plain English.
+
+Answer:

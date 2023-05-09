@@ -1,3 +1,5 @@
+## Chat characters
+
 Custom chat mode characters are defined by `.yaml` files inside the `characters` folder. An example is included: [Example.yaml](https://github.com/oobabooga/text-generation-webui/blob/main/characters/Example.yaml)
 
 The following fields may be defined:
@@ -29,3 +31,15 @@ Once your prompt reaches the 2048 token limit, old messages will be removed one 
 #### Pygmalion format characters
 
 These are also supported out of the box. Simply put the JSON file in the `characters` folder, or upload it directly from the web UI by clicking on the "Upload character" tab at the bottom.
+
+## Chat styles
+
+Custom chat styles can be defined in the `text-generation-webui/css` folder. Simply create a new file with name starting in `chat_style-` and ending in `.css` and it will automatically appear in the "Chat style" dropdown menu in the interface. Examples:
+
+```
+chat_style-cai-chat.css
+chat_style-TheEncrypted777.css
+chat_style-wpp.css
+```
+
+You should use the same class names as in `chat_style-cai-chat.css` in your custom style.
