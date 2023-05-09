@@ -14,7 +14,7 @@ from PIL import Image
 import modules.shared as shared
 from modules.extensions import apply_extensions
 from modules.html_generator import chat_html_wrapper, make_thumbnail
-from modules.text_generation import (get_encoded_length, generate_reply,
+from modules.text_generation import (generate_reply, get_encoded_length,
                                      get_max_prompt_length)
 
 

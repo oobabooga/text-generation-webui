@@ -1,15 +1,15 @@
 import logging
 import time
-import torch
 from abc import abstractmethod
-from huggingface_hub import hf_hub_download
-from PIL import Image
-from transformers import CLIPImageProcessor, CLIPVisionModel
 from typing import List, Tuple
 
+import torch
 from extensions.multimodal.abstract_pipeline import AbstractMultimodalPipeline
+from huggingface_hub import hf_hub_download
 from modules import shared
 from modules.text_generation import encode
+from PIL import Image
+from transformers import CLIPImageProcessor, CLIPVisionModel
 
 
 class LLaVA_v0_Pipeline(AbstractMultimodalPipeline):

@@ -1,15 +1,15 @@
 import base64
 import logging
 import re
-import torch
 from dataclasses import dataclass
 from io import BytesIO
-from PIL import Image
 from typing import Any, List, Optional
 
+import torch
 from extensions.multimodal.pipeline_loader import load_pipeline
 from modules import shared
 from modules.text_generation import encode, get_max_prompt_length
+from PIL import Image
 
 
 @dataclass

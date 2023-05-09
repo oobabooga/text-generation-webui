@@ -1,15 +1,14 @@
 import base64
-import gradio as gr
 import logging
 import re
 import time
-import torch
 from functools import partial
 from io import BytesIO
 
-from modules import shared
+import gradio as gr
+import torch
 from extensions.multimodal.multimodal_embedder import MultimodalEmbedder
-
+from modules import shared
 
 params = {
     "add_all_images_to_prompt": False,

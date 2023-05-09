@@ -1,6 +1,6 @@
 from typing import Optional
-from extensions.multimodal.abstract_pipeline import AbstractMultimodalPipeline
 
+from extensions.multimodal.abstract_pipeline import AbstractMultimodalPipeline
 
 available_pipelines = ['llava-7b', 'llava-13b']
 

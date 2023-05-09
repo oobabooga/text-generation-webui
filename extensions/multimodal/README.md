@@ -7,11 +7,24 @@ Adds support for multimodality (text+images) to text-generation-webui.
 https://user-images.githubusercontent.com/3718215/233817203-69b57e77-0c55-4fd6-b742-3204bb13b8fc.mp4
 
 ## Usage
-To run this extension, download a LLM which supports multimodality, and then start server.py with `--extensions multimodality` argument.
-The built-in support is there for LLaVA-v0-13B and LLaVA-v0-7b, if you wish to download additional pipelines, usually you will need to
-`git clone` the pipeline repository to `extensions/multimodality/pipelines` directory. Do note, that you will usually need to also append `--multimodal-pipeline [pipeline name]` argument. For additional multimodal pipelines refer to compatibility section below.
 
-Do note, that each image takes up a considerable amount of tokens, so adjust max_new_tokens to be at most 1700 (recommended value is between 200 to 500), so the images don't get truncated.
+To run this extension, download a LLM that supports multimodality, and then start server.py with the appropriate `--multimodal-pipeline` argument. Examples:
+
+```
+python server.py --model wojtab_llava-7b-v0-4bit-128g --multimodal-pipeline llava-7b --chat
+python3 server.py --model wojtab_llava-13b-v0-4bit-128g --multimodal-pipeline llava-13b --chat
+python server.py --model anon8231489123_vicuna-13b-GPTQ-4bit-128g --multimodal-pipeline minigpt4-13b --chat
+python server.py --model llama-7b-4bit --multimodal-pipeline minigpt4-7b --chat
+```
+
+There is built-in support for LLaVA-v0-13B and LLaVA-v0-7b. To install `minigpt4`:
+
+- clone https://github.com/Wojtab/minigpt-4-pipeline into `extensions/multimodal/pipelines`
+- install the requirements.txt
+
+The same procedure should be used to install other pipelines, which can then me used with `--multimodal-pipeline [pipeline name]`. For additional multimodal pipelines refer to compatibility section below.
+
+Do note, that each image takes up a considerable amount of tokens, so adjust `max_new_tokens` to be at most 1700 (recommended value is between 200 to 500), so the images don't get truncated.
 
 To send an image, just upload it to the extension field below chat, and send a prompt as always. The image will be added to the end of your message. If you wish to modify the placement, include a string `<image>` in your prompt.
 

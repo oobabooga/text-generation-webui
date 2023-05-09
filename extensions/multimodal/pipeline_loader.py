@@ -4,8 +4,9 @@ from importlib import import_module
 from pathlib import Path
 from typing import Tuple
 
-from modules import shared
 from extensions.multimodal.abstract_pipeline import AbstractMultimodalPipeline
+from modules import shared
+
 
 def _get_available_pipeline_modules():
     pipeline_path = Path(__file__).parent / 'pipelines'

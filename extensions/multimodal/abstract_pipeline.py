@@ -1,7 +1,8 @@
-import torch
 from abc import ABC, abstractmethod
-from PIL import Image
 from typing import List, Optional
+
+import torch
+from PIL import Image
 
 
 class AbstractMultimodalPipeline(ABC):
