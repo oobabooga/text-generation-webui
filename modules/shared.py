@@ -166,6 +166,8 @@ parser.add_argument("--gradio-auth-path", type=str, help='Set the gradio authent
 parser.add_argument('--api', action='store_true', help='Enable the API extension.')
 parser.add_argument('--public-api', action='store_true', help='Create a public URL for the API using Cloudfare.')
 
+# Multimodal
+parser.add_argument('--multimodal-pipeline', type=str, default=None, help='The multimodal pipeline to use. Examples: llava-7b, llava-13b.')
 
 args = parser.parse_args()
 args_defaults = parser.parse_args([])
@@ -183,12 +185,21 @@ if args.trust_remote_code:
 if args.share:
     logging.warning("The gradio \"share link\" feature downloads a proprietary and unaudited blob to create a reverse tunnel. This is potentially dangerous.")
 
+
+def add_extension(name):
+    if args.extensions is None:
+        args.extensions = [name]
+    elif 'api' not in args.extensions:
+        args.extensions.append(name)
+
+
 # Activating the API extension
 if args.api or args.public_api:
-    if args.extensions is None:
-        args.extensions = ['api']
-    elif 'api' not in args.extensions:
-        args.extensions.append('api')
+    add_extension('api')
+
+# Activating the multimodal extension
+if args.multimodal_pipeline is not None:
+    add_extension('multimodal')
 
 
 def is_chat():
