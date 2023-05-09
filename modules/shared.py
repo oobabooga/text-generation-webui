@@ -49,7 +49,8 @@ settings = {
     'truncation_length': 2048,
     'truncation_length_min': 0,
     'truncation_length_max': 8192,
-    'mode': 'cai-chat',
+    'mode': 'chat',
+    'chat_style': 'cai-chat',
     'instruction_template': 'None',
     'chat_prompt_size': 2048,
     'chat_prompt_size_min': 0,
@@ -95,7 +96,6 @@ parser = argparse.ArgumentParser(formatter_class=lambda prog: argparse.HelpForma
 # Basic settings
 parser.add_argument('--notebook', action='store_true', help='Launch the web UI in notebook mode, where the output is written to the same text box as the input.')
 parser.add_argument('--chat', action='store_true', help='Launch the web UI in chat mode with a style similar to the Character.AI website.')
-parser.add_argument('--cai-chat', action='store_true', help='DEPRECATED: use --chat instead.')
 parser.add_argument('--character', type=str, help='The name of the character to load in chat mode by default.')
 parser.add_argument('--model', type=str, help='Name of the model to load by default.')
 parser.add_argument('--lora', type=str, nargs="+", help='The list of LoRAs to load. If you want to load more than one LoRA, write the names separated by spaces.')
@@ -175,11 +175,6 @@ for k in deprecated_dict:
     if getattr(args, k) != deprecated_dict[k][1]:
         logging.warning(f"--{k} is deprecated and will be removed. Use --{deprecated_dict[k][0]} instead.")
         setattr(args, deprecated_dict[k][0], getattr(args, k))
-
-# Deprecation warnings for parameters that have been removed
-if args.cai_chat:
-    logging.warning("--cai-chat is deprecated. Use --chat instead.")
-    args.chat = True
 
 # Security warnings
 if args.trust_remote_code:
