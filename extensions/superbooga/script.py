@@ -52,10 +52,12 @@ class ChromaCollector(Collecter):
         self.collection.add(documents=texts, ids=self.ids)
 
     def get(self, search_strings: list[str], n_results: int) -> list[str]:
+        n_results = min(len(self.ids), n_results)
         result = self.collection.query(query_texts=search_strings, n_results=n_results, include=['documents'])['documents'][0]
         return result
 
     def get_ids(self, search_strings: list[str], n_results: int) -> list[str]:
+        n_results = min(len(self.ids), n_results)
         result = self.collection.query(query_texts=search_strings, n_results=n_results, include=['documents'])['ids'][0]
         return list(map(lambda x : int(x[2:]), result))
 
