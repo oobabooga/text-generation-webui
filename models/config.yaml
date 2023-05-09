@@ -59,3 +59,7 @@ llama-[0-9]*b-4bit$:
 .*moss-moon.*sft:
   mode: 'instruct'
   instruction_template: 'MOSS'
+.*pygmalion-7b:
+  model_type: 'llama'
+.*metharme-7b:
+  model_type: 'llama'
