@@ -1,6 +1,5 @@
 import time
 from pathlib import Path
-import json
 import random
 
 import gradio as gr
@@ -150,10 +149,8 @@ def setup():
 
 
 def random_sentence():
-    with open("extensions/silero_tts/harvard_sentences.json") as f:
-        sentences = json.load(f)
-
-    return random.choice(sentences)
+    with open("extensions/silero_tts/harvard_sentences.txt") as f:
+        return random.choice(list(f))
 
 
 def voice_preview(preview_text):
