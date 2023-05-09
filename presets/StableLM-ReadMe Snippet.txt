@@ -1,0 +1,14 @@
+max_new_tokens=64
+temperature=0.7
+do_sample=True
+top_p=1.0
+top_k=50
+typical_p=1.0
+repetition_penalty=1.0
+encoder_repetition_penalty=1.0
+no_repeat_ngram_size=0
+min_length=0
+penalty_alpha=0
+num_beams=1
+length_penalty=1.0
+early_stopping=False

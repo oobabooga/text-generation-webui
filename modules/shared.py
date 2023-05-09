@@ -71,12 +71,31 @@ settings = {
     'prompts': {
         'default': 'QA',
         '.*(gpt4chan|gpt-4chan|4chan)': 'GPT-4chan',
-        '.*oasst': 'Open Assistant',
-        '.*alpaca': "Alpaca",
+        '.*(oasst|stablelm-7b-sft-v7-epoch-3)': 'Open Assistant',
+        '.*(alpac|dolly)': "Alpaca",
+        '.*mpt-.*instruct': "Alpaca",
+        "(?!.*v0)(?!.*1.1)(?!.*1_1)(?!.*stable).*vicuna": "Vicuna v0",
+        ".*vicuna.*v0": "Vicuna v0",
+        ".*vicuna.*(1.1|1_1)": "Vicuna v1.1",
+        ".*stable.*vicuna": "StableVicuna",
+        ".*guanaco": "Guanaco-Chat",
+        ".*koala": "Koala",
+        ".*stablelm-tuned": "StableLM",
+        ".*wizardlm": "WizardLM",
+        ".*galactica.*finetuned": "Galactica Finetuned",
+        ".*galactica.*-v2": "Galactica v2",
+        "(?!.*finetuned)(?!.*-v2).*galactica": "Galactica",
+        ".*baize": "Baize",
+        ".*mpt-.*instruct": "Alpaca",
+        ".*mpt-.*chat": "MPT-Chat",
+        "(?!.*-flan-)(?!.*-t5-).*lamini-": "Alpaca",
+        ".*incite.*chat": "INCITE-Chat",
+        ".*incite.*instruct": "INCITE-Instruct",
     },
     'lora_prompts': {
         'default': 'QA',
         '.*alpaca': "Alpaca",
+        '.*baize': "Baize",
     }
 }
 
