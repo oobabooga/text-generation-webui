@@ -346,7 +346,8 @@ def create_model_menus():
 
 
     # In this event handler, the interface state is read and updated
-    # with the model defaults (if any)
+    # with the model defaults (if any), and then the model is loaded
+    # unless "autoload_model" is unchecked
     shared.gradio['model_menu'].change(
         ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
         load_model_specific_settings, [shared.gradio[k] for k in ['model_menu', 'interface_state']], shared.gradio['interface_state']).then(
