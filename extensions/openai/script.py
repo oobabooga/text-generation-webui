@@ -2,6 +2,7 @@ import json
 import os
 import time
 import requests
+import re
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
 
@@ -44,6 +45,39 @@ def default(dic, key, default):
 
 def clamp(value, minvalue, maxvalue):
     return max(minvalue, min(value, maxvalue))
+
+
+def deduce_template():
+    # I don't load these from the character/instruction-following/ files (yet) because Alpaca is special and has 'input' separate, but Alpaca is worth it.
+    instruction_template = {
+        'Alpaca': (
+            "Below is an instruction that describes a task, paired with an input that provides further context. "
+            "Write a response that appropriately completes the request.\n\n"
+            "### Instruction:\n{instruction}\n\n### Input:\n{input}\n\n### Response:\n"
+        ),
+        'Vicuna': "### Human: {instruction}\n{input}\n### Assistant:",
+        'Vicuna-v0': "### Human: {instruction}\n{input}\n### Assistant:",
+        'Vicuna-v1': "USER: {instruction}\n{input}\nASSISTANT:",
+        'Koala': 'BEGINNING OF CONVERSATION:\nUSER: {instruction}\n{input}\n GPT:',
+        'Open Assistant': "<|prompter|>{instruction}\n{input}<|endoftext|><|assistant|>",
+        'ChatGLM': "[Round 1]\n问：{instruction}\n{input}\n答：", # Those aren't ascii colons! (ie. ':' != '：')
+        'RWKV-Raven': "Bob: {instruction}\n{input}\n\nAlice: ",
+        'MOSS': "<|Human|>: {instruction}\n{input}<eoh>\n<|MOSS|>: ", # simplify input
+        'LLaVA': "### Human\n{instruction}\n{input}\n### Assistant\n",
+    }
+
+    if shared.settings['instruction_template'] in instruction_template:
+        # hack for vicuna 1.1
+        if re.match('.*vicuna.*[-_v]1[_.]1.*', shared.model_name):
+            return instruction_template['Vicuna-v1']
+        # hack for vicuna 1.1
+        if re.match('.*wizard.*vicuna.*', shared.model_name):
+            return instruction_template['Vicuna-v1']
+
+        return instruction_template[shared.settings['instruction_template']]
+    
+    # Fall back to Alpaca
+    return instruction_template['Alpaca']
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -142,7 +176,7 @@ class Handler(BaseHTTPRequestHandler):
             truncation_length = default(shared.settings, 'truncation_length', 2048)
             truncation_length = clamp(default(body, 'truncation_length', truncation_length), 1, truncation_length)
 
-            default_max_tokens = truncation_length if is_chat else 16  # completions default, chat default is 'inf' so we need to cap it., the default for chat is "inf"
+            default_max_tokens = truncation_length if is_chat else 16  # completions default, chat default is 'inf' so we need to cap it.
 
             max_tokens_str = 'length' if is_legacy else 'max_tokens'
             max_tokens = default(body, max_tokens_str, default(shared.settings, 'max_new_tokens', default_max_tokens))
@@ -444,16 +478,16 @@ class Handler(BaseHTTPRequestHandler):
             # Using Alpaca format, this may work with other models too.
             instruction = body['instruction']
             input = body.get('input', '')
-            edit_task = (
-                "Below is an instruction that describes a task, paired with an input that provides further context. "
-                "Write a response that appropriately completes the request.\n\n"
-                f"### Instruction:\n{instruction}\n\n### Input:\n{input}\n\n### Response:\n"
-            )
+
+            instruction_template = deduce_template()
+            edit_task = instruction_template.format(instruction=instruction, input=input)
 
             truncation_length = default(shared.settings, 'truncation_length', 2048)
+            token_count = len(encode(edit_task)[0])
+            max_tokens = truncation_length - token_count
 
             req_params = {
-                'max_new_tokens': truncation_length,
+                'max_new_tokens': max_tokens,
                 'temperature': clamp(default(body, 'temperature', 1.0), 0.001, 1.999),
                 'top_p': clamp(default(body, 'top_p', 1.0), 0.001, 1.0),
                 'top_k': 1,
@@ -479,11 +513,9 @@ class Handler(BaseHTTPRequestHandler):
                 'custom_stopping_strings': ['\n###'],
             }
 
-            token_count = len(encode(edit_task)[0])
-
             if debug:
                 print({'edit_template': edit_task, 'req_params': req_params, 'token_count': token_count})
-                
+            
             generator = generate_reply(edit_task, req_params)
 
             answer = ''
@@ -508,6 +540,9 @@ class Handler(BaseHTTPRequestHandler):
                     "total_tokens": token_count + completion_token_count
                 }
             }
+
+            if debug:
+                print({'answer': answer, 'completion_token_count': completion_token_count})
 
             response = json.dumps(resp)
             self.wfile.write(response.encode('utf-8'))
