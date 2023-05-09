@@ -137,3 +137,8 @@ button {
 .SDAP .hires_opts input[type="number"] {
   width: 6em !important;
 }
+
+/* silero_tts preview */
+.form:has(> #silero_preview_text) {
+    min-width: 75%
+}
