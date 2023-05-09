@@ -1,4 +1,4 @@
-accelerate==0.18.0
+accelerate==0.19.0
 colorama
 datasets
 flexgen==0.1.7
