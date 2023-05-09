@@ -228,7 +228,7 @@ def impersonate_wrapper(text, state):
 
     # Defining some variables
     cumulative_reply = ''
-    eos_token = '\n' if state['stop_at_newline'] else None    
+    eos_token = '\n' if state['stop_at_newline'] else None
     prompt = generate_chat_prompt('', state, impersonate=True)
     stopping_strings = get_stopping_strings(state)
 
@@ -240,10 +240,7 @@ def impersonate_wrapper(text, state):
 
     for i in range(state['chat_generation_attempts']):
         reply = None
-        # Only add space for consecutive generations, in non instruct mode there should already be space ("You: ")
-        full_prompt = f"{prompt}{cumulative_reply}{' ' if i > 0 and len(cumulative_reply) > 0 else ''}"
-
-        for reply in generate_reply(full_prompt, state, eos_token=eos_token, stopping_strings=stopping_strings):
+        for reply in generate_reply(f"{prompt}{' ' if len(cumulative_reply) > 0 else ''}{cumulative_reply}", state, eos_token=eos_token, stopping_strings=stopping_strings):
             reply = cumulative_reply + reply
             reply, next_character_found = extract_message_from_reply(reply, state)
             yield reply
