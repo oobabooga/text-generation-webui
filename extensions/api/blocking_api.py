@@ -33,6 +33,7 @@ class Handler(BaseHTTPRequestHandler):
             prompt = body['prompt']
             generate_params = build_parameters(body)
             stopping_strings = generate_params.pop('stopping_strings')
+            generate_params['stream'] = False
 
             generator = generate_reply(
                 prompt, generate_params, stopping_strings=stopping_strings)
@@ -66,7 +67,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send_error(404)
 
 
-def _run_server(port: int, share: bool=False):
+def _run_server(port: int, share: bool = False):
     address = '0.0.0.0' if shared.args.listen else '127.0.0.1'
 
     server = ThreadingHTTPServer((address, port), Handler)
