@@ -46,12 +46,12 @@ class MultimodalEmbedder:
                 break
             # found an image, append image start token to the text
             if match.start() > 0:
-                parts.append(PromptPart(text=prompt[curr:curr+match.start()]+self.pipeline.image_start()))
+                parts.append(PromptPart(text=prompt[curr:curr + match.start()] + self.pipeline.image_start()))
             else:
                 parts.append(PromptPart(text=self.pipeline.image_start()))
             # append the image
             parts.append(PromptPart(
-                text=match.group(0), 
+                text=match.group(0),
                 image=Image.open(BytesIO(base64.b64decode(match.group(1)))) if load_images else None,
                 is_image=True
             ))
@@ -94,14 +94,14 @@ class MultimodalEmbedder:
 
     def _encode_text(self, state, parts: List[PromptPart]) -> List[PromptPart]:
         """Encode text to token_ids, also truncate the prompt, if necessary.
-        
+
         The chat/instruct mode should make prompts that fit in get_max_prompt_length, but if max_new_tokens are set
         such that the context + min_rows don't fit, we can get a prompt which is too long.
         We can't truncate image embeddings, as it leads to broken generation, so remove the images instead and warn the user
         """
         encoded: List[PromptPart] = []
         for i, part in enumerate(parts):
-            encoded.append(self._encode_single_text(part, i==0 and state['add_bos_token']))
+            encoded.append(self._encode_single_text(part, i == 0 and state['add_bos_token']))
 
         # truncation:
         max_len = get_max_prompt_length(state)

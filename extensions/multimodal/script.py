@@ -42,13 +42,12 @@ def add_chat_picture(picture, text, visible_text):
     longest_edge = int(shortest_edge * aspect_ratio)
     w = shortest_edge if picture.width < picture.height else longest_edge
     h = shortest_edge if picture.width >= picture.height else longest_edge
-    picture = picture.resize((w,h))
+    picture = picture.resize((w, h))
 
     buffer = BytesIO()
     picture.save(buffer, format="JPEG")
     img_str = base64.b64encode(buffer.getvalue()).decode('utf-8')
     image = f'<img src="data:image/jpeg;base64,{img_str}">'
-
 
     if '<image>' in text:
         text = text.replace('<image>', image)
@@ -80,8 +79,8 @@ def tokenizer_modifier(state, prompt, input_ids, input_embeds):
     prompt, input_ids, input_embeds, total_embedded = multimodal_embedder.forward(prompt, state, params)
     logging.info(f'Embedded {total_embedded} image(s) in {time.time()-start_ts:.2f}s')
     return (prompt,
-        input_ids.unsqueeze(0).to(shared.model.device, dtype=torch.int64),
-        input_embeds.unsqueeze(0).to(shared.model.device, dtype=shared.model.dtype))
+            input_ids.unsqueeze(0).to(shared.model.device, dtype=torch.int64),
+            input_embeds.unsqueeze(0).to(shared.model.device, dtype=shared.model.dtype))
 
 
 def ui():
@@ -97,7 +96,7 @@ def ui():
         [picture_select],
         None
     )
-    picture_select.clear(lambda: input_hijack.update({"state": False, "value": ["",""]}), None, None)
+    picture_select.clear(lambda: input_hijack.update({"state": False, "value": ["", ""]}), None, None)
     single_image_checkbox.change(lambda x: params.update({"add_all_images_to_prompt": x}), single_image_checkbox, None)
     shared.gradio['Generate'].click(lambda: None, None, picture_select)
     shared.gradio['textbox'].submit(lambda: None, None, picture_select)

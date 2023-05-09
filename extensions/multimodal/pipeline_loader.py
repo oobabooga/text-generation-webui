@@ -26,7 +26,7 @@ def load_pipeline(params: dict) -> Tuple[AbstractMultimodalPipeline, str]:
 
     if shared.args.multimodal_pipeline is not None:
         for k in pipeline_modules:
-             if hasattr(pipeline_modules[k], 'get_pipeline'):
+            if hasattr(pipeline_modules[k], 'get_pipeline'):
                 pipeline = getattr(pipeline_modules[k], 'get_pipeline')(shared.args.multimodal_pipeline, params)
                 if pipeline is not None:
                     return (pipeline, k)
