@@ -1,5 +1,7 @@
 import time
 from pathlib import Path
+import json
+import random
 
 import gradio as gr
 import torch
@@ -147,6 +149,13 @@ def setup():
     model = load_model()
 
 
+def random_sentence():
+    with open("extensions/silero_tts/harvard_sentences.json") as f:
+        sentences = json.load(f)
+
+    return random.choice(sentences)
+
+
 def voice_preview(preview_text):
     global model, current_params, streaming_state
 
@@ -156,9 +165,9 @@ def voice_preview(preview_text):
             current_params = params.copy()
             break
 
-    string = tts_preprocessor.preprocess(preview_text or "The quick brown fox jumps over the lazy dog.")
+    string = tts_preprocessor.preprocess(preview_text or random_sentence())
 
-    output_file = Path(f'extensions/silero_tts/outputs/voice_preview.wav')
+    output_file = Path('extensions/silero_tts/outputs/voice_preview.wav')
     prosody = f"<prosody rate=\"{params['voice_speed']}\" pitch=\"{params['voice_pitch']}\">"
     silero_input = f'<speak>{prosody}{xmlesc(string)}</prosody></speak>'
     model.save_wav(ssml_text=silero_input, speaker=params['speaker'], sample_rate=int(params['sample_rate']), audio_path=str(output_file))
