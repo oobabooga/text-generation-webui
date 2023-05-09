@@ -1,0 +1,137 @@
+/* All credits to TheEncrypted777: https://www.reddit.com/r/Oobabooga/comments/12xe6vq/updated_css_styling_with_color_customization_for/ */
+
+.chat {
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 800px;
+    height: calc(100vh - 300px);
+    overflow-y: auto;
+    padding-right: 20px;
+    display: flex;
+    flex-direction: column-reverse;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+.message {
+    display: grid;
+    grid-template-columns: 60px minmax(0, 1fr);
+    padding-bottom: 28px;
+    font-size: 18px;
+    /*Change 'Quicksand' to a font you like or leave it*/
+    font-family: Quicksand, Arial, sans-serif;
+    line-height: 1.428571429;
+}
+
+.circle-you {
+    background-color: gray;
+    border-radius: 1rem;
+    /*Change color to any you like to be the border of your image*/
+    border: 2px solid white;
+}
+
+.circle-bot {
+    background-color: gray;
+    border-radius: 1rem;
+    /*Change color to any you like to be the border of the bot's image*/
+    border: 2px solid white;
+}
+
+.circle-bot img,
+.circle-you img {
+    border-radius: 10%;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.circle-you, .circle-bot {
+    /*You can set the size of the profile images here, but if you do, you have to also adjust the .text{padding-left: 90px} to a different number according to the width of the image which is right below here*/
+    width: 135px;
+    height: 175px;
+}
+
+.text {
+    /*Change this to move the message box further left or right depending on the size of your profile pic*/
+    padding-left: 90px;
+    text-shadow: 2px 2px 2px rgb(0, 0, 0);
+}
+
+.text p {
+    margin-top: 2px;
+}
+
+.username {
+    padding-left: 10px;
+    font-size: 22px;
+    font-weight: bold;
+    border-top: 1px solid rgb(51, 64, 90);
+    padding: 3px;
+}
+
+.message-body {
+    position: relative;
+    border-radius: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.459);
+    border-radius: 10px;
+    padding: 10px;
+    padding-top: 5px;
+    /*Message gradient background color - remove the line bellow if you don't want a background color or gradient*/
+    background: linear-gradient(to bottom, #171730, #1b263f);
+  }
+  
+  /*Adds 2 extra lines at the top and bottom of the message*/
+  .message-body:before,
+  .message-body:after {
+    content: "";
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    height: 1px;
+    background-color: rgba(255, 255, 255, 0.13);
+  }
+  
+  .message-body:before {
+    top: 6px;
+  }
+  
+  .message-body:after {
+    bottom: 6px;
+  }
+  
+
+.message-body img {
+    max-width: 300px;
+    max-height: 300px;
+    border-radius: 20px;
+}
+
+.message-body p {
+    margin-bottom: 0 !important;
+    font-size: 18px !important;
+    line-height: 1.428571429 !important;
+}
+
+.message-body li {
+    margin-top: 0.5em !important;
+    margin-bottom: 0.5em !important;
+}
+
+.message-body li > p {
+    display: inline !important;
+}
+
+.message-body code {
+    overflow-x: auto;
+}
+.message-body :not(pre) > code {
+    white-space: normal !important;
+}
+
+.dark .message-body p em {
+    color: rgb(138, 138, 138) !important;
+}
+
+.message-body p em {
+    color: rgb(110, 110, 110) !important;
+}

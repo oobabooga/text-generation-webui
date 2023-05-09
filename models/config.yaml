@@ -3,7 +3,7 @@
   model_type: 'None'
   groupsize: 'None'
   pre_layer: 0
-  mode: 'cai-chat'
+  mode: 'chat'
   skip_special_tokens: true
   custom_stopping_strings: ''
 .*llama:
@@ -129,3 +129,7 @@
 .*incite.*instruct:
   mode: 'instruct'
   instruction_template: 'INCITE-Instruct'
+.*pygmalion-7b:
+  model_type: 'llama'
+.*metharme-7b:
+  model_type: 'llama'
