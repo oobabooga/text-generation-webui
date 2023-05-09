@@ -73,3 +73,11 @@
 .dark .chat .assistant-message {
   background-color: #374151;
 }
+
+code {
+  background-color: white !important;
+}
+
+.dark code {
+  background-color: #1a212f !important;
+}
