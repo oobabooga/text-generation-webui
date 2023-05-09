@@ -30,7 +30,7 @@ class LlamaCppModel:
             'use_mlock': shared.args.mlock
         }
         self.model = Llama(**params)
-        self.model.set_cache(LlamaCache)
+        self.model.set_cache(LlamaCache())
 
         # This is ugly, but the model and the tokenizer are the same object in this library.
         return result, result
