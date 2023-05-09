@@ -28,6 +28,7 @@ def add_lora_to_model(lora_names):
     # If any LoRA needs to be removed, start over
     if len(removed_set) > 0:
         shared.model.disable_adapter()
+        shared.model = shared.model.base_model.model
 
     if len(lora_names) > 0:
         logging.info("Applying the following LoRAs to {}: {}".format(shared.model_name, ', '.join(lora_names)))
