@@ -74,6 +74,9 @@
 .*chatglm:
   mode: 'instruct'
   instruction_template: 'ChatGLM'
+.*metharme:
+  mode: 'instruct'
+  instruction_template: 'Metharme'
 .*llava:
   mode: 'instruct'
   model_type: 'llama'

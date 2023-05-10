@@ -147,9 +147,9 @@ def load_quantized(model_name):
         name = model_name.lower()
         if any((k in name for k in ['opt-', 'opt_', 'opt1', 'opt3', 'optfor', 'galactica', 'galpaca', 'pygmalion-350m'])):
             model_type = 'opt'
-        elif any((k in name for k in ['gpt-j', 'gptj', 'gpt4all-j', 'malion-6b', 'pygway'])):
+        elif any((k in name for k in ['gpt-j', 'gptj', 'gpt4all-j', 'malion-6b', 'pygway', 'pygmalion-6b'])):
             model_type = 'gptj'
-        elif any((k in name for k in ['llama', 'alpac', 'vicuna', 'guanaco', 'koala', 'llava', 'wizardlm'])):
+        elif any((k in name for k in ['llama', 'alpac', 'vicuna', 'guanaco', 'koala', 'llava', 'wizardlm', 'metharme'])):
             model_type = 'llama'
         else:
             logging.error("Can't determine model type from model name. Please specify it manually using --model_type argument")

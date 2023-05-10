@@ -35,17 +35,20 @@
         "default": "Default",
         ".*(alpaca|llama|llava)": "LLaMA-Precise",
         ".*pygmalion": "NovelAI-Storywriter",
-        ".*RWKV": "Naive"
+        ".*RWKV": "Naive",
+        ".*moss": "MOSS"
     },
     "prompts": {
         "default": "QA",
         ".*(gpt4chan|gpt-4chan|4chan)": "GPT-4chan",
         ".*(oasst|stablelm-7b-sft-v7-epoch-3)": "Open Assistant",
         ".*(alpac|dolly)": "Alpaca",
+        ".*mpt-.*instruct": "Alpaca",
         "(?!.*v0)(?!.*1.1)(?!.*1_1)(?!.*stable).*vicuna": "Vicuna v0",
         ".*vicuna.*v0": "Vicuna v0",
         ".*vicuna.*(1.1|1_1)": "Vicuna v1.1",
         ".*stable.*vicuna": "StableVicuna",
+        ".*metharme": "Metharme",
         ".*guanaco": "Guanaco-Chat",
         ".*koala": "Koala",
         ".*stablelm-tuned": "StableLM",
@@ -54,7 +57,6 @@
         ".*galactica.*-v2": "Galactica v2",
         "(?!.*finetuned)(?!.*-v2).*galactica": "Galactica",
         ".*baize": "Baize",
-        ".*mpt-.*instruct": "Alpaca",
         ".*mpt-.*chat": "MPT-Chat",
         "(?!.*-flan-)(?!.*-t5-).*lamini-": "Alpaca",
         ".*incite.*chat": "INCITE-Chat",
@@ -62,7 +64,7 @@
     },
     "lora_prompts": {
         "default": "QA",
-        ".*(alpaca-lora-7b|alpaca-lora-13b|alpaca-lora-30b)": "Alpaca",
+        ".*alpaca": "Alpaca",
         ".*baize": "Baize"
     }
 }

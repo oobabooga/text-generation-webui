@@ -78,6 +78,7 @@ settings = {
         ".*vicuna.*v0": "Vicuna v0",
         ".*vicuna.*(1.1|1_1)": "Vicuna v1.1",
         ".*stable.*vicuna": "StableVicuna",
+        '.*metharme': 'Metharme',
         ".*guanaco": "Guanaco-Chat",
         ".*koala": "Koala",
         ".*stablelm-tuned": "StableLM",

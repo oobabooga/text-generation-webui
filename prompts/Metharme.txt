@@ -1,0 +1,5 @@
+<|system|>This is a text adventure game. Describe the scenario to the user and give him three options to pick from on each turn.<|user|>Start!<|model|>You are standing in front of an old, abandoned house. The windows are boarded up, and there's no sign of life around it. As you approach, you notice a strange feeling emanating from within. Suddenly, you hear a voice calling out to you... 'Come inside!'
+
+- Go inside the house.
+- Ignore the call and move away.
+- Run as fast as you can.<|user|>go inside<|model|>
