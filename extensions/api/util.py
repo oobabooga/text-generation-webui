@@ -3,7 +3,7 @@ import traceback
 from threading import Thread
 from typing import Callable, Optional
 
-from modules.text_generation import encode
+from modules.text_generation import get_encoded_length
 
 
 def build_parameters(body):
@@ -11,7 +11,7 @@ def build_parameters(body):
 
     prompt_lines = [k.strip() for k in prompt.split('\n')]
     max_context = body.get('max_context_length', 2048)
-    while len(prompt_lines) >= 0 and len(encode('\n'.join(prompt_lines))) > max_context:
+    while len(prompt_lines) >= 0 and get_encoded_length('\n'.join(prompt_lines)) > max_context:
         prompt_lines.pop(0)
 
     prompt = '\n'.join(prompt_lines)
@@ -32,7 +32,7 @@ def build_parameters(body):
         'length_penalty': float(body.get('length_penalty', 1)),
         'early_stopping': bool(body.get('early_stopping', False)),
         'seed': int(body.get('seed', -1)),
-        'add_bos_token': int(body.get('add_bos_token', True)),
+        'add_bos_token': bool(body.get('add_bos_token', True)),
         'truncation_length': int(body.get('truncation_length', 2048)),
         'ban_eos_token': bool(body.get('ban_eos_token', False)),
         'skip_special_tokens': bool(body.get('skip_special_tokens', True)),

@@ -13,7 +13,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * Dropdown menu for switching between models
 * Notebook mode that resembles OpenAI's playground
 * Chat mode for conversation and role playing
-* Instruct mode compatible with Alpaca, Vicuna, Open Assistant, Dolly, Koala, Metharme, and ChatGLM formats 
+* Instruct mode compatible with various formats, including Alpaca, Vicuna, Open Assistant, Dolly, Koala, ChatGLM, MOSS, LLaVA, RWKV-Raven, Galactica, StableLM, WizardLM, Baize, MPT, and INCITE formats
 * Nice HTML output for GPT-4chan
 * Markdown output for [GALACTICA](https://github.com/paperswithcode/galai), including LaTeX rendering
 * [Custom chat characters](docs/Custom-chat-characters.md)
@@ -31,6 +31,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * [llama.cpp](docs/llama.cpp-models.md)
 * [RWKV model](docs/RWKV-model.md)
 * [LoRA (loading and training)](docs/Using-LoRAs.md)
+* [Multimodal pipelines, including LLaVA and MiniGPT-4](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/multimodal)
 * Softprompts
 * [Extensions](docs/Extensions.md) - see the [user extensions list](https://github.com/oobabooga/text-generation-webui-extensions)
 
@@ -220,8 +221,10 @@ Optionally, you can use the following command-line flags:
 
 | Flag        | Description |
 |-------------|-------------|
-| `--threads` | Number of threads to use in llama.cpp. |
-| `--n_batch` | Processing batch size for llama.cpp. |
+| `--threads` | Number of threads to use. |
+| `--n_batch` | Maximum number of prompt tokens to batch together when calling llama_eval. |
+| `--no-mmap` | Prevent mmap from being used. |
+| `--mlock`   | Force the system to keep the model in RAM. |
 
 #### GPTQ
 
@@ -231,10 +234,11 @@ Optionally, you can use the following command-line flags:
 | `--model_type MODEL_TYPE` | Model type of pre-quantized model. Currently LLaMA, OPT, and GPT-J are supported. |
 | `--groupsize GROUPSIZE`   | Group size. |
 | `--pre_layer PRE_LAYER`   | The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models. |
+| `--checkpoint CHECKPOINT` | The path to the quantized checkpoint file. If not specified, it will be automatically detected. |
 | `--monkey-patch`          | Apply the monkey patch for using LoRAs with quantized models.
-| `--quant_attn`         | (triton) Enable quant attention.
-| `--warmup_autotune`    | (triton) Enable warmup autotune.
-| `--fused_mlp`          | (triton) Enable fused mlp.
+| `--quant_attn`         | (triton) Enable quant attention. |
+| `--warmup_autotune`    | (triton) Enable warmup autotune. |
+| `--fused_mlp`          | (triton) Enable fused mlp. |
 
 #### FlexGen
 
@@ -277,6 +281,12 @@ Optionally, you can use the following command-line flags:
 |---------------------------------------|-------------|
 | `--api`                               | Enable the API extension. |
 | `--public-api`                        | Create a public URL for the API using Cloudfare. |
+
+#### Multimodal
+
+| Flag                                  | Description |
+|---------------------------------------|-------------|
+| `--multimodal-pipeline PIPELINE`      | The multimodal pipeline to use. Examples: `llava-7b`, `llava-13b`. |
 
 Out of memory errors? [Check the low VRAM guide](docs/Low-VRAM-guide.md).
 

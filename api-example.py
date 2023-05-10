@@ -7,7 +7,7 @@ URI = f'http://{HOST}/api/v1/generate'
 # For reverse-proxied streaming, the remote will likely host with ssl - https://
 # URI = 'https://your-uri-here.trycloudflare.com/api/v1/generate'
 
-def run(context):
+def run(prompt):
     request = {
         'prompt': prompt,
         'max_new_tokens': 250,

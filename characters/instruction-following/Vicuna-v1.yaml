@@ -1,4 +1,0 @@
-name: "ASSISTANT:"
-your_name: "USER:"
-context: "A chat between a user and an assistant.\n\n"
-turn_template: "<|user|> <|user-message|>\n<|bot|> <|bot-message|></s>\n"

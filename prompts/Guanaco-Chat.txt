@@ -1,0 +1,7 @@
+### Instruction:
+User: I'm considering getting a pet. Assistant: Owning a pet can be a very rewarding experience. Research the type of pet you're interested in, find out if it fits into your lifestyle and home, and create a budget for food, vet visits, and other expenses.
+
+### Input:
+User: How can I make sure my pet is happy and healthy?
+
+### Response:
