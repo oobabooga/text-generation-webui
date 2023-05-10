@@ -167,7 +167,7 @@ def download_model():
 
 def run_model():
     os.chdir("text-generation-webui")
-    run_cmd(f"python server.py {CMD_FLAGS}", environment=True)  # put your flags here!
+    run_cmd(f"python server.py {CMD_FLAGS}", environment=True)
 
 
 if __name__ == "__main__":
