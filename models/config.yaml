@@ -6,11 +6,12 @@
   mode: 'chat'
   skip_special_tokens: true
   custom_stopping_strings: ''
-.*llama:
+.*(llama|alpac|vicuna|guanaco|koala|llava|wizardlm|metharme|pygmalion-7b):
   model_type: 'llama'
-.*gptq(?!u|arl|v2):
-  wbits: 4
-  groupsize: 128
+.*(opt-|opt_|opt1|opt3|optfor|galactica|galpaca|pygmalion-350m):
+  model_type: 'opt'
+.*(gpt-j|gptj|gpt4all-j|malion-6b|pygway|pygmalion-6b):
+  model_type: 'gptj'
 .*(4bit|int4):
   wbits: 4
 .*(3bit|int3):
@@ -27,8 +28,6 @@
   wbits: 6
 .*(-5bit|_5bit|int5-):
   wbits: 5
-.*gptqv2:
-  groupsize: 'None'
 .*(-gr32-|-32g-|groupsize32):
   groupsize: 32
 .*(-gr64-|-64g-|groupsize64):
@@ -37,6 +36,11 @@
   groupsize: 128
 .*(gr1024|1024g|groupsize1024):
   groupsize: 1024
+.*gptq(?!u|arl|v2):
+  wbits: 4
+  groupsize: 128
+.*gptqv2:
+  groupsize: 'None'
 .*(oasst|stablelm-7b-sft-v7-epoch-3):
   mode: 'instruct'
   instruction_template: 'Open Assistant'
@@ -132,7 +136,3 @@
 .*incite.*instruct:
   mode: 'instruct'
   instruction_template: 'INCITE-Instruct'
-.*pygmalion-7b:
-  model_type: 'llama'
-.*metharme-7b:
-  model_type: 'llama'
