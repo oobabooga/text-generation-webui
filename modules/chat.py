@@ -188,7 +188,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False):
     # Generate
     for i in range(state['chat_generation_attempts']):
         reply = None
-        for reply in generate_reply(f"{prompt}{' ' if len(cumulative_reply) > 0 else ''}{cumulative_reply}", state, eos_token=eos_token, stopping_strings=stopping_strings):
+        for j, reply in enumerate(generate_reply(f"{prompt}{' ' if len(cumulative_reply) > 0 else ''}{cumulative_reply}", state, eos_token=eos_token, stopping_strings=stopping_strings)):
             reply = cumulative_reply + reply
 
             # Extracting the reply
@@ -212,9 +212,11 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False):
                     shared.history['internal'].append(['', ''])
                     shared.history['visible'].append(['', ''])
 
-            shared.history['internal'][-1] = [text, reply]
-            shared.history['visible'][-1] = [visible_text, visible_reply]
-            yield shared.history['visible']
+            if not (j == 0 and visible_reply.strip() == ''):
+                shared.history['internal'][-1] = [text, reply]
+                shared.history['visible'][-1] = [visible_text, visible_reply]
+                yield shared.history['visible']
+
             if next_character_found:
                 break
 
