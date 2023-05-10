@@ -78,6 +78,7 @@ def _apply_custom_generate_chat_prompt(text, state, **kwargs):
     custom_generate_chat_prompt = None
     for extension, _ in iterator():
         if hasattr(extension, 'custom_generate_chat_prompt'):
+            custom_generate_chat_prompt = extension.custom_generate_chat_prompt
             return custom_generate_chat_prompt(text, state, **kwargs)
 
     return None
