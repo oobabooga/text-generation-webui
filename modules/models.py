@@ -160,7 +160,11 @@ def load_model(model_name):
 
     # Custom
     else:
-        params = {"low_cpu_mem_usage": True}
+        params = {
+          "low_cpu_mem_usage": True,
+          "trust_remote_code": trust_remote_code
+        }
+        
         if not any((shared.args.cpu, torch.cuda.is_available(), torch.has_mps)):
             logging.warning("torch.cuda.is_available() returned False. This means that no GPU has been detected. Falling back to CPU mode.")
             shared.args.cpu = True
@@ -169,7 +173,6 @@ def load_model(model_name):
             params["torch_dtype"] = torch.float32
         else:
             params["device_map"] = 'auto'
-            params["trust_remote_code"] = trust_remote_code
             if shared.args.load_in_8bit and any((shared.args.auto_devices, shared.args.gpu_memory)):
                 params['quantization_config'] = BitsAndBytesConfig(load_in_8bit=True, llm_int8_enable_fp32_cpu_offload=True)
             elif shared.args.load_in_8bit:
@@ -285,6 +288,7 @@ def load_soft_prompt(name):
                         logging.info(f"{field}: {', '.join(j[field])}")
                     else:
                         logging.info(f"{field}: {j[field]}")
+                        
             logging.info()
             tensor = np.load('tensor.npy')
             Path('tensor.npy').unlink()

@@ -1,0 +1,7 @@
+### Instruction:
+Classify the given text into three categories, output the labels.
+
+### Input:
+The movie was predictable, yet enjoyable.
+
+### Response:

@@ -49,20 +49,27 @@ from modules import chat, shared, training, ui, utils
 from modules.html_generator import chat_html_wrapper
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, load_soft_prompt, unload_model
-from modules.text_generation import encode, generate_reply, stop_everything_event
+from modules.text_generation import generate_reply, get_encoded_length, stop_everything_event
 
 
-def load_model_wrapper(selected_model):
-    try:
-        yield f"Loading {selected_model}..."
-        shared.model_name = selected_model
-        unload_model()
-        if selected_model != '':
-            shared.model, shared.tokenizer = load_model(shared.model_name)
+def load_model_wrapper(selected_model, autoload=False):
+    if not autoload:
+        yield f"The settings for {selected_model} have been updated.\nClick on \"Load the model\" to load it."
+        return
 
-        yield f"Successfully loaded {selected_model}"
-    except:
-        yield traceback.format_exc()
+    if selected_model == 'None':
+        yield "No model selected"
+    else:
+        try:
+            yield f"Loading {selected_model}..."
+            shared.model_name = selected_model
+            unload_model()
+            if selected_model != '':
+                shared.model, shared.tokenizer = load_model(shared.model_name)
+
+            yield f"Successfully loaded {selected_model}"
+        except:
+            yield traceback.format_exc()
 
 
 def load_lora_wrapper(selected_loras):
@@ -134,7 +141,7 @@ def load_prompt(fname):
 
 
 def count_tokens(text):
-    tokens = len(encode(text)[0])
+    tokens = get_encoded_length(text)
     return f'{tokens} tokens in the input.'
 
 
@@ -293,6 +300,7 @@ def create_model_menus():
             with gr.Row():
                 shared.gradio['lora_menu_apply'] = gr.Button(value='Apply the selected LoRAs')
             with gr.Row():
+                load = gr.Button("Load the model", visible=not shared.settings['autoload_model'])
                 unload = gr.Button("Unload the model")
                 reload = gr.Button("Reload the model")
                 save_settings = gr.Button("Save settings for this model")
@@ -328,6 +336,9 @@ def create_model_menus():
 
     with gr.Row():
         with gr.Column():
+            with gr.Row():
+                shared.gradio['autoload_model'] = gr.Checkbox(value=shared.settings['autoload_model'], label='Autoload the model', info='Whether to load the model as soon as it is selected in the Model dropdown.')
+
             shared.gradio['custom_model_menu'] = gr.Textbox(label="Download custom model or LoRA", info="Enter the Hugging Face username/model path, for instance: facebook/galactica-125m. To specify a branch, add it at the end after a \":\" character like this: facebook/galactica-125m:main")
             shared.gradio['download_model_button'] = gr.Button("Download")
 
@@ -336,12 +347,20 @@ def create_model_menus():
 
     # In this event handler, the interface state is read and updated
     # with the model defaults (if any), and then the model is loaded
+    # unless "autoload_model" is unchecked
     shared.gradio['model_menu'].change(
         ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
         load_model_specific_settings, [shared.gradio[k] for k in ['model_menu', 'interface_state']], shared.gradio['interface_state']).then(
         ui.apply_interface_values, shared.gradio['interface_state'], [shared.gradio[k] for k in ui.list_interface_input_elements(chat=shared.is_chat())], show_progress=False).then(
         update_model_parameters, shared.gradio['interface_state'], None).then(
-        load_model_wrapper, shared.gradio['model_menu'], shared.gradio['model_status'], show_progress=True)
+        load_model_wrapper, [shared.gradio[k] for k in ['model_menu', 'autoload_model']], shared.gradio['model_status'], show_progress=False)
+
+    load.click(
+        ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
+        ui.apply_interface_values, shared.gradio['interface_state'],
+        [shared.gradio[k] for k in ui.list_interface_input_elements(chat=shared.is_chat())], show_progress=False).then(
+        update_model_parameters, shared.gradio['interface_state'], None).then(
+        partial(load_model_wrapper, autoload=True), shared.gradio['model_menu'], shared.gradio['model_status'], show_progress=False)
 
     unload.click(
         unload_model, None, None).then(
@@ -359,6 +378,7 @@ def create_model_menus():
 
     shared.gradio['lora_menu_apply'].click(load_lora_wrapper, shared.gradio['lora_menu'], shared.gradio['model_status'], show_progress=False)
     shared.gradio['download_model_button'].click(download_model_wrapper, shared.gradio['custom_model_menu'], shared.gradio['model_status'], show_progress=False)
+    shared.gradio['autoload_model'].change(lambda x : gr.update(visible=not x), shared.gradio['autoload_model'], load)
 
 
 def create_settings_menus(default_preset):

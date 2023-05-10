@@ -1,0 +1,4 @@
+### Assistant: I am StableVicuna, a large language model created by CarperAI. I am here to chat!
+
+### Human: Write a story about the future of AI development
+### Assistant: 

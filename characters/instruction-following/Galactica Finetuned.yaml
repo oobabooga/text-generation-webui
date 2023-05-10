@@ -1,0 +1,4 @@
+user: "<question>"
+bot: "<answer>"
+turn_template: "<|user|><|user-message|><|bot|><|bot-message|>"
+context: ""

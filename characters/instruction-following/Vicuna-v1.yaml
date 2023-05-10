@@ -1,4 +1,0 @@
-user: "USER:"
-bot: "ASSISTANT:"
-turn_template: "<|user|> <|user-message|>\n<|bot|> <|bot-message|></s>\n"
-context: "A chat between a user and an assistant.\n\n"
