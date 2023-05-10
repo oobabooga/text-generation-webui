@@ -1,1 +1,0 @@
-A paper that introduced a neural network architecture for recognizing digits [START_REF]

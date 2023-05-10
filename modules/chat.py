@@ -16,14 +16,7 @@ from modules.extensions import apply_extensions
 from modules.html_generator import chat_html_wrapper, make_thumbnail
 from modules.text_generation import (generate_reply, get_encoded_length,
                                      get_max_prompt_length)
-
-
-# Replace multiple string pairs in a string
-def replace_all(text, dic):
-    for i, j in dic.items():
-        text = text.replace(i, j)
-
-    return text
+from modules.utils import replace_all
 
 
 def generate_chat_prompt(user_input, state, **kwargs):

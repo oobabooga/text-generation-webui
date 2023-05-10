@@ -1,4 +1,0 @@
-A chat between a curious human and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the human's questions.
-
-### Human: Write a story about the future of AI development
-### Assistant: 

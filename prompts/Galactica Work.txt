@@ -1,3 +1,0 @@
-Question: A needle 35 mm long rests on a water surface at 20◦C. What force over and above the needle’s weight is required to lift the needle from contact with the water surface? σ = 0.0728m.
-
-<work>

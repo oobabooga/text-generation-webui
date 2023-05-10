@@ -1,2 +1,0 @@
-<human>: Who is Alan Turing?
-<bot>:
