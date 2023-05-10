@@ -252,7 +252,7 @@ def load_model(model_name):
     else:
         tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/{model_name}/"), trust_remote_code=trust_remote_code)
 
-    logging.info(f"Loaded the model in {(time.time()-t0):.2f} seconds.")
+    logging.info(f"Loaded the model in {(time.time()-t0):.2f} seconds.\n")
     return model, tokenizer
 
 
