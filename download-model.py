@@ -34,25 +34,25 @@ def select_model_from_default_options():
         "Pythia-1.4B-deduped": ("EleutherAI", "pythia-1.4b-deduped", "main"),
         "Pythia-410M-deduped": ("EleutherAI", "pythia-410m-deduped", "main"),
     }
-    choices = {}
 
+    choices = {}
     print("Select the model that you want to download:\n")
     for i, name in enumerate(models):
         char = chr(ord('A') + i)
         choices[char] = name
         print(f"{char}) {name}")
+
     char_hugging = chr(ord('A') + len(models))
     print(f"{char_hugging}) Manually specify a Hugging Face model")
     char_exit = chr(ord('A') + len(models) + 1)
     print(f"{char_exit}) Do not download a model")
-
     print()
     print("Input> ", end='')
     choice = input()[0].strip().upper()
     if choice == char_exit:
         exit()
     elif choice == char_hugging:
-        print("""\nThen type the name of your desired Hugging Face model in the format organization/name.
+        print("""\nType the name of your desired Hugging Face model in the format organization/name.
 
 Examples:
 facebook/opt-1.3b
