@@ -75,10 +75,9 @@ def _apply_input_hijack(text, visible_text):
 
 # custom_generate_chat_prompt handling - currently only the first one will work
 def _apply_custom_generate_chat_prompt(text, state, **kwargs):
-    custom_generate_chat_prompt = None
     for extension, _ in iterator():
         if hasattr(extension, 'custom_generate_chat_prompt'):
-            return custom_generate_chat_prompt(text, state, **kwargs)
+            return extension.custom_generate_chat_prompt(text, state, **kwargs)
 
     return None
 
