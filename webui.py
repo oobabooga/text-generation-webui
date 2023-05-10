@@ -8,6 +8,9 @@ import sys
 
 script_dir = os.getcwd()
 
+# Use this to set your command-line flags. For the full list, see:
+# https://github.com/oobabooga/text-generation-webui/#starting-the-web-ui
+CMD_FLAGS = '--chat --model-menu'
 
 def run_cmd(cmd, assert_success=False, environment=False, capture_output=False, env=None):
     # Use the conda environment
@@ -164,7 +167,7 @@ def download_model():
 
 def run_model():
     os.chdir("text-generation-webui")
-    run_cmd("python server.py --chat --model-menu", environment=True)  # put your flags here!
+    run_cmd(f"python server.py {CMD_FLAGS}", environment=True)  # put your flags here!
 
 
 if __name__ == "__main__":
