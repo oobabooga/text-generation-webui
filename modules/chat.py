@@ -7,6 +7,7 @@ import logging
 import re
 from datetime import datetime
 from pathlib import Path
+import PIL.Image
 
 import yaml
 from PIL import Image
@@ -557,3 +558,36 @@ def upload_your_profile_picture(img, name1, name2, mode, style):
         logging.info('Profile picture saved to "cache/pfp_me.png"')
 
     return chat_html_wrapper(shared.history['visible'], name1, name2, mode, style, reset_cache=True)
+
+
+def save_character(
+    name,
+    greeting,
+    context,
+    picture,
+    mode,
+):
+    if not name:
+        return
+
+    folder = 'characters' if mode != 'instruct' else 'characters/instruction-following'
+
+    # TODO: support additional fields in UI:
+    # example_dialogue, char_persona, char_greeting, world_scenario
+    data = {
+        'name': name,
+        'greeting': greeting,
+        'context': context,
+    }
+    # Strip falsy
+    data = {k: v for k, v in data.items() if v}
+
+    filepath = Path(f'{folder}/{name}.yaml')
+    with filepath.open('w') as f:
+        yaml.dump(data, f)
+    logging.info(f'wrote {filepath}')
+
+    if picture:
+        path = f'{folder}/{name}.png'
+        picture.save(path)
+        logging.info(f'wrote {path}')

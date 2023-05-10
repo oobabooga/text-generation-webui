@@ -558,6 +558,7 @@ def create_interface():
                         shared.gradio['context'] = gr.Textbox(value=shared.settings['context'], lines=4, label='Context', visible=not is_instruct)
                         shared.gradio['context_instruct'] = gr.Textbox(value=shared.settings['context'], lines=4, label='Context', visible=is_instruct)
                         shared.gradio['turn_template'] = gr.Textbox(value=shared.settings['turn_template'], lines=1, label='Turn template', info='Used to precisely define the placement of spaces and new line characters in instruction prompts.', visible=is_instruct)
+                        shared.gradio['save_character'] = gr.Button(value='Save current character', visible=not is_instruct)
 
                     with gr.Column(scale=1):
                         shared.gradio['character_picture'] = gr.Image(label='Character picture', type='pil')
@@ -779,7 +780,7 @@ def create_interface():
                 chat.redraw_html, reload_inputs, shared.gradio['display'])
 
             shared.gradio['mode'].change(
-                lambda x: [gr.update(visible=x == 'instruct')] * 5 + [gr.update(visible=x != 'instruct')] * 5, shared.gradio['mode'], [shared.gradio[k] for k in ['instruction_template', 'name1_instruct', 'name2_instruct', 'context_instruct', 'turn_template', 'name1', 'name2', 'context', 'greeting', 'chat_style']], show_progress=False).then(
+                lambda x: [gr.update(visible=x == 'instruct')] * 5 + [gr.update(visible=x != 'instruct')] * 6, shared.gradio['mode'], [shared.gradio[k] for k in ['instruction_template', 'name1_instruct', 'name2_instruct', 'context_instruct', 'turn_template', 'name1', 'name2', 'context', 'greeting', 'chat_style', 'save_character']], show_progress=False).then(
                 lambda x: gr.update(interactive=x != 'instruct'), shared.gradio['mode'], shared.gradio['character_menu']).then(
                 chat.redraw_html, reload_inputs, shared.gradio['display'])
 
@@ -796,6 +797,8 @@ def create_interface():
             shared.gradio['Clear history'].click(lambda: [gr.update(visible=True), gr.update(visible=False), gr.update(visible=True)], None, clear_arr)
             shared.gradio['Clear history-cancel'].click(lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, clear_arr)
             shared.gradio['Remove last'].click(chat.remove_last_message, [shared.gradio[k] for k in ['name1', 'name2', 'mode', 'chat_style']], [shared.gradio['display'], shared.gradio['textbox']], show_progress=False)
+            shared.gradio['save_character'].click(chat.save_character, [shared.gradio[k] for k in ['name2', 'greeting', 'context', 'character_picture', 'mode']], None) \
+                .then(lambda: gr.update(choices=utils.get_available_characters()), None, shared.gradio['character_menu'])
             shared.gradio['download_button'].click(lambda x: chat.save_history(x, timestamp=True), shared.gradio['mode'], shared.gradio['download'])
             shared.gradio['Upload character'].click(chat.upload_character, [shared.gradio['upload_json'], shared.gradio['upload_img_bot']], [shared.gradio['character_menu']])
             shared.gradio['character_menu'].change(chat.load_character, [shared.gradio[k] for k in ['character_menu', 'name1', 'name2', 'mode', 'chat_style']], [shared.gradio[k] for k in ['name1', 'name2', 'character_picture', 'greeting', 'context', 'turn_template', 'display']])
