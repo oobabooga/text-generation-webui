@@ -1,6 +1,7 @@
 # Copied from https://stackoverflow.com/a/1336640
 
 import logging
+import platform
 
 
 def add_coloring_to_emit_windows(fn):
@@ -95,8 +96,6 @@ def add_coloring_to_emit_ansi(fn):
         return fn(*args)
     return new
 
-
-import platform
 
 if platform.system() == 'Windows':
     # Windows does not support ANSI escapes and we are using API calls to set the console color
