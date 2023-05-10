@@ -164,7 +164,7 @@ def get_output_folder(model, branch, is_lora, base_folder=None):
     return output_folder
 
 
-def get_single_file(url, output_folder, start_from_scratch=False):
+def get_single_file(url, output_folder, start_from_scratch=False, attempt = 0):
     filename = Path(url.rsplit('/', 1)[1])
     output_path = output_folder / filename
     if output_path.exists() and not start_from_scratch:
@@ -180,14 +180,24 @@ def get_single_file(url, output_folder, start_from_scratch=False):
         headers = {}
         mode = 'wb'
 
-    r = requests.get(url, stream=True, headers=headers)
-    with open(output_path, mode) as f:
-        total_size = int(r.headers.get('content-length', 0))
-        block_size = 1024
-        with tqdm.tqdm(total=total_size, unit='iB', unit_scale=True, bar_format='{l_bar}{bar}| {n_fmt:6}/{total_fmt:6} {rate_fmt:6}') as t:
-            for data in r.iter_content(block_size):
-                t.update(len(data))
-                f.write(data)
+    r = requests.get(url, stream=True, headers=headers, timeout=20)
+    try:
+        with open(output_path, mode) as f:
+            total_size = int(r.headers.get('content-length', 0))
+            block_size = 1024
+            with tqdm.tqdm(total=total_size, unit='iB', unit_scale=True, bar_format='{l_bar}{bar}| {n_fmt:6}/{total_fmt:6} {rate_fmt:6}') as t:
+                for data in r.iter_content(block_size):
+                    t.update(len(data))
+                    f.write(data)
+    except Exception as e:
+        print(f"Failed to download {url} due to {e}, retrying...")
+        MAX_ATTEMPTS = 15
+        if attempt < MAX_ATTEMPTS:
+            get_single_file(url, output_folder, start_from_scratch=False, attempt=attempt+1)
+        else:
+            print(f"Failed to download {url} after {MAX_ATTEMPTS} attempts")
+            raise
+
 
 
 def start_download_threads(file_list, output_folder, start_from_scratch=False, threads=1):
