@@ -116,9 +116,9 @@ def input_modifier(string):
         string = string.lower()
         if "of" in string:
             subject = string.split('of', 1)[1]  # subdivide the string once by the first 'of' instance and get what's coming after it
-            string = params['textgen_prefix'] + " " + subject
+            string = params['textgen_prefix'].replace("[subject]", subject)
         else:
-            string = params['textgen_prefix'] + " " + "your appearance, your surroundings and what you are doing right now"
+            string = params['textgen_prefix'].replace("[subject]", "your appearance, your surroundings and what you are doing right now")
 
     return string
 
@@ -279,7 +279,7 @@ def ui():
 
         with gr.Accordion("Generation parameters", open=False):
             prompt_prefix = gr.Textbox(placeholder=params['prompt_prefix'], value=params['prompt_prefix'], label='Prompt Prefix (best used to describe the look of the character)')
-            textgen_prefix = gr.Textbox(placeholder=params['textgen_prefix'], value=params['textgen_prefix'], label='textgen prefix (what is given to the text generator to make your prompt)')
+            textgen_prefix = gr.Textbox(placeholder=params['textgen_prefix'], value=params['textgen_prefix'], label='textgen prefix (type [subject] where the subject should be placed)')
             negative_prompt = gr.Textbox(placeholder=params['negative_prompt'], value=params['negative_prompt'], label='Negative Prompt')
             with gr.Row():
                 with gr.Column():
