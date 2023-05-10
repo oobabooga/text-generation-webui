@@ -82,7 +82,7 @@ const api = new ChatGPTAPI({
 | /v1/models/{id} | openai.Model.get() | returns whatever you ask for, model does nothing yet anyways |
 | /v1/text_completion | openai.Completion.create() | the most tested, only supports single string input so far |
 | /v1/chat/completions | openai.ChatCompletion.create() | depending on the model, this may add leading linefeeds |
-| /v1/edits | openai.Edit.create() | Assumes an Alpaca type model using ### Instruction/Input/Response |
+| /v1/edits | openai.Edit.create() | Assumes an instruction following model, but may work with others |
 | /v1/images/generations | openai.Image.create() | Bare bones, no model configuration, response_format='b64_json' only. |
 | /v1/embeddings | openai.Embedding.create() | Using Sentence Transformer, dimensions are different and may never be directly comparable to openai embeddings. |
 | /v1/moderations | openai.Moderation.create() | does nothing. successfully. |
@@ -112,6 +112,11 @@ Some hacky mappings:
 | logprobs | - | ignored |
 
 defaults are mostly from openai, so are different. I use the openai defaults where I can and try to scale them to the webui defaults with the same intent.
+
+### Models
+
+This has primarily been tested with Alpaca & Vicuna kin, ie. Instruction Following models. If you test with other models please let me know how it goes.
+
 
 ### Applications
 

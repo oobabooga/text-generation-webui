@@ -3,7 +3,7 @@ import json
 import os
 import time
 import requests
-import re
+import yaml
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
 
@@ -51,36 +51,28 @@ def clamp(value, minvalue, maxvalue):
 
 
 def deduce_template():
-    # I don't load these from the character/instruction-following/ files (yet) because Alpaca is special and has 'input' separate, but Alpaca is worth it.
-    instruction_template = {
-        'Alpaca': (
-            "Below is an instruction that describes a task, paired with an input that provides further context. "
-            "Write a response that appropriately completes the request.\n\n"
-            "### Instruction:\n{instruction}\n\n### Input:\n{input}\n\n### Response:\n"
-        ),
-        'Vicuna': "### Human: {instruction}\n{input}\n### Assistant:",
-        'Vicuna-v0': "### Human: {instruction}\n{input}\n### Assistant:",
-        'Vicuna-v1': "USER: {instruction}\n{input}\nASSISTANT:",
-        'Koala': 'BEGINNING OF CONVERSATION:\nUSER: {instruction}\n{input}\n GPT:',
-        'Open Assistant': "<|prompter|>{instruction}\n{input}<|endoftext|><|assistant|>",
-        'ChatGLM': "[Round 1]\n问：{instruction}\n{input}\n答：", # Those aren't ascii colons! (ie. ':' != '：')
-        'RWKV-Raven': "Bob: {instruction}\n{input}\n\nAlice: ",
-        'MOSS': "<|Human|>: {instruction}\n{input}<eoh>\n<|MOSS|>: ", # simplify input
-        'LLaVA': "### Human\n{instruction}\n{input}\n### Assistant\n",
-    }
+    # Alpaca is verbose so a good default prompt
+    default_template = (
+        "Below is an instruction that describes a task, paired with an input that provides further context. "
+        "Write a response that appropriately completes the request.\n\n"
+        "### Instruction:\n{instruction}\n\n### Input:\n{input}\n\n### Response:\n"
+    )
 
-    if shared.settings['instruction_template'] in instruction_template:
-        # hack for vicuna 1.1
-        if re.match('.*vicuna.*[-_v]1[_.]1.*', shared.model_name):
-            return instruction_template['Vicuna-v1']
-        # hack for vicuna 1.1
-        if re.match('.*wizard.*vicuna.*', shared.model_name):
-            return instruction_template['Vicuna-v1']
+    # Use the special instruction/input/response template for anything trained like Alpaca
+    if shared.settings['instruction_template'] in ['Alpaca', 'Alpaca-Input']:
+        return default_template
 
-        return instruction_template[shared.settings['instruction_template']]
-    
-    # Fall back to Alpaca
-    return instruction_template['Alpaca']
+    try:
+        instruct = yaml.safe_load(open(f"characters/instruction-following/{shared.settings['instruction_template']}.yaml", 'r'))
+
+        template = instruct['turn_template']
+        template = template\
+            .replace('<|user|>', instruct.get('user', ''))\
+            .replace('<|bot|>', instruct.get('bot', ''))\
+            .replace('<|user-message|>', '{instruction}\n{input}')
+        return instruct.get('context', '') + template[:template.find('<|bot-message|>')]
+    except:
+        return default_template
 
 
 def float_list_to_base64(float_list):
@@ -528,13 +520,13 @@ class Handler(BaseHTTPRequestHandler):
                 'early_stopping': False,
                 'ban_eos_token': False,
                 'skip_special_tokens': True,
-                'custom_stopping_strings': ['\n###'],
+                'custom_stopping_strings': [],
             }
 
             if debug:
                 print({'edit_template': edit_task, 'req_params': req_params, 'token_count': token_count})
             
-            generator = generate_reply(edit_task, req_params)
+            generator = generate_reply(edit_task, req_params, stopping_strings=standard_stopping_strings)
 
             answer = ''
             for a in generator:
