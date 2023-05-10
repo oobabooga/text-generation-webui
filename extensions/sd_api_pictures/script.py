@@ -6,18 +6,17 @@ from datetime import date
 from pathlib import Path
 
 import gradio as gr
+import modules.shared as shared
 import requests
 import torch
-from PIL import Image
-
-import modules.shared as shared
 from modules.models import reload_model, unload_model
+from PIL import Image
 
 torch._C._jit_set_profiling_mode(False)
 
 # parameters which can be customized in settings.json of webui
 params = {
-    'address': 'http://127.0.0.1:7860',
+    'address': 'http://127.0.0.1:7861',
     'mode': 0,  # modes of operation: 0 (Manual only), 1 (Immersive/Interactive - looks for words to trigger), 2 (Picturebook Adventure - Always on)
     'manage_VRAM': False,
     'save_img': False,
@@ -34,7 +33,8 @@ params = {
     'seed': -1,
     'sampler_name': 'DDIM',
     'steps': 32,
-    'cfg_scale': 7
+    'cfg_scale': 7,
+    'textgen_prefix': 'Please provide a detailed and vivid description of'
 }
 
 
@@ -78,7 +78,6 @@ SD_models = ['NeverEndingDream']  # TODO: get with http://{address}}/sdapi/v1/sd
 
 picture_response = False  # specifies if the next model response should appear as a picture
 
-
 def remove_surrounded_chars(string):
     # this expression matches to 'as few symbols as possible (0 upwards) between any asterisks' OR
     # 'as few symbols as possible (0 upwards) between an asterisk and the end of the string'
@@ -111,19 +110,21 @@ def input_modifier(string):
     if not params['mode'] == 1:  # if not in immersive/interactive mode, do nothing
         return string
 
+            
     if triggers_are_in(string):  # if we're in it, check for trigger words
         toggle_generation(True)
         string = string.lower()
         if "of" in string:
             subject = string.split('of', 1)[1]  # subdivide the string once by the first 'of' instance and get what's coming after it
-            string = "Please provide a detailed and vivid description of " + subject
+            string = params['textgen_prefix'] + " " + subject
         else:
-            string = "Please provide a detailed description of your appearance, your surroundings and what you are doing right now"
+            string = params['textgen_prefix'] + " " + "your appearance, your surroundings and what you are doing right now"
 
     return string
 
 # Get and save the Stable Diffusion-generated picture
 def get_SD_pictures(description):
+
     global params
 
     if params['manage_VRAM']:
@@ -260,7 +261,6 @@ def SD_api_address_update(address):
 
     return gr.Textbox.update(label=msg)
 
-
 def ui():
 
     # Gradio elements
@@ -279,6 +279,7 @@ def ui():
 
         with gr.Accordion("Generation parameters", open=False):
             prompt_prefix = gr.Textbox(placeholder=params['prompt_prefix'], value=params['prompt_prefix'], label='Prompt Prefix (best used to describe the look of the character)')
+            textgen_prefix = gr.Textbox(placeholder=params['textgen_prefix'], value=params['textgen_prefix'], label='textgen prefix (what is given to the text generator to make your prompt)')
             negative_prompt = gr.Textbox(placeholder=params['negative_prompt'], value=params['negative_prompt'], label='Negative Prompt')
             with gr.Row():
                 with gr.Column():
@@ -292,11 +293,12 @@ def ui():
                 cfg_scale = gr.Number(label="CFG Scale", value=params['cfg_scale'], elem_id="cfg_box")
                 with gr.Column() as hr_options:
                     restore_faces = gr.Checkbox(value=params['restore_faces'], label='Restore faces')
-                    enable_hr = gr.Checkbox(value=params['enable_hr'], label='Hires. fix')
+                    enable_hr = gr.Checkbox(value=params['enable_hr'], label='Hires. fix')                    
             with gr.Row(visible=params['enable_hr'], elem_classes="hires_opts") as hr_options:
-                hr_scale = gr.Slider(1, 4, value=params['hr_scale'], step=0.1, label='Upscale by')
-                denoising_strength = gr.Slider(0, 1, value=params['denoising_strength'], step=0.01, label='Denoising strength')
-                hr_upscaler = gr.Textbox(placeholder=params['hr_upscaler'], value=params['hr_upscaler'], label='Upscaler')
+                    hr_scale = gr.Slider(1, 4, value=params['hr_scale'], step=0.1, label='Upscale by')
+                    denoising_strength = gr.Slider(0, 1, value=params['denoising_strength'], step=0.01, label='Denoising strength')
+                    hr_upscaler = gr.Textbox(placeholder=params['hr_upscaler'], value=params['hr_upscaler'], label='Upscaler')                    
+
 
     # Event functions to update the parameters in the backend
     address.change(lambda x: params.update({"address": filter_address(x)}), address, None)
@@ -308,6 +310,7 @@ def ui():
 
     address.submit(fn=SD_api_address_update, inputs=address, outputs=address)
     prompt_prefix.change(lambda x: params.update({"prompt_prefix": x}), prompt_prefix, None)
+    textgen_prefix.change(lambda x: params.update({"textgen_prefix": x}), textgen_prefix, None)
     negative_prompt.change(lambda x: params.update({"negative_prompt": x}), negative_prompt, None)
     width.change(lambda x: params.update({"width": x}), width, None)
     height.change(lambda x: params.update({"height": x}), height, None)
@@ -325,3 +328,4 @@ def ui():
 
     force_pic.click(lambda x: toggle_generation(True), inputs=force_pic, outputs=None)
     suppr_pic.click(lambda x: toggle_generation(False), inputs=suppr_pic, outputs=None)
+
