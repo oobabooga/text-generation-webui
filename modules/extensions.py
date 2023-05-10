@@ -7,7 +7,6 @@ import gradio as gr
 import extensions
 import modules.shared as shared
 
-
 state = {}
 available_extensions = []
 setup_called = set()
@@ -91,7 +90,7 @@ def _apply_state_modifier_extensions(state):
             state = getattr(extension, "state_modifier")(state)
 
     return state
- 
+
 
 # Extension functions that override the default tokenizer output - currently only the first one will work
 def _apply_tokenizer_extensions(function_name, state, prompt, input_ids, input_embeds):
@@ -108,7 +107,7 @@ def _apply_custom_tokenized_length(prompt):
     for extension, _ in iterator():
         if hasattr(extension, 'custom_tokenized_length'):
             return getattr(extension, 'custom_tokenized_length')(prompt)
-    
+
     return None
 
 

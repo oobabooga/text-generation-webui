@@ -1,12 +1,12 @@
-import json
 import asyncio
-from websockets.server import serve
+import json
 from threading import Thread
 
-from modules import shared
-from modules.text_generation import generate_reply
+from websockets.server import serve
 
 from extensions.api.util import build_parameters, try_start_cloudflared
+from modules import shared
+from modules.text_generation import generate_reply
 
 PATH = '/api/v1/stream'
 

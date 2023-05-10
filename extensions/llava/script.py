@@ -1,5 +1,7 @@
-import gradio as gr
 import logging
+
+import gradio as gr
+
 
 def ui():
     gr.Markdown("### This extension is deprecated, use \"multimodal\" extension instead")

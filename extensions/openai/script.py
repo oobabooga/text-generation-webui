@@ -1,10 +1,11 @@
 import base64
 import json
-import numpy as np
 import os
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
+
+import numpy as np
 
 from modules import shared
 from modules.text_generation import encode, generate_reply
@@ -60,6 +61,7 @@ def float_list_to_base64(float_list):
     # Turn raw base64 encoded bytes into ASCII
     ascii_string = encoded_bytes.decode('ascii')
     return ascii_string
+
 
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -387,8 +389,8 @@ class Handler(BaseHTTPRequestHandler):
                     "created": created_time,
                     "model": model,  # TODO: add Lora info?
                     resp_list: [{
-                            "index": 0,
-                            "finish_reason": "stop",
+                        "index": 0,
+                        "finish_reason": "stop",
                     }],
                     "usage": {
                         "prompt_tokens": token_count,
