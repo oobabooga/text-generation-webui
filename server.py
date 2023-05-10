@@ -15,12 +15,6 @@ def my_get(url, **kwargs):
     kwargs.setdefault('allow_redirects', True)
     return requests.api.request('get', 'http://127.0.0.1/', **kwargs)
 
-
-original_get = requests.get
-requests.get = my_get
-import gradio as gr
-requests.get = original_get
-
 import matplotlib
 matplotlib.use('Agg')  # This fixes LaTeX rendering on some systems
 
@@ -858,6 +852,15 @@ def create_interface():
 
 
 if __name__ == "__main__":
+    # Import Gradio with normal requests.get if --share is found
+    if shared.args.model is not None:
+        import gradio as gr
+    else:
+        original_get = requests.get
+        requests.get = my_get
+        import gradio as gr
+        requests.get = original_get
+
     # Loading custom settings
     settings_file = None
     if shared.args.settings is not None and Path(shared.args.settings).exists():
