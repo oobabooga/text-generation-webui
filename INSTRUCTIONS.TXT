@@ -2,7 +2,11 @@ Thank you for downloading oobabooga/text-generation-webui.
 
 # Installation
 
-Simply run the "start" script.
+Run the "start" script. If all goes right, it should take care of
+everything for you.
+
+To launch the web UI in the future after it is already installed, run
+this same "start" script.
 
 # Updating
 
@@ -15,16 +19,15 @@ folder if GPTQ-for-LLaMa needs to be updated.
 # Adding flags like --chat, --notebook, etc
 
 Edit the "webui.py" script using a text editor and add the desired flags
-to the line that says
+to the CMD_FLAGS variable at the top. It should look like this:
 
-run_cmd("python server.py --chat --model-menu")
+CMD_FLAGS = '--chat --model-menu'
 
 For instance, to add the --notebook flag, change it to
 
-run_cmd("python server.py --notebook --model-menu")
+CMD_FLAGS = '--notebook --model-menu'
 
 # Running an interactive shell
 
-In order to run an interactive shell in the miniconda environment, run
-the "cmd" script. This is useful for installing additional requirements
-manually.
+To run an interactive shell in the miniconda environment, run the "cmd"
+script. This is useful for installing additional requirements manually.
