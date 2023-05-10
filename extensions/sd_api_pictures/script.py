@@ -123,10 +123,7 @@ def input_modifier(string):
     return string
 
 # Get and save the Stable Diffusion-generated picture
-
-
 def get_SD_pictures(description):
-
     global params
 
     if params['manage_VRAM']:
