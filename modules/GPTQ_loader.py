@@ -10,6 +10,7 @@ import transformers
 from transformers import AutoConfig, AutoModelForCausalLM
 
 import modules.shared as shared
+from server import get_model_specific_settings
 
 sys.path.insert(0, str(Path("repositories/GPTQ-for-LLaMa")))
 
@@ -53,6 +54,7 @@ def _load_quant(model, checkpoint, wbits, groupsize=-1, faster_kernel=False, exc
     torch.set_default_dtype(torch.float)
     if eval:
         model = model.eval()
+
     layers = find_layers(model)
     for name in exclude_layers:
         if name in layers:
@@ -78,7 +80,6 @@ def _load_quant(model, checkpoint, wbits, groupsize=-1, faster_kernel=False, exc
         quant.make_quant_linear(model, layers, wbits, groupsize)
 
     del layers
-
     if checkpoint.endswith('.safetensors'):
         from safetensors.torch import load_file as safe_load
         model.load_state_dict(safe_load(checkpoint), strict=False)
@@ -88,6 +89,7 @@ def _load_quant(model, checkpoint, wbits, groupsize=-1, faster_kernel=False, exc
     if is_triton:
         if shared.args.quant_attn:
             quant.make_quant_attn(model)
+
         if eval and shared.args.fused_mlp:
             quant.make_fused_mlp(model)
 
@@ -141,19 +143,15 @@ def find_quantized_model_file(model_name):
 
 # The function that loads the model in modules/models.py
 def load_quantized(model_name):
-
     # Find the model type
     if not shared.args.model_type:
-        name = model_name.lower()
-        if any((k in name for k in ['opt-', 'opt_', 'opt1', 'opt3', 'optfor', 'galactica', 'galpaca', 'pygmalion-350m'])):
-            model_type = 'opt'
-        elif any((k in name for k in ['gpt-j', 'gptj', 'gpt4all-j', 'malion-6b', 'pygway', 'pygmalion-6b'])):
-            model_type = 'gptj'
-        elif any((k in name for k in ['llama', 'alpac', 'vicuna', 'guanaco', 'koala', 'llava', 'wizardlm', 'metharme'])):
-            model_type = 'llama'
+        settings = get_model_specific_settings(model_name)
+        if 'model_type' in settings and settings['model_type'] != 'None':
+            model_type = settings['model_type']
         else:
-            logging.error("Can't determine model type from model name. Please specify it manually using --model_type argument")
-            exit()
+            logging.error("The model could not be loaded because its type could not be inferred from its name.")
+            logging.error("Please specify the type manually using the --model_type argument.")
+            return
     else:
         model_type = shared.args.model_type.lower()
 

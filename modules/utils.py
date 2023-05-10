@@ -34,8 +34,9 @@ def get_available_presets():
 
 def get_available_prompts():
     prompts = []
-    prompts += sorted(set((k.stem for k in Path('prompts').glob('[0-9]*.txt'))), key=natural_keys, reverse=True)
-    prompts += sorted(set((k.stem for k in Path('prompts').glob('*.txt'))), key=natural_keys)
+    files = set((k.stem for k in Path('prompts').glob('*.txt')))
+    prompts += sorted([k for k in files if re.match('^[0-9]', k)], key=natural_keys, reverse=True)
+    prompts += sorted([k for k in files if re.match('^[^0-9]', k)], key=natural_keys)
     prompts += ['Instruct-' + k for k in get_available_instruction_templates() if k != 'None']
     prompts += ['None']
     return prompts
