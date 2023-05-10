@@ -7,7 +7,7 @@ import logging
 import re
 from datetime import datetime
 from pathlib import Path
-import PIL.Image
+from typing import Optional
 
 import yaml
 from PIL import Image
@@ -561,12 +561,12 @@ def upload_your_profile_picture(img, name1, name2, mode, style):
 
 
 def save_character(
-    name,
-    greeting,
-    context,
-    picture,
-    mode,
-):
+    name: str,
+    greeting: str,
+    context: str,
+    picture: Image.Image,
+    mode: str,
+) -> None:
     if not name:
         return
 
@@ -591,3 +591,16 @@ def save_character(
         path = f'{folder}/{name}.png'
         picture.save(path)
         logging.info(f'wrote {path}')
+
+
+def delete_character(name: str, mode: str) -> None:
+    def delete(path: Path) -> None:
+        if path.exists():
+            logging.warn(f'deleting {path}')
+            path.unlink(missing_ok=True)
+
+    folder = 'characters' if mode != 'instruct' else 'characters/instruction-following'
+    for extension in ["yml", "yaml", "json"]:
+        delete(Path(f'{folder}/{name}.{extension}'))
+
+    delete(Path(f'{folder}/{name}.png'))
