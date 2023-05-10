@@ -147,7 +147,6 @@ def load_prompt(fname):
 
             output += utils.replace_all(data['turn_template'].split('<|bot-message|>')[0], replacements)
             return output
-
     else:
         with open(Path(f'prompts/{fname}.txt'), 'r', encoding='utf-8') as f:
             text = f.read()
