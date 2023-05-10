@@ -22,13 +22,13 @@ There is built-in support for LLaVA-v0-13B and LLaVA-v0-7b. To install `minigpt4
 - clone https://github.com/Wojtab/minigpt-4-pipeline into `extensions/multimodal/pipelines`
 - install the requirements.txt
 
-The same procedure should be used to install other pipelines, which can then me used with `--multimodal-pipeline [pipeline name]`. For additional multimodal pipelines refer to compatibility section below.
+The same procedure should be used to install other pipelines, which can then be used with `--multimodal-pipeline [pipeline name]`. For additional multimodal pipelines refer to the compatibility section below.
 
 Do note, that each image takes up a considerable amount of tokens, so adjust `max_new_tokens` to be at most 1700 (recommended value is between 200 to 500), so the images don't get truncated.
 
 To send an image, just upload it to the extension field below chat, and send a prompt as always. The image will be added to the end of your message. If you wish to modify the placement, include a string `<image>` in your prompt.
 
-Additionally, there is *Embed all images, not only the last one* checkbox. It modifies the image embeddings, by default (if it's unchecked), all but the most recent images have their embeddings empty, so they are not fed to the network. It seems as some multimodal networks consider the features in all images at the same time as if they were a single image. Due to this behavior, by default the extension skips previous images. However, it can lead to sub-par generation on other pipelines. If you want to include all images, just tick this checkbox.
+Additionally, there is *Embed all images, not only the last one* checkbox. It modifies the image embeddings, by default (if it's unchecked), all but the most recent images have their embeddings empty, so they are not fed to the network. It seems as if some multimodal networks consider the features in all images at the same time as if they were a single image. Due to this behavior, by default, the extension skips previous images. However, it can lead to sub-par generation on other pipelines. If you want to include all images, just tick this checkbox.
 
 ## Compatibility
 As of now, the following multimodal pipelines are supported:
@@ -39,18 +39,18 @@ As of now, the following multimodal pipelines are supported:
 |[MiniGPT-4 7B](https://github.com/Vision-CAIR/MiniGPT-4)|`minigpt4-7b`|[Vicuna v0 7B](https://huggingface.co/TheBloke/vicuna-7B-GPTQ-4bit-128g)|GPTQ 4-bit quant, new format|[Wojtab/minigpt-4-pipeline](https://github.com/Wojtab/minigpt-4-pipeline)|
 |[MiniGPT-4 13B](https://github.com/Vision-CAIR/MiniGPT-4)|`minigpt4-13b`|[Vicuna v0 13B](https://huggingface.co/anon8231489123/vicuna-13b-GPTQ-4bit-128g)|GPTQ 4-bit quant, old CUDA|[Wojtab/minigpt-4-pipeline](https://github.com/Wojtab/minigpt-4-pipeline)|
 
-Some pipelines could support different LLMs, but do note that while it might work, it isn't a supported configuration.
+Some pipelines could support different LLMs but do note that while it might work, it isn't a supported configuration.
 
 DO NOT report bugs if you are using a different LLM.
 
 DO NOT report bugs with pipelines in this repository (unless they are built-in)
 
 ## Extension config
-This extension uses following parameters (from settings.json):
+This extension uses the following parameters (from `settings.json`):
 |Parameter|Description|
 |---------|-----------|
 |`multimodal-vision_bits`|Number of bits to load vision models (CLIP/ViT) feature extractor in (most pipelines should support either 32 or 16, default=32)|
-|`multimodal-vision_device`|Torch device to run the feature extractor on, for example `cpu` or `cuda:0`, by default `cuda:0` if available|
+|`multimodal-vision_device`|Torch device to run the feature extractor on, for example, `cpu` or `cuda:0`, by default `cuda:0` if available|
 |`multimodal-projector_bits`|Number of bits to load feature projector model(s) in (most pipelines should support either 32 or 16, default=32)|
 |`multimodal-projector_device`|Torch device to run the feature projector model(s) on, for example `cpu` or `cuda:0`, by default `cuda:0` if available|
 |`multimodal-add_all_images_to_prompt`|Default value of "Embed all images, not only the last one" checkbox|

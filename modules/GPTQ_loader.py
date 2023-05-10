@@ -10,7 +10,6 @@ import transformers
 from transformers import AutoConfig, AutoModelForCausalLM
 
 import modules.shared as shared
-from server import get_model_specific_settings
 
 sys.path.insert(0, str(Path("repositories/GPTQ-for-LLaMa")))
 
@@ -115,6 +114,7 @@ def find_quantized_model_file(model_name):
         for ext in ['.safetensors', '.pt']
         for hyphen in ['-', f'/{model_name}-', '/']
     ]
+
     for path in priority_name_list:
         if path.exists():
             pt_path = path
@@ -143,19 +143,13 @@ def find_quantized_model_file(model_name):
 
 # The function that loads the model in modules/models.py
 def load_quantized(model_name):
-    # Find the model type
-    if not shared.args.model_type:
-        settings = get_model_specific_settings(model_name)
-        if 'model_type' in settings and settings['model_type'] != 'None':
-            model_type = settings['model_type']
-        else:
-            logging.error("The model could not be loaded because its type could not be inferred from its name.")
-            logging.error("Please specify the type manually using the --model_type argument.")
-            return
-    else:
-        model_type = shared.args.model_type.lower()
+    if shared.args.model_type is None:
+        logging.error("The model could not be loaded because its type could not be inferred from its name.")
+        logging.error("Please specify the type manually using the --model_type argument.")
+        return
 
     # Select the appropriate load_quant function
+    model_type = shared.args.model_type.lower()
     if shared.args.pre_layer and model_type == 'llama':
         load_quant = llama_inference_offload.load_quant
     elif model_type in ('llama', 'opt', 'gptj'):
