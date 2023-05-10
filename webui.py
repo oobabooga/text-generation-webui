@@ -12,6 +12,7 @@ script_dir = os.getcwd()
 # https://github.com/oobabooga/text-generation-webui/#starting-the-web-ui
 CMD_FLAGS = '--chat --model-menu'
 
+
 def run_cmd(cmd, assert_success=False, environment=False, capture_output=False, env=None):
     # Use the conda environment
     if environment:
