@@ -3,7 +3,6 @@ from pathlib import Path
 
 import gradio as gr
 import torch
-
 from extensions.silero_tts import tts_preprocessor
 from modules import chat, shared
 from modules.html_generator import chat_html_wrapper
@@ -164,6 +163,8 @@ def ui():
             convert = gr.Button('Permanently replace audios with the message texts')
             convert_cancel = gr.Button('Cancel', visible=False)
             convert_confirm = gr.Button('Confirm (cannot be undone)', variant="stop", visible=False)
+
+        gr.Markdown('[Click here for Silero audio samples](https://oobabooga.github.io/silero-samples/index.html)')
 
     # Convert history with confirmation
     convert_arr = [convert_confirm, convert, convert_cancel]

@@ -48,7 +48,7 @@ from modules import chat, shared, training, ui, utils
 from modules.html_generator import chat_html_wrapper
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, load_soft_prompt, unload_model
-from modules.text_generation import encode, generate_reply, stop_everything_event
+from modules.text_generation import generate_reply, get_encoded_length, stop_everything_event
 
 
 def load_model_wrapper(selected_model, autoload=False):
@@ -131,6 +131,22 @@ def save_prompt(text):
 def load_prompt(fname):
     if fname in ['None', '']:
         return ''
+    elif fname.startswith('Instruct-'):
+        fname = re.sub('^Instruct-', '', fname)
+        with open(Path(f'characters/instruction-following/{fname}.yaml'), 'r', encoding='utf-8') as f:
+            data = yaml.safe_load(f)
+            output = ''
+            if 'context' in data:
+                output += data['context']
+
+            replacements = {
+                '<|user|>': data['user'],
+                '<|bot|>': data['bot'],
+                '<|user-message|>': 'Input',
+            }
+
+            output += utils.replace_all(data['turn_template'].split('<|bot-message|>')[0], replacements)
+            return output
     else:
         with open(Path(f'prompts/{fname}.txt'), 'r', encoding='utf-8') as f:
             text = f.read()
@@ -140,7 +156,7 @@ def load_prompt(fname):
 
 
 def count_tokens(text):
-    tokens = len(encode(text)[0])
+    tokens = get_encoded_length(text)
     return f'{tokens} tokens in the input.'
 
 
@@ -377,7 +393,7 @@ def create_model_menus():
 
     shared.gradio['lora_menu_apply'].click(load_lora_wrapper, shared.gradio['lora_menu'], shared.gradio['model_status'], show_progress=False)
     shared.gradio['download_model_button'].click(download_model_wrapper, shared.gradio['custom_model_menu'], shared.gradio['model_status'], show_progress=False)
-    shared.gradio['autoload_model'].change(lambda x : gr.update(visible=not x), shared.gradio['autoload_model'], load)
+    shared.gradio['autoload_model'].change(lambda x: gr.update(visible=not x), shared.gradio['autoload_model'], load)
 
 
 def create_settings_menus(default_preset):
@@ -472,7 +488,7 @@ def create_interface():
     gen_events = []
     default_preset = shared.settings['presets'][next((k for k in shared.settings['presets'] if re.match(k.lower(), shared.model_name.lower())), 'default')]
     if len(shared.lora_names) == 1:
-        default_text = load_prompt(shared.settings['lora_prompts'][next((k for k in shared.settings['lora_prompts'] if re.match(k.lower(), shared.lora_names[0].lower())), 'default')])
+        default_text = load_prompt(shared.settings['prompts'][next((k for k in shared.settings['prompts'] if re.match(k.lower(), shared.lora_names[0].lower())), 'default')])
     else:
         default_text = load_prompt(shared.settings['prompts'][next((k for k in shared.settings['prompts'] if re.match(k.lower(), shared.model_name.lower())), 'default')])
     title = 'Text generation web UI'

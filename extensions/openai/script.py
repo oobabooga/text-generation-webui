@@ -1,12 +1,13 @@
 import base64
 import json
-import numpy as np
 import os
 import time
 import requests
 import re
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
+
+import numpy as np
 
 from modules import shared
 from modules.text_generation import encode, generate_reply
@@ -432,8 +433,8 @@ class Handler(BaseHTTPRequestHandler):
                     "created": created_time,
                     "model": model,  # TODO: add Lora info?
                     resp_list: [{
-                            "index": 0,
-                            "finish_reason": "stop",
+                        "index": 0,
+                        "finish_reason": "stop",
                     }],
                     "usage": {
                         "prompt_tokens": token_count,

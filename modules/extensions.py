@@ -73,15 +73,11 @@ def _apply_input_hijack(text, visible_text):
     return text, visible_text
 
 
-# custom_generate_chat_prompt handling
+# custom_generate_chat_prompt handling - currently only the first one will work
 def _apply_custom_generate_chat_prompt(text, state, **kwargs):
-    custom_generate_chat_prompt = None
     for extension, _ in iterator():
-        if custom_generate_chat_prompt is None and hasattr(extension, 'custom_generate_chat_prompt'):
-            custom_generate_chat_prompt = extension.custom_generate_chat_prompt
-
-    if custom_generate_chat_prompt is not None:
-        return custom_generate_chat_prompt(text, state, **kwargs)
+        if hasattr(extension, 'custom_generate_chat_prompt'):
+            return extension.custom_generate_chat_prompt(text, state, **kwargs)
 
     return None
 
@@ -93,18 +89,28 @@ def _apply_state_modifier_extensions(state):
             state = getattr(extension, "state_modifier")(state)
 
     return state
- 
 
-# Extension functions that override the default tokenizer output
+
+# Extension functions that override the default tokenizer output - currently only the first one will work
 def _apply_tokenizer_extensions(function_name, state, prompt, input_ids, input_embeds):
     for extension, _ in iterator():
         if hasattr(extension, function_name):
-            prompt, input_ids, input_embeds = getattr(extension, function_name)(state, prompt, input_ids, input_embeds)
+            return getattr(extension, function_name)(state, prompt, input_ids, input_embeds)
 
     return prompt, input_ids, input_embeds
 
 
-# Custom generate reply handling
+# Get prompt length in tokens after applying extension functions which override the default tokenizer output
+# currently only the first one will work
+def _apply_custom_tokenized_length(prompt):
+    for extension, _ in iterator():
+        if hasattr(extension, 'custom_tokenized_length'):
+            return getattr(extension, 'custom_tokenized_length')(prompt)
+
+    return None
+
+
+# Custom generate reply handling - currently only the first one will work
 def _apply_custom_generate_reply():
     for extension, _ in iterator():
         if hasattr(extension, 'custom_generate_reply'):
@@ -121,7 +127,8 @@ EXTENSION_MAP = {
     "tokenizer": partial(_apply_tokenizer_extensions, "tokenizer_modifier"),
     "input_hijack": _apply_input_hijack,
     "custom_generate_chat_prompt": _apply_custom_generate_chat_prompt,
-    "custom_generate_reply": _apply_custom_generate_reply
+    "custom_generate_reply": _apply_custom_generate_reply,
+    "tokenized_length": _apply_custom_tokenized_length
 }
 
 

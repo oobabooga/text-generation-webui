@@ -59,7 +59,7 @@ class ChromaCollector(Collecter):
     def get_ids(self, search_strings: list[str], n_results: int) -> list[str]:
         n_results = min(len(self.ids), n_results)
         result = self.collection.query(query_texts=search_strings, n_results=n_results, include=['documents'])['ids'][0]
-        return list(map(lambda x : int(x[2:]), result))
+        return list(map(lambda x: int(x[2:]), result))
 
     def clear(self):
         self.collection.delete(ids=self.ids)
@@ -162,13 +162,13 @@ def input_modifier(string):
 def custom_generate_chat_prompt(user_input, state, **kwargs):
     if len(shared.history['internal']) > 2 and user_input != '':
         chunks = []
-        for i in range(len(shared.history['internal'])-1):
+        for i in range(len(shared.history['internal']) - 1):
             chunks.append('\n'.join(shared.history['internal'][i]))
 
         add_chunks_to_collector(chunks)
         query = '\n'.join(shared.history['internal'][-1] + [user_input])
         try:
-            best_ids = collector.get_ids(query, n_results=len(shared.history['internal'])-1)
+            best_ids = collector.get_ids(query, n_results=len(shared.history['internal']) - 1)
 
             # Sort the history by relevance instead of by chronological order,
             # except for the latest message
@@ -226,7 +226,7 @@ def ui():
 
         ## Chat mode
 
-        In chat mode, the extension automatically sorts the history by relevance instead of chronologically, except for the very latest input/reply pair. 
+        In chat mode, the extension automatically sorts the history by relevance instead of chronologically, except for the very latest input/reply pair.
 
         That is, the prompt will include (starting from the end):
 
