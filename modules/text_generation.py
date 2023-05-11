@@ -147,7 +147,7 @@ def stop_everything_event():
 def generate_reply_wrapper(question, state, eos_token=None, stopping_strings=None):
     for reply in generate_reply(question, state, eos_token, stopping_strings, is_chat=False):
         if shared.model_type not in ['HF_seq2seq']:
-            reply = reply + question
+            reply = question + reply
 
         yield formatted_outputs(reply, shared.model_name)
 
