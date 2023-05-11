@@ -146,7 +146,7 @@ def extract_message_from_reply(reply, state):
     return reply, next_character_found
 
 
-def generate_reply_chat_wrapper(text, state, regenerate=False, _continue=False):
+def chatbot_wrapper(text, state, regenerate=False, _continue=False):
     if shared.model_name == 'None' or shared.model is None:
         logging.error("No model is loaded! Select one in the Model tab.")
         yield shared.history['visible']
@@ -226,7 +226,7 @@ def generate_reply_chat_wrapper(text, state, regenerate=False, _continue=False):
     yield shared.history['visible']
 
 
-def generate_reply_impersonate_wrapper(text, state):
+def impersonate_wrapper(text, state):
     if shared.model_name == 'None' or shared.model is None:
         logging.error("No model is loaded! Select one in the Model tab.")
         yield ''
@@ -262,7 +262,7 @@ def generate_chat_reply(text, state, regenerate=False, _continue=False):
             yield shared.history['visible']
             return
 
-    for history in generate_reply_chat_wrapper(text, state, regenerate=regenerate, _continue=_continue):
+    for history in chatbot_wrapper(text, state, regenerate=regenerate, _continue=_continue):
         yield history
 
 
