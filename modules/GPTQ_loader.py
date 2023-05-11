@@ -152,13 +152,13 @@ def load_quantized(model_name):
     model_type = shared.args.model_type.lower()
     if shared.args.pre_layer and model_type == 'llama':
         load_quant = llama_inference_offload.load_quant
-    elif model_type in ('llama', 'opt', 'gptj'):
+    elif model_type in ('llama', 'opt', 'gptj', 'mpt'):
         if shared.args.pre_layer:
             logging.warning("Ignoring --pre_layer because it only works for llama model type.")
 
         load_quant = _load_quant
     else:
-        logging.error("Unknown pre-quantized model type specified. Only 'llama', 'opt' and 'gptj' are supported")
+        logging.error("Unknown pre-quantized model type specified. Only 'llama', 'opt', 'gptj' and 'mpt' are supported")
         exit()
 
     # Find the quantized model weights file (.pt/.safetensors)
