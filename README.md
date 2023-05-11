@@ -303,9 +303,11 @@ By default, 10 presets by NovelAI and KoboldAI are included. These were selected
 
 [Visualization](https://user-images.githubusercontent.com/112222186/228956352-1addbdb9-2456-465a-b51d-089f462cd385.png)
 
-## System requirements
+## Documentation
 
-Check the [wiki](docs/System-requirements.md) for some examples of VRAM and RAM usage in both GPU and CPU modes.
+Make sure to check out the documentation for an in-depth guide on how to use the web UI.
+
+https://github.com/oobabooga/text-generation-webui/tree/main/docs
 
 ## Contributing
 
