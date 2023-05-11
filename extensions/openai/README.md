@@ -115,8 +115,7 @@ defaults are mostly from openai, so are different. I use the openai defaults whe
 
 ### Models
 
-This has primarily been tested with Alpaca & Vicuna kin, ie. Instruction Following models. If you test with other models please let me know how it goes.
-
+This has been successfully tested with Koala, Alpaca, gpt4-x-alpaca, GPT4all-snoozy,  wizard-vicuna, stable-vicuna and Vicuna 1.1 - ie. Instruction Following models. If you test with other models please let me know how it goes. Less than satisfying results (so far): RWKV-4-Raven, llama, mpt-7b-instruct/chat
 
 ### Applications
 
