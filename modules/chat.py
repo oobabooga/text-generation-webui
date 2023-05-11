@@ -257,21 +257,16 @@ def impersonate_wrapper(text, state):
 
 def generate_chat_reply(text, state, regenerate=False, _continue=False):
     if regenerate or _continue:
+        text = ''
         if (len(shared.history['visible']) == 1 and not shared.history['visible'][0][0]) or len(shared.history['internal']) == 0:
             yield shared.history['visible']
             return
 
-    if regenerate:
-        for history in chatbot_wrapper('', state, regenerate=True):
-            yield history
-    elif _continue:
-        for history in chatbot_wrapper('', state, _continue=True):
-            yield history
-    else:
-        for history in chatbot_wrapper(text, state):
-            yield history
+    for history in chatbot_wrapper(text, state, regenerate=regenerate, _continue=_continue):
+        yield history
 
 
+# Same as above but returns HTML
 def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
     for history in generate_chat_reply(text, state, regenerate, _continue):
         yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'])
