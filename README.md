@@ -99,7 +99,7 @@ pip install -r requirements.txt
 
 #### 4. Install GPTQ-for-LLaMa and the monkey patch
 
-The base installation covers regular transformers models as well as llama.cpp (GGML) models.
+The base installation covers [transformers](https://github.com/huggingface/transformers) models (`AutoModelForCausalLM` and `AutoModelForSeq2SeqLM` specifically) and [llama.cpp](https://github.com/ggerganov/llama.cpp) (GGML) models.
 
 To use 4-bit GPU models, the additional installation steps below are necessary:
 
