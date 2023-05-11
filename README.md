@@ -12,7 +12,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 
 * Dropdown menu for switching between models
 * Notebook mode that resembles OpenAI's playground
-* Chat mode for conversation and role playing
+* Chat mode for conversation and role-playing
 * Instruct mode compatible with various formats, including Alpaca, Vicuna, Open Assistant, Dolly, Koala, ChatGLM, MOSS, RWKV-Raven, Galactica, StableLM, WizardLM, Baize, MPT, and INCITE
 * [Multimodal pipelines, including LLaVA and MiniGPT-4](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/multimodal)
 * Nice HTML output for GPT-4chan
@@ -43,15 +43,16 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 |-------|--------|--------|
 | [oobabooga-windows.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga_windows.zip) | [oobabooga-linux.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga_linux.zip) |[oobabooga-macos.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga_macos.zip) |
 
-Just download the zip above, extract it, and double click on "start". The web UI and all its dependencies will be installed in the same folder.
+Just download the zip above, extract it, and double-click on "start". The web UI and all its dependencies will be installed in the same folder.
 
 * The source codes are here: https://github.com/oobabooga/one-click-installers
-* Huge thanks to [@jllllll](https://github.com/jllllll), [@ClayShoaf](https://github.com/ClayShoaf), and [@xNul](https://github.com/xNul) for their contributions to these installers.
 * There is no need to run the installers as admin.
+* AMD doesn't work on Windows.
+* Huge thanks to [@jllllll](https://github.com/jllllll), [@ClayShoaf](https://github.com/ClayShoaf), and [@xNul](https://github.com/xNul) for their contributions to these installers.
 
 ### Manual installation using Conda
 
-Recommended if you have some experience with the command-line.
+Recommended if you have some experience with the command line.
 
 On Windows, I additionally recommend carrying out the installation on WSL instead of the base system: [WSL installation guide](https://github.com/oobabooga/text-generation-webui/blob/main/docs/WSL-installation-guide.md).
 
@@ -82,7 +83,7 @@ conda activate textgen
 | Linux | AMD | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.4.2` |
 | MacOS + MPS (untested) | Any | `pip3 install torch torchvision torchaudio` |
 
-The up to date commands can be found here: https://pytorch.org/get-started/locally/. 
+The up-to-date commands can be found here: https://pytorch.org/get-started/locally/. 
 
 #### 2.1 Special instructions
 
@@ -305,7 +306,7 @@ By default, 10 presets by NovelAI and KoboldAI are included. These were selected
 
 ## System requirements
 
-Check the [wiki](docs/System-requirements.md) for some examples of VRAM and RAM usage in both GPU and CPU mode.
+Check the [wiki](docs/System-requirements.md) for some examples of VRAM and RAM usage in both GPU and CPU modes.
 
 ## Contributing
 
