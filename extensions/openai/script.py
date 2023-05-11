@@ -147,15 +147,6 @@ class Handler(BaseHTTPRequestHandler):
             self.send_error(404)
 
     def do_POST(self):
-        # ... haaack.
-        is_chat = shared.args.chat
-        try:
-            shared.args.chat = True
-            self.do_POST_wrap()
-        finally:
-            shared.args.chat = is_chat
-
-    def do_POST_wrap(self):
         if debug:
             print(self.headers)  # did you know... python-openai sends your linux kernel & python version?
         content_length = int(self.headers['Content-Length'])
@@ -349,7 +340,7 @@ class Handler(BaseHTTPRequestHandler):
             # generate reply #######################################
             if debug:
                 print({'prompt': prompt, 'req_params': req_params, 'stopping_strings': stopping_strings})
-            generator = generate_reply(prompt, req_params, stopping_strings=stopping_strings)
+            generator = generate_reply(prompt, req_params, stopping_strings=stopping_strings, is_chat=True)
 
             answer = ''
             seen_content = ''
@@ -526,7 +517,7 @@ class Handler(BaseHTTPRequestHandler):
             if debug:
                 print({'edit_template': edit_task, 'req_params': req_params, 'token_count': token_count})
             
-            generator = generate_reply(edit_task, req_params, stopping_strings=standard_stopping_strings)
+            generator = generate_reply(edit_task, req_params, stopping_strings=standard_stopping_strings, is_chat=True)
 
             answer = ''
             for a in generator:
