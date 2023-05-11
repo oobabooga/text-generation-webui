@@ -20,14 +20,11 @@ from modules.utils import replace_all
 
 
 def generate_chat_prompt(user_input, state, **kwargs):
-    # Check if an extension is sending its modified history.
-    # If not, use the regular history
-    history = state['history'] if 'history' in state else shared.history['internal']
+    impersonate = kwargs.get('impersonate', False)
+    _continue = kwargs.get('_continue', False)
+    also_return_rows = kwargs.get('also_return_rows', False)
 
-    # Define some variables
-    impersonate = kwargs['impersonate'] if 'impersonate' in kwargs else False
-    _continue = kwargs['_continue'] if '_continue' in kwargs else False
-    also_return_rows = kwargs['also_return_rows'] if 'also_return_rows' in kwargs else False
+    history = state.get('history', shared.history['internal'])
     is_instruct = state['mode'] == 'instruct'
     rows = [state['context_instruct'] if is_instruct else f"{state['context'].strip()}\n"]
     min_rows = 3
