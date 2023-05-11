@@ -104,18 +104,15 @@ def fix_galactica(s):
 def get_reply_from_output_ids(output_ids, input_ids, original_question, state, is_chat=False):
     if shared.model_type == 'HF_seq2seq':
         reply = decode(output_ids, state['skip_special_tokens'])
-        if not is_chat:
-            reply = apply_extensions('output', reply)
     else:
         new_tokens = len(output_ids) - len(input_ids[0])
         reply = decode(output_ids[-new_tokens:], state['skip_special_tokens'])
-
         if type(shared.tokenizer) is transformers.LlamaTokenizer:
             if len(original_question) > 0 and original_question[-1] not in [' ', '\n']:
                 reply = ' ' + reply
 
-        if not is_chat:
-            reply = original_question + apply_extensions('output', reply)
+    if not is_chat:
+        reply = apply_extensions('output', reply)
 
     return reply
 
@@ -149,6 +146,9 @@ def stop_everything_event():
 
 def generate_reply_wrapper(question, state, eos_token=None, stopping_strings=None):
     for reply in generate_reply(question, state, eos_token, stopping_strings, is_chat=False):
+        if shared.model_type not in ['HF_seq2seq']:
+            reply = reply + question
+
         yield formatted_outputs(reply, shared.model_name)
 
 
@@ -236,7 +236,7 @@ def generate_reply_HF(question, original_question, seed, state, eos_token=None, 
     t0 = time.time()
     try:
         if not is_chat and shared.model_type != 'HF_seq2seq':
-            yield original_question
+            yield ''
 
         # Generate the entire reply at once.
         if not state['stream']:
@@ -291,21 +291,18 @@ def generate_reply_custom(question, original_question, seed, state, eos_token=No
     t0 = time.time()
     try:
         if not is_chat:
-            yield question
+            yield ''
 
         if not state['stream']:
             reply = shared.model.generate(context=question, **generate_params)
-            output = original_question + reply
             if not is_chat:
-                reply = original_question + apply_extensions('output', reply)
+                reply = apply_extensions('output', reply)
 
             yield reply
         else:
-
             for reply in shared.model.generate_with_streaming(context=question, **generate_params):
-                output = original_question + reply
                 if not is_chat:
-                    reply = original_question + apply_extensions('output', reply)
+                    reply = apply_extensions('output', reply)
 
                 yield reply
 
@@ -314,7 +311,7 @@ def generate_reply_custom(question, original_question, seed, state, eos_token=No
     finally:
         t1 = time.time()
         original_tokens = len(encode(original_question)[0])
-        new_tokens = len(encode(output)[0]) - original_tokens
+        new_tokens = len(encode(original_question + reply)[0]) - original_tokens
         print(f'Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens}, seed {seed})')
         return
 
@@ -349,7 +346,7 @@ def generate_reply_flexgen(question, original_question, seed, state, eos_token=N
     t0 = time.time()
     try:
         if not is_chat:
-            yield question
+            yield ''
 
         # Generate the entire reply at once.
         if not state['stream']:

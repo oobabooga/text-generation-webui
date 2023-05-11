@@ -340,17 +340,14 @@ class Handler(BaseHTTPRequestHandler):
             # generate reply #######################################
             if debug:
                 print({'prompt': prompt, 'req_params': req_params, 'stopping_strings': stopping_strings})
-            generator = generate_reply(prompt, req_params, stopping_strings=stopping_strings, is_chat=True)
+            generator = generate_reply(prompt, req_params, stopping_strings=stopping_strings, is_chat=False)
 
             answer = ''
             seen_content = ''
             longest_stop_len = max([len(x) for x in stopping_strings])
 
             for a in generator:
-                if isinstance(a, str):
-                    answer = a
-                else:
-                    answer = a[0]
+                answer = a
 
                 stop_string_found = False
                 len_seen = len(seen_content)
@@ -521,10 +518,7 @@ class Handler(BaseHTTPRequestHandler):
 
             answer = ''
             for a in generator:
-                if isinstance(a, str):
-                    answer = a
-                else:
-                    answer = a[0]
+                answer = a
 
             completion_token_count = len(encode(answer)[0])
 
