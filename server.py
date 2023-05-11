@@ -754,6 +754,7 @@ def create_interface():
 
             shared.gradio['Remove last'].click(
                 chat.remove_last_message, None, shared.gradio['textbox'], show_progress=False).then(
+                chat.save_history, shared.gradio['mode'], None, show_progress=False).then(
                 chat.redraw_html, reload_inputs, shared.gradio['display'])
 
             shared.gradio['Replace last reply'].click(
@@ -774,19 +775,12 @@ def create_interface():
                 chat.save_history, shared.gradio['mode'], None, show_progress=False).then(
                 chat.redraw_html, reload_inputs, shared.gradio['display'])
 
-            shared.gradio['Clear history-confirm'].click(
-                lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, clear_arr).then(
-                chat.clear_chat_log, [shared.gradio[k] for k in ['greeting', 'mode']], None).then(
-                chat.save_history, shared.gradio['mode'], None, show_progress=False).then(
-                chat.redraw_html, reload_inputs, shared.gradio['display'])
-
             shared.gradio['character_menu'].change(
                 chat.load_character, [shared.gradio[k] for k in ['character_menu', 'name1', 'name2', 'mode']], [shared.gradio[k] for k in ['name1', 'name2', 'character_picture', 'greeting', 'context', 'dummy']]).then(
                 chat.redraw_html, reload_inputs, shared.gradio['display'])
 
             shared.gradio['instruction_template'].change(
                 chat.load_character, [shared.gradio[k] for k in ['instruction_template', 'name1_instruct', 'name2_instruct', 'mode']], [shared.gradio[k] for k in ['name1_instruct', 'name2_instruct', 'dummy', 'dummy', 'context_instruct', 'turn_template']]).then(
-                chat.redraw_html, reload_inputs, shared.gradio['display'])
 
             shared.gradio['your_picture'].change(
                 chat.upload_your_profile_picture, shared.gradio['your_picture'], None).then(
@@ -810,6 +804,11 @@ def create_interface():
             shared.gradio['Copy last reply'].click(chat.send_last_reply_to_input, None, shared.gradio['textbox'], show_progress=False)
             shared.gradio['Clear history'].click(lambda: [gr.update(visible=True), gr.update(visible=False), gr.update(visible=True)], None, clear_arr)
             shared.gradio['Clear history-cancel'].click(lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, clear_arr)
+            shared.gradio['Clear history-confirm'].click(
+                lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, clear_arr).then(
+                chat.clear_chat_log, [shared.gradio[k] for k in ['greeting', 'mode']], None).then(
+                chat.save_history, shared.gradio['mode'], None, show_progress=False).then(
+                chat.redraw_html, reload_inputs, shared.gradio['display'])
 
             shared.gradio['download_button'].click(lambda x: chat.save_history(x, timestamp=True), shared.gradio['mode'], shared.gradio['download'])
             shared.gradio['Upload character'].click(chat.upload_character, [shared.gradio['upload_json'], shared.gradio['upload_img_bot']], [shared.gradio['character_menu']])
