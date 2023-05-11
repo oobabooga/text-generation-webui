@@ -133,7 +133,7 @@ pip install -r requirements.txt --upgrade
 ```
 ## Downloading models
 
-Models should be placed inside the `models` folder.
+Models should be placed inside the `models/` folder.
 
 [Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads) is the main place to download models. These are some examples:
 
@@ -151,6 +151,10 @@ For example:
     python download-model.py facebook/opt-1.3b
 
 If you want to download a model manually, note that all you need are the json, txt, and pytorch\*.bin (or model*.safetensors) files. The remaining files are not necessary.
+
+#### GGML models
+
+You can drop these directly into the `models/` folder, making sure that the file name contains `ggml` somewhere and ends in `.bin`.
 
 #### GPT-4chan
 
