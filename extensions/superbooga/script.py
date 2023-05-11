@@ -19,7 +19,7 @@ posthog.capture = lambda *args, **kwargs: None
 # These parameters are customizable through settings.json
 params = {
     'chunk_count': 5,
-    'chunk_length': 700
+    'chunk_length': 700,
     'strong_cleanup': True,
 }
 
