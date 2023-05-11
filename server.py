@@ -776,9 +776,6 @@ def create_interface():
                 chat.save_history, shared.gradio['mode'], None, show_progress=False).then(
                 chat.redraw_html, reload_inputs, shared.gradio['display'])
 
-            shared.gradio['instruction_template'].change(
-                chat.load_character, [shared.gradio[k] for k in ['instruction_template', 'name1_instruct', 'name2_instruct', 'mode']], [shared.gradio[k] for k in ['name1_instruct', 'name2_instruct', 'dummy', 'dummy', 'context_instruct', 'turn_template']])
-
             shared.gradio['Stop'].click(
                 stop_everything_event, None, None, queue=False, cancels=gen_events if shared.args.no_stream else None).then(
                 chat.redraw_html, reload_inputs, shared.gradio['display'])
@@ -789,6 +786,8 @@ def create_interface():
                 chat.redraw_html, reload_inputs, shared.gradio['display'])
 
             shared.gradio['chat_style'].change(chat.redraw_html, reload_inputs, shared.gradio['display'])
+            shared.gradio['instruction_template'].change(
+                chat.load_character, [shared.gradio[k] for k in ['instruction_template', 'name1_instruct', 'name2_instruct', 'mode']], [shared.gradio[k] for k in ['name1_instruct', 'name2_instruct', 'dummy', 'dummy', 'context_instruct', 'turn_template']])
 
             shared.gradio['upload_chat_history'].upload(
                 chat.load_history, [shared.gradio[k] for k in ['upload_chat_history', 'name1', 'name2']], None).then(
