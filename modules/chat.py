@@ -255,25 +255,26 @@ def impersonate_wrapper(text, state):
     yield reply
 
 
-def cai_chatbot_wrapper(text, state):
-    for history in chatbot_wrapper(text, state):
-        yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'])
+def generate_chat_reply(text, state, regenerate=False, _continue=False):
+    if regenerate or _continue:
+        if (len(shared.history['visible']) == 1 and not shared.history['visible'][0][0]) or len(shared.history['internal']) == 0:
+            yield shared.history['visible']
+            return
 
-
-def regenerate_wrapper(text, state):
-    if (len(shared.history['visible']) == 1 and not shared.history['visible'][0][0]) or len(shared.history['internal']) == 0:
-        yield chat_html_wrapper(shared.history['visible'], state['name1'], state['name2'], state['mode'], state['chat_style'])
-    else:
+    if regenerate:
         for history in chatbot_wrapper('', state, regenerate=True):
-            yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'])
-
-
-def continue_wrapper(text, state):
-    if (len(shared.history['visible']) == 1 and not shared.history['visible'][0][0]) or len(shared.history['internal']) == 0:
-        yield chat_html_wrapper(shared.history['visible'], state['name1'], state['name2'], state['mode'], state['chat_style'])
-    else:
+            yield history
+    elif _continue:
         for history in chatbot_wrapper('', state, _continue=True):
-            yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'])
+            yield history
+    else:
+        for history in chatbot_wrapper(text, state):
+            yield history
+
+
+def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
+    for history in generate_chat_reply(text, state, regenerate, _continue):
+        yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'])
 
 
 def remove_last_message():
