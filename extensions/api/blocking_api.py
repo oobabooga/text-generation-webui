@@ -39,10 +39,7 @@ class Handler(BaseHTTPRequestHandler):
 
             answer = ''
             for a in generator:
-                if isinstance(a, str):
-                    answer = a
-                else:
-                    answer = a[0]
+                answer = a
 
             response = json.dumps({
                 'results': [{

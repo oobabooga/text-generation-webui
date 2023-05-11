@@ -33,12 +33,7 @@ async def _handle_connection(websocket, path):
         message_num = 0
 
         for a in generator:
-            to_send = ''
-            if isinstance(a, str):
-                to_send = a[skip_index:]
-            else:
-                to_send = a[0][skip_index:]
-
+            to_send = a[skip_index:]
             await websocket.send(json.dumps({
                 'event': 'text_stream',
                 'message_num': message_num,
