@@ -67,13 +67,6 @@ bash Miniconda3.sh
 ```
 Source: https://educe-ubc.github.io/conda.html
 
-#### 0.1 (Ubuntu/WSL) Install build tools
-
-```
-sudo apt install build-essential
-```
-
-
 #### 1. Create a new conda environment
 
 ```
@@ -103,6 +96,14 @@ git clone https://github.com/oobabooga/text-generation-webui
 cd text-generation-webui
 pip install -r requirements.txt
 ```
+
+#### 4. Install GPTQ-for-LLaMa and the monkey patch
+
+The base installation covers regular transformers models as well as llama.cpp (GGML) models.
+
+To use 4-bit GPU models, the additional installation steps below are necessary:
+
+[GPTQ models (4 bit mode)](https://github.com/oobabooga/text-generation-webui/blob/main/docs/GPTQ-models-(4-bit-mode).md)
 
 ### Alternative: manual Windows installation
 
