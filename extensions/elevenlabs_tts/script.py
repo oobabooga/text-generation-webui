@@ -31,12 +31,12 @@ def refresh_voices_dd():
     return gr.Dropdown.update(value=all_voices[0], choices=all_voices)
 
 
-def remove_tts_from_history(name1, name2, mode, style):
+def remove_tts_from_history():
     for i, entry in enumerate(shared.history['internal']):
         shared.history['visible'][i] = [shared.history['visible'][i][0], entry[1]]
 
 
-def toggle_text_in_history(name1, name2, mode, style):
+def toggle_text_in_history():
     for i, entry in enumerate(shared.history['visible']):
         visible_reply = entry[1]
         if visible_reply.startswith('<audio'):
@@ -49,8 +49,6 @@ def toggle_text_in_history(name1, name2, mode, style):
                 shared.history['visible'][i] = [
                     shared.history['visible'][i][0], f"{visible_reply.split('</audio>')[0]}</audio>"
                 ]
-
-    return chat_html_wrapper(shared.history['visible'], name1, name2, mode, style)
 
 
 def remove_surrounded_chars(string):
