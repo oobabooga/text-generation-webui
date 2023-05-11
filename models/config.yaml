@@ -54,6 +54,9 @@
 .*vicuna.*(1.1|1_1):
   mode: 'instruct'
   instruction_template: 'Vicuna-v1.1'
+.*wizard.*vicuna:
+  mode: 'instruct'
+  instruction_template: 'Vicuna-v1.1'
 .*stable.*vicuna:
   mode: 'instruct'
   instruction_template: 'StableVicuna'
