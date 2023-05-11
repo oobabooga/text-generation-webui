@@ -120,18 +120,15 @@ def get_reply_from_output_ids(output_ids, input_ids, original_question, state, i
     return reply
 
 
-def formatted_outputs(reply, model_name, is_chat=False):
-    if not is_chat:
-        if shared.model_type == 'galactica':
-            reply = fix_galactica(reply)
-            return reply, reply, generate_basic_html(reply)
-        elif shared.model_type == 'gpt4chan':
-            reply = fix_gpt4chan(reply)
-            return reply, 'Only applicable for GALACTICA models.', generate_4chan_html(reply)
-        else:
-            return reply, 'Only applicable for GALACTICA models.', generate_basic_html(reply)
+def formatted_outputs(reply, model_name):
+    if shared.model_type == 'galactica':
+        reply = fix_galactica(reply)
+        return reply, reply, generate_basic_html(reply)
+    elif shared.model_type == 'gpt4chan':
+        reply = fix_gpt4chan(reply)
+        return reply, 'Only applicable for GALACTICA models.', generate_4chan_html(reply)
     else:
-        return reply
+        return reply, 'Only applicable for GALACTICA models.', generate_basic_html(reply)
 
 
 def set_manual_seed(seed):
@@ -161,7 +158,7 @@ def generate_reply(question, state, eos_token=None, stopping_strings=None, is_ch
     if generate_func is None:
         if shared.model_name == 'None' or shared.model is None:
             logging.error("No model is loaded! Select one in the Model tab.")
-            yield formatted_outputs(question, shared.model_name)
+            yield question
             return
 
         if shared.model_type in ['rwkv', 'llamacpp']:
