@@ -26,10 +26,10 @@ async def _handle_connection(websocket, path):
         generate_params['stream'] = True
 
         generator = generate_reply(
-            prompt, generate_params, stopping_strings=stopping_strings)
+            prompt, generate_params, stopping_strings=stopping_strings, is_chat=False)
 
         # As we stream, only send the new bytes.
-        skip_index = len(prompt) if not shared.is_chat() else 0
+        skip_index = len(prompt)
         message_num = 0
 
         for a in generator:
