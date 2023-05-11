@@ -148,7 +148,7 @@ def stop_everything_event():
 
 
 def generate_reply_wrapper(question, state, eos_token=None, stopping_strings=None):
-    for output in generate_reply(question, state, eos_token, stopping_strings, is_chat=False):
+    for reply in generate_reply(question, state, eos_token, stopping_strings, is_chat=False):
         yield formatted_outputs(reply, shared.model_name)
 
 
@@ -179,7 +179,7 @@ def generate_reply(question, state, eos_token=None, stopping_strings=None, is_ch
     shared.stop_everything = False
     clear_torch_cache()
     seed = set_manual_seed(state['seed'])
-    for reply in generate_func(question, original_question, seed, state, eos_token, stopping_strings):
+    for reply in generate_func(question, original_question, seed, state, eos_token, stopping_strings, is_chat=is_chat):
         yield reply
 
 

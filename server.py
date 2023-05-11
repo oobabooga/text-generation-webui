@@ -780,7 +780,7 @@ def create_interface():
                 chat.redraw_html, reload_inputs, shared.gradio['display'])
 
             shared.gradio['instruction_template'].change(
-                chat.load_character, [shared.gradio[k] for k in ['instruction_template', 'name1_instruct', 'name2_instruct', 'mode']], [shared.gradio[k] for k in ['name1_instruct', 'name2_instruct', 'dummy', 'dummy', 'context_instruct', 'turn_template']]).then(
+                chat.load_character, [shared.gradio[k] for k in ['instruction_template', 'name1_instruct', 'name2_instruct', 'mode']], [shared.gradio[k] for k in ['name1_instruct', 'name2_instruct', 'dummy', 'dummy', 'context_instruct', 'turn_template']])
 
             shared.gradio['your_picture'].change(
                 chat.upload_your_profile_picture, shared.gradio['your_picture'], None).then(
