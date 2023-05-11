@@ -13,10 +13,11 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * Dropdown menu for switching between models
 * Notebook mode that resembles OpenAI's playground
 * Chat mode for conversation and role playing
-* Instruct mode compatible with various formats, including Alpaca, Vicuna, Open Assistant, Dolly, Koala, ChatGLM, and MOSS
+* Instruct mode compatible with various formats, including Alpaca, Vicuna, Open Assistant, Dolly, Koala, ChatGLM, MOSS, RWKV-Raven, Galactica, StableLM, WizardLM, Baize, MPT, and INCITE
+* [Multimodal pipelines, including LLaVA and MiniGPT-4](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/multimodal)
 * Nice HTML output for GPT-4chan
 * Markdown output for [GALACTICA](https://github.com/paperswithcode/galai), including LaTeX rendering
-* [Custom chat characters](docs/Custom-chat-characters.md)
+* [Custom chat characters](docs/Chat-mode.md)
 * Advanced chat features (send images, get audio responses with TTS)
 * Very efficient text streaming
 * Parameter presets
@@ -280,6 +281,12 @@ Optionally, you can use the following command-line flags:
 |---------------------------------------|-------------|
 | `--api`                               | Enable the API extension. |
 | `--public-api`                        | Create a public URL for the API using Cloudfare. |
+
+#### Multimodal
+
+| Flag                                  | Description |
+|---------------------------------------|-------------|
+| `--multimodal-pipeline PIPELINE`      | The multimodal pipeline to use. Examples: `llava-7b`, `llava-13b`. |
 
 Out of memory errors? [Check the low VRAM guide](docs/Low-VRAM-guide.md).
 

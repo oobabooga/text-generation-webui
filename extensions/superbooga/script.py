@@ -16,6 +16,13 @@ from modules import chat, shared
 logging.info('Intercepting all calls to posthog :)')
 posthog.capture = lambda *args, **kwargs: None
 
+# These parameters are customizable through settings.json
+params = {
+    'chunk_count': 5,
+    'chunk_length': 700,
+    'strong_cleanup': True,
+}
+
 
 class Collecter():
     def __init__(self):
@@ -59,7 +66,7 @@ class ChromaCollector(Collecter):
     def get_ids(self, search_strings: list[str], n_results: int) -> list[str]:
         n_results = min(len(self.ids), n_results)
         result = self.collection.query(query_texts=search_strings, n_results=n_results, include=['documents'])['ids'][0]
-        return list(map(lambda x : int(x[2:]), result))
+        return list(map(lambda x: int(x[2:]), result))
 
     def clear(self):
         self.collection.delete(ids=self.ids)
@@ -105,7 +112,7 @@ def feed_file_into_collector(file, chunk_len):
         yield i
 
 
-def feed_url_into_collector(urls, chunk_len):
+def feed_url_into_collector(urls, chunk_len, strong_cleanup=False):
     urls = urls.strip().split('\n')
     all_text = ''
     cumulative = ''
@@ -117,7 +124,11 @@ def feed_url_into_collector(urls, chunk_len):
         for script in soup(["script", "style"]):
             script.extract()
 
-        text = soup.get_text()
+        strings = soup.stripped_strings
+        if strong_cleanup:
+            strings = [s for s in strings if re.search("[A-Za-z] ", s)]
+
+        text = '\n'.join([s.strip() for s in strings])
         lines = (line.strip() for line in text.splitlines())
         chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
         text = '\n\n'.join(chunk for chunk in chunks if chunk)
@@ -162,13 +173,13 @@ def input_modifier(string):
 def custom_generate_chat_prompt(user_input, state, **kwargs):
     if len(shared.history['internal']) > 2 and user_input != '':
         chunks = []
-        for i in range(len(shared.history['internal'])-1):
+        for i in range(len(shared.history['internal']) - 1):
             chunks.append('\n'.join(shared.history['internal'][i]))
 
         add_chunks_to_collector(chunks)
         query = '\n'.join(shared.history['internal'][-1] + [user_input])
         try:
-            best_ids = collector.get_ids(query, n_results=len(shared.history['internal'])-1)
+            best_ids = collector.get_ids(query, n_results=len(shared.history['internal']) - 1)
 
             # Sort the history by relevance instead of by chronological order,
             # except for the latest message
@@ -226,7 +237,7 @@ def ui():
 
         ## Chat mode
 
-        In chat mode, the extension automatically sorts the history by relevance instead of chronologically, except for the very latest input/reply pair. 
+        In chat mode, the extension automatically sorts the history by relevance instead of chronologically, except for the very latest input/reply pair.
 
         That is, the prompt will include (starting from the end):
 
@@ -251,6 +262,7 @@ def ui():
 
                 with gr.Tab("URL input"):
                     url_input = gr.Textbox(lines=10, label='Input URLs', info='Enter one or more URLs separated by newline characters.')
+                    strong_cleanup = gr.Checkbox(value=params['strong_cleanup'], label='Strong cleanup', info='Only keeps html elements that look like long-form text.')
                     update_url = gr.Button('Load data')
 
                 with gr.Tab("File input"):
@@ -258,15 +270,15 @@ def ui():
                     update_file = gr.Button('Load data')
 
                 with gr.Tab("Generation settings"):
-                    chunk_count = gr.Number(value=5, label='Chunk count', info='The number of closest-matching chunks to include in the prompt.')
+                    chunk_count = gr.Number(value=params['chunk_count'], label='Chunk count', info='The number of closest-matching chunks to include in the prompt.')
                     update_settings = gr.Button('Apply changes')
 
-                chunk_len = gr.Number(value=700, label='Chunk length', info='In characters, not tokens. This value is used when you click on "Load data".')
+                chunk_len = gr.Number(value=params['chunk_length'], label='Chunk length', info='In characters, not tokens. This value is used when you click on "Load data".')
 
             with gr.Column():
                 last_updated = gr.Markdown()
 
         update_data.click(feed_data_into_collector, [data_input, chunk_len], last_updated, show_progress=False)
-        update_url.click(feed_url_into_collector, [url_input, chunk_len], last_updated, show_progress=False)
+        update_url.click(feed_url_into_collector, [url_input, chunk_len, strong_cleanup], last_updated, show_progress=False)
         update_file.click(feed_file_into_collector, [file_input, chunk_len], last_updated, show_progress=False)
         update_settings.click(apply_settings, [chunk_count], last_updated, show_progress=False)

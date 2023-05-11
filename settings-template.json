@@ -35,16 +35,11 @@
         "default": "Default",
         ".*(alpaca|llama|llava)": "LLaMA-Precise",
         ".*pygmalion": "NovelAI-Storywriter",
-        ".*RWKV": "Naive"
+        ".*RWKV": "Naive",
+        ".*moss": "MOSS"
     },
     "prompts": {
         "default": "QA",
-        ".*(gpt4chan|gpt-4chan|4chan)": "GPT-4chan",
-        ".*oasst": "Open Assistant",
-        ".*alpaca": "Alpaca"
-    },
-    "lora_prompts": {
-        "default": "QA",
-        ".*(alpaca-lora-7b|alpaca-lora-13b|alpaca-lora-30b)": "Alpaca"
+        ".*(gpt4chan|gpt-4chan|4chan)": "GPT-4chan"
     }
 }

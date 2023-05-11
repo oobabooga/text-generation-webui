@@ -53,6 +53,7 @@ def _load_quant(model, checkpoint, wbits, groupsize=-1, faster_kernel=False, exc
     torch.set_default_dtype(torch.float)
     if eval:
         model = model.eval()
+
     layers = find_layers(model)
     for name in exclude_layers:
         if name in layers:
@@ -78,7 +79,6 @@ def _load_quant(model, checkpoint, wbits, groupsize=-1, faster_kernel=False, exc
         quant.make_quant_linear(model, layers, wbits, groupsize)
 
     del layers
-
     if checkpoint.endswith('.safetensors'):
         from safetensors.torch import load_file as safe_load
         model.load_state_dict(safe_load(checkpoint), strict=False)
@@ -88,6 +88,7 @@ def _load_quant(model, checkpoint, wbits, groupsize=-1, faster_kernel=False, exc
     if is_triton:
         if shared.args.quant_attn:
             quant.make_quant_attn(model)
+
         if eval and shared.args.fused_mlp:
             quant.make_fused_mlp(model)
 
@@ -113,6 +114,7 @@ def find_quantized_model_file(model_name):
         for ext in ['.safetensors', '.pt']
         for hyphen in ['-', f'/{model_name}-', '/']
     ]
+
     for path in priority_name_list:
         if path.exists():
             pt_path = path
@@ -141,23 +143,13 @@ def find_quantized_model_file(model_name):
 
 # The function that loads the model in modules/models.py
 def load_quantized(model_name):
-
-    # Find the model type
-    if not shared.args.model_type:
-        name = model_name.lower()
-        if any((k in name for k in ['llama', 'alpaca', 'vicuna', 'llava'])):
-            model_type = 'llama'
-        elif any((k in name for k in ['opt-', 'galactica'])):
-            model_type = 'opt'
-        elif any((k in name for k in ['gpt-j', 'pygmalion-6b'])):
-            model_type = 'gptj'
-        else:
-            logging.error("Can't determine model type from model name. Please specify it manually using --model_type argument")
-            exit()
-    else:
-        model_type = shared.args.model_type.lower()
+    if shared.args.model_type is None:
+        logging.error("The model could not be loaded because its type could not be inferred from its name.")
+        logging.error("Please specify the type manually using the --model_type argument.")
+        return
 
     # Select the appropriate load_quant function
+    model_type = shared.args.model_type.lower()
     if shared.args.pre_layer and model_type == 'llama':
         load_quant = llama_inference_offload.load_quant
     elif model_type in ('llama', 'opt', 'gptj'):
