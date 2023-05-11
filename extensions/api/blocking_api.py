@@ -2,10 +2,9 @@ import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
 
+from extensions.api.util import build_parameters, try_start_cloudflared
 from modules import shared
 from modules.text_generation import encode, generate_reply
-
-from extensions.api.util import build_parameters, try_start_cloudflared
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -33,6 +32,7 @@ class Handler(BaseHTTPRequestHandler):
             prompt = body['prompt']
             generate_params = build_parameters(body)
             stopping_strings = generate_params.pop('stopping_strings')
+            generate_params['stream'] = False
 
             generator = generate_reply(
                 prompt, generate_params, stopping_strings=stopping_strings)
@@ -66,7 +66,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send_error(404)
 
 
-def _run_server(port: int, share: bool=False):
+def _run_server(port: int, share: bool = False):
     address = '0.0.0.0' if shared.args.listen else '127.0.0.1'
 
     server = ThreadingHTTPServer((address, port), Handler)

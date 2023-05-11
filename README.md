@@ -12,26 +12,26 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 
 * Dropdown menu for switching between models
 * Notebook mode that resembles OpenAI's playground
-* Chat mode for conversation and role playing
-* Instruct mode compatible with various formats, including Alpaca, Vicuna, Open Assistant, Dolly, Koala, ChatGLM, and MOSS
-* Nice HTML output for GPT-4chan
+* Chat mode for conversation and role-playing
+* Instruct mode compatible with various formats, including Alpaca, Vicuna, Open Assistant, Dolly, Koala, ChatGLM, MOSS, RWKV-Raven, Galactica, StableLM, WizardLM, Baize, MPT, and INCITE
+* [Multimodal pipelines, including LLaVA and MiniGPT-4](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/multimodal)
 * Markdown output for [GALACTICA](https://github.com/paperswithcode/galai), including LaTeX rendering
-* [Custom chat characters](docs/Custom-chat-characters.md)
+* Nice HTML output for GPT-4chan
+* [Custom chat characters](docs/Chat-mode.md)
 * Advanced chat features (send images, get audio responses with TTS)
 * Very efficient text streaming
 * Parameter presets
+* [LLaMA model](docs/LLaMA-model.md)
+* [4-bit GPTQ mode](docs/GPTQ-models-(4-bit-mode).md)
+* [LoRA (loading and training)](docs/Using-LoRAs.md)
+* [llama.cpp](docs/llama.cpp-models.md)
+* [RWKV model](docs/RWKV-model.md)
 * 8-bit mode
 * Layers splitting across GPU(s), CPU, and disk
 * CPU mode
 * [FlexGen](docs/FlexGen.md)
 * [DeepSpeed ZeRO-3](docs/DeepSpeed.md)
 * API [with](https://github.com/oobabooga/text-generation-webui/blob/main/api-example-stream.py) streaming and [without](https://github.com/oobabooga/text-generation-webui/blob/main/api-example.py) streaming
-* [LLaMA model](docs/LLaMA-model.md)
-* [4-bit GPTQ mode](docs/GPTQ-models-(4-bit-mode).md)
-* [llama.cpp](docs/llama.cpp-models.md)
-* [RWKV model](docs/RWKV-model.md)
-* [LoRA (loading and training)](docs/Using-LoRAs.md)
-* Softprompts
 * [Extensions](docs/Extensions.md) - see the [user extensions list](https://github.com/oobabooga/text-generation-webui-extensions)
 
 ## Installation
@@ -42,15 +42,16 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 |-------|--------|--------|
 | [oobabooga-windows.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga_windows.zip) | [oobabooga-linux.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga_linux.zip) |[oobabooga-macos.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga_macos.zip) |
 
-Just download the zip above, extract it, and double click on "start". The web UI and all its dependencies will be installed in the same folder.
+Just download the zip above, extract it, and double-click on "start". The web UI and all its dependencies will be installed in the same folder.
 
 * The source codes are here: https://github.com/oobabooga/one-click-installers
-* Huge thanks to [@jllllll](https://github.com/jllllll), [@ClayShoaf](https://github.com/ClayShoaf), and [@xNul](https://github.com/xNul) for their contributions to these installers.
 * There is no need to run the installers as admin.
+* AMD doesn't work on Windows.
+* Huge thanks to [@jllllll](https://github.com/jllllll), [@ClayShoaf](https://github.com/ClayShoaf), and [@xNul](https://github.com/xNul) for their contributions to these installers.
 
 ### Manual installation using Conda
 
-Recommended if you have some experience with the command-line.
+Recommended if you have some experience with the command line.
 
 On Windows, I additionally recommend carrying out the installation on WSL instead of the base system: [WSL installation guide](https://github.com/oobabooga/text-generation-webui/blob/main/docs/WSL-installation-guide.md).
 
@@ -65,13 +66,6 @@ curl -sL "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh"
 bash Miniconda3.sh
 ```
 Source: https://educe-ubc.github.io/conda.html
-
-#### 0.1 (Ubuntu/WSL) Install build tools
-
-```
-sudo apt install build-essential
-```
-
 
 #### 1. Create a new conda environment
 
@@ -88,7 +82,7 @@ conda activate textgen
 | Linux | AMD | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.4.2` |
 | MacOS + MPS (untested) | Any | `pip3 install torch torchvision torchaudio` |
 
-The up to date commands can be found here: https://pytorch.org/get-started/locally/. 
+The up-to-date commands can be found here: https://pytorch.org/get-started/locally/. 
 
 #### 2.1 Special instructions
 
@@ -102,6 +96,14 @@ git clone https://github.com/oobabooga/text-generation-webui
 cd text-generation-webui
 pip install -r requirements.txt
 ```
+
+#### 4. Install GPTQ-for-LLaMa and the monkey patch
+
+The base installation covers [transformers](https://github.com/huggingface/transformers) models (`AutoModelForCausalLM` and `AutoModelForSeq2SeqLM` specifically) and [llama.cpp](https://github.com/ggerganov/llama.cpp) (GGML) models.
+
+To use 4-bit GPU models, the additional installation steps below are necessary:
+
+[GPTQ models (4 bit mode)](https://github.com/oobabooga/text-generation-webui/blob/main/docs/GPTQ-models-(4-bit-mode).md)
 
 ### Alternative: manual Windows installation
 
@@ -131,7 +133,7 @@ pip install -r requirements.txt --upgrade
 ```
 ## Downloading models
 
-Models should be placed inside the `models` folder.
+Models should be placed inside the `models/` folder.
 
 [Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads) is the main place to download models. These are some examples:
 
@@ -149,6 +151,10 @@ For example:
     python download-model.py facebook/opt-1.3b
 
 If you want to download a model manually, note that all you need are the json, txt, and pytorch\*.bin (or model*.safetensors) files. The remaining files are not necessary.
+
+#### GGML models
+
+You can drop these directly into the `models/` folder, making sure that the file name contains `ggml` somewhere and ends in `.bin`.
 
 #### GPT-4chan
 
@@ -281,6 +287,12 @@ Optionally, you can use the following command-line flags:
 | `--api`                               | Enable the API extension. |
 | `--public-api`                        | Create a public URL for the API using Cloudfare. |
 
+#### Multimodal
+
+| Flag                                  | Description |
+|---------------------------------------|-------------|
+| `--multimodal-pipeline PIPELINE`      | The multimodal pipeline to use. Examples: `llava-7b`, `llava-13b`. |
+
 Out of memory errors? [Check the low VRAM guide](docs/Low-VRAM-guide.md).
 
 ## Presets
@@ -291,9 +303,11 @@ By default, 10 presets by NovelAI and KoboldAI are included. These were selected
 
 [Visualization](https://user-images.githubusercontent.com/112222186/228956352-1addbdb9-2456-465a-b51d-089f462cd385.png)
 
-## System requirements
+## Documentation
 
-Check the [wiki](docs/System-requirements.md) for some examples of VRAM and RAM usage in both GPU and CPU mode.
+Make sure to check out the documentation for an in-depth guide on how to use the web UI.
+
+https://github.com/oobabooga/text-generation-webui/tree/main/docs
 
 ## Contributing
 

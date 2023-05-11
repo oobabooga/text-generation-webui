@@ -20,6 +20,8 @@ def load_past_evaluations():
         return df
     else:
         return pd.DataFrame(columns=['Model', 'LoRAs', 'Dataset', 'Perplexity', 'stride', 'max_length', 'Date', 'Comment'])
+
+
 past_evaluations = load_past_evaluations()
 
 

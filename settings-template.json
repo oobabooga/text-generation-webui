@@ -1,4 +1,5 @@
 {
+    "autoload_model": true,
     "max_new_tokens": 200,
     "max_new_tokens_min": 1,
     "max_new_tokens_max": 2000,
@@ -17,7 +18,8 @@
     "truncation_length": 2048,
     "truncation_length_min": 0,
     "truncation_length_max": 8192,
-    "mode": "cai-chat",
+    "mode": "chat",
+    "chat_style": "cai-chat",
     "instruction_template": "None",
     "chat_prompt_size": 2048,
     "chat_prompt_size_min": 0,
@@ -33,16 +35,11 @@
         "default": "Default",
         ".*(alpaca|llama|llava)": "LLaMA-Precise",
         ".*pygmalion": "NovelAI-Storywriter",
-        ".*RWKV": "Naive"
+        ".*RWKV": "Naive",
+        ".*moss": "MOSS"
     },
     "prompts": {
         "default": "QA",
-        ".*(gpt4chan|gpt-4chan|4chan)": "GPT-4chan",
-        ".*oasst": "Open Assistant",
-        ".*alpaca": "Alpaca"
-    },
-    "lora_prompts": {
-        "default": "QA",
-        ".*(alpaca-lora-7b|alpaca-lora-13b|alpaca-lora-30b)": "Alpaca"
+        ".*(gpt4chan|gpt-4chan|4chan)": "GPT-4chan"
     }
 }

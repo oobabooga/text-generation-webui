@@ -160,7 +160,11 @@ def load_model(model_name):
 
     # Custom
     else:
-        params = {"low_cpu_mem_usage": True}
+        params = {
+            "low_cpu_mem_usage": True,
+            "trust_remote_code": trust_remote_code
+        }
+
         if not any((shared.args.cpu, torch.cuda.is_available(), torch.has_mps)):
             logging.warning("torch.cuda.is_available() returned False. This means that no GPU has been detected. Falling back to CPU mode.")
             shared.args.cpu = True
@@ -169,7 +173,6 @@ def load_model(model_name):
             params["torch_dtype"] = torch.float32
         else:
             params["device_map"] = 'auto'
-            params["trust_remote_code"] = trust_remote_code
             if shared.args.load_in_8bit and any((shared.args.auto_devices, shared.args.gpu_memory)):
                 params['quantization_config'] = BitsAndBytesConfig(load_in_8bit=True, llm_int8_enable_fp32_cpu_offload=True)
             elif shared.args.load_in_8bit:
@@ -204,9 +207,9 @@ def load_model(model_name):
 
         checkpoint = Path(f'{shared.args.model_dir}/{model_name}')
         if shared.args.load_in_8bit and params.get('max_memory', None) is not None and params['device_map'] == 'auto':
-            config = AutoConfig.from_pretrained(checkpoint)
+            config = AutoConfig.from_pretrained(checkpoint, trust_remote_code=trust_remote_code)
             with init_empty_weights():
-                model = LoaderClass.from_config(config)
+                model = LoaderClass.from_config(config, trust_remote_code=trust_remote_code)
 
             model.tie_weights()
             params['device_map'] = infer_auto_device_map(
@@ -249,7 +252,7 @@ def load_model(model_name):
     else:
         tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/{model_name}/"), trust_remote_code=trust_remote_code)
 
-    logging.info(f"Loaded the model in {(time.time()-t0):.2f} seconds.")
+    logging.info(f"Loaded the model in {(time.time()-t0):.2f} seconds.\n")
     return model, tokenizer
 
 
@@ -285,6 +288,7 @@ def load_soft_prompt(name):
                         logging.info(f"{field}: {', '.join(j[field])}")
                     else:
                         logging.info(f"{field}: {j[field]}")
+
             logging.info()
             tensor = np.load('tensor.npy')
             Path('tensor.npy').unlink()

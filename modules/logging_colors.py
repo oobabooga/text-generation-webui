@@ -1,6 +1,8 @@
 # Copied from https://stackoverflow.com/a/1336640
 
 import logging
+import platform
+
 
 def add_coloring_to_emit_windows(fn):
     # add methods we need to the class
@@ -11,6 +13,7 @@ def add_coloring_to_emit_windows(fn):
 
     def _set_color(self, code):
         import ctypes
+
         # Constants from the Windows API
         self.STD_OUTPUT_HANDLE = -11
         hdl = ctypes.windll.kernel32.GetStdHandle(self.STD_OUTPUT_HANDLE)
@@ -94,7 +97,6 @@ def add_coloring_to_emit_ansi(fn):
     return new
 
 
-import platform
 if platform.system() == 'Windows':
     # Windows does not support ANSI escapes and we are using API calls to set the console color
     logging.StreamHandler.emit = add_coloring_to_emit_windows(logging.StreamHandler.emit)
