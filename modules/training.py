@@ -5,6 +5,7 @@ import sys
 import threading
 import time
 import traceback
+import os
 from pathlib import Path
 
 import gradio as gr
@@ -253,8 +254,18 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     # == Prep the dataset, format, etc ==
     if raw_text_file not in ['None', '']:
         logging.info("Loading raw text file dataset...")
-        with open(clean_path('training/datasets', f'{raw_text_file}.txt'), 'r', encoding='utf-8') as file:
-            raw_text = file.read()
+        fullpath=clean_path('training/datasets', f'{raw_text_file}')
+        if os.path.isdir(fullpath):
+            print('Training path directory {}'.format(raw_text_file))
+            raw_text = ""
+            for filename in os.listdir(fullpath):
+                if filename.endswith('.txt'):
+                    with open(os.path.join(fullpath, filename), 'r', encoding='utf-8') as file:
+                        raw_text += file.read()
+                    print("Loaded training file:", filename)
+        else:
+            with open(clean_path('training/datasets', f'{raw_text_file}.txt'), 'r', encoding='utf-8') as file:
+                raw_text = file.read()
 
         tokens = shared.tokenizer.encode(raw_text)
         del raw_text  # Note: could be a gig for a large dataset, so delete redundant data as we go to be safe on RAM
