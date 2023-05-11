@@ -520,6 +520,10 @@ class Handler(BaseHTTPRequestHandler):
             for a in generator:
                 answer = a
 
+            # hack to eat an extra leading space
+            if instruction_template[-1] not in [' ', '\n'] and answer[0] == ' ':
+                answer = answer[1:]
+
             completion_token_count = len(encode(answer)[0])
 
             resp = {
