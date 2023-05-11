@@ -3,9 +3,9 @@ from pathlib import Path
 
 import gradio as gr
 import torch
-from extensions.silero_tts import tts_preprocessor
 from modules import chat, shared
-from modules.html_generator import chat_html_wrapper
+
+from extensions.silero_tts import tts_preprocessor
 
 torch._C._jit_set_profiling_mode(False)
 

@@ -3,9 +3,7 @@ from pathlib import Path
 
 import elevenlabs
 import gradio as gr
-
 from modules import chat, shared
-from modules.html_generator import chat_html_wrapper
 
 params = {
     'activate': True,
