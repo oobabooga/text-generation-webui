@@ -718,7 +718,7 @@ def create_interface():
         if shared.is_chat():
             shared.input_params = [shared.gradio[k] for k in ['Chat input', 'interface_state']]
             clear_arr = [shared.gradio[k] for k in ['Clear history-confirm', 'Clear history', 'Clear history-cancel']]
-            reload_inputs = [shared.gradio[k] for k in ['name1', 'name2', 'mode', 'chat_style']]
+            shared.reload_inputs = [shared.gradio[k] for k in ['name1', 'name2', 'mode', 'chat_style']]
 
             gen_events.append(shared.gradio['Generate'].click(
                 ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
@@ -756,42 +756,42 @@ def create_interface():
                 chat.replace_last_reply, shared.gradio['textbox'], None).then(
                 lambda: '', None, shared.gradio['textbox'], show_progress=False).then(
                 chat.save_history, shared.gradio['mode'], None, show_progress=False).then(
-                chat.redraw_html, reload_inputs, shared.gradio['display'])
+                chat.redraw_html, shared.reload_inputs, shared.gradio['display'])
 
             shared.gradio['Send dummy message'].click(
                 chat.send_dummy_message, shared.gradio['textbox'], None).then(
                 lambda: '', None, shared.gradio['textbox'], show_progress=False).then(
                 chat.save_history, shared.gradio['mode'], None, show_progress=False).then(
-                chat.redraw_html, reload_inputs, shared.gradio['display'])
+                chat.redraw_html, shared.reload_inputs, shared.gradio['display'])
 
             shared.gradio['Send dummy reply'].click(
                 chat.send_dummy_reply, shared.gradio['textbox'], None).then(
                 lambda: '', None, shared.gradio['textbox'], show_progress=False).then(
                 chat.save_history, shared.gradio['mode'], None, show_progress=False).then(
-                chat.redraw_html, reload_inputs, shared.gradio['display'])
+                chat.redraw_html, shared.reload_inputs, shared.gradio['display'])
 
             shared.gradio['Clear history-confirm'].click(
                 lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, clear_arr).then(
                 chat.clear_chat_log, [shared.gradio[k] for k in ['greeting', 'mode']], None).then(
                 chat.save_history, shared.gradio['mode'], None, show_progress=False).then(
-                chat.redraw_html, reload_inputs, shared.gradio['display'])
+                chat.redraw_html, shared.reload_inputs, shared.gradio['display'])
 
             shared.gradio['Stop'].click(
                 stop_everything_event, None, None, queue=False, cancels=gen_events if shared.args.no_stream else None).then(
-                chat.redraw_html, reload_inputs, shared.gradio['display'])
+                chat.redraw_html, shared.reload_inputs, shared.gradio['display'])
 
             shared.gradio['mode'].change(
                 lambda x: [gr.update(visible=x == 'instruct')] * 5 + [gr.update(visible=x != 'instruct')] * 5, shared.gradio['mode'], [shared.gradio[k] for k in ['instruction_template', 'name1_instruct', 'name2_instruct', 'context_instruct', 'turn_template', 'name1', 'name2', 'context', 'greeting', 'chat_style']], show_progress=False).then(
                 lambda x: gr.update(interactive=x != 'instruct'), shared.gradio['mode'], shared.gradio['character_menu']).then(
-                chat.redraw_html, reload_inputs, shared.gradio['display'])
+                chat.redraw_html, shared.reload_inputs, shared.gradio['display'])
 
-            shared.gradio['chat_style'].change(chat.redraw_html, reload_inputs, shared.gradio['display'])
+            shared.gradio['chat_style'].change(chat.redraw_html, shared.reload_inputs, shared.gradio['display'])
             shared.gradio['instruction_template'].change(
                 chat.load_character, [shared.gradio[k] for k in ['instruction_template', 'name1_instruct', 'name2_instruct', 'mode']], [shared.gradio[k] for k in ['name1_instruct', 'name2_instruct', 'dummy', 'dummy', 'context_instruct', 'turn_template']])
 
             shared.gradio['upload_chat_history'].upload(
                 chat.load_history, [shared.gradio[k] for k in ['upload_chat_history', 'name1', 'name2']], None).then(
-                chat.redraw_html, reload_inputs, shared.gradio['display'])
+                chat.redraw_html, shared.reload_inputs, shared.gradio['display'])
 
             shared.gradio['Copy last reply'].click(chat.send_last_reply_to_input, None, shared.gradio['textbox'], show_progress=False)
             shared.gradio['Clear history'].click(lambda: [gr.update(visible=True), gr.update(visible=False), gr.update(visible=True)], None, clear_arr)
@@ -799,18 +799,18 @@ def create_interface():
             shared.gradio['Remove last'].click(
                 chat.remove_last_message, None, shared.gradio['textbox'], show_progress=False).then(
                 chat.save_history, shared.gradio['mode'], None, show_progress=False).then(
-                chat.redraw_html, reload_inputs, shared.gradio['display'])
+                chat.redraw_html, shared.reload_inputs, shared.gradio['display'])
 
             shared.gradio['download_button'].click(lambda x: chat.save_history(x, timestamp=True), shared.gradio['mode'], shared.gradio['download'])
             shared.gradio['Upload character'].click(chat.upload_character, [shared.gradio['upload_json'], shared.gradio['upload_img_bot']], [shared.gradio['character_menu']])
             shared.gradio['character_menu'].change(
                 chat.load_character, [shared.gradio[k] for k in ['character_menu', 'name1', 'name2', 'mode']], [shared.gradio[k] for k in ['name1', 'name2', 'character_picture', 'greeting', 'context', 'dummy']]).then(
-                chat.redraw_html, reload_inputs, shared.gradio['display'])
+                chat.redraw_html, shared.reload_inputs, shared.gradio['display'])
 
             shared.gradio['upload_img_tavern'].upload(chat.upload_tavern_character, [shared.gradio['upload_img_tavern'], shared.gradio['name1'], shared.gradio['name2']], [shared.gradio['character_menu']])
             shared.gradio['your_picture'].change(
                 chat.upload_your_profile_picture, shared.gradio['your_picture'], None).then(
-                partial(chat.redraw_html, reset_cache=True), reload_inputs, shared.gradio['display'])
+                partial(chat.redraw_html, reset_cache=True), shared.reload_inputs, shared.gradio['display'])
 
             shared.gradio['interface'].load(None, None, None, _js=f"() => {{{ui.main_js+ui.chat_js}}}")
 
