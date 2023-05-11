@@ -514,7 +514,7 @@ class Handler(BaseHTTPRequestHandler):
             if debug:
                 print({'edit_template': edit_task, 'req_params': req_params, 'token_count': token_count})
             
-            generator = generate_reply(edit_task, req_params, stopping_strings=standard_stopping_strings, is_chat=True)
+            generator = generate_reply(edit_task, req_params, stopping_strings=standard_stopping_strings, is_chat=False)
 
             answer = ''
             for a in generator:
