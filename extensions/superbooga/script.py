@@ -1,7 +1,6 @@
 import logging
 import re
 import textwrap
-from urllib.request import urlopen
 
 import chromadb
 import gradio as gr
@@ -13,6 +12,8 @@ from sentence_transformers import SentenceTransformer
 
 from modules import chat, shared
 
+from .download_urls import download_urls
+
 logging.info('Intercepting all calls to posthog :)')
 posthog.capture = lambda *args, **kwargs: None
 
@@ -21,6 +22,7 @@ params = {
     'chunk_count': 5,
     'chunk_length': 700,
     'strong_cleanup': True,
+    'threads': 4,
 }
 
 
@@ -112,15 +114,20 @@ def feed_file_into_collector(file, chunk_len):
         yield i
 
 
-def feed_url_into_collector(urls, chunk_len, strong_cleanup=False):
-    urls = urls.strip().split('\n')
+def feed_url_into_collector(urls, chunk_len, strong_cleanup, threads):
     all_text = ''
     cumulative = ''
-    for url in urls:
-        cumulative += f'Loading {url}...\n\n'
-        yield cumulative
-        html = urlopen(url).read()
-        soup = BeautifulSoup(html, features="html.parser")
+
+    urls = urls.strip().split('\n')
+    cumulative += f'Loading {len(urls)} URLs with {threads} threads...\n\n'
+    yield cumulative
+    for update, contents in download_urls(urls, threads=threads):
+        yield cumulative + update
+
+    cumulative += 'Processing the HTML sources...'
+    yield cumulative
+    for content in contents:
+        soup = BeautifulSoup(content, features="html.parser")
         for script in soup(["script", "style"]):
             script.extract()
 
@@ -217,23 +224,23 @@ def ui():
 
         ### Example
 
-        For your convenience, you can use the following prompt as a starting point (for Alpaca models):
+        For your convenience, you can use the following prompt as a starting point (for Vicuna 1.1 models):
 
         ```
-        Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
+        A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions.
 
-        ### Instruction:
-        You are ArxivGPT, trained on millions of Arxiv papers. You always answer the question, even if full context isn't provided to you. The following are snippets from an Arxiv paper. Use the snippets to answer the question. Think about it step by step
+        USER:
+
+        <|begin-user-input|>
+        What datasets are mentioned in the text below?
+        <|end-user-input|>
 
         <|injection-point|>
 
-        ### Input:
-        <|begin-user-input|>
-        What datasets are mentioned in the paper above?
-        <|end-user-input|>
-
-        ### Response:
+        ASSISTANT:
         ```
+
+        ⚠️  For best results, make sure to remove the spaces and new line characters after `ASSISTANT:`.
 
         ## Chat mode
 
@@ -263,6 +270,7 @@ def ui():
                 with gr.Tab("URL input"):
                     url_input = gr.Textbox(lines=10, label='Input URLs', info='Enter one or more URLs separated by newline characters.')
                     strong_cleanup = gr.Checkbox(value=params['strong_cleanup'], label='Strong cleanup', info='Only keeps html elements that look like long-form text.')
+                    threads = gr.Number(value=params['threads'], label='Threads', info='The number of threads to use while downloading the URLs.', precision=0)
                     update_url = gr.Button('Load data')
 
                 with gr.Tab("File input"):
@@ -279,6 +287,6 @@ def ui():
                 last_updated = gr.Markdown()
 
         update_data.click(feed_data_into_collector, [data_input, chunk_len], last_updated, show_progress=False)
-        update_url.click(feed_url_into_collector, [url_input, chunk_len, strong_cleanup], last_updated, show_progress=False)
+        update_url.click(feed_url_into_collector, [url_input, chunk_len, strong_cleanup, threads], last_updated, show_progress=False)
         update_file.click(feed_file_into_collector, [file_input, chunk_len], last_updated, show_progress=False)
         update_settings.click(apply_settings, [chunk_count], last_updated, show_progress=False)
