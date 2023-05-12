@@ -185,7 +185,8 @@ def load_quantized(model_name):
                 max_memory = {}
                 for i in range(len(memory_map)):
                     max_memory[i] = f'{memory_map[i]}GiB' if not re.match('.*ib$', memory_map[i].lower()) else memory_map[i]
-                max_memory['cpu'] = max_cpu_memory
+
+                max_memory['cpu'] = f'{max_cpu_memory}GiB' if not re.match('.*ib$', max_cpu_memory.lower()) else max_cpu_memory
             else:
                 max_memory = accelerate.utils.get_balanced_memory(model)
 

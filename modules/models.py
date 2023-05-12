@@ -189,7 +189,7 @@ def load_model(model_name):
                 for i in range(len(memory_map)):
                     max_memory[i] = f'{memory_map[i]}GiB' if not re.match('.*ib$', memory_map[i].lower()) else memory_map[i]
 
-                max_memory['cpu'] = max_cpu_memory
+                max_memory['cpu'] = f'{max_cpu_memory}GiB' if not re.match('.*ib$', max_cpu_memory.lower()) else max_cpu_memory
                 params['max_memory'] = max_memory
             elif shared.args.auto_devices:
                 total_mem = (torch.cuda.get_device_properties(0).total_memory / (1024 * 1024))
