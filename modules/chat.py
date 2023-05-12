@@ -247,10 +247,12 @@ def impersonate_wrapper(text, state):
             if next_character_found:
                 break
 
-        if reply is not None:
+        if reply in [None, '']:
+            break
+        else:
             cumulative_reply = reply
 
-    yield reply
+    yield cumulative_reply
 
 
 def generate_chat_reply(text, state, regenerate=False, _continue=False):
