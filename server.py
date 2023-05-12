@@ -264,11 +264,12 @@ def save_model_settings(model, state):
         else:
             user_config = {}
 
+        model_regex = model + '$'  # For exact matches
         if model not in user_config:
-            user_config[model] = {}
+            user_config[model_regex] = {}
 
         for k in ui.list_model_elements():
-            user_config[model][k] = state[k]
+            user_config[model_regex][k] = state[k]
 
         with open(p, 'w') as f:
             f.write(yaml.dump(user_config))
