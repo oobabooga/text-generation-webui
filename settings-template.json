@@ -26,7 +26,7 @@
     "chat_prompt_size_max": 2048,
     "chat_generation_attempts": 1,
     "chat_generation_attempts_min": 1,
-    "chat_generation_attempts_max": 5,
+    "chat_generation_attempts_max": 10,
     "default_extensions": [],
     "chat_default_extensions": [
         "gallery"
