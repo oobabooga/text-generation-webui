@@ -266,7 +266,7 @@ def save_model_settings(model, state):
             user_config = {}
 
         model_regex = model + '$'  # For exact matches
-        if model not in user_config:
+        if model_regex not in user_config:
             user_config[model_regex] = {}
 
         for k in ui.list_model_elements():
