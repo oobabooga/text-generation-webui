@@ -2,7 +2,7 @@
 
 #### Pre-converted models
 
-Simply place the model in the `models` folder, making sure that its name contains `ggml` somewhere and ends in `.bin`.
+Place the model in the `models` folder, making sure that its name contains `ggml` somewhere and ends in `.bin`.
 
 #### Convert LLaMA yourself
 

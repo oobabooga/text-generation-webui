@@ -20,14 +20,11 @@ from modules.utils import replace_all
 
 
 def generate_chat_prompt(user_input, state, **kwargs):
-    # Check if an extension is sending its modified history.
-    # If not, use the regular history
-    history = state['history'] if 'history' in state else shared.history['internal']
+    impersonate = kwargs.get('impersonate', False)
+    _continue = kwargs.get('_continue', False)
+    also_return_rows = kwargs.get('also_return_rows', False)
 
-    # Define some variables
-    impersonate = kwargs['impersonate'] if 'impersonate' in kwargs else False
-    _continue = kwargs['_continue'] if '_continue' in kwargs else False
-    also_return_rows = kwargs['also_return_rows'] if 'also_return_rows' in kwargs else False
+    history = state.get('history', shared.history['internal'])
     is_instruct = state['mode'] == 'instruct'
     rows = [state['context_instruct'] if is_instruct else f"{state['context'].strip()}\n"]
     min_rows = 3
@@ -188,7 +185,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False):
     # Generate
     for i in range(state['chat_generation_attempts']):
         reply = None
-        for j, reply in enumerate(generate_reply(f"{prompt}{' ' if len(cumulative_reply) > 0 else ''}{cumulative_reply}", state, eos_token=eos_token, stopping_strings=stopping_strings)):
+        for j, reply in enumerate(generate_reply(f"{prompt}{' ' if len(cumulative_reply) > 0 else ''}{cumulative_reply}", state, eos_token=eos_token, stopping_strings=stopping_strings, is_chat=True)):
             reply = cumulative_reply + reply
 
             # Extracting the reply
@@ -242,7 +239,7 @@ def impersonate_wrapper(text, state):
     cumulative_reply = text
     for i in range(state['chat_generation_attempts']):
         reply = None
-        for reply in generate_reply(f"{prompt}{' ' if len(cumulative_reply) > 0 else ''}{cumulative_reply}", state, eos_token=eos_token, stopping_strings=stopping_strings):
+        for reply in generate_reply(f"{prompt}{' ' if len(cumulative_reply) > 0 else ''}{cumulative_reply}", state, eos_token=eos_token, stopping_strings=stopping_strings, is_chat=True):
             reply = cumulative_reply + reply
             reply, next_character_found = extract_message_from_reply(reply, state)
             yield reply
@@ -255,35 +252,31 @@ def impersonate_wrapper(text, state):
     yield reply
 
 
-def cai_chatbot_wrapper(text, state):
-    for history in chatbot_wrapper(text, state):
+def generate_chat_reply(text, state, regenerate=False, _continue=False):
+    if regenerate or _continue:
+        text = ''
+        if (len(shared.history['visible']) == 1 and not shared.history['visible'][0][0]) or len(shared.history['internal']) == 0:
+            yield shared.history['visible']
+            return
+
+    for history in chatbot_wrapper(text, state, regenerate=regenerate, _continue=_continue):
+        yield history
+
+
+# Same as above but returns HTML
+def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
+    for history in generate_chat_reply(text, state, regenerate, _continue):
         yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'])
 
 
-def regenerate_wrapper(text, state):
-    if (len(shared.history['visible']) == 1 and not shared.history['visible'][0][0]) or len(shared.history['internal']) == 0:
-        yield chat_html_wrapper(shared.history['visible'], state['name1'], state['name2'], state['mode'], state['chat_style'])
-    else:
-        for history in chatbot_wrapper('', state, regenerate=True):
-            yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'])
-
-
-def continue_wrapper(text, state):
-    if (len(shared.history['visible']) == 1 and not shared.history['visible'][0][0]) or len(shared.history['internal']) == 0:
-        yield chat_html_wrapper(shared.history['visible'], state['name1'], state['name2'], state['mode'], state['chat_style'])
-    else:
-        for history in chatbot_wrapper('', state, _continue=True):
-            yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'])
-
-
-def remove_last_message(name1, name2, mode, style):
+def remove_last_message():
     if len(shared.history['visible']) > 0 and shared.history['internal'][-1][0] != '<|BEGIN-VISIBLE-CHAT|>':
         last = shared.history['visible'].pop()
         shared.history['internal'].pop()
     else:
         last = ['', '']
 
-    return chat_html_wrapper(shared.history['visible'], name1, name2, mode, style), last[0]
+    return last[0]
 
 
 def send_last_reply_to_input():
@@ -293,35 +286,27 @@ def send_last_reply_to_input():
         return ''
 
 
-def replace_last_reply(text, name1, name2, mode, style):
+def replace_last_reply(text):
     if len(shared.history['visible']) > 0:
         shared.history['visible'][-1][1] = text
         shared.history['internal'][-1][1] = apply_extensions("input", text)
 
-    return chat_html_wrapper(shared.history['visible'], name1, name2, mode, style)
 
-
-def send_dummy_message(text, name1, name2, mode, style):
+def send_dummy_message(text):
     shared.history['visible'].append([text, ''])
     shared.history['internal'].append([apply_extensions("input", text), ''])
-    return chat_html_wrapper(shared.history['visible'], name1, name2, mode, style)
 
 
-def send_dummy_reply(text, name1, name2, mode, style):
+def send_dummy_reply(text):
     if len(shared.history['visible']) > 0 and not shared.history['visible'][-1][1] == '':
         shared.history['visible'].append(['', ''])
         shared.history['internal'].append(['', ''])
 
     shared.history['visible'][-1][1] = text
     shared.history['internal'][-1][1] = apply_extensions("input", text)
-    return chat_html_wrapper(shared.history['visible'], name1, name2, mode, style)
 
 
-def clear_html():
-    return chat_html_wrapper([], "", "")
-
-
-def clear_chat_log(name1, name2, greeting, mode, style):
+def clear_chat_log(greeting, mode):
     shared.history['visible'] = []
     shared.history['internal'] = []
 
@@ -332,14 +317,12 @@ def clear_chat_log(name1, name2, greeting, mode, style):
 
         save_history(mode)
 
-    return chat_html_wrapper(shared.history['visible'], name1, name2, mode, style)
+
+def redraw_html(name1, name2, mode, style, reset_cache=False):
+    return chat_html_wrapper(shared.history['visible'], name1, name2, mode, style, reset_cache=reset_cache)
 
 
-def redraw_html(name1, name2, mode, style):
-    return chat_html_wrapper(shared.history['visible'], name1, name2, mode, style)
-
-
-def tokenize_dialogue(dialogue, name1, name2, mode, style):
+def tokenize_dialogue(dialogue, name1, name2):
     history = []
     messages = []
     dialogue = re.sub('<START>', '', dialogue)
@@ -447,7 +430,7 @@ def generate_pfp_cache(character):
     return None
 
 
-def load_character(character, name1, name2, mode, style):
+def load_character(character, name1, name2, mode):
     shared.character = character
     context = greeting = turn_template = ""
     greeting_field = 'greeting'
@@ -521,7 +504,7 @@ def load_character(character, name1, name2, mode, style):
             # Create .json log files since they don't already exist
             save_history(mode)
 
-    return name1, name2, picture, greeting, context, repr(turn_template)[1:-1], chat_html_wrapper(shared.history['visible'], name1, name2, mode, style)
+    return name1, name2, picture, greeting, context, repr(turn_template)[1:-1]
 
 
 def upload_character(json_file, img, tavern=False):
@@ -556,7 +539,7 @@ def upload_tavern_character(img, name1, name2):
     return upload_character(json.dumps(_json), img, tavern=True)
 
 
-def upload_your_profile_picture(img, name1, name2, mode, style):
+def upload_your_profile_picture(img):
     cache_folder = Path("cache")
     if not cache_folder.exists():
         cache_folder.mkdir()
@@ -568,5 +551,3 @@ def upload_your_profile_picture(img, name1, name2, mode, style):
         img = make_thumbnail(img)
         img.save(Path('cache/pfp_me.png'))
         logging.info('Profile picture saved to "cache/pfp_me.png"')
-
-    return chat_html_wrapper(shared.history['visible'], name1, name2, mode, style, reset_cache=True)

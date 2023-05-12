@@ -24,8 +24,8 @@ gradio = {}
 # For keeping the values of UI elements on page reload
 persistent_interface_state = {}
 
-# Generation input parameters
-input_params = []
+input_params = []  # Generation input parameters
+reload_inputs = []  # Parameters for reloading the chat interface
 
 # For restarting the interface
 need_restart = False

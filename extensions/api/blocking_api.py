@@ -35,18 +35,15 @@ class Handler(BaseHTTPRequestHandler):
             generate_params['stream'] = False
 
             generator = generate_reply(
-                prompt, generate_params, stopping_strings=stopping_strings)
+                prompt, generate_params, stopping_strings=stopping_strings, is_chat=False)
 
             answer = ''
             for a in generator:
-                if isinstance(a, str):
-                    answer = a
-                else:
-                    answer = a[0]
+                answer = a
 
             response = json.dumps({
                 'results': [{
-                    'text': answer if shared.is_chat() else answer[len(prompt):]
+                    'text': answer
                 }]
             })
             self.wfile.write(response.encode('utf-8'))
