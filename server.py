@@ -878,11 +878,25 @@ if __name__ == "__main__":
         settings_file = Path(shared.args.settings)
     elif Path('settings.json').exists():
         settings_file = Path('settings.json')
+
     if settings_file is not None:
         logging.info(f"Loading settings from {settings_file}...")
         new_settings = json.loads(open(settings_file, 'r').read())
         for item in new_settings:
             shared.settings[item] = new_settings[item]
+
+    # Set default model settings based on settings.json
+    shared.model_config['.*'] = {
+        'wbits': 'None',
+        'model_type': 'None',
+        'groupsize': 'None',
+        'pre_layer': 0,
+        'mode': shared.settings['mode'],
+        'skip_special_tokens': shared.settings['skip_special_tokens'],
+        'custom_stopping_strings': shared.settings['custom_stopping_strings'],
+    }
+
+    shared.model_config.move_to_end('.*', last=False)  # Move to the beginning
 
     # Default extensions
     extensions_module.available_extensions = utils.get_available_extensions()
