@@ -1,5 +1,6 @@
 import argparse
 import logging
+from collections import OrderedDict
 from pathlib import Path
 
 import yaml
@@ -200,7 +201,7 @@ def is_chat():
     return args.chat
 
 
-# Loading model-specific settings (default)
+# Loading model-specific settings
 with Path(f'{args.model_dir}/config.yaml') as p:
     if p.exists():
         model_config = yaml.safe_load(open(p, 'r').read())
@@ -216,3 +217,5 @@ with Path(f'{args.model_dir}/config-user.yaml') as p:
                 model_config[k].update(user_config[k])
             else:
                 model_config[k] = user_config[k]
+
+model_config = OrderedDict(model_config)
