@@ -1,1 +1,1 @@
-Moved to https://github.com/oobabooga/text-generation-webui/blob/main/docs/Custom-chat-characters.md
+Moved to https://github.com/oobabooga/text-generation-webui/blob/main/docs/Chat-mode.md
