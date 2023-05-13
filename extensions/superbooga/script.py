@@ -90,7 +90,7 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
 
     if state['mode'] == 'instruct':
         results = collector.get(user_input, n_results=chunk_count)
-        additional_context = '\nConsider the excerpts below as additional context:\n\n' + '\n'.join(results)
+        additional_context = '\nYour reply should be based on the context below:\n\n' + '\n'.join(results)
         user_input += additional_context
     else:
 
