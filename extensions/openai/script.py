@@ -70,7 +70,7 @@ def deduce_template():
             .replace('<|user|>', instruct.get('user', ''))\
             .replace('<|bot|>', instruct.get('bot', ''))\
             .replace('<|user-message|>', '{instruction}\n{input}')
-        return instruct.get('context', '') + template[:template.find('<|bot-message|>')]
+        return instruct.get('context', '') + template[:template.find('<|bot-message|>')].rstrip(' ')
     except:
         return default_template
 
