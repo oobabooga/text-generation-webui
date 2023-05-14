@@ -123,6 +123,7 @@ parser.add_argument('--threads', type=int, default=0, help='Number of threads to
 parser.add_argument('--n_batch', type=int, default=512, help='Maximum number of prompt tokens to batch together when calling llama_eval.')
 parser.add_argument('--no-mmap', action='store_true', help='Prevent mmap from being used.')
 parser.add_argument('--mlock', action='store_true', help='Force the system to keep the model in RAM.')
+parser.add_argument('--n_gpu_layers', type=int, default=0, help='Number of layers to offload to the GPU.')
 
 # GPTQ
 parser.add_argument('--wbits', type=int, default=0, help='Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported.')
