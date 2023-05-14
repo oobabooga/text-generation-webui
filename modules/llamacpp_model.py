@@ -28,7 +28,7 @@ class LlamaCppModel:
             'n_batch': shared.args.n_batch,
             'use_mmap': not shared.args.no_mmap,
             'use_mlock': shared.args.mlock,
-            'n_gpu_layers': shared.args.gpu_layers
+            'n_gpu_layers': shared.args.n_gpu_layers
         }
         self.model = Llama(**params)
         self.model.set_cache(LlamaCache)
