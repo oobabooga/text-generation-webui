@@ -224,6 +224,7 @@ Optionally, you can use the following command-line flags:
 | `--n_batch` | Maximum number of prompt tokens to batch together when calling llama_eval. |
 | `--no-mmap` | Prevent mmap from being used. |
 | `--mlock`   | Force the system to keep the model in RAM. |
+| `--cache-capacity CACHE_CAPACITY`   | Maximum cache capacity. Examples: 2000MiB, 2GiB. When provided without units, GiB will be assumed. |
 
 #### GPTQ
 
