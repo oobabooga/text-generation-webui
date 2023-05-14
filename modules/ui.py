@@ -59,13 +59,7 @@ def apply_interface_values(state, use_persistent=False):
     if len(state) == 0:
         return [gr.update() for k in elements]  # Dummy, do nothing
     else:
-        if use_persistent and 'mode' in state:
-            if state['mode'] == 'instruct':
-                return [state[k] if (k not in ['character_menu'] and k in state) else gr.update() for k in elements]
-            else:
-                return [state[k] if (k not in ['instruction_template'] and k in state) else gr.update() for k in elements]
-        else:
-            return [state[k] if k in state else gr.update() for k in elements]
+        return [state[k] if k in state else gr.update() for k in elements]
 
 
 class ToolButton(gr.Button, gr.components.FormComponent):
