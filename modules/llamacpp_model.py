@@ -6,6 +6,9 @@ Documentation:
 https://abetlen.github.io/llama-cpp-python/
 '''
 
+import logging
+import re
+
 from llama_cpp import Llama, LlamaCache
 
 from modules import shared
@@ -19,6 +22,16 @@ class LlamaCppModel:
     @classmethod
     def from_pretrained(self, path):
         result = self()
+
+        if shared.args.cache_capacity is not None:
+            if 'GiB' in shared.args.cache_capacity:
+                cache_capacity = int(re.sub('[a-zA-Z]', '', shared.args.cache_capacity)) * 1000
+            elif 'MiB' in shared.args.cache_capacity:
+                cache_capacity = int(re.sub('[a-zA-Z]', '', shared.args.cache_capacity))
+            else:
+                cache_capacity = int(shared.args.cache_capacity) * 1000
+
+        logging.info("Cache capacity is " + str(cache_capacity))
 
         params = {
             'model_path': str(path),
