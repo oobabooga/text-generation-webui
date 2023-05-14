@@ -127,10 +127,11 @@ def load_quantized(model_name):
                                                    trust_remote_code=shared.args.trust_remote_code,
                                                    max_memory=max_memory,
                                                    device_map=shared.args.autogptq_device_map,
-                                                   fused_attn=shared.args.quant_attn,
-                                                   fused_mlp=shared.args.fused_mlp,
+                                                   inject_fused_attention=shared.args.quant_attn,
+                                                   inject_fused_mlp=shared.args.fused_mlp,
                                                    use_cuda_fp16=shared.args.autogptq_cuda_tweak,
-                                                   strict=not shared.args.autogptq_compat)
+                                                   strict=not shared.args.autogptq_compat,
+                                                   warmup_triton=shared.args.warmup_autotune)
     except ValueError:
         logging.error('Could not load model. The model might be using old quantization. Use the --autogptq-compat flag.')
         raise Exception('Could not load model. The model might be using old quantization. Use the --autogptq-compat flag.')
