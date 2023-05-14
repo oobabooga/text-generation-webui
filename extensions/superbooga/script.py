@@ -36,6 +36,8 @@ def feed_data_into_collector(corpus, chunk_len, chunk_sep):
     yield cumulative
     if chunk_sep:
         data_chunks = corpus.split(chunk_sep)
+        data_chunks = [[data_chunk[i:i + chunk_len] for i in range(0, len(data_chunk), chunk_len)] for data_chunk in data_chunks]
+        data_chunks = [x for y in data_chunks for x in y]
     else:
         data_chunks = [corpus[i:i + chunk_len] for i in range(0, len(corpus), chunk_len)]
     cumulative += f"{len(data_chunks)} chunks have been found.\n\nAdding the chunks to the database...\n\n"
@@ -237,7 +239,7 @@ def ui():
                 update_settings = gr.Button('Apply changes')
 
             chunk_len = gr.Number(value=params['chunk_length'], label='Chunk length', info='In characters, not tokens. This value is used when you click on "Load data".')
-            chunk_sep = gr.Textbox(value=params['chunk_separator'], label='Chunk separator', info='Used to manually split chunks. If specified, chunk length will be ignored. This value is used when you click on "Load data".')
+            chunk_sep = gr.Textbox(value=params['chunk_separator'], label='Chunk separator', info='Used to manually split chunks. Manually split chunks longer than chunk length are split again. This value is used when you click on "Load data".')
         with gr.Column():
             last_updated = gr.Markdown()
 
