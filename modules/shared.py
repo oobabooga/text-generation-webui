@@ -54,6 +54,7 @@ settings = {
     'mode': 'chat',
     'chat_style': 'cai-chat',
     'instruction_template': 'None',
+    'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
     'chat_prompt_size': 2048,
     'chat_prompt_size_min': 0,
     'chat_prompt_size_max': 2048,
