@@ -19,25 +19,8 @@ from modules.text_generation import (generate_reply, get_encoded_length,
 from modules.utils import replace_all
 
 
-def generate_chat_prompt(user_input, state, **kwargs):
-    impersonate = kwargs.get('impersonate', False)
-    _continue = kwargs.get('_continue', False)
-    also_return_rows = kwargs.get('also_return_rows', False)
-
-    history = state.get('history', shared.history['internal'])
-    is_instruct = state['mode'] == 'instruct'
-    rows = [state['context_instruct'] if is_instruct else f"{state['context'].strip()}\n"]
-    min_rows = 3
-
-    # Finding the maximum prompt size
-    chat_prompt_size = state['chat_prompt_size']
-    if shared.soft_prompt:
-        chat_prompt_size -= shared.soft_prompt_tensor.shape[1]
-
-    max_length = min(get_max_prompt_length(state), chat_prompt_size)
-
-    # Building the turn templates
-    if is_instruct:
+def get_turn_substrings(state, instruct=False):
+    if instruct:
         if 'turn_template' not in state or state['turn_template'] == '':
             template = '<|user|>\n<|user-message|>\n<|bot|>\n<|bot-message|>\n'
         else:
@@ -46,44 +29,93 @@ def generate_chat_prompt(user_input, state, **kwargs):
         template = '<|user|>: <|user-message|>\n<|bot|>: <|bot-message|>\n'
 
     replacements = {
-        '<|user|>': state['name1_instruct' if is_instruct else 'name1'].strip(),
-        '<|bot|>': state['name2_instruct' if is_instruct else 'name2'].strip(),
+        '<|user|>': state['name1_instruct' if instruct else 'name1'].strip(),
+        '<|bot|>': state['name2_instruct' if instruct else 'name2'].strip(),
     }
 
-    user_turn = replace_all(template.split('<|bot|>')[0], replacements)
-    bot_turn = replace_all('<|bot|>' + template.split('<|bot|>')[1], replacements)
-    user_turn_stripped = replace_all(user_turn.split('<|user-message|>')[0], replacements)
-    bot_turn_stripped = replace_all(bot_turn.split('<|bot-message|>')[0], replacements)
+    output = {
+        'user_turn': template.split('<|bot|>')[0],
+        'bot_turn': '<|bot|>' + template.split('<|bot|>')[1],
+        'user_turn_stripped': template.split('<|bot|>')[0].split('<|user-message|>')[0],
+        'bot_turn_stripped': '<|bot|>' + template.split('<|bot|>')[1].split('<|bot-message|>')[0],
+    }
+
+    for k in output:
+        output[k] = replace_all(output[k], replacements)
+
+    return output
+
+
+def generate_chat_prompt(user_input, state, **kwargs):
+    impersonate = kwargs.get('impersonate', False)
+    _continue = kwargs.get('_continue', False)
+    also_return_rows = kwargs.get('also_return_rows', False)
+    history = state.get('history', shared.history['internal'])
+    is_instruct = state['mode'] == 'instruct'
+
+    # Finding the maximum prompt size
+    chat_prompt_size = state['chat_prompt_size']
+    if shared.soft_prompt:
+        chat_prompt_size -= shared.soft_prompt_tensor.shape[1]
+
+    max_length = min(get_max_prompt_length(state), chat_prompt_size)
+
+    all_substrings = {
+        'chat': get_turn_substrings(state, instruct=False),
+        'instruct': get_turn_substrings(state, instruct=True)
+    }
+    substrings = all_substrings['instruct' if is_instruct else 'chat']
+
+    # Creating the template for "chat-instruct" mode
+    if state['mode'] == 'chat-instruct':
+        wrapper = ''
+        wrapper += state['context_instruct']
+        wrapper += all_substrings['instruct']['user_turn_stripped']
+        wrapper += 'Continue the chat dialogue below. Write a single reply for the character "{}".\n\n'.format(state['name2'] if not impersonate else state['name1'])
+        wrapper += '<|prompt|>\n'
+        wrapper += all_substrings['instruct']['bot_turn_stripped']
+        if impersonate:
+            wrapper += substrings['user_turn_stripped'].rstrip(' ')
+        else:
+            wrapper += apply_extensions("bot_prefix", substrings['bot_turn_stripped'].rstrip(' '))
+    else:
+        wrapper = '<|prompt|>'
 
     # Building the prompt
+    min_rows = 3
     i = len(history) - 1
-    while i >= 0 and get_encoded_length(''.join(rows)) < max_length:
+    rows = [state['context_instruct'] if is_instruct else f"{state['context'].strip()}\n"]
+    while i >= 0 and get_encoded_length(wrapper.replace('<|prompt|>', ''.join(rows))) < max_length:
         if _continue and i == len(history) - 1:
-            rows.insert(1, bot_turn_stripped + history[i][1].strip())
+            rows.insert(1, substrings['bot_turn_stripped'] + history[i][1].strip())
         else:
-            rows.insert(1, bot_turn.replace('<|bot-message|>', history[i][1].strip()))
+            rows.insert(1, substrings['bot_turn'].replace('<|bot-message|>', history[i][1].strip()))
 
         string = history[i][0]
         if string not in ['', '<|BEGIN-VISIBLE-CHAT|>']:
-            rows.insert(1, replace_all(user_turn, {'<|user-message|>': string.strip(), '<|round|>': str(i)}))
+            rows.insert(1, replace_all(substrings['user_turn'], {'<|user-message|>': string.strip(), '<|round|>': str(i)}))
 
         i -= 1
 
     if impersonate:
-        min_rows = 2
-        rows.append(user_turn_stripped.rstrip(' '))
+        if state['mode'] == 'chat-instruct':
+            min_rows = 1
+        else:
+            min_rows = 2
+            rows.append(substrings['user_turn_stripped'].rstrip(' '))
     elif not _continue:
         # Adding the user message
         if len(user_input) > 0:
-            rows.append(replace_all(user_turn, {'<|user-message|>': user_input.strip(), '<|round|>': str(len(history))}))
+            rows.append(replace_all(substrings['user_turn'], {'<|user-message|>': user_input.strip(), '<|round|>': str(len(history))}))
 
         # Adding the Character prefix
-        rows.append(apply_extensions("bot_prefix", bot_turn_stripped.rstrip(' ')))
+        if state['mode'] != 'chat-instruct':
+            rows.append(apply_extensions("bot_prefix", substrings['bot_turn_stripped'].rstrip(' ')))
 
-    while len(rows) > min_rows and get_encoded_length(''.join(rows)) >= max_length:
+    while len(rows) > min_rows and get_encoded_length(wrapper.replace('<|prompt|>', ''.join(rows))) >= max_length:
         rows.pop(1)
 
-    prompt = ''.join(rows)
+    prompt = wrapper.replace('<|prompt|>', ''.join(rows))
     if also_return_rows:
         return prompt, rows
     else:
@@ -139,6 +171,12 @@ def extract_message_from_reply(reply, state):
                     continue
 
                 break
+
+    if state['mode'] == 'chat-instruct':
+        pattern = f"{state['name2']}:"
+        if re.match(f" ?{pattern}", reply):
+            idx = reply.find(pattern) + len(pattern)
+            reply = reply[idx:]
 
     return reply, next_character_found
 
@@ -318,7 +356,7 @@ def clear_chat_log(greeting, mode):
             shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
             shared.history['visible'] += [['', apply_extensions("output", greeting)]]
 
-        save_history(mode)
+        save_history(mode=='instruct')
 
 
 def redraw_html(name1, name2, mode, style, reset_cache=False):
@@ -364,10 +402,10 @@ def tokenize_dialogue(dialogue, name1, name2):
     return history
 
 
-def save_history(mode, timestamp=False):
+def save_history(instruct=False, timestamp=False):
     # Instruct mode histories should not be saved as if
     # Alpaca or Vicuna were characters
-    if mode == 'instruct':
+    if instruct:
         if not timestamp:
             return
 
@@ -433,7 +471,7 @@ def generate_pfp_cache(character):
     return None
 
 
-def load_character(character, name1, name2, mode):
+def load_character(character, name1, name2, instruct=False):
     shared.character = character
     context = greeting = turn_template = ""
     greeting_field = 'greeting'
@@ -444,7 +482,7 @@ def load_character(character, name1, name2, mode):
         Path("cache/pfp_character.png").unlink()
 
     if character != 'None':
-        folder = 'characters' if not mode == 'instruct' else 'characters/instruction-following'
+        folder = 'characters' if not instruct else 'characters/instruction-following'
         picture = generate_pfp_cache(character)
         for extension in ["yml", "yaml", "json"]:
             filepath = Path(f'{folder}/{character}.{extension}')
@@ -472,7 +510,7 @@ def load_character(character, name1, name2, mode):
 
         if 'context' in data:
             context = data['context']
-            if mode != 'instruct':
+            if not instruct:
                 context = context.strip() + '\n\n'
         elif "char_persona" in data:
             context = build_pygmalion_style_context(data)
@@ -493,7 +531,7 @@ def load_character(character, name1, name2, mode):
         greeting = shared.settings['greeting']
         turn_template = shared.settings['turn_template']
 
-    if mode != 'instruct':
+    if not instruct:
         shared.history['internal'] = []
         shared.history['visible'] = []
         if Path(f'logs/{shared.character}_persistent.json').exists():
@@ -505,7 +543,7 @@ def load_character(character, name1, name2, mode):
                 shared.history['visible'] += [['', apply_extensions("output", greeting)]]
 
             # Create .json log files since they don't already exist
-            save_history(mode)
+            save_history(instruct=instruct)
 
     return name1, name2, picture, greeting, context, repr(turn_template)[1:-1]
 
