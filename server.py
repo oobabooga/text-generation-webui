@@ -539,7 +539,7 @@ def create_interface():
                     shared.gradio['Clear history-confirm'] = gr.Button('Confirm', variant='stop', visible=False)
                     shared.gradio['Clear history-cancel'] = gr.Button('Cancel', visible=False)
 
-                shared.gradio['mode'] = gr.Radio(choices=['chat', 'chat-instruct', 'instruct'], value=shared.settings['mode'] if shared.settings['mode'] in ['chat', 'instruct', 'chat-instruct'] else 'chat', label='Mode')
+                shared.gradio['mode'] = gr.Radio(choices=['chat', 'chat-instruct', 'instruct'], value=shared.settings['mode'] if shared.settings['mode'] in ['chat', 'instruct', 'chat-instruct'] else 'chat', label='Mode', info='Select the appropriate instruction template under Chat settings > Instruction template when in "instruct" or "chat-instruct" mode.')
                 shared.gradio['chat_style'] = gr.Dropdown(choices=utils.get_available_chat_styles(), label='Chat style', value=shared.settings['chat_style'], visible=shared.settings['mode'] != 'instruct')
 
             with gr.Tab('Chat settings', elem_id='chat-settings'):
@@ -569,7 +569,7 @@ def create_interface():
                     shared.gradio['turn_template'] = gr.Textbox(value='', lines=1, label='Turn template', info='Used to precisely define the placement of spaces and new line characters in instruction prompts.')
 
                     with gr.Row():
-                        shared.gradio['chat-instruct_command'] = gr.Textbox(value=repr(shared.settings['chat-instruct_command'])[1:-1], lines=1, label='Command for chat-instruct mode', info='The <|character|> special token gets replaced by the bot name.')
+                        shared.gradio['chat-instruct_command'] = gr.Textbox(value=shared.settings['chat-instruct_command'], lines=4, label='Command for chat-instruct mode', info='The <|character|> special token gets replaced by the bot name.')
 
                 with gr.Row():
                     with gr.Tab('Chat history'):

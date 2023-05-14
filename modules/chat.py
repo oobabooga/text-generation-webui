@@ -71,7 +71,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
         wrapper = ''
         wrapper += state['context_instruct']
         wrapper += all_substrings['instruct']['user_turn_stripped']
-        wrapper += state['chat-instruct_command'].replace(r'\n', '\n').replace('<|character|>', state['name2'] if not impersonate else state['name1'])
+        wrapper += state['chat-instruct_command'].replace('<|character|>', state['name2'] if not impersonate else state['name1'])
         wrapper += '<|prompt|>\n'
         wrapper += all_substrings['instruct']['bot_turn_stripped']
         if impersonate:
