@@ -568,6 +568,9 @@ def create_interface():
                     shared.gradio['context_instruct'] = gr.Textbox(value='', lines=4, label='Context')
                     shared.gradio['turn_template'] = gr.Textbox(value='', lines=1, label='Turn template', info='Used to precisely define the placement of spaces and new line characters in instruction prompts.')
 
+                    with gr.Row():
+                        shared.gradio['chat-instruct_command'] = gr.Textbox(value=repr(shared.settings['chat-instruct_command'])[1:-1], lines=1, label='Command for chat-instruct mode', info='The <|character|> special token gets replaced by the bot name.')
+
                 with gr.Row():
                     with gr.Tab('Chat history'):
                         with gr.Row():
