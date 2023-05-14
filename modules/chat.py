@@ -172,12 +172,6 @@ def extract_message_from_reply(reply, state):
 
                 break
 
-    if state['mode'] == 'chat-instruct':
-        pattern = f"{state['name2']}:"
-        if re.match(f" ?{pattern}", reply):
-            idx = reply.find(pattern) + len(pattern)
-            reply = reply[idx:]
-
     return reply, next_character_found
 
 
