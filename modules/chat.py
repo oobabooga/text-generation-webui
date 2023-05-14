@@ -69,10 +69,9 @@ def generate_chat_prompt(user_input, state, **kwargs):
     # Creating the template for "chat-instruct" mode
     if state['mode'] == 'chat-instruct':
         wrapper = ''
+        command = state['chat-instruct_command'].replace('<|character|>', state['name2'] if not impersonate else state['name1'])
         wrapper += state['context_instruct']
-        wrapper += all_substrings['instruct']['user_turn_stripped']
-        wrapper += state['chat-instruct_command'].replace('<|character|>', state['name2'] if not impersonate else state['name1'])
-        wrapper += '<|prompt|>\n'
+        wrapper += all_substrings['instruct']['user_turn'].replace('<|user-message|>', command)
         wrapper += all_substrings['instruct']['bot_turn_stripped']
         if impersonate:
             wrapper += substrings['user_turn_stripped'].rstrip(' ')
