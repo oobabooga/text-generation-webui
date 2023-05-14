@@ -350,7 +350,7 @@ def clear_chat_log(greeting, mode):
             shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
             shared.history['visible'] += [['', apply_extensions("output", greeting)]]
 
-        save_history(mode=='instruct')
+        save_history(mode)
 
 
 def redraw_html(name1, name2, mode, style, reset_cache=False):
@@ -396,10 +396,10 @@ def tokenize_dialogue(dialogue, name1, name2):
     return history
 
 
-def save_history(instruct=False, timestamp=False):
+def save_history(mode, timestamp=False):
     # Instruct mode histories should not be saved as if
     # Alpaca or Vicuna were characters
-    if instruct:
+    if mode == 'instruct':
         if not timestamp:
             return
 
@@ -537,7 +537,7 @@ def load_character(character, name1, name2, instruct=False):
                 shared.history['visible'] += [['', apply_extensions("output", greeting)]]
 
             # Create .json log files since they don't already exist
-            save_history(instruct=instruct)
+            save_history('instruct' if instruct else 'chat')
 
     return name1, name2, picture, greeting, context, repr(turn_template)[1:-1]
 
