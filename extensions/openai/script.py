@@ -520,6 +520,10 @@ class Handler(BaseHTTPRequestHandler):
             for a in generator:
                 answer = a
 
+            # some reply's have an extra leading space to fit the instruction template, just clip it off from the reply.
+            if edit_task[-1] != '\n' and answer and answer[0] == ' ':
+                answer = answer[1:]
+
             completion_token_count = len(encode(answer)[0])
 
             resp = {
