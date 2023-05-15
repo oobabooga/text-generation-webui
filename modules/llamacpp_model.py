@@ -23,15 +23,16 @@ class LlamaCppModel:
     def from_pretrained(self, path):
         result = self()
 
+        cache_capacity = 0
         if shared.args.cache_capacity is not None:
             if 'GiB' in shared.args.cache_capacity:
-                cache_capacity = int(re.sub('[a-zA-Z]', '', shared.args.cache_capacity)) * 1000
+                cache_capacity = int(re.sub('[a-zA-Z]', '', shared.args.cache_capacity)) * 1000 * 1000 * 1000
             elif 'MiB' in shared.args.cache_capacity:
-                cache_capacity = int(re.sub('[a-zA-Z]', '', shared.args.cache_capacity))
+                cache_capacity = int(re.sub('[a-zA-Z]', '', shared.args.cache_capacity)) * 1000 * 1000
             else:
-                cache_capacity = int(shared.args.cache_capacity) * 1000
+                cache_capacity = int(shared.args.cache_capacity)
 
-        logging.info("Cache capacity is " + str(cache_capacity))
+        logging.info("Cache capacity is " + str(cache_capacity) + " bytes")
 
         params = {
             'model_path': str(path),
@@ -43,7 +44,8 @@ class LlamaCppModel:
             'use_mlock': shared.args.mlock
         }
         self.model = Llama(**params)
-        self.model.set_cache(LlamaCache())
+        if cache_capacity > 0:
+            self.model.set_cache(LlamaCache(capacity_bytes=cache_capacity))
 
         # This is ugly, but the model and the tokenizer are the same object in this library.
         return result, result
