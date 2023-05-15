@@ -230,6 +230,7 @@ Optionally, you can use the following command-line flags:
 | `--n_batch` | Maximum number of prompt tokens to batch together when calling llama_eval. |
 | `--no-mmap` | Prevent mmap from being used. |
 | `--mlock`   | Force the system to keep the model in RAM. |
+| `--n-gpu-layers N_GPU_LAYERS` | Number of layers to offload to the GPU. Only works if llama-cpp-python was compiled with BLAS. Set this to 1000000000 to offload all layers to the GPU. |
 
 #### GPTQ
 
