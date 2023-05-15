@@ -3,9 +3,7 @@ from pathlib import Path
 
 import elevenlabs
 import gradio as gr
-
 from modules import chat, shared
-from modules.html_generator import chat_html_wrapper
 
 params = {
     'activate': True,
@@ -31,14 +29,12 @@ def refresh_voices_dd():
     return gr.Dropdown.update(value=all_voices[0], choices=all_voices)
 
 
-def remove_tts_from_history(name1, name2, mode, style):
+def remove_tts_from_history():
     for i, entry in enumerate(shared.history['internal']):
         shared.history['visible'][i] = [shared.history['visible'][i][0], entry[1]]
 
-    return chat_html_wrapper(shared.history['visible'], name1, name2, mode, style)
 
-
-def toggle_text_in_history(name1, name2, mode, style):
+def toggle_text_in_history():
     for i, entry in enumerate(shared.history['visible']):
         visible_reply = entry[1]
         if visible_reply.startswith('<audio'):
@@ -51,8 +47,6 @@ def toggle_text_in_history(name1, name2, mode, style):
                 shared.history['visible'][i] = [
                     shared.history['visible'][i][0], f"{visible_reply.split('</audio>')[0]}</audio>"
                 ]
-
-    return chat_html_wrapper(shared.history['visible'], name1, name2, mode, style)
 
 
 def remove_surrounded_chars(string):
@@ -152,22 +146,23 @@ def ui():
 
     # Convert history with confirmation
     convert_arr = [convert_confirm, convert, convert_cancel]
-    convert.click(
-        lambda: [gr.update(visible=True), gr.update(visible=False),
-                 gr.update(visible=True)], None, convert_arr
-    )
+    convert.click(lambda: [gr.update(visible=True), gr.update(visible=False), gr.update(visible=True)], None, convert_arr)
     convert_confirm.click(
-        lambda: [gr.update(visible=False), gr.update(visible=True),
-                 gr.update(visible=False)], None, convert_arr
-    )
-    convert_confirm.click(
-        remove_tts_from_history, [shared.gradio[k] for k in ['name1', 'name2', 'mode', 'chat_style']], shared.gradio['display']
-    )
-    convert_confirm.click(chat.save_history, shared.gradio['mode'], [], show_progress=False)
-    convert_cancel.click(
-        lambda: [gr.update(visible=False), gr.update(visible=True),
-                 gr.update(visible=False)], None, convert_arr
-    )
+        lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr).then(
+        remove_tts_from_history, None, None).then(
+        chat.save_history, shared.gradio['mode'], None, show_progress=False).then(
+        chat.redraw_html, shared.reload_inputs, shared.gradio['display'])
+
+    convert_cancel.click(lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr)
+
+    # Toggle message text in history
+    show_text.change(
+        lambda x: params.update({"show_text": x}), show_text, None).then(
+        toggle_text_in_history, None, None).then(
+        chat.save_history, shared.gradio['mode'], None, show_progress=False).then(
+        chat.redraw_html, shared.reload_inputs, shared.gradio['display'])
+
+    convert_cancel.click(lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr)
 
     # Event functions to update the parameters in the backend
     activate.change(lambda x: params.update({'activate': x}), activate, None)
@@ -175,11 +170,5 @@ def ui():
     api_key.change(lambda x: params.update({'api_key': x}), api_key, None)
     # connect.click(check_valid_api, [], connection_status)
     refresh.click(refresh_voices_dd, [], voice)
-    # Toggle message text in history
-    show_text.change(lambda x: params.update({"show_text": x}), show_text, None)
-    show_text.change(
-        toggle_text_in_history, [shared.gradio[k] for k in ['name1', 'name2', 'mode', 'chat_style']], shared.gradio['display']
-    )
-    show_text.change(chat.save_history, shared.gradio['mode'], [], show_progress=False)
     # Event functions to update the parameters in the backend
     autoplay.change(lambda x: params.update({"autoplay": x}), autoplay, None)

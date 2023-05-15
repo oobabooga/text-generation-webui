@@ -41,7 +41,8 @@ class LlamaCppModel:
             'n_threads': shared.args.threads or None,
             'n_batch': shared.args.n_batch,
             'use_mmap': not shared.args.no_mmap,
-            'use_mlock': shared.args.mlock
+            'use_mlock': shared.args.mlock,
+            'n_gpu_layers': shared.args.n_gpu_layers
         }
         self.model = Llama(**params)
         if cache_capacity > 0:

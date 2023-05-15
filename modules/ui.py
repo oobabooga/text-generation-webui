@@ -36,7 +36,7 @@ def list_model_elements():
 def list_interface_input_elements(chat=False):
     elements = ['max_new_tokens', 'seed', 'temperature', 'top_p', 'top_k', 'typical_p', 'repetition_penalty', 'encoder_repetition_penalty', 'no_repeat_ngram_size', 'min_length', 'do_sample', 'penalty_alpha', 'num_beams', 'length_penalty', 'early_stopping', 'add_bos_token', 'ban_eos_token', 'truncation_length', 'custom_stopping_strings', 'skip_special_tokens', 'preset_menu', 'stream']
     if chat:
-        elements += ['name1', 'name2', 'greeting', 'context', 'chat_prompt_size', 'chat_generation_attempts', 'stop_at_newline', 'mode', 'instruction_template', 'character_menu', 'name1_instruct', 'name2_instruct', 'context_instruct', 'turn_template', 'chat_style']
+        elements += ['name1', 'name2', 'greeting', 'context', 'chat_prompt_size', 'chat_generation_attempts', 'stop_at_newline', 'mode', 'instruction_template', 'character_menu', 'name1_instruct', 'name2_instruct', 'context_instruct', 'turn_template', 'chat_style', 'chat-instruct_command']
 
     elements += list_model_elements()
     return elements
@@ -59,13 +59,7 @@ def apply_interface_values(state, use_persistent=False):
     if len(state) == 0:
         return [gr.update() for k in elements]  # Dummy, do nothing
     else:
-        if use_persistent and 'mode' in state:
-            if state['mode'] == 'instruct':
-                return [state[k] if (k not in ['character_menu'] and k in state) else gr.update() for k in elements]
-            else:
-                return [state[k] if (k not in ['instruction_template'] and k in state) else gr.update() for k in elements]
-        else:
-            return [state[k] if k in state else gr.update() for k in elements]
+        return [state[k] if k in state else gr.update() for k in elements]
 
 
 class ToolButton(gr.Button, gr.components.FormComponent):

@@ -1,12 +1,12 @@
-import json
 import asyncio
-from websockets.server import serve
+import json
 from threading import Thread
 
-from modules import shared
-from modules.text_generation import generate_reply
+from websockets.server import serve
 
 from extensions.api.util import build_parameters, try_start_cloudflared
+from modules import shared
+from modules.text_generation import generate_reply
 
 PATH = '/api/v1/stream'
 
@@ -26,19 +26,14 @@ async def _handle_connection(websocket, path):
         generate_params['stream'] = True
 
         generator = generate_reply(
-            prompt, generate_params, stopping_strings=stopping_strings)
+            prompt, generate_params, stopping_strings=stopping_strings, is_chat=False)
 
         # As we stream, only send the new bytes.
-        skip_index = len(prompt) if not shared.is_chat() else 0
+        skip_index = 0
         message_num = 0
 
         for a in generator:
-            to_send = ''
-            if isinstance(a, str):
-                to_send = a[skip_index:]
-            else:
-                to_send = a[0][skip_index:]
-
+            to_send = a[skip_index:]
             await websocket.send(json.dumps({
                 'event': 'text_stream',
                 'message_num': message_num,

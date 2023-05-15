@@ -59,6 +59,14 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
         return input_ids.cuda()
 
 
+def get_encoded_length(prompt):
+    length_after_extensions = apply_extensions('tokenized_length', prompt)
+    if length_after_extensions is not None:
+        return length_after_extensions
+
+    return len(encode(prompt)[0])
+
+
 def decode(output_ids, skip_special_tokens=True):
     return shared.tokenizer.decode(output_ids, skip_special_tokens)
 
@@ -93,37 +101,33 @@ def fix_galactica(s):
     return s
 
 
-def get_reply_from_output_ids(output_ids, input_ids, original_question, state):
+def get_reply_from_output_ids(output_ids, input_ids, original_question, state, is_chat=False):
     if shared.model_type == 'HF_seq2seq':
         reply = decode(output_ids, state['skip_special_tokens'])
-        if not shared.is_chat():
-            reply = apply_extensions('output', reply)
     else:
         new_tokens = len(output_ids) - len(input_ids[0])
         reply = decode(output_ids[-new_tokens:], state['skip_special_tokens'])
 
-        if type(shared.tokenizer) is transformers.LlamaTokenizer:
-            if len(original_question) > 0 and original_question[-1] not in [' ', '\n']:
+        # Prevent LlamaTokenizer from skipping a space
+        if type(shared.tokenizer) is transformers.LlamaTokenizer and len(output_ids) > 0:
+            if shared.tokenizer.convert_ids_to_tokens(int(output_ids[-new_tokens])).startswith('▁'):
                 reply = ' ' + reply
 
-        if not shared.is_chat():
-            reply = original_question + apply_extensions('output', reply)
+    if not is_chat:
+        reply = apply_extensions('output', reply)
 
     return reply
 
 
 def formatted_outputs(reply, model_name):
-    if not shared.is_chat():
-        if shared.model_type == 'galactica':
-            reply = fix_galactica(reply)
-            return reply, reply, generate_basic_html(reply)
-        elif shared.model_type == 'gpt4chan':
-            reply = fix_gpt4chan(reply)
-            return reply, 'Only applicable for GALACTICA models.', generate_4chan_html(reply)
-        else:
-            return reply, 'Only applicable for GALACTICA models.', generate_basic_html(reply)
+    if shared.model_type == 'galactica':
+        reply = fix_galactica(reply)
+        return reply, reply, generate_basic_html(reply)
+    elif shared.model_type == 'gpt4chan':
+        reply = fix_gpt4chan(reply)
+        return reply, 'Only applicable for GALACTICA models.', generate_4chan_html(reply)
     else:
-        return reply
+        return reply, 'Only applicable for GALACTICA models.', generate_basic_html(reply)
 
 
 def set_manual_seed(seed):
@@ -142,13 +146,21 @@ def stop_everything_event():
     shared.stop_everything = True
 
 
-def generate_reply(question, state, eos_token=None, stopping_strings=None):
+def generate_reply_wrapper(question, state, eos_token=None, stopping_strings=None):
+    for reply in generate_reply(question, state, eos_token, stopping_strings, is_chat=False):
+        if shared.model_type not in ['HF_seq2seq']:
+            reply = question + reply
+
+        yield formatted_outputs(reply, shared.model_name)
+
+
+def generate_reply(question, state, eos_token=None, stopping_strings=None, is_chat=False):
     state = apply_extensions('state', state)
     generate_func = apply_extensions('custom_generate_reply')
     if generate_func is None:
         if shared.model_name == 'None' or shared.model is None:
             logging.error("No model is loaded! Select one in the Model tab.")
-            yield formatted_outputs(question, shared.model_name)
+            yield question
             return
 
         if shared.model_type in ['rwkv', 'llamacpp']:
@@ -160,7 +172,7 @@ def generate_reply(question, state, eos_token=None, stopping_strings=None):
 
     # Preparing the input
     original_question = question
-    if not shared.is_chat():
+    if not is_chat:
         question = apply_extensions('input', question)
 
     if shared.args.verbose:
@@ -169,11 +181,11 @@ def generate_reply(question, state, eos_token=None, stopping_strings=None):
     shared.stop_everything = False
     clear_torch_cache()
     seed = set_manual_seed(state['seed'])
-    for reply in generate_func(question, original_question, seed, state, eos_token, stopping_strings):
-        yield formatted_outputs(reply, shared.model_name)
+    for reply in generate_func(question, original_question, seed, state, eos_token, stopping_strings, is_chat=is_chat):
+        yield reply
 
 
-def generate_reply_HF(question, original_question, seed, state, eos_token=None, stopping_strings=None):
+def generate_reply_HF(question, original_question, seed, state, eos_token=None, stopping_strings=None, is_chat=False):
     generate_params = {}
     for k in ['max_new_tokens', 'do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping']:
         generate_params[k] = state[k]
@@ -225,8 +237,8 @@ def generate_reply_HF(question, original_question, seed, state, eos_token=None, 
 
     t0 = time.time()
     try:
-        if not shared.is_chat() and shared.model_type != 'HF_seq2seq':
-            yield original_question
+        if not is_chat and shared.model_type != 'HF_seq2seq':
+            yield ''
 
         # Generate the entire reply at once.
         if not state['stream']:
@@ -238,7 +250,7 @@ def generate_reply_HF(question, original_question, seed, state, eos_token=None, 
             if shared.soft_prompt:
                 output = torch.cat((input_ids[0], output[filler_input_ids.shape[1]:]))
 
-            yield get_reply_from_output_ids(output, input_ids, original_question, state)
+            yield get_reply_from_output_ids(output, input_ids, original_question, state, is_chat=is_chat)
 
         # Stream the reply 1 token at a time.
         # This is based on the trick of using 'stopping_criteria' to create an iterator.
@@ -258,7 +270,7 @@ def generate_reply_HF(question, original_question, seed, state, eos_token=None, 
                     if shared.soft_prompt:
                         output = torch.cat((input_ids[0], output[filler_input_ids.shape[1]:]))
 
-                    yield get_reply_from_output_ids(output, input_ids, original_question, state)
+                    yield get_reply_from_output_ids(output, input_ids, original_question, state, is_chat=is_chat)
                     if output[-1] in eos_token_ids:
                         break
 
@@ -272,7 +284,7 @@ def generate_reply_HF(question, original_question, seed, state, eos_token=None, 
         return
 
 
-def generate_reply_custom(question, original_question, seed, state, eos_token=None, stopping_strings=None):
+def generate_reply_custom(question, original_question, seed, state, eos_token=None, stopping_strings=None, is_chat=False):
     seed = set_manual_seed(state['seed'])
     generate_params = {'token_count': state['max_new_tokens']}
     for k in ['temperature', 'top_p', 'top_k', 'repetition_penalty']:
@@ -280,22 +292,19 @@ def generate_reply_custom(question, original_question, seed, state, eos_token=No
 
     t0 = time.time()
     try:
-        if not shared.is_chat():
-            yield question
+        if not is_chat:
+            yield ''
 
         if not state['stream']:
             reply = shared.model.generate(context=question, **generate_params)
-            output = original_question + reply
-            if not shared.is_chat():
-                reply = original_question + apply_extensions('output', reply)
+            if not is_chat:
+                reply = apply_extensions('output', reply)
 
             yield reply
         else:
-
             for reply in shared.model.generate_with_streaming(context=question, **generate_params):
-                output = original_question + reply
-                if not shared.is_chat():
-                    reply = original_question + apply_extensions('output', reply)
+                if not is_chat:
+                    reply = apply_extensions('output', reply)
 
                 yield reply
 
@@ -304,12 +313,12 @@ def generate_reply_custom(question, original_question, seed, state, eos_token=No
     finally:
         t1 = time.time()
         original_tokens = len(encode(original_question)[0])
-        new_tokens = len(encode(output)[0]) - original_tokens
+        new_tokens = len(encode(original_question + reply)[0]) - original_tokens
         print(f'Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens}, seed {seed})')
         return
 
 
-def generate_reply_flexgen(question, original_question, seed, state, eos_token=None, stopping_strings=None):
+def generate_reply_flexgen(question, original_question, seed, state, eos_token=None, stopping_strings=None, is_chat=False):
     generate_params = {}
     for k in ['max_new_tokens', 'do_sample', 'temperature']:
         generate_params[k] = state[k]
@@ -338,15 +347,15 @@ def generate_reply_flexgen(question, original_question, seed, state, eos_token=N
 
     t0 = time.time()
     try:
-        if not shared.is_chat():
-            yield question
+        if not is_chat:
+            yield ''
 
         # Generate the entire reply at once.
         if not state['stream']:
             with torch.no_grad():
                 output = shared.model.generate(**generate_params)[0]
 
-            yield get_reply_from_output_ids(output, input_ids, original_question, state)
+            yield get_reply_from_output_ids(output, input_ids, original_question, state, is_chat=is_chat)
 
         # Stream the output naively for FlexGen since it doesn't support 'stopping_criteria'
         else:

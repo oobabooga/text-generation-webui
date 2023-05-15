@@ -1,5 +1,6 @@
 import argparse
 import logging
+from collections import OrderedDict
 from pathlib import Path
 
 import yaml
@@ -24,13 +25,14 @@ gradio = {}
 # For keeping the values of UI elements on page reload
 persistent_interface_state = {}
 
-# Generation input parameters
-input_params = []
+input_params = []  # Generation input parameters
+reload_inputs = []  # Parameters for reloading the chat interface
 
 # For restarting the interface
 need_restart = False
 
 settings = {
+    'autoload_model': True,
     'max_new_tokens': 200,
     'max_new_tokens_min': 1,
     'max_new_tokens_max': 2000,
@@ -52,12 +54,13 @@ settings = {
     'mode': 'chat',
     'chat_style': 'cai-chat',
     'instruction_template': 'None',
+    'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
     'chat_prompt_size': 2048,
     'chat_prompt_size_min': 0,
     'chat_prompt_size_max': 2048,
     'chat_generation_attempts': 1,
     'chat_generation_attempts_min': 1,
-    'chat_generation_attempts_max': 5,
+    'chat_generation_attempts_max': 10,
     'default_extensions': [],
     'chat_default_extensions': ["gallery"],
     'presets': {
@@ -70,12 +73,6 @@ settings = {
     'prompts': {
         'default': 'QA',
         '.*(gpt4chan|gpt-4chan|4chan)': 'GPT-4chan',
-        '.*oasst': 'Open Assistant',
-        '.*alpaca': "Alpaca",
-    },
-    'lora_prompts': {
-        'default': 'QA',
-        '.*alpaca': "Alpaca",
     }
 }
 
@@ -126,7 +123,8 @@ parser.add_argument('--threads', type=int, default=0, help='Number of threads to
 parser.add_argument('--n_batch', type=int, default=512, help='Maximum number of prompt tokens to batch together when calling llama_eval.')
 parser.add_argument('--no-mmap', action='store_true', help='Prevent mmap from being used.')
 parser.add_argument('--mlock', action='store_true', help='Force the system to keep the model in RAM.')
-parser.add_argument('--cache-capacity', type=str, help='Maximum cache capacity. Examples: 2000MiB, 2GiB. When provided without units, GiB will be assumed.')
+parser.add_argument('--cache-capacity', type=str, help='Maximum cache capacity. Examples: 2000MiB, 2GiB. When provided without units, bytes will be assumed.')
+parser.add_argument('--n-gpu-layers', type=int, default=0, help='Number of layers to offload to the GPU.')
 
 # GPTQ
 parser.add_argument('--wbits', type=int, default=0, help='Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported.')
@@ -166,6 +164,8 @@ parser.add_argument("--gradio-auth-path", type=str, help='Set the gradio authent
 parser.add_argument('--api', action='store_true', help='Enable the API extension.')
 parser.add_argument('--public-api', action='store_true', help='Create a public URL for the API using Cloudfare.')
 
+# Multimodal
+parser.add_argument('--multimodal-pipeline', type=str, default=None, help='The multimodal pipeline to use. Examples: llava-7b, llava-13b.')
 
 args = parser.parse_args()
 args_defaults = parser.parse_args([])
@@ -183,19 +183,28 @@ if args.trust_remote_code:
 if args.share:
     logging.warning("The gradio \"share link\" feature downloads a proprietary and unaudited blob to create a reverse tunnel. This is potentially dangerous.")
 
+
+def add_extension(name):
+    if args.extensions is None:
+        args.extensions = [name]
+    elif 'api' not in args.extensions:
+        args.extensions.append(name)
+
+
 # Activating the API extension
 if args.api or args.public_api:
-    if args.extensions is None:
-        args.extensions = ['api']
-    elif 'api' not in args.extensions:
-        args.extensions.append('api')
+    add_extension('api')
+
+# Activating the multimodal extension
+if args.multimodal_pipeline is not None:
+    add_extension('multimodal')
 
 
 def is_chat():
     return args.chat
 
 
-# Loading model-specific settings (default)
+# Loading model-specific settings
 with Path(f'{args.model_dir}/config.yaml') as p:
     if p.exists():
         model_config = yaml.safe_load(open(p, 'r').read())
@@ -211,3 +220,5 @@ with Path(f'{args.model_dir}/config-user.yaml') as p:
                 model_config[k].update(user_config[k])
             else:
                 model_config[k] = user_config[k]
+
+model_config = OrderedDict(model_config)
