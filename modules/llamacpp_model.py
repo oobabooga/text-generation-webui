@@ -16,6 +16,9 @@ class LlamaCppModel:
     def __init__(self):
         self.initialized = False
 
+    def __del__(self):        
+        self.model.__del__()
+
     @classmethod
     def from_pretrained(self, path):
         result = self()
