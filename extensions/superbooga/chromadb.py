@@ -45,15 +45,32 @@ class ChromaCollector(Collecter):
         self.ids = [f"id{i}" for i in range(len(texts))]
         self.collection.add(documents=texts, ids=self.ids)
 
-    def get(self, search_strings: list[str], n_results: int) -> list[str]:
+    def get_documents_and_ids(self, search_strings: list[str], n_results: int):
         n_results = min(len(self.ids), n_results)
-        result = self.collection.query(query_texts=search_strings, n_results=n_results, include=['documents'])['documents'][0]
-        return result
+        result = self.collection.query(query_texts=search_strings, n_results=n_results, include=['documents'])
+        documents = result['documents'][0]
+        ids = list(map(lambda x: int(x[2:]), result['ids'][0]))
+        return documents, ids
 
+    # Get chunks by similarity
+    def get(self, search_strings: list[str], n_results: int) -> list[str]:
+        documents, _ = self.get_documents_and_ids(search_strings, n_results)
+        return documents
+
+    # Get ids by similarity
     def get_ids(self, search_strings: list[str], n_results: int) -> list[str]:
-        n_results = min(len(self.ids), n_results)
-        result = self.collection.query(query_texts=search_strings, n_results=n_results, include=['documents'])['ids'][0]
-        return list(map(lambda x: int(x[2:]), result))
+        _ , ids = self.get_documents_and_ids(search_strings, n_results)
+        return ids
+
+    # Get chunks by similarity and then sort by insertion order
+    def get_sorted(self, search_strings: list[str], n_results: int) -> list[str]:
+        documents, ids = self.get_documents_and_ids(search_strings, n_results)
+        return [x for _, x in sorted(zip(ids, documents))]
+
+    # Get ids by similarity and then sort by insertion order
+    def get_ids_sorted(self, search_strings: list[str], n_results: int) -> list[str]:
+        _ , ids = self.get_documents_and_ids(search_strings, n_results)
+        return sorted(ids)
 
     def clear(self):
         self.collection.delete(ids=self.ids)
