@@ -76,7 +76,7 @@ class ChromaCollector(Collecter):
         return [x for _, x in sorted(zip(ids, documents))]
 
     # Multiply distance by factor within [min_time_weight, 1] where more recent is lower
-    def apply_time_weight_to_distances(self, ids: list[int], distances: list[float], min_time_weight: float = 1.0):
+    def apply_time_weight_to_distances(self, ids: list[int], distances: list[float], min_time_weight: float = 1.0) -> list[float]:
         if len(self.ids) <= 1: return distances.copy()
         return [distance * (_id / (len(self.ids)-1) * min_time_weight - _id / (len(self.ids)-1) + 1) for _id, distance in zip(ids, distances)]
 
