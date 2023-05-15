@@ -18,7 +18,7 @@ def find_quantized_model_file(model_name):
     priority_name_list = [
         Path(f'{shared.args.model_dir}/{model_name}{hyphen}{shared.args.wbits}bit{group}{ext}')
         for group in ([f'-{shared.args.groupsize}g', ''] if shared.args.groupsize > 0 else [''])
-        for ext in ['.safetensors', '.bin']
+        for ext in ['.safetensors', '.bin', '.pt']
         for hyphen in ['-', f'/{model_name}-', '/']
     ]
     for path in priority_name_list:
@@ -26,16 +26,16 @@ def find_quantized_model_file(model_name):
             bin_path = path
             break
 
-    # If the model hasn't been found with a well-behaved name, pick the last .bin
+    # If the model hasn't been found with a well-behaved name, pick the last .bin/.pt
     # or the last .safetensors found in its folder as a last resort
     if not bin_path:
-        found_bins = [bin for bin in list(path_to_model.glob("*.bin")) if 'pytorch' not in bin.stem]  # ignore pytorch bins
+        found_bins = [bin for bin in list(path_to_model.glob("*.bin") + path_to_model.glob("*.pt")) if 'pytorch' not in bin.stem]  # ignore pytorch bins
         found_safetensors = list(path_to_model.glob("*.safetensors"))
         bin_path = None
 
         if len(found_bins) > 0:
             if len(found_bins) > 1:
-                logging.info('Warning: more than one .bin model has been found. The last one will be selected. It could be wrong.')
+                logging.info('Warning: more than one .bin/.pt model has been found. The last one will be selected. It could be wrong.')
             bin_path = found_bins[-1]
         elif len(found_safetensors) > 0:
             if len(found_bins) > 1:
