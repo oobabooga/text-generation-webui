@@ -361,7 +361,7 @@ def create_model_menus():
 
         with gr.Column():
             with gr.Box():
-                gr.Markdown('LLama.cpp parameters')
+                gr.Markdown('llama.cpp parameters')
                 with gr.Row():
                     with gr.Column():
                         shared.gradio['threads'] = gr.Slider(label="threads", minimum=0, step=1, maximum=32, value=shared.args.threads)
