@@ -360,7 +360,20 @@ def create_model_menus():
             shared.gradio['download_model_button'] = gr.Button("Download")
 
         with gr.Column():
-            shared.gradio['model_status'] = gr.Markdown('No model is loaded' if shared.model_name == 'None' else 'Ready')
+            with gr.Box():
+                gr.Markdown('LLama.cpp parameters')
+                with gr.Row():
+                    with gr.Column():
+                        shared.gradio['threads'] = gr.Slider(label="threads", minimum=0, step=1, maximum=32, value=shared.args.threads)
+                        shared.gradio['n_batch'] = gr.Slider(label="n_batch", minimum=1, maximum=2048, value=shared.args.n_batch)
+                        shared.gradio['n_gpu_layers'] = gr.Slider(label="n-gpu-layers", minimum=0, maximum=128, value=shared.args.n_gpu_layers)
+
+                    with gr.Column():
+                        shared.gradio['no-mmap'] = gr.Checkbox(label="no-mmap", value=shared.args.no_mmap)
+                        shared.gradio['mlock'] = gr.Checkbox(label="mlock", value=shared.args.mlock)
+
+            with gr.Row():                
+                shared.gradio['model_status'] = gr.Markdown('No model is loaded' if shared.model_name == 'None' else 'Ready')
 
     # In this event handler, the interface state is read and updated
     # with the model defaults (if any), and then the model is loaded
