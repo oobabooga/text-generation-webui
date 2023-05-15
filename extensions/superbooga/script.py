@@ -96,7 +96,7 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
     global chat_collector
 
     if state['mode'] == 'instruct':
-        results = collector.get(user_input, n_results=chunk_count)
+        results = collector.get_sorted(user_input, n_results=chunk_count)
         additional_context = '\nYour reply should be based on the context below:\n\n' + '\n'.join(results)
         user_input += additional_context
     else:
@@ -116,7 +116,7 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
             add_chunks_to_collector(chunks, chat_collector)
             query = '\n'.join(shared.history['internal'][-1] + [user_input])
             try:
-                best_ids = chat_collector.get_ids(query, n_results=chunk_count)
+                best_ids = chat_collector.get_ids_sorted(query, n_results=chunk_count)
                 additional_context = '\n'
                 for id_ in best_ids:
                     if shared.history['internal'][id_][0] != '<|BEGIN-VISIBLE-CHAT|>':
@@ -147,7 +147,7 @@ def input_modifier(string):
         user_input = match.group(1).strip()
 
         # Get the most similar chunks
-        results = collector.get(user_input, n_results=chunk_count)
+        results = collector.get_sorted(user_input, n_results=chunk_count)
 
         # Make the injection
         string = string.replace('<|injection-point|>', '\n'.join(results))
