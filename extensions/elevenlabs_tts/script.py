@@ -167,7 +167,7 @@ def ui():
     # Event functions to update the parameters in the backend
     activate.change(lambda x: params.update({'activate': x}), activate, None)
     voice.change(lambda x: params.update({'selected_voice': x}), voice, None)
-    api_key.change(lambda x: params.update({'api_key': x}), api_key, None)
+    api_key.change(lambda x: [params.update({'api_key': x}), elevenlabs.set_api_key(x)], api_key, None)
     # connect.click(check_valid_api, [], connection_status)
     refresh.click(refresh_voices_dd, [], voice)
     # Event functions to update the parameters in the backend
