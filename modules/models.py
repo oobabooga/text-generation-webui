@@ -82,7 +82,6 @@ def load_model(model_name):
     else:
         load_func = huggingface_loader
 
-    # Load the model
     output = load_func(model_name)
     if type(output) is tuple:
         model, tokenizer = output
@@ -102,7 +101,6 @@ def load_tokenizer(model_name, model):
     if shared.model_type == 'gpt4chan' and Path(f"{shared.args.model_dir}/gpt-j-6B/").exists():
         tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/gpt-j-6B/"))
     elif type(model) is transformers.LlamaForCausalLM:
-
         # Try to load an universal LLaMA tokenizer
         if shared.model_type not in ['llava', 'oasst']:
             for p in [Path(f"{shared.args.model_dir}/llama-tokenizer/"), Path(f"{shared.args.model_dir}/oobabooga_llama-tokenizer/")]:
@@ -120,7 +118,6 @@ def load_tokenizer(model_name, model):
             tokenizer.pad_token_id = 0
         except:
             pass
-
     else:
         tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/{model_name}/"), trust_remote_code=shared.args.trust_remote_code)
 
@@ -229,7 +226,6 @@ def RWKV_loader(model_name):
 
     model = RWKVModel.from_pretrained(Path(f'{shared.args.model_dir}/{model_name}'), dtype="fp32" if shared.args.cpu else "bf16" if shared.args.bf16 else "fp16", device="cpu" if shared.args.cpu else "cuda")
     tokenizer = RWKVTokenizer.from_pretrained(Path(shared.args.model_dir))
-
     return model, tokenizer
 
 
