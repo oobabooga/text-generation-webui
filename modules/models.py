@@ -20,9 +20,6 @@ from modules import llama_attn_hijack
 
 transformers.logging.set_verbosity_error()
 
-if shared.args.flexgen:
-    from flexgen.flex_opt import CompressionConfig, ExecutionEnv, OptLM, Policy
-
 local_rank = None
 if shared.args.deepspeed:
     import deepspeed
@@ -202,6 +199,8 @@ def huggingface_loader(model_name):
 
 
 def flexgen_loader(model_name):
+    from flexgen.flex_opt import CompressionConfig, ExecutionEnv, OptLM, Policy
+
     # Initialize environment
     env = ExecutionEnv.create(shared.args.disk_cache_dir)
 
