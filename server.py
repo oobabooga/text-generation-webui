@@ -369,7 +369,7 @@ def create_model_menus():
                         shared.gradio['n_gpu_layers'] = gr.Slider(label="n-gpu-layers", minimum=0, maximum=128, value=shared.args.n_gpu_layers)
 
                     with gr.Column():
-                        shared.gradio['no-mmap'] = gr.Checkbox(label="no-mmap", value=shared.args.no_mmap)
+                        shared.gradio['no_mmap'] = gr.Checkbox(label="no-mmap", value=shared.args.no_mmap)
                         shared.gradio['mlock'] = gr.Checkbox(label="mlock", value=shared.args.mlock)
 
             with gr.Row():                
