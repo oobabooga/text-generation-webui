@@ -16,9 +16,20 @@ Enabled with the `--n-gpu-layers` parameter. If you have enough VRAM, use a high
 
 Note that you need to manually install `llama-cpp-python` with GPU support. To do that:
 
+#### Linux
+
 ```
 pip uninstall -y llama-cpp-python
 CMAKE_ARGS="-DLLAMA_CUBLAS=on" FORCE_CMAKE=1 pip install llama-cpp-python --no-cache-dir
+```
+
+#### Windows
+
+```
+pip uninstall -y llama-cpp-python
+set CMAKE_ARGS="-DLLAMA_CUBLAS=on"
+set FORCE_CMAKE=1
+pip install llama-cpp-python --no-cache-dir
 ```
 
 Here you can find the different compilation options for OpenBLAS / cuBLAS / CLBlast: https://pypi.org/project/llama-cpp-python/
