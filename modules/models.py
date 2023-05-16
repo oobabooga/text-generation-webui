@@ -188,26 +188,7 @@ def load_model(model_name):
             else:
                 params["torch_dtype"] = torch.float16
 
-            if shared.args.gpu_memory:
-                memory_map = list(map(lambda x: x.strip(), shared.args.gpu_memory))
-                max_cpu_memory = shared.args.cpu_memory.strip() if shared.args.cpu_memory is not None else '99GiB'
-                max_memory = {}
-                for i in range(len(memory_map)):
-                    max_memory[i] = f'{memory_map[i]}GiB' if not re.match('.*ib$', memory_map[i].lower()) else memory_map[i]
-
-                max_memory['cpu'] = f'{max_cpu_memory}GiB' if not re.match('.*ib$', max_cpu_memory.lower()) else max_cpu_memory
-                params['max_memory'] = max_memory
-            elif shared.args.auto_devices:
-                total_mem = (torch.cuda.get_device_properties(0).total_memory / (1024 * 1024))
-                suggestion = round((total_mem - 1000) / 1000) * 1000
-                if total_mem - suggestion < 800:
-                    suggestion -= 1000
-
-                suggestion = int(round(suggestion / 1000))
-                logging.warning(f"\033[1;32;1mAuto-assiging --gpu-memory {suggestion} for your GPU to try to prevent out-of-memory errors.\nYou can manually set other values.\033[0;37;0m")
-                max_memory = {0: f'{suggestion}GiB', 'cpu': f'{shared.args.cpu_memory or 99}GiB'}
-                params['max_memory'] = max_memory
-
+            params['max_memory'] = get_max_memory_dict()
             if shared.args.disk:
                 params["offload_folder"] = shared.args.disk_cache_dir
 
@@ -260,6 +241,32 @@ def load_model(model_name):
 
     logging.info(f"Loaded the model in {(time.time()-t0):.2f} seconds.\n")
     return model, tokenizer
+
+
+def get_max_memory_dict():
+    max_memory = {}
+
+    if shared.args.gpu_memory:
+        memory_map = list(map(lambda x: x.strip(), shared.args.gpu_memory))
+        for i in range(len(memory_map)):
+            max_memory[i] = f'{memory_map[i]}GiB' if not re.match('.*ib$', memory_map[i].lower()) else memory_map[i]
+
+        max_cpu_memory = shared.args.cpu_memory.strip() if shared.args.cpu_memory is not None else '99GiB'
+        max_memory['cpu'] = f'{max_cpu_memory}GiB' if not re.match('.*ib$', max_cpu_memory.lower()) else max_cpu_memory
+
+    # If --auto-devices is provided standalone, try to get a reasonable value
+    # for the maximum memory of device :0
+    elif shared.args.auto_devices:
+        total_mem = (torch.cuda.get_device_properties(0).total_memory / (1024 * 1024))
+        suggestion = round((total_mem - 1000) / 1000) * 1000
+        if total_mem - suggestion < 800:
+            suggestion -= 1000
+
+        suggestion = int(round(suggestion / 1000))
+        logging.warning(f"Auto-assiging --gpu-memory {suggestion} for your GPU to try to prevent out-of-memory errors. You can manually set other values.")
+        max_memory = {0: f'{suggestion}GiB', 'cpu': f'{shared.args.cpu_memory or 99}GiB'}
+
+    return max_memory
 
 
 def clear_torch_cache():
