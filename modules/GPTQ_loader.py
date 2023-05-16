@@ -172,7 +172,11 @@ def load_quantized(model_name):
 
     # qwopqwop200's offload
     if model_type == 'llama' and shared.args.pre_layer:
-        model = load_quant(str(path_to_model), str(pt_path), shared.args.wbits, shared.args.groupsize, shared.args.pre_layer)
+        if not ',' in shared.args.pre_layer:
+            pre_layer = int(shared.args.pre_layer)
+        else:
+            pre_layer = [int(x.strip()) for x in shared.args.pre_layer.split(',')]
+        model = load_quant(str(path_to_model), str(pt_path), shared.args.wbits, shared.args.groupsize, pre_layer)
     else:
         threshold = False if model_type == 'gptj' else 128
         model = load_quant(str(path_to_model), str(pt_path), shared.args.wbits, shared.args.groupsize, kernel_switch_threshold=threshold)
