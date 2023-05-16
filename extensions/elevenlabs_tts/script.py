@@ -19,7 +19,7 @@ wav_idx = 0
 
 def refresh_voices():
     global params
-    your_voices = elevenlabs.voices(api_key=params['api_key'])
+    your_voices = elevenlabs.voices()
     voice_names = [voice.name for voice in your_voices]
     return voice_names
 
