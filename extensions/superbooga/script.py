@@ -6,7 +6,7 @@ import gradio as gr
 from bs4 import BeautifulSoup
 from modules import chat, shared
 
-from .chromadb import add_chunks_to_collector, make_collector
+from .chromadb import add_chunks_to_collector, make_embedder, make_collector
 from .download_urls import download_urls
 
 
@@ -16,11 +16,21 @@ params = {
     'chunk_separator': '',
     'strong_cleanup': False,
     'threads': 4,
+    'embedder_model_type': None,
+    'embedder_model_name_or_path': None,
 }
 
-collector = make_collector()
-chat_collector = make_collector()
+
 chunk_count = 5
+
+
+def setup() -> None:
+    global embedder, collector, chat_collector
+    if not params['embedder_model_type']:
+        logging.warning('No embedder model type provided. Using default embedder.')
+    embedder = make_embedder(params['embedder_model_type'], params['embedder_model_name_or_path'])
+    collector = make_collector(embedder)
+    chat_collector = make_collector(embedder)
 
 
 def feed_data_into_collector(corpus, chunk_len, chunk_sep):

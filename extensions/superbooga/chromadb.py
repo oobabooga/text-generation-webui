@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 import posthog
 import torch
@@ -77,14 +78,30 @@ class ChromaCollector(Collecter):
 
 
 class SentenceTransformerEmbedder(Embedder):
-    def __init__(self) -> None:
-        self.model = SentenceTransformer("sentence-transformers/all-mpnet-base-v2")
+    DEFAULT_MODEL_NAME_OR_PATH = "sentence-transformers/all-mpnet-base-v2"
+    def __init__(self, model_name_or_path: Optional[str] = None) -> None:
+        self.model = SentenceTransformer(model_name_or_path or self.DEFAULT_MODEL_NAME_OR_PATH)
         self.embed = self.model.encode
 
 
-def make_collector():
-    global embedder
-    return ChromaCollector(embedder)
+def get_default_embedder() -> Embedder:
+    global embedder_default
+    if not embedder_default:
+        embedder_default = SentenceTransformerEmbedder()
+    return embedder_default
+
+
+def make_embedder(model_type: Optional[str] = None, model_name_or_path: Optional[str] = None) -> Embedder:
+    if not model_type:
+        return get_default_embedder()
+    elif model_type == 'sentence_transformer':
+        return SentenceTransformerEmbedder(model_name_or_path)
+    else:
+        raise ValueError("Unknown embedder model type specified. Only 'sentence_transformer' is supported")
+
+
+def make_collector(embedder: Optional[Embedder] = None):
+    return ChromaCollector(embedder or get_default_embedder())
 
 
 def add_chunks_to_collector(chunks, collector):
