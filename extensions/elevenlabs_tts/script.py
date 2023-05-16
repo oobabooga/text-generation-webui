@@ -17,6 +17,12 @@ voices = None
 wav_idx = 0
 
 
+def update_api_key(key):
+    params['api_key'] = key
+    if key is not None:
+        elevenlabs.set_api_key(key)
+
+
 def refresh_voices():
     global params
     your_voices = elevenlabs.voices()
@@ -167,7 +173,7 @@ def ui():
     # Event functions to update the parameters in the backend
     activate.change(lambda x: params.update({'activate': x}), activate, None)
     voice.change(lambda x: params.update({'selected_voice': x}), voice, None)
-    api_key.change(lambda x: [params.update({'api_key': x}), elevenlabs.set_api_key(x)], api_key, None)
+    api_key.change(update_api_key, api_key, None)
     # connect.click(check_valid_api, [], connection_status)
     refresh.click(refresh_voices_dd, [], voice)
     # Event functions to update the parameters in the backend
