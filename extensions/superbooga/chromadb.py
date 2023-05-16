@@ -84,6 +84,17 @@ class SentenceTransformerEmbedder(Embedder):
         self.embed = self.model.encode
 
 
+try:
+    from InstructorEmbedding import INSTRUCTOR
+    class InstructorEmbedder(Embedder):
+        DEFAULT_MODEL_NAME_OR_PATH = "hkunlp/instructor-base"
+        def __init__(self, model_name_or_path: Optional[str] = None) -> None:
+            self.model = INSTRUCTOR(model_name_or_path or self.DEFAULT_MODEL_NAME_OR_PATH)
+            self.embed = self.model.encode
+except ImportError:
+    pass
+
+
 def get_default_embedder() -> Embedder:
     global embedder_default
     if not embedder_default:
@@ -96,8 +107,10 @@ def make_embedder(model_type: Optional[str] = None, model_name_or_path: Optional
         return get_default_embedder()
     elif model_type == 'sentence_transformer':
         return SentenceTransformerEmbedder(model_name_or_path)
+    elif model_type == 'instructor':
+        return InstructorEmbedder(model_name_or_path)
     else:
-        raise ValueError("Unknown embedder model type specified. Only 'sentence_transformer' is supported")
+        raise ValueError("Unknown embedder model type specified. Only 'sentence_transformer' and 'instructor' are supported")
 
 
 def make_collector(embedder: Optional[Embedder] = None):
