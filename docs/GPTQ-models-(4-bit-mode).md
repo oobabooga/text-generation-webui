@@ -107,7 +107,7 @@ This is the performance:
 Output generated in 123.79 seconds (1.61 tokens/s, 199 tokens)
 ```
 
-You can also use multiple GPUs with `pre_layer` if using the oobabooga fork of GPTQ, eg `--pre_layer 30,60` will load a LLaMA-30B model half onto your first GPU and half onto your second, or `--pre_layer 20,40` will load 20 layers onto GPU-0, 20 layers onto GPU-1, and 20 layers offloaded to CPU.
+You can also use multiple GPUs with `pre_layer` if using the oobabooga fork of GPTQ, eg `--pre_layer 30 60` will load a LLaMA-30B model half onto your first GPU and half onto your second, or `--pre_layer 20 40` will load 20 layers onto GPU-0, 20 layers onto GPU-1, and 20 layers offloaded to CPU.
 
 ## Using LoRAs in 4-bit mode
 
