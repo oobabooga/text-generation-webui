@@ -380,10 +380,10 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             logging_steps=5,
             evaluation_strategy="steps" if eval_data is not None else "no",
             eval_steps=math.ceil(eval_steps / gradient_accumulation_steps) if eval_data is not None else None,
-            save_strategy="no",
+            save_strategy="steps" if eval_data is not None else "no",
             output_dir=lora_file_path,
             lr_scheduler_type=lr_scheduler_type,
-            load_best_model_at_end=True if eval_data is not None else False,
+            load_best_model_at_end=eval_data is not None,
             # TODO: Enable multi-device support
             ddp_find_unused_parameters=None,
             no_cuda=shared.args.cpu
