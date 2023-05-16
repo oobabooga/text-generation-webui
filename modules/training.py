@@ -258,7 +258,13 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
         tokens = shared.tokenizer.encode(raw_text)
         del raw_text  # Note: could be a gig for a large dataset, so delete redundant data as we go to be safe on RAM
-        tokens = list(split_chunks(tokens, cutoff_len - overlap_len))
+
+        step = cutoff_len - overlap_len
+        if step <= 0:
+            yield f"Error: overlap_len ({overlap_len}) cannot be greater than or equal to cutoff_len ({cutoff_len})"
+            return
+
+        tokens = list(split_chunks(tokens, step))
         for i in range(1, len(tokens)):
             tokens[i] = tokens[i - 1][-overlap_len:] + tokens[i]
 
