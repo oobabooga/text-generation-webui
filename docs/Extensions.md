@@ -33,25 +33,25 @@ script.py may define the special functions and variables below.
 
 #### Predefined functions
 
-The following functions may be defined in `script.py`:
-
 | Function        | Description |
 |-------------|-------------|
 | `def ui()` | Creates custom gradio elements when the UI is launched. | 
-| `def custom_css()` | Returns custom CSS as a string. |
-| `def custom_js()` | Returns custom javascript as a string. |
+| `def custom_css()` | Returns custom CSS as a string. It is applied whenever the web UI is loaded. |
+| `def custom_js()` | Same as above but for javascript. |
 | `def input_modifier(string)`  | Modifies the input string before it enters the model. In chat mode, it is applied to the user message. Otherwise, it is applied to the entire prompt. |
 | `def output_modifier(string)`  | Modifies the output string before it is presented in the UI. In chat mode, it is applied to the bot's reply. Otherwise, it is applied to the entire output. |
 | `def state_modifier(state)`  | Modifies the dictionary containing the UI input parameters before it is used by the text generation functions. |
-| `def bot_prefix_modifier(string)`  | Applied in chat mode to the prefix for the bot's reply (more on that below). |
+| `def bot_prefix_modifier(string)`  | Applied in chat mode to the prefix for the bot's reply. |
 | `def custom_generate_reply(...)` | Overrides the main text generation function. |
 | `def custom_generate_chat_prompt(...)` | Overrides the prompt generator in chat mode. |
-| `def tokenizer_modifier(state, prompt, input_ids, input_embeds)` | Modifies the `input_ids`/`input_embeds` fed to the model. Should return `prompt`, `input_ids`, `input_embeds`. See `multimodal` extension for an example |
-| `def custom_tokenized_length(prompt)` | Used in conjunction with `tokenizer_modifier`, returns the length in tokens of `prompt`. See `multimodal` extension for an example |
-
-Additionally, the script may define two special global variables:
+| `def tokenizer_modifier(state, prompt, input_ids, input_embeds)` | Modifies the `input_ids`/`input_embeds` fed to the model. Should return `prompt`, `input_ids`, `input_embeds`. See the `multimodal` extension for an example. |
+| `def custom_tokenized_length(prompt)` | Used in conjunction with `tokenizer_modifier`, returns the length in tokens of `prompt`. See the `multimodal` extension for an example. |
 
 #### `params` dictionary
+
+In this dictionary, `display_name` is used to define the displayed name of the extension in the UI, and `is_tab` is used to define whether the extension should appear in a new tab. By default, extensions appear at the bottom of the "Text generation" tab.
+
+Example:
 
 ```python
 params = {
@@ -60,9 +60,7 @@ params = {
 }
 ```
 
-`display_name` is used to define the displayed name of the extension in the UI, and `is_tab` is used to define whether the extension should appear in a new tab. By default, extensions appear at the bottom of the "Text generation" tab.
-
-Additionally, `params` may contain variables that you want to be customizable through a `settings.json` file. For instance, assuming the extension is in `extensions/google_translate`, the variable `language string` below:
+Additionally, `params` may contain variables that you want to be customizable through a `settings.json` file. For instance, assuming the extension is in `extensions/google_translate`, the variable `language string` in
 
 ```python
 params = {
@@ -92,22 +90,6 @@ This is only relevant in chat mode. If your extension sets `input_hijack['state'
 
 Additionally, your extension can set the value to be a callback, in the form of `def cb(text: str, visible_text: str) -> [str, str]`. See the `multimodal` extension above for an example.
 
-## The `bot_prefix_modifier`
-
-In chat mode, this function modifies the prefix for a new bot message. For instance, if your bot is named `Marie Antoinette`, the default prefix for a new message will be
-
-```
-Marie Antoinette:
-```
-
-Using `bot_prefix_modifier`, you can change it to:
-
-```
-Marie Antoinette: *I am very enthusiastic*
-```
- 
-Marie Antoinette will become very enthusiastic in all her messages.
-
 ## Using multiple extensions at the same time
 
 In order to use your extension, you must start the web UI with the `--extensions` flag followed by the name of your extension (the folder under `text-generation-webui/extension` where `script.py` resides).
@@ -127,6 +109,22 @@ Do note, that for:
 - `custom_tokenized_length`
 
 only the first declaration encountered will be used and the rest will be ignored. 
+
+## The `bot_prefix_modifier`
+
+In chat mode, this function modifies the prefix for a new bot message. For instance, if your bot is named `Marie Antoinette`, the default prefix for a new message will be
+
+```
+Marie Antoinette:
+```
+
+Using `bot_prefix_modifier`, you can change it to:
+
+```
+Marie Antoinette: *I am very enthusiastic*
+```
+ 
+Marie Antoinette will become very enthusiastic in all her messages.
 
 ## `custom_generate_reply` example
 
