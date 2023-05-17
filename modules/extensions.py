@@ -137,6 +137,30 @@ def _apply_custom_js():
     return all_js
 
 
+def create_extensions_block():
+    to_display = []
+    for extension, name in iterator():
+        if hasattr(extension, "ui") and not (hasattr(extension, 'params') and extension.params.get('is_tab', False)):
+            to_display.append((extension, name))
+
+    # Creating the extension ui elements
+    if len(to_display) > 0:
+        with gr.Column(elem_id="extensions"):
+            for row in to_display:
+                extension, name = row
+                display_name = getattr(extension, 'params', {}).get('display_name', name)
+                gr.Markdown(f"\n### {display_name}")
+                extension.ui()
+
+
+def create_extensions_tabs():
+    for extension, name in iterator():
+        if hasattr(extension, "ui") and (hasattr(extension, 'params') and extension.params.get('is_tab', False)):
+            display_name = getattr(extension, 'params', {}).get('display_name', name)
+            with gr.Tab(display_name, elem_classes="extension-tab"):
+                extension.ui()
+
+
 EXTENSION_MAP = {
     "input": partial(_apply_string_extensions, "input_modifier"),
     "output": partial(_apply_string_extensions, "output_modifier"),
@@ -157,21 +181,3 @@ def apply_extensions(typ, *args, **kwargs):
         raise ValueError(f"Invalid extension type {typ}")
 
     return EXTENSION_MAP[typ](*args, **kwargs)
-
-
-def create_extensions_block():
-    global setup_called
-
-    should_display_ui = False
-    for extension, name in iterator():
-        if hasattr(extension, "ui"):
-            should_display_ui = True
-            break
-
-    # Creating the extension ui elements
-    if should_display_ui:
-        with gr.Column(elem_id="extensions"):
-            for extension, name in iterator():
-                if hasattr(extension, "ui"):
-                    gr.Markdown(f"\n### {name}")
-                    extension.ui()

@@ -49,17 +49,34 @@ Additionally, the script may define two special global variables:
 
 #### `params` dictionary
 
+`script.py` may contain a special dictionary called `params`:
+
 ```python
 params = {
-    "language string": "ja",
+    "display_name": "Google Translate",
+    "is_tab": True,
 }
 ```
 
-This dicionary can be used to make the extension parameters customizable by adding entries to a `settings.json` file like this:
+In this dictionary, `display_name` is used to define the displayed name of the extension inside the UI, and `is_tab` is used to define whether the extension's `ui()` function should be called in a new `gr.Tab()` that will appear in the header bar. By default, the extension appears at the bottom of the "Text generation" tab.
+
+Additionally, `params` may contain variables that you want to be customizable through a `settings.json` file. For instance, assuming the extension is in `extensions/google_translate`, the variable `language string` below
+
+```python
+params = {
+    "display_name": "Google Translate",
+    "is_tab": True,
+    "language string": "jp"
+}
+```
+
+can be customized by adding a key called `google_translate-language string` to `settings.json`:
 
 ```python
 "google_translate-language string": "fr",
 ``` 
+
+That is, the syntax is `extension_name-variable_name`.
 
 #### `input_hijack` dictionary
 

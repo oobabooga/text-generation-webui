@@ -59,6 +59,10 @@ ol li p, ul li p {
   margin-bottom: 35px;
 }
 
+.extension-tab {
+  border: 0 !important;
+}
+
 span.math.inline {
   font-size: 27px;
   vertical-align: baseline !important;
