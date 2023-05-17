@@ -1,6 +1,6 @@
-Extensions are defined by files named `script.py` inside subfolders of `text-generation-webui/extensions`. They are invoked with the `--extensions` flag.
+Extensions are defined by files named `script.py` inside subfolders of `text-generation-webui/extensions`. They are loaded at startup if specified with the `--extensions` flag.
 
-For instance, `extensions/silero_tts/script.py` gets invoked with `python server.py --extensions silero_tts`.
+For instance, `extensions/silero_tts/script.py` gets loaded with `python server.py --extensions silero_tts`.
 
 ## [text-generation-webui-extensions](https://github.com/oobabooga/text-generation-webui-extensions)
 
@@ -29,7 +29,11 @@ Most of these have been created by the extremely talented contributors that you 
 
 ## How to write an extension
 
-`script.py` has access to all variables in the UI through the `modules.shared` module, and it may define the following functions:
+script.py may define the special functions and variables below.
+
+#### Predefined functions
+
+The following functions may be defined in `script.py`:
 
 | Function        | Description |
 |-------------|-------------|
@@ -38,7 +42,7 @@ Most of these have been created by the extremely talented contributors that you 
 | `def custom_js()` | Returns custom javascript as a string. |
 | `def input_modifier(string)`  | Modifies the input string before it enters the model. In chat mode, it is applied to the user message. Otherwise, it is applied to the entire prompt. |
 | `def output_modifier(string)`  | Modifies the output string before it is presented in the UI. In chat mode, it is applied to the bot's reply. Otherwise, it is applied to the entire output. |
-| `def state_modifier(state)`  | Modifies the dictionary containing the input parameters before it is used by the text generation functions. |
+| `def state_modifier(state)`  | Modifies the dictionary containing the UI input parameters before it is used by the text generation functions. |
 | `def bot_prefix_modifier(string)`  | Applied in chat mode to the prefix for the bot's reply (more on that below). |
 | `def custom_generate_reply(...)` | Overrides the main text generation function. |
 | `def custom_generate_chat_prompt(...)` | Overrides the prompt generator in chat mode. |
@@ -49,8 +53,6 @@ Additionally, the script may define two special global variables:
 
 #### `params` dictionary
 
-`script.py` may contain a special dictionary called `params`:
-
 ```python
 params = {
     "display_name": "Google Translate",
@@ -58,9 +60,9 @@ params = {
 }
 ```
 
-In this dictionary, `display_name` is used to define the displayed name of the extension inside the UI, and `is_tab` is used to define whether the extension's `ui()` function should be called in a new `gr.Tab()` that will appear in the header bar. By default, the extension appears at the bottom of the "Text generation" tab.
+`display_name` is used to define the displayed name of the extension in the UI, and `is_tab` is used to define whether the extension should appear in a new tab. By default, extensions appear at the bottom of the "Text generation" tab.
 
-Additionally, `params` may contain variables that you want to be customizable through a `settings.json` file. For instance, assuming the extension is in `extensions/google_translate`, the variable `language string` below
+Additionally, `params` may contain variables that you want to be customizable through a `settings.json` file. For instance, assuming the extension is in `extensions/google_translate`, the variable `language string` below:
 
 ```python
 params = {
