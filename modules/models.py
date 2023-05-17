@@ -257,17 +257,17 @@ def GPTQ_loader(model_name):
 
     # No monkey patch
     else:
-        from modules.GPTQ_loader import load_quantized
+        import modules.GPTQ_loader
 
-        model = load_quantized(model_name)
+        model = modules.GPTQ_loader.load_quantized(model_name)
 
     return model
 
 
 def AutoGPTQ_loader(model_name):
-    from modules.AutoGPTQ_loader import load_quantized
+    import modules.AutoGPTQ_loader
 
-    return load_quantized(model_name)
+    return modules.AutoGPTQ_loader.load_quantized(model_name)
 
 
 def get_max_memory_dict():
