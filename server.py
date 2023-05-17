@@ -132,9 +132,11 @@ def save_prompt(text, fname):
         with open(Path(f'prompts/{fname}.txt'), 'w', encoding='utf-8') as f:
             f.write(text)
 
-        return f"Saved to prompts/{fname}.txt", gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)
+        message = f"Saved to prompts/{fname}.txt"
     else:
-        return "Error: No prompt name given.", gr.update(visible=True), gr.update(visible=False), gr.update(visible=True)
+        message = "Error: No prompt name given."
+
+    return message, gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)
 
 
 def load_prompt(fname):
