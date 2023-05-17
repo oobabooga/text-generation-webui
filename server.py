@@ -721,11 +721,10 @@ def create_interface():
                     break
 
             cmd_list = vars(shared.args)
-            bool_list = [k for k in cmd_list if type(cmd_list[k]) is bool and k not in modes + ui.list_model_elements()]
+            bool_list = sorted([k for k in cmd_list if type(cmd_list[k]) is bool and k not in modes + ui.list_model_elements()])
             bool_active = [k for k in bool_list if vars(shared.args)[k]]
 
-            gr.Markdown("*Experimental*")
-            shared.gradio['interface_modes_menu'] = gr.Dropdown(choices=modes, value=current_mode, label="Mode", info='For instruct and chat-instruct modes, make sure to select a template that matches the current model in the "Chat settings" tab.')
+            shared.gradio['interface_modes_menu'] = gr.Dropdown(choices=modes, value=current_mode, label="Mode")
             shared.gradio['extensions_menu'] = gr.CheckboxGroup(choices=utils.get_available_extensions(), value=shared.args.extensions, label="Available extensions")
             shared.gradio['bool_menu'] = gr.CheckboxGroup(choices=bool_list, value=bool_active, label="Boolean command-line flags")
             shared.gradio['reset_interface'] = gr.Button("Apply and restart the interface")
