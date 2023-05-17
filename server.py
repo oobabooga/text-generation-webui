@@ -667,7 +667,7 @@ def create_interface():
 
                         shared.gradio['open_save_prompt'] = gr.Button('Save prompt')
                         shared.gradio['save_prompt'] = gr.Button('Confirm save prompt', visible=False)
-                        shared.gradio['prompt_to_save'] = gr.Textbox(elem_classes="textbox_default",interactive=True, lines=1, label='Prompt name:',visible=False)
+                        shared.gradio['prompt_to_save'] = gr.Textbox(elem_classes="textbox_default", lines=1, label='Prompt name:', interactive=True, visible=False)
                         shared.gradio['count_tokens'] = gr.Button('Count tokens')
                         shared.gradio['status'] = gr.Markdown('')
 
@@ -699,7 +699,7 @@ def create_interface():
                                     ui.create_refresh_button(shared.gradio['prompt_menu'], lambda: None, lambda: {'choices': utils.get_available_prompts()}, 'refresh-button')
 
                             with gr.Column():
-                                shared.gradio['prompt_to_save'] = gr.Textbox(elem_classes="textbox_default",interactive=True, lines=1, label='Prompt name:',visible=False)
+                                shared.gradio['prompt_to_save'] = gr.Textbox(elem_classes="textbox_default", lines=1, label='Prompt name:', interactive=True, visible=False)
                                 shared.gradio['status'] = gr.Markdown('')
 
                     with gr.Column():
