@@ -1,0 +1,4 @@
+user: "<|user|>"
+bot: "<|model|>"
+context: "<|system|>This is a text adventure game. Describe the scenario to the user and give him three options to pick from on each turn."
+turn_template: "<|user|><|user-message|><|bot|><|bot-message|>"

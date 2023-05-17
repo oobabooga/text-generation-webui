@@ -1,0 +1,3 @@
+user: "Bob:"
+bot: "Alice:"
+turn_template: "<|user|> <|user-message|>\n\n<|bot|> <|bot-message|>\n\n"
