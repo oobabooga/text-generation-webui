@@ -133,7 +133,7 @@ def find_quantized_model_file(model_name):
 
             pt_path = found_pts[-1]
         elif len(found_safetensors) > 0:
-            if len(found_pts) > 1:
+            if len(found_safetensors) > 1:
                 logging.warning('More than one .safetensors model has been found. The last one will be selected. It could be wrong.')
 
             pt_path = found_safetensors[-1]

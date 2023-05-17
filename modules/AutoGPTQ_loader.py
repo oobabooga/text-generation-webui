@@ -16,7 +16,7 @@ def load_quantized(model_name):
     found_pts = list(path_to_model.glob("*.pt"))
     found_safetensors = list(path_to_model.glob("*.safetensors"))
     if len(found_safetensors) > 0:
-        if len(found_pts) > 1:
+        if len(found_safetensors) > 1:
             logging.warning('More than one .safetensors model has been found. The last one will be selected. It could be wrong.')
 
         use_safetensors = True
