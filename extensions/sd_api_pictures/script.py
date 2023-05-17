@@ -261,6 +261,11 @@ def SD_api_address_update(address):
     return gr.Textbox.update(label=msg)
 
 
+def custom_css():
+    path_to_css = Path(__file__).parent.resolve() / 'style.css'
+    return open(path_to_css, 'r').read()
+
+
 def ui():
 
     # Gradio elements

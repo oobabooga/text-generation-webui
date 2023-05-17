@@ -45,6 +45,7 @@ from PIL import Image
 
 import modules.extensions as extensions_module
 from modules import chat, shared, training, ui, utils
+from modules.extensions import apply_extensions
 from modules.html_generator import chat_html_wrapper
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, load_soft_prompt, unload_model
@@ -519,7 +520,13 @@ def create_interface():
     if shared.args.extensions is not None and len(shared.args.extensions) > 0:
         extensions_module.load_extensions()
 
-    with gr.Blocks(css=ui.css if not shared.is_chat() else ui.css + ui.chat_css, analytics_enabled=False, title=title, theme=ui.theme) as shared.gradio['interface']:
+    # css/js strings
+    css = ui.css if not shared.is_chat() else ui.css + ui.chat_css
+    js = ui.main_js if not shared.is_chat() else ui.main_js + ui.chat_js
+    css += apply_extensions('css')
+    js += apply_extensions('js')
+
+    with gr.Blocks(css=css, analytics_enabled=False, title=title, theme=ui.theme) as shared.gradio['interface']:
 
         # Create chat mode interface
         if shared.is_chat():
@@ -826,8 +833,6 @@ def create_interface():
                 chat.upload_your_profile_picture, shared.gradio['your_picture'], None).then(
                 partial(chat.redraw_html, reset_cache=True), shared.reload_inputs, shared.gradio['display'])
 
-            shared.gradio['interface'].load(None, None, None, _js=f"() => {{{ui.main_js+ui.chat_js}}}")
-
         # notebook/default modes event handlers
         else:
             shared.input_params = [shared.gradio[k] for k in ['textbox', 'interface_state']]
@@ -869,8 +874,8 @@ def create_interface():
             shared.gradio['prompt_menu'].change(load_prompt, shared.gradio['prompt_menu'], shared.gradio['textbox'], show_progress=False)
             shared.gradio['save_prompt'].click(save_prompt, shared.gradio['textbox'], shared.gradio['status'], show_progress=False)
             shared.gradio['count_tokens'].click(count_tokens, shared.gradio['textbox'], shared.gradio['status'], show_progress=False)
-            shared.gradio['interface'].load(None, None, None, _js=f"() => {{{ui.main_js}}}")
 
+        shared.gradio['interface'].load(None, None, None, _js=f"() => {{{js}}}")
         shared.gradio['interface'].load(partial(ui.apply_interface_values, {}, use_persistent=True), None, [shared.gradio[k] for k in ui.list_interface_input_elements(chat=shared.is_chat())], show_progress=False)
         # Extensions block
         if shared.args.extensions is not None:

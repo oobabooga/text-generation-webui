@@ -1,16 +1,6 @@
-This web UI supports extensions. They are simply files under 
+Extensions are defined by files named `script.py` inside subfolders of `text-generation-webui/extensions`. They are invoked with the `--extensions` flag.
 
-```
-extensions/your_extension_name/script.py
-```
-
-which can be invoked with the 
-
-```
---extension your_extension_name
-```
-
-command-line flag.
+For instance, `extensions/silero_tts/script.py` gets invoked with `python server.py --extensions silero_tts`.
 
 ## [text-generation-webui-extensions](https://github.com/oobabooga/text-generation-webui-extensions)
 
@@ -44,6 +34,8 @@ Most of these have been created by the extremely talented contributors that you 
 | Function        | Description |
 |-------------|-------------|
 | `def ui()` | Creates custom gradio elements when the UI is launched. | 
+| `def custom_css()` | Returns custom CSS as a string. |
+| `def custom_js()` | Returns custom javascript as a string. |
 | `def input_modifier(string)`  | Modifies the input string before it enters the model. In chat mode, it is applied to the user message. Otherwise, it is applied to the entire prompt. |
 | `def output_modifier(string)`  | Modifies the output string before it is presented in the UI. In chat mode, it is applied to the bot's reply. Otherwise, it is applied to the entire output. |
 | `def state_modifier(state)`  | Modifies the dictionary containing the input parameters before it is used by the text generation functions. |

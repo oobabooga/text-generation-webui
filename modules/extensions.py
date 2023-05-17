@@ -119,6 +119,24 @@ def _apply_custom_generate_reply():
     return None
 
 
+def _apply_custom_css():
+    all_css = ''
+    for extension, _ in iterator():
+        if hasattr(extension, 'custom_css'):
+            all_css += getattr(extension, 'custom_css')()
+
+    return all_css
+
+
+def _apply_custom_js():
+    all_js = ''
+    for extension, _ in iterator():
+        if hasattr(extension, 'custom_js'):
+            all_js += getattr(extension, 'custom_js')()
+
+    return all_js
+
+
 EXTENSION_MAP = {
     "input": partial(_apply_string_extensions, "input_modifier"),
     "output": partial(_apply_string_extensions, "output_modifier"),
@@ -128,7 +146,9 @@ EXTENSION_MAP = {
     "input_hijack": _apply_input_hijack,
     "custom_generate_chat_prompt": _apply_custom_generate_chat_prompt,
     "custom_generate_reply": _apply_custom_generate_reply,
-    "tokenized_length": _apply_custom_tokenized_length
+    "tokenized_length": _apply_custom_tokenized_length,
+    "css": _apply_custom_css,
+    "js": _apply_custom_js
 }
 
 
