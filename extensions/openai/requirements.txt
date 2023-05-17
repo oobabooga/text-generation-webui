@@ -1,0 +1,2 @@
+flask_cloudflared==0.0.12
+sentence-transformers

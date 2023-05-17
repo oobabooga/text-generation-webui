@@ -1,4 +1,5 @@
 {
+    "autoload_model": true,
     "max_new_tokens": 200,
     "max_new_tokens_min": 1,
     "max_new_tokens_max": 2000,
@@ -6,7 +7,7 @@
     "character": "None",
     "name1": "You",
     "name2": "Assistant",
-    "context": "This is a conversation with your Assistant. The Assistant is very helpful and is eager to chat with you and answer your questions.",
+    "context": "This is a conversation with your Assistant. It is a computer program designed to help you with various tasks such as answering questions, providing recommendations, and helping with decision making. You can ask it anything you want and it will do its best to give you accurate and relevant information.",
     "greeting": "",
     "turn_template": "",
     "custom_stopping_strings": "",
@@ -17,14 +18,16 @@
     "truncation_length": 2048,
     "truncation_length_min": 0,
     "truncation_length_max": 8192,
-    "mode": "cai-chat",
+    "mode": "chat",
+    "chat_style": "cai-chat",
     "instruction_template": "None",
+    "chat-instruct_command": "Continue the chat dialogue below. Write a single reply for the character \"<|character|>\".\n\n<|prompt|>",
     "chat_prompt_size": 2048,
     "chat_prompt_size_min": 0,
     "chat_prompt_size_max": 2048,
     "chat_generation_attempts": 1,
     "chat_generation_attempts_min": 1,
-    "chat_generation_attempts_max": 5,
+    "chat_generation_attempts_max": 10,
     "default_extensions": [],
     "chat_default_extensions": [
         "gallery"
@@ -33,16 +36,11 @@
         "default": "Default",
         ".*(alpaca|llama|llava)": "LLaMA-Precise",
         ".*pygmalion": "NovelAI-Storywriter",
-        ".*RWKV": "Naive"
+        ".*RWKV": "Naive",
+        ".*moss": "MOSS"
     },
     "prompts": {
         "default": "QA",
-        ".*(gpt4chan|gpt-4chan|4chan)": "GPT-4chan",
-        ".*oasst": "Open Assistant",
-        ".*alpaca": "Alpaca"
-    },
-    "lora_prompts": {
-        "default": "QA",
-        ".*(alpaca-lora-7b|alpaca-lora-13b|alpaca-lora-30b)": "Alpaca"
+        ".*(gpt4chan|gpt-4chan|4chan)": "GPT-4chan"
     }
 }

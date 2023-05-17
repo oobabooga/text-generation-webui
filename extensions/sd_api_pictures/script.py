@@ -6,11 +6,12 @@ from datetime import date
 from pathlib import Path
 
 import gradio as gr
-import modules.shared as shared
 import requests
 import torch
-from modules.models import reload_model, unload_model
 from PIL import Image
+
+import modules.shared as shared
+from modules.models import reload_model, unload_model
 
 torch._C._jit_set_profiling_mode(False)
 
@@ -75,8 +76,8 @@ if params['manage_VRAM']:
 samplers = ['DDIM', 'DPM++ 2M Karras']  # TODO: get the availible samplers with http://{address}}/sdapi/v1/samplers
 SD_models = ['NeverEndingDream']  # TODO: get with http://{address}}/sdapi/v1/sd-models and allow user to select
 
-streaming_state = shared.args.no_stream  # remember if chat streaming was enabled
 picture_response = False  # specifies if the next model response should appear as a picture
+
 
 def remove_surrounded_chars(string):
     # this expression matches to 'as few symbols as possible (0 upwards) between any asterisks' OR
@@ -90,6 +91,13 @@ def triggers_are_in(string):
     # a whole word of image|pic|picture|photo|snap|snapshot|selfie|meme(s),
     # (?aims) are regex parser flags
     return bool(re.search('(?aims)(send|mail|message|me)\\b.+?\\b(image|pic(ture)?|photo|snap(shot)?|selfie|meme)s?\\b', string))
+
+
+def state_modifier(state):
+    if picture_response:
+        state['stream'] = False
+
+    return state
 
 
 def input_modifier(string):
@@ -116,7 +124,6 @@ def input_modifier(string):
 
 # Get and save the Stable Diffusion-generated picture
 def get_SD_pictures(description):
-
     global params
 
     if params['manage_VRAM']:
@@ -218,14 +225,13 @@ def bot_prefix_modifier(string):
 
 
 def toggle_generation(*args):
-    global picture_response, shared, streaming_state
+    global picture_response, shared
 
     if not args:
         picture_response = not picture_response
     else:
         picture_response = args[0]
 
-    shared.args.no_stream = True if picture_response else streaming_state  # Disable streaming cause otherwise the SD-generated picture would return as a dud
     shared.processing_message = "*Is sending a picture...*" if picture_response else "*Is typing...*"
 
 
@@ -253,6 +259,12 @@ def SD_api_address_update(address):
         msg = "❌ No SD API endpoint on:"
 
     return gr.Textbox.update(label=msg)
+
+
+def custom_css():
+    path_to_css = Path(__file__).parent.resolve() / 'style.css'
+    return open(path_to_css, 'r').read()
+
 
 def ui():
 
@@ -285,12 +297,11 @@ def ui():
                 cfg_scale = gr.Number(label="CFG Scale", value=params['cfg_scale'], elem_id="cfg_box")
                 with gr.Column() as hr_options:
                     restore_faces = gr.Checkbox(value=params['restore_faces'], label='Restore faces')
-                    enable_hr = gr.Checkbox(value=params['enable_hr'], label='Hires. fix')                    
+                    enable_hr = gr.Checkbox(value=params['enable_hr'], label='Hires. fix')
             with gr.Row(visible=params['enable_hr'], elem_classes="hires_opts") as hr_options:
-                    hr_scale = gr.Slider(1, 4, value=params['hr_scale'], step=0.1, label='Upscale by')
-                    denoising_strength = gr.Slider(0, 1, value=params['denoising_strength'], step=0.01, label='Denoising strength')
-                    hr_upscaler = gr.Textbox(placeholder=params['hr_upscaler'], value=params['hr_upscaler'], label='Upscaler')                    
-
+                hr_scale = gr.Slider(1, 4, value=params['hr_scale'], step=0.1, label='Upscale by')
+                denoising_strength = gr.Slider(0, 1, value=params['denoising_strength'], step=0.01, label='Denoising strength')
+                hr_upscaler = gr.Textbox(placeholder=params['hr_upscaler'], value=params['hr_upscaler'], label='Upscaler')
 
     # Event functions to update the parameters in the backend
     address.change(lambda x: params.update({"address": filter_address(x)}), address, None)
