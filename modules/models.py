@@ -71,7 +71,7 @@ def load_model(model_name):
     t0 = time.time()
 
     shared.model_type = find_model_type(model_name)
-    if shared.args.wbits > 0:
+    if shared.args.wbits > 0 or shared.args.autogptq:
         if shared.args.autogptq:
             load_func = AutoGPTQ_loader
         else:
