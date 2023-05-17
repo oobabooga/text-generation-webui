@@ -7,6 +7,10 @@ In order to create the image as described in the main README, you must have dock
 Docker Compose version v2.17.2
 ```
 
+#### Dedicated docker repository
+
+An external repository maintains a docker wrapper for this project as well as several pre-configured 'one-click' `docker compose` variants (e.g., updated branches of GPTQ). It can be found at: [Atinoda/text-generation-webui-docker](https://github.com/Atinoda/text-generation-webui-docker).
+
 # Intructions by [@loeken](https://github.com/loeken)
 
 - [Ubuntu 22.04](#ubuntu-2204)
