@@ -173,5 +173,7 @@ def create_extensions_block():
         with gr.Column(elem_id="extensions"):
             for extension, name in iterator():
                 if hasattr(extension, "ui"):
-                    gr.Markdown(f"\n### {name}")
+                    gr.Markdown(f"\n### {extension.params['display_name']}" 
+                                if hasattr(extension, 'params') and extension.params.__contains__('display_name') 
+                                else f"\n### {name}")
                     extension.ui()
