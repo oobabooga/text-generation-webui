@@ -39,7 +39,11 @@ llama-65b-gptq-3bit:
   groupsize: 128
 .*(gr1024|1024g|groupsize1024):
   groupsize: 1024
-.*(oasst|stablelm-7b-sft-v7-epoch-3):
+.*(oasst|openassistant-|stablelm-7b-sft-v7-epoch-3):
+  mode: 'instruct'
+  instruction_template: 'Open Assistant'
+  skip_special_tokens: false
+(?!.*galactica)(?!.*reward).*openassistant:
   mode: 'instruct'
   instruction_template: 'Open Assistant'
   skip_special_tokens: false
@@ -161,9 +165,9 @@ llama-65b-gptq-3bit:
 .*vigogne.*chat:
   mode: 'instruct'
   instruction_template: 'Vigogne-Chat'
-.*llama-deus:
+.*(llama-deus|supercot|open-llama-0.3t-7b-instruct-dolly-hhrlhf|open-llama-0.3t-7b-open-instruct):
   mode: 'instruct'
   instruction_template: 'Alpaca'
 .*bactrian:
-  mode: 'bactrian'
+  mode: 'instruct'
   instruction_template: 'Bactrian'
