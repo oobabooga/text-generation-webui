@@ -13,6 +13,8 @@
   groupsize: 128
 .*gptqv2:
   groupsize: 'None'
+llama-65b-gptq-3bit:
+  groupsize: 'None'
 .*(4bit|int4):
   wbits: 4
 .*(3bit|int3):
