@@ -134,3 +134,6 @@
 .*wizard.*mega:
   mode: 'instruct'
   instruction_template: 'Wizard-Mega'
+.*ziya-:
+  mode: 'instruct'
+  instruction_template: 'Ziya'
