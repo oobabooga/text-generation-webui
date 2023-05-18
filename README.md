@@ -13,7 +13,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * Dropdown menu for switching between models
 * Notebook mode that resembles OpenAI's playground
 * Chat mode for conversation and role-playing
-* Instruct mode compatible with various formats, including Alpaca, Vicuna, Open Assistant, Dolly, Koala, ChatGLM, MOSS, RWKV-Raven, Galactica, StableLM, WizardLM, Baize, Ziya, Chinese-Vicuna, MPT, INCITE, Wizard Mega, KoAlpaca, Vigogne, Bactrian, and OpenBuddy
+* Instruct mode compatible with various formats, including Alpaca, Vicuna, Open Assistant, Dolly, Koala, ChatGLM, MOSS, RWKV-Raven, Galactica, StableLM, WizardLM, Baize, Ziya, Chinese-Vicuna, MPT, INCITE, Wizard Mega, KoAlpaca, Vigogne, Bactrian, h2o, and OpenBuddy
 * [Multimodal pipelines, including LLaVA and MiniGPT-4](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/multimodal)
 * Markdown output for [GALACTICA](https://github.com/paperswithcode/galai), including LaTeX rendering
 * Nice HTML output for GPT-4chan

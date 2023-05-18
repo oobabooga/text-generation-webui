@@ -165,9 +165,15 @@ llama-65b-gptq-3bit:
 .*vigogne.*chat:
   mode: 'instruct'
   instruction_template: 'Vigogne-Chat'
-.*(llama-deus|supercot|open-llama-0.3t-7b-instruct-dolly-hhrlhf|open-llama-0.3t-7b-open-instruct):
+.*(llama-deus|supercot|llama-natural-instructions|open-llama-0.3t-7b-instruct-dolly-hhrlhf|open-llama-0.3t-7b-open-instruct):
   mode: 'instruct'
   instruction_template: 'Alpaca'
 .*bactrian:
   mode: 'instruct'
   instruction_template: 'Bactrian'
+.*(h2ogpt-oig-|h2ogpt-oasst1-|h2ogpt-research-oasst1-):
+  mode: 'instruct'
+  instruction_template: 'H2O-human_bot'
+.*h2ogpt-gm-:
+  mode: 'instruct'
+  instruction_template: 'H2O-prompt_answer'
