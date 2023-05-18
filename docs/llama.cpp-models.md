@@ -31,6 +31,7 @@ set CMAKE_ARGS="-DLLAMA_CUBLAS=on"
 set FORCE_CMAKE=1
 pip install llama-cpp-python --no-cache-dir
 ```
+Note: If you used one click install (windows) then run cmd_windows.bat first and use THAT cmd terminal window.
 
 Here you can find the different compilation options for OpenBLAS / cuBLAS / CLBlast: https://pypi.org/project/llama-cpp-python/
 
