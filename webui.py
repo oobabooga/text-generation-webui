@@ -127,7 +127,6 @@ def update_dependencies():
     # Install GPTQ-for-LLaMa dependencies
     os.chdir("GPTQ-for-LLaMa")
     run_cmd("git pull", assert_success=True, environment=True)
-    run_cmd("python -m pip install -r requirements.txt", assert_success=True, environment=True)
     
     # On some Linux distributions, g++ may not exist or be the wrong version to compile GPTQ-for-LLaMa
     if sys.platform.startswith("linux"):
