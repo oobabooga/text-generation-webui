@@ -161,4 +161,9 @@ llama-65b-gptq-3bit:
 .*vigogne.*chat:
   mode: 'instruct'
   instruction_template: 'Vigogne-Chat'
-
+.*llama-deus:
+  mode: 'instruct'
+  instruction_template: 'Alpaca'
+.*bactrian:
+  mode: 'bactrian'
+  instruction_template: 'Bactrian'
