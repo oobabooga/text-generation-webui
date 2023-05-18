@@ -1,4 +1,4 @@
-.*(llama|alpac|vicuna|guanaco|koala|llava|wizardlm|metharme|pygmalion-7b|wizard-mega|openbuddy):
+.*(llama|alpac|vicuna|guanaco|koala|llava|wizardlm|metharme|pygmalion-7b|wizard-mega|openbuddy|vigogne):
   model_type: 'llama'
 .*(opt-|opt_|opt1|opt3|optfor|galactica|galpaca|pygmalion-350m):
   model_type: 'opt'
@@ -6,6 +6,8 @@
   model_type: 'gptj'
 .*(gpt-neox|koalpaca-polyglot|polyglot.*koalpaca|polyglot-ko|polyglot_ko|pythia|stablelm|incite|dolly-v2|polycoder):
   model_type: 'gpt_neox'
+.*bloom:
+  model_type: 'bloom'
 .*gptq(?!u|arl|v2):
   wbits: 4
   groupsize: 128
@@ -151,4 +153,10 @@
 .*openbuddy:
   mode: 'instruct'
   instruction_template: 'OpenBuddy'
+(?!.*chat).*vigogne:
+  mode: 'instruct'
+  instruction_template: 'Vigogne-Instruct'
+.*vigogne.*chat:
+  mode: 'instruct'
+  instruction_template: 'Vigogne-Chat'
 
