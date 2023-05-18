@@ -139,6 +139,7 @@ def update_dependencies():
     # Compile and install GPTQ-for-LLaMa
     if os.path.exists('setup_cuda.py'):
         os.rename("setup_cuda.py", "setup.py")
+        
     run_cmd("python -m pip install .", environment=True)
     
     # Wheel installation can fail while in the build directory of a package with the same name
@@ -147,17 +148,22 @@ def update_dependencies():
     # If the path does not exist, then the install failed
     quant_cuda_path_regex = os.path.join(site_packages_path, "quant_cuda*/")
     if not glob.glob(quant_cuda_path_regex):
-        print("ERROR: GPTQ CUDA kernel compilation failed.")
         # Attempt installation via alternative, Windows-specific method
         if sys.platform.startswith("win"):
-            print("Attempting installation with wheel.")
+            print("\n\n*******************************************************************")
+            print("* WARNING: GPTQ-for-LLaMa compilation failed, but this FINE and can be ignored!")
+            print("* The installer will proceed to install a pre-compiled wheel.")
+            print("*******************************************************************\n\n")
+
             result = run_cmd("python -m pip install https://github.com/jllllll/GPTQ-for-LLaMa-Wheels/raw/main/quant_cuda-0.0.0-cp310-cp310-win_amd64.whl", environment=True)
             if result.returncode == 0:
                 print("Wheel installation success!")
             else:
                 print("ERROR: GPTQ wheel installation failed. You will not be able to use GPTQ-based models.")
         else:
+            print("ERROR: GPTQ CUDA kernel compilation failed.")
             print("You will not be able to use GPTQ-based models.")
+            
         print("Continuing with install..")
 
 
