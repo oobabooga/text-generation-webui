@@ -151,7 +151,7 @@ def update_dependencies():
         # Attempt installation via alternative, Windows-specific method
         if sys.platform.startswith("win"):
             print("\n\n*******************************************************************")
-            print("* WARNING: GPTQ-for-LLaMa compilation failed, but this FINE and can be ignored!")
+            print("* WARNING: GPTQ-for-LLaMa compilation failed, but this is FINE and can be ignored!")
             print("* The installer will proceed to install a pre-compiled wheel.")
             print("*******************************************************************\n\n")
 
