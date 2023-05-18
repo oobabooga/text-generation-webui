@@ -39,7 +39,7 @@
   mode: 'instruct'
   instruction_template: 'Open Assistant'
   skip_special_tokens: false
-(?!.*v0)(?!.*1.1)(?!.*1_1)(?!.*stable).*vicuna:
+(?!.*v0)(?!.*1.1)(?!.*1_1)(?!.*stable)(?!.*chinese).*vicuna:
   mode: 'instruct'
   instruction_template: 'Vicuna-v0'
 .*vicuna.*v0:
@@ -54,6 +54,12 @@
 .*stable.*vicuna:
   mode: 'instruct'
   instruction_template: 'StableVicuna'
+(?!.*chat).*chinese-vicuna:
+  mode: 'instruct'
+  instruction_template: 'Alpaca'
+.*chinese-vicuna.*chat:
+  mode: 'instruct'
+  instruction_template: 'Chinese-Vicuna-Chat'
 .*alpaca:
   mode: 'instruct'
   instruction_template: 'Alpaca'
