@@ -97,7 +97,10 @@ def load_model(model_name):
         model, tokenizer = output
     else:
         model = output
-        tokenizer = load_tokenizer(model_name, model)
+        if model is None:
+            return None, None
+        else:
+            tokenizer = load_tokenizer(model_name, model)
 
     # Hijack attention with xformers
     if any((shared.args.xformers, shared.args.sdp_attention)):

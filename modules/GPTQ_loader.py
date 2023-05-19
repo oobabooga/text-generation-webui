@@ -140,7 +140,7 @@ def load_quantized(model_name):
     if shared.args.model_type is None:
         logging.error("The model could not be loaded because its type could not be inferred from its name.")
         logging.error("Please specify the type manually using the --model_type argument.")
-        return
+        return None
 
     # Select the appropriate load_quant function
     model_type = shared.args.model_type.lower()
