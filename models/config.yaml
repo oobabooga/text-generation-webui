@@ -28,11 +28,6 @@
   groupsize: 128
 .*(gr1024|1024g|groupsize1024):
   groupsize: 1024
-.*gptq(?!u|arl|v2):
-  wbits: 4
-  groupsize: 128
-.*gptqv2:
-  groupsize: 'None'
 .*(oasst|stablelm-7b-sft-v7-epoch-3):
   mode: 'instruct'
   instruction_template: 'Open Assistant'
