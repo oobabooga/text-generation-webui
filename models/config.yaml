@@ -1,4 +1,4 @@
-.*(llama|alpac|vicuna|guanaco|koala|llava|wizardlm|metharme|pygmalion-7b|wizard-mega|openbuddy|vigogne|h2ogpt-research):
+.*(llama|alpac|vicuna|guanaco|koala|llava|wizardlm|metharme|pygmalion-7b|wizard-mega|openbuddy|vigogne|h2ogpt-research|manticore):
   model_type: 'llama'
 .*(opt-|opt_|opt1|opt3|optfor|galactica|galpaca|pygmalion-350m):
   model_type: 'opt'
@@ -179,3 +179,6 @@ llama-65b-gptq-3bit:
 .*h2ogpt-gm-:
   mode: 'instruct'
   instruction_template: 'H2O-prompt_answer'
+.*manticore:
+  mode: 'instruct'
+  instruction_template: 'Manticore Chat'
