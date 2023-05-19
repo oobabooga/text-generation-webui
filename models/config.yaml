@@ -10,11 +10,6 @@
   model_type: 'llama'
 .*bloom:
   model_type: 'bloom'
-.*gptq(?!u|arl|v2):
-  wbits: 4
-  groupsize: 128
-.*gptqv2:
-  groupsize: 'None'
 llama-65b-gptq-3bit:
   groupsize: 'None'
 .*(4bit|int4):
