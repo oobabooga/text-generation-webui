@@ -1,8 +1,11 @@
 import logging
 import os
+
+import coloredlogs
 import requests
 import warnings
-import modules.logging_colors
+
+coloredlogs.install()
 
 os.environ['GRADIO_ANALYTICS_ENABLED'] = 'False'
 os.environ['BITSANDBYTES_NOWELCOME'] = '1'

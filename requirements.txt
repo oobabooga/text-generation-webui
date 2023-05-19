@@ -1,5 +1,5 @@
 accelerate==0.19.0
-colorama
+coloredlogs
 datasets
 flexgen==0.1.7
 gradio_client==0.2.5
