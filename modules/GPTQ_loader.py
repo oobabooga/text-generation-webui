@@ -123,20 +123,14 @@ def find_quantized_model_file(model_name):
     # If the model hasn't been found with a well-behaved name, pick the last .pt
     # or the last .safetensors found in its folder as a last resort
     if not pt_path:
-        found_pts = list(path_to_model.glob("*.pt"))
-        found_safetensors = list(path_to_model.glob("*.safetensors"))
-        pt_path = None
+        for ext in ['.pt', '.safetensors']:
+            found = list(path_to_model.glob(f"*{ext}"))
+            if len(found) > 0:
+                if len(found) > 1:
+                    logging.warning(f'More than one {ext} model has been found. The last one will be selected. It could be wrong.')
 
-        if len(found_pts) > 0:
-            if len(found_pts) > 1:
-                logging.warning('More than one .pt model has been found. The last one will be selected. It could be wrong.')
-
-            pt_path = found_pts[-1]
-        elif len(found_safetensors) > 0:
-            if len(found_pts) > 1:
-                logging.warning('More than one .safetensors model has been found. The last one will be selected. It could be wrong.')
-
-            pt_path = found_safetensors[-1]
+                pt_path = found[-1]
+                break
 
     return pt_path
 
@@ -146,7 +140,7 @@ def load_quantized(model_name):
     if shared.args.model_type is None:
         logging.error("The model could not be loaded because its type could not be inferred from its name.")
         logging.error("Please specify the type manually using the --model_type argument.")
-        return
+        return None
 
     # Select the appropriate load_quant function
     model_type = shared.args.model_type.lower()
@@ -172,7 +166,12 @@ def load_quantized(model_name):
 
     # qwopqwop200's offload
     if model_type == 'llama' and shared.args.pre_layer:
-        model = load_quant(str(path_to_model), str(pt_path), shared.args.wbits, shared.args.groupsize, shared.args.pre_layer)
+        if len(shared.args.pre_layer) == 1:
+            pre_layer = shared.args.pre_layer[0]
+        else:
+            pre_layer = shared.args.pre_layer
+
+        model = load_quant(str(path_to_model), str(pt_path), shared.args.wbits, shared.args.groupsize, pre_layer)
     else:
         threshold = False if model_type == 'gptj' else 128
         model = load_quant(str(path_to_model), str(pt_path), shared.args.wbits, shared.args.groupsize, kernel_switch_threshold=threshold)
