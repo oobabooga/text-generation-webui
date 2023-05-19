@@ -1,0 +1,4 @@
+user: "### Input:"
+bot: "### Output:"
+turn_template: "<|user|>\n<|user-message|>\n\n<|bot|>\n<|bot-message|>\n\n"
+context: ""
