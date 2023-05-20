@@ -1,60 +1,58 @@
 import re
 from pathlib import Path
 
+import elevenlabs
 import gradio as gr
-from elevenlabslib import ElevenLabsUser
-from elevenlabslib.helpers import save_bytes_to_path
-
-import modules.shared as shared
+from modules import chat, shared
 
 params = {
     'activate': True,
-    'api_key': '12345',
+    'api_key': None,
     'selected_voice': 'None',
+    'autoplay': False,
+    'show_text': True,
 }
 
-initial_voice = ['None']
+voices = None
 wav_idx = 0
-user = ElevenLabsUser(params['api_key'])
-user_info = None
-
-if not shared.args.no_stream:
-    print("Please add --no-stream. This extension is not meant to be used with streaming.")
-    raise ValueError
-
-# Check if the API is valid and refresh the UI accordingly.
 
 
-def check_valid_api():
-
-    global user, user_info, params
-
-    user = ElevenLabsUser(params['api_key'])
-    user_info = user._get_subscription_data()
-    print('checking api')
-    if not params['activate']:
-        return gr.update(value='Disconnected')
-    elif user_info is None:
-        print('Incorrect API Key')
-        return gr.update(value='Disconnected')
-    else:
-        print('Got an API Key!')
-        return gr.update(value='Connected')
-
-# Once the API is verified, get the available voices and update the dropdown list
+def update_api_key(key):
+    params['api_key'] = key
+    if key is not None:
+        elevenlabs.set_api_key(key)
 
 
 def refresh_voices():
+    global params
+    your_voices = elevenlabs.voices()
+    voice_names = [voice.name for voice in your_voices]
+    return voice_names
 
-    global user, user_info
 
-    your_voices = [None]
-    if user_info is not None:
-        for voice in user.get_available_voices():
-            your_voices.append(voice.initialName)
-        return gr.Dropdown.update(choices=your_voices)
-    else:
-        return
+def refresh_voices_dd():
+    all_voices = refresh_voices()
+    return gr.Dropdown.update(value=all_voices[0], choices=all_voices)
+
+
+def remove_tts_from_history():
+    for i, entry in enumerate(shared.history['internal']):
+        shared.history['visible'][i] = [shared.history['visible'][i][0], entry[1]]
+
+
+def toggle_text_in_history():
+    for i, entry in enumerate(shared.history['visible']):
+        visible_reply = entry[1]
+        if visible_reply.startswith('<audio'):
+            if params['show_text']:
+                reply = shared.history['internal'][i][1]
+                shared.history['visible'][i] = [
+                    shared.history['visible'][i][0], f"{visible_reply.split('</audio>')[0]}</audio>\n\n{reply}"
+                ]
+            else:
+                shared.history['visible'][i] = [
+                    shared.history['visible'][i][0], f"{visible_reply.split('</audio>')[0]}</audio>"
+                ]
 
 
 def remove_surrounded_chars(string):
@@ -63,11 +61,25 @@ def remove_surrounded_chars(string):
     return re.sub('\*[^\*]*?(\*|$)', '', string)
 
 
+def state_modifier(state):
+    state['stream'] = False
+    return state
+
+
 def input_modifier(string):
     """
     This function is applied to your text inputs before
     they are fed into the model.
     """
+    # Remove autoplay from the last reply
+    if shared.is_chat() and len(shared.history['internal']) > 0:
+        shared.history['visible'][-1] = [
+            shared.history['visible'][-1][0],
+            shared.history['visible'][-1][1].replace('controls autoplay>', 'controls>')
+        ]
+
+    if params['activate']:
+        shared.processing_message = "*Is recording a voice message...*"
 
     return string
 
@@ -77,46 +89,92 @@ def output_modifier(string):
     This function is applied to the model outputs.
     """
 
-    global params, wav_idx, user, user_info
+    global params, wav_idx
 
     if not params['activate']:
         return string
-    elif user_info is None:
-        return string
 
+    original_string = string
     string = remove_surrounded_chars(string)
     string = string.replace('"', '')
     string = string.replace('“', '')
     string = string.replace('\n', ' ')
     string = string.strip()
-
     if string == '':
         string = 'empty reply, try regenerating'
 
-    output_file = Path(f'extensions/elevenlabs_tts/outputs/{wav_idx:06d}.wav'.format(wav_idx))
-    voice = user.get_voices_by_name(params['selected_voice'])[0]
-    audio_data = voice.generate_audio_bytes(string)
-    save_bytes_to_path(Path(f'extensions/elevenlabs_tts/outputs/{wav_idx:06d}.wav'), audio_data)
+    output_file = Path(f'extensions/elevenlabs_tts/outputs/{wav_idx:06d}.mp3'.format(wav_idx))
+    print(f'Outputing audio to {str(output_file)}')
+    try:
+        audio = elevenlabs.generate(text=string, voice=params['selected_voice'], model="eleven_monolingual_v1")
+        elevenlabs.save(audio, str(output_file))
 
-    string = f'<audio src="file/{output_file.as_posix()}" controls></audio>'
-    wav_idx += 1
+        autoplay = 'autoplay' if params['autoplay'] else ''
+        string = f'<audio src="file/{output_file.as_posix()}" controls {autoplay}></audio>'
+        wav_idx += 1
+    except elevenlabs.api.error.UnauthenticatedRateLimitError:
+        string = "🤖 ElevenLabs Unauthenticated Rate Limit Reached - Please create an API key to continue\n\n"
+    except elevenlabs.api.error.RateLimitError:
+        string = "🤖 ElevenLabs API Tier Limit Reached\n\n"
+    except elevenlabs.api.error.APIError as err:
+        string = f"🤖 ElevenLabs Error: {err}\n\n"
+
+    if params['show_text']:
+        string += f'\n\n{original_string}'
+
+    shared.processing_message = "*Is typing...*"
     return string
 
 
 def ui():
+    global voices
+    if not voices:
+        voices = refresh_voices()
+        params['selected_voice'] = voices[0]
 
     # Gradio elements
     with gr.Row():
         activate = gr.Checkbox(value=params['activate'], label='Activate TTS')
-        connection_status = gr.Textbox(value='Disconnected', label='Connection Status')
-    voice = gr.Dropdown(value=params['selected_voice'], choices=initial_voice, label='TTS Voice')
+        autoplay = gr.Checkbox(value=params['autoplay'], label='Play TTS automatically')
+        show_text = gr.Checkbox(value=params['show_text'], label='Show message text under audio player')
+
+    with gr.Row():
+        voice = gr.Dropdown(value=params['selected_voice'], choices=voices, label='TTS Voice')
+        refresh = gr.Button(value='Refresh')
+
     with gr.Row():
         api_key = gr.Textbox(placeholder="Enter your API key.", label='API Key')
-        connect = gr.Button(value='Connect')
+
+    with gr.Row():
+        convert = gr.Button('Permanently replace audios with the message texts')
+        convert_cancel = gr.Button('Cancel', visible=False)
+        convert_confirm = gr.Button('Confirm (cannot be undone)', variant="stop", visible=False)
+
+    # Convert history with confirmation
+    convert_arr = [convert_confirm, convert, convert_cancel]
+    convert.click(lambda: [gr.update(visible=True), gr.update(visible=False), gr.update(visible=True)], None, convert_arr)
+    convert_confirm.click(
+        lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr).then(
+        remove_tts_from_history, None, None).then(
+        chat.save_history, shared.gradio['mode'], None, show_progress=False).then(
+        chat.redraw_html, shared.reload_inputs, shared.gradio['display'])
+
+    convert_cancel.click(lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr)
+
+    # Toggle message text in history
+    show_text.change(
+        lambda x: params.update({"show_text": x}), show_text, None).then(
+        toggle_text_in_history, None, None).then(
+        chat.save_history, shared.gradio['mode'], None, show_progress=False).then(
+        chat.redraw_html, shared.reload_inputs, shared.gradio['display'])
+
+    convert_cancel.click(lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr)
 
     # Event functions to update the parameters in the backend
     activate.change(lambda x: params.update({'activate': x}), activate, None)
     voice.change(lambda x: params.update({'selected_voice': x}), voice, None)
-    api_key.change(lambda x: params.update({'api_key': x}), api_key, None)
-    connect.click(check_valid_api, [], connection_status)
-    connect.click(refresh_voices, [], voice)
+    api_key.change(update_api_key, api_key, None)
+    # connect.click(check_valid_api, [], connection_status)
+    refresh.click(refresh_voices_dd, [], voice)
+    # Event functions to update the parameters in the backend
+    autoplay.change(lambda x: params.update({"autoplay": x}), autoplay, None)

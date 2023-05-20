@@ -12,6 +12,8 @@ from pathlib import Path
 import markdown
 from PIL import Image, ImageOps
 
+from modules.utils import get_available_chat_styles
+
 # This is to store the paths to the thumbnails of the profile pictures
 image_cache = {}
 
@@ -19,10 +21,13 @@ with open(Path(__file__).resolve().parent / '../css/html_readable_style.css', 'r
     readable_css = f.read()
 with open(Path(__file__).resolve().parent / '../css/html_4chan_style.css', 'r') as css_f:
     _4chan_css = css_f.read()
-with open(Path(__file__).resolve().parent / '../css/html_cai_style.css', 'r') as f:
-    cai_css = f.read()
 with open(Path(__file__).resolve().parent / '../css/html_instruct_style.css', 'r') as f:
     instruct_css = f.read()
+
+# Custom chat styles
+chat_styles = {}
+for k in get_available_chat_styles():
+    chat_styles[k] = open(Path(f'css/chat_style-{k}.css'), 'r').read()
 
 
 def fix_newlines(string):
@@ -31,17 +36,39 @@ def fix_newlines(string):
     string = string.strip()
     return string
 
-# This could probably be generalized and improved
+
+def replace_blockquote(m):
+    return m.group().replace('\n', '\n> ').replace('\\begin{blockquote}', '').replace('\\end{blockquote}', '')
 
 
 def convert_to_markdown(string):
+
+    # Blockquote
+    pattern = re.compile(r'\\begin{blockquote}(.*?)\\end{blockquote}', re.DOTALL)
+    string = pattern.sub(replace_blockquote, string)
+
+    # Code
     string = string.replace('\\begin{code}', '```')
     string = string.replace('\\end{code}', '```')
-    string = string.replace('\\begin{blockquote}', '> ')
-    string = string.replace('\\end{blockquote}', '')
     string = re.sub(r"(.)```", r"\1\n```", string)
-    string = fix_newlines(string)
-    return markdown.markdown(string, extensions=['fenced_code'])
+
+    result = ''
+    is_code = False
+    for line in string.split('\n'):
+        if line.lstrip(' ').startswith('```'):
+            is_code = not is_code
+
+        result += line
+        if is_code or line.startswith('|'):  # Don't add an extra \n for tables or code
+            result += '\n'
+        else:
+            result += '\n\n'
+
+    if is_code:
+        result = result + '```'  # Unfinished code block
+
+    string = result.strip()
+    return markdown.markdown(string, extensions=['fenced_code', 'tables'])
 
 
 def generate_basic_html(string):
@@ -161,8 +188,8 @@ def generate_instruct_html(history):
     return output
 
 
-def generate_cai_chat_html(history, name1, name2, reset_cache=False):
-    output = f'<style>{cai_css}</style><div class="chat" id="chat">'
+def generate_cai_chat_html(history, name1, name2, style, reset_cache=False):
+    output = f'<style>{chat_styles[style]}</style><div class="chat" id="chat">'
 
     # We use ?name2 and ?time.time() to force the browser to reset caches
     img_bot = f'<img src="file/cache/pfp_character.png?{name2}">' if Path("cache/pfp_character.png").exists() else ''
@@ -210,16 +237,43 @@ def generate_cai_chat_html(history, name1, name2, reset_cache=False):
     return output
 
 
-def generate_chat_html(history, name1, name2):
-    return generate_cai_chat_html(history, name1, name2)
+def generate_chat_html(history, name1, name2, reset_cache=False):
+    output = f'<style>{chat_styles["wpp"]}</style><div class="chat" id="chat">'
+
+    for i, _row in enumerate(history[::-1]):
+        row = [convert_to_markdown(entry) for entry in _row]
+
+        output += f"""
+              <div class="message">
+                <div class="text-bot">
+                  <div class="message-body">
+                    {row[1]}
+                  </div>
+                </div>
+              </div>
+            """
+
+        if len(row[0]) == 0:  # don't display empty user messages
+            continue
+
+        output += f"""
+              <div class="message">
+                <div class="text-you">
+                  <div class="message-body">
+                    {row[0]}
+                  </div>
+                </div>
+              </div>
+            """
+
+    output += "</div>"
+    return output
 
 
-def chat_html_wrapper(history, name1, name2, mode, reset_cache=False):
-    if mode == "cai-chat":
-        return generate_cai_chat_html(history, name1, name2, reset_cache)
-    elif mode == "chat":
-        return generate_chat_html(history, name1, name2)
-    elif mode == "instruct":
+def chat_html_wrapper(history, name1, name2, mode, style, reset_cache=False):
+    if mode == 'instruct':
         return generate_instruct_html(history)
+    elif style == 'wpp':
+        return generate_chat_html(history, name1, name2)
     else:
-        return ''
+        return generate_cai_chat_html(history, name1, name2, style, reset_cache)
