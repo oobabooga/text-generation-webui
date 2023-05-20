@@ -5,21 +5,9 @@ from typing import Callable, Optional
 
 from modules import shared
 from modules.chat import load_character
-from modules.text_generation import get_encoded_length
 
 
 def build_parameters(body, chat=False):
-    if chat:
-        pass
-    else:
-        prompt = body['prompt']
-
-        prompt_lines = [k.strip() for k in prompt.split('\n')]
-        max_context = body.get('max_context_length', 2048)
-        while len(prompt_lines) >= 0 and get_encoded_length('\n'.join(prompt_lines)) > max_context:
-            prompt_lines.pop(0)
-
-        prompt = '\n'.join(prompt_lines)
 
     generate_params = {
         'max_new_tokens': int(body.get('max_new_tokens', body.get('max_length', 200))),
@@ -38,7 +26,7 @@ def build_parameters(body, chat=False):
         'early_stopping': bool(body.get('early_stopping', False)),
         'seed': int(body.get('seed', -1)),
         'add_bos_token': bool(body.get('add_bos_token', True)),
-        'truncation_length': int(body.get('truncation_length', 2048)),
+        'truncation_length': int(body.get('truncation_length', body.get('max_context_length', 2048))),
         'ban_eos_token': bool(body.get('ban_eos_token', False)),
         'skip_special_tokens': bool(body.get('skip_special_tokens', True)),
         'custom_stopping_strings': '',  # leave this blank

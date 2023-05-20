@@ -59,11 +59,11 @@ def generate_chat_prompt(user_input, state, **kwargs):
         chat_prompt_size -= shared.soft_prompt_tensor.shape[1]
 
     max_length = min(get_max_prompt_length(state), chat_prompt_size)
-
     all_substrings = {
         'chat': get_turn_substrings(state, instruct=False),
         'instruct': get_turn_substrings(state, instruct=True)
     }
+
     substrings = all_substrings['instruct' if is_instruct else 'chat']
 
     # Creating the template for "chat-instruct" mode
@@ -219,7 +219,7 @@ def chatbot_wrapper(text, history, state, regenerate=False, _continue=False, loa
     # Generating the prompt
     kwargs = {
         '_continue': _continue,
-        'history': history,
+        'history': output,
     }
 
     prompt = apply_extensions('custom_generate_chat_prompt', text, state, **kwargs)
