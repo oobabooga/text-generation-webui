@@ -34,25 +34,25 @@ def select_model_from_default_options():
         "Pythia-1.4B-deduped": ("EleutherAI", "pythia-1.4b-deduped", "main"),
         "Pythia-410M-deduped": ("EleutherAI", "pythia-410m-deduped", "main"),
     }
-    choices = {}
 
+    choices = {}
     print("Select the model that you want to download:\n")
     for i, name in enumerate(models):
         char = chr(ord('A') + i)
         choices[char] = name
         print(f"{char}) {name}")
+
     char_hugging = chr(ord('A') + len(models))
     print(f"{char_hugging}) Manually specify a Hugging Face model")
     char_exit = chr(ord('A') + len(models) + 1)
     print(f"{char_exit}) Do not download a model")
-
     print()
     print("Input> ", end='')
     choice = input()[0].strip().upper()
     if choice == char_exit:
         exit()
     elif choice == char_hugging:
-        print("""\nThen type the name of your desired Hugging Face model in the format organization/name.
+        print("""\nType the name of your desired Hugging Face model in the format organization/name.
 
 Examples:
 facebook/opt-1.3b
@@ -98,7 +98,7 @@ def get_download_links_from_huggingface(model, branch, text_only=False):
     is_lora = False
     while True:
         url = f"{base}{page}" + (f"?cursor={cursor.decode()}" if cursor else "")
-        r = requests.get(url)
+        r = requests.get(url, timeout=10)
         r.raise_for_status()
         content = r.content
 
@@ -169,7 +169,7 @@ def get_single_file(url, output_folder, start_from_scratch=False):
     output_path = output_folder / filename
     if output_path.exists() and not start_from_scratch:
         # Check if the file has already been downloaded completely
-        r = requests.get(url, stream=True)
+        r = requests.get(url, stream=True, timeout=10)
         total_size = int(r.headers.get('content-length', 0))
         if output_path.stat().st_size >= total_size:
             return
@@ -180,7 +180,7 @@ def get_single_file(url, output_folder, start_from_scratch=False):
         headers = {}
         mode = 'wb'
 
-    r = requests.get(url, stream=True, headers=headers)
+    r = requests.get(url, stream=True, headers=headers, timeout=10)
     with open(output_path, mode) as f:
         total_size = int(r.headers.get('content-length', 0))
         block_size = 1024

@@ -59,7 +59,7 @@ def convert_to_markdown(string):
             is_code = not is_code
 
         result += line
-        if is_code:
+        if is_code or line.startswith('|'):  # Don't add an extra \n for tables or code
             result += '\n'
         else:
             result += '\n\n'
@@ -68,7 +68,7 @@ def convert_to_markdown(string):
         result = result + '```'  # Unfinished code block
 
     string = result.strip()
-    return markdown.markdown(string, extensions=['fenced_code'])
+    return markdown.markdown(string, extensions=['fenced_code', 'tables'])
 
 
 def generate_basic_html(string):
