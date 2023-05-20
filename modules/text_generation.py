@@ -291,6 +291,7 @@ def generate_reply_custom(question, original_question, seed, state, eos_token=No
         generate_params[k] = state[k]
 
     t0 = time.time()
+    reply = ''
     try:
         if not is_chat:
             yield ''
