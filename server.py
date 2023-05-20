@@ -917,9 +917,10 @@ def create_interface():
     # Launch the interface
     shared.gradio['interface'].queue()
     if shared.args.listen:
-        shared.gradio['interface'].launch(prevent_thread_lock=True, share=shared.args.share, server_name=shared.args.listen_host or '0.0.0.0', server_port=shared.args.listen_port, inbrowser=shared.args.auto_launch, auth=auth)
+        shared.gradio['interface'].launch(prevent_thread_lock=True, enable_queue=True, share=shared.args.share, server_name=shared.args.listen_host or '0.0.0.0', server_port=shared.args.listen_port, inbrowser=shared.args.auto_launch, auth=auth)
     else:
-        shared.gradio['interface'].launch(prevent_thread_lock=True, share=shared.args.share, server_port=shared.args.listen_port, inbrowser=shared.args.auto_launch, auth=auth)
+        shared.gradio['interface'].launch(prevent_thread_lock=True, enable_queue=True,  share=shared.args.share, server_port=shared.args.listen_port, inbrowser=shared.args.auto_launch, auth=auth)
+
 
 
 if __name__ == "__main__":
