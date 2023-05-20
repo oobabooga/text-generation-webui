@@ -3,6 +3,7 @@ import os
 import requests
 import warnings
 import modules.logging_colors
+import pkg_resources
 
 os.environ['GRADIO_ANALYTICS_ENABLED'] = 'False'
 os.environ['BITSANDBYTES_NOWELCOME'] = '1'
@@ -376,6 +377,7 @@ def create_model_menus():
         with gr.Column():
             with gr.Box():
                 gr.Markdown('llama.cpp parameters')
+                gr.Markdown(f'llama-cpp-python version: {pkg_resources.get_distribution("llama-cpp-python").version}')
                 with gr.Row():
                     with gr.Column():
                         shared.gradio['threads'] = gr.Slider(label="threads", minimum=0, step=1, maximum=32, value=shared.args.threads)
