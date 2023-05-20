@@ -16,7 +16,7 @@ torch._C._jit_set_profiling_mode(False)
 
 # parameters which can be customized in settings.json of webui
 params = {
-    'address': 'http://127.0.0.1:7861',
+    'address': 'http://127.0.0.1:7860',
     'mode': 0,  # modes of operation: 0 (Manual only), 1 (Immersive/Interactive - looks for words to trigger), 2 (Picturebook Adventure - Always on)
     'manage_VRAM': False,
     'save_img': False,
