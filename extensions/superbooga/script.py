@@ -4,11 +4,11 @@ import textwrap
 
 import gradio as gr
 from bs4 import BeautifulSoup
+
 from modules import chat, shared
 
 from .chromadb import add_chunks_to_collector, make_collector
 from .download_urls import download_urls
-
 
 params = {
     'chunk_count': 5,
@@ -40,6 +40,7 @@ def feed_data_into_collector(corpus, chunk_len, chunk_sep):
         data_chunks = [x for y in data_chunks for x in y]
     else:
         data_chunks = [corpus[i:i + chunk_len] for i in range(0, len(corpus), chunk_len)]
+
     cumulative += f"{len(data_chunks)} chunks have been found.\n\nAdding the chunks to the database...\n\n"
     yield cumulative
     add_chunks_to_collector(data_chunks, collector)
@@ -124,7 +125,10 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
 
                 logging.warning(f'Adding the following new context:\n{additional_context}')
                 state['context'] = state['context'].strip() + '\n' + additional_context
-                state['history'] = [shared.history['internal'][i] for i in range(hist_size) if i not in best_ids]
+                kwargs['history'] = {
+                    'internal': [shared.history['internal'][i] for i in range(hist_size) if i not in best_ids],
+                    'visible': ''
+                }
             except RuntimeError:
                 logging.error("Couldn't query the database, moving on...")
 
