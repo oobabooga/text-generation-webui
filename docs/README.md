@@ -17,3 +17,4 @@
 * [Windows installation guide](Windows-installation-guide.md)
 * [WSL installation guide](WSL-installation-guide.md)
 * [Docker Compose](Docker.md)
+* [Audio notification](Audio-Notification.md)
