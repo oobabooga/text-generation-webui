@@ -208,6 +208,8 @@ class Handler(BaseHTTPRequestHandler):
                 'add_bos_token': shared.settings.get('add_bos_token', True),
                 'do_sample': True,
                 'typical_p': 1.0,
+                'epsilon_cutoff': 0,  # In units of 1e-4
+                'eta_cutoff': 0,  # In units of 1e-4
                 'min_length': 0,
                 'no_repeat_ngram_size': 0,
                 'num_beams': 1,
@@ -516,6 +518,8 @@ class Handler(BaseHTTPRequestHandler):
                 'add_bos_token': shared.settings.get('add_bos_token', True),
                 'do_sample': True,
                 'typical_p': 1.0,
+                'epsilon_cutoff': 0,  # In units of 1e-4
+                'eta_cutoff': 0,  # In units of 1e-4
                 'min_length': 0,
                 'no_repeat_ngram_size': 0,
                 'num_beams': 1,
