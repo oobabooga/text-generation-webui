@@ -190,6 +190,10 @@ def generate_reply_HF(question, original_question, seed, state, eos_token=None, 
     for k in ['max_new_tokens', 'do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping']:
         generate_params[k] = state[k]
 
+    for k in ['epsilon_cutoff', 'eta_cutoff']:
+        if state[k] > 0:
+            generate_params[k] = state[k] * 1e-4
+
     if state['ban_eos_token']:
         generate_params['suppress_tokens'] = [shared.tokenizer.eos_token_id]
 
