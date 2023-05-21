@@ -602,3 +602,43 @@ def upload_your_profile_picture(img):
         img = make_thumbnail(img)
         img.save(Path('cache/pfp_me.png'))
         logging.info('Profile picture saved to "cache/pfp_me.png"')
+
+
+def delete_file(path):
+    if path.exists():
+        logging.warning(f'Deleting {path}')
+        path.unlink(missing_ok=True)
+
+
+def save_character(name, greeting, context, picture, filename, instruct=False):
+    if filename == "":
+        logging.error("The filename is empty, so the character will not be saved.")
+        return
+
+    folder = 'characters' if not instruct else 'characters/instruction-following'
+    data = {
+        'name': name,
+        'greeting': greeting,
+        'context': context,
+    }
+
+    data = {k: v for k, v in data.items() if v}  # Strip falsy
+    filepath = Path(f'{folder}/{filename}.yaml')
+    with filepath.open('w') as f:
+        yaml.dump(data, f)
+
+    logging.info(f'Wrote {filepath}')
+    path_to_img = Path(f'{folder}/{filename}.png')
+    if picture and not instruct:
+        picture.save(path_to_img)
+        logging.info(f'Wrote {path_to_img}')
+    elif path_to_img.exists():
+        delete_file(path_to_img)
+
+
+def delete_character(name, instruct=False):
+    folder = 'characters' if not instruct else 'characters/instruction-following'
+    for extension in ["yml", "yaml", "json"]:
+        delete_file(Path(f'{folder}/{name}.{extension}'))
+
+    delete_file(Path(f'{folder}/{name}.png'))

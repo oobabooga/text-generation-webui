@@ -582,11 +582,19 @@ def create_interface():
 
             with gr.Tab('Chat settings', elem_id='chat-settings'):
                 with gr.Row():
-                    shared.gradio['character_menu'] = gr.Dropdown(choices=utils.get_available_characters(), label='Character', elem_id='character-menu', info='Used in chat and chat-instruct modes.')
-                    ui.create_refresh_button(shared.gradio['character_menu'], lambda: None, lambda: {'choices': utils.get_available_characters()}, 'refresh-button')
-
-                with gr.Row():
                     with gr.Column(scale=8):
+                        with gr.Row():
+                            shared.gradio['character_menu'] = gr.Dropdown(choices=utils.get_available_characters(), label='Character', elem_id='character-menu', info='Used in chat and chat-instruct modes.')
+                            ui.create_refresh_button(shared.gradio['character_menu'], lambda: None, lambda: {'choices': utils.get_available_characters()}, 'refresh-button')
+                            shared.gradio['save_character'] = ui.create_save_button(elem_id='refresh-button')
+                            shared.gradio['delete_character'] = ui.create_delete_button(elem_id='refresh-button')
+
+                        shared.gradio['save_character-filename'] = gr.Textbox(lines=1, label='File name:', interactive=True, visible=False)
+                        shared.gradio['save_character-confirm'] = gr.Button('Confirm save character', elem_classes="small-button", variant='primary', visible=False)
+                        shared.gradio['save_character-cancel'] = gr.Button('Cancel', elem_classes="small-button", visible=False)
+                        shared.gradio['delete_character-confirm'] = gr.Button('Confirm delete character', elem_classes="small-button", variant='stop', visible=False)
+                        shared.gradio['delete_character-cancel'] = gr.Button('Cancel', elem_classes="small-button", visible=False)
+
                         shared.gradio['name1'] = gr.Textbox(value=shared.settings['name1'], lines=1, label='Your name')
                         shared.gradio['name2'] = gr.Textbox(value=shared.settings['name2'], lines=1, label='Character\'s name')
                         shared.gradio['context'] = gr.Textbox(value=shared.settings['context'], lines=4, label='Context')
@@ -596,7 +604,10 @@ def create_interface():
                         shared.gradio['character_picture'] = gr.Image(label='Character picture', type='pil')
                         shared.gradio['your_picture'] = gr.Image(label='Your picture', type='pil', value=Image.open(Path('cache/pfp_me.png')) if Path('cache/pfp_me.png').exists() else None)
 
-                shared.gradio['instruction_template'] = gr.Dropdown(choices=utils.get_available_instruction_templates(), label='Instruction template', value='None', info='Change this according to the model/LoRA that you are using. Used in instruct and chat-instruct modes.')
+                with gr.Row():
+                    shared.gradio['instruction_template'] = gr.Dropdown(choices=utils.get_available_instruction_templates(), label='Instruction template', value='None', info='Change this according to the model/LoRA that you are using. Used in instruct and chat-instruct modes.')
+                    ui.create_refresh_button(shared.gradio['instruction_template'], lambda: None, lambda: {'choices': utils.get_available_instruction_templates()}, 'refresh-button')
+
                 shared.gradio['name1_instruct'] = gr.Textbox(value='', lines=2, label='User string')
                 shared.gradio['name2_instruct'] = gr.Textbox(value='', lines=1, label='Bot string')
                 shared.gradio['context_instruct'] = gr.Textbox(value='', lines=4, label='Context')
@@ -831,7 +842,6 @@ def create_interface():
                 lambda x: gr.update(visible=x != 'instruct'), shared.gradio['mode'], shared.gradio['chat_style'], show_progress=False).then(
                 chat.redraw_html, shared.reload_inputs, shared.gradio['display'])
 
-
             shared.gradio['chat_style'].change(chat.redraw_html, shared.reload_inputs, shared.gradio['display'])
             shared.gradio['instruction_template'].change(
                 partial(chat.load_character, instruct=True), [shared.gradio[k] for k in ['instruction_template', 'name1_instruct', 'name2_instruct']], [shared.gradio[k] for k in ['name1_instruct', 'name2_instruct', 'dummy', 'dummy', 'context_instruct', 'turn_template']])
@@ -847,6 +857,31 @@ def create_interface():
                 chat.remove_last_message, None, shared.gradio['textbox'], show_progress=False).then(
                 chat.save_history, shared.gradio['mode'], None, show_progress=False).then(
                 chat.redraw_html, shared.reload_inputs, shared.gradio['display'])
+
+            # Save/delete a character
+            shared.gradio['save_character'].click(
+                lambda x: x, shared.gradio['name2'], shared.gradio['save_character-filename'], show_progress=True).then(
+                lambda: [gr.update(visible=True)] * 3, None, [shared.gradio[k] for k in ['save_character-filename', 'save_character-confirm', 'save_character-cancel']], show_progress=False)
+
+            shared.gradio['save_character-cancel'].click(
+                lambda: [gr.update(visible=False)] * 3, None, [shared.gradio[k] for k in ['save_character-filename', 'save_character-confirm', 'save_character-cancel']], show_progress=False)
+
+            shared.gradio['save_character-confirm'].click(
+                partial(chat.save_character, instruct=False), [shared.gradio[k] for k in ['name2', 'greeting', 'context', 'character_picture', 'save_character-filename']], None).then(
+                lambda: [gr.update(visible=False)] * 3, None, [shared.gradio[k] for k in ['save_character-filename', 'save_character-confirm', 'save_character-cancel']], show_progress=False).then(
+                lambda x: x, shared.gradio['save_character-filename'], shared.gradio['character_menu'])
+
+            shared.gradio['delete_character'].click(
+                lambda: [gr.update(visible=True)] * 2, None, [shared.gradio[k] for k in ['delete_character-confirm', 'delete_character-cancel']], show_progress=False)
+
+            shared.gradio['delete_character-cancel'].click(
+                lambda: [gr.update(visible=False)] * 2, None, [shared.gradio[k] for k in ['delete_character-confirm', 'delete_character-cancel']], show_progress=False)
+
+            shared.gradio['delete_character-confirm'].click(
+                partial(chat.delete_character, instruct=False), shared.gradio['character_menu'], None).then(
+                lambda: gr.update(choices=utils.get_available_characters()), outputs=shared.gradio['character_menu']).then(
+                lambda: 'None', None, shared.gradio['character_menu']).then(
+                lambda: [gr.update(visible=False)] * 2, None, [shared.gradio[k] for k in ['delete_character-confirm', 'delete_character-cancel']], show_progress=False)
 
             shared.gradio['download_button'].click(lambda x: chat.save_history(x, timestamp=True), shared.gradio['mode'], shared.gradio['download'])
             shared.gradio['Upload character'].click(chat.upload_character, [shared.gradio['upload_json'], shared.gradio['upload_img_bot']], [shared.gradio['character_menu']])
