@@ -47,12 +47,12 @@ def load_model():
     model_path = torch_cache_path + "/snakers4_silero-models_master/src/silero/model/" + params['model_id'] + ".pt"
     if Path(model_path).is_file():
         print(f'\nUsing Silero TTS cached checkpoint found at {torch_cache_path}')
-        model, example_text = torch.hub.load(repo_or_dir=torch_cache_path + '/snakers4_silero-models_master/', model='silero_tts', language=params['language'], speaker=params['model_id'], source='local', path=model_path, force_reload=True)
+        model_temp, example_text = torch.hub.load(repo_or_dir=torch_cache_path + '/snakers4_silero-models_master/', model='silero_tts', language=params['language'], speaker=params['model_id'], source='local', path=model_path, force_reload=True)
     else:
         print(f'\nSilero TTS cache not found at {torch_cache_path}. Attempting to download...')
-        model, example_text = torch.hub.load(repo_or_dir='snakers4/silero-models', model='silero_tts', language=params['language'], speaker=params['model_id'])
-    model.to(params['device'])
-    return model
+        model_temp, example_text = torch.hub.load(repo_or_dir='snakers4/silero-models', model='silero_tts', language=params['language'], speaker=params['model_id'])
+    model_temp.to(params['device'])
+    return model_temp
 
 
 def remove_tts_from_history():
