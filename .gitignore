@@ -3,9 +3,10 @@ characters
 training/datasets
 extensions/silero_tts/outputs/*.wav
 extensions/elevenlabs_tts/outputs/*.wav
-extensions/sd_api_pictures/outputs/*
 extensions/tortoise_tts*/tortoise/**/*
 extensions/tortoise_tts*/outputs/**/*.wav
+extensions/sd_api_pictures/outputs/*
+extensions/multimodal/pipelines
 logs
 loras
 models
@@ -23,7 +24,11 @@ venv/
 *.log
 
 settings.json
+notification.mp3
 img_bot*
 img_me*
 prompts/[0-9]*
 models/config-user.yaml
+
+.DS_Store
+Thumbs.db

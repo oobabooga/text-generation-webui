@@ -107,6 +107,8 @@ This is the performance:
 Output generated in 123.79 seconds (1.61 tokens/s, 199 tokens)
 ```
 
+You can also use multiple GPUs with `pre_layer` if using the oobabooga fork of GPTQ, eg `--pre_layer 30 60` will load a LLaMA-30B model half onto your first GPU and half onto your second, or `--pre_layer 20 40` will load 20 layers onto GPU-0, 20 layers onto GPU-1, and 20 layers offloaded to CPU.
+
 ## Using LoRAs in 4-bit mode
 
 At the moment, this feature is not officially supported by the relevant libraries, but a patch exists and is supported by this web UI: https://github.com/johnsmith0031/alpaca_lora_4bit
@@ -126,6 +128,8 @@ pip install -r requirements.txt --upgrade
 cd text-generation-webui/repositories
 git clone https://github.com/johnsmith0031/alpaca_lora_4bit
 ```
+
+⚠️  I have tested it with the following commit specifically: `2f704b93c961bf202937b10aac9322b092afdce0`
 
 3. Install https://github.com/sterlind/GPTQ-for-LLaMa with this command:
 

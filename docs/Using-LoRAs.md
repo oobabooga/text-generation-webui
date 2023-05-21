@@ -11,9 +11,9 @@ python download-model.py tloen/alpaca-lora-7b
 2. Load the LoRA. 16-bit, 8-bit, and CPU modes work:
 
 ```
-python server.py --model llama-7b-hf --lora alpaca-lora-7b
-python server.py --model llama-7b-hf --lora alpaca-lora-7b --load-in-8bit
-python server.py --model llama-7b-hf --lora alpaca-lora-7b --cpu
+python server.py --model llama-7b-hf --lora tloen_alpaca-lora-7b
+python server.py --model llama-7b-hf --lora tloen_alpaca-lora-7b --load-in-8bit
+python server.py --model llama-7b-hf --lora tloen_alpaca-lora-7b --cpu
 ```
 
 * For using LoRAs in 4-bit mode, follow [these special instructions](GPTQ-models-(4-bit-mode).md#using-loras-in-4-bit-mode).

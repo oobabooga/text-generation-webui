@@ -7,7 +7,8 @@ URI = f'http://{HOST}/api/v1/generate'
 # For reverse-proxied streaming, the remote will likely host with ssl - https://
 # URI = 'https://your-uri-here.trycloudflare.com/api/v1/generate'
 
-def run(context):
+
+def run(prompt):
     request = {
         'prompt': prompt,
         'max_new_tokens': 250,
@@ -36,6 +37,7 @@ def run(context):
     if response.status_code == 200:
         result = response.json()['results'][0]['text']
         print(prompt + result)
+
 
 if __name__ == '__main__':
     prompt = "In order to make homemade bread, follow these steps:\n1)"
