@@ -589,7 +589,7 @@ def create_interface():
                             shared.gradio['save_character'] = ui.create_save_button(elem_id='refresh-button')
                             shared.gradio['delete_character'] = ui.create_delete_button(elem_id='refresh-button')
 
-                        shared.gradio['save_character-filename'] = gr.Textbox(elem_classes="textbox_default", lines=1, label='File name:', interactive=True, visible=False)
+                        shared.gradio['save_character-filename'] = gr.Textbox(lines=1, label='File name:', interactive=True, visible=False)
                         shared.gradio['save_character-confirm'] = gr.Button('Confirm save character', elem_classes="small-button", variant='primary', visible=False)
                         shared.gradio['save_character-cancel'] = gr.Button('Cancel', elem_classes="small-button", visible=False)
                         shared.gradio['delete_character-confirm'] = gr.Button('Confirm delete character', elem_classes="small-button", variant='stop', visible=False)
