@@ -471,7 +471,7 @@ def create_settings_menus(default_preset):
                             with gr.Column():
                                 shared.gradio['epsilon_cutoff'] = gr.Slider(0, 9, value=generate_params['epsilon_cutoff'], step=0.01, label='epsilon_cutoff', info='In units of 1e-4')
                             with gr.Column():
-                                shared.gradio['eta_cutoff'] = gr.Slider(0, 20, value=generate_params['eta_cutoff'], step=0.01, label='epsilon_cutoff', info='In units of 1e-4')
+                                shared.gradio['eta_cutoff'] = gr.Slider(0, 20, value=generate_params['eta_cutoff'], step=0.01, label='eta_cutoff', info='In units of 1e-4')
 
             with gr.Box():
                 with gr.Row():
