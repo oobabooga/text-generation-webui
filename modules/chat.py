@@ -607,7 +607,7 @@ def upload_your_profile_picture(img):
 
 def delete_file(path):
     if path.exists():
-        logging.warn(f'deleting {path}')
+        logging.warn(f'Deleting {path}')
         path.unlink(missing_ok=True)
 
 
@@ -633,16 +633,13 @@ def save_character(name, greeting, context, picture, filename, instruct=False):
     with filepath.open('w') as f:
         yaml.dump(data, f)
 
-    logging.info(f'wrote {filepath}')
-
+    logging.info(f'Wrote {filepath}')
     path_to_img = Path(f'{folder}/{filename}.png')
     if picture and not instruct:
         picture.save(path_to_img)
-        logging.info(f'wrote {path_to_img}')
+        logging.info(f'Wrote {path_to_img}')
     elif path_to_img.exists():
         delete_file(path_to_img)
-
-    print()
 
 
 def delete_character(name, instruct=False):

@@ -590,9 +590,9 @@ def create_interface():
                             shared.gradio['delete_character'] = ui.create_delete_button(elem_id='refresh-button')
 
                         shared.gradio['save_character-filename'] = gr.Textbox(elem_classes="textbox_default", lines=1, label='File name:', interactive=True, visible=False)
-                        shared.gradio['save_character-confirm'] = gr.Button('Confirm', elem_classes="small-button", variant='primary', visible=False)
+                        shared.gradio['save_character-confirm'] = gr.Button('Confirm save character', elem_classes="small-button", variant='primary', visible=False)
                         shared.gradio['save_character-cancel'] = gr.Button('Cancel', elem_classes="small-button", visible=False)
-                        shared.gradio['delete_character-confirm'] = gr.Button('Confirm', elem_classes="small-button", variant='primary', visible=False)
+                        shared.gradio['delete_character-confirm'] = gr.Button('Confirm delete character', elem_classes="small-button", variant='stop', visible=False)
                         shared.gradio['delete_character-cancel'] = gr.Button('Cancel', elem_classes="small-button", visible=False)
 
                         shared.gradio['name1'] = gr.Textbox(value=shared.settings['name1'], lines=1, label='Your name')
@@ -868,7 +868,8 @@ def create_interface():
 
             shared.gradio['save_character-confirm'].click(
                 partial(chat.save_character, instruct=False), [shared.gradio[k] for k in ['name2', 'greeting', 'context', 'character_picture', 'save_character-filename']], None).then(
-                lambda: [gr.update(visible=False)] * 3, None, [shared.gradio[k] for k in ['save_character-filename', 'save_character-confirm', 'save_character-cancel']], show_progress=False)
+                lambda: [gr.update(visible=False)] * 3, None, [shared.gradio[k] for k in ['save_character-filename', 'save_character-confirm', 'save_character-cancel']], show_progress=False).then(
+                lambda x: x, shared.gradio['save_character-filename'], shared.gradio['character_menu'])
 
             shared.gradio['delete_character'].click(
                 lambda: [gr.update(visible=True)] * 2, None, [shared.gradio[k] for k in ['delete_character-confirm', 'delete_character-cancel']], show_progress=False)
