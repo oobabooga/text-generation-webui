@@ -7,7 +7,6 @@ import logging
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 import yaml
 from PIL import Image
@@ -607,7 +606,7 @@ def upload_your_profile_picture(img):
 
 def delete_file(path):
     if path.exists():
-        logging.warn(f'Deleting {path}')
+        logging.warning(f'Deleting {path}')
         path.unlink(missing_ok=True)
 
 
@@ -617,18 +616,13 @@ def save_character(name, greeting, context, picture, filename, instruct=False):
         return
 
     folder = 'characters' if not instruct else 'characters/instruction-following'
-
-    # TODO: support additional fields in UI:
-    # example_dialogue, char_persona, char_greeting, world_scenario
     data = {
         'name': name,
         'greeting': greeting,
         'context': context,
     }
 
-    # Strip falsy
-    data = {k: v for k, v in data.items() if v}
-
+    data = {k: v for k, v in data.items() if v}  # Strip falsy
     filepath = Path(f'{folder}/{filename}.yaml')
     with filepath.open('w') as f:
         yaml.dump(data, f)
