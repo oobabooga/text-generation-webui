@@ -199,7 +199,6 @@ def chatbot_wrapper(text, history, state, regenerate=False, _continue=False, loa
         if visible_text is None:
             visible_text = text
 
-        text = apply_extensions('input', text)
         # *Is typing...*
         if loading_message:
             yield {'visible': output['visible'] + [[visible_text, shared.processing_message]], 'internal': output['internal']}
@@ -252,11 +251,13 @@ def chatbot_wrapper(text, history, state, regenerate=False, _continue=False, loa
             if _continue:
                 output['internal'][-1] = [text, last_reply[0] + reply]
                 output['visible'][-1] = [visible_text, last_reply[1] + visible_reply]
-                yield output
+                if state['stream']:
+                    yield output
             elif not (j == 0 and visible_reply.strip() == ''):
                 output['internal'][-1] = [text, reply.lstrip(' ')]
                 output['visible'][-1] = [visible_text, visible_reply.lstrip(' ')]
-                yield output
+                if state['stream']:
+                    yield output
 
             if next_character_found:
                 break
@@ -306,6 +307,8 @@ def generate_chat_reply(text, history, state, regenerate=False, _continue=False,
         if (len(history['visible']) == 1 and not history['visible'][0][0]) or len(history['internal']) == 0:
             yield history
             return
+    else:
+        text = apply_extensions('input', text)
 
     for history in chatbot_wrapper(text, history, state, regenerate=regenerate, _continue=_continue, loading_message=loading_message):
         yield history
