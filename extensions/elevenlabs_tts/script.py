@@ -71,17 +71,21 @@ def input_modifier(string):
     This function is applied to your text inputs before
     they are fed into the model.
     """
+
+    shared.processing_message = "*Is recording a voice message...*"
+    return string
+
+
+def history_modifier(history):
+
     # Remove autoplay from the last reply
-    if shared.is_chat() and len(shared.history['internal']) > 0:
-        shared.history['visible'][-1] = [
-            shared.history['visible'][-1][0],
-            shared.history['visible'][-1][1].replace('controls autoplay>', 'controls>')
+    if len(history['internal']) > 0:
+        history['visible'][-1] = [
+            history['visible'][-1][0],
+            history['visible'][-1][1].replace('controls autoplay>', 'controls>')
         ]
 
-    if params['activate']:
-        shared.processing_message = "*Is recording a voice message...*"
-
-    return string
+    return history
 
 
 def output_modifier(string):
@@ -104,7 +108,7 @@ def output_modifier(string):
         string = 'empty reply, try regenerating'
 
     output_file = Path(f'extensions/elevenlabs_tts/outputs/{wav_idx:06d}.mp3'.format(wav_idx))
-    print(f'Outputing audio to {str(output_file)}')
+    print(f'Outputting audio to {str(output_file)}')
     try:
         audio = elevenlabs.generate(text=string, voice=params['selected_voice'], model="eleven_monolingual_v1")
         elevenlabs.save(audio, str(output_file))
