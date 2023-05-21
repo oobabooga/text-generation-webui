@@ -9,6 +9,34 @@ import numpy as np
 import torch
 import transformers
 
+import threading
+import queue
+
+class GenerationQueue:
+    def __init__(self):
+        self.task_queue = queue.Queue()
+        self.worker_thread = threading.Thread(target=self.process_generate_queue)
+        self.worker_thread.daemon = True
+        self.worker_thread.start()
+
+    def schedule_generation(self, *args, **kwargs):
+        result_queue = queue.Queue()
+        self.task_queue.put((args, kwargs, result_queue))  # Put the task on the task queue
+        while True:
+            result = result_queue.get()  # Wait for the result
+            if result is None:
+                break  # Exit the loop when there are no more results
+            yield result
+
+    def process_generate_queue(self):
+        while True:
+            args, kwargs, result_queue = self.task_queue.get()
+            generator = _generate_reply(*args, **kwargs)
+            for result in generator:
+                result_queue.put(result)  # Put the result into the result queue
+            result_queue.put(None)  # Put None to signal the end of results
+            self.task_queue.task_done()
+
 import modules.shared as shared
 from modules.callbacks import (Iteratorize, Stream,
                                _SentinelTokenStoppingCriteria)
@@ -16,6 +44,9 @@ from modules.extensions import apply_extensions
 from modules.html_generator import generate_4chan_html, generate_basic_html
 from modules.models import clear_torch_cache, local_rank
 
+def generate_reply(*args, **kwargs):
+    for result in shared.queue.schedule_generation(*args, **kwargs):
+        yield result
 
 def get_max_prompt_length(state):
     max_length = state['truncation_length'] - state['max_new_tokens']
@@ -153,8 +184,7 @@ def generate_reply_wrapper(question, state, eos_token=None, stopping_strings=Non
 
         yield formatted_outputs(reply, shared.model_name)
 
-
-def generate_reply(question, state, eos_token=None, stopping_strings=None, is_chat=False):
+def _generate_reply(question, state, eos_token=None, stopping_strings=None, is_chat=False):
     state = apply_extensions('state', state)
     generate_func = apply_extensions('custom_generate_reply')
     if generate_func is None:

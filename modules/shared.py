@@ -5,6 +5,9 @@ from pathlib import Path
 
 import yaml
 
+from modules.text_generation import GenerationQueue
+
+queue = GenerationQueue()
 model = None
 tokenizer = None
 model_name = "None"
