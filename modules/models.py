@@ -341,7 +341,6 @@ def load_soft_prompt(name):
                     else:
                         logging.info(f"{field}: {j[field]}")
 
-            logging.info()
             tensor = np.load('tensor.npy')
             Path('tensor.npy').unlink()
             Path('meta.json').unlink()
