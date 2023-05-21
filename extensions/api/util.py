@@ -15,6 +15,8 @@ def build_parameters(body, chat=False):
         'temperature': float(body.get('temperature', 0.5)),
         'top_p': float(body.get('top_p', 1)),
         'typical_p': float(body.get('typical_p', body.get('typical', 1))),
+        'epsilon_cutoff': float(body.get('epsilon_cutoff', 0)),
+        'eta_cutoff': float(body.get('eta_cutoff', 0)),
         'repetition_penalty': float(body.get('repetition_penalty', body.get('rep_pen', 1.1))),
         'encoder_repetition_penalty': float(body.get('encoder_repetition_penalty', 1.0)),
         'top_k': int(body.get('top_k', 0)),
