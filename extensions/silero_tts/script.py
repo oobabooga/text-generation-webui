@@ -83,15 +83,20 @@ def input_modifier(string):
     they are fed into the model.
     """
 
-    # Remove autoplay from the last reply
-    if shared.is_chat() and len(shared.history['internal']) > 0:
-        shared.history['visible'][-1] = [
-            shared.history['visible'][-1][0],
-            shared.history['visible'][-1][1].replace('controls autoplay>', 'controls>')
-        ]
-
     shared.processing_message = "*Is recording a voice message...*"
     return string
+
+
+def history_modifier(history):
+
+    # Remove autoplay from the last reply
+    if len(history['internal']) > 0:
+        history['visible'][-1] = [
+            history['visible'][-1][0],
+            history['visible'][-1][1].replace('controls autoplay>', 'controls>')
+        ]
+
+    return history
 
 
 def output_modifier(string):

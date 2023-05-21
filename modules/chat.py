@@ -181,6 +181,7 @@ def extract_message_from_reply(reply, state):
 
 def chatbot_wrapper(text, history, state, regenerate=False, _continue=False, loading_message=True):
     output = copy.deepcopy(history)
+    output = apply_extensions('history', output)
     if shared.model_name == 'None' or shared.model is None:
         logging.error("No model is loaded! Select one in the Model tab.")
         yield output
@@ -199,6 +200,7 @@ def chatbot_wrapper(text, history, state, regenerate=False, _continue=False, loa
         if visible_text is None:
             visible_text = text
 
+        text = apply_extensions('input', text)
         # *Is typing...*
         if loading_message:
             yield {'visible': output['visible'] + [[visible_text, shared.processing_message]], 'internal': output['internal']}
@@ -307,8 +309,6 @@ def generate_chat_reply(text, history, state, regenerate=False, _continue=False,
         if (len(history['visible']) == 1 and not history['visible'][0][0]) or len(history['internal']) == 0:
             yield history
             return
-    else:
-        text = apply_extensions('input', text)
 
     for history in chatbot_wrapper(text, history, state, regenerate=regenerate, _continue=_continue, loading_message=loading_message):
         yield history

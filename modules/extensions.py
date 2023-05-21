@@ -91,6 +91,15 @@ def _apply_state_modifier_extensions(state):
     return state
 
 
+# Extension that modifies the chat history before it is used
+def _apply_history_modifier_extensions(history):
+    for extension, _ in iterator():
+        if hasattr(extension, "history_modifier"):
+            history = getattr(extension, "history_modifier")(history)
+
+    return history
+
+
 # Extension functions that override the default tokenizer output - currently only the first one will work
 def _apply_tokenizer_extensions(function_name, state, prompt, input_ids, input_embeds):
     for extension, _ in iterator():
@@ -165,6 +174,7 @@ EXTENSION_MAP = {
     "input": partial(_apply_string_extensions, "input_modifier"),
     "output": partial(_apply_string_extensions, "output_modifier"),
     "state": _apply_state_modifier_extensions,
+    "history": _apply_history_modifier_extensions,
     "bot_prefix": partial(_apply_string_extensions, "bot_prefix_modifier"),
     "tokenizer": partial(_apply_tokenizer_extensions, "tokenizer_modifier"),
     "input_hijack": _apply_input_hijack,
