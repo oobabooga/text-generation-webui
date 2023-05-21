@@ -605,17 +605,18 @@ def upload_your_profile_picture(img):
         logging.info('Profile picture saved to "cache/pfp_me.png"')
 
 
-def save_character(
-    name: str,
-    greeting: str,
-    context: str,
-    picture: Image.Image,
-    mode: str,
-) -> None:
-    if not name:
+def delete_file(path):
+    if path.exists():
+        logging.warn(f'deleting {path}')
+        path.unlink(missing_ok=True)
+
+
+def save_character(name, greeting, context, picture, filename, instruct=False):
+    if filename == "":
+        logging.error("The filename is empty, so the character will not be saved.")
         return
 
-    folder = 'characters' if mode != 'instruct' else 'characters/instruction-following'
+    folder = 'characters' if not instruct else 'characters/instruction-following'
 
     # TODO: support additional fields in UI:
     # example_dialogue, char_persona, char_greeting, world_scenario
@@ -624,28 +625,29 @@ def save_character(
         'greeting': greeting,
         'context': context,
     }
+
     # Strip falsy
     data = {k: v for k, v in data.items() if v}
 
-    filepath = Path(f'{folder}/{name}.yaml')
+    filepath = Path(f'{folder}/{filename}.yaml')
     with filepath.open('w') as f:
         yaml.dump(data, f)
+
     logging.info(f'wrote {filepath}')
 
-    if picture:
-        path = f'{folder}/{name}.png'
-        picture.save(path)
-        logging.info(f'wrote {path}')
+    path_to_img = Path(f'{folder}/{filename}.png')
+    if picture and not instruct:
+        picture.save(path_to_img)
+        logging.info(f'wrote {path_to_img}')
+    elif path_to_img.exists():
+        delete_file(path_to_img)
+
+    print()
 
 
-def delete_character(name: str, mode: str) -> None:
-    def delete(path: Path) -> None:
-        if path.exists():
-            logging.warn(f'deleting {path}')
-            path.unlink(missing_ok=True)
-
-    folder = 'characters' if mode != 'instruct' else 'characters/instruction-following'
+def delete_character(name, instruct=False):
+    folder = 'characters' if not instruct else 'characters/instruction-following'
     for extension in ["yml", "yaml", "json"]:
-        delete(Path(f'{folder}/{name}.{extension}'))
+        delete_file(Path(f'{folder}/{name}.{extension}'))
 
-    delete(Path(f'{folder}/{name}.png'))
+    delete_file(Path(f'{folder}/{name}.png'))

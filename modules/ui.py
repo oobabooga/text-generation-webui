@@ -16,6 +16,8 @@ with open(Path(__file__).resolve().parent / '../css/chat.js', 'r') as f:
 
 refresh_symbol = '\U0001f504'  # 🔄
 delete_symbol = '🗑️'
+save_symbol = '💾'
+
 theme = gr.themes.Default(
     font=['Helvetica', 'ui-sans-serif', 'system-ui', 'sans-serif'],
     font_mono=['IBM Plex Mono', 'ui-monospace', 'Consolas', 'monospace'],
@@ -94,3 +96,7 @@ def create_refresh_button(refresh_component, refresh_method, refreshed_args, ele
 
 def create_delete_button(**kwargs):
     return ToolButton(value=delete_symbol, **kwargs)
+
+
+def create_save_button(**kwargs):
+    return ToolButton(value=save_symbol, **kwargs)
