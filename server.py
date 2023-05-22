@@ -98,8 +98,8 @@ def load_preset_values(preset_menu, state, return_dict=False):
         'no_repeat_ngram_size': 0,
         'early_stopping': False,
         'mirostat_mode': 0,
-        'mirostat_eta': 0.1,
         'mirostat_tau': 5.0,
+        'mirostat_eta': 0.1,
     }
 
     with open(Path(f'presets/{preset_menu}.txt'), 'r') as infile:
@@ -114,7 +114,7 @@ def load_preset_values(preset_menu, state, return_dict=False):
         return generate_params
     else:
         state.update(generate_params)
-        return state, *[generate_params[k] for k in ['do_sample', 'temperature', 'top_p', 'typical_p', 'epsilon_cutoff', 'eta_cutoff', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping', 'mirostat_mode', 'mirostat_eta', 'mirostat_tau']]
+        return state, *[generate_params[k] for k in ['do_sample', 'temperature', 'top_p', 'typical_p', 'epsilon_cutoff', 'eta_cutoff', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping', 'mirostat_mode', 'mirostat_tau', 'mirostat_eta']]
 
 
 def upload_soft_prompt(file):
@@ -479,8 +479,8 @@ def create_settings_menus(default_preset):
                     with gr.Column():
                         gr.Markdown('Mirostrat (for llama.cpp)')
                         shared.gradio['mirostat_mode'] = gr.Slider(0, 2, step=1, value=generate_params['mirostat_mode'], label='mirostat_mode')
-                        shared.gradio['mirostat_eta'] = gr.Slider(0, 1, step=0.01, value=generate_params['mirostat_eta'], label='mirostat_eta')
                         shared.gradio['mirostat_tau'] = gr.Slider(0, 10, step=0.01, value=generate_params['mirostat_tau'], label='mirostat_tau')
+                        shared.gradio['mirostat_eta'] = gr.Slider(0, 1, step=0.01, value=generate_params['mirostat_eta'], label='mirostat_eta')
 
                         gr.Markdown('Other')
                         with gr.Accordion('Soft prompt', open=False):
@@ -506,7 +506,7 @@ def create_settings_menus(default_preset):
 
             gr.Markdown('[Click here for more information.](https://github.com/oobabooga/text-generation-webui/docs/Generation-parameters.md)')
 
-    shared.gradio['preset_menu'].change(load_preset_values, [shared.gradio[k] for k in ['preset_menu', 'interface_state']], [shared.gradio[k] for k in ['interface_state', 'do_sample', 'temperature', 'top_p', 'typical_p', 'epsilon_cutoff', 'eta_cutoff', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping', 'mirostat_mode', 'mirostat_eta', 'mirostat_tau']])
+    shared.gradio['preset_menu'].change(load_preset_values, [shared.gradio[k] for k in ['preset_menu', 'interface_state']], [shared.gradio[k] for k in ['interface_state', 'do_sample', 'temperature', 'top_p', 'typical_p', 'epsilon_cutoff', 'eta_cutoff', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping', 'mirostat_mode', 'mirostat_tau', 'mirostat_eta']])
     shared.gradio['softprompts_menu'].change(load_soft_prompt, shared.gradio['softprompts_menu'], shared.gradio['softprompts_menu'], show_progress=True)
     shared.gradio['upload_softprompt'].upload(upload_soft_prompt, shared.gradio['upload_softprompt'], shared.gradio['softprompts_menu'])
 

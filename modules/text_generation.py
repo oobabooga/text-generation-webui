@@ -295,7 +295,7 @@ def generate_reply_custom(question, original_question, seed, state, eos_token=No
         generate_params[k] = state[k]
 
     if shared.model_type == 'llamacpp':
-        for k in ['mirostat_mode', 'mirostat_eta', 'mirostat_tau']:
+        for k in ['mirostat_mode', 'mirostat_tau', 'mirostat_eta']:
             generate_params[k] = state[k]
 
     t0 = time.time()
