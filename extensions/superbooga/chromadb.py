@@ -1,13 +1,12 @@
-import logging
-
+import chromadb
 import posthog
 import torch
+from chromadb.config import Settings
 from sentence_transformers import SentenceTransformer
 
-import chromadb
-from chromadb.config import Settings
+from modules.logging_colors import logger
 
-logging.info('Intercepting all calls to posthog :)')
+logger.info('Intercepting all calls to posthog :)')
 posthog.capture = lambda *args, **kwargs: None
 
 

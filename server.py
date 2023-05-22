@@ -1,17 +1,18 @@
-import logging
 import os
-import requests
 import warnings
-import modules.logging_colors
+
+import requests
+
+from modules.logging_colors import logger
 
 os.environ['GRADIO_ANALYTICS_ENABLED'] = 'False'
 os.environ['BITSANDBYTES_NOWELCOME'] = '1'
 warnings.filterwarnings('ignore', category=UserWarning, message='TypedStorage is deprecated')
-logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
+
 
 # This is a hack to prevent Gradio from phoning home when it gets imported
 def my_get(url, **kwargs):
-    logging.info('Gradio HTTP request redirected to localhost :)')
+    logger.info('Gradio HTTP request redirected to localhost :)')
     kwargs.setdefault('allow_redirects', True)
     return requests.api.request('get', 'http://127.0.0.1/', **kwargs)
 
@@ -49,7 +50,8 @@ from modules.extensions import apply_extensions
 from modules.html_generator import chat_html_wrapper
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, load_soft_prompt, unload_model
-from modules.text_generation import generate_reply_wrapper, get_encoded_length, stop_everything_event
+from modules.text_generation import (generate_reply_wrapper,
+                                     get_encoded_length, stop_everything_event)
 
 
 def load_model_wrapper(selected_model, autoload=False):
@@ -388,7 +390,7 @@ def create_model_menus():
                         shared.gradio['no_mmap'] = gr.Checkbox(label="no-mmap", value=shared.args.no_mmap)
                         shared.gradio['mlock'] = gr.Checkbox(label="mlock", value=shared.args.mlock)
 
-            with gr.Row():                
+            with gr.Row():
                 shared.gradio['model_status'] = gr.Markdown('No model is loaded' if shared.model_name == 'None' else 'Ready')
 
     # In this event handler, the interface state is read and updated
@@ -971,7 +973,7 @@ if __name__ == "__main__":
         settings_file = Path('settings.json')
 
     if settings_file is not None:
-        logging.info(f"Loading settings from {settings_file}...")
+        logger.info(f"Loading settings from {settings_file}...")
         new_settings = json.loads(open(settings_file, 'r').read())
         for item in new_settings:
             shared.settings[item] = new_settings[item]
@@ -1015,7 +1017,7 @@ if __name__ == "__main__":
     # Select the model from a command-line menu
     elif shared.args.model_menu:
         if len(available_models) == 0:
-            logging.error('No models are available! Please download at least one.')
+            logger.error('No models are available! Please download at least one.')
             sys.exit(0)
         else:
             print('The following models are available:\n')

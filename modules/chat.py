@@ -3,7 +3,6 @@ import base64
 import copy
 import io
 import json
-import logging
 import re
 from datetime import datetime
 from pathlib import Path
@@ -14,6 +13,7 @@ from PIL import Image
 import modules.shared as shared
 from modules.extensions import apply_extensions
 from modules.html_generator import chat_html_wrapper, make_thumbnail
+from modules.logging_colors import logger
 from modules.text_generation import (generate_reply, get_encoded_length,
                                      get_max_prompt_length)
 from modules.utils import replace_all
@@ -187,7 +187,7 @@ def chatbot_wrapper(text, history, state, regenerate=False, _continue=False, loa
     output = copy.deepcopy(history)
     output = apply_extensions('history', output)
     if shared.model_name == 'None' or shared.model is None:
-        logging.error("No model is loaded! Select one in the Model tab.")
+        logger.error("No model is loaded! Select one in the Model tab.")
         yield output
         return
 
@@ -278,7 +278,7 @@ def chatbot_wrapper(text, history, state, regenerate=False, _continue=False, loa
 
 def impersonate_wrapper(text, state):
     if shared.model_name == 'None' or shared.model is None:
-        logging.error("No model is loaded! Select one in the Model tab.")
+        logger.error("No model is loaded! Select one in the Model tab.")
         yield ''
         return
 
@@ -584,7 +584,7 @@ def upload_character(json_file, img, tavern=False):
         img = Image.open(io.BytesIO(img))
         img.save(Path(f'characters/{outfile_name}.png'))
 
-    logging.info(f'New character saved to "characters/{outfile_name}.json".')
+    logger.info(f'New character saved to "characters/{outfile_name}.json".')
     return outfile_name
 
 
@@ -608,18 +608,18 @@ def upload_your_profile_picture(img):
     else:
         img = make_thumbnail(img)
         img.save(Path('cache/pfp_me.png'))
-        logging.info('Profile picture saved to "cache/pfp_me.png"')
+        logger.info('Profile picture saved to "cache/pfp_me.png"')
 
 
 def delete_file(path):
     if path.exists():
-        logging.warning(f'Deleting {path}')
+        logger.warning(f'Deleting {path}')
         path.unlink(missing_ok=True)
 
 
 def save_character(name, greeting, context, picture, filename, instruct=False):
     if filename == "":
-        logging.error("The filename is empty, so the character will not be saved.")
+        logger.error("The filename is empty, so the character will not be saved.")
         return
 
     folder = 'characters' if not instruct else 'characters/instruction-following'
@@ -634,11 +634,11 @@ def save_character(name, greeting, context, picture, filename, instruct=False):
     with filepath.open('w') as f:
         yaml.dump(data, f)
 
-    logging.info(f'Wrote {filepath}')
+    logger.info(f'Wrote {filepath}')
     path_to_img = Path(f'{folder}/{filename}.png')
     if picture and not instruct:
         picture.save(path_to_img)
-        logging.info(f'Wrote {path_to_img}')
+        logger.info(f'Wrote {path_to_img}')
     elif path_to_img.exists():
         delete_file(path_to_img)
 

@@ -1,9 +1,10 @@
 import argparse
-import logging
 from collections import OrderedDict
 from pathlib import Path
 
 import yaml
+
+from modules.logging_colors import logger
 
 model = None
 tokenizer = None
@@ -180,14 +181,14 @@ args_defaults = parser.parse_args([])
 deprecated_dict = {}
 for k in deprecated_dict:
     if getattr(args, k) != deprecated_dict[k][1]:
-        logging.warning(f"--{k} is deprecated and will be removed. Use --{deprecated_dict[k][0]} instead.")
+        logger.warning(f"--{k} is deprecated and will be removed. Use --{deprecated_dict[k][0]} instead.")
         setattr(args, deprecated_dict[k][0], getattr(args, k))
 
 # Security warnings
 if args.trust_remote_code:
-    logging.warning("trust_remote_code is enabled. This is dangerous.")
+    logger.warning("trust_remote_code is enabled. This is dangerous.")
 if args.share:
-    logging.warning("The gradio \"share link\" feature downloads a proprietary and unaudited blob to create a reverse tunnel. This is potentially dangerous.")
+    logger.warning("The gradio \"share link\" feature downloads a proprietary and unaudited blob to create a reverse tunnel. This is potentially dangerous.")
 
 
 def add_extension(name):

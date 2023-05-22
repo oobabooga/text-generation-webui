@@ -1,9 +1,9 @@
-import logging
 from pathlib import Path
 
 from auto_gptq import AutoGPTQForCausalLM
 
 import modules.shared as shared
+from modules.logging_colors import logger
 from modules.models import get_max_memory_dict
 
 
@@ -17,13 +17,13 @@ def load_quantized(model_name):
         found = list(path_to_model.glob(f"*{ext}"))
         if len(found) > 0:
             if len(found) > 1:
-                logging.warning(f'More than one {ext} model has been found. The last one will be selected. It could be wrong.')
+                logger.warning(f'More than one {ext} model has been found. The last one will be selected. It could be wrong.')
 
             pt_path = found[-1]
             break
 
     if pt_path is None:
-        logging.error("The model could not be loaded because its checkpoint file in .bin/.pt/.safetensors format could not be located.")
+        logger.error("The model could not be loaded because its checkpoint file in .bin/.pt/.safetensors format could not be located.")
         return
 
     # Define the params for AutoGPTQForCausalLM.from_quantized
@@ -35,6 +35,6 @@ def load_quantized(model_name):
         'max_memory': get_max_memory_dict()
     }
 
-    logging.warning(f"The AutoGPTQ params are: {params}")
+    logger.warning(f"The AutoGPTQ params are: {params}")
     model = AutoGPTQForCausalLM.from_quantized(path_to_model, **params)
     return model
