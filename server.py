@@ -480,7 +480,7 @@ def create_settings_menus(default_preset):
                         gr.Markdown('Mirostrat (for llama.cpp)')
                         shared.gradio['mirostat_mode'] = gr.Slider(0, 2, step=1, value=generate_params['mirostat_mode'], label='mirostat_mode')
                         shared.gradio['mirostat_eta'] = gr.Slider(0, 1, step=0.01, value=generate_params['mirostat_eta'], label='mirostat_eta')
-                        shared.gradio['mirostat_tau'] = gr.Slider(0, 10, step=1, value=generate_params['mirostat_tau'], label='mirostat_tau')
+                        shared.gradio['mirostat_tau'] = gr.Slider(0, 10, step=0.01, value=generate_params['mirostat_tau'], label='mirostat_tau')
 
                         gr.Markdown('Other')
                         with gr.Accordion('Soft prompt', open=False):
