@@ -442,9 +442,9 @@ def create_settings_menus(default_preset):
                     with gr.Row():
                         shared.gradio['preset_menu'] = gr.Dropdown(choices=utils.get_available_presets(), value=default_preset if not shared.args.flexgen else 'Naive', label='Generation parameters preset')
                         ui.create_refresh_button(shared.gradio['preset_menu'], lambda: None, lambda: {'choices': utils.get_available_presets()}, 'refresh-button')
+
                 with gr.Column():
                     shared.gradio['seed'] = gr.Number(value=shared.settings['seed'], label='Seed (-1 for random)')
-
 
             with gr.Box():
                 gr.Markdown('Main parameters')
