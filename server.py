@@ -954,6 +954,8 @@ def create_interface():
             shared.gradio['count_tokens'].click(count_tokens, shared.gradio['textbox'], shared.gradio['status'], show_progress=False)
 
         shared.gradio['interface'].load(lambda: None, None, None, _js=f"() => {{{js}}}")
+        if shared.settings['dark_theme']:
+            shared.gradio['interface'].load(lambda: None, None, None, _js=f"() => document.getElementsByTagName('body')[0].classList.add('dark')")
         shared.gradio['interface'].load(partial(ui.apply_interface_values, {}, use_persistent=True), None, [shared.gradio[k] for k in ui.list_interface_input_elements(chat=shared.is_chat())], show_progress=False)
         # Extensions tabs
         extensions_module.create_extensions_tabs()
