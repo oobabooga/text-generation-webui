@@ -626,16 +626,16 @@ def create_interface():
                     with gr.Tab('Chat history'):
                         with gr.Row():
                             with gr.Column():
-                                gr.Markdown('## Upload')
+                                gr.Markdown('### Upload')
                                 shared.gradio['upload_chat_history'] = gr.File(type='binary', file_types=['.json', '.txt'])
 
                             with gr.Column():
-                                gr.Markdown('## Download')
+                                gr.Markdown('### Download')
                                 shared.gradio['download'] = gr.File()
                                 shared.gradio['download_button'] = gr.Button(value='Click me')
 
                     with gr.Tab('Upload character'):
-                        gr.Markdown('## JSON format')
+                        gr.Markdown('### JSON format')
                         with gr.Row():
                             with gr.Column():
                                 gr.Markdown('1. Select the JSON file')
@@ -646,7 +646,7 @@ def create_interface():
                                 shared.gradio['upload_img_bot'] = gr.File(type='binary', file_types=['image'])
 
                         shared.gradio['Upload character'] = gr.Button(value='Submit')
-                        gr.Markdown('## TavernAI PNG format')
+                        gr.Markdown('### TavernAI PNG format')
                         shared.gradio['upload_img_tavern'] = gr.File(type='binary', file_types=['image'])
 
             with gr.Tab("Parameters", elem_id="parameters"):
