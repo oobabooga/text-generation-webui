@@ -6,20 +6,20 @@ Documentation:
 https://abetlen.github.io/llama-cpp-python/
 '''
 
-import logging
 import re
 
 from llama_cpp import Llama, LlamaCache
 
 from modules import shared
 from modules.callbacks import Iteratorize
+from modules.logging_colors import logger
 
 
 class LlamaCppModel:
     def __init__(self):
         self.initialized = False
 
-    def __del__(self):        
+    def __del__(self):
         self.model.__del__()
 
     @classmethod
@@ -35,7 +35,7 @@ class LlamaCppModel:
             else:
                 cache_capacity = int(shared.args.cache_capacity)
 
-        logging.info("Cache capacity is " + str(cache_capacity) + " bytes")
+        logger.info("Cache capacity is " + str(cache_capacity) + " bytes")
 
         params = {
             'model_path': str(path),

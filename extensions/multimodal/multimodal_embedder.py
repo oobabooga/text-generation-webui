@@ -1,5 +1,4 @@
 import base64
-import logging
 import re
 from dataclasses import dataclass
 from io import BytesIO
@@ -10,6 +9,7 @@ from PIL import Image
 
 from extensions.multimodal.pipeline_loader import load_pipeline
 from modules import shared
+from modules.logging_colors import logger
 from modules.text_generation import encode, get_max_prompt_length
 
 
@@ -26,7 +26,7 @@ class MultimodalEmbedder:
     def __init__(self, params: dict):
         pipeline, source = load_pipeline(params)
         self.pipeline = pipeline
-        logging.info(f'Multimodal: loaded pipeline {self.pipeline.name()} from pipelines/{source} ({self.pipeline.__class__.__name__})')
+        logger.info(f'Multimodal: loaded pipeline {self.pipeline.name()} from pipelines/{source} ({self.pipeline.__class__.__name__})')
 
     def _split_prompt(self, prompt: str, load_images: bool = False) -> List[PromptPart]:
         """Splits a prompt into a list of `PromptParts` to separate image data from text.
@@ -138,7 +138,7 @@ class MultimodalEmbedder:
 
         # notify user if we truncated an image
         if removed_images > 0:
-            logging.warning(f"Multimodal: removed {removed_images} image(s) from prompt. Try decreasing max_new_tokens if generation is broken")
+            logger.warning(f"Multimodal: removed {removed_images} image(s) from prompt. Try decreasing max_new_tokens if generation is broken")
 
         return encoded
 

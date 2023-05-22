@@ -1,4 +1,3 @@
-import logging
 import re
 import textwrap
 
@@ -6,6 +5,7 @@ import gradio as gr
 from bs4 import BeautifulSoup
 
 from modules import chat, shared
+from modules.logging_colors import logger
 
 from .chromadb import add_chunks_to_collector, make_collector
 from .download_urls import download_urls
@@ -123,14 +123,14 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
                     if shared.history['internal'][id_][0] != '<|BEGIN-VISIBLE-CHAT|>':
                         additional_context += make_single_exchange(id_)
 
-                logging.warning(f'Adding the following new context:\n{additional_context}')
+                logger.warning(f'Adding the following new context:\n{additional_context}')
                 state['context'] = state['context'].strip() + '\n' + additional_context
                 kwargs['history'] = {
                     'internal': [shared.history['internal'][i] for i in range(hist_size) if i not in best_ids],
                     'visible': ''
                 }
             except RuntimeError:
-                logging.error("Couldn't query the database, moving on...")
+                logger.error("Couldn't query the database, moving on...")
 
     return chat.generate_chat_prompt(user_input, state, **kwargs)
 

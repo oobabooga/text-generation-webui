@@ -74,7 +74,7 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
 
 .header_bar {
   background-color: #f7f7f7;
-  margin-bottom: 40px;
+  margin-bottom: 30px;
 }
 
 .dark .header_bar {
@@ -83,15 +83,15 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
 }
 
 .textbox_default textarea {
-  height: calc(100vh - 391px);
+  height: calc(100vh - 381px);
 }
 
 .textbox_default_output textarea {
-  height: calc(100vh - 210px);
+  height: calc(100vh - 200px);
 }
 
 .textbox textarea {
-  height: calc(100vh - 261px);
+  height: calc(100vh - 251px);
 }
 
 .textbox_default textarea, .textbox_default_output textarea, .textbox textarea {

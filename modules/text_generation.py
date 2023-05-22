@@ -1,5 +1,4 @@
 import ast
-import logging
 import random
 import re
 import time
@@ -42,6 +41,7 @@ from modules.callbacks import (Iteratorize, Stream,
                                _SentinelTokenStoppingCriteria)
 from modules.extensions import apply_extensions
 from modules.html_generator import generate_4chan_html, generate_basic_html
+from modules.logging_colors import logger
 from modules.models import clear_torch_cache, local_rank
 
 def generate_reply(*args, **kwargs):
@@ -189,7 +189,7 @@ def _generate_reply(question, state, eos_token=None, stopping_strings=None, is_c
     generate_func = apply_extensions('custom_generate_reply')
     if generate_func is None:
         if shared.model_name == 'None' or shared.model is None:
-            logging.error("No model is loaded! Select one in the Model tab.")
+            logger.error("No model is loaded! Select one in the Model tab.")
             yield question
             return
 

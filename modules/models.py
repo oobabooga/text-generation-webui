@@ -1,6 +1,5 @@
 import gc
 import json
-import logging
 import os
 import re
 import time
@@ -17,6 +16,7 @@ from transformers import (AutoConfig, AutoModel, AutoModelForCausalLM,
 
 import modules.shared as shared
 from modules import llama_attn_hijack
+from modules.logging_colors import logger
 
 transformers.logging.set_verbosity_error()
 
@@ -71,12 +71,12 @@ def find_model_type(model_name):
 
 
 def load_model(model_name):
-    logging.info(f"Loading {model_name}...")
+    logger.info(f"Loading {model_name}...")
     t0 = time.time()
 
     shared.model_type = find_model_type(model_name)
     if shared.model_type == 'None':
-        logging.error('The path to the model does not exist. Exiting.')
+        logger.error('The path to the model does not exist. Exiting.')
         return None, None
 
     if shared.args.autogptq:
@@ -106,7 +106,7 @@ def load_model(model_name):
     if any((shared.args.xformers, shared.args.sdp_attention)):
         llama_attn_hijack.hijack_llama_attention()
 
-    logging.info(f"Loaded the model in {(time.time()-t0):.2f} seconds.\n")
+    logger.info(f"Loaded the model in {(time.time()-t0):.2f} seconds.\n")
     return model, tokenizer
 
 
@@ -119,7 +119,7 @@ def load_tokenizer(model_name, model):
         if shared.model_type not in ['llava', 'oasst']:
             for p in [Path(f"{shared.args.model_dir}/llama-tokenizer/"), Path(f"{shared.args.model_dir}/oobabooga_llama-tokenizer/")]:
                 if p.exists():
-                    logging.info(f"Loading the universal LLaMA tokenizer from {p}...")
+                    logger.info(f"Loading the universal LLaMA tokenizer from {p}...")
                     tokenizer = LlamaTokenizer.from_pretrained(p, clean_up_tokenization_spaces=True)
                     return tokenizer
 
@@ -162,7 +162,7 @@ def huggingface_loader(model_name):
         model = LoaderClass.from_pretrained(Path(f"{shared.args.model_dir}/{model_name}"), torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16)
         model = deepspeed.initialize(model=model, config_params=ds_config, model_parameters=None, optimizer=None, lr_scheduler=None)[0]
         model.module.eval()  # Inference
-        logging.info(f"DeepSpeed ZeRO-3 is enabled: {is_deepspeed_zero3_enabled()}")
+        logger.info(f"DeepSpeed ZeRO-3 is enabled: {is_deepspeed_zero3_enabled()}")
 
     # Custom
     else:
@@ -172,7 +172,7 @@ def huggingface_loader(model_name):
         }
 
         if not any((shared.args.cpu, torch.cuda.is_available(), torch.has_mps)):
-            logging.warning("torch.cuda.is_available() returned False. This means that no GPU has been detected. Falling back to CPU mode.")
+            logger.warning("torch.cuda.is_available() returned False. This means that no GPU has been detected. Falling back to CPU mode.")
             shared.args.cpu = True
 
         if shared.args.cpu:
@@ -254,7 +254,7 @@ def llamacpp_loader(model_name):
     else:
         model_file = list(Path(f'{shared.args.model_dir}/{model_name}').glob('*ggml*.bin'))[0]
 
-    logging.info(f"llama.cpp weights detected: {model_file}\n")
+    logger.info(f"llama.cpp weights detected: {model_file}\n")
     model, tokenizer = LlamaCppModel.from_pretrained(model_file)
     return model, tokenizer
 
@@ -263,7 +263,7 @@ def GPTQ_loader(model_name):
 
     # Monkey patch
     if shared.args.monkey_patch:
-        logging.warning("Applying the monkey patch for using LoRAs in 4-bit mode. It may cause undefined behavior outside its intended scope.")
+        logger.warning("Applying the monkey patch for using LoRAs in 4-bit mode. It may cause undefined behavior outside its intended scope.")
         from modules.monkey_patch_gptq_lora import load_model_llama
 
         model, _ = load_model_llama(model_name)
@@ -302,7 +302,7 @@ def get_max_memory_dict():
             suggestion -= 1000
 
         suggestion = int(round(suggestion / 1000))
-        logging.warning(f"Auto-assiging --gpu-memory {suggestion} for your GPU to try to prevent out-of-memory errors. You can manually set other values.")
+        logger.warning(f"Auto-assiging --gpu-memory {suggestion} for your GPU to try to prevent out-of-memory errors. You can manually set other values.")
         max_memory = {0: f'{suggestion}GiB', 'cpu': f'{shared.args.cpu_memory or 99}GiB'}
 
     return max_memory if len(max_memory) > 0 else None
@@ -333,13 +333,13 @@ def load_soft_prompt(name):
             zf.extract('tensor.npy')
             zf.extract('meta.json')
             j = json.loads(open('meta.json', 'r').read())
-            logging.info(f"\nLoading the softprompt \"{name}\".")
+            logger.info(f"\nLoading the softprompt \"{name}\".")
             for field in j:
                 if field != 'name':
                     if type(j[field]) is list:
-                        logging.info(f"{field}: {', '.join(j[field])}")
+                        logger.info(f"{field}: {', '.join(j[field])}")
                     else:
-                        logging.info(f"{field}: {j[field]}")
+                        logger.info(f"{field}: {j[field]}")
 
             tensor = np.load('tensor.npy')
             Path('tensor.npy').unlink()
