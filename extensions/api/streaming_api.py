@@ -8,13 +8,23 @@ from extensions.api.util import build_parameters, try_start_cloudflared
 from modules import shared
 from modules.chat import generate_chat_reply
 from modules.text_generation import generate_reply
+from extensions.superbooga.script import feed_url_into_collector
+from extensions.superbooga.chromadb import make_collector
 
-PATH = '/api/v1/stream'
+PATHS = ['/api/v1/stream','/api/v1/chat-stream','/api/v1/superstream', '/api/v1/feed_urls']
 
+collector = make_collector()
+chunk_count = 5
+
+def custom_generate_chat_prompt(user_input,chunk_count, **kwargs):
+    global collector
+    results = collector.get_sorted(user_input, n_results=chunk_count)
+    user_input = '### Memory:\n' + '\n'.join(results) +'\n' + user_input
+    return user_input
 
 async def _handle_connection(websocket, path):
 
-    if path == '/api/v1/stream':
+    if path == PATHS[0]:
         async for message in websocket:
             message = json.loads(message)
 
@@ -47,7 +57,7 @@ async def _handle_connection(websocket, path):
                 'message_num': message_num
             }))
 
-    elif path == '/api/v1/chat-stream':
+    elif path == PATHS[1]:
         async for message in websocket:
             body = json.loads(message)
 
@@ -76,8 +86,47 @@ async def _handle_connection(websocket, path):
                 'event': 'stream_end',
                 'message_num': message_num
             }))
+    elif path == PATHS[2]:
+        async for message in websocket:
+            message = json.loads(message)
 
-    else:
+            prompt = message['prompt']
+            generate_params = build_parameters(message)
+            stopping_strings = generate_params.pop('stopping_strings')
+            generate_params['stream'] = True
+
+            infused_prompt = custom_generate_chat_prompt(prompt,chunk_count= 10)
+            generator = generate_reply(infused_prompt, generate_params, stopping_strings=stopping_strings, is_chat=False)
+            
+            # As we stream, only send the new bytes.
+            skip_index = 0
+            message_num = 0
+
+            for a in generator:
+                to_send = a[skip_index:]
+                await websocket.send(json.dumps({
+                    'event': 'text_stream',
+                    'message_num': message_num,
+                    'text': to_send
+                }))
+
+                await asyncio.sleep(0)
+
+                skip_index += len(to_send)
+                message_num += 1
+
+            await websocket.send(json.dumps({
+                'event': 'stream_end',
+                'message_num': message_num
+            }))
+    elif path == PATHS[3]:
+         async for message in websocket:
+            urls = message
+            datafeed = feed_url_into_collector(urls=urls, chunk_len=400,  chunk_sep='', strong_cleanup='True', threads=4, collector=collector)
+            for output in datafeed:
+                print(output)          
+
+    elif path != PATHS:
         print(f'Streaming api: unknown path: {path}')
         return
 
@@ -92,7 +141,7 @@ def _run_server(port: int, share: bool = False):
 
     def on_start(public_url: str):
         public_url = public_url.replace('https://', 'wss://')
-        print(f'Starting streaming server at public url {public_url}{PATH}')
+        print(f'Starting streaming server at public url {public_url}{PATHS}')
 
     if share:
         try:
@@ -100,7 +149,7 @@ def _run_server(port: int, share: bool = False):
         except Exception as e:
             print(e)
     else:
-        print(f'Starting streaming server at ws://{address}:{port}{PATH}')
+        print(f'Starting streaming server at ws://{address}:{port}{PATHS}')
 
     asyncio.run(_run(host=address, port=port))
 

@@ -23,9 +23,8 @@ chat_collector = make_collector()
 chunk_count = 5
 
 
-def feed_data_into_collector(corpus, chunk_len, chunk_sep):
-    global collector
-
+def feed_data_into_collector(corpus, chunk_len, chunk_sep, collector=collector):
+    
     # Defining variables
     chunk_len = int(chunk_len)
     chunk_sep = chunk_sep.replace(r'\n', '\n')
@@ -48,14 +47,14 @@ def feed_data_into_collector(corpus, chunk_len, chunk_sep):
     yield cumulative
 
 
-def feed_file_into_collector(file, chunk_len, chunk_sep):
+def feed_file_into_collector(file, chunk_len, chunk_sep, collector=collector):
     yield 'Reading the input dataset...\n\n'
     text = file.decode('utf-8')
-    for i in feed_data_into_collector(text, chunk_len, chunk_sep):
+    for i in feed_data_into_collector(text, chunk_len, chunk_sep, collector):
         yield i
 
 
-def feed_url_into_collector(urls, chunk_len, chunk_sep, strong_cleanup, threads):
+def feed_url_into_collector(urls, chunk_len, chunk_sep, strong_cleanup, threads,  collector=collector):
     all_text = ''
     cumulative = ''
 
@@ -79,7 +78,7 @@ def feed_url_into_collector(urls, chunk_len, chunk_sep, strong_cleanup, threads)
         text = '\n'.join([s.strip() for s in strings])
         all_text += text
 
-    for i in feed_data_into_collector(all_text, chunk_len, chunk_sep):
+    for i in feed_data_into_collector(all_text, chunk_len, chunk_sep, collector):
         yield i
 
 
@@ -160,6 +159,7 @@ def input_modifier(string):
 
 
 def ui():
+
     with gr.Accordion("Click for more information...", open=False):
         gr.Markdown(textwrap.dedent("""
 
@@ -246,7 +246,7 @@ def ui():
             chunk_sep = gr.Textbox(value=params['chunk_separator'], label='Chunk separator', info='Used to manually split chunks. Manually split chunks longer than chunk length are split again. This value is used when you click on "Load data".')
         with gr.Column():
             last_updated = gr.Markdown()
-
+    global collector
     update_data.click(feed_data_into_collector, [data_input, chunk_len, chunk_sep], last_updated, show_progress=False)
     update_url.click(feed_url_into_collector, [url_input, chunk_len, chunk_sep, strong_cleanup, threads], last_updated, show_progress=False)
     update_file.click(feed_file_into_collector, [file_input, chunk_len, chunk_sep], last_updated, show_progress=False)
