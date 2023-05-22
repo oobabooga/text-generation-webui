@@ -294,6 +294,10 @@ def generate_reply_custom(question, original_question, seed, state, eos_token=No
     for k in ['temperature', 'top_p', 'top_k', 'repetition_penalty']:
         generate_params[k] = state[k]
 
+    if shared.model_type == 'llamacpp':
+        for k in ['mirostat_mode', 'mirostat_tau', 'mirostat_eta']:
+            generate_params[k] = state[k]
+
     t0 = time.time()
     reply = ''
     try:

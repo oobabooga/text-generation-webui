@@ -59,7 +59,7 @@ class LlamaCppModel:
             string = string.encode()
         return self.model.tokenize(string)
 
-    def generate(self, context="", token_count=20, temperature=1, top_p=1, top_k=50, repetition_penalty=1, callback=None):
+    def generate(self, context="", token_count=20, temperature=1, top_p=1, top_k=50, repetition_penalty=1, mirostat_mode=0, mirostat_tau=5, mirostat_eta=0.1, callback=None):
         context = context if type(context) is str else context.decode()
         completion_chunks = self.model.create_completion(
             prompt=context,
@@ -68,6 +68,9 @@ class LlamaCppModel:
             top_p=top_p,
             top_k=top_k,
             repeat_penalty=repetition_penalty,
+            mirostat_mode=int(mirostat_mode),
+            mirostat_tau=mirostat_tau,
+            mirostat_eta=mirostat_eta,
             stream=True
         )
         output = ""
