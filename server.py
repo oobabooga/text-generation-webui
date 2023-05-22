@@ -785,7 +785,7 @@ def create_interface():
                 lambda x: (x, ''), shared.gradio['textbox'], [shared.gradio['Chat input'], shared.gradio['textbox']], show_progress=False).then(
                 chat.generate_chat_reply_wrapper, shared.input_params, shared.gradio['display'], show_progress=False).then(
                 chat.save_history, shared.gradio['mode'], None, show_progress=False).then(
-                None, None, None, _js=f"() => {{{audio_notification_js}}}")
+                lambda: None, None, None, _js=f"() => {{{audio_notification_js}}}")
             )
 
             gen_events.append(shared.gradio['textbox'].submit(
@@ -793,28 +793,28 @@ def create_interface():
                 lambda x: (x, ''), shared.gradio['textbox'], [shared.gradio['Chat input'], shared.gradio['textbox']], show_progress=False).then(
                 chat.generate_chat_reply_wrapper, shared.input_params, shared.gradio['display'], show_progress=False).then(
                 chat.save_history, shared.gradio['mode'], None, show_progress=False).then(
-                None, None, None, _js=f"() => {{{audio_notification_js}}}")
+                lambda: None, None, None, _js=f"() => {{{audio_notification_js}}}")
             )
 
             gen_events.append(shared.gradio['Regenerate'].click(
                 ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
                 partial(chat.generate_chat_reply_wrapper, regenerate=True), shared.input_params, shared.gradio['display'], show_progress=False).then(
                 chat.save_history, shared.gradio['mode'], None, show_progress=False).then(
-                None, None, None, _js=f"() => {{{audio_notification_js}}}")
+                lambda: None, None, None, _js=f"() => {{{audio_notification_js}}}")
             )
 
             gen_events.append(shared.gradio['Continue'].click(
                 ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
                 partial(chat.generate_chat_reply_wrapper, _continue=True), shared.input_params, shared.gradio['display'], show_progress=False).then(
                 chat.save_history, shared.gradio['mode'], None, show_progress=False).then(
-                None, None, None, _js=f"() => {{{audio_notification_js}}}")
+                lambda: None, None, None, _js=f"() => {{{audio_notification_js}}}")
             )
 
             gen_events.append(shared.gradio['Impersonate'].click(
                 ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
                 lambda x: x, shared.gradio['textbox'], shared.gradio['Chat input'], show_progress=False).then(
                 chat.impersonate_wrapper, shared.input_params, shared.gradio['textbox'], show_progress=False).then(
-                None, None, None, _js=f"() => {{{audio_notification_js}}}")
+                lambda: None, None, None, _js=f"() => {{{audio_notification_js}}}")
             )
 
             shared.gradio['Replace last reply'].click(
@@ -913,16 +913,16 @@ def create_interface():
                 lambda x: x, shared.gradio['textbox'], shared.gradio['last_input']).then(
                 ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
                 generate_reply_wrapper, shared.input_params, output_params, show_progress=False).then(
-                None, None, None, _js=f"() => {{{audio_notification_js}}}")
-                # None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[0]; element.scrollTop = element.scrollHeight}")
+                lambda: None, None, None, _js=f"() => {{{audio_notification_js}}}")
+                # lambda: None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[0]; element.scrollTop = element.scrollHeight}")
             )
 
             gen_events.append(shared.gradio['textbox'].submit(
                 lambda x: x, shared.gradio['textbox'], shared.gradio['last_input']).then(
                 ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
                 generate_reply_wrapper, shared.input_params, output_params, show_progress=False).then(
-                None, None, None, _js=f"() => {{{audio_notification_js}}}")
-                # None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[0]; element.scrollTop = element.scrollHeight}")
+                lambda: None, None, None, _js=f"() => {{{audio_notification_js}}}")
+                # lambda: None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[0]; element.scrollTop = element.scrollHeight}")
             )
 
             if shared.args.notebook:
@@ -931,15 +931,15 @@ def create_interface():
                     lambda x: x, shared.gradio['last_input'], shared.gradio['textbox'], show_progress=False).then(
                     ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
                     generate_reply_wrapper, shared.input_params, output_params, show_progress=False).then(
-                    None, None, None, _js=f"() => {{{audio_notification_js}}}")
-                    # None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[0]; element.scrollTop = element.scrollHeight}")
+                    lambda: None, None, None, _js=f"() => {{{audio_notification_js}}}")
+                    # lambda: None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[0]; element.scrollTop = element.scrollHeight}")
                 )
             else:
                 gen_events.append(shared.gradio['Continue'].click(
                     ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
                     generate_reply_wrapper, [shared.gradio['output_textbox']] + shared.input_params[1:], output_params, show_progress=False).then(
-                    None, None, None, _js=f"() => {{{audio_notification_js}}}")
-                    # None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[1]; element.scrollTop = element.scrollHeight}")
+                    lambda: None, None, None, _js=f"() => {{{audio_notification_js}}}")
+                    # lambda: None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[1]; element.scrollTop = element.scrollHeight}")
                 )
 
             shared.gradio['Stop'].click(stop_everything_event, None, None, queue=False, cancels=gen_events if shared.args.no_stream else None)
@@ -948,7 +948,7 @@ def create_interface():
             shared.gradio['save_prompt'].click(save_prompt, [shared.gradio[k] for k in ['textbox', 'prompt_to_save']], [shared.gradio[k] for k in ['status', 'prompt_to_save', 'open_save_prompt', 'save_prompt']], show_progress=False)
             shared.gradio['count_tokens'].click(count_tokens, shared.gradio['textbox'], shared.gradio['status'], show_progress=False)
 
-        shared.gradio['interface'].load(None, None, None, _js=f"() => {{{js}}}")
+        shared.gradio['interface'].load(lambda: None, None, None, _js=f"() => {{{js}}}")
         shared.gradio['interface'].load(partial(ui.apply_interface_values, {}, use_persistent=True), None, [shared.gradio[k] for k in ui.list_interface_input_elements(chat=shared.is_chat())], show_progress=False)
         # Extensions tabs
         extensions_module.create_extensions_tabs()
