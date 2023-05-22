@@ -11,8 +11,8 @@ llama.cpp only uses the following parameters:
 * top_k
 * repetition_penalty
 * mirostat_mode
-* mirostat_eta
 * mirostat_tau
+* mirostat_eta
 
 ### RWKV
 
