@@ -543,11 +543,14 @@ def create_interface():
 
     # Authentication variables
     auth = None
+    gradio_auth_creds = []
+    if shared.args.gradio_auth:
+        gradio_auth_creds += [x.strip() for x in shared.args.gradio_auth.strip('"').replace('\n', '').split(',') if x.strip()]
     if shared.args.gradio_auth_path is not None:
-        gradio_auth_creds = []
         with open(shared.args.gradio_auth_path, 'r', encoding="utf8") as file:
             for line in file.readlines():
                 gradio_auth_creds += [x.strip() for x in line.split(',') if x.strip()]
+    if gradio_auth_creds:
         auth = [tuple(cred.split(':')) for cred in gradio_auth_creds]
 
     # Importing the extension files and executing their setup() functions
