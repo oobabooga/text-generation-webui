@@ -118,13 +118,8 @@ cp docker/.env.example .env
 docker compose up --build
 ```
 
-You need to have docker compose v2.17 or higher installed in your system. To see how to install docker compose itself, see the guide in [here](https://github.com/oobabooga/text-generation-webui/blob/main/docs/Docker.md).
-
-Contributed by [@loeken](https://github.com/loeken) in [#633](https://github.com/oobabooga/text-generation-webui/pull/633)
-
-#### Dedicated docker repository
-
-An external repository maintains a docker wrapper for this project as well as several pre-configured 'one-click' `docker compose` variants (e.g., updated branches of GPTQ). It can be found at: [Atinoda/text-generation-webui-docker](https://github.com/Atinoda/text-generation-webui-docker).
+* You need to have docker compose v2.17 or higher installed. See [this guide](https://github.com/oobabooga/text-generation-webui/blob/main/docs/Docker.md) for instructions.
+* For additional docker files, check out [this repository](https://github.com/Atinoda/text-generation-webui/blob/docker-wrapper/docs/Docker.md#dedicated-docker-repository).
 
 ### Updating the requirements
 
