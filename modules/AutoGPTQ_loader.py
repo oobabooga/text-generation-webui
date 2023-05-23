@@ -20,6 +20,9 @@ def load_quantized(model_name):
                 logger.warning(f'More than one {ext} model has been found. The last one will be selected. It could be wrong.')
 
             pt_path = found[-1]
+            if ext == '.safetensors':
+                use_safetensors = True
+
             break
 
     if pt_path is None:
