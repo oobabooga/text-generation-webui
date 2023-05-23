@@ -16,7 +16,7 @@ llama.cpp only uses the following parameters:
 
 ### RWKV
 
-RWKV only uses the following parameters:
+RWKV only uses the following parameters when loaded through the old .pth weights:
 
 * temperature
 * top_p
