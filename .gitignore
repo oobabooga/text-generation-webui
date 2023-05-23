@@ -22,6 +22,7 @@ venv/
 *.log
 
 settings.json
+notification.mp3
 img_bot*
 img_me*
 prompts/[0-9]*

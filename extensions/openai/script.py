@@ -208,12 +208,17 @@ class Handler(BaseHTTPRequestHandler):
                 'add_bos_token': shared.settings.get('add_bos_token', True),
                 'do_sample': True,
                 'typical_p': 1.0,
+                'epsilon_cutoff': 0,  # In units of 1e-4
+                'eta_cutoff': 0,  # In units of 1e-4
                 'min_length': 0,
                 'no_repeat_ngram_size': 0,
                 'num_beams': 1,
                 'penalty_alpha': 0.0,
                 'length_penalty': 1,
                 'early_stopping': False,
+                'mirostat_mode': 0,
+                'mirostat_tau': 5,
+                'mirostat_eta': 0.1,
                 'ban_eos_token': False,
                 'skip_special_tokens': True,
             }
@@ -243,9 +248,9 @@ class Handler(BaseHTTPRequestHandler):
 
                 messages = body['messages']
 
-                system_msg = ''  # You are ChatGPT, a large language model trained by OpenAI. Answer as concisely as possible. Knowledge cutoff: {knowledge_cutoff} Current date: {current_date}
+                system_msgs = []
                 if 'prompt' in body:  # Maybe they sent both? This is not documented in the API, but some clients seem to do this.
-                    system_msg = body['prompt']
+                    system_msgs = [ body['prompt'] ]
 
                 chat_msgs = []
 
@@ -254,9 +259,14 @@ class Handler(BaseHTTPRequestHandler):
                     content = m['content']
                     # name = m.get('name', 'user')
                     if role == 'system':
-                        system_msg += content
+                        system_msgs.extend([content.strip()])
                     else:
                         chat_msgs.extend([f"\n{role}: {content.strip()}"])  # Strip content? linefeed?
+
+                # You are ChatGPT, a large language model trained by OpenAI. Answer as concisely as possible. Knowledge cutoff: {knowledge_cutoff} Current date: {current_date}
+                system_msg = 'You are assistant, a large language model. Answer as concisely as possible.'
+                if system_msgs:
+                    system_msg = '\n'.join(system_msgs)
 
                 system_token_count = len(encode(system_msg)[0])
                 remaining_tokens = req_params['truncation_length'] - req_params['max_new_tokens'] - system_token_count
@@ -277,9 +287,9 @@ class Handler(BaseHTTPRequestHandler):
                     print(f"truncating chat messages, dropping {len(chat_msgs)} messages.")
 
                 if system_msg:
-                    prompt = 'system: ' + system_msg + '\n' + chat_msg + '\nassistant: '
+                    prompt = 'system: ' + system_msg + '\n' + chat_msg + '\nassistant:'
                 else:
-                    prompt = chat_msg + '\nassistant: '
+                    prompt = chat_msg + '\nassistant:'
 
                 token_count = len(encode(prompt)[0])
 
@@ -396,6 +406,11 @@ class Handler(BaseHTTPRequestHandler):
                             "finish_reason": None,
                         }],
                     }
+
+                    # strip extra leading space off new generated content
+                    if len_seen == 0 and new_content[0] == ' ':
+                        new_content = new_content[1:]
+
                     if stream_object_type == 'text_completion.chunk':
                         chunk[resp_list][0]['text'] = new_content
                     else:
@@ -432,8 +447,14 @@ class Handler(BaseHTTPRequestHandler):
                 self.wfile.write(response.encode('utf-8'))
                 # Finished if streaming.
                 if debug:
+                    if answer and answer[0] == ' ':
+                        answer = answer[1:]
                     print({'response': answer})
                 return
+
+            # strip extra leading space off new generated content
+            if answer and answer[0] == ' ':
+                answer = answer[1:]
 
             if debug:
                 print({'response': answer})
@@ -500,12 +521,17 @@ class Handler(BaseHTTPRequestHandler):
                 'add_bos_token': shared.settings.get('add_bos_token', True),
                 'do_sample': True,
                 'typical_p': 1.0,
+                'epsilon_cutoff': 0,  # In units of 1e-4
+                'eta_cutoff': 0,  # In units of 1e-4
                 'min_length': 0,
                 'no_repeat_ngram_size': 0,
                 'num_beams': 1,
                 'penalty_alpha': 0.0,
                 'length_penalty': 1,
                 'early_stopping': False,
+                'mirostat_mode': 0,
+                'mirostat_tau': 5,
+                'mirostat_eta': 0.1,
                 'ban_eos_token': False,
                 'skip_special_tokens': True,
                 'custom_stopping_strings': [],

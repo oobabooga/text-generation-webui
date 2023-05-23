@@ -1,4 +1,5 @@
 {
+    "dark_theme": false,
     "autoload_model": true,
     "max_new_tokens": 200,
     "max_new_tokens_min": 1,
@@ -7,7 +8,7 @@
     "character": "None",
     "name1": "You",
     "name2": "Assistant",
-    "context": "This is a conversation with your Assistant. The Assistant is very helpful and is eager to chat with you and answer your questions.",
+    "context": "This is a conversation with your Assistant. It is a computer program designed to help you with various tasks such as answering questions, providing recommendations, and helping with decision making. You can ask it anything you want and it will do its best to give you accurate and relevant information.",
     "greeting": "",
     "turn_template": "",
     "custom_stopping_strings": "",
@@ -34,9 +35,9 @@
     ],
     "presets": {
         "default": "Default",
-        ".*(alpaca|llama|llava)": "LLaMA-Precise",
+        ".*(alpaca|llama|llava|vicuna)": "LLaMA-Precise",
         ".*pygmalion": "NovelAI-Storywriter",
-        ".*RWKV": "Naive",
+        ".*RWKV.*\.pth": "Naive",
         ".*moss": "MOSS"
     },
     "prompts": {

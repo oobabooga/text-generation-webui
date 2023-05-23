@@ -98,7 +98,7 @@ def get_download_links_from_huggingface(model, branch, text_only=False):
     is_lora = False
     while True:
         url = f"{base}{page}" + (f"?cursor={cursor.decode()}" if cursor else "")
-        r = requests.get(url)
+        r = requests.get(url, timeout=10)
         r.raise_for_status()
         content = r.content
 
@@ -169,7 +169,7 @@ def get_single_file(url, output_folder, start_from_scratch=False):
     output_path = output_folder / filename
     if output_path.exists() and not start_from_scratch:
         # Check if the file has already been downloaded completely
-        r = requests.get(url, stream=True)
+        r = requests.get(url, stream=True, timeout=10)
         total_size = int(r.headers.get('content-length', 0))
         if output_path.stat().st_size >= total_size:
             return
@@ -180,7 +180,7 @@ def get_single_file(url, output_folder, start_from_scratch=False):
         headers = {}
         mode = 'wb'
 
-    r = requests.get(url, stream=True, headers=headers)
+    r = requests.get(url, stream=True, headers=headers, timeout=10)
     with open(output_path, mode) as f:
         total_size = int(r.headers.get('content-length', 0))
         block_size = 1024
