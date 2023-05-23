@@ -45,7 +45,7 @@ def find_model_type(model_name):
         return 'None'
 
     model_name_lower = model_name.lower()
-    if 'rwkv-' in model_name_lower:
+    if re.match('.*rwkv.*\.pth', model_name_lower):
         return 'rwkv'
     elif len(list(path_to_model.glob('*ggml*.bin'))) > 0:
         return 'llamacpp'
