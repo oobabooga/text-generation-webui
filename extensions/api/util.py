@@ -4,7 +4,7 @@ from threading import Thread
 from typing import Callable, Optional
 
 from modules import shared
-from modules.chat import load_character
+from modules.chat import load_character_memoized
 
 
 def build_parameters(body, chat=False):
@@ -41,8 +41,8 @@ def build_parameters(body, chat=False):
     if chat:
         character = body.get('character')
         instruction_template = body.get('instruction_template')
-        name1, name2, _, greeting, context, _ = load_character(character, shared.settings['name1'], shared.settings['name2'], instruct=False)
-        name1_instruct, name2_instruct, _, _, context_instruct, turn_template = load_character(instruction_template, '', '', instruct=True)
+        name1, name2, _, greeting, context, _ = load_character_memoized(character, shared.settings['name1'], shared.settings['name2'], instruct=False)
+        name1_instruct, name2_instruct, _, _, context_instruct, turn_template = load_character_memoized(instruction_template, '', '', instruct=True)
         generate_params.update({
             'stop_at_newline': bool(body.get('stop_at_newline', shared.settings['stop_at_newline'])),
             'chat_prompt_size': int(body.get('chat_prompt_size', shared.settings['chat_prompt_size'])),

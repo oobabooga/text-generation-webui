@@ -1,6 +1,7 @@
 import ast
 import base64
 import copy
+import functools
 import io
 import json
 import re
@@ -566,6 +567,11 @@ def load_character(character, name1, name2, instruct=False):
             save_history('instruct' if instruct else 'chat')
 
     return name1, name2, picture, greeting, context, repr(turn_template)[1:-1]
+
+
+@functools.cache
+def load_character_memoized(character, name1, name2, instruct=False):
+    return load_character(character, name1, name2, instruct=instruct)
 
 
 def upload_character(json_file, img, tavern=False):
