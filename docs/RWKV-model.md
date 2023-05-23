@@ -18,6 +18,14 @@ There is a bug in transformers==4.29.2 that prevents RWKV from being loaded in 8
 
 The instructions below are from before RWKV was supported in transformers, and they are kept for legacy purposes. The old implementation is possibly faster, but it lacks the full range of samplers that the transformers library offers.
 
+#### 0. Install the RWKV library
+
+```
+pip install rwkv
+```
+
+`0.7.3` was the last version that I tested. If you experience any issues, try ```pip install rwkv==0.7.3```.
+
 #### 1. Download the model
 
 It is available in different sizes:
