@@ -17,6 +17,7 @@ from modules import shared, ui, utils
 from modules.evaluate import (calculate_perplexity, generate_markdown_table,
                               save_past_evaluations)
 from modules.logging_colors import logger
+from tqdm.auto import tqdm
 
 # This mapping is from a very recent commit, not yet released.
 # If not available, default to a backup map for some common model types.
@@ -258,9 +259,11 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         with open(clean_path('training/datasets', f'{raw_text_file}.txt'), 'r', encoding='utf-8') as file:
             raw_text = file.read().replace('\r', '')
 
+
         cut_string = hard_cut_string.replace('\\n', '\n')
         out_tokens = []
-        for text_part in raw_text.split(cut_string):
+        logger.info("Performing the cutoffs...")
+        for text_part in tqdm(raw_text.split(cut_string)):
             if text_part.strip() == '':
                 continue
 
@@ -278,12 +281,19 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             del tokens
 
         del raw_text  # Note: could be a gig for a large dataset, so delete redundant data as we go to be safe on RAM
-        text_chunks = [shared.tokenizer.decode(x) for x in out_tokens]
+        logger.info("Generating the chunks...")
+        text_chunks = []
+        for tokens in tqdm(out_tokens):
+            text_chunks.append(shared.tokenizer.decode(tokens))
         del out_tokens
-        if newline_favor_len > 0:
-            text_chunks = [cut_chunk_for_newline(x, newline_favor_len) for x in text_chunks]
 
-        train_data = Dataset.from_list([tokenize(x) for x in text_chunks])
+        if newline_favor_len > 0:
+            logger.info("Cutting the chunks to fix newlines...")
+            text_chunks = [cut_chunk_for_newline(x, newline_favor_len) for x in tqdm(text_chunks)]
+
+        logger.info("Loading the dataset...")
+        train_data = Dataset.from_list([tokenize(x) for x in tqdm(text_chunks)])
+
         del text_chunks
         eval_data = None
 
