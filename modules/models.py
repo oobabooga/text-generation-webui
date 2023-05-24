@@ -182,6 +182,7 @@ def huggingface_loader(model_name):
             if shared.args.load_in_4bit:
 
                 # See https://github.com/huggingface/transformers/pull/23479/files
+                # and https://huggingface.co/blog/4bit-transformers-bitsandbytes
                 quantization_config = BitsAndBytesConfig(
                     load_in_4bit=True,
                     # bnb_4bit_compute_dtype=torch.bfloat16,  # Default is float32
