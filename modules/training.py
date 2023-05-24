@@ -247,20 +247,23 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     shared.tokenizer.pad_token_id = 0
     shared.tokenizer.padding_side = "left"
 
-    def encode(text):
-        return shared.tokenizer.encode(text, truncation=True, max_length=cutoff_len)
+    def encode(text, add_bos_token):
+        result = shared.tokenizer.encode(text, truncation=True, max_length=cutoff_len)
+        if not add_bos_token and result[0] == shared.tokenizer.bos_token_id:
+            result = result[1:]
+        return result
 
     def tokenize(prompt):
 
         if train_only_after == '' or train_only_after not in prompt:
-            input_ids = encode(prompt)
+            input_ids = encode(prompt, True)
             input_ids = [shared.tokenizer.pad_token_id] * (cutoff_len - len(input_ids)) + input_ids
             labels = [1] * len(input_ids)
 
         else:
             ind = prompt.index(train_only_after) + len(train_only_after)
-            before_tokens = encode(prompt[:ind])[1:]
-            after_tokens = encode(prompt[ind:])[1:]
+            before_tokens = encode(prompt[:ind], False)
+            after_tokens = encode(prompt[ind:], False)
 
             full_length = len(after_tokens) + len(before_tokens)
             if full_length > cutoff_len:
