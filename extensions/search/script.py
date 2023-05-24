@@ -5,8 +5,9 @@ from bs4 import BeautifulSoup
 # enter search: at the beginning of the prompt to start a search for the rest of the prompt.
 # TODO more search engines, visit website direct, improve scraping of the pages content
 
-max_results = 3 # number of sites to read 
-result_max_characters = 2000 # length of the 
+max_results = 3  # number of sites to read
+result_max_characters = 2000  # length of the
+
 def input_modifier(string):
     if string.strip().lower().startswith("search:"):
         searchstring = string[len("search:"):].strip()
@@ -19,6 +20,7 @@ def input_modifier(string):
             url = result.text.strip()
             if url != '':  # skip any empty urls
                 result_urls.append(url)
+
         texts = string + ' '
         count = 0
         for result_url in result_urls:
@@ -31,16 +33,8 @@ def input_modifier(string):
                     count += 1
             except:
                 continue
+
         texts = texts[0:result_max_characters]
-        print(texts)
         return texts
     else:
         return string
-
-
-def output_modifier(string):
-    return string
-
-
-def bot_prefix_modifier(string):
-    return string
