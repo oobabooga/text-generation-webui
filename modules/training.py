@@ -254,7 +254,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         if train_only_after == '' or train_only_after not in prompt:
             input_ids = encode(prompt)[:-1]
             input_ids = [shared.tokenizer.pad_token_id] * (cutoff_len - len(input_ids)) + input_ids
-            labels = None
+            labels = [1] * len(input_ids)
 
         else:
             ind = prompt.index(train_only_after) + len(train_only_after)
