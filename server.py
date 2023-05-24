@@ -288,6 +288,10 @@ def save_model_settings(model, state):
             user_config = {}
 
         model_regex = model + '$'  # For exact matches
+        for _dict in [user_config, shared.model_config]:
+            if model_regex not in _dict:
+                _dict[model_regex] = {}
+
         if model_regex not in user_config:
             user_config[model_regex] = {}
 
