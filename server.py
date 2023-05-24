@@ -366,6 +366,13 @@ def create_model_menus():
                         shared.gradio['cpu'] = gr.Checkbox(label="cpu", value=shared.args.cpu)
                         shared.gradio['bf16'] = gr.Checkbox(label="bf16", value=shared.args.bf16)
                         shared.gradio['load_in_8bit'] = gr.Checkbox(label="load-in-8bit", value=shared.args.load_in_8bit)
+                        shared.gradio['load_in_4bit'] = gr.Checkbox(label="load-in-4bit", value=shared.args.load_in_4bit)
+
+            with gr.Row():
+                shared.gradio['autoload_model'] = gr.Checkbox(value=shared.settings['autoload_model'], label='Autoload the model', info='Whether to load the model as soon as it is selected in the Model dropdown.')
+
+            shared.gradio['custom_model_menu'] = gr.Textbox(label="Download custom model or LoRA", info="Enter the Hugging Face username/model path, for instance: facebook/galactica-125m. To specify a branch, add it at the end after a \":\" character like this: facebook/galactica-125m:main")
+            shared.gradio['download_model_button'] = gr.Button("Download")
 
         with gr.Column():
             with gr.Box():
@@ -379,15 +386,6 @@ def create_model_menus():
                         shared.gradio['model_type'] = gr.Dropdown(label="model_type", choices=["None", "llama", "opt", "gptj"], value=shared.args.model_type or "None")
                         shared.gradio['pre_layer'] = gr.Slider(label="pre_layer", minimum=0, maximum=100, value=shared.args.pre_layer[0] if shared.args.pre_layer is not None else 0)
 
-    with gr.Row():
-        with gr.Column():
-            with gr.Row():
-                shared.gradio['autoload_model'] = gr.Checkbox(value=shared.settings['autoload_model'], label='Autoload the model', info='Whether to load the model as soon as it is selected in the Model dropdown.')
-
-            shared.gradio['custom_model_menu'] = gr.Textbox(label="Download custom model or LoRA", info="Enter the Hugging Face username/model path, for instance: facebook/galactica-125m. To specify a branch, add it at the end after a \":\" character like this: facebook/galactica-125m:main")
-            shared.gradio['download_model_button'] = gr.Button("Download")
-
-        with gr.Column():
             with gr.Box():
                 gr.Markdown('llama.cpp parameters')
                 with gr.Row():
@@ -978,7 +976,7 @@ def create_interface():
 
         shared.gradio['interface'].load(lambda: None, None, None, _js=f"() => {{{js}}}")
         if shared.settings['dark_theme']:
-            shared.gradio['interface'].load(lambda: None, None, None, _js=f"() => document.getElementsByTagName('body')[0].classList.add('dark')")
+            shared.gradio['interface'].load(lambda: None, None, None, _js="() => document.getElementsByTagName('body')[0].classList.add('dark')")
 
         shared.gradio['interface'].load(partial(ui.apply_interface_values, {}, use_persistent=True), None, [shared.gradio[k] for k in ui.list_interface_input_elements(chat=shared.is_chat())], show_progress=False)
 
