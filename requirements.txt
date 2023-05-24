@@ -16,5 +16,5 @@ transformers==4.29.2
 tqdm
 git+https://github.com/huggingface/peft@4fd374e80d670781c0d82c96ce94d1215ff23306
 bitsandbytes==0.38.1; platform_system != "Windows"
-llama-cpp-python==0.1.51; platform_system != "Windows"
-https://github.com/abetlen/llama-cpp-python/releases/download/v0.1.51/llama_cpp_python-0.1.51-cp310-cp310-win_amd64.whl; platform_system == "Windows"
+llama-cpp-python==0.1.53; platform_system != "Windows"
+https://github.com/abetlen/llama-cpp-python/releases/download/v0.1.53/llama_cpp_python-0.1.53-cp310-cp310-win_amd64.whl; platform_system == "Windows"
