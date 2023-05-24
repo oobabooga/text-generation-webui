@@ -2,11 +2,21 @@ import gradio as gr
 import speech_recognition as sr
 
 from modules import shared
+from faster_whisper import WhisperModel
 
 input_hijack = {
     'state': False,
     'value': ["", ""]
 }
+
+device = "auto" # cpu cuda auto
+compute_type = "default" # default int8 float16
+cpu_threads = 0 # 0 4 8 16
+num_workers = 1
+model = "medium.en" # tiny, tiny.en, base, base.en, small, small.en, medium, medium.en, large-v1, or large-v2
+
+r = WhisperModel(model, device=device, compute_type=compute_type, 
+                 cpu_threads=cpu_threads, num_workers=num_workers)
 
 
 def do_stt(audio):
@@ -17,7 +27,7 @@ def do_stt(audio):
     audio_data = sr.AudioData(sample_rate=audio[0], frame_data=audio[1], sample_width=4)
 
     try:
-        transcription = r.recognize_whisper(audio_data, language="english", model="base.en")
+        transcription = r.recognize_whisper(audio_data, beam_size=5)
     except sr.UnknownValueError:
         print("Whisper could not understand audio")
     except sr.RequestError as e:
