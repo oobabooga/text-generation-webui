@@ -6,6 +6,7 @@ import yaml
 
 from modules.logging_colors import logger
 
+generation_lock = None
 model = None
 tokenizer = None
 model_name = "None"

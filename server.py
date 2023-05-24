@@ -38,6 +38,7 @@ import zipfile
 from datetime import datetime
 from functools import partial
 from pathlib import Path
+from threading import Lock
 
 import psutil
 import torch
@@ -1075,6 +1076,7 @@ if __name__ == "__main__":
             'instruction_template': shared.settings['instruction_template']
         })
 
+    shared.generation_lock = Lock()
     # Launch the web UI
     create_interface()
     while True:
