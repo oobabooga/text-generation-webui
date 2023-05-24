@@ -13,7 +13,7 @@ from .download_urls import download_urls
 params = {
     'chunk_count': 5,
     'chunk_count_initial': 10,
-    'min_time_weight': 1.0,
+    'time_weight': 0,
     'chunk_length': 700,
     'chunk_separator': '',
     'strong_cleanup': False,
@@ -84,12 +84,12 @@ def feed_url_into_collector(urls, chunk_len, chunk_sep, strong_cleanup, threads)
         yield i
 
 
-def apply_settings(chunk_count, chunk_count_initial, min_time_weight):
+def apply_settings(chunk_count, chunk_count_initial, time_weight):
     global params
     params['chunk_count'] = int(chunk_count)
     params['chunk_count_initial'] = int(chunk_count_initial)
-    params['min_time_weight'] = min_time_weight
-    settings_to_display = {k: params[k] for k in params if k in ['chunk_count', 'chunk_count_initial', 'min_time_weight']}
+    params['time_weight'] = time_weight
+    settings_to_display = {k: params[k] for k in params if k in ['chunk_count', 'chunk_count_initial', 'time_weight']}
     yield f"The following settings are now active: {str(settings_to_display)}"
 
 
@@ -117,7 +117,7 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
             add_chunks_to_collector(chunks, chat_collector)
             query = '\n'.join(shared.history['internal'][-1] + [user_input])
             try:
-                best_ids = chat_collector.get_ids_sorted(query, n_results=params['chunk_count'], n_initial=params['chunk_count_initial'], min_time_weight=params['min_time_weight'])
+                best_ids = chat_collector.get_ids_sorted(query, n_results=params['chunk_count'], n_initial=params['chunk_count_initial'], time_weight=params['time_weight'])
                 additional_context = '\n'
                 for id_ in best_ids:
                     if shared.history['internal'][id_][0] != '<|BEGIN-VISIBLE-CHAT|>':
@@ -241,9 +241,8 @@ def ui():
             with gr.Tab("Generation settings"):
                 chunk_count = gr.Number(value=params['chunk_count'], label='Chunk count', info='The number of closest-matching chunks to include in the prompt.')
                 gr.Markdown('Time weighting (optional, used in to make recently added chunks more likely to appear)')
-                with gr.Row():
-                    min_time_weight = gr.Number(value=params['min_time_weight'], label='Minimum time weight', info='Time weight will range from this value to 1, with more recent chunks receiving lower weight (higher priority). Set to 1 to disable time weight.')
-                    chunk_count_initial = gr.Number(value=params['chunk_count_initial'], label='Initial chunk count', info='The number of closest-matching chunks retrieved for time weight reordering in chat mode. This should be >= chunk count. Only used if min_time_weight != 1.')
+                time_weight = gr.Slider(0, 1, value=params['time_weight'], label='Time weight', info='Defines the strength of the time weighting. 0 = no time weighting.')
+                chunk_count_initial = gr.Number(value=params['chunk_count_initial'], label='Initial chunk count', info='The number of closest-matching chunks retrieved for time weight reordering in chat mode. This should be >= chunk count. Only used if time_weight != 1.')
 
                 update_settings = gr.Button('Apply changes')
 
@@ -255,4 +254,4 @@ def ui():
     update_data.click(feed_data_into_collector, [data_input, chunk_len, chunk_sep], last_updated, show_progress=False)
     update_url.click(feed_url_into_collector, [url_input, chunk_len, chunk_sep, strong_cleanup, threads], last_updated, show_progress=False)
     update_file.click(feed_file_into_collector, [file_input, chunk_len, chunk_sep], last_updated, show_progress=False)
-    update_settings.click(apply_settings, [chunk_count, chunk_count_initial, min_time_weight], last_updated, show_progress=False)
+    update_settings.click(apply_settings, [chunk_count, chunk_count_initial, time_weight], last_updated, show_progress=False)
