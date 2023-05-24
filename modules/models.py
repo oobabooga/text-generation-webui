@@ -149,7 +149,7 @@ def huggingface_loader(model_name):
         LoaderClass = AutoModelForCausalLM
 
     # Load the model in simple 16-bit mode by default
-    if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.auto_devices, shared.args.disk, shared.args.deepspeed, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None]):
+    if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.load_in_4bit, shared.args.auto_devices, shared.args.disk, shared.args.deepspeed, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None]):
         model = LoaderClass.from_pretrained(Path(f"{shared.args.model_dir}/{model_name}"), low_cpu_mem_usage=True, torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16, trust_remote_code=shared.args.trust_remote_code)
         if torch.has_mps:
             device = torch.device('mps')
@@ -179,7 +179,9 @@ def huggingface_loader(model_name):
             params["torch_dtype"] = torch.float32
         else:
             params["device_map"] = 'auto'
-            if shared.args.load_in_8bit and any((shared.args.auto_devices, shared.args.gpu_memory)):
+            if shared.args.load_in_4bit:
+                params['load_in_4bit'] = True
+            elif shared.args.load_in_8bit and any((shared.args.auto_devices, shared.args.gpu_memory)):
                 params['quantization_config'] = BitsAndBytesConfig(load_in_8bit=True, llm_int8_enable_fp32_cpu_offload=True)
             elif shared.args.load_in_8bit:
                 params['quantization_config'] = BitsAndBytesConfig(load_in_8bit=True)
