@@ -73,11 +73,17 @@ def toggle_text_in_history():
 
 
 def state_modifier(state):
+    if not params['activate']:
+        return state
+
     state['stream'] = False
     return state
 
 
 def input_modifier(string):
+    if not params['activate']:
+        return string
+
     """
     This function is applied to your text inputs before
     they are fed into the model.
@@ -88,7 +94,6 @@ def input_modifier(string):
 
 
 def history_modifier(history):
-
     # Remove autoplay from the last reply
     if len(history['internal']) > 0:
         history['visible'][-1] = [
