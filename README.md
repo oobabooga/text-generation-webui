@@ -13,7 +13,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * Dropdown menu for switching between models
 * Notebook mode that resembles OpenAI's playground
 * Chat mode for conversation and role-playing
-* Instruct mode compatible with various formats, including Alpaca, Vicuna, Open Assistant, Dolly, Koala, ChatGLM, MOSS, RWKV-Raven, Galactica, StableLM, WizardLM, Baize, MPT, and INCITE
+* Instruct mode compatible with various formats, including Alpaca, Vicuna, Open Assistant, Dolly, Koala, ChatGLM, MOSS, RWKV-Raven, Galactica, StableLM, WizardLM, Baize, Ziya, Chinese-Vicuna, MPT, INCITE, Wizard Mega, KoAlpaca, Vigogne, Bactrian, h2o, and OpenBuddy
 * [Multimodal pipelines, including LLaVA and MiniGPT-4](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/multimodal)
 * Markdown output for [GALACTICA](https://github.com/paperswithcode/galai), including LaTeX rendering
 * Nice HTML output for GPT-4chan
@@ -118,9 +118,8 @@ cp docker/.env.example .env
 docker compose up --build
 ```
 
-You need to have docker compose v2.17 or higher installed in your system. To see how to install docker compose itself, see the guide in [here](https://github.com/oobabooga/text-generation-webui/blob/main/docs/Docker.md).
-
-Contributed by [@loeken](https://github.com/loeken) in [#633](https://github.com/oobabooga/text-generation-webui/pull/633)
+* You need to have docker compose v2.17 or higher installed. See [this guide](https://github.com/oobabooga/text-generation-webui/blob/main/docs/Docker.md) for instructions.
+* For additional docker files, check out [this repository](https://github.com/Atinoda/text-generation-webui/blob/docker-wrapper/docs/Docker.md#dedicated-docker-repository).
 
 ### Updating the requirements
 
@@ -230,6 +229,7 @@ Optionally, you can use the following command-line flags:
 | `--n_batch` | Maximum number of prompt tokens to batch together when calling llama_eval. |
 | `--no-mmap` | Prevent mmap from being used. |
 | `--mlock`   | Force the system to keep the model in RAM. |
+| `--cache-capacity CACHE_CAPACITY`   | Maximum cache capacity. Examples: 2000MiB, 2GiB. When provided without units, bytes will be assumed. |
 | `--n-gpu-layers N_GPU_LAYERS` | Number of layers to offload to the GPU. Only works if llama-cpp-python was compiled with BLAS. Set this to 1000000000 to offload all layers to the GPU. |
 
 #### GPTQ
@@ -239,7 +239,7 @@ Optionally, you can use the following command-line flags:
 | `--wbits WBITS`           | Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported. |
 | `--model_type MODEL_TYPE` | Model type of pre-quantized model. Currently LLaMA, OPT, and GPT-J are supported. |
 | `--groupsize GROUPSIZE`   | Group size. |
-| `--pre_layer PRE_LAYER`   | The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models. |
+| `--pre_layer PRE_LAYER [PRE_LAYER ...]`  | The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models. For multi-gpu, write the numbers separated by spaces, eg `--pre_layer 30 60`. |
 | `--checkpoint CHECKPOINT` | The path to the quantized checkpoint file. If not specified, it will be automatically detected. |
 | `--monkey-patch`          | Apply the monkey patch for using LoRAs with quantized models.
 | `--quant_attn`         | (triton) Enable quant attention. |
@@ -279,6 +279,7 @@ Optionally, you can use the following command-line flags:
 | `--listen-port LISTEN_PORT`           | The listening port that the server will use. |
 | `--share`                             | Create a public URL. This is useful for running the web UI on Google Colab or similar. |
 | `--auto-launch`                       | Open the web UI in the default browser upon launch. |
+| `--gradio-auth USER:PWD`              | set gradio authentication like "username:password"; or comma-delimit multiple like "u1:p1,u2:p2,u3:p3" |
 | `--gradio-auth-path GRADIO_AUTH_PATH` | Set the gradio authentication file path. The file should contain one or more user:password pairs in this format: "u1:p1,u2:p2,u3:p3" |
 
 #### API

@@ -1,9 +1,10 @@
 import argparse
-import logging
 from collections import OrderedDict
 from pathlib import Path
 
 import yaml
+
+from modules.logging_colors import logger
 
 model = None
 tokenizer = None
@@ -32,6 +33,7 @@ reload_inputs = []  # Parameters for reloading the chat interface
 need_restart = False
 
 settings = {
+    'dark_theme': False,
     'autoload_model': True,
     'max_new_tokens': 200,
     'max_new_tokens_min': 1,
@@ -40,7 +42,7 @@ settings = {
     'character': 'None',
     'name1': 'You',
     'name2': 'Assistant',
-    'context': 'This is a conversation with your Assistant. The Assistant is very helpful and is eager to chat with you and answer your questions.',
+    'context': 'This is a conversation with your Assistant. It is a computer program designed to help you with various tasks such as answering questions, providing recommendations, and helping with decision making. You can ask it anything you want and it will do its best to give you accurate and relevant information.',
     'greeting': '',
     'turn_template': '',
     'custom_stopping_strings': '',
@@ -65,9 +67,9 @@ settings = {
     'chat_default_extensions': ["gallery"],
     'presets': {
         'default': 'Default',
-        '.*(alpaca|llama|llava)': "LLaMA-Precise",
+        '.*(alpaca|llama|llava|vicuna)': "LLaMA-Precise",
         '.*pygmalion': 'NovelAI-Storywriter',
-        '.*RWKV': 'Naive',
+        '.*RWKV.*\.pth': 'Naive',
         '.*moss': 'MOSS',
     },
     'prompts': {
@@ -123,18 +125,23 @@ parser.add_argument('--threads', type=int, default=0, help='Number of threads to
 parser.add_argument('--n_batch', type=int, default=512, help='Maximum number of prompt tokens to batch together when calling llama_eval.')
 parser.add_argument('--no-mmap', action='store_true', help='Prevent mmap from being used.')
 parser.add_argument('--mlock', action='store_true', help='Force the system to keep the model in RAM.')
+parser.add_argument('--cache-capacity', type=str, help='Maximum cache capacity. Examples: 2000MiB, 2GiB. When provided without units, bytes will be assumed.')
 parser.add_argument('--n-gpu-layers', type=int, default=0, help='Number of layers to offload to the GPU.')
 
 # GPTQ
 parser.add_argument('--wbits', type=int, default=0, help='Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported.')
 parser.add_argument('--model_type', type=str, help='Model type of pre-quantized model. Currently LLaMA, OPT, and GPT-J are supported.')
 parser.add_argument('--groupsize', type=int, default=-1, help='Group size.')
-parser.add_argument('--pre_layer', type=int, default=0, help='The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models.')
+parser.add_argument('--pre_layer', type=int, nargs="+", help='The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models. For multi-gpu, write the numbers separated by spaces, eg --pre_layer 30 60.')
 parser.add_argument('--checkpoint', type=str, help='The path to the quantized checkpoint file. If not specified, it will be automatically detected.')
 parser.add_argument('--monkey-patch', action='store_true', help='Apply the monkey patch for using LoRAs with quantized models.')
 parser.add_argument('--quant_attn', action='store_true', help='(triton) Enable quant attention.')
 parser.add_argument('--warmup_autotune', action='store_true', help='(triton) Enable warmup autotune.')
 parser.add_argument('--fused_mlp', action='store_true', help='(triton) Enable fused mlp.')
+
+# AutoGPTQ
+parser.add_argument('--autogptq', action='store_true', help='Use AutoGPTQ for loading quantized models instead of the internal GPTQ loader.')
+parser.add_argument('--triton', action='store_true', help='Use triton.')
 
 # FlexGen
 parser.add_argument('--flexgen', action='store_true', help='Enable the use of FlexGen offloading.')
@@ -157,10 +164,13 @@ parser.add_argument('--listen-host', type=str, help='The hostname that the serve
 parser.add_argument('--listen-port', type=int, help='The listening port that the server will use.')
 parser.add_argument('--share', action='store_true', help='Create a public URL. This is useful for running the web UI on Google Colab or similar.')
 parser.add_argument('--auto-launch', action='store_true', default=False, help='Open the web UI in the default browser upon launch.')
+parser.add_argument("--gradio-auth", type=str, help='set gradio authentication like "username:password"; or comma-delimit multiple like "u1:p1,u2:p2,u3:p3"', default=None)
 parser.add_argument("--gradio-auth-path", type=str, help='Set the gradio authentication file path. The file should contain one or more user:password pairs in this format: "u1:p1,u2:p2,u3:p3"', default=None)
 
 # API
 parser.add_argument('--api', action='store_true', help='Enable the API extension.')
+parser.add_argument('--api-blocking-port', type=int, default=5000, help='The listening port for the blocking API.')
+parser.add_argument('--api-streaming-port', type=int,  default=5005, help='The listening port for the streaming API.')
 parser.add_argument('--public-api', action='store_true', help='Create a public URL for the API using Cloudfare.')
 
 # Multimodal
@@ -173,14 +183,14 @@ args_defaults = parser.parse_args([])
 deprecated_dict = {}
 for k in deprecated_dict:
     if getattr(args, k) != deprecated_dict[k][1]:
-        logging.warning(f"--{k} is deprecated and will be removed. Use --{deprecated_dict[k][0]} instead.")
+        logger.warning(f"--{k} is deprecated and will be removed. Use --{deprecated_dict[k][0]} instead.")
         setattr(args, deprecated_dict[k][0], getattr(args, k))
 
 # Security warnings
 if args.trust_remote_code:
-    logging.warning("trust_remote_code is enabled. This is dangerous.")
+    logger.warning("trust_remote_code is enabled. This is dangerous.")
 if args.share:
-    logging.warning("The gradio \"share link\" feature downloads a proprietary and unaudited blob to create a reverse tunnel. This is potentially dangerous.")
+    logger.warning("The gradio \"share link\" feature downloads a proprietary and unaudited blob to create a reverse tunnel. This is potentially dangerous.")
 
 
 def add_extension(name):

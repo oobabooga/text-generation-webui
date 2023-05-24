@@ -1,0 +1,4 @@
+user: "### 질문:"
+bot: "### 답변:"
+turn_template: "<|user|> <|user-message|>\n\n<|bot|><|bot-message|>\n\n"
+context: ""

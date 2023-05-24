@@ -7,6 +7,7 @@
 * [Using LoRAs](Using-LoRAs.md)
 * [llama.cpp models](llama.cpp-models.md)
 * [RWKV model](RWKV-model.md)
+* [Generation parameters](Generation-parameters.md)
 * [Extensions](Extensions.md)
 * [Chat mode](Chat-mode.md)
 * [DeepSpeed](DeepSpeed.md)
@@ -17,3 +18,4 @@
 * [Windows installation guide](Windows-installation-guide.md)
 * [WSL installation guide](WSL-installation-guide.md)
 * [Docker Compose](Docker.md)
+* [Audio notification](Audio-Notification.md)
