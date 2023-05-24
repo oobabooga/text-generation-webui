@@ -259,7 +259,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
         else:
             ind = prompt.index(train_only_after) + len(train_only_after)
-            before_tokens = encode(prompt[:ind])[:-1]
+            before_tokens = encode(prompt[:ind])[1:]
             after_tokens = encode(prompt[ind:])[1:]
 
             full_length = len(after_tokens) + len(before_tokens)
