@@ -149,36 +149,13 @@ def huggingface_loader(model_name):
         LoaderClass = AutoModelForCausalLM
 
     # Load the model in simple 16-bit mode by default
-    if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.wbits, shared.args.auto_devices, shared.args.disk, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None, shared.args.deepspeed, shared.args.flexgen, shared.is_RWKV, shared.is_llamacpp]):
-        model = LoaderClass.from_pretrained(Path(f"{shared.args.model_dir}/{model_name}"), low_cpu_mem_usage=True, torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16, trust_remote_code=trust_remote_code)
+    if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.auto_devices, shared.args.disk, shared.args.deepspeed, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None]):
+        model = LoaderClass.from_pretrained(Path(f"{shared.args.model_dir}/{model_name}"), low_cpu_mem_usage=True, torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16, trust_remote_code=shared.args.trust_remote_code)
         if torch.has_mps:
             device = torch.device('mps')
             model = model.to(device)
         else:
             model = model.cuda()
-
-    # FlexGen
-    elif shared.args.flexgen:
-        # Initialize environment
-        env = ExecutionEnv.create(shared.args.disk_cache_dir)
-
-        # Offloading policy
-        policy = Policy(1, 1,
-                        shared.args.percent[0], shared.args.percent[1],
-                        shared.args.percent[2], shared.args.percent[3],
-                        shared.args.percent[4], shared.args.percent[5],
-                        overlap=True, sep_layer=True, pin_weight=shared.args.pin_weight,
-                        cpu_cache_compute=False, attn_sparsity=1.0,
-                        compress_weight=shared.args.compress_weight,
-                        comp_weight_config=CompressionConfig(
-                            num_bits=4, group_size=64,
-                            group_dim=0, symmetric=False),
-                        compress_cache=False,
-                        comp_cache_config=CompressionConfig(
-                            num_bits=4, group_size=64,
-                            group_dim=2, symmetric=False))
-
-        model = OptLM(f"facebook/{model_name}", env, shared.args.model_dir, policy)
 
     # DeepSpeed ZeRO-3
     elif shared.args.deepspeed:
@@ -216,7 +193,6 @@ def huggingface_loader(model_name):
                 params["offload_folder"] = shared.args.disk_cache_dir
 
         checkpoint = Path(f'{shared.args.model_dir}/{model_name}')
-
         if shared.args.load_in_8bit and params.get('max_memory', None) is not None and params['device_map'] == 'auto':
             config = AutoConfig.from_pretrained(checkpoint, trust_remote_code=shared.args.trust_remote_code)
             with init_empty_weights():
@@ -234,27 +210,12 @@ def huggingface_loader(model_name):
 
     return model
 
-    # Loading the tokenizer
-    if any((k in model_name.lower() for k in ['gpt4chan', 'gpt-4chan'])) and Path(f"{shared.args.model_dir}/gpt-j-6B/").exists():
-        tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/gpt-j-6B/"))
-    elif type(model) is transformers.LlamaForCausalLM:
-        tokenizer = None
 
 def flexgen_loader(model_name):
     from flexgen.flex_opt import CompressionConfig, ExecutionEnv, OptLM, Policy
 
-        # Otherwise, load it from the model folder and hope that these
-        # are not outdated tokenizer files.
-        if tokenizer is None:
-            tokenizer = LlamaTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/{model_name}/"), clean_up_tokenization_spaces=True)
-            try:
-                tokenizer.eos_token_id = 2
-                tokenizer.bos_token_id = 1
-                tokenizer.pad_token_id = 0
-            except:
-                pass
-    else:
-        tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/{model_name}/"), trust_remote_code=trust_remote_code)
+    # Initialize environment
+    env = ExecutionEnv.create(shared.args.disk_cache_dir)
 
     # Offloading policy
     policy = Policy(1, 1,
