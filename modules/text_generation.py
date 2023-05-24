@@ -1,14 +1,13 @@
 import ast
 import random
 import re
+import threading
 import time
 import traceback
 
 import numpy as np
 import torch
 import transformers
-
-import threading
 
 import modules.shared as shared
 from modules.callbacks import (Iteratorize, Stream,
@@ -18,6 +17,7 @@ from modules.html_generator import generate_4chan_html, generate_basic_html
 from modules.logging_colors import logger
 from modules.models import clear_torch_cache, local_rank
 
+
 def generate_reply(*args, **kwargs):
     shared.generation_lock.acquire()
     try:
@@ -25,6 +25,7 @@ def generate_reply(*args, **kwargs):
             yield result
     finally:
         shared.generation_lock.release()
+
 
 def get_max_prompt_length(state):
     max_length = state['truncation_length'] - state['max_new_tokens']
