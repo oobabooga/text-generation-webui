@@ -163,6 +163,7 @@ def generate_reply_wrapper(question, state, eos_token=None, stopping_strings=Non
 
         yield formatted_outputs(reply, shared.model_name)
 
+
 def _generate_reply(question, state, eos_token=None, stopping_strings=None, is_chat=False):
     state = apply_extensions('state', state)
     generate_func = apply_extensions('custom_generate_reply')

@@ -51,7 +51,6 @@ from modules.extensions import apply_extensions
 from modules.html_generator import chat_html_wrapper
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, load_soft_prompt, unload_model
-
 from modules.text_generation import (generate_reply_wrapper,
                                      get_encoded_length, stop_everything_event)
 
