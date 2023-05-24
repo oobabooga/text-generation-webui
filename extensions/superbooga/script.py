@@ -240,7 +240,7 @@ def ui():
 
             with gr.Tab("Generation settings"):
                 chunk_count = gr.Number(value=params['chunk_count'], label='Chunk count', info='The number of closest-matching chunks to include in the prompt.')
-                gr.Markdown('Time weighting (optional, used in chat mode to make recent messages more likely to appear)')
+                gr.Markdown('Time weighting (optional, used in to make recently added chunks more likely to appear)')
                 with gr.Row():
                     min_time_weight = gr.Number(value=params['min_time_weight'], label='Minimum time weight', info='Time weight will range from this value to 1, with more recent chunks receiving lower weight (higher priority). Set to 1 to disable time weight.')
                     chunk_count_initial = gr.Number(value=params['chunk_count_initial'], label='Initial chunk count', info='The number of closest-matching chunks retrieved for time weight reordering in chat mode. This should be >= chunk count. Only used if min_time_weight != 1.')
