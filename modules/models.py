@@ -180,7 +180,17 @@ def huggingface_loader(model_name):
         else:
             params["device_map"] = 'auto'
             if shared.args.load_in_4bit:
-                params['load_in_4bit'] = True
+
+                # See https://github.com/huggingface/transformers/pull/23479/files
+                quantization_config = BitsAndBytesConfig(
+                    load_in_4bit=True,
+                    # bnb_4bit_compute_dtype=torch.bfloat16,  # Default is float32
+                    # bnb_4bit_quant_type="nf4",
+                    # bnb_4bit_use_double_quant=True,
+                )
+
+                params['quantization_config'] = quantization_config
+
             elif shared.args.load_in_8bit and any((shared.args.auto_devices, shared.args.gpu_memory)):
                 params['quantization_config'] = BitsAndBytesConfig(load_in_8bit=True, llm_int8_enable_fp32_cpu_offload=True)
             elif shared.args.load_in_8bit:
