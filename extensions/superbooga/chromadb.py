@@ -78,7 +78,7 @@ class ChromaCollector(Collecter):
         if len(self.ids) <= 1:
             return distances.copy()
 
-        return [distance * (_id / (len(self.ids) - 1) * min_time_weight - _id / (len(self.ids) - 1) + 1) for _id, distance in zip(ids, distances)]
+        return [distance * (1 - _id / (len(self.ids) - 1) * (1 - min_time_weight)) for _id, distance in zip(ids, distances)]
 
     # Get ids by similarity and then sort by insertion order
     def get_ids_sorted(self, search_strings: list[str], n_results: int, n_initial: int = None, min_time_weight: float = 1.0) -> list[str]:
