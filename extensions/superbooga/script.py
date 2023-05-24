@@ -242,7 +242,7 @@ def ui():
                 chunk_count = gr.Number(value=params['chunk_count'], label='Chunk count', info='The number of closest-matching chunks to include in the prompt.')
                 gr.Markdown('Time weighting (optional, used in to make recently added chunks more likely to appear)')
                 time_weight = gr.Slider(0, 1, value=params['time_weight'], label='Time weight', info='Defines the strength of the time weighting. 0 = no time weighting.')
-                chunk_count_initial = gr.Number(value=params['chunk_count_initial'], label='Initial chunk count', info='The number of closest-matching chunks retrieved for time weight reordering in chat mode. This should be >= chunk count. Only used if time_weight != 1.')
+                chunk_count_initial = gr.Number(value=params['chunk_count_initial'], label='Initial chunk count', info='The number of closest-matching chunks retrieved for time weight reordering in chat mode. This should be >= chunk count. Only used if time_weight > 0.')
 
                 update_settings = gr.Button('Apply changes')
 
