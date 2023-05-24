@@ -9,32 +9,6 @@ import torch
 import transformers
 
 import threading
-import queue
-
-class GenerationQueue:
-    def __init__(self):
-        self.task_queue = queue.Queue()
-        self.worker_thread = threading.Thread(target=self.process_generate_queue)
-        self.worker_thread.daemon = True
-        self.worker_thread.start()
-
-    def schedule_generation(self, *args, **kwargs):
-        result_queue = queue.Queue()
-        self.task_queue.put((args, kwargs, result_queue))  # Put the task on the task queue
-        while True:
-            result = result_queue.get()  # Wait for the result
-            if result is None:
-                break  # Exit the loop when there are no more results
-            yield result
-
-    def process_generate_queue(self):
-        while True:
-            args, kwargs, result_queue = self.task_queue.get()
-            generator = _generate_reply(*args, **kwargs)
-            for result in generator:
-                result_queue.put(result)  # Put the result into the result queue
-            result_queue.put(None)  # Put None to signal the end of results
-            self.task_queue.task_done()
 
 import modules.shared as shared
 from modules.callbacks import (Iteratorize, Stream,
@@ -45,8 +19,12 @@ from modules.logging_colors import logger
 from modules.models import clear_torch_cache, local_rank
 
 def generate_reply(*args, **kwargs):
-    for result in shared.queue.schedule_generation(*args, **kwargs):
-        yield result
+    shared.generation_lock.acquire()
+    try:
+        for result in _generate_reply(*args, **kwargs):
+            yield result
+    finally:
+        shared.generation_lock.release()
 
 def get_max_prompt_length(state):
     max_length = state['truncation_length'] - state['max_new_tokens']

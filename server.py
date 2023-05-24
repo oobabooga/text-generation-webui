@@ -39,6 +39,8 @@ from datetime import datetime
 from functools import partial
 from pathlib import Path
 
+from threading import Lock
+
 import psutil
 import torch
 import yaml
@@ -52,7 +54,7 @@ from modules.LoRA import add_lora_to_model
 from modules.models import load_model, load_soft_prompt, unload_model
 
 from modules.text_generation import (generate_reply_wrapper,
-                                     get_encoded_length, stop_everything_event, GenerationQueue)
+                                     get_encoded_length, stop_everything_event)
 
 
 def load_model_wrapper(selected_model, autoload=False):
@@ -1055,7 +1057,7 @@ if __name__ == "__main__":
             'instruction_template': shared.settings['instruction_template']
         })
 
-    shared.queue = GenerationQueue()
+    shared.generation_lock = Lock()
     # Launch the web UI
     create_interface()
     while True:
