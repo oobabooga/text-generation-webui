@@ -293,6 +293,7 @@ def save_model_settings(model, state):
 
         for k in ui.list_model_elements():
             user_config[model_regex][k] = state[k]
+            shared.model_config[model_regex][k] = state[k]
 
         with open(p, 'w') as f:
             f.write(yaml.dump(user_config))
