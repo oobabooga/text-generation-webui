@@ -4,6 +4,7 @@ training/datasets
 extensions/silero_tts/outputs
 extensions/elevenlabs_tts/outputs
 extensions/sd_api_pictures/outputs
+extensions/multimodal/pipelines
 logs
 loras
 models
@@ -21,7 +22,11 @@ venv/
 *.log
 
 settings.json
+notification.mp3
 img_bot*
 img_me*
 prompts/[0-9]*
 models/config-user.yaml
+
+.DS_Store
+Thumbs.db

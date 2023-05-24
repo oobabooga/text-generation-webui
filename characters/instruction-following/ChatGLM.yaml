@@ -1,3 +1,4 @@
-name: "答:"
-your_name: "[Round <|round|>]\n问:"
+user: "[Round <|round|>]\n问："
+bot: "答："
+turn_template: "<|user|><|user-message|>\n<|bot|><|bot-message|>\n"
 context: ""
