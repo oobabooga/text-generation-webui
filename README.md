@@ -215,7 +215,7 @@ Optionally, you can use the following command-line flags:
 | `--disk`                                    | If the model is too large for your GPU(s) and CPU combined, send the remaining layers to the disk. |
 | `--disk-cache-dir DISK_CACHE_DIR`           | Directory to save the disk cache to. Defaults to `cache/`. |
 | `--load-in-8bit`                            | Load the model with 8-bit precision (using bitsandbytes).|
-| `--load-in-4bit`                            | Load the model with 8-bit precision (using bitsandbytes).|
+| `--load-in-4bit`                            | Load the model with 4-bit precision (using bitsandbytes).|
 | `--bf16`                                    | Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU. |
 | `--no-cache`                                | Set `use_cache` to False while generating text. This reduces the VRAM usage a bit with a performance cost. |
 | `--xformers`                                | Use xformer's memory efficient attention. This should increase your tokens/s. |
