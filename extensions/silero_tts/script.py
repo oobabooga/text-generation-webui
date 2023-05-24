@@ -3,9 +3,9 @@ from pathlib import Path
 
 import gradio as gr
 import torch
-from extensions.silero_tts import tts_preprocessor
 from modules import chat, shared
-from modules.html_generator import chat_html_wrapper
+
+from extensions.silero_tts import tts_preprocessor
 
 torch._C._jit_set_profiling_mode(False)
 
@@ -56,14 +56,12 @@ def load_model():
     return model
 
 
-def remove_tts_from_history(name1, name2, mode, style):
+def remove_tts_from_history():
     for i, entry in enumerate(shared.history['internal']):
         shared.history['visible'][i] = [shared.history['visible'][i][0], entry[1]]
 
-    return chat_html_wrapper(shared.history['visible'], name1, name2, mode, style)
 
-
-def toggle_text_in_history(name1, name2, mode, style):
+def toggle_text_in_history():
     for i, entry in enumerate(shared.history['visible']):
         visible_reply = entry[1]
         if visible_reply.startswith('<audio'):
@@ -73,35 +71,36 @@ def toggle_text_in_history(name1, name2, mode, style):
             else:
                 shared.history['visible'][i] = [shared.history['visible'][i][0], f"{visible_reply.split('</audio>')[0]}</audio>"]
 
-    return chat_html_wrapper(shared.history['visible'], name1, name2, mode, style)
-
 
 def state_modifier(state):
+    if not params['activate']:
+        return state
+
     state['stream'] = False
     return state
 
 
 def input_modifier(string):
-    """
-    This function is applied to your text inputs before
-    they are fed into the model.
-    """
-
-    # Remove autoplay from the last reply
-    if shared.is_chat() and len(shared.history['internal']) > 0:
-        shared.history['visible'][-1] = [shared.history['visible'][-1][0], shared.history['visible'][-1][1].replace('controls autoplay>', 'controls>')]
+    if not params['activate']:
+        return string
 
     shared.processing_message = "*Is recording a voice message...*"
     return string
 
 
+def history_modifier(history):
+    # Remove autoplay from the last reply
+    if len(history['internal']) > 0:
+        history['visible'][-1] = [
+            history['visible'][-1][0],
+            history['visible'][-1][1].replace('controls autoplay>', 'controls>')
+        ]
+
+    return history
+
+
 def output_modifier(string):
-    """
-    This function is applied to the model outputs.
-    """
-
     global model, current_params, streaming_state
-
     for i in params:
         if params[i] != current_params[i]:
             model = load_model()
@@ -128,16 +127,6 @@ def output_modifier(string):
             string += f'\n\n{original_string}'
 
     shared.processing_message = "*Is typing...*"
-    return string
-
-
-def bot_prefix_modifier(string):
-    """
-    This function is only applied in chat mode. It modifies
-    the prefix text for the Bot and can be used to bias its
-    behavior.
-    """
-
     return string
 
 
@@ -169,15 +158,20 @@ def ui():
     # Convert history with confirmation
     convert_arr = [convert_confirm, convert, convert_cancel]
     convert.click(lambda: [gr.update(visible=True), gr.update(visible=False), gr.update(visible=True)], None, convert_arr)
-    convert_confirm.click(lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr)
-    convert_confirm.click(remove_tts_from_history, [shared.gradio[k] for k in ['name1', 'name2', 'mode', 'chat_style']], shared.gradio['display'])
-    convert_confirm.click(chat.save_history, shared.gradio['mode'], [], show_progress=False)
+    convert_confirm.click(
+        lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr).then(
+        remove_tts_from_history, None, None).then(
+        chat.save_history, shared.gradio['mode'], None, show_progress=False).then(
+        chat.redraw_html, shared.reload_inputs, shared.gradio['display'])
+
     convert_cancel.click(lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr)
 
     # Toggle message text in history
-    show_text.change(lambda x: params.update({"show_text": x}), show_text, None)
-    show_text.change(toggle_text_in_history, [shared.gradio[k] for k in ['name1', 'name2', 'mode', 'chat_style']], shared.gradio['display'])
-    show_text.change(chat.save_history, shared.gradio['mode'], [], show_progress=False)
+    show_text.change(
+        lambda x: params.update({"show_text": x}), show_text, None).then(
+        toggle_text_in_history, None, None).then(
+        chat.save_history, shared.gradio['mode'], None, show_progress=False).then(
+        chat.redraw_html, shared.reload_inputs, shared.gradio['display'])
 
     # Event functions to update the parameters in the backend
     activate.change(lambda x: params.update({"activate": x}), activate, None)
