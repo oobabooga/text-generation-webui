@@ -26,7 +26,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * [LoRA (loading and training)](docs/Using-LoRAs.md)
 * [llama.cpp](docs/llama.cpp-models.md)
 * [RWKV model](docs/RWKV-model.md)
-* 8-bit mode
+* 8-bit and 4-bit through bitsandbytes
 * Layers splitting across GPU(s), CPU, and disk
 * CPU mode
 * [FlexGen](docs/FlexGen.md)
