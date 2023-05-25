@@ -53,7 +53,10 @@ def feed_data_into_collector(corpus, chunk_len, chunk_sep):
 
 import PyPDF2
 import os
-from mimetypes import guess_type
+
+import tempfile
+from pdfminer.high_level import extract_text
+
 def feed_url_file_into_collector(url, chunk_len, chunk_sep):
     yield "Downloading the file from the URL...\n\n"
     response = requests.get(url)
@@ -67,27 +70,16 @@ def feed_url_file_into_collector(url, chunk_len, chunk_sep):
             f.write(response.content)
 
         yield "File downloaded successfully...\n\n"
-        
-        text = ''
-        
-        # Guess the MIME type of the file
-        
 
-        if temp_file_name.endswith(".pdf"):
-            # The file is a PDF
-            pdf_file_obj = open(temp_file_name, 'rb')
-            pdf_reader = PyPDF2.PdfFileReader(pdf_file_obj)
-            for page_num in range(pdf_reader.numPages):
-                page_obj = pdf_reader.getPage(page_num)
-                text += page_obj.extractText()
-            pdf_file_obj.close()
-        else:
-            # Assume the file is a text file
-            with open(temp_file_name, 'r', errors='ignore') as f:
-                text = f.read()
+        text = extract_text(temp_file_name)
 
         os.unlink(temp_file_name)  # delete the temporary file
 
+        # Display the first chunk as a preview
+        preview = text[:chunk_len]
+        yield f"Preview of the first chunk:\n\n{preview}\n\n"
+
+        # Feed all data into the collector
         for i in feed_data_into_collector(text, chunk_len, chunk_sep):
             yield i
     else:
