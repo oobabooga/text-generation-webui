@@ -1,3 +1,5 @@
+Colab Notebook: https://github.com/aitrepreneur/text-generation-webui/blob/main/UPDATE_pyg_13b_GPTQ_4bit_128g.ipynb
+
 # Text generation web UI
 
 A gradio web UI for running Large Language Models like LLaMA, llama.cpp, GPT-J, Pythia, OPT, and GALACTICA.
