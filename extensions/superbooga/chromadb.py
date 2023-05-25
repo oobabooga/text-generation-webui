@@ -83,8 +83,10 @@ class ChromaCollector(Collecter):
     # Get ids by similarity and then sort by insertion order
     def get_ids_sorted(self, search_strings: list[str], n_results: int, n_initial: int = None, time_weight: float = 1.0) -> list[str]:
         do_time_weight = time_weight > 0
-        if not (do_time_weight and n_initial):
+        if not (do_time_weight and n_initial is not None):
             n_initial = n_results
+        elif n_initial == -1:
+            n_initial = len(self.ids)
 
         if n_initial < n_results:
             raise ValueError(f"n_initial {n_initial} should be >= n_results {n_results}")
