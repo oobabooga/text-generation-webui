@@ -1,9 +1,12 @@
 import argparse
-import logging
+from collections import OrderedDict
 from pathlib import Path
 
 import yaml
 
+from modules.logging_colors import logger
+
+generation_lock = None
 model = None
 tokenizer = None
 model_name = "None"
@@ -24,13 +27,15 @@ gradio = {}
 # For keeping the values of UI elements on page reload
 persistent_interface_state = {}
 
-# Generation input parameters
-input_params = []
+input_params = []  # Generation input parameters
+reload_inputs = []  # Parameters for reloading the chat interface
 
 # For restarting the interface
 need_restart = False
 
 settings = {
+    'dark_theme': False,
+    'autoload_model': True,
     'max_new_tokens': 200,
     'max_new_tokens_min': 1,
     'max_new_tokens_max': 2000,
@@ -38,7 +43,7 @@ settings = {
     'character': 'None',
     'name1': 'You',
     'name2': 'Assistant',
-    'context': 'This is a conversation with your Assistant. The Assistant is very helpful and is eager to chat with you and answer your questions.',
+    'context': 'This is a conversation with your Assistant. It is a computer program designed to help you with various tasks such as answering questions, providing recommendations, and helping with decision making. You can ask it anything you want and it will do its best to give you accurate and relevant information.',
     'greeting': '',
     'turn_template': '',
     'custom_stopping_strings': '',
@@ -49,32 +54,28 @@ settings = {
     'truncation_length': 2048,
     'truncation_length_min': 0,
     'truncation_length_max': 8192,
-    'mode': 'cai-chat',
+    'mode': 'chat',
+    'chat_style': 'cai-chat',
     'instruction_template': 'None',
+    'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
     'chat_prompt_size': 2048,
     'chat_prompt_size_min': 0,
     'chat_prompt_size_max': 2048,
     'chat_generation_attempts': 1,
     'chat_generation_attempts_min': 1,
-    'chat_generation_attempts_max': 5,
+    'chat_generation_attempts_max': 10,
     'default_extensions': [],
     'chat_default_extensions': ["gallery"],
     'presets': {
         'default': 'Default',
-        '.*(alpaca|llama|llava)': "LLaMA-Precise",
+        '.*(alpaca|llama|llava|vicuna)': "LLaMA-Precise",
         '.*pygmalion': 'NovelAI-Storywriter',
-        '.*RWKV': 'Naive',
+        '.*RWKV.*\.pth': 'Naive',
         '.*moss': 'MOSS',
     },
     'prompts': {
         'default': 'QA',
         '.*(gpt4chan|gpt-4chan|4chan)': 'GPT-4chan',
-        '.*oasst': 'Open Assistant',
-        '.*alpaca': "Alpaca",
-    },
-    'lora_prompts': {
-        'default': 'QA',
-        '.*alpaca': "Alpaca",
     }
 }
 
@@ -95,7 +96,6 @@ parser = argparse.ArgumentParser(formatter_class=lambda prog: argparse.HelpForma
 # Basic settings
 parser.add_argument('--notebook', action='store_true', help='Launch the web UI in notebook mode, where the output is written to the same text box as the input.')
 parser.add_argument('--chat', action='store_true', help='Launch the web UI in chat mode with a style similar to the Character.AI website.')
-parser.add_argument('--cai-chat', action='store_true', help='DEPRECATED: use --chat instead.')
 parser.add_argument('--character', type=str, help='The name of the character to load in chat mode by default.')
 parser.add_argument('--model', type=str, help='Name of the model to load by default.')
 parser.add_argument('--lora', type=str, nargs="+", help='The list of LoRAs to load. If you want to load more than one LoRA, write the names separated by spaces.')
@@ -114,29 +114,43 @@ parser.add_argument('--gpu-memory', type=str, nargs="+", help='Maxmimum GPU memo
 parser.add_argument('--cpu-memory', type=str, help='Maximum CPU memory in GiB to allocate for offloaded weights. Same as above.')
 parser.add_argument('--disk', action='store_true', help='If the model is too large for your GPU(s) and CPU combined, send the remaining layers to the disk.')
 parser.add_argument('--disk-cache-dir', type=str, default="cache", help='Directory to save the disk cache to. Defaults to "cache".')
-parser.add_argument('--load-in-8bit', action='store_true', help='Load the model with 8-bit precision.')
+parser.add_argument('--load-in-8bit', action='store_true', help='Load the model with 8-bit precision (using bitsandbytes).')
 parser.add_argument('--bf16', action='store_true', help='Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU.')
 parser.add_argument('--no-cache', action='store_true', help='Set use_cache to False while generating text. This reduces the VRAM usage a bit at a performance cost.')
 parser.add_argument('--xformers', action='store_true', help="Use xformer's memory efficient attention. This should increase your tokens/s.")
 parser.add_argument('--sdp-attention', action='store_true', help="Use torch 2.0's sdp attention.")
 parser.add_argument('--trust-remote-code', action='store_true', help="Set trust_remote_code=True while loading a model. Necessary for ChatGLM.")
 
+# Accelerate 4-bit
+parser.add_argument('--load-in-4bit', action='store_true', help='Load the model with 4-bit precision (using bitsandbytes).')
+parser.add_argument('--compute_dtype', type=str, default="float16", help="compute dtype for 4-bit. Valid options: bfloat16, float16, float32.")
+parser.add_argument('--quant_type', type=str, default="nf4", help='quant_type for 4-bit. Valid options: nf4, fp4.')
+parser.add_argument('--use_double_quant', action='store_true', help='use_double_quant for 4-bit.')
+
 # llama.cpp
 parser.add_argument('--threads', type=int, default=0, help='Number of threads to use.')
 parser.add_argument('--n_batch', type=int, default=512, help='Maximum number of prompt tokens to batch together when calling llama_eval.')
 parser.add_argument('--no-mmap', action='store_true', help='Prevent mmap from being used.')
 parser.add_argument('--mlock', action='store_true', help='Force the system to keep the model in RAM.')
+parser.add_argument('--cache-capacity', type=str, help='Maximum cache capacity. Examples: 2000MiB, 2GiB. When provided without units, bytes will be assumed.')
+parser.add_argument('--n-gpu-layers', type=int, default=0, help='Number of layers to offload to the GPU.')
+parser.add_argument('--n_ctx', type=int, default=2048, help='Size of the prompt context.')
+parser.add_argument('--llama_cpp_seed', type=int, default=0, help='Seed for llama-cpp models. Default 0 (random)')
 
 # GPTQ
 parser.add_argument('--wbits', type=int, default=0, help='Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported.')
 parser.add_argument('--model_type', type=str, help='Model type of pre-quantized model. Currently LLaMA, OPT, and GPT-J are supported.')
 parser.add_argument('--groupsize', type=int, default=-1, help='Group size.')
-parser.add_argument('--pre_layer', type=int, default=0, help='The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models.')
+parser.add_argument('--pre_layer', type=int, nargs="+", help='The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models. For multi-gpu, write the numbers separated by spaces, eg --pre_layer 30 60.')
 parser.add_argument('--checkpoint', type=str, help='The path to the quantized checkpoint file. If not specified, it will be automatically detected.')
 parser.add_argument('--monkey-patch', action='store_true', help='Apply the monkey patch for using LoRAs with quantized models.')
 parser.add_argument('--quant_attn', action='store_true', help='(triton) Enable quant attention.')
 parser.add_argument('--warmup_autotune', action='store_true', help='(triton) Enable warmup autotune.')
 parser.add_argument('--fused_mlp', action='store_true', help='(triton) Enable fused mlp.')
+
+# AutoGPTQ
+parser.add_argument('--autogptq', action='store_true', help='Use AutoGPTQ for loading quantized models instead of the internal GPTQ loader.')
+parser.add_argument('--triton', action='store_true', help='Use triton.')
 
 # FlexGen
 parser.add_argument('--flexgen', action='store_true', help='Enable the use of FlexGen offloading.')
@@ -159,12 +173,17 @@ parser.add_argument('--listen-host', type=str, help='The hostname that the serve
 parser.add_argument('--listen-port', type=int, help='The listening port that the server will use.')
 parser.add_argument('--share', action='store_true', help='Create a public URL. This is useful for running the web UI on Google Colab or similar.')
 parser.add_argument('--auto-launch', action='store_true', default=False, help='Open the web UI in the default browser upon launch.')
+parser.add_argument("--gradio-auth", type=str, help='set gradio authentication like "username:password"; or comma-delimit multiple like "u1:p1,u2:p2,u3:p3"', default=None)
 parser.add_argument("--gradio-auth-path", type=str, help='Set the gradio authentication file path. The file should contain one or more user:password pairs in this format: "u1:p1,u2:p2,u3:p3"', default=None)
 
 # API
 parser.add_argument('--api', action='store_true', help='Enable the API extension.')
+parser.add_argument('--api-blocking-port', type=int, default=5000, help='The listening port for the blocking API.')
+parser.add_argument('--api-streaming-port', type=int,  default=5005, help='The listening port for the streaming API.')
 parser.add_argument('--public-api', action='store_true', help='Create a public URL for the API using Cloudfare.')
 
+# Multimodal
+parser.add_argument('--multimodal-pipeline', type=str, default=None, help='The multimodal pipeline to use. Examples: llava-7b, llava-13b.')
 
 args = parser.parse_args()
 args_defaults = parser.parse_args([])
@@ -173,33 +192,37 @@ args_defaults = parser.parse_args([])
 deprecated_dict = {}
 for k in deprecated_dict:
     if getattr(args, k) != deprecated_dict[k][1]:
-        logging.warning(f"--{k} is deprecated and will be removed. Use --{deprecated_dict[k][0]} instead.")
+        logger.warning(f"--{k} is deprecated and will be removed. Use --{deprecated_dict[k][0]} instead.")
         setattr(args, deprecated_dict[k][0], getattr(args, k))
-
-# Deprecation warnings for parameters that have been removed
-if args.cai_chat:
-    logging.warning("--cai-chat is deprecated. Use --chat instead.")
-    args.chat = True
 
 # Security warnings
 if args.trust_remote_code:
-    logging.warning("trust_remote_code is enabled. This is dangerous.")
+    logger.warning("trust_remote_code is enabled. This is dangerous.")
 if args.share:
-    logging.warning("The gradio \"share link\" feature downloads a proprietary and unaudited blob to create a reverse tunnel. This is potentially dangerous.")
+    logger.warning("The gradio \"share link\" feature downloads a proprietary and unaudited blob to create a reverse tunnel. This is potentially dangerous.")
+
+
+def add_extension(name):
+    if args.extensions is None:
+        args.extensions = [name]
+    elif 'api' not in args.extensions:
+        args.extensions.append(name)
+
 
 # Activating the API extension
 if args.api or args.public_api:
-    if args.extensions is None:
-        args.extensions = ['api']
-    elif 'api' not in args.extensions:
-        args.extensions.append('api')
+    add_extension('api')
+
+# Activating the multimodal extension
+if args.multimodal_pipeline is not None:
+    add_extension('multimodal')
 
 
 def is_chat():
     return args.chat
 
 
-# Loading model-specific settings (default)
+# Loading model-specific settings
 with Path(f'{args.model_dir}/config.yaml') as p:
     if p.exists():
         model_config = yaml.safe_load(open(p, 'r').read())
@@ -215,3 +238,5 @@ with Path(f'{args.model_dir}/config-user.yaml') as p:
                 model_config[k].update(user_config[k])
             else:
                 model_config[k] = user_config[k]
+
+model_config = OrderedDict(model_config)

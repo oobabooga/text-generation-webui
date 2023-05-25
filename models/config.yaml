@@ -1,32 +1,70 @@
-.*:
-  wbits: 'None'
-  model_type: 'None'
-  groupsize: 'None'
-  pre_layer: 0
-  mode: 'cai-chat'
-  skip_special_tokens: true
-  custom_stopping_strings: ''
-llama-[0-9]*b-4bit$:
-  wbits: 4
+.*(llama|alpac|vicuna|guanaco|koala|llava|wizardlm|metharme|pygmalion-7b|wizard-mega|openbuddy|vigogne|h2ogpt-research|manticore):
   model_type: 'llama'
-.*-(4bit|int4)-(gr128|128g):
+.*(opt-|opt_|opt1|opt3|optfor|galactica|galpaca|pygmalion-350m):
+  model_type: 'opt'
+.*(gpt-j|gptj|gpt4all-j|malion-6b|pygway|pygmalion-6b|dolly-v1):
+  model_type: 'gptj'
+.*(gpt-neox|koalpaca-polyglot|polyglot.*koalpaca|polyglot-ko|polyglot_ko|pythia|stablelm|incite|dolly-v2|polycoder|h2ogpt-oig|h2ogpt-oasst1|h2ogpt-gm):
+  model_type: 'gpt_neox'
+.*llama:
+  model_type: 'llama'
+.*bloom:
+  model_type: 'bloom'
+llama-65b-gptq-3bit:
+  groupsize: 'None'
+.*(4bit|int4):
   wbits: 4
-  groupsize: 128
-.*-(gr128|128g)-(4bit|int4):
-  wbits: 4
-  groupsize: 128
-.*-3bit-(gr128|128g):
+.*(3bit|int3):
   wbits: 3
+.*(-2bit|_2bit|int2-):
+  wbits: 2
+.*(-1bit|_1bit|int1-):
+  wbits: 1
+.*(8bit|int8):
+  wbits: 8
+.*(-7bit|_7bit|int7-):
+  wbits: 7
+.*(-6bit|_6bit|int6-):
+  wbits: 6
+.*(-5bit|_5bit|int5-):
+  wbits: 5
+.*(-gr32-|-32g-|groupsize32|-32g$):
+  groupsize: 32
+.*(-gr64-|-64g-|groupsize64|-64g$):
+  groupsize: 64
+.*(gr128|128g|groupsize128):
   groupsize: 128
-.*-(gr128|128g)-3bit:
-  wbits: 3
-  groupsize: 128
-.*(oasst-sft-1-pythia-12b|oasst-sft-6-llama-30b):
+.*(gr1024|1024g|groupsize1024):
+  groupsize: 1024
+.*(oasst|openassistant-|stablelm-7b-sft-v7-epoch-3):
   mode: 'instruct'
   instruction_template: 'Open Assistant'
-.*vicuna:
+  skip_special_tokens: false
+(?!.*galactica)(?!.*reward).*openassistant:
+  mode: 'instruct'
+  instruction_template: 'Open Assistant'
+  skip_special_tokens: false
+(?!.*v0)(?!.*1.1)(?!.*1_1)(?!.*stable)(?!.*chinese).*vicuna:
   mode: 'instruct'
   instruction_template: 'Vicuna-v0'
+.*vicuna.*v0:
+  mode: 'instruct'
+  instruction_template: 'Vicuna-v0'
+.*vicuna.*(1.1|1_1):
+  mode: 'instruct'
+  instruction_template: 'Vicuna-v1.1'
+.*wizard.*vicuna:
+  mode: 'instruct'
+  instruction_template: 'Vicuna-v1.1'
+.*stable.*vicuna:
+  mode: 'instruct'
+  instruction_template: 'StableVicuna'
+(?!.*chat).*chinese-vicuna:
+  mode: 'instruct'
+  instruction_template: 'Alpaca'
+.*chinese-vicuna.*chat:
+  mode: 'instruct'
+  instruction_template: 'Chinese-Vicuna-Chat'
 .*alpaca:
   mode: 'instruct'
   instruction_template: 'Alpaca'
@@ -35,7 +73,7 @@ llama-[0-9]*b-4bit$:
   instruction_template: 'Alpaca'
   wbits: 4
   groupsize: 128
-.*(galactica|oasst):
+.*galactica:
   skip_special_tokens: false
 .*dolly-v[0-9]-[0-9]*b:
   mode: 'instruct'
@@ -48,6 +86,9 @@ llama-[0-9]*b-4bit$:
 .*chatglm:
   mode: 'instruct'
   instruction_template: 'ChatGLM'
+.*metharme:
+  mode: 'instruct'
+  instruction_template: 'Metharme'
 .*llava:
   mode: 'instruct'
   model_type: 'llama'
@@ -59,3 +100,80 @@ llama-[0-9]*b-4bit$:
 .*moss-moon.*sft:
   mode: 'instruct'
   instruction_template: 'MOSS'
+.*stablelm-tuned:
+  mode: 'instruct'
+  instruction_template: 'StableLM'
+  truncation_length: 4096
+  chat_prompt_size: 4096
+  chat_prompt_size_max: 4096
+.*stablelm-base:
+  truncation_length: 4096
+  chat_prompt_size: 4096
+  chat_prompt_size_max: 4096
+.*wizardlm:
+  mode: 'instruct'
+  model_type: 'llama'
+  instruction_template: 'WizardLM'
+.*galactica.*finetuned:
+  mode: 'instruct'
+  instruction_template: 'Galactica Finetuned'
+.*galactica.*-v2:
+  mode: 'instruct'
+  instruction_template: 'Galactica v2'
+(?!.*finetuned)(?!.*-v2).*galactica:
+  mode: 'instruct'
+  instruction_template: 'Galactica'
+.*guanaco:
+  mode: 'instruct'
+  instruction_template: 'Guanaco non-chat'
+.*baize:
+  mode: 'instruct'
+  instruction_template: 'Baize'
+.*mpt-.*instruct:
+  mode: 'instruct'
+  instruction_template: 'Alpaca'
+.*mpt-.*chat:
+  mode: 'instruct'
+  instruction_template: 'MPT-Chat'
+(?!.*-flan-)(?!.*-t5-).*lamini-:
+  mode: 'instruct'
+  instruction_template: 'Alpaca'
+.*incite.*chat:
+  mode: 'instruct'
+  instruction_template: 'INCITE-Chat'
+.*incite.*instruct:
+  mode: 'instruct'
+  instruction_template: 'INCITE-Instruct'
+.*wizard.*mega:
+  mode: 'instruct'
+  instruction_template: 'Wizard-Mega'
+.*ziya-:
+  mode: 'instruct'
+  instruction_template: 'Ziya'
+.*koalpaca:
+  mode: 'instruct'
+  instruction_template: 'KoAlpaca'
+.*openbuddy:
+  mode: 'instruct'
+  instruction_template: 'OpenBuddy'
+(?!.*chat).*vigogne:
+  mode: 'instruct'
+  instruction_template: 'Vigogne-Instruct'
+.*vigogne.*chat:
+  mode: 'instruct'
+  instruction_template: 'Vigogne-Chat'
+.*(llama-deus|supercot|llama-natural-instructions|open-llama-0.3t-7b-instruct-dolly-hhrlhf|open-llama-0.3t-7b-open-instruct):
+  mode: 'instruct'
+  instruction_template: 'Alpaca'
+.*bactrian:
+  mode: 'instruct'
+  instruction_template: 'Bactrian'
+.*(h2ogpt-oig-|h2ogpt-oasst1-|h2ogpt-research-oasst1-):
+  mode: 'instruct'
+  instruction_template: 'H2O-human_bot'
+.*h2ogpt-gm-:
+  mode: 'instruct'
+  instruction_template: 'H2O-prompt_answer'
+.*manticore:
+  mode: 'instruct'
+  instruction_template: 'Manticore Chat'

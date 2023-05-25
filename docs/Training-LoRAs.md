@@ -18,7 +18,7 @@ The WebUI seeks to make training your own LoRAs as easy as possible. It comes do
 - **3.1**: Load the WebUI, and your model.
     - Make sure you don't have any LoRAs already loaded (unless you want to train for multi-LoRA usage).
 - **3.2**: Open the `Training` tab at the top, `Train LoRA` sub-tab.
-- **3.3**: Fill in the name lof the LoRA, select your dataset in the dataset options.
+- **3.3**: Fill in the name of the LoRA, select your dataset in the dataset options.
 - **3.4**: Select other parameters to your preference. See [parameters below](#parameters).
 - **3.5**: click `Start LoRA Training`, and wait.
     - It can take a few hours for a large dataset, or just a few minute if doing a small run.
@@ -74,6 +74,13 @@ Note that the keys (eg `instruction,output`) are a comma-separated list of datas
 So for example if a dataset has `"instruction": "answer my question"`, then the format file's `User: %instruction%\n` will be automatically filled in as `User: answer my question\n`.
 
 If you have different sets of key inputs, you can make your own format file to match it. This format-file is designed to be as simple as possible to enable easy editing to match your needs.
+
+## Raw Text File Settings
+
+When using raw text files as your dataset, the text is automatically split into chunks based on your `Cutoff Length` you get a few basic options to configure them.
+- `Overlap Length` is how much to overlap chunks by. Overlapping chunks helps prevent the model from learning strange mid-sentence cuts, and instead learn continual sentences that flow from earlier text.
+- `Prefer Newline Cut Length` sets a maximum distance in characters to shift the chunk cut towards newlines. Doing this helps prevent lines from starting or ending mid-sentence, preventing the model from learning to cut off sentences randomly.
+- `Hard Cut String` sets a string that indicates there must be a hard cut without overlap. This defaults to `\n\n\n`, meaning 3 newlines. No trained chunk will ever contain this string. This allows you to insert unrelated sections of text in the same text file, but still ensure the model won't be taught to randomly change the subject.
 
 ## Parameters
 
