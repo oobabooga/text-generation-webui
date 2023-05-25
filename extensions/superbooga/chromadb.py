@@ -52,7 +52,7 @@ class ChromaCollector(Collecter):
         if n_results == 0:
             return [], []
 
-        result = self.collection.query(query_texts=search_strings, n_results=n_results, include=['documents'])
+        result = self.collection.query(query_texts=search_strings, n_results=n_results, include=['documents', 'distances'])
         documents = result['documents'][0]
         ids = list(map(lambda x: int(x[2:]), result['ids'][0]))
         distances = result['distances'][0]
