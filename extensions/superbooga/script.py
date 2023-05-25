@@ -27,7 +27,7 @@ chunk_count = 5
 def setup() -> None:
     global embedder, collector, chat_collector
     if not params['embedder_model_type']:
-        logging.warning('No embedder model type provided. Using default embedder.')
+        logger.warning('No embedder model type provided. Using default embedder.')
     embedder = make_embedder(params['embedder_model_type'], params['embedder_model_name_or_path'])
     collector = make_collector(embedder)
     chat_collector = make_collector(embedder)
