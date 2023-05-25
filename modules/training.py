@@ -126,7 +126,9 @@ def create_train_interface():
                 evaluation_log = gr.Markdown(value='')
 
         evaluation_table = gr.Dataframe(value=generate_markdown_table(), interactive=True)
-        save_comments = gr.Button('Save comments')
+        with gr.Row():
+            save_comments = gr.Button('Save comments', elem_classes="small-button")
+            refresh_table = gr.Button('Refresh the table', elem_classes="small-button")
 
     # Training events
     all_params = [lora_name, always_override, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lr_scheduler_type, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, higher_rank_limit, warmup_steps, optimizer, hard_cut_string, train_only_after]
@@ -147,6 +149,7 @@ def create_train_interface():
     start_current_evaluation.click(generate_markdown_table, None, evaluation_table, show_progress=False)
 
     stop_evaluation.click(None, None, None, cancels=[ev, ev_cur], queue=False)
+    refresh_table.click(generate_markdown_table, None, evaluation_table, show_progress=True)
     save_comments.click(
         save_past_evaluations, evaluation_table, None).then(
         lambda: "Comments saved.", None, evaluation_log, show_progress=False)
