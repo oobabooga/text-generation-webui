@@ -105,6 +105,13 @@ To use GPTQ models, the additional installation steps below are necessary:
 
 [GPTQ models (4 bit mode)](https://github.com/oobabooga/text-generation-webui/blob/main/docs/GPTQ-models-(4-bit-mode).md)
 
+#### Note about bitsandbytes
+
+bitsandbytes >= 0.39 may not work on older NVIDIA GPUs. In that case, to use `--load-in-8bit`, you may have to downgrade like this:
+
+* Linux: `pip install bitsandbytes==0.38.1`
+* Windows: `pip install https://github.com/jllllll/bitsandbytes-windows-webui/raw/main/bitsandbytes-0.38.1-py3-none-any.whl`
+
 ### Alternative: manual Windows installation
 
 As an alternative to the recommended WSL method, you can install the web UI natively on Windows using this guide. It will be a lot harder and the performance may be slower: [Windows installation guide](https://github.com/oobabooga/text-generation-webui/blob/main/docs/Windows-installation-guide.md).
