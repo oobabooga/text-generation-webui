@@ -49,6 +49,13 @@ if [ ! -e "$INSTALL_ENV_DIR/bin/python" ]; then
     exit
 fi
 
+# environment isolation
+export PYTHONNOUSERSITE=1
+unset PYTHONPATH
+unset PYTHONHOME
+export CUDA_PATH="$INSTALL_ENV_DIR"
+export CUDA_HOME="$CUDA_PATH"
+
 # activate installer env
 source "$CONDA_ROOT_PREFIX/etc/profile.d/conda.sh" # otherwise conda complains about 'shell not initialized' (needed when running in a script)
 conda activate "$INSTALL_ENV_DIR"
