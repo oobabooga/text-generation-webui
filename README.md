@@ -101,7 +101,7 @@ pip install -r requirements.txt
 
 The base installation covers [transformers](https://github.com/huggingface/transformers) models (`AutoModelForCausalLM` and `AutoModelForSeq2SeqLM` specifically) and [llama.cpp](https://github.com/ggerganov/llama.cpp) (GGML) models.
 
-To use 4-bit GPU models, the additional installation steps below are necessary:
+To use GPTQ models, the additional installation steps below are necessary:
 
 [GPTQ models (4 bit mode)](https://github.com/oobabooga/text-generation-webui/blob/main/docs/GPTQ-models-(4-bit-mode).md)
 
@@ -222,6 +222,8 @@ Optionally, you can use the following command-line flags:
 | `--trust-remote-code`                       | Set trust_remote_code=True while loading a model. Necessary for ChatGLM. |
 
 #### Accelerate 4-bit
+
+⚠️ Not supported on Windows at the moment.
 
 | Flag                                        | Description |
 |---------------------------------------------|-------------|
