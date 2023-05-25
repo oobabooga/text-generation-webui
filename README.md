@@ -126,7 +126,7 @@ docker compose up --build
 ```
 
 * You need to have docker compose v2.17 or higher installed. See [this guide](https://github.com/oobabooga/text-generation-webui/blob/main/docs/Docker.md) for instructions.
-* For additional docker files, check out [this repository](https://github.com/Atinoda/text-generation-webui/blob/docker-wrapper/docs/Docker.md#dedicated-docker-repository).
+* For additional docker files, check out [this repository](https://github.com/Atinoda/text-generation-webui-docker).
 
 ### Updating the requirements
 
