@@ -42,7 +42,8 @@
     object-fit: cover;
 }
 
-.text {}
+.text {
+}
 
 .text p {
     margin-top: 5px;
@@ -52,7 +53,8 @@
     font-weight: bold;
 }
 
-.message-body {}
+.message-body {
+}
 
 .message-body img {
     max-width: 300px;
@@ -78,6 +80,7 @@
 .message-body code {
     overflow-x: auto;
 }
+
 .message-body :not(pre) > code {
     white-space: normal !important;
 }

@@ -12,6 +12,8 @@ from .download_urls import download_urls
 
 params = {
     'chunk_count': 5,
+    'chunk_count_initial': 10,
+    'time_weight': 0,
     'chunk_length': 700,
     'chunk_separator': '',
     'document_template': '<|text|>',
@@ -21,9 +23,6 @@ params = {
     'embedder_model_type': None,
     'embedder_model_name_or_path': None,
 }
-
-
-chunk_count = 5
 
 
 def setup() -> None:
@@ -95,17 +94,14 @@ def feed_url_into_collector(urls, chunk_len, chunk_sep, strong_cleanup, threads)
         yield i
 
 
-def apply_settings(_chunk_count, _document_template, _query_template):
-    global chunk_count, embedder
-    chunk_count = int(_chunk_count)
-    embedder.document_template = _document_template
-    embedder.query_template = _query_template
-    settings_to_display = {
-        'chunk_count': chunk_count,
-        'document_template': embedder.document_template,
-        'query_template': embedder.query_template,
-    }
-
+def apply_settings(chunk_count, chunk_count_initial, time_weight, document_template, query_template):
+    global params, embedder
+    params['chunk_count'] = int(chunk_count)
+    params['chunk_count_initial'] = int(chunk_count_initial)
+    params['time_weight'] = time_weight
+    params['document_template'] = embedder.document_template = document_template
+    params['query_template'] = embedder.query_template = query_template
+    settings_to_display = {k: params[k] for k in params if k in ['chunk_count', 'chunk_count_initial', 'time_weight', 'document_template', 'query_template']}
     yield f"The following settings are now active: {str(settings_to_display)}"
 
 
@@ -113,7 +109,7 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
     global chat_collector
 
     if state['mode'] == 'instruct':
-        results = collector.get_sorted(user_input, n_results=chunk_count)
+        results = collector.get_sorted(user_input, n_results=params['chunk_count'])
         additional_context = '\nYour reply should be based on the context below:\n\n' + '\n'.join(results)
         user_input += additional_context
     else:
@@ -124,7 +120,7 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
             output += f"{state['name2']}: {shared.history['internal'][id_][1]}\n"
             return output
 
-        if len(shared.history['internal']) > chunk_count and user_input != '':
+        if len(shared.history['internal']) > params['chunk_count'] and user_input != '':
             chunks = []
             hist_size = len(shared.history['internal'])
             for i in range(hist_size-1):
@@ -133,7 +129,7 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
             add_chunks_to_collector(chunks, chat_collector)
             query = '\n'.join(shared.history['internal'][-1] + [user_input])
             try:
-                best_ids = chat_collector.get_ids_sorted(query, n_results=chunk_count)
+                best_ids = chat_collector.get_ids_sorted(query, n_results=params['chunk_count'], n_initial=params['chunk_count_initial'], time_weight=params['time_weight'])
                 additional_context = '\n'
                 for id_ in best_ids:
                     if shared.history['internal'][id_][0] != '<|BEGIN-VISIBLE-CHAT|>':
@@ -167,7 +163,7 @@ def input_modifier(string):
         user_input = match.group(1).strip()
 
         # Get the most similar chunks
-        results = collector.get_sorted(user_input, n_results=chunk_count)
+        results = collector.get_sorted(user_input, n_results=params['chunk_count'])
 
         # Make the injection
         string = string.replace('<|injection-point|>', '\n'.join(results))
@@ -256,8 +252,13 @@ def ui():
 
             with gr.Tab("Generation settings"):
                 chunk_count = gr.Number(value=params['chunk_count'], label='Chunk count', info='The number of closest-matching chunks to include in the prompt.')
+                gr.Markdown('Time weighting (optional, used in to make recently added chunks more likely to appear)')
+                time_weight = gr.Slider(0, 1, value=params['time_weight'], label='Time weight', info='Defines the strength of the time weighting. 0 = no time weighting.')
+                chunk_count_initial = gr.Number(value=params['chunk_count_initial'], label='Initial chunk count', info='The number of closest-matching chunks retrieved for time weight reordering in chat mode. This should be >= chunk count. -1 = All chunks are retrieved. Only used if time_weight > 0.')
+                gr.Markdown('Chunk templating (used for embedder models that need prompting)')
                 document_template = gr.Textbox(value=params['document_template'], label='Document template', info='This is how chunks to be retrieved will be embedded. <|text|> gets replaced by the chunk text.')
                 query_template = gr.Textbox(value=params['query_template'], label='Query template', info='This is how query text will be embedded. <|text|> gets replaced by the query text.')
+
                 update_settings = gr.Button('Apply changes')
 
             chunk_len = gr.Number(value=params['chunk_length'], label='Chunk length', info='In characters, not tokens. This value is used when you click on "Load data".')
@@ -268,4 +269,4 @@ def ui():
     update_data.click(feed_data_into_collector, [data_input, chunk_len, chunk_sep], last_updated, show_progress=False)
     update_url.click(feed_url_into_collector, [url_input, chunk_len, chunk_sep, strong_cleanup, threads], last_updated, show_progress=False)
     update_file.click(feed_file_into_collector, [file_input, chunk_len, chunk_sep], last_updated, show_progress=False)
-    update_settings.click(apply_settings, [chunk_count, document_template, query_template], last_updated, show_progress=False)
+    update_settings.click(apply_settings, [chunk_count, chunk_count_initial, time_weight, document_template, query_template], last_updated, show_progress=False)

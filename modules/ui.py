@@ -30,9 +30,10 @@ theme = gr.themes.Default(
 
 
 def list_model_elements():
-    elements = ['cpu_memory', 'auto_devices', 'disk', 'cpu', 'bf16', 'load_in_8bit', 'wbits', 'groupsize', 'model_type', 'pre_layer', 'threads', 'n_batch', 'no_mmap', 'mlock', 'n_gpu_layers']
+    elements = ['cpu_memory', 'auto_devices', 'disk', 'cpu', 'bf16', 'load_in_8bit', 'load_in_4bit', 'compute_dtype', 'quant_type', 'use_double_quant', 'wbits', 'groupsize', 'model_type', 'pre_layer', 'threads', 'n_batch', 'no_mmap', 'mlock', 'n_gpu_layers', 'n_ctx', 'llama_cpp_seed']
     for i in range(torch.cuda.device_count()):
         elements.append(f'gpu_memory_{i}')
+
     return elements
 
 

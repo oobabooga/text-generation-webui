@@ -73,22 +73,22 @@ def toggle_text_in_history():
 
 
 def state_modifier(state):
+    if not params['activate']:
+        return state
+
     state['stream'] = False
     return state
 
 
 def input_modifier(string):
-    """
-    This function is applied to your text inputs before
-    they are fed into the model.
-    """
+    if not params['activate']:
+        return string
 
     shared.processing_message = "*Is recording a voice message...*"
     return string
 
 
 def history_modifier(history):
-
     # Remove autoplay from the last reply
     if len(history['internal']) > 0:
         history['visible'][-1] = [
@@ -100,12 +100,7 @@ def history_modifier(history):
 
 
 def output_modifier(string):
-    """
-    This function is applied to the model outputs.
-    """
-
     global model, current_params, streaming_state
-
     for i in params:
         if params[i] != current_params[i]:
             model = load_model()

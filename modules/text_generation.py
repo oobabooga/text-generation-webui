@@ -1,6 +1,7 @@
 import ast
 import random
 import re
+import threading
 import time
 import traceback
 
@@ -15,6 +16,15 @@ from modules.extensions import apply_extensions
 from modules.html_generator import generate_4chan_html, generate_basic_html
 from modules.logging_colors import logger
 from modules.models import clear_torch_cache, local_rank
+
+
+def generate_reply(*args, **kwargs):
+    shared.generation_lock.acquire()
+    try:
+        for result in _generate_reply(*args, **kwargs):
+            yield result
+    finally:
+        shared.generation_lock.release()
 
 
 def get_max_prompt_length(state):
@@ -120,14 +130,11 @@ def get_reply_from_output_ids(output_ids, input_ids, original_question, state, i
 
 
 def formatted_outputs(reply, model_name):
-    if shared.model_type == 'galactica':
-        reply = fix_galactica(reply)
-        return reply, reply, generate_basic_html(reply)
-    elif shared.model_type == 'gpt4chan':
+    if shared.model_type == 'gpt4chan':
         reply = fix_gpt4chan(reply)
-        return reply, 'Only applicable for GALACTICA models.', generate_4chan_html(reply)
+        return reply, generate_4chan_html(reply)
     else:
-        return reply, 'Only applicable for GALACTICA models.', generate_basic_html(reply)
+        return reply, generate_basic_html(reply)
 
 
 def set_manual_seed(seed):
@@ -154,7 +161,7 @@ def generate_reply_wrapper(question, state, eos_token=None, stopping_strings=Non
         yield formatted_outputs(reply, shared.model_name)
 
 
-def generate_reply(question, state, eos_token=None, stopping_strings=None, is_chat=False):
+def _generate_reply(question, state, eos_token=None, stopping_strings=None, is_chat=False):
     state = apply_extensions('state', state)
     generate_func = apply_extensions('custom_generate_reply')
     if generate_func is None:
