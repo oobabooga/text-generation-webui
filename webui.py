@@ -58,6 +58,9 @@ def install_dependencies():
     print()
     gpuchoice = input("Input> ").lower()
 
+    if gpuchoice == "d":
+        print("\nOnce the installation ends, make sure to open webui.py with a text editor and add the --cpu flag to CMD_FLAGS.\n")
+
     # Install the version of PyTorch needed
     if gpuchoice == "a":
         run_cmd("conda install -y -k pytorch[version=2,build=py3.10_cuda11.7*] torchvision torchaudio pytorch-cuda=11.7 cuda-toolkit ninja git -c pytorch -c nvidia/label/cuda-11.7.0 -c nvidia", assert_success=True, environment=True)
