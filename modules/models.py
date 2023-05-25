@@ -183,14 +183,15 @@ def huggingface_loader(model_name):
 
                 # See https://github.com/huggingface/transformers/pull/23479/files
                 # and https://huggingface.co/blog/4bit-transformers-bitsandbytes
-                quantization_config = BitsAndBytesConfig(
-                    load_in_4bit=True,
-                    # bnb_4bit_compute_dtype=torch.bfloat16,  # Default is float32
-                    # bnb_4bit_quant_type="nf4",
-                    # bnb_4bit_use_double_quant=True,
-                )
+                quantization_config_params = {
+                    'load_in_4bit': True,
+                    'bnb_4bit_compute_dtype': eval("torch.{}".format(shared.args.compute_dtype)) if shared.args.compute_dtype in ["bfloat16", "float16", "float32"] else None,
+                    'bnb_4bit_quant_type': shared.args.quant_type,
+                    'bnb_4bit_use_double_quant': shared.args.use_double_quant,
+                }
 
-                params['quantization_config'] = quantization_config
+                logger.warning("Using the following 4-bit params: " + str(quantization_config_params))
+                params['quantization_config'] = BitsAndBytesConfig(**quantization_config_params)
 
             elif shared.args.load_in_8bit and any((shared.args.auto_devices, shared.args.gpu_memory)):
                 params['quantization_config'] = BitsAndBytesConfig(load_in_8bit=True, llm_int8_enable_fp32_cpu_offload=True)
