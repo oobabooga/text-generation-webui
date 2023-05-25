@@ -230,7 +230,7 @@ Optionally, you can use the following command-line flags:
 
 #### Accelerate 4-bit
 
-⚠️ Not supported on Windows at the moment.
+⚠️ Requires minimum compute of 7.0 on Windows at the moment.
 
 | Flag                                        | Description |
 |---------------------------------------------|-------------|
