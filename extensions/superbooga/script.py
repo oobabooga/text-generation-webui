@@ -9,6 +9,7 @@ from modules.superbooga import (
     apply_settings,
     add_chunks_to_collector,
     collector,
+    chat_collector
 )
 
 params = {
@@ -22,7 +23,6 @@ params = {
 
 def custom_generate_chat_prompt(user_input, state, **kwargs):
     global chat_collector
-
     if state["mode"] == "instruct":
         results = collector.get_sorted(user_input, n_results=params["chunk_count"])
         print(results)

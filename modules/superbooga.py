@@ -3,7 +3,9 @@ from .chromadb import add_chunks_to_collector, make_collector
 from .download_urls import download_urls
 from modules import chat, shared
 import re
-
+import requests
+from io import BytesIO
+import tempfile
 
 collector = make_collector()
 chat_collector = make_collector()
@@ -46,6 +48,50 @@ def feed_data_into_collector(corpus, chunk_len, chunk_sep):
     add_chunks_to_collector(data_chunks, collector)
     cumulative += "Done."
     yield cumulative
+
+
+
+import PyPDF2
+import os
+from mimetypes import guess_type
+def feed_url_file_into_collector(url, chunk_len, chunk_sep):
+    yield "Downloading the file from the URL...\n\n"
+    response = requests.get(url)
+    if response.status_code == 200:
+        # Create a temporary file
+        temp_file = tempfile.NamedTemporaryFile(delete=False)
+        temp_file_name = temp_file.name
+
+        # Write the content to the temporary file
+        with open(temp_file_name, 'wb') as f:
+            f.write(response.content)
+
+        yield "File downloaded successfully...\n\n"
+        
+        text = ''
+        
+        # Guess the MIME type of the file
+        
+
+        if temp_file_name.endswith(".pdf"):
+            # The file is a PDF
+            pdf_file_obj = open(temp_file_name, 'rb')
+            pdf_reader = PyPDF2.PdfFileReader(pdf_file_obj)
+            for page_num in range(pdf_reader.numPages):
+                page_obj = pdf_reader.getPage(page_num)
+                text += page_obj.extractText()
+            pdf_file_obj.close()
+        else:
+            # Assume the file is a text file
+            with open(temp_file_name, 'r', errors='ignore') as f:
+                text = f.read()
+
+        os.unlink(temp_file_name)  # delete the temporary file
+
+        for i in feed_data_into_collector(text, chunk_len, chunk_sep):
+            yield i
+    else:
+        yield "Failed to download the file.\n\n"
 
 
 def feed_file_into_collector(file, chunk_len, chunk_sep):

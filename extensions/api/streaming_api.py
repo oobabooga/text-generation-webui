@@ -8,14 +8,14 @@ from extensions.api.util import build_parameters, try_start_cloudflared
 from modules import shared
 from modules.chat import generate_chat_reply
 from modules.text_generation import generate_reply
-from modules.superbooga import feed_url_into_collector, custom_generate_instruct_prompt
+from modules.superbooga import feed_url_into_collector, feed_data_into_collector, feed_url_file_into_collector, custom_generate_instruct_prompt
 from modules.chromadb import make_collector
 
 PATHS = [
     "/api/v1/stream",
     "/api/v1/chat-stream",
     "/api/v1/superstream",
-    "/api/v1/feed_urls",
+    "/api/v1/feed_data",
 ]
 
 
@@ -145,13 +145,39 @@ async def _handle_connection(websocket, path):
                 json.dumps({"event": "stream_end", "message_num": message_num})
             )
     elif path == PATHS[3]:
+        
         async for message in websocket:
-            urls = message
-            datafeed = feed_url_into_collector(
-                urls=urls, chunk_len=400, chunk_sep="", strong_cleanup="True", threads=4
-            )
+            message = json.loads(message)
+            input_data = message.get('data')
+            feed_mode = message.get('data_type')
+            chunk_size = message.get('chunk_size', 400)
+            cleanup = message.get('strong_cleanup', "True")
+            threads = message.get('threads', 4)
+            chunk_sep = message.get('chunk_sep', "")
+
+            if feed_mode == 'url':
+                datafeed = feed_url_into_collector(
+                    urls=input_data, chunk_len=chunk_size, chunk_sep=chunk_sep,
+                    strong_cleanup=cleanup, threads=threads
+                )
+            elif feed_mode == 'text':
+                datafeed = feed_data_into_collector(
+                    corpus=input_data, chunk_len=chunk_size, chunk_sep=chunk_sep
+                )
+            elif feed_mode == 'file':
+                datafeed = feed_url_file_into_collector(
+                    url=input_data, chunk_len=chunk_size, chunk_sep=chunk_sep
+                )
+            else:
+                print("Invalid data_type:", feed_mode)
+                continue
+
             for output in datafeed:
                 print(output)
+
+            await websocket.send(
+                json.dumps({"event":"feeding_done", "details": output})
+            )
 
     elif path != PATHS:
         print(f"Streaming api: unknown path: {path}")
