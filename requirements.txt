@@ -12,6 +12,7 @@ requests
 safetensors==0.3.1
 sentencepiece
 tqdm
+scipy
 git+https://github.com/huggingface/peft@3714aa2fff158fdfa637b2b65952580801d890b2
 git+https://github.com/huggingface/transformers@e45e756d22206ca8fa9fb057c8c3d8fa79bf81c6
 git+https://github.com/huggingface/accelerate@0226f750257b3bf2cadc4f189f9eef0c764a0467
