@@ -14,6 +14,8 @@ params = {
     'chunk_count': 5,
     'chunk_length': 700,
     'chunk_separator': '',
+    'document_template': '<|text|>',
+    'query_template': '<|text|>',
     'strong_cleanup': False,
     'threads': 4,
     'embedder_model_type': None,
@@ -28,7 +30,7 @@ def setup() -> None:
     global embedder, collector, chat_collector
     if not params['embedder_model_type']:
         logger.warning('No embedder model type provided. Using default embedder.')
-    embedder = make_embedder(params['embedder_model_type'], params['embedder_model_name_or_path'])
+    embedder = make_embedder(model_type=params['embedder_model_type'], model_name_or_path=params['embedder_model_name_or_path'], document_template=params['document_template'], query_template=params['query_template'])
     collector = make_collector(embedder)
     chat_collector = make_collector(embedder)
 
@@ -93,11 +95,15 @@ def feed_url_into_collector(urls, chunk_len, chunk_sep, strong_cleanup, threads)
         yield i
 
 
-def apply_settings(_chunk_count):
-    global chunk_count
+def apply_settings(_chunk_count, _document_template, _query_template):
+    global chunk_count, embedder
     chunk_count = int(_chunk_count)
+    embedder.document_template = _document_template
+    embedder.query_template = _query_template
     settings_to_display = {
         'chunk_count': chunk_count,
+        'document_template': embedder.document_template,
+        'query_template': embedder.query_template,
     }
 
     yield f"The following settings are now active: {str(settings_to_display)}"
@@ -250,6 +256,8 @@ def ui():
 
             with gr.Tab("Generation settings"):
                 chunk_count = gr.Number(value=params['chunk_count'], label='Chunk count', info='The number of closest-matching chunks to include in the prompt.')
+                document_template = gr.Textbox(value=params['document_template'], label='Document template', info='This is how chunks to be retrieved will be embedded. <|text|> gets replaced by the chunk text.')
+                query_template = gr.Textbox(value=params['query_template'], label='Query template', info='This is how query text will be embedded. <|text|> gets replaced by the query text.')
                 update_settings = gr.Button('Apply changes')
 
             chunk_len = gr.Number(value=params['chunk_length'], label='Chunk length', info='In characters, not tokens. This value is used when you click on "Load data".')
@@ -260,4 +268,4 @@ def ui():
     update_data.click(feed_data_into_collector, [data_input, chunk_len, chunk_sep], last_updated, show_progress=False)
     update_url.click(feed_url_into_collector, [url_input, chunk_len, chunk_sep, strong_cleanup, threads], last_updated, show_progress=False)
     update_file.click(feed_file_into_collector, [file_input, chunk_len, chunk_sep], last_updated, show_progress=False)
-    update_settings.click(apply_settings, [chunk_count], last_updated, show_progress=False)
+    update_settings.click(apply_settings, [chunk_count, document_template, query_template], last_updated, show_progress=False)

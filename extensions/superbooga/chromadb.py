@@ -27,10 +27,20 @@ class Collecter():
 
 
 class Embedder():
-    def __init__(self):
-        pass
+    DEFAULT_DOCUMENT_TEMPLATE = '<|text|>'
+    DEFAULT_QUERY_TEMPLATE = '<|text|>'
+
+    def __init__(self, document_template: Optional[str] = None, query_template: Optional[str] = None):
+        self.document_template = document_template or self.DEFAULT_DOCUMENT_TEMPLATE
+        self.query_template = query_template or self.DEFAULT_QUERY_TEMPLATE
 
     def embed(self, text: str) -> list[torch.Tensor]:
+        pass
+
+    def embed_document(self, text: str) -> list[torch.Tensor]:
+        pass
+
+    def embed_query(self, text: str) -> list[torch.Tensor]:
         pass
 
 
@@ -47,14 +57,16 @@ class ChromaCollector(Collecter):
             return
 
         self.ids = [f"id{i}" for i in range(len(texts))]
-        self.collection.add(documents=texts, ids=self.ids)
+        embeddings = self.embedder.embed_document(texts)
+        self.collection.add(documents=texts, embeddings=embeddings, ids=self.ids)
 
     def get_documents_and_ids(self, search_strings: list[str], n_results: int):
         n_results = min(len(self.ids), n_results)
         if n_results == 0:
             return [], []
 
-        result = self.collection.query(query_texts=search_strings, n_results=n_results, include=['documents'])
+        search_embeddings = self.embedder.embed_query(search_strings)
+        result = self.collection.query(query_embeddings=search_embeddings, n_results=n_results, include=['documents'])
         documents = result['documents'][0]
         ids = list(map(lambda x: int(x[2:]), result['ids'][0]))
         return documents, ids
@@ -86,18 +98,46 @@ class ChromaCollector(Collecter):
 
 class SentenceTransformerEmbedder(Embedder):
     DEFAULT_MODEL_NAME_OR_PATH = "sentence-transformers/all-mpnet-base-v2"
-    def __init__(self, model_name_or_path: Optional[str] = None) -> None:
+
+    def __init__(self, model_name_or_path: Optional[str] = None, document_template: Optional[str] = None, query_template: Optional[str] = None) -> None:
+        super().__init__(document_template=document_template, query_template=query_template)
         self.model = SentenceTransformer(model_name_or_path or self.DEFAULT_MODEL_NAME_OR_PATH)
         self.embed = self.model.encode
+
+    def embed_document(self, text: str):
+        if isinstance(text, str):
+            text = [text]
+        text = [self.document_template.replace('<|text|>', t) for t in text]
+        return list(self.model.encode(text))
+
+    def embed_query(self, text: str):
+        if isinstance(text, str):
+            text = [text]
+        text = [self.query_template.replace('<|text|>', t) for t in text]
+        return list(self.model.encode(text))
 
 
 try:
     from InstructorEmbedding import INSTRUCTOR
     class InstructorEmbedder(Embedder):
         DEFAULT_MODEL_NAME_OR_PATH = "hkunlp/instructor-base"
-        def __init__(self, model_name_or_path: Optional[str] = None) -> None:
+
+        def __init__(self, model_name_or_path: Optional[str] = None, document_template: Optional[str] = None, query_template: Optional[str] = None) -> None:
+            super().__init__(document_template=document_template, query_template=query_template)
             self.model = INSTRUCTOR(model_name_or_path or self.DEFAULT_MODEL_NAME_OR_PATH)
             self.embed = self.model.encode
+
+        def embed_document(self, text: str):
+            if isinstance(text, str):
+                text = [text]
+            text = [self.document_template.replace('<|text|>', t) for t in text]
+            return list(self.model.encode(text))
+
+        def embed_query(self, text: str):
+            if isinstance(text, str):
+                text = [text]
+            text = [self.query_template.replace('<|text|>', t) for t in text]
+            return list(self.model.encode(text))
 except ImportError:
     pass
 
@@ -109,13 +149,13 @@ def get_default_embedder() -> Embedder:
     return embedder_default
 
 
-def make_embedder(model_type: Optional[str] = None, model_name_or_path: Optional[str] = None) -> Embedder:
+def make_embedder(model_type: Optional[str] = None, **kwargs) -> Embedder:
     if not model_type:
         return get_default_embedder()
     elif model_type == 'sentence_transformer':
-        return SentenceTransformerEmbedder(model_name_or_path)
+        return SentenceTransformerEmbedder(**kwargs)
     elif model_type == 'instructor':
-        return InstructorEmbedder(model_name_or_path)
+        return InstructorEmbedder(**kwargs)
     else:
         raise ValueError("Unknown embedder model type specified. Only 'sentence_transformer' and 'instructor' are supported")
 
