@@ -130,14 +130,11 @@ def get_reply_from_output_ids(output_ids, input_ids, original_question, state, i
 
 
 def formatted_outputs(reply, model_name):
-    if shared.model_type == 'galactica':
-        reply = fix_galactica(reply)
-        return reply, reply, generate_basic_html(reply)
-    elif shared.model_type == 'gpt4chan':
+    if shared.model_type == 'gpt4chan':
         reply = fix_gpt4chan(reply)
-        return reply, 'Only applicable for GALACTICA models.', generate_4chan_html(reply)
+        return reply, generate_4chan_html(reply)
     else:
-        return reply, 'Only applicable for GALACTICA models.', generate_basic_html(reply)
+        return reply, generate_basic_html(reply)
 
 
 def set_manual_seed(seed):

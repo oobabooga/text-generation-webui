@@ -709,6 +709,7 @@ def create_interface():
                             shared.gradio['textbox'] = gr.Textbox(value=default_text, elem_classes="textbox", lines=27)
 
                         with gr.Tab('Markdown'):
+                            shared.gradio['markdown_render'] = gr.Button('Render')
                             shared.gradio['markdown'] = gr.Markdown()
 
                         with gr.Tab('HTML'):
@@ -769,6 +770,7 @@ def create_interface():
                             shared.gradio['output_textbox'] = gr.Textbox(elem_classes="textbox_default_output", lines=27, label='Output')
 
                         with gr.Tab('Markdown'):
+                            shared.gradio['markdown_render'] = gr.Button('Render')
                             shared.gradio['markdown'] = gr.Markdown()
 
                         with gr.Tab('HTML'):
@@ -944,9 +946,9 @@ def create_interface():
         else:
             shared.input_params = [shared.gradio[k] for k in ['textbox', 'interface_state']]
             if shared.args.notebook:
-                output_params = [shared.gradio[k] for k in ['textbox', 'markdown', 'html']]
+                output_params = [shared.gradio[k] for k in ['textbox', 'html']]
             else:
-                output_params = [shared.gradio[k] for k in ['output_textbox', 'markdown', 'html']]
+                output_params = [shared.gradio[k] for k in ['output_textbox', 'html']]
 
             gen_events.append(shared.gradio['Generate'].click(
                 lambda x: x, shared.gradio['textbox'], shared.gradio['last_input']).then(
@@ -966,6 +968,7 @@ def create_interface():
 
             if shared.args.notebook:
                 shared.gradio['Undo'].click(lambda x: x, shared.gradio['last_input'], shared.gradio['textbox'], show_progress=False)
+                shared.gradio['markdown_render'].click(lambda x: x, shared.gradio['textbox'], shared.gradio['markdown'], queue=False)
                 gen_events.append(shared.gradio['Regenerate'].click(
                     lambda x: x, shared.gradio['last_input'], shared.gradio['textbox'], show_progress=False).then(
                     ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
@@ -974,6 +977,7 @@ def create_interface():
                     # lambda: None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[0]; element.scrollTop = element.scrollHeight}")
                 )
             else:
+                shared.gradio['markdown_render'].click(lambda x: x, shared.gradio['output_textbox'], shared.gradio['markdown'], queue=False)
                 gen_events.append(shared.gradio['Continue'].click(
                     ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
                     generate_reply_wrapper, [shared.gradio['output_textbox']] + shared.input_params[1:], output_params, show_progress=False).then(

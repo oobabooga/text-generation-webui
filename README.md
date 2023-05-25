@@ -15,7 +15,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * Chat mode for conversation and role-playing
 * Instruct mode compatible with various formats, including Alpaca, Vicuna, Open Assistant, Dolly, Koala, ChatGLM, MOSS, RWKV-Raven, Galactica, StableLM, WizardLM, Baize, Ziya, Chinese-Vicuna, MPT, INCITE, Wizard Mega, KoAlpaca, Vigogne, Bactrian, h2o, and OpenBuddy
 * [Multimodal pipelines, including LLaVA and MiniGPT-4](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/multimodal)
-* Markdown output for [GALACTICA](https://github.com/paperswithcode/galai), including LaTeX rendering
+* Markdown output with LaTeX rendering, to use for instance with [GALACTICA](https://github.com/paperswithcode/galai)
 * Nice HTML output for GPT-4chan
 * [Custom chat characters](docs/Chat-mode.md)
 * Advanced chat features (send images, get audio responses with TTS)
