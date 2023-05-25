@@ -8,8 +8,8 @@ from extensions.api.util import build_parameters, try_start_cloudflared
 from modules import shared
 from modules.chat import generate_chat_reply
 from modules.text_generation import generate_reply
-from extensions.superbooga.script import feed_url_into_collector
-from extensions.superbooga.chromadb import make_collector
+from modules.superbooga import feed_url_into_collector, custom_generate_instruct_prompt
+from modules.chromadb import make_collector
 
 PATHS = [
     "/api/v1/stream",
@@ -18,15 +18,8 @@ PATHS = [
     "/api/v1/feed_urls",
 ]
 
-collector = make_collector()
+
 chunk_count = 5
-
-
-def custom_generate_chat_prompt(user_input, chunk_count, **kwargs):
-    global collector
-    results = collector.get_sorted(user_input, n_results=chunk_count)
-    user_input = "### Memory:\n" + "\n".join(results) + "\n" + user_input
-    return user_input
 
 
 async def _handle_connection(websocket, path):
@@ -117,7 +110,7 @@ async def _handle_connection(websocket, path):
             stopping_strings = generate_params.pop("stopping_strings")
             generate_params["stream"] = True
 
-            infused_prompt = custom_generate_chat_prompt(
+            infused_prompt = custom_generate_instruct_prompt(
                 prompt, chunk_count=chunk_count
             )
             generator = generate_reply(
@@ -155,12 +148,7 @@ async def _handle_connection(websocket, path):
         async for message in websocket:
             urls = message
             datafeed = feed_url_into_collector(
-                urls=urls,
-                chunk_len=400,
-                chunk_sep="",
-                strong_cleanup="True",
-                threads=4,
-                collector=collector,
+                urls=urls, chunk_len=400, chunk_sep="", strong_cleanup="True", threads=4
             )
             for output in datafeed:
                 print(output)

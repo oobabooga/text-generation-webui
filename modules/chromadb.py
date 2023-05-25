@@ -7,11 +7,11 @@ from sentence_transformers import SentenceTransformer
 import chromadb
 from chromadb.config import Settings
 
-logging.info('Intercepting all calls to posthog :)')
+logging.info("Intercepting all calls to posthog :)")
 posthog.capture = lambda *args, **kwargs: None
 
 
-class Collecter():
+class Collecter:
     def __init__(self):
         pass
 
@@ -25,7 +25,7 @@ class Collecter():
         pass
 
 
-class Embedder():
+class Embedder:
     def __init__(self):
         pass
 
@@ -38,7 +38,9 @@ class ChromaCollector(Collecter):
         super().__init__()
         self.chroma_client = chromadb.Client(Settings(anonymized_telemetry=False))
         self.embedder = embedder
-        self.collection = self.chroma_client.create_collection(name="context", embedding_function=embedder.embed)
+        self.collection = self.chroma_client.create_collection(
+            name="context", embedding_function=embedder.embed
+        )
         self.ids = []
 
     def add(self, texts: list[str]):
@@ -53,9 +55,11 @@ class ChromaCollector(Collecter):
         if n_results == 0:
             return [], []
 
-        result = self.collection.query(query_texts=search_strings, n_results=n_results, include=['documents'])
-        documents = result['documents'][0]
-        ids = list(map(lambda x: int(x[2:]), result['ids'][0]))
+        result = self.collection.query(
+            query_texts=search_strings, n_results=n_results, include=["documents"]
+        )
+        documents = result["documents"][0]
+        ids = list(map(lambda x: int(x[2:]), result["ids"][0]))
         return documents, ids
 
     # Get chunks by similarity

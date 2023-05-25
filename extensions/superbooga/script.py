@@ -1,132 +1,70 @@
-import logging
-import re
 import textwrap
 
 import gradio as gr
-from bs4 import BeautifulSoup
-
 from modules import chat, shared
-
-from .chromadb import add_chunks_to_collector, make_collector
-from .download_urls import download_urls
+from modules.superbooga import (
+    feed_data_into_collector,
+    feed_file_into_collector,
+    feed_url_into_collector,
+    apply_settings,
+    add_chunks_to_collector,
+    collector,
+)
 
 params = {
-    'chunk_count': 5,
-    'chunk_length': 700,
-    'chunk_separator': '',
-    'strong_cleanup': False,
-    'threads': 4,
+    "chunk_count": 5,
+    "chunk_length": 700,
+    "chunk_separator": "",
+    "strong_cleanup": False,
+    "threads": 4,
 }
-
-collector = make_collector()
-chat_collector = make_collector()
-chunk_count = 5
-
-
-def feed_data_into_collector(corpus, chunk_len, chunk_sep, collector=collector):
-    
-    # Defining variables
-    chunk_len = int(chunk_len)
-    chunk_sep = chunk_sep.replace(r'\n', '\n')
-    cumulative = ''
-
-    # Breaking the data into chunks and adding those to the db
-    cumulative += "Breaking the input dataset...\n\n"
-    yield cumulative
-    if chunk_sep:
-        data_chunks = corpus.split(chunk_sep)
-        data_chunks = [[data_chunk[i:i + chunk_len] for i in range(0, len(data_chunk), chunk_len)] for data_chunk in data_chunks]
-        data_chunks = [x for y in data_chunks for x in y]
-    else:
-        data_chunks = [corpus[i:i + chunk_len] for i in range(0, len(corpus), chunk_len)]
-
-    cumulative += f"{len(data_chunks)} chunks have been found.\n\nAdding the chunks to the database...\n\n"
-    yield cumulative
-    add_chunks_to_collector(data_chunks, collector)
-    cumulative += "Done."
-    yield cumulative
-
-
-def feed_file_into_collector(file, chunk_len, chunk_sep, collector=collector):
-    yield 'Reading the input dataset...\n\n'
-    text = file.decode('utf-8')
-    for i in feed_data_into_collector(text, chunk_len, chunk_sep, collector):
-        yield i
-
-
-def feed_url_into_collector(urls, chunk_len, chunk_sep, strong_cleanup, threads,  collector=collector):
-    all_text = ''
-    cumulative = ''
-
-    urls = urls.strip().split('\n')
-    cumulative += f'Loading {len(urls)} URLs with {threads} threads...\n\n'
-    yield cumulative
-    for update, contents in download_urls(urls, threads=threads):
-        yield cumulative + update
-
-    cumulative += 'Processing the HTML sources...'
-    yield cumulative
-    for content in contents:
-        soup = BeautifulSoup(content, features="html.parser")
-        for script in soup(["script", "style"]):
-            script.extract()
-
-        strings = soup.stripped_strings
-        if strong_cleanup:
-            strings = [s for s in strings if re.search("[A-Za-z] ", s)]
-
-        text = '\n'.join([s.strip() for s in strings])
-        all_text += text
-
-    for i in feed_data_into_collector(all_text, chunk_len, chunk_sep, collector):
-        yield i
-
-
-def apply_settings(_chunk_count):
-    global chunk_count
-    chunk_count = int(_chunk_count)
-    settings_to_display = {
-        'chunk_count': chunk_count,
-    }
-
-    yield f"The following settings are now active: {str(settings_to_display)}"
 
 
 def custom_generate_chat_prompt(user_input, state, **kwargs):
     global chat_collector
 
-    if state['mode'] == 'instruct':
-        results = collector.get_sorted(user_input, n_results=chunk_count)
-        additional_context = '\nYour reply should be based on the context below:\n\n' + '\n'.join(results)
+    if state["mode"] == "instruct":
+        results = collector.get_sorted(user_input, n_results=params["chunk_count"])
+        print(results)
+        additional_context = (
+            "\nYour reply should be based on the context below:\n\n"
+            + "\n".join(results)
+        )
         user_input += additional_context
     else:
 
         def make_single_exchange(id_):
-            output = ''
+            output = ""
             output += f"{state['name1']}: {shared.history['internal'][id_][0]}\n"
             output += f"{state['name2']}: {shared.history['internal'][id_][1]}\n"
             return output
 
-        if len(shared.history['internal']) > chunk_count and user_input != '':
+        if len(shared.history["internal"]) > chunk_count and user_input != "":
             chunks = []
-            hist_size = len(shared.history['internal'])
-            for i in range(hist_size-1):
+            hist_size = len(shared.history["internal"])
+            for i in range(hist_size - 1):
                 chunks.append(make_single_exchange(i))
 
             add_chunks_to_collector(chunks, chat_collector)
-            query = '\n'.join(shared.history['internal'][-1] + [user_input])
+            query = "\n".join(shared.history["internal"][-1] + [user_input])
             try:
                 best_ids = chat_collector.get_ids_sorted(query, n_results=chunk_count)
-                additional_context = '\n'
+                additional_context = "\n"
                 for id_ in best_ids:
-                    if shared.history['internal'][id_][0] != '<|BEGIN-VISIBLE-CHAT|>':
+                    if shared.history["internal"][id_][0] != "<|BEGIN-VISIBLE-CHAT|>":
                         additional_context += make_single_exchange(id_)
 
-                logging.warning(f'Adding the following new context:\n{additional_context}')
-                state['context'] = state['context'].strip() + '\n' + additional_context
-                kwargs['history'] = {
-                    'internal': [shared.history['internal'][i] for i in range(hist_size) if i not in best_ids],
-                    'visible': ''
+                logging.warning(
+                    f"Adding the following new context:\n{additional_context}"
+                )
+                state["context"] = state["context"].strip() + "\n" + additional_context
+                kwargs["history"] = {
+                    "internal": [
+                        shared.history["internal"][i]
+                        for i in range(hist_size)
+                        if i not in best_ids
+                    ],
+                    "visible": "",
                 }
             except RuntimeError:
                 logging.error("Couldn't query the database, moving on...")
@@ -134,34 +72,11 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
     return chat.generate_chat_prompt(user_input, state, **kwargs)
 
 
-def remove_special_tokens(string):
-    pattern = r'(<\|begin-user-input\|>|<\|end-user-input\|>|<\|injection-point\|>)'
-    return re.sub(pattern, '', string)
-
-
-def input_modifier(string):
-    if shared.is_chat():
-        return string
-
-    # Find the user input
-    pattern = re.compile(r"<\|begin-user-input\|>(.*?)<\|end-user-input\|>", re.DOTALL)
-    match = re.search(pattern, string)
-    if match:
-        user_input = match.group(1).strip()
-
-        # Get the most similar chunks
-        results = collector.get_sorted(user_input, n_results=chunk_count)
-
-        # Make the injection
-        string = string.replace('<|injection-point|>', '\n'.join(results))
-
-    return remove_special_tokens(string)
-
-
 def ui():
-
     with gr.Accordion("Click for more information...", open=False):
-        gr.Markdown(textwrap.dedent("""
+        gr.Markdown(
+            textwrap.dedent(
+                """
 
         ## About
 
@@ -220,34 +135,78 @@ def ui():
 
         *This extension is currently experimental and under development.*
 
-        """))
+        """
+            )
+        )
 
     with gr.Row():
         with gr.Column(min_width=600):
             with gr.Tab("Text input"):
-                data_input = gr.Textbox(lines=20, label='Input data')
-                update_data = gr.Button('Load data')
+                data_input = gr.Textbox(lines=20, label="Input data")
+                update_data = gr.Button("Load data")
 
             with gr.Tab("URL input"):
-                url_input = gr.Textbox(lines=10, label='Input URLs', info='Enter one or more URLs separated by newline characters.')
-                strong_cleanup = gr.Checkbox(value=params['strong_cleanup'], label='Strong cleanup', info='Only keeps html elements that look like long-form text.')
-                threads = gr.Number(value=params['threads'], label='Threads', info='The number of threads to use while downloading the URLs.', precision=0)
-                update_url = gr.Button('Load data')
+                url_input = gr.Textbox(
+                    lines=10,
+                    label="Input URLs",
+                    info="Enter one or more URLs separated by newline characters.",
+                )
+                strong_cleanup = gr.Checkbox(
+                    value=params["strong_cleanup"],
+                    label="Strong cleanup",
+                    info="Only keeps html elements that look like long-form text.",
+                )
+                threads = gr.Number(
+                    value=params["threads"],
+                    label="Threads",
+                    info="The number of threads to use while downloading the URLs.",
+                    precision=0,
+                )
+                update_url = gr.Button("Load data")
 
             with gr.Tab("File input"):
-                file_input = gr.File(label='Input file', type='binary')
-                update_file = gr.Button('Load data')
+                file_input = gr.File(label="Input file", type="binary")
+                update_file = gr.Button("Load data")
 
             with gr.Tab("Generation settings"):
-                chunk_count = gr.Number(value=params['chunk_count'], label='Chunk count', info='The number of closest-matching chunks to include in the prompt.')
-                update_settings = gr.Button('Apply changes')
+                chunk_count = gr.Number(
+                    value=params["chunk_count"],
+                    label="Chunk count",
+                    info="The number of closest-matching chunks to include in the prompt.",
+                )
+                update_settings = gr.Button("Apply changes")
 
-            chunk_len = gr.Number(value=params['chunk_length'], label='Chunk length', info='In characters, not tokens. This value is used when you click on "Load data".')
-            chunk_sep = gr.Textbox(value=params['chunk_separator'], label='Chunk separator', info='Used to manually split chunks. Manually split chunks longer than chunk length are split again. This value is used when you click on "Load data".')
+            chunk_len = gr.Number(
+                value=params["chunk_length"],
+                label="Chunk length",
+                info='In characters, not tokens. This value is used when you click on "Load data".',
+            )
+            chunk_sep = gr.Textbox(
+                value=params["chunk_separator"],
+                label="Chunk separator",
+                info='Used to manually split chunks. Manually split chunks longer than chunk length are split again. This value is used when you click on "Load data".',
+            )
         with gr.Column():
             last_updated = gr.Markdown()
     global collector
-    update_data.click(feed_data_into_collector, [data_input, chunk_len, chunk_sep], last_updated, show_progress=False)
-    update_url.click(feed_url_into_collector, [url_input, chunk_len, chunk_sep, strong_cleanup, threads], last_updated, show_progress=False)
-    update_file.click(feed_file_into_collector, [file_input, chunk_len, chunk_sep], last_updated, show_progress=False)
-    update_settings.click(apply_settings, [chunk_count], last_updated, show_progress=False)
+    update_data.click(
+        feed_data_into_collector,
+        [data_input, chunk_len, chunk_sep],
+        last_updated,
+        show_progress=False,
+    )
+    update_url.click(
+        feed_url_into_collector,
+        [url_input, chunk_len, chunk_sep, strong_cleanup, threads],
+        last_updated,
+        show_progress=False,
+    )
+    update_file.click(
+        feed_file_into_collector,
+        [file_input, chunk_len, chunk_sep],
+        last_updated,
+        show_progress=False,
+    )
+    update_settings.click(
+        apply_settings, [chunk_count], last_updated, show_progress=False
+    )
