@@ -227,7 +227,7 @@ Optionally, you can use the following command-line flags:
 |---------------------------------------------|-------------|
 | `--load-in-4bit`                            | Load the model with 4-bit precision (using bitsandbytes). |
 | `--compute_dtype COMPUTE_DTYPE`             | compute dtype for 4-bit. Valid options: bfloat16, float16, float32. |
-| `--quant_type QUANT_TYPE`                   | quant_type for 4-bit. Valid options: bf4, fp4. |
+| `--quant_type QUANT_TYPE`                   | quant_type for 4-bit. Valid options: nf4, fp4. |
 | `--use_double_quant`                        | use_double_quant for 4-bit. |
 
 #### llama.cpp
