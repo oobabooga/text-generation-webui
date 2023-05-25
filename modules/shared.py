@@ -123,7 +123,7 @@ parser.add_argument('--trust-remote-code', action='store_true', help="Set trust_
 
 # Accelerate 4-bit
 parser.add_argument('--load-in-4bit', action='store_true', help='Load the model with 4-bit precision (using bitsandbytes).')
-parser.add_argument('--compute_dtype', type=str, default="bfloat16", help="compute dtype for 4-bit. Valid options: bfloat16, float16, float32.")
+parser.add_argument('--compute_dtype', type=str, default="float16", help="compute dtype for 4-bit. Valid options: bfloat16, float16, float32.")
 parser.add_argument('--quant_type', type=str, default="nf4", help='quant_type for 4-bit. Valid options: nf4, fp4.')
 parser.add_argument('--use_double_quant', action='store_true', help='use_double_quant for 4-bit.')
 
