@@ -1,1 +1,0 @@
-<|prompter|>Write a story about future of AI development<|endoftext|><|assistant|>

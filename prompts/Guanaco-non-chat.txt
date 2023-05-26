@@ -1,4 +1,0 @@
-### Instruction:
-Generate a list of ten dining places when you are in Rome.
-
-### Response:

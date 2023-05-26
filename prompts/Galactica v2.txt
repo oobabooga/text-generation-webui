@@ -1,1 +1,0 @@
-<prefix>You are a helpful chatbot name Stan</prefix><human>What's my name?<bot>

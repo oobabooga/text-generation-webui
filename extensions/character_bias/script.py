@@ -1,5 +1,6 @@
-import gradio as gr
 import os
+
+import gradio as gr
 
 # get the current directory of the script
 current_dir = os.path.dirname(os.path.abspath(__file__))
