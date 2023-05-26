@@ -20,3 +20,4 @@ bitsandbytes==0.39.0; platform_system != "Windows"
 https://github.com/jllllll/bitsandbytes-windows-webui/raw/main/bitsandbytes-0.39.0-py3-none-any.whl; platform_system == "Windows"
 llama-cpp-python==0.1.53; platform_system != "Windows"
 https://github.com/abetlen/llama-cpp-python/releases/download/v0.1.53/llama_cpp_python-0.1.53-cp310-cp310-win_amd64.whl; platform_system == "Windows"
+ctransformers==0.2.1

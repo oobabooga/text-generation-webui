@@ -47,6 +47,14 @@ def find_model_type(model_name):
     model_name_lower = model_name.lower()
     if re.match('.*rwkv.*\.pth', model_name_lower):
         return 'rwkv'
+    elif len(list(path_to_model.glob('*starcoder*ggml*.bin'))) > 0:
+        return 'starcoder'
+    elif re.match('.*starcoder.*ggml.*\.bin', model_name_lower):
+        return 'starcoder'
+    elif len(list(path_to_model.glob('*starchat*ggml*.bin'))) > 0:
+        return 'starchat'
+    elif re.match('.*starchat.*ggml.*\.bin', model_name_lower):
+        return 'starchat'
     elif len(list(path_to_model.glob('*ggml*.bin'))) > 0:
         return 'llamacpp'
     elif re.match('.*ggml.*\.bin', model_name_lower):
@@ -83,6 +91,10 @@ def load_model(model_name):
         load_func = AutoGPTQ_loader
     elif shared.args.wbits > 0:
         load_func = GPTQ_loader
+    elif shared.model_type == 'starcoder':
+        load_func = starcodercpp_loader
+    elif shared.model_type == 'starchat':
+        load_func = starchatcpp_loader
     elif shared.model_type == 'llamacpp':
         load_func = llamacpp_loader
     elif shared.model_type == 'rwkv':
@@ -270,6 +282,38 @@ def llamacpp_loader(model_name):
 
     logger.info(f"llama.cpp weights detected: {model_file}\n")
     model, tokenizer = LlamaCppModel.from_pretrained(model_file)
+    return model, tokenizer
+
+
+def starcodercpp_loader(model_name):
+    from modules.starcoder_model import StarcoderCppModel
+
+    path = Path(f'{shared.args.model_dir}/{model_name}')
+    if path.is_file():
+        model_file = path
+    else:
+        model_file = list(
+            Path(f'{shared.args.model_dir}/{model_name}').glob('*starcoder*ggml*.bin')
+        )[0]
+
+    logger.info(f'starcoder.cpp weights detected: {model_file}\n')
+    model, tokenizer = StarcoderCppModel().from_pretrained(model_file)
+    return model, tokenizer
+
+
+def starchatcpp_loader(model_name):
+    from modules.starcoder_model import StarcoderCppModel
+
+    path = Path(f'{shared.args.model_dir}/{model_name}')
+    if path.is_file():
+        model_file = path
+    else:
+        model_file = list(
+            Path(f'{shared.args.model_dir}/{model_name}').glob('*starchat*ggml*.bin')
+        )[0]
+
+    logger.info(f'starchat.cpp weights detected: {model_file}\n')
+    model, tokenizer = StarcoderCppModel().from_pretrained(model_file)
     return model, tokenizer
 
 
