@@ -1,5 +1,5 @@
 import textwrap
-
+from modules.logging_colors import logger
 import gradio as gr
 from modules import chat, shared
 from modules.superbooga import (
@@ -39,7 +39,7 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
             output += f"{state['name2']}: {shared.history['internal'][id_][1]}\n"
             return output
 
-        if len(shared.history["internal"]) > chunk_count and user_input != "":
+        if len(shared.history["internal"]) > params['chunk_count'] and user_input != "":
             chunks = []
             hist_size = len(shared.history["internal"])
             for i in range(hist_size - 1):
@@ -48,13 +48,13 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
             add_chunks_to_collector(chunks, chat_collector)
             query = "\n".join(shared.history["internal"][-1] + [user_input])
             try:
-                best_ids = chat_collector.get_ids_sorted(query, n_results=chunk_count)
+                best_ids = chat_collector.get_ids_sorted(query, n_results=params['chunk_count'])
                 additional_context = "\n"
                 for id_ in best_ids:
                     if shared.history["internal"][id_][0] != "<|BEGIN-VISIBLE-CHAT|>":
                         additional_context += make_single_exchange(id_)
 
-                logging.warning(
+                logger.warning(
                     f"Adding the following new context:\n{additional_context}"
                 )
                 state["context"] = state["context"].strip() + "\n" + additional_context
@@ -67,7 +67,7 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
                     "visible": "",
                 }
             except RuntimeError:
-                logging.error("Couldn't query the database, moving on...")
+                logger.error("Couldn't query the database, moving on...")
 
     return chat.generate_chat_prompt(user_input, state, **kwargs)
 

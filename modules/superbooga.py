@@ -2,10 +2,11 @@ from bs4 import BeautifulSoup
 from .chromadb import add_chunks_to_collector, make_collector
 from .download_urls import download_urls
 from modules import chat, shared
+import os
 import re
 import requests
-from io import BytesIO
 import tempfile
+from pdfminer.high_level import extract_text
 
 collector = make_collector()
 chat_collector = make_collector()
@@ -49,13 +50,6 @@ def feed_data_into_collector(corpus, chunk_len, chunk_sep):
     cumulative += "Done."
     yield cumulative
 
-
-
-import PyPDF2
-import os
-
-import tempfile
-from pdfminer.high_level import extract_text
 
 def feed_url_file_into_collector(url, chunk_len, chunk_sep):
     yield "Downloading the file from the URL...\n\n"
