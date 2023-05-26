@@ -20,6 +20,7 @@ venv/
 *.bak
 *.ipynb
 *.log
+.chroma
 
 settings.json
 notification.mp3

@@ -115,15 +115,6 @@ def feed_url_into_collector(urls, chunk_len, chunk_sep, strong_cleanup, threads)
         yield i
 
 
-def apply_settings(_chunk_count):
-    global chunk_count
-    chunk_count = int(_chunk_count)
-    settings_to_display = {
-        "chunk_count": chunk_count,
-    }
-
-    yield f"The following settings are now active: {str(settings_to_display)}"
-
 
 def remove_special_tokens(string):
     pattern = r"(<\|begin-user-input\|>|<\|end-user-input\|>|<\|injection-point\|>)"
