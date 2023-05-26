@@ -4,7 +4,7 @@ from threading import Thread
 from typing import Callable, Optional
 
 from modules import shared
-from modules.chat import load_character
+from modules.chat import load_character_memoized
 
 
 def build_parameters(body, chat=False):
@@ -26,6 +26,9 @@ def build_parameters(body, chat=False):
         'penalty_alpha': float(body.get('penalty_alpha', 0)),
         'length_penalty': float(body.get('length_penalty', 1)),
         'early_stopping': bool(body.get('early_stopping', False)),
+        'mirostat_mode': int(body.get('mirostat_mode', 0)),
+        'mirostat_tau': float(body.get('mirostat_tau', 5)),
+        'mirostat_eta': float(body.get('mirostat_eta', 0.1)),
         'seed': int(body.get('seed', -1)),
         'add_bos_token': bool(body.get('add_bos_token', True)),
         'truncation_length': int(body.get('truncation_length', body.get('max_context_length', 2048))),
@@ -38,8 +41,8 @@ def build_parameters(body, chat=False):
     if chat:
         character = body.get('character')
         instruction_template = body.get('instruction_template')
-        name1, name2, _, greeting, context, _ = load_character(character, shared.settings['name1'], shared.settings['name2'], instruct=False)
-        name1_instruct, name2_instruct, _, _, context_instruct, turn_template = load_character(instruction_template, '', '', instruct=True)
+        name1, name2, _, greeting, context, _ = load_character_memoized(character, str(body.get('your_name', shared.settings['name1'])), shared.settings['name2'], instruct=False)
+        name1_instruct, name2_instruct, _, _, context_instruct, turn_template = load_character_memoized(instruction_template, '', '', instruct=True)
         generate_params.update({
             'stop_at_newline': bool(body.get('stop_at_newline', shared.settings['stop_at_newline'])),
             'chat_prompt_size': int(body.get('chat_prompt_size', shared.settings['chat_prompt_size'])),

@@ -1,4 +1,5 @@
 {
+    "dark_theme": false,
     "autoload_model": true,
     "max_new_tokens": 200,
     "max_new_tokens_min": 1,
@@ -34,9 +35,9 @@
     ],
     "presets": {
         "default": "Default",
-        ".*(alpaca|llama|llava)": "LLaMA-Precise",
+        ".*(alpaca|llama|llava|vicuna)": "LLaMA-Precise",
         ".*pygmalion": "NovelAI-Storywriter",
-        ".*RWKV": "Naive",
+        ".*RWKV.*\.pth": "Naive",
         ".*moss": "MOSS"
     },
     "prompts": {

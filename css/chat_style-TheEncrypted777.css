@@ -4,7 +4,7 @@
     margin-left: auto;
     margin-right: auto;
     max-width: 800px;
-    height: calc(100vh - 300px);
+    height: calc(100vh - 296px);
     overflow-y: auto;
     padding-right: 20px;
     display: flex;
@@ -78,10 +78,10 @@
     padding-top: 5px;
     /*Message gradient background color - remove the line bellow if you don't want a background color or gradient*/
     background: linear-gradient(to bottom, #171730, #1b263f);
-  }
+}
   
   /*Adds 2 extra lines at the top and bottom of the message*/
-  .message-body:before,
+.message-body:before,
   .message-body:after {
     content: "";
     position: absolute;
@@ -89,16 +89,15 @@
     right: 10px;
     height: 1px;
     background-color: rgba(255, 255, 255, 0.13);
-  }
-  
-  .message-body:before {
+}
+
+.message-body:before {
     top: 6px;
-  }
-  
-  .message-body:after {
+}
+
+.message-body:after {
     bottom: 6px;
-  }
-  
+}
 
 .message-body img {
     max-width: 300px;
@@ -124,6 +123,7 @@
 .message-body code {
     overflow-x: auto;
 }
+
 .message-body :not(pre) > code {
     white-space: normal !important;
 }

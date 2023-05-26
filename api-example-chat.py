@@ -17,6 +17,7 @@ def run(user_input, history):
         'mode': 'instruct',  # Valid options: 'chat', 'chat-instruct', 'instruct'
         'character': 'Example',
         'instruction_template': 'Vicuna-v1.1',
+        'your_name': 'You',
 
         'regenerate': False,
         '_continue': False,
@@ -40,6 +41,9 @@ def run(user_input, history):
         'penalty_alpha': 0,
         'length_penalty': 1,
         'early_stopping': False,
+        'mirostat_mode': 0,
+        'mirostat_tau': 5,
+        'mirostat_eta': 0.1,
         'seed': -1,
         'add_bos_token': True,
         'truncation_length': 2048,

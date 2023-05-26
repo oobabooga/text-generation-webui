@@ -1,4 +1,3 @@
-import logging
 import traceback
 from functools import partial
 
@@ -6,6 +5,7 @@ import gradio as gr
 
 import extensions
 import modules.shared as shared
+from modules.logging_colors import logger
 
 state = {}
 available_extensions = []
@@ -29,7 +29,7 @@ def load_extensions():
     for i, name in enumerate(shared.args.extensions):
         if name in available_extensions:
             if name != 'api':
-                logging.info(f'Loading the extension "{name}"...')
+                logger.info(f'Loading the extension "{name}"...')
             try:
                 exec(f"import extensions.{name}.script")
                 extension = getattr(extensions, name).script
@@ -40,7 +40,7 @@ def load_extensions():
 
                 state[name] = [True, i]
             except:
-                logging.error(f'Failed to load the extension "{name}".')
+                logger.error(f'Failed to load the extension "{name}".')
                 traceback.print_exc()
 
 

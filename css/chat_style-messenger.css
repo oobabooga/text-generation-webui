@@ -2,7 +2,7 @@
     margin-left: auto;
     margin-right: auto;
     max-width: 800px;
-    height: calc(100vh - 306px);
+    height: calc(100vh - 296px);
     overflow-y: auto;
     padding-right: 20px;
     display: flex;
@@ -42,18 +42,20 @@
     height: 100%;
     object-fit: cover;
 }
+
 .circle-you {
-	margin-top: 5px;
+    margin-top: 5px;
     float: right;
 }
+
 .circle-bot + .text, .circle-you + .text {
     border-radius: 18px;
     padding: 8px 12px;
 }
 
 .circle-bot + .text {
-	background-color: #E4E6EB;
-	float: left;
+    background-color: #E4E6EB;
+    float: left;
 }
 
 .circle-you + .text {
@@ -63,10 +65,11 @@
 }
 
 .circle-you + .text div, .circle-you + .text *, .dark .circle-you + .text div, .dark .circle-you + .text * {
-	color: #FFF !important;
+    color: #FFF !important;
 }
+
 .circle-you + .text .username {
-	text-align: right;
+    text-align: right;
 }
 
 .dark .circle-bot + .text div, .dark .circle-bot + .text * {
@@ -74,7 +77,7 @@
 }
 
 .text {
-	max-width: 80%;
+    max-width: 80%;
 }
 
 .text p {
@@ -85,7 +88,8 @@
     font-weight: bold;
 }
 
-.message-body {}
+.message-body {
+}
 
 .message-body img {
     max-width: 300px;
@@ -111,6 +115,7 @@
 .message-body code {
     overflow-x: auto;
 }
+
 .message-body :not(pre) > code {
     white-space: normal !important;
 }
