@@ -1,4 +1,4 @@
-[Colab Notebook](https://colab.research.google.com/github/aitrepreneur/text-generation-webui/blob/main/UPDATE_pyg_13b_GPTQ_4bit_128g.ipynb)
+[Colab Notebook](https://colab.research.google.com/github/aitrepreneur/text-generation-webui/blob/main/UPDATED_WebUI%26pyg_13b_GPTQ_4bit_128g.ipynb)
 
 # Text generation web UI
 
