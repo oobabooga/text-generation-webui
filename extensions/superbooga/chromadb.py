@@ -50,7 +50,7 @@ class ChromaCollector(Collecter):
     def get_documents_ids_distances(self, search_strings: list[str], n_results: int):
         n_results = min(len(self.ids), n_results)
         if n_results == 0:
-            return [], []
+            return [], [], []
 
         result = self.collection.query(query_texts=search_strings, n_results=n_results, include=['documents', 'distances'])
         documents = result['documents'][0]
