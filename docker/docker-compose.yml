@@ -6,7 +6,15 @@ services:
       args:
         # specify which cuda version your card supports: https://developer.nvidia.com/cuda-gpus
         TORCH_CUDA_ARCH_LIST: ${TORCH_CUDA_ARCH_LIST}
-        WEBUI_VERSION: ${WEBUI_VERSION}
+        QUANT_MODEL_URL: ${QUANT_MODEL_URL}
+        QUANT_SHA: ${QUANT_SHA}
+        QUANT_BRANCH: ${QUANT_BRANCH}
+        WEBUI_URL: ${WEBUI_URL}
+        WEBUI_SHA: ${WEBUI_SHA}
+        WEBUI_BRANCH: ${WEBUI_BRANCH}
+        LORA_4BIT_URL: ${LORA_4BIT_URL}
+        LORA_4BIT_BRANCH: ${LORA_4BIT_BRANCH}
+        LORA_4BIT_SHA: ${LORA_4BIT_SHA}
     env_file: .env
     ports:
       - "${HOST_PORT}:${CONTAINER_PORT}"

@@ -2,7 +2,7 @@
 Dockerfile
 /characters
 /loras
-/models
+# /models
 /presets
 /prompts
 /softprompts
