@@ -177,3 +177,8 @@ llama-65b-gptq-3bit:
 .*manticore:
   mode: 'instruct'
   instruction_template: 'Manticore Chat'
+.*falcon:
+  mode: 'instruct'
+  auto_devices: true
+  bf16: true
+  trust_remote_code: true
