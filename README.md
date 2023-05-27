@@ -1,6 +1,6 @@
 # Text generation web UI
 
-A gradio web UI for running Large Language Models like LLaMA, llama.cpp, GPT-J, Pythia, OPT, and GALACTICA.
+A gradio web UI for running Large Language Models like LLaMA, llama.cpp, GPT-J, Pythia, OPT, starcoder and GALACTICA.
 
 Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.com/AUTOMATIC1111/stable-diffusion-webui) of text generation.
 
@@ -26,6 +26,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * [LoRA (loading and training)](docs/Using-LoRAs.md)
 * [llama.cpp](docs/llama.cpp-models.md)
 * [RWKV model](docs/RWKV-model.md)
+* [starcoder.cpp](docs/starcoder.cpp-models.md)
 * 8-bit and 4-bit through bitsandbytes
 * Layers splitting across GPU(s), CPU, and disk
 * CPU mode
@@ -251,6 +252,13 @@ Optionally, you can use the following command-line flags:
 | `--n-gpu-layers N_GPU_LAYERS` | Number of layers to offload to the GPU. Only works if llama-cpp-python was compiled with BLAS. Set this to 1000000000 to offload all layers to the GPU. |
 | `--n_ctx N_CTX` | Size of the prompt context. |
 | `--llama_cpp_seed SEED` | Seed for llama-cpp models. Default 0 (random). |
+
+#### starcoder.cpp
+
+| Flag        | Description |
+|-------------|-------------|
+| `--threads` | Number of threads to use. |
+| `--n_ctx N_CTX` | Size of the prompt context. |
 
 #### GPTQ
 
