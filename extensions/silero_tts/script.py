@@ -98,7 +98,6 @@ def history_modifier(history):
 
     return history
 
-
 def output_modifier(string):
     global model, current_params, streaming_state
     for i in params:
@@ -110,25 +109,48 @@ def output_modifier(string):
     if not params['activate']:
         return string
 
-    original_string = string
-    string = tts_preprocessor.preprocess(string)
+    preprocessed_string = tts_preprocessor.preprocess(string)
+    if preprocessed_string == '':
+        return '*Empty reply, try regenerating*'
 
-    if string == '':
-        string = '*Empty reply, try regenerating*'
-    else:
-        output_file = Path(f'extensions/silero_tts/outputs/{shared.character}_{int(time.time())}.wav')
+    paragraphs = string.split('\n')
+
+    current_time = int(time.time())
+    combined_output_string = ''
+
+    valid_paragraph_counter = 0
+    for paragraph in paragraphs:
+        original_string = paragraph
+        paragraph = tts_preprocessor.preprocess(paragraph)
+
+        # Skip processing for empty paragraphs
+        if paragraph == '':
+            continue
+
+        output_directory = Path(f'extensions/silero_tts/outputs/{shared.character}_{current_time}')
+        output_directory.mkdir(parents=True, exist_ok=True)
+
+        output_file = output_directory / f'{valid_paragraph_counter}.wav'
+
         prosody = '<prosody rate="{}" pitch="{}">'.format(params['voice_speed'], params['voice_pitch'])
-        silero_input = f'<speak>{prosody}{xmlesc(string)}</prosody></speak>'
+        silero_input = f'<speak>{prosody}{xmlesc(paragraph)}</prosody></speak>'
         model.save_wav(ssml_text=silero_input, speaker=params['speaker'], sample_rate=int(params['sample_rate']), audio_path=str(output_file))
 
-        autoplay = 'autoplay' if params['autoplay'] else ''
-        string = f'<audio src="file/{output_file.as_posix()}" controls {autoplay}></audio>'
+        # Save the original paragraph to a .txt file
+        with open(output_directory / f'{valid_paragraph_counter}.txt', 'w') as text_file:
+            text_file.write(original_string)
+
+        autoplay = 'autoplay' if params['autoplay'] and len(paragraphs) == 1 else ''
+        paragraph_output_string = f'<audio src="file/{output_file.as_posix()}" controls {autoplay}></audio>'
         if params['show_text']:
-            string += f'\n\n{original_string}'
+            paragraph_output_string += f'\n\n{original_string}'
+
+        combined_output_string += paragraph_output_string + '\n\n'
+
+        valid_paragraph_counter += 1
 
     shared.processing_message = "*Is typing...*"
-    return string
-
+    return combined_output_string
 
 def setup():
     global model
