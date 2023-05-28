@@ -32,6 +32,21 @@ alphabet_map = {
     "Z": " Zed "  # Zed is weird, as I (da3dsoul) am American, but most of the voice models sound British, so it matches
 }
 
+custom_abbreviations = {
+    "Mr.": " Mister ",
+    "Mrs.": " Misses ",
+    "Dr.": " Doctor ",
+    "St.": " Saint ",
+    "Co.": " Company ",
+    "Jr.": " Junior ",
+    "Maj.": " Major ",
+    "Gen.": " General ",
+}
+
+def replace_custom_abbreviations(string):
+    for k, v in custom_abbreviations.items():
+        string = string.replace(k, v)
+    return string
 
 def preprocess(string):
     # the order for some of these matter
@@ -54,6 +69,7 @@ def preprocess(string):
     # replace_abbreviations adds a lot of unnecessary whitespace to ensure separation
     string = replace_abbreviations(string)
     string = replace_lowercase_abbreviations(string)
+    string = replace_custom_abbreviations(string)
 
     # cleanup whitespaces
     # remove whitespace before punctuation
