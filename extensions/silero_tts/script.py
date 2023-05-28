@@ -205,8 +205,11 @@ def output_modifier(string):
         if preprocessed_paragraph.strip() == '':
             continue  # Skip empty preprocessed paragraphs
 
-        output_file = output_directory / f'{file_idx}.wav'
-        text_file = output_directory / f'{file_idx}.txt'
+        # Pad the file index with leading zeroes
+        padded_idx = str(file_idx).zfill(3)
+
+        output_file = output_directory / f'voice_{padded_idx}.wav'
+        text_file = output_directory / f'paragraph_{padded_idx}.txt'
 
         # Save the original paragraph to a text file before generating audio
         with open(text_file, 'w') as f:
