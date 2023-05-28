@@ -98,6 +98,84 @@ def history_modifier(history):
 
     return history
 
+import os
+from pathlib import Path
+
+def generate_html_page(directory):
+    # Define the file paths
+    audio_files = sorted(Path(directory).rglob('*.wav'))
+    text_files = sorted(Path(directory).rglob('*.txt'))
+
+    # Extract file names
+    audio_files_names = [audio_file.name for audio_file in audio_files]
+    text_files_names = [text_file.name for text_file in text_files]
+
+    # Read the content of the text files
+    text_contents = []
+    for text_file in text_files:
+        with open(text_file, 'r') as file:
+            text_contents.append(file.read().replace('\n', '\\n').replace('"', '\\"'))
+
+    # Define the Javascript part
+    javascript = f"""
+    <script>
+        const audioFiles = {str(audio_files_names)};
+        const textContents = {str(text_contents)};
+
+        let audioIndex = 0;
+        let audioElement = new Audio(audioFiles[audioIndex]);
+
+        const audioPlayer = document.getElementById('audio-player');
+        const textDisplay = document.getElementById('text-display');
+        const playButton = document.getElementById('play-button');
+
+        audioPlayer.appendChild(audioElement);
+
+        textDisplay.innerText = textContents[audioIndex];
+
+        audioElement.addEventListener('ended', function () {{
+            audioIndex++;
+            if (audioIndex < audioFiles.length) {{
+                audioElement.src = audioFiles[audioIndex];
+                textDisplay.innerText = textContents[audioIndex];
+                audioElement.play();
+            }}
+        }});
+
+        playButton.addEventListener('click', function () {{
+            audioElement.play();
+            playButton.style.display = 'none';
+        }});
+    </script>
+    """
+
+    # Generate the HTML content
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Audio Playback</title>
+        <style>
+            #text-display {{
+                margin-top: 2em;
+                font-size: 1.5em;
+            }}
+        </style>
+    </head>
+    <body>
+        <button id="play-button">Start Playback</button>
+        <div id="audio-player"></div>
+        <div id="text-display"></div>
+        {javascript}
+    </body>
+    </html>
+    """
+
+    # Write the HTML content to a file
+    with open(Path(directory) / 'playback.html', 'w') as file:
+        file.write(html)
+
+
 def output_modifier(string):
     global model, current_params, streaming_state
     for i in params:
@@ -109,48 +187,52 @@ def output_modifier(string):
     if not params['activate']:
         return string
 
-    preprocessed_string = tts_preprocessor.preprocess(string)
-    if preprocessed_string == '':
-        return '*Empty reply, try regenerating*'
+    original_string = string
 
-    paragraphs = string.split('\n')
-
+    # Create a new directory for the outputs
     current_time = int(time.time())
-    combined_output_string = ''
+    output_directory = Path(f'extensions/silero_tts/outputs/{shared.character}_{current_time}')
+    output_directory.mkdir(parents=True, exist_ok=True)
 
-    valid_paragraph_counter = 0
+    paragraphs = original_string.split('\n')
+    audio_files = []
+    text_files = []
+    file_idx = 0
+
     for paragraph in paragraphs:
-        original_string = paragraph
-        paragraph = tts_preprocessor.preprocess(paragraph)
+        preprocessed_paragraph = tts_preprocessor.preprocess(paragraph)
 
-        # Skip processing for empty paragraphs
-        if paragraph == '':
-            continue
+        if preprocessed_paragraph.strip() == '':
+            continue  # Skip empty preprocessed paragraphs
 
-        output_directory = Path(f'extensions/silero_tts/outputs/{shared.character}_{current_time}')
-        output_directory.mkdir(parents=True, exist_ok=True)
+        output_file = output_directory / f'{file_idx}.wav'
+        text_file = output_directory / f'{file_idx}.txt'
 
-        output_file = output_directory / f'{valid_paragraph_counter}.wav'
+        # Save the original paragraph to a text file before generating audio
+        with open(text_file, 'w') as f:
+            f.write(paragraph)
 
         prosody = '<prosody rate="{}" pitch="{}">'.format(params['voice_speed'], params['voice_pitch'])
-        silero_input = f'<speak>{prosody}{xmlesc(paragraph)}</prosody></speak>'
+        silero_input = f'<speak>{prosody}{xmlesc(preprocessed_paragraph)}</prosody></speak>'
         model.save_wav(ssml_text=silero_input, speaker=params['speaker'], sample_rate=int(params['sample_rate']), audio_path=str(output_file))
 
-        # Save the original paragraph to a .txt file
-        with open(output_directory / f'{valid_paragraph_counter}.txt', 'w') as text_file:
-            text_file.write(original_string)
+        audio_files.append(str(output_file))
+        text_files.append(str(text_file))
 
-        autoplay = 'autoplay' if params['autoplay'] and len(paragraphs) == 1 else ''
-        paragraph_output_string = f'<audio src="file/{output_file.as_posix()}" controls {autoplay}></audio>'
+        file_idx += 1  # Increment file index only after a successful file creation
+
+    generate_html_page(str(output_directory))  # Generate the HTML page
+
+    # Create the output string with links to the audio files
+    output_string = ''
+    for idx, (audio_file, text_file) in enumerate(zip(audio_files, text_files)):
+        output_string += f'<audio src="file/{audio_file}" controls></audio>'
         if params['show_text']:
-            paragraph_output_string += f'\n\n{original_string}'
-
-        combined_output_string += paragraph_output_string + '\n\n'
-
-        valid_paragraph_counter += 1
+            output_string += f'<br><a href="file/{text_file}" target="_blank">Read Text for Audio {idx+1}</a><br><br>'
 
     shared.processing_message = "*Is typing...*"
-    return combined_output_string
+    return output_string
+
 
 def setup():
     global model
