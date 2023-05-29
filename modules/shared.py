@@ -65,18 +65,9 @@ settings = {
     'chat_generation_attempts_min': 1,
     'chat_generation_attempts_max': 10,
     'default_extensions': [],
-    'chat_default_extensions': ["gallery"],
-    'presets': {
-        'default': 'Default',
-        '.*(alpaca|llama|llava|vicuna)': "LLaMA-Precise",
-        '.*pygmalion': 'NovelAI-Storywriter',
-        '.*RWKV.*\.pth': 'Naive',
-        '.*moss': 'MOSS',
-    },
-    'prompts': {
-        'default': 'QA',
-        '.*(gpt4chan|gpt-4chan|4chan)': 'GPT-4chan',
-    }
+    'chat_default_extensions': ['gallery'],
+    'preset': 'LLaMA-Precise',
+    'prompt': 'QA',
 }
 
 
@@ -103,7 +94,7 @@ parser.add_argument("--model-dir", type=str, default='models/', help="Path to di
 parser.add_argument("--lora-dir", type=str, default='loras/', help="Path to directory with all the loras")
 parser.add_argument('--model-menu', action='store_true', help='Show a model menu in the terminal when the web UI is first launched.')
 parser.add_argument('--no-stream', action='store_true', help='Don\'t stream the text output in real time.')
-parser.add_argument('--settings', type=str, help='Load the default interface settings from this json file. See settings-template.json for an example. If you create a file called settings.json, this file will be loaded by default without the need to use the --settings flag.')
+parser.add_argument('--settings', type=str, help='Load the default interface settings from this yaml file. See settings-template.yaml for an example. If you create a file called settings.yaml, this file will be loaded by default without the need to use the --settings flag.')
 parser.add_argument('--extensions', type=str, nargs="+", help='The list of extensions to load. If you want to load more than one extension, write the names separated by spaces.')
 parser.add_argument('--verbose', action='store_true', help='Print the prompts to the terminal.')
 

@@ -103,12 +103,11 @@ def load_preset_values(preset_menu, state, return_dict=False):
         'mirostat_eta': 0.1,
     }
 
-    with open(Path(f'presets/{preset_menu}.txt'), 'r') as infile:
-        preset = infile.read()
-    for i in preset.splitlines():
-        i = i.rstrip(',').strip().split('=')
-        if len(i) == 2 and i[0].strip() != 'tokens':
-            generate_params[i[0].strip()] = eval(i[1].strip())
+    with open(Path(f'presets/{preset_menu}.yaml'), 'r') as infile:
+        preset = yaml.safe_load(infile)
+
+    for k in preset:
+        generate_params[k] = preset[k]
 
     generate_params['temperature'] = min(1.99, generate_params['temperature'])
     if return_dict:
@@ -301,7 +300,7 @@ def save_model_settings(model, state):
             shared.model_config[model_regex][k] = state[k]
 
         with open(p, 'w') as f:
-            f.write(yaml.dump(user_config))
+            f.write(yaml.dump(user_config, sort_keys=False))
 
         yield (f"Settings for {model} saved to {p}")
 
@@ -551,11 +550,8 @@ def create_interface():
 
     # Defining some variables
     gen_events = []
-    default_preset = shared.settings['presets'][next((k for k in shared.settings['presets'] if re.match(k.lower(), shared.model_name.lower())), 'default')]
-    if len(shared.lora_names) == 1:
-        default_text = load_prompt(shared.settings['prompts'][next((k for k in shared.settings['prompts'] if re.match(k.lower(), shared.lora_names[0].lower())), 'default')])
-    else:
-        default_text = load_prompt(shared.settings['prompts'][next((k for k in shared.settings['prompts'] if re.match(k.lower(), shared.model_name.lower())), 'default')])
+    default_preset = shared.settings['preset']
+    default_text = load_prompt(shared.settings['prompt'])
     title = 'Text generation web UI'
 
     # Authentication variables
@@ -1016,16 +1012,19 @@ if __name__ == "__main__":
     settings_file = None
     if shared.args.settings is not None and Path(shared.args.settings).exists():
         settings_file = Path(shared.args.settings)
+    elif Path('settings.yaml').exists():
+        settings_file = Path('settings.yaml')
     elif Path('settings.json').exists():
         settings_file = Path('settings.json')
 
     if settings_file is not None:
         logger.info(f"Loading settings from {settings_file}...")
-        new_settings = json.loads(open(settings_file, 'r').read())
+        file_contents = open(settings_file, 'r', encoding='utf-8').read()
+        new_settings = json.loads(file_contents) if settings_file.suffix == "json" else yaml.safe_load(file_contents)
         for item in new_settings:
             shared.settings[item] = new_settings[item]
 
-    # Set default model settings based on settings.json
+    # Set default model settings based on settings file
     shared.model_config['.*'] = {
         'wbits': 'None',
         'model_type': 'None',
