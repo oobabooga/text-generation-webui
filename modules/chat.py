@@ -641,7 +641,7 @@ def save_character(name, greeting, context, picture, filename, instruct=False):
     data = {k: v for k, v in data.items() if v}  # Strip falsy
     filepath = Path(f'{folder}/{filename}.yaml')
     with filepath.open('w') as f:
-        yaml.dump(data, f)
+        yaml.dump(data, f, sort_keys=False)
 
     logger.info(f'Wrote {filepath}')
     path_to_img = Path(f'{folder}/{filename}.png')
