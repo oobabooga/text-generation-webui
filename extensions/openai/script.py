@@ -91,10 +91,32 @@ def float_list_to_base64(float_list):
 
 
 class Handler(BaseHTTPRequestHandler):
+    def send_access_control_headers(self):
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Credentials", "true")
+        self.send_header(
+            "Access-Control-Allow-Methods",
+            "GET,HEAD,OPTIONS,POST,PUT"
+        )
+        self.send_header(
+            "Access-Control-Allow-Headers",
+            "Origin, Accept, X-Requested-With, Content-Type, "
+            "Access-Control-Request-Method, Access-Control-Request-Headers, "
+            "Authorization"
+        )    
+ 
+    def do_OPTIONS(self):
+        self.send_response(200)
+        self.send_access_control_headers()
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        self.wfile.write("OK".encode('utf-8'))
+
     def do_GET(self):
         if self.path.startswith('/v1/models'):
 
             self.send_response(200)
+            self.send_access_control_headers()
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
 
@@ -146,6 +168,7 @@ class Handler(BaseHTTPRequestHandler):
         elif '/billing/usage' in self.path:
             # Ex. /v1/dashboard/billing/usage?start_date=2023-05-01&end_date=2023-05-31
             self.send_response(200)
+            self.send_access_control_headers()
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
 
@@ -236,6 +259,7 @@ class Handler(BaseHTTPRequestHandler):
                 req_params[par] = clamp(req_params[par], 0.001, 1.999)
 
             self.send_response(200)
+            self.send_access_control_headers()
             if req_params['stream']:
                 self.send_header('Content-Type', 'text/event-stream')
                 self.send_header('Cache-Control', 'no-cache')
@@ -389,7 +413,9 @@ class Handler(BaseHTTPRequestHandler):
                     chunk[resp_list][0]["message"] = {'role': 'assistant', 'content': ''}
                     chunk[resp_list][0]["delta"] = {'role': 'assistant', 'content': ''}
 
-                response = 'data: ' + json.dumps(chunk) + '\n'
+                data_chunk = 'data: ' + json.dumps(chunk) + '\r\n\r\n'
+                chunk_size = hex(len(data_chunk))[2:] + '\r\n'
+                response = chunk_size + data_chunk
                 self.wfile.write(response.encode('utf-8'))
 
             # generate reply #######################################
@@ -462,7 +488,9 @@ class Handler(BaseHTTPRequestHandler):
                         # So yeah... do both methods? delta and messages.
                         chunk[resp_list][0]['message'] = {'content': new_content}
                         chunk[resp_list][0]['delta'] = {'content': new_content}
-                    response = 'data: ' + json.dumps(chunk) + '\n'
+                    data_chunk = 'data: ' + json.dumps(chunk) + '\r\n\r\n'
+                    chunk_size = hex(len(data_chunk))[2:] + '\r\n'
+                    response = chunk_size + data_chunk
                     self.wfile.write(response.encode('utf-8'))
                     completion_token_count += len(encode(new_content)[0])
 
@@ -487,8 +515,12 @@ class Handler(BaseHTTPRequestHandler):
                 else:
                     # So yeah... do both methods? delta and messages.
                     chunk[resp_list][0]['message'] = {'content': ''}
-                    chunk[resp_list][0]['delta'] = {}
-                response = 'data: ' + json.dumps(chunk) + '\ndata: [DONE]\n'
+                    chunk[resp_list][0]['delta'] = {'content': ''}
+
+                data_chunk = 'data: ' + json.dumps(chunk) + '\r\n\r\n'
+                chunk_size = hex(len(data_chunk))[2:] + '\r\n'
+                done = 'data: [DONE]\r\n\r\n'
+                response = chunk_size + data_chunk + done
                 self.wfile.write(response.encode('utf-8'))
                 # Finished if streaming.
                 if debug:
@@ -534,6 +566,7 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(response.encode('utf-8'))
         elif '/edits' in self.path:
             self.send_response(200)
+            self.send_access_control_headers()
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
 
@@ -629,6 +662,7 @@ class Handler(BaseHTTPRequestHandler):
             # url return types will require file management and a web serving files... Perhaps later!
 
             self.send_response(200)
+            self.send_access_control_headers()
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
 
@@ -663,6 +697,7 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(response.encode('utf-8'))
         elif '/embeddings' in self.path and embedding_model is not None:
             self.send_response(200)
+            self.send_access_control_headers()
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
 
@@ -696,6 +731,7 @@ class Handler(BaseHTTPRequestHandler):
         elif '/moderations' in self.path:
             # for now do nothing, just don't error.
             self.send_response(200)
+            self.send_access_control_headers()
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
 
@@ -729,6 +765,7 @@ class Handler(BaseHTTPRequestHandler):
         elif self.path == '/api/v1/token-count':
             # NOT STANDARD. lifted from the api extension, but it's still very useful to calculate tokenized length client side.
             self.send_response(200)
+            self.send_access_control_headers()
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
 
