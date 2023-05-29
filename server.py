@@ -395,8 +395,10 @@ def create_model_menus():
                         shared.gradio['model_type'] = gr.Dropdown(label="model_type", choices=["None", "llama", "opt", "gptj"], value=shared.args.model_type or "None")
 
                     with gr.Column():
-                        shared.gradio['autogptq'] = gr.Checkbox(label="autogptq", value=shared.args.autogptq, info='AutoGPTQ needs to be manually installed from source. When enabled, gpu-memory should be used for CPU offloading instead of pre_layer.')
                         shared.gradio['pre_layer'] = gr.Slider(label="pre_layer", minimum=0, maximum=100, value=shared.args.pre_layer[0] if shared.args.pre_layer is not None else 0)
+                        gr.Markdown('AutoGPTQ')
+                        shared.gradio['autogptq'] = gr.Checkbox(label="autogptq", value=shared.args.autogptq, info='AutoGPTQ needs to be manually installed from source. When enabled, gpu-memory should be used for CPU offloading instead of pre_layer.')
+                        shared.gradio['triton'] = gr.Checkbox(label="triton", value=shared.args.triton, info='Use triton in AutoGPTQ.')
 
             with gr.Box():
                 gr.Markdown('llama.cpp')
