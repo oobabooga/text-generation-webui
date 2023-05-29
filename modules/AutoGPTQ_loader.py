@@ -35,6 +35,7 @@ def load_quantized(model_name):
         'device': "cuda:0" if not shared.args.cpu else "cpu",
         'use_triton': shared.args.triton,
         'use_safetensors': use_safetensors,
+        'trust_remote_code': shared.args.trust_remote_code,
         'max_memory': get_max_memory_dict()
     }
 
