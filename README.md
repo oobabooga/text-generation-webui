@@ -97,7 +97,7 @@ cd text-generation-webui
 pip install -r requirements.txt
 ```
 
-#### 4. Install GPTQ-for-LLaMa and the monkey patch
+#### 4. Install GPTQ
 
 The base installation covers [transformers](https://github.com/huggingface/transformers) models (`AutoModelForCausalLM` and `AutoModelForSeq2SeqLM` specifically) and [llama.cpp](https://github.com/ggerganov/llama.cpp) (GGML) models.
 
