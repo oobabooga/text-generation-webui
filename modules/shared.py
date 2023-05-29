@@ -190,7 +190,7 @@ for k in deprecated_dict:
 if args.trust_remote_code:
     logger.warning("trust_remote_code is enabled. This is dangerous.")
 if args.share:
-    logger.warning("The gradio \"share link\" feature downloads a proprietary and unaudited blob to create a reverse tunnel. This is potentially dangerous.")
+    logger.warning("The gradio \"share link\" feature uses a proprietary executable to create a reverse tunnel. Use it with care.")
 
 
 def add_extension(name):
