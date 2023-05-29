@@ -82,11 +82,12 @@ def calculate_perplexity(models, input_dataset, stride, _max_length):
         yield cumulative_log + "Tokenizing the input dataset...\n\n"
         encodings = encode(text, add_special_tokens=False)
         seq_len = encodings.shape[1]
-        if not _max_length:
-            if hasattr(shared.model.config, 'max_position_embeddings'):
-                max_length = shared.model.config.max_position_embeddings
-            else:
-                max_length = 2048
+        if _max_length:
+            max_length = _max_length
+        elif hasattr(shared.model.config, 'max_position_embeddings'):
+            max_length = shared.model.config.max_position_embeddings
+        else:
+            max_length = 2048
 
         nlls = []
         prev_end_loc = 0
