@@ -128,6 +128,7 @@ def generate_html_page(directory):
         const audioPlayer = document.getElementById('audio-player');
         const textDisplay = document.getElementById('text-display');
         const playButton = document.getElementById('play-button');
+        const themeButton = document.getElementById('theme-button');
 
         audioPlayer.appendChild(audioElement);
 
@@ -137,14 +138,31 @@ def generate_html_page(directory):
             audioIndex++;
             if (audioIndex < audioFiles.length) {{
                 audioElement.src = audioFiles[audioIndex];
-                textDisplay.innerText = textContents[audioIndex];
+                textDisplay.style.opacity = '0';
+                setTimeout(function () {{
+                    textDisplay.innerText = textContents[audioIndex];
+                    textDisplay.style.opacity = '1';
+                }}, 500);  // reduced transition time to 0.5 seconds
                 audioElement.play();
+            }} else {{  // If all audio files have been played
+                audioIndex = 0;  // Reset the audio index
+                audioElement.src = audioFiles[audioIndex];  // Set the audio source to the first audio file
+                textDisplay.style.opacity = '0';  // Set the opacity of textDisplay to 0
+                setTimeout(function () {{
+                    textDisplay.innerText = textContents[audioIndex];  // Update the text display with index 0
+                    textDisplay.style.opacity = '1';  // Set the opacity of textDisplay to 1
+                }}, 500);
+                playButton.style.display = '';  // Show the "Start Playback" button again
             }}
         }});
 
         playButton.addEventListener('click', function () {{
             audioElement.play();
             playButton.style.display = 'none';
+        }});
+
+        themeButton.addEventListener('click', function () {{
+            document.body.classList.toggle('dark-theme');
         }});
     </script>
     """
@@ -159,11 +177,19 @@ def generate_html_page(directory):
             #text-display {{
                 margin-top: 2em;
                 font-size: 1.5em;
+                opacity: 1;
+                transition: opacity 0.5s;
+            }}
+            /* Dark theme CSS */
+            .dark-theme {{
+                background-color: #121212;
+                color: white;
             }}
         </style>
     </head>
     <body>
         <button id="play-button">Start Playback</button>
+        <button id="theme-button">Toggle Dark/Light Theme</button>
         <div id="audio-player"></div>
         <div id="text-display"></div>
         {javascript}
