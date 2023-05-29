@@ -114,7 +114,7 @@ def generate_html_page(directory):
     text_contents = []
     for text_file in text_files:
         with open(text_file, 'r') as file:
-            text_contents.append(file.read().replace('\n', '\\n').replace('"', '\\"'))
+            text_contents.append(file.read().replace('"', '\"'))
 
     # Define the Javascript part
     javascript = f"""
@@ -232,6 +232,8 @@ def output_modifier(string):
         output_string += f'<audio src="file/{audio_file}" controls></audio>'
         if params['show_text']:
             output_string += f'<br><a href="file/{text_file}" target="_blank">Read Text for Audio {idx+1}</a><br><br>'
+
+    output_string += f'<br><a href="file/{str(output_directory)}/playback.html" target="_blank">Link to HTML Playback Page</a><br><br>'
 
     shared.processing_message = "*Is typing...*"
     return output_string
