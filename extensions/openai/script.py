@@ -91,7 +91,39 @@ def float_list_to_base64(float_list):
 
 
 class Handler(BaseHTTPRequestHandler):
+    protocol_version = 'HTTP/1.1'
+    def do_OPTIONS(self):
+        self.send_response(200)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Credentials", "true")
+        self.send_header(
+            "Access-Control-Allow-Methods",
+            "GET,HEAD,OPTIONS,POST,PUT"
+        )
+        self.send_header(
+            "Access-Control-Allow-Headers",
+            "Origin, Accept, X-Requested-With, Content-Type, "
+            "Access-Control-Request-Method, Access-Control-Request-Headers, "
+            "Authorization"
+        )
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        self.wfile.write("OK".encode('utf-8'))
+
     def do_GET(self):
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Credentials", "true")
+        self.send_header(
+            "Access-Control-Allow-Methods",
+            "GET,HEAD,OPTIONS,POST,PUT"
+        )
+        self.send_header(
+            "Access-Control-Allow-Headers",
+            "Origin, Accept, X-Requested-With, Content-Type, "
+            "Access-Control-Request-Method, Access-Control-Request-Headers, "
+            "Authorization"
+        )
+        
         if self.path.startswith('/v1/models'):
 
             self.send_response(200)
@@ -239,9 +271,22 @@ class Handler(BaseHTTPRequestHandler):
             if req_params['stream']:
                 self.send_header('Content-Type', 'text/event-stream')
                 self.send_header('Cache-Control', 'no-cache')
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.send_header("Access-Control-Allow-Credentials", "true")
+                self.send_header(
+                   "Access-Control-Allow-Methods",
+                   "GET,HEAD,OPTIONS,POST,PUT"
+                 )
+                self.send_header(
+                    "Access-Control-Allow-Headers",
+                    "Origin, Accept, X-Requested-With, Content-Type, "
+                    "Access-Control-Request-Method, Access-Control-Request-Headers, "
+                    "Authorization"
+                )
                 # self.send_header('Connection', 'keep-alive')
             else:
                 self.send_header('Content-Type', 'application/json')
+
             self.end_headers()
 
             token_count = 0
@@ -315,8 +360,13 @@ class Handler(BaseHTTPRequestHandler):
 
                 # can't really truncate the system messages
                 system_msg = '\n'.join(system_msgs)
-                if system_msg[-1] != '\n':
-                    system_msg = system_msg + '\n'
+                
+                # Don't crash on empty system message
+                if not system_msg: 
+                    system_msg = '\n'
+                else:
+                    if system_msg[-1] != '\n':
+                        system_msg = system_msg + '\n'
 
                 system_token_count = len(encode(system_msg)[0])
                 remaining_tokens = req_params['truncation_length'] - system_token_count
@@ -389,8 +439,13 @@ class Handler(BaseHTTPRequestHandler):
                     chunk[resp_list][0]["message"] = {'role': 'assistant', 'content': ''}
                     chunk[resp_list][0]["delta"] = {'role': 'assistant', 'content': ''}
 
-                response = 'data: ' + json.dumps(chunk) + '\n'
-                self.wfile.write(response.encode('utf-8'))
+                response = 'data: ' + json.dumps(chunk) + '\r\n\r\n'
+
+                # Convert length to hexadecimal string
+                chunk_size = hex(len(response))[2:]  
+                chunked_response = chunk_size + '\r\n' + response + '\r\n'
+
+                self.wfile.write(chunked_response.encode('utf-8'))
 
             # generate reply #######################################
             if debug:
@@ -462,34 +517,24 @@ class Handler(BaseHTTPRequestHandler):
                         # So yeah... do both methods? delta and messages.
                         chunk[resp_list][0]['message'] = {'content': new_content}
                         chunk[resp_list][0]['delta'] = {'content': new_content}
-                    response = 'data: ' + json.dumps(chunk) + '\n'
-                    self.wfile.write(response.encode('utf-8'))
+
+                    response = 'data: ' + json.dumps(chunk) + '\r\n'
+
+                    chunk_size = hex(len(response))[2:]  # Convert length to hexadecimal string
+                    chunked_response = chunk_size + '\r\n' + response + '\r\n\r\n'
+                    # Return empty response twice
+                    self.wfile.write(chunked_response.encode('utf-8'))
                     completion_token_count += len(encode(new_content)[0])
 
             if req_params['stream']:
-                chunk = {
-                    "id": cmpl_id,
-                    "object": stream_object_type,
-                    "created": created_time,
-                    "model": model,  # TODO: add Lora info?
-                    resp_list: [{
-                        "index": 0,
-                        "finish_reason": "stop",
-                    }],
-                    "usage": {
-                        "prompt_tokens": token_count,
-                        "completion_tokens": completion_token_count,
-                        "total_tokens": token_count + completion_token_count
-                    }
-                }
-                if stream_object_type == 'text_completion.chunk':
-                    chunk[resp_list][0]['text'] = ''
-                else:
-                    # So yeah... do both methods? delta and messages.
-                    chunk[resp_list][0]['message'] = {'content': ''}
-                    chunk[resp_list][0]['delta'] = {}
-                response = 'data: ' + json.dumps(chunk) + '\ndata: [DONE]\n'
+                # If we've reached this point, we've printed all of the tokens
+                response = '\ndata: [DONE]\n\r\n\r\n'
                 self.wfile.write(response.encode('utf-8'))
+
+                chunked_response = "0" + '\r\n' + response + '\r\n'
+                # Terminate chunked encoding
+                self.wfile.write(chunked_response.encode('utf-8'))
+
                 # Finished if streaming.
                 if debug:
                     if answer and answer[0] == ' ':
