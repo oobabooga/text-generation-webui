@@ -1,54 +1,31 @@
 GPTQ is a clever quantization algorithm that lightly reoptimizes the weights during quantization so that the accuracy loss is compensated relative to a round-to-nearest quantization. See the paper for more details: https://arxiv.org/abs/2210.17323
 
-## AutoGPTQ
+4-bit GPTQ models reduce VRAM usage by about 75%. So LLaMA-7B fits into a 6GB GPU, and LLaMA-30B fits into a 24GB GPU.
 
-AutoGPTQ is the recommended way to create new quantized models: https://github.com/PanQiWei/AutoGPTQ
+## Overview
 
-### Installation
+There are two ways of loading GPTQ models in the web UI at the moment:
 
-To load a model quantized with AutoGPTQ in the web UI, you need to first manually install the AutoGPTQ library:
+* Using GPTQ-for-LLaMa directly:
+  * faster CPU offloading
+  * faster multi-GPU inference
+  * supports loading LoRAs using a monkey patch
+  * included by default in the one-click installers
+  * requires you to manually figure out the wbits/groupsize/model_type parameters for the model to be able to load it
+  * supports either only cuda or only triton depending on the branch
 
-```
-conda activate textgen
-git clone https://github.com/PanQiWei/AutoGPTQ.git && cd AutoGPTQ
-pip install .
-```
+* Using AutoGPTQ:
+  * supports more models
+  * standardized (no need to guess any parameter)
+  * is a proper Python library
+  * no wheels are presently available so it requires manual compilation
+  * supports loading both triton and cuda models
 
-The last command requires `nvcc` to be installed (see the [instructions below](https://github.com/oobabooga/text-generation-webui/blob/main/docs/GPTQ-models-(4-bit-mode).md#step-0-install-nvcc)).
-
-### Usage
-
-When you quantize a model using AutoGPTQ, a folder containing a filed called `quantize_config.json` will be generated. Place that folder inside your `models/` folder and load it with the `--autogptq` flag:
-
-```
-python server.py --autogptq --model model_name
-```
-
-Alternatively, check the `autogptq` box in the "Model" tab of the UI before loading the model.
-
-### Offloading
-
-In order to do CPU offloading or multi-gpu inference with AutoGPTQ, use the `--gpu-memory` flag. It is currently somewhat slower than offloading with the `--pre_layer` option in GPTQ-for-LLaMA (more on that below).
-
-For CPU offloading:
-
-```
-python server.py --autogptq --gpu-memory 3000MiB --model model_name
-```
-
-For multi-GPU:
-
-```
-python server.py --autogptq --gpu-memory 3000MiB 6000MiB --model model_name
-```
-
-### Using LoRAs with AutoGPTQ
-
-Not supported yet.
+For creating new quantizations, I recommend using AutoGPTQ: https://github.com/PanQiWei/AutoGPTQ
 
 ## GPTQ-for-LLaMa
 
-GPTQ-for-LLaMa is the original adaptation of GPTQ for the LLaMA model. It was made by [@qwopqwop200](https://github.com/qwopqwop200/GPTQ-for-LLaMa) in this repository: https://github.com/qwopqwop200/GPTQ-for-LLaMa
+GPTQ-for-LLaMa is the original adaptation of GPTQ for the LLaMA model. It was made possible by [@qwopqwop200](https://github.com/qwopqwop200/GPTQ-for-LLaMa): https://github.com/qwopqwop200/GPTQ-for-LLaMa
 
 Different branches of GPTQ-for-LLaMa are currently available, including:
 
@@ -108,9 +85,6 @@ pip uninstall -y quant-cuda
 git clone https://github.com/qwopqwop200/GPTQ-for-LLaMa.git -b triton
 ...
 ```
-
-
-https://github.com/qwopqwop200/GPTQ-for-LLaMa
 
 #### Step 2: get the pre-converted weights
 
@@ -183,3 +157,47 @@ pip install git+https://github.com/sterlind/GPTQ-for-LLaMa.git@lora_4bit
 ```
 python server.py --model llama-7b-4bit-128g --listen --lora tloen_alpaca-lora-7b --monkey-patch
 ```
+
+## AutoGPTQ
+
+### Installation
+
+To load a model quantized with AutoGPTQ in the web UI, you need to first manually install the AutoGPTQ library:
+
+```
+conda activate textgen
+git clone https://github.com/PanQiWei/AutoGPTQ.git && cd AutoGPTQ
+pip install .
+```
+
+The last command requires `nvcc` to be installed (see the [instructions above](https://github.com/oobabooga/text-generation-webui/blob/main/docs/GPTQ-models-(4-bit-mode).md#step-0-install-nvcc)).
+
+### Usage
+
+When you quantize a model using AutoGPTQ, a folder containing a filed called `quantize_config.json` will be generated. Place that folder inside your `models/` folder and load it with the `--autogptq` flag:
+
+```
+python server.py --autogptq --model model_name
+```
+
+Alternatively, check the `autogptq` box in the "Model" tab of the UI before loading the model.
+
+### Offloading
+
+In order to do CPU offloading or multi-gpu inference with AutoGPTQ, use the `--gpu-memory` flag. It is currently somewhat slower than offloading with the `--pre_layer` option in GPTQ-for-LLaMA.
+
+For CPU offloading:
+
+```
+python server.py --autogptq --gpu-memory 3000MiB --model model_name
+```
+
+For multi-GPU inference:
+
+```
+python server.py --autogptq --gpu-memory 3000MiB 6000MiB --model model_name
+```
+
+### Using LoRAs with AutoGPTQ
+
+Not supported yet.
