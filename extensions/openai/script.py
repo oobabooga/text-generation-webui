@@ -229,6 +229,8 @@ class Handler(BaseHTTPRequestHandler):
                 'mirostat_eta': 0.1,
                 'ban_eos_token': False,
                 'skip_special_tokens': True,
+                'tfs': float(shared.settings.get('tfs', 1)),
+                'top_a': float(shared.settings.get('top_a', 0))
             }
 
             # fixup absolute 0.0's
@@ -580,6 +582,8 @@ class Handler(BaseHTTPRequestHandler):
                 'ban_eos_token': False,
                 'skip_special_tokens': True,
                 'custom_stopping_strings': [],
+                'tfs': float(shared.settings.get('tfs', 1)),
+                'top_a': float(shared.settings.get('top_a', 0))
             }
 
             if debug:
