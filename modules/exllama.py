@@ -62,8 +62,24 @@ class ExllamaModel:
         return text
 
 
-    def generate_with_streaming(self, *args, **kwargs):
-        yield self.generate(*args, **kwargs)
+    def generate_with_streaming(self, context="", token_count=20, temperature=1, top_p=1, top_k=50, repetition_penalty=None, alpha_frequency=0.1, alpha_presence=0.1, token_ban=None, token_stop=None, callback=None):
+
+        torch.set_grad_enabled(False)
+        torch.cuda._lazy_init()
+
+        generator = ExLlamaGenerator(self.model, self.tokenizer, self.cache)
+        generator.settings.temperature = temperature
+        generator.settings.top_p = top_p
+        generator.settings.top_k = top_k
+
+        generator.end_beam_search()
+        ids = generator.tokenizer.encode(context)
+        generator.gen_begin(ids)
+        all_tokens = []
+        for i in range(token_count):
+            token = generator.gen_single_token()
+            yield(generator.tokenizer.decode(generator.sequence[0]))
+            if token.item() == generator.tokenizer.eos_token_id: break
 
 
     def encode(self, string, **kwargs):
