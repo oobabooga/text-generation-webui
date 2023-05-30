@@ -81,7 +81,9 @@ def load_model(model_name):
         logger.error('The path to the model does not exist. Exiting.')
         return None, None
 
-    if shared.args.autogptq:
+    if shared.args.exllama:
+        load_func = exllama_loader
+    elif shared.args.autogptq:
         load_func = AutoGPTQ_loader
     elif shared.args.wbits > 0:
         load_func = GPTQ_loader
@@ -297,6 +299,13 @@ def AutoGPTQ_loader(model_name):
     import modules.AutoGPTQ_loader
 
     return modules.AutoGPTQ_loader.load_quantized(model_name)
+
+
+def exllama_loader(model_name):
+    from modules.exllama import ExllamaModel
+
+    model, tokenizer = ExllamaModel.from_pretrained(model_name)
+    return model, tokenizer
 
 
 def get_max_memory_dict():

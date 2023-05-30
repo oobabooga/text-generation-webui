@@ -170,7 +170,7 @@ def _generate_reply(question, state, eos_token=None, stopping_strings=None, is_c
             yield ''
             return
 
-        if shared.model_type in ['rwkv', 'llamacpp']:
+        if shared.model_type in ['rwkv', 'llamacpp'] or shared.args.exllama:
             generate_func = generate_reply_custom
         elif shared.args.flexgen:
             generate_func = generate_reply_flexgen

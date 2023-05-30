@@ -143,6 +143,9 @@ parser.add_argument('--fused_mlp', action='store_true', help='(triton) Enable fu
 parser.add_argument('--autogptq', action='store_true', help='Use AutoGPTQ for loading quantized models instead of the internal GPTQ loader.')
 parser.add_argument('--triton', action='store_true', help='Use triton.')
 
+# exllama
+parser.add_argument('--exllama', action='store_true', help='Use exllama to load the model.')
+
 # FlexGen
 parser.add_argument('--flexgen', action='store_true', help='Enable the use of FlexGen offloading.')
 parser.add_argument('--percent', type=int, nargs="+", default=[0, 100, 100, 0, 100, 0], help='FlexGen: allocation percentages. Must be 6 numbers separated by spaces (default: 0, 100, 100, 0, 100, 0).')
