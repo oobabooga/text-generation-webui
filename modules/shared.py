@@ -110,6 +110,7 @@ parser.add_argument('--bf16', action='store_true', help='Load the model with bfl
 parser.add_argument('--no-cache', action='store_true', help='Set use_cache to False while generating text. This reduces the VRAM usage a bit at a performance cost.')
 parser.add_argument('--xformers', action='store_true', help="Use xformer's memory efficient attention. This should increase your tokens/s.")
 parser.add_argument('--sdp-attention', action='store_true', help="Use torch 2.0's sdp attention.")
+parser.add_argument('--flash-attention', action='store_true', help="Use HazyResearch's Flash Attention. This drastically reduces VRAM cost")
 parser.add_argument('--trust-remote-code', action='store_true', help="Set trust_remote_code=True while loading a model. Necessary for ChatGLM and Falcon.")
 
 # Accelerate 4-bit

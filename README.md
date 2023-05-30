@@ -226,6 +226,7 @@ Optionally, you can use the following command-line flags:
 | `--no-cache`                                | Set `use_cache` to False while generating text. This reduces the VRAM usage a bit with a performance cost. |
 | `--xformers`                                | Use xformer's memory efficient attention. This should increase your tokens/s. |
 | `--sdp-attention`                           | Use torch 2.0's sdp attention. |
+| `--flash-attention`                         | Use HazyResearch's Flash Attention. This drastically reduces the VRAM cost |
 | `--trust-remote-code`                       | Set trust_remote_code=True while loading a model. Necessary for ChatGLM and Falcon. |
 
 #### Accelerate 4-bit
