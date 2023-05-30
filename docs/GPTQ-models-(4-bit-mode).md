@@ -39,7 +39,20 @@ Overall, I recommend using the old CUDA branch. It is included by default in the
 
 ### Installation using precompiled wheels
 
-https://github.com/jllllll/GPTQ-for-LLaMa-Wheels
+Kindly provided by our friend jllllll: https://github.com/jllllll/GPTQ-for-LLaMa-Wheels
+
+Windows:
+
+```
+pip install https://github.com/jllllll/GPTQ-for-LLaMa-Wheels/raw/main/quant_cuda-0.0.0-cp310-cp310-win_amd64.whl
+```
+
+Linux:
+
+```
+pip install https://github.com/jllllll/GPTQ-for-LLaMa-Wheels/raw/Linux-x64/quant_cuda-0.0.0-cp310-cp310-linux_x86_64.whl
+```
+
 
 ### Manual installation
 
