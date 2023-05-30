@@ -111,7 +111,7 @@ def get_download_links_from_huggingface(model, branch, text_only=False):
             if not is_lora and fname.endswith(('adapter_config.json', 'adapter_model.bin')):
                 is_lora = True
 
-            is_pytorch = re.match("(pytorch|adapter)_model.*\.bin", fname)
+            is_pytorch = re.match("(pytorch|adapter|gptq)_model.*\.bin", fname)
             is_safetensors = re.match(".*\.safetensors", fname)
             is_pt = re.match(".*\.pt", fname)
             is_ggml = re.match(".*ggml.*\.bin", fname)

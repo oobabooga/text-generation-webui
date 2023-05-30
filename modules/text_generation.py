@@ -167,7 +167,7 @@ def _generate_reply(question, state, eos_token=None, stopping_strings=None, is_c
     if generate_func is None:
         if shared.model_name == 'None' or shared.model is None:
             logger.error("No model is loaded! Select one in the Model tab.")
-            yield question
+            yield ''
             return
 
         if shared.model_type in ['rwkv', 'llamacpp']:

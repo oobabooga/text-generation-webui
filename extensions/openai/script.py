@@ -259,7 +259,7 @@ class Handler(BaseHTTPRequestHandler):
 
                 role_formats = {
                     'user': 'user: {message}\n',
-                    'bot': 'assistant: {message}\n',
+                    'assistant': 'assistant: {message}\n',
                     'system': '{message}',
                     'context': 'You are a helpful assistant. Answer as concisely as possible.',
                     'prompt': 'assistant:',

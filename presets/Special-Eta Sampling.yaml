@@ -1,0 +1,4 @@
+do_sample: true
+eta_cutoff: 3
+temperature: 0.7
+repetition_penalty: 1.18

@@ -65,18 +65,9 @@ settings = {
     'chat_generation_attempts_min': 1,
     'chat_generation_attempts_max': 10,
     'default_extensions': [],
-    'chat_default_extensions': ["gallery"],
-    'presets': {
-        'default': 'Default',
-        '.*(alpaca|llama|llava|vicuna)': "LLaMA-Precise",
-        '.*pygmalion': 'NovelAI-Storywriter',
-        '.*RWKV.*\.pth': 'Naive',
-        '.*moss': 'MOSS',
-    },
-    'prompts': {
-        'default': 'QA',
-        '.*(gpt4chan|gpt-4chan|4chan)': 'GPT-4chan',
-    }
+    'chat_default_extensions': ['gallery'],
+    'preset': 'LLaMA-Precise',
+    'prompt': 'QA',
 }
 
 
@@ -103,7 +94,7 @@ parser.add_argument("--model-dir", type=str, default='models/', help="Path to di
 parser.add_argument("--lora-dir", type=str, default='loras/', help="Path to directory with all the loras")
 parser.add_argument('--model-menu', action='store_true', help='Show a model menu in the terminal when the web UI is first launched.')
 parser.add_argument('--no-stream', action='store_true', help='Don\'t stream the text output in real time.')
-parser.add_argument('--settings', type=str, help='Load the default interface settings from this json file. See settings-template.json for an example. If you create a file called settings.json, this file will be loaded by default without the need to use the --settings flag.')
+parser.add_argument('--settings', type=str, help='Load the default interface settings from this yaml file. See settings-template.yaml for an example. If you create a file called settings.yaml, this file will be loaded by default without the need to use the --settings flag.')
 parser.add_argument('--extensions', type=str, nargs="+", help='The list of extensions to load. If you want to load more than one extension, write the names separated by spaces.')
 parser.add_argument('--verbose', action='store_true', help='Print the prompts to the terminal.')
 
@@ -119,7 +110,7 @@ parser.add_argument('--bf16', action='store_true', help='Load the model with bfl
 parser.add_argument('--no-cache', action='store_true', help='Set use_cache to False while generating text. This reduces the VRAM usage a bit at a performance cost.')
 parser.add_argument('--xformers', action='store_true', help="Use xformer's memory efficient attention. This should increase your tokens/s.")
 parser.add_argument('--sdp-attention', action='store_true', help="Use torch 2.0's sdp attention.")
-parser.add_argument('--trust-remote-code', action='store_true', help="Set trust_remote_code=True while loading a model. Necessary for ChatGLM.")
+parser.add_argument('--trust-remote-code', action='store_true', help="Set trust_remote_code=True while loading a model. Necessary for ChatGLM and Falcon.")
 
 # Accelerate 4-bit
 parser.add_argument('--load-in-4bit', action='store_true', help='Load the model with 4-bit precision (using bitsandbytes).')
@@ -199,7 +190,7 @@ for k in deprecated_dict:
 if args.trust_remote_code:
     logger.warning("trust_remote_code is enabled. This is dangerous.")
 if args.share:
-    logger.warning("The gradio \"share link\" feature downloads a proprietary and unaudited blob to create a reverse tunnel. This is potentially dangerous.")
+    logger.warning("The gradio \"share link\" feature uses a proprietary executable to create a reverse tunnel. Use it with care.")
 
 
 def add_extension(name):
