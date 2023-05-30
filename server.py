@@ -607,17 +607,17 @@ def create_interface():
                     shared.gradio['Continue'] = gr.Button('Continue')
 
                 with gr.Row():
-                    shared.gradio['Copy last reply'] = gr.Button('Copy last reply')
+                    shared.gradio['Impersonate'] = gr.Button('Impersonate')
                     shared.gradio['Regenerate'] = gr.Button('Regenerate')
-                    shared.gradio['Replace last reply'] = gr.Button('Replace last reply')
+                    shared.gradio['Remove last'] = gr.Button('Remove last')
 
                 with gr.Row():
-                    shared.gradio['Impersonate'] = gr.Button('Impersonate')
+                    shared.gradio['Copy last reply'] = gr.Button('Copy last reply')
+                    shared.gradio['Replace last reply'] = gr.Button('Replace last reply')
                     shared.gradio['Send dummy message'] = gr.Button('Send dummy message')
                     shared.gradio['Send dummy reply'] = gr.Button('Send dummy reply')
 
                 with gr.Row():
-                    shared.gradio['Remove last'] = gr.Button('Remove last')
                     shared.gradio['Clear history'] = gr.Button('Clear history')
                     shared.gradio['Clear history-confirm'] = gr.Button('Confirm', variant='stop', visible=False)
                     shared.gradio['Clear history-cancel'] = gr.Button('Cancel', visible=False)
