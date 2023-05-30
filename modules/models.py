@@ -279,7 +279,7 @@ def GPTQ_loader(model_name):
 
     # Monkey patch
     if shared.args.monkey_patch:
-        logger.warning("Applying the monkey patch for using LoRAs in 4-bit mode. It may cause undefined behavior outside its intended scope.")
+        logger.warning("Applying the monkey patch for using LoRAs with GPTQ models. It may cause undefined behavior outside its intended scope.")
         from modules.monkey_patch_gptq_lora import load_model_llama
 
         model, _ = load_model_llama(model_name)
