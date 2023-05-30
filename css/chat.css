@@ -41,3 +41,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 .sm.svelte-1ipelgc {
     width: 100%;
 }
+
+#main button {
+    min-width: 0 !important;
+}
