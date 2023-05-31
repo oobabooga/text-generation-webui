@@ -78,6 +78,7 @@ git clone https://github.com/oobabooga/GPTQ-for-LLaMa.git -b cuda
 cd GPTQ-for-LLaMa
 python setup_cuda.py install
 ```
+>If you're using an older version of CUDA toolkit (e.g. 11.7) but the latest version of `gcc` and `g++` (12.0+), you should downgrade with: `conda install -c conda-forge gxx==11.3.0`. Kernel compilation will fail otherwise.
 
 You are going to need to have a C++ compiler installed into your system for the last command. On Linux, `sudo apt install build-essential` or equivalent is enough.
 
