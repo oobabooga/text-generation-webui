@@ -6,6 +6,7 @@ import requests
 import yaml
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
+from modules.utils import get_available_models
 
 import numpy as np
 
@@ -183,6 +184,8 @@ class Handler(BaseHTTPRequestHandler):
                 "owned_by": "user",
                 "permission": []
             }]
+
+            models.extend([{ "id": id, "object": "model", "owned_by": "user", "permission": [] } for id in get_available_models() ])
 
             response = ''
             if self.path == '/v1/models':
