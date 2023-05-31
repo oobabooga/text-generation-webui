@@ -1,4 +1,4 @@
-user: "### Instruction:"
-bot: "### Response:"
+user: "### Human: "
+bot: "### Assistant: "
 turn_template: "<|user|>\n<|user-message|>\n\n<|bot|>\n<|bot-message|>\n\n"
-context: ""
+context: "A chat between a curious human and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the human's questions."
