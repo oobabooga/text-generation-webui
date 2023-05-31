@@ -79,7 +79,7 @@ def auto_model_loader_req(model):
         req['args']['groupsize'] = guess_groupsize(model)
     elif '8bit' in model:
         req['args']['load_in_8bit'] = True
-    elif '-hf' in model:
+    elif '-hf' in model or 'fp16' in model:
         if '7b' in model:
             req['args']['bf16'] = True # for 24GB
         elif '13b' in model:
