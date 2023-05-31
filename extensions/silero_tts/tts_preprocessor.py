@@ -56,6 +56,7 @@ def preprocess(string):
     string = string.replace('\u201D', '').replace('\u201C', '')  # right and left quote
     string = string.replace('\u201F', '')  # italic looking quote
     string = string.replace('\n', ' ')
+    string = string.replace(' - ', ';')
     string = convert_num_locale(string)
     string = replace_negative(string)
     string = replace_roman(string)
