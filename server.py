@@ -91,7 +91,7 @@ def load_preset_values(preset_menu, state, return_dict=False):
         'eta_cutoff': 0,
         'repetition_penalty': 1,
         'encoder_repetition_penalty': 1,
-        'top_k': 50,
+        'top_k': 0,
         'num_beams': 1,
         'penalty_alpha': 0,
         'min_length': 0,
@@ -101,21 +101,22 @@ def load_preset_values(preset_menu, state, return_dict=False):
         'mirostat_mode': 0,
         'mirostat_tau': 5.0,
         'mirostat_eta': 0.1,
+        'tfs': 1,
+        'top_a': 0,
     }
 
-    with open(Path(f'presets/{preset_menu}.txt'), 'r') as infile:
-        preset = infile.read()
-    for i in preset.splitlines():
-        i = i.rstrip(',').strip().split('=')
-        if len(i) == 2 and i[0].strip() != 'tokens':
-            generate_params[i[0].strip()] = eval(i[1].strip())
+    with open(Path(f'presets/{preset_menu}.yaml'), 'r') as infile:
+        preset = yaml.safe_load(infile)
+
+    for k in preset:
+        generate_params[k] = preset[k]
 
     generate_params['temperature'] = min(1.99, generate_params['temperature'])
     if return_dict:
         return generate_params
     else:
         state.update(generate_params)
-        return state, *[generate_params[k] for k in ['do_sample', 'temperature', 'top_p', 'typical_p', 'epsilon_cutoff', 'eta_cutoff', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping', 'mirostat_mode', 'mirostat_tau', 'mirostat_eta']]
+        return state, *[generate_params[k] for k in ['do_sample', 'temperature', 'top_p', 'typical_p', 'epsilon_cutoff', 'eta_cutoff', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping', 'mirostat_mode', 'mirostat_tau', 'mirostat_eta', 'tfs', 'top_a']]
 
 
 def upload_soft_prompt(file):
@@ -301,7 +302,7 @@ def save_model_settings(model, state):
             shared.model_config[model_regex][k] = state[k]
 
         with open(p, 'w') as f:
-            f.write(yaml.dump(user_config))
+            f.write(yaml.dump(user_config, sort_keys=False))
 
         yield (f"Settings for {model} saved to {p}")
 
@@ -367,7 +368,8 @@ def create_model_menus():
                         shared.gradio['cpu'] = gr.Checkbox(label="cpu", value=shared.args.cpu)
                         shared.gradio['bf16'] = gr.Checkbox(label="bf16", value=shared.args.bf16)
                         shared.gradio['load_in_8bit'] = gr.Checkbox(label="load-in-8bit", value=shared.args.load_in_8bit)
-
+                        shared.gradio['trust_remote_code'] = gr.Checkbox(label="trust-remote-code", value=shared.args.trust_remote_code, info='Make sure to inspect the .py files inside the model folder before loading it with this option enabled.')
+                        
             with gr.Box():
                 gr.Markdown('Transformers 4-bit')
                 with gr.Row():
@@ -392,10 +394,13 @@ def create_model_menus():
                     with gr.Column():
                         shared.gradio['wbits'] = gr.Dropdown(label="wbits", choices=["None", 1, 2, 3, 4, 8], value=shared.args.wbits if shared.args.wbits > 0 else "None")
                         shared.gradio['groupsize'] = gr.Dropdown(label="groupsize", choices=["None", 32, 64, 128, 1024], value=shared.args.groupsize if shared.args.groupsize > 0 else "None")
+                        shared.gradio['model_type'] = gr.Dropdown(label="model_type", choices=["None", "llama", "opt", "gptj"], value=shared.args.model_type or "None")
 
                     with gr.Column():
-                        shared.gradio['model_type'] = gr.Dropdown(label="model_type", choices=["None", "llama", "opt", "gptj"], value=shared.args.model_type or "None")
                         shared.gradio['pre_layer'] = gr.Slider(label="pre_layer", minimum=0, maximum=100, value=shared.args.pre_layer[0] if shared.args.pre_layer is not None else 0)
+                        gr.Markdown('AutoGPTQ')
+                        shared.gradio['autogptq'] = gr.Checkbox(label="autogptq", value=shared.args.autogptq, info='AutoGPTQ needs to be manually installed from source. When enabled, gpu-memory should be used for CPU offloading instead of pre_layer.')
+                        shared.gradio['triton'] = gr.Checkbox(label="triton", value=shared.args.triton, info='Use triton in AutoGPTQ.')
 
             with gr.Box():
                 gr.Markdown('llama.cpp')
@@ -404,7 +409,7 @@ def create_model_menus():
                         shared.gradio['threads'] = gr.Slider(label="threads", minimum=0, step=1, maximum=32, value=shared.args.threads)
                         shared.gradio['n_batch'] = gr.Slider(label="n_batch", minimum=1, maximum=2048, value=shared.args.n_batch)
                         shared.gradio['n_gpu_layers'] = gr.Slider(label="n-gpu-layers", minimum=0, maximum=128, value=shared.args.n_gpu_layers)
-                        shared.gradio['n_ctx'] = gr.Slider(0, 8192, label="n_ctx", value=shared.args.n_ctx)
+                        shared.gradio['n_ctx'] = gr.Slider(minimum=0, maximum=8192, step=1, label="n_ctx", value=shared.args.n_ctx)
 
                     with gr.Column():
                         shared.gradio['no_mmap'] = gr.Checkbox(label="no-mmap", value=shared.args.no_mmap)
@@ -471,8 +476,10 @@ def create_settings_menus(default_preset):
                         shared.gradio['top_p'] = gr.Slider(0.0, 1.0, value=generate_params['top_p'], step=0.01, label='top_p', info='If not set to 1, select tokens with probabilities adding up to less than this number. Higher value = higher range of possible random results.')
                         shared.gradio['top_k'] = gr.Slider(0, 200, value=generate_params['top_k'], step=1, label='top_k', info='Similar to top_p, but select instead only the top_k most likely tokens. Higher value = higher range of possible random results.')
                         shared.gradio['typical_p'] = gr.Slider(0.0, 1.0, value=generate_params['typical_p'], step=0.01, label='typical_p', info='If not set to 1, select only tokens that are at least this much more likely to appear than random tokens, given the prior text.')
-                        shared.gradio['epsilon_cutoff'] = gr.Slider(0, 9, value=generate_params['epsilon_cutoff'], step=0.01, label='epsilon_cutoff', info='In units of 1e-4')
-                        shared.gradio['eta_cutoff'] = gr.Slider(0, 20, value=generate_params['eta_cutoff'], step=0.01, label='eta_cutoff', info='In units of 1e-4')
+                        shared.gradio['epsilon_cutoff'] = gr.Slider(0, 9, value=generate_params['epsilon_cutoff'], step=0.01, label='epsilon_cutoff', info='In units of 1e-4; a reasonable value is 3. This sets a probability floor below which tokens are excluded from being sampled. Should be used with top_p, top_k, and eta_cutoff set to 0.')
+                        shared.gradio['eta_cutoff'] = gr.Slider(0, 20, value=generate_params['eta_cutoff'], step=0.01, label='eta_cutoff', info='In units of 1e-4; a reasonable value is 3. Should be used with top_p, top_k, and epsilon_cutoff set to 0.')
+                        shared.gradio['tfs'] = gr.Slider(0.0, 1.0, value=generate_params['tfs'], step=0.01, label='tfs')
+                        shared.gradio['top_a'] = gr.Slider(0.0, 1.0, value=generate_params['top_a'], step=0.01, label='top_a')
 
                     with gr.Column():
                         shared.gradio['repetition_penalty'] = gr.Slider(1.0, 1.5, value=generate_params['repetition_penalty'], step=0.01, label='repetition_penalty', info='Exponential penalty factor for repeating prior tokens. 1 means no penalty, higher value = less repetition, lower value = more repetition.')
@@ -523,7 +530,7 @@ def create_settings_menus(default_preset):
 
             gr.Markdown('[Click here for more information.](https://github.com/oobabooga/text-generation-webui/blob/main/docs/Generation-parameters.md)')
 
-    shared.gradio['preset_menu'].change(load_preset_values, [shared.gradio[k] for k in ['preset_menu', 'interface_state']], [shared.gradio[k] for k in ['interface_state', 'do_sample', 'temperature', 'top_p', 'typical_p', 'epsilon_cutoff', 'eta_cutoff', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping', 'mirostat_mode', 'mirostat_tau', 'mirostat_eta']])
+    shared.gradio['preset_menu'].change(load_preset_values, [shared.gradio[k] for k in ['preset_menu', 'interface_state']], [shared.gradio[k] for k in ['interface_state', 'do_sample', 'temperature', 'top_p', 'typical_p', 'epsilon_cutoff', 'eta_cutoff', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping', 'mirostat_mode', 'mirostat_tau', 'mirostat_eta', 'tfs', 'top_a']])
     shared.gradio['softprompts_menu'].change(load_soft_prompt, shared.gradio['softprompts_menu'], shared.gradio['softprompts_menu'], show_progress=True)
     shared.gradio['upload_softprompt'].upload(upload_soft_prompt, shared.gradio['upload_softprompt'], shared.gradio['softprompts_menu'])
 
@@ -551,11 +558,8 @@ def create_interface():
 
     # Defining some variables
     gen_events = []
-    default_preset = shared.settings['presets'][next((k for k in shared.settings['presets'] if re.match(k.lower(), shared.model_name.lower())), 'default')]
-    if len(shared.lora_names) == 1:
-        default_text = load_prompt(shared.settings['prompts'][next((k for k in shared.settings['prompts'] if re.match(k.lower(), shared.lora_names[0].lower())), 'default')])
-    else:
-        default_text = load_prompt(shared.settings['prompts'][next((k for k in shared.settings['prompts'] if re.match(k.lower(), shared.model_name.lower())), 'default')])
+    default_preset = shared.settings['preset']
+    default_text = load_prompt(shared.settings['prompt'])
     title = 'Text generation web UI'
 
     # Authentication variables
@@ -603,17 +607,17 @@ def create_interface():
                     shared.gradio['Continue'] = gr.Button('Continue')
 
                 with gr.Row():
-                    shared.gradio['Copy last reply'] = gr.Button('Copy last reply')
+                    shared.gradio['Impersonate'] = gr.Button('Impersonate')
                     shared.gradio['Regenerate'] = gr.Button('Regenerate')
-                    shared.gradio['Replace last reply'] = gr.Button('Replace last reply')
+                    shared.gradio['Remove last'] = gr.Button('Remove last')
 
                 with gr.Row():
-                    shared.gradio['Impersonate'] = gr.Button('Impersonate')
+                    shared.gradio['Copy last reply'] = gr.Button('Copy last reply')
+                    shared.gradio['Replace last reply'] = gr.Button('Replace last reply')
                     shared.gradio['Send dummy message'] = gr.Button('Send dummy message')
                     shared.gradio['Send dummy reply'] = gr.Button('Send dummy reply')
 
                 with gr.Row():
-                    shared.gradio['Remove last'] = gr.Button('Remove last')
                     shared.gradio['Clear history'] = gr.Button('Clear history')
                     shared.gradio['Clear history-confirm'] = gr.Button('Confirm', variant='stop', visible=False)
                     shared.gradio['Clear history-cancel'] = gr.Button('Cancel', visible=False)
@@ -709,6 +713,7 @@ def create_interface():
                             shared.gradio['textbox'] = gr.Textbox(value=default_text, elem_classes="textbox", lines=27)
 
                         with gr.Tab('Markdown'):
+                            shared.gradio['markdown_render'] = gr.Button('Render')
                             shared.gradio['markdown'] = gr.Markdown()
 
                         with gr.Tab('HTML'):
@@ -769,6 +774,7 @@ def create_interface():
                             shared.gradio['output_textbox'] = gr.Textbox(elem_classes="textbox_default_output", lines=27, label='Output')
 
                         with gr.Tab('Markdown'):
+                            shared.gradio['markdown_render'] = gr.Button('Render')
                             shared.gradio['markdown'] = gr.Markdown()
 
                         with gr.Tab('HTML'):
@@ -944,9 +950,9 @@ def create_interface():
         else:
             shared.input_params = [shared.gradio[k] for k in ['textbox', 'interface_state']]
             if shared.args.notebook:
-                output_params = [shared.gradio[k] for k in ['textbox', 'markdown', 'html']]
+                output_params = [shared.gradio[k] for k in ['textbox', 'html']]
             else:
-                output_params = [shared.gradio[k] for k in ['output_textbox', 'markdown', 'html']]
+                output_params = [shared.gradio[k] for k in ['output_textbox', 'html']]
 
             gen_events.append(shared.gradio['Generate'].click(
                 lambda x: x, shared.gradio['textbox'], shared.gradio['last_input']).then(
@@ -966,6 +972,7 @@ def create_interface():
 
             if shared.args.notebook:
                 shared.gradio['Undo'].click(lambda x: x, shared.gradio['last_input'], shared.gradio['textbox'], show_progress=False)
+                shared.gradio['markdown_render'].click(lambda x: x, shared.gradio['textbox'], shared.gradio['markdown'], queue=False)
                 gen_events.append(shared.gradio['Regenerate'].click(
                     lambda x: x, shared.gradio['last_input'], shared.gradio['textbox'], show_progress=False).then(
                     ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
@@ -974,6 +981,7 @@ def create_interface():
                     # lambda: None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[0]; element.scrollTop = element.scrollHeight}")
                 )
             else:
+                shared.gradio['markdown_render'].click(lambda x: x, shared.gradio['output_textbox'], shared.gradio['markdown'], queue=False)
                 gen_events.append(shared.gradio['Continue'].click(
                     ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
                     generate_reply_wrapper, [shared.gradio['output_textbox']] + shared.input_params[1:], output_params, show_progress=False).then(
@@ -1012,16 +1020,19 @@ if __name__ == "__main__":
     settings_file = None
     if shared.args.settings is not None and Path(shared.args.settings).exists():
         settings_file = Path(shared.args.settings)
+    elif Path('settings.yaml').exists():
+        settings_file = Path('settings.yaml')
     elif Path('settings.json').exists():
         settings_file = Path('settings.json')
 
     if settings_file is not None:
         logger.info(f"Loading settings from {settings_file}...")
-        new_settings = json.loads(open(settings_file, 'r').read())
+        file_contents = open(settings_file, 'r', encoding='utf-8').read()
+        new_settings = json.loads(file_contents) if settings_file.suffix == "json" else yaml.safe_load(file_contents)
         for item in new_settings:
             shared.settings[item] = new_settings[item]
 
-    # Set default model settings based on settings.json
+    # Set default model settings based on settings file
     shared.model_config['.*'] = {
         'wbits': 'None',
         'model_type': 'None',

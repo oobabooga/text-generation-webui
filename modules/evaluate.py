@@ -78,11 +78,17 @@ def calculate_perplexity(models, input_dataset, stride, _max_length):
                 yield cumulative_log
                 continue
 
-        cumulative_log += f"Processing {model}...\n\n"
+        cumulative_log += f"Processing {shared.model_name}...\n\n"
         yield cumulative_log + "Tokenizing the input dataset...\n\n"
         encodings = encode(text, add_special_tokens=False)
         seq_len = encodings.shape[1]
-        max_length = _max_length or shared.model.config.max_position_embeddings
+        if _max_length:
+            max_length = _max_length
+        elif hasattr(shared.model.config, 'max_position_embeddings'):
+            max_length = shared.model.config.max_position_embeddings
+        else:
+            max_length = 2048
+
         nlls = []
         prev_end_loc = 0
         for begin_loc in tqdm(range(0, seq_len, stride)):
@@ -110,7 +116,7 @@ def calculate_perplexity(models, input_dataset, stride, _max_length):
         ppl = torch.exp(torch.stack(nlls).mean())
         add_entry_to_past_evaluations(float(ppl), shared.model_name, input_dataset, stride, _max_length)
         save_past_evaluations(past_evaluations)
-        cumulative_log += f"Done. The perplexity is: {float(ppl)}\n\n"
+        cumulative_log += f"The perplexity for {shared.model_name} is: {float(ppl)}\n\n"
         yield cumulative_log
 
 
