@@ -164,14 +164,18 @@ def update_dependencies():
     # If the path does not exist, then the install failed
     quant_cuda_path_regex = os.path.join(site_packages_path, "quant_cuda*/")
     if not glob.glob(quant_cuda_path_regex):
-        # Attempt installation via alternative, Windows-specific method
-        if sys.platform.startswith("win"):
+        # Attempt installation via alternative, Windows/Linux-specific method
+        if sys.platform.startswith("win") or sys.platform.startswith("linux"):
             print("\n\n*******************************************************************")
             print("* WARNING: GPTQ-for-LLaMa compilation failed, but this is FINE and can be ignored!")
             print("* The installer will proceed to install a pre-compiled wheel.")
             print("*******************************************************************\n\n")
 
-            result = run_cmd("python -m pip install https://github.com/jllllll/GPTQ-for-LLaMa-Wheels/raw/main/quant_cuda-0.0.0-cp310-cp310-win_amd64.whl", environment=True)
+            url = "https://github.com/jllllll/GPTQ-for-LLaMa-Wheels/raw/main/quant_cuda-0.0.0-cp310-cp310-win_amd64.whl"
+            if sys.platform.startswith("linux"):
+                url = "https://github.com/jllllll/GPTQ-for-LLaMa-Wheels/raw/Linux-x64/quant_cuda-0.0.0-cp310-cp310-linux_x86_64.whl"
+
+            result = run_cmd("python -m pip install " + url, environment=True)
             if result.returncode == 0:
                 print("Wheel installation success!")
             else:
