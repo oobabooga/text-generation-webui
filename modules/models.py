@@ -15,7 +15,7 @@ from transformers import (AutoConfig, AutoModel, AutoModelForCausalLM,
                           BitsAndBytesConfig, LlamaTokenizer)
 
 import modules.shared as shared
-from modules import llama_attn_hijack
+from modules import llama_attn_hijack, sampler_hijack
 from modules.logging_colors import logger
 
 transformers.logging.set_verbosity_error()
@@ -35,6 +35,8 @@ if shared.args.deepspeed:
     deepspeed.init_distributed()
     ds_config = generate_ds_config(shared.args.bf16, 1 * world_size, shared.args.nvme_offload_dir)
     dschf = HfDeepSpeedConfig(ds_config)  # Keep this object alive for the Transformers integration
+
+sampler_hijack.hijack_samplers()
 
 
 # Some models require special treatment in various parts of the code.
@@ -277,7 +279,7 @@ def GPTQ_loader(model_name):
 
     # Monkey patch
     if shared.args.monkey_patch:
-        logger.warning("Applying the monkey patch for using LoRAs in 4-bit mode. It may cause undefined behavior outside its intended scope.")
+        logger.warning("Applying the monkey patch for using LoRAs with GPTQ models. It may cause undefined behavior outside its intended scope.")
         from modules.monkey_patch_gptq_lora import load_model_llama
 
         model, _ = load_model_llama(model_name)

@@ -97,7 +97,7 @@ cd text-generation-webui
 pip install -r requirements.txt
 ```
 
-#### 4. Install GPTQ-for-LLaMa and the monkey patch
+#### 4. Install GPTQ
 
 The base installation covers [transformers](https://github.com/huggingface/transformers) models (`AutoModelForCausalLM` and `AutoModelForSeq2SeqLM` specifically) and [llama.cpp](https://github.com/ggerganov/llama.cpp) (GGML) models.
 
@@ -126,7 +126,7 @@ docker compose up --build
 ```
 
 * You need to have docker compose v2.17 or higher installed. See [this guide](https://github.com/oobabooga/text-generation-webui/blob/main/docs/Docker.md) for instructions.
-* For additional docker files, check out [this repository](https://github.com/Atinoda/text-generation-webui/blob/docker-wrapper/docs/Docker.md#dedicated-docker-repository).
+* For additional docker files, check out [this repository](https://github.com/Atinoda/text-generation-webui-docker).
 
 ### Updating the requirements
 
@@ -226,7 +226,7 @@ Optionally, you can use the following command-line flags:
 | `--no-cache`                                | Set `use_cache` to False while generating text. This reduces the VRAM usage a bit with a performance cost. |
 | `--xformers`                                | Use xformer's memory efficient attention. This should increase your tokens/s. |
 | `--sdp-attention`                           | Use torch 2.0's sdp attention. |
-| `--trust-remote-code`                       | Set trust_remote_code=True while loading a model. Necessary for ChatGLM. |
+| `--trust-remote-code`                       | Set trust_remote_code=True while loading a model. Necessary for ChatGLM and Falcon. |
 
 #### Accelerate 4-bit
 
@@ -265,6 +265,13 @@ Optionally, you can use the following command-line flags:
 | `--quant_attn`         | (triton) Enable quant attention. |
 | `--warmup_autotune`    | (triton) Enable warmup autotune. |
 | `--fused_mlp`          | (triton) Enable fused mlp. |
+
+#### AutoGPTQ
+
+| Flag             | Description |
+|------------------|-------------|
+| `--autogptq`     | Use AutoGPTQ for loading quantized models instead of the internal GPTQ loader. |
+| `--triton`       | Use triton. |
 
 #### FlexGen
 
@@ -308,6 +315,8 @@ Optionally, you can use the following command-line flags:
 |---------------------------------------|-------------|
 | `--api`                               | Enable the API extension. |
 | `--public-api`                        | Create a public URL for the API using Cloudfare. |
+| `--api-blocking-port BLOCKING_PORT`   | The listening port for the blocking API. |
+| `--api-streaming-port STREAMING_PORT` | The listening port for the streaming API. |
 
 #### Multimodal
 

@@ -111,7 +111,7 @@ def get_download_links_from_huggingface(model, branch, text_only=False):
             if not is_lora and fname.endswith(('adapter_config.json', 'adapter_model.bin')):
                 is_lora = True
 
-            is_pytorch = re.match("(pytorch|adapter)_model.*\.bin", fname)
+            is_pytorch = re.match("(pytorch|adapter|gptq)_model.*\.bin", fname)
             is_safetensors = re.match(".*\.safetensors", fname)
             is_pt = re.match(".*\.pt", fname)
             is_ggml = re.match(".*ggml.*\.bin", fname)
@@ -197,7 +197,7 @@ def start_download_threads(file_list, output_folder, start_from_scratch=False, t
 def download_model_files(model, branch, links, sha256, output_folder, start_from_scratch=False, threads=1):
     # Creating the folder and writing the metadata
     if not output_folder.exists():
-        output_folder.mkdir()
+        output_folder.mkdir(parents=True, exist_ok=True)
     with open(output_folder / 'huggingface-metadata.txt', 'w') as f:
         f.write(f'url: https://huggingface.co/{model}\n')
         f.write(f'branch: {branch}\n')

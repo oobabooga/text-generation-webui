@@ -234,10 +234,10 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         time.sleep(5)
 
     if shared.args.wbits > 0 and not shared.args.monkey_patch:
-        yield "LoRA training in 4-bit requires loading with `--monkey-patch`"
+        yield "LoRA training with GPTQ models requires loading with `--monkey-patch`"
         return
 
-    elif not shared.args.load_in_8bit and shared.args.wbits <= 0:
+    elif not (shared.args.load_in_8bit or shared.args.load_in_4bit) and shared.args.wbits <= 0:
         yield "It is highly recommended you use `--load-in-8bit` for LoRA training. *(Will continue anyway in 2 seconds, press `Interrupt` to stop.)*"
         logger.warning("It is highly recommended you use `--load-in-8bit` for LoRA training.")
         time.sleep(2)  # Give it a moment for the message to show in UI before continuing
