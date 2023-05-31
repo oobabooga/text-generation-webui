@@ -156,8 +156,7 @@ class Handler(BaseHTTPRequestHandler):
             })
 
             self.wfile.write(response.encode('utf-8'))
-      
-      
+
         elif self.path == '/api/v1/token-count':
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
