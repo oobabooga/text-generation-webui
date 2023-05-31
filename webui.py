@@ -155,8 +155,8 @@ def update_dependencies():
     
     # On some Linux distributions, g++ may not exist or be the wrong version to compile GPTQ-for-LLaMa
     if sys.platform.startswith("linux"):
-        gxx_output = run_cmd("g++ --version", environment=True, capture_output=True)
-        if gxx_output.returncode != 0 or b"g++ (GCC) 12" in gxx_output.stdout:
+        gxx_output = run_cmd("g++ -dumpfullversion -dumpversion", environment=True, capture_output=True)
+        if gxx_output.returncode != 0 or int(gxx_output.stdout.strip().split(b".")[0]) > 11:
             # Install the correct version of g++
             run_cmd("conda install -y -k gxx_linux-64=11.2.0", environment=True)
 
