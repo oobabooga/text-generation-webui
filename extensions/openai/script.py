@@ -346,7 +346,7 @@ class Handler(BaseHTTPRequestHandler):
 
                 # can't really truncate the system messages
                 system_msg = '\n'.join(system_msgs)
-                if system_msg[-1] != '\n':
+                if system_msg and system_msg[-1] != '\n':
                     system_msg = system_msg + '\n'
 
                 system_token_count = len(encode(system_msg)[0])
