@@ -266,6 +266,13 @@ Optionally, you can use the following command-line flags:
 | `--warmup_autotune`    | (triton) Enable warmup autotune. |
 | `--fused_mlp`          | (triton) Enable fused mlp. |
 
+#### AutoGPTQ
+
+| Flag             | Description |
+|------------------|-------------|
+| `--autogptq`     | Use AutoGPTQ for loading quantized models instead of the internal GPTQ loader. |
+| `--triton`       | Use triton. |
+
 #### FlexGen
 
 | Flag             | Description |
@@ -308,6 +315,8 @@ Optionally, you can use the following command-line flags:
 |---------------------------------------|-------------|
 | `--api`                               | Enable the API extension. |
 | `--public-api`                        | Create a public URL for the API using Cloudfare. |
+| `--api-blocking-port BLOCKING_PORT`   | The listening port for the blocking API. |
+| `--api-streaming-port STREAMING_PORT` | The listening port for the streaming API. |
 
 #### Multimodal
 
