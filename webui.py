@@ -14,6 +14,14 @@ conda_env_path = os.path.join(script_dir, "installer_files", "env")
 CMD_FLAGS = '--chat --model-menu'
 
 
+# Allows users to set flags in "OOBABOOGA_FLAGS" environment variable
+if "OOBABOOGA_FLAGS" in os.environ:
+    CMD_FLAGS = os.environ["OOBABOOGA_FLAGS"]
+    print("\33[1;32mFlags have been taken from enivroment Variable 'OOBABOOGA_FLAGS'\33[0m") 
+    print(CMD_FLAGS)
+    print("\33[1;32mTo use flags from webui.py remove 'OOBABOOGA_FLAGS'\33[0m") 
+
+
 def run_cmd(cmd, assert_success=False, environment=False, capture_output=False, env=None):
     # Use the conda environment
     if environment:
