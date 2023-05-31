@@ -315,8 +315,8 @@ Optionally, you can use the following command-line flags:
 |---------------------------------------|-------------|
 | `--api`                               | Enable the API extension. |
 | `--public-api`                        | Create a public URL for the API using Cloudfare. |
-| `--api-blocking-port`                 | The listening port for the blocking API. |
-| `--api-streaming-port`                | The listening port for the streaming API. |
+| `--api-blocking-port BLOCKING_PORT`   | The listening port for the blocking API. |
+| `--api-streaming-port STREAMING_PORT` | The listening port for the streaming API. |
 
 #### Multimodal
 
