@@ -191,18 +191,25 @@ class ModelDownloader:
         r = self.s.get(url, stream=True, headers=headers, timeout=10)
         with open(output_path, mode) as f:
             total_size = int(r.headers.get('content-length', 0))
-            block_size = 1024
+            # Every 512Kb we report an update
+            block_size = 512*1024
+
             with tqdm.tqdm(total=total_size, unit='iB', unit_scale=True, bar_format='{l_bar}{bar}| {n_fmt:6}/{total_fmt:6} {rate_fmt:6}') as t:
+                count = 0
                 for data in r.iter_content(block_size):
                     t.update(len(data))
                     f.write(data)
+                    if self.progress_bar is not None:
+                        count += len(data)
+                        self.progress_bar(float(count)/float(total_size), f"Downloading {filename}")
 
 
     def start_download_threads(self, file_list, output_folder, start_from_scratch=False, threads=1):
         thread_map(lambda url: self.get_single_file(url, output_folder, start_from_scratch=start_from_scratch), file_list, max_workers=threads, disable=True)
 
 
-    def download_model_files(self, model, branch, links, sha256, output_folder, start_from_scratch=False, threads=1):
+    def download_model_files(self, model, branch, links, sha256, output_folder, progress_bar = None, start_from_scratch=False, threads=1):
+        self.progress_bar = progress_bar
         # Creating the folder and writing the metadata
         if not output_folder.exists():
             output_folder.mkdir(parents=True, exist_ok=True)
