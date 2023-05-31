@@ -197,7 +197,7 @@ def start_download_threads(file_list, output_folder, start_from_scratch=False, t
 def download_model_files(model, branch, links, sha256, output_folder, start_from_scratch=False, threads=1):
     # Creating the folder and writing the metadata
     if not output_folder.exists():
-        output_folder.mkdir()
+        output_folder.mkdir(parents=True, exist_ok=True)
     with open(output_folder / 'huggingface-metadata.txt', 'w') as f:
         f.write(f'url: https://huggingface.co/{model}\n')
         f.write(f'branch: {branch}\n')
