@@ -75,10 +75,11 @@ class ExllamaModel:
         generator.end_beam_search()
         ids = generator.tokenizer.encode(context)
         generator.gen_begin(ids)
+        initial_len = generator.sequence[0].shape[0]
         all_tokens = []
         for i in range(token_count):
             token = generator.gen_single_token()
-            yield(generator.tokenizer.decode(generator.sequence[0]))
+            yield(generator.tokenizer.decode(generator.sequence[0][initial_len:]))
             if token.item() == generator.tokenizer.eos_token_id: break
 
 
