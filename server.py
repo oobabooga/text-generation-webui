@@ -184,7 +184,8 @@ def count_tokens(text):
 
 def download_model_wrapper(repo_id):
     try:
-        downloader = importlib.import_module("download-model")
+        downloader_module = importlib.import_module("download-model")
+        downloader = downloader_module.ModelDownloader()
         repo_id_parts = repo_id.split(":")
         model = repo_id_parts[0] if len(repo_id_parts) > 0 else repo_id
         branch = repo_id_parts[1] if len(repo_id_parts) > 1 else "main"

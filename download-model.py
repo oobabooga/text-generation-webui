@@ -71,24 +71,24 @@ EleutherAI/pythia-1.4b-deduped
     return model, branch
 
 
-def sanitize_model_and_branch_names(model, branch):
-    if model[-1] == '/':
-        model = model[:-1]
-    if branch is None:
-        branch = "main"
-    else:
-        pattern = re.compile(r"^[a-zA-Z0-9._-]+$")
-        if not pattern.match(branch):
-            raise ValueError("Invalid branch name. Only alphanumeric characters, period, underscore and dash are allowed.")
-
-    return model, branch
-
-
 class ModelDownloader:
     def __init__(self):
         self.s = requests.Session()
         if os.getenv('HF_USER') != None and os.getenv('HF_PASS') != None:
             self.s.auth = (os.getenv('HF_USER'), os.getenv('HF_PASS'))
+
+    def sanitize_model_and_branch_names(self, model, branch):
+        if model[-1] == '/':
+            model = model[:-1]
+        if branch is None:
+            branch = "main"
+        else:
+            pattern = re.compile(r"^[a-zA-Z0-9._-]+$")
+            if not pattern.match(branch):
+                raise ValueError(
+                    "Invalid branch name. Only alphanumeric characters, period, underscore and dash are allowed.")
+
+        return model, branch
 
 
     def get_download_links_from_huggingface(self, model, branch, text_only=False):
@@ -264,14 +264,14 @@ if __name__ == '__main__':
     if model is None:
         model, branch = select_model_from_default_options()
 
+    downloader = ModelDownloader()
     # Cleaning up the model/branch names
     try:
-        model, branch = sanitize_model_and_branch_names(model, branch)
+        model, branch = downloader.sanitize_model_and_branch_names(model, branch)
     except ValueError as err_branch:
         print(f"Error: {err_branch}")
         sys.exit()
 
-    downloader = ModelDownloader()
     # Getting the download links from Hugging Face
     links, sha256, is_lora = downloader.get_download_links_from_huggingface(model, branch, text_only=args.text_only)
 
