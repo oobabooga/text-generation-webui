@@ -86,7 +86,7 @@ conda install -c conda-forge cudatoolkit-dev
 
 The command above takes some 10 minutes to run and shows no progress bar or updates along the way.
 
-You are going to need to have a C++ compiler installed. On Linux, `sudo apt install build-essential` or equivalent is enough.
+You are also going to need to have a C++ compiler installed. On Linux, `sudo apt install build-essential` or equivalent is enough.
 
 If you're using an older version of CUDA toolkit (e.g. 11.7) but the latest version of `gcc` and `g++` (12.0+), you should downgrade with: `conda install -c conda-forge gxx==11.3.0`. Kernel compilation will fail otherwise.
 
@@ -97,7 +97,9 @@ cd repositories/GPTQ-for-LLaMa
 python setup_cuda.py install
 ```
 
-### Pre-converted weights
+### Getting pre-converted LLaMA weights
+
+These are models that you can simply download and place in your `models` folder.
 
 * Converted without `group-size` (better for the 7b model): https://github.com/oobabooga/text-generation-webui/pull/530#issuecomment-1483891617
 * Converted with `group-size` (better from 13b upwards): https://github.com/oobabooga/text-generation-webui/pull/530#issuecomment-1483941105 
