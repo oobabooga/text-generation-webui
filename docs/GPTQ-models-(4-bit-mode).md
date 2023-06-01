@@ -37,7 +37,29 @@ Different branches of GPTQ-for-LLaMa are currently available, including:
 
 Overall, I recommend using the old CUDA branch. It is included by default in the one-click-installer for this web UI.
 
-### Installation using precompiled wheels
+### Installation
+
+Start by cloning GPTQ-for-LLaMa into your `text-generation-webui/repositories` folder:
+
+```
+mkdir repositories
+cd repositories
+git clone https://github.com/oobabooga/GPTQ-for-LLaMa.git -b cuda
+```
+
+If you want to you to use the up-to-date CUDA or triton branches instead of the old CUDA branch, use these commands:
+
+```
+git clone https://github.com/qwopqwop200/GPTQ-for-LLaMa.git -b cuda
+```
+
+```
+git clone https://github.com/qwopqwop200/GPTQ-for-LLaMa.git -b triton
+```
+
+Next you need to install the CUDA extensions. You can do that either by installing the precompiled wheels, or by compiling the wheels yourself.
+
+### Precompiled wheels
 
 Kindly provided by our friend jllllll: https://github.com/jllllll/GPTQ-for-LLaMa-Wheels
 
@@ -53,10 +75,9 @@ Linux:
 pip install https://github.com/jllllll/GPTQ-for-LLaMa-Wheels/raw/Linux-x64/quant_cuda-0.0.0-cp310-cp310-linux_x86_64.whl
 ```
 
-
 ### Manual installation
 
-#### Step 0: install nvcc
+#### Step 1: install nvcc
 
 ```
 conda activate textgen
@@ -65,49 +86,25 @@ conda install -c conda-forge cudatoolkit-dev
 
 The command above takes some 10 minutes to run and shows no progress bar or updates along the way.
 
-See this issue for more details: https://github.com/oobabooga/text-generation-webui/issues/416#issuecomment-1475078571
+You are going to need to have a C++ compiler installed. On Linux, `sudo apt install build-essential` or equivalent is enough.
 
-#### Step 1: install GPTQ-for-LLaMa
+If you're using an older version of CUDA toolkit (e.g. 11.7) but the latest version of `gcc` and `g++` (12.0+), you should downgrade with: `conda install -c conda-forge gxx==11.3.0`. Kernel compilation will fail otherwise.
 
-Clone the GPTQ-for-LLaMa repository into the `text-generation-webui/repositories` subfolder and install it:
+#### Step 2: compile the CUDA extensions
 
 ```
-mkdir repositories
-cd repositories
-git clone https://github.com/oobabooga/GPTQ-for-LLaMa.git -b cuda
-cd GPTQ-for-LLaMa
+cd repositories/GPTQ-for-LLaMa
 python setup_cuda.py install
 ```
->If you're using an older version of CUDA toolkit (e.g. 11.7) but the latest version of `gcc` and `g++` (12.0+), you should downgrade with: `conda install -c conda-forge gxx==11.3.0`. Kernel compilation will fail otherwise.
 
-You are going to need to have a C++ compiler installed into your system for the last command. On Linux, `sudo apt install build-essential` or equivalent is enough.
-
-If you want to you to use the up-to-date CUDA or triton branches instead of the old CUDA branch, use these commands:
-
-```
-cd repositories
-rm -r GPTQ-for-LLaMa
-pip uninstall -y quant-cuda
-git clone https://github.com/qwopqwop200/GPTQ-for-LLaMa.git -b cuda
-...
-```
-
-```
-cd repositories
-rm -r GPTQ-for-LLaMa
-pip uninstall -y quant-cuda
-git clone https://github.com/qwopqwop200/GPTQ-for-LLaMa.git -b triton
-...
-```
-
-#### Step 2: get the pre-converted weights
+### Pre-converted weights
 
 * Converted without `group-size` (better for the 7b model): https://github.com/oobabooga/text-generation-webui/pull/530#issuecomment-1483891617
 * Converted with `group-size` (better from 13b upwards): https://github.com/oobabooga/text-generation-webui/pull/530#issuecomment-1483941105 
 
 ⚠️ The tokenizer files in the sources above may be outdated. Make sure to obtain the universal LLaMA tokenizer as described [here](https://github.com/oobabooga/text-generation-webui/blob/main/docs/LLaMA-model.md#option-1-pre-converted-weights).
 
-#### Step 3: Start the web UI:
+### Starting the web UI:
 
 For the models converted without `group-size`:
 
