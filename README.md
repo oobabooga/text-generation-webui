@@ -152,7 +152,7 @@ For example:
 
 * If you want to download a model manually, note that all you need are the json, txt, and pytorch\*.bin (or model*.safetensors) files. The remaining files are not necessary.
 
-* If you want to download a protected model (one gated behind accepting a license or otherwise private, like `bigcode/starcoder`) you can set the environment variables `HF_USER` to your huggingface username and `HF_PASS` to your password -- or, as a better option, to a [User Access Token](https://huggingface.co/settings/tokens). Note that you will need to accept the model terms on the Hugging Face website before starting the download.
+* Set env vars `HF_USER` and `HF_PASS` to your Hugging Face username and password (or [User Access Token](https://huggingface.co/settings/tokens)) to download a protected model. The model's terms must first be accepted on the HF website.
 
 #### GGML models
 
@@ -338,14 +338,10 @@ https://github.com/oobabooga/text-generation-webui/tree/main/docs
 
 ## Contributing
 
-Pull requests, suggestions, and issue reports are welcome. 
-
-You are also welcome to review open pull requests.
-
-Before reporting a bug, make sure that you have:
-
-1. Created a conda environment and installed the dependencies exactly as in the *Installation* section above.
-2. [Searched](https://github.com/oobabooga/text-generation-webui/issues) to see if an issue already exists for the issue you encountered.
+* Pull requests, suggestions, and issue reports are welcome. 
+* Make sure to carefully [search](https://github.com/oobabooga/text-generation-webui/issues) existing issues before starting a new one.
+* If you have some experience with git, testing an open pull request and leaving a comment on whether it works as expected or not is immensely helpful.
+* A simple way to contribute, even if you are not a programmer, is to leave a 👍 on an issue or pull request that you find relevant.
 
 ## Credits
 
