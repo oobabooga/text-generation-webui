@@ -10,7 +10,7 @@ Place the model in the `models` folder, making sure that its name contains `ggml
 
 Follow the instructions in the llama.cpp README to generate the `ggml-model.bin` file: https://github.com/ggerganov/llama.cpp#usage
 
-## GPU offloading
+## GPU acceleration
 
 Enabled with the `--n-gpu-layers` parameter. 
 
