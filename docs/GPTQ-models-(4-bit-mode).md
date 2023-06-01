@@ -183,7 +183,7 @@ git clone https://github.com/PanQiWei/AutoGPTQ.git && cd AutoGPTQ
 pip install .
 ```
 
-The last command requires `nvcc` to be installed (see the [instructions above](https://github.com/oobabooga/text-generation-webui/blob/main/docs/GPTQ-models-(4-bit-mode).md#step-0-install-nvcc)).
+The last command requires `nvcc` to be installed (see the [instructions above](https://github.com/oobabooga/text-generation-webui/blob/main/docs/GPTQ-models-(4-bit-mode).md#step-1-install-nvcc)).
 
 ### Usage
 
