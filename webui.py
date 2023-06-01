@@ -79,7 +79,7 @@ def install_dependencies():
     gpuchoice = input("Input> ").lower()
 
     if gpuchoice == "d":
-        print("\nOnce the installation ends, make sure to open webui.py with a text editor and add the --cpu flag to CMD_FLAGS.\n")
+        print_big_message("Once the installation ends, make sure to open webui.py with a text editor\nand add the --cpu flag to CMD_FLAGS.")
 
     # Install the version of PyTorch needed
     if gpuchoice == "a":
