@@ -18,6 +18,8 @@ def run(prompt):
         'typical_p': 1,
         'epsilon_cutoff': 0,  # In units of 1e-4
         'eta_cutoff': 0,  # In units of 1e-4
+        'tfs': 1,
+        'top_a': 0,
         'repetition_penalty': 1.18,
         'top_k': 40,
         'min_length': 0,

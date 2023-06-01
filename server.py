@@ -89,6 +89,8 @@ def load_preset_values(preset_menu, state, return_dict=False):
         'typical_p': 1,
         'epsilon_cutoff': 0,
         'eta_cutoff': 0,
+        'tfs': 1,
+        'top_a': 0,
         'repetition_penalty': 1,
         'encoder_repetition_penalty': 1,
         'top_k': 0,
@@ -101,8 +103,6 @@ def load_preset_values(preset_menu, state, return_dict=False):
         'mirostat_mode': 0,
         'mirostat_tau': 5.0,
         'mirostat_eta': 0.1,
-        'tfs': 1,
-        'top_a': 0,
     }
 
     with open(Path(f'presets/{preset_menu}.yaml'), 'r') as infile:
