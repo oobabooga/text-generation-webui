@@ -156,7 +156,9 @@ For example:
 
     python download-model.py facebook/opt-1.3b
 
-If you want to download a model manually, note that all you need are the json, txt, and pytorch\*.bin (or model*.safetensors) files. The remaining files are not necessary.
+* If you want to download a model manually, note that all you need are the json, txt, and pytorch\*.bin (or model*.safetensors) files. The remaining files are not necessary.
+
+* If you want to download a protected model (one gated behind accepting a license or otherwise private, like `bigcode/starcoder`) you can set the environment variables `HF_USER` to your huggingface username and `HF_PASS` to your password or (_as a better option_) to a [User Access Token](https://huggingface.co/settings/tokens). Note that you will need to accept the model terms on the Hugging Face website before starting the download.
 
 #### GGML models
 

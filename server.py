@@ -184,7 +184,8 @@ def count_tokens(text):
 
 def download_model_wrapper(repo_id):
     try:
-        downloader = importlib.import_module("download-model")
+        downloader_module = importlib.import_module("download-model")
+        downloader = downloader_module.ModelDownloader()
         repo_id_parts = repo_id.split(":")
         model = repo_id_parts[0] if len(repo_id_parts) > 0 else repo_id
         branch = repo_id_parts[1] if len(repo_id_parts) > 1 else "main"
@@ -369,7 +370,7 @@ def create_model_menus():
                         shared.gradio['bf16'] = gr.Checkbox(label="bf16", value=shared.args.bf16)
                         shared.gradio['load_in_8bit'] = gr.Checkbox(label="load-in-8bit", value=shared.args.load_in_8bit)
                         shared.gradio['trust_remote_code'] = gr.Checkbox(label="trust-remote-code", value=shared.args.trust_remote_code, info='Make sure to inspect the .py files inside the model folder before loading it with this option enabled.')
-                        
+
             with gr.Box():
                 gr.Markdown('Transformers 4-bit')
                 with gr.Row():
