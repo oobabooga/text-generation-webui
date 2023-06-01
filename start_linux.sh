@@ -62,6 +62,3 @@ conda activate "$INSTALL_ENV_DIR"
 
 # setup installer env
 python webui.py
-
-echo
-echo "Done!"

@@ -59,8 +59,5 @@ call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" activate "%INSTALL_ENV_DIR%" || ( 
 @rem setup installer env
 call python webui.py
 
-echo.
-echo Done!
-
 :end
 pause

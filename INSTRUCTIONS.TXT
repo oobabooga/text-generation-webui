@@ -8,24 +8,21 @@ everything for you.
 To launch the web UI in the future after it is already installed, run
 this same "start" script.
 
-# Updating
+# Updating the web UI
 
 Run the "update" script. This will only install the updates, so it should
 be much faster than the initial installation.
-
-May need to delete the 'text-generation-webui\repositories\GPTQ-for-LLaMa'
-folder if GPTQ-for-LLaMa needs to be updated.
 
 # Adding flags like --chat, --notebook, etc
 
 Edit the "webui.py" script using a text editor and add the desired flags
 to the CMD_FLAGS variable at the top. It should look like this:
 
-CMD_FLAGS = '--chat --model-menu'
+CMD_FLAGS = '--chat'
 
-For instance, to add the --notebook flag, change it to
+For instance, to add the --api flag, change it to
 
-CMD_FLAGS = '--notebook --model-menu'
+CMD_FLAGS = '--chat --api'
 
 # Running an interactive shell
 

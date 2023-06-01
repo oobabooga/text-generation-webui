@@ -11,15 +11,26 @@ conda_env_path = os.path.join(script_dir, "installer_files", "env")
 
 # Use this to set your command-line flags. For the full list, see:
 # https://github.com/oobabooga/text-generation-webui/#starting-the-web-ui
-CMD_FLAGS = '--chat --model-menu'
+CMD_FLAGS = '--chat'
 
 
 # Allows users to set flags in "OOBABOOGA_FLAGS" environment variable
 if "OOBABOOGA_FLAGS" in os.environ:
     CMD_FLAGS = os.environ["OOBABOOGA_FLAGS"]
-    print("\33[1;32mFlags have been taken from enivroment Variable 'OOBABOOGA_FLAGS'\33[0m") 
+    print("The following flags have been taken from the environment variable 'OOBABOOGA_FLAGS':")
     print(CMD_FLAGS)
-    print("\33[1;32mTo use flags from webui.py remove 'OOBABOOGA_FLAGS'\33[0m") 
+    print("To use the CMD_FLAGS Inside webui.py, unset 'OOBABOOGA_FLAGS'.\n")
+
+
+def print_big_message(message):
+    message = message.strip()
+    lines = message.split('\n')
+    print("\n\n*******************************************************************")
+    for line in lines:
+        if line.strip() != '':
+            print("*", line)
+
+    print("*******************************************************************\n\n")
 
 
 def run_cmd(cmd, assert_success=False, environment=False, capture_output=False, env=None):
@@ -31,14 +42,15 @@ def run_cmd(cmd, assert_success=False, environment=False, capture_output=False, 
         else:
             conda_sh_path = os.path.join(script_dir, "installer_files", "conda", "etc", "profile.d", "conda.sh")
             cmd = ". \"" + conda_sh_path + "\" && conda activate \"" + conda_env_path + "\" && " + cmd
-    
+
     # Run shell commands
     result = subprocess.run(cmd, shell=True, capture_output=capture_output, env=env)
-    
+
     # Assert the command ran successfully
     if assert_success and result.returncode != 0:
         print("Command '" + cmd + "' failed with exit status code '" + str(result.returncode) + "'. Exiting...")
         sys.exit()
+
     return result
 
 
@@ -48,7 +60,7 @@ def check_env():
     if not conda_exist:
         print("Conda is not installed. Exiting...")
         sys.exit()
-    
+
     # Ensure this is a new environment and not the base environment
     if os.environ["CONDA_DEFAULT_ENV"] == "base":
         print("Create an environment for this project and activate it. Exiting...")
@@ -86,7 +98,7 @@ def install_dependencies():
     # if sys.platform.startswith("win"):
     #     # Fix a bitsandbytes compatibility issue with Windows
     #     run_cmd("python -m pip install https://github.com/jllllll/bitsandbytes-windows-webui/raw/main/bitsandbytes-0.38.1-py3-none-any.whl", assert_success=True, environment=True)
-    
+
     # Install the webui dependencies
     update_dependencies()
 
@@ -101,7 +113,7 @@ def update_dependencies():
     for extension in extensions:
         if extension in ['superbooga']:  # No wheels available for dependencies
             continue
-            
+
         extension_req_path = os.path.join("extensions", extension, "requirements.txt")
         if os.path.exists(extension_req_path):
             run_cmd("python -m pip install -r " + extension_req_path + " --upgrade", assert_success=True, environment=True)
@@ -113,12 +125,14 @@ def update_dependencies():
     old_bnb = "bitsandbytes==0.38.1" if not sys.platform.startswith("win") else "https://github.com/jllllll/bitsandbytes-windows-webui/raw/main/bitsandbytes-0.38.1-py3-none-any.whl"
     if compute_array.returncode == 0 and not any(int(compute) >= min_compute for compute in compute_array.stdout.decode('utf-8').split(',')):
         old_bnb_install = run_cmd(f"python -m pip install {old_bnb} --force-reinstall --no-deps", environment=True).returncode == 0
-        print("\n\nWARNING: GPU with compute < 7.0 detected!")
+        message = "\n\nWARNING: GPU with compute < 7.0 detected!\n"
         if old_bnb_install:
-            print("Older version of bitsandbytes has been installed to maintain compatibility.")
-            print("You will be unable to use --load-in-4bit!\n\n")
+            message += "Older version of bitsandbytes has been installed to maintain compatibility.\n"
+            message += "You will be unable to use --load-in-4bit!\n"
         else:
-            print("You will be unable to use --load-in-8bit until you install bitsandbytes 0.38.1!\n\n")
+            message += "You will be unable to use --load-in-8bit until you install bitsandbytes 0.38.1!\n"
+
+        print_big_message(message)
 
     # The following dependencies are for CUDA, not CPU
     # Check if the package cpuonly exists to determine if torch uses CUDA or not
@@ -143,16 +157,16 @@ def update_dependencies():
 
     if not os.path.exists("repositories/"):
         os.mkdir("repositories")
-    
+
     # Install GPTQ-for-LLaMa which enables 4bit CUDA quantization
     os.chdir("repositories")
     if not os.path.exists("GPTQ-for-LLaMa/"):
         run_cmd("git clone https://github.com/oobabooga/GPTQ-for-LLaMa.git -b cuda", assert_success=True, environment=True)
-    
+
     # Install GPTQ-for-LLaMa dependencies
     os.chdir("GPTQ-for-LLaMa")
     run_cmd("git pull", assert_success=True, environment=True)
-    
+
     # On some Linux distributions, g++ may not exist or be the wrong version to compile GPTQ-for-LLaMa
     if sys.platform.startswith("linux"):
         gxx_output = run_cmd("g++ -dumpfullversion -dumpversion", environment=True, capture_output=True)
@@ -163,22 +177,18 @@ def update_dependencies():
     # Compile and install GPTQ-for-LLaMa
     if os.path.exists('setup_cuda.py'):
         os.rename("setup_cuda.py", "setup.py")
-        
+
     run_cmd("python -m pip install .", environment=True)
-    
+
     # Wheel installation can fail while in the build directory of a package with the same name
     os.chdir("..")
-    
+
     # If the path does not exist, then the install failed
     quant_cuda_path_regex = os.path.join(site_packages_path, "quant_cuda*/")
     if not glob.glob(quant_cuda_path_regex):
         # Attempt installation via alternative, Windows/Linux-specific method
         if sys.platform.startswith("win") or sys.platform.startswith("linux"):
-            print("\n\n*******************************************************************")
-            print("* WARNING: GPTQ-for-LLaMa compilation failed, but this is FINE and can be ignored!")
-            print("* The installer will proceed to install a pre-compiled wheel.")
-            print("*******************************************************************\n\n")
-
+            print_big_message("WARNING: GPTQ-for-LLaMa compilation failed, but this is FINE and can be ignored!\nThe installer will proceed to install a pre-compiled wheel.")
             url = "https://github.com/jllllll/GPTQ-for-LLaMa-Wheels/raw/main/quant_cuda-0.0.0-cp310-cp310-win_amd64.whl"
             if sys.platform.startswith("linux"):
                 url = "https://github.com/jllllll/GPTQ-for-LLaMa-Wheels/raw/Linux-x64/quant_cuda-0.0.0-cp310-cp310-linux_x86_64.whl"
@@ -191,7 +201,7 @@ def update_dependencies():
         else:
             print("ERROR: GPTQ CUDA kernel compilation failed.")
             print("You will not be able to use GPTQ-based models.")
-            
+
         print("Continuing with install..")
 
 
@@ -200,7 +210,7 @@ def download_model():
     run_cmd("python download-model.py", environment=True)
 
 
-def run_model():
+def launch_webui():
     os.chdir("text-generation-webui")
     run_cmd(f"python server.py {CMD_FLAGS}", environment=True)
 
@@ -223,13 +233,12 @@ if __name__ == "__main__":
 
         # Check if a model has been downloaded yet
         if len(glob.glob("text-generation-webui/models/*/")) == 0:
-            download_model()
-            os.chdir(script_dir)
+            print_big_message("WARNING: You haven't downloaded any model yet.\nOnce the web UI launches, head over to the bottom of the \"Model\" tab and download one.")
 
         # Workaround for llama-cpp-python loading paths in CUDA env vars even if they do not exist
         conda_path_bin = os.path.join(conda_env_path, "bin")
         if not os.path.exists(conda_path_bin):
             os.mkdir(conda_path_bin)
 
-        # Run the model with webui
-        run_model()
+        # Launch the webui
+        launch_webui()
