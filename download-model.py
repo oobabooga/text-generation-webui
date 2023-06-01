@@ -74,12 +74,14 @@ EleutherAI/pythia-1.4b-deduped
 class ModelDownloader:
     def __init__(self):
         self.s = requests.Session()
-        if os.getenv('HF_USER') != None and os.getenv('HF_PASS') != None:
+        if os.getenv('HF_USER') is not None and os.getenv('HF_PASS') is not None:
             self.s.auth = (os.getenv('HF_USER'), os.getenv('HF_PASS'))
+
 
     def sanitize_model_and_branch_names(self, model, branch):
         if model[-1] == '/':
             model = model[:-1]
+
         if branch is None:
             branch = "main"
         else:
@@ -125,14 +127,15 @@ class ModelDownloader:
                 is_ggml = re.match(".*ggml.*\.bin", fname)
                 is_tokenizer = re.match("(tokenizer|ice).*\.model", fname)
                 is_text = re.match(".*\.(txt|json|py|md)", fname) or is_tokenizer
-
                 if any((is_pytorch, is_safetensors, is_pt, is_ggml, is_tokenizer, is_text)):
                     if 'lfs' in dict[i]:
                         sha256.append([fname, dict[i]['lfs']['oid']])
+
                     if is_text:
                         links.append(f"https://huggingface.co/{model}/resolve/{branch}/{fname}")
                         classifications.append('text')
                         continue
+
                     if not text_only:
                         links.append(f"https://huggingface.co/{model}/resolve/{branch}/{fname}")
                         if is_safetensors:
