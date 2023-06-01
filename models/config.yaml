@@ -177,3 +177,6 @@ llama-65b-gptq-3bit:
 .*manticore:
   mode: 'instruct'
   instruction_template: 'Manticore Chat'
+.*bluemoonrp-(30|13)b:
+  mode: 'instruct'
+  instruction_template: 'Bluemoon'
