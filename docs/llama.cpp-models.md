@@ -12,7 +12,10 @@ Follow the instructions in the llama.cpp README to generate the `ggml-model.bin`
 
 ## GPU offloading
 
-Enabled with the `--n-gpu-layers` parameter. If you have enough VRAM, use a high number like `--n-gpu-layers 200000` to offload all layers to the GPU. Otherwise, start with a low value like `--n-gpu-layers 10` and gradually increase it until you run out of memory.
+Enabled with the `--n-gpu-layers` parameter. 
+
+* If you have enough VRAM, use a high number like `--n-gpu-layers 200000` to offload all layers to the GPU. 
+* Otherwise, start with a low number like `--n-gpu-layers 10` and then gradually increase it until you run out of memory.
 
 To use this feature, you need to manually compile and install `llama-cpp-python` with GPU support.
 
