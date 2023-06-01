@@ -105,7 +105,7 @@ To use GPTQ models, the additional installation steps below are necessary:
 
 #### llama.cpp with GPU acceleration
 
-Requires the additional compilation step described here: [GPU offloading](https://github.com/oobabooga/text-generation-webui/blob/main/docs/llama.cpp-models.md#gpu-offloading).
+Requires the additional compilation step described here: [GPU acceleration](https://github.com/oobabooga/text-generation-webui/blob/main/docs/llama.cpp-models.md#gpu-acceleration).
 
 #### bitsandbytes
 
