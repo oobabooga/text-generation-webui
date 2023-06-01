@@ -12,7 +12,7 @@ torch._C._jit_set_profiling_mode(False)
 
 params = {
     'activate': True,
-    'speaker': 'en_56',
+    'speaker': 'en_94',
     'language': 'en',
     'model_id': 'v3_en',
     'sample_rate': 48000,
