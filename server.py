@@ -211,6 +211,7 @@ def download_model_wrapper(repo_id, progress=gr.Progress()):
             downloader.download_model_files(model, branch, links, sha256, output_folder, progress_bar=progress, threads=1)
             yield ("Done!")
     except:
+        progress(1.0)
         yield traceback.format_exc()
 
 
