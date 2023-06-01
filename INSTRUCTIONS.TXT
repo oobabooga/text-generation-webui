@@ -6,7 +6,7 @@ Run the "start" script. If all goes right, it should take care of
 everything for you.
 
 To launch the web UI in the future after it is already installed, run
-this same "start" script.
+the same "start" script.
 
 # Updating the web UI
 
