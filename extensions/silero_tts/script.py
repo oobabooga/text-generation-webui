@@ -11,14 +11,14 @@ torch._C._jit_set_profiling_mode(False)
 
 
 params = {
-    'activate': True,
+    'activate': False,
     'speaker': 'en_94',
     'language': 'en',
     'model_id': 'v3_en',
     'sample_rate': 48000,
     'device': 'cpu',
     'show_text': False,
-    'autoplay': True,
+    'autoplay': False,
     'voice_pitch': 'medium',
     'voice_speed': 'medium',
     'local_cache_path': ''  # User can override the default cache path to something other via settings.json
@@ -202,7 +202,7 @@ def generate_html_page(directory):
         file.write(html)
 
 
-def output_modifier(string):
+def process_last_reply_with_TTS():
     global model, current_params, streaming_state
     for i in params:
         if params[i] != current_params[i]:
@@ -210,17 +210,23 @@ def output_modifier(string):
             current_params = params.copy()
             break
 
-    if not params['activate']:
-        return string
+    if len(shared.history['visible']) == 0:
+        print('No history')
+        return
 
-    original_string = string
+    # Get the last visible reply
+    string = shared.history['visible'][-1][1]
 
     # Create a new directory for the outputs
     current_time = int(time.time())
     output_directory = Path(f'extensions/silero_tts/outputs/{shared.character}_{current_time}')
     output_directory.mkdir(parents=True, exist_ok=True)
 
-    paragraphs = original_string.split('\n')
+    paragraphs = string.split('\n')
+
+    # Remove empty paragraphs or paragraphs that only contain whitespace
+    paragraphs = [paragraph for paragraph in paragraphs if paragraph.strip() != '']
+
     audio_files = []
     text_files = []
     file_idx = 0
@@ -228,11 +234,11 @@ def output_modifier(string):
     for paragraph in paragraphs:
         preprocessed_paragraph = tts_preprocessor.preprocess(paragraph)
 
-        if preprocessed_paragraph.strip() == '':
-            continue  # Skip empty preprocessed paragraphs
-
         # Pad the file index with leading zeroes
         padded_idx = str(file_idx).zfill(3)
+        padded_length = str(len(paragraphs)).zfill(3)
+        print(f'Generating audio file {padded_idx}/{padded_length}...')
+        print(f'Paragraph: {paragraph}')
 
         output_file = output_directory / f'voice_{padded_idx}.wav'
         text_file = output_directory / f'paragraph_{padded_idx}.txt'
@@ -256,13 +262,42 @@ def output_modifier(string):
     output_string = ''
     for idx, (audio_file, text_file) in enumerate(zip(audio_files, text_files)):
         output_string += f'<audio src="file/{audio_file}" controls></audio>'
-        if params['show_text']:
-            output_string += f'<br><a href="file/{text_file}" target="_blank">Read Text for Audio {idx+1}</a><br><br>'
+        output_string += paragraphs[idx]
+    output_string += f'<p><a href="file/{str(output_directory)}/playback.html" target="_blank">Link to HTML Playback Page</a></p>'
 
-    output_string += f'<br><a href="file/{str(output_directory)}/playback.html" target="_blank">Link to HTML Playback Page</a><br><br>'
+    # Replace the last visible reply with the output string
+    shared.history['visible'][-1] = [shared.history['visible'][-1][0], output_string]
+
+
+def output_modifier(string):
+    global model, current_params, streaming_state
+    for i in params:
+        if params[i] != current_params[i]:
+            model = load_model()
+            current_params = params.copy()
+            break
+
+    if not params['activate']:
+        return string
+
+    original_string = string
+    string = tts_preprocessor.preprocess(string)
+
+    if string == '':
+        string = '*Empty reply, try regenerating*'
+    else:
+        output_file = Path(f'extensions/silero_tts/outputs/{shared.character}_{int(time.time())}.wav')
+        prosody = '<prosody rate="{}" pitch="{}">'.format(params['voice_speed'], params['voice_pitch'])
+        silero_input = f'<speak>{prosody}{xmlesc(string)}</prosody></speak>'
+        model.save_wav(ssml_text=silero_input, speaker=params['speaker'], sample_rate=int(params['sample_rate']), audio_path=str(output_file))
+
+        autoplay = 'autoplay' if params['autoplay'] else ''
+        string = f'<audio src="file/{output_file.as_posix()}" controls {autoplay}></audio>'
+        if params['show_text']:
+            string += f'\n\n{original_string}'
 
     shared.processing_message = "*Is typing...*"
-    return output_string
+    return string
 
 
 def setup():
@@ -284,11 +319,17 @@ def ui():
             v_speed = gr.Dropdown(value=params['voice_speed'], choices=voice_speeds, label='Voice speed')
 
         with gr.Row():
+            process_last_reply = gr.Button('Process last reply with TTS')
             convert = gr.Button('Permanently replace audios with the message texts')
             convert_cancel = gr.Button('Cancel', visible=False)
             convert_confirm = gr.Button('Confirm (cannot be undone)', variant="stop", visible=False)
 
         gr.Markdown('[Click here for Silero audio samples](https://oobabooga.github.io/silero-samples/index.html)')
+
+    # Gradio callbacks
+    process_last_reply.click(process_last_reply_with_TTS, None, None).then(
+        chat.save_history, shared.gradio['mode'], None, show_progress=False).then(
+        chat.redraw_html, shared.reload_inputs, shared.gradio['display'])
 
     # Convert history with confirmation
     convert_arr = [convert_confirm, convert, convert_cancel]
