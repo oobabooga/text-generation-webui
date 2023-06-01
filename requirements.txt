@@ -19,5 +19,5 @@ git+https://github.com/huggingface/transformers@e45e756d22206ca8fa9fb057c8c3d8fa
 git+https://github.com/huggingface/accelerate@0226f750257b3bf2cadc4f189f9eef0c764a0467
 bitsandbytes==0.39.0; platform_system != "Windows"
 https://github.com/jllllll/bitsandbytes-windows-webui/raw/main/bitsandbytes-0.39.0-py3-none-any.whl; platform_system == "Windows"
-llama-cpp-python==0.1.53; platform_system != "Windows"
-https://github.com/abetlen/llama-cpp-python/releases/download/v0.1.53/llama_cpp_python-0.1.53-cp310-cp310-win_amd64.whl; platform_system == "Windows"
+llama-cpp-python==0.1.56; platform_system != "Windows"
+https://github.com/abetlen/llama-cpp-python/releases/download/v0.1.56/llama_cpp_python-0.1.56-cp310-cp310-win_amd64.whl; platform_system == "Windows"
