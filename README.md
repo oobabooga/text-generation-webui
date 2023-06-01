@@ -103,7 +103,11 @@ To use GPTQ models, the additional installation steps below are necessary:
 
 [GPTQ models (4 bit mode)](https://github.com/oobabooga/text-generation-webui/blob/main/docs/GPTQ-models-(4-bit-mode).md)
 
-#### Note about bitsandbytes
+#### llama.cpp with GPU acceleration
+
+Requires the additional compilation step described here: [GPU offloading](https://github.com/oobabooga/text-generation-webui/blob/main/docs/llama.cpp-models.md#gpu-offloading).
+
+#### bitsandbytes
 
 bitsandbytes >= 0.39 may not work on older NVIDIA GPUs. In that case, to use `--load-in-8bit`, you may have to downgrade like this:
 
