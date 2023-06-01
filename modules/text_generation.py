@@ -188,7 +188,19 @@ def _generate_reply(question, state, eos_token=None, stopping_strings=None, is_c
     shared.stop_everything = False
     clear_torch_cache()
     seed = set_manual_seed(state['seed'])
+    is_stream = state['stream']
+    last_update = -1
+    reply = ''
     for reply in generate_func(question, original_question, seed, state, eos_token, stopping_strings, is_chat=is_chat):
+        if is_stream:
+            cur_time = time.time()
+            if cur_time - last_update > 0.041666666666666664:  # Limit streaming to 24 fps
+                last_update = cur_time
+                yield reply
+        else:
+            yield reply
+
+    if is_stream:
         yield reply
 
 
