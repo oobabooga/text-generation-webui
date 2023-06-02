@@ -134,7 +134,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
 
-            token_ids = body['tokenIds']
+            token_ids = body['token_ids']
             skip_special_tokens = body.get('skip_special_tokens', True)
 
             # Using encode directly for each token would cause spaces to be lost
