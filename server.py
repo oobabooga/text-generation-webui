@@ -393,7 +393,7 @@ def create_model_menus():
                 with gr.Row():
                     with gr.Column():
                         gr.Markdown('GPTQ')
-                        shared.gradio['autogptq'] = gr.Checkbox(label="autogptq", value=shared.args.autogptq, info='When enabled, gpu-memory should be used for CPU offloading instead of pre_layer.')
+                        shared.gradio['autogptq'] = gr.Checkbox(label="autogptq", value=shared.args.autogptq, info='Use AutoGPTQ for loading GPTQ models. When enabled, gpu-memory should be used for CPU offloading instead of pre_layer.')
                         shared.gradio['triton'] = gr.Checkbox(label="triton", value=shared.args.triton)
                         shared.gradio['desc_act'] = gr.Checkbox(label="desc_act", value=shared.args.desc_act, info='Only used for old models without a quantize_config.json.')
 
