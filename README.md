@@ -272,6 +272,7 @@ Optionally, you can use the following command-line flags:
 |------------------|-------------|
 | `--autogptq`     | Use AutoGPTQ for loading quantized models instead of the internal GPTQ loader. |
 | `--triton`       | Use triton. |
+|` --desc_act`     | For models that don't have a quantize_config.json, this parameter is used to define whether to set desc_act or not in BaseQuantizeConfig. |
 
 #### FlexGen
 
