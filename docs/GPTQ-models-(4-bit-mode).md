@@ -18,7 +18,7 @@ There are two ways of loading GPTQ models in the web UI at the moment:
   * supports more models
   * standardized (no need to guess any parameter)
   * is a proper Python library
-  * no wheels are presently available so it requires manual compilation
+  * ~no wheels are presently available so it requires manual compilation~
   * supports loading both triton and cuda models
 
 For creating new quantizations, I recommend using AutoGPTQ: https://github.com/PanQiWei/AutoGPTQ
@@ -175,7 +175,7 @@ python server.py --model llama-7b-4bit-128g --listen --lora tloen_alpaca-lora-7b
 
 ### Installation
 
-To load a model quantized with AutoGPTQ in the web UI, you need to first manually install the AutoGPTQ library:
+No additional steps are necessary as AutoGPTQ is already in the `requirements.txt` for the webui. If you still want or need to install it manually for whatever reason, these are the commands:
 
 ```
 conda activate textgen
