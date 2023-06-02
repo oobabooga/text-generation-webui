@@ -392,12 +392,13 @@ def create_model_menus():
             with gr.Box():
                 with gr.Row():
                     with gr.Column():
-                        gr.Markdown('GPTQ')
-                        shared.gradio['autogptq'] = gr.Checkbox(label="autogptq", value=shared.args.autogptq, info='Use AutoGPTQ for loading GPTQ models. When enabled, gpu-memory should be used for CPU offloading instead of pre_layer.')
+                        gr.Markdown('AutoGPTQ')
+                        shared.gradio['autogptq'] = gr.Checkbox(label="autogptq", value=shared.args.autogptq, info='Activate AutoGPTQ loader. gpu-memory should be used for CPU offloading instead of pre_layer.')
                         shared.gradio['triton'] = gr.Checkbox(label="triton", value=shared.args.triton)
-                        shared.gradio['desc_act'] = gr.Checkbox(label="desc_act", value=shared.args.desc_act, info='Only used for old models without a quantize_config.json.')
+                        shared.gradio['desc_act'] = gr.Checkbox(label="desc_act", value=shared.args.desc_act, info='\'desc_act\', \'wbits\', and \'groupsize\' are used for old models without a quantize_config.json.')
 
                     with gr.Column():
+                        gr.Markdown('GPTQ-for-LLaMa')
                         with gr.Row():
                             shared.gradio['wbits'] = gr.Dropdown(label="wbits", choices=["None", 1, 2, 3, 4, 8], value=shared.args.wbits if shared.args.wbits > 0 else "None")
                             shared.gradio['groupsize'] = gr.Dropdown(label="groupsize", choices=["None", 32, 64, 128, 1024], value=shared.args.groupsize if shared.args.groupsize > 0 else "None")
