@@ -120,9 +120,24 @@ class Handler(BaseHTTPRequestHandler):
             # tensor to list
             token_ids = [t.item() for t in tokens]
 
+            # Using encode directly for each token would cause spaces to be lost
+            tokens = torch.tensor([])
+            token_texts = []
+            length = 0
+            for t in token_ids:
+                new_tokens = torch.tensor([t])
+                tokens = torch.cat((tokens, new_tokens))
+                decoded_text = decode(tokens, not add_special_tokens)
+                # Take the new part from the end of decoded_text as the text of the new_tokens
+                new_text_length = len(decoded_text) - length
+                new_text = decoded_text[-new_text_length:]
+                length = len(decoded_text)
+                token_texts.append(new_text)
+
             response = json.dumps({
                 'results': [{
                     'token_ids': token_ids,
+                    'token_texts': token_texts,
                     'token_count': len(tokens)
                 }]
             })
