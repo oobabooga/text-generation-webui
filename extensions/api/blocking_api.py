@@ -1,11 +1,13 @@
 import json
+import torch
+
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
 
 from extensions.api.util import build_parameters, try_start_cloudflared
 from modules import shared
 from modules.chat import generate_chat_reply
-from modules.text_generation import encode, generate_reply, stop_everything_event
+from modules.text_generation import encode, decode, generate_reply, stop_everything_event
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -104,6 +106,60 @@ class Handler(BaseHTTPRequestHandler):
             })
 
             self.wfile.write(response.encode('utf-8'))
+
+        elif self.path == '/api/v1/encode':
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+
+            prompt = body['prompt']
+            add_special_tokens = body.get('add_special_tokens', True)
+            add_bos_token = body.get('add_bos_token', True)
+
+            tokens = encode(prompt, add_special_tokens, add_bos_token)[0]
+            # tensor to list
+            token_ids = [t.item() for t in tokens]
+
+            response = json.dumps({
+                'results': [{
+                    'token_ids': token_ids,
+                    'token_count': len(tokens)
+                }]
+            })
+
+            self.wfile.write(response.encode('utf-8'))
+
+        elif self.path == '/api/v1/decode':
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+
+            token_ids = body['tokenIds']
+            skip_special_tokens = body.get('skip_special_tokens', True)
+
+            # Using encode directly for each token would cause spaces to be lost
+            tokens = torch.tensor([])
+            token_texts = []
+            length = 0
+            for t in token_ids:
+                new_tokens = torch.tensor([t])
+                tokens = torch.cat((tokens, new_tokens))
+                decoded_text = decode(tokens, skip_special_tokens)
+                # Take the new part from the end of decoded_text as the text of the new_tokens
+                new_text_length = len(decoded_text) - length
+                new_text = decoded_text[-new_text_length:]
+                length = len(decoded_text)
+                token_texts.append(new_text)
+
+            response = json.dumps({
+                'results': [{
+                    'decoded_text': decoded_text,
+                    'token_texts': token_texts
+                }]
+            })
+
+            self.wfile.write(response.encode('utf-8'))
+
         else:
             self.send_error(404)
 
