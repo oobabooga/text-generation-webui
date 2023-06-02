@@ -142,6 +142,7 @@ parser.add_argument('--fused_mlp', action='store_true', help='(triton) Enable fu
 # AutoGPTQ
 parser.add_argument('--autogptq', action='store_true', help='Use AutoGPTQ for loading quantized models instead of the internal GPTQ loader.')
 parser.add_argument('--triton', action='store_true', help='Use triton.')
+parser.add_argument('--desc_act', action='store_true', help='For models that don\'t have a quantize_config.json, this parameter is used to define whether to set desc_act or not in BaseQuantizeConfig.')
 
 # FlexGen
 parser.add_argument('--flexgen', action='store_true', help='Enable the use of FlexGen offloading.')
