@@ -1,6 +1,6 @@
 import json
-import logging
 import math
+import random
 import sys
 import threading
 import time
@@ -15,8 +15,9 @@ from peft import (LoraConfig, get_peft_model, prepare_model_for_int8_training,
                   set_peft_model_state_dict)
 
 from modules import shared, ui, utils
-from modules.evaluate import calculate_perplexity, generate_markdown_table, save_past_evaluations
-
+from modules.evaluate import (calculate_perplexity, generate_markdown_table,
+                              save_past_evaluations)
+from modules.logging_colors import logger
 
 # This mapping is from a very recent commit, not yet released.
 # If not available, default to a backup map for some common model types.
@@ -24,7 +25,8 @@ try:
     from peft.utils.other import \
         TRANSFORMERS_MODELS_TO_LORA_TARGET_MODULES_MAPPING as \
         model_to_lora_modules
-    from transformers.models.auto.modeling_auto import MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
+    from transformers.models.auto.modeling_auto import \
+        MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
     MODEL_CLASSES = {v: k for k, v in MODEL_FOR_CAUSAL_LM_MAPPING_NAMES}
 except:
     standard_modules = ["q_proj", "v_proj"]
@@ -36,9 +38,9 @@ except:
         "GPTNeoXForCausalLM": "gpt_neox"
     }
 
-WANT_INTERRUPT = False
 
-PARAMETERS = ["lora_name", "always_override", "save_steps", "micro_batch_size", "batch_size", "epochs", "learning_rate", "lr_scheduler_type", "lora_rank", "lora_alpha", "lora_dropout", "cutoff_len", "dataset", "eval_dataset", "format", "eval_steps", "raw_text_file", "overlap_len", "newline_favor_len", "higher_rank_limit", "warmup_steps", "optimizer"]
+WANT_INTERRUPT = False
+PARAMETERS = ["lora_name", "always_override", "save_steps", "micro_batch_size", "batch_size", "epochs", "learning_rate", "lr_scheduler_type", "lora_rank", "lora_alpha", "lora_dropout", "cutoff_len", "dataset", "eval_dataset", "format", "eval_steps", "raw_text_file", "overlap_len", "newline_favor_len", "higher_rank_limit", "warmup_steps", "optimizer", "hard_cut_string", "train_only_after"]
 
 
 def create_train_interface():
@@ -85,6 +87,7 @@ def create_train_interface():
             with gr.Row():
                 raw_text_file = gr.Dropdown(choices=utils.get_datasets('training/datasets', 'txt'), value='None', label='Text file', info='The raw text file to use for training.')
                 ui.create_refresh_button(raw_text_file, lambda: None, lambda: {'choices': utils.get_datasets('training/datasets', 'txt')}, 'refresh-button')
+                hard_cut_string = gr.Textbox(label='Hard Cut String', value='\\n\\n\\n', info='String that indicates a hard cut between text parts. Helps prevent unwanted overlap.')
 
             with gr.Row():
                 overlap_len = gr.Slider(label='Overlap Length', minimum=0, maximum=512, value=128, step=16, info='Overlap length - ie how many tokens from the prior chunk of text to include into the next chunk. (The chunks themselves will be of a size determined by Cutoff Length below). Setting overlap to exactly half the cutoff length may be ideal.')
@@ -94,6 +97,7 @@ def create_train_interface():
             lora_dropout = gr.Slider(label='LoRA Dropout', minimum=0.0, maximum=1.0, step=0.025, value=0.05, info='Percentage probability for dropout of LoRA layers. This can help reduce overfitting. Most users should leave at default.')
             warmup_steps = gr.Number(label='Warmup Steps', value=100, info='For this many steps at the start, the learning rate will be lower than normal. This helps the trainer prepare the model and precompute statistics to improve the quality of training after the start.')
             optimizer = gr.Dropdown(label='Optimizer', value='adamw_torch', choices=['adamw_hf', 'adamw_torch', 'adamw_torch_fused', 'adamw_torch_xla', 'adamw_apex_fused', 'adafactor', 'adamw_bnb_8bit', 'adamw_anyprecision', 'sgd', 'adagrad'], info='Different optimizer implementation options, for advanced users. Effects of different options are not well documented yet.')
+            train_only_after = gr.Textbox(label='Train Only After', value='', info='Only consider text *after* this string in any given chunk for training. For Alpaca datasets, use "### Response:" to only train the response and ignore the input.')
 
             with gr.Row():
                 higher_rank_limit = gr.Checkbox(label='Enable higher ranks', value=False, info='If checked, changes Rank/Alpha slider above to go much higher. This will not work without a datacenter-class GPU.')
@@ -122,10 +126,12 @@ def create_train_interface():
                 evaluation_log = gr.Markdown(value='')
 
         evaluation_table = gr.Dataframe(value=generate_markdown_table(), interactive=True)
-        save_comments = gr.Button('Save comments')
+        with gr.Row():
+            save_comments = gr.Button('Save comments', elem_classes="small-button")
+            refresh_table = gr.Button('Refresh the table', elem_classes="small-button")
 
     # Training events
-    all_params = [lora_name, always_override, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lr_scheduler_type, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, higher_rank_limit, warmup_steps, optimizer]
+    all_params = [lora_name, always_override, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lr_scheduler_type, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, higher_rank_limit, warmup_steps, optimizer, hard_cut_string, train_only_after]
     copy_from.change(do_copy_params, [copy_from] + all_params, all_params)
     start_button.click(do_train, all_params, output)
     stop_button.click(do_interrupt, None, None, queue=False)
@@ -143,6 +149,7 @@ def create_train_interface():
     start_current_evaluation.click(generate_markdown_table, None, evaluation_table, show_progress=False)
 
     stop_evaluation.click(None, None, None, cancels=[ev, ev_cur], queue=False)
+    refresh_table.click(generate_markdown_table, None, evaluation_table, show_progress=True)
     save_comments.click(
         save_past_evaluations, evaluation_table, None).then(
         lambda: "Comments saved.", None, evaluation_log, show_progress=False)
@@ -178,7 +185,7 @@ def change_rank_limit(use_higher_ranks: bool):
 
 
 def clean_path(base_path: str, path: str):
-    """"Strips unusual symbols and forcibly builds a path as relative to the intended directory."""
+    """Strips unusual symbols and forcibly builds a path as relative to the intended directory."""
     # TODO: Probably could do with a security audit to guarantee there's no ways this can be bypassed to target an unwanted path.
     # Or swap it to a strict whitelist of [a-zA-Z_0-9]
     path = path.replace('\\', '/').replace('..', '_')
@@ -188,7 +195,7 @@ def clean_path(base_path: str, path: str):
     return f'{Path(base_path).absolute()}/{path}'
 
 
-def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lr_scheduler_type: str, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, higher_rank_limit: bool, warmup_steps: int, optimizer: str):
+def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lr_scheduler_type: str, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, higher_rank_limit: bool, warmup_steps: int, optimizer: str, hard_cut_string: str, train_only_after: str):
 
     if shared.args.monkey_patch:
         from monkeypatch.peft_tuners_lora_monkey_patch import \
@@ -216,23 +223,23 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         if model_type == "PeftModelForCausalLM":
             if len(shared.args.lora_names) > 0:
                 yield "You are trying to train a LoRA while you already have another LoRA loaded. This will work, but may have unexpected effects. *(Will continue anyway in 5 seconds, press `Interrupt` to stop.)*"
-                logging.warning("Training LoRA over top of another LoRA. May have unexpected effects.")
+                logger.warning("Training LoRA over top of another LoRA. May have unexpected effects.")
             else:
                 yield "Model ID not matched due to LoRA loading. Consider reloading base model. *(Will continue anyway in 5 seconds, press `Interrupt` to stop.)*"
-                logging.warning("Model ID not matched due to LoRA loading. Consider reloading base model.")
+                logger.warning("Model ID not matched due to LoRA loading. Consider reloading base model.")
         else:
             yield "LoRA training has only currently been validated for LLaMA, OPT, GPT-J, and GPT-NeoX models. Unexpected errors may follow. *(Will continue anyway in 5 seconds, press `Interrupt` to stop.)*"
-            logging.warning(f"LoRA training has only currently been validated for LLaMA, OPT, GPT-J, and GPT-NeoX models. (Found model type: {model_type})")
+            logger.warning(f"LoRA training has only currently been validated for LLaMA, OPT, GPT-J, and GPT-NeoX models. (Found model type: {model_type})")
 
         time.sleep(5)
 
     if shared.args.wbits > 0 and not shared.args.monkey_patch:
-        yield "LoRA training in 4-bit requires loading with `--monkey-patch`"
+        yield "LoRA training with GPTQ models requires loading with `--monkey-patch`"
         return
 
-    elif not shared.args.load_in_8bit and shared.args.wbits <= 0:
+    elif not (shared.args.load_in_8bit or shared.args.load_in_4bit) and shared.args.wbits <= 0:
         yield "It is highly recommended you use `--load-in-8bit` for LoRA training. *(Will continue anyway in 2 seconds, press `Interrupt` to stop.)*"
-        logging.warning("It is highly recommended you use `--load-in-8bit` for LoRA training.")
+        logger.warning("It is highly recommended you use `--load-in-8bit` for LoRA training.")
         time.sleep(2)  # Give it a moment for the message to show in UI before continuing
 
     if cutoff_len <= 0 or micro_batch_size <= 0 or batch_size <= 0 or actual_lr <= 0 or lora_rank <= 0 or lora_alpha <= 0:
@@ -243,27 +250,68 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     shared.tokenizer.pad_token_id = 0
     shared.tokenizer.padding_side = "left"
 
+    def encode(text, add_bos_token):
+        result = shared.tokenizer.encode(text, truncation=True, max_length=cutoff_len)
+        if not add_bos_token and result[0] == shared.tokenizer.bos_token_id:
+            result = result[1:]
+        return result
+
     def tokenize(prompt):
-        result = shared.tokenizer(prompt, truncation=True, max_length=cutoff_len + 1, padding="max_length")
+
+        if train_only_after == '' or train_only_after not in prompt:
+            input_ids = encode(prompt, True)
+            input_ids = [shared.tokenizer.pad_token_id] * (cutoff_len - len(input_ids)) + input_ids
+            labels = [1] * len(input_ids)
+
+        else:
+            ind = prompt.index(train_only_after) + len(train_only_after)
+            before_tokens = encode(prompt[:ind], True)
+            after_tokens = encode(prompt[ind:], False)
+
+            full_length = len(after_tokens) + len(before_tokens)
+            if full_length > cutoff_len:
+                after_tokens = after_tokens[:cutoff_len - len(before_tokens)]
+            else:
+                before_tokens = [shared.tokenizer.pad_token_id] * (cutoff_len - full_length) + before_tokens
+
+            input_ids = before_tokens + after_tokens
+            labels = [-100] * len(before_tokens) + [1] * len(after_tokens)
+
+        input_ids = torch.tensor(input_ids)
         return {
-            "input_ids": result["input_ids"][:-1],
-            "attention_mask": result["attention_mask"][:-1],
+            "input_ids": input_ids,
+            "labels": labels,
+            "attention_mask": input_ids.ne(shared.tokenizer.pad_token_id),
         }
 
     # == Prep the dataset, format, etc ==
     if raw_text_file not in ['None', '']:
-        logging.info("Loading raw text file dataset...")
+        logger.info("Loading raw text file dataset...")
         with open(clean_path('training/datasets', f'{raw_text_file}.txt'), 'r', encoding='utf-8') as file:
-            raw_text = file.read()
+            raw_text = file.read().replace('\r', '')
 
-        tokens = shared.tokenizer.encode(raw_text)
+        cut_string = hard_cut_string.replace('\\n', '\n')
+        out_tokens = []
+        for text_part in raw_text.split(cut_string):
+            if text_part.strip() == '':
+                continue
+
+            tokens = shared.tokenizer.encode(text_part)
+            step = cutoff_len - overlap_len
+            if step <= 0:
+                yield f"Error: overlap_len ({overlap_len}) cannot be greater than or equal to cutoff_len ({cutoff_len})"
+                return
+
+            tokens = list(split_chunks(tokens, step))
+            for i in range(1, len(tokens)):
+                tokens[i] = tokens[i - 1][-overlap_len:] + tokens[i]
+
+            out_tokens.extend(tokens)
+            del tokens
+
         del raw_text  # Note: could be a gig for a large dataset, so delete redundant data as we go to be safe on RAM
-        tokens = list(split_chunks(tokens, cutoff_len - overlap_len))
-        for i in range(1, len(tokens)):
-            tokens[i] = tokens[i - 1][-overlap_len:] + tokens[i]
-
-        text_chunks = [shared.tokenizer.decode(x) for x in tokens]
-        del tokens
+        text_chunks = [shared.tokenizer.decode(x) for x in out_tokens]
+        del out_tokens
         if newline_favor_len > 0:
             text_chunks = [cut_chunk_for_newline(x, newline_favor_len) for x in text_chunks]
 
@@ -296,22 +344,22 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             prompt = generate_prompt(data_point)
             return tokenize(prompt)
 
-        logging.info("Loading JSON datasets...")
+        logger.info("Loading JSON datasets...")
         data = load_dataset("json", data_files=clean_path('training/datasets', f'{dataset}.json'))
-        train_data = data['train'].map(generate_and_tokenize_prompt)
+        train_data = data['train'].map(generate_and_tokenize_prompt, new_fingerprint='%030x' % random.randrange(16**30))
 
         if eval_dataset == 'None':
             eval_data = None
         else:
             eval_data = load_dataset("json", data_files=clean_path('training/datasets', f'{eval_dataset}.json'))
-            eval_data = eval_data['train'].map(generate_and_tokenize_prompt)
+            eval_data = eval_data['train'].map(generate_and_tokenize_prompt, new_fingerprint='%030x' % random.randrange(16**30))
 
     # == Start prepping the model itself ==
     if not hasattr(shared.model, 'lm_head') or hasattr(shared.model.lm_head, 'weight'):
-        logging.info("Getting model ready...")
+        logger.info("Getting model ready...")
         prepare_model_for_int8_training(shared.model)
 
-    logging.info("Prepping for training...")
+    logger.info("Prepping for training...")
     config = LoraConfig(
         r=lora_rank,
         lora_alpha=lora_alpha,
@@ -322,10 +370,10 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     )
 
     try:
-        logging.info("Creating LoRA model...")
+        logger.info("Creating LoRA model...")
         lora_model = get_peft_model(shared.model, config)
         if not always_override and Path(f"{lora_file_path}/adapter_model.bin").is_file():
-            logging.info("Loading existing LoRA data...")
+            logger.info("Loading existing LoRA data...")
             state_dict_peft = torch.load(f"{lora_file_path}/adapter_model.bin")
             set_peft_model_state_dict(lora_model, state_dict_peft)
     except:
@@ -380,10 +428,10 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             logging_steps=5,
             evaluation_strategy="steps" if eval_data is not None else "no",
             eval_steps=math.ceil(eval_steps / gradient_accumulation_steps) if eval_data is not None else None,
-            save_strategy="no",
+            save_strategy="steps" if eval_data is not None else "no",
             output_dir=lora_file_path,
             lr_scheduler_type=lr_scheduler_type,
-            load_best_model_at_end=True if eval_data is not None else False,
+            load_best_model_at_end=eval_data is not None,
             # TODO: Enable multi-device support
             ddp_find_unused_parameters=None,
             no_cuda=shared.args.cpu
@@ -403,7 +451,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         json.dump({x: vars[x] for x in PARAMETERS}, file)
 
     # == Main run and monitor loop ==
-    logging.info("Starting training...")
+    logger.info("Starting training...")
     yield "Starting..."
     if WANT_INTERRUPT:
         yield "Interrupted before start."
@@ -413,7 +461,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         trainer.train()
         # Note: save in the thread in case the gradio thread breaks (eg browser closed)
         lora_model.save_pretrained(lora_file_path)
-        logging.info("LoRA training run is completed and saved.")
+        logger.info("LoRA training run is completed and saved.")
         tracked.did_save = True
 
     thread = threading.Thread(target=threaded_run)
@@ -445,14 +493,14 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
     # Saving in the train thread might fail if an error occurs, so save here if so.
     if not tracked.did_save:
-        logging.info("Training complete, saving...")
+        logger.info("Training complete, saving...")
         lora_model.save_pretrained(lora_file_path)
 
     if WANT_INTERRUPT:
-        logging.info("Training interrupted.")
+        logger.info("Training interrupted.")
         yield f"Interrupted. Incomplete LoRA saved to `{lora_file_path}`"
     else:
-        logging.info("Training complete!")
+        logger.info("Training complete!")
         yield f"Done! LoRA saved to `{lora_file_path}`"
 
 

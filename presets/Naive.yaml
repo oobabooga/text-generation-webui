@@ -1,0 +1,4 @@
+do_sample: true
+temperature: 0.7
+top_p: 0.85
+top_k: 50

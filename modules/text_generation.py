@@ -1,7 +1,7 @@
 import ast
-import logging
 import random
 import re
+import threading
 import time
 import traceback
 
@@ -14,7 +14,17 @@ from modules.callbacks import (Iteratorize, Stream,
                                _SentinelTokenStoppingCriteria)
 from modules.extensions import apply_extensions
 from modules.html_generator import generate_4chan_html, generate_basic_html
+from modules.logging_colors import logger
 from modules.models import clear_torch_cache, local_rank
+
+
+def generate_reply(*args, **kwargs):
+    shared.generation_lock.acquire()
+    try:
+        for result in _generate_reply(*args, **kwargs):
+            yield result
+    finally:
+        shared.generation_lock.release()
 
 
 def get_max_prompt_length(state):
@@ -120,14 +130,11 @@ def get_reply_from_output_ids(output_ids, input_ids, original_question, state, i
 
 
 def formatted_outputs(reply, model_name):
-    if shared.model_type == 'galactica':
-        reply = fix_galactica(reply)
-        return reply, reply, generate_basic_html(reply)
-    elif shared.model_type == 'gpt4chan':
+    if shared.model_type == 'gpt4chan':
         reply = fix_gpt4chan(reply)
-        return reply, 'Only applicable for GALACTICA models.', generate_4chan_html(reply)
+        return reply, generate_4chan_html(reply)
     else:
-        return reply, 'Only applicable for GALACTICA models.', generate_basic_html(reply)
+        return reply, generate_basic_html(reply)
 
 
 def set_manual_seed(seed):
@@ -154,13 +161,13 @@ def generate_reply_wrapper(question, state, eos_token=None, stopping_strings=Non
         yield formatted_outputs(reply, shared.model_name)
 
 
-def generate_reply(question, state, eos_token=None, stopping_strings=None, is_chat=False):
+def _generate_reply(question, state, eos_token=None, stopping_strings=None, is_chat=False):
     state = apply_extensions('state', state)
     generate_func = apply_extensions('custom_generate_reply')
     if generate_func is None:
         if shared.model_name == 'None' or shared.model is None:
-            logging.error("No model is loaded! Select one in the Model tab.")
-            yield question
+            logger.error("No model is loaded! Select one in the Model tab.")
+            yield ''
             return
 
         if shared.model_type in ['rwkv', 'llamacpp']:
@@ -181,14 +188,30 @@ def generate_reply(question, state, eos_token=None, stopping_strings=None, is_ch
     shared.stop_everything = False
     clear_torch_cache()
     seed = set_manual_seed(state['seed'])
+    is_stream = state['stream']
+    last_update = -1
+    reply = ''
     for reply in generate_func(question, original_question, seed, state, eos_token, stopping_strings, is_chat=is_chat):
+        if is_stream:
+            cur_time = time.time()
+            if cur_time - last_update > 0.041666666666666664:  # Limit streaming to 24 fps
+                last_update = cur_time
+                yield reply
+        else:
+            yield reply
+
+    if is_stream:
         yield reply
 
 
 def generate_reply_HF(question, original_question, seed, state, eos_token=None, stopping_strings=None, is_chat=False):
     generate_params = {}
-    for k in ['max_new_tokens', 'do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping']:
+    for k in ['max_new_tokens', 'do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping', 'tfs', 'top_a']:
         generate_params[k] = state[k]
+
+    for k in ['epsilon_cutoff', 'eta_cutoff']:
+        if state[k] > 0:
+            generate_params[k] = state[k] * 1e-4
 
     if state['ban_eos_token']:
         generate_params['suppress_tokens'] = [shared.tokenizer.eos_token_id]
@@ -290,7 +313,12 @@ def generate_reply_custom(question, original_question, seed, state, eos_token=No
     for k in ['temperature', 'top_p', 'top_k', 'repetition_penalty']:
         generate_params[k] = state[k]
 
+    if shared.model_type == 'llamacpp':
+        for k in ['mirostat_mode', 'mirostat_tau', 'mirostat_eta']:
+            generate_params[k] = state[k]
+
     t0 = time.time()
+    reply = ''
     try:
         if not is_chat:
             yield ''

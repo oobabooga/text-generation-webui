@@ -25,19 +25,23 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 #extensions {
-  padding: 0;
-  padding: 0;
+    padding: 0;
+    padding: 0;
 }
 
 #gradio-chatbot {
-  height: 66.67vh;
+    height: 66.67vh;
 }
 
 .wrap.svelte-6roggh.svelte-6roggh {
-  max-height: 92.5%;
+    max-height: 92.5%;
 }
 
 /* This is for the microphone button in the whisper extension */
 .sm.svelte-1ipelgc {
-  width: 100%;
+    width: 100%;
+}
+
+#main button {
+    min-width: 0 !important;
 }

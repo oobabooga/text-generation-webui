@@ -6,6 +6,7 @@ import requests
 import yaml
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
+from modules.utils import get_available_models
 
 import numpy as np
 
@@ -17,6 +18,41 @@ params = {
 }
 
 debug = True if 'OPENEDAI_DEBUG' in os.environ else False
+
+# Slightly different defaults for OpenAI's API
+default_req_params = {
+    'max_new_tokens': 200,
+    'temperature': 1.0,
+    'top_p': 1.0,
+    'top_k': 1,
+    'repetition_penalty': 1.18,
+    'encoder_repetition_penalty': 1.0,
+    'suffix': None,
+    'stream': False,
+    'echo': False,
+    'seed': -1,
+    # 'n' : default(body, 'n', 1),  # 'n' doesn't have a direct map
+    'truncation_length': 2048,
+    'add_bos_token': True,
+    'do_sample': True,
+    'typical_p': 1.0,
+    'epsilon_cutoff': 0,  # In units of 1e-4
+    'eta_cutoff': 0,  # In units of 1e-4
+    'tfs': 1.0,
+    'top_a': 0.0,
+    'min_length': 0,
+    'no_repeat_ngram_size': 0,
+    'num_beams': 1,
+    'penalty_alpha': 0.0,
+    'length_penalty': 1,
+    'early_stopping': False,
+    'mirostat_mode': 0,
+    'mirostat_tau': 5,
+    'mirostat_eta': 0.1,
+    'ban_eos_token': False,
+    'skip_special_tokens': True,
+    'custom_stopping_strings': [],
+}
 
 # Optional, install the module and download the model to enable
 # v1/embeddings
@@ -91,10 +127,32 @@ def float_list_to_base64(float_list):
 
 
 class Handler(BaseHTTPRequestHandler):
+    def send_access_control_headers(self):
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Credentials", "true")
+        self.send_header(
+            "Access-Control-Allow-Methods",
+            "GET,HEAD,OPTIONS,POST,PUT"
+        )
+        self.send_header(
+            "Access-Control-Allow-Headers",
+            "Origin, Accept, X-Requested-With, Content-Type, "
+            "Access-Control-Request-Method, Access-Control-Request-Headers, "
+            "Authorization"
+        )    
+ 
+    def do_OPTIONS(self):
+        self.send_response(200)
+        self.send_access_control_headers()
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        self.wfile.write("OK".encode('utf-8'))
+
     def do_GET(self):
         if self.path.startswith('/v1/models'):
 
             self.send_response(200)
+            self.send_access_control_headers()
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
 
@@ -127,6 +185,8 @@ class Handler(BaseHTTPRequestHandler):
                 "permission": []
             }]
 
+            models.extend([{ "id": id, "object": "model", "owned_by": "user", "permission": [] } for id in get_available_models() ])
+
             response = ''
             if self.path == '/v1/models':
                 response = json.dumps({
@@ -142,6 +202,17 @@ class Handler(BaseHTTPRequestHandler):
                     "permission": []
                 })
 
+            self.wfile.write(response.encode('utf-8'))
+        elif '/billing/usage' in self.path:
+            # Ex. /v1/dashboard/billing/usage?start_date=2023-05-01&end_date=2023-05-31
+            self.send_response(200)
+            self.send_access_control_headers()
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+
+            response = json.dumps({
+                "total_usage": 0,
+            })
             self.wfile.write(response.encode('utf-8'))
         else:
             self.send_error(404)
@@ -164,7 +235,8 @@ class Handler(BaseHTTPRequestHandler):
             # model = body.get('model', shared.model_name) # ignored, use existing for now
             model = shared.model_name
             created_time = int(time.time())
-            cmpl_id = "conv-%d" % (created_time)
+
+            cmpl_id = "chatcmpl-%d" % (created_time) if is_chat else "conv-%d" % (created_time)
 
             # Try to use openai defaults or map them to something with the same intent
             stopping_strings = default(shared.settings, 'custom_stopping_strings', [])
@@ -181,48 +253,23 @@ class Handler(BaseHTTPRequestHandler):
 
             max_tokens_str = 'length' if is_legacy else 'max_tokens'
             max_tokens = default(body, max_tokens_str, default(shared.settings, 'max_new_tokens', default_max_tokens))
+            # if the user assumes OpenAI, the max_tokens is way too large - try to ignore it unless it's small enough
 
-            # hard scale this, assuming the given max is for GPT3/4, perhaps inspect the requested model and lookup the context max
-            while truncation_length <= max_tokens:
-                max_tokens = max_tokens // 2
+            req_params = default_req_params.copy()
 
-            req_params = {
-                'max_new_tokens': max_tokens,
-                'temperature': default(body, 'temperature', 1.0),
-                'top_p': default(body, 'top_p', 1.0),
-                'top_k': default(body, 'best_of', 1),
-                # XXX not sure about this one, seems to be the right mapping, but the range is different (-2..2.0) vs 0..2
-                # 0 is default in openai, but 1.0 is default in other places. Maybe it's scaled? scale it.
-                'repetition_penalty': 1.18,  # (default(body, 'presence_penalty', 0) + 2.0 ) / 2.0, # 0 the real default, 1.2 is the model default, but 1.18 works better.
-                # XXX not sure about this one either, same questions. (-2..2.0), 0 is default not 1.0, scale it.
-                'encoder_repetition_penalty': 1.0,  # (default(body, 'frequency_penalty', 0) + 2.0) / 2.0,
-                'suffix': body.get('suffix', None),
-                'stream': default(body, 'stream', False),
-                'echo': default(body, 'echo', False),
-                #####################################################
-                'seed': shared.settings.get('seed', -1),
-                # int(body.get('n', 1)) # perhaps this should be num_beams or chat_generation_attempts? 'n' doesn't have a direct map
-                # unofficial, but it needs to get set anyways.
-                'truncation_length': truncation_length,
-                # no more args.
-                'add_bos_token': shared.settings.get('add_bos_token', True),
-                'do_sample': True,
-                'typical_p': 1.0,
-                'min_length': 0,
-                'no_repeat_ngram_size': 0,
-                'num_beams': 1,
-                'penalty_alpha': 0.0,
-                'length_penalty': 1,
-                'early_stopping': False,
-                'ban_eos_token': False,
-                'skip_special_tokens': True,
-            }
-
-            # fixup absolute 0.0's
-            for par in ['temperature', 'repetition_penalty', 'encoder_repetition_penalty']:
-                req_params[par] = clamp(req_params[par], 0.001, 1.999)
+            req_params['max_new_tokens'] = max_tokens
+            req_params['truncation_length'] = truncation_length
+            req_params['temperature'] = clamp(default(body, 'temperature', default_req_params['temperature']), 0.001, 1.999) # fixup absolute 0.0
+            req_params['top_p'] = clamp(default(body, 'top_p', default_req_params['top_p']), 0.001, 1.0)
+            req_params['top_k'] = default(body, 'best_of', default_req_params['top_k'])
+            req_params['suffix'] = default(body, 'suffix', default_req_params['suffix'])
+            req_params['stream'] = default(body, 'stream', default_req_params['stream'])
+            req_params['echo'] = default(body, 'echo', default_req_params['echo'])
+            req_params['seed'] = shared.settings.get('seed', default_req_params['seed'])
+            req_params['add_bos_token'] = shared.settings.get('add_bos_token', default_req_params['add_bos_token'])
 
             self.send_response(200)
+            self.send_access_control_headers()
             if req_params['stream']:
                 self.send_header('Content-Type', 'text/event-stream')
                 self.send_header('Cache-Control', 'no-cache')
@@ -238,28 +285,75 @@ class Handler(BaseHTTPRequestHandler):
             object_type = ''
 
             if is_chat:
+                # Chat Completions
                 stream_object_type = 'chat.completions.chunk'
                 object_type = 'chat.completions'
 
                 messages = body['messages']
 
-                system_msg = ''  # You are ChatGPT, a large language model trained by OpenAI. Answer as concisely as possible. Knowledge cutoff: {knowledge_cutoff} Current date: {current_date}
-                if 'prompt' in body:  # Maybe they sent both? This is not documented in the API, but some clients seem to do this.
-                    system_msg = body['prompt']
+                role_formats = {
+                    'user': 'user: {message}\n',
+                    'assistant': 'assistant: {message}\n',
+                    'system': '{message}',
+                    'context': 'You are a helpful assistant. Answer as concisely as possible.',
+                    'prompt': 'assistant:',
+                }
 
+                # Instruct models can be much better
+                try:
+                    instruct = yaml.safe_load(open(f"characters/instruction-following/{shared.settings['instruction_template']}.yaml", 'r'))
+
+                    template = instruct['turn_template']
+                    system_message_template = "{message}"
+                    system_message_default = instruct['context']
+                    bot_start = template.find('<|bot|>') # So far, 100% of instruction templates have this token
+                    user_message_template = template[:bot_start].replace('<|user-message|>', '{message}').replace('<|user|>', instruct['user'])
+                    bot_message_template = template[bot_start:].replace('<|bot-message|>', '{message}').replace('<|bot|>', instruct['bot'])
+                    bot_prompt = bot_message_template[:bot_message_template.find('{message}')].rstrip(' ')
+            
+                    role_formats = {
+                        'user': user_message_template,
+                        'assistant': bot_message_template,
+                        'system': system_message_template,
+                        'context': system_message_default,
+                        'prompt': bot_prompt,
+                    }
+
+                    if debug:
+                        print(f"Loaded instruction role format: {shared.settings['instruction_template']}")
+                except:
+                    if debug:
+                        print("Loaded default role format.")
+
+                system_msgs = []
                 chat_msgs = []
+
+                # You are ChatGPT, a large language model trained by OpenAI. Answer as concisely as possible. Knowledge cutoff: {knowledge_cutoff} Current date: {current_date}
+                context_msg = role_formats['system'].format(message=role_formats['context']) if role_formats['context'] else ''
+                if context_msg:
+                    system_msgs.extend([context_msg])
+
+                # Maybe they sent both? This is not documented in the API, but some clients seem to do this.
+                if 'prompt' in body:
+                    prompt_msg = role_formats['system'].format(message=body['prompt'])
+                    system_msgs.extend([prompt_msg])
 
                 for m in messages:
                     role = m['role']
                     content = m['content']
-                    # name = m.get('name', 'user')
+                    msg = role_formats[role].format(message=content)
                     if role == 'system':
-                        system_msg += content
+                        system_msgs.extend([msg])
                     else:
-                        chat_msgs.extend([f"\n{role}: {content.strip()}"])  # Strip content? linefeed?
+                        chat_msgs.extend([msg])
+
+                # can't really truncate the system messages
+                system_msg = '\n'.join(system_msgs)
+                if system_msg and system_msg[-1] != '\n':
+                    system_msg = system_msg + '\n'
 
                 system_token_count = len(encode(system_msg)[0])
-                remaining_tokens = req_params['truncation_length'] - req_params['max_new_tokens'] - system_token_count
+                remaining_tokens = req_params['truncation_length'] - system_token_count
                 chat_msg = ''
 
                 while chat_msgs:
@@ -269,25 +363,15 @@ class Handler(BaseHTTPRequestHandler):
                         chat_msg = new_msg + chat_msg
                         remaining_tokens -= new_size
                     else:
-                        # TODO: clip a message to fit?
-                        # ie. user: ...<clipped message>
+                        print(f"Warning: too many messages for context size, dropping {len(chat_msgs) + 1} oldest message(s).")
                         break
 
-                if len(chat_msgs) > 0:
-                    print(f"truncating chat messages, dropping {len(chat_msgs)} messages.")
-
-                if system_msg:
-                    prompt = 'system: ' + system_msg + '\n' + chat_msg + '\nassistant: '
-                else:
-                    prompt = chat_msg + '\nassistant: '
+                prompt = system_msg + chat_msg + role_formats['prompt']
 
                 token_count = len(encode(prompt)[0])
 
-                # pass with some expected stop strings.
-                # some strange cases of "##| Instruction: " sneaking through.
-                stopping_strings += standard_stopping_strings
-                req_params['custom_stopping_strings'] = stopping_strings
             else:
+                # Text Completions
                 stream_object_type = 'text_completion.chunk'
                 object_type = 'text_completion'
 
@@ -302,14 +386,21 @@ class Handler(BaseHTTPRequestHandler):
 
                 token_count = len(encode(prompt)[0])
                 if token_count >= req_params['truncation_length']:
-                    new_len = int(len(prompt) * (float(shared.settings['truncation_length']) - req_params['max_new_tokens']) / token_count)
+                    new_len = int(len(prompt) * shared.settings['truncation_length'] / token_count)
                     prompt = prompt[-new_len:]
-                    print(f"truncating prompt to {new_len} characters, was {token_count} tokens. Now: {len(encode(prompt)[0])} tokens.")
+                    new_token_count = len(encode(prompt)[0])
+                    print(f"Warning: truncating prompt to {new_len} characters, was {token_count} tokens. Now: {new_token_count} tokens.")
+                    token_count = new_token_count
 
-                # pass with some expected stop strings.
-                # some strange cases of "##| Instruction: " sneaking through.
-                stopping_strings += standard_stopping_strings
-                req_params['custom_stopping_strings'] = stopping_strings
+            if req_params['truncation_length'] - token_count < req_params['max_new_tokens']:
+                print(f"Warning: Ignoring max_new_tokens ({req_params['max_new_tokens']}), too large for the remaining context. Remaining tokens: {req_params['truncation_length'] - token_count}")
+                req_params['max_new_tokens'] = req_params['truncation_length'] - token_count
+                print(f"Warning: Set max_new_tokens = {req_params['max_new_tokens']}")
+            
+            # pass with some expected stop strings.
+            # some strange cases of "##| Instruction: " sneaking through.
+            stopping_strings += standard_stopping_strings
+            req_params['custom_stopping_strings'] = stopping_strings
 
             if req_params['stream']:
                 shared.args.chat = True
@@ -328,13 +419,13 @@ class Handler(BaseHTTPRequestHandler):
                 if stream_object_type == 'text_completion.chunk':
                     chunk[resp_list][0]["text"] = ""
                 else:
-                    # This is coming back as "system" to the openapi cli, not sure why.
                     # So yeah... do both methods? delta and messages.
                     chunk[resp_list][0]["message"] = {'role': 'assistant', 'content': ''}
                     chunk[resp_list][0]["delta"] = {'role': 'assistant', 'content': ''}
-                    # { "role": "assistant" }
 
-                response = 'data: ' + json.dumps(chunk) + '\n'
+                data_chunk = 'data: ' + json.dumps(chunk) + '\r\n\r\n'
+                chunk_size = hex(len(data_chunk))[2:] + '\r\n'
+                response = chunk_size + data_chunk
                 self.wfile.write(response.encode('utf-8'))
 
             # generate reply #######################################
@@ -396,13 +487,20 @@ class Handler(BaseHTTPRequestHandler):
                             "finish_reason": None,
                         }],
                     }
+
+                    # strip extra leading space off new generated content
+                    if len_seen == 0 and new_content[0] == ' ':
+                        new_content = new_content[1:]
+
                     if stream_object_type == 'text_completion.chunk':
                         chunk[resp_list][0]['text'] = new_content
                     else:
                         # So yeah... do both methods? delta and messages.
                         chunk[resp_list][0]['message'] = {'content': new_content}
                         chunk[resp_list][0]['delta'] = {'content': new_content}
-                    response = 'data: ' + json.dumps(chunk) + '\n'
+                    data_chunk = 'data: ' + json.dumps(chunk) + '\r\n\r\n'
+                    chunk_size = hex(len(data_chunk))[2:] + '\r\n'
+                    response = chunk_size + data_chunk
                     self.wfile.write(response.encode('utf-8'))
                     completion_token_count += len(encode(new_content)[0])
 
@@ -427,13 +525,23 @@ class Handler(BaseHTTPRequestHandler):
                 else:
                     # So yeah... do both methods? delta and messages.
                     chunk[resp_list][0]['message'] = {'content': ''}
-                    chunk[resp_list][0]['delta'] = {}
-                response = 'data: ' + json.dumps(chunk) + '\ndata: [DONE]\n'
+                    chunk[resp_list][0]['delta'] = {'content': ''}
+
+                data_chunk = 'data: ' + json.dumps(chunk) + '\r\n\r\n'
+                chunk_size = hex(len(data_chunk))[2:] + '\r\n'
+                done = 'data: [DONE]\r\n\r\n'
+                response = chunk_size + data_chunk + done
                 self.wfile.write(response.encode('utf-8'))
                 # Finished if streaming.
                 if debug:
-                    print({'response': answer})
+                    if answer and answer[0] == ' ':
+                        answer = answer[1:]
+                    print({'answer': answer}, chunk)
                 return
+
+            # strip extra leading space off new generated content
+            if answer and answer[0] == ' ':
+                answer = answer[1:]
 
             if debug:
                 print({'response': answer})
@@ -468,6 +576,7 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(response.encode('utf-8'))
         elif '/edits' in self.path:
             self.send_response(200)
+            self.send_access_control_headers()
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
 
@@ -484,32 +593,14 @@ class Handler(BaseHTTPRequestHandler):
             token_count = len(encode(edit_task)[0])
             max_tokens = truncation_length - token_count
 
-            req_params = {
-                'max_new_tokens': max_tokens,
-                'temperature': clamp(default(body, 'temperature', 1.0), 0.001, 1.999),
-                'top_p': clamp(default(body, 'top_p', 1.0), 0.001, 1.0),
-                'top_k': 1,
-                'repetition_penalty': 1.18,
-                'encoder_repetition_penalty': 1.0,
-                'suffix': None,
-                'stream': False,
-                'echo': False,
-                'seed': shared.settings.get('seed', -1),
-                # 'n' : default(body, 'n', 1),  # 'n' doesn't have a direct map
-                'truncation_length': truncation_length,
-                'add_bos_token': shared.settings.get('add_bos_token', True),
-                'do_sample': True,
-                'typical_p': 1.0,
-                'min_length': 0,
-                'no_repeat_ngram_size': 0,
-                'num_beams': 1,
-                'penalty_alpha': 0.0,
-                'length_penalty': 1,
-                'early_stopping': False,
-                'ban_eos_token': False,
-                'skip_special_tokens': True,
-                'custom_stopping_strings': [],
-            }
+            req_params = default_req_params.copy()
+
+            req_params['max_new_tokens'] = max_tokens
+            req_params['truncation_length'] = truncation_length
+            req_params['temperature'] = clamp(default(body, 'temperature', default_req_params['temperature']), 0.001, 1.999) # fixup absolute 0.0
+            req_params['top_p'] = clamp(default(body, 'top_p', default_req_params['top_p']), 0.001, 1.0)
+            req_params['seed'] = shared.settings.get('seed', default_req_params['seed'])
+            req_params['add_bos_token'] = shared.settings.get('add_bos_token', default_req_params['add_bos_token'])
 
             if debug:
                 print({'edit_template': edit_task, 'req_params': req_params, 'token_count': token_count})
@@ -558,6 +649,7 @@ class Handler(BaseHTTPRequestHandler):
             # url return types will require file management and a web serving files... Perhaps later!
 
             self.send_response(200)
+            self.send_access_control_headers()
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
 
@@ -592,6 +684,7 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(response.encode('utf-8'))
         elif '/embeddings' in self.path and embedding_model is not None:
             self.send_response(200)
+            self.send_access_control_headers()
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
 
@@ -625,6 +718,7 @@ class Handler(BaseHTTPRequestHandler):
         elif '/moderations' in self.path:
             # for now do nothing, just don't error.
             self.send_response(200)
+            self.send_access_control_headers()
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
 
@@ -658,6 +752,7 @@ class Handler(BaseHTTPRequestHandler):
         elif self.path == '/api/v1/token-count':
             # NOT STANDARD. lifted from the api extension, but it's still very useful to calculate tokenized length client side.
             self.send_response(200)
+            self.send_access_control_headers()
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
 

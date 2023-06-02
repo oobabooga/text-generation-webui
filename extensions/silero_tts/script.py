@@ -73,31 +73,34 @@ def toggle_text_in_history():
 
 
 def state_modifier(state):
+    if not params['activate']:
+        return state
+
     state['stream'] = False
     return state
 
 
 def input_modifier(string):
-    """
-    This function is applied to your text inputs before
-    they are fed into the model.
-    """
-
-    # Remove autoplay from the last reply
-    if shared.is_chat() and len(shared.history['internal']) > 0:
-        shared.history['visible'][-1] = [shared.history['visible'][-1][0], shared.history['visible'][-1][1].replace('controls autoplay>', 'controls>')]
+    if not params['activate']:
+        return string
 
     shared.processing_message = "*Is recording a voice message...*"
     return string
 
 
+def history_modifier(history):
+    # Remove autoplay from the last reply
+    if len(history['internal']) > 0:
+        history['visible'][-1] = [
+            history['visible'][-1][0],
+            history['visible'][-1][1].replace('controls autoplay>', 'controls>')
+        ]
+
+    return history
+
+
 def output_modifier(string):
-    """
-    This function is applied to the model outputs.
-    """
-
     global model, current_params, streaming_state
-
     for i in params:
         if params[i] != current_params[i]:
             model = load_model()
@@ -124,16 +127,6 @@ def output_modifier(string):
             string += f'\n\n{original_string}'
 
     shared.processing_message = "*Is typing...*"
-    return string
-
-
-def bot_prefix_modifier(string):
-    """
-    This function is only applied in chat mode. It modifies
-    the prefix text for the Bot and can be used to bias its
-    behavior.
-    """
-
     return string
 
 

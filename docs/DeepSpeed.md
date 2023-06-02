@@ -9,7 +9,8 @@ As far as I know, DeepSpeed is only available for Linux at the moment.
 1. Install DeepSpeed: 
 
 ```
-pip install deepspeed
+conda install -c conda-forge mpi4py mpich
+pip install -U deepspeed
 ```
 
 2. Start the web UI replacing `python` with `deepspeed --num_gpus=1` and adding the `--deepspeed` flag. Example:

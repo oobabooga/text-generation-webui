@@ -1,0 +1,4 @@
+user: "User:"
+bot: "Assistant:"
+turn_template: "<|user|><|user-message|>\n\n<|bot|><|bot-message|>\n\n"
+context: "The following is a conversation between an AI assistant called Assistant and a human user called User. The assistant is intelligent, knowledgeable and polite to answer questions of user.\n\n"
