@@ -32,6 +32,9 @@ async def _handle_connection(websocket, path):
 
             for a in generator:
                 to_send = a[skip_index:]
+                if to_send is None or chr(0xfffd) in to_send:  # partial unicode character, don't send it yet.
+                    continue
+
                 await websocket.send(json.dumps({
                     'event': 'text_stream',
                     'message_num': message_num,

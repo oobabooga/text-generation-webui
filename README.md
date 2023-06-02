@@ -25,7 +25,6 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * [4-bit GPTQ mode](docs/GPTQ-models-(4-bit-mode).md)
 * [LoRA (loading and training)](docs/Using-LoRAs.md)
 * [llama.cpp](docs/llama.cpp-models.md)
-* [RWKV model](docs/RWKV-model.md)
 * 8-bit and 4-bit through bitsandbytes
 * Layers splitting across GPU(s), CPU, and disk
 * CPU mode
@@ -53,8 +52,6 @@ Just download the zip above, extract it, and double-click on "start". The web UI
 
 Recommended if you have some experience with the command line.
 
-On Windows, I additionally recommend carrying out the installation on WSL instead of the base system: [WSL installation guide](https://github.com/oobabooga/text-generation-webui/blob/main/docs/WSL-installation-guide.md).
-
 #### 0. Install Conda
 
 https://docs.conda.io/en/latest/miniconda.html
@@ -81,6 +78,7 @@ conda activate textgen
 | Linux/WSL | NVIDIA | `pip3 install torch torchvision torchaudio` |
 | Linux | AMD | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.4.2` |
 | MacOS + MPS (untested) | Any | `pip3 install torch torchvision torchaudio` |
+| Windows | NVIDIA | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117` |
 
 The up-to-date commands can be found here: https://pytorch.org/get-started/locally/. 
 
@@ -105,16 +103,16 @@ To use GPTQ models, the additional installation steps below are necessary:
 
 [GPTQ models (4 bit mode)](https://github.com/oobabooga/text-generation-webui/blob/main/docs/GPTQ-models-(4-bit-mode).md)
 
-#### Note about bitsandbytes
+#### llama.cpp with GPU acceleration
+
+Requires the additional compilation step described here: [GPU acceleration](https://github.com/oobabooga/text-generation-webui/blob/main/docs/llama.cpp-models.md#gpu-acceleration).
+
+#### bitsandbytes
 
 bitsandbytes >= 0.39 may not work on older NVIDIA GPUs. In that case, to use `--load-in-8bit`, you may have to downgrade like this:
 
 * Linux: `pip install bitsandbytes==0.38.1`
 * Windows: `pip install https://github.com/jllllll/bitsandbytes-windows-webui/raw/main/bitsandbytes-0.38.1-py3-none-any.whl`
-
-### Alternative: manual Windows installation
-
-As an alternative to the recommended WSL method, you can install the web UI natively on Windows using this guide. It will be a lot harder and the performance may be slower: [Windows installation guide](https://github.com/oobabooga/text-generation-webui/blob/main/docs/Windows-installation-guide.md).
 
 ### Alternative: Docker
 
@@ -156,7 +154,9 @@ For example:
 
     python download-model.py facebook/opt-1.3b
 
-If you want to download a model manually, note that all you need are the json, txt, and pytorch\*.bin (or model*.safetensors) files. The remaining files are not necessary.
+* If you want to download a model manually, note that all you need are the json, txt, and pytorch\*.bin (or model*.safetensors) files. The remaining files are not necessary.
+
+* Set env vars `HF_USER` and `HF_PASS` to your Hugging Face username and password (or [User Access Token](https://huggingface.co/settings/tokens)) to download a protected model. The model's terms must first be accepted on the HF website.
 
 #### GGML models
 
@@ -217,7 +217,7 @@ Optionally, you can use the following command-line flags:
 |---------------------------------------------|-------------|
 | `--cpu`                                     | Use the CPU to generate text. Warning: Training on CPU is extremely slow.|
 | `--auto-devices`                            | Automatically split the model across the available GPU(s) and CPU. |
-|  `--gpu-memory GPU_MEMORY [GPU_MEMORY ...]` | Maxmimum GPU memory in GiB to be allocated per GPU. Example: `--gpu-memory 10` for a single GPU, `--gpu-memory 10 5` for two GPUs. You can also set values in MiB like `--gpu-memory 3500MiB`. |
+|  `--gpu-memory GPU_MEMORY [GPU_MEMORY ...]` | Maximum GPU memory in GiB to be allocated per GPU. Example: `--gpu-memory 10` for a single GPU, `--gpu-memory 10 5` for two GPUs. You can also set values in MiB like `--gpu-memory 3500MiB`. |
 | `--cpu-memory CPU_MEMORY`                   | Maximum CPU memory in GiB to allocate for offloaded weights. Same as above.|
 | `--disk`                                    | If the model is too large for your GPU(s) and CPU combined, send the remaining layers to the disk. |
 | `--disk-cache-dir DISK_CACHE_DIR`           | Directory to save the disk cache to. Defaults to `cache/`. |
@@ -272,6 +272,7 @@ Optionally, you can use the following command-line flags:
 |------------------|-------------|
 | `--autogptq`     | Use AutoGPTQ for loading quantized models instead of the internal GPTQ loader. |
 | `--triton`       | Use triton. |
+|` --desc_act`     | For models that don't have a quantize_config.json, this parameter is used to define whether to set desc_act or not in BaseQuantizeConfig. |
 
 #### FlexGen
 
@@ -328,7 +329,7 @@ Out of memory errors? [Check the low VRAM guide](docs/Low-VRAM-guide.md).
 
 ## Presets
 
-Inference settings presets can be created under `presets/` as text files. These files are detected automatically at startup.
+Inference settings presets can be created under `presets/` as yaml files. These files are detected automatically at startup.
 
 By default, 10 presets based on NovelAI and KoboldAI presets are included. These were selected out of a sample of 43 presets after applying a K-Means clustering algorithm and selecting the elements closest to the average of each cluster.
 
@@ -342,14 +343,10 @@ https://github.com/oobabooga/text-generation-webui/tree/main/docs
 
 ## Contributing
 
-Pull requests, suggestions, and issue reports are welcome. 
-
-You are also welcome to review open pull requests.
-
-Before reporting a bug, make sure that you have:
-
-1. Created a conda environment and installed the dependencies exactly as in the *Installation* section above.
-2. [Searched](https://github.com/oobabooga/text-generation-webui/issues) to see if an issue already exists for the issue you encountered.
+* Pull requests, suggestions, and issue reports are welcome. 
+* Make sure to carefully [search](https://github.com/oobabooga/text-generation-webui/issues) existing issues before starting a new one.
+* If you have some experience with git, testing an open pull request and leaving a comment on whether it works as expected or not is immensely helpful.
+* A simple way to contribute, even if you are not a programmer, is to leave a 👍 on an issue or pull request that you find relevant.
 
 ## Credits
 

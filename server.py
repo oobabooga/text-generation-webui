@@ -89,6 +89,8 @@ def load_preset_values(preset_menu, state, return_dict=False):
         'typical_p': 1,
         'epsilon_cutoff': 0,
         'eta_cutoff': 0,
+        'tfs': 1,
+        'top_a': 0,
         'repetition_penalty': 1,
         'encoder_repetition_penalty': 1,
         'top_k': 0,
@@ -101,8 +103,6 @@ def load_preset_values(preset_menu, state, return_dict=False):
         'mirostat_mode': 0,
         'mirostat_tau': 5.0,
         'mirostat_eta': 0.1,
-        'tfs': 1,
-        'top_a': 0,
     }
 
     with open(Path(f'presets/{preset_menu}.yaml'), 'r') as infile:
@@ -184,7 +184,8 @@ def count_tokens(text):
 
 def download_model_wrapper(repo_id):
     try:
-        downloader = importlib.import_module("download-model")
+        downloader_module = importlib.import_module("download-model")
+        downloader = downloader_module.ModelDownloader()
         repo_id_parts = repo_id.split(":")
         model = repo_id_parts[0] if len(repo_id_parts) > 0 else repo_id
         branch = repo_id_parts[1] if len(repo_id_parts) > 1 else "main"
@@ -369,7 +370,7 @@ def create_model_menus():
                         shared.gradio['bf16'] = gr.Checkbox(label="bf16", value=shared.args.bf16)
                         shared.gradio['load_in_8bit'] = gr.Checkbox(label="load-in-8bit", value=shared.args.load_in_8bit)
                         shared.gradio['trust_remote_code'] = gr.Checkbox(label="trust-remote-code", value=shared.args.trust_remote_code, info='Make sure to inspect the .py files inside the model folder before loading it with this option enabled.')
-                        
+
             with gr.Box():
                 gr.Markdown('Transformers 4-bit')
                 with gr.Row():
@@ -389,18 +390,20 @@ def create_model_menus():
 
         with gr.Column():
             with gr.Box():
-                gr.Markdown('GPTQ')
                 with gr.Row():
                     with gr.Column():
-                        shared.gradio['wbits'] = gr.Dropdown(label="wbits", choices=["None", 1, 2, 3, 4, 8], value=shared.args.wbits if shared.args.wbits > 0 else "None")
-                        shared.gradio['groupsize'] = gr.Dropdown(label="groupsize", choices=["None", 32, 64, 128, 1024], value=shared.args.groupsize if shared.args.groupsize > 0 else "None")
-                        shared.gradio['model_type'] = gr.Dropdown(label="model_type", choices=["None", "llama", "opt", "gptj"], value=shared.args.model_type or "None")
+                        gr.Markdown('GPTQ')
+                        shared.gradio['autogptq'] = gr.Checkbox(label="autogptq", value=shared.args.autogptq, info='When enabled, gpu-memory should be used for CPU offloading instead of pre_layer.')
+                        shared.gradio['triton'] = gr.Checkbox(label="triton", value=shared.args.triton)
+                        shared.gradio['desc_act'] = gr.Checkbox(label="desc_act", value=shared.args.desc_act, info='Only used for old models without a quantize_config.json.')
 
                     with gr.Column():
+                        with gr.Row():
+                            shared.gradio['wbits'] = gr.Dropdown(label="wbits", choices=["None", 1, 2, 3, 4, 8], value=shared.args.wbits if shared.args.wbits > 0 else "None")
+                            shared.gradio['groupsize'] = gr.Dropdown(label="groupsize", choices=["None", 32, 64, 128, 1024], value=shared.args.groupsize if shared.args.groupsize > 0 else "None")
+
+                        shared.gradio['model_type'] = gr.Dropdown(label="model_type", choices=["None", "llama", "opt", "gptj"], value=shared.args.model_type or "None")
                         shared.gradio['pre_layer'] = gr.Slider(label="pre_layer", minimum=0, maximum=100, value=shared.args.pre_layer[0] if shared.args.pre_layer is not None else 0)
-                        gr.Markdown('AutoGPTQ')
-                        shared.gradio['autogptq'] = gr.Checkbox(label="autogptq", value=shared.args.autogptq, info='AutoGPTQ needs to be manually installed from source. When enabled, gpu-memory should be used for CPU offloading instead of pre_layer.')
-                        shared.gradio['triton'] = gr.Checkbox(label="triton", value=shared.args.triton, info='Use triton in AutoGPTQ.')
 
             with gr.Box():
                 gr.Markdown('llama.cpp')
