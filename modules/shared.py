@@ -99,6 +99,10 @@ parser.add_argument('--settings', type=str, help='Load the default interface set
 parser.add_argument('--extensions', type=str, nargs="+", help='The list of extensions to load. If you want to load more than one extension, write the names separated by spaces.')
 parser.add_argument('--verbose', action='store_true', help='Print the prompts to the terminal.')
 
+# added by launch.py
+parser.add_argument("--check", action="store_true")
+parser.add_argument("--no-history", action="store_true")
+
 # Accelerate/transformers
 parser.add_argument('--cpu', action='store_true', help='Use the CPU to generate text. Warning: Training on CPU is extremely slow.')
 parser.add_argument('--auto-devices', action='store_true', help='Automatically split the model across the available GPU(s) and CPU.')
