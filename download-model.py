@@ -1,8 +1,14 @@
 '''
 Downloads models from Hugging Face to models/model-name.
 
-Example:
+Examples:
 python download-model.py facebook/opt-1.3b
+
+Using the built-in short name:
+python download-model.py "OPT 1.3B"
+
+Specifying a subset of model files within a repository folder
+python download-model.py --select "ggml-vicuna-13B-1.1-q5_0.bin|ggml-vicuna-13B-1.1-q5_1.bin" CRD716/ggml-vicuna-1.1-quantized
 
 '''
 
@@ -10,7 +16,6 @@ import argparse
 import base64
 import datetime
 import hashlib
-import json
 import re
 import os
 import sys
@@ -72,15 +77,20 @@ EleutherAI/pythia-1.4b-deduped
 
 
 class ModelDownloader:
+    """
+    Manages state for downloading from HF, especially with regard to auth,
+    allowing download of protected models
+    """
     def __init__(self):
-        self.s = requests.Session()
-        if os.getenv('HF_USER') is not None and os.getenv('HF_PASS') is not None:
-            self.s.auth = (os.getenv('HF_USER'), os.getenv('HF_PASS'))
-
+        self._session = requests.Session()
+        if all((os.getenv('HF_USER'), os.getenv('HF_PASS'))):
+            self._session.auth = (os.getenv('HF_USER'), os.getenv('HF_PASS'))
 
     def sanitize_model_and_branch_names(self, model, branch):
-        if model[-1] == '/':
-            model = model[:-1]
+        """
+        Make sure model & branch names are valid & do some clean-up, if need be
+        """
+        model = model.rstrip("/")
 
         if branch is None:
             branch = "main"
@@ -92,11 +102,16 @@ class ModelDownloader:
 
         return model, branch
 
-
-    def get_download_links_from_huggingface(self, model, branch, text_only=False):
+    def get_download_links_from_huggingface(self, model, branch, text_only=False, select=None):
+        """
+        Gather a list of download links & checksums (SHA256) from all pages of the files manifest for the HF repository
+        """
         base = "https://huggingface.co"
         page = f"/api/models/{model}/tree/{branch}"
         cursor = b""
+
+        if select:
+            select = select.split("|")
 
         links = []
         sha256 = []
@@ -106,18 +121,20 @@ class ModelDownloader:
         has_ggml = False
         has_safetensors = False
         is_lora = False
+        # The loop is for paging over repos with many files
         while True:
+            # Get the file manifest from the HF repo
             url = f"{base}{page}" + (f"?cursor={cursor.decode()}" if cursor else "")
-            r = self.s.get(url, timeout=10)
-            r.raise_for_status()
-            content = r.content
+            resp = self._session.get(url, timeout=10)
+            resp.raise_for_status()
+            manifest = resp.json()
 
-            dict = json.loads(content)
-            if len(dict) == 0:
+            # We've hit an empty page, so we're done
+            if len(manifest) == 0:
                 break
 
-            for i in range(len(dict)):
-                fname = dict[i]['path']
+            for i in range(len(manifest)):
+                fname = manifest[i]['path']
                 if not is_lora and fname.endswith(('adapter_config.json', 'adapter_model.bin')):
                     is_lora = True
 
@@ -128,8 +145,13 @@ class ModelDownloader:
                 is_tokenizer = re.match("(tokenizer|ice).*\.model", fname)
                 is_text = re.match(".*\.(txt|json|py|md)", fname) or is_tokenizer
                 if any((is_pytorch, is_safetensors, is_pt, is_ggml, is_tokenizer, is_text)):
-                    if 'lfs' in dict[i]:
-                        sha256.append([fname, dict[i]['lfs']['oid']])
+                    # if a select option is given, and current file is a binary, make sure it's in the select list
+                    if select and any((is_pytorch, is_pt, is_safetensors, is_ggml)):
+                        if fname not in select:
+                            continue
+
+                    if 'lfs' in manifest[i]:
+                        sha256.append([fname, manifest[i]['lfs']['oid']])
 
                     if is_text:
                         links.append(f"https://huggingface.co/{model}/resolve/{branch}/{fname}")
@@ -151,7 +173,8 @@ class ModelDownloader:
                             has_ggml = True
                             classifications.append('ggml')
 
-            cursor = base64.b64encode(f'{{"file_name":"{dict[-1]["path"]}"}}'.encode()) + b':50'
+            # Set up to move the next page (if any) of HF repo contents
+            cursor = base64.b64encode(f'{{"file_name":"{manifest[-1]["path"]}"}}'.encode()) + b':50'
             cursor = base64.b64encode(cursor)
             cursor = cursor.replace(b'=', b'%3D')
 
@@ -163,8 +186,11 @@ class ModelDownloader:
 
         return links, sha256, is_lora
 
-
     def get_output_folder(self, model, branch, is_lora, base_folder=None):
+        """
+        Figure out where to put the downloaded files, based on user params,
+        model type & HF repo branch
+        """
         if base_folder is None:
             base_folder = 'models' if not is_lora else 'loras'
 
@@ -174,14 +200,16 @@ class ModelDownloader:
         output_folder = Path(base_folder) / output_folder
         return output_folder
 
-
     def get_single_file(self, url, output_folder, start_from_scratch=False):
+        """
+        Download an individual file from the HF repo, within a thread. Also handles resume.
+        """
         filename = Path(url.rsplit('/', 1)[1])
         output_path = output_folder / filename
         if output_path.exists() and not start_from_scratch:
             # Check if the file has already been downloaded completely
-            r = self.s.get(url, stream=True, timeout=10)
-            total_size = int(r.headers.get('content-length', 0))
+            resp = self._session.get(url, stream=True, timeout=10)
+            total_size = int(resp.headers.get('content-length', 0))
             if output_path.stat().st_size >= total_size:
                 return
             # Otherwise, resume the download from where it left off
@@ -191,21 +219,22 @@ class ModelDownloader:
             headers = {}
             mode = 'wb'
 
-        r = self.s.get(url, stream=True, headers=headers, timeout=10)
+        resp = self._session.get(url, stream=True, headers=headers, timeout=10)
         with open(output_path, mode) as f:
-            total_size = int(r.headers.get('content-length', 0))
+            total_size = int(resp.headers.get('content-length', 0))
             block_size = 1024
             with tqdm.tqdm(total=total_size, unit='iB', unit_scale=True, bar_format='{l_bar}{bar}| {n_fmt:6}/{total_fmt:6} {rate_fmt:6}') as t:
-                for data in r.iter_content(block_size):
+                for data in resp.iter_content(block_size):
                     t.update(len(data))
                     f.write(data)
-
 
     def start_download_threads(self, file_list, output_folder, start_from_scratch=False, threads=1):
         thread_map(lambda url: self.get_single_file(url, output_folder, start_from_scratch=start_from_scratch), file_list, max_workers=threads, disable=True)
 
-
     def download_model_files(self, model, branch, links, sha256, output_folder, start_from_scratch=False, threads=1):
+        """
+        Make the preparations to launch the threads to download the individual files
+        """
         # Creating the folder and writing the metadata
         if not output_folder.exists():
             output_folder.mkdir(parents=True, exist_ok=True)
@@ -223,8 +252,10 @@ class ModelDownloader:
         print(f"Downloading the model to {output_folder}")
         self.start_download_threads(links, output_folder, start_from_scratch=start_from_scratch, threads=threads)
 
-
     def check_model_files(self, model, branch, links, sha256, output_folder):
+        """
+        Validate the checksums of model files, to make sure we completely downloaded exactly what we should have
+        """
         # Validate the checksums
         validated = True
         for i in range(len(sha256)):
@@ -236,8 +267,8 @@ class ModelDownloader:
                 continue
 
             with open(output_folder / sha256[i][0], "rb") as f:
-                bytes = f.read()
-                file_hash = hashlib.sha256(bytes).hexdigest()
+                fbytes = f.read()
+                file_hash = hashlib.sha256(fbytes).hexdigest()
                 if file_hash != sha256[i][1]:
                     print(f'Checksum failed: {sha256[i][0]}  {sha256[i][1]}')
                     validated = False
@@ -260,6 +291,7 @@ if __name__ == '__main__':
     parser.add_argument('--output', type=str, default=None, help='The folder where the model should be saved.')
     parser.add_argument('--clean', action='store_true', help='Does not resume the previous download.')
     parser.add_argument('--check', action='store_true', help='Validates the checksums of model files.')
+    parser.add_argument('--select', type=str, help='Pipe separated list of .bin or .safetensors files to download. No other files of these extensions will be.')
     args = parser.parse_args()
 
     branch = args.branch
@@ -276,7 +308,7 @@ if __name__ == '__main__':
         sys.exit()
 
     # Getting the download links from Hugging Face
-    links, sha256, is_lora = downloader.get_download_links_from_huggingface(model, branch, text_only=args.text_only)
+    links, sha256, is_lora = downloader.get_download_links_from_huggingface(model, branch, text_only=args.text_only, select=args.select)
 
     # Getting the output folder
     output_folder = downloader.get_output_folder(model, branch, is_lora, base_folder=args.output)
