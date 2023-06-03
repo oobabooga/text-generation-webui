@@ -31,3 +31,5 @@ models/config-user.yaml
 
 .DS_Store
 Thumbs.db
+
+history.json
