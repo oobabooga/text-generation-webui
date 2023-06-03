@@ -277,7 +277,7 @@ def chatbot_wrapper(text, history, state, regenerate=False, _continue=False, loa
     yield output
 
 
-def impersonate_wrapper(text, state):
+def impersonate_wrapper(text, start_with, state):
     if shared.model_name == 'None' or shared.model is None:
         logger.error("No model is loaded! Select one in the Model tab.")
         yield ''
@@ -322,8 +322,13 @@ def generate_chat_reply(text, history, state, regenerate=False, _continue=False,
         yield history
 
 
-# Same as above but returns HTML
-def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
+# Same as above but returns HTML for the UI
+def generate_chat_reply_wrapper(text, start_with, state, regenerate=False, _continue=False):
+    if start_with != '' and _continue == False:
+        _continue = True
+        send_dummy_message(text)
+        send_dummy_reply(start_with)
+
     for i, history in enumerate(generate_chat_reply(text, shared.history, state, regenerate, _continue, loading_message=True)):
         if i != 0:
             shared.history = copy.deepcopy(history)
