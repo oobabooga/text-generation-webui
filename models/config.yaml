@@ -180,3 +180,11 @@ llama-65b-gptq-3bit:
 .*bluemoonrp-(30|13)b:
   mode: 'instruct'
   instruction_template: 'Bluemoon'
+  truncation_length: 4096
+.*Nous-Hermes-13b:
+  mode: 'instruct'
+  instruction_template: 'Alpaca'
+.*airoboros-13b-gpt4:
+  mode: 'instruct'
+  instruction_template: 'Vicuna-v1.1'
+  truncation_length: 4096

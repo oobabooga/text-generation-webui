@@ -10,28 +10,23 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 
 ## Features
 
-* Dropdown menu for switching between models
-* Notebook mode that resembles OpenAI's playground
-* Chat mode for conversation and role-playing
-* Instruct mode compatible with various formats, including Alpaca, Vicuna, Open Assistant, Dolly, Koala, ChatGLM, MOSS, RWKV-Raven, Galactica, StableLM, WizardLM, Baize, Ziya, Chinese-Vicuna, MPT, INCITE, Wizard Mega, KoAlpaca, Vigogne, Bactrian, h2o, and OpenBuddy
+* 3 interface modes: default, notebook, and chat
+* Multiple model backends: tranformers, llama.cpp, AutoGPTQ, GPTQ-for-LLaMa, RWKV, FlexGen
+* Dropdown menu for quickly switching between different models
+* LoRA: load and unload LoRAs on the fly, load multiple LoRAs at the same time, train a new LoRA
+* Precise instruction templates for chat mode, including Alpaca, Vicuna, Open Assistant, Dolly, Koala, ChatGLM, MOSS, RWKV-Raven, Galactica, StableLM, WizardLM, Baize, Ziya, Chinese-Vicuna, MPT, INCITE, Wizard Mega, KoAlpaca, Vigogne, Bactrian, h2o, and OpenBuddy
 * [Multimodal pipelines, including LLaVA and MiniGPT-4](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/multimodal)
+* 8-bit and 4-bit inference through bitsandbytes
+* CPU mode for transformers models
+* [DeepSpeed ZeRO-3 inference](docs/DeepSpeed.md)
+* [Extensions](docs/Extensions.md)
+* [Custom chat characters](docs/Chat-mode.md)
+* Very efficient text streaming
 * Markdown output with LaTeX rendering, to use for instance with [GALACTICA](https://github.com/paperswithcode/galai)
 * Nice HTML output for GPT-4chan
-* [Custom chat characters](docs/Chat-mode.md)
-* Advanced chat features (send images, get audio responses with TTS)
-* Very efficient text streaming
-* Parameter presets
-* [LLaMA model](docs/LLaMA-model.md)
-* [4-bit GPTQ mode](docs/GPTQ-models-(4-bit-mode).md)
-* [LoRA (loading and training)](docs/Using-LoRAs.md)
-* [llama.cpp](docs/llama.cpp-models.md)
-* 8-bit and 4-bit through bitsandbytes
-* Layers splitting across GPU(s), CPU, and disk
-* CPU mode
-* [FlexGen](docs/FlexGen.md)
-* [DeepSpeed ZeRO-3](docs/DeepSpeed.md)
-* API [with](https://github.com/oobabooga/text-generation-webui/blob/main/api-example-stream.py) streaming and [without](https://github.com/oobabooga/text-generation-webui/blob/main/api-example.py) streaming
-* [Extensions](docs/Extensions.md) - see the [user extensions list](https://github.com/oobabooga/text-generation-webui-extensions)
+* API, including endpoints for websocket streaming ([see the examples](https://github.com/oobabooga/text-generation-webui/blob/main/api-examples))
+
+To learn how to use the various features, check out the Documentation: https://github.com/oobabooga/text-generation-webui/tree/main/docs
 
 ## Installation
 
@@ -95,14 +90,6 @@ cd text-generation-webui
 pip install -r requirements.txt
 ```
 
-#### 4. Install GPTQ
-
-The base installation covers [transformers](https://github.com/huggingface/transformers) models (`AutoModelForCausalLM` and `AutoModelForSeq2SeqLM` specifically) and [llama.cpp](https://github.com/ggerganov/llama.cpp) (GGML) models.
-
-To use GPTQ models, the additional installation steps below are necessary:
-
-[GPTQ models (4 bit mode)](https://github.com/oobabooga/text-generation-webui/blob/main/docs/GPTQ-models-(4-bit-mode).md)
-
 #### llama.cpp with GPU acceleration
 
 Requires the additional compilation step described here: [GPU acceleration](https://github.com/oobabooga/text-generation-webui/blob/main/docs/llama.cpp-models.md#gpu-acceleration).
@@ -154,15 +141,18 @@ For example:
 
     python download-model.py facebook/opt-1.3b
 
-* If you want to download a model manually, note that all you need are the json, txt, and pytorch\*.bin (or model*.safetensors) files. The remaining files are not necessary.
-
-* Set env vars `HF_USER` and `HF_PASS` to your Hugging Face username and password (or [User Access Token](https://huggingface.co/settings/tokens)) to download a protected model. The model's terms must first be accepted on the HF website.
+To download a protected model, set env vars `HF_USER` and `HF_PASS` to your Hugging Face username and password (or [User Access Token](https://huggingface.co/settings/tokens)). The model's terms must first be accepted on the HF website.
 
 #### GGML models
 
 You can drop these directly into the `models/` folder, making sure that the file name contains `ggml` somewhere and ends in `.bin`.
 
 #### GPT-4chan
+
+<details>
+<summary>
+Instructions
+</summary>
 
 [GPT-4chan](https://huggingface.co/ykilcher/gpt-4chan) has been shut down from Hugging Face, so you need to download it elsewhere. You have two options:
 
@@ -180,6 +170,9 @@ After downloading the model, follow these steps:
 ```
 python download-model.py EleutherAI/gpt-j-6B --text-only
 ```
+
+When you load this model in default or notebook modes, the "HTML" tab will show the generated text in 4chan format.
+</details>
 
 ## Starting the web UI
 
@@ -252,10 +245,18 @@ Optionally, you can use the following command-line flags:
 | `--n_ctx N_CTX` | Size of the prompt context. |
 | `--llama_cpp_seed SEED` | Seed for llama-cpp models. Default 0 (random). |
 
-#### GPTQ
+#### AutoGPTQ
+
+| Flag             | Description |
+|------------------|-------------|
+| `--triton`       | Use triton. |
+| `--desc_act`     | For models that don't have a quantize_config.json, this parameter is used to define whether to set desc_act or not in BaseQuantizeConfig. |
+
+#### GPTQ-for-LLaMa
 
 | Flag                      | Description |
 |---------------------------|-------------|
+| `--gptq-for-llama` | Use GPTQ-for-LLaMa to load the GPTQ model instead of AutoGPTQ. |
 | `--wbits WBITS`           | Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported. |
 | `--model_type MODEL_TYPE` | Model type of pre-quantized model. Currently LLaMA, OPT, and GPT-J are supported. |
 | `--groupsize GROUPSIZE`   | Group size. |
@@ -265,14 +266,6 @@ Optionally, you can use the following command-line flags:
 | `--quant_attn`         | (triton) Enable quant attention. |
 | `--warmup_autotune`    | (triton) Enable warmup autotune. |
 | `--fused_mlp`          | (triton) Enable fused mlp. |
-
-#### AutoGPTQ
-
-| Flag             | Description |
-|------------------|-------------|
-| `--autogptq`     | Use AutoGPTQ for loading quantized models instead of the internal GPTQ loader. |
-| `--triton`       | Use triton. |
-|` --desc_act`     | For models that don't have a quantize_config.json, this parameter is used to define whether to set desc_act or not in BaseQuantizeConfig. |
 
 #### FlexGen
 
@@ -331,15 +324,7 @@ Out of memory errors? [Check the low VRAM guide](docs/Low-VRAM-guide.md).
 
 Inference settings presets can be created under `presets/` as yaml files. These files are detected automatically at startup.
 
-By default, 10 presets based on NovelAI and KoboldAI presets are included. These were selected out of a sample of 43 presets after applying a K-Means clustering algorithm and selecting the elements closest to the average of each cluster.
-
-[Visualization](https://user-images.githubusercontent.com/112222186/228956352-1addbdb9-2456-465a-b51d-089f462cd385.png)
-
-## Documentation
-
-Make sure to check out the documentation for an in-depth guide on how to use the web UI.
-
-https://github.com/oobabooga/text-generation-webui/tree/main/docs
+By default, 10 presets based on NovelAI and KoboldAI presets are included. These were selected out of a sample of 43 presets after applying a K-Means clustering algorithm and selecting the elements closest to the average of each cluster: [tSNE visualization](https://user-images.githubusercontent.com/112222186/228956352-1addbdb9-2456-465a-b51d-089f462cd385.png).
 
 ## Contributing
 

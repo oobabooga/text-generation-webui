@@ -141,7 +141,8 @@ parser.add_argument('--warmup_autotune', action='store_true', help='(triton) Ena
 parser.add_argument('--fused_mlp', action='store_true', help='(triton) Enable fused mlp.')
 
 # AutoGPTQ
-parser.add_argument('--autogptq', action='store_true', help='Use AutoGPTQ for loading quantized models instead of the internal GPTQ loader.')
+parser.add_argument('--gptq-for-llama', action='store_true', help='Use GPTQ-for-LLaMa to load the GPTQ model instead of AutoGPTQ.')
+parser.add_argument('--autogptq', action='store_true', help='DEPRECATED')
 parser.add_argument('--triton', action='store_true', help='Use triton.')
 parser.add_argument('--desc_act', action='store_true', help='For models that don\'t have a quantize_config.json, this parameter is used to define whether to set desc_act or not in BaseQuantizeConfig.')
 
@@ -181,12 +182,9 @@ parser.add_argument('--multimodal-pipeline', type=str, default=None, help='The m
 args = parser.parse_args()
 args_defaults = parser.parse_args([])
 
-# Deprecation warnings for parameters that have been renamed
-deprecated_dict = {}
-for k in deprecated_dict:
-    if getattr(args, k) != deprecated_dict[k][1]:
-        logger.warning(f"--{k} is deprecated and will be removed. Use --{deprecated_dict[k][0]} instead.")
-        setattr(args, deprecated_dict[k][0], getattr(args, k))
+# Deprecation warnings
+if args.autogptq:
+    logger.warning('--autogptq has been deprecated and will be removed soon. AutoGPTQ is now used by default for GPTQ models.')
 
 # Security warnings
 if args.trust_remote_code:

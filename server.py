@@ -393,12 +393,12 @@ def create_model_menus():
                 with gr.Row():
                     with gr.Column():
                         gr.Markdown('AutoGPTQ')
-                        shared.gradio['autogptq'] = gr.Checkbox(label="autogptq", value=shared.args.autogptq, info='Activate AutoGPTQ loader. gpu-memory should be used for CPU offloading instead of pre_layer.')
                         shared.gradio['triton'] = gr.Checkbox(label="triton", value=shared.args.triton)
                         shared.gradio['desc_act'] = gr.Checkbox(label="desc_act", value=shared.args.desc_act, info='\'desc_act\', \'wbits\', and \'groupsize\' are used for old models without a quantize_config.json.')
 
                     with gr.Column():
                         gr.Markdown('GPTQ-for-LLaMa')
+                        shared.gradio['gptq_for_llama'] = gr.Checkbox(label="gptq-for-llama", value=shared.args.gptq_for_llama, info='Use GPTQ-for-LLaMa to load the GPTQ model instead of AutoGPTQ. pre_layer should be used for CPU offloading instead of gpu-memory.')
                         with gr.Row():
                             shared.gradio['wbits'] = gr.Dropdown(label="wbits", choices=["None", 1, 2, 3, 4, 8], value=shared.args.wbits if shared.args.wbits > 0 else "None")
                             shared.gradio['groupsize'] = gr.Dropdown(label="groupsize", choices=["None", 32, 64, 128, 1024], value=shared.args.groupsize if shared.args.groupsize > 0 else "None")
@@ -1049,6 +1049,7 @@ if __name__ == "__main__":
         'mode': shared.settings['mode'],
         'skip_special_tokens': shared.settings['skip_special_tokens'],
         'custom_stopping_strings': shared.settings['custom_stopping_strings'],
+        'truncation_length': shared.settings['truncation_length'],
     }
 
     shared.model_config.move_to_end('.*', last=False)  # Move to the beginning
