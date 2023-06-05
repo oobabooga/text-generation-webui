@@ -3,7 +3,7 @@ datasets
 einops
 flexgen==0.1.7
 gradio_client==0.2.5
-gradio==3.31.0
+gradio==3.33.1
 markdown
 numpy
 pandas
