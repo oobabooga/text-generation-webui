@@ -115,6 +115,25 @@ class Handler(BaseHTTPRequestHandler):
             "Authorization"
         )
 
+    def openai_error(self, message, code = 500, type = 'APIError', param = '', internal_message = ''):
+        self.send_response(code)
+        self.send_access_control_headers()
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        error_resp = {
+            'error': {
+                'message': message,
+                'code': code,
+                'type': type,
+                'param': param,
+            }
+        }
+        if internal_message:
+            error_resp['internal_message'] = internal_message
+
+        response = json.dumps(error_resp)
+        self.wfile.write(response.encode('utf-8'))
+
     def do_OPTIONS(self):
         self.send_response(200)
         self.send_access_control_headers()
@@ -185,6 +204,11 @@ class Handler(BaseHTTPRequestHandler):
             print(body)
 
         if '/completions' in self.path or '/generate' in self.path:
+
+            if not shared.model:
+                self.openai_error("No model loaded.")
+                return
+
             is_legacy = '/generate' in self.path
             is_chat = 'chat' in self.path
             resp_list = 'data' if is_legacy else 'choices'
@@ -526,7 +550,12 @@ class Handler(BaseHTTPRequestHandler):
 
             response = json.dumps(resp)
             self.wfile.write(response.encode('utf-8'))
+
         elif '/edits' in self.path:
+            if not self.model:
+                self.openai_error("No model loaded.")
+                return
+
             self.send_response(200)
             self.send_access_control_headers()
             self.send_header('Content-Type', 'application/json')
@@ -615,6 +644,7 @@ class Handler(BaseHTTPRequestHandler):
 
             response = json.dumps(resp)
             self.wfile.write(response.encode('utf-8'))
+
         elif '/images/generations' in self.path and 'SD_WEBUI_URL' in os.environ:
             # Stable Diffusion callout wrapper for txt2img
             # Low effort implementation for compatibility. With only "prompt" being passed and assuming DALL-E
@@ -661,6 +691,7 @@ class Handler(BaseHTTPRequestHandler):
 
             response = json.dumps(resp)
             self.wfile.write(response.encode('utf-8'))
+
         elif '/embeddings' in self.path and embedding_model is not None:
             self.send_response(200)
             self.send_access_control_headers()
@@ -694,6 +725,7 @@ class Handler(BaseHTTPRequestHandler):
             if debug:
                 print(f"Embeddings return size: {len(embeddings[0])}, number: {len(embeddings)}")
             self.wfile.write(response.encode('utf-8'))
+
         elif '/moderations' in self.path:
             # for now do nothing, just don't error.
             self.send_response(200)
@@ -742,6 +774,7 @@ class Handler(BaseHTTPRequestHandler):
                 }]
             })
             self.wfile.write(response.encode('utf-8'))
+
         else:
             print(self.path, self.headers)
             self.send_error(404)
