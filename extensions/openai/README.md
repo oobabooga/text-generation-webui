@@ -5,6 +5,12 @@ It's incomplete so far but perhaps is functional enough for you.
 
 ## Setup & installation 
 
+Make sure you enable it in launch parameters. Just make sure they include:
+
+```
+--extensions openai
+```
+
 Optional (for flask_cloudflared, embeddings):
 
 ```
