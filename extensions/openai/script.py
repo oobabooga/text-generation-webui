@@ -423,9 +423,7 @@ class Handler(BaseHTTPRequestHandler):
                     chunk[resp_list][0]["message"] = {'role': 'assistant', 'content': ''}
                     chunk[resp_list][0]["delta"] = {'role': 'assistant', 'content': ''}
 
-                data_chunk = 'data: ' + json.dumps(chunk) + '\r\n\r\n'
-                chunk_size = hex(len(data_chunk))[2:] + '\r\n'
-                response = chunk_size + data_chunk
+                response = 'data: ' + json.dumps(chunk) + '\r\n\r\n'
                 self.wfile.write(response.encode('utf-8'))
 
             # generate reply #######################################
@@ -498,9 +496,7 @@ class Handler(BaseHTTPRequestHandler):
                         # So yeah... do both methods? delta and messages.
                         chunk[resp_list][0]['message'] = {'content': new_content}
                         chunk[resp_list][0]['delta'] = {'content': new_content}
-                    data_chunk = 'data: ' + json.dumps(chunk) + '\r\n\r\n'
-                    chunk_size = hex(len(data_chunk))[2:] + '\r\n'
-                    response = chunk_size + data_chunk
+                    response = 'data: ' + json.dumps(chunk) + '\r\n\r\n'
                     self.wfile.write(response.encode('utf-8'))
                     completion_token_count += len(encode(new_content)[0])
 
@@ -527,10 +523,7 @@ class Handler(BaseHTTPRequestHandler):
                     chunk[resp_list][0]['message'] = {'content': ''}
                     chunk[resp_list][0]['delta'] = {'content': ''}
 
-                data_chunk = 'data: ' + json.dumps(chunk) + '\r\n\r\n'
-                chunk_size = hex(len(data_chunk))[2:] + '\r\n'
-                done = 'data: [DONE]\r\n\r\n'
-                response = chunk_size + data_chunk + done
+                response = 'data: ' + json.dumps(chunk) + '\r\n\r\ndata: [DONE]\r\n\r\n'
                 self.wfile.write(response.encode('utf-8'))
                 # Finished if streaming.
                 if debug:
