@@ -11,15 +11,15 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 ## Features
 
 * 3 interface modes: default, notebook, and chat
+* Multiple model backends: tranformers, llama.cpp, AutoGPTQ, GPTQ-for-LLaMa, RWKV, FlexGen
 * Dropdown menu for quickly switching between different models
 * LoRA: load and unload LoRAs on the fly, load multiple LoRAs at the same time, train a new LoRA
-* Precise instruction templates in chat mode, including Alpaca, Vicuna, Open Assistant, Dolly, Koala, ChatGLM, MOSS, RWKV-Raven, Galactica, StableLM, WizardLM, Baize, Ziya, Chinese-Vicuna, MPT, INCITE, Wizard Mega, KoAlpaca, Vigogne, Bactrian, h2o, and OpenBuddy
+* Precise instruction templates for chat mode, including Alpaca, Vicuna, Open Assistant, Dolly, Koala, ChatGLM, MOSS, RWKV-Raven, Galactica, StableLM, WizardLM, Baize, Ziya, Chinese-Vicuna, MPT, INCITE, Wizard Mega, KoAlpaca, Vigogne, Bactrian, h2o, and OpenBuddy
 * [Multimodal pipelines, including LLaVA and MiniGPT-4](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/multimodal)
-* Multiple model backends: tranformers, llama.cpp, AutoGPTQ, GPTQ-for-LLaMa, RWKV, FlexGen
 * 8-bit and 4-bit inference through bitsandbytes
 * CPU mode for transformers models
 * [DeepSpeed ZeRO-3 inference](docs/DeepSpeed.md)
-* [Extension support](docs/Extensions.md)
+* [Extensions](docs/Extensions.md)
 * [Custom chat characters](docs/Chat-mode.md)
 * Very efficient text streaming
 * Markdown output with LaTeX rendering, to use for instance with [GALACTICA](https://github.com/paperswithcode/galai)
