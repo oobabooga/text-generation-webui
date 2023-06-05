@@ -226,6 +226,11 @@ class Handler(BaseHTTPRequestHandler):
         if debug:
             print(body)
 
+        # Generate a clear error if no model has ben loaded
+        # May be better ways of handling this error, but this is an improvement
+        if shared.tokenizer is None:
+            raise RuntimeError('No model has been loaded')
+
         if '/completions' in self.path or '/generate' in self.path:
             is_legacy = '/generate' in self.path
             is_chat = 'chat' in self.path
