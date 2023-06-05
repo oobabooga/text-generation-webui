@@ -552,7 +552,7 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(response.encode('utf-8'))
 
         elif '/edits' in self.path:
-            if not self.model:
+            if not shared.model:
                 self.openai_error("No model loaded.")
                 return
 
