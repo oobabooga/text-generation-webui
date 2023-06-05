@@ -17,6 +17,7 @@ torch-dumps
 venv/
 .venv/
 .vscode
+.idea/
 *.bak
 *.ipynb
 *.log
