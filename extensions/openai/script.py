@@ -115,7 +115,7 @@ class Handler(BaseHTTPRequestHandler):
             "Authorization"
         )
 
-    def openai_error(self, message, code = 500, type = 'APIError', param = '', internal_message = ''):
+    def openai_error(self, message, code = 500, error_type = 'APIError', param = '', internal_message = ''):
         self.send_response(code)
         self.send_access_control_headers()
         self.send_header('Content-Type', 'application/json')
@@ -124,7 +124,7 @@ class Handler(BaseHTTPRequestHandler):
             'error': {
                 'message': message,
                 'code': code,
-                'type': type,
+                'type': error_type,
                 'param': param,
             }
         }
