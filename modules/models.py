@@ -81,10 +81,10 @@ def load_model(model_name):
         logger.error('The path to the model does not exist. Exiting.')
         return None, None
 
-    if shared.args.autogptq:
-        load_func = AutoGPTQ_loader
-    elif shared.args.wbits > 0:
+    if shared.args.gptq_for_llama:
         load_func = GPTQ_loader
+    elif Path(f'{shared.args.model_dir}/{model_name}/quantize_config.json').exists() or shared.args.wbits > 0:
+        load_func = AutoGPTQ_loader
     elif shared.model_type == 'llamacpp':
         load_func = llamacpp_loader
     elif shared.model_type == 'rwkv':

@@ -244,10 +244,18 @@ Optionally, you can use the following command-line flags:
 | `--n_ctx N_CTX` | Size of the prompt context. |
 | `--llama_cpp_seed SEED` | Seed for llama-cpp models. Default 0 (random). |
 
-#### GPTQ
+#### AutoGPTQ
+
+| Flag             | Description |
+|------------------|-------------|
+| `--triton`       | Use triton. |
+| `--desc_act`     | For models that don't have a quantize_config.json, this parameter is used to define whether to set desc_act or not in BaseQuantizeConfig. |
+
+#### GPTQ-for-LLaMa
 
 | Flag                      | Description |
 |---------------------------|-------------|
+| `--gptq-for-llama` | Use GPTQ-for-LLaMa to load the GPTQ model instead of AutoGPTQ. |
 | `--wbits WBITS`           | Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported. |
 | `--model_type MODEL_TYPE` | Model type of pre-quantized model. Currently LLaMA, OPT, and GPT-J are supported. |
 | `--groupsize GROUPSIZE`   | Group size. |
@@ -257,14 +265,6 @@ Optionally, you can use the following command-line flags:
 | `--quant_attn`         | (triton) Enable quant attention. |
 | `--warmup_autotune`    | (triton) Enable warmup autotune. |
 | `--fused_mlp`          | (triton) Enable fused mlp. |
-
-#### AutoGPTQ
-
-| Flag             | Description |
-|------------------|-------------|
-| `--autogptq`     | Use AutoGPTQ for loading quantized models instead of the internal GPTQ loader. |
-| `--triton`       | Use triton. |
-|` --desc_act`     | For models that don't have a quantize_config.json, this parameter is used to define whether to set desc_act or not in BaseQuantizeConfig. |
 
 #### FlexGen
 
