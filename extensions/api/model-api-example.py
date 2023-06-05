@@ -34,9 +34,10 @@ def auto_model_loader_req(model):
         'action': 'load',
         'model_name': model,
         'args': {
+            'autogptq': False,
             'bf16': False,
             'load_in_8bit': False,
-            'groupsize': None,
+            'groupsize': 0,
             'wbits': 0,
             'trust_remote_code': False,
 
@@ -65,7 +66,6 @@ def auto_model_loader_req(model):
             #"cpu_memory": null,
             #"disk": false,
             #"disk_cache_dir": "cache",
-
         },
     }
 
