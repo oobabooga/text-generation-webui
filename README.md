@@ -151,8 +151,9 @@ You can drop these directly into the `models/` folder, making sure that the file
 
 <details>
 <summary>
-Download instructions
+Instructions
 </summary>
+
 [GPT-4chan](https://huggingface.co/ykilcher/gpt-4chan) has been shut down from Hugging Face, so you need to download it elsewhere. You have two options:
 
 * Torrent: [16-bit](https://archive.org/details/gpt4chan_model_float16) / [32-bit](https://archive.org/details/gpt4chan_model)
