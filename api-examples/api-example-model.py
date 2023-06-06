@@ -33,9 +33,7 @@ def auto_model_loader_req(model):
         'action': 'load',
         'model_name': model,
         'args': {
-            'autogptq': True,
-            # autogptq or gptq-for-llama should be True, not both. gptq-for-llama is still slightly more compatible, but the default is autogptq.
-            'gptq_for_llama': False, 
+            'gptq_for_llama': False, # Use AutoGPTQ by default, set to True for gptq-for-llama
 
             'bf16': False,
             'load_in_8bit': False,
@@ -80,7 +78,6 @@ def auto_model_loader_req(model):
         req['args']['wbits'] = 3
         req['args']['groupsize'] = guess_groupsize(model)
     else:
-        req['args']['autogptq'] = False
         req['args']['gptq_for_llama'] = False
 
     if '8bit' in model:
