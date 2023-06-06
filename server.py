@@ -26,7 +26,6 @@ import matplotlib
 matplotlib.use('Agg')  # This fixes LaTeX rendering on some systems
 
 import importlib
-import io
 import json
 import math
 import os
@@ -34,7 +33,6 @@ import re
 import sys
 import time
 import traceback
-import zipfile
 from datetime import datetime
 from functools import partial
 from pathlib import Path
@@ -50,7 +48,7 @@ from modules import chat, shared, training, ui, utils
 from modules.extensions import apply_extensions
 from modules.html_generator import chat_html_wrapper
 from modules.LoRA import add_lora_to_model
-from modules.models import load_model, load_soft_prompt, unload_model
+from modules.models import load_model, unload_model
 from modules.text_generation import (generate_reply_wrapper,
                                      get_encoded_length, stop_everything_event)
 
@@ -117,19 +115,6 @@ def load_preset_values(preset_menu, state, return_dict=False):
     else:
         state.update(generate_params)
         return state, *[generate_params[k] for k in ['do_sample', 'temperature', 'top_p', 'typical_p', 'epsilon_cutoff', 'eta_cutoff', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping', 'mirostat_mode', 'mirostat_tau', 'mirostat_eta', 'tfs', 'top_a']]
-
-
-def upload_soft_prompt(file):
-    with zipfile.ZipFile(io.BytesIO(file)) as zf:
-        zf.extract('meta.json')
-        j = json.loads(open('meta.json', 'r').read())
-        name = j['name']
-        Path('meta.json').unlink()
-
-    with open(Path(f'softprompts/{name}.zip'), 'wb') as f:
-        f.write(file)
-
-    return name
 
 
 def open_save_prompt():
@@ -510,16 +495,6 @@ def create_settings_menus(default_preset):
                         shared.gradio['mirostat_tau'] = gr.Slider(0, 10, step=0.01, value=generate_params['mirostat_tau'], label='mirostat_tau')
                         shared.gradio['mirostat_eta'] = gr.Slider(0, 1, step=0.01, value=generate_params['mirostat_eta'], label='mirostat_eta')
 
-                        gr.Markdown('Other')
-                        with gr.Accordion('Soft prompt', open=False):
-                            with gr.Row():
-                                shared.gradio['softprompts_menu'] = gr.Dropdown(choices=utils.get_available_softprompts(), value='None', label='Soft prompt')
-                                ui.create_refresh_button(shared.gradio['softprompts_menu'], lambda: None, lambda: {'choices': utils.get_available_softprompts()}, 'refresh-button')
-
-                            gr.Markdown('Upload a soft prompt (.zip format):')
-                            with gr.Row():
-                                shared.gradio['upload_softprompt'] = gr.File(type='binary', file_types=['.zip'])
-
             with gr.Box():
                 with gr.Row():
                     with gr.Column():
@@ -535,8 +510,6 @@ def create_settings_menus(default_preset):
             gr.Markdown('[Click here for more information.](https://github.com/oobabooga/text-generation-webui/blob/main/docs/Generation-parameters.md)')
 
     shared.gradio['preset_menu'].change(load_preset_values, [shared.gradio[k] for k in ['preset_menu', 'interface_state']], [shared.gradio[k] for k in ['interface_state', 'do_sample', 'temperature', 'top_p', 'typical_p', 'epsilon_cutoff', 'eta_cutoff', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping', 'mirostat_mode', 'mirostat_tau', 'mirostat_eta', 'tfs', 'top_a']])
-    shared.gradio['softprompts_menu'].change(load_soft_prompt, shared.gradio['softprompts_menu'], shared.gradio['softprompts_menu'], show_progress=True)
-    shared.gradio['upload_softprompt'].upload(upload_soft_prompt, shared.gradio['upload_softprompt'], shared.gradio['softprompts_menu'])
 
 
 def set_interface_arguments(interface_mode, extensions, bool_active):

@@ -1,12 +1,9 @@
 import gc
-import json
 import os
 import re
 import time
-import zipfile
 from pathlib import Path
 
-import numpy as np
 import torch
 import transformers
 from accelerate import infer_auto_device_map, init_empty_weights
@@ -338,32 +335,3 @@ def unload_model():
 def reload_model():
     unload_model()
     shared.model, shared.tokenizer = load_model(shared.model_name)
-
-
-def load_soft_prompt(name):
-    if name == 'None':
-        shared.soft_prompt = False
-        shared.soft_prompt_tensor = None
-    else:
-        with zipfile.ZipFile(Path(f'softprompts/{name}.zip')) as zf:
-            zf.extract('tensor.npy')
-            zf.extract('meta.json')
-            j = json.loads(open('meta.json', 'r').read())
-            logger.info(f"\nLoading the softprompt \"{name}\".")
-            for field in j:
-                if field != 'name':
-                    if type(j[field]) is list:
-                        logger.info(f"{field}: {', '.join(j[field])}")
-                    else:
-                        logger.info(f"{field}: {j[field]}")
-
-            tensor = np.load('tensor.npy')
-            Path('tensor.npy').unlink()
-            Path('meta.json').unlink()
-
-        tensor = torch.Tensor(tensor).to(device=shared.model.device, dtype=shared.model.dtype)
-        tensor = torch.reshape(tensor, (1, tensor.shape[0], tensor.shape[1]))
-        shared.soft_prompt = True
-        shared.soft_prompt_tensor = tensor
-
-    return name

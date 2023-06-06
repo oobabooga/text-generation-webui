@@ -12,8 +12,6 @@ tokenizer = None
 model_name = "None"
 model_type = None
 lora_names = []
-soft_prompt_tensor = None
-soft_prompt = False
 
 # Chat variables
 history = {'internal': [], 'visible': []}

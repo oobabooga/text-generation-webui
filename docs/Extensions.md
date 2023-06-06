@@ -160,11 +160,7 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
     min_rows = 3
 
     # Finding the maximum prompt size
-    chat_prompt_size = state['chat_prompt_size']
-    if shared.soft_prompt:
-        chat_prompt_size -= shared.soft_prompt_tensor.shape[1]
-
-    max_length = min(get_max_prompt_length(state), chat_prompt_size)
+    max_length = min(get_max_prompt_length(state), state['chat_prompt_size'])
 
     # Building the turn templates
     if 'turn_template' not in state or state['turn_template'] == '':
