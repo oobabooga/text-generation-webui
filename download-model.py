@@ -103,7 +103,7 @@ class ModelDownloader:
         classifications = []
         has_pytorch = False
         has_pt = False
-        has_ggml = False
+        # has_ggml = False
         has_safetensors = False
         is_lora = False
         while True:
@@ -148,7 +148,7 @@ class ModelDownloader:
                             has_pt = True
                             classifications.append('pt')
                         elif is_ggml:
-                            has_ggml = True
+                            # has_ggml = True
                             classifications.append('ggml')
 
             cursor = base64.b64encode(f'{{"file_name":"{dict[-1]["path"]}"}}'.encode()) + b':50'

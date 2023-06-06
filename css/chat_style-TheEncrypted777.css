@@ -11,6 +11,7 @@
     flex-direction: column-reverse;
     word-break: break-word;
     overflow-wrap: anywhere;
+    padding-top: 1px;
 }
 
 .message {

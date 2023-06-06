@@ -12,8 +12,6 @@ tokenizer = None
 model_name = "None"
 model_type = None
 lora_names = []
-soft_prompt_tensor = None
-soft_prompt = False
 
 # Chat variables
 history = {'internal': [], 'visible': []}
@@ -61,7 +59,7 @@ settings = {
     'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
     'chat_prompt_size': 2048,
     'chat_prompt_size_min': 0,
-    'chat_prompt_size_max': 2048,
+    'chat_prompt_size_max': 8192,
     'chat_generation_attempts': 1,
     'chat_generation_attempts_min': 1,
     'chat_generation_attempts_max': 10,

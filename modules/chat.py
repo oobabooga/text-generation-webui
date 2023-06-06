@@ -55,11 +55,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
     is_instruct = state['mode'] == 'instruct'
 
     # Find the maximum prompt size
-    chat_prompt_size = state['chat_prompt_size']
-    if shared.soft_prompt:
-        chat_prompt_size -= shared.soft_prompt_tensor.shape[1]
-
-    max_length = min(get_max_prompt_length(state), chat_prompt_size)
+    max_length = min(get_max_prompt_length(state), state['chat_prompt_size'])
     all_substrings = {
         'chat': get_turn_substrings(state, instruct=False),
         'instruct': get_turn_substrings(state, instruct=True)
@@ -441,6 +437,9 @@ def save_history(mode, timestamp=False):
 
         fname = f"Instruct_{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
     else:
+        if shared.character == 'None':
+            return
+
         if timestamp:
             fname = f"{shared.character}_{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
         else:
@@ -564,7 +563,7 @@ def load_character(character, name1, name2, instruct=False):
     if not instruct:
         shared.history['internal'] = []
         shared.history['visible'] = []
-        if Path(f'logs/{shared.character}_persistent.json').exists():
+        if shared.character != 'None' and Path(f'logs/{shared.character}_persistent.json').exists():
             load_history(open(Path(f'logs/{shared.character}_persistent.json'), 'rb').read(), name1, name2)
         else:
             # Insert greeting if it exists
