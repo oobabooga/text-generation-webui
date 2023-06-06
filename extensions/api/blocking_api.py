@@ -140,7 +140,7 @@ class Handler(BaseHTTPRequestHandler):
                     response = json.dumps({'error': { 'message': repr(e) } })
 
                     self.wfile.write(response.encode('utf-8'))
-                    return
+                    raise e
 
                 shared.args.model = shared.model_name
 
