@@ -451,6 +451,8 @@ def save_history(mode, timestamp=False):
     with open(Path(f'logs/{fname}'), 'w', encoding='utf-8') as f:
         f.write(json.dumps({'data': shared.history['internal'], 'data_visible': shared.history['visible']}, indent=2))
 
+    return Path(f'logs/{fname}')
+
 
 def load_history(file, name1, name2):
     file = file.decode('utf-8')
