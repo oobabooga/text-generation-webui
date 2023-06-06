@@ -441,6 +441,9 @@ def save_history(mode, timestamp=False):
 
         fname = f"Instruct_{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
     else:
+        if shared.character == 'None':
+            return
+
         if timestamp:
             fname = f"{shared.character}_{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
         else:
@@ -451,8 +454,6 @@ def save_history(mode, timestamp=False):
 
     with open(Path(f'logs/{fname}'), 'w', encoding='utf-8') as f:
         f.write(json.dumps({'data': shared.history['internal'], 'data_visible': shared.history['visible']}, indent=2))
-
-    return Path(f'logs/{fname}')
 
 
 def load_history(file, name1, name2):
