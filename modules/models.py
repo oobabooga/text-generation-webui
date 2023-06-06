@@ -15,7 +15,7 @@ from transformers import (AutoConfig, AutoModel, AutoModelForCausalLM,
                           BitsAndBytesConfig, LlamaTokenizer)
 
 import modules.shared as shared
-from modules import llama_attn_hijack, sampler_hijack
+from modules import llama_attn_hijack, sampler_hijack, falcon_fixer
 from modules.logging_colors import logger
 
 transformers.logging.set_verbosity_error()
@@ -108,7 +108,9 @@ def load_model(model_name):
     if any((shared.args.xformers, shared.args.sdp_attention)):
         llama_attn_hijack.hijack_llama_attention()
 
-    logger.info(f"Loaded the model in {(time.time()-t0):.2f} seconds.\n")
+    model = falcon_fixer.patch_falcon_rotary_embedding(model)
+
+    logger.info(f"Loaded the model in {(time.time() - t0):.2f} seconds.\n")
     return model, tokenizer
 
 
