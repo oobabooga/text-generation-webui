@@ -1088,6 +1088,22 @@ if __name__ == "__main__":
             'instruction_template': shared.settings['instruction_template']
         })
 
+    # This extension depends on having the model already fully loaded, including LoRA
+    if shared.use_guidance():
+        try:
+            import guidance
+        except ImportError:
+            raise ImportError("Please run 'pip install guidance' before using the guidance extension.")
+        
+        # For now only supports HF Transformers
+        # As far as I know, this includes GPTQ variants and LoRAs
+        shared.guidance_model = guidance.llms.Transformers(
+            model=shared.model,
+            tokenizer=shared.tokenizer,
+            device="auto"
+        )
+
+
     shared.generation_lock = Lock()
     # Launch the web UI
     create_interface()

@@ -11,6 +11,7 @@ model = None
 tokenizer = None
 model_name = "None"
 model_type = None
+guidance_model = None
 lora_names = []
 
 # Chat variables
@@ -174,6 +175,10 @@ parser.add_argument('--api-blocking-port', type=int, default=5000, help='The lis
 parser.add_argument('--api-streaming-port', type=int,  default=5005, help='The listening port for the streaming API.')
 parser.add_argument('--public-api', action='store_true', help='Create a public URL for the API using Cloudfare.')
 
+# Guidance Server
+parser.add_argument('--guidance', action='store_true', help='Enable the guidance API extension.')
+parser.add_argument('--guidance-port', type=int, default=9000, help='The listening port for the blocking guidance API.')
+
 # Multimodal
 parser.add_argument('--multimodal-pipeline', type=str, default=None, help='The multimodal pipeline to use. Examples: llava-7b, llava-13b.')
 
@@ -206,10 +211,11 @@ if args.api or args.public_api:
 if args.multimodal_pipeline is not None:
     add_extension('multimodal')
 
+if args.guidance:
+    add_extension("guidance_server")
 
 def is_chat():
     return args.chat
-
 
 # Loading model-specific settings
 with Path(f'{args.model_dir}/config.yaml') as p:
@@ -229,3 +235,7 @@ with Path(f'{args.model_dir}/config-user.yaml') as p:
                 model_config[k] = user_config[k]
 
 model_config = OrderedDict(model_config)
+
+
+def use_guidance():
+    return args.guidance
