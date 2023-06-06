@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 '''
 
 Converts a transformers model to safetensors format and shards it.

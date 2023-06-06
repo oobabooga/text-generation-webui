@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import re
 
 from num2words import num2words

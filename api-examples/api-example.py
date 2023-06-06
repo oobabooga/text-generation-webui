@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import requests
 
 # For local streaming, the websockets are hosted without ssl - http://

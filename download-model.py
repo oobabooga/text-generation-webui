@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 '''
 Downloads models from Hugging Face to models/username_modelname.
 
