@@ -1,13 +1,18 @@
 from pathlib import Path
 
 import torch
-from auto_gptq import get_gptq_peft_model
-from auto_gptq.utils.peft_utils import GPTQLoraConfig
 from peft import PeftModel
 
 import modules.shared as shared
 from modules.logging_colors import logger
 from modules.models import reload_model
+
+try:
+    from auto_gptq import get_gptq_peft_model
+    from auto_gptq.utils.peft_utils import GPTQLoraConfig
+    has_auto_gptq_peft = True
+except:
+    has_auto_gptq_peft = False
 
 
 def add_lora_to_model(lora_names):
@@ -21,6 +26,10 @@ def add_lora_to_model(lora_names):
     # AutoGPTQ case. It doesn't use the peft functions.
     # Copied from https://github.com/Ph0rk0z/text-generation-webui-testing
     if is_autogptq:
+        if not has_auto_gptq_peft:
+            logger.error("This version of AutoGPTQ does not support LoRA. You need to install from source or wait for a new release.")
+            return
+
         if len(prior_set) > 0:
             reload_model()
 
