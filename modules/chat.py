@@ -564,7 +564,7 @@ def load_character(character, name1, name2, instruct=False):
     if not instruct:
         shared.history['internal'] = []
         shared.history['visible'] = []
-        if Path(f'logs/{shared.character}_persistent.json').exists():
+        if shared.character != 'None' and Path(f'logs/{shared.character}_persistent.json').exists():
             load_history(open(Path(f'logs/{shared.character}_persistent.json'), 'rb').read(), name1, name2)
         else:
             # Insert greeting if it exists
