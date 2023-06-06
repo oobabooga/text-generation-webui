@@ -178,6 +178,8 @@ parser.add_argument('--public-api', action='store_true', help='Create a public U
 # Guidance Server
 parser.add_argument('--guidance', action='store_true', help='Enable the guidance API extension.')
 parser.add_argument('--guidance-port', type=int, default=9000, help='The listening port for the blocking guidance API.')
+parser.add_argument('--guidance-device', type=str, default='cuda', help='The listening port for the blocking guidance API.')
+
 
 # Multimodal
 parser.add_argument('--multimodal-pipeline', type=str, default=None, help='The multimodal pipeline to use. Examples: llava-7b, llava-13b.')
@@ -212,7 +214,7 @@ if args.multimodal_pipeline is not None:
     add_extension('multimodal')
 
 if args.guidance:
-    add_extension("guidance_server")
+    add_extension("guidance")
 
 def is_chat():
     return args.chat
@@ -236,6 +238,3 @@ with Path(f'{args.model_dir}/config-user.yaml') as p:
 
 model_config = OrderedDict(model_config)
 
-
-def use_guidance():
-    return args.guidance
