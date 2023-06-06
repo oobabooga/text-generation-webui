@@ -108,7 +108,8 @@ def load_model(model_name):
     if any((shared.args.xformers, shared.args.sdp_attention)):
         llama_attn_hijack.hijack_llama_attention()
 
-    model = falcon_fixer.patch_falcon_rotary_embedding(model)
+    if model.__class__.__name__ == 'RWForCausalLM':
+        model = falcon_fixer.patch_falcon_rotary_embedding(model)
 
     logger.info(f"Loaded the model in {(time.time() - t0):.2f} seconds.\n")
     return model, tokenizer

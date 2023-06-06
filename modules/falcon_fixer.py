@@ -4,7 +4,9 @@ from modules.logging_colors import logger
 def patch_falcon_rotary_embedding(model):
     """The `modelling_RW.py` provided with some of the Falcon models has a bug in its rotary embedding code where it doesn't respect the incoming datatypes. This causes a crash such as `RuntimeError: Expected query, key, and value to have the same dtype, but got query.dtype: float key.dtype: float and value.dtype: c10::Half instead.` when using a custom dtype.
 
-    Our fix is to monkeypatch `RotaryEmbedding.forward` to wrap the original implementation to cast the result back to the incoming dtype. This will have no effect if the original implementation is correct (since we'd convert from the same dtype to the same dtype which is a no-op.)
+    Our fix is to monkeypatch `RotaryEmbedding.forward`. We wrap the original implementation to cast the result back to the original dtype. This will have no effect when the original implementation is correct (since we'd convert from the same dtype to the same dtype which is a no-op), so is safe to do unconditionally.
+
+    The function returns the 'changed' model but really it changes the model in-place. It's just easier to return the model because that's what pytorch model functions tend to do.
     """
 
     if model.__class__.__name__ != 'RWForCausalLM':
@@ -25,5 +27,7 @@ def patch_falcon_rotary_embedding(model):
         child.__class__.forward = falcon_rotary_forward_wrapper
         # Since we're patching the class (not the instance), all instances will be patched.
         break
+    else:
+        logger.warning("This looks like a Falcon model, but couldn't find Falcon RotaryEmbedding to patch!")
 
     return model
