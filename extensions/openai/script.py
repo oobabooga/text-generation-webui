@@ -37,8 +37,8 @@ default_req_params = {
     'add_bos_token': True,
     'do_sample': True,
     'typical_p': 1.0,
-    'epsilon_cutoff': 0,  # In units of 1e-4
-    'eta_cutoff': 0,  # In units of 1e-4
+    'epsilon_cutoff': 0.0,  # In units of 1e-4
+    'eta_cutoff': 0.0,  # In units of 1e-4
     'tfs': 1.0,
     'top_a': 0.0,
     'min_length': 0,
