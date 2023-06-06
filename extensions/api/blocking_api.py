@@ -49,6 +49,48 @@ class Handler(BaseHTTPRequestHandler):
             })
 
             self.wfile.write(response.encode('utf-8'))
+            
+        elif self.path == '/api/v1/completions':
+            import string,datetime,random
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+
+            prompt = body['prompt']
+            generate_params = build_parameters(body)
+            stopping_strings = generate_params.pop('stopping_strings')
+            generate_params['stream'] = False
+
+            generator = generate_reply(
+                prompt, generate_params, stopping_strings=stopping_strings, is_chat=False)
+            answer = ''
+            for a in generator:
+                answer = a
+
+            prompt_tokens =len(encode(prompt)[0])
+            reponse_tokens =len(encode(answer)[0])
+            response = json.dumps(
+                {
+                    "choices": [
+                        {
+                        "finish_reason": "stop",
+                        "index": 0,
+                        "logprobs": None,
+                        "text": answer
+                        }
+                    ],
+                    "created": int(datetime.datetime.now().timestamp()),
+                    "id": str("cmpl-"+''.join(random.choice(string.ascii_letters + string.digits) for _ in range(26))),
+                    "model": str(shared.model_name),
+                    "object": "text_completion",
+                    "usage": {
+                        "completion_tokens": int(reponse_tokens),
+                        "prompt_tokens": int(prompt_tokens),
+                        "total_tokens": int(reponse_tokens+prompt_tokens)
+                    }
+                },indent=4
+            )
+            self.wfile.write(response.encode('utf-8'))
 
         elif self.path == '/api/v1/chat':
             self.send_response(200)
