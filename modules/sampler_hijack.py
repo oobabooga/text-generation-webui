@@ -135,7 +135,7 @@ def generation_config_init_patch(self, **kwargs):
     self.__init___old(**kwargs)
     self.tfs = kwargs.pop("tfs", 1.0)
     self.top_a = kwargs.pop("top_a", 0.0)
-    self.mirostat_mode = kwargs.pop("mirostat_mode", 2)
+    self.mirostat_mode = kwargs.pop("mirostat_mode", 0)
     self.mirostat_eta = kwargs.pop("mirostat_eta", 0.1)
     self.mirostat_tau = kwargs.pop("mirostat_tau", 5)
 
