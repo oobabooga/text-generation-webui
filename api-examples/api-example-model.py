@@ -4,7 +4,6 @@ import requests
 
 HOST = '0.0.0.0:5000'
 
-
 def generate(prompt, tokens = 200):
     request = { 'prompt': prompt, 'max_new_tokens': tokens }
     response = requests.post(f'http://{HOST}/api/v1/generate', json=request)
