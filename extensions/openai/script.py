@@ -7,6 +7,8 @@ import yaml
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
 from modules.utils import get_available_models
+from modules.models import load_model, unload_model
+from server import get_model_specific_settings, update_model_parameters
 
 import numpy as np
 
@@ -142,41 +144,83 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write("OK".encode('utf-8'))
 
     def do_GET(self):
-        if self.path.startswith('/v1/models'):
-            self.send_response(200)
-            self.send_access_control_headers()
-            self.send_header('Content-Type', 'application/json')
-            self.end_headers()
-
-            # TODO: Lora's?
-            # This API should list capabilities, limits and pricing...
-            current_model_list = [ shared.model_name ] # The real chat/completions model
+        if self.path.startswith('/v1/engines') or self.path.startswith('/v1/models'):
+            current_model_list = [ shared.model_name ] # The real chat/completions model, maybe "None"
             embeddings_model_list = [ st_model ] if embedding_model else [] # The real sentence transformer embeddings model
             pseudo_model_list = [ # these are expected by so much, so include some here as a dummy
                 'gpt-3.5-turbo', # /v1/chat/completions
                 'text-curie-001', # /v1/completions, 2k context
                 'text-davinci-002' # /v1/embeddings text-embedding-ada-002:1536, text-davinci-002:768
             ]
-            available_model_list = get_available_models()
-            all_model_list = current_model_list + embeddings_model_list + pseudo_model_list + available_model_list
 
-            models = [{ "id": id, "object": "model", "owned_by": "user", "permission": [] } for id in all_model_list ]
+            is_legacy = 'engines' in self.path
+            is_list = self.path in ['/v1/engines', '/v1/models']
 
-            response = ''
-            if self.path == '/v1/models':
-                response = json.dumps({
+            resp = ''
+
+            if is_legacy and not is_list: # load model
+                model_name = self.path[self.path.find('/v1/engines/') + len('/v1/engines/'):]
+
+                resp = {
+                    "id": model_name,
+                    "object": "engine",
+                    "owner": "self",
+                    "ready": True,
+                }
+                if model_name not in pseudo_model_list + embeddings_model_list + current_model_list: # Real model only
+                    # No args. Maybe it works anyways!
+                    # TODO: hack some heuristics into args for better results
+
+                    shared.model_name = model_name
+                    unload_model()
+
+                    model_settings = get_model_specific_settings(shared.model_name)
+                    shared.settings.update(model_settings)
+                    update_model_parameters(model_settings, initial=True)
+
+                    if shared.settings['mode'] != 'instruct':
+                        shared.settings['instruction_template'] = None
+
+                    shared.model, shared.tokenizer = load_model(shared.model_name)
+
+                    if not shared.model: # load failed.
+                        shared.model_name = "None"
+                        resp['id'] = "None"
+                        resp['ready'] = False
+
+            elif is_list:
+                # TODO: Lora's?
+                available_model_list = get_available_models()
+                all_model_list = current_model_list + embeddings_model_list + pseudo_model_list + available_model_list
+
+                models = {}
+
+                if is_legacy:
+                    models = [{ "id": id, "object": "engine", "owner": "user", "ready": True } for id in all_model_list ]
+                    if not shared.model:
+                        models[0]['ready'] = False
+                else:
+                    models = [{ "id": id, "object": "model", "owned_by": "user", "permission": [] } for id in all_model_list ]
+
+                resp = {
                     "object": "list",
                     "data": models,
-                })
+                }
+
             else:
                 the_model_name = self.path[len('/v1/models/'):]
-                response = json.dumps({
+                resp = {
                     "id": the_model_name,
                     "object": "model",
                     "owned_by": "user",
                     "permission": []
-                })
+                }
 
+            self.send_response(200)
+            self.send_access_control_headers()
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            response = json.dumps(resp)
             self.wfile.write(response.encode('utf-8'))
 
         elif '/billing/usage' in self.path:
