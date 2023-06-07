@@ -4,11 +4,6 @@ import requests
 
 HOST = '0.0.0.0:5000'
 
-def model_api(request):
-    response = requests.post(f'http://{HOST}/api/v1/model', json=request)
-
-    return response.json()
-
 
 def generate(prompt, tokens = 200):
     request = { 'prompt': prompt, 'max_new_tokens': tokens }
@@ -18,17 +13,44 @@ def generate(prompt, tokens = 200):
         return response.json()['results'][0]['text']
 
 
-def guess_groupsize(model):
-    if '1024g' in model:
-        return 1024
-    elif '128g' in model:
-        return 128
-    elif '32g' in model:
-        return 32
-    else:
-        return -1
+def model_api(request):
+    response = requests.post(f'http://{HOST}/api/v1/model', json=request)
+    return response.json()
 
-def auto_model_loader_req(model):
+
+# print some common settings
+def print_basic_model_info(response):
+    basic_settings = ['truncation_length', 'instruction_template']
+    print("Model: ", response['result']['model_name'])
+    print("Lora(s): ", response['result']['lora_names'])
+    for setting in basic_settings:
+        print(setting, "=",  response['result']['shared.settings'][setting])
+
+
+# model info
+def model_info():
+    response = model_api({'action': 'info'})
+    print_basic_model_info(response)
+
+
+# simple loader
+def model_load(model_name):
+    return model_api({'action': 'load', 'model_name': model_name})
+
+
+# complex loader
+def complex_model_load(model):
+
+    def guess_groupsize(model_name):
+        if '1024g' in model_name:
+            return 1024
+        elif '128g' in model_name:
+            return 128
+        elif '32g' in model_name:
+            return 32
+        else:
+            return -1
+
     req = {
         'action': 'load',
         'model_name': model,
@@ -39,7 +61,6 @@ def auto_model_loader_req(model):
             'load_in_8bit': False,
             'groupsize': 0,
             'wbits': 0,
-            'trust_remote_code': False,
 
             # llama.cpp
             'threads': 0,
@@ -105,29 +126,25 @@ def auto_model_loader_req(model):
             req['args']['rwkv_strategy'] = 'cuda f16' # 24GB
 
 
-    if 'mpt-7b' in model or 'chatglm' in model:
-        req['args']['trust_remote_code'] = True
-
-    return req
+    return model_api(req)
 
 
 if __name__ == '__main__':
     for model in model_api({'action': 'list'})['result']:
-        req = auto_model_loader_req(model)
-
         try:
-            resp = model_api(req)
+            resp = complex_model_load(model)
 
             if 'error' in resp:
                 print (f"❌ {model} FAIL Error: {resp['error']['message']}")
                 continue
+            else:
+                print_basic_model_info(resp)
 
             ans = generate("0,1,1,2,3,5,8,13,", tokens=2)
 
             if '21' in ans:
                 print (f"✅ {model} PASS ({ans})")
             else:
-                print(model, req, resp)
                 print (f"❌ {model} FAIL ({ans})")
 
         except Exception as e:
@@ -136,11 +153,25 @@ if __name__ == '__main__':
 
 # 0,1,1,2,3,5,8,13, is the fibonacci sequence, the next number is 21.
 # Some results below.
-# Some folders were renamed so the auto-loader worked, Ex: added -hf or -128g, etc.
 """ $ ./model-api-example.py 
-✅ eachadea_vicuna-13b-1.1-HF PASS (21)
-✅ gpt4-x-alpaca-13b-native-4bit-128g PASS (21)
-✅ koala-13B-HF PASS (21)
-✅ llama-7b-4bit-1g PASS (21)
-❌ llama-7b-hf FAIL Error: FileNotFoundError(2, 'No such file or directory')
+Model:  4bit_gpt4-x-alpaca-13b-native-4bit-128g-cuda
+Lora(s):  []
+truncation_length = 2048
+instruction_template = Alpaca
+✅ 4bit_gpt4-x-alpaca-13b-native-4bit-128g-cuda PASS (21)
+Model:  4bit_WizardLM-13B-Uncensored-4bit-128g
+Lora(s):  []
+truncation_length = 2048
+instruction_template = WizardLM
+✅ 4bit_WizardLM-13B-Uncensored-4bit-128g PASS (21)
+Model:  Aeala_VicUnlocked-alpaca-30b-4bit
+Lora(s):  []
+truncation_length = 2048
+instruction_template = Alpaca
+✅ Aeala_VicUnlocked-alpaca-30b-4bit PASS (21)
+Model:  alpaca-30b-4bit
+Lora(s):  []
+truncation_length = 2048
+instruction_template = Alpaca
+✅ alpaca-30b-4bit PASS (21)
 """
