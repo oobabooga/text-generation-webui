@@ -620,6 +620,12 @@ def create_interface():
                     shared.gradio['mode'] = gr.Radio(choices=['chat', 'chat-instruct', 'instruct'], value=shared.settings['mode'] if shared.settings['mode'] in ['chat', 'instruct', 'chat-instruct'] else 'chat', label='Mode', info='Defines how the chat prompt is generated. In instruct and chat-instruct modes, the instruction template selected under "Chat settings" must match the current model.')
                     shared.gradio['chat_style'] = gr.Dropdown(choices=utils.get_available_chat_styles(), label='Chat style', value=shared.settings['chat_style'], visible=shared.settings['mode'] != 'instruct')
 
+                with gr.Row():
+                    # multi-user handler
+                    if shared.is_multi_user():
+                        shared.gradio['generate_uuid'] = gr.Textbox(label='generate_uuid', visible=False)
+                        uuid_box = gr.Textbox(label='uuid', visible=False)
+            
             with gr.Tab('Chat settings', elem_id='chat-settings'):
                 with gr.Row():
                     with gr.Column(scale=8):
@@ -684,11 +690,6 @@ def create_interface():
 
             with gr.Tab("Parameters", elem_id="parameters"):
                 create_settings_menus(default_preset)
-                
-            # multi-user handler
-            if shared.is_multi_user():
-                shared.gradio['generate_uuid'] = gr.Textbox(label='generate_uuid', visible=False)
-                uuid_box = gr.Textbox(label='uuid', visible=False)
 
         # Create notebook mode interface
         elif shared.args.notebook:
