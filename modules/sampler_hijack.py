@@ -89,7 +89,10 @@ class MirostatLogitsWarper(LogitsWarper):
         # Truncate the words with surprise values greater than mu
         for i, candidate in enumerate(prob_original):
             if candidate > 0 and -math.log2(candidate) > self.mu:
-                sorted_logits = sorted_logits[:i]
+                if(i==0):
+                    sorted_logits = sorted_logits[:1]
+                else:
+                    sorted_logits = sorted_logits[:i]
                 break
 
         # Normalize the probabilities of the remaining words
