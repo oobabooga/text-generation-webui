@@ -16,15 +16,14 @@ from modules.html_generator import generate_4chan_html, generate_basic_html
 from modules.logging_colors import logger
 from modules.models import clear_torch_cache, local_rank
 
-
 def generate_reply(*args, **kwargs):
-    shared.generation_lock.acquire()
+    if not shared.is_multi_user(): # Already acquired when multi_user mode. Refer to modules.chat.chatbot_wrapper.
+        shared.generation_sema.acquire()
     try:
         for result in _generate_reply(*args, **kwargs):
             yield result
     finally:
-        shared.generation_lock.release()
-
+        shared.generation_sema.release()
 
 def get_max_prompt_length(state):
     return state['truncation_length'] - state['max_new_tokens']

@@ -36,7 +36,7 @@ import traceback
 from datetime import datetime
 from functools import partial
 from pathlib import Path
-from threading import Lock
+from threading import Semaphore
 
 import psutil
 import torch
@@ -1011,7 +1011,9 @@ def create_interface():
         extensions_module.create_extensions_block()
 
     # Launch the interface
-    shared.gradio['interface'].queue(concurrency_count=10 if shared.is_multi_user() else 1)
+    shared.gradio['interface'].queue(
+        concurrency_count=shared.args.multi_cnt * 2 if shared.is_multi_user() else 1 # multi_cnt*2 for Waiters
+    )
     if shared.args.listen:
         shared.gradio['interface'].launch(prevent_thread_lock=(not shared.is_multi_user()), share=shared.args.share, server_name=shared.args.listen_host or '0.0.0.0', server_port=shared.args.listen_port, inbrowser=shared.args.auto_launch, auth=auth)
     else:
@@ -1111,8 +1113,8 @@ if __name__ == "__main__":
         shared.persistent_interface_state.update({
             'generate_uuid': True
         })
-    
-    shared.generation_lock = Lock()
+
+    shared.generation_sema = Semaphore(shared.args.multi_cnt if shared.is_multi_user() else 1)
     # Launch the web UI
     create_interface()
     while True:

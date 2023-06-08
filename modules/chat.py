@@ -194,8 +194,20 @@ def chatbot_wrapper(text, history, state, regenerate=False, _continue=False, loa
     visible_text = None
     eos_token = '\n' if state['stop_at_newline'] else None
     stopping_strings = get_stopping_strings(state)
+    is_waiting = False
 
     # Preparing the input
+    # *Is waiting for generation queue...*
+    if shared.is_multi_user():
+        while(not shared.generation_sema.acquire(timeout=.1)):
+            if not is_waiting:
+                yield {'visible': output['visible'] + [[text, shared.waiting_message]], 'internal': output['internal']}
+                is_waiting = True
+            if shared.stop_everything:
+                yield output
+                shared.generation_sema.release()
+                return
+        is_waiting = False
     if not any((regenerate, _continue)):
         text, visible_text = apply_extensions('input_hijack', text, visible_text)
         if visible_text is None:
@@ -330,7 +342,7 @@ def generate_chat_reply_wrapper(text, start_with, state, uuid_box=None, regenera
         send_dummy_message(text)
         send_dummy_reply(start_with)
 
-    if uuid_box:
+    if shared.is_multi_user():
         for i, history in enumerate(generate_chat_reply(text, shared.multi_history[uuid_box], state, regenerate, _continue, loading_message=True)):
             if i != 0:
                 shared.multi_history[uuid_box] = copy.deepcopy(history)

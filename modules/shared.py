@@ -6,7 +6,7 @@ import yaml
 
 from modules.logging_colors import logger
 
-generation_lock = None
+generation_sema = None
 model = None
 tokenizer = None
 model_name = "None"
@@ -19,6 +19,7 @@ multi_history = {}
 character = 'None'
 stop_everything = False
 processing_message = '*Is typing...*'
+waiting_message = '*Is waiting for generation queue...*'
 
 # UI elements (buttons, sliders, HTML, etc)
 gradio = {}
@@ -98,6 +99,7 @@ parser.add_argument('--settings', type=str, help='Load the default interface set
 parser.add_argument('--extensions', type=str, nargs="+", help='The list of extensions to load. If you want to load more than one extension, write the names separated by spaces.')
 parser.add_argument('--verbose', action='store_true', help='Print the prompts to the terminal.')
 parser.add_argument('--multi_user', action='store_true', help='Use Multi-user history instead of single history. Only works in chat mode.')
+parser.add_argument('--multi_cnt', type=int, default=10, help='Size of the prompt context.')
 
 # Accelerate/transformers
 parser.add_argument('--cpu', action='store_true', help='Use the CPU to generate text. Warning: Training on CPU is extremely slow.')
