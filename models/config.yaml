@@ -196,3 +196,9 @@ llama-65b-gptq-3bit:
 .*gpt4all-.*-snoozy:
   mode: 'instruct'
   instruction_template: 'WizardLM'
+.*lazarus:
+  mode: 'instruct'
+  instruction_template: 'Alpaca'
+.*based-:
+  mode: 'instruct'
+  instruction_template: 'Vicuna-v1.1'
