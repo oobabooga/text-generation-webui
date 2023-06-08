@@ -1011,11 +1011,11 @@ def create_interface():
         extensions_module.create_extensions_block()
 
     # Launch the interface
-    shared.gradio['interface'].queue()
+    shared.gradio['interface'].queue(concurrency_count=10 if shared.is_multi_user() else 1)
     if shared.args.listen:
-        shared.gradio['interface'].launch(prevent_thread_lock=True, share=shared.args.share, server_name=shared.args.listen_host or '0.0.0.0', server_port=shared.args.listen_port, inbrowser=shared.args.auto_launch, auth=auth)
+        shared.gradio['interface'].launch(prevent_thread_lock=(not shared.is_multi_user()), share=shared.args.share, server_name=shared.args.listen_host or '0.0.0.0', server_port=shared.args.listen_port, inbrowser=shared.args.auto_launch, auth=auth)
     else:
-        shared.gradio['interface'].launch(prevent_thread_lock=True, share=shared.args.share, server_port=shared.args.listen_port, inbrowser=shared.args.auto_launch, auth=auth)
+        shared.gradio['interface'].launch(prevent_thread_lock=(not shared.is_multi_user()), share=shared.args.share, server_port=shared.args.listen_port, inbrowser=shared.args.auto_launch, auth=auth)
 
 
 if __name__ == "__main__":
