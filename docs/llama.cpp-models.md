@@ -30,8 +30,8 @@ CMAKE_ARGS="-DLLAMA_CUBLAS=on" FORCE_CMAKE=1 pip install llama-cpp-python --no-c
 
 ```
 pip uninstall -y llama-cpp-python
-set CMAKE_ARGS="-DLLAMA_CUBLAS=on"
-set FORCE_CMAKE=1
+set "CMAKE_ARGS=-DLLAMA_OPENBLAS=on"
+set "FORCE_CMAKE=1"
 pip install llama-cpp-python --no-cache-dir
 ```
 
