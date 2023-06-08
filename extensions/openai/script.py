@@ -456,7 +456,7 @@ class Handler(BaseHTTPRequestHandler):
             # generate reply #######################################
             if debug:
                 print({'prompt': prompt, 'req_params': req_params})
-            generator = generate_reply(prompt, req_params, is_chat=False)
+            generator = generate_reply(prompt, req_params, stopping_strings=req_params['custom_stopping_strings'], is_chat=False)
 
             answer = ''
             seen_content = ''
@@ -613,6 +613,7 @@ class Handler(BaseHTTPRequestHandler):
 
             # Request parameters
             req_params = default_req_params.copy()
+            req_params['custom_stopping_strings'] = default_req_params['custom_stopping_strings'].copy()
 
             # Alpaca is verbose so a good default prompt
             default_template = (
@@ -622,7 +623,7 @@ class Handler(BaseHTTPRequestHandler):
             )
 
             instruction_template = default_template
-            req_params['custom_stopping_strings'] = [ '\n###' ]
+            
 
             # Use the special instruction/input/response template for anything trained like Alpaca
             if not (shared.settings['instruction_template'] in ['Alpaca', 'Alpaca-Input']):
@@ -637,7 +638,7 @@ class Handler(BaseHTTPRequestHandler):
 
                     instruction_template = instruct.get('context', '') + template[:template.find('<|bot-message|>')].rstrip(' ')
                     if instruct['user']:
-                        req_params['custom_stopping_strings'] = [ '\n' + instruct['user'], instruct['user'] ]
+                        req_params['custom_stopping_strings'].extend(['\n' + instruct['user'], instruct['user'] ])
                 except:
                     pass
 
@@ -657,11 +658,27 @@ class Handler(BaseHTTPRequestHandler):
             if debug:
                 print({'edit_template': edit_task, 'req_params': req_params, 'token_count': token_count})
             
-            generator = generate_reply(edit_task, req_params, is_chat=False)
+            generator = generate_reply(edit_task, req_params, stopping_strings=req_params['custom_stopping_strings'], is_chat=False)
 
+            longest_stop_len = max([len(x) for x in req_params['custom_stopping_strings']] + [0])
             answer = ''
+            seen_content = ''
             for a in generator:
                 answer = a
+
+                stop_string_found = False
+                len_seen = len(seen_content)
+                search_start = max(len_seen - longest_stop_len, 0)
+
+                for string in req_params['custom_stopping_strings']:
+                    idx = answer.find(string, search_start)
+                    if idx != -1:
+                        answer = answer[:idx]  # clip it.
+                        stop_string_found = True
+
+                if stop_string_found:
+                    break
+
 
             # some reply's have an extra leading space to fit the instruction template, just clip it off from the reply.
             if edit_task[-1] != '\n' and answer and answer[0] == ' ':
