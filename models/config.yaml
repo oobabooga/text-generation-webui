@@ -193,3 +193,6 @@ llama-65b-gptq-3bit:
 .*hippogriff:
   mode: 'instruct'
   instruction_template: 'Hippogriff'
+.*gpt4all-.*-snoozy:
+  mode: 'instruct'
+  instruction_template: 'WizardLM'
