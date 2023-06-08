@@ -414,7 +414,8 @@ class Handler(BaseHTTPRequestHandler):
                     prompt = body['prompt']  # XXX this can be different types
 
                 if isinstance(prompt, list):
-                    prompt = ''.join(prompt)  # XXX this is wrong... need to split out to multiple calls?
+                    self.openai_error("API Batched generation not yet supported.")
+                    return
 
                 token_count = len(encode(prompt)[0])
                 if token_count >= req_params['truncation_length']:
