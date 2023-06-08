@@ -202,3 +202,9 @@ TheBloke_WizardLM-30B-GPTQ:
 .*gpt4all-.*-snoozy:
   mode: 'instruct'
   instruction_template: 'WizardLM'
+.*lazarus:
+  mode: 'instruct'
+  instruction_template: 'Alpaca'
+.*based-:
+  mode: 'instruct'
+  instruction_template: 'Vicuna-v1.1'
