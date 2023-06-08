@@ -199,3 +199,6 @@ TheBloke_WizardLM-30B-GPTQ:
 .*hippogriff:
   mode: 'instruct'
   instruction_template: 'Hippogriff'
+.*gpt4all-.*-snoozy:
+  mode: 'instruct'
+  instruction_template: 'WizardLM'
