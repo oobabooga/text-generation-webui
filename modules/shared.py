@@ -192,6 +192,8 @@ if args.trust_remote_code:
 if args.share:
     logger.warning("The gradio \"share link\" feature uses a proprietary executable to create a reverse tunnel. Use it with care.")
 
+if args.multi_user and not args.chat:
+    logger.warning("Currently multi_user support is available only for chat mode. Use --chat argument to apply it.")
 
 def add_extension(name):
     if args.extensions is None:
@@ -213,7 +215,7 @@ def is_chat():
     return args.chat
 
 def is_multi_user():
-    return args.multi_user
+    return args.multi_user and args.chat
 
 # Loading model-specific settings
 with Path(f'{args.model_dir}/config.yaml') as p:
