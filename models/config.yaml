@@ -188,3 +188,6 @@ llama-65b-gptq-3bit:
   mode: 'instruct'
   instruction_template: 'Vicuna-v1.1'
   truncation_length: 4096
+.*WizardLM-30B-V1.0:
+  mode: 'instruct'
+  instruction_template: 'Vicuna-v1.1'
