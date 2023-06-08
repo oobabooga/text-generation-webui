@@ -187,4 +187,9 @@ llama-65b-gptq-3bit:
 .*airoboros-13b-gpt4:
   mode: 'instruct'
   instruction_template: 'Vicuna-v1.1'
-  truncation_length: 4096
+.*(alpacino|alpasta):
+  mode: 'instruct'
+  instruction_template: 'Alpaca'
+.*hippogriff:
+  mode: 'instruct'
+  instruction_template: 'Hippogriff'
