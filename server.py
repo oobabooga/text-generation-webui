@@ -687,8 +687,8 @@ def create_interface():
                 
             # multi-user handler
             if shared.is_multi_user():
-                shared.gradio['generate_uuid'] = gr.Textbox(label='generate_uuid', visible=True)
-                uuid_box = gr.Textbox(label='uuid', visible=True)
+                shared.gradio['generate_uuid'] = gr.Textbox(label='generate_uuid', visible=False)
+                uuid_box = gr.Textbox(label='uuid', visible=False)
 
         # Create notebook mode interface
         elif shared.args.notebook:
