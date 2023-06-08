@@ -15,6 +15,7 @@ lora_names = []
 
 # Chat variables
 history = {'internal': [], 'visible': []}
+multi_history = {}
 character = 'None'
 stop_everything = False
 processing_message = '*Is typing...*'
@@ -96,6 +97,7 @@ parser.add_argument('--no-stream', action='store_true', help='Don\'t stream the 
 parser.add_argument('--settings', type=str, help='Load the default interface settings from this yaml file. See settings-template.yaml for an example. If you create a file called settings.yaml, this file will be loaded by default without the need to use the --settings flag.')
 parser.add_argument('--extensions', type=str, nargs="+", help='The list of extensions to load. If you want to load more than one extension, write the names separated by spaces.')
 parser.add_argument('--verbose', action='store_true', help='Print the prompts to the terminal.')
+parser.add_argument('--multi_user', action='store_true', help='Use Multi-user history instead of single history. Only works in chat mode.')
 
 # Accelerate/transformers
 parser.add_argument('--cpu', action='store_true', help='Use the CPU to generate text. Warning: Training on CPU is extremely slow.')
@@ -210,6 +212,8 @@ if args.multimodal_pipeline is not None:
 def is_chat():
     return args.chat
 
+def is_multi_user():
+    return args.multi_user
 
 # Loading model-specific settings
 with Path(f'{args.model_dir}/config.yaml') as p:

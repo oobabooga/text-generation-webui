@@ -7,6 +7,7 @@ import json
 import re
 from datetime import datetime
 from pathlib import Path
+import uuid
 
 import yaml
 from PIL import Image
@@ -319,7 +320,7 @@ def generate_chat_reply(text, history, state, regenerate=False, _continue=False,
 
 
 # Same as above but returns HTML for the UI
-def generate_chat_reply_wrapper(text, start_with, state, regenerate=False, _continue=False):
+def generate_chat_reply_wrapper(text, start_with, state, uuid_box=None, regenerate=False, _continue=False):
     if start_with != '' and _continue == False:
         if regenerate == True:
             text = remove_last_message()
@@ -329,11 +330,18 @@ def generate_chat_reply_wrapper(text, start_with, state, regenerate=False, _cont
         send_dummy_message(text)
         send_dummy_reply(start_with)
 
-    for i, history in enumerate(generate_chat_reply(text, shared.history, state, regenerate, _continue, loading_message=True)):
-        if i != 0:
-            shared.history = copy.deepcopy(history)
-
-        yield chat_html_wrapper(history['visible'], state['name1'], state['name2'], state['mode'], state['chat_style'])
+    if uuid_box:
+        for i, history in enumerate(generate_chat_reply(text, shared.multi_history[uuid_box], state, regenerate, _continue, loading_message=True)):
+            if i != 0:
+                shared.multi_history[uuid_box] = copy.deepcopy(history)
+    
+            yield chat_html_wrapper(history['visible'], state['name1'], state['name2'], state['mode'], state['chat_style'])
+    else:
+        for i, history in enumerate(generate_chat_reply(text, shared.history, state, regenerate, _continue, loading_message=True)):
+            if i != 0:
+                shared.history = copy.deepcopy(history)
+    
+            yield chat_html_wrapper(history['visible'], state['name1'], state['name2'], state['mode'], state['chat_style'])
 
 
 def remove_last_message():
@@ -373,20 +381,29 @@ def send_dummy_reply(text):
     shared.history['internal'][-1][1] = apply_extensions("input", text)
 
 
-def clear_chat_log(greeting, mode):
-    shared.history['visible'] = []
-    shared.history['internal'] = []
+def clear_chat_log(greeting, mode, uuid_box=None):
+    if uuid_box:
+        shared.multi_history[uuid_box]['visible'] = []
+        shared.multi_history[uuid_box]['internal'] = []
+    else:
+        shared.history['visible'] = []
+        shared.history['internal'] = []
 
     if mode != 'instruct':
         if greeting != '':
-            shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
-            shared.history['visible'] += [['', apply_extensions("output", greeting)]]
+            if uuid_box:
+                shared.multi_history[uuid_box]['visible'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
+                shared.multi_history[uuid_box]['internal'] += [['', apply_extensions("output", greeting)]]
+            else:
+                shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
+                shared.history['visible'] += [['', apply_extensions("output", greeting)]]
 
-        save_history(mode)
+        save_history(mode, uuid_box)
 
 
-def redraw_html(name1, name2, mode, style, reset_cache=False):
-    return chat_html_wrapper(shared.history['visible'], name1, name2, mode, style, reset_cache=reset_cache)
+def redraw_html(name1, name2, mode, style, uuid_box=None, reset_cache=False):
+    _history = shared.multi_history[uuid_box] if uuid_box else shared.history
+    return chat_html_wrapper(_history['visible'], name1, name2, mode, style, reset_cache=reset_cache)
 
 
 def tokenize_dialogue(dialogue, name1, name2):
@@ -428,7 +445,7 @@ def tokenize_dialogue(dialogue, name1, name2):
     return history
 
 
-def save_history(mode, timestamp=False):
+def save_history(mode, uuid_box='', timestamp=False):
     # Instruct mode histories should not be saved as if
     # Alpaca or Vicuna were characters
     if mode == 'instruct':
@@ -441,15 +458,17 @@ def save_history(mode, timestamp=False):
             return
 
         if timestamp:
-            fname = f"{shared.character}_{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
+            fname = f"{shared.character}_{datetime.now().strftime('%Y%m%d-%H%M%S')}{'_' if uuid_box else ''}{uuid_box}.json"
         else:
-            fname = f"{shared.character}_persistent.json"
+            fname = f"{shared.character}_persistent{'_' if uuid_box else ''}{uuid_box}.json"
 
     if not Path('logs').exists():
         Path('logs').mkdir()
 
+    _history = shared.multi_history[uuid_box] if uuid_box else shared.history
+    
     with open(Path(f'logs/{fname}'), 'w', encoding='utf-8') as f:
-        f.write(json.dumps({'data': shared.history['internal'], 'data_visible': shared.history['visible']}, indent=2))
+        f.write(json.dumps({'data': _history['internal'], 'data_visible': _history['visible']}, indent=2))
 
     return Path(f'logs/{fname}')
 
@@ -666,3 +685,10 @@ def delete_character(name, instruct=False):
         delete_file(Path(f'{folder}/{name}.{extension}'))
 
     delete_file(Path(f'{folder}/{name}.png'))
+
+def generate_uuid():
+    id = uuid.uuid4().hex
+    shared.multi_history[id] = copy.deepcopy(shared.history)
+
+    return id
+    

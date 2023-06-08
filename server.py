@@ -584,7 +584,7 @@ def create_interface():
 
         # Create chat mode interface
         if shared.is_chat():
-            shared.input_elements = ui.list_interface_input_elements(chat=True)
+            shared.input_elements = ui.list_interface_input_elements(chat=True, multi_user=shared.is_multi_user())
             shared.gradio['interface_state'] = gr.State({k: None for k in shared.input_elements})
             shared.gradio['Chat input'] = gr.State()
             shared.gradio['dummy'] = gr.State()
@@ -684,6 +684,11 @@ def create_interface():
 
             with gr.Tab("Parameters", elem_id="parameters"):
                 create_settings_menus(default_preset)
+                
+            # multi-user handler
+            if shared.is_multi_user():
+                shared.gradio['generate_uuid'] = gr.Textbox(label='generate_uuid', visible=True)
+                uuid_box = gr.Textbox(label='uuid', visible=True)
 
         # Create notebook mode interface
         elif shared.args.notebook:
@@ -806,14 +811,21 @@ def create_interface():
         # chat mode event handlers
         if shared.is_chat():
             shared.input_params = [shared.gradio[k] for k in ['Chat input', 'start_with', 'interface_state']]
+            save_params = [shared.gradio['mode']]
             clear_arr = [shared.gradio[k] for k in ['Clear history-confirm', 'Clear history', 'Clear history-cancel']]
+            clear_params = [shared.gradio[k] for k in ['greeting', 'mode']]
             shared.reload_inputs = [shared.gradio[k] for k in ['name1', 'name2', 'mode', 'chat_style']]
+            if shared.is_multi_user():
+                shared.input_params += [uuid_box]
+                save_params += [uuid_box]
+                clear_params += [uuid_box]
+                shared.reload_inputs += [uuid_box]
 
             gen_events.append(shared.gradio['Generate'].click(
                 ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
                 lambda x: (x, ''), shared.gradio['textbox'], [shared.gradio['Chat input'], shared.gradio['textbox']], show_progress=False).then(
                 chat.generate_chat_reply_wrapper, shared.input_params, shared.gradio['display'], show_progress=False).then(
-                chat.save_history, shared.gradio['mode'], None, show_progress=False).then(
+                chat.save_history, save_params, None, show_progress=False).then(
                 lambda: None, None, None, _js=f"() => {{{audio_notification_js}}}")
             )
 
@@ -821,7 +833,7 @@ def create_interface():
                 ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
                 lambda x: (x, ''), shared.gradio['textbox'], [shared.gradio['Chat input'], shared.gradio['textbox']], show_progress=False).then(
                 chat.generate_chat_reply_wrapper, shared.input_params, shared.gradio['display'], show_progress=False).then(
-                chat.save_history, shared.gradio['mode'], None, show_progress=False).then(
+                chat.save_history, save_params, None, show_progress=False).then(
                 lambda: None, None, None, _js=f"() => {{{audio_notification_js}}}")
             )
 
@@ -866,7 +878,7 @@ def create_interface():
 
             shared.gradio['Clear history-confirm'].click(
                 lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, clear_arr).then(
-                chat.clear_chat_log, [shared.gradio[k] for k in ['greeting', 'mode']], None).then(
+                chat.clear_chat_log, clear_params, None).then(
                 chat.save_history, shared.gradio['mode'], None, show_progress=False).then(
                 chat.redraw_html, shared.reload_inputs, shared.gradio['display'])
 
@@ -930,6 +942,12 @@ def create_interface():
                 chat.upload_your_profile_picture, shared.gradio['your_picture'], None).then(
                 partial(chat.redraw_html, reset_cache=True), shared.reload_inputs, shared.gradio['display'])
 
+            # multi-user handler
+            if shared.is_multi_user():
+                shared.gradio['generate_uuid'].change(
+                    chat.generate_uuid, None, uuid_box
+                )
+            
         # notebook/default modes event handlers
         else:
             shared.input_params = [shared.gradio[k] for k in ['textbox', 'interface_state']]
@@ -983,7 +1001,7 @@ def create_interface():
         if shared.settings['dark_theme']:
             shared.gradio['interface'].load(lambda: None, None, None, _js="() => document.getElementsByTagName('body')[0].classList.add('dark')")
 
-        shared.gradio['interface'].load(partial(ui.apply_interface_values, {}, use_persistent=True), None, [shared.gradio[k] for k in ui.list_interface_input_elements(chat=shared.is_chat())], show_progress=False)
+        shared.gradio['interface'].load(partial(ui.apply_interface_values, {}, use_persistent=True), None, [shared.gradio[k] for k in ui.list_interface_input_elements(chat=shared.is_chat(), multi_user=shared.is_multi_user())], show_progress=False)
 
         # Extensions tabs
         extensions_module.create_extensions_tabs()
@@ -1088,6 +1106,11 @@ if __name__ == "__main__":
             'instruction_template': shared.settings['instruction_template']
         })
 
+    if shared.is_multi_user():
+        shared.persistent_interface_state.update({
+            'generate_uuid': True
+        })
+    
     shared.generation_lock = Lock()
     # Launch the web UI
     create_interface()
