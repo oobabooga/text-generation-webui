@@ -194,8 +194,8 @@ class ModelDownloader:
         r = self.s.get(url, stream=True, headers=headers, timeout=10)
         with open(output_path, mode) as f:
             total_size = int(r.headers.get('content-length', 0))
-            # Every 512Kb we report an update
-            block_size = 512*1024
+            # Every 4MB we report an update
+            block_size = 4*1024*1024
 
             with tqdm.tqdm(total=total_size, unit='iB', unit_scale=True, bar_format='{l_bar}{bar}| {n_fmt:6}/{total_fmt:6} {rate_fmt:6}') as t:
                 count = 0
