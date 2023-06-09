@@ -1,0 +1,5 @@
+user: "<|user|>"
+bot: "<|system|>"
+turn_template: "<|user|><|user-message|><|end|><|bot|><|bot-message|><|end|>"
+context: "Below is a conversation between a human user and a helpful AI coding assistant."
+#Source: https://huggingface.co/spaces/HuggingFaceH4/starchat-playground
