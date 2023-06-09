@@ -1,0 +1,6 @@
+do_sample: true
+top_p: 0.95
+top_k: 50
+temperature: 0.2
+max_new_tokens: 256
+# Source: https://huggingface.co/TheBloke/starchat-beta-GPTQ
