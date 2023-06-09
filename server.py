@@ -940,7 +940,7 @@ def create_interface():
                 lambda: 'None', None, shared.gradio['character_menu']).then(
                 lambda: [gr.update(visible=False)] * 2, None, [shared.gradio[k] for k in ['delete_character-confirm', 'delete_character-cancel']], show_progress=False)
 
-            shared.gradio['download_button'].click(lambda x: chat.save_history(x, timestamp=True), save_params, shared.gradio['download'])
+            shared.gradio['download_button'].click(partial(chat.save_history, timestamp=True), save_params, shared.gradio['download'])
             shared.gradio['Upload character'].click(chat.upload_character, [shared.gradio['upload_json'], shared.gradio['upload_img_bot']], [shared.gradio['character_menu']])
             shared.gradio['character_menu'].change(
                 partial(chat.load_character, instruct=False), [shared.gradio[k] for k in ['character_menu', 'name1', 'name2']], [shared.gradio[k] for k in ['name1', 'name2', 'character_picture', 'greeting', 'context', 'dummy']]).then(
