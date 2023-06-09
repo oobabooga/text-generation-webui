@@ -187,6 +187,12 @@ llama-65b-gptq-3bit:
 .*airoboros-13b-gpt4:
   mode: 'instruct'
   instruction_template: 'Vicuna-v1.1'
+.*WizardLM-30B-V1.0:
+  mode: 'instruct'
+  instruction_template: 'Vicuna-v1.1'
+TheBloke_WizardLM-30B-GPTQ:
+  mode: 'instruct'
+  instruction_template: 'Vicuna-v1.1'
 .*(alpacino|alpasta):
   mode: 'instruct'
   instruction_template: 'Alpaca'
@@ -202,3 +208,4 @@ llama-65b-gptq-3bit:
 .*based-:
   mode: 'instruct'
   instruction_template: 'Vicuna-v1.1'
+  
