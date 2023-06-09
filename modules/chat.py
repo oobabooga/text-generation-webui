@@ -286,7 +286,7 @@ def chatbot_wrapper(text, history, state, regenerate=False, _continue=False, loa
     yield output
 
 
-def impersonate_wrapper(text, start_with, state):
+def impersonate_wrapper(text, start_with, state, uuid_box=None):
     if shared.model_name == 'None' or shared.model is None:
         logger.error("No model is loaded! Select one in the Model tab.")
         yield ''
@@ -297,7 +297,19 @@ def impersonate_wrapper(text, start_with, state):
     eos_token = '\n' if state['stop_at_newline'] else None
     prompt = generate_chat_prompt('', state, impersonate=True)
     stopping_strings = get_stopping_strings(state)
+    is_waiting = False
 
+    # *Is waiting for generation queue...*
+    if shared.is_multi_user():
+        while(not shared.generation_sema.acquire(timeout=.1)):
+            if not is_waiting:
+                yield text + 'waiting queue...'
+                is_waiting = True
+            if shared.stop_everything:
+                yield text
+                shared.generation_sema.release()
+                return
+        is_waiting = False
     yield text + '...'
     cumulative_reply = text
     for i in range(state['chat_generation_attempts']):
