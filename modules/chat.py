@@ -181,7 +181,7 @@ def extract_message_from_reply(reply, state):
     return reply, next_character_found
 
 
-def chatbot_wrapper(text, history, state, regenerate=False, _continue=False, loading_message=True):
+def chatbot_wrapper(text, history, state, regenerate=False, _continue=False, loading_message=True, uuid_box=None):
     output = copy.deepcopy(history)
     output = apply_extensions('history', output)
     if shared.model_name == 'None' or shared.model is None:
@@ -203,9 +203,9 @@ def chatbot_wrapper(text, history, state, regenerate=False, _continue=False, loa
             if not is_waiting:
                 yield {'visible': output['visible'] + [[text, shared.waiting_message]], 'internal': output['internal']}
                 is_waiting = True
-            if shared.stop_everything:
+            if shared.stop_everything or (uuid_box and shared.multi_stop_everything[uuid_box]):
                 yield output
-                shared.generation_sema.release()
+                # shared.generation_sema.release()
                 return
         is_waiting = False
     if not any((regenerate, _continue)):
@@ -244,7 +244,7 @@ def chatbot_wrapper(text, history, state, regenerate=False, _continue=False, loa
     cumulative_reply = ''
     for i in range(state['chat_generation_attempts']):
         reply = None
-        for j, reply in enumerate(generate_reply(prompt + cumulative_reply, state, eos_token=eos_token, stopping_strings=stopping_strings, is_chat=True)):
+        for j, reply in enumerate(generate_reply(prompt + cumulative_reply, state, eos_token=eos_token, stopping_strings=stopping_strings, is_chat=True, uuid_box=uuid_box)):
             reply = cumulative_reply + reply
 
             # Extract the reply
@@ -254,8 +254,9 @@ def chatbot_wrapper(text, history, state, regenerate=False, _continue=False, loa
 
             # We need this global variable to handle the Stop event,
             # otherwise gradio gets confused
-            if shared.stop_everything:
+            if shared.stop_everything or (uuid_box and shared.multi_stop_everything[uuid_box]):
                 yield output
+                # shared.generation_sema.release()
                 return
 
             if just_started:
@@ -305,20 +306,21 @@ def impersonate_wrapper(text, start_with, state, uuid_box=None):
             if not is_waiting:
                 yield text + 'waiting queue...'
                 is_waiting = True
-            if shared.stop_everything:
+            if shared.stop_everything or (uuid_box and shared.multi_stop_everything[uuid_box]):
                 yield text
-                shared.generation_sema.release()
+                # shared.generation_sema.release()
                 return
         is_waiting = False
     yield text + '...'
     cumulative_reply = text
     for i in range(state['chat_generation_attempts']):
         reply = None
-        for reply in generate_reply(prompt + cumulative_reply, state, eos_token=eos_token, stopping_strings=stopping_strings, is_chat=True):
+        for reply in generate_reply(prompt + cumulative_reply, state, eos_token=eos_token, stopping_strings=stopping_strings, is_chat=True, uuid_box=uuid_box):
             reply = cumulative_reply + reply
             reply, next_character_found = extract_message_from_reply(reply, state)
             yield reply.lstrip(' ')
-            if shared.stop_everything:
+            if shared.stop_everything or (uuid_box and shared.multi_stop_everything[uuid_box]):
+                # shared.generation_sema.release()
                 return
 
             if next_character_found:
@@ -332,14 +334,14 @@ def impersonate_wrapper(text, start_with, state, uuid_box=None):
     yield cumulative_reply.lstrip(' ')
 
 
-def generate_chat_reply(text, history, state, regenerate=False, _continue=False, loading_message=True):
+def generate_chat_reply(text, history, state, regenerate=False, _continue=False, loading_message=True, uuid_box=None):
     if regenerate or _continue:
         text = ''
         if (len(history['visible']) == 1 and not history['visible'][0][0]) or len(history['internal']) == 0:
             yield history
             return
 
-    for history in chatbot_wrapper(text, history, state, regenerate=regenerate, _continue=_continue, loading_message=loading_message):
+    for history in chatbot_wrapper(text, history, state, regenerate=regenerate, _continue=_continue, loading_message=loading_message, uuid_box=uuid_box):
         yield history
 
 
@@ -351,11 +353,11 @@ def generate_chat_reply_wrapper(text, start_with, state, uuid_box=None, regenera
             regenerate = False
 
         _continue = True
-        send_dummy_message(text)
-        send_dummy_reply(start_with)
+        send_dummy_message(text, uuid_box=uuid_box)
+        send_dummy_reply(start_with, uuid_box=uuid_box)
 
     if shared.is_multi_user():
-        for i, history in enumerate(generate_chat_reply(text, shared.multi_history[uuid_box], state, regenerate, _continue, loading_message=True)):
+        for i, history in enumerate(generate_chat_reply(text, shared.multi_history[uuid_box], state, regenerate, _continue, loading_message=True, uuid_box=uuid_box)):
             if i != 0:
                 shared.multi_history[uuid_box] = copy.deepcopy(history)
     
@@ -368,8 +370,11 @@ def generate_chat_reply_wrapper(text, start_with, state, uuid_box=None, regenera
             yield chat_html_wrapper(history['visible'], state['name1'], state['name2'], state['mode'], state['chat_style'])
 
 
-def remove_last_message():
-    if len(shared.history['visible']) > 0 and shared.history['internal'][-1][0] != '<|BEGIN-VISIBLE-CHAT|>':
+def remove_last_message(uuid_box=None):
+    if uuid_box and len(shared.multi_history[uuid_box]['visible']) > 0 and shared.multi_history[uuid_box]['internal'][-1][0] != '<|BEGIN-VISIBLE-CHAT|>':
+        last = shared.multi_history[uuid_box]['visible'].pop()
+        shared.multi_history[uuid_box]['internal'].pop()
+    elif len(shared.history['visible']) > 0 and shared.history['internal'][-1][0] != '<|BEGIN-VISIBLE-CHAT|>':
         last = shared.history['visible'].pop()
         shared.history['internal'].pop()
     else:
@@ -378,31 +383,52 @@ def remove_last_message():
     return last[0]
 
 
-def send_last_reply_to_input():
-    if len(shared.history['internal']) > 0:
-        return shared.history['internal'][-1][1]
+def send_last_reply_to_input(uuid_box=None):
+    if uuid_box:
+        if len(shared.multi_history[uuid_box]['internal']) > 0:
+            return shared.multi_history[uuid_box]['internal'][-1][1]
     else:
-        return ''
+        if len(shared.history['internal']) > 0:
+            return shared.history['internal'][-1][1]
+    
+    return ''
 
 
-def replace_last_reply(text):
-    if len(shared.history['visible']) > 0:
+def replace_last_reply(text, uuid_box=None):
+    if uuid_box:
+        if len(shared.multi_history[uuid_box]['visible']) > 0:
+            shared.multi_history[uuid_box]['visible'][-1][1] = text
+            shared.multi_history[uuid_box]['internal'][-1][1] = apply_extensions("input", text)
+    else:
+        if len(shared.history['visible']) > 0:
+            shared.history['visible'][-1][1] = text
+            shared.history['internal'][-1][1] = apply_extensions("input", text)
+
+
+def send_dummy_message(text, uuid_box=None):
+    if uuid_box:
+        shared.multi_history[uuid_box]['visible'].append([text, ''])
+        shared.multi_history[uuid_box]['internal'].append([apply_extensions("input", text), ''])
+    else:
+        shared.history['visible'].append([text, ''])
+        shared.history['internal'].append([apply_extensions("input", text), ''])
+
+
+def send_dummy_reply(text, uuid_box=None):
+    if uuid_box:
+        if len(shared.multi_history[uuid_box]['visible']) > 0 and not shared.multi_history[uuid_box]['visible'][-1][1] == '':
+            shared.multi_history[uuid_box]['visible'].append(['', ''])
+            shared.multi_history[uuid_box]['internal'].append(['', ''])
+    
+        shared.multi_history[uuid_box]['visible'][-1][1] = text
+        shared.multi_history[uuid_box]['internal'][-1][1] = apply_extensions("input", text)
+    else:
+        if len(shared.history['visible']) > 0 and not shared.history['visible'][-1][1] == '':
+            shared.history['visible'].append(['', ''])
+            shared.history['internal'].append(['', ''])
+    
         shared.history['visible'][-1][1] = text
         shared.history['internal'][-1][1] = apply_extensions("input", text)
-
-
-def send_dummy_message(text):
-    shared.history['visible'].append([text, ''])
-    shared.history['internal'].append([apply_extensions("input", text), ''])
-
-
-def send_dummy_reply(text):
-    if len(shared.history['visible']) > 0 and not shared.history['visible'][-1][1] == '':
-        shared.history['visible'].append(['', ''])
-        shared.history['internal'].append(['', ''])
-
-    shared.history['visible'][-1][1] = text
-    shared.history['internal'][-1][1] = apply_extensions("input", text)
 
 
 def clear_chat_log(greeting, mode, uuid_box=None):
@@ -713,6 +739,7 @@ def delete_character(name, instruct=False):
 def generate_uuid():
     id = uuid.uuid4().hex
     shared.multi_history[id] = copy.deepcopy(shared.history)
-
+    shared.multi_stop_everything[id] = False
+    
     return id
     

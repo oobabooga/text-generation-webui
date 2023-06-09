@@ -23,6 +23,9 @@ def generate_reply(*args, **kwargs):
         for result in _generate_reply(*args, **kwargs):
             yield result
     finally:
+        shared.stop_everything = False
+        if kwargs['uuid_box']:
+            shared.multi_stop_everything[kwargs['uuid_box']] = False
         shared.generation_sema.release()
 
 def get_max_prompt_length(state):
@@ -135,8 +138,11 @@ def set_manual_seed(seed):
     return seed
 
 
-def stop_everything_event():
-    shared.stop_everything = True
+def stop_everything_event(uuid_box=None):
+    if uuid_box:
+        shared.multi_stop_everything[uuid_box] = True
+    else:
+        shared.stop_everything = True
 
 
 def generate_reply_wrapper(question, state, eos_token=None, stopping_strings=None):
@@ -147,7 +153,7 @@ def generate_reply_wrapper(question, state, eos_token=None, stopping_strings=Non
         yield formatted_outputs(reply, shared.model_name)
 
 
-def _generate_reply(question, state, eos_token=None, stopping_strings=None, is_chat=False):
+def _generate_reply(question, state, eos_token=None, stopping_strings=None, is_chat=False, uuid_box=None):
     state = apply_extensions('state', state)
     generate_func = apply_extensions('custom_generate_reply')
     if generate_func is None:
@@ -172,6 +178,8 @@ def _generate_reply(question, state, eos_token=None, stopping_strings=None, is_c
         print(f'\n\n{question}\n--------------------\n')
 
     shared.stop_everything = False
+    if uuid_box:
+        shared.multi_stop_everything[uuid_box] = False
     clear_torch_cache()
     seed = set_manual_seed(state['seed'])
     is_stream = state['stream']

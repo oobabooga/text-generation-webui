@@ -15,11 +15,14 @@ lora_names = []
 
 # Chat variables
 history = {'internal': [], 'visible': []}
-multi_history = {}
 character = 'None'
 stop_everything = False
 processing_message = '*Is typing...*'
 waiting_message = '*Is waiting for generation queue...*'
+
+# multi-user variables
+multi_history = {}
+multi_stop_everything = {}
 
 # UI elements (buttons, sliders, HTML, etc)
 gradio = {}
