@@ -1,7 +1,7 @@
 import torch
 import transformers
 from transformers import LogitsWarper
-from transformers.generation.logits_process import LogitNormalization, LogitsProcessorList
+from transformers.generation.logits_process import LogitNormalization, LogitsProcessorList, TemperatureLogitsWarper
 import math
 
 class TailFreeLogitsWarper(LogitsWarper):
@@ -118,16 +118,20 @@ def get_logits_warper_patch(self, generation_config):
     warpers_to_add = LogitsProcessorList()
     min_tokens_to_keep = 2 if generation_config.num_beams > 1 else 1
 
-    if generation_config.tfs is not None and 0.0 <= generation_config.tfs <= 1.0:
-        warpers_to_add.append(TailFreeLogitsWarper(tfs=generation_config.tfs, min_tokens_to_keep=min_tokens_to_keep))
-    if generation_config.top_a is not None and 0.0 <= generation_config.top_a <= 1.0:
-        warpers_to_add.append(TopALogitsWarper(top_a=generation_config.top_a, min_tokens_to_keep=min_tokens_to_keep))
+    if generation_config.mirostat_mode is not None and generation_config.mirostat_mode == 2:
+        warpers_to_add.append(MirostatLogitsWarper(mirostat_mode=generation_config.mirostat_mode, mirostat_eta=generation_config.mirostat_eta, mirostat_tau=generation_config.mirostat_tau, min_tokens_to_keep=min_tokens_to_keep))
+        # We need to disable samplers other than temperature
+        for warper in warpers:
+            if not isinstance(warper, TemperatureLogitsWarper):
+                warpers.remove(warper)
+    else:
+        if generation_config.tfs is not None and 0.0 <= generation_config.tfs <= 1.0:
+            warpers_to_add.append(TailFreeLogitsWarper(tfs=generation_config.tfs, min_tokens_to_keep=min_tokens_to_keep))
+        if generation_config.top_a is not None and 0.0 <= generation_config.top_a <= 1.0:
+            warpers_to_add.append(TopALogitsWarper(top_a=generation_config.top_a, min_tokens_to_keep=min_tokens_to_keep))
 
     if warpers and isinstance(warpers[-1], LogitNormalization):
         warpers = warpers[:-1] + warpers_to_add + [warpers[-1]]
-    elif generation_config.mirostat_mode is not None and generation_config.mirostat_mode == 2:
-        # We need to disable other samplers
-        warpers = MirostatLogitsWarper(mirostat_mode=generation_config.mirostat_mode, mirostat_eta=generation_config.mirostat_eta, mirostat_tau=generation_config.mirostat_tau, min_tokens_to_keep=min_tokens_to_keep)
     else:
         warpers += warpers_to_add
 
