@@ -19,4 +19,3 @@ transformers==4.30.0
 git+https://github.com/huggingface/peft@e45529b149c7f91ec1d4d82a5a152ef56c56cb94
 bitsandbytes==0.39.0; platform_system != "Windows"
 https://github.com/jllllll/bitsandbytes-windows-webui/raw/main/bitsandbytes-0.39.0-py3-none-any.whl; platform_system == "Windows"
-llama-cpp-python==0.1.57; platform_system != "Windows"
