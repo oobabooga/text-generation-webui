@@ -191,3 +191,6 @@ llama-65b-gptq-3bit:
 .*WizardLM-30B-V1.0:
   mode: 'instruct'
   instruction_template: 'Vicuna-v1.1'
+TheBloke_WizardLM-30B-GPTQ:
+  mode: 'instruct'
+  instruction_template: 'Vicuna-v1.1'
