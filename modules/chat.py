@@ -55,11 +55,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
     is_instruct = state['mode'] == 'instruct'
 
     # Find the maximum prompt size
-    chat_prompt_size = state['chat_prompt_size']
-    if shared.soft_prompt:
-        chat_prompt_size -= shared.soft_prompt_tensor.shape[1]
-
-    max_length = min(get_max_prompt_length(state), chat_prompt_size)
+    max_length = min(get_max_prompt_length(state), state['chat_prompt_size'])
     all_substrings = {
         'chat': get_turn_substrings(state, instruct=False),
         'instruct': get_turn_substrings(state, instruct=True)
@@ -277,7 +273,7 @@ def chatbot_wrapper(text, history, state, regenerate=False, _continue=False, loa
     yield output
 
 
-def impersonate_wrapper(text, state):
+def impersonate_wrapper(text, start_with, state):
     if shared.model_name == 'None' or shared.model is None:
         logger.error("No model is loaded! Select one in the Model tab.")
         yield ''
@@ -322,8 +318,17 @@ def generate_chat_reply(text, history, state, regenerate=False, _continue=False,
         yield history
 
 
-# Same as above but returns HTML
-def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
+# Same as above but returns HTML for the UI
+def generate_chat_reply_wrapper(text, start_with, state, regenerate=False, _continue=False):
+    if start_with != '' and _continue == False:
+        if regenerate == True:
+            text = remove_last_message()
+            regenerate = False
+
+        _continue = True
+        send_dummy_message(text)
+        send_dummy_reply(start_with)
+
     for i, history in enumerate(generate_chat_reply(text, shared.history, state, regenerate, _continue, loading_message=True)):
         if i != 0:
             shared.history = copy.deepcopy(history)
@@ -432,6 +437,9 @@ def save_history(mode, timestamp=False):
 
         fname = f"Instruct_{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
     else:
+        if shared.character == 'None':
+            return
+
         if timestamp:
             fname = f"{shared.character}_{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
         else:
@@ -555,7 +563,7 @@ def load_character(character, name1, name2, instruct=False):
     if not instruct:
         shared.history['internal'] = []
         shared.history['visible'] = []
-        if Path(f'logs/{shared.character}_persistent.json').exists():
+        if shared.character != 'None' and Path(f'logs/{shared.character}_persistent.json').exists():
             load_history(open(Path(f'logs/{shared.character}_persistent.json'), 'rb').read(), name1, name2)
         else:
             # Insert greeting if it exists
