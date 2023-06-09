@@ -3,7 +3,7 @@ colorama
 datasets
 einops
 flexgen==0.1.7
-gradio_client==0.2.5
+gradio_client==0.2.6
 gradio==3.33.1
 markdown
 numpy
