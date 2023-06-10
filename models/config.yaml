@@ -208,3 +208,4 @@ TheBloke_WizardLM-30B-GPTQ:
 .*based-:
   mode: 'instruct'
   instruction_template: 'Vicuna-v1.1'
+  
