@@ -72,7 +72,7 @@ class TopALogitsWarper(LogitsWarper):
 class MirostatLogitsWarper(LogitsWarper):
     def __init__(self, mirostat_mode: int, mirostat_tau: float, mirostat_eta: float, filter_value: float = -float("Inf"), min_tokens_to_keep: int = 1):
         if mirostat_mode not in [2]:
-            raise ValueError(f"`mirostat` has to be a an integer 2, but is {mirostat}")
+            raise ValueError(f"`mirostat` has to be a an integer 2, but is {mirostat_mode}")
         self.mirostat_mode = mirostat_mode
         self.mirostat_eta = mirostat_eta
         self.mirostat_tau = mirostat_tau
