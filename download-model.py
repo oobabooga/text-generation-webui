@@ -108,7 +108,7 @@ class ModelDownloader:
         is_lora = False
         while True:
             url = f"{base}{page}" + (f"?cursor={cursor.decode()}" if cursor else "")
-            r = self.s.get(url, timeout=10)
+            r = self.s.get(url, timeout=20)
             r.raise_for_status()
             content = r.content
 
@@ -180,7 +180,7 @@ class ModelDownloader:
         output_path = output_folder / filename
         if output_path.exists() and not start_from_scratch:
             # Check if the file has already been downloaded completely
-            r = self.s.get(url, stream=True, timeout=10)
+            r = self.s.get(url, stream=True, timeout=20)
             total_size = int(r.headers.get('content-length', 0))
             if output_path.stat().st_size >= total_size:
                 return
@@ -191,7 +191,7 @@ class ModelDownloader:
             headers = {}
             mode = 'wb'
 
-        r = self.s.get(url, stream=True, headers=headers, timeout=10)
+        r = self.s.get(url, stream=True, headers=headers, timeout=20)
         with open(output_path, mode) as f:
             total_size = int(r.headers.get('content-length', 0))
             block_size = 1024
