@@ -193,7 +193,7 @@ llama-65b-gptq-3bit:
 TheBloke_WizardLM-30B-GPTQ:
   mode: 'instruct'
   instruction_template: 'Vicuna-v1.1'
-.*(alpacino|alpasta):
+.*(A|a)lpa(cino|sta):
   mode: 'instruct'
   instruction_template: 'Alpaca'
 .*hippogriff:
