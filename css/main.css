@@ -114,3 +114,18 @@ button {
 .small-button {
     max-width: 171px;
 }
+
+#file-saver {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%); /* center horizontally */
+  max-width: 500px;
+  background-color: var(--input-background-fill);
+  border: 2px solid black;
+  z-index: 1000;
+}
+
+.dark #file-saver {
+  border: 2px solid white;
+}

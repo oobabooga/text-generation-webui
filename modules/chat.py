@@ -17,7 +17,7 @@ from modules.html_generator import chat_html_wrapper, make_thumbnail
 from modules.logging_colors import logger
 from modules.text_generation import (generate_reply, get_encoded_length,
                                      get_max_prompt_length)
-from modules.utils import replace_all
+from modules.utils import replace_all, save_file
 
 
 def get_turn_substrings(state, instruct=False):
@@ -634,12 +634,7 @@ def delete_file(path):
         path.unlink(missing_ok=True)
 
 
-def save_character(name, greeting, context, picture, filename, instruct=False):
-    if filename == "":
-        logger.error("The filename is empty, so the character will not be saved.")
-        return
-
-    folder = 'characters' if not instruct else 'characters/instruction-following'
+def generate_character_yaml(name, greeting, context):
     data = {
         'name': name,
         'greeting': greeting,
@@ -647,11 +642,29 @@ def save_character(name, greeting, context, picture, filename, instruct=False):
     }
 
     data = {k: v for k, v in data.items() if v}  # Strip falsy
-    filepath = Path(f'{folder}/{filename}.yaml')
-    with filepath.open('w') as f:
-        yaml.dump(data, f, sort_keys=False)
+    return yaml.dump(data, sort_keys=False)
 
-    logger.info(f'Wrote {filepath}')
+
+def generate_instruction_template_yaml(user, bot, context, turn_template):
+    data = {
+        'user': user,
+        'bot': bot,
+        'turn_template': turn_template,
+        'context': context,
+    }
+
+    data = {k: v for k, v in data.items() if v}  # Strip falsy
+    return yaml.dump(data, sort_keys=False)
+
+
+def save_character(name, greeting, context, picture, filename, instruct=False):
+    if filename == "":
+        logger.error("The filename is empty, so the character will not be saved.")
+        return
+
+    data = generate_character_yaml(name, greeting, context)
+    folder = 'characters' if not instruct else 'characters/instruction-following'
+    save_file(f'{folder}/{filename}.yaml', data)
     path_to_img = Path(f'{folder}/{filename}.png')
     if picture and not instruct:
         picture.save(path_to_img)

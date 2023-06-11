@@ -117,21 +117,13 @@ def load_preset_values(preset_menu, state, return_dict=False):
         return state, *[generate_params[k] for k in ['do_sample', 'temperature', 'top_p', 'typical_p', 'epsilon_cutoff', 'eta_cutoff', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping', 'mirostat_mode', 'mirostat_tau', 'mirostat_eta', 'tfs', 'top_a']]
 
 
-def open_save_prompt():
-    fname = f"{datetime.now().strftime('%Y-%m-%d-%H%M%S')}"
-    return gr.update(value=fname, visible=True), gr.update(visible=False), gr.update(visible=True)
+def generate_preset_yaml(state):
+    data = {k: state[k] for k in ['do_sample', 'temperature', 'top_p', 'typical_p', 'epsilon_cutoff', 'eta_cutoff', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping', 'mirostat_mode', 'mirostat_tau', 'mirostat_eta', 'tfs', 'top_a']}
+    return yaml.dump(data, sort_keys=False)
 
 
-def save_prompt(text, fname):
-    if fname != "":
-        with open(Path(f'prompts/{fname}.txt'), 'w', encoding='utf-8') as f:
-            f.write(text)
-
-        message = f"Saved to prompts/{fname}.txt"
-    else:
-        message = "Error: No prompt name given."
-
-    return message, gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)
+def current_time():
+    return f"{datetime.now().strftime('%Y-%m-%d-%H%M%S')}"
 
 
 def load_prompt(fname):
@@ -462,16 +454,12 @@ def create_settings_menus(default_preset):
     with gr.Row():
         with gr.Column():
             with gr.Row():
-                with gr.Column():
-                    with gr.Row():
-                        shared.gradio['preset_menu'] = gr.Dropdown(choices=utils.get_available_presets(), value=default_preset if not shared.args.flexgen else 'Naive', label='Generation parameters preset')
-                        ui.create_refresh_button(shared.gradio['preset_menu'], lambda: None, lambda: {'choices': utils.get_available_presets()}, 'refresh-button')
-
-                with gr.Column():
-                    shared.gradio['seed'] = gr.Number(value=shared.settings['seed'], label='Seed (-1 for random)')
+                shared.gradio['preset_menu'] = gr.Dropdown(choices=utils.get_available_presets(), value=default_preset if not shared.args.flexgen else 'Naive', label='Generation parameters preset')
+                ui.create_refresh_button(shared.gradio['preset_menu'], lambda: None, lambda: {'choices': utils.get_available_presets()}, 'refresh-button')
 
             with gr.Box():
                 gr.Markdown('Main parameters')
+                shared.gradio['seed'] = gr.Number(value=shared.settings['seed'], label='Seed (-1 for random)')
                 with gr.Row():
                     with gr.Column():
                         shared.gradio['do_sample'] = gr.Checkbox(value=generate_params['do_sample'], label='do_sample')
@@ -489,6 +477,7 @@ def create_settings_menus(default_preset):
                         shared.gradio['min_length'] = gr.Slider(0, 2000, step=1, value=generate_params['min_length'], label='min_length', info='Minimum generation length in tokens.')
                         shared.gradio['tfs'] = gr.Slider(0.0, 1.0, value=generate_params['tfs'], step=0.01, label='tfs')
                         shared.gradio['top_a'] = gr.Slider(0.0, 1.0, value=generate_params['top_a'], step=0.01, label='top_a')
+
 
         with gr.Column():
             create_chat_settings_menus()
@@ -523,7 +512,40 @@ def create_settings_menus(default_preset):
 
             gr.Markdown('[Click here for more information.](https://github.com/oobabooga/text-generation-webui/blob/main/docs/Generation-parameters.md)')
 
+    with gr.Row():
+        shared.gradio['save_preset'] = gr.Button('Save preset', elem_classes="small-button")
+        shared.gradio['delete_preset'] = gr.Button('Delete preset', elem_classes="small-button")
+
     shared.gradio['preset_menu'].change(load_preset_values, [shared.gradio[k] for k in ['preset_menu', 'interface_state']], [shared.gradio[k] for k in ['interface_state', 'do_sample', 'temperature', 'top_p', 'typical_p', 'epsilon_cutoff', 'eta_cutoff', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping', 'mirostat_mode', 'mirostat_tau', 'mirostat_eta', 'tfs', 'top_a']])
+
+
+def create_file_saving_menus():
+    with gr.Box(visible=False, elem_id='file-saver') as shared.gradio['file_saver']:
+        shared.gradio['save_filename'] = gr.Textbox(elem_classes="textbox_default", lines=1, label='File name')
+        shared.gradio['save_root'] = gr.Textbox(elem_classes="textbox_default", lines=1, label='File folder', info='For reference. Unchangeable.', interactive=False)
+        shared.gradio['save_contents'] = gr.Textbox(elem_classes="textbox_default", lines=10, label='File contents')
+        with gr.Row():
+            shared.gradio['save_confirm'] = gr.Button('Save', elem_classes="small-button")
+            shared.gradio['save_cancel'] = gr.Button('Cancel', elem_classes="small-button")
+
+    # File deleter menu
+    with gr.Box(visible=False, elem_id='file-deleter') as shared.gradio['file_deleter']:
+        shared.gradio['delete_filename'] = gr.Textbox(elem_classes="textbox_default", lines=1, label='File name')
+        shared.gradio['delete_root'] = gr.Textbox(elem_classes="textbox_default", lines=1, label='File folder', info='For reference. Unchangeable.', interactive=False)
+        shared.gradio['delete_contents'] = gr.Textbox(elem_classes="textbox_default", lines=10, label='File contents')
+        with gr.Row():
+            shared.gradio['delete_confirm'] = gr.Button('Delete', elem_classes="small-button")
+            shared.gradio['delete_cancel'] = gr.Button('Cancel', elem_classes="small-button")
+
+    shared.gradio['save_cancel'].click(lambda: gr.update(visible=False), None, shared.gradio['file_saver'])
+    shared.gradio['save_confirm'].click(
+        lambda x, y, z: utils.save_file(x + y, z), [shared.gradio[k] for k in ['save_root', 'save_filename', 'save_contents']], None).then(
+        lambda: gr.update(visible=False), None, shared.gradio['file_saver'])
+
+    shared.gradio['delete_cancel'].click(lambda: gr.update(visible=False), None, shared.gradio['file_deleter'])
+    shared.gradio['delete_confirm'].click(
+        lambda x, y, z: utils.delete_file(x + y, z), [shared.gradio[k] for k in ['delete_root', 'delete_filename', 'delete_contents']], None).then(
+        lambda: gr.update(visible=False), None, shared.gradio['file_deleter'])
 
 
 def set_interface_arguments(interface_mode, extensions, bool_active):
@@ -582,6 +604,9 @@ def create_interface():
         else:
             audio_notification_js = ""
 
+        # Floating menus for saving/deleting files
+        create_file_saving_menus()
+
         # Create chat mode interface
         if shared.is_chat():
             shared.input_elements = ui.list_interface_input_elements(chat=True)
@@ -626,15 +651,11 @@ def create_interface():
                         with gr.Row():
                             shared.gradio['character_menu'] = gr.Dropdown(choices=utils.get_available_characters(), label='Character', elem_id='character-menu', info='Used in chat and chat-instruct modes.')
                             ui.create_refresh_button(shared.gradio['character_menu'], lambda: None, lambda: {'choices': utils.get_available_characters()}, 'refresh-button')
-                            shared.gradio['save_character'] = ui.create_save_button(elem_id='refresh-button')
-                            shared.gradio['delete_character'] = ui.create_delete_button(elem_id='refresh-button')
 
-                        shared.gradio['save_character-filename'] = gr.Textbox(lines=1, label='File name:', interactive=True, visible=False)
-                        shared.gradio['save_character-confirm'] = gr.Button('Confirm save character', elem_classes="small-button", variant='primary', visible=False)
-                        shared.gradio['save_character-cancel'] = gr.Button('Cancel', elem_classes="small-button", visible=False)
-                        shared.gradio['delete_character-confirm'] = gr.Button('Confirm delete character', elem_classes="small-button", variant='stop', visible=False)
-                        shared.gradio['delete_character-cancel'] = gr.Button('Cancel', elem_classes="small-button", visible=False)
-
+                        with gr.Row():
+                            shared.gradio['save_character'] = gr.Button('Save character', elem_classes="small-button")
+                            shared.gradio['delete_character'] = gr.Button('Delete character', elem_classes="small-button")
+                        
                         shared.gradio['name1'] = gr.Textbox(value=shared.settings['name1'], lines=1, label='Your name')
                         shared.gradio['name2'] = gr.Textbox(value=shared.settings['name2'], lines=1, label='Character\'s name')
                         shared.gradio['context'] = gr.Textbox(value=shared.settings['context'], lines=4, label='Context')
@@ -647,6 +668,10 @@ def create_interface():
                 with gr.Row():
                     shared.gradio['instruction_template'] = gr.Dropdown(choices=utils.get_available_instruction_templates(), label='Instruction template', value='None', info='Change this according to the model/LoRA that you are using. Used in instruct and chat-instruct modes.')
                     ui.create_refresh_button(shared.gradio['instruction_template'], lambda: None, lambda: {'choices': utils.get_available_instruction_templates()}, 'refresh-button')
+
+                with gr.Row():
+                    shared.gradio['save_template'] = gr.Button('Save template', elem_classes="small-button")
+                    shared.gradio['delete_template'] = gr.Button('Delete template', elem_classes="small-button")
 
                 shared.gradio['name1_instruct'] = gr.Textbox(value='', lines=2, label='User string')
                 shared.gradio['name2_instruct'] = gr.Textbox(value='', lines=1, label='Bot string')
@@ -716,9 +741,7 @@ def create_interface():
                             shared.gradio['prompt_menu'] = gr.Dropdown(choices=utils.get_available_prompts(), value='None', label='Prompt')
                             ui.create_refresh_button(shared.gradio['prompt_menu'], lambda: None, lambda: {'choices': utils.get_available_prompts()}, 'refresh-button')
 
-                        shared.gradio['open_save_prompt'] = gr.Button('Save prompt')
-                        shared.gradio['save_prompt'] = gr.Button('Confirm save prompt', visible=False)
-                        shared.gradio['prompt_to_save'] = gr.Textbox(elem_classes="textbox_default", lines=1, label='Prompt name:', interactive=True, visible=False)
+                        shared.gradio['save_prompt'] = gr.Button('Save prompt')
                         shared.gradio['count_tokens'] = gr.Button('Count tokens')
                         shared.gradio['status'] = gr.Markdown('')
 
@@ -739,8 +762,7 @@ def create_interface():
                             shared.gradio['Generate'] = gr.Button('Generate', variant='primary', elem_classes="small-button")
                             shared.gradio['Stop'] = gr.Button('Stop', elem_classes="small-button")
                             shared.gradio['Continue'] = gr.Button('Continue', elem_classes="small-button")
-                            shared.gradio['open_save_prompt'] = gr.Button('Save prompt', elem_classes="small-button")
-                            shared.gradio['save_prompt'] = gr.Button('Confirm save prompt', visible=False, elem_classes="small-button")
+                            shared.gradio['save_prompt'] = gr.Button('Save prompt', elem_classes="small-button")
                             shared.gradio['count_tokens'] = gr.Button('Count tokens', elem_classes="small-button")
 
                         with gr.Row():
@@ -750,7 +772,6 @@ def create_interface():
                                     ui.create_refresh_button(shared.gradio['prompt_menu'], lambda: None, lambda: {'choices': utils.get_available_prompts()}, 'refresh-button')
 
                             with gr.Column():
-                                shared.gradio['prompt_to_save'] = gr.Textbox(elem_classes="textbox_default", lines=1, label='Prompt name:', interactive=True, visible=False)
                                 shared.gradio['status'] = gr.Markdown('')
 
                     with gr.Column():
@@ -896,28 +917,26 @@ def create_interface():
 
             # Save/delete a character
             shared.gradio['save_character'].click(
-                lambda x: x, shared.gradio['name2'], shared.gradio['save_character-filename'], show_progress=True).then(
-                lambda: [gr.update(visible=True)] * 3, None, [shared.gradio[k] for k in ['save_character-filename', 'save_character-confirm', 'save_character-cancel']], show_progress=False)
+                lambda x: f'{x}.yaml', shared.gradio['name2'], shared.gradio['save_filename']).then(
+                lambda: 'characters/', None, shared.gradio['save_root']).then(
+                chat.generate_character_yaml, [shared.gradio[k] for k in ['name2', 'greeting', 'context']], shared.gradio['save_contents']).then(
+                lambda: gr.update(visible=True), None, shared.gradio['file_saver'])
 
-            shared.gradio['save_character-cancel'].click(
-                lambda: [gr.update(visible=False)] * 3, None, [shared.gradio[k] for k in ['save_character-filename', 'save_character-confirm', 'save_character-cancel']], show_progress=False)
-
-            shared.gradio['save_character-confirm'].click(
-                partial(chat.save_character, instruct=False), [shared.gradio[k] for k in ['name2', 'greeting', 'context', 'character_picture', 'save_character-filename']], None).then(
-                lambda: [gr.update(visible=False)] * 3, None, [shared.gradio[k] for k in ['save_character-filename', 'save_character-confirm', 'save_character-cancel']], show_progress=False).then(
-                lambda x: x, shared.gradio['save_character-filename'], shared.gradio['character_menu'])
+            shared.gradio['save_template'].click(
+                lambda: 'My Template.yaml', None, shared.gradio['save_filename']).then(
+                lambda: 'characters/instruction-following/', None, shared.gradio['save_root']).then(
+                chat.generate_instruction_template_yaml, [shared.gradio[k] for k in ['name1_instruct', 'name2_instruct', 'context_instruct', 'turn_template']], shared.gradio['save_contents']).then(
+                lambda: gr.update(visible=True), None, shared.gradio['file_saver'])
 
             shared.gradio['delete_character'].click(
-                lambda: [gr.update(visible=True)] * 2, None, [shared.gradio[k] for k in ['delete_character-confirm', 'delete_character-cancel']], show_progress=False)
+                lambda x: f'{x}.yaml', shared.gradio['character_menu'], shared.gradio['delete_filename']).then(
+                lambda: 'characters/', None, shared.gradio['delete_root']).then(
+                lambda: gr.update(visible=True), None, shared.gradio['file_deleter'])
 
-            shared.gradio['delete_character-cancel'].click(
-                lambda: [gr.update(visible=False)] * 2, None, [shared.gradio[k] for k in ['delete_character-confirm', 'delete_character-cancel']], show_progress=False)
-
-            shared.gradio['delete_character-confirm'].click(
-                partial(chat.delete_character, instruct=False), shared.gradio['character_menu'], None).then(
-                lambda: gr.update(choices=utils.get_available_characters()), outputs=shared.gradio['character_menu']).then(
-                lambda: 'None', None, shared.gradio['character_menu']).then(
-                lambda: [gr.update(visible=False)] * 2, None, [shared.gradio[k] for k in ['delete_character-confirm', 'delete_character-cancel']], show_progress=False)
+            shared.gradio['delete_template'].click(
+                lambda x: f'{x}.yaml', shared.gradio['instruction_template'], shared.gradio['delete_filename']).then(
+                lambda: 'characters/instruction-following/', None, shared.gradio['delete_root']).then(
+                lambda: gr.update(visible=True), None, shared.gradio['file_deleter'])
 
             shared.gradio['download_button'].click(lambda x: chat.save_history(x, timestamp=True), shared.gradio['mode'], shared.gradio['download'])
             shared.gradio['Upload character'].click(chat.upload_character, [shared.gradio['upload_json'], shared.gradio['upload_img_bot']], [shared.gradio['character_menu']])
@@ -975,9 +994,25 @@ def create_interface():
 
             shared.gradio['Stop'].click(stop_everything_event, None, None, queue=False, cancels=gen_events if shared.args.no_stream else None)
             shared.gradio['prompt_menu'].change(load_prompt, shared.gradio['prompt_menu'], shared.gradio['textbox'], show_progress=False)
-            shared.gradio['open_save_prompt'].click(open_save_prompt, None, [shared.gradio[k] for k in ['prompt_to_save', 'open_save_prompt', 'save_prompt']], show_progress=False)
-            shared.gradio['save_prompt'].click(save_prompt, [shared.gradio[k] for k in ['textbox', 'prompt_to_save']], [shared.gradio[k] for k in ['status', 'prompt_to_save', 'open_save_prompt', 'save_prompt']], show_progress=False)
+            shared.gradio['save_prompt'].click(
+                lambda x: x, shared.gradio['textbox'], shared.gradio['save_contents']).then(
+                lambda: 'prompts/', None, shared.gradio['save_root']).then(
+                lambda: current_time() + '.txt', None, shared.gradio['save_filename']).then(
+                lambda: gr.update(visible=True), None, shared.gradio['file_saver'])
+
             shared.gradio['count_tokens'].click(count_tokens, shared.gradio['textbox'], shared.gradio['status'], show_progress=False)
+
+        shared.gradio['save_preset'].click(
+            ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
+            generate_preset_yaml, shared.gradio['interface_state'], shared.gradio['save_contents']).then(
+            lambda: 'presets/', None, shared.gradio['save_root']).then(
+            lambda: 'My Preset.yaml', None, shared.gradio['save_filename']).then(
+            lambda: gr.update(visible=True), None, shared.gradio['file_saver'])
+
+        shared.gradio['delete_preset'].click(
+            lambda x: f'{x}.yaml', shared.gradio['preset_menu'], shared.gradio['delete_filename']).then(
+            lambda: 'presets/', None, shared.gradio['delete_root']).then(
+            lambda: gr.update(visible=True), None, shared.gradio['file_deleter'])
 
         shared.gradio['interface'].load(lambda: None, None, None, _js=f"() => {{{js}}}")
         if shared.settings['dark_theme']:

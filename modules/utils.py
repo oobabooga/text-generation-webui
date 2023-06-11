@@ -3,6 +3,27 @@ import re
 from pathlib import Path
 
 from modules import shared
+from modules.logging_colors import logger
+
+
+def save_file(fname, contents):
+    if fname == '':
+        logger.error(f'File name is empty!')
+        return
+
+    with open(Path(fname), 'w') as f:
+        f.write(contents)
+
+    logger.info(f'Saved {fname}.')
+
+
+def delete_file(fname):
+    if fname == '':
+        logger.error(f'File name is empty!')
+        return
+
+    Path(fname).unlink(missing_ok=True)
+    logger.info(f'Deleted {fname}.')
 
 
 def atoi(text):
