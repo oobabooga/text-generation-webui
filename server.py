@@ -359,9 +359,7 @@ def create_model_menus():
                         shared.gradio['compute_dtype'] = gr.Dropdown(label="compute_dtype", choices=["bfloat16", "float16", "float32"], value=shared.args.compute_dtype)
                         shared.gradio['quant_type'] = gr.Dropdown(label="quant_type", choices=["nf4", "fp4"], value=shared.args.quant_type)
 
-            with gr.Row():
-                shared.gradio['autoload_model'] = gr.Checkbox(value=shared.settings['autoload_model'], label='Autoload the model', info='Whether to load the model as soon as it is selected in the Model dropdown.')
-
+            shared.gradio['autoload_model'] = gr.Checkbox(value=shared.settings['autoload_model'], label='Autoload the model', info='Whether to load the model as soon as it is selected in the Model dropdown.')
             shared.gradio['custom_model_menu'] = gr.Textbox(label="Download custom model or LoRA", info="Enter the Hugging Face username/model path, for instance: facebook/galactica-125m. To specify a branch, add it at the end after a \":\" character like this: facebook/galactica-125m:main")
             shared.gradio['download_model_button'] = gr.Button("Download")
 
@@ -459,7 +457,11 @@ def create_settings_menus(default_preset):
                 shared.gradio['save_preset'] = gr.Button('💾', elem_classes='refresh-button')
                 shared.gradio['delete_preset'] = gr.Button('🗑️', elem_classes='refresh-button')
 
+        with gr.Column():
             shared.gradio['seed'] = gr.Number(value=shared.settings['seed'], label='Seed (-1 for random)')
+
+    with gr.Row():
+        with gr.Column():
             with gr.Box():
                 gr.Markdown('Main parameters')
                 with gr.Row():
