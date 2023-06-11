@@ -18,7 +18,7 @@ def save_file(fname, contents):
         logger.error(f'Invalid file path: {fname}')
         return
 
-    with open(abs_path, 'w') as f:
+    with open(abs_path, 'w', encoding='utf-8') as f:
         f.write(contents)
 
     logger.info(f'Saved {abs_path}.')
