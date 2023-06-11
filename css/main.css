@@ -139,3 +139,13 @@ button {
 .dark .file-saver {
   border: 2px solid white !important;
 }
+
+.checkboxgroup-table label {
+    background: none !important;
+    padding: 0 !important;
+    border: 0 !important;
+}
+
+.checkboxgroup-table div {
+    display: grid !important;
+}
