@@ -1,3 +1,4 @@
+accelerate==0.20.3
 colorama
 datasets
 einops
@@ -14,12 +15,11 @@ safetensors==0.3.1
 sentencepiece
 tqdm
 scipy
-git+https://github.com/huggingface/peft@3714aa2fff158fdfa637b2b65952580801d890b2
-git+https://github.com/huggingface/transformers@e45e756d22206ca8fa9fb057c8c3d8fa79bf81c6
-git+https://github.com/huggingface/accelerate@0226f750257b3bf2cadc4f189f9eef0c764a0467
+transformers==4.30.0
+git+https://github.com/huggingface/peft@e45529b149c7f91ec1d4d82a5a152ef56c56cb94
 bitsandbytes==0.39.0; platform_system != "Windows"
 https://github.com/jllllll/bitsandbytes-windows-webui/raw/main/bitsandbytes-0.39.0-py3-none-any.whl; platform_system == "Windows"
 llama-cpp-python==0.1.57; platform_system != "Windows"
 https://github.com/abetlen/llama-cpp-python/releases/download/v0.1.57/llama_cpp_python-0.1.57-cp310-cp310-win_amd64.whl; platform_system == "Windows"
-https://github.com/PanQiWei/AutoGPTQ/releases/download/v0.2.0/auto_gptq-0.2.0+cu117-cp310-cp310-win_amd64.whl; platform_system == "Windows"
-https://github.com/PanQiWei/AutoGPTQ/releases/download/v0.2.0/auto_gptq-0.2.0+cu117-cp310-cp310-linux_x86_64.whl; platform_system == "Linux"
+https://github.com/PanQiWei/AutoGPTQ/releases/download/v0.2.2/auto_gptq-0.2.2+cu117-cp310-cp310-win_amd64.whl; platform_system == "Windows"
+https://github.com/PanQiWei/AutoGPTQ/releases/download/v0.2.2/auto_gptq-0.2.2+cu117-cp310-cp310-linux_x86_64.whl; platform_system == "Linux"
