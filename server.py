@@ -456,6 +456,9 @@ def create_settings_menus(default_preset):
             with gr.Row():
                 shared.gradio['preset_menu'] = gr.Dropdown(choices=utils.get_available_presets(), value=default_preset if not shared.args.flexgen else 'Naive', label='Generation parameters preset')
                 ui.create_refresh_button(shared.gradio['preset_menu'], lambda: None, lambda: {'choices': utils.get_available_presets()}, 'refresh-button')
+                with gr.Column(scale=0):
+                    shared.gradio['save_preset'] = gr.Button('Save preset')
+                    shared.gradio['delete_preset'] = gr.Button('Delete preset')
 
             with gr.Box():
                 gr.Markdown('Main parameters')
@@ -512,18 +515,14 @@ def create_settings_menus(default_preset):
 
             gr.Markdown('[Click here for more information.](https://github.com/oobabooga/text-generation-webui/blob/main/docs/Generation-parameters.md)')
 
-    with gr.Row():
-        shared.gradio['save_preset'] = gr.Button('Save preset', elem_classes="small-button")
-        shared.gradio['delete_preset'] = gr.Button('Delete preset', elem_classes="small-button")
-
     shared.gradio['preset_menu'].change(load_preset_values, [shared.gradio[k] for k in ['preset_menu', 'interface_state']], [shared.gradio[k] for k in ['interface_state', 'do_sample', 'temperature', 'top_p', 'typical_p', 'epsilon_cutoff', 'eta_cutoff', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping', 'mirostat_mode', 'mirostat_tau', 'mirostat_eta', 'tfs', 'top_a']])
 
 
 def create_file_saving_menus():
     with gr.Box(visible=False, elem_id='file-saver') as shared.gradio['file_saver']:
-        shared.gradio['save_filename'] = gr.Textbox(elem_classes="textbox_default", lines=1, label='File name')
-        shared.gradio['save_root'] = gr.Textbox(elem_classes="textbox_default", lines=1, label='File folder', info='For reference. Unchangeable.', interactive=False)
-        shared.gradio['save_contents'] = gr.Textbox(elem_classes="textbox_default", lines=10, label='File contents')
+        shared.gradio['save_filename'] = gr.Textbox(lines=1, label='File name')
+        shared.gradio['save_root'] = gr.Textbox(lines=1, label='File folder', info='For reference. Unchangeable.', interactive=False)
+        shared.gradio['save_contents'] = gr.Textbox(lines=10, label='File contents')
         with gr.Row():
             shared.gradio['save_confirm'] = gr.Button('Save', elem_classes="small-button")
             shared.gradio['save_cancel'] = gr.Button('Cancel', elem_classes="small-button")
@@ -650,11 +649,10 @@ def create_interface():
                         with gr.Row():
                             shared.gradio['character_menu'] = gr.Dropdown(choices=utils.get_available_characters(), label='Character', elem_id='character-menu', info='Used in chat and chat-instruct modes.')
                             ui.create_refresh_button(shared.gradio['character_menu'], lambda: None, lambda: {'choices': utils.get_available_characters()}, 'refresh-button')
+                            with gr.Column(scale=0):
+                                shared.gradio['save_character'] = gr.Button('Save character')
+                                shared.gradio['delete_character'] = gr.Button('Delete character')
 
-                        with gr.Row():
-                            shared.gradio['save_character'] = gr.Button('Save character', elem_classes="small-button")
-                            shared.gradio['delete_character'] = gr.Button('Delete character', elem_classes="small-button")
-                        
                         shared.gradio['name1'] = gr.Textbox(value=shared.settings['name1'], lines=1, label='Your name')
                         shared.gradio['name2'] = gr.Textbox(value=shared.settings['name2'], lines=1, label='Character\'s name')
                         shared.gradio['context'] = gr.Textbox(value=shared.settings['context'], lines=4, label='Context')
@@ -667,10 +665,9 @@ def create_interface():
                 with gr.Row():
                     shared.gradio['instruction_template'] = gr.Dropdown(choices=utils.get_available_instruction_templates(), label='Instruction template', value='None', info='Change this according to the model/LoRA that you are using. Used in instruct and chat-instruct modes.')
                     ui.create_refresh_button(shared.gradio['instruction_template'], lambda: None, lambda: {'choices': utils.get_available_instruction_templates()}, 'refresh-button')
-
-                with gr.Row():
-                    shared.gradio['save_template'] = gr.Button('Save template', elem_classes="small-button")
-                    shared.gradio['delete_template'] = gr.Button('Delete template', elem_classes="small-button")
+                    with gr.Column(scale=0):
+                        shared.gradio['save_template'] = gr.Button('Save template')
+                        shared.gradio['delete_template'] = gr.Button('Delete template')
 
                 shared.gradio['name1_instruct'] = gr.Textbox(value='', lines=2, label='User string')
                 shared.gradio['name2_instruct'] = gr.Textbox(value='', lines=1, label='Bot string')
