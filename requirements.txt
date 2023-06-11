@@ -1,4 +1,4 @@
-accelerate==0.20.3
+accelerate==0.19.0
 colorama
 datasets
 einops
@@ -16,7 +16,7 @@ safetensors==0.3.1
 sentencepiece
 tqdm
 scipy
-transformers==4.30.0
+transformers==4.29.2
 bitsandbytes==0.39.0; platform_system != "Windows"
 https://github.com/jllllll/bitsandbytes-windows-webui/raw/main/bitsandbytes-0.39.0-py3-none-any.whl; platform_system == "Windows"
 llama-cpp-python==0.1.57; platform_system != "Windows"
