@@ -17,7 +17,7 @@ from modules.html_generator import chat_html_wrapper, make_thumbnail
 from modules.logging_colors import logger
 from modules.text_generation import (generate_reply, get_encoded_length,
                                      get_max_prompt_length)
-from modules.utils import replace_all
+from modules.utils import delete_file, replace_all, save_file
 
 
 def get_turn_substrings(state, instruct=False):
@@ -649,3 +649,24 @@ def generate_instruction_template_yaml(user, bot, context, turn_template):
 
     data = {k: v for k, v in data.items() if v}  # Strip falsy
     return yaml.dump(data, sort_keys=False)
+
+
+def save_character(name, greeting, context, picture, filename):
+    if filename == "":
+        logger.error("The filename is empty, so the character will not be saved.")
+        return
+
+    data = generate_character_yaml(name, greeting, context)
+    filepath = Path(f'characters/{filename}.yaml')
+    save_file(filepath, data)
+    path_to_img = Path(f'characters/{filename}.png')
+    if picture is not None:
+        picture.save(path_to_img)
+        logger.info(f'Saved {path_to_img}.')
+
+
+def delete_character(name, instruct=False):
+    for extension in ["yml", "yaml", "json"]:
+        delete_file(Path(f'characters/{name}.{extension}'))
+
+    delete_file(Path(f'characters/{name}.png'))

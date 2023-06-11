@@ -39,8 +39,6 @@ def delete_file(fname):
     if abs_path.exists():
         abs_path.unlink()
         logger.info(f'Deleted {fname}.')
-    else:
-        logger.error(f'{abs_path} does not exist.')
 
 
 def atoi(text):
