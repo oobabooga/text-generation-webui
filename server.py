@@ -46,6 +46,7 @@ from PIL import Image
 import modules.extensions as extensions_module
 from modules import chat, shared, training, ui, utils
 from modules.extensions import apply_extensions
+from modules.github import clone_or_pull_repository
 from modules.html_generator import chat_html_wrapper
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, unload_model
@@ -833,10 +834,20 @@ def create_interface():
             with gr.Row():
                 with gr.Column():
                     shared.gradio['extensions_menu'] = gr.CheckboxGroup(choices=utils.get_available_extensions(), value=shared.args.extensions, label="Available extensions", info='Note that some of these extensions may require manually installing Python requirements through the command: pip install -r extensions/extension_name/requirements.txt', elem_classes='checkboxgroup-table')
+
                 with gr.Column():
                     shared.gradio['bool_menu'] = gr.CheckboxGroup(choices=bool_list, value=bool_active, label="Boolean command-line flags", elem_classes='checkboxgroup-table')
 
             shared.gradio['reset_interface'] = gr.Button("Apply and restart the interface")
+            with gr.Row():
+                extension_name = gr.Textbox(lines=1, label='Install or update an extension', info='Enter the GitHub URL below. For a list of extensions, see: https://github.com/oobabooga/text-generation-webui-extensions ⚠️  WARNING ⚠️ : extensions can execute arbitrary code. Make sure to inspect their source code before activating them.')
+                extension_install = gr.Button('Install or update', elem_classes="small-button")
+
+            extension_status = gr.Markdown()
+
+            extension_install.click(
+                clone_or_pull_repository, extension_name, extension_status, show_progress=False).then(
+                lambda: gr.update(choices=utils.get_available_extensions(), value=shared.args.extensions), outputs=shared.gradio['extensions_menu'])
 
             # Reset interface event
             shared.gradio['reset_interface'].click(
