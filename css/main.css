@@ -82,7 +82,7 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
 }
 
 .textbox_default textarea {
-    height: calc(100vh - 381px);
+    height: calc(100vh - 416px);
 }
 
 .textbox_default_output textarea {
@@ -113,4 +113,19 @@ button {
 
 .small-button {
     max-width: 171px;
+}
+
+.file-saver {
+  position: fixed !important;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%); /* center horizontally */
+  max-width: 500px;
+  background-color: var(--input-background-fill);
+  border: 2px solid black !important;
+  z-index: 1000;
+}
+
+.dark .file-saver {
+  border: 2px solid white !important;
 }
