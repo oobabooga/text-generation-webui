@@ -155,8 +155,11 @@ def load_prompt(fname):
 
 
 def count_tokens(text):
-    tokens = get_encoded_length(text)
-    return f'{tokens} tokens in the input.'
+    try:
+        tokens = get_encoded_length(text)
+        return f'{tokens} tokens in the input.'
+    except:
+        return 'Couldn\'t count the number of tokens. Is a tokenizer loaded?'
 
 
 def download_model_wrapper(repo_id):
@@ -567,9 +570,8 @@ def create_file_saving_menus():
 
         shared.gradio['delete_character_confirm'].click(
             chat.delete_character, shared.gradio['character_menu'], None).then(
-            lambda: gr.update(choices=utils.get_available_characters()), outputs=shared.gradio['character_menu']).then(
-            lambda: 'None', None, shared.gradio['character_menu']).then(
-            lambda: gr.update(visible=False), None, shared.gradio['character_deleter'])
+            lambda: gr.update(visible=False), None, shared.gradio['character_deleter']).then(
+            lambda: gr.update(choices=utils.get_available_characters()), outputs=shared.gradio['character_menu'])
 
         shared.gradio['save_character_cancel'].click(lambda: gr.update(visible=False), None, shared.gradio['character_saver'])
         shared.gradio['delete_character_cancel'].click(lambda: gr.update(visible=False), None, shared.gradio['character_deleter'])
@@ -763,7 +765,10 @@ def create_interface():
                             shared.gradio['prompt_menu'] = gr.Dropdown(choices=utils.get_available_prompts(), value='None', label='Prompt')
                             ui.create_refresh_button(shared.gradio['prompt_menu'], lambda: None, lambda: {'choices': utils.get_available_prompts()}, 'refresh-button')
 
-                        shared.gradio['save_prompt'] = gr.Button('Save prompt')
+                        with gr.Row():
+                            shared.gradio['save_prompt'] = gr.Button('Save prompt')
+                            shared.gradio['delete_prompt'] = gr.Button('Delete prompt')
+
                         shared.gradio['count_tokens'] = gr.Button('Count tokens')
                         shared.gradio['status'] = gr.Markdown('')
 
@@ -781,20 +786,19 @@ def create_interface():
                         shared.gradio['textbox'] = gr.Textbox(value=default_text, elem_classes="textbox_default", lines=27, label='Input')
                         shared.gradio['max_new_tokens'] = gr.Slider(minimum=shared.settings['max_new_tokens_min'], maximum=shared.settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=shared.settings['max_new_tokens'])
                         with gr.Row():
-                            shared.gradio['Generate'] = gr.Button('Generate', variant='primary', elem_classes="small-button")
-                            shared.gradio['Stop'] = gr.Button('Stop', elem_classes="small-button")
-                            shared.gradio['Continue'] = gr.Button('Continue', elem_classes="small-button")
-                            shared.gradio['save_prompt'] = gr.Button('Save prompt', elem_classes="small-button")
-                            shared.gradio['count_tokens'] = gr.Button('Count tokens', elem_classes="small-button")
+                            shared.gradio['Generate'] = gr.Button('Generate', variant='primary')
+                            shared.gradio['Stop'] = gr.Button('Stop')
+                            shared.gradio['Continue'] = gr.Button('Continue')
+                            shared.gradio['count_tokens'] = gr.Button('Count tokens')
 
                         with gr.Row():
+                            shared.gradio['prompt_menu'] = gr.Dropdown(choices=utils.get_available_prompts(), value='None', label='Prompt')
+                            ui.create_refresh_button(shared.gradio['prompt_menu'], lambda: None, lambda: {'choices': utils.get_available_prompts()}, 'refresh-button')
                             with gr.Column():
-                                with gr.Row():
-                                    shared.gradio['prompt_menu'] = gr.Dropdown(choices=utils.get_available_prompts(), value='None', label='Prompt')
-                                    ui.create_refresh_button(shared.gradio['prompt_menu'], lambda: None, lambda: {'choices': utils.get_available_prompts()}, 'refresh-button')
+                                shared.gradio['save_prompt'] = gr.Button('Save prompt')
+                                shared.gradio['delete_prompt'] = gr.Button('Delete prompt')
 
-                            with gr.Column():
-                                shared.gradio['status'] = gr.Markdown('')
+                        shared.gradio['status'] = gr.Markdown('')
 
                     with gr.Column():
                         with gr.Tab('Raw'):
@@ -1019,6 +1023,11 @@ def create_interface():
                 lambda: 'prompts/', None, shared.gradio['save_root']).then(
                 lambda: current_time() + '.txt', None, shared.gradio['save_filename']).then(
                 lambda: gr.update(visible=True), None, shared.gradio['file_saver'])
+
+            shared.gradio['delete_prompt'].click(
+                lambda: 'prompts/', None, shared.gradio['delete_root']).then(
+                lambda x: x + '.txt', shared.gradio['prompt_menu'], shared.gradio['delete_filename']).then(
+                lambda: gr.update(visible=True), None, shared.gradio['file_deleter'])
 
             shared.gradio['count_tokens'].click(count_tokens, shared.gradio['textbox'], shared.gradio['status'], show_progress=False)
 
