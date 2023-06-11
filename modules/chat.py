@@ -17,7 +17,7 @@ from modules.html_generator import chat_html_wrapper, make_thumbnail
 from modules.logging_colors import logger
 from modules.text_generation import (generate_reply, get_encoded_length,
                                      get_max_prompt_length)
-from modules.utils import replace_all, save_file
+from modules.utils import replace_all
 
 
 def get_turn_substrings(state, instruct=False):
@@ -628,12 +628,6 @@ def upload_your_profile_picture(img):
         logger.info('Profile picture saved to "cache/pfp_me.png"')
 
 
-def delete_file(path):
-    if path.exists():
-        logger.warning(f'Deleting {path}')
-        path.unlink(missing_ok=True)
-
-
 def generate_character_yaml(name, greeting, context):
     data = {
         'name': name,
@@ -655,27 +649,3 @@ def generate_instruction_template_yaml(user, bot, context, turn_template):
 
     data = {k: v for k, v in data.items() if v}  # Strip falsy
     return yaml.dump(data, sort_keys=False)
-
-
-def save_character(name, greeting, context, picture, filename, instruct=False):
-    if filename == "":
-        logger.error("The filename is empty, so the character will not be saved.")
-        return
-
-    data = generate_character_yaml(name, greeting, context)
-    folder = 'characters' if not instruct else 'characters/instruction-following'
-    save_file(f'{folder}/{filename}.yaml', data)
-    path_to_img = Path(f'{folder}/{filename}.png')
-    if picture and not instruct:
-        picture.save(path_to_img)
-        logger.info(f'Wrote {path_to_img}')
-    elif path_to_img.exists():
-        delete_file(path_to_img)
-
-
-def delete_character(name, instruct=False):
-    folder = 'characters' if not instruct else 'characters/instruction-following'
-    for extension in ["yml", "yaml", "json"]:
-        delete_file(Path(f'{folder}/{name}.{extension}'))
-
-    delete_file(Path(f'{folder}/{name}.png'))
