@@ -529,8 +529,8 @@ def create_file_saving_menus():
 
     # File deleter menu
     with gr.Box(visible=False, elem_id='file-deleter') as shared.gradio['file_deleter']:
-        shared.gradio['delete_filename'] = gr.Textbox(elem_classes="textbox_default", lines=1, label='File name')
-        shared.gradio['delete_root'] = gr.Textbox(elem_classes="textbox_default", lines=1, label='File folder', info='For reference. Unchangeable.', interactive=False)
+        shared.gradio['delete_filename'] = gr.Textbox(lines=1, label='File name')
+        shared.gradio['delete_root'] = gr.Textbox(lines=1, label='File folder', info='For reference. Unchangeable.', interactive=False)
         with gr.Row():
             shared.gradio['delete_confirm'] = gr.Button('Delete', elem_classes="small-button")
             shared.gradio['delete_cancel'] = gr.Button('Cancel', elem_classes="small-button")
