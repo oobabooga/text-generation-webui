@@ -122,10 +122,10 @@ button {
   transform: translate(-50%, -50%); /* center horizontally */
   max-width: 500px;
   background-color: var(--input-background-fill);
-  border: 2px solid black;
+  border: 2px solid black !important;
   z-index: 1000;
 }
 
 .dark .file-saver {
-  border: 2px solid white;
+  border: 2px solid white !important;
 }
