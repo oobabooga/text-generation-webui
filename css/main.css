@@ -6,19 +6,29 @@
     padding-top: 2.5rem
 }
 
-.dark #refresh-button {
-    background-color: #ffffff1f;
+.refresh-button {
+    max-width: 4.4em;
+    min-width: 2.2em !important;
+    height: 39.594px;
+    align-self: end;
+    line-height: 1em;
+    border-radius: 0.5em;
+    flex: none;
 }
 
-#refresh-button {
-    flex: none;
-    margin: 0;
-    padding: 0;
-    min-width: 50px;
-    border: none;
-    box-shadow: none;
-    border-radius: 10px;
-    background-color: #0000000d;
+.refresh-button-small {
+    max-width: 2.2em;
+}
+
+#slim-column {
+    flex: none !important;
+    min-width: 0 !important;
+}
+
+.slim-dropdown {
+    background-color: transparent !important;
+    border: none !important;
+    padding: 0 !important;
 }
 
 #download-label, #upload-label {

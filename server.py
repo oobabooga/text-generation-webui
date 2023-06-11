@@ -315,22 +315,18 @@ def create_model_menus():
             with gr.Row():
                 with gr.Column():
                     with gr.Row():
-                        shared.gradio['model_menu'] = gr.Dropdown(choices=utils.get_available_models(), value=shared.model_name, label='Model')
+                        shared.gradio['model_menu'] = gr.Dropdown(choices=utils.get_available_models(), value=shared.model_name, label='Model', elem_classes='slim-dropdown')
                         ui.create_refresh_button(shared.gradio['model_menu'], lambda: None, lambda: {'choices': utils.get_available_models()}, 'refresh-button')
+                        load = gr.Button("Load", visible=not shared.settings['autoload_model'])
+                        unload = gr.Button("Unload", elem_classes='refresh-button')
+                        reload = gr.Button("Reload", elem_classes='refresh-button')
+                        save_settings = gr.Button("Save settings", elem_classes='refresh-button')
 
                 with gr.Column():
                     with gr.Row():
-                        shared.gradio['lora_menu'] = gr.Dropdown(multiselect=True, choices=utils.get_available_loras(), value=shared.lora_names, label='LoRA(s)')
+                        shared.gradio['lora_menu'] = gr.Dropdown(multiselect=True, choices=utils.get_available_loras(), value=shared.lora_names, label='LoRA(s)', elem_classes='slim-dropdown')
                         ui.create_refresh_button(shared.gradio['lora_menu'], lambda: None, lambda: {'choices': utils.get_available_loras(), 'value': shared.lora_names}, 'refresh-button')
-
-        with gr.Column():
-            with gr.Row():
-                shared.gradio['lora_menu_apply'] = gr.Button(value='Apply the selected LoRAs')
-            with gr.Row():
-                load = gr.Button("Load the model", visible=not shared.settings['autoload_model'])
-                unload = gr.Button("Unload the model")
-                reload = gr.Button("Reload the model")
-                save_settings = gr.Button("Save settings for this model")
+                        shared.gradio['lora_menu_apply'] = gr.Button(value='Apply LoRAs', elem_classes='refresh-button')
 
     with gr.Row():
         with gr.Column():
@@ -457,11 +453,10 @@ def create_settings_menus(default_preset):
     with gr.Row():
         with gr.Column():
             with gr.Row():
-                shared.gradio['preset_menu'] = gr.Dropdown(choices=utils.get_available_presets(), value=default_preset if not shared.args.flexgen else 'Naive', label='Generation parameters preset')
+                shared.gradio['preset_menu'] = gr.Dropdown(choices=utils.get_available_presets(), value=default_preset if not shared.args.flexgen else 'Naive', label='Generation parameters preset', elem_classes='slim-dropdown')
                 ui.create_refresh_button(shared.gradio['preset_menu'], lambda: None, lambda: {'choices': utils.get_available_presets()}, 'refresh-button')
-                with gr.Column(scale=0):
-                    shared.gradio['save_preset'] = gr.Button('Save preset')
-                    shared.gradio['delete_preset'] = gr.Button('Delete preset')
+                shared.gradio['save_preset'] = gr.Button('💾', elem_classes='refresh-button')
+                shared.gradio['delete_preset'] = gr.Button('🗑️', elem_classes='refresh-button')
 
             shared.gradio['seed'] = gr.Number(value=shared.settings['seed'], label='Seed (-1 for random)')
             with gr.Box():
@@ -675,11 +670,10 @@ def create_interface():
                 with gr.Row():
                     with gr.Column(scale=8):
                         with gr.Row():
-                            shared.gradio['character_menu'] = gr.Dropdown(choices=utils.get_available_characters(), label='Character', elem_id='character-menu', info='Used in chat and chat-instruct modes.')
+                            shared.gradio['character_menu'] = gr.Dropdown(choices=utils.get_available_characters(), label='Character', elem_id='character-menu', info='Used in chat and chat-instruct modes.', elem_classes='slim-dropdown')
                             ui.create_refresh_button(shared.gradio['character_menu'], lambda: None, lambda: {'choices': utils.get_available_characters()}, 'refresh-button')
-                            with gr.Column(scale=0):
-                                shared.gradio['save_character'] = gr.Button('Save character')
-                                shared.gradio['delete_character'] = gr.Button('Delete character')
+                            shared.gradio['save_character'] = gr.Button('💾', elem_classes='refresh-button')
+                            shared.gradio['delete_character'] = gr.Button('🗑️', elem_classes='refresh-button')
 
                         shared.gradio['name1'] = gr.Textbox(value=shared.settings['name1'], lines=1, label='Your name')
                         shared.gradio['name2'] = gr.Textbox(value=shared.settings['name2'], lines=1, label='Character\'s name')
@@ -691,11 +685,11 @@ def create_interface():
                         shared.gradio['your_picture'] = gr.Image(label='Your picture', type='pil', value=Image.open(Path('cache/pfp_me.png')) if Path('cache/pfp_me.png').exists() else None)
 
                 with gr.Row():
-                    shared.gradio['instruction_template'] = gr.Dropdown(choices=utils.get_available_instruction_templates(), label='Instruction template', value='None', info='Change this according to the model/LoRA that you are using. Used in instruct and chat-instruct modes.')
-                    ui.create_refresh_button(shared.gradio['instruction_template'], lambda: None, lambda: {'choices': utils.get_available_instruction_templates()}, 'refresh-button')
-                    with gr.Column(scale=0):
-                        shared.gradio['save_template'] = gr.Button('Save template')
-                        shared.gradio['delete_template'] = gr.Button('Delete template')
+                    with gr.Row():
+                        shared.gradio['instruction_template'] = gr.Dropdown(choices=utils.get_available_instruction_templates(), label='Instruction template', value='None', info='Change this according to the model/LoRA that you are using. Used in instruct and chat-instruct modes.', elem_classes='slim-dropdown')
+                        ui.create_refresh_button(shared.gradio['instruction_template'], lambda: None, lambda: {'choices': utils.get_available_instruction_templates()}, 'refresh-button')
+                        shared.gradio['save_template'] = gr.Button('💾', elem_classes='refresh-button')
+                        shared.gradio['delete_template'] = gr.Button('🗑️ ', elem_classes='refresh-button')
 
                 shared.gradio['name1_instruct'] = gr.Textbox(value='', lines=2, label='User string')
                 shared.gradio['name2_instruct'] = gr.Textbox(value='', lines=1, label='Bot string')
@@ -762,12 +756,10 @@ def create_interface():
                         gr.HTML('<div style="padding-bottom: 13px"></div>')
                         shared.gradio['max_new_tokens'] = gr.Slider(minimum=shared.settings['max_new_tokens_min'], maximum=shared.settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=shared.settings['max_new_tokens'])
                         with gr.Row():
-                            shared.gradio['prompt_menu'] = gr.Dropdown(choices=utils.get_available_prompts(), value='None', label='Prompt')
-                            ui.create_refresh_button(shared.gradio['prompt_menu'], lambda: None, lambda: {'choices': utils.get_available_prompts()}, 'refresh-button')
-
-                        with gr.Row():
-                            shared.gradio['save_prompt'] = gr.Button('Save prompt')
-                            shared.gradio['delete_prompt'] = gr.Button('Delete prompt')
+                            shared.gradio['prompt_menu'] = gr.Dropdown(choices=utils.get_available_prompts(), value='None', label='Prompt', elem_classes='slim-dropdown')
+                            ui.create_refresh_button(shared.gradio['prompt_menu'], lambda: None, lambda: {'choices': utils.get_available_prompts()}, ['refresh-button', 'refresh-button-small'])
+                            shared.gradio['save_prompt'] = gr.Button('💾', elem_classes=['refresh-button', 'refresh-button-small'])
+                            shared.gradio['delete_prompt'] = gr.Button('🗑️', elem_classes=['refresh-button', 'refresh-button-small'])
 
                         shared.gradio['count_tokens'] = gr.Button('Count tokens')
                         shared.gradio['status'] = gr.Markdown('')
@@ -792,11 +784,10 @@ def create_interface():
                             shared.gradio['count_tokens'] = gr.Button('Count tokens')
 
                         with gr.Row():
-                            shared.gradio['prompt_menu'] = gr.Dropdown(choices=utils.get_available_prompts(), value='None', label='Prompt')
+                            shared.gradio['prompt_menu'] = gr.Dropdown(choices=utils.get_available_prompts(), value='None', label='Prompt', elem_classes='slim-dropdown')
                             ui.create_refresh_button(shared.gradio['prompt_menu'], lambda: None, lambda: {'choices': utils.get_available_prompts()}, 'refresh-button')
-                            with gr.Column():
-                                shared.gradio['save_prompt'] = gr.Button('Save prompt')
-                                shared.gradio['delete_prompt'] = gr.Button('Delete prompt')
+                            shared.gradio['save_prompt'] = gr.Button('💾', elem_classes='refresh-button')
+                            shared.gradio['delete_prompt'] = gr.Button('🗑️', elem_classes='refresh-button')
 
                         shared.gradio['status'] = gr.Markdown('')
 
