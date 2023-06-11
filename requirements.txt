@@ -3,9 +3,9 @@ colorama
 datasets
 einops
 flexgen==0.1.7
-gradio_client==0.2.5
+gradio_client==0.1.4
 peft
-gradio==3.33.1
+gradio==3.25.0
 markdown
 numpy
 pandas
@@ -16,9 +16,8 @@ safetensors==0.3.1
 sentencepiece
 tqdm
 scipy
-transformers==4.29.2
-bitsandbytes==0.39.0; platform_system != "Windows"
-https://github.com/jllllll/bitsandbytes-windows-webui/raw/main/bitsandbytes-0.39.0-py3-none-any.whl; platform_system == "Windows"
+transformers==4.29.1
+bitsandbytes==0.38.1; platform_system != "Windows"
 llama-cpp-python==0.1.57; platform_system != "Windows"
 https://github.com/abetlen/llama-cpp-python/releases/download/v0.1.57/llama_cpp_python-0.1.57-cp310-cp310-win_amd64.whl; platform_system == "Windows"
 auto-gptq
