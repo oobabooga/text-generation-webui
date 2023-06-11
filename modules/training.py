@@ -101,6 +101,8 @@ def create_train_interface():
 
             with gr.Row():
                 higher_rank_limit = gr.Checkbox(label='Enable higher ranks', value=False, info='If checked, changes Rank/Alpha slider above to go much higher. This will not work without a datacenter-class GPU.')
+            with gr.Row():
+                report_to = gr.Radio(label="Save detailed logs with", value="None", choices=["None", "wandb", "tensorboard"], interactive=True)
 
         with gr.Row():
             start_button = gr.Button("Start LoRA Training")
@@ -434,7 +436,8 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             load_best_model_at_end=eval_data is not None,
             # TODO: Enable multi-device support
             ddp_find_unused_parameters=None,
-            no_cuda=shared.args.cpu
+            no_cuda=shared.args.cpu,
+            report_to=report_to if report_to != "None" else None
         ),
         data_collator=transformers.DataCollatorForLanguageModeling(shared.tokenizer, mlm=False),
         callbacks=list([Callbacks()])
