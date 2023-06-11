@@ -1535,9 +1535,6 @@ def create_interface():
                 .then(
                     chat.save_history, shared.gradio["mode"], None, show_progress=False
                 )
-                .then(
-                    lambda: None, None, None, _js=f"() => {{{audio_notification_js}}}"
-                )
             )
 
             gen_events.append(
@@ -1562,9 +1559,6 @@ def create_interface():
                 .then(
                     chat.save_history, shared.gradio["mode"], None, show_progress=False
                 )
-                .then(
-                    lambda: None, None, None, _js=f"() => {{{audio_notification_js}}}"
-                )
             )
 
             gen_events.append(
@@ -1583,9 +1577,6 @@ def create_interface():
                 .then(
                     chat.save_history, shared.gradio["mode"], None, show_progress=False
                 )
-                .then(
-                    lambda: None, None, None, _js=f"() => {{{audio_notification_js}}}"
-                )
             )
 
             gen_events.append(
@@ -1603,9 +1594,6 @@ def create_interface():
                 )
                 .then(
                     chat.save_history, shared.gradio["mode"], None, show_progress=False
-                )
-                .then(
-                    lambda: None, None, None, _js=f"() => {{{audio_notification_js}}}"
                 )
             )
 
@@ -1627,9 +1615,6 @@ def create_interface():
                     shared.input_params,
                     shared.gradio["textbox"],
                     show_progress=False,
-                )
-                .then(
-                    lambda: None, None, None, _js=f"() => {{{audio_notification_js}}}"
                 )
             )
 
