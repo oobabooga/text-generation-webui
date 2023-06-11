@@ -177,8 +177,8 @@ parser.add_argument('--public-api', action='store_true', help='Create a public U
 
 # Guidance Server
 parser.add_argument('--guidance', action='store_true', help='Enable the guidance API extension.')
-parser.add_argument('--guidance-port', type=int, default=9000, help='The listening port for the blocking guidance API.')
-parser.add_argument('--guidance-device', type=str, default='cuda', help='The listening port for the blocking guidance API.')
+parser.add_argument('--guidance-port', type=int, default=9000, help='The listening port for the guidance API.')
+parser.add_argument('--guidance-device', type=str, default='cuda', help='The device where the model is loaded on.')
 
 
 # Multimodal
