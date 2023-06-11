@@ -320,8 +320,8 @@ def generate_chat_reply(text, history, state, regenerate=False, _continue=False,
 
 # Same as above but returns HTML for the UI
 def generate_chat_reply_wrapper(text, start_with, state, regenerate=False, _continue=False):
-    if start_with != '' and _continue == False:
-        if regenerate == True:
+    if start_with != '' and not _continue:
+        if regenerate:
             text = remove_last_message()
             regenerate = False
 
