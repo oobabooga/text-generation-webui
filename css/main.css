@@ -115,7 +115,7 @@ button {
     max-width: 171px;
 }
 
-#file-saver {
+#file-saver, #file-deleter {
   position: fixed;
   top: 50%;
   left: 50%;
@@ -126,6 +126,6 @@ button {
   z-index: 1000;
 }
 
-.dark #file-saver {
+.dark #file-saver, .dark #file-deleter {
   border: 2px solid white;
 }

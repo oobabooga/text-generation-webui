@@ -22,8 +22,12 @@ def delete_file(fname):
         logger.error(f'File name is empty!')
         return
 
-    Path(fname).unlink(missing_ok=True)
-    logger.info(f'Deleted {fname}.')
+    path = Path(fname)
+    if path.exists():
+        path.unlink()
+        logger.info(f'Deleted {fname}.')
+    else:
+        logger.error(f'{path} does not exist.')
 
 
 def atoi(text):
