@@ -8,26 +8,39 @@ from modules.logging_colors import logger
 
 def save_file(fname, contents):
     if fname == '':
-        logger.error(f'File name is empty!')
+        logger.error('File name is empty!')
         return
 
-    with open(Path(fname), 'w') as f:
+    root_folder = Path(__file__).resolve().parent.parent
+    abs_path = Path(fname).resolve()
+    rel_path = abs_path.relative_to(root_folder)
+    if rel_path.parts[0] == '..':
+        logger.error(f'Invalid file path: {fname}')
+        return
+
+    with open(abs_path, 'w') as f:
         f.write(contents)
 
-    logger.info(f'Saved {fname}.')
+    logger.info(f'Saved {abs_path}.')
 
 
 def delete_file(fname):
     if fname == '':
-        logger.error(f'File name is empty!')
+        logger.error('File name is empty!')
         return
 
-    path = Path(fname)
-    if path.exists():
-        path.unlink()
+    root_folder = Path(__file__).resolve().parent.parent
+    abs_path = Path(fname).resolve()
+    rel_path = abs_path.relative_to(root_folder)
+    if rel_path.parts[0] == '..':
+        logger.error(f'Invalid file path: {fname}')
+        return
+
+    if abs_path.exists():
+        abs_path.unlink()
         logger.info(f'Deleted {fname}.')
     else:
-        logger.error(f'{path} does not exist.')
+        logger.error(f'{abs_path} does not exist.')
 
 
 def atoi(text):
