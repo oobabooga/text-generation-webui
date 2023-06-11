@@ -1116,7 +1116,7 @@ def create_interface():
                         visible=shared.settings["mode"] != "instruct",
                     )
 
-            with gr.Tab("Chat settings", elem_id="chat-settings"):
+            with gr.Tab("聊天设置", elem_id="chat-settings"):
                 with gr.Row():
                     with gr.Column(scale=8):
                         with gr.Row():
@@ -1262,7 +1262,7 @@ def create_interface():
                             type="binary", file_types=["image"]
                         )
 
-            with gr.Tab("Parameters", elem_id="parameters"):
+            with gr.Tab("参数", elem_id="parameters"):
                 create_settings_menus(default_preset)
 
         # Create notebook mode interface
@@ -1936,10 +1936,6 @@ def create_interface():
                     output_params,
                     show_progress=False,
                 )
-                .then(
-                    lambda: None, None, None, _js=f"() => {{{audio_notification_js}}}"
-                )
-                # lambda: None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[0]; element.scrollTop = element.scrollHeight}")
             )
 
             gen_events.append(
@@ -1958,10 +1954,6 @@ def create_interface():
                     output_params,
                     show_progress=False,
                 )
-                .then(
-                    lambda: None, None, None, _js=f"() => {{{audio_notification_js}}}"
-                )
-                # lambda: None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[0]; element.scrollTop = element.scrollHeight}")
             )
 
             if shared.args.notebook:
@@ -1996,13 +1988,6 @@ def create_interface():
                         output_params,
                         show_progress=False,
                     )
-                    .then(
-                        lambda: None,
-                        None,
-                        None,
-                        _js=f"() => {{{audio_notification_js}}}",
-                    )
-                    # lambda: None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[0]; element.scrollTop = element.scrollHeight}")
                 )
             else:
                 shared.gradio["markdown_render"].click(
@@ -2024,13 +2009,6 @@ def create_interface():
                         output_params,
                         show_progress=False,
                     )
-                    .then(
-                        lambda: None,
-                        None,
-                        None,
-                        _js=f"() => {{{audio_notification_js}}}",
-                    )
-                    # lambda: None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[1]; element.scrollTop = element.scrollHeight}")
                 )
 
             shared.gradio["Stop"].click(
