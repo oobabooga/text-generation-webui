@@ -1073,17 +1073,17 @@ def create_interface():
                     shared.gradio["Continue"] = gr.Button("继续")
 
                 with gr.Row():
-                    shared.gradio["Copy last reply"] = gr.Button("复制上次的回复")
+                    shared.gradio["Impersonate"] = gr.Button("模仿")
                     shared.gradio["Regenerate"] = gr.Button("重新生成")
-                    shared.gradio["Replace last reply"] = gr.Button("替换上次的回复")
+                    shared.gradio["Remove last"] = gr.Button("删除最后一条")
 
                 with gr.Row():
-                    shared.gradio["Impersonate"] = gr.Button("模仿")
+                    shared.gradio["Copy last reply"] = gr.Button("复制最后一条回复")
+                    shared.gradio["Replace last reply"] = gr.Button("替换最后一条回复")
                     shared.gradio["Send dummy message"] = gr.Button("发送虚拟消息")
                     shared.gradio["Send dummy reply"] = gr.Button("发送虚拟回复")
 
                 with gr.Row():
-                    shared.gradio["Remove last"] = gr.Button("删除上一条")
                     shared.gradio["Clear history"] = gr.Button("清除历史记录")
                     shared.gradio["Clear history-confirm"] = gr.Button(
                         "确认", variant="stop", visible=False
@@ -1092,20 +1092,29 @@ def create_interface():
                         "取消", visible=False
                     )
 
-                shared.gradio["mode"] = gr.Radio(
-                    choices=["chat", "chat-instruct", "instruct"],
-                    value=shared.settings["mode"]
-                    if shared.settings["mode"] in ["chat", "instruct", "chat-instruct"]
-                    else "chat",
-                    label="Mode",
-                    info='Defines how the chat prompt is generated. In instruct and chat-instruct modes, the instruction template selected under "Chat settings" must match the current model.',
-                )
-                shared.gradio["chat_style"] = gr.Dropdown(
-                    choices=utils.get_available_chat_styles(),
-                    label="聊天风格",
-                    value=shared.settings["chat_style"],
-                    visible=shared.settings["mode"] != "instruct",
-                )
+                with gr.Row():
+                    shared.gradio["start_with"] = gr.Textbox(
+                        label="以以下内容开头回复",
+                        placeholder="当然！",
+                        value=shared.settings["start_with"],
+                    )
+
+                with gr.Row():
+                    shared.gradio["mode"] = gr.Radio(
+                        choices=["chat", "chat-instruct", "instruct"],
+                        value=shared.settings["mode"]
+                        if shared.settings["mode"]
+                        in ["chat", "instruct", "chat-instruct"]
+                        else "chat",
+                        label="模式",
+                        info='定义聊天提示的生成方式。在"instruct"和"chat-instruct"模式下，"Chat settings"中选择的指令模板必须与当前模型匹配。',
+                    )
+                    shared.gradio["chat_style"] = gr.Dropdown(
+                        choices=utils.get_available_chat_styles(),
+                        label="聊天风格",
+                        value=shared.settings["chat_style"],
+                        visible=shared.settings["mode"] != "instruct",
+                    )
 
             with gr.Tab("Chat settings", elem_id="chat-settings"):
                 with gr.Row():
