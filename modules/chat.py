@@ -520,7 +520,7 @@ def load_character(character, name1, name2, instruct=False):
 
         try:
             file_contents = open(filepath, 'r', encoding='utf-8').read()
-        except FileNotFoundError as e:
+        except FileNotFoundError:
             logger.error(f"Could not find character file for {character} in {folder} folder. Please check your spelling.")
             return
         
