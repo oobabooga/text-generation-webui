@@ -318,16 +318,16 @@ def create_model_menus():
                     with gr.Row():
                         shared.gradio['model_menu'] = gr.Dropdown(choices=utils.get_available_models(), value=shared.model_name, label='Model', elem_classes='slim-dropdown')
                         ui.create_refresh_button(shared.gradio['model_menu'], lambda: None, lambda: {'choices': utils.get_available_models()}, 'refresh-button')
-                        load = gr.Button("Load", visible=not shared.settings['autoload_model'],variant='primary',elem_classes='refresh-button')
+                        load = gr.Button("Load", visible=not shared.settings['autoload_model'], elem_classes='refresh-button')
                         unload = gr.Button("Unload", elem_classes='refresh-button')
                         reload = gr.Button("Reload", elem_classes='refresh-button')
-                        save_settings = gr.Button("Save", elem_classes='refresh-button')
+                        save_settings = gr.Button("Save settings", elem_classes='refresh-button')
 
                 with gr.Column():
                     with gr.Row():
                         shared.gradio['lora_menu'] = gr.Dropdown(multiselect=True, choices=utils.get_available_loras(), value=shared.lora_names, label='LoRA(s)', elem_classes='slim-dropdown')
                         ui.create_refresh_button(shared.gradio['lora_menu'], lambda: None, lambda: {'choices': utils.get_available_loras(), 'value': shared.lora_names}, 'refresh-button')
-                        shared.gradio['lora_menu_apply'] = gr.Button(value='Apply', variant='primary', elem_classes='refresh-button')
+                        shared.gradio['lora_menu_apply'] = gr.Button(value='Apply LoRAs', elem_classes='refresh-button')
 
     with gr.Row():
         with gr.Column():
