@@ -318,7 +318,7 @@ def create_model_menus():
                     with gr.Row():
                         shared.gradio['model_menu'] = gr.Dropdown(choices=utils.get_available_models(), value=shared.model_name, label='Model', elem_classes='slim-dropdown')
                         ui.create_refresh_button(shared.gradio['model_menu'], lambda: None, lambda: {'choices': utils.get_available_models()}, 'refresh-button')
-                        load = gr.Button("Load", visible=not shared.settings['autoload_model'])
+                        load = gr.Button("Load", visible=not shared.settings['autoload_model'], elem_classes='refresh-button')
                         unload = gr.Button("Unload", elem_classes='refresh-button')
                         reload = gr.Button("Reload", elem_classes='refresh-button')
                         save_settings = gr.Button("Save settings", elem_classes='refresh-button')
