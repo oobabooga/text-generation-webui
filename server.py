@@ -537,17 +537,6 @@ def create_file_saving_menus():
             shared.gradio['delete_confirm'] = gr.Button('Delete', elem_classes="small-button", variant='stop')
             shared.gradio['delete_cancel'] = gr.Button('Cancel', elem_classes="small-button")
 
-    shared.gradio['save_confirm'].click(
-        lambda x, y, z: utils.save_file(x + y, z), [shared.gradio[k] for k in ['save_root', 'save_filename', 'save_contents']], None).then(
-        lambda: gr.update(visible=False), None, shared.gradio['file_saver'])
-
-    shared.gradio['delete_confirm'].click(
-        lambda x, y: utils.delete_file(x + y), [shared.gradio[k] for k in ['delete_root', 'delete_filename']], None).then(
-        lambda: gr.update(visible=False), None, shared.gradio['file_deleter'])
-
-    shared.gradio['delete_cancel'].click(lambda: gr.update(visible=False), None, shared.gradio['file_deleter'])
-    shared.gradio['save_cancel'].click(lambda: gr.update(visible=False), None, shared.gradio['file_saver'])
-
     # Character saver/deleter
     if shared.is_chat():
         with gr.Box(visible=False, elem_classes='file-saver') as shared.gradio['character_saver']:
@@ -562,6 +551,19 @@ def create_file_saving_menus():
                 shared.gradio['delete_character_confirm'] = gr.Button('Delete', elem_classes="small-button", variant='stop')
                 shared.gradio['delete_character_cancel'] = gr.Button('Cancel', elem_classes="small-button")
 
+
+def create_file_saving_event_handlers():
+    shared.gradio['save_confirm'].click(
+        lambda x, y, z: utils.save_file(x + y, z), [shared.gradio[k] for k in ['save_root', 'save_filename', 'save_contents']], None).then(
+        lambda: gr.update(visible=False), None, shared.gradio['file_saver'])
+
+    shared.gradio['delete_confirm'].click(
+        lambda x, y: utils.delete_file(x + y), [shared.gradio[k] for k in ['delete_root', 'delete_filename']], None).then(
+        lambda: gr.update(visible=False), None, shared.gradio['file_deleter'])
+
+    shared.gradio['delete_cancel'].click(lambda: gr.update(visible=False), None, shared.gradio['file_deleter'])
+    shared.gradio['save_cancel'].click(lambda: gr.update(visible=False), None, shared.gradio['file_saver'])
+    if shared.is_chat():
         shared.gradio['save_character_confirm'].click(
             chat.save_character, [shared.gradio[k] for k in ['name2', 'greeting', 'context', 'character_picture', 'save_character_filename']], None).then(
             lambda: gr.update(visible=False), None, shared.gradio['character_saver'])
@@ -573,6 +575,18 @@ def create_file_saving_menus():
 
         shared.gradio['save_character_cancel'].click(lambda: gr.update(visible=False), None, shared.gradio['character_saver'])
         shared.gradio['delete_character_cancel'].click(lambda: gr.update(visible=False), None, shared.gradio['character_deleter'])
+
+    shared.gradio['save_preset'].click(
+        ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
+        generate_preset_yaml, shared.gradio['interface_state'], shared.gradio['save_contents']).then(
+        lambda: 'presets/', None, shared.gradio['save_root']).then(
+        lambda: 'My Preset.yaml', None, shared.gradio['save_filename']).then(
+        lambda: gr.update(visible=True), None, shared.gradio['file_saver'])
+
+    shared.gradio['delete_preset'].click(
+        lambda x: f'{x}.yaml', shared.gradio['preset_menu'], shared.gradio['delete_filename']).then(
+        lambda: 'presets/', None, shared.gradio['delete_root']).then(
+        lambda: gr.update(visible=True), None, shared.gradio['file_deleter'])
 
 
 def set_interface_arguments(interface_mode, extensions, bool_active):
@@ -630,6 +644,9 @@ def create_interface():
             audio_notification_js = "document.querySelector('#audio_notification audio')?.play();"
         else:
             audio_notification_js = ""
+
+        # Floating menus for saving/deleting files
+        create_file_saving_menus()
 
         # Create chat mode interface
         if shared.is_chat():
@@ -858,9 +875,6 @@ def create_interface():
 
             shared.gradio['toggle_dark_mode'].click(lambda: None, None, None, _js='() => {document.getElementsByTagName("body")[0].classList.toggle("dark")}')
 
-        # Floating menus for saving/deleting files
-        create_file_saving_menus()
-
         # chat mode event handlers
         if shared.is_chat():
             shared.input_params = [shared.gradio[k] for k in ['Chat input', 'start_with', 'interface_state']]
@@ -1039,18 +1053,7 @@ def create_interface():
 
             shared.gradio['count_tokens'].click(count_tokens, shared.gradio['textbox'], shared.gradio['status'], show_progress=False)
 
-        shared.gradio['save_preset'].click(
-            ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
-            generate_preset_yaml, shared.gradio['interface_state'], shared.gradio['save_contents']).then(
-            lambda: 'presets/', None, shared.gradio['save_root']).then(
-            lambda: 'My Preset.yaml', None, shared.gradio['save_filename']).then(
-            lambda: gr.update(visible=True), None, shared.gradio['file_saver'])
-
-        shared.gradio['delete_preset'].click(
-            lambda x: f'{x}.yaml', shared.gradio['preset_menu'], shared.gradio['delete_filename']).then(
-            lambda: 'presets/', None, shared.gradio['delete_root']).then(
-            lambda: gr.update(visible=True), None, shared.gradio['file_deleter'])
-
+        create_file_saving_event_handlers()
         shared.gradio['interface'].load(lambda: None, None, None, _js=f"() => {{{js}}}")
         if shared.settings['dark_theme']:
             shared.gradio['interface'].load(lambda: None, None, None, _js="() => document.getElementsByTagName('body')[0].classList.add('dark')")
