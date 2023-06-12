@@ -46,6 +46,7 @@ from PIL import Image
 import modules.extensions as extensions_module
 from modules import chat, shared, training, ui, utils
 from modules.extensions import apply_extensions
+from modules.github import clone_or_pull_repository
 from modules.html_generator import chat_html_wrapper
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, unload_model
@@ -315,22 +316,18 @@ def create_model_menus():
             with gr.Row():
                 with gr.Column():
                     with gr.Row():
-                        shared.gradio['model_menu'] = gr.Dropdown(choices=utils.get_available_models(), value=shared.model_name, label='Model')
+                        shared.gradio['model_menu'] = gr.Dropdown(choices=utils.get_available_models(), value=shared.model_name, label='Model', elem_classes='slim-dropdown')
                         ui.create_refresh_button(shared.gradio['model_menu'], lambda: None, lambda: {'choices': utils.get_available_models()}, 'refresh-button')
+                        load = gr.Button("Load", visible=not shared.settings['autoload_model'])
+                        unload = gr.Button("Unload", elem_classes='refresh-button')
+                        reload = gr.Button("Reload", elem_classes='refresh-button')
+                        save_settings = gr.Button("Save settings", elem_classes='refresh-button')
 
                 with gr.Column():
                     with gr.Row():
-                        shared.gradio['lora_menu'] = gr.Dropdown(multiselect=True, choices=utils.get_available_loras(), value=shared.lora_names, label='LoRA(s)')
+                        shared.gradio['lora_menu'] = gr.Dropdown(multiselect=True, choices=utils.get_available_loras(), value=shared.lora_names, label='LoRA(s)', elem_classes='slim-dropdown')
                         ui.create_refresh_button(shared.gradio['lora_menu'], lambda: None, lambda: {'choices': utils.get_available_loras(), 'value': shared.lora_names}, 'refresh-button')
-
-        with gr.Column():
-            with gr.Row():
-                shared.gradio['lora_menu_apply'] = gr.Button(value='Apply the selected LoRAs')
-            with gr.Row():
-                load = gr.Button("Load the model", visible=not shared.settings['autoload_model'])
-                unload = gr.Button("Unload the model")
-                reload = gr.Button("Reload the model")
-                save_settings = gr.Button("Save settings for this model")
+                        shared.gradio['lora_menu_apply'] = gr.Button(value='Apply LoRAs', elem_classes='refresh-button')
 
     with gr.Row():
         with gr.Column():
@@ -362,9 +359,7 @@ def create_model_menus():
                         shared.gradio['compute_dtype'] = gr.Dropdown(label="compute_dtype", choices=["bfloat16", "float16", "float32"], value=shared.args.compute_dtype)
                         shared.gradio['quant_type'] = gr.Dropdown(label="quant_type", choices=["nf4", "fp4"], value=shared.args.quant_type)
 
-            with gr.Row():
-                shared.gradio['autoload_model'] = gr.Checkbox(value=shared.settings['autoload_model'], label='Autoload the model', info='Whether to load the model as soon as it is selected in the Model dropdown.')
-
+            shared.gradio['autoload_model'] = gr.Checkbox(value=shared.settings['autoload_model'], label='Autoload the model', info='Whether to load the model as soon as it is selected in the Model dropdown.')
             shared.gradio['custom_model_menu'] = gr.Textbox(label="Download custom model or LoRA", info="Enter the Hugging Face username/model path, for instance: facebook/galactica-125m. To specify a branch, add it at the end after a \":\" character like this: facebook/galactica-125m:main")
             shared.gradio['download_model_button'] = gr.Button("Download")
 
@@ -457,13 +452,16 @@ def create_settings_menus(default_preset):
     with gr.Row():
         with gr.Column():
             with gr.Row():
-                shared.gradio['preset_menu'] = gr.Dropdown(choices=utils.get_available_presets(), value=default_preset if not shared.args.flexgen else 'Naive', label='Generation parameters preset')
+                shared.gradio['preset_menu'] = gr.Dropdown(choices=utils.get_available_presets(), value=default_preset if not shared.args.flexgen else 'Naive', label='Generation parameters preset', elem_classes='slim-dropdown')
                 ui.create_refresh_button(shared.gradio['preset_menu'], lambda: None, lambda: {'choices': utils.get_available_presets()}, 'refresh-button')
-                with gr.Column(scale=0):
-                    shared.gradio['save_preset'] = gr.Button('Save preset')
-                    shared.gradio['delete_preset'] = gr.Button('Delete preset')
+                shared.gradio['save_preset'] = gr.Button('💾', elem_classes='refresh-button')
+                shared.gradio['delete_preset'] = gr.Button('🗑️', elem_classes='refresh-button')
 
+        with gr.Column():
             shared.gradio['seed'] = gr.Number(value=shared.settings['seed'], label='Seed (-1 for random)')
+
+    with gr.Row():
+        with gr.Column():
             with gr.Box():
                 gr.Markdown('Main parameters')
                 with gr.Row():
@@ -539,17 +537,6 @@ def create_file_saving_menus():
             shared.gradio['delete_confirm'] = gr.Button('Delete', elem_classes="small-button", variant='stop')
             shared.gradio['delete_cancel'] = gr.Button('Cancel', elem_classes="small-button")
 
-    shared.gradio['save_confirm'].click(
-        lambda x, y, z: utils.save_file(x + y, z), [shared.gradio[k] for k in ['save_root', 'save_filename', 'save_contents']], None).then(
-        lambda: gr.update(visible=False), None, shared.gradio['file_saver'])
-
-    shared.gradio['delete_confirm'].click(
-        lambda x, y: utils.delete_file(x + y), [shared.gradio[k] for k in ['delete_root', 'delete_filename']], None).then(
-        lambda: gr.update(visible=False), None, shared.gradio['file_deleter'])
-
-    shared.gradio['delete_cancel'].click(lambda: gr.update(visible=False), None, shared.gradio['file_deleter'])
-    shared.gradio['save_cancel'].click(lambda: gr.update(visible=False), None, shared.gradio['file_saver'])
-
     # Character saver/deleter
     if shared.is_chat():
         with gr.Box(visible=False, elem_classes='file-saver') as shared.gradio['character_saver']:
@@ -564,6 +551,19 @@ def create_file_saving_menus():
                 shared.gradio['delete_character_confirm'] = gr.Button('Delete', elem_classes="small-button", variant='stop')
                 shared.gradio['delete_character_cancel'] = gr.Button('Cancel', elem_classes="small-button")
 
+
+def create_file_saving_event_handlers():
+    shared.gradio['save_confirm'].click(
+        lambda x, y, z: utils.save_file(x + y, z), [shared.gradio[k] for k in ['save_root', 'save_filename', 'save_contents']], None).then(
+        lambda: gr.update(visible=False), None, shared.gradio['file_saver'])
+
+    shared.gradio['delete_confirm'].click(
+        lambda x, y: utils.delete_file(x + y), [shared.gradio[k] for k in ['delete_root', 'delete_filename']], None).then(
+        lambda: gr.update(visible=False), None, shared.gradio['file_deleter'])
+
+    shared.gradio['delete_cancel'].click(lambda: gr.update(visible=False), None, shared.gradio['file_deleter'])
+    shared.gradio['save_cancel'].click(lambda: gr.update(visible=False), None, shared.gradio['file_saver'])
+    if shared.is_chat():
         shared.gradio['save_character_confirm'].click(
             chat.save_character, [shared.gradio[k] for k in ['name2', 'greeting', 'context', 'character_picture', 'save_character_filename']], None).then(
             lambda: gr.update(visible=False), None, shared.gradio['character_saver'])
@@ -575,6 +575,18 @@ def create_file_saving_menus():
 
         shared.gradio['save_character_cancel'].click(lambda: gr.update(visible=False), None, shared.gradio['character_saver'])
         shared.gradio['delete_character_cancel'].click(lambda: gr.update(visible=False), None, shared.gradio['character_deleter'])
+
+    shared.gradio['save_preset'].click(
+        ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
+        generate_preset_yaml, shared.gradio['interface_state'], shared.gradio['save_contents']).then(
+        lambda: 'presets/', None, shared.gradio['save_root']).then(
+        lambda: 'My Preset.yaml', None, shared.gradio['save_filename']).then(
+        lambda: gr.update(visible=True), None, shared.gradio['file_saver'])
+
+    shared.gradio['delete_preset'].click(
+        lambda x: f'{x}.yaml', shared.gradio['preset_menu'], shared.gradio['delete_filename']).then(
+        lambda: 'presets/', None, shared.gradio['delete_root']).then(
+        lambda: gr.update(visible=True), None, shared.gradio['file_deleter'])
 
 
 def set_interface_arguments(interface_mode, extensions, bool_active):
@@ -633,6 +645,9 @@ def create_interface():
         else:
             audio_notification_js = ""
 
+        # Floating menus for saving/deleting files
+        create_file_saving_menus()
+
         # Create chat mode interface
         if shared.is_chat():
             shared.input_elements = ui.list_interface_input_elements(chat=True)
@@ -675,11 +690,10 @@ def create_interface():
                 with gr.Row():
                     with gr.Column(scale=8):
                         with gr.Row():
-                            shared.gradio['character_menu'] = gr.Dropdown(choices=utils.get_available_characters(), label='Character', elem_id='character-menu', info='Used in chat and chat-instruct modes.')
+                            shared.gradio['character_menu'] = gr.Dropdown(choices=utils.get_available_characters(), label='Character', elem_id='character-menu', info='Used in chat and chat-instruct modes.', elem_classes='slim-dropdown')
                             ui.create_refresh_button(shared.gradio['character_menu'], lambda: None, lambda: {'choices': utils.get_available_characters()}, 'refresh-button')
-                            with gr.Column(scale=0):
-                                shared.gradio['save_character'] = gr.Button('Save character')
-                                shared.gradio['delete_character'] = gr.Button('Delete character')
+                            shared.gradio['save_character'] = gr.Button('💾', elem_classes='refresh-button')
+                            shared.gradio['delete_character'] = gr.Button('🗑️', elem_classes='refresh-button')
 
                         shared.gradio['name1'] = gr.Textbox(value=shared.settings['name1'], lines=1, label='Your name')
                         shared.gradio['name2'] = gr.Textbox(value=shared.settings['name2'], lines=1, label='Character\'s name')
@@ -691,11 +705,11 @@ def create_interface():
                         shared.gradio['your_picture'] = gr.Image(label='Your picture', type='pil', value=Image.open(Path('cache/pfp_me.png')) if Path('cache/pfp_me.png').exists() else None)
 
                 with gr.Row():
-                    shared.gradio['instruction_template'] = gr.Dropdown(choices=utils.get_available_instruction_templates(), label='Instruction template', value='None', info='Change this according to the model/LoRA that you are using. Used in instruct and chat-instruct modes.')
-                    ui.create_refresh_button(shared.gradio['instruction_template'], lambda: None, lambda: {'choices': utils.get_available_instruction_templates()}, 'refresh-button')
-                    with gr.Column(scale=0):
-                        shared.gradio['save_template'] = gr.Button('Save template')
-                        shared.gradio['delete_template'] = gr.Button('Delete template')
+                    with gr.Row():
+                        shared.gradio['instruction_template'] = gr.Dropdown(choices=utils.get_available_instruction_templates(), label='Instruction template', value='None', info='Change this according to the model/LoRA that you are using. Used in instruct and chat-instruct modes.', elem_classes='slim-dropdown')
+                        ui.create_refresh_button(shared.gradio['instruction_template'], lambda: None, lambda: {'choices': utils.get_available_instruction_templates()}, 'refresh-button')
+                        shared.gradio['save_template'] = gr.Button('💾', elem_classes='refresh-button')
+                        shared.gradio['delete_template'] = gr.Button('🗑️ ', elem_classes='refresh-button')
 
                 shared.gradio['name1_instruct'] = gr.Textbox(value='', lines=2, label='User string')
                 shared.gradio['name2_instruct'] = gr.Textbox(value='', lines=1, label='Bot string')
@@ -762,12 +776,10 @@ def create_interface():
                         gr.HTML('<div style="padding-bottom: 13px"></div>')
                         shared.gradio['max_new_tokens'] = gr.Slider(minimum=shared.settings['max_new_tokens_min'], maximum=shared.settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=shared.settings['max_new_tokens'])
                         with gr.Row():
-                            shared.gradio['prompt_menu'] = gr.Dropdown(choices=utils.get_available_prompts(), value='None', label='Prompt')
-                            ui.create_refresh_button(shared.gradio['prompt_menu'], lambda: None, lambda: {'choices': utils.get_available_prompts()}, 'refresh-button')
-
-                        with gr.Row():
-                            shared.gradio['save_prompt'] = gr.Button('Save prompt')
-                            shared.gradio['delete_prompt'] = gr.Button('Delete prompt')
+                            shared.gradio['prompt_menu'] = gr.Dropdown(choices=utils.get_available_prompts(), value='None', label='Prompt', elem_classes='slim-dropdown')
+                            ui.create_refresh_button(shared.gradio['prompt_menu'], lambda: None, lambda: {'choices': utils.get_available_prompts()}, ['refresh-button', 'refresh-button-small'])
+                            shared.gradio['save_prompt'] = gr.Button('💾', elem_classes=['refresh-button', 'refresh-button-small'])
+                            shared.gradio['delete_prompt'] = gr.Button('🗑️', elem_classes=['refresh-button', 'refresh-button-small'])
 
                         shared.gradio['count_tokens'] = gr.Button('Count tokens')
                         shared.gradio['status'] = gr.Markdown('')
@@ -792,11 +804,10 @@ def create_interface():
                             shared.gradio['count_tokens'] = gr.Button('Count tokens')
 
                         with gr.Row():
-                            shared.gradio['prompt_menu'] = gr.Dropdown(choices=utils.get_available_prompts(), value='None', label='Prompt')
+                            shared.gradio['prompt_menu'] = gr.Dropdown(choices=utils.get_available_prompts(), value='None', label='Prompt', elem_classes='slim-dropdown')
                             ui.create_refresh_button(shared.gradio['prompt_menu'], lambda: None, lambda: {'choices': utils.get_available_prompts()}, 'refresh-button')
-                            with gr.Column():
-                                shared.gradio['save_prompt'] = gr.Button('Save prompt')
-                                shared.gradio['delete_prompt'] = gr.Button('Delete prompt')
+                            shared.gradio['save_prompt'] = gr.Button('💾', elem_classes='refresh-button')
+                            shared.gradio['delete_prompt'] = gr.Button('🗑️', elem_classes='refresh-button')
 
                         shared.gradio['status'] = gr.Markdown('')
 
@@ -839,9 +850,23 @@ def create_interface():
                 shared.gradio['interface_modes_menu'] = gr.Dropdown(choices=modes, value=current_mode, label="Mode")
                 shared.gradio['toggle_dark_mode'] = gr.Button('Toggle dark/light mode', elem_classes="small-button")
 
-            shared.gradio['extensions_menu'] = gr.CheckboxGroup(choices=utils.get_available_extensions(), value=shared.args.extensions, label="Available extensions", info='Note that some of these extensions may require manually installing Python requirements through the command: pip install -r extensions/extension_name/requirements.txt')
-            shared.gradio['bool_menu'] = gr.CheckboxGroup(choices=bool_list, value=bool_active, label="Boolean command-line flags")
+            with gr.Row():
+                with gr.Column():
+                    shared.gradio['extensions_menu'] = gr.CheckboxGroup(choices=utils.get_available_extensions(), value=shared.args.extensions, label="Available extensions", info='Note that some of these extensions may require manually installing Python requirements through the command: pip install -r extensions/extension_name/requirements.txt', elem_classes='checkboxgroup-table')
+
+                with gr.Column():
+                    shared.gradio['bool_menu'] = gr.CheckboxGroup(choices=bool_list, value=bool_active, label="Boolean command-line flags", elem_classes='checkboxgroup-table')
+
             shared.gradio['reset_interface'] = gr.Button("Apply and restart the interface")
+            with gr.Row():
+                extension_name = gr.Textbox(lines=1, label='Install or update an extension', info='Enter the GitHub URL below. For a list of extensions, see: https://github.com/oobabooga/text-generation-webui-extensions ⚠️  WARNING ⚠️ : extensions can execute arbitrary code. Make sure to inspect their source code before activating them.')
+                extension_install = gr.Button('Install or update', elem_classes="small-button")
+
+            extension_status = gr.Markdown()
+
+            extension_install.click(
+                clone_or_pull_repository, extension_name, extension_status, show_progress=False).then(
+                lambda: gr.update(choices=utils.get_available_extensions(), value=shared.args.extensions), outputs=shared.gradio['extensions_menu'])
 
             # Reset interface event
             shared.gradio['reset_interface'].click(
@@ -849,9 +874,6 @@ def create_interface():
                 lambda: None, None, None, _js='() => {document.body.innerHTML=\'<h1 style="font-family:monospace;margin-top:20%;color:lightgray;text-align:center;">Reloading...</h1>\'; setTimeout(function(){location.reload()},2500); return []}')
 
             shared.gradio['toggle_dark_mode'].click(lambda: None, None, None, _js='() => {document.getElementsByTagName("body")[0].classList.toggle("dark")}')
-
-        # Floating menus for saving/deleting files
-        create_file_saving_menus()
 
         # chat mode event handlers
         if shared.is_chat():
@@ -1031,18 +1053,7 @@ def create_interface():
 
             shared.gradio['count_tokens'].click(count_tokens, shared.gradio['textbox'], shared.gradio['status'], show_progress=False)
 
-        shared.gradio['save_preset'].click(
-            ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
-            generate_preset_yaml, shared.gradio['interface_state'], shared.gradio['save_contents']).then(
-            lambda: 'presets/', None, shared.gradio['save_root']).then(
-            lambda: 'My Preset.yaml', None, shared.gradio['save_filename']).then(
-            lambda: gr.update(visible=True), None, shared.gradio['file_saver'])
-
-        shared.gradio['delete_preset'].click(
-            lambda x: f'{x}.yaml', shared.gradio['preset_menu'], shared.gradio['delete_filename']).then(
-            lambda: 'presets/', None, shared.gradio['delete_root']).then(
-            lambda: gr.update(visible=True), None, shared.gradio['file_deleter'])
-
+        create_file_saving_event_handlers()
         shared.gradio['interface'].load(lambda: None, None, None, _js=f"() => {{{js}}}")
         if shared.settings['dark_theme']:
             shared.gradio['interface'].load(lambda: None, None, None, _js="() => document.getElementsByTagName('body')[0].classList.add('dark')")
