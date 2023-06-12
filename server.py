@@ -369,6 +369,8 @@ def create_model_menus():
                     with gr.Column():
                         gr.Markdown('GPTQ')
                         shared.gradio['triton'] = gr.Checkbox(label="triton", value=shared.args.triton)
+                        shared.gradio['inject_fused_attention'] = gr.Checkbox(label="inject_fused_attention", value=not shared.args.inject_fused_attention, info='\'inject_fused_attention\' improves inference performance at the cost of greater VRAM usage. Disable if running out of VRAM, eg when using a 13B model on a 12GB card.')
+                        shared.gradio['inject_fused_mlp'] = gr.Checkbox(label="inject_fused_mlp", value=not shared.args.inject_fused_mlp, info='\'inject_fused_mlp\' improves inference performance when using Triton inference, at the cost of greater VRAM usage. Disable if running out of VRAM, eg when using a 13B model on a 12GB card.')
                         shared.gradio['desc_act'] = gr.Checkbox(label="desc_act", value=shared.args.desc_act, info='\'desc_act\', \'wbits\', and \'groupsize\' are used for old models without a quantize_config.json.')
                         shared.gradio['gptq_for_llama'] = gr.Checkbox(label="gptq-for-llama", value=shared.args.gptq_for_llama, info='Use GPTQ-for-LLaMa loader instead of AutoGPTQ. pre_layer should be used for CPU offloading instead of gpu-memory.')
 
