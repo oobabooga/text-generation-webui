@@ -518,7 +518,12 @@ def load_character(character, name1, name2, instruct=False):
             if filepath.exists():
                 break
 
-        file_contents = open(filepath, 'r', encoding='utf-8').read()
+        try:
+            file_contents = open(filepath, 'r', encoding='utf-8').read()
+        except FileNotFoundError as e:
+            logger.error(f"Could not find character file for {character} in {folder} folder. Please check your spelling.")
+            return
+        
         data = json.loads(file_contents) if extension == "json" else yaml.safe_load(file_contents)
 
         # Finding the bot's name
