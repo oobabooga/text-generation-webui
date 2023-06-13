@@ -1,0 +1,74 @@
+Thank you for downloading oobabooga/text-generation-webui.
+
+# WSL setup
+
+If you do not have WSL installed, see here:
+https://learn.microsoft.com/en-us/windows/wsl/install
+
+If you want to install Linux to a drive other than C
+Open powershell and enter these commands:
+
+cd D:\Path\To\Linux
+$ProgressPreference = 'SilentlyContinue'
+Invoke-WebRequest -Uri <LinuxDistroURL> -OutFile Linux.appx -UseBasicParsing
+mv Linux.appx Linux.zip
+
+Then open Linux.zip and you should see several .appx files inside.
+The one with _x64.appx contains the exe installer that you need.
+Extract the contents of that _x64.appx file and run <distro>.exe to install.
+
+Linux Distro URLs:
+https://learn.microsoft.com/en-us/windows/wsl/install-manual#downloading-distributions
+
+******************************************************************************
+*ENSURE THAT THE WSL LINUX DISTRO THAT YOU WISH TO USE IS SET AS THE DEFAULT!*
+******************************************************************************
+
+Do this by using these commands:
+wsl -l
+wsl -s <DistroName>
+
+# Web UI Installation
+
+Run the "start" script. By default it will install the web UI in WSL:
+/home/{username}/text-gen-install
+
+To launch the web UI in the future after it is already installed, run
+the same "start" script. Ensure that webui.py and wsl.sh are next to it!
+
+# Updating the web UI
+
+Run the "update" script. This will only install the updates, so it should
+be much faster than the initial installation.
+
+You can also run "wsl.sh update" in WSL.
+
+# Adding flags like --chat, --notebook, etc
+
+Edit the "webui.py" script using a text editor and add the desired flags
+to the CMD_FLAGS variable at the top. It should look like this:
+
+CMD_FLAGS = '--chat'
+
+For instance, to add the --api flag, change it to
+
+CMD_FLAGS = '--chat --api'
+
+The "start" and "update" scripts will copy the edited "webui.py" to WSL
+to be used by the web UI.
+
+# Running an interactive shell
+
+To run an interactive shell in the miniconda environment, run the "cmd"
+script. This is useful for installing additional requirements manually.
+
+You can also run "wsl.sh cmd" in WSL.
+
+# Changing the default install location
+
+To change this, you will need to edit the scripts as follows:
+wsl.sh: line ~22   INSTALL_DIR="/path/to/install/dir"
+
+Keep in mind that there is a long-standing bug in WSL that significantly
+slows drive read/write speeds when using a physical drive as opposed to
+the virtual one that Linux is installed in.
