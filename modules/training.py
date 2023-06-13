@@ -448,7 +448,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     # == Save parameters for reuse ==
     with open(f"{lora_file_path}/training_parameters.json", 'w', encoding='utf-8') as file:
         vars = locals()
-        json.dump({x: vars[x] for x in PARAMETERS}, file)
+        json.dump({x: vars[x] for x in PARAMETERS}, file, indent=2)
 
     # == Main run and monitor loop ==
     logger.info("Starting training...")
