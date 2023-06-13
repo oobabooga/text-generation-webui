@@ -190,31 +190,48 @@ class Handler(BaseHTTPRequestHandler):
             prompt = body['prompt']
             add_special_tokens = body.get('add_special_tokens', True)
             add_bos_token = body.get('add_bos_token', True)
+            truncation_length = body.get('truncation_length')
 
-            tokens = encode(prompt, add_special_tokens, add_bos_token)[0]
+            tokens = encode(prompt, add_special_tokens, add_bos_token, truncation_length)[0]
             # tensor to list
             token_ids = [t.item() for t in tokens]
 
             # Using encode directly for each token would cause spaces to be lost
-            tokens = torch.tensor([])
+            # and non-english characters could be encoded as multiple tokens
             token_texts = []
+            tokens = torch.tensor([])
+            new_ids = []
             length = 0
             for t in token_ids:
                 new_tokens = torch.tensor([t])
                 tokens = torch.cat((tokens, new_tokens))
+                new_ids.extend([t])
                 decoded_text = decode(tokens, not add_special_tokens)
                 # Take the new part from the end of decoded_text as the text of the new_tokens
                 new_text_length = len(decoded_text) - length
                 new_text = decoded_text[-new_text_length:]
+
+                # chr(0xfffd) is a partial unicode character
+                if chr(0xfffd) in new_text:
+                    continue
+
                 length = len(decoded_text)
-                token_texts.append(new_text)
+                token_texts.append({
+                    'text': new_text,
+                    'ids': new_ids
+                })
+                new_ids = []
+
+            if len(new_ids) > 0:
+                token_texts.append({
+                    'text': new_text,
+                    'ids': new_ids
+                })
 
             response = json.dumps({
-                'results': [{
-                    'token_ids': token_ids,
-                    'token_texts': token_texts,
-                    'token_count': len(tokens)
-                }]
+                'token_ids': token_ids,
+                'token_texts': token_texts,
+                'tokens_count': len(token_ids)
             })
 
             self.wfile.write(response.encode('utf-8'))
@@ -228,24 +245,40 @@ class Handler(BaseHTTPRequestHandler):
             skip_special_tokens = body.get('skip_special_tokens', True)
 
             # Using encode directly for each token would cause spaces to be lost
-            tokens = torch.tensor([])
+            # and non-english characters could be encoded as multiple tokens
             token_texts = []
+            tokens = torch.tensor([])
+            new_ids = []
             length = 0
             for t in token_ids:
                 new_tokens = torch.tensor([t])
                 tokens = torch.cat((tokens, new_tokens))
+                new_ids.extend([t])
                 decoded_text = decode(tokens, skip_special_tokens)
                 # Take the new part from the end of decoded_text as the text of the new_tokens
                 new_text_length = len(decoded_text) - length
                 new_text = decoded_text[-new_text_length:]
+
+                # chr(0xfffd) is a partial unicode character
+                if chr(0xfffd) in new_text:
+                    continue
+
                 length = len(decoded_text)
-                token_texts.append(new_text)
+                token_texts.append({
+                    'text': new_text,
+                    'ids': new_ids
+                })
+                new_ids = []
+
+            if len(new_ids) > 0:
+                token_texts.append({
+                    'text': new_text,
+                    'ids': new_ids
+                })
 
             response = json.dumps({
-                'results': [{
-                    'decoded_text': decoded_text,
-                    'token_texts': token_texts
-                }]
+                'decoded_text': decoded_text,
+                'token_texts': token_texts
             })
 
             self.wfile.write(response.encode('utf-8'))
