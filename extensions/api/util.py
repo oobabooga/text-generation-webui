@@ -43,9 +43,7 @@ def build_parameters(body, chat=False):
 
     preset_name = body.get('preset', 'None')
     if preset_name not in ['None', None, '']:
-        print(preset_name)
         preset = load_preset_memoized(preset_name)
-        print(preset)
         generate_params.update(preset)
 
     if chat:
