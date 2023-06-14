@@ -62,7 +62,7 @@ def build_parameters(body, chat=False):
             'greeting': greeting,
             'name1_instruct': name1_instruct,
             'name2_instruct': name2_instruct,
-            'context_instruct': context_instruct,
+            'context_instruct': body.get('context_instruct',  context_instruct),
             'turn_template': turn_template,
             'chat-instruct_command': str(body.get('chat-instruct_command', shared.settings['chat-instruct_command'])),
         })
