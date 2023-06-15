@@ -13,6 +13,7 @@ import transformers
 from datasets import Dataset, load_dataset
 from peft import (LoraConfig, get_peft_model, prepare_model_for_int8_training,
                   set_peft_model_state_dict)
+from trl import SFTTrainer
 
 from modules import shared, ui, utils
 from modules.evaluate import (calculate_perplexity, generate_markdown_table,
@@ -40,7 +41,7 @@ except:
 
 
 WANT_INTERRUPT = False
-PARAMETERS = ["lora_name", "always_override", "save_steps", "micro_batch_size", "batch_size", "epochs", "learning_rate", "lr_scheduler_type", "lora_rank", "lora_alpha", "lora_dropout", "cutoff_len", "dataset", "eval_dataset", "format", "eval_steps", "raw_text_file", "overlap_len", "newline_favor_len", "higher_rank_limit", "warmup_steps", "optimizer", "hard_cut_string", "train_only_after", "report_to"]
+PARAMETERS = ["lora_name", "always_override", "save_steps", "micro_batch_size", "batch_size", "epochs", "learning_rate", "lr_scheduler_type", "lora_rank", "lora_alpha", "lora_dropout", "cutoff_len", "dataset", "eval_dataset", "format", "eval_steps", "raw_text_file", "overlap_len", "newline_favor_len", "higher_rank_limit", "warmup_steps", "optimizer", "hard_cut_string", "train_only_after", "enforce_whole_answer", "report_to"]
 
 
 def create_train_interface():
@@ -98,6 +99,7 @@ def create_train_interface():
             warmup_steps = gr.Number(label='Warmup Steps', value=100, info='For this many steps at the start, the learning rate will be lower than normal. This helps the trainer prepare the model and precompute statistics to improve the quality of training after the start.')
             optimizer = gr.Dropdown(label='Optimizer', value='adamw_torch', choices=['adamw_hf', 'adamw_torch', 'adamw_torch_fused', 'adamw_torch_xla', 'adamw_apex_fused', 'adafactor', 'adamw_bnb_8bit', 'adamw_anyprecision', 'sgd', 'adagrad'], info='Different optimizer implementation options, for advanced users. Effects of different options are not well documented yet.')
             train_only_after = gr.Textbox(label='Train Only After', value='', info='Only consider text *after* this string in any given chunk for training. For Alpaca datasets, use "### Response:" to only train the response and ignore the input.')
+            enforce_whole_answer = gr.Checkbox(label='Enforce whole answer (RL)', value='', info='Demands the whole answer to be correct. Increases precision, but lowers creativity. Uses Reinforcement Learning (trl). Works only with "Train Only After"')
 
             with gr.Row():
                 higher_rank_limit = gr.Checkbox(label='Enable higher ranks', value=False, info='If checked, changes Rank/Alpha slider above to go much higher. This will not work without a datacenter-class GPU.')
@@ -133,7 +135,7 @@ def create_train_interface():
             refresh_table = gr.Button('Refresh the table', elem_classes="small-button")
 
     # Training events
-    all_params = [lora_name, always_override, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lr_scheduler_type, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, higher_rank_limit, warmup_steps, optimizer, hard_cut_string, train_only_after, report_to]
+    all_params = [lora_name, always_override, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lr_scheduler_type, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, higher_rank_limit, warmup_steps, optimizer, hard_cut_string, train_only_after, enforce_whole_answer, report_to]
     copy_from.change(do_copy_params, [copy_from] + all_params, all_params)
     start_button.click(do_train, all_params, output)
     stop_button.click(do_interrupt, None, None, queue=False)
@@ -197,7 +199,7 @@ def clean_path(base_path: str, path: str):
     return f'{Path(base_path).absolute()}/{path}'
 
 
-def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lr_scheduler_type: str, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, higher_rank_limit: bool, warmup_steps: int, optimizer: str, hard_cut_string: str, train_only_after: str, report_to: str):
+def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lr_scheduler_type: str, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, higher_rank_limit: bool, warmup_steps: int, optimizer: str, hard_cut_string: str, train_only_after: str, enforce_whole_answer: bool, report_to: str):
 
     if shared.args.monkey_patch:
         from monkeypatch.peft_tuners_lora_monkey_patch import \
@@ -414,8 +416,8 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             if WANT_INTERRUPT:
                 control.should_epoch_stop = True
                 control.should_training_stop = True
-
-    trainer = transformers.Trainer(
+    
+    trainer_args = {
         model=lora_model,
         train_dataset=train_data,
         eval_dataset=eval_data,
@@ -441,7 +443,12 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         ),
         data_collator=transformers.DataCollatorForLanguageModeling(shared.tokenizer, mlm=False),
         callbacks=list([Callbacks()])
-    )
+    }
+    
+    if enforce_whole_answer:
+        trainer = SFTTrainer(**trainer_args)
+    else:
+        trainer = transformers.Trainer(**trainer_args)
 
     lora_model.config.use_cache = False
 
