@@ -362,17 +362,21 @@ def create_model_menus():
     load.click(
         ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
         update_model_parameters, shared.gradio['interface_state'], None).then(
-        partial(load_model_wrapper, autoload=True), shared.gradio['model_menu'], shared.gradio['model_status'], show_progress=False)
+        partial(load_model_wrapper, autoload=True), shared.gradio['model_menu'], shared.gradio['model_status'], show_progress=False).then(
+        lambda: shared.lora_names, None,shared.gradio['lora_menu'])
 
     unload.click(
         unload_model, None, None).then(
-        lambda: "Model unloaded", None, shared.gradio['model_status'])
+        lambda: "Model unloaded", None, shared.gradio['model_status']).then(
+        lambda: shared.lora_names, None,shared.gradio['lora_menu'])
+
 
     reload.click(
         unload_model, None, None).then(
         ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
         update_model_parameters, shared.gradio['interface_state'], None).then(
-        partial(load_model_wrapper, autoload=True), shared.gradio['model_menu'], shared.gradio['model_status'], show_progress=False)
+        partial(load_model_wrapper, autoload=True), shared.gradio['model_menu'], shared.gradio['model_status'], show_progress=False).then(
+        lambda: shared.lora_names, None,shared.gradio['lora_menu'])
 
     save_settings.click(
         ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
