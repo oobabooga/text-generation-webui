@@ -17,7 +17,7 @@ from modules.html_generator import chat_html_wrapper, make_thumbnail
 from modules.logging_colors import logger
 from modules.text_generation import (generate_reply, get_encoded_length,
                                      get_max_prompt_length)
-from modules.utils import replace_all
+from modules.utils import delete_file, replace_all, save_file
 
 
 def get_turn_substrings(state, instruct=False):
@@ -320,8 +320,8 @@ def generate_chat_reply(text, history, state, regenerate=False, _continue=False,
 
 # Same as above but returns HTML for the UI
 def generate_chat_reply_wrapper(text, start_with, state, regenerate=False, _continue=False):
-    if start_with != '' and _continue == False:
-        if regenerate == True:
+    if start_with != '' and not _continue:
+        if regenerate:
             text = remove_last_message()
             regenerate = False
 
@@ -628,18 +628,7 @@ def upload_your_profile_picture(img):
         logger.info('Profile picture saved to "cache/pfp_me.png"')
 
 
-def delete_file(path):
-    if path.exists():
-        logger.warning(f'Deleting {path}')
-        path.unlink(missing_ok=True)
-
-
-def save_character(name, greeting, context, picture, filename, instruct=False):
-    if filename == "":
-        logger.error("The filename is empty, so the character will not be saved.")
-        return
-
-    folder = 'characters' if not instruct else 'characters/instruction-following'
+def generate_character_yaml(name, greeting, context):
     data = {
         'name': name,
         'greeting': greeting,
@@ -647,22 +636,37 @@ def save_character(name, greeting, context, picture, filename, instruct=False):
     }
 
     data = {k: v for k, v in data.items() if v}  # Strip falsy
-    filepath = Path(f'{folder}/{filename}.yaml')
-    with filepath.open('w') as f:
-        yaml.dump(data, f, sort_keys=False)
+    return yaml.dump(data, sort_keys=False)
 
-    logger.info(f'Wrote {filepath}')
-    path_to_img = Path(f'{folder}/{filename}.png')
-    if picture and not instruct:
+
+def generate_instruction_template_yaml(user, bot, context, turn_template):
+    data = {
+        'user': user,
+        'bot': bot,
+        'turn_template': turn_template,
+        'context': context,
+    }
+
+    data = {k: v for k, v in data.items() if v}  # Strip falsy
+    return yaml.dump(data, sort_keys=False)
+
+
+def save_character(name, greeting, context, picture, filename):
+    if filename == "":
+        logger.error("The filename is empty, so the character will not be saved.")
+        return
+
+    data = generate_character_yaml(name, greeting, context)
+    filepath = Path(f'characters/{filename}.yaml')
+    save_file(filepath, data)
+    path_to_img = Path(f'characters/{filename}.png')
+    if picture is not None:
         picture.save(path_to_img)
-        logger.info(f'Wrote {path_to_img}')
-    elif path_to_img.exists():
-        delete_file(path_to_img)
+        logger.info(f'Saved {path_to_img}.')
 
 
 def delete_character(name, instruct=False):
-    folder = 'characters' if not instruct else 'characters/instruction-following'
     for extension in ["yml", "yaml", "json"]:
-        delete_file(Path(f'{folder}/{name}.{extension}'))
+        delete_file(Path(f'characters/{name}.{extension}'))
 
-    delete_file(Path(f'{folder}/{name}.png'))
+    delete_file(Path(f'characters/{name}.png'))
