@@ -5,6 +5,7 @@ from typing import Callable, Optional
 
 from modules import shared
 from modules.chat import load_character_memoized
+from modules.presets import load_preset_memoized
 
 
 def build_parameters(body, chat=False):
@@ -39,6 +40,11 @@ def build_parameters(body, chat=False):
         'custom_stopping_strings': '',  # leave this blank
         'stopping_strings': body.get('stopping_strings', []),
     }
+
+    preset_name = body.get('preset', 'None')
+    if preset_name not in ['None', None, '']:
+        preset = load_preset_memoized(preset_name)
+        generate_params.update(preset)
 
     if chat:
         character = body.get('character')

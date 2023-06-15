@@ -1,8 +1,49 @@
 import os
 import re
+from datetime import datetime
 from pathlib import Path
 
 from modules import shared
+from modules.logging_colors import logger
+
+
+def save_file(fname, contents):
+    if fname == '':
+        logger.error('File name is empty!')
+        return
+
+    root_folder = Path(__file__).resolve().parent.parent
+    abs_path = Path(fname).resolve()
+    rel_path = abs_path.relative_to(root_folder)
+    if rel_path.parts[0] == '..':
+        logger.error(f'Invalid file path: {fname}')
+        return
+
+    with open(abs_path, 'w', encoding='utf-8') as f:
+        f.write(contents)
+
+    logger.info(f'Saved {abs_path}.')
+
+
+def delete_file(fname):
+    if fname == '':
+        logger.error('File name is empty!')
+        return
+
+    root_folder = Path(__file__).resolve().parent.parent
+    abs_path = Path(fname).resolve()
+    rel_path = abs_path.relative_to(root_folder)
+    if rel_path.parts[0] == '..':
+        logger.error(f'Invalid file path: {fname}')
+        return
+
+    if abs_path.exists():
+        abs_path.unlink()
+        logger.info(f'Deleted {fname}.')
+
+
+def current_time():
+    return f"{datetime.now().strftime('%Y-%m-%d-%H%M%S')}"
 
 
 def atoi(text):
