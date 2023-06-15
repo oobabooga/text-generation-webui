@@ -354,8 +354,7 @@ class Handler(BaseHTTPRequestHandler):
                 except:
                     req_params['custom_stopping_strings'].extend(['\nuser:'])
 
-                    if debug:
-                        print("Loaded default role format.")
+                    print("Warning: Loaded default instruction-following template found for model.")
 
                 system_msgs = []
                 chat_msgs = []
