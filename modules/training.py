@@ -11,7 +11,7 @@ import gradio as gr
 import torch
 import transformers
 from datasets import Dataset, load_dataset
-from peft import (LoraConfig, get_peft_model, prepare_model_for_int8_training,
+from peft import (LoraConfig, get_peft_model, prepare_model_for_kbit_training,
                   set_peft_model_state_dict)
 
 from modules import shared, ui, utils
@@ -357,7 +357,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     # == Start prepping the model itself ==
     if not hasattr(shared.model, 'lm_head') or hasattr(shared.model.lm_head, 'weight'):
         logger.info("Getting model ready...")
-        prepare_model_for_int8_training(shared.model)
+        prepare_model_for_kbit_training(shared.model)
 
     logger.info("Prepping for training...")
     config = LoraConfig(
