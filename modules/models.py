@@ -14,6 +14,7 @@ from transformers import (AutoConfig, AutoModel, AutoModelForCausalLM,
 import modules.shared as shared
 from modules import llama_attn_hijack, sampler_hijack
 from modules.logging_colors import logger
+from modules.models_settings import infer_loader
 
 transformers.logging.set_verbosity_error()
 
@@ -34,26 +35,6 @@ if shared.args.deepspeed:
     dschf = HfDeepSpeedConfig(ds_config)  # Keep this object alive for the Transformers integration
 
 sampler_hijack.hijack_samplers()
-
-
-def infer_loader(model_name):
-    path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
-    if not path_to_model.exists():
-        loader = None
-    elif Path(f'{shared.args.model_dir}/{model_name}/quantize_config.json').exists():
-        loader = 'AutoGPTQ'
-    elif len(list(path_to_model.glob('*ggml*.bin'))) > 0:
-        loader = 'llama.cpp'
-    elif re.match('.*ggml.*\.bin', model_name.lower()):
-        loader = 'llama.cpp'
-    elif re.match('.*rwkv.*\.pth', model_name.lower()):
-        loader = 'RWKV'
-    elif shared.args.flexgen:
-        loader = 'FlexGen'
-    else:
-        loader = 'Transformers'
-
-    return loader
 
 
 def load_model(model_name, loader=None):
