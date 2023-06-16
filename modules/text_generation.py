@@ -1,7 +1,6 @@
 import ast
 import random
 import re
-import threading
 import time
 import traceback
 
@@ -28,15 +27,11 @@ def generate_reply(*args, **kwargs):
 
 
 def get_max_prompt_length(state):
-    max_length = state['truncation_length'] - state['max_new_tokens']
-    if shared.soft_prompt:
-        max_length -= shared.soft_prompt_tensor.shape[1]
-
-    return max_length
+    return state['truncation_length'] - state['max_new_tokens']
 
 
 def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_length=None):
-    if shared.model_type in ['rwkv', 'llamacpp']:
+    if shared.model.__class__.__name__ in ['LlamaCppModel', 'RWKVModel']:
         input_ids = shared.tokenizer.encode(str(prompt))
         input_ids = np.array(input_ids).reshape(1, len(input_ids))
         return input_ids
@@ -56,7 +51,7 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
     if truncation_length is not None:
         input_ids = input_ids[:, -truncation_length:]
 
-    if shared.model_type in ['rwkv', 'llamacpp'] or shared.args.cpu:
+    if shared.model.__class__.__name__ in ['LlamaCppModel', 'RWKVModel'] or shared.args.cpu:
         return input_ids
     elif shared.args.flexgen:
         return input_ids.numpy()
@@ -79,14 +74,6 @@ def get_encoded_length(prompt):
 
 def decode(output_ids, skip_special_tokens=True):
     return shared.tokenizer.decode(output_ids, skip_special_tokens)
-
-
-def generate_softprompt_input_tensors(input_ids):
-    inputs_embeds = shared.model.transformer.wte(input_ids)
-    inputs_embeds = torch.cat((shared.soft_prompt_tensor, inputs_embeds), dim=1)
-    filler_input_ids = torch.zeros((1, inputs_embeds.shape[1]), dtype=input_ids.dtype).to(shared.model.device)
-    # filler_input_ids += shared.model.config.bos_token_id # setting dummy input_ids to bos tokens
-    return inputs_embeds, filler_input_ids
 
 
 # Removes empty replies from gpt4chan outputs
@@ -112,7 +99,7 @@ def fix_galactica(s):
 
 
 def get_reply_from_output_ids(output_ids, input_ids, original_question, state, is_chat=False):
-    if shared.model_type == 'HF_seq2seq':
+    if shared.is_seq2seq:
         reply = decode(output_ids, state['skip_special_tokens'])
     else:
         new_tokens = len(output_ids) - len(input_ids[0])
@@ -130,7 +117,7 @@ def get_reply_from_output_ids(output_ids, input_ids, original_question, state, i
 
 
 def formatted_outputs(reply, model_name):
-    if shared.model_type == 'gpt4chan':
+    if any(s in model_name for s in ['gpt-4chan', 'gpt4chan']):
         reply = fix_gpt4chan(reply)
         return reply, generate_4chan_html(reply)
     else:
@@ -155,7 +142,7 @@ def stop_everything_event():
 
 def generate_reply_wrapper(question, state, eos_token=None, stopping_strings=None):
     for reply in generate_reply(question, state, eos_token, stopping_strings, is_chat=False):
-        if shared.model_type not in ['HF_seq2seq']:
+        if not shared.is_seq2seq:
             reply = question + reply
 
         yield formatted_outputs(reply, shared.model_name)
@@ -170,7 +157,7 @@ def _generate_reply(question, state, eos_token=None, stopping_strings=None, is_c
             yield ''
             return
 
-        if shared.model_type in ['rwkv', 'llamacpp'] or shared.args.exllama:
+        if shared.model.__class__.__name__ in ['LlamaCppModel', 'RWKVModel', 'ExllamaModel']:
             generate_func = generate_reply_custom
         elif shared.args.flexgen:
             generate_func = generate_reply_flexgen
@@ -194,7 +181,7 @@ def _generate_reply(question, state, eos_token=None, stopping_strings=None, is_c
     for reply in generate_func(question, original_question, seed, state, eos_token, stopping_strings, is_chat=is_chat):
         if is_stream:
             cur_time = time.time()
-            if cur_time - last_update > 0.041666666666666664:
+            if cur_time - last_update > 0.041666666666666664:  # Limit streaming to 24 fps
                 last_update = cur_time
                 yield reply
         else:
@@ -206,7 +193,7 @@ def _generate_reply(question, state, eos_token=None, stopping_strings=None, is_c
 
 def generate_reply_HF(question, original_question, seed, state, eos_token=None, stopping_strings=None, is_chat=False):
     generate_params = {}
-    for k in ['max_new_tokens', 'do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping', 'tfs', 'top_a']:
+    for k in ['max_new_tokens', 'do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping', 'tfs', 'top_a', 'mirostat_mode', 'mirostat_tau', 'mirostat_eta']:
         generate_params[k] = state[k]
 
     for k in ['epsilon_cutoff', 'eta_cutoff']:
@@ -233,18 +220,11 @@ def generate_reply_HF(question, original_question, seed, state, eos_token=None, 
         eos_token_ids.append(int(encode(eos_token)[0][-1]))
 
     # Add the encoded tokens to generate_params
-    if shared.soft_prompt:
-        inputs_embeds, filler_input_ids = generate_softprompt_input_tensors(input_ids)
-        question, filler_input_ids, inputs_embeds = apply_extensions('tokenizer', state, question, filler_input_ids, inputs_embeds)
-        original_input_ids = input_ids
+    question, input_ids, inputs_embeds = apply_extensions('tokenizer', state, question, input_ids, None)
+    original_input_ids = input_ids
+    generate_params.update({'inputs': input_ids})
+    if inputs_embeds is not None:
         generate_params.update({'inputs_embeds': inputs_embeds})
-        generate_params.update({'inputs': filler_input_ids})
-    else:
-        question, input_ids, inputs_embeds = apply_extensions('tokenizer', state, question, input_ids, None)
-        original_input_ids = input_ids
-        generate_params.update({'inputs': input_ids})
-        if inputs_embeds is not None:
-            generate_params.update({'inputs_embeds': inputs_embeds})
 
     # Create the StoppingCriteriaList with the stopping strings (needs to be done after tokenizer extensions)
     stopping_criteria_list = transformers.StoppingCriteriaList()
@@ -260,7 +240,7 @@ def generate_reply_HF(question, original_question, seed, state, eos_token=None, 
 
     t0 = time.time()
     try:
-        if not is_chat and shared.model_type != 'HF_seq2seq':
+        if not is_chat and not shared.is_seq2seq:
             yield ''
 
         # Generate the entire reply at once.
@@ -269,9 +249,6 @@ def generate_reply_HF(question, original_question, seed, state, eos_token=None, 
                 output = shared.model.generate(**generate_params)[0]
                 if cuda:
                     output = output.cuda()
-
-            if shared.soft_prompt:
-                output = torch.cat((input_ids[0], output[filler_input_ids.shape[1]:]))
 
             yield get_reply_from_output_ids(output, input_ids, original_question, state, is_chat=is_chat)
 
@@ -290,9 +267,6 @@ def generate_reply_HF(question, original_question, seed, state, eos_token=None, 
 
             with generate_with_streaming(**generate_params) as generator:
                 for output in generator:
-                    if shared.soft_prompt:
-                        output = torch.cat((input_ids[0], output[filler_input_ids.shape[1]:]))
-
                     yield get_reply_from_output_ids(output, input_ids, original_question, state, is_chat=is_chat)
                     if output[-1] in eos_token_ids:
                         break
@@ -302,7 +276,7 @@ def generate_reply_HF(question, original_question, seed, state, eos_token=None, 
     finally:
         t1 = time.time()
         original_tokens = len(original_input_ids[0])
-        new_tokens = len(output) - (original_tokens if shared.model_type != 'HF_seq2seq' else 0)
+        new_tokens = len(output) - (original_tokens if not shared.is_seq2seq else 0)
         print(f'Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens}, seed {seed})')
         return
 
@@ -313,7 +287,7 @@ def generate_reply_custom(question, original_question, seed, state, eos_token=No
     for k in ['temperature', 'top_p', 'top_k', 'repetition_penalty']:
         generate_params[k] = state[k]
 
-    if shared.model_type == 'llamacpp':
+    if shared.model.__class__.__name__ in ['LlamaCppModel']:
         for k in ['mirostat_mode', 'mirostat_tau', 'mirostat_eta']:
             generate_params[k] = state[k]
 
@@ -407,6 +381,6 @@ def generate_reply_flexgen(question, original_question, seed, state, eos_token=N
     finally:
         t1 = time.time()
         original_tokens = len(original_input_ids[0])
-        new_tokens = len(output) - (original_tokens if shared.model_type != 'HF_seq2seq' else 0)
+        new_tokens = len(output) - (original_tokens if not shared.is_seq2seq else 0)
         print(f'Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens}, seed {seed})')
         return

@@ -20,6 +20,12 @@ Example:
 SD_WEBUI_URL=http://127.0.0.1:7861
 ```
 
+Make sure you enable it in server launch parameters. Just make sure they include:
+
+```
+--extensions openai
+```
+
 ### Embeddings (alpha)
 
 Embeddings requires ```sentence-transformers``` installed, but chat and completions will function without it loaded. The embeddings endpoint is currently using the HuggingFace model: ```sentence-transformers/all-mpnet-base-v2``` for embeddings. This produces 768 dimensional embeddings (the same as the text-davinci-002 embeddings), which is different from OpenAI's current default ```text-embedding-ada-002``` model which produces 1536 dimensional embeddings. The model is small-ish and fast-ish. This model and embedding size may change in the future.
@@ -42,7 +48,7 @@ Almost everything you use it with will require you to set a dummy OpenAI API key
 With the [official python openai client](https://github.com/openai/openai-python), you can set the OPENAI_API_BASE environment variable before you import the openai module, like so:
 
 ```
-OPENAI_API_KEY=dummy
+OPENAI_API_KEY=sk-dummy
 OPENAI_API_BASE=http://127.0.0.1:5001/v1
 ```
 
@@ -126,6 +132,7 @@ Everything needs OPENAI_API_KEY=dummy set.
 | ✅❌ | openai-python | https://github.com/openai/openai-python | only the endpoints from above are working. OPENAI_API_BASE=http://127.0.0.1:5001/v1 |
 | ✅❌ | openai-node | https://github.com/openai/openai-node | only the endpoints from above are working. environment variables don't work by default, but can be configured (see above) |
 | ✅❌ | chatgpt-api | https://github.com/transitive-bullshit/chatgpt-api | only the endpoints from above are working. environment variables don't work by default, but can be configured (see above) |
+| ✅ | anse | https://github.com/anse-app/anse | API Key & URL configurable in UI |
 | ✅ | shell_gpt | https://github.com/TheR1D/shell_gpt | OPENAI_API_HOST=http://127.0.0.1:5001 |
 | ✅ | gpt-shell | https://github.com/jla/gpt-shell | OPENAI_API_BASE=http://127.0.0.1:5001/v1 |
 | ✅ | gpt-discord-bot | https://github.com/openai/gpt-discord-bot | OPENAI_API_BASE=http://127.0.0.1:5001/v1 |

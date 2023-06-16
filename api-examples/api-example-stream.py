@@ -20,12 +20,18 @@ async def run(context):
     request = {
         'prompt': context,
         'max_new_tokens': 250,
+
+        # Generation params. If 'preset' is set to different than 'None', the values
+        # in presets/preset-name.yaml are used instead of the individual numbers.
+        'preset': 'None',  
         'do_sample': True,
-        'temperature': 1.3,
+        'temperature': 0.7,
         'top_p': 0.1,
         'typical_p': 1,
         'epsilon_cutoff': 0,  # In units of 1e-4
         'eta_cutoff': 0,  # In units of 1e-4
+        'tfs': 1,
+        'top_a': 0,
         'repetition_penalty': 1.18,
         'top_k': 40,
         'min_length': 0,
@@ -37,6 +43,7 @@ async def run(context):
         'mirostat_mode': 0,
         'mirostat_tau': 5,
         'mirostat_eta': 0.1,
+
         'seed': -1,
         'add_bos_token': True,
         'truncation_length': 2048,

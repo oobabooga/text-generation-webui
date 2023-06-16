@@ -9,6 +9,7 @@
     flex-direction: column-reverse;
     word-break: break-word;
     overflow-wrap: anywhere;
+    padding-top: 1px;
 }
 
 .message {
@@ -74,6 +75,12 @@
 
 .dark .chat .assistant-message {
     background-color: #374151;
+    border: 1px solid #4b5563;
+}
+
+.dark .chat .user-message {
+    background-color: #111827;
+    border: 1px solid #4b5563;
 }
 
 code {

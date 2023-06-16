@@ -177,3 +177,20 @@ llama-65b-gptq-3bit:
 .*manticore:
   mode: 'instruct'
   instruction_template: 'Manticore Chat'
+.*bluemoonrp-(30|13)b:
+  mode: 'instruct'
+  instruction_template: 'Bluemoon'
+  truncation_length: 4096
+.*Nous-Hermes-13b:
+  mode: 'instruct'
+  instruction_template: 'Alpaca'
+.*airoboros-13b-gpt4:
+  mode: 'instruct'
+  instruction_template: 'Vicuna-v1.1'
+  truncation_length: 4096
+.*WizardLM-30B-V1.0:
+  mode: 'instruct'
+  instruction_template: 'Vicuna-v1.1'
+TheBloke_WizardLM-30B-GPTQ:
+  mode: 'instruct'
+  instruction_template: 'Vicuna-v1.1'

@@ -21,13 +21,13 @@ The output will be saved to `models/opt-1.3b-np/`.
 The basic command is the following:
 
 ```
-python server.py --model opt-1.3b  --flexgen
+python server.py --model opt-1.3b  --loader flexgen
 ```
 
 For large models, the RAM usage may be too high and your computer may freeze. If that happens, you can try this:
 
 ```
-python server.py --model opt-1.3b  --flexgen --compress-weight
+python server.py --model opt-1.3b  --loader flexgen --compress-weight
 ```
 
 With this second command, I was able to run both OPT-6.7b and OPT-13B with **2GB VRAM**, and the speed was good in both cases.
@@ -35,7 +35,7 @@ With this second command, I was able to run both OPT-6.7b and OPT-13B with **2GB
 You can also manually set the offload strategy with
 
 ```
-python server.py --model opt-1.3b  --flexgen --percent 0 100 100 0 100 0
+python server.py --model opt-1.3b  --loader flexgen --percent 0 100 100 0 100 0
 ```
 
 where the six numbers after `--percent` are:
@@ -55,8 +55,8 @@ You should typically only change the first two numbers. If their sum is less tha
 
 In my experiments with OPT-30B using a RTX 3090 on Linux, I have obtained these results:
 
-* `--flexgen --compress-weight --percent 0 100 100 0 100 0`: 0.99 seconds per token.
-* `--flexgen --compress-weight --percent 100 0 100 0 100 0`: 0.765 seconds per token.
+* `--loader flexgen --compress-weight --percent 0 100 100 0 100 0`: 0.99 seconds per token.
+* `--loader flexgen --compress-weight --percent 100 0 100 0 100 0`: 0.765 seconds per token.
 
 ## Limitations
 
