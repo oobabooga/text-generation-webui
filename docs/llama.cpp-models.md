@@ -35,6 +35,13 @@ set FORCE_CMAKE=1
 pip install llama-cpp-python --no-cache-dir
 ```
 
+#### macOS
+
+```
+pip uninstall -y llama-cpp-python
+CMAKE_ARGS="-DLLAMA_METAL=on" FORCE_CMAKE=1 pip install llama-cpp-python --no-cache-dir
+```
+
 Here you can find the different compilation options for OpenBLAS / cuBLAS / CLBlast: https://pypi.org/project/llama-cpp-python/
 
 ## Performance
