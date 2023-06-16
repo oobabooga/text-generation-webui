@@ -43,6 +43,8 @@ def load_quantized(model_name):
         'model_basename': pt_path.stem,
         'device': "cuda:0" if not shared.args.cpu else "cpu",
         'use_triton': shared.args.triton,
+        'inject_fused_attention': not shared.args.no_inject_fused_attention,
+        'inject_fused_mlp': not shared.args.no_inject_fused_mlp,
         'use_safetensors': use_safetensors,
         'trust_remote_code': shared.args.trust_remote_code,
         'max_memory': get_max_memory_dict(),
