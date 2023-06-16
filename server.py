@@ -191,12 +191,9 @@ def update_model_parameters(state, initial=False):
             shared.args.gpu_memory = None
 
 
-def get_model_specific_settings(model):
+def get_model_settings_from_yamls(model):
     settings = shared.model_config
-    model_settings = {
-        'loader': infer_loader(model)
-    }
-
+    model_settings = {}
     for pat in settings:
         if re.match(pat.lower(), model.lower()):
             for k in settings[pat]:
@@ -205,8 +202,17 @@ def get_model_specific_settings(model):
     return model_settings
 
 
-def load_model_specific_settings(model, state):
-    model_settings = get_model_specific_settings(model)
+def apply_model_settings_to_state(model, state):
+    model_settings = get_model_settings_from_yamls(model)
+    if 'loader' not in model_settings:
+        loader = infer_loader(model)
+        if model_settings.get('wbits', 0) > 0:
+            loader = 'AutoGPTQ'
+
+        # If the user is using an alternative GPTQ loader, let them keep using it
+        if not (loader == 'AutoGPTQ' and state['loader'] in ['GPTQ-for-LLaMa', 'exllama']):
+            state['loader'] = loader
+
     for k in model_settings:
         if k in state:
             state[k] = model_settings[k]
@@ -315,7 +321,7 @@ def create_model_menus():
                         shared.gradio['auto_devices'] = gr.Checkbox(label="auto-devices", value=shared.args.auto_devices)
                         shared.gradio['disk'] = gr.Checkbox(label="disk", value=shared.args.disk)
                         shared.gradio['cpu'] = gr.Checkbox(label="cpu", value=shared.args.cpu)
-                        shared.gradio['load_in_4bit'] = gr.Checkbox(label="load-in-4bit", value=True, interactive=False)
+                        shared.gradio['load_in_4bit'] = gr.Checkbox(label="load-in-4bit")
                         shared.gradio['use_double_quant'] = gr.Checkbox(label="use_double_quant", value=shared.args.use_double_quant)
                         shared.gradio['no_mmap'] = gr.Checkbox(label="no-mmap", value=shared.args.no_mmap)
                         shared.gradio['mlock'] = gr.Checkbox(label="mlock", value=shared.args.mlock)
@@ -340,7 +346,7 @@ def create_model_menus():
     # unless "autoload_model" is unchecked
     shared.gradio['model_menu'].change(
         ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
-        load_model_specific_settings, [shared.gradio[k] for k in ['model_menu', 'interface_state']], shared.gradio['interface_state']).then(
+        apply_model_settings_to_state, [shared.gradio[k] for k in ['model_menu', 'interface_state']], shared.gradio['interface_state']).then(
         ui.apply_interface_values, shared.gradio['interface_state'], [shared.gradio[k] for k in ui.list_interface_input_elements(chat=shared.is_chat())], show_progress=False).then(
         update_model_parameters, shared.gradio['interface_state'], None).then(
         load_model_wrapper, [shared.gradio[k] for k in ['model_menu', 'loader', 'autoload_model']], shared.gradio['model_status'], show_progress=False)
@@ -1085,7 +1091,7 @@ if __name__ == "__main__":
 
     # If any model has been selected, load it
     if shared.model_name != 'None':
-        model_settings = get_model_specific_settings(shared.model_name)
+        model_settings = get_model_settings_from_yamls(shared.model_name)
         shared.settings.update(model_settings)  # hijacking the interface defaults
         update_model_parameters(model_settings, initial=True)  # hijacking the command-line arguments
 
