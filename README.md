@@ -32,9 +32,9 @@ To learn how to use the various features, check out the Documentation: https://g
 
 ### One-click installers
 
-| Windows | Linux | macOS |
-|-------|--------|--------|
-| [oobabooga-windows.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga_windows.zip) | [oobabooga-linux.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga_linux.zip) |[oobabooga-macos.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga_macos.zip) |
+| Windows | Linux | macOS | WSL |
+|--------|--------|--------|--------|
+| [oobabooga-windows.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga_windows.zip) | [oobabooga-linux.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga_linux.zip) |[oobabooga-macos.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga_macos.zip) | [oobabooga-wsl.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga_wsl.zip) |
 
 Just download the zip above, extract it, and double-click on "start". The web UI and all its dependencies will be installed in the same folder.
 
@@ -249,8 +249,10 @@ Optionally, you can use the following command-line flags:
 
 | Flag             | Description |
 |------------------|-------------|
-| `--triton`       | Use triton. |
-| `--desc_act`     | For models that don't have a quantize_config.json, this parameter is used to define whether to set desc_act or not in BaseQuantizeConfig. |
+| `--triton`                     | Use triton. |
+| `--no_inject_fused_attention`  | Disable the use of fused attention, which will use less VRAM at the cost of slower inference. |
+| `--no_inject_fused_mlp`        | Triton mode only: disable the use of fused MLP, which will use less VRAM at the cost of slower inference. |
+| `--desc_act`                   | For models that don't have a quantize_config.json, this parameter is used to define whether to set desc_act or not in BaseQuantizeConfig. |
 
 #### GPTQ-for-LLaMa
 
