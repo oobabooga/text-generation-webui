@@ -1,3 +1,10 @@
+**Vote on the preset arena!**
+
+* Arena: https://oobabooga.github.io/arena/index.html
+* [Preliminary results](https://oobabooga.github.io/arena/preliminary-results.html)
+* [Presets](https://oobabooga.github.io/arena/presets.html)
+* +Info: https://www.reddit.com/r/LocalLLaMA/comments/14adfw2/preset_arena_17205_comparisons_between_241/
+
 # Text generation web UI
 
 A gradio web UI for running Large Language Models like LLaMA, llama.cpp, GPT-J, Pythia, OPT, and GALACTICA.
