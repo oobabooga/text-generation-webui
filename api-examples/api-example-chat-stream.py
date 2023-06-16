@@ -19,6 +19,7 @@ async def run(user_input, history):
     # Note: the selected defaults change from time to time.
     request = {
         'user_input': user_input,
+        'max_new_tokens': 250,
         'history': history,
         'mode': 'instruct',  # Valid options: 'chat', 'chat-instruct', 'instruct'
         'character': 'Example',
@@ -32,7 +33,9 @@ async def run(user_input, history):
         'chat_generation_attempts': 1,
         'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
 
-        'max_new_tokens': 250,
+        # Generation params. If 'preset' is set to different than 'None', the values
+        # in presets/preset-name.yaml are used instead of the individual numbers.
+        'preset': 'None',  
         'do_sample': True,
         'temperature': 0.7,
         'top_p': 0.1,
@@ -52,6 +55,7 @@ async def run(user_input, history):
         'mirostat_mode': 0,
         'mirostat_tau': 5,
         'mirostat_eta': 0.1,
+
         'seed': -1,
         'add_bos_token': True,
         'truncation_length': 2048,

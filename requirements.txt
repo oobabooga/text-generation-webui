@@ -15,11 +15,11 @@ safetensors==0.3.1
 sentencepiece
 tqdm
 scipy
-transformers==4.30.0
+transformers==4.30.2
 git+https://github.com/huggingface/peft@e45529b149c7f91ec1d4d82a5a152ef56c56cb94
 bitsandbytes==0.39.0; platform_system != "Windows"
 https://github.com/jllllll/bitsandbytes-windows-webui/raw/main/bitsandbytes-0.39.0-py3-none-any.whl; platform_system == "Windows"
-llama-cpp-python==0.1.57; platform_system != "Windows"
-https://github.com/abetlen/llama-cpp-python/releases/download/v0.1.57/llama_cpp_python-0.1.57-cp310-cp310-win_amd64.whl; platform_system == "Windows"
+llama-cpp-python==0.1.62; platform_system != "Windows"
+https://github.com/abetlen/llama-cpp-python/releases/download/v0.1.62/llama_cpp_python-0.1.62-cp310-cp310-win_amd64.whl; platform_system == "Windows"
 https://github.com/PanQiWei/AutoGPTQ/releases/download/v0.2.2/auto_gptq-0.2.2+cu117-cp310-cp310-win_amd64.whl; platform_system == "Windows"
 https://github.com/PanQiWei/AutoGPTQ/releases/download/v0.2.2/auto_gptq-0.2.2+cu117-cp310-cp310-linux_x86_64.whl; platform_system == "Linux"
