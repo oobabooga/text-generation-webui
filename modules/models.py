@@ -82,6 +82,7 @@ def load_model(model_name, loader=None):
                 return None, None
 
     loader = loaders.fix_loader_name(loader)
+    shared.args.loader = loader
     output = load_func_map[loader](model_name)
     if type(output) is tuple:
         model, tokenizer = output

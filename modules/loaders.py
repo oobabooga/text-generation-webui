@@ -73,6 +73,7 @@ def get_all_params():
 
 
 def make_loader_params_visible(loader):
+    loader = fix_loader_name(loader)
     params = loaders_and_params[loader]
     all_params = get_all_params()
 

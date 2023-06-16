@@ -995,6 +995,7 @@ def create_interface():
             shared.gradio['interface'].load(lambda: None, None, None, _js="() => document.getElementsByTagName('body')[0].classList.add('dark')")
 
         shared.gradio['interface'].load(partial(ui.apply_interface_values, {}, use_persistent=True), None, [shared.gradio[k] for k in ui.list_interface_input_elements(chat=shared.is_chat())], show_progress=False)
+#        shared.gradio['interface'].load(partial(lambda: shared.args.loader or 'Transformers', None, shared.gradio['model_loader'])
 
         # Extensions tabs
         extensions_module.create_extensions_tabs()
@@ -1098,6 +1099,10 @@ if __name__ == "__main__":
             'character_menu': shared.args.character or shared.settings['character'],
             'instruction_template': shared.settings['instruction_template']
         })
+
+    shared.persistent_interface_state.update({
+        'model_loader': shared.args.loader or 'Transformers',
+    })
 
     shared.generation_lock = Lock()
     # Launch the web UI
