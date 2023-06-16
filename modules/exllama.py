@@ -44,35 +44,38 @@ class ExllamaModel:
         result.tokenizer = tokenizer
         return result, result
 
-
-    def generate(self, context="", token_count=20, temperature=1, top_p=1, top_k=50, repetition_penalty=None, alpha_frequency=0.1, alpha_presence=0.1, token_ban=None, token_stop=None, callback=None):
+    def generate(self, prompt, state, callback=None):
         generator = ExLlamaGenerator(self.model, self.tokenizer, self.cache)
-        generator.settings.temperature = temperature
-        generator.settings.top_p = top_p
-        generator.settings.top_k = top_k
-        # generator.settings.typical = typical_p
+        generator.settings.temperature = state['temperature']
+        generator.settings.top_p = state['top_p']
+        generator.settings.top_k = state['top_k']
+        generator.settings.typical = state['typical_p']
+        generator.settings.token_repetition_penalty_max = state['repetition_penalty']
+        if state['ban_eos_token']:
+            generator.disallow_tokens([self.tokenizer.eos_token_id])
 
-#        with torch.no_grad():
-        text = generator.generate_simple(context, max_new_tokens = token_count)
+        text = generator.generate_simple(prompt, max_new_tokens=state['max_new_tokens'])
         return text
 
-
-    def generate_with_streaming(self, context="", token_count=20, temperature=1, top_p=1, top_k=50, repetition_penalty=None, alpha_frequency=0.1, alpha_presence=0.1, token_ban=None, token_stop=None, callback=None):
+    def generate_with_streaming(self, prompt, state, callback=None):
         generator = ExLlamaGenerator(self.model, self.tokenizer, self.cache)
-        generator.settings.temperature = temperature
-        generator.settings.top_p = top_p
-        generator.settings.top_k = top_k
-        # generator.settings.typical = typical_p
+        generator.settings.temperature = state['temperature']
+        generator.settings.top_p = state['top_p']
+        generator.settings.top_k = state['top_k']
+        generator.settings.typical = state['typical_p']
+        generator.settings.token_repetition_penalty_max = state['repetition_penalty']
+        if state['ban_eos_token']:
+            generator.disallow_tokens([self.tokenizer.eos_token_id])
 
         generator.end_beam_search()
-        ids = generator.tokenizer.encode(context)
+        ids = generator.tokenizer.encode(prompt)
         generator.gen_begin(ids)
         initial_len = generator.sequence[0].shape[0]
-        for i in range(token_count):
+        for i in range(state['max_new_tokens']):
             token = generator.gen_single_token()
-            yield(generator.tokenizer.decode(generator.sequence[0][initial_len:]))
-            if token.item() == generator.tokenizer.eos_token_id: break
-
+            yield (generator.tokenizer.decode(generator.sequence[0][initial_len:]))
+            if token.item() == generator.tokenizer.eos_token_id:
+                break
 
     def encode(self, string, **kwargs):
         return self.tokenizer.encode(string)

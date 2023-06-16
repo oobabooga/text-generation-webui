@@ -31,7 +31,6 @@ def get_max_prompt_length(state):
 
 
 def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_length=None):
-#    if shared.model.__class__.__name__ in ['LlamaCppModel', 'RWKVModel', 'ExllamaModel']:
     if shared.model.__class__.__name__ in ['LlamaCppModel', 'RWKVModel']:
         input_ids = shared.tokenizer.encode(str(prompt))
         input_ids = np.array(input_ids).reshape(1, len(input_ids))
@@ -284,13 +283,6 @@ def generate_reply_HF(question, original_question, seed, state, eos_token=None, 
 
 def generate_reply_custom(question, original_question, seed, state, eos_token=None, stopping_strings=None, is_chat=False):
     seed = set_manual_seed(state['seed'])
-    generate_params = {'token_count': state['max_new_tokens']}
-    for k in ['temperature', 'top_p', 'top_k', 'repetition_penalty']:
-        generate_params[k] = state[k]
-
-    if shared.model.__class__.__name__ in ['LlamaCppModel']:
-        for k in ['mirostat_mode', 'mirostat_tau', 'mirostat_eta']:
-            generate_params[k] = state[k]
 
     t0 = time.time()
     reply = ''
@@ -299,13 +291,13 @@ def generate_reply_custom(question, original_question, seed, state, eos_token=No
             yield ''
 
         if not state['stream']:
-            reply = shared.model.generate(context=question, **generate_params)
+            reply = shared.model.generate(question, state)
             if not is_chat:
                 reply = apply_extensions('output', reply)
 
             yield reply
         else:
-            for reply in shared.model.generate_with_streaming(context=question, **generate_params):
+            for reply in shared.model.generate_with_streaming(question, state):
                 if not is_chat:
                     reply = apply_extensions('output', reply)
 
