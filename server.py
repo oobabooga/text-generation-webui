@@ -48,7 +48,7 @@ from modules.extensions import apply_extensions
 from modules.github import clone_or_pull_repository
 from modules.html_generator import chat_html_wrapper
 from modules.LoRA import add_lora_to_model
-from modules.models import load_model, unload_model
+from modules.models import infer_loader, load_model, unload_model
 from modules.text_generation import (generate_reply_wrapper,
                                      get_encoded_length, stop_everything_event)
 
@@ -200,6 +200,7 @@ def get_model_specific_settings(model):
             for k in settings[pat]:
                 model_settings[k] = settings[pat][k]
 
+    model_settings['loader'] = infer_loader(model)
     return model_settings
 
 
@@ -283,7 +284,7 @@ def create_model_menus():
 
     with gr.Row():
         with gr.Column():
-            shared.gradio['model_loader'] = gr.Dropdown(label="Model loader", choices=["Transformers", "AutoGPTQ", "GPTQ-for-LLaMa", "llama.cpp"], value=None)
+            shared.gradio['loader'] = gr.Dropdown(label="Model loader", choices=["Transformers", "AutoGPTQ", "GPTQ-for-LLaMa", "llama.cpp"], value=None)
             with gr.Box():
                 with gr.Row():
                     with gr.Column():
@@ -331,7 +332,7 @@ def create_model_menus():
             with gr.Row():
                 shared.gradio['model_status'] = gr.Markdown('No model is loaded' if shared.model_name == 'None' else 'Ready')
 
-    shared.gradio['model_loader'].change(loaders.make_loader_params_visible, shared.gradio['model_loader'], [shared.gradio[k] for k in loaders.get_all_params()])
+    shared.gradio['loader'].change(loaders.make_loader_params_visible, shared.gradio['loader'], [shared.gradio[k] for k in loaders.get_all_params()])
 
     # In this event handler, the interface state is read and updated
     # with the model defaults (if any), and then the model is loaded
@@ -341,12 +342,12 @@ def create_model_menus():
         load_model_specific_settings, [shared.gradio[k] for k in ['model_menu', 'interface_state']], shared.gradio['interface_state']).then(
         ui.apply_interface_values, shared.gradio['interface_state'], [shared.gradio[k] for k in ui.list_interface_input_elements(chat=shared.is_chat())], show_progress=False).then(
         update_model_parameters, shared.gradio['interface_state'], None).then(
-        load_model_wrapper, [shared.gradio[k] for k in ['model_menu', 'model_loader', 'autoload_model']], shared.gradio['model_status'], show_progress=False)
+        load_model_wrapper, [shared.gradio[k] for k in ['model_menu', 'loader', 'autoload_model']], shared.gradio['model_status'], show_progress=False)
 
     load.click(
         ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
         update_model_parameters, shared.gradio['interface_state'], None).then(
-        partial(load_model_wrapper, autoload=True), [shared.gradio[k] for k in ['model_menu', 'model_loader']], shared.gradio['model_status'], show_progress=False)
+        partial(load_model_wrapper, autoload=True), [shared.gradio[k] for k in ['model_menu', 'loader']], shared.gradio['model_status'], show_progress=False)
 
     unload.click(
         unload_model, None, None).then(
@@ -356,7 +357,7 @@ def create_model_menus():
         unload_model, None, None).then(
         ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
         update_model_parameters, shared.gradio['interface_state'], None).then(
-        partial(load_model_wrapper, autoload=True), [shared.gradio[k] for k in ['model_menu', 'model_loader']], shared.gradio['model_status'], show_progress=False)
+        partial(load_model_wrapper, autoload=True), [shared.gradio[k] for k in ['model_menu', 'loader']], shared.gradio['model_status'], show_progress=False)
 
     save_settings.click(
         ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
@@ -995,7 +996,7 @@ def create_interface():
             shared.gradio['interface'].load(lambda: None, None, None, _js="() => document.getElementsByTagName('body')[0].classList.add('dark')")
 
         shared.gradio['interface'].load(partial(ui.apply_interface_values, {}, use_persistent=True), None, [shared.gradio[k] for k in ui.list_interface_input_elements(chat=shared.is_chat())], show_progress=False)
-#        shared.gradio['interface'].load(partial(lambda: shared.args.loader or 'Transformers', None, shared.gradio['model_loader'])
+#        shared.gradio['interface'].load(partial(lambda: shared.args.loader or 'Transformers', None, shared.gradio['loader'])
 
         # Extensions tabs
         extensions_module.create_extensions_tabs()
@@ -1101,7 +1102,7 @@ if __name__ == "__main__":
         })
 
     shared.persistent_interface_state.update({
-        'model_loader': shared.args.loader or 'Transformers',
+        'loader': shared.args.loader or 'Transformers',
     })
 
     shared.generation_lock = Lock()

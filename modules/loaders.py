@@ -20,7 +20,6 @@ loaders_and_params = {
         'trust_remote_code',
     ],
     'GPTQ-for-LLaMa': [
-        'gptq_for_llama',
         'wbits',
         'groupsize',
         'model_type',
@@ -92,5 +91,5 @@ def fix_loader_name(name):
         return 'Transformers'
     elif name in ['autogptq', 'auto-gptq', 'auto_gptq', 'auto gptq']:
         return 'AutoGPTQ'
-    elif name in ['gptq-for-llama', 'gptqforllama', 'gptqllama', 'gptq for llama']:
+    elif name in ['gptq-for-llama', 'gptqforllama', 'gptqllama', 'gptq for llama', 'gptq_for_llama']:
         return 'GPTQ-for-LLaMa'

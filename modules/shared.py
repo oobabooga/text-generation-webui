@@ -141,7 +141,7 @@ parser.add_argument('--warmup_autotune', action='store_true', help='(triton) Ena
 parser.add_argument('--fused_mlp', action='store_true', help='(triton) Enable fused mlp.')
 
 # AutoGPTQ
-parser.add_argument('--gptq-for-llama', action='store_true', help='Use GPTQ-for-LLaMa to load the GPTQ model instead of AutoGPTQ.')
+parser.add_argument('--gptq-for-llama', action='store_true', help='DEPRECATED')
 parser.add_argument('--autogptq', action='store_true', help='DEPRECATED')
 parser.add_argument('--triton', action='store_true', help='Use triton.')
 parser.add_argument('--no_inject_fused_attention', action='store_true', help='Do not use fused attention (lowers VRAM requirements).')
@@ -186,7 +186,11 @@ args_defaults = parser.parse_args([])
 
 # Deprecation warnings
 if args.autogptq:
-    logger.warning('--autogptq has been deprecated and will be removed soon. AutoGPTQ is now used by default for GPTQ models.')
+    logger.warning('--autogptq has been deprecated and will be removed soon. Use --loader autogptq instead.')
+    args.loader = 'autogptq'
+if args.gptq_for_llama:
+    logger.warning('--gptq-for-llama has been deprecated and will be removed soon. Use --loader gptq-for-llama instead.')
+    args.loader = 'gptq-for-llama'
 
 # Security warnings
 if args.trust_remote_code:
