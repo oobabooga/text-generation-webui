@@ -70,7 +70,7 @@ def get_all_params():
         for k in get_gpu_memory_keys():
             all_params.add(k)
 
-    return list(sorted(list(all_params)))
+    return sorted(all_params)
 
 
 def make_loader_params_visible(loader):

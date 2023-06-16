@@ -208,7 +208,7 @@ Optionally, you can use the following command-line flags:
 
 | Flag                                       | Description |
 |--------------------------------------------|-------------|
-| `--loader LOADER`                          | Choose the model loader manually, otherwise it gets autodetected. Valid options: autogptq, gptq-for-llama, transformers, llamacpp |
+| `--loader LOADER`                          | Choose the model loader manually, otherwise, it will get autodetected. Valid options: autogptq, gptq-for-llama, transformers, llamacpp, rwkv, flexgen |
 
 #### Accelerate/transformers
 

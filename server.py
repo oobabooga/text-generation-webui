@@ -68,7 +68,10 @@ def load_model_wrapper(selected_model, loader, autoload=False):
             if selected_model != '':
                 shared.model, shared.tokenizer = load_model(shared.model_name, loader)
 
-            yield f"Successfully loaded {selected_model}"
+            if shared.model is not None:
+                yield f"Successfully loaded {selected_model}"
+            else:
+                yield f"Failed to load {selected_model}."
         except:
             yield traceback.format_exc()
 
@@ -206,7 +209,7 @@ def apply_model_settings_to_state(model, state):
     model_settings = get_model_settings_from_yamls(model)
     if 'loader' not in model_settings:
         loader = infer_loader(model)
-        if model_settings.get('wbits', 0) > 0:
+        if 'wbits' in model_settings and type(model_settings['wbits']) is int and model_settings['wbits'] > 0:
             loader = 'AutoGPTQ'
 
         # If the user is using an alternative GPTQ loader, let them keep using it

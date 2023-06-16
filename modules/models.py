@@ -40,9 +40,8 @@ def infer_loader(model_name):
     path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
     if not path_to_model.exists():
         loader = None
-    elif Path(f'{shared.args.model_dir}/{model_name}/quantize_config.json').exists() or shared.args.wbits > 0:
-        if not shared.args.loader == 'GPTQ-for-LLaMa':
-            loader = 'AutoGPTQ'
+    elif Path(f'{shared.args.model_dir}/{model_name}/quantize_config.json').exists():
+        loader = 'AutoGPTQ'
     elif len(list(path_to_model.glob('*ggml*.bin'))) > 0:
         loader = 'llama.cpp'
     elif re.match('.*ggml.*\.bin', model_name.lower()):
