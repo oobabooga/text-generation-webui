@@ -52,6 +52,8 @@ def infer_loader(model_name):
         loader = 'RWKV'
     elif shared.args.flexgen:
         loader = 'FlexGen'
+    else:
+        loader = 'Transformers'
 
     return loader
 
@@ -60,6 +62,7 @@ def load_model(model_name, loader=None):
     logger.info(f"Loading {model_name}...")
     t0 = time.time()
 
+    shared.is_seq2seq = False
     load_func_map = {
         'Transformers': huggingface_loader,
         'AutoGPTQ': AutoGPTQ_loader,
@@ -135,6 +138,7 @@ def huggingface_loader(model_name):
         config = AutoConfig.from_pretrained(path_to_model, trust_remote_code=shared.args.trust_remote_code)
         if config.to_dict().get("is_encoder_decoder", False):
             LoaderClass = AutoModelForSeq2SeqLM
+            shared.is_seq2seq = True
         else:
             LoaderClass = AutoModelForCausalLM
 
