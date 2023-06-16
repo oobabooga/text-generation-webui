@@ -53,6 +53,7 @@ loaders_and_params = {
         'transformers_info'
     ],
     'ExLlama' : [
+        'gpu_split',
         'exllama_info',
     ]
 }

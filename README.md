@@ -267,6 +267,12 @@ Optionally, you can use the following command-line flags:
 | `--no_inject_fused_mlp`        | Triton mode only: disable the use of fused MLP, which will use less VRAM at the cost of slower inference. |
 | `--desc_act`                   | For models that don't have a quantize_config.json, this parameter is used to define whether to set desc_act or not in BaseQuantizeConfig. |
 
+#### ExLlama
+
+| Flag             | Description |
+|------------------|-------------|
+|`--gpu-split`     | Comma-separated list of VRAM (in GB) to use per GPU device for model layers, e.g. `20,7,7` |
+
 #### GPTQ-for-LLaMa
 
 | Flag                      | Description |

@@ -1,9 +1,10 @@
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path("repositories/exllama")))
-
+from modules import shared
 from modules.logging_colors import logger
+
+sys.path.insert(0, str(Path("repositories/exllama")))
 from repositories.exllama.generator import ExLlamaGenerator
 from repositories.exllama.model import ExLlama, ExLlamaCache, ExLlamaConfig
 from repositories.exllama.tokenizer import ExLlamaTokenizer
@@ -33,6 +34,10 @@ class ExllamaModel:
 
         config = ExLlamaConfig(str(model_config_path))
         config.model_path = str(model_path)
+        if shared.args.gpu_split:
+            config.set_auto_map(shared.args.gpu_split)
+            config.gpu_peer_fix = True
+
         model = ExLlama(config)
         tokenizer = ExLlamaTokenizer(str(tokenizer_model_path))
         cache = ExLlamaCache(model)
