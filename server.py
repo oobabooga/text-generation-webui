@@ -50,7 +50,8 @@ from modules.html_generator import chat_html_wrapper
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, unload_model
 from modules.models_settings import (apply_model_settings_to_state,
-                                     save_model_settings, get_model_settings_from_yamls,
+                                     get_model_settings_from_yamls,
+                                     save_model_settings,
                                      update_model_parameters)
 from modules.text_generation import (generate_reply_wrapper,
                                      get_encoded_length, stop_everything_event)
@@ -904,7 +905,6 @@ def create_interface():
             shared.gradio['interface'].load(lambda: None, None, None, _js="() => document.getElementsByTagName('body')[0].classList.add('dark')")
 
         shared.gradio['interface'].load(partial(ui.apply_interface_values, {}, use_persistent=True), None, [shared.gradio[k] for k in ui.list_interface_input_elements(chat=shared.is_chat())], show_progress=False)
-#        shared.gradio['interface'].load(partial(lambda: shared.args.loader or 'Transformers', None, shared.gradio['loader'])
 
         # Extensions tabs
         extensions_module.create_extensions_tabs()
