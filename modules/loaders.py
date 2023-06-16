@@ -52,6 +52,9 @@ loaders_and_params = {
         'trust_remote_code',
         'transformers_info'
     ],
+    'ExLlama' : [
+        'exllama_info',
+    ]
 }
 
 
