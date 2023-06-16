@@ -7,6 +7,8 @@ from modules import shared
 loaders_and_params = {
     'AutoGPTQ': [
         'triton',
+        'no_inject_fused_attention',
+        'no_inject_fused_mlp',
         'wbits',
         'groupsize',
         'desc_act',
@@ -18,6 +20,7 @@ loaders_and_params = {
         'trust_remote_code',
     ],
     'GPTQ-for-LLaMa': [
+        'gptq_for_llama',
         'wbits',
         'groupsize',
         'model_type',
@@ -41,13 +44,12 @@ loaders_and_params = {
         'cpu',
         'disk',
         'auto_devices',
-    ],
-    'Transformers 4-bit': [
+        'load_in_4bit',
         'use_double_quant',
         'quant_type',
         'compute_dtype',
         'trust_remote_code',
-    ]
+    ],
 }
 
 

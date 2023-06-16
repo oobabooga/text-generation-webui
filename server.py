@@ -283,7 +283,7 @@ def create_model_menus():
 
     with gr.Row():
         with gr.Column():
-            shared.gradio['model_loader'] = gr.Dropdown(label="Model loader", choices=["Transformers", "Transformers 4-bit", "AutoGPTQ", "GPTQ-for-LLaMa", "llama.cpp"], value=None)
+            shared.gradio['model_loader'] = gr.Dropdown(label="Model loader", choices=["Transformers", "AutoGPTQ", "GPTQ-for-LLaMa", "llama.cpp"], value=None)
             with gr.Box():
                 with gr.Row():
                     with gr.Column():
@@ -293,45 +293,29 @@ def create_model_menus():
                         shared.gradio['cpu_memory'] = gr.Slider(label="cpu-memory in MiB", maximum=total_cpu_mem, value=default_cpu_mem)
                         shared.gradio['compute_dtype'] = gr.Dropdown(label="compute_dtype", choices=["bfloat16", "float16", "float32"], value=shared.args.compute_dtype)
                         shared.gradio['quant_type'] = gr.Dropdown(label="quant_type", choices=["nf4", "fp4"], value=shared.args.quant_type)
+                        shared.gradio['threads'] = gr.Slider(label="threads", minimum=0, step=1, maximum=32, value=shared.args.threads)
+                        shared.gradio['n_batch'] = gr.Slider(label="n_batch", minimum=1, maximum=2048, value=shared.args.n_batch)
+                        shared.gradio['n_gpu_layers'] = gr.Slider(label="n-gpu-layers", minimum=0, maximum=128, value=shared.args.n_gpu_layers)
+                        shared.gradio['n_ctx'] = gr.Slider(minimum=0, maximum=8192, step=1, label="n_ctx", value=shared.args.n_ctx)
+                        shared.gradio['wbits'] = gr.Dropdown(label="wbits", choices=["None", 1, 2, 3, 4, 8], value=shared.args.wbits if shared.args.wbits > 0 else "None")
+                        shared.gradio['groupsize'] = gr.Dropdown(label="groupsize", choices=["None", 32, 64, 128, 1024], value=shared.args.groupsize if shared.args.groupsize > 0 else "None")
+                        shared.gradio['model_type'] = gr.Dropdown(label="model_type", choices=["None", "llama", "opt", "gptj"], value=shared.args.model_type or "None")
+                        shared.gradio['pre_layer'] = gr.Slider(label="pre_layer", minimum=0, maximum=100, value=shared.args.pre_layer[0] if shared.args.pre_layer is not None else 0)
 
-            shared.gradio['autoload_model'] = gr.Checkbox(value=shared.settings['autoload_model'], label='Autoload the model', info='Whether to load the model as soon as it is selected in the Model dropdown.')
-            shared.gradio['custom_model_menu'] = gr.Textbox(label="Download custom model or LoRA", info="Enter the Hugging Face username/model path, for instance: facebook/galactica-125m. To specify a branch, add it at the end after a \":\" character like this: facebook/galactica-125m:main")
-            shared.gradio['download_model_button'] = gr.Button("Download")
-
-        with gr.Column():
-            with gr.Box():
-                with gr.Row():
                     with gr.Column():
-                        gr.Markdown('GPTQ')
                         shared.gradio['triton'] = gr.Checkbox(label="triton", value=shared.args.triton)
                         shared.gradio['no_inject_fused_attention'] = gr.Checkbox(label="no_inject_fused_attention", value=shared.args.no_inject_fused_attention, info='Disable fused attention. Fused attention improves inference performance but uses more VRAM. Disable if running low on VRAM.')
                         shared.gradio['no_inject_fused_mlp'] = gr.Checkbox(label="no_inject_fused_mlp", value=shared.args.no_inject_fused_mlp, info='Affects Triton only. Disable fused MLP. Fused MLP improves performance but uses more VRAM. Disable if running low on VRAM.')
                         shared.gradio['desc_act'] = gr.Checkbox(label="desc_act", value=shared.args.desc_act, info='\'desc_act\', \'wbits\', and \'groupsize\' are used for old models without a quantize_config.json.')
                         shared.gradio['gptq_for_llama'] = gr.Checkbox(label="gptq-for-llama", value=shared.args.gptq_for_llama, info='Use GPTQ-for-LLaMa loader instead of AutoGPTQ. pre_layer should be used for CPU offloading instead of gpu-memory.')
 
-                    with gr.Column():
-                        with gr.Row():
-                            shared.gradio['wbits'] = gr.Dropdown(label="wbits", choices=["None", 1, 2, 3, 4, 8], value=shared.args.wbits if shared.args.wbits > 0 else "None")
-                            shared.gradio['groupsize'] = gr.Dropdown(label="groupsize", choices=["None", 32, 64, 128, 1024], value=shared.args.groupsize if shared.args.groupsize > 0 else "None")
-
-                        shared.gradio['model_type'] = gr.Dropdown(label="model_type", choices=["None", "llama", "opt", "gptj"], value=shared.args.model_type or "None")
-                        shared.gradio['pre_layer'] = gr.Slider(label="pre_layer", minimum=0, maximum=100, value=shared.args.pre_layer[0] if shared.args.pre_layer is not None else 0)
-                        shared.gradio['threads'] = gr.Slider(label="threads", minimum=0, step=1, maximum=32, value=shared.args.threads)
-                        shared.gradio['n_batch'] = gr.Slider(label="n_batch", minimum=1, maximum=2048, value=shared.args.n_batch)
-                        shared.gradio['n_gpu_layers'] = gr.Slider(label="n-gpu-layers", minimum=0, maximum=128, value=shared.args.n_gpu_layers)
-                        shared.gradio['n_ctx'] = gr.Slider(minimum=0, maximum=8192, step=1, label="n_ctx", value=shared.args.n_ctx)
-
-                    with gr.Column():
                         shared.gradio['load_in_8bit'] = gr.Checkbox(label="load-in-8bit", value=shared.args.load_in_8bit)
                         shared.gradio['bf16'] = gr.Checkbox(label="bf16", value=shared.args.bf16)
-                        shared.gradio['triton'] = gr.Checkbox(label="triton", value=shared.args.triton)
-                        shared.gradio['desc_act'] = gr.Checkbox(label="desc_act", value=shared.args.desc_act, info='\'desc_act\', \'wbits\', and \'groupsize\' are used for old models without a quantize_config.json.')
                         shared.gradio['auto_devices'] = gr.Checkbox(label="auto-devices", value=shared.args.auto_devices)
                         shared.gradio['disk'] = gr.Checkbox(label="disk", value=shared.args.disk)
                         shared.gradio['cpu'] = gr.Checkbox(label="cpu", value=shared.args.cpu)
                         shared.gradio['load_in_4bit'] = gr.Checkbox(label="load-in-4bit", value=True, interactive=False)
                         shared.gradio['use_double_quant'] = gr.Checkbox(label="use_double_quant", value=shared.args.use_double_quant)
-
                         shared.gradio['no_mmap'] = gr.Checkbox(label="no-mmap", value=shared.args.no_mmap)
                         shared.gradio['mlock'] = gr.Checkbox(label="mlock", value=shared.args.mlock)
                         shared.gradio['llama_cpp_seed'] = gr.Number(label='Seed (0 for random)', value=shared.args.llama_cpp_seed)
