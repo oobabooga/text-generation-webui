@@ -97,7 +97,7 @@ parser.add_argument('--extensions', type=str, nargs="+", help='The list of exten
 parser.add_argument('--verbose', action='store_true', help='Print the prompts to the terminal.')
 
 # Manually choose the model loader
-parser.add_argument('--loader', action='store_true', help='Choose the model loader manually, otherwise it gets autodetected. Valid options: autogptq, gptq-for-llama, exllama, transformers, llamacpp')
+parser.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise it gets autodetected. Valid options: autogptq, gptq-for-llama, exllama, transformers, llamacpp')
 
 # Accelerate/transformers
 parser.add_argument('--cpu', action='store_true', help='Use the CPU to generate text. Warning: Training on CPU is extremely slow.')

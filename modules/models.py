@@ -12,7 +12,7 @@ from transformers import (AutoConfig, AutoModel, AutoModelForCausalLM,
                           BitsAndBytesConfig, LlamaTokenizer)
 
 import modules.shared as shared
-from modules import llama_attn_hijack, sampler_hijack
+from modules import llama_attn_hijack, loaders, sampler_hijack
 from modules.logging_colors import logger
 
 transformers.logging.set_verbosity_error()
@@ -61,25 +61,25 @@ def load_model(model_name, loader=None):
     t0 = time.time()
 
     load_func_map = {
-        'transformers': huggingface_loader,
-        'autogptq': AutoGPTQ_loader,
-        'gptq-for-llama': GPTQ_loader,
+        'Transformers': huggingface_loader,
+        'AutoGPTQ': AutoGPTQ_loader,
+        'GPTQ-for-LLaMa': GPTQ_loader,
         'llama.cpp': llamacpp_loader,
-        'llamacpp': llamacpp_loader,
-        'flexgen': flexgen_loader,
+        'FlexGen': flexgen_loader,
         'RWKV': RWKV_loader
     }
 
     if loader is None:
-        if shared.loader is not None:
-            loader = shared.loader
+        if shared.args.loader is not None:
+            loader = shared.args.loader
         else:
             loader = infer_loader(model_name)
             if loader is None:
                 logger.error('The path to the model does not exist. Exiting.')
                 return None, None
 
-    output = load_func_map[loader.lower()](model_name)
+    loader = loaders.fix_loader_name(loader)
+    output = load_func_map[loader](model_name)
     if type(output) is tuple:
         model, tokenizer = output
     else:
@@ -99,11 +99,11 @@ def load_model(model_name, loader=None):
 
 def load_tokenizer(model_name, model):
     tokenizer = None
-    if shared.model_type == 'gpt4chan' and Path(f"{shared.args.model_dir}/gpt-j-6B/").exists():
+    if any(s in model_name for s in ['gpt-4chan', 'gpt4chan']) and Path(f"{shared.args.model_dir}/gpt-j-6B/").exists():
         tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/gpt-j-6B/"))
     elif type(model) is transformers.LlamaForCausalLM or "LlamaGPTQForCausalLM" in str(type(model)):
         # Try to load an universal LLaMA tokenizer
-        if shared.model_type not in ['llava', 'oasst']:
+        if any(s in shared.model_name.lower() for s in ['llava', 'oasst']):
             for p in [Path(f"{shared.args.model_dir}/llama-tokenizer/"), Path(f"{shared.args.model_dir}/oobabooga_llama-tokenizer/")]:
                 if p.exists():
                     logger.info(f"Loading the universal LLaMA tokenizer from {p}...")
@@ -129,19 +129,14 @@ def load_tokenizer(model_name, model):
 
 def huggingface_loader(model_name):
     path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
-    config = AutoConfig.from_pretrained(path_to_model, trust_remote_code=shared.args.trust_remote_code)
-    # Not a "catch all", but fairly accurate
-    if config.to_dict().get("is_encoder_decoder", False):
-        return 'HF_seq2seq'
-    else:
-        return 'HF_generic'
-
-    if shared.model_type == 'chatglm':
+    if 'chatglm' in model_name.lower():
         LoaderClass = AutoModel
-    elif shared.model_type == 'HF_seq2seq':
-        LoaderClass = AutoModelForSeq2SeqLM
     else:
-        LoaderClass = AutoModelForCausalLM
+        config = AutoConfig.from_pretrained(path_to_model, trust_remote_code=shared.args.trust_remote_code)
+        if config.to_dict().get("is_encoder_decoder", False):
+            LoaderClass = AutoModelForSeq2SeqLM
+        else:
+            LoaderClass = AutoModelForCausalLM
 
     # Load the model in simple 16-bit mode by default
     if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.load_in_4bit, shared.args.auto_devices, shared.args.disk, shared.args.deepspeed, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None]):

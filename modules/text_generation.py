@@ -31,7 +31,7 @@ def get_max_prompt_length(state):
 
 
 def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_length=None):
-    if shared.model_type in ['rwkv', 'llamacpp']:
+    if shared.model.__class__.__name__ in ['LlamaCppModel', 'RWKVModel']:
         input_ids = shared.tokenizer.encode(str(prompt))
         input_ids = np.array(input_ids).reshape(1, len(input_ids))
         return input_ids
@@ -51,7 +51,7 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
     if truncation_length is not None:
         input_ids = input_ids[:, -truncation_length:]
 
-    if shared.model_type in ['rwkv', 'llamacpp'] or shared.args.cpu:
+    if shared.model.__class__.__name__ in ['LlamaCppModel', 'RWKVModel'] or shared.args.cpu:
         return input_ids
     elif shared.args.flexgen:
         return input_ids.numpy()
@@ -157,7 +157,7 @@ def _generate_reply(question, state, eos_token=None, stopping_strings=None, is_c
             yield ''
             return
 
-        if shared.model_type in ['rwkv', 'llamacpp']:
+        if shared.model.__class__.__name__ in ['LlamaCppModel', 'RWKVModel']:
             generate_func = generate_reply_custom
         elif shared.args.flexgen:
             generate_func = generate_reply_flexgen
@@ -287,7 +287,7 @@ def generate_reply_custom(question, original_question, seed, state, eos_token=No
     for k in ['temperature', 'top_p', 'top_k', 'repetition_penalty']:
         generate_params[k] = state[k]
 
-    if shared.model_type == 'llamacpp':
+    if shared.model_type == 'LlamaCppModel':
         for k in ['mirostat_mode', 'mirostat_tau', 'mirostat_eta']:
             generate_params[k] = state[k]
 

@@ -81,3 +81,15 @@ def make_loader_params_visible(loader):
         params += get_gpu_memory_keys()
 
     return [gr.update(visible=True) if k in params else gr.update(visible=False) for k in all_params]
+
+
+def fix_loader_name(name):
+    name = name.lower()
+    if name in ['llamacpp', 'llama.cpp', 'llama-cpp', 'llama cpp']:
+        return 'llama.cpp'
+    elif name in ['transformers', 'huggingface', 'hf', 'hugging_face', 'hugging face']:
+        return 'Transformers'
+    elif name in ['autogptq', 'auto-gptq', 'auto_gptq', 'auto gptq']:
+        return 'AutoGPTQ'
+    elif name in ['gptq-for-llama', 'gptqforllama', 'gptqllama', 'gptq for llama']:
+        return 'GPTQ-for-LLaMa'
