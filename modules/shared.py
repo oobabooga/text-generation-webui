@@ -199,6 +199,22 @@ if args.share:
     logger.warning("The gradio \"share link\" feature uses a proprietary executable to create a reverse tunnel. Use it with care.")
 
 
+def fix_loader_name(name):
+    name = name.lower()
+    if name in ['llamacpp', 'llama.cpp', 'llama-cpp', 'llama cpp']:
+        return 'llama.cpp'
+    elif name in ['transformers', 'huggingface', 'hf', 'hugging_face', 'hugging face']:
+        return 'Transformers'
+    elif name in ['autogptq', 'auto-gptq', 'auto_gptq', 'auto gptq']:
+        return 'AutoGPTQ'
+    elif name in ['gptq-for-llama', 'gptqforllama', 'gptqllama', 'gptq for llama', 'gptq_for_llama']:
+        return 'GPTQ-for-LLaMa'
+
+
+if args.loader is not None:
+    args.loader = fix_loader_name(args.loader)
+
+
 def add_extension(name):
     if args.extensions is None:
         args.extensions = [name]

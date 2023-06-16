@@ -12,7 +12,7 @@ from transformers import (AutoConfig, AutoModel, AutoModelForCausalLM,
                           BitsAndBytesConfig, LlamaTokenizer)
 
 import modules.shared as shared
-from modules import llama_attn_hijack, loaders, sampler_hijack
+from modules import llama_attn_hijack, sampler_hijack
 from modules.logging_colors import logger
 
 transformers.logging.set_verbosity_error()
@@ -40,10 +40,9 @@ def infer_loader(model_name):
     path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
     if not path_to_model.exists():
         loader = None
-    elif shared.args.gptq_for_llama:
-        loader = 'GPTQ-for-LLaMa'
     elif Path(f'{shared.args.model_dir}/{model_name}/quantize_config.json').exists() or shared.args.wbits > 0:
-        loader = 'AutoGPTQ'
+        if not shared.args.loader == 'GPTQ-for-LLaMa':
+            loader = 'AutoGPTQ'
     elif len(list(path_to_model.glob('*ggml*.bin'))) > 0:
         loader = 'llama.cpp'
     elif re.match('.*ggml.*\.bin', model_name.lower()):
@@ -81,7 +80,6 @@ def load_model(model_name, loader=None):
                 logger.error('The path to the model does not exist. Exiting.')
                 return None, None
 
-    loader = loaders.fix_loader_name(loader)
     shared.args.loader = loader
     output = load_func_map[loader](model_name)
     if type(output) is tuple:
