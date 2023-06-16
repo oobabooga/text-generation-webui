@@ -204,6 +204,12 @@ Optionally, you can use the following command-line flags:
 | `--extensions EXTENSIONS [EXTENSIONS ...]` | The list of extensions to load. If you want to load more than one extension, write the names separated by spaces. |
 | `--verbose`                                | Print the prompts to the terminal. |
 
+#### Model loader
+
+| Flag                                       | Description |
+|--------------------------------------------|-------------|
+| `--loader LOADER`                          | Choose the model loader manually, otherwise it gets autodetected. Valid options: autogptq, gptq-for-llama, transformers, llamacpp |
+
 #### Accelerate/transformers
 
 | Flag                                        | Description |
@@ -258,7 +264,6 @@ Optionally, you can use the following command-line flags:
 
 | Flag                      | Description |
 |---------------------------|-------------|
-| `--gptq-for-llama` | Use GPTQ-for-LLaMa to load the GPTQ model instead of AutoGPTQ. |
 | `--wbits WBITS`           | Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported. |
 | `--model_type MODEL_TYPE` | Model type of pre-quantized model. Currently LLaMA, OPT, and GPT-J are supported. |
 | `--groupsize GROUPSIZE`   | Group size. |

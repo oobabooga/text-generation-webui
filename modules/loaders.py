@@ -24,6 +24,7 @@ loaders_and_params = {
         'groupsize',
         'model_type',
         'pre_layer',
+        'gptq_for_llama_info',
     ],
     'llama.cpp': [
         'n_ctx',
