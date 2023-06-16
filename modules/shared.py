@@ -97,7 +97,7 @@ parser.add_argument('--extensions', type=str, nargs="+", help='The list of exten
 parser.add_argument('--verbose', action='store_true', help='Print the prompts to the terminal.')
 
 # Model loader
-parser.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise it gets autodetected. Valid options: autogptq, gptq-for-llama, transformers, llamacpp')
+parser.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise it gets autodetected. Valid options: autogptq, gptq-for-llama, transformers, llamacpp, rwkv, flexgen')
 
 # Accelerate/transformers
 parser.add_argument('--cpu', action='store_true', help='Use the CPU to generate text. Warning: Training on CPU is extremely slow.')
@@ -149,7 +149,7 @@ parser.add_argument('--no_inject_fused_mlp', action='store_true', help='Triton m
 parser.add_argument('--desc_act', action='store_true', help='For models that don\'t have a quantize_config.json, this parameter is used to define whether to set desc_act or not in BaseQuantizeConfig.')
 
 # FlexGen
-parser.add_argument('--flexgen', action='store_true', help='Enable the use of FlexGen offloading.')
+parser.add_argument('--flexgen', action='store_true', help='DEPRECATED')
 parser.add_argument('--percent', type=int, nargs="+", default=[0, 100, 100, 0, 100, 0], help='FlexGen: allocation percentages. Must be 6 numbers separated by spaces (default: 0, 100, 100, 0, 100, 0).')
 parser.add_argument("--compress-weight", action="store_true", help="FlexGen: activate weight compression.")
 parser.add_argument("--pin-weight", type=str2bool, nargs="?", const=True, default=True, help="FlexGen: whether to pin weights (setting this to False reduces CPU memory by 20%%).")
@@ -191,6 +191,9 @@ if args.autogptq:
 if args.gptq_for_llama:
     logger.warning('--gptq-for-llama has been deprecated and will be removed soon. Use --loader gptq-for-llama instead.')
     args.loader = 'gptq-for-llama'
+if args.flexgen:
+    logger.warning('--flexgen has been deprecated and will be removed soon. Use --loader flexgen instead.')
+    args.loader = 'FlexGen'
 
 # Security warnings
 if args.trust_remote_code:

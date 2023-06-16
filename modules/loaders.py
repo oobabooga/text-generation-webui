@@ -74,11 +74,13 @@ def get_all_params():
 
 
 def make_loader_params_visible(loader):
-    params = loaders_and_params[loader]
+    params = []
     all_params = get_all_params()
+    if loader in loaders_and_params:
+        params = loaders_and_params[loader]
 
-    if 'gpu_memory' in params:
-        params.remove('gpu_memory')
-        params += get_gpu_memory_keys()
+        if 'gpu_memory' in params:
+            params.remove('gpu_memory')
+            params += get_gpu_memory_keys()
 
     return [gr.update(visible=True) if k in params else gr.update(visible=False) for k in all_params]
