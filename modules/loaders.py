@@ -18,6 +18,7 @@ loaders_and_params = {
         'disk',
         'auto_devices',
         'trust_remote_code',
+        'autogptq_info',
     ],
     'GPTQ-for-LLaMa': [
         'wbits',
