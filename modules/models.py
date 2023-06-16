@@ -36,62 +36,50 @@ if shared.args.deepspeed:
 sampler_hijack.hijack_samplers()
 
 
-# Some models require special treatment in various parts of the code.
-# This function detects those models
-def find_model_type(model_name):
+def infer_loader(model_name):
     path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
     if not path_to_model.exists():
-        return 'None'
-
-    model_name_lower = model_name.lower()
-    if re.match('.*rwkv.*\.pth', model_name_lower):
-        return 'rwkv'
+        loader = None
+    elif shared.args.gptq_for_llama:
+        loader = 'GPTQ-for-LLaMa'
+    elif Path(f'{shared.args.model_dir}/{model_name}/quantize_config.json').exists() or shared.args.wbits > 0:
+        loader = 'AutoGPTQ'
     elif len(list(path_to_model.glob('*ggml*.bin'))) > 0:
-        return 'llamacpp'
-    elif re.match('.*ggml.*\.bin', model_name_lower):
-        return 'llamacpp'
-    elif 'chatglm' in model_name_lower:
-        return 'chatglm'
-    elif 'galactica' in model_name_lower:
-        return 'galactica'
-    elif 'llava' in model_name_lower:
-        return 'llava'
-    elif 'oasst' in model_name_lower:
-        return 'oasst'
-    elif any((k in model_name_lower for k in ['gpt4chan', 'gpt-4chan'])):
-        return 'gpt4chan'
-    else:
-        config = AutoConfig.from_pretrained(path_to_model, trust_remote_code=shared.args.trust_remote_code)
-        # Not a "catch all", but fairly accurate
-        if config.to_dict().get("is_encoder_decoder", False):
-            return 'HF_seq2seq'
-        else:
-            return 'HF_generic'
+        loader = 'llama.cpp'
+    elif re.match('.*ggml.*\.bin', model_name.lower()):
+        loader = 'llama.cpp'
+    elif re.match('.*rwkv.*\.pth', model_name.lower()):
+        loader = 'RWKV'
+    elif shared.args.flexgen:
+        loader = 'FlexGen'
+
+    return loader
 
 
-def load_model(model_name):
+def load_model(model_name, loader=None):
     logger.info(f"Loading {model_name}...")
     t0 = time.time()
 
-    shared.model_type = find_model_type(model_name)
-    if shared.model_type == 'None':
-        logger.error('The path to the model does not exist. Exiting.')
-        return None, None
+    load_func_map = {
+        'transformers': huggingface_loader,
+        'autogptq': AutoGPTQ_loader,
+        'gptq-for-llama': GPTQ_loader,
+        'llama.cpp': llamacpp_loader,
+        'llamacpp': llamacpp_loader,
+        'flexgen': flexgen_loader,
+        'RWKV': RWKV_loader
+    }
 
-    if shared.args.gptq_for_llama:
-        load_func = GPTQ_loader
-    elif Path(f'{shared.args.model_dir}/{model_name}/quantize_config.json').exists() or shared.args.wbits > 0:
-        load_func = AutoGPTQ_loader
-    elif shared.model_type == 'llamacpp':
-        load_func = llamacpp_loader
-    elif shared.model_type == 'rwkv':
-        load_func = RWKV_loader
-    elif shared.args.flexgen:
-        load_func = flexgen_loader
-    else:
-        load_func = huggingface_loader
+    if loader is None:
+        if shared.loader is not None:
+            loader = shared.loader
+        else:
+            loader = infer_loader(model_name)
+            if loader is None:
+                logger.error('The path to the model does not exist. Exiting.')
+                return None, None
 
-    output = load_func(model_name)
+    output = load_func_map[loader.lower()](model_name)
     if type(output) is tuple:
         model, tokenizer = output
     else:
@@ -140,6 +128,14 @@ def load_tokenizer(model_name, model):
 
 
 def huggingface_loader(model_name):
+    path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
+    config = AutoConfig.from_pretrained(path_to_model, trust_remote_code=shared.args.trust_remote_code)
+    # Not a "catch all", but fairly accurate
+    if config.to_dict().get("is_encoder_decoder", False):
+        return 'HF_seq2seq'
+    else:
+        return 'HF_generic'
+
     if shared.model_type == 'chatglm':
         LoaderClass = AutoModel
     elif shared.model_type == 'HF_seq2seq':

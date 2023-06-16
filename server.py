@@ -43,7 +43,7 @@ import yaml
 from PIL import Image
 
 import modules.extensions as extensions_module
-from modules import chat, presets, shared, training, ui, utils
+from modules import chat, loaders, presets, shared, training, ui, utils
 from modules.extensions import apply_extensions
 from modules.github import clone_or_pull_repository
 from modules.html_generator import chat_html_wrapper
@@ -53,7 +53,7 @@ from modules.text_generation import (generate_reply_wrapper,
                                      get_encoded_length, stop_everything_event)
 
 
-def load_model_wrapper(selected_model, autoload=False):
+def load_model_wrapper(selected_model, loader, autoload=False):
     if not autoload:
         yield f"The settings for {selected_model} have been updated.\nClick on \"Load the model\" to load it."
         return
@@ -66,7 +66,7 @@ def load_model_wrapper(selected_model, autoload=False):
             shared.model_name = selected_model
             unload_model()
             if selected_model != '':
-                shared.model, shared.tokenizer = load_model(shared.model_name)
+                shared.model, shared.tokenizer = load_model(shared.model_name, loader)
 
             yield f"Successfully loaded {selected_model}"
         except:
@@ -283,31 +283,14 @@ def create_model_menus():
 
     with gr.Row():
         with gr.Column():
+            shared.gradio['model_loader'] = gr.Dropdown(label="Model loader", choices=["Transformers", "Transformers 4-bit", "AutoGPTQ", "GPTQ-for-LLaMa", "llama.cpp"], value=None)
             with gr.Box():
-                gr.Markdown('Transformers')
                 with gr.Row():
                     with gr.Column():
                         for i in range(len(total_mem)):
                             shared.gradio[f'gpu_memory_{i}'] = gr.Slider(label=f"gpu-memory in MiB for device :{i}", maximum=total_mem[i], value=default_gpu_mem[i])
 
                         shared.gradio['cpu_memory'] = gr.Slider(label="cpu-memory in MiB", maximum=total_cpu_mem, value=default_cpu_mem)
-
-                    with gr.Column():
-                        shared.gradio['auto_devices'] = gr.Checkbox(label="auto-devices", value=shared.args.auto_devices)
-                        shared.gradio['disk'] = gr.Checkbox(label="disk", value=shared.args.disk)
-                        shared.gradio['cpu'] = gr.Checkbox(label="cpu", value=shared.args.cpu)
-                        shared.gradio['bf16'] = gr.Checkbox(label="bf16", value=shared.args.bf16)
-                        shared.gradio['load_in_8bit'] = gr.Checkbox(label="load-in-8bit", value=shared.args.load_in_8bit)
-                        shared.gradio['trust_remote_code'] = gr.Checkbox(label="trust-remote-code", value=shared.args.trust_remote_code, info='Make sure to inspect the .py files inside the model folder before loading it with this option enabled.')
-
-            with gr.Box():
-                gr.Markdown('Transformers 4-bit')
-                with gr.Row():
-                    with gr.Column():
-                        shared.gradio['load_in_4bit'] = gr.Checkbox(label="load-in-4bit", value=shared.args.load_in_4bit)
-                        shared.gradio['use_double_quant'] = gr.Checkbox(label="use_double_quant", value=shared.args.use_double_quant)
-
-                    with gr.Column():
                         shared.gradio['compute_dtype'] = gr.Dropdown(label="compute_dtype", choices=["bfloat16", "float16", "float32"], value=shared.args.compute_dtype)
                         shared.gradio['quant_type'] = gr.Dropdown(label="quant_type", choices=["nf4", "fp4"], value=shared.args.quant_type)
 
@@ -333,23 +316,38 @@ def create_model_menus():
 
                         shared.gradio['model_type'] = gr.Dropdown(label="model_type", choices=["None", "llama", "opt", "gptj"], value=shared.args.model_type or "None")
                         shared.gradio['pre_layer'] = gr.Slider(label="pre_layer", minimum=0, maximum=100, value=shared.args.pre_layer[0] if shared.args.pre_layer is not None else 0)
-
-            with gr.Box():
-                gr.Markdown('llama.cpp')
-                with gr.Row():
-                    with gr.Column():
                         shared.gradio['threads'] = gr.Slider(label="threads", minimum=0, step=1, maximum=32, value=shared.args.threads)
                         shared.gradio['n_batch'] = gr.Slider(label="n_batch", minimum=1, maximum=2048, value=shared.args.n_batch)
                         shared.gradio['n_gpu_layers'] = gr.Slider(label="n-gpu-layers", minimum=0, maximum=128, value=shared.args.n_gpu_layers)
                         shared.gradio['n_ctx'] = gr.Slider(minimum=0, maximum=8192, step=1, label="n_ctx", value=shared.args.n_ctx)
 
                     with gr.Column():
+                        shared.gradio['load_in_8bit'] = gr.Checkbox(label="load-in-8bit", value=shared.args.load_in_8bit)
+                        shared.gradio['bf16'] = gr.Checkbox(label="bf16", value=shared.args.bf16)
+                        shared.gradio['triton'] = gr.Checkbox(label="triton", value=shared.args.triton)
+                        shared.gradio['desc_act'] = gr.Checkbox(label="desc_act", value=shared.args.desc_act, info='\'desc_act\', \'wbits\', and \'groupsize\' are used for old models without a quantize_config.json.')
+                        shared.gradio['auto_devices'] = gr.Checkbox(label="auto-devices", value=shared.args.auto_devices)
+                        shared.gradio['disk'] = gr.Checkbox(label="disk", value=shared.args.disk)
+                        shared.gradio['cpu'] = gr.Checkbox(label="cpu", value=shared.args.cpu)
+                        shared.gradio['load_in_4bit'] = gr.Checkbox(label="load-in-4bit", value=True, interactive=False)
+                        shared.gradio['use_double_quant'] = gr.Checkbox(label="use_double_quant", value=shared.args.use_double_quant)
+
                         shared.gradio['no_mmap'] = gr.Checkbox(label="no-mmap", value=shared.args.no_mmap)
                         shared.gradio['mlock'] = gr.Checkbox(label="mlock", value=shared.args.mlock)
                         shared.gradio['llama_cpp_seed'] = gr.Number(label='Seed (0 for random)', value=shared.args.llama_cpp_seed)
+                        shared.gradio['trust_remote_code'] = gr.Checkbox(label="trust-remote-code", value=shared.args.trust_remote_code, info='Make sure to inspect the .py files inside the model folder before loading it with this option enabled.')
+
+        with gr.Column():
+            with gr.Row():
+                shared.gradio['autoload_model'] = gr.Checkbox(value=shared.settings['autoload_model'], label='Autoload the model', info='Whether to load the model as soon as it is selected in the Model dropdown.')
+
+            shared.gradio['custom_model_menu'] = gr.Textbox(label="Download custom model or LoRA", info="Enter the Hugging Face username/model path, for instance: facebook/galactica-125m. To specify a branch, add it at the end after a \":\" character like this: facebook/galactica-125m:main")
+            shared.gradio['download_model_button'] = gr.Button("Download")
 
             with gr.Row():
                 shared.gradio['model_status'] = gr.Markdown('No model is loaded' if shared.model_name == 'None' else 'Ready')
+
+    shared.gradio['model_loader'].change(loaders.make_loader_params_visible, shared.gradio['model_loader'], [shared.gradio[k] for k in loaders.get_all_params()])
 
     # In this event handler, the interface state is read and updated
     # with the model defaults (if any), and then the model is loaded
@@ -359,12 +357,12 @@ def create_model_menus():
         load_model_specific_settings, [shared.gradio[k] for k in ['model_menu', 'interface_state']], shared.gradio['interface_state']).then(
         ui.apply_interface_values, shared.gradio['interface_state'], [shared.gradio[k] for k in ui.list_interface_input_elements(chat=shared.is_chat())], show_progress=False).then(
         update_model_parameters, shared.gradio['interface_state'], None).then(
-        load_model_wrapper, [shared.gradio[k] for k in ['model_menu', 'autoload_model']], shared.gradio['model_status'], show_progress=False)
+        load_model_wrapper, [shared.gradio[k] for k in ['model_menu', 'model_loader', 'autoload_model']], shared.gradio['model_status'], show_progress=False)
 
     load.click(
         ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
         update_model_parameters, shared.gradio['interface_state'], None).then(
-        partial(load_model_wrapper, autoload=True), shared.gradio['model_menu'], shared.gradio['model_status'], show_progress=False)
+        partial(load_model_wrapper, autoload=True), [shared.gradio[k] for k in ['model_menu', 'model_loader']], shared.gradio['model_status'], show_progress=False)
 
     unload.click(
         unload_model, None, None).then(
@@ -374,7 +372,7 @@ def create_model_menus():
         unload_model, None, None).then(
         ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(
         update_model_parameters, shared.gradio['interface_state'], None).then(
-        partial(load_model_wrapper, autoload=True), shared.gradio['model_menu'], shared.gradio['model_status'], show_progress=False)
+        partial(load_model_wrapper, autoload=True), [shared.gradio[k] for k in ['model_menu', 'model_loader']], shared.gradio['model_status'], show_progress=False)
 
     save_settings.click(
         ui.gather_interface_values, [shared.gradio[k] for k in shared.input_elements], shared.gradio['interface_state']).then(

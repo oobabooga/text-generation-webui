@@ -10,7 +10,6 @@ generation_lock = None
 model = None
 tokenizer = None
 model_name = "None"
-model_type = None
 lora_names = []
 
 # Chat variables
@@ -96,6 +95,9 @@ parser.add_argument('--no-stream', action='store_true', help='Don\'t stream the 
 parser.add_argument('--settings', type=str, help='Load the default interface settings from this yaml file. See settings-template.yaml for an example. If you create a file called settings.yaml, this file will be loaded by default without the need to use the --settings flag.')
 parser.add_argument('--extensions', type=str, nargs="+", help='The list of extensions to load. If you want to load more than one extension, write the names separated by spaces.')
 parser.add_argument('--verbose', action='store_true', help='Print the prompts to the terminal.')
+
+# Manually choose the model loader
+parser.add_argument('--loader', action='store_true', help='Choose the model loader manually, otherwise it gets autodetected. Valid options: autogptq, gptq-for-llama, exllama, transformers, llamacpp')
 
 # Accelerate/transformers
 parser.add_argument('--cpu', action='store_true', help='Use the CPU to generate text. Warning: Training on CPU is extremely slow.')
