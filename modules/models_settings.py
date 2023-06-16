@@ -94,7 +94,7 @@ def apply_model_settings_to_state(model, state):
             loader = 'AutoGPTQ'
 
         # If the user is using an alternative GPTQ loader, let them keep using it
-        if not (loader == 'AutoGPTQ' and state['loader'] in ['GPTQ-for-LLaMa', 'exllama']):
+        if not (loader == 'AutoGPTQ' and state['loader'] in ['GPTQ-for-LLaMa', 'ExLlama']):
             state['loader'] = loader
 
     for k in model_settings:
