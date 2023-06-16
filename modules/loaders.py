@@ -50,6 +50,7 @@ loaders_and_params = {
         'quant_type',
         'compute_dtype',
         'trust_remote_code',
+        'transformers_info'
     ],
 }
 
