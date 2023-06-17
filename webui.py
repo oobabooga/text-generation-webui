@@ -68,6 +68,15 @@ def check_env():
 
 
 def install_dependencies():
+    # Check for special characters in installation path on Windows
+    if sys.platform.startswith("win"):
+        # punctuation contains:  !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~
+        from string import punctuation
+        # Allow some characters:  _-:\/.'"
+        special_characters = punctuation.translate({ord(char): None for char in '_-:\\/.\'"'})
+        if any(char in script_dir for char in special_characters):
+            print_big_message("WARNING: Special characters were detected in the installation path!\n         This can cause the installation to fail!")
+
     # Select your GPU or, choose to run in CPU mode
     print("What is your GPU")
     print()
