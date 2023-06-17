@@ -9,6 +9,7 @@ from modules.logging_colors import logger
 generation_lock = None
 model = None
 tokenizer = None
+is_seq2seq = False
 model_name = "None"
 lora_names = []
 
