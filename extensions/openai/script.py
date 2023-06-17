@@ -4,13 +4,13 @@ import os
 import time
 import requests
 import yaml
+import numpy as np
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
 from modules.utils import get_available_models
 from modules.models import load_model, unload_model
-from server import get_model_specific_settings, update_model_parameters
-
-import numpy as np
+from modules.models_settings import (get_model_settings_from_yamls,
+                                     update_model_parameters)
 
 from modules import shared
 from modules.text_generation import encode, generate_reply
@@ -174,7 +174,7 @@ class Handler(BaseHTTPRequestHandler):
                     shared.model_name = model_name
                     unload_model()
 
-                    model_settings = get_model_specific_settings(shared.model_name)
+                    model_settings = get_model_settings_from_yamls(shared.model_name)
                     shared.settings.update(model_settings)
                     update_model_parameters(model_settings, initial=True)
 
@@ -327,33 +327,40 @@ class Handler(BaseHTTPRequestHandler):
                 }
 
                 # Instruct models can be much better
-                try:
-                    instruct = yaml.safe_load(open(f"characters/instruction-following/{shared.settings['instruction_template']}.yaml", 'r'))
+                if shared.settings['instruction_template']:
+                    try:
+                        instruct = yaml.safe_load(open(f"characters/instruction-following/{shared.settings['instruction_template']}.yaml", 'r'))
 
-                    template = instruct['turn_template']
-                    system_message_template = "{message}"
-                    system_message_default = instruct['context']
-                    bot_start = template.find('<|bot|>') # So far, 100% of instruction templates have this token
-                    user_message_template = template[:bot_start].replace('<|user-message|>', '{message}').replace('<|user|>', instruct['user'])
-                    bot_message_template = template[bot_start:].replace('<|bot-message|>', '{message}').replace('<|bot|>', instruct['bot'])
-                    bot_prompt = bot_message_template[:bot_message_template.find('{message}')].rstrip(' ')
-            
-                    role_formats = {
-                        'user': user_message_template,
-                        'assistant': bot_message_template,
-                        'system': system_message_template,
-                        'context': system_message_default,
-                        'prompt': bot_prompt,
-                    }
+                        template = instruct['turn_template']
+                        system_message_template = "{message}"
+                        system_message_default = instruct['context']
+                        bot_start = template.find('<|bot|>') # So far, 100% of instruction templates have this token
+                        user_message_template = template[:bot_start].replace('<|user-message|>', '{message}').replace('<|user|>', instruct['user'])
+                        bot_message_template = template[bot_start:].replace('<|bot-message|>', '{message}').replace('<|bot|>', instruct['bot'])
+                        bot_prompt = bot_message_template[:bot_message_template.find('{message}')].rstrip(' ')
+                
+                        role_formats = {
+                            'user': user_message_template,
+                            'assistant': bot_message_template,
+                            'system': system_message_template,
+                            'context': system_message_default,
+                            'prompt': bot_prompt,
+                        }
 
-                    if instruct['user']: # WizardLM and some others have no user prompt.
-                        req_params['custom_stopping_strings'].extend(['\n' + instruct['user'], instruct['user']])
+                        if instruct['user']: # WizardLM and some others have no user prompt.
+                            req_params['custom_stopping_strings'].extend(['\n' + instruct['user'], instruct['user']])
 
-                    if debug:
-                        print(f"Loaded instruction role format: {shared.settings['instruction_template']}")
-                except:
+                        if debug:
+                            print(f"Loaded instruction role format: {shared.settings['instruction_template']}")
+
+                    except Exception as e:
+                        req_params['custom_stopping_strings'].extend(['\nuser:'])
+
+                        print(f"Exception: When loading characters/instruction-following/{shared.settings['instruction_template']}.yaml: {repr(e)}")
+                        print("Warning: Loaded default instruction-following template found for model.")
+
+                else:
                     req_params['custom_stopping_strings'].extend(['\nuser:'])
-
                     print("Warning: Loaded default instruction-following template found for model.")
 
                 system_msgs = []
