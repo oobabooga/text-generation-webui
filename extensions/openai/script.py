@@ -357,11 +357,11 @@ class Handler(BaseHTTPRequestHandler):
                         req_params['custom_stopping_strings'].extend(['\nuser:'])
 
                         print(f"Exception: When loading characters/instruction-following/{shared.settings['instruction_template']}.yaml: {repr(e)}")
-                        print("Warning: Loaded default instruction-following template found for model.")
+                        print("Warning: Loaded default instruction-following template for model.")
 
                 else:
                     req_params['custom_stopping_strings'].extend(['\nuser:'])
-                    print("Warning: Loaded default instruction-following template found for model.")
+                    print("Warning: Loaded default instruction-following template for model.")
 
                 system_msgs = []
                 chat_msgs = []
@@ -631,9 +631,8 @@ class Handler(BaseHTTPRequestHandler):
 
             instruction_template = default_template
             
-
             # Use the special instruction/input/response template for anything trained like Alpaca
-            if not (shared.settings['instruction_template'] in ['Alpaca', 'Alpaca-Input']):
+            if shared.settings['instruction_template'] and not (shared.settings['instruction_template'] in ['Alpaca', 'Alpaca-Input']):
                 try:
                     instruct = yaml.safe_load(open(f"characters/instruction-following/{shared.settings['instruction_template']}.yaml", 'r'))
 
@@ -646,8 +645,15 @@ class Handler(BaseHTTPRequestHandler):
                     instruction_template = instruct.get('context', '') + template[:template.find('<|bot-message|>')].rstrip(' ')
                     if instruct['user']:
                         req_params['custom_stopping_strings'].extend(['\n' + instruct['user'], instruct['user'] ])
-                except:
-                    pass
+
+                except Exception as e:
+                    instruction_template = default_template
+                    print(f"Exception: When loading characters/instruction-following/{shared.settings['instruction_template']}.yaml: {repr(e)}")
+                    print("Warning: Loaded default instruction-following template (Alpaca) for model.")
+
+            else:
+                print("Warning: Loaded default instruction-following template (Alpaca) for model.")
+                
 
             edit_task = instruction_template.format(instruction=instruction, input=input)
 
