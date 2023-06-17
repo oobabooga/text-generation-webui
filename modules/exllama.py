@@ -66,9 +66,17 @@ class ExllamaModel:
         ids = self.generator.tokenizer.encode(prompt)
         self.generator.gen_begin_reuse(ids)
         initial_len = self.generator.sequence[0].shape[0]
-        for _ in range(state['max_new_tokens']):
+        has_leading_space = False
+        for i in range(state['max_new_tokens']):
             token = self.generator.gen_single_token()
-            yield (self.generator.tokenizer.decode(self.generator.sequence[0][initial_len:]))
+            if i == 0 and self.generator.tokenizer.tokenizer.IdToPiece(int(token)).startswith('▁'):
+                has_leading_space = True
+
+            decoded_text = self.generator.tokenizer.decode(self.generator.sequence[0][initial_len:])
+            if has_leading_space:
+                decoded_text = ' ' + decoded_text
+
+            yield decoded_text
             if token.item() == self.generator.tokenizer.eos_token_id or shared.stop_everything:
                 break
 
