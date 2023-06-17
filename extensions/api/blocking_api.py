@@ -7,10 +7,11 @@ from modules import shared
 from modules.chat import generate_chat_reply
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, unload_model
+from modules.models_settings import (get_model_settings_from_yamls,
+                                     update_model_parameters)
 from modules.text_generation import (encode, generate_reply,
                                      stop_everything_event)
 from modules.utils import get_available_models
-from server import get_model_specific_settings, update_model_parameters
 
 
 def get_model_info():
@@ -21,6 +22,7 @@ def get_model_info():
         'shared.settings': shared.settings,
         'shared.args': vars(shared.args),
     }
+
 
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -126,7 +128,7 @@ class Handler(BaseHTTPRequestHandler):
                 shared.model_name = model_name
                 unload_model()
 
-                model_settings = get_model_specific_settings(shared.model_name)
+                model_settings = get_model_settings_from_yamls(shared.model_name)
                 shared.settings.update(model_settings)
                 update_model_parameters(model_settings, initial=True)
 
@@ -136,10 +138,10 @@ class Handler(BaseHTTPRequestHandler):
                 try:
                     shared.model, shared.tokenizer = load_model(shared.model_name)
                     if shared.args.lora:
-                        add_lora_to_model(shared.args.lora) # list
+                        add_lora_to_model(shared.args.lora)  # list
 
                 except Exception as e:
-                    response = json.dumps({'error': { 'message': repr(e) } })
+                    response = json.dumps({'error': {'message': repr(e)}})
 
                     self.wfile.write(response.encode('utf-8'))
                     raise e
