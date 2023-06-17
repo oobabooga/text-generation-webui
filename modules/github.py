@@ -1,6 +1,7 @@
 import os
 import subprocess
 
+
 def clone_or_pull_repository(github_url):
     repository_folder = "extensions"
     repo_name = github_url.split("/")[-1].split(".")[0]
