@@ -1,5 +1,6 @@
 import os
 import re
+from datetime import datetime
 from pathlib import Path
 
 from modules import shared
@@ -39,6 +40,10 @@ def delete_file(fname):
     if abs_path.exists():
         abs_path.unlink()
         logger.info(f'Deleted {fname}.')
+
+
+def current_time():
+    return f"{datetime.now().strftime('%Y-%m-%d-%H%M%S')}"
 
 
 def atoi(text):
