@@ -79,7 +79,7 @@ class ExllamaModel:
         for i in range(state['max_new_tokens']):
             token = generator.gen_single_token()
             yield (generator.tokenizer.decode(generator.sequence[0][initial_len:]))
-            if token.item() == generator.tokenizer.eos_token_id:
+            if token.item() == generator.tokenizer.eos_token_id or shared.stop_everything:
                 break
 
     def encode(self, string, **kwargs):
