@@ -1,26 +1,15 @@
 import os
 import warnings
 
-import requests
-
 from modules.logging_colors import logger
+from modules.block_requests import RequestBlocker
 
 os.environ['GRADIO_ANALYTICS_ENABLED'] = 'False'
 os.environ['BITSANDBYTES_NOWELCOME'] = '1'
 warnings.filterwarnings('ignore', category=UserWarning, message='TypedStorage is deprecated')
 
-
-# This is a hack to prevent Gradio from phoning home when it gets imported
-def my_get(url, **kwargs):
-    logger.info('Gradio HTTP request redirected to localhost :)')
-    kwargs.setdefault('allow_redirects', True)
-    return requests.api.request('get', 'http://127.0.0.1/', **kwargs)
-
-
-original_get = requests.get
-requests.get = my_get
-import gradio as gr
-requests.get = original_get
+with RequestBlocker():
+    import gradio as gr
 
 import matplotlib
 matplotlib.use('Agg')  # This fixes LaTeX rendering on some systems
