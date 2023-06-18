@@ -37,7 +37,6 @@ def add_lora_exllama(lora_names):
         lora_config_path = lora_path / "adapter_config.json"
         lora_adapter_path = lora_path / "adapter_model.bin"
 
-        print(str(lora_config_path), str(lora_adapter_path))
         logger.info("Applying the following LoRAs to {}: {}".format(shared.model_name, ', '.join([lora_names[0]])))
         lora = ExLlamaLora(shared.model.model, str(lora_config_path), str(lora_adapter_path))
         shared.model.generator.lora = lora
