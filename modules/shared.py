@@ -130,6 +130,14 @@ parser.add_argument('--n-gpu-layers', type=int, default=0, help='Number of layer
 parser.add_argument('--n_ctx', type=int, default=2048, help='Size of the prompt context.')
 parser.add_argument('--llama_cpp_seed', type=int, default=0, help='Seed for llama-cpp models. Default 0 (random)')
 
+# openai
+# see https://github.com/openai/openai-python/blob/041bf5a8ec54da19aad0169671793c2078bd6173/openai/__init__.py
+parser.add_argument('--openai-api-key', type=str, default=None, help='OpenAI API key.')
+parser.add_argument('--openai-model', type=str, default='gpt-3.5-turbo', help='OpenAI model name. Defaults to gpt-3.5-turbo, set to "gpt-35-turbo" for Azure OpenAI.')
+parser.add_argument('--openai-api-type', type=str, default='open_ai', help='Defaults to "open_ai", set to "azure" for Azure OpenAI.')
+parser.add_argument('--openai-api-base', type=str, default='https://api.openai.com/v1', help='Defaults to "https://api.openai.com/v1", set to "https://your-resource-name.openai.azure.com" for Azure OpenAI.')
+parser.add_argument('--openai-deployment', type=str, default=None, help='Defaults to "None", set to "your-deployment-name" for Azure OpenAI.')
+
 # GPTQ
 parser.add_argument('--wbits', type=int, default=0, help='Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported.')
 parser.add_argument('--model_type', type=str, help='Model type of pre-quantized model. Currently LLaMA, OPT, and GPT-J are supported.')
@@ -218,6 +226,8 @@ def fix_loader_name(name):
         return 'GPTQ-for-LLaMa'
     elif name in ['exllama', 'ex-llama', 'ex_llama', 'exlama']:
         return 'ExLlama'
+    elif name in ['openai']:
+        return 'OpenAI'
 
 
 if args.loader is not None:

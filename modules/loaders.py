@@ -52,10 +52,17 @@ loaders_and_params = {
         'trust_remote_code',
         'transformers_info'
     ],
-    'ExLlama' : [
+    'ExLlama': [
         'gpu_split',
         'exllama_info',
-    ]
+    ],
+    'OpenAI': [
+        'openai-api-key',
+        'openai-model',
+        'openai-api-type',
+        'openai-api-base',
+        'openai-deployment',
+    ],
 }
 
 
