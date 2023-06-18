@@ -77,12 +77,17 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     font-size: 15px !important;
 }
 
+.message-body ul {
+    list-style-type: disc !important;
+}
+
 .message-body pre {
     margin-bottom: 1.25em !important;
 }
 
 .message-body code {
-    overflow-x: auto;
+    white-space: pre-wrap !important;
+    word-wrap: break-word !important;
 }
 
 .message-body :not(pre) > code {
