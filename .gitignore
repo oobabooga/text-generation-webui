@@ -8,6 +8,7 @@ extensions/multimodal/pipelines
 logs
 loras
 models
+presets
 repositories
 softprompts
 torch-dumps
