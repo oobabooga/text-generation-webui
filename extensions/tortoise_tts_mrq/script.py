@@ -159,13 +159,12 @@ def unload_model():
         pass
 
 
-def remove_tts_from_history(name1, name2, mode):
+def remove_tts_from_history():
     for i, entry in enumerate(shared.history['internal']):
         shared.history['visible'][i] = [shared.history['visible'][i][0], entry[1]]
-    return chat_html_wrapper(shared.history['visible'], name1, name2, mode)
 
 
-def toggle_text_in_history(name1, name2, mode):
+def toggle_text_in_history():
     for i, entry in enumerate(shared.history['visible']):
         visible_reply = entry[1]
         if visible_reply.startswith('<audio'):
@@ -174,22 +173,33 @@ def toggle_text_in_history(name1, name2, mode):
                 shared.history['visible'][i] = [shared.history['visible'][i][0], f"{visible_reply.split('</audio>')[0]}</audio>\n\n{reply}"]
             else:
                 shared.history['visible'][i] = [shared.history['visible'][i][0], f"{visible_reply.split('</audio>')[0]}</audio>"]
-    return chat_html_wrapper(shared.history['visible'], name1, name2, mode)
+
+
+def state_modifier(state):
+    if not params['activate']:
+        return state
+
+    state['stream'] = False
+    return state
 
 
 def input_modifier(string):
-    """
-    This function is applied to your text inputs before
-    they are fed into the model.
-    """
-
-    # Remove autoplay from the last reply
-    if shared.is_chat() and len(shared.history['internal']) > 0:
-        shared.history['visible'][-1] = [shared.history['visible'][-1][0], shared.history['visible'][-1][1].replace('controls autoplay>', 'controls>')]
+    if not params['activate']:
+        return string
 
     shared.processing_message = "*Is recording a voice message...*"
-    shared.args.no_stream = True  # Disable streaming cause otherwise the audio output will stutter and begin anew every time the message is being updated
     return string
+
+
+def history_modifier(history):
+    # Remove autoplay from the last reply
+    if len(history['internal']) > 0:
+        history['visible'][-1] = [
+            history['visible'][-1][0],
+            history['visible'][-1][1].replace('controls autoplay>', 'controls>')
+        ]
+
+    return history
 
 
 def output_modifier(string):
@@ -235,7 +245,6 @@ def output_modifier(string):
 
         if string == '':
             string = '*Empty reply, try regenerating*'
-            shared.args.no_stream = streaming_state  # restore the streaming option to the previous value
             if params['model_swap']:
                 unload_model()
                 load_llm()
@@ -266,7 +275,6 @@ def output_modifier(string):
             string += f'\n\n{original_string}'
 
         shared.processing_message = "*Is typing...*"
-        shared.args.no_stream = streaming_state  # restore the streaming option to the previous value
         if params['model_swap']:
             unload_model()
             load_llm()
@@ -274,7 +282,6 @@ def output_modifier(string):
         return string
     except:
         shared.processing_message = "*Is typing...*"
-        shared.args.no_stream = streaming_state  # restore the streaming option to the previous value
         if params['model_swap']:
             unload_model()
             load_llm()

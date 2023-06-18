@@ -2,13 +2,11 @@ import time
 import traceback
 from pathlib import Path
 
-import TTS.utils.synthesizer
-
 from modules import chat, shared, tts_preprocessor
-from modules.html_generator import chat_html_wrapper
 
 import gradio as gr
 from TTS.api import TTS
+import TTS.utils.synthesizer
 
 
 # Running a multi-speaker and multilingual model
@@ -72,48 +70,51 @@ model, speaker, language = load_model()
 streaming_state = shared.args.no_stream  # remember if chat streaming was enabled
 
 
-def remove_tts_from_history(name1, name2, mode):
+def remove_tts_from_history():
     for i, entry in enumerate(shared.history['internal']):
         shared.history['visible'][i] = [shared.history['visible'][i][0], entry[1]]
-    return chat_html_wrapper(shared.history['visible'], name1, name2, mode)
 
 
-def toggle_text_in_history(name1, name2, mode):
+def toggle_text_in_history():
     for i, entry in enumerate(shared.history['visible']):
         visible_reply = entry[1]
         if visible_reply.startswith('<audio'):
             if params['show_text']:
                 reply = shared.history['internal'][i][1]
-                shared.history['visible'][i] = [shared.history['visible'][i][0],
-                                                f"{visible_reply.split('</audio>')[0]}</audio>\n\n{reply}"]
+                shared.history['visible'][i] = [shared.history['visible'][i][0], f"{visible_reply.split('</audio>')[0]}</audio>\n\n{reply}"]
             else:
-                shared.history['visible'][i] = [shared.history['visible'][i][0],
-                                                f"{visible_reply.split('</audio>')[0]}</audio>"]
-    return chat_html_wrapper(shared.history['visible'], name1, name2, mode)
+                shared.history['visible'][i] = [shared.history['visible'][i][0], f"{visible_reply.split('</audio>')[0]}</audio>"]
+
+
+def state_modifier(state):
+    if not params['activate']:
+        return state
+
+    state['stream'] = False
+    return state
 
 
 def input_modifier(string):
-    """
-    This function is applied to your text inputs before
-    they are fed into the model.
-    """
-
-    # Remove autoplay from the last reply
-    if shared.is_chat() and len(shared.history['internal']) > 0:
-        shared.history['visible'][-1] = [shared.history['visible'][-1][0],
-                                         shared.history['visible'][-1][1].replace('controls autoplay>', 'controls>')]
+    if not params['activate']:
+        return string
 
     shared.processing_message = "*Is recording a voice message...*"
-    shared.args.no_stream = True  # Disable streaming cause otherwise the audio output will stutter and begin anew every time the message is being updated
     return string
 
 
-def output_modifier(string):
-    """
-    This function is applied to the model outputs.
-    """
+def history_modifier(history):
+    # Remove autoplay from the last reply
+    if len(history['internal']) > 0:
+        history['visible'][-1] = [
+            history['visible'][-1][0],
+            history['visible'][-1][1].replace('controls autoplay>', 'controls>')
+        ]
 
-    global model, speaker, language, current_params, streaming_state
+    return history
+
+
+def output_modifier(string):
+    global model, speaker, language, current_params
 
     for i in params:
         if params[i] != current_params[i]:
@@ -146,17 +147,6 @@ def output_modifier(string):
             string += f'\n\n{original_string}'
 
     shared.processing_message = "*Is typing...*"
-    shared.args.no_stream = streaming_state  # restore the streaming option to the previous value
-    return string
-
-
-def bot_prefix_modifier(string):
-    """
-    This function is only applied in chat mode. It modifies
-    the prefix text for the Bot and can be used to bias its
-    behavior.
-    """
-
     return string
 
 
