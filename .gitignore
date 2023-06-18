@@ -10,6 +10,7 @@ extensions/multimodal/pipelines
 logs
 loras
 models
+presets
 repositories
 softprompts
 torch-dumps
@@ -19,11 +20,13 @@ torch-dumps
 venv/
 .venv/
 .vscode
+.idea/
 *.bak
 *.ipynb
 *.log
 
 settings.json
+settings.yaml
 notification.mp3
 img_bot*
 img_me*

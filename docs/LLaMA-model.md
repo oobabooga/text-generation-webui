@@ -28,9 +28,15 @@ Once downloaded, it will be automatically applied to **every** `LlamaForCausalLM
 pip install protobuf==3.20.1
 ```
 
-2. Use the script below to convert the model in `.pth` format that you, a fellow academic, downloaded using Meta's official link:
+2. Use the script below to convert the model in `.pth` format that you, a fellow academic, downloaded using Meta's official link.
 
-### [convert_llama_weights_to_hf.py](https://github.com/huggingface/transformers/blob/main/src/transformers/models/llama/convert_llama_weights_to_hf.py)
+If you have `transformers` installed in place:
+
+```
+python -m transformers.models.llama.convert_llama_weights_to_hf --input_dir /path/to/LLaMA --model_size 7B --output_dir /tmp/outputs/llama-7b
+```
+
+Otherwise download [convert_llama_weights_to_hf.py](https://github.com/huggingface/transformers/blob/main/src/transformers/models/llama/convert_llama_weights_to_hf.py) first and run:
 
 ```
 python convert_llama_weights_to_hf.py --input_dir /path/to/LLaMA --model_size 7B --output_dir /tmp/outputs/llama-7b

@@ -7,16 +7,18 @@ HOST = 'localhost:5000'
 URI = f'http://{HOST}/api/v1/chat'
 
 # For reverse-proxied streaming, the remote will likely host with ssl - https://
-# URI = 'https://your-uri-here.trycloudflare.com/api/v1/generate'
+# URI = 'https://your-uri-here.trycloudflare.com/api/v1/chat'
 
 
 def run(user_input, history):
     request = {
         'user_input': user_input,
+        'max_new_tokens': 250,
         'history': history,
         'mode': 'instruct',  # Valid options: 'chat', 'chat-instruct', 'instruct'
         'character': 'Example',
         'instruction_template': 'Vicuna-v1.1',
+        'your_name': 'You',
 
         'regenerate': False,
         '_continue': False,
@@ -25,11 +27,17 @@ def run(user_input, history):
         'chat_generation_attempts': 1,
         'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
 
-        'max_new_tokens': 250,
+        # Generation params. If 'preset' is set to different than 'None', the values
+        # in presets/preset-name.yaml are used instead of the individual numbers.
+        'preset': 'None',
         'do_sample': True,
         'temperature': 0.7,
         'top_p': 0.1,
         'typical_p': 1,
+        'epsilon_cutoff': 0,  # In units of 1e-4
+        'eta_cutoff': 0,  # In units of 1e-4
+        'tfs': 1,
+        'top_a': 0,
         'repetition_penalty': 1.18,
         'top_k': 40,
         'min_length': 0,
@@ -38,6 +46,10 @@ def run(user_input, history):
         'penalty_alpha': 0,
         'length_penalty': 1,
         'early_stopping': False,
+        'mirostat_mode': 0,
+        'mirostat_tau': 5,
+        'mirostat_eta': 0.1,
+
         'seed': -1,
         'add_bos_token': True,
         'truncation_length': 2048,

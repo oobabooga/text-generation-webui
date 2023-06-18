@@ -1,4 +1,4 @@
-If you GPU is not large enough to fit a model, try these in the following order:
+If you GPU is not large enough to fit a 16-bit model, try these in the following order:
 
 ### Load the model in 8-bit mode
 
@@ -6,7 +6,11 @@ If you GPU is not large enough to fit a model, try these in the following order:
 python server.py --load-in-8bit
 ```
 
-This reduces the memory usage by half with no noticeable loss in quality. Only newer GPUs support 8-bit mode.
+### Load the model in 4-bit mode
+
+```
+python server.py --load-in-4bit
+```
 
 ### Split the model across your GPU and CPU
 
@@ -33,8 +37,6 @@ python server.py --auto-devices --gpu-memory 4725MiB
 python server.py --auto-devices --gpu-memory 3500MiB
 ...
 ```
-
-Additionally, you can also set the `--no-cache` value to reduce the GPU usage while generating text at a performance cost. This may allow you to set a higher value for `--gpu-memory`, resulting in a net performance gain.
 
 ### Send layers to a disk cache
 

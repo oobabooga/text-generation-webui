@@ -1,4 +1,3 @@
-import logging
 import traceback
 from functools import partial
 
@@ -6,6 +5,7 @@ import gradio as gr
 
 import extensions
 import modules.shared as shared
+from modules.logging_colors import logger
 
 state = {}
 available_extensions = []
@@ -29,7 +29,7 @@ def load_extensions():
     for i, name in enumerate(shared.args.extensions):
         if name in available_extensions:
             if name != 'api':
-                logging.info(f'Loading the extension "{name}"...')
+                logger.info(f'Loading the extension "{name}"...')
             try:
                 exec(f"import extensions.{name}.script")
                 extension = getattr(extensions, name).script
@@ -40,7 +40,7 @@ def load_extensions():
 
                 state[name] = [True, i]
             except:
-                logging.error(f'Failed to load the extension "{name}".')
+                logger.error(f'Failed to load the extension "{name}".')
                 traceback.print_exc()
 
 
@@ -89,6 +89,15 @@ def _apply_state_modifier_extensions(state):
             state = getattr(extension, "state_modifier")(state)
 
     return state
+
+
+# Extension that modifies the chat history before it is used
+def _apply_history_modifier_extensions(history):
+    for extension, _ in iterator():
+        if hasattr(extension, "history_modifier"):
+            history = getattr(extension, "history_modifier")(history)
+
+    return history
 
 
 # Extension functions that override the default tokenizer output - currently only the first one will work
@@ -165,6 +174,7 @@ EXTENSION_MAP = {
     "input": partial(_apply_string_extensions, "input_modifier"),
     "output": partial(_apply_string_extensions, "output_modifier"),
     "state": _apply_state_modifier_extensions,
+    "history": _apply_history_modifier_extensions,
     "bot_prefix": partial(_apply_string_extensions, "bot_prefix_modifier"),
     "tokenizer": partial(_apply_tokenizer_extensions, "tokenizer_modifier"),
     "input_hijack": _apply_input_hijack,

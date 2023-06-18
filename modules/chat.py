@@ -1,9 +1,9 @@
 import ast
 import base64
 import copy
+import functools
 import io
 import json
-import logging
 import re
 from datetime import datetime
 from pathlib import Path
@@ -14,9 +14,10 @@ from PIL import Image
 import modules.shared as shared
 from modules.extensions import apply_extensions
 from modules.html_generator import chat_html_wrapper, make_thumbnail
+from modules.logging_colors import logger
 from modules.text_generation import (generate_reply, get_encoded_length,
                                      get_max_prompt_length)
-from modules.utils import replace_all
+from modules.utils import delete_file, replace_all, save_file
 
 
 def get_turn_substrings(state, instruct=False):
@@ -53,12 +54,8 @@ def generate_chat_prompt(user_input, state, **kwargs):
     history = kwargs.get('history', shared.history)['internal']
     is_instruct = state['mode'] == 'instruct'
 
-    # Finding the maximum prompt size
-    chat_prompt_size = state['chat_prompt_size']
-    if shared.soft_prompt:
-        chat_prompt_size -= shared.soft_prompt_tensor.shape[1]
-
-    max_length = min(get_max_prompt_length(state), chat_prompt_size)
+    # Find the maximum prompt size
+    max_length = min(get_max_prompt_length(state), state['chat_prompt_size'])
     all_substrings = {
         'chat': get_turn_substrings(state, instruct=False),
         'instruct': get_turn_substrings(state, instruct=True)
@@ -66,7 +63,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
     substrings = all_substrings['instruct' if is_instruct else 'chat']
 
-    # Creating the template for "chat-instruct" mode
+    # Create the template for "chat-instruct" mode
     if state['mode'] == 'chat-instruct':
         wrapper = ''
         command = state['chat-instruct_command'].replace('<|character|>', state['name2'] if not impersonate else state['name1'])
@@ -75,18 +72,22 @@ def generate_chat_prompt(user_input, state, **kwargs):
         wrapper += all_substrings['instruct']['bot_turn_stripped']
         if impersonate:
             wrapper += substrings['user_turn_stripped'].rstrip(' ')
+        elif _continue:
+            wrapper += apply_extensions("bot_prefix", substrings['bot_turn_stripped'])
+            wrapper += history[-1][1]
         else:
             wrapper += apply_extensions("bot_prefix", substrings['bot_turn_stripped'].rstrip(' '))
     else:
         wrapper = '<|prompt|>'
 
-    # Building the prompt
+    # Build the prompt
     min_rows = 3
     i = len(history) - 1
     rows = [state['context_instruct'] if is_instruct else f"{state['context'].strip()}\n"]
     while i >= 0 and get_encoded_length(wrapper.replace('<|prompt|>', ''.join(rows))) < max_length:
         if _continue and i == len(history) - 1:
-            rows.insert(1, substrings['bot_turn_stripped'] + history[i][1].strip())
+            if state['mode'] != 'chat-instruct':
+                rows.insert(1, substrings['bot_turn_stripped'] + history[i][1].strip())
         else:
             rows.insert(1, substrings['bot_turn'].replace('<|bot-message|>', history[i][1].strip()))
 
@@ -103,11 +104,11 @@ def generate_chat_prompt(user_input, state, **kwargs):
             min_rows = 2
             rows.append(substrings['user_turn_stripped'].rstrip(' '))
     elif not _continue:
-        # Adding the user message
+        # Add the user message
         if len(user_input) > 0:
             rows.append(replace_all(substrings['user_turn'], {'<|user-message|>': user_input.strip(), '<|round|>': str(len(history))}))
 
-        # Adding the Character prefix
+        # Add the character prefix
         if state['mode'] != 'chat-instruct':
             rows.append(apply_extensions("bot_prefix", substrings['bot_turn_stripped'].rstrip(' ')))
 
@@ -181,13 +182,13 @@ def extract_message_from_reply(reply, state):
 
 def chatbot_wrapper(text, history, state, regenerate=False, _continue=False, loading_message=True):
     output = copy.deepcopy(history)
+    output = apply_extensions('history', output)
     if shared.model_name == 'None' or shared.model is None:
-        logging.error("No model is loaded! Select one in the Model tab.")
+        logger.error("No model is loaded! Select one in the Model tab.")
         yield output
         return
 
     # Defining some variables
-    cumulative_reply = ''
     just_started = True
     visible_text = None
     eos_token = '\n' if state['stop_at_newline'] else None
@@ -227,12 +228,13 @@ def chatbot_wrapper(text, history, state, regenerate=False, _continue=False, loa
         prompt = generate_chat_prompt(text, state, **kwargs)
 
     # Generate
+    cumulative_reply = ''
     for i in range(state['chat_generation_attempts']):
         reply = None
         for j, reply in enumerate(generate_reply(prompt + cumulative_reply, state, eos_token=eos_token, stopping_strings=stopping_strings, is_chat=True)):
             reply = cumulative_reply + reply
 
-            # Extracting the reply
+            # Extract the reply
             reply, next_character_found = extract_message_from_reply(reply, state)
             visible_reply = re.sub("(<USER>|<user>|{{user}})", state['name1'], reply)
             visible_reply = apply_extensions("output", visible_reply)
@@ -252,16 +254,18 @@ def chatbot_wrapper(text, history, state, regenerate=False, _continue=False, loa
             if _continue:
                 output['internal'][-1] = [text, last_reply[0] + reply]
                 output['visible'][-1] = [visible_text, last_reply[1] + visible_reply]
-                yield output
+                if state['stream']:
+                    yield output
             elif not (j == 0 and visible_reply.strip() == ''):
                 output['internal'][-1] = [text, reply.lstrip(' ')]
                 output['visible'][-1] = [visible_text, visible_reply.lstrip(' ')]
-                yield output
+                if state['stream']:
+                    yield output
 
             if next_character_found:
                 break
 
-        if reply in [None, '']:
+        if reply in [None, cumulative_reply]:
             break
         else:
             cumulative_reply = reply
@@ -269,9 +273,9 @@ def chatbot_wrapper(text, history, state, regenerate=False, _continue=False, loa
     yield output
 
 
-def impersonate_wrapper(text, state):
+def impersonate_wrapper(text, start_with, state):
     if shared.model_name == 'None' or shared.model is None:
-        logging.error("No model is loaded! Select one in the Model tab.")
+        logger.error("No model is loaded! Select one in the Model tab.")
         yield ''
         return
 
@@ -288,16 +292,19 @@ def impersonate_wrapper(text, state):
         for reply in generate_reply(prompt + cumulative_reply, state, eos_token=eos_token, stopping_strings=stopping_strings, is_chat=True):
             reply = cumulative_reply + reply
             reply, next_character_found = extract_message_from_reply(reply, state)
-            yield reply
+            yield reply.lstrip(' ')
+            if shared.stop_everything:
+                return
+
             if next_character_found:
                 break
 
-        if reply in [None, '']:
+        if reply in [None, cumulative_reply]:
             break
         else:
             cumulative_reply = reply
 
-    yield cumulative_reply
+    yield cumulative_reply.lstrip(' ')
 
 
 def generate_chat_reply(text, history, state, regenerate=False, _continue=False, loading_message=True):
@@ -311,8 +318,17 @@ def generate_chat_reply(text, history, state, regenerate=False, _continue=False,
         yield history
 
 
-# Same as above but returns HTML
-def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
+# Same as above but returns HTML for the UI
+def generate_chat_reply_wrapper(text, start_with, state, regenerate=False, _continue=False):
+    if start_with != '' and not _continue:
+        if regenerate:
+            text = remove_last_message()
+            regenerate = False
+
+        _continue = True
+        send_dummy_message(text)
+        send_dummy_reply(start_with)
+
     for i, history in enumerate(generate_chat_reply(text, shared.history, state, regenerate, _continue, loading_message=True)):
         if i != 0:
             shared.history = copy.deepcopy(history)
@@ -421,6 +437,9 @@ def save_history(mode, timestamp=False):
 
         fname = f"Instruct_{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
     else:
+        if shared.character == 'None':
+            return
+
         if timestamp:
             fname = f"{shared.character}_{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
         else:
@@ -544,7 +563,7 @@ def load_character(character, name1, name2, instruct=False):
     if not instruct:
         shared.history['internal'] = []
         shared.history['visible'] = []
-        if Path(f'logs/{shared.character}_persistent.json').exists():
+        if shared.character != 'None' and Path(f'logs/{shared.character}_persistent.json').exists():
             load_history(open(Path(f'logs/{shared.character}_persistent.json'), 'rb').read(), name1, name2)
         else:
             # Insert greeting if it exists
@@ -556,6 +575,11 @@ def load_character(character, name1, name2, instruct=False):
             save_history('instruct' if instruct else 'chat')
 
     return name1, name2, picture, greeting, context, repr(turn_template)[1:-1]
+
+
+@functools.cache
+def load_character_memoized(character, name1, name2, instruct=False):
+    return load_character(character, name1, name2, instruct=instruct)
 
 
 def upload_character(json_file, img, tavern=False):
@@ -577,7 +601,7 @@ def upload_character(json_file, img, tavern=False):
         img = Image.open(io.BytesIO(img))
         img.save(Path(f'characters/{outfile_name}.png'))
 
-    logging.info(f'New character saved to "characters/{outfile_name}.json".')
+    logger.info(f'New character saved to "characters/{outfile_name}.json".')
     return outfile_name
 
 
@@ -601,21 +625,10 @@ def upload_your_profile_picture(img):
     else:
         img = make_thumbnail(img)
         img.save(Path('cache/pfp_me.png'))
-        logging.info('Profile picture saved to "cache/pfp_me.png"')
+        logger.info('Profile picture saved to "cache/pfp_me.png"')
 
 
-def delete_file(path):
-    if path.exists():
-        logging.warning(f'Deleting {path}')
-        path.unlink(missing_ok=True)
-
-
-def save_character(name, greeting, context, picture, filename, instruct=False):
-    if filename == "":
-        logging.error("The filename is empty, so the character will not be saved.")
-        return
-
-    folder = 'characters' if not instruct else 'characters/instruction-following'
+def generate_character_yaml(name, greeting, context):
     data = {
         'name': name,
         'greeting': greeting,
@@ -623,22 +636,37 @@ def save_character(name, greeting, context, picture, filename, instruct=False):
     }
 
     data = {k: v for k, v in data.items() if v}  # Strip falsy
-    filepath = Path(f'{folder}/{filename}.yaml')
-    with filepath.open('w') as f:
-        yaml.dump(data, f)
+    return yaml.dump(data, sort_keys=False)
 
-    logging.info(f'Wrote {filepath}')
-    path_to_img = Path(f'{folder}/{filename}.png')
-    if picture and not instruct:
+
+def generate_instruction_template_yaml(user, bot, context, turn_template):
+    data = {
+        'user': user,
+        'bot': bot,
+        'turn_template': turn_template,
+        'context': context,
+    }
+
+    data = {k: v for k, v in data.items() if v}  # Strip falsy
+    return yaml.dump(data, sort_keys=False)
+
+
+def save_character(name, greeting, context, picture, filename):
+    if filename == "":
+        logger.error("The filename is empty, so the character will not be saved.")
+        return
+
+    data = generate_character_yaml(name, greeting, context)
+    filepath = Path(f'characters/{filename}.yaml')
+    save_file(filepath, data)
+    path_to_img = Path(f'characters/{filename}.png')
+    if picture is not None:
         picture.save(path_to_img)
-        logging.info(f'Wrote {path_to_img}')
-    elif path_to_img.exists():
-        delete_file(path_to_img)
+        logger.info(f'Saved {path_to_img}.')
 
 
 def delete_character(name, instruct=False):
-    folder = 'characters' if not instruct else 'characters/instruction-following'
     for extension in ["yml", "yaml", "json"]:
-        delete_file(Path(f'{folder}/{name}.{extension}'))
+        delete_file(Path(f'characters/{name}.{extension}'))
 
-    delete_file(Path(f'{folder}/{name}.png'))
+    delete_file(Path(f'characters/{name}.png'))

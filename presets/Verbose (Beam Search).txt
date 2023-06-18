@@ -1,9 +1,0 @@
-num_beams=10
-min_length=200
-length_penalty=1.4
-no_repeat_ngram_size=2
-early_stopping=True
-temperature=0.7
-top_k=150
-top_p=0.92
-repetition_penalty=4.5

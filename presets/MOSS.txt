@@ -1,3 +1,0 @@
-temperature=0.7
-top_p=0.8
-repetition_penalty=1.02

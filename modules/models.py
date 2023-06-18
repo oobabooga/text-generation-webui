@@ -1,13 +1,9 @@
 import gc
-import json
-import logging
 import os
 import re
 import time
-import zipfile
 from pathlib import Path
 
-import numpy as np
 import torch
 import transformers
 from accelerate import infer_auto_device_map, init_empty_weights
@@ -16,7 +12,9 @@ from transformers import (AutoConfig, AutoModel, AutoModelForCausalLM,
                           BitsAndBytesConfig, LlamaTokenizer)
 
 import modules.shared as shared
-from modules import llama_attn_hijack
+from modules import llama_attn_hijack, sampler_hijack
+from modules.logging_colors import logger
+from modules.models_settings import infer_loader
 
 transformers.logging.set_verbosity_error()
 
@@ -36,63 +34,35 @@ if shared.args.deepspeed:
     ds_config = generate_ds_config(shared.args.bf16, 1 * world_size, shared.args.nvme_offload_dir)
     dschf = HfDeepSpeedConfig(ds_config)  # Keep this object alive for the Transformers integration
 
-
-# Some models require special treatment in various parts of the code.
-# This function detects those models
-def find_model_type(model_name):
-    path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
-    if not path_to_model.exists():
-        return 'None'
-
-    model_name_lower = model_name.lower()
-    if 'rwkv-' in model_name_lower:
-        return 'rwkv'
-    elif len(list(path_to_model.glob('*ggml*.bin'))) > 0:
-        return 'llamacpp'
-    elif re.match('.*ggml.*\.bin', model_name_lower):
-        return 'llamacpp'
-    elif 'chatglm' in model_name_lower:
-        return 'chatglm'
-    elif 'galactica' in model_name_lower:
-        return 'galactica'
-    elif 'llava' in model_name_lower:
-        return 'llava'
-    elif 'oasst' in model_name_lower:
-        return 'oasst'
-    elif any((k in model_name_lower for k in ['gpt4chan', 'gpt-4chan'])):
-        return 'gpt4chan'
-    else:
-        config = AutoConfig.from_pretrained(path_to_model, trust_remote_code=shared.args.trust_remote_code)
-        # Not a "catch all", but fairly accurate
-        if config.to_dict().get("is_encoder_decoder", False):
-            return 'HF_seq2seq'
-        else:
-            return 'HF_generic'
+sampler_hijack.hijack_samplers()
 
 
-def load_model(model_name):
-    logging.info(f"Loading {model_name}...")
+def load_model(model_name, loader=None):
+    logger.info(f"Loading {model_name}...")
     t0 = time.time()
 
-    shared.model_type = find_model_type(model_name)
-    if shared.model_type == 'None':
-        logging.error('The path to the model does not exist. Exiting.')
-        return None, None
+    shared.is_seq2seq = False
+    load_func_map = {
+        'Transformers': huggingface_loader,
+        'AutoGPTQ': AutoGPTQ_loader,
+        'GPTQ-for-LLaMa': GPTQ_loader,
+        'llama.cpp': llamacpp_loader,
+        'FlexGen': flexgen_loader,
+        'RWKV': RWKV_loader,
+        'ExLlama': ExLlama_loader
+    }
 
-    if shared.args.autogptq:
-        load_func = AutoGPTQ_loader
-    elif shared.args.wbits > 0:
-        load_func = GPTQ_loader
-    elif shared.model_type == 'llamacpp':
-        load_func = llamacpp_loader
-    elif shared.model_type == 'rwkv':
-        load_func = RWKV_loader
-    elif shared.args.flexgen:
-        load_func = flexgen_loader
-    else:
-        load_func = huggingface_loader
+    if loader is None:
+        if shared.args.loader is not None:
+            loader = shared.args.loader
+        else:
+            loader = infer_loader(model_name)
+            if loader is None:
+                logger.error('The path to the model does not exist. Exiting.')
+                return None, None
 
-    output = load_func(model_name)
+    shared.args.loader = loader
+    output = load_func_map[loader](model_name)
     if type(output) is tuple:
         model, tokenizer = output
     else:
@@ -106,20 +76,20 @@ def load_model(model_name):
     if any((shared.args.xformers, shared.args.sdp_attention)):
         llama_attn_hijack.hijack_llama_attention()
 
-    logging.info(f"Loaded the model in {(time.time()-t0):.2f} seconds.\n")
+    logger.info(f"Loaded the model in {(time.time()-t0):.2f} seconds.\n")
     return model, tokenizer
 
 
 def load_tokenizer(model_name, model):
     tokenizer = None
-    if shared.model_type == 'gpt4chan' and Path(f"{shared.args.model_dir}/gpt-j-6B/").exists():
+    if any(s in model_name.lower() for s in ['gpt-4chan', 'gpt4chan']) and Path(f"{shared.args.model_dir}/gpt-j-6B/").exists():
         tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/gpt-j-6B/"))
-    elif type(model) is transformers.LlamaForCausalLM:
+    elif type(model) is transformers.LlamaForCausalLM or "LlamaGPTQForCausalLM" in str(type(model)):
         # Try to load an universal LLaMA tokenizer
-        if shared.model_type not in ['llava', 'oasst']:
+        if not any(s in shared.model_name.lower() for s in ['llava', 'oasst']):
             for p in [Path(f"{shared.args.model_dir}/llama-tokenizer/"), Path(f"{shared.args.model_dir}/oobabooga_llama-tokenizer/")]:
                 if p.exists():
-                    logging.info(f"Loading the universal LLaMA tokenizer from {p}...")
+                    logger.info(f"Loading the universal LLaMA tokenizer from {p}...")
                     tokenizer = LlamaTokenizer.from_pretrained(p, clean_up_tokenization_spaces=True)
                     return tokenizer
 
@@ -141,15 +111,19 @@ def load_tokenizer(model_name, model):
 
 
 def huggingface_loader(model_name):
-    if shared.model_type == 'chatglm':
+    path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
+    if 'chatglm' in model_name.lower():
         LoaderClass = AutoModel
-    elif shared.model_type == 'HF_seq2seq':
-        LoaderClass = AutoModelForSeq2SeqLM
     else:
-        LoaderClass = AutoModelForCausalLM
+        config = AutoConfig.from_pretrained(path_to_model, trust_remote_code=shared.args.trust_remote_code)
+        if config.to_dict().get("is_encoder_decoder", False):
+            LoaderClass = AutoModelForSeq2SeqLM
+            shared.is_seq2seq = True
+        else:
+            LoaderClass = AutoModelForCausalLM
 
     # Load the model in simple 16-bit mode by default
-    if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.auto_devices, shared.args.disk, shared.args.deepspeed, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None]):
+    if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.load_in_4bit, shared.args.auto_devices, shared.args.disk, shared.args.deepspeed, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None]):
         model = LoaderClass.from_pretrained(Path(f"{shared.args.model_dir}/{model_name}"), low_cpu_mem_usage=True, torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16, trust_remote_code=shared.args.trust_remote_code)
         if torch.has_mps:
             device = torch.device('mps')
@@ -162,7 +136,7 @@ def huggingface_loader(model_name):
         model = LoaderClass.from_pretrained(Path(f"{shared.args.model_dir}/{model_name}"), torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16)
         model = deepspeed.initialize(model=model, config_params=ds_config, model_parameters=None, optimizer=None, lr_scheduler=None)[0]
         model.module.eval()  # Inference
-        logging.info(f"DeepSpeed ZeRO-3 is enabled: {is_deepspeed_zero3_enabled()}")
+        logger.info(f"DeepSpeed ZeRO-3 is enabled: {is_deepspeed_zero3_enabled()}")
 
     # Custom
     else:
@@ -172,14 +146,28 @@ def huggingface_loader(model_name):
         }
 
         if not any((shared.args.cpu, torch.cuda.is_available(), torch.has_mps)):
-            logging.warning("torch.cuda.is_available() returned False. This means that no GPU has been detected. Falling back to CPU mode.")
+            logger.warning("torch.cuda.is_available() returned False. This means that no GPU has been detected. Falling back to CPU mode.")
             shared.args.cpu = True
 
         if shared.args.cpu:
             params["torch_dtype"] = torch.float32
         else:
             params["device_map"] = 'auto'
-            if shared.args.load_in_8bit and any((shared.args.auto_devices, shared.args.gpu_memory)):
+            if shared.args.load_in_4bit:
+
+                # See https://github.com/huggingface/transformers/pull/23479/files
+                # and https://huggingface.co/blog/4bit-transformers-bitsandbytes
+                quantization_config_params = {
+                    'load_in_4bit': True,
+                    'bnb_4bit_compute_dtype': eval("torch.{}".format(shared.args.compute_dtype)) if shared.args.compute_dtype in ["bfloat16", "float16", "float32"] else None,
+                    'bnb_4bit_quant_type': shared.args.quant_type,
+                    'bnb_4bit_use_double_quant': shared.args.use_double_quant,
+                }
+
+                logger.warning("Using the following 4-bit params: " + str(quantization_config_params))
+                params['quantization_config'] = BitsAndBytesConfig(**quantization_config_params)
+
+            elif shared.args.load_in_8bit and any((shared.args.auto_devices, shared.args.gpu_memory)):
                 params['quantization_config'] = BitsAndBytesConfig(load_in_8bit=True, llm_int8_enable_fp32_cpu_offload=True)
             elif shared.args.load_in_8bit:
                 params['quantization_config'] = BitsAndBytesConfig(load_in_8bit=True)
@@ -254,7 +242,7 @@ def llamacpp_loader(model_name):
     else:
         model_file = list(Path(f'{shared.args.model_dir}/{model_name}').glob('*ggml*.bin'))[0]
 
-    logging.info(f"llama.cpp weights detected: {model_file}\n")
+    logger.info(f"llama.cpp weights detected: {model_file}\n")
     model, tokenizer = LlamaCppModel.from_pretrained(model_file)
     return model, tokenizer
 
@@ -263,7 +251,7 @@ def GPTQ_loader(model_name):
 
     # Monkey patch
     if shared.args.monkey_patch:
-        logging.warning("Applying the monkey patch for using LoRAs in 4-bit mode. It may cause undefined behavior outside its intended scope.")
+        logger.warning("Applying the monkey patch for using LoRAs with GPTQ models. It may cause undefined behavior outside its intended scope.")
         from modules.monkey_patch_gptq_lora import load_model_llama
 
         model, _ = load_model_llama(model_name)
@@ -281,6 +269,13 @@ def AutoGPTQ_loader(model_name):
     import modules.AutoGPTQ_loader
 
     return modules.AutoGPTQ_loader.load_quantized(model_name)
+
+
+def ExLlama_loader(model_name):
+    from modules.exllama import ExllamaModel
+
+    model, tokenizer = ExllamaModel.from_pretrained(model_name)
+    return model, tokenizer
 
 
 def get_max_memory_dict():
@@ -302,7 +297,7 @@ def get_max_memory_dict():
             suggestion -= 1000
 
         suggestion = int(round(suggestion / 1000))
-        logging.warning(f"Auto-assiging --gpu-memory {suggestion} for your GPU to try to prevent out-of-memory errors. You can manually set other values.")
+        logger.warning(f"Auto-assiging --gpu-memory {suggestion} for your GPU to try to prevent out-of-memory errors. You can manually set other values.")
         max_memory = {0: f'{suggestion}GiB', 'cpu': f'{shared.args.cpu_memory or 99}GiB'}
 
     return max_memory if len(max_memory) > 0 else None
@@ -322,32 +317,3 @@ def unload_model():
 def reload_model():
     unload_model()
     shared.model, shared.tokenizer = load_model(shared.model_name)
-
-
-def load_soft_prompt(name):
-    if name == 'None':
-        shared.soft_prompt = False
-        shared.soft_prompt_tensor = None
-    else:
-        with zipfile.ZipFile(Path(f'softprompts/{name}.zip')) as zf:
-            zf.extract('tensor.npy')
-            zf.extract('meta.json')
-            j = json.loads(open('meta.json', 'r').read())
-            logging.info(f"\nLoading the softprompt \"{name}\".")
-            for field in j:
-                if field != 'name':
-                    if type(j[field]) is list:
-                        logging.info(f"{field}: {', '.join(j[field])}")
-                    else:
-                        logging.info(f"{field}: {j[field]}")
-
-            tensor = np.load('tensor.npy')
-            Path('tensor.npy').unlink()
-            Path('meta.json').unlink()
-
-        tensor = torch.Tensor(tensor).to(device=shared.model.device, dtype=shared.model.dtype)
-        tensor = torch.reshape(tensor, (1, tensor.shape[0], tensor.shape[1]))
-        shared.soft_prompt = True
-        shared.soft_prompt_tensor = tensor
-
-    return name
