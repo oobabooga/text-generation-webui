@@ -77,8 +77,7 @@ def add_lora_to_model(lora_names):
                 elif shared.args.load_in_8bit:
                     params['device_map'] = {'': 0}
 
-            shared.model = PeftModel.from_pretrained(shared.model, Path(f"{shared.args.lora_dir}/{lora_names[0]}"), **params)
-
+            shared.model = PeftModel.from_pretrained(shared.model, Path(f"{shared.args.lora_dir}/{lora_names[0]}"), adapter_name=lora_names[0], **params)
             for lora in lora_names[1:]:
                 shared.model.load_adapter(Path(f"{shared.args.lora_dir}/{lora}"), lora)
 
