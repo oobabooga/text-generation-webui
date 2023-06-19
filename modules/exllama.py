@@ -17,7 +17,7 @@ class ExllamaModel:
     @classmethod
     def from_pretrained(self, path_to_model):
 
-        path_to_model = Path("models") / Path(path_to_model)
+        path_to_model = Path(f'{shared.args.model_dir}') / Path(path_to_model)
         tokenizer_model_path = path_to_model / "tokenizer.model"
         model_config_path = path_to_model / "config.json"
 
