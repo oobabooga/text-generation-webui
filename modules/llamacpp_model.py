@@ -7,6 +7,7 @@ https://abetlen.github.io/llama-cpp-python/
 '''
 
 import re
+import ast
 
 from llama_cpp import Llama, LlamaCache
 
@@ -14,6 +15,24 @@ from modules import shared
 from modules.callbacks import Iteratorize
 from modules.logging_colors import logger
 
+def check_stop_by_reply(reply, state, stopping_strings):
+    # custom_stopping_strings
+    custom_stopping_strings = state.get('custom_stopping_strings', "")
+    all_stopping_strings = ast.literal_eval(f"[{custom_stopping_strings}]")
+
+    # stopping_strings
+    if stopping_strings is not None:
+        all_stopping_strings += stopping_strings
+
+    # stop_by_newline
+    if state.get('stop_by_newline', False):
+        all_stopping_strings += ["\n"]
+
+    for string in all_stopping_strings:
+        if string in reply:
+            return True
+
+    return False
 
 class LlamaCppModel:
     def __init__(self):
@@ -59,7 +78,7 @@ class LlamaCppModel:
 
         return self.model.tokenize(string)
 
-    def generate(self, prompt, state, callback=None):
+    def generate(self, prompt, state, stopping_strings, callback=None):
         prompt = prompt if type(prompt) is str else prompt.decode()
         completion_chunks = self.model.create_completion(
             prompt=prompt,
@@ -82,6 +101,12 @@ class LlamaCppModel:
             if callback:
                 callback(text)
 
+            if shared.stop_everything:
+                break
+
+            if check_stop_by_reply(output, state, stopping_strings):
+                break
+
         return output
 
     def generate_with_streaming(self, *args, **kwargs):
@@ -90,3 +115,9 @@ class LlamaCppModel:
             for token in generator:
                 reply += token
                 yield reply
+
+                if shared.stop_everything:
+                    break
+
+                if check_stop_by_reply(reply, args[1], args[2]):
+                    break

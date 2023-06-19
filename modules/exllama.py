@@ -1,3 +1,4 @@
+import ast
 import sys
 from pathlib import Path
 
@@ -9,6 +10,24 @@ from repositories.exllama.generator import ExLlamaGenerator
 from repositories.exllama.model import ExLlama, ExLlamaCache, ExLlamaConfig
 from repositories.exllama.tokenizer import ExLlamaTokenizer
 
+def check_stop_by_reply(reply, state, stopping_strings):
+    # custom_stopping_strings
+    custom_stopping_strings = state.get('custom_stopping_strings', "")
+    all_stopping_strings = ast.literal_eval(f"[{custom_stopping_strings}]")
+
+    # stopping_strings
+    if stopping_strings is not None:
+        all_stopping_strings += stopping_strings
+
+    # stop_by_newline
+    if state.get('stop_by_newline', False):
+        all_stopping_strings += ["\n"]
+
+    for string in all_stopping_strings:
+        if string in reply:
+            return True
+
+    return False
 
 class ExllamaModel:
     def __init__(self):
@@ -51,7 +70,7 @@ class ExllamaModel:
         result.generator = generator
         return result, result
 
-    def generate_with_streaming(self, prompt, state):
+    def generate_with_streaming(self, prompt, state, stopping_strings):
         self.generator.settings.temperature = state['temperature']
         self.generator.settings.top_p = state['top_p']
         self.generator.settings.top_k = state['top_k']
@@ -80,9 +99,12 @@ class ExllamaModel:
             if token.item() == self.generator.tokenizer.eos_token_id or shared.stop_everything:
                 break
 
-    def generate(self, prompt, state):
+            if check_stop_by_reply(decoded_text, state, stopping_strings):
+                break
+
+    def generate(self, prompt, state, stopping_strings):
         output = ''
-        for output in self.generate_with_streaming(prompt, state):
+        for output in self.generate_with_streaming(prompt, state, stopping_strings):
             pass
 
         return output
