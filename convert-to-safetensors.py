@@ -22,6 +22,7 @@ parser.add_argument('MODEL', type=str, default=None, nargs='?', help="Path to th
 parser.add_argument('--output', type=str, default=None, help='Path to the output folder (default: models/{model_name}_safetensors).')
 parser.add_argument("--max-shard-size", type=str, default="2GB", help="Maximum size of a shard in GB or MB (default: %(default)s).")
 parser.add_argument('--bf16', action='store_true', help='Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU.')
+parser.add_argument('--no-low-cpu-mem-usage', action='store_true', help="Set low_cpu_mem_usage=False while loading a model. This could avoid some problem while loading some quantized models like ChatGLM-6B-int4.")
 args = parser.parse_args()
 
 if __name__ == '__main__':
@@ -29,7 +30,7 @@ if __name__ == '__main__':
     model_name = path.name
 
     print(f"Loading {model_name}...")
-    model = AutoModelForCausalLM.from_pretrained(path, low_cpu_mem_usage=True, torch_dtype=torch.bfloat16 if args.bf16 else torch.float16)
+    model = AutoModelForCausalLM.from_pretrained(path, low_cpu_mem_usage=not args.no_low_cpu_mem_usage, torch_dtype=torch.bfloat16 if args.bf16 else torch.float16)
     tokenizer = AutoTokenizer.from_pretrained(path)
 
     out_folder = args.output or Path(f"models/{model_name}_safetensors")

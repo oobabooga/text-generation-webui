@@ -15,6 +15,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 parser = argparse.ArgumentParser(formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=54))
 parser.add_argument('MODEL', type=str, default=None, nargs='?', help="Path to the input model.")
+parser.add_argument('--no-low-cpu-mem-usage', action='store_true', help="Set low_cpu_mem_usage=False while loading a model. This could avoid some problem while loading some quantized models like ChatGLM-6B-int4.")
 args = parser.parse_args()
 
 
@@ -46,7 +47,7 @@ if __name__ == '__main__':
 
     print(f"Loading {model_name}...")
     # disable_torch_init()
-    model = AutoModelForCausalLM.from_pretrained(path, torch_dtype=torch.float16, low_cpu_mem_usage=True)
+    model = AutoModelForCausalLM.from_pretrained(path, torch_dtype=torch.float16, low_cpu_mem_usage=not args.no_low_cpu_mem_usage)
     # restore_torch_init()
 
     tokenizer = AutoTokenizer.from_pretrained(path)
