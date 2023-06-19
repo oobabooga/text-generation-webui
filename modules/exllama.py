@@ -48,7 +48,7 @@ class ExllamaModel:
         result.model = model
         result.cache = cache
         result.tokenizer = tokenizer
-        self.generator = generator
+        result.generator = generator
         return result, result
 
     def generate_with_streaming(self, prompt, state):
