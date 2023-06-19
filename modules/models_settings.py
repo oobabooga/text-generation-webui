@@ -20,8 +20,8 @@ def get_model_settings_from_yamls(model):
 def infer_loader(model_name):
     path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
     model_settings = get_model_settings_from_yamls(model_name)
-    if shared.args.openai_api_key is not None:
-        loader = 'OpanAI'
+    if shared.args.openai_api_key is not None or shared.model_name == 'gpt-35-turbo':
+        loader = 'openai'
     elif not path_to_model.exists():
         loader = None
     elif Path(f'{shared.args.model_dir}/{model_name}/quantize_config.json').exists() or ('wbits' in model_settings and type(model_settings['wbits']) is int and model_settings['wbits'] > 0):

@@ -50,7 +50,7 @@ def load_model(model_name, loader=None):
         'FlexGen': flexgen_loader,
         'RWKV': RWKV_loader,
         'ExLlama': ExLlama_loader,
-        'OpenAI': openai_loader,
+        'openai': openai_loader,
     }
 
     if loader is None:

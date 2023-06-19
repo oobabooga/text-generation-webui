@@ -194,7 +194,7 @@ def create_model_menus():
 
     with gr.Row():
         with gr.Column():
-            shared.gradio['loader'] = gr.Dropdown(label="Model loader", choices=["Transformers", "AutoGPTQ", "GPTQ-for-LLaMa", "ExLlama", "llama.cpp", "OpenAI"], value=None)
+            shared.gradio['loader'] = gr.Dropdown(label="Model loader", choices=["Transformers", "AutoGPTQ", "GPTQ-for-LLaMa", "ExLlama", "llama.cpp", "openai"], value=None)
             with gr.Box():
                 with gr.Row():
                     with gr.Column():
@@ -217,11 +217,11 @@ def create_model_menus():
                         shared.gradio['gpu_split'] = gr.Textbox(label='gpu-split', info='Comma-separated list of VRAM (in GB) to use per GPU. Example: 20,7,7')
 
                         # opanai only
-                        shared.gradio['openai-api-key'] = gr.Textbox(label='openai-api-key', info='OpenAI API key')
-                        shared.gradio['openai-model'] = gr.Textbox(label='openai-model', info='OpenAI model name')
-                        shared.gradio['openai-api-type'] = gr.Dropdown(label="openai-api-type", choices=["open_ai", "azure"], value=shared.args.openai_api_type)
-                        shared.gradio['openai-api-base'] = gr.Textbox(label="openai-api-base", info='OpenAI API base URL')
-                        shared.gradio['openai-deployment'] = gr.Textbox(label="openai-deployment", info='Azure OpenAI deployment name')
+                        shared.gradio['openai_api_key'] = gr.Textbox(label='openai_api_key', info='OpenAI API key')
+                        shared.gradio['openai_model'] = gr.Textbox(label='openai_model', info='OpenAI model name')
+                        shared.gradio['openai_api_type'] = gr.Dropdown(label="openai_api_type", choices=["open_ai", "azure"], value=shared.args.openai_api_type)
+                        shared.gradio['openai_api_base'] = gr.Textbox(label="openai_api_base", info='OpenAI API base URL')
+                        shared.gradio['openai_deployment'] = gr.Textbox(label="openai_deployment", info='Azure OpenAI deployment name')
 
                     with gr.Column():
                         shared.gradio['triton'] = gr.Checkbox(label="triton", value=shared.args.triton)

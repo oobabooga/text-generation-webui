@@ -56,12 +56,12 @@ loaders_and_params = {
         'gpu_split',
         'exllama_info',
     ],
-    'OpenAI': [
-        'openai-api-key',
-        'openai-model',
-        'openai-api-type',
-        'openai-api-base',
-        'openai-deployment',
+    'openai': [
+        'openai_api_key',
+        'openai_model',
+        'openai_api_type',
+        'openai_api_base',
+        'openai_deployment',
     ],
 }
 

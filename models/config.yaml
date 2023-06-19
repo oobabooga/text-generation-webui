@@ -1,3 +1,5 @@
+.*(openai|OpenAI):
+  model_type: 'openai'
 .*(llama|alpac|vicuna|guanaco|koala|llava|wizardlm|metharme|pygmalion-7b|wizard-mega|openbuddy|vigogne|h2ogpt-research|manticore):
   model_type: 'llama'
 .*(opt-|opt_|opt1|opt3|optfor|galactica|galpaca|pygmalion-350m):
