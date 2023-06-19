@@ -15,7 +15,6 @@
 * [LLaMA model](LLaMA-model.md)
 * [LoRA](LoRA.md)
 * [Low VRAM guide](Low-VRAM-guide.md)
-* [README](README.md)
 * [RWKV model](RWKV-model.md)
 * [Spell book](Spell-book.md)
 * [System requirements](System-requirements.md)
