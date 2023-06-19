@@ -33,3 +33,9 @@ models/config-user.yaml
 
 .DS_Store
 Thumbs.db
+
+.env
+.dockerignore
+Dockerfile
+docker-compose.yml
+hack/*
