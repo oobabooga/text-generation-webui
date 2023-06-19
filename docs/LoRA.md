@@ -1,14 +1,31 @@
-Based on https://github.com/tloen/alpaca-lora
+# LoRA
 
-## Instructions
+LoRA (Low-Rank Adaptation) is an extremely powerful method for customizing a base model by training only a small number of parameters. They can be attached to models at runtime.
 
-1. Download a LoRA, for instance:
+For instance, a 50mb LoRA can teach LLaMA an entire new language, a given writing style, or give it instruction-following or chat abilities.
+
+This is the current state of LoRA integration in the web UI:
+
+|Loader | Status |
+|--------|------|
+| Transformers | Full support in 16-bit, `--load-in-8bit`, `--load-in-4bit`, and CPU modes. |
+| ExLlama | Single LoRA support. Fast to remove the LoRA afterwards. |
+| AutoGPTQ | Single LoRA support. Removing the LoRA requires reloading the entire model.|
+| GPTQ-for-LLaMa | Full support with the [monkey patch](https://github.com/oobabooga/text-generation-webui/blob/main/docs/GPTQ-models-(4-bit-mode).md#using-loras-with-gptq-for-llama). |
+
+## Downloading a LoRA
+
+The download script can be used. For instance:
 
 ```
 python download-model.py tloen/alpaca-lora-7b
 ```
 
-2. Load the LoRA. 16-bit, `--load-in-8bit`, `--load-in-4bit`, and CPU modes work:
+The files will be saved to `loras/tloen_alpaca-lora-7b`.
+
+## Using the LoRA
+
+The `--lora` command-line flag can be used. Examples:
 
 ```
 python server.py --model llama-7b-hf --lora tloen_alpaca-lora-7b
@@ -17,9 +34,7 @@ python server.py --model llama-7b-hf --lora tloen_alpaca-lora-7b --load-in-4bit
 python server.py --model llama-7b-hf --lora tloen_alpaca-lora-7b --cpu
 ```
 
-* For using LoRAs with GPTQ quantized models, follow [these special instructions](GPTQ-models-(4-bit-mode).md#using-loras-with-gptq-for-llama).
-
-* Instead of using the `--lora` command-line flag, you can also select the LoRA in the "Parameters" tab of the interface.
+Instead of using the `--lora` command-line flag, you can also select the LoRA in the "Parameters" tab of the interface.
 
 ## Prompt
 For the Alpaca LoRA in particular, the prompt must be formatted like this:
