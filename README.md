@@ -1,9 +1,6 @@
-**Vote on the preset arena!**
+**Help find the best parameters for text generation!**
 
-* Arena: https://oobabooga.github.io/arena/index.html
-* [Preliminary results](https://oobabooga.github.io/arena/preliminary-results.html)
-* [Presets](https://oobabooga.github.io/arena/presets.html)
-* +Info: https://www.reddit.com/r/LocalLLaMA/comments/14adfw2/preset_arena_17205_comparisons_between_241/
+https://oobabooga.github.io/arena/preliminary-results.html
 
 # Text generation web UI
 

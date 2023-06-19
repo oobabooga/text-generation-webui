@@ -1,19 +1,5 @@
 /* All credits to TheEncrypted777: https://www.reddit.com/r/Oobabooga/comments/12xe6vq/updated_css_styling_with_color_customization_for/ */
 
-.chat {
-    margin-left: auto;
-    margin-right: auto;
-    max-width: 800px;
-    height: calc(100vh - 296px);
-    overflow-y: auto;
-    padding-right: 20px;
-    display: flex;
-    flex-direction: column-reverse;
-    word-break: break-word;
-    overflow-wrap: anywhere;
-    padding-top: 1px;
-}
-
 .message {
     display: grid;
     grid-template-columns: 60px minmax(0, 1fr);
@@ -110,23 +96,6 @@
     margin-bottom: 0 !important;
     font-size: 18px !important;
     line-height: 1.428571429 !important;
-}
-
-.message-body li {
-    margin-top: 0.5em !important;
-    margin-bottom: 0.5em !important;
-}
-
-.message-body li > p {
-    display: inline !important;
-}
-
-.message-body code {
-    overflow-x: auto;
-}
-
-.message-body :not(pre) > code {
-    white-space: normal !important;
 }
 
 .dark .message-body p em {
