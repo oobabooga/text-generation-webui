@@ -72,8 +72,14 @@ EleutherAI/pythia-1.4b-deduped
 
 
 class ModelDownloader:
-    def __init__(self):
+    def __init__(self, proxy=None):
         self.s = requests.Session()
+        if not proxy is None:
+            self.proxies = {'http': proxy,'https': proxy}
+            print("using proxies:", proxy)
+        else:
+            self.proxies = {}
+
         if os.getenv('HF_USER') is not None and os.getenv('HF_PASS') is not None:
             self.s.auth = (os.getenv('HF_USER'), os.getenv('HF_PASS'))
 
@@ -108,7 +114,7 @@ class ModelDownloader:
         is_lora = False
         while True:
             url = f"{base}{page}" + (f"?cursor={cursor.decode()}" if cursor else "")
-            r = self.s.get(url, timeout=20)
+            r = self.s.get(url, proxies=self.proxies, timeout=20)
             r.raise_for_status()
             content = r.content
 
@@ -180,7 +186,7 @@ class ModelDownloader:
         output_path = output_folder / filename
         if output_path.exists() and not start_from_scratch:
             # Check if the file has already been downloaded completely
-            r = self.s.get(url, stream=True, timeout=20)
+            r = self.s.get(url, proxies=self.proxies, stream=True, timeout=20)
             total_size = int(r.headers.get('content-length', 0))
             if output_path.stat().st_size >= total_size:
                 return
@@ -191,7 +197,7 @@ class ModelDownloader:
             headers = {}
             mode = 'wb'
 
-        r = self.s.get(url, stream=True, headers=headers, timeout=20)
+        r = self.s.get(url, proxies=self.proxies, stream=True, headers=headers, timeout=20)
         with open(output_path, mode) as f:
             total_size = int(r.headers.get('content-length', 0))
             block_size = 1024
@@ -260,6 +266,7 @@ if __name__ == '__main__':
     parser.add_argument('--output', type=str, default=None, help='The folder where the model should be saved.')
     parser.add_argument('--clean', action='store_true', help='Does not resume the previous download.')
     parser.add_argument('--check', action='store_true', help='Validates the checksums of model files.')
+    parser.add_argument('--proxy', type=str, default=None, help='Use http(s)-proxy to download models.')
     args = parser.parse_args()
 
     branch = args.branch
@@ -267,7 +274,7 @@ if __name__ == '__main__':
     if model is None:
         model, branch = select_model_from_default_options()
 
-    downloader = ModelDownloader()
+    downloader = ModelDownloader(args.proxy)
     # Cleaning up the model/branch names
     try:
         model, branch = downloader.sanitize_model_and_branch_names(model, branch)
