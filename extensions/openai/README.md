@@ -84,20 +84,25 @@ const api = new ChatGPTAPI({
 
 | API endpoint | tested with | notes |
 | --- | --- | --- |
-| /v1/models | openai.Model.list() | returns the currently loaded model_name and some mock compatibility options |
+| /v1/models | openai.Model.list() | Lists models, Currently loaded model first, plus some compatibility options |
 | /v1/models/{id} | openai.Model.get() | returns whatever you ask for, model does nothing yet anyways |
-| /v1/text_completion | openai.Completion.create() | the most tested, only supports single string input so far |
-| /v1/chat/completions | openai.ChatCompletion.create() | depending on the model, this may add leading linefeeds |
-| /v1/edits | openai.Edit.create() | Assumes an instruction following model, but may work with others |
+| /v1/text_completion | openai.Completion.create() | the most tested, only supports single string input so far, variable quality based on the model |
+| /v1/chat/completions | openai.ChatCompletion.create() | Quality depends a lot on the model |
+| /v1/edits | openai.Edit.create() | Works the best of all, perfect for instruction following models |
 | /v1/images/generations | openai.Image.create() | Bare bones, no model configuration, response_format='b64_json' only. |
 | /v1/embeddings | openai.Embedding.create() | Using Sentence Transformer, dimensions are different and may never be directly comparable to openai embeddings. |
 | /v1/moderations | openai.Moderation.create() | does nothing. successfully. |
-| /v1/engines/\*/... completions, embeddings, generate | python-openai v0.25 and earlier | Legacy engines endpoints |
-| /v1/images/edits | openai.Image.create_edit() | not supported |
-| /v1/images/variations | openai.Image.create_variation() | not supported |
-| /v1/audio/\* | openai.Audio.\* | not supported |
-| /v1/files\* | openai.Files.\* | not supported |
-| /v1/fine-tunes\* | openai.FineTune.\* | not supported |
+| /v1/completions | openai api completions.create | Legacy endpoint (v0.25) |
+| /v1/engines/*/embeddings | python-openai v0.25 | Legacy endpoint |
+| /v1/engines/*/generate | openai engines.generate | Legacy endpoint |
+| /v1/engines | openai engines.list | Legacy Lists models |
+| /v1/engines/{model_name} | openai engines.get -i {model_name} | You can use this legacy endpoint to load models via the api |
+| /v1/images/edits | openai.Image.create_edit() | not yet supported |
+| /v1/images/variations | openai.Image.create_variation() | not yet supported |
+| /v1/audio/\* | openai.Audio.\* | not yet supported |
+| /v1/files\* | openai.Files.\* | not yet supported |
+| /v1/fine-tunes\* | openai.FineTune.\* | not yet supported |
+| /v1/search | openai.search, engines.search | not yet supported |
 
 The model name setting is ignored in completions, but you may need to adjust the maximum token length to fit the model (ie. set to <2048 tokens instead of 4096, 8k, etc). To mitigate some of this, the max_tokens value is halved until it is less than truncation_length for the model (typically 2k).
 
@@ -110,12 +115,15 @@ Some hacky mappings:
 | frequency_penalty | encoder_repetition_penalty | this seems to operate with a different scale and defaults, I tried to scale it based on range & defaults, but the results are terrible. hardcoded to 1.18 until there is a better way |
 | presence_penalty | repetition_penalty | same issues as frequency_penalty, hardcoded to 1.0 |
 | best_of | top_k | |
-| stop | custom_stopping_strings | this is also stuffed with ['\nsystem:', '\nuser:', '\nhuman:', '\nassistant:', '\n###', ] for good measure. |
+| stop | custom_stopping_strings | this is also stuffed with ['\n###', "\n{user prompt}", "{user prompt}" ] for good measure. |
 | n | 1 | hardcoded, it may be worth implementing this but I'm not sure how yet |
 | 1.0 | typical_p | hardcoded |
 | 1 | num_beams | hardcoded |
-| max_tokens | max_new_tokens | max_tokens is scaled down by powers of 2 until it's smaller than truncation length. |
+| max_tokens | max_new_tokens | For Text Completions max_tokens is set smaller than the truncation_length minus the prompt length. This can cause no input to be generated if the prompt is too large. For ChatCompletions, the older chat messages may be dropped to fit the max_new_tokens requested |
 | logprobs | - | ignored |
+| logit_bias | - | ignored |
+| messages.name | - | ignored |
+| user | - | ignored |
 
 defaults are mostly from openai, so are different. I use the openai defaults where I can and try to scale them to the webui defaults with the same intent.
 
@@ -129,13 +137,14 @@ Everything needs OPENAI_API_KEY=dummy set.
 
 | Compatibility | Application/Library | url | notes / setting |
 | --- | --- | --- | --- |
-| ✅❌ | openai-python | https://github.com/openai/openai-python | only the endpoints from above are working. OPENAI_API_BASE=http://127.0.0.1:5001/v1 |
+| ✅❌ | openai-python (v0.25+) | https://github.com/openai/openai-python | only the endpoints from above are working. OPENAI_API_BASE=http://127.0.0.1:5001/v1 |
 | ✅❌ | openai-node | https://github.com/openai/openai-node | only the endpoints from above are working. environment variables don't work by default, but can be configured (see above) |
 | ✅❌ | chatgpt-api | https://github.com/transitive-bullshit/chatgpt-api | only the endpoints from above are working. environment variables don't work by default, but can be configured (see above) |
 | ✅ | anse | https://github.com/anse-app/anse | API Key & URL configurable in UI |
 | ✅ | shell_gpt | https://github.com/TheR1D/shell_gpt | OPENAI_API_HOST=http://127.0.0.1:5001 |
 | ✅ | gpt-shell | https://github.com/jla/gpt-shell | OPENAI_API_BASE=http://127.0.0.1:5001/v1 |
 | ✅ | gpt-discord-bot | https://github.com/openai/gpt-discord-bot | OPENAI_API_BASE=http://127.0.0.1:5001/v1 |
+| ✅ | OpenAI for Notepad++| https://github.com/Krazal/nppopenai | api_url=http://127.0.0.1:5001 in the config file |
 | ✅❌ | langchain | https://github.com/hwchase17/langchain | OPENAI_API_BASE=http://127.0.0.1:5001/v1 even with a good 30B-4bit model the result is poor so far. It assumes zero shot python/json coding. Some model tailored prompt formatting improves results greatly. |
 | ✅❌ | Auto-GPT | https://github.com/Significant-Gravitas/Auto-GPT | OPENAI_API_BASE=http://127.0.0.1:5001/v1 Same issues as langchain. Also assumes a 4k+ context |
 | ✅❌ | babyagi | https://github.com/yoheinakajima/babyagi | OPENAI_API_BASE=http://127.0.0.1:5001/v1 |
@@ -147,5 +156,7 @@ Everything needs OPENAI_API_KEY=dummy set.
 * do something about rate limiting or locking requests for completions, most systems will only be able handle a single request at a time before OOM
 
 ## Bugs? Feedback? Comments? Pull requests?
+
+To enable debugging and get copious output you can set the OPENEDAI_DEBUG=1 environment variable.
 
 Are all appreciated, please @matatonic and I'll try to get back to you as soon as possible.

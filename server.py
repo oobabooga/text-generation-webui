@@ -1,26 +1,15 @@
 import os
 import warnings
 
-import requests
-
 from modules.logging_colors import logger
+from modules.block_requests import RequestBlocker
 
 os.environ['GRADIO_ANALYTICS_ENABLED'] = 'False'
 os.environ['BITSANDBYTES_NOWELCOME'] = '1'
 warnings.filterwarnings('ignore', category=UserWarning, message='TypedStorage is deprecated')
 
-
-# This is a hack to prevent Gradio from phoning home when it gets imported
-def my_get(url, **kwargs):
-    logger.info('Gradio HTTP request redirected to localhost :)')
-    kwargs.setdefault('allow_redirects', True)
-    return requests.api.request('get', 'http://127.0.0.1/', **kwargs)
-
-
-original_get = requests.get
-requests.get = my_get
-import gradio as gr
-requests.get = original_get
+with RequestBlocker():
+    import gradio as gr
 
 import matplotlib
 matplotlib.use('Agg')  # This fixes LaTeX rendering on some systems
@@ -94,7 +83,11 @@ def load_prompt(fname):
         return ''
     elif fname.startswith('Instruct-'):
         fname = re.sub('^Instruct-', '', fname)
-        with open(Path(f'characters/instruction-following/{fname}.yaml'), 'r', encoding='utf-8') as f:
+        file_path = Path(f'characters/instruction-following/{fname}.yaml')
+        if not file_path.exists():
+            return ''
+
+        with open(file_path, 'r', encoding='utf-8') as f:
             data = yaml.safe_load(f)
             output = ''
             if 'context' in data:
@@ -109,7 +102,11 @@ def load_prompt(fname):
             output += utils.replace_all(data['turn_template'].split('<|bot-message|>')[0], replacements)
             return output.rstrip(' ')
     else:
-        with open(Path(f'prompts/{fname}.txt'), 'r', encoding='utf-8') as f:
+        file_path = Path(f'prompts/{fname}.txt')
+        if not file_path.exists():
+            return ''
+
+        with open(file_path, 'r', encoding='utf-8') as f:
             text = f.read()
             if text[-1] == '\n':
                 text = text[:-1]
@@ -228,7 +225,7 @@ def create_model_menus():
                         shared.gradio['bf16'] = gr.Checkbox(label="bf16", value=shared.args.bf16)
                         shared.gradio['auto_devices'] = gr.Checkbox(label="auto-devices", value=shared.args.auto_devices)
                         shared.gradio['disk'] = gr.Checkbox(label="disk", value=shared.args.disk)
-                        shared.gradio['load_in_4bit'] = gr.Checkbox(label="load-in-4bit")
+                        shared.gradio['load_in_4bit'] = gr.Checkbox(label="load-in-4bit", value=shared.args.load_in_4bit)
                         shared.gradio['use_double_quant'] = gr.Checkbox(label="use_double_quant", value=shared.args.use_double_quant)
                         shared.gradio['no_mmap'] = gr.Checkbox(label="no-mmap", value=shared.args.no_mmap)
                         shared.gradio['mlock'] = gr.Checkbox(label="mlock", value=shared.args.mlock)
@@ -700,6 +697,7 @@ def create_interface():
 
             with gr.Row():
                 shared.gradio['interface_modes_menu'] = gr.Dropdown(choices=modes, value=current_mode, label="Mode")
+                shared.gradio['reset_interface'] = gr.Button("Apply and restart the interface", elem_classes="small-button")
                 shared.gradio['toggle_dark_mode'] = gr.Button('Toggle dark/light mode', elem_classes="small-button")
 
             with gr.Row():
@@ -709,7 +707,6 @@ def create_interface():
                 with gr.Column():
                     shared.gradio['bool_menu'] = gr.CheckboxGroup(choices=bool_list, value=bool_active, label="Boolean command-line flags", elem_classes='checkboxgroup-table')
 
-            shared.gradio['reset_interface'] = gr.Button("Apply and restart the interface")
             with gr.Row():
                 extension_name = gr.Textbox(lines=1, label='Install or update an extension', info='Enter the GitHub URL below. For a list of extensions, see: https://github.com/oobabooga/text-generation-webui-extensions ⚠️  WARNING ⚠️ : extensions can execute arbitrary code. Make sure to inspect their source code before activating them.')
                 extension_install = gr.Button('Install or update', elem_classes="small-button")
