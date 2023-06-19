@@ -3,11 +3,12 @@ from pathlib import Path
 
 from modules import shared
 from modules.logging_colors import logger
+from modules.relative_imports import RelativeImport
 
-sys.path.insert(0, str(Path("repositories/exllama")))
-from repositories.exllama.generator import ExLlamaGenerator
-from repositories.exllama.model import ExLlama, ExLlamaCache, ExLlamaConfig
-from repositories.exllama.tokenizer import ExLlamaTokenizer
+with RelativeImport("repositories/exllama"):
+    from generator import ExLlamaGenerator
+    from model import ExLlama, ExLlamaCache, ExLlamaConfig
+    from tokenizer import ExLlamaTokenizer
 
 
 class ExllamaModel:
