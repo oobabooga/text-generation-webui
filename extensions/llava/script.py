@@ -1,5 +1,4 @@
 import gradio as gr
-
 from modules.logging_colors import logger
 
 

@@ -3,7 +3,6 @@ import textwrap
 
 import gradio as gr
 from bs4 import BeautifulSoup
-
 from modules import chat, shared
 from modules.logging_colors import logger
 

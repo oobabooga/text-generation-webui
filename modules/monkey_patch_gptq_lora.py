@@ -7,10 +7,14 @@ sys.path.insert(0, str(Path("repositories/alpaca_lora_4bit")))
 
 import autograd_4bit
 from amp_wrapper import AMPWrapper
-from autograd_4bit import (Autograd4bitQuantLinear,
-                           load_llama_model_4bit_low_ram)
+from autograd_4bit import (
+    Autograd4bitQuantLinear,
+    load_llama_model_4bit_low_ram
+)
 from monkeypatch.peft_tuners_lora_monkey_patch import (
-    Linear4bitLt, replace_peft_model_with_gptq_lora_model)
+    Linear4bitLt,
+    replace_peft_model_with_gptq_lora_model
+)
 
 from modules import shared
 from modules.GPTQ_loader import find_quantized_model_file

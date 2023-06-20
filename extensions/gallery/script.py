@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import gradio as gr
-
 from modules.html_generator import get_image_cache
 from modules.shared import gradio
 

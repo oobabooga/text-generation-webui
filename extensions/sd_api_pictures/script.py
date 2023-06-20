@@ -6,12 +6,11 @@ from datetime import date
 from pathlib import Path
 
 import gradio as gr
+import modules.shared as shared
 import requests
 import torch
-from PIL import Image
-
-import modules.shared as shared
 from modules.models import reload_model, unload_model
+from PIL import Image
 
 torch._C._jit_set_profiling_mode(False)
 

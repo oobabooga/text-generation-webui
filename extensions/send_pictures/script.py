@@ -3,10 +3,9 @@ from io import BytesIO
 
 import gradio as gr
 import torch
-from transformers import BlipForConditionalGeneration, BlipProcessor
-
 from modules import chat, shared
 from modules.ui import gather_interface_values
+from transformers import BlipForConditionalGeneration, BlipProcessor
 
 # If 'state' is True, will hijack the next chat generation with
 # custom input text given by 'value' in the format [text, visible_text]

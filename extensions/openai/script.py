@@ -2,18 +2,20 @@ import base64
 import json
 import os
 import time
-import requests
-import yaml
-import numpy as np
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
-from modules.utils import get_available_models
-from modules.models import load_model, unload_model
-from modules.models_settings import (get_model_settings_from_yamls,
-                                     update_model_parameters)
 
+import numpy as np
+import requests
+import yaml
 from modules import shared
+from modules.models import load_model, unload_model
+from modules.models_settings import (
+    get_model_settings_from_yamls,
+    update_model_parameters
+)
 from modules.text_generation import encode, generate_reply
+from modules.utils import get_available_models
 
 params = {
     'port': int(os.environ.get('OPENEDAI_PORT')) if 'OPENEDAI_PORT' in os.environ else 5001,

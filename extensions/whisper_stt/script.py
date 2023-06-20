@@ -1,6 +1,5 @@
 import gradio as gr
 import speech_recognition as sr
-
 from modules import shared
 
 input_hijack = {

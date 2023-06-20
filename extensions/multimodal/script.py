@@ -6,10 +6,10 @@ from io import BytesIO
 
 import gradio as gr
 import torch
-
-from extensions.multimodal.multimodal_embedder import MultimodalEmbedder
 from modules import shared
 from modules.logging_colors import logger
+
+from extensions.multimodal.multimodal_embedder import MultimodalEmbedder
 
 params = {
     "add_all_images_to_prompt": False,

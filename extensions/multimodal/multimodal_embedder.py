@@ -5,12 +5,12 @@ from io import BytesIO
 from typing import Any, List, Optional
 
 import torch
-from PIL import Image
-
-from extensions.multimodal.pipeline_loader import load_pipeline
 from modules import shared
 from modules.logging_colors import logger
 from modules.text_generation import encode, get_max_prompt_length
+from PIL import Image
+
+from extensions.multimodal.pipeline_loader import load_pipeline
 
 
 @dataclass

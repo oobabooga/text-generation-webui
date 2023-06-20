@@ -9,8 +9,11 @@ import torch
 import transformers
 
 import modules.shared as shared
-from modules.callbacks import (Iteratorize, Stream,
-                               _SentinelTokenStoppingCriteria)
+from modules.callbacks import (
+    Iteratorize,
+    Stream,
+    _SentinelTokenStoppingCriteria
+)
 from modules.extensions import apply_extensions
 from modules.html_generator import generate_4chan_html, generate_basic_html
 from modules.logging_colors import logger
