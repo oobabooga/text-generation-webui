@@ -1,9 +1,5 @@
 # This is FP fork of Text generation web UI
-This forks adds fixes and enhancements to the original repo and it's closely following the main branch of Web UI
-
-**Help find the best parameters for text generation!**
-
-https://oobabooga.github.io/arena/preliminary-results.html
+This forks adds fixes and enhancements to the original repo and it's closely following the main branch of Text generation Web UI
 
 # Text generation web UI
 
