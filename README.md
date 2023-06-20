@@ -1,5 +1,8 @@
 # This is FP fork of Text generation web UI
-This forks adds fixes and enhancements to the original repo and it's closely following the main branch of Text generation Web UI
+This forks adds my personal fixes and enhancements to the original repo and it's closely following the main branch of Text generation Web UI
+
+![image](https://github.com/FartyPants/text-generation-webui/assets/23346289/72e11406-e87d-4b79-8376-a846130312b3)
+
 
 # Text generation web UI
 
