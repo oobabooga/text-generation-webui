@@ -113,6 +113,21 @@ def update_dependencies():
     os.chdir("text-generation-webui")
     run_cmd("git pull", assert_success=True, environment=True)
 
+    # Workaround for git+ packages not updating properly
+    with open("requirements.txt") as f:
+        requirements = f.read().splitlines()
+        git_requirements = [req for req in requirements if req.startswith("git+")]
+    
+    # Loop through each "git+" requirement and uninstall it
+    for req in git_requirements:
+        # Extract the package name from the "git+" requirement
+        url = req.replace("git+", "")
+        package_name = url.split("/")[-1].split("@")[0]
+    
+        # Uninstall the package using pip
+        run_cmd("python -m pip uninstall " + package_name, environment=True)
+        print(f"Uninstalled {package_name}")
+
     # Installs/Updates dependencies from all requirements.txt
     run_cmd("python -m pip install -r requirements.txt --upgrade", assert_success=True, environment=True)
     extensions = next(os.walk("extensions"))[1]
