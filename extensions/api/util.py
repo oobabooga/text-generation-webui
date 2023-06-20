@@ -1,6 +1,4 @@
 import time
-import json
-import ast
 import traceback
 from threading import Thread
 from typing import Callable, Optional
@@ -39,16 +37,9 @@ def build_parameters(body, chat=False):
         'truncation_length': int(body.get('truncation_length', body.get('max_context_length', 2048))),
         'ban_eos_token': bool(body.get('ban_eos_token', False)),
         'skip_special_tokens': bool(body.get('skip_special_tokens', True)),
-        'custom_stopping_strings': body.get('custom_stopping_strings', ""),
+        'custom_stopping_strings': '',  # leave this blank
         'stopping_strings': body.get('stopping_strings', []),
     }
-
-    # generate_chat_reply doesn't accept stopping_strings, so need to combine to custom_stopping_strings
-    if chat:
-        custom_stopping_strings = body.get('custom_stopping_strings', "")
-        stopping_strings = body.get('stopping_strings', [])
-        all_stopping_strings = ast.literal_eval(f"[{custom_stopping_strings}]") + stopping_strings
-        generate_params['custom_stopping_strings'] = json.dumps(all_stopping_strings)[1:-1]
 
     preset_name = body.get('preset', 'None')
     if preset_name not in ['None', None, '']:

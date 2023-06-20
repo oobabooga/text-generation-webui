@@ -145,7 +145,8 @@ def get_stopping_strings(state):
         ]
 
     stopping_strings += ast.literal_eval(f"[{state['custom_stopping_strings']}]")
-    return stopping_strings
+    stopping_strings += state.get('stopping_strings', [])
+    return list(set(stopping_strings))
 
 
 def extract_message_from_reply(reply, state):
