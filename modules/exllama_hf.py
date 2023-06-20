@@ -1,17 +1,24 @@
+import os
 import sys
 from pathlib import Path
+from typing import *
+
+import torch
+from transformers import (
+    GenerationConfig,
+    LlamaTokenizer,
+    PretrainedConfig,
+    PreTrainedModel
+)
+from transformers.modeling_outputs import CausalLMOutputWithPast
 
 from modules import shared
 from modules.logging_colors import logger
 from modules.relative_imports import RelativeImport
-from transformers import PreTrainedModel, PretrainedConfig, GenerationConfig, LlamaTokenizer
-from transformers.modeling_outputs import CausalLMOutputWithPast
-import torch
-from typing import *
-import os
 
 with RelativeImport("repositories/exllama"):
     from model import ExLlama, ExLlamaCache, ExLlamaConfig
+
 
 class ExllamaHF(PreTrainedModel):
     def __init__(self, config: ExLlamaConfig):
