@@ -1,7 +1,6 @@
 import argparse
 import glob
 import os
-import shutil
 import site
 import subprocess
 import sys
@@ -72,6 +71,7 @@ def install_dependencies():
     if sys.platform.startswith("win"):
         # punctuation contains:  !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~
         from string import punctuation
+
         # Allow some characters:  _-:\/.'"
         special_characters = punctuation.translate({ord(char): None for char in '_-:\\/.\'"'})
         if any(char in script_dir for char in special_characters):
@@ -117,13 +117,13 @@ def update_dependencies():
     with open("requirements.txt") as f:
         requirements = f.read().splitlines()
         git_requirements = [req for req in requirements if req.startswith("git+")]
-    
+
     # Loop through each "git+" requirement and uninstall it
     for req in git_requirements:
         # Extract the package name from the "git+" requirement
         url = req.replace("git+", "")
         package_name = url.split("/")[-1].split("@")[0]
-    
+
         # Uninstall the package using pip
         run_cmd("python -m pip uninstall " + package_name, environment=True)
         print(f"Uninstalled {package_name}")
@@ -159,7 +159,7 @@ def update_dependencies():
     # Parse output of 'pip show torch' to determine torch version
     torver_cmd = run_cmd("python -m pip show torch", assert_success=True, environment=True, capture_output=True)
     torver = [v.split()[1] for v in torver_cmd.stdout.decode('utf-8').splitlines() if 'Version:' in v][0]
-    
+
     # Check for '+cu' in version string to determine if torch uses CUDA or not   check for pytorch-cuda as well for backwards compatibility
     if '+cu' not in torver and run_cmd("conda list -f pytorch-cuda | grep pytorch-cuda", environment=True, capture_output=True).returncode == 1:
         return
@@ -183,7 +183,7 @@ def update_dependencies():
         os.mkdir("repositories")
 
     os.chdir("repositories")
-        
+
     # Install or update exllama as needed
     if not os.path.exists("exllama/"):
         run_cmd("git clone https://github.com/turboderp/exllama.git", environment=True)
@@ -191,11 +191,11 @@ def update_dependencies():
         os.chdir("exllama")
         run_cmd("git pull", environment=True)
         os.chdir("..")
-    
+
     # Fix build issue with exllama in Linux/WSL
     if sys.platform.startswith("linux") and not os.path.exists(f"{conda_env_path}/lib64"):
         run_cmd(f'ln -s "{conda_env_path}/lib" "{conda_env_path}/lib64"', environment=True)
-    
+
     # Install GPTQ-for-LLaMa which enables 4bit CUDA quantization
     if not os.path.exists("GPTQ-for-LLaMa/"):
         run_cmd("git clone https://github.com/oobabooga/GPTQ-for-LLaMa.git -b cuda", assert_success=True, environment=True)
