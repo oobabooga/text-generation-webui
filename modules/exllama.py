@@ -18,7 +18,7 @@ except:
             from model import ExLlama, ExLlamaCache, ExLlamaConfig
             from tokenizer import ExLlamaTokenizer
     except:
-        logger.error("Could not find the file repositories/exllama/lora.py. Make sure that exllama is cloned inside repositories/ and is up to date.")
+        logger.error("Could not find repositories/exllama/. Make sure that exllama is cloned inside repositories/ and is up to date.")
         raise
 
 
