@@ -469,6 +469,10 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     # == Main run and monitor loop ==
     logger.info("Starting training...")
     yield "Starting..."
+  
+    if stop_at_loss>0:
+        print(f"Monitoring loss (Auto-Stop below: {stop_at_loss})")
+        
     if WANT_INTERRUPT:
         yield "Interrupted before start."
         return
