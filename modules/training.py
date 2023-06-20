@@ -441,7 +441,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             learning_rate=actual_lr,
             fp16=False if shared.args.cpu else True,
             optim=optimizer,
-            logging_steps= 1 if stop_at_loss > 0 else 5,
+            logging_steps= 2 if stop_at_loss > 0 else 5,
             evaluation_strategy="steps" if eval_data is not None else "no",
             eval_steps=math.ceil(eval_steps / gradient_accumulation_steps) if eval_data is not None else None,
             save_strategy="steps" if eval_data is not None else "no",
