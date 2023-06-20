@@ -30,12 +30,14 @@ try:
     MODEL_CLASSES = {v: k for k, v in MODEL_FOR_CAUSAL_LM_MAPPING_NAMES}
 except:
     standard_modules = ["q_proj", "v_proj"]
-    model_to_lora_modules = {"llama": standard_modules, "opt": standard_modules, "gptj": standard_modules, "gpt_neox": ["query_key_value"]}
+    model_to_lora_modules = {"llama": standard_modules, "opt": standard_modules, "gptj": standard_modules, "gpt_neox": ["query_key_value"], "rw":["query_key_value"]}
     MODEL_CLASSES = {
         "LlamaForCausalLM": "llama",
         "OPTForCausalLM": "opt",
         "GPTJForCausalLM": "gptj",
-        "GPTNeoXForCausalLM": "gpt_neox"
+        "GPTNeoXForCausalLM": "gpt_neox",
+        "RWForCausalLM": "rw"
+        
     }
 
 train_log = {}
@@ -421,13 +423,6 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         
         def on_log(self, args: transformers.TrainingArguments, state: transformers.TrainerState, control: transformers.TrainerControl, logs, **kwargs):
             train_log.update(logs)
-            if 'loss' in logs:
-                loss = float(logs['loss'])
-                if loss<=stop_at_loss:
-                    control.should_epoch_stop = True
-                    control.should_training_stop = True
-                    print(f"\033[1;31;1mStop Loss {stop_at_loss} reached.\033[0;37;0m")                 
-                    
 
     trainer = transformers.Trainer(
         model=lora_model,
