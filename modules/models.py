@@ -272,10 +272,13 @@ def AutoGPTQ_loader(model_name):
 
 
 def ExLlama_loader(model_name):
-    from modules.exllama import ExllamaModel
+    # from modules.exllama import ExllamaModel
 
-    model, tokenizer = ExllamaModel.from_pretrained(model_name)
-    return model, tokenizer
+    # model, tokenizer = ExllamaModel.from_pretrained(model_name)
+    # return model, tokenizer
+    from modules.exllama_hf import ExllamaHF
+
+    return ExllamaHF.from_pretrained(model_name)
 
 
 def get_max_memory_dict():
