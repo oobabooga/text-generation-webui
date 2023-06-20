@@ -16,25 +16,6 @@ from modules import shared
 from modules.callbacks import Iteratorize
 from modules.logging_colors import logger
 
-def check_stop_by_reply(reply, state, stopping_strings):
-    # custom_stopping_strings
-    custom_stopping_strings = state.get('custom_stopping_strings', "")
-    all_stopping_strings = ast.literal_eval(f"[{custom_stopping_strings}]")
-
-    # stopping_strings
-    if stopping_strings is not None:
-        all_stopping_strings += stopping_strings
-
-    # stop_by_newline
-    if state.get('stop_by_newline', False):
-        all_stopping_strings += ["\n"]
-
-    for string in all_stopping_strings:
-        if string in reply:
-            return True
-
-    return False
-
 def ban_eos_logits_processor(eos_token, input_ids, logits):
     logits[eos_token] = -float('inf')
     return logits
