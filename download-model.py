@@ -208,7 +208,9 @@ class ModelDownloader:
     def download_model_files(self, model, branch, links, sha256, output_folder, start_from_scratch=False, threads=1):
         # Creating the folder and writing the metadata
         output_folder.mkdir(parents=True, exist_ok=True)
-        metadata = f'url: https://huggingface.co/{model}\nbranch: {branch}\ndownload date: {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n'
+        metadata = f'url: https://huggingface.co/{model}\n' \
+                    'branch: {branch}\n' \
+                    'download date: {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n'
         sha256_str ='\n'.join([f'    {item[1]} {item[0]}' for item in sha256])
         if sha256_str:
             metadata += f'sha256sum:\n{sha256_str}'
