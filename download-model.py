@@ -207,18 +207,14 @@ class ModelDownloader:
 
     def download_model_files(self, model, branch, links, sha256, output_folder, start_from_scratch=False, threads=1):
         # Creating the folder and writing the metadata
-        if not output_folder.exists():
-            output_folder.mkdir(parents=True, exist_ok=True)
-        with open(output_folder / 'huggingface-metadata.txt', 'w') as f:
-            f.write(f'url: https://huggingface.co/{model}\n')
-            f.write(f'branch: {branch}\n')
-            f.write(f'download date: {str(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))}\n')
-            sha256_str = ''
-            for i in range(len(sha256)):
-                sha256_str += f'    {sha256[i][1]} {sha256[i][0]}\n'
-            if sha256_str != '':
-                f.write(f'sha256sum:\n{sha256_str}')
-
+        output_folder.mkdir(parents=True, exist_ok=True)
+        sha256_str ='\n'.join([f'    {item[1]} {item[0]}' for item in sha256])
+        metadata = f'url: https://huggingface.co/{model}\nbranch: {branch}\ndownload date: {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n'
+        if sha256_str:
+            metadata += f'sha256sum:\n{sha256_str}'
+        metadata += '\n'
+        (output_folder / 'huggingface-metadata.txt').write_text(metadata)
+        
         # Downloading the files
         print(f"Downloading the model to {output_folder}")
         self.start_download_threads(links, output_folder, start_from_scratch=start_from_scratch, threads=threads)
