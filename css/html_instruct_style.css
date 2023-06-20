@@ -17,6 +17,10 @@
     margin-bottom: 1.25em !important;
 }
 
+.message-body ul, .message-body ol {
+    margin-bottom: 1.25em !important;
+}
+
 .dark .message-body p em {
     color: rgb(198, 202, 214) !important;
 }
