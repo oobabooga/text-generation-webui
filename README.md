@@ -1,5 +1,5 @@
 # This is FP fork of Text generation web UI
-This forks adds fixes and enhancements to the original repo and it's closely following the main branch of Text generation Web UI
+This forks adds my personal fixes and enhancements to the original repo and it's closely following the main branch of Text generation Web UI
 
 # Text generation web UI
 
