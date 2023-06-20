@@ -16,7 +16,7 @@ esac
 INSTALL_DIR="$(pwd)/installer_files"
 CONDA_ROOT_PREFIX="$(pwd)/installer_files/conda"
 INSTALL_ENV_DIR="$(pwd)/installer_files/env"
-MINICONDA_DOWNLOAD_URL="https://repo.anaconda.com/miniconda/Miniconda3-py310_23.1.0-1-Linux-${OS_ARCH}.sh"
+MINICONDA_DOWNLOAD_URL="https://repo.anaconda.com/miniconda/Miniconda3-py310_23.3.1-0-Linux-${OS_ARCH}.sh"
 conda_exists="F"
 
 # figure out whether git and conda needs to be installed

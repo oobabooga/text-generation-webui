@@ -22,7 +22,7 @@ conda deactivate 2> /dev/null
 INSTALL_DIR="$HOME/text-gen-install"
 CONDA_ROOT_PREFIX="$INSTALL_DIR/installer_files/conda"
 INSTALL_ENV_DIR="$INSTALL_DIR/installer_files/env"
-MINICONDA_DOWNLOAD_URL="https://repo.anaconda.com/miniconda/Miniconda3-py310_23.1.0-1-Linux-x86_64.sh"
+MINICONDA_DOWNLOAD_URL="https://repo.anaconda.com/miniconda/Miniconda3-py310_23.3.1-0-Linux-x86_64.sh"
 conda_exists="F"
 
 # environment isolation

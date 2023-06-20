@@ -92,21 +92,18 @@ def install_dependencies():
 
     # Install the version of PyTorch needed
     if gpuchoice == "a":
-        run_cmd("conda install -y -k pytorch[version=2,build=py3.10_cuda11.7*] torchvision torchaudio pytorch-cuda=11.7 cuda-toolkit ninja git -c pytorch -c nvidia/label/cuda-11.7.0 -c nvidia", assert_success=True, environment=True)
+        run_cmd('conda install -y -k cuda ninja git -c nvidia/label/cuda-11.7.0 -c nvidia && python -m pip install torch==2.0.1+cu117 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117', assert_success=True, environment=True)
     elif gpuchoice == "b":
         print("AMD GPUs are not supported. Exiting...")
         sys.exit()
     elif gpuchoice == "c" or gpuchoice == "d":
-        run_cmd("conda install -y -k pytorch torchvision torchaudio cpuonly git -c pytorch", assert_success=True, environment=True)
+        run_cmd("conda install -y -k ninja git && python -m pip install torch torchvision torchaudio", assert_success=True, environment=True)
     else:
         print("Invalid choice. Exiting...")
         sys.exit()
 
     # Clone webui to our computer
     run_cmd("git clone https://github.com/oobabooga/text-generation-webui.git", assert_success=True, environment=True)
-    # if sys.platform.startswith("win"):
-    #     # Fix a bitsandbytes compatibility issue with Windows
-    #     run_cmd("python -m pip install https://github.com/jllllll/bitsandbytes-windows-webui/raw/main/bitsandbytes-0.38.1-py3-none-any.whl", assert_success=True, environment=True)
 
     # Install the webui dependencies
     update_dependencies()
@@ -144,9 +141,12 @@ def update_dependencies():
         print_big_message(message)
 
     # The following dependencies are for CUDA, not CPU
-    # Check if the package cpuonly exists to determine if torch uses CUDA or not
-    cpuonly_exist = run_cmd("conda list cpuonly | grep cpuonly", environment=True, capture_output=True).returncode == 0
-    if cpuonly_exist:
+    # Parse output of 'pip show torch' to determine torch version
+    torver_cmd = run_cmd("python -m pip show torch", assert_success=True, environment=True, capture_output=True)
+    torver = [v.split()[1] for v in torver_cmd.stdout.decode('utf-8').splitlines() if 'Version:' in v][0]
+    
+    # Check for '+cu' in version string to determine if torch uses CUDA or not   check for pytorch-cuda as well for backwards compatibility
+    if '+cu' not in torver and run_cmd("conda list -f pytorch-cuda | grep pytorch-cuda", environment=True, capture_output=True).returncode == 1:
         return
 
     # Finds the path to your dependencies
@@ -161,8 +161,8 @@ def update_dependencies():
         sys.exit()
 
     # Fix a bitsandbytes compatibility issue with Linux
-    if sys.platform.startswith("linux"):
-        shutil.copy(os.path.join(site_packages_path, "bitsandbytes", "libbitsandbytes_cuda117.so"), os.path.join(site_packages_path, "bitsandbytes", "libbitsandbytes_cpu.so"))
+    # if sys.platform.startswith("linux"):
+    #     shutil.copy(os.path.join(site_packages_path, "bitsandbytes", "libbitsandbytes_cuda117.so"), os.path.join(site_packages_path, "bitsandbytes", "libbitsandbytes_cpu.so"))
 
     if not os.path.exists("repositories/"):
         os.mkdir("repositories")
@@ -176,6 +176,10 @@ def update_dependencies():
         os.chdir("exllama")
         run_cmd("git pull", environment=True)
         os.chdir("..")
+    
+    # Fix build issue with exllama in Linux/WSL
+    if sys.platform.startswith("linux") and not os.path.exists(f"{conda_env_path}/lib64"):
+        run_cmd(f'ln -s "{conda_env_path}/lib" "{conda_env_path}/lib64"', environment=True)
     
     # Install GPTQ-for-LLaMa which enables 4bit CUDA quantization
     if not os.path.exists("GPTQ-for-LLaMa/"):
