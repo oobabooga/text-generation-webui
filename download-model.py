@@ -178,6 +178,8 @@ class ModelDownloader:
     def get_single_file(self, url, output_folder, start_from_scratch=False):
         filename = Path(url.rsplit('/', 1)[1])
         output_path = output_folder / filename
+        headers = {}
+        mode = 'wb'
         if output_path.exists() and not start_from_scratch:
             # Check if the file has already been downloaded completely
             r = self.s.get(url, stream=True, timeout=20)
@@ -187,18 +189,20 @@ class ModelDownloader:
             # Otherwise, resume the download from where it left off
             headers = {'Range': f'bytes={output_path.stat().st_size}-'}
             mode = 'ab'
-        else:
-            headers = {}
-            mode = 'wb'
-
-        r = self.s.get(url, stream=True, headers=headers, timeout=20)
-        with open(output_path, mode) as f:
+        
+        with self.s.get(url, stream=True, headers=headers, timeout=20) as r:
+            r.raise_for_status() #Do not continue the download if the request was unsuccessful
             total_size = int(r.headers.get('content-length', 0))
-            block_size = 1024
-            with tqdm.tqdm(total=total_size, unit='iB', unit_scale=True, bar_format='{l_bar}{bar}| {n_fmt:6}/{total_fmt:6} {rate_fmt:6}') as t:
-                for data in r.iter_content(block_size):
-                    t.update(len(data))
-                    f.write(data)
+            block_size = 1024 * 1024 #1MB
+            with open(output_path, mode) as f:
+                with tqdm.tqdm(total=total_size, 
+                               unit='iB', 
+                               unit_scale=True, 
+                               bar_format='{l_bar}{bar}| {n_fmt:6}/{total_fmt:6} {rate_fmt:6}'
+                ) as t:
+                    for data in r.iter_content(block_size):
+                        t.update(len(data))
+                        f.write(data)
 
 
     def start_download_threads(self, file_list, output_folder, start_from_scratch=False, threads=1):
