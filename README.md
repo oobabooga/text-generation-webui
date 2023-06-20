@@ -1,10 +1,6 @@
 # This is FP fork of Text generation web UI
 This forks adds fixes and enhancements to the original repo and it's closely following the main branch of Web UI
 
-**Help find the best parameters for text generation!**
-
-https://oobabooga.github.io/arena/preliminary-results.html
-
 # Text generation web UI
 
 A gradio web UI for running Large Language Models like LLaMA, llama.cpp, GPT-J, Pythia, OPT, and GALACTICA.
