@@ -24,9 +24,6 @@ class ExllamaHF(PreTrainedModel):
     def __init__(self, config: ExLlamaConfig):
         super().__init__(PretrainedConfig())
         self.ex_config = config
-        if shared.args.gpu_split:
-            self.ex_config.set_auto_map(shared.args.gpu_split)
-            self.ex_config.gpu_peer_fix = True
         self.ex_model = ExLlama(self.ex_config)
         self.generation_config = GenerationConfig()
 
@@ -75,6 +72,10 @@ class ExllamaHF(PreTrainedModel):
         assert weight_path is not None, f'could not find weight in "{pretrained_model_name_or_path}"'
 
         config.model_path = str(weight_path)
+
+        if shared.args.gpu_split:
+            config.set_auto_map(shared.args.gpu_split)
+            config.gpu_peer_fix = True
         
         # This slowes down a bit but align better with autogptq generation.
         # TODO: Should give user choice to tune the exllama config
