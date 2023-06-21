@@ -1,4 +1,4 @@
 user: "<|user|>"
 bot: "<|assistant|>"
-context: "<|system|>"
+context: "<|system|>\n"
 turn_template: "<|user|> <|user-message|><|end|>\n<|bot|> <|bot-message|><|end|>\n"
