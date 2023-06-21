@@ -140,20 +140,20 @@ def update_dependencies():
             run_cmd("python -m pip install -r " + extension_req_path + " --upgrade", assert_success=True, environment=True)
 
     # Latest bitsandbytes requires minimum compute 7.0
-    nvcc_device_query = "__nvcc_device_query" if not sys.platform.startswith("win") else "__nvcc_device_query.exe"
-    min_compute = 70
-    compute_array = run_cmd(os.path.join(conda_env_path, "bin", nvcc_device_query), environment=True, capture_output=True)
-    old_bnb = "bitsandbytes==0.38.1" if not sys.platform.startswith("win") else "https://github.com/jllllll/bitsandbytes-windows-webui/raw/main/bitsandbytes-0.38.1-py3-none-any.whl"
-    if compute_array.returncode == 0 and not any(int(compute) >= min_compute for compute in compute_array.stdout.decode('utf-8').split(',')):
-        old_bnb_install = run_cmd(f"python -m pip install {old_bnb} --force-reinstall --no-deps", environment=True).returncode == 0
-        message = "\n\nWARNING: GPU with compute < 7.0 detected!\n"
-        if old_bnb_install:
-            message += "Older version of bitsandbytes has been installed to maintain compatibility.\n"
-            message += "You will be unable to use --load-in-4bit!\n"
-        else:
-            message += "You will be unable to use --load-in-8bit until you install bitsandbytes 0.38.1!\n"
+    # nvcc_device_query = "__nvcc_device_query" if not sys.platform.startswith("win") else "__nvcc_device_query.exe"
+    # min_compute = 70
+    # compute_array = run_cmd(os.path.join(conda_env_path, "bin", nvcc_device_query), environment=True, capture_output=True)
+    # old_bnb = "bitsandbytes==0.38.1" if not sys.platform.startswith("win") else "https://github.com/jllllll/bitsandbytes-windows-webui/raw/main/bitsandbytes-0.38.1-py3-none-any.whl"
+    # if compute_array.returncode == 0 and not any(int(compute) >= min_compute for compute in compute_array.stdout.decode('utf-8').split(',')):
+    #     old_bnb_install = run_cmd(f"python -m pip install {old_bnb} --force-reinstall --no-deps", environment=True).returncode == 0
+    #     message = "\n\nWARNING: GPU with compute < 7.0 detected!\n"
+    #     if old_bnb_install:
+    #         message += "Older version of bitsandbytes has been installed to maintain compatibility.\n"
+    #         message += "You will be unable to use --load-in-4bit!\n"
+    #     else:
+    #         message += "You will be unable to use --load-in-8bit until you install bitsandbytes 0.38.1!\n"
 
-        print_big_message(message)
+    #     print_big_message(message)
 
     # The following dependencies are for CUDA, not CPU
     # Parse output of 'pip show torch' to determine torch version
