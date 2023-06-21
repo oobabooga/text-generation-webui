@@ -168,6 +168,7 @@ class ModelDownloader:
         output_folder = f"{'_'.join(model.split('/')[-2:])}"
         if branch != 'main':
             output_folder += f'_{branch}'
+
         output_folder = Path(base_folder) / output_folder
         return output_folder
 
@@ -177,11 +178,13 @@ class ModelDownloader:
         headers = {}
         mode = 'wb'
         if output_path.exists() and not start_from_scratch:
+
             # Check if the file has already been downloaded completely
             r = self.s.get(url, stream=True, timeout=20)
             total_size = int(r.headers.get('content-length', 0))
             if output_path.stat().st_size >= total_size:
                 return
+
             # Otherwise, resume the download from where it left off
             headers = {'Range': f'bytes={output_path.stat().st_size}-'}
             mode = 'ab'
@@ -209,14 +212,17 @@ class ModelDownloader:
 
     def download_model_files(self, model, branch, links, sha256, output_folder, progress_bar=None, start_from_scratch=False, threads=1):
         self.progress_bar = progress_bar
+
         # Creating the folder and writing the metadata
         output_folder.mkdir(parents=True, exist_ok=True)
         metadata = f'url: https://huggingface.co/{model}\n' \
                    f'branch: {branch}\n' \
                    f'download date: {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n'
+
         sha256_str = '\n'.join([f'    {item[1]} {item[0]}' for item in sha256])
         if sha256_str:
             metadata += f'sha256sum:\n{sha256_str}'
+
         metadata += '\n'
         (output_folder / 'huggingface-metadata.txt').write_text(metadata)
 
