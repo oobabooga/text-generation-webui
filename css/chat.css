@@ -93,3 +93,22 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 .message-body :not(pre) > code {
     white-space: normal !important;
 }
+
+@media print {
+    body {
+        visibility: hidden;
+    }
+
+    .chat {
+        visibility: visible;
+        position: absolute;
+        left: 0;
+        top: 0;
+        max-width: none;
+        max-height: none;
+        width: 100%;
+        height: fit-content;
+        display: flex;
+        flex-direction: column-reverse;
+    }
+}
