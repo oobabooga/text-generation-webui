@@ -49,7 +49,8 @@ def load_model(model_name, loader=None):
         'llama.cpp': llamacpp_loader,
         'FlexGen': flexgen_loader,
         'RWKV': RWKV_loader,
-        'ExLlama': ExLlama_loader
+        'ExLlama': ExLlama_loader,
+        'ExLlama_HF': ExLlama_HF_loader
     }
 
     if loader is None:
@@ -272,10 +273,13 @@ def AutoGPTQ_loader(model_name):
 
 
 def ExLlama_loader(model_name):
-    # from modules.exllama import ExllamaModel
+    from modules.exllama import ExllamaModel
 
-    # model, tokenizer = ExllamaModel.from_pretrained(model_name)
-    # return model, tokenizer
+    model, tokenizer = ExllamaModel.from_pretrained(model_name)
+    return model, tokenizer
+
+
+def ExLlama_HF_loader(model_name):
     from modules.exllama_hf import ExllamaHF
 
     return ExllamaHF.from_pretrained(model_name)

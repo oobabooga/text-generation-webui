@@ -218,6 +218,8 @@ def fix_loader_name(name):
         return 'GPTQ-for-LLaMa'
     elif name in ['exllama', 'ex-llama', 'ex_llama', 'exlama']:
         return 'ExLlama'
+    elif name in ['exllama-hf', 'exllama_hf', 'exllama hf', 'ex-llama-hf', 'ex_llama_hf']:
+        return 'ExLlama_HF'
 
 
 if args.loader is not None:
