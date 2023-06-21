@@ -52,9 +52,9 @@ class LlamaCppModel:
             'n_gpu_layers': shared.args.n_gpu_layers
         }
 
-        self.model = Llama(**params)
+        result.model = Llama(**params)
         if cache_capacity > 0:
-            self.model.set_cache(LlamaCache(capacity_bytes=cache_capacity))
+            result.model.set_cache(LlamaCache(capacity_bytes=cache_capacity))
 
         # This is ugly, but the model and the tokenizer are the same object in this library.
         return result, result
