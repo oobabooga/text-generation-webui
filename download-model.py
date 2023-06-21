@@ -1,5 +1,5 @@
 '''
-Downloads models from Hugging Face to models/model-name.
+Downloads models from Hugging Face to models/username_modelname.
 
 Example:
 python download-model.py facebook/opt-1.3b
@@ -11,64 +11,14 @@ import base64
 import datetime
 import hashlib
 import json
-import re
 import os
+import re
 import sys
 from pathlib import Path
 
 import requests
 import tqdm
 from tqdm.contrib.concurrent import thread_map
-
-
-def select_model_from_default_options():
-    models = {
-        "OPT 6.7B": ("facebook", "opt-6.7b", "main"),
-        "OPT 2.7B": ("facebook", "opt-2.7b", "main"),
-        "OPT 1.3B": ("facebook", "opt-1.3b", "main"),
-        "OPT 350M": ("facebook", "opt-350m", "main"),
-        "GALACTICA 6.7B": ("facebook", "galactica-6.7b", "main"),
-        "GALACTICA 1.3B": ("facebook", "galactica-1.3b", "main"),
-        "GALACTICA 125M": ("facebook", "galactica-125m", "main"),
-        "Pythia-6.9B-deduped": ("EleutherAI", "pythia-6.9b-deduped", "main"),
-        "Pythia-2.8B-deduped": ("EleutherAI", "pythia-2.8b-deduped", "main"),
-        "Pythia-1.4B-deduped": ("EleutherAI", "pythia-1.4b-deduped", "main"),
-        "Pythia-410M-deduped": ("EleutherAI", "pythia-410m-deduped", "main"),
-    }
-
-    choices = {}
-    print("Select the model that you want to download:\n")
-    for i, name in enumerate(models):
-        char = chr(ord('A') + i)
-        choices[char] = name
-        print(f"{char}) {name}")
-
-    char_hugging = chr(ord('A') + len(models))
-    print(f"{char_hugging}) Manually specify a Hugging Face model")
-    char_exit = chr(ord('A') + len(models) + 1)
-    print(f"{char_exit}) Do not download a model")
-    print()
-    print("Input> ", end='')
-    choice = input()[0].strip().upper()
-    if choice == char_exit:
-        exit()
-    elif choice == char_hugging:
-        print("""\nType the name of your desired Hugging Face model in the format organization/name.
-
-Examples:
-facebook/opt-1.3b
-EleutherAI/pythia-1.4b-deduped
-""")
-
-        print("Input> ", end='')
-        model = input()
-        branch = "main"
-    else:
-        arr = models[choices[choice]]
-        model = f"{arr[0]}/{arr[1]}"
-        branch = arr[2]
-
-    return model, branch
 
 
 class ModelDownloader:
@@ -194,11 +144,7 @@ class ModelDownloader:
             total_size = int(r.headers.get('content-length', 0))
             block_size = 1024 * 1024  # 1MB
             with open(output_path, mode) as f:
-                with tqdm.tqdm(total=total_size,
-                               unit='iB',
-                               unit_scale=True,
-                               bar_format='{l_bar}{bar}| {n_fmt:6}/{total_fmt:6} {rate_fmt:6}'
-                               ) as t:
+                with tqdm.tqdm(total=total_size, unit='iB', unit_scale=True, bar_format='{l_bar}{bar}| {n_fmt:6}/{total_fmt:6} {rate_fmt:6}') as t:
                     count = 0
                     for data in r.iter_content(block_size):
                         t.update(len(data))
@@ -270,8 +216,6 @@ if __name__ == '__main__':
 
     branch = args.branch
     model = args.MODEL
-    if model is None:
-        model, branch = select_model_from_default_options()
 
     downloader = ModelDownloader()
     # Cleaning up the model/branch names
