@@ -125,7 +125,7 @@ def update_dependencies():
         package_name = url.split("/")[-1].split("@")[0]
 
         # Uninstall the package using pip
-        run_cmd("python -m pip uninstall -y" + package_name, environment=True)
+        run_cmd("python -m pip uninstall -y " + package_name, environment=True)
         print(f"Uninstalled {package_name}")
 
     # Installs/Updates dependencies from all requirements.txt
