@@ -122,7 +122,7 @@ def count_tokens(text):
         return 'Couldn\'t count the number of tokens. Is a tokenizer loaded?'
 
 
-def download_model_wrapper(repo_id):
+def download_model_wrapper(repo_id, progress=gr.Progress()):
     try:
         downloader_module = importlib.import_module("download-model")
         downloader = downloader_module.ModelDownloader()
@@ -131,6 +131,7 @@ def download_model_wrapper(repo_id):
         branch = repo_id_parts[1] if len(repo_id_parts) > 1 else "main"
         check = False
 
+        progress(0.0)
         yield ("Cleaning up the model/branch names")
         model, branch = downloader.sanitize_model_and_branch_names(model, branch)
 
@@ -141,13 +142,16 @@ def download_model_wrapper(repo_id):
         output_folder = downloader.get_output_folder(model, branch, is_lora)
 
         if check:
+            progress(0.5)
             yield ("Checking previously downloaded files")
             downloader.check_model_files(model, branch, links, sha256, output_folder)
+            progress(1.0)
         else:
             yield (f"Downloading files to {output_folder}")
-            downloader.download_model_files(model, branch, links, sha256, output_folder, threads=1)
+            downloader.download_model_files(model, branch, links, sha256, output_folder, progress_bar=progress, threads=1)
             yield ("Done!")
     except:
+        progress(1.0)
         yield traceback.format_exc()
 
 
@@ -279,7 +283,7 @@ def create_model_menus():
         save_model_settings, [shared.gradio[k] for k in ['model_menu', 'interface_state']], shared.gradio['model_status'], show_progress=False)
 
     shared.gradio['lora_menu_apply'].click(load_lora_wrapper, shared.gradio['lora_menu'], shared.gradio['model_status'], show_progress=False)
-    shared.gradio['download_model_button'].click(download_model_wrapper, shared.gradio['custom_model_menu'], shared.gradio['model_status'], show_progress=False)
+    shared.gradio['download_model_button'].click(download_model_wrapper, shared.gradio['custom_model_menu'], shared.gradio['model_status'], show_progress=True)
     shared.gradio['autoload_model'].change(lambda x: gr.update(visible=not x), shared.gradio['autoload_model'], load)
 
 
