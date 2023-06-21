@@ -7,6 +7,7 @@ https://abetlen.github.io/llama-cpp-python/
 '''
 
 import re
+import numpy as np
 from functools import partial
 
 from llama_cpp import Llama, LlamaCache, LogitsProcessorList
@@ -56,17 +57,21 @@ class LlamaCppModel:
         if cache_capacity > 0:
             result.model.set_cache(LlamaCache(capacity_bytes=cache_capacity))
 
-        # This is ugly, but the model and the tokenizer are the same object in this library.
-        return result, result
+        tokenizer = result.model.tokenizer()
+        return result, tokenizer
 
     def encode(self, string):
-        if type(string) is str:
-            string = string.encode()
-
-        return self.model.tokenize(string)
+        input_ids = self.model.tokenizer().encode(str(string))
+        input_ids = np.array(input_ids).reshape(1, len(input_ids))
+        return input_ids
+    
+    def decode(self, tokens):
+        if type(tokens[0]) is np.ndarray:
+            tokens = tokens[0]
+        return self.model.tokenizer().decode(tokens)
 
     def generate(self, prompt, state, callback=None):
-        prompt = prompt if type(prompt) is str else prompt.decode()
+        prompt = prompt if type(prompt) is str else self.decode(prompt)
         completion_chunks = self.model.create_completion(
             prompt=prompt,
             max_tokens=state['max_new_tokens'],

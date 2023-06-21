@@ -1,4 +1,5 @@
 import sys
+import numpy as np
 from pathlib import Path
 
 from modules import shared
@@ -50,7 +51,7 @@ class ExllamaModel:
         result.cache = cache
         result.tokenizer = tokenizer
         result.generator = generator
-        return result, result
+        return result, tokenizer
 
     def generate_with_streaming(self, prompt, state):
         self.generator.settings.temperature = state['temperature']
@@ -89,4 +90,11 @@ class ExllamaModel:
         return output
 
     def encode(self, string, **kwargs):
-        return self.tokenizer.encode(string)
+        input_ids = self.tokenizer.encode(str(string))
+        input_ids = np.array(input_ids.tolist())
+        return input_ids
+
+    def decode(self, tokens):
+        if type(tokens[0]) is np.ndarray:
+            tokens = tokens[0]
+            return self.tokenizer.decode(tokens)

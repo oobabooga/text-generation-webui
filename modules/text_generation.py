@@ -34,6 +34,20 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
     if shared.model.__class__.__name__ in ['LlamaCppModel', 'RWKVModel']:
         input_ids = shared.tokenizer.encode(str(prompt))
         input_ids = np.array(input_ids).reshape(1, len(input_ids))
+
+        # Handling truncation
+        if truncation_length is not None:
+            input_ids = input_ids[:, -truncation_length:]
+
+        return input_ids
+    elif shared.model.__class__.__name__ in ['ExllamaModel']:
+        input_ids = shared.tokenizer.encode(str(prompt))
+        input_ids = np.array(input_ids.tolist())
+
+        # Handling truncation
+        if truncation_length is not None:
+            input_ids = input_ids[:, -truncation_length:]
+
         return input_ids
     else:
         input_ids = shared.tokenizer.encode(str(prompt), return_tensors='pt', add_special_tokens=add_special_tokens)
@@ -47,21 +61,21 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
         if type(shared.tokenizer) is transformers.LlamaTokenizer and input_ids[0][0] == 29871:
             input_ids = input_ids[:, 1:]
 
-    # Handling truncation
-    if truncation_length is not None:
-        input_ids = input_ids[:, -truncation_length:]
+        # Handling truncation
+        if truncation_length is not None:
+            input_ids = input_ids[:, -truncation_length:]
 
-    if shared.model.__class__.__name__ in ['LlamaCppModel', 'RWKVModel', 'ExllamaModel'] or shared.args.cpu:
-        return input_ids
-    elif shared.args.flexgen:
-        return input_ids.numpy()
-    elif shared.args.deepspeed:
-        return input_ids.to(device=local_rank)
-    elif torch.has_mps:
-        device = torch.device('mps')
-        return input_ids.to(device)
-    else:
-        return input_ids.cuda()
+        if shared.args.cpu:
+            return input_ids
+        elif shared.args.flexgen:
+            return input_ids.numpy()
+        elif shared.args.deepspeed:
+            return input_ids.to(device=local_rank)
+        elif torch.has_mps:
+            device = torch.device('mps')
+            return input_ids.to(device)
+        else:
+            return input_ids.cuda()
 
 
 def get_encoded_length(prompt):
@@ -73,7 +87,12 @@ def get_encoded_length(prompt):
 
 
 def decode(output_ids, skip_special_tokens=True):
-    return shared.tokenizer.decode(output_ids, skip_special_tokens)
+    if shared.model.__class__.__name__ in ["ExllamaModel", "LlamaCppModel"]:
+        if type(output_ids[0]) is np.ndarray:
+            output_ids = output_ids[0]
+        return shared.tokenizer.decode(output_ids)
+    else:
+        return shared.tokenizer.decode(output_ids, skip_special_tokens)
 
 
 # Removes empty replies from gpt4chan outputs
