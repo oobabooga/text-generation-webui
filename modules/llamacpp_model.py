@@ -67,22 +67,6 @@ class LlamaCppModel:
 
     def generate(self, prompt, state, stopping_strings, callback=None):
         prompt = prompt if type(prompt) is str else prompt.decode()
-        completion_chunks = self.model.create_completion(
-            prompt=prompt,
-            max_tokens=state['max_new_tokens'],
-            temperature=state['temperature'],
-            top_p=state['top_p'],
-            top_k=state['top_k'],
-            repeat_penalty=state['repetition_penalty'],
-            tfs_z=state['tfs'],
-            mirostat_mode=int(state['mirostat_mode']),
-            mirostat_tau=state['mirostat_tau'],
-            mirostat_eta=state['mirostat_eta'],
-            stream=True,
-            logits_processor=LogitsProcessorList([
-                partial(ban_eos_logits_processor, self.model.token_eos()),
-            ]) if state['ban_eos_token'] else None,
-        )
 
         all_stopping_strings = []
         # custom_stopping_strings
@@ -97,40 +81,30 @@ class LlamaCppModel:
             all_stopping_strings += ['\n']
         all_stopping_strings = list(set(all_stopping_strings))
 
-        output = ''
-        tem_text = ''
+        completion_chunks = self.model.create_completion(
+            prompt=prompt,
+            max_tokens=state['max_new_tokens'],
+            temperature=state['temperature'],
+            top_p=state['top_p'],
+            top_k=state['top_k'],
+            repeat_penalty=state['repetition_penalty'],
+            tfs_z=state['tfs'],
+            mirostat_mode=int(state['mirostat_mode']),
+            mirostat_tau=state['mirostat_tau'],
+            mirostat_eta=state['mirostat_eta'],
+            stream=True,
+            stop=all_stopping_strings,
+            logits_processor=LogitsProcessorList([
+                partial(ban_eos_logits_processor, self.model.token_eos()),
+            ]) if state['ban_eos_token'] else None,
+        )
+
+        output = ""
         for completion_chunk in completion_chunks:
             text = completion_chunk['choices'][0]['text']
-
-            tem_text += text
-            yield_text = None
-            for string in all_stopping_strings:
-                if string in tem_text:
-                    # extract tem_text from beginning to the string
-                    new_yield_text = tem_text[:tem_text.find(string)]
-                    # compare with yield_text, pick the shorter one
-                    if yield_text is None or len(new_yield_text) < len(yield_text):
-                        yield_text = new_yield_text
-            if yield_text is not None:
-                # yield the text before the stopping string, then end the generation
-                output += yield_text
-                if callback:
-                    callback(yield_text)
-                break
-
-            ends_with_substring = False
-            for string in all_stopping_strings:
-                # if tem_text endswith substring, don't yield anything yet
-                for i in range(len(string)):
-                    if tem_text.endswith(string[:i+1]):
-                        ends_with_substring = True
-                        break
-            # none substring match, yield and clear the tem_text
-            if not ends_with_substring:
-                output += tem_text
-                if callback:
-                    callback(tem_text)
-                tem_text = ''
+            output += text
+            if callback:
+                callback(text)
 
             if shared.stop_everything:
                 break
