@@ -7,12 +7,18 @@ https://abetlen.github.io/llama-cpp-python/
 '''
 
 import re
+from functools import partial
 
-from llama_cpp import Llama, LlamaCache
+from llama_cpp import Llama, LlamaCache, LogitsProcessorList
 
 from modules import shared
 from modules.callbacks import Iteratorize
 from modules.logging_colors import logger
+
+
+def ban_eos_logits_processor(eos_token, input_ids, logits):
+    logits[eos_token] = -float('inf')
+    return logits
 
 
 class LlamaCppModel:
@@ -46,9 +52,9 @@ class LlamaCppModel:
             'n_gpu_layers': shared.args.n_gpu_layers
         }
 
-        self.model = Llama(**params)
+        result.model = Llama(**params)
         if cache_capacity > 0:
-            self.model.set_cache(LlamaCache(capacity_bytes=cache_capacity))
+            result.model.set_cache(LlamaCache(capacity_bytes=cache_capacity))
 
         # This is ugly, but the model and the tokenizer are the same object in this library.
         return result, result
@@ -59,19 +65,23 @@ class LlamaCppModel:
 
         return self.model.tokenize(string)
 
-    def generate(self, context="", token_count=20, temperature=1, top_p=1, top_k=50, repetition_penalty=1, mirostat_mode=0, mirostat_tau=5, mirostat_eta=0.1, callback=None):
-        context = context if type(context) is str else context.decode()
+    def generate(self, prompt, state, callback=None):
+        prompt = prompt if type(prompt) is str else prompt.decode()
         completion_chunks = self.model.create_completion(
-            prompt=context,
-            max_tokens=token_count,
-            temperature=temperature,
-            top_p=top_p,
-            top_k=top_k,
-            repeat_penalty=repetition_penalty,
-            mirostat_mode=int(mirostat_mode),
-            mirostat_tau=mirostat_tau,
-            mirostat_eta=mirostat_eta,
-            stream=True
+            prompt=prompt,
+            max_tokens=state['max_new_tokens'],
+            temperature=state['temperature'],
+            top_p=state['top_p'],
+            top_k=state['top_k'],
+            repeat_penalty=state['repetition_penalty'],
+            tfs_z=state['tfs'],
+            mirostat_mode=int(state['mirostat_mode']),
+            mirostat_tau=state['mirostat_tau'],
+            mirostat_eta=state['mirostat_eta'],
+            stream=True,
+            logits_processor=LogitsProcessorList([
+                partial(ban_eos_logits_processor, self.model.token_eos()),
+            ]) if state['ban_eos_token'] else None,
         )
 
         output = ""
@@ -83,8 +93,8 @@ class LlamaCppModel:
 
         return output
 
-    def generate_with_streaming(self, **kwargs):
-        with Iteratorize(self.generate, kwargs, callback=None) as generator:
+    def generate_with_streaming(self, *args, **kwargs):
+        with Iteratorize(self.generate, args, kwargs, callback=None) as generator:
             reply = ''
             for token in generator:
                 reply += token

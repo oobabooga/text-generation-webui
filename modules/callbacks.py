@@ -55,11 +55,12 @@ class Iteratorize:
     Adapted from: https://stackoverflow.com/a/9969000
     """
 
-    def __init__(self, func, kwargs=None, callback=None):
+    def __init__(self, func, args=None, kwargs=None, callback=None):
         self.mfunc = func
         self.c_callback = callback
         self.q = Queue()
         self.sentinel = object()
+        self.args = args or []
         self.kwargs = kwargs or {}
         self.stop_now = False
 
@@ -70,7 +71,7 @@ class Iteratorize:
 
         def gentask():
             try:
-                ret = self.mfunc(callback=_callback, **self.kwargs)
+                ret = self.mfunc(callback=_callback, *args, **self.kwargs)
             except ValueError:
                 pass
             except:
