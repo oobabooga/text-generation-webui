@@ -38,8 +38,6 @@ class ExllamaHF(PreTrainedModel):
 
     @property
     def device(self) -> torch.device:
-        # TODO: May cause problem on multi-gpu inference?
-        # TODO: Using device('cuda') doesnt fix this. I suspect the problem comes from here.
         return torch.device(0)
 
     def __call__(self, *args, **kwargs):
