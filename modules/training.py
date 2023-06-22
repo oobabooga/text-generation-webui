@@ -344,10 +344,10 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         with open(clean_path('training/formats', f'{format}.json'), 'r', encoding='utf-8-sig') as formatFile:
             format_data: dict[str, str] = json.load(formatFile)
 
-        # store turnaround with LORA directory
+        # store training prompt in LORA directory
         for _, value in format_data.items():
-            turnaround_key = f"template_{len(train_template)}"
-            train_template[turnaround_key] = value
+            prompt_key = f"template_{len(train_template)}"
+            train_template[prompt_key] = value
 
 
         def generate_prompt(data_point: dict[str, str]):
@@ -428,7 +428,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
                  # Save log
                 with open(f"{lora_file_path}/checkpoint-{tracked.current_steps}/training_log.json", 'w', encoding='utf-8') as file:
                     json.dump(train_log, file, indent=2)
-                    # == Save Turnaround instruction ==
+                # == Save training prompt ==
                 with open(f"{lora_file_path}/checkpoint-{tracked.current_steps}/training_prompt.json", 'w', encoding='utf-8') as file:
                     json.dump(train_template, file, indent=2)        
 
@@ -491,7 +491,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         vars = locals()
         json.dump({x: vars[x] for x in PARAMETERS}, file, indent=2)
 
-    # == Save Turnaround instruction ==
+    # == Save training prompt ==
     with open(f"{lora_file_path}/training_prompt.json", 'w', encoding='utf-8') as file:
         json.dump(train_template, file, indent=2)
     
