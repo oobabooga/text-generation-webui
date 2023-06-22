@@ -51,7 +51,7 @@ class ExllamaHF(PreTrainedModel):
         if cache is None:
             cache = ExLlamaCache(self.ex_model)
             self.ex_model.forward(torch.tensor([seq[:-1]], dtype=torch.long), cache, preprocess_only=True)
-        logits = self.ex_model.forward(torch.tensor([seq[-1:]], dtype=torch.long), cache).to(self.device)
+        logits = self.ex_model.forward(torch.tensor([seq[-1:]], dtype=torch.long), cache).to(kwargs['input_ids'].device)
         return CausalLMOutputWithPast(logits=logits, past_key_values=cache if use_cache else None)
 
     @classmethod
