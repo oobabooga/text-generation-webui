@@ -424,6 +424,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         def on_log(self, args: transformers.TrainingArguments, state: transformers.TrainerState, control: transformers.TrainerControl, logs, **kwargs):
             train_log.update(logs)
             train_log.update({"current_steps": tracked.current_steps})
+            print(f"\033[1;30;40m{tracked.current_steps} \033[0;37;0m", end='')
             if 'loss' in logs:
                 loss = float(logs['loss'])
                 if loss<=stop_at_loss:
