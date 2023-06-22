@@ -225,50 +225,78 @@ def generate_reply_HF(question, original_question, seed, state, eos_token=None, 
     if inputs_embeds is not None:
         generate_params.update({'inputs_embeds': inputs_embeds})
 
-    # Create the StoppingCriteriaList with the stopping strings (needs to be done after tokenizer extensions)
-    stopping_criteria_list = transformers.StoppingCriteriaList()
-    for st in (stopping_strings, ast.literal_eval(f"[{state['custom_stopping_strings']}]")):
-        if type(st) is list and len(st) > 0:
-            sentinel_token_ids = [encode(string, add_special_tokens=False) for string in st]
-            stopping_criteria_list.append(_SentinelTokenStoppingCriteria(sentinel_token_ids=sentinel_token_ids, starting_idx=len(input_ids[0])))
-            break
+    # combine the stopping strings
+    stopping_strings = stopping_strings or []
+    if type(state.get('stopping_strings')) == list:
+        stopping_strings.extend(state['stopping_strings'])
+    if type(state.get('custom_stopping_strings')) == str:
+        stopping_strings.extend(ast.literal_eval(f"[{state['custom_stopping_strings']}]"))
+    if state.get('stop_at_newline', False):
+        stopping_strings.append('\n')
+    stopping_strings = list(set(stopping_strings))
 
-    # Update generate_params with the eos token and the stopping strings
+    # Update generate_params with the eos token
     generate_params['eos_token_id'] = eos_token_ids
-    generate_params['stopping_criteria'] = stopping_criteria_list
 
     t0 = time.time()
     try:
         if not is_chat and not shared.is_seq2seq:
             yield ''
 
-        # Generate the entire reply at once.
-        if not state['stream']:
-            with torch.no_grad():
-                output = shared.model.generate(**generate_params)[0]
-                if cuda:
-                    output = output.cuda()
-
-            yield get_reply_from_output_ids(output, input_ids, original_question, state, is_chat=is_chat)
-
         # Stream the reply 1 token at a time.
         # This is based on the trick of using 'stopping_criteria' to create an iterator.
-        else:
+        def generate_with_callback(callback=None, *args, **kwargs):
+            stopping_criteria_list = transformers.StoppingCriteriaList()
+            stopping_criteria_list.append(Stream(callback_func=callback))
+            kwargs['stopping_criteria'] = stopping_criteria_list
+            clear_torch_cache()
+            with torch.no_grad():
+                shared.model.generate(**kwargs)
 
-            def generate_with_callback(callback=None, *args, **kwargs):
-                kwargs['stopping_criteria'].append(Stream(callback_func=callback))
-                clear_torch_cache()
-                with torch.no_grad():
-                    shared.model.generate(**kwargs)
+        def generate_with_streaming(**kwargs):
+            return Iteratorize(generate_with_callback, [], kwargs, callback=None)
 
-            def generate_with_streaming(**kwargs):
-                return Iteratorize(generate_with_callback, [], kwargs, callback=None)
+        with generate_with_streaming(**generate_params) as generator:
+            for output in generator:
+                # Check if the output contains the eos token
+                if output[-1] in eos_token_ids:
+                    reply = get_reply_from_output_ids(output[:-1], input_ids, original_question, state, is_chat=is_chat)
+                    break
 
-            with generate_with_streaming(**generate_params) as generator:
-                for output in generator:
-                    yield get_reply_from_output_ids(output, input_ids, original_question, state, is_chat=is_chat)
-                    if output[-1] in eos_token_ids:
-                        break
+                reply = get_reply_from_output_ids(output, input_ids, original_question, state, is_chat=is_chat)
+
+                tem_text = reply
+                yield_text = None
+                for string in stopping_strings:
+                    if string in tem_text:
+                        # extract tem_text from beginning to the string
+                        new_yield_text = tem_text[:tem_text.find(string)]
+                        # compare with yield_text, pick the shorter one
+                        if yield_text is None or len(new_yield_text) < len(yield_text):
+                            yield_text = new_yield_text
+                if yield_text is not None:
+                    # replace last reply, then end the generation
+                    # it is all the text before the stopping string
+                    reply = yield_text
+                    break
+
+                # check should keep or yield the process text, only check if streamming (for performance)
+                if state.get('stream', False):
+                    ends_with_substring = False
+                    for string in stopping_strings:
+                        # if tem_text endswith substring, don't yield anything yet
+                        if ends_with_substring:
+                            break
+                        for i in range(len(string)):
+                            if tem_text.endswith(string[:i+1]):
+                                ends_with_substring = True
+                                break
+                    # none substring match, yield it
+                    if not ends_with_substring:
+                        yield tem_text
+
+            # yield the last reply
+            yield reply
 
     except Exception:
         traceback.print_exc()
