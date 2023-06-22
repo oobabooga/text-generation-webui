@@ -88,6 +88,8 @@ def get_encoded_length(prompt):
 
 def decode(output_ids, skip_special_tokens=True):
     if shared.model.__class__.__name__ in ["ExllamaModel", "LlamaCppModel"]:
+        if type(output_ids) is torch.Tensor:
+            output_ids = np.array(output_ids.tolist())
         if type(output_ids[0]) is np.ndarray:
             output_ids = output_ids[0]
         return shared.tokenizer.decode(output_ids)

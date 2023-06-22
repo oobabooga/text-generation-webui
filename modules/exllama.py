@@ -1,5 +1,6 @@
 import sys
 import numpy as np
+import torch
 from pathlib import Path
 
 from modules import shared
@@ -95,6 +96,8 @@ class ExllamaModel:
         return input_ids
 
     def decode(self, tokens):
+        if type(tokens) is torch.Tensor:
+            tokens = np.array(tokens.tolist())
         if type(tokens[0]) is np.ndarray:
             tokens = tokens[0]
-            return self.tokenizer.decode(tokens)
+        return self.tokenizer.decode(tokens)

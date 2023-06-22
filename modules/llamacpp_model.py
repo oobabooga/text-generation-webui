@@ -8,6 +8,7 @@ https://abetlen.github.io/llama-cpp-python/
 
 import re
 import numpy as np
+import torch
 from functools import partial
 
 from llama_cpp import Llama, LlamaCache, LogitsProcessorList
@@ -66,6 +67,8 @@ class LlamaCppModel:
         return input_ids
     
     def decode(self, tokens):
+        if type(tokens) is torch.Tensor:
+            tokens = np.array(tokens.tolist())
         if type(tokens[0]) is np.ndarray:
             tokens = tokens[0]
         return self.model.tokenizer().decode(tokens)
