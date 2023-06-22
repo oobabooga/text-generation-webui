@@ -111,4 +111,16 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
         display: flex;
         flex-direction: column-reverse;
     }
+    
+    .message {
+        break-inside: avoid;
+    }
+    
+    .gradio-container {
+        overflow: visible;
+    }
+    
+    .tab-nav {
+        display: none !important;
+    }
 }
