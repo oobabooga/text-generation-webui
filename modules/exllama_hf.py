@@ -78,7 +78,6 @@ class ExllamaHF(PreTrainedModel):
         
         # This slowes down a bit but align better with autogptq generation.
         # TODO: Should give user choice to tune the exllama config
-        config.act_order = True
         config.fused_attn = False
         config.fused_mlp_thd = 0
 
