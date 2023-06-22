@@ -149,7 +149,7 @@ class ModelDownloader:
                     for data in r.iter_content(block_size):
                         t.update(len(data))
                         f.write(data)
-                        if self.progress_bar is not None:
+                        if total_size != 0 and self.progress_bar is not None:
                             count += len(data)
                             self.progress_bar(float(count) / float(total_size), f"Downloading {filename}")
 
