@@ -1,5 +1,4 @@
-﻿user: "<|user|>"
+user: "<|user|>"
 bot: "<|assistant|>"
-context: |
-  <|system|>Below is a dialogue between a human and AI assistant called StarChat.<|end|>
-turn_template: "<|user|>\n<|user-message|>\n<|end|>\n<|bot|>\n<|bot-message|>"
+context: "<|system|>\n<|end|>\n"
+turn_template: "<|user|>\n<|user-message|><|end|>\n<|bot|>\n<|bot-message|><|end|>\n"
