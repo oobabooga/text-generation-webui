@@ -25,6 +25,11 @@ def get_model_info():
 
 
 class Handler(BaseHTTPRequestHandler):
+    def send_response(self, *args, **kwargs):
+        BaseHTTPRequestHandler.send_response(self, *args, **kwargs)
+        self.send_header("Access-Control-Allow-Origin", "*")
+      
+  
     def do_GET(self):
         if self.path == '/api/v1/model':
             self.send_response(200)
