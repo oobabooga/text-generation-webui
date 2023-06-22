@@ -96,4 +96,3 @@ def _start_cloudflared(port: int, max_attempts: int = 3, on_start: Optional[Call
             time.sleep(3)
 
         raise Exception('Could not start cloudflared.')
-    
