@@ -232,3 +232,9 @@ TheBloke_WizardLM-30B-GPTQ:
 .*starchat-beta:
   mode: 'instruct'
   instruction_template: 'Starchat-Beta'
+.*minotaur:
+  mode: 'instruct'
+  instruction_template: 'Minotaur'
+  truncation_length: 8192
+  chat_prompt_size: 8192
+  chat_prompt_size_max: 8192
