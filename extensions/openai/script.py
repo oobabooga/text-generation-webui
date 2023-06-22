@@ -4,6 +4,7 @@ import os
 import time
 import requests
 import yaml
+from copy import deepcopy
 import numpy as np
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
@@ -54,7 +55,7 @@ default_req_params = {
     'mirostat_eta': 0.1,
     'ban_eos_token': False,
     'skip_special_tokens': True,
-    'custom_stopping_strings': ['\n###'],
+    'custom_stopping_strings': [],
 }
 
 # Optional, install the module and download the model to enable
@@ -266,8 +267,7 @@ class Handler(BaseHTTPRequestHandler):
 
             # Request Parameters
             # Try to use openai defaults or map them to something with the same intent
-            req_params = default_req_params.copy()
-            req_params['custom_stopping_strings'] = default_req_params['custom_stopping_strings'].copy()
+            req_params = deepcopy(default_req_params)
 
             if 'stop' in body:
                 if isinstance(body['stop'], str):
@@ -347,7 +347,9 @@ class Handler(BaseHTTPRequestHandler):
                             'prompt': bot_prompt,
                         }
 
-                        if instruct['user']: # WizardLM and some others have no user prompt.
+                        if 'Alpaca' in shared.settings['instruction_template']:
+                            req_params['custom_stopping_strings'].extend(['\n###'])
+                        elif instruct['user']: # WizardLM and some others have no user prompt.
                             req_params['custom_stopping_strings'].extend(['\n' + instruct['user'], instruct['user']])
 
                         if debug:
@@ -619,8 +621,7 @@ class Handler(BaseHTTPRequestHandler):
             input = body.get('input', '')
 
             # Request parameters
-            req_params = default_req_params.copy()
-            req_params['custom_stopping_strings'] = default_req_params['custom_stopping_strings'].copy()
+            req_params = deepcopy(default_req_params)
 
             # Alpaca is verbose so a good default prompt
             default_template = (
@@ -632,26 +633,29 @@ class Handler(BaseHTTPRequestHandler):
             instruction_template = default_template
             
             # Use the special instruction/input/response template for anything trained like Alpaca
-            if shared.settings['instruction_template'] and not (shared.settings['instruction_template'] in ['Alpaca', 'Alpaca-Input']):
-                try:
-                    instruct = yaml.safe_load(open(f"characters/instruction-following/{shared.settings['instruction_template']}.yaml", 'r'))
+            if shared.settings['instruction_template']:
+                if 'Alpaca' in shared.settings['instruction_template']:
+                    req_params['custom_stopping_strings'].extend(['\n###'])
+                else:
+                    try:
+                        instruct = yaml.safe_load(open(f"characters/instruction-following/{shared.settings['instruction_template']}.yaml", 'r'))
 
-                    template = instruct['turn_template']
-                    template = template\
-                        .replace('<|user|>', instruct.get('user', ''))\
-                        .replace('<|bot|>', instruct.get('bot', ''))\
-                        .replace('<|user-message|>', '{instruction}\n{input}')
+                        template = instruct['turn_template']
+                        template = template\
+                            .replace('<|user|>', instruct.get('user', ''))\
+                            .replace('<|bot|>', instruct.get('bot', ''))\
+                            .replace('<|user-message|>', '{instruction}\n{input}')
 
-                    instruction_template = instruct.get('context', '') + template[:template.find('<|bot-message|>')].rstrip(' ')
-                    if instruct['user']:
-                        req_params['custom_stopping_strings'].extend(['\n' + instruct['user'], instruct['user'] ])
+                        instruction_template = instruct.get('context', '') + template[:template.find('<|bot-message|>')].rstrip(' ')
+                        if instruct['user']:
+                            req_params['custom_stopping_strings'].extend(['\n' + instruct['user'], instruct['user'] ])
 
-                except Exception as e:
-                    instruction_template = default_template
-                    print(f"Exception: When loading characters/instruction-following/{shared.settings['instruction_template']}.yaml: {repr(e)}")
-                    print("Warning: Loaded default instruction-following template (Alpaca) for model.")
-
+                    except Exception as e:
+                        instruction_template = default_template
+                        print(f"Exception: When loading characters/instruction-following/{shared.settings['instruction_template']}.yaml: {repr(e)}")
+                        print("Warning: Loaded default instruction-following template (Alpaca) for model.")
             else:
+                req_params['custom_stopping_strings'].extend(['\n###'])
                 print("Warning: Loaded default instruction-following template (Alpaca) for model.")
                 
 
