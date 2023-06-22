@@ -50,7 +50,7 @@ llama-65b-gptq-3bit:
 .*vicuna.*v0:
   mode: 'instruct'
   instruction_template: 'Vicuna-v0'
-.*vicuna.*(1.1|1_1):
+.*vicuna.*(1.1|1_1|1.3|1_3):
   mode: 'instruct'
   instruction_template: 'Vicuna-v1.1'
 .*wizard.*vicuna:
@@ -184,7 +184,7 @@ llama-65b-gptq-3bit:
 .*Nous-Hermes-13b:
   mode: 'instruct'
   instruction_template: 'Alpaca'
-.*airoboros-13b-gpt4:
+.*airoboros:
   mode: 'instruct'
   instruction_template: 'Vicuna-v1.1'
 .*WizardLM-30B-V1.0:
@@ -193,7 +193,7 @@ llama-65b-gptq-3bit:
 TheBloke_WizardLM-30B-GPTQ:
   mode: 'instruct'
   instruction_template: 'Vicuna-v1.1'
-.*(A|a)lpa(cino|sta):
+.*alpa(cino|sta):
   mode: 'instruct'
   instruction_template: 'Alpaca'
 .*hippogriff:
@@ -202,9 +202,39 @@ TheBloke_WizardLM-30B-GPTQ:
 .*gpt4all-.*-snoozy:
   mode: 'instruct'
   instruction_template: 'WizardLM'
-.*(L|l)azarus:
+.*lazarus:
   mode: 'instruct'
   instruction_template: 'Alpaca'
-.*(G|g)uanaco-.*(7|13|33|65)(b|B):
+.*guanaco-.*(7|13|33|65)b:
   mode: 'instruct'
   instruction_template: 'Guanaco'
+.*hypermantis:
+  mode: 'instruct'
+  instruction_template: 'Alpaca'
+.*open-llama-.*-open-instruct:
+  mode: 'instruct'
+  instruction_template: 'Alpaca'
+.*starcoder-gpteacher-code-instruct:
+  mode: 'instruct'
+  instruction_template: 'Alpaca'
+.*tulu:
+  mode: 'instruct'
+  instruction_template: 'Tulu'
+.*chronos:
+  mode: 'instruct'
+  instruction_template: 'Alpaca'
+.*samantha:
+  mode: 'instruct'
+  instruction_template: 'Samantha'
+.*wizardcoder:
+  mode: 'instruct'
+  instruction_template: 'Alpaca'
+.*starchat-beta:
+  mode: 'instruct'
+  instruction_template: 'Starchat-Beta'
+.*minotaur:
+  mode: 'instruct'
+  instruction_template: 'Minotaur'
+  truncation_length: 8192
+  chat_prompt_size: 8192
+  chat_prompt_size_max: 8192
