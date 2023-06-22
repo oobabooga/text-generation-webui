@@ -41,6 +41,7 @@ except:
     }
 
 train_log = {}
+train_turnaround = {}
 
 WANT_INTERRUPT = False
 PARAMETERS = ["lora_name", "always_override", "save_steps", "micro_batch_size", "batch_size", "epochs", "learning_rate", "lr_scheduler_type", "lora_rank", "lora_alpha", "lora_dropout", "cutoff_len", "dataset", "eval_dataset", "format", "eval_steps", "raw_text_file", "overlap_len", "newline_favor_len", "higher_rank_limit", "warmup_steps", "optimizer", "hard_cut_string", "train_only_after", "stop_at_loss"]
@@ -288,9 +289,14 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             "attention_mask": input_ids.ne(shared.tokenizer.pad_token_id),
         }
 
+    train_turnaround.clear()
+
     # == Prep the dataset, format, etc ==
     if raw_text_file not in ['None', '']:
         logger.info("Loading raw text file dataset...")
+        
+        train_turnaround["template_type"] ="raw_text"
+
         with open(clean_path('training/datasets', f'{raw_text_file}.txt'), 'r', encoding='utf-8') as file:
             raw_text = file.read().replace('\r', '')
 
@@ -322,6 +328,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         train_data = Dataset.from_list([tokenize(x) for x in text_chunks])
         del text_chunks
         eval_data = None
+        
 
     else:
         if dataset in ['None', '']:
@@ -332,8 +339,16 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             yield "**Missing format choice input, cannot continue.**"
             return
 
-        with open(clean_path('training/formats', f'{format}.json'), 'r', encoding='utf-8') as formatFile:
+        train_turnaround["template_type"] ="dataset"
+
+        with open(clean_path('training/formats', f'{format}.json'), 'r', encoding='utf-8-sig') as formatFile:
             format_data: dict[str, str] = json.load(formatFile)
+
+        # store turnaround with LORA directory
+        for _, value in format_data.items():
+            turnaround_key = f"turnaround_{len(train_turnaround)}"
+            train_turnaround[turnaround_key] = value
+
 
         def generate_prompt(data_point: dict[str, str]):
             for options, data in format_data.items():
@@ -412,7 +427,10 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
                 lora_model.save_pretrained(f"{lora_file_path}/checkpoint-{tracked.current_steps}/")
                  # Save log
                 with open(f"{lora_file_path}/checkpoint-{tracked.current_steps}/training_log.json", 'w', encoding='utf-8') as file:
-                    json.dump(train_log, file, indent=2)    
+                    json.dump(train_log, file, indent=2)
+                    # == Save Turnaround instruction ==
+                with open(f"{lora_file_path}/checkpoint-{tracked.current_steps}/training_turnaround.json", 'w', encoding='utf-8') as file:
+                    json.dump(train_turnaround, file, indent=2)        
 
 
         def on_substep_end(self, args: transformers.TrainingArguments, state: transformers.TrainerState, control: transformers.TrainerControl, **kwargs):
@@ -424,7 +442,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         def on_log(self, args: transformers.TrainingArguments, state: transformers.TrainerState, control: transformers.TrainerControl, logs, **kwargs):
             train_log.update(logs)
             train_log.update({"current_steps": tracked.current_steps})
-            print(f"\033[1;30;40m{tracked.current_steps} \033[0;37;0m", end='')
+            print(f"\033[1;30;40mStep: {tracked.current_steps} \033[0;37;0m", end='')
             if 'loss' in logs:
                 loss = float(logs['loss'])
                 if loss<=stop_at_loss:
@@ -470,12 +488,16 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         vars = locals()
         json.dump({x: vars[x] for x in PARAMETERS}, file, indent=2)
 
+    # == Save Turnaround instruction ==
+    with open(f"{lora_file_path}/training_turnaround.json", 'w', encoding='utf-8') as file:
+        json.dump(train_turnaround, file, indent=2)
+    
     # == Main run and monitor loop ==
     logger.info("Starting training...")
     yield "Starting..."
   
     if stop_at_loss>0:
-        print(f"Monitoring loss (Auto-Stop below: {stop_at_loss})")
+        print(f"\033[1;31;1mMonitoring loss\033[0;37;0m (Auto-Stop at: {stop_at_loss})")
         
     if WANT_INTERRUPT:
         yield "Interrupted before start."
