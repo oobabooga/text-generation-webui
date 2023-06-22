@@ -97,7 +97,7 @@ def add_lora_transformers(lora_names):
         # shared.model may no longer be PeftModel
         if hasattr(shared.model, 'disable_adapter'):  
             shared.model.disable_adapter()  
-        shared.model = shared.model.base_model.model
+            shared.model = shared.model.base_model.model
 
     if len(lora_names) > 0:
         params = {}
