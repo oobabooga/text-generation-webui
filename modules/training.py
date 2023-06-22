@@ -41,7 +41,7 @@ except:
     }
 
 train_log = {}
-train_turnaround = {}
+train_template = {}
 
 WANT_INTERRUPT = False
 PARAMETERS = ["lora_name", "always_override", "save_steps", "micro_batch_size", "batch_size", "epochs", "learning_rate", "lr_scheduler_type", "lora_rank", "lora_alpha", "lora_dropout", "cutoff_len", "dataset", "eval_dataset", "format", "eval_steps", "raw_text_file", "overlap_len", "newline_favor_len", "higher_rank_limit", "warmup_steps", "optimizer", "hard_cut_string", "train_only_after", "stop_at_loss"]
@@ -102,7 +102,7 @@ def create_train_interface():
             warmup_steps = gr.Number(label='Warmup Steps', value=100, info='For this many steps at the start, the learning rate will be lower than normal. This helps the trainer prepare the model and precompute statistics to improve the quality of training after the start.')
             optimizer = gr.Dropdown(label='Optimizer', value='adamw_torch', choices=['adamw_hf', 'adamw_torch', 'adamw_torch_fused', 'adamw_torch_xla', 'adamw_apex_fused', 'adafactor', 'adamw_bnb_8bit', 'adamw_anyprecision', 'sgd', 'adagrad'], info='Different optimizer implementation options, for advanced users. Effects of different options are not well documented yet.')
             train_only_after = gr.Textbox(label='Train Only After', value='', info='Only consider text *after* this string in any given chunk for training. For Alpaca datasets, use "### Response:" to only train the response and ignore the input.')
-            stop_at_loss = gr.Slider(label='Stop at loss', minimum=0.0, maximum=3.0, step=0.1, value=0.00, info='The process will automatically stop when this loss has been reached. (1.5 - 1.8 is a good value)')
+            stop_at_loss = gr.Slider(label='Stop at loss', minimum=0.0, maximum=3.0, step=0.1, value=0.00, info='The process will automatically stop once the desired loss value is reached. (reasonable numbers are 1.5-1.8)')
         
             with gr.Row():
                 higher_rank_limit = gr.Checkbox(label='Enable higher ranks', value=False, info='If checked, changes Rank/Alpha slider above to go much higher. This will not work without a datacenter-class GPU.')
@@ -289,13 +289,13 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             "attention_mask": input_ids.ne(shared.tokenizer.pad_token_id),
         }
 
-    train_turnaround.clear()
+    train_template.clear()
 
     # == Prep the dataset, format, etc ==
     if raw_text_file not in ['None', '']:
         logger.info("Loading raw text file dataset...")
         
-        train_turnaround["template_type"] ="raw_text"
+        train_template["template_type"] ="raw_text"
 
         with open(clean_path('training/datasets', f'{raw_text_file}.txt'), 'r', encoding='utf-8') as file:
             raw_text = file.read().replace('\r', '')
@@ -339,15 +339,15 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             yield "**Missing format choice input, cannot continue.**"
             return
 
-        train_turnaround["template_type"] ="dataset"
+        train_template["template_type"] ="dataset"
 
         with open(clean_path('training/formats', f'{format}.json'), 'r', encoding='utf-8-sig') as formatFile:
             format_data: dict[str, str] = json.load(formatFile)
 
         # store turnaround with LORA directory
         for _, value in format_data.items():
-            turnaround_key = f"turnaround_{len(train_turnaround)}"
-            train_turnaround[turnaround_key] = value
+            turnaround_key = f"template_{len(train_template)}"
+            train_template[turnaround_key] = value
 
 
         def generate_prompt(data_point: dict[str, str]):
@@ -429,8 +429,8 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
                 with open(f"{lora_file_path}/checkpoint-{tracked.current_steps}/training_log.json", 'w', encoding='utf-8') as file:
                     json.dump(train_log, file, indent=2)
                     # == Save Turnaround instruction ==
-                with open(f"{lora_file_path}/checkpoint-{tracked.current_steps}/training_turnaround.json", 'w', encoding='utf-8') as file:
-                    json.dump(train_turnaround, file, indent=2)        
+                with open(f"{lora_file_path}/checkpoint-{tracked.current_steps}/training_prompt.json", 'w', encoding='utf-8') as file:
+                    json.dump(train_template, file, indent=2)        
 
 
         def on_substep_end(self, args: transformers.TrainingArguments, state: transformers.TrainerState, control: transformers.TrainerControl, **kwargs):
@@ -442,6 +442,9 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         def on_log(self, args: transformers.TrainingArguments, state: transformers.TrainerState, control: transformers.TrainerControl, logs, **kwargs):
             train_log.update(logs)
             train_log.update({"current_steps": tracked.current_steps})
+            if WANT_INTERRUPT:
+                print(f"\033[1;31;1mInterrupted by user\033[0;37;0m")
+
             print(f"\033[1;30;40mStep: {tracked.current_steps} \033[0;37;0m", end='')
             if 'loss' in logs:
                 loss = float(logs['loss'])
@@ -489,15 +492,15 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         json.dump({x: vars[x] for x in PARAMETERS}, file, indent=2)
 
     # == Save Turnaround instruction ==
-    with open(f"{lora_file_path}/training_turnaround.json", 'w', encoding='utf-8') as file:
-        json.dump(train_turnaround, file, indent=2)
+    with open(f"{lora_file_path}/training_prompt.json", 'w', encoding='utf-8') as file:
+        json.dump(train_template, file, indent=2)
     
     # == Main run and monitor loop ==
     logger.info("Starting training...")
     yield "Starting..."
   
     if stop_at_loss>0:
-        print(f"\033[1;31;1mMonitoring loss\033[0;37;0m (Auto-Stop at: {stop_at_loss})")
+        print(f"Monitoring loss \033[1;31;1m(Auto-Stop at: {stop_at_loss})\033[0;37;0m")
         
     if WANT_INTERRUPT:
         yield "Interrupted before start."
