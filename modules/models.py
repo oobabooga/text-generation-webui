@@ -50,7 +50,8 @@ def load_model(model_name, loader=None):
         'FlexGen': flexgen_loader,
         'RWKV': RWKV_loader,
         'ExLlama': ExLlama_loader,
-        'ExLlama_HF': ExLlama_HF_loader
+        'ExLlama_HF': ExLlama_HF_loader,
+        'ct2': ct2_loader,
     }
 
     if loader is None:
@@ -283,6 +284,16 @@ def ExLlama_HF_loader(model_name):
     from modules.exllama_hf import ExllamaHF
 
     return ExllamaHF.from_pretrained(model_name)
+
+
+def ct2_loader(model_name):
+    from hf_hub_ctranslate2 import TranslatorCT2fromHfHub, GeneratorCT2fromHfHub
+    return GeneratorCT2fromHfHub(
+        model_name_or_path=str(Path(f'{shared.args.model_dir}/{model_name}')),
+        device="cuda" if torch.cuda.is_available() and not shared.args.cpu else "cpu",
+        # Not currently supporting int16 as I'm not sure what the usecase is
+        compute_type="int8" if shared.args.load_in_8bit else "int8_float16"
+    )
 
 
 def get_max_memory_dict():

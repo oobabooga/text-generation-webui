@@ -158,6 +158,8 @@ def _generate_reply(question, state, eos_token=None, stopping_strings=None, is_c
 
         if shared.model.__class__.__name__ in ['LlamaCppModel', 'RWKVModel', 'ExllamaModel']:
             generate_func = generate_reply_custom
+        elif shared.model.__class__.__name__ in ['GeneratorCT2fromHfHub']:
+            generate_func = generate_reply_ct2
         elif shared.args.flexgen:
             generate_func = generate_reply_flexgen
         else:
@@ -374,5 +376,107 @@ def generate_reply_flexgen(question, original_question, seed, state, eos_token=N
         t1 = time.time()
         original_tokens = len(original_input_ids[0])
         new_tokens = len(output) - (original_tokens if not shared.is_seq2seq else 0)
+        print(f'Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens}, seed {seed})')
+        return
+
+
+def generate_reply_ct2(question, original_question, seed, state, eos_token=None, stopping_strings=None, is_chat=False):
+    def encode_ct2(prompt):
+        return [shared.model.tokenizer.convert_ids_to_tokens(shared.model.tokenizer.encode(prompt))]
+
+    # Find the eos tokens
+    eos_token_ids = [shared.tokenizer.eos_token_id] if shared.tokenizer.eos_token_id is not None else []
+    if eos_token is not None:
+        eos_token_ids.append(int(encode_ct2(eos_token)[0][-1]))
+
+    start_tokens = encode_ct2(question)
+    generate_params = {
+        # Batch of start tokens. If the decoder starts from a special start token like "<s>", this token should be added to this input.
+        "start_tokens": start_tokens,
+        # Not sure what effect this has when using generate_iterable, it doesn't seem to do anything.
+        # It'll generate up to max length regardless, and although I anticipated it'd return token by token,
+        # it doesn't seem to be streaming as expected.
+        #"max_batch_size": 0,
+        # Whether "max_batch_size" is the number of "examples" or "tokens".
+        #"batch_type": "tokens",
+        # Run the generation asynchronously.
+        "asynchronous": False,
+        # Beam size (1 for greedy search).
+        "beam_size": 1,
+        # Beam search patience factor, as described in https://arxiv.org/abs/2204.05424.
+        # The decoding will continue until beam_size*patience hypotheses are finished.
+        "patience": 1,
+        # Number of hypotheses to return.
+        "num_hypotheses": state['num_beams'],
+        # Exponential penalty applied to the length during beam search.
+        "length_penalty": state['length_penalty'],
+        # Penalty applied to the score of previously generated tokens (set > 1 to penalize).
+        "repetition_penalty": state['repetition_penalty'],
+        # Prevent repetitions of ngrams with this size (set 0 to disable).
+        "no_repeat_ngram_size": state['no_repeat_ngram_size'],
+        # Disable the generation of the unknown token.
+        "disable_unk": False,
+        # Disable the generation of some sequences of tokens.
+        "suppress_sequences": [shared.tokenizer.eos_token_id] if state['ban_eos_token'] else None,
+        # Stop the decoding on one of these tokens (defaults to the model EOS token).
+        # This is different: stopping_strings or None,
+        "end_token": eos_token_ids,
+        # Include the end token in the results.
+        "return_end_token": False,
+        # Maximum generation length.
+        "max_length": len(start_tokens[0]) + state["max_new_tokens"],
+        # Minimum generation length.
+        "min_length": state['min_length'],
+        # If the model expects a static prompt (a.k.a. system prompt) it can be set here
+        # to simplify the inputs and optionally cache the model state for this prompt to
+        # accelerate future generations.
+        "static_prompt": None,
+        # Cache the model state after the static prompt and reuse it for future generations
+        # using the same static prompt.
+        "cache_static_prompt": True,
+        # Include the "start_tokens" in the result.
+        "include_prompt_in_result": False,
+        # Include the scores in the output.
+        "return_scores": False,
+        # Return alternatives at the first unconstrained decoding position.
+        "return_alternatives": False,
+        # Minimum initial probability to expand an alternative.
+        "min_alternative_expansion_prob": 0,
+        # Randomly sample predictions from the top K candidates.
+        "sampling_topk": state["top_k"],
+        # Keep the most probable tokens whose cumulative probability exceeds this value.
+        "sampling_topp": state["top_p"],
+        # Sampling temperature to generate more random samples.
+        "sampling_temperature": state["temperature"],
+        # Optional function that is called for each generated token. This requires a beam size of 1.
+        # "callback": None,
+    }
+    for e in ('epsilon_cutoff', 'eta_cutoff', 'penalty_alpha', 'mirostat_mode', 'top_a'):
+        if state[e] > 0:
+            raise NotImplementedError(f"{e} is not implemented for ct2 models")
+    for e in ('typical_p', 'encoder_repetition_penalty', 'tfs'):
+        if state[e] != 1:
+            raise NotImplementedError(f"{e} is not implemented for ct2 models")
+    t0 = time.time()
+    new_tokens = 0
+    try:
+        if not is_chat:
+            yield ''
+        # Generate here
+        for genresult in shared.model.model.generate_iterable(**generate_params):
+            # Also returns with genresult.scores and genresult.sequences
+            reply = shared.model.tokenizer.decode(genresult.sequences_ids[0], state['skip_special_tokens'])
+            print(f"Reply: {reply}")
+            if not is_chat:
+                reply = apply_extensions('output', reply)
+            new_tokens += len(reply)
+            yield reply
+            if reply[-1] in eos_token_ids:
+                break
+    except Exception:
+        traceback.print_exc()
+    finally:
+        t1 = time.time()
+        original_tokens = len(start_tokens[0])
         print(f'Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens}, seed {seed})')
         return
