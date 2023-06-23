@@ -1,7 +1,3 @@
-**Help find the best parameters for text generation!**
-
-https://oobabooga.github.io/arena/preliminary-results.html
-
 # Text generation web UI
 
 A gradio web UI for running Large Language Models like LLaMA, llama.cpp, GPT-J, Pythia, OPT, and GALACTICA.
