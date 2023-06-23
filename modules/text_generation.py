@@ -256,12 +256,20 @@ def generate_reply_HF(question, original_question, seed, state, eos_token=None, 
         def generate_with_streaming(**kwargs):
             return Iteratorize(generate_with_callback, [], kwargs, callback=None)
 
+        reply = ''
         with generate_with_streaming(**generate_params) as generator:
+            last_time = time.time()
             for output in generator:
                 # Check if the output contains the eos token
                 if output[-1] in eos_token_ids:
                     reply = get_reply_from_output_ids(output[:-1], input_ids, original_question, state, is_chat=is_chat)
                     break
+
+                cur_time = time.time()
+                time_threshold = (1/24) if state.get('stream', False) else 1
+                if cur_time - last_time < time_threshold:
+                    continue
+                last_time = time.time()
 
                 reply = get_reply_from_output_ids(output, input_ids, original_question, state, is_chat=is_chat)
 
