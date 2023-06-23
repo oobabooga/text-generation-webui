@@ -257,6 +257,7 @@ def generate_reply_HF(question, original_question, seed, state, eos_token=None, 
             return Iteratorize(generate_with_callback, [], kwargs, callback=None)
 
         reply = ''
+        stop_by_string = False
         with generate_with_streaming(**generate_params) as generator:
             last_time = time.time()
             for output in generator:
@@ -282,6 +283,7 @@ def generate_reply_HF(question, original_question, seed, state, eos_token=None, 
                     # replace last reply, then end the generation
                     # it is all the text before the stopping string
                     reply = yield_text
+                    stop_by_string = True
                     break
 
                 # check should keep or yield the process text, only check if streamming (for performance)
@@ -301,7 +303,12 @@ def generate_reply_HF(question, original_question, seed, state, eos_token=None, 
 
                 # Check if the output contains the eos token
                 if output[-1] in eos_token_ids:
+                    stop_by_string = True
                     break
+
+            # if not stop by string, update reply first
+            if not stop_by_string:
+                reply = get_reply_from_output_ids(output, input_ids, original_question, state, is_chat=is_chat)
 
             # yield the last reply
             yield reply
