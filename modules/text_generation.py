@@ -202,6 +202,7 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False):
     seed = set_manual_seed(state['seed'])
     last_update = -1
     reply = ''
+    buf = ''  # buf the return value of generate_func
     is_stream = state['stream']
     if len(all_stop_strings) > 0 and not state['stream']:
         state['stream'] = True
@@ -212,7 +213,12 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False):
             cur_time = time.time()
             if cur_time - last_update > 0.041666666666666664:  # Limit streaming to 24 fps
                 last_update = cur_time
+                reply = buf + reply  # add bufferd reply to the reply
+                buf = ''  # clear buf
                 yield reply
+            else:
+                reply = buf + reply  # add bufferd reply to the reply
+                buf = reply  # buf the reply
 
         if stop_found:
             break
