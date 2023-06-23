@@ -291,8 +291,7 @@ def ct2_loader(model_name):
     return GeneratorCT2fromHfHub(
         model_name_or_path=str(Path(f'{shared.args.model_dir}/{model_name}')),
         device="cuda" if torch.cuda.is_available() and not shared.args.cpu else "cpu",
-        # Not currently supporting int16 as I'm not sure what the usecase is
-        compute_type="int8" if shared.args.load_in_8bit else "int8_float16"
+        compute_type="auto"
     )
 
 
