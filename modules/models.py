@@ -282,7 +282,7 @@ def ExLlama_loader(model_name):
 def ExLlama_HF_loader(model_name):
     from modules.exllama_hf import ExllamaHF
 
-    return ExllamaHF.from_pretrained(model_name)
+    return ExllamaHF.from_pretrained(model_name), AutoTokenizer.from_pretrained(str(Path(f'{shared.args.model_dir}') / Path(model_name)), use_fast = False)
 
 
 def get_max_memory_dict():
