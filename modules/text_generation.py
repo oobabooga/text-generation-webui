@@ -260,10 +260,6 @@ def generate_reply_HF(question, original_question, seed, state, eos_token=None, 
         with generate_with_streaming(**generate_params) as generator:
             last_time = time.time()
             for output in generator:
-                # Check if the output contains the eos token
-                if output[-1] in eos_token_ids:
-                    reply = get_reply_from_output_ids(output[:-1], input_ids, original_question, state, is_chat=is_chat)
-                    break
 
                 cur_time = time.time()
                 time_threshold = (1/24) if state.get('stream', False) else 1
@@ -302,6 +298,10 @@ def generate_reply_HF(question, original_question, seed, state, eos_token=None, 
                     # none substring match, yield it
                     if not ends_with_substring:
                         yield tem_text
+
+                # Check if the output contains the eos token
+                if output[-1] in eos_token_ids:
+                    break
 
             # yield the last reply
             yield reply
