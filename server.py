@@ -1,26 +1,15 @@
 import os
 import warnings
 
-import requests
-
 from modules.logging_colors import logger
+from modules.block_requests import RequestBlocker
 
 os.environ['GRADIO_ANALYTICS_ENABLED'] = 'False'
 os.environ['BITSANDBYTES_NOWELCOME'] = '1'
 warnings.filterwarnings('ignore', category=UserWarning, message='TypedStorage is deprecated')
 
-
-# This is a hack to prevent Gradio from phoning home when it gets imported
-def my_get(url, **kwargs):
-    logger.info('Gradio HTTP request redirected to localhost :)')
-    kwargs.setdefault('allow_redirects', True)
-    return requests.api.request('get', 'http://127.0.0.1/', **kwargs)
-
-
-original_get = requests.get
-requests.get = my_get
-import gradio as gr
-requests.get = original_get
+with RequestBlocker():
+    import gradio as gr
 
 import matplotlib
 matplotlib.use('Agg')  # This fixes LaTeX rendering on some systems
@@ -133,7 +122,7 @@ def count_tokens(text):
         return 'Couldn\'t count the number of tokens. Is a tokenizer loaded?'
 
 
-def download_model_wrapper(repo_id):
+def download_model_wrapper(repo_id, progress=gr.Progress()):
     try:
         downloader_module = importlib.import_module("download-model")
         downloader = downloader_module.ModelDownloader()
@@ -142,6 +131,7 @@ def download_model_wrapper(repo_id):
         branch = repo_id_parts[1] if len(repo_id_parts) > 1 else "main"
         check = False
 
+        progress(0.0)
         yield ("Cleaning up the model/branch names")
         model, branch = downloader.sanitize_model_and_branch_names(model, branch)
 
@@ -152,13 +142,16 @@ def download_model_wrapper(repo_id):
         output_folder = downloader.get_output_folder(model, branch, is_lora)
 
         if check:
+            progress(0.5)
             yield ("Checking previously downloaded files")
             downloader.check_model_files(model, branch, links, sha256, output_folder)
+            progress(1.0)
         else:
             yield (f"Downloading files to {output_folder}")
-            downloader.download_model_files(model, branch, links, sha256, output_folder, threads=1)
+            downloader.download_model_files(model, branch, links, sha256, output_folder, progress_bar=progress, threads=1)
             yield ("Done!")
     except:
+        progress(1.0)
         yield traceback.format_exc()
 
 
@@ -204,7 +197,7 @@ def create_model_menus():
 
     with gr.Row():
         with gr.Column():
-            shared.gradio['loader'] = gr.Dropdown(label="Model loader", choices=["Transformers", "AutoGPTQ", "GPTQ-for-LLaMa", "ExLlama", "llama.cpp"], value=None)
+            shared.gradio['loader'] = gr.Dropdown(label="Model loader", choices=["Transformers", "AutoGPTQ", "GPTQ-for-LLaMa", "ExLlama", "ExLlama_HF", "llama.cpp"], value=None)
             with gr.Box():
                 with gr.Row():
                     with gr.Column():
@@ -244,6 +237,7 @@ def create_model_menus():
                         shared.gradio['trust_remote_code'] = gr.Checkbox(label="trust-remote-code", value=shared.args.trust_remote_code, info='Make sure to inspect the .py files inside the model folder before loading it with this option enabled.')
                         shared.gradio['gptq_for_llama_info'] = gr.Markdown('GPTQ-for-LLaMa is currently 2x faster than AutoGPTQ on some systems. It is installed by default with the one-click installers. Otherwise, it has to be installed manually following the instructions here: [instructions](https://github.com/oobabooga/text-generation-webui/blob/main/docs/GPTQ-models-(4-bit-mode).md#installation-1).')
                         shared.gradio['exllama_info'] = gr.Markdown('ExLlama has to be installed manually. See the instructions here: [instructions](https://github.com/oobabooga/text-generation-webui/blob/main/docs/ExLlama.md).')
+                        shared.gradio['exllama_HF_info'] = gr.Markdown('ExLlama_HF is a wrapper that lets you use ExLlama like a Transformers model, which means it can use the Transformers samplers. It\'s still a bit buggy, so feel free to help out by fixing issues.\n\nCheck out PR [#2777](https://github.com/oobabooga/text-generation-webui/pull/2777) for more details.')
 
         with gr.Column():
             with gr.Row():
@@ -287,7 +281,7 @@ def create_model_menus():
         save_model_settings, [shared.gradio[k] for k in ['model_menu', 'interface_state']], shared.gradio['model_status'], show_progress=False)
 
     shared.gradio['lora_menu_apply'].click(load_lora_wrapper, shared.gradio['lora_menu'], shared.gradio['model_status'], show_progress=False)
-    shared.gradio['download_model_button'].click(download_model_wrapper, shared.gradio['custom_model_menu'], shared.gradio['model_status'], show_progress=False)
+    shared.gradio['download_model_button'].click(download_model_wrapper, shared.gradio['custom_model_menu'], shared.gradio['model_status'], show_progress=True)
     shared.gradio['autoload_model'].change(lambda x: gr.update(visible=not x), shared.gradio['autoload_model'], load)
 
 

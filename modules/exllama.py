@@ -3,11 +3,12 @@ from pathlib import Path
 
 from modules import shared
 from modules.logging_colors import logger
+from modules.relative_imports import RelativeImport
 
-sys.path.insert(0, str(Path("repositories/exllama")))
-from repositories.exllama.generator import ExLlamaGenerator
-from repositories.exllama.model import ExLlama, ExLlamaCache, ExLlamaConfig
-from repositories.exllama.tokenizer import ExLlamaTokenizer
+with RelativeImport("repositories/exllama"):
+    from generator import ExLlamaGenerator
+    from model import ExLlama, ExLlamaCache, ExLlamaConfig
+    from tokenizer import ExLlamaTokenizer
 
 
 class ExllamaModel:
@@ -17,7 +18,7 @@ class ExllamaModel:
     @classmethod
     def from_pretrained(self, path_to_model):
 
-        path_to_model = Path("models") / Path(path_to_model)
+        path_to_model = Path(f'{shared.args.model_dir}') / Path(path_to_model)
         tokenizer_model_path = path_to_model / "tokenizer.model"
         model_config_path = path_to_model / "config.json"
 
@@ -48,7 +49,7 @@ class ExllamaModel:
         result.model = model
         result.cache = cache
         result.tokenizer = tokenizer
-        self.generator = generator
+        result.generator = generator
         return result, result
 
     def generate_with_streaming(self, prompt, state):
