@@ -85,7 +85,7 @@ def load_tokenizer(model_name, model):
     tokenizer = None
     if any(s in model_name.lower() for s in ['gpt-4chan', 'gpt4chan']) and Path(f"{shared.args.model_dir}/gpt-j-6B/").exists():
         tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/gpt-j-6B/"))
-    elif type(model) is transformers.LlamaForCausalLM or "LlamaGPTQForCausalLM" in str(type(model)):
+    elif model.__class__.__name__ in ['LlamaForCausalLM', 'LlamaGPTQForCausalLM', 'ExllamaHF']:
         # Try to load an universal LLaMA tokenizer
         if not any(s in shared.model_name.lower() for s in ['llava', 'oasst']):
             for p in [Path(f"{shared.args.model_dir}/llama-tokenizer/"), Path(f"{shared.args.model_dir}/oobabooga_llama-tokenizer/")]:
@@ -282,7 +282,7 @@ def ExLlama_loader(model_name):
 def ExLlama_HF_loader(model_name):
     from modules.exllama_hf import ExllamaHF
 
-    return ExllamaHF.from_pretrained(model_name), AutoTokenizer.from_pretrained(str(Path(f'{shared.args.model_dir}') / Path(model_name)), use_fast = False)
+    return ExllamaHF.from_pretrained(model_name)
 
 
 def get_max_memory_dict():
