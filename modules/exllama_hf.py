@@ -16,7 +16,7 @@ except:
     logger.warning('Exllama module failed to load. Will attempt to load from repositories.')
     try:
         from modules.relative_imports import RelativeImport
-        
+
         with RelativeImport("repositories/exllama"):
             from model import ExLlama, ExLlamaCache, ExLlamaConfig
     except:
@@ -77,7 +77,7 @@ class ExllamaHF(PreTrainedModel):
         assert len(model_args) == 0 and len(kwargs) == 0, "extra args is currently not supported"
         if isinstance(pretrained_model_name_or_path, str):
             pretrained_model_name_or_path = Path(pretrained_model_name_or_path)
-            
+
         pretrained_model_name_or_path = Path(f'{shared.args.model_dir}') / Path(pretrained_model_name_or_path)
         config = ExLlamaConfig(pretrained_model_name_or_path / 'config.json')
 
@@ -95,7 +95,7 @@ class ExllamaHF(PreTrainedModel):
         if shared.args.gpu_split:
             config.set_auto_map(shared.args.gpu_split)
             config.gpu_peer_fix = True
-        
+
         # This slowes down a bit but align better with autogptq generation.
         # TODO: Should give user choice to tune the exllama config
         # config.fused_attn = False

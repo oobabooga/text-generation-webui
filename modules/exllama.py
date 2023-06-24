@@ -12,7 +12,7 @@ except:
     logger.warning('Exllama module failed to load. Will attempt to load from repositories.')
     try:
         from modules.relative_imports import RelativeImport
-        
+
         with RelativeImport("repositories/exllama"):
             from generator import ExLlamaGenerator
             from model import ExLlama, ExLlamaCache, ExLlamaConfig
