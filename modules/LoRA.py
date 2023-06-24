@@ -20,10 +20,13 @@ def add_lora_to_model(lora_names):
 def add_lora_exllama(lora_names):
 
     try:
-        from repositories.exllama.lora import ExLlamaLora
+        from exllama.lora import ExLlamaLora
     except:
-        logger.error("Could not find the file repositories/exllama/lora.py. Make sure that exllama is cloned inside repositories/ and is up to date.")
-        return
+        try:
+            from repositories.exllama.lora import ExLlamaLora
+        except:
+            logger.error("Could not find the file repositories/exllama/lora.py. Make sure that exllama is cloned inside repositories/ and is up to date.")
+            return
 
     if len(lora_names) == 0:
         shared.model.generator.lora = None
