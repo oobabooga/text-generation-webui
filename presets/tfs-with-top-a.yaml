@@ -1,0 +1,4 @@
+temperature: 0.7
+tfs: 0.95
+top_a: 0.2
+repetition_penalty: 1.15

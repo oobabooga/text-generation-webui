@@ -1,0 +1,7 @@
+temperature: 1.01
+top_p: 0.21
+eta_cutoff: 10.78
+top_a: 0.75
+repetition_penalty: 1.21
+encoder_repetition_penalty: 1.07
+top_k: 91
