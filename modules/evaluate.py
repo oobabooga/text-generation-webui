@@ -100,7 +100,7 @@ def calculate_perplexity(models, input_dataset, stride, _max_length):
             target_ids[:, :-trg_len] = -100
 
             with torch.no_grad():
-                outputs = shared.model(input_ids, labels=target_ids)
+                outputs = shared.model(input_ids=input_ids, labels=target_ids)
 
                 # loss is calculated using CrossEntropyLoss which averages over valid labels
                 # N.B. the model only calculates loss over trg_len - 1 labels, because it internally shifts the labels
