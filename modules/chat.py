@@ -152,6 +152,7 @@ def get_stopping_strings(state):
 def chatbot_wrapper(text, history, state, regenerate=False, _continue=False, loading_message=True):
     output = copy.deepcopy(history)
     output = apply_extensions('history', output)
+    state = apply_extensions('state', state)
     if shared.model_name == 'None' or shared.model is None:
         logger.error("No model is loaded! Select one in the Model tab.")
         yield output
@@ -161,6 +162,7 @@ def chatbot_wrapper(text, history, state, regenerate=False, _continue=False, loa
     just_started = True
     visible_text = None
     stopping_strings = get_stopping_strings(state)
+    is_stream = state['stream']
 
     # Preparing the input
     if not any((regenerate, _continue)):
@@ -204,11 +206,11 @@ def chatbot_wrapper(text, history, state, regenerate=False, _continue=False, loa
 
             # Extract the reply
             visible_reply = re.sub("(<USER>|<user>|{{user}})", state['name1'], reply)
-            visible_reply = apply_extensions("output", visible_reply)
 
             # We need this global variable to handle the Stop event,
             # otherwise gradio gets confused
             if shared.stop_everything:
+                output['visible'][-1][1] = apply_extensions("output", output['visible'][-1][1])
                 yield output
                 return
 
@@ -221,12 +223,12 @@ def chatbot_wrapper(text, history, state, regenerate=False, _continue=False, loa
             if _continue:
                 output['internal'][-1] = [text, last_reply[0] + reply]
                 output['visible'][-1] = [visible_text, last_reply[1] + visible_reply]
-                if state['stream']:
+                if is_stream:
                     yield output
             elif not (j == 0 and visible_reply.strip() == ''):
                 output['internal'][-1] = [text, reply.lstrip(' ')]
                 output['visible'][-1] = [visible_text, visible_reply.lstrip(' ')]
-                if state['stream']:
+                if is_stream:
                     yield output
 
         if reply in [None, cumulative_reply]:
@@ -234,6 +236,7 @@ def chatbot_wrapper(text, history, state, regenerate=False, _continue=False, loa
         else:
             cumulative_reply = reply
 
+    output['visible'][-1][1] = apply_extensions("output", output['visible'][-1][1])
     yield output
 
 
