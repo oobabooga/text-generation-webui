@@ -235,6 +235,7 @@ TheBloke_WizardLM-30B-GPTQ:
 .*minotaur:
   mode: 'instruct'
   instruction_template: 'Minotaur'
+.*minotaur-15b:
   truncation_length: 8192
   chat_prompt_size: 8192
   chat_prompt_size_max: 8192
