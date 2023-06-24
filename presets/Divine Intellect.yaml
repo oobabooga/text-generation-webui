@@ -1,7 +1,4 @@
 temperature: 1.31
 top_p: 0.14
-epsilon_cutoff: 1.49
-eta_cutoff: 10.42
-top_a: 0.52
 repetition_penalty: 1.17
 top_k: 49
