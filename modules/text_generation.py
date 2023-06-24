@@ -10,7 +10,8 @@ import transformers
 
 import modules.shared as shared
 from modules.callbacks import (Iteratorize, Stream,
-                               _SentinelTokenStoppingCriteria)
+                               _SentinelTokenStoppingCriteria,
+                               _StopEverythingStoppingCriteria)
 from modules.extensions import apply_extensions
 from modules.html_generator import generate_4chan_html, generate_basic_html
 from modules.logging_colors import logger
@@ -227,6 +228,8 @@ def generate_reply_HF(question, original_question, seed, state, eos_token=None, 
 
     # Create the StoppingCriteriaList with the stopping strings (needs to be done after tokenizer extensions)
     stopping_criteria_list = transformers.StoppingCriteriaList()
+    # Always stop if stop_everything is set
+    stopping_criteria_list.append(_StopEverythingStoppingCriteria());
     for st in (stopping_strings, ast.literal_eval(f"[{state['custom_stopping_strings']}]")):
         if type(st) is list and len(st) > 0:
             sentinel_token_ids = [encode(string, add_special_tokens=False) for string in st]
