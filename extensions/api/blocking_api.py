@@ -184,6 +184,17 @@ class Handler(BaseHTTPRequestHandler):
         else:
             self.send_error(404)
 
+    def do_OPTIONS(self):
+        self.send_response(200)
+        self.end_headers()
+
+    def end_headers(self):
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', '*')
+        self.send_header('Access-Control-Allow-Headers', '*')
+        self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate')
+        super().end_headers()
+
 
 def _run_server(port: int, share: bool = False):
     address = '0.0.0.0' if shared.args.listen else '127.0.0.1'

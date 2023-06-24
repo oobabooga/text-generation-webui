@@ -1,15 +1,10 @@
 import os
-import sys
 from pathlib import Path
-from typing import *
+from typing import Any, Dict, Optional, Union
 
 import torch
-from transformers import (
-    GenerationConfig,
-    LlamaTokenizer,
-    PretrainedConfig,
-    PreTrainedModel
-)
+from torch.nn import CrossEntropyLoss
+from transformers import GenerationConfig, PretrainedConfig, PreTrainedModel
 from transformers.modeling_outputs import CausalLMOutputWithPast
 
 from modules import shared
@@ -38,19 +33,34 @@ class ExllamaHF(PreTrainedModel):
 
     @property
     def device(self) -> torch.device:
-        # TODO: May cause problem on multi-gpu inference?
         return torch.device(0)
 
     def __call__(self, *args, **kwargs):
         # TODO: Some decoding methods (such as Contrastive Search) may not work at this time
         assert len(args) == 0, 'no *args should be passed to forward'
-        use_cache = kwargs['use_cache']
+        use_cache = kwargs.get('use_cache', True)
+        labels = kwargs.get('labels', None)
         seq = kwargs['input_ids'][0].tolist()
         cache = kwargs['past_key_values'] if 'past_key_values' in kwargs else None
         if cache is None:
             cache = ExLlamaCache(self.ex_model)
             self.ex_model.forward(torch.tensor([seq[:-1]], dtype=torch.long), cache, preprocess_only=True)
-        logits = self.ex_model.forward(torch.tensor([seq[-1:]], dtype=torch.long), cache).to(self.device)
+
+        logits = self.ex_model.forward(torch.tensor([seq[-1:]], dtype=torch.long), cache).to(kwargs['input_ids'].device)
+
+        loss = None
+        if labels is not None:
+            # Shift so that tokens < n predict n
+            shift_logits = logits[..., :-1, :].contiguous()
+            shift_labels = labels[..., 1:].contiguous()
+            # Flatten the tokens
+            loss_fct = CrossEntropyLoss()
+            shift_logits = shift_logits.view(-1, logits.shape[-1])
+            shift_labels = shift_labels.view(-1)
+            # Enable model parallelism
+            shift_labels = shift_labels.to(shift_logits.device)
+            loss = loss_fct(shift_logits, shift_labels)
+
         return CausalLMOutputWithPast(logits=logits, past_key_values=cache if use_cache else None)
 
     @classmethod
@@ -72,11 +82,14 @@ class ExllamaHF(PreTrainedModel):
         assert weight_path is not None, f'could not find weight in "{pretrained_model_name_or_path}"'
 
         config.model_path = str(weight_path)
+
+        if shared.args.gpu_split:
+            config.set_auto_map(shared.args.gpu_split)
+            config.gpu_peer_fix = True
         
         # This slowes down a bit but align better with autogptq generation.
         # TODO: Should give user choice to tune the exllama config
-        config.act_order = True
-        config.fused_attn = False
-        config.fused_mlp_thd = 0
+        # config.fused_attn = False
+        # config.fused_mlp_thd = 0
 
         return ExllamaHF(config)
