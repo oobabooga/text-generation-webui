@@ -4,7 +4,6 @@ import os
 import time
 import requests
 import yaml
-from copy import deepcopy
 import numpy as np
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
@@ -255,7 +254,7 @@ class Handler(BaseHTTPRequestHandler):
                 return
 
             is_legacy = '/generate' in self.path
-            is_chat = 'chat' in self.path
+            is_chat_request = 'chat' in self.path
             resp_list = 'data' if is_legacy else 'choices'
 
             # XXX model is ignored for now
@@ -263,11 +262,11 @@ class Handler(BaseHTTPRequestHandler):
             model = shared.model_name
             created_time = int(time.time())
 
-            cmpl_id = "chatcmpl-%d" % (created_time) if is_chat else "conv-%d" % (created_time)
+            cmpl_id = "chatcmpl-%d" % (created_time) if is_chat_request else "conv-%d" % (created_time)
 
             # Request Parameters
             # Try to use openai defaults or map them to something with the same intent
-            req_params = deepcopy(default_req_params)
+            req_params = default_req_params.copy()
             stopping_strings = []
 
             if 'stop' in body:
@@ -279,7 +278,7 @@ class Handler(BaseHTTPRequestHandler):
             truncation_length = default(shared.settings, 'truncation_length', 2048)
             truncation_length = clamp(default(body, 'truncation_length', truncation_length), 1, truncation_length)
 
-            default_max_tokens = truncation_length if is_chat else 16  # completions default, chat default is 'inf' so we need to cap it.
+            default_max_tokens = truncation_length if is_chat_request else 16  # completions default, chat default is 'inf' so we need to cap it.
 
             max_tokens_str = 'length' if is_legacy else 'max_tokens'
             max_tokens = default(body, max_tokens_str, default(shared.settings, 'max_new_tokens', default_max_tokens))
@@ -296,9 +295,11 @@ class Handler(BaseHTTPRequestHandler):
             req_params['seed'] = shared.settings.get('seed', default_req_params['seed'])
             req_params['add_bos_token'] = shared.settings.get('add_bos_token', default_req_params['add_bos_token'])
 
+            is_streaming = req_params['stream']
+
             self.send_response(200)
             self.send_access_control_headers()
-            if req_params['stream']:
+            if is_streaming:
                 self.send_header('Content-Type', 'text/event-stream')
                 self.send_header('Cache-Control', 'no-cache')
                 # self.send_header('Connection', 'keep-alive')
@@ -312,7 +313,7 @@ class Handler(BaseHTTPRequestHandler):
             stream_object_type = ''
             object_type = ''
 
-            if is_chat:
+            if is_chat_request:
                 # Chat Completions
                 stream_object_type = 'chat.completions.chunk'
                 object_type = 'chat.completions'
@@ -394,7 +395,7 @@ class Handler(BaseHTTPRequestHandler):
                     system_msg = system_msg + '\n'
 
                 system_token_count = len(encode(system_msg)[0])
-                remaining_tokens = req_params['truncation_length'] - system_token_count
+                remaining_tokens = truncation_length - system_token_count
                 chat_msg = ''
 
                 while chat_msgs:
@@ -427,20 +428,19 @@ class Handler(BaseHTTPRequestHandler):
                     return
 
                 token_count = len(encode(prompt)[0])
-                if token_count >= req_params['truncation_length']:
+                if token_count >= truncation_length:
                     new_len = int(len(prompt) * shared.settings['truncation_length'] / token_count)
                     prompt = prompt[-new_len:]
                     new_token_count = len(encode(prompt)[0])
                     print(f"Warning: truncating prompt to {new_len} characters, was {token_count} tokens. Now: {new_token_count} tokens.")
                     token_count = new_token_count
 
-            if req_params['truncation_length'] - token_count < req_params['max_new_tokens']:
-                print(f"Warning: Ignoring max_new_tokens ({req_params['max_new_tokens']}), too large for the remaining context. Remaining tokens: {req_params['truncation_length'] - token_count}")
-                req_params['max_new_tokens'] = req_params['truncation_length'] - token_count
+            if truncation_length - token_count < req_params['max_new_tokens']:
+                print(f"Warning: Ignoring max_new_tokens ({req_params['max_new_tokens']}), too large for the remaining context. Remaining tokens: {truncation_length - token_count}")
+                req_params['max_new_tokens'] = truncation_length - token_count
                 print(f"Warning: Set max_new_tokens = {req_params['max_new_tokens']}")
 
-            if req_params['stream']:
-                shared.args.chat = True
+            if is_streaming:
                 # begin streaming
                 chunk = {
                     "id": cmpl_id,
@@ -504,7 +504,7 @@ class Handler(BaseHTTPRequestHandler):
                 if buffer_and_continue:
                     continue
 
-                if req_params['stream']:
+                if is_streaming:
                     # Streaming
                     new_content = answer[len_seen:]
 
@@ -537,7 +537,7 @@ class Handler(BaseHTTPRequestHandler):
                     self.wfile.write(response.encode('utf-8'))
                     completion_token_count += len(encode(new_content)[0])
 
-            if req_params['stream']:
+            if is_streaming:
                 chunk = {
                     "id": cmpl_id,
                     "object": stream_object_type,
@@ -578,7 +578,7 @@ class Handler(BaseHTTPRequestHandler):
 
             completion_token_count = len(encode(answer)[0])
             stop_reason = "stop"
-            if token_count + completion_token_count >= req_params['truncation_length']:
+            if token_count + completion_token_count >= truncation_length:
                 stop_reason = "length"
 
             resp = {
@@ -597,7 +597,7 @@ class Handler(BaseHTTPRequestHandler):
                 }
             }
 
-            if is_chat:
+            if is_chat_request:
                 resp[resp_list][0]["message"] = {"role": "assistant", "content": answer}
             else:
                 resp[resp_list][0]["text"] = answer
@@ -622,7 +622,7 @@ class Handler(BaseHTTPRequestHandler):
             input = body.get('input', '')
 
             # Request parameters
-            req_params = deepcopy(default_req_params)
+            req_params = default_req_params.copy()
             stopping_strings = []
 
             # Alpaca is verbose so a good default prompt
