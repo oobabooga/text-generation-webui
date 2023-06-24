@@ -557,7 +557,6 @@ def upload_character(json_file, img, tavern=False):
         f.write(json_file)
 
     if img is not None:
-        img = Image.open(io.BytesIO(img))
         img.save(Path(f'characters/{outfile_name}.png'))
 
     logger.info(f'New character saved to "characters/{outfile_name}.json".')
@@ -570,7 +569,7 @@ def upload_tavern_character(img, name1, name2):
     decoded_string = base64.b64decode(_img.info['chara'])
     _json = json.loads(decoded_string)
     _json = {"char_name": _json['name'], "char_persona": _json['description'], "char_greeting": _json["first_mes"], "example_dialogue": _json['mes_example'], "world_scenario": _json['scenario']}
-    return upload_character(json.dumps(_json), img, tavern=True)
+    return upload_character(json.dumps(_json), _img, tavern=True)
 
 
 def upload_your_profile_picture(img):
