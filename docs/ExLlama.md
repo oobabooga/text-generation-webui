@@ -12,9 +12,7 @@ Configure text-generation-webui to use exllama via the UI or command line:
 
 ### Manual setup
 
-No additional installation steps are necessary since an exllama package is already included in the requirements.txt. If this package fails to install for some reason, you can use the following manual procedure:
-
-1) Clone the ExLlama repository into your `text-generation-webui/repositories` folder:
+No additional installation steps are necessary since an exllama package is already included in the requirements.txt. If this package fails to install for some reason, you can install it manually by cloning the original repository into your `repositories/` folder:
 
 ```
 mkdir repositories
