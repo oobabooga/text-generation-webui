@@ -170,10 +170,11 @@ def chatbot_wrapper(text, history, state, regenerate=False, _continue=False, loa
         if visible_text is None:
             visible_text = text
 
-        text = apply_extensions('input', text)
         # *Is typing...*
         if loading_message:
             yield {'visible': output['visible'] + [[visible_text, shared.processing_message]], 'internal': output['internal']}
+
+        text = apply_extensions('input', text)
     else:
         text, visible_text = output['internal'][-1][0], output['visible'][-1][0]
         if regenerate:
