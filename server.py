@@ -577,12 +577,10 @@ def create_interface():
                     with gr.Tab('Chat history'):
                         with gr.Row():
                             with gr.Column():
-                                gr.Markdown('### Upload')
-                                shared.gradio['upload_chat_history'] = gr.File(type='binary', file_types=['.json', '.txt'])
+                                shared.gradio['upload_chat_history'] = gr.File(type='binary', file_types=['.json', '.txt'], label="Upload")
 
                             with gr.Column():
-                                gr.Markdown('### Download')
-                                shared.gradio['download'] = gr.File()
+                                shared.gradio['download'] = gr.File(label="Download")
                                 shared.gradio['download_button'] = gr.Button(value='Refresh')
 
                     with gr.Tab('Upload character'):
