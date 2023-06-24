@@ -149,7 +149,7 @@ class ModelDownloader:
                     for data in r.iter_content(block_size):
                         t.update(len(data))
                         f.write(data)
-                        if self.progress_bar is not None:
+                        if total_size != 0 and self.progress_bar is not None:
                             count += len(data)
                             self.progress_bar(float(count) / float(total_size), f"Downloading {filename}")
 
@@ -216,6 +216,10 @@ if __name__ == '__main__':
 
     branch = args.branch
     model = args.MODEL
+
+    if model is None:
+        print("Error: Please specify the model you'd like to download (e.g. 'python download-model.py facebook/opt-1.3b').")
+        sys.exit()
 
     downloader = ModelDownloader()
     # Cleaning up the model/branch names
