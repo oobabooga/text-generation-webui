@@ -623,6 +623,7 @@ class Handler(BaseHTTPRequestHandler):
 
             # Request parameters
             req_params = deepcopy(default_req_params)
+            stopping_strings = []
 
             # Alpaca is verbose so a good default prompt
             default_template = (
