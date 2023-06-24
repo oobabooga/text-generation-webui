@@ -217,6 +217,10 @@ if __name__ == '__main__':
     branch = args.branch
     model = args.MODEL
 
+    if model is None:
+        print("Error: Please specify the model you'd like to download (e.g. 'python download-model.py facebook/opt-1.3b').")
+        sys.exit()
+
     downloader = ModelDownloader()
     # Cleaning up the model/branch names
     try:
