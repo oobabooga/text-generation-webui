@@ -350,4 +350,4 @@ The presets that are included by default are the result of a contest that receiv
 
 - Gradio dropdown menu refresh button, code for reloading the interface: https://github.com/AUTOMATIC1111/stable-diffusion-webui
 - Godlike preset: https://github.com/KoboldAI/KoboldAI-Client/wiki/Settings-Presets
-- Code for early stopping in chat mode, code for some of the sliders: https://github.com/PygmalionAI/gradio-ui/
+- Code for some of the sliders: https://github.com/PygmalionAI/gradio-ui/
