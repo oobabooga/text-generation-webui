@@ -6,6 +6,13 @@ set PATH=%PATH%;%SystemRoot%\system32
 
 echo "%CD%"| findstr /C:" " >nul && echo This script relies on Miniconda which can not be silently installed under a path with spaces. && goto end
 
+@rem Check for special characters in installation path
+set "SPCHARMESSAGE="WARNING: Special characters were detected in the installation path!" "         This can cause the installation to fail!""
+echo "%CD%"| findstr /R /C:"[!#\$%&()\*+,;<=>?@\[\]\^`{|}~]" >nul && (
+	call :PrintBigMessage %SPCHARMESSAGE%
+)
+set SPCHARMESSAGE=
+
 @rem fix failed install when installing to a separate drive
 set TMP=%cd%\installer_files
 set TEMP=%cd%\installer_files
@@ -39,8 +46,8 @@ if "%conda_exists%" == "F" (
 
 @rem create the installer env
 if not exist "%INSTALL_ENV_DIR%" (
-  echo Packages to install: %PACKAGES_TO_INSTALL%
-  call "%CONDA_ROOT_PREFIX%\_conda.exe" create --no-shortcuts -y -k --prefix "%INSTALL_ENV_DIR%" python=3.10 || ( echo. && echo Conda environment creation failed. && goto end )
+	echo Packages to install: %PACKAGES_TO_INSTALL%
+	call "%CONDA_ROOT_PREFIX%\_conda.exe" create --no-shortcuts -y -k --prefix "%INSTALL_ENV_DIR%" python=3.10 || ( echo. && echo Conda environment creation failed. && goto end )
 )
 
 @rem check if conda environment was actually created
@@ -58,6 +65,17 @@ call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" activate "%INSTALL_ENV_DIR%" || ( 
 
 @rem setup installer env
 call python webui.py
+
+@rem below are functions for the script   next line skips these during normal execution
+goto end
+
+:PrintBigMessage
+echo. && echo.
+echo *******************************************************************
+for %%M in (%*) do echo * %%~M
+echo *******************************************************************
+echo. && echo.
+exit /b
 
 :end
 pause
