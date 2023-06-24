@@ -55,7 +55,7 @@ default_req_params = {
     'mirostat_eta': 0.1,
     'ban_eos_token': False,
     'skip_special_tokens': True,
-    'custom_stopping_strings': [],
+    'custom_stopping_strings': '',
 }
 
 # Optional, install the module and download the model to enable
@@ -268,12 +268,13 @@ class Handler(BaseHTTPRequestHandler):
             # Request Parameters
             # Try to use openai defaults or map them to something with the same intent
             req_params = deepcopy(default_req_params)
+            stopping_strings = []
 
             if 'stop' in body:
                 if isinstance(body['stop'], str):
-                    req_params['custom_stopping_strings'].extend([body['stop']])
+                    stopping_strings.extend([body['stop']])
                 elif isinstance(body['stop'], list):
-                    req_params['custom_stopping_strings'].extend(body['stop'])
+                    stopping_strings.extend(body['stop'])
 
             truncation_length = default(shared.settings, 'truncation_length', 2048)
             truncation_length = clamp(default(body, 'truncation_length', truncation_length), 1, truncation_length)
@@ -348,21 +349,21 @@ class Handler(BaseHTTPRequestHandler):
                         }
 
                         if 'Alpaca' in shared.settings['instruction_template']:
-                            req_params['custom_stopping_strings'].extend(['\n###'])
+                            stopping_strings.extend(['\n###'])
                         elif instruct['user']: # WizardLM and some others have no user prompt.
-                            req_params['custom_stopping_strings'].extend(['\n' + instruct['user'], instruct['user']])
+                            stopping_strings.extend(['\n' + instruct['user'], instruct['user']])
 
                         if debug:
                             print(f"Loaded instruction role format: {shared.settings['instruction_template']}")
 
                     except Exception as e:
-                        req_params['custom_stopping_strings'].extend(['\nuser:'])
+                        stopping_strings.extend(['\nuser:'])
 
                         print(f"Exception: When loading characters/instruction-following/{shared.settings['instruction_template']}.yaml: {repr(e)}")
                         print("Warning: Loaded default instruction-following template for model.")
 
                 else:
-                    req_params['custom_stopping_strings'].extend(['\nuser:'])
+                    stopping_strings.extend(['\nuser:'])
                     print("Warning: Loaded default instruction-following template for model.")
 
                 system_msgs = []
@@ -465,11 +466,11 @@ class Handler(BaseHTTPRequestHandler):
             # generate reply #######################################
             if debug:
                 print({'prompt': prompt, 'req_params': req_params})
-            generator = generate_reply(prompt, req_params, stopping_strings=req_params['custom_stopping_strings'], is_chat=False)
+            generator = generate_reply(prompt, req_params, stopping_strings=stopping_strings, is_chat=False)
 
             answer = ''
             seen_content = ''
-            longest_stop_len = max([len(x) for x in req_params['custom_stopping_strings']] + [0])
+            longest_stop_len = max([len(x) for x in stopping_strings] + [0])
 
             for a in generator:
                 answer = a
@@ -478,7 +479,7 @@ class Handler(BaseHTTPRequestHandler):
                 len_seen = len(seen_content)
                 search_start = max(len_seen - longest_stop_len, 0)
 
-                for string in req_params['custom_stopping_strings']:
+                for string in stopping_strings:
                     idx = answer.find(string, search_start)
                     if idx != -1:
                         answer = answer[:idx]  # clip it.
@@ -491,7 +492,7 @@ class Handler(BaseHTTPRequestHandler):
                 # is completed, buffer and generate more, don't send it
                 buffer_and_continue = False
 
-                for string in req_params['custom_stopping_strings']:
+                for string in stopping_strings:
                     for j in range(len(string) - 1, 0, -1):
                         if answer[-j:] == string[:j]:
                             buffer_and_continue = True
@@ -635,7 +636,7 @@ class Handler(BaseHTTPRequestHandler):
             # Use the special instruction/input/response template for anything trained like Alpaca
             if shared.settings['instruction_template']:
                 if 'Alpaca' in shared.settings['instruction_template']:
-                    req_params['custom_stopping_strings'].extend(['\n###'])
+                    stopping_strings.extend(['\n###'])
                 else:
                     try:
                         instruct = yaml.safe_load(open(f"characters/instruction-following/{shared.settings['instruction_template']}.yaml", 'r'))
@@ -648,14 +649,14 @@ class Handler(BaseHTTPRequestHandler):
 
                         instruction_template = instruct.get('context', '') + template[:template.find('<|bot-message|>')].rstrip(' ')
                         if instruct['user']:
-                            req_params['custom_stopping_strings'].extend(['\n' + instruct['user'], instruct['user'] ])
+                            stopping_strings.extend(['\n' + instruct['user'], instruct['user'] ])
 
                     except Exception as e:
                         instruction_template = default_template
                         print(f"Exception: When loading characters/instruction-following/{shared.settings['instruction_template']}.yaml: {repr(e)}")
                         print("Warning: Loaded default instruction-following template (Alpaca) for model.")
             else:
-                req_params['custom_stopping_strings'].extend(['\n###'])
+                stopping_strings.extend(['\n###'])
                 print("Warning: Loaded default instruction-following template (Alpaca) for model.")
                 
 
@@ -675,9 +676,9 @@ class Handler(BaseHTTPRequestHandler):
             if debug:
                 print({'edit_template': edit_task, 'req_params': req_params, 'token_count': token_count})
             
-            generator = generate_reply(edit_task, req_params, stopping_strings=req_params['custom_stopping_strings'], is_chat=False)
+            generator = generate_reply(edit_task, req_params, stopping_strings=stopping_strings, is_chat=False)
 
-            longest_stop_len = max([len(x) for x in req_params['custom_stopping_strings']] + [0])
+            longest_stop_len = max([len(x) for x in stopping_strings] + [0])
             answer = ''
             seen_content = ''
             for a in generator:
@@ -687,7 +688,7 @@ class Handler(BaseHTTPRequestHandler):
                 len_seen = len(seen_content)
                 search_start = max(len_seen - longest_stop_len, 0)
 
-                for string in req_params['custom_stopping_strings']:
+                for string in stopping_strings:
                     idx = answer.find(string, search_start)
                     if idx != -1:
                         answer = answer[:idx]  # clip it.
