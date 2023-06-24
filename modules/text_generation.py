@@ -134,6 +134,9 @@ def stop_everything_event():
 
 
 def generate_reply_wrapper(question, state, stopping_strings=None):
+    reply = question if not shared.is_seq2seq else ''
+    yield formatted_outputs(reply, shared.model_name)
+
     for reply in generate_reply(question, state, stopping_strings, is_chat=False):
         if not shared.is_seq2seq:
             reply = question + reply
@@ -205,15 +208,13 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False):
     if len(all_stop_strings) > 0 and not state['stream']:
         state['stream'] = True
 
-    for i, reply in enumerate(generate_func(question, original_question, seed, state, stopping_strings, is_chat=is_chat)):
+    for reply in generate_func(question, original_question, seed, state, stopping_strings, is_chat=is_chat):
         reply, stop_found = apply_stopping_strings(reply, all_stop_strings)
         if is_stream:
             cur_time = time.time()
             if cur_time - last_update > 0.041666666666666664:  # Limit streaming to 24 fps
                 last_update = cur_time
                 yield reply
-        elif i == 0:
-            yield reply
 
         if stop_found:
             break
