@@ -38,14 +38,14 @@ try:
     MODEL_CLASSES = {v: k for k, v in MODEL_FOR_CAUSAL_LM_MAPPING_NAMES}
 except:
     standard_modules = ["q_proj", "v_proj"]
-    model_to_lora_modules = {"llama": standard_modules, "opt": standard_modules, "gptj": standard_modules, "gpt_neox": ["query_key_value"], "rw":["query_key_value"]}
+    model_to_lora_modules = {"llama": standard_modules, "opt": standard_modules, "gptj": standard_modules, "gpt_neox": ["query_key_value"], "rw": ["query_key_value"]}
     MODEL_CLASSES = {
         "LlamaForCausalLM": "llama",
         "OPTForCausalLM": "opt",
         "GPTJForCausalLM": "gptj",
         "GPTNeoXForCausalLM": "gpt_neox",
         "RWForCausalLM": "rw"
-        
+
     }
 
 train_log = {}
@@ -111,7 +111,7 @@ def create_train_interface():
             optimizer = gr.Dropdown(label='Optimizer', value='adamw_torch', choices=['adamw_hf', 'adamw_torch', 'adamw_torch_fused', 'adamw_torch_xla', 'adamw_apex_fused', 'adafactor', 'adamw_bnb_8bit', 'adamw_anyprecision', 'sgd', 'adagrad'], info='Different optimizer implementation options, for advanced users. Effects of different options are not well documented yet.')
             train_only_after = gr.Textbox(label='Train Only After', value='', info='Only consider text *after* this string in any given chunk for training. For Alpaca datasets, use "### Response:" to only train the response and ignore the input.')
             stop_at_loss = gr.Slider(label='Stop at loss', minimum=0.0, maximum=3.0, step=0.1, value=0.00, info='The process will automatically stop once the desired loss value is reached. (reasonable numbers are 1.5-1.8)')
-        
+
             with gr.Row():
                 higher_rank_limit = gr.Checkbox(label='Enable higher ranks', value=False, info='If checked, changes Rank/Alpha slider above to go much higher. This will not work without a datacenter-class GPU.')
 
@@ -303,8 +303,8 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     # == Prep the dataset, format, etc ==
     if raw_text_file not in ['None', '']:
         logger.info("Loading raw text file dataset...")
-        
-        train_template["template_type"] ="raw_text"
+
+        train_template["template_type"] = "raw_text"
 
         with open(clean_path('training/datasets', f'{raw_text_file}.txt'), 'r', encoding='utf-8') as file:
             raw_text = file.read().replace('\r', '')
@@ -346,7 +346,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             yield "**Missing format choice input, cannot continue.**"
             return
 
-        train_template["template_type"] ="dataset"
+        train_template["template_type"] = "dataset"
 
         with open(clean_path('training/formats', f'{format}.json'), 'r', encoding='utf-8') as formatFile:
             format_data: dict[str, str] = json.load(formatFile)
@@ -355,7 +355,6 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         for _, value in format_data.items():
             prompt_key = f"template_{len(train_template)}"
             train_template[prompt_key] = value
-
 
         def generate_prompt(data_point: dict[str, str]):
             for options, data in format_data.items():
@@ -383,7 +382,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     # == Start prepping the model itself ==
     if not hasattr(shared.model, 'lm_head') or hasattr(shared.model.lm_head, 'weight'):
         logger.info("Getting model ready...")
-        prepare_model_for_kbit_training(shared.model)
+        prepare_model_for_int8_training(shared.model)
 
     logger.info("Prepping for training...")
     config = LoraConfig(
@@ -432,34 +431,32 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
                 control.should_training_stop = True
             elif state.global_step > 0 and actual_save_steps > 0 and state.global_step % actual_save_steps == 0:
                 lora_model.save_pretrained(f"{lora_file_path}/checkpoint-{tracked.current_steps}/")
-                 # Save log
+                # Save log
                 with open(f"{lora_file_path}/checkpoint-{tracked.current_steps}/training_log.json", 'w', encoding='utf-8') as file:
                     json.dump(train_log, file, indent=2)
                 # == Save training prompt ==
                 with open(f"{lora_file_path}/checkpoint-{tracked.current_steps}/training_prompt.json", 'w', encoding='utf-8') as file:
-                    json.dump(train_template, file, indent=2)        
-
+                    json.dump(train_template, file, indent=2)
 
         def on_substep_end(self, args: transformers.TrainingArguments, state: transformers.TrainerState, control: transformers.TrainerControl, **kwargs):
             tracked.current_steps += 1
             if WANT_INTERRUPT:
                 control.should_epoch_stop = True
                 control.should_training_stop = True
-        
+
         def on_log(self, args: transformers.TrainingArguments, state: transformers.TrainerState, control: transformers.TrainerControl, logs, **kwargs):
             train_log.update(logs)
             train_log.update({"current_steps": tracked.current_steps})
             if WANT_INTERRUPT:
-                print(f"\033[1;31;1mInterrupted by user\033[0;37;0m")
+                print("\033[1;31;1mInterrupted by user\033[0;37;0m")
 
             print(f"\033[1;30;40mStep: {tracked.current_steps} \033[0;37;0m", end='')
             if 'loss' in logs:
                 loss = float(logs['loss'])
-                if loss<=stop_at_loss:
+                if loss <= stop_at_loss:
                     control.should_epoch_stop = True
                     control.should_training_stop = True
-                    print(f"\033[1;31;1mStop Loss {stop_at_loss} reached.\033[0;37;0m")                 
-                    
+                    print(f"\033[1;31;1mStop Loss {stop_at_loss} reached.\033[0;37;0m")
 
     trainer = transformers.Trainer(
         model=lora_model,
@@ -473,7 +470,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             learning_rate=actual_lr,
             fp16=False if shared.args.cpu else True,
             optim=optimizer,
-            logging_steps= 2 if stop_at_loss > 0 else 5,
+            logging_steps=2 if stop_at_loss > 0 else 5,
             evaluation_strategy="steps" if eval_data is not None else "no",
             eval_steps=math.ceil(eval_steps / gradient_accumulation_steps) if eval_data is not None else None,
             save_strategy="steps" if eval_data is not None else "no",
@@ -501,19 +498,19 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     # == Save training prompt ==
     with open(f"{lora_file_path}/training_prompt.json", 'w', encoding='utf-8') as file:
         json.dump(train_template, file, indent=2)
-    
+
     # == Main run and monitor loop ==
     logger.info("Starting training...")
     yield "Starting..."
 
     train_log.update({"base_model_name": shared.model_name})
-    train_log.update({"base_model_class": shared.model.__class__.__name__}) 
-    train_log.update({"base_loaded_in_4bit": getattr(lora_model, "is_loaded_in_4bit", False)})     
+    train_log.update({"base_model_class": shared.model.__class__.__name__})
+    train_log.update({"base_loaded_in_4bit": getattr(lora_model, "is_loaded_in_4bit", False)})
     train_log.update({"base_loaded_in_8bit": getattr(lora_model, "is_loaded_in_8bit", False)})
 
-    if stop_at_loss>0:
+    if stop_at_loss > 0:
         print(f"Monitoring loss \033[1;31;1m(Auto-Stop at: {stop_at_loss})\033[0;37;0m")
-        
+
     if WANT_INTERRUPT:
         yield "Interrupted before start."
         return
