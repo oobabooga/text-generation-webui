@@ -14,7 +14,7 @@ from datasets import Dataset, load_dataset
 from peft import (
     LoraConfig,
     get_peft_model,
-    prepare_model_for_kbit_training,
+    prepare_model_for_int8_training,
     set_peft_model_state_dict
 )
 
