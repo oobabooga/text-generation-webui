@@ -237,8 +237,8 @@ def create_model_menus():
                         shared.gradio['llama_cpp_seed'] = gr.Number(label='Seed (0 for random)', value=shared.args.llama_cpp_seed)
                         shared.gradio['trust_remote_code'] = gr.Checkbox(label="trust-remote-code", value=shared.args.trust_remote_code, info='Make sure to inspect the .py files inside the model folder before loading it with this option enabled.')
                         shared.gradio['gptq_for_llama_info'] = gr.Markdown('GPTQ-for-LLaMa is currently 2x faster than AutoGPTQ on some systems. It is installed by default with the one-click installers. Otherwise, it has to be installed manually following the instructions here: [instructions](https://github.com/oobabooga/text-generation-webui/blob/main/docs/GPTQ-models-(4-bit-mode).md#installation-1).')
-                        shared.gradio['exllama_info'] = gr.Markdown('ExLlama has to be installed manually. See the instructions here: [instructions](https://github.com/oobabooga/text-generation-webui/blob/main/docs/ExLlama.md).')
-                        shared.gradio['exllama_HF_info'] = gr.Markdown('ExLlama_HF is a wrapper that lets you use ExLlama like a Transformers model, which means it can use the Transformers samplers. It\'s still a bit buggy, so feel free to help out by fixing issues.\n\nCheck out PR [#2777](https://github.com/oobabooga/text-generation-webui/pull/2777) for more details.')
+                        shared.gradio['exllama_info'] = gr.Markdown('For more information, consult the [docs](https://github.com/oobabooga/text-generation-webui/blob/main/docs/ExLlama.md).')
+                        shared.gradio['exllama_HF_info'] = gr.Markdown('ExLlama_HF is a wrapper that lets you use ExLlama like a Transformers model, which means it can use the Transformers samplers. It\'s a bit slower than the regular ExLlama and doesn\'t support LoRA.')
 
         with gr.Column():
             with gr.Row():
@@ -545,57 +545,60 @@ def create_interface():
                     shared.gradio['chat_style'] = gr.Dropdown(choices=utils.get_available_chat_styles(), label='Chat style', value=shared.settings['chat_style'], visible=shared.settings['mode'] != 'instruct')
 
             with gr.Tab('Chat settings', elem_id='chat-settings'):
-                with gr.Row():
-                    with gr.Column(scale=8):
-                        with gr.Row():
-                            shared.gradio['character_menu'] = gr.Dropdown(choices=utils.get_available_characters(), label='Character', elem_id='character-menu', info='Used in chat and chat-instruct modes.', elem_classes='slim-dropdown')
-                            ui.create_refresh_button(shared.gradio['character_menu'], lambda: None, lambda: {'choices': utils.get_available_characters()}, 'refresh-button')
-                            shared.gradio['save_character'] = gr.Button('💾', elem_classes='refresh-button')
-                            shared.gradio['delete_character'] = gr.Button('🗑️', elem_classes='refresh-button')
 
-                        shared.gradio['name1'] = gr.Textbox(value=shared.settings['name1'], lines=1, label='Your name')
-                        shared.gradio['name2'] = gr.Textbox(value=shared.settings['name2'], lines=1, label='Character\'s name')
-                        shared.gradio['context'] = gr.Textbox(value=shared.settings['context'], lines=4, label='Context')
-                        shared.gradio['greeting'] = gr.Textbox(value=shared.settings['greeting'], lines=4, label='Greeting')
-
-                    with gr.Column(scale=1):
-                        shared.gradio['character_picture'] = gr.Image(label='Character picture', type='pil')
-                        shared.gradio['your_picture'] = gr.Image(label='Your picture', type='pil', value=Image.open(Path('cache/pfp_me.png')) if Path('cache/pfp_me.png').exists() else None)
-
-                with gr.Row():
+                with gr.Tab("Character"):
                     with gr.Row():
-                        shared.gradio['instruction_template'] = gr.Dropdown(choices=utils.get_available_instruction_templates(), label='Instruction template', value='None', info='Change this according to the model/LoRA that you are using. Used in instruct and chat-instruct modes.', elem_classes='slim-dropdown')
-                        ui.create_refresh_button(shared.gradio['instruction_template'], lambda: None, lambda: {'choices': utils.get_available_instruction_templates()}, 'refresh-button')
-                        shared.gradio['save_template'] = gr.Button('💾', elem_classes='refresh-button')
-                        shared.gradio['delete_template'] = gr.Button('🗑️ ', elem_classes='refresh-button')
-
-                shared.gradio['name1_instruct'] = gr.Textbox(value='', lines=2, label='User string')
-                shared.gradio['name2_instruct'] = gr.Textbox(value='', lines=1, label='Bot string')
-                shared.gradio['context_instruct'] = gr.Textbox(value='', lines=4, label='Context')
-                shared.gradio['turn_template'] = gr.Textbox(value=shared.settings['turn_template'], lines=1, label='Turn template', info='Used to precisely define the placement of spaces and new line characters in instruction prompts.')
-                with gr.Row():
-                    shared.gradio['chat-instruct_command'] = gr.Textbox(value=shared.settings['chat-instruct_command'], lines=4, label='Command for chat-instruct mode', info='<|character|> gets replaced by the bot name, and <|prompt|> gets replaced by the regular chat prompt.')
-
-                with gr.Row():
-                    with gr.Tab('Chat history'):
-                        with gr.Row():
-                            with gr.Column():
-                                shared.gradio['upload_chat_history'] = gr.File(type='binary', file_types=['.json', '.txt'], label="Upload")
-
-                            with gr.Column():
-                                shared.gradio['download'] = gr.File(label="Download")
-                                shared.gradio['download_button'] = gr.Button(value='Refresh')
-
-                    with gr.Tab('Upload character'):
-                        with gr.Tab('JSON'):
+                        with gr.Column(scale=8):
                             with gr.Row():
-                                shared.gradio['upload_json'] = gr.File(type='binary', file_types=['.json'], label='JSON File')
-                                shared.gradio['upload_img_bot'] = gr.Image(type='pil', label='Profile Picture (optional)')
+                                shared.gradio['character_menu'] = gr.Dropdown(choices=utils.get_available_characters(), label='Character', elem_id='character-menu', info='Used in chat and chat-instruct modes.', elem_classes='slim-dropdown')
+                                ui.create_refresh_button(shared.gradio['character_menu'], lambda: None, lambda: {'choices': utils.get_available_characters()}, 'refresh-button')
+                                shared.gradio['save_character'] = gr.Button('💾', elem_classes='refresh-button')
+                                shared.gradio['delete_character'] = gr.Button('🗑️', elem_classes='refresh-button')
 
-                            shared.gradio['Upload character'] = gr.Button(value='Submit', interactive=False)
-                        with gr.Tab('TavernAI'):
-                            shared.gradio['upload_img_tavern'] = gr.File(type='binary', file_types=['image'], label='TavernAI PNG File')
-                            shared.gradio['Upload tavern character'] = gr.Button(value='Submit', interactive=False)
+                            shared.gradio['name1'] = gr.Textbox(value=shared.settings['name1'], lines=1, label='Your name')
+                            shared.gradio['name2'] = gr.Textbox(value=shared.settings['name2'], lines=1, label='Character\'s name')
+                            shared.gradio['context'] = gr.Textbox(value=shared.settings['context'], lines=4, label='Context')
+                            shared.gradio['greeting'] = gr.Textbox(value=shared.settings['greeting'], lines=4, label='Greeting')
+
+                        with gr.Column(scale=1):
+                            shared.gradio['character_picture'] = gr.Image(label='Character picture', type='pil')
+                            shared.gradio['your_picture'] = gr.Image(label='Your picture', type='pil', value=Image.open(Path('cache/pfp_me.png')) if Path('cache/pfp_me.png').exists() else None)
+
+                with gr.Tab("Instruction template"):
+                    with gr.Row():
+                        with gr.Row():
+                            shared.gradio['instruction_template'] = gr.Dropdown(choices=utils.get_available_instruction_templates(), label='Instruction template', value='None', info='Change this according to the model/LoRA that you are using. Used in instruct and chat-instruct modes.', elem_classes='slim-dropdown')
+                            ui.create_refresh_button(shared.gradio['instruction_template'], lambda: None, lambda: {'choices': utils.get_available_instruction_templates()}, 'refresh-button')
+                            shared.gradio['save_template'] = gr.Button('💾', elem_classes='refresh-button')
+                            shared.gradio['delete_template'] = gr.Button('🗑️ ', elem_classes='refresh-button')
+
+                    shared.gradio['name1_instruct'] = gr.Textbox(value='', lines=2, label='User string')
+                    shared.gradio['name2_instruct'] = gr.Textbox(value='', lines=1, label='Bot string')
+                    shared.gradio['context_instruct'] = gr.Textbox(value='', lines=4, label='Context')
+                    shared.gradio['turn_template'] = gr.Textbox(value=shared.settings['turn_template'], lines=1, label='Turn template', info='Used to precisely define the placement of spaces and new line characters in instruction prompts.')
+                    with gr.Row():
+                        shared.gradio['chat-instruct_command'] = gr.Textbox(value=shared.settings['chat-instruct_command'], lines=4, label='Command for chat-instruct mode', info='<|character|> gets replaced by the bot name, and <|prompt|> gets replaced by the regular chat prompt.')
+
+                with gr.Tab('Chat history'):
+                    with gr.Row():
+                        with gr.Column():
+                            shared.gradio['download'] = gr.File(label="Download")
+                            shared.gradio['download_button'] = gr.Button(value='Refresh')
+
+                        with gr.Column():
+                            shared.gradio['upload_chat_history'] = gr.File(type='binary', file_types=['.json', '.txt'], label="Upload")
+
+                with gr.Tab('Upload character'):
+                    with gr.Tab('JSON'):
+                        with gr.Row():
+                            shared.gradio['upload_json'] = gr.File(type='binary', file_types=['.json'], label='JSON File')
+                            shared.gradio['upload_img_bot'] = gr.Image(type='pil', label='Profile Picture (optional)')
+
+                        shared.gradio['Upload character'] = gr.Button(value='Submit', interactive=False)
+
+                    with gr.Tab('TavernAI'):
+                        shared.gradio['upload_img_tavern'] = gr.File(type='binary', file_types=['image'], label='TavernAI PNG File')
+                        shared.gradio['Upload tavern character'] = gr.Button(value='Submit', interactive=False)
 
             with gr.Tab("Parameters", elem_id="parameters"):
                 create_settings_menus(default_preset)
@@ -836,7 +839,7 @@ def create_interface():
                 lambda: 'characters/instruction-following/', None, shared.gradio['delete_root']).then(
                 lambda: gr.update(visible=True), None, shared.gradio['file_deleter'])
 
-            shared.gradio['download_button'].click(lambda x: chat.save_history(x, timestamp=True), shared.gradio['mode'], shared.gradio['download'])
+            shared.gradio['download_button'].click(lambda x: chat.save_history(x, timestamp=True, user_request=True), shared.gradio['mode'], shared.gradio['download'])
             shared.gradio['Upload character'].click(chat.upload_character, [shared.gradio['upload_json'], shared.gradio['upload_img_bot']], [shared.gradio['character_menu']])
             shared.gradio['upload_json'].upload(lambda: gr.update(interactive=True), None, [shared.gradio['Upload character']])
             shared.gradio['upload_json'].clear(lambda: gr.update(interactive=False), None, [shared.gradio['Upload character']])
