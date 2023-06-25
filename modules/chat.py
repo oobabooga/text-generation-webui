@@ -394,7 +394,7 @@ def tokenize_dialogue(dialogue, name1, name2):
     return history
 
 
-def save_history(mode, timestamp=False):
+def save_history(mode, timestamp=False, user_request=False):
     # Instruct mode histories should not be saved as if
     # Alpaca or Vicuna were characters
     if mode == 'instruct':
@@ -403,7 +403,7 @@ def save_history(mode, timestamp=False):
 
         fname = f"Instruct_{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
     else:
-        if shared.character == 'None':
+        if shared.character == 'None' and not user_request:
             return
 
         if timestamp:
