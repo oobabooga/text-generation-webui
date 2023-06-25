@@ -353,7 +353,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         with open(clean_path('training/formats', f'{format}.json'), 'r', encoding='utf-8-sig') as formatFile:
             format_data: dict[str, str] = json.load(formatFile)
 
-        # store training prompt in LORA directory
+        # == store training prompt ==
         for _, value in format_data.items():
             prompt_key = f"template_{len(train_template)}"
             train_template[prompt_key] = value
