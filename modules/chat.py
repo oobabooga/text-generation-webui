@@ -540,7 +540,7 @@ def load_character(character, name1, name2, instruct=False):
             # Create .json log files since they don't already exist
             save_history('instruct' if instruct else 'chat')
 
-    return name1, name2, picture, greeting, context, repr(turn_template)[1:-1]
+    return name1, name2, picture, greeting, context, turn_template.replace("\n", r"\n")
 
 
 @functools.cache
