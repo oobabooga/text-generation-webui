@@ -507,7 +507,12 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     # == Main run and monitor loop ==
     logger.info("Starting training...")
     yield "Starting..."
-  
+
+    train_log.update({"base_model_name": shared.model_name})
+    train_log.update({"base_model_class": shared.model.__class__.__name__}) 
+    train_log.update({"base_loaded_in_4bit": getattr(lora_model, "is_loaded_in_4bit", False)})     
+    train_log.update({"base_loaded_in_8bit": getattr(lora_model, "is_loaded_in_8bit", False)})
+
     if stop_at_loss>0:
         print(f"Monitoring loss \033[1;31;1m(Auto-Stop at: {stop_at_loss})\033[0;37;0m")
         
