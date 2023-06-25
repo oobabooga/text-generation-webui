@@ -57,7 +57,7 @@ def find_model_type(model_name):
         return "None"
 
     model_name_lower = model_name.lower()
-    if re.match(".*rwkv.*", model_name_lower):
+    if re.match(".*rwkv.*\.pth", model_name_lower):
         return "rwkv"
     elif len(list(path_to_model.glob("*ggml*.bin"))) > 0:
         return "llamacpp"
@@ -344,13 +344,12 @@ def flexgen_loader(model_name):
 def RWKV_loader(model_name):
     from modules.RWKV import RWKVModel, RWKVTokenizer
 
-    model_path = f"{shared.args.model_dir}/{model_name}"
     model = RWKVModel.from_pretrained(
-        Path(model_path),
+        Path(f"{shared.args.model_dir}/{model_name}"),
         dtype="fp32" if shared.args.cpu else "bf16" if shared.args.bf16 else "fp16",
         device="cpu" if shared.args.cpu else "cuda",
     )
-    tokenizer = RWKVTokenizer.from_pretrained(Path(model_path))
+    tokenizer = RWKVTokenizer.from_pretrained(Path(shared.args.model_dir))
     return model, tokenizer
 
 
