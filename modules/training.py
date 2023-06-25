@@ -337,8 +337,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         train_data = Dataset.from_list([tokenize(x) for x in text_chunks])
         del text_chunks
         eval_data = None
-        
-
+ 
     else:
         if dataset in ['None', '']:
             yield "**Missing dataset choice input, cannot continue.**"
