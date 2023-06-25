@@ -1,9 +1,3 @@
-'''
-
-This is a library for formatting text outputs as nice HTML.
-
-'''
-
 import os
 import re
 import time

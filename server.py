@@ -38,12 +38,17 @@ from modules.github import clone_or_pull_repository
 from modules.html_generator import chat_html_wrapper
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, unload_model
-from modules.models_settings import (apply_model_settings_to_state,
-                                     get_model_settings_from_yamls,
-                                     save_model_settings,
-                                     update_model_parameters)
-from modules.text_generation import (generate_reply_wrapper,
-                                     get_encoded_length, stop_everything_event)
+from modules.models_settings import (
+    apply_model_settings_to_state,
+    get_model_settings_from_yamls,
+    save_model_settings,
+    update_model_parameters
+)
+from modules.text_generation import (
+    generate_reply_wrapper,
+    get_encoded_length,
+    stop_everything_event
+)
 
 
 def load_model_wrapper(selected_model, loader, autoload=False):
