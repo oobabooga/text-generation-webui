@@ -14,8 +14,11 @@ import modules.shared as shared
 from modules.extensions import apply_extensions
 from modules.html_generator import chat_html_wrapper, make_thumbnail
 from modules.logging_colors import logger
-from modules.text_generation import (generate_reply, get_encoded_length,
-                                     get_max_prompt_length)
+from modules.text_generation import (
+    generate_reply,
+    get_encoded_length,
+    get_max_prompt_length
+)
 from modules.utils import delete_file, replace_all, save_file
 
 
@@ -537,7 +540,7 @@ def load_character(character, name1, name2, instruct=False):
             # Create .json log files since they don't already exist
             save_history('instruct' if instruct else 'chat')
 
-    return name1, name2, picture, greeting, context, repr(turn_template)[1:-1]
+    return name1, name2, picture, greeting, context, turn_template.replace("\n", r"\n")
 
 
 @functools.cache
