@@ -11,12 +11,19 @@ import gradio as gr
 import torch
 import transformers
 from datasets import Dataset, load_dataset
-from peft import (LoraConfig, get_peft_model, prepare_model_for_kbit_training,
-                  set_peft_model_state_dict)
+from peft import (
+    LoraConfig,
+    get_peft_model,
+    prepare_model_for_int8_training,
+    set_peft_model_state_dict
+)
 
 from modules import shared, ui, utils
-from modules.evaluate import (calculate_perplexity, generate_markdown_table,
-                              save_past_evaluations)
+from modules.evaluate import (
+    calculate_perplexity,
+    generate_markdown_table,
+    save_past_evaluations
+)
 from modules.logging_colors import logger
 
 # This mapping is from a very recent commit, not yet released.
@@ -25,8 +32,9 @@ try:
     from peft.utils.other import \
         TRANSFORMERS_MODELS_TO_LORA_TARGET_MODULES_MAPPING as \
         model_to_lora_modules
-    from transformers.models.auto.modeling_auto import \
+    from transformers.models.auto.modeling_auto import (
         MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
+    )
     MODEL_CLASSES = {v: k for k, v in MODEL_FOR_CAUSAL_LM_MAPPING_NAMES}
 except:
     standard_modules = ["q_proj", "v_proj"]
@@ -203,8 +211,9 @@ def clean_path(base_path: str, path: str):
 def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lr_scheduler_type: str, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, higher_rank_limit: bool, warmup_steps: int, optimizer: str, hard_cut_string: str, train_only_after: str, stop_at_loss: float):
 
     if shared.args.monkey_patch:
-        from monkeypatch.peft_tuners_lora_monkey_patch import \
+        from monkeypatch.peft_tuners_lora_monkey_patch import (
             replace_peft_model_with_gptq_lora_model
+        )
         replace_peft_model_with_gptq_lora_model()
 
     global WANT_INTERRUPT

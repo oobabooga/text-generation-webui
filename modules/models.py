@@ -7,9 +7,15 @@ from pathlib import Path
 import torch
 import transformers
 from accelerate import infer_auto_device_map, init_empty_weights
-from transformers import (AutoConfig, AutoModel, AutoModelForCausalLM,
-                          AutoModelForSeq2SeqLM, AutoTokenizer,
-                          BitsAndBytesConfig, LlamaTokenizer)
+from transformers import (
+    AutoConfig,
+    AutoModel,
+    AutoModelForCausalLM,
+    AutoModelForSeq2SeqLM,
+    AutoTokenizer,
+    BitsAndBytesConfig,
+    LlamaTokenizer
+)
 
 import modules.shared as shared
 from modules import llama_attn_hijack, sampler_hijack
@@ -21,8 +27,10 @@ transformers.logging.set_verbosity_error()
 local_rank = None
 if shared.args.deepspeed:
     import deepspeed
-    from transformers.deepspeed import (HfDeepSpeedConfig,
-                                        is_deepspeed_zero3_enabled)
+    from transformers.deepspeed import (
+        HfDeepSpeedConfig,
+        is_deepspeed_zero3_enabled
+    )
 
     from modules.deepspeed_parameters import generate_ds_config
 
