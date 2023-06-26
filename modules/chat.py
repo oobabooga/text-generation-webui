@@ -14,8 +14,11 @@ import modules.shared as shared
 from modules.extensions import apply_extensions
 from modules.html_generator import chat_html_wrapper, make_thumbnail
 from modules.logging_colors import logger
-from modules.text_generation import (generate_reply, get_encoded_length,
-                                     get_max_prompt_length)
+from modules.text_generation import (
+    generate_reply,
+    get_encoded_length,
+    get_max_prompt_length
+)
 from modules.utils import delete_file, replace_all, save_file
 
 
@@ -391,7 +394,7 @@ def tokenize_dialogue(dialogue, name1, name2):
     return history
 
 
-def save_history(mode, timestamp=False):
+def save_history(mode, timestamp=False, user_request=False):
     # Instruct mode histories should not be saved as if
     # Alpaca or Vicuna were characters
     if mode == 'instruct':
@@ -400,7 +403,7 @@ def save_history(mode, timestamp=False):
 
         fname = f"Instruct_{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
     else:
-        if shared.character == 'None':
+        if shared.character == 'None' and not user_request:
             return
 
         if timestamp:
@@ -537,7 +540,7 @@ def load_character(character, name1, name2, instruct=False):
             # Create .json log files since they don't already exist
             save_history('instruct' if instruct else 'chat')
 
-    return name1, name2, picture, greeting, context, repr(turn_template)[1:-1]
+    return name1, name2, picture, greeting, context, turn_template.replace("\n", r"\n")
 
 
 @functools.cache

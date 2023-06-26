@@ -1,4 +1,5 @@
 import ast
+import copy
 import random
 import re
 import time
@@ -9,8 +10,11 @@ import torch
 import transformers
 
 import modules.shared as shared
-from modules.callbacks import (Iteratorize, Stream,
-                               _StopEverythingStoppingCriteria)
+from modules.callbacks import (
+    Iteratorize,
+    Stream,
+    _StopEverythingStoppingCriteria
+)
 from modules.extensions import apply_extensions
 from modules.html_generator import generate_4chan_html, generate_basic_html
 from modules.logging_colors import logger
@@ -204,6 +208,7 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False):
     reply = ''
     is_stream = state['stream']
     if len(all_stop_strings) > 0 and not state['stream']:
+        state = copy.deepcopy(state)
         state['stream'] = True
 
     for reply in generate_func(question, original_question, seed, state, stopping_strings, is_chat=is_chat):
