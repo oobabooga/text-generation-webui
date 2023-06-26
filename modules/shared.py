@@ -51,7 +51,7 @@ settings = {
     'skip_special_tokens': True,
     'truncation_length': 2048,
     'truncation_length_min': 0,
-    'truncation_length_max': 8192,
+    'truncation_length_max': 16384,
     'mode': 'chat',
     'start_with': '',
     'chat_style': 'cai-chat',
@@ -59,7 +59,7 @@ settings = {
     'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
     'chat_prompt_size': 2048,
     'chat_prompt_size_min': 0,
-    'chat_prompt_size_max': 8192,
+    'chat_prompt_size_max': 16384,
     'chat_generation_attempts': 1,
     'chat_generation_attempts_min': 1,
     'chat_generation_attempts_max': 10,
@@ -152,6 +152,8 @@ parser.add_argument('--desc_act', action='store_true', help='For models that don
 
 # ExLlama
 parser.add_argument('--gpu-split', type=str, help="Comma-separated list of VRAM (in GB) to use per GPU device for model layers, e.g. 20,7,7")
+parser.add_argument('--max_seq_len', type=int, default=2048, help="Maximum sequence length.")
+parser.add_argument('--compress_pos_emb', type=int, default=1, help="Positional embeddings compression factor. Should typically be set to max_seq_len / 2048.")
 
 # FlexGen
 parser.add_argument('--flexgen', action='store_true', help='DEPRECATED')
