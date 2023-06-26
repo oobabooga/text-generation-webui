@@ -275,12 +275,8 @@ def get_checkpoints():
     options = requests.get(url=f'{params["address"]}/sdapi/v1/options')
     options_json = options.json()
     params['sd_checkpoint'] = options_json['sd_model_checkpoint']
-    list = models.json()
-    params['checkpoint_list'] = [0] * len(list)
-    i = 0
-    for result in list:
-        params['checkpoint_list'][i] = result['title']
-        i = i + 1
+    params['checkpoint_list'] = [result["title"] for result in models.json()]
+    return gr.update(choices=params['checkpoint_list'], value=params['sd_checkpoint'])
 
 def load_checkpoint(checkpoint):
 
@@ -349,10 +345,9 @@ def ui():
     hr_upscaler.change(lambda x: params.update({"hr_upscaler": x}), hr_upscaler, None)
     enable_hr.change(lambda x: params.update({"enable_hr": x}), enable_hr, None)
     enable_hr.change(lambda x: hr_options.update(visible=params["enable_hr"]), enable_hr, hr_options)
-    update_checkpoints.click(fn=get_checkpoints(), outputs=None)
-    update_checkpoints.click(lambda x: checkpoint.update(choices=params['checkpoint_list'], value=params['sd_checkpoint']), update_checkpoints, checkpoint)
+    update_checkpoints.click(get_checkpoints, None, checkpoint)
     checkpoint.change(lambda x: params.update({"sd_checkpoint": x}), checkpoint, None)
-    checkpoint.change(lambda x: load_checkpoint(x), checkpoint, None)
+    checkpoint.change(load_checkpoint, checkpoint, None)
 
     sampler_name.change(lambda x: params.update({"sampler_name": x}), sampler_name, None)
     steps.change(lambda x: params.update({"steps": x}), steps, None)
