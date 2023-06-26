@@ -1,4 +1,8 @@
 import json
+import yaml
+import base64
+from pathlib import Path
+from urllib.parse import urlparse, parse_qs
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
 
@@ -11,7 +15,11 @@ from modules.models_settings import (get_model_settings_from_yamls,
                                      update_model_parameters)
 from modules.text_generation import (encode, generate_reply,
                                      stop_everything_event)
-from modules.utils import get_available_models
+from modules.utils import (get_available_models,
+                           get_available_presets,
+                           get_available_prompts,
+                           get_available_characters,
+                           get_available_instruction_templates)
 
 
 def get_model_info():
@@ -25,6 +33,17 @@ def get_model_info():
 
 
 class Handler(BaseHTTPRequestHandler):
+    def simple_json_results(self, resp):
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+
+        response = json.dumps({
+            'results': resp,
+        })
+
+        self.wfile.write(response.encode('utf-8'))
+
     def do_GET(self):
         if self.path == '/api/v1/model':
             self.send_response(200)
@@ -34,6 +53,105 @@ class Handler(BaseHTTPRequestHandler):
             })
 
             self.wfile.write(response.encode('utf-8'))
+
+        elif self.path.startswith('/api/v1/prompts'):
+            args = parse_qs(urlparse(self.path).query)
+            name = args.get('name', None)
+            if name:
+                name = name[0]
+                filepath = Path(f'prompts/{name}.txt')
+                if filepath.exists():
+                    with open(filepath, 'r', encoding='utf-8') as f:
+                        data = f.read()
+                        self.simple_json_results(data)
+                else:
+                    self.send_error(404, message="Prompt not found")
+                    return
+            else:
+                self.simple_json_results(get_available_prompts())
+            
+        elif self.path.startswith('/api/v1/presets'):
+            args = parse_qs(urlparse(self.path).query)
+            name = args.get('name', None)
+            if name:
+                name = name[0]
+                filepath = Path(f'presets/{name}.yaml')
+                if filepath.exists():
+                    with open(filepath, 'r', encoding='utf-8') as f:
+                        data = yaml.safe_load(f)
+                        self.simple_json_results(data)
+                else:
+                    self.send_error(404, message="Preset not found")
+                    return
+            else:
+                self.simple_json_results(get_available_presets())
+
+        elif self.path.startswith('/api/v1/characters'):
+            args = parse_qs(urlparse(self.path).query)
+            name = args.get('name', None)
+            #picture_response_format = args.get('picture_response_format', 'b64_json')
+            if name:
+                name = name[0]
+
+                picture_data = None
+                data = None
+
+                for extension in ['png', 'jpg', 'jpeg']:
+                    filepath = Path(f"characters/{name}.{extension}")
+                    if filepath.exists():
+                        with open(filepath, 'rb') as f:
+                            file_contents = f.read()
+                            encoded_bytes = base64.b64encode(file_contents)
+
+                            # Turn raw base64 encoded bytes into ASCII
+                            # TODO: support 'url' and 'data': url ? data_url?
+                            img_data = encoded_bytes.decode('ascii')
+                            img_filename = f"{name}.{extension}"
+                            img_encoding = 'b64_json' # like SD, maybe also accept 'url'.. 'data_url'?
+                            picture_data = {
+                                'filename': img_filename,
+                                'encoding': img_encoding, 
+                                'data': img_data, # or 'data': url, and/or #'url': f"data:image/png;base64,{img_data}",
+                            }
+                            break
+
+                for extension in ["yml", "yaml", "json"]:
+                    filepath = Path(f'characters/{name}.{extension}')
+                    if filepath.exists():
+                        with open(filepath, 'r', encoding='utf-8') as f:
+                            file_contents = f.read()
+                            data = json.loads(file_contents) if extension == "json" else yaml.safe_load(file_contents)
+                            break
+
+                if not (picture_data or data):
+                    self.send_error(404, message="Character not found")
+                    return
+
+                resp = {
+                    'data': data,
+                    'picture': picture_data,
+                }
+                self.simple_json_results(resp)
+
+            else:
+                self.simple_json_results(get_available_characters())
+
+        elif self.path.startswith('/api/v1/instruction_templates'):
+            args = parse_qs(urlparse(self.path).query)
+            name = args.get('name', None)
+            if name:
+                name = name[0]
+                filepath = Path(f'characters/instruction-following/{name}.yaml')
+                if filepath.exists():
+                    with open(filepath, 'r', encoding='utf-8') as f:
+                        data = yaml.safe_load(f)
+                        self.simple_json_results(data)
+                else:
+                    self.send_error(404, message="Instruction Template not found")
+                    return
+            else:
+                self.simple_json_results(get_available_instruction_templates())
+
         else:
             self.send_error(404)
 
@@ -95,17 +213,8 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(response.encode('utf-8'))
 
         elif self.path == '/api/v1/stop-stream':
-            self.send_response(200)
-            self.send_header('Content-Type', 'application/json')
-            self.end_headers()
-
             stop_everything_event()
-
-            response = json.dumps({
-                'results': 'success'
-            })
-
-            self.wfile.write(response.encode('utf-8'))
+            self.simple_json_results('success')
 
         elif self.path == '/api/v1/model':
             self.send_response(200)
@@ -169,18 +278,9 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(response.encode('utf-8'))
 
         elif self.path == '/api/v1/token-count':
-            self.send_response(200)
-            self.send_header('Content-Type', 'application/json')
-            self.end_headers()
-
             tokens = encode(body['prompt'])[0]
-            response = json.dumps({
-                'results': [{
-                    'tokens': len(tokens)
-                }]
-            })
+            self.simple_json_results([{'tokens': len(tokens)}])
 
-            self.wfile.write(response.encode('utf-8'))
         else:
             self.send_error(404)
 
