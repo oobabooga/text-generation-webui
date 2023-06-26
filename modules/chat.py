@@ -57,7 +57,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
     is_instruct = state['mode'] == 'instruct'
 
     # Find the maximum prompt size
-    max_length = min(get_max_prompt_length(state), state['chat_prompt_size'])
+    max_length = get_max_prompt_length(state)
     all_substrings = {
         'chat': get_turn_substrings(state, instruct=False),
         'instruct': get_turn_substrings(state, instruct=True)
@@ -394,7 +394,7 @@ def tokenize_dialogue(dialogue, name1, name2):
     return history
 
 
-def save_history(mode, timestamp=False):
+def save_history(mode, timestamp=False, user_request=False):
     # Instruct mode histories should not be saved as if
     # Alpaca or Vicuna were characters
     if mode == 'instruct':
@@ -403,7 +403,7 @@ def save_history(mode, timestamp=False):
 
         fname = f"Instruct_{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
     else:
-        if shared.character == 'None':
+        if shared.character == 'None' and not user_request:
             return
 
         if timestamp:
