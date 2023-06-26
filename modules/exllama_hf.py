@@ -93,7 +93,6 @@ class ExllamaHF(PreTrainedModel):
         config.model_path = str(weight_path)
         config.max_seq_len = shared.args.max_seq_len
         config.compress_pos_emb = shared.args.compress_pos_emb
-
         if shared.args.gpu_split:
             config.set_auto_map(shared.args.gpu_split)
             config.gpu_peer_fix = True
