@@ -51,7 +51,7 @@ class ExllamaModel:
             config.gpu_peer_fix = True
 
         if shared.args.max_ctx_length:
-            config.max_seq_len = int(shared.args.ctx_length)
+            config.max_seq_len = int(shared.args.max_ctx_length)
 
         if shared.args.compress_pos_emb:
             config.compress_pos_emb = int(shared.args.compress_pos_emb)
