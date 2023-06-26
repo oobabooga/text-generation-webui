@@ -57,7 +57,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
     is_instruct = state['mode'] == 'instruct'
 
     # Find the maximum prompt size
-    max_length = min(get_max_prompt_length(state), state['chat_prompt_size'])
+    max_length = get_max_prompt_length(state)
     all_substrings = {
         'chat': get_turn_substrings(state, instruct=False),
         'instruct': get_turn_substrings(state, instruct=True)
