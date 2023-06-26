@@ -223,6 +223,8 @@ def create_model_menus():
                         shared.gradio['pre_layer'] = gr.Slider(label="pre_layer", minimum=0, maximum=100, value=shared.args.pre_layer[0] if shared.args.pre_layer is not None else 0)
                         shared.gradio['autogptq_info'] = gr.Markdown('On some systems, AutoGPTQ can be 2x slower than GPTQ-for-LLaMa. You can manually select the GPTQ-for-LLaMa loader above.')
                         shared.gradio['gpu_split'] = gr.Textbox(label='gpu-split', info='Comma-separated list of VRAM (in GB) to use per GPU. Example: 20,7,7')
+                        shared.gradio['max_ctx_length'] = gr.Textbox(label='max_ctx_length', info='Max content length size for exllama. Let you use more than the default 2048 value.')
+                        shared.gradio['compress_pos_emb'] = gr.Textbox(label='compress_pos_emb', info='Compression factor for positional embeddings')
 
                     with gr.Column():
                         shared.gradio['triton'] = gr.Checkbox(label="triton", value=shared.args.triton)
