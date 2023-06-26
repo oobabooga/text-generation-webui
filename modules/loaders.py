@@ -56,10 +56,14 @@ loaders_and_params = {
     'ExLlama' : [
         'gpu_split',
         'exllama_info',
+        'max_ctx_length',
+        'compress_pos_emb',
     ],
     'ExLlama_HF' : [
         'gpu_split',
         'exllama_HF_info',
+        'max_ctx_length',
+        'compress_pos_emb',  
     ]
 }
 
