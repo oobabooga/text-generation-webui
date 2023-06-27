@@ -348,6 +348,11 @@ The presets that are included by default are the result of a contest that receiv
 * If you have some experience with git, testing an open pull request and leaving a comment on whether it works as expected or not is immensely helpful.
 * A simple way to contribute, even if you are not a programmer, is to leave a 👍 on an issue or pull request that you find relevant.
 
+## Community
+
+* Subreddit: https://www.reddit.com/r/oobaboogazz/
+* Discord: https://discord.gg/jwZCF2dPQN
+
 ## Credits
 
 - Gradio dropdown menu refresh button, code for reloading the interface: https://github.com/AUTOMATIC1111/stable-diffusion-webui
