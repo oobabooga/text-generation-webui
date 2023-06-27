@@ -33,7 +33,7 @@ params = {
     'hr_upscaler': 'ESRGAN_4x',
     'hr_scale': '1.0',
     'seed': -1,
-    'sampler_name': 'DDIM',
+    'sampler_name': 'DPM++ 2M Karras',
     'steps': 32,
     'cfg_scale': 7,
     'textgen_prefix': 'Please provide a detailed and vivid description of [subject]',
