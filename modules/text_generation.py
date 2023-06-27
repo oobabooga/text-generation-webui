@@ -48,7 +48,7 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
 
     # Handling truncation
     if truncation_length is not None:
-        input_ids = input_ids[:-truncation_length]
+        input_ids = input_ids[:, -truncation_length:]
 
     if shared.model.__class__.__name__ in ['LlamaCppModel', 'RWKVModel', 'ExllamaModel', 'StarcoderCppModel'] or shared.args.cpu:
         return input_ids
