@@ -36,7 +36,7 @@ params = {
     'sampler_name': 'DDIM',
     'steps': 32,
     'cfg_scale': 7,
-    'textgen_prefix': 'Please provide a detailed and vivid description of',
+    'textgen_prefix': 'Please provide a detailed and vivid description of [subject]',
     'sd_checkpoint': ' ',
     'checkpoint_list': [" "]
 }
