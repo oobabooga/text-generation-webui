@@ -2,6 +2,17 @@
 .SDAP #sampler_box {
   padding-top: var(--spacing-sm);
   padding-bottom: var(--spacing-sm);
+  border-radius: var(--block-radius) var(--block-radius) 0 0;
+}
+
+.SDAP #steps_box {
+  border-radius: 0 0 var(--block-radius) var(--block-radius);
+  border-top: 0;
+}
+
+.SDAP #sampler_col {
+  gap: 0;
+  padding: 0
 }
 
 .SDAP #seed_box,
@@ -11,7 +22,8 @@
 
 .SDAP #sampler_box span,
 .SDAP #seed_box span,
-.SDAP #cfg_box span{
+.SDAP #cfg_box span,
+.SDAP #steps_box span {
   margin-bottom: var(--spacing-sm);
 }
 

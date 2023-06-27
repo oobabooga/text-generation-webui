@@ -73,7 +73,6 @@ def give_VRAM_priority(actor):
 if params['manage_VRAM']:
     give_VRAM_priority('set')
 
-samplers = ['DDIM', 'DPM++ 2M Karras']  # TODO: get the availible samplers with http://{address}}/sdapi/v1/samplers
 SD_models = ['NeverEndingDream']  # TODO: get with http://{address}}/sdapi/v1/sd-models and allow user to select
 
 picture_response = False  # specifies if the next model response should appear as a picture
@@ -245,7 +244,6 @@ def filter_address(address):
 
 
 def SD_api_address_update(address):
-
     global params
 
     msg = "✔️ SD API is found on:"
@@ -258,12 +256,23 @@ def SD_api_address_update(address):
     except:
         msg = "❌ No SD API endpoint on:"
 
-    return gr.Textbox.update(label=msg)
+    return gr.Textbox.update(label=msg), gr.update(choices=get_samplers())
 
 
 def custom_css():
     path_to_css = Path(__file__).parent.resolve() / 'style.css'
     return open(path_to_css, 'r').read()
+
+
+def get_samplers():
+    try:
+        response = requests.get(url=f'{params["address"]}/sdapi/v1/samplers')
+        response.raise_for_status()
+        samplers = [x["name"] for x in response.json()]
+    except:
+        samplers = []
+
+    return samplers
 
 
 def ui():
@@ -289,9 +298,9 @@ def ui():
                 with gr.Column():
                     width = gr.Slider(256, 768, value=params['width'], step=64, label='Width')
                     height = gr.Slider(256, 768, value=params['height'], step=64, label='Height')
-                with gr.Column():
-                    sampler_name = gr.Textbox(placeholder=params['sampler_name'], value=params['sampler_name'], label='Sampling method', elem_id="sampler_box")
-                    steps = gr.Slider(1, 150, value=params['steps'], step=1, label="Sampling steps")
+                with gr.Column(variant="compact", elem_id="sampler_col"):
+                    sampler_name = gr.Dropdown(value=params['sampler_name'], label='Sampling method', elem_id="sampler_box")
+                    steps = gr.Slider(1, 150, value=params['steps'], step=1, label="Sampling steps", elem_id="steps_box")
             with gr.Row():
                 seed = gr.Number(label="Seed", value=params['seed'], elem_id="seed_box")
                 cfg_scale = gr.Number(label="CFG Scale", value=params['cfg_scale'], elem_id="cfg_box")
@@ -311,7 +320,7 @@ def ui():
     manage_VRAM.change(lambda x: give_VRAM_priority('set' if x else 'reset'), inputs=manage_VRAM, outputs=None)
     save_img.change(lambda x: params.update({"save_img": x}), save_img, None)
 
-    address.submit(fn=SD_api_address_update, inputs=address, outputs=address)
+    address.submit(fn=SD_api_address_update, inputs=address, outputs=[address, sampler_name], show_progress=False)
     prompt_prefix.change(lambda x: params.update({"prompt_prefix": x}), prompt_prefix, None)
     negative_prompt.change(lambda x: params.update({"negative_prompt": x}), negative_prompt, None)
     width.change(lambda x: params.update({"width": x}), width, None)
