@@ -271,11 +271,16 @@ def custom_css():
 def get_checkpoints():
     global params
 
-    models = requests.get(url=f'{params["address"]}/sdapi/v1/sd-models')
-    options = requests.get(url=f'{params["address"]}/sdapi/v1/options')
-    options_json = options.json()
-    params['sd_checkpoint'] = options_json['sd_model_checkpoint']
-    params['checkpoint_list'] = [result["title"] for result in models.json()]
+    try:
+        models = requests.get(url=f'{params["address"]}/sdapi/v1/sd-models')
+        options = requests.get(url=f'{params["address"]}/sdapi/v1/options')
+        options_json = options.json()
+        params['sd_checkpoint'] = options_json['sd_model_checkpoint']
+        params['checkpoint_list'] = [result["title"] for result in models.json()]
+    except:
+        params['sd_checkpoint'] = ""
+        params['checkpoint_list'] = []
+
     return gr.update(choices=params['checkpoint_list'], value=params['sd_checkpoint'])
 
 def load_checkpoint(checkpoint):
