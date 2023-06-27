@@ -236,3 +236,7 @@ TheBloke_WizardLM-30B-GPTQ:
 .*orca_mini:
   mode: 'instruct'
   instruction_template: 'Orca Mini'
+.*landmark:
+  truncation_length: 8192
+.*superhot-8k:
+  truncation_length: 8192
