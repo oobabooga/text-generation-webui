@@ -32,7 +32,6 @@ class StarcoderCppModel:
 
 
     def generate(self, prompt, state, callback=None):
-        #try:
         prompt = prompt if type(prompt) is str else prompt.decode()
         generator = self.model._stream(
             prompt=prompt,
