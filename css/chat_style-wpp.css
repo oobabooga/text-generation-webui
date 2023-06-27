@@ -1,16 +1,3 @@
-.chat {
-    margin-left: auto;
-    margin-right: auto;
-    max-width: 800px;
-    height: calc(100vh - 306px);
-    overflow-y: auto;
-    padding-right: 20px;
-    display: flex;
-    flex-direction: column-reverse;
-    word-break: break-word;
-    overflow-wrap: anywhere;
-}
-
 .message {
     padding-bottom: 25px;
     font-size: 15px;
@@ -19,35 +6,33 @@
 }
 
 .text-you {
-  background-color: #d9fdd3;
-  border-radius: 15px;
-  padding: 10px;
-  padding-top: 5px;
-  float: right;
+    background-color: #d9fdd3;
+    border-radius: 15px;
+    padding: 10px;
+    padding-top: 5px;
+    float: right;
 }
 
 .text-bot {
-  background-color: #f2f2f2;
-  border-radius: 15px;
-  padding: 10px;
-  padding-top: 5px;
+    background-color: #f2f2f2;
+    border-radius: 15px;
+    padding: 10px;
+    padding-top: 5px;
 }
 
 .dark .text-you {
-  background-color: #005c4b;
-  color: #111b21;
+    background-color: #005c4b;
+    color: #111b21;
 }
 
 .dark .text-bot {
-  background-color: #1f2937;
-  color: #111b21;
+    background-color: #1f2937;
+    color: #111b21;
 }
 
 .text-bot p, .text-you p {
-  margin-top: 5px;
+    margin-top: 5px;
 }
-
-.message-body {}
 
 .message-body img {
     max-width: 300px;
@@ -59,22 +44,6 @@
     margin-bottom: 0 !important;
     font-size: 15px !important;
     line-height: 1.428571429 !important;
-}
-
-.message-body li {
-    margin-top: 0.5em !important;
-    margin-bottom: 0.5em !important;
-}
-
-.message-body li > p {
-    display: inline !important;
-}
-
-.message-body code {
-    overflow-x: auto;
-}
-.message-body :not(pre) > code {
-    white-space: normal !important;
 }
 
 .dark .message-body p em {

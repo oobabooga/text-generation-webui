@@ -1,0 +1,4 @@
+user: "### Instruction:"
+bot: "### Réponse:"
+turn_template: "<|user|>\n<|user-message|>\n\n<|bot|>\n<|bot-message|>\n\n"
+context: "Ci-dessous se trouve une instruction qui décrit une tâche à accomplir. Rédigez une réponse qui répond de manière précise à la demande.\n\n"

@@ -1,16 +1,6 @@
-This web UI supports extensions. They are simply files under 
+Extensions are defined by files named `script.py` inside subfolders of `text-generation-webui/extensions`. They are loaded at startup if specified with the `--extensions` flag.
 
-```
-extensions/your_extension_name/script.py
-```
-
-which can be invoked with the 
-
-```
---extension your_extension_name
-```
-
-command-line flag.
+For instance, `extensions/silero_tts/script.py` gets loaded with `python server.py --extensions silero_tts`.
 
 ## [text-generation-webui-extensions](https://github.com/oobabooga/text-generation-webui-extensions)
 
@@ -24,7 +14,7 @@ Most of these have been created by the extremely talented contributors that you 
 
 |Extension|Description|
 |---------|-----------|
-|[api](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/api)| Creates an API with two endpoints, one for streaming at `/api/v1/stream` port 5005 and another for blocking at `/api/v1/generate` por 5000. This is the main API for this web UI. |
+|[api](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/api)| Creates an API with two endpoints, one for streaming at `/api/v1/stream` port 5005 and another for blocking at `/api/v1/generate` port 5000. This is the main API for this web UI. |
 |[google_translate](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/google_translate)| Automatically translates inputs and outputs using Google Translate.|
 |[character_bias](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/character_bias)| Just a very simple example that biases the bot's responses in chat mode.|
 |[gallery](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/gallery/)| Creates a gallery with the chat characters and their pictures. |
@@ -33,41 +23,61 @@ Most of these have been created by the extremely talented contributors that you 
 |[send_pictures](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/send_pictures/)| Creates an image upload field that can be used to send images to the bot in chat mode. Captions are automatically generated using BLIP. |
 |[whisper_stt](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/whisper_stt)| Allows you to enter your inputs in chat mode using your microphone. |
 |[sd_api_pictures](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/sd_api_pictures)| Allows you to request pictures from the bot in chat mode, which will be generated using the AUTOMATIC1111 Stable Diffusion API. See examples [here](https://github.com/oobabooga/text-generation-webui/pull/309). |
-|[multimodal](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/multimodal) | Adds multimodality support (text+images). For detailed description see [README.md](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/multimodal/README.md) in the extension directory. |
+|[multimodal](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/multimodal) | Adds multimodality support (text+images). For a detailed description see [README.md](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/multimodal/README.md) in the extension directory. |
 |[openai](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/openai)| Creates an API that mimics the OpenAI API and can be used as a drop-in replacement. |
 |[superbooga](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/superbooga)| An extension that uses ChromaDB to create an arbitrarily large pseudocontext, taking as input text files, URLs, or pasted text. Based on https://github.com/kaiokendev/superbig. |
 
 ## How to write an extension
 
-`script.py` has access to all variables in the UI through the `modules.shared` module, and it may define the following functions:
+script.py may define the special functions and variables below.
+
+#### Predefined functions
 
 | Function        | Description |
 |-------------|-------------|
 | `def ui()` | Creates custom gradio elements when the UI is launched. | 
+| `def custom_css()` | Returns custom CSS as a string. It is applied whenever the web UI is loaded. |
+| `def custom_js()` | Same as above but for javascript. |
 | `def input_modifier(string)`  | Modifies the input string before it enters the model. In chat mode, it is applied to the user message. Otherwise, it is applied to the entire prompt. |
 | `def output_modifier(string)`  | Modifies the output string before it is presented in the UI. In chat mode, it is applied to the bot's reply. Otherwise, it is applied to the entire output. |
-| `def state_modifier(state)`  | Modifies the dictionary containing the input parameters before it is used by the text generation functions. |
-| `def bot_prefix_modifier(string)`  | Applied in chat mode to the prefix for the bot's reply (more on that below). |
+| `def state_modifier(state)`  | Modifies the dictionary containing the UI input parameters before it is used by the text generation functions. |
+| `def history_modifier(history)`  | Modifies the chat history before the text generation in chat mode begins. |
+| `def bot_prefix_modifier(string)`  | Applied in chat mode to the prefix for the bot's reply. |
 | `def custom_generate_reply(...)` | Overrides the main text generation function. |
 | `def custom_generate_chat_prompt(...)` | Overrides the prompt generator in chat mode. |
-| `def tokenizer_modifier(state, prompt, input_ids, input_embeds)` | Modifies the `input_ids`/`input_embeds` fed to the model. Should return `prompt`, `input_ids`, `input_embeds`. See `multimodal` extension for an example |
-| `def custom_tokenized_length(prompt)` | Used in conjunction with `tokenizer_modifier`, returns the length in tokens of `prompt`. See `multimodal` extension for an example |
-
-Additionally, the script may define two special global variables:
+| `def tokenizer_modifier(state, prompt, input_ids, input_embeds)` | Modifies the `input_ids`/`input_embeds` fed to the model. Should return `prompt`, `input_ids`, `input_embeds`. See the `multimodal` extension for an example. |
+| `def custom_tokenized_length(prompt)` | Used in conjunction with `tokenizer_modifier`, returns the length in tokens of `prompt`. See the `multimodal` extension for an example. |
 
 #### `params` dictionary
 
+In this dictionary, `display_name` is used to define the displayed name of the extension in the UI, and `is_tab` is used to define whether the extension should appear in a new tab. By default, extensions appear at the bottom of the "Text generation" tab.
+
+Example:
+
 ```python
 params = {
-    "language string": "ja",
+    "display_name": "Google Translate",
+    "is_tab": True,
 }
 ```
 
-This dicionary can be used to make the extension parameters customizable by adding entries to a `settings.json` file like this:
+Additionally, `params` may contain variables that you want to be customizable through a `settings.json` file. For instance, assuming the extension is in `extensions/google_translate`, the variable `language string` in
+
+```python
+params = {
+    "display_name": "Google Translate",
+    "is_tab": True,
+    "language string": "jp"
+}
+```
+
+can be customized by adding a key called `google_translate-language string` to `settings.json`:
 
 ```python
 "google_translate-language string": "fr",
 ``` 
+
+That is, the syntax is `extension_name-variable_name`.
 
 #### `input_hijack` dictionary
 
@@ -77,9 +87,29 @@ input_hijack = {
     'value': ["", ""]
 }
 ```
-This is only relevant in chat mode. If your extension sets `input_hijack['state']` to `True` at any moment, the next call to `modules.chat.chatbot_wrapper` will use the values inside `input_hijack['value']` as the user input for text generation. See the `send_pictures` extension above for an example. 
+This is only used in chat mode. If your extension sets `input_hijack['state'] = True` at any moment, the next call to `modules.chat.chatbot_wrapper` will use the values inside `input_hijack['value']` as the user input for text generation. See the `send_pictures` extension above for an example. 
 
-Additionally, your extension can set the value to be a callback, in the form of `def cb(text: str, visible_text: str) -> [str, str]`. See the `multimodal` extension above for an example.
+Additionally, your extension can set the value to be a callback in the form of `def cb(text: str, visible_text: str) -> [str, str]`. See the `multimodal` extension above for an example.
+
+## Using multiple extensions at the same time
+
+In order to use your extension, you must start the web UI with the `--extensions` flag followed by the name of your extension (the folder under `text-generation-webui/extension` where `script.py` resides).
+
+You can activate more than one extension at a time by providing their names separated by spaces. The input, output, and bot prefix modifiers will be applied in the specified order. 
+
+
+```
+python server.py --extensions enthusiasm translate # First apply enthusiasm, then translate
+python server.py --extensions translate enthusiasm # First apply translate, then enthusiasm
+```
+
+Do note, that for:
+- `custom_generate_chat_prompt`
+- `custom_generate_reply`
+- `tokenizer_modifier`
+- `custom_tokenized_length`
+
+only the first declaration encountered will be used and the rest will be ignored. 
 
 ## The `bot_prefix_modifier`
 
@@ -96,26 +126,6 @@ Marie Antoinette: *I am very enthusiastic*
 ```
  
 Marie Antoinette will become very enthusiastic in all her messages.
-
-## Using multiple extensions at the same time
-
-In order to use your extension, you must start the web UI with the `--extensions` flag followed by the name of your extension (the folder under `text-generation-webui/extension` where `script.py` resides).
-
-You can activate more than one extension at a time by providing their names separated by spaces. The input, output and bot prefix modifiers will be applied in the specified order. 
-
-
-```
-python server.py --extensions enthusiasm translate # First apply enthusiasm, then translate
-python server.py --extensions translate enthusiasm # First apply translate, then enthusiasm
-```
-
-Do note, that for:
-- `custom_generate_chat_prompt`
-- `custom_generate_reply`
-- `tokenizer_modifier`
-- `custom_tokenized_length`
-
-only the first declaration encountered will be used and the rest will be ignored. 
 
 ## `custom_generate_reply` example
 
@@ -150,11 +160,7 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
     min_rows = 3
 
     # Finding the maximum prompt size
-    chat_prompt_size = state['chat_prompt_size']
-    if shared.soft_prompt:
-        chat_prompt_size -= shared.soft_prompt_tensor.shape[1]
-
-    max_length = min(get_max_prompt_length(state), chat_prompt_size)
+    max_length = min(get_max_prompt_length(state), state['chat_prompt_size'])
 
     # Building the turn templates
     if 'turn_template' not in state or state['turn_template'] == '':

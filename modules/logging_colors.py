@@ -3,6 +3,11 @@
 import logging
 import platform
 
+logging.basicConfig(
+    format='%(asctime)s %(levelname)s:%(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+)
+
 
 def add_coloring_to_emit_windows(fn):
     # add methods we need to the class
@@ -107,3 +112,6 @@ else:
     # log.addFilter(log_filter())
     # //hdlr = logging.StreamHandler()
     # //hdlr.setFormatter(formatter())
+
+logger = logging.getLogger('text-generation-webui')
+logger.setLevel(logging.DEBUG)
