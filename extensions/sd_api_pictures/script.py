@@ -12,6 +12,7 @@ from PIL import Image
 
 import modules.shared as shared
 from modules.models import reload_model, unload_model
+from modules.ui import create_refresh_button
 
 torch._C._jit_set_profiling_mode(False)
 
@@ -256,7 +257,7 @@ def SD_api_address_update(address):
     except:
         msg = "❌ No SD API endpoint on:"
 
-    return gr.Textbox.update(label=msg), gr.update(choices=get_samplers())
+    return gr.Textbox.update(label=msg)
 
 
 def custom_css():
@@ -299,7 +300,9 @@ def ui():
                     width = gr.Slider(256, 768, value=params['width'], step=64, label='Width')
                     height = gr.Slider(256, 768, value=params['height'], step=64, label='Height')
                 with gr.Column(variant="compact", elem_id="sampler_col"):
-                    sampler_name = gr.Dropdown(value=params['sampler_name'], label='Sampling method', elem_id="sampler_box")
+                    with gr.Row(elem_id="sampler_row"):
+                        sampler_name = gr.Dropdown(value=params['sampler_name'], label='Sampling method', elem_id="sampler_box")
+                        create_refresh_button(sampler_name, lambda: None, lambda: {'choices': get_samplers()}, 'refresh-button')
                     steps = gr.Slider(1, 150, value=params['steps'], step=1, label="Sampling steps", elem_id="steps_box")
             with gr.Row():
                 seed = gr.Number(label="Seed", value=params['seed'], elem_id="seed_box")
@@ -320,7 +323,7 @@ def ui():
     manage_VRAM.change(lambda x: give_VRAM_priority('set' if x else 'reset'), inputs=manage_VRAM, outputs=None)
     save_img.change(lambda x: params.update({"save_img": x}), save_img, None)
 
-    address.submit(fn=SD_api_address_update, inputs=address, outputs=[address, sampler_name], show_progress=False)
+    address.submit(fn=SD_api_address_update, inputs=address, outputs=address)
     prompt_prefix.change(lambda x: params.update({"prompt_prefix": x}), prompt_prefix, None)
     negative_prompt.change(lambda x: params.update({"negative_prompt": x}), negative_prompt, None)
     width.change(lambda x: params.update({"width": x}), width, None)
