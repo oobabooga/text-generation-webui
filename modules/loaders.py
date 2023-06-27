@@ -64,6 +64,15 @@ loaders_and_params = {
         'max_seq_len',
         'compress_pos_emb',
         'exllama_HF_info',
+    ],
+    'starcoder': [
+        'n_ctx',
+        'n_gpu_layers',
+        'n_batch',
+        'threads',
+        'no_mmap',
+        'mlock',
+        'llama_cpp_seed',
     ]
 }
 

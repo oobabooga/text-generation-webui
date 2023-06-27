@@ -24,6 +24,18 @@ def infer_loader(model_name):
         loader = None
     elif Path(f'{shared.args.model_dir}/{model_name}/quantize_config.json').exists() or ('wbits' in model_settings and type(model_settings['wbits']) is int and model_settings['wbits'] > 0):
         loader = 'AutoGPTQ'
+    elif len(list(path_to_model.glob('*starcoder*ggml*.bin'))) > 0:
+        loader = 'starcoder'
+    elif re.match('.*starcoder.*ggml.*\.bin', model_name.lower()):
+        loader = 'starcoder'
+    elif len(list(path_to_model.glob('*starchat*ggml*.bin'))) > 0:
+        loader = 'starchat'
+    elif re.match('.*starchat.*ggml.*\.bin', model_name.lower()):
+        loader = 'starchat'
+    elif len(list(path_to_model.glob('*wizardcoder*ggml*.bin'))) > 0:
+        loader = 'starcoder'
+    elif re.match('.*wizardcoder.*ggml.*\.bin', model_name.lower()):
+        loader = 'starcoder'
     elif len(list(path_to_model.glob('*ggml*.bin'))) > 0:
         loader = 'llama.cpp'
     elif re.match('.*ggml.*\.bin', model_name.lower()):

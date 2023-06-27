@@ -58,7 +58,9 @@ def load_model(model_name, loader=None):
         'FlexGen': flexgen_loader,
         'RWKV': RWKV_loader,
         'ExLlama': ExLlama_loader,
-        'ExLlama_HF': ExLlama_HF_loader
+        'ExLlama_HF': ExLlama_HF_loader,
+        'starcoder': starcodercpp_loader,
+        'starchat': starchatcpp_loader
     }
 
     if loader is None:
@@ -253,6 +255,38 @@ def llamacpp_loader(model_name):
 
     logger.info(f"llama.cpp weights detected: {model_file}\n")
     model, tokenizer = LlamaCppModel.from_pretrained(model_file)
+    return model, tokenizer
+
+
+def starcodercpp_loader(model_name):
+    from modules.starcoder_model import StarcoderCppModel
+
+    path = Path(f'{shared.args.model_dir}/{model_name}')
+    if path.is_file():
+        model_file = path
+    else:
+        model_file = list(
+            Path(f'{shared.args.model_dir}/{model_name}').glob('*starcoder*ggml*.bin')
+        )[0]
+
+    logger.info(f'starcoder.cpp weights detected: {model_file}\n')
+    model, tokenizer = StarcoderCppModel().from_pretrained(model_file)
+    return model, tokenizer
+
+
+def starchatcpp_loader(model_name):
+    from modules.starcoder_model import StarcoderCppModel
+
+    path = Path(f'{shared.args.model_dir}/{model_name}')
+    if path.is_file():
+        model_file = path
+    else:
+        model_file = list(
+            Path(f'{shared.args.model_dir}/{model_name}').glob('*starchat*ggml*.bin')
+        )[0]
+
+    logger.info(f'starchat.cpp weights detected: {model_file}\n')
+    model, tokenizer = StarcoderCppModel().from_pretrained(model_file)
     return model, tokenizer
 
 

@@ -35,7 +35,7 @@ def get_max_prompt_length(state):
 
 
 def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_length=None):
-    if shared.model.__class__.__name__ in ['LlamaCppModel', 'RWKVModel']:
+    if shared.model.__class__.__name__ in ['LlamaCppModel', 'RWKVModel', 'StarcoderCppModel']:
         input_ids = shared.tokenizer.encode(str(prompt))
         input_ids = np.array(input_ids).reshape(1, len(input_ids))
         return input_ids
@@ -48,9 +48,9 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
 
     # Handling truncation
     if truncation_length is not None:
-        input_ids = input_ids[:, -truncation_length:]
+        input_ids = input_ids[:-truncation_length]
 
-    if shared.model.__class__.__name__ in ['LlamaCppModel', 'RWKVModel', 'ExllamaModel'] or shared.args.cpu:
+    if shared.model.__class__.__name__ in ['LlamaCppModel', 'RWKVModel', 'ExllamaModel', 'StarcoderCppModel'] or shared.args.cpu:
         return input_ids
     elif shared.args.flexgen:
         return input_ids.numpy()
@@ -179,7 +179,7 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False):
             yield ''
             return
 
-        if shared.model.__class__.__name__ in ['LlamaCppModel', 'RWKVModel', 'ExllamaModel']:
+        if shared.model.__class__.__name__ in ['LlamaCppModel', 'RWKVModel', 'ExllamaModel', 'StarcoderCppModel']:
             generate_func = generate_reply_custom
         elif shared.args.flexgen:
             generate_func = generate_reply_flexgen
