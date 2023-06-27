@@ -12,6 +12,7 @@ from PIL import Image
 
 import modules.shared as shared
 from modules.models import reload_model, unload_model
+from modules.ui import create_refresh_button
 
 torch._C._jit_set_profiling_mode(False)
 
@@ -76,7 +77,6 @@ def give_VRAM_priority(actor):
 if params['manage_VRAM']:
     give_VRAM_priority('set')
 
-samplers = ['DDIM', 'DPM++ 2M Karras']  # TODO: get the availible samplers with http://{address}}/sdapi/v1/samplers
 SD_models = ['NeverEndingDream']  # TODO: get with http://{address}}/sdapi/v1/sd-models and allow user to select
 
 picture_response = False  # specifies if the next model response should appear as a picture
@@ -248,7 +248,6 @@ def filter_address(address):
 
 
 def SD_api_address_update(address):
-
     global params
 
     msg = "✔️ SD API is found on:"
@@ -291,6 +290,17 @@ def load_checkpoint(checkpoint):
 
     requests.post(url=f'{params["address"]}/sdapi/v1/options', json=payload)
 
+def get_samplers():
+    try:
+        response = requests.get(url=f'{params["address"]}/sdapi/v1/samplers')
+        response.raise_for_status()
+        samplers = [x["name"] for x in response.json()]
+    except:
+        samplers = []
+
+    return samplers
+
+
 def ui():
 
     # Gradio elements
@@ -317,9 +327,11 @@ def ui():
                 with gr.Column():
                     width = gr.Slider(256, 768, value=params['width'], step=64, label='Width')
                     height = gr.Slider(256, 768, value=params['height'], step=64, label='Height')
-                with gr.Column():
-                    sampler_name = gr.Textbox(placeholder=params['sampler_name'], value=params['sampler_name'], label='Sampling method', elem_id="sampler_box")
-                    steps = gr.Slider(1, 150, value=params['steps'], step=1, label="Sampling steps")
+                with gr.Column(variant="compact", elem_id="sampler_col"):
+                    with gr.Row(elem_id="sampler_row"):
+                        sampler_name = gr.Dropdown(value=params['sampler_name'], label='Sampling method', elem_id="sampler_box")
+                        create_refresh_button(sampler_name, lambda: None, lambda: {'choices': get_samplers()}, 'refresh-button')
+                    steps = gr.Slider(1, 150, value=params['steps'], step=1, label="Sampling steps", elem_id="steps_box")
             with gr.Row():
                 seed = gr.Number(label="Seed", value=params['seed'], elem_id="seed_box")
                 cfg_scale = gr.Number(label="CFG Scale", value=params['cfg_scale'], elem_id="cfg_box")
