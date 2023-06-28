@@ -20,7 +20,7 @@ ban_eos_token: false
 skip_special_tokens: true
 truncation_length: 2048
 truncation_length_min: 0
-truncation_length_max: 8192
+truncation_length_max: 16384
 mode: chat
 start_with: ''
 chat_style: cai-chat
@@ -30,14 +30,11 @@ chat-instruct_command: 'Continue the chat dialogue below. Write a single reply f
 
 
   <|prompt|>'
-chat_prompt_size: 2048
-chat_prompt_size_min: 0
-chat_prompt_size_max: 8192
 chat_generation_attempts: 1
 chat_generation_attempts_min: 1
 chat_generation_attempts_max: 10
 default_extensions: []
 chat_default_extensions:
 - gallery
-preset: LLaMA-Precise
+preset: simple-1
 prompt: QA
