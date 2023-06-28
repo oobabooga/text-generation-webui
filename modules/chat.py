@@ -1,4 +1,3 @@
-import ast
 import base64
 import copy
 import functools
@@ -15,8 +14,11 @@ import modules.shared as shared
 from modules.extensions import apply_extensions
 from modules.html_generator import chat_html_wrapper, make_thumbnail
 from modules.logging_colors import logger
-from modules.text_generation import (generate_reply, get_encoded_length,
-                                     get_max_prompt_length)
+from modules.text_generation import (
+    generate_reply,
+    get_encoded_length,
+    get_max_prompt_length
+)
 from modules.utils import delete_file, replace_all, save_file
 
 
@@ -55,7 +57,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
     is_instruct = state['mode'] == 'instruct'
 
     # Find the maximum prompt size
-    max_length = min(get_max_prompt_length(state), state['chat_prompt_size'])
+    max_length = get_max_prompt_length(state)
     all_substrings = {
         'chat': get_turn_substrings(state, instruct=False),
         'instruct': get_turn_substrings(state, instruct=True)
@@ -144,45 +146,16 @@ def get_stopping_strings(state):
             f"\n{state['name2']}:"
         ]
 
-    stopping_strings += ast.literal_eval(f"[{state['custom_stopping_strings']}]")
-    return stopping_strings
-
-
-def extract_message_from_reply(reply, state):
-    next_character_found = False
-    stopping_strings = get_stopping_strings(state)
-
     if state['stop_at_newline']:
-        lines = reply.split('\n')
-        reply = lines[0].strip()
-        if len(lines) > 1:
-            next_character_found = True
-    else:
-        for string in stopping_strings:
-            idx = reply.find(string)
-            if idx != -1:
-                reply = reply[:idx]
-                next_character_found = True
+        stopping_strings.append("\n")
 
-        # If something like "\nYo" is generated just before "\nYou:"
-        # is completed, trim it
-        if not next_character_found:
-            for string in stopping_strings:
-                for j in range(len(string) - 1, 0, -1):
-                    if reply[-j:] == string[:j]:
-                        reply = reply[:-j]
-                        break
-                else:
-                    continue
-
-                break
-
-    return reply, next_character_found
+    return stopping_strings
 
 
 def chatbot_wrapper(text, history, state, regenerate=False, _continue=False, loading_message=True):
     output = copy.deepcopy(history)
     output = apply_extensions('history', output)
+    state = apply_extensions('state', state)
     if shared.model_name == 'None' or shared.model is None:
         logger.error("No model is loaded! Select one in the Model tab.")
         yield output
@@ -191,8 +164,8 @@ def chatbot_wrapper(text, history, state, regenerate=False, _continue=False, loa
     # Defining some variables
     just_started = True
     visible_text = None
-    eos_token = '\n' if state['stop_at_newline'] else None
     stopping_strings = get_stopping_strings(state)
+    is_stream = state['stream']
 
     # Preparing the input
     if not any((regenerate, _continue)):
@@ -200,10 +173,11 @@ def chatbot_wrapper(text, history, state, regenerate=False, _continue=False, loa
         if visible_text is None:
             visible_text = text
 
-        text = apply_extensions('input', text)
         # *Is typing...*
         if loading_message:
             yield {'visible': output['visible'] + [[visible_text, shared.processing_message]], 'internal': output['internal']}
+
+        text = apply_extensions('input', text)
     else:
         text, visible_text = output['internal'][-1][0], output['visible'][-1][0]
         if regenerate:
@@ -231,17 +205,16 @@ def chatbot_wrapper(text, history, state, regenerate=False, _continue=False, loa
     cumulative_reply = ''
     for i in range(state['chat_generation_attempts']):
         reply = None
-        for j, reply in enumerate(generate_reply(prompt + cumulative_reply, state, eos_token=eos_token, stopping_strings=stopping_strings, is_chat=True)):
+        for j, reply in enumerate(generate_reply(prompt + cumulative_reply, state, stopping_strings=stopping_strings, is_chat=True)):
             reply = cumulative_reply + reply
 
             # Extract the reply
-            reply, next_character_found = extract_message_from_reply(reply, state)
             visible_reply = re.sub("(<USER>|<user>|{{user}})", state['name1'], reply)
-            visible_reply = apply_extensions("output", visible_reply)
 
             # We need this global variable to handle the Stop event,
             # otherwise gradio gets confused
             if shared.stop_everything:
+                output['visible'][-1][1] = apply_extensions("output", output['visible'][-1][1])
                 yield output
                 return
 
@@ -254,22 +227,20 @@ def chatbot_wrapper(text, history, state, regenerate=False, _continue=False, loa
             if _continue:
                 output['internal'][-1] = [text, last_reply[0] + reply]
                 output['visible'][-1] = [visible_text, last_reply[1] + visible_reply]
-                if state['stream']:
+                if is_stream:
                     yield output
             elif not (j == 0 and visible_reply.strip() == ''):
                 output['internal'][-1] = [text, reply.lstrip(' ')]
                 output['visible'][-1] = [visible_text, visible_reply.lstrip(' ')]
-                if state['stream']:
+                if is_stream:
                     yield output
-
-            if next_character_found:
-                break
 
         if reply in [None, cumulative_reply]:
             break
         else:
             cumulative_reply = reply
 
+    output['visible'][-1][1] = apply_extensions("output", output['visible'][-1][1])
     yield output
 
 
@@ -281,7 +252,6 @@ def impersonate_wrapper(text, start_with, state):
 
     # Defining some variables
     cumulative_reply = ''
-    eos_token = '\n' if state['stop_at_newline'] else None
     prompt = generate_chat_prompt('', state, impersonate=True)
     stopping_strings = get_stopping_strings(state)
 
@@ -289,15 +259,11 @@ def impersonate_wrapper(text, start_with, state):
     cumulative_reply = text
     for i in range(state['chat_generation_attempts']):
         reply = None
-        for reply in generate_reply(prompt + cumulative_reply, state, eos_token=eos_token, stopping_strings=stopping_strings, is_chat=True):
+        for reply in generate_reply(prompt + cumulative_reply, state, stopping_strings=stopping_strings, is_chat=True):
             reply = cumulative_reply + reply
-            reply, next_character_found = extract_message_from_reply(reply, state)
             yield reply.lstrip(' ')
             if shared.stop_everything:
                 return
-
-            if next_character_found:
-                break
 
         if reply in [None, cumulative_reply]:
             break
@@ -428,7 +394,7 @@ def tokenize_dialogue(dialogue, name1, name2):
     return history
 
 
-def save_history(mode, timestamp=False):
+def save_history(mode, timestamp=False, user_request=False):
     # Instruct mode histories should not be saved as if
     # Alpaca or Vicuna were characters
     if mode == 'instruct':
@@ -437,7 +403,7 @@ def save_history(mode, timestamp=False):
 
         fname = f"Instruct_{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
     else:
-        if shared.character == 'None':
+        if shared.character == 'None' and not user_request:
             return
 
         if timestamp:
@@ -574,7 +540,7 @@ def load_character(character, name1, name2, instruct=False):
             # Create .json log files since they don't already exist
             save_history('instruct' if instruct else 'chat')
 
-    return name1, name2, picture, greeting, context, repr(turn_template)[1:-1]
+    return name1, name2, picture, greeting, context, turn_template.replace("\n", r"\n")
 
 
 @functools.cache
@@ -598,7 +564,6 @@ def upload_character(json_file, img, tavern=False):
         f.write(json_file)
 
     if img is not None:
-        img = Image.open(io.BytesIO(img))
         img.save(Path(f'characters/{outfile_name}.png'))
 
     logger.info(f'New character saved to "characters/{outfile_name}.json".')
@@ -611,7 +576,7 @@ def upload_tavern_character(img, name1, name2):
     decoded_string = base64.b64decode(_img.info['chara'])
     _json = json.loads(decoded_string)
     _json = {"char_name": _json['name'], "char_persona": _json['description'], "char_greeting": _json["first_mes"], "example_dialogue": _json['mes_example'], "world_scenario": _json['scenario']}
-    return upload_character(json.dumps(_json), img, tavern=True)
+    return upload_character(json.dumps(_json), _img, tavern=True)
 
 
 def upload_your_profile_picture(img):

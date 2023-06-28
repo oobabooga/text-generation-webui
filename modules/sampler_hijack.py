@@ -3,9 +3,11 @@ import math
 import torch
 import transformers
 from transformers import LogitsWarper
-from transformers.generation.logits_process import (LogitNormalization,
-                                                    LogitsProcessorList,
-                                                    TemperatureLogitsWarper)
+from transformers.generation.logits_process import (
+    LogitNormalization,
+    LogitsProcessorList,
+    TemperatureLogitsWarper
+)
 
 
 class TailFreeLogitsWarper(LogitsWarper):

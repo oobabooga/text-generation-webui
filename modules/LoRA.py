@@ -11,7 +11,7 @@ from modules.models import reload_model
 def add_lora_to_model(lora_names):
     if 'GPTQForCausalLM' in shared.model.__class__.__name__:
         add_lora_autogptq(lora_names)
-    elif shared.model.__class__.__name__ == 'ExllamaModel':
+    elif shared.model.__class__.__name__ in ['ExllamaModel', 'ExllamaHF']:
         add_lora_exllama(lora_names)
     else:
         add_lora_transformers(lora_names)
@@ -20,13 +20,20 @@ def add_lora_to_model(lora_names):
 def add_lora_exllama(lora_names):
 
     try:
-        from repositories.exllama.lora import ExLlamaLora
+        from exllama.lora import ExLlamaLora
     except:
-        logger.error("Could not find the file repositories/exllama/lora.py. Make sure that exllama is cloned inside repositories/ and is up to date.")
-        return
+        try:
+            from repositories.exllama.lora import ExLlamaLora
+        except:
+            logger.error("Could not find the file repositories/exllama/lora.py. Make sure that exllama is cloned inside repositories/ and is up to date.")
+            return
 
     if len(lora_names) == 0:
-        shared.model.generator.lora = None
+        if shared.model.__class__.__name__ == 'ExllamaModel':
+            shared.model.generator.lora = None
+        else:
+            shared.model.lora = None
+
         shared.lora_names = []
         return
     else:
@@ -38,8 +45,13 @@ def add_lora_exllama(lora_names):
         lora_adapter_path = lora_path / "adapter_model.bin"
 
         logger.info("Applying the following LoRAs to {}: {}".format(shared.model_name, ', '.join([lora_names[0]])))
-        lora = ExLlamaLora(shared.model.model, str(lora_config_path), str(lora_adapter_path))
-        shared.model.generator.lora = lora
+        if shared.model.__class__.__name__ == 'ExllamaModel':
+            lora = ExLlamaLora(shared.model.model, str(lora_config_path), str(lora_adapter_path))
+            shared.model.generator.lora = lora
+        else:
+            lora = ExLlamaLora(shared.model.ex_model, str(lora_config_path), str(lora_adapter_path))
+            shared.model.lora = lora
+
         shared.lora_names = [lora_names[0]]
         return
 
