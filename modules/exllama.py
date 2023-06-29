@@ -71,7 +71,7 @@ class ExllamaModel:
         self.generator.settings.top_k = state['top_k']
         self.generator.settings.typical = state['typical_p']
         self.generator.settings.token_repetition_penalty_max = state['repetition_penalty']
-        self.generator.settings.token_repetition_penalty_sustain = state['repetition_penalty_range']
+        self.generator.settings.token_repetition_penalty_sustain = -1 if state['repetition_penalty_range'] <= 0 else state['repetition_penalty_range']
         if state['ban_eos_token']:
             self.generator.disallow_tokens([self.tokenizer.eos_token_id])
         else:
