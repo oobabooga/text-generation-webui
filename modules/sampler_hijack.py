@@ -148,15 +148,6 @@ def get_logits_warper_patch(self, generation_config):
 
 
 class RepetitionPenaltyLogitsProcessorWithRange(LogitsProcessor):
-    r"""
-    [`LogitsProcessor`] enforcing an exponential penalty on repeated sequences.
-
-    Args:
-        repetition_penalty (`float`):
-            The parameter for repetition penalty. 1.0 means no penalty. See [this
-            paper](https://arxiv.org/pdf/1909.05858.pdf) for more details.
-    """
-
     def __init__(self, penalty: float, _range: int):
         if not isinstance(penalty, float) or not (penalty > 0):
             raise ValueError(f"`penalty` has to be a strictly positive float, but is {penalty}")
@@ -166,9 +157,8 @@ class RepetitionPenaltyLogitsProcessorWithRange(LogitsProcessor):
 
 
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
-        input_ids = input_ids[:, -self._range:]
-        print(input_ids.shape, scores.shape)
 
+        input_ids = input_ids[:, -self._range:]
         score = torch.gather(scores, 1, input_ids)
 
         # if score < 0 then repetition penalty has to be multiplied to reduce the previous token probability
@@ -185,6 +175,7 @@ def get_logits_processor_patch(self, **kwargs):
         if result[i].__class__.__name__ == 'RepetitionPenaltyLogitsProcessor':
             repetition_penalty = kwargs['generation_config'].repetition_penalty
             repetition_penalty_range = kwargs['generation_config'].repetition_penalty_range
+            print(repetition_penalty_range)
             result[i] = RepetitionPenaltyLogitsProcessorWithRange(repetition_penalty, repetition_penalty_range)
 
     return result
@@ -197,7 +188,7 @@ def generation_config_init_patch(self, **kwargs):
     self.mirostat_mode = kwargs.pop("mirostat_mode", 0)
     self.mirostat_eta = kwargs.pop("mirostat_eta", 0.1)
     self.mirostat_tau = kwargs.pop("mirostat_tau", 5)
-    self.repetition_penalty_range = kwargs.pop("repetition_penalty_range", 256)
+    self.repetition_penalty_range = kwargs.pop("repetition_penalty_range", 0)
 
 
 def hijack_samplers():
