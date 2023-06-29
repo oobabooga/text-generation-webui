@@ -851,7 +851,7 @@ def create_interface():
                 partial(chat.load_character, instruct=False), [shared.gradio[k] for k in ['character_menu', 'name1', 'name2']], [shared.gradio[k] for k in ['name1', 'name2', 'character_picture', 'greeting', 'context', 'dummy']]).then(
                 chat.redraw_html, shared.reload_inputs, shared.gradio['display'])
 
-            shared.gradio['Upload tavern character'].click(chat.upload_tavern_character, [shared.gradio['upload_img_tavern'], shared.gradio['name1'], shared.gradio['name2']], [shared.gradio['character_menu']])
+            shared.gradio['Upload tavern character'].click(chat.upload_tavern_character, [shared.gradio['upload_img_tavern']], [shared.gradio['character_menu']])
             shared.gradio['upload_img_tavern'].upload(lambda: gr.update(interactive=True), None, [shared.gradio['Upload tavern character']])
             shared.gradio['upload_img_tavern'].clear(lambda: gr.update(interactive=False), None, [shared.gradio['Upload tavern character']])
             shared.gradio['your_picture'].change(

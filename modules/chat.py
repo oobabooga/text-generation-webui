@@ -570,11 +570,13 @@ def upload_character(json_file, img, tavern=False):
     return outfile_name
 
 
-def upload_tavern_character(img, name1, name2):
+def upload_tavern_character(img):
     _img = Image.open(io.BytesIO(img))
     _img.getexif()
     decoded_string = base64.b64decode(_img.info['chara'])
     _json = json.loads(decoded_string)
+    if "data" in _json:
+        _json = _json["data"]
     _json = {"char_name": _json['name'], "char_persona": _json['description'], "char_greeting": _json["first_mes"], "example_dialogue": _json['mes_example'], "world_scenario": _json['scenario']}
     return upload_character(json.dumps(_json), _img, tavern=True)
 
