@@ -21,6 +21,7 @@ def build_parameters(body, chat=False):
         'tfs': float(body.get('tfs', 1)),
         'top_a': float(body.get('top_a', 0)),
         'repetition_penalty': float(body.get('repetition_penalty', body.get('rep_pen', 1.1))),
+        'repetition_penalty_range': int(body.get('repetition_penalty_range', 0)),
         'encoder_repetition_penalty': float(body.get('encoder_repetition_penalty', 1.0)),
         'top_k': int(body.get('top_k', 0)),
         'min_length': int(body.get('min_length', 0)),
