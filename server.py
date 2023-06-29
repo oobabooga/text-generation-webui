@@ -858,8 +858,8 @@ def create_interface():
                 chat.redraw_html, shared.reload_inputs, shared.gradio['display'])
 
             shared.gradio['Upload tavern character'].click(chat.upload_tavern_character, [shared.gradio['upload_img_tavern'], shared.gradio['tavern_json']], [shared.gradio['character_menu']])
-            shared.gradio['upload_img_tavern'].upload(chat.check_tavern_character, shared.gradio['upload_img_tavern'], [shared.gradio['tavern_name'], shared.gradio['tavern_desc'], shared.gradio['tavern_json'], shared.gradio['Upload tavern character']], show_progress=False)
-            shared.gradio['upload_img_tavern'].clear(lambda: (None, None, None, gr.update(interactive=False)), None, [shared.gradio['tavern_name'], shared.gradio['tavern_desc'], shared.gradio['tavern_json'], shared.gradio['Upload tavern character']], show_progress=False)
+            shared.gradio['upload_img_tavern'].upload(chat.check_tavern_character, shared.gradio['upload_img_tavern'], [shared.gradio[k] for k in ['tavern_name', 'tavern_desc', 'tavern_json', 'Upload tavern character']], show_progress=False)
+            shared.gradio['upload_img_tavern'].clear(lambda: (None, None, None, gr.update(interactive=False)), None, [shared.gradio[k] for k in ['tavern_name', 'tavern_desc', 'tavern_json', 'Upload tavern character']], show_progress=False)
             shared.gradio['your_picture'].change(
                 chat.upload_your_profile_picture, shared.gradio['your_picture'], None).then(
                 partial(chat.redraw_html, reset_cache=True), shared.reload_inputs, shared.gradio['display'])

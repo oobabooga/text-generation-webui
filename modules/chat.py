@@ -1,14 +1,13 @@
 import base64
 import copy
 import functools
-import io
 import json
 import re
 from datetime import datetime
 from pathlib import Path
 
-import yaml
 import gradio as gr
+import yaml
 from PIL import Image
 
 import modules.shared as shared
