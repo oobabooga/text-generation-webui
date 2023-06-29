@@ -630,11 +630,18 @@ def create_interface():
                             shared.gradio['upload_json'] = gr.File(type='binary', file_types=['.json'], label='JSON File')
                             shared.gradio['upload_img_bot'] = gr.Image(type='pil', label='Profile Picture (optional)')
 
-                        shared.gradio['Upload character'] = gr.Button(value='Submit', interactive=False)
+                        shared.gradio['Submit character'] = gr.Button(value='Submit', interactive=False)
 
                     with gr.Tab('TavernAI'):
-                        shared.gradio['upload_img_tavern'] = gr.File(type='binary', file_types=['image'], label='TavernAI PNG File')
-                        shared.gradio['Upload tavern character'] = gr.Button(value='Submit', interactive=False)
+                        with gr.Row():
+                            with gr.Column():
+                                shared.gradio['upload_img_tavern'] = gr.Image(type='pil', label='TavernAI PNG File', elem_id="upload_img_tavern")
+                                shared.gradio['tavern_json'] = gr.State()
+                            with gr.Column():
+                                shared.gradio['tavern_name'] = gr.Textbox(value='', lines=1, label='Name', interactive=False)
+                                shared.gradio['tavern_desc'] = gr.Textbox(value='', lines=4, max_lines=4, label='Description', interactive=False)
+
+                        shared.gradio['Submit tavern character'] = gr.Button(value='Submit', interactive=False)
 
             with gr.Tab("Parameters", elem_id="parameters"):
                 create_settings_menus(default_preset)
@@ -876,17 +883,17 @@ def create_interface():
                 lambda: gr.update(visible=True), None, shared.gradio['file_deleter'])
 
             shared.gradio['download_button'].click(lambda x: chat.save_history(x, timestamp=True, user_request=True), shared.gradio['mode'], shared.gradio['download'])
-            shared.gradio['Upload character'].click(chat.upload_character, [shared.gradio['upload_json'], shared.gradio['upload_img_bot']], [shared.gradio['character_menu']])
-            shared.gradio['upload_json'].upload(lambda: gr.update(interactive=True), None, [shared.gradio['Upload character']])
-            shared.gradio['upload_json'].clear(lambda: gr.update(interactive=False), None, [shared.gradio['Upload character']])
+            shared.gradio['Submit character'].click(chat.upload_character, [shared.gradio['upload_json'], shared.gradio['upload_img_bot']], [shared.gradio['character_menu']])
+            shared.gradio['upload_json'].upload(lambda: gr.update(interactive=True), None, [shared.gradio['Submit character']])
+            shared.gradio['upload_json'].clear(lambda: gr.update(interactive=False), None, [shared.gradio['Submit character']])
 
             shared.gradio['character_menu'].change(
                 partial(chat.load_character, instruct=False), [shared.gradio[k] for k in ['character_menu', 'name1', 'name2']], [shared.gradio[k] for k in ['name1', 'name2', 'character_picture', 'greeting', 'context', 'dummy']]).then(
                 chat.redraw_html, shared.reload_inputs, shared.gradio['display'])
 
-            shared.gradio['Upload tavern character'].click(chat.upload_tavern_character, [shared.gradio['upload_img_tavern'], shared.gradio['name1'], shared.gradio['name2']], [shared.gradio['character_menu']])
-            shared.gradio['upload_img_tavern'].upload(lambda: gr.update(interactive=True), None, [shared.gradio['Upload tavern character']])
-            shared.gradio['upload_img_tavern'].clear(lambda: gr.update(interactive=False), None, [shared.gradio['Upload tavern character']])
+            shared.gradio['Submit tavern character'].click(chat.upload_tavern_character, [shared.gradio['upload_img_tavern'], shared.gradio['tavern_json']], [shared.gradio['character_menu']])
+            shared.gradio['upload_img_tavern'].upload(chat.check_tavern_character, shared.gradio['upload_img_tavern'], [shared.gradio[k] for k in ['tavern_name', 'tavern_desc', 'tavern_json', 'Submit tavern character']], show_progress=False)
+            shared.gradio['upload_img_tavern'].clear(lambda: (None, None, None, gr.update(interactive=False)), None, [shared.gradio[k] for k in ['tavern_name', 'tavern_desc', 'tavern_json', 'Submit tavern character']], show_progress=False)
             shared.gradio['your_picture'].change(
                 chat.upload_your_profile_picture, shared.gradio['your_picture'], None).then(
                 partial(chat.redraw_html, reset_cache=True), shared.reload_inputs, shared.gradio['display'])
