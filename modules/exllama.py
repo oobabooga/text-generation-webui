@@ -1,6 +1,8 @@
 import sys
 from pathlib import Path
 
+from torch import version as torch_version
+
 from modules import shared
 from modules.logging_colors import logger
 
@@ -51,6 +53,12 @@ class ExllamaModel:
         if shared.args.gpu_split:
             config.set_auto_map(shared.args.gpu_split)
             config.gpu_peer_fix = True
+        if torch_version.hip:
+            config.rmsnorm_no_half2 = True
+            config.rope_no_half2 = True
+            config.matmul_no_half2 = True
+            config.silu_no_half2 = True
+
 
         model = ExLlama(config)
         tokenizer = ExLlamaTokenizer(str(tokenizer_model_path))
@@ -71,6 +79,7 @@ class ExllamaModel:
         self.generator.settings.top_k = state['top_k']
         self.generator.settings.typical = state['typical_p']
         self.generator.settings.token_repetition_penalty_max = state['repetition_penalty']
+        self.generator.settings.token_repetition_penalty_sustain = -1 if state['repetition_penalty_range'] <= 0 else state['repetition_penalty_range']
         if state['ban_eos_token']:
             self.generator.disallow_tokens([self.tokenizer.eos_token_id])
         else:
