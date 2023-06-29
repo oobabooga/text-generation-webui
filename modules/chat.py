@@ -12,6 +12,7 @@ import gradio as gr
 from PIL import Image
 
 import modules.shared as shared
+from modules import utils
 from modules.extensions import apply_extensions
 from modules.html_generator import chat_html_wrapper, make_thumbnail
 from modules.logging_colors import logger
@@ -568,7 +569,7 @@ def upload_character(json_file, img, tavern=False):
         img.save(Path(f'characters/{outfile_name}.png'))
 
     logger.info(f'New character saved to "characters/{outfile_name}.json".')
-    return outfile_name
+    return gr.update(value=outfile_name, choices=utils.get_available_characters())
 
 
 def upload_tavern_character(img, _json):
