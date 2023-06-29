@@ -243,3 +243,6 @@ TheBloke_WizardLM-30B-GPTQ:
 .*xgen.*-inst:
   truncation_length: 8192
   instruction_template: 'Vicuna-v0'
+.*(platypus|gplatty):
+  mode: 'instruct'
+  instruction_template: 'Alpaca'
