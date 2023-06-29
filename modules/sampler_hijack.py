@@ -122,6 +122,29 @@ class MirostatLogitsWarper(LogitsWarper):
         return scores
 
 
+class RepetitionPenaltyLogitsProcessorWithRange(LogitsProcessor):
+    '''
+    Copied from the transformers library
+    '''
+    def __init__(self, penalty: float, _range: int):
+        if not isinstance(penalty, float) or not (penalty > 0):
+            raise ValueError(f"`penalty` has to be a strictly positive float, but is {penalty}")
+
+        self.penalty = penalty
+        self._range = _range
+
+    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
+
+        input_ids = input_ids[:, -self._range:]
+        score = torch.gather(scores, 1, input_ids)
+
+        # if score < 0 then repetition penalty has to be multiplied to reduce the previous token probability
+        score = torch.where(score < 0, score * self.penalty, score / self.penalty)
+
+        scores.scatter_(1, input_ids, score)
+        return scores
+
+
 def get_logits_warper_patch(self, generation_config):
     warpers = self._get_logits_warper_old(generation_config)
     warpers_to_add = LogitsProcessorList()
@@ -147,36 +170,15 @@ def get_logits_warper_patch(self, generation_config):
     return warpers
 
 
-class RepetitionPenaltyLogitsProcessorWithRange(LogitsProcessor):
-    def __init__(self, penalty: float, _range: int):
-        if not isinstance(penalty, float) or not (penalty > 0):
-            raise ValueError(f"`penalty` has to be a strictly positive float, but is {penalty}")
-
-        self.penalty = penalty
-        self._range = _range
-
-
-    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
-
-        input_ids = input_ids[:, -self._range:]
-        score = torch.gather(scores, 1, input_ids)
-
-        # if score < 0 then repetition penalty has to be multiplied to reduce the previous token probability
-        score = torch.where(score < 0, score * self.penalty, score / self.penalty)
-
-        scores.scatter_(1, input_ids, score)
-        return scores
-
-
 def get_logits_processor_patch(self, **kwargs):
     result = self._get_logits_processor_old(**kwargs)
+    repetition_penalty_range = kwargs['generation_config'].repetition_penalty_range
+    repetition_penalty = kwargs['generation_config'].repetition_penalty
 
-    for i in range(len(result)):
-        if result[i].__class__.__name__ == 'RepetitionPenaltyLogitsProcessor':
-            repetition_penalty = kwargs['generation_config'].repetition_penalty
-            repetition_penalty_range = kwargs['generation_config'].repetition_penalty_range
-            print(repetition_penalty_range)
-            result[i] = RepetitionPenaltyLogitsProcessorWithRange(repetition_penalty, repetition_penalty_range)
+    if repetition_penalty_range > 0:
+        for i in range(len(result)):
+            if result[i].__class__.__name__ == 'RepetitionPenaltyLogitsProcessor':
+                result[i] = RepetitionPenaltyLogitsProcessorWithRange(repetition_penalty, repetition_penalty_range)
 
     return result
 
@@ -195,8 +197,8 @@ def hijack_samplers():
     transformers.GenerationMixin._get_logits_warper_old = transformers.GenerationMixin._get_logits_warper
     transformers.GenerationMixin._get_logits_warper = get_logits_warper_patch
 
-    transformers.GenerationConfig.__init___old = transformers.GenerationConfig.__init__
-    transformers.GenerationConfig.__init__ = generation_config_init_patch
-
     transformers.GenerationMixin._get_logits_processor_old = transformers.GenerationMixin._get_logits_processor
     transformers.GenerationMixin._get_logits_processor = get_logits_processor_patch
+
+    transformers.GenerationConfig.__init___old = transformers.GenerationConfig.__init__
+    transformers.GenerationConfig.__init__ = generation_config_init_patch
