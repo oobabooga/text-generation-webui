@@ -33,7 +33,7 @@ params = {
     'hr_upscaler': 'ESRGAN_4x',
     'hr_scale': '1.0',
     'seed': -1,
-    'sampler_name': 'DDIM',
+    'sampler_name': 'DPM++ 2M Karras',
     'steps': 32,
     'cfg_scale': 7,
     'textgen_prefix': 'Please provide a detailed and vivid description of [subject]',
@@ -286,12 +286,14 @@ def get_checkpoints():
 
 
 def load_checkpoint(checkpoint):
-
     payload = {
         "sd_model_checkpoint": checkpoint
     }
 
-    requests.post(url=f'{params["address"]}/sdapi/v1/options', json=payload)
+    try:
+        requests.post(url=f'{params["address"]}/sdapi/v1/options', json=payload)
+    except:
+        pass
 
 
 def get_samplers():
