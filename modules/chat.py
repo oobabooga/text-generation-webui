@@ -8,6 +8,7 @@ from datetime import datetime
 from pathlib import Path
 
 import yaml
+import gradio as gr
 from PIL import Image
 
 import modules.shared as shared
@@ -570,15 +571,19 @@ def upload_character(json_file, img, tavern=False):
     return outfile_name
 
 
-def upload_tavern_character(img):
-    _img = Image.open(io.BytesIO(img))
-    _img.getexif()
-    decoded_string = base64.b64decode(_img.info['chara'])
+def upload_tavern_character(img, _json):
+    _json = {"char_name": _json['name'], "char_persona": _json['description'], "char_greeting": _json["first_mes"], "example_dialogue": _json['mes_example'], "world_scenario": _json['scenario']}
+    return upload_character(json.dumps(_json), img, tavern=True)
+
+
+def check_tavern_character(img):
+    if "chara" not in img.info:
+        return "Not a TavernAI card", None, None, gr.update(interactive=False)
+    decoded_string = base64.b64decode(img.info['chara'])
     _json = json.loads(decoded_string)
     if "data" in _json:
         _json = _json["data"]
-    _json = {"char_name": _json['name'], "char_persona": _json['description'], "char_greeting": _json["first_mes"], "example_dialogue": _json['mes_example'], "world_scenario": _json['scenario']}
-    return upload_character(json.dumps(_json), _img, tavern=True)
+    return _json['name'], _json['description'], _json, gr.update(interactive=True)
 
 
 def upload_your_profile_picture(img):
