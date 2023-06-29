@@ -29,6 +29,7 @@ default_req_params = {
     'top_p': 1.0,
     'top_k': 1,
     'repetition_penalty': 1.18,
+    'repetition_penalty_range': 0,
     'encoder_repetition_penalty': 1.0,
     'suffix': None,
     'stream': False,
