@@ -1052,12 +1052,7 @@ if __name__ == "__main__":
 
     # If any model has been selected, load it
     if shared.model_name != 'None':
-        model_settings = get_model_settings_from_yamls(shared.model_name)
-        shared.settings.update(model_settings)  # hijacking the interface defaults
-        update_model_parameters(model_settings, initial=True)  # hijacking the command-line arguments
-
-        # Load the model
-        shared.model, shared.tokenizer = load_model(shared.model_name)
+        load_model_wrapper(shared.model_name, shared.args.loader, autoload=True)
         if shared.args.lora:
             add_lora_to_model(shared.args.lora)
 
