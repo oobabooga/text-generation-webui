@@ -224,20 +224,29 @@ class Handler(BaseHTTPRequestHandler):
             # by default return the same as the GET interface
             result = shared.model_name
 
-            # Actions: info, load, list, unload
+            # Actions: info, load, list, unload, reload, update
             action = body.get('action', '')
 
-            if action == 'load':
-                model_name = body['model_name']
+            if action == 'load' or action == 'update' or action == 'reload':
+                model_name = body.get('model_name', shared.model_name)
                 args = body.get('args', {})
+                extra_settings = body.get('settings', {})
                 print('args', args)
+                print('settings', extra_settings)
                 for k in args:
                     setattr(shared.args, k, args[k])
 
-                shared.model_name = model_name
-                unload_model()
+                if shared.model and model_name and shared.model_name != model_name or action == 'reload':
+                    unload_model()
 
                 model_settings = get_model_settings_from_yamls(shared.model_name)
+
+                for k in extra_settings:
+                    if model_settings[k]:
+                        model_settings[k] = type(model_settings[k])(extra_settings[k])
+                    else:
+                        model_settings[k] = extra_settings[k]
+
                 shared.settings.update(model_settings)
                 update_model_parameters(model_settings, initial=True)
 
@@ -245,7 +254,9 @@ class Handler(BaseHTTPRequestHandler):
                     shared.settings['instruction_template'] = None
 
                 try:
-                    shared.model, shared.tokenizer = load_model(shared.model_name)
+                    if model_name and shared.model_name != model_name or action == 'reload':
+                        shared.model_name = model_name
+                        shared.model, shared.tokenizer = load_model(shared.model_name)
                     if shared.args.lora:
                         add_lora_to_model(shared.args.lora)  # list
 
