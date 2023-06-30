@@ -1130,7 +1130,9 @@ if __name__ == "__main__":
     # If any model has been selected, load it
     if shared.model_name != 'None':
         # Load the model
-        load_model_wrapper(shared.model_name, shared.args.loader, autoload=True)
+        for resp in load_model_wrapper(shared.model_name, shared.args.loader, autoload=True):
+            print(resp)
+            
         if shared.args.lora:
             add_lora_to_model(shared.args.lora)
 
