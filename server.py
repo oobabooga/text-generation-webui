@@ -40,7 +40,7 @@ from modules.LoRA import add_lora_to_model
 from modules.models import load_model, unload_model
 from modules.models_settings import (
     apply_model_settings_to_state,
-    get_model_settings_from_yamls,
+    set_shared_model_settings,
     save_model_settings,
     update_model_parameters
 )
@@ -63,9 +63,7 @@ def load_model_wrapper(selected_model, loader, autoload=False):
         try:
             yield f"Loading {selected_model}..."
             shared.model_name = selected_model
-            model_settings = get_model_settings_from_yamls(shared.model_name)
-            shared.settings.update(model_settings)  # hijacking the interface defaults
-            update_model_parameters(model_settings, initial=True)  # hijacking the command-line arguments
+            set_shared_model_settings(selected_model)
             unload_model()
             if selected_model != '':
                 shared.model, shared.tokenizer = load_model(shared.model_name, loader)
