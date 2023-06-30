@@ -132,3 +132,24 @@ def save_model_settings(model, state):
             f.write(yaml.dump(user_config, sort_keys=False))
 
         yield (f"Settings for {model} saved to {p}")
+
+
+# Update the shared.settings with new settings
+def set_shared_model_settings(extra_settings):
+    model_settings = get_model_settings_from_yamls(shared.model_name) # get current model settings
+
+    # set each setting and ensure the correct type
+    for k in extra_settings:
+        if shared.settings[k]:
+            shared.settings[k] = type(shared.settings[k])(extra_settings[k])
+        elif model_settings[k]:
+            shared.settings[k] = type(model_settings[k])(extra_settings[k])
+        else:
+            print("Warning: Setting unknown model setting: {k} = {extra_settings[k]}")
+            shared.settings[k] = extra_settings[k]
+    
+    update_model_parameters(shared.settings, initial=True)
+
+    if shared.settings['mode'] != 'instruct':
+        shared.settings['instruction_template'] = None
+

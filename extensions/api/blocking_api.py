@@ -8,10 +8,12 @@ from modules.chat import generate_chat_reply
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, unload_model
 from modules.models_settings import (get_model_settings_from_yamls,
-                                     update_model_parameters)
+                                     update_model_parameters,
+                                     set_shared_model_settings)
 from modules.text_generation import (encode, generate_reply,
                                      stop_everything_event)
-from modules.utils import get_available_models
+from modules.utils import (get_available_models,
+                           get_available_loras)
 
 
 def get_model_info():
@@ -108,6 +110,7 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(response.encode('utf-8'))
 
         elif self.path == '/api/v1/model':
+
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
@@ -115,45 +118,30 @@ class Handler(BaseHTTPRequestHandler):
             # by default return the same as the GET interface
             result = shared.model_name
 
-            # Actions: info, load, list, unload, reload, update
+            # Actions: info, load, list, unload, add_lora, update
             action = body.get('action', '')
 
-            if action == 'load' or action == 'update' or action == 'reload':
+            if action == 'load':
                 model_name = body.get('model_name', shared.model_name)
                 args = body.get('args', {})
                 extra_settings = body.get('settings', {})
-                print('args', args)
-                print('settings', extra_settings)
+
+                print('Model load args:', args)
+
+                unload_model()
+
+                shared.model_name = model_name
                 for k in args:
                     setattr(shared.args, k, args[k])
-
-                if shared.model and model_name and shared.model_name != model_name or action == 'reload':
-                    unload_model()
-
-                model_settings = get_model_settings_from_yamls(shared.model_name)
-
-                for k in extra_settings:
-                    if model_settings[k]:
-                        model_settings[k] = type(model_settings[k])(extra_settings[k])
-                    else:
-                        model_settings[k] = extra_settings[k]
-
-                shared.settings.update(model_settings)
-                update_model_parameters(model_settings, initial=True)
-
-                if shared.settings['mode'] != 'instruct':
-                    shared.settings['instruction_template'] = None
+                    
+                set_shared_model_settings(extra_settings)
 
                 try:
-                    if model_name and shared.model_name != model_name or action == 'reload':
-                        shared.model_name = model_name
-                        shared.model, shared.tokenizer = load_model(shared.model_name)
-                    if shared.args.lora:
-                        add_lora_to_model(shared.args.lora)  # list
+                    shared.model, shared.tokenizer = load_model(model_name)
+                    add_lora_to_model(shared.args.lora)  # list
 
                 except Exception as e:
                     response = json.dumps({'error': {'message': repr(e)}})
-
                     self.wfile.write(response.encode('utf-8'))
                     raise e
 
@@ -161,14 +149,40 @@ class Handler(BaseHTTPRequestHandler):
 
                 result = get_model_info()
 
+            elif action == 'settings':
+                extra_settings = body.get('settings', {})
+                set_shared_model_settings(extra_settings)
+                result = get_model_info()
+
+            elif action == 'add_lora':
+                lora = body.get('lora', [])
+                if not isinstance(lora, list):
+                    lora = [lora]
+
+                try:
+                    add_lora_to_model(lora)
+                    shared.args.lora = lora
+                except Exception as e:
+                    response = json.dumps({'error': {'message': repr(e)}})
+
+                    self.wfile.write(response.encode('utf-8'))
+                    raise e
+                
+                result = get_model_info()
+                
             elif action == 'unload':
                 unload_model()
                 shared.model_name = None
+                shared.lora_names = []
                 shared.args.model = None
+                shared.args.lora = []
                 result = get_model_info()
 
             elif action == 'list':
                 result = get_available_models()
+
+            elif action == 'list_lora':
+                result = get_available_loras()
 
             elif action == 'info':
                 result = get_model_info()
