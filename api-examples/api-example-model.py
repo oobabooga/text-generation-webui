@@ -148,7 +148,7 @@ def complex_model_load(model, lora = []):
 
 
 if __name__ == '__main__':
-    for model in ['CalderaAI_30B-Lazarus-GPTQ4bit']: #model_api({'action': 'list'})['result']:
+    for model in model_api({'action': 'list'})['result']:
         try:
             resp = complex_model_load(model)
 
