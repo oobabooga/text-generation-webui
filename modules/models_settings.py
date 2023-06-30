@@ -2,6 +2,7 @@ import re
 from pathlib import Path
 
 import yaml
+import copy
 
 from modules import shared, ui
 
@@ -135,21 +136,24 @@ def save_model_settings(model, state):
 
 
 # Update the shared.settings with new settings
+# Settings are applied after the default settings for the model
 def set_shared_model_settings(extra_settings):
     model_settings = get_model_settings_from_yamls(shared.model_name) # get current model settings
+    new_shared_settings = copy.deepcopy(shared.settings)
+    new_shared_settings.update(model_settings)
 
     # set each setting and ensure the correct type
     for k in extra_settings:
-        if shared.settings[k]:
-            shared.settings[k] = type(shared.settings[k])(extra_settings[k])
-        elif model_settings[k]:
-            shared.settings[k] = type(model_settings[k])(extra_settings[k])
+        if new_shared_settings[k]:
+            new_shared_settings[k] = type(new_shared_settings[k])(extra_settings[k])
         else:
             print("Warning: Setting unknown model setting: {k} = {extra_settings[k]}")
-            shared.settings[k] = extra_settings[k]
+            new_shared_settings[k] = extra_settings[k]
     
-    update_model_parameters(shared.settings, initial=True)
+    update_model_parameters(new_shared_settings, initial=True)
 
-    if shared.settings['mode'] != 'instruct':
-        shared.settings['instruction_template'] = None
+    if new_shared_settings['mode'] != 'instruct':
+        new_shared_settings['instruction_template'] = None
+
+    shared.settings = new_shared_settings
 

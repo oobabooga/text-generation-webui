@@ -190,7 +190,7 @@ class Handler(BaseHTTPRequestHandler):
             elif action == 'info' or action == 'settings':
                 extra_settings = body.get('settings', {})
                 if extra_settings:
-                    set_shared_model_settings(extra_settings)
+                    set_shared_model_settings(extra_settings) # Settings are applied after the default settings for the model
                 result = get_model_info()
 
             response = json.dumps({
