@@ -11,7 +11,8 @@ from modules.models_settings import set_shared_model_settings
 from modules.text_generation import (encode, generate_reply,
                                      stop_everything_event)
 from modules.utils import (get_available_models,
-                           get_available_loras)
+                           get_available_loras,
+                           get_available_settings)
 
 
 def get_model_info():
@@ -131,7 +132,10 @@ class Handler(BaseHTTPRequestHandler):
                 shared.model_name = model_name
                 for k in args:
                     setattr(shared.args, k, args[k])
-                    
+                
+                if not shared.args.lora:
+                    shared.args.lora = []
+
                 set_shared_model_settings(extra_settings)
 
                 try:
@@ -176,6 +180,9 @@ class Handler(BaseHTTPRequestHandler):
 
             elif action == 'list_lora':
                 result = get_available_loras()
+
+            elif action == 'list_settings':
+                result = get_available_settings()
 
             elif action == 'info' or action == 'settings':
                 extra_settings = body.get('settings', {})
