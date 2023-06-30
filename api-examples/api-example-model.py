@@ -38,7 +38,7 @@ def model_load(model_name):
 
 
 # complex loader
-def complex_model_load(model):
+def complex_model_load(model, lora = []):
 
     def guess_groupsize(model_name):
         if '1024g' in model_name:
@@ -50,16 +50,23 @@ def complex_model_load(model):
         else:
             return -1
 
+    loader_names = ['llama.cpp', 'Transformers', 'AutoGPTQ', 'GPTQ-for-LLaMa', 'ExLlama', 'ExLlama_HF',  'RWKV', 'flexgen']
+
     req = {
         'action': 'load',
         'model_name': model,
         'args': {
-            'gptq_for_llama': False, # Use AutoGPTQ by default, set to True for gptq-for-llama
+            'lora': lora,
 
             'bf16': False,
             'load_in_8bit': False,
             'groupsize': 0,
             'wbits': 0,
+
+            # Exllama
+            'gpu_split': None,
+            'max_seq_len': 2048,
+            'compress_pos_emb': 1,
 
             # llama.cpp
             'threads': 0,
@@ -88,6 +95,18 @@ def complex_model_load(model):
             #"disk_cache_dir": "cache",
         },
     }
+
+    # Example of a more complex load
+    # CalderaAI_30B-Lazarus-GPTQ4bit in 24GB with superhot-8k lora and embedding compression
+    # Also set truncation_length = 3072 because 8k is not detected from the model.
+    if model == 'CalderaAI_30B-Lazarus-GPTQ4bit':
+        req['args']['loader'] = 'ExLlama'
+        req['args']['compress_pos_emb'] = 2
+        req['args']['max_seq_len'] = 3072
+        req['args']['lora'] = ['kaiokendev_superhot-30b-8k-no-rlhf-test']
+        req['settings'] = { 'truncation_length': req['args']['max_seq_len'] }
+        return model_api(req)
+    
 
     model = model.lower()
 
@@ -129,7 +148,7 @@ def complex_model_load(model):
 
 
 if __name__ == '__main__':
-    for model in model_api({'action': 'list'})['result']:
+    for model in ['CalderaAI_30B-Lazarus-GPTQ4bit']: #model_api({'action': 'list'})['result']:
         try:
             resp = complex_model_load(model)
 

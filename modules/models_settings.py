@@ -136,15 +136,15 @@ def save_model_settings(model, state):
 
 
 # Update the shared.settings with new settings
-# Settings are applied after the default settings for the model
-def set_shared_model_settings(extra_settings):
+# the extra_settings dict is applied after the default settings for the model
+def set_shared_model_settings(extra_settings = {}):
     model_settings = get_model_settings_from_yamls(shared.model_name) # get current model settings
     new_shared_settings = copy.deepcopy(shared.settings)
     new_shared_settings.update(model_settings)
 
     # set each setting and ensure the correct type
     for k in extra_settings:
-        if new_shared_settings[k]:
+        if k in new_shared_settings:
             new_shared_settings[k] = type(new_shared_settings[k])(extra_settings[k])
         else:
             print("Warning: Setting unknown model setting: {k} = {extra_settings[k]}")

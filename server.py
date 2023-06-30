@@ -63,7 +63,7 @@ def load_model_wrapper(selected_model, loader, autoload=False):
         try:
             yield f"Loading {selected_model}..."
             shared.model_name = selected_model
-            set_shared_model_settings(selected_model)
+            set_shared_model_settings()
             unload_model()
             if selected_model != '':
                 shared.model, shared.tokenizer = load_model(shared.model_name, loader)

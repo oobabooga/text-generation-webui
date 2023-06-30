@@ -139,6 +139,7 @@ class Handler(BaseHTTPRequestHandler):
                     shared.args.lora = []
 
                 set_shared_model_settings(extra_settings)
+                # TODO: fetch lora settings too, ie. +get_model_settings_from_yamls(lora)
 
                 try:
                     shared.model, shared.tokenizer = load_model(model_name)
