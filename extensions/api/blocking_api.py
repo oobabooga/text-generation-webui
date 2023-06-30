@@ -117,7 +117,7 @@ class Handler(BaseHTTPRequestHandler):
             # by default return the same as the GET interface
             result = shared.model_name
 
-            # Actions: info, load, list, unload, add_lora, update
+            # Actions: info, load, list, unload, add_lora, list_lora, list_settings, settings
             action = body.get('action', '')
 
             if action == 'load':
@@ -128,8 +128,10 @@ class Handler(BaseHTTPRequestHandler):
                 print('Model load args:', args)
 
                 unload_model()
-
                 shared.model_name = model_name
+                shared.args.model = model_name
+                shared.lora_names = []
+                
                 for k in args:
                     setattr(shared.args, k, args[k])
                 
@@ -170,8 +172,8 @@ class Handler(BaseHTTPRequestHandler):
             elif action == 'unload':
                 unload_model()
                 shared.model_name = None
-                shared.lora_names = []
                 shared.args.model = None
+                shared.lora_names = []
                 shared.args.lora = []
                 result = get_model_info()
 
