@@ -396,20 +396,21 @@ class Handler(BaseHTTPRequestHandler):
                     system_msg = system_msg + '\n'
 
                 system_token_count = len(encode(system_msg)[0])
-                remaining_tokens = truncation_length - system_token_count
-                chat_msg = ''
+                remaining_tokens = truncation_length - system_token_count - 16 # set min new tokens to 16
+                chat_msg = role_formats['prompt']
 
                 while chat_msgs:
-                    new_msg = chat_msgs.pop()
-                    new_size = len(encode(new_msg)[0])
-                    if new_size <= remaining_tokens:
-                        chat_msg = new_msg + chat_msg
-                        remaining_tokens -= new_size
+                    new_chat_msg = chat_msgs.pop() + chat_msg
+
+                    new_size = len(encode(new_chat_msg)[0])
+                    if new_size < remaining_tokens:
+                        chat_msg = new_chat_msg
                     else:
                         print(f"Warning: too many messages for context size, dropping {len(chat_msgs) + 1} oldest message(s).")
+                        print(f"truncation_length: {truncation_length}, system_prompt: {system_token_count}, remaining_tokens: {remaining_tokens}, new size would be {new_size} tokens.")
                         break
 
-                prompt = system_msg + chat_msg + role_formats['prompt']
+                prompt = system_msg + chat_msg
 
                 token_count = len(encode(prompt)[0])
 
@@ -539,6 +540,9 @@ class Handler(BaseHTTPRequestHandler):
                     completion_token_count += len(encode(new_content)[0])
 
             if is_streaming:
+                stop_reason = "stop"
+                if token_count + completion_token_count >= truncation_length:
+                    stop_reason = "length"
                 chunk = {
                     "id": cmpl_id,
                     "object": stream_object_type,
@@ -546,7 +550,7 @@ class Handler(BaseHTTPRequestHandler):
                     "model": model,  # TODO: add Lora info?
                     resp_list: [{
                         "index": 0,
-                        "finish_reason": "stop",
+                        "finish_reason": stop_reason,
                     }],
                     "usage": {
                         "prompt_tokens": token_count,
