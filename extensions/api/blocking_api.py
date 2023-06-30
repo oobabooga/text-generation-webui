@@ -7,9 +7,7 @@ from modules import shared
 from modules.chat import generate_chat_reply
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, unload_model
-from modules.models_settings import (get_model_settings_from_yamls,
-                                     update_model_parameters,
-                                     set_shared_model_settings)
+from modules.models_settings import set_shared_model_settings
 from modules.text_generation import (encode, generate_reply,
                                      stop_everything_event)
 from modules.utils import (get_available_models,
@@ -149,11 +147,6 @@ class Handler(BaseHTTPRequestHandler):
 
                 result = get_model_info()
 
-            elif action == 'settings':
-                extra_settings = body.get('settings', {})
-                set_shared_model_settings(extra_settings)
-                result = get_model_info()
-
             elif action == 'add_lora':
                 lora = body.get('lora', [])
                 if not isinstance(lora, list):
@@ -184,7 +177,10 @@ class Handler(BaseHTTPRequestHandler):
             elif action == 'list_lora':
                 result = get_available_loras()
 
-            elif action == 'info':
+            elif action == 'info' or action == 'settings':
+                extra_settings = body.get('settings', {})
+                if extra_settings:
+                    set_shared_model_settings(extra_settings)
                 result = get_model_info()
 
             response = json.dumps({
