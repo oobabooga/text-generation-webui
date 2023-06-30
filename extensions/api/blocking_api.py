@@ -142,7 +142,8 @@ class Handler(BaseHTTPRequestHandler):
 
                 try:
                     shared.model, shared.tokenizer = load_model(model_name)
-                    add_lora_to_model(shared.args.lora)  # list
+                    if shared.args.lora:
+                        add_lora_to_model(shared.args.lora)  # list
 
                 except Exception as e:
                     response = json.dumps({'error': {'message': repr(e)}})
@@ -159,8 +160,8 @@ class Handler(BaseHTTPRequestHandler):
                     lora = [lora]
 
                 try:
-                    add_lora_to_model(lora)
                     shared.args.lora = lora
+                    add_lora_to_model(lora)
                 except Exception as e:
                     response = json.dumps({'error': {'message': repr(e)}})
 
