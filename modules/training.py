@@ -13,6 +13,7 @@ import transformers
 
 import shutil
 from datetime import datetime
+from modules.models import load_model, unload_model
 
 from datasets import Dataset, load_dataset
 from peft import (
@@ -242,7 +243,7 @@ def backup_adapter(input_folder):
 
 def calc_trainable_parameters(model):
     trainable_params = 0
-    all_param = 0
+    all_param = 0 
     for _, param in model.named_parameters():
         num_params = param.numel()
         # if using DS Zero 3 and the weights are initialized empty
@@ -427,10 +428,32 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             eval_data = load_dataset("json", data_files=clean_path('training/datasets', f'{eval_dataset}.json'))
             eval_data = eval_data['train'].map(generate_and_tokenize_prompt, new_fingerprint='%030x' % random.randrange(16**30))
 
+    #== We MUST reload model if it went through any previous training, even failed one ==
+    if shared.model_dirty_from_training:
+        selected_model = shared.model_name
+        if selected_model:
+            print(f"\033[1;31;1m(Model has been modified by previous training, it needs to be reloaded...)\033[0;37;0m")
+            try:
+                yield f"Reloading {selected_model}..."
+                unload_model()
+                shared.model, shared.tokenizer = load_model(shared.model_name, None)
+                if shared.model is not None:
+                    print("Model reloaded OK, continue with training.")
+                else:
+                    return f"Failed to load {selected_model}."
+            except:
+                exc = traceback.format_exc()
+                logger.error('Failed to reload the model.')
+                print(exc)
+                return exc
+
     # == Start prepping the model itself ==
     if not hasattr(shared.model, 'lm_head') or hasattr(shared.model.lm_head, 'weight'):
         logger.info("Getting model ready...")
         prepare_model_for_int8_training(shared.model)
+
+    # base model is now frozen and should not be reused for any other LoRA training than this one
+    shared.model_dirty_from_training = True
 
     logger.info("Prepping for training...")
     config = LoraConfig(
