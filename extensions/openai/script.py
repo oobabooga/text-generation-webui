@@ -24,7 +24,7 @@ debug = True if 'OPENEDAI_DEBUG' in os.environ else False
 # Slightly different defaults for OpenAI's API
 # Data type is important, Ex. use 0.0 for a float 0
 default_req_params = {
-    'max_new_tokens': 200,
+    'max_new_tokens': 16,
     'temperature': 1.0,
     'top_p': 1.0,
     'top_k': 1,
@@ -36,7 +36,7 @@ default_req_params = {
     'echo': False,
     'seed': -1,
     # 'n' : default(body, 'n', 1),  # 'n' doesn't have a direct map
-    'truncation_length': 2048,
+    'truncation_length': 2048, # first use shared.settings value
     'add_bos_token': True,
     'do_sample': True,
     'typical_p': 1.0,
@@ -258,67 +258,83 @@ class Handler(BaseHTTPRequestHandler):
             is_chat_request = 'chat' in self.path
             resp_list = 'data' if is_legacy else 'choices'
 
-            # XXX model is ignored for now
-            # model = body.get('model', shared.model_name) # ignored, use existing for now
-            model = shared.model_name
-            created_time = int(time.time())
-
-            cmpl_id = "chatcmpl-%d" % (created_time) if is_chat_request else "conv-%d" % (created_time)
+            created_time = int(time.time()*1000)
 
             # Request Parameters
             # Try to use openai defaults or map them to something with the same intent
             req_params = default_req_params.copy()
             stopping_strings = []
 
+            # Common request parameters
+            truncation_length = default(shared.settings, 'truncation_length', 2048)
+            req_params['truncation_length'] = truncation_length
+            req_params['add_bos_token'] = shared.settings.get('add_bos_token', default_req_params['add_bos_token'])
+            req_params['seed'] = shared.settings.get('seed', default_req_params['seed'])
+
+            # OpenAI API Parameters
+            # model - ignored for now, TODO: When we can reliably load a model or lora from a name only change this
+            # model = body.get('model', shared.model_name)
+            model = shared.model_name # return the real model name
+            req_params['suffix'] = default(body, 'suffix', default_req_params['suffix'])
+            min_tokens = 2
+            max_tokens = 0
+            max_tokens_str = 'length' if is_legacy else 'max_tokens'
+            if is_chat_request:
+                # chat default max_tokens is 'inf', but also flexible
+                if max_tokens_str in body:
+                    max_tokens = default(body, max_tokens_str, truncation_length)
+                    req_params['max_new_tokens'] = max_tokens
+                else:
+                    max_tokens = 0
+                    req_params['max_new_tokens'] = truncation_length
+            else:
+                max_tokens = default(body, max_tokens_str, default_req_params['max_new_tokens'])
+                req_params['max_new_tokens'] = max_tokens
+            req_params['temperature'] = clamp(default(body, 'temperature', default_req_params['temperature']), 0.001, 1.999) # fixup absolute 0.0/2.0
+            req_params['top_p'] = clamp(default(body, 'top_p', default_req_params['top_p']), 0.001, 1.0)
+            n = default(body, 'n', 1)
+            if n != 1:
+                self.openai_error(message="Only n = 1 is supported.", code=400, error_type='InvalidRequestError')
+                return
+            is_streaming = default(body, 'stream', default_req_params['stream'])
+            req_params['stream'] = is_streaming
             if 'stop' in body:
                 if isinstance(body['stop'], str):
                     stopping_strings.extend([body['stop']])
                 elif isinstance(body['stop'], list):
                     stopping_strings.extend(body['stop'])
-
-            truncation_length = default(shared.settings, 'truncation_length', 2048)
-            truncation_length = clamp(default(body, 'truncation_length', truncation_length), 1, truncation_length)
-
-            default_max_tokens = truncation_length if is_chat_request else 16  # completions default, chat default is 'inf' so we need to cap it.
-
-            max_tokens_str = 'length' if is_legacy else 'max_tokens'
-            max_tokens = default(body, max_tokens_str, default(shared.settings, 'max_new_tokens', default_max_tokens))
-            # if the user assumes OpenAI, the max_tokens is way too large - try to ignore it unless it's small enough
-
-            req_params['max_new_tokens'] = max_tokens
-            req_params['truncation_length'] = truncation_length
-            req_params['temperature'] = clamp(default(body, 'temperature', default_req_params['temperature']), 0.001, 1.999) # fixup absolute 0.0
-            req_params['top_p'] = clamp(default(body, 'top_p', default_req_params['top_p']), 0.001, 1.0)
-            req_params['top_k'] = default(body, 'best_of', default_req_params['top_k'])
-            req_params['suffix'] = default(body, 'suffix', default_req_params['suffix'])
-            req_params['stream'] = default(body, 'stream', default_req_params['stream'])
-            req_params['echo'] = default(body, 'echo', default_req_params['echo'])
-            req_params['seed'] = shared.settings.get('seed', default_req_params['seed'])
-            req_params['add_bos_token'] = shared.settings.get('add_bos_token', default_req_params['add_bos_token'])
-
-            is_streaming = req_params['stream']
-
-            self.send_response(200)
-            self.send_access_control_headers()
-            if is_streaming:
-                self.send_header('Content-Type', 'text/event-stream')
-                self.send_header('Cache-Control', 'no-cache')
-                # self.send_header('Connection', 'keep-alive')
-            else:
-                self.send_header('Content-Type', 'application/json')
-            self.end_headers()
+            # presence_penalty - ignored
+            # frequency_penalty - ignored
+            if 'logit_bias' in body:
+                self.openai_error(message="logit_bias is not supported.", code=400, error_type='InvalidRequestError')
+                return
+            # user - ignored
 
             token_count = 0
             completion_token_count = 0
             prompt = ''
             stream_object_type = ''
             object_type = ''
+            cmpl_id = ''
 
             if is_chat_request:
                 # Chat Completions
                 stream_object_type = 'chat.completions.chunk'
                 object_type = 'chat.completions'
+                cmpl_id = "chatcmpl-%d" % (created_time)
 
+                # messages - chat only
+                if 'functions' in body: # chat only
+                    self.openai_error(message="functions is not supported.", code=400, error_type='InvalidRequestError')
+                    return
+                if 'function_call' in body: # chat only
+                    self.openai_error(message="function_call is not supported.", code=400, error_type='InvalidRequestError')
+                    return
+
+                if not 'messages' in body:
+                    self.openai_error(message="messages is required", code=400, error_type='InvalidRequestError')
+                    return
+                
                 messages = body['messages']
 
                 role_formats = {
@@ -390,34 +406,30 @@ class Handler(BaseHTTPRequestHandler):
                     else:
                         chat_msgs.extend([msg])
 
-                # can't really truncate the system messages
                 system_msg = '\n'.join(system_msgs)
                 if system_msg and system_msg[-1] != '\n':
                     system_msg = system_msg + '\n'
 
-                system_token_count = len(encode(system_msg)[0])
-                remaining_tokens = truncation_length - system_token_count - 16 # set min new tokens to 16
-                chat_msg = role_formats['prompt']
-
-                while chat_msgs:
-                    new_chat_msg = chat_msgs.pop() + chat_msg
-
-                    new_size = len(encode(new_chat_msg)[0])
-                    if new_size < remaining_tokens:
-                        chat_msg = new_chat_msg
-                    else:
-                        print(f"Warning: too many messages for context size, dropping {len(chat_msgs) + 1} oldest message(s).")
-                        print(f"truncation_length: {truncation_length}, system_prompt: {system_token_count}, remaining_tokens: {remaining_tokens}, new size would be {new_size} tokens.")
-                        break
-
-                prompt = system_msg + chat_msg
+                prompt = system_msg + ''.join(chat_msgs) + role_formats['prompt']
 
                 token_count = len(encode(prompt)[0])
+
+                if token_count >= truncation_length:
+                    err_msg = f"This model maximum context length is {truncation_length} tokens. However, your messages resulted in over {token_count} tokens."
+                    self.openai_error(message=err_msg, code=400, error_type='InvalidRequestError')
+                    return
+
+                if max_tokens > 0 and token_count + max_tokens > truncation_length:
+                    err_msg = f"This model maximum context length is {truncation_length} tokens. However, your messages resulted in over {token_count} tokens and max_tokens is {max_tokens}."
+                    print(f"Warning: ${err_msg}")
+                    #self.openai_error(message=err_msg, code=400, error_type='InvalidRequestError')
+                    #return
 
             else:
                 # Text Completions
                 stream_object_type = 'text_completion.chunk'
                 object_type = 'text_completion'
+                cmpl_id = "conv-%d" % (created_time)
 
                 # ... encoded as a string, array of strings, array of tokens, or array of token arrays.
                 if is_legacy:
@@ -426,21 +438,34 @@ class Handler(BaseHTTPRequestHandler):
                     prompt = body['prompt']  # XXX this can be different types
 
                 if isinstance(prompt, list):
-                    self.openai_error("API Batched generation not yet supported.")
+                    self.openai_error(message="API Batched generation not yet supported.", code=400, error_type='InvalidRequestError')
                     return
 
                 token_count = len(encode(prompt)[0])
-                if token_count >= truncation_length:
-                    new_len = int(len(prompt) * shared.settings['truncation_length'] / token_count)
-                    prompt = prompt[-new_len:]
-                    new_token_count = len(encode(prompt)[0])
-                    print(f"Warning: truncating prompt to {new_len} characters, was {token_count} tokens. Now: {new_token_count} tokens.")
-                    token_count = new_token_count
 
-            if truncation_length - token_count < req_params['max_new_tokens']:
-                print(f"Warning: Ignoring max_new_tokens ({req_params['max_new_tokens']}), too large for the remaining context. Remaining tokens: {truncation_length - token_count}")
-                req_params['max_new_tokens'] = truncation_length - token_count
-                print(f"Warning: Set max_new_tokens = {req_params['max_new_tokens']}")
+                if token_count + max_tokens > truncation_length:
+                    err_msg = f"The token count of your prompt ({token_count}) plus max_tokens ({max_tokens}) cannot exceed the model's context length ({truncation_length})."
+                    #print(f"Warning: ${err_msg}")
+                    self.openai_error(message=err_msg, code=400, error_type='InvalidRequestError')
+                    return
+
+                if 'logprobs' in body:
+                    self.openai_error(message="logprobs is not supported.", code=400, error_type='InvalidRequestError')
+                    return
+                req_params['echo'] = default(body, 'echo', default_req_params['echo'])
+                req_params['top_k'] = default(body, 'best_of', default_req_params['top_k'])
+
+
+            # Send HTTP headers
+            self.send_response(200)
+            self.send_access_control_headers()
+            if is_streaming:
+                self.send_header('Content-Type', 'text/event-stream')
+                self.send_header('Cache-Control', 'no-cache')
+                # self.send_header('Connection', 'keep-alive')
+            else:
+                self.send_header('Content-Type', 'application/json')
+            self.end_headers()
 
             if is_streaming:
                 # begin streaming
@@ -541,7 +566,7 @@ class Handler(BaseHTTPRequestHandler):
 
             if is_streaming:
                 stop_reason = "stop"
-                if token_count + completion_token_count >= truncation_length:
+                if token_count + completion_token_count >= truncation_length or completion_token_count >= max_tokens:
                     stop_reason = "length"
                 chunk = {
                     "id": cmpl_id,
@@ -583,7 +608,7 @@ class Handler(BaseHTTPRequestHandler):
 
             completion_token_count = len(encode(answer)[0])
             stop_reason = "stop"
-            if token_count + completion_token_count >= truncation_length:
+            if token_count + completion_token_count >= truncation_length or completion_token_count >= max_tokens:
                 stop_reason = "length"
 
             resp = {
@@ -615,14 +640,8 @@ class Handler(BaseHTTPRequestHandler):
                 self.openai_error("No model loaded.")
                 return
 
-            self.send_response(200)
-            self.send_access_control_headers()
-            self.send_header('Content-Type', 'application/json')
-            self.end_headers()
-
             created_time = int(time.time())
 
-            # Using Alpaca format, this may work with other models too.
             instruction = body['instruction']
             input = body.get('input', '')
 
@@ -671,6 +690,16 @@ class Handler(BaseHTTPRequestHandler):
             truncation_length = default(shared.settings, 'truncation_length', 2048)
             token_count = len(encode(edit_task)[0])
             max_tokens = truncation_length - token_count
+
+            if max_tokens < 2:
+                err_msg = f"This model maximum context length is {truncation_length} tokens. However, your messages resulted in over {truncation_length - max_tokens} tokens."
+                self.openai_error(message=err_msg, code=400, error_type='InvalidRequestError')
+                return
+            
+            self.send_response(200)
+            self.send_access_control_headers()
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
 
             req_params['max_new_tokens'] = max_tokens
             req_params['truncation_length'] = truncation_length
