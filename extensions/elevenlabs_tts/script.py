@@ -14,10 +14,12 @@ params = {
     'selected_voice': 'None',
     'autoplay': False,
     'show_text': True,
+    'model': 'eleven_monolingual_v1',
 }
 
 voices = None
 wav_idx = 0
+LANG_MODELS = ['eleven_monolingual_v1', 'eleven_multilingual_v1']
 
 
 def update_api_key(key):
@@ -109,7 +111,7 @@ def output_modifier(string):
     output_file = Path(f'extensions/elevenlabs_tts/outputs/{wav_idx:06d}.mp3'.format(wav_idx))
     print(f'Outputting audio to {str(output_file)}')
     try:
-        audio = elevenlabs.generate(text=string, voice=params['selected_voice'], model="eleven_monolingual_v1")
+        audio = elevenlabs.generate(text=string, voice=params['selected_voice'], model=params['model'])
         elevenlabs.save(audio, str(output_file))
 
         autoplay = 'autoplay' if params['autoplay'] else ''
@@ -158,6 +160,9 @@ def ui():
             api_key = gr.Textbox(placeholder="Enter your API key.", label='API Key')
 
     with gr.Row():
+         model = gr.Dropdown(value=params['model'], choices=LANG_MODELS, label='Language model')
+
+    with gr.Row():
         convert = gr.Button('Permanently replace audios with the message texts')
         convert_cancel = gr.Button('Cancel', visible=False)
         convert_confirm = gr.Button('Confirm (cannot be undone)', variant="stop", visible=False)
@@ -185,6 +190,7 @@ def ui():
     activate.change(lambda x: params.update({'activate': x}), activate, None)
     voice.change(lambda x: params.update({'selected_voice': x}), voice, None)
     api_key.change(update_api_key, api_key, None)
+    model.change(lambda x: params.update({'model': x}), model, None)
     # connect.click(check_valid_api, [], connection_status)
     refresh.click(refresh_voices_dd, [], voice)
     # Event functions to update the parameters in the backend
