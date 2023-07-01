@@ -151,7 +151,11 @@ def ui():
         refresh = gr.Button(value='Refresh')
 
     with gr.Row():
-        api_key = gr.Textbox(placeholder="Enter your API key.", label='API Key')
+        if params['api_key']:
+            api_key = gr.Textbox(value=params['api_key'], label='API Key')
+            update_api_key(params['api_key'])
+        else:
+            api_key = gr.Textbox(placeholder="Enter your API key.", label='API Key')
 
     with gr.Row():
         convert = gr.Button('Permanently replace audios with the message texts')
