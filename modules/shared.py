@@ -151,6 +151,7 @@ parser.add_argument('--desc_act', action='store_true', help='For models that don
 parser.add_argument('--gpu-split', type=str, help="Comma-separated list of VRAM (in GB) to use per GPU device for model layers, e.g. 20,7,7")
 parser.add_argument('--max_seq_len', type=int, default=2048, help="Maximum sequence length.")
 parser.add_argument('--compress_pos_emb', type=int, default=1, help="Positional embeddings compression factor. Should typically be set to max_seq_len / 2048.")
+parser.add_argument('--alpha_emb', type=int, default=1, help="Positional embeddings alpha factor for NTK RoPE Scaling. Should typically be set to max_seq_len / 2048.")
 
 # FlexGen
 parser.add_argument('--flexgen', action='store_true', help='DEPRECATED')
