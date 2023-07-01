@@ -44,6 +44,7 @@ async def run(user_input, history):
         'tfs': 1,
         'top_a': 0,
         'repetition_penalty': 1.18,
+        'repetition_penalty_range': 0,
         'top_k': 40,
         'min_length': 0,
         'no_repeat_ngram_size': 0,
