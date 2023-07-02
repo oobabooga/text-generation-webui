@@ -993,6 +993,10 @@ if __name__ == "__main__":
         new_settings = json.loads(file_contents) if settings_file.suffix == "json" else yaml.safe_load(file_contents)
         for item in new_settings:
             shared.settings[item] = new_settings[item]
+        if shared.args.model is None:
+            model = new_settings.get('model', None)
+            if model is not None:
+                shared.args.model = model
 
     # Set default model settings based on settings file
     shared.model_config['.*'] = {
