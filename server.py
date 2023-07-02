@@ -998,7 +998,10 @@ if __name__ == "__main__":
             shared.settings[item] = new_settings[item]
         mode = new_settings.get('mode', None)
         if mode is not None:
-            set_interface_mode(mode)
+            if mode not in VALID_MODES:
+                logger.error(f'Unknown mode {mode} ignoring it')
+            else:
+                set_interface_mode(mode)
 
     # Set default model settings based on settings file
     shared.model_config['.*'] = {
