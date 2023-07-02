@@ -323,14 +323,15 @@ class Handler(BaseHTTPRequestHandler):
                 object_type = 'chat.completions'
                 cmpl_id = "chatcmpl-%d" % (created_time)
 
-                # messages - chat only
-                if 'functions' in body: # chat only
+                
+                if body.get('functions', []): # chat only
                     self.openai_error(message="functions is not supported.", code=400, error_type='InvalidRequestError')
                     return
-                if 'function_call' in body: # chat only
+                if body.get('function_call', ''): # chat only, 'none', 'auto', {'name': 'func'}
                     self.openai_error(message="function_call is not supported.", code=400, error_type='InvalidRequestError')
                     return
 
+                # messages - chat only
                 if not 'messages' in body:
                     self.openai_error(message="messages is required", code=400, error_type='InvalidRequestError')
                     return
