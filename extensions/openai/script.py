@@ -305,7 +305,7 @@ class Handler(BaseHTTPRequestHandler):
                     stopping_strings.extend(body['stop'])
             # presence_penalty - ignored
             # frequency_penalty - ignored
-            if 'logit_bias' in body:
+            if body.get('logit_bias', None):
                 self.openai_error(message="logit_bias is not supported.", code=400, error_type='InvalidRequestError')
                 return
             # user - ignored
@@ -449,7 +449,7 @@ class Handler(BaseHTTPRequestHandler):
                     self.openai_error(message=err_msg, code=400, error_type='InvalidRequestError')
                     return
 
-                if 'logprobs' in body:
+                if body.get('logprobs', None):
                     self.openai_error(message="logprobs is not supported.", code=400, error_type='InvalidRequestError')
                     return
                 req_params['echo'] = default(body, 'echo', default_req_params['echo'])
