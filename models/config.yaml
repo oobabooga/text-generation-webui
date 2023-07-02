@@ -246,3 +246,12 @@ TheBloke_WizardLM-30B-GPTQ:
 .*(platypus|gplatty):
   mode: 'instruct'
   instruction_template: 'Alpaca'
+.*longchat:
+  mode: 'instruct'
+  instruction_template: 'Vicuna-v1.1'
+.*vicuna-33b:
+  mode: 'instruct'
+  instruction_template: 'Vicuna-v1.1'
+.*redmond-hermes-coder:
+  mode: 'instruct'
+  instruction_template: 'Alpaca'
