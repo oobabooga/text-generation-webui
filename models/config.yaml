@@ -255,3 +255,8 @@ TheBloke_WizardLM-30B-GPTQ:
 .*redmond-hermes-coder:
   mode: 'instruct'
   instruction_template: 'Alpaca'
+  truncation_length: 8192
+.*wizardcoder-15b:
+  mode: 'instruct'
+  instruction_template: 'Alpaca'
+  truncation_length: 8192
