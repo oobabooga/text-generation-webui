@@ -49,6 +49,7 @@ from modules.text_generation import (
     get_encoded_length,
     stop_everything_event
 )
+VALID_MODES = ["default", "notebook", "chat"]
 
 
 def load_model_wrapper(selected_model, loader, autoload=False):
@@ -483,16 +484,19 @@ def create_file_saving_event_handlers():
         lambda: gr.update(visible=True), None, shared.gradio['file_deleter'])
 
 
-def set_interface_arguments(interface_mode, extensions, bool_active):
-    modes = ["default", "notebook", "chat", "cai_chat"]
-    cmd_list = vars(shared.args)
-    bool_list = [k for k in cmd_list if type(cmd_list[k]) is bool and k not in modes]
-
-    shared.args.extensions = extensions
-    for k in modes[1:]:
+def set_interface_mode(interface_mode):
+    for k in VALID_MODES[1:]:
         setattr(shared.args, k, False)
     if interface_mode != "default":
         setattr(shared.args, interface_mode, True)
+
+
+def set_interface_arguments(interface_mode, extensions, bool_active):
+    cmd_list = vars(shared.args)
+    bool_list = [k for k in cmd_list if type(cmd_list[k]) is bool and k not in VALID_MODES]
+
+    shared.args.extensions = extensions
+    set_interface_mode(interface_mode)
 
     for k in bool_list:
         setattr(shared.args, k, False)
@@ -733,19 +737,18 @@ def create_interface():
 
         # Interface mode tab
         with gr.Tab("Interface mode", elem_id="interface-mode"):
-            modes = ["default", "notebook", "chat"]
             current_mode = "default"
-            for mode in modes[1:]:
+            for mode in VALID_MODES[1:]:
                 if getattr(shared.args, mode):
                     current_mode = mode
                     break
 
             cmd_list = vars(shared.args)
-            bool_list = sorted([k for k in cmd_list if type(cmd_list[k]) is bool and k not in modes + ui.list_model_elements()])
+            bool_list = sorted([k for k in cmd_list if type(cmd_list[k]) is bool and k not in VALID_MODES + ui.list_model_elements()])
             bool_active = [k for k in bool_list if vars(shared.args)[k]]
 
             with gr.Row():
-                shared.gradio['interface_modes_menu'] = gr.Dropdown(choices=modes, value=current_mode, label="Mode")
+                shared.gradio['interface_modes_menu'] = gr.Dropdown(choices=VALID_MODES, value=current_mode, label="Mode")
                 shared.gradio['reset_interface'] = gr.Button("Apply and restart the interface", elem_classes="small-button")
                 shared.gradio['toggle_dark_mode'] = gr.Button('Toggle dark/light mode', elem_classes="small-button")
 
@@ -993,6 +996,9 @@ if __name__ == "__main__":
         new_settings = json.loads(file_contents) if settings_file.suffix == "json" else yaml.safe_load(file_contents)
         for item in new_settings:
             shared.settings[item] = new_settings[item]
+        mode = new_settings.get('mode', None)
+        if mode is not None:
+            set_interface_mode(mode)
 
     # Set default model settings based on settings file
     shared.model_config['.*'] = {
