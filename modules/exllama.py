@@ -1,13 +1,27 @@
 import sys
 from pathlib import Path
 
+from torch import version as torch_version
+
 from modules import shared
 from modules.logging_colors import logger
 
-sys.path.insert(0, str(Path("repositories/exllama")))
-from repositories.exllama.generator import ExLlamaGenerator
-from repositories.exllama.model import ExLlama, ExLlamaCache, ExLlamaConfig
-from repositories.exllama.tokenizer import ExLlamaTokenizer
+try:
+    from exllama.generator import ExLlamaGenerator
+    from exllama.model import ExLlama, ExLlamaCache, ExLlamaConfig
+    from exllama.tokenizer import ExLlamaTokenizer
+except:
+    logger.warning('Exllama module failed to load. Will attempt to load from repositories.')
+    try:
+        from modules.relative_imports import RelativeImport
+
+        with RelativeImport("repositories/exllama"):
+            from generator import ExLlamaGenerator
+            from model import ExLlama, ExLlamaCache, ExLlamaConfig
+            from tokenizer import ExLlamaTokenizer
+    except:
+        logger.error("Could not find repositories/exllama/. Make sure that exllama is cloned inside repositories/ and is up to date.")
+        raise
 
 
 class ExllamaModel:
@@ -34,9 +48,17 @@ class ExllamaModel:
 
         config = ExLlamaConfig(str(model_config_path))
         config.model_path = str(model_path)
+        config.max_seq_len = shared.args.max_seq_len
+        config.compress_pos_emb = shared.args.compress_pos_emb
         if shared.args.gpu_split:
             config.set_auto_map(shared.args.gpu_split)
             config.gpu_peer_fix = True
+        if torch_version.hip:
+            config.rmsnorm_no_half2 = True
+            config.rope_no_half2 = True
+            config.matmul_no_half2 = True
+            config.silu_no_half2 = True
+
 
         model = ExLlama(config)
         tokenizer = ExLlamaTokenizer(str(tokenizer_model_path))
@@ -48,7 +70,7 @@ class ExllamaModel:
         result.model = model
         result.cache = cache
         result.tokenizer = tokenizer
-        self.generator = generator
+        result.generator = generator
         return result, result
 
     def generate_with_streaming(self, prompt, state):
@@ -57,6 +79,7 @@ class ExllamaModel:
         self.generator.settings.top_k = state['top_k']
         self.generator.settings.typical = state['typical_p']
         self.generator.settings.token_repetition_penalty_max = state['repetition_penalty']
+        self.generator.settings.token_repetition_penalty_sustain = -1 if state['repetition_penalty_range'] <= 0 else state['repetition_penalty_range']
         if state['ban_eos_token']:
             self.generator.disallow_tokens([self.tokenizer.eos_token_id])
         else:

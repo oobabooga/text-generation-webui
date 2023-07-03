@@ -51,21 +51,18 @@ settings = {
     'skip_special_tokens': True,
     'truncation_length': 2048,
     'truncation_length_min': 0,
-    'truncation_length_max': 8192,
+    'truncation_length_max': 16384,
     'mode': 'chat',
     'start_with': '',
     'chat_style': 'cai-chat',
     'instruction_template': 'None',
     'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
-    'chat_prompt_size': 2048,
-    'chat_prompt_size_min': 0,
-    'chat_prompt_size_max': 8192,
     'chat_generation_attempts': 1,
     'chat_generation_attempts_min': 1,
     'chat_generation_attempts_max': 10,
     'default_extensions': [],
     'chat_default_extensions': ['gallery'],
-    'preset': 'LLaMA-Precise',
+    'preset': 'simple-1',
     'prompt': 'QA',
 }
 
@@ -98,7 +95,7 @@ parser.add_argument('--extensions', type=str, nargs="+", help='The list of exten
 parser.add_argument('--verbose', action='store_true', help='Print the prompts to the terminal.')
 
 # Model loader
-parser.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise, it will get autodetected. Valid options: transformers, autogptq, gptq-for-llama, exllama, llamacpp, rwkv, flexgen')
+parser.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise, it will get autodetected. Valid options: transformers, autogptq, gptq-for-llama, exllama, exllama_hf, llamacpp, rwkv, flexgen')
 
 # Accelerate/transformers
 parser.add_argument('--cpu', action='store_true', help='Use the CPU to generate text. Warning: Training on CPU is extremely slow.')
@@ -147,10 +144,13 @@ parser.add_argument('--autogptq', action='store_true', help='DEPRECATED')
 parser.add_argument('--triton', action='store_true', help='Use triton.')
 parser.add_argument('--no_inject_fused_attention', action='store_true', help='Do not use fused attention (lowers VRAM requirements).')
 parser.add_argument('--no_inject_fused_mlp', action='store_true', help='Triton mode only: Do not use fused MLP (lowers VRAM requirements).')
+parser.add_argument('--no_use_cuda_fp16', action='store_true', help='This can make models faster on some systems.')
 parser.add_argument('--desc_act', action='store_true', help='For models that don\'t have a quantize_config.json, this parameter is used to define whether to set desc_act or not in BaseQuantizeConfig.')
 
 # ExLlama
 parser.add_argument('--gpu-split', type=str, help="Comma-separated list of VRAM (in GB) to use per GPU device for model layers, e.g. 20,7,7")
+parser.add_argument('--max_seq_len', type=int, default=2048, help="Maximum sequence length.")
+parser.add_argument('--compress_pos_emb', type=int, default=1, help="Positional embeddings compression factor. Should typically be set to max_seq_len / 2048.")
 
 # FlexGen
 parser.add_argument('--flexgen', action='store_true', help='DEPRECATED')
@@ -218,6 +218,8 @@ def fix_loader_name(name):
         return 'GPTQ-for-LLaMa'
     elif name in ['exllama', 'ex-llama', 'ex_llama', 'exlama']:
         return 'ExLlama'
+    elif name in ['exllama-hf', 'exllama_hf', 'exllama hf', 'ex-llama-hf', 'ex_llama_hf']:
+        return 'ExLlama_HF'
 
 
 if args.loader is not None:

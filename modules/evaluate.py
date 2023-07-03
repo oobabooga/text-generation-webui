@@ -8,8 +8,10 @@ from tqdm import tqdm
 
 from modules import shared
 from modules.models import load_model, unload_model
-from modules.models_settings import (get_model_settings_from_yamls,
-                                     update_model_parameters)
+from modules.models_settings import (
+    get_model_settings_from_yamls,
+    update_model_parameters
+)
 from modules.text_generation import encode
 
 
@@ -100,7 +102,7 @@ def calculate_perplexity(models, input_dataset, stride, _max_length):
             target_ids[:, :-trg_len] = -100
 
             with torch.no_grad():
-                outputs = shared.model(input_ids, labels=target_ids)
+                outputs = shared.model(input_ids=input_ids, labels=target_ids)
 
                 # loss is calculated using CrossEntropyLoss which averages over valid labels
                 # N.B. the model only calculates loss over trg_len - 1 labels, because it internally shifts the labels

@@ -1,9 +1,3 @@
-'''
-
-This is a library for formatting text outputs as nice HTML.
-
-'''
-
 import os
 import re
 import time
@@ -135,7 +129,7 @@ def generate_4chan_html(f):
 def make_thumbnail(image):
     image = image.resize((350, round(image.size[1] / image.size[0] * 350)), Image.Resampling.LANCZOS)
     if image.size[1] > 470:
-        image = ImageOps.fit(image, (350, 470), Image.ANTIALIAS)
+        image = ImageOps.fit(image, (350, 470), Image.LANCZOS)
 
     return image
 

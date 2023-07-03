@@ -7,12 +7,18 @@ https://abetlen.github.io/llama-cpp-python/
 '''
 
 import re
+from functools import partial
 
-from llama_cpp import Llama, LlamaCache
+from llama_cpp import Llama, LlamaCache, LogitsProcessorList
 
 from modules import shared
 from modules.callbacks import Iteratorize
 from modules.logging_colors import logger
+
+
+def ban_eos_logits_processor(eos_token, input_ids, logits):
+    logits[eos_token] = -float('inf')
+    return logits
 
 
 class LlamaCppModel:
@@ -46,9 +52,9 @@ class LlamaCppModel:
             'n_gpu_layers': shared.args.n_gpu_layers
         }
 
-        self.model = Llama(**params)
+        result.model = Llama(**params)
         if cache_capacity > 0:
-            self.model.set_cache(LlamaCache(capacity_bytes=cache_capacity))
+            result.model.set_cache(LlamaCache(capacity_bytes=cache_capacity))
 
         # This is ugly, but the model and the tokenizer are the same object in this library.
         return result, result
@@ -72,7 +78,10 @@ class LlamaCppModel:
             mirostat_mode=int(state['mirostat_mode']),
             mirostat_tau=state['mirostat_tau'],
             mirostat_eta=state['mirostat_eta'],
-            stream=True
+            stream=True,
+            logits_processor=LogitsProcessorList([
+                partial(ban_eos_logits_processor, self.model.token_eos()),
+            ]) if state['ban_eos_token'] else None,
         )
 
         output = ""
