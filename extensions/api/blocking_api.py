@@ -130,7 +130,6 @@ class Handler(BaseHTTPRequestHandler):
                 unload_model()
                 shared.model_name = model_name
                 shared.args.model = model_name
-                shared.lora_names = [] # can be removed if handled in unload_model()
                 
                 for k in args:
                     setattr(shared.args, k, args[k])
@@ -175,7 +174,6 @@ class Handler(BaseHTTPRequestHandler):
                 unload_model()
                 shared.model_name = None
                 shared.args.model = None
-                shared.lora_names = [] # can be removed if handled in unload_model()
                 shared.args.lora = []
                 result = get_model_info()
 
