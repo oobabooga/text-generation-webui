@@ -143,7 +143,7 @@ def gather_interface_values(*args):
             from modules.chat import save_history
 
             save_history(
-                output['history'], 
+                output['history'],
                 path=Path('logs/{}_persistent.json'.format(output['character_menu']))
             )
 
