@@ -14,8 +14,6 @@ model_name = "None"
 lora_names = []
 
 # Chat variables
-history = {'internal': [], 'visible': []}
-character = 'None'
 stop_everything = False
 processing_message = '*Is typing...*'
 
@@ -244,6 +242,15 @@ if args.multimodal_pipeline is not None:
 
 def is_chat():
     return args.chat
+
+
+def get_mode():
+    if args.chat:
+        return 'chat'
+    elif args.notebook:
+        return 'notebook'
+    else:
+        return 'default'
 
 
 # Loading model-specific settings

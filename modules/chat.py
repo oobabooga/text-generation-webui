@@ -54,7 +54,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
     impersonate = kwargs.get('impersonate', False)
     _continue = kwargs.get('_continue', False)
     also_return_rows = kwargs.get('also_return_rows', False)
-    history = kwargs.get('history', shared.history)['internal']
+    history = kwargs.get('history', state['history'])['internal']
     is_instruct = state['mode'] == 'instruct'
 
     # Find the maximum prompt size
@@ -153,7 +153,8 @@ def get_stopping_strings(state):
     return stopping_strings
 
 
-def chatbot_wrapper(text, history, state, regenerate=False, _continue=False, loading_message=True):
+def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_message=True):
+    history = state['history']
     output = copy.deepcopy(history)
     output = apply_extensions('history', output)
     state = apply_extensions('state', state)
@@ -274,14 +275,15 @@ def impersonate_wrapper(text, start_with, state):
     yield cumulative_reply.lstrip(' ')
 
 
-def generate_chat_reply(text, history, state, regenerate=False, _continue=False, loading_message=True):
+def generate_chat_reply(text, state, regenerate=False, _continue=False, loading_message=True):
+    history = state['history']
     if regenerate or _continue:
         text = ''
         if (len(history['visible']) == 1 and not history['visible'][0][0]) or len(history['internal']) == 0:
             yield history
             return
 
-    for history in chatbot_wrapper(text, history, state, regenerate=regenerate, _continue=_continue, loading_message=loading_message):
+    for history in chatbot_wrapper(text, state, regenerate=regenerate, _continue=_continue, loading_message=loading_message):
         yield history
 
 
@@ -296,106 +298,68 @@ def generate_chat_reply_wrapper(text, start_with, state, regenerate=False, _cont
         send_dummy_message(text)
         send_dummy_reply(start_with)
 
-    for i, history in enumerate(generate_chat_reply(text, shared.history, state, regenerate, _continue, loading_message=True)):
-        if i != 0:
-            shared.history = copy.deepcopy(history)
-
-        yield chat_html_wrapper(history['visible'], state['name1'], state['name2'], state['mode'], state['chat_style'])
+    for i, history in enumerate(generate_chat_reply(text, state, regenerate, _continue, loading_message=True)):
+        yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style']), history
 
 
-def remove_last_message():
-    if len(shared.history['visible']) > 0 and shared.history['internal'][-1][0] != '<|BEGIN-VISIBLE-CHAT|>':
-        last = shared.history['visible'].pop()
-        shared.history['internal'].pop()
+def remove_last_message(history):
+    if len(history['visible']) > 0 and history['internal'][-1][0] != '<|BEGIN-VISIBLE-CHAT|>':
+        last = history['visible'].pop()
+        history['internal'].pop()
     else:
         last = ['', '']
 
-    return last[0]
+    return last[0], history
 
 
-def send_last_reply_to_input():
-    if len(shared.history['internal']) > 0:
-        return shared.history['internal'][-1][1]
+def send_last_reply_to_input(history):
+    if len(history['internal']) > 0:
+        return history['internal'][-1][1]
     else:
         return ''
 
 
-def replace_last_reply(text):
-    if len(shared.history['visible']) > 0:
-        shared.history['visible'][-1][1] = text
-        shared.history['internal'][-1][1] = apply_extensions("input", text)
-
-
-def send_dummy_message(text):
-    shared.history['visible'].append([text, ''])
-    shared.history['internal'].append([apply_extensions("input", text), ''])
-
-
-def send_dummy_reply(text):
-    if len(shared.history['visible']) > 0 and not shared.history['visible'][-1][1] == '':
-        shared.history['visible'].append(['', ''])
-        shared.history['internal'].append(['', ''])
-
-    shared.history['visible'][-1][1] = text
-    shared.history['internal'][-1][1] = apply_extensions("input", text)
-
-
-def clear_chat_log(greeting, mode):
-    shared.history['visible'] = []
-    shared.history['internal'] = []
-
-    if mode != 'instruct':
-        if greeting != '':
-            shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
-            shared.history['visible'] += [['', apply_extensions("output", greeting)]]
-
-        save_history(mode)
-
-
-def redraw_html(name1, name2, mode, style, reset_cache=False):
-    return chat_html_wrapper(shared.history['visible'], name1, name2, mode, style, reset_cache=reset_cache)
-
-
-def tokenize_dialogue(dialogue, name1, name2):
-    history = []
-    messages = []
-    dialogue = re.sub('<START>', '', dialogue)
-    dialogue = re.sub('<start>', '', dialogue)
-    dialogue = re.sub('(\n|^)[Aa]non:', '\\1You:', dialogue)
-    dialogue = re.sub('(\n|^)\[CHARACTER\]:', f'\\g<1>{name2}:', dialogue)
-    idx = [m.start() for m in re.finditer(f"(^|\n)({re.escape(name1)}|{re.escape(name2)}):", dialogue)]
-    if len(idx) == 0:
-        return history
-
-    for i in range(len(idx) - 1):
-        messages.append(dialogue[idx[i]:idx[i + 1]].strip())
-
-    messages.append(dialogue[idx[-1]:].strip())
-    entry = ['', '']
-    for i in messages:
-        if i.startswith(f'{name1}:'):
-            entry[0] = i[len(f'{name1}:'):].strip()
-        elif i.startswith(f'{name2}:'):
-            entry[1] = i[len(f'{name2}:'):].strip()
-            if not (len(entry[0]) == 0 and len(entry[1]) == 0):
-                history.append(entry)
-
-            entry = ['', '']
-
-    print("\033[1;32;1m\nDialogue tokenized to:\033[0;37;0m\n", end='')
-    for row in history:
-        for column in row:
-            print("\n")
-            for line in column.strip().split('\n'):
-                print("|  " + line + "\n")
-
-            print("|\n")
-        print("------------------------------")
+def replace_last_reply(text, history):
+    if len(history['visible']) > 0:
+        history['visible'][-1][1] = text
+        history['internal'][-1][1] = apply_extensions("input", text)
 
     return history
 
 
-def save_history(mode, timestamp=False, user_request=False):
+def send_dummy_message(text, history):
+    history['visible'].append([text, ''])
+    history['internal'].append([apply_extensions("input", text), ''])
+    return history
+
+
+def send_dummy_reply(text, history):
+    if len(history['visible']) > 0 and not history['visible'][-1][1] == '':
+        history['visible'].append(['', ''])
+        history['internal'].append(['', ''])
+
+    history['visible'][-1][1] = text
+    history['internal'][-1][1] = apply_extensions("input", text)
+    return history
+
+
+def clear_chat_log(greeting, mode, history):
+    history['visible'] = []
+    history['internal'] = []
+    if mode != 'instruct':
+        if greeting != '':
+            history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
+            history['visible'] += [['', apply_extensions("output", greeting)]]
+
+    return history
+
+
+def redraw_html(history, name1, name2, mode, style, reset_cache=False):
+    return chat_html_wrapper(history, name1, name2, mode, style, reset_cache=reset_cache)
+
+
+def save_history(history, mode, timestamp=False, user_request=False):
+    character = None
     # Instruct mode histories should not be saved as if
     # Alpaca or Vicuna were characters
     if mode == 'instruct':
@@ -404,36 +368,36 @@ def save_history(mode, timestamp=False, user_request=False):
 
         fname = f"Instruct_{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
     else:
-        if shared.character == 'None' and not user_request:
+        if character == 'None' and not user_request:
             return
 
         if timestamp:
-            fname = f"{shared.character}_{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
+            fname = f"{character}_{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
         else:
-            fname = f"{shared.character}_persistent.json"
+            fname = f"{character}_persistent.json"
 
     if not Path('logs').exists():
         Path('logs').mkdir()
 
     with open(Path(f'logs/{fname}'), 'w', encoding='utf-8') as f:
-        f.write(json.dumps({'data': shared.history['internal'], 'data_visible': shared.history['visible']}, indent=2))
+        f.write(json.dumps({'data': history['internal'], 'data_visible': history['visible']}, indent=2))
 
     return Path(f'logs/{fname}')
 
 
-def load_history(file, name1, name2):
-    file = file.decode('utf-8')
-    try:
-        j = json.loads(file)
-        if 'data' in j:
-            shared.history['internal'] = j['data']
-            if 'data_visible' in j:
-                shared.history['visible'] = j['data_visible']
-            else:
-                shared.history['visible'] = copy.deepcopy(shared.history['internal'])
-    except:
-        shared.history['internal'] = tokenize_dialogue(file, name1, name2)
-        shared.history['visible'] = copy.deepcopy(shared.history['internal'])
+def load_history(character, greeting):
+    history = {'internal': [], 'visible': []}
+    p = Path(f'logs/{character}_persistent.json')
+    if character != 'None' and p.exists():
+        f = json.loads(open(p, 'rb').read())
+        if 'internal' in f and 'visible' in f:
+            history = f
+    else:
+        if greeting != "":
+            history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
+            history['visible'] += [['', apply_extensions("output", greeting)]]
+
+    return history
 
 
 def replace_character_names(text, name1, name2):
@@ -468,7 +432,6 @@ def generate_pfp_cache(character):
 
 
 def load_character(character, name1, name2, instruct=False):
-    shared.character = character
     context = greeting = turn_template = ""
     greeting_field = 'greeting'
     picture = None
@@ -526,20 +489,6 @@ def load_character(character, name1, name2, instruct=False):
         name2 = shared.settings['name2']
         greeting = shared.settings['greeting']
         turn_template = shared.settings['turn_template']
-
-    if not instruct:
-        shared.history['internal'] = []
-        shared.history['visible'] = []
-        if shared.character != 'None' and Path(f'logs/{shared.character}_persistent.json').exists():
-            load_history(open(Path(f'logs/{shared.character}_persistent.json'), 'rb').read(), name1, name2)
-        else:
-            # Insert greeting if it exists
-            if greeting != "":
-                shared.history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
-                shared.history['visible'] += [['', apply_extensions("output", greeting)]]
-
-            # Create .json log files since they don't already exist
-            save_history('instruct' if instruct else 'chat')
 
     return name1, name2, picture, greeting, context, turn_template.replace("\n", r"\n")
 

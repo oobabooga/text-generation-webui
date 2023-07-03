@@ -111,3 +111,7 @@ def get_datasets(path: str, ext: str):
 
 def get_available_chat_styles():
     return sorted(set(('-'.join(k.stem.split('-')[1:]) for k in Path('css').glob('chat_style*.css'))), key=natural_keys)
+
+
+def get_available_sessions():
+    return sorted(set(k.stem for k in Path('logs').glob(f'session_{shared.get_mode()}*')), key=natural_keys)
