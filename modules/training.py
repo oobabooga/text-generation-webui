@@ -284,7 +284,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     else:
         model_id = "llama"
         if model_type == "PeftModelForCausalLM":
-            if len(shared.args.lora_names) > 0:
+            if len(shared.lora_names) > 0:
                 yield "You are trying to train a LoRA while you already have another LoRA loaded. This will work, but may have unexpected effects. *(Will continue anyway in 5 seconds, press `Interrupt` to stop.)*"
                 logger.warning("Training LoRA over top of another LoRA. May have unexpected effects.")
             else:
