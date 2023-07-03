@@ -490,12 +490,20 @@ def create_file_saving_event_handlers():
         lambda: 'presets/', None, gradio('delete_root')).then(
         lambda: gr.update(visible=True), None, gradio('file_deleter'))
 
-    shared.gradio['save_session'].click(
-        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        lambda x: json.dumps(x, indent=4), gradio('interface_state'), gradio('save_contents')).then(
-        lambda: 'logs/', None, gradio('save_root')).then(
-        lambda x: f'session_{shared.get_mode()}_{x}_{utils.current_time()}.json', gradio('character_menu'), gradio('save_filename')).then(
-        lambda: gr.update(visible=True), None, gradio('file_saver'))
+    if shared.is_chat():
+        shared.gradio['save_session'].click(
+            ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+            lambda x: json.dumps(x, indent=4), gradio('interface_state'), gradio('save_contents')).then(
+            lambda: 'logs/', None, gradio('save_root')).then(
+            lambda x: f'session_{shared.get_mode()}_{x}_{utils.current_time()}.json', gradio('character_menu'), gradio('save_filename')).then(
+            lambda: gr.update(visible=True), None, gradio('file_saver'))
+    else:
+        shared.gradio['save_session'].click(
+            ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+            lambda x: json.dumps(x, indent=4), gradio('interface_state'), gradio('save_contents')).then(
+            lambda: 'logs/', None, gradio('save_root')).then(
+            lambda: f'session_{shared.get_mode()}_{utils.current_time()}.json', None, gradio('save_filename')).then(
+            lambda: gr.update(visible=True), None, gradio('file_saver'))
 
     shared.gradio['delete_session'].click(
         lambda x: f'{x}.json', gradio('session_menu'), gradio('delete_filename')).then(
@@ -893,7 +901,7 @@ def create_interface():
                 partial(chat.load_character, instruct=True), gradio('instruction_template', 'name1_instruct', 'name2_instruct'), gradio('name1_instruct', 'name2_instruct', 'dummy', 'dummy', 'context_instruct', 'turn_template'))
 
             shared.gradio['upload_chat_history'].upload(
-                # chat.load_history, gradio('upload_chat_history', 'name1', 'name2'), None).then(
+                chat.load_history, gradio('upload_chat_history', 'history'), gradio('history')).then(
                 chat.redraw_html, shared.reload_inputs, gradio('display'))
 
             shared.gradio['Copy last reply'].click(chat.send_last_reply_to_input, gradio('history'), gradio('textbox'), show_progress=False)
@@ -928,7 +936,7 @@ def create_interface():
 
             shared.gradio['character_menu'].change(
                 partial(chat.load_character, instruct=False), gradio('character_menu', 'name1', 'name2'), gradio('name1', 'name2', 'character_picture', 'greeting', 'context', 'dummy')).then(
-                chat.load_history, gradio('character_menu', 'greeting'), gradio('history')).then(
+                chat.load_persistent_history, gradio('character_menu', 'greeting'), gradio('history')).then(
                 chat.redraw_html, shared.reload_inputs, gradio('display'))
 
             shared.gradio['Submit tavern character'].click(chat.upload_tavern_character, gradio('upload_img_tavern', 'tavern_json'), gradio('character_menu'))
@@ -1006,7 +1014,8 @@ def create_interface():
             shared.gradio['interface'].load(lambda: None, None, None, _js="() => document.getElementsByTagName('body')[0].classList.add('dark')")
 
         shared.gradio['interface'].load(partial(ui.apply_interface_values, {}, use_persistent=True), None, gradio(ui.list_interface_input_elements()), show_progress=False)
-        shared.gradio['interface'].load(chat.redraw_html, shared.reload_inputs, gradio('display'))
+        if shared.is_chat():
+            shared.gradio['interface'].load(chat.redraw_html, shared.reload_inputs, gradio('display'))
 
         # Extensions tabs
         extensions_module.create_extensions_tabs()

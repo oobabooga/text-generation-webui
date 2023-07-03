@@ -114,4 +114,4 @@ def get_available_chat_styles():
 
 
 def get_available_sessions():
-    return sorted(set(k.stem for k in Path('logs').glob(f'session_{shared.get_mode()}*')), key=natural_keys)
+    return sorted(set(k.stem for k in Path('logs').glob(f'session_{shared.get_mode()}*')), key=natural_keys, reverse=True)

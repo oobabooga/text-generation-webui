@@ -362,9 +362,6 @@ def redraw_html(history, name1, name2, mode, style, reset_cache=False):
 
 
 def save_history(history, path=None):
-    if not Path('logs').exists():
-        Path('logs').mkdir()
-
     p = path or Path('logs/exported_history.json')
     with open(p, 'w', encoding='utf-8') as f:
         f.write(json.dumps(history, indent=4))
@@ -372,7 +369,19 @@ def save_history(history, path=None):
     return p
 
 
-def load_history(character, greeting):
+def load_history(file, history):
+    try:
+        file = file.decode('utf-8')
+        j = json.loads(file)
+        if 'internal' in j and 'visible' in j:
+            return j
+        else:
+            return history
+    except:
+        return history
+
+
+def load_persistent_history(character, greeting):
     history = {'internal': [], 'visible': []}
     p = Path(f'logs/{character}_persistent.json')
     if character != 'None' and p.exists():
