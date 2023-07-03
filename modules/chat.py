@@ -392,6 +392,9 @@ def load_persistent_history(state):
     character = state['character_menu']
     greeting = state['greeting']
     history = state['history']
+    if state['mode'] != 'chat':
+        return history
+
     p = Path(f'logs/{character}_persistent.json')
     if character != 'None' and p.exists():
         f = json.loads(open(p, 'rb').read())
@@ -445,7 +448,7 @@ def load_character(character, name1, name2, instruct=False):
     if Path("cache/pfp_character.png").exists():
         Path("cache/pfp_character.png").unlink()
 
-    if character != 'None':
+    if character not in ['None', '', None]:
         folder = 'characters' if not instruct else 'characters/instruction-following'
         picture = generate_pfp_cache(character)
         for extension in ["yml", "yaml", "json"]:

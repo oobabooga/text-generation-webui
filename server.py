@@ -1009,11 +1009,14 @@ def create_interface():
             shared.gradio['count_tokens'].click(count_tokens, gradio('textbox'), gradio('status'), show_progress=False)
 
         create_file_saving_event_handlers()
-        shared.gradio['interface'].load(lambda: None, None, None, _js=f"() => {{{js}}}")
+
+        shared.gradio['interface'].load(
+            lambda: None, None, None, _js=f"() => {{{js}}}").then(
+            partial(ui.apply_interface_values, {}, use_persistent=True), None, gradio(ui.list_interface_input_elements()), show_progress=False)
+
         if shared.settings['dark_theme']:
             shared.gradio['interface'].load(lambda: None, None, None, _js="() => document.getElementsByTagName('body')[0].classList.add('dark')")
 
-        shared.gradio['interface'].load(partial(ui.apply_interface_values, {}, use_persistent=True), None, gradio(ui.list_interface_input_elements()), show_progress=False)
         if shared.is_chat():
             shared.gradio['interface'].load(chat.redraw_html, shared.reload_inputs, gradio('display'))
 
