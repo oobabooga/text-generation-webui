@@ -388,6 +388,26 @@ def load_history(file, history):
         return history
 
 
+def save_persistent_history(history, character, mode):
+    if mode == 'chat' and character not in  ['', 'None', None]:
+        save_history(history, path=Path(f'logs/{character}_persistent.json'))
+
+
+def load_persistent_history(character, greeting):
+    p = Path(f'logs/{character}_persistent.json')
+    if character not in ['None', '', None] and p.exists():
+        f = json.loads(open(p, 'rb').read())
+        if 'internal' in f and 'visible' in f:
+            history = f
+    else:
+        history = {'internal': [], 'visible': []}
+        if greeting != "":
+            history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
+            history['visible'] += [['', greeting]]
+
+    return history
+
+
 def replace_character_names(text, name1, name2):
     text = text.replace('{{user}}', name1).replace('{{char}}', name2)
     return text.replace('<USER>', name1).replace('<BOT>', name2)
