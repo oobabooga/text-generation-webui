@@ -1112,15 +1112,10 @@ if __name__ == "__main__":
             add_lora_to_model(shared.args.lora)
 
     # Forcing some events to be triggered on page load
-    # saved_state_path = Path('logs/interface_state.json')
-    # if saved_state_path.exists():
-    #     with open(saved_state_path, 'r') as f:
-    #         saved_state = json.loads(f.read())
-    # shared.persistent_interface_state.update(saved_state)
-
     shared.persistent_interface_state.update({
         'loader': shared.args.loader or 'Transformers',
     })
+
     if shared.is_chat():
         shared.persistent_interface_state.update({
             'mode': shared.settings['mode'],
