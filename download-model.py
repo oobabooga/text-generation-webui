@@ -28,7 +28,7 @@ class ModelDownloader:
             self.s.auth = (os.getenv('HF_USER'), os.getenv('HF_PASS'))
 
     def sanitize_model_and_branch_names(self, model, branch):
-        if model[-1] == '/':
+        if model and model[-1] == '/':
             model = model[:-1]
 
         if branch is None:
