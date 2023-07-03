@@ -6,6 +6,7 @@ import torch
 
 from modules import shared
 
+
 with open(Path(__file__).resolve().parent / '../css/main.css', 'r') as f:
     css = f.read()
 with open(Path(__file__).resolve().parent / '../css/chat.css', 'r') as f:
@@ -138,19 +139,19 @@ def gather_interface_values(*args):
     for i, element in enumerate(list_interface_input_elements()):
         output[element] = args[i]
 
-    shared.persistent_interface_state = output
     with open(Path('logs/interface_state.json'), 'w') as f:
-        import copy
-        out = copy.deepcopy(output)
-
-        if shared.is_chat():
-            if out['character_menu'] not in ['', 'None', None]:
-                history_f = Path('logs/{}_persistent.json'.format(out['character_menu']))
-                with open(history_f, 'w') as ff:
-                    ff.write(json.dumps(out['history'], indent=4))
-
         f.write(json.dumps(output, indent=4))
 
+    if shared.is_chat():
+        if output['mode'] == 'chat' and output['character_menu'] not in ['', 'None', None]:
+            from modules.chat import save_history
+
+            save_history(
+                output['history'], 
+                path=Path('logs/{}_persistent.json'.format(output['character_menu']))
+            )
+
+    shared.persistent_interface_state = output
     return output
 
 

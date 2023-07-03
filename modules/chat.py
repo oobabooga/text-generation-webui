@@ -3,7 +3,6 @@ import copy
 import functools
 import json
 import re
-from datetime import datetime
 from pathlib import Path
 
 import gradio as gr
@@ -11,7 +10,6 @@ import yaml
 from PIL import Image
 
 import modules.shared as shared
-from modules import utils
 from modules.extensions import apply_extensions
 from modules.html_generator import chat_html_wrapper, make_thumbnail
 from modules.logging_colors import logger
@@ -20,7 +18,12 @@ from modules.text_generation import (
     get_encoded_length,
     get_max_prompt_length
 )
-from modules.utils import delete_file, replace_all, save_file
+from modules.utils import (
+    delete_file,
+    get_available_characters,
+    replace_all,
+    save_file
+)
 
 
 def get_turn_substrings(state, instruct=False):
@@ -358,31 +361,15 @@ def redraw_html(history, name1, name2, mode, style, reset_cache=False):
     return chat_html_wrapper(history, name1, name2, mode, style, reset_cache=reset_cache)
 
 
-def save_history(history, mode, timestamp=False, user_request=False):
-    character = None
-    # Instruct mode histories should not be saved as if
-    # Alpaca or Vicuna were characters
-    if mode == 'instruct':
-        if not timestamp:
-            return
-
-        fname = f"Instruct_{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
-    else:
-        if character == 'None' and not user_request:
-            return
-
-        if timestamp:
-            fname = f"{character}_{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
-        else:
-            fname = f"{character}_persistent.json"
-
+def save_history(history, path=None):
     if not Path('logs').exists():
         Path('logs').mkdir()
 
-    with open(Path(f'logs/{fname}'), 'w', encoding='utf-8') as f:
-        f.write(json.dumps({'data': history['internal'], 'data_visible': history['visible']}, indent=2))
+    p = path or Path('logs/exported_history.json')
+    with open(p, 'w', encoding='utf-8') as f:
+        f.write(json.dumps(history, indent=4))
 
-    return Path(f'logs/{fname}')
+    return p
 
 
 def load_history(character, greeting):
@@ -517,7 +504,7 @@ def upload_character(json_file, img, tavern=False):
         img.save(Path(f'characters/{outfile_name}.png'))
 
     logger.info(f'New character saved to "characters/{outfile_name}.json".')
-    return gr.update(value=outfile_name, choices=utils.get_available_characters())
+    return gr.update(value=outfile_name, choices=get_available_characters())
 
 
 def upload_tavern_character(img, _json):
