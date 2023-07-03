@@ -84,7 +84,7 @@ def state_modifier(state):
     return state
 
 
-def input_modifier(string):
+def input_modifier(string, state):
     if not params['activate']:
         return string
 
@@ -103,7 +103,7 @@ def history_modifier(history):
     return history
 
 
-def output_modifier(string):
+def output_modifier(string, state):
     global model, current_params, streaming_state
     for i in params:
         if params[i] != current_params[i]:
