@@ -138,15 +138,6 @@ def gather_interface_values(*args):
     for i, element in enumerate(list_interface_input_elements()):
         output[element] = args[i]
 
-    if shared.is_chat():
-        if output['mode'] == 'chat' and output['character_menu'] not in ['', 'None', None]:
-            from modules.chat import save_history
-
-            save_history(
-                output['history'],
-                path=Path('logs/{}_persistent.json'.format(output['character_menu']))
-            )
-
     shared.persistent_interface_state = output
     with open(Path(f'logs/session_{shared.get_mode()}_autosave.json'), 'w') as f:
         f.write(json.dumps(output, indent=4))
