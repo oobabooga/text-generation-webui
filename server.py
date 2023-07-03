@@ -979,7 +979,7 @@ def create_interface():
                 shared.gradio['markdown_render'].click(lambda x: x, gradio('output_textbox'), gradio('markdown'), queue=False)
                 gen_events.append(shared.gradio['Continue'].click(
                     ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-                    generate_reply_wrapper, get('output_textbox') + shared.input_params[1:], output_params, show_progress=False).then(
+                    generate_reply_wrapper, [shared.gradio['output_textbox']] + shared.input_params[1:], output_params, show_progress=False).then(
                     ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
                     lambda: None, None, None, _js=f"() => {{{audio_notification_js}}}")
                     # lambda: None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[1]; element.scrollTop = element.scrollHeight}")
