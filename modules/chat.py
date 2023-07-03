@@ -79,10 +79,10 @@ def generate_chat_prompt(user_input, state, **kwargs):
         if impersonate:
             wrapper += substrings['user_turn_stripped'].rstrip(' ')
         elif _continue:
-            wrapper += apply_extensions('bot_prefix', substrings['bot_turn_stripped'])
+            wrapper += apply_extensions('bot_prefix', substrings['bot_turn_stripped'], state)
             wrapper += history[-1][1]
         else:
-            wrapper += apply_extensions('bot_prefix', substrings['bot_turn_stripped'].rstrip(' '))
+            wrapper += apply_extensions('bot_prefix', substrings['bot_turn_stripped'].rstrip(' '), state)
     else:
         wrapper = '<|prompt|>'
 
@@ -116,7 +116,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
         # Add the character prefix
         if state['mode'] != 'chat-instruct':
-            rows.append(apply_extensions('bot_prefix', substrings['bot_turn_stripped'].rstrip(' ')))
+            rows.append(apply_extensions('bot_prefix', substrings['bot_turn_stripped'].rstrip(' '), state))
 
     while len(rows) > min_rows and get_encoded_length(wrapper.replace('<|prompt|>', ''.join(rows))) >= max_length:
         rows.pop(1)
@@ -178,11 +178,11 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
         if visible_text is None:
             visible_text = text
 
+        text = apply_extensions('input', text, state)
+
         # *Is typing...*
         if loading_message:
             yield {'visible': output['visible'] + [[visible_text, shared.processing_message]], 'internal': output['internal']}
-
-        text = apply_extensions('input', text)
     else:
         text, visible_text = output['internal'][-1][0], output['visible'][-1][0]
         if regenerate:
@@ -219,7 +219,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             # We need this global variable to handle the Stop event,
             # otherwise gradio gets confused
             if shared.stop_everything:
-                output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1])
+                output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state)
                 yield output
                 return
 
@@ -245,7 +245,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
         else:
             cumulative_reply = reply
 
-    output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1])
+    output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state)
     yield output
 
 
@@ -322,37 +322,44 @@ def send_last_reply_to_input(history):
         return ''
 
 
-def replace_last_reply(text, history):
+def replace_last_reply(text, state):
+    history = state['history']
     if len(history['visible']) > 0:
         history['visible'][-1][1] = text
-        history['internal'][-1][1] = apply_extensions('input', text)
+        history['internal'][-1][1] = apply_extensions('input', text, state)
 
     return history
 
 
-def send_dummy_message(text, history):
+def send_dummy_message(text, state):
+    history = state['history']
     history['visible'].append([text, ''])
-    history['internal'].append([apply_extensions('input', text), ''])
+    history['internal'].append([apply_extensions('input', text, state), ''])
     return history
 
 
-def send_dummy_reply(text, history):
+def send_dummy_reply(text, state):
+    history = state['history']
     if len(history['visible']) > 0 and not history['visible'][-1][1] == '':
         history['visible'].append(['', ''])
         history['internal'].append(['', ''])
 
     history['visible'][-1][1] = text
-    history['internal'][-1][1] = apply_extensions('input', text)
+    history['internal'][-1][1] = apply_extensions('input', text, state)
     return history
 
 
-def clear_chat_log(greeting, mode, history):
+def clear_chat_log(state):
+    greeting = state['greeting']
+    mode = state['mode']
+    history = state['history']
+
     history['visible'] = []
     history['internal'] = []
     if mode != 'instruct':
         if greeting != '':
             history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
-            history['visible'] += [['', apply_extensions('output', greeting)]]
+            history['visible'] += [['', apply_extensions('output', greeting, state)]]
 
     return history
 
@@ -381,8 +388,10 @@ def load_history(file, history):
         return history
 
 
-def load_persistent_history(character, greeting):
-    history = {'internal': [], 'visible': []}
+def load_persistent_history(state):
+    character = state['character_menu']
+    greeting = state['greeting']
+    history = state['history']
     p = Path(f'logs/{character}_persistent.json')
     if character != 'None' and p.exists():
         f = json.loads(open(p, 'rb').read())
@@ -391,7 +400,7 @@ def load_persistent_history(character, greeting):
     else:
         if greeting != "":
             history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
-            history['visible'] += [['', apply_extensions('output', greeting)]]
+            history['visible'] += [['', apply_extensions('output', greeting, state)]]
 
     return history
 

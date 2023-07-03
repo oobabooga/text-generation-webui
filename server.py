@@ -869,23 +869,38 @@ def create_interface():
             )
 
             shared.gradio['Replace last reply'].click(
-                chat.replace_last_reply, gradio('textbox', 'history'), None).then(
+                ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+                chat.replace_last_reply, gradio('textbox', 'interface_state'), gradio('history')).then(
                 lambda: '', None, gradio('textbox'), show_progress=False).then(
                 chat.redraw_html, shared.reload_inputs, gradio('display'))
 
             shared.gradio['Send dummy message'].click(
-                chat.send_dummy_message, gradio('textbox', 'history'), gradio('history')).then(
+                ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+                chat.send_dummy_message, gradio('textbox', 'interface_state'), gradio('history')).then(
                 lambda: '', None, gradio('textbox'), show_progress=False).then(
                 chat.redraw_html, shared.reload_inputs, gradio('display'))
 
             shared.gradio['Send dummy reply'].click(
-                chat.send_dummy_reply, gradio('textbox', 'history'), gradio('history')).then(
+                ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+                chat.send_dummy_reply, gradio('textbox', 'interface_state'), gradio('history')).then(
                 lambda: '', None, gradio('textbox'), show_progress=False).then(
                 chat.redraw_html, shared.reload_inputs, gradio('display'))
 
             shared.gradio['Clear history-confirm'].click(
+                ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
                 lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, clear_arr).then(
-                chat.clear_chat_log, gradio('greeting', 'mode', 'history'), gradio('history')).then(
+                chat.clear_chat_log, gradio('interface_state'), gradio('history')).then(
+                chat.redraw_html, shared.reload_inputs, gradio('display'))
+
+            shared.gradio['Remove last'].click(
+                ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+                chat.remove_last_message, gradio('history'), gradio('textbox', 'history'), show_progress=False).then(
+                chat.redraw_html, shared.reload_inputs, gradio('display'))
+
+            shared.gradio['character_menu'].change(
+                ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+                partial(chat.load_character, instruct=False), gradio('character_menu', 'name1', 'name2'), gradio('name1', 'name2', 'character_picture', 'greeting', 'context', 'dummy')).then(
+                chat.load_persistent_history, gradio('interface_state'), gradio('history')).then(
                 chat.redraw_html, shared.reload_inputs, gradio('display'))
 
             shared.gradio['Stop'].click(
@@ -907,9 +922,6 @@ def create_interface():
             shared.gradio['Copy last reply'].click(chat.send_last_reply_to_input, gradio('history'), gradio('textbox'), show_progress=False)
             shared.gradio['Clear history'].click(lambda: [gr.update(visible=True), gr.update(visible=False), gr.update(visible=True)], None, clear_arr)
             shared.gradio['Clear history-cancel'].click(lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, clear_arr)
-            shared.gradio['Remove last'].click(
-                chat.remove_last_message, gradio('history'), gradio('textbox', 'history'), show_progress=False).then(
-                chat.redraw_html, shared.reload_inputs, gradio('display'))
 
             # Save/delete a character
             shared.gradio['save_character'].click(
@@ -933,11 +945,6 @@ def create_interface():
             shared.gradio['Submit character'].click(chat.upload_character, gradio('upload_json', 'upload_img_bot'), gradio('character_menu'))
             shared.gradio['upload_json'].upload(lambda: gr.update(interactive=True), None, gradio('Submit character'))
             shared.gradio['upload_json'].clear(lambda: gr.update(interactive=False), None, gradio('Submit character'))
-
-            shared.gradio['character_menu'].change(
-                partial(chat.load_character, instruct=False), gradio('character_menu', 'name1', 'name2'), gradio('name1', 'name2', 'character_picture', 'greeting', 'context', 'dummy')).then(
-                chat.load_persistent_history, gradio('character_menu', 'greeting'), gradio('history')).then(
-                chat.redraw_html, shared.reload_inputs, gradio('display'))
 
             shared.gradio['Submit tavern character'].click(chat.upload_tavern_character, gradio('upload_img_tavern', 'tavern_json'), gradio('character_menu'))
             shared.gradio['upload_img_tavern'].upload(chat.check_tavern_character, gradio('upload_img_tavern'), gradio('tavern_name', 'tavern_desc', 'tavern_json', 'Submit tavern character'), show_progress=False)
