@@ -243,7 +243,7 @@ def backup_adapter(input_folder):
 
 def calc_trainable_parameters(model):
     trainable_params = 0
-    all_param = 0 
+    all_param = 0
     for _, param in model.named_parameters():
         num_params = param.numel()
         # if using DS Zero 3 and the weights are initialized empty
