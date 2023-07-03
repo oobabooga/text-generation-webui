@@ -26,12 +26,10 @@ from functools import partial
 from pathlib import Path
 from threading import Lock
 
+import modules.extensions as extensions_module
 import psutil
 import torch
 import yaml
-from PIL import Image
-
-import modules.extensions as extensions_module
 from modules import chat, loaders, presets, shared, training, ui, utils
 from modules.extensions import apply_extensions
 from modules.github import clone_or_pull_repository
@@ -49,14 +47,8 @@ from modules.text_generation import (
     get_encoded_length,
     stop_everything_event
 )
-
-
-# Helper function to get multiple values from shared.gradio
-def gradio(*keys):
-    if len(keys) == 1 and type(keys[0]) is list:
-        keys = keys[0]
-
-    return [shared.gradio[k] for k in keys]
+from modules.utils import gradio
+from PIL import Image
 
 
 def load_model_wrapper(selected_model, loader, autoload=False):

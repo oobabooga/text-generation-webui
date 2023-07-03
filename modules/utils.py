@@ -7,6 +7,14 @@ from modules import shared
 from modules.logging_colors import logger
 
 
+# Helper function to get multiple values from shared.gradio
+def gradio(*keys):
+    if len(keys) == 1 and type(keys[0]) is list:
+        keys = keys[0]
+
+    return [shared.gradio[k] for k in keys]
+
+
 def save_file(fname, contents):
     if fname == '':
         logger.error('File name is empty!')

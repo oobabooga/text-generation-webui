@@ -3,9 +3,10 @@ from pathlib import Path
 
 import gradio as gr
 import torch
-from modules import chat, shared
 
 from extensions.silero_tts import tts_preprocessor
+from modules import chat, shared
+from modules.utils import gradio
 
 torch._C._jit_set_profiling_mode(False)
 
@@ -165,18 +166,18 @@ def ui():
         convert.click(lambda: [gr.update(visible=True), gr.update(visible=False), gr.update(visible=True)], None, convert_arr)
         convert_confirm.click(
             lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr).then(
-            remove_tts_from_history, shared.gradio['history'], shared.gradio['history']).then(
-            chat.save_history, shared.gradio['mode'], None, show_progress=False).then(
-            chat.redraw_html, shared.reload_inputs, shared.gradio['display'])
+            remove_tts_from_history, gradio('history'), gradio('history')).then(
+            chat.save_history, gradio('mode'), None, show_progress=False).then(
+            chat.redraw_html, shared.reload_inputs, gradio('display'))
 
         convert_cancel.click(lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr)
 
         # Toggle message text in history
         show_text.change(
             lambda x: params.update({"show_text": x}), show_text, None).then(
-            toggle_text_in_history, shared.gradio['history'], shared.gradio['history']).then(
-            chat.save_history, shared.gradio['mode'], None, show_progress=False).then(
-            chat.redraw_html, shared.reload_inputs, shared.gradio['display'])
+            toggle_text_in_history, gradio('history'), gradio('history')).then(
+            chat.save_history, gradio('mode'), None, show_progress=False).then(
+            chat.redraw_html, shared.reload_inputs, gradio('display'))
 
     # Event functions to update the parameters in the backend
     activate.change(lambda x: params.update({"activate": x}), activate, None)
