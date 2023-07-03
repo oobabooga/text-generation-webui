@@ -828,7 +828,7 @@ def create_interface():
                 lambda x: (x, ''), gradio('textbox'), gradio('Chat input', 'textbox'), show_progress=False).then(
                 chat.generate_chat_reply_wrapper, shared.input_params, gradio('display', 'history'), show_progress=False).then(
                 ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-                chat.save_persistent_history(gradio('history', 'character_menu', 'mode'), None)).then(
+                chat.save_persistent_history, gradio('history', 'character_menu', 'mode'), None).then(
                 lambda: None, None, None, _js=f"() => {{{audio_notification_js}}}")
             )
 
@@ -837,7 +837,7 @@ def create_interface():
                 lambda x: (x, ''), gradio('textbox'), gradio('Chat input', 'textbox'), show_progress=False).then(
                 chat.generate_chat_reply_wrapper, shared.input_params, gradio('display', 'history'), show_progress=False).then(
                 ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-                chat.save_persistent_history(gradio('history', 'character_menu', 'mode'), None)).then(
+                chat.save_persistent_history, gradio('history', 'character_menu', 'mode'), None).then(
                 lambda: None, None, None, _js=f"() => {{{audio_notification_js}}}")
             )
 
@@ -845,7 +845,7 @@ def create_interface():
                 ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
                 partial(chat.generate_chat_reply_wrapper, regenerate=True), shared.input_params, gradio('display', 'history'), show_progress=False).then(
                 ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-                chat.save_persistent_history(gradio('history', 'character_menu', 'mode'), None)).then(
+                chat.save_persistent_history, gradio('history', 'character_menu', 'mode'), None).then(
                 lambda: None, None, None, _js=f"() => {{{audio_notification_js}}}")
             )
 
@@ -853,7 +853,7 @@ def create_interface():
                 ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
                 partial(chat.generate_chat_reply_wrapper, _continue=True), shared.input_params, gradio('display', 'history'), show_progress=False).then(
                 ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-                chat.save_persistent_history(gradio('history', 'character_menu', 'mode'), None)).then(
+                chat.save_persistent_history, gradio('history', 'character_menu', 'mode'), None).then(
                 lambda: None, None, None, _js=f"() => {{{audio_notification_js}}}")
             )
 
@@ -870,21 +870,21 @@ def create_interface():
                 chat.replace_last_reply, gradio('textbox', 'interface_state'), gradio('history')).then(
                 lambda: '', None, gradio('textbox'), show_progress=False).then(
                 chat.redraw_html, shared.reload_inputs, gradio('display')).then(
-                chat.save_persistent_history(gradio('history', 'character_menu', 'mode'), None))
+                chat.save_persistent_history, gradio('history', 'character_menu', 'mode'), None)
 
             shared.gradio['Send dummy message'].click(
                 ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
                 chat.send_dummy_message, gradio('textbox', 'interface_state'), gradio('history')).then(
                 lambda: '', None, gradio('textbox'), show_progress=False).then(
                 chat.redraw_html, shared.reload_inputs, gradio('display')).then(
-                chat.save_persistent_history(gradio('history', 'character_menu', 'mode'), None))
+                chat.save_persistent_history, gradio('history', 'character_menu', 'mode'), None)
 
             shared.gradio['Send dummy reply'].click(
                 ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
                 chat.send_dummy_reply, gradio('textbox', 'interface_state'), gradio('history')).then(
                 lambda: '', None, gradio('textbox'), show_progress=False).then(
                 chat.redraw_html, shared.reload_inputs, gradio('display')).then(
-                chat.save_persistent_history(gradio('history', 'character_menu', 'mode'), None))
+                chat.save_persistent_history, gradio('history', 'character_menu', 'mode'), None)
 
             shared.gradio['Clear history'].click(lambda: [gr.update(visible=True), gr.update(visible=False), gr.update(visible=True)], None, clear_arr)
             shared.gradio['Clear history-cancel'].click(lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, clear_arr)
@@ -893,13 +893,13 @@ def create_interface():
                 lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, clear_arr).then(
                 chat.clear_chat_log, gradio('interface_state'), gradio('history')).then(
                 chat.redraw_html, shared.reload_inputs, gradio('display')).then(
-                chat.save_persistent_history(gradio('history', 'character_menu', 'mode'), None))
+                chat.save_persistent_history, gradio('history', 'character_menu', 'mode'), None)
 
             shared.gradio['Remove last'].click(
                 ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
                 chat.remove_last_message, gradio('history'), gradio('textbox', 'history'), show_progress=False).then(
                 chat.redraw_html, shared.reload_inputs, gradio('display')).then(
-                chat.save_persistent_history(gradio('history', 'character_menu', 'mode'), None))
+                chat.save_persistent_history, gradio('history', 'character_menu', 'mode'), None)
 
             shared.gradio['character_menu'].change(
                 partial(chat.load_character, instruct=False), gradio('character_menu', 'name1', 'name2'), gradio('name1', 'name2', 'character_picture', 'greeting', 'context', 'dummy')).then(
