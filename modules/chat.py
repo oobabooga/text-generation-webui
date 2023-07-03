@@ -79,10 +79,10 @@ def generate_chat_prompt(user_input, state, **kwargs):
         if impersonate:
             wrapper += substrings['user_turn_stripped'].rstrip(' ')
         elif _continue:
-            wrapper += apply_extensions("bot_prefix", substrings['bot_turn_stripped'])
+            wrapper += apply_extensions('bot_prefix', substrings['bot_turn_stripped'])
             wrapper += history[-1][1]
         else:
-            wrapper += apply_extensions("bot_prefix", substrings['bot_turn_stripped'].rstrip(' '))
+            wrapper += apply_extensions('bot_prefix', substrings['bot_turn_stripped'].rstrip(' '))
     else:
         wrapper = '<|prompt|>'
 
@@ -116,7 +116,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
         # Add the character prefix
         if state['mode'] != 'chat-instruct':
-            rows.append(apply_extensions("bot_prefix", substrings['bot_turn_stripped'].rstrip(' ')))
+            rows.append(apply_extensions('bot_prefix', substrings['bot_turn_stripped'].rstrip(' ')))
 
     while len(rows) > min_rows and get_encoded_length(wrapper.replace('<|prompt|>', ''.join(rows))) >= max_length:
         rows.pop(1)
@@ -219,7 +219,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             # We need this global variable to handle the Stop event,
             # otherwise gradio gets confused
             if shared.stop_everything:
-                output['visible'][-1][1] = apply_extensions("output", output['visible'][-1][1])
+                output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1])
                 yield output
                 return
 
@@ -245,7 +245,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
         else:
             cumulative_reply = reply
 
-    output['visible'][-1][1] = apply_extensions("output", output['visible'][-1][1])
+    output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1])
     yield output
 
 
@@ -325,14 +325,14 @@ def send_last_reply_to_input(history):
 def replace_last_reply(text, history):
     if len(history['visible']) > 0:
         history['visible'][-1][1] = text
-        history['internal'][-1][1] = apply_extensions("input", text)
+        history['internal'][-1][1] = apply_extensions('input', text)
 
     return history
 
 
 def send_dummy_message(text, history):
     history['visible'].append([text, ''])
-    history['internal'].append([apply_extensions("input", text), ''])
+    history['internal'].append([apply_extensions('input', text), ''])
     return history
 
 
@@ -342,7 +342,7 @@ def send_dummy_reply(text, history):
         history['internal'].append(['', ''])
 
     history['visible'][-1][1] = text
-    history['internal'][-1][1] = apply_extensions("input", text)
+    history['internal'][-1][1] = apply_extensions('input', text)
     return history
 
 
@@ -352,7 +352,7 @@ def clear_chat_log(greeting, mode, history):
     if mode != 'instruct':
         if greeting != '':
             history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
-            history['visible'] += [['', apply_extensions("output", greeting)]]
+            history['visible'] += [['', apply_extensions('output', greeting)]]
 
     return history
 
@@ -391,7 +391,7 @@ def load_persistent_history(character, greeting):
     else:
         if greeting != "":
             history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
-            history['visible'] += [['', apply_extensions("output", greeting)]]
+            history['visible'] += [['', apply_extensions('output', greeting)]]
 
     return history
 
