@@ -368,6 +368,14 @@ def redraw_html(history, name1, name2, mode, style, reset_cache=False):
     return chat_html_wrapper(history, name1, name2, mode, style, reset_cache=reset_cache)
 
 
+def save_history(history, path=None):
+    p = path or Path('logs/exported_history.json')
+    with open(p, 'w', encoding='utf-8') as f:
+        f.write(json.dumps(history, indent=4))
+
+    return p
+
+
 def load_history(file, history):
     try:
         file = file.decode('utf-8')
