@@ -64,7 +64,7 @@ def list_model_elements():
         'gpu_split',
         'max_seq_len',
         'compress_pos_emb',
-        'alpha_emb'
+        'alpha_value'
     ]
 
 
