@@ -74,6 +74,7 @@ def list_model_elements():
 
 def list_interface_input_elements():
     elements = [
+        'preset_menu',
         'max_new_tokens',
         'seed',
         'temperature',
