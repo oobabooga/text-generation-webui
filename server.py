@@ -356,6 +356,25 @@ def create_settings_menus(default_preset):
 
     For a technical description of the parameters, the [transformers documentation](https://huggingface.co/docs/transformers/main_classes/text_generation#transformers.GenerationConfig) is a good reference.
 
+    The best presets, according to the [Preset Arena](https://github.com/oobabooga/oobabooga.github.io/blob/main/arena/results.md) experiment, are:
+
+    * Instruction following:
+        1) Divine Intellect
+        2) Big O
+        3) simple-1
+        4) Space Alien
+        5) StarChat
+        6) Titanic
+        7) tfs-with-top-a
+        8) Asterism
+        9) Contrastive Search
+
+    * Chat:
+        1) Midnight Enigma
+        2) Yara
+        3) Shortwave
+        4) Kobold-Godlike
+
     ### Temperature
     Primary factor to control randomness of outputs. 0 = deterministic (only the most likely token is used). Higher value = more randomness.
     ### top_p
