@@ -276,7 +276,6 @@ class Handler(BaseHTTPRequestHandler):
             # model = body.get('model', shared.model_name)
             model = shared.model_name # return the real model name
             req_params['suffix'] = default(body, 'suffix', default_req_params['suffix'])
-            min_tokens = 2
             max_tokens = 0
             max_tokens_str = 'length' if is_legacy else 'max_tokens'
             if is_chat_request:
@@ -498,42 +497,13 @@ class Handler(BaseHTTPRequestHandler):
 
             answer = ''
             seen_content = ''
-            longest_stop_len = max([len(x) for x in stopping_strings] + [0])
 
             for a in generator:
                 answer = a
 
-                stop_string_found = False
-                len_seen = len(seen_content)
-                search_start = max(len_seen - longest_stop_len, 0)
-
-                for string in stopping_strings:
-                    idx = answer.find(string, search_start)
-                    if idx != -1:
-                        answer = answer[:idx]  # clip it.
-                        stop_string_found = True
-
-                if stop_string_found:
-                    break
-
-                # If something like "\nYo" is generated just before "\nYou:"
-                # is completed, buffer and generate more, don't send it
-                buffer_and_continue = False
-
-                for string in stopping_strings:
-                    for j in range(len(string) - 1, 0, -1):
-                        if answer[-j:] == string[:j]:
-                            buffer_and_continue = True
-                            break
-                    else:
-                        continue
-                    break
-
-                if buffer_and_continue:
-                    continue
-
                 if is_streaming:
                     # Streaming
+                    len_seen = len(seen_content)
                     new_content = answer[len_seen:]
 
                     if not new_content or chr(0xfffd) in new_content:  # partial unicode character, don't send it yet.
@@ -716,23 +686,8 @@ class Handler(BaseHTTPRequestHandler):
 
             longest_stop_len = max([len(x) for x in stopping_strings] + [0])
             answer = ''
-            seen_content = ''
             for a in generator:
                 answer = a
-
-                stop_string_found = False
-                len_seen = len(seen_content)
-                search_start = max(len_seen - longest_stop_len, 0)
-
-                for string in stopping_strings:
-                    idx = answer.find(string, search_start)
-                    if idx != -1:
-                        answer = answer[:idx]  # clip it.
-                        stop_string_found = True
-
-                if stop_string_found:
-                    break
-
 
             # some reply's have an extra leading space to fit the instruction template, just clip it off from the reply.
             if edit_task[-1] != '\n' and answer and answer[0] == ' ':
