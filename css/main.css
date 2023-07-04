@@ -6,6 +6,12 @@
     padding-top: 2.5rem
 }
 
+.small-button {
+    max-width: 171px;
+    height: 39.594px;
+    align-self: end;
+}
+
 .refresh-button {
     max-width: 4.4em;
     min-width: 2.2em !important;
@@ -50,7 +56,7 @@ ol li p, ul li p {
     display: inline-block;
 }
 
-#main, #parameters, #chat-settings, #interface-mode, #lora, #training-tab, #model-tab {
+#main, #parameters, #chat-settings, #lora, #training-tab, #model-tab, #session-tab {
     border: 0;
 }
 
@@ -119,10 +125,6 @@ footer {
 
 button {
     font-size: 14px !important;
-}
-
-.small-button {
-    max-width: 171px;
 }
 
 .file-saver {

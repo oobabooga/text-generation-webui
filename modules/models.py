@@ -326,6 +326,7 @@ def clear_torch_cache():
 
 def unload_model():
     shared.model = shared.tokenizer = None
+    shared.lora_names = []
     clear_torch_cache()
 
 

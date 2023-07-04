@@ -193,6 +193,7 @@ Optionally, you can use the following command-line flags:
 | `-h`, `--help`                             | Show this help message and exit. |
 | `--notebook`                               | Launch the web UI in notebook mode, where the output is written to the same text box as the input. |
 | `--chat`                                   | Launch the web UI in chat mode. |
+| `--multi-user`                             | Multi-user mode. Chat histories are not saved or automatically loaded. WARNING: this is highly experimental. |
 | `--character CHARACTER`                    | The name of the character to load in chat mode by default. |
 | `--model MODEL`                            | Name of the model to load by default. |
 | `--lora LORA [LORA ...]`                   | The list of LoRAs to load. If you want to load more than one LoRA, write the names separated by spaces. |
@@ -266,6 +267,8 @@ Optionally, you can use the following command-line flags:
 | Flag             | Description |
 |------------------|-------------|
 |`--gpu-split`     | Comma-separated list of VRAM (in GB) to use per GPU device for model layers, e.g. `20,7,7` |
+|`--max_seq_len MAX_SEQ_LEN`           | Maximum sequence length. |
+|`--compress_pos_emb COMPRESS_POS_EMB` | Positional embeddings compression factor. Should typically be set to max_seq_len / 2048. |
 
 #### GPTQ-for-LLaMa
 
@@ -345,6 +348,11 @@ The presets that are included by default are the result of a contest that receiv
 * Make sure to carefully [search](https://github.com/oobabooga/text-generation-webui/issues) existing issues before starting a new one.
 * If you have some experience with git, testing an open pull request and leaving a comment on whether it works as expected or not is immensely helpful.
 * A simple way to contribute, even if you are not a programmer, is to leave a 👍 on an issue or pull request that you find relevant.
+
+## Community
+
+* Subreddit: https://www.reddit.com/r/oobaboogazz/
+* Discord: https://discord.gg/jwZCF2dPQN
 
 ## Credits
 

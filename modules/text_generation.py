@@ -190,7 +190,7 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False):
     original_question = question
     if not is_chat:
         state = apply_extensions('state', state)
-        question = apply_extensions('input', question)
+        question = apply_extensions('input', question, state)
 
     # Finding the stopping strings
     all_stop_strings = []
@@ -223,14 +223,14 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False):
             break
 
     if not is_chat:
-        reply = apply_extensions('output', reply)
+        reply = apply_extensions('output', reply, state)
 
     yield reply
 
 
 def generate_reply_HF(question, original_question, seed, state, stopping_strings=None, is_chat=False):
     generate_params = {}
-    for k in ['max_new_tokens', 'do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping', 'tfs', 'top_a', 'mirostat_mode', 'mirostat_tau', 'mirostat_eta']:
+    for k in ['max_new_tokens', 'do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'repetition_penalty_range', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping', 'tfs', 'top_a', 'mirostat_mode', 'mirostat_tau', 'mirostat_eta']:
         generate_params[k] = state[k]
 
     for k in ['epsilon_cutoff', 'eta_cutoff']:
@@ -262,7 +262,7 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
     eos_token_ids = [shared.tokenizer.eos_token_id] if shared.tokenizer.eos_token_id is not None else []
     generate_params['eos_token_id'] = eos_token_ids
     generate_params['stopping_criteria'] = transformers.StoppingCriteriaList()
-    generate_params['stopping_criteria'].append(_StopEverythingStoppingCriteria());
+    generate_params['stopping_criteria'].append(_StopEverythingStoppingCriteria())
 
     t0 = time.time()
     try:
