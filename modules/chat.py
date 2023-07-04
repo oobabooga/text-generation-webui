@@ -389,12 +389,12 @@ def load_history(file, history):
 
 
 def save_persistent_history(history, character, mode):
-    if mode == 'chat' and character not in  ['', 'None', None] and not shared.args.multi_user:
+    if mode in ['chat', 'chat-instruct'] and character not in  ['', 'None', None] and not shared.args.multi_user:
         save_history(history, path=Path(f'logs/{character}_persistent.json'))
 
 
 def load_persistent_history(state):
-    if shared.args.multi_user:
+    if shared.args.multi_user or state['mode'] == 'instruct':
         return state['history']
 
     character = state['character_menu']

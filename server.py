@@ -489,7 +489,7 @@ def create_file_saving_event_handlers():
                 ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
                 lambda x: json.dumps(x, indent=4), gradio('interface_state'), gradio('save_contents')).then(
                 lambda: 'logs/', None, gradio('save_root')).then(
-                lambda x: f'session_{shared.get_mode()}_{x}_{utils.current_time()}.json', gradio('character_menu'), gradio('save_filename')).then(
+                lambda x: f'session_{shared.get_mode()}_{x + "_" if x not in ["None", None, ""] else ""}{utils.current_time()}.json', gradio('character_menu'), gradio('save_filename')).then(
                 lambda: gr.update(visible=True), None, gradio('file_saver'))
         else:
             shared.gradio['save_session'].click(
@@ -509,6 +509,9 @@ def create_file_saving_event_handlers():
                 state.update(
                     json.loads(f.read())
                 )
+
+            if shared.is_chat():
+                chat.save_persistent_history(state['history'], state['character_menu'], state['mode'])
 
             return state
 
