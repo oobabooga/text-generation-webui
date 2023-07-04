@@ -143,6 +143,7 @@ def gather_interface_values(*args):
 
     if not shared.args.multi_user:
         shared.persistent_interface_state = output
+        Path('logs').mkdir(exist_ok=True)
         with open(Path(f'logs/session_{shared.get_mode()}_autosave.json'), 'w') as f:
             f.write(json.dumps(output, indent=4))
 
