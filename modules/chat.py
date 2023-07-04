@@ -404,6 +404,10 @@ def load_persistent_history(state):
         f = json.loads(open(p, 'rb').read())
         if 'internal' in f and 'visible' in f:
             history = f
+        else:
+            history = {'internal': [], 'visible': []}
+            history['internal'] = f['data']
+            history['visible'] = f['data_visible']
     else:
         history = {'internal': [], 'visible': []}
         if greeting != "":
