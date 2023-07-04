@@ -903,7 +903,8 @@ def create_interface():
 
             shared.gradio['character_menu'].change(
                 partial(chat.load_character, instruct=False), gradio('character_menu', 'name1', 'name2'), gradio('name1', 'name2', 'character_picture', 'greeting', 'context', 'dummy')).then(
-                chat.load_persistent_history, gradio('character_menu', 'greeting'), gradio('history')).then(
+                ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+                chat.load_persistent_history, gradio('interface_state'), gradio('history')).then(
                 chat.redraw_html, shared.reload_inputs, gradio('display'))
 
             shared.gradio['Stop'].click(

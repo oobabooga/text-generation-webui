@@ -393,7 +393,9 @@ def save_persistent_history(history, character, mode):
         save_history(history, path=Path(f'logs/{character}_persistent.json'))
 
 
-def load_persistent_history(character, greeting):
+def load_persistent_history(state):
+    character = state['character_menu']
+    greeting = state['greeting']
     p = Path(f'logs/{character}_persistent.json')
     if character not in ['None', '', None] and p.exists():
         f = json.loads(open(p, 'rb').read())
@@ -403,7 +405,7 @@ def load_persistent_history(character, greeting):
         history = {'internal': [], 'visible': []}
         if greeting != "":
             history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
-            history['visible'] += [['', greeting]]
+            history['visible'] += [['', apply_extensions('output', greeting, state)]]
 
     return history
 
