@@ -6,6 +6,8 @@ import gradio as gr
 import extensions
 import modules.shared as shared
 from modules.logging_colors import logger
+from inspect import signature
+
 
 state = {}
 available_extensions = []
@@ -52,10 +54,14 @@ def iterator():
 
 
 # Extension functions that map string -> string
-def _apply_string_extensions(function_name, text):
+def _apply_string_extensions(function_name, text, state):
     for extension, _ in iterator():
         if hasattr(extension, function_name):
-            text = getattr(extension, function_name)(text)
+            func = getattr(extension, function_name)
+            if len(signature(func).parameters) == 2:
+                text = func(text, state)
+            else:
+                text = func(text)
 
     return text
 
