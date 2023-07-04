@@ -53,11 +53,11 @@ sampler_hijack.hijack_samplers()
 # This function detects those models
 def find_model_type(model_name):
     path_to_model = Path(f"{shared.args.model_dir}/{model_name}")
-    if not path_to_model.exists():
+    if "rwkv" not in model_name.lower() and not path_to_model.exists():
         return "None"
 
     model_name_lower = model_name.lower()
-    if re.match(".*rwkv.*\.pth", model_name_lower):
+    if re.match(".*rwkv.*", model_name_lower):
         return "rwkv"
     elif len(list(path_to_model.glob("*ggml*.bin"))) > 0:
         return "llamacpp"
