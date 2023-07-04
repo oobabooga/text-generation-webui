@@ -335,6 +335,8 @@ class Handler(BaseHTTPRequestHandler):
                     self.openai_error(message="messages is required", code=400, error_type='InvalidRequestError')
                     return
                 
+                req_params['top_k'] = 20 # There is no best_of/top_k param for chat, but it is much improved with a higher top_k.
+
                 messages = body['messages']
 
                 role_formats = {
@@ -387,15 +389,18 @@ class Handler(BaseHTTPRequestHandler):
                 system_msgs = []
                 chat_msgs = []
 
+                def end_line(s):
+                    if s and s[-1] != '\n':
+                        s = s + '\n'
+                    return s
+
                 # You are ChatGPT, a large language model trained by OpenAI. Answer as concisely as possible. Knowledge cutoff: {knowledge_cutoff} Current date: {current_date}
                 context_msg = role_formats['system'].format(message=role_formats['context']) if role_formats['context'] else ''
-                if context_msg:
-                    system_msgs.extend([context_msg])
+                context_msg = end_line(context_msg)
 
                 # Maybe they sent both? This is not documented in the API, but some clients seem to do this.
                 if 'prompt' in body:
-                    prompt_msg = role_formats['system'].format(message=body['prompt'])
-                    system_msgs.extend([prompt_msg])
+                    context_msg = end_line(role_formats['system'].format(message=body['prompt'])) + context_msg
 
                 for m in messages:
                     role = m['role']
@@ -407,10 +412,9 @@ class Handler(BaseHTTPRequestHandler):
                         chat_msgs.extend([msg])
 
                 system_msg = '\n'.join(system_msgs)
-                if system_msg and system_msg[-1] != '\n':
-                    system_msg = system_msg + '\n'
+                system_msg = end_line(system_msg)
 
-                prompt = system_msg + ''.join(chat_msgs) + role_formats['prompt']
+                prompt = system_msg + context_msg + ''.join(chat_msgs) + role_formats['prompt']
 
                 token_count = len(encode(prompt)[0])
 
