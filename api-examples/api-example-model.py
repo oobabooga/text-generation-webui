@@ -67,6 +67,7 @@ def complex_model_load(model, lora = []):
             'gpu_split': None,
             'max_seq_len': 2048,
             'compress_pos_emb': 1,
+            'alpha_value': 1,
 
             # llama.cpp
             'threads': 0,
