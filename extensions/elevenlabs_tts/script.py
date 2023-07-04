@@ -159,7 +159,7 @@ def ui():
         convert_confirm.click(
             lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr).then(
             remove_tts_from_history, gradio('history'), gradio('history')).then(
-            chat.save_history, gradio('mode'), None, show_progress=False).then(
+            chat.save_persistent_history, gradio('history', 'character_menu', 'mode'), None).then(
             chat.redraw_html, shared.reload_inputs, gradio('display'))
 
         convert_cancel.click(lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr)
@@ -168,7 +168,7 @@ def ui():
         show_text.change(
             lambda x: params.update({"show_text": x}), show_text, None).then(
             toggle_text_in_history, gradio('history'), gradio('history')).then(
-            chat.save_history, gradio('mode'), None, show_progress=False).then(
+            chat.save_persistent_history, gradio('history', 'character_menu', 'mode'), None).then(
             chat.redraw_html, shared.reload_inputs, gradio('display'))
 
     # Event functions to update the parameters in the backend
