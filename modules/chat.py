@@ -394,13 +394,13 @@ def save_persistent_history(history, character, mode):
 
 
 def load_persistent_history(state):
-    if shared.args.multi_user or state['mode'] == 'instruct':
+    if state['mode'] == 'instruct':
         return state['history']
 
     character = state['character_menu']
     greeting = state['greeting']
     p = Path(f'logs/{character}_persistent.json')
-    if character not in ['None', '', None] and p.exists():
+    if not shared.args.multi_user and character not in ['None', '', None] and p.exists():
         f = json.loads(open(p, 'rb').read())
         if 'internal' in f and 'visible' in f:
             history = f
