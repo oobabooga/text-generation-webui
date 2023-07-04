@@ -122,4 +122,5 @@ def get_available_chat_styles():
 
 
 def get_available_sessions():
-    return sorted(set(k.stem for k in Path('logs').glob(f'session_{shared.get_mode()}*')), key=natural_keys, reverse=True)
+    items = sorted(set(k.stem for k in Path('logs').glob(f'session_{shared.get_mode()}*')), key=natural_keys, reverse=True)
+    return [item for item in items if 'autosave' in item] + [item for item in items if 'autosave' not in item]
