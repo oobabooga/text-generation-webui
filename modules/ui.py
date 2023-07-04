@@ -139,9 +139,10 @@ def gather_interface_values(*args):
     for i, element in enumerate(list_interface_input_elements()):
         output[element] = args[i]
 
-    shared.persistent_interface_state = output
-    with open(Path(f'logs/session_{shared.get_mode()}_autosave.json'), 'w') as f:
-        f.write(json.dumps(output, indent=4))
+    if not shared.args.multi_user:
+        shared.persistent_interface_state = output
+        with open(Path(f'logs/session_{shared.get_mode()}_autosave.json'), 'w') as f:
+            f.write(json.dumps(output, indent=4))
 
     return output
 

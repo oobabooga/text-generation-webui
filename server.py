@@ -483,37 +483,38 @@ def create_file_saving_event_handlers():
         lambda: 'presets/', None, gradio('delete_root')).then(
         lambda: gr.update(visible=True), None, gradio('file_deleter'))
 
-    if shared.is_chat():
-        shared.gradio['save_session'].click(
-            ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-            lambda x: json.dumps(x, indent=4), gradio('interface_state'), gradio('save_contents')).then(
-            lambda: 'logs/', None, gradio('save_root')).then(
-            lambda x: f'session_{shared.get_mode()}_{x}_{utils.current_time()}.json', gradio('character_menu'), gradio('save_filename')).then(
-            lambda: gr.update(visible=True), None, gradio('file_saver'))
-    else:
-        shared.gradio['save_session'].click(
-            ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-            lambda x: json.dumps(x, indent=4), gradio('interface_state'), gradio('save_contents')).then(
-            lambda: 'logs/', None, gradio('save_root')).then(
-            lambda: f'session_{shared.get_mode()}_{utils.current_time()}.json', None, gradio('save_filename')).then(
-            lambda: gr.update(visible=True), None, gradio('file_saver'))
+    if not shared.args.multi_user:
+        if shared.is_chat():
+            shared.gradio['save_session'].click(
+                ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+                lambda x: json.dumps(x, indent=4), gradio('interface_state'), gradio('save_contents')).then(
+                lambda: 'logs/', None, gradio('save_root')).then(
+                lambda x: f'session_{shared.get_mode()}_{x}_{utils.current_time()}.json', gradio('character_menu'), gradio('save_filename')).then(
+                lambda: gr.update(visible=True), None, gradio('file_saver'))
+        else:
+            shared.gradio['save_session'].click(
+                ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+                lambda x: json.dumps(x, indent=4), gradio('interface_state'), gradio('save_contents')).then(
+                lambda: 'logs/', None, gradio('save_root')).then(
+                lambda: f'session_{shared.get_mode()}_{utils.current_time()}.json', None, gradio('save_filename')).then(
+                lambda: gr.update(visible=True), None, gradio('file_saver'))
 
-    shared.gradio['delete_session'].click(
-        lambda x: f'{x}.json', gradio('session_menu'), gradio('delete_filename')).then(
-        lambda: 'logs/', None, gradio('delete_root')).then(
-        lambda: gr.update(visible=True), None, gradio('file_deleter'))
+        shared.gradio['delete_session'].click(
+            lambda x: f'{x}.json', gradio('session_menu'), gradio('delete_filename')).then(
+            lambda: 'logs/', None, gradio('delete_root')).then(
+            lambda: gr.update(visible=True), None, gradio('file_deleter'))
 
-    def load_session(session, state):
-        with open(Path(f'logs/{session}.json'), 'r') as f:
-            state.update(
-                json.loads(f.read())
-            )
+        def load_session(session, state):
+            with open(Path(f'logs/{session}.json'), 'r') as f:
+                state.update(
+                    json.loads(f.read())
+                )
 
-        return state
+            return state
 
-    shared.gradio['session_menu'].change(
-        load_session, gradio('session_menu', 'interface_state'), gradio('interface_state')).then(
-        ui.apply_interface_values, gradio('interface_state'), gradio(ui.list_interface_input_elements()), show_progress=False)
+        shared.gradio['session_menu'].change(
+            load_session, gradio('session_menu', 'interface_state'), gradio('interface_state')).then(
+            ui.apply_interface_values, gradio('interface_state'), gradio(ui.list_interface_input_elements()), show_progress=False)
 
 
 def set_interface_arguments(interface_mode, extensions, bool_active):
@@ -797,11 +798,12 @@ def create_interface():
                             shared.gradio['bool_menu'] = gr.CheckboxGroup(choices=bool_list, value=bool_active, label="Boolean command-line flags", elem_classes='checkboxgroup-table')
 
                 with gr.Column():
-                    with gr.Row():
-                        shared.gradio['session_menu'] = gr.Dropdown(choices=utils.get_available_sessions(), value='None', label='Session', elem_classes='slim-dropdown')
-                        ui.create_refresh_button(shared.gradio['session_menu'], lambda: None, lambda: {'choices': utils.get_available_sessions()}, ['refresh-button'])
-                        shared.gradio['save_session'] = gr.Button('💾', elem_classes=['refresh-button'])
-                        shared.gradio['delete_session'] = gr.Button('🗑️', elem_classes=['refresh-button'])
+                    if not shared.args.multi_user:
+                        with gr.Row():
+                            shared.gradio['session_menu'] = gr.Dropdown(choices=utils.get_available_sessions(), value='None', label='Session', elem_classes='slim-dropdown', info='When saving a session, make sure to keep the initial part of the filename (session_chat, session_notebook, or session_default), otherwise it will not appear on this list afterwards.')
+                            ui.create_refresh_button(shared.gradio['session_menu'], lambda: None, lambda: {'choices': utils.get_available_sessions()}, ['refresh-button'])
+                            shared.gradio['save_session'] = gr.Button('💾', elem_classes=['refresh-button'])
+                            shared.gradio['delete_session'] = gr.Button('🗑️', elem_classes=['refresh-button'])
 
                     extension_name = gr.Textbox(lines=1, label='Install or update an extension', info='Enter the GitHub URL below and press Enter. For a list of extensions, see: https://github.com/oobabooga/text-generation-webui-extensions ⚠️  WARNING ⚠️ : extensions can execute arbitrary code. Make sure to inspect their source code before activating them.')
                     extension_status = gr.Markdown()
