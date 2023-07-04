@@ -3,6 +3,7 @@ import json
 import os
 import time
 import requests
+import torch
 import yaml
 import numpy as np
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -11,6 +12,7 @@ from modules.utils import get_available_models
 from modules.models import load_model, unload_model
 from modules.models_settings import (get_model_settings_from_yamls,
                                      update_model_parameters)
+import torch.nn.functional as F
 
 from modules import shared
 from modules.text_generation import encode, generate_reply
@@ -67,6 +69,11 @@ except ImportError:
 
 st_model = os.environ["OPENEDAI_EMBEDDING_MODEL"] if "OPENEDAI_EMBEDDING_MODEL" in os.environ else "all-mpnet-base-v2"
 embedding_model = None
+token_alternatives = []
+last_top_logits = []
+logprobs = None
+logit_bias = None
+
 
 # little helper to get defaults if arg is present but None and should be the same type as default.
 def default(dic, key, default):
@@ -240,6 +247,10 @@ class Handler(BaseHTTPRequestHandler):
             self.send_error(404)
 
     def do_POST(self):
+        global token_alternatives, logprobs, logit_bias
+        logit_bias = None
+        logprobs = None
+        token_alternatives = []
         if debug:
             print(self.headers)  # did you know... python-openai sends your linux kernel & python version?
         content_length = int(self.headers['Content-Length'])
@@ -296,6 +307,10 @@ class Handler(BaseHTTPRequestHandler):
             req_params['seed'] = shared.settings.get('seed', default_req_params['seed'])
             req_params['add_bos_token'] = shared.settings.get('add_bos_token', default_req_params['add_bos_token'])
 
+            logit_bias = body.get('logit_bias', None)
+            logprobs = body.get('logprobs', None)
+            if logprobs is not None:
+                logprobs = int(logprobs)
             is_streaming = req_params['stream']
 
             self.send_response(200)
@@ -474,18 +489,8 @@ class Handler(BaseHTTPRequestHandler):
             longest_stop_len = max([len(x) for x in stopping_strings] + [0])
 
             for a in generator:
-                answer = a
-
-                stop_string_found = False
-                len_seen = len(seen_content)
-                search_start = max(len_seen - longest_stop_len, 0)
-
-                for string in stopping_strings:
-                    idx = answer.find(string, search_start)
-                    if idx != -1:
-                        answer = answer[:idx]  # clip it.
-                        stop_string_found = True
-
+                answer, len_seen, stop_string_found = self.detect_stop_string(a, longest_stop_len, seen_content,
+                                                                              stopping_strings)
                 if stop_string_found:
                     break
 
@@ -524,6 +529,10 @@ class Handler(BaseHTTPRequestHandler):
                         }],
                     }
 
+                    if logprobs is not None:
+                        chunk[resp_list][0]["logprobs"] = token_alternatives
+                        token_alternatives = []
+
                     # strip extra leading space off new generated content
                     if len_seen == 0 and new_content[0] == ' ':
                         new_content = new_content[1:]
@@ -554,6 +563,7 @@ class Handler(BaseHTTPRequestHandler):
                         "total_tokens": token_count + completion_token_count
                     }
                 }
+
                 if stream_object_type == 'text_completion.chunk':
                     chunk[resp_list][0]['text'] = ''
                 else:
@@ -597,6 +607,9 @@ class Handler(BaseHTTPRequestHandler):
                     "total_tokens": token_count + completion_token_count
                 }
             }
+            if logprobs is not None:
+                resp[resp_list][0]["logprobs"] = token_alternatives
+                token_alternatives = []
 
             if is_chat_request:
                 resp[resp_list][0]["message"] = {"role": "assistant", "content": answer}
@@ -660,7 +673,6 @@ class Handler(BaseHTTPRequestHandler):
             else:
                 stopping_strings.extend(['\n###'])
                 print("Warning: Loaded default instruction-following template (Alpaca) for model.")
-                
 
             edit_task = instruction_template.format(instruction=instruction, input=input)
 
@@ -684,21 +696,10 @@ class Handler(BaseHTTPRequestHandler):
             answer = ''
             seen_content = ''
             for a in generator:
-                answer = a
-
-                stop_string_found = False
-                len_seen = len(seen_content)
-                search_start = max(len_seen - longest_stop_len, 0)
-
-                for string in stopping_strings:
-                    idx = answer.find(string, search_start)
-                    if idx != -1:
-                        answer = answer[:idx]  # clip it.
-                        stop_string_found = True
-
+                answer, len_seen, stop_string_found = self.detect_stop_string(a, answer, longest_stop_len, seen_content,
+                                                                              stopping_strings)
                 if stop_string_found:
                     break
-
 
             # some reply's have an extra leading space to fit the instruction template, just clip it off from the reply.
             if edit_task[-1] != '\n' and answer and answer[0] == ' ':
@@ -719,6 +720,9 @@ class Handler(BaseHTTPRequestHandler):
                     "total_tokens": token_count + completion_token_count
                 }
             }
+            if logprobs is not None:
+                resp["choices"][0]["logprobs"] = token_alternatives
+                token_alternatives = []
 
             if debug:
                 print({'answer': answer, 'completion_token_count': completion_token_count})
@@ -859,6 +863,38 @@ class Handler(BaseHTTPRequestHandler):
         else:
             print(self.path, self.headers)
             self.send_error(404)
+
+    def detect_stop_string(self, answer, longest_stop_len, seen_content, stopping_strings):
+        stop_string_found = False
+        len_seen = len(seen_content)
+        search_start = max(len_seen - longest_stop_len, 0)
+        for string in stopping_strings:
+            idx = answer.find(string, search_start)
+            if idx != -1:
+                answer = answer[:idx]  # clip it.
+                stop_string_found = True
+        return answer, len_seen, stop_string_found
+
+
+def tokenizer_modifier(state, prompt, input_ids, input_embeds):
+    return prompt, input_ids, input_embeds
+
+
+def logits_modifier(input_ids, logits):
+    global token_alternatives, last_top_logits, logprobs, logit_bias
+
+    if logit_bias is not None:
+        keys = list([int(key) for key in logit_bias.keys()])
+        values = list([int(val) for val in logit_bias.values()])
+        logits[0, keys] += torch.tensor(values)
+
+    if logprobs is not None:
+        log_e_probabilities = F.log_softmax(logits, dim=1)
+        top_values, top_indices = torch.topk(log_e_probabilities, k=logprobs)
+        top_tokens = [shared.tokenizer.decode(tok) for tok in top_indices[0]]
+        last_top_logits = [[tok, prob] for tok, prob in zip(top_tokens, top_values[0].tolist())]
+        token_alternatives.append(last_top_logits)
+    return logits
 
 
 def run_server():

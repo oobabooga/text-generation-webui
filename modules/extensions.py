@@ -108,6 +108,13 @@ def _apply_tokenizer_extensions(function_name, state, prompt, input_ids, input_e
 
     return prompt, input_ids, input_embeds
 
+# Extension functions that post-process the logits output; the order is undefined, but all will be called.
+def _apply_logits_extensions(function_name, input_ids, logits):
+    for extension, _ in iterator():
+        if hasattr(extension, function_name):
+            logits = getattr(extension, function_name)(input_ids, logits)
+
+    return logits
 
 # Get prompt length in tokens after applying extension functions which override the default tokenizer output
 # currently only the first one will work
@@ -177,6 +184,7 @@ EXTENSION_MAP = {
     "history": _apply_history_modifier_extensions,
     "bot_prefix": partial(_apply_string_extensions, "bot_prefix_modifier"),
     "tokenizer": partial(_apply_tokenizer_extensions, "tokenizer_modifier"),
+    "logits": partial(_apply_logits_extensions, "logits_modifier"),
     "input_hijack": _apply_input_hijack,
     "custom_generate_chat_prompt": _apply_custom_generate_chat_prompt,
     "custom_generate_reply": _apply_custom_generate_reply,
