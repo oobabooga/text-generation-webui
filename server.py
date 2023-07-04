@@ -484,6 +484,16 @@ def create_file_saving_event_handlers():
         lambda: gr.update(visible=True), None, gradio('file_deleter'))
 
     if not shared.args.multi_user:
+
+        def load_session(session, state):
+            with open(Path(f'logs/{session}.json'), 'r') as f:
+                state.update(json.loads(f.read()))
+
+            if shared.is_chat():
+                chat.save_persistent_history(state['history'], state['character_menu'], state['mode'])
+
+            return state
+
         if shared.is_chat():
             shared.gradio['save_session'].click(
                 ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
@@ -491,6 +501,12 @@ def create_file_saving_event_handlers():
                 lambda: 'logs/', None, gradio('save_root')).then(
                 lambda x: f'session_{shared.get_mode()}_{x + "_" if x not in ["None", None, ""] else ""}{utils.current_time()}.json', gradio('character_menu'), gradio('save_filename')).then(
                 lambda: gr.update(visible=True), None, gradio('file_saver'))
+
+            shared.gradio['session_menu'].change(
+                load_session, gradio('session_menu', 'interface_state'), gradio('interface_state')).then(
+                ui.apply_interface_values, gradio('interface_state'), gradio(ui.list_interface_input_elements()), show_progress=False).then(
+                chat.redraw_html, shared.reload_inputs, gradio('display'))
+
         else:
             shared.gradio['save_session'].click(
                 ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
@@ -499,25 +515,14 @@ def create_file_saving_event_handlers():
                 lambda: f'session_{shared.get_mode()}_{utils.current_time()}.json', None, gradio('save_filename')).then(
                 lambda: gr.update(visible=True), None, gradio('file_saver'))
 
+            shared.gradio['session_menu'].change(
+                load_session, gradio('session_menu', 'interface_state'), gradio('interface_state')).then(
+                ui.apply_interface_values, gradio('interface_state'), gradio(ui.list_interface_input_elements()), show_progress=False)
+
         shared.gradio['delete_session'].click(
             lambda x: f'{x}.json', gradio('session_menu'), gradio('delete_filename')).then(
             lambda: 'logs/', None, gradio('delete_root')).then(
             lambda: gr.update(visible=True), None, gradio('file_deleter'))
-
-        def load_session(session, state):
-            with open(Path(f'logs/{session}.json'), 'r') as f:
-                state.update(
-                    json.loads(f.read())
-                )
-
-            if shared.is_chat():
-                chat.save_persistent_history(state['history'], state['character_menu'], state['mode'])
-
-            return state
-
-        shared.gradio['session_menu'].change(
-            load_session, gradio('session_menu', 'interface_state'), gradio('interface_state')).then(
-            ui.apply_interface_values, gradio('interface_state'), gradio(ui.list_interface_input_elements()), show_progress=False)
 
 
 def set_interface_arguments(interface_mode, extensions, bool_active):
