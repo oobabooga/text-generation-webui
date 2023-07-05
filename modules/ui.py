@@ -63,8 +63,10 @@ def list_model_elements():
         'llama_cpp_seed',
         'gpu_split',
         'max_seq_len',
-        'compress_pos_emb'
+        'compress_pos_emb',
+        'alpha_value'
     ]
+
 
     for i in range(torch.cuda.device_count()):
         elements.append(f'gpu_memory_{i}')
@@ -141,6 +143,7 @@ def gather_interface_values(*args):
 
     if not shared.args.multi_user:
         shared.persistent_interface_state = output
+        Path('logs').mkdir(exist_ok=True)
         with open(Path(f'logs/session_{shared.get_mode()}_autosave.json'), 'w') as f:
             f.write(json.dumps(output, indent=4))
 

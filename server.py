@@ -226,6 +226,7 @@ def create_model_menus():
                         shared.gradio['gpu_split'] = gr.Textbox(label='gpu-split', info='Comma-separated list of VRAM (in GB) to use per GPU. Example: 20,7,7')
                         shared.gradio['max_seq_len'] = gr.Slider(label='max_seq_len', minimum=2048, maximum=16384, step=256, info='Maximum sequence length.', value=shared.args.max_seq_len)
                         shared.gradio['compress_pos_emb'] = gr.Slider(label='compress_pos_emb', minimum=1, maximum=8, step=1, info='Positional embeddings compression factor. Should typically be set to max_seq_len / 2048.', value=shared.args.compress_pos_emb)
+                        shared.gradio['alpha_value'] = gr.Slider(label='alpha_value', minimum=1, maximum=8, step=1, info='Positional embeddings alpha factor for NTK RoPE scaling. Same as above. Use either this or compress_pos_emb, not both.', value=shared.args.alpha_value)
 
                     with gr.Column():
                         shared.gradio['triton'] = gr.Checkbox(label="triton", value=shared.args.triton)
@@ -354,6 +355,25 @@ def create_settings_menus(default_preset):
     Not all parameters are used by all loaders. See [this page](https://github.com/oobabooga/text-generation-webui/blob/main/docs/Generation-parameters.md) for details.
 
     For a technical description of the parameters, the [transformers documentation](https://huggingface.co/docs/transformers/main_classes/text_generation#transformers.GenerationConfig) is a good reference.
+
+    The best presets, according to the [Preset Arena](https://github.com/oobabooga/oobabooga.github.io/blob/main/arena/results.md) experiment, are:
+
+    * Instruction following:
+        1) Divine Intellect
+        2) Big O
+        3) simple-1
+        4) Space Alien
+        5) StarChat
+        6) Titanic
+        7) tfs-with-top-a
+        8) Asterism
+        9) Contrastive Search
+
+    * Chat:
+        1) Midnight Enigma
+        2) Yara
+        3) Shortwave
+        4) Kobold-Godlike
 
     ### Temperature
     Primary factor to control randomness of outputs. 0 = deterministic (only the most likely token is used). Higher value = more randomness.
@@ -1032,10 +1052,8 @@ def create_interface():
 
         create_file_saving_event_handlers()
 
-        shared.gradio['interface'].load(
-            lambda: None, None, None, _js=f"() => {{{js}}}").then(
-            partial(ui.apply_interface_values, {}, use_persistent=True), None, gradio(ui.list_interface_input_elements()), show_progress=False)
-
+        shared.gradio['interface'].load(lambda: None, None, None, _js=f"() => {{{js}}}")
+        shared.gradio['interface'].load(partial(ui.apply_interface_values, {}, use_persistent=True), None, gradio(ui.list_interface_input_elements()), show_progress=False)
         if shared.settings['dark_theme']:
             shared.gradio['interface'].load(lambda: None, None, None, _js="() => document.getElementsByTagName('body')[0].classList.add('dark')")
 
