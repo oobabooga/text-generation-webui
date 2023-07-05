@@ -328,23 +328,29 @@ def ui():
 
                 with gr.Accordion("Click for more information...", open=False):
                     gr.Markdown(textwrap.dedent("""
-
-                    # installation/setup
-                    Please follow the instruction found here to setup a custom search engine with Google.
-                    https://www.thepythoncode.com/article/use-google-custom-search-engine-api-in-python
+                    ### Instructions for Installation/Setup:
                     
-                    create a file called "custom_search_engine_keys.json"
+                        To set up a custom search engine with Google, please follow the instructions provided in this guide: 
+                        https://www.thepythoncode.com/article/use-google-custom-search-engine-api-in-python
                     
-                    Paste this text in it and replace with your values from the previous step:
-                    "
+                        Create a new file called "custom_search_engine_keys.json".
+                    
+                        Open the "custom_search_engine_keys.json" file and paste the following text into it:
+                    
+                    json
+                    
                     {
-                      "key": "Custom search engine key",
-                      "cx": "Custom search engine cx number"
+                        "key": "Custom search engine key",
+                        "cx": "Custom search engine cx number"
                     }
-                    "
-                
-                    # usage
-                    Enter a search query above.  Press the load data button.  This data will be added to the local chromaDB to be read into context at runtime.
+                    
+                        Replace the placeholders "Custom search engine key" and "Custom search engine cx number" with the respective values you obtained from the previous step.
+                    
+                    ### Usage:
+                    
+                        Enter your desired search query in the search box above.
+                    
+                        Press the "Load Data" button. This will add the retrieved data to the local chromaDB, which will be read into the context during runtime.
 
                     """))
 
