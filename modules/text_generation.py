@@ -8,6 +8,7 @@ import traceback
 import numpy as np
 import torch
 import transformers
+from transformers import LogitsProcessorList
 
 import modules.shared as shared
 from modules.callbacks import (
@@ -262,7 +263,8 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
     eos_token_ids = [shared.tokenizer.eos_token_id] if shared.tokenizer.eos_token_id is not None else []
     generate_params['eos_token_id'] = eos_token_ids
     generate_params['stopping_criteria'] = transformers.StoppingCriteriaList()
-    generate_params['stopping_criteria'].append(_StopEverythingStoppingCriteria());
+    generate_params['stopping_criteria'].append(_StopEverythingStoppingCriteria())
+    generate_params['logits_processor'] = apply_extensions("logits", LogitsProcessorList([]), input_ids)
 
     t0 = time.time()
     try:

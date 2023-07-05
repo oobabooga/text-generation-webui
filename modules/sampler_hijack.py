@@ -124,11 +124,6 @@ class MirostatLogitsWarper(LogitsWarper):
         return scores
 
 
-class ExtensionLogitsProcessor(LogitsProcessor):
-    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
-        return apply_extensions("logits", input_ids, scores)
-
-
 class RepetitionPenaltyLogitsProcessorWithRange(LogitsProcessor):
     '''
     Copied from the transformers library
@@ -187,7 +182,6 @@ def get_logits_processor_patch(self, **kwargs):
             if result[i].__class__.__name__ == 'RepetitionPenaltyLogitsProcessor':
                 result[i] = RepetitionPenaltyLogitsProcessorWithRange(repetition_penalty, repetition_penalty_range)
 
-    result.append(ExtensionLogitsProcessor())
     return result
 
 

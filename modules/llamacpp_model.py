@@ -13,6 +13,7 @@ from llama_cpp import Llama, LlamaCache, LogitsProcessorList
 
 from modules import shared
 from modules.callbacks import Iteratorize
+from modules.extensions import apply_extensions
 from modules.logging_colors import logger
 
 
@@ -67,6 +68,10 @@ class LlamaCppModel:
 
     def generate(self, prompt, state, callback=None):
         prompt = prompt if type(prompt) is str else prompt.decode()
+        processors = apply_extensions("logits", LogitsProcessorList([]))
+        if state['ban_eos_token']:
+            processors.append(partial(ban_eos_logits_processor, self.model.token_eos()))
+
         completion_chunks = self.model.create_completion(
             prompt=prompt,
             max_tokens=state['max_new_tokens'],
@@ -79,9 +84,7 @@ class LlamaCppModel:
             mirostat_tau=state['mirostat_tau'],
             mirostat_eta=state['mirostat_eta'],
             stream=True,
-            logits_processor=LogitsProcessorList([
-                partial(ban_eos_logits_processor, self.model.token_eos()),
-            ]) if state['ban_eos_token'] else None,
+            logits_processor=processors,
         )
 
         output = ""

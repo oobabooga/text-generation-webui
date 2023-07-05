@@ -8,6 +8,9 @@ import yaml
 import numpy as np
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
+
+from transformers import LogitsProcessor
+
 from modules.utils import get_available_models
 from modules.models import load_model, unload_model
 from modules.models_settings import (get_model_settings_from_yamls,
@@ -876,25 +879,34 @@ class Handler(BaseHTTPRequestHandler):
         return answer, len_seen, stop_string_found
 
 
-def tokenizer_modifier(state, prompt, input_ids, input_embeds):
-    return prompt, input_ids, input_embeds
+class LogitsBiasProcessor(LogitsProcessor):
+    def __call__(self, input_ids: torch.LongTensor, logits: torch.FloatTensor) -> torch.FloatTensor:
+        global logit_bias
+        if logit_bias is not None:
+            keys = list([int(key) for key in logit_bias.keys()])
+            values = list([int(val) for val in logit_bias.values()])
+            logits[0, keys] += torch.tensor(values)
+
+        return logits
 
 
-def logits_modifier(input_ids, logits):
-    global token_alternatives, last_top_logits, logprobs, logit_bias
+class LogprobProcessor(LogitsProcessor):
+    def __call__(self, input_ids: torch.LongTensor, logits: torch.FloatTensor) -> torch.FloatTensor:
+        global token_alternatives, last_top_logits, logprobs
 
-    if logit_bias is not None:
-        keys = list([int(key) for key in logit_bias.keys()])
-        values = list([int(val) for val in logit_bias.values()])
-        logits[0, keys] += torch.tensor(values)
+        if logprobs is not None:
+            log_e_probabilities = F.log_softmax(logits, dim=1)
+            top_values, top_indices = torch.topk(log_e_probabilities, k=logprobs)
+            top_tokens = [shared.tokenizer.decode(tok) for tok in top_indices[0]]
+            last_top_logits = [[tok, prob] for tok, prob in zip(top_tokens, top_values[0].tolist())]
+            token_alternatives.append(last_top_logits)
 
-    if logprobs is not None:
-        log_e_probabilities = F.log_softmax(logits, dim=1)
-        top_values, top_indices = torch.topk(log_e_probabilities, k=logprobs)
-        top_tokens = [shared.tokenizer.decode(tok) for tok in top_indices[0]]
-        last_top_logits = [[tok, prob] for tok, prob in zip(top_tokens, top_values[0].tolist())]
-        token_alternatives.append(last_top_logits)
-    return logits
+        return logits
+
+
+def logits_modifier(processor_list, input_ids):
+    processor_list.append(LogitsBiasProcessor())
+    processor_list.append(LogprobProcessor())
 
 
 def run_server():

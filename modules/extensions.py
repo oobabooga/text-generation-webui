@@ -108,13 +108,16 @@ def _apply_tokenizer_extensions(function_name, state, prompt, input_ids, input_e
 
     return prompt, input_ids, input_embeds
 
-# Extension functions that post-process the logits output; the order is undefined, but all will be called.
-def _apply_logits_extensions(function_name, input_ids, logits):
+
+# Extension functions that add LogitsProcessors (or LogitsWarpers) to be called.
+# Each extension will use this callback to append logits processors to the list.
+def _apply_logits_extensions(function_name, logits_processor_list, input_ids):
     for extension, _ in iterator():
         if hasattr(extension, function_name):
-            logits = getattr(extension, function_name)(input_ids, logits)
+            getattr(extension, function_name)(logits_processor_list, input_ids)
 
-    return logits
+    return logits_processor_list
+
 
 # Get prompt length in tokens after applying extension functions which override the default tokenizer output
 # currently only the first one will work
