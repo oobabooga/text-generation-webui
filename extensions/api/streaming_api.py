@@ -55,14 +55,13 @@ async def _handle_connection(websocket, path):
             body = json.loads(message)
 
             user_input = body['user_input']
-            history = body['history']
             generate_params = build_parameters(body, chat=True)
             generate_params['stream'] = True
             regenerate = body.get('regenerate', False)
             _continue = body.get('_continue', False)
 
             generator = generate_chat_reply(
-                user_input, history, generate_params, regenerate=regenerate, _continue=_continue, loading_message=False)
+                user_input, generate_params, regenerate=regenerate, _continue=_continue, loading_message=False)
 
             message_num = 0
             for a in generator:
