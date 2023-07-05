@@ -294,12 +294,12 @@ def generate_chat_reply(text, state, regenerate=False, _continue=False, loading_
 def generate_chat_reply_wrapper(text, start_with, state, regenerate=False, _continue=False):
     if start_with != '' and not _continue:
         if regenerate:
-            text = remove_last_message()
+            text, state['history'] = remove_last_message(state['history'])
             regenerate = False
 
         _continue = True
-        send_dummy_message(text)
-        send_dummy_reply(start_with)
+        send_dummy_message(text, state)
+        send_dummy_reply(start_with, state)
 
     for i, history in enumerate(generate_chat_reply(text, state, regenerate, _continue, loading_message=True)):
         yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style']), history
@@ -404,6 +404,10 @@ def load_persistent_history(state):
         f = json.loads(open(p, 'rb').read())
         if 'internal' in f and 'visible' in f:
             history = f
+        else:
+            history = {'internal': [], 'visible': []}
+            history['internal'] = f['data']
+            history['visible'] = f['data_visible']
     else:
         history = {'internal': [], 'visible': []}
         if greeting != "":

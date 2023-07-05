@@ -357,6 +357,25 @@ def create_settings_menus(default_preset):
 
     For a technical description of the parameters, the [transformers documentation](https://huggingface.co/docs/transformers/main_classes/text_generation#transformers.GenerationConfig) is a good reference.
 
+    The best presets, according to the [Preset Arena](https://github.com/oobabooga/oobabooga.github.io/blob/main/arena/results.md) experiment, are:
+
+    * Instruction following:
+        1) Divine Intellect
+        2) Big O
+        3) simple-1
+        4) Space Alien
+        5) StarChat
+        6) Titanic
+        7) tfs-with-top-a
+        8) Asterism
+        9) Contrastive Search
+
+    * Chat:
+        1) Midnight Enigma
+        2) Yara
+        3) Shortwave
+        4) Kobold-Godlike
+
     ### Temperature
     Primary factor to control randomness of outputs. 0 = deterministic (only the most likely token is used). Higher value = more randomness.
     ### top_p
@@ -1034,10 +1053,8 @@ def create_interface():
 
         create_file_saving_event_handlers()
 
-        shared.gradio['interface'].load(
-            lambda: None, None, None, _js=f"() => {{{js}}}").then(
-            partial(ui.apply_interface_values, {}, use_persistent=True), None, gradio(ui.list_interface_input_elements()), show_progress=False)
-
+        shared.gradio['interface'].load(lambda: None, None, None, _js=f"() => {{{js}}}")
+        shared.gradio['interface'].load(partial(ui.apply_interface_values, {}, use_persistent=True), None, gradio(ui.list_interface_input_elements()), show_progress=False)
         if shared.settings['dark_theme']:
             shared.gradio['interface'].load(lambda: None, None, None, _js="() => document.getElementsByTagName('body')[0].classList.add('dark')")
 

@@ -23,6 +23,7 @@ ExLlama only uses the following parameters:
 * top_p
 * top_k
 * repetition_penalty
+* repetition_penalty_range
 * typical_p
 
 ### RWKV

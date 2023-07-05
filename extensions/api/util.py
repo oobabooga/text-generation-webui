@@ -65,6 +65,7 @@ def build_parameters(body, chat=False):
             'context_instruct': context_instruct,
             'turn_template': turn_template,
             'chat-instruct_command': str(body.get('chat-instruct_command', shared.settings['chat-instruct_command'])),
+            'history': body.get('history', {'internal': [], 'visible': []})
         })
 
     return generate_params
