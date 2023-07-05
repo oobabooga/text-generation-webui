@@ -10,7 +10,7 @@ import requests
 import torch
 from PIL import Image
 
-import modules.shared as shared
+from modules import shared
 from modules.models import reload_model, unload_model
 from modules.ui import create_refresh_button
 
@@ -126,7 +126,7 @@ def input_modifier(string):
     return string
 
 # Get and save the Stable Diffusion-generated picture
-def get_SD_pictures(description):
+def get_SD_pictures(description, character):
 
     global params
 
@@ -160,7 +160,7 @@ def get_SD_pictures(description):
         if params['save_img']:
             img_data = base64.b64decode(img_str)
 
-            variadic = f'{date.today().strftime("%Y_%m_%d")}/{shared.character}_{int(time.time())}'
+            variadic = f'{date.today().strftime("%Y_%m_%d")}/{character}_{int(time.time())}'
             output_file = Path(f'extensions/sd_api_pictures/outputs/{variadic}.png')
             output_file.parent.mkdir(parents=True, exist_ok=True)
 
@@ -186,7 +186,7 @@ def get_SD_pictures(description):
 
 # TODO: how do I make the UI history ignore the resulting pictures (I don't want HTML to appear in history)
 # and replace it with 'text' for the purposes of logging?
-def output_modifier(string):
+def output_modifier(string, state):
     """
     This function is applied to the model outputs.
     """
@@ -213,7 +213,7 @@ def output_modifier(string):
     else:
         text = string
 
-    string = get_SD_pictures(string) + "\n" + text
+    string = get_SD_pictures(string, state['character_menu']) + "\n" + text
 
     return string
 
