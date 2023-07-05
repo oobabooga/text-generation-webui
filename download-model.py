@@ -216,7 +216,7 @@ if __name__ == '__main__':
     parser.add_argument('--output', type=str, default=None, help='The folder where the model should be saved.')
     parser.add_argument('--clean', action='store_true', help='Does not resume the previous download.')
     parser.add_argument('--check', action='store_true', help='Validates the checksums of model files.')
-    parser.add_argument('--max-retries', type=int, default=0, help='Max retries count when get error in download time.')
+    parser.add_argument('--max-retries', type=int, default=5, help='Max retries count when get error in download time.')
     args = parser.parse_args()
 
     branch = args.branch
