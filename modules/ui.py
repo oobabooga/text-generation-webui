@@ -162,7 +162,7 @@ def apply_interface_values(state, use_persistent=False):
         return ans
 
 
-class ToolButton(gr.Button, gr.components.FormComponent):
+class ToolButton(gr.Button, gr.components.IOComponent):
     """Small button with single emoji as text, fits inside gradio forms"""
 
     def __init__(self, **kwargs):
