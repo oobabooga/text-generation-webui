@@ -94,8 +94,6 @@ def load_tokenizer(model_name, model):
     if any(s in model_name.lower() for s in ['gpt-4chan', 'gpt4chan']) and Path(f"{shared.args.model_dir}/gpt-j-6B/").exists():
         tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/gpt-j-6B/"))
     elif model.__class__.__name__ in ['LlamaForCausalLM', 'LlamaGPTQForCausalLM', 'ExllamaHF']:
-        if any(s in model_name.lower() for s in ['xgen']) and Path(f"{shared.args.model_dir}/{model_name}/").exists():
-            tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/{model_name}/"), trust_remote_code=shared.args.trust_remote_code)
         # Try to load an universal LLaMA tokenizer
         if not any(s in shared.model_name.lower() for s in ['llava', 'oasst']):
             for p in [Path(f"{shared.args.model_dir}/llama-tokenizer/"), Path(f"{shared.args.model_dir}/oobabooga_llama-tokenizer/")]:
