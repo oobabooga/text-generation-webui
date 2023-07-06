@@ -28,8 +28,11 @@ class RWKVModel:
             model = RWKV(model=str(path), strategy=f'{device} {dtype}')
         else:
             model = RWKV(model=str(path), strategy=shared.args.rwkv_strategy)
-
-        pipeline = PIPELINE(model, str(tokenizer_path))
+        if "world" in path.lower():
+            tokenizer_path = "rwkv_vocab_v20230424"
+        else:
+            tokenizer_path = str(tokenizer_path)
+        pipeline = PIPELINE(model, "rwkv_vocab_v20230424")
         result = self()
         result.pipeline = pipeline
         result.model = model
