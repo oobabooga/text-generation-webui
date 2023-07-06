@@ -315,6 +315,10 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
     def encode(text, add_bos_token):
         result = shared.tokenizer.encode(text, truncation=True, max_length=cutoff_len)
+        # Check if the first two tokens are BOS
+        if len(result) >= 2 and result[:2] == [shared.tokenizer.bos_token_id, shared.tokenizer.bos_token_id]:
+            input_ids= input_ids[1:]
+
         if not add_bos_token and result[0] == shared.tokenizer.bos_token_id:
             result = result[1:]
         return result
@@ -365,6 +369,9 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
                 continue
 
             tokens = shared.tokenizer.encode(text_part)
+            #append EOS
+            tokens.append(shared.tokenizer.eos_token_id)
+            
             step = cutoff_len - overlap_len
             if step <= 0:
                 yield f"Error: overlap_len ({overlap_len}) cannot be greater than or equal to cutoff_len ({cutoff_len})"
@@ -582,15 +589,17 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     yield "Starting..."
 
     lora_trainable_param, lora_all_param = calc_trainable_parameters(lora_model)
-    
+    projections_string = ", ".join([projection.replace("_proj", "") for projection in model_to_lora_modules[model_id]])
+
+    print(f"Training '{model_id}' model using ({projections_string}) projections")
     if lora_all_param>0:
         print(f"Trainable params: {lora_trainable_param:,d} ({100 * lora_trainable_param / lora_all_param:.4f} %), All params: {lora_all_param:,d} (Model: {model_all_params:,d})")
-
 
     train_log.update({"base_model_name": shared.model_name})
     train_log.update({"base_model_class": shared.model.__class__.__name__})
     train_log.update({"base_loaded_in_4bit": getattr(lora_model, "is_loaded_in_4bit", False)})
     train_log.update({"base_loaded_in_8bit": getattr(lora_model, "is_loaded_in_8bit", False)})
+    train_log.update({"projections": projections_string})
 
     if stop_at_loss > 0:
         print(f"Monitoring loss \033[1;31;1m(Auto-Stop at: {stop_at_loss})\033[0;37;0m")
