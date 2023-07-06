@@ -266,8 +266,8 @@ def generate_chat_html(history, name1, name2, reset_cache=False):
 
 def chat_html_wrapper(history, name1, name2, mode, style, reset_cache=False):
     if mode == 'instruct':
-        return generate_instruct_html(history)
+        return generate_instruct_html(history['visible'])
     elif style == 'wpp':
-        return generate_chat_html(history, name1, name2)
+        return generate_chat_html(history['visible'], name1, name2)
     else:
-        return generate_cai_chat_html(history, name1, name2, style, reset_cache)
+        return generate_cai_chat_html(history['visible'], name1, name2, style, reset_cache)

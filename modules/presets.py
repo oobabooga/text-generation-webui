@@ -29,11 +29,12 @@ def load_preset(name):
         'mirostat_eta': 0.1,
     }
 
-    with open(Path(f'presets/{name}.yaml'), 'r') as infile:
-        preset = yaml.safe_load(infile)
+    if name not in ['None', None, '']:
+        with open(Path(f'presets/{name}.yaml'), 'r') as infile:
+            preset = yaml.safe_load(infile)
 
-    for k in preset:
-        generate_params[k] = preset[k]
+        for k in preset:
+            generate_params[k] = preset[k]
 
     generate_params['temperature'] = min(1.99, generate_params['temperature'])
     return generate_params

@@ -72,7 +72,6 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
 
             user_input = body['user_input']
-            history = body['history']
             regenerate = body.get('regenerate', False)
             _continue = body.get('_continue', False)
 
@@ -80,9 +79,9 @@ class Handler(BaseHTTPRequestHandler):
             generate_params['stream'] = False
 
             generator = generate_chat_reply(
-                user_input, history, generate_params, regenerate=regenerate, _continue=_continue, loading_message=False)
+                user_input, generate_params, regenerate=regenerate, _continue=_continue, loading_message=False)
 
-            answer = history
+            answer = generate_params['history']
             for a in generator:
                 answer = a
 
