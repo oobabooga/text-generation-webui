@@ -240,3 +240,6 @@ TheBloke_WizardLM-30B-GPTQ:
   truncation_length: 8192
 .*superhot-8k:
   truncation_length: 8192
+.*xgen.*-inst:
+  truncation_length: 8192
+  instruction_template: 'Vicuna-v0'

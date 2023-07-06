@@ -14,8 +14,6 @@ model_name = "None"
 lora_names = []
 
 # Chat variables
-history = {'internal': [], 'visible': []}
-character = 'None'
 stop_everything = False
 processing_message = '*Is typing...*'
 
@@ -83,6 +81,7 @@ parser = argparse.ArgumentParser(formatter_class=lambda prog: argparse.HelpForma
 # Basic settings
 parser.add_argument('--notebook', action='store_true', help='Launch the web UI in notebook mode, where the output is written to the same text box as the input.')
 parser.add_argument('--chat', action='store_true', help='Launch the web UI in chat mode with a style similar to the Character.AI website.')
+parser.add_argument('--multi-user', action='store_true', help='Multi-user mode. Chat histories are not saved or automatically loaded. WARNING: this is highly experimental.')
 parser.add_argument('--character', type=str, help='The name of the character to load in chat mode by default.')
 parser.add_argument('--model', type=str, help='Name of the model to load by default.')
 parser.add_argument('--lora', type=str, nargs="+", help='The list of LoRAs to load. If you want to load more than one LoRA, write the names separated by spaces.')
@@ -151,6 +150,7 @@ parser.add_argument('--desc_act', action='store_true', help='For models that don
 parser.add_argument('--gpu-split', type=str, help="Comma-separated list of VRAM (in GB) to use per GPU device for model layers, e.g. 20,7,7")
 parser.add_argument('--max_seq_len', type=int, default=2048, help="Maximum sequence length.")
 parser.add_argument('--compress_pos_emb', type=int, default=1, help="Positional embeddings compression factor. Should typically be set to max_seq_len / 2048.")
+parser.add_argument('--alpha_value', type=int, default=1, help="Positional embeddings alpha factor for NTK RoPE scaling. Same as above. Use either this or compress_pos_emb, not both.")
 
 # FlexGen
 parser.add_argument('--flexgen', action='store_true', help='DEPRECATED')
@@ -204,6 +204,8 @@ if args.trust_remote_code:
     logger.warning("trust_remote_code is enabled. This is dangerous.")
 if args.share:
     logger.warning("The gradio \"share link\" feature uses a proprietary executable to create a reverse tunnel. Use it with care.")
+if args.multi_user:
+    logger.warning("The multi-user mode is highly experimental. DO NOT EXPOSE IT TO THE INTERNET.")
 
 
 def fix_loader_name(name):
@@ -244,6 +246,15 @@ if args.multimodal_pipeline is not None:
 
 def is_chat():
     return args.chat
+
+
+def get_mode():
+    if args.chat:
+        return 'chat'
+    elif args.notebook:
+        return 'notebook'
+    else:
+        return 'default'
 
 
 # Loading model-specific settings
