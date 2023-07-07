@@ -369,15 +369,10 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
                 yield f"Error: overlap_len ({overlap_len}) cannot be greater than or equal to cutoff_len ({cutoff_len})"
                 return
 
-            tokens = list(split_chunks(tokens, step))
-            for i in range(1, len(tokens)):
-                tokens[i] = tokens[i - 1][-overlap_len:] + tokens[i]
-
-            out_tokens.extend(tokens)
-            del tokens
+            out_tokens.extend(split_chunks(tokens, cutoff_len, step))
 
         del raw_text  # Note: could be a gig for a large dataset, so delete redundant data as we go to be safe on RAM
-        text_chunks = [shared.tokenizer.decode(x) for x in out_tokens]
+        text_chunks = [shared.tokenizer.decode(x, skip_special_tokens=True) for x in out_tokens]
         del out_tokens
         if newline_favor_len > 0:
             text_chunks = [cut_chunk_for_newline(x, newline_favor_len) for x in text_chunks]
@@ -625,9 +620,9 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         yield f"Done! LoRA saved to `{lora_file_path}`"
 
 
-def split_chunks(arr, step):
+def split_chunks(arr, size, step):
     for i in range(0, len(arr), step):
-        yield arr[i:i + step]
+        yield arr[i:i + size]
 
 
 def cut_chunk_for_newline(chunk: str, max_length: int):
