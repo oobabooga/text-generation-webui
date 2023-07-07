@@ -87,8 +87,14 @@ def install_dependencies():
     elif gpuchoice == "b":
         print("AMD GPUs are not supported. Exiting...")
         sys.exit()
-    elif gpuchoice == "c" or gpuchoice == "d":
+    elif gpuchoice == "c":
         run_cmd("conda install -y -k ninja git && python -m pip install torch torchvision torchaudio", assert_success=True, environment=True)
+    elif gpuchoice == "d":
+        if sys.platform.startswith("linux"):
+            run_cmd("conda install -y -k ninja git && python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu", assert_success=True, environment=True)
+        else:
+            run_cmd("conda install -y -k ninja git && python -m pip install torch torchvision torchaudio", assert_success=True, environment=True)
+
     else:
         print("Invalid choice. Exiting...")
         sys.exit()
