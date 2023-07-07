@@ -3,8 +3,12 @@ import json
 import os
 import time
 import requests
+import torch
 import yaml
 import numpy as np
+import torch.nn.functional as F
+import tiktoken
+from transformers import LogitsProcessor, LogitsProcessorList
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
 from modules.utils import get_available_models
@@ -13,7 +17,7 @@ from modules.models_settings import (get_model_settings_from_yamls,
                                      update_model_parameters)
 
 from modules import shared
-from modules.text_generation import encode, generate_reply
+from modules.text_generation import encode, decode, generate_reply
 
 params = {
     'port': int(os.environ.get('OPENEDAI_PORT')) if 'OPENEDAI_PORT' in os.environ else 5001,
@@ -24,10 +28,10 @@ debug = True if 'OPENEDAI_DEBUG' in os.environ else False
 # Slightly different defaults for OpenAI's API
 # Data type is important, Ex. use 0.0 for a float 0
 default_req_params = {
-    'max_new_tokens': 200,
+    'max_new_tokens': 16, # 'Inf' for chat
     'temperature': 1.0,
     'top_p': 1.0,
-    'top_k': 1,
+    'top_k': 1, # choose 20 for chat in absence of another default
     'repetition_penalty': 1.18,
     'repetition_penalty_range': 0,
     'encoder_repetition_penalty': 1.0,
@@ -36,7 +40,7 @@ default_req_params = {
     'echo': False,
     'seed': -1,
     # 'n' : default(body, 'n', 1),  # 'n' doesn't have a direct map
-    'truncation_length': 2048,
+    'truncation_length': 2048, # first use shared.settings value
     'add_bos_token': True,
     'do_sample': True,
     'typical_p': 1.0,
@@ -67,6 +71,49 @@ except ImportError:
 
 st_model = os.environ["OPENEDAI_EMBEDDING_MODEL"] if "OPENEDAI_EMBEDDING_MODEL" in os.environ else "all-mpnet-base-v2"
 embedding_model = None
+
+
+# Thanks to @Cypherfox [Cypherfoxy] for the logits code, blame to @matatonic
+class LogitsBiasProcessor(LogitsProcessor):
+    def __init__(self, logit_bias={}):
+        self.logit_bias = logit_bias
+        super().__init__()
+
+    def __call__(self, input_ids: torch.LongTensor, logits: torch.FloatTensor) -> torch.FloatTensor:
+        if self.logit_bias:
+            keys = list([int(key) for key in self.logit_bias.keys()])
+            values = list([int(val) for val in self.logit_bias.values()])
+            logits[0, keys] += torch.tensor(values)
+
+        return logits
+
+
+class LogprobProcessor(LogitsProcessor):
+    def __init__(self, logprobs=None):
+        self.logprobs = logprobs
+        self.token_alternatives = {}
+        super().__init__()
+
+    def __call__(self, input_ids: torch.LongTensor, logits: torch.FloatTensor) -> torch.FloatTensor:
+        if self.logprobs is not None: # 0-5
+            log_e_probabilities = F.log_softmax(logits, dim=1)
+            # XXX hack. should find the selected token and include the prob of that
+            # ... but we just +1 here instead because we don't know it yet.
+            top_values, top_indices = torch.topk(log_e_probabilities, k=logprobs + 1) 
+            top_tokens = [ decode(tok) for tok in top_indices[0] ]
+            self.token_alternatives = dict(zip(top_tokens, top_values[0].tolist()))
+        return logits
+
+
+def convert_logprobs_to_tiktoken(model, logprobs):
+    try:
+        encoder = tiktoken.encoding_for_model(model)
+        # just pick the first one if it encodes to multiple tokens
+        return dict([ (encoder.decode([encoder.encode(token)[0]]), prob) for token, prob in logprobs.items() ])
+    except KeyError:
+         # assume native tokens if we can't find the tokenizer
+        return logprobs
+
 
 # little helper to get defaults if arg is present but None and should be the same type as default.
 def default(dic, key, default):
@@ -151,7 +198,8 @@ class Handler(BaseHTTPRequestHandler):
             pseudo_model_list = [ # these are expected by so much, so include some here as a dummy
                 'gpt-3.5-turbo', # /v1/chat/completions
                 'text-curie-001', # /v1/completions, 2k context
-                'text-davinci-002' # /v1/embeddings text-embedding-ada-002:1536, text-davinci-002:768
+                'text-davinci-002', # /v1/embeddings text-embedding-ada-002:1536, text-davinci-002:768
+                'text-embedding-ada-002',
             ]
 
             is_legacy = 'engines' in self.path
@@ -240,6 +288,8 @@ class Handler(BaseHTTPRequestHandler):
             self.send_error(404)
 
     def do_POST(self):
+        global token_alternatives, logprobs, logit_bias
+
         if debug:
             print(self.headers)  # did you know... python-openai sends your linux kernel & python version?
         content_length = int(self.headers['Content-Length'])
@@ -258,66 +308,98 @@ class Handler(BaseHTTPRequestHandler):
             is_chat_request = 'chat' in self.path
             resp_list = 'data' if is_legacy else 'choices'
 
-            # XXX model is ignored for now
-            # model = body.get('model', shared.model_name) # ignored, use existing for now
-            model = shared.model_name
-            created_time = int(time.time())
-
-            cmpl_id = "chatcmpl-%d" % (created_time) if is_chat_request else "conv-%d" % (created_time)
+            created_time = int(time.time()*1000)
 
             # Request Parameters
             # Try to use openai defaults or map them to something with the same intent
             req_params = default_req_params.copy()
             stopping_strings = []
+            logits_processor = [] # XXX ... eos token?
 
+            # Common request parameters
+            truncation_length = default(shared.settings, 'truncation_length', 2048)
+            req_params['truncation_length'] = truncation_length
+            req_params['add_bos_token'] = shared.settings.get('add_bos_token', default_req_params['add_bos_token'])
+            req_params['seed'] = shared.settings.get('seed', default_req_params['seed'])
+
+            # OpenAI API Parameters
+            # model - ignored for now, TODO: When we can reliably load a model or lora from a name only change this
+            requested_model = body.get('model', shared.model_name)
+            model = shared.model_name # return the real model name
+            req_params['suffix'] = default(body, 'suffix', default_req_params['suffix'])
+            max_tokens = 0
+            max_tokens_str = 'length' if is_legacy else 'max_tokens'
+            if is_chat_request:
+                # chat default max_tokens is 'inf', but also flexible
+                if max_tokens_str in body:
+                    max_tokens = default(body, max_tokens_str, truncation_length)
+                    req_params['max_new_tokens'] = max_tokens
+                else:
+                    max_tokens = 0
+                    req_params['max_new_tokens'] = truncation_length
+            else:
+                max_tokens = default(body, max_tokens_str, default_req_params['max_new_tokens'])
+                req_params['max_new_tokens'] = max_tokens
+            req_params['temperature'] = clamp(default(body, 'temperature', default_req_params['temperature']), 0.001, 1.999) # fixup absolute 0.0/2.0
+            req_params['top_p'] = clamp(default(body, 'top_p', default_req_params['top_p']), 0.001, 1.0)
+            n = default(body, 'n', 1)
+            if n != 1:
+                self.openai_error(message="Only n = 1 is supported.", code=400, error_type='InvalidRequestError')
+                return
+            is_streaming = default(body, 'stream', default_req_params['stream'])
+            req_params['stream'] = is_streaming
             if 'stop' in body:
                 if isinstance(body['stop'], str):
                     stopping_strings.extend([body['stop']])
                 elif isinstance(body['stop'], list):
                     stopping_strings.extend(body['stop'])
+            # presence_penalty - ignored
+            # frequency_penalty - ignored
+            logit_bias = body.get('logit_bias', None)
+            if logit_bias: # {str: float, ...}
+                # XXX convert tokens from tiktoken based on requested model
+                # Ex.: 'logit_bias': {'1129': 100, '11442': 100, '16243': 100}
+                try:
+                    encoder = tiktoken.encoding_for_model(requested_model)
+                    new_logit_bias = {}
+                    for logit, bias in logit_bias.items():
+                        for x in decode(encoder.decode([int(logit)]))[0]:
+                            new_logit_bias[str(x)] = bias
+                    logit_bias = new_logit_bias
+                except KeyError:
+                    pass # assume native tokens if we can't find the tokenizer
 
-            truncation_length = default(shared.settings, 'truncation_length', 2048)
-            truncation_length = clamp(default(body, 'truncation_length', truncation_length), 1, truncation_length)
-
-            default_max_tokens = truncation_length if is_chat_request else 16  # completions default, chat default is 'inf' so we need to cap it.
-
-            max_tokens_str = 'length' if is_legacy else 'max_tokens'
-            max_tokens = default(body, max_tokens_str, default(shared.settings, 'max_new_tokens', default_max_tokens))
-            # if the user assumes OpenAI, the max_tokens is way too large - try to ignore it unless it's small enough
-
-            req_params['max_new_tokens'] = max_tokens
-            req_params['truncation_length'] = truncation_length
-            req_params['temperature'] = clamp(default(body, 'temperature', default_req_params['temperature']), 0.001, 1.999) # fixup absolute 0.0
-            req_params['top_p'] = clamp(default(body, 'top_p', default_req_params['top_p']), 0.001, 1.0)
-            req_params['top_k'] = default(body, 'best_of', default_req_params['top_k'])
-            req_params['suffix'] = default(body, 'suffix', default_req_params['suffix'])
-            req_params['stream'] = default(body, 'stream', default_req_params['stream'])
-            req_params['echo'] = default(body, 'echo', default_req_params['echo'])
-            req_params['seed'] = shared.settings.get('seed', default_req_params['seed'])
-            req_params['add_bos_token'] = shared.settings.get('add_bos_token', default_req_params['add_bos_token'])
-
-            is_streaming = req_params['stream']
-
-            self.send_response(200)
-            self.send_access_control_headers()
-            if is_streaming:
-                self.send_header('Content-Type', 'text/event-stream')
-                self.send_header('Cache-Control', 'no-cache')
-                # self.send_header('Connection', 'keep-alive')
-            else:
-                self.send_header('Content-Type', 'application/json')
-            self.end_headers()
+                logits_processor.extend([LogitsBiasProcessor(logit_bias)])
+            # user - ignored
 
             token_count = 0
             completion_token_count = 0
             prompt = ''
             stream_object_type = ''
             object_type = ''
+            cmpl_id = ''
+            LP = None # LogprobProcessor
 
             if is_chat_request:
                 # Chat Completions
                 stream_object_type = 'chat.completions.chunk'
                 object_type = 'chat.completions'
+                cmpl_id = "chatcmpl-%d" % (created_time)
+
+                
+                if body.get('functions', []): # chat only
+                    self.openai_error(message="functions is not supported.", code=400, error_type='InvalidRequestError')
+                    return
+                if body.get('function_call', ''): # chat only, 'none', 'auto', {'name': 'func'}
+                    self.openai_error(message="function_call is not supported.", code=400, error_type='InvalidRequestError')
+                    return
+
+                # messages - chat only
+                if not 'messages' in body:
+                    self.openai_error(message="messages is required", code=400, error_type='InvalidRequestError')
+                    return
+                
+                req_params['top_k'] = 20 # There is no best_of/top_k param for chat, but it is much improved with a higher top_k.
 
                 messages = body['messages']
 
@@ -371,15 +453,18 @@ class Handler(BaseHTTPRequestHandler):
                 system_msgs = []
                 chat_msgs = []
 
+                def end_line(s):
+                    if s and s[-1] != '\n':
+                        s = s + '\n'
+                    return s
+
                 # You are ChatGPT, a large language model trained by OpenAI. Answer as concisely as possible. Knowledge cutoff: {knowledge_cutoff} Current date: {current_date}
                 context_msg = role_formats['system'].format(message=role_formats['context']) if role_formats['context'] else ''
-                if context_msg:
-                    system_msgs.extend([context_msg])
+                context_msg = end_line(context_msg)
 
                 # Maybe they sent both? This is not documented in the API, but some clients seem to do this.
                 if 'prompt' in body:
-                    prompt_msg = role_formats['system'].format(message=body['prompt'])
-                    system_msgs.extend([prompt_msg])
+                    context_msg = end_line(role_formats['system'].format(message=body['prompt'])) + context_msg
 
                 for m in messages:
                     role = m['role']
@@ -390,33 +475,29 @@ class Handler(BaseHTTPRequestHandler):
                     else:
                         chat_msgs.extend([msg])
 
-                # can't really truncate the system messages
                 system_msg = '\n'.join(system_msgs)
-                if system_msg and system_msg[-1] != '\n':
-                    system_msg = system_msg + '\n'
+                system_msg = end_line(system_msg)
 
-                system_token_count = len(encode(system_msg)[0])
-                remaining_tokens = truncation_length - system_token_count
-                chat_msg = ''
-
-                while chat_msgs:
-                    new_msg = chat_msgs.pop()
-                    new_size = len(encode(new_msg)[0])
-                    if new_size <= remaining_tokens:
-                        chat_msg = new_msg + chat_msg
-                        remaining_tokens -= new_size
-                    else:
-                        print(f"Warning: too many messages for context size, dropping {len(chat_msgs) + 1} oldest message(s).")
-                        break
-
-                prompt = system_msg + chat_msg + role_formats['prompt']
+                prompt = system_msg + context_msg + ''.join(chat_msgs) + role_formats['prompt']
 
                 token_count = len(encode(prompt)[0])
+
+                if token_count >= truncation_length:
+                    err_msg = f"This model maximum context length is {truncation_length} tokens. However, your messages resulted in over {token_count} tokens."
+                    self.openai_error(message=err_msg, code=400, error_type='InvalidRequestError')
+                    return
+
+                if max_tokens > 0 and token_count + max_tokens > truncation_length:
+                    err_msg = f"This model maximum context length is {truncation_length} tokens. However, your messages resulted in over {token_count} tokens and max_tokens is {max_tokens}."
+                    print(f"Warning: ${err_msg}")
+                    #self.openai_error(message=err_msg, code=400, error_type='InvalidRequestError')
+                    #return
 
             else:
                 # Text Completions
                 stream_object_type = 'text_completion.chunk'
                 object_type = 'text_completion'
+                cmpl_id = "conv-%d" % (created_time)
 
                 # ... encoded as a string, array of strings, array of tokens, or array of token arrays.
                 if is_legacy:
@@ -425,21 +506,47 @@ class Handler(BaseHTTPRequestHandler):
                     prompt = body['prompt']  # XXX this can be different types
 
                 if isinstance(prompt, list):
-                    self.openai_error("API Batched generation not yet supported.")
-                    return
+                    if prompt and isinstance(prompt[0], int):
+                        try:
+                            encoder = tiktoken.encoding_for_model(requested_model)
+                            prompt = encode(encoder.decode(prompt))[0]
+                        except KeyError:
+                            prompt = decode(prompt)[0]
+                    else:
+                        self.openai_error(message="API Batched generation not yet supported.", code=400, error_type='InvalidRequestError')
+                        return
 
                 token_count = len(encode(prompt)[0])
-                if token_count >= truncation_length:
-                    new_len = int(len(prompt) * shared.settings['truncation_length'] / token_count)
-                    prompt = prompt[-new_len:]
-                    new_token_count = len(encode(prompt)[0])
-                    print(f"Warning: truncating prompt to {new_len} characters, was {token_count} tokens. Now: {new_token_count} tokens.")
-                    token_count = new_token_count
 
-            if truncation_length - token_count < req_params['max_new_tokens']:
-                print(f"Warning: Ignoring max_new_tokens ({req_params['max_new_tokens']}), too large for the remaining context. Remaining tokens: {truncation_length - token_count}")
-                req_params['max_new_tokens'] = truncation_length - token_count
-                print(f"Warning: Set max_new_tokens = {req_params['max_new_tokens']}")
+                if token_count + max_tokens > truncation_length:
+                    err_msg = f"The token count of your prompt ({token_count}) plus max_tokens ({max_tokens}) cannot exceed the model's context length ({truncation_length})."
+                    #print(f"Warning: ${err_msg}")
+                    self.openai_error(message=err_msg, code=400, error_type='InvalidRequestError')
+                    return
+
+                req_params['echo'] = default(body, 'echo', default_req_params['echo'])
+                req_params['top_k'] = default(body, 'best_of', default_req_params['top_k'])
+
+                if 'logprobs' in body:
+                    logprobs = default(body, 'logprobs', 0) # maybe cap at topk? don't clamp 0-5.
+                    LP = LogprobProcessor(logprobs)
+                    logits_processor.extend([LP])
+                else:
+                    logprobs = None
+
+            if logits_processor: # requires logits_processor support
+                req_params['logits_processor'] = LogitsProcessorList(logits_processor)
+
+            # Send HTTP headers
+            self.send_response(200)
+            self.send_access_control_headers()
+            if is_streaming:
+                self.send_header('Content-Type', 'text/event-stream')
+                self.send_header('Cache-Control', 'no-cache')
+                # self.send_header('Connection', 'keep-alive')
+            else:
+                self.send_header('Content-Type', 'application/json')
+            self.end_headers()
 
             if is_streaming:
                 # begin streaming
@@ -456,6 +563,7 @@ class Handler(BaseHTTPRequestHandler):
 
                 if stream_object_type == 'text_completion.chunk':
                     chunk[resp_list][0]["text"] = ""
+                    chunk[resp_list][0]["logprobs"] = None
                 else:
                     # So yeah... do both methods? delta and messages.
                     chunk[resp_list][0]["message"] = {'role': 'assistant', 'content': ''}
@@ -471,42 +579,13 @@ class Handler(BaseHTTPRequestHandler):
 
             answer = ''
             seen_content = ''
-            longest_stop_len = max([len(x) for x in stopping_strings] + [0])
 
             for a in generator:
                 answer = a
 
-                stop_string_found = False
-                len_seen = len(seen_content)
-                search_start = max(len_seen - longest_stop_len, 0)
-
-                for string in stopping_strings:
-                    idx = answer.find(string, search_start)
-                    if idx != -1:
-                        answer = answer[:idx]  # clip it.
-                        stop_string_found = True
-
-                if stop_string_found:
-                    break
-
-                # If something like "\nYo" is generated just before "\nYou:"
-                # is completed, buffer and generate more, don't send it
-                buffer_and_continue = False
-
-                for string in stopping_strings:
-                    for j in range(len(string) - 1, 0, -1):
-                        if answer[-j:] == string[:j]:
-                            buffer_and_continue = True
-                            break
-                    else:
-                        continue
-                    break
-
-                if buffer_and_continue:
-                    continue
-
                 if is_streaming:
                     # Streaming
+                    len_seen = len(seen_content)
                     new_content = answer[len_seen:]
 
                     if not new_content or chr(0xfffd) in new_content:  # partial unicode character, don't send it yet.
@@ -530,6 +609,11 @@ class Handler(BaseHTTPRequestHandler):
 
                     if stream_object_type == 'text_completion.chunk':
                         chunk[resp_list][0]['text'] = new_content
+                        if LP:
+                            top_logprobs = convert_logprobs_to_tiktoken(model=requested_model, logprobs=LP.token_alternatives)
+                            chunk[resp_list][0]["logprobs"] =  {'top_logprobs': [top_logprobs]}
+                        else:
+                            chunk[resp_list][0]["logprobs"] =  None
                     else:
                         # So yeah... do both methods? delta and messages.
                         chunk[resp_list][0]['message'] = {'content': new_content}
@@ -539,6 +623,9 @@ class Handler(BaseHTTPRequestHandler):
                     completion_token_count += len(encode(new_content)[0])
 
             if is_streaming:
+                stop_reason = "stop"
+                if token_count + completion_token_count >= truncation_length or completion_token_count >= max_tokens:
+                    stop_reason = "length"
                 chunk = {
                     "id": cmpl_id,
                     "object": stream_object_type,
@@ -546,7 +633,7 @@ class Handler(BaseHTTPRequestHandler):
                     "model": model,  # TODO: add Lora info?
                     resp_list: [{
                         "index": 0,
-                        "finish_reason": "stop",
+                        "finish_reason": stop_reason,
                     }],
                     "usage": {
                         "prompt_tokens": token_count,
@@ -556,6 +643,11 @@ class Handler(BaseHTTPRequestHandler):
                 }
                 if stream_object_type == 'text_completion.chunk':
                     chunk[resp_list][0]['text'] = ''
+                    if LP:
+                        top_logprobs = convert_logprobs_to_tiktoken(model=requested_model, logprobs=LP.token_alternatives)
+                        chunk[resp_list][0]["logprobs"] =  {'top_logprobs': [top_logprobs]}
+                    else:
+                        chunk[resp_list][0]["logprobs"] = None
                 else:
                     # So yeah... do both methods? delta and messages.
                     chunk[resp_list][0]['message'] = {'content': ''}
@@ -574,12 +666,9 @@ class Handler(BaseHTTPRequestHandler):
             if answer and answer[0] == ' ':
                 answer = answer[1:]
 
-            if debug:
-                print({'response': answer})
-
             completion_token_count = len(encode(answer)[0])
             stop_reason = "stop"
-            if token_count + completion_token_count >= truncation_length:
+            if token_count + completion_token_count >= truncation_length or completion_token_count >= max_tokens:
                 stop_reason = "length"
 
             resp = {
@@ -602,6 +691,14 @@ class Handler(BaseHTTPRequestHandler):
                 resp[resp_list][0]["message"] = {"role": "assistant", "content": answer}
             else:
                 resp[resp_list][0]["text"] = answer
+                if LP:
+                    top_logprobs = convert_logprobs_to_tiktoken(model=requested_model, logprobs=LP.token_alternatives)
+                    resp[resp_list][0]["logprobs"] =  {'top_logprobs': [top_logprobs]}
+                else:
+                    resp[resp_list][0]["logprobs"] =  None
+
+            if debug:
+                print({'response': answer}, resp)
 
             response = json.dumps(resp)
             self.wfile.write(response.encode('utf-8'))
@@ -611,14 +708,8 @@ class Handler(BaseHTTPRequestHandler):
                 self.openai_error("No model loaded.")
                 return
 
-            self.send_response(200)
-            self.send_access_control_headers()
-            self.send_header('Content-Type', 'application/json')
-            self.end_headers()
-
             created_time = int(time.time())
 
-            # Using Alpaca format, this may work with other models too.
             instruction = body['instruction']
             input = body.get('input', '')
 
@@ -668,6 +759,16 @@ class Handler(BaseHTTPRequestHandler):
             token_count = len(encode(edit_task)[0])
             max_tokens = truncation_length - token_count
 
+            if max_tokens < 2:
+                err_msg = f"This model maximum context length is {truncation_length} tokens. However, your messages resulted in over {truncation_length - max_tokens} tokens."
+                self.openai_error(message=err_msg, code=400, error_type='InvalidRequestError')
+                return
+            
+            self.send_response(200)
+            self.send_access_control_headers()
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+
             req_params['max_new_tokens'] = max_tokens
             req_params['truncation_length'] = truncation_length
             req_params['temperature'] = clamp(default(body, 'temperature', default_req_params['temperature']), 0.001, 1.999) # fixup absolute 0.0
@@ -682,23 +783,8 @@ class Handler(BaseHTTPRequestHandler):
 
             longest_stop_len = max([len(x) for x in stopping_strings] + [0])
             answer = ''
-            seen_content = ''
             for a in generator:
                 answer = a
-
-                stop_string_found = False
-                len_seen = len(seen_content)
-                search_start = max(len_seen - longest_stop_len, 0)
-
-                for string in stopping_strings:
-                    idx = answer.find(string, search_start)
-                    if idx != -1:
-                        answer = answer[:idx]  # clip it.
-                        stop_string_found = True
-
-                if stop_string_found:
-                    break
-
 
             # some reply's have an extra leading space to fit the instruction template, just clip it off from the reply.
             if edit_task[-1] != '\n' and answer and answer[0] == ' ':
