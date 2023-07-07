@@ -31,6 +31,7 @@ loaders_and_params = {
     'llama.cpp': [
         'n_ctx',
         'n_gpu_layers',
+        'tensor_split',
         'n_batch',
         'threads',
         'no_mmap',

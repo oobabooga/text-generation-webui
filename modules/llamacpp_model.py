@@ -41,6 +41,12 @@ class LlamaCppModel:
                 cache_capacity = int(shared.args.cache_capacity)
 
         logger.info("Cache capacity is " + str(cache_capacity) + " bytes")
+
+        if shared.args.tensor_split is None or shared.args.tensor_split.strip() == '':
+            tensor_split_list = [0.0]
+        else:
+            tensor_split_list = [float(x) for x in shared.args.tensor_split.strip().split(",")]
+
         params = {
             'model_path': str(path),
             'n_ctx': shared.args.n_ctx,
@@ -50,7 +56,8 @@ class LlamaCppModel:
             'use_mmap': not shared.args.no_mmap,
             'use_mlock': shared.args.mlock,
             'low_vram': shared.args.low_vram,
-            'n_gpu_layers': shared.args.n_gpu_layers
+            'n_gpu_layers': shared.args.n_gpu_layers,
+            'tensor_split': tensor_split_list
         }
 
         result.model = Llama(**params)
