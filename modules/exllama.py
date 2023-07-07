@@ -120,3 +120,6 @@ class ExllamaModel:
 
     def encode(self, string, **kwargs):
         return self.tokenizer.encode(string)
+
+    def decode(self, string, **kwargs):
+        return self.tokenizer.decode(string)[0]
