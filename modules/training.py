@@ -371,6 +371,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
         cut_string = hard_cut_string.replace('\\n', '\n')
         out_tokens = []
+        eos_added = 0
         for text_part in raw_text.split(cut_string):
             if text_part.strip() == '':
                 continue
@@ -379,6 +380,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             
             if add_eos_token:
                 tokens.append(shared.tokenizer.eos_token_id)
+                eos_added = eos_added + 1
             
             step = cutoff_len - overlap_len
             if step <= 0:
@@ -391,6 +393,9 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
             out_tokens.extend(tokens)
             del tokens
+        
+        if eos_added>0:
+            print(f"EOS added to {eos_added} text blocks")
 
         del raw_text  # Note: could be a gig for a large dataset, so delete redundant data as we go to be safe on RAM
         text_chunks = [shared.tokenizer.decode(x) for x in out_tokens]
