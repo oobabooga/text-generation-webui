@@ -127,18 +127,15 @@ def _get_api_lock(tls) -> asyncio.Lock:
     return tls.asyncio_lock
 
 
-def with_api_lock():
+def with_api_lock(func):
     """
     This decorator should be added to all streaming API methods which
     require access to the shared.generation_lock.  It ensures that the
     tls.asyncio_lock is acquired before the method is called, and
     released afterwards.
     """
-    def api_lock_decorator(func):
-        @functools.wraps(func)
-        async def api_wrapper(*args, **kwargs):
-            async with _get_api_lock(api_tls):
-                return await func(*args, **kwargs)
-        return api_wrapper
-
-    return api_lock_decorator
+    @functools.wraps(func)
+    async def api_wrapper(*args, **kwargs):
+        async with _get_api_lock(api_tls):
+            return await func(*args, **kwargs)
+    return api_wrapper
