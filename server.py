@@ -2,7 +2,7 @@ import os
 import warnings
 
 from modules.logging_colors import logger
-from modules.block_requests import RequestBlocker
+from modules.block_requests import OpenMonkeyPatch, RequestBlocker
 
 os.environ['GRADIO_ANALYTICS_ENABLED'] = 'False'
 os.environ['BITSANDBYTES_NOWELCOME'] = '1'
@@ -1068,10 +1068,11 @@ def create_interface():
 
     # Launch the interface
     shared.gradio['interface'].queue()
-    if shared.args.listen:
-        shared.gradio['interface'].launch(prevent_thread_lock=True, share=shared.args.share, server_name=shared.args.listen_host or '0.0.0.0', server_port=shared.args.listen_port, inbrowser=shared.args.auto_launch, auth=auth)
-    else:
-        shared.gradio['interface'].launch(prevent_thread_lock=True, share=shared.args.share, server_port=shared.args.listen_port, inbrowser=shared.args.auto_launch, auth=auth)
+    with OpenMonkeyPatch():
+        if shared.args.listen:
+            shared.gradio['interface'].launch(prevent_thread_lock=True, share=shared.args.share, server_name=shared.args.listen_host or '0.0.0.0', server_port=shared.args.listen_port, inbrowser=shared.args.auto_launch, auth=auth)
+        else:
+            shared.gradio['interface'].launch(prevent_thread_lock=True, share=shared.args.share, server_port=shared.args.listen_port, inbrowser=shared.args.auto_launch, auth=auth)
 
 
 if __name__ == "__main__":
