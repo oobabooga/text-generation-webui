@@ -21,7 +21,7 @@ PATH = '/api/v1/stream'
 streaming_tls = threading.local()
 
 
-def get_api_lock(tls) -> asyncio.Lock:
+def _get_api_lock(tls) -> asyncio.Lock:
     """
     The streaming and blocking API implementations each run on their own
     thread, and multiplex requests using asyncio.  If multiple outstanding
@@ -49,7 +49,7 @@ def with_api_lock(tls):
     def api_lock_decorator(func):
         @functools.wraps(func)
         async def api_wrapper(*args, **kwargs):
-            async with get_api_lock(tls):
+            async with _get_api_lock(tls):
                 return await func(*args, **kwargs)
         return api_wrapper
 
@@ -57,7 +57,7 @@ def with_api_lock(tls):
 
 
 @with_api_lock(streaming_tls)
-async def handle_stream_message(websocket, message):
+async def _handle_stream_message(websocket, message):
     message = json.loads(message)
 
     prompt = message['prompt']
@@ -94,7 +94,7 @@ async def handle_stream_message(websocket, message):
 
 
 @with_api_lock(streaming_tls)
-async def handle_chat_stream_message(websocket, message):
+async def _handle_chat_stream_message(websocket, message):
     body = json.loads(message)
 
     user_input = body['user_input']
@@ -127,11 +127,11 @@ async def _handle_connection(websocket, path):
 
     if path == '/api/v1/stream':
         async for message in websocket:
-            await handle_stream_message(websocket, message)
+            await _handle_stream_message(websocket, message)
 
     elif path == '/api/v1/chat-stream':
         async for message in websocket:
-            await handle_chat_stream_message(websocket, message)
+            await _handle_chat_stream_message(websocket, message)
 
     else:
         print(f'Streaming api: unknown path: {path}')
