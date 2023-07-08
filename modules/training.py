@@ -329,7 +329,6 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             input_ids = encode(prompt, True)
             
             if append_eos_token and input_ids[-1] != shared.tokenizer.eos_token_id and len(input_ids)<cutoff_len:
-                print ("EOS added")
                 input_ids.append(shared.tokenizer.eos_token_id)
 
             input_ids = [shared.tokenizer.pad_token_id] * (cutoff_len - len(input_ids)) + input_ids
