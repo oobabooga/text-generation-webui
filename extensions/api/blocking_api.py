@@ -37,7 +37,6 @@ class Handler(BaseHTTPRequestHandler):
         else:
             self.send_error(404)
 
-    @with_api_lock
     def do_POST(self):
         content_length = int(self.headers['Content-Length'])
         body = json.loads(self.rfile.read(content_length).decode('utf-8'))
