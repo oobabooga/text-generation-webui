@@ -2,7 +2,7 @@ import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
 
-from extensions.api.util import build_parameters, try_start_cloudflared
+from extensions.api.util import build_parameters, try_start_cloudflared, with_api_lock
 from modules import shared
 from modules.chat import generate_chat_reply
 from modules.LoRA import add_lora_to_model
@@ -37,6 +37,7 @@ class Handler(BaseHTTPRequestHandler):
         else:
             self.send_error(404)
 
+    @with_api_lock
     def do_POST(self):
         content_length = int(self.headers['Content-Length'])
         body = json.loads(self.rfile.read(content_length).decode('utf-8'))

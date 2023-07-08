@@ -1,12 +1,10 @@
 import asyncio
-import functools
 import json
-import threading
 from threading import Thread
 
 from websockets.server import serve
 
-from extensions.api.util import build_parameters, try_start_cloudflared
+from extensions.api.util import build_parameters, try_start_cloudflared, with_api_lock
 from modules import shared
 from modules.chat import generate_chat_reply
 from modules.text_generation import generate_reply
@@ -14,49 +12,7 @@ from modules.text_generation import generate_reply
 PATH = '/api/v1/stream'
 
 
-# We use a thread local to store the asyncio lock, so that each thread
-# has its own lock.  This isn't strictly necessary, but it makes it
-# such that if we can support multiple worker threads in the future,
-# thus handling multiple requests in parallel.
-streaming_tls = threading.local()
-
-
-def _get_api_lock(tls) -> asyncio.Lock:
-    """
-    The streaming and blocking API implementations each run on their own
-    thread, and multiplex requests using asyncio.  If multiple outstanding
-    requests are received at once, we will try to acquire the shared lock
-    shared.generation_lock multiple times in succession in the same thread,
-    which will cause a deadlock.
-
-    To avoid this, we use this wrapper function to block on an asyncio
-    lock, and then try and grab the shared lock only while holding
-    the asyncio lock.
-    """
-    if not hasattr(tls, "asyncio_lock"):
-        tls.asyncio_lock = asyncio.Lock()
-
-    return tls.asyncio_lock
-
-
-def with_api_lock(tls):
-    """
-    This decorator should be added to all streaming API methods which
-    require access to the shared.generation_lock.  It ensures that the
-    tls.asyncio_lock is acquired before the method is called, and
-    released afterwards.
-    """
-    def api_lock_decorator(func):
-        @functools.wraps(func)
-        async def api_wrapper(*args, **kwargs):
-            async with _get_api_lock(tls):
-                return await func(*args, **kwargs)
-        return api_wrapper
-
-    return api_lock_decorator
-
-
-@with_api_lock(streaming_tls)
+@with_api_lock
 async def _handle_stream_message(websocket, message):
     message = json.loads(message)
 
@@ -93,7 +49,7 @@ async def _handle_stream_message(websocket, message):
     }))
 
 
-@with_api_lock(streaming_tls)
+@with_api_lock
 async def _handle_chat_stream_message(websocket, message):
     body = json.loads(message)
 
