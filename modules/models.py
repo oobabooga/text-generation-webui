@@ -339,6 +339,7 @@ def clear_torch_cache():
 def unload_model():
     shared.model = shared.tokenizer = None
     shared.lora_names = []
+    shared.model_dirty_from_training = False
     clear_torch_cache()
 
 
