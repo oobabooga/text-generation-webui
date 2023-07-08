@@ -61,6 +61,10 @@ def load_model(model_name, loader=None):
         'ExLlama_HF': ExLlama_HF_loader
     }
 
+    p = Path(model_name)
+    if p.exists():
+        model_name = p.parts[-1]
+
     if loader is None:
         if shared.args.loader is not None:
             loader = shared.args.loader
