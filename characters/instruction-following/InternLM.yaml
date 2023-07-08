@@ -1,4 +1,4 @@
-user: "<User>:"
-bot: "<Bot>:"
+user: "<|User|>:"
+bot: "<|Bot|>:"
 turn_template: "<|user|><|user-message|><eoh>\n<|bot|><|bot-message|><eoa>\n"
 context: ""
