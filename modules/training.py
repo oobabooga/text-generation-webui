@@ -116,7 +116,7 @@ def create_train_interface():
             optimizer = gr.Dropdown(label='Optimizer', value='adamw_torch', choices=['adamw_hf', 'adamw_torch', 'adamw_torch_fused', 'adamw_torch_xla', 'adamw_apex_fused', 'adafactor', 'adamw_bnb_8bit', 'adamw_anyprecision', 'sgd', 'adagrad'], info='Different optimizer implementation options, for advanced users. Effects of different options are not well documented yet.')
             train_only_after = gr.Textbox(label='Train Only After', value='', info='Only consider text *after* this string in any given chunk for training. For Alpaca datasets, use "### Response:" to only train the response and ignore the input.')
             stop_at_loss = gr.Slider(label='Stop at loss', minimum=0.0, maximum=3.0, step=0.1, value=0.00, info='The process will automatically stop once the desired loss value is reached. (reasonable numbers are 1.5-1.8)')
-            add_eos_token = gr.Checkbox(label='Add EOS token', value = False, info="Adds EOS token for each dataset item or at the raw text Hard Cut") 
+            add_eos_token = gr.Checkbox(label='Add EOS token', value = False, info="Adds EOS token for each dataset item. In case of raw text, the EOS will be added at the Hard Cut") 
             
             with gr.Row():
                 higher_rank_limit = gr.Checkbox(label='Enable higher ranks', value=False, info='If checked, changes Rank/Alpha slider above to go much higher. This will not work without a datacenter-class GPU.')
@@ -317,22 +317,30 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         result = shared.tokenizer.encode(text, truncation=True, max_length=cutoff_len)
         # Check if the first two tokens are BOS
         if len(result) >= 2 and result[:2] == [shared.tokenizer.bos_token_id, shared.tokenizer.bos_token_id]:
-            input_ids= input_ids[1:]
+            result= result[1:]
 
         if not add_bos_token and result[0] == shared.tokenizer.bos_token_id:
             result = result[1:]
         return result
 
-    def tokenize(prompt):
+    def tokenize(prompt, append_eos_token=False):
 
         if train_only_after == '' or train_only_after not in prompt:
             input_ids = encode(prompt, True)
+            
+            if append_eos_token and input_ids[-1] != shared.tokenizer.eos_token_id and len(input_ids)<cutoff_len:
+                print ("EOS added")
+                input_ids.append(shared.tokenizer.eos_token_id)
+
             input_ids = [shared.tokenizer.pad_token_id] * (cutoff_len - len(input_ids)) + input_ids
             labels = [1] * len(input_ids)
         else:
             ind = prompt.index(train_only_after) + len(train_only_after)
             before_tokens = encode(prompt[:ind], True)
             after_tokens = encode(prompt[ind:], False)
+
+            if append_eos_token and after_tokens[-1] != shared.tokenizer.eos_token_id:
+                after_tokens.append(shared.tokenizer.eos_token_id)
 
             full_length = len(after_tokens) + len(before_tokens)
             if full_length > cutoff_len:
@@ -369,7 +377,6 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
             tokens = shared.tokenizer.encode(text_part)
             
-            #add EOS
             if add_eos_token:
                 tokens.append(shared.tokenizer.eos_token_id)
             
@@ -408,12 +415,6 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         with open(clean_path('training/formats', f'{format}.json'), 'r', encoding='utf-8-sig') as formatFile:
             format_data: dict[str, str] = json.load(formatFile)
         
-        # modify the format if we want EOS in every item
-        if add_eos_token:
-            for options, data in format_data.items():
-                if not data.endswith("</s>"):
-                    format_data[options] = data + "</s>"
-
         # == store training prompt ==
         for _, value in format_data.items():
             prompt_key = f"template_{len(train_template)}"
@@ -430,7 +431,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
         def generate_and_tokenize_prompt(data_point):
             prompt = generate_prompt(data_point)
-            return tokenize(prompt)
+            return tokenize(prompt, add_eos_token)
 
         logger.info("Loading JSON datasets...")
         data = load_dataset("json", data_files=clean_path('training/datasets', f'{dataset}.json'))
