@@ -4,6 +4,7 @@ import functools
 import json
 import re
 from pathlib import Path
+from datetime import datetime
 
 import gradio as gr
 import yaml
@@ -374,6 +375,23 @@ def save_history(history, path=None):
         f.write(json.dumps(history, indent=4))
 
     return p
+
+
+def save_download_history(history, character, mode):
+    def make_timestamp_path(character=None):
+        return f"logs/{character or ''}{'_' if character else ''}{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
+
+    path = None
+    if mode in ['chat', 'chat-instruct'] and character not in  ['', 'None', None]:
+        path = make_timestamp_path(character)
+    else:
+        # Try to use mode as the file name, otherwise just use the timestamp
+        try:
+            path = make_timestamp_path(mode.capitalize())
+        except:
+            path = make_timestamp_path()
+
+    return save_history(history, path)
 
 
 def load_history(file, history):
