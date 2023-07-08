@@ -71,7 +71,7 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(response.encode('utf-8'))
 
     def openai_error(self, message, code = 500, error_type = 'APIError', param = '', internal_message = ''):
-        print(internal_message)
+        
         error_resp = {
             'error': {
                 'message': message,
@@ -81,6 +81,7 @@ class Handler(BaseHTTPRequestHandler):
             }
         }
         if internal_message:
+            print(internal_message)
             error_resp['internal_message'] = internal_message
 
         self.return_json(error_resp, code)

@@ -24,7 +24,7 @@ class LogitsBiasProcessor(LogitsProcessor):
         if self.logit_bias:
             keys = list([int(key) for key in self.logit_bias.keys()])
             values = list([int(val) for val in self.logit_bias.values()])
-            logits[0, keys] += torch.tensor(values)
+            logits[0, keys] += torch.tensor(values).cuda()
 
         return logits
 
@@ -95,11 +95,12 @@ def marshal_common_params(body):
         # XXX convert tokens from tiktoken based on requested model
         # Ex.: 'logit_bias': {'1129': 100, '11442': 100, '16243': 100}
         try:
-            encoder = tiktoken.encoding_for_model(requested_model)
+            encoder = tiktoken.encoding_for_model(req_params['requested_model'])
             new_logit_bias = {}
             for logit, bias in logit_bias.items():
-                for x in decode(encoder.decode([int(logit)]))[0]:
-                    new_logit_bias[str(x)] = bias
+                for x in encode(encoder.decode([int(logit)]))[0]:
+                    new_logit_bias[str(int(x))] = bias
+            print(logit_bias, '->', new_logit_bias)
             logit_bias = new_logit_bias
         except KeyError:
             pass # assume native tokens if we can't find the tokenizer
