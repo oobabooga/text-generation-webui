@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
+import numpy as np
 
 import torch
 from torch.nn import CrossEntropyLoss
@@ -42,7 +43,8 @@ class LlamacppHF(PreTrainedModel):
         #     cache = ExLlamaCache(self.ex_model)
         #     self.ex_model.forward(torch.tensor([seq[:-1]], dtype=torch.long), cache, preprocess_only=True, lora=self.lora)
         # logits = self.ex_model.forward(torch.tensor([seq[-1:]], dtype=torch.long), cache, lora=self.lora).to(kwargs['input_ids'].device)
-        logits = self.model.model.llama_get_logits(seq).to(kwargs['input_ids'].device)
+        self.model.model.eval(seq)
+        logits = torch.tensor(self.model.model.eval_logits).view(1, 1, -1).to(kwargs['input_ids'].device)
 
         loss = None
         if labels is not None:
