@@ -8,8 +8,8 @@ from transformers import GenerationConfig, PretrainedConfig, PreTrainedModel
 from transformers.modeling_outputs import CausalLMOutputWithPast
 
 from modules import shared
-from modules.logging_colors import logger
 from modules.llamacpp_model import LlamaCppModel
+from modules.logging_colors import logger
 
 
 class LlamacppHF(PreTrainedModel):
