@@ -65,6 +65,9 @@ class LlamaCppModel:
 
         return self.model.tokenize(string)
 
+    def decode(self, tokens):
+        return self.model.detokenize(tokens)
+
     def generate(self, prompt, state, callback=None):
         prompt = prompt if type(prompt) is str else prompt.decode()
         completion_chunks = self.model.create_completion(

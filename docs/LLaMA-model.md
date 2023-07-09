@@ -12,13 +12,7 @@ This guide will cover usage through the official `transformers` implementation. 
 * Torrent: https://github.com/oobabooga/text-generation-webui/pull/530#issuecomment-1484235789
 * Direct download: https://huggingface.co/Neko-Institute-of-Science
 
-⚠️ The tokenizers for the Torrent source above and also for many LLaMA fine-tunes available on Hugging Face may be outdated, so I recommend downloading the following universal LLaMA tokenizer: 
-
-```
-python download-model.py oobabooga/llama-tokenizer
-```
-
-Once downloaded, it will be automatically applied to **every** `LlamaForCausalLM` model that you try to load.
+⚠️ The tokenizers for the Torrent source above and also for many LLaMA fine-tunes available on Hugging Face may be outdated, in particular the files called `tokenizer_config.json` and `special_tokens_map.json`. Here you can find those files: https://huggingface.co/oobabooga/llama-tokenizer
 
 ### Option 2: convert the weights yourself
 

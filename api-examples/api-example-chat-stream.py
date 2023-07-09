@@ -29,7 +29,6 @@ async def run(user_input, history):
         'regenerate': False,
         '_continue': False,
         'stop_at_newline': False,
-        'chat_prompt_size': 2048,
         'chat_generation_attempts': 1,
         'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
 
@@ -45,6 +44,7 @@ async def run(user_input, history):
         'tfs': 1,
         'top_a': 0,
         'repetition_penalty': 1.18,
+        'repetition_penalty_range': 0,
         'top_k': 40,
         'min_length': 0,
         'no_repeat_ngram_size': 0,

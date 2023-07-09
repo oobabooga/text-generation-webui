@@ -3,7 +3,9 @@ from pathlib import Path
 
 import elevenlabs
 import gradio as gr
+
 from modules import chat, shared
+from modules.utils import gradio
 
 params = {
     'activate': True,
@@ -35,24 +37,24 @@ def refresh_voices_dd():
     return gr.Dropdown.update(value=all_voices[0], choices=all_voices)
 
 
-def remove_tts_from_history():
-    for i, entry in enumerate(shared.history['internal']):
-        shared.history['visible'][i] = [shared.history['visible'][i][0], entry[1]]
+def remove_tts_from_history(history):
+    for i, entry in enumerate(history['internal']):
+        history['visible'][i] = [history['visible'][i][0], entry[1]]
+
+    return history
 
 
-def toggle_text_in_history():
-    for i, entry in enumerate(shared.history['visible']):
+def toggle_text_in_history(history):
+    for i, entry in enumerate(history['visible']):
         visible_reply = entry[1]
         if visible_reply.startswith('<audio'):
             if params['show_text']:
-                reply = shared.history['internal'][i][1]
-                shared.history['visible'][i] = [
-                    shared.history['visible'][i][0], f"{visible_reply.split('</audio>')[0]}</audio>\n\n{reply}"
-                ]
+                reply = history['internal'][i][1]
+                history['visible'][i] = [history['visible'][i][0], f"{visible_reply.split('</audio>')[0]}</audio>\n\n{reply}"]
             else:
-                shared.history['visible'][i] = [
-                    shared.history['visible'][i][0], f"{visible_reply.split('</audio>')[0]}</audio>"
-                ]
+                history['visible'][i] = [history['visible'][i][0], f"{visible_reply.split('</audio>')[0]}</audio>"]
+
+    return history
 
 
 def remove_surrounded_chars(string):
@@ -150,25 +152,24 @@ def ui():
         convert_cancel = gr.Button('Cancel', visible=False)
         convert_confirm = gr.Button('Confirm (cannot be undone)', variant="stop", visible=False)
 
-    # Convert history with confirmation
-    convert_arr = [convert_confirm, convert, convert_cancel]
-    convert.click(lambda: [gr.update(visible=True), gr.update(visible=False), gr.update(visible=True)], None, convert_arr)
-    convert_confirm.click(
-        lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr).then(
-        remove_tts_from_history, None, None).then(
-        chat.save_history, shared.gradio['mode'], None, show_progress=False).then(
-        chat.redraw_html, shared.reload_inputs, shared.gradio['display'])
+    if shared.is_chat():
+        # Convert history with confirmation
+        convert_arr = [convert_confirm, convert, convert_cancel]
+        convert.click(lambda: [gr.update(visible=True), gr.update(visible=False), gr.update(visible=True)], None, convert_arr)
+        convert_confirm.click(
+            lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr).then(
+            remove_tts_from_history, gradio('history'), gradio('history')).then(
+            chat.save_persistent_history, gradio('history', 'character_menu', 'mode'), None).then(
+            chat.redraw_html, shared.reload_inputs, gradio('display'))
 
-    convert_cancel.click(lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr)
+        convert_cancel.click(lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr)
 
-    # Toggle message text in history
-    show_text.change(
-        lambda x: params.update({"show_text": x}), show_text, None).then(
-        toggle_text_in_history, None, None).then(
-        chat.save_history, shared.gradio['mode'], None, show_progress=False).then(
-        chat.redraw_html, shared.reload_inputs, shared.gradio['display'])
-
-    convert_cancel.click(lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr)
+        # Toggle message text in history
+        show_text.change(
+            lambda x: params.update({"show_text": x}), show_text, None).then(
+            toggle_text_in_history, gradio('history'), gradio('history')).then(
+            chat.save_persistent_history, gradio('history', 'character_menu', 'mode'), None).then(
+            chat.redraw_html, shared.reload_inputs, gradio('display'))
 
     # Event functions to update the parameters in the backend
     activate.change(lambda x: params.update({'activate': x}), activate, None)

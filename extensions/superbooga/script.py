@@ -96,6 +96,8 @@ def apply_settings(chunk_count, chunk_count_initial, time_weight):
 def custom_generate_chat_prompt(user_input, state, **kwargs):
     global chat_collector
 
+    history = state['history']
+
     if state['mode'] == 'instruct':
         results = collector.get_sorted(user_input, n_results=params['chunk_count'])
         additional_context = '\nYour reply should be based on the context below:\n\n' + '\n'.join(results)
@@ -104,29 +106,29 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
 
         def make_single_exchange(id_):
             output = ''
-            output += f"{state['name1']}: {shared.history['internal'][id_][0]}\n"
-            output += f"{state['name2']}: {shared.history['internal'][id_][1]}\n"
+            output += f"{state['name1']}: {history['internal'][id_][0]}\n"
+            output += f"{state['name2']}: {history['internal'][id_][1]}\n"
             return output
 
-        if len(shared.history['internal']) > params['chunk_count'] and user_input != '':
+        if len(history['internal']) > params['chunk_count'] and user_input != '':
             chunks = []
-            hist_size = len(shared.history['internal'])
+            hist_size = len(history['internal'])
             for i in range(hist_size-1):
                 chunks.append(make_single_exchange(i))
 
             add_chunks_to_collector(chunks, chat_collector)
-            query = '\n'.join(shared.history['internal'][-1] + [user_input])
+            query = '\n'.join(history['internal'][-1] + [user_input])
             try:
                 best_ids = chat_collector.get_ids_sorted(query, n_results=params['chunk_count'], n_initial=params['chunk_count_initial'], time_weight=params['time_weight'])
                 additional_context = '\n'
                 for id_ in best_ids:
-                    if shared.history['internal'][id_][0] != '<|BEGIN-VISIBLE-CHAT|>':
+                    if history['internal'][id_][0] != '<|BEGIN-VISIBLE-CHAT|>':
                         additional_context += make_single_exchange(id_)
 
                 logger.warning(f'Adding the following new context:\n{additional_context}')
                 state['context'] = state['context'].strip() + '\n' + additional_context
                 kwargs['history'] = {
-                    'internal': [shared.history['internal'][i] for i in range(hist_size) if i not in best_ids],
+                    'internal': [history['internal'][i] for i in range(hist_size) if i not in best_ids],
                     'visible': ''
                 }
             except RuntimeError:

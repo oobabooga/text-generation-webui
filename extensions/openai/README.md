@@ -13,17 +13,56 @@ pip3 install -r requirements.txt
 
 It listens on tcp port 5001 by default. You can use the OPENEDAI_PORT environment variable to change this.
 
-To enable the bare bones image generation (txt2img) set: SD_WEBUI_URL to point to your Stable Diffusion API ([Automatic1111](https://github.com/AUTOMATIC1111/stable-diffusion-webui)).
+Make sure you enable it in server launch parameters, it should include:
 
-Example:
+```
+--extensions openai
+```
+
+You can also use the ``--listen`` argument to make the server available on the networ, and/or the ```--share``` argument to enable a public Cloudflare endpoint.
+
+To enable the basic image generation support (txt2img) set the environment variable SD_WEBUI_URL to point to your Stable Diffusion API ([Automatic1111](https://github.com/AUTOMATIC1111/stable-diffusion-webui)).
+
+For example:
 ```
 SD_WEBUI_URL=http://127.0.0.1:7861
 ```
 
-Make sure you enable it in server launch parameters. Just make sure they include:
+### Models
+
+This has been successfully tested with Alpaca, Koala, Vicuna, WizardLM and their variants, (ex. gpt4-x-alpaca, GPT4all-snoozy, stable-vicuna, wizard-vicuna, etc.) and many others. Models that have been trained for **Instruction Following** work best. If you test with other models please let me know how it goes. Less than satisfying results (so far) from: RWKV-4-Raven, llama, mpt-7b-instruct/chat.
+
+For best results across all API endpoints, a model like [vicuna-13b-v1.3-GPTQ](https://huggingface.co/TheBloke/vicuna-13b-v1.3-GPTQ), [stable-vicuna-13B-GPTQ](https://huggingface.co/TheBloke/stable-vicuna-13B-GPTQ) or [airoboros-13B-gpt4-1.3-GPTQ](https://huggingface.co/TheBloke/airoboros-13B-gpt4-1.3-GPTQ) is a good start.
+
+For good results with the [Completions](https://platform.openai.com/docs/api-reference/completions) API endpoint, in addition to the above models, you can also try using a base model like [falcon-7b](https://huggingface.co/tiiuae/falcon-7b) or Llama.
+
+For good results with the [ChatCompletions](https://platform.openai.com/docs/api-reference/chat) or [Edits](https://platform.openai.com/docs/api-reference/edits) API endpoints you can use almost any model trained for instruction following - within the limits of the model. Be sure that the proper instruction template is detected and loaded or the results will not be good.
+
+For the proper instruction format to be detected you need to have a matching model entry in your ```models/config.yaml``` file. Be sure to keep this file up to date.
+A matching instruction template file in the characters/instruction-following/ folder will loaded and applied to format messages correctly for the model - this is critical for good results.
+
+For example, the Wizard-Vicuna family of models are trained with the Vicuna 1.1 format. In the models/config.yaml file there is this matching entry:
 
 ```
---extensions openai
+.*wizard.*vicuna:
+  mode: 'instruct'
+  instruction_template: 'Vicuna-v1.1'
+```
+
+This refers to ```characters/instruction-following/Vicuna-v1.1.yaml```, which looks like this:
+
+```
+user: "USER:"
+bot: "ASSISTANT:"
+turn_template: "<|user|> <|user-message|>\n<|bot|> <|bot-message|></s>\n"
+context: "A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions.\n\n"
+```
+
+For most common models this is already setup, but if you are using a new or uncommon model you may need add a matching entry to the models/config.yaml and possibly create your own instruction-following template and for best results.
+
+If you see this in your logs, it probably means that the correct format could not be loaded:
+```
+Warning: Loaded default instruction-following template for model.
 ```
 
 ### Embeddings (alpha)
@@ -43,12 +82,13 @@ Warning: You cannot mix embeddings from different models even if they have the s
 
 ### Client Application Setup
 
+
 Almost everything you use it with will require you to set a dummy OpenAI API key environment variable.
 
 With the [official python openai client](https://github.com/openai/openai-python), you can set the OPENAI_API_BASE environment variable before you import the openai module, like so:
 
 ```
-OPENAI_API_KEY=sk-dummy
+OPENAI_API_KEY=sk-111111111111111111111111111111111111111111111111
 OPENAI_API_BASE=http://127.0.0.1:5001/v1
 ```
 
@@ -79,6 +119,29 @@ const api = new ChatGPTAPI({
   apiBaseUrl: process.env.OPENAI_API_BASE,
 })
 ```
+
+## API Documentation & Examples
+
+The OpenAI API is well documented, you can view the documentation here: https://platform.openai.com/docs/api-reference
+
+Examples of how to use the Completions API in Python can be found here: https://platform.openai.com/examples
+Not all of them will work with all models unfortunately, See the notes on Models for how to get the best results.
+
+Here is a simple python example of how you can use the Edit endpoint as a translator.
+
+```python
+import openai
+response = openai.Edit.create(
+  model="x",
+  instruction="Translate this into French",
+  input="Our mission is to ensure that artificial general intelligence benefits all of humanity.",
+)
+print(response['choices'][0]['text'])
+# Sample Output:
+# Notre mission est de garantir que l'intelligence artificielle généralisée profite à tous les membres de l'humanité.
+```
+
+
 
 ## Compatibility & not so compatibility
 
@@ -114,26 +177,32 @@ Some hacky mappings:
 | --- | --- | --- |
 | frequency_penalty | encoder_repetition_penalty | this seems to operate with a different scale and defaults, I tried to scale it based on range & defaults, but the results are terrible. hardcoded to 1.18 until there is a better way |
 | presence_penalty | repetition_penalty | same issues as frequency_penalty, hardcoded to 1.0 |
-| best_of | top_k | |
+| best_of | top_k | default is 1 |
 | stop | custom_stopping_strings | this is also stuffed with ['\n###', "\n{user prompt}", "{user prompt}" ] for good measure. |
-| n | 1 | hardcoded, it may be worth implementing this but I'm not sure how yet |
-| 1.0 | typical_p | hardcoded |
-| 1 | num_beams | hardcoded |
+| n | 1 | variations are not supported yet. |
+| 1 | num_beams | hardcoded to 1 |
+| 1.0 | typical_p | hardcoded to 1.0 |
 | max_tokens | max_new_tokens | For Text Completions max_tokens is set smaller than the truncation_length minus the prompt length. This can cause no input to be generated if the prompt is too large. For ChatCompletions, the older chat messages may be dropped to fit the max_new_tokens requested |
-| logprobs | - | ignored |
-| logit_bias | - | ignored |
-| messages.name | - | ignored |
-| user | - | ignored |
+| logprobs | - | not supported yet |
+| logit_bias | - | not supported yet |
+| messages.name | - | not supported yet |
+| user | - | not supported yet |
+| functions/function_call | - | function calls are not supported yet |
 
 defaults are mostly from openai, so are different. I use the openai defaults where I can and try to scale them to the webui defaults with the same intent.
 
-### Models
-
-This has been successfully tested with Koala, Alpaca, gpt4-x-alpaca, GPT4all-snoozy,  wizard-vicuna, stable-vicuna and Vicuna 1.1 - ie. Instruction Following models. If you test with other models please let me know how it goes. Less than satisfying results (so far): RWKV-4-Raven, llama, mpt-7b-instruct/chat
-
 ### Applications
 
-Everything needs OPENAI_API_KEY=dummy set.
+Almost everything needs the OPENAI_API_KEY environment variable set, for example:
+```
+OPENAI_API_KEY=sk-111111111111111111111111111111111111111111111111
+```
+Some apps are picky about key format, but 'dummy' or 'sk-dummy' also work in most cases.
+Most application will work if you also set:
+```
+OPENAI_API_BASE=http://127.0.0.1:5001/v1
+```
+but there are some exceptions.
 
 | Compatibility | Application/Library | url | notes / setting |
 | --- | --- | --- | --- |
@@ -144,7 +213,8 @@ Everything needs OPENAI_API_KEY=dummy set.
 | ✅ | shell_gpt | https://github.com/TheR1D/shell_gpt | OPENAI_API_HOST=http://127.0.0.1:5001 |
 | ✅ | gpt-shell | https://github.com/jla/gpt-shell | OPENAI_API_BASE=http://127.0.0.1:5001/v1 |
 | ✅ | gpt-discord-bot | https://github.com/openai/gpt-discord-bot | OPENAI_API_BASE=http://127.0.0.1:5001/v1 |
-| ✅ | OpenAI for Notepad++| https://github.com/Krazal/nppopenai | api_url=http://127.0.0.1:5001 in the config file |
+| ✅ | OpenAI for Notepad++ | https://github.com/Krazal/nppopenai | api_url=http://127.0.0.1:5001 in the config file, or environment variables |
+| ✅ | vscode-openai | https://marketplace.visualstudio.com/items?itemName=AndrewButson.vscode-openai | OPENAI_API_BASE=http://127.0.0.1:5001/v1 |
 | ✅❌ | langchain | https://github.com/hwchase17/langchain | OPENAI_API_BASE=http://127.0.0.1:5001/v1 even with a good 30B-4bit model the result is poor so far. It assumes zero shot python/json coding. Some model tailored prompt formatting improves results greatly. |
 | ✅❌ | Auto-GPT | https://github.com/Significant-Gravitas/Auto-GPT | OPENAI_API_BASE=http://127.0.0.1:5001/v1 Same issues as langchain. Also assumes a 4k+ context |
 | ✅❌ | babyagi | https://github.com/yoheinakajima/babyagi | OPENAI_API_BASE=http://127.0.0.1:5001/v1 |

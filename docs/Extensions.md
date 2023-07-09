@@ -38,11 +38,11 @@ script.py may define the special functions and variables below.
 | `def ui()` | Creates custom gradio elements when the UI is launched. | 
 | `def custom_css()` | Returns custom CSS as a string. It is applied whenever the web UI is loaded. |
 | `def custom_js()` | Same as above but for javascript. |
-| `def input_modifier(string)`  | Modifies the input string before it enters the model. In chat mode, it is applied to the user message. Otherwise, it is applied to the entire prompt. |
-| `def output_modifier(string)`  | Modifies the output string before it is presented in the UI. In chat mode, it is applied to the bot's reply. Otherwise, it is applied to the entire output. |
+| `def input_modifier(string, state)`  | Modifies the input string before it enters the model. In chat mode, it is applied to the user message. Otherwise, it is applied to the entire prompt. |
+| `def output_modifier(string, state)`  | Modifies the output string before it is presented in the UI. In chat mode, it is applied to the bot's reply. Otherwise, it is applied to the entire output. |
+| `def bot_prefix_modifier(string, state)`  | Applied in chat mode to the prefix for the bot's reply. |
 | `def state_modifier(state)`  | Modifies the dictionary containing the UI input parameters before it is used by the text generation functions. |
 | `def history_modifier(history)`  | Modifies the chat history before the text generation in chat mode begins. |
-| `def bot_prefix_modifier(string)`  | Applied in chat mode to the prefix for the bot's reply. |
 | `def custom_generate_reply(...)` | Overrides the main text generation function. |
 | `def custom_generate_chat_prompt(...)` | Overrides the prompt generator in chat mode. |
 | `def tokenizer_modifier(state, prompt, input_ids, input_embeds)` | Modifies the `input_ids`/`input_embeds` fed to the model. Should return `prompt`, `input_ids`, `input_embeds`. See the `multimodal` extension for an example. |
@@ -136,7 +136,7 @@ Note that in chat mode, this function must only return the new text, whereas in 
 ```python
 import datetime
 
-def custom_generate_reply(question, original_question, seed, state, eos_token, stopping_strings):
+def custom_generate_reply(question, original_question, seed, state, stopping_strings):
     cumulative = ''
     for i in range(10):
         cumulative += f"Counting: {i}...\n"
@@ -151,67 +151,11 @@ def custom_generate_reply(question, original_question, seed, state, eos_token, s
 Below is an extension that just reproduces the default prompt generator in `modules/chat.py`. You can modify it freely to come up with your own prompts in chat mode.
 
 ```python
+from modules import chat
+
 def custom_generate_chat_prompt(user_input, state, **kwargs):
-    impersonate = kwargs['impersonate'] if 'impersonate' in kwargs else False
-    _continue = kwargs['_continue'] if '_continue' in kwargs else False
-    also_return_rows = kwargs['also_return_rows'] if 'also_return_rows' in kwargs else False
-    is_instruct = state['mode'] == 'instruct'
-    rows = [state['context'] if is_instruct else f"{state['context'].strip()}\n"]
-    min_rows = 3
+    
+    # Do something with kwargs['history'] or state
 
-    # Finding the maximum prompt size
-    max_length = min(get_max_prompt_length(state), state['chat_prompt_size'])
-
-    # Building the turn templates
-    if 'turn_template' not in state or state['turn_template'] == '':
-        if is_instruct:
-            template = '<|user|>\n<|user-message|>\n<|bot|>\n<|bot-message|>\n'
-        else:
-            template = '<|user|>: <|user-message|>\n<|bot|>: <|bot-message|>\n'
-    else:
-        template = state['turn_template'].replace(r'\n', '\n')
-
-    replacements = {
-        '<|user|>': state['name1'].strip(),
-        '<|bot|>': state['name2'].strip(),
-    }
-
-    user_turn = replace_all(template.split('<|bot|>')[0], replacements)
-    bot_turn = replace_all('<|bot|>' + template.split('<|bot|>')[1], replacements)
-    user_turn_stripped = replace_all(user_turn.split('<|user-message|>')[0], replacements)
-    bot_turn_stripped = replace_all(bot_turn.split('<|bot-message|>')[0], replacements)
-
-    # Building the prompt
-    i = len(shared.history['internal']) - 1
-    while i >= 0 and get_encoded_length(''.join(rows)) < max_length:
-        if _continue and i == len(shared.history['internal']) - 1:
-            rows.insert(1, bot_turn_stripped + shared.history['internal'][i][1].strip())
-        else:
-            rows.insert(1, bot_turn.replace('<|bot-message|>', shared.history['internal'][i][1].strip()))
-
-        string = shared.history['internal'][i][0]
-        if string not in ['', '<|BEGIN-VISIBLE-CHAT|>']:
-            rows.insert(1, replace_all(user_turn, {'<|user-message|>': string.strip(), '<|round|>': str(i)}))
-
-        i -= 1
-
-    if impersonate:
-        min_rows = 2
-        rows.append(user_turn_stripped.rstrip(' '))
-    elif not _continue:
-        # Adding the user message
-        if len(user_input) > 0:
-            rows.append(replace_all(user_turn, {'<|user-message|>': user_input.strip(), '<|round|>': str(len(shared.history["internal"]))}))
-
-        # Adding the Character prefix
-        rows.append(apply_extensions("bot_prefix", bot_turn_stripped.rstrip(' ')))
-
-    while len(rows) > min_rows and get_encoded_length(''.join(rows)) >= max_length:
-        rows.pop(1)
-
-    prompt = ''.join(rows)
-    if also_return_rows:
-        return prompt, rows
-    else:
-        return prompt
+    return chat.generate_chat_prompt(user_input, state, **kwargs)
 ```

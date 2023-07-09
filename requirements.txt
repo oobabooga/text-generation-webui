@@ -2,6 +2,7 @@ accelerate==0.20.3
 colorama
 datasets
 einops
+fastapi==0.95.2
 flexgen==0.1.7
 gradio_client==0.2.5
 gradio==3.33.1
@@ -19,7 +20,9 @@ transformers==4.30.2
 git+https://github.com/huggingface/peft@03eb378eb914fbee709ff7c86ba5b1d033b89524
 bitsandbytes==0.39.1; platform_system != "Windows"
 https://github.com/jllllll/bitsandbytes-windows-webui/releases/download/wheels/bitsandbytes-0.39.1-py3-none-win_amd64.whl; platform_system == "Windows"
-llama-cpp-python==0.1.64; platform_system != "Windows"
-https://github.com/abetlen/llama-cpp-python/releases/download/v0.1.64/llama_cpp_python-0.1.64-cp310-cp310-win_amd64.whl; platform_system == "Windows"
+llama-cpp-python==0.1.68; platform_system != "Windows"
+https://github.com/abetlen/llama-cpp-python/releases/download/v0.1.68/llama_cpp_python-0.1.68-cp310-cp310-win_amd64.whl; platform_system == "Windows"
 https://github.com/PanQiWei/AutoGPTQ/releases/download/v0.2.2/auto_gptq-0.2.2+cu117-cp310-cp310-win_amd64.whl; platform_system == "Windows"
-https://github.com/PanQiWei/AutoGPTQ/releases/download/v0.2.2/auto_gptq-0.2.2+cu117-cp310-cp310-linux_x86_64.whl; platform_system == "Linux"
+https://github.com/PanQiWei/AutoGPTQ/releases/download/v0.2.2/auto_gptq-0.2.2+cu117-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
+https://github.com/jllllll/exllama/releases/download/0.0.5/exllama-0.0.5+cu117-cp310-cp310-win_amd64.whl; platform_system == "Windows"
+https://github.com/jllllll/exllama/releases/download/0.0.5/exllama-0.0.5+cu117-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"

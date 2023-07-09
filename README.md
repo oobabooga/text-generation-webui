@@ -1,7 +1,3 @@
-**Help find the best parameters for text generation!**
-
-https://oobabooga.github.io/arena/preliminary-results.html
-
 # Text generation web UI
 
 A gradio web UI for running Large Language Models like LLaMA, llama.cpp, GPT-J, Pythia, OPT, and GALACTICA.
@@ -197,6 +193,7 @@ Optionally, you can use the following command-line flags:
 | `-h`, `--help`                             | Show this help message and exit. |
 | `--notebook`                               | Launch the web UI in notebook mode, where the output is written to the same text box as the input. |
 | `--chat`                                   | Launch the web UI in chat mode. |
+| `--multi-user`                             | Multi-user mode. Chat histories are not saved or automatically loaded. WARNING: this is highly experimental. |
 | `--character CHARACTER`                    | The name of the character to load in chat mode by default. |
 | `--model MODEL`                            | Name of the model to load by default. |
 | `--lora LORA [LORA ...]`                   | The list of LoRAs to load. If you want to load more than one LoRA, write the names separated by spaces. |
@@ -262,6 +259,7 @@ Optionally, you can use the following command-line flags:
 | `--triton`                     | Use triton. |
 | `--no_inject_fused_attention`  | Disable the use of fused attention, which will use less VRAM at the cost of slower inference. |
 | `--no_inject_fused_mlp`        | Triton mode only: disable the use of fused MLP, which will use less VRAM at the cost of slower inference. |
+| `--no_use_cuda_fp16`           | This can make models faster on some systems. |
 | `--desc_act`                   | For models that don't have a quantize_config.json, this parameter is used to define whether to set desc_act or not in BaseQuantizeConfig. |
 
 #### ExLlama
@@ -269,6 +267,9 @@ Optionally, you can use the following command-line flags:
 | Flag             | Description |
 |------------------|-------------|
 |`--gpu-split`     | Comma-separated list of VRAM (in GB) to use per GPU device for model layers, e.g. `20,7,7` |
+|`--max_seq_len MAX_SEQ_LEN`           | Maximum sequence length. |
+|`--compress_pos_emb COMPRESS_POS_EMB` | Positional embeddings compression factor. Should typically be set to max_seq_len / 2048. |
+|`--alpha_value ALPHA_VALUE`           | Positional embeddings alpha factor for NTK RoPE scaling. Same as above. Use either this or compress_pos_emb, not both. `
 
 #### GPTQ-for-LLaMa
 
@@ -340,7 +341,7 @@ Out of memory errors? [Check the low VRAM guide](docs/Low-VRAM-guide.md).
 
 Inference settings presets can be created under `presets/` as yaml files. These files are detected automatically at startup.
 
-By default, 10 presets based on NovelAI and KoboldAI presets are included. These were selected out of a sample of 43 presets after applying a K-Means clustering algorithm and selecting the elements closest to the average of each cluster: [tSNE visualization](https://user-images.githubusercontent.com/112222186/228956352-1addbdb9-2456-465a-b51d-089f462cd385.png).
+The presets that are included by default are the result of a contest that received 7215 votes. More details can be found [here](https://github.com/oobabooga/oobabooga.github.io/blob/main/arena/results.md).
 
 ## Contributing
 
@@ -349,8 +350,13 @@ By default, 10 presets based on NovelAI and KoboldAI presets are included. These
 * If you have some experience with git, testing an open pull request and leaving a comment on whether it works as expected or not is immensely helpful.
 * A simple way to contribute, even if you are not a programmer, is to leave a 👍 on an issue or pull request that you find relevant.
 
+## Community
+
+* Subreddit: https://www.reddit.com/r/oobaboogazz/
+* Discord: https://discord.gg/jwZCF2dPQN
+
 ## Credits
 
 - Gradio dropdown menu refresh button, code for reloading the interface: https://github.com/AUTOMATIC1111/stable-diffusion-webui
-- NovelAI and KoboldAI presets: https://github.com/KoboldAI/KoboldAI-Client/wiki/Settings-Presets
-- Code for early stopping in chat mode, code for some of the sliders: https://github.com/PygmalionAI/gradio-ui/
+- Godlike preset: https://github.com/KoboldAI/KoboldAI-Client/wiki/Settings-Presets
+- Code for some of the sliders: https://github.com/PygmalionAI/gradio-ui/

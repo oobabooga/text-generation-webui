@@ -104,12 +104,8 @@ llama-65b-gptq-3bit:
   mode: 'instruct'
   instruction_template: 'StableLM'
   truncation_length: 4096
-  chat_prompt_size: 4096
-  chat_prompt_size_max: 4096
 .*stablelm-base:
   truncation_length: 4096
-  chat_prompt_size: 4096
-  chat_prompt_size_max: 4096
 .*wizardlm:
   mode: 'instruct'
   model_type: 'llama'
@@ -235,6 +231,15 @@ TheBloke_WizardLM-30B-GPTQ:
 .*minotaur:
   mode: 'instruct'
   instruction_template: 'Minotaur'
+.*minotaur-15b:
   truncation_length: 8192
-  chat_prompt_size: 8192
-  chat_prompt_size_max: 8192
+.*orca_mini:
+  mode: 'instruct'
+  instruction_template: 'Orca Mini'
+.*landmark:
+  truncation_length: 8192
+.*superhot-8k:
+  truncation_length: 8192
+.*xgen.*-inst:
+  truncation_length: 8192
+  instruction_template: 'Vicuna-v0'
