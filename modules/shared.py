@@ -127,6 +127,8 @@ parser.add_argument('--cache-capacity', type=str, help='Maximum cache capacity. 
 parser.add_argument('--n-gpu-layers', type=int, default=0, help='Number of layers to offload to the GPU.')
 parser.add_argument('--n_ctx', type=int, default=2048, help='Size of the prompt context.')
 parser.add_argument('--llama_cpp_seed', type=int, default=0, help='Seed for llama-cpp models. Default 0 (random)')
+parser.add_argument('--rope-freq-scale', type=float, default=1.0, help='Size of the prompt context.')
+parser.add_argument('--rope-freq-base', type=int, default=10000, help='Size of the prompt context.')
 
 # GPTQ
 parser.add_argument('--wbits', type=int, default=0, help='Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported.')
