@@ -55,6 +55,7 @@ def load_model(model_name, loader=None):
         'AutoGPTQ': AutoGPTQ_loader,
         'GPTQ-for-LLaMa': GPTQ_loader,
         'llama.cpp': llamacpp_loader,
+        'llamacpp_HF': llamacpp_HF_loader,
         'FlexGen': flexgen_loader,
         'RWKV': RWKV_loader,
         'ExLlama': ExLlama_loader,
@@ -266,6 +267,12 @@ def llamacpp_loader(model_name):
     logger.info(f"llama.cpp weights detected: {model_file}\n")
     model, tokenizer = LlamaCppModel.from_pretrained(model_file)
     return model, tokenizer
+
+
+def llamacpp_HF_loader(model_name):
+    from modules.llamacpp_hf import LlamacppHF
+
+    return LlamacppHF.from_pretrained(model_name)
 
 
 def GPTQ_loader(model_name):
