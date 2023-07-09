@@ -1,7 +1,6 @@
 import os
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
-import numpy as np
 
 import torch
 from torch.nn import CrossEntropyLoss
@@ -52,6 +51,7 @@ class LlamacppHF(PreTrainedModel):
         self.cache = seq_tensor
         logits = torch.tensor(self.model.model.eval_logits).view(1, 1, -1).to(kwargs['input_ids'].device)
 
+        # Based on transformers/models/llama/modeling_llama.py
         loss = None
         if labels is not None:
             # Shift so that tokens < n predict n
@@ -65,7 +65,7 @@ class LlamacppHF(PreTrainedModel):
             shift_labels = shift_labels.to(shift_logits.device)
             loss = loss_fct(shift_logits, shift_labels)
 
-        return CausalLMOutputWithPast(logits=logits, past_key_values=cache if use_cache else None)
+        return CausalLMOutputWithPast(logits=logits, past_key_values=cache if use_cache else None, loss=loss)
 
     @classmethod
     def from_pretrained(cls, pretrained_model_name_or_path: Optional[Union[str, os.PathLike]], *model_args, **kwargs):
