@@ -18,6 +18,7 @@ class LlamacppHF(PreTrainedModel):
         super().__init__(PretrainedConfig())
         self.model = model
         self.generation_config = GenerationConfig()
+        self.cache = None
 
     def _validate_model_class(self):
         pass
@@ -39,12 +40,16 @@ class LlamacppHF(PreTrainedModel):
         labels = kwargs.get('labels', None)
         seq = kwargs['input_ids'][0].tolist()
         cache = kwargs['past_key_values'] if 'past_key_values' in kwargs else None
-        # if cache is None:
-        #     cache = ExLlamaCache(self.ex_model)
-        #     self.ex_model.forward(torch.tensor([seq[:-1]], dtype=torch.long), cache, preprocess_only=True, lora=self.lora)
-        # logits = self.ex_model.forward(torch.tensor([seq[-1:]], dtype=torch.long), cache, lora=self.lora).to(kwargs['input_ids'].device)
-        self.model.model.reset()
-        self.model.model.eval(seq)
+
+        # Make the forward call
+        seq_tensor = torch.tensor(seq)
+        if self.cache is None or not torch.equal(self.cache, seq_tensor[:-1]):
+            self.model.model.reset()
+            self.model.model.eval(seq)
+        else:
+            self.model.model.eval([seq[-1]])
+
+        self.cache = seq_tensor
         logits = torch.tensor(self.model.model.eval_logits).view(1, 1, -1).to(kwargs['input_ids'].device)
 
         loss = None
