@@ -43,6 +43,7 @@ class LlamacppHF(PreTrainedModel):
         #     cache = ExLlamaCache(self.ex_model)
         #     self.ex_model.forward(torch.tensor([seq[:-1]], dtype=torch.long), cache, preprocess_only=True, lora=self.lora)
         # logits = self.ex_model.forward(torch.tensor([seq[-1:]], dtype=torch.long), cache, lora=self.lora).to(kwargs['input_ids'].device)
+        self.model.model.reset()
         self.model.model.eval(seq)
         logits = torch.tensor(self.model.model.eval_logits).view(1, 1, -1).to(kwargs['input_ids'].device)
 
