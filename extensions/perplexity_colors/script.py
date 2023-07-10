@@ -15,10 +15,8 @@ params = {
 class PerplexityLogits(LogitsProcessor):
     def __init__(self, verbose=False):
         self.generated_token_ids = []
-        self.generated_tokens = []
         self.selected_probs = []
         self.top_token_ids_list = []
-        self.top_tokens_list = []
         self.top_probs_list = []
         self.perplexities_list = []
         self.last_probs = None
@@ -32,22 +30,19 @@ class PerplexityLogits(LogitsProcessor):
         perplexity = round(float(np.exp(entropy)), 4)
         self.perplexities_list.append(perplexity)
         last_token_id = int(input_ids[0][-1].cpu().numpy().item())
-        last_token = shared.tokenizer.decode(last_token_id)
         # Store the generated tokens (not sure why this isn't accessible in the output endpoint!)
         self.generated_token_ids.append(last_token_id)
-        self.generated_tokens.append(last_token)
         # Get last probability, and add to the list if it wasn't there
         if len(self.selected_probs) > 0:
             # Is the selected token in the top tokens?
             if self.verbose:
-                print(last_token)
-                print(self.top_tokens_list[-1])
+                print(shared.tokenizer.decode(last_token_id))
+                print([shared.tokenizer.decode(token_id) for token_id in self.top_token_ids_list[-1]])
                 print(self.top_probs_list[-1])
-            if last_token in self.top_tokens_list[-1]:
-                idx = self.top_tokens_list[-1].index(last_token)
+            if last_token_id in self.top_token_ids_list[-1]:
+                idx = self.top_token_ids_list[-1].index(last_token_id)
                 self.selected_probs.append(self.top_probs_list[-1][idx])
             else:
-                self.top_tokens_list[-1].append(last_token)
                 self.top_token_ids_list[-1].append(last_token_id)
                 last_prob = round(float(self.last_probs[last_token_id]), 4)
                 self.top_probs_list[-1].append(last_prob)
@@ -60,16 +55,16 @@ class PerplexityLogits(LogitsProcessor):
             if not np.isnan(perplexity):
                 pplbar = "*"*round(perplexity)
             print(f"{last_token}\t{perplexity:.2f}\t{pplbar}")
+
         # Get top 5 probabilities
-        probs = probs.cpu().numpy().flatten()
-        top_token_ids = np.argsort(probs)[-5:].astype(int).tolist()[::-1]
-        top_tokens = [shared.tokenizer.decode(tok) for tok in top_token_ids]
-        top_probs = [round(float(probs[i]), 4) for i in top_token_ids]
+        top_tokens_and_probs = torch.topk(probs, 5)
+        top_probs = top_tokens_and_probs.values.cpu().numpy().astype(float).tolist()
+        top_token_ids = top_tokens_and_probs.indices.cpu().numpy().astype(int).tolist()
 
         self.top_token_ids_list.append(top_token_ids)
-        self.top_tokens_list.append(top_tokens)
         self.top_probs_list.append(top_probs)
-
+        
+        probs = probs.cpu().numpy().flatten()
         self.last_probs = probs # Need to keep this as a reference for top probs
 
         # Doesn't actually modify the logits!
@@ -90,18 +85,24 @@ def output_modifier(text):
     # Remove last element of perplexities_list, top_token_ids_list, top_tokens_list, top_probs_list since everything is off by one because this extension runs before generation
     perplexities = ppl_logits_processor.perplexities_list[:-1]
     top_token_ids_list = ppl_logits_processor.top_token_ids_list[:-1]
-    top_tokens_list = ppl_logits_processor.top_tokens_list[:-1]
+    top_tokens_list = [[shared.tokenizer.decode(token_id) for token_id in top_token_ids] for top_token_ids in top_token_ids_list]
     top_probs_list = ppl_logits_processor.top_probs_list[:-1]
     # Remove first element of generated_token_ids, generated_tokens, selected_probs because they are for the last token of the prompt
     gen_token_ids = ppl_logits_processor.generated_token_ids[1:]
-    gen_tokens = ppl_logits_processor.generated_tokens[1:]
+    gen_tokens = [shared.tokenizer.decode(token_id) for token_id in gen_token_ids]
     sel_probs = ppl_logits_processor.selected_probs[1:]
 
     end_part = '</span>' # Helps with finding the index after replacing part of the text.
+    in_code = False # Since the <span> tags mess up code blocks, avoid coloring while inside a code block, based on finding tokens with '`' in them
 
     if params['color_by_probability'] and params['color_by_perplexity']:
         i = 0
         for token, prob, ppl, top_tokens, top_probs in zip(gen_tokens, sel_probs, perplexities, top_tokens_list, top_probs_list):
+            if '`' in token:
+                in_code = not in_code
+                continue
+            if in_code:
+                continue
             color = probability_perplexity_color_scale(prob, ppl)
             if token in text[i:]:
                 text = text[:i] + text[i:].replace(token, add_color_html(token, color), 1)
@@ -109,6 +110,11 @@ def output_modifier(text):
     elif params['color_by_perplexity']:
         i = 0
         for token, ppl, top_tokens, top_probs in zip(gen_tokens, perplexities, top_tokens_list, top_probs_list):
+            if '`' in token:
+                in_code = not in_code
+                continue
+            if in_code:
+                continue
             color = perplexity_color_scale(ppl)
             if token in text[i:]:
                 text = text[:i] + text[i:].replace(token, add_color_html(token, color), 1)
@@ -116,6 +122,11 @@ def output_modifier(text):
     elif params['color_by_probability']:
         i = 0
         for token, prob, top_tokens, top_probs in zip(gen_tokens, sel_probs, top_tokens_list, top_probs_list):
+            if '`' in token:
+                in_code = not in_code
+                continue
+            if in_code:
+                continue
             color = probability_color_scale(prob)
             if token in text[i:]:
                 text = text[:i] + text[i:].replace(token, add_color_html(token, color), 1)
