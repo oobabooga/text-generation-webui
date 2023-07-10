@@ -561,6 +561,7 @@ def stream_completions(body: dict, is_legacy: bool=False):
 
     answer = ''
     seen_content = ''
+    completion_token_count = 0
 
     for a in generator:
         answer = a
@@ -584,7 +585,7 @@ def stream_completions(body: dict, is_legacy: bool=False):
 
 
     stop_reason = "stop"
-    if token_count + completion_token_count >= truncation_length or completion_token_count >= max_tokens:
+    if token_count + completion_token_count >= req_params['truncation_length'] or completion_token_count >= max_tokens:
         stop_reason = "length"
 
     chunk = text_streaming_chunk('')
