@@ -150,9 +150,6 @@ def get_stopping_strings(state):
             f"\n{state['name2']}:"
         ]
 
-    if state['stop_at_newline']:
-        stopping_strings.append("\n")
-
     return stopping_strings
 
 

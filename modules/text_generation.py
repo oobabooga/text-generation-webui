@@ -171,6 +171,22 @@ def apply_stopping_strings(reply, all_stop_strings):
     return reply, stop_found
 
 
+def find_stopping_newline(reply: str,
+                          reply_len: int,
+                          newlines_found: int,
+                          newlines_allowed: int) -> tuple[str, int, int, bool]:
+    """Finds the newline at which to stop text generation."""
+    new_reply_part = reply[reply_len:]
+    newline_position = new_reply_part.find('\n')
+    if newline_position != -1:
+        newlines_found += 1
+        if newlines_allowed and newlines_found == newlines_allowed:
+            reply = reply[:reply.rfind('\n')]
+            return reply, reply_len, newlines_found, True
+    reply_len += len(new_reply_part)
+    return reply, reply_len, newlines_found, False
+
+
 def _generate_reply(question, state, stopping_strings=None, is_chat=False):
     generate_func = apply_extensions('custom_generate_reply')
     if generate_func is None:
@@ -211,8 +227,15 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False):
         state = copy.deepcopy(state)
         state['stream'] = True
 
+    newlines_allowed = state['stop_at_newline']
+    newlines_found = 0
+    reply_len_so_far = 0
     for reply in generate_func(question, original_question, seed, state, stopping_strings, is_chat=is_chat):
         reply, stop_found = apply_stopping_strings(reply, all_stop_strings)
+        if newlines_allowed:
+            reply, reply_len_so_far, newlines_found, stop_found = find_stopping_newline(
+                reply=reply, reply_len=reply_len_so_far,
+                newlines_found=newlines_found, newlines_allowed=newlines_allowed)
         if is_stream:
             cur_time = time.time()
             if cur_time - last_update > 0.041666666666666664:  # Limit streaming to 24 fps
@@ -225,6 +248,10 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False):
     if not is_chat:
         reply = apply_extensions('output', reply, state)
 
+    # total_newlines = reply.count('\n')
+    # if newlines_allowed and newlines_found != total_newlines + 1 and newlines_found > newlines_allowed:
+    #     print('Wrong newline matching!')
+    # print(f'{newlines_allowed=} {newlines_found=} {total_newlines+1=}')
     yield reply
 
 

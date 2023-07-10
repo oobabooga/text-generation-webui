@@ -43,7 +43,7 @@ settings = {
     'greeting': '',
     'turn_template': '',
     'custom_stopping_strings': '',
-    'stop_at_newline': False,
+    'stop_at_newline': 0,
     'add_bos_token': True,
     'ban_eos_token': False,
     'skip_special_tokens': True,

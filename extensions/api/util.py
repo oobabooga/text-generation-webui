@@ -63,7 +63,7 @@ def build_parameters(body, chat=False):
         name1, name2, _, greeting, context, _ = load_character_memoized(character, str(body.get('your_name', shared.settings['name1'])), shared.settings['name2'], instruct=False)
         name1_instruct, name2_instruct, _, _, context_instruct, turn_template = load_character_memoized(instruction_template, '', '', instruct=True)
         generate_params.update({
-            'stop_at_newline': bool(body.get('stop_at_newline', shared.settings['stop_at_newline'])),
+            'stop_at_newline': int(bool(body.get('stop_at_newline', shared.settings['stop_at_newline']))),
             'chat_generation_attempts': int(body.get('chat_generation_attempts', shared.settings['chat_generation_attempts'])),
             'mode': str(body.get('mode', 'chat')),
             'name1': name1,

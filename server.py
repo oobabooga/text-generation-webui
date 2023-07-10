@@ -310,7 +310,11 @@ def create_chat_settings_menus():
                 shared.gradio['chat_generation_attempts'] = gr.Slider(minimum=shared.settings['chat_generation_attempts_min'], maximum=shared.settings['chat_generation_attempts_max'], value=shared.settings['chat_generation_attempts'], step=1, label='Generation attempts (for longer replies)', info='New generations will be called until either this number is reached or no new content is generated between two iterations.')
 
             with gr.Column():
-                shared.gradio['stop_at_newline'] = gr.Checkbox(value=shared.settings['stop_at_newline'], label='Stop generating at new line character')
+                shared.gradio['stop_at_newline'] = gr.Slider(
+                    0, 20, step=1, value=0,
+                    label='Stop generating at this many new line characters. '
+                          '0 = unlimited'
+                )
 
 
 def create_settings_menus(default_preset):

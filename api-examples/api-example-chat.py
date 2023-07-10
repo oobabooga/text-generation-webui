@@ -22,7 +22,7 @@ def run(user_input, history):
 
         'regenerate': False,
         '_continue': False,
-        'stop_at_newline': False,
+        'stop_at_newline':  0,
         'chat_generation_attempts': 1,
         'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
 
