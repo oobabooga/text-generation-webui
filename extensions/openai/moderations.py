@@ -57,7 +57,7 @@ def moderations(input):
         for ine in embeddings_model.encode([in_str]).tolist():
             category_scores = dict([ (C, mod_score(category_embeddings[C], ine)) for C in categories ])
             category_flags = dict([ (C, bool(category_scores[C] > flag_threshold)) for C in categories ])
-            flagged = any(category_flags)
+            flagged = any(category_flags.values())
 
             results['results'].extend([{
                 'categories': category_flags,
