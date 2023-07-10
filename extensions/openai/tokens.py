@@ -27,7 +27,7 @@ def token_encode(input, encoding_format = ''):
 def token_decode(tokens, encoding_format):
     #if isinstance(input, list):
 #    if encoding_format == "base64":
-#		tokens = base64_to_float_list(tokens)
+#         tokens = base64_to_float_list(tokens)
     output = decode(tokens)[0]
 
     return {

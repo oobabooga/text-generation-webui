@@ -54,6 +54,7 @@ def edits(instruction: str, input: str, temperature = 1.0, top_p = 1.0) -> dict:
     edit_task = instruction_template.format(instruction=instruction, input=input)
 
     truncation_length = shared.settings['truncation_length']
+    
     token_count = len(encode(edit_task)[0])
     max_tokens = truncation_length - token_count
 
@@ -67,6 +68,7 @@ def edits(instruction: str, input: str, temperature = 1.0, top_p = 1.0) -> dict:
     req_params['top_p'] = top_p
     req_params['seed'] = shared.settings.get('seed', req_params['seed'])
     req_params['add_bos_token'] = shared.settings.get('add_bos_token', req_params['add_bos_token'])
+    req_params['custom_stopping_strings'] = shared.settings['custom_stopping_strings']
 
     debug_msg({'edit_template': edit_task, 'req_params': req_params, 'token_count': token_count})
     

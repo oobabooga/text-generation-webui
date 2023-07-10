@@ -4,15 +4,11 @@ from modules.models import load_model, unload_model
 from modules.models_settings import (get_model_settings_from_yamls,
                                      update_model_parameters)
 
-from extensions.openai.embeddings import (st_model,
-                                          embedding_model)
+from extensions.openai.embeddings import get_embeddings_model_name
 from extensions.openai.errors import *
 
 def get_current_model_list() -> list:
     return [ shared.model_name ] # The real chat/completions model, maybe "None"
-
-def get_embeddings_model_list() -> list:
-    return [ st_model ] # The real sentence transformer embeddings model
 
 def get_pseudo_model_list() -> list:
     return [ # these are expected by so much, so include some here as a dummy
@@ -27,7 +23,7 @@ def load_model(model_name: str) -> dict:
         "owner": "self",
         "ready": True,
     }
-    if model_name not in get_pseudo_model_list() + get_embeddings_model_list() + get_current_model_list(): # Real model only
+    if model_name not in get_pseudo_model_list() + [ get_embeddings_model_name() ] + get_current_model_list(): # Real model only
         # No args. Maybe it works anyways!
         # TODO: hack some heuristics into args for better results
 
@@ -52,7 +48,7 @@ def load_model(model_name: str) -> dict:
 
 def list_models(is_legacy: bool = False) -> dict:
     # TODO: Lora's?
-    all_model_list = get_current_model_list() + get_embeddings_model_list() + get_pseudo_model_list() + get_available_models()
+    all_model_list = get_current_model_list() + [ get_embeddings_model_name() ] + get_pseudo_model_list() + get_available_models()
 
     models = {}
 

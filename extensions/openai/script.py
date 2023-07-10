@@ -60,15 +60,17 @@ class Handler(BaseHTTPRequestHandler):
     def end_sse(self):
         self.wfile.write('data: [DONE]\r\n\r\n'.encode('utf-8'))
 
-    def return_json(self, ret: dict, code: int = 200):
+    def return_json(self, ret: dict, code: int = 200, no_debug=False):
         self.send_response(code)
         self.send_access_control_headers()
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
 
         response = json.dumps(ret)
-        debug_msg(response)
-        self.wfile.write(response.encode('utf-8'))
+        r_utf8 = response.encode('utf-8')
+        self.wfile.write(r_utf8)
+        if not no_debug:
+            debug_msg(r_utf8)
 
     def openai_error(self, message, code = 500, error_type = 'APIError', param = '', internal_message = ''):
         
@@ -82,7 +84,7 @@ class Handler(BaseHTTPRequestHandler):
         }
         if internal_message:
             print(internal_message)
-            error_resp['internal_message'] = internal_message
+            #error_resp['internal_message'] = internal_message
 
         self.return_json(error_resp, code)
  
@@ -103,6 +105,9 @@ class Handler(BaseHTTPRequestHandler):
 
     @openai_error_handler
     def do_GET(self):
+        debug_msg(self.requestline)
+        debug_msg(self.headers)
+
         if self.path.startswith('/v1/engines') or self.path.startswith('/v1/models'):
             is_legacy = 'engines' in self.path
             is_list = self.path in ['/v1/engines', '/v1/models']
@@ -119,14 +124,15 @@ class Handler(BaseHTTPRequestHandler):
 
         elif '/billing/usage' in self.path:
             #  Ex. /v1/dashboard/billing/usage?start_date=2023-05-01&end_date=2023-05-31
-            self.return_json({"total_usage": 0})
+            self.return_json({"total_usage": 0}, no_debug=True)
 
         else:
             self.send_error(404)
 
     @openai_error_handler
     def do_POST(self):
-        debug_msg(self.headers)  # did you know... python-openai sends your linux kernel & python version?
+        debug_msg(self.requestline)
+        debug_msg(self.headers)
 
         content_length = int(self.headers['Content-Length'])
         body = json.loads(self.rfile.read(content_length).decode('utf-8'))
@@ -191,7 +197,7 @@ class Handler(BaseHTTPRequestHandler):
 
             response = OAIimages.generations(prompt=prompt, size=size, response_format=response_format, n=n)
 
-            self.return_json(response)
+            self.return_json(response, no_debug=True)
 
         elif '/embeddings' in self.path:
             encoding_format = body.get('encoding_format', '')
@@ -205,20 +211,22 @@ class Handler(BaseHTTPRequestHandler):
 
             response = OAIembeddings.embeddings(input, encoding_format)
 
-            self.return_json(response)
+            self.return_json(response, no_debug=True)
 
         elif '/moderations' in self.path:
             input = body['input']
+            if not input:
+                raise InvalidRequestError("Missing required argument input", params='input')
 
             response = OAImoderations.moderations(input)
 
-            self.return_json(response)
+            self.return_json(response, no_debug=True)
 
         elif self.path == '/api/v1/token-count':
             # NOT STANDARD. lifted from the api extension, but it's still very useful to calculate tokenized length client side.
             response = token_count(body['prompt'])
             
-            self.return_json(response)
+            self.return_json(response, no_debug=True)
 
         elif self.path == '/api/v1/token/encode':
             # NOT STANDARD. needed to support logit_bias, logprobs and token arrays for native models
@@ -226,7 +234,7 @@ class Handler(BaseHTTPRequestHandler):
             
             response = token_encode(body['input'], encoding_format)
             
-            self.return_json(response)
+            self.return_json(response, no_debug=True)
 
         elif self.path == '/api/v1/token/decode':
             # NOT STANDARD. needed to support logit_bias, logprobs and token arrays for native models
@@ -234,10 +242,9 @@ class Handler(BaseHTTPRequestHandler):
 
             response = token_decode(body['input'], encoding_format)
             
-            self.return_json(response)
+            self.return_json(response, no_debug=True)
 
         else:
-            print(self.path, self.headers)
             self.send_error(404)
 
 

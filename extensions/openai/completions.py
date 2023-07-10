@@ -66,7 +66,7 @@ def marshal_common_params(body):
     req_params['truncation_length'] = shared.settings['truncation_length']
     req_params['add_bos_token'] = shared.settings.get('add_bos_token', req_params['add_bos_token'])
     req_params['seed'] = shared.settings.get('seed', req_params['seed'])
-    
+    req_params['custom_stopping_strings'] = shared.settings['custom_stopping_strings']
 
     # OpenAI API Parameters
     # model - ignored for now, TODO: When we can reliably load a model or lora from a name only change this
@@ -228,8 +228,8 @@ def messages_to_prompt(body: dict, req_params: dict, max_tokens):
 def chat_completions(body: dict, is_legacy: bool=False) -> dict:
     # Chat Completions
     object_type = 'chat.completions'
-    created_time = int(time.time()*1000)
-    cmpl_id = "chatcmpl-%d" % (created_time)
+    created_time = int(time.time())
+    cmpl_id = "chatcmpl-%d" % (int(time.time()*1000000000))
     resp_list = 'data' if is_legacy else 'choices'
 
     # common params
@@ -300,8 +300,8 @@ def stream_chat_completions(body: dict, is_legacy: bool=False):
 
     # Chat Completions
     stream_object_type = 'chat.completions.chunk'
-    created_time = int(time.time()*1000)
-    cmpl_id = "chatcmpl-%d" % (created_time)
+    created_time = int(time.time())
+    cmpl_id = "chatcmpl-%d" % (int(time.time()*1000000000))
     resp_list = 'data' if is_legacy else 'choices'
 
     # common params
@@ -400,8 +400,8 @@ def completions(body: dict, is_legacy: bool=False):
     # Legacy
     # Text Completions
     object_type = 'text_completion'
-    created_time = int(time.time()*1000)
-    cmpl_id = "conv-%d" % (created_time)
+    created_time = int(time.time())
+    cmpl_id = "conv-%d" % (int(time.time()*1000000000))
     resp_list = 'data' if is_legacy else 'choices'
 
     # ... encoded as a string, array of strings, array of tokens, or array of token arrays.
@@ -491,8 +491,8 @@ def stream_completions(body: dict, is_legacy: bool=False):
     # Text Completions
     #object_type = 'text_completion'
     stream_object_type = 'text_completion.chunk'
-    created_time = int(time.time()*1000)
-    cmpl_id = "conv-%d" % (created_time)
+    created_time = int(time.time())
+    cmpl_id = "conv-%d" % (int(time.time()*1000000000))
     resp_list = 'data' if is_legacy else 'choices'
 
     # ... encoded as a string, array of strings, array of tokens, or array of token arrays.
