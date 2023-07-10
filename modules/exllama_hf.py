@@ -97,6 +97,11 @@ class ExllamaHF(PreTrainedModel):
         if shared.args.gpu_split:
             config.set_auto_map(shared.args.gpu_split)
             config.gpu_peer_fix = True
+
+        if shared.args.alpha_value:
+            config.alpha_value = shared.args.alpha_value
+            config.calculate_rotary_embedding_base()
+
         if torch.version.hip:
             config.rmsnorm_no_half2 = True
             config.rope_no_half2 = True
