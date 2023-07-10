@@ -7,7 +7,7 @@ from extensions.openai.embeddings import get_embeddings_model
 moderations_disabled = False # return 0/false
 category_embeddings = None
 antonym_embeddings = None
-categories = [ "hate", "hate/threatening", "self-harm", "sexual", "sexual/minors", "violence", "violence/graphic" ]
+categories = [ "sexual", "hate", "harassment", "self-harm", "sexual/minors", "hate/threatening", "violence/graphic", "self-harm/intent", "self-harm/instructions", "harassment/threatening", "violence" ]
 flag_threshold = 0.5
 
 
@@ -60,9 +60,9 @@ def moderations(input):
             flagged = any(category_flags.values())
 
             results['results'].extend([{
+                'flagged': flagged,
                 'categories': category_flags,
                 'category_scores': category_scores,
-                'flagged': flagged,
             }])
 
     print(results)
