@@ -54,7 +54,7 @@ def complex_model_load(model):
         'action': 'load',
         'model_name': model,
         'args': {
-            'gptq_for_llama': False, # Use AutoGPTQ by default, set to True for gptq-for-llama
+            'loader': 'AutoGPTQ',
 
             'bf16': False,
             'load_in_8bit': False,
@@ -74,7 +74,7 @@ def complex_model_load(model):
             'rwkv_strategy': None,
             'rwkv_cuda_on': False,
 
-            # b&b 4-bit 
+            # b&b 4-bit
             #'load_in_4bit': False,
             #'compute_dtype': 'float16',
             #'quant_type': 'nf4',
@@ -148,11 +148,11 @@ if __name__ == '__main__':
 
         except Exception as e:
             print (f"❌ {model} FAIL Exception: {repr(e)}")
-            
+
 
 # 0,1,1,2,3,5,8,13, is the fibonacci sequence, the next number is 21.
 # Some results below.
-""" $ ./model-api-example.py 
+""" $ ./model-api-example.py
 Model:  4bit_gpt4-x-alpaca-13b-native-4bit-128g-cuda
 Lora(s):  []
 truncation_length = 2048
