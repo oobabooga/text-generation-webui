@@ -126,8 +126,6 @@ def input_modifier(string):
     return string
 
 # Get and save the Stable Diffusion-generated picture
-
-
 def get_SD_pictures(description, character):
 
     global params
@@ -188,8 +186,6 @@ def get_SD_pictures(description, character):
 
 # TODO: how do I make the UI history ignore the resulting pictures (I don't want HTML to appear in history)
 # and replace it with 'text' for the purposes of logging?
-
-
 def output_modifier(string, state):
     """
     This function is applied to the model outputs.
