@@ -4,8 +4,9 @@ import requests
 
 HOST = '0.0.0.0:5000'
 
-def generate(prompt, tokens = 200):
-    request = { 'prompt': prompt, 'max_new_tokens': tokens }
+
+def generate(prompt, tokens=200):
+    request = {'prompt': prompt, 'max_new_tokens': tokens}
     response = requests.post(f'http://{HOST}/api/v1/generate', json=request)
 
     if response.status_code == 200:
@@ -23,7 +24,7 @@ def print_basic_model_info(response):
     print("Model: ", response['result']['model_name'])
     print("Lora(s): ", response['result']['lora_names'])
     for setting in basic_settings:
-        print(setting, "=",  response['result']['shared.settings'][setting])
+        print(setting, "=", response['result']['shared.settings'][setting])
 
 
 # model info
@@ -75,17 +76,17 @@ def complex_model_load(model):
             'rwkv_cuda_on': False,
 
             # b&b 4-bit
-            #'load_in_4bit': False,
-            #'compute_dtype': 'float16',
-            #'quant_type': 'nf4',
-            #'use_double_quant': False,
+            # 'load_in_4bit': False,
+            # 'compute_dtype': 'float16',
+            # 'quant_type': 'nf4',
+            # 'use_double_quant': False,
 
-            #"cpu": false,
-            #"auto_devices": false,
-            #"gpu_memory": null,
-            #"cpu_memory": null,
-            #"disk": false,
-            #"disk_cache_dir": "cache",
+            # "cpu": false,
+            # "auto_devices": false,
+            # "gpu_memory": null,
+            # "cpu_memory": null,
+            # "disk": false,
+            # "disk_cache_dir": "cache",
         },
     }
 
@@ -104,26 +105,25 @@ def complex_model_load(model):
         req['args']['load_in_8bit'] = True
     elif '-hf' in model or 'fp16' in model:
         if '7b' in model:
-            req['args']['bf16'] = True # for 24GB
+            req['args']['bf16'] = True  # for 24GB
         elif '13b' in model:
-            req['args']['load_in_8bit'] = True # for 24GB
+            req['args']['load_in_8bit'] = True  # for 24GB
     elif 'ggml' in model:
-        #req['args']['threads'] = 16
+        # req['args']['threads'] = 16
         if '7b' in model:
             req['args']['n_gpu_layers'] = 100
         elif '13b' in model:
             req['args']['n_gpu_layers'] = 100
         elif '30b' in model or '33b' in model:
-            req['args']['n_gpu_layers'] = 59 # 24GB
+            req['args']['n_gpu_layers'] = 59  # 24GB
         elif '65b' in model:
-            req['args']['n_gpu_layers'] = 42 # 24GB
+            req['args']['n_gpu_layers'] = 42  # 24GB
     elif 'rwkv' in model:
         req['args']['rwkv_cuda_on'] = True
         if '14b' in model:
-            req['args']['rwkv_strategy'] = 'cuda f16i8' # 24GB
+            req['args']['rwkv_strategy'] = 'cuda f16i8'  # 24GB
         else:
-            req['args']['rwkv_strategy'] = 'cuda f16' # 24GB
-
+            req['args']['rwkv_strategy'] = 'cuda f16'  # 24GB
 
     return model_api(req)
 
@@ -134,7 +134,7 @@ if __name__ == '__main__':
             resp = complex_model_load(model)
 
             if 'error' in resp:
-                print (f"❌ {model} FAIL Error: {resp['error']['message']}")
+                print(f"❌ {model} FAIL Error: {resp['error']['message']}")
                 continue
             else:
                 print_basic_model_info(resp)
@@ -142,12 +142,12 @@ if __name__ == '__main__':
             ans = generate("0,1,1,2,3,5,8,13,", tokens=2)
 
             if '21' in ans:
-                print (f"✅ {model} PASS ({ans})")
+                print(f"✅ {model} PASS ({ans})")
             else:
-                print (f"❌ {model} FAIL ({ans})")
+                print(f"❌ {model} FAIL ({ans})")
 
         except Exception as e:
-            print (f"❌ {model} FAIL Exception: {repr(e)}")
+            print(f"❌ {model} FAIL Exception: {repr(e)}")
 
 
 # 0,1,1,2,3,5,8,13, is the fibonacci sequence, the next number is 21.
