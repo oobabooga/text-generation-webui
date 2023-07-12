@@ -1,3 +1,8 @@
+import os
+
+os.environ["WANDB_MODE"] = "offline"
+os.environ["WANDB_DISABLED"] = "true"
+
 import json
 import math
 import random
@@ -517,6 +522,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         train_dataset=train_data,
         eval_dataset=eval_data,
         args=transformers.TrainingArguments(
+            report_to=None,
             per_device_train_batch_size=micro_batch_size,
             gradient_accumulation_steps=gradient_accumulation_steps,
             warmup_steps=math.ceil(warmup_steps / gradient_accumulation_steps),
