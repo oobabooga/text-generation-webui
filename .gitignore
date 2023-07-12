@@ -4,9 +4,11 @@ training/datasets
 extensions/silero_tts/outputs
 extensions/elevenlabs_tts/outputs
 extensions/sd_api_pictures/outputs
+extensions/multimodal/pipelines
 logs
 loras
 models
+presets
 repositories
 softprompts
 torch-dumps
@@ -16,12 +18,18 @@ torch-dumps
 venv/
 .venv/
 .vscode
+.idea/
 *.bak
 *.ipynb
 *.log
 
 settings.json
+settings.yaml
+notification.mp3
 img_bot*
 img_me*
 prompts/[0-9]*
 models/config-user.yaml
+
+.DS_Store
+Thumbs.db

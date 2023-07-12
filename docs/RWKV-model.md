@@ -8,6 +8,24 @@ https://github.com/BlinkDL/ChatRWKV
 
 ## Using RWKV in the web UI
 
+### Hugging Face weights
+
+Simply download the weights from https://huggingface.co/RWKV and load them as you would for any other model.
+
+There is a bug in transformers==4.29.2 that prevents RWKV from being loaded in 8-bit mode. You can install the dev branch to solve this bug: `pip install git+https://github.com/huggingface/transformers`
+
+### Original .pth weights
+
+The instructions below are from before RWKV was supported in transformers, and they are kept for legacy purposes. The old implementation is possibly faster, but it lacks the full range of samplers that the transformers library offers.
+
+#### 0. Install the RWKV library
+
+```
+pip install rwkv
+```
+
+`0.7.3` was the last version that I tested. If you experience any issues, try ```pip install rwkv==0.7.3```.
+
 #### 1. Download the model
 
 It is available in different sizes:
@@ -36,7 +54,7 @@ No additional steps are required. Just launch it as you would with any other mod
 python server.py --listen  --no-stream --model RWKV-4-Pile-169M-20220807-8023.pth
 ```
 
-## Setting a custom strategy
+#### Setting a custom strategy
 
 It is possible to have very fine control over the offloading and precision for the model with the `--rwkv-strategy` flag. Possible values include:
 
@@ -49,6 +67,6 @@ It is possible to have very fine control over the offloading and precision for t
 
 See the README for the PyPl package for more details: https://pypi.org/project/rwkv/
 
-## Compiling the CUDA kernel
+#### Compiling the CUDA kernel
 
 You can compile the CUDA kernel for the model with `--rwkv-cuda-on`. This should improve the performance a lot but I haven't been able to get it to work yet.

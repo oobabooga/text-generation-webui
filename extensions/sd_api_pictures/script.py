@@ -6,11 +6,13 @@ from datetime import date
 from pathlib import Path
 
 import gradio as gr
-import modules.shared as shared
 import requests
 import torch
-from modules.models import reload_model, unload_model
 from PIL import Image
+
+from modules import shared
+from modules.models import reload_model, unload_model
+from modules.ui import create_refresh_button
 
 torch._C._jit_set_profiling_mode(False)
 
@@ -31,9 +33,12 @@ params = {
     'hr_upscaler': 'ESRGAN_4x',
     'hr_scale': '1.0',
     'seed': -1,
-    'sampler_name': 'DDIM',
+    'sampler_name': 'DPM++ 2M Karras',
     'steps': 32,
-    'cfg_scale': 7
+    'cfg_scale': 7,
+    'textgen_prefix': 'Please provide a detailed and vivid description of [subject]',
+    'sd_checkpoint': ' ',
+    'checkpoint_list': [" "]
 }
 
 
@@ -72,11 +77,10 @@ def give_VRAM_priority(actor):
 if params['manage_VRAM']:
     give_VRAM_priority('set')
 
-samplers = ['DDIM', 'DPM++ 2M Karras']  # TODO: get the availible samplers with http://{address}}/sdapi/v1/samplers
 SD_models = ['NeverEndingDream']  # TODO: get with http://{address}}/sdapi/v1/sd-models and allow user to select
 
-streaming_state = shared.args.no_stream  # remember if chat streaming was enabled
 picture_response = False  # specifies if the next model response should appear as a picture
+
 
 def remove_surrounded_chars(string):
     # this expression matches to 'as few symbols as possible (0 upwards) between any asterisks' OR
@@ -90,6 +94,13 @@ def triggers_are_in(string):
     # a whole word of image|pic|picture|photo|snap|snapshot|selfie|meme(s),
     # (?aims) are regex parser flags
     return bool(re.search('(?aims)(send|mail|message|me)\\b.+?\\b(image|pic(ture)?|photo|snap(shot)?|selfie|meme)s?\\b', string))
+
+
+def state_modifier(state):
+    if picture_response:
+        state['stream'] = False
+
+    return state
 
 
 def input_modifier(string):
@@ -108,14 +119,14 @@ def input_modifier(string):
         string = string.lower()
         if "of" in string:
             subject = string.split('of', 1)[1]  # subdivide the string once by the first 'of' instance and get what's coming after it
-            string = "Please provide a detailed and vivid description of " + subject
+            string = params['textgen_prefix'].replace("[subject]", subject)
         else:
-            string = "Please provide a detailed description of your appearance, your surroundings and what you are doing right now"
+            string = params['textgen_prefix'].replace("[subject]", "your appearance, your surroundings and what you are doing right now")
 
     return string
 
 # Get and save the Stable Diffusion-generated picture
-def get_SD_pictures(description):
+def get_SD_pictures(description, character):
 
     global params
 
@@ -149,7 +160,7 @@ def get_SD_pictures(description):
         if params['save_img']:
             img_data = base64.b64decode(img_str)
 
-            variadic = f'{date.today().strftime("%Y_%m_%d")}/{shared.character}_{int(time.time())}'
+            variadic = f'{date.today().strftime("%Y_%m_%d")}/{character}_{int(time.time())}'
             output_file = Path(f'extensions/sd_api_pictures/outputs/{variadic}.png')
             output_file.parent.mkdir(parents=True, exist_ok=True)
 
@@ -175,7 +186,7 @@ def get_SD_pictures(description):
 
 # TODO: how do I make the UI history ignore the resulting pictures (I don't want HTML to appear in history)
 # and replace it with 'text' for the purposes of logging?
-def output_modifier(string):
+def output_modifier(string, state):
     """
     This function is applied to the model outputs.
     """
@@ -202,7 +213,7 @@ def output_modifier(string):
     else:
         text = string
 
-    string = get_SD_pictures(string) + "\n" + text
+    string = get_SD_pictures(string, state['character_menu']) + "\n" + text
 
     return string
 
@@ -218,14 +229,13 @@ def bot_prefix_modifier(string):
 
 
 def toggle_generation(*args):
-    global picture_response, shared, streaming_state
+    global picture_response, shared
 
     if not args:
         picture_response = not picture_response
     else:
         picture_response = args[0]
 
-    shared.args.no_stream = True if picture_response else streaming_state  # Disable streaming cause otherwise the SD-generated picture would return as a dud
     shared.processing_message = "*Is sending a picture...*" if picture_response else "*Is typing...*"
 
 
@@ -239,7 +249,6 @@ def filter_address(address):
 
 
 def SD_api_address_update(address):
-
     global params
 
     msg = "✔️ SD API is found on:"
@@ -253,6 +262,50 @@ def SD_api_address_update(address):
         msg = "❌ No SD API endpoint on:"
 
     return gr.Textbox.update(label=msg)
+
+
+def custom_css():
+    path_to_css = Path(__file__).parent.resolve() / 'style.css'
+    return open(path_to_css, 'r').read()
+
+
+def get_checkpoints():
+    global params
+
+    try:
+        models = requests.get(url=f'{params["address"]}/sdapi/v1/sd-models')
+        options = requests.get(url=f'{params["address"]}/sdapi/v1/options')
+        options_json = options.json()
+        params['sd_checkpoint'] = options_json['sd_model_checkpoint']
+        params['checkpoint_list'] = [result["title"] for result in models.json()]
+    except:
+        params['sd_checkpoint'] = ""
+        params['checkpoint_list'] = []
+
+    return gr.update(choices=params['checkpoint_list'], value=params['sd_checkpoint'])
+
+
+def load_checkpoint(checkpoint):
+    payload = {
+        "sd_model_checkpoint": checkpoint
+    }
+
+    try:
+        requests.post(url=f'{params["address"]}/sdapi/v1/options', json=payload)
+    except:
+        pass
+
+
+def get_samplers():
+    try:
+        response = requests.get(url=f'{params["address"]}/sdapi/v1/samplers')
+        response.raise_for_status()
+        samplers = [x["name"] for x in response.json()]
+    except:
+        samplers = []
+
+    return samplers
+
 
 def ui():
 
@@ -269,28 +322,33 @@ def ui():
 
             force_pic = gr.Button("Force the picture response")
             suppr_pic = gr.Button("Suppress the picture response")
+        with gr.Row():
+            checkpoint = gr.Dropdown(params['checkpoint_list'], value=params['sd_checkpoint'], label="Checkpoint", type="value")
+            update_checkpoints = gr.Button("Get list of checkpoints")
 
         with gr.Accordion("Generation parameters", open=False):
             prompt_prefix = gr.Textbox(placeholder=params['prompt_prefix'], value=params['prompt_prefix'], label='Prompt Prefix (best used to describe the look of the character)')
+            textgen_prefix = gr.Textbox(placeholder=params['textgen_prefix'], value=params['textgen_prefix'], label='textgen prefix (type [subject] where the subject should be placed)')
             negative_prompt = gr.Textbox(placeholder=params['negative_prompt'], value=params['negative_prompt'], label='Negative Prompt')
             with gr.Row():
                 with gr.Column():
                     width = gr.Slider(256, 768, value=params['width'], step=64, label='Width')
                     height = gr.Slider(256, 768, value=params['height'], step=64, label='Height')
-                with gr.Column():
-                    sampler_name = gr.Textbox(placeholder=params['sampler_name'], value=params['sampler_name'], label='Sampling method', elem_id="sampler_box")
-                    steps = gr.Slider(1, 150, value=params['steps'], step=1, label="Sampling steps")
+                with gr.Column(variant="compact", elem_id="sampler_col"):
+                    with gr.Row(elem_id="sampler_row"):
+                        sampler_name = gr.Dropdown(value=params['sampler_name'], label='Sampling method', elem_id="sampler_box")
+                        create_refresh_button(sampler_name, lambda: None, lambda: {'choices': get_samplers()}, 'refresh-button')
+                    steps = gr.Slider(1, 150, value=params['steps'], step=1, label="Sampling steps", elem_id="steps_box")
             with gr.Row():
                 seed = gr.Number(label="Seed", value=params['seed'], elem_id="seed_box")
                 cfg_scale = gr.Number(label="CFG Scale", value=params['cfg_scale'], elem_id="cfg_box")
                 with gr.Column() as hr_options:
                     restore_faces = gr.Checkbox(value=params['restore_faces'], label='Restore faces')
-                    enable_hr = gr.Checkbox(value=params['enable_hr'], label='Hires. fix')                    
+                    enable_hr = gr.Checkbox(value=params['enable_hr'], label='Hires. fix')
             with gr.Row(visible=params['enable_hr'], elem_classes="hires_opts") as hr_options:
-                    hr_scale = gr.Slider(1, 4, value=params['hr_scale'], step=0.1, label='Upscale by')
-                    denoising_strength = gr.Slider(0, 1, value=params['denoising_strength'], step=0.01, label='Denoising strength')
-                    hr_upscaler = gr.Textbox(placeholder=params['hr_upscaler'], value=params['hr_upscaler'], label='Upscaler')                    
-
+                hr_scale = gr.Slider(1, 4, value=params['hr_scale'], step=0.1, label='Upscale by')
+                denoising_strength = gr.Slider(0, 1, value=params['denoising_strength'], step=0.01, label='Denoising strength')
+                hr_upscaler = gr.Textbox(placeholder=params['hr_upscaler'], value=params['hr_upscaler'], label='Upscaler')
 
     # Event functions to update the parameters in the backend
     address.change(lambda x: params.update({"address": filter_address(x)}), address, None)
@@ -302,6 +360,7 @@ def ui():
 
     address.submit(fn=SD_api_address_update, inputs=address, outputs=address)
     prompt_prefix.change(lambda x: params.update({"prompt_prefix": x}), prompt_prefix, None)
+    textgen_prefix.change(lambda x: params.update({"textgen_prefix": x}), textgen_prefix, None)
     negative_prompt.change(lambda x: params.update({"negative_prompt": x}), negative_prompt, None)
     width.change(lambda x: params.update({"width": x}), width, None)
     height.change(lambda x: params.update({"height": x}), height, None)
@@ -311,6 +370,9 @@ def ui():
     hr_upscaler.change(lambda x: params.update({"hr_upscaler": x}), hr_upscaler, None)
     enable_hr.change(lambda x: params.update({"enable_hr": x}), enable_hr, None)
     enable_hr.change(lambda x: hr_options.update(visible=params["enable_hr"]), enable_hr, hr_options)
+    update_checkpoints.click(get_checkpoints, None, checkpoint)
+    checkpoint.change(lambda x: params.update({"sd_checkpoint": x}), checkpoint, None)
+    checkpoint.change(load_checkpoint, checkpoint, None)
 
     sampler_name.change(lambda x: params.update({"sampler_name": x}), sampler_name, None)
     steps.change(lambda x: params.update({"steps": x}), steps, None)

@@ -9,26 +9,12 @@ import transformers
 import modules.shared as shared
 
 
-# Copied from https://github.com/PygmalionAI/gradio-ui/
-class _SentinelTokenStoppingCriteria(transformers.StoppingCriteria):
-
-    def __init__(self, sentinel_token_ids: list, starting_idx: int):
+class _StopEverythingStoppingCriteria(transformers.StoppingCriteria):
+    def __init__(self):
         transformers.StoppingCriteria.__init__(self)
-        self.sentinel_token_ids = sentinel_token_ids
-        self.starting_idx = starting_idx
 
     def __call__(self, input_ids: torch.LongTensor, _scores: torch.FloatTensor) -> bool:
-        for sample in input_ids:
-            trimmed_sample = sample[self.starting_idx:]
-
-            for i in range(len(self.sentinel_token_ids)):
-                # Can't unfold, output is still too tiny. Skip.
-                if trimmed_sample.shape[-1] < self.sentinel_token_ids[i].shape[-1]:
-                    continue
-                for window in trimmed_sample.unfold(0, self.sentinel_token_ids[i].shape[-1], 1):
-                    if torch.all(torch.eq(self.sentinel_token_ids[i][0], window)):
-                        return True
-        return False
+        return shared.stop_everything
 
 
 class Stream(transformers.StoppingCriteria):
@@ -46,14 +32,17 @@ class Iteratorize:
     """
     Transforms a function that takes a callback
     into a lazy iterator (generator).
+
+    Adapted from: https://stackoverflow.com/a/9969000
     """
 
-    def __init__(self, func, kwargs={}, callback=None):
+    def __init__(self, func, args=None, kwargs=None, callback=None):
         self.mfunc = func
         self.c_callback = callback
         self.q = Queue()
         self.sentinel = object()
-        self.kwargs = kwargs
+        self.args = args or []
+        self.kwargs = kwargs or {}
         self.stop_now = False
 
         def _callback(val):
@@ -63,7 +52,7 @@ class Iteratorize:
 
         def gentask():
             try:
-                ret = self.mfunc(callback=_callback, **self.kwargs)
+                ret = self.mfunc(callback=_callback, *args, **self.kwargs)
             except ValueError:
                 pass
             except:
