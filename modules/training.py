@@ -17,7 +17,6 @@ from pathlib import Path
 import gradio as gr
 import torch
 import transformers
-
 from modules.models import load_model, unload_model
 
 from datasets import Dataset, load_dataset
@@ -64,7 +63,6 @@ train_template = {}
 
 WANT_INTERRUPT = False
 PARAMETERS = ["lora_name", "always_override", "save_steps", "micro_batch_size", "batch_size", "epochs", "learning_rate", "lr_scheduler_type", "lora_rank", "lora_alpha", "lora_dropout", "cutoff_len", "dataset", "eval_dataset", "format", "eval_steps", "raw_text_file", "overlap_len", "newline_favor_len", "higher_rank_limit", "warmup_steps", "optimizer", "hard_cut_string", "train_only_after", "stop_at_loss", "add_eos_token", "min_chars", "report_to"]
-
 
 def create_train_interface():
     with gr.Tab('Train LoRA', elem_id='lora-train-tab'):
@@ -159,7 +157,9 @@ def create_train_interface():
             refresh_table = gr.Button('Refresh the table', elem_classes="small-button")
 
     # Training events
+
     all_params = [lora_name, always_override, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lr_scheduler_type, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, higher_rank_limit, warmup_steps, optimizer, hard_cut_string, train_only_after, stop_at_loss, add_eos_token, min_chars, report_to]
+
     copy_from.change(do_copy_params, [copy_from] + all_params, all_params)
     start_button.click(do_train, all_params, output)
     stop_button.click(do_interrupt, None, None, queue=False)
@@ -266,6 +266,7 @@ def calc_trainable_parameters(model):
             trainable_params += num_params
 
     return trainable_params, all_param
+
 
 def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lr_scheduler_type: str, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, higher_rank_limit: bool, warmup_steps: int, optimizer: str, hard_cut_string: str, train_only_after: str, stop_at_loss: float, add_eos_token: bool, min_chars: int, report_to: str):
 
@@ -387,8 +388,8 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
                     logger.info(f"Loaded training file: {file_path.name}")
         else:
-        with open(clean_path('training/datasets', f'{raw_text_file}.txt'), 'r', encoding='utf-8') as file:
-            raw_text = file.read().replace('\r', '')
+            with open(clean_path('training/datasets', f'{raw_text_file}.txt'), 'r', encoding='utf-8') as file:
+                raw_text = file.read().replace('\r', '')
 
         cut_string = hard_cut_string.replace('\\n', '\n')
         out_tokens = []
@@ -414,7 +415,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
                 return
 
             out_tokens.extend(split_chunks(tokens, cutoff_len, step))
-                    
+
         if eos_added>0:
             print(f"EOS added to {eos_added} text blocks")
 
@@ -624,9 +625,11 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     yield "Starting..."
 
     lora_trainable_param, lora_all_param = calc_trainable_parameters(lora_model)
+
     projections_string = ", ".join([projection.replace("_proj", "") for projection in model_to_lora_modules[model_id]])
 
     print(f"Training '{model_id}' model using ({projections_string}) projections")
+
     if lora_all_param > 0:
         print(f"Trainable params: {lora_trainable_param:,d} ({100 * lora_trainable_param / lora_all_param:.4f} %), All params: {lora_all_param:,d} (Model: {model_all_params:,d})")
 

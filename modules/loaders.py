@@ -34,6 +34,7 @@ loaders_and_params = {
         'n_batch',
         'threads',
         'no_mmap',
+        'low_vram',
         'mlock',
         'llama_cpp_seed',
     ],
