@@ -369,12 +369,12 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             for file_path in file_paths:
                 if file_path.is_file():
                     with file_path.open('r', encoding='utf-8') as file:
-                        raw_text += file.read()
+                        raw_text += file.read().replace('\r', '')
 
                     logger.info(f"Loaded training file: {file_path.name}")
         else:
             with open(clean_path('training/datasets', f'{raw_text_file}.txt'), 'r', encoding='utf-8') as file:
-                raw_text = file.read()
+                raw_text = file.read().replace('\r', '')
 
         cut_string = hard_cut_string.replace('\\n', '\n')
         out_tokens = []
