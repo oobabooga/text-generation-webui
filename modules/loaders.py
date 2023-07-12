@@ -34,6 +34,7 @@ loaders_and_params = {
         'n_batch',
         'threads',
         'no_mmap',
+        'low_vram',
         'mlock',
         'llama_cpp_seed',
     ],
@@ -57,12 +58,14 @@ loaders_and_params = {
         'gpu_split',
         'max_seq_len',
         'compress_pos_emb',
+        'alpha_value',
         'exllama_info',
     ],
     'ExLlama_HF' : [
         'gpu_split',
         'max_seq_len',
         'compress_pos_emb',
+        'alpha_value',
         'exllama_HF_info',
     ]
 }

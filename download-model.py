@@ -18,14 +18,20 @@ from pathlib import Path
 
 import requests
 import tqdm
+from requests.adapters import HTTPAdapter
 from tqdm.contrib.concurrent import thread_map
 
 
 class ModelDownloader:
-    def __init__(self):
+    def __init__(self, max_retries = 5):
         self.s = requests.Session()
+        if max_retries:
+            self.s.mount('https://cdn-lfs.huggingface.co', HTTPAdapter(max_retries=max_retries))
+            self.s.mount('https://huggingface.co', HTTPAdapter(max_retries=max_retries))
         if os.getenv('HF_USER') is not None and os.getenv('HF_PASS') is not None:
             self.s.auth = (os.getenv('HF_USER'), os.getenv('HF_PASS'))
+        if os.getenv('HF_TOKEN') is not None:
+            self.s.headers = {'authorization': f'Bearer {os.getenv("HF_TOKEN")}'}
 
     def sanitize_model_and_branch_names(self, model, branch):
         if model[-1] == '/':
@@ -69,11 +75,11 @@ class ModelDownloader:
                 if not is_lora and fname.endswith(('adapter_config.json', 'adapter_model.bin')):
                     is_lora = True
 
-                is_pytorch = re.match("(pytorch|adapter)_model.*\.bin", fname)
+                is_pytorch = re.match("(pytorch|adapter|gptq)_model.*\.bin", fname)
                 is_safetensors = re.match(".*\.safetensors", fname)
                 is_pt = re.match(".*\.pt", fname)
                 is_ggml = re.match(".*ggml.*\.bin", fname)
-                is_tokenizer = re.match("(tokenizer|ice).*\.model", fname)
+                is_tokenizer = re.match("(tokenizer|ice|spiece).*\.model", fname)
                 is_text = re.match(".*\.(txt|json|py|md)", fname) or is_tokenizer
                 if any((is_pytorch, is_safetensors, is_pt, is_ggml, is_tokenizer, is_text)):
                     if 'lfs' in dict[i]:
@@ -212,6 +218,7 @@ if __name__ == '__main__':
     parser.add_argument('--output', type=str, default=None, help='The folder where the model should be saved.')
     parser.add_argument('--clean', action='store_true', help='Does not resume the previous download.')
     parser.add_argument('--check', action='store_true', help='Validates the checksums of model files.')
+    parser.add_argument('--max-retries', type=int, default=5, help='Max retries count when get error in download time.')
     args = parser.parse_args()
 
     branch = args.branch
@@ -221,7 +228,7 @@ if __name__ == '__main__':
         print("Error: Please specify the model you'd like to download (e.g. 'python download-model.py facebook/opt-1.3b').")
         sys.exit()
 
-    downloader = ModelDownloader()
+    downloader = ModelDownloader(max_retries=args.max_retries)
     # Cleaning up the model/branch names
     try:
         model, branch = downloader.sanitize_model_and_branch_names(model, branch)

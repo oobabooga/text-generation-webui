@@ -193,6 +193,7 @@ Optionally, you can use the following command-line flags:
 | `-h`, `--help`                             | Show this help message and exit. |
 | `--notebook`                               | Launch the web UI in notebook mode, where the output is written to the same text box as the input. |
 | `--chat`                                   | Launch the web UI in chat mode. |
+| `--multi-user`                             | Multi-user mode. Chat histories are not saved or automatically loaded. WARNING: this is highly experimental. |
 | `--character CHARACTER`                    | The name of the character to load in chat mode by default. |
 | `--model MODEL`                            | Name of the model to load by default. |
 | `--lora LORA [LORA ...]`                   | The list of LoRAs to load. If you want to load more than one LoRA, write the names separated by spaces. |
@@ -268,6 +269,7 @@ Optionally, you can use the following command-line flags:
 |`--gpu-split`     | Comma-separated list of VRAM (in GB) to use per GPU device for model layers, e.g. `20,7,7` |
 |`--max_seq_len MAX_SEQ_LEN`           | Maximum sequence length. |
 |`--compress_pos_emb COMPRESS_POS_EMB` | Positional embeddings compression factor. Should typically be set to max_seq_len / 2048. |
+|`--alpha_value ALPHA_VALUE`           | Positional embeddings alpha factor for NTK RoPE scaling. Same as above. Use either this or compress_pos_emb, not both. `
 
 #### GPTQ-for-LLaMa
 
