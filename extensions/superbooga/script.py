@@ -69,7 +69,7 @@ def feed_url_into_collector(urls, chunk_len, chunk_sep, strong_cleanup, threads)
     cumulative += 'Processing the HTML sources...'
     yield cumulative
     for content in contents:
-        soup = BeautifulSoup(content, features="html.parser")
+        soup = BeautifulSoup(content, features="lxml")
         for script in soup(["script", "style"]):
             script.extract()
 
@@ -113,7 +113,7 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
         if len(history['internal']) > params['chunk_count'] and user_input != '':
             chunks = []
             hist_size = len(history['internal'])
-            for i in range(hist_size-1):
+            for i in range(hist_size - 1):
                 chunks.append(make_single_exchange(i))
 
             add_chunks_to_collector(chunks, chat_collector)

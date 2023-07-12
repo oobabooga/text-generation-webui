@@ -15,7 +15,7 @@ def run(prompt):
 
         # Generation params. If 'preset' is set to different than 'None', the values
         # in presets/preset-name.yaml are used instead of the individual numbers.
-        'preset': 'None',  
+        'preset': 'None',
         'do_sample': True,
         'temperature': 0.7,
         'top_p': 0.1,

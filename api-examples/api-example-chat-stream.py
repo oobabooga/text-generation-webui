@@ -23,7 +23,8 @@ async def run(user_input, history):
         'history': history,
         'mode': 'instruct',  # Valid options: 'chat', 'chat-instruct', 'instruct'
         'character': 'Example',
-        'instruction_template': 'Vicuna-v1.1',
+        'instruction_template': 'Vicuna-v1.1',  # Will get autodetected if unset
+        # 'context_instruct': '',  # Optional
         'your_name': 'You',
 
         'regenerate': False,
@@ -34,7 +35,7 @@ async def run(user_input, history):
 
         # Generation params. If 'preset' is set to different than 'None', the values
         # in presets/preset-name.yaml are used instead of the individual numbers.
-        'preset': 'None',  
+        'preset': 'None',
         'do_sample': True,
         'temperature': 0.7,
         'top_p': 0.1,

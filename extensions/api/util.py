@@ -59,7 +59,10 @@ def build_parameters(body, chat=False):
 
     if chat:
         character = body.get('character')
-        instruction_template = body.get('instruction_template')
+        instruction_template = body.get('instruction_template', shared.settings['instruction_template'])
+        if str(instruction_template) == "None":
+            instruction_template = "Vicuna-v1.1"
+
         name1, name2, _, greeting, context, _ = load_character_memoized(character, str(body.get('your_name', shared.settings['name1'])), shared.settings['name2'], instruct=False)
         name1_instruct, name2_instruct, _, _, context_instruct, turn_template = load_character_memoized(instruction_template, '', '', instruct=True)
         generate_params.update({
@@ -72,7 +75,7 @@ def build_parameters(body, chat=False):
             'greeting': greeting,
             'name1_instruct': name1_instruct,
             'name2_instruct': name2_instruct,
-            'context_instruct': context_instruct,
+            'context_instruct': body.get('context_instruct', context_instruct),
             'turn_template': turn_template,
             'chat-instruct_command': str(body.get('chat-instruct_command', shared.settings['chat-instruct_command'])),
             'history': body.get('history', {'internal': [], 'visible': []})

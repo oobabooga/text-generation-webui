@@ -1,18 +1,23 @@
+import os
+
+os.environ["WANDB_MODE"] = "offline"
+# os.environ["WANDB_DISABLED"] = "true"
+
 import json
 import math
 import random
+import shutil
 import sys
 import threading
 import time
 import traceback
+from datetime import datetime
 from pathlib import Path
 
 import gradio as gr
 import torch
 import transformers
-
-import shutil
-from datetime import datetime
+from modules.models import load_model, unload_model
 
 from datasets import Dataset, load_dataset
 from peft import (
@@ -29,6 +34,7 @@ from modules.evaluate import (
     save_past_evaluations
 )
 from modules.logging_colors import logger
+from modules.utils import natural_keys
 
 # This mapping is from a very recent commit, not yet released.
 # If not available, default to a backup map for some common model types.
@@ -56,7 +62,7 @@ train_log = {}
 train_template = {}
 
 WANT_INTERRUPT = False
-PARAMETERS = ["lora_name", "always_override", "save_steps", "micro_batch_size", "batch_size", "epochs", "learning_rate", "lr_scheduler_type", "lora_rank", "lora_alpha", "lora_dropout", "cutoff_len", "dataset", "eval_dataset", "format", "eval_steps", "raw_text_file", "overlap_len", "newline_favor_len", "higher_rank_limit", "warmup_steps", "optimizer", "hard_cut_string", "train_only_after", "stop_at_loss"]
+PARAMETERS = ["lora_name", "always_override", "save_steps", "micro_batch_size", "batch_size", "epochs", "learning_rate", "lr_scheduler_type", "lora_rank", "lora_alpha", "lora_dropout", "cutoff_len", "dataset", "eval_dataset", "format", "eval_steps", "raw_text_file", "overlap_len", "newline_favor_len", "higher_rank_limit", "warmup_steps", "optimizer", "hard_cut_string", "train_only_after", "stop_at_loss", "add_eos_token", "min_chars", "report_to"]
 
 
 def create_train_interface():
@@ -104,6 +110,7 @@ def create_train_interface():
                 raw_text_file = gr.Dropdown(choices=utils.get_datasets('training/datasets', 'txt'), value='None', label='Text file', info='The raw text file to use for training.')
                 ui.create_refresh_button(raw_text_file, lambda: None, lambda: {'choices': utils.get_datasets('training/datasets', 'txt')}, 'refresh-button')
                 hard_cut_string = gr.Textbox(label='Hard Cut String', value='\\n\\n\\n', info='String that indicates a hard cut between text parts. Helps prevent unwanted overlap.')
+                min_chars = gr.Number(label='Ignore small blocks', value=0, info='Ignore Hard Cut blocks that have less or equal characters than this number')
 
             with gr.Row():
                 overlap_len = gr.Slider(label='Overlap Length', minimum=0, maximum=512, value=128, step=16, info='Overlap length - ie how many tokens from the prior chunk of text to include into the next chunk. (The chunks themselves will be of a size determined by Cutoff Length below). Setting overlap to exactly half the cutoff length may be ideal.')
@@ -115,9 +122,12 @@ def create_train_interface():
             optimizer = gr.Dropdown(label='Optimizer', value='adamw_torch', choices=['adamw_hf', 'adamw_torch', 'adamw_torch_fused', 'adamw_torch_xla', 'adamw_apex_fused', 'adafactor', 'adamw_bnb_8bit', 'adamw_anyprecision', 'sgd', 'adagrad'], info='Different optimizer implementation options, for advanced users. Effects of different options are not well documented yet.')
             train_only_after = gr.Textbox(label='Train Only After', value='', info='Only consider text *after* this string in any given chunk for training. For Alpaca datasets, use "### Response:" to only train the response and ignore the input.')
             stop_at_loss = gr.Slider(label='Stop at loss', minimum=0.0, maximum=3.0, step=0.1, value=0.00, info='The process will automatically stop once the desired loss value is reached. (reasonable numbers are 1.5-1.8)')
+            add_eos_token = gr.Checkbox(label='Add EOS token', value=False, info="Adds EOS token for each dataset item. In case of raw text, the EOS will be added at the Hard Cut")
 
             with gr.Row():
                 higher_rank_limit = gr.Checkbox(label='Enable higher ranks', value=False, info='If checked, changes Rank/Alpha slider above to go much higher. This will not work without a datacenter-class GPU.')
+            with gr.Row():
+                report_to = gr.Radio(label="Save detailed logs with", value="None", choices=["None", "wandb", "tensorboard"], interactive=True)
 
         with gr.Row():
             start_button = gr.Button("Start LoRA Training")
@@ -148,7 +158,9 @@ def create_train_interface():
             refresh_table = gr.Button('Refresh the table', elem_classes="small-button")
 
     # Training events
-    all_params = [lora_name, always_override, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lr_scheduler_type, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, higher_rank_limit, warmup_steps, optimizer, hard_cut_string, train_only_after, stop_at_loss]
+
+    all_params = [lora_name, always_override, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lr_scheduler_type, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, higher_rank_limit, warmup_steps, optimizer, hard_cut_string, train_only_after, stop_at_loss, add_eos_token, min_chars, report_to]
+
     copy_from.change(do_copy_params, [copy_from] + all_params, all_params)
     start_button.click(do_train, all_params, output)
     stop_button.click(do_interrupt, None, None, queue=False)
@@ -223,7 +235,7 @@ def backup_adapter(input_folder):
             creation_date_str = creation_date.strftime("Backup-%Y-%m-%d")
 
             # Create the new subfolder
-            subfolder_path = Path(f"{input_folder}/{creation_date_str}") 
+            subfolder_path = Path(f"{input_folder}/{creation_date_str}")
             subfolder_path.mkdir(parents=True, exist_ok=True)
 
             # Check if the file already exists in the subfolder
@@ -240,6 +252,7 @@ def backup_adapter(input_folder):
     except Exception as e:
         print("An error occurred in backup_adapter:", str(e))
 
+
 def calc_trainable_parameters(model):
     trainable_params = 0
     all_param = 0
@@ -252,11 +265,11 @@ def calc_trainable_parameters(model):
         all_param += num_params
         if param.requires_grad:
             trainable_params += num_params
-    
-    return trainable_params,all_param
+
+    return trainable_params, all_param
 
 
-def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lr_scheduler_type: str, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, higher_rank_limit: bool, warmup_steps: int, optimizer: str, hard_cut_string: str, train_only_after: str, stop_at_loss: float):
+def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lr_scheduler_type: str, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, higher_rank_limit: bool, warmup_steps: int, optimizer: str, hard_cut_string: str, train_only_after: str, stop_at_loss: float, add_eos_token: bool, min_chars: int, report_to: str):
 
     if shared.args.monkey_patch:
         from monkeypatch.peft_tuners_lora_monkey_patch import (
@@ -314,14 +327,22 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
     def encode(text, add_bos_token):
         result = shared.tokenizer.encode(text, truncation=True, max_length=cutoff_len)
+        # Check if the first two tokens are BOS
+        if len(result) >= 2 and result[:2] == [shared.tokenizer.bos_token_id, shared.tokenizer.bos_token_id]:
+            result = result[1:]
+
         if not add_bos_token and result[0] == shared.tokenizer.bos_token_id:
             result = result[1:]
         return result
 
-    def tokenize(prompt):
+    def tokenize(prompt, append_eos_token=False):
 
         if train_only_after == '' or train_only_after not in prompt:
             input_ids = encode(prompt, True)
+
+            if append_eos_token and input_ids[-1] != shared.tokenizer.eos_token_id and len(input_ids) < cutoff_len:
+                input_ids.append(shared.tokenizer.eos_token_id)
+
             input_ids = [shared.tokenizer.pad_token_id] * (cutoff_len - len(input_ids)) + input_ids
             labels = [1] * len(input_ids)
 
@@ -329,6 +350,9 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             ind = prompt.index(train_only_after) + len(train_only_after)
             before_tokens = encode(prompt[:ind], True)
             after_tokens = encode(prompt[ind:], False)
+
+            if append_eos_token and after_tokens[-1] != shared.tokenizer.eos_token_id:
+                after_tokens.append(shared.tokenizer.eos_token_id)
 
             full_length = len(after_tokens) + len(before_tokens)
             if full_length > cutoff_len:
@@ -350,31 +374,46 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
     # == Prep the dataset, format, etc ==
     if raw_text_file not in ['None', '']:
-        logger.info("Loading raw text file dataset...")
-
         train_template["template_type"] = "raw_text"
+        logger.info("Loading raw text file dataset...")
+        fullpath = clean_path('training/datasets', f'{raw_text_file}')
+        fullpath = Path(fullpath)
+        if fullpath.is_dir():
+            logger.info('Training path directory {}'.format(raw_text_file))
+            raw_text = ""
+            file_paths = sorted(fullpath.glob('*.txt'), key=lambda path: natural_keys(path.name))
+            for file_path in file_paths:
+                if file_path.is_file():
+                    with file_path.open('r', encoding='utf-8') as file:
+                        raw_text += file.read().replace('\r', '')
 
-        with open(clean_path('training/datasets', f'{raw_text_file}.txt'), 'r', encoding='utf-8') as file:
-            raw_text = file.read().replace('\r', '')
+                    logger.info(f"Loaded training file: {file_path.name}")
+        else:
+            with open(clean_path('training/datasets', f'{raw_text_file}.txt'), 'r', encoding='utf-8') as file:
+                raw_text = file.read().replace('\r', '')
 
         cut_string = hard_cut_string.replace('\\n', '\n')
+        eos_added = 0
         out_tokens = []
         for text_part in raw_text.split(cut_string):
-            if text_part.strip() == '':
+
+            if len(text_part.strip()) <= min_chars:
                 continue
 
             tokens = shared.tokenizer.encode(text_part)
+            if add_eos_token:
+                tokens.append(shared.tokenizer.eos_token_id)
+                eos_added += 1
+
             step = cutoff_len - overlap_len
             if step <= 0:
                 yield f"Error: overlap_len ({overlap_len}) cannot be greater than or equal to cutoff_len ({cutoff_len})"
                 return
 
-            tokens = list(split_chunks(tokens, step))
-            for i in range(1, len(tokens)):
-                tokens[i] = tokens[i - 1][-overlap_len:] + tokens[i]
+            out_tokens.extend(split_chunks(tokens, cutoff_len, step))
 
-            out_tokens.extend(tokens)
-            del tokens
+        if eos_added > 0:
+            print(f"EOS added to {eos_added} text blocks")
 
         del raw_text  # Note: could be a gig for a large dataset, so delete redundant data as we go to be safe on RAM
         text_chunks = [shared.tokenizer.decode(x) for x in out_tokens]
@@ -415,7 +454,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
         def generate_and_tokenize_prompt(data_point):
             prompt = generate_prompt(data_point)
-            return tokenize(prompt)
+            return tokenize(prompt, add_eos_token)
 
         logger.info("Loading JSON datasets...")
         data = load_dataset("json", data_files=clean_path('training/datasets', f'{dataset}.json'))
@@ -427,10 +466,32 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             eval_data = load_dataset("json", data_files=clean_path('training/datasets', f'{eval_dataset}.json'))
             eval_data = eval_data['train'].map(generate_and_tokenize_prompt, new_fingerprint='%030x' % random.randrange(16**30))
 
+    # == We MUST reload model if it went through any previous training, even failed one ==
+    if shared.model_dirty_from_training:
+        selected_model = shared.model_name
+        if selected_model:
+            print("\033[1;31;1m(Model has been modified by previous training, it needs to be reloaded...)\033[0;37;0m")
+            try:
+                yield f"Reloading {selected_model}..."
+                unload_model()
+                shared.model, shared.tokenizer = load_model(shared.model_name, None)
+                if shared.model is not None:
+                    print("Model reloaded OK, continue with training.")
+                else:
+                    return f"Failed to load {selected_model}."
+            except:
+                exc = traceback.format_exc()
+                logger.error('Failed to reload the model.')
+                print(exc)
+                return exc
+
     # == Start prepping the model itself ==
     if not hasattr(shared.model, 'lm_head') or hasattr(shared.model.lm_head, 'weight'):
         logger.info("Getting model ready...")
         prepare_model_for_int8_training(shared.model)
+
+    # base model is now frozen and should not be reused for any other LoRA training than this one
+    shared.model_dirty_from_training = True
 
     logger.info("Prepping for training...")
     config = LoraConfig(
@@ -518,6 +579,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         train_dataset=train_data,
         eval_dataset=eval_data,
         args=transformers.TrainingArguments(
+            report_to=report_to if report_to != "None" else None,
             per_device_train_batch_size=micro_batch_size,
             gradient_accumulation_steps=gradient_accumulation_steps,
             warmup_steps=math.ceil(warmup_steps / gradient_accumulation_steps),
@@ -534,7 +596,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             load_best_model_at_end=eval_data is not None,
             # TODO: Enable multi-device support
             ddp_find_unused_parameters=None,
-            no_cuda=shared.args.cpu
+            no_cuda=shared.args.cpu,
         ),
         data_collator=transformers.DataCollatorForLanguageModeling(shared.tokenizer, mlm=False),
         callbacks=list([Callbacks()])
@@ -559,15 +621,19 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     yield "Starting..."
 
     lora_trainable_param, lora_all_param = calc_trainable_parameters(lora_model)
-    
-    if lora_all_param>0:
-        print(f"Trainable params: {lora_trainable_param:,d} ({100 * lora_trainable_param / lora_all_param:.4f} %), All params: {lora_all_param:,d} (Model: {model_all_params:,d})")
 
+    projections_string = ", ".join([projection.replace("_proj", "") for projection in model_to_lora_modules[model_id]])
+
+    print(f"Training '{model_id}' model using ({projections_string}) projections")
+
+    if lora_all_param > 0:
+        print(f"Trainable params: {lora_trainable_param:,d} ({100 * lora_trainable_param / lora_all_param:.4f} %), All params: {lora_all_param:,d} (Model: {model_all_params:,d})")
 
     train_log.update({"base_model_name": shared.model_name})
     train_log.update({"base_model_class": shared.model.__class__.__name__})
     train_log.update({"base_loaded_in_4bit": getattr(lora_model, "is_loaded_in_4bit", False)})
     train_log.update({"base_loaded_in_8bit": getattr(lora_model, "is_loaded_in_8bit", False)})
+    train_log.update({"projections": projections_string})
 
     if stop_at_loss > 0:
         print(f"Monitoring loss \033[1;31;1m(Auto-Stop at: {stop_at_loss})\033[0;37;0m")
@@ -576,7 +642,26 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         yield "Interrupted before start."
         return
 
+    def log_train_dataset(trainer):
+        decoded_entries = []
+        # Try to decode the entries and write the log file
+        try:
+            # Iterate over the first 10 elements in the dataset (or fewer if there are less than 10)
+            for i in range(min(10, len(trainer.train_dataset))):
+                decoded_text = shared.tokenizer.decode(trainer.train_dataset[i]['input_ids'])
+                decoded_entries.append({"value": decoded_text})
+
+            # Write the log file
+            Path('logs').mkdir(exist_ok=True)
+            with open(Path('logs/train_dataset_sample.json'), 'w') as json_file:
+                json.dump(decoded_entries, json_file, indent=4)
+
+            logger.info("Log file 'train_dataset_sample.json' created in the 'logs' directory.")
+        except Exception as e:
+            logger.error(f"Failed to create log file due to error: {e}")
+
     def threaded_run():
+        log_train_dataset(trainer)
         trainer.train()
         # Note: save in the thread in case the gradio thread breaks (eg browser closed)
         lora_model.save_pretrained(lora_file_path)
@@ -625,9 +710,9 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         yield f"Done! LoRA saved to `{lora_file_path}`"
 
 
-def split_chunks(arr, step):
+def split_chunks(arr, size, step):
     for i in range(0, len(arr), step):
-        yield arr[i:i + step]
+        yield arr[i:i + size]
 
 
 def cut_chunk_for_newline(chunk: str, max_length: int):
