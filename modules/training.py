@@ -581,7 +581,6 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         return
     
     def log_train_dataset(trainer):
-        import os
         decoded_entries = []
         # Try to decode the entries and write the log file
         try:
@@ -589,14 +588,15 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             for i in range(min(10, len(trainer.train_dataset))):
                 decoded_text = shared.tokenizer.decode(trainer.train_dataset[i]['input_ids'])
                 decoded_entries.append({"value": decoded_text})
-            if not os.path.exists('logs'):
-                os.makedirs('logs')
+
             # Write the log file
-            with open(os.path.join('logs', 'train_dataset_sample.json'), 'w') as json_file:
+            Path('logs').mkdir(exist_ok=True)
+            with open(Path('logs/train_dataset_sample.json'), 'w') as json_file:
                 json.dump(decoded_entries, json_file, indent=4)
-            print("Log file 'train_dataset_sample.json' created in the 'logs' directory.")
+
+            logger.info("Log file 'train_dataset_sample.json' created in the 'logs' directory.")
         except Exception as e:
-            print(f"Failed to create log file due to error: {e}")
+            logger.error(f"Failed to create log file due to error: {e}")
 
     def threaded_run():
         log_train_dataset(trainer)
