@@ -161,8 +161,10 @@ class RWKVTokenizer:
         pass
 
     @classmethod
-    def from_pretrained(self, path):
+    def from_pretrained(self, path, world_model: bool):
         tokenizer_path = path / "20B_tokenizer.json"
+        if world_model:
+            tokenizer_path = "rwkv_vocab_v20230424"
         tokenizer = Tokenizer.from_file(str(tokenizer_path))
         result = self()
         result.tokenizer = tokenizer

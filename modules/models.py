@@ -349,7 +349,10 @@ def RWKV_loader(model_name):
         dtype="fp32" if shared.args.cpu else "bf16" if shared.args.bf16 else "fp16",
         device="cpu" if shared.args.cpu else "cuda",
     )
-    tokenizer = RWKVTokenizer.from_pretrained(Path(shared.args.model_dir))
+    world_model = False
+    if "world" in model_name.lower():
+        world_model = True
+    tokenizer = RWKVTokenizer.from_pretrained(Path(shared.args.model_dir), world_model)
     return model, tokenizer
 
 
