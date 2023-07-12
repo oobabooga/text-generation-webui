@@ -355,8 +355,8 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     # == Prep the dataset, format, etc ==
     if raw_text_file not in ['None', '']:
         train_template["template_type"] = "raw_text"
-        logging.info("Loading raw text file dataset...")
-        fullpath=clean_path('training/datasets', f'{raw_text_file}')
+        logger.info("Loading raw text file dataset...")
+        fullpath = clean_path('training/datasets', f'{raw_text_file}')
         if os.path.isdir(fullpath):
             print('Training path directory {}'.format(raw_text_file))
             raw_text = ""
@@ -587,7 +587,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     if WANT_INTERRUPT:
         yield "Interrupted before start."
         return
-    
+
     def log_train_dataset(trainer):
         decoded_entries = []
         # Try to decode the entries and write the log file
