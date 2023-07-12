@@ -460,10 +460,15 @@ def load_character(character, name1, name2, instruct=False):
     if character not in ['None', '', None]:
         folder = 'characters' if not instruct else 'characters/instruction-following'
         picture = generate_pfp_cache(character)
+        filepath = None
         for extension in ["yml", "yaml", "json"]:
             filepath = Path(f'{folder}/{character}.{extension}')
             if filepath.exists():
                 break
+
+        if filepath is None:
+            logger.error(f"Could not find character file for {character} in {folder} folder. Please check your spelling.")
+            return name1, name2, picture, greeting, context, turn_template.replace("\n", r"\n")
 
         file_contents = open(filepath, 'r', encoding='utf-8').read()
         data = json.loads(file_contents) if extension == "json" else yaml.safe_load(file_contents)
