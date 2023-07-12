@@ -49,6 +49,7 @@ class LlamaCppModel:
             'n_batch': shared.args.n_batch,
             'use_mmap': not shared.args.no_mmap,
             'use_mlock': shared.args.mlock,
+            'low_vram': shared.args.low_vram,
             'n_gpu_layers': shared.args.n_gpu_layers
         }
 
@@ -64,6 +65,9 @@ class LlamaCppModel:
             string = string.encode()
 
         return self.model.tokenize(string)
+
+    def decode(self, tokens):
+        return self.model.detokenize(tokens)
 
     def generate(self, prompt, state, callback=None):
         prompt = prompt if type(prompt) is str else prompt.decode()

@@ -1,19 +1,22 @@
+import os
+
+os.environ["WANDB_MODE"] = "offline"
+os.environ["WANDB_DISABLED"] = "true"
+
 import json
 import math
 import random
+import shutil
 import sys
 import threading
 import time
 import traceback
+from datetime import datetime
 from pathlib import Path
 
 import gradio as gr
 import torch
 import transformers
-
-import shutil
-from datetime import datetime
-
 from datasets import Dataset, load_dataset
 from peft import (
     LoraConfig,
@@ -223,7 +226,7 @@ def backup_adapter(input_folder):
             creation_date_str = creation_date.strftime("Backup-%Y-%m-%d")
 
             # Create the new subfolder
-            subfolder_path = Path(f"{input_folder}/{creation_date_str}") 
+            subfolder_path = Path(f"{input_folder}/{creation_date_str}")
             subfolder_path.mkdir(parents=True, exist_ok=True)
 
             # Check if the file already exists in the subfolder
@@ -240,6 +243,7 @@ def backup_adapter(input_folder):
     except Exception as e:
         print("An error occurred in backup_adapter:", str(e))
 
+
 def calc_trainable_parameters(model):
     trainable_params = 0
     all_param = 0
@@ -252,8 +256,8 @@ def calc_trainable_parameters(model):
         all_param += num_params
         if param.requires_grad:
             trainable_params += num_params
-    
-    return trainable_params,all_param
+
+    return trainable_params, all_param
 
 
 def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lr_scheduler_type: str, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, higher_rank_limit: bool, warmup_steps: int, optimizer: str, hard_cut_string: str, train_only_after: str, stop_at_loss: float):
@@ -513,6 +517,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         train_dataset=train_data,
         eval_dataset=eval_data,
         args=transformers.TrainingArguments(
+            report_to=None,
             per_device_train_batch_size=micro_batch_size,
             gradient_accumulation_steps=gradient_accumulation_steps,
             warmup_steps=math.ceil(warmup_steps / gradient_accumulation_steps),
@@ -554,10 +559,9 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     yield "Starting..."
 
     lora_trainable_param, lora_all_param = calc_trainable_parameters(lora_model)
-    
-    if lora_all_param>0:
-        print(f"Trainable params: {lora_trainable_param:,d} ({100 * lora_trainable_param / lora_all_param:.4f} %), All params: {lora_all_param:,d} (Model: {model_all_params:,d})")
 
+    if lora_all_param > 0:
+        print(f"Trainable params: {lora_trainable_param:,d} ({100 * lora_trainable_param / lora_all_param:.4f} %), All params: {lora_all_param:,d} (Model: {model_all_params:,d})")
 
     train_log.update({"base_model_name": shared.model_name})
     train_log.update({"base_model_class": shared.model.__class__.__name__})
@@ -570,8 +574,27 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     if WANT_INTERRUPT:
         yield "Interrupted before start."
         return
+    
+    def log_train_dataset(trainer):
+        decoded_entries = []
+        # Try to decode the entries and write the log file
+        try:
+            # Iterate over the first 10 elements in the dataset (or fewer if there are less than 10)
+            for i in range(min(10, len(trainer.train_dataset))):
+                decoded_text = shared.tokenizer.decode(trainer.train_dataset[i]['input_ids'])
+                decoded_entries.append({"value": decoded_text})
+
+            # Write the log file
+            Path('logs').mkdir(exist_ok=True)
+            with open(Path('logs/train_dataset_sample.json'), 'w') as json_file:
+                json.dump(decoded_entries, json_file, indent=4)
+
+            logger.info("Log file 'train_dataset_sample.json' created in the 'logs' directory.")
+        except Exception as e:
+            logger.error(f"Failed to create log file due to error: {e}")
 
     def threaded_run():
+        log_train_dataset(trainer)
         trainer.train()
         # Note: save in the thread in case the gradio thread breaks (eg browser closed)
         lora_model.save_pretrained(lora_file_path)
