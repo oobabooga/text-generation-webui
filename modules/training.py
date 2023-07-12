@@ -1,19 +1,17 @@
 import json
 import math
 import random
+import shutil
 import sys
 import threading
 import time
 import traceback
+from datetime import datetime
 from pathlib import Path
 
 import gradio as gr
 import torch
 import transformers
-
-import shutil
-from datetime import datetime
-
 from datasets import Dataset, load_dataset
 from peft import (
     LoraConfig,
@@ -223,7 +221,7 @@ def backup_adapter(input_folder):
             creation_date_str = creation_date.strftime("Backup-%Y-%m-%d")
 
             # Create the new subfolder
-            subfolder_path = Path(f"{input_folder}/{creation_date_str}") 
+            subfolder_path = Path(f"{input_folder}/{creation_date_str}")
             subfolder_path.mkdir(parents=True, exist_ok=True)
 
             # Check if the file already exists in the subfolder
@@ -240,6 +238,7 @@ def backup_adapter(input_folder):
     except Exception as e:
         print("An error occurred in backup_adapter:", str(e))
 
+
 def calc_trainable_parameters(model):
     trainable_params = 0
     all_param = 0
@@ -252,8 +251,8 @@ def calc_trainable_parameters(model):
         all_param += num_params
         if param.requires_grad:
             trainable_params += num_params
-    
-    return trainable_params,all_param
+
+    return trainable_params, all_param
 
 
 def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lr_scheduler_type: str, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, higher_rank_limit: bool, warmup_steps: int, optimizer: str, hard_cut_string: str, train_only_after: str, stop_at_loss: float):
@@ -559,10 +558,9 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     yield "Starting..."
 
     lora_trainable_param, lora_all_param = calc_trainable_parameters(lora_model)
-    
-    if lora_all_param>0:
-        print(f"Trainable params: {lora_trainable_param:,d} ({100 * lora_trainable_param / lora_all_param:.4f} %), All params: {lora_all_param:,d} (Model: {model_all_params:,d})")
 
+    if lora_all_param > 0:
+        print(f"Trainable params: {lora_trainable_param:,d} ({100 * lora_trainable_param / lora_all_param:.4f} %), All params: {lora_all_param:,d} (Model: {model_all_params:,d})")
 
     train_log.update({"base_model_name": shared.model_name})
     train_log.update({"base_model_class": shared.model.__class__.__name__})

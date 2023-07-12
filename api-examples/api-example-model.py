@@ -55,7 +55,7 @@ def complex_model_load(model):
         'action': 'load',
         'model_name': model,
         'args': {
-            'gptq_for_llama': False,  # Use AutoGPTQ by default, set to True for gptq-for-llama
+            'loader': 'AutoGPTQ',
 
             'bf16': False,
             'load_in_8bit': False,

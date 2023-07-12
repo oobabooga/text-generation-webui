@@ -54,7 +54,7 @@ from modules.utils import gradio
 
 def load_model_wrapper(selected_model, loader, autoload=False):
     if not autoload:
-        yield f"The settings for {selected_model} have been updated.\nClick on \"Load the model\" to load it."
+        yield f"The settings for {selected_model} have been updated.\nClick on \"Load\" to load it."
         return
 
     if selected_model == 'None':
@@ -145,7 +145,13 @@ def download_model_wrapper(repo_id, progress=gr.Progress()):
         links, sha256, is_lora = downloader.get_download_links_from_huggingface(model, branch, text_only=False)
 
         yield ("Getting the output folder")
-        output_folder = downloader.get_output_folder(model, branch, is_lora)
+        models_dir = Path(shared.args.model_dir)
+
+        # If the last part of the path is "models", remove it
+        if models_dir.name.lower() == 'models':
+            models_dir = models_dir.parent
+
+        output_folder = downloader.get_output_folder(model, branch, is_lora, base_folder=models_dir)
 
         if check:
             progress(0.5)
@@ -218,8 +224,8 @@ def create_model_menus():
                         shared.gradio['n_batch'] = gr.Slider(label="n_batch", minimum=1, maximum=2048, value=shared.args.n_batch)
                         shared.gradio['n_gpu_layers'] = gr.Slider(label="n-gpu-layers", minimum=0, maximum=128, value=shared.args.n_gpu_layers)
                         shared.gradio['n_ctx'] = gr.Slider(minimum=0, maximum=16384, step=256, label="n_ctx", value=shared.args.n_ctx)
-                        shared.gradio['wbits'] = gr.Dropdown(label="wbits", choices=["None", 1, 2, 3, 4, 8], value=shared.args.wbits if shared.args.wbits > 0 else "None")
-                        shared.gradio['groupsize'] = gr.Dropdown(label="groupsize", choices=["None", 32, 64, 128, 1024], value=shared.args.groupsize if shared.args.groupsize > 0 else "None")
+                        shared.gradio['wbits'] = gr.Dropdown(label="wbits", choices=["None", 1, 2, 3, 4, 8], value=str(shared.args.wbits) if shared.args.wbits > 0 else "None")
+                        shared.gradio['groupsize'] = gr.Dropdown(label="groupsize", choices=["None", 32, 64, 128, 1024], value=str(shared.args.groupsize) if shared.args.groupsize > 0 else "None")
                         shared.gradio['model_type'] = gr.Dropdown(label="model_type", choices=["None", "llama", "opt", "gptj"], value=shared.args.model_type or "None")
                         shared.gradio['pre_layer'] = gr.Slider(label="pre_layer", minimum=0, maximum=100, value=shared.args.pre_layer[0] if shared.args.pre_layer is not None else 0)
                         shared.gradio['autogptq_info'] = gr.Markdown('On some systems, AutoGPTQ can be 2x slower than GPTQ-for-LLaMa. You can manually select the GPTQ-for-LLaMa loader above.')

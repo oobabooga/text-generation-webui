@@ -30,6 +30,8 @@ class ModelDownloader:
             self.s.mount('https://huggingface.co', HTTPAdapter(max_retries=max_retries))
         if os.getenv('HF_USER') is not None and os.getenv('HF_PASS') is not None:
             self.s.auth = (os.getenv('HF_USER'), os.getenv('HF_PASS'))
+        if os.getenv('HF_TOKEN') is not None:
+            self.s.headers = {'authorization': f'Bearer {os.getenv("HF_TOKEN")}'}
 
     def sanitize_model_and_branch_names(self, model, branch):
         if model[-1] == '/':
@@ -77,7 +79,7 @@ class ModelDownloader:
                 is_safetensors = re.match(".*\.safetensors", fname)
                 is_pt = re.match(".*\.pt", fname)
                 is_ggml = re.match(".*ggml.*\.bin", fname)
-                is_tokenizer = re.match("(tokenizer|ice).*\.model", fname)
+                is_tokenizer = re.match("(tokenizer|ice|spiece).*\.model", fname)
                 is_text = re.match(".*\.(txt|json|py|md)", fname) or is_tokenizer
                 if any((is_pytorch, is_safetensors, is_pt, is_ggml, is_tokenizer, is_text)):
                     if 'lfs' in dict[i]:
