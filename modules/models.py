@@ -58,7 +58,8 @@ def load_model(model_name, loader=None):
         'FlexGen': flexgen_loader,
         'RWKV': RWKV_loader,
         'ExLlama': ExLlama_loader,
-        'ExLlama_HF': ExLlama_HF_loader
+        'ExLlama_HF': ExLlama_HF_loader,
+        'xinference': xinference_loader
     }
 
     p = Path(model_name)
@@ -266,6 +267,13 @@ def llamacpp_loader(model_name):
     logger.info(f"llama.cpp weights detected: {model_file}\n")
     model, tokenizer = LlamaCppModel.from_pretrained(model_file)
     return model, tokenizer
+
+
+def xinference_loader(model_name):
+    from modules.xinference import XinferenceModel
+
+    model = XinferenceModel.from_pretrained(shared.args.model_uid, shared.args.endpoint)
+    return model
 
 
 def GPTQ_loader(model_name):

@@ -67,6 +67,10 @@ loaders_and_params = {
         'compress_pos_emb',
         'alpha_value',
         'exllama_HF_info',
+    ],
+    'xinference' : [
+        'model_uid',
+        'endpoint',
     ]
 }
 
