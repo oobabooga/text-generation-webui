@@ -64,6 +64,7 @@ train_template = {}
 WANT_INTERRUPT = False
 PARAMETERS = ["lora_name", "always_override", "save_steps", "micro_batch_size", "batch_size", "epochs", "learning_rate", "lr_scheduler_type", "lora_rank", "lora_alpha", "lora_dropout", "cutoff_len", "dataset", "eval_dataset", "format", "eval_steps", "raw_text_file", "overlap_len", "newline_favor_len", "higher_rank_limit", "warmup_steps", "optimizer", "hard_cut_string", "train_only_after", "stop_at_loss", "add_eos_token", "min_chars", "report_to"]
 
+
 def create_train_interface():
     with gr.Tab('Train LoRA', elem_id='lora-train-tab'):
         gr.Markdown("Confused? [[Click here for a guide]](https://github.com/oobabooga/text-generation-webui/blob/main/docs/Training-LoRAs.md)")
@@ -109,7 +110,7 @@ def create_train_interface():
                 raw_text_file = gr.Dropdown(choices=utils.get_datasets('training/datasets', 'txt'), value='None', label='Text file', info='The raw text file to use for training.')
                 ui.create_refresh_button(raw_text_file, lambda: None, lambda: {'choices': utils.get_datasets('training/datasets', 'txt')}, 'refresh-button')
                 hard_cut_string = gr.Textbox(label='Hard Cut String', value='\\n\\n\\n', info='String that indicates a hard cut between text parts. Helps prevent unwanted overlap.')
-                min_chars = gr.Number(label='Ignore small blocks',value=0, info='Ignore Hard Cut blocks that have less or equal characters than this number')
+                min_chars = gr.Number(label='Ignore small blocks', value=0, info='Ignore Hard Cut blocks that have less or equal characters than this number')
 
             with gr.Row():
                 overlap_len = gr.Slider(label='Overlap Length', minimum=0, maximum=512, value=128, step=16, info='Overlap length - ie how many tokens from the prior chunk of text to include into the next chunk. (The chunks themselves will be of a size determined by Cutoff Length below). Setting overlap to exactly half the cutoff length may be ideal.')
@@ -121,8 +122,8 @@ def create_train_interface():
             optimizer = gr.Dropdown(label='Optimizer', value='adamw_torch', choices=['adamw_hf', 'adamw_torch', 'adamw_torch_fused', 'adamw_torch_xla', 'adamw_apex_fused', 'adafactor', 'adamw_bnb_8bit', 'adamw_anyprecision', 'sgd', 'adagrad'], info='Different optimizer implementation options, for advanced users. Effects of different options are not well documented yet.')
             train_only_after = gr.Textbox(label='Train Only After', value='', info='Only consider text *after* this string in any given chunk for training. For Alpaca datasets, use "### Response:" to only train the response and ignore the input.')
             stop_at_loss = gr.Slider(label='Stop at loss', minimum=0.0, maximum=3.0, step=0.1, value=0.00, info='The process will automatically stop once the desired loss value is reached. (reasonable numbers are 1.5-1.8)')
-            add_eos_token = gr.Checkbox(label='Add EOS token', value = False, info="Adds EOS token for each dataset item. In case of raw text, the EOS will be added at the Hard Cut") 
-            
+            add_eos_token = gr.Checkbox(label='Add EOS token', value=False, info="Adds EOS token for each dataset item. In case of raw text, the EOS will be added at the Hard Cut")
+
             with gr.Row():
                 higher_rank_limit = gr.Checkbox(label='Enable higher ranks', value=False, info='If checked, changes Rank/Alpha slider above to go much higher. This will not work without a datacenter-class GPU.')
             with gr.Row():
@@ -328,7 +329,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         result = shared.tokenizer.encode(text, truncation=True, max_length=cutoff_len)
         # Check if the first two tokens are BOS
         if len(result) >= 2 and result[:2] == [shared.tokenizer.bos_token_id, shared.tokenizer.bos_token_id]:
-            result= result[1:]
+            result = result[1:]
 
         if not add_bos_token and result[0] == shared.tokenizer.bos_token_id:
             result = result[1:]
@@ -338,8 +339,8 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
         if train_only_after == '' or train_only_after not in prompt:
             input_ids = encode(prompt, True)
-            
-            if append_eos_token and input_ids[-1] != shared.tokenizer.eos_token_id and len(input_ids)<cutoff_len:
+
+            if append_eos_token and input_ids[-1] != shared.tokenizer.eos_token_id and len(input_ids) < cutoff_len:
                 input_ids.append(shared.tokenizer.eos_token_id)
 
             input_ids = [shared.tokenizer.pad_token_id] * (cutoff_len - len(input_ids)) + input_ids
@@ -392,23 +393,18 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
                 raw_text = file.read().replace('\r', '')
 
         cut_string = hard_cut_string.replace('\\n', '\n')
-        out_tokens = []
         eos_added = 0
-        
-        if min_chars<0:
-            min_chars = 0
-
+        out_tokens = []
         for text_part in raw_text.split(cut_string):
-            
+
             if len(text_part.strip()) <= min_chars:
                 continue
 
             tokens = shared.tokenizer.encode(text_part)
-            
             if add_eos_token:
                 tokens.append(shared.tokenizer.eos_token_id)
-                eos_added = eos_added + 1
-            
+                eos_added += 1
+
             step = cutoff_len - overlap_len
             if step <= 0:
                 yield f"Error: overlap_len ({overlap_len}) cannot be greater than or equal to cutoff_len ({cutoff_len})"
@@ -416,7 +412,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
             out_tokens.extend(split_chunks(tokens, cutoff_len, step))
 
-        if eos_added>0:
+        if eos_added > 0:
             print(f"EOS added to {eos_added} text blocks")
 
         del raw_text  # Note: could be a gig for a large dataset, so delete redundant data as we go to be safe on RAM
@@ -470,11 +466,11 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             eval_data = load_dataset("json", data_files=clean_path('training/datasets', f'{eval_dataset}.json'))
             eval_data = eval_data['train'].map(generate_and_tokenize_prompt, new_fingerprint='%030x' % random.randrange(16**30))
 
-    #== We MUST reload model if it went through any previous training, even failed one ==
+    # == We MUST reload model if it went through any previous training, even failed one ==
     if shared.model_dirty_from_training:
         selected_model = shared.model_name
         if selected_model:
-            print(f"\033[1;31;1m(Model has been modified by previous training, it needs to be reloaded...)\033[0;37;0m")
+            print("\033[1;31;1m(Model has been modified by previous training, it needs to be reloaded...)\033[0;37;0m")
             try:
                 yield f"Reloading {selected_model}..."
                 unload_model()
