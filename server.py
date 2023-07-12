@@ -982,7 +982,7 @@ def create_interface():
                 lambda: 'characters/instruction-following/', None, gradio('delete_root')).then(
                 lambda: gr.update(visible=True), None, gradio('file_deleter'))
 
-            shared.gradio['download_button'].click(chat.save_history, gradio('history'), gradio('download'))
+            shared.gradio['download_button'].click(chat.save_history_at_user_request, gradio('history', 'character_menu', 'mode'), gradio('download'))
             shared.gradio['Submit character'].click(chat.upload_character, gradio('upload_json', 'upload_img_bot'), gradio('character_menu'))
             shared.gradio['upload_json'].upload(lambda: gr.update(interactive=True), None, gradio('Submit character'))
             shared.gradio['upload_json'].clear(lambda: gr.update(interactive=False), None, gradio('Submit character'))
