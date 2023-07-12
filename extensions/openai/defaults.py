@@ -3,10 +3,10 @@ import copy
 # Slightly different defaults for OpenAI's API
 # Data type is important, Ex. use 0.0 for a float 0
 default_req_params = {
-    'max_new_tokens': 16, # 'Inf' for chat
+    'max_new_tokens': 16,  # 'Inf' for chat
     'temperature': 1.0,
     'top_p': 1.0,
-    'top_k': 1, # choose 20 for chat in absence of another default
+    'top_k': 1,  # choose 20 for chat in absence of another default
     'repetition_penalty': 1.18,
     'repetition_penalty_range': 0,
     'encoder_repetition_penalty': 1.0,
@@ -15,7 +15,7 @@ default_req_params = {
     'echo': False,
     'seed': -1,
     # 'n' : default(body, 'n', 1),  # 'n' doesn't have a direct map
-    'truncation_length': 2048, # first use shared.settings value
+    'truncation_length': 2048,  # first use shared.settings value
     'add_bos_token': True,
     'do_sample': True,
     'typical_p': 1.0,
@@ -41,10 +41,13 @@ default_req_params = {
     # 'requested_model' - temporarily used
 }
 
+
 def get_default_req_params():
     return copy.deepcopy(default_req_params)
 
 # little helper to get defaults if arg is present but None and should be the same type as default.
+
+
 def default(dic, key, default):
     val = dic.get(key, default)
     if type(val) != type(default):
@@ -59,6 +62,6 @@ def default(dic, key, default):
         val = default
     return val
 
+
 def clamp(value, minvalue, maxvalue):
     return max(minvalue, min(value, maxvalue))
-

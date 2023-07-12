@@ -2,6 +2,7 @@ import os
 import base64
 import numpy as np
 
+
 def float_list_to_base64(float_list):
     # Convert the list to a float32 array that the OpenAPI client expects
     float_array = np.array(float_list, dtype="float32")
@@ -16,10 +17,12 @@ def float_list_to_base64(float_list):
     ascii_string = encoded_bytes.decode('ascii')
     return ascii_string
 
+
 def end_line(s):
     if s and s[-1] != '\n':
         s = s + '\n'
     return s
+
 
 def debug_msg(*args, **kwargs):
     if 'OPENEDAI_DEBUG' in os.environ:

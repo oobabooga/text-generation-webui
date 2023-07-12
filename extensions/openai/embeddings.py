@@ -6,25 +6,29 @@ from extensions.openai.errors import *
 st_model = os.environ["OPENEDAI_EMBEDDING_MODEL"] if "OPENEDAI_EMBEDDING_MODEL" in os.environ else "all-mpnet-base-v2"
 embeddings_model = None
 
+
 def load_embedding_model(model):
     try:
         emb_model = SentenceTransformer(model)
         print(f"\nLoaded embedding model: {model}, max sequence length: {emb_model.max_seq_length}")
     except Exception as e:
         print(f"\nError: Failed to load embedding model: {model}")
-        raise ServiceUnavailableError(f"Error: Failed to load embedding model: {model}", internal_message = repr(e))
-    
+        raise ServiceUnavailableError(f"Error: Failed to load embedding model: {model}", internal_message=repr(e))
+
     return emb_model
+
 
 def get_embeddings_model():
     global embeddings_model, st_model
     if st_model and not embeddings_model:
-        embeddings_model = load_embedding_model(st_model) # lazy load the model
+        embeddings_model = load_embedding_model(st_model)  # lazy load the model
     return embeddings_model
+
 
 def get_embeddings_model_name():
     global st_model
     return st_model
+
 
 def embeddings(input: list, encoding_format: str):
 

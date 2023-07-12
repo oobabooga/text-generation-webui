@@ -126,6 +126,7 @@ class RepetitionPenaltyLogitsProcessorWithRange(LogitsProcessor):
     '''
     Copied from the transformers library
     '''
+
     def __init__(self, penalty: float, _range: int):
         if not isinstance(penalty, float) or not (penalty > 0):
             raise ValueError(f"`penalty` has to be a strictly positive float, but is {penalty}")

@@ -1,6 +1,7 @@
 from extensions.openai.utils import float_list_to_base64
 from modules.text_generation import encode, decode
 
+
 def token_count(prompt):
     tokens = encode(prompt)[0]
 
@@ -11,8 +12,8 @@ def token_count(prompt):
     }
 
 
-def token_encode(input, encoding_format = ''):
-    #if isinstance(input, list):
+def token_encode(input, encoding_format=''):
+    # if isinstance(input, list):
     tokens = encode(input)[0]
 
     return {
@@ -25,9 +26,9 @@ def token_encode(input, encoding_format = ''):
 
 
 def token_decode(tokens, encoding_format):
-    #if isinstance(input, list):
-#    if encoding_format == "base64":
-#         tokens = base64_to_float_list(tokens)
+    # if isinstance(input, list):
+    #    if encoding_format == "base64":
+    #         tokens = base64_to_float_list(tokens)
     output = decode(tokens)[0]
 
     return {

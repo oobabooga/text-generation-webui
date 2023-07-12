@@ -1,8 +1,8 @@
 # Adds ngrok ingress, to use add `--extension ngrok` to the command line options
 #
-# Parameters can be customized in settings.json of webui, e.g.: 
+# Parameters can be customized in settings.json of webui, e.g.:
 # {"ngrok": {"basic_auth":"user:password"} }
-# or 
+# or
 # {"ngrok": {"oauth_provider":"google", "oauth_allow_emails":["asdf@asdf.com"]} }
 #
 # See this example for full list of options: https://github.com/ngrok/ngrok-py/blob/main/examples/ngrok-connect-full.py
@@ -22,6 +22,7 @@ options = {
     'session_metadata': 'text-generation-webui',
 }
 
+
 def ui():
     settings = shared.settings.get("ngrok")
     if settings:
@@ -33,4 +34,3 @@ def ui():
         logging.info(f"Ingress established at: {tunnel.url()}")
     except ModuleNotFoundError:
         logging.error("===> ngrok library not found, please run `pip install -r extensions/ngrok/requirements.txt`")
-

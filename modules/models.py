@@ -106,11 +106,11 @@ def load_tokenizer(model_name, model):
                 use_fast=False
             )
         except ValueError:
-             tokenizer = AutoTokenizer.from_pretrained(
+            tokenizer = AutoTokenizer.from_pretrained(
                 path_to_model,
                 trust_remote_code=shared.args.trust_remote_code,
                 use_fast=True
-            )           
+            )
 
     if tokenizer.__class__.__name__ == 'LlamaTokenizer':
         pairs = [

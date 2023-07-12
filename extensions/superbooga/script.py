@@ -113,7 +113,7 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
         if len(history['internal']) > params['chunk_count'] and user_input != '':
             chunks = []
             hist_size = len(history['internal'])
-            for i in range(hist_size-1):
+            for i in range(hist_size - 1):
                 chunks.append(make_single_exchange(i))
 
             add_chunks_to_collector(chunks, chat_collector)

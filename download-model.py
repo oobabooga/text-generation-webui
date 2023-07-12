@@ -23,7 +23,7 @@ from tqdm.contrib.concurrent import thread_map
 
 
 class ModelDownloader:
-    def __init__(self, max_retries = 5):
+    def __init__(self, max_retries=5):
         self.s = requests.Session()
         if max_retries:
             self.s.mount('https://cdn-lfs.huggingface.co', HTTPAdapter(max_retries=max_retries))

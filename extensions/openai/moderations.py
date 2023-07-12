@@ -4,10 +4,10 @@ from numpy.linalg import norm
 from extensions.openai.embeddings import get_embeddings_model
 
 
-moderations_disabled = False # return 0/false
+moderations_disabled = False  # return 0/false
 category_embeddings = None
 antonym_embeddings = None
-categories = [ "sexual", "hate", "harassment", "self-harm", "sexual/minors", "hate/threatening", "violence/graphic", "self-harm/intent", "self-harm/instructions", "harassment/threatening", "violence" ]
+categories = ["sexual", "hate", "harassment", "self-harm", "sexual/minors", "hate/threatening", "violence/graphic", "self-harm/intent", "self-harm/instructions", "harassment/threatening", "violence"]
 flag_threshold = 0.5
 
 
@@ -40,14 +40,13 @@ def moderations(input):
     embeddings_model = get_embeddings_model()
     if not embeddings_model or moderations_disabled:
         results['results'] = [{
-            'categories': dict([ (C, False) for C in categories]),
-            'category_scores': dict([ (C, 0.0) for C in categories]),
+            'categories': dict([(C, False) for C in categories]),
+            'category_scores': dict([(C, 0.0) for C in categories]),
             'flagged': False,
         }]
         return results
 
     category_embeddings = get_category_embeddings()
-
 
     # input, string or array
     if isinstance(input, str):
@@ -55,8 +54,8 @@ def moderations(input):
 
     for in_str in input:
         for ine in embeddings_model.encode([in_str]).tolist():
-            category_scores = dict([ (C, mod_score(category_embeddings[C], ine)) for C in categories ])
-            category_flags = dict([ (C, bool(category_scores[C] > flag_threshold)) for C in categories ])
+            category_scores = dict([(C, mod_score(category_embeddings[C], ine)) for C in categories])
+            category_flags = dict([(C, bool(category_scores[C] > flag_threshold)) for C in categories])
             flagged = any(category_flags.values())
 
             results['results'].extend([{

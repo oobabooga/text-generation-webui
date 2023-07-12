@@ -160,7 +160,7 @@ def ui():
             api_key = gr.Textbox(placeholder="Enter your API key.", label='API Key')
 
     with gr.Row():
-         model = gr.Dropdown(value=params['model'], choices=LANG_MODELS, label='Language model')
+        model = gr.Dropdown(value=params['model'], choices=LANG_MODELS, label='Language model')
 
     with gr.Row():
         convert = gr.Button('Permanently replace audios with the message texts')
