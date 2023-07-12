@@ -1,20 +1,24 @@
+import asyncio
+import functools
+import threading
 import time
 import traceback
 from threading import Thread
 from typing import Callable, Optional
 
-from modules.text_generation import get_encoded_length
+from modules import shared
+from modules.chat import load_character_memoized
+from modules.presets import load_preset_memoized
 
 
-def build_parameters(body):
-    prompt = body['prompt']
+# We use a thread local to store the asyncio lock, so that each thread
+# has its own lock.  This isn't strictly necessary, but it makes it
+# such that if we can support multiple worker threads in the future,
+# thus handling multiple requests in parallel.
+api_tls = threading.local()
 
-    prompt_lines = [k.strip() for k in prompt.split('\n')]
-    max_context = body.get('max_context_length', 2048)
-    while len(prompt_lines) >= 0 and get_encoded_length('\n'.join(prompt_lines)) > max_context:
-        prompt_lines.pop(0)
 
-    prompt = '\n'.join(prompt_lines)
+def build_parameters(body, chat=False):
 
     generate_params = {
         'max_new_tokens': int(body.get('max_new_tokens', body.get('max_length', 200))),
@@ -22,7 +26,12 @@ def build_parameters(body):
         'temperature': float(body.get('temperature', 0.5)),
         'top_p': float(body.get('top_p', 1)),
         'typical_p': float(body.get('typical_p', body.get('typical', 1))),
+        'epsilon_cutoff': float(body.get('epsilon_cutoff', 0)),
+        'eta_cutoff': float(body.get('eta_cutoff', 0)),
+        'tfs': float(body.get('tfs', 1)),
+        'top_a': float(body.get('top_a', 0)),
         'repetition_penalty': float(body.get('repetition_penalty', body.get('rep_pen', 1.1))),
+        'repetition_penalty_range': int(body.get('repetition_penalty_range', 0)),
         'encoder_repetition_penalty': float(body.get('encoder_repetition_penalty', 1.0)),
         'top_k': int(body.get('top_k', 0)),
         'min_length': int(body.get('min_length', 0)),
@@ -31,14 +40,46 @@ def build_parameters(body):
         'penalty_alpha': float(body.get('penalty_alpha', 0)),
         'length_penalty': float(body.get('length_penalty', 1)),
         'early_stopping': bool(body.get('early_stopping', False)),
+        'mirostat_mode': int(body.get('mirostat_mode', 0)),
+        'mirostat_tau': float(body.get('mirostat_tau', 5)),
+        'mirostat_eta': float(body.get('mirostat_eta', 0.1)),
         'seed': int(body.get('seed', -1)),
         'add_bos_token': bool(body.get('add_bos_token', True)),
-        'truncation_length': int(body.get('truncation_length', 2048)),
+        'truncation_length': int(body.get('truncation_length', body.get('max_context_length', 2048))),
         'ban_eos_token': bool(body.get('ban_eos_token', False)),
         'skip_special_tokens': bool(body.get('skip_special_tokens', True)),
         'custom_stopping_strings': '',  # leave this blank
         'stopping_strings': body.get('stopping_strings', []),
     }
+
+    preset_name = body.get('preset', 'None')
+    if preset_name not in ['None', None, '']:
+        preset = load_preset_memoized(preset_name)
+        generate_params.update(preset)
+
+    if chat:
+        character = body.get('character')
+        instruction_template = body.get('instruction_template', shared.settings['instruction_template'])
+        if str(instruction_template) == "None":
+            instruction_template = "Vicuna-v1.1"
+
+        name1, name2, _, greeting, context, _ = load_character_memoized(character, str(body.get('your_name', shared.settings['name1'])), shared.settings['name2'], instruct=False)
+        name1_instruct, name2_instruct, _, _, context_instruct, turn_template = load_character_memoized(instruction_template, '', '', instruct=True)
+        generate_params.update({
+            'stop_at_newline': bool(body.get('stop_at_newline', shared.settings['stop_at_newline'])),
+            'chat_generation_attempts': int(body.get('chat_generation_attempts', shared.settings['chat_generation_attempts'])),
+            'mode': str(body.get('mode', 'chat')),
+            'name1': name1,
+            'name2': name2,
+            'context': context,
+            'greeting': greeting,
+            'name1_instruct': name1_instruct,
+            'name2_instruct': name2_instruct,
+            'context_instruct': body.get('context_instruct',  context_instruct),
+            'turn_template': turn_template,
+            'chat-instruct_command': str(body.get('chat-instruct_command', shared.settings['chat-instruct_command'])),
+            'history': body.get('history', {'internal': [], 'visible': []})
+        })
 
     return generate_params
 
@@ -69,3 +110,35 @@ def _start_cloudflared(port: int, max_attempts: int = 3, on_start: Optional[Call
             time.sleep(3)
 
         raise Exception('Could not start cloudflared.')
+
+
+def _get_api_lock(tls) -> asyncio.Lock:
+    """
+    The streaming and blocking API implementations each run on their own
+    thread, and multiplex requests using asyncio.  If multiple outstanding
+    requests are received at once, we will try to acquire the shared lock
+    shared.generation_lock multiple times in succession in the same thread,
+    which will cause a deadlock.
+
+    To avoid this, we use this wrapper function to block on an asyncio
+    lock, and then try and grab the shared lock only while holding
+    the asyncio lock.
+    """
+    if not hasattr(tls, "asyncio_lock"):
+        tls.asyncio_lock = asyncio.Lock()
+
+    return tls.asyncio_lock
+
+
+def with_api_lock(func):
+    """
+    This decorator should be added to all streaming API methods which
+    require access to the shared.generation_lock.  It ensures that the
+    tls.asyncio_lock is acquired before the method is called, and
+    released afterwards.
+    """
+    @functools.wraps(func)
+    async def api_wrapper(*args, **kwargs):
+        async with _get_api_lock(api_tls):
+            return await func(*args, **kwargs)
+    return api_wrapper

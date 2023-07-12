@@ -25,19 +25,102 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 #extensions {
-  padding: 0;
-  padding: 0;
+    padding: 0;
+    padding: 0;
 }
 
 #gradio-chatbot {
-  height: 66.67vh;
+    height: 66.67vh;
 }
 
 .wrap.svelte-6roggh.svelte-6roggh {
-  max-height: 92.5%;
+    max-height: 92.5%;
 }
 
 /* This is for the microphone button in the whisper extension */
 .sm.svelte-1ipelgc {
-  width: 100%;
+    width: 100%;
+}
+
+#main button {
+    min-width: 0 !important;
+}
+
+/*****************************************************/
+/*************** Chat box declarations ***************/
+/*****************************************************/
+
+.chat {
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 800px;
+    height: calc(100vh - 296px);
+    overflow-y: auto;
+    padding-right: 20px;
+    display: flex;
+    flex-direction: column-reverse;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    padding-top: 1px;
+}
+
+.message-body li {
+    margin-top: 0.5em !important;
+    margin-bottom: 0.5em !important;
+}
+
+.message-body li > p {
+    display: inline !important;
+}
+
+.message-body ul, .message-body ol {
+    font-size: 15px !important;
+}
+
+.message-body ul {
+    list-style-type: disc !important;
+}
+
+.message-body pre {
+    margin-bottom: 1.25em !important;
+}
+
+.message-body code {
+    white-space: pre-wrap !important;
+    word-wrap: break-word !important;
+}
+
+.message-body :not(pre) > code {
+    white-space: normal !important;
+}
+
+@media print {
+    body {
+        visibility: hidden;
+    }
+
+    .chat {
+        visibility: visible;
+        position: absolute;
+        left: 0;
+        top: 0;
+        max-width: none;
+        max-height: none;
+        width: 100%;
+        height: fit-content;
+        display: flex;
+        flex-direction: column-reverse;
+    }
+    
+    .message {
+        break-inside: avoid;
+    }
+    
+    .gradio-container {
+        overflow: visible;
+    }
+    
+    .tab-nav {
+        display: none !important;
+    }
 }

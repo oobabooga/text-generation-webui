@@ -1,5 +1,4 @@
 import datetime
-import traceback
 from pathlib import Path
 
 import pandas as pd
@@ -9,8 +8,11 @@ from tqdm import tqdm
 
 from modules import shared
 from modules.models import load_model, unload_model
+from modules.models_settings import (
+    get_model_settings_from_yamls,
+    update_model_parameters
+)
 from modules.text_generation import encode
-from server import get_model_specific_settings, update_model_parameters
 
 
 def load_past_evaluations():
@@ -28,7 +30,9 @@ past_evaluations = load_past_evaluations()
 def save_past_evaluations(df):
     global past_evaluations
     past_evaluations = df
-    df.to_csv(Path('logs/evaluations.csv'), index=False)
+    filepath = Path('logs/evaluations.csv')
+    filepath.parent.mkdir(parents=True, exist_ok=True)
+    df.to_csv(filepath, index=False)
 
 
 def calculate_perplexity(models, input_dataset, stride, _max_length):
@@ -39,7 +43,7 @@ def calculate_perplexity(models, input_dataset, stride, _max_length):
 
     global past_evaluations
     cumulative_log = ''
-    cumulative_log += "Loading the input dataset...\n"
+    cumulative_log += "Loading the input dataset...\n\n"
     yield cumulative_log
 
     # Copied from https://github.com/qwopqwop200/GPTQ-for-LLaMa/blob/triton/utils/datautils.py
@@ -58,29 +62,35 @@ def calculate_perplexity(models, input_dataset, stride, _max_length):
 
     for model in models:
         if is_in_past_evaluations(model, input_dataset, stride, _max_length):
-            cumulative_log += f"{model} has already been tested. Ignoring.\n"
+            cumulative_log += f"{model} has already been tested. Ignoring.\n\n"
             yield cumulative_log
             continue
 
         if model != 'current model':
             try:
-                yield cumulative_log + f"Loading {model}...\n"
-                model_settings = get_model_specific_settings(model)
+                yield cumulative_log + f"Loading {model}...\n\n"
+                model_settings = get_model_settings_from_yamls(model)
                 shared.settings.update(model_settings)  # hijacking the interface defaults
                 update_model_parameters(model_settings)  # hijacking the command-line arguments
                 shared.model_name = model
                 unload_model()
                 shared.model, shared.tokenizer = load_model(shared.model_name)
             except:
-                cumulative_log += f"Failed to load {model}. Moving on.\n"
+                cumulative_log += f"Failed to load {model}. Moving on.\n\n"
                 yield cumulative_log
                 continue
 
-        cumulative_log += f"Processing {model}...\n"
-        yield cumulative_log + "Tokenizing the input dataset...\n"
+        cumulative_log += f"Processing {shared.model_name}...\n\n"
+        yield cumulative_log + "Tokenizing the input dataset...\n\n"
         encodings = encode(text, add_special_tokens=False)
         seq_len = encodings.shape[1]
-        max_length = _max_length or shared.model.config.max_position_embeddings
+        if _max_length:
+            max_length = _max_length
+        elif hasattr(shared.model.config, 'max_position_embeddings'):
+            max_length = shared.model.config.max_position_embeddings
+        else:
+            max_length = 2048
+
         nlls = []
         prev_end_loc = 0
         for begin_loc in tqdm(range(0, seq_len, stride)):
@@ -92,7 +102,7 @@ def calculate_perplexity(models, input_dataset, stride, _max_length):
             target_ids[:, :-trg_len] = -100
 
             with torch.no_grad():
-                outputs = shared.model(input_ids, labels=target_ids)
+                outputs = shared.model(input_ids=input_ids, labels=target_ids)
 
                 # loss is calculated using CrossEntropyLoss which averages over valid labels
                 # N.B. the model only calculates loss over trg_len - 1 labels, because it internally shifts the labels
@@ -108,7 +118,7 @@ def calculate_perplexity(models, input_dataset, stride, _max_length):
         ppl = torch.exp(torch.stack(nlls).mean())
         add_entry_to_past_evaluations(float(ppl), shared.model_name, input_dataset, stride, _max_length)
         save_past_evaluations(past_evaluations)
-        cumulative_log += f"Done. The perplexity is: {float(ppl)}\n\n"
+        cumulative_log += f"The perplexity for {shared.model_name} is: {float(ppl)}\n\n"
         yield cumulative_log
 
 

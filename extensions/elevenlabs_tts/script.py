@@ -5,7 +5,8 @@ import elevenlabs
 import gradio as gr
 
 from modules import chat, shared
-from modules.html_generator import chat_html_wrapper
+from modules.utils import gradio
+from modules.logging_colors import logger
 
 params = {
     'activate': True,
@@ -13,15 +14,23 @@ params = {
     'selected_voice': 'None',
     'autoplay': False,
     'show_text': True,
+    'model': 'eleven_monolingual_v1',
 }
 
 voices = None
 wav_idx = 0
+LANG_MODELS = ['eleven_monolingual_v1', 'eleven_multilingual_v1']
+
+
+def update_api_key(key):
+    params['api_key'] = key
+    if key is not None:
+        elevenlabs.set_api_key(key)
 
 
 def refresh_voices():
     global params
-    your_voices = elevenlabs.voices(api_key=params['api_key'])
+    your_voices = elevenlabs.voices()
     voice_names = [voice.name for voice in your_voices]
     return voice_names
 
@@ -31,28 +40,24 @@ def refresh_voices_dd():
     return gr.Dropdown.update(value=all_voices[0], choices=all_voices)
 
 
-def remove_tts_from_history(name1, name2, mode, style):
-    for i, entry in enumerate(shared.history['internal']):
-        shared.history['visible'][i] = [shared.history['visible'][i][0], entry[1]]
+def remove_tts_from_history(history):
+    for i, entry in enumerate(history['internal']):
+        history['visible'][i] = [history['visible'][i][0], entry[1]]
 
-    return chat_html_wrapper(shared.history['visible'], name1, name2, mode, style)
+    return history
 
 
-def toggle_text_in_history(name1, name2, mode, style):
-    for i, entry in enumerate(shared.history['visible']):
+def toggle_text_in_history(history):
+    for i, entry in enumerate(history['visible']):
         visible_reply = entry[1]
         if visible_reply.startswith('<audio'):
             if params['show_text']:
-                reply = shared.history['internal'][i][1]
-                shared.history['visible'][i] = [
-                    shared.history['visible'][i][0], f"{visible_reply.split('</audio>')[0]}</audio>\n\n{reply}"
-                ]
+                reply = history['internal'][i][1]
+                history['visible'][i] = [history['visible'][i][0], f"{visible_reply.split('</audio>')[0]}</audio>\n\n{reply}"]
             else:
-                shared.history['visible'][i] = [
-                    shared.history['visible'][i][0], f"{visible_reply.split('</audio>')[0]}</audio>"
-                ]
+                history['visible'][i] = [history['visible'][i][0], f"{visible_reply.split('</audio>')[0]}</audio>"]
 
-    return chat_html_wrapper(shared.history['visible'], name1, name2, mode, style)
+    return history
 
 
 def remove_surrounded_chars(string):
@@ -62,33 +67,33 @@ def remove_surrounded_chars(string):
 
 
 def state_modifier(state):
+    if not params['activate']:
+        return state
+
     state['stream'] = False
     return state
 
 
 def input_modifier(string):
-    """
-    This function is applied to your text inputs before
-    they are fed into the model.
-    """
-    # Remove autoplay from the last reply
-    if shared.is_chat() and len(shared.history['internal']) > 0:
-        shared.history['visible'][-1] = [
-            shared.history['visible'][-1][0],
-            shared.history['visible'][-1][1].replace('controls autoplay>', 'controls>')
-        ]
+    if not params['activate']:
+        return string
 
-    if params['activate']:
-        shared.processing_message = "*Is recording a voice message...*"
-
+    shared.processing_message = "*Is recording a voice message...*"
     return string
 
 
-def output_modifier(string):
-    """
-    This function is applied to the model outputs.
-    """
+def history_modifier(history):
+    # Remove autoplay from the last reply
+    if len(history['internal']) > 0:
+        history['visible'][-1] = [
+            history['visible'][-1][0],
+            history['visible'][-1][1].replace('controls autoplay>', 'controls>')
+        ]
 
+    return history
+
+
+def output_modifier(string):
     global params, wav_idx
 
     if not params['activate']:
@@ -104,9 +109,9 @@ def output_modifier(string):
         string = 'empty reply, try regenerating'
 
     output_file = Path(f'extensions/elevenlabs_tts/outputs/{wav_idx:06d}.mp3'.format(wav_idx))
-    print(f'Outputing audio to {str(output_file)}')
+    print(f'Outputting audio to {str(output_file)}')
     try:
-        audio = elevenlabs.generate(text=string, voice=params['selected_voice'], model="eleven_monolingual_v1")
+        audio = elevenlabs.generate(text=string, voice=params['selected_voice'], model=params['model'])
         elevenlabs.save(audio, str(output_file))
 
         autoplay = 'autoplay' if params['autoplay'] else ''
@@ -130,7 +135,12 @@ def ui():
     global voices
     if not voices:
         voices = refresh_voices()
-        params['selected_voice'] = voices[0]
+        selected = params['selected_voice']
+        if selected == 'None':
+            params['selected_voice'] = voices[0]
+        elif selected not in voices:
+            logger.error(f'Selected voice {selected} not available, switching to {voices[0]}')
+            params['selected_voice'] = voices[0]
 
     # Gradio elements
     with gr.Row():
@@ -143,43 +153,45 @@ def ui():
         refresh = gr.Button(value='Refresh')
 
     with gr.Row():
-        api_key = gr.Textbox(placeholder="Enter your API key.", label='API Key')
+        if params['api_key']:
+            api_key = gr.Textbox(value=params['api_key'], label='API Key')
+            update_api_key(params['api_key'])
+        else:
+            api_key = gr.Textbox(placeholder="Enter your API key.", label='API Key')
+
+    with gr.Row():
+         model = gr.Dropdown(value=params['model'], choices=LANG_MODELS, label='Language model')
 
     with gr.Row():
         convert = gr.Button('Permanently replace audios with the message texts')
         convert_cancel = gr.Button('Cancel', visible=False)
         convert_confirm = gr.Button('Confirm (cannot be undone)', variant="stop", visible=False)
 
-    # Convert history with confirmation
-    convert_arr = [convert_confirm, convert, convert_cancel]
-    convert.click(
-        lambda: [gr.update(visible=True), gr.update(visible=False),
-                 gr.update(visible=True)], None, convert_arr
-    )
-    convert_confirm.click(
-        lambda: [gr.update(visible=False), gr.update(visible=True),
-                 gr.update(visible=False)], None, convert_arr
-    )
-    convert_confirm.click(
-        remove_tts_from_history, [shared.gradio[k] for k in ['name1', 'name2', 'mode', 'chat_style']], shared.gradio['display']
-    )
-    convert_confirm.click(chat.save_history, shared.gradio['mode'], [], show_progress=False)
-    convert_cancel.click(
-        lambda: [gr.update(visible=False), gr.update(visible=True),
-                 gr.update(visible=False)], None, convert_arr
-    )
+    if shared.is_chat():
+        # Convert history with confirmation
+        convert_arr = [convert_confirm, convert, convert_cancel]
+        convert.click(lambda: [gr.update(visible=True), gr.update(visible=False), gr.update(visible=True)], None, convert_arr)
+        convert_confirm.click(
+            lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr).then(
+            remove_tts_from_history, gradio('history'), gradio('history')).then(
+            chat.save_persistent_history, gradio('history', 'character_menu', 'mode'), None).then(
+            chat.redraw_html, shared.reload_inputs, gradio('display'))
+
+        convert_cancel.click(lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr)
+
+        # Toggle message text in history
+        show_text.change(
+            lambda x: params.update({"show_text": x}), show_text, None).then(
+            toggle_text_in_history, gradio('history'), gradio('history')).then(
+            chat.save_persistent_history, gradio('history', 'character_menu', 'mode'), None).then(
+            chat.redraw_html, shared.reload_inputs, gradio('display'))
 
     # Event functions to update the parameters in the backend
     activate.change(lambda x: params.update({'activate': x}), activate, None)
     voice.change(lambda x: params.update({'selected_voice': x}), voice, None)
-    api_key.change(lambda x: params.update({'api_key': x}), api_key, None)
+    api_key.change(update_api_key, api_key, None)
+    model.change(lambda x: params.update({'model': x}), model, None)
     # connect.click(check_valid_api, [], connection_status)
     refresh.click(refresh_voices_dd, [], voice)
-    # Toggle message text in history
-    show_text.change(lambda x: params.update({"show_text": x}), show_text, None)
-    show_text.change(
-        toggle_text_in_history, [shared.gradio[k] for k in ['name1', 'name2', 'mode', 'chat_style']], shared.gradio['display']
-    )
-    show_text.change(chat.save_history, shared.gradio['mode'], [], show_progress=False)
     # Event functions to update the parameters in the backend
     autoplay.change(lambda x: params.update({"autoplay": x}), autoplay, None)
