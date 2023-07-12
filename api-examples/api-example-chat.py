@@ -18,6 +18,7 @@ def run(user_input, history):
         'mode': 'instruct',  # Valid options: 'chat', 'chat-instruct', 'instruct'
         'character': 'Example',
         'instruction_template': 'Vicuna-v1.1',
+        # 'context_instruct': '',  # Optional
         'your_name': 'You',
 
         'regenerate': False,
