@@ -376,7 +376,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             out_tokens.extend(split_chunks(tokens, cutoff_len, step))
 
         del raw_text  # Note: could be a gig for a large dataset, so delete redundant data as we go to be safe on RAM
-        text_chunks = [shared.tokenizer.decode(x, skip_special_tokens=True) for x in out_tokens]
+        text_chunks = [shared.tokenizer.decode(x) for x in out_tokens]
         del out_tokens
         if newline_favor_len > 0:
             text_chunks = [cut_chunk_for_newline(x, newline_favor_len) for x in text_chunks]
