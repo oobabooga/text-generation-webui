@@ -54,7 +54,7 @@ from modules.utils import gradio
 
 def load_model_wrapper(selected_model, loader, autoload=False):
     if not autoload:
-        yield f"The settings for {selected_model} have been updated.\nClick on \"Load the model\" to load it."
+        yield f"The settings for {selected_model} have been updated.\nClick on \"Load\" to load it."
         return
 
     if selected_model == 'None':
