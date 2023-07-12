@@ -32,6 +32,7 @@ from modules.evaluate import (
     save_past_evaluations
 )
 from modules.logging_colors import logger
+from modules.utils import natural_keys
 
 # This mapping is from a very recent commit, not yet released.
 # If not available, default to a backup map for some common model types.
@@ -357,14 +358,17 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         train_template["template_type"] = "raw_text"
         logger.info("Loading raw text file dataset...")
         fullpath = clean_path('training/datasets', f'{raw_text_file}')
-        if os.path.isdir(fullpath):
-            print('Training path directory {}'.format(raw_text_file))
+        fullpath = Path(fullpath)
+        if fullpath.is_dir():
+            logger.info('Training path directory {}'.format(raw_text_file))
             raw_text = ""
-            for filename in os.listdir(fullpath):
-                if filename.endswith('.txt'):
-                    with open(os.path.join(fullpath, filename), 'r', encoding='utf-8') as file:
+            file_paths = sorted(fullpath.glob('*.txt'), key=lambda path: natural_keys(path.name))
+            for file_path in file_paths:
+                if file_path.is_file():
+                    with file_path.open('r', encoding='utf-8') as file:
                         raw_text += file.read()
-                    print("Loaded training file:", filename)
+
+                    logger.info(f"Loaded training file: {file_path.name}")
         else:
             with open(clean_path('training/datasets', f'{raw_text_file}.txt'), 'r', encoding='utf-8') as file:
                 raw_text = file.read()
