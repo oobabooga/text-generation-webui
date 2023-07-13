@@ -938,6 +938,7 @@ def create_interface():
 
             shared.gradio['character_menu'].change(
                 partial(chat.load_character, instruct=False), gradio('character_menu', 'name1', 'name2'), gradio('name1', 'name2', 'character_picture', 'greeting', 'context', 'dummy')).then(
+                lambda character_menu, mode: gr.Radio.update(value='chat' if not character_menu == 'None' and mode not in ['chat', 'chat-instruct'] else mode), inputs=[shared.gradio['character_menu'], shared.gradio['mode']], outputs=[shared.gradio['mode']]).then(
                 ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
                 chat.load_persistent_history, gradio('interface_state'), gradio('history')).then(
                 chat.redraw_html, shared.reload_inputs, gradio('display'))
