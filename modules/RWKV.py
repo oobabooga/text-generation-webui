@@ -34,7 +34,7 @@ class RWKVModel:
             tokenizer_path = "rwkv_vocab_v20230424"
         else:
             tokenizer_path = str(tokenizer_path)
-        pipeline = PIPELINE(model, "rwkv_vocab_v20230424")
+        pipeline = PIPELINE(model, tokenizer_path)
         result = self()
         result.pipeline = pipeline
         result.model = model
