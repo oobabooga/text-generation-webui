@@ -8,6 +8,10 @@ from modules.logging_colors import logger
 from modules.models import reload_model
 
 
+def merge_loras():
+    shared.model.add_weighted_adapter(shared.lora_names, [1] * len(shared.lora_names), "__merged")
+    shared.model.set_adapter("__merged")
+
 def add_lora_to_model(lora_names):
     if 'GPTQForCausalLM' in shared.model.__class__.__name__ or shared.args.loader == 'AutoGPTQ':
         add_lora_autogptq(lora_names)
@@ -103,6 +107,9 @@ def add_lora_transformers(lora_names):
         for lora in added_set:
             shared.model.load_adapter(Path(f"{shared.args.lora_dir}/{lora}"), lora)
 
+        if len(lora_names) > 1:
+            merge_loras()
+
         return
 
     # If any LoRA needs to be removed, start over
@@ -126,6 +133,9 @@ def add_lora_transformers(lora_names):
         shared.model = PeftModel.from_pretrained(shared.model, Path(f"{shared.args.lora_dir}/{lora_names[0]}"), adapter_name=lora_names[0], **params)
         for lora in lora_names[1:]:
             shared.model.load_adapter(Path(f"{shared.args.lora_dir}/{lora}"), lora)
+
+        if len(lora_names) > 1:
+            merge_loras()
 
         shared.lora_names = lora_names
 
