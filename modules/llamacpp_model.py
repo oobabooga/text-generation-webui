@@ -71,35 +71,48 @@ class LlamaCppModel:
 
     def generate(self, prompt, state, callback=None):
         prompt = prompt if type(prompt) is str else prompt.decode()
-        completion_chunks = self.model.create_completion(
-            prompt=prompt,
-            max_tokens=state['max_new_tokens'],
-            temperature=state['temperature'],
-            top_p=state['top_p'],
+        prompt_tokens = self.model.tokenize(b" " + prompt.encode("utf-8"))
+        
+        max_tokens = state['max_new_tokens']
+        completion_tokens = []
+
+        detokenize = self.model.detokenize
+
+        output = b''
+
+        for token in self.model.generate(
+            prompt_tokens,
             top_k=state['top_k'],
-            repeat_penalty=state['repetition_penalty'],
+            top_p=state['top_p'],
+            temp=state['temperature'],
             tfs_z=state['tfs'],
             mirostat_mode=int(state['mirostat_mode']),
             mirostat_tau=state['mirostat_tau'],
             mirostat_eta=state['mirostat_eta'],
-            stream=True,
+            repeat_penalty=state['repetition_penalty'],
             logits_processor=LogitsProcessorList([
                 partial(ban_eos_logits_processor, self.model.token_eos()),
             ]) if state['ban_eos_token'] else None,
-        )
+        ):
+            if token == self.model._token_eos:
+                break
 
-        output = ""
-        for completion_chunk in completion_chunks:
-            text = completion_chunk['choices'][0]['text']
+            completion_tokens.append(token)
+
+            text = detokenize([token])
             output += text
-            if callback:
-                callback(text)
 
-        return output
+            if callback:
+                callback(text) 
+
+            if len(completion_tokens) >= max_tokens:
+                break
+
+        return output.decode('utf-8', 'ignore')
 
     def generate_with_streaming(self, *args, **kwargs):
         with Iteratorize(self.generate, args, kwargs, callback=None) as generator:
-            reply = ''
+            reply = b''
             for token in generator:
                 reply += token
-                yield reply
+                yield reply.decode('utf-8', 'ignore')
