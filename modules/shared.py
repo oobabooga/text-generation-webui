@@ -38,7 +38,7 @@ settings = {
     'max_new_tokens_max': 2000,
     'seed': -1,
     'character': 'None',
-    'name1': 'You',
+    'name1': 'User',
     'name2': 'Assistant',
     'context': 'This is a conversation with your Assistant. It is a computer program designed to help you with various tasks such as answering questions, providing recommendations, and helping with decision making. You can ask it anything you want and it will do its best to give you accurate and relevant information.',
     'greeting': '',
