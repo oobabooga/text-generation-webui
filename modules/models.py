@@ -272,7 +272,7 @@ def llamacpp_loader(model_name):
 def xinference_loader(model_name):
     from modules.xinference import XinferenceModel
 
-    model = XinferenceModel.from_pretrained(shared.args.model_uid, shared.args.endpoint)
+    model = XinferenceModel.from_pretrained(model_name, shared.args.model_uid, shared.args.endpoint)
     return model
 
 

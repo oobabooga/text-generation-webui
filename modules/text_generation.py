@@ -181,6 +181,8 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False):
 
         if shared.model.__class__.__name__ in ['LlamaCppModel', 'RWKVModel', 'ExllamaModel']:
             generate_func = generate_reply_custom
+        elif shared.model.__name__ == 'XinferenceModel':
+            generate_func = generate_reply_xinference
         elif shared.args.flexgen:
             generate_func = generate_reply_flexgen
         else:
@@ -393,4 +395,35 @@ def generate_reply_flexgen(question, original_question, seed, state, stopping_st
         original_tokens = len(original_input_ids[0])
         new_tokens = len(output) - (original_tokens if not shared.is_seq2seq else 0)
         print(f'Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens}, seed {seed})')
+        return
+
+
+def generate_reply_xinference(question, original_question, seed, state, stopping_strings=None, is_chat=False):
+    t0 = time.time()
+    try:
+        if not state['stream']:
+            output = shared.model.model.generate(
+                prompt=question,
+                generate_config={"max_tokens": state['max_new_tokens']}
+            )
+            yield output['choices'][0]['text']
+        else:
+            ans = ""
+            for i in range(state['max_new_tokens']):
+                output = shared.model.model.generate(
+                    prompt=question,
+                    generate_config={"max_tokens": 1}
+                )
+                question += output['choices'][0]['text']
+                ans += output['choices'][0]['text']
+                yield ans
+
+                if shared.stop_everything:
+                    break
+
+    except Exception:
+        traceback.print_exc()
+    finally:
+        t1 = time.time()
+        print(f'Output generated in {(t1-t0):.2f} seconds')
         return
