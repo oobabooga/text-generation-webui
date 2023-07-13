@@ -3,9 +3,9 @@ import base64
 import numpy as np
 
 
-def float_list_to_base64(float_list):
+def float_list_to_base64(float_array: np.ndarray) -> str:
     # Convert the list to a float32 array that the OpenAPI client expects
-    float_array = np.array(float_list, dtype="float32")
+    #float_array = np.array(float_list, dtype="float32")
 
     # Get raw bytes
     bytes_array = float_array.tobytes()

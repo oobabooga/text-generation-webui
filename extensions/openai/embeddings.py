@@ -1,16 +1,26 @@
 import os
 from sentence_transformers import SentenceTransformer
+import numpy as np
 from extensions.openai.utils import float_list_to_base64, debug_msg
 from extensions.openai.errors import *
 
 st_model = os.environ["OPENEDAI_EMBEDDING_MODEL"] if "OPENEDAI_EMBEDDING_MODEL" in os.environ else "all-mpnet-base-v2"
 embeddings_model = None
+embeddings_device = 'cpu'
 
 
-def load_embedding_model(model):
+def load_embedding_model(model: str) -> SentenceTransformer:
+    global embeddings_device
     try:
-        emb_model = SentenceTransformer(model)
-        print(f"\nLoaded embedding model: {model}, max sequence length: {emb_model.max_seq_length}")
+        embeddings_model = 'loading...' # flag
+        # device: 'cpu', 'cuda', None (auto GPU)
+        # see: https://www.sbert.net/docs/package_reference/SentenceTransformer.html#sentence_transformers.SentenceTransformer
+        embeddings_device = os.environ.get("OPENEDAI_EMBEDDING_MODEL_DEVICE", embeddings_device)
+        if embeddings_device.lower() == 'auto':
+            embeddings_device = None
+        emb_model = SentenceTransformer(model, device=embeddings_device)
+        # ... emb_model.device doesn't seem to work, always cpu anyways? but specify cpu anyways to free more VRAM
+        print(f"\nLoaded embedding model: {model} on {emb_model.device} [always seems to say, even if cuda 'cpu'], max sequence length: {emb_model.max_seq_length}")
     except Exception as e:
         print(f"\nError: Failed to load embedding model: {model}")
         raise ServiceUnavailableError(f"Error: Failed to load embedding model: {model}", internal_message=repr(e))
@@ -18,26 +28,29 @@ def load_embedding_model(model):
     return emb_model
 
 
-def get_embeddings_model():
+def get_embeddings_model() -> SentenceTransformer:
     global embeddings_model, st_model
     if st_model and not embeddings_model:
         embeddings_model = load_embedding_model(st_model)  # lazy load the model
     return embeddings_model
 
 
-def get_embeddings_model_name():
+def get_embeddings_model_name() -> str:
     global st_model
     return st_model
 
 
-def embeddings(input: list, encoding_format: str):
+def get_embeddings(input: list) -> np.ndarray:
+    return get_embeddings_model().encode(input, convert_to_numpy=True, normalize_embeddings=True, convert_to_tensor=False, device=embeddings_device)
 
-    embeddings = get_embeddings_model().encode(input).tolist()
+def embeddings(input: list, encoding_format: str) -> dict:
+
+    embeddings = get_embeddings(input)
 
     if encoding_format == "base64":
         data = [{"object": "embedding", "embedding": float_list_to_base64(emb), "index": n} for n, emb in enumerate(embeddings)]
     else:
-        data = [{"object": "embedding", "embedding": emb, "index": n} for n, emb in enumerate(embeddings)]
+        data = [{"object": "embedding", "embedding": emb.tolist(), "index": n} for n, emb in enumerate(embeddings)]
 
     response = {
         "object": "list",
