@@ -75,7 +75,7 @@ def feed_url_into_collector(urls, chunk_len, chunk_sep, strong_cleanup, threads)
     cumulative += 'Processing the HTML sources...'
     yield cumulative
     for content in contents:
-        soup = BeautifulSoup(content, features="html.parser")
+        soup = BeautifulSoup(content, features="lxml")
         for script in soup(["script", "style"]):
             script.extract()
 

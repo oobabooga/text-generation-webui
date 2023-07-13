@@ -6,6 +6,7 @@ import gradio as gr
 
 from modules import chat, shared
 from modules.utils import gradio
+from modules.logging_colors import logger
 
 params = {
     'activate': True,
@@ -13,10 +14,12 @@ params = {
     'selected_voice': 'None',
     'autoplay': False,
     'show_text': True,
+    'model': 'eleven_monolingual_v1',
 }
 
 voices = None
 wav_idx = 0
+LANG_MODELS = ['eleven_monolingual_v1', 'eleven_multilingual_v1']
 
 
 def update_api_key(key):
@@ -108,7 +111,7 @@ def output_modifier(string):
     output_file = Path(f'extensions/elevenlabs_tts/outputs/{wav_idx:06d}.mp3'.format(wav_idx))
     print(f'Outputting audio to {str(output_file)}')
     try:
-        audio = elevenlabs.generate(text=string, voice=params['selected_voice'], model="eleven_monolingual_v1")
+        audio = elevenlabs.generate(text=string, voice=params['selected_voice'], model=params['model'])
         elevenlabs.save(audio, str(output_file))
 
         autoplay = 'autoplay' if params['autoplay'] else ''
@@ -132,7 +135,12 @@ def ui():
     global voices
     if not voices:
         voices = refresh_voices()
-        params['selected_voice'] = voices[0]
+        selected = params['selected_voice']
+        if selected == 'None':
+            params['selected_voice'] = voices[0]
+        elif selected not in voices:
+            logger.error(f'Selected voice {selected} not available, switching to {voices[0]}')
+            params['selected_voice'] = voices[0]
 
     # Gradio elements
     with gr.Row():
@@ -145,7 +153,14 @@ def ui():
         refresh = gr.Button(value='Refresh')
 
     with gr.Row():
-        api_key = gr.Textbox(placeholder="Enter your API key.", label='API Key')
+        if params['api_key']:
+            api_key = gr.Textbox(value=params['api_key'], label='API Key')
+            update_api_key(params['api_key'])
+        else:
+            api_key = gr.Textbox(placeholder="Enter your API key.", label='API Key')
+
+    with gr.Row():
+        model = gr.Dropdown(value=params['model'], choices=LANG_MODELS, label='Language model')
 
     with gr.Row():
         convert = gr.Button('Permanently replace audios with the message texts')
@@ -175,6 +190,7 @@ def ui():
     activate.change(lambda x: params.update({'activate': x}), activate, None)
     voice.change(lambda x: params.update({'selected_voice': x}), voice, None)
     api_key.change(update_api_key, api_key, None)
+    model.change(lambda x: params.update({'model': x}), model, None)
     # connect.click(check_valid_api, [], connection_status)
     refresh.click(refresh_voices_dd, [], voice)
     # Event functions to update the parameters in the backend

@@ -218,12 +218,11 @@ but there are some exceptions.
 | ✅❌ | langchain | https://github.com/hwchase17/langchain | OPENAI_API_BASE=http://127.0.0.1:5001/v1 even with a good 30B-4bit model the result is poor so far. It assumes zero shot python/json coding. Some model tailored prompt formatting improves results greatly. |
 | ✅❌ | Auto-GPT | https://github.com/Significant-Gravitas/Auto-GPT | OPENAI_API_BASE=http://127.0.0.1:5001/v1 Same issues as langchain. Also assumes a 4k+ context |
 | ✅❌ | babyagi | https://github.com/yoheinakajima/babyagi | OPENAI_API_BASE=http://127.0.0.1:5001/v1 |
+| ❌ | guidance | https://github.com/microsoft/guidance | logit_bias and logprobs not yet supported |
 
 ## Future plans
-* better error handling
 * model changing, esp. something for swapping loras or embedding models
 * consider switching to FastAPI + starlette for SSE (openai SSE seems non-standard)
-* do something about rate limiting or locking requests for completions, most systems will only be able handle a single request at a time before OOM
 
 ## Bugs? Feedback? Comments? Pull requests?
 

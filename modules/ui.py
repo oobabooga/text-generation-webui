@@ -57,6 +57,7 @@ def list_model_elements():
         'threads',
         'n_batch',
         'no_mmap',
+        'low_vram',
         'mlock',
         'n_gpu_layers',
         'n_ctx',
@@ -67,7 +68,6 @@ def list_model_elements():
         'alpha_value'
     ]
 
-
     for i in range(torch.cuda.device_count()):
         elements.append(f'gpu_memory_{i}')
 
@@ -76,7 +76,6 @@ def list_model_elements():
 
 def list_interface_input_elements():
     elements = [
-        'preset_menu',
         'max_new_tokens',
         'seed',
         'temperature',
@@ -158,11 +157,10 @@ def apply_interface_values(state, use_persistent=False):
     if len(state) == 0:
         return [gr.update() for k in elements]  # Dummy, do nothing
     else:
-        ans = [state[k] if k in state else gr.update() for k in elements]
-        return ans
+        return [state[k] if k in state else gr.update() for k in elements]
 
 
-class ToolButton(gr.Button, gr.components.FormComponent):
+class ToolButton(gr.Button, gr.components.IOComponent):
     """Small button with single emoji as text, fits inside gradio forms"""
 
     def __init__(self, **kwargs):
