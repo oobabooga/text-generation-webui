@@ -57,6 +57,7 @@ def list_model_elements():
         'threads',
         'n_batch',
         'no_mmap',
+        'low_vram',
         'mlock',
         'n_gpu_layers',
         'n_ctx',
@@ -159,7 +160,7 @@ def apply_interface_values(state, use_persistent=False):
         return [state[k] if k in state else gr.update() for k in elements]
 
 
-class ToolButton(gr.Button, gr.components.FormComponent):
+class ToolButton(gr.Button, gr.components.IOComponent):
     """Small button with single emoji as text, fits inside gradio forms"""
 
     def __init__(self, **kwargs):

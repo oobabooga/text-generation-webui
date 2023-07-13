@@ -3,6 +3,7 @@ import copy
 import functools
 import json
 import re
+from datetime import datetime
 from pathlib import Path
 
 import gradio as gr
@@ -388,8 +389,25 @@ def load_history(file, history):
         return history
 
 
+def save_history_at_user_request(history, character, mode):
+    def make_timestamp_path(character=None):
+        return f"logs/{character or ''}{'_' if character else ''}{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
+
+    path = None
+    if mode in ['chat', 'chat-instruct'] and character not in ['', 'None', None]:
+        path = make_timestamp_path(character)
+    else:
+        # Try to use mode as the file name, otherwise just use the timestamp
+        try:
+            path = make_timestamp_path(mode.capitalize())
+        except:
+            path = make_timestamp_path()
+
+    return save_history(history, path)
+
+
 def save_persistent_history(history, character, mode):
-    if mode in ['chat', 'chat-instruct'] and character not in  ['', 'None', None] and not shared.args.multi_user:
+    if mode in ['chat', 'chat-instruct'] and character not in ['', 'None', None] and not shared.args.multi_user:
         save_history(history, path=Path(f'logs/{character}_persistent.json'))
 
 
@@ -460,10 +478,15 @@ def load_character(character, name1, name2, instruct=False):
     if character not in ['None', '', None]:
         folder = 'characters' if not instruct else 'characters/instruction-following'
         picture = generate_pfp_cache(character)
+        filepath = None
         for extension in ["yml", "yaml", "json"]:
             filepath = Path(f'{folder}/{character}.{extension}')
             if filepath.exists():
                 break
+
+        if filepath is None:
+            logger.error(f"Could not find character file for {character} in {folder} folder. Please check your spelling.")
+            return name1, name2, picture, greeting, context, turn_template.replace("\n", r"\n")
 
         file_contents = open(filepath, 'r', encoding='utf-8').read()
         data = json.loads(file_contents) if extension == "json" else yaml.safe_load(file_contents)
