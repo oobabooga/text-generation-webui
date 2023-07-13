@@ -1,9 +1,6 @@
 '''
 Based on
-https://github.com/abetlen/llama-cpp-python
-
-Documentation:
-https://abetlen.github.io/llama-cpp-python/
+https://github.com/xorbitsai/inference
 '''
 
 
