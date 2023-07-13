@@ -256,11 +256,11 @@ def run_server():
         try:
             from flask_cloudflared import _run_cloudflared
             public_url = _run_cloudflared(params['port'], params['port'] + 1)
-            print(f'Starting OpenAI compatible api at\nOPENAI_API_BASE={public_url}/v1')
+            print(f'OpenAI compatible API ready at: OPENAI_API_BASE={public_url}/v1')
         except ImportError:
             print('You should install flask_cloudflared manually')
     else:
-        print(f'Starting OpenAI compatible api:\nOPENAI_API_BASE=http://{server_addr[0]}:{server_addr[1]}/v1')
+        print(f'OpenAI compatible API ready at: OPENAI_API_BASE=http://{server_addr[0]}:{server_addr[1]}/v1')
 
     server.serve_forever()
 
