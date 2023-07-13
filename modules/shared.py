@@ -128,6 +128,10 @@ parser.add_argument('--n-gpu-layers', type=int, default=0, help='Number of layer
 parser.add_argument('--n_ctx', type=int, default=2048, help='Size of the prompt context.')
 parser.add_argument('--llama_cpp_seed', type=int, default=0, help='Seed for llama-cpp models. Default 0 (random)')
 
+# Xinference
+parser.add_argument('--model_uid', type=str, default='0', help='Uid for the current Xinference model. Default 0')
+parser.add_argument('--endpoint', type=str, default='http://localhost:9997', help='The endpoint Xinference is currently running on. Default 9997')
+
 # GPTQ
 parser.add_argument('--wbits', type=int, default=0, help='Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported.')
 parser.add_argument('--model_type', type=str, help='Model type of pre-quantized model. Currently LLaMA, OPT, and GPT-J are supported.')
