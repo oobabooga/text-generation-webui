@@ -145,13 +145,8 @@ def download_model_wrapper(repo_id, progress=gr.Progress()):
         links, sha256, is_lora = downloader.get_download_links_from_huggingface(model, branch, text_only=False)
 
         yield ("Getting the output folder")
-        models_dir = Path(shared.args.model_dir)
-
-        # If the last part of the path is "models", remove it
-        if models_dir.name.lower() == 'models':
-            models_dir = models_dir.parent
-
-        output_folder = downloader.get_output_folder(model, branch, is_lora, base_folder=models_dir)
+        base_folder = shared.args.lora_dir if is_lora else shared.args.model_dir
+        output_folder = downloader.get_output_folder(model, branch, is_lora, base_folder=base_folder)
 
         if check:
             progress(0.5)
