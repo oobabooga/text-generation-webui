@@ -10,7 +10,8 @@ params = {
     'color_by_perplexity': False,
     'color_by_probability': False,
     'ppl_scale': 15.0, # No slider for this right now, because I don't think it really needs to be changed. Very large perplexity scores don't show up often.
-    'probability_dropdown': False
+    'probability_dropdown': False,
+    'verbose': False # For debugging mostly
 }
 
 class PerplexityLogits(LogitsProcessor):
@@ -25,7 +26,7 @@ class PerplexityLogits(LogitsProcessor):
 
     def __call__(self, input_ids, scores):
         probs = torch.softmax(scores, dim=-1, dtype=torch.float)
-        log_probs = torch.nan_to_num(torch.log(probs))
+        log_probs = torch.nan_to_num(torch.log(probs)) # Note: This is to convert log(0) nan to 0, but probs*log_probs makes this 0 not affect the perplexity.
         entropy = -torch.sum(probs*log_probs)
         entropy = entropy.cpu().numpy()
         perplexity = round(float(np.exp(entropy)), 4)
@@ -40,13 +41,13 @@ class PerplexityLogits(LogitsProcessor):
                 print('Probs: Token after', shared.tokenizer.decode(last_token_id))
                 print('Probs:', [shared.tokenizer.decode(token_id) for token_id in self.top_token_ids_list[-1][0]])
                 print('Probs:', [round(float(prob), 4) for prob in self.top_probs_list[-1][0]])
-            if last_token_id in self.top_token_ids_list[-1]:
-                idx = self.top_token_ids_list[-1].index(last_token_id)
-                self.selected_probs.append(self.top_probs_list[-1][idx])
+            if last_token_id in self.top_token_ids_list[-1][0]:
+                idx = self.top_token_ids_list[-1][0].index(last_token_id)
+                self.selected_probs.append(self.top_probs_list[-1][0][idx])
             else:
-                self.top_token_ids_list[-1].append(last_token_id)
+                self.top_token_ids_list[-1][0].append(last_token_id)
                 last_prob = round(float(self.last_probs[last_token_id]), 4)
-                self.top_probs_list[-1].append(last_prob)
+                self.top_probs_list[-1][0].append(last_prob)
                 self.selected_probs.append(last_prob)
         else:
             self.selected_probs.append(1.0) # Placeholder for the last token of the prompt
@@ -77,7 +78,7 @@ ppl_logits_processor = None
 def logits_processor_modifier(logits_processor_list, input_ids):
     global ppl_logits_processor
     if params['active']:
-        ppl_logits_processor = PerplexityLogits(verbose=False)
+        ppl_logits_processor = PerplexityLogits(verbose=params['verbose'])
         logits_processor_list.append(ppl_logits_processor)
 
 def output_modifier(text):
@@ -98,71 +99,38 @@ def output_modifier(text):
     sel_probs = ppl_logits_processor.selected_probs[1:]
 
     end_part = '</div></div>' if params['probability_dropdown'] else '</span>' # Helps with finding the index after replacing part of the text.
-    
     in_code = False # Since the <span> tags mess up code blocks, avoid coloring while inside a code block, based on finding tokens with '`' in them
 
-    if params['color_by_probability'] and params['color_by_perplexity']:
-        i = 0
-        for token, prob, ppl, top_tokens, top_probs in zip(gen_tokens, sel_probs, perplexities, top_tokens_list, top_probs_list):
-            if '`' in token:
-                in_code = not in_code
-                continue
-            if in_code:
-                continue
+    i = 0
+    for token, prob, ppl, top_tokens, top_probs in zip(gen_tokens, sel_probs, perplexities, top_tokens_list, top_probs_list):
+        if '`' in token:
+            in_code = not in_code
+            continue
+        if in_code:
+            continue
+        color = 'ffffff'
+        if params['color_by_probability'] and params['color_by_perplexity']:
             color = probability_perplexity_color_scale(prob, ppl)
-            if token in text[i:]:
-                if params['probability_dropdown']:
-                    text = text[:i] + text[i:].replace(token, add_dropdown_html(token, color, top_tokens, top_probs[0]), 1)
-                else:
-                    text = text[:i] + text[i:].replace(token, add_color_html(token, color), 1)
-                i += text[i:].find(end_part) + len(end_part)
-    elif params['color_by_perplexity']:
-        i = 0
-        for token, ppl, top_tokens, top_probs in zip(gen_tokens, perplexities, top_tokens_list, top_probs_list):
-            if '`' in token:
-                in_code = not in_code
-                continue
-            if in_code:
-                continue
+        elif params['color_by_perplexity']:
             color = perplexity_color_scale(ppl)
-            if token in text[i:]:
-                if params['probability_dropdown']:
-                    text = text[:i] + text[i:].replace(token, add_dropdown_html(token, color, top_tokens, top_probs[0]), 1)
-                else:
-                    text = text[:i] + text[i:].replace(token, add_color_html(token, color), 1)
-                i += text[i:].find(end_part) + len(end_part)
-    elif params['color_by_probability']:
-        i = 0
-        for token, prob, top_tokens, top_probs in zip(gen_tokens, sel_probs, top_tokens_list, top_probs_list):
-            if '`' in token:
-                in_code = not in_code
-                continue
-            if in_code:
-                continue
+        elif params['color_by_probability']:
             color = probability_color_scale(prob)
-            if token in text[i:]:
-                if params['probability_dropdown']:
-                    text = text[:i] + text[i:].replace(token, add_dropdown_html(token, color, top_tokens, top_probs[0]), 1)
-                else:
-                    text = text[:i] + text[i:].replace(token, add_color_html(token, color), 1)
-                i += text[i:].find(end_part) + len(end_part)
-    elif params['probability_dropdown']:
-        i = 0
-        for token, prob, top_tokens, top_probs in zip(gen_tokens, sel_probs, top_tokens_list, top_probs_list):
-            if '`' in token:
-                in_code = not in_code
-                continue
-            if in_code:
-                continue
-            color = 'ffffff'
-            if token in text[i:]:
-                text = text[:i] + text[i:].replace(token, add_dropdown_html(token, color, top_tokens, top_probs[0]), 1)
-                i += text[i:].find(end_part) + len(end_part)
+        if token in text[i:]:
+            if params['probability_dropdown']:
+                after_token_index = text[i:].find(token) + len(token)
+                whitespace = text[i:][after_token_index:(after_token_index+1)]
+                if whitespace != ' ':
+                    whitespace = ''
+                text = text[:i] + text[i:].replace(token, add_dropdown_html(token, color, top_tokens, top_probs[0], whitespace, ppl), 1)
+            else:
+                text = text[:i] + text[i:].replace(token, add_color_html(token, color), 1)
+            i += text[i:].find(end_part) + len(end_part)
 
-    print('Average perplexity:', round(np.mean(perplexities), 4))
+    # Use full perplexity list for calculating the average here.
+    print('Average perplexity:', round(np.mean(ppl_logits_processor.perplexities_list[:-1]), 4))
     # Optional hacky workaround: Without this, spaces get added between every token. With this, there is a little extra whitespace at the top.
     # This fixes the tokenization spaces, somehow. However, this also removes any paragraph breaks in the message.
-    # return '<p>' + text + '</p>'
+    #return '<p>' + text + '</p>'
     return text
 
 # Green-yellow-red color scale
@@ -210,51 +178,70 @@ def probability_perplexity_color_scale(prob, ppl):
 def add_color_html(token, color):
     return f'<span style="color: #{color}">{token}</span>'
 
-def add_dropdown_html(token, color, top_tokens, top_probs):
-    html = f'<div class="hoverable" style="color: #{color}">{token}<div class="dropdown"><table class="dropdown-content"><tbody>'
+# The whitespace fix here is not perfect -- it will remove whitespace of paragraph breaks and other particular cases.
+def add_dropdown_html(token, color, top_tokens, top_probs, whitespace='', perplexity=0):
+    if whitespace != '':
+        whitespace = '&nbsp;'
+    html = f'<div class="hoverable"><span style="color: #{color}">{token}{whitespace}</span><div class="dropdown"><table class="dropdown-content"><tbody>'
     for token_option, prob in zip(top_tokens, top_probs):
         # TODO: Bold for selected token?
         # Using divs prevented the problem of divs inside spans causing issues.
         # Now the problem is that divs show the same whitespace of one space between every token.
         # There is probably some way to fix this in CSS that I don't know about.
         row_color = probability_color_scale(prob)
-        html += f'<tr><td style="color: #{row_color}">{token_option}</td><td style="color: #{row_color}">{prob:.4f}</td></tr>'
+        row_class = ' class="selected"' if token_option == token else ''
+        html += f'<tr{row_class}><td style="color: #{row_color}">{token_option}</td><td style="color: #{row_color}">{prob:.4f}</td></tr>'
+    if perplexity != 0:
+        ppl_color = perplexity_color_scale(perplexity)
+        html += f'<tr><td>Perplexity:</td><td style="color: #{ppl_color}">{perplexity:.4f}</td></tr>'
     html += '</tbody></table></div></div>'
     return html
 
+#374151;
 def custom_css():
     return """
         .dropdown {
             display: none;
             position: absolute;
             z-index: 50; 
-            background-color: #374151;
+            background-color: var(--block-background-fill); 
             box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
             width: max-content;
             overflow: visible;
             padding: 5px;
             border-radius: 10px;
-            border: 1px solid #4b5563;
+            border: 1px solid var(--border-color-primary);
         }
-        
+
         .dropdown-content {
             border: none;
             z-index: 50;
         }
+
+        .dropdown-content tr.selected {
+            background-color: var(--block-label-background-fill);
+        }
         
+        .dropdown-content td {
+            color: var(--body-text-color);
+        }
+
         .hoverable {
+            color: var(--body-text-color);
             position: relative;
             display: inline-block;
             overflow: visible;
             font-size: 15px;
+            line-height: 1.75;
             margin: 0;
             padding: 0;
+            margin-right: -4px;
         }
-        
+
         .hoverable:hover .dropdown {
             display: block;
         }
-        
+
         .chat {
             overflow-y: visible;
         }
@@ -276,7 +263,7 @@ def ui():
         params.update({'color_by_probability': x})
     color_by_prob_check.change(update_color_by_prob_check, color_by_prob_check, None)
 
-    prob_dropdown_check = gradio.Checkbox(value=False, label="Probability dropdown", info="Hover over a token to show a dropdown of top token probabilities.")
+    prob_dropdown_check = gradio.Checkbox(value=False, label="Probability dropdown", info="Hover over a token to show a dropdown of top token probabilities. Currently slightly buggy with whitespace between tokens.")
     def update_prob_dropdown_check(x):
         params.update({'probability_dropdown': x})
     prob_dropdown_check.change(update_prob_dropdown_check, prob_dropdown_check, None)
