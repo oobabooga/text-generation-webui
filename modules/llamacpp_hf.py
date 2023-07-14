@@ -10,6 +10,9 @@ from transformers.modeling_outputs import CausalLMOutputWithPast
 from modules import shared
 from modules.llamacpp_model import LlamaCppModel
 from modules.logging_colors import logger
+import numpy as np
+import llama_cpp
+from llama_cpp import Llama
 
 
 class LlamacppHF(PreTrainedModel):
@@ -42,14 +45,19 @@ class LlamacppHF(PreTrainedModel):
 
         # Make the forward call
         seq_tensor = torch.tensor(seq)
-        if self.cache is None or not torch.equal(self.cache, seq_tensor[:-1]):
-            self.model.model.reset()
-            self.model.model.eval(seq)
-        else:
-            self.model.model.eval([seq[-1]])
-
         self.cache = seq_tensor
-        logits = torch.tensor(self.model.model.eval_logits).view(1, 1, -1).to(kwargs['input_ids'].device)
+        if labels is None:
+            logits = torch.tensor(self.model.eval_logits).view(1, 1, -1).to(kwargs['input_ids'].device)
+            if self.cache is None or not torch.equal(self.cache, seq_tensor[:-1]):
+                self.model.reset()
+                self.model.eval(seq)
+            else:
+                self.model.eval([seq[-1]])
+        else:
+            self.model.reset()
+            self.model.eval(seq)
+            logits = torch.tensor(self.model.eval_logits)
+            logits = logits.view(1, logits.shape[0], logits.shape[1]).to(kwargs['input_ids'].device)
 
         # Based on transformers/models/llama/modeling_llama.py
         loss = None
@@ -81,6 +89,22 @@ class LlamacppHF(PreTrainedModel):
             model_file = list(path.glob('*ggml*.bin'))[0]
 
         logger.info(f"llama.cpp weights detected: {model_file}\n")
-        model, _ = LlamaCppModel.from_pretrained(model_file)
+        params = {
+            'model_path': str(model_file),
+            'n_ctx': shared.args.n_ctx,
+            'seed': int(shared.args.llama_cpp_seed),
+            'n_threads': shared.args.threads or None,
+            'n_batch': shared.args.n_batch,
+            'use_mmap': not shared.args.no_mmap,
+            'use_mlock': shared.args.mlock,
+            'low_vram': shared.args.low_vram,
+            'n_gpu_layers': shared.args.n_gpu_layers,
+            'logits_all': True,
+        }
 
+        # model = Llama(model_path=str(model_file), n_batch=512, logits_all=True)
+        model = Llama(**params)
+        # model, _ = LlamaCppModel.from_pretrained(model_file)
+
+        # return LlamacppHF(model)
         return LlamacppHF(model)

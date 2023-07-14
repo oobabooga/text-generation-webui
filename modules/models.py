@@ -272,7 +272,15 @@ def llamacpp_loader(model_name):
 def llamacpp_HF_loader(model_name):
     from modules.llamacpp_hf import LlamacppHF
 
-    return LlamacppHF.from_pretrained(model_name)
+    model = LlamacppHF.from_pretrained(model_name)
+
+    tokenizer = AutoTokenizer.from_pretrained(
+        "models/oobabooga_llama-tokenizer",
+        trust_remote_code=shared.args.trust_remote_code,
+        use_fast=False
+    )
+
+    return model, tokenizer
 
 
 def GPTQ_loader(model_name):
