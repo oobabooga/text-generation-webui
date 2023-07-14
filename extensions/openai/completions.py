@@ -18,41 +18,46 @@ from extensions.openai.errors import *
 class LogitsBiasProcessor(LogitsProcessor):
     def __init__(self, logit_bias={}):
         self.logit_bias = logit_bias
-        super().__init__()
+        if self.logit_bias:
+            self.keys = list([int(key) for key in self.logit_bias.keys()])
+            self.values = torch.tensor([float(val * 0.01) for val in self.logit_bias.values()]).cuda()
+            debug_msg(f"{self})")
 
     def __call__(self, input_ids: torch.LongTensor, logits: torch.FloatTensor) -> torch.FloatTensor:
         if self.logit_bias:
-            keys = list([int(key) for key in self.logit_bias.keys()])
-            values = list([int(val) for val in self.logit_bias.values()])
-            logits[0, keys] += torch.tensor(values).cuda()
-
+            logits[0, self.keys] += self.values
         return logits
 
+    def __repr__(self):
+        return f"<{self.__class__.__name__}(logit_bias={self.logit_bias})>"
 
 class LogprobProcessor(LogitsProcessor):
     def __init__(self, logprobs=None):
         self.logprobs = logprobs
         self.token_alternatives = {}
-        super().__init__()
 
     def __call__(self, input_ids: torch.LongTensor, logits: torch.FloatTensor) -> torch.FloatTensor:
         if self.logprobs is not None:  # 0-5
             log_e_probabilities = F.log_softmax(logits, dim=1)
-            # XXX hack. should find the selected token and include the prob of that
-            # ... but we just +1 here instead because we don't know it yet.
-            top_values, top_indices = torch.topk(log_e_probabilities, k=self.logprobs + 1)
-            top_tokens = [decode(tok) for tok in top_indices[0]]
-            self.token_alternatives = dict(zip(top_tokens, top_values[0].tolist()))
+            top_values, top_indices = torch.topk(log_e_probabilities, k=self.logprobs+1)
+            top_tokens = [ decode(tok) for tok in top_indices[0] ]
+            top_probs = [ float(x) for x in top_values[0] ]
+            self.token_alternatives = dict(zip(top_tokens, top_probs))
+            debug_msg(f"{self.__class__.__name__}(logprobs+1={self.logprobs+1}, token_alternatives={self.token_alternatives})")
         return logits
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__}(logprobs={self.logprobs}, token_alternatives={self.token_alternatives})>"
 
 
 def convert_logprobs_to_tiktoken(model, logprobs):
-    try:
-        encoder = tiktoken.encoding_for_model(model)
-        # just pick the first one if it encodes to multiple tokens... 99.9% not required and maybe worse overall.
-        return dict([(encoder.decode([encoder.encode(token)[0]]), prob) for token, prob in logprobs.items()])
-    except KeyError:
-        # assume native tokens if we can't find the tokenizer
+# more problems than it's worth.
+#    try:
+#        encoder = tiktoken.encoding_for_model(model)
+#        # just pick the first one if it encodes to multiple tokens... 99.9% not required and maybe worse overall.
+#        return dict([(encoder.decode([encoder.encode(token)[0]]), prob) for token, prob in logprobs.items()])
+#    except KeyError:
+#        # assume native tokens if we can't find the tokenizer
         return logprobs
 
 
@@ -98,9 +103,11 @@ def marshal_common_params(body):
             encoder = tiktoken.encoding_for_model(req_params['requested_model'])
             new_logit_bias = {}
             for logit, bias in logit_bias.items():
-                for x in encode(encoder.decode([int(logit)]))[0]:
+                for x in encode(encoder.decode([int(logit)]), add_special_tokens=False)[0]:
+                    if int(x) in [0, 1, 2, 29871]: # XXX LLAMA tokens
+                        continue
                     new_logit_bias[str(int(x))] = bias
-            print(logit_bias, '->', new_logit_bias)
+            debug_msg('logit_bias_map', logit_bias, '->', new_logit_bias)
             logit_bias = new_logit_bias
         except KeyError:
             pass  # assume native tokens if we can't find the tokenizer
@@ -453,7 +460,6 @@ def completions(body: dict, is_legacy: bool = False):
     # generate reply #######################################
     debug_msg({'prompt': prompt, 'req_params': req_params})
     stopping_strings = req_params.pop('stopping_strings', [])
-    logprob_proc = req_params.pop('logprob_proc', None)
     generator = generate_reply(prompt, req_params, stopping_strings=stopping_strings, is_chat=False)
 
     answer = ''
@@ -487,7 +493,7 @@ def completions(body: dict, is_legacy: bool = False):
         }
     }
 
-    if logprob_proc:
+    if logprob_proc and logprob_proc.token_alternatives:
         top_logprobs = convert_logprobs_to_tiktoken(model=requested_model, logprobs=logprob_proc.token_alternatives)
         resp[resp_list][0]["logprobs"] = {'top_logprobs': [top_logprobs]}
     else:
