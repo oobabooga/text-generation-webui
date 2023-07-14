@@ -215,12 +215,12 @@ def messages_to_prompt(body: dict, req_params: dict, max_tokens):
 
     if token_count >= req_params['truncation_length']:
         err_msg = f"This model maximum context length is {req_params['truncation_length']} tokens. However, your messages resulted in over {token_count} tokens."
-        raise InvalidRequestError(message=err_msg)
+        raise InvalidRequestError(message=err_msg, param='messages')
 
     if max_tokens > 0 and token_count + max_tokens > req_params['truncation_length']:
         err_msg = f"This model maximum context length is {req_params['truncation_length']} tokens. However, your messages resulted in over {token_count} tokens and max_tokens is {max_tokens}."
         print(f"Warning: ${err_msg}")
-        # raise InvalidRequestError(message=err_msg)
+        # raise InvalidRequestError(message=err_msg, params='max_tokens')
 
     return prompt, token_count
 
@@ -250,6 +250,10 @@ def chat_completions(body: dict, is_legacy: bool = False) -> dict:
 
     # format the prompt from messages
     prompt, token_count = messages_to_prompt(body, req_params, max_tokens)
+
+    # set real max, avoid deeper errors
+    if req_params['max_new_tokens'] + token_count >= req_params['truncation_length']:
+        req_params['max_new_tokens'] = req_params['truncation_length'] - token_count
 
     # generate reply #######################################
     debug_msg({'prompt': prompt, 'req_params': req_params})
@@ -323,6 +327,10 @@ def stream_chat_completions(body: dict, is_legacy: bool = False):
     # format the prompt from messages
     prompt, token_count = messages_to_prompt(body, req_params, max_tokens)
 
+    # set real max, avoid deeper errors
+    if req_params['max_new_tokens'] + token_count >= req_params['truncation_length']:
+        req_params['max_new_tokens'] = req_params['truncation_length'] - token_count
+
     def chat_streaming_chunk(content):
         # begin streaming
         chunk = {
@@ -375,11 +383,15 @@ def stream_chat_completions(body: dict, is_legacy: bool = False):
         if len_seen == 0 and new_content[0] == ' ':
             new_content = new_content[1:]
 
-        completion_token_count += len(encode(new_content)[0])
         chunk = chat_streaming_chunk(new_content)
 
         yield chunk
 
+    # to get the correct token_count, strip leading space if present
+    if answer and answer[0] == ' ':
+        answer = answer[1:]
+
+    completion_token_count = len(encode(answer)[0])
     stop_reason = "stop"
     if token_count + completion_token_count >= req_params['truncation_length'] or completion_token_count >= max_tokens:
         stop_reason = "length"
@@ -413,7 +425,7 @@ def completions(body: dict, is_legacy: bool = False):
         if prompt and isinstance(prompt[0], int):
             try:
                 encoder = tiktoken.encoding_for_model(requested_model)
-                prompt = encode(encoder.decode(prompt))[0]
+                prompt = encoder.decode(prompt)
             except KeyError:
                 prompt = decode(prompt)[0]
         else:
@@ -504,7 +516,7 @@ def stream_completions(body: dict, is_legacy: bool = False):
         if prompt and isinstance(prompt[0], int):
             try:
                 encoder = tiktoken.encoding_for_model(requested_model)
-                prompt = encode(encoder.decode(prompt))[0]
+                prompt = encoder.decode(prompt)
             except KeyError:
                 prompt = decode(prompt)[0]
         else:
@@ -579,9 +591,13 @@ def stream_completions(body: dict, is_legacy: bool = False):
 
         chunk = text_streaming_chunk(new_content)
 
-        completion_token_count += len(encode(new_content)[0])
         yield chunk
 
+    # to get the correct count, we strip the leading space if present
+    if answer and answer[0] == ' ':
+        answer = answer[1:]
+
+    completion_token_count = len(encode(answer)[0])
     stop_reason = "stop"
     if token_count + completion_token_count >= req_params['truncation_length'] or completion_token_count >= max_tokens:
         stop_reason = "length"

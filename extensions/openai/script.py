@@ -55,11 +55,13 @@ class Handler(BaseHTTPRequestHandler):
 
     def send_sse(self, chunk: dict):
         response = 'data: ' + json.dumps(chunk) + '\r\n\r\n'
-        debug_msg(response)
+        debug_msg(response[:-4])
         self.wfile.write(response.encode('utf-8'))
 
     def end_sse(self):
-        self.wfile.write('data: [DONE]\r\n\r\n'.encode('utf-8'))
+        response = 'data: [DONE]\r\n\r\n'
+        debug_msg(response[:-4])
+        self.wfile.write(response.encode('utf-8'))
 
     def return_json(self, ret: dict, code: int = 200, no_debug=False):
         self.send_response(code)
@@ -93,12 +95,10 @@ class Handler(BaseHTTPRequestHandler):
         def wrapper(self):
             try:
                 func(self)
-            except ServiceUnavailableError as e:
-                self.openai_error(e.message, e.code, e.error_type, internal_message=e.internal_message)
             except InvalidRequestError as e:
-                self.openai_error(e.message, e.code, e.error_type, e.param, internal_message=e.internal_message)
+                self.openai_error(e.message, e.code, e.__class__.__name__, e.param, internal_message=e.internal_message)
             except OpenAIError as e:
-                self.openai_error(e.message, e.code, e.error_type, internal_message=e.internal_message)
+                self.openai_error(e.message, e.code, e.__class__.__name__, internal_message=e.internal_message)
             except Exception as e:
                 self.openai_error(repr(e), 500, 'OpenAIError', internal_message=traceback.format_exc())
 
@@ -143,8 +143,7 @@ class Handler(BaseHTTPRequestHandler):
         if '/completions' in self.path or '/generate' in self.path:
 
             if not shared.model:
-                self.openai_error("No model loaded.")
-                return
+                raise ServiceUnavailableError("No model loaded.")
 
             is_legacy = '/generate' in self.path
             is_streaming = body.get('stream', False)
@@ -176,8 +175,7 @@ class Handler(BaseHTTPRequestHandler):
             # deprecated
 
             if not shared.model:
-                self.openai_error("No model loaded.")
-                return
+                raise ServiceUnavailableError("No model loaded.")
 
             req_params = get_default_req_params()
 
@@ -190,7 +188,10 @@ class Handler(BaseHTTPRequestHandler):
 
             self.return_json(response)
 
-        elif '/images/generations' in self.path and 'SD_WEBUI_URL' in os.environ:
+        elif '/images/generations' in self.path:
+            if not 'SD_WEBUI_URL' in os.environ:
+                raise ServiceUnavailableError("Stable Diffusion not available. SD_WEBUI_URL not set.")
+
             prompt = body['prompt']
             size = default(body, 'size', '1024x1024')
             response_format = default(body, 'response_format', 'url')  # or b64_json
