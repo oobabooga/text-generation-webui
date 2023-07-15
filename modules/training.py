@@ -574,6 +574,21 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
                     control.should_training_stop = True
                     print(f"\033[1;31;1mStop Loss {stop_at_loss} reached.\033[0;37;0m")
 
+    sample_req = int(train_data.num_rows)//micro_batch_size
+    
+    if sample_req < gradient_accumulation_steps:
+        print(f"\033[1;31;1mWARNING: Current gradient accumulation is too high for the amount of training data.\033[0;37;0m")
+        print(f"Gradient accumulation: {gradient_accumulation_steps} should be less than: {sample_req}. \033[1;31;1mThis could crash Accelerate/Transformers\033[0;37;0m")
+        min_batchSize = sample_req*micro_batch_size
+        print(f"Preferable fix: \033[1;31;1mIncrease the size of dataset\033[0;37;0m")
+        print(f"... or Decrerase Batch Size \033[1;31;1m{batch_size}\033[0;37;0m to below {min_batchSize}")
+        gradient_accumulation_steps = max(1,sample_req-1)
+        print(f"Last resort fix for this run: Lowering Gradient accumulation to {gradient_accumulation_steps}. [Good luck]")
+
+    else:
+        print(f"Data Size Check: Gradient accumulation: {gradient_accumulation_steps} <= Data/Batch {sample_req} ... [OK]")
+
+    
     trainer = transformers.Trainer(
         model=lora_model,
         train_dataset=train_data,
