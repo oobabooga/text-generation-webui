@@ -2,8 +2,12 @@ import gradio
 import torch
 from transformers import LogitsProcessor
 import numpy as np
+import time
+import re
 
 from modules import shared
+from modules import html_generator
+from modules.html_generator import replace_blockquote
 
 params = {
     'active': True,
@@ -25,6 +29,7 @@ class PerplexityLogits(LogitsProcessor):
         self.verbose = verbose
 
     def __call__(self, input_ids, scores):
+        #t0 = time.time()
         probs = torch.softmax(scores, dim=-1, dtype=torch.float)
         log_probs = torch.nan_to_num(torch.log(probs)) # Note: This is to convert log(0) nan to 0, but probs*log_probs makes this 0 not affect the perplexity.
         entropy = -torch.sum(probs*log_probs)
@@ -68,7 +73,10 @@ class PerplexityLogits(LogitsProcessor):
         
         probs = probs.cpu().numpy().flatten()
         self.last_probs = probs # Need to keep this as a reference for top probs
-
+        
+        #t1 = time.time()
+        #print(f"PPL Processor: {(t1-t0):.3f} s")
+        # About 1 ms, though occasionally up to around 100 ms, not sure why...
         # Doesn't actually modify the logits!
         return scores
 
@@ -83,6 +91,7 @@ def logits_processor_modifier(logits_processor_list, input_ids):
 
 def output_modifier(text):
     global ppl_logits_processor
+    #t0 = time.time()
 
     if not params['active']:
         return text
@@ -131,6 +140,9 @@ def output_modifier(text):
     # Optional hacky workaround: Without this, spaces get added between every token. With this, there is a little extra whitespace at the top.
     # This fixes the tokenization spaces, somehow. However, this also removes any paragraph breaks in the message.
     #return '<p>' + text + '</p>'
+    #t1 = time.time()
+    #print(f"Modifier: {(t1-t0):.3f} s")
+    # About 50 ms
     return text
 
 # Green-yellow-red color scale
@@ -178,6 +190,10 @@ def probability_perplexity_color_scale(prob, ppl):
 def add_color_html(token, color):
     return f'<span style="color: #{color}">{token}</span>'
 
+# TODO: Major issue: Applying this to too many tokens will cause a permanent slowdown in generation speed until the messages are removed from the history.
+# I think the issue is from HTML elements taking up space in the visible history, and things like history deepcopy add latency proportional to the size of the history.
+# Potential solution is maybe to modify the main generation code to send just the internal text and not the visible history, to avoid moving too much around.
+# I wonder if we can also avoid using deepcopy here.
 # The whitespace fix here is not perfect -- it will remove whitespace of paragraph breaks and other particular cases.
 def add_dropdown_html(token, color, top_tokens, top_probs, whitespace='', perplexity=0):
     if whitespace != '':
@@ -194,10 +210,9 @@ def add_dropdown_html(token, color, top_tokens, top_probs, whitespace='', perple
     if perplexity != 0:
         ppl_color = perplexity_color_scale(perplexity)
         html += f'<tr><td>Perplexity:</td><td style="color: #{ppl_color}">{perplexity:.4f}</td></tr>'
-    html += '</tbody></table></div></div>'
-    return html
+    html += '</tbody></table></div></div>\n' # The newline would normally be added by markdown.markdown() but this is faster.
+    return html # About 750 characters per token...
 
-#374151;
 def custom_css():
     return """
         .dropdown {
@@ -242,10 +257,62 @@ def custom_css():
             display: block;
         }
 
-        .chat {
-            overflow-y: visible;
-        }
+        # TODO: This makes the hover menus extend outside the bounds of the chat area, which is good.
+        # However, it also makes the scrollbar disappear, which is bad.
+        # The scroll bar needs to still be present. So for now, we can't see dropdowns that extend past the edge of the chat area.
+        #.chat {
+        #    overflow-y: auto;
+        #}
     """
+
+# Monkeypatch applied to html_generator.py
+# This fixes an issue where the markdown conversion was causing a large slowdown in generation speeds if too many tokens had probability dropdowns added.
+# I'd rather have a more long-term solution, since this really shouldn't be called on all messages for each token, but this works for now.
+def convert_to_markdown(string):
+    #t0 = time.time()
+    # Blockquote
+    pattern = re.compile(r'\\begin{blockquote}(.*?)\\end{blockquote}', re.DOTALL)
+    string = pattern.sub(replace_blockquote, string)
+
+    # Code
+    string = string.replace('\\begin{code}', '```')
+    string = string.replace('\\end{code}', '```')
+    string = re.sub(r"(.)```", r"\1\n```", string)
+
+    result = ''
+    is_code = False
+    for line in string.split('\n'):
+        if line.lstrip(' ').startswith('```'):
+            is_code = not is_code
+
+        result += line
+        if is_code or line.startswith('|'):  # Don't add an extra \n for tables or code
+            result += '\n'
+        else:
+            result += '\n\n'
+
+    if is_code:
+        result = result + '```'  # Unfinished code block
+
+    string = result.strip()
+    #t1 = time.time()
+    #print(len(string))
+    #print(f"Pre markdown: {(t1-t0):.3f} s")
+    if params['probability_dropdown']:
+        # Prevents all latency introduced by trying to convert the HTML to markdown when it's not even necessary
+        #print('Monkeypatched')
+        return string
+    else:
+        #t0 = time.time()
+        return markdown.markdown(string, extensions=['fenced_code', 'tables'])
+        #t1 = time.time()
+        #print(f"Markdown: {(t1-t0):.3f} s for string of length {len(string)}")
+        #print(string)
+        #print(res)
+        #return res
+
+html_generator.convert_to_markdown = convert_to_markdown
+
 
 def ui():
     active_check = gradio.Checkbox(value=True, label="Compute probabilities and perplexity scores", info="Activate this extension. Note that this extension currently does not work with exllama or llama.cpp.")
