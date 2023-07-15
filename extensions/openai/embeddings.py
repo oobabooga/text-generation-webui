@@ -6,23 +6,21 @@ from extensions.openai.errors import *
 
 st_model = os.environ["OPENEDAI_EMBEDDING_MODEL"] if "OPENEDAI_EMBEDDING_MODEL" in os.environ else "all-mpnet-base-v2"
 embeddings_model = None
-embeddings_device = 'cpu'
-
+# OPENEDAI_EMBEDDING_DEVICE: auto (best or cpu), cpu, cuda, ipu, xpu, mkldnn, opengl, opencl, ideep, hip, ve, fpga, ort, xla, lazy, vulkan, mps, meta, hpu, mtia, privateuseone
+embeddings_device = os.environ.get("OPENEDAI_EMBEDDING_DEVICE", "cpu")
+if embeddings_device.lower() == 'auto':
+    embeddings_device = None
 
 def load_embedding_model(model: str) -> SentenceTransformer:
-    global embeddings_device
+    global embeddings_device, embeddings_model
     try:
         embeddings_model = 'loading...' # flag
-        # device: 'cpu', 'cuda', None (auto GPU)
         # see: https://www.sbert.net/docs/package_reference/SentenceTransformer.html#sentence_transformers.SentenceTransformer
-        embeddings_device = os.environ.get("OPENEDAI_EMBEDDING_MODEL_DEVICE", embeddings_device)
-        if embeddings_device.lower() == 'auto':
-            embeddings_device = None
         emb_model = SentenceTransformer(model, device=embeddings_device)
         # ... emb_model.device doesn't seem to work, always cpu anyways? but specify cpu anyways to free more VRAM
-        print(f"\nLoaded embedding model: {model} on {emb_model.device} [always seems to say, even if cuda 'cpu'], max sequence length: {emb_model.max_seq_length}")
+        print(f"\nLoaded embedding model: {model} on {emb_model.device} [always seems to say 'cpu', even if 'cuda'], max sequence length: {emb_model.max_seq_length}")
     except Exception as e:
-        print(f"\nError: Failed to load embedding model: {model}")
+        embeddings_model = None
         raise ServiceUnavailableError(f"Error: Failed to load embedding model: {model}", internal_message=repr(e))
 
     return emb_model

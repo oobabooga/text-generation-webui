@@ -202,8 +202,7 @@ Some hacky mappings:
 | n | 1 | variations are not supported yet. |
 | 1 | num_beams | hardcoded to 1 |
 | 1.0 | typical_p | hardcoded to 1.0 |
-| logprobs | - | not supported yet |
-| logit_bias | - | not supported yet |
+| logprobs & logit_bias | - | experimental, llama only, transformers-kin only (ExLlama_HF ok), can also use llama tokens if 'model' is not an openai model or will convert from tiktoken for the openai model specified in 'model' |
 | messages.name | - | not supported yet |
 | user | - | not supported yet |
 | functions/function_call | - | function calls are not supported yet |

@@ -3,6 +3,7 @@ import yaml
 import tiktoken
 import torch
 import torch.nn.functional as F
+from math import log, exp
 
 from transformers import LogitsProcessor, LogitsProcessorList
 
@@ -20,12 +21,17 @@ class LogitsBiasProcessor(LogitsProcessor):
         self.logit_bias = logit_bias
         if self.logit_bias:
             self.keys = list([int(key) for key in self.logit_bias.keys()])
-            self.values = torch.tensor([float(val * 0.01) for val in self.logit_bias.values()]).cuda()
+            values = [ self.logit_bias[str(key)] for key in self.keys ]
+            # maybe? This seems to have the desired effect of mapping [-100,100] to a token logprob delta.
+            self.values = torch.tensor(values, dtype=torch.float, device=shared.model.device).mul_(0.01).add_(1.0).clamp_(0, 2)
             debug_msg(f"{self})")
 
     def __call__(self, input_ids: torch.LongTensor, logits: torch.FloatTensor) -> torch.FloatTensor:
         if self.logit_bias:
-            logits[0, self.keys] += self.values
+            debug_msg(logits[0, self.keys], " *= ", self.values)
+            logits[0, self.keys] *= self.values
+            debug_msg(" --> ", logits[0, self.keys])
+            debug_msg(" max/min ", float(torch.max(logits[0])), float(torch.min(logits[0])))
         return logits
 
     def __repr__(self):

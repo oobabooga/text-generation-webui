@@ -86,6 +86,7 @@ class Handler(BaseHTTPRequestHandler):
             }
         }
         if internal_message:
+            print(error_type, message)
             print(internal_message)
             # error_resp['internal_message'] = internal_message
 
