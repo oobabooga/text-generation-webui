@@ -72,7 +72,9 @@ class LlamaCppModel:
     def generate(self, prompt, state, callback=None):
         prompt = prompt if type(prompt) is str else prompt.decode()
         prompt_tokens = self.model.tokenize(b" " + prompt.encode("utf-8"))
-        
+        max_prompt_tokens = state['truncation_length']
+        if len(prompt_tokens) > max_prompt_tokens:
+            prompt_tokens = prompt_tokens[-max_prompt_tokens::]
         max_tokens = state['max_new_tokens']
         completion_tokens = []
 
@@ -94,7 +96,7 @@ class LlamaCppModel:
                 partial(ban_eos_logits_processor, self.model.token_eos()),
             ]) if state['ban_eos_token'] else None,
         ):
-            if token == self.model._token_eos:
+            if token == self.model.token_eos():
                 break
 
             completion_tokens.append(token)
