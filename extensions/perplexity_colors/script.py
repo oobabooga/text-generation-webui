@@ -4,6 +4,7 @@ from transformers import LogitsProcessor
 import numpy as np
 import time
 import re
+import markdown
 
 from modules import shared
 from modules import html_generator
@@ -112,7 +113,7 @@ def output_modifier(text):
 
     i = 0
     for token, prob, ppl, top_tokens, top_probs in zip(gen_tokens, sel_probs, perplexities, top_tokens_list, top_probs_list):
-        if '`' in token:
+        if '`' in token and not params['probability_dropdown']:
             in_code = not in_code
             continue
         if in_code:
@@ -298,7 +299,7 @@ def convert_to_markdown(string):
     #t1 = time.time()
     #print(len(string))
     #print(f"Pre markdown: {(t1-t0):.3f} s")
-    if params['probability_dropdown']:
+    if params['probability_dropdown'] and '<div class="hoverable">' in string:
         # Prevents all latency introduced by trying to convert the HTML to markdown when it's not even necessary
         #print('Monkeypatched')
         return string
