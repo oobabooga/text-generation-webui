@@ -106,13 +106,21 @@ def _apply_history_modifier_extensions(history):
     return history
 
 
-# Extension functions that override the default tokenizer output - currently only the first one will work
+# Extension functions that override the default tokenizer output - The order of execution is not defined
 def _apply_tokenizer_extensions(function_name, state, prompt, input_ids, input_embeds):
     for extension, _ in iterator():
         if hasattr(extension, function_name):
-            return getattr(extension, function_name)(state, prompt, input_ids, input_embeds)
+            prompt, input_ids, input_embeds = getattr(extension, function_name)(state, prompt, input_ids, input_embeds)
 
     return prompt, input_ids, input_embeds
+
+
+# Allow extensions to add their own logits processors to the stack being run.
+# Each extension would call `processor_list.append({their LogitsProcessor}())`.
+def _apply_logits_processor_extensions(function_name, processor_list, input_ids):
+    for extension, _ in iterator():
+        if hasattr(extension, function_name):
+            getattr(extension, function_name)(processor_list, input_ids)
 
 
 # Get prompt length in tokens after applying extension functions which override the default tokenizer output
@@ -183,6 +191,7 @@ EXTENSION_MAP = {
     "history": _apply_history_modifier_extensions,
     "bot_prefix": partial(_apply_string_extensions, "bot_prefix_modifier"),
     "tokenizer": partial(_apply_tokenizer_extensions, "tokenizer_modifier"),
+    'logits_processor': partial(_apply_logits_processor_extensions, 'logits_processor_modifier'),
     "input_hijack": _apply_input_hijack,
     "custom_generate_chat_prompt": _apply_custom_generate_chat_prompt,
     "custom_generate_reply": _apply_custom_generate_reply,
