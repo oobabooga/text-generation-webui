@@ -38,7 +38,7 @@ loaders_and_params = {
         'mlock',
         'llama_cpp_seed',
     ],
-    'llama.cpp_HF': [
+    'llamacpp_HF': [
         'n_ctx',
         'n_gpu_layers',
         'n_batch',
