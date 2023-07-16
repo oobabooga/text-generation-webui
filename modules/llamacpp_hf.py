@@ -2,8 +2,6 @@ import os
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
-import llama_cpp
-import numpy as np
 import torch
 from llama_cpp import Llama
 from torch.nn import CrossEntropyLoss
@@ -11,7 +9,6 @@ from transformers import GenerationConfig, PretrainedConfig, PreTrainedModel
 from transformers.modeling_outputs import CausalLMOutputWithPast
 
 from modules import shared
-from modules.llamacpp_model import LlamaCppModel
 from modules.logging_colors import logger
 
 
