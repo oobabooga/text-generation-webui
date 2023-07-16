@@ -86,7 +86,6 @@ class LlamaCppModel:
             logits_processor=LogitsProcessorList([
                 partial(ban_eos_logits_processor, self.model.token_eos()),
             ]) if state['ban_eos_token'] else None,
-            logits_all=True,  # Needed for perplexity evaluation
         )
 
         output = ""

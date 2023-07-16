@@ -2,7 +2,10 @@ import os
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
+import llama_cpp
+import numpy as np
 import torch
+from llama_cpp import Llama
 from torch.nn import CrossEntropyLoss
 from transformers import GenerationConfig, PretrainedConfig, PreTrainedModel
 from transformers.modeling_outputs import CausalLMOutputWithPast
@@ -10,9 +13,6 @@ from transformers.modeling_outputs import CausalLMOutputWithPast
 from modules import shared
 from modules.llamacpp_model import LlamaCppModel
 from modules.logging_colors import logger
-import numpy as np
-import llama_cpp
-from llama_cpp import Llama
 
 
 class LlamacppHF(PreTrainedModel):
@@ -47,12 +47,13 @@ class LlamacppHF(PreTrainedModel):
         seq_tensor = torch.tensor(seq)
         self.cache = seq_tensor
         if labels is None:
-            logits = torch.tensor(self.model.eval_logits).view(1, 1, -1).to(kwargs['input_ids'].device)
             if self.cache is None or not torch.equal(self.cache, seq_tensor[:-1]):
                 self.model.reset()
                 self.model.eval(seq)
             else:
                 self.model.eval([seq[-1]])
+
+            logits = torch.tensor(self.model.eval_logits)[-1].view(1, 1, -1).to(kwargs['input_ids'].device)
         else:
             self.model.reset()
             self.model.eval(seq)
@@ -82,7 +83,6 @@ class LlamacppHF(PreTrainedModel):
             pretrained_model_name_or_path = Path(pretrained_model_name_or_path)
 
         path = Path(f'{shared.args.model_dir}') / Path(pretrained_model_name_or_path)
-        print(path)
         if path.is_file():
             model_file = path
         else:
@@ -102,9 +102,5 @@ class LlamacppHF(PreTrainedModel):
             'logits_all': True,
         }
 
-        # model = Llama(model_path=str(model_file), n_batch=512, logits_all=True)
         model = Llama(**params)
-        # model, _ = LlamaCppModel.from_pretrained(model_file)
-
-        # return LlamacppHF(model)
         return LlamacppHF(model)
