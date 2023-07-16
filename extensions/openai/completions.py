@@ -373,7 +373,6 @@ def stream_chat_completions(body: dict, is_legacy: bool = False):
     debug_msg({'prompt': prompt, 'req_params': req_params})
 
     stopping_strings = req_params.pop('stopping_strings', [])
-    logprob_proc = req_params.pop('logprob_proc', None)
 
     generator = generate_reply(prompt, req_params, stopping_strings=stopping_strings, is_chat=False)
 
