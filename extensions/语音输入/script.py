@@ -15,7 +15,7 @@ def do_stt(audio):
 
     try:
         transcription = r.recognize_whisper(
-            audio_data, language="english", model="base"
+            audio_data, language="chinese", model="base"
         )
     except sr.UnknownValueError:
         print("Whisper could not understand audio")
