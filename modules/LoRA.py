@@ -66,7 +66,7 @@ def add_lora_autogptq(lora_names):
         logger.error("This version of AutoGPTQ does not support LoRA. You need to install from source or wait for a new release.")
         return
 
-    if len(lora_names) == 0:        
+    if len(lora_names) == 0:
         reload_model()
 
         shared.lora_names = []
@@ -108,14 +108,14 @@ def add_lora_transformers(lora_names):
     # If any LoRA needs to be removed, start over
     if len(removed_set) > 0:
         # shared.model may no longer be PeftModel
-        if hasattr(shared.model, 'disable_adapter'):  
-            shared.model.disable_adapter()  
+        if hasattr(shared.model, 'disable_adapter'):
+            shared.model.disable_adapter()
             shared.model = shared.model.base_model.model
 
     if len(lora_names) > 0:
         params = {}
         if not shared.args.cpu:
-            if shared.args.load_in_4bit or shared.args.load_in_8bit: 
+            if shared.args.load_in_4bit or shared.args.load_in_8bit:
                 params['peft_type'] = shared.model.dtype
             else:
                 params['dtype'] = shared.model.dtype
