@@ -1,5 +1,6 @@
 import argparse
 import glob
+import re
 import os
 import site
 import subprocess
@@ -110,10 +111,10 @@ def update_dependencies():
     os.chdir("text-generation-webui")
     run_cmd("git pull", assert_success=True, environment=True)
 
-    # Workaround for git+ packages not updating properly
+    # Workaround for git+ packages not updating properly  Also store requirements.txt for later use
     with open("requirements.txt") as f:
-        requirements = f.read().splitlines()
-        git_requirements = [req for req in requirements if req.startswith("git+")]
+        textgen_requirements = f.read()
+        git_requirements = [req for req in textgen_requirements.splitlines() if req.startswith("git+")]
 
     # Loop through each "git+" requirement and uninstall it
     for req in git_requirements:
@@ -160,6 +161,12 @@ def update_dependencies():
     # Check for '+cu' in version string to determine if torch uses CUDA or not   check for pytorch-cuda as well for backwards compatibility
     if '+cu' not in torver and run_cmd("conda list -f pytorch-cuda | grep pytorch-cuda", environment=True, capture_output=True).returncode == 1:
         return
+
+    # Install llama-cpp-python built with cuBLAS support for NVIDIA GPU acceleration
+    if '+cu' in torver:
+        llama_cpp = re.search('(?<=llama-cpp-python==)\d+(?:\.\d+)*', textgen_requirements)
+        if llama_cpp is not None:
+            run_cmd(f'python -m pip install llama-cpp-python=={llama_cpp[0]} --force-reinstall --no-deps --index-url=https://jllllll.github.io/llama-cpp-python-cuBLAS-wheels/AVX2/cu117', environment=True)
 
     # Finds the path to your dependencies
     for sitedir in site.getsitepackages():
