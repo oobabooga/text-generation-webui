@@ -56,15 +56,15 @@ class ExllamaHF(PreTrainedModel):
 
         if labels is None:
             if cache is None:
-                cache = self.ex_cache
                 self.ex_cache.current_seq_len = 0
+                cache = self.ex_cache
                 self.ex_model.forward(torch.tensor([seq[:-1]], dtype=torch.long), cache, preprocess_only=True, lora=self.lora)
 
             logits = self.ex_model.forward(torch.tensor([seq[-1:]], dtype=torch.long), cache, lora=self.lora).to(kwargs['input_ids'].device)
         else:
             if cache is None:
-                cache = self.ex_cache
                 self.ex_cache.current_seq_len = 0
+                cache = self.ex_cache
 
             logits = self.ex_model.forward(torch.tensor([seq], dtype=torch.long), cache, last_id_only=False, lora=self.lora)
 
