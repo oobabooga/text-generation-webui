@@ -50,7 +50,9 @@ class LlamaCppModel:
             'use_mmap': not shared.args.no_mmap,
             'use_mlock': shared.args.mlock,
             'low_vram': shared.args.low_vram,
-            'n_gpu_layers': shared.args.n_gpu_layers
+            'n_gpu_layers': shared.args.n_gpu_layers,
+            'rope_freq_base': shared.args.rope_freq_base,
+            'rope_freq_scale': shared.args.rope_freq_scale
         }
 
         result.model = Llama(**params)

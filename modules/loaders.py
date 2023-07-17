@@ -37,6 +37,8 @@ loaders_and_params = {
         'low_vram',
         'mlock',
         'llama_cpp_seed',
+        'rope_freq_base',
+        'rope_freq_scale',
     ],
     'llamacpp_HF': [
         'n_ctx',
