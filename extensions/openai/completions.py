@@ -84,7 +84,7 @@ def marshal_common_params(body):
     req_params['requested_model'] = body.get('model', shared.model_name)
 
     req_params['suffix'] = default(body, 'suffix', req_params['suffix'])
-    req_params['temperature'] = clamp(default(body, 'temperature', req_params['temperature']), 0.01, 1.99)  # fixup absolute 0.0/2.0
+    req_params['temperature'] = clamp(default(body, 'temperature', req_params['temperature']), 0.02, 1.99)  # fixup absolute 0.0/2.0
     req_params['top_p'] = clamp(default(body, 'top_p', req_params['top_p']), 0.01, 1.0)
     n = default(body, 'n', 1)
     if n != 1:
