@@ -251,6 +251,8 @@ Optionally, you can use the following command-line flags:
 | `--n-gpu-layers N_GPU_LAYERS` | Number of layers to offload to the GPU. Only works if llama-cpp-python was compiled with BLAS. Set this to 1000000000 to offload all layers to the GPU. |
 | `--n_ctx N_CTX` | Size of the prompt context. |
 | `--llama_cpp_seed SEED` | Seed for llama-cpp models. Default 0 (random). |
+| `--rope_freq_base ROPE_FREQ_BASE` | Base frequency for rope sampling. |
+| `--rope_freq_scale ROPE_FREQ_SCALE` | Scale factor for rope sampling. |
 
 #### AutoGPTQ
 
