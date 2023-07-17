@@ -38,7 +38,8 @@ def generations(prompt: str, size: str, response_format: str, n: int):
     response = requests.post(url=sd_url, json=payload)
     r = response.json()
     if response.status_code != 200 or 'images' not in r:
-        raise ServiceUnavailableError(r.get('detail', [{'msg': 'Unknown error calling Stable Diffusion'}])[0]['msg'], code=response.status_code)
+        print(r)
+        raise ServiceUnavailableError(r.get('error', 'Unknown error calling Stable Diffusion'), code=response.status_code, internal_message=r.get('errors',None))
     # r['parameters']...
     for b64_json in r['images']:
         if response_format == 'b64_json':

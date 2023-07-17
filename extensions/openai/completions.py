@@ -84,8 +84,8 @@ def marshal_common_params(body):
     req_params['requested_model'] = body.get('model', shared.model_name)
 
     req_params['suffix'] = default(body, 'suffix', req_params['suffix'])
-    req_params['temperature'] = clamp(default(body, 'temperature', req_params['temperature']), 0.001, 1.999)  # fixup absolute 0.0/2.0
-    req_params['top_p'] = clamp(default(body, 'top_p', req_params['top_p']), 0.001, 1.0)
+    req_params['temperature'] = clamp(default(body, 'temperature', req_params['temperature']), 0.01, 1.99)  # fixup absolute 0.0/2.0
+    req_params['top_p'] = clamp(default(body, 'top_p', req_params['top_p']), 0.01, 1.0)
     n = default(body, 'n', 1)
     if n != 1:
         raise InvalidRequestError(message="Only n = 1 is supported.", param='n')
@@ -164,10 +164,10 @@ def messages_to_prompt(body: dict, req_params: dict, max_tokens):
 
             template = instruct['turn_template']
             system_message_template = "{message}"
-            system_message_default = instruct['context']
+            system_message_default = instruct.get('context', '') # can be missing
             bot_start = template.find('<|bot|>')  # So far, 100% of instruction templates have this token
-            user_message_template = template[:bot_start].replace('<|user-message|>', '{message}').replace('<|user|>', instruct['user'])
-            bot_message_template = template[bot_start:].replace('<|bot-message|>', '{message}').replace('<|bot|>', instruct['bot'])
+            user_message_template = template[:bot_start].replace('<|user-message|>', '{message}').replace('<|user|>', instruct.get('user', ''))
+            bot_message_template = template[bot_start:].replace('<|bot-message|>', '{message}').replace('<|bot|>', instruct.get('bot', ''))
             bot_prompt = bot_message_template[:bot_message_template.find('{message}')].rstrip(' ')
 
             role_formats = {
