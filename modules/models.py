@@ -55,6 +55,7 @@ def load_model(model_name, loader=None):
         'AutoGPTQ': AutoGPTQ_loader,
         'GPTQ-for-LLaMa': GPTQ_loader,
         'llama.cpp': llamacpp_loader,
+        'llamacpp_HF': llamacpp_HF_loader,
         'FlexGen': flexgen_loader,
         'RWKV': RWKV_loader,
         'ExLlama': ExLlama_loader,
@@ -274,6 +275,27 @@ def xinference_loader(model_name):
 
     model = XinferenceModel.from_pretrained(model_name, shared.args.model_uid, shared.args.endpoint)
     return model
+
+
+def llamacpp_HF_loader(model_name):
+    from modules.llamacpp_hf import LlamacppHF
+
+    for fname in ["oobabooga_llama-tokenizer", "llama-tokenizer"]:
+        path = Path(f'{shared.args.model_dir}/{fname}')
+        if path.exists():
+            break
+    else:
+        logger.error("Could not load the model because a tokenizer in transformers format was not found. Please download oobabooga/llama-tokenizer.")
+        return None, None
+
+    tokenizer = AutoTokenizer.from_pretrained(
+        path,
+        trust_remote_code=shared.args.trust_remote_code,
+        use_fast=False
+    )
+
+    model = LlamacppHF.from_pretrained(model_name)
+    return model, tokenizer
 
 
 def GPTQ_loader(model_name):
