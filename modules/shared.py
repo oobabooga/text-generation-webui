@@ -32,7 +32,7 @@ need_restart = False
 
 settings = {
     'dark_theme': False,
-    'autoload_model': True,
+    'autoload_model': False,
     'max_new_tokens': 200,
     'max_new_tokens_min': 1,
     'max_new_tokens_max': 2000,
