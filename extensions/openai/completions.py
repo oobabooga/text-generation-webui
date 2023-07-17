@@ -147,11 +147,11 @@ def messages_to_prompt(body: dict, req_params: dict, max_tokens):
     messages = body['messages']
 
     role_formats = {
-        'user': 'user: {message}\n',
-        'assistant': 'assistant: {message}\n',
+        'user': 'User: {message}\n',
+        'assistant': 'Assistant: {message}\n',
         'system': '{message}',
-        'context': 'You are a helpful assistant. Answer as concisely as possible.',
-        'prompt': 'assistant:',
+        'context': 'You are a helpful assistant. Answer as concisely as possible.\nUser: I want your assistance.\nAssistant: Sure! What can I do for you?',
+        'prompt': 'Assistant:',
     }
 
     if not 'stopping_strings' in req_params:
@@ -186,13 +186,13 @@ def messages_to_prompt(body: dict, req_params: dict, max_tokens):
             debug_msg(f"Loaded instruction role format: {shared.settings['instruction_template']}")
 
         except Exception as e:
-            req_params['stopping_strings'].extend(['\nuser:'])
+            req_params['stopping_strings'].extend(['\nUser:', 'User:'])  # XXX User: prompt here also
 
             print(f"Exception: When loading characters/instruction-following/{shared.settings['instruction_template']}.yaml: {repr(e)}")
             print("Warning: Loaded default instruction-following template for model.")
 
     else:
-        req_params['stopping_strings'].extend(['\nuser:'])
+        req_params['stopping_strings'].extend(['\nUser:', 'User:'])  # XXX User: prompt here also
         print("Warning: Loaded default instruction-following template for model.")
 
     system_msgs = []
