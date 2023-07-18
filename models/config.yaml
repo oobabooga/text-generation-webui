@@ -272,6 +272,8 @@ TheBloke_WizardLM-30B-GPTQ:
 .*godzilla:
   mode: 'instruct'
   instruction_template: 'Alpaca'
-.*llama-2.*chat:
+.*llama-(2|v2):
+  truncation_length: 4096
+.*llama-(2|v2).*chat:
   mode: 'instruct'
   instruction_template: 'Llama-v2'
