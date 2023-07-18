@@ -62,8 +62,6 @@ def list_model_elements():
         'n_gpu_layers',
         'n_ctx',
         'llama_cpp_seed',
-        'rope_freq_base',
-        'rope_freq_scale',
         'gpu_split',
         'max_seq_len',
         'compress_pos_emb',
