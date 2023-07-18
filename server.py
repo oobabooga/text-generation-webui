@@ -277,20 +277,17 @@ def create_model_menus():
     load.click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         update_model_parameters, gradio('interface_state'), None).then(
-        partial(load_model_wrapper, autoload=True), gradio('model_menu', 'loader'), gradio('model_status'), show_progress=False).then(
-        lambda: shared.lora_names, None, gradio('lora_menu'))
+        partial(load_model_wrapper, autoload=True), gradio('model_menu', 'loader'), gradio('model_status'), show_progress=False)
 
     unload.click(
         unload_model, None, None).then(
-        lambda: "Model unloaded", None, gradio('model_status')).then(
-        lambda: shared.lora_names, None, gradio('lora_menu'))
+        lambda: "Model unloaded", None, gradio('model_status'))
 
     reload.click(
         unload_model, None, None).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         update_model_parameters, gradio('interface_state'), None).then(
-        partial(load_model_wrapper, autoload=True), gradio('model_menu', 'loader'), gradio('model_status'), show_progress=False).then(
-        lambda: shared.lora_names, None, gradio('lora_menu'))
+        partial(load_model_wrapper, autoload=True), gradio('model_menu', 'loader'), gradio('model_status'), show_progress=False)
 
     save_settings.click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
@@ -1127,10 +1124,6 @@ if __name__ == "__main__":
     # Model defined through --model
     if shared.args.model is not None:
         shared.model_name = shared.args.model
-
-    # Only one model is available
-    elif len(available_models) == 1:
-        shared.model_name = available_models[0]
 
     # Select the model from a command-line menu
     elif shared.args.model_menu:

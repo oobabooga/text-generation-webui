@@ -147,7 +147,7 @@ def huggingface_loader(model_name):
     # Load the model in simple 16-bit mode by default
     if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.load_in_4bit, shared.args.auto_devices, shared.args.disk, shared.args.deepspeed, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None]):
         model = LoaderClass.from_pretrained(Path(f"{shared.args.model_dir}/{model_name}"), low_cpu_mem_usage=True, torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16, trust_remote_code=shared.args.trust_remote_code)
-        if torch.has_mps:
+        if torch.backends.mps.is_available():
             device = torch.device('mps')
             model = model.to(device)
         else:
@@ -167,7 +167,7 @@ def huggingface_loader(model_name):
             "trust_remote_code": shared.args.trust_remote_code
         }
 
-        if not any((shared.args.cpu, torch.cuda.is_available(), torch.has_mps)):
+        if not any((shared.args.cpu, torch.cuda.is_available(), torch.backends.mps.is_available())):
             logger.warning("torch.cuda.is_available() returned False. This means that no GPU has been detected. Falling back to CPU mode.")
             shared.args.cpu = True
 

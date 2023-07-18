@@ -9,10 +9,21 @@ This guide will cover usage through the official `transformers` implementation. 
 
 ### Option 1: pre-converted weights
 
-* Torrent: https://github.com/oobabooga/text-generation-webui/pull/530#issuecomment-1484235789
-* Direct download: https://huggingface.co/Neko-Institute-of-Science
+* Direct download (recommended):
 
-⚠️ The tokenizers for the Torrent source above and also for many LLaMA fine-tunes available on Hugging Face may be outdated, in particular the files called `tokenizer_config.json` and `special_tokens_map.json`. Here you can find those files: https://huggingface.co/oobabooga/llama-tokenizer
+https://huggingface.co/Neko-Institute-of-Science/LLaMA-7B-HF
+
+https://huggingface.co/Neko-Institute-of-Science/LLaMA-13B-HF
+
+https://huggingface.co/Neko-Institute-of-Science/LLaMA-30B-HF
+
+https://huggingface.co/Neko-Institute-of-Science/LLaMA-65B-HF
+
+* Torrent:
+
+https://github.com/oobabooga/text-generation-webui/pull/530#issuecomment-1484235789
+
+The tokenizer files in the torrent above are outdated, in particular the files called `tokenizer_config.json` and `special_tokens_map.json`. Here you can find those files: https://huggingface.co/oobabooga/llama-tokenizer
 
 ### Option 2: convert the weights yourself
 
