@@ -8,10 +8,10 @@ To convert LLaMA-v2 from the `.pth` format provided by Meta to transformers form
 cd llama
 ```
 
-2) Clone the code in [this PR](https://github.com/huggingface/transformers/pull/24891):
+2) Clone the transformers library:
 
 ```
-git clone 'https://github.com/ArthurZucker/transformers' -b llama-tests
+git clone 'https://github.com/huggingface/transformers'
 
 ```
 
