@@ -311,7 +311,7 @@ Optionally, you can use the following command-line flags:
 |---------------------------------------|-------------|
 | `--multimodal-pipeline PIPELINE`      | The multimodal pipeline to use. Examples: `llava-7b`, `llava-13b`. |
 
-Out of memory errors? [Check the low VRAM guide](docs/Low-VRAM-guide.md).
+Out of memory errors? [Check the low VRAM guide](docs/Low-VRAM-guide.md). Alternatively explore [GGML](docs/GGML-llama.cpp-models.md) and [GPTQ](docs/GPTQ-models-(4-bit-mode).md) quantizations.
 
 ## Presets
 
