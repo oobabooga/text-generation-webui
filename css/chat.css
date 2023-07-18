@@ -65,8 +65,8 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 .message-body li {
-    margin-top: 0.5em !important;
-    margin-bottom: 0.5em !important;
+    margin-top: 0 !important;
+    margin-bottom: 1.25em !important;
 }
 
 .message-body li > p {
