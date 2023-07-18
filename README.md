@@ -268,8 +268,6 @@ Optionally, you can use the following command-line flags:
 |------------------|-------------|
 |`--gpu-split`     | Comma-separated list of VRAM (in GB) to use per GPU device for model layers, e.g. `20,7,7` |
 |`--max_seq_len MAX_SEQ_LEN`           | Maximum sequence length. |
-|`--compress_pos_emb COMPRESS_POS_EMB` | Positional embeddings compression factor. Should typically be set to max_seq_len / 2048. |
-|`--alpha_value ALPHA_VALUE`           | Positional embeddings alpha factor for NTK RoPE scaling. Same as above. Use either this or compress_pos_emb, not both. `
 
 #### GPTQ-for-LLaMa
 
@@ -307,6 +305,13 @@ Optionally, you can use the following command-line flags:
 |---------------------------------|-------------|
 | `--rwkv-strategy RWKV_STRATEGY` | RWKV: The strategy to use while loading the model. Examples: "cpu fp32", "cuda fp16", "cuda fp16i8". |
 | `--rwkv-cuda-on`                | RWKV: Compile the CUDA kernel for better performance. |
+
+#### RoPE (for llama.cpp and ExLlama only)
+
+| Flag             | Description |
+|------------------|-------------|
+|`--compress_pos_emb COMPRESS_POS_EMB` | Positional embeddings compression factor. Should typically be set to max_seq_len / 2048. |
+|`--alpha_value ALPHA_VALUE`           | Positional embeddings alpha factor for NTK RoPE scaling. Same as above. Use either this or compress_pos_emb, not both. |
 
 #### Gradio
 
