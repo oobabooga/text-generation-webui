@@ -38,7 +38,8 @@ def generate_chat_picture(picture, name1, name2):
 
 
 def ui():
-    picture_select = gr.Image(label='Send a picture', type='pil')
+    with gr.Accordion("Picture upload"):
+        picture_select = gr.Image(label='Send a picture', type='pil')
 
     # Prepare the input hijack, update the interface values, call the generation function, and clear the picture
     picture_select.upload(
