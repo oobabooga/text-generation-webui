@@ -246,8 +246,6 @@ def create_model_menus():
                         shared.gradio['low_vram'] = gr.Checkbox(label="low-vram", value=shared.args.low_vram)
                         shared.gradio['mlock'] = gr.Checkbox(label="mlock", value=shared.args.mlock)
                         shared.gradio['llama_cpp_seed'] = gr.Number(label='Seed (0 for random)', value=shared.args.llama_cpp_seed)
-                        shared.gradio['rope_freq_base'] = gr.Slider(label='RoPE base frequency', minimum=0, step=1, maximum=100000, value=shared.args.rope_freq_base)
-                        shared.gradio['rope_freq_scale'] = gr.Slider(label='RoPE scale frequency', minimum=0, maximum=1, step=0.01, value=shared.args.rope_freq_scale)
                         shared.gradio['trust_remote_code'] = gr.Checkbox(label="trust-remote-code", value=shared.args.trust_remote_code, info='Make sure to inspect the .py files inside the model folder before loading it with this option enabled.')
                         shared.gradio['gptq_for_llama_info'] = gr.Markdown('GPTQ-for-LLaMa is currently 2x faster than AutoGPTQ on some systems. It is installed by default with the one-click installers. Otherwise, it has to be installed manually following the instructions here: [instructions](https://github.com/oobabooga/text-generation-webui/blob/main/docs/GPTQ-models-(4-bit-mode).md#installation-1).')
                         shared.gradio['exllama_info'] = gr.Markdown('For more information, consult the [docs](https://github.com/oobabooga/text-generation-webui/blob/main/docs/ExLlama.md).')
