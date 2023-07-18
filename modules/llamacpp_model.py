@@ -43,7 +43,7 @@ class LlamaCppModel:
         logger.info("Cache capacity is " + str(cache_capacity) + " bytes")
 
         if shared.args.tensor_split is None or shared.args.tensor_split.strip() == '':
-            tensor_split_list = [0.0]
+            tensor_split_list = None
         else:
             tensor_split_list = [float(x) for x in shared.args.tensor_split.strip().split(",")]
 
