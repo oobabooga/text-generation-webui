@@ -57,7 +57,9 @@ class LlamaCppModel:
             'use_mlock': shared.args.mlock,
             'low_vram': shared.args.low_vram,
             'n_gpu_layers': shared.args.n_gpu_layers,
-            'tensor_split': tensor_split_list
+            'tensor_split': tensor_split_list,
+            'rope_freq_base': 10000 * shared.args.alpha_value ** (64/63.),
+            'rope_freq_scale': 1.0 / shared.args.compress_pos_emb,
         }
 
         result.model = Llama(**params)

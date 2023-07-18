@@ -38,6 +38,8 @@ loaders_and_params = {
         'low_vram',
         'mlock',
         'llama_cpp_seed',
+        'compress_pos_emb',
+        'alpha_value',
     ],
     'llamacpp_HF': [
         'n_ctx',
@@ -49,6 +51,8 @@ loaders_and_params = {
         'low_vram',
         'mlock',
         'llama_cpp_seed',
+        'compress_pos_emb',
+        'alpha_value',
         'llamacpp_HF_info',
     ],
     'Transformers': [
