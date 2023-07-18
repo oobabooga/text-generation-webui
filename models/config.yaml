@@ -272,3 +272,6 @@ TheBloke_WizardLM-30B-GPTQ:
 .*godzilla:
   mode: 'instruct'
   instruction_template: 'Alpaca'
+.*llama-2.*chat:
+  mode: 'instruct'
+  instruction_template: 'Llama-v2'
