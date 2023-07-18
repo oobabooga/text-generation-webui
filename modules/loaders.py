@@ -42,6 +42,7 @@ loaders_and_params = {
     'llamacpp_HF': [
         'n_ctx',
         'n_gpu_layers',
+        'tensor_split',
         'n_batch',
         'threads',
         'no_mmap',

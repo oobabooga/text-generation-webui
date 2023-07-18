@@ -86,6 +86,12 @@ class LlamacppHF(PreTrainedModel):
             model_file = list(path.glob('*ggml*.bin'))[0]
 
         logger.info(f"llama.cpp weights detected: {model_file}\n")
+
+        if shared.args.tensor_split is None or shared.args.tensor_split.strip() == '':
+            tensor_split_list = None
+        else:
+            tensor_split_list = [float(x) for x in shared.args.tensor_split.strip().split(",")]
+
         params = {
             'model_path': str(model_file),
             'n_ctx': shared.args.n_ctx,
@@ -96,6 +102,7 @@ class LlamacppHF(PreTrainedModel):
             'use_mlock': shared.args.mlock,
             'low_vram': shared.args.low_vram,
             'n_gpu_layers': shared.args.n_gpu_layers,
+            'tensor_split': tensor_split_list,
             'logits_all': True,
         }
 
