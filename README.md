@@ -143,7 +143,7 @@ For example:
 
 To download a protected model, set env vars `HF_USER` and `HF_PASS` to your Hugging Face username and password (or [User Access Token](https://huggingface.co/settings/tokens)). The model's terms must first be accepted on the HF website.
 
-Many types of models and quantizations such as RWKV, GGML, and GPTQ are supported. For detailed instructions [check out the specific documentation for each type](docs/README.md).
+Many types of models and quantizations such as RWKV, GGML, and GPTQ are supported. For most users quantization is highly recommended due to the performance and memory benefits it provides. For detailed instructions [check out the specific documentation for each type](docs/README.md).
 
 ## Starting the web UI
 
