@@ -186,6 +186,9 @@ llama-65b-gptq-3bit:
 .*airoboros:
   mode: 'instruct'
   instruction_template: 'Vicuna-v1.1'
+.*airoboros.*1.2:
+  mode: 'instruct'
+  instruction_template: 'Airoboros-v1.2'
 .*WizardLM-30B-V1.0:
   mode: 'instruct'
   instruction_template: 'Vicuna-v1.1'

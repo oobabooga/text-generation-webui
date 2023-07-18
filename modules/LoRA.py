@@ -132,7 +132,7 @@ def add_lora_transformers(lora_names):
         if not shared.args.load_in_8bit and not shared.args.cpu:
             shared.model.half()
             if not hasattr(shared.model, "hf_device_map"):
-                if torch.has_mps:
+                if torch.backends.mps.is_available():
                     device = torch.device('mps')
                     shared.model = shared.model.to(device)
                 else:
