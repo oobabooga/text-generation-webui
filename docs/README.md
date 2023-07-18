@@ -11,7 +11,7 @@
 * [FlexGen](FlexGen.md)
 * [Generation parameters](Generation-parameters.md)
 * [GPTQ models (4 bit mode)](GPTQ-models-(4-bit-mode).md)
-* [llama.cpp models](llama.cpp-models.md)
+* [GGML (llama.cpp) models](GGML-llama.cpp-models.md)
 * [LLaMA model](LLaMA-model.md)
 * [LoRA](LoRA.md)
 * [Low VRAM guide](Low-VRAM-guide.md)
