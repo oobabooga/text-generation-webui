@@ -1125,10 +1125,6 @@ if __name__ == "__main__":
     if shared.args.model is not None:
         shared.model_name = shared.args.model
 
-    # Only one model is available
-    elif len(available_models) == 1:
-        shared.model_name = available_models[0]
-
     # Select the model from a command-line menu
     elif shared.args.model_menu:
         if len(available_models) == 0:
