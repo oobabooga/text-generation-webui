@@ -8,6 +8,7 @@ import traceback
 import numpy as np
 import torch
 import transformers
+from transformers import LogitsProcessorList
 
 import modules.shared as shared
 from modules.callbacks import (
@@ -56,7 +57,7 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
         return input_ids.numpy()
     elif shared.args.deepspeed:
         return input_ids.to(device=local_rank)
-    elif torch.has_mps:
+    elif torch.backends.mps.is_available():
         device = torch.device('mps')
         return input_ids.to(device)
     else:
@@ -263,6 +264,13 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
     generate_params['eos_token_id'] = eos_token_ids
     generate_params['stopping_criteria'] = transformers.StoppingCriteriaList()
     generate_params['stopping_criteria'].append(_StopEverythingStoppingCriteria())
+
+    processor = state.get('logits_processor', LogitsProcessorList([]))
+    # In case folks just pass in a processor by itself.
+    if type(processor) != LogitsProcessorList:
+        processor = LogitsProcessorList([processor])
+    apply_extensions('logits_processor', processor, input_ids)
+    generate_params['logits_processor'] = processor
 
     t0 = time.time()
     try:

@@ -142,12 +142,25 @@ python setup_cuda.py install
 
 ### Getting pre-converted LLaMA weights
 
-These are models that you can simply download and place in your `models` folder.
+* Direct download (recommended):
 
-* Converted without `group-size` (better for the 7b model): https://github.com/oobabooga/text-generation-webui/pull/530#issuecomment-1483891617
-* Converted with `group-size` (better from 13b upwards): https://github.com/oobabooga/text-generation-webui/pull/530#issuecomment-1483941105 
+https://huggingface.co/Neko-Institute-of-Science/LLaMA-7B-4bit-128g
 
-⚠️ The tokenizer files in the sources above may be outdated. Make sure to obtain the universal LLaMA tokenizer as described [here](https://github.com/oobabooga/text-generation-webui/blob/main/docs/LLaMA-model.md#option-1-pre-converted-weights).
+https://huggingface.co/Neko-Institute-of-Science/LLaMA-13B-4bit-128g
+
+https://huggingface.co/Neko-Institute-of-Science/LLaMA-30B-4bit-128g
+
+https://huggingface.co/Neko-Institute-of-Science/LLaMA-65B-4bit-128g
+
+These models were converted with `desc_act=True`. They work just fine with ExLlama. For AutoGPTQ, they will only work on Linux with the `triton` option checked.
+
+* Torrent:
+
+https://github.com/oobabooga/text-generation-webui/pull/530#issuecomment-1483891617
+
+https://github.com/oobabooga/text-generation-webui/pull/530#issuecomment-1483941105
+
+These models were converted with `desc_act=False`. As such, they are less accurate, but they work with AutoGPTQ on Windows. The `128g` versions are better from 13b upwards, and worse for 7b. The tokenizer files in the torrents are outdated, in particular the files called `tokenizer_config.json` and `special_tokens_map.json`. Here you can find those files: https://huggingface.co/oobabooga/llama-tokenizer
 
 ### Starting the web UI:
 

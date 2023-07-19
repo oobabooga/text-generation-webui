@@ -1,3 +1,6 @@
+import asyncio
+import functools
+import threading
 import time
 import traceback
 from threading import Thread
@@ -6,6 +9,13 @@ from typing import Callable, Optional
 from modules import shared
 from modules.chat import load_character_memoized
 from modules.presets import load_preset_memoized
+
+
+# We use a thread local to store the asyncio lock, so that each thread
+# has its own lock.  This isn't strictly necessary, but it makes it
+# such that if we can support multiple worker threads in the future,
+# thus handling multiple requests in parallel.
+api_tls = threading.local()
 
 
 def build_parameters(body, chat=False):
@@ -49,7 +59,10 @@ def build_parameters(body, chat=False):
 
     if chat:
         character = body.get('character')
-        instruction_template = body.get('instruction_template')
+        instruction_template = body.get('instruction_template', shared.settings['instruction_template'])
+        if str(instruction_template) == "None":
+            instruction_template = "Vicuna-v1.1"
+
         name1, name2, _, greeting, context, _ = load_character_memoized(character, str(body.get('your_name', shared.settings['name1'])), shared.settings['name2'], instruct=False)
         name1_instruct, name2_instruct, _, _, context_instruct, turn_template = load_character_memoized(instruction_template, '', '', instruct=True)
         generate_params.update({
@@ -62,7 +75,7 @@ def build_parameters(body, chat=False):
             'greeting': greeting,
             'name1_instruct': name1_instruct,
             'name2_instruct': name2_instruct,
-            'context_instruct': context_instruct,
+            'context_instruct': body.get('context_instruct', context_instruct),
             'turn_template': turn_template,
             'chat-instruct_command': str(body.get('chat-instruct_command', shared.settings['chat-instruct_command'])),
             'history': body.get('history', {'internal': [], 'visible': []})
@@ -97,3 +110,35 @@ def _start_cloudflared(port: int, max_attempts: int = 3, on_start: Optional[Call
             time.sleep(3)
 
         raise Exception('Could not start cloudflared.')
+
+
+def _get_api_lock(tls) -> asyncio.Lock:
+    """
+    The streaming and blocking API implementations each run on their own
+    thread, and multiplex requests using asyncio.  If multiple outstanding
+    requests are received at once, we will try to acquire the shared lock
+    shared.generation_lock multiple times in succession in the same thread,
+    which will cause a deadlock.
+
+    To avoid this, we use this wrapper function to block on an asyncio
+    lock, and then try and grab the shared lock only while holding
+    the asyncio lock.
+    """
+    if not hasattr(tls, "asyncio_lock"):
+        tls.asyncio_lock = asyncio.Lock()
+
+    return tls.asyncio_lock
+
+
+def with_api_lock(func):
+    """
+    This decorator should be added to all streaming API methods which
+    require access to the shared.generation_lock.  It ensures that the
+    tls.asyncio_lock is acquired before the method is called, and
+    released afterwards.
+    """
+    @functools.wraps(func)
+    async def api_wrapper(*args, **kwargs):
+        async with _get_api_lock(api_tls):
+            return await func(*args, **kwargs)
+    return api_wrapper

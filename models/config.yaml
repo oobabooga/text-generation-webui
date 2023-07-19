@@ -97,6 +97,8 @@ llama-65b-gptq-3bit:
 .*raven:
   mode: 'instruct'
   instruction_template: 'RWKV-Raven'
+.*ctx8192:
+  truncation_length: 8192
 .*moss-moon.*sft:
   mode: 'instruct'
   instruction_template: 'MOSS'
@@ -143,6 +145,7 @@ llama-65b-gptq-3bit:
 .*wizard.*mega:
   mode: 'instruct'
   instruction_template: 'Wizard-Mega'
+  custom_stopping_strings: '"</s>"'
 .*ziya-:
   mode: 'instruct'
   instruction_template: 'Ziya'
@@ -183,6 +186,9 @@ llama-65b-gptq-3bit:
 .*airoboros:
   mode: 'instruct'
   instruction_template: 'Vicuna-v1.1'
+.*airoboros.*1.2:
+  mode: 'instruct'
+  instruction_template: 'Airoboros-v1.2'
 .*WizardLM-30B-V1.0:
   mode: 'instruct'
   instruction_template: 'Vicuna-v1.1'
@@ -243,3 +249,31 @@ TheBloke_WizardLM-30B-GPTQ:
 .*xgen.*-inst:
   truncation_length: 8192
   instruction_template: 'Vicuna-v0'
+.*(platypus|gplatty|superplatty):
+  mode: 'instruct'
+  instruction_template: 'Alpaca'
+.*longchat:
+  mode: 'instruct'
+  instruction_template: 'Vicuna-v1.1'
+.*vicuna-33b:
+  mode: 'instruct'
+  instruction_template: 'Vicuna-v1.1'
+.*redmond-hermes-coder:
+  mode: 'instruct'
+  instruction_template: 'Alpaca'
+  truncation_length: 8192
+.*wizardcoder-15b:
+  mode: 'instruct'
+  instruction_template: 'Alpaca'
+  truncation_length: 8192
+.*wizardlm-.*-v1.1:
+  mode: 'instruct'
+  instruction_template: 'Vicuna-v1.1'
+.*godzilla:
+  mode: 'instruct'
+  instruction_template: 'Alpaca'
+.*llama-(2|v2):
+  truncation_length: 4096
+.*llama-(2|v2).*chat:
+  mode: 'instruct'
+  instruction_template: 'Llama-v2'

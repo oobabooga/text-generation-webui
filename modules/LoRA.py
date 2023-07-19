@@ -9,9 +9,9 @@ from modules.models import reload_model
 
 
 def add_lora_to_model(lora_names):
-    if 'GPTQForCausalLM' in shared.model.__class__.__name__:
+    if 'GPTQForCausalLM' in shared.model.__class__.__name__ or shared.args.loader == 'AutoGPTQ':
         add_lora_autogptq(lora_names)
-    elif shared.model.__class__.__name__ in ['ExllamaModel', 'ExllamaHF']:
+    elif shared.model.__class__.__name__ in ['ExllamaModel', 'ExllamaHF'] or shared.args.loader == 'ExLlama':
         add_lora_exllama(lora_names)
     else:
         add_lora_transformers(lora_names)
@@ -67,14 +67,15 @@ def add_lora_autogptq(lora_names):
         return
 
     if len(lora_names) == 0:
-        if len(shared.lora_names) > 0:
-            reload_model()
+        reload_model()
 
         shared.lora_names = []
         return
     else:
         if len(lora_names) > 1:
             logger.warning('AutoGPTQ can only work with 1 LoRA at the moment. Only the first one in the list will be loaded.')
+        if not shared.args.no_inject_fused_attention:
+            logger.warning('Fused Atttention + AutoGPTQ may break Lora loading. Disable it.')
 
         peft_config = GPTQLoraConfig(
             inference_mode=True,
@@ -107,18 +108,19 @@ def add_lora_transformers(lora_names):
     # If any LoRA needs to be removed, start over
     if len(removed_set) > 0:
         # shared.model may no longer be PeftModel
-        if hasattr(shared.model, 'disable_adapter'):  
-            shared.model.disable_adapter()  
+        if hasattr(shared.model, 'disable_adapter'):
+            shared.model.disable_adapter()
             shared.model = shared.model.base_model.model
 
     if len(lora_names) > 0:
         params = {}
         if not shared.args.cpu:
-            params['dtype'] = shared.model.dtype
-            if hasattr(shared.model, "hf_device_map"):
-                params['device_map'] = {"base_model.model." + k: v for k, v in shared.model.hf_device_map.items()}
-            elif shared.args.load_in_8bit:
-                params['device_map'] = {'': 0}
+            if shared.args.load_in_4bit or shared.args.load_in_8bit:
+                params['peft_type'] = shared.model.dtype
+            else:
+                params['dtype'] = shared.model.dtype
+                if hasattr(shared.model, "hf_device_map"):
+                    params['device_map'] = {"base_model.model." + k: v for k, v in shared.model.hf_device_map.items()}
 
         logger.info("Applying the following LoRAs to {}: {}".format(shared.model_name, ', '.join(lora_names)))
         shared.model = PeftModel.from_pretrained(shared.model, Path(f"{shared.args.lora_dir}/{lora_names[0]}"), adapter_name=lora_names[0], **params)
@@ -130,7 +132,7 @@ def add_lora_transformers(lora_names):
         if not shared.args.load_in_8bit and not shared.args.cpu:
             shared.model.half()
             if not hasattr(shared.model, "hf_device_map"):
-                if torch.has_mps:
+                if torch.backends.mps.is_available():
                     device = torch.device('mps')
                     shared.model = shared.model.to(device)
                 else:

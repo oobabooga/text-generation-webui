@@ -34,8 +34,24 @@ loaders_and_params = {
         'n_batch',
         'threads',
         'no_mmap',
+        'low_vram',
         'mlock',
         'llama_cpp_seed',
+        'compress_pos_emb',
+        'alpha_value',
+    ],
+    'llamacpp_HF': [
+        'n_ctx',
+        'n_gpu_layers',
+        'n_batch',
+        'threads',
+        'no_mmap',
+        'low_vram',
+        'mlock',
+        'llama_cpp_seed',
+        'compress_pos_emb',
+        'alpha_value',
+        'llamacpp_HF_info',
     ],
     'Transformers': [
         'cpu_memory',
@@ -53,14 +69,14 @@ loaders_and_params = {
         'trust_remote_code',
         'transformers_info'
     ],
-    'ExLlama' : [
+    'ExLlama': [
         'gpu_split',
         'max_seq_len',
         'compress_pos_emb',
         'alpha_value',
         'exllama_info',
     ],
-    'ExLlama_HF' : [
+    'ExLlama_HF': [
         'gpu_split',
         'max_seq_len',
         'compress_pos_emb',

@@ -55,11 +55,16 @@ def load_model(model_name, loader=None):
         'AutoGPTQ': AutoGPTQ_loader,
         'GPTQ-for-LLaMa': GPTQ_loader,
         'llama.cpp': llamacpp_loader,
+        'llamacpp_HF': llamacpp_HF_loader,
         'FlexGen': flexgen_loader,
         'RWKV': RWKV_loader,
         'ExLlama': ExLlama_loader,
         'ExLlama_HF': ExLlama_HF_loader
     }
+
+    p = Path(model_name)
+    if p.exists():
+        model_name = p.parts[-1]
 
     if loader is None:
         if shared.args.loader is not None:
@@ -95,11 +100,18 @@ def load_tokenizer(model_name, model):
     if any(s in model_name.lower() for s in ['gpt-4chan', 'gpt4chan']) and Path(f"{shared.args.model_dir}/gpt-j-6B/").exists():
         tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/gpt-j-6B/"))
     elif path_to_model.exists():
-        tokenizer = AutoTokenizer.from_pretrained(
-            path_to_model,
-            trust_remote_code=shared.args.trust_remote_code,
-            use_fast=False
-        )
+        try:
+            tokenizer = AutoTokenizer.from_pretrained(
+                path_to_model,
+                trust_remote_code=shared.args.trust_remote_code,
+                use_fast=False
+            )
+        except ValueError:
+            tokenizer = AutoTokenizer.from_pretrained(
+                path_to_model,
+                trust_remote_code=shared.args.trust_remote_code,
+                use_fast=True
+            )
 
     if tokenizer.__class__.__name__ == 'LlamaTokenizer':
         pairs = [
@@ -135,7 +147,7 @@ def huggingface_loader(model_name):
     # Load the model in simple 16-bit mode by default
     if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.load_in_4bit, shared.args.auto_devices, shared.args.disk, shared.args.deepspeed, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None]):
         model = LoaderClass.from_pretrained(Path(f"{shared.args.model_dir}/{model_name}"), low_cpu_mem_usage=True, torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16, trust_remote_code=shared.args.trust_remote_code)
-        if torch.has_mps:
+        if torch.backends.mps.is_available():
             device = torch.device('mps')
             model = model.to(device)
         else:
@@ -155,7 +167,7 @@ def huggingface_loader(model_name):
             "trust_remote_code": shared.args.trust_remote_code
         }
 
-        if not any((shared.args.cpu, torch.cuda.is_available(), torch.has_mps)):
+        if not any((shared.args.cpu, torch.cuda.is_available(), torch.backends.mps.is_available())):
             logger.warning("torch.cuda.is_available() returned False. This means that no GPU has been detected. Falling back to CPU mode.")
             shared.args.cpu = True
 
@@ -257,6 +269,27 @@ def llamacpp_loader(model_name):
     return model, tokenizer
 
 
+def llamacpp_HF_loader(model_name):
+    from modules.llamacpp_hf import LlamacppHF
+
+    for fname in ["oobabooga_llama-tokenizer", "llama-tokenizer"]:
+        path = Path(f'{shared.args.model_dir}/{fname}')
+        if path.exists():
+            break
+    else:
+        logger.error("Could not load the model because a tokenizer in transformers format was not found. Please download oobabooga/llama-tokenizer.")
+        return None, None
+
+    tokenizer = AutoTokenizer.from_pretrained(
+        path,
+        trust_remote_code=shared.args.trust_remote_code,
+        use_fast=False
+    )
+
+    model = LlamacppHF.from_pretrained(model_name)
+    return model, tokenizer
+
+
 def GPTQ_loader(model_name):
 
     # Monkey patch
@@ -328,6 +361,7 @@ def clear_torch_cache():
 def unload_model():
     shared.model = shared.tokenizer = None
     shared.lora_names = []
+    shared.model_dirty_from_training = False
     clear_torch_cache()
 
 

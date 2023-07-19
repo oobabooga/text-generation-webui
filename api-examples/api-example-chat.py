@@ -17,7 +17,8 @@ def run(user_input, history):
         'history': history,
         'mode': 'instruct',  # Valid options: 'chat', 'chat-instruct', 'instruct'
         'character': 'Example',
-        'instruction_template': 'Vicuna-v1.1',
+        'instruction_template': 'Vicuna-v1.1',  # Will get autodetected if unset
+        # 'context_instruct': '',  # Optional
         'your_name': 'You',
 
         'regenerate': False,

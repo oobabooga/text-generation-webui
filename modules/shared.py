@@ -12,6 +12,7 @@ tokenizer = None
 is_seq2seq = False
 model_name = "None"
 lora_names = []
+model_dirty_from_training = False
 
 # Chat variables
 stop_everything = False
@@ -31,10 +32,10 @@ need_restart = False
 
 settings = {
     'dark_theme': False,
-    'autoload_model': True,
+    'autoload_model': False,
     'max_new_tokens': 200,
     'max_new_tokens_min': 1,
-    'max_new_tokens_max': 2000,
+    'max_new_tokens_max': 4096,
     'seed': -1,
     'character': 'None',
     'name1': 'You',
@@ -120,6 +121,7 @@ parser.add_argument('--use_double_quant', action='store_true', help='use_double_
 parser.add_argument('--threads', type=int, default=0, help='Number of threads to use.')
 parser.add_argument('--n_batch', type=int, default=512, help='Maximum number of prompt tokens to batch together when calling llama_eval.')
 parser.add_argument('--no-mmap', action='store_true', help='Prevent mmap from being used.')
+parser.add_argument('--low-vram', action='store_true', help='Low VRAM Mode')
 parser.add_argument('--mlock', action='store_true', help='Force the system to keep the model in RAM.')
 parser.add_argument('--cache-capacity', type=str, help='Maximum cache capacity. Examples: 2000MiB, 2GiB. When provided without units, bytes will be assumed.')
 parser.add_argument('--n-gpu-layers', type=int, default=0, help='Number of layers to offload to the GPU.')
@@ -179,7 +181,7 @@ parser.add_argument("--gradio-auth-path", type=str, help='Set the gradio authent
 # API
 parser.add_argument('--api', action='store_true', help='Enable the API extension.')
 parser.add_argument('--api-blocking-port', type=int, default=5000, help='The listening port for the blocking API.')
-parser.add_argument('--api-streaming-port', type=int,  default=5005, help='The listening port for the streaming API.')
+parser.add_argument('--api-streaming-port', type=int, default=5005, help='The listening port for the streaming API.')
 parser.add_argument('--public-api', action='store_true', help='Create a public URL for the API using Cloudfare.')
 
 # Multimodal
@@ -212,6 +214,8 @@ def fix_loader_name(name):
     name = name.lower()
     if name in ['llamacpp', 'llama.cpp', 'llama-cpp', 'llama cpp']:
         return 'llama.cpp'
+    if name in ['llamacpp_hf', 'llama.cpp_hf', 'llama-cpp-hf', 'llamacpp-hf', 'llama.cpp-hf']:
+        return 'llamacpp_HF'
     elif name in ['transformers', 'huggingface', 'hf', 'hugging_face', 'hugging face']:
         return 'Transformers'
     elif name in ['autogptq', 'auto-gptq', 'auto_gptq', 'auto gptq']:
