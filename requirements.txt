@@ -2,7 +2,7 @@ accelerate==0.21.0
 colorama
 datasets
 einops
-fastapi==0.95.2
+fastapi==0.100.0
 flexgen==0.1.7
 gradio==3.37.0
 gradio_client==0.2.10
