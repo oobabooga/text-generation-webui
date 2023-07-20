@@ -345,13 +345,17 @@ class FPSchedulerTrainer(transformers.Trainer):
             num_train_epochs = self.args.num_train_epochs
             num_warmup_steps=self.args.get_warmup_steps(num_training_steps)
             num_firstepoch_steps = math.ceil(num_training_steps/num_train_epochs)
-            num_warmup_acc = num_warmup_steps*self.args.gradient_accumulation_steps
+            num_warmup_acc = num_warmup_steps*self.args.gradient_accumulation_steps 
             num_firstepoch_steps_acc = num_firstepoch_steps*self.args.gradient_accumulation_steps
             num_training_steps_acc = num_training_steps*self.args.gradient_accumulation_steps
-            num_firstepoch_steps_acc_max = max(num_warmup_acc,num_firstepoch_steps_acc)
-            print (f"FP Scheduler Warmup: 0-{num_warmup_acc}, Hold {num_warmup_acc}-{num_firstepoch_steps_acc_max}, Annealing {num_firstepoch_steps_acc_max}-{num_training_steps_acc}")
+            num_warmup_acc_min = min(num_warmup_acc, num_firstepoch_steps_acc)
+            
             if num_warmup_acc>num_firstepoch_steps_acc:
                 print(f"\033[1;31;1mWARNING: The number of warmup steps is set too high! It will be clamped to 1 epoch, essentially going from warmup to annealing.\033[0;37;0m")
+                print (f"FP Scheduler Warmup: 0-[{num_warmup_acc_min}], Hold [{num_warmup_acc_min}]-{num_firstepoch_steps_acc}, Annealing {num_firstepoch_steps_acc}-{num_training_steps_acc}")
+            else:
+                print (f"FP Scheduler Warmup: 0-{num_warmup_acc_min}, Hold {num_warmup_acc_min}-{num_firstepoch_steps_acc}, Annealing {num_firstepoch_steps_acc}-{num_training_steps_acc}")
+
             self.lr_scheduler = custom_scheduler_with_warmup(
                     optimizer=self.optimizer if optimizer is None else optimizer,
                     num_warmup_steps=num_warmup_steps,
@@ -698,7 +702,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         add_EOS_to_all = add_eos_token and add_eos_token_type == 0
         add_EOS_to_HC = add_eos_token and add_eos_token_type == 1
 
-        print (f"Add EOS token {add_eos_token}, add_EOS_to_all {add_EOS_to_all}, add_EOS_to_HC {add_EOS_to_HC}")
+        #print (f"add_eos_token {add_eos_token}, add_EOS_to_all {add_EOS_to_all}, add_EOS_to_HC {add_EOS_to_HC}")
 
         if precize_slicing:
             # == New more precise slicing on sentence boundary ==
