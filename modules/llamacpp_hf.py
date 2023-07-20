@@ -42,7 +42,6 @@ class LlamacppHF(PreTrainedModel):
 
         # Make the forward call
         seq_tensor = torch.tensor(seq)
-        self.cache = seq_tensor
         if labels is None:
             if self.cache is None or not torch.equal(self.cache, seq_tensor[:-1]):
                 self.model.reset()
@@ -50,12 +49,14 @@ class LlamacppHF(PreTrainedModel):
             else:
                 self.model.eval([seq[-1]])
 
-            logits = torch.tensor(self.model.eval_logits)[-1].view(1, 1, -1).to(kwargs['input_ids'].device)
+            logits = torch.tensor(self.model.eval_logits[-1]).view(1, 1, -1).to(kwargs['input_ids'].device)
         else:
             self.model.reset()
             self.model.eval(seq)
             logits = torch.tensor(self.model.eval_logits)
             logits = logits.view(1, logits.shape[0], logits.shape[1]).to(kwargs['input_ids'].device)
+
+        self.cache = seq_tensor
 
         # Based on transformers/models/llama/modeling_llama.py
         loss = None
@@ -96,6 +97,8 @@ class LlamacppHF(PreTrainedModel):
             'use_mlock': shared.args.mlock,
             'low_vram': shared.args.low_vram,
             'n_gpu_layers': shared.args.n_gpu_layers,
+            'rope_freq_base': 10000 * shared.args.alpha_value ** (64/63.),
+            'rope_freq_scale': 1.0 / shared.args.compress_pos_emb,
             'logits_all': True,
         }
 
