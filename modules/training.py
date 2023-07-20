@@ -581,7 +581,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
     def precise_cut(text: str, overlap: bool, min_chars_cut: int, eos_to_hc: bool):
 
-        debug_slicer = True
+        debug_slicer = False
         EOS_str = '</s>'
         print("Precise raw text slicer: ON")
         
