@@ -137,22 +137,6 @@ def update_dependencies():
         if os.path.exists(extension_req_path):
             run_cmd("python -m pip install -r " + extension_req_path + " --upgrade", assert_success=True, environment=True)
 
-    # Latest bitsandbytes requires minimum compute 7.0
-    # nvcc_device_query = "__nvcc_device_query" if not sys.platform.startswith("win") else "__nvcc_device_query.exe"
-    # min_compute = 70
-    # compute_array = run_cmd(os.path.join(conda_env_path, "bin", nvcc_device_query), environment=True, capture_output=True)
-    # old_bnb = "bitsandbytes==0.38.1" if not sys.platform.startswith("win") else "https://github.com/jllllll/bitsandbytes-windows-webui/raw/main/bitsandbytes-0.38.1-py3-none-any.whl"
-    # if compute_array.returncode == 0 and not any(int(compute) >= min_compute for compute in compute_array.stdout.decode('utf-8').split(',')):
-    #     old_bnb_install = run_cmd(f"python -m pip install {old_bnb} --force-reinstall --no-deps", environment=True).returncode == 0
-    #     message = "\n\nWARNING: GPU with compute < 7.0 detected!\n"
-    #     if old_bnb_install:
-    #         message += "Older version of bitsandbytes has been installed to maintain compatibility.\n"
-    #         message += "You will be unable to use --load-in-4bit!\n"
-    #     else:
-    #         message += "You will be unable to use --load-in-8bit until you install bitsandbytes 0.38.1!\n"
-
-    #     print_big_message(message)
-
     # The following dependencies are for CUDA, not CPU
     # Parse output of 'pip show torch' to determine torch version
     torver_cmd = run_cmd("python -m pip show torch", assert_success=True, environment=True, capture_output=True)
@@ -162,11 +146,9 @@ def update_dependencies():
     if '+cu' not in torver and run_cmd("conda list -f pytorch-cuda | grep pytorch-cuda", environment=True, capture_output=True).returncode == 1:
         return
 
-    # Install llama-cpp-python built with cuBLAS support for NVIDIA GPU acceleration
-    if '+cu' in torver:
-        llama_cpp = re.search('(?<=llama-cpp-python==)\d+(?:\.\d+)*', textgen_requirements)
-        if llama_cpp is not None:
-            run_cmd(f'python -m pip install llama-cpp-python=={llama_cpp[0]} --force-reinstall --no-deps --index-url=https://jllllll.github.io/llama-cpp-python-cuBLAS-wheels/AVX2/cu117', environment=True)
+    # Get GPU CUDA/compute support
+    nvcc_device_query = "__nvcc_device_query" if not sys.platform.startswith("win") else "__nvcc_device_query.exe"
+    compute_array = run_cmd(os.path.join(conda_env_path, "bin", nvcc_device_query), environment=True, capture_output=True)
 
     # Finds the path to your dependencies
     for sitedir in site.getsitepackages():
@@ -200,9 +182,17 @@ def update_dependencies():
     if sys.platform.startswith("linux") and not os.path.exists(f"{conda_env_path}/lib64"):
         run_cmd(f'ln -s "{conda_env_path}/lib" "{conda_env_path}/lib64"', environment=True)
 
+    # oobabooga fork requires min compute of 6.0
+    gptq_min_compute = 60
+    gptq_min_compute_check = any(int(compute) >= gptq_min_compute for compute in compute_array.stdout.decode('utf-8').split(',')) if compute_array.returncode == 0 else False
+
     # Install GPTQ-for-LLaMa which enables 4bit CUDA quantization
     if not os.path.exists("GPTQ-for-LLaMa/"):
-        run_cmd("git clone https://github.com/oobabooga/GPTQ-for-LLaMa.git -b cuda", assert_success=True, environment=True)
+        # Install oobabooga fork if min compute met or if failed to check
+        if gptq_min_compute_check or compute_array.returncode != 0:
+            run_cmd("git clone https://github.com/oobabooga/GPTQ-for-LLaMa.git -b cuda", assert_success=True, environment=True)
+        else:
+            run_cmd("git clone https://github.com/qwopqwop200/GPTQ-for-LLaMa.git -b cuda", assert_success=True, environment=True)
 
     # Install GPTQ-for-LLaMa dependencies
     os.chdir("GPTQ-for-LLaMa")
@@ -231,9 +221,8 @@ def update_dependencies():
         # Attempt installation via alternative, Windows/Linux-specific method
         if (sys.platform.startswith("win") or sys.platform.startswith("linux")) and not quant_cuda_path:
             print_big_message("WARNING: GPTQ-for-LLaMa compilation failed, but this is FINE and can be ignored!\nThe installer will proceed to install a pre-compiled wheel.")
-            url = "https://github.com/jllllll/GPTQ-for-LLaMa-Wheels/raw/main/quant_cuda-0.0.0-cp310-cp310-win_amd64.whl"
-            if sys.platform.startswith("linux"):
-                url = "https://github.com/jllllll/GPTQ-for-LLaMa-Wheels/raw/Linux-x64/quant_cuda-0.0.0-cp310-cp310-linux_x86_64.whl"
+            wheel = f"{'' if gptq_min_compute_check or compute_array.returncode != 0 else '832e220d6dbf11bec5eaa8b221a52c1c854d2a25/'}quant_cuda-0.0.0-cp310-cp310-{'linux_x86_64' if sys.platform.startswith('linux') else 'win_amd64'}.whl"
+            url = f"https://github.com/jllllll/GPTQ-for-LLaMa-Wheels/raw/{'Linux-x64' if sys.platform.startswith('linux') else 'main'}/" + wheel
 
             result = run_cmd("python -m pip install " + url, environment=True)
             if result.returncode == 0:
