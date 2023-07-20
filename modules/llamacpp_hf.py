@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
 import torch
-from llama_cpp import Llama
 from torch.nn import CrossEntropyLoss
 from transformers import GenerationConfig, PretrainedConfig, PreTrainedModel
 from transformers.modeling_outputs import CausalLMOutputWithPast
@@ -11,6 +10,10 @@ from transformers.modeling_outputs import CausalLMOutputWithPast
 from modules import shared
 from modules.logging_colors import logger
 
+if torch.cuda.is_available():
+    from llama_cpp_cuda import Llama
+else:
+    from llama_cpp import Llama
 
 class LlamacppHF(PreTrainedModel):
     def __init__(self, model):

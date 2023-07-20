@@ -61,7 +61,7 @@ settings = {
     'chat_generation_attempts_max': 10,
     'default_extensions': [],
     'chat_default_extensions': ['gallery'],
-    'preset': 'simple-1',
+    'preset': 'Divine Intellect',
     'prompt': 'QA',
 }
 
