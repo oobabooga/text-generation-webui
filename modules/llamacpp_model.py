@@ -9,11 +9,16 @@ https://abetlen.github.io/llama-cpp-python/
 import re
 from functools import partial
 
-from llama_cpp import Llama, LlamaCache, LogitsProcessorList
+import torch
 
 from modules import shared
 from modules.callbacks import Iteratorize
 from modules.logging_colors import logger
+
+if torch.cuda.is_available():
+    from llama_cpp_cuda import Llama, LlamaCache, LogitsProcessorList
+else:
+    from llama_cpp import Llama, LlamaCache, LogitsProcessorList
 
 
 def ban_eos_logits_processor(eos_token, input_ids, logits):
