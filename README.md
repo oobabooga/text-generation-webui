@@ -90,10 +90,6 @@ cd text-generation-webui
 pip install -r requirements.txt
 ```
 
-#### llama.cpp with GPU acceleration
-
-Requires the additional compilation step described here: [GPU acceleration](https://github.com/oobabooga/text-generation-webui/blob/main/docs/llama.cpp-models.md#gpu-acceleration).
-
 #### bitsandbytes
 
 bitsandbytes >= 0.39 may not work on older NVIDIA GPUs. In that case, to use `--load-in-8bit`, you may have to downgrade like this:
