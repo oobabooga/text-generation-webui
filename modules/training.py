@@ -581,7 +581,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
     def precise_cut(text: str, overlap: bool, min_chars_cut: int, eos_to_hc: bool):
 
-        debug_slicer = False
+        debug_slicer = True
         EOS_str = '</s>'
         print("Precise raw text slicer: ON")
         
@@ -608,16 +608,13 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
                 half_index = index
             else:
                 edgeindex.append(half_index)
-                halfcut_length = - max_cut
+                halfcut_length = -2 * max_cut
 
 
             if totalLength + item['size'] < max_cut and not currentSentence.endswith(EOS_str): 
                 currentSentence += item['text']
                 totalLength += item['size']
             else:
-                if EOS_str in currentSentence and edgeindex:
-                    edgeindex.pop()
-
                 if currentSentence and not eos_to_hc:
                     currentSentence = currentSentence.replace(EOS_str, ' ')
 
@@ -637,21 +634,23 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         unique_blocks = len(sentencelist)
         print(f"Text Blocks: {unique_blocks}")
 
-        #overlap strategies 
+        #overlap strategies: 
+        # don't overlap across HARD CUT (EOS)
         if overlap:
             for edge_idx in edgeindex:
                 currentSentence = ''
                 totalLength = 0
 
                 for item in sentences[edge_idx:]:
-                    if totalLength + item['size'] < max_cut and not currentSentence.endswith(EOS_str):
+                    if totalLength + item['size'] < max_cut:
                         currentSentence += item['text']
                         totalLength += item['size']
                     else:
-                        if currentSentence and not eos_to_hc:
-                            currentSentence = currentSentence.replace(EOS_str,' ')
-
-                        if len(currentSentence.strip()) > min_chars_cut:
+                        #if by chance EOS is at the end then it's acceptable
+                        if currentSentence.endswith(EOS_str):
+                            currentSentence = currentSentence[:-len(EOS_str)]
+                        
+                        if EOS_str not in currentSentence and len(currentSentence.strip()) > min_chars_cut:
                             sentencelist.append(currentSentence.strip())
                         
                         currentSentence = ''
