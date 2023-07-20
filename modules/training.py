@@ -66,7 +66,7 @@ train_template = {}
 train_log_graph = []
 
 WANT_INTERRUPT = False
-PARAMETERS = ["lora_name", "always_override", "save_steps", "micro_batch_size", "batch_size", "epochs", "learning_rate", "lr_scheduler_type", "lora_rank", "lora_alpha", "lora_dropout", "cutoff_len", "dataset", "eval_dataset", "format", "eval_steps", "raw_text_file", "overlap_len", "newline_favor_len", "higher_rank_limit", "warmup_steps", "optimizer", "hard_cut_string", "train_only_after", "stop_at_loss", "add_eos_token", "min_chars", "report_to", "precize_slicing", "precize_slicing_overlap"]
+PARAMETERS = ["lora_name", "always_override", "save_steps", "micro_batch_size", "batch_size", "epochs", "learning_rate", "lr_scheduler_type", "lora_rank", "lora_alpha", "lora_dropout", "cutoff_len", "dataset", "eval_dataset", "format", "eval_steps", "raw_text_file", "overlap_len", "newline_favor_len", "higher_rank_limit", "warmup_steps", "optimizer", "hard_cut_string", "train_only_after", "stop_at_loss", "add_eos_token", "min_chars", "report_to", "precize_slicing", "precize_slicing_overlap", "add_eos_token_type"]
 
 
 def create_train_interface():
@@ -127,9 +127,14 @@ def create_train_interface():
             train_only_after = gr.Textbox(label='Train Only After', value='', info='Only consider text *after* this string in any given chunk for training. For Alpaca datasets, use "### Response:" to only train the response and ignore the input.')
             stop_at_loss = gr.Slider(label='Stop at loss', minimum=0.0, maximum=3.0, step=0.1, value=0.00, info='The process will automatically stop once the desired loss value is reached. (reasonable numbers are 1.5-1.8)')
             with gr.Row():
-                add_eos_token = gr.Checkbox(label='Add EOS token for each block', value = False, info="For Dataset and PRTS it adds EOS at the end of each block. For normal text, EOS will be at the Hard Cut only. ") 
-                precize_slicing = gr.Checkbox(label='Precise Raw Text Slicer (PRTS)', value = False, info="Creates training blocks with special attention to clean sentence structure") 
-                precize_slicing_overlap = gr.Checkbox(label='Overlap blocks in PRTS', value = True, info="Doubles the amount of training blocks by overlapping sentence boundaries") 
+                with gr.Column():
+                    with gr.Row():
+                        add_eos_token = gr.Checkbox(label='Add EOS token', value = False, info="Add EOS token to the dataset") 
+                        add_eos_token_type = gr.Dropdown(type="index", label='EOS placement (raw text)', choices=['At Every Block', 'Hard Cut Blocks Only'], value='Every Block', info='', allow_custom_value = False)
+                with gr.Column():
+                    with gr.Row():
+                        precize_slicing = gr.Checkbox(label='Precise Raw Text Slicer (PRTS)', value = False, info="Creates training blocks with special attention to clean sentence structure") 
+                        precize_slicing_overlap = gr.Checkbox(label='Overlap blocks in PRTS', value = True, info="Adds overlapping blocks (except for Hard Cut)") 
             
             with gr.Row():
                 higher_rank_limit = gr.Checkbox(label='Enable higher ranks', value=False, info='If checked, changes Rank/Alpha slider above to go much higher. This will not work without a datacenter-class GPU.')
@@ -165,7 +170,7 @@ def create_train_interface():
             refresh_table = gr.Button('Refresh the table', elem_classes="small-button")
 
     # Training events
-    all_params = [lora_name, always_override, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lr_scheduler_type, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, higher_rank_limit, warmup_steps, optimizer, hard_cut_string, train_only_after, stop_at_loss, add_eos_token, min_chars, report_to, precize_slicing, precize_slicing_overlap]
+    all_params = [lora_name, always_override, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lr_scheduler_type, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, higher_rank_limit, warmup_steps, optimizer, hard_cut_string, train_only_after, stop_at_loss, add_eos_token, min_chars, report_to, precize_slicing, precize_slicing_overlap, add_eos_token_type]
     copy_from.change(do_copy_params, [copy_from] + all_params, all_params)
     start_button.click(do_train, all_params, output)
     stop_button.click(do_interrupt, None, None, queue=False)
@@ -362,7 +367,7 @@ def create_graph(lora_path, lora_name):
     try:
         import matplotlib.pyplot as plt
         from matplotlib.ticker import ScalarFormatter
-        print("Creating graph...")
+        
         peft_model_path = f'{lora_path}/training_graph.json'
         image_model_path = f'{lora_path}/training_graph.png'
         # Check if the JSON file exists
@@ -411,7 +416,7 @@ def create_graph(lora_path, lora_name):
             # Save the chart as an image
             plt.savefig(image_model_path)
 
-            print(f"Chart saved as {image_model_path}")
+            print(f"Graph saved in {image_model_path}")
         else:
             print(f"File 'training_graph.json' does not exist in the {lora_path}")
       
@@ -420,7 +425,7 @@ def create_graph(lora_path, lora_name):
         
     
 
-def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lr_scheduler_type: str, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, higher_rank_limit: bool, warmup_steps: int, optimizer: str, hard_cut_string: str, train_only_after: str, stop_at_loss: float, add_eos_token: bool, min_chars: int, report_to: str, precize_slicing: bool, precize_slicing_overlap: bool):
+def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lr_scheduler_type: str, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, higher_rank_limit: bool, warmup_steps: int, optimizer: str, hard_cut_string: str, train_only_after: str, stop_at_loss: float, add_eos_token: bool, min_chars: int, report_to: str, precize_slicing: bool, precize_slicing_overlap: bool, add_eos_token_type: int):
 
     if shared.args.monkey_patch:
         from monkeypatch.peft_tuners_lora_monkey_patch import (
@@ -574,14 +579,15 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     # hard cut defined by hard_cut_string or </s> will always end at the end of data block
     # no overlapping blocks will be created across hard cut or across </s> token
 
-    def precise_cut(text: str, overlap: bool, min_chars_cut: int):
+    def precise_cut(text: str, overlap: bool, min_chars_cut: int, eos_to_hc: bool):
 
-        debug_slicer = False
+        debug_slicer = True
         EOS_str = '</s>'
         print("Precise raw text slicer: ON")
         
         cut_string = hard_cut_string.replace('\\n', '\n')
         text = text.replace(cut_string, EOS_str)
+        num_EOS = text.count(EOS_str)
         sentences = split_sentences(text)
 
         print(f"Sentences: {len(sentences)}")
@@ -609,20 +615,21 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
                 currentSentence += item['text']
                 totalLength += item['size']
             else:
-                if EOS_str in currentSentence:
+                if EOS_str in currentSentence and edgeindex:
+                    edgeindex.pop()
+
+                if currentSentence and not eos_to_hc:
                     currentSentence = currentSentence.replace(EOS_str, ' ')
-                    
-                    if edgeindex: 
-                        edgeindex.pop()
 
                 if len(currentSentence.strip()) > min_chars_cut:
-                    currentSentence = currentSentence.replace(EOS_str, ' ')    
                     sentencelist.append(currentSentence.strip())
 
                 currentSentence = item['text']
                 totalLength = item['size']
                 halfcut_length = item['size']
                 
+        if currentSentence and not eos_to_hc:
+            currentSentence = currentSentence.replace(EOS_str, ' ')
 
         if len(currentSentence.strip()) > min_chars_cut:    
             sentencelist.append(currentSentence.strip())
@@ -641,7 +648,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
                         currentSentence += item['text']
                         totalLength += item['size']
                     else:
-                        if EOS_str in currentSentence:
+                        if currentSentence and not eos_to_hc:
                             currentSentence = currentSentence.replace(EOS_str,' ')
 
                         if len(currentSentence.strip()) > min_chars_cut:
@@ -652,7 +659,10 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
                         break
             
             print(f"+ Overlapping blocks: {len(sentencelist)-unique_blocks}")
-            
+
+        if eos_to_hc and num_EOS > 0:
+            print(f"+ added EOS to {num_EOS} Hard Cut blocks")
+
         if debug_slicer:
             sentencelist_dict = {index: sentence for index, sentence in enumerate(sentencelist)}
             output_file = "logs/sentencelist.json"
@@ -663,7 +673,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         return sentencelist                
 
 
-    # == Prep the dataset, format, etc ==
+     # == Prep the dataset, format, etc ==
     if raw_text_file not in ['None', '']:
         train_template["template_type"] = "raw_text"
         logger.info("Loading raw text file dataset...")
@@ -685,12 +695,17 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
         if min_chars<0:
             min_chars = 0
-        
+
+        add_EOS_to_all = add_eos_token and add_eos_token_type == 0
+        add_EOS_to_HC = add_eos_token and add_eos_token_type == 1
+
+        print (f"Add EOS token {add_eos_token}, add_EOS_to_all {add_EOS_to_all}, add_EOS_to_HC {add_EOS_to_HC}")
+
         if precize_slicing:
             # == New more precise slicing on sentence boundary ==
-            text_chunks = precise_cut(raw_text, precize_slicing_overlap, min_chars)
-            train_data = Dataset.from_list([tokenize(x, add_eos_token) for x in text_chunks])
-            if add_eos_token:
+            text_chunks = precise_cut(raw_text, precize_slicing_overlap, min_chars, add_EOS_to_HC)
+            train_data = Dataset.from_list([tokenize(x, add_EOS_to_all) for x in text_chunks])
+            if add_EOS_to_all:
                 print(f"Added EOS to {len(text_chunks)} blocks") 
         else:
             # == Old slicing ==
@@ -705,7 +720,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
                 tokens = shared.tokenizer.encode(text_part)
                 
-                if add_eos_token:
+                if add_EOS_to_HC:
                     tokens.append(shared.tokenizer.eos_token_id)
                     eos_added = eos_added + 1
                 
@@ -725,7 +740,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             if newline_favor_len > 0:
                 text_chunks = [cut_chunk_for_newline(x, newline_favor_len) for x in text_chunks]
 
-            train_data = Dataset.from_list([tokenize(x) for x in text_chunks])
+            train_data = Dataset.from_list([tokenize(x, add_EOS_to_all) for x in text_chunks])
 
         del text_chunks
         eval_data = None
