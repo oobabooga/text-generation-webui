@@ -120,6 +120,13 @@ def state_modifier(state):
     return state
 
 
+def find_subject(string):
+    for split in [":", "of", "关于", "："]:
+        if split in string:
+            return string.split(split, 1)[1].strip()
+    return None
+
+
 def input_modifier(string):
     """
     This function is applied to your text inputs before
@@ -134,11 +141,9 @@ def input_modifier(string):
     if triggers_are_in(string):  # if we're in it, check for trigger words
         toggle_generation(True)
         string = string.lower()
-        if "of" in string:
-            subject = string.split("of", 1)[
-                1
-            ]  # subdivide the string once by the first 'of' instance and get what's coming after it
-            string = "Please provide a detailed and vivid description of " + subject
+        subject = find_subject(string)
+        if subject:
+            string = "Please provide a detailed description of " + subject
         else:
             string = "Please provide a detailed description of your appearance, your surroundings and what you are doing right now"
 
