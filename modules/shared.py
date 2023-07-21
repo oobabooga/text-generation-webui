@@ -13,6 +13,7 @@ is_seq2seq = False
 model_name = "None"
 lora_names = []
 model_dirty_from_training = False
+tts_model = None
 
 # Chat variables
 stop_everything = False

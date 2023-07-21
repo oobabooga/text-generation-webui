@@ -1,4 +1,5 @@
 import re
+import time
 from pathlib import Path
 
 import elevenlabs
@@ -93,7 +94,7 @@ def history_modifier(history):
     return history
 
 
-def output_modifier(string):
+def output_modifier(string, state):
     global params, wav_idx
 
     if not params['activate']:
@@ -108,7 +109,7 @@ def output_modifier(string):
     if string == '':
         string = 'empty reply, try regenerating'
 
-    output_file = Path(f'extensions/elevenlabs_tts/outputs/{wav_idx:06d}.mp3'.format(wav_idx))
+    output_file = Path(f'extensions/elevenlabs_tts/outputs/{state["character_menu"]}_{int(time.time())}.mp3'.format(wav_idx))
     print(f'Outputting audio to {str(output_file)}')
     try:
         audio = elevenlabs.generate(text=string, voice=params['selected_voice'], model=params['model'])
@@ -160,7 +161,7 @@ def ui():
             api_key = gr.Textbox(placeholder="Enter your API key.", label='API Key')
 
     with gr.Row():
-        model = gr.Dropdown(value=params['model'], choices=LANG_MODELS, label='Language model')
+        tts_model = gr.Dropdown(value=params['model'], choices=LANG_MODELS, label='Language model')
 
     with gr.Row():
         convert = gr.Button('Permanently replace audios with the message texts')
@@ -190,7 +191,7 @@ def ui():
     activate.change(lambda x: params.update({'activate': x}), activate, None)
     voice.change(lambda x: params.update({'selected_voice': x}), voice, None)
     api_key.change(update_api_key, api_key, None)
-    model.change(lambda x: params.update({'model': x}), model, None)
+    tts_model.change(lambda x: params.update({'model': x}), tts_model, None)
     # connect.click(check_valid_api, [], connection_status)
     refresh.click(refresh_voices_dd, [], voice)
     # Event functions to update the parameters in the backend
