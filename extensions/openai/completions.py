@@ -84,7 +84,7 @@ def marshal_common_params(body):
     req_params['requested_model'] = body.get('model', shared.model_name)
 
     req_params['suffix'] = default(body, 'suffix', req_params['suffix'])
-    req_params['temperature'] = clamp(default(body, 'temperature', req_params['temperature']), 0.02, 1.99)  # fixup absolute 0.0/2.0
+    req_params['temperature'] = clamp(default(body, 'temperature', req_params['temperature']), 0.01, 1.99)  # fixup absolute 0.0/2.0
     req_params['top_p'] = clamp(default(body, 'top_p', req_params['top_p']), 0.01, 1.0)
     n = default(body, 'n', 1)
     if n != 1:
@@ -98,12 +98,6 @@ def marshal_common_params(body):
 
     # presence_penalty - ignored
     # frequency_penalty - ignored
-    # Hacks to improve results for non-llama models
-    #debug_msg("model_type: ", type(shared.model).__name__)
-    if type(shared.model).__name__ in ['RWKVModel']:
-        req_params['repetition_penalty'] = 0.4  # presence_penalty
-    elif type(shared.model).__name__ in ['GPTBigCodeGPTQForCausalLM', 'GPTBigCodeForCausalLM']:  # StarCoder
-        req_params['repetition_penalty'] = 1.0  # presence_penalty
 
     # pass through unofficial params
     req_params['repetition_penalty'] = default(body, 'repetition_penalty', req_params['repetition_penalty'])
@@ -295,7 +289,7 @@ def chat_completions(body: dict, is_legacy: bool = False) -> dict:
 
     completion_token_count = len(encode(answer)[0])
     stop_reason = "stop"
-    if token_count + completion_token_count >= req_params['truncation_length'] or completion_token_count >= max_tokens:
+    if token_count + completion_token_count >= req_params['truncation_length'] or completion_token_count >= req_params['max_new_tokens']:
         stop_reason = "length"
 
     resp = {
@@ -416,7 +410,7 @@ def stream_chat_completions(body: dict, is_legacy: bool = False):
 
     completion_token_count = len(encode(answer)[0])
     stop_reason = "stop"
-    if token_count + completion_token_count >= req_params['truncation_length'] or completion_token_count >= max_tokens:
+    if token_count + completion_token_count >= req_params['truncation_length'] or completion_token_count >= req_params['max_new_tokens']:
         stop_reason = "length"
 
     chunk = chat_streaming_chunk('')
