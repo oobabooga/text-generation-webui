@@ -98,6 +98,17 @@ def marshal_common_params(body):
 
     # presence_penalty - ignored
     # frequency_penalty - ignored
+    # Hacks to improve results for non-llama models
+    #debug_msg("model_type: ", type(shared.model).__name__)
+    if type(shared.model).__name__ in ['RWKVModel']:
+        req_params['repetition_penalty'] = 0.4  # presence_penalty
+    elif type(shared.model).__name__ in ['GPTBigCodeGPTQForCausalLM', 'GPTBigCodeForCausalLM']:  # StarCoder
+        req_params['repetition_penalty'] = 1.0  # presence_penalty
+
+    # pass through unofficial params
+    req_params['repetition_penalty'] = default(body, 'repetition_penalty', req_params['repetition_penalty'])
+    req_params['encoder_repetition_penalty'] = default(body, 'encoder_repetition_penalty', req_params['encoder_repetition_penalty'])
+
     # user - ignored
 
     logits_processor = []
