@@ -168,6 +168,7 @@ parser.add_argument('--local_rank', type=int, default=0, help='DeepSpeed: Option
 # RWKV
 parser.add_argument('--rwkv-strategy', type=str, default=None, help='RWKV: The strategy to use while loading the model. Examples: "cpu fp32", "cuda fp16", "cuda fp16i8".')
 parser.add_argument('--rwkv-cuda-on', action='store_true', help='RWKV: Compile the CUDA kernel for better performance.')
+parser.add_argument('--rwkv-world', action='store_true', help='RWKV: Use the World tokenizer. Required for the newer RWKV-World family of models.')
 
 # Gradio
 parser.add_argument('--listen', action='store_true', help='Make the web UI reachable from your local network.')

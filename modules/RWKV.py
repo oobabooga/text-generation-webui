@@ -8,6 +8,8 @@ from tokenizers import Tokenizer
 import modules.shared as shared
 from modules.callbacks import Iteratorize
 
+from ast import literal_eval
+
 np.set_printoptions(precision=4, suppress=True, linewidth=200)
 
 os.environ['RWKV_JIT_ON'] = '1'
@@ -22,14 +24,14 @@ class RWKVModel:
         pass
 
     @classmethod
-    def from_pretrained(self, path, dtype="fp16", device="cuda"):
-        tokenizer_path = Path(f"{path.parent}/20B_tokenizer.json")
+    def from_pretrained(self, path, dtype="fp16", device="cuda", world=False):
+        tokenizer_path = str(Path(f"{path.parent}/20B_tokenizer.json")) if not world else 'rwkv_vocab_v20230424'
         if shared.args.rwkv_strategy is None:
             model = RWKV(model=str(path), strategy=f'{device} {dtype}')
         else:
             model = RWKV(model=str(path), strategy=shared.args.rwkv_strategy)
 
-        pipeline = PIPELINE(model, str(tokenizer_path))
+        pipeline = PIPELINE(model, tokenizer_path)
         result = self()
         result.pipeline = pipeline
         result.model = model
@@ -146,3 +148,63 @@ class RWKVTokenizer:
 
     def decode(self, ids):
         return self.tokenizer.decode(ids)
+
+
+class RWKVWorldTokenizer:
+    __slots__ = ('tok2val', 'root')
+
+    def __init__(self, file_name) -> None:
+        self.tok2val = {}
+        self.root = {}
+
+        with open(file_name, 'rt', encoding = 'utf-8') as file:
+            for line in file:
+                token_str, value = line.rstrip().split(' ', 1)
+                value, len_str = value.rsplit(' ', 1)
+                value = literal_eval(value)
+                value = value if isinstance(value, bytes) else value.encode('utf-8')
+                assert len(value) == int(len_str)
+                self.add_token(int(token_str), value)
+
+    def add_token(self, token, value) -> None:
+        self.tok2val[token] = value
+        pos = self.root
+        for byte in value[:-1]: pos = pos.setdefault(byte, (None, {}))[1]
+        pos.setdefault(value[-1], (token, {}))
+
+    def next_token(self, src):
+        last_token = None
+        last = self.root
+        for i in range(0, len(src)):
+            if current := last.get(src[i]):
+                if token := current[0]: last_token = token
+                last = current[1]
+            else: break
+        return last_token
+
+    def encode_bytes(self, src):
+        start, stop, tokens = 0, len(src), []
+        while start < stop:
+            last_token = None
+            last = self.root
+
+            for i in range(start, stop):
+                if current := last.get(src[i]):
+                    if token := current[0]:
+                        last_token = token
+                        start = i + 1
+                    last = current[1]
+                else: break
+
+            if last_token: tokens.append(last_token)
+            else: break
+        return tokens
+
+    def decode_bytes(self, tokens):
+        return b''.join(map(self.tok2val.__getitem__, tokens))
+
+    def encode(self, src):
+        return self.encode_bytes(src.encode('utf-8'))
+
+    def decode(self, tokens):
+        return self.decode_bytes(tokens).decode('utf-8')

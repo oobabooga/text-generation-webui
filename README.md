@@ -11,7 +11,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 ## Features
 
 * 3 interface modes: default, notebook, and chat
-* Multiple model backends: tranformers, llama.cpp, AutoGPTQ, GPTQ-for-LLaMa, ExLlama, RWKV, FlexGen
+* Multiple model backends: tranformers, llama.cpp, AutoGPTQ, GPTQ-for-LLaMa, ExLlama, RWKV, RWKV-World, FlexGen
 * Dropdown menu for quickly switching between different models
 * LoRA: load and unload LoRAs on the fly, load multiple LoRAs at the same time, train a new LoRA
 * Precise instruction templates for chat mode, including Alpaca, Vicuna, Open Assistant, Dolly, Koala, ChatGLM, MOSS, RWKV-Raven, Galactica, StableLM, WizardLM, Baize, Ziya, Chinese-Vicuna, MPT, INCITE, Wizard Mega, KoAlpaca, Vigogne, Bactrian, h2o, and OpenBuddy
@@ -303,6 +303,7 @@ Optionally, you can use the following command-line flags:
 |---------------------------------|-------------|
 | `--rwkv-strategy RWKV_STRATEGY` | RWKV: The strategy to use while loading the model. Examples: "cpu fp32", "cuda fp16", "cuda fp16i8". |
 | `--rwkv-cuda-on`                | RWKV: Compile the CUDA kernel for better performance. |
+| `--rwkv-world`                  | RWKV: Use the World tokenizer. Required for the newer RWKV-World family of models. |
 
 #### Gradio
 
