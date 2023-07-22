@@ -17,6 +17,7 @@ scipy
 sentencepiece
 tensorboard
 transformers==4.31.*
+transformers_stream_generator
 tqdm
 wandb
 git+https://github.com/huggingface/peft@03eb378eb914fbee709ff7c86ba5b1d033b89524
