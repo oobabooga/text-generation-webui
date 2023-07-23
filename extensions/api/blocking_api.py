@@ -4,7 +4,8 @@ from threading import Thread
 
 from extensions.api.util import build_parameters, try_start_cloudflared
 from modules import shared
-from modules.chat import generate_chat_reply
+from modules.extensions import apply_extensions
+from modules.chat import generate_chat_reply, generate_chat_prompt
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, unload_model
 from modules.models_settings import (get_model_settings_from_yamls,
@@ -173,6 +174,33 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
 
             tokens = encode(body['prompt'])[0]
+            response = json.dumps({
+                'results': [{
+                    'tokens': len(tokens)
+                }]
+            })
+
+            self.wfile.write(response.encode('utf-8'))
+        elif self.path == '/api/v1/chat-token-count':
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+
+            user_input = body['user_input']
+
+            generate_params = build_parameters(body, chat=True)
+            generate_params['stream'] = False
+
+            # Generate the prompt
+            kwargs = {
+                '_continue': body['_continue'],
+                'history': body['history'],
+            }
+            prompt = apply_extensions('custom_generate_chat_prompt', user_input, generate_params, **kwargs)
+            if prompt is None:
+                prompt = generate_chat_prompt(user_input, generate_params, **kwargs)
+
+            tokens = encode(prompt)[0]
             response = json.dumps({
                 'results': [{
                     'tokens': len(tokens)
