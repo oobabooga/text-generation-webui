@@ -16,7 +16,6 @@ def api_chat(user_input, history, max_new_tokens):
         'history': history,
         'mode': 'instruct',  # Valid options: 'chat', 'chat-instruct', 'instruct'
         'character': 'Example',
-        'instruction_template': 'Vicuna-v1.1',  # Will get autodetected if unset
         # 'context_instruct': '',  # Optional
         'your_name': 'You',
 
