@@ -1,6 +1,6 @@
 # Text generation web UI
 
-A gradio web UI for running Large Language Models like LLaMA, llama.cpp, GPT-J, Pythia, OPT, and GALACTICA.
+A gradio web UI for running Large Language Models like LLaMA (v1 and v2), GPT-J, Pythia, OPT, and GALACTICA.
 
 Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.com/AUTOMATIC1111/stable-diffusion-webui) of text generation.
 
@@ -71,9 +71,11 @@ conda activate textgen
 | System | GPU | Command |
 |--------|---------|---------|
 | Linux/WSL | NVIDIA | `pip3 install torch torchvision torchaudio` |
+| Linux/WSL | CPU only | `pip3 install torch torchvision torchaudio` |
 | Linux | AMD | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.4.2` |
 | MacOS + MPS (untested) | Any | `pip3 install torch torchvision torchaudio` |
 | Windows | NVIDIA | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117` |
+| Windows | CPU only | `pip3 install torch torchvision torchaudio` |
 
 The up-to-date commands can be found here: https://pytorch.org/get-started/locally/. 
 
@@ -307,7 +309,7 @@ Optionally, you can use the following command-line flags:
 |---------------------------------------|-------------|
 | `--multimodal-pipeline PIPELINE`      | The multimodal pipeline to use. Examples: `llava-7b`, `llava-13b`. |
 
-Out of memory errors? [Check the low VRAM guide](docs/Low-VRAM-guide.md). Alternatively explore [GGML](docs/GGML-llama.cpp-models.md) and [GPTQ](docs/GPTQ-models-(4-bit-mode).md) quantizations.
+Out of memory errors? Try out [GGML](docs/GGML-llama.cpp-models.md) and [GPTQ](docs/GPTQ-models-(4-bit-mode).md) quantizations. Alternatively check out [the low VRAM guide](docs/Low-VRAM-guide.md).
 
 ## Presets
 
