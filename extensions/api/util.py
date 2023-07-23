@@ -7,9 +7,10 @@ from threading import Thread
 from typing import Callable, Optional
 
 from modules import shared
-from modules.chat import load_character_memoized
+from modules.chat import load_character_memoized, generate_chat_prompt
 from modules.presets import load_preset_memoized
-
+from modules.extensions import apply_extensions
+from modules.text_generation import encode
 
 # We use a thread local to store the asyncio lock, so that each thread
 # has its own lock.  This isn't strictly necessary, but it makes it
@@ -17,11 +18,31 @@ from modules.presets import load_preset_memoized
 # thus handling multiple requests in parallel.
 api_tls = threading.local()
 
+def calculate_max_new_tokens(prompt, state):
+    max_length = min(shared.settings['max_seq_len'], state['truncation_length'])
+    num_prompt_tokens = len(encode(prompt)[0])
+    max_new_tokens = max_length - num_prompt_tokens
+    return max_new_tokens
+
+def get_chat_prompt(body, state):
+    user_input = body['user_input']
+    if body.get('history', None) is None:
+        history = {'internal': [], 'visible': []}
+    else:
+        history = body['history']
+    kwargs = {
+        '_continue': body.get('_continue', False),
+        'history': history,
+    }
+    prompt = apply_extensions('custom_generate_chat_prompt', user_input, state, **kwargs)
+    if prompt is None:
+        prompt = generate_chat_prompt(user_input, state, **kwargs)
+    return prompt
 
 def build_parameters(body, chat=False):
 
     generate_params = {
-        'max_new_tokens': int(body.get('max_new_tokens', body.get('max_length', 200))),
+        'max_new_tokens': 0, # temporary value, will calculate final value later (see below)
         'do_sample': bool(body.get('do_sample', True)),
         'temperature': float(body.get('temperature', 0.5)),
         'top_p': float(body.get('top_p', 1)),
@@ -45,7 +66,7 @@ def build_parameters(body, chat=False):
         'mirostat_eta': float(body.get('mirostat_eta', 0.1)),
         'seed': int(body.get('seed', -1)),
         'add_bos_token': bool(body.get('add_bos_token', True)),
-        'truncation_length': int(body.get('truncation_length', body.get('max_context_length', 2048))),
+        'truncation_length': int(body.get('truncation_length', body.get('max_context_length',  shared.settings['truncation_length']))),
         'ban_eos_token': bool(body.get('ban_eos_token', False)),
         'skip_special_tokens': bool(body.get('skip_special_tokens', True)),
         'custom_stopping_strings': '',  # leave this blank
@@ -80,6 +101,16 @@ def build_parameters(body, chat=False):
             'chat-instruct_command': str(body.get('chat-instruct_command', shared.settings['chat-instruct_command'])),
             'history': body.get('history', {'internal': [], 'visible': []})
         })
+
+    max_new_tokens = body.get('max_new_tokens', body.get('max_length', None))
+    if max_new_tokens is not None:
+        generate_params['max_new_tokens'] = int(max_new_tokens)
+    else:
+        if chat:
+            prompt = get_chat_prompt(body, generate_params)
+        else:
+            prompt = body['prompt']
+        generate_params['max_new_tokens'] = calculate_max_new_tokens(prompt, generate_params)
 
     return generate_params
 
