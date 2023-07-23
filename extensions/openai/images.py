@@ -18,7 +18,6 @@ def generations(prompt: str, size: str, response_format: str, n: int):
     sd_defaults = {
         'sampler_name': 'DPM++ 2M Karras',  # vast improvement
         'steps': 30,
-        'restore_faces': True,  # slightly less horrible
     }
 
     width, height = [int(x) for x in size.split('x')]  # ignore the restrictions on size
