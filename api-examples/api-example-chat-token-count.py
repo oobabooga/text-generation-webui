@@ -70,7 +70,7 @@ def api_chat_count_tokens(user_input, history):
         "history": history,
         "mode": "instruct",  # Valid options: 'chat', 'chat-instruct', 'instruct'
         "character": "Example",
-        "_continue": True,
+        "_continue": False,
     }
 
     response = requests.post(URI_CHAT_TOKEN_COUNT, json=request)
