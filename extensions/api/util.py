@@ -18,7 +18,7 @@ from modules.text_generation import encode
 # thus handling multiple requests in parallel.
 api_tls = threading.local()
 
-def optimize_max_new_tokens(prompt, state):
+def estimate_max_new_tokens(prompt, state):
     old_max_new_tokens = state['max_new_tokens']
     max_length = min(shared.settings['max_seq_len'], state['truncation_length'])
     num_prompt_tokens = len(encode(prompt)[0])
@@ -43,7 +43,7 @@ def get_chat_prompt(body, state):
 def build_parameters(body, chat=False):
 
     generate_params = {
-        'optimize_max_new_tokens': bool(body.get('optimize_max_new_tokens', False)),
+        'use_max_seq_len': bool(body.get('use_max_seq_len', False)),
         'max_new_tokens': int(body.get('max_new_tokens', body.get('max_length', 200))),
         'do_sample': bool(body.get('do_sample', True)),
         'temperature': float(body.get('temperature', 0.5)),
@@ -104,12 +104,13 @@ def build_parameters(body, chat=False):
             'history': body.get('history', {'internal': [], 'visible': []})
         })
 
-    if generate_params['optimize_max_new_tokens'] is True:
+    if generate_params['use_max_seq_len'] is True:
+        generate_params['truncation_length'] = int(body.get('truncation_length', body.get('max_context_length',  shared.settings['max_seq_len'])))
         if chat:
             prompt = get_chat_prompt(body, generate_params)
         else:
             prompt = body['prompt']
-        generate_params['max_new_tokens'] = optimize_max_new_tokens(prompt, generate_params)
+        generate_params['max_new_tokens'] = estimate_max_new_tokens(prompt, generate_params)
 
     return generate_params
 
