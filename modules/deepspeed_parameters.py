@@ -1,6 +1,6 @@
 def generate_ds_config(ds_bf16, train_batch_size, nvme_offload_dir):
     '''
-    DeepSpeed configration
+    DeepSpeed configuration
     https://huggingface.co/docs/transformers/main_classes/deepspeed
     '''
 
