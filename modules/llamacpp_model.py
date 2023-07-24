@@ -53,6 +53,7 @@ class LlamaCppModel:
             'n_gpu_layers': shared.args.n_gpu_layers,
             'rope_freq_base': 10000 * shared.args.alpha_value ** (64/63.),
             'rope_freq_scale': 1.0 / shared.args.compress_pos_emb,
+            'n_gqa': shared.args.n_gqa or None,
         }
 
         result.model = Llama(**params)

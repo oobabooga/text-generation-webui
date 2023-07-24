@@ -61,6 +61,7 @@ def list_model_elements():
         'mlock',
         'n_gpu_layers',
         'n_ctx',
+        'n_gqa',
         'llama_cpp_seed',
         'gpu_split',
         'max_seq_len',
