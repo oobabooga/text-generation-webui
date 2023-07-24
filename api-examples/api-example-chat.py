@@ -9,6 +9,9 @@ URI = f'http://{HOST}/api/v1/chat'
 # For reverse-proxied streaming, the remote will likely host with ssl - https://
 # URI = 'https://your-uri-here.trycloudflare.com/api/v1/chat'
 
+# To retrieve the chat history of the character, do a GET Request against:
+# http://{HOST}/api/v1/chat/history
+
 
 def run(user_input, history):
     request = {
@@ -20,6 +23,7 @@ def run(user_input, history):
         'instruction_template': 'Vicuna-v1.1',  # Will get autodetected if unset
         # 'context_instruct': '',  # Optional
         'your_name': 'You',
+        # save_history: False,  # Optional, saves result to the persistent history of the character
 
         'regenerate': False,
         '_continue': False,

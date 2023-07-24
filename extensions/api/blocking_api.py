@@ -1,10 +1,11 @@
 import json
+from urllib.parse import urlparse, parse_qs
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
 
 from extensions.api.util import build_parameters, try_start_cloudflared
 from modules import shared
-from modules.chat import generate_chat_reply
+from modules.chat import generate_chat_reply, save_persistent_history, load_persistent_history
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, unload_model
 from modules.models_settings import (get_model_settings_from_yamls,
@@ -34,6 +35,41 @@ class Handler(BaseHTTPRequestHandler):
             })
 
             self.wfile.write(response.encode('utf-8'))
+
+        elif '/api/v1/chat/history' in self.path:
+            self.send_response(200)
+            self.end_headers()
+
+            # Parse request
+            parsed_url = urlparse(self.path)
+            params = parse_qs(parsed_url.query)
+            # Check if required parameters are there
+            if 'character' not in params:
+                print('character not provided')
+                self.send_error(400)
+                return
+
+            # Build a fake body to generate character params
+            character = params['character'][0]
+            body = {
+                'character': character
+            }
+            generated_params = build_parameters(body=body, chat=True)
+
+            # Use generated params to build state for requesting history
+            state = {
+                'mode': generated_params['mode'],
+                'character_menu': character,
+                'greeting': generated_params['greeting']
+            }
+            history = load_persistent_history(state)
+
+            # Send history
+            response = json.dumps({
+                'history': history
+            })
+            self.wfile.write(response.encode('utf-8'))
+
         else:
             self.send_error(404)
 
@@ -74,6 +110,8 @@ class Handler(BaseHTTPRequestHandler):
             user_input = body['user_input']
             regenerate = body.get('regenerate', False)
             _continue = body.get('_continue', False)
+            character = body.get('character', '')
+            save_history = body.get('save_history', False)
 
             generate_params = build_parameters(body, chat=True)
             generate_params['stream'] = False
@@ -84,6 +122,9 @@ class Handler(BaseHTTPRequestHandler):
             answer = generate_params['history']
             for a in generator:
                 answer = a
+
+            if save_history:
+                save_persistent_history(answer, character, generate_params['mode'])
 
             response = json.dumps({
                 'results': [{
