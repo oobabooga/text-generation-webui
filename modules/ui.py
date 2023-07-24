@@ -62,6 +62,7 @@ def list_model_elements():
         'n_gpu_layers',
         'n_ctx',
         'n_gqa',
+        'rms_norm_eps',
         'llama_cpp_seed',
         'gpu_split',
         'max_seq_len',
