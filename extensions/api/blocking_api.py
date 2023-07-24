@@ -72,7 +72,6 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
 
             user_input = body['user_input']
-            history = body['history']
             regenerate = body.get('regenerate', False)
             _continue = body.get('_continue', False)
 
@@ -80,9 +79,9 @@ class Handler(BaseHTTPRequestHandler):
             generate_params['stream'] = False
 
             generator = generate_chat_reply(
-                user_input, history, generate_params, regenerate=regenerate, _continue=_continue, loading_message=False)
+                user_input, generate_params, regenerate=regenerate, _continue=_continue, loading_message=False)
 
-            answer = history
+            answer = generate_params['history']
             for a in generator:
                 answer = a
 
@@ -183,6 +182,17 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(response.encode('utf-8'))
         else:
             self.send_error(404)
+
+    def do_OPTIONS(self):
+        self.send_response(200)
+        self.end_headers()
+
+    def end_headers(self):
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', '*')
+        self.send_header('Access-Control-Allow-Headers', '*')
+        self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate')
+        super().end_headers()
 
 
 def _run_server(port: int, share: bool = False):

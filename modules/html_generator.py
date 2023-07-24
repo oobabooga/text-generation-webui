@@ -1,9 +1,3 @@
-'''
-
-This is a library for formatting text outputs as nice HTML.
-
-'''
-
 import os
 import re
 import time
@@ -135,7 +129,7 @@ def generate_4chan_html(f):
 def make_thumbnail(image):
     image = image.resize((350, round(image.size[1] / image.size[0] * 350)), Image.Resampling.LANCZOS)
     if image.size[1] > 470:
-        image = ImageOps.fit(image, (350, 470), Image.ANTIALIAS)
+        image = ImageOps.fit(image, (350, 470), Image.LANCZOS)
 
     return image
 
@@ -272,8 +266,8 @@ def generate_chat_html(history, name1, name2, reset_cache=False):
 
 def chat_html_wrapper(history, name1, name2, mode, style, reset_cache=False):
     if mode == 'instruct':
-        return generate_instruct_html(history)
+        return generate_instruct_html(history['visible'])
     elif style == 'wpp':
-        return generate_chat_html(history, name1, name2)
+        return generate_chat_html(history['visible'], name1, name2)
     else:
-        return generate_cai_chat_html(history, name1, name2, style, reset_cache)
+        return generate_cai_chat_html(history['visible'], name1, name2, style, reset_cache)

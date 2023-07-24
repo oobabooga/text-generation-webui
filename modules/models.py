@@ -3,13 +3,19 @@ import os
 import re
 import time
 from pathlib import Path
+import hashlib
 
 import torch
 import transformers
 from accelerate import infer_auto_device_map, init_empty_weights
-from transformers import (AutoConfig, AutoModel, AutoModelForCausalLM,
-                          AutoModelForSeq2SeqLM, AutoTokenizer,
-                          BitsAndBytesConfig, LlamaTokenizer)
+from transformers import (
+    AutoConfig,
+    AutoModel,
+    AutoModelForCausalLM,
+    AutoModelForSeq2SeqLM,
+    AutoTokenizer,
+    BitsAndBytesConfig,
+)
 
 import modules.shared as shared
 from modules import llama_attn_hijack, sampler_hijack
@@ -21,8 +27,10 @@ transformers.logging.set_verbosity_error()
 local_rank = None
 if shared.args.deepspeed:
     import deepspeed
-    from transformers.deepspeed import (HfDeepSpeedConfig,
-                                        is_deepspeed_zero3_enabled)
+    from transformers.deepspeed import (
+        HfDeepSpeedConfig,
+        is_deepspeed_zero3_enabled
+    )
 
     from modules.deepspeed_parameters import generate_ds_config
 
@@ -47,10 +55,16 @@ def load_model(model_name, loader=None):
         'AutoGPTQ': AutoGPTQ_loader,
         'GPTQ-for-LLaMa': GPTQ_loader,
         'llama.cpp': llamacpp_loader,
+        'llamacpp_HF': llamacpp_HF_loader,
         'FlexGen': flexgen_loader,
         'RWKV': RWKV_loader,
-        'ExLlama': ExLlama_loader
+        'ExLlama': ExLlama_loader,
+        'ExLlama_HF': ExLlama_HF_loader
     }
+
+    p = Path(model_name)
+    if p.exists():
+        model_name = p.parts[-1]
 
     if loader is None:
         if shared.args.loader is not None:
@@ -82,30 +96,38 @@ def load_model(model_name, loader=None):
 
 def load_tokenizer(model_name, model):
     tokenizer = None
+    path_to_model = Path(f"{shared.args.model_dir}/{model_name}/")
     if any(s in model_name.lower() for s in ['gpt-4chan', 'gpt4chan']) and Path(f"{shared.args.model_dir}/gpt-j-6B/").exists():
         tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/gpt-j-6B/"))
-    elif type(model) is transformers.LlamaForCausalLM or "LlamaGPTQForCausalLM" in str(type(model)):
-        # Try to load an universal LLaMA tokenizer
-        if not any(s in shared.model_name.lower() for s in ['llava', 'oasst']):
-            for p in [Path(f"{shared.args.model_dir}/llama-tokenizer/"), Path(f"{shared.args.model_dir}/oobabooga_llama-tokenizer/")]:
-                if p.exists():
-                    logger.info(f"Loading the universal LLaMA tokenizer from {p}...")
-                    tokenizer = LlamaTokenizer.from_pretrained(p, clean_up_tokenization_spaces=True)
-                    return tokenizer
-
-        # Otherwise, load it from the model folder and hope that these
-        # are not outdated tokenizer files.
-        tokenizer = LlamaTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/{model_name}/"), clean_up_tokenization_spaces=True)
+    elif path_to_model.exists():
         try:
-            tokenizer.eos_token_id = 2
-            tokenizer.bos_token_id = 1
-            tokenizer.pad_token_id = 0
-        except:
-            pass
-    else:
-        path_to_model = Path(f"{shared.args.model_dir}/{model_name}/")
-        if path_to_model.exists():
-            tokenizer = AutoTokenizer.from_pretrained(path_to_model, trust_remote_code=shared.args.trust_remote_code)
+            tokenizer = AutoTokenizer.from_pretrained(
+                path_to_model,
+                trust_remote_code=shared.args.trust_remote_code,
+                use_fast=False
+            )
+        except ValueError:
+            tokenizer = AutoTokenizer.from_pretrained(
+                path_to_model,
+                trust_remote_code=shared.args.trust_remote_code,
+                use_fast=True
+            )
+
+    if tokenizer.__class__.__name__ == 'LlamaTokenizer':
+        pairs = [
+            ['tokenizer_config.json', '516c6167c884793a738c440e29ccb80c15e1493ffc965affc69a1a8ddef4572a'],
+            ['special_tokens_map.json', 'ff3b4a612c4e447acb02d40071bddd989fe0da87eb5b7fe0dbadfc4f74de7531']
+        ]
+
+        for pair in pairs:
+            p = path_to_model / pair[0]
+            if p.exists():
+                with open(p, "rb") as f:
+                    bytes = f.read()
+
+                file_hash = hashlib.sha256(bytes).hexdigest()
+                if file_hash != pair[1]:
+                    logger.warning(f"{p} is different from the original LlamaTokenizer file. It is either customized or outdated.")
 
     return tokenizer
 
@@ -125,7 +147,7 @@ def huggingface_loader(model_name):
     # Load the model in simple 16-bit mode by default
     if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.load_in_4bit, shared.args.auto_devices, shared.args.disk, shared.args.deepspeed, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None]):
         model = LoaderClass.from_pretrained(Path(f"{shared.args.model_dir}/{model_name}"), low_cpu_mem_usage=True, torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16, trust_remote_code=shared.args.trust_remote_code)
-        if torch.has_mps:
+        if torch.backends.mps.is_available():
             device = torch.device('mps')
             model = model.to(device)
         else:
@@ -145,7 +167,7 @@ def huggingface_loader(model_name):
             "trust_remote_code": shared.args.trust_remote_code
         }
 
-        if not any((shared.args.cpu, torch.cuda.is_available(), torch.has_mps)):
+        if not any((shared.args.cpu, torch.cuda.is_available(), torch.backends.mps.is_available())):
             logger.warning("torch.cuda.is_available() returned False. This means that no GPU has been detected. Falling back to CPU mode.")
             shared.args.cpu = True
 
@@ -247,6 +269,27 @@ def llamacpp_loader(model_name):
     return model, tokenizer
 
 
+def llamacpp_HF_loader(model_name):
+    from modules.llamacpp_hf import LlamacppHF
+
+    for fname in ["oobabooga_llama-tokenizer", "llama-tokenizer"]:
+        path = Path(f'{shared.args.model_dir}/{fname}')
+        if path.exists():
+            break
+    else:
+        logger.error("Could not load the model because a tokenizer in transformers format was not found. Please download oobabooga/llama-tokenizer.")
+        return None, None
+
+    tokenizer = AutoTokenizer.from_pretrained(
+        path,
+        trust_remote_code=shared.args.trust_remote_code,
+        use_fast=False
+    )
+
+    model = LlamacppHF.from_pretrained(model_name)
+    return model, tokenizer
+
+
 def GPTQ_loader(model_name):
 
     # Monkey patch
@@ -276,6 +319,12 @@ def ExLlama_loader(model_name):
 
     model, tokenizer = ExllamaModel.from_pretrained(model_name)
     return model, tokenizer
+
+
+def ExLlama_HF_loader(model_name):
+    from modules.exllama_hf import ExllamaHF
+
+    return ExllamaHF.from_pretrained(model_name)
 
 
 def get_max_memory_dict():
@@ -311,6 +360,8 @@ def clear_torch_cache():
 
 def unload_model():
     shared.model = shared.tokenizer = None
+    shared.lora_names = []
+    shared.model_dirty_from_training = False
     clear_torch_cache()
 
 

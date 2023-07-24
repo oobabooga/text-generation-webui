@@ -48,7 +48,8 @@ def load_quantized(model_name):
         'use_safetensors': use_safetensors,
         'trust_remote_code': shared.args.trust_remote_code,
         'max_memory': get_max_memory_dict(),
-        'quantize_config': quantize_config
+        'quantize_config': quantize_config,
+        'use_cuda_fp16': not shared.args.no_use_cuda_fp16,
     }
 
     logger.info(f"The AutoGPTQ params are: {params}")

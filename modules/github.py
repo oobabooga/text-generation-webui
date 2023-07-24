@@ -14,16 +14,20 @@ def clone_or_pull_repository(github_url):
 
     # Check if the repository is already cloned
     if os.path.exists(repo_path):
+        yield f"Updating {github_url}..."
         # Perform a 'git pull' to update the repository
         try:
             pull_output = subprocess.check_output(["git", "-C", repo_path, "pull"], stderr=subprocess.STDOUT)
+            yield "Done."
             return pull_output.decode()
         except subprocess.CalledProcessError as e:
             return str(e)
 
     # Clone the repository
     try:
+        yield f"Cloning {github_url}..."
         clone_output = subprocess.check_output(["git", "clone", github_url, repo_path], stderr=subprocess.STDOUT)
+        yield "Done."
         return clone_output.decode()
     except subprocess.CalledProcessError as e:
         return str(e)

@@ -9,31 +9,12 @@ import transformers
 import modules.shared as shared
 
 
-class _SentinelTokenStoppingCriteria(transformers.StoppingCriteria):
-
-    def __init__(self, sentinel_token_ids: list, starting_idx: int):
+class _StopEverythingStoppingCriteria(transformers.StoppingCriteria):
+    def __init__(self):
         transformers.StoppingCriteria.__init__(self)
-        self.sentinel_token_ids = sentinel_token_ids
-        self.starting_idx = starting_idx
-        self.shortest = min([x.shape[-1] for x in sentinel_token_ids])
 
     def __call__(self, input_ids: torch.LongTensor, _scores: torch.FloatTensor) -> bool:
-        for sample in input_ids:
-            trimmed_sample = sample[self.starting_idx:]
-            trimmed_len = trimmed_sample.shape[-1]
-            if trimmed_len < self.shortest:
-                continue
-
-            for sentinel in self.sentinel_token_ids:
-                sentinel_len = sentinel.shape[-1]
-                if trimmed_len < sentinel_len:
-                    continue
-
-                window = trimmed_sample[-sentinel_len:]
-                if torch.all(torch.eq(sentinel, window)):
-                    return True
-
-        return False
+        return shared.stop_everything
 
 
 class Stream(transformers.StoppingCriteria):

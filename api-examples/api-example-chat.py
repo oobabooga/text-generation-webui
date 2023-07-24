@@ -17,13 +17,13 @@ def run(user_input, history):
         'history': history,
         'mode': 'instruct',  # Valid options: 'chat', 'chat-instruct', 'instruct'
         'character': 'Example',
-        'instruction_template': 'Vicuna-v1.1',
+        'instruction_template': 'Vicuna-v1.1',  # Will get autodetected if unset
+        # 'context_instruct': '',  # Optional
         'your_name': 'You',
 
         'regenerate': False,
         '_continue': False,
         'stop_at_newline': False,
-        'chat_prompt_size': 2048,
         'chat_generation_attempts': 1,
         'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
 
@@ -39,6 +39,7 @@ def run(user_input, history):
         'tfs': 1,
         'top_a': 0,
         'repetition_penalty': 1.18,
+        'repetition_penalty_range': 0,
         'top_k': 40,
         'min_length': 0,
         'no_repeat_ngram_size': 0,

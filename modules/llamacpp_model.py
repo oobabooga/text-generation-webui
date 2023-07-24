@@ -7,12 +7,23 @@ https://abetlen.github.io/llama-cpp-python/
 '''
 
 import re
+from functools import partial
 
-from llama_cpp import Llama, LlamaCache
+import torch
 
 from modules import shared
 from modules.callbacks import Iteratorize
 from modules.logging_colors import logger
+
+if torch.cuda.is_available():
+    from llama_cpp_cuda import Llama, LlamaCache, LogitsProcessorList
+else:
+    from llama_cpp import Llama, LlamaCache, LogitsProcessorList
+
+
+def ban_eos_logits_processor(eos_token, input_ids, logits):
+    logits[eos_token] = -float('inf')
+    return logits
 
 
 class LlamaCppModel:
@@ -43,12 +54,15 @@ class LlamaCppModel:
             'n_batch': shared.args.n_batch,
             'use_mmap': not shared.args.no_mmap,
             'use_mlock': shared.args.mlock,
-            'n_gpu_layers': shared.args.n_gpu_layers
+            'low_vram': shared.args.low_vram,
+            'n_gpu_layers': shared.args.n_gpu_layers,
+            'rope_freq_base': 10000 * shared.args.alpha_value ** (64/63.),
+            'rope_freq_scale': 1.0 / shared.args.compress_pos_emb,
         }
 
-        self.model = Llama(**params)
+        result.model = Llama(**params)
         if cache_capacity > 0:
-            self.model.set_cache(LlamaCache(capacity_bytes=cache_capacity))
+            result.model.set_cache(LlamaCache(capacity_bytes=cache_capacity))
 
         # This is ugly, but the model and the tokenizer are the same object in this library.
         return result, result
@@ -58,6 +72,9 @@ class LlamaCppModel:
             string = string.encode()
 
         return self.model.tokenize(string)
+
+    def decode(self, tokens):
+        return self.model.detokenize(tokens)
 
     def generate(self, prompt, state, callback=None):
         prompt = prompt if type(prompt) is str else prompt.decode()
@@ -72,7 +89,10 @@ class LlamaCppModel:
             mirostat_mode=int(state['mirostat_mode']),
             mirostat_tau=state['mirostat_tau'],
             mirostat_eta=state['mirostat_eta'],
-            stream=True
+            stream=True,
+            logits_processor=LogitsProcessorList([
+                partial(ban_eos_logits_processor, self.model.token_eos()),
+            ]) if state['ban_eos_token'] else None,
         )
 
         output = ""

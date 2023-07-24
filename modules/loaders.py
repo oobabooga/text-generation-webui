@@ -9,6 +9,7 @@ loaders_and_params = {
         'triton',
         'no_inject_fused_attention',
         'no_inject_fused_mlp',
+        'no_use_cuda_fp16',
         'wbits',
         'groupsize',
         'desc_act',
@@ -33,8 +34,24 @@ loaders_and_params = {
         'n_batch',
         'threads',
         'no_mmap',
+        'low_vram',
         'mlock',
         'llama_cpp_seed',
+        'compress_pos_emb',
+        'alpha_value',
+    ],
+    'llamacpp_HF': [
+        'n_ctx',
+        'n_gpu_layers',
+        'n_batch',
+        'threads',
+        'no_mmap',
+        'low_vram',
+        'mlock',
+        'llama_cpp_seed',
+        'compress_pos_emb',
+        'alpha_value',
+        'llamacpp_HF_info',
     ],
     'Transformers': [
         'cpu_memory',
@@ -52,9 +69,19 @@ loaders_and_params = {
         'trust_remote_code',
         'transformers_info'
     ],
-    'ExLlama' : [
+    'ExLlama': [
         'gpu_split',
+        'max_seq_len',
+        'compress_pos_emb',
+        'alpha_value',
         'exllama_info',
+    ],
+    'ExLlama_HF': [
+        'gpu_split',
+        'max_seq_len',
+        'compress_pos_emb',
+        'alpha_value',
+        'exllama_HF_info',
     ]
 }
 

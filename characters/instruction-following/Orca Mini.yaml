@@ -1,0 +1,4 @@
+user: "### User:"
+bot: "### Response:"
+turn_template: "<|user|>\n<|user-message|>\n\n<|bot|>\n<|bot-message|>\n\n"
+context: "### System:\nYou are an AI assistant that follows instruction extremely well. Help as much as you can.\n\n"
