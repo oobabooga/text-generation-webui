@@ -5,7 +5,7 @@ einops
 fastapi==0.95.2
 flexgen==0.1.7
 gradio_client==0.2.5
-gradio==3.33.1
+gradio==3.38.0
 markdown
 numpy
 pandas
