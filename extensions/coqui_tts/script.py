@@ -2,9 +2,11 @@ import time
 import traceback
 from pathlib import Path
 
-from modules import chat, shared, tts_preprocessor
-
 import gradio as gr
+
+from modules import chat, shared, tts_preprocessor
+from modules.utils import gradio
+
 from TTS.api import TTS
 import TTS.utils.synthesizer
 
@@ -70,20 +72,24 @@ model, speaker, language = load_model()
 streaming_state = shared.args.no_stream  # remember if chat streaming was enabled
 
 
-def remove_tts_from_history():
-    for i, entry in enumerate(shared.history['internal']):
-        shared.history['visible'][i] = [shared.history['visible'][i][0], entry[1]]
+def remove_tts_from_history(history):
+    for i, entry in enumerate(history['internal']):
+        history['visible'][i] = [history['visible'][i][0], entry[1]]
+
+    return history
 
 
-def toggle_text_in_history():
-    for i, entry in enumerate(shared.history['visible']):
+def toggle_text_in_history(history):
+    for i, entry in enumerate(history['visible']):
         visible_reply = entry[1]
         if visible_reply.startswith('<audio'):
             if params['show_text']:
-                reply = shared.history['internal'][i][1]
-                shared.history['visible'][i] = [shared.history['visible'][i][0], f"{visible_reply.split('</audio>')[0]}</audio>\n\n{reply}"]
+                reply = history['internal'][i][1]
+                history['visible'][i] = [history['visible'][i][0], f"{visible_reply.split('</audio>')[0]}</audio>\n\n{reply}"]
             else:
-                shared.history['visible'][i] = [shared.history['visible'][i][0], f"{visible_reply.split('</audio>')[0]}</audio>"]
+                history['visible'][i] = [history['visible'][i][0], f"{visible_reply.split('</audio>')[0]}</audio>"]
+
+    return history
 
 
 def state_modifier(state):
@@ -94,7 +100,7 @@ def state_modifier(state):
     return state
 
 
-def input_modifier(string):
+def input_modifier(string, state):
     if not params['activate']:
         return string
 
@@ -113,7 +119,7 @@ def history_modifier(history):
     return history
 
 
-def output_modifier(string):
+def output_modifier(string, state):
     global model, speaker, language, current_params
 
     for i in params:
@@ -134,7 +140,7 @@ def output_modifier(string):
     if string == '':
         string = '*Empty reply, try regenerating*'
     else:
-        output_file = Path(f'extensions/coqui_tts/outputs/{shared.character}_{int(time.time())}.wav')
+        output_file = Path(f'extensions/coqui_tts/outputs/{state["character_menu"]}_{int(time.time())}.wav')
         if params['voice_clone_reference_path'] is not None:
             model.tts_with_vc_to_file(text=string, language=language, speaker_wav=params['voice_clone_reference_path'],
                                       file_path=str(output_file))

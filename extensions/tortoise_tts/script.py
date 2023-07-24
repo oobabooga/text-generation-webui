@@ -2,6 +2,7 @@ import gc
 import os
 import sys
 import traceback
+from typing import Union
 
 import torch
 import torchaudio
@@ -11,6 +12,7 @@ import time
 
 from modules import chat, shared, tts_preprocessor
 from modules.models import reload_model as load_llm, unload_model as unload_llm
+from modules.utils import gradio
 
 import gradio as gr
 
@@ -102,7 +104,7 @@ def get_gen_kwargs(par):
     preset_options = get_preset_settings(par['preset'])
 
     for option in par['tuning_settings'].keys():
-        opt: [float | int | str | bool | None] = par['tuning_settings'][option]
+        opt: [Union[float, int, str, bool, None]] = par['tuning_settings'][option]
         if opt is None:
             continue
 
@@ -156,20 +158,24 @@ def unload_model():
         pass
 
 
-def remove_tts_from_history():
-    for i, entry in enumerate(shared.history['internal']):
-        shared.history['visible'][i] = [shared.history['visible'][i][0], entry[1]]
+def remove_tts_from_history(history):
+    for i, entry in enumerate(history['internal']):
+        history['visible'][i] = [history['visible'][i][0], entry[1]]
+
+    return history
 
 
-def toggle_text_in_history():
-    for i, entry in enumerate(shared.history['visible']):
+def toggle_text_in_history(history):
+    for i, entry in enumerate(history['visible']):
         visible_reply = entry[1]
         if visible_reply.startswith('<audio'):
             if params['show_text']:
-                reply = shared.history['internal'][i][1]
-                shared.history['visible'][i] = [shared.history['visible'][i][0], f"{visible_reply.split('</audio>')[0]}</audio>\n\n{reply}"]
+                reply = history['internal'][i][1]
+                history['visible'][i] = [history['visible'][i][0], f"{visible_reply.split('</audio>')[0]}</audio>\n\n{reply}"]
             else:
-                shared.history['visible'][i] = [shared.history['visible'][i][0], f"{visible_reply.split('</audio>')[0]}</audio>"]
+                history['visible'][i] = [history['visible'][i][0], f"{visible_reply.split('</audio>')[0]}</audio>"]
+
+    return history
 
 
 def state_modifier(state):
@@ -180,7 +186,7 @@ def state_modifier(state):
     return state
 
 
-def input_modifier(string):
+def input_modifier(string, state):
     if not params['activate']:
         return string
 
@@ -199,7 +205,7 @@ def history_modifier(history):
     return history
 
 
-def output_modifier(string):
+def output_modifier(string, state):
     """
     This function is applied to the model outputs.
     """
@@ -364,15 +370,20 @@ def ui():
     # Convert history with confirmation
     controls['convert_arr'] = [controls['convert_confirm'], controls['convert'], controls['convert_cancel']]
     controls['convert'].click(lambda: [gr.update(visible=True), gr.update(visible=False), gr.update(visible=True)], None, controls['convert_arr'])
-    controls['convert_confirm'].click(lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, controls['convert_arr'])
-    controls['convert_confirm'].click(remove_tts_from_history, [shared.gradio[k] for k in ['name1', 'name2', 'mode']], shared.gradio['display'])
-    controls['convert_confirm'].click(lambda: chat.save_history(mode='chat', timestamp=False), [], [], show_progress=False)
+    controls['convert_confirm'].click(
+            lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, controls['convert_arr']).then(
+            remove_tts_from_history, gradio('history'), gradio('history')).then(
+            chat.save_persistent_history, gradio('history', 'character_menu', 'mode'), None).then(
+            chat.redraw_html, shared.reload_inputs, gradio('display'))
+
     controls['convert_cancel'].click(lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, controls['convert_arr'])
 
     # Toggle message text in history
-    controls['show_text'].change(lambda x: params.update({"show_text": x}), controls['show_text'], None)
-    controls['show_text'].change(toggle_text_in_history, [shared.gradio[k] for k in ['name1', 'name2', 'mode']], shared.gradio['display'])
-    controls['show_text'].change(lambda: chat.save_history(mode='chat', timestamp=False), [], [], show_progress=False)
+    controls['show_text'].change(
+            lambda x: params.update({"show_text": x}), controls['show_text'], None).then(
+            toggle_text_in_history, gradio('history'), gradio('history')).then(
+            chat.save_persistent_history, gradio('history', 'character_menu', 'mode'), None).then(
+            chat.redraw_html, shared.reload_inputs, gradio('display'))
 
     # Event functions to update the parameters in the backend
     controls['activate'].change(lambda x: params.update({"activate": x}), controls['activate'], None)
@@ -410,7 +421,7 @@ def update_preset(preset):
     global params
     params.update({'preset': preset})
     set_preset(preset)
-    tune: dict[str, float | int | str] = params['tuning_settings']
+    tune: dict[str, Union[float, int, str]] = params['tuning_settings']
     return [
         # num_autoregressive_samples
         gr.update(value=tune['num_autoregressive_samples'], visible=True),
