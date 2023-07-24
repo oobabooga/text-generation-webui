@@ -1,3 +1,10 @@
+"""
+This module contains utils for preprocessing the text before converting it to embeddings.
+
+- TextPreprocessorBuilder preprocesses individual strings.
+- TextSummarizer extracts the most important sentences from a long string.
+"""
+
 import pytextrank
 import string
 import spacy
@@ -17,6 +24,8 @@ class TextPreprocessorBuilder:
     def initialize_class_variables(cls):
         nltk.download('stopwords')
         nltk.download('wordnet')
+        nltk.download('punkt')
+        nltk.download('averaged_perceptron_tagger')
         cls._stop_words = set(stopwords.words('english'))
         cls._lemmatizer = WordNetLemmatizer()
 
@@ -91,6 +100,28 @@ class TextPreprocessorBuilder:
     def remove_stopwords(self):
         self.text = "".join([word for word in re.findall(r'\b\w+\b|\W+', self.text) if word not in self._stop_words])
         return self
+    
+    def remove_specific_pos(self):
+        """
+        In the English language, adverbs and interjections rarely provide meaningul information.
+        Removing them improves the embedding accuracy. Don't tell JK Rowling, though.
+        """
+        # Match both words and non-word characters
+        tokens = re.findall(r'\b\w+\b|\W+', self.text)
+
+        # Exclude adverbs and interjections
+        excluded_tags = ['RB', 'RBR', 'RBS', 'UH']
+
+        for i, token in enumerate(tokens):
+            # Check if token is a word
+            if re.match(r'^\w+$', token):
+                # Part-of-speech tag the word
+                pos = nltk.pos_tag([token])[0][1]
+                # If the word's POS tag is in the excluded list, remove the word
+                if pos in excluded_tags:
+                    tokens[i] = ''
+        self.text = "".join(tokens)
+        return self
 
     def lemmatize(self):
         self.text = "".join([self._lemmatizer.lemmatize(word) for word in re.findall(r'\b\w+\b|\W+', self.text)])
@@ -104,7 +135,7 @@ class TextSummarizer:
 
     @staticmethod
     def load_nlp_pipeline():
-        # Lazy load it. Most of the time, it won't be loaded at all.
+        # Lazy-load it.
         if TextSummarizer._nlp_pipeline is None:
             TextSummarizer._nlp_pipeline = spacy.load('en_core_web_sm')
             TextSummarizer._nlp_pipeline.add_pipe("textrank", last=True)
@@ -117,17 +148,15 @@ class TextSummarizer:
         for 80% of the meaning (the Pareto Principle).
 
         Returns:
-        list: A list of the most important sentences if the text is long, or a list containing 
-        the original text if it is short.
+        list: A list of the most important sentences
         """
-        if len(text) > 225:  # Average english sentence is between 75 and 100 characters.
-            nlp_pipeline = self.load_nlp_pipeline()
-            doc = nlp_pipeline(text)
 
-            limit_phrases = math.ceil(len(doc._.phrases) * 0.20)  # 20% of the phrases, rounded up
-            limit_sentences = math.ceil(len(list(doc.sents)) * 0.20)  # 20% of the sentences, rounded up
-            extracted_sentences = [str(sent) for sent in doc._.textrank.summary(limit_phrases=limit_phrases, limit_sentences=limit_sentences)]
-            return extracted_sentences
-        return [text]
+        nlp_pipeline = self.load_nlp_pipeline()
+        doc = nlp_pipeline(text)
+
+        limit_phrases = math.ceil(len(doc._.phrases) * 0.20)  # 20% of the phrases, rounded up
+        limit_sentences = math.ceil(len(list(doc.sents)) * 0.20)  # 20% of the sentences, rounded up
+        extracted_sentences = [str(sent) for sent in doc._.textrank.summary(limit_phrases=limit_phrases, limit_sentences=limit_sentences)]
+        return extracted_sentences
 
     

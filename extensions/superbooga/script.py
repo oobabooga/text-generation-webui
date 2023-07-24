@@ -1,6 +1,5 @@
 import re
 import textwrap
-import bisect
 import codecs
 
 import gradio as gr
@@ -11,14 +10,15 @@ from modules.logging_colors import logger
 
 from .chromadb import add_chunks_to_collector, make_collector
 from .download_urls import download_urls
-from .text_preprocessor import TextPreprocessorBuilder, TextSummarizer
+from .data_processor import process_and_add_to_collector, preprocess_text
+from .benchmark import benchmark
 
 params = {
-    'chunk_count': 200,
+    'chunk_count': 180,
     'chunk_count_initial': 10,
     'time_weight': 0,
     'chunk_length': '40,50',
-    'context_length': '400,800', # We provide less context before the embedding. This is because language typically flows forward, meaning the text that comes after an embedding often gives us more useful information.
+    'context_length': '300,850', # We provide less context before the embedding. This is because language typically flows forward, meaning the text that comes after an embedding often gives us more useful information.
     'chunk_separator': '',
     'data_separator': '\n\n<<document chunk>>\n\n',
     'strong_cleanup': False,
@@ -29,159 +29,16 @@ params = {
 
 collector = make_collector()
 chat_collector = make_collector()
-summarizer = TextSummarizer()
-
-def preprocess_text(text) -> list[str]:
-    important_sentences = summarizer.process_long_text(text)
-    return [TextPreprocessorBuilder(text).to_lower().remove_punctuation().merge_spaces().strip().num_to_word(1).build() for text in important_sentences]
-
-def create_chunks_with_context(corpus, chunk_len, context_left, context_right):
-    """
-    This function takes a corpus of text and splits it into chunks of a specified length, 
-    then adds a specified amount of context to each chunk. The context is added by first 
-    going backwards from the start of the chunk and then going forwards from the end of the 
-    chunk, ensuring that the context includes only whole words and that the total context length 
-    does not exceed the specified limit. This function uses binary search for efficiency.
-
-    Returns:
-    chunks (list of str): The chunks of text.
-    chunks_with_context (list of str): The chunks of text with added context.
-    chunk_with_context_start_indices (list of int): The starting indices of each chunk with context in the corpus.
-    """
-    words = re.split('(\\s+)', corpus)
-    word_start_indices = [0]
-    current_index = 0
-
-    for word in words:
-        current_index += len(word)
-        word_start_indices.append(current_index)
-
-    chunks, chunk_lengths, chunk_start_indices, chunk_with_context_start_indices = [], [], [], []
-    current_length = 0
-    current_index = 0
-    chunk = []
-
-    for word in words:
-        if current_length + len(word) > chunk_len:
-            chunks.append(''.join(chunk))
-            chunk_lengths.append(current_length)
-            chunk_start_indices.append(current_index - current_length)
-            chunk = [word]
-            current_length = len(word)
-        else:
-            chunk.append(word)
-            current_length += len(word)
-        current_index += len(word)
-
-    if chunk:
-        chunks.append(''.join(chunk))
-        chunk_lengths.append(current_length)
-        chunk_start_indices.append(current_index - current_length)
-
-    chunks_with_context = []
-    for start_index, chunk_length in zip(chunk_start_indices, chunk_lengths):
-        context_start_index = bisect.bisect_right(word_start_indices, start_index - context_left)
-        context_end_index = bisect.bisect_left(word_start_indices, start_index + chunk_length + context_right)
-
-        # Combine all the words in the context range (before, chunk, and after)
-        chunk_with_context = ''.join(words[context_start_index:context_end_index])
-        chunks_with_context.append(chunk_with_context)
-        
-        # Determine the start index of the chunk with context
-        chunk_with_context_start_index = word_start_indices[context_start_index]
-        chunk_with_context_start_indices.append(chunk_with_context_start_index)
-
-    return chunks, chunks_with_context, chunk_with_context_start_indices
-
 
 def feed_data_into_collector(corpus, chunk_len, context_len, chunk_regex, chunk_sep):
-    global collector
-
-    # Defining variables
-    chunk_lens = [int(len.strip()) for len in chunk_len.split(',')]
-    context_len = [int(len) for len in context_len.split(',')]
-    if len(context_len) >= 3:
-        raise f"Context len has too many values: {len(context_len)}"
-    if len(context_len) == 2:
-        context_left = context_len[0]
-        context_right = context_len[1]
-    else:
-        context_left = context_right = context_len[0]
-    chunk_sep = chunk_sep.replace(r'\n', '\n')
-    cumulative = ''
-
-    data_chunks = []
-    data_chunks_with_context = []
-    data_chunk_starting_indices = []
-
-    # Handling chunk_regex
-    if chunk_regex:
-        if chunk_sep:
-            cumulative_length = 0  # This variable will store the length of the processed corpus
-            sections = corpus.split(chunk_sep)
-            for section in sections:
-                special_chunks = list(re.finditer(chunk_regex, section))
-                for match in special_chunks:
-                    chunk = match.group(0)
-                    start_index = match.start()
-                    end_index = start_index + len(chunk)
-                    context = section[max(0, start_index - context_left):min(len(section), end_index + context_right)]
-                    data_chunks.append(chunk)
-                    data_chunks_with_context.append(context)
-                    data_chunk_starting_indices.append(cumulative_length + max(0, start_index - context_left))
-                cumulative_length += len(section) + len(chunk_sep)  # Update the length of the processed corpus
-        else:
-            special_chunks = list(re.finditer(chunk_regex, corpus))
-            for match in special_chunks:
-                chunk = match.group(0)
-                start_index = match.start()
-                end_index = start_index + len(chunk)
-                context = corpus[max(0, start_index - context_left):min(len(corpus), end_index + context_right)]
-                data_chunks.append(chunk)
-                data_chunks_with_context.append(context)
-                data_chunk_starting_indices.append(max(0, start_index - context_left))
-
-        cumulative += f"{len(data_chunks)} special chunks have been found.\n\n"
-        yield cumulative
-
-    for chunk_len in chunk_lens:
-        # Breaking the data into chunks and adding those to the db
-        cumulative += "Breaking the input dataset...\n\n"
-        yield cumulative
-        if chunk_sep:
-            cumulative_length = 0  # This variable will store the length of the processed corpus
-            sections = corpus.split(chunk_sep)
-            for section in sections:
-                chunks, chunks_with_context, context_start_indices = create_chunks_with_context(section, chunk_len, context_left, context_right)
-                context_start_indices = [cumulative_length + i for i in context_start_indices]  # Add the length of the processed corpus to each start index
-                data_chunks.extend(chunks)
-                data_chunks_with_context.extend(chunks_with_context)
-                data_chunk_starting_indices.extend(context_start_indices)
-                cumulative_length += len(section) + len(chunk_sep)  # Update the length of the processed corpus
-        else:
-            chunks, chunks_with_context, context_start_indices = create_chunks_with_context(corpus, chunk_len, context_left, context_right)
-            data_chunks.extend(chunks)
-            data_chunks_with_context.extend(chunks_with_context)
-            data_chunk_starting_indices.extend(context_start_indices)
-
-        cumulative += f"{len(data_chunks)} chunks have been found.\n\n"
-        yield cumulative
-
-    cumulative += f"Preprocessing chunks...\n\n"
-    yield cumulative
-    data_chunks = [preprocess_text(chunk) for chunk in data_chunks]
-
-    cumulative += f"Adding all {len(data_chunks)} chunks to the database. This may take a while.\n\n"
-    yield cumulative
-    add_chunks_to_collector(data_chunks, data_chunks_with_context, data_chunk_starting_indices, collector)
-    cumulative += "Done."
-    yield cumulative
+    for i in process_and_add_to_collector(corpus, chunk_len, context_len, chunk_regex, chunk_sep, collector):
+        yield i
 
 
 def feed_file_into_collector(file, chunk_len, context_len, chunk_regex, chunk_sep):
     yield 'Reading the input dataset...\n\n'
     text = file.decode('utf-8')
-    for i in feed_data_into_collector(text, chunk_len, context_len, chunk_regex, chunk_sep):
+    for i in process_and_add_to_collector(text, chunk_len, context_len, chunk_regex, chunk_sep, collector):
         yield i
 
 
@@ -209,7 +66,12 @@ def feed_url_into_collector(urls, chunk_len, context_len, chunk_regex, chunk_sep
         text = '\n'.join([s.strip() for s in strings])
         all_text += text
 
-    for i in feed_data_into_collector(all_text, chunk_len, context_len, chunk_regex, chunk_sep):
+    for i in process_and_add_to_collector(all_text, chunk_len, context_len, chunk_regex, chunk_sep, collector):
+        yield i
+
+
+def begin_benchmark(chunk_count, max_token_count, chunk_len, context_len, chunk_regex, chunk_sep):
+    for i in benchmark("/home/hidelord/Desktop/LLM/Oobabooga/text-generation-webui/extensions/superbooga/benchmark_texts/questions.json", chunk_count, max_token_count, chunk_len, context_len, chunk_regex, chunk_sep, collector):
         yield i
 
 
@@ -380,6 +242,9 @@ def ui():
 
                 update_settings = gr.Button('Apply changes')
 
+            with gr.Tab("Benchmark"):
+                update_benchmark = gr.Button('Begin')
+
             chunk_len = gr.Textbox(value=params['chunk_length'], label='Chunk length', info='In characters, not tokens. This value is used when you click on "Load data".')
             chunk_regex = gr.Textbox(value=params['chunk_regex'], label='Chunk regex', info='Will specifically add the captured text to the embeddings.')
             context_len = gr.Textbox(value=params['context_length'], label='Context length', info='In characters, not tokens. How much context to load around each chunk.')
@@ -391,3 +256,4 @@ def ui():
     update_url.click(feed_url_into_collector, [url_input, chunk_len, context_len, chunk_regex, chunk_sep, strong_cleanup, threads], last_updated, show_progress=False)
     update_file.click(feed_file_into_collector, [file_input, chunk_len, context_len, chunk_regex, chunk_sep], last_updated, show_progress=False)
     update_settings.click(apply_settings, [chunk_count, chunk_count_initial, time_weight, max_token_count, data_separator], last_updated, show_progress=False)
+    update_benchmark.click(begin_benchmark, [chunk_count, max_token_count, chunk_len, context_len, chunk_regex, chunk_sep], last_updated, show_progress=False)

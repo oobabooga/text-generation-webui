@@ -46,21 +46,30 @@ class Info:
         s2 = other_info.text_with_context
         s1_start = self.start_index
         s2_start = other_info.start_index
-        min_distance = min(self.distance, other_info.distance)
+        
+        """
+        From testing, the most efective strategy seems to be taking the lower of the two distances. Other strategies include:
+        - Harmonic Mean
+        - Discounted Mean
+        - Geometric Mean
+        - Arithmetic Mean
+        TODO: Further testing required.
+        """
+        new_dist = min(self.distance, other_info.distance)
 
         if self.should_merge(s1, s2, s1_start, s2_start):
             if s1_start <= s2_start:
                 if s1_start + len(s1) >= s2_start + len(s2):  # if s1 completely covers s2
-                    return Info(s1_start, s1, min_distance, self.id)
+                    return Info(s1_start, s1, new_dist, self.id)
                 else:
                     overlap = max(0, s1_start + len(s1) - s2_start)
-                    return Info(s1_start, s1 + s2[overlap:], min_distance, self.id)
+                    return Info(s1_start, s1 + s2[overlap:], new_dist, self.id)
             else:
                 if s2_start + len(s2) >= s1_start + len(s1):  # if s2 completely covers s1
-                    return Info(s2_start, s2, min_distance, other_info.id)
+                    return Info(s2_start, s2, new_dist, other_info.id)
                 else:
                     overlap = max(0, s2_start + len(s2) - s1_start)
-                    return Info(s2_start, s2 + s1[overlap:], min_distance, other_info.id)
+                    return Info(s2_start, s2 + s1[overlap:], new_dist, other_info.id)
 
         return None
     
@@ -139,6 +148,7 @@ class ChromaCollector(Collecter):
     
     # Cutoff token count
     def get_documents_up_to_token_count(self, documents: list[str], max_token_count: int):
+        # TODO: Move to script.py; We add delimiters there which might go over the limit.
         current_token_count = 0
         return_documents = []
 
@@ -149,9 +159,7 @@ class ChromaCollector(Collecter):
                 # If adding this document would exceed the max token count,
                 # truncate the document to fit within the limit.
                 remaining_tokens = max_token_count - current_token_count
-                print(type(remaining_tokens))
-                print(type(max_token_count))
-                print(type(current_token_count))
+                
                 truncated_doc = shared.tokenizer.decode(doc_tokens[:remaining_tokens], skip_special_tokens=True)
                 return_documents.append(truncated_doc)
                 break
