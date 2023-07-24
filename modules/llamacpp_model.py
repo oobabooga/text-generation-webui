@@ -1,11 +1,3 @@
-'''
-Based on
-https://github.com/abetlen/llama-cpp-python
-
-Documentation:
-https://abetlen.github.io/llama-cpp-python/
-'''
-
 import re
 from functools import partial
 
@@ -15,7 +7,7 @@ from modules import shared
 from modules.callbacks import Iteratorize
 from modules.logging_colors import logger
 
-if torch.cuda.is_available() and not torch.version.hip and not shared.args.cpu:
+if torch.cuda.is_available() and not torch.version.hip:
     try:
         from llama_cpp_cuda import Llama, LlamaCache, LogitsProcessorList
     except:

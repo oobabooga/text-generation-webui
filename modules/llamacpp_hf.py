@@ -10,13 +10,14 @@ from transformers.modeling_outputs import CausalLMOutputWithPast
 from modules import shared
 from modules.logging_colors import logger
 
-if torch.cuda.is_available() and not torch.version.hip and not shared.args.cpu:
+if torch.cuda.is_available() and not torch.version.hip:
     try:
         from llama_cpp_cuda import Llama
     except:
         from llama_cpp import Llama
 else:
     from llama_cpp import Llama
+
 
 class LlamacppHF(PreTrainedModel):
     def __init__(self, model):
