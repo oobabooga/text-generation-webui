@@ -248,6 +248,7 @@ Optionally, you can use the following command-line flags:
 | `--n_ctx N_CTX` | Size of the prompt context. |
 | `--llama_cpp_seed SEED` | Seed for llama-cpp models. Default 0 (random). |
 | `--n_gqa N_GQA`         | grouped-query attention. Must be 8 for llama2 70b. |
+| `--rms_norm_eps RMS_NORM_EPS`  | Must be 1e-5 for llama2 70b. |
 
 #### AutoGPTQ
 
