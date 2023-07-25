@@ -20,7 +20,7 @@ tensorboard
 wandb
 transformers==4.31.0
 git+https://github.com/huggingface/peft@03eb378eb914fbee709ff7c86ba5b1d033b89524
-bitsandbytes==0.40.2; platform_system != "Windows"
+bitsandbytes==0.41.0; platform_system != "Windows"
 https://github.com/jllllll/bitsandbytes-windows-webui/releases/download/wheels/bitsandbytes-0.40.2-py3-none-win_amd64.whl; platform_system == "Windows"
 llama-cpp-python==0.1.73; platform_system != "Windows"
 https://github.com/abetlen/llama-cpp-python/releases/download/v0.1.72/llama_cpp_python-0.1.72-cp310-cp310-win_amd64.whl; platform_system == "Windows"
