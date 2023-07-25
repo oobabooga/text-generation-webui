@@ -152,7 +152,7 @@ def state_modifier(state):
 
 def chat_input_modifier(text, visible_text, state):
     """
-    Modifies the visible and internal input strings in chat mode.
+    Modifies the internal and visible input strings in chat mode.
     """
     return text, visible_text
 
@@ -201,7 +201,8 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
     Replaces the function that generates the prompt from the chat history.
     Only used in chat mode.
     """
-    return chat.generate_chat_prompt(user_input, state, **kwargs)
+    result = chat.generate_chat_prompt(user_input, state, **kwargs)
+    return result
 
 def custom_css():
     """
