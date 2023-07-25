@@ -63,7 +63,8 @@ def convert_logprobs_to_tiktoken(model, logprobs):
 #        return dict([(encoder.decode([encoder.encode(token)[0]]), prob) for token, prob in logprobs.items()])
 #    except KeyError:
 #        # assume native tokens if we can't find the tokenizer
-        return logprobs
+#        return logprobs
+    return logprobs
 
 
 def marshal_common_params(body):
@@ -441,16 +442,9 @@ def completions(body: dict, is_legacy: bool = False):
     if not prompt_str in body:
         raise InvalidRequestError("Missing required input", param=prompt_str)
 
-    prompt = body[prompt_str]
-    if isinstance(prompt, list):
-        if prompt and isinstance(prompt[0], int):
-            try:
-                encoder = tiktoken.encoding_for_model(requested_model)
-                prompt = encoder.decode(prompt)
-            except KeyError:
-                prompt = decode(prompt)[0]
-        else:
-            raise InvalidRequestError(message="API Batched generation not yet supported.", param=prompt_str)
+    prompt_arg = body[prompt_str]
+    if isinstance(prompt_arg, str) or (isinstance(prompt_arg, list) and isinstance(prompt_arg[0], int)):
+        prompt_arg = [prompt_arg]
 
     # common params
     req_params = marshal_common_params(body)
@@ -460,58 +454,74 @@ def completions(body: dict, is_legacy: bool = False):
     req_params['max_new_tokens'] = max_tokens
     requested_model = req_params.pop('requested_model')
     logprob_proc = req_params.pop('logprob_proc', None)
-
-    token_count = len(encode(prompt)[0])
-
-    if token_count + max_tokens > req_params['truncation_length']:
-        err_msg = f"The token count of your prompt ({token_count}) plus max_tokens ({max_tokens}) cannot exceed the model's context length ({req_params['truncation_length']})."
-        # print(f"Warning: ${err_msg}")
-        raise InvalidRequestError(message=err_msg, param=max_tokens_str)
-
+    #req_params['suffix'] = default(body, 'suffix', req_params['suffix'])
     req_params['echo'] = default(body, 'echo', req_params['echo'])
     req_params['top_k'] = default(body, 'best_of', req_params['top_k'])
-
-    # generate reply #######################################
-    debug_msg({'prompt': prompt, 'req_params': req_params})
     stopping_strings = req_params.pop('stopping_strings', [])
-    generator = generate_reply(prompt, req_params, stopping_strings=stopping_strings, is_chat=False)
 
-    answer = ''
+    resp_list_data = []
+    total_completion_token_count = 0
+    total_prompt_token_count = 0
 
-    for a in generator:
-        answer = a
+    for idx, prompt in enumerate(prompt_arg, start=0):
+        if isinstance(prompt[0], int):
+            # token lists
+            if requested_model == shared.model_name:
+                prompt = decode(prompt)[0]
+            else:
+                try:
+                    encoder = tiktoken.encoding_for_model(requested_model)
+                    prompt = encoder.decode(prompt)
+                except KeyError:
+                    prompt = decode(prompt)[0]
 
-    # strip extra leading space off new generated content
-    if answer and answer[0] == ' ':
-        answer = answer[1:]
+        token_count = len(encode(prompt)[0])
+        total_prompt_token_count += token_count
 
-    completion_token_count = len(encode(answer)[0])
-    stop_reason = "stop"
-    if token_count + completion_token_count >= req_params['truncation_length'] or completion_token_count >= max_tokens:
-        stop_reason = "length"
+        if token_count + max_tokens > req_params['truncation_length']:
+            err_msg = f"The token count of your prompt ({token_count}) plus max_tokens ({max_tokens}) cannot exceed the model's context length ({req_params['truncation_length']})."
+            # print(f"Warning: ${err_msg}")
+            raise InvalidRequestError(message=err_msg, param=max_tokens_str)
+
+        # generate reply #######################################
+        debug_msg({'prompt': prompt, 'req_params': req_params})
+        generator = generate_reply(prompt, req_params, stopping_strings=stopping_strings, is_chat=False)
+        answer = ''
+
+        for a in generator:
+            answer = a
+
+        # strip extra leading space off new generated content
+        if answer and answer[0] == ' ':
+            answer = answer[1:]
+
+        completion_token_count = len(encode(answer)[0])
+        total_completion_token_count += completion_token_count
+        stop_reason = "stop"
+        if token_count + completion_token_count >= req_params['truncation_length'] or completion_token_count >= max_tokens:
+            stop_reason = "length"
+
+        respi = {
+            "index": idx,
+            "finish_reason": stop_reason,
+            "text": answer,
+            "logprobs": {'top_logprobs': [logprob_proc.token_alternatives]} if logprob_proc else None,
+        }
+
+        resp_list_data.extend([respi])
 
     resp = {
         "id": cmpl_id,
         "object": object_type,
         "created": created_time,
         "model": shared.model_name,  # TODO: add Lora info?
-        resp_list: [{
-            "index": 0,
-            "finish_reason": stop_reason,
-            "text": answer,
-        }],
+        resp_list: resp_list_data,
         "usage": {
-            "prompt_tokens": token_count,
-            "completion_tokens": completion_token_count,
-            "total_tokens": token_count + completion_token_count
+            "prompt_tokens": total_prompt_token_count,
+            "completion_tokens": total_completion_token_count,
+            "total_tokens": total_prompt_token_count + total_completion_token_count
         }
     }
-
-    if logprob_proc and logprob_proc.token_alternatives:
-        top_logprobs = convert_logprobs_to_tiktoken(model=requested_model, logprobs=logprob_proc.token_alternatives)
-        resp[resp_list][0]["logprobs"] = {'top_logprobs': [top_logprobs]}
-    else:
-        resp[resp_list][0]["logprobs"] = None
 
     return resp
 
@@ -550,6 +560,9 @@ def stream_completions(body: dict, is_legacy: bool = False):
     req_params['max_new_tokens'] = max_tokens
     requested_model = req_params.pop('requested_model')
     logprob_proc = req_params.pop('logprob_proc', None)
+    #req_params['suffix'] = default(body, 'suffix', req_params['suffix'])
+    req_params['echo'] = default(body, 'echo', req_params['echo'])
+    req_params['top_k'] = default(body, 'best_of', req_params['top_k'])
 
     token_count = len(encode(prompt)[0])
 
@@ -557,9 +570,6 @@ def stream_completions(body: dict, is_legacy: bool = False):
         err_msg = f"The token count of your prompt ({token_count}) plus max_tokens ({max_tokens}) cannot exceed the model's context length ({req_params['truncation_length']})."
         # print(f"Warning: ${err_msg}")
         raise InvalidRequestError(message=err_msg, param=max_tokens_str)
-
-    req_params['echo'] = default(body, 'echo', req_params['echo'])
-    req_params['top_k'] = default(body, 'best_of', req_params['top_k'])
 
     def text_streaming_chunk(content):
         # begin streaming
@@ -572,13 +582,9 @@ def stream_completions(body: dict, is_legacy: bool = False):
                 "index": 0,
                 "finish_reason": None,
                 "text": content,
+                "logprobs": {'top_logprobs': [logprob_proc.token_alternatives]} if logprob_proc else None,
             }],
         }
-        if logprob_proc:
-            top_logprobs = convert_logprobs_to_tiktoken(model=requested_model, logprobs=logprob_proc.token_alternatives)
-            chunk[resp_list][0]["logprobs"] = {'top_logprobs': [top_logprobs]}
-        else:
-            chunk[resp_list][0]["logprobs"] = None
 
         return chunk
 
