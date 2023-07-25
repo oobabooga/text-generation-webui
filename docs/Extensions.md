@@ -39,6 +39,7 @@ The extensions framework is based on special functions and variables that you ca
 | `def custom_js()` | Same as above but for javascript. |
 | `def input_modifier(string, state)`  | Modifies the input string before it enters the model. In chat mode, it is applied to the user message. Otherwise, it is applied to the entire prompt. |
 | `def output_modifier(string, state)`  | Modifies the output string before it is presented in the UI. In chat mode, it is applied to the bot's reply. Otherwise, it is applied to the entire output. |
+| `def chat_input_modifier(text, visible_text, state)` | Modifies both the visible and internal inputs in chat mode. Can be used to hijack the chat input with custom content. |
 | `def bot_prefix_modifier(string, state)`  | Applied in chat mode to the prefix for the bot's reply. |
 | `def state_modifier(state)`  | Modifies the dictionary containing the UI input parameters before it is used by the text generation functions. |
 | `def history_modifier(history)`  | Modifies the chat history before the text generation in chat mode begins. |
