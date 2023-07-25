@@ -49,6 +49,12 @@ def state_modifier(state):
     """
     return state
 
+def chat_input_modifier(text, visible_text, state):
+    """
+    Modifies the visible and internal input strings in chat mode.
+    """
+    return text, visible_text
+
 def input_modifier(string, state):
     """
     In chat mode, modifies the user input. The modified version goes into

@@ -16,6 +16,15 @@ params = {
 }
 
 
+def chat_input_modifier(text, visible_text, state):
+    global input_hijack
+    if input_hijack['state']:
+        input_hijack['state'] = False
+        return input_hijack['value']
+    else:
+        return text, visible_text
+
+
 def do_stt(audio, whipser_model, whipser_language):
     transcription = ""
     r = sr.Recognizer()
@@ -56,6 +65,7 @@ def ui():
     audio.change(
         auto_transcribe, [audio, auto_submit, whipser_model, whipser_language], [shared.gradio['textbox'], audio]).then(
         None, auto_submit, None, _js="(check) => {if (check) { document.getElementById('Generate').click() }}")
+
     whipser_model.change(lambda x: params.update({"whipser_model": x}), whipser_model, None)
     whipser_language.change(lambda x: params.update({"whipser_language": x}), whipser_language, None)
     auto_submit.change(lambda x: params.update({"auto_submit": x}), auto_submit, None)

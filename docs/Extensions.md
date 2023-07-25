@@ -76,18 +76,6 @@ google_translate-language string: 'fr'
 
 That is, the syntax for the key is `extension_name-variable_name`.
 
-#### `input_hijack` dictionary
-
-```python
-input_hijack = {
-    'state': False,
-    'value': ["", ""]
-}
-```
-This is only used in chat mode. If your extension sets `input_hijack['state'] = True` at any moment, the next call to `modules.chat.chatbot_wrapper` will use the values inside `input_hijack['value']` as the user input for text generation. See the `send_pictures` extension above for an example. 
-
-Additionally, your extension can set the value to be a callback in the form of `def cb(text: str, visible_text: str) -> [str, str]`. See the `multimodal` extension above for an example.
-
 ## Using multiple extensions at the same time
 
 You can activate more than one extension at a time by providing their names separated by spaces after `--extensions`. The input, output, and bot prefix modifiers will be applied in the specified order. 
@@ -161,6 +149,12 @@ def state_modifier(state):
     values in the UI like sliders and checkboxes.
     """
     return state
+
+def chat_input_modifier(text, visible_text, state):
+    """
+    Modifies the visible and internal input strings in chat mode.
+    """
+    return text, visible_text
 
 def input_modifier(string, state):
     """

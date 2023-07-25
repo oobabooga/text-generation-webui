@@ -9,8 +9,6 @@ from modules import chat, shared
 from modules.ui import gather_interface_values
 from modules.utils import gradio
 
-# If 'state' is True, will hijack the next chat generation with
-# custom input text given by 'value' in the format [text, visible_text]
 input_hijack = {
     'state': False,
     'value': ["", ""]
@@ -18,6 +16,15 @@ input_hijack = {
 
 processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
 model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base", torch_dtype=torch.float32).to("cpu")
+
+
+def chat_input_modifier(text, visible_text, state):
+    global input_hijack
+    if input_hijack['state']:
+        input_hijack['state'] = False
+        return input_hijack['value']
+    else:
+        return text, visible_text
 
 
 def caption_image(raw_image):
