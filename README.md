@@ -1,6 +1,6 @@
 # Text generation web UI
 
-A gradio web UI for running Large Language Models like LLaMA, llama.cpp, GPT-J, Pythia, OPT, and GALACTICA.
+A gradio web UI for running Large Language Models like LLaMA (v1 and v2), GPT-J, Pythia, OPT, and GALACTICA.
 
 Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.com/AUTOMATIC1111/stable-diffusion-webui) of text generation.
 
@@ -71,9 +71,11 @@ conda activate textgen
 | System | GPU | Command |
 |--------|---------|---------|
 | Linux/WSL | NVIDIA | `pip3 install torch torchvision torchaudio` |
+| Linux/WSL | CPU only | `pip3 install torch torchvision torchaudio` |
 | Linux | AMD | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.4.2` |
 | MacOS + MPS (untested) | Any | `pip3 install torch torchvision torchaudio` |
 | Windows | NVIDIA | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117` |
+| Windows | CPU only | `pip3 install torch torchvision torchaudio` |
 
 The up-to-date commands can be found here: https://pytorch.org/get-started/locally/. 
 
@@ -139,36 +141,7 @@ For example:
 
 To download a protected model, set env vars `HF_USER` and `HF_PASS` to your Hugging Face username and password (or [User Access Token](https://huggingface.co/settings/tokens)). The model's terms must first be accepted on the HF website.
 
-#### GGML models
-
-You can drop these directly into the `models/` folder, making sure that the file name contains `ggml` somewhere and ends in `.bin`.
-
-#### GPT-4chan
-
-<details>
-<summary>
-Instructions
-</summary>
-
-[GPT-4chan](https://huggingface.co/ykilcher/gpt-4chan) has been shut down from Hugging Face, so you need to download it elsewhere. You have two options:
-
-* Torrent: [16-bit](https://archive.org/details/gpt4chan_model_float16) / [32-bit](https://archive.org/details/gpt4chan_model)
-* Direct download: [16-bit](https://theswissbay.ch/pdf/_notpdf_/gpt4chan_model_float16/) / [32-bit](https://theswissbay.ch/pdf/_notpdf_/gpt4chan_model/)
-
-The 32-bit version is only relevant if you intend to run the model in CPU mode. Otherwise, you should use the 16-bit version.
-
-After downloading the model, follow these steps:
-
-1. Place the files under `models/gpt4chan_model_float16` or `models/gpt4chan_model`.
-2. Place GPT-J 6B's config.json file in that same folder: [config.json](https://huggingface.co/EleutherAI/gpt-j-6B/raw/main/config.json).
-3. Download GPT-J 6B's tokenizer files (they will be automatically detected when you attempt to load GPT-4chan):
-
-```
-python download-model.py EleutherAI/gpt-j-6B --text-only
-```
-
-When you load this model in default or notebook modes, the "HTML" tab will show the generated text in 4chan format.
-</details>
+Many types of models and quantizations such as RWKV, GGML, and GPTQ are supported. For most users quantization is highly recommended due to the performance and memory benefits it provides. For detailed instructions [check out the specific documentation for each type](docs/README.md).
 
 ## Starting the web UI
 
@@ -266,8 +239,6 @@ Optionally, you can use the following command-line flags:
 |------------------|-------------|
 |`--gpu-split`     | Comma-separated list of VRAM (in GB) to use per GPU device for model layers, e.g. `20,7,7` |
 |`--max_seq_len MAX_SEQ_LEN`           | Maximum sequence length. |
-|`--compress_pos_emb COMPRESS_POS_EMB` | Positional embeddings compression factor. Should typically be set to max_seq_len / 2048. |
-|`--alpha_value ALPHA_VALUE`           | Positional embeddings alpha factor for NTK RoPE scaling. Same as above. Use either this or compress_pos_emb, not both. `
 
 #### GPTQ-for-LLaMa
 
@@ -306,6 +277,13 @@ Optionally, you can use the following command-line flags:
 | `--rwkv-strategy RWKV_STRATEGY` | RWKV: The strategy to use while loading the model. Examples: "cpu fp32", "cuda fp16", "cuda fp16i8". |
 | `--rwkv-cuda-on`                | RWKV: Compile the CUDA kernel for better performance. |
 
+#### RoPE (for llama.cpp and ExLlama only)
+
+| Flag             | Description |
+|------------------|-------------|
+|`--compress_pos_emb COMPRESS_POS_EMB` | Positional embeddings compression factor. Should typically be set to max_seq_len / 2048. |
+|`--alpha_value ALPHA_VALUE`           | Positional embeddings alpha factor for NTK RoPE scaling. Scaling is not identical to embedding compression. Use either this or compress_pos_emb, not both. |
+
 #### Gradio
 
 | Flag                                  | Description |
@@ -333,7 +311,7 @@ Optionally, you can use the following command-line flags:
 |---------------------------------------|-------------|
 | `--multimodal-pipeline PIPELINE`      | The multimodal pipeline to use. Examples: `llava-7b`, `llava-13b`. |
 
-Out of memory errors? [Check the low VRAM guide](docs/Low-VRAM-guide.md).
+Out of memory errors? Try out [GGML](docs/GGML-llama.cpp-models.md) and [GPTQ](docs/GPTQ-models-(4-bit-mode).md) quantizations. Alternatively check out [the low VRAM guide](docs/Low-VRAM-guide.md).
 
 ## Presets
 
