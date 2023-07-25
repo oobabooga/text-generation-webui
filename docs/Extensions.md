@@ -6,7 +6,7 @@ For instance, `extensions/silero_tts/script.py` gets loaded with `python server.
 
 ## [text-generation-webui-extensions](https://github.com/oobabooga/text-generation-webui-extensions)
 
-The repository above contains a directory of user extensions for text-generation-webui.
+The repository above contains a directory of user extensions.
 
 If you create an extension, you are welcome to host it in a GitHub repository and submit a PR adding it to the list above.
 
@@ -18,7 +18,7 @@ If you create an extension, you are welcome to host it in a GitHub repository an
 |[openai](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/openai)| Creates an API that mimics the OpenAI API and can be used as a drop-in replacement. |
 |[multimodal](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/multimodal) | Adds multimodality support (text+images). For a detailed description see [README.md](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/multimodal/README.md) in the extension directory. |
 |[google_translate](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/google_translate)| Automatically translates inputs and outputs using Google Translate.|
-|[silero_tts](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/silero_tts)| Text-to-speech extension using [Silero](https://github.com/snakers4/silero-models). When used in chat mode, it replaces the responses with an audio widget. |
+|[silero_tts](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/silero_tts)| Text-to-speech extension using [Silero](https://github.com/snakers4/silero-models). When used in chat mode, responses are replaced with an audio widget. |
 |[elevenlabs_tts](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/elevenlabs_tts)| Text-to-speech extension using the [ElevenLabs](https://beta.elevenlabs.io/) API. You need an API key to use it. |
 |[whisper_stt](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/whisper_stt)| Allows you to enter your inputs in chat mode using your microphone. |
 |[sd_api_pictures](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/sd_api_pictures)| Allows you to request pictures from the bot in chat mode, which will be generated using the AUTOMATIC1111 Stable Diffusion API. See examples [here](https://github.com/oobabooga/text-generation-webui/pull/309). |
@@ -47,9 +47,7 @@ The extensions framework is based on special functions and variables that you ca
 | `def tokenizer_modifier(state, prompt, input_ids, input_embeds)` | Modifies the `input_ids`/`input_embeds` fed to the model. Should return `prompt`, `input_ids`, `input_embeds`. See the `multimodal` extension for an example. |
 | `def custom_tokenized_length(prompt)` | Used in conjunction with `tokenizer_modifier`, returns the length in tokens of `prompt`. See the `multimodal` extension for an example. |
 
-#### `params` dictionary
-
-In this dictionary, `display_name` is used to define the displayed name of the extension in the UI, and `is_tab` is used to define whether the extension should appear in a new tab. By default, extensions appear at the bottom of the "Text generation" tab.
+Additionally, you can define a special `params` dictionary. In it, the `display_name` key is used to define the displayed name of the extension in the UI, and the `is_tab` key is used to define whether the extension should appear in a new tab. By default, extensions appear at the bottom of the "Text generation" tab.
 
 Example:
 
@@ -60,7 +58,7 @@ params = {
 }
 ```
 
-Additionally, `params` may contain variables that you want to be customizable through a `settings.json` file. For instance, assuming the extension is in `extensions/google_translate`, the variable `language string` in
+Additionally, `params` may contain variables that you want to be customizable through a `settings.yaml` file. For instance, assuming the extension is in `extensions/google_translate`, the variable `language string` in
 
 ```python
 params = {
@@ -70,13 +68,13 @@ params = {
 }
 ```
 
-can be customized by adding a key called `google_translate-language string` to `settings.json`:
+can be customized by adding a key called `google_translate-language string` to `settings.yaml`:
 
 ```python
-"google_translate-language string": "fr",
+google_translate-language string: 'fr'
 ``` 
 
-That is, the syntax is `extension_name-variable_name`.
+That is, the syntax for the key is `extension_name-variable_name`.
 
 #### `input_hijack` dictionary
 
@@ -92,10 +90,9 @@ Additionally, your extension can set the value to be a callback in the form of `
 
 ## Using multiple extensions at the same time
 
-In order to use your extension, you must start the web UI with the `--extensions` flag followed by the name of your extension (the folder under `text-generation-webui/extension` where `script.py` resides).
+You can activate more than one extension at a time by providing their names separated by spaces after `--extensions`. The input, output, and bot prefix modifiers will be applied in the specified order. 
 
-You can activate more than one extension at a time by providing their names separated by spaces. The input, output, and bot prefix modifiers will be applied in the specified order. 
-
+Example:
 
 ```
 python server.py --extensions enthusiasm translate # First apply enthusiasm, then translate
@@ -105,56 +102,135 @@ python server.py --extensions translate enthusiasm # First apply translate, then
 Do note, that for:
 - `custom_generate_chat_prompt`
 - `custom_generate_reply`
-- `tokenizer_modifier`
 - `custom_tokenized_length`
 
 only the first declaration encountered will be used and the rest will be ignored. 
 
-## The `bot_prefix_modifier`
+## A full example
 
-In chat mode, this function modifies the prefix for a new bot message. For instance, if your bot is named `Marie Antoinette`, the default prefix for a new message will be
-
-```
-Marie Antoinette:
-```
-
-Using `bot_prefix_modifier`, you can change it to:
-
-```
-Marie Antoinette: *I am very enthusiastic*
-```
- 
-Marie Antoinette will become very enthusiastic in all her messages.
-
-## `custom_generate_reply` example
-
-Once defined in a `script.py`, this function is executed in place of the main generation functions. You can use it to connect the web UI to an external API, or to load a custom model that is not supported yet.
-
-Note that in chat mode, this function must only return the new text, whereas in other modes it must return the original prompt + the new text.
+The source code below can be found at [extensions/example/script.py](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/example/script.py).
 
 ```python
-import datetime
+"""
+An example of extension. It does nothing, but you can add transformations
+before the return statements to customize the webui behavior.
 
-def custom_generate_reply(question, original_question, seed, state, stopping_strings):
-    cumulative = ''
-    for i in range(10):
-        cumulative += f"Counting: {i}...\n"
-        yield cumulative
+Starting from history_modifier and ending in output_modifier, the
+functions are declared in the same order that they are called at
+generation time.
+"""
 
-    cumulative += f"Done! {str(datetime.datetime.now())}"
-    yield cumulative
-```
-
-## `custom_generate_chat_prompt` example
-
-Below is an extension that just reproduces the default prompt generator in `modules/chat.py`. You can modify it freely to come up with your own prompts in chat mode.
-
-```python
+import torch
 from modules import chat
+from modules.text_generation import (
+    decode,
+    encode,
+    generate_reply,
+)
+from transformers import LogitsProcessor
+
+params = {
+    "display_name": "Example Extension",
+    "is_tab": False,
+}
+
+class MyLogits(LogitsProcessor):
+    """
+    Manipulates the probabilities for the next token before it gets sampled.
+    It gets used in the custom_logits_processor function below.
+    """
+    def __init__(self):
+        pass
+
+    def __call__(self, input_ids, scores):
+        # probs = torch.softmax(scores, dim=-1, dtype=torch.float)
+        # probs[0] /= probs[0].sum()
+        # scores = torch.log(probs / (1 - probs))
+        return scores
+
+def history_modifier(history):
+    """
+    Modifies the chat history.
+    Only used in chat mode.
+    """
+    return history
+
+def state_modifier(state):
+    """
+    Modifies the state variable, which is a dictionary containing the input
+    values in the UI like sliders and checkboxes.
+    """
+    return state
+
+def input_modifier(string, state):
+    """
+    In chat mode, modifies the user input. The modified version goes into
+    history['internal'], and the original version goes into history['visible'].
+
+    In default/notebook modes, modifies the whole prompt.
+    """
+    return string
+
+def bot_prefix_modifier(string, state):
+    """
+    Modifies the prefix for the next bot reply in chat mode.
+    By default, the prefix will be something like "Bot Name:".
+    """
+    return string
+
+def tokenizer_modifier(state, prompt, input_ids, input_embeds):
+    """
+    Modifies the input ids and embeds.
+    Used by the multimodal extension to put image embeddings in the prompt.
+    Only used by loaders that use the transformers library for sampling.
+    """
+    return prompt, input_ids, input_embeds
+
+def custom_logits_processor(processor_list, input_ids):
+    """
+    Adds logits processors to the list.
+    Only used by loaders that use the transformers library for sampling.
+    """
+    processor_list.append(MyLogits())
+    return processor_list
+
+def output_modifier(string, state):
+    """
+    Modifies the LLM output before it gets presented.
+
+    In chat mode, the modified version goes into history['internal'], and the original version goes into history['visible'].
+    """
+    return string
 
 def custom_generate_chat_prompt(user_input, state, **kwargs):
-    
-    # Do something with kwargs['history'] or state
-
+    """
+    Replaces the function that generates the prompt from the chat history.
+    Only used in chat mode.
+    """
     return chat.generate_chat_prompt(user_input, state, **kwargs)
+
+def custom_css():
+    """
+    Returns a CSS string that gets appended to the CSS for the webui.
+    """
+    return ''
+
+def custom_js():
+    """
+    Returns a javascript string that gets appended to the javascript for the webui.
+    """
+    return ''
+
+def setup():
+    """
+    Gets executed only once, when the extension is imported.
+    """
+    pass
+
+def ui():
+    """
+    Gets executed when the UI is drawn. Custom gradio elements and their corresponding
+    event handlers should be defined here.
+    """
+    pass
 ```
