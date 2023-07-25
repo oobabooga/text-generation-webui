@@ -1,6 +1,6 @@
 # Text generation web UI
 
-A gradio web UI for running Large Language Models like LLaMA (v1 and v2), GPT-J, Pythia, OPT, and GALACTICA.
+A gradio web UI for running Large Language Models like LLaMA, llama.cpp, GPT-J, OPT, and GALACTICA.
 
 Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.com/AUTOMATIC1111/stable-diffusion-webui) of text generation.
 
@@ -11,10 +11,10 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 ## Features
 
 * 3 interface modes: default, notebook, and chat
-* Multiple model backends: transformers, llama.cpp, AutoGPTQ, GPTQ-for-LLaMa, ExLlama, RWKV, FlexGen
+* Multiple model backends: transformers, llama.cpp, ExLlama, AutoGPTQ, GPTQ-for-LLaMa
 * Dropdown menu for quickly switching between different models
-* LoRA: load and unload LoRAs on the fly, load multiple LoRAs at the same time, train a new LoRA
-* Precise instruction templates for chat mode, including Alpaca, Vicuna, Open Assistant, Dolly, Koala, ChatGLM, MOSS, RWKV-Raven, Galactica, StableLM, WizardLM, Baize, Ziya, Chinese-Vicuna, MPT, INCITE, Wizard Mega, KoAlpaca, Vigogne, Bactrian, h2o, and OpenBuddy
+* LoRA: load and unload LoRAs on the fly, train a new LoRA
+* Precise instruction templates for chat mode, including Llama 2, Alpaca, Vicuna, WizardLM, StableLM, and many others
 * [Multimodal pipelines, including LLaVA and MiniGPT-4](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/multimodal)
 * 8-bit and 4-bit inference through bitsandbytes
 * CPU mode for transformers models
@@ -71,9 +71,9 @@ conda activate textgen
 | System | GPU | Command |
 |--------|---------|---------|
 | Linux/WSL | NVIDIA | `pip3 install torch torchvision torchaudio` |
-| Linux/WSL | CPU only | `pip3 install torch torchvision torchaudio` |
+| Linux/WSL | CPU only | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu` |
 | Linux | AMD | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.4.2` |
-| MacOS + MPS (untested) | Any | `pip3 install torch torchvision torchaudio` |
+| MacOS + MPS | Any | `pip3 install torch torchvision torchaudio` |
 | Windows | NVIDIA | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117` |
 | Windows | CPU only | `pip3 install torch torchvision torchaudio` |
 
