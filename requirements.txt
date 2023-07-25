@@ -4,7 +4,7 @@ datasets
 einops
 fastapi==0.100.0
 flexgen==0.1.7
-gradio==3.37.0
+gradio==3.38.0
 gradio_client==0.2.10
 markdown
 numpy
