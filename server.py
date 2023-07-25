@@ -595,8 +595,8 @@ def create_interface():
         extensions_module.load_extensions()
 
     # css/js strings
-    css = ui.css if not shared.is_chat() else ui.css + ui.chat_css
-    js = ui.main_js if not shared.is_chat() else ui.main_js + ui.chat_js
+    css = ui.css + ui.chat_css
+    js = ui.main_js + ui.chat_js
     css += apply_extensions('css')
     js += apply_extensions('js')
 
@@ -610,19 +610,19 @@ def create_interface():
         # Floating menus for saving/deleting files
         create_file_saving_menus()
 
-        shared.input_elements = ui.list_interface_input_elements()
-        shared.input_elements = ui.list_interface_input_elements()
-        shared.input_elements = ui.list_interface_input_elements()
+        shared.input_elements = {
+            'chat': ui.list_interface_input_elements(mode='chat'),
+            'notebook': ui.list_interface_input_elements(mode='notebook'),
+            'default': ui.list_interface_input_elements(mode='default'),
+        }
+
         shared.gradio.update({
-            'interface_state': gr.State({k: None for k in shared.input_elements}),
+            'interface_state': gr.State({}),
             'Chat input': gr.State(),
             'dummy': gr.State(),
             'history': gr.State({'internal': [], 'visible': []}),
+            'last_input': gr.State('')
         })
-        shared.gradio['interface_state'] = gr.State({k: None for k in shared.input_elements})
-        shared.gradio['interface_state'] = gr.State({k: None for k in shared.input_elements})
-        shared.gradio['last_input'] = gr.State('')
-        shared.gradio['last_input'] = gr.State('')
 
         # Create chat mode interface
         with gr.Tab('Text generation', elem_id='main') as shared.gradio['text generation-chat']:
