@@ -79,7 +79,7 @@ def tokenizer_modifier(state, prompt, input_ids, input_embeds):
     """
     return prompt, input_ids, input_embeds
 
-def custom_logits_processor(processor_list, input_ids):
+def logits_processor_modifier(processor_list, input_ids):
     """
     Adds logits processors to the list.
     Only used by loaders that use the transformers library for sampling.
