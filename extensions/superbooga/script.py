@@ -1,8 +1,10 @@
 import re
 import textwrap
 import codecs
-
 import gradio as gr
+
+import extensions.superbooga.parameters as parameters
+
 from bs4 import BeautifulSoup
 
 from modules import chat, shared
@@ -12,20 +14,6 @@ from .chromadb import add_chunks_to_collector, make_collector
 from .download_urls import download_urls
 from .data_processor import process_and_add_to_collector, preprocess_text
 from .benchmark import benchmark
-
-params = {
-    'chunk_count': 180,
-    'chunk_count_initial': 10,
-    'time_weight': 0,
-    'chunk_length': '40,50',
-    'context_length': '300,850', # We provide less context before the embedding. This is because language typically flows forward, meaning the text that comes after an embedding often gives us more useful information.
-    'chunk_separator': '',
-    'data_separator': '\n\n<<document chunk>>\n\n',
-    'strong_cleanup': False,
-    'max_token_count': 3072,
-    'chunk_regex': '(?<==== ).*?(?= ===)|User story: \d+',
-    'threads': 4,
-}
 
 collector = make_collector()
 chat_collector = make_collector()
@@ -75,15 +63,38 @@ def begin_benchmark(chunk_count, max_token_count, chunk_len, context_len, chunk_
         yield i
 
 
-def apply_settings(chunk_count, chunk_count_initial, time_weight, max_token_count, data_separator):
-    global params
-    params['chunk_count'] = int(chunk_count)
-    params['chunk_count_initial'] = int(chunk_count_initial)
-    params['time_weight'] = time_weight
-    params['max_token_count'] = max_token_count
-    params['data_separator'] = codecs.decode(data_separator, 'unicode_escape')
-    settings_to_display = {k: params[k] for k in params if k in ['chunk_count', 'chunk_count_initial', 'time_weight', 'max_token_count']}
-    yield f"The following settings are now active: {str(settings_to_display)}"
+def apply_settings(confidence_interval, min_sentences, new_dist_strat, delta_start, min_number_length, num_conversion, preprocess_pipeline, data_separator, max_token_count, time_weight, chunk_count, chunk_sep, context_len, chunk_regex, chunk_len):
+    logger.debug('Applying settings.')
+    parameters.set_confidence_interval(confidence_interval)
+    parameters.set_min_num_sentences(min_sentences)
+    parameters.set_new_dist_strategy(new_dist_strat)
+    parameters.set_delta_start(delta_start)
+    parameters.set_min_num_length(min_number_length)
+    parameters.set_num_conversion_strategy(num_conversion)
+    parameters.set_data_separator(data_separator)
+    parameters.set_max_token_count(max_token_count)
+    parameters.set_time_weight(time_weight)
+    parameters.set_chunk_count(chunk_count)
+    parameters.set_chunk_separator(chunk_sep)
+    parameters.set_context_len(context_len)
+    parameters.set_chunk_regex(chunk_regex)
+    parameters.set_chunk_len(chunk_len)
+
+    for preprocess_method in preprocess_pipeline:
+        if preprocess_method == 'Lower Cases':
+            parameters.set_to_lower(True)
+        elif preprocess_method == 'Remove Punctuation':
+            parameters.set_remove_punctuation(True)
+        elif preprocess_method == 'Remove Adverbs':
+            parameters.set_remove_specific_pos(True)
+        elif preprocess_method == 'Remove Stop Words':
+            parameters.set_remove_stopwords(True)
+        elif preprocess_method == 'Lemmatize':
+            parameters.set_lemmatize(True)
+        elif preprocess_method == 'Merge Spaces':
+            parameters.set_merge_spaces(True)
+        elif preprocess_method == 'Strip Edges':
+            parameters.set_strip(True)
 
 
 def custom_generate_chat_prompt(user_input, state, **kwargs):
@@ -92,7 +103,7 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
     history = state['history']
 
     if state['mode'] == 'instruct':
-        results = collector.get_sorted(user_input, n_results=params['chunk_count'])
+        results = collector.get_sorted(user_input, n_results=parameters.get_chunk_count())
         additional_context = '\nYour reply should be based on the context below:\n\n' + '\n'.join(results)
         user_input += additional_context
     else:
@@ -103,7 +114,7 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
             output += f"{state['name2']}: {history['internal'][id_][1]}\n"
             return output
 
-        if len(history['internal']) > params['chunk_count'] and user_input != '':
+        if len(history['internal']) > parameters.get_chunk_count() and user_input != '':
             chunks = []
             hist_size = len(history['internal'])
             for i in range(hist_size - 1):
@@ -112,7 +123,7 @@ def custom_generate_chat_prompt(user_input, state, **kwargs):
             add_chunks_to_collector(chunks, chat_collector)
             query = '\n'.join(history['internal'][-1] + [user_input])
             try:
-                best_ids = chat_collector.get_ids_sorted(query, n_results=params['chunk_count'], n_initial=params['chunk_count_initial'], time_weight=params['time_weight'])
+                best_ids = chat_collector.get_ids_sorted(query, n_results=parameters.get_chunk_count(), n_initial=parameters.get_chunk_count(), time_weight=parameters.get_time_weight())
                 additional_context = '\n'
                 for id_ in best_ids:
                     if history['internal'][id_][0] != '<|BEGIN-VISIBLE-CHAT|>':
@@ -149,10 +160,10 @@ def input_modifier(string):
         print(f"Preprocessed user input: {user_input}")
 
         # Get the most similar chunks
-        results = collector.get_sorted_by_dist(user_input, n_results=params['chunk_count'], max_token_count=int(params['max_token_count']))
+        results = collector.get_sorted_by_dist(user_input, n_results=parameters.get_chunk_count(), max_token_count=int(parameters.get_max_token_count()))
 
         # Make the injection
-        string = string.replace('<|injection-point|>', params['data_separator'].join(results))
+        string = string.replace('<|injection-point|>', parameters.get_data_separator().join(results))
 
     return remove_special_tokens(string)
 
@@ -224,36 +235,95 @@ def ui():
 
             with gr.Tab("URL input"):
                 url_input = gr.Textbox(lines=10, label='Input URLs', info='Enter one or more URLs separated by newline characters.')
-                strong_cleanup = gr.Checkbox(value=params['strong_cleanup'], label='Strong cleanup', info='Only keeps html elements that look like long-form text.')
-                threads = gr.Number(value=params['threads'], label='Threads', info='The number of threads to use while downloading the URLs.', precision=0)
+                strong_cleanup = gr.Checkbox(value=parameters.get_is_strong_cleanup(), label='Strong cleanup', info='Only keeps html elements that look like long-form text.')
+                threads = gr.Number(value=parameters.get_num_threads(), label='Threads', info='The number of threads to use while downloading the URLs.', precision=0)
                 update_url = gr.Button('Load data')
 
             with gr.Tab("File input"):
                 file_input = gr.File(label='Input file', type='binary')
                 update_file = gr.Button('Load data')
+                
+            with gr.Tab("Settings"):
+                with gr.Accordion("Processing settings", open=True):
+                    chunk_len = gr.Textbox(value=parameters.get_chunk_len(), label='Chunk length', info='In characters, not tokens. This value is used when you click on "Load data".')
+                    chunk_regex = gr.Textbox(value=parameters.get_chunk_regex(), label='Chunk regex', info='Will specifically add the captured text to the embeddings.')
+                    context_len = gr.Textbox(value=parameters.get_context_len(), label='Context length', info='In characters, not tokens. How much context to load around each chunk.')
+                    chunk_sep = gr.Textbox(value=parameters.get_chunk_separator(), label='Chunk separator', info='Used to manually split chunks. Manually split chunks longer than chunk length are split again. This value is used when you click on "Load data".')
 
-            with gr.Tab("Generation settings"):
-                chunk_count = gr.Number(value=params['chunk_count'], label='Chunk count', info='The number of closest-matching chunks to include in the prompt.')
-                gr.Markdown('Time weighting (optional, used in to make recently added chunks more likely to appear)')
-                time_weight = gr.Slider(0, 1, value=params['time_weight'], label='Time weight', info='Defines the strength of the time weighting. 0 = no time weighting.')
-                chunk_count_initial = gr.Number(value=params['chunk_count_initial'], label='Initial chunk count', info='The number of closest-matching chunks retrieved for time weight reordering in chat mode. This should be >= chunk count. -1 = All chunks are retrieved. Only used if time_weight > 0.')
-                max_token_count = gr.Number(value=params['max_token_count'], label='Max Context Tokens', info='The context will not exceed this value unless the best match is longer. In this case, only it will be added.')
-                data_separator = gr.Textbox(value=codecs.encode(params['data_separator'], 'unicode_escape').decode(), label='Data separator', info='When multiple pieces of distant data are added, they might be unrelated. It\'s important to separate them.')
+                with gr.Accordion("Generation settings", open=False):
+                    chunk_count = gr.Number(value=parameters.get_chunk_count(), label='Chunk count', info='The number of closest-matching chunks to include in the prompt.')
+                    gr.Markdown('Time weighting (optional, used in to make recently added chunks more likely to appear)')
+                    time_weight = gr.Slider(0, 1, value=parameters.get_time_weight(), label='Time weight', info='Defines the strength of the time weighting. 0 = no time weighting.')
+                    max_token_count = gr.Number(value=parameters.get_max_token_count(), label='Max Context Tokens', info='The context length in tokens will not exceed this value.')
+                    data_separator = gr.Textbox(value=codecs.encode(parameters.get_data_separator(), 'unicode_escape').decode(), label='Data separator', info='When multiple pieces of distant data are added, they might be unrelated. It\'s important to separate them.')
 
-                update_settings = gr.Button('Apply changes')
+                with gr.Accordion("Advanced settings", open=False):
+                    preprocess_set_choices = []
+                    if parameters.should_to_lower():
+                        preprocess_set_choices.append('Lower Cases')
+                    if parameters.should_remove_punctuation():
+                        preprocess_set_choices.append('Remove Punctuation')
+                    if parameters.should_remove_specific_pos():
+                        preprocess_set_choices.append('Remove Adverbs')
+                    if parameters.should_remove_stopwords():
+                        preprocess_set_choices.append('Remove Stop Words')
+                    if parameters.should_lemmatize():
+                        preprocess_set_choices.append('Lemmatize')
+                    if parameters.should_merge_spaces():
+                        preprocess_set_choices.append('Merge Spaces')
+                    if parameters.should_strip():
+                        preprocess_set_choices.append('Strip Edges')
+
+                    preprocess_pipeline = gr.CheckboxGroup(label='Preprocessing pipeline', choices=[
+                        'Lower Cases',
+                        'Remove Punctuation',
+                        'Remove Adverbs',
+                        'Remove Stop Words',
+                        'Lemmatize',
+                        'Merge Spaces',
+                        'Strip Edges',
+                    ], value=preprocess_set_choices, interactive=True, info='How to preprocess the text before it is turned into an embedding.')
+
+                    with gr.Row():
+                        num_conversion = gr.Dropdown(choices=[parameters.NUM_TO_WORD_METHOD, parameters.NUM_TO_CHAR_METHOD, parameters.NUM_TO_CHAR_LONG_METHOD, 'None'], value=parameters.get_num_conversion_strategy(), label="Number Conversion Method", info='How to preprocess numbers before creating the embeddings.', interactive=True)
+
+                        min_number_length = gr.Number(value=parameters.get_min_num_length(), label='Number Length Threshold', info='In digits. Only numbers that have at least that many digits will be converted.', interactive=True)
+
+                    delta_start = gr.Number(value=parameters.get_delta_start(), label='Delta Start Index', info='If the system encounters two identical embeddings, and they both start within the same delta, then only the first will be considered.', interactive=True)
+
+                    new_dist_strat = gr.Dropdown(choices=[parameters.DIST_MIN_STRATEGY, parameters.DIST_HARMONIC_STRATEGY, parameters.DIST_GEOMETRIC_STRATEGY, parameters.DIST_ARITHMETIC_STRATEGY], value=parameters.get_new_dist_strategy(), label="Distance Strategy", info='When two embedding texts are merged, the distance of the new piece will be decided using one of these strategies.', interactive=True)
+
+                    min_sentences = gr.Number(value=parameters.get_min_num_sentences(), label='Summary Threshold', info='In sentences. The minumum number of sentences to trigger text-rank summarization.', interactive=True)
+
+                    confidence_interval = gr.Slider(0, 1, value=parameters.get_confidence_interval(), label='Confidence Interval', info='Consider only the smallest interval containing a certain percentage of entries, where entries are weighted according to their inverse distance (1/d).', interactive=True)
 
             with gr.Tab("Benchmark"):
                 update_benchmark = gr.Button('Begin')
 
-            chunk_len = gr.Textbox(value=params['chunk_length'], label='Chunk length', info='In characters, not tokens. This value is used when you click on "Load data".')
-            chunk_regex = gr.Textbox(value=params['chunk_regex'], label='Chunk regex', info='Will specifically add the captured text to the embeddings.')
-            context_len = gr.Textbox(value=params['context_length'], label='Context length', info='In characters, not tokens. How much context to load around each chunk.')
-            chunk_sep = gr.Textbox(value=params['chunk_separator'], label='Chunk separator', info='Used to manually split chunks. Manually split chunks longer than chunk length are split again. This value is used when you click on "Load data".')
+            
         with gr.Column():
             last_updated = gr.Markdown()
 
     update_data.click(feed_data_into_collector, [data_input, chunk_len, context_len, chunk_regex, chunk_sep], last_updated, show_progress=False)
     update_url.click(feed_url_into_collector, [url_input, chunk_len, context_len, chunk_regex, chunk_sep, strong_cleanup, threads], last_updated, show_progress=False)
     update_file.click(feed_file_into_collector, [file_input, chunk_len, context_len, chunk_regex, chunk_sep], last_updated, show_progress=False)
-    update_settings.click(apply_settings, [chunk_count, chunk_count_initial, time_weight, max_token_count, data_separator], last_updated, show_progress=False)
     update_benchmark.click(begin_benchmark, [chunk_count, max_token_count, chunk_len, context_len, chunk_regex, chunk_sep], last_updated, show_progress=False)
+
+
+    all_params = [confidence_interval, min_sentences, new_dist_strat, delta_start, min_number_length, num_conversion, preprocess_pipeline, data_separator, max_token_count, time_weight, chunk_count, chunk_sep, context_len, chunk_regex, chunk_len]
+
+    confidence_interval.input(fn=apply_settings, inputs=all_params, show_progress=False)
+    min_sentences.input(fn=apply_settings, inputs=all_params, show_progress=False)
+    new_dist_strat.input(fn=apply_settings, inputs=all_params, show_progress=False)
+    delta_start.input(fn=apply_settings, inputs=all_params, show_progress=False)
+    min_number_length.input(fn=apply_settings, inputs=all_params, show_progress=False)
+    num_conversion.input(fn=apply_settings, inputs=all_params, show_progress=False)
+    preprocess_pipeline.input(fn=apply_settings, inputs=all_params, show_progress=False)
+    data_separator.input(fn=apply_settings, inputs=all_params, show_progress=False)
+    max_token_count.input(fn=apply_settings, inputs=all_params, show_progress=False)
+    time_weight.input(fn=apply_settings, inputs=all_params, show_progress=False)
+    chunk_count.input(fn=apply_settings, inputs=all_params, show_progress=False)
+    chunk_sep.input(fn=apply_settings, inputs=all_params, show_progress=False)
+    context_len.input(fn=apply_settings, inputs=all_params, show_progress=False)
+    chunk_regex.input(fn=apply_settings, inputs=all_params, show_progress=False)
+    chunk_len.input(fn=apply_settings, inputs=all_params, show_progress=False)

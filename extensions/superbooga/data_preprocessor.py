@@ -11,6 +11,7 @@ import spacy
 import nltk
 import math
 import re
+
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from num2words import num2words
@@ -104,7 +105,7 @@ class TextPreprocessorBuilder:
     def remove_specific_pos(self):
         """
         In the English language, adverbs and interjections rarely provide meaningul information.
-        Removing them improves the embedding accuracy. Don't tell JK Rowling, though.
+        Removing them improves the embedding precision. Don't tell JK Rowling, though.
         """
         # Match both words and non-word characters
         tokens = re.findall(r'\b\w+\b|\W+', self.text)
@@ -141,7 +142,7 @@ class TextSummarizer:
             TextSummarizer._nlp_pipeline.add_pipe("textrank", last=True)
         return TextSummarizer._nlp_pipeline
 
-    def process_long_text(self, text: str):
+    def process_long_text(self, text: str, min_num_sent: int) -> list[str]:
         """
         This function applies a text summarization process on a given text string, extracting 
         the most important sentences based on the principle that 20% of the content is responsible
@@ -154,9 +155,15 @@ class TextSummarizer:
         nlp_pipeline = self.load_nlp_pipeline()
         doc = nlp_pipeline(text)
 
-        limit_phrases = math.ceil(len(doc._.phrases) * 0.20)  # 20% of the phrases, rounded up
-        limit_sentences = math.ceil(len(list(doc.sents)) * 0.20)  # 20% of the sentences, rounded up
-        extracted_sentences = [str(sent) for sent in doc._.textrank.summary(limit_phrases=limit_phrases, limit_sentences=limit_sentences)]
-        return extracted_sentences
+        num_sent = len(list(doc.sents))
+
+        if num_sent >= min_num_sent:
+
+            limit_phrases = math.ceil(len(doc._.phrases) * 0.20)  # 20% of the phrases, rounded up
+            limit_sentences = math.ceil(num_sent * 0.20)  # 20% of the sentences, rounded up
+            extracted_sentences = [str(sent) for sent in doc._.textrank.summary(limit_phrases=limit_phrases, limit_sentences=limit_sentences)]
+            return extracted_sentences
+        
+        return [text]
 
     

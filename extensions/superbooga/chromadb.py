@@ -1,7 +1,11 @@
 import chromadb
 import posthog
 import torch
+import numpy
 import math
+
+import extensions.superbooga.parameters as parameters
+
 from chromadb.config import Settings
 from sentence_transformers import SentenceTransformer
 
@@ -41,21 +45,29 @@ class Info:
         self.distance = distance
         self.id = id
 
+    def calculate_distance(self, other_info):
+        if parameters.get_new_dist_strategy() == parameters.DIST_MIN_STRATEGY:
+            # Min
+            return min(self.distance, other_info.distance)
+        elif parameters.get_new_dist_strategy() == parameters.DIST_HARMONIC_STRATEGY:
+            # Harmonic mean
+            return 2 * (self.distance * other_info.distance) / (self.distance + other_info.distance)
+        elif parameters.get_new_dist_strategy() == parameters.DIST_GEOMETRIC_STRATEGY:
+            # Geometric mean
+            return (self.distance * other_info.distance) ** 0.5
+        elif parameters.get_new_dist_strategy() == parameters.DIST_ARITHMETIC_STRATEGY:
+            # Arithmetic mean
+            return (self.distance + other_info.distance) / 2
+        else: # Min is default
+            return min(self.distance, other_info.distance)
+
     def merge_with(self, other_info):
         s1 = self.text_with_context
         s2 = other_info.text_with_context
         s1_start = self.start_index
         s2_start = other_info.start_index
         
-        """
-        From testing, the most efective strategy seems to be taking the lower of the two distances. Other strategies include:
-        - Harmonic Mean
-        - Discounted Mean
-        - Geometric Mean
-        - Arithmetic Mean
-        TODO: Further testing required.
-        """
-        new_dist = min(self.distance, other_info.distance)
+        new_dist = self.calculate_distance(other_info)
 
         if self.should_merge(s1, s2, s1_start, s2_start):
             if s1_start <= s2_start:
@@ -86,15 +98,42 @@ class ChromaCollector(Collecter):
         super().__init__()
         self.chroma_client = chromadb.Client(Settings(anonymized_telemetry=False))
         self.embedder = embedder
-        self.collection = self.chroma_client.create_collection(name="context", embedding_function=embedder.embed)
+        self.collection = self.chroma_client.create_collection(name="context", embedding_function=self.embedder.embed)
         self.ids = []
+        self.embeddings_cache = {}
 
     def add(self, texts: list[str], texts_with_context: list[str], starting_indices: list[int]):
         if len(texts) == 0:
             return
 
         self.ids = [f"id{i}" for i in range(len(texts))]
-        self.collection.add(documents=texts, ids=self.ids)
+
+        # Split the texts into existing and non-existing ones
+        existing_texts = []
+        non_existing_texts = []
+        existing_embeddings = []
+
+        for text, id_ in zip(texts, self.ids):
+            embedding = self.embeddings_cache.get(text)
+            if embedding:
+                existing_texts.append((text, id_))
+                existing_embeddings.append(embedding)
+            else:
+                non_existing_texts.append((text, id_))
+
+        # If there are any already existing texts, add them all at once.
+        if existing_texts:
+            logger.info(f'Adding {len(existing_embeddings)} cached embeddings.')
+            self.collection.add(embeddings=existing_embeddings, documents=[text for text, _ in existing_texts], ids=[id_ for _, id_ in existing_texts])
+
+        # If there are any non-existing texts, compute their embeddings all at once. Each call to embed has significant overhead.
+        if non_existing_texts:
+            non_existing_embeddings = self.embedder.embed([text for text, _ in non_existing_texts]).tolist()
+            for (text, _), embedding in zip(non_existing_texts, non_existing_embeddings):
+                self.embeddings_cache[text] = embedding
+            
+            logger.info(f'Adding {len(non_existing_embeddings)} new embeddings.')
+            self.collection.add(embeddings=non_existing_embeddings, documents=[text for text, _ in non_existing_texts], ids=[id_ for _, id_ in non_existing_texts])
 
         # Create a dictionary that maps each ID to its context and starting index
         self.id_to_info = {
@@ -102,37 +141,75 @@ class ChromaCollector(Collecter):
             for id_, context, start_index in zip(self.ids, texts_with_context, starting_indices)
         }
 
+
+    def filter_infos_in_interval(self, infos: list[Info], percentage: float):
+        points = [info.start_index for info in infos]
+        weights = [1.0/info.distance for info in infos]
+
+        start, end = self.find_optimal_weighted_interval(points, weights, percentage)
+
+        return [info for info in infos if start <= info.start_index <= end]
+
+
+    def find_optimal_weighted_interval(self, points: list[int], weights: list[float], percentage: float):
+        total_weight = sum(weights)
+        target_weight = total_weight * percentage
+
+        weight_accumulator = 0
+        left = 0
+        min_length = float('inf')
+        result = (None, None)
+
+        for right in range(len(points)):
+            weight_accumulator += weights[right]
+            
+            while weight_accumulator >= target_weight:
+                if points[right] - points[left] < min_length:
+                    min_length = points[right] - points[left]
+                    result = (points[left], points[right])
+
+                weight_accumulator -= weights[left]
+                left += 1
+
+        return result
+
+
+    def merge_infos(self, infos: list[Info]):
+        merged_infos = []
+        current_info = infos[0]
+
+        for next_info in infos[1:]:
+            merged = current_info.merge_with(next_info)
+            if merged is not None:
+                current_info = merged
+            else:
+                merged_infos.append(current_info)
+                current_info = next_info
+
+        merged_infos.append(current_info)
+        return merged_infos
+    
+
     def get_documents_ids_distances(self, search_strings: list[str], n_results: int):
         n_results = min(len(self.ids), n_results)
         if n_results == 0:
             return [], [], []
 
         result = self.collection.query(query_texts=search_strings, n_results=math.ceil(n_results / len(search_strings)), include=['documents', 'distances'])
-        info = [Info(start_index=self.id_to_info[id]['start_index'], 
+        infos = [Info(start_index=self.id_to_info[id]['start_index'], 
                     text_with_context=self.id_to_info[id]['text_with_context'], 
                     distance=distance, id=id) 
                 for id, distance in zip(result['ids'][0], result['distances'][0])]
         
         print(result)
 
-        info.sort(key=lambda x: x.start_index)
+        infos.sort(key=lambda x: x.start_index)
+        infos = self.filter_infos_in_interval(infos, parameters.get_confidence_interval())
+        infos = self.merge_infos(infos)
 
-        merged_info = []
-        current_info = info[0]
-
-        for next_info in info[1:]:
-            merged = current_info.merge_with(next_info)
-            if merged is not None:
-                current_info = merged
-            else:
-                merged_info.append(current_info)
-                current_info = next_info
-
-        merged_info.append(current_info)
-
-        texts_with_context = [inf.text_with_context for inf in merged_info]
-        ids = [inf.id for inf in merged_info]
-        distances = [inf.distance for inf in merged_info]
+        texts_with_context = [inf.text_with_context for inf in infos]
+        ids = [inf.id for inf in infos]
+        distances = [inf.distance for inf in infos]
 
         return texts_with_context, ids, distances
 
@@ -217,7 +294,8 @@ class ChromaCollector(Collecter):
         return sorted(ids)
 
     def clear(self):
-        self.collection.delete(ids=self.ids)
+        self.chroma_client.delete_collection("context")
+        self.collection = self.chroma_client.create_collection("context", embedding_function=self.embedder.embed)
         self.ids = []
 
 

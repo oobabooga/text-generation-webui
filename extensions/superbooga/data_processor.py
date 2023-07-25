@@ -5,18 +5,49 @@ This module is responsible for processing the corpus and feeding it into chromaD
 import re
 import bisect
 
+import extensions.superbooga.parameters as parameters
+
 from .chromadb import add_chunks_to_collector
 from .data_preprocessor import TextPreprocessorBuilder, TextSummarizer
 
 summarizer = TextSummarizer()
 
-
 def preprocess_text_no_summary(text) -> str:
-    return TextPreprocessorBuilder(text).to_lower().remove_punctuation().remove_specific_pos().merge_spaces().strip().num_to_word(1).build()
+    builder = TextPreprocessorBuilder(text)
+    if parameters.should_to_lower():
+        builder.to_lower()
+
+    if parameters.should_remove_punctuation():
+        builder.remove_punctuation()
+
+    if parameters.should_remove_specific_pos():
+        builder.remove_specific_pos()
+
+    if parameters.should_remove_stopwords():
+        builder.remove_stopwords
+
+    if parameters.should_lemmatize():
+        builder.lemmatize()
+
+    if parameters.should_merge_spaces():
+        builder.merge_spaces
+
+    if parameters.should_strip():
+        builder.strip()
+
+    if parameters.get_num_conversion_strategy():
+        if parameters.get_num_conversion_strategy() == parameters.NUM_TO_WORD_METHOD:
+            builder.num_to_word(parameters.get_min_num_length())
+        elif parameters.get_num_conversion_strategy() == parameters.NUM_TO_CHAR_METHOD:
+            builder.num_to_char(parameters.get_min_num_length())
+        elif parameters.get_num_conversion_strategy() == parameters.NUM_TO_CHAR_LONG_METHOD:
+            builder.num_to_char_long(parameters.get_min_num_length())
+    
+    return builder.build()
 
 
 def preprocess_text(text) -> list[str]:
-    important_sentences = summarizer.process_long_text(text)
+    important_sentences = summarizer.process_long_text(text, parameters.get_min_num_sentences())
     return [preprocess_text_no_summary(sent) for sent in important_sentences]
 
 
@@ -77,6 +108,33 @@ def create_chunks_with_context(corpus, chunk_len, context_left, context_right):
         chunk_with_context_start_indices.append(chunk_with_context_start_index)
 
     return chunks, chunks_with_context, chunk_with_context_start_indices
+
+
+def clear_chunks(data_chunks, data_chunks_with_context, data_chunk_starting_indices):
+    distinct_data_chunks = []
+    distinct_data_chunks_with_context = []
+    distinct_data_chunk_starting_indices = []
+
+    seen_chunks = dict()
+
+    for chunk, context, index in zip(data_chunks, data_chunks_with_context, data_chunk_starting_indices):
+        # Skip the chunk if it does not contain any alphanumeric characters
+        if not any(char.isalnum() for char in chunk):
+            continue
+
+        seen_chunk_start = seen_chunks.get(chunk)
+        if seen_chunk_start:
+            # If we've already seen this exact chunk, and the context around it it very close to the seen chunk, then skip it.
+            if abs(seen_chunk_start-index) < parameters.get_delta_start():
+                continue
+        
+        distinct_data_chunks.append(chunk)
+        distinct_data_chunks_with_context.append(context)
+        distinct_data_chunk_starting_indices.append(index)
+
+        seen_chunks[chunk] = index
+
+    return distinct_data_chunks, distinct_data_chunks_with_context, distinct_data_chunk_starting_indices
 
 
 def process_and_add_to_collector(corpus, chunk_len, context_len, chunk_regex, chunk_sep, collector):
@@ -154,8 +212,13 @@ def process_and_add_to_collector(corpus, chunk_len, context_len, chunk_regex, ch
     yield cumulative
     data_chunks = [preprocess_text_no_summary(chunk) for chunk in data_chunks]
 
+    data_chunks, data_chunks_with_context, data_chunk_starting_indices = clear_chunks(
+        data_chunks, data_chunks_with_context, data_chunk_starting_indices
+    )
+
     cumulative += f"Adding all {len(data_chunks)} chunks to the database. This may take a while.\n\n"
     yield cumulative
+
     add_chunks_to_collector(data_chunks, data_chunks_with_context, data_chunk_starting_indices, collector)
     cumulative += "Done."
     yield cumulative
