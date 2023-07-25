@@ -321,7 +321,7 @@ def create_settings_menus(default_preset):
     with gr.Row():
         with gr.Column():
             with gr.Row():
-                shared.gradio['preset_menu'] = gr.Dropdown(choices=utils.get_available_presets(), value=default_preset if not shared.args.flexgen else 'Naive', label='Generation parameters preset', elem_classes='slim-dropdown')
+                shared.gradio['preset_menu'] = gr.Dropdown(choices=utils.get_available_presets(), value=default_preset, label='Generation parameters preset', elem_classes='slim-dropdown')
                 ui.create_refresh_button(shared.gradio['preset_menu'], lambda: None, lambda: {'choices': utils.get_available_presets()}, 'refresh-button')
                 shared.gradio['save_preset'] = gr.Button('💾', elem_classes='refresh-button')
                 shared.gradio['delete_preset'] = gr.Button('🗑️', elem_classes='refresh-button')

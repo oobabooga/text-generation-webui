@@ -95,7 +95,7 @@ parser.add_argument('--extensions', type=str, nargs="+", help='The list of exten
 parser.add_argument('--verbose', action='store_true', help='Print the prompts to the terminal.')
 
 # Model loader
-parser.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise, it will get autodetected. Valid options: transformers, autogptq, gptq-for-llama, exllama, exllama_hf, llamacpp, rwkv, flexgen')
+parser.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise, it will get autodetected. Valid options: transformers, autogptq, gptq-for-llama, exllama, exllama_hf, llamacpp, rwkv')
 
 # Accelerate/transformers
 parser.add_argument('--cpu', action='store_true', help='Use the CPU to generate text. Warning: Training on CPU is extremely slow.')
@@ -156,7 +156,6 @@ parser.add_argument('--gpu-split', type=str, help="Comma-separated list of VRAM 
 parser.add_argument('--max_seq_len', type=int, default=2048, help="Maximum sequence length.")
 
 # FlexGen
-parser.add_argument('--flexgen', action='store_true', help='DEPRECATED')
 parser.add_argument('--percent', type=int, nargs="+", default=[0, 100, 100, 0, 100, 0], help='FlexGen: allocation percentages. Must be 6 numbers separated by spaces (default: 0, 100, 100, 0, 100, 0).')
 parser.add_argument("--compress-weight", action="store_true", help="FlexGen: activate weight compression.")
 parser.add_argument("--pin-weight", type=str2bool, nargs="?", const=True, default=True, help="FlexGen: whether to pin weights (setting this to False reduces CPU memory by 20%%).")
@@ -202,9 +201,6 @@ if args.autogptq:
 if args.gptq_for_llama:
     logger.warning('--gptq-for-llama has been deprecated and will be removed soon. Use --loader gptq-for-llama instead.')
     args.loader = 'gptq-for-llama'
-if args.flexgen:
-    logger.warning('--flexgen has been deprecated and will be removed soon. Use --loader flexgen instead.')
-    args.loader = 'FlexGen'
 
 # Security warnings
 if args.trust_remote_code:

@@ -30,8 +30,6 @@ def infer_loader(model_name):
         loader = 'llama.cpp'
     elif re.match('.*rwkv.*\.pth', model_name.lower()):
         loader = 'RWKV'
-    elif shared.args.flexgen:
-        loader = 'FlexGen'
     else:
         loader = 'Transformers'
 
