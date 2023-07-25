@@ -376,7 +376,6 @@ def create_settings_menus(default_preset):
         1) Midnight Enigma
         2) Yara
         3) Shortwave
-        4) Kobold-Godlike
 
     ### Temperature
     Primary factor to control randomness of outputs. 0 = deterministic (only the most likely token is used). Higher value = more randomness.

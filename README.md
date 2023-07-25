@@ -323,9 +323,3 @@ The presets that are included by default are the result of a contest that receiv
 
 * Subreddit: https://www.reddit.com/r/oobaboogazz/
 * Discord: https://discord.gg/jwZCF2dPQN
-
-## Credits
-
-- Gradio dropdown menu refresh button, code for reloading the interface: https://github.com/AUTOMATIC1111/stable-diffusion-webui
-- Godlike preset: https://github.com/KoboldAI/KoboldAI-Client/wiki/Settings-Presets
-- Code for some of the sliders: https://github.com/PygmalionAI/gradio-ui/
