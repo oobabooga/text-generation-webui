@@ -1,0 +1,8 @@
+sd_config:
+  base_model_size: 512
+  url: "http://0.0.0.0:7860/sdapi/v1/txt2img"
+sd_defaults:
+  sampler_name: 'DPM++ 2M Karras'
+  steps: 30
+  hr_upscaler: 'Latent'
+  denoising_strength: 0.68
