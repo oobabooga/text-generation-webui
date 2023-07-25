@@ -610,190 +610,180 @@ def create_interface():
         # Floating menus for saving/deleting files
         create_file_saving_menus()
 
+        shared.input_elements = ui.list_interface_input_elements()
+        shared.input_elements = ui.list_interface_input_elements()
+        shared.input_elements = ui.list_interface_input_elements()
+        shared.gradio.update({
+            'interface_state': gr.State({k: None for k in shared.input_elements}),
+            'Chat input': gr.State(),
+            'dummy': gr.State(),
+            'history': gr.State({'internal': [], 'visible': []}),
+        })
+        shared.gradio['interface_state'] = gr.State({k: None for k in shared.input_elements})
+        shared.gradio['interface_state'] = gr.State({k: None for k in shared.input_elements})
+        shared.gradio['last_input'] = gr.State('')
+        shared.gradio['last_input'] = gr.State('')
+
         # Create chat mode interface
-        if shared.is_chat():
-            shared.input_elements = ui.list_interface_input_elements()
+        with gr.Tab('Text generation', elem_id='main') as shared.gradio['text generation-chat']:
+            shared.gradio['display'] = gr.HTML(value=chat_html_wrapper({'internal': [], 'visible': []}, shared.settings['name1'], shared.settings['name2'], 'chat', 'cai-chat'))
+            shared.gradio['textbox'] = gr.Textbox(label='Input')
+            with gr.Row():
+                shared.gradio['Stop'] = gr.Button('Stop', elem_id='stop')
+                shared.gradio['Generate'] = gr.Button('Generate', elem_id='Generate', variant='primary')
+                shared.gradio['Continue'] = gr.Button('Continue')
 
-            shared.gradio.update({
-                'interface_state': gr.State({k: None for k in shared.input_elements}),
-                'Chat input': gr.State(),
-                'dummy': gr.State(),
-                'history': gr.State({'internal': [], 'visible': []}),
-            })
+            with gr.Row():
+                shared.gradio['Impersonate'] = gr.Button('Impersonate')
+                shared.gradio['Regenerate'] = gr.Button('Regenerate')
+                shared.gradio['Remove last'] = gr.Button('Remove last')
 
-            with gr.Tab('Text generation', elem_id='main'):
-                shared.gradio['display'] = gr.HTML(value=chat_html_wrapper({'internal': [], 'visible': []}, shared.settings['name1'], shared.settings['name2'], 'chat', 'cai-chat'))
-                shared.gradio['textbox'] = gr.Textbox(label='Input')
+            with gr.Row():
+                shared.gradio['Copy last reply'] = gr.Button('Copy last reply')
+                shared.gradio['Replace last reply'] = gr.Button('Replace last reply')
+                shared.gradio['Send dummy message'] = gr.Button('Send dummy message')
+                shared.gradio['Send dummy reply'] = gr.Button('Send dummy reply')
+
+            with gr.Row():
+                shared.gradio['Clear history'] = gr.Button('Clear history')
+                shared.gradio['Clear history-confirm'] = gr.Button('Confirm', variant='stop', visible=False)
+                shared.gradio['Clear history-cancel'] = gr.Button('Cancel', visible=False)
+
+            with gr.Row():
+                shared.gradio['start_with'] = gr.Textbox(label='Start reply with', placeholder='Sure thing!', value=shared.settings['start_with'])
+
+            with gr.Row():
+                shared.gradio['mode'] = gr.Radio(choices=['chat', 'chat-instruct', 'instruct'], value=shared.settings['mode'] if shared.settings['mode'] in ['chat', 'instruct', 'chat-instruct'] else 'chat', label='Mode', info='Defines how the chat prompt is generated. In instruct and chat-instruct modes, the instruction template selected under "Chat settings" must match the current model.')
+                shared.gradio['chat_style'] = gr.Dropdown(choices=utils.get_available_chat_styles(), label='Chat style', value=shared.settings['chat_style'], visible=shared.settings['mode'] != 'instruct')
+
+        with gr.Tab('Chat settings', elem_id='chat-settings'):
+
+            with gr.Tab("Character"):
                 with gr.Row():
-                    shared.gradio['Stop'] = gr.Button('Stop', elem_id='stop')
-                    shared.gradio['Generate'] = gr.Button('Generate', elem_id='Generate', variant='primary')
-                    shared.gradio['Continue'] = gr.Button('Continue')
-
-                with gr.Row():
-                    shared.gradio['Impersonate'] = gr.Button('Impersonate')
-                    shared.gradio['Regenerate'] = gr.Button('Regenerate')
-                    shared.gradio['Remove last'] = gr.Button('Remove last')
-
-                with gr.Row():
-                    shared.gradio['Copy last reply'] = gr.Button('Copy last reply')
-                    shared.gradio['Replace last reply'] = gr.Button('Replace last reply')
-                    shared.gradio['Send dummy message'] = gr.Button('Send dummy message')
-                    shared.gradio['Send dummy reply'] = gr.Button('Send dummy reply')
-
-                with gr.Row():
-                    shared.gradio['Clear history'] = gr.Button('Clear history')
-                    shared.gradio['Clear history-confirm'] = gr.Button('Confirm', variant='stop', visible=False)
-                    shared.gradio['Clear history-cancel'] = gr.Button('Cancel', visible=False)
-
-                with gr.Row():
-                    shared.gradio['start_with'] = gr.Textbox(label='Start reply with', placeholder='Sure thing!', value=shared.settings['start_with'])
-
-                with gr.Row():
-                    shared.gradio['mode'] = gr.Radio(choices=['chat', 'chat-instruct', 'instruct'], value=shared.settings['mode'] if shared.settings['mode'] in ['chat', 'instruct', 'chat-instruct'] else 'chat', label='Mode', info='Defines how the chat prompt is generated. In instruct and chat-instruct modes, the instruction template selected under "Chat settings" must match the current model.')
-                    shared.gradio['chat_style'] = gr.Dropdown(choices=utils.get_available_chat_styles(), label='Chat style', value=shared.settings['chat_style'], visible=shared.settings['mode'] != 'instruct')
-
-            with gr.Tab('Chat settings', elem_id='chat-settings'):
-
-                with gr.Tab("Character"):
-                    with gr.Row():
-                        with gr.Column(scale=8):
-                            with gr.Row():
-                                shared.gradio['character_menu'] = gr.Dropdown(value='None', choices=utils.get_available_characters(), label='Character', elem_id='character-menu', info='Used in chat and chat-instruct modes.', elem_classes='slim-dropdown')
-                                ui.create_refresh_button(shared.gradio['character_menu'], lambda: None, lambda: {'choices': utils.get_available_characters()}, 'refresh-button')
-                                shared.gradio['save_character'] = gr.Button('💾', elem_classes='refresh-button')
-                                shared.gradio['delete_character'] = gr.Button('🗑️', elem_classes='refresh-button')
-
-                            shared.gradio['name1'] = gr.Textbox(value=shared.settings['name1'], lines=1, label='Your name')
-                            shared.gradio['name2'] = gr.Textbox(value=shared.settings['name2'], lines=1, label='Character\'s name')
-                            shared.gradio['context'] = gr.Textbox(value=shared.settings['context'], lines=4, label='Context')
-                            shared.gradio['greeting'] = gr.Textbox(value=shared.settings['greeting'], lines=4, label='Greeting')
-
-                        with gr.Column(scale=1):
-                            shared.gradio['character_picture'] = gr.Image(label='Character picture', type='pil')
-                            shared.gradio['your_picture'] = gr.Image(label='Your picture', type='pil', value=Image.open(Path('cache/pfp_me.png')) if Path('cache/pfp_me.png').exists() else None)
-
-                with gr.Tab("Instruction template"):
-                    with gr.Row():
+                    with gr.Column(scale=8):
                         with gr.Row():
-                            shared.gradio['instruction_template'] = gr.Dropdown(choices=utils.get_available_instruction_templates(), label='Instruction template', value='None', info='Change this according to the model/LoRA that you are using. Used in instruct and chat-instruct modes.', elem_classes='slim-dropdown')
-                            ui.create_refresh_button(shared.gradio['instruction_template'], lambda: None, lambda: {'choices': utils.get_available_instruction_templates()}, 'refresh-button')
-                            shared.gradio['save_template'] = gr.Button('💾', elem_classes='refresh-button')
-                            shared.gradio['delete_template'] = gr.Button('🗑️ ', elem_classes='refresh-button')
+                            shared.gradio['character_menu'] = gr.Dropdown(value='None', choices=utils.get_available_characters(), label='Character', elem_id='character-menu', info='Used in chat and chat-instruct modes.', elem_classes='slim-dropdown')
+                            ui.create_refresh_button(shared.gradio['character_menu'], lambda: None, lambda: {'choices': utils.get_available_characters()}, 'refresh-button')
+                            shared.gradio['save_character'] = gr.Button('💾', elem_classes='refresh-button')
+                            shared.gradio['delete_character'] = gr.Button('🗑️', elem_classes='refresh-button')
 
-                    shared.gradio['name1_instruct'] = gr.Textbox(value='', lines=2, label='User string')
-                    shared.gradio['name2_instruct'] = gr.Textbox(value='', lines=1, label='Bot string')
-                    shared.gradio['context_instruct'] = gr.Textbox(value='', lines=4, label='Context')
-                    shared.gradio['turn_template'] = gr.Textbox(value=shared.settings['turn_template'], lines=1, label='Turn template', info='Used to precisely define the placement of spaces and new line characters in instruction prompts.')
-                    with gr.Row():
-                        shared.gradio['chat-instruct_command'] = gr.Textbox(value=shared.settings['chat-instruct_command'], lines=4, label='Command for chat-instruct mode', info='<|character|> gets replaced by the bot name, and <|prompt|> gets replaced by the regular chat prompt.')
-
-                with gr.Tab('Chat history'):
-                    with gr.Row():
-                        with gr.Column():
-                            shared.gradio['download'] = gr.File(label="Download")
-                            shared.gradio['download_button'] = gr.Button(value='Refresh')
-
-                        with gr.Column():
-                            shared.gradio['upload_chat_history'] = gr.File(type='binary', file_types=['.json', '.txt'], label="Upload")
-
-                with gr.Tab('Upload character'):
-                    with gr.Tab('JSON'):
-                        with gr.Row():
-                            shared.gradio['upload_json'] = gr.File(type='binary', file_types=['.json'], label='JSON File')
-                            shared.gradio['upload_img_bot'] = gr.Image(type='pil', label='Profile Picture (optional)')
-
-                        shared.gradio['Submit character'] = gr.Button(value='Submit', interactive=False)
-
-                    with gr.Tab('TavernAI'):
-                        with gr.Row():
-                            with gr.Column():
-                                shared.gradio['upload_img_tavern'] = gr.Image(type='pil', label='TavernAI PNG File', elem_id="upload_img_tavern")
-                                shared.gradio['tavern_json'] = gr.State()
-                            with gr.Column():
-                                shared.gradio['tavern_name'] = gr.Textbox(value='', lines=1, label='Name', interactive=False)
-                                shared.gradio['tavern_desc'] = gr.Textbox(value='', lines=4, max_lines=4, label='Description', interactive=False)
-
-                        shared.gradio['Submit tavern character'] = gr.Button(value='Submit', interactive=False)
-
-            with gr.Tab("Parameters", elem_id="parameters"):
-                create_settings_menus(default_preset)
-
-        # Create notebook mode interface
-        elif shared.args.notebook:
-            shared.input_elements = ui.list_interface_input_elements()
-            shared.gradio['interface_state'] = gr.State({k: None for k in shared.input_elements})
-            shared.gradio['last_input'] = gr.State('')
-            with gr.Tab("Text generation", elem_id="main"):
-                with gr.Row():
-                    with gr.Column(scale=4):
-                        with gr.Tab('Raw'):
-                            shared.gradio['textbox'] = gr.Textbox(value=default_text, elem_classes="textbox", lines=27)
-
-                        with gr.Tab('Markdown'):
-                            shared.gradio['markdown_render'] = gr.Button('Render')
-                            shared.gradio['markdown'] = gr.Markdown()
-
-                        with gr.Tab('HTML'):
-                            shared.gradio['html'] = gr.HTML()
-
-                        with gr.Row():
-                            shared.gradio['Generate'] = gr.Button('Generate', variant='primary', elem_classes="small-button")
-                            shared.gradio['Stop'] = gr.Button('Stop', elem_classes="small-button")
-                            shared.gradio['Undo'] = gr.Button('Undo', elem_classes="small-button")
-                            shared.gradio['Regenerate'] = gr.Button('Regenerate', elem_classes="small-button")
+                        shared.gradio['name1'] = gr.Textbox(value=shared.settings['name1'], lines=1, label='Your name')
+                        shared.gradio['name2'] = gr.Textbox(value=shared.settings['name2'], lines=1, label='Character\'s name')
+                        shared.gradio['context'] = gr.Textbox(value=shared.settings['context'], lines=4, label='Context')
+                        shared.gradio['greeting'] = gr.Textbox(value=shared.settings['greeting'], lines=4, label='Greeting')
 
                     with gr.Column(scale=1):
-                        gr.HTML('<div style="padding-bottom: 13px"></div>')
-                        shared.gradio['max_new_tokens'] = gr.Slider(minimum=shared.settings['max_new_tokens_min'], maximum=shared.settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=shared.settings['max_new_tokens'])
-                        with gr.Row():
-                            shared.gradio['prompt_menu'] = gr.Dropdown(choices=utils.get_available_prompts(), value='None', label='Prompt', elem_classes='slim-dropdown')
-                            ui.create_refresh_button(shared.gradio['prompt_menu'], lambda: None, lambda: {'choices': utils.get_available_prompts()}, ['refresh-button', 'refresh-button-small'])
-                            shared.gradio['save_prompt'] = gr.Button('💾', elem_classes=['refresh-button', 'refresh-button-small'])
-                            shared.gradio['delete_prompt'] = gr.Button('🗑️', elem_classes=['refresh-button', 'refresh-button-small'])
+                        shared.gradio['character_picture'] = gr.Image(label='Character picture', type='pil')
+                        shared.gradio['your_picture'] = gr.Image(label='Your picture', type='pil', value=Image.open(Path('cache/pfp_me.png')) if Path('cache/pfp_me.png').exists() else None)
 
-                        shared.gradio['count_tokens'] = gr.Button('Count tokens')
-                        shared.gradio['status'] = gr.Markdown('')
+            with gr.Tab("Instruction template"):
+                with gr.Row():
+                    with gr.Row():
+                        shared.gradio['instruction_template'] = gr.Dropdown(choices=utils.get_available_instruction_templates(), label='Instruction template', value='None', info='Change this according to the model/LoRA that you are using. Used in instruct and chat-instruct modes.', elem_classes='slim-dropdown')
+                        ui.create_refresh_button(shared.gradio['instruction_template'], lambda: None, lambda: {'choices': utils.get_available_instruction_templates()}, 'refresh-button')
+                        shared.gradio['save_template'] = gr.Button('💾', elem_classes='refresh-button')
+                        shared.gradio['delete_template'] = gr.Button('🗑️ ', elem_classes='refresh-button')
 
-            with gr.Tab("Parameters", elem_id="parameters"):
-                create_settings_menus(default_preset)
+                shared.gradio['name1_instruct'] = gr.Textbox(value='', lines=2, label='User string')
+                shared.gradio['name2_instruct'] = gr.Textbox(value='', lines=1, label='Bot string')
+                shared.gradio['context_instruct'] = gr.Textbox(value='', lines=4, label='Context')
+                shared.gradio['turn_template'] = gr.Textbox(value=shared.settings['turn_template'], lines=1, label='Turn template', info='Used to precisely define the placement of spaces and new line characters in instruction prompts.')
+                with gr.Row():
+                    shared.gradio['chat-instruct_command'] = gr.Textbox(value=shared.settings['chat-instruct_command'], lines=4, label='Command for chat-instruct mode', info='<|character|> gets replaced by the bot name, and <|prompt|> gets replaced by the regular chat prompt.')
 
-        # Create default mode interface
-        else:
-            shared.input_elements = ui.list_interface_input_elements()
-            shared.gradio['interface_state'] = gr.State({k: None for k in shared.input_elements})
-            shared.gradio['last_input'] = gr.State('')
-            with gr.Tab("Text generation", elem_id="main"):
+            with gr.Tab('Chat history'):
                 with gr.Row():
                     with gr.Column():
-                        shared.gradio['textbox'] = gr.Textbox(value=default_text, elem_classes="textbox_default", lines=27, label='Input')
-                        shared.gradio['max_new_tokens'] = gr.Slider(minimum=shared.settings['max_new_tokens_min'], maximum=shared.settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=shared.settings['max_new_tokens'])
-                        with gr.Row():
-                            shared.gradio['Generate'] = gr.Button('Generate', variant='primary')
-                            shared.gradio['Stop'] = gr.Button('Stop')
-                            shared.gradio['Continue'] = gr.Button('Continue')
-                            shared.gradio['count_tokens'] = gr.Button('Count tokens')
-
-                        with gr.Row():
-                            shared.gradio['prompt_menu'] = gr.Dropdown(choices=utils.get_available_prompts(), value='None', label='Prompt', elem_classes='slim-dropdown')
-                            ui.create_refresh_button(shared.gradio['prompt_menu'], lambda: None, lambda: {'choices': utils.get_available_prompts()}, 'refresh-button')
-                            shared.gradio['save_prompt'] = gr.Button('💾', elem_classes='refresh-button')
-                            shared.gradio['delete_prompt'] = gr.Button('🗑️', elem_classes='refresh-button')
-
-                        shared.gradio['status'] = gr.Markdown('')
+                        shared.gradio['download'] = gr.File(label="Download")
+                        shared.gradio['download_button'] = gr.Button(value='Refresh')
 
                     with gr.Column():
-                        with gr.Tab('Raw'):
-                            shared.gradio['output_textbox'] = gr.Textbox(elem_classes="textbox_default_output", lines=27, label='Output')
+                        shared.gradio['upload_chat_history'] = gr.File(type='binary', file_types=['.json', '.txt'], label="Upload")
 
-                        with gr.Tab('Markdown'):
-                            shared.gradio['markdown_render'] = gr.Button('Render')
-                            shared.gradio['markdown'] = gr.Markdown()
+            with gr.Tab('Upload character'):
+                with gr.Tab('JSON'):
+                    with gr.Row():
+                        shared.gradio['upload_json'] = gr.File(type='binary', file_types=['.json'], label='JSON File')
+                        shared.gradio['upload_img_bot'] = gr.Image(type='pil', label='Profile Picture (optional)')
 
-                        with gr.Tab('HTML'):
-                            shared.gradio['html'] = gr.HTML()
+                    shared.gradio['Submit character'] = gr.Button(value='Submit', interactive=False)
 
-            with gr.Tab("Parameters", elem_id="parameters"):
-                create_settings_menus(default_preset)
+                with gr.Tab('TavernAI'):
+                    with gr.Row():
+                        with gr.Column():
+                            shared.gradio['upload_img_tavern'] = gr.Image(type='pil', label='TavernAI PNG File', elem_id="upload_img_tavern")
+                            shared.gradio['tavern_json'] = gr.State()
+                        with gr.Column():
+                            shared.gradio['tavern_name'] = gr.Textbox(value='', lines=1, label='Name', interactive=False)
+                            shared.gradio['tavern_desc'] = gr.Textbox(value='', lines=4, max_lines=4, label='Description', interactive=False)
+
+                    shared.gradio['Submit tavern character'] = gr.Button(value='Submit', interactive=False)
+
+        # Create notebook mode interface
+        with gr.Tab("Text generation", elem_id="main") as shared.gradio['text generation-notebook']:
+            with gr.Row():
+                with gr.Column(scale=4):
+                    with gr.Tab('Raw'):
+                        shared.gradio['textbox'] = gr.Textbox(value=default_text, elem_classes="textbox", lines=27)
+
+                    with gr.Tab('Markdown'):
+                        shared.gradio['markdown_render'] = gr.Button('Render')
+                        shared.gradio['markdown'] = gr.Markdown()
+
+                    with gr.Tab('HTML'):
+                        shared.gradio['html'] = gr.HTML()
+
+                    with gr.Row():
+                        shared.gradio['Generate'] = gr.Button('Generate', variant='primary', elem_classes="small-button")
+                        shared.gradio['Stop'] = gr.Button('Stop', elem_classes="small-button")
+                        shared.gradio['Undo'] = gr.Button('Undo', elem_classes="small-button")
+                        shared.gradio['Regenerate'] = gr.Button('Regenerate', elem_classes="small-button")
+
+                with gr.Column(scale=1):
+                    gr.HTML('<div style="padding-bottom: 13px"></div>')
+                    shared.gradio['max_new_tokens'] = gr.Slider(minimum=shared.settings['max_new_tokens_min'], maximum=shared.settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=shared.settings['max_new_tokens'])
+                    with gr.Row():
+                        shared.gradio['prompt_menu'] = gr.Dropdown(choices=utils.get_available_prompts(), value='None', label='Prompt', elem_classes='slim-dropdown')
+                        ui.create_refresh_button(shared.gradio['prompt_menu'], lambda: None, lambda: {'choices': utils.get_available_prompts()}, ['refresh-button', 'refresh-button-small'])
+                        shared.gradio['save_prompt'] = gr.Button('💾', elem_classes=['refresh-button', 'refresh-button-small'])
+                        shared.gradio['delete_prompt'] = gr.Button('🗑️', elem_classes=['refresh-button', 'refresh-button-small'])
+
+                    shared.gradio['count_tokens'] = gr.Button('Count tokens')
+                    shared.gradio['status'] = gr.Markdown('')
+
+        # Create default mode interface
+        with gr.Tab("Text generation", elem_id="main") as shared.gradio['text generation-default']:
+            with gr.Row():
+                with gr.Column():
+                    shared.gradio['textbox'] = gr.Textbox(value=default_text, elem_classes="textbox_default", lines=27, label='Input')
+                    shared.gradio['max_new_tokens'] = gr.Slider(minimum=shared.settings['max_new_tokens_min'], maximum=shared.settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=shared.settings['max_new_tokens'])
+                    with gr.Row():
+                        shared.gradio['Generate'] = gr.Button('Generate', variant='primary')
+                        shared.gradio['Stop'] = gr.Button('Stop')
+                        shared.gradio['Continue'] = gr.Button('Continue')
+                        shared.gradio['count_tokens'] = gr.Button('Count tokens')
+
+                    with gr.Row():
+                        shared.gradio['prompt_menu'] = gr.Dropdown(choices=utils.get_available_prompts(), value='None', label='Prompt', elem_classes='slim-dropdown')
+                        ui.create_refresh_button(shared.gradio['prompt_menu'], lambda: None, lambda: {'choices': utils.get_available_prompts()}, 'refresh-button')
+                        shared.gradio['save_prompt'] = gr.Button('💾', elem_classes='refresh-button')
+                        shared.gradio['delete_prompt'] = gr.Button('🗑️', elem_classes='refresh-button')
+
+                    shared.gradio['status'] = gr.Markdown('')
+
+                with gr.Column():
+                    with gr.Tab('Raw'):
+                        shared.gradio['output_textbox'] = gr.Textbox(elem_classes="textbox_default_output", lines=27, label='Output')
+
+                    with gr.Tab('Markdown'):
+                        shared.gradio['markdown_render'] = gr.Button('Render')
+                        shared.gradio['markdown'] = gr.Markdown()
+
+                    with gr.Tab('HTML'):
+                        shared.gradio['html'] = gr.HTML()
+
+        with gr.Tab("Parameters", elem_id="parameters"):
+            create_settings_menus(default_preset)
 
         # Model tab
         with gr.Tab("Model", elem_id="model-tab"):
