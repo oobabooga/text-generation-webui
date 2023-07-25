@@ -1,13 +1,12 @@
 import traceback
 from functools import partial
+from inspect import signature
 
 import gradio as gr
 
 import extensions
 import modules.shared as shared
 from modules.logging_colors import logger
-from inspect import signature
-
 
 state = {}
 available_extensions = []
@@ -120,7 +119,9 @@ def _apply_tokenizer_extensions(function_name, state, prompt, input_ids, input_e
 def _apply_logits_processor_extensions(function_name, processor_list, input_ids):
     for extension, _ in iterator():
         if hasattr(extension, function_name):
-            getattr(extension, function_name)(processor_list, input_ids)
+            processor_list = getattr(extension, function_name)(processor_list, input_ids)
+
+    return processor_list
 
 
 # Get prompt length in tokens after applying extension functions which override the default tokenizer output
