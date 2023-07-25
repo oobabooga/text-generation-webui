@@ -10,10 +10,14 @@ from transformers.modeling_outputs import CausalLMOutputWithPast
 from modules import shared
 from modules.logging_colors import logger
 
-if torch.cuda.is_available():
-    from llama_cpp_cuda import Llama
+if torch.cuda.is_available() and not torch.version.hip:
+    try:
+        from llama_cpp_cuda import Llama
+    except:
+        from llama_cpp import Llama
 else:
     from llama_cpp import Llama
+
 
 class LlamacppHF(PreTrainedModel):
     def __init__(self, model):
@@ -102,6 +106,8 @@ class LlamacppHF(PreTrainedModel):
             'n_gpu_layers': shared.args.n_gpu_layers,
             'rope_freq_base': 10000 * shared.args.alpha_value ** (64/63.),
             'rope_freq_scale': 1.0 / shared.args.compress_pos_emb,
+            'n_gqa': shared.args.n_gqa or None,
+            'rms_norm_eps': shared.args.rms_norm_eps or None,
             'logits_all': True,
         }
 
