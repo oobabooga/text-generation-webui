@@ -277,3 +277,6 @@ TheBloke_WizardLM-30B-GPTQ:
 .*llama-(2|v2).*chat:
   mode: 'instruct'
   instruction_template: 'Llama-v2'
+.*llama.*70b.*ggml.*\.bin:
+  n_gqa: 8
+  rms_norm_eps: 1.0e-5

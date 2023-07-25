@@ -19,16 +19,16 @@ tensorboard
 transformers==4.31.*
 tqdm
 wandb
-git+https://github.com/huggingface/peft@03eb378eb914fbee709ff7c86ba5b1d033b89524
-bitsandbytes==0.40.2; platform_system != "Windows"
-https://github.com/jllllll/bitsandbytes-windows-webui/releases/download/wheels/bitsandbytes-0.40.2-py3-none-win_amd64.whl; platform_system == "Windows"
+git+https://github.com/huggingface/peft@96c0277a1b9a381b10ab34dbf84917f9b3b992e6
+bitsandbytes==0.41.0; platform_system != "Windows"
+https://github.com/jllllll/bitsandbytes-windows-webui/releases/download/wheels/bitsandbytes-0.41.0-py3-none-win_amd64.whl; platform_system == "Windows"
 https://github.com/PanQiWei/AutoGPTQ/releases/download/v0.3.0/auto_gptq-0.3.0+cu117-cp310-cp310-win_amd64.whl; platform_system == "Windows"
 https://github.com/PanQiWei/AutoGPTQ/releases/download/v0.3.0/auto_gptq-0.3.0+cu117-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
-https://github.com/jllllll/exllama/releases/download/0.0.7/exllama-0.0.7+cu117-cp310-cp310-win_amd64.whl; platform_system == "Windows"
-https://github.com/jllllll/exllama/releases/download/0.0.7/exllama-0.0.7+cu117-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
+https://github.com/jllllll/exllama/releases/download/0.0.8/exllama-0.0.8+cu117-cp310-cp310-win_amd64.whl; platform_system == "Windows"
+https://github.com/jllllll/exllama/releases/download/0.0.8/exllama-0.0.8+cu117-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
 # llama-cpp-python without GPU support
-llama-cpp-python==0.1.73; platform_system != "Windows"
-https://github.com/abetlen/llama-cpp-python/releases/download/v0.1.73/llama_cpp_python-0.1.73-cp310-cp310-win_amd64.whl; platform_system == "Windows"
+llama-cpp-python==0.1.77; platform_system != "Windows"
+https://github.com/abetlen/llama-cpp-python/releases/download/v0.1.77/llama_cpp_python-0.1.77-cp310-cp310-win_amd64.whl; platform_system == "Windows"
 # llama-cpp-python with CUDA support
-https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/textgen-webui/llama_cpp_python_cuda-0.1.73+cu117-cp310-cp310-win_amd64.whl; platform_system == "Windows"
-https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/textgen-webui/llama_cpp_python_cuda-0.1.73+cu117-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
+https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/textgen-webui/llama_cpp_python_cuda-0.1.77+cu117-cp310-cp310-win_amd64.whl; platform_system == "Windows"
+https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/textgen-webui/llama_cpp_python_cuda-0.1.77+cu117-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
