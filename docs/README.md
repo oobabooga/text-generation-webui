@@ -8,7 +8,6 @@
 * [Docker](Docker.md)
 * [ExLlama](ExLlama.md)
 * [Extensions](Extensions.md)
-* [FlexGen](FlexGen.md)
 * [Generation parameters](Generation-parameters.md)
 * [GGML (llama.cpp) models](GGML-llama.cpp-models.md)
 * [GPT-4chan model](GPT-4chan-model.md)
