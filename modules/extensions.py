@@ -119,7 +119,9 @@ def _apply_tokenizer_extensions(function_name, state, prompt, input_ids, input_e
 def _apply_logits_processor_extensions(function_name, processor_list, input_ids):
     for extension, _ in iterator():
         if hasattr(extension, function_name):
-            processor_list = getattr(extension, function_name)(processor_list, input_ids)
+            result = getattr(extension, function_name)(processor_list, input_ids)
+            if type(result) is list:
+                processor_list = result
 
     return processor_list
 
