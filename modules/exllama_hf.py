@@ -50,8 +50,8 @@ class ExllamaHF(PreTrainedModel):
         input_ids = args[0] if len(args) > 0 else kwargs['input_ids']
         use_cache = kwargs.get('use_cache', True)
         labels = kwargs.get('labels', None)
+        cache = kwargs.get('past_key_values', None)
         seq = input_ids[0].tolist()
-        cache = kwargs['past_key_values'] if 'past_key_values' in kwargs else None
 
         if labels is None:
             if cache is None:
