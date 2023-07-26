@@ -141,7 +141,36 @@ For example:
 
 To download a protected model, set env vars `HF_USER` and `HF_PASS` to your Hugging Face username and password (or [User Access Token](https://huggingface.co/settings/tokens)). The model's terms must first be accepted on the HF website.
 
-Many types of models and quantizations such as RWKV, GGML, and GPTQ are supported. For most users quantization is highly recommended due to the performance and memory benefits it provides. For detailed instructions [check out the specific documentation for each type](docs/README.md).
+#### GGML models
+
+You can drop these directly into the `models/` folder, making sure that the file name contains `ggml` somewhere and ends in `.bin`.
+
+#### GPT-4chan
+
+<details>
+<summary>
+Instructions
+</summary>
+
+[GPT-4chan](https://huggingface.co/ykilcher/gpt-4chan) has been shut down from Hugging Face, so you need to download it elsewhere. You have two options:
+
+* Torrent: [16-bit](https://archive.org/details/gpt4chan_model_float16) / [32-bit](https://archive.org/details/gpt4chan_model)
+* Direct download: [16-bit](https://theswissbay.ch/pdf/_notpdf_/gpt4chan_model_float16/) / [32-bit](https://theswissbay.ch/pdf/_notpdf_/gpt4chan_model/)
+
+The 32-bit version is only relevant if you intend to run the model in CPU mode. Otherwise, you should use the 16-bit version.
+
+After downloading the model, follow these steps:
+
+1. Place the files under `models/gpt4chan_model_float16` or `models/gpt4chan_model`.
+2. Place GPT-J 6B's config.json file in that same folder: [config.json](https://huggingface.co/EleutherAI/gpt-j-6B/raw/main/config.json).
+3. Download GPT-J 6B's tokenizer files (they will be automatically detected when you attempt to load GPT-4chan):
+
+```
+python download-model.py EleutherAI/gpt-j-6B --text-only
+```
+
+When you load this model in default or notebook modes, the "HTML" tab will show the generated text in 4chan format.
+</details>
 
 ## Starting the web UI
 
@@ -303,8 +332,6 @@ Optionally, you can use the following command-line flags:
 | Flag                                  | Description |
 |---------------------------------------|-------------|
 | `--multimodal-pipeline PIPELINE`      | The multimodal pipeline to use. Examples: `llava-7b`, `llava-13b`. |
-
-Out of memory errors? Try out [GGML](docs/GGML-llama.cpp-models.md) and [GPTQ](docs/GPTQ-models-(4-bit-mode).md) quantizations. Alternatively check out [the low VRAM guide](docs/Low-VRAM-guide.md).
 
 ## Presets
 
