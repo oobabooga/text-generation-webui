@@ -34,7 +34,7 @@ settings = {
     'autoload_model': False,
     'max_new_tokens': 200,
     'max_new_tokens_min': 1,
-    'max_new_tokens_max': 4096,
+    'max_new_tokens_max': 8000,
     'auto_max_new_tokens': False,
     'seed': -1,
     'negative_prompt': '',
