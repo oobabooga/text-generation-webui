@@ -593,6 +593,21 @@ def create_interface():
     if shared.args.extensions is not None and len(shared.args.extensions) > 0:
         extensions_module.load_extensions()
 
+    # Forcing some events to be triggered on page load
+    shared.persistent_interface_state.update({
+        'loader': shared.args.loader or 'Transformers',
+    })
+
+    if shared.is_chat():
+        shared.persistent_interface_state.update({
+            'mode': shared.settings['mode'],
+            'character_menu': shared.args.character or shared.settings['character'],
+            'instruction_template': shared.settings['instruction_template']
+        })
+
+        if Path("cache/pfp_character.png").exists():
+            Path("cache/pfp_character.png").unlink()
+
     # css/js strings
     css = ui.css if not shared.is_chat() else ui.css + ui.chat_css
     js = ui.main_js if not shared.is_chat() else ui.main_js + ui.chat_js
@@ -1054,11 +1069,11 @@ def create_interface():
 
         create_file_saving_event_handlers()
 
-        shared.gradio['interface'].load(lambda: None, None, None, _js=f"() => {{{js}}}")
-        shared.gradio['interface'].load(partial(ui.apply_interface_values, {}, use_persistent=True), None, gradio(ui.list_interface_input_elements()), show_progress=False)
         if shared.settings['dark_theme']:
             shared.gradio['interface'].load(lambda: None, None, None, _js="() => document.getElementsByTagName('body')[0].classList.add('dark')")
 
+        shared.gradio['interface'].load(lambda: None, None, None, _js=f"() => {{{js}}}")
+        shared.gradio['interface'].load(partial(ui.apply_interface_values, {}, use_persistent=True), None, gradio(ui.list_interface_input_elements()), show_progress=False)
         if shared.is_chat():
             shared.gradio['interface'].load(chat.redraw_html, shared.reload_inputs, gradio('display'))
 
@@ -1155,21 +1170,6 @@ if __name__ == "__main__":
         shared.model, shared.tokenizer = load_model(shared.model_name)
         if shared.args.lora:
             add_lora_to_model(shared.args.lora)
-
-    # Forcing some events to be triggered on page load
-    shared.persistent_interface_state.update({
-        'loader': shared.args.loader or 'Transformers',
-    })
-
-    if shared.is_chat():
-        shared.persistent_interface_state.update({
-            'mode': shared.settings['mode'],
-            'character_menu': shared.args.character or shared.settings['character'],
-            'instruction_template': shared.settings['instruction_template']
-        })
-
-        if Path("cache/pfp_character.png").exists():
-            Path("cache/pfp_character.png").unlink()
 
     shared.generation_lock = Lock()
 
