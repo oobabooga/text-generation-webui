@@ -128,7 +128,7 @@ params = {
 class MyLogits(LogitsProcessor):
     """
     Manipulates the probabilities for the next token before it gets sampled.
-    Used in the custom_logits_processor function below.
+    Used in the logits_processor_modifier function below.
     """
     def __init__(self):
         pass
