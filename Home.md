@@ -1,1 +1,1 @@
-Moved to https://github.com/oobabooga/text-generation-webui/tree/main/docs
+The project documentation has been moved to https://github.com/oobabooga/text-generation-webui/tree/main/docs
