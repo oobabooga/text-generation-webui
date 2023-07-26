@@ -231,7 +231,7 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
         generate_params[k] = state[k]
 
     if state['negative_prompt'] != '':
-        generate_params['negative_prompt'] = shared.tokenizer([state['negative_prompt']], return_tensors="pt")["input_ids"]
+        generate_params['negative_prompt_ids'] = encode(state['negative_prompt'])
 
     for k in ['epsilon_cutoff', 'eta_cutoff']:
         if state[k] > 0:
