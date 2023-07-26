@@ -1,9 +1,17 @@
 """
-This file contains all the hyperparameters used in the embedding pipeline.
-The first parameter in the list is the current value.
-The second parameter in the list is the scope.
+This module provides a singleton class `Parameters` that is used to manage all hyperparameters for the embedding application. It expects a JSON file in `extensions/superbooga/config.json`.
+
+Each element would have a default value which will be used for the current run.
+
+Some of the elements would have 'categories'. These categories define the range in which the optimizer will search.
+
+If the element is tagged with 'should_optimize: false', then the optimizer will only ever use the default value.
 """
-from skopt.space import Categorical, Integer, Real
+from skopt.space import Categorical
+from pathlib import Path
+
+import json
+
 from modules.logging_colors import logger
 
 
@@ -18,268 +26,270 @@ DIST_GEOMETRIC_STRATEGY = 'Geometric Mean'
 DIST_ARITHMETIC_STRATEGY = 'Arithmetic Mean'
 
 
-hyperparameters = {
-    # === PREPROCESS HYPERPARAMS ===
-    'to_lower': [True, Categorical([True, False])],
-    'num_conversion': [NUM_TO_WORD_METHOD, Categorical([NUM_TO_WORD_METHOD, NUM_TO_CHAR_METHOD, NUM_TO_CHAR_LONG_METHOD, None])],
-    'merge_spaces': [True, Categorical([True, False])],
-    'strip': [True, Categorical([True, False])],
-    'remove_punctuation': [True, Categorical([True, False])],
-    'remove_stopwords': [False, Categorical([True, False])],
-    'remove_specific_pos': [True, Categorical([True, False])],
-    'lemmatize': [False, Categorical([True, False])],
+class Parameters:
+    _instance = None
 
-    'min_num_sent': [1, Categorical([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 999999])],
+    variable_mapping = {
+        'NUM_TO_WORD_METHOD': NUM_TO_WORD_METHOD,
+        'NUM_TO_CHAR_METHOD': NUM_TO_CHAR_METHOD,
+        'NUM_TO_CHAR_LONG_METHOD': NUM_TO_CHAR_LONG_METHOD,
+        'DIST_MIN_STRATEGY': DIST_MIN_STRATEGY,
+        'DIST_HARMONIC_STRATEGY': DIST_HARMONIC_STRATEGY,
+        'DIST_GEOMETRIC_STRATEGY': DIST_GEOMETRIC_STRATEGY,
+        'DIST_ARITHMETIC_STRATEGY': DIST_ARITHMETIC_STRATEGY,
+    }
 
+    @staticmethod
+    def getInstance():
+        if Parameters._instance is None:
+            Parameters()
+        return Parameters._instance
 
-    # === PROCESS HYPERPARAMS ===
-    'delta_start': [30, Integer(0, 100)],
+    def __init__(self):
+        if Parameters._instance is not None:
+            raise Exception("This class is a singleton!")
+        else:
+            Parameters._instance = self
+            self.hyperparameters = self._load_from_json(Path("extensions/superbooga/config.json"))
 
-    'chunk_len1': [40, Integer(30, 100)],
-    'include_len1': [True, Categorical([True, False])],
-    'chunk_len2': [50, Integer(30, 100)],
-    'include_len2': [True, Categorical([True, False])],
-    'chunk_len3': [100, Integer(30, 700)],
-    'include_len3': [False, Categorical([True, False])],
-    'chunk_len4': [300, Integer(30, 700)],
-    'include_len4': [False, Categorical([True, False])],
+    def _load_from_json(self, file_path):
+        logger.debug('Loading hyperparameters...')
 
-    'context_len_left': [300, Integer(10, 1000)],
-    'context_len_right': [850, Integer(100, 1500)],
+        with open(file_path, 'r') as file:
+            data = json.load(file)
 
+        # Replace variable names in the dict and create Categorical objects
+        for key in data:
+            if "default" in data[key] and data[key]["default"] in self.variable_mapping:
+                data[key]["default"] = self.variable_mapping[data[key]["default"]]
+            if "categories" in data[key]:
+                data[key]["categories"] = Categorical([self.variable_mapping.get(cat, cat) for cat in data[key]["categories"]], name=key)
 
-    # === POSTPROCESS HYPERPARAMS ===
-    'new_dist_strategy': [DIST_MIN_STRATEGY, Categorical([DIST_MIN_STRATEGY, DIST_HARMONIC_STRATEGY, DIST_GEOMETRIC_STRATEGY, DIST_ARITHMETIC_STRATEGY])],
-    'chunk_count': [180, Integer(50, 400)],
-    'min_num_length': [1, Integer(1, 10)],
-    'confidence_interval': [0.6, Real(0.1, 1.0, prior="uniform")],
-    'time_weight': [0, Real(0.0, 1.0, prior="uniform")],
-
-    
-    # === NON-OPTIMIZABLE HYPERPARAMS ===
-    'chunk_separator': '',
-    'data_separator': '\n\n<<document chunk>>\n\n',
-    'chunk_regex': '(?<==== ).*?(?= ===)|User story: \d+',
-    'strong_cleanup': False,
-    'max_token_count': 3072,
-    'threads': 4
-}
+        return data
 
 
 def should_to_lower() -> bool:
-    return hyperparameters['to_lower'][0]
+    return Parameters.getInstance().hyperparameters['to_lower']['default']
 
 
 def get_num_conversion_strategy() -> str:
-    return hyperparameters['num_conversion'][0]
+    return Parameters.getInstance().hyperparameters['num_conversion']['default']
 
 
 def should_merge_spaces() -> bool:
-    return hyperparameters['merge_spaces'][0]
+    return Parameters.getInstance().hyperparameters['merge_spaces']['default']
 
 
 def should_strip() -> bool:
-    return hyperparameters['strip'][0]
+    return Parameters.getInstance().hyperparameters['strip']['default']
 
 
 def should_remove_punctuation() -> bool:
-    return hyperparameters['remove_punctuation'][0]
+    return Parameters.getInstance().hyperparameters['remove_punctuation']['default']
 
 
 def should_remove_stopwords() -> bool:
-    return hyperparameters['remove_stopwords'][0]
+    return Parameters.getInstance().hyperparameters['remove_stopwords']['default']
 
 
 def should_remove_specific_pos() -> bool:
-    return hyperparameters['remove_specific_pos'][0]
+    return Parameters.getInstance().hyperparameters['remove_specific_pos']['default']
 
 
 def should_lemmatize() -> bool:
-    return hyperparameters['lemmatize'][0]
+    return Parameters.getInstance().hyperparameters['lemmatize']['default']
 
 
 def get_min_num_sentences() -> int:
-    return hyperparameters['min_num_sent'][0]
+    return Parameters.getInstance().hyperparameters['min_num_sent']['default']
 
 
 def get_delta_start() -> int:
-    return hyperparameters['delta_start'][0]
+    return Parameters.getInstance().hyperparameters['delta_start']['default']
 
 
 def set_to_lower(value: bool):
-    hyperparameters['to_lower'][0] = value
+    Parameters.getInstance().hyperparameters['to_lower']['default'] = value
 
 
 def set_num_conversion_strategy(value: str):
-    hyperparameters['num_conversion'][0] = value
+    Parameters.getInstance().hyperparameters['num_conversion']['default'] = value
 
 
 def set_merge_spaces(value: bool):
-    hyperparameters['merge_spaces'][0] = value
+    Parameters.getInstance().hyperparameters['merge_spaces']['default'] = value
 
 
 def set_strip(value: bool):
-    hyperparameters['strip'][0] = value
+    Parameters.getInstance().hyperparameters['strip']['default'] = value
 
 
 def set_remove_punctuation(value: bool):
-    hyperparameters['remove_punctuation'][0] = value
+    Parameters.getInstance().hyperparameters['remove_punctuation']['default'] = value
 
 
 def set_remove_stopwords(value: bool):
-    hyperparameters['remove_stopwords'][0] = value
+    Parameters.getInstance().hyperparameters['remove_stopwords']['default'] = value
 
 
 def set_remove_specific_pos(value: bool):
-    hyperparameters['remove_specific_pos'][0] = value
+    Parameters.getInstance().hyperparameters['remove_specific_pos']['default'] = value
 
 
 def set_lemmatize(value: bool):
-    hyperparameters['lemmatize'][0] = value
+    Parameters.getInstance().hyperparameters['lemmatize']['default'] = value
 
 
 def set_min_num_sentences(value: int):
-    hyperparameters['min_num_sent'][0] = value
+    Parameters.getInstance().hyperparameters['min_num_sent']['default'] = value
 
 
 def set_delta_start(value: int):
-    hyperparameters['delta_start'][0] = value
+    Parameters.getInstance().hyperparameters['delta_start']['default'] = value
 
 
 def get_chunk_len() -> str:
     lens = []
-    if hyperparameters['include_len1'][0]:
-        lens.append(hyperparameters['chunk_len1'][0])
+    mask = Parameters.getInstance().hyperparameters['chunk_len_mask']['default']
 
-    if hyperparameters['include_len2'][0]:
-        lens.append(hyperparameters['chunk_len2'][0])
+    lens.append(Parameters.getInstance().hyperparameters['chunk_len1']['default'] if mask & (1 << 0) else None)
+    lens.append(Parameters.getInstance().hyperparameters['chunk_len2']['default'] if mask & (1 << 1) else None)
+    lens.append(Parameters.getInstance().hyperparameters['chunk_len3']['default'] if mask & (1 << 2) else None)
+    lens.append(Parameters.getInstance().hyperparameters['chunk_len4']['default'] if mask & (1 << 3) else None)
 
-    if hyperparameters['include_len3'][0]:
-        lens.append(hyperparameters['chunk_len3'][0])
-
-    if hyperparameters['include_len4'][0]:
-        lens.append(hyperparameters['chunk_len4'][0])
-
-    return ','.join([str(len) for len in lens])
+    return ','.join([str(len) for len in lens if len])
 
 
 def set_chunk_len(val: str):
     chunk_lens = sorted([int(len.strip()) for len in val.split(',')])
+
+    # Reset the mask to zero
+    Parameters.getInstance().hyperparameters['chunk_len_mask']['default'] = 0
+
     if len(chunk_lens) > 0:
-        if 30 <= chunk_lens[0] <= 100:
-            hyperparameters['chunk_len1'][0] = chunk_lens[0]
+        Parameters.getInstance().hyperparameters['chunk_len1']['default'] = chunk_lens[0]
+        Parameters.getInstance().hyperparameters['chunk_len_mask']['default'] |= (1 << 0)
     if len(chunk_lens) > 1:
-        if 30 <= chunk_lens[1] <= 100:
-            hyperparameters['chunk_len2'][0] = chunk_lens[1]
+        Parameters.getInstance().hyperparameters['chunk_len2']['default'] = chunk_lens[1]
+        Parameters.getInstance().hyperparameters['chunk_len_mask']['default'] |= (1 << 1)
     if len(chunk_lens) > 2:
-        if 30 <= chunk_lens[2] <= 700:
-            hyperparameters['chunk_len3'][0] = chunk_lens[2]
+        Parameters.getInstance().hyperparameters['chunk_len3']['default'] = chunk_lens[2]
+        Parameters.getInstance().hyperparameters['chunk_len_mask']['default'] |= (1 << 2)
     if len(chunk_lens) > 3:
-        if 30 <= chunk_lens[3] <= 700:
-            hyperparameters['chunk_len4'][0] = chunk_lens[3]
+        Parameters.getInstance().hyperparameters['chunk_len4']['default'] = chunk_lens[3]
+        Parameters.getInstance().hyperparameters['chunk_len_mask']['default'] |= (1 << 3)
 
     if len(chunk_lens) > 4:
         logger.warning(f'Only up to four chunk lengths are supported. Skipping {chunk_lens[4:]}')
 
 
 def get_context_len() -> str:
-    context_len = str(hyperparameters['context_len_left'][0]) + ',' + str(hyperparameters['context_len_right'][0])
+    context_len = str(Parameters.getInstance().hyperparameters['context_len_left']['default']) + ',' + str(Parameters.getInstance().hyperparameters['context_len_right']['default'])
     return context_len
 
 
 def set_context_len(val: str):
     context_lens = [int(len.strip()) for len in val.split(',') if len.isdigit()]
     if len(context_lens) == 1:
-        hyperparameters['context_len_left'] = hyperparameters['context_len_right'] = context_lens[0]
+        Parameters.getInstance().hyperparameters['context_len_left']['default'] = Parameters.getInstance().hyperparameters['context_len_right']['default'] = context_lens[0]
     elif len(context_lens) == 2:
-        hyperparameters['context_len_left'] = context_lens[0]
-        hyperparameters['context_len_right'] = context_lens[1]
+        Parameters.getInstance().hyperparameters['context_len_left']['default'] = context_lens[0]
+        Parameters.getInstance().hyperparameters['context_len_right']['default'] = context_lens[1]
     else:
         logger.warning(f'Incorrect context length received {val}. Skipping.')
 
 
 def get_new_dist_strategy() -> str:
-    return hyperparameters['new_dist_strategy'][0]
+    return Parameters.getInstance().hyperparameters['new_dist_strategy']['default']
 
 
 def get_chunk_count() -> int:
-    return hyperparameters['chunk_count'][0]
+    return Parameters.getInstance().hyperparameters['chunk_count']['default']
 
 
 def get_min_num_length() -> int:
-    return hyperparameters['min_num_length'][0]
+    return Parameters.getInstance().hyperparameters['min_num_length']['default']
 
 
 def get_confidence_interval() -> float:
-    return hyperparameters['confidence_interval'][0]
+    return Parameters.getInstance().hyperparameters['confidence_interval']['default']
 
 
 def get_time_weight() -> int:
-    return hyperparameters['time_weight'][0]
+    return Parameters.getInstance().hyperparameters['time_weight']['default']
 
 
 def get_chunk_separator() -> str:
-    return hyperparameters['chunk_separator']
+    return Parameters.getInstance().hyperparameters['chunk_separator']['default']
 
 
 def get_data_separator() -> str:
-    return hyperparameters['data_separator']
+    return Parameters.getInstance().hyperparameters['data_separator']['default']
 
 
 def get_chunk_regex() -> str:
-    return hyperparameters['chunk_regex']
+    return Parameters.getInstance().hyperparameters['chunk_regex']['default']
 
 
 def get_is_strong_cleanup() -> bool:
-    return hyperparameters['strong_cleanup']
+    return Parameters.getInstance().hyperparameters['strong_cleanup']['default']
 
 
 def get_max_token_count() -> int:
-    return hyperparameters['max_token_count']
+    return Parameters.getInstance().hyperparameters['max_token_count']['default']
 
 
 def get_num_threads() -> int:
-    return hyperparameters['threads']
+    return Parameters.getInstance().hyperparameters['threads']['default']
+
+
+def get_optimization_steps() -> int:
+    return Parameters.getInstance().hyperparameters['optimization_steps']['default']
+
 
 def set_new_dist_strategy(value: str):
-    hyperparameters['new_dist_strategy'][0] = value
+    Parameters.getInstance().hyperparameters['new_dist_strategy']['default'] = value
 
 
 def set_chunk_count(value: int):
-    hyperparameters['chunk_count'][0] = value
+    Parameters.getInstance().hyperparameters['chunk_count']['default'] = value
 
 
 def set_min_num_length(value: int):
-    hyperparameters['min_num_length'][0] = value
+    Parameters.getInstance().hyperparameters['min_num_length']['default'] = value
 
 
 def set_confidence_interval(value: float):
-    hyperparameters['confidence_interval'][0] = value
+    Parameters.getInstance().hyperparameters['confidence_interval']['default'] = value
 
 
 def set_time_weight(value: int):
-    hyperparameters['time_weight'][0] = value
+    Parameters.getInstance().hyperparameters['time_weight']['default'] = value
 
 
 def set_chunk_separator(value: str):
-    hyperparameters['chunk_separator'] = value
+    Parameters.getInstance().hyperparameters['chunk_separator']['default'] = value
 
 
 def set_data_separator(value: str):
-    hyperparameters['data_separator'] = value
+    Parameters.getInstance().hyperparameters['data_separator']['default'] = value
 
 
 def set_chunk_regex(value: str):
-    hyperparameters['chunk_regex'] = value
+    Parameters.getInstance().hyperparameters['chunk_regex']['default'] = value
 
 
 def set_strong_cleanup(value: bool):
-    hyperparameters['strong_cleanup'] = value
+    Parameters.getInstance().hyperparameters['strong_cleanup']['default'] = value
 
 
 def set_max_token_count(value: int):
-    hyperparameters['max_token_count'] = value
+    Parameters.getInstance().hyperparameters['max_token_count']['default'] = value
 
 
 def set_num_threads(value: int):
-    hyperparameters['threads'] = value
+    Parameters.getInstance().hyperparameters['threads']['default'] = value
+
+
+def set_optimization_steps(value: int):
+    Parameters.getInstance().hyperparameters['optimization_steps']['default'] = value

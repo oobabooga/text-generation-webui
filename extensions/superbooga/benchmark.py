@@ -1,7 +1,16 @@
+"""
+This module implements a benchmark function to evaluate the performance of the embedding pipeline. It expects a configuration JSON file. It must have questions and expected retrieved text.
+For each question, it's essential to have variants of that question. Language is fluid and each person might have their own spin on how they may ask it.
+
+At the end, it will save the results inside a benchmark_{sysdate}.txt file in the main directory.
+
+The benchmark function will return the score as an integer.
+"""
 import datetime
 import json
-import math
 import os
+
+from pathlib import Path
 
 from .data_processor import process_and_add_to_collector, preprocess_text
 
@@ -23,12 +32,12 @@ def benchmark(config_path, n_results, max_token_count, chunk_len, context_len, c
             corpus = ""
 
             # Check if the file exists
-            if os.path.isfile(filepath):
+            if os.path.isfile(Path(filepath)):
                 # Open the file and read its content
-                with open(filepath, 'r') as file:
+                with open(Path(filepath), 'r') as file:
                     corpus = file.read()
-                for i in process_and_add_to_collector(corpus, chunk_len, context_len, chunk_regex, chunk_sep, collector):
-                    yield i
+                for _ in process_and_add_to_collector(corpus, chunk_len, context_len, chunk_regex, chunk_sep, collector):
+                    pass
             else:
                 raise f'Cannot find specified file {filepath}.'
 
@@ -52,12 +61,11 @@ def benchmark(config_path, n_results, max_token_count, chunk_len, context_len, c
                                 total_points += 1
                                 break
 
-                    info = f"The question '{q}' scored {points} points."
+                    info = f"The question '{q}' scored {points}/{len(criteria)} points."
                     print(info, file=log)
 
-                    yield info
-                print(file=log)
+                print('\n---\n', file=log)
 
-    yield f'Total points: {total_points}/{max_points}.'
+        print(f'##Total points:\n\n{total_points}/{max_points}', file=log)
 
     return total_points

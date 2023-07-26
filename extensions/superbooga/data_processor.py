@@ -1,5 +1,7 @@
 """
-This module is responsible for processing the corpus and feeding it into chromaDB.
+This module is responsible for processing the corpus and feeding it into chromaDB. It will receive a corpus of text. 
+It will then split it into chunks of specified length. For each of those chunks, it will append surrounding context.
+It will only include full words.
 """
 
 import re

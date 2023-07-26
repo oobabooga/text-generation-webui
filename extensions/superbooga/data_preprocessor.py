@@ -2,7 +2,14 @@
 This module contains utils for preprocessing the text before converting it to embeddings.
 
 - TextPreprocessorBuilder preprocesses individual strings.
-- TextSummarizer extracts the most important sentences from a long string.
+    * lowering cases
+    * converting numbers to words or characters
+    * merging and stripping spaces
+    * removing punctuation
+    * removing stop words
+    * lemmatizing
+    * removing specific parts of speech (adverbs and interjections)
+- TextSummarizer extracts the most important sentences from a long string using text-ranking.
 """
 
 import pytextrank

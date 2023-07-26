@@ -200,8 +200,6 @@ class ChromaCollector(Collecter):
                     text_with_context=self.id_to_info[id]['text_with_context'], 
                     distance=distance, id=id) 
                 for id, distance in zip(result['ids'][0], result['distances'][0])]
-        
-        print(result)
 
         infos.sort(key=lambda x: x.start_index)
         infos = self.filter_infos_in_interval(infos, parameters.get_confidence_interval())

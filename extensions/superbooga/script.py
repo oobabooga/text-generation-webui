@@ -1,3 +1,7 @@
+"""
+This file is responsible for the UI and how the application interracts with the rest of the system.
+"""
+
 import re
 import textwrap
 import codecs
@@ -6,6 +10,7 @@ import gradio as gr
 import extensions.superbooga.parameters as parameters
 
 from bs4 import BeautifulSoup
+from pathlib import Path
 
 from modules import chat, shared
 from modules.logging_colors import logger
@@ -14,6 +19,7 @@ from .chromadb import add_chunks_to_collector, make_collector
 from .download_urls import download_urls
 from .data_processor import process_and_add_to_collector, preprocess_text
 from .benchmark import benchmark
+from .optimize import optimize
 
 collector = make_collector()
 chat_collector = make_collector()
@@ -59,12 +65,52 @@ def feed_url_into_collector(urls, chunk_len, context_len, chunk_regex, chunk_sep
 
 
 def begin_benchmark(chunk_count, max_token_count, chunk_len, context_len, chunk_regex, chunk_sep):
-    for i in benchmark("/home/hidelord/Desktop/LLM/Oobabooga/text-generation-webui/extensions/superbooga/benchmark_texts/questions.json", chunk_count, max_token_count, chunk_len, context_len, chunk_regex, chunk_sep, collector):
-        yield i
+    score = benchmark(Path("extensions/superbooga/benchmark_texts/questions.json"), chunk_count,
+                      max_token_count, chunk_len, context_len, chunk_regex, chunk_sep, collector)
+    return f'**Score**: {score}'
 
 
-def apply_settings(confidence_interval, min_sentences, new_dist_strat, delta_start, min_number_length, num_conversion, preprocess_pipeline, data_separator, max_token_count, time_weight, chunk_count, chunk_sep, context_len, chunk_regex, chunk_len):
+def begin_optimization(optimization_steps, progress=gr.Progress()):
+    return optimize(collector, int(optimization_steps), progress), *get_optimizable_settings()
+
+
+def get_optimizable_settings() -> list:
+    preprocess_pipeline = []
+    if parameters.should_to_lower():
+        preprocess_pipeline.append('Lower Cases')
+    if parameters.should_remove_punctuation():
+        preprocess_pipeline.append('Remove Punctuation')
+    if parameters.should_remove_specific_pos():
+        preprocess_pipeline.append('Remove Adverbs')
+    if parameters.should_remove_stopwords():
+        preprocess_pipeline.append('Remove Stop Words')
+    if parameters.should_lemmatize():
+        preprocess_pipeline.append('Lemmatize')
+    if parameters.should_merge_spaces():
+        preprocess_pipeline.append('Merge Spaces')
+    if parameters.should_strip():
+        preprocess_pipeline.append('Strip Edges')
+        
+    return [
+        parameters.get_confidence_interval(),
+        parameters.get_min_num_sentences(),
+        parameters.get_new_dist_strategy(),
+        parameters.get_delta_start(),
+        parameters.get_min_num_length(),
+        parameters.get_num_conversion_strategy(),
+        preprocess_pipeline,
+        parameters.get_time_weight(),
+        parameters.get_chunk_count(),
+        parameters.get_context_len(),
+        parameters.get_chunk_len()
+    ]
+
+
+def apply_settings(optimization_steps, confidence_interval, min_sentences, new_dist_strat, delta_start, min_number_length, num_conversion, 
+                   preprocess_pipeline, data_separator, max_token_count, time_weight, chunk_count, chunk_sep, context_len, chunk_regex, chunk_len):
     logger.debug('Applying settings.')
+
+    parameters.set_optimization_steps(optimization_steps)
     parameters.set_confidence_interval(confidence_interval)
     parameters.set_min_num_sentences(min_sentences)
     parameters.set_new_dist_strategy(new_dist_strat)
@@ -157,7 +203,7 @@ def input_modifier(string):
         user_input = match.group(1).strip()
         user_input = preprocess_text(user_input)
 
-        print(f"Preprocessed user input: {user_input}")
+        logger.debug(f"Preprocessed User Input: {user_input}")
 
         # Get the most similar chunks
         results = collector.get_sorted_by_dist(user_input, n_results=parameters.get_chunk_count(), max_token_count=int(parameters.get_max_token_count()))
@@ -252,8 +298,7 @@ def ui():
 
                 with gr.Accordion("Generation settings", open=False):
                     chunk_count = gr.Number(value=parameters.get_chunk_count(), label='Chunk count', info='The number of closest-matching chunks to include in the prompt.')
-                    gr.Markdown('Time weighting (optional, used in to make recently added chunks more likely to appear)')
-                    time_weight = gr.Slider(0, 1, value=parameters.get_time_weight(), label='Time weight', info='Defines the strength of the time weighting. 0 = no time weighting.')
+                    time_weight = gr.Slider(0, 1, value=parameters.get_time_weight(), label='Time weight', info='Defines the strength of the time weighting. Zero means the feature is turned off.')
                     max_token_count = gr.Number(value=parameters.get_max_token_count(), label='Max Context Tokens', info='The context length in tokens will not exceed this value.')
                     data_separator = gr.Textbox(value=codecs.encode(parameters.get_data_separator(), 'unicode_escape').decode(), label='Data separator', info='When multiple pieces of distant data are added, they might be unrelated. It\'s important to separate them.')
 
@@ -286,32 +331,36 @@ def ui():
 
                     with gr.Row():
                         num_conversion = gr.Dropdown(choices=[parameters.NUM_TO_WORD_METHOD, parameters.NUM_TO_CHAR_METHOD, parameters.NUM_TO_CHAR_LONG_METHOD, 'None'], value=parameters.get_num_conversion_strategy(), label="Number Conversion Method", info='How to preprocess numbers before creating the embeddings.', interactive=True)
-
                         min_number_length = gr.Number(value=parameters.get_min_num_length(), label='Number Length Threshold', info='In digits. Only numbers that have at least that many digits will be converted.', interactive=True)
 
                     delta_start = gr.Number(value=parameters.get_delta_start(), label='Delta Start Index', info='If the system encounters two identical embeddings, and they both start within the same delta, then only the first will be considered.', interactive=True)
-
                     new_dist_strat = gr.Dropdown(choices=[parameters.DIST_MIN_STRATEGY, parameters.DIST_HARMONIC_STRATEGY, parameters.DIST_GEOMETRIC_STRATEGY, parameters.DIST_ARITHMETIC_STRATEGY], value=parameters.get_new_dist_strategy(), label="Distance Strategy", info='When two embedding texts are merged, the distance of the new piece will be decided using one of these strategies.', interactive=True)
-
                     min_sentences = gr.Number(value=parameters.get_min_num_sentences(), label='Summary Threshold', info='In sentences. The minumum number of sentences to trigger text-rank summarization.', interactive=True)
-
                     confidence_interval = gr.Slider(0, 1, value=parameters.get_confidence_interval(), label='Confidence Interval', info='Consider only the smallest interval containing a certain percentage of entries, where entries are weighted according to their inverse distance (1/d).', interactive=True)
 
             with gr.Tab("Benchmark"):
-                update_benchmark = gr.Button('Begin')
+                benchmark_button = gr.Button('Benchmark')
+                optimize_button = gr.Button('Optimize')
+                optimization_steps = gr.Number(value=parameters.get_optimization_steps(), label='Optimization Steps', info='For how many steps to optimize.', interactive=True)
 
             
         with gr.Column():
             last_updated = gr.Markdown()
 
+    all_params = [optimization_steps, confidence_interval, min_sentences, new_dist_strat, delta_start, min_number_length, num_conversion, 
+                  preprocess_pipeline, data_separator, max_token_count, time_weight, chunk_count, chunk_sep, context_len, chunk_regex, chunk_len]
+    optimizable_params = [confidence_interval, min_sentences, new_dist_strat, delta_start, min_number_length, num_conversion, 
+                  preprocess_pipeline, time_weight, chunk_count, context_len, chunk_len]
+
+
     update_data.click(feed_data_into_collector, [data_input, chunk_len, context_len, chunk_regex, chunk_sep], last_updated, show_progress=False)
     update_url.click(feed_url_into_collector, [url_input, chunk_len, context_len, chunk_regex, chunk_sep, strong_cleanup, threads], last_updated, show_progress=False)
     update_file.click(feed_file_into_collector, [file_input, chunk_len, context_len, chunk_regex, chunk_sep], last_updated, show_progress=False)
-    update_benchmark.click(begin_benchmark, [chunk_count, max_token_count, chunk_len, context_len, chunk_regex, chunk_sep], last_updated, show_progress=False)
+    benchmark_button.click(begin_benchmark, [chunk_count, max_token_count, chunk_len, context_len, chunk_regex, chunk_sep], last_updated, show_progress=True)
+    optimize_button.click(begin_optimization, [optimization_steps], [last_updated] + optimizable_params, show_progress=True)
 
 
-    all_params = [confidence_interval, min_sentences, new_dist_strat, delta_start, min_number_length, num_conversion, preprocess_pipeline, data_separator, max_token_count, time_weight, chunk_count, chunk_sep, context_len, chunk_regex, chunk_len]
-
+    optimization_steps.input(fn=apply_settings, inputs=all_params, show_progress=False)
     confidence_interval.input(fn=apply_settings, inputs=all_params, show_progress=False)
     min_sentences.input(fn=apply_settings, inputs=all_params, show_progress=False)
     new_dist_strat.input(fn=apply_settings, inputs=all_params, show_progress=False)

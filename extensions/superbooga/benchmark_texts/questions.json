@@ -1,6 +1,6 @@
 [
     {
-        "text": "/home/hidelord/Desktop/LLM/Oobabooga/text-generation-webui/extensions/superbooga/benchmark_texts/manual.txt",
+        "text": "extensions/superbooga/benchmark_texts/manual.txt",
         "questions": [
             {
                 "question_variants": [
