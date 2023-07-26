@@ -332,8 +332,8 @@ def ui():
             negative_prompt = gr.Textbox(placeholder=params['negative_prompt'], value=params['negative_prompt'], label='Negative Prompt')
             with gr.Row():
                 with gr.Column():
-                    width = gr.Slider(256, 768, value=params['width'], step=64, label='Width')
-                    height = gr.Slider(256, 768, value=params['height'], step=64, label='Height')
+                    width = gr.Slider(64, 2048, value=params['width'], step=64, label='Width')
+                    height = gr.Slider(64, 2048, value=params['height'], step=64, label='Height')
                 with gr.Column(variant="compact", elem_id="sampler_col"):
                     with gr.Row(elem_id="sampler_row"):
                         sampler_name = gr.Dropdown(value=params['sampler_name'], label='Sampling method', elem_id="sampler_box")
