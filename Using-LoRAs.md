@@ -1,1 +1,0 @@
-Moved to https://github.com/oobabooga/text-generation-webui/edit/main/docs/Using-LoRAs.md
