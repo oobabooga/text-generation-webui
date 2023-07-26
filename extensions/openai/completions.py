@@ -48,7 +48,7 @@ class LogprobProcessor(LogitsProcessor):
             top_tokens = [ decode(tok) for tok in top_indices[0] ]
             top_probs = [ float(x) for x in top_values[0] ]
             self.token_alternatives = dict(zip(top_tokens, top_probs))
-            debug_msg(f"{self.__class__.__name__}(logprobs+1={self.logprobs+1}, token_alternatives={self.token_alternatives})")
+            debug_msg(repr(self))
         return logits
 
     def __repr__(self):
@@ -272,16 +272,16 @@ def chat_completions(body: dict, is_legacy: bool = False) -> dict:
         req_params['max_new_tokens'] = req_params['truncation_length']
 
     # format the prompt from messages
-    prompt, token_count = messages_to_prompt(body, req_params, max_tokens)
+    prompt, token_count = messages_to_prompt(body, req_params, max_tokens)  # updates req_params['stopping_strings']
 
     # set real max, avoid deeper errors
     if req_params['max_new_tokens'] + token_count >= req_params['truncation_length']:
         req_params['max_new_tokens'] = req_params['truncation_length'] - token_count
 
+    stopping_strings = req_params.pop('stopping_strings', [])
+
     # generate reply #######################################
     debug_msg({'prompt': prompt, 'req_params': req_params})
-    stopping_strings = req_params.pop('stopping_strings', [])
-    logprob_proc = req_params.pop('logprob_proc', None)
     generator = generate_reply(prompt, req_params, stopping_strings=stopping_strings, is_chat=False)
 
     answer = ''
@@ -348,7 +348,7 @@ def stream_chat_completions(body: dict, is_legacy: bool = False):
         req_params['max_new_tokens'] = req_params['truncation_length']
 
     # format the prompt from messages
-    prompt, token_count = messages_to_prompt(body, req_params, max_tokens)
+    prompt, token_count = messages_to_prompt(body, req_params, max_tokens)  # updates req_params['stopping_strings']
 
     # set real max, avoid deeper errors
     if req_params['max_new_tokens'] + token_count >= req_params['truncation_length']:
@@ -454,10 +454,10 @@ def completions(body: dict, is_legacy: bool = False):
     req_params['max_new_tokens'] = max_tokens
     requested_model = req_params.pop('requested_model')
     logprob_proc = req_params.pop('logprob_proc', None)
+    stopping_strings = req_params.pop('stopping_strings', [])
     #req_params['suffix'] = default(body, 'suffix', req_params['suffix'])
     req_params['echo'] = default(body, 'echo', req_params['echo'])
     req_params['top_k'] = default(body, 'best_of', req_params['top_k'])
-    stopping_strings = req_params.pop('stopping_strings', [])
 
     resp_list_data = []
     total_completion_token_count = 0
@@ -560,6 +560,7 @@ def stream_completions(body: dict, is_legacy: bool = False):
     req_params['max_new_tokens'] = max_tokens
     requested_model = req_params.pop('requested_model')
     logprob_proc = req_params.pop('logprob_proc', None)
+    stopping_strings = req_params.pop('stopping_strings', [])
     #req_params['suffix'] = default(body, 'suffix', req_params['suffix'])
     req_params['echo'] = default(body, 'echo', req_params['echo'])
     req_params['top_k'] = default(body, 'best_of', req_params['top_k'])
@@ -592,8 +593,6 @@ def stream_completions(body: dict, is_legacy: bool = False):
 
     # generate reply #######################################
     debug_msg({'prompt': prompt, 'req_params': req_params})
-    stopping_strings = req_params.pop('stopping_strings', [])
-    logprob_proc = req_params.pop('logprob_proc', None)
     generator = generate_reply(prompt, req_params, stopping_strings=stopping_strings, is_chat=False)
 
     answer = ''
