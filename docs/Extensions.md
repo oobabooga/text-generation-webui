@@ -232,8 +232,11 @@ def setup():
 
 def ui():
     """
-    Gets executed when the UI is drawn. Custom gradio elements and their
-    corresponding event handlers should be defined here.
+    Gets executed when the UI is drawn. Custom gradio elements and
+    their corresponding event handlers should be defined here.
+
+    To learn about gradio components, check out the docs:
+    https://gradio.app/docs/
     """
     pass
 ```
