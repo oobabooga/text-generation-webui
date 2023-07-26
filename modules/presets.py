@@ -27,6 +27,8 @@ def load_preset(name):
         'mirostat_mode': 0,
         'mirostat_tau': 5.0,
         'mirostat_eta': 0.1,
+        'guidance_scale': 1,
+        'negative_prompt': '',
     }
 
     if name not in ['None', None, '']:
