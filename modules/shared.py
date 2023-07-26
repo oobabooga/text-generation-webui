@@ -31,7 +31,7 @@ reload_inputs = []  # Parameters for reloading the chat interface
 need_restart = False
 
 settings = {
-    'dark_theme': False,
+    'dark_theme': True,
     'autoload_model': False,
     'max_new_tokens': 200,
     'max_new_tokens_min': 1,
