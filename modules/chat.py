@@ -175,10 +175,8 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
 
     # Preparing the input
     if not any((regenerate, _continue)):
-        text, visible_text = apply_extensions('input_hijack', text, visible_text)
-        if visible_text is None:
-            visible_text = text
-
+        visible_text = text
+        text, visible_text = apply_extensions('chat_input', text, visible_text, state)
         text = apply_extensions('input', text, state)
 
         # *Is typing...*

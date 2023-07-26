@@ -56,7 +56,6 @@ def load_model(model_name, loader=None):
         'GPTQ-for-LLaMa': GPTQ_loader,
         'llama.cpp': llamacpp_loader,
         'llamacpp_HF': llamacpp_HF_loader,
-        'FlexGen': flexgen_loader,
         'RWKV': RWKV_loader,
         'ExLlama': ExLlama_loader,
         'ExLlama_HF': ExLlama_HF_loader
@@ -218,32 +217,6 @@ def huggingface_loader(model_name):
 
         model = LoaderClass.from_pretrained(checkpoint, **params)
 
-    return model
-
-
-def flexgen_loader(model_name):
-    from flexgen.flex_opt import CompressionConfig, ExecutionEnv, OptLM, Policy
-
-    # Initialize environment
-    env = ExecutionEnv.create(shared.args.disk_cache_dir)
-
-    # Offloading policy
-    policy = Policy(1, 1,
-                    shared.args.percent[0], shared.args.percent[1],
-                    shared.args.percent[2], shared.args.percent[3],
-                    shared.args.percent[4], shared.args.percent[5],
-                    overlap=True, sep_layer=True, pin_weight=shared.args.pin_weight,
-                    cpu_cache_compute=False, attn_sparsity=1.0,
-                    compress_weight=shared.args.compress_weight,
-                    comp_weight_config=CompressionConfig(
-                        num_bits=4, group_size=64,
-                        group_dim=0, symmetric=False),
-                    compress_cache=False,
-                    comp_cache_config=CompressionConfig(
-                        num_bits=4, group_size=64,
-                        group_dim=2, symmetric=False))
-
-    model = OptLM(f"facebook/{model_name}", env, shared.args.model_dir, policy)
     return model
 
 
