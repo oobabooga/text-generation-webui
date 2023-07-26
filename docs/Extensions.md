@@ -8,7 +8,7 @@ For instance, `extensions/silero_tts/script.py` gets loaded with `python server.
 
 The repository above contains a directory of user extensions.
 
-If you create an extension, you are welcome to host it in a GitHub repository and submit a PR adding it to the list above.
+If you create an extension, you are welcome to host it in a GitHub repository and submit a PR adding it to the list.
 
 ## Built-in extensions
 
@@ -26,6 +26,8 @@ If you create an extension, you are welcome to host it in a GitHub repository an
 |[send_pictures](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/send_pictures/)| Creates an image upload field that can be used to send images to the bot in chat mode. Captions are automatically generated using BLIP. |
 |[gallery](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/gallery/)| Creates a gallery with the chat characters and their pictures. |
 |[superbooga](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/superbooga)| An extension that uses ChromaDB to create an arbitrarily large pseudocontext, taking as input text files, URLs, or pasted text. Based on https://github.com/kaiokendev/superbig. |
+|[ngrok](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/ngrok)| Allows you to access the web UI remotely using the ngrok reverse tunnel service (free). It's an alternative to the built-in Gradio `--share` feature. |
+|[perplexity_colors](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/perplexity_colors)| Colors each token in the output text by its associated probability, as derived from the model logits. |
 
 ## How to write an extension
 
@@ -59,7 +61,7 @@ params = {
 }
 ```
 
-Additionally, `params` may contain variables that you want to be customizable through a `settings.yaml` file. For instance, assuming the extension is in `extensions/google_translate`, the variable `language string` in
+The `params` may also contain variables that you want to be customizable through a `settings.yaml` file. For instance, assuming the extension is in `extensions/google_translate`, the variable `language string` in
 
 ```python
 params = {
@@ -126,7 +128,7 @@ params = {
 class MyLogits(LogitsProcessor):
     """
     Manipulates the probabilities for the next token before it gets sampled.
-    It gets used in the custom_logits_processor function below.
+    Used in the custom_logits_processor function below.
     """
     def __init__(self):
         pass
@@ -153,16 +155,18 @@ def state_modifier(state):
 
 def chat_input_modifier(text, visible_text, state):
     """
-    Modifies the internal and visible input strings in chat mode.
+    Modifies the user input string in chat mode (visible_text).
+    You can also modify the internal representation of the user
+    input (text) to change how it will appear in the prompt.
     """
     return text, visible_text
 
 def input_modifier(string, state):
     """
-    In chat mode, modifies the user input. The modified version goes into
-    history['internal'], and the original version goes into history['visible'].
-
     In default/notebook modes, modifies the whole prompt.
+
+    In chat mode, it is the same as chat_input_modifier but only applied
+    to "text", here called "string", and not to "visible_text".
     """
     return string
 
@@ -183,7 +187,8 @@ def tokenizer_modifier(state, prompt, input_ids, input_embeds):
 
 def logits_processor_modifier(processor_list, input_ids):
     """
-    Adds logits processors to the list.
+    Adds logits processors to the list, allowing you to access and modify
+    the next token probabilities.
     Only used by loaders that use the transformers library for sampling.
     """
     processor_list.append(MyLogits())
@@ -193,7 +198,8 @@ def output_modifier(string, state):
     """
     Modifies the LLM output before it gets presented.
 
-    In chat mode, the modified version goes into history['internal'], and the original version goes into history['visible'].
+    In chat mode, the modified version goes into history['visible'],
+    and the original version goes into history['internal'].
     """
     return string
 
@@ -213,7 +219,8 @@ def custom_css():
 
 def custom_js():
     """
-    Returns a javascript string that gets appended to the javascript for the webui.
+    Returns a javascript string that gets appended to the javascript
+    for the webui.
     """
     return ''
 
@@ -225,8 +232,8 @@ def setup():
 
 def ui():
     """
-    Gets executed when the UI is drawn. Custom gradio elements and their corresponding
-    event handlers should be defined here.
+    Gets executed when the UI is drawn. Custom gradio elements and their
+    corresponding event handlers should be defined here.
     """
     pass
 ```

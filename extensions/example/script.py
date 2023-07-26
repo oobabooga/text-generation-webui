@@ -24,7 +24,7 @@ params = {
 class MyLogits(LogitsProcessor):
     """
     Manipulates the probabilities for the next token before it gets sampled.
-    It gets used in the custom_logits_processor function below.
+    Used in the custom_logits_processor function below.
     """
     def __init__(self):
         pass
@@ -51,16 +51,18 @@ def state_modifier(state):
 
 def chat_input_modifier(text, visible_text, state):
     """
-    Modifies the internal and visible input strings in chat mode.
+    Modifies the user input string in chat mode (visible_text).
+    You can also modify the internal representation of the user
+    input (text) to change how it will appear in the prompt.
     """
     return text, visible_text
 
 def input_modifier(string, state):
     """
-    In chat mode, modifies the user input. The modified version goes into
-    history['internal'], and the original version goes into history['visible'].
-
     In default/notebook modes, modifies the whole prompt.
+
+    In chat mode, it is the same as chat_input_modifier but only applied
+    to "text", here called "string", and not to "visible_text".
     """
     return string
 
@@ -81,7 +83,8 @@ def tokenizer_modifier(state, prompt, input_ids, input_embeds):
 
 def logits_processor_modifier(processor_list, input_ids):
     """
-    Adds logits processors to the list.
+    Adds logits processors to the list, allowing you to access and modify
+    the next token probabilities.
     Only used by loaders that use the transformers library for sampling.
     """
     processor_list.append(MyLogits())
@@ -91,7 +94,8 @@ def output_modifier(string, state):
     """
     Modifies the LLM output before it gets presented.
 
-    In chat mode, the modified version goes into history['internal'], and the original version goes into history['visible'].
+    In chat mode, the modified version goes into history['visible'],
+    and the original version goes into history['internal'].
     """
     return string
 
@@ -111,7 +115,8 @@ def custom_css():
 
 def custom_js():
     """
-    Returns a javascript string that gets appended to the javascript for the webui.
+    Returns a javascript string that gets appended to the javascript
+    for the webui.
     """
     return ''
 
@@ -123,7 +128,7 @@ def setup():
 
 def ui():
     """
-    Gets executed when the UI is drawn. Custom gradio elements and their corresponding
-    event handlers should be defined here.
+    Gets executed when the UI is drawn. Custom gradio elements and their
+    corresponding event handlers should be defined here.
     """
     pass
