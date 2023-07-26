@@ -1,1 +1,0 @@
-Moved to https://github.com/oobabooga/text-generation-webui/blob/main/docs/GPTQ-models-(4-bit-mode).md
