@@ -203,7 +203,7 @@ def update_dependencies():
         gxx_output = run_cmd("g++ -dumpfullversion -dumpversion", environment=True, capture_output=True)
         if gxx_output.returncode != 0 or int(gxx_output.stdout.strip().split(b".")[0]) > 11:
             # Install the correct version of g++
-            run_cmd("conda install -y -k gxx_linux-64=11.2.0", environment=True)
+            run_cmd("conda install -y -k gxx_linux-64=11.2.0 -c conda-forge", environment=True)
 
     # Compile and install GPTQ-for-LLaMa
     if os.path.exists('setup_cuda.py'):
