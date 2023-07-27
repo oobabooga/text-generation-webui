@@ -412,7 +412,7 @@ def create_settings_menus(default_preset):
             with gr.Box():
                 with gr.Row():
                     with gr.Column():
-                        shared.gradio['guidance_scale'] = gr.Slider(1, 2.5, step=0.05, value=generate_params['guidance_scale'], label='guidance_scale', info='For CFG. 1.5 is a good value.')
+                        shared.gradio['guidance_scale'] = gr.Slider(-0.5, 2.5, step=0.05, value=generate_params['guidance_scale'], label='guidance_scale', info='For CFG. 1.5 is a good value.')
                         shared.gradio['negative_prompt'] = gr.Textbox(value=shared.settings['negative_prompt'], label='Negative prompt')
                         gr.Markdown('Mirostat (mode=1 is only for llama.cpp)')
                         shared.gradio['mirostat_mode'] = gr.Slider(0, 2, step=1, value=generate_params['mirostat_mode'], label='mirostat_mode')
