@@ -16,7 +16,8 @@ from modules.text_generation import (
     generate_reply,
     stop_everything_event
 )
-from modules.utils import get_available_models
+from modules.utils import get_available_models, get_available_characters
+from modules.chat import save_character
 
 
 def get_model_info():
@@ -30,7 +31,34 @@ def get_model_info():
 
 
 class Handler(BaseHTTPRequestHandler):
+    def simple_json_results(self, resp):
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+
+        response = json.dumps({
+            'results': resp,
+        })
+
+        self.wfile.write(response.encode('utf-8'))
+
+    def auth(self):
+        if 'Authorization' not in self.headers:
+            self.send_error(401)
+            return
+
+        auth_header = self.headers.get('Authorization')
+        token = auth_header.replace('Bearer ', '')
+
+        if token != shared.args.auth_api:
+            self.send_error(401)
+            return
+
     def do_GET(self):
+
+        if shared.args.auth_api:
+            self.auth()
+
         if self.path == '/api/v1/model':
             self.send_response(200)
             self.end_headers()
@@ -39,12 +67,18 @@ class Handler(BaseHTTPRequestHandler):
             })
 
             self.wfile.write(response.encode('utf-8'))
+            
+        elif self.path.startswith('/api/v1/characters'):
+            self.simple_json_results(get_available_characters())
         else:
             self.send_error(404)
 
     def do_POST(self):
         content_length = int(self.headers['Content-Length'])
         body = json.loads(self.rfile.read(content_length).decode('utf-8'))
+
+        if shared.args.auth_api:
+            self.auth()
 
         if self.path == '/api/v1/generate':
             self.send_response(200)
@@ -71,6 +105,27 @@ class Handler(BaseHTTPRequestHandler):
 
             self.wfile.write(response.encode('utf-8'))
 
+        elif self.path == '/api/v1/character':
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+
+            name = body['name']
+            context = body['context']
+            greeting = body['greeting']
+            example_dialogue = body['example_dialogue']
+            context += f"\n{example_dialogue.strip()}\n"
+
+            save_character(name, greeting, context, None, name)
+
+            response = json.dumps({
+                'results': [{
+                    'text': f'character "{name}" saved with success'
+                }]
+            })
+
+            self.wfile.write(response.encode('utf-8'))
+        
         elif self.path == '/api/v1/chat':
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
@@ -214,8 +269,10 @@ def _run_server(port: int, share: bool = False):
         except Exception:
             pass
     else:
-        print(
-            f'Starting API at http://{address}:{port}/api')
+        print(f'Starting API at http://{address}:{port}/api')
+    
+    if shared.args.auth_api:
+        print(f'with token {shared.args.auth_api}')
 
     server.serve_forever()
 

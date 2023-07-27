@@ -3,6 +3,7 @@ from collections import OrderedDict
 from pathlib import Path
 
 import yaml
+import hashlib
 
 from modules.logging_colors import logger
 
@@ -76,6 +77,9 @@ def str2bool(v):
     else:
         raise argparse.ArgumentTypeError('Boolean value expected.')
 
+
+def set_token():
+    return hashlib.sha256(b"").hexdigest()
 
 parser = argparse.ArgumentParser(formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=54))
 
@@ -178,6 +182,8 @@ parser.add_argument("--gradio-auth-path", type=str, help='Set the gradio authent
 
 # API
 parser.add_argument('--api', action='store_true', help='Enable the API extension.')
+parser.add_argument('--auth-api', action='store_true', help='Set API authentication using TOKEN (if empty then token will be set automatically)')
+parser.add_argument('--auth-api-token', type=str, default=set_token(), help='Set API authentication using TOKEN (if empty then token will be set automatically)')
 parser.add_argument('--api-blocking-port', type=int, default=5000, help='The listening port for the blocking API.')
 parser.add_argument('--api-streaming-port', type=int, default=5005, help='The listening port for the streaming API.')
 parser.add_argument('--public-api', action='store_true', help='Create a public URL for the API using Cloudfare.')

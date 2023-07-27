@@ -322,6 +322,7 @@ Optionally, you can use the following command-line flags:
 | Flag                                  | Description |
 |---------------------------------------|-------------|
 | `--api`                               | Enable the API extension. |
+| `--auth-api TOKEN`                    | Set API authentication using TOKEN (if empty then token will be set automatically) |
 | `--public-api`                        | Create a public URL for the API using Cloudfare. |
 | `--api-blocking-port BLOCKING_PORT`   | The listening port for the blocking API. |
 | `--api-streaming-port STREAMING_PORT` | The listening port for the streaming API. |
