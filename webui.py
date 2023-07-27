@@ -238,9 +238,6 @@ def update_dependencies():
     if '+rocm' in torver:
         if os.path.exists('setup_rocm.py'):
             os.replace("setup_rocm.py", "setup.py")
-        # Skip compile for AMD GPU if wheel is successfully installed
-        if rocm_gptq:
-            return
     elif os.path.exists('setup_cuda.py'):
         os.rename("setup_cuda.py", "setup.py")
 
