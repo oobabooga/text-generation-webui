@@ -1,3 +1,4 @@
+import threading
 import chromadb
 import posthog
 import torch
@@ -101,49 +102,51 @@ class ChromaCollector(Collecter):
         self.ids = []
         self.id_to_info = {}
         self.embeddings_cache = {}
+        self.lock = threading.Lock() # Locking so the server doesn't break.
 
     def add(self, texts: list[str], texts_with_context: list[str], starting_indices: list[int], metadatas: list[dict] = None):
-        assert metadatas is None or len(metadatas) == len(texts), "metadatas must be None or have the same length as texts"
-        
-        if len(texts) == 0: 
-            return
+        with self.lock:
+            assert metadatas is None or len(metadatas) == len(texts), "metadatas must be None or have the same length as texts"
+            
+            if len(texts) == 0: 
+                return
 
-        new_ids = self._get_new_ids(len(texts))
+            new_ids = self._get_new_ids(len(texts))
 
-        (existing_texts, existing_embeddings, existing_ids, existing_metas), \
-        (non_existing_texts, non_existing_ids, non_existing_metas) = self._split_texts_by_cache_hit(texts, new_ids, metadatas)
+            (existing_texts, existing_embeddings, existing_ids, existing_metas), \
+            (non_existing_texts, non_existing_ids, non_existing_metas) = self._split_texts_by_cache_hit(texts, new_ids, metadatas)
 
-        # If there are any already existing texts, add them all at once.
-        if existing_texts:
-            logger.info(f'Adding {len(existing_embeddings)} cached embeddings.')
-            args = {'embeddings': existing_embeddings, 'documents': existing_texts, 'ids': existing_ids}
-            if metadatas is not None: 
-                args['metadatas'] = existing_metas
-            self.collection.add(**args)
+            # If there are any already existing texts, add them all at once.
+            if existing_texts:
+                logger.info(f'Adding {len(existing_embeddings)} cached embeddings.')
+                args = {'embeddings': existing_embeddings, 'documents': existing_texts, 'ids': existing_ids}
+                if metadatas is not None: 
+                    args['metadatas'] = existing_metas
+                self.collection.add(**args)
 
-        # If there are any non-existing texts, compute their embeddings all at once. Each call to embed has significant overhead.
-        if non_existing_texts:
-            non_existing_embeddings = self.embedder.embed(non_existing_texts).tolist()
-            for text, embedding in zip(non_existing_texts, non_existing_embeddings):
-                pass#self.embeddings_cache[text] = embedding
+            # If there are any non-existing texts, compute their embeddings all at once. Each call to embed has significant overhead.
+            if non_existing_texts:
+                non_existing_embeddings = self.embedder.embed(non_existing_texts).tolist()
+                for text, embedding in zip(non_existing_texts, non_existing_embeddings):
+                    pass#self.embeddings_cache[text] = embedding
 
-            logger.info(f'Adding {len(non_existing_embeddings)} new embeddings.')
-            args = {'embeddings': non_existing_embeddings, 'documents': non_existing_texts, 'ids': non_existing_ids}
-            if metadatas is not None: 
-                args['metadatas'] = non_existing_metas
-            self.collection.add(**args)
+                logger.info(f'Adding {len(non_existing_embeddings)} new embeddings.')
+                args = {'embeddings': non_existing_embeddings, 'documents': non_existing_texts, 'ids': non_existing_ids}
+                if metadatas is not None: 
+                    args['metadatas'] = non_existing_metas
+                self.collection.add(**args)
 
-        # Create a dictionary that maps each ID to its context and starting index
-        new_info = {
-            id_: {'text_with_context': context, 'start_index': start_index}
-            for id_, context, start_index in zip(new_ids, texts_with_context, starting_indices)
-        }
+            # Create a dictionary that maps each ID to its context and starting index
+            new_info = {
+                id_: {'text_with_context': context, 'start_index': start_index}
+                for id_, context, start_index in zip(new_ids, texts_with_context, starting_indices)
+            }
 
-        self.id_to_info.update(new_info)
-        self.ids.extend(new_ids)
+            self.id_to_info.update(new_info)
+            self.ids.extend(new_ids)
 
     
-    def _split_texts_by_cache_hit(self, texts, new_ids, metadatas):
+    def _split_texts_by_cache_hit(self, texts: list[str], new_ids: list[str], metadatas: list[dict]):
         existing_texts, non_existing_texts = [], []
         existing_embeddings = []
         existing_ids, non_existing_ids = [], []
@@ -255,14 +258,16 @@ class ChromaCollector(Collecter):
 
     # Get chunks by similarity
     def get(self, search_strings: list[str], n_results: int) -> list[str]:
-        documents, _, _ = self._get_documents_ids_distances(search_strings, n_results)
-        return documents
+        with self.lock:
+            documents, _, _ = self._get_documents_ids_distances(search_strings, n_results)
+            return documents
     
 
     # Get ids by similarity
     def get_ids(self, search_strings: list[str], n_results: int) -> list[str]:
-        _, ids, _ = self._get_documents_ids_distances(search_strings, n_results)
-        return ids
+        with self.lock:
+            _, ids, _ = self._get_documents_ids_distances(search_strings, n_results)
+            return ids
     
     
     # Cutoff token count
@@ -291,42 +296,49 @@ class ChromaCollector(Collecter):
 
     # Get chunks by similarity and then sort by ids
     def get_sorted_by_ids(self, search_strings: list[str], n_results: int, max_token_count: int) -> list[str]:
-        documents, ids, _ = self._get_documents_ids_distances(search_strings, n_results)
-        sorted_docs = [x for _, x in sorted(zip(ids, documents))]
+        with self.lock:
+            documents, ids, _ = self._get_documents_ids_distances(search_strings, n_results)
+            sorted_docs = [x for _, x in sorted(zip(ids, documents))]
 
-        return self._get_documents_up_to_token_count(sorted_docs, max_token_count)
+            return self._get_documents_up_to_token_count(sorted_docs, max_token_count)
     
     
     # Get chunks by similarity and then sort by distance (lowest distance is last).
     def get_sorted_by_dist(self, search_strings: list[str], n_results: int, max_token_count: int) -> list[str]:
-        documents, _, distances = self._get_documents_ids_distances(search_strings, n_results)
-        sorted_docs = [doc for doc, _ in sorted(zip(documents, distances), key=lambda x: x[1])] # sorted lowest -> highest
-        
-        # If a document is truncated or competely skipped, it would be with high distance.
-        return_documents = self._get_documents_up_to_token_count(sorted_docs, max_token_count)
-        return_documents.reverse() # highest -> lowest
+        with self.lock:
+            documents, _, distances = self._get_documents_ids_distances(search_strings, n_results)
+            sorted_docs = [doc for doc, _ in sorted(zip(documents, distances), key=lambda x: x[1])] # sorted lowest -> highest
+            
+            # If a document is truncated or competely skipped, it would be with high distance.
+            return_documents = self._get_documents_up_to_token_count(sorted_docs, max_token_count)
+            return_documents.reverse() # highest -> lowest
 
-        return return_documents
+            return return_documents
     
 
     def delete(self, ids_to_delete: list[str], where: dict):
-        ids_to_delete = self.collection.get(ids=ids_to_delete, where=where)['ids']
-        self.collection.delete(ids=ids_to_delete, where=where)
+        with self.lock:
+            ids_to_delete = self.collection.get(ids=ids_to_delete, where=where)['ids']
+            self.collection.delete(ids=ids_to_delete, where=where)
 
-        # Remove the deleted ids from self.ids and self.id_to_info
-        ids_set = set(ids_to_delete)
-        self.ids = [id_ for id_ in self.ids if id_ not in ids_set]
-        for id_ in ids_to_delete:
-            self.id_to_info.pop(id_, None)
+            # Remove the deleted ids from self.ids and self.id_to_info
+            ids_set = set(ids_to_delete)
+            self.ids = [id_ for id_ in self.ids if id_ not in ids_set]
+            for id_ in ids_to_delete:
+                self.id_to_info.pop(id_, None)
 
+            logger.info(f'Successfully deleted {len(ids_to_delete)} records from chromaDB.')
 
 
     def clear(self):
-        self.collection.delete(self.ids)
-        self.chroma_client.delete_collection("context")
-        self.collection = self.chroma_client.create_collection("context", embedding_function=self.embedder.embed)
-        self.ids = []
-        self.id_to_info = {}
+        with self.lock:
+            self.collection.delete(self.ids)
+            self.chroma_client.delete_collection("context")
+            self.collection = self.chroma_client.create_collection("context", embedding_function=self.embedder.embed)
+            self.ids = []
+            self.id_to_info = {}
+
+            logger.info('Successfully cleared all records from chromaDB.')
 
 
 class SentenceTransformerEmbedder(Embedder):

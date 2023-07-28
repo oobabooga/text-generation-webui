@@ -145,6 +145,12 @@
     },
     "optimization_steps": {
       "default": 100
+    },
+    "api_port": {
+      "default": 5002
+    },
+    "api_on": {
+      "default": false
     }
   }
   

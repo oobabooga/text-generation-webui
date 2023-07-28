@@ -30,6 +30,10 @@ APPEND_TO_LAST = 'Append to Last Message'
 HIJACK_LAST_IN_CONTEXT = 'Hijack Last Message in Context ⚠️ WIP ⚠️ (Works Partially)'
 
 
+SORT_DISTANCE = 'distance'
+SORT_ID = 'id'
+
+
 class Parameters:
     _instance = None
 
@@ -274,6 +278,14 @@ def get_optimization_steps() -> int:
     return int(Parameters.getInstance().hyperparameters['optimization_steps']['default'])
 
 
+def get_api_port() -> int:
+    return int(Parameters.getInstance().hyperparameters['api_port']['default'])
+
+
+def get_api_on() -> bool:
+    return bool(Parameters.getInstance().hyperparameters['api_on']['default'])
+
+
 def set_new_dist_strategy(value: str):
     Parameters.getInstance().hyperparameters['new_dist_strategy']['default'] = value
 
@@ -340,3 +352,11 @@ def set_num_threads(value: int):
 
 def set_optimization_steps(value: int):
     Parameters.getInstance().hyperparameters['optimization_steps']['default'] = value
+
+
+def set_api_port(value: int):
+    Parameters.getInstance().hyperparameters['api_port']['default'] = value
+
+
+def set_api_on(value: bool):
+    Parameters.getInstance().hyperparameters['api_on']['default'] = value

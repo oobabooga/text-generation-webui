@@ -1,13 +1,17 @@
 """
 This file is responsible for the UI and how the application interracts with the rest of the system.
 """
+import os
+from pathlib import Path
+
+# Point to where nltk will find the required data.
+os.environ['NLTK_DATA'] = str(Path("extensions/superbooga/nltk_data").resolve())
+
 import textwrap
 import codecs
 import gradio as gr
 
 import extensions.superbooga.parameters as parameters
-
-from pathlib import Path
 
 from modules.logging_colors import logger
 from modules import shared
@@ -20,8 +24,19 @@ from .benchmark import benchmark
 from .optimize import optimize
 from .notebook_handler import input_modifier_internal
 from .chat_handler import custom_generate_chat_prompt_internal
+from .api import APIManager
 
-collector = make_collector()
+collector = None
+api_manager = None
+
+def setup():
+    global collector
+    global api_manager
+    collector = make_collector()
+    api_manager = APIManager(collector)
+
+    if parameters.get_api_on():
+        api_manager.start_server(parameters.get_api_port())
 
 def _feed_data_into_collector(corpus):
     yield '### Processing data...'
@@ -89,8 +104,8 @@ def _get_optimizable_settings() -> list:
 
 
 def _apply_settings(optimization_steps, confidence_interval, min_sentences, new_dist_strat, delta_start, min_number_length, num_conversion, 
-                    preprocess_pipeline, injection_strategy, add_chat_to_data, manual, postfix, data_separator, prefix, max_token_count, 
-                    time_weight, chunk_count, chunk_sep, context_len, chunk_regex, chunk_len):
+                    preprocess_pipeline, api_port, api_on, injection_strategy, add_chat_to_data, manual, postfix, data_separator, prefix, 
+                    max_token_count, time_weight, chunk_count, chunk_sep, context_len, chunk_regex, chunk_len):
     logger.debug('Applying settings.')
 
     parameters.set_optimization_steps(optimization_steps)
@@ -100,6 +115,8 @@ def _apply_settings(optimization_steps, confidence_interval, min_sentences, new_
     parameters.set_delta_start(delta_start)
     parameters.set_min_num_length(min_number_length)
     parameters.set_num_conversion_strategy(num_conversion)
+    parameters.set_api_port(api_port)
+    parameters.set_api_on(api_on)
     parameters.set_injection_strategy(injection_strategy)
     parameters.set_add_chat_to_data(add_chat_to_data)
     parameters.set_manual(manual)
@@ -114,21 +131,29 @@ def _apply_settings(optimization_steps, confidence_interval, min_sentences, new_
     parameters.set_chunk_regex(chunk_regex)
     parameters.set_chunk_len(chunk_len)
 
-    for preprocess_method in preprocess_pipeline:
+    preprocess_choices = ['Lower Cases', 'Remove Punctuation', 'Remove Adverbs', 'Remove Stop Words', 'Lemmatize', 'Merge Spaces', 'Strip Edges']
+    for preprocess_method in preprocess_choices:
         if preprocess_method == 'Lower Cases':
-            parameters.set_to_lower(True)
+            parameters.set_to_lower(preprocess_method in preprocess_pipeline)
         elif preprocess_method == 'Remove Punctuation':
-            parameters.set_remove_punctuation(True)
+            parameters.set_remove_punctuation(preprocess_method in preprocess_pipeline)
         elif preprocess_method == 'Remove Adverbs':
-            parameters.set_remove_specific_pos(True)
+            parameters.set_remove_specific_pos(preprocess_method in preprocess_pipeline)
         elif preprocess_method == 'Remove Stop Words':
-            parameters.set_remove_stopwords(True)
+            parameters.set_remove_stopwords(preprocess_method in preprocess_pipeline)
         elif preprocess_method == 'Lemmatize':
-            parameters.set_lemmatize(True)
+            parameters.set_lemmatize(preprocess_method in preprocess_pipeline)
         elif preprocess_method == 'Merge Spaces':
-            parameters.set_merge_spaces(True)
+            parameters.set_merge_spaces(preprocess_method in preprocess_pipeline)
         elif preprocess_method == 'Strip Edges':
-            parameters.set_strip(True)
+            parameters.set_strip(preprocess_method in preprocess_pipeline)
+
+    # Based on API on/off, start or stop the server
+    if api_manager is not None:
+        if parameters.get_api_on() and (not api_manager.is_server_running()):
+            api_manager.start_server(parameters.get_api_port())
+        elif (not parameters.get_api_on()) and api_manager.is_server_running():
+            api_manager.stop_server()
 
 
 def custom_generate_chat_prompt(user_input, state, **kwargs):
@@ -223,7 +248,6 @@ def ui():
 
                 with gr.Accordion("Generation settings", open=False):
                     chunk_count = gr.Number(value=parameters.get_chunk_count(), label='Chunk count', info='The number of closest-matching chunks to include in the prompt.')
-                    time_weight = gr.Slider(0, 1, value=parameters.get_time_weight(), label='Time weight', info='Defines the strength of the time weighting. Zero means the feature is turned off. ⚠️ WIP ⚠️', interactive=False)
                     max_token_count = gr.Number(value=parameters.get_max_token_count(), label='Max Context Tokens', info='The context length in tokens will not exceed this value.')
                     prefix = gr.Textbox(value=codecs.encode(parameters.get_prefix(), 'unicode_escape').decode(), label='Prefix', info='What to put before the injection point.')
                     data_separator = gr.Textbox(value=codecs.encode(parameters.get_data_separator(), 'unicode_escape').decode(), label='Data separator', info='When multiple pieces of distant data are added, they might be unrelated. It\'s important to separate them.')
@@ -232,6 +256,9 @@ def ui():
                         manual = gr.Checkbox(value=parameters.get_is_manual(), label="Is Manual", info="Manually specify when to use ChromaDB. Insert `!c` at the start or end of the message to trigger a query.", visible=shared.is_chat())
                         add_chat_to_data = gr.Checkbox(value=parameters.get_add_chat_to_data(), label="Add Chat to Data", info="Automatically feed the chat history as you chat.", visible=shared.is_chat())
                     injection_strategy = gr.Radio(choices=[parameters.PREPEND_TO_LAST, parameters.APPEND_TO_LAST, parameters.HIJACK_LAST_IN_CONTEXT], value=parameters.get_injection_strategy(), label='Injection Strategy', info='Where to inject the messages in chat or instruct mode.', visible=shared.is_chat())
+                    with gr.Row():
+                        api_on = gr.Checkbox(value=parameters.get_api_on(), label="Turn on API", info="Check this to turn on the API service.")
+                        api_port = gr.Number(value=parameters.get_api_port(), label="API Port", info="The port on which the API service will run.")
 
                 with gr.Accordion("Advanced settings", open=False):
                     preprocess_set_choices = []
@@ -268,6 +295,7 @@ def ui():
                     new_dist_strat = gr.Dropdown(choices=[parameters.DIST_MIN_STRATEGY, parameters.DIST_HARMONIC_STRATEGY, parameters.DIST_GEOMETRIC_STRATEGY, parameters.DIST_ARITHMETIC_STRATEGY], value=parameters.get_new_dist_strategy(), label="Distance Strategy", info='When two embedding texts are merged, the distance of the new piece will be decided using one of these strategies.', interactive=True)
                     min_sentences = gr.Number(value=parameters.get_min_num_sentences(), label='Summary Threshold', info='In sentences. The minumum number of sentences to trigger text-rank summarization.', interactive=True)
                     confidence_interval = gr.Slider(0, 1, value=parameters.get_confidence_interval(), label='Confidence Interval', info='Consider only the smallest interval containing a certain percentage of entries, where entries are weighted according to their inverse distance (1/d).', interactive=True)
+                    time_weight = gr.Slider(0, 1, value=parameters.get_time_weight(), label='Time weight', info='Defines the strength of the time weighting. Zero means the feature is turned off. ⚠️ WIP ⚠️', interactive=False)
 
             with gr.Tab("Benchmark"):
                 benchmark_button = gr.Button('Benchmark')
@@ -282,7 +310,7 @@ def ui():
             last_updated = gr.Markdown()
 
     all_params = [optimization_steps, confidence_interval, min_sentences, new_dist_strat, delta_start, min_number_length, num_conversion, 
-                  preprocess_pipeline, injection_strategy, add_chat_to_data, manual, postfix, data_separator, prefix, max_token_count, 
+                  preprocess_pipeline, api_port, api_on, injection_strategy, add_chat_to_data, manual, postfix, data_separator, prefix, max_token_count, 
                   time_weight, chunk_count, chunk_sep, context_len, chunk_regex, chunk_len]
     optimizable_params = [confidence_interval, min_sentences, new_dist_strat, delta_start, min_number_length, num_conversion, 
                   preprocess_pipeline, time_weight, chunk_count, context_len, chunk_len]
@@ -304,6 +332,8 @@ def ui():
     min_number_length.input(fn=_apply_settings, inputs=all_params, show_progress=False)
     num_conversion.input(fn=_apply_settings, inputs=all_params, show_progress=False)
     preprocess_pipeline.input(fn=_apply_settings, inputs=all_params, show_progress=False)
+    api_port.input(fn=_apply_settings, inputs=all_params, show_progress=False)
+    api_on.input(fn=_apply_settings, inputs=all_params, show_progress=False)
     injection_strategy.input(fn=_apply_settings, inputs=all_params, show_progress=False)
     add_chat_to_data.input(fn=_apply_settings, inputs=all_params, show_progress=False)
     manual.input(fn=_apply_settings, inputs=all_params, show_progress=False)

@@ -11,17 +11,17 @@ This module contains utils for preprocessing the text before converting it to em
     * removing specific parts of speech (adverbs and interjections)
 - TextSummarizer extracts the most important sentences from a long string using text-ranking.
 """
-
 import pytextrank
 import string
 import spacy
-import nltk
 import math
+import nltk
 import re
 
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from num2words import num2words
+
 
 class TextPreprocessorBuilder:
      # Define class variables as None initially
@@ -30,18 +30,26 @@ class TextPreprocessorBuilder:
 
     @classmethod
     def initialize_class_variables(cls):
+        """
+        Downloaded via:
+        
         nltk.download('stopwords')
         nltk.download('wordnet')
-        nltk.download('punkt')
         nltk.download('averaged_perceptron_tagger')
+        
+        The data was stored locally, so that it could run without being connected
+        to the internet.
+        """
         cls._stop_words = set(stopwords.words('english'))
         cls._lemmatizer = WordNetLemmatizer()
+
 
     def __init__(self, text: str):
         # Initialize class variables if they haven't been initialized
         if TextPreprocessorBuilder._stop_words is None or TextPreprocessorBuilder._lemmatizer is None:
             self.initialize_class_variables()
         self.text = text
+
 
     def to_lower(self):
         # Match both words and non-word characters
@@ -54,6 +62,7 @@ class TextPreprocessorBuilder:
                     tokens[i] = token.lower()
         self.text = "".join(tokens)
         return self
+
 
     def num_to_word(self, min_len: int = 1):
         # Match both words and non-word characters
