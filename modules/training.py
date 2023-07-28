@@ -65,7 +65,7 @@ train_template = {}
 train_log_graph = []
 
 WANT_INTERRUPT = False
-PARAMETERS = ["lora_name", "always_override", "save_steps", "micro_batch_size", "batch_size", "epochs", "learning_rate", "lr_scheduler_type", "lora_rank", "lora_alpha", "lora_dropout", "cutoff_len", "dataset", "eval_dataset", "format", "eval_steps", "raw_text_file", "overlap_len", "newline_favor_len", "higher_rank_limit", "warmup_steps", "optimizer", "hard_cut_string", "train_only_after", "stop_at_loss", "add_eos_token", "min_chars", "report_to", "precize_slicing", "precize_slicing_overlap", "add_eos_token_type"]
+PARAMETERS = ["lora_name", "always_override", "save_steps", "micro_batch_size", "batch_size", "epochs", "learning_rate", "lr_scheduler_type", "lora_rank", "lora_alpha", "lora_dropout", "cutoff_len", "dataset", "eval_dataset", "format", "eval_steps", "raw_text_file", "overlap_len", "newline_favor_len", "higher_rank_limit", "warmup_steps", "optimizer", "hard_cut_string", "train_only_after", "stop_at_loss", "add_eos_token", "min_chars", "report_to", "precize_slicing", "precize_slicing_overlap", "add_eos_token_type", "save_steps_under_loss"]
 
 
 def create_train_interface():
@@ -77,7 +77,7 @@ def create_train_interface():
                 always_override = gr.Checkbox(label='Override Existing Files', value=False, info='If the name given is the same as an existing file, checking this will replace that file. Leaving unchecked will load that file and continue from it (must use the same rank value as the original had).')
             with gr.Row():
                 save_steps = gr.Number(label='Save every n steps', value=0, info='If above 0, a checkpoint of the LoRA will be saved every time this many steps pass.', elem_classes="column-300px")
-                save_steps_under_loss = gr.Slider(label='Checkpoint Minimum loss', value=1.9, minimum=0.0, maximum=3.0, step=0.1, info='Save checkpoints only if the loss is less or equall Minimum loss. (0 = save all)')
+                save_steps_under_loss = gr.Slider(label='Save Loss Threshold', value=1.9, minimum=0.0, maximum=3.0, step=0.1, info='Save checkpoints only if the loss is less or equall Threshold loss. (0 = save all)')
 
         with gr.Row():
             copy_from = gr.Dropdown(label='Copy parameters from', value='None', choices=utils.get_available_loras())
@@ -574,7 +574,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             sentences.append({'text': sentence, 'size': len(tokens)})
 
         if errors > 0:
-            print(f"Trimmed very long sentences: {errors}")
+            print(f"Trimmed sentences beyond Cutoff Length: {errors}")
 
         return sentences
 
@@ -686,7 +686,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
      
         return sentencelist                
 
-    print(f"LoRA: {lora_name}")
+    print(f"*** LoRA: {lora_name} ***")
   
      # == Prep the dataset, format, etc ==
     if raw_text_file not in ['None', '']:
@@ -885,9 +885,9 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
                 control.should_training_stop = True
             elif state.global_step > 0 and actual_save_steps > 0 and state.global_step % actual_save_steps == 0:
                 current_loss = float(train_log.get('loss', 0.0))
-                if save_steps_under_loss <= current_loss or save_steps_under_loss==0.0:
+                if current_loss <= save_steps_under_loss or save_steps_under_loss==0.0:
                     lora_model.save_pretrained(f"{lora_file_path}/checkpoint-{tracked.current_steps}/")
-                    print (f"Checkpoint {tracked.current_steps} saved")
+                    print(f"\033[1;30;40mStep: {tracked.current_steps:6} \033[0;37;0m Checkpoint-{tracked.current_steps} saved")
                     # Save log
                     with open(f"{lora_file_path}/checkpoint-{tracked.current_steps}/training_log.json", 'w', encoding='utf-8') as file:
                         json.dump(train_log, file, indent=2)
