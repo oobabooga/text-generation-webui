@@ -1,6 +1,6 @@
 # Text generation web UI
 
-A gradio web UI for running Large Language Models like LLaMA, llama.cpp, GPT-J, Pythia, OPT, and GALACTICA.
+A gradio web UI for running Large Language Models like LLaMA, llama.cpp, GPT-J, OPT, and GALACTICA.
 
 Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.com/AUTOMATIC1111/stable-diffusion-webui) of text generation.
 
@@ -11,10 +11,10 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 ## Features
 
 * 3 interface modes: default, notebook, and chat
-* Multiple model backends: tranformers, llama.cpp, AutoGPTQ, GPTQ-for-LLaMa, ExLlama, RWKV, FlexGen
+* Multiple model backends: transformers, llama.cpp, ExLlama, AutoGPTQ, GPTQ-for-LLaMa
 * Dropdown menu for quickly switching between different models
-* LoRA: load and unload LoRAs on the fly, load multiple LoRAs at the same time, train a new LoRA
-* Precise instruction templates for chat mode, including Alpaca, Vicuna, Open Assistant, Dolly, Koala, ChatGLM, MOSS, RWKV-Raven, Galactica, StableLM, WizardLM, Baize, Ziya, Chinese-Vicuna, MPT, INCITE, Wizard Mega, KoAlpaca, Vigogne, Bactrian, h2o, and OpenBuddy
+* LoRA: load and unload LoRAs on the fly, train a new LoRA
+* Precise instruction templates for chat mode, including Llama 2, Alpaca, Vicuna, WizardLM, StableLM, and many others
 * [Multimodal pipelines, including LLaVA and MiniGPT-4](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/multimodal)
 * 8-bit and 4-bit inference through bitsandbytes
 * CPU mode for transformers models
@@ -71,9 +71,11 @@ conda activate textgen
 | System | GPU | Command |
 |--------|---------|---------|
 | Linux/WSL | NVIDIA | `pip3 install torch torchvision torchaudio` |
+| Linux/WSL | CPU only | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu` |
 | Linux | AMD | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.4.2` |
-| MacOS + MPS (untested) | Any | `pip3 install torch torchvision torchaudio` |
+| MacOS + MPS | Any | `pip3 install torch torchvision torchaudio` |
 | Windows | NVIDIA | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117` |
+| Windows | CPU only | `pip3 install torch torchvision torchaudio` |
 
 The up-to-date commands can be found here: https://pytorch.org/get-started/locally/. 
 
@@ -205,7 +207,7 @@ Optionally, you can use the following command-line flags:
 
 | Flag                                       | Description |
 |--------------------------------------------|-------------|
-| `--loader LOADER`                          | Choose the model loader manually, otherwise, it will get autodetected. Valid options: transformers, autogptq, gptq-for-llama, exllama, exllama_hf, llamacpp, rwkv, flexgen |
+| `--loader LOADER`                          | Choose the model loader manually, otherwise, it will get autodetected. Valid options: transformers, autogptq, gptq-for-llama, exllama, exllama_hf, llamacpp, rwkv |
 
 #### Accelerate/transformers
 
@@ -266,8 +268,6 @@ Optionally, you can use the following command-line flags:
 |------------------|-------------|
 |`--gpu-split`     | Comma-separated list of VRAM (in GB) to use per GPU device for model layers, e.g. `20,7,7` |
 |`--max_seq_len MAX_SEQ_LEN`           | Maximum sequence length. |
-|`--compress_pos_emb COMPRESS_POS_EMB` | Positional embeddings compression factor. Should typically be set to max_seq_len / 2048. |
-|`--alpha_value ALPHA_VALUE`           | Positional embeddings alpha factor for NTK RoPE scaling. Same as above. Use either this or compress_pos_emb, not both. `
 
 #### GPTQ-for-LLaMa
 
@@ -283,14 +283,6 @@ Optionally, you can use the following command-line flags:
 | `--warmup_autotune`    | (triton) Enable warmup autotune. |
 | `--fused_mlp`          | (triton) Enable fused mlp. |
 
-#### FlexGen
-
-| Flag             | Description |
-|------------------|-------------|
-| `--percent PERCENT [PERCENT ...]` | FlexGen: allocation percentages. Must be 6 numbers separated by spaces (default: 0, 100, 100, 0, 100, 0). |
-| `--compress-weight`               | FlexGen: Whether to compress weight (default: False).|
-| `--pin-weight [PIN_WEIGHT]`       | FlexGen: whether to pin weights (setting this to False reduces CPU memory by 20%). |
-
 #### DeepSpeed
 
 | Flag                                  | Description |
@@ -305,6 +297,13 @@ Optionally, you can use the following command-line flags:
 |---------------------------------|-------------|
 | `--rwkv-strategy RWKV_STRATEGY` | RWKV: The strategy to use while loading the model. Examples: "cpu fp32", "cuda fp16", "cuda fp16i8". |
 | `--rwkv-cuda-on`                | RWKV: Compile the CUDA kernel for better performance. |
+
+#### RoPE (for llama.cpp and ExLlama only)
+
+| Flag             | Description |
+|------------------|-------------|
+|`--compress_pos_emb COMPRESS_POS_EMB` | Positional embeddings compression factor. Should typically be set to max_seq_len / 2048. |
+|`--alpha_value ALPHA_VALUE`           | Positional embeddings alpha factor for NTK RoPE scaling. Scaling is not identical to embedding compression. Use either this or compress_pos_emb, not both. |
 
 #### Gradio
 
@@ -333,8 +332,6 @@ Optionally, you can use the following command-line flags:
 |---------------------------------------|-------------|
 | `--multimodal-pipeline PIPELINE`      | The multimodal pipeline to use. Examples: `llava-7b`, `llava-13b`. |
 
-Out of memory errors? [Check the low VRAM guide](docs/Low-VRAM-guide.md).
-
 ## Presets
 
 Inference settings presets can be created under `presets/` as yaml files. These files are detected automatically at startup.
@@ -352,9 +349,3 @@ The presets that are included by default are the result of a contest that receiv
 
 * Subreddit: https://www.reddit.com/r/oobaboogazz/
 * Discord: https://discord.gg/jwZCF2dPQN
-
-## Credits
-
-- Gradio dropdown menu refresh button, code for reloading the interface: https://github.com/AUTOMATIC1111/stable-diffusion-webui
-- Godlike preset: https://github.com/KoboldAI/KoboldAI-Client/wiki/Settings-Presets
-- Code for some of the sliders: https://github.com/PygmalionAI/gradio-ui/
