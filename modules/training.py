@@ -17,7 +17,6 @@ from pathlib import Path
 import gradio as gr
 import torch
 import transformers
-
 from modules.models import load_model, unload_model
 from torch.optim.lr_scheduler import LambdaLR
 from functools import partial
@@ -130,7 +129,7 @@ def create_train_interface():
                 with gr.Column():
                     with gr.Row():
                         add_eos_token = gr.Checkbox(label='Add EOS token', value = False, info="Add EOS token to the dataset") 
-                        add_eos_token_type = gr.Dropdown(type="index", label='EOS placement (raw text)', choices=['At Every Block', 'Hard Cut Blocks Only'], value='Every Block', info='', allow_custom_value = False)
+                        add_eos_token_type = gr.Dropdown(label='EOS placement (raw text)', choices=['Every Block', 'Hard Cut Blocks Only'], value='Every Block', info='', allow_custom_value = False)
                 with gr.Column():
                     with gr.Row():
                         precize_slicing = gr.Checkbox(label='Precise Raw Text Slicer (PRTS)', value = False, info="Creates training blocks with special attention to clean sentence structure") 
@@ -429,7 +428,7 @@ def create_graph(lora_path, lora_name):
         
     
 
-def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lr_scheduler_type: str, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, higher_rank_limit: bool, warmup_steps: int, optimizer: str, hard_cut_string: str, train_only_after: str, stop_at_loss: float, add_eos_token: bool, min_chars: int, report_to: str, precize_slicing: bool, precize_slicing_overlap: bool, add_eos_token_type: int):
+def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lr_scheduler_type: str, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, higher_rank_limit: bool, warmup_steps: int, optimizer: str, hard_cut_string: str, train_only_after: str, stop_at_loss: float, add_eos_token: bool, min_chars: int, report_to: str, precize_slicing: bool, precize_slicing_overlap: bool, add_eos_token_type: str):
 
     if shared.args.monkey_patch:
         from monkeypatch.peft_tuners_lora_monkey_patch import (
@@ -491,7 +490,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         result = shared.tokenizer.encode(text, truncation=True, max_length=cutoff_len)
         # Check if the first two tokens are BOS
         if len(result) >= 2 and result[:2] == [shared.tokenizer.bos_token_id, shared.tokenizer.bos_token_id]:
-            result= result[1:]
+            result = result[1:]
 
         if not add_bos_token and result[0] == shared.tokenizer.bos_token_id:
             result = result[1:]
@@ -501,8 +500,8 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
         if train_only_after == '' or train_only_after not in prompt:
             input_ids = encode(prompt, True)
-            
-            if append_eos_token and input_ids[-1] != shared.tokenizer.eos_token_id and len(input_ids)<cutoff_len:
+
+            if append_eos_token and input_ids[-1] != shared.tokenizer.eos_token_id and len(input_ids) < cutoff_len:
                 input_ids.append(shared.tokenizer.eos_token_id)
 
             input_ids = [shared.tokenizer.pad_token_id] * (cutoff_len - len(input_ids)) + input_ids
@@ -537,7 +536,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     def split_sentences(text: str):
         sentences = []
         sentence = ''
-        delimiters = ['. ', '? ', '! ', '... ', '.\n', '?\n', '!\n','...\n','</s>']
+        delimiters = ['. ', '? ', '! ', '... ', '.\n', '?\n', '!\n','...\n','</s>','<//>']
         abbreviations = ['Mr. ', 'Mrs. ', 'Dr. ', 'Ms. ', 'St. ', 'Prof. ', 'Jr. ', 'Ltd. ', 'Capt. ', 'Col. ', 'Gen. ', 'Ave. ', 'Blvd. ', 'Co. ', 'Corp. ', 'Dept. ', 'Est. ', 'Gov. ', 'Inc. ', 'Ph.D. ', 'Univ. ']
         errors = 0
         max_cut = cutoff_len-1
@@ -585,13 +584,13 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
     def precise_cut(text: str, overlap: bool, min_chars_cut: int, eos_to_hc: bool):
 
-        debug_slicer = False
-        EOS_str = '</s>'
+        debug_slicer = True
+        EOSX_str = '<//>' #hardcut placeholder
+        EOS_str = '</s>' 
         print("Precise raw text slicer: ON")
         
         cut_string = hard_cut_string.replace('\\n', '\n')
-        text = text.replace(cut_string, EOS_str)
-        num_EOS = text.count(EOS_str)
+        text = text.replace(cut_string, EOSX_str)
         sentences = split_sentences(text)
 
         print(f"Sentences: {len(sentences)}")
@@ -615,12 +614,10 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
                 halfcut_length = -2 * max_cut
 
 
-            if totalLength + item['size'] < max_cut and not currentSentence.endswith(EOS_str): 
+            if totalLength + item['size'] < max_cut and not currentSentence.endswith(EOSX_str): 
                 currentSentence += item['text']
                 totalLength += item['size']
             else:
-                if currentSentence and not eos_to_hc:
-                    currentSentence = currentSentence.replace(EOS_str, ' ')
 
                 if len(currentSentence.strip()) > min_chars_cut:
                     sentencelist.append(currentSentence.strip())
@@ -629,9 +626,6 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
                 totalLength = item['size']
                 halfcut_length = item['size']
                 
-        if currentSentence and not eos_to_hc:
-            currentSentence = currentSentence.replace(EOS_str, ' ')
-
         if len(currentSentence.strip()) > min_chars_cut:    
             sentencelist.append(currentSentence.strip())
     
@@ -639,7 +633,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         print(f"Text Blocks: {unique_blocks}")
 
         #overlap strategies: 
-        # don't overlap across HARD CUT (EOS)
+        # don't overlap across HARD CUT (EOSX)
         if overlap:
             for edge_idx in edgeindex:
                 currentSentence = ''
@@ -650,11 +644,11 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
                         currentSentence += item['text']
                         totalLength += item['size']
                     else:
-                        #if by chance EOS is at the end then it's acceptable
-                        if currentSentence.endswith(EOS_str):
-                            currentSentence = currentSentence[:-len(EOS_str)]
-                        
-                        if EOS_str not in currentSentence and len(currentSentence.strip()) > min_chars_cut:
+                        #if by chance EOSX is at the end then it's acceptable
+                        if currentSentence.endswith(EOSX_str) and len(currentSentence.strip()) > min_chars_cut:
+                                sentencelist.append(currentSentence.strip())    
+                        # otherwise don't cross hard cut    
+                        elif EOSX_str not in currentSentence and len(currentSentence.strip()) > min_chars_cut:
                             sentencelist.append(currentSentence.strip())
                         
                         currentSentence = ''
@@ -663,8 +657,23 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             
             print(f"+ Overlapping blocks: {len(sentencelist)-unique_blocks}")
 
-        if eos_to_hc and num_EOS > 0:
-            print(f"+ added EOS to {num_EOS} Hard Cut blocks")
+        num_EOS = 0
+        for i in range(len(sentencelist)):
+            if eos_to_hc:
+                sentencelist[i] = sentencelist[i].replace(EOSX_str, EOS_str)
+            else:
+                sentencelist[i] = sentencelist[i].replace(EOSX_str, '')
+            
+            #someone may have had stop strings in the raw text...
+            sentencelist[i] = sentencelist[i].replace("</s></s>", EOS_str)
+            num_EOS += sentencelist[i].count(EOS_str)
+
+        if num_EOS > 0:
+            print(f"+ EOS count: {num_EOS}")
+
+        #final check for useless lines
+        sentencelist = [item for item in sentencelist if item.strip() != "</s>"]
+        sentencelist = [item for item in sentencelist if item.strip() != ""]
 
         if debug_slicer:
             sentencelist_dict = {index: sentence for index, sentence in enumerate(sentencelist)}
@@ -699,8 +708,9 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         if min_chars<0:
             min_chars = 0
 
-        add_EOS_to_all = add_eos_token and add_eos_token_type == 0
-        add_EOS_to_HC = add_eos_token and add_eos_token_type == 1
+        add_EOS_to_all = add_eos_token and add_eos_token_type == 'Every Block'
+        add_EOS_to_HC = add_eos_token and add_eos_token_type != 'Every Block'
+        
 
         #print (f"add_eos_token {add_eos_token}, add_EOS_to_all {add_EOS_to_all}, add_EOS_to_HC {add_EOS_to_HC}")
 
@@ -768,9 +778,9 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
         def generate_prompt(data_point: dict[str, str]):
             for options, data in format_data.items():
-                if set(options.split(',')) == set(x[0] for x in data_point.items() if (type(x[1]) is str and len(x[1].strip()) > 0)):
+                if set(options.split(',')) == set(x[0] for x in data_point.items() if (x[1] is not None and len(x[1].strip()) > 0)):
                     for key, val in data_point.items():
-                        if type(val) is str:
+                        if val is not None:
                             data = data.replace(f'%{key}%', val)
                     return data
             raise RuntimeError(f'Data-point "{data_point}" has no keyset match within format "{list(format_data.keys())}"')
@@ -996,9 +1006,11 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     yield "Starting..."
 
     lora_trainable_param, lora_all_param = calc_trainable_parameters(lora_model)
+
     projections_string = ", ".join([projection.replace("_proj", "") for projection in model_to_lora_modules[model_id]])
 
     print(f"Training '{model_id}' model using ({projections_string}) projections")
+
     if lora_all_param > 0:
         print(f"Trainable params: {lora_trainable_param:,d} ({100 * lora_trainable_param / lora_all_param:.4f} %), All params: {lora_all_param:,d} (Model: {model_all_params:,d})")
 

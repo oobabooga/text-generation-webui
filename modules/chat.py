@@ -3,8 +3,8 @@ import copy
 import functools
 import json
 import re
-from datetime import datetime
 from pathlib import Path
+from datetime import date
 
 import gradio as gr
 import yaml
@@ -90,7 +90,22 @@ def generate_chat_prompt(user_input, state, **kwargs):
     # Build the prompt
     min_rows = 3
     i = len(history) - 1
-    rows = [state['context_instruct'] if is_instruct else f"{state['context'].strip()}\n"]
+ 
+    current_date = date.today()
+
+    context_str = state['context_instruct'] if is_instruct else f"{state['context'].strip()}\n"
+
+    date_replacements = {
+        '<|date|>': current_date.strftime("%d %B %Y"),
+        '<|day|>':current_date.strftime("%A")
+    }
+
+    for j, k in date_replacements.items():
+        context_str = context_str.replace(j, k)
+    
+    rows = [context_str]
+
+
     while i >= 0 and get_encoded_length(wrapper.replace('<|prompt|>', ''.join(rows))) < max_length:
         if _continue and i == len(history) - 1:
             if state['mode'] != 'chat-instruct':
@@ -175,7 +190,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
 
     # Preparing the input
     if not any((regenerate, _continue)):
-        visible_text = text
+            visible_text = text
         text, visible_text = apply_extensions('chat_input', text, visible_text, state)
         text = apply_extensions('input', text, state)
 

@@ -12,7 +12,7 @@ from modules.logging_colors import logger
 
 if torch.cuda.is_available() and not torch.version.hip:
     try:
-        from llama_cpp_cuda import Llama
+    from llama_cpp_cuda import Llama
     except:
         from llama_cpp import Llama
 else:
