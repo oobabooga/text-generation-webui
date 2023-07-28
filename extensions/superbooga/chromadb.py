@@ -10,10 +10,9 @@ from chromadb.config import Settings
 from sentence_transformers import SentenceTransformer
 
 from modules.logging_colors import logger
+from modules.text_generation import encode, decode
 
-from modules import shared
-
-logger.info('Intercepting all calls to posthog :)')
+logger.debug('Intercepting all calls to posthog.')
 posthog.capture = lambda *args, **kwargs: None
 
 
@@ -100,58 +99,96 @@ class ChromaCollector(Collecter):
         self.embedder = embedder
         self.collection = self.chroma_client.create_collection(name="context", embedding_function=self.embedder.embed)
         self.ids = []
+        self.id_to_info = {}
         self.embeddings_cache = {}
 
-    def add(self, texts: list[str], texts_with_context: list[str], starting_indices: list[int]):
-        if len(texts) == 0:
+    def add(self, texts: list[str], texts_with_context: list[str], starting_indices: list[int], metadatas: list[dict] = None):
+        assert metadatas is None or len(metadatas) == len(texts), "metadatas must be None or have the same length as texts"
+        
+        if len(texts) == 0: 
             return
 
-        self.ids = [f"id{i}" for i in range(len(texts))]
+        new_ids = self._get_new_ids(len(texts))
 
-        # Split the texts into existing and non-existing ones
-        existing_texts = []
-        non_existing_texts = []
-        existing_embeddings = []
-
-        for text, id_ in zip(texts, self.ids):
-            embedding = self.embeddings_cache.get(text)
-            if embedding:
-                existing_texts.append((text, id_))
-                existing_embeddings.append(embedding)
-            else:
-                non_existing_texts.append((text, id_))
+        (existing_texts, existing_embeddings, existing_ids, existing_metas), \
+        (non_existing_texts, non_existing_ids, non_existing_metas) = self._split_texts_by_cache_hit(texts, new_ids, metadatas)
 
         # If there are any already existing texts, add them all at once.
         if existing_texts:
             logger.info(f'Adding {len(existing_embeddings)} cached embeddings.')
-            self.collection.add(embeddings=existing_embeddings, documents=[text for text, _ in existing_texts], ids=[id_ for _, id_ in existing_texts])
+            args = {'embeddings': existing_embeddings, 'documents': existing_texts, 'ids': existing_ids}
+            if metadatas is not None: 
+                args['metadatas'] = existing_metas
+            self.collection.add(**args)
 
         # If there are any non-existing texts, compute their embeddings all at once. Each call to embed has significant overhead.
         if non_existing_texts:
-            non_existing_embeddings = self.embedder.embed([text for text, _ in non_existing_texts]).tolist()
-            for (text, _), embedding in zip(non_existing_texts, non_existing_embeddings):
-                self.embeddings_cache[text] = embedding
-            
+            non_existing_embeddings = self.embedder.embed(non_existing_texts).tolist()
+            for text, embedding in zip(non_existing_texts, non_existing_embeddings):
+                pass#self.embeddings_cache[text] = embedding
+
             logger.info(f'Adding {len(non_existing_embeddings)} new embeddings.')
-            self.collection.add(embeddings=non_existing_embeddings, documents=[text for text, _ in non_existing_texts], ids=[id_ for _, id_ in non_existing_texts])
+            args = {'embeddings': non_existing_embeddings, 'documents': non_existing_texts, 'ids': non_existing_ids}
+            if metadatas is not None: 
+                args['metadatas'] = non_existing_metas
+            self.collection.add(**args)
 
         # Create a dictionary that maps each ID to its context and starting index
-        self.id_to_info = {
+        new_info = {
             id_: {'text_with_context': context, 'start_index': start_index}
-            for id_, context, start_index in zip(self.ids, texts_with_context, starting_indices)
+            for id_, context, start_index in zip(new_ids, texts_with_context, starting_indices)
         }
 
+        self.id_to_info.update(new_info)
+        self.ids.extend(new_ids)
 
-    def filter_infos_in_interval(self, infos: list[Info], percentage: float):
+    
+    def _split_texts_by_cache_hit(self, texts, new_ids, metadatas):
+        existing_texts, non_existing_texts = [], []
+        existing_embeddings = []
+        existing_ids, non_existing_ids = [], []
+        existing_metas, non_existing_metas = [], []
+
+        for i, text in enumerate(texts):
+            id_ = new_ids[i]
+            metadata = metadatas[i] if metadatas is not None else None
+            embedding = self.embeddings_cache.get(text)
+            if embedding:
+                existing_texts.append(text)
+                existing_embeddings.append(embedding)
+                existing_ids.append(id_)
+                existing_metas.append(metadata)
+            else:
+                non_existing_texts.append(text)
+                non_existing_ids.append(id_)
+                non_existing_metas.append(metadata)
+
+        return (existing_texts, existing_embeddings, existing_ids, existing_metas), \
+               (non_existing_texts, non_existing_ids, non_existing_metas)
+
+
+    def _get_new_ids(self, num_new_ids: int):
+        if self.ids:
+            max_existing_id = max(int(id_) for id_ in self.ids)
+        else:
+            max_existing_id = -1
+
+        return [str(i + max_existing_id + 1) for i in range(num_new_ids)]
+
+
+    def _filter_infos_in_interval(self, infos: list[Info], percentage: float):
+        if percentage >= 1.0:
+            return infos
+        
         points = [info.start_index for info in infos]
         weights = [1.0/info.distance for info in infos]
 
-        start, end = self.find_optimal_weighted_interval(points, weights, percentage)
+        start, end = self._find_optimal_weighted_interval(points, weights, percentage)
 
         return [info for info in infos if start <= info.start_index <= end]
 
 
-    def find_optimal_weighted_interval(self, points: list[int], weights: list[float], percentage: float):
+    def _find_optimal_weighted_interval(self, points: list[int], weights: list[float], percentage: float):
         total_weight = sum(weights)
         target_weight = total_weight * percentage
 
@@ -174,7 +211,7 @@ class ChromaCollector(Collecter):
         return result
 
 
-    def merge_infos(self, infos: list[Info]):
+    def _merge_infos(self, infos: list[Info]):
         merged_infos = []
         current_info = infos[0]
 
@@ -190,52 +227,59 @@ class ChromaCollector(Collecter):
         return merged_infos
     
 
-    def get_documents_ids_distances(self, search_strings: list[str], n_results: int):
+    # Main function for retrieving chunks by distance. It performs merging and confidence filtering.
+    def _get_documents_ids_distances(self, search_strings: list[str], n_results: int):
         n_results = min(len(self.ids), n_results)
         if n_results == 0:
             return [], [], []
 
-        result = self.collection.query(query_texts=search_strings, n_results=math.ceil(n_results / len(search_strings)), include=['documents', 'distances'])
+        if isinstance(search_strings, str):
+            search_strings = [search_strings]
+
+        result = self.collection.query(query_texts=search_strings, n_results=math.ceil(n_results / len(search_strings)), include=['distances'])
         infos = [Info(start_index=self.id_to_info[id]['start_index'], 
                     text_with_context=self.id_to_info[id]['text_with_context'], 
                     distance=distance, id=id) 
                 for id, distance in zip(result['ids'][0], result['distances'][0])]
 
         infos.sort(key=lambda x: x.start_index)
-        infos = self.filter_infos_in_interval(infos, parameters.get_confidence_interval())
-        infos = self.merge_infos(infos)
+        infos = self._filter_infos_in_interval(infos, parameters.get_confidence_interval())
+        infos = self._merge_infos(infos)
 
         texts_with_context = [inf.text_with_context for inf in infos]
         ids = [inf.id for inf in infos]
         distances = [inf.distance for inf in infos]
 
         return texts_with_context, ids, distances
+    
 
     # Get chunks by similarity
     def get(self, search_strings: list[str], n_results: int) -> list[str]:
-        documents, _, _ = self.get_documents_ids_distances(search_strings, n_results)
+        documents, _, _ = self._get_documents_ids_distances(search_strings, n_results)
         return documents
+    
 
     # Get ids by similarity
     def get_ids(self, search_strings: list[str], n_results: int) -> list[str]:
-        _, ids, _ = self.get_documents_ids_distances(search_strings, n_results)
+        _, ids, _ = self._get_documents_ids_distances(search_strings, n_results)
         return ids
     
+    
     # Cutoff token count
-    def get_documents_up_to_token_count(self, documents: list[str], max_token_count: int):
-        # TODO: Move to script.py; We add delimiters there which might go over the limit.
+    def _get_documents_up_to_token_count(self, documents: list[str], max_token_count: int):
+        # TODO: Move to caller; We add delimiters there which might go over the limit.
         current_token_count = 0
         return_documents = []
 
         for doc in documents:
-            doc_tokens = shared.tokenizer.encode(doc)
+            doc_tokens = encode(doc)[0]
             doc_token_count = len(doc_tokens)
             if current_token_count + doc_token_count > max_token_count:
                 # If adding this document would exceed the max token count,
                 # truncate the document to fit within the limit.
                 remaining_tokens = max_token_count - current_token_count
                 
-                truncated_doc = shared.tokenizer.decode(doc_tokens[:remaining_tokens], skip_special_tokens=True)
+                truncated_doc = decode(doc_tokens[:remaining_tokens], skip_special_tokens=True)
                 return_documents.append(truncated_doc)
                 break
             else:
@@ -243,74 +287,54 @@ class ChromaCollector(Collecter):
                 current_token_count += doc_token_count
 
         return return_documents
+    
 
-    # Get chunks by similarity and then sort by insertion order
-    def get_sorted(self, search_strings: list[str], n_results: int, max_token_count: int) -> list[str]:
-        documents, ids, _ = self.get_documents_ids_distances(search_strings, n_results)
+    # Get chunks by similarity and then sort by ids
+    def get_sorted_by_ids(self, search_strings: list[str], n_results: int, max_token_count: int) -> list[str]:
+        documents, ids, _ = self._get_documents_ids_distances(search_strings, n_results)
         sorted_docs = [x for _, x in sorted(zip(ids, documents))]
 
-        return self.get_documents_up_to_token_count(sorted_docs, max_token_count)
+        return self._get_documents_up_to_token_count(sorted_docs, max_token_count)
+    
     
     # Get chunks by similarity and then sort by distance (lowest distance is last).
     def get_sorted_by_dist(self, search_strings: list[str], n_results: int, max_token_count: int) -> list[str]:
-        documents, _, distances = self.get_documents_ids_distances(search_strings, n_results)
+        documents, _, distances = self._get_documents_ids_distances(search_strings, n_results)
         sorted_docs = [doc for doc, _ in sorted(zip(documents, distances), key=lambda x: x[1])] # sorted lowest -> highest
         
         # If a document is truncated or competely skipped, it would be with high distance.
-        return_documents = self.get_documents_up_to_token_count(sorted_docs, max_token_count)
+        return_documents = self._get_documents_up_to_token_count(sorted_docs, max_token_count)
         return_documents.reverse() # highest -> lowest
 
         return return_documents
+    
+
+    def delete(self, ids_to_delete: list[str], where: dict):
+        ids_to_delete = self.collection.get(ids=ids_to_delete, where=where)['ids']
+        self.collection.delete(ids=ids_to_delete, where=where)
+
+        # Remove the deleted ids from self.ids and self.id_to_info
+        ids_set = set(ids_to_delete)
+        self.ids = [id_ for id_ in self.ids if id_ not in ids_set]
+        for id_ in ids_to_delete:
+            self.id_to_info.pop(id_, None)
 
 
-    # Multiply distance by factor within [0, time_weight] where more recent is lower
-    def apply_time_weight_to_distances(self, ids: list[int], distances: list[float], time_weight: float = 1.0) -> list[float]:
-        if len(self.ids) <= 1:
-            return distances.copy()
-
-        return [distance * (1 - _id / (len(self.ids) - 1) * time_weight) for _id, distance in zip(ids, distances)]
-
-    # Get ids by similarity and then sort by insertion order
-    def get_ids_sorted(self, search_strings: list[str], n_results: int, n_initial: int = None, time_weight: float = 1.0) -> list[str]:
-        do_time_weight = time_weight > 0
-        if not (do_time_weight and n_initial is not None):
-            n_initial = n_results
-        elif n_initial == -1:
-            n_initial = len(self.ids)
-
-        if n_initial < n_results:
-            raise ValueError(f"n_initial {n_initial} should be >= n_results {n_results}")
-
-        _, ids, distances = self.get_documents_ids_distances(search_strings, n_initial)
-        if do_time_weight:
-            distances_w = self.apply_time_weight_to_distances(ids, distances, time_weight=time_weight)
-            results = zip(ids, distances, distances_w)
-            results = sorted(results, key=lambda x: x[2])[:n_results]
-            results = sorted(results, key=lambda x: x[0])
-            ids = [x[0] for x in results]
-
-        return sorted(ids)
 
     def clear(self):
+        self.collection.delete(self.ids)
         self.chroma_client.delete_collection("context")
         self.collection = self.chroma_client.create_collection("context", embedding_function=self.embedder.embed)
         self.ids = []
+        self.id_to_info = {}
 
 
 class SentenceTransformerEmbedder(Embedder):
     def __init__(self) -> None:
+        logger.debug('Creating Sentence Embedder...')
         self.model = SentenceTransformer("sentence-transformers/all-mpnet-base-v2")
         self.embed = self.model.encode
 
 
 def make_collector():
-    global embedder
-    return ChromaCollector(embedder)
-
-
-def add_chunks_to_collector(data_chunks, data_chunks_with_context, data_chunk_starting_indices, collector):
-    collector.clear()
-    collector.add(data_chunks, data_chunks_with_context, data_chunk_starting_indices)
-
-
-embedder = SentenceTransformerEmbedder()
+    return ChromaCollector(SentenceTransformerEmbedder())

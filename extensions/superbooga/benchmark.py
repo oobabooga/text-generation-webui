@@ -13,8 +13,10 @@ import os
 from pathlib import Path
 
 from .data_processor import process_and_add_to_collector, preprocess_text
+from .parameters import get_chunk_count, get_max_token_count
+from .utils import create_metadata_source
 
-def benchmark(config_path, n_results, max_token_count, chunk_len, context_len, chunk_regex, chunk_sep, collector):
+def benchmark(config_path, collector):
     # Get the current system date
     sysdate = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"benchmark_{sysdate}.txt"
@@ -36,8 +38,7 @@ def benchmark(config_path, n_results, max_token_count, chunk_len, context_len, c
                 # Open the file and read its content
                 with open(Path(filepath), 'r') as file:
                     corpus = file.read()
-                for _ in process_and_add_to_collector(corpus, chunk_len, context_len, chunk_regex, chunk_sep, collector):
-                    pass
+                process_and_add_to_collector(corpus, collector, True, create_metadata_source('benchmark'))
             else:
                 raise f'Cannot find specified file {filepath}.'
 
@@ -50,7 +51,7 @@ def benchmark(config_path, n_results, max_token_count, chunk_len, context_len, c
                     processed_text = preprocess_text(q)
 
                     # Get the most similar chunks
-                    results = collector.get_sorted_by_dist(processed_text, n_results=n_results, max_token_count=int(max_token_count))
+                    results = collector.get_sorted_by_dist(processed_text, n_results=get_chunk_count(), max_token_count=get_max_token_count())
 
                     points = 0
                     
@@ -68,4 +69,4 @@ def benchmark(config_path, n_results, max_token_count, chunk_len, context_len, c
 
         print(f'##Total points:\n\n{total_points}/{max_points}', file=log)
 
-    return total_points
+    return total_points, max_points

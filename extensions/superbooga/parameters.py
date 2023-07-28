@@ -1,11 +1,10 @@
 """
-This module provides a singleton class `Parameters` that is used to manage all hyperparameters for the embedding application. It expects a JSON file in `extensions/superbooga/config.json`.
+This module provides a singleton class `Parameters` that is used to manage all hyperparameters for the embedding application. 
+It expects a JSON file in `extensions/superbooga/config.json`.
 
-Each element would have a default value which will be used for the current run.
-
-Some of the elements would have 'categories'. These categories define the range in which the optimizer will search.
-
-If the element is tagged with 'should_optimize: false', then the optimizer will only ever use the default value.
+Each element in the JSON must have a `default` value which will be used for the current run. Elements can have `categories`. 
+These categories define the range in which the optimizer will search. If the element is tagged with `"should_optimize": false`, 
+then the optimizer will only ever use the default value.
 """
 from skopt.space import Categorical
 from pathlib import Path
@@ -26,6 +25,11 @@ DIST_GEOMETRIC_STRATEGY = 'Geometric Mean'
 DIST_ARITHMETIC_STRATEGY = 'Arithmetic Mean'
 
 
+PREPEND_TO_LAST = 'Prepend to Last Message'
+APPEND_TO_LAST = 'Append to Last Message'
+HIJACK_LAST_IN_CONTEXT = 'Hijack Last Message in Context ⚠️ WIP ⚠️ (Works Partially)'
+
+
 class Parameters:
     _instance = None
 
@@ -37,6 +41,9 @@ class Parameters:
         'DIST_HARMONIC_STRATEGY': DIST_HARMONIC_STRATEGY,
         'DIST_GEOMETRIC_STRATEGY': DIST_GEOMETRIC_STRATEGY,
         'DIST_ARITHMETIC_STRATEGY': DIST_ARITHMETIC_STRATEGY,
+        'PREPEND_TO_LAST': PREPEND_TO_LAST,
+        'APPEND_TO_LAST': APPEND_TO_LAST,
+        'HIJACK_LAST_IN_CONTEXT': HIJACK_LAST_IN_CONTEXT,
     }
 
     @staticmethod
@@ -69,7 +76,7 @@ class Parameters:
 
 
 def should_to_lower() -> bool:
-    return Parameters.getInstance().hyperparameters['to_lower']['default']
+    return bool(Parameters.getInstance().hyperparameters['to_lower']['default'])
 
 
 def get_num_conversion_strategy() -> str:
@@ -77,35 +84,35 @@ def get_num_conversion_strategy() -> str:
 
 
 def should_merge_spaces() -> bool:
-    return Parameters.getInstance().hyperparameters['merge_spaces']['default']
+    return bool(Parameters.getInstance().hyperparameters['merge_spaces']['default'])
 
 
 def should_strip() -> bool:
-    return Parameters.getInstance().hyperparameters['strip']['default']
+    return bool(Parameters.getInstance().hyperparameters['strip']['default'])
 
 
 def should_remove_punctuation() -> bool:
-    return Parameters.getInstance().hyperparameters['remove_punctuation']['default']
+    return bool(Parameters.getInstance().hyperparameters['remove_punctuation']['default'])
 
 
 def should_remove_stopwords() -> bool:
-    return Parameters.getInstance().hyperparameters['remove_stopwords']['default']
+    return bool(Parameters.getInstance().hyperparameters['remove_stopwords']['default'])
 
 
 def should_remove_specific_pos() -> bool:
-    return Parameters.getInstance().hyperparameters['remove_specific_pos']['default']
+    return bool(Parameters.getInstance().hyperparameters['remove_specific_pos']['default'])
 
 
 def should_lemmatize() -> bool:
-    return Parameters.getInstance().hyperparameters['lemmatize']['default']
+    return bool(Parameters.getInstance().hyperparameters['lemmatize']['default'])
 
 
 def get_min_num_sentences() -> int:
-    return Parameters.getInstance().hyperparameters['min_num_sent']['default']
+    return int(Parameters.getInstance().hyperparameters['min_num_sent']['default'])
 
 
 def get_delta_start() -> int:
-    return Parameters.getInstance().hyperparameters['delta_start']['default']
+    return int(Parameters.getInstance().hyperparameters['delta_start']['default'])
 
 
 def set_to_lower(value: bool):
@@ -204,27 +211,47 @@ def get_new_dist_strategy() -> str:
 
 
 def get_chunk_count() -> int:
-    return Parameters.getInstance().hyperparameters['chunk_count']['default']
+    return int(Parameters.getInstance().hyperparameters['chunk_count']['default'])
 
 
 def get_min_num_length() -> int:
-    return Parameters.getInstance().hyperparameters['min_num_length']['default']
+    return int(Parameters.getInstance().hyperparameters['min_num_length']['default'])
 
 
 def get_confidence_interval() -> float:
-    return Parameters.getInstance().hyperparameters['confidence_interval']['default']
+    return float(Parameters.getInstance().hyperparameters['confidence_interval']['default'])
 
 
-def get_time_weight() -> int:
-    return Parameters.getInstance().hyperparameters['time_weight']['default']
+def get_time_weight() -> float:
+    return float(Parameters.getInstance().hyperparameters['time_weight']['default'])
 
 
 def get_chunk_separator() -> str:
     return Parameters.getInstance().hyperparameters['chunk_separator']['default']
 
 
+def get_prefix() -> str:
+    return Parameters.getInstance().hyperparameters['prefix']['default']
+
+
 def get_data_separator() -> str:
     return Parameters.getInstance().hyperparameters['data_separator']['default']
+
+
+def get_postfix() -> str:
+    return Parameters.getInstance().hyperparameters['postfix']['default']
+
+
+def get_is_manual() -> bool:
+    return bool(Parameters.getInstance().hyperparameters['manual']['default'])
+
+
+def get_add_chat_to_data() -> bool:
+    return bool(Parameters.getInstance().hyperparameters['add_chat_to_data']['default'])
+
+
+def get_injection_strategy() -> str:
+    return Parameters.getInstance().hyperparameters['injection_strategy']['default']
 
 
 def get_chunk_regex() -> str:
@@ -232,19 +259,19 @@ def get_chunk_regex() -> str:
 
 
 def get_is_strong_cleanup() -> bool:
-    return Parameters.getInstance().hyperparameters['strong_cleanup']['default']
+    return bool(Parameters.getInstance().hyperparameters['strong_cleanup']['default'])
 
 
 def get_max_token_count() -> int:
-    return Parameters.getInstance().hyperparameters['max_token_count']['default']
+    return int(Parameters.getInstance().hyperparameters['max_token_count']['default'])
 
 
 def get_num_threads() -> int:
-    return Parameters.getInstance().hyperparameters['threads']['default']
+    return int(Parameters.getInstance().hyperparameters['threads']['default'])
 
 
 def get_optimization_steps() -> int:
-    return Parameters.getInstance().hyperparameters['optimization_steps']['default']
+    return int(Parameters.getInstance().hyperparameters['optimization_steps']['default'])
 
 
 def set_new_dist_strategy(value: str):
@@ -271,8 +298,28 @@ def set_chunk_separator(value: str):
     Parameters.getInstance().hyperparameters['chunk_separator']['default'] = value
 
 
+def set_prefix(value: str):
+    Parameters.getInstance().hyperparameters['prefix']['default'] = value
+
+
 def set_data_separator(value: str):
     Parameters.getInstance().hyperparameters['data_separator']['default'] = value
+
+
+def set_postfix(value: str):
+    Parameters.getInstance().hyperparameters['postfix']['default'] = value
+
+
+def set_manual(value: bool):
+    Parameters.getInstance().hyperparameters['manual']['default'] = value
+
+
+def set_add_chat_to_data(value: bool):
+    Parameters.getInstance().hyperparameters['add_chat_to_data']['default'] = value
+
+
+def set_injection_strategy(value: str):
+    Parameters.getInstance().hyperparameters['injection_strategy']['default'] = value
 
 
 def set_chunk_regex(value: str):

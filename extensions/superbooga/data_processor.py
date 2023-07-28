@@ -9,8 +9,8 @@ import bisect
 
 import extensions.superbooga.parameters as parameters
 
-from .chromadb import add_chunks_to_collector
 from .data_preprocessor import TextPreprocessorBuilder, TextSummarizer
+from .chromadb import ChromaCollector
 
 summarizer = TextSummarizer()
 
@@ -53,7 +53,7 @@ def preprocess_text(text) -> list[str]:
     return [preprocess_text_no_summary(sent) for sent in important_sentences]
 
 
-def create_chunks_with_context(corpus, chunk_len, context_left, context_right):
+def _create_chunks_with_context(corpus, chunk_len, context_left, context_right):
     """
     This function takes a corpus of text and splits it into chunks of a specified length, 
     then adds a specified amount of context to each chunk. The context is added by first 
@@ -112,7 +112,7 @@ def create_chunks_with_context(corpus, chunk_len, context_left, context_right):
     return chunks, chunks_with_context, chunk_with_context_start_indices
 
 
-def clear_chunks(data_chunks, data_chunks_with_context, data_chunk_starting_indices):
+def _clear_chunks(data_chunks, data_chunks_with_context, data_chunk_starting_indices):
     distinct_data_chunks = []
     distinct_data_chunks_with_context = []
     distinct_data_chunk_starting_indices = []
@@ -139,10 +139,10 @@ def clear_chunks(data_chunks, data_chunks_with_context, data_chunk_starting_indi
     return distinct_data_chunks, distinct_data_chunks_with_context, distinct_data_chunk_starting_indices
 
 
-def process_and_add_to_collector(corpus, chunk_len, context_len, chunk_regex, chunk_sep, collector):
+def process_and_add_to_collector(corpus: str, collector: ChromaCollector, clear_collector_before_adding: bool, metadata: dict):
     # Defining variables
-    chunk_lens = [int(len.strip()) for len in chunk_len.split(',')]
-    context_len = [int(len) for len in context_len.split(',')]
+    chunk_lens = [int(len.strip()) for len in parameters.get_chunk_len().split(',')]
+    context_len = [int(len.strip()) for len in parameters.get_context_len().split(',')]
     if len(context_len) >= 3:
         raise f"Context len has too many values: {len(context_len)}"
     if len(context_len) == 2:
@@ -150,20 +150,18 @@ def process_and_add_to_collector(corpus, chunk_len, context_len, chunk_regex, ch
         context_right = context_len[1]
     else:
         context_left = context_right = context_len[0]
-    chunk_sep = chunk_sep.replace(r'\n', '\n')
-    cumulative = ''
 
     data_chunks = []
     data_chunks_with_context = []
     data_chunk_starting_indices = []
 
     # Handling chunk_regex
-    if chunk_regex:
-        if chunk_sep:
+    if parameters.get_chunk_regex():
+        if parameters.get_chunk_separator():
             cumulative_length = 0  # This variable will store the length of the processed corpus
-            sections = corpus.split(chunk_sep)
+            sections = corpus.split(parameters.get_chunk_separator())
             for section in sections:
-                special_chunks = list(re.finditer(chunk_regex, section))
+                special_chunks = list(re.finditer(parameters.get_chunk_regex(), section))
                 for match in special_chunks:
                     chunk = match.group(0)
                     start_index = match.start()
@@ -172,9 +170,9 @@ def process_and_add_to_collector(corpus, chunk_len, context_len, chunk_regex, ch
                     data_chunks.append(chunk)
                     data_chunks_with_context.append(context)
                     data_chunk_starting_indices.append(cumulative_length + max(0, start_index - context_left))
-                cumulative_length += len(section) + len(chunk_sep)  # Update the length of the processed corpus
+                cumulative_length += len(section) + len(parameters.get_chunk_separator())  # Update the length of the processed corpus
         else:
-            special_chunks = list(re.finditer(chunk_regex, corpus))
+            special_chunks = list(re.finditer(parameters.get_chunk_regex(), corpus))
             for match in special_chunks:
                 chunk = match.group(0)
                 start_index = match.start()
@@ -184,43 +182,30 @@ def process_and_add_to_collector(corpus, chunk_len, context_len, chunk_regex, ch
                 data_chunks_with_context.append(context)
                 data_chunk_starting_indices.append(max(0, start_index - context_left))
 
-        cumulative += f"{len(data_chunks)} special chunks have been found.\n\n"
-        yield cumulative
-
     for chunk_len in chunk_lens:
         # Breaking the data into chunks and adding those to the db
-        cumulative += "Breaking the input dataset...\n\n"
-        yield cumulative
-        if chunk_sep:
+        if parameters.get_chunk_separator():
             cumulative_length = 0  # This variable will store the length of the processed corpus
-            sections = corpus.split(chunk_sep)
+            sections = corpus.split(parameters.get_chunk_separator())
             for section in sections:
-                chunks, chunks_with_context, context_start_indices = create_chunks_with_context(section, chunk_len, context_left, context_right)
+                chunks, chunks_with_context, context_start_indices = _create_chunks_with_context(section, chunk_len, context_left, context_right)
                 context_start_indices = [cumulative_length + i for i in context_start_indices]  # Add the length of the processed corpus to each start index
                 data_chunks.extend(chunks)
                 data_chunks_with_context.extend(chunks_with_context)
                 data_chunk_starting_indices.extend(context_start_indices)
-                cumulative_length += len(section) + len(chunk_sep)  # Update the length of the processed corpus
+                cumulative_length += len(section) + len(parameters.get_chunk_separator())  # Update the length of the processed corpus
         else:
-            chunks, chunks_with_context, context_start_indices = create_chunks_with_context(corpus, chunk_len, context_left, context_right)
+            chunks, chunks_with_context, context_start_indices = _create_chunks_with_context(corpus, chunk_len, context_left, context_right)
             data_chunks.extend(chunks)
             data_chunks_with_context.extend(chunks_with_context)
             data_chunk_starting_indices.extend(context_start_indices)
 
-        cumulative += f"{len(data_chunks)} chunks have been found.\n\n"
-        yield cumulative
-
-    cumulative += f"Preprocessing chunks...\n\n"
-    yield cumulative
     data_chunks = [preprocess_text_no_summary(chunk) for chunk in data_chunks]
 
-    data_chunks, data_chunks_with_context, data_chunk_starting_indices = clear_chunks(
+    data_chunks, data_chunks_with_context, data_chunk_starting_indices = _clear_chunks(
         data_chunks, data_chunks_with_context, data_chunk_starting_indices
     )
 
-    cumulative += f"Adding all {len(data_chunks)} chunks to the database. This may take a while.\n\n"
-    yield cumulative
-
-    add_chunks_to_collector(data_chunks, data_chunks_with_context, data_chunk_starting_indices, collector)
-    cumulative += "Done."
-    yield cumulative
+    if clear_collector_before_adding:
+        collector.clear()
+    collector.add(data_chunks, data_chunks_with_context, data_chunk_starting_indices, [metadata]*len(data_chunks) if metadata is not None else None)

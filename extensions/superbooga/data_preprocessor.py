@@ -142,7 +142,7 @@ class TextSummarizer:
     _nlp_pipeline = None
 
     @staticmethod
-    def load_nlp_pipeline():
+    def _load_nlp_pipeline():
         # Lazy-load it.
         if TextSummarizer._nlp_pipeline is None:
             TextSummarizer._nlp_pipeline = spacy.load('en_core_web_sm')
@@ -159,7 +159,7 @@ class TextSummarizer:
         list: A list of the most important sentences
         """
 
-        nlp_pipeline = self.load_nlp_pipeline()
+        nlp_pipeline = self._load_nlp_pipeline()
         doc = nlp_pipeline(text)
 
         num_sent = len(list(doc.sents))

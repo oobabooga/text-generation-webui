@@ -19,7 +19,7 @@ from modules.logging_colors import logger
 
 
 # Format the parameters into markdown format.
-def markdown_hyperparams():
+def _markdown_hyperparams():
     res = []
     for param_name, param_value in Parameters.getInstance().hyperparameters.items():
         res.append('* {}: **{}**'.format(param_name, param_value['default']))
@@ -28,7 +28,7 @@ def markdown_hyperparams():
 
 
 # Convert numpy types to python types.
-def convert_np_types(params):
+def _convert_np_types(params):
     for key in params:
         if type(params[key]) == np.bool_:
             params[key] = bool(params[key])
@@ -40,21 +40,21 @@ def convert_np_types(params):
 
 
 # Set the default values for the hyperparameters.
-def set_hyperparameters(params):
+def _set_hyperparameters(params):
     for param_name, param_value in params.items():
         if param_name in Parameters.getInstance().hyperparameters: 
             Parameters.getInstance().hyperparameters[param_name]['default'] = param_value
 
 
 # Check if the parameter is for optimization.
-def is_optimization_param(val):
+def _is_optimization_param(val):
     is_opt = val.get('should_optimize', False) # Either does not exist or is false
     return is_opt
 
 
-def optimize(collector, steps: int = 5, progress=gr.Progress()):
+def optimize(collector, progress=gr.Progress()):
     # Create the optimization space.
-    optimization_space = [val['categories'] for val in Parameters.getInstance().hyperparameters.values() if is_optimization_param(val)]
+    optimization_space = [val['categories'] for val in Parameters.getInstance().hyperparameters.values() if _is_optimization_param(val)]
 
     # Inform the user that something is happening.
     progress(0, desc=f'Setting Up...')
@@ -70,15 +70,13 @@ def optimize(collector, steps: int = 5, progress=gr.Progress()):
         nonlocal current_step
         nonlocal best_score
 
-        set_hyperparameters(params)
+        _set_hyperparameters(params)
 
         # Benchmark the current set of parameters.
-        score = benchmark(Path("extensions/superbooga/benchmark_texts/questions.json"), parameters.get_chunk_count(), 
-                          parameters.get_max_token_count(), parameters.get_chunk_len(), parameters.get_context_len(), 
-                          parameters.get_chunk_regex(), parameters.get_chunk_separator(), collector)
+        score, max_score = benchmark(Path("extensions/superbooga/benchmark_texts/questions.json"), collector)
 
-        result = json.dumps(convert_np_types(params), indent=4)
-        result += f'\nScore: {score}'
+        result = json.dumps(_convert_np_types(params), indent=4)
+        result += f'\nScore: {score}/{max_score}'
 
         logger.debug(result)
 
@@ -89,24 +87,24 @@ def optimize(collector, steps: int = 5, progress=gr.Progress()):
         best_score = max(best_score, score)
 
         # Update the progress
-        progress(current_step / steps, desc=f'Optimizing... {current_step}/{steps}')
+        progress(current_step / parameters.get_optimization_steps(), desc=f'Optimizing... {current_step}/{parameters.get_optimization_steps()}')
 
         return -score
 
     # Retrieve initial parameter values.
-    initial_params = [val['default'] for val in Parameters.getInstance().hyperparameters.values() if is_optimization_param(val)]
+    initial_params = [val['default'] for val in Parameters.getInstance().hyperparameters.values() if _is_optimization_param(val)]
 
     # Run the optimization.
-    result = gp_minimize(objective_function, optimization_space, x0=initial_params, n_calls=int(steps), random_state=0)
+    result = gp_minimize(objective_function, optimization_space, x0=initial_params, n_calls=int(parameters.get_optimization_steps()), random_state=0)
 
-    best_params = dict(zip([key for key, val in Parameters.getInstance().hyperparameters.items() if is_optimization_param(val)], result.x))
-    set_hyperparameters(best_params)
+    best_params = dict(zip([key for key, val in Parameters.getInstance().hyperparameters.items() if _is_optimization_param(val)], result.x))
+    _set_hyperparameters(best_params)
 
     # Convert results to a markdown string.
-    str_result = f"## Best parameters:\n\n{markdown_hyperparams()}\n\n## Score:\n\n{best_score}"
+    str_result = f"## Best parameters:\n\n{_markdown_hyperparams()}\n\n## Score:\n\n{best_score}"
 
     # Save to JSON file
     with open('best_params.json', 'w') as fp:
-        json.dump(convert_np_types(best_params), fp, indent=4)
+        json.dump(_convert_np_types(best_params), fp, indent=4)
 
     return str_result
