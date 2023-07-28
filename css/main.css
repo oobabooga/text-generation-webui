@@ -12,6 +12,11 @@
     align-self: end;
 }
 
+.column-300px {
+    max-width: 300px;
+}
+
+
 .refresh-button {
     max-width: 4.4em;
     min-width: 2.2em !important;

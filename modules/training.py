@@ -71,11 +71,13 @@ PARAMETERS = ["lora_name", "always_override", "save_steps", "micro_batch_size", 
 def create_train_interface():
     with gr.Tab('Train LoRA', elem_id='lora-train-tab'):
         gr.Markdown("Confused? [[Click here for a guide]](https://github.com/oobabooga/text-generation-webui/blob/main/docs/Training-LoRAs.md)")
-
         with gr.Row():
-            lora_name = gr.Textbox(label='Name', info='The name of your new LoRA file')
-            always_override = gr.Checkbox(label='Override Existing Files', value=False, info='If the name given is the same as an existing file, checking this will replace that file. Leaving unchecked will load that file and continue from it (must use the same rank value as the original had).')
-            save_steps = gr.Number(label='Save every n steps', value=0, info='If above 0, a checkpoint of the LoRA will be saved every time this many steps pass.')
+            with gr.Row():
+                lora_name = gr.Textbox(label='Name', info='The name of your new LoRA file')
+                always_override = gr.Checkbox(label='Override Existing Files', value=False, info='If the name given is the same as an existing file, checking this will replace that file. Leaving unchecked will load that file and continue from it (must use the same rank value as the original had).')
+            with gr.Row():
+                save_steps = gr.Number(label='Save every n steps', value=0, info='If above 0, a checkpoint of the LoRA will be saved every time this many steps pass.', elem_classes="column-300px")
+                save_steps_under_loss = gr.Slider(label='Checkpoint Minimum loss', value=1.9, minimum=0.0, maximum=3.0, step=0.1, info='Save checkpoints only if the loss is less or equall Minimum loss. (0 = save all)')
 
         with gr.Row():
             copy_from = gr.Dropdown(label='Copy parameters from', value='None', choices=utils.get_available_loras())
@@ -169,7 +171,7 @@ def create_train_interface():
             refresh_table = gr.Button('Refresh the table', elem_classes="small-button")
 
     # Training events
-    all_params = [lora_name, always_override, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lr_scheduler_type, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, higher_rank_limit, warmup_steps, optimizer, hard_cut_string, train_only_after, stop_at_loss, add_eos_token, min_chars, report_to, precize_slicing, precize_slicing_overlap, add_eos_token_type]
+    all_params = [lora_name, always_override, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lr_scheduler_type, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, higher_rank_limit, warmup_steps, optimizer, hard_cut_string, train_only_after, stop_at_loss, add_eos_token, min_chars, report_to, precize_slicing, precize_slicing_overlap, add_eos_token_type, save_steps_under_loss]
     copy_from.change(do_copy_params, [copy_from] + all_params, all_params)
     start_button.click(do_train, all_params, output)
     stop_button.click(do_interrupt, None, None, queue=False)
@@ -428,7 +430,7 @@ def create_graph(lora_path, lora_name):
         
     
 
-def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lr_scheduler_type: str, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, higher_rank_limit: bool, warmup_steps: int, optimizer: str, hard_cut_string: str, train_only_after: str, stop_at_loss: float, add_eos_token: bool, min_chars: int, report_to: str, precize_slicing: bool, precize_slicing_overlap: bool, add_eos_token_type: str):
+def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lr_scheduler_type: str, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, higher_rank_limit: bool, warmup_steps: int, optimizer: str, hard_cut_string: str, train_only_after: str, stop_at_loss: float, add_eos_token: bool, min_chars: int, report_to: str, precize_slicing: bool, precize_slicing_overlap: bool, add_eos_token_type: str, save_steps_under_loss: float):
 
     if shared.args.monkey_patch:
         from monkeypatch.peft_tuners_lora_monkey_patch import (
@@ -684,7 +686,8 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
      
         return sentencelist                
 
-
+    print(f"LoRA: {lora_name}")
+  
      # == Prep the dataset, format, etc ==
     if raw_text_file not in ['None', '']:
         train_template["template_type"] = "raw_text"
@@ -881,13 +884,16 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
                 control.should_epoch_stop = True
                 control.should_training_stop = True
             elif state.global_step > 0 and actual_save_steps > 0 and state.global_step % actual_save_steps == 0:
-                lora_model.save_pretrained(f"{lora_file_path}/checkpoint-{tracked.current_steps}/")
-                # Save log
-                with open(f"{lora_file_path}/checkpoint-{tracked.current_steps}/training_log.json", 'w', encoding='utf-8') as file:
-                    json.dump(train_log, file, indent=2)
-                # == Save training prompt ==
-                with open(f"{lora_file_path}/checkpoint-{tracked.current_steps}/training_prompt.json", 'w', encoding='utf-8') as file:
-                    json.dump(train_template, file, indent=2)
+                current_loss = float(train_log.get('loss', 0.0))
+                if save_steps_under_loss <= current_loss or save_steps_under_loss==0.0:
+                    lora_model.save_pretrained(f"{lora_file_path}/checkpoint-{tracked.current_steps}/")
+                    print (f"Checkpoint {tracked.current_steps} saved")
+                    # Save log
+                    with open(f"{lora_file_path}/checkpoint-{tracked.current_steps}/training_log.json", 'w', encoding='utf-8') as file:
+                        json.dump(train_log, file, indent=2)
+                    # == Save training prompt ==
+                    with open(f"{lora_file_path}/checkpoint-{tracked.current_steps}/training_prompt.json", 'w', encoding='utf-8') as file:
+                        json.dump(train_template, file, indent=2)
 
         def on_substep_end(self, args: transformers.TrainingArguments, state: transformers.TrainerState, control: transformers.TrainerControl, **kwargs):
             tracked.current_steps += 1
