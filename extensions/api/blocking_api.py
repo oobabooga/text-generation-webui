@@ -66,6 +66,8 @@ class Handler(BaseHTTPRequestHandler):
 
             # Send history
             response = json.dumps({
+                'user_name': generated_params['name1'],
+                'character_name': generated_params['name2'],
                 'history': history
             })
             self.wfile.write(response.encode('utf-8'))
