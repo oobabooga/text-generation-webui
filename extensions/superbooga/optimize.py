@@ -1,8 +1,9 @@
 """
-This module implements a hyperparameter optimization routine for the embedding application. It utilizes Gaussian Process optimization from Scikit-Optimize.
+This module implements a hyperparameter optimization routine for the embedding application. It utilizes TPE optimization from Optuna.
 
 Each run, the optimizer will set the default values inside the hyperparameters. At the end, it will output the best ones it has found.
 """
+import re
 import json
 import optuna
 import gradio as gr
@@ -24,7 +25,11 @@ from modules.logging_colors import logger
 def _markdown_hyperparams():
     res = []
     for param_name, param_value in Parameters.getInstance().hyperparameters.items():
-        res.append('* {}: **{}**'.format(param_name, param_value['default']))
+        # Escape any markdown syntax
+        param_name = re.sub(r"([_*\[\]()~`>#+-.!])", r"\\\1", param_name)
+        param_value_default = re.sub(r"([_*\[\]()~`>#+-.!])", r"\\\1", str(param_value['default'])) if param_value['default'] else ' '
+        
+        res.append('* {}: **{}**'.format(param_name, param_value_default))
 
     return '\n'.join(res)
 
@@ -54,6 +59,12 @@ def _is_optimization_param(val):
     return is_opt
 
 
+# Create a hashable representation of the parameters
+def _get_params_hash(params):
+    params_str = json.dumps(params, sort_keys=True)
+    return hashlib.sha256(params_str.encode()).hexdigest()
+
+
 def optimize(collector, progress=gr.Progress()):
     # Inform the user that something is happening.
     progress(0, desc=f'Setting Up...')
@@ -70,21 +81,20 @@ def optimize(collector, progress=gr.Progress()):
     def objective_function(trial):
         nonlocal current_step
         nonlocal best_score
+        nonlocal scores_cache
 
         params = {}
         for key, val in Parameters.getInstance().hyperparameters.items():
             if _is_optimization_param(val):
                 params[key] = trial.suggest_categorical(key, val['categories'])
 
-        # Create a hashable representation of the parameters
-        params_str = json.dumps(params, sort_keys=True)
-        params_hash = hashlib.sha256(params_str.encode()).hexdigest()
+        _set_hyperparameters(params)
+
+        params_hash = _get_params_hash(params)
 
         # If the score for these parameters is in the cache, return it
         if params_hash in scores_cache:
             return scores_cache[params_hash]
-
-        _set_hyperparameters(params)
 
         # Benchmark the current set of parameters.
         score, max_score = benchmark(Path("extensions/superbooga/benchmark_texts/questions.json"), collector)

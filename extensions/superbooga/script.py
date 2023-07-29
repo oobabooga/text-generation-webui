@@ -89,6 +89,8 @@ def _get_optimizable_settings() -> list:
         preprocess_pipeline.append('Strip Edges')
         
     return [
+        parameters.get_time_power(),
+        parameters.get_time_steepness(),
         parameters.get_significant_level(),
         parameters.get_min_num_sentences(),
         parameters.get_new_dist_strategy(),
@@ -96,64 +98,69 @@ def _get_optimizable_settings() -> list:
         parameters.get_min_num_length(),
         parameters.get_num_conversion_strategy(),
         preprocess_pipeline,
-        parameters.get_time_weight(),
         parameters.get_chunk_count(),
         parameters.get_context_len(),
         parameters.get_chunk_len()
     ]
 
 
-def _apply_settings(optimization_steps, significant_level, min_sentences, new_dist_strat, delta_start, min_number_length, num_conversion, 
-                    preprocess_pipeline, api_port, api_on, injection_strategy, add_chat_to_data, manual, postfix, data_separator, prefix, 
-                    max_token_count, time_weight, chunk_count, chunk_sep, context_len, chunk_regex, chunk_len):
+def _apply_settings(optimization_steps, time_power, time_steepness, significant_level, min_sentences, new_dist_strat, delta_start, min_number_length, num_conversion, 
+                    preprocess_pipeline, api_port, api_on, injection_strategy, add_chat_to_data, manual, postfix, data_separator, prefix, max_token_count, 
+                    chunk_count, chunk_sep, context_len, chunk_regex, chunk_len, threads, strong_cleanup):
     logger.debug('Applying settings.')
 
-    parameters.set_optimization_steps(optimization_steps)
-    parameters.set_significant_level(significant_level)
-    parameters.set_min_num_sentences(min_sentences)
-    parameters.set_new_dist_strategy(new_dist_strat)
-    parameters.set_delta_start(delta_start)
-    parameters.set_min_num_length(min_number_length)
-    parameters.set_num_conversion_strategy(num_conversion)
-    parameters.set_api_port(api_port)
-    parameters.set_api_on(api_on)
-    parameters.set_injection_strategy(injection_strategy)
-    parameters.set_add_chat_to_data(add_chat_to_data)
-    parameters.set_manual(manual)
-    parameters.set_postfix(codecs.decode(postfix, 'unicode_escape'))
-    parameters.set_data_separator(codecs.decode(data_separator, 'unicode_escape'))
-    parameters.set_prefix(codecs.decode(prefix, 'unicode_escape'))
-    parameters.set_max_token_count(max_token_count)
-    parameters.set_time_weight(time_weight)
-    parameters.set_chunk_count(chunk_count)
-    parameters.set_chunk_separator(codecs.decode(chunk_sep, 'unicode_escape'))
-    parameters.set_context_len(context_len)
-    parameters.set_chunk_regex(chunk_regex)
-    parameters.set_chunk_len(chunk_len)
+    try:
+        parameters.set_optimization_steps(optimization_steps)
+        parameters.set_significant_level(significant_level)
+        parameters.set_min_num_sentences(min_sentences)
+        parameters.set_new_dist_strategy(new_dist_strat)
+        parameters.set_delta_start(delta_start)
+        parameters.set_min_num_length(min_number_length)
+        parameters.set_num_conversion_strategy(num_conversion)
+        parameters.set_api_port(api_port)
+        parameters.set_api_on(api_on)
+        parameters.set_injection_strategy(injection_strategy)
+        parameters.set_add_chat_to_data(add_chat_to_data)
+        parameters.set_manual(manual)
+        parameters.set_postfix(codecs.decode(postfix, 'unicode_escape'))
+        parameters.set_data_separator(codecs.decode(data_separator, 'unicode_escape'))
+        parameters.set_prefix(codecs.decode(prefix, 'unicode_escape'))
+        parameters.set_max_token_count(max_token_count)
+        parameters.set_time_power(time_power)
+        parameters.set_time_steepness(time_steepness)
+        parameters.set_chunk_count(chunk_count)
+        parameters.set_chunk_separator(codecs.decode(chunk_sep, 'unicode_escape'))
+        parameters.set_context_len(context_len)
+        parameters.set_chunk_regex(chunk_regex)
+        parameters.set_chunk_len(chunk_len)
+        parameters.set_num_threads(threads)
+        parameters.set_strong_cleanup(strong_cleanup)
 
-    preprocess_choices = ['Lower Cases', 'Remove Punctuation', 'Remove Adverbs', 'Remove Stop Words', 'Lemmatize', 'Merge Spaces', 'Strip Edges']
-    for preprocess_method in preprocess_choices:
-        if preprocess_method == 'Lower Cases':
-            parameters.set_to_lower(preprocess_method in preprocess_pipeline)
-        elif preprocess_method == 'Remove Punctuation':
-            parameters.set_remove_punctuation(preprocess_method in preprocess_pipeline)
-        elif preprocess_method == 'Remove Adverbs':
-            parameters.set_remove_specific_pos(preprocess_method in preprocess_pipeline)
-        elif preprocess_method == 'Remove Stop Words':
-            parameters.set_remove_stopwords(preprocess_method in preprocess_pipeline)
-        elif preprocess_method == 'Lemmatize':
-            parameters.set_lemmatize(preprocess_method in preprocess_pipeline)
-        elif preprocess_method == 'Merge Spaces':
-            parameters.set_merge_spaces(preprocess_method in preprocess_pipeline)
-        elif preprocess_method == 'Strip Edges':
-            parameters.set_strip(preprocess_method in preprocess_pipeline)
+        preprocess_choices = ['Lower Cases', 'Remove Punctuation', 'Remove Adverbs', 'Remove Stop Words', 'Lemmatize', 'Merge Spaces', 'Strip Edges']
+        for preprocess_method in preprocess_choices:
+            if preprocess_method == 'Lower Cases':
+                parameters.set_to_lower(preprocess_method in preprocess_pipeline)
+            elif preprocess_method == 'Remove Punctuation':
+                parameters.set_remove_punctuation(preprocess_method in preprocess_pipeline)
+            elif preprocess_method == 'Remove Adverbs':
+                parameters.set_remove_specific_pos(preprocess_method in preprocess_pipeline)
+            elif preprocess_method == 'Remove Stop Words':
+                parameters.set_remove_stopwords(preprocess_method in preprocess_pipeline)
+            elif preprocess_method == 'Lemmatize':
+                parameters.set_lemmatize(preprocess_method in preprocess_pipeline)
+            elif preprocess_method == 'Merge Spaces':
+                parameters.set_merge_spaces(preprocess_method in preprocess_pipeline)
+            elif preprocess_method == 'Strip Edges':
+                parameters.set_strip(preprocess_method in preprocess_pipeline)
 
-    # Based on API on/off, start or stop the server
-    if api_manager is not None:
-        if parameters.get_api_on() and (not api_manager.is_server_running()):
-            api_manager.start_server(parameters.get_api_port())
-        elif (not parameters.get_api_on()) and api_manager.is_server_running():
-            api_manager.stop_server()
+        # Based on API on/off, start or stop the server
+        if api_manager is not None:
+            if parameters.get_api_on() and (not api_manager.is_server_running()):
+                api_manager.start_server(parameters.get_api_port())
+            elif (not parameters.get_api_on()) and api_manager.is_server_running():
+                api_manager.stop_server()
+    except Exception as e:
+        logger.warn(f'Could not properly apply settings: {str(e)}')
 
 
 def custom_generate_chat_prompt(user_input, state, **kwargs):
@@ -216,11 +223,6 @@ def ui():
         <|begin-user-input|>What datasets are mentioned in the text above?<|end-user-input|>
         ASSISTANT:
         ```
-
-        ⚠️  For best results, make sure to remove the spaces and new line characters after `ASSISTANT:`.
-
-        *This extension is currently experimental and under development.*
-
         """))
 
     with gr.Row():
@@ -294,8 +296,9 @@ def ui():
                     delta_start = gr.Number(value=parameters.get_delta_start(), label='Delta Start Index', info='If the system encounters two identical embeddings, and they both start within the same delta, then only the first will be considered.', interactive=True)
                     new_dist_strat = gr.Dropdown(choices=[parameters.DIST_MIN_STRATEGY, parameters.DIST_HARMONIC_STRATEGY, parameters.DIST_GEOMETRIC_STRATEGY, parameters.DIST_ARITHMETIC_STRATEGY], value=parameters.get_new_dist_strategy(), label="Distance Strategy", info='When two embedding texts are merged, the distance of the new piece will be decided using one of these strategies.', interactive=True)
                     min_sentences = gr.Number(value=parameters.get_min_num_sentences(), label='Summary Threshold', info='In sentences. The minumum number of sentences to trigger text-rank summarization.', interactive=True)
-                    significant_level = gr.Slider(1.0, 2, value=parameters.get_significant_level(), label='Significant Level', info='Defines the cut-off for what is considered a "significant" distance relative to the median distance among the returned samples.', interactive=True)
-                    time_weight = gr.Slider(0, 1, value=parameters.get_time_weight(), label='Time weight', info='Defines the strength of the time weighting. Zero means the feature is turned off. ⚠️ WIP ⚠️', interactive=False)
+                    significant_level = gr.Slider(0.8, 2, value=parameters.get_significant_level(), label='Significant Level', info='Defines the cut-off for what is considered a "significant" distance relative to the median distance among the returned samples.', interactive=True)
+                    time_steepness = gr.Slider(0.01, 1.0, value=parameters.get_time_steepness(), label='Time Weighing Steepness', info='How differently two close excerpts are going to be weighed.')
+                    time_power = gr.Slider(0.0, 1.0, value=parameters.get_time_power(), label='Time Weighing Power', info='How influencial is the weighing. At 1.0, old entries won\'t be considered')
 
             with gr.Tab("Benchmark"):
                 benchmark_button = gr.Button('Benchmark')
@@ -309,11 +312,11 @@ def ui():
         with gr.Column():
             last_updated = gr.Markdown()
 
-    all_params = [optimization_steps, significant_level, min_sentences, new_dist_strat, delta_start, min_number_length, num_conversion, 
+    all_params = [optimization_steps, time_power, time_steepness, significant_level, min_sentences, new_dist_strat, delta_start, min_number_length, num_conversion, 
                   preprocess_pipeline, api_port, api_on, injection_strategy, add_chat_to_data, manual, postfix, data_separator, prefix, max_token_count, 
-                  time_weight, chunk_count, chunk_sep, context_len, chunk_regex, chunk_len]
-    optimizable_params = [significant_level, min_sentences, new_dist_strat, delta_start, min_number_length, num_conversion, 
-                  preprocess_pipeline, time_weight, chunk_count, context_len, chunk_len]
+                  chunk_count, chunk_sep, context_len, chunk_regex, chunk_len, threads, strong_cleanup]
+    optimizable_params = [time_power, time_steepness, significant_level, min_sentences, new_dist_strat, delta_start, min_number_length, num_conversion, 
+                  preprocess_pipeline, chunk_count, context_len, chunk_len]
 
 
     update_data.click(_feed_data_into_collector, [data_input], last_updated, show_progress=False)
@@ -325,6 +328,8 @@ def ui():
 
 
     optimization_steps.input(fn=_apply_settings, inputs=all_params, show_progress=False)
+    time_power.input(fn=_apply_settings, inputs=all_params, show_progress=False)
+    time_steepness.input(fn=_apply_settings, inputs=all_params, show_progress=False)
     significant_level.input(fn=_apply_settings, inputs=all_params, show_progress=False)
     min_sentences.input(fn=_apply_settings, inputs=all_params, show_progress=False)
     new_dist_strat.input(fn=_apply_settings, inputs=all_params, show_progress=False)
@@ -341,9 +346,10 @@ def ui():
     data_separator.input(fn=_apply_settings, inputs=all_params, show_progress=False)
     prefix.input(fn=_apply_settings, inputs=all_params, show_progress=False)
     max_token_count.input(fn=_apply_settings, inputs=all_params, show_progress=False)
-    time_weight.input(fn=_apply_settings, inputs=all_params, show_progress=False)
     chunk_count.input(fn=_apply_settings, inputs=all_params, show_progress=False)
     chunk_sep.input(fn=_apply_settings, inputs=all_params, show_progress=False)
     context_len.input(fn=_apply_settings, inputs=all_params, show_progress=False)
     chunk_regex.input(fn=_apply_settings, inputs=all_params, show_progress=False)
     chunk_len.input(fn=_apply_settings, inputs=all_params, show_progress=False)
+    threads.input(fn=_apply_settings, inputs=all_params, show_progress=False)
+    strong_cleanup.input(fn=_apply_settings, inputs=all_params, show_progress=False)

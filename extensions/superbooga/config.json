@@ -104,9 +104,14 @@
       "categories": [0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 999999],
       "should_optimize": true
     },
-    "time_weight": {
+    "time_steepness": {
+      "default": 0.01,
+      "categories": [0.01, 0.2, 0.4, 0.6, 0.8, 1.0],
+      "should_optimize": false
+    },
+    "time_power": {
       "default": 0,
-      "categories": [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+      "categories": [0.0, 0.2, 0.4, 0.6, 0.8, 1.0],
       "should_optimize": false
     },
     "chunk_separator": {

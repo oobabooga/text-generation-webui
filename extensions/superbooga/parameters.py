@@ -225,8 +225,12 @@ def get_significant_level() -> float:
     return float(Parameters.getInstance().hyperparameters['significant_level']['default'])
 
 
-def get_time_weight() -> float:
-    return float(Parameters.getInstance().hyperparameters['time_weight']['default'])
+def get_time_steepness() -> float:
+    return float(Parameters.getInstance().hyperparameters['time_steepness']['default'])
+
+
+def get_time_power() -> float:
+    return float(Parameters.getInstance().hyperparameters['time_power']['default'])
 
 
 def get_chunk_separator() -> str:
@@ -301,8 +305,12 @@ def set_significant_level(value: float):
     Parameters.getInstance().hyperparameters['significant_level']['default'] = value
 
 
-def set_time_weight(value: int):
-    Parameters.getInstance().hyperparameters['time_weight']['default'] = value
+def set_time_steepness(value: float):
+    Parameters.getInstance().hyperparameters['time_steepness']['default'] = value
+
+
+def set_time_power(value: float):
+    Parameters.getInstance().hyperparameters['time_power']['default'] = value
 
 
 def set_chunk_separator(value: str):

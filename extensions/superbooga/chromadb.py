@@ -178,6 +178,38 @@ class ChromaCollector(Collecter):
 
         return [str(i + max_existing_id + 1) for i in range(num_new_ids)]
 
+    
+    def _find_min_max_start_index(self):
+        max_index, min_index = 0, float('inf')
+        for _, val in self.id_to_info.items():
+            if val['start_index'] > max_index:
+                max_index = val['start_index']
+            if val['start_index'] < min_index:
+                min_index = val['start_index']
+        return min_index, max_index
+
+
+    # NB: Does not make sense to weigh excerpts from different documents. 
+    # But let's say that's the user's problem. Perfect world scenario:
+    # Apply time weighing to different documents. For each document, then, add
+    # separate time weighing.
+    def _apply_sigmoid_time_weighing(self, infos: list[Info], document_len: int, time_steepness: float, time_power: float):
+        sigmoid = lambda x: 1 / (1 + np.exp(-x))
+        
+        weights = sigmoid(time_steepness * np.linspace(-10, 10, document_len))
+
+        # Scale to [0,time_power] and shift it up to [1-time_power, 1]
+        weights = weights - min(weights) 
+        weights = weights * (time_power / max(weights))
+        weights = weights + (1 - time_power) 
+
+        # Reverse the weights
+        weights = weights[::-1]  
+
+        for info in infos:
+            index = info.start_index
+            info.distance *= weights[index]
+
 
     def _filter_outliers_by_median_distance(self, infos: list[Info], significant_level: float):
         # Ensure there are infos to filter
@@ -216,7 +248,7 @@ class ChromaCollector(Collecter):
         return merged_infos
 
 
-    # Main function for retrieving chunks by distance. It performs merging and mean filtering.
+    # Main function for retrieving chunks by distance. It performs merging, time weighing, and mean filtering.
     def _get_documents_ids_distances(self, search_strings: list[str], n_results: int):
         n_results = min(len(self.ids), n_results)
         if n_results == 0:
@@ -226,6 +258,7 @@ class ChromaCollector(Collecter):
             search_strings = [search_strings]
 
         infos = []
+        min_start_index, max_start_index = self._find_min_max_start_index()
 
         for search_string in search_strings:
             result = self.collection.query(query_texts=search_string, n_results=math.ceil(n_results / len(search_strings)), include=['distances'])
@@ -233,6 +266,8 @@ class ChromaCollector(Collecter):
                                text_with_context=self.id_to_info[id]['text_with_context'], 
                                distance=distance, id=id) 
                           for id, distance in zip(result['ids'][0], result['distances'][0])]
+            
+            self._apply_sigmoid_time_weighing(infos=curr_infos, document_len=max_start_index - min_start_index + 1, time_steepness=parameters.get_time_steepness(), time_power=parameters.get_time_power())
             curr_infos = self._filter_outliers_by_median_distance(curr_infos, parameters.get_significant_level())
             infos.extend(curr_infos)
 
@@ -334,7 +369,6 @@ class SentenceTransformerEmbedder(Embedder):
     def __init__(self) -> None:
         logger.debug('Creating Sentence Embedder...')
         self.model = SentenceTransformer("sentence-transformers/all-mpnet-base-v2")
-        #self.model = SentenceTransformer("intfloat/e5-base-v2")
         self.embed = self.model.encode
 
 

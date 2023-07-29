@@ -1,6 +1,6 @@
 [
     {
-        "text": "extensions/superbooga/benchmark_texts/manual.txt",
+        "text": "extensions/superbooga/benchmark_texts/aircraft_lease.txt",
         "questions": [
             {
                 "question_variants": [
@@ -204,6 +204,86 @@
                 ],
                 "criteria": [
                     "(f) Assignee is a \"citizen of the United States\" as defined\nin 40102(a)(15) of Title 49 of the United States Code."
+                ]
+            },
+            {
+                "question_variants": [
+                    "How many days do I have to pay?",
+                    "Could you specify the number of days I'm given to complete the payment?",
+                    "I'm a bit unsure about the payment deadline. Could you clarify how many days exactly I have to make the payment?",
+                    "I'm really trying to understand the payment terms. Could you help me ascertain the exact number of days that I am allotted to finalize the payment?",
+                    "I'm so confused! What does this mean exactly? Can you help me comprehend the specific amount of time, in days, that I have been provided with to conclude the payment? I'm finding this financial term quite challenging to understand."
+                ],
+                "criteria": [
+                    "(e) TIMING OF PAYMENT. Any amount due and payable to the\n relevant Indemnitee pursuant to this Section 10 will be paid within 10 days\n after receipt of a written demand therefor from such Indemnitee accompanied by\n a written statement describing in reasonable detail the basis for such\n indemnity and the computation of the amount so payable; PROVIDED, HOWEVER, that\n such amount need not be paid by Lessee prior to the later of (i) five days\n prior to the date the applicable Tax is payable to the a",
+                    "ppropriate Governmental\n Entity or taxing authority or (ii) in the case of amounts which are being\n contested by Lessee in good faith or by Lessor pursuant to Section 10(f), the\n date such contest is finally resolved. If requested in writing by Lessee, and\n at Lessee's sole cost and expense, any calculations by an Indemnitee of any\n amount due and payable\n\n                                      -44-\n\n\n<PAGE>\n\n\n hereunder shall be subject to review and verification by a firm of independent\n certif",
+                    "ied public accounts of internationally recognized stature selected by\n such Indemnitee and reasonably acceptable to Lessee (such approval not to be\n unreasonably withheld or delayed). Such Indemnitee shall make available to such\n accounting firm such information as shall be necessary for purposes of such\n review and verification (but such information shall be held by such accounting\n firm in strictest confidence and shall not in any event be disclosed or made\n available to Lessee). If the result",
+                    " of such review is that Lessee was liable\n for a smaller amount, the excess payment shall be returned by such Indemnitee\n forthwith."
+                ]
+            },
+            {
+                "question_variants": [
+                    "What currency should I pay in?",
+                    "Could you please clarify in which currency I am expected to make the payment?",
+                    "I'm a bit puzzled here, could you specify the exact currency I should use for the payment?",
+                    "I'm really scratching my head trying to figure this out. Could you help me understand in which specific currency I am supposed to settle the payment?",
+                    "I'm quite frustrated at this point! What exactly does it mean? Can you elucidate in which particular currency I'm required to execute the payment? I'm finding this point a bit difficult to decipher."
+                ],
+                "criteria": [
+                    "(i) PAYMENTS IN U.S. DOLLARS. All amounts to be paid hereunder to\nLessor or Lessee shall be paid in Dollars, in immediately available funds.\nLessee acknowledges that the specification of Dollars in this transaction is\nof the essence and that Dollars shall be the currency of account in any and\nall events. The obligations of Lessee or Lessor hereunder, to Lessor or\nLessee, respectively, shall not be discharged by an amount paid in another\ncurrency, whether pursuant to a judgment or otherwise, to t",
+                    "he extent that the\n amount so paid on prompt conversion to Dollars under normal banking\nprocedures does not yield the amount of Dollars owing to Lessor."
+                ]
+            },
+            {
+                "question_variants": [
+                    "What is the US registration number of the aircraft?",
+                    "Could you please tell me the US registration number assigned to the aircraft?",
+                    "I'm having some difficulty here. Could you specify the exact US registration number of the aircraft?",
+                    "I'm really struggling to get this part. Could you assist me in figuring out what the specific US registration number for the aircraft is?",
+                    "I'm pulling my hair out over this! What does it mean exactly? Can you help me decipher the precise US registration number that's associated with the aircraft? I'm finding it a bit challenging to understand."
+                ],
+                "criteria": [
+                    "U.S.\n                                                         MODEL AND             REGISTRATION          MANUFACTURER'S\nITEM                    MANUFACTURER                   CONFIGURATION               NUMBER            SERIAL NUMBER\n-------------------------------------------------------------------------------------------------------------------\n<S>                     <C>                            <C>                        <C>                  <C>\n\nAircraft                The Boeing Compa",
+                    "ny             737-25A                    N685MA*"
+                ]
+            },
+            {
+                "question_variants": [
+                    "What is the maximum duration that a safety or maintenance requirement can remain unaddressed on the aircraft, particularly in terms of airworthiness directives and mandatory orders?",
+                    "How long can a safety or maintenance requirement, especially airworthiness directives and mandatory orders, be left unresolved?",
+                    "How long can an airworthiness directive or mandatory order remain outstanding on the aircraft according to standard lease agreements?",
+                    "What's the longest period that a safety or maintenance requirement, such as airworthiness directives and mandatory orders, can remain unmet on a leased aircraft?",
+                    "What is the maximum allowable timeframe for a safety or maintenance requirement to be left unattended to on an aircraft, specifically referring to airworthiness directives and mandatory orders?"
+                ],
+                "criteria": [
+                    "(i)  have had all repetitive airworthiness directives and mandatory\n          orders and regulations in at least half-life or better condition;"
+                ]
+            },
+            {
+                "question_variants": [
+                    "What are the payment locations?",
+                    "Could you specify where exactly I should be making the payments? Are there particular bank accounts or locations?",
+                    "I'm a bit puzzled here. Could you clarify the exact payment locations or bank accounts where I'm supposed to deposit the payments?",
+                    "I'm really struggling to grasp this. Could you assist me in understanding the specific payment locations or bank accounts where I'm expected to send the payments?",
+                    "I'm at my wit's end here! What does this mean? Can you help me figure out the precise locations or bank accounts where I'm supposed to carry out the payments? I'm finding this financial aspect particularly hard to comprehend."
+                ],
+                "criteria": [
+                    "Payment Locations:                  For ITOCHU AirLease (Europe) Limited:\n\n                                    Account Name: Citibank New York (ABA No.\n                                    021000089) for the account of Citibank\n                                    Dublin (account no. 10994598) in favor of\n                                    ITOCHU AirLease (Europe) Limited (account\n                                    no. 1-00-6793-017)\n\n                                    For Marubeni Airleasing (",
+                    "U.K.) Limited:\n\n                                    Harris Bank International Corporation\n                                    ABA #026-007-760\n                                    for the credit of\n                                    The Mitsubishi Trust & Banking Corporation\n                                    London Branch A/C#16011100\n                                    UID No.107280\n                                    for further credit to\n                                    Marubeni Airleasi",
+                    "ng (UK) Ltd.\n                                    Account #020-404391\n\n                                    With respect to payments by\n                                    Lessee of Basic Rent hereunder, 62.682% of\n                                    such amounts shall be paid to ITOCHU\n                                    AirLease (Europe) Limited (as above\n                                    provided) and 37.318% of such amounts\n                                    shall be paid to Marubeni Airlea",
+                    "sing (U.K.)\n                                    Limited (as above provided)."
+                ]
+            },
+            {
+                "question_variants": [
+                    "What is the revision number of the aircraft?",
+                    "Could you please clarify what the revision number of the aircraft is?",
+                    "I'm finding this a bit hard to grasp. Could you specify the exact revision number associated with the aircraft?",
+                    "I'm really trying to understand this, but it's proving difficult. Could you assist me in determining the specific revision number that is attributed to the aircraft?",
+                    "Agh! What does it even mean? Can you help me decipher the exact revision number that is tied to the aircraft? I'm finding this technical detail quite challenging to comprehend."
+                ],
+                "criteria": [
+                    "Detail Specification (737-25A-Rev. B)"
                 ]
             }
         ]
