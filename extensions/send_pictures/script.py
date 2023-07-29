@@ -9,8 +9,6 @@ from modules import chat, shared
 from modules.ui import gather_interface_values
 from modules.utils import gradio
 
-# If 'state' is True, will hijack the next chat generation with
-# custom input text given by 'value' in the format [text, visible_text]
 input_hijack = {
     'state': False,
     'value': ["", ""]
@@ -18,6 +16,15 @@ input_hijack = {
 
 processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
 model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base", torch_dtype=torch.float32).to("cpu")
+
+
+def chat_input_modifier(text, visible_text, state):
+    global input_hijack
+    if input_hijack['state']:
+        input_hijack['state'] = False
+        return input_hijack['value']
+    else:
+        return text, visible_text
 
 
 def caption_image(raw_image):
@@ -42,7 +49,10 @@ def ui():
 
     # Prepare the input hijack, update the interface values, call the generation function, and clear the picture
     picture_select.upload(
-        lambda picture, name1, name2: input_hijack.update({"state": True, "value": generate_chat_picture(picture, name1, name2)}), [picture_select, shared.gradio['name1'], shared.gradio['name2']], None).then(
+        lambda picture, name1, name2: input_hijack.update({
+            "state": True,
+            "value": generate_chat_picture(picture, name1, name2)
+        }), [picture_select, shared.gradio['name1'], shared.gradio['name2']], None).then(
         gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         chat.generate_chat_reply_wrapper, shared.input_params, gradio('display', 'history'), show_progress=False).then(
         lambda: None, None, picture_select, show_progress=False)

@@ -215,10 +215,14 @@ def create_model_menus():
                         shared.gradio['transformers_info'] = gr.Markdown('load-in-4bit params:')
                         shared.gradio['compute_dtype'] = gr.Dropdown(label="compute_dtype", choices=["bfloat16", "float16", "float32"], value=shared.args.compute_dtype)
                         shared.gradio['quant_type'] = gr.Dropdown(label="quant_type", choices=["nf4", "fp4"], value=shared.args.quant_type)
-                        shared.gradio['threads'] = gr.Slider(label="threads", minimum=0, step=1, maximum=32, value=shared.args.threads)
-                        shared.gradio['n_batch'] = gr.Slider(label="n_batch", minimum=1, maximum=2048, value=shared.args.n_batch)
+
                         shared.gradio['n_gpu_layers'] = gr.Slider(label="n-gpu-layers", minimum=0, maximum=128, value=shared.args.n_gpu_layers)
                         shared.gradio['n_ctx'] = gr.Slider(minimum=0, maximum=16384, step=256, label="n_ctx", value=shared.args.n_ctx)
+                        shared.gradio['threads'] = gr.Slider(label="threads", minimum=0, step=1, maximum=32, value=shared.args.threads)
+                        shared.gradio['n_batch'] = gr.Slider(label="n_batch", minimum=1, maximum=2048, value=shared.args.n_batch)
+                        shared.gradio['n_gqa'] = gr.Slider(minimum=0, maximum=16, step=1, label="n_gqa", value=shared.args.n_gqa, info='grouped-query attention. Must be 8 for llama2 70b.')
+                        shared.gradio['rms_norm_eps'] = gr.Slider(minimum=0, maximum=1e-5, step=1e-6, label="rms_norm_eps", value=shared.args.n_gqa, info='5e-6 is a good value for llama2 70b.')
+
                         shared.gradio['wbits'] = gr.Dropdown(label="wbits", choices=["None", 1, 2, 3, 4, 8], value=str(shared.args.wbits) if shared.args.wbits > 0 else "None")
                         shared.gradio['groupsize'] = gr.Dropdown(label="groupsize", choices=["None", 32, 64, 128, 1024], value=str(shared.args.groupsize) if shared.args.groupsize > 0 else "None")
                         shared.gradio['model_type'] = gr.Dropdown(label="model_type", choices=["None", "llama", "opt", "gptj"], value=shared.args.model_type or "None")
@@ -246,6 +250,7 @@ def create_model_menus():
                         shared.gradio['low_vram'] = gr.Checkbox(label="low-vram", value=shared.args.low_vram)
                         shared.gradio['mlock'] = gr.Checkbox(label="mlock", value=shared.args.mlock)
                         shared.gradio['llama_cpp_seed'] = gr.Number(label='Seed (0 for random)', value=shared.args.llama_cpp_seed)
+                        shared.gradio['tensor_split'] = gr.Textbox(label='tensor_split', info='Split the model across multiple GPUs, comma-separated list of proportions, e.g. 18,17')
                         shared.gradio['trust_remote_code'] = gr.Checkbox(label="trust-remote-code", value=shared.args.trust_remote_code, info='Make sure to inspect the .py files inside the model folder before loading it with this option enabled.')
                         shared.gradio['gptq_for_llama_info'] = gr.Markdown('GPTQ-for-LLaMa is currently 2x faster than AutoGPTQ on some systems. It is installed by default with the one-click installers. Otherwise, it has to be installed manually following the instructions here: [instructions](https://github.com/oobabooga/text-generation-webui/blob/main/docs/GPTQ-models-(4-bit-mode).md#installation-1).')
                         shared.gradio['exllama_info'] = gr.Markdown('For more information, consult the [docs](https://github.com/oobabooga/text-generation-webui/blob/main/docs/ExLlama.md).')
@@ -318,7 +323,7 @@ def create_settings_menus(default_preset):
     with gr.Row():
         with gr.Column():
             with gr.Row():
-                shared.gradio['preset_menu'] = gr.Dropdown(choices=utils.get_available_presets(), value=default_preset if not shared.args.flexgen else 'Naive', label='Generation parameters preset', elem_classes='slim-dropdown')
+                shared.gradio['preset_menu'] = gr.Dropdown(choices=utils.get_available_presets(), value=default_preset, label='Generation parameters preset', elem_classes='slim-dropdown')
                 ui.create_refresh_button(shared.gradio['preset_menu'], lambda: None, lambda: {'choices': utils.get_available_presets()}, 'refresh-button')
                 shared.gradio['save_preset'] = gr.Button('💾', elem_classes='refresh-button')
                 shared.gradio['delete_preset'] = gr.Button('🗑️', elem_classes='refresh-button')
@@ -373,7 +378,6 @@ def create_settings_menus(default_preset):
         1) Midnight Enigma
         2) Yara
         3) Shortwave
-        4) Kobold-Godlike
 
     ### Temperature
     Primary factor to control randomness of outputs. 0 = deterministic (only the most likely token is used). Higher value = more randomness.
@@ -590,6 +594,21 @@ def create_interface():
     # Importing the extension files and executing their setup() functions
     if shared.args.extensions is not None and len(shared.args.extensions) > 0:
         extensions_module.load_extensions()
+
+    # Forcing some events to be triggered on page load
+    shared.persistent_interface_state.update({
+        'loader': shared.args.loader or 'Transformers',
+    })
+
+    if shared.is_chat():
+        shared.persistent_interface_state.update({
+            'mode': shared.settings['mode'],
+            'character_menu': shared.args.character or shared.settings['character'],
+            'instruction_template': shared.settings['instruction_template']
+        })
+
+        if Path("cache/pfp_character.png").exists():
+            Path("cache/pfp_character.png").unlink()
 
     # css/js strings
     css = ui.css if not shared.is_chat() else ui.css + ui.chat_css
@@ -1052,11 +1071,11 @@ def create_interface():
 
         create_file_saving_event_handlers()
 
-        shared.gradio['interface'].load(lambda: None, None, None, _js=f"() => {{{js}}}")
-        shared.gradio['interface'].load(partial(ui.apply_interface_values, {}, use_persistent=True), None, gradio(ui.list_interface_input_elements()), show_progress=False)
         if shared.settings['dark_theme']:
             shared.gradio['interface'].load(lambda: None, None, None, _js="() => document.getElementsByTagName('body')[0].classList.add('dark')")
 
+        shared.gradio['interface'].load(lambda: None, None, None, _js=f"() => {{{js}}}")
+        shared.gradio['interface'].load(partial(ui.apply_interface_values, {}, use_persistent=True), None, gradio(ui.list_interface_input_elements()), show_progress=False)
         if shared.is_chat():
             shared.gradio['interface'].load(chat.redraw_html, shared.reload_inputs, gradio('display'))
 
@@ -1102,6 +1121,8 @@ if __name__ == "__main__":
         'skip_special_tokens': shared.settings['skip_special_tokens'],
         'custom_stopping_strings': shared.settings['custom_stopping_strings'],
         'truncation_length': shared.settings['truncation_length'],
+        'n_gqa': 0,
+        'rms_norm_eps': 0,
     }
 
     shared.model_config.move_to_end('.*', last=False)  # Move to the beginning
@@ -1151,21 +1172,6 @@ if __name__ == "__main__":
         shared.model, shared.tokenizer = load_model(shared.model_name)
         if shared.args.lora:
             add_lora_to_model(shared.args.lora)
-
-    # Forcing some events to be triggered on page load
-    shared.persistent_interface_state.update({
-        'loader': shared.args.loader or 'Transformers',
-    })
-
-    if shared.is_chat():
-        shared.persistent_interface_state.update({
-            'mode': shared.settings['mode'],
-            'character_menu': shared.args.character or shared.settings['character'],
-            'instruction_template': shared.settings['instruction_template']
-        })
-
-        if Path("cache/pfp_character.png").exists():
-            Path("cache/pfp_character.png").unlink()
 
     shared.generation_lock = Lock()
 

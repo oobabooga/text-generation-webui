@@ -61,6 +61,8 @@ def list_model_elements():
         'mlock',
         'n_gpu_layers',
         'n_ctx',
+        'n_gqa',
+        'rms_norm_eps',
         'llama_cpp_seed',
         'gpu_split',
         'max_seq_len',
@@ -161,7 +163,10 @@ def apply_interface_values(state, use_persistent=False):
 
 
 class ToolButton(gr.Button, gr.components.IOComponent):
-    """Small button with single emoji as text, fits inside gradio forms"""
+    """
+    Small button with single emoji as text, fits inside gradio forms
+    Copied from https://github.com/AUTOMATIC1111/stable-diffusion-webui
+    """
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -171,6 +176,9 @@ class ToolButton(gr.Button, gr.components.IOComponent):
 
 
 def create_refresh_button(refresh_component, refresh_method, refreshed_args, elem_class):
+    """
+    Copied from https://github.com/AUTOMATIC1111/stable-diffusion-webui
+    """
     def refresh():
         refresh_method()
         args = refreshed_args() if callable(refreshed_args) else refreshed_args

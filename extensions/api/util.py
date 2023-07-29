@@ -10,7 +10,6 @@ from modules import shared
 from modules.chat import load_character_memoized
 from modules.presets import load_preset_memoized
 
-
 # We use a thread local to store the asyncio lock, so that each thread
 # has its own lock.  This isn't strictly necessary, but it makes it
 # such that if we can support multiple worker threads in the future,
