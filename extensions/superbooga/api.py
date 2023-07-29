@@ -6,6 +6,8 @@ This module is responsible for the VectorDB API. It currently supports:
     - Add some corpus to the DB. You can also specify metadata to be added alongside it.
 * POST api/v1/delete
     - Delete specific records with given metadata.
+* POST api/v1/get
+    - Get results from chromaDB.
 """
 
 import json

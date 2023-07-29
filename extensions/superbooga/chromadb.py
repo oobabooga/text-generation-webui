@@ -2,9 +2,9 @@ import threading
 import chromadb
 import posthog
 import torch
-import numpy
 import math
 
+import numpy as np
 import extensions.superbooga.parameters as parameters
 
 from chromadb.config import Settings
@@ -128,7 +128,7 @@ class ChromaCollector(Collecter):
             if non_existing_texts:
                 non_existing_embeddings = self.embedder.embed(non_existing_texts).tolist()
                 for text, embedding in zip(non_existing_texts, non_existing_embeddings):
-                    pass#self.embeddings_cache[text] = embedding
+                    self.embeddings_cache[text] = embedding
 
                 logger.info(f'Adding {len(non_existing_embeddings)} new embeddings.')
                 args = {'embeddings': non_existing_embeddings, 'documents': non_existing_texts, 'ids': non_existing_ids}
@@ -179,39 +179,25 @@ class ChromaCollector(Collecter):
         return [str(i + max_existing_id + 1) for i in range(num_new_ids)]
 
 
-    def _filter_infos_in_interval(self, infos: list[Info], percentage: float):
-        if percentage >= 1.0:
-            return infos
-        
-        points = [info.start_index for info in infos]
-        weights = [1.0/info.distance for info in infos]
-
-        start, end = self._find_optimal_weighted_interval(points, weights, percentage)
-
-        return [info for info in infos if start <= info.start_index <= end]
-
-
-    def _find_optimal_weighted_interval(self, points: list[int], weights: list[float], percentage: float):
-        total_weight = sum(weights)
-        target_weight = total_weight * percentage
-
-        weight_accumulator = 0
-        left = 0
-        min_length = float('inf')
-        result = (None, None)
-
-        for right in range(len(points)):
-            weight_accumulator += weights[right]
+    def _filter_outliers_by_median_distance(self, infos: list[Info], significant_level: float):
+        # Ensure there are infos to filter
+        if not infos:
+            return []
             
-            while weight_accumulator >= target_weight:
-                if points[right] - points[left] < min_length:
-                    min_length = points[right] - points[left]
-                    result = (points[left], points[right])
+        # Find info with minimum distance
+        min_info = min(infos, key=lambda x: x.distance)
 
-                weight_accumulator -= weights[left]
-                left += 1
+        # Calculate median distance among infos
+        median_distance = np.median([inf.distance for inf in infos])
 
-        return result
+        # Filter out infos that have a distance significantly greater than the median
+        filtered_infos = [inf for inf in infos if inf.distance <= significant_level * median_distance]
+
+        # Always include the info with minimum distance
+        if min_info not in filtered_infos:
+            filtered_infos.append(min_info)
+
+        return filtered_infos
 
 
     def _merge_infos(self, infos: list[Info]):
@@ -228,9 +214,9 @@ class ChromaCollector(Collecter):
 
         merged_infos.append(current_info)
         return merged_infos
-    
 
-    # Main function for retrieving chunks by distance. It performs merging and confidence filtering.
+
+    # Main function for retrieving chunks by distance. It performs merging and mean filtering.
     def _get_documents_ids_distances(self, search_strings: list[str], n_results: int):
         n_results = min(len(self.ids), n_results)
         if n_results == 0:
@@ -239,14 +225,18 @@ class ChromaCollector(Collecter):
         if isinstance(search_strings, str):
             search_strings = [search_strings]
 
-        result = self.collection.query(query_texts=search_strings, n_results=math.ceil(n_results / len(search_strings)), include=['distances'])
-        infos = [Info(start_index=self.id_to_info[id]['start_index'], 
-                    text_with_context=self.id_to_info[id]['text_with_context'], 
-                    distance=distance, id=id) 
-                for id, distance in zip(result['ids'][0], result['distances'][0])]
+        infos = []
+
+        for search_string in search_strings:
+            result = self.collection.query(query_texts=search_string, n_results=math.ceil(n_results / len(search_strings)), include=['distances'])
+            curr_infos = [Info(start_index=self.id_to_info[id]['start_index'], 
+                               text_with_context=self.id_to_info[id]['text_with_context'], 
+                               distance=distance, id=id) 
+                          for id, distance in zip(result['ids'][0], result['distances'][0])]
+            curr_infos = self._filter_outliers_by_median_distance(curr_infos, parameters.get_significant_level())
+            infos.extend(curr_infos)
 
         infos.sort(key=lambda x: x.start_index)
-        infos = self._filter_infos_in_interval(infos, parameters.get_confidence_interval())
         infos = self._merge_infos(infos)
 
         texts_with_context = [inf.text_with_context for inf in infos]
@@ -332,19 +322,19 @@ class ChromaCollector(Collecter):
 
     def clear(self):
         with self.lock:
-            self.collection.delete(self.ids)
-            self.chroma_client.delete_collection("context")
+            self.chroma_client.reset()
             self.collection = self.chroma_client.create_collection("context", embedding_function=self.embedder.embed)
             self.ids = []
             self.id_to_info = {}
 
-            logger.info('Successfully cleared all records from chromaDB.')
+            logger.info('Successfully cleared all records and reset chromaDB.')
 
 
 class SentenceTransformerEmbedder(Embedder):
     def __init__(self) -> None:
         logger.debug('Creating Sentence Embedder...')
         self.model = SentenceTransformer("sentence-transformers/all-mpnet-base-v2")
+        #self.model = SentenceTransformer("intfloat/e5-base-v2")
         self.embed = self.model.encode
 
 

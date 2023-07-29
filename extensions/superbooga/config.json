@@ -5,12 +5,12 @@
       "should_optimize": true
     },
     "num_conversion": {
-      "default": "NUM_TO_CHAR_METHOD",
+      "default": null,
       "categories": ["NUM_TO_WORD_METHOD", "NUM_TO_CHAR_METHOD", "NUM_TO_CHAR_LONG_METHOD", null],
       "should_optimize": true
     },
     "merge_spaces": {
-      "default": true,
+      "default": false,
       "categories": [true, false],
       "should_optimize": true
     },
@@ -30,7 +30,7 @@
       "should_optimize": true
     },
     "remove_specific_pos": {
-      "default": true,
+      "default": false,
       "categories": [true, false],
       "should_optimize": true
     },
@@ -40,33 +40,33 @@
       "should_optimize": true
     },
     "min_num_sent": {
-      "default": 9,
+      "default": 1,
       "categories": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 999999],
       "should_optimize": true
     },
     "delta_start": {
       "default": 0,
-      "categories": [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 150, 200, 250, 300],
-      "should_optimize": false
+      "categories": [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
+      "should_optimize": true
     },
     "chunk_len1": {
-      "default": 600,
-      "categories": [40, 50, 60, 70, 80, 90, 100, 150, 200, 250, 300, 400, 500, 600, 700, 800, 900, 1000],
+      "default": 500,
+      "categories": [50, 200, 250, 500, 600, 900, 1000],
       "should_optimize": true
     },
     "chunk_len2": {
       "default": 500,
-      "categories": [0, 40, 50, 60, 70, 80, 90, 100, 150, 200, 250, 300, 400, 500, 600, 700, 800, 900, 1000],
+      "categories": [0, 50, 200, 250, 500, 600, 900],
       "should_optimize": true
     },
     "chunk_len3": {
-      "default": 700,
-      "categories": [0, 40, 50, 60, 70, 80, 90, 100, 150, 200, 250, 300, 400, 500, 600, 700, 800, 900, 1000],
+      "default": 1000,
+      "categories": [0, 100, 150, 300, 400, 700, 800, 1000],
       "should_optimize": true
     },
     "chunk_len4": {
       "default": 700,
-      "categories": [0, 40, 50, 60, 70, 80, 90, 100, 150, 200, 250, 300, 400, 500, 600, 700, 800, 900, 1000],
+      "categories": [0, 100, 150, 300, 400, 700, 800],
       "should_optimize": true
     },
     "chunk_len_mask": {
@@ -75,12 +75,12 @@
       "should_optimize": false
     },
     "context_len_left": {
-      "default": 350,
+      "default": 250,
       "categories": [50, 100, 150, 200, 250, 300, 350, 400, 500, 600, 700, 800, 900, 1000],
       "should_optimize": true
     },
     "context_len_right": {
-      "default": 600,
+      "default": 800,
       "categories": [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1200, 1400, 1500, 1600],
       "should_optimize": true
     },
@@ -95,14 +95,14 @@
       "should_optimize": true
     },
     "min_num_length": {
-      "default": 1,
+      "default": 9,
       "categories": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
       "should_optimize": true
     },
-    "confidence_interval": {
+    "significant_level": {
       "default": 1.0,
-      "categories": [0.75, 0.8, 0.85, 0.9, 0.95, 1.0],
-      "should_optimize": false
+      "categories": [0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 999999],
+      "should_optimize": true
     },
     "time_weight": {
       "default": 0,

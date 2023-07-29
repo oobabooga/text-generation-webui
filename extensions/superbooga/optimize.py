@@ -4,13 +4,15 @@ This module implements a hyperparameter optimization routine for the embedding a
 Each run, the optimizer will set the default values inside the hyperparameters. At the end, it will output the best ones it has found.
 """
 import json
+import optuna
 import gradio as gr
 import numpy as np
+import logging
+import hashlib
+logging.getLogger('optuna').setLevel(logging.WARNING)
 
 import extensions.superbooga.parameters as parameters
 
-from skopt.utils import use_named_args
-from skopt import gp_minimize
 from pathlib import Path
 
 from .benchmark import benchmark
@@ -53,9 +55,6 @@ def _is_optimization_param(val):
 
 
 def optimize(collector, progress=gr.Progress()):
-    # Create the optimization space.
-    optimization_space = [val['categories'] for val in Parameters.getInstance().hyperparameters.values() if _is_optimization_param(val)]
-
     # Inform the user that something is happening.
     progress(0, desc=f'Setting Up...')
 
@@ -65,15 +64,33 @@ def optimize(collector, progress=gr.Progress()):
     # Track the best score
     best_score = 0
 
-    @use_named_args(optimization_space)
-    def objective_function(**params):
+    # Dictionary for caching scores
+    scores_cache = {}
+
+    def objective_function(trial):
         nonlocal current_step
         nonlocal best_score
+
+        params = {}
+        for key, val in Parameters.getInstance().hyperparameters.items():
+            if _is_optimization_param(val):
+                params[key] = trial.suggest_categorical(key, val['categories'])
+
+        # Create a hashable representation of the parameters
+        params_str = json.dumps(params, sort_keys=True)
+        params_hash = hashlib.sha256(params_str.encode()).hexdigest()
+
+        # If the score for these parameters is in the cache, return it
+        if params_hash in scores_cache:
+            return scores_cache[params_hash]
 
         _set_hyperparameters(params)
 
         # Benchmark the current set of parameters.
         score, max_score = benchmark(Path("extensions/superbooga/benchmark_texts/questions.json"), collector)
+
+        # Cache the score
+        scores_cache[params_hash] = score
 
         result = json.dumps(_convert_np_types(params), indent=4)
         result += f'\nScore: {score}/{max_score}'
@@ -91,13 +108,11 @@ def optimize(collector, progress=gr.Progress()):
 
         return -score
 
-    # Retrieve initial parameter values.
-    initial_params = [val['default'] for val in Parameters.getInstance().hyperparameters.values() if _is_optimization_param(val)]
-
     # Run the optimization.
-    result = gp_minimize(objective_function, optimization_space, x0=initial_params, n_calls=int(parameters.get_optimization_steps()), random_state=0)
+    study = optuna.create_study()
+    study.optimize(objective_function, n_trials=int(parameters.get_optimization_steps()))
 
-    best_params = dict(zip([key for key, val in Parameters.getInstance().hyperparameters.items() if _is_optimization_param(val)], result.x))
+    best_params = study.best_params
     _set_hyperparameters(best_params)
 
     # Convert results to a markdown string.

@@ -25,29 +25,15 @@ from num2words import num2words
 
 class TextPreprocessorBuilder:
      # Define class variables as None initially
-    _stop_words = None
-    _lemmatizer = None
-
-    @classmethod
-    def initialize_class_variables(cls):
-        """
-        Downloaded via:
-        
-        nltk.download('stopwords')
-        nltk.download('wordnet')
-        nltk.download('averaged_perceptron_tagger')
-        
-        The data was stored locally, so that it could run without being connected
-        to the internet.
-        """
-        cls._stop_words = set(stopwords.words('english'))
-        cls._lemmatizer = WordNetLemmatizer()
+    _stop_words = set(stopwords.words('english'))
+    _lemmatizer = WordNetLemmatizer()
+    
+    # Some of the functions are expensive. We cache the results.
+    _lemmatizer_cache = {}
+    _pos_remove_cache = {}
 
 
     def __init__(self, text: str):
-        # Initialize class variables if they haven't been initialized
-        if TextPreprocessorBuilder._stop_words is None or TextPreprocessorBuilder._lemmatizer is None:
-            self.initialize_class_variables()
         self.text = text
 
 
@@ -115,7 +101,7 @@ class TextPreprocessorBuilder:
         return self
 
     def remove_stopwords(self):
-        self.text = "".join([word for word in re.findall(r'\b\w+\b|\W+', self.text) if word not in self._stop_words])
+        self.text = "".join([word for word in re.findall(r'\b\w+\b|\W+', self.text) if word not in TextPreprocessorBuilder._stop_words])
         return self
     
     def remove_specific_pos(self):
@@ -123,6 +109,11 @@ class TextPreprocessorBuilder:
         In the English language, adverbs and interjections rarely provide meaningul information.
         Removing them improves the embedding precision. Don't tell JK Rowling, though.
         """
+        processed_text = TextPreprocessorBuilder._pos_remove_cache.get(self.text)
+        if processed_text:
+            self.text = processed_text
+            return self
+
         # Match both words and non-word characters
         tokens = re.findall(r'\b\w+\b|\W+', self.text)
 
@@ -137,11 +128,23 @@ class TextPreprocessorBuilder:
                 # If the word's POS tag is in the excluded list, remove the word
                 if pos in excluded_tags:
                     tokens[i] = ''
-        self.text = "".join(tokens)
+
+        new_text = "".join(tokens)
+        TextPreprocessorBuilder._pos_remove_cache[self.text] = new_text
+        self.text = new_text
+
         return self
 
     def lemmatize(self):
-        self.text = "".join([self._lemmatizer.lemmatize(word) for word in re.findall(r'\b\w+\b|\W+', self.text)])
+        processed_text = TextPreprocessorBuilder._lemmatizer_cache.get(self.text)
+        if processed_text:
+            self.text = processed_text
+            return self
+        
+        new_text = "".join([TextPreprocessorBuilder._lemmatizer.lemmatize(word) for word in re.findall(r'\b\w+\b|\W+', self.text)])
+        TextPreprocessorBuilder._lemmatizer_cache[self.text] = new_text
+        self.text = new_text
+
         return self
 
     def build(self):
@@ -149,6 +152,7 @@ class TextPreprocessorBuilder:
 
 class TextSummarizer:
     _nlp_pipeline = None
+    _cache = {}
 
     @staticmethod
     def _load_nlp_pipeline():
@@ -158,7 +162,8 @@ class TextSummarizer:
             TextSummarizer._nlp_pipeline.add_pipe("textrank", last=True)
         return TextSummarizer._nlp_pipeline
 
-    def process_long_text(self, text: str, min_num_sent: int) -> list[str]:
+    @staticmethod
+    def process_long_text(text: str, min_num_sent: int) -> list[str]:
         """
         This function applies a text summarization process on a given text string, extracting 
         the most important sentences based on the principle that 20% of the content is responsible
@@ -168,18 +173,27 @@ class TextSummarizer:
         list: A list of the most important sentences
         """
 
-        nlp_pipeline = self._load_nlp_pipeline()
+        # Attempt to get the result from cache
+        cache_key = (text, min_num_sent)
+        cached_result = TextSummarizer._cache.get(cache_key, None)
+        if cached_result is not None:
+            return cached_result
+
+        nlp_pipeline = TextSummarizer._load_nlp_pipeline()
         doc = nlp_pipeline(text)
 
         num_sent = len(list(doc.sents))
+        result = []
 
         if num_sent >= min_num_sent:
 
             limit_phrases = math.ceil(len(doc._.phrases) * 0.20)  # 20% of the phrases, rounded up
             limit_sentences = math.ceil(num_sent * 0.20)  # 20% of the sentences, rounded up
-            extracted_sentences = [str(sent) for sent in doc._.textrank.summary(limit_phrases=limit_phrases, limit_sentences=limit_sentences)]
-            return extracted_sentences
-        
-        return [text]
+            result = [str(sent) for sent in doc._.textrank.summary(limit_phrases=limit_phrases, limit_sentences=limit_sentences)]
 
-    
+        else:
+            result = [text]
+        
+        # Store the result in cache before returning it
+        TextSummarizer._cache[cache_key] = result
+        return result

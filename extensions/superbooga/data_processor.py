@@ -12,8 +12,6 @@ import extensions.superbooga.parameters as parameters
 from .data_preprocessor import TextPreprocessorBuilder, TextSummarizer
 from .chromadb import ChromaCollector
 
-summarizer = TextSummarizer()
-
 def preprocess_text_no_summary(text) -> str:
     builder = TextPreprocessorBuilder(text)
     if parameters.should_to_lower():
@@ -49,7 +47,7 @@ def preprocess_text_no_summary(text) -> str:
 
 
 def preprocess_text(text) -> list[str]:
-    important_sentences = summarizer.process_long_text(text, parameters.get_min_num_sentences())
+    important_sentences = TextSummarizer.process_long_text(text, parameters.get_min_num_sentences())
     return [preprocess_text_no_summary(sent) for sent in important_sentences]
 
 

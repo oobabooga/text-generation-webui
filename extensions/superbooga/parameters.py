@@ -6,7 +6,6 @@ Each element in the JSON must have a `default` value which will be used for the 
 These categories define the range in which the optimizer will search. If the element is tagged with `"should_optimize": false`, 
 then the optimizer will only ever use the default value.
 """
-from skopt.space import Categorical
 from pathlib import Path
 
 import json
@@ -74,7 +73,7 @@ class Parameters:
             if "default" in data[key] and data[key]["default"] in self.variable_mapping:
                 data[key]["default"] = self.variable_mapping[data[key]["default"]]
             if "categories" in data[key]:
-                data[key]["categories"] = Categorical([self.variable_mapping.get(cat, cat) for cat in data[key]["categories"]], name=key)
+                data[key]["categories"] = [self.variable_mapping.get(cat, cat) for cat in data[key]["categories"]]
 
         return data
 
@@ -222,8 +221,8 @@ def get_min_num_length() -> int:
     return int(Parameters.getInstance().hyperparameters['min_num_length']['default'])
 
 
-def get_confidence_interval() -> float:
-    return float(Parameters.getInstance().hyperparameters['confidence_interval']['default'])
+def get_significant_level() -> float:
+    return float(Parameters.getInstance().hyperparameters['significant_level']['default'])
 
 
 def get_time_weight() -> float:
@@ -298,8 +297,8 @@ def set_min_num_length(value: int):
     Parameters.getInstance().hyperparameters['min_num_length']['default'] = value
 
 
-def set_confidence_interval(value: float):
-    Parameters.getInstance().hyperparameters['confidence_interval']['default'] = value
+def set_significant_level(value: float):
+    Parameters.getInstance().hyperparameters['significant_level']['default'] = value
 
 
 def set_time_weight(value: int):

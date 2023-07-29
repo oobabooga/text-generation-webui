@@ -89,7 +89,7 @@ def _get_optimizable_settings() -> list:
         preprocess_pipeline.append('Strip Edges')
         
     return [
-        parameters.get_confidence_interval(),
+        parameters.get_significant_level(),
         parameters.get_min_num_sentences(),
         parameters.get_new_dist_strategy(),
         parameters.get_delta_start(),
@@ -103,13 +103,13 @@ def _get_optimizable_settings() -> list:
     ]
 
 
-def _apply_settings(optimization_steps, confidence_interval, min_sentences, new_dist_strat, delta_start, min_number_length, num_conversion, 
+def _apply_settings(optimization_steps, significant_level, min_sentences, new_dist_strat, delta_start, min_number_length, num_conversion, 
                     preprocess_pipeline, api_port, api_on, injection_strategy, add_chat_to_data, manual, postfix, data_separator, prefix, 
                     max_token_count, time_weight, chunk_count, chunk_sep, context_len, chunk_regex, chunk_len):
     logger.debug('Applying settings.')
 
     parameters.set_optimization_steps(optimization_steps)
-    parameters.set_confidence_interval(confidence_interval)
+    parameters.set_significant_level(significant_level)
     parameters.set_min_num_sentences(min_sentences)
     parameters.set_new_dist_strategy(new_dist_strat)
     parameters.set_delta_start(delta_start)
@@ -294,7 +294,7 @@ def ui():
                     delta_start = gr.Number(value=parameters.get_delta_start(), label='Delta Start Index', info='If the system encounters two identical embeddings, and they both start within the same delta, then only the first will be considered.', interactive=True)
                     new_dist_strat = gr.Dropdown(choices=[parameters.DIST_MIN_STRATEGY, parameters.DIST_HARMONIC_STRATEGY, parameters.DIST_GEOMETRIC_STRATEGY, parameters.DIST_ARITHMETIC_STRATEGY], value=parameters.get_new_dist_strategy(), label="Distance Strategy", info='When two embedding texts are merged, the distance of the new piece will be decided using one of these strategies.', interactive=True)
                     min_sentences = gr.Number(value=parameters.get_min_num_sentences(), label='Summary Threshold', info='In sentences. The minumum number of sentences to trigger text-rank summarization.', interactive=True)
-                    confidence_interval = gr.Slider(0, 1, value=parameters.get_confidence_interval(), label='Confidence Interval', info='Consider only the smallest interval containing a certain percentage of entries, where entries are weighted according to their inverse distance (1/d).', interactive=True)
+                    significant_level = gr.Slider(1.0, 2, value=parameters.get_significant_level(), label='Significant Level', info='Defines the cut-off for what is considered a "significant" distance relative to the median distance among the returned samples.', interactive=True)
                     time_weight = gr.Slider(0, 1, value=parameters.get_time_weight(), label='Time weight', info='Defines the strength of the time weighting. Zero means the feature is turned off. ⚠️ WIP ⚠️', interactive=False)
 
             with gr.Tab("Benchmark"):
@@ -309,10 +309,10 @@ def ui():
         with gr.Column():
             last_updated = gr.Markdown()
 
-    all_params = [optimization_steps, confidence_interval, min_sentences, new_dist_strat, delta_start, min_number_length, num_conversion, 
+    all_params = [optimization_steps, significant_level, min_sentences, new_dist_strat, delta_start, min_number_length, num_conversion, 
                   preprocess_pipeline, api_port, api_on, injection_strategy, add_chat_to_data, manual, postfix, data_separator, prefix, max_token_count, 
                   time_weight, chunk_count, chunk_sep, context_len, chunk_regex, chunk_len]
-    optimizable_params = [confidence_interval, min_sentences, new_dist_strat, delta_start, min_number_length, num_conversion, 
+    optimizable_params = [significant_level, min_sentences, new_dist_strat, delta_start, min_number_length, num_conversion, 
                   preprocess_pipeline, time_weight, chunk_count, context_len, chunk_len]
 
 
@@ -325,7 +325,7 @@ def ui():
 
 
     optimization_steps.input(fn=_apply_settings, inputs=all_params, show_progress=False)
-    confidence_interval.input(fn=_apply_settings, inputs=all_params, show_progress=False)
+    significant_level.input(fn=_apply_settings, inputs=all_params, show_progress=False)
     min_sentences.input(fn=_apply_settings, inputs=all_params, show_progress=False)
     new_dist_strat.input(fn=_apply_settings, inputs=all_params, show_progress=False)
     delta_start.input(fn=_apply_settings, inputs=all_params, show_progress=False)
