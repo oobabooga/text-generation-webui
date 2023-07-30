@@ -21,6 +21,8 @@ venv/
 *.bak
 *.ipynb
 *.log
+*.pth
+*.wav
 
 settings.json
 settings.yaml
