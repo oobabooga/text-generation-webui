@@ -18,6 +18,8 @@ tensorboard
 transformers==4.31.*
 tqdm
 wandb
+texttable
+toml
 git+https://github.com/huggingface/peft@96c0277a1b9a381b10ab34dbf84917f9b3b992e6
 bitsandbytes==0.41.0; platform_system != "Windows"
 https://github.com/jllllll/bitsandbytes-windows-webui/releases/download/wheels/bitsandbytes-0.41.0-py3-none-win_amd64.whl; platform_system == "Windows"
