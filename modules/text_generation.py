@@ -39,7 +39,6 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
     if shared.model.__class__.__name__ in ['LlamaCppModel', 'RWKVModel']:
         input_ids = shared.tokenizer.encode(str(prompt))
         input_ids = np.array(input_ids).reshape(1, len(input_ids))
-        return input_ids
     else:
         input_ids = shared.tokenizer.encode(str(prompt), return_tensors='pt', add_special_tokens=add_special_tokens)
 
@@ -314,6 +313,12 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
 def generate_reply_custom(question, original_question, seed, state, stopping_strings=None, is_chat=False):
     seed = set_manual_seed(state['seed'])
 
+    # Use 'encode' to truncate the prompt
+    truncated_prompt_ndarray = encode(question, truncation_length=get_max_prompt_length(state))
+
+    # Convert the truncated prompt back to a string (to avoid modifying 'generate' and 'generate_with_streaming')
+    truncated_prompt_string = shared.model.decode(truncated_prompt_ndarray[0])
+
     t0 = time.time()
     reply = ''
     try:
@@ -321,17 +326,17 @@ def generate_reply_custom(question, original_question, seed, state, stopping_str
             yield ''
 
         if not state['stream']:
-            reply = shared.model.generate(question, state)
+            reply = shared.model.generate(truncated_prompt_string, state)
             yield reply
         else:
-            for reply in shared.model.generate_with_streaming(question, state):
+            for reply in shared.model.generate_with_streaming(truncated_prompt_string, state):
                 yield reply
 
     except Exception:
         traceback.print_exc()
     finally:
         t1 = time.time()
-        original_tokens = len(encode(original_question)[0])
-        new_tokens = len(encode(original_question + reply)[0]) - original_tokens
+        original_tokens = len(truncated_prompt_ndarray[0])
+        new_tokens = len(encode(reply)[0])
         print(f'Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens}, seed {seed})')
         return
