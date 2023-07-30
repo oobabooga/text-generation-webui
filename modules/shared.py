@@ -45,7 +45,6 @@ settings = {
     'turn_template': '',
     'custom_stopping_strings': '',
     'stop_at_newline': False,
-    'ban_newline': False,
     'add_bos_token': True,
     'ban_eos_token': False,
     'skip_special_tokens': True,

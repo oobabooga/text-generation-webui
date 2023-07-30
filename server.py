@@ -316,7 +316,6 @@ def create_chat_settings_menus():
 
             with gr.Column():
                 shared.gradio['stop_at_newline'] = gr.Checkbox(value=shared.settings['stop_at_newline'], label='Stop generating at new line character')
-                shared.gradio['ban_newline'] = gr.Checkbox(value=shared.settings['ban_newline'], label='Ban the new line character')
 
 
 def create_settings_menus(default_preset):
