@@ -120,6 +120,7 @@ def list_interface_input_elements():
             'context',
             'chat_generation_attempts',
             'stop_at_newline',
+            'ban_newline',
             'mode',
             'instruction_template',
             'name1_instruct',

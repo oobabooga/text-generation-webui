@@ -15,6 +15,7 @@ greeting: ''
 turn_template: ''
 custom_stopping_strings: ''
 stop_at_newline: false
+ban_newline: false
 add_bos_token: true
 ban_eos_token: false
 skip_special_tokens: true

@@ -234,8 +234,12 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
         if state[k] > 0:
             generate_params[k] = state[k] * 1e-4
 
+    generate_params['suppress_tokens'] = []
     if state['ban_eos_token']:
-        generate_params['suppress_tokens'] = [shared.tokenizer.eos_token_id]
+        generate_params['suppress_tokens'].append(shared.tokenizer.eos_token_id)
+
+    if state['ban_newline']:
+        generate_params['suppress_tokens'].append(shared.tokenizer.encode('\n')[-1])
 
     if shared.args.no_cache:
         generate_params.update({'use_cache': False})
