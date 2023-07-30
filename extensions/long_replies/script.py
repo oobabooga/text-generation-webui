@@ -1,12 +1,3 @@
-"""
-An example of extension. It does nothing, but you can add transformations
-before the return statements to customize the webui behavior.
-
-Starting from history_modifier and ending in output_modifier, the
-functions are declared in the same order that they are called at
-generation time.
-"""
-
 import torch
 from modules import chat, shared
 from modules.text_generation import (
