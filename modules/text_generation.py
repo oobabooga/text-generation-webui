@@ -313,21 +313,21 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
 def generate_reply_custom(question, original_question, seed, state, stopping_strings=None, is_chat=False):
     seed = set_manual_seed(state['seed'])
 
+    # Use the 'encode' function to truncate the prompt
+    truncated_prompt_encoded = encode(question, truncation_length=get_max_prompt_length(state))
+
     # Convert the truncated prompt back to a string (to avoid modifying 'generate' and 'generate_with_streaming')
     truncated_prompt_string: str
 
     if state['loader'] == 'ExLlama':
         # ExLlama model. The encoded type is 'torch.Tensor'
-        truncated_prompt_encoded = encode(question, truncation_length=get_max_prompt_length(state))
         truncated_prompt_string = shared.model.decode(truncated_prompt_encoded)
     elif state['loader'] == 'llama.cpp':
         # Llama.cpp model. The encoded type is 'numpy.ndarray'
-        truncated_prompt_encoded = encode(question, truncation_length=get_max_prompt_length(state))
         # Convert decoded value from 'bytes' to 'str'
         truncated_prompt_string = shared.model.decode(truncated_prompt_encoded[0]).decode('utf-8')
     elif state['loader'] == 'RWKV':
         # RWKV model. The encoded type is 'numpy.ndarray'
-        truncated_prompt_encoded = encode(question, truncation_length=get_max_prompt_length(state))
         truncated_prompt_string = shared.tokenizer.decode(truncated_prompt_encoded[0])
     else:
         # In default case, don't touch the prompt string
