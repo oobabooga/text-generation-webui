@@ -313,11 +313,28 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
 def generate_reply_custom(question, original_question, seed, state, stopping_strings=None, is_chat=False):
     seed = set_manual_seed(state['seed'])
 
-    # Use 'encode' to truncate the prompt
-    truncated_prompt_ndarray = encode(question, truncation_length=get_max_prompt_length(state))
-
     # Convert the truncated prompt back to a string (to avoid modifying 'generate' and 'generate_with_streaming')
-    truncated_prompt_string = shared.model.decode(truncated_prompt_ndarray[0])
+    truncated_prompt_string: str
+
+    if state['loader'] == 'ExLlama':
+        # ExLlama model. The encoded type is 'torch.Tensor'
+        truncated_prompt_encoded = encode(question, truncation_length=get_max_prompt_length(state))
+        truncated_prompt_string = shared.model.decode(truncated_prompt_encoded)
+    elif state['loader'] == 'llama.cpp':
+        # Llama.cpp model. The encoded type is 'numpy.ndarray'
+        truncated_prompt_encoded = encode(question, truncation_length=get_max_prompt_length(state))
+        # Convert decoded value from 'bytes' to 'str'
+        truncated_prompt_string = shared.model.decode(truncated_prompt_encoded[0]).decode('utf-8')
+    elif state['loader'] == 'RWKV':
+        # RWKV model. The encoded type is 'numpy.ndarray'
+        truncated_prompt_encoded = encode(question, truncation_length=get_max_prompt_length(state))
+        truncated_prompt_string = shared.tokenizer.decode(truncated_prompt_encoded[0])
+    else:
+        # In default case, don't touch the prompt string
+        truncated_prompt_string = question
+
+    print(f"loader: {state['loader']}")
+    print(f"truncated_prompt_string: {truncated_prompt_string}")
 
     t0 = time.time()
     reply = ''
@@ -336,7 +353,7 @@ def generate_reply_custom(question, original_question, seed, state, stopping_str
         traceback.print_exc()
     finally:
         t1 = time.time()
-        original_tokens = len(truncated_prompt_ndarray[0])
+        original_tokens = len(truncated_prompt_encoded[0])
         new_tokens = len(encode(reply)[0])
         print(f'Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens}, seed {seed})')
         return
