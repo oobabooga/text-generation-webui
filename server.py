@@ -713,9 +713,9 @@ def create_interface():
                             shared.gradio['upload_chat_history'] = gr.File(type='binary', file_types=['.json', '.txt'], label="Upload")
 
                 with gr.Tab('Upload character'):
-                    with gr.Tab('JSON'):
+                    with gr.Tab('YAML or JSON'):
                         with gr.Row():
-                            shared.gradio['upload_json'] = gr.File(type='binary', file_types=['.json'], label='JSON File')
+                            shared.gradio['upload_json'] = gr.File(type='binary', file_types=['.json', '.yaml'], label='JSON or YAML File')
                             shared.gradio['upload_img_bot'] = gr.Image(type='pil', label='Profile Picture (optional)')
 
                         shared.gradio['Submit character'] = gr.Button(value='Submit', interactive=False)
