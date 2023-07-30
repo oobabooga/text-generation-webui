@@ -333,9 +333,6 @@ def generate_reply_custom(question, original_question, seed, state, stopping_str
         # In default case, don't touch the prompt string
         truncated_prompt_string = question
 
-    print(f"loader: {state['loader']}")
-    print(f"truncated_prompt_string: {truncated_prompt_string}")
-
     t0 = time.time()
     reply = ''
     try:
