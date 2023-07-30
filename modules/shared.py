@@ -180,7 +180,7 @@ parser.add_argument("--gradio-auth-path", type=str, help='Set the gradio authent
 parser.add_argument('--api', action='store_true', help='Enable the API extension.')
 parser.add_argument('--api-blocking-port', type=int, default=5000, help='The listening port for the blocking API.')
 parser.add_argument('--api-streaming-port', type=int, default=5005, help='The listening port for the streaming API.')
-parser.add_argument('--public-api-id', type=str, help='Tunnel ID for persistent Cloudflare Tunnel. Use together with public-id option.', default=None)
+parser.add_argument('--public-api-id', type=str, help='Tunnel ID for named Cloudflare Tunnel. Use together with public-api option.', default=None)
 parser.add_argument('--public-api', action='store_true', help='Create a public URL for the API using Cloudfare.')
 
 # Multimodal
