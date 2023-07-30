@@ -720,7 +720,7 @@ def create_interface():
 
                         shared.gradio['Submit character'] = gr.Button(value='Submit', interactive=False)
 
-                    with gr.Tab('TavernAI'):
+                    with gr.Tab('TavernAI PNG'):
                         with gr.Row():
                             with gr.Column():
                                 shared.gradio['upload_img_tavern'] = gr.Image(type='pil', label='TavernAI PNG File', elem_id="upload_img_tavern")

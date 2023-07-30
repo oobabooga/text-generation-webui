@@ -103,10 +103,19 @@ def generate_chat_prompt(user_input, state, **kwargs):
     else:
         wrapper = '<|prompt|>'
 
+    if is_instruct:
+        context = state['context_instruct']
+    else:
+        context = replace_character_names(
+            f"{state['context'].strip()}\n",
+            state['name1'],
+            state['name2']
+        )
+
     # Build the prompt
+    rows = [context]
     min_rows = 3
     i = len(history) - 1
-    rows = [state['context_instruct'] if is_instruct else f"{state['context'].strip()}\n"]
     while i >= 0 and get_encoded_length(wrapper.replace('<|prompt|>', ''.join(rows))) < max_length:
         if _continue and i == len(history) - 1:
             if state['mode'] != 'chat-instruct':
@@ -365,7 +374,7 @@ def send_dummy_reply(text, state):
 
 
 def clear_chat_log(state):
-    greeting = state['greeting']
+    greeting = replace_character_names(state['greeting'], state['name1'], state['name2'])
     mode = state['mode']
     history = state['history']
 
@@ -430,7 +439,7 @@ def load_persistent_history(state):
         return state['history']
 
     character = state['character_menu']
-    greeting = state['greeting']
+    greeting = replace_character_names(state['greeting'], state['name1'], state['name2'])
     p = Path(f'logs/{character}_persistent.json')
     if not shared.args.multi_user and character not in ['None', '', None] and p.exists():
         f = json.loads(open(p, 'rb').read())
@@ -505,10 +514,6 @@ def load_character(character, name1, name2, instruct=False):
                 name1 = data[k]
                 break
 
-        for field in ['context', 'greeting', 'example_dialogue', 'char_persona', 'char_greeting', 'world_scenario']:
-            if field in data:
-                data[field] = replace_character_names(data[field], name1, name2)
-
         if 'context' in data:
             context = data['context']
             if not instruct:
@@ -553,15 +558,13 @@ def upload_character(file, img, tavern=False):
         context = build_pygmalion_style_context(data)
         yaml_data = generate_character_yaml(name, greeting, context)
     else:
+        name = data['name']
         yaml_data = generate_character_yaml(data['name'], data['greeting'], data['context'])
 
-    print(repr(greeting))
-    print(repr(context))
-    print(yaml_data)
-    outfile_name = data['name']
+    outfile_name = name
     i = 1
     while Path(f'characters/{outfile_name}.yaml').exists():
-        outfile_name = f"{data['name']}_{i:03d}"
+        outfile_name = f'{name}_{i:03d}'
         i += 1
 
     with open(Path(f'characters/{outfile_name}.yaml'), 'w', encoding='utf-8') as f:
@@ -588,13 +591,7 @@ def build_pygmalion_style_context(data):
 
 def upload_tavern_character(img, _json):
     _json = {'char_name': _json['name'], 'char_persona': _json['description'], 'char_greeting': _json['first_mes'], 'example_dialogue': _json['mes_example'], 'world_scenario': _json['scenario']}
-
-    name = _json['char_name']
-    greeting = _json['char_greeting']
-    context = build_pygmalion_style_context(_json)
-    yaml = generate_character_yaml(name, greeting, context)
-
-    return upload_character(yaml, img, tavern=True)
+    return upload_character(json.dumps(_json), img, tavern=True)
 
 
 def check_tavern_character(img):
