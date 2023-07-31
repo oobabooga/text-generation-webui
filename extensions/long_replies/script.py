@@ -11,7 +11,7 @@ import gradio as gr
 params = {
     "display_name": "Long replies",
     "is_tab": False,
-    "min_length": 150,
+    "min_length": 120,
 }
 
 initial_size = 0
@@ -139,5 +139,5 @@ def ui():
     https://gradio.app/docs/
     """
 
-    min_length = gr.Slider(0, 768, step=16, value=params['min_length'], label='Minimum reply length')
+    min_length = gr.Slider(0, 800, step=10, value=params['min_length'], label='Minimum reply length')
     min_length.change(lambda x: params.update({'min_length': x}), min_length, None)
