@@ -3,7 +3,7 @@ colorama
 datasets
 einops
 fastapi==0.95.2
-gradio_client==0.2.5
+gradio_client==0.3.0
 gradio==3.33.1
 markdown
 numpy
