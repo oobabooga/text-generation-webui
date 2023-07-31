@@ -598,7 +598,7 @@ def check_tavern_character(img):
     if "chara" not in img.info:
         return "Not a TavernAI card", None, None, gr.update(interactive=False)
 
-    decoded_string = base64.b64decode(img.info['chara'])
+    decoded_string = base64.b64decode(img.info['chara']).replace(b'\\r\\n', b'\\n')
     _json = json.loads(decoded_string)
     if "data" in _json:
         _json = _json["data"]
