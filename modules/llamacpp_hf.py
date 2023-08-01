@@ -56,7 +56,7 @@ class LlamacppHF(PreTrainedModel):
             else:
                 self.model.eval([seq[-1]])
 
-            logits = torch.tensor(self.model.eval_logits[-1]).view(1, 1, -1).to(kwargs['input_ids'].device)
+            logits = torch.tensor(self.model.scores[self.model.n_tokens-1, :]).view(1, 1, -1).to(kwargs['input_ids'].device)
         else:
             self.model.reset()
             self.model.eval(seq)
