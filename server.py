@@ -1069,14 +1069,14 @@ def create_interface():
         if shared.settings['dark_theme']:
             shared.gradio['interface'].load(lambda: None, None, None, _js="() => document.getElementsByTagName('body')[0].classList.add('dark')")
 
-        # Inject javascript to remove the 'scroll-hide' class from the textarea in the Raw Textbox
+        # Inject javascript to remove the 'scroll-hide' class from UI elements
         js += """
-        function fixRawTextBoxScroll() {
-            let rawTextBox_textArea = document.querySelector('#raw_textbox textarea')
-            rawTextBox_textArea.classList.remove('scroll-hide')
+        function enableScrollBarOnElement(id) {
+            let selected_element = document.querySelector(id)
+            selected_element.classList.remove('scroll-hide')
         }
 
-        fixRawTextBoxScroll();
+        enableScrollBarOnElement('#raw_textbox textarea');
         """
 
         shared.gradio['interface'].load(lambda: None, None, None, _js=f"() => {{{js}}}")
