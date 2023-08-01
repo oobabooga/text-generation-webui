@@ -1069,6 +1069,16 @@ def create_interface():
         if shared.settings['dark_theme']:
             shared.gradio['interface'].load(lambda: None, None, None, _js="() => document.getElementsByTagName('body')[0].classList.add('dark')")
 
+        # Inject javascript to remove the 'scroll-hide' class from the textarea in the Raw Textbox
+        js += """
+        function fixRawTextBoxScroll() {
+            let rawTextBox_textArea = document.querySelector('#raw_textbox textarea')
+            rawTextBox_textArea.classList.remove('scroll-hide')
+        }
+
+        fixRawTextBoxScroll();
+        """
+
         shared.gradio['interface'].load(lambda: None, None, None, _js=f"() => {{{js}}}")
         shared.gradio['interface'].load(partial(ui.apply_interface_values, {}, use_persistent=True), None, gradio(ui.list_interface_input_elements()), show_progress=False)
         if shared.is_chat():
