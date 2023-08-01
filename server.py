@@ -738,7 +738,7 @@ def create_interface():
                 with gr.Row():
                     with gr.Column(scale=4):
                         with gr.Tab('Raw'):
-                            shared.gradio['textbox'] = gr.Textbox(value=default_text, elem_classes="textbox", lines=27)
+                            shared.gradio['textbox'] = gr.Textbox(value=default_text, elem_id="raw_textbox", elem_classes="textbox", lines=27)
 
                         with gr.Tab('Markdown'):
                             shared.gradio['markdown_render'] = gr.Button('Render')
