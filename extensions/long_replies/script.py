@@ -1,27 +1,20 @@
-"""
-An example of extension. It does nothing, but you can add transformations
-before the return statements to customize the webui behavior.
-
-Starting from history_modifier and ending in output_modifier, the
-functions are declared in the same order that they are called at
-generation time.
-"""
-
-import gradio as gr
 import torch
-from transformers import LogitsProcessor
-
 from modules import chat, shared
 from modules.text_generation import (
     decode,
     encode,
     generate_reply,
 )
+from transformers import LogitsProcessor
+import gradio as gr
 
 params = {
-    "display_name": "Example Extension",
+    "display_name": "Long replies",
     "is_tab": False,
+    "min_length": 120,
 }
+
+initial_size = 0
 
 class MyLogits(LogitsProcessor):
     """
@@ -29,9 +22,14 @@ class MyLogits(LogitsProcessor):
     Used in the logits_processor_modifier function below.
     """
     def __init__(self):
+        self.newline_id = shared.tokenizer.encode('\n')[-1]
         pass
 
     def __call__(self, input_ids, scores):
+        if input_ids.shape[-1] - initial_size < params["min_length"]:
+            scores[...,self.newline_id] = -1000
+            # scores[...,shared.tokenizer.eos_token_id] = -1000
+
         # probs = torch.softmax(scores, dim=-1, dtype=torch.float)
         # probs[0] /= probs[0].sum()
         # scores = torch.log(probs / (1 - probs))
@@ -81,6 +79,10 @@ def tokenizer_modifier(state, prompt, input_ids, input_embeds):
     Used by the multimodal extension to put image embeddings in the prompt.
     Only used by loaders that use the transformers library for sampling.
     """
+
+    global initial_size
+    initial_size = input_ids.shape[-1]
+
     return prompt, input_ids, input_embeds
 
 def logits_processor_modifier(processor_list, input_ids):
@@ -136,4 +138,6 @@ def ui():
     To learn about gradio components, check out the docs:
     https://gradio.app/docs/
     """
-    pass
+
+    min_length = gr.Slider(0, 800, step=10, value=params['min_length'], label='Minimum reply length')
+    min_length.change(lambda x: params.update({'min_length': x}), min_length, None)

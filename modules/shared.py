@@ -53,7 +53,7 @@ settings = {
     'truncation_length_max': 16384,
     'mode': 'chat',
     'start_with': '',
-    'chat_style': 'cai-chat',
+    'chat_style': 'TheEncrypted777',
     'instruction_template': 'None',
     'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
     'chat_generation_attempts': 1,
@@ -61,7 +61,7 @@ settings = {
     'chat_generation_attempts_max': 10,
     'default_extensions': [],
     'chat_default_extensions': ['gallery'],
-    'preset': 'Divine Intellect',
+    'preset': 'simple-1',
     'prompt': 'QA',
 }
 

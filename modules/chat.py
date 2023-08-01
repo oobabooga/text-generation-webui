@@ -27,6 +27,22 @@ from modules.utils import (
 )
 
 
+def str_presenter(dumper, data):
+    """
+    Copied from https://github.com/yaml/pyyaml/issues/240
+    Makes pyyaml output prettier multiline strings.
+    """
+
+    if data.count('\n') > 0:
+        return dumper.represent_scalar('tag:yaml.org,2002:str', data, style='|')
+
+    return dumper.represent_scalar('tag:yaml.org,2002:str', data)
+
+
+yaml.add_representer(str, str_presenter)
+yaml.representer.SafeRepresenter.add_representer(str, str_presenter)
+
+
 def get_turn_substrings(state, instruct=False):
     if instruct:
         if 'turn_template' not in state or state['turn_template'] == '':
@@ -87,10 +103,19 @@ def generate_chat_prompt(user_input, state, **kwargs):
     else:
         wrapper = '<|prompt|>'
 
+    if is_instruct:
+        context = state['context_instruct']
+    else:
+        context = replace_character_names(
+            f"{state['context'].strip()}\n",
+            state['name1'],
+            state['name2']
+        )
+
     # Build the prompt
+    rows = [context]
     min_rows = 3
     i = len(history) - 1
-    rows = [state['context_instruct'] if is_instruct else f"{state['context'].strip()}\n"]
     while i >= 0 and get_encoded_length(wrapper.replace('<|prompt|>', ''.join(rows))) < max_length:
         if _continue and i == len(history) - 1:
             if state['mode'] != 'chat-instruct':
@@ -349,7 +374,7 @@ def send_dummy_reply(text, state):
 
 
 def clear_chat_log(state):
-    greeting = state['greeting']
+    greeting = replace_character_names(state['greeting'], state['name1'], state['name2'])
     mode = state['mode']
     history = state['history']
 
@@ -414,7 +439,7 @@ def load_persistent_history(state):
         return state['history']
 
     character = state['character_menu']
-    greeting = state['greeting']
+    greeting = replace_character_names(state['greeting'], state['name1'], state['name2'])
     p = Path(f'logs/{character}_persistent.json')
     if not shared.args.multi_user and character not in ['None', '', None] and p.exists():
         f = json.loads(open(p, 'rb').read())
@@ -436,18 +461,6 @@ def load_persistent_history(state):
 def replace_character_names(text, name1, name2):
     text = text.replace('{{user}}', name1).replace('{{char}}', name2)
     return text.replace('<USER>', name1).replace('<BOT>', name2)
-
-
-def build_pygmalion_style_context(data):
-    context = ""
-    if 'char_persona' in data and data['char_persona'] != '':
-        context += f"{data['char_name']}'s Persona: {data['char_persona']}\n"
-
-    if 'world_scenario' in data and data['world_scenario'] != '':
-        context += f"Scenario: {data['world_scenario']}\n"
-
-    context = f"{context.strip()}\n<START>\n"
-    return context
 
 
 def generate_pfp_cache(character):
@@ -501,10 +514,6 @@ def load_character(character, name1, name2, instruct=False):
                 name1 = data[k]
                 break
 
-        for field in ['context', 'greeting', 'example_dialogue', 'char_persona', 'char_greeting', 'world_scenario']:
-            if field in data:
-                data[field] = replace_character_names(data[field], name1, name2)
-
         if 'context' in data:
             context = data['context']
             if not instruct:
@@ -536,40 +545,64 @@ def load_character_memoized(character, name1, name2, instruct=False):
     return load_character(character, name1, name2, instruct=instruct)
 
 
-def upload_character(json_file, img, tavern=False):
-    json_file = json_file if type(json_file) == str else json_file.decode('utf-8')
-    data = json.loads(json_file)
-    outfile_name = data["char_name"]
+def upload_character(file, img, tavern=False):
+    decoded_file = file if type(file) == str else file.decode('utf-8')
+    try:
+        data = json.loads(decoded_file)
+    except:
+        data = yaml.safe_load(decoded_file)
+
+    if 'char_name' in data:
+        name = data['char_name']
+        greeting = data['char_greeting']
+        context = build_pygmalion_style_context(data)
+        yaml_data = generate_character_yaml(name, greeting, context)
+    else:
+        name = data['name']
+        yaml_data = generate_character_yaml(data['name'], data['greeting'], data['context'])
+
+    outfile_name = name
     i = 1
-    while Path(f'characters/{outfile_name}.json').exists():
-        outfile_name = f'{data["char_name"]}_{i:03d}'
+    while Path(f'characters/{outfile_name}.yaml').exists():
+        outfile_name = f'{name}_{i:03d}'
         i += 1
 
-    if tavern:
-        outfile_name = f'TavernAI-{outfile_name}'
-
-    with open(Path(f'characters/{outfile_name}.json'), 'w', encoding='utf-8') as f:
-        f.write(json_file)
+    with open(Path(f'characters/{outfile_name}.yaml'), 'w', encoding='utf-8') as f:
+        f.write(yaml_data)
 
     if img is not None:
         img.save(Path(f'characters/{outfile_name}.png'))
 
-    logger.info(f'New character saved to "characters/{outfile_name}.json".')
+    logger.info(f'New character saved to "characters/{outfile_name}.yaml".')
     return gr.update(value=outfile_name, choices=get_available_characters())
 
 
+def build_pygmalion_style_context(data):
+    context = ""
+    if 'char_persona' in data and data['char_persona'] != '':
+        context += f"{data['char_name']}'s Persona: {data['char_persona']}\n"
+
+    if 'world_scenario' in data and data['world_scenario'] != '':
+        context += f"Scenario: {data['world_scenario']}\n"
+
+    context = f"{context.strip()}\n"
+    return context
+
+
 def upload_tavern_character(img, _json):
-    _json = {"char_name": _json['name'], "char_persona": _json['description'], "char_greeting": _json["first_mes"], "example_dialogue": _json['mes_example'], "world_scenario": _json['scenario']}
+    _json = {'char_name': _json['name'], 'char_persona': _json['description'], 'char_greeting': _json['first_mes'], 'example_dialogue': _json['mes_example'], 'world_scenario': _json['scenario']}
     return upload_character(json.dumps(_json), img, tavern=True)
 
 
 def check_tavern_character(img):
     if "chara" not in img.info:
         return "Not a TavernAI card", None, None, gr.update(interactive=False)
-    decoded_string = base64.b64decode(img.info['chara'])
+
+    decoded_string = base64.b64decode(img.info['chara']).replace(b'\\r\\n', b'\\n')
     _json = json.loads(decoded_string)
     if "data" in _json:
         _json = _json["data"]
+
     return _json['name'], _json['description'], _json, gr.update(interactive=True)
 
 
@@ -595,7 +628,7 @@ def generate_character_yaml(name, greeting, context):
     }
 
     data = {k: v for k, v in data.items() if v}  # Strip falsy
-    return yaml.dump(data, sort_keys=False)
+    return yaml.dump(data, sort_keys=False, width=float("inf"))
 
 
 def generate_instruction_template_yaml(user, bot, context, turn_template):
@@ -607,7 +640,7 @@ def generate_instruction_template_yaml(user, bot, context, turn_template):
     }
 
     data = {k: v for k, v in data.items() if v}  # Strip falsy
-    return yaml.dump(data, sort_keys=False)
+    return yaml.dump(data, sort_keys=False, width=float("inf"))
 
 
 def save_character(name, greeting, context, picture, filename):
