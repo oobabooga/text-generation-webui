@@ -79,6 +79,7 @@ def list_model_elements():
 def list_interface_input_elements():
     elements = [
         'max_new_tokens',
+        'auto_max_new_tokens',
         'seed',
         'temperature',
         'top_p',
