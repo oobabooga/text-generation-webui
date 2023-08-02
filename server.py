@@ -676,8 +676,8 @@ def create_interface():
 
                             shared.gradio['name1'] = gr.Textbox(value=shared.settings['name1'], lines=1, label='Your name')
                             shared.gradio['name2'] = gr.Textbox(value=shared.settings['name2'], lines=1, label='Character\'s name')
-                            shared.gradio['context'] = gr.Textbox(value=shared.settings['context'], lines=4, label='Context')
-                            shared.gradio['greeting'] = gr.Textbox(value=shared.settings['greeting'], lines=4, label='Greeting')
+                            shared.gradio['context'] = gr.Textbox(value=shared.settings['context'], lines=4, label='Context', elem_classes=['add_scrollbar'])
+                            shared.gradio['greeting'] = gr.Textbox(value=shared.settings['greeting'], lines=4, label='Greeting', elem_classes=['add_scrollbar'])
 
                         with gr.Column(scale=1):
                             shared.gradio['character_picture'] = gr.Image(label='Character picture', type='pil')
@@ -696,7 +696,7 @@ def create_interface():
                     shared.gradio['context_instruct'] = gr.Textbox(value='', lines=4, label='Context')
                     shared.gradio['turn_template'] = gr.Textbox(value=shared.settings['turn_template'], lines=1, label='Turn template', info='Used to precisely define the placement of spaces and new line characters in instruction prompts.')
                     with gr.Row():
-                        shared.gradio['chat-instruct_command'] = gr.Textbox(value=shared.settings['chat-instruct_command'], lines=4, label='Command for chat-instruct mode', info='<|character|> gets replaced by the bot name, and <|prompt|> gets replaced by the regular chat prompt.')
+                        shared.gradio['chat-instruct_command'] = gr.Textbox(value=shared.settings['chat-instruct_command'], lines=4, label='Command for chat-instruct mode', info='<|character|> gets replaced by the bot name, and <|prompt|> gets replaced by the regular chat prompt.', elem_classes=['add_scrollbar'])
 
                 with gr.Tab('Chat history'):
                     with gr.Row():
@@ -738,7 +738,7 @@ def create_interface():
                 with gr.Row():
                     with gr.Column(scale=4):
                         with gr.Tab('Raw'):
-                            shared.gradio['textbox'] = gr.Textbox(value=default_text, elem_id="raw_textbox", elem_classes="textbox", lines=27)
+                            shared.gradio['textbox'] = gr.Textbox(value=default_text, elem_classes=['textbox', 'add_scrollbar'], lines=27)
 
                         with gr.Tab('Markdown'):
                             shared.gradio['markdown_render'] = gr.Button('Render')
@@ -776,7 +776,7 @@ def create_interface():
             with gr.Tab("Text generation", elem_id="main"):
                 with gr.Row():
                     with gr.Column():
-                        shared.gradio['textbox'] = gr.Textbox(value=default_text, elem_classes="textbox_default", lines=27, label='Input')
+                        shared.gradio['textbox'] = gr.Textbox(value=default_text, elem_classes=['textbox_default', 'add_scrollbar'], lines=27, label='Input')
                         shared.gradio['max_new_tokens'] = gr.Slider(minimum=shared.settings['max_new_tokens_min'], maximum=shared.settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=shared.settings['max_new_tokens'])
                         with gr.Row():
                             shared.gradio['Generate'] = gr.Button('Generate', variant='primary')
@@ -794,7 +794,7 @@ def create_interface():
 
                     with gr.Column():
                         with gr.Tab('Raw'):
-                            shared.gradio['output_textbox'] = gr.Textbox(elem_classes="textbox_default_output", lines=27, label='Output')
+                            shared.gradio['output_textbox'] = gr.Textbox(lines=27, label='Output', elem_classes=['textbox_default_output', 'add_scrollbar'])
 
                         with gr.Tab('Markdown'):
                             shared.gradio['markdown_render'] = gr.Button('Render')
@@ -1068,16 +1068,6 @@ def create_interface():
 
         if shared.settings['dark_theme']:
             shared.gradio['interface'].load(lambda: None, None, None, _js="() => document.getElementsByTagName('body')[0].classList.add('dark')")
-
-        # Inject javascript to remove the 'scroll-hide' class from UI elements
-        js += """
-        function enableScrollBarOnElement(id) {
-            let selected_element = document.querySelector(id)
-            selected_element.classList.remove('scroll-hide')
-        }
-
-        enableScrollBarOnElement('#raw_textbox textarea');
-        """
 
         shared.gradio['interface'].load(lambda: None, None, None, _js=f"() => {{{js}}}")
         shared.gradio['interface'].load(partial(ui.apply_interface_values, {}, use_persistent=True), None, gradio(ui.list_interface_input_elements()), show_progress=False)
