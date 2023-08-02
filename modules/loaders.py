@@ -151,6 +151,7 @@ loaders_samplers = {
         'repetition_penalty_range',
         'seed',
         'ban_eos_token',
+        'auto_max_new_tokens',
     },
     'AutoGPTQ': {
         'temperature',
