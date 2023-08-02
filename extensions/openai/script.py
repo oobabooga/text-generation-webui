@@ -67,10 +67,13 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(code)
         self.send_access_control_headers()
         self.send_header('Content-Type', 'application/json')
-        self.end_headers()
 
         response = json.dumps(ret)
         r_utf8 = response.encode('utf-8')
+
+        self.send_header('Content-Length', str(len(r_utf8)))
+        self.end_headers()
+
         self.wfile.write(r_utf8)
         if not no_debug:
             debug_msg(r_utf8)
