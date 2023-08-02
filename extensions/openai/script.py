@@ -120,7 +120,7 @@ class Handler(BaseHTTPRequestHandler):
                 resp = OAImodels.list_models(is_legacy)
             else:
                 model_name = self.path[len('/v1/models/'):]
-                resp = OAImodels.model_info()
+                resp = OAImodels.model_info(model_name)
 
             self.return_json(resp)
 
