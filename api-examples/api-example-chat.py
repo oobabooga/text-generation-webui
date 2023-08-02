@@ -14,6 +14,7 @@ def run(user_input, history):
     request = {
         'user_input': user_input,
         'max_new_tokens': 250,
+        'auto_max_new_tokens': False,
         'history': history,
         'mode': 'instruct',  # Valid options: 'chat', 'chat-instruct', 'instruct'
         'character': 'Example',

@@ -116,6 +116,7 @@ loaders_samplers = {
         'ban_eos_token',
         'add_bos_token',
         'skip_special_tokens',
+        'auto_max_new_tokens',
     },
     'ExLlama_HF': {
         'temperature',
@@ -139,6 +140,7 @@ loaders_samplers = {
         'ban_eos_token',
         'add_bos_token',
         'skip_special_tokens',
+        'auto_max_new_tokens',
     },
     'ExLlama': {
         'temperature',
@@ -176,6 +178,7 @@ loaders_samplers = {
         'ban_eos_token',
         'add_bos_token',
         'skip_special_tokens',
+        'auto_max_new_tokens',
     },
     'GPTQ-for-LLaMa': {
         'temperature',
@@ -203,6 +206,7 @@ loaders_samplers = {
         'ban_eos_token',
         'add_bos_token',
         'skip_special_tokens',
+        'auto_max_new_tokens',
     },
     'llama.cpp': {
         'temperature',
@@ -237,6 +241,7 @@ loaders_samplers = {
         'ban_eos_token',
         'add_bos_token',
         'skip_special_tokens',
+        'auto_max_new_tokens',
     },
 }
 
