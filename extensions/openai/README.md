@@ -174,7 +174,7 @@ print(text)
 | /v1/models | openai.Model.list() | Lists models, Currently loaded model first, plus some compatibility options |
 | /v1/models/{id} | openai.Model.get() | returns whatever you ask for |
 | /v1/edits | openai.Edit.create() | Deprecated by openai, good with instruction following models |
-| /v1/text_completion | openai.Completion.create() | Legacy endpoint, doesn't support array input, variable quality based on the model |
+| /v1/text_completion | openai.Completion.create() | Legacy endpoint, variable quality based on the model |
 | /v1/completions | openai api completions.create | Legacy endpoint (v0.25) |
 | /v1/engines/*/embeddings | python-openai v0.25 | Legacy endpoint |
 | /v1/engines/*/generate | openai engines.generate | Legacy endpoint |
@@ -204,6 +204,7 @@ Some hacky mappings:
 | 1.0 | typical_p | hardcoded to 1.0 |
 | logprobs & logit_bias | - | experimental, llama only, transformers-kin only (ExLlama_HF ok), can also use llama tokens if 'model' is not an openai model or will convert from tiktoken for the openai model specified in 'model' |
 | messages.name | - | not supported yet |
+| suffix | - | not supported yet |
 | user | - | not supported yet |
 | functions/function_call | - | function calls are not supported yet |
 
