@@ -26,6 +26,10 @@
     max-width: 2.2em;
 }
 
+.button_nowrap {
+    white-space: nowrap;
+}
+
 #slim-column {
     flex: none !important;
     min-width: 0 !important;
@@ -90,6 +94,8 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
 .header_bar {
     background-color: #f7f7f7;
     margin-bottom: 20px;
+    display: inline !important;
+    overflow-x: scroll;
 }
 
 .dark .header_bar {

@@ -46,6 +46,16 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     min-width: 0 !important;
 }
 
+@media screen and (max-width: 688px) {
+    #main {
+        padding: 0px;
+    }
+
+    .chat {
+        height: calc(100vh - 274px) !important;
+    }
+}
+
 /*****************************************************/
 /*************** Chat box declarations ***************/
 /*****************************************************/

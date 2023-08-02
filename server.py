@@ -643,7 +643,7 @@ def create_interface():
                 with gr.Row():
                     shared.gradio['Impersonate'] = gr.Button('Impersonate')
                     shared.gradio['Regenerate'] = gr.Button('Regenerate')
-                    shared.gradio['Remove last'] = gr.Button('Remove last')
+                    shared.gradio['Remove last'] = gr.Button('Remove last', elem_classes=['button_nowrap'])
 
                 with gr.Row():
                     shared.gradio['Copy last reply'] = gr.Button('Copy last reply')
