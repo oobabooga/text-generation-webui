@@ -204,7 +204,7 @@ def create_model_menus():
 
     with gr.Row():
         with gr.Column():
-            shared.gradio['loader'] = gr.Dropdown(label="Model loader", choices=["Transformers", "AutoGPTQ", "GPTQ-for-LLaMa", "ExLlama", "ExLlama_HF", "llama.cpp"], value=None)
+            shared.gradio['loader'] = gr.Dropdown(label="Model loader", choices=["Transformers", "ExLlama_HF", "ExLlama", "AutoGPTQ", "GPTQ-for-LLaMa", "llama.cpp", "llamacpp_HF"], value=None)
             with gr.Box():
                 with gr.Row():
                     with gr.Column():
@@ -215,19 +215,23 @@ def create_model_menus():
                         shared.gradio['transformers_info'] = gr.Markdown('load-in-4bit params:')
                         shared.gradio['compute_dtype'] = gr.Dropdown(label="compute_dtype", choices=["bfloat16", "float16", "float32"], value=shared.args.compute_dtype)
                         shared.gradio['quant_type'] = gr.Dropdown(label="quant_type", choices=["nf4", "fp4"], value=shared.args.quant_type)
-                        shared.gradio['threads'] = gr.Slider(label="threads", minimum=0, step=1, maximum=32, value=shared.args.threads)
-                        shared.gradio['n_batch'] = gr.Slider(label="n_batch", minimum=1, maximum=2048, value=shared.args.n_batch)
+
                         shared.gradio['n_gpu_layers'] = gr.Slider(label="n-gpu-layers", minimum=0, maximum=128, value=shared.args.n_gpu_layers)
                         shared.gradio['n_ctx'] = gr.Slider(minimum=0, maximum=16384, step=256, label="n_ctx", value=shared.args.n_ctx)
+                        shared.gradio['threads'] = gr.Slider(label="threads", minimum=0, step=1, maximum=32, value=shared.args.threads)
+                        shared.gradio['n_batch'] = gr.Slider(label="n_batch", minimum=1, maximum=2048, value=shared.args.n_batch)
+                        shared.gradio['n_gqa'] = gr.Slider(minimum=0, maximum=16, step=1, label="n_gqa", value=shared.args.n_gqa, info='grouped-query attention. Must be 8 for llama-2 70b.')
+                        shared.gradio['rms_norm_eps'] = gr.Slider(minimum=0, maximum=1e-5, step=1e-6, label="rms_norm_eps", value=shared.args.n_gqa, info='5e-6 is a good value for llama-2 models.')
+
                         shared.gradio['wbits'] = gr.Dropdown(label="wbits", choices=["None", 1, 2, 3, 4, 8], value=str(shared.args.wbits) if shared.args.wbits > 0 else "None")
                         shared.gradio['groupsize'] = gr.Dropdown(label="groupsize", choices=["None", 32, 64, 128, 1024], value=str(shared.args.groupsize) if shared.args.groupsize > 0 else "None")
                         shared.gradio['model_type'] = gr.Dropdown(label="model_type", choices=["None", "llama", "opt", "gptj"], value=shared.args.model_type or "None")
                         shared.gradio['pre_layer'] = gr.Slider(label="pre_layer", minimum=0, maximum=100, value=shared.args.pre_layer[0] if shared.args.pre_layer is not None else 0)
-                        shared.gradio['autogptq_info'] = gr.Markdown('On some systems, AutoGPTQ can be 2x slower than GPTQ-for-LLaMa. You can manually select the GPTQ-for-LLaMa loader above.')
+                        shared.gradio['autogptq_info'] = gr.Markdown('* ExLlama_HF is recommended over AutoGPTQ for models derived from LLaMA.')
                         shared.gradio['gpu_split'] = gr.Textbox(label='gpu-split', info='Comma-separated list of VRAM (in GB) to use per GPU. Example: 20,7,7')
                         shared.gradio['max_seq_len'] = gr.Slider(label='max_seq_len', minimum=2048, maximum=16384, step=256, info='Maximum sequence length.', value=shared.args.max_seq_len)
                         shared.gradio['compress_pos_emb'] = gr.Slider(label='compress_pos_emb', minimum=1, maximum=8, step=1, info='Positional embeddings compression factor. Should typically be set to max_seq_len / 2048.', value=shared.args.compress_pos_emb)
-                        shared.gradio['alpha_value'] = gr.Slider(label='alpha_value', minimum=1, maximum=8, step=1, info='Positional embeddings alpha factor for NTK RoPE scaling. Same as above. Use either this or compress_pos_emb, not both.', value=shared.args.alpha_value)
+                        shared.gradio['alpha_value'] = gr.Slider(label='alpha_value', minimum=1, maximum=32, step=1, info='Positional embeddings alpha factor for NTK RoPE scaling. Scaling is not identical to embedding compression. Use either this or compress_pos_emb, not both.', value=shared.args.alpha_value)
 
                     with gr.Column():
                         shared.gradio['triton'] = gr.Checkbox(label="triton", value=shared.args.triton)
@@ -250,6 +254,7 @@ def create_model_menus():
                         shared.gradio['gptq_for_llama_info'] = gr.Markdown('GPTQ-for-LLaMa is currently 2x faster than AutoGPTQ on some systems. It is installed by default with the one-click installers. Otherwise, it has to be installed manually following the instructions here: [instructions](https://github.com/oobabooga/text-generation-webui/blob/main/docs/GPTQ-models-(4-bit-mode).md#installation-1).')
                         shared.gradio['exllama_info'] = gr.Markdown('For more information, consult the [docs](https://github.com/oobabooga/text-generation-webui/blob/main/docs/ExLlama.md).')
                         shared.gradio['exllama_HF_info'] = gr.Markdown('ExLlama_HF is a wrapper that lets you use ExLlama like a Transformers model, which means it can use the Transformers samplers. It\'s a bit slower than the regular ExLlama.')
+                        shared.gradio['llamacpp_HF_info'] = gr.Markdown('llamacpp_HF is a wrapper that lets you use llama.cpp like a Transformers model, which means it can use the Transformers samplers. To use it, make sure to first download oobabooga/llama-tokenizer under "Download custom model or LoRA".')
 
         with gr.Column():
             with gr.Row():
@@ -276,20 +281,17 @@ def create_model_menus():
     load.click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         update_model_parameters, gradio('interface_state'), None).then(
-        partial(load_model_wrapper, autoload=True), gradio('model_menu', 'loader'), gradio('model_status'), show_progress=False).then(
-        lambda: shared.lora_names, None, gradio('lora_menu'))
+        partial(load_model_wrapper, autoload=True), gradio('model_menu', 'loader'), gradio('model_status'), show_progress=False)
 
     unload.click(
         unload_model, None, None).then(
-        lambda: "Model unloaded", None, gradio('model_status')).then(
-        lambda: shared.lora_names, None, gradio('lora_menu'))
+        lambda: "Model unloaded", None, gradio('model_status'))
 
     reload.click(
         unload_model, None, None).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         update_model_parameters, gradio('interface_state'), None).then(
-        partial(load_model_wrapper, autoload=True), gradio('model_menu', 'loader'), gradio('model_status'), show_progress=False).then(
-        lambda: shared.lora_names, None, gradio('lora_menu'))
+        partial(load_model_wrapper, autoload=True), gradio('model_menu', 'loader'), gradio('model_status'), show_progress=False)
 
     save_settings.click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
@@ -320,18 +322,17 @@ def create_settings_menus(default_preset):
     with gr.Row():
         with gr.Column():
             with gr.Row():
-                shared.gradio['preset_menu'] = gr.Dropdown(choices=utils.get_available_presets(), value=default_preset if not shared.args.flexgen else 'Naive', label='Generation parameters preset', elem_classes='slim-dropdown')
+                shared.gradio['preset_menu'] = gr.Dropdown(choices=utils.get_available_presets(), value=default_preset, label='Generation parameters preset', elem_classes='slim-dropdown')
                 ui.create_refresh_button(shared.gradio['preset_menu'], lambda: None, lambda: {'choices': utils.get_available_presets()}, 'refresh-button')
                 shared.gradio['save_preset'] = gr.Button('💾', elem_classes='refresh-button')
                 shared.gradio['delete_preset'] = gr.Button('🗑️', elem_classes='refresh-button')
 
         with gr.Column():
-            shared.gradio['seed'] = gr.Number(value=shared.settings['seed'], label='Seed (-1 for random)')
+            filter_by_loader = gr.Dropdown(label="Filter by loader", choices=["All", "Transformers", "ExLlama_HF", "ExLlama", "AutoGPTQ", "GPTQ-for-LLaMa", "llama.cpp", "llamacpp_HF"], value="All", elem_classes='slim-dropdown')
 
     with gr.Row():
         with gr.Column():
             with gr.Box():
-                gr.Markdown('Main parameters')
                 with gr.Row():
                     with gr.Column():
                         shared.gradio['temperature'] = gr.Slider(0.01, 1.99, value=generate_params['temperature'], step=0.01, label='temperature')
@@ -340,6 +341,8 @@ def create_settings_menus(default_preset):
                         shared.gradio['typical_p'] = gr.Slider(0.0, 1.0, value=generate_params['typical_p'], step=0.01, label='typical_p')
                         shared.gradio['epsilon_cutoff'] = gr.Slider(0, 9, value=generate_params['epsilon_cutoff'], step=0.01, label='epsilon_cutoff')
                         shared.gradio['eta_cutoff'] = gr.Slider(0, 20, value=generate_params['eta_cutoff'], step=0.01, label='eta_cutoff')
+                        shared.gradio['tfs'] = gr.Slider(0.0, 1.0, value=generate_params['tfs'], step=0.01, label='tfs')
+                        shared.gradio['top_a'] = gr.Slider(0.0, 1.0, value=generate_params['top_a'], step=0.01, label='top_a')
 
                     with gr.Column():
                         shared.gradio['repetition_penalty'] = gr.Slider(1.0, 1.5, value=generate_params['repetition_penalty'], step=0.01, label='repetition_penalty')
@@ -347,14 +350,11 @@ def create_settings_menus(default_preset):
                         shared.gradio['encoder_repetition_penalty'] = gr.Slider(0.8, 1.5, value=generate_params['encoder_repetition_penalty'], step=0.01, label='encoder_repetition_penalty')
                         shared.gradio['no_repeat_ngram_size'] = gr.Slider(0, 20, step=1, value=generate_params['no_repeat_ngram_size'], label='no_repeat_ngram_size')
                         shared.gradio['min_length'] = gr.Slider(0, 2000, step=1, value=generate_params['min_length'], label='min_length')
-                        shared.gradio['tfs'] = gr.Slider(0.0, 1.0, value=generate_params['tfs'], step=0.01, label='tfs')
-                        shared.gradio['top_a'] = gr.Slider(0.0, 1.0, value=generate_params['top_a'], step=0.01, label='top_a')
+                        shared.gradio['seed'] = gr.Number(value=shared.settings['seed'], label='Seed (-1 for random)')
                         shared.gradio['do_sample'] = gr.Checkbox(value=generate_params['do_sample'], label='do_sample')
 
             with gr.Accordion("Learn more", open=False):
                 gr.Markdown("""
-
-    Not all parameters are used by all loaders. See [this page](https://github.com/oobabooga/text-generation-webui/blob/main/docs/Generation-parameters.md) for details.
 
     For a technical description of the parameters, the [transformers documentation](https://huggingface.co/docs/transformers/main_classes/text_generation#transformers.GenerationConfig) is a good reference.
 
@@ -375,7 +375,6 @@ def create_settings_menus(default_preset):
         1) Midnight Enigma
         2) Yara
         3) Shortwave
-        4) Kobold-Godlike
 
     ### Temperature
     Primary factor to control randomness of outputs. 0 = deterministic (only the most likely token is used). Higher value = more randomness.
@@ -409,19 +408,16 @@ def create_settings_menus(default_preset):
             with gr.Box():
                 with gr.Row():
                     with gr.Column():
-                        gr.Markdown('Contrastive search')
-                        shared.gradio['penalty_alpha'] = gr.Slider(0, 5, value=generate_params['penalty_alpha'], label='penalty_alpha')
-
-                        gr.Markdown('Beam search')
-                        shared.gradio['num_beams'] = gr.Slider(1, 20, step=1, value=generate_params['num_beams'], label='num_beams')
-                        shared.gradio['length_penalty'] = gr.Slider(-5, 5, value=generate_params['length_penalty'], label='length_penalty')
-                        shared.gradio['early_stopping'] = gr.Checkbox(value=generate_params['early_stopping'], label='early_stopping')
-
-                    with gr.Column():
-                        gr.Markdown('Mirostat (mode=1 is only for llama.cpp)')
-                        shared.gradio['mirostat_mode'] = gr.Slider(0, 2, step=1, value=generate_params['mirostat_mode'], label='mirostat_mode')
+                        shared.gradio['mirostat_mode'] = gr.Slider(0, 2, step=1, value=generate_params['mirostat_mode'], label='mirostat_mode', info='mode=1 is for llama.cpp only.')
                         shared.gradio['mirostat_tau'] = gr.Slider(0, 10, step=0.01, value=generate_params['mirostat_tau'], label='mirostat_tau')
                         shared.gradio['mirostat_eta'] = gr.Slider(0, 1, step=0.01, value=generate_params['mirostat_eta'], label='mirostat_eta')
+
+                    with gr.Column():
+                        shared.gradio['penalty_alpha'] = gr.Slider(0, 5, value=generate_params['penalty_alpha'], label='penalty_alpha', info='For Contrastive Search. do_sample must be unchecked.')
+
+                        shared.gradio['num_beams'] = gr.Slider(1, 20, step=1, value=generate_params['num_beams'], label='num_beams', info='For Beam Search, along with length_penalty and early_stopping.')
+                        shared.gradio['length_penalty'] = gr.Slider(-5, 5, value=generate_params['length_penalty'], label='length_penalty')
+                        shared.gradio['early_stopping'] = gr.Checkbox(value=generate_params['early_stopping'], label='early_stopping')
 
             with gr.Box():
                 with gr.Row():
@@ -435,6 +431,7 @@ def create_settings_menus(default_preset):
                         shared.gradio['skip_special_tokens'] = gr.Checkbox(value=shared.settings['skip_special_tokens'], label='Skip special tokens', info='Some specific models need this unset.')
                         shared.gradio['stream'] = gr.Checkbox(value=not shared.args.no_stream, label='Activate text streaming')
 
+    filter_by_loader.change(loaders.blacklist_samplers, filter_by_loader, gradio(loaders.list_all_samplers()), show_progress=False)
     shared.gradio['preset_menu'].change(presets.load_preset_for_ui, gradio('preset_menu', 'interface_state'), gradio('interface_state', 'do_sample', 'temperature', 'top_p', 'typical_p', 'epsilon_cutoff', 'eta_cutoff', 'repetition_penalty', 'repetition_penalty_range', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping', 'mirostat_mode', 'mirostat_tau', 'mirostat_eta', 'tfs', 'top_a'))
 
 
@@ -593,6 +590,21 @@ def create_interface():
     if shared.args.extensions is not None and len(shared.args.extensions) > 0:
         extensions_module.load_extensions()
 
+    # Forcing some events to be triggered on page load
+    shared.persistent_interface_state.update({
+        'loader': shared.args.loader or 'Transformers',
+    })
+
+    if shared.is_chat():
+        shared.persistent_interface_state.update({
+            'mode': shared.settings['mode'],
+            'character_menu': shared.args.character or shared.settings['character'],
+            'instruction_template': shared.settings['instruction_template']
+        })
+
+        if Path("cache/pfp_character.png").exists():
+            Path("cache/pfp_character.png").unlink()
+
     # css/js strings
     css = ui.css if not shared.is_chat() else ui.css + ui.chat_css
     js = ui.main_js if not shared.is_chat() else ui.main_js + ui.chat_js
@@ -696,14 +708,14 @@ def create_interface():
                             shared.gradio['upload_chat_history'] = gr.File(type='binary', file_types=['.json', '.txt'], label="Upload")
 
                 with gr.Tab('Upload character'):
-                    with gr.Tab('JSON'):
+                    with gr.Tab('YAML or JSON'):
                         with gr.Row():
-                            shared.gradio['upload_json'] = gr.File(type='binary', file_types=['.json'], label='JSON File')
+                            shared.gradio['upload_json'] = gr.File(type='binary', file_types=['.json', '.yaml'], label='JSON or YAML File')
                             shared.gradio['upload_img_bot'] = gr.Image(type='pil', label='Profile Picture (optional)')
 
                         shared.gradio['Submit character'] = gr.Button(value='Submit', interactive=False)
 
-                    with gr.Tab('TavernAI'):
+                    with gr.Tab('TavernAI PNG'):
                         with gr.Row():
                             with gr.Column():
                                 shared.gradio['upload_img_tavern'] = gr.Image(type='pil', label='TavernAI PNG File', elem_id="upload_img_tavern")
@@ -848,7 +860,7 @@ def create_interface():
             # Reset interface event
             shared.gradio['reset_interface'].click(
                 set_interface_arguments, gradio('interface_modes_menu', 'extensions_menu', 'bool_menu'), None).then(
-                lambda: None, None, None, _js='() => {document.body.innerHTML=\'<h1 style="font-family:monospace;margin-top:20%;color:lightgray;text-align:center;">Reloading...</h1>\'; setTimeout(function(){location.reload()},2500); return []}')
+                lambda: None, None, None, _js='() => {document.body.innerHTML=\'<h1 style="font-family:monospace;padding-top:20%;margin:0;height:100vh;color:lightgray;text-align:center;background:var(--body-background-fill)">Reloading...</h1>\'; setTimeout(function(){location.reload()},2500); return []}')
 
             shared.gradio['toggle_dark_mode'].click(lambda: None, None, None, _js='() => {document.getElementsByTagName("body")[0].classList.toggle("dark")}')
 
@@ -1054,11 +1066,11 @@ def create_interface():
 
         create_file_saving_event_handlers()
 
-        shared.gradio['interface'].load(lambda: None, None, None, _js=f"() => {{{js}}}")
-        shared.gradio['interface'].load(partial(ui.apply_interface_values, {}, use_persistent=True), None, gradio(ui.list_interface_input_elements()), show_progress=False)
         if shared.settings['dark_theme']:
             shared.gradio['interface'].load(lambda: None, None, None, _js="() => document.getElementsByTagName('body')[0].classList.add('dark')")
 
+        shared.gradio['interface'].load(lambda: None, None, None, _js=f"() => {{{js}}}")
+        shared.gradio['interface'].load(partial(ui.apply_interface_values, {}, use_persistent=True), None, gradio(ui.list_interface_input_elements()), show_progress=False)
         if shared.is_chat():
             shared.gradio['interface'].load(chat.redraw_html, shared.reload_inputs, gradio('display'))
 
@@ -1104,6 +1116,8 @@ if __name__ == "__main__":
         'skip_special_tokens': shared.settings['skip_special_tokens'],
         'custom_stopping_strings': shared.settings['custom_stopping_strings'],
         'truncation_length': shared.settings['truncation_length'],
+        'n_gqa': 0,
+        'rms_norm_eps': 0,
     }
 
     shared.model_config.move_to_end('.*', last=False)  # Move to the beginning
@@ -1126,10 +1140,6 @@ if __name__ == "__main__":
     # Model defined through --model
     if shared.args.model is not None:
         shared.model_name = shared.args.model
-
-    # Only one model is available
-    elif len(available_models) == 1:
-        shared.model_name = available_models[0]
 
     # Select the model from a command-line menu
     elif shared.args.model_menu:
@@ -1157,21 +1167,6 @@ if __name__ == "__main__":
         shared.model, shared.tokenizer = load_model(shared.model_name)
         if shared.args.lora:
             add_lora_to_model(shared.args.lora)
-
-    # Forcing some events to be triggered on page load
-    shared.persistent_interface_state.update({
-        'loader': shared.args.loader or 'Transformers',
-    })
-
-    if shared.is_chat():
-        shared.persistent_interface_state.update({
-            'mode': shared.settings['mode'],
-            'character_menu': shared.args.character or shared.settings['character'],
-            'instruction_template': shared.settings['instruction_template']
-        })
-
-        if Path("cache/pfp_character.png").exists():
-            Path("cache/pfp_character.png").unlink()
 
     shared.generation_lock = Lock()
 
