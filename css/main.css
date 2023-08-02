@@ -155,3 +155,31 @@ button {
 .markdown ul ol {
     font-size: 100% !important;
 }
+
+.pretty_scrollbar::-webkit-scrollbar {
+  width: 10px;
+}
+
+.pretty_scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.pretty_scrollbar::-webkit-scrollbar-thumb,
+.pretty_scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #c5c5d2;
+  border-radius: 10px;
+}
+
+.dark .pretty_scrollbar::-webkit-scrollbar-thumb,
+.dark .pretty_scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #374151;
+  border-radius: 10px;
+}
+
+.pretty_scrollbar::-webkit-resizer {
+  background: #c5c5d2;
+}
+
+.dark .pretty_scrollbar::-webkit-resizer {
+  background: #374151;
+}
