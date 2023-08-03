@@ -6,6 +6,7 @@ import torch
 from modules import shared
 from modules.callbacks import Iteratorize
 from modules.logging_colors import logger
+from modules.text_generation import get_max_prompt_length
 
 import llama_cpp
 
@@ -91,6 +92,12 @@ class LlamaCppModel:
         LogitsProcessorList = llama_cpp_lib().LogitsProcessorList
 
         prompt = prompt if type(prompt) is str else prompt.decode()
+
+        # Handle truncation
+        prompt = self.encode(prompt)
+        prompt = prompt[-get_max_prompt_length(state):]
+        prompt = self.decode(prompt).decode('utf-8')
+
         completion_chunks = self.model.create_completion(
             prompt=prompt,
             max_tokens=state['max_new_tokens'],
