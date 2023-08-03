@@ -6,6 +6,7 @@ import torch
 from modules import shared
 from modules.callbacks import Iteratorize
 from modules.logging_colors import logger
+from modules.text_generation import get_max_prompt_length
 
 if torch.cuda.is_available() and not torch.version.hip:
     try:
@@ -75,6 +76,12 @@ class LlamaCppModel:
 
     def generate(self, prompt, state, callback=None):
         prompt = prompt if type(prompt) is str else prompt.decode()
+
+        # Handle truncation
+        prompt = self.encode(prompt)
+        prompt = prompt[-get_max_prompt_length(state):]
+        prompt = self.decode(prompt).decode('utf-8')
+
         completion_chunks = self.model.create_completion(
             prompt=prompt,
             max_tokens=state['max_new_tokens'],
@@ -94,6 +101,7 @@ class LlamaCppModel:
 
         output = ""
         for completion_chunk in completion_chunks:
+            print(completion_chunk)
             text = completion_chunk['choices'][0]['text']
             output += text
             if callback:
