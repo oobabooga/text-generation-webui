@@ -64,7 +64,6 @@ class ModelDownloader:
         """
         Gather a list of download links & checksums (SHA256) from all pages of the files manifest for the HF repository
         """
-
         base = "https://huggingface.co"
         page = f"/api/models/{model}/tree/{branch}"
         cursor = b""
@@ -89,6 +88,7 @@ class ModelDownloader:
             resp.raise_for_status()
             manifest = resp.json()
 
+            # We've hit an empty page, so we're done
             if len(manifest) == 0:
                 break
 
@@ -166,8 +166,6 @@ class ModelDownloader:
         """
         filename = Path(url.rsplit('/', 1)[1])
         output_path = output_folder / filename
-        headers = {}
-        mode = 'wb'
         if output_path.exists() and not start_from_scratch:
 
             # Check if the file has already been downloaded completely
@@ -179,6 +177,9 @@ class ModelDownloader:
             # Otherwise, resume the download from where it left off
             headers = {'Range': f'bytes={output_path.stat().st_size}-'}
             mode = 'ab'
+        else:
+            headers = {}
+            mode = 'wb'
 
         with self._session.get(url, stream=True, headers=headers, timeout=10) as resp:
             resp.raise_for_status()  # Do not continue the download if the request was unsuccessful
