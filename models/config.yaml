@@ -283,3 +283,8 @@ TheBloke_WizardLM-30B-GPTQ:
 .*newhope:
   mode: 'instruct'
   instruction_template: 'NewHope'
+.*stablebeluga2:
+  mode: 'instruct'
+  instruction_template: 'StableBeluga2'
+  truncation_length: 4096
+  rms_norm_eps: 5.0e-6

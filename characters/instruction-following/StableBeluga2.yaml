@@ -1,0 +1,4 @@
+user: "### User:"
+bot: "### Assistant:"
+turn_template: "<|user|>\n<|user-message|>\n\n<|bot|>\n<|bot-message|>\n\n"
+context: "### System:\nThis is a system prompt, please behave and help the user.\n\n"
