@@ -15,7 +15,6 @@ import argparse
 import base64
 import datetime
 import hashlib
-import json
 import os
 import re
 import sys
@@ -96,12 +95,12 @@ class ModelDownloader:
                 if not is_lora and fname.endswith(('adapter_config.json', 'adapter_model.bin')):
                     is_lora = True
 
-                is_pytorch = re.match("(pytorch|adapter|gptq)_model.*\.bin", fname)
-                is_safetensors = re.match(".*\.safetensors", fname)
-                is_pt = re.match(".*\.pt", fname)
-                is_ggml = re.match(".*ggml.*\.bin", fname)
-                is_tokenizer = re.match("(tokenizer|ice|spiece).*\.model", fname)
-                is_text = re.match(".*\.(txt|json|py|md)", fname) or is_tokenizer
+                is_pytorch = re.match("(pytorch|adapter|gptq)_model.*.bin", fname)
+                is_safetensors = re.match(".*.safetensors", fname)
+                is_pt = re.match(".*.pt", fname)
+                is_ggml = re.match(".*ggml.*.bin", fname)
+                is_tokenizer = re.match("(tokenizer|ice|spiece).*.model", fname)
+                is_text = re.match(".*.(txt|json|py|md)", fname) or is_tokenizer
                 if any((is_pytorch, is_safetensors, is_pt, is_ggml, is_tokenizer, is_text)):
                     # if a select option is given, and current file is a binary, make sure it's in the select list
                     if select and any((is_pytorch, is_pt, is_safetensors, is_ggml)):
