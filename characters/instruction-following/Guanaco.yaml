@@ -1,0 +1,4 @@
+user: "### Human:"
+bot: "### Assistant:"
+turn_template: "<|user|> <|user-message|>\n<|bot|> <|bot-message|>\n"
+context: "A chat between a curious human and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the human's questions.\n\n"

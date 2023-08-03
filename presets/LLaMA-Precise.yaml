@@ -1,6 +1,4 @@
-do_sample: true
-top_p: 0.1
-top_k: 40
 temperature: 0.7
+top_p: 0.1
 repetition_penalty: 1.18
-typical_p: 1.0
+top_k: 40

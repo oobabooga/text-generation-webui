@@ -35,6 +35,15 @@ input_hijack = {
 multimodal_embedder: MultimodalEmbedder = None
 
 
+def chat_input_modifier(text, visible_text, state):
+    global input_hijack
+    if input_hijack['state']:
+        input_hijack['state'] = False
+        return input_hijack['value'](text, visible_text)
+    else:
+        return text, visible_text
+
+
 def add_chat_picture(picture, text, visible_text):
     # resize the image, so that shortest edge is at least 224 (size for CLIP), and at most 300 (to keep history manageable)
     max_hw, min_hw = max(picture.size), min(picture.size)

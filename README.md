@@ -1,6 +1,6 @@
 # Text generation web UI
 
-A gradio web UI for running Large Language Models like LLaMA, llama.cpp, GPT-J, Pythia, OPT, and GALACTICA.
+A gradio web UI for running Large Language Models like LLaMA, llama.cpp, GPT-J, OPT, and GALACTICA.
 
 Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.com/AUTOMATIC1111/stable-diffusion-webui) of text generation.
 
@@ -10,36 +10,31 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 
 ## Features
 
-* Dropdown menu for switching between models
-* Notebook mode that resembles OpenAI's playground
-* Chat mode for conversation and role-playing
-* Instruct mode compatible with various formats, including Alpaca, Vicuna, Open Assistant, Dolly, Koala, ChatGLM, MOSS, RWKV-Raven, Galactica, StableLM, WizardLM, Baize, Ziya, Chinese-Vicuna, MPT, INCITE, Wizard Mega, KoAlpaca, Vigogne, Bactrian, h2o, and OpenBuddy
+* 3 interface modes: default, notebook, and chat
+* Multiple model backends: transformers, llama.cpp, ExLlama, AutoGPTQ, GPTQ-for-LLaMa
+* Dropdown menu for quickly switching between different models
+* LoRA: load and unload LoRAs on the fly, train a new LoRA
+* Precise instruction templates for chat mode, including Llama 2, Alpaca, Vicuna, WizardLM, StableLM, and many others
 * [Multimodal pipelines, including LLaVA and MiniGPT-4](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/multimodal)
+* 8-bit and 4-bit inference through bitsandbytes
+* CPU mode for transformers models
+* [DeepSpeed ZeRO-3 inference](docs/DeepSpeed.md)
+* [Extensions](docs/Extensions.md)
+* [Custom chat characters](docs/Chat-mode.md)
+* Very efficient text streaming
 * Markdown output with LaTeX rendering, to use for instance with [GALACTICA](https://github.com/paperswithcode/galai)
 * Nice HTML output for GPT-4chan
-* [Custom chat characters](docs/Chat-mode.md)
-* Advanced chat features (send images, get audio responses with TTS)
-* Very efficient text streaming
-* Parameter presets
-* [LLaMA model](docs/LLaMA-model.md)
-* [4-bit GPTQ mode](docs/GPTQ-models-(4-bit-mode).md)
-* [LoRA (loading and training)](docs/Using-LoRAs.md)
-* [llama.cpp](docs/llama.cpp-models.md)
-* 8-bit and 4-bit through bitsandbytes
-* Layers splitting across GPU(s), CPU, and disk
-* CPU mode
-* [FlexGen](docs/FlexGen.md)
-* [DeepSpeed ZeRO-3](docs/DeepSpeed.md)
-* API [with](https://github.com/oobabooga/text-generation-webui/blob/main/api-example-stream.py) streaming and [without](https://github.com/oobabooga/text-generation-webui/blob/main/api-example.py) streaming
-* [Extensions](docs/Extensions.md) - see the [user extensions list](https://github.com/oobabooga/text-generation-webui-extensions)
+* API, including endpoints for websocket streaming ([see the examples](https://github.com/oobabooga/text-generation-webui/blob/main/api-examples))
+
+To learn how to use the various features, check out the Documentation: https://github.com/oobabooga/text-generation-webui/tree/main/docs
 
 ## Installation
 
 ### One-click installers
 
-| Windows | Linux | macOS |
-|-------|--------|--------|
-| [oobabooga-windows.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga_windows.zip) | [oobabooga-linux.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga_linux.zip) |[oobabooga-macos.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga_macos.zip) |
+| Windows | Linux | macOS | WSL |
+|--------|--------|--------|--------|
+| [oobabooga-windows.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga_windows.zip) | [oobabooga-linux.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga_linux.zip) |[oobabooga-macos.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga_macos.zip) | [oobabooga-wsl.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga_wsl.zip) |
 
 Just download the zip above, extract it, and double-click on "start". The web UI and all its dependencies will be installed in the same folder.
 
@@ -76,9 +71,11 @@ conda activate textgen
 | System | GPU | Command |
 |--------|---------|---------|
 | Linux/WSL | NVIDIA | `pip3 install torch torchvision torchaudio` |
+| Linux/WSL | CPU only | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu` |
 | Linux | AMD | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.4.2` |
-| MacOS + MPS (untested) | Any | `pip3 install torch torchvision torchaudio` |
+| MacOS + MPS | Any | `pip3 install torch torchvision torchaudio` |
 | Windows | NVIDIA | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117` |
+| Windows | CPU only | `pip3 install torch torchvision torchaudio` |
 
 The up-to-date commands can be found here: https://pytorch.org/get-started/locally/. 
 
@@ -94,18 +91,6 @@ git clone https://github.com/oobabooga/text-generation-webui
 cd text-generation-webui
 pip install -r requirements.txt
 ```
-
-#### 4. Install GPTQ
-
-The base installation covers [transformers](https://github.com/huggingface/transformers) models (`AutoModelForCausalLM` and `AutoModelForSeq2SeqLM` specifically) and [llama.cpp](https://github.com/ggerganov/llama.cpp) (GGML) models.
-
-To use GPTQ models, the additional installation steps below are necessary:
-
-[GPTQ models (4 bit mode)](https://github.com/oobabooga/text-generation-webui/blob/main/docs/GPTQ-models-(4-bit-mode).md)
-
-#### llama.cpp with GPU acceleration
-
-Requires the additional compilation step described here: [GPU acceleration](https://github.com/oobabooga/text-generation-webui/blob/main/docs/llama.cpp-models.md#gpu-acceleration).
 
 #### bitsandbytes
 
@@ -154,15 +139,18 @@ For example:
 
     python download-model.py facebook/opt-1.3b
 
-* If you want to download a model manually, note that all you need are the json, txt, and pytorch\*.bin (or model*.safetensors) files. The remaining files are not necessary.
-
-* Set env vars `HF_USER` and `HF_PASS` to your Hugging Face username and password (or [User Access Token](https://huggingface.co/settings/tokens)) to download a protected model. The model's terms must first be accepted on the HF website.
+To download a protected model, set env vars `HF_USER` and `HF_PASS` to your Hugging Face username and password (or [User Access Token](https://huggingface.co/settings/tokens)). The model's terms must first be accepted on the HF website.
 
 #### GGML models
 
 You can drop these directly into the `models/` folder, making sure that the file name contains `ggml` somewhere and ends in `.bin`.
 
 #### GPT-4chan
+
+<details>
+<summary>
+Instructions
+</summary>
 
 [GPT-4chan](https://huggingface.co/ykilcher/gpt-4chan) has been shut down from Hugging Face, so you need to download it elsewhere. You have two options:
 
@@ -180,6 +168,9 @@ After downloading the model, follow these steps:
 ```
 python download-model.py EleutherAI/gpt-j-6B --text-only
 ```
+
+When you load this model in default or notebook modes, the "HTML" tab will show the generated text in 4chan format.
+</details>
 
 ## Starting the web UI
 
@@ -200,6 +191,7 @@ Optionally, you can use the following command-line flags:
 | `-h`, `--help`                             | Show this help message and exit. |
 | `--notebook`                               | Launch the web UI in notebook mode, where the output is written to the same text box as the input. |
 | `--chat`                                   | Launch the web UI in chat mode. |
+| `--multi-user`                             | Multi-user mode. Chat histories are not saved or automatically loaded. WARNING: this is highly experimental. |
 | `--character CHARACTER`                    | The name of the character to load in chat mode by default. |
 | `--model MODEL`                            | Name of the model to load by default. |
 | `--lora LORA [LORA ...]`                   | The list of LoRAs to load. If you want to load more than one LoRA, write the names separated by spaces. |
@@ -210,6 +202,12 @@ Optionally, you can use the following command-line flags:
 | `--settings SETTINGS_FILE`                 | Load the default interface settings from this yaml file. See `settings-template.yaml` for an example. If you create a file called `settings.yaml`, this file will be loaded by default without the need to use the `--settings` flag. |
 | `--extensions EXTENSIONS [EXTENSIONS ...]` | The list of extensions to load. If you want to load more than one extension, write the names separated by spaces. |
 | `--verbose`                                | Print the prompts to the terminal. |
+
+#### Model loader
+
+| Flag                                       | Description |
+|--------------------------------------------|-------------|
+| `--loader LOADER`                          | Choose the model loader manually, otherwise, it will get autodetected. Valid options: transformers, autogptq, gptq-for-llama, exllama, exllama_hf, llamacpp, rwkv |
 
 #### Accelerate/transformers
 
@@ -251,8 +249,28 @@ Optionally, you can use the following command-line flags:
 | `--n-gpu-layers N_GPU_LAYERS` | Number of layers to offload to the GPU. Only works if llama-cpp-python was compiled with BLAS. Set this to 1000000000 to offload all layers to the GPU. |
 | `--n_ctx N_CTX` | Size of the prompt context. |
 | `--llama_cpp_seed SEED` | Seed for llama-cpp models. Default 0 (random). |
+| `--n_gqa N_GQA`         | grouped-query attention. Must be 8 for llama-2 70b. |
+| `--rms_norm_eps RMS_NORM_EPS`  | 5e-6 is a good value for llama-2 models. |
+| `--cpu`                        | Use the CPU version of llama-cpp-python instead of the GPU-accelerated version. |
 
-#### GPTQ
+#### AutoGPTQ
+
+| Flag             | Description |
+|------------------|-------------|
+| `--triton`                     | Use triton. |
+| `--no_inject_fused_attention`  | Disable the use of fused attention, which will use less VRAM at the cost of slower inference. |
+| `--no_inject_fused_mlp`        | Triton mode only: disable the use of fused MLP, which will use less VRAM at the cost of slower inference. |
+| `--no_use_cuda_fp16`           | This can make models faster on some systems. |
+| `--desc_act`                   | For models that don't have a quantize_config.json, this parameter is used to define whether to set desc_act or not in BaseQuantizeConfig. |
+
+#### ExLlama
+
+| Flag             | Description |
+|------------------|-------------|
+|`--gpu-split`     | Comma-separated list of VRAM (in GB) to use per GPU device for model layers, e.g. `20,7,7` |
+|`--max_seq_len MAX_SEQ_LEN`           | Maximum sequence length. |
+
+#### GPTQ-for-LLaMa
 
 | Flag                      | Description |
 |---------------------------|-------------|
@@ -265,23 +283,6 @@ Optionally, you can use the following command-line flags:
 | `--quant_attn`         | (triton) Enable quant attention. |
 | `--warmup_autotune`    | (triton) Enable warmup autotune. |
 | `--fused_mlp`          | (triton) Enable fused mlp. |
-
-#### AutoGPTQ
-
-| Flag             | Description |
-|------------------|-------------|
-| `--autogptq`     | Use AutoGPTQ for loading quantized models instead of the internal GPTQ loader. |
-| `--triton`       | Use triton. |
-|` --desc_act`     | For models that don't have a quantize_config.json, this parameter is used to define whether to set desc_act or not in BaseQuantizeConfig. |
-
-#### FlexGen
-
-| Flag             | Description |
-|------------------|-------------|
-| `--flexgen`                       | Enable the use of FlexGen offloading. |
-| `--percent PERCENT [PERCENT ...]` | FlexGen: allocation percentages. Must be 6 numbers separated by spaces (default: 0, 100, 100, 0, 100, 0). |
-| `--compress-weight`               | FlexGen: Whether to compress weight (default: False).|
-| `--pin-weight [PIN_WEIGHT]`       | FlexGen: whether to pin weights (setting this to False reduces CPU memory by 20%). |
 
 #### DeepSpeed
 
@@ -297,6 +298,13 @@ Optionally, you can use the following command-line flags:
 |---------------------------------|-------------|
 | `--rwkv-strategy RWKV_STRATEGY` | RWKV: The strategy to use while loading the model. Examples: "cpu fp32", "cuda fp16", "cuda fp16i8". |
 | `--rwkv-cuda-on`                | RWKV: Compile the CUDA kernel for better performance. |
+
+#### RoPE (for llama.cpp and ExLlama only)
+
+| Flag             | Description |
+|------------------|-------------|
+|`--compress_pos_emb COMPRESS_POS_EMB` | Positional embeddings compression factor. Should typically be set to max_seq_len / 2048. |
+|`--alpha_value ALPHA_VALUE`           | Positional embeddings alpha factor for NTK RoPE scaling. Scaling is not identical to embedding compression. Use either this or compress_pos_emb, not both. |
 
 #### Gradio
 
@@ -325,21 +333,11 @@ Optionally, you can use the following command-line flags:
 |---------------------------------------|-------------|
 | `--multimodal-pipeline PIPELINE`      | The multimodal pipeline to use. Examples: `llava-7b`, `llava-13b`. |
 
-Out of memory errors? [Check the low VRAM guide](docs/Low-VRAM-guide.md).
-
 ## Presets
 
 Inference settings presets can be created under `presets/` as yaml files. These files are detected automatically at startup.
 
-By default, 10 presets based on NovelAI and KoboldAI presets are included. These were selected out of a sample of 43 presets after applying a K-Means clustering algorithm and selecting the elements closest to the average of each cluster.
-
-[Visualization](https://user-images.githubusercontent.com/112222186/228956352-1addbdb9-2456-465a-b51d-089f462cd385.png)
-
-## Documentation
-
-Make sure to check out the documentation for an in-depth guide on how to use the web UI.
-
-https://github.com/oobabooga/text-generation-webui/tree/main/docs
+The presets that are included by default are the result of a contest that received 7215 votes. More details can be found [here](https://github.com/oobabooga/oobabooga.github.io/blob/main/arena/results.md).
 
 ## Contributing
 
@@ -348,8 +346,7 @@ https://github.com/oobabooga/text-generation-webui/tree/main/docs
 * If you have some experience with git, testing an open pull request and leaving a comment on whether it works as expected or not is immensely helpful.
 * A simple way to contribute, even if you are not a programmer, is to leave a 👍 on an issue or pull request that you find relevant.
 
-## Credits
+## Community
 
-- Gradio dropdown menu refresh button, code for reloading the interface: https://github.com/AUTOMATIC1111/stable-diffusion-webui
-- NovelAI and KoboldAI presets: https://github.com/KoboldAI/KoboldAI-Client/wiki/Settings-Presets
-- Code for early stopping in chat mode, code for some of the sliders: https://github.com/PygmalionAI/gradio-ui/
+* Subreddit: https://www.reddit.com/r/oobaboogazz/
+* Discord: https://discord.gg/jwZCF2dPQN

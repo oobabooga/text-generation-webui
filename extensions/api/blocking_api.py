@@ -5,7 +5,28 @@ from threading import Thread
 from extensions.api.util import build_parameters, try_start_cloudflared
 from modules import shared
 from modules.chat import generate_chat_reply
-from modules.text_generation import encode, generate_reply, stop_everything_event
+from modules.LoRA import add_lora_to_model
+from modules.models import load_model, unload_model
+from modules.models_settings import (
+    get_model_settings_from_yamls,
+    update_model_parameters
+)
+from modules.text_generation import (
+    encode,
+    generate_reply,
+    stop_everything_event
+)
+from modules.utils import get_available_models
+
+
+def get_model_info():
+    return {
+        'model_name': shared.model_name,
+        'lora_names': shared.lora_names,
+        # dump
+        'shared.settings': shared.settings,
+        'shared.args': vars(shared.args),
+    }
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -56,7 +77,6 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
 
             user_input = body['user_input']
-            history = body['history']
             regenerate = body.get('regenerate', False)
             _continue = body.get('_continue', False)
 
@@ -64,9 +84,9 @@ class Handler(BaseHTTPRequestHandler):
             generate_params['stream'] = False
 
             generator = generate_chat_reply(
-                user_input, history, generate_params, regenerate=regenerate, _continue=_continue, loading_message=False)
+                user_input, generate_params, regenerate=regenerate, _continue=_continue, loading_message=False)
 
-            answer = history
+            answer = generate_params['history']
             for a in generator:
                 answer = a
 
@@ -91,6 +111,67 @@ class Handler(BaseHTTPRequestHandler):
 
             self.wfile.write(response.encode('utf-8'))
 
+        elif self.path == '/api/v1/model':
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+
+            # by default return the same as the GET interface
+            result = shared.model_name
+
+            # Actions: info, load, list, unload
+            action = body.get('action', '')
+
+            if action == 'load':
+                model_name = body['model_name']
+                args = body.get('args', {})
+                print('args', args)
+                for k in args:
+                    setattr(shared.args, k, args[k])
+
+                shared.model_name = model_name
+                unload_model()
+
+                model_settings = get_model_settings_from_yamls(shared.model_name)
+                shared.settings.update(model_settings)
+                update_model_parameters(model_settings, initial=True)
+
+                if shared.settings['mode'] != 'instruct':
+                    shared.settings['instruction_template'] = None
+
+                try:
+                    shared.model, shared.tokenizer = load_model(shared.model_name)
+                    if shared.args.lora:
+                        add_lora_to_model(shared.args.lora)  # list
+
+                except Exception as e:
+                    response = json.dumps({'error': {'message': repr(e)}})
+
+                    self.wfile.write(response.encode('utf-8'))
+                    raise e
+
+                shared.args.model = shared.model_name
+
+                result = get_model_info()
+
+            elif action == 'unload':
+                unload_model()
+                shared.model_name = None
+                shared.args.model = None
+                result = get_model_info()
+
+            elif action == 'list':
+                result = get_available_models()
+
+            elif action == 'info':
+                result = get_model_info()
+
+            response = json.dumps({
+                'result': result,
+            })
+
+            self.wfile.write(response.encode('utf-8'))
+
         elif self.path == '/api/v1/token-count':
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
@@ -106,6 +187,17 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(response.encode('utf-8'))
         else:
             self.send_error(404)
+
+    def do_OPTIONS(self):
+        self.send_response(200)
+        self.end_headers()
+
+    def end_headers(self):
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Access-Control-Allow-Methods', '*')
+        self.send_header('Access-Control-Allow-Headers', '*')
+        self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate')
+        super().end_headers()
 
 
 def _run_server(port: int, share: bool = False):

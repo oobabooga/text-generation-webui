@@ -3,7 +3,10 @@
 import logging
 import platform
 
-logging.basicConfig(format='%(levelname)s:%(message)s')
+logging.basicConfig(
+    format='%(asctime)s %(levelname)s:%(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+)
 
 
 def add_coloring_to_emit_windows(fn):

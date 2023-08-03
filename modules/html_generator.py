@@ -1,9 +1,3 @@
-'''
-
-This is a library for formatting text outputs as nice HTML.
-
-'''
-
 import os
 import re
 import time
@@ -135,7 +129,7 @@ def generate_4chan_html(f):
 def make_thumbnail(image):
     image = image.resize((350, round(image.size[1] / image.size[0] * 350)), Image.Resampling.LANCZOS)
     if image.size[1] > 470:
-        image = ImageOps.fit(image, (350, 470), Image.ANTIALIAS)
+        image = ImageOps.fit(image, (350, 470), Image.LANCZOS)
 
     return image
 
@@ -156,7 +150,7 @@ def get_image_cache(path):
 
 
 def generate_instruct_html(history):
-    output = f'<style>{instruct_css}</style><div class="chat" id="chat">'
+    output = f'<style>{instruct_css}</style><div class="chat pretty_scrollbar" id="chat">'
     for i, _row in enumerate(history[::-1]):
         row = [convert_to_markdown(entry) for entry in _row]
 
@@ -189,7 +183,7 @@ def generate_instruct_html(history):
 
 
 def generate_cai_chat_html(history, name1, name2, style, reset_cache=False):
-    output = f'<style>{chat_styles[style]}</style><div class="chat" id="chat">'
+    output = f'<style>{chat_styles[style]}</style><div class="chat pretty_scrollbar" id="chat">'
 
     # We use ?name2 and ?time.time() to force the browser to reset caches
     img_bot = f'<img src="file/cache/pfp_character.png?{name2}">' if Path("cache/pfp_character.png").exists() else ''
@@ -238,7 +232,7 @@ def generate_cai_chat_html(history, name1, name2, style, reset_cache=False):
 
 
 def generate_chat_html(history, name1, name2, reset_cache=False):
-    output = f'<style>{chat_styles["wpp"]}</style><div class="chat" id="chat">'
+    output = f'<style>{chat_styles["wpp"]}</style><div class="chat pretty_scrollbar" id="chat">'
 
     for i, _row in enumerate(history[::-1]):
         row = [convert_to_markdown(entry) for entry in _row]
@@ -272,8 +266,8 @@ def generate_chat_html(history, name1, name2, reset_cache=False):
 
 def chat_html_wrapper(history, name1, name2, mode, style, reset_cache=False):
     if mode == 'instruct':
-        return generate_instruct_html(history)
+        return generate_instruct_html(history['visible'])
     elif style == 'wpp':
-        return generate_chat_html(history, name1, name2)
+        return generate_chat_html(history['visible'], name1, name2)
     else:
-        return generate_cai_chat_html(history, name1, name2, style, reset_cache)
+        return generate_cai_chat_html(history['visible'], name1, name2, style, reset_cache)

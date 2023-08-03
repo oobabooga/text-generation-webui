@@ -1,0 +1,4 @@
+user: "### Human:"
+bot: "### Assistant:"
+turn_template: "<|user|> <|user-message|>\n<|bot|> <|bot-message|></s>\n"
+context: ""
