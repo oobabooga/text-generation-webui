@@ -58,6 +58,24 @@ Some Docker files are available in the repository, but I do not use Docker. Pull
 
 * The `shared.settings` variable contains default values for Gradio components. It can be customized through a `settings.yaml` file.
 * The `shared.args` variable contains the command-line arguments. They represent variables that need to be changed often.
+* `shared.gradio` contains the UI elements (like sliders and dropdowns). While defining Gradio event handlers, the `modules.utils.gradio` function can be used to write
+
+```python
+gradio('history', 'character_menu', 'mode')
+```
+
+instead of 
+
+```python
+[shared.gradio[k] for k in ['history', 'character_menu', 'mode']]
+```
+
+* The UI values are not passed directly to the generation functions. Instead, they are first fed into the `shared.gradio['interface_state']` state variable. This variable is taken as input on backend functions with arg name `state`. The code for updating `shared.gradio['interface_state']` with the current UI values is the following (it must be associated to some Gradio method):
+
+```python
+ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')
+```
+
 * The chat history is represented as a dictionary with the following structure:
 
 ```python
@@ -69,3 +87,4 @@ Some Docker files are available in the repository, but I do not use Docker. Pull
 ```
 
 Each row is in the format `[input, reply]`. `history['visible']` contains the messages as they will appear in the UI, and `history['internal']` contains the messages as they appear in the prompt. When no extension is used, the two will be identical, but many extensions add images, audio widgets, or translations to `history['visible']`.
+
