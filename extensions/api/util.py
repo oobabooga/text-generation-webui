@@ -21,6 +21,7 @@ def build_parameters(body, chat=False):
 
     generate_params = {
         'max_new_tokens': int(body.get('max_new_tokens', body.get('max_length', 200))),
+        'auto_max_new_tokens': bool(body.get('auto_max_new_tokens', False)),
         'do_sample': bool(body.get('do_sample', True)),
         'temperature': float(body.get('temperature', 0.5)),
         'top_p': float(body.get('top_p', 1)),

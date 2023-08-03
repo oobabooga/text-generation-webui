@@ -75,7 +75,7 @@ def load_model_wrapper(selected_model, loader, autoload=False):
             exc = traceback.format_exc()
             logger.error('Failed to load the model.')
             print(exc)
-            yield exc
+            yield exc.replace('\n', '\n\n')
 
 
 def load_lora_wrapper(selected_loras):
@@ -159,7 +159,7 @@ def download_model_wrapper(repo_id, progress=gr.Progress()):
             yield ("Done!")
     except:
         progress(1.0)
-        yield traceback.format_exc()
+        yield traceback.format_exc().replace('\n', '\n\n')
 
 
 def create_model_menus():
@@ -425,6 +425,7 @@ def create_settings_menus(default_preset):
                         shared.gradio['truncation_length'] = gr.Slider(value=shared.settings['truncation_length'], minimum=shared.settings['truncation_length_min'], maximum=shared.settings['truncation_length_max'], step=256, label='Truncate the prompt up to this length', info='The leftmost tokens are removed if the prompt exceeds this length. Most models require this to be at most 2048.')
                         shared.gradio['custom_stopping_strings'] = gr.Textbox(lines=1, value=shared.settings["custom_stopping_strings"] or None, label='Custom stopping strings', info='In addition to the defaults. Written between "" and separated by commas. For instance: "\\nYour Assistant:", "\\nThe assistant:"')
                     with gr.Column():
+                        shared.gradio['auto_max_new_tokens'] = gr.Checkbox(value=shared.settings['auto_max_new_tokens'], label='auto_max_new_tokens', info='Expand max_new_tokens to the available context length.')
                         shared.gradio['ban_eos_token'] = gr.Checkbox(value=shared.settings['ban_eos_token'], label='Ban the eos_token', info='Forces the model to never end the generation prematurely.')
                         shared.gradio['add_bos_token'] = gr.Checkbox(value=shared.settings['add_bos_token'], label='Add the bos_token to the beginning of prompts', info='Disabling this can make the replies more creative.')
 
@@ -507,44 +508,34 @@ def create_file_saving_event_handlers():
 
     if not shared.args.multi_user:
 
-        def load_session(session, state):
-            with open(Path(f'logs/{session}.json'), 'r') as f:
-                state.update(json.loads(f.read()))
+        def load_session(file, state):
+            decoded_file = file if type(file) == str else file.decode('utf-8')
+            data = json.loads(decoded_file)
 
-            if shared.is_chat():
-                chat.save_persistent_history(state['history'], state['character_menu'], state['mode'])
+            if shared.is_chat() and 'character_menu' in data and state.get('character_menu') != data.get('character_menu'):
+                shared.session_is_loading = True
 
+            state.update(data)
             return state
 
+        shared.gradio['save_session'].click(
+            ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+            lambda x: json.dumps(x, indent=4), gradio('interface_state'), gradio('temporary_text')).then(
+            None, gradio('temporary_text'), None, _js=f"(contents) => {{{ui.save_files_js}; saveSession(contents, \"{shared.get_mode()}\")}}")
+
         if shared.is_chat():
-            shared.gradio['save_session'].click(
+            shared.gradio['load_session'].upload(
                 ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-                lambda x: json.dumps(x, indent=4), gradio('interface_state'), gradio('save_contents')).then(
-                lambda: 'logs/', None, gradio('save_root')).then(
-                lambda x: f'session_{shared.get_mode()}_{x + "_" if x not in ["None", None, ""] else ""}{utils.current_time()}.json', gradio('character_menu'), gradio('save_filename')).then(
-                lambda: gr.update(visible=True), None, gradio('file_saver'))
-
-            shared.gradio['session_menu'].change(
-                load_session, gradio('session_menu', 'interface_state'), gradio('interface_state')).then(
+                load_session, gradio('load_session', 'interface_state'), gradio('interface_state')).then(
                 ui.apply_interface_values, gradio('interface_state'), gradio(ui.list_interface_input_elements()), show_progress=False).then(
-                chat.redraw_html, shared.reload_inputs, gradio('display'))
-
+                chat.redraw_html, shared.reload_inputs, gradio('display')).then(
+                None, None, None, _js='() => {alert("The session has been loaded.")}')
         else:
-            shared.gradio['save_session'].click(
+            shared.gradio['load_session'].upload(
                 ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-                lambda x: json.dumps(x, indent=4), gradio('interface_state'), gradio('save_contents')).then(
-                lambda: 'logs/', None, gradio('save_root')).then(
-                lambda: f'session_{shared.get_mode()}_{utils.current_time()}.json', None, gradio('save_filename')).then(
-                lambda: gr.update(visible=True), None, gradio('file_saver'))
-
-            shared.gradio['session_menu'].change(
-                load_session, gradio('session_menu', 'interface_state'), gradio('interface_state')).then(
-                ui.apply_interface_values, gradio('interface_state'), gradio(ui.list_interface_input_elements()), show_progress=False)
-
-        shared.gradio['delete_session'].click(
-            lambda x: f'{x}.json', gradio('session_menu'), gradio('delete_filename')).then(
-            lambda: 'logs/', None, gradio('delete_root')).then(
-            lambda: gr.update(visible=True), None, gradio('file_deleter'))
+                load_session, gradio('load_session', 'interface_state'), gradio('interface_state')).then(
+                ui.apply_interface_values, gradio('interface_state'), gradio(ui.list_interface_input_elements()), show_progress=False).then(
+                None, None, None, _js='() => {alert("The session has been loaded.")}')
 
 
 def set_interface_arguments(interface_mode, extensions, bool_active):
@@ -557,7 +548,6 @@ def set_interface_arguments(interface_mode, extensions, bool_active):
         setattr(shared.args, k, False)
     if interface_mode != "default":
         setattr(shared.args, interface_mode, True)
-
     for k in bool_list:
         setattr(shared.args, k, False)
     for k in bool_active:
@@ -621,6 +611,9 @@ def create_interface():
         # Floating menus for saving/deleting files
         create_file_saving_menus()
 
+        # Used for saving files using javascript
+        shared.gradio['temporary_text'] = gr.Textbox(visible=False)
+
         # Create chat mode interface
         if shared.is_chat():
             shared.input_elements = ui.list_interface_input_elements()
@@ -643,7 +636,7 @@ def create_interface():
                 with gr.Row():
                     shared.gradio['Impersonate'] = gr.Button('Impersonate')
                     shared.gradio['Regenerate'] = gr.Button('Regenerate')
-                    shared.gradio['Remove last'] = gr.Button('Remove last')
+                    shared.gradio['Remove last'] = gr.Button('Remove last', elem_classes=['button_nowrap'])
 
                 with gr.Row():
                     shared.gradio['Copy last reply'] = gr.Button('Copy last reply')
@@ -676,8 +669,8 @@ def create_interface():
 
                             shared.gradio['name1'] = gr.Textbox(value=shared.settings['name1'], lines=1, label='Your name')
                             shared.gradio['name2'] = gr.Textbox(value=shared.settings['name2'], lines=1, label='Character\'s name')
-                            shared.gradio['context'] = gr.Textbox(value=shared.settings['context'], lines=4, label='Context')
-                            shared.gradio['greeting'] = gr.Textbox(value=shared.settings['greeting'], lines=4, label='Greeting')
+                            shared.gradio['context'] = gr.Textbox(value=shared.settings['context'], lines=4, label='Context', elem_classes=['add_scrollbar'])
+                            shared.gradio['greeting'] = gr.Textbox(value=shared.settings['greeting'], lines=4, label='Greeting', elem_classes=['add_scrollbar'])
 
                         with gr.Column(scale=1):
                             shared.gradio['character_picture'] = gr.Image(label='Character picture', type='pil')
@@ -696,16 +689,15 @@ def create_interface():
                     shared.gradio['context_instruct'] = gr.Textbox(value='', lines=4, label='Context')
                     shared.gradio['turn_template'] = gr.Textbox(value=shared.settings['turn_template'], lines=1, label='Turn template', info='Used to precisely define the placement of spaces and new line characters in instruction prompts.')
                     with gr.Row():
-                        shared.gradio['chat-instruct_command'] = gr.Textbox(value=shared.settings['chat-instruct_command'], lines=4, label='Command for chat-instruct mode', info='<|character|> gets replaced by the bot name, and <|prompt|> gets replaced by the regular chat prompt.')
+                        shared.gradio['chat-instruct_command'] = gr.Textbox(value=shared.settings['chat-instruct_command'], lines=4, label='Command for chat-instruct mode', info='<|character|> gets replaced by the bot name, and <|prompt|> gets replaced by the regular chat prompt.', elem_classes=['add_scrollbar'])
 
                 with gr.Tab('Chat history'):
                     with gr.Row():
                         with gr.Column():
-                            shared.gradio['download'] = gr.File(label="Download")
-                            shared.gradio['download_button'] = gr.Button(value='Refresh')
+                            shared.gradio['save_chat_history'] = gr.Button(value='Save history')
 
                         with gr.Column():
-                            shared.gradio['upload_chat_history'] = gr.File(type='binary', file_types=['.json', '.txt'], label="Upload")
+                            shared.gradio['load_chat_history'] = gr.File(type='binary', file_types=['.json', '.txt'], label="Upload History JSON")
 
                 with gr.Tab('Upload character'):
                     with gr.Tab('YAML or JSON'):
@@ -738,7 +730,7 @@ def create_interface():
                 with gr.Row():
                     with gr.Column(scale=4):
                         with gr.Tab('Raw'):
-                            shared.gradio['textbox'] = gr.Textbox(value=default_text, elem_classes="textbox", lines=27)
+                            shared.gradio['textbox'] = gr.Textbox(value=default_text, elem_classes=['textbox', 'add_scrollbar'], lines=27)
 
                         with gr.Tab('Markdown'):
                             shared.gradio['markdown_render'] = gr.Button('Render')
@@ -749,7 +741,7 @@ def create_interface():
 
                         with gr.Row():
                             shared.gradio['Generate'] = gr.Button('Generate', variant='primary', elem_classes="small-button")
-                            shared.gradio['Stop'] = gr.Button('Stop', elem_classes="small-button")
+                            shared.gradio['Stop'] = gr.Button('Stop', elem_classes="small-button", elem_id='stop')
                             shared.gradio['Undo'] = gr.Button('Undo', elem_classes="small-button")
                             shared.gradio['Regenerate'] = gr.Button('Regenerate', elem_classes="small-button")
 
@@ -776,11 +768,11 @@ def create_interface():
             with gr.Tab("Text generation", elem_id="main"):
                 with gr.Row():
                     with gr.Column():
-                        shared.gradio['textbox'] = gr.Textbox(value=default_text, elem_classes="textbox_default", lines=27, label='Input')
+                        shared.gradio['textbox'] = gr.Textbox(value=default_text, elem_classes=['textbox_default', 'add_scrollbar'], lines=27, label='Input')
                         shared.gradio['max_new_tokens'] = gr.Slider(minimum=shared.settings['max_new_tokens_min'], maximum=shared.settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=shared.settings['max_new_tokens'])
                         with gr.Row():
                             shared.gradio['Generate'] = gr.Button('Generate', variant='primary')
-                            shared.gradio['Stop'] = gr.Button('Stop')
+                            shared.gradio['Stop'] = gr.Button('Stop', elem_id='stop')
                             shared.gradio['Continue'] = gr.Button('Continue')
                             shared.gradio['count_tokens'] = gr.Button('Count tokens')
 
@@ -794,7 +786,7 @@ def create_interface():
 
                     with gr.Column():
                         with gr.Tab('Raw'):
-                            shared.gradio['output_textbox'] = gr.Textbox(elem_classes="textbox_default_output", lines=27, label='Output')
+                            shared.gradio['output_textbox'] = gr.Textbox(lines=27, label='Output', elem_classes=['textbox_default_output', 'add_scrollbar'])
 
                         with gr.Tab('Markdown'):
                             shared.gradio['markdown_render'] = gr.Button('Render')
@@ -844,11 +836,8 @@ def create_interface():
 
                 with gr.Column():
                     if not shared.args.multi_user:
-                        with gr.Row():
-                            shared.gradio['session_menu'] = gr.Dropdown(choices=utils.get_available_sessions(), value='None', label='Session', elem_classes='slim-dropdown', info='When saving a session, make sure to keep the initial part of the filename (session_chat, session_notebook, or session_default), otherwise it will not appear on this list afterwards.')
-                            ui.create_refresh_button(shared.gradio['session_menu'], lambda: None, lambda: {'choices': utils.get_available_sessions()}, ['refresh-button'])
-                            shared.gradio['save_session'] = gr.Button('💾', elem_classes=['refresh-button'])
-                            shared.gradio['delete_session'] = gr.Button('🗑️', elem_classes=['refresh-button'])
+                        shared.gradio['save_session'] = gr.Button('Save session', elem_id="save_session")
+                        shared.gradio['load_session'] = gr.File(type='binary', file_types=['.json'], label="Upload Session JSON")
 
                     extension_name = gr.Textbox(lines=1, label='Install or update an extension', info='Enter the GitHub URL below and press Enter. For a list of extensions, see: https://github.com/oobabooga/text-generation-webui-extensions ⚠️  WARNING ⚠️ : extensions can execute arbitrary code. Make sure to inspect their source code before activating them.')
                     extension_status = gr.Markdown()
@@ -966,9 +955,10 @@ def create_interface():
             shared.gradio['instruction_template'].change(
                 partial(chat.load_character, instruct=True), gradio('instruction_template', 'name1_instruct', 'name2_instruct'), gradio('name1_instruct', 'name2_instruct', 'dummy', 'dummy', 'context_instruct', 'turn_template'))
 
-            shared.gradio['upload_chat_history'].upload(
-                chat.load_history, gradio('upload_chat_history', 'history'), gradio('history')).then(
-                chat.redraw_html, shared.reload_inputs, gradio('display'))
+            shared.gradio['load_chat_history'].upload(
+                chat.load_history, gradio('load_chat_history', 'history'), gradio('history')).then(
+                chat.redraw_html, shared.reload_inputs, gradio('display')).then(
+                None, None, None, _js='() => {alert("The history has been loaded.")}')
 
             shared.gradio['Copy last reply'].click(chat.send_last_reply_to_input, gradio('history'), gradio('textbox'), show_progress=False)
 
@@ -990,12 +980,20 @@ def create_interface():
                 lambda: 'characters/instruction-following/', None, gradio('delete_root')).then(
                 lambda: gr.update(visible=True), None, gradio('file_deleter'))
 
-            shared.gradio['download_button'].click(chat.save_history_at_user_request, gradio('history', 'character_menu', 'mode'), gradio('download'))
-            shared.gradio['Submit character'].click(chat.upload_character, gradio('upload_json', 'upload_img_bot'), gradio('character_menu'))
+            shared.gradio['save_chat_history'].click(
+                lambda x: json.dumps(x, indent=4), gradio('history'), gradio('temporary_text')).then(
+                None, gradio('temporary_text', 'character_menu', 'mode'), None, _js=f"(hist, char, mode) => {{{ui.save_files_js}; saveHistory(hist, char, mode)}}")
+
+            shared.gradio['Submit character'].click(
+                chat.upload_character, gradio('upload_json', 'upload_img_bot'), gradio('character_menu')).then(
+                None, None, None, _js='() => {alert("The character has been loaded.")}')
+
+            shared.gradio['Submit tavern character'].click(
+                chat.upload_tavern_character, gradio('upload_img_tavern', 'tavern_json'), gradio('character_menu')).then(
+                None, None, None, _js='() => {alert("The character has been loaded.")}')
+
             shared.gradio['upload_json'].upload(lambda: gr.update(interactive=True), None, gradio('Submit character'))
             shared.gradio['upload_json'].clear(lambda: gr.update(interactive=False), None, gradio('Submit character'))
-
-            shared.gradio['Submit tavern character'].click(chat.upload_tavern_character, gradio('upload_img_tavern', 'tavern_json'), gradio('character_menu'))
             shared.gradio['upload_img_tavern'].upload(chat.check_tavern_character, gradio('upload_img_tavern'), gradio('tavern_name', 'tavern_desc', 'tavern_json', 'Submit tavern character'), show_progress=False)
             shared.gradio['upload_img_tavern'].clear(lambda: (None, None, None, gr.update(interactive=False)), None, gradio('tavern_name', 'tavern_desc', 'tavern_json', 'Submit tavern character'), show_progress=False)
             shared.gradio['your_picture'].change(

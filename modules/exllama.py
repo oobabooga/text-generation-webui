@@ -94,11 +94,15 @@ class ExllamaModel:
         # Tokenizing the input
         ids = self.generator.tokenizer.encode(prompt)
         ids = ids[:, -get_max_prompt_length(state):]
+        if state['auto_max_new_tokens']:
+            max_new_tokens = state['truncation_length'] - ids.shape[-1]
+        else:
+            max_new_tokens = state['max_new_tokens']
 
         self.generator.gen_begin_reuse(ids)
         initial_len = self.generator.sequence[0].shape[0]
         has_leading_space = False
-        for i in range(state['max_new_tokens']):
+        for i in range(max_new_tokens):
             token = self.generator.gen_single_token()
             if i == 0 and self.generator.tokenizer.tokenizer.IdToPiece(int(token)).startswith('▁'):
                 has_leading_space = True

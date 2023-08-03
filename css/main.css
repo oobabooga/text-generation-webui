@@ -26,6 +26,10 @@
     max-width: 2.2em;
 }
 
+.button_nowrap {
+    white-space: nowrap;
+}
+
 #slim-column {
     flex: none !important;
     min-width: 0 !important;
@@ -39,6 +43,10 @@
 
 #download-label, #upload-label {
     min-height: 0
+}
+
+#save_session {
+    margin-top: 32px;
 }
 
 #accordion {
@@ -90,6 +98,8 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
 .header_bar {
     background-color: #f7f7f7;
     margin-bottom: 20px;
+    display: inline !important;
+    overflow-x: scroll;
 }
 
 .dark .header_bar {
@@ -154,4 +164,32 @@ button {
 
 .markdown ul ol {
     font-size: 100% !important;
+}
+
+.pretty_scrollbar::-webkit-scrollbar {
+  width: 10px;
+}
+
+.pretty_scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.pretty_scrollbar::-webkit-scrollbar-thumb,
+.pretty_scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #c5c5d2;
+  border-radius: 10px;
+}
+
+.dark .pretty_scrollbar::-webkit-scrollbar-thumb,
+.dark .pretty_scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #374151;
+  border-radius: 10px;
+}
+
+.pretty_scrollbar::-webkit-resizer {
+  background: #c5c5d2;
+}
+
+.dark .pretty_scrollbar::-webkit-resizer {
+  background: #374151;
 }

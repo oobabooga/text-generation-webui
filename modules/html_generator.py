@@ -150,7 +150,7 @@ def get_image_cache(path):
 
 
 def generate_instruct_html(history):
-    output = f'<style>{instruct_css}</style><div class="chat" id="chat">'
+    output = f'<style>{instruct_css}</style><div class="chat pretty_scrollbar" id="chat">'
     for i, _row in enumerate(history[::-1]):
         row = [convert_to_markdown(entry) for entry in _row]
 
@@ -183,7 +183,7 @@ def generate_instruct_html(history):
 
 
 def generate_cai_chat_html(history, name1, name2, style, reset_cache=False):
-    output = f'<style>{chat_styles[style]}</style><div class="chat" id="chat">'
+    output = f'<style>{chat_styles[style]}</style><div class="chat pretty_scrollbar" id="chat">'
 
     # We use ?name2 and ?time.time() to force the browser to reset caches
     img_bot = f'<img src="file/cache/pfp_character.png?{name2}">' if Path("cache/pfp_character.png").exists() else ''
@@ -232,7 +232,7 @@ def generate_cai_chat_html(history, name1, name2, style, reset_cache=False):
 
 
 def generate_chat_html(history, name1, name2, reset_cache=False):
-    output = f'<style>{chat_styles["wpp"]}</style><div class="chat" id="chat">'
+    output = f'<style>{chat_styles["wpp"]}</style><div class="chat pretty_scrollbar" id="chat">'
 
     for i, _row in enumerate(history[::-1]):
         row = [convert_to_markdown(entry) for entry in _row]
