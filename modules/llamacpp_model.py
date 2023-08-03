@@ -7,15 +7,15 @@ from modules import shared
 from modules.callbacks import Iteratorize
 from modules.logging_colors import logger
 
+import llama_cpp
+
 if torch.cuda.is_available() and not torch.version.hip:
     try:
         import llama_cpp_cuda
     except:
         llama_cpp_cuda = None
-        import llama_cpp
 else:
     llama_cpp_cuda = None
-    import llama_cpp
 
 
 def llama_cpp_lib():
