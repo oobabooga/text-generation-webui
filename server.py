@@ -528,12 +528,14 @@ def create_file_saving_event_handlers():
                 ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
                 load_session, gradio('load_session', 'interface_state'), gradio('interface_state')).then(
                 ui.apply_interface_values, gradio('interface_state'), gradio(ui.list_interface_input_elements()), show_progress=False).then(
-                chat.redraw_html, shared.reload_inputs, gradio('display'))
+                chat.redraw_html, shared.reload_inputs, gradio('display')).then(
+                None, None, None, _js='() => {alert("The session has been loaded.")}')
         else:
             shared.gradio['load_session'].upload(
                 ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
                 load_session, gradio('load_session', 'interface_state'), gradio('interface_state')).then(
-                ui.apply_interface_values, gradio('interface_state'), gradio(ui.list_interface_input_elements()), show_progress=False)
+                ui.apply_interface_values, gradio('interface_state'), gradio(ui.list_interface_input_elements()), show_progress=False).then(
+                None, None, None, _js='() => {alert("The session has been loaded.")}')
 
 
 def set_interface_arguments(interface_mode, extensions, bool_active):
@@ -955,7 +957,8 @@ def create_interface():
 
             shared.gradio['load_chat_history'].upload(
                 chat.load_history, gradio('load_chat_history', 'history'), gradio('history')).then(
-                chat.redraw_html, shared.reload_inputs, gradio('display'))
+                chat.redraw_html, shared.reload_inputs, gradio('display')).then(
+                None, None, None, _js='() => {alert("The history has been loaded.")}')
 
             shared.gradio['Copy last reply'].click(chat.send_last_reply_to_input, gradio('history'), gradio('textbox'), show_progress=False)
 
@@ -977,14 +980,20 @@ def create_interface():
                 lambda: 'characters/instruction-following/', None, gradio('delete_root')).then(
                 lambda: gr.update(visible=True), None, gradio('file_deleter'))
 
-            shared.gradio['save_chat_history'].click(lambda x: json.dumps(x, indent=4), gradio('history'), gradio('temporary_text')).then(
+            shared.gradio['save_chat_history'].click(
+                lambda x: json.dumps(x, indent=4), gradio('history'), gradio('temporary_text')).then(
                 None, gradio('temporary_text', 'character_menu', 'mode'), None, _js=f"(hist, char, mode) => {{{ui.save_files_js}; saveHistory(hist, char, mode)}}")
 
-            shared.gradio['Submit character'].click(chat.upload_character, gradio('upload_json', 'upload_img_bot'), gradio('character_menu'))
+            shared.gradio['Submit character'].click(
+                chat.upload_character, gradio('upload_json', 'upload_img_bot'), gradio('character_menu')).then(
+                None, None, None, _js='() => {alert("The character has been loaded.")}')
+
+            shared.gradio['Submit tavern character'].click(
+                chat.upload_tavern_character, gradio('upload_img_tavern', 'tavern_json'), gradio('character_menu')).then(
+                None, None, None, _js='() => {alert("The character has been loaded.")}')
+
             shared.gradio['upload_json'].upload(lambda: gr.update(interactive=True), None, gradio('Submit character'))
             shared.gradio['upload_json'].clear(lambda: gr.update(interactive=False), None, gradio('Submit character'))
-
-            shared.gradio['Submit tavern character'].click(chat.upload_tavern_character, gradio('upload_img_tavern', 'tavern_json'), gradio('character_menu'))
             shared.gradio['upload_img_tavern'].upload(chat.check_tavern_character, gradio('upload_img_tavern'), gradio('tavern_name', 'tavern_desc', 'tavern_json', 'Submit tavern character'), show_progress=False)
             shared.gradio['upload_img_tavern'].clear(lambda: (None, None, None, gr.update(interactive=False)), None, gradio('tavern_name', 'tavern_desc', 'tavern_json', 'Submit tavern character'), show_progress=False)
             shared.gradio['your_picture'].change(
