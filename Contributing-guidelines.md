@@ -53,3 +53,19 @@ There are two main installation methods for this project:
 2) The one-click-installers available at https://github.com/oobabooga/one-click-installers.
 
 Some Docker files are available in the repository, but I do not use Docker. Pull requests about Docker should contain straightforward fixes or updates only.
+
+## Some important variables
+
+* The `shared.settings` variable contains default values for Gradio components. It can be customized through a `settings.yaml` file.
+* The `shared.args` variable contains the command-line arguments. They represent variables that need to be changed often.
+* The chat history is represented as a dictionary with the following structure:
+
+```python
+{
+    'internal': [['hi', 'hey'], ['how are you?', "i'm fine, thanks!"]], 
+    'visible': [['hi', 'hey'], ['how are you?', "i'm fine, thanks!"]]
+}
+
+```
+
+Each row is in the format `[input, reply]`. `history['visible']` contains the messages as they will appear in the UI, and `history['internal']` contains the messages as they appear in the prompt. When no extension is used, the two will be identical, but many extensions add images, audio widgets, or translations to `history['visible']`.
