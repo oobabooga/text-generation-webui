@@ -9,11 +9,20 @@ from modules.logging_colors import logger
 
 if torch.cuda.is_available() and not torch.version.hip:
     try:
-        from llama_cpp_cuda import Llama, LlamaCache, LogitsProcessorList
+        import llama_cpp_cuda
     except:
-        from llama_cpp import Llama, LlamaCache, LogitsProcessorList
+        llama_cpp_cuda = None
+        import llama_cpp
 else:
-    from llama_cpp import Llama, LlamaCache, LogitsProcessorList
+    llama_cpp_cuda = None
+    import llama_cpp
+
+
+def llama_cpp_lib():
+    if shared.args.cpu or llama_cpp_cuda is None:
+        return llama_cpp
+    else:
+        return llama_cpp_cuda
 
 
 def ban_eos_logits_processor(eos_token, input_ids, logits):
@@ -30,6 +39,10 @@ class LlamaCppModel:
 
     @classmethod
     def from_pretrained(self, path):
+
+        Llama = llama_cpp_lib().Llama
+        LlamaCache = llama_cpp_lib().LlamaCache
+
         result = self()
         cache_capacity = 0
         if shared.args.cache_capacity is not None:
@@ -74,6 +87,9 @@ class LlamaCppModel:
         return self.model.detokenize(tokens)
 
     def generate(self, prompt, state, callback=None):
+
+        LogitsProcessorList = llama_cpp_lib().LogitsProcessorList
+
         prompt = prompt if type(prompt) is str else prompt.decode()
         completion_chunks = self.model.create_completion(
             prompt=prompt,
