@@ -210,7 +210,7 @@ def update_dependencies():
         gxx_output = run_cmd("g++ -dumpfullversion -dumpversion", environment=True, capture_output=True)
         if gxx_output.returncode != 0 or int(gxx_output.stdout.strip().split(b".")[0]) > 11:
             # Install the correct version of g++
-            run_cmd("conda install -y -k gxx_linux-64=11.2.0 -c conda-forge", environment=True)
+            run_cmd("conda install -y -k conda-forge::gxx_linux-64=11.2.0", environment=True)
 
     # Install/Update ROCm AutoGPTQ for AMD GPUs
     if '+rocm' in torver:
