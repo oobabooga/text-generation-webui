@@ -101,7 +101,6 @@ class LlamaCppModel:
 
         output = ""
         for completion_chunk in completion_chunks:
-            print(completion_chunk)
             text = completion_chunk['choices'][0]['text']
             output += text
             if callback:
