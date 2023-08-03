@@ -45,6 +45,10 @@
     min-height: 0
 }
 
+#save_session {
+    margin-top: 32px;
+}
+
 #accordion {
 }
 

@@ -826,7 +826,7 @@ def create_interface():
 
                 with gr.Column():
                     if not shared.args.multi_user:
-                        shared.gradio['save_session'] = gr.Button('Save session')
+                        shared.gradio['save_session'] = gr.Button('Save session', elem_id="save_session")
                         shared.gradio['load_session'] = gr.File(type='binary', file_types=['.json'], label="Upload Session JSON")
 
                     extension_name = gr.Textbox(lines=1, label='Install or update an extension', info='Enter the GitHub URL below and press Enter. For a list of extensions, see: https://github.com/oobabooga/text-generation-webui-extensions ⚠️  WARNING ⚠️ : extensions can execute arbitrary code. Make sure to inspect their source code before activating them.')
