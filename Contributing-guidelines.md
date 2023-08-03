@@ -70,7 +70,7 @@ instead of
 [shared.gradio[k] for k in ['history', 'character_menu', 'mode']]
 ```
 
-* The UI values are not passed directly to the generation functions. Instead, they are first fed into the `shared.gradio['interface_state']` state variable. This variable is taken as input on backend functions with arg name `state`. The code for updating `shared.gradio['interface_state']` with the current UI values is the following (it must be associated to some Gradio method):
+* The UI values are not passed directly to the generation functions. Instead, they are first fed into the `shared.gradio['interface_state']` state variable. This variable receives the name `state` when used as input to backend functions. The code for updating `shared.gradio['interface_state']` with the current UI values is the following (it must be associated to some Gradio method):
 
 ```python
 ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')
