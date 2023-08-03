@@ -4,7 +4,7 @@ Your help with improving text-generation-webui is welcome and appreciated. Here 
 
 ## Requirements
 
-Before submitting a PR, make sure to:
+Before submitting a Pull Request, make sure to:
 
 1) Familiarize yourself with Gradio, in particular, its components and methods. The documentation is very easy to follow: https://gradio.app/docs
 2) Lint the changes that you have made. I use the following tools:
