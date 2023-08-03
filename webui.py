@@ -1,7 +1,7 @@
 import argparse
 import glob
-import re
 import os
+import re
 import site
 import subprocess
 import sys
@@ -9,19 +9,19 @@ import sys
 script_dir = os.getcwd()
 conda_env_path = os.path.join(script_dir, "installer_files", "env")
 
-# Use this to set your command-line flags. For the full list, see:
-# https://github.com/oobabooga/text-generation-webui/#starting-the-web-ui
-# Example: CMD_FLAGS = '--chat --listen'
-CMD_FLAGS = '--chat'
-
-
-# Allows users to set flags in "OOBABOOGA_FLAGS" environment variable
+# Command-line flags
 if "OOBABOOGA_FLAGS" in os.environ:
     CMD_FLAGS = os.environ["OOBABOOGA_FLAGS"]
     print("The following flags have been taken from the environment variable 'OOBABOOGA_FLAGS':")
     print(CMD_FLAGS)
     print("To use the CMD_FLAGS Inside webui.py, unset 'OOBABOOGA_FLAGS'.\n")
-    
+else:
+    cmd_flags_path = os.path.join(script_dir, "CMD_FLAGS.txt")
+    if os.path.exists(cmd_flags_path):
+        CMD_FLAGS = open(cmd_flags_path, 'r').read().strip()
+    else:
+        CMD_FLAGS = '--chat'
+
 
 # Remove the '# ' from the following lines as needed for your AMD GPU on Linux
 # os.environ["ROCM_PATH"] = '/opt/rocm'
@@ -74,6 +74,11 @@ def check_env():
         sys.exit()
 
 
+def clear_cache():
+    run_cmd("conda clean -a -y", environment=True)
+    run_cmd("python -m pip cache purge", environment=True)
+
+
 def install_dependencies():
     # Select your GPU or, choose to run in CPU mode
     print("What is your GPU")
@@ -81,12 +86,12 @@ def install_dependencies():
     print("A) NVIDIA")
     print("B) AMD (Linux/MacOS only. Requires ROCm SDK 5.4.2/5.4.3 on Linux)")
     print("C) Apple M Series")
-    print("D) None (I want to run in CPU mode)")
+    print("D) None (I want to run models in CPU mode)")
     print()
     gpuchoice = input("Input> ").lower()
 
     if gpuchoice == "d":
-        print_big_message("Once the installation ends, make sure to open webui.py with a text editor\nand add the --cpu flag to CMD_FLAGS.")
+        print_big_message("Once the installation ends, make sure to open CMD_FLAGS.txt with\na text editor and add the --cpu flag.")
 
     # Install the version of PyTorch needed
     if gpuchoice == "a":
@@ -113,10 +118,10 @@ def install_dependencies():
     run_cmd("git clone https://github.com/oobabooga/text-generation-webui.git", assert_success=True, environment=True)
 
     # Install the webui dependencies
-    update_dependencies()
+    update_dependencies(initial_installation=True)
 
 
-def update_dependencies():
+def update_dependencies(initial_installation=False):
     os.chdir("text-generation-webui")
     run_cmd("git pull", assert_success=True, environment=True)
 
@@ -135,16 +140,19 @@ def update_dependencies():
         run_cmd("python -m pip uninstall -y " + package_name, environment=True)
         print(f"Uninstalled {package_name}")
 
-    # Installs/Updates dependencies from all requirements.txt
+    # Installs/Updates the project dependencies
     run_cmd("python -m pip install -r requirements.txt --upgrade", assert_success=True, environment=True)
-    extensions = next(os.walk("extensions"))[1]
-    for extension in extensions:
-        if extension in ['superbooga']:  # No wheels available for dependencies
-            continue
 
-        extension_req_path = os.path.join("extensions", extension, "requirements.txt")
-        if os.path.exists(extension_req_path):
-            run_cmd("python -m pip install -r " + extension_req_path + " --upgrade", assert_success=True, environment=True)
+    # Installs the extensions dependencies (only on the first install)
+    if initial_installation:
+        extensions = next(os.walk("extensions"))[1]
+        for extension in extensions:
+            if extension in ['superbooga']:  # No wheels available for dependencies
+                continue
+
+            extension_req_path = os.path.join("extensions", extension, "requirements.txt")
+            if os.path.exists(extension_req_path):
+                run_cmd("python -m pip install -r " + extension_req_path + " --upgrade", assert_success=True, environment=True)
 
     # The following dependencies are for CUDA, not CPU
     # Parse output of 'pip show torch' to determine torch version
@@ -153,6 +161,7 @@ def update_dependencies():
 
     # Check for '+cu' or '+rocm' in version string to determine if torch uses CUDA or ROCm   check for pytorch-cuda as well for backwards compatibility
     if '+cu' not in torver and '+rocm' not in torver and run_cmd("conda list -f pytorch-cuda | grep pytorch-cuda", environment=True, capture_output=True).returncode == 1:
+        clear_cache()
         return
 
     # Get GPU CUDA/compute support
@@ -178,7 +187,7 @@ def update_dependencies():
         os.chdir("exllama")
         run_cmd("git pull", environment=True)
         os.chdir("..")
-        
+
     # Pre-installed exllama module does not support AMD GPU
     if '+rocm' in torver:
         run_cmd("python -m pip uninstall -y exllama", environment=True)
@@ -222,7 +231,7 @@ def update_dependencies():
     # Install GPTQ-for-LLaMa dependencies
     os.chdir("GPTQ-for-LLaMa")
     run_cmd("git pull", environment=True)
-    
+
     # Finds the path to your dependencies
     for sitedir in site.getsitepackages():
         if "site-packages" in sitedir:
@@ -272,6 +281,8 @@ def update_dependencies():
 
         print("Continuing with install..")
 
+    clear_cache()
+
 
 def download_model():
     os.chdir("text-generation-webui")
@@ -301,7 +312,7 @@ if __name__ == "__main__":
 
         # Check if a model has been downloaded yet
         if len([item for item in glob.glob('text-generation-webui/models/*') if not item.endswith(('.txt', '.yaml'))]) == 0:
-            print_big_message("WARNING: You haven't downloaded any model yet.\nOnce the web UI launches, head over to the bottom of the \"Model\" tab and download one.")
+            print_big_message("WARNING: You haven't downloaded any model yet.\nOnce the web UI launches, head over to the \"Model\" tab and download one.")
 
         # Workaround for llama-cpp-python loading paths in CUDA env vars even if they do not exist
         conda_path_bin = os.path.join(conda_env_path, "bin")
