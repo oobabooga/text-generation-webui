@@ -1,0 +1,1 @@
+python3 server.py --api --auth-api --listen --listen-host 0.0.0.0 --model 4bit_gpt4-x-alpaca-13b-native-4bit-128g-cuda --model_type LLaMa --wbits 4 --chat --extensions gallery --groupsize 128 --gpu-memory 14
