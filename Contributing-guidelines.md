@@ -58,7 +58,7 @@ Some Docker files are available in the repository, but I do not use Docker. Pull
 
 * The `shared.settings` variable contains default values for Gradio components. It can be customized through a `settings.yaml` file.
 * The `shared.args` variable contains the command-line arguments. They represent variables that need to be changed often.
-* `shared.gradio` contains the UI elements (like sliders and dropdowns). While defining Gradio event handlers, the `modules.utils.gradio` function can be used to write
+* `shared.gradio` contains the UI elements, like sliders and dropdowns. While defining Gradio event handlers, the `modules.utils.gradio` function can be used to write
 
 ```python
 gradio('history', 'character_menu', 'mode')
