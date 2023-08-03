@@ -418,6 +418,10 @@ def save_persistent_history(history, character, mode):
 
 
 def load_persistent_history(state):
+    if shared.session_is_loading:
+        shared.session_is_loading = False
+        return state['history']
+
     if state['mode'] == 'instruct':
         return state['history']
 

@@ -511,21 +511,27 @@ def create_file_saving_event_handlers():
         def load_session(file, state):
             decoded_file = file if type(file) == str else file.decode('utf-8')
             data = json.loads(decoded_file)
+
+            if shared.is_chat() and 'character_menu' in data and state.get('character_menu') != data.get('character_menu'):
+                shared.session_is_loading = True
+
             state.update(data)
-
-            if shared.is_chat():
-                chat.save_persistent_history(state['history'], state['character_menu'], state['mode'])
-
             return state
 
         shared.gradio['save_session'].click(
             ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
             lambda x: json.dumps(x, indent=4), gradio('interface_state'), gradio('temporary_text')).then(
-                None, gradio('temporary_text'), None, _js=f"(contents) => {{{ui.save_files_js}; saveSession(contents, \"{shared.get_mode()}\")}}")
+            None, gradio('temporary_text'), None, _js=f"(contents) => {{{ui.save_files_js}; saveSession(contents, \"{shared.get_mode()}\")}}")
 
-        shared.gradio['load_session'].upload(
-            load_session, gradio('load_session', 'interface_state'), gradio('interface_state')).then(
-            ui.apply_interface_values, gradio('interface_state'), gradio(ui.list_interface_input_elements()), show_progress=False)
+        if shared.is_chat():
+            shared.gradio['load_session'].upload(
+                load_session, gradio('load_session', 'interface_state'), gradio('interface_state')).then(
+                ui.apply_interface_values, gradio('interface_state'), gradio(ui.list_interface_input_elements()), show_progress=False).then(
+                chat.redraw_html, shared.reload_inputs, gradio('display'))
+        else:
+            shared.gradio['load_session'].upload(
+                load_session, gradio('load_session', 'interface_state'), gradio('interface_state')).then(
+                ui.apply_interface_values, gradio('interface_state'), gradio(ui.list_interface_input_elements()), show_progress=False)
 
 
 def set_interface_arguments(interface_mode, extensions, bool_active):

@@ -30,6 +30,10 @@ reload_inputs = []  # Parameters for reloading the chat interface
 # For restarting the interface
 need_restart = False
 
+# To prevent the persistent chat history from being loaded when
+# a session JSON file is being loaded in chat mode
+session_is_loading = False
+
 settings = {
     'dark_theme': True,
     'autoload_model': False,
