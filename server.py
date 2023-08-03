@@ -525,11 +525,13 @@ def create_file_saving_event_handlers():
 
         if shared.is_chat():
             shared.gradio['load_session'].upload(
+                ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
                 load_session, gradio('load_session', 'interface_state'), gradio('interface_state')).then(
                 ui.apply_interface_values, gradio('interface_state'), gradio(ui.list_interface_input_elements()), show_progress=False).then(
                 chat.redraw_html, shared.reload_inputs, gradio('display'))
         else:
             shared.gradio['load_session'].upload(
+                ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
                 load_session, gradio('load_session', 'interface_state'), gradio('interface_state')).then(
                 ui.apply_interface_values, gradio('interface_state'), gradio(ui.list_interface_input_elements()), show_progress=False)
 
