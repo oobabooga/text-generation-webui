@@ -341,10 +341,7 @@ The presets that are included by default are the result of a contest that receiv
 
 ## Contributing
 
-* Pull requests, suggestions, and issue reports are welcome. 
-* Make sure to carefully [search](https://github.com/oobabooga/text-generation-webui/issues) existing issues before starting a new one.
-* If you have some experience with git, testing an open pull request and leaving a comment on whether it works as expected or not is immensely helpful.
-* A simple way to contribute, even if you are not a programmer, is to leave a 👍 on an issue or pull request that you find relevant.
+If you would like to contribute to the project, check out the [Contributing guidelines](https://github.com/oobabooga/text-generation-webui/wiki/Contributing-guidelines).
 
 ## Community
 
