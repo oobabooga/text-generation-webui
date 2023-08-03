@@ -19,9 +19,15 @@ def run(user_input, history):
         'mode': 'instruct',  # Valid options: 'chat', 'chat-instruct', 'instruct'
         'character': 'Example',
         'instruction_template': 'Vicuna-v1.1',  # Will get autodetected if unset
-        # 'context_instruct': '',  # Optional
         'your_name': 'You',
-
+        # 'name1': 'name of user', # Optional
+        # 'name2': 'name of character', # Optional
+        # 'context': 'character context', # Optional
+        # 'greeting': 'greeting', # Optional
+        # 'name1_instruct': 'You', # Optional
+        # 'name2_instruct': 'Assistant', # Optional
+        # 'context_instruct': 'context_instruct', # Optional
+        # 'turn_template': 'turn_template', # Optional
         'regenerate': False,
         '_continue': False,
         'stop_at_newline': False,
