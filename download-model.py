@@ -1,14 +1,13 @@
 '''
-Downloads models from Hugging Face to models/model-name.
+Downloads models from Hugging Face to models/username_modelname.
 
 Examples:
+
 python download-model.py facebook/opt-1.3b
 
-Using the built-in short name:
-python download-model.py "OPT 1.3B"
-
 Specifying a subset of model files within a repository folder
-python download-model.py --select "ggml-vicuna-13B-1.1-q5_0.bin|ggml-vicuna-13B-1.1-q5_1.bin" CRD716/ggml-vicuna-1.1-quantized
+
+python download-model.py --select "llama-2-7b.ggmlv3.q4_K_M.bin|llama-2-7b.ggmlv3.q3_K_S.bin" TheBloke/Llama-2-7B-GGML
 
 '''
 
