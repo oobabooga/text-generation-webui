@@ -36,9 +36,10 @@ This project aims to provide a web interface for interacting with Large Language
 
 **API**
 
-The API exists to make it possible to automate text generation actions available in the UI. You should not add features to the API if they could be added to the UI first. 
+The API exists to make it possible to automate text generation actions available in the UI.
 
-Providing an API with extensive and niche features is not a priority; providing one that contains the most important features while being easy to understand and use, is.
+* You should not add features to the API if they could be added to the UI first.
+* Providing an API with extensive and niche features is not a priority.
 
 ## Extensions
 
@@ -46,7 +47,7 @@ As a rule of thumb, extensions should be submitted to https://github.com/oobaboo
 
 ## Installation methods
 
-There are two main installation methods for this project.
+There are two main installation methods for this project:
 
 1) Manual installation as described in the README.
 2) The one-click-installers available at https://github.com/oobabooga/one-click-installers.
