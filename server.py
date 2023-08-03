@@ -75,7 +75,7 @@ def load_model_wrapper(selected_model, loader, autoload=False):
             exc = traceback.format_exc()
             logger.error('Failed to load the model.')
             print(exc)
-            yield exc
+            yield exc.replace('\n', '\n\n')
 
 
 def load_lora_wrapper(selected_loras):
@@ -159,7 +159,7 @@ def download_model_wrapper(repo_id, progress=gr.Progress()):
             yield ("Done!")
     except:
         progress(1.0)
-        yield traceback.format_exc()
+        yield traceback.format_exc().replace('\n', '\n\n')
 
 
 def create_model_menus():
