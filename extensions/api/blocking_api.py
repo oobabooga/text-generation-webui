@@ -50,7 +50,7 @@ class Handler(BaseHTTPRequestHandler):
         auth_header = self.headers.get('Authorization')
         token = auth_header.replace('Bearer ', '')
 
-        if token != shared.args.auth_api:
+        if token != shared.args.auth_api_token:
             self.send_error(401)
             return
 
@@ -272,7 +272,7 @@ def _run_server(port: int, share: bool = False):
         print(f'Starting API at http://{address}:{port}/api')
     
     if shared.args.auth_api:
-        print(f'with token {shared.args.auth_api}')
+        print(f'with token {shared.args.auth_api_token}')
 
     server.serve_forever()
 
