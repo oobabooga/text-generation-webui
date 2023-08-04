@@ -103,6 +103,18 @@ class LlamacppHF(PreTrainedModel):
             model_file = list(path.glob('*ggml*.bin'))[0]
 
         logger.info(f"llama.cpp weights detected: {model_file}\n")
+
+        rope_freq_base = 10000 * shared.args.alpha_value ** (64/63.)
+        rope_freq_base_by_alphascaling = {
+            1: 10000,
+            2: 32000,
+            3: 54000,
+            4: 82684
+        }
+        alpha_value = shared.args.alpha_value
+        if alpha_value in rope_freq_base_by_alphascaling:
+            rope_freq_base = rope_freq_base_by_alphascaling[alpha_value]
+
         params = {
             'model_path': str(model_file),
             'n_ctx': shared.args.n_ctx,
@@ -113,7 +125,7 @@ class LlamacppHF(PreTrainedModel):
             'use_mlock': shared.args.mlock,
             'low_vram': shared.args.low_vram,
             'n_gpu_layers': shared.args.n_gpu_layers,
-            'rope_freq_base': 10000 * shared.args.alpha_value ** (64/63.),
+            'rope_freq_base': rope_freq_base,
             'rope_freq_scale': 1.0 / shared.args.compress_pos_emb,
             'n_gqa': shared.args.n_gqa or None,
             'rms_norm_eps': shared.args.rms_norm_eps or None,
