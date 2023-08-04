@@ -13,8 +13,6 @@ with open(Path(__file__).resolve().parent / '../css/chat.css', 'r') as f:
     chat_css = f.read()
 with open(Path(__file__).resolve().parent / '../css/main.js', 'r') as f:
     main_js = f.read()
-with open(Path(__file__).resolve().parent / '../css/chat.js', 'r') as f:
-    chat_js = f.read()
 with open(Path(__file__).resolve().parent / '../css/save_files.js', 'r') as f:
     save_files_js = f.read()
 
