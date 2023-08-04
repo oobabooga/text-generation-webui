@@ -1081,30 +1081,17 @@ def create_interface():
     # Launch the interface
     shared.gradio['interface'].queue()
     with OpenMonkeyPatch():
-        if shared.args.listen:
-            shared.gradio['interface'].launch(
-                prevent_thread_lock=True,
-                share=shared.args.share,
-                server_name=shared.args.listen_host or '0.0.0.0',
-                server_port=shared.args.listen_port,
-                inbrowser=shared.args.auto_launch,
-                auth=auth,
-                ssl_verify=False if (shared.args.ssl_keyfile or shared.args.ssl_certfile) else True,
-                ssl_keyfile=shared.args.ssl_keyfile,
-                ssl_certfile=shared.args.ssl_certfile
-            )
-        else:
-            shared.gradio['interface'].launch(
-                prevent_thread_lock=True,
-                share=shared.args.share,
-                server_port=shared.args.listen_port,
-                inbrowser=shared.args.auto_launch,
-                auth=auth,
-                ssl_verify=False if (shared.args.ssl_keyfile or shared.args.ssl_certfile) else True,
-                ssl_keyfile=shared.args.ssl_keyfile,
-                ssl_certfile=shared.args.ssl_certfile
-            )
-
+        shared.gradio['interface'].launch(
+            prevent_thread_lock=True,
+            share=shared.args.share,
+            server_name = None if not shared.args.listen else (shared.args.listen_host or '0.0.0.0'),
+            server_port=shared.args.listen_port,
+            inbrowser=shared.args.auto_launch,
+            auth=auth,
+            ssl_verify=False if (shared.args.ssl_keyfile or shared.args.ssl_certfile) else True,
+            ssl_keyfile=shared.args.ssl_keyfile,
+            ssl_certfile=shared.args.ssl_certfile
+        )
 
 if __name__ == "__main__":
     # Loading custom settings
