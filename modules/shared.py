@@ -180,6 +180,8 @@ parser.add_argument('--share', action='store_true', help='Create a public URL. T
 parser.add_argument('--auto-launch', action='store_true', default=False, help='Open the web UI in the default browser upon launch.')
 parser.add_argument("--gradio-auth", type=str, help='set gradio authentication like "username:password"; or comma-delimit multiple like "u1:p1,u2:p2,u3:p3"', default=None)
 parser.add_argument("--gradio-auth-path", type=str, help='Set the gradio authentication file path. The file should contain one or more user:password pairs in this format: "u1:p1,u2:p2,u3:p3"', default=None)
+parser.add_argument("--ssl-keyfile", type=str, help='The path to the SSL certificate key file.', default=None)
+parser.add_argument("--ssl-certfile", type=str, help='The path to the SSL certificate cert file.', default=None)
 
 # API
 parser.add_argument('--api', action='store_true', help='Enable the API extension.')
