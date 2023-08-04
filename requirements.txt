@@ -19,8 +19,8 @@ transformers==4.31.*
 tqdm
 wandb
 git+https://github.com/huggingface/peft@96c0277a1b9a381b10ab34dbf84917f9b3b992e6
-bitsandbytes==0.41.0; platform_system != "Windows"
-https://github.com/jllllll/bitsandbytes-windows-webui/releases/download/wheels/bitsandbytes-0.41.0-py3-none-win_amd64.whl; platform_system == "Windows"
+bitsandbytes==0.41.1; platform_system != "Windows"
+https://github.com/jllllll/bitsandbytes-windows-webui/releases/download/wheels/bitsandbytes-0.41.1-py3-none-win_amd64.whl; platform_system == "Windows"
 https://github.com/PanQiWei/AutoGPTQ/releases/download/v0.3.0/auto_gptq-0.3.0+cu117-cp310-cp310-win_amd64.whl; platform_system == "Windows"
 https://github.com/PanQiWei/AutoGPTQ/releases/download/v0.3.0/auto_gptq-0.3.0+cu117-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
 https://github.com/jllllll/exllama/releases/download/0.0.9/exllama-0.0.9+cu117-cp310-cp310-win_amd64.whl; platform_system == "Windows"
