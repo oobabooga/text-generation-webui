@@ -69,7 +69,7 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(response.encode('utf-8'))
             
         elif self.path.startswith('/api/v1/characters'):
-            self.simple_json_results(get_available_characters())
+            self.simple_json_results(get_available_characters()[1:])
         else:
             self.send_error(404)
 
