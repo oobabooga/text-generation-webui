@@ -4,7 +4,7 @@ from threading import Thread
 
 from extensions.api.util import build_parameters, try_start_cloudflared
 from modules import shared
-from modules.chat import generate_chat_reply
+from modules.chat import generate_chat_reply, delete_character
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, unload_model
 from modules.models_settings import (
@@ -75,7 +75,12 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         content_length = int(self.headers['Content-Length'])
-        body = json.loads(self.rfile.read(content_length).decode('utf-8'))
+        try:
+            body = json.loads(self.rfile.read(content_length).decode('utf-8'))
+        except Exception as e:
+            print(e)
+            self.send_error(400)
+            return
 
         if shared.args.auth_api:
             self.auth()
@@ -106,7 +111,7 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(response.encode('utf-8'))
 
         elif self.path == '/api/v1/character':
-            self.send_response(200)
+            self.send_response(201)
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
 
@@ -124,6 +129,36 @@ class Handler(BaseHTTPRequestHandler):
                 }]
             })
 
+            self.wfile.write(response.encode('utf-8'))
+
+        elif self.path == '/api/v1/characters':
+            self.send_response(201)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+
+            if body is None:
+                self.simple_json_results("body is None")
+                return
+
+            characters = get_available_characters()
+            for character in characters:
+                delete_character(character)
+
+            for character in body:
+                try:
+                    name = character['name']
+                    context = character['context']
+                    greeting = character['greeting']
+                    example_dialogue = character['example_dialogue']
+                    context += f"\n{example_dialogue.strip()}\n"
+
+                    save_character(name, greeting, context, None, name)
+                except Exception as e:
+                    print(e)
+            
+            response = json.dumps({
+                'results': get_available_characters()[1:],
+            })
             self.wfile.write(response.encode('utf-8'))
         
         elif self.path == '/api/v1/chat':
