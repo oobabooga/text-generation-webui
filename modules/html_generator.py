@@ -61,8 +61,26 @@ def convert_to_markdown(string):
     if is_code:
         result = result + '```'  # Unfinished code block
 
-    string = result.strip()
-    return markdown.markdown(string, extensions=['fenced_code', 'tables'])
+    result = result.strip()
+
+    # Unfinished list, like "\n1.". A |delete| string is added and then
+    # removed to force a <ol> to be generated instead of a <p>.
+    if re.search(r'(\d+\.?)$', result):
+        delete_str = '|delete|'
+
+        if not result.endswith('.'):
+            result += '.'
+
+        result = re.sub(r'(\d+\.)$', r'\g<1> ' + delete_str, result)
+
+        html = markdown.markdown(result, extensions=['fenced_code', 'tables'])
+        pos = html.rfind(delete_str)
+        if pos > -1:
+            html = html[:pos] + html[pos + len(delete_str):]
+    else:
+        html = markdown.markdown(result, extensions=['fenced_code', 'tables'])
+
+    return html
 
 
 def generate_basic_html(string):
