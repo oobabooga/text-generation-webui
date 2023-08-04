@@ -107,6 +107,7 @@ def history_modifier(history):
 
 def output_modifier(string, state):
     global model, current_params, streaming_state
+
     for i in params:
         if params[i] != current_params[i]:
             model = load_model()
@@ -192,7 +193,6 @@ def ui():
             convert = gr.Button('Permanently replace audios with the message texts')
             convert_cancel = gr.Button('Cancel', visible=False)
             convert_confirm = gr.Button('Confirm (cannot be undone)', variant="stop", visible=False)
-
 
     if shared.is_chat():
         # Convert history with confirmation
