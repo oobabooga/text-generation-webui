@@ -597,7 +597,7 @@ def create_interface():
 
     # css/js strings
     css = ui.css if not shared.is_chat() else ui.css + ui.chat_css
-    js = ui.main_js if not shared.is_chat() else ui.main_js + ui.chat_js
+    js = ui.main_js
     css += apply_extensions('css')
     js += apply_extensions('js')
 
