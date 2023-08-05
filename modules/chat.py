@@ -394,6 +394,8 @@ def redraw_html(history, name1, name2, mode, style, reset_cache=False):
 
 def save_history(history, path=None):
     p = path or Path('logs/exported_history.json')
+    if not p.parent.is_dir():
+        p.parent.mkdir(parents=True)
     with open(p, 'w', encoding='utf-8') as f:
         f.write(json.dumps(history, indent=4))
 
