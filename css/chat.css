@@ -79,6 +79,11 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     padding-top: 1px;
 }
 
+.chat > .messages {
+    display: flex;
+    flex-direction: column;
+}
+
 .message-body li {
     margin-top: 0.5em !important;
     margin-bottom: 0.5em !important;
