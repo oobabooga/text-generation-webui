@@ -421,7 +421,6 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
         del raw_text  # Note: could be a gig for a large dataset, so delete redundant data as we go to be safe on RAM
 
-
         train_data = Dataset.from_list(out_tokens)
         del out_tokens
 
@@ -714,15 +713,15 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
 def split_chunks(arr, size: int, step: int, max_newline_length: int, newline_token: int):
     num_tokens = len(arr)
-    split_end = num_tokens - size + step # Don't split in the last overlap
+    split_end = num_tokens - size + step  # Don't split in the last overlap
     if split_end < 0:
         split_end = num_tokens
     split_starts = list(range(0, split_end, step))
-    for index in range(1, len(split_starts)): # First split always starts at 0
+    for index in range(1, len(split_starts)):  # First split always starts at 0
         if split_starts[index] + size > num_tokens:
             split_starts[index] = num_tokens - size + 1
 
-        if max_newline_length > 0 and newline_token in arr[split_starts[index] : split_starts[index] + max_newline_length]:
+        if max_newline_length > 0 and newline_token in arr[split_starts[index]:split_starts[index] + max_newline_length]:
             first_newline = arr[split_starts[index]: split_starts[index] + max_newline_length].index(newline_token)
             split_starts[index] += first_newline
 
@@ -736,6 +735,7 @@ def split_chunks(arr, size: int, step: int, max_newline_length: int, newline_tok
             "labels": labels,
             "attention_mask": input_ids.ne(shared.tokenizer.pad_token_id),
         }
+
 
 def format_time(seconds: float):
     if seconds < 120:
