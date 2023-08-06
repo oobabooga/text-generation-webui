@@ -100,6 +100,8 @@ def list_interface_input_elements():
         'mirostat_mode',
         'mirostat_tau',
         'mirostat_eta',
+        'negative_prompt',
+        'guidance_scale',
         'add_bos_token',
         'ban_eos_token',
         'truncation_length',

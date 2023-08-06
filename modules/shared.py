@@ -42,6 +42,7 @@ settings = {
     'max_new_tokens_max': 4096,
     'auto_max_new_tokens': False,
     'seed': -1,
+    'negative_prompt': '',
     'character': 'None',
     'name1': 'You',
     'name2': 'Assistant',
