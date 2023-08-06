@@ -51,10 +51,7 @@ def create_event_handlers():
     gen_events = []
 
     shared.input_params = gradio('textbox', 'interface_state')
-    if shared.args.notebook:
-        output_params = gradio('textbox', 'html')
-    else:
-        output_params = gradio('output_textbox', 'html')
+    output_params = gradio('textbox', 'html')
 
     gen_events.append(shared.gradio['Generate'].click(
         lambda x: x, gradio('textbox'), gradio('last_input')).then(
@@ -74,26 +71,16 @@ def create_event_handlers():
         # lambda: None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[0]; element.scrollTop = element.scrollHeight}")
     )
 
-    if shared.args.notebook:
-        shared.gradio['Undo'].click(lambda x: x, gradio('last_input'), gradio('textbox'), show_progress=False)
-        shared.gradio['markdown_render'].click(lambda x: x, gradio('textbox'), gradio('markdown'), queue=False)
-        gen_events.append(shared.gradio['Regenerate'].click(
-            lambda x: x, gradio('last_input'), gradio('textbox'), show_progress=False).then(
-            ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-            generate_reply_wrapper, shared.input_params, output_params, show_progress=False).then(
-            ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-            lambda: None, None, None, _js=f"() => {{{ui.audio_notification_js}}}")
-            # lambda: None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[0]; element.scrollTop = element.scrollHeight}")
-        )
-    else:
-        shared.gradio['markdown_render'].click(lambda x: x, gradio('output_textbox'), gradio('markdown'), queue=False)
-        gen_events.append(shared.gradio['Continue'].click(
-            ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-            generate_reply_wrapper, [shared.gradio['output_textbox']] + shared.input_params[1:], output_params, show_progress=False).then(
-            ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-            lambda: None, None, None, _js=f"() => {{{ui.audio_notification_js}}}")
-            # lambda: None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[1]; element.scrollTop = element.scrollHeight}")
-        )
+    shared.gradio['Undo'].click(lambda x: x, gradio('last_input'), gradio('textbox'), show_progress=False)
+    shared.gradio['markdown_render'].click(lambda x: x, gradio('textbox'), gradio('markdown'), queue=False)
+    gen_events.append(shared.gradio['Regenerate'].click(
+        lambda x: x, gradio('last_input'), gradio('textbox'), show_progress=False).then(
+        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+        generate_reply_wrapper, shared.input_params, output_params, show_progress=False).then(
+        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+        lambda: None, None, None, _js=f"() => {{{ui.audio_notification_js}}}")
+        # lambda: None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[0]; element.scrollTop = element.scrollHeight}")
+    )
 
     shared.gradio['Stop'].click(stop_everything_event, None, None, queue=False, cancels=gen_events if shared.args.no_stream else None)
     shared.gradio['prompt_menu'].change(load_prompt, gradio('prompt_menu'), gradio('textbox'), show_progress=False)
