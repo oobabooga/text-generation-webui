@@ -475,7 +475,7 @@ def load_character(character, name1, name2, instruct=False):
         Path("cache/pfp_character.png").unlink()
 
     if character not in ['None', '', None]:
-        folder = 'characters' if not instruct else 'instruction-templates'
+        folder = 'characters' if not instruct else 'characters/instruction-following'
         picture = generate_pfp_cache(character)
         filepath = None
         for extension in ["yml", "yaml", "json"]:
