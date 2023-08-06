@@ -157,6 +157,7 @@ def create_interface():
 
 
 if __name__ == "__main__":
+
     # Loading custom settings
     settings_file = None
     if shared.args.settings is not None and Path(shared.args.settings).exists():
