@@ -1,9 +1,9 @@
 import gc
+import hashlib
 import os
 import re
 import time
 from pathlib import Path
-import hashlib
 
 import torch
 import transformers
@@ -14,7 +14,7 @@ from transformers import (
     AutoModelForCausalLM,
     AutoModelForSeq2SeqLM,
     AutoTokenizer,
-    BitsAndBytesConfig,
+    BitsAndBytesConfig
 )
 
 import modules.shared as shared

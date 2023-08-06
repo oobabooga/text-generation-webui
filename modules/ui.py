@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 
 import gradio as gr
@@ -6,14 +5,13 @@ import torch
 
 from modules import shared
 
-
 with open(Path(__file__).resolve().parent / '../css/main.css', 'r') as f:
     css = f.read()
 with open(Path(__file__).resolve().parent / '../css/chat.css', 'r') as f:
     chat_css = f.read()
-with open(Path(__file__).resolve().parent / '../css/main.js', 'r') as f:
+with open(Path(__file__).resolve().parent / '../js/main.js', 'r') as f:
     main_js = f.read()
-with open(Path(__file__).resolve().parent / '../css/save_files.js', 'r') as f:
+with open(Path(__file__).resolve().parent / '../js/save_files.js', 'r') as f:
     save_files_js = f.read()
 
 refresh_symbol = '🔄'
@@ -29,6 +27,13 @@ theme = gr.themes.Default(
     body_text_color_subdued='#484848',
     background_fill_secondary='#eaeaea'
 )
+
+
+if Path("notification.mp3").exists():
+    shared.gradio['audio_notification'] = gr.Audio(interactive=False, value="notification.mp3", elem_id="audio_notification", visible=False)
+    audio_notification_js = "document.querySelector('#audio_notification audio')?.play();"
+else:
+    audio_notification_js = ""
 
 
 def list_model_elements():
