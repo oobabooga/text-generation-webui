@@ -123,7 +123,7 @@ def create_interface():
         else:
             ui_default.create_event_handlers()
 
-        # General events
+        # Other events
         ui_file_saving.create_event_handlers()
         ui_parameters.create_event_handlers()
 
