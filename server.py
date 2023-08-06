@@ -51,7 +51,6 @@ from modules.utils import gradio
 
 def create_interface():
 
-    # Defining some variables
     title = 'Text generation web UI'
 
     # Authentication variables
@@ -66,7 +65,7 @@ def create_interface():
     if gradio_auth_creds:
         auth = [tuple(cred.split(':')) for cred in gradio_auth_creds]
 
-    # Importing the extension files and executing their setup() functions
+    # Importing the extensions and executing their setup() functions
     if shared.args.extensions is not None and len(shared.args.extensions) > 0:
         extensions_module.load_extensions()
 
@@ -74,7 +73,6 @@ def create_interface():
     shared.persistent_interface_state.update({
         'loader': shared.args.loader or 'Transformers',
     })
-
     if shared.is_chat():
         shared.persistent_interface_state.update({
             'mode': shared.settings['mode'],
@@ -96,15 +94,15 @@ def create_interface():
 
     with gr.Blocks(css=css, analytics_enabled=False, title=title, theme=ui.theme) as shared.gradio['interface']:
 
-        # Used for saving files using javascript
-        shared.gradio['temporary_text'] = gr.Textbox(visible=False)
-
         # Audio notification
         if Path("notification.mp3").exists():
             shared.gradio['audio_notification'] = gr.Audio(interactive=False, value="notification.mp3", elem_id="audio_notification", visible=False)
 
         # Floating menus for saving/deleting files
         ui_file_saving.create_ui()
+
+        # Temporary clipboard for saving files
+        shared.gradio['temporary_text'] = gr.Textbox(visible=False)
 
         # Text Generation tab
         if shared.is_chat():
@@ -157,7 +155,7 @@ def create_interface():
 
 if __name__ == "__main__":
 
-    # Loading custom settings
+    # Load custom settings
     settings_file = None
     if shared.args.settings is not None and Path(shared.args.settings).exists():
         settings_file = Path(shared.args.settings)
@@ -170,10 +168,9 @@ if __name__ == "__main__":
         logger.info(f"Loading settings from {settings_file}...")
         file_contents = open(settings_file, 'r', encoding='utf-8').read()
         new_settings = json.loads(file_contents) if settings_file.suffix == "json" else yaml.safe_load(file_contents)
-        for item in new_settings:
-            shared.settings[item] = new_settings[item]
+        shared.settings.update(new_settings)
 
-    # Set default model settings based on settings file
+    # Fallback settings for models
     shared.model_config['.*'] = {
         'wbits': 'None',
         'model_type': 'None',
@@ -189,7 +186,7 @@ if __name__ == "__main__":
 
     shared.model_config.move_to_end('.*', last=False)  # Move to the beginning
 
-    # Default extensions
+    # Activate the extensions listed on settings.yaml
     extensions_module.available_extensions = utils.get_available_extensions()
     if shared.is_chat():
         for extension in shared.settings['chat_default_extensions']:
