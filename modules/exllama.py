@@ -136,6 +136,7 @@ class ExllamaModel:
                     break
 
         # Case 2: CFG
+        # Copied from https://github.com/turboderp/exllama/blob/master/example_cfg.py
         else:
             alpha = state['guidance_scale']
             prompts = [prompt, state['negative_prompt'] or '']
