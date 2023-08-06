@@ -30,7 +30,6 @@ theme = gr.themes.Default(
 )
 
 if Path("notification.mp3").exists():
-    shared.gradio['audio_notification'] = gr.Audio(interactive=False, value="notification.mp3", elem_id="audio_notification", visible=False)
     audio_notification_js = "document.querySelector('#audio_notification audio')?.play();"
 else:
     audio_notification_js = ""

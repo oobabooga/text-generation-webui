@@ -96,11 +96,15 @@ def create_interface():
 
     with gr.Blocks(css=css, analytics_enabled=False, title=title, theme=ui.theme) as shared.gradio['interface']:
 
-        # Floating menus for saving/deleting files
-        ui_file_saving.create_ui()
-
         # Used for saving files using javascript
         shared.gradio['temporary_text'] = gr.Textbox(visible=False)
+
+        # Audio notification
+        if Path("notification.mp3").exists():
+            shared.gradio['audio_notification'] = gr.Audio(interactive=False, value="notification.mp3", elem_id="audio_notification", visible=False)
+
+        # Floating menus for saving/deleting files
+        ui_file_saving.create_ui()
 
         # Text Generation tab
         if shared.is_chat():
