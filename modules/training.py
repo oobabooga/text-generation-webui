@@ -483,7 +483,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
                 exc = traceback.format_exc()
                 logger.error('Failed to reload the model.')
                 print(exc)
-                return exc
+                return exc.replace('\n', '\n\n')
 
     # == Start prepping the model itself ==
     if not hasattr(shared.model, 'lm_head') or hasattr(shared.model.lm_head, 'weight'):
@@ -518,7 +518,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             state_dict_peft = torch.load(f"{lora_file_path}/adapter_model.bin")
             set_peft_model_state_dict(lora_model, state_dict_peft)
     except:
-        yield traceback.format_exc()
+        yield traceback.format_exc().replace('\n', '\n\n')
         return
 
     if shared.args.monkey_patch:

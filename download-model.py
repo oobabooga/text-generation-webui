@@ -75,12 +75,12 @@ class ModelDownloader:
                 if not is_lora and fname.endswith(('adapter_config.json', 'adapter_model.bin')):
                     is_lora = True
 
-                is_pytorch = re.match("(pytorch|adapter|gptq)_model.*\.bin", fname)
-                is_safetensors = re.match(".*\.safetensors", fname)
-                is_pt = re.match(".*\.pt", fname)
-                is_ggml = re.match(".*ggml.*\.bin", fname)
-                is_tokenizer = re.match("(tokenizer|ice|spiece).*\.model", fname)
-                is_text = re.match(".*\.(txt|json|py|md)", fname) or is_tokenizer
+                is_pytorch = re.match(r"(pytorch|adapter|gptq)_model.*\.bin", fname)
+                is_safetensors = re.match(r".*\.safetensors", fname)
+                is_pt = re.match(r".*\.pt", fname)
+                is_ggml = re.match(r".*ggml.*\.bin", fname)
+                is_tokenizer = re.match(r"(tokenizer|ice|spiece).*\.model", fname)
+                is_text = re.match(r".*\.(txt|json|py|md)", fname) or is_tokenizer
                 if any((is_pytorch, is_safetensors, is_pt, is_ggml, is_tokenizer, is_text)):
                     if 'lfs' in dict[i]:
                         sha256.append([fname, dict[i]['lfs']['oid']])

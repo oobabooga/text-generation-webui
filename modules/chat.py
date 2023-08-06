@@ -394,6 +394,8 @@ def redraw_html(history, name1, name2, mode, style, reset_cache=False):
 
 def save_history(history, path=None):
     p = path or Path('logs/exported_history.json')
+    if not p.parent.is_dir():
+        p.parent.mkdir(parents=True)
     with open(p, 'w', encoding='utf-8') as f:
         f.write(json.dumps(history, indent=4))
 
@@ -412,29 +414,16 @@ def load_history(file, history):
         return history
 
 
-def save_history_at_user_request(history, character, mode):
-    def make_timestamp_path(character=None):
-        return f"logs/{character or ''}{'_' if character else ''}{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
-
-    path = None
-    if mode in ['chat', 'chat-instruct'] and character not in ['', 'None', None]:
-        path = make_timestamp_path(character)
-    else:
-        # Try to use mode as the file name, otherwise just use the timestamp
-        try:
-            path = make_timestamp_path(mode.capitalize())
-        except:
-            path = make_timestamp_path()
-
-    return save_history(history, path)
-
-
 def save_persistent_history(history, character, mode):
     if mode in ['chat', 'chat-instruct'] and character not in ['', 'None', None] and not shared.args.multi_user:
         save_history(history, path=Path(f'logs/{character}_persistent.json'))
 
 
 def load_persistent_history(state):
+    if shared.session_is_loading:
+        shared.session_is_loading = False
+        return state['history']
+
     if state['mode'] == 'instruct':
         return state['history']
 

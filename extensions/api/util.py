@@ -21,6 +21,7 @@ def build_parameters(body, chat=False):
 
     generate_params = {
         'max_new_tokens': int(body.get('max_new_tokens', body.get('max_length', 200))),
+        'auto_max_new_tokens': bool(body.get('auto_max_new_tokens', False)),
         'do_sample': bool(body.get('do_sample', True)),
         'temperature': float(body.get('temperature', 0.5)),
         'top_p': float(body.get('top_p', 1)),
@@ -68,14 +69,14 @@ def build_parameters(body, chat=False):
             'stop_at_newline': bool(body.get('stop_at_newline', shared.settings['stop_at_newline'])),
             'chat_generation_attempts': int(body.get('chat_generation_attempts', shared.settings['chat_generation_attempts'])),
             'mode': str(body.get('mode', 'chat')),
-            'name1': name1,
-            'name2': name2,
-            'context': context,
-            'greeting': greeting,
-            'name1_instruct': name1_instruct,
-            'name2_instruct': name2_instruct,
-            'context_instruct': body.get('context_instruct', context_instruct),
-            'turn_template': turn_template,
+            'name1': str(body.get('name1', name1)),
+            'name2': str(body.get('name2', name2)),
+            'context': str(body.get('context', context)),
+            'greeting': str(body.get('greeting', greeting)),
+            'name1_instruct': str(body.get('name1_instruct', name1_instruct)),
+            'name2_instruct': str(body.get('name2_instruct', name2_instruct)),
+            'context_instruct': str(body.get('context_instruct', context_instruct)),
+            'turn_template': str(body.get('turn_template', turn_template)),
             'chat-instruct_command': str(body.get('chat-instruct_command', shared.settings['chat-instruct_command'])),
             'history': body.get('history', {'internal': [], 'visible': []})
         })

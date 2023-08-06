@@ -30,12 +30,17 @@ reload_inputs = []  # Parameters for reloading the chat interface
 # For restarting the interface
 need_restart = False
 
+# To prevent the persistent chat history from being loaded when
+# a session JSON file is being loaded in chat mode
+session_is_loading = False
+
 settings = {
     'dark_theme': True,
     'autoload_model': False,
     'max_new_tokens': 200,
     'max_new_tokens_min': 1,
     'max_new_tokens_max': 4096,
+    'auto_max_new_tokens': False,
     'seed': -1,
     'negative_prompt': '',
     'character': 'None',
@@ -54,7 +59,7 @@ settings = {
     'truncation_length_max': 16384,
     'mode': 'chat',
     'start_with': '',
-    'chat_style': 'cai-chat',
+    'chat_style': 'TheEncrypted777',
     'instruction_template': 'None',
     'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
     'chat_generation_attempts': 1,
@@ -62,7 +67,7 @@ settings = {
     'chat_generation_attempts_max': 10,
     'default_extensions': [],
     'chat_default_extensions': ['gallery'],
-    'preset': 'Divine Intellect',
+    'preset': 'simple-1',
     'prompt': 'QA',
 }
 
@@ -128,8 +133,8 @@ parser.add_argument('--cache-capacity', type=str, help='Maximum cache capacity. 
 parser.add_argument('--n-gpu-layers', type=int, default=0, help='Number of layers to offload to the GPU.')
 parser.add_argument('--n_ctx', type=int, default=2048, help='Size of the prompt context.')
 parser.add_argument('--llama_cpp_seed', type=int, default=0, help='Seed for llama-cpp models. Default 0 (random)')
-parser.add_argument('--n_gqa', type=int, default=0, help='grouped-query attention. Must be 8 for llama2 70b.')
-parser.add_argument('--rms_norm_eps', type=float, default=0, help='Must be 1e-5 for llama2 70b.')
+parser.add_argument('--n_gqa', type=int, default=0, help='grouped-query attention. Must be 8 for llama-2 70b.')
+parser.add_argument('--rms_norm_eps', type=float, default=0, help='5e-6 is a good value for llama-2 models.')
 
 # GPTQ
 parser.add_argument('--wbits', type=int, default=0, help='Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported.')
@@ -176,6 +181,8 @@ parser.add_argument('--share', action='store_true', help='Create a public URL. T
 parser.add_argument('--auto-launch', action='store_true', default=False, help='Open the web UI in the default browser upon launch.')
 parser.add_argument("--gradio-auth", type=str, help='set gradio authentication like "username:password"; or comma-delimit multiple like "u1:p1,u2:p2,u3:p3"', default=None)
 parser.add_argument("--gradio-auth-path", type=str, help='Set the gradio authentication file path. The file should contain one or more user:password pairs in this format: "u1:p1,u2:p2,u3:p3"', default=None)
+parser.add_argument("--ssl-keyfile", type=str, help='The path to the SSL certificate key file.', default=None)
+parser.add_argument("--ssl-certfile", type=str, help='The path to the SSL certificate cert file.', default=None)
 
 # API
 parser.add_argument('--api', action='store_true', help='Enable the API extension.')

@@ -12,6 +12,7 @@ def run(prompt):
     request = {
         'prompt': prompt,
         'max_new_tokens': 250,
+        'auto_max_new_tokens': False,
 
         # Generation params. If 'preset' is set to different than 'None', the values
         # in presets/preset-name.yaml are used instead of the individual numbers.

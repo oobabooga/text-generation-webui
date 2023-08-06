@@ -113,6 +113,10 @@ class ExllamaModel:
             # Tokenizing the input
             ids = self.generator.tokenizer.encode(prompt)
             ids = ids[:, -get_max_prompt_length(state):]
+            if state['auto_max_new_tokens']:
+                max_new_tokens = state['truncation_length'] - ids.shape[-1]
+            else:
+                max_new_tokens = state['max_new_tokens']
 
             self.generator.gen_begin_reuse(ids)
             initial_len = self.generator.sequence[0].shape[0]
@@ -135,10 +139,17 @@ class ExllamaModel:
         else:
             alpha = state['guidance_scale']
             prompts = [prompt, state['negative_prompt'] or '']
+
             ids, mask = self.tokenizer.encode(prompts, return_mask=True)
+            if state['auto_max_new_tokens']:
+                max_new_tokens = state['truncation_length'] - ids[0].shape[-1]
+            else:
+                max_new_tokens = state['max_new_tokens']
+
             self.generator.gen_begin(ids, mask=mask)
             initial_len = self.generator.sequence[0].shape[0]
             has_leading_space = False
+
             for i in range(state['max_new_tokens']):
                 logits = self.model.forward(self.generator.sequence[:, -1:], self.cache, input_mask=mask)
                 self.generator.apply_rep_penalty(logits)
