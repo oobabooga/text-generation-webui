@@ -113,8 +113,6 @@ def create_interface():
         ui_model_menu.create_ui()  # Model tab
         training.create_ui()  # Training tab
         ui_session.create_ui()  # Session tab
-        extensions_module.create_extensions_tabs()  # Extensions tabs
-        extensions_module.create_extensions_block()  # Extensions block
 
         # Generation events
         if shared.is_chat():
@@ -133,6 +131,9 @@ def create_interface():
         shared.gradio['interface'].load(partial(ui.apply_interface_values, {}, use_persistent=True), None, gradio(ui.list_interface_input_elements()), show_progress=False)
         if shared.is_chat():
             shared.gradio['interface'].load(chat.redraw_html, shared.reload_inputs, gradio('display'))
+
+        extensions_module.create_extensions_tabs()  # Extensions tabs
+        extensions_module.create_extensions_block()  # Extensions block
 
     # Launch the interface
     shared.gradio['interface'].queue()
