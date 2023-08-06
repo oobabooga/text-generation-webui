@@ -77,17 +77,6 @@ def create_event_handlers():
         lambda: gr.update(visible=True), None, gradio('file_deleter'))
 
     if not shared.args.multi_user:
-
-        def load_session(file, state):
-            decoded_file = file if type(file) == str else file.decode('utf-8')
-            data = json.loads(decoded_file)
-
-            if shared.is_chat() and 'character_menu' in data and state.get('character_menu') != data.get('character_menu'):
-                shared.session_is_loading = True
-
-            state.update(data)
-            return state
-
         shared.gradio['save_session'].click(
             ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
             lambda x: json.dumps(x, indent=4), gradio('interface_state'), gradio('temporary_text')).then(
@@ -106,3 +95,14 @@ def create_event_handlers():
                 load_session, gradio('load_session', 'interface_state'), gradio('interface_state')).then(
                 ui.apply_interface_values, gradio('interface_state'), gradio(ui.list_interface_input_elements()), show_progress=False).then(
                 None, None, None, _js='() => {alert("The session has been loaded.")}')
+
+
+def load_session(file, state):
+    decoded_file = file if type(file) == str else file.decode('utf-8')
+    data = json.loads(decoded_file)
+
+    if shared.is_chat() and 'character_menu' in data and state.get('character_menu') != data.get('character_menu'):
+        shared.session_is_loading = True
+
+    state.update(data)
+    return state

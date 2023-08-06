@@ -52,7 +52,6 @@ def create_ui():
             shared.gradio['chat_style'] = gr.Dropdown(choices=utils.get_available_chat_styles(), label='Chat style', value=shared.settings['chat_style'], visible=shared.settings['mode'] != 'instruct')
 
     with gr.Tab('Chat settings', elem_id='chat-settings'):
-
         with gr.Tab("Character"):
             with gr.Row():
                 with gr.Column(scale=8):

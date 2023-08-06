@@ -5,24 +5,6 @@ from modules.github import clone_or_pull_repository
 from modules.utils import gradio
 
 
-def set_interface_arguments(interface_mode, extensions, bool_active):
-    modes = ["default", "notebook", "chat", "cai_chat"]
-    cmd_list = vars(shared.args)
-    bool_list = [k for k in cmd_list if type(cmd_list[k]) is bool and k not in modes]
-
-    shared.args.extensions = extensions
-    for k in modes[1:]:
-        setattr(shared.args, k, False)
-    if interface_mode != "default":
-        setattr(shared.args, interface_mode, True)
-    for k in bool_list:
-        setattr(shared.args, k, False)
-    for k in bool_active:
-        setattr(shared.args, k, True)
-
-    shared.need_restart = True
-
-
 def create_ui():
     with gr.Tab("Session", elem_id="session-tab"):
         modes = ["default", "notebook", "chat"]
@@ -69,3 +51,21 @@ def create_ui():
             lambda: None, None, None, _js='() => {document.body.innerHTML=\'<h1 style="font-family:monospace;padding-top:20%;margin:0;height:100vh;color:lightgray;text-align:center;background:var(--body-background-fill)">Reloading...</h1>\'; setTimeout(function(){location.reload()},2500); return []}')
 
         shared.gradio['toggle_dark_mode'].click(lambda: None, None, None, _js='() => {document.getElementsByTagName("body")[0].classList.toggle("dark")}')
+
+
+def set_interface_arguments(interface_mode, extensions, bool_active):
+    modes = ["default", "notebook", "chat", "cai_chat"]
+    cmd_list = vars(shared.args)
+    bool_list = [k for k in cmd_list if type(cmd_list[k]) is bool and k not in modes]
+
+    shared.args.extensions = extensions
+    for k in modes[1:]:
+        setattr(shared.args, k, False)
+    if interface_mode != "default":
+        setattr(shared.args, interface_mode, True)
+    for k in bool_list:
+        setattr(shared.args, k, False)
+    for k in bool_active:
+        setattr(shared.args, k, True)
+
+    shared.need_restart = True
