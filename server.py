@@ -117,7 +117,7 @@ def create_interface():
         ui_parameters.create_ui(shared.settings['preset'])  # Parameters tab
         ui_model_menu.create_ui()  # Model tab
         training.create_ui()  # Training tab
-        ui_session.create()  # Session tab
+        ui_session.create_ui()  # Session tab
         extensions_module.create_extensions_tabs()  # Extensions tabs
         extensions_module.create_extensions_block()  # Extensions block
 

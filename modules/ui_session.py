@@ -23,7 +23,7 @@ def set_interface_arguments(interface_mode, extensions, bool_active):
     shared.need_restart = True
 
 
-def create():
+def create_ui():
     with gr.Tab("Session", elem_id="session-tab"):
         modes = ["default", "notebook", "chat"]
         current_mode = "default"
