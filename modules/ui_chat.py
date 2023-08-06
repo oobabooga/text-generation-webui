@@ -13,8 +13,6 @@ from modules.utils import gradio
 
 def create_ui():
 
-    shared.input_elements = ui.list_interface_input_elements()
-
     shared.gradio.update({
         'interface_state': gr.State({k: None for k in shared.input_elements}),
         'Chat input': gr.State(),

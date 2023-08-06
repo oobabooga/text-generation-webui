@@ -91,6 +91,9 @@ def create_interface():
     css += apply_extensions('css')
     js += apply_extensions('js')
 
+    # The input elements for the generation functions
+    shared.input_elements = ui.list_interface_input_elements()
+
     with gr.Blocks(css=css, analytics_enabled=False, title=title, theme=ui.theme) as shared.gradio['interface']:
 
         # Floating menus for saving/deleting files

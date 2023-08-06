@@ -12,9 +12,9 @@ from modules.utils import gradio
 def create_ui():
     default_text = load_prompt(shared.settings['prompt'])
 
-    shared.input_elements = ui.list_interface_input_elements()
     shared.gradio['interface_state'] = gr.State({k: None for k in shared.input_elements})
     shared.gradio['last_input'] = gr.State('')
+
     with gr.Tab("Text generation", elem_id="main"):
         with gr.Row():
             with gr.Column():
@@ -79,6 +79,7 @@ def create_event_handlers():
             lambda x: x, gradio('last_input'), gradio('textbox'), show_progress=False).then(
             ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
             generate_reply_wrapper, shared.input_params, output_params, show_progress=False).then(
+
             ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
             lambda: None, None, None, _js=f"() => {{{ui.audio_notification_js}}}")
             # lambda: None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[0]; element.scrollTop = element.scrollHeight}")
