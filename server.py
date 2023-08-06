@@ -46,18 +46,7 @@ from modules.models_settings import (
     get_model_settings_from_yamls,
     update_model_parameters
 )
-from modules.text_generation import (
-    get_encoded_length
-)
 from modules.utils import gradio
-
-
-def count_tokens(text):
-    try:
-        tokens = get_encoded_length(text)
-        return f'{tokens} tokens in the input.'
-    except:
-        return 'Couldn\'t count the number of tokens. Is a tokenizer loaded?'
 
 
 def create_interface():
