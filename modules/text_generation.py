@@ -32,6 +32,8 @@ def generate_reply(*args, **kwargs):
 
 
 def _generate_reply(question, state, stopping_strings=None, is_chat=False):
+
+    # Find the appropriate generation function
     generate_func = apply_extensions('custom_generate_reply')
     if generate_func is None:
         if shared.model_name == 'None' or shared.model is None:
@@ -44,13 +46,13 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False):
         else:
             generate_func = generate_reply_HF
 
-    # Preparing the input
+    # Prepare the input
     original_question = question
     if not is_chat:
         state = apply_extensions('state', state)
         question = apply_extensions('input', question, state)
 
-    # Finding the stopping strings
+    # Find the stopping strings
     all_stop_strings = []
     for st in (stopping_strings, ast.literal_eval(f"[{state['custom_stopping_strings']}]")):
         if type(st) is list and len(st) > 0:
@@ -69,6 +71,7 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False):
         state = copy.deepcopy(state)
         state['stream'] = True
 
+    # Generate
     for reply in generate_func(question, original_question, seed, state, stopping_strings, is_chat=is_chat):
         reply, stop_found = apply_stopping_strings(reply, all_stop_strings)
         if is_stream:
