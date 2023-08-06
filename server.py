@@ -120,20 +120,11 @@ def create_interface():
 
         ui_parameters.create_ui(shared.settings['preset'])
 
-        # Model tab
-        ui_model_menu.create_ui()
-
-        # Training tab
-        training.create_ui()
-
-        # Session tab
-        ui_session.create()
-
-        # Extensions tabs
-        extensions_module.create_extensions_tabs()
-
-        # Extensions block
-        extensions_module.create_extensions_block()
+        ui_model_menu.create_ui()  # Model tab
+        training.create_ui()  # Training tab
+        ui_session.create()  # Session tab
+        extensions_module.create_extensions_tabs()  # Extensions tabs
+        extensions_module.create_extensions_block()  # Extensions block
 
         # Generation events
         if shared.is_chat():

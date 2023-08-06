@@ -5,6 +5,7 @@ import torch
 
 from modules import shared
 
+
 with open(Path(__file__).resolve().parent / '../css/main.css', 'r') as f:
     css = f.read()
 with open(Path(__file__).resolve().parent / '../css/chat.css', 'r') as f:
@@ -27,7 +28,6 @@ theme = gr.themes.Default(
     body_text_color_subdued='#484848',
     background_fill_secondary='#eaeaea'
 )
-
 
 if Path("notification.mp3").exists():
     shared.gradio['audio_notification'] = gr.Audio(interactive=False, value="notification.mp3", elem_id="audio_notification", visible=False)
