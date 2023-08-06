@@ -53,23 +53,20 @@ def create_interface():
 
     title = 'Text generation web UI'
 
-    # Authentication variables
-    auth = None
-    gradio_auth_creds = []
+    # Password authentication
+    auth = []
     if shared.args.gradio_auth:
-        gradio_auth_creds += [x.strip() for x in shared.args.gradio_auth.strip('"').replace('\n', '').split(',') if x.strip()]
-    if shared.args.gradio_auth_path is not None:
+        auth.extend(x.strip() for x in shared.args.gradio_auth.strip('"').replace('\n', '').split(',') if x.strip())
+    if shared.args.gradio_auth_path:
         with open(shared.args.gradio_auth_path, 'r', encoding="utf8") as file:
-            for line in file.readlines():
-                gradio_auth_creds += [x.strip() for x in line.split(',') if x.strip()]
-    if gradio_auth_creds:
-        auth = [tuple(cred.split(':')) for cred in gradio_auth_creds]
+            auth.extend(x.strip() for line in file for x in line.split(',') if x.strip())
+    auth = [tuple(cred.split(':')) for cred in auth]
 
-    # Importing the extensions and executing their setup() functions
+    # Import the extensions and execute their setup() functions
     if shared.args.extensions is not None and len(shared.args.extensions) > 0:
         extensions_module.load_extensions()
 
-    # Forcing some events to be triggered on page load
+    # Force some events to be triggered on page load
     shared.persistent_interface_state.update({
         'loader': shared.args.loader or 'Transformers',
     })
@@ -146,7 +143,7 @@ def create_interface():
             server_name=None if not shared.args.listen else (shared.args.listen_host or '0.0.0.0'),
             server_port=shared.args.listen_port,
             inbrowser=shared.args.auto_launch,
-            auth=auth,
+            auth=auth or None,
             ssl_verify=False if (shared.args.ssl_keyfile or shared.args.ssl_certfile) else True,
             ssl_keyfile=shared.args.ssl_keyfile,
             ssl_certfile=shared.args.ssl_certfile
