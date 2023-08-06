@@ -33,6 +33,8 @@ default_req_params = {
     'mirostat_mode': 0,
     'mirostat_tau': 5.0,
     'mirostat_eta': 0.1,
+    'guidance_scale': 1,
+    'negative_prompt': '',
     'ban_eos_token': False,
     'skip_special_tokens': True,
     'custom_stopping_strings': '',

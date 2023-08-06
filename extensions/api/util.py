@@ -43,6 +43,8 @@ def build_parameters(body, chat=False):
         'mirostat_mode': int(body.get('mirostat_mode', 0)),
         'mirostat_tau': float(body.get('mirostat_tau', 5)),
         'mirostat_eta': float(body.get('mirostat_eta', 0.1)),
+        'guidance_scale': float(body.get('guidance_scale', 1)),
+        'negative_prompt': str(body.get('negative_prompt', '')),
         'seed': int(body.get('seed', -1)),
         'add_bos_token': bool(body.get('add_bos_token', True)),
         'truncation_length': int(body.get('truncation_length', body.get('max_context_length', 2048))),
