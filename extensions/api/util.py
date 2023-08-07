@@ -79,7 +79,7 @@ def build_parameters(body, chat=False):
             'name2_instruct': str(body.get('name2_instruct', name2_instruct)),
             'context_instruct': str(body.get('context_instruct', context_instruct)),
             'turn_template': str(body.get('turn_template', turn_template)),
-            'chat-instruct_command': str(body.get('chat-instruct_command', shared.settings['chat-instruct_command'])),
+            'chat-instruct_command': str(body.get('chat_instruct_command', body.get('chat-instruct_command', shared.settings['chat-instruct_command']))),
             'history': body.get('history', {'internal': [], 'visible': []})
         })
 
