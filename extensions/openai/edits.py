@@ -31,7 +31,7 @@ def edits(instruction: str, input: str, temperature=1.0, top_p=1.0) -> dict:
             stopping_strings.extend(['\n###'])
         else:
             try:
-                instruct = yaml.safe_load(open(f"characters/instruction-following/{shared.settings['instruction_template']}.yaml", 'r'))
+                instruct = yaml.safe_load(open(f"instruction-templates/{shared.settings['instruction_template']}.yaml", 'r'))
 
                 template = instruct['turn_template']
                 template = template\
@@ -45,7 +45,7 @@ def edits(instruction: str, input: str, temperature=1.0, top_p=1.0) -> dict:
 
             except Exception as e:
                 instruction_template = default_template
-                print(f"Exception: When loading characters/instruction-following/{shared.settings['instruction_template']}.yaml: {repr(e)}")
+                print(f"Exception: When loading instruction-templates/{shared.settings['instruction_template']}.yaml: {repr(e)}")
                 print("Warning: Loaded default instruction-following template (Alpaca) for model.")
     else:
         stopping_strings.extend(['\n###'])

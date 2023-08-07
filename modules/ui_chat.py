@@ -232,13 +232,13 @@ def create_event_handlers():
 
     shared.gradio['save_template'].click(
         lambda: 'My Template.yaml', None, gradio('save_filename')).then(
-        lambda: 'characters/instruction-following/', None, gradio('save_root')).then(
+        lambda: 'instruction-templates/', None, gradio('save_root')).then(
         chat.generate_instruction_template_yaml, gradio('name1_instruct', 'name2_instruct', 'context_instruct', 'turn_template'), gradio('save_contents')).then(
         lambda: gr.update(visible=True), None, gradio('file_saver'))
 
     shared.gradio['delete_template'].click(
         lambda x: f'{x}.yaml', gradio('instruction_template'), gradio('delete_filename')).then(
-        lambda: 'characters/instruction-following/', None, gradio('delete_root')).then(
+        lambda: 'instruction-templates/', None, gradio('delete_root')).then(
         lambda: gr.update(visible=True), None, gradio('file_deleter'))
 
     shared.gradio['save_chat_history'].click(

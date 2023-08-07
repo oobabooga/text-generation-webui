@@ -12,7 +12,7 @@ def load_prompt(fname):
         return ''
     elif fname.startswith('Instruct-'):
         fname = re.sub('^Instruct-', '', fname)
-        file_path = Path(f'characters/instruction-following/{fname}.yaml')
+        file_path = Path(f'instruction-templates/{fname}.yaml')
         if not file_path.exists():
             return ''
 
