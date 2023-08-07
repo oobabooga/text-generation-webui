@@ -125,6 +125,7 @@ def create_interface():
         # Other events
         ui_file_saving.create_event_handlers()
         ui_parameters.create_event_handlers()
+        ui_model_menu.create_event_handlers()
 
         # Interface launch events
         shared.gradio['interface'].load(lambda: None, None, None, _js=f"() => {{{js}}}")
