@@ -199,6 +199,9 @@ if args.multi_user:
 
 
 def fix_loader_name(name):
+    if not name:
+        return name
+
     name = name.lower()
     if name in ['llamacpp', 'llama.cpp', 'llama-cpp', 'llama cpp']:
         return 'llama.cpp'
