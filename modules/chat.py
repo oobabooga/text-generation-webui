@@ -510,9 +510,6 @@ def load_character(character, name1, name2, instruct=False):
             context = build_pygmalion_style_context(data)
             greeting_field = 'char_greeting'
 
-        if 'example_dialogue' in data:
-            context += f"{data['example_dialogue'].strip()}\n"
-
         if greeting_field in data:
             greeting = data[greeting_field]
 
@@ -572,6 +569,9 @@ def build_pygmalion_style_context(data):
 
     if 'world_scenario' in data and data['world_scenario'] != '':
         context += f"Scenario: {data['world_scenario']}\n"
+
+    if 'example_dialogue' in data and data['example_dialogue'] != '':
+        context += f"{data['example_dialogue'].strip()}\n"
 
     context = f"{context.strip()}\n"
     return context
