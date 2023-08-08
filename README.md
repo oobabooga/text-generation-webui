@@ -261,7 +261,6 @@ Optionally, you can use the following command-line flags:
 | `--no_inject_fused_attention`  | Disable the use of fused attention, which will use less VRAM at the cost of slower inference. |
 | `--no_inject_fused_mlp`        | Triton mode only: disable the use of fused MLP, which will use less VRAM at the cost of slower inference. |
 | `--no_use_cuda_fp16`           | This can make models faster on some systems. |
-| `--fused_mlp`                  | (triton) Enable fused mlp. |
 | `--checkpoint CHECKPOINT`      | The path to the quantized checkpoint file. If not specified, it will be automatically detected. |
 | `--wbits WBITS`                | (For models without a quantize_config.json): The quantization precision in bits. |
 | `--groupsize GROUPSIZE`        | (For models without a quantize_config.json): Group size. |
