@@ -63,8 +63,8 @@ def create_ui():
 
                     shared.gradio['name1'] = gr.Textbox(value=shared.settings['name1'], lines=1, label='Your name')
                     shared.gradio['name2'] = gr.Textbox(value=shared.settings['name2'], lines=1, label='Character\'s name')
-                    shared.gradio['context'] = gr.Textbox(value=shared.settings['context'], lines=4, label='Context', elem_classes=['add_scrollbar'])
-                    shared.gradio['greeting'] = gr.Textbox(value=shared.settings['greeting'], lines=4, label='Greeting', elem_classes=['add_scrollbar'])
+                    shared.gradio['context'] = gr.Textbox(value=shared.settings['context'], lines=10, label='Context', elem_classes=['add_scrollbar'])
+                    shared.gradio['greeting'] = gr.Textbox(value=shared.settings['greeting'], lines=5, label='Greeting', elem_classes=['add_scrollbar'])
 
                 with gr.Column(scale=1):
                     shared.gradio['character_picture'] = gr.Image(label='Character picture', type='pil')
