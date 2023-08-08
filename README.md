@@ -11,7 +11,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 ## Features
 
 * 3 interface modes: default, notebook, and chat
-* Multiple model backends: transformers, llama.cpp, ExLlama, AutoGPTQ, GPTQ-for-LLaMa
+* Multiple model backends: transformers, llama.cpp, ExLlama, AutoGPTQ
 * Dropdown menu for quickly switching between different models
 * LoRA: load and unload LoRAs on the fly, train a new LoRA
 * Precise instruction templates for chat mode, including Llama 2, Alpaca, Vicuna, WizardLM, StableLM, and many others
@@ -207,7 +207,7 @@ Optionally, you can use the following command-line flags:
 
 | Flag                                       | Description |
 |--------------------------------------------|-------------|
-| `--loader LOADER`                          | Choose the model loader manually, otherwise, it will get autodetected. Valid options: transformers, autogptq, gptq-for-llama, exllama, exllama_hf, llamacpp, rwkv |
+| `--loader LOADER`                          | Choose the model loader manually, otherwise, it will get autodetected. Valid options: transformers, autogptq, exllama, exllama_hf, llamacpp, rwkv |
 
 #### Accelerate/transformers
 
@@ -261,7 +261,11 @@ Optionally, you can use the following command-line flags:
 | `--no_inject_fused_attention`  | Disable the use of fused attention, which will use less VRAM at the cost of slower inference. |
 | `--no_inject_fused_mlp`        | Triton mode only: disable the use of fused MLP, which will use less VRAM at the cost of slower inference. |
 | `--no_use_cuda_fp16`           | This can make models faster on some systems. |
-| `--desc_act`                   | For models that don't have a quantize_config.json, this parameter is used to define whether to set desc_act or not in BaseQuantizeConfig. |
+| `--fused_mlp`                  | (triton) Enable fused mlp. |
+| `--checkpoint CHECKPOINT`      | The path to the quantized checkpoint file. If not specified, it will be automatically detected. |
+| `--wbits WBITS`                | (For models without a quantize_config.json): The quantization precision in bits. |
+| `--groupsize GROUPSIZE`        | (For models without a quantize_config.json): Group size. |
+| `--desc_act`                   | (For models without a quantize_config.json): defines whether to set desc_act or not in BaseQuantizeConfig. |
 
 #### ExLlama
 
@@ -269,20 +273,6 @@ Optionally, you can use the following command-line flags:
 |------------------|-------------|
 |`--gpu-split`     | Comma-separated list of VRAM (in GB) to use per GPU device for model layers, e.g. `20,7,7` |
 |`--max_seq_len MAX_SEQ_LEN`           | Maximum sequence length. |
-
-#### GPTQ-for-LLaMa
-
-| Flag                      | Description |
-|---------------------------|-------------|
-| `--wbits WBITS`           | Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported. |
-| `--model_type MODEL_TYPE` | Model type of pre-quantized model. Currently LLaMA, OPT, and GPT-J are supported. |
-| `--groupsize GROUPSIZE`   | Group size. |
-| `--pre_layer PRE_LAYER [PRE_LAYER ...]`  | The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models. For multi-gpu, write the numbers separated by spaces, eg `--pre_layer 30 60`. |
-| `--checkpoint CHECKPOINT` | The path to the quantized checkpoint file. If not specified, it will be automatically detected. |
-| `--monkey-patch`          | Apply the monkey patch for using LoRAs with quantized models.
-| `--quant_attn`         | (triton) Enable quant attention. |
-| `--warmup_autotune`    | (triton) Enable warmup autotune. |
-| `--fused_mlp`          | (triton) Enable fused mlp. |
 
 #### DeepSpeed
 

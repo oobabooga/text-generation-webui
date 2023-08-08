@@ -39,19 +39,6 @@ python server.py --load-in-8bit
 python server.py --wbits 4
 ```
 
-#### The web UI works with any version of GPTQ-for-LLaMa
-
-Including the up to date triton and cuda branches. But you have to delete the `repositories/GPTQ-for-LLaMa` folder and reinstall the new one every time:
-
-```
-cd text-generation-webui/repositories
-rm -r GPTQ-for-LLaMa
-pip uninstall quant-cuda
-git clone https://github.com/oobabooga/GPTQ-for-LLaMa -b cuda # or any other repository and branch
-cd GPTQ-for-LLaMa
-python setup_cuda.py install
-```
-
 #### Instruction-following templates are represented as chat characters
 
 https://github.com/oobabooga/text-generation-webui/tree/main/characters/instruction-following
@@ -101,7 +88,3 @@ It doesn't start over.
 ```
 python download-model.py facebook/galactica-125m --threads 8
 ```
-
-#### LoRAs work in 4-bit mode
-
-You need to follow [these instructions](GPTQ-models-(4-bit-mode).md#using-loras-in-4-bit-mode) and then start the web UI with the `--monkey-patch` flag.

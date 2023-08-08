@@ -96,7 +96,7 @@ parser.add_argument('--extensions', type=str, nargs="+", help='The list of exten
 parser.add_argument('--verbose', action='store_true', help='Print the prompts to the terminal.')
 
 # Model loader
-parser.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise, it will get autodetected. Valid options: transformers, autogptq, gptq-for-llama, exllama, exllama_hf, llamacpp, rwkv')
+parser.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise, it will get autodetected. Valid options: transformers, autogptq, exllama, exllama_hf, llamacpp, rwkv')
 
 # Accelerate/transformers
 parser.add_argument('--cpu', action='store_true', help='Use the CPU to generate text. Warning: Training on CPU is extremely slow.')
@@ -131,23 +131,16 @@ parser.add_argument('--llama_cpp_seed', type=int, default=0, help='Seed for llam
 parser.add_argument('--n_gqa', type=int, default=0, help='grouped-query attention. Must be 8 for llama-2 70b.')
 parser.add_argument('--rms_norm_eps', type=float, default=0, help='5e-6 is a good value for llama-2 models.')
 
-# GPTQ
-parser.add_argument('--wbits', type=int, default=0, help='Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported.')
-parser.add_argument('--model_type', type=str, help='Model type of pre-quantized model. Currently LLaMA, OPT, and GPT-J are supported.')
-parser.add_argument('--groupsize', type=int, default=-1, help='Group size.')
-parser.add_argument('--pre_layer', type=int, nargs="+", help='The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models. For multi-gpu, write the numbers separated by spaces, eg --pre_layer 30 60.')
-parser.add_argument('--checkpoint', type=str, help='The path to the quantized checkpoint file. If not specified, it will be automatically detected.')
-parser.add_argument('--monkey-patch', action='store_true', help='Apply the monkey patch for using LoRAs with quantized models.')
-parser.add_argument('--quant_attn', action='store_true', help='(triton) Enable quant attention.')
-parser.add_argument('--warmup_autotune', action='store_true', help='(triton) Enable warmup autotune.')
-parser.add_argument('--fused_mlp', action='store_true', help='(triton) Enable fused mlp.')
-
 # AutoGPTQ
 parser.add_argument('--triton', action='store_true', help='Use triton.')
 parser.add_argument('--no_inject_fused_attention', action='store_true', help='Do not use fused attention (lowers VRAM requirements).')
 parser.add_argument('--no_inject_fused_mlp', action='store_true', help='Triton mode only: Do not use fused MLP (lowers VRAM requirements).')
 parser.add_argument('--no_use_cuda_fp16', action='store_true', help='This can make models faster on some systems.')
-parser.add_argument('--desc_act', action='store_true', help='For models that don\'t have a quantize_config.json, this parameter is used to define whether to set desc_act or not in BaseQuantizeConfig.')
+parser.add_argument('--fused_mlp', action='store_true', help='(triton) Enable fused mlp.')
+parser.add_argument('--checkpoint', type=str, help='The path to the quantized checkpoint file. If not specified, it will be automatically detected.')
+parser.add_argument('--wbits', type=int, default=0, help='(For models without a quantize_config.json): The quantization precision in bits.')
+parser.add_argument('--groupsize', type=int, default=-1, help='(For models without a quantize_config.json): Group size.')
+parser.add_argument('--desc_act', action='store_true', help='(For models without a quantize_config.json): defines whether to set desc_act or not in BaseQuantizeConfig.')
 
 # ExLlama
 parser.add_argument('--gpu-split', type=str, help="Comma-separated list of VRAM (in GB) to use per GPU device for model layers, e.g. 20,7,7")
@@ -211,8 +204,6 @@ def fix_loader_name(name):
         return 'Transformers'
     elif name in ['autogptq', 'auto-gptq', 'auto_gptq', 'auto gptq']:
         return 'AutoGPTQ'
-    elif name in ['gptq-for-llama', 'gptqforllama', 'gptqllama', 'gptq for llama', 'gptq_for_llama']:
-        return 'GPTQ-for-LLaMa'
     elif name in ['exllama', 'ex-llama', 'ex_llama', 'exlama']:
         return 'ExLlama'
     elif name in ['exllama-hf', 'exllama_hf', 'exllama hf', 'ex-llama-hf', 'ex_llama_hf']:

@@ -53,7 +53,6 @@ def load_model(model_name, loader=None):
     load_func_map = {
         'Transformers': huggingface_loader,
         'AutoGPTQ': AutoGPTQ_loader,
-        'GPTQ-for-LLaMa': GPTQ_loader,
         'llama.cpp': llamacpp_loader,
         'llamacpp_HF': llamacpp_HF_loader,
         'RWKV': RWKV_loader,
@@ -261,24 +260,6 @@ def llamacpp_HF_loader(model_name):
 
     model = LlamacppHF.from_pretrained(model_name)
     return model, tokenizer
-
-
-def GPTQ_loader(model_name):
-
-    # Monkey patch
-    if shared.args.monkey_patch:
-        logger.warning("Applying the monkey patch for using LoRAs with GPTQ models. It may cause undefined behavior outside its intended scope.")
-        from modules.monkey_patch_gptq_lora import load_model_llama
-
-        model, _ = load_model_llama(model_name)
-
-    # No monkey patch
-    else:
-        import modules.GPTQ_loader
-
-        model = modules.GPTQ_loader.load_quantized(model_name)
-
-    return model
 
 
 def AutoGPTQ_loader(model_name):
