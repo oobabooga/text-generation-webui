@@ -288,3 +288,6 @@ TheBloke_WizardLM-30B-GPTQ:
   instruction_template: 'StableBeluga2'
   truncation_length: 4096
   rms_norm_eps: 5.0e-6
+.*openchat:
+  mode: 'instruct'
+  instruction_template: 'OpenChat'
