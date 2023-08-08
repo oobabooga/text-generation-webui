@@ -24,19 +24,13 @@ and start training the LoRA from the training tab as usual.
 python server.py --load-in-8bit --gpu-memory 4000MiB
 ```
 
-#### `--pre_layer`, and not `--gpu-memory`, is the right way to do CPU offloading with 4-bit models
-
-```
-python server.py --wbits 4 --groupsize 128 --pre_layer 20
-```
-
 #### Models can be loaded in 32-bit, 16-bit, 8-bit, and 4-bit modes
 
 ```
 python server.py --cpu
 python server.py
 python server.py --load-in-8bit
-python server.py --wbits 4
+python server.py --load-in-4bit
 ```
 
 #### Instruction-following templates are represented as chat characters
