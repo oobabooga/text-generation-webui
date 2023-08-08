@@ -140,7 +140,7 @@ def create_interface():
         extensions_module.create_extensions_block()  # Extensions block
 
     # Launch the interface
-    shared.gradio['interface'].queue()
+    shared.gradio['interface'].queue(concurrency_count=64)
     with OpenMonkeyPatch():
         shared.gradio['interface'].launch(
             prevent_thread_lock=True,
