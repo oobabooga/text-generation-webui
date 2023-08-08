@@ -128,6 +128,9 @@ def create_interface():
         ui_model_menu.create_event_handlers()
 
         # Interface launch events
+        if shared.settings['dark_theme']:
+            shared.gradio['interface'].load(lambda: None, None, None, _js="() => document.getElementsByTagName('body')[0].classList.add('dark')")
+            
         shared.gradio['interface'].load(lambda: None, None, None, _js=f"() => {{{js}}}")
         shared.gradio['interface'].load(partial(ui.apply_interface_values, {}, use_persistent=True), None, gradio(ui.list_interface_input_elements()), show_progress=False)
         if shared.is_chat():
