@@ -471,7 +471,7 @@ def load_character(character, name1, name2, instruct=False):
     picture = None
 
     # Deleting the profile picture cache, if any
-    if Path("cache/pfp_character.png").exists():
+    if Path("cache/pfp_character.png").exists() and not instruct:
         Path("cache/pfp_character.png").unlink()
 
     if character not in ['None', '', None]:
