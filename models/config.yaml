@@ -231,6 +231,7 @@ TheBloke_WizardLM-30B-GPTQ:
 .*starchat-beta:
   mode: 'instruct'
   instruction_template: 'Starchat-Beta'
+  custom_stopping_strings: '"<|end|>"'
 .*minotaur:
   mode: 'instruct'
   instruction_template: 'Minotaur'

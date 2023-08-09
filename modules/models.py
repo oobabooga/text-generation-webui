@@ -2,7 +2,6 @@ import gc
 import os
 import re
 import time
-import json
 from pathlib import Path
 import hashlib
 
@@ -129,17 +128,6 @@ def load_tokenizer(model_name, model):
                 file_hash = hashlib.sha256(bytes).hexdigest()
                 if file_hash != pair[1]:
                     logger.warning(f"{p} is different from the original LlamaTokenizer file. It is either customized or outdated.")
-    elif tokenizer.__class__.__name__ == "GPT2Tokenizer" and model_name.startswith("HuggingFaceH4_starchat"):
-        tokenizer.pad_token_id = tokenizer.eos_token_id
-        p = Path(f"{path_to_model}/dialogue_template.json")
-        k = 'end_token'
-        try:
-            with open(p, "r") as f:
-                dialogue_template = json.load(f)
-                tokenizer.eos_token = dialogue_template[k]
-        except (FileNotFoundError, KeyError) as e:
-            logger.warning(f"Field k in {p} not found. Check the file and properties. Using '<|end|>' as eos token.")
-            tokenizer.eos_token = '<|end|>'
 
     return tokenizer
 
