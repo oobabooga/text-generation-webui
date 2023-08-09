@@ -182,11 +182,11 @@ parser.add_argument("--gradio-auth-path", type=str, help='Set the gradio authent
 
 # API
 parser.add_argument('--api', action='store_true', help='Enable the API extension.')
-parser.add_argument('--auth-api', action='store_true', help='Set API authentication using TOKEN (if empty then token will be set automatically)')
-parser.add_argument('--auth-api-token', type=str, default=set_token(), help='Set API authentication using TOKEN (if empty then token will be set automatically)')
 parser.add_argument('--api-blocking-port', type=int, default=5000, help='The listening port for the blocking API.')
 parser.add_argument('--api-streaming-port', type=int, default=5005, help='The listening port for the streaming API.')
 parser.add_argument('--public-api', action='store_true', help='Create a public URL for the API using Cloudfare.')
+parser.add_argument('--auth-api', action='store_true', help='Require an authentication token for API requests.')
+parser.add_argument('--auth-api-token', type=str, default=set_token(), help='The API authentication token. If unset, a random token will be generated.')
 
 # Multimodal
 parser.add_argument('--multimodal-pipeline', type=str, default=None, help='The multimodal pipeline to use. Examples: llava-7b, llava-13b.')
