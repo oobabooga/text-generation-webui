@@ -39,8 +39,9 @@ loaders_and_params = {
         'low_vram',
         'mlock',
         'llama_cpp_seed',
-        'compress_pos_emb',
         'alpha_value',
+        'compress_pos_emb',
+        'cpu',
     ],
     'llamacpp_HF': [
         'n_ctx',
@@ -53,8 +54,9 @@ loaders_and_params = {
         'low_vram',
         'mlock',
         'llama_cpp_seed',
-        'compress_pos_emb',
         'alpha_value',
+        'compress_pos_emb',
+        'cpu',
         'llamacpp_HF_info',
     ],
     'Transformers': [
@@ -71,20 +73,22 @@ loaders_and_params = {
         'quant_type',
         'compute_dtype',
         'trust_remote_code',
+        'alpha_value',
+        'compress_pos_emb',
         'transformers_info'
     ],
     'ExLlama': [
         'gpu_split',
         'max_seq_len',
-        'compress_pos_emb',
         'alpha_value',
+        'compress_pos_emb',
         'exllama_info',
     ],
     'ExLlama_HF': [
         'gpu_split',
         'max_seq_len',
-        'compress_pos_emb',
         'alpha_value',
+        'compress_pos_emb',
         'exllama_HF_info',
     ]
 }
@@ -113,9 +117,12 @@ loaders_samplers = {
         'mirostat_mode',
         'mirostat_tau',
         'mirostat_eta',
+        'guidance_scale',
+        'negative_prompt',
         'ban_eos_token',
         'add_bos_token',
         'skip_special_tokens',
+        'auto_max_new_tokens',
     },
     'ExLlama_HF': {
         'temperature',
@@ -139,6 +146,7 @@ loaders_samplers = {
         'ban_eos_token',
         'add_bos_token',
         'skip_special_tokens',
+        'auto_max_new_tokens',
     },
     'ExLlama': {
         'temperature',
@@ -148,7 +156,10 @@ loaders_samplers = {
         'repetition_penalty',
         'repetition_penalty_range',
         'seed',
+        'guidance_scale',
+        'negative_prompt',
         'ban_eos_token',
+        'auto_max_new_tokens',
     },
     'AutoGPTQ': {
         'temperature',
@@ -173,9 +184,12 @@ loaders_samplers = {
         'mirostat_mode',
         'mirostat_tau',
         'mirostat_eta',
+        'guidance_scale',
+        'negative_prompt',
         'ban_eos_token',
         'add_bos_token',
         'skip_special_tokens',
+        'auto_max_new_tokens',
     },
     'GPTQ-for-LLaMa': {
         'temperature',
@@ -200,9 +214,12 @@ loaders_samplers = {
         'mirostat_mode',
         'mirostat_tau',
         'mirostat_eta',
+        'guidance_scale',
+        'negative_prompt',
         'ban_eos_token',
         'add_bos_token',
         'skip_special_tokens',
+        'auto_max_new_tokens',
     },
     'llama.cpp': {
         'temperature',
@@ -237,6 +254,7 @@ loaders_samplers = {
         'ban_eos_token',
         'add_bos_token',
         'skip_special_tokens',
+        'auto_max_new_tokens',
     },
 }
 

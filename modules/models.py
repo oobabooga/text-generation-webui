@@ -1,9 +1,9 @@
 import gc
+import hashlib
 import os
 import re
 import time
 from pathlib import Path
-import hashlib
 
 import torch
 import transformers
@@ -14,7 +14,7 @@ from transformers import (
     AutoModelForCausalLM,
     AutoModelForSeq2SeqLM,
     AutoTokenizer,
-    BitsAndBytesConfig,
+    BitsAndBytesConfig
 )
 
 import modules.shared as shared
@@ -144,7 +144,7 @@ def huggingface_loader(model_name):
             LoaderClass = AutoModelForCausalLM
 
     # Load the model in simple 16-bit mode by default
-    if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.load_in_4bit, shared.args.auto_devices, shared.args.disk, shared.args.deepspeed, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None]):
+    if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.load_in_4bit, shared.args.auto_devices, shared.args.disk, shared.args.deepspeed, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None, shared.args.compress_pos_emb > 1, shared.args.alpha_value > 1]):
         model = LoaderClass.from_pretrained(Path(f"{shared.args.model_dir}/{model_name}"), low_cpu_mem_usage=True, torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16, trust_remote_code=shared.args.trust_remote_code)
         if torch.backends.mps.is_available():
             device = torch.device('mps')
@@ -214,6 +214,11 @@ def huggingface_loader(model_name):
                 max_memory=params['max_memory'],
                 no_split_module_classes=model._no_split_modules
             )
+
+        if shared.args.compress_pos_emb > 1:
+            params['rope_scaling'] = {'type': 'linear', 'factor': shared.args.compress_pos_emb}
+        elif shared.args.alpha_value > 1:
+            params['rope_scaling'] = {'type': 'dynamic', 'factor': shared.args.alpha_value}
 
         model = LoaderClass.from_pretrained(checkpoint, **params)
 

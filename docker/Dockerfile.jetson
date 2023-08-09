@@ -1,0 +1,51 @@
+#Standalone Dockerfile for text-generation-webui on NVIDIA Jetson Embedded devices
+
+FROM nvcr.io/nvidia/l4t-pytorch:r35.2.1-pth2.0-py3 as builder
+ENV TORCH_CUDA_ARCH_LIST Turing
+RUN apt-get update && \
+    apt-get install -y python3 python3-pip git build-essential python3-dev
+
+RUN pip3 install --upgrade pip setuptools
+RUN git clone https://github.com/g588928812/bitsandbytes_jetsonX.git /build
+WORKDIR /build
+RUN CUDA_VERSION=118 make cuda11x
+RUN mkdir /wheels
+RUN python3 setup.py bdist_wheel -d /wheels
+RUN rm -rf /build
+RUN git clone https://github.com/oobabooga/GPTQ-for-LLaMa /build
+WORKDIR /build
+RUN pip3 install -r requirements.txt
+RUN python3 setup_cuda.py bdist_wheel -d /wheels
+
+FROM nvcr.io/nvidia/l4t-pytorch:r35.2.1-pth2.0-py3
+COPY --from=builder /wheels /wheels
+COPY --from=builder /build /build
+RUN apt-get update && \
+    apt-get install --no-install-recommends -y git python3-dev python3 python3-pip make g++ && \
+    rm -rf /var/lib/apt/lists/*
+RUN pip3 install /wheels/*.whl
+RUN rm -rf /wheels
+WORKDIR /build
+RUN pip3 install -r requirements.txt
+RUN git clone https://github.com/oobabooga/text-generation-webui /app
+
+WORKDIR /app
+#ENV WEBUI_VERSION="2908a515877ffde2b1684b2353f6d72e6cb4d31b"
+#RUN git reset --hard ${WEBUI_VERSION}
+RUN pip3 install --upgrade pip setuptools
+RUN pip3 install protobuf>=3.3.0
+RUN pip3 install -r requirements.txt
+#Force to use bitsandbytes_jetsonX
+RUN pip3 uninstall -y bitsandbytes
+RUN mkdir /app/repositories
+RUN mv /build /app/repositories/GPTQ-for-LLaMa
+
+#Remove Python 3.10 specific macros
+RUN sed -i 's/@functools.cache/@functools.lru_cache(maxsize=None)/g' /app/modules/chat.py
+RUN sed -i 's/@functools.cache/@functools.lru_cache(maxsize=None)/g' /app/modules/loaders.py
+RUN sed -i 's/@functools.cache/@functools.lru_cache(maxsize=None)/g' /app/modules/presets.py
+
+EXPOSE 7860
+
+ENV CLI_ARGS="--listen"
+CMD python3 server.py ${CLI_ARGS}

@@ -20,18 +20,25 @@ async def run(user_input, history):
     request = {
         'user_input': user_input,
         'max_new_tokens': 250,
+        'auto_max_new_tokens': False,
         'history': history,
         'mode': 'instruct',  # Valid options: 'chat', 'chat-instruct', 'instruct'
         'character': 'Example',
         'instruction_template': 'Vicuna-v1.1',  # Will get autodetected if unset
-        # 'context_instruct': '',  # Optional
         'your_name': 'You',
-
+        # 'name1': 'name of user', # Optional
+        # 'name2': 'name of character', # Optional
+        # 'context': 'character context', # Optional
+        # 'greeting': 'greeting', # Optional
+        # 'name1_instruct': 'You', # Optional
+        # 'name2_instruct': 'Assistant', # Optional
+        # 'context_instruct': 'context_instruct', # Optional
+        # 'turn_template': 'turn_template', # Optional
         'regenerate': False,
         '_continue': False,
         'stop_at_newline': False,
         'chat_generation_attempts': 1,
-        'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
+        'chat_instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
 
         # Generation params. If 'preset' is set to different than 'None', the values
         # in presets/preset-name.yaml are used instead of the individual numbers.
@@ -56,6 +63,8 @@ async def run(user_input, history):
         'mirostat_mode': 0,
         'mirostat_tau': 5,
         'mirostat_eta': 0.1,
+        'guidance_scale': 1,
+        'negative_prompt': '',
 
         'seed': -1,
         'add_bos_token': True,

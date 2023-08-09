@@ -61,8 +61,26 @@ def convert_to_markdown(string):
     if is_code:
         result = result + '```'  # Unfinished code block
 
-    string = result.strip()
-    return markdown.markdown(string, extensions=['fenced_code', 'tables'])
+    result = result.strip()
+
+    # Unfinished list, like "\n1.". A |delete| string is added and then
+    # removed to force a <ol> to be generated instead of a <p>.
+    if re.search(r'(\d+\.?)$', result):
+        delete_str = '|delete|'
+
+        if not result.endswith('.'):
+            result += '.'
+
+        result = re.sub(r'(\d+\.)$', r'\g<1> ' + delete_str, result)
+
+        html = markdown.markdown(result, extensions=['fenced_code', 'tables'])
+        pos = html.rfind(delete_str)
+        if pos > -1:
+            html = html[:pos] + html[pos + len(delete_str):]
+    else:
+        html = markdown.markdown(result, extensions=['fenced_code', 'tables'])
+
+    return html
 
 
 def generate_basic_html(string):
@@ -150,9 +168,20 @@ def get_image_cache(path):
 
 
 def generate_instruct_html(history):
-    output = f'<style>{instruct_css}</style><div class="chat" id="chat">'
-    for i, _row in enumerate(history[::-1]):
+    output = f'<style>{instruct_css}</style><div class="chat pretty_scrollbar" id="chat"><div class="messages">'
+    for i, _row in enumerate(history):
         row = [convert_to_markdown(entry) for entry in _row]
+
+        if row[0]:  # don't display empty user messages
+            output += f"""
+                  <div class="user-message">
+                    <div class="text">
+                      <div class="message-body">
+                        {row[0]}
+                      </div>
+                    </div>
+                  </div>
+                """
 
         output += f"""
               <div class="assistant-message">
@@ -164,33 +193,37 @@ def generate_instruct_html(history):
               </div>
             """
 
-        if len(row[0]) == 0:  # don't display empty user messages
-            continue
-
-        output += f"""
-              <div class="user-message">
-                <div class="text">
-                  <div class="message-body">
-                    {row[0]}
-                  </div>
-                </div>
-              </div>
-            """
-
-    output += "</div>"
+    output += "</div></div>"
 
     return output
 
 
 def generate_cai_chat_html(history, name1, name2, style, reset_cache=False):
-    output = f'<style>{chat_styles[style]}</style><div class="chat" id="chat">'
+    output = f'<style>{chat_styles[style]}</style><div class="chat pretty_scrollbar" id="chat"><div class="messages">'
 
     # We use ?name2 and ?time.time() to force the browser to reset caches
     img_bot = f'<img src="file/cache/pfp_character.png?{name2}">' if Path("cache/pfp_character.png").exists() else ''
     img_me = f'<img src="file/cache/pfp_me.png?{time.time() if reset_cache else ""}">' if Path("cache/pfp_me.png").exists() else ''
 
-    for i, _row in enumerate(history[::-1]):
+    for i, _row in enumerate(history):
         row = [convert_to_markdown(entry) for entry in _row]
+
+        if row[0]:  # don't display empty user messages
+            output += f"""
+                  <div class="message">
+                    <div class="circle-you">
+                      {img_me}
+                    </div>
+                    <div class="text">
+                      <div class="username">
+                        {name1}
+                      </div>
+                      <div class="message-body">
+                        {row[0]}
+                      </div>
+                    </div>
+                  </div>
+                """
 
         output += f"""
               <div class="message">
@@ -208,49 +241,18 @@ def generate_cai_chat_html(history, name1, name2, style, reset_cache=False):
               </div>
             """
 
-        if len(row[0]) == 0:  # don't display empty user messages
-            continue
-
-        output += f"""
-              <div class="message">
-                <div class="circle-you">
-                  {img_me}
-                </div>
-                <div class="text">
-                  <div class="username">
-                    {name1}
-                  </div>
-                  <div class="message-body">
-                    {row[0]}
-                  </div>
-                </div>
-              </div>
-            """
-
-    output += "</div>"
+    output += "</div></div>"
     return output
 
 
 def generate_chat_html(history, name1, name2, reset_cache=False):
-    output = f'<style>{chat_styles["wpp"]}</style><div class="chat" id="chat">'
+    output = f'<style>{chat_styles["wpp"]}</style><div class="chat pretty_scrollbar" id="chat"><div class="messages">'
 
-    for i, _row in enumerate(history[::-1]):
+    for i, _row in enumerate(history):
         row = [convert_to_markdown(entry) for entry in _row]
 
-        output += f"""
-              <div class="message">
-                <div class="text-bot">
-                  <div class="message-body">
-                    {row[1]}
-                  </div>
-                </div>
-              </div>
-            """
-
-        if len(row[0]) == 0:  # don't display empty user messages
-            continue
-
-        output += f"""
+        if row[0]:  # don't display empty user messages
+            output += f"""
               <div class="message">
                 <div class="text-you">
                   <div class="message-body">
@@ -260,7 +262,17 @@ def generate_chat_html(history, name1, name2, reset_cache=False):
               </div>
             """
 
-    output += "</div>"
+        output += f"""
+          <div class="message">
+            <div class="text-bot">
+              <div class="message-body">
+                {row[1]}
+              </div>
+            </div>
+          </div>
+        """
+
+    output += "</div></div>"
     return output
 
 

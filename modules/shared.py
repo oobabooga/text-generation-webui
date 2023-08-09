@@ -6,37 +6,38 @@ import yaml
 
 from modules.logging_colors import logger
 
-generation_lock = None
+
+# Model variables
 model = None
 tokenizer = None
-is_seq2seq = False
 model_name = "None"
-lora_names = []
+is_seq2seq = False
 model_dirty_from_training = False
+lora_names = []
 
-# Chat variables
+# Generation variables
 stop_everything = False
+generation_lock = None
 processing_message = '*Is typing...*'
+input_params = []
+reload_inputs = []
 
-# UI elements (buttons, sliders, HTML, etc)
+# UI variables
 gradio = {}
-
-# For keeping the values of UI elements on page reload
 persistent_interface_state = {}
-
-input_params = []  # Generation input parameters
-reload_inputs = []  # Parameters for reloading the chat interface
-
-# For restarting the interface
 need_restart = False
+session_is_loading = False
 
+# UI defaults
 settings = {
     'dark_theme': True,
     'autoload_model': False,
     'max_new_tokens': 200,
     'max_new_tokens_min': 1,
     'max_new_tokens_max': 4096,
+    'auto_max_new_tokens': False,
     'seed': -1,
+    'negative_prompt': '',
     'character': 'None',
     'name1': 'You',
     'name2': 'Assistant',
@@ -127,8 +128,8 @@ parser.add_argument('--cache-capacity', type=str, help='Maximum cache capacity. 
 parser.add_argument('--n-gpu-layers', type=int, default=0, help='Number of layers to offload to the GPU.')
 parser.add_argument('--n_ctx', type=int, default=2048, help='Size of the prompt context.')
 parser.add_argument('--llama_cpp_seed', type=int, default=0, help='Seed for llama-cpp models. Default 0 (random)')
-parser.add_argument('--n_gqa', type=int, default=0, help='grouped-query attention. Must be 8 for llama2 70b.')
-parser.add_argument('--rms_norm_eps', type=float, default=0, help='Must be 1e-5 for llama2 70b.')
+parser.add_argument('--n_gqa', type=int, default=0, help='grouped-query attention. Must be 8 for llama-2 70b.')
+parser.add_argument('--rms_norm_eps', type=float, default=0, help='5e-6 is a good value for llama-2 models.')
 
 # GPTQ
 parser.add_argument('--wbits', type=int, default=0, help='Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported.')
@@ -142,8 +143,6 @@ parser.add_argument('--warmup_autotune', action='store_true', help='(triton) Ena
 parser.add_argument('--fused_mlp', action='store_true', help='(triton) Enable fused mlp.')
 
 # AutoGPTQ
-parser.add_argument('--gptq-for-llama', action='store_true', help='DEPRECATED')
-parser.add_argument('--autogptq', action='store_true', help='DEPRECATED')
 parser.add_argument('--triton', action='store_true', help='Use triton.')
 parser.add_argument('--no_inject_fused_attention', action='store_true', help='Do not use fused attention (lowers VRAM requirements).')
 parser.add_argument('--no_inject_fused_mlp', action='store_true', help='Triton mode only: Do not use fused MLP (lowers VRAM requirements).')
@@ -165,7 +164,7 @@ parser.add_argument('--rwkv-cuda-on', action='store_true', help='RWKV: Compile t
 
 # RoPE
 parser.add_argument('--compress_pos_emb', type=int, default=1, help="Positional embeddings compression factor. Should typically be set to max_seq_len / 2048.")
-parser.add_argument('--alpha_value', type=int, default=1, help="Positional embeddings alpha factor for NTK RoPE scaling. Scaling is not identical to embedding compression. Use either this or compress_pos_emb, not both.")
+parser.add_argument('--alpha_value', type=int, default=1, help="Positional embeddings alpha factor for NTK RoPE scaling. Use either this or compress_pos_emb, not both.")
 
 # Gradio
 parser.add_argument('--listen', action='store_true', help='Make the web UI reachable from your local network.')
@@ -175,26 +174,21 @@ parser.add_argument('--share', action='store_true', help='Create a public URL. T
 parser.add_argument('--auto-launch', action='store_true', default=False, help='Open the web UI in the default browser upon launch.')
 parser.add_argument("--gradio-auth", type=str, help='set gradio authentication like "username:password"; or comma-delimit multiple like "u1:p1,u2:p2,u3:p3"', default=None)
 parser.add_argument("--gradio-auth-path", type=str, help='Set the gradio authentication file path. The file should contain one or more user:password pairs in this format: "u1:p1,u2:p2,u3:p3"', default=None)
+parser.add_argument("--ssl-keyfile", type=str, help='The path to the SSL certificate key file.', default=None)
+parser.add_argument("--ssl-certfile", type=str, help='The path to the SSL certificate cert file.', default=None)
 
 # API
 parser.add_argument('--api', action='store_true', help='Enable the API extension.')
 parser.add_argument('--api-blocking-port', type=int, default=5000, help='The listening port for the blocking API.')
 parser.add_argument('--api-streaming-port', type=int, default=5005, help='The listening port for the streaming API.')
 parser.add_argument('--public-api', action='store_true', help='Create a public URL for the API using Cloudfare.')
+parser.add_argument('--public-api-id', type=str, help='Tunnel ID for named Cloudflare Tunnel. Use together with public-api option.', default=None)
 
 # Multimodal
 parser.add_argument('--multimodal-pipeline', type=str, default=None, help='The multimodal pipeline to use. Examples: llava-7b, llava-13b.')
 
 args = parser.parse_args()
 args_defaults = parser.parse_args([])
-
-# Deprecation warnings
-if args.autogptq:
-    logger.warning('--autogptq has been deprecated and will be removed soon. Use --loader autogptq instead.')
-    args.loader = 'autogptq'
-if args.gptq_for_llama:
-    logger.warning('--gptq-for-llama has been deprecated and will be removed soon. Use --loader gptq-for-llama instead.')
-    args.loader = 'gptq-for-llama'
 
 # Security warnings
 if args.trust_remote_code:
@@ -206,6 +200,9 @@ if args.multi_user:
 
 
 def fix_loader_name(name):
+    if not name:
+        return name
+
     name = name.lower()
     if name in ['llamacpp', 'llama.cpp', 'llama-cpp', 'llama cpp']:
         return 'llama.cpp'
@@ -223,24 +220,11 @@ def fix_loader_name(name):
         return 'ExLlama_HF'
 
 
-if args.loader is not None:
-    args.loader = fix_loader_name(args.loader)
-
-
 def add_extension(name):
     if args.extensions is None:
         args.extensions = [name]
     elif 'api' not in args.extensions:
         args.extensions.append(name)
-
-
-# Activating the API extension
-if args.api or args.public_api:
-    add_extension('api')
-
-# Activating the multimodal extension
-if args.multimodal_pipeline is not None:
-    add_extension('multimodal')
 
 
 def is_chat():
@@ -256,14 +240,24 @@ def get_mode():
         return 'default'
 
 
-# Loading model-specific settings
+args.loader = fix_loader_name(args.loader)
+
+# Activate the API extension
+if args.api or args.public_api:
+    add_extension('api')
+
+# Activate the multimodal extension
+if args.multimodal_pipeline is not None:
+    add_extension('multimodal')
+
+# Load model-specific settings
 with Path(f'{args.model_dir}/config.yaml') as p:
     if p.exists():
         model_config = yaml.safe_load(open(p, 'r').read())
     else:
         model_config = {}
 
-# Applying user-defined model settings
+# Load custom model-specific settings
 with Path(f'{args.model_dir}/config-user.yaml') as p:
     if p.exists():
         user_config = yaml.safe_load(open(p, 'r').read())

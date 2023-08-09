@@ -249,8 +249,9 @@ Optionally, you can use the following command-line flags:
 | `--n-gpu-layers N_GPU_LAYERS` | Number of layers to offload to the GPU. Only works if llama-cpp-python was compiled with BLAS. Set this to 1000000000 to offload all layers to the GPU. |
 | `--n_ctx N_CTX` | Size of the prompt context. |
 | `--llama_cpp_seed SEED` | Seed for llama-cpp models. Default 0 (random). |
-| `--n_gqa N_GQA`         | grouped-query attention. Must be 8 for llama2 70b. |
-| `--rms_norm_eps RMS_NORM_EPS`  | Must be 1e-5 for llama2 70b. |
+| `--n_gqa N_GQA`         | grouped-query attention. Must be 8 for llama-2 70b. |
+| `--rms_norm_eps RMS_NORM_EPS`  | 5e-6 is a good value for llama-2 models. |
+| `--cpu`                        | Use the CPU version of llama-cpp-python instead of the GPU-accelerated version. |
 
 #### AutoGPTQ
 
@@ -298,12 +299,12 @@ Optionally, you can use the following command-line flags:
 | `--rwkv-strategy RWKV_STRATEGY` | RWKV: The strategy to use while loading the model. Examples: "cpu fp32", "cuda fp16", "cuda fp16i8". |
 | `--rwkv-cuda-on`                | RWKV: Compile the CUDA kernel for better performance. |
 
-#### RoPE (for llama.cpp and ExLlama only)
+#### RoPE (for llama.cpp, ExLlama, and transformers)
 
 | Flag             | Description |
 |------------------|-------------|
+|`--alpha_value ALPHA_VALUE`           | Positional embeddings alpha factor for NTK RoPE scaling. Use either this or compress_pos_emb, not both. |
 |`--compress_pos_emb COMPRESS_POS_EMB` | Positional embeddings compression factor. Should typically be set to max_seq_len / 2048. |
-|`--alpha_value ALPHA_VALUE`           | Positional embeddings alpha factor for NTK RoPE scaling. Scaling is not identical to embedding compression. Use either this or compress_pos_emb, not both. |
 
 #### Gradio
 
@@ -316,6 +317,8 @@ Optionally, you can use the following command-line flags:
 | `--auto-launch`                       | Open the web UI in the default browser upon launch. |
 | `--gradio-auth USER:PWD`              | set gradio authentication like "username:password"; or comma-delimit multiple like "u1:p1,u2:p2,u3:p3" |
 | `--gradio-auth-path GRADIO_AUTH_PATH` | Set the gradio authentication file path. The file should contain one or more user:password pairs in this format: "u1:p1,u2:p2,u3:p3" |
+| `--ssl-keyfile SSL_KEYFILE`           | The path to the SSL certificate key file. |
+| `--ssl-certfile SSL_CERTFILE`         | The path to the SSL certificate cert file. |
 
 #### API
 
@@ -323,6 +326,7 @@ Optionally, you can use the following command-line flags:
 |---------------------------------------|-------------|
 | `--api`                               | Enable the API extension. |
 | `--public-api`                        | Create a public URL for the API using Cloudfare. |
+| `--public-api-id PUBLIC_API_ID`       | Tunnel ID for named Cloudflare Tunnel. Use together with public-api option. |
 | `--api-blocking-port BLOCKING_PORT`   | The listening port for the blocking API. |
 | `--api-streaming-port STREAMING_PORT` | The listening port for the streaming API. |
 
@@ -340,10 +344,7 @@ The presets that are included by default are the result of a contest that receiv
 
 ## Contributing
 
-* Pull requests, suggestions, and issue reports are welcome. 
-* Make sure to carefully [search](https://github.com/oobabooga/text-generation-webui/issues) existing issues before starting a new one.
-* If you have some experience with git, testing an open pull request and leaving a comment on whether it works as expected or not is immensely helpful.
-* A simple way to contribute, even if you are not a programmer, is to leave a 👍 on an issue or pull request that you find relevant.
+If you would like to contribute to the project, check out the [Contributing guidelines](https://github.com/oobabooga/text-generation-webui/wiki/Contributing-guidelines).
 
 ## Community
 

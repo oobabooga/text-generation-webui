@@ -26,7 +26,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 
 #extensions {
     padding: 0;
-    padding: 0;
 }
 
 #gradio-chatbot {
@@ -46,6 +45,22 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     min-width: 0 !important;
 }
 
+#main > :first-child, #extensions {
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+@media screen and (max-width: 688px) {
+    #main {
+        padding: 0px;
+    }
+
+    .chat {
+        height: calc(100vh - 274px) !important;
+    }
+}
+
 /*****************************************************/
 /*************** Chat box declarations ***************/
 /*****************************************************/
@@ -62,6 +77,11 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     word-break: break-word;
     overflow-wrap: anywhere;
     padding-top: 1px;
+}
+
+.chat > .messages {
+    display: flex;
+    flex-direction: column;
 }
 
 .message-body li {

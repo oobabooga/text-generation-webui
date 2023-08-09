@@ -20,6 +20,7 @@ async def run(context):
     request = {
         'prompt': context,
         'max_new_tokens': 250,
+        'auto_max_new_tokens': False,
 
         # Generation params. If 'preset' is set to different than 'None', the values
         # in presets/preset-name.yaml are used instead of the individual numbers.
@@ -44,6 +45,8 @@ async def run(context):
         'mirostat_mode': 0,
         'mirostat_tau': 5,
         'mirostat_eta': 0.1,
+        'guidance_scale': 1,
+        'negative_prompt': '',
 
         'seed': -1,
         'add_bos_token': True,

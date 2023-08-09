@@ -1,3 +1,4 @@
+import random
 import time
 from pathlib import Path
 
@@ -106,6 +107,7 @@ def history_modifier(history):
 
 def output_modifier(string, state):
     global model, current_params, streaming_state
+
     for i in params:
         if params[i] != current_params[i]:
             model = load_model()
@@ -140,6 +142,35 @@ def setup():
     model = load_model()
 
 
+def random_sentence():
+    with open(Path("extensions/silero_tts/harvard_sentences.txt")) as f:
+        return random.choice(list(f))
+
+
+def voice_preview(preview_text):
+    global model, current_params, streaming_state
+
+    for i in params:
+        if params[i] != current_params[i]:
+            model = load_model()
+            current_params = params.copy()
+            break
+
+    string = tts_preprocessor.preprocess(preview_text or random_sentence())
+
+    output_file = Path('extensions/silero_tts/outputs/voice_preview.wav')
+    prosody = f"<prosody rate=\"{params['voice_speed']}\" pitch=\"{params['voice_pitch']}\">"
+    silero_input = f'<speak>{prosody}{xmlesc(string)}</prosody></speak>'
+    model.save_wav(ssml_text=silero_input, speaker=params['speaker'], sample_rate=int(params['sample_rate']), audio_path=str(output_file))
+
+    return f'<audio src="file/{output_file.as_posix()}?{int(time.time())}" controls autoplay></audio>'
+
+
+def custom_css():
+    path_to_css = Path(__file__).parent.resolve() / 'style.css'
+    return open(path_to_css, 'r').read()
+
+
 def ui():
     # Gradio elements
     with gr.Accordion("Silero TTS"):
@@ -154,11 +185,14 @@ def ui():
             v_speed = gr.Dropdown(value=params['voice_speed'], choices=voice_speeds, label='Voice speed')
 
         with gr.Row():
+            preview_text = gr.Text(show_label=False, placeholder="Preview text", elem_id="silero_preview_text")
+            preview_play = gr.Button("Preview")
+            preview_audio = gr.HTML(visible=False)
+
+        with gr.Row():
             convert = gr.Button('Permanently replace audios with the message texts')
             convert_cancel = gr.Button('Cancel', visible=False)
             convert_confirm = gr.Button('Confirm (cannot be undone)', variant="stop", visible=False)
-
-        gr.Markdown('[Click here for Silero audio samples](https://oobabooga.github.io/silero-samples/index.html)')
 
     if shared.is_chat():
         # Convert history with confirmation
@@ -185,3 +219,7 @@ def ui():
     voice.change(lambda x: params.update({"speaker": x}), voice, None)
     v_pitch.change(lambda x: params.update({"voice_pitch": x}), v_pitch, None)
     v_speed.change(lambda x: params.update({"voice_speed": x}), v_speed, None)
+
+    # Play preview
+    preview_text.submit(voice_preview, preview_text, preview_audio)
+    preview_play.click(voice_preview, preview_text, preview_audio)

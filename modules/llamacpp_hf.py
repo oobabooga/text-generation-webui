@@ -10,13 +10,22 @@ from transformers.modeling_outputs import CausalLMOutputWithPast
 from modules import shared
 from modules.logging_colors import logger
 
+import llama_cpp
+
 if torch.cuda.is_available() and not torch.version.hip:
     try:
-        from llama_cpp_cuda import Llama
+        import llama_cpp_cuda
     except:
-        from llama_cpp import Llama
+        llama_cpp_cuda = None
 else:
-    from llama_cpp import Llama
+    llama_cpp_cuda = None
+
+
+def llama_cpp_lib():
+    if shared.args.cpu or llama_cpp_cuda is None:
+        return llama_cpp
+    else:
+        return llama_cpp_cuda
 
 
 class LlamacppHF(PreTrainedModel):
@@ -40,12 +49,11 @@ class LlamacppHF(PreTrainedModel):
         return torch.device(0)
 
     def __call__(self, *args, **kwargs):
-        # TODO: Some decoding methods (such as Contrastive Search) may not work at this time
-        assert len(args) == 0, 'no *args should be passed to forward'
+        input_ids = args[0] if len(args) > 0 else kwargs['input_ids']
         use_cache = kwargs.get('use_cache', True)
         labels = kwargs.get('labels', None)
-        seq = kwargs['input_ids'][0].tolist()
-        cache = kwargs['past_key_values'] if 'past_key_values' in kwargs else None
+        cache = kwargs.get('past_key_values', None)
+        seq = input_ids[0].tolist()
 
         # Make the forward call
         seq_tensor = torch.tensor(seq)
@@ -56,12 +64,12 @@ class LlamacppHF(PreTrainedModel):
             else:
                 self.model.eval([seq[-1]])
 
-            logits = torch.tensor(self.model.scores[self.model.n_tokens-1, :]).view(1, 1, -1).to(kwargs['input_ids'].device)
+            logits = torch.tensor(self.model.scores[self.model.n_tokens - 1, :]).view(1, 1, -1).to(kwargs['input_ids'].device)
         else:
             self.model.reset()
             self.model.eval(seq)
             logits = torch.tensor(self.model.eval_logits)
-            logits = logits.view(1, logits.shape[0], logits.shape[1]).to(kwargs['input_ids'].device)
+            logits = logits.view(1, logits.shape[0], logits.shape[1]).to(input_ids.device)
 
         self.cache = seq_tensor
 
@@ -104,12 +112,14 @@ class LlamacppHF(PreTrainedModel):
             'use_mlock': shared.args.mlock,
             'low_vram': shared.args.low_vram,
             'n_gpu_layers': shared.args.n_gpu_layers,
-            'rope_freq_base': 10000 * shared.args.alpha_value ** (64/63.),
+            'rope_freq_base': 10000 * shared.args.alpha_value ** (64 / 63.),
             'rope_freq_scale': 1.0 / shared.args.compress_pos_emb,
             'n_gqa': shared.args.n_gqa or None,
             'rms_norm_eps': shared.args.rms_norm_eps or None,
             'logits_all': True,
         }
 
+        Llama = llama_cpp_lib().Llama
         model = Llama(**params)
+
         return LlamacppHF(model)

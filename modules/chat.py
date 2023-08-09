@@ -3,7 +3,6 @@ import copy
 import functools
 import json
 import re
-from datetime import datetime
 from pathlib import Path
 
 import gradio as gr
@@ -394,6 +393,8 @@ def redraw_html(history, name1, name2, mode, style, reset_cache=False):
 
 def save_history(history, path=None):
     p = path or Path('logs/exported_history.json')
+    if not p.parent.is_dir():
+        p.parent.mkdir(parents=True)
     with open(p, 'w', encoding='utf-8') as f:
         f.write(json.dumps(history, indent=4))
 
@@ -412,29 +413,16 @@ def load_history(file, history):
         return history
 
 
-def save_history_at_user_request(history, character, mode):
-    def make_timestamp_path(character=None):
-        return f"logs/{character or ''}{'_' if character else ''}{datetime.now().strftime('%Y%m%d-%H%M%S')}.json"
-
-    path = None
-    if mode in ['chat', 'chat-instruct'] and character not in ['', 'None', None]:
-        path = make_timestamp_path(character)
-    else:
-        # Try to use mode as the file name, otherwise just use the timestamp
-        try:
-            path = make_timestamp_path(mode.capitalize())
-        except:
-            path = make_timestamp_path()
-
-    return save_history(history, path)
-
-
 def save_persistent_history(history, character, mode):
     if mode in ['chat', 'chat-instruct'] and character not in ['', 'None', None] and not shared.args.multi_user:
         save_history(history, path=Path(f'logs/{character}_persistent.json'))
 
 
 def load_persistent_history(state):
+    if shared.session_is_loading:
+        shared.session_is_loading = False
+        return state['history']
+
     if state['mode'] == 'instruct':
         return state['history']
 
@@ -483,11 +471,11 @@ def load_character(character, name1, name2, instruct=False):
     picture = None
 
     # Deleting the profile picture cache, if any
-    if Path("cache/pfp_character.png").exists():
+    if Path("cache/pfp_character.png").exists() and not instruct:
         Path("cache/pfp_character.png").unlink()
 
     if character not in ['None', '', None]:
-        folder = 'characters' if not instruct else 'characters/instruction-following'
+        folder = 'characters' if not instruct else 'instruction-templates'
         picture = generate_pfp_cache(character)
         filepath = None
         for extension in ["yml", "yaml", "json"]:
@@ -521,9 +509,6 @@ def load_character(character, name1, name2, instruct=False):
         elif "char_persona" in data:
             context = build_pygmalion_style_context(data)
             greeting_field = 'char_greeting'
-
-        if 'example_dialogue' in data:
-            context += f"{data['example_dialogue'].strip()}\n"
 
         if greeting_field in data:
             greeting = data[greeting_field]
@@ -584,6 +569,9 @@ def build_pygmalion_style_context(data):
 
     if 'world_scenario' in data and data['world_scenario'] != '':
         context += f"Scenario: {data['world_scenario']}\n"
+
+    if 'example_dialogue' in data and data['example_dialogue'] != '':
+        context += f"{data['example_dialogue'].strip()}\n"
 
     context = f"{context.strip()}\n"
     return context

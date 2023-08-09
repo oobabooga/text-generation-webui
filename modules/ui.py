@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 
 import gradio as gr
@@ -11,10 +10,10 @@ with open(Path(__file__).resolve().parent / '../css/main.css', 'r') as f:
     css = f.read()
 with open(Path(__file__).resolve().parent / '../css/chat.css', 'r') as f:
     chat_css = f.read()
-with open(Path(__file__).resolve().parent / '../css/main.js', 'r') as f:
+with open(Path(__file__).resolve().parent / '../js/main.js', 'r') as f:
     main_js = f.read()
-with open(Path(__file__).resolve().parent / '../css/chat.js', 'r') as f:
-    chat_js = f.read()
+with open(Path(__file__).resolve().parent / '../js/save_files.js', 'r') as f:
+    save_files_js = f.read()
 
 refresh_symbol = '🔄'
 delete_symbol = '🗑️'
@@ -29,6 +28,11 @@ theme = gr.themes.Default(
     body_text_color_subdued='#484848',
     background_fill_secondary='#eaeaea'
 )
+
+if Path("notification.mp3").exists():
+    audio_notification_js = "document.querySelector('#audio_notification audio')?.play();"
+else:
+    audio_notification_js = ""
 
 
 def list_model_elements():
@@ -79,6 +83,7 @@ def list_model_elements():
 def list_interface_input_elements():
     elements = [
         'max_new_tokens',
+        'auto_max_new_tokens',
         'seed',
         'temperature',
         'top_p',
@@ -99,6 +104,8 @@ def list_interface_input_elements():
         'mirostat_mode',
         'mirostat_tau',
         'mirostat_eta',
+        'negative_prompt',
+        'guidance_scale',
         'add_bos_token',
         'ban_eos_token',
         'truncation_length',
@@ -144,9 +151,6 @@ def gather_interface_values(*args):
 
     if not shared.args.multi_user:
         shared.persistent_interface_state = output
-        Path('logs').mkdir(exist_ok=True)
-        with open(Path(f'logs/session_{shared.get_mode()}_autosave.json'), 'w') as f:
-            f.write(json.dumps(output, indent=4))
 
     return output
 

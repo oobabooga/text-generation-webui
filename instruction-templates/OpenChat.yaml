@@ -1,0 +1,4 @@
+user: "GPT4 User:"
+bot: "GPT4 Assistant:"
+turn_template: "<|user|> <|user-message|><|end_of_turn|><|bot|> <|bot-message|><|end_of_turn|>"
+context: ""
