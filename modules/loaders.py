@@ -39,8 +39,8 @@ loaders_and_params = {
         'low_vram',
         'mlock',
         'llama_cpp_seed',
-        'compress_pos_emb',
         'alpha_value',
+        'compress_pos_emb',
         'cpu',
     ],
     'llamacpp_HF': [
@@ -54,8 +54,8 @@ loaders_and_params = {
         'low_vram',
         'mlock',
         'llama_cpp_seed',
-        'compress_pos_emb',
         'alpha_value',
+        'compress_pos_emb',
         'cpu',
         'llamacpp_HF_info',
     ],
@@ -73,20 +73,22 @@ loaders_and_params = {
         'quant_type',
         'compute_dtype',
         'trust_remote_code',
+        'alpha_value',
+        'compress_pos_emb',
         'transformers_info'
     ],
     'ExLlama': [
         'gpu_split',
         'max_seq_len',
-        'compress_pos_emb',
         'alpha_value',
+        'compress_pos_emb',
         'exllama_info',
     ],
     'ExLlama_HF': [
         'gpu_split',
         'max_seq_len',
-        'compress_pos_emb',
         'alpha_value',
+        'compress_pos_emb',
         'exllama_HF_info',
     ]
 }
