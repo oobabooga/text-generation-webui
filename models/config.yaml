@@ -53,6 +53,12 @@ llama-65b-gptq-3bit:
 .*vicuna.*(1.1|1_1|1.3|1_3):
   mode: 'instruct'
   instruction_template: 'Vicuna-v1.1'
+.*vicuna.*(1.5|1_5):
+  mode: 'instruct'
+  instruction_template: 'Vicuna-v1.1'
+  truncation_length: 4096
+  n_ctx: 4096
+  rms_norm_eps: 1.0e-05  
 .*stable.*vicuna:
   mode: 'instruct'
   instruction_template: 'StableVicuna'
