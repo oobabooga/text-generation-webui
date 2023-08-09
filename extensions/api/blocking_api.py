@@ -200,7 +200,7 @@ class Handler(BaseHTTPRequestHandler):
         super().end_headers()
 
 
-def _run_server(port: int, share: bool = False):
+def _run_server(port: int, share: bool = False, tunnel_id=str):
     address = '0.0.0.0' if shared.args.listen else '127.0.0.1'
 
     server = ThreadingHTTPServer((address, port), Handler)
@@ -210,7 +210,7 @@ def _run_server(port: int, share: bool = False):
 
     if share:
         try:
-            try_start_cloudflared(port, max_attempts=3, on_start=on_start)
+            try_start_cloudflared(port, tunnel_id, max_attempts=3, on_start=on_start)
         except Exception:
             pass
     else:
@@ -220,5 +220,5 @@ def _run_server(port: int, share: bool = False):
     server.serve_forever()
 
 
-def start_server(port: int, share: bool = False):
-    Thread(target=_run_server, args=[port, share], daemon=True).start()
+def start_server(port: int, share: bool = False, tunnel_id=str):
+    Thread(target=_run_server, args=[port, share, tunnel_id], daemon=True).start()

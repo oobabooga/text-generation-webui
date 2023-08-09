@@ -102,7 +102,7 @@ async def _run(host: str, port: int):
         await asyncio.Future()  # run forever
 
 
-def _run_server(port: int, share: bool = False):
+def _run_server(port: int, share: bool = False, tunnel_id=str):
     address = '0.0.0.0' if shared.args.listen else '127.0.0.1'
 
     def on_start(public_url: str):
@@ -111,7 +111,7 @@ def _run_server(port: int, share: bool = False):
 
     if share:
         try:
-            try_start_cloudflared(port, max_attempts=3, on_start=on_start)
+            try_start_cloudflared(port, tunnel_id, max_attempts=3, on_start=on_start)
         except Exception as e:
             print(e)
     else:
@@ -120,5 +120,5 @@ def _run_server(port: int, share: bool = False):
     asyncio.run(_run(host=address, port=port))
 
 
-def start_server(port: int, share: bool = False):
-    Thread(target=_run_server, args=[port, share], daemon=True).start()
+def start_server(port: int, share: bool = False, tunnel_id=str):
+    Thread(target=_run_server, args=[port, share, tunnel_id], daemon=True).start()
