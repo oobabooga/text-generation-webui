@@ -395,6 +395,7 @@ def save_history(history, path=None):
     p = path or Path('logs/exported_history.json')
     if not p.parent.is_dir():
         p.parent.mkdir(parents=True)
+
     with open(p, 'w', encoding='utf-8') as f:
         f.write(json.dumps(history, indent=4))
 
@@ -415,7 +416,7 @@ def load_history(file, history):
 
 def save_persistent_history(history, character, mode):
     if mode in ['chat', 'chat-instruct'] and character not in ['', 'None', None] and not shared.args.multi_user:
-        save_history(history, path=Path(f'logs/{character}_persistent.json'))
+        save_history(history, path=Path(f'logs/persistent_{character}.json'))
 
 
 def load_persistent_history(state):
@@ -428,8 +429,15 @@ def load_persistent_history(state):
 
     character = state['character_menu']
     greeting = replace_character_names(state['greeting'], state['name1'], state['name2'])
-    p = Path(f'logs/{character}_persistent.json')
-    if not shared.args.multi_user and character not in ['None', '', None] and p.exists():
+
+    should_load_history = (not shared.args.multi_user and character not in ['None', '', None])
+    old_p = Path(f'logs/{character}_persistent.json')
+    p = Path(f'logs/persistent_{character}.json')
+    if should_load_history and old_p.exists():
+        logger.warning(f"Renaming {old_p} to {p}")
+        old_p.rename(p)
+
+    if should_load_history and p.exists():
         f = json.loads(open(p, 'rb').read())
         if 'internal' in f and 'visible' in f:
             history = f
