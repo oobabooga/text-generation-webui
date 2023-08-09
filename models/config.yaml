@@ -292,3 +292,4 @@ TheBloke_WizardLM-30B-GPTQ:
 .*openchat:
   mode: 'instruct'
   instruction_template: 'OpenChat'
+

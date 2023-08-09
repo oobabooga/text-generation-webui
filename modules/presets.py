@@ -63,6 +63,7 @@ def generate_preset_yaml(state):
     defaults = default_preset()
     data = {k: state[k] for k in presets_params()}
 
+
     # Remove entries that are identical to the defaults
     for k in list(data.keys()):
         if data[k] == defaults[k]:
