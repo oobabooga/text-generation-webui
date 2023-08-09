@@ -18,7 +18,8 @@ if "OOBABOOGA_FLAGS" in os.environ:
 else:
     cmd_flags_path = os.path.join(script_dir, "CMD_FLAGS.txt")
     if os.path.exists(cmd_flags_path):
-        CMD_FLAGS = open(cmd_flags_path, 'r').read().strip()
+        with open(cmd_flags_path, 'r') as f:
+            CMD_FLAGS = ' '.join(line.strip() for line in f.read().splitlines() if line.strip())
     else:
         CMD_FLAGS = '--chat'
 
