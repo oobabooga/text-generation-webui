@@ -53,9 +53,6 @@ llama-65b-gptq-3bit:
 .*vicuna.*(1.1|1_1|1.3|1_3):
   mode: 'instruct'
   instruction_template: 'Vicuna-v1.1'
-.*wizard.*vicuna:
-  mode: 'instruct'
-  instruction_template: 'Vicuna-v1.1'
 .*stable.*vicuna:
   mode: 'instruct'
   instruction_template: 'StableVicuna'
@@ -108,10 +105,6 @@ llama-65b-gptq-3bit:
   truncation_length: 4096
 .*stablelm-base:
   truncation_length: 4096
-.*wizardlm:
-  mode: 'instruct'
-  model_type: 'llama'
-  instruction_template: 'WizardLM'
 .*galactica.*finetuned:
   mode: 'instruct'
   instruction_template: 'Galactica Finetuned'
@@ -189,21 +182,12 @@ llama-65b-gptq-3bit:
 .*airoboros.*1.2:
   mode: 'instruct'
   instruction_template: 'Airoboros-v1.2'
-.*WizardLM-30B-V1.0:
-  mode: 'instruct'
-  instruction_template: 'Vicuna-v1.1'
-TheBloke_WizardLM-30B-GPTQ:
-  mode: 'instruct'
-  instruction_template: 'Vicuna-v1.1'
 .*alpa(cino|sta):
   mode: 'instruct'
   instruction_template: 'Alpaca'
 .*hippogriff:
   mode: 'instruct'
   instruction_template: 'Hippogriff'
-.*gpt4all-.*-snoozy:
-  mode: 'instruct'
-  instruction_template: 'WizardLM'
 .*lazarus:
   mode: 'instruct'
   instruction_template: 'Alpaca'
@@ -234,6 +218,7 @@ TheBloke_WizardLM-30B-GPTQ:
 .*starchat-beta:
   mode: 'instruct'
   instruction_template: 'Starchat-Beta'
+  custom_stopping_strings: '"<|end|>"'
 .*minotaur:
   mode: 'instruct'
   instruction_template: 'Minotaur'
@@ -266,7 +251,7 @@ TheBloke_WizardLM-30B-GPTQ:
   mode: 'instruct'
   instruction_template: 'Alpaca'
   truncation_length: 8192
-.*wizardlm-.*-v1.1:
+.*wizardlm:
   mode: 'instruct'
   instruction_template: 'Vicuna-v1.1'
 .*godzilla:
@@ -278,7 +263,7 @@ TheBloke_WizardLM-30B-GPTQ:
 .*llama-(2|v2).*chat:
   mode: 'instruct'
   instruction_template: 'Llama-v2'
-.*llama.*70b.*ggml.*\.bin:
+.*70b.*ggml.*\.bin:
   n_gqa: 8
 .*newhope:
   mode: 'instruct'
@@ -288,3 +273,6 @@ TheBloke_WizardLM-30B-GPTQ:
   instruction_template: 'StableBeluga2'
   truncation_length: 4096
   rms_norm_eps: 5.0e-6
+.*openchat:
+  mode: 'instruct'
+  instruction_template: 'OpenChat'

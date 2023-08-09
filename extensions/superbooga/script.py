@@ -96,7 +96,8 @@ def apply_settings(chunk_count, chunk_count_initial, time_weight):
 def custom_generate_chat_prompt(user_input, state, **kwargs):
     global chat_collector
 
-    history = state['history']
+    # get history as being modified when using regenerate.
+    history = kwargs['history']
 
     if state['mode'] == 'instruct':
         results = collector.get_sorted(user_input, n_results=params['chunk_count'])

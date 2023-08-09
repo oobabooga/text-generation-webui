@@ -86,12 +86,12 @@ def build_parameters(body, chat=False):
     return generate_params
 
 
-def try_start_cloudflared(port: int, max_attempts: int = 3, on_start: Optional[Callable[[str], None]] = None):
+def try_start_cloudflared(port: int, tunnel_id: str, max_attempts: int = 3, on_start: Optional[Callable[[str], None]] = None):
     Thread(target=_start_cloudflared, args=[
-           port, max_attempts, on_start], daemon=True).start()
+           port, tunnel_id, max_attempts, on_start], daemon=True).start()
 
 
-def _start_cloudflared(port: int, max_attempts: int = 3, on_start: Optional[Callable[[str], None]] = None):
+def _start_cloudflared(port: int, tunnel_id: str, max_attempts: int = 3, on_start: Optional[Callable[[str], None]] = None):
     try:
         from flask_cloudflared import _run_cloudflared
     except ImportError:
@@ -101,7 +101,7 @@ def _start_cloudflared(port: int, max_attempts: int = 3, on_start: Optional[Call
 
     for _ in range(max_attempts):
         try:
-            public_url = _run_cloudflared(port, port + 1)
+            public_url = _run_cloudflared(port, port + 1, tunnel_id=tunnel_id)
 
             if on_start:
                 on_start(public_url)
