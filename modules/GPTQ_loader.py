@@ -1,6 +1,5 @@
 import inspect
 import re
-import sys
 from pathlib import Path
 
 import accelerate
