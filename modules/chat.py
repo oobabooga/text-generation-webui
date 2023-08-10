@@ -347,7 +347,10 @@ def send_last_reply_to_input(history):
 
 def replace_last_reply(text, state):
     history = state['history']
-    if len(history['visible']) > 0:
+
+    if len(text.strip()) == 0:
+        return history
+    elif len(history['visible']) > 0:
         history['visible'][-1][1] = text
         history['internal'][-1][1] = apply_extensions('input', text, state)
 
