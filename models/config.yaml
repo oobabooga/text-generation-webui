@@ -57,7 +57,7 @@ llama-65b-gptq-3bit:
   mode: 'instruct'
   instruction_template: 'Vicuna-v1.1'
   truncation_length: 4096
-  rms_norm_eps: 1.0e-05  
+  rms_norm_eps: 5.0e-6  
 .*stable.*vicuna:
   mode: 'instruct'
   instruction_template: 'StableVicuna'
