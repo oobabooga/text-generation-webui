@@ -393,7 +393,8 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
                 raw_text = file.read().replace('\r', '')
 
         cut_string = hard_cut_string.replace('\\n', '\n')
-        newline_token = shared.tokenizer.encode('\n')[0]
+        newline_token = set(shared.tokenizer.encode('\n')[1:])
+        
         eos_added = 0
         out_tokens = []
         if add_eos_token and shared.tokenizer.eos_token_id == shared.tokenizer.bos_token_id:
@@ -711,7 +712,11 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         yield f"Done! LoRA saved to `{lora_file_path}`"
 
 
-def split_chunks(arr, size: int, step: int, max_newline_length: int, newline_token: int):
+def split_chunks(arr, size: int, step: int, max_newline_length: int, newline_tokens: set):
+    while arr and arr[1] in newline_tokens: # Skip the first token, which will be <BOS>
+        del arr[1]
+    while arr and arr[-1] in newline_tokens:
+        del arr[-1]
     num_tokens = len(arr)
     split_end = num_tokens - size + step  # Don't split in the last overlap
     if split_end < 0:
@@ -721,8 +726,8 @@ def split_chunks(arr, size: int, step: int, max_newline_length: int, newline_tok
         if split_starts[index] + size > num_tokens:
             split_starts[index] = num_tokens - size + 1
 
-        if max_newline_length > 0 and newline_token in arr[split_starts[index]:split_starts[index] + max_newline_length]:
-            first_newline = arr[split_starts[index]: split_starts[index] + max_newline_length].index(newline_token)
+        if max_newline_length > 0 and ( newline_tokens.intersection(arr[split_starts[index]:split_starts[index] + max_newline_length])):
+            first_newline = end_first_block(arr[split_starts[index]:],newline_tokens)
             split_starts[index] += first_newline
 
     labels = [1] * size
@@ -736,6 +741,14 @@ def split_chunks(arr, size: int, step: int, max_newline_length: int, newline_tok
             "attention_mask": input_ids.ne(shared.tokenizer.pad_token_id),
         }
 
+
+def end_first_block(arr:list, tokens: set):
+    offset = 0
+    while arr[offset] not in tokens:
+        offset += 1
+    while arr[offset] in tokens:
+        offset += 1
+    return offset
 
 def format_time(seconds: float):
     if seconds < 120:
