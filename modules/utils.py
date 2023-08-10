@@ -71,7 +71,12 @@ def natural_keys(text):
 
 
 def get_available_models():
-    return sorted([re.sub('.pth$', '', item.name) for item in list(Path(f'{shared.args.model_dir}/').glob('*')) if not item.name.endswith(('.txt', '-np', '.pt', '.json', '.yaml'))], key=natural_keys)
+    model_list = []
+    for item in list(Path(f'{shared.args.model_dir}/').glob('*')):
+        if not item.name.endswith(('.txt', '-np', '.pt', '.json', '.yaml', '.py')) and 'llama-tokenizer' not in item.name:
+            model_list.append(re.sub('.pth$', '', item.name))
+
+    return sorted(model_list, key=natural_keys)
 
 
 def get_available_presets():
@@ -120,8 +125,3 @@ def get_datasets(path: str, ext: str):
 
 def get_available_chat_styles():
     return sorted(set(('-'.join(k.stem.split('-')[1:]) for k in Path('css').glob('chat_style*.css'))), key=natural_keys)
-
-
-def get_available_sessions():
-    items = sorted(set(k.stem for k in Path('logs').glob(f'session_{shared.get_mode()}*')), key=natural_keys, reverse=True)
-    return [item for item in items if 'autosave' in item] + [item for item in items if 'autosave' not in item]
