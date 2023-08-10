@@ -131,6 +131,14 @@ So, in effect, Loss is a balancing game: you want to get it low enough that it u
 
 Note: if you see Loss start at or suddenly jump to exactly `0`, it is likely something has gone wrong in your training process (eg model corruption).
 
+## Note: 4-Bit Monkeypatch
+
+The [4-bit LoRA monkeypatch](GPTQ-models-(4-bit-mode).md#using-loras-in-4-bit-mode) works for training, but has side effects:
+- VRAM usage is higher currently. You can reduce the `Micro Batch Size` to `1` to compensate.
+- Models do funky things. LoRAs apply themselves, or refuse to apply, or spontaneously error out, or etc. It can be helpful to reload base model or restart the WebUI between training/usage to minimize chances of anything going haywire.
+- Loading or working with multiple LoRAs at the same time doesn't currently work.
+- Generally, recognize and treat the monkeypatch as the dirty temporary hack it is - it works, but isn't very stable. It will get better in time when everything is merged upstream for full official support.
+
 ## Legacy notes
 
 LoRA training was contributed by [mcmonkey4eva](https://github.com/mcmonkey4eva) in PR [#570](https://github.com/oobabooga/text-generation-webui/pull/570).

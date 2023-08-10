@@ -270,6 +270,12 @@ def calc_trainable_parameters(model):
 
 def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lr_scheduler_type: str, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, higher_rank_limit: bool, warmup_steps: int, optimizer: str, hard_cut_string: str, train_only_after: str, stop_at_loss: float, add_eos_token: bool, min_chars: int, report_to: str):
 
+    if shared.args.monkey_patch:
+        from monkeypatch.peft_tuners_lora_monkey_patch import (
+            replace_peft_model_with_gptq_lora_model
+        )
+        replace_peft_model_with_gptq_lora_model()
+
     global WANT_INTERRUPT
     WANT_INTERRUPT = False
 
@@ -300,6 +306,15 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             logger.warning(f"LoRA training has only currently been validated for LLaMA, OPT, GPT-J, and GPT-NeoX models. (Found model type: {model_type})")
 
         time.sleep(5)
+
+    if shared.args.wbits > 0 and not shared.args.monkey_patch:
+        yield "LoRA training with GPTQ models requires loading with `--monkey-patch`"
+        return
+
+    elif not (shared.args.load_in_8bit or shared.args.load_in_4bit) and shared.args.wbits <= 0:
+        yield "It is highly recommended you use `--load-in-8bit` for LoRA training. *(Will continue anyway in 2 seconds, press `Interrupt` to stop.)*"
+        logger.warning("It is highly recommended you use `--load-in-8bit` for LoRA training.")
+        time.sleep(2)  # Give it a moment for the message to show in UI before continuing
 
     if cutoff_len <= 0 or micro_batch_size <= 0 or batch_size <= 0 or actual_lr <= 0 or lora_rank <= 0 or lora_alpha <= 0:
         yield "Cannot input zeroes."
@@ -504,6 +519,14 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     except:
         yield traceback.format_exc().replace('\n', '\n\n')
         return
+
+    if shared.args.monkey_patch:
+        for n, m in lora_model.named_modules():
+            if '4bit' in str(type(m)):
+                if m.is_v1_model:
+                    m.zeros = m.zeros.half()
+
+                m.scales = m.scales.half()
 
     class Tracked():
         def __init__(self):
