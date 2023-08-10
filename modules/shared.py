@@ -36,6 +36,7 @@ settings = {
     'max_new_tokens_min': 1,
     'max_new_tokens_max': 4096,
     'auto_max_new_tokens': False,
+    'max_tokens_second': 0,
     'seed': -1,
     'negative_prompt': '',
     'character': 'None',

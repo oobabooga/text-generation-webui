@@ -76,9 +76,21 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False):
         reply, stop_found = apply_stopping_strings(reply, all_stop_strings)
         if is_stream:
             cur_time = time.time()
-            if cur_time - last_update > 0.041666666666666664:  # Limit streaming to 24 fps
+
+            # Maximum number of tokens/second
+            if state['max_tokens_second'] > 0:
+                diff = 1 / state['max_tokens_second'] - (cur_time - last_update)
+                if diff > 0:
+                    time.sleep(diff)
+
                 last_update = cur_time
                 yield reply
+
+            # Limit updates to 24 per second to not stress low latency networks
+            else:
+                if cur_time - last_update > 0.041666666666666664:
+                    last_update = cur_time
+                    yield reply
 
         if stop_found:
             break

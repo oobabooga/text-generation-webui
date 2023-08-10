@@ -110,6 +110,7 @@ def list_interface_input_elements():
         'ban_eos_token',
         'truncation_length',
         'custom_stopping_strings',
+        'max_tokens_second',
         'skip_special_tokens',
         'stream',
         'tfs',
