@@ -280,9 +280,6 @@ Optionally, you can use the following command-line flags:
 | `--pre_layer PRE_LAYER [PRE_LAYER ...]`  | The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models. For multi-gpu, write the numbers separated by spaces, eg `--pre_layer 30 60`. |
 | `--checkpoint CHECKPOINT` | The path to the quantized checkpoint file. If not specified, it will be automatically detected. |
 | `--monkey-patch`          | Apply the monkey patch for using LoRAs with quantized models.
-| `--quant_attn`         | (triton) Enable quant attention. |
-| `--warmup_autotune`    | (triton) Enable warmup autotune. |
-| `--fused_mlp`          | (triton) Enable fused mlp. |
 
 #### DeepSpeed
 
