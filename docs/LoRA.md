@@ -11,7 +11,6 @@ This is the current state of LoRA integration in the web UI:
 | Transformers | Full support in 16-bit, `--load-in-8bit`, `--load-in-4bit`, and CPU modes. |
 | ExLlama | Single LoRA support. Fast to remove the LoRA afterwards. |
 | AutoGPTQ | Single LoRA support. Removing the LoRA requires reloading the entire model.|
-| GPTQ-for-LLaMa | Full support with the [monkey patch](https://github.com/oobabooga/text-generation-webui/blob/main/docs/GPTQ-models-(4-bit-mode).md#using-loras-with-gptq-for-llama). |
 
 ## Downloading a LoRA
 
