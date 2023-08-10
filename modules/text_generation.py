@@ -83,7 +83,7 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False):
                 if diff > 0:
                     time.sleep(diff)
 
-                last_update = cur_time
+                last_update = time.time()
                 yield reply
 
             # Limit updates to 24 per second to not stress low latency networks
