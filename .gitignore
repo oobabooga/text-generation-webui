@@ -33,3 +33,5 @@ models/config-user.yaml
 
 .DS_Store
 Thumbs.db
+.env
+session_chat_settings.json
