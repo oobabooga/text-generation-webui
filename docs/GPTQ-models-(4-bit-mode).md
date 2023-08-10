@@ -64,7 +64,7 @@ python server.py --autogptq --gpu-memory 3000MiB 6000MiB --model model_name
 
 ### Using LoRAs with AutoGPTQ
 
-Not supported yet.
+Works fine for a single LoRA.
 
 ## GPTQ-for-LLaMa
 
