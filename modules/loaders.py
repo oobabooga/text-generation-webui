@@ -272,7 +272,6 @@ loaders_samplers = {
         'top_p',
         'top_k',
         'repetition_penalty',
-        'seed'
     }
 }
 

@@ -19,7 +19,7 @@ class CtransformersModel:
             threads=shared.args.threads,
             gpu_layers=shared.args.n_gpu_layers,
             batch_size=shared.args.n_batch,
-            stream=not shared.args.no_stream,
+            stream=True,
             seed=(-1 if shared.args.llama_cpp_seed == 0 else shared.args.llama_cpp_seed)
         )
 
@@ -38,6 +38,7 @@ class CtransformersModel:
     def model_dir(self, path):
         if path.is_file():
             return path.parent
+
         return path
 
     def encode(self, string, **kwargs):
@@ -62,7 +63,9 @@ class CtransformersModel:
         for token in generator:
             if callback:
                 callback(token)
+
             output += token
+
         return output
 
     def generate_with_streaming(self, *args, **kwargs):
