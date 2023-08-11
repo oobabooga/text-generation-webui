@@ -273,7 +273,7 @@ def CtransformorsModel_loader(model_name):
     from modules.ctransformers_model import CtransformersModel
 
     path = Path(f'{shared.args.model_dir}/{model_name}')
-    logger.info(f'ctransformers loading: {path}\n')
+    logger.info(f'ctransformers loading: {path}')
     ctrans = CtransformersModel()
     if ctrans.model_type_is_auto():
         model_file = path
@@ -281,10 +281,9 @@ def CtransformorsModel_loader(model_name):
         if path.is_file():
             model_file = path
         else:
-            model_file = list(
-                Path(f'{shared.args.model_dir}/{model_name}').glob('*.bin')
-            )[0]
+            model_file = list(Path(f'{shared.args.model_dir}/{model_name}').glob('*.bin'))[0]
             logger.info(f'ctransformers weights detected: {model_file}\n')
+
     model, tokenizer = ctrans.from_pretrained(model_file)
     return model, tokenizer
 

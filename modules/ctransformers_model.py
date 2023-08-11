@@ -22,11 +22,13 @@ class CtransformersModel:
             stream=not shared.args.no_stream,
             seed=(-1 if shared.args.llama_cpp_seed == 0 else shared.args.llama_cpp_seed)
         )
+
         self.model = AutoModelForCausalLM.from_pretrained(
             str(result.model_dir(path) if result.model_type_is_auto() else path),
             model_type=(None if result.model_type_is_auto() else shared.args.model_type),
             config=config
         )
+
         logger.info(f'Using ctransformers model_type: {self.model.model_type} for {self.model.model_path}')
         return result, result
 
