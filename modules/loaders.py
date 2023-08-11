@@ -92,7 +92,6 @@ loaders_and_params = OrderedDict({
         'llamacpp_HF_info',
     ],
     'ctransformers': [
-        'n_ctx',
         'n_gpu_layers',
         'n_batch',
         'threads',
