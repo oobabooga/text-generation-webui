@@ -86,7 +86,6 @@ loaders_and_params = OrderedDict({
         'no_mmap',
         'low_vram',
         'mlock',
-        'llama_cpp_seed',
         'alpha_value',
         'compress_pos_emb',
         'cpu',
@@ -270,6 +269,7 @@ loaders_samplers = {
         'top_p',
         'top_k',
         'repetition_penalty',
+        'repetition_penalty_range',
     }
 }
 
