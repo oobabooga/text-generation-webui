@@ -12,13 +12,10 @@ from modules.utils import gradio
 
 
 def create_ui():
-
-    shared.gradio.update({
-        'interface_state': gr.State({k: None for k in shared.input_elements}),
-        'Chat input': gr.State(),
-        'dummy': gr.State(),
-        'history': gr.State({'internal': [], 'visible': []}),
-    })
+    shared.gradio['interface_state'] = gr.State({k: None for k in shared.input_elements})
+    shared.gradio['Chat input'] = gr.State()
+    shared.gradio['dummy'] = gr.State()
+    shared.gradio['history'] = gr.State({'internal': [], 'visible': []})
 
     with gr.Tab('Text generation', elem_id='main'):
         shared.gradio['display'] = gr.HTML(value=chat_html_wrapper({'internal': [], 'visible': []}, shared.settings['name1'], shared.settings['name2'], 'chat', 'cai-chat'))
@@ -52,7 +49,7 @@ def create_ui():
             shared.gradio['chat_style'] = gr.Dropdown(choices=utils.get_available_chat_styles(), label='Chat style', value=shared.settings['chat_style'], visible=shared.settings['mode'] != 'instruct')
 
     with gr.Tab('Chat settings', elem_id='chat-settings'):
-        with gr.Tab("Character"):
+        with gr.Tab('Character'):
             with gr.Row():
                 with gr.Column(scale=8):
                     with gr.Row():
@@ -70,7 +67,7 @@ def create_ui():
                     shared.gradio['character_picture'] = gr.Image(label='Character picture', type='pil')
                     shared.gradio['your_picture'] = gr.Image(label='Your picture', type='pil', value=Image.open(Path('cache/pfp_me.png')) if Path('cache/pfp_me.png').exists() else None)
 
-        with gr.Tab("Instruction template"):
+        with gr.Tab('Instruction template'):
             with gr.Row():
                 with gr.Row():
                     shared.gradio['instruction_template'] = gr.Dropdown(choices=utils.get_available_instruction_templates(), label='Instruction template', value='None', info='Change this according to the model/LoRA that you are using. Used in instruct and chat-instruct modes.', elem_classes='slim-dropdown')
@@ -91,7 +88,7 @@ def create_ui():
                     shared.gradio['save_chat_history'] = gr.Button(value='Save history')
 
                 with gr.Column():
-                    shared.gradio['load_chat_history'] = gr.File(type='binary', file_types=['.json', '.txt'], label="Upload History JSON")
+                    shared.gradio['load_chat_history'] = gr.File(type='binary', file_types=['.json', '.txt'], label='Upload History JSON')
 
         with gr.Tab('Upload character'):
             with gr.Tab('YAML or JSON'):
@@ -104,7 +101,7 @@ def create_ui():
             with gr.Tab('TavernAI PNG'):
                 with gr.Row():
                     with gr.Column():
-                        shared.gradio['upload_img_tavern'] = gr.Image(type='pil', label='TavernAI PNG File', elem_id="upload_img_tavern")
+                        shared.gradio['upload_img_tavern'] = gr.Image(type='pil', label='TavernAI PNG File', elem_id='upload_img_tavern')
                         shared.gradio['tavern_json'] = gr.State()
                     with gr.Column():
                         shared.gradio['tavern_name'] = gr.Textbox(value='', lines=1, label='Name', interactive=False)
@@ -126,7 +123,7 @@ def create_event_handlers():
         chat.generate_chat_reply_wrapper, shared.input_params, gradio('display', 'history'), show_progress=False).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         chat.save_persistent_history, gradio('history', 'character_menu', 'mode'), None).then(
-        lambda: None, None, None, _js=f"() => {{{ui.audio_notification_js}}}")
+        lambda: None, None, None, _js=f'() => {{{ui.audio_notification_js}}}')
     )
 
     gen_events.append(shared.gradio['textbox'].submit(
@@ -135,7 +132,7 @@ def create_event_handlers():
         chat.generate_chat_reply_wrapper, shared.input_params, gradio('display', 'history'), show_progress=False).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         chat.save_persistent_history, gradio('history', 'character_menu', 'mode'), None).then(
-        lambda: None, None, None, _js=f"() => {{{ui.audio_notification_js}}}")
+        lambda: None, None, None, _js=f'() => {{{ui.audio_notification_js}}}')
     )
 
     gen_events.append(shared.gradio['Regenerate'].click(
@@ -143,7 +140,7 @@ def create_event_handlers():
         partial(chat.generate_chat_reply_wrapper, regenerate=True), shared.input_params, gradio('display', 'history'), show_progress=False).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         chat.save_persistent_history, gradio('history', 'character_menu', 'mode'), None).then(
-        lambda: None, None, None, _js=f"() => {{{ui.audio_notification_js}}}")
+        lambda: None, None, None, _js=f'() => {{{ui.audio_notification_js}}}')
     )
 
     gen_events.append(shared.gradio['Continue'].click(
@@ -151,7 +148,7 @@ def create_event_handlers():
         partial(chat.generate_chat_reply_wrapper, _continue=True), shared.input_params, gradio('display', 'history'), show_progress=False).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         chat.save_persistent_history, gradio('history', 'character_menu', 'mode'), None).then(
-        lambda: None, None, None, _js=f"() => {{{ui.audio_notification_js}}}")
+        lambda: None, None, None, _js=f'() => {{{ui.audio_notification_js}}}')
     )
 
     gen_events.append(shared.gradio['Impersonate'].click(
@@ -159,7 +156,7 @@ def create_event_handlers():
         lambda x: x, gradio('textbox'), gradio('Chat input'), show_progress=False).then(
         chat.impersonate_wrapper, shared.input_params, gradio('textbox'), show_progress=False).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        lambda: None, None, None, _js=f"() => {{{ui.audio_notification_js}}}")
+        lambda: None, None, None, _js=f'() => {{{ui.audio_notification_js}}}')
     )
 
     shared.gradio['Replace last reply'].click(
@@ -243,7 +240,7 @@ def create_event_handlers():
 
     shared.gradio['save_chat_history'].click(
         lambda x: json.dumps(x, indent=4), gradio('history'), gradio('temporary_text')).then(
-        None, gradio('temporary_text', 'character_menu', 'mode'), None, _js=f"(hist, char, mode) => {{{ui.save_files_js}; saveHistory(hist, char, mode)}}")
+        None, gradio('temporary_text', 'character_menu', 'mode'), None, _js=f'(hist, char, mode) => {{{ui.save_files_js}; saveHistory(hist, char, mode)}}')
 
     shared.gradio['Submit character'].click(
         chat.upload_character, gradio('upload_json', 'upload_img_bot'), gradio('character_menu')).then(

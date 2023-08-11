@@ -15,7 +15,7 @@ def create_ui():
     shared.gradio['interface_state'] = gr.State({k: None for k in shared.input_elements})
     shared.gradio['last_input'] = gr.State('')
 
-    with gr.Tab("Text generation", elem_id="main"):
+    with gr.Tab('Text generation', elem_id='main'):
         with gr.Row():
             with gr.Column():
                 shared.gradio['textbox'] = gr.Textbox(value=default_text, elem_classes=['textbox_default', 'add_scrollbar'], lines=27, label='Input')
@@ -56,7 +56,7 @@ def create_event_handlers():
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         generate_reply_wrapper, shared.input_params, output_params, show_progress=False).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        lambda: None, None, None, _js=f"() => {{{ui.audio_notification_js}}}")
+        lambda: None, None, None, _js=f'() => {{{ui.audio_notification_js}}}')
         # lambda: None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[0]; element.scrollTop = element.scrollHeight}")
     )
 
@@ -65,7 +65,7 @@ def create_event_handlers():
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         generate_reply_wrapper, shared.input_params, output_params, show_progress=False).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        lambda: None, None, None, _js=f"() => {{{ui.audio_notification_js}}}")
+        lambda: None, None, None, _js=f'() => {{{ui.audio_notification_js}}}')
         # lambda: None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[0]; element.scrollTop = element.scrollHeight}")
     )
 
@@ -74,7 +74,7 @@ def create_event_handlers():
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         generate_reply_wrapper, [shared.gradio['output_textbox']] + shared.input_params[1:], output_params, show_progress=False).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        lambda: None, None, None, _js=f"() => {{{ui.audio_notification_js}}}")
+        lambda: None, None, None, _js=f'() => {{{ui.audio_notification_js}}}')
         # lambda: None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[1]; element.scrollTop = element.scrollHeight}")
     )
 

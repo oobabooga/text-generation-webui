@@ -11,11 +11,10 @@ from modules.utils import gradio
 
 def create_ui():
     default_text = load_prompt(shared.settings['prompt'])
-
     shared.gradio['interface_state'] = gr.State({k: None for k in shared.input_elements})
     shared.gradio['last_input'] = gr.State('')
 
-    with gr.Tab("Text generation", elem_id="main"):
+    with gr.Tab('Text generation', elem_id='main'):
         with gr.Row():
             with gr.Column(scale=4):
                 with gr.Tab('Raw'):
@@ -29,10 +28,10 @@ def create_ui():
                     shared.gradio['html'] = gr.HTML()
 
                 with gr.Row():
-                    shared.gradio['Generate'] = gr.Button('Generate', variant='primary', elem_classes="small-button")
-                    shared.gradio['Stop'] = gr.Button('Stop', elem_classes="small-button", elem_id='stop')
-                    shared.gradio['Undo'] = gr.Button('Undo', elem_classes="small-button")
-                    shared.gradio['Regenerate'] = gr.Button('Regenerate', elem_classes="small-button")
+                    shared.gradio['Generate'] = gr.Button('Generate', variant='primary', elem_classes='small-button')
+                    shared.gradio['Stop'] = gr.Button('Stop', elem_classes='small-button', elem_id='stop')
+                    shared.gradio['Undo'] = gr.Button('Undo', elem_classes='small-button')
+                    shared.gradio['Regenerate'] = gr.Button('Regenerate', elem_classes='small-button')
 
             with gr.Column(scale=1):
                 gr.HTML('<div style="padding-bottom: 13px"></div>')
@@ -58,7 +57,7 @@ def create_event_handlers():
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         generate_reply_wrapper, shared.input_params, output_params, show_progress=False).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        lambda: None, None, None, _js=f"() => {{{ui.audio_notification_js}}}")
+        lambda: None, None, None, _js=f'() => {{{ui.audio_notification_js}}}')
         # lambda: None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[0]; element.scrollTop = element.scrollHeight}")
     )
 
@@ -67,7 +66,7 @@ def create_event_handlers():
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         generate_reply_wrapper, shared.input_params, output_params, show_progress=False).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        lambda: None, None, None, _js=f"() => {{{ui.audio_notification_js}}}")
+        lambda: None, None, None, _js=f'() => {{{ui.audio_notification_js}}}')
         # lambda: None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[0]; element.scrollTop = element.scrollHeight}")
     )
 
@@ -78,7 +77,7 @@ def create_event_handlers():
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         generate_reply_wrapper, shared.input_params, output_params, show_progress=False).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        lambda: None, None, None, _js=f"() => {{{ui.audio_notification_js}}}")
+        lambda: None, None, None, _js=f'() => {{{ui.audio_notification_js}}}')
         # lambda: None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[0]; element.scrollTop = element.scrollHeight}")
     )
 
