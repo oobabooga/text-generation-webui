@@ -1,9 +1,9 @@
-from ctransformers import AutoModelForCausalLM
-from ctransformers import AutoConfig
+from ctransformers import AutoConfig, AutoModelForCausalLM
 
 from modules import shared
 from modules.callbacks import Iteratorize
 from modules.logging_colors import logger
+
 
 class CtransformersModel:
     def __init__(self):
@@ -12,13 +12,10 @@ class CtransformersModel:
     @classmethod
     def from_pretrained(self, path):
         result = self()
-        stops = shared.settings['custom_stopping_strings']
-        stops.append("<|end|>")
 
         # ctransformers uses -1 for random seed
         config = AutoConfig.from_pretrained(
             str(path),
-            stop=stops,
             threads=shared.args.threads,
             gpu_layers=shared.args.n_gpu_layers,
             batch_size=shared.args.n_batch,
@@ -47,7 +44,6 @@ class CtransformersModel:
     def decode(self, ids):
         return self.model.detokenize(ids)
 
-
     def generate(self, prompt, state, callback=None):
         prompt = prompt if type(prompt) is str else prompt.decode()
         generator = self.model._stream(
@@ -66,7 +62,6 @@ class CtransformersModel:
                 callback(token)
             output += token
         return output
-
 
     def generate_with_streaming(self, *args, **kwargs):
         with Iteratorize(self.generate, args, kwargs, callback=None) as generator:

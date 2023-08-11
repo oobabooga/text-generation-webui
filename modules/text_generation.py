@@ -88,6 +88,7 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False):
 
     yield reply
 
+
 def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_length=None):
     if shared.model.__class__.__name__ in ['LlamaCppModel', 'RWKVModel', 'CtransformersModel']:
         input_ids = shared.tokenizer.encode(str(prompt))

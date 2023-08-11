@@ -288,6 +288,7 @@ def CtransformorsModel_loader(model_name):
     model, tokenizer = ctrans.from_pretrained(model_file)
     return model, tokenizer
 
+
 def GPTQ_loader(model_name):
 
     # Monkey patch

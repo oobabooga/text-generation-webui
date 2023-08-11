@@ -276,25 +276,7 @@ loaders_samplers = {
     }
 }
 
-
-@functools.cache
-def list_all_samplers():
-    all_samplers = set()
-    for k in loaders_samplers:
-        for sampler in loaders_samplers[k]:
-            all_samplers.add(sampler)
-
-    return sorted(all_samplers)
-
-
-def blacklist_samplers(loader):
-    all_samplers = list_all_samplers()
-    if loader == 'All':
-        return [gr.update(visible=True) for sampler in all_samplers]
-    else:
-        return [gr.update(visible=True) if sampler in loaders_samplers[loader] else gr.update(visible=False) for sampler in all_samplers]
-
-model_loader_type_table = {
+loaders_model_types = {
     'GPTQ-for-LLaMa': [
         "None",
         "llama",
@@ -315,10 +297,31 @@ model_loader_type_table = {
     ],
 }
 
-def model_loader_type(loader):
-    if loader in model_loader_type_table:
-        return model_loader_type_table[loader]
+
+@functools.cache
+def list_all_samplers():
+    all_samplers = set()
+    for k in loaders_samplers:
+        for sampler in loaders_samplers[k]:
+            all_samplers.add(sampler)
+
+    return sorted(all_samplers)
+
+
+def blacklist_samplers(loader):
+    all_samplers = list_all_samplers()
+    if loader == 'All':
+        return [gr.update(visible=True) for sampler in all_samplers]
+    else:
+        return [gr.update(visible=True) if sampler in loaders_samplers[loader] else gr.update(visible=False) for sampler in all_samplers]
+
+
+def get_model_types(loader):
+    if loader in loaders_model_types:
+        return loaders_model_types[loader]
+
     return ["None"]
+
 
 def get_gpu_memory_keys():
     return [k for k in shared.gradio if k.startswith('gpu_memory')]
