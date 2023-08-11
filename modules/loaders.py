@@ -1,10 +1,43 @@
 import functools
+from collections import OrderedDict
 
 import gradio as gr
 
 from modules import shared
 
-loaders_and_params = {
+loaders_and_params = OrderedDict({
+    'Transformers': [
+        'cpu_memory',
+        'gpu_memory',
+        'trust_remote_code',
+        'load_in_8bit',
+        'bf16',
+        'cpu',
+        'disk',
+        'auto_devices',
+        'load_in_4bit',
+        'use_double_quant',
+        'quant_type',
+        'compute_dtype',
+        'trust_remote_code',
+        'alpha_value',
+        'compress_pos_emb',
+        'transformers_info'
+    ],
+    'ExLlama_HF': [
+        'gpu_split',
+        'max_seq_len',
+        'alpha_value',
+        'compress_pos_emb',
+        'exllama_HF_info',
+    ],
+    'ExLlama': [
+        'gpu_split',
+        'max_seq_len',
+        'alpha_value',
+        'compress_pos_emb',
+        'exllama_info',
+    ],
     'AutoGPTQ': [
         'triton',
         'no_inject_fused_attention',
@@ -59,39 +92,15 @@ loaders_and_params = {
         'cpu',
         'llamacpp_HF_info',
     ],
-    'Transformers': [
-        'cpu_memory',
-        'gpu_memory',
-        'trust_remote_code',
-        'load_in_8bit',
-        'bf16',
-        'cpu',
-        'disk',
-        'auto_devices',
-        'load_in_4bit',
-        'use_double_quant',
-        'quant_type',
-        'compute_dtype',
-        'trust_remote_code',
-        'alpha_value',
-        'compress_pos_emb',
-        'transformers_info'
-    ],
-    'ExLlama': [
-        'gpu_split',
-        'max_seq_len',
-        'alpha_value',
-        'compress_pos_emb',
-        'exllama_info',
-    ],
-    'ExLlama_HF': [
-        'gpu_split',
-        'max_seq_len',
-        'alpha_value',
-        'compress_pos_emb',
-        'exllama_HF_info',
+    'ctransformers': [
+        'n_ctx',
+        'n_gpu_layers',
+        'n_batch',
+        'threads',
+        'model_type',
+        'llama_cpp_seed',
     ]
-}
+})
 
 loaders_samplers = {
     'Transformers': {
@@ -256,6 +265,33 @@ loaders_samplers = {
         'skip_special_tokens',
         'auto_max_new_tokens',
     },
+    'ctransformers': {
+        'temperature',
+        'top_p',
+        'top_k',
+        'repetition_penalty',
+    }
+}
+
+loaders_model_types = {
+    'GPTQ-for-LLaMa': [
+        "None",
+        "llama",
+        "opt",
+        "gptj"
+    ],
+    'ctransformers': [
+        "None",
+        "gpt2",
+        "gptj",
+        "gptneox",
+        "llama",
+        "mpt",
+        "dollyv2"
+        "replit",
+        "starcoder",
+        "falcon"
+    ],
 }
 
 
@@ -275,6 +311,13 @@ def blacklist_samplers(loader):
         return [gr.update(visible=True) for sampler in all_samplers]
     else:
         return [gr.update(visible=True) if sampler in loaders_samplers[loader] else gr.update(visible=False) for sampler in all_samplers]
+
+
+def get_model_types(loader):
+    if loader in loaders_model_types:
+        return loaders_model_types[loader]
+
+    return ["None"]
 
 
 def get_gpu_memory_keys():
