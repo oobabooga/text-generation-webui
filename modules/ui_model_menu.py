@@ -129,7 +129,7 @@ def create_ui():
 def create_event_handlers():
     shared.gradio['loader'].change(
         loaders.make_loader_params_visible, gradio('loader'), gradio(loaders.get_all_params())).then(
-        lambda value: gr.update(choices=loaders.get_model_types(value)), shared.gradio['loader'], shared.gradio['model_type'])
+        lambda value: gr.update(choices=loaders.get_model_types(value)), gradio('loader'), gradio('model_type'))
 
     # In this event handler, the interface state is read and updated
     # with the model defaults (if any), and then the model is loaded
