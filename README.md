@@ -258,6 +258,12 @@ Optionally, you can use the following command-line flags:
 | `--rms_norm_eps RMS_NORM_EPS`  | 5e-6 is a good value for llama-2 models. |
 | `--cpu`                        | Use the CPU version of llama-cpp-python instead of the GPU-accelerated version. |
 
+#### ctransformers
+
+| Flag        | Description |
+|-------------|-------------|
+| `--model_type MODEL_TYPE` | Model type of pre-quantized model. Currently gpt2, gptj, gpt_neox, falcon, llama, mpt, gpt_bigcode, dolly-v2, and replit are supported. |
+
 #### AutoGPTQ
 
 | Flag             | Description |
