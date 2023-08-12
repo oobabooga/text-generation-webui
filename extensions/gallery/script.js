@@ -1,4 +1,4 @@
-let gallery_element = document.getElementById('gallery-extension').parentNode;
+let gallery_element = document.getElementById('gallery-extension');
 
 main_parent.addEventListener('click', function(e) {
     let chat_visible =  (chat_tab.offsetHeight > 0 && chat_tab.offsetWidth > 0);

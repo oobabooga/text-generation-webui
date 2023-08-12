@@ -143,8 +143,8 @@ def remove_special_tokens(string):
     return re.sub(pattern, '', string)
 
 
-def input_modifier(string):
-    if shared.is_chat():
+def input_modifier(string, state, is_chat=False):
+    if is_chat:
         return string
 
     # Find the user input

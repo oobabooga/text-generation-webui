@@ -198,7 +198,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
     if not any((regenerate, _continue)):
         visible_text = text
         text, visible_text = apply_extensions('chat_input', text, visible_text, state)
-        text = apply_extensions('input', text, state)
+        text = apply_extensions('input', text, state, is_chat=True)
 
         # *Is typing...*
         if loading_message:
@@ -236,7 +236,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
         # We need this global variable to handle the Stop event,
         # otherwise gradio gets confused
         if shared.stop_everything:
-            output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state)
+            output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
             yield output
             return
 
@@ -257,7 +257,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             if is_stream:
                 yield output
 
-    output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state)
+    output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
     yield output
 
 
@@ -341,7 +341,7 @@ def replace_last_reply(text, state):
         return history
     elif len(history['visible']) > 0:
         history['visible'][-1][1] = text
-        history['internal'][-1][1] = apply_extensions('input', text, state)
+        history['internal'][-1][1] = apply_extensions('input', text, state, is_chat=True)
 
     return history
 
@@ -349,7 +349,7 @@ def replace_last_reply(text, state):
 def send_dummy_message(text, state):
     history = state['history']
     history['visible'].append([text, ''])
-    history['internal'].append([apply_extensions('input', text, state), ''])
+    history['internal'].append([apply_extensions('input', text, state, is_chat=True), ''])
     return history
 
 
@@ -360,7 +360,7 @@ def send_dummy_reply(text, state):
         history['internal'].append(['', ''])
 
     history['visible'][-1][1] = text
-    history['internal'][-1][1] = apply_extensions('input', text, state)
+    history['internal'][-1][1] = apply_extensions('input', text, state, is_chat=True)
     return history
 
 
@@ -374,7 +374,7 @@ def clear_chat_log(state):
     if mode != 'instruct':
         if greeting != '':
             history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
-            history['visible'] += [['', apply_extensions('output', greeting, state)]]
+            history['visible'] += [['', apply_extensions('output', greeting, state, is_chat=True)]]
 
     return history
 
@@ -441,7 +441,7 @@ def load_persistent_history(state):
         history = {'internal': [], 'visible': []}
         if greeting != "":
             history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
-            history['visible'] += [['', apply_extensions('output', greeting, state)]]
+            history['visible'] += [['', apply_extensions('output', greeting, state, is_chat=True)]]
 
     return history
 
