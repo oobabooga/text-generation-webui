@@ -326,6 +326,7 @@ Optionally, you can use the following command-line flags:
 | `--public-api-id PUBLIC_API_ID`       | Tunnel ID for named Cloudflare Tunnel. Use together with public-api option. |
 | `--api-blocking-port BLOCKING_PORT`   | The listening port for the blocking API. |
 | `--api-streaming-port STREAMING_PORT` | The listening port for the streaming API. |
+| `--http_auth`                         | Enables (very) basic authentication for the API. If set call the API with HTTP Header X-TEXT-UI-AUTH and the value from the console. Use togehter with api option |
 
 #### Multimodal
 
