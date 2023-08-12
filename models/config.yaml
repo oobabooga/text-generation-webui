@@ -10,6 +10,12 @@
   model_type: 'llama'
 .*bloom:
   model_type: 'bloom'
+.*mpt:
+  model_type: 'mpt'
+.*falcon:
+  model_type: 'falcon'
+.*gpt2:
+  model_type: 'gpt2'
 llama-65b-gptq-3bit:
   groupsize: 'None'
 .*(4bit|int4):
