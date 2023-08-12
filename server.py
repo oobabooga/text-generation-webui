@@ -106,7 +106,6 @@ def create_interface():
         ui_notebook.create_ui()
         ui_default.create_ui()
 
-        ui_chat.create_chat_settings_ui()
         ui_parameters.create_ui(shared.settings['preset'])  # Parameters tab
         ui_model_menu.create_ui()  # Model tab
         training.create_ui()  # Training tab

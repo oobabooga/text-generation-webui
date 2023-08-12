@@ -188,8 +188,7 @@ def create_extensions_block():
     if len(to_display) > 0:
         with gr.Column(elem_id="extensions"):
             for row in to_display:
-                extension, name = row
-                display_name = getattr(extension, 'params', {}).get('display_name', name)
+                extension, _ = row
                 extension.ui()
 
 
