@@ -13,14 +13,12 @@ class CtransformersModel:
     def from_pretrained(self, path):
         result = self()
 
-        # ctransformers uses -1 for random seed
         config = AutoConfig.from_pretrained(
             str(path),
             threads=shared.args.threads,
             gpu_layers=shared.args.n_gpu_layers,
             batch_size=shared.args.n_batch,
-            stream=True,
-            seed=(-1 if shared.args.llama_cpp_seed == 0 else shared.args.llama_cpp_seed)
+            stream=True
         )
 
         self.model = AutoModelForCausalLM.from_pretrained(
@@ -49,6 +47,7 @@ class CtransformersModel:
 
     def generate(self, prompt, state, callback=None):
         prompt = prompt if type(prompt) is str else prompt.decode()
+        # ctransformers uses -1 for random seed
         generator = self.model._stream(
             prompt=prompt,
             max_new_tokens=state['max_new_tokens'],
@@ -57,7 +56,7 @@ class CtransformersModel:
             top_k=state['top_k'],
             repetition_penalty=state['repetition_penalty'],
             last_n_tokens=state['repetition_penalty_range'],
-            threads=shared.args.threads
+            seed=shared.settings['seed']
         )
 
         output = ""

@@ -95,8 +95,7 @@ loaders_and_params = OrderedDict({
         'n_gpu_layers',
         'n_batch',
         'threads',
-        'model_type',
-        'llama_cpp_seed',
+        'model_type'
     ]
 })
 
