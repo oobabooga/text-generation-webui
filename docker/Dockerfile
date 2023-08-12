@@ -1,7 +1,7 @@
 FROM nvidia/cuda:11.8.0-devel-ubuntu22.04 as builder
 
 RUN apt-get update && \
-    apt-get install --no-install-recommends -y git vim build-essential python3-dev python3-venv && \
+    apt-get install --no-install-recommends -y git vim build-essential python3-dev python3-venv libmpich-dev && \
     rm -rf /var/lib/apt/lists/*
 
 RUN git clone https://github.com/oobabooga/GPTQ-for-LLaMa /build
@@ -26,7 +26,7 @@ LABEL maintainer="Your Name <your.email@example.com>"
 LABEL description="Docker image for GPTQ-for-LLaMa and Text Generation WebUI"
 
 RUN apt-get update && \
-    apt-get install --no-install-recommends -y python3-dev libportaudio2 libasound-dev git python3 python3-pip make g++ && \
+    apt-get install --no-install-recommends -y python3-dev libportaudio2 libasound-dev git python3 python3-pip make g++ libmpich-dev && \
     rm -rf /var/lib/apt/lists/*
 
 RUN --mount=type=cache,target=/root/.cache/pip pip3 install virtualenv
