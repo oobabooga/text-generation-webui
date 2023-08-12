@@ -17,6 +17,17 @@ from websockets.server import serve
 
 PATH = '/api/v1/stream'
 
+async def ensureModelLoaded(websocket):
+    if shared.model_name != 'None':
+        return True
+    else:
+        print('websocket request not handled, no model is loaded')
+        await websocket.send(json.dumps({
+            'event': 'warning',
+            'message': 'no model loaded'
+        }))
+        return False
+	
 
 @with_api_lock
 async def _handle_stream_message(websocket, message):
@@ -89,7 +100,7 @@ async def _handle_chat_stream_message(websocket, message):
 @with_api_lock
 async def _handle_token_count_request(websocket, message):
     body = json.loads(message)
-
+    
     await websocket.send(json.dumps({
         'event': 'token-count',
         'count': get_encoded_length(body['prompt']),
@@ -101,15 +112,18 @@ async def _handle_connection(websocket, path):
 
     if path == '/api/v1/stream':
         async for message in websocket:
-            await _handle_stream_message(websocket, message)
+            if await ensureModelLoaded(websocket):
+                await _handle_stream_message(websocket, message)
 
     elif path == '/api/v1/chat-stream':
         async for message in websocket:
-            await _handle_chat_stream_message(websocket, message)
+            if await ensureModelLoaded(websocket):
+                await _handle_chat_stream_message(websocket, message)
             
     elif path == '/api/v1/token-count':
         async for message in websocket:
-            await _handle_token_count_request(websocket, message)
+            if await ensureModelLoaded(websocket):
+                await _handle_token_count_request(websocket, message)
 
     else:
         print(f'Streaming api: unknown path: {path}')
