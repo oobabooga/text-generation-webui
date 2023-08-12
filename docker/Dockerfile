@@ -11,7 +11,7 @@ WORKDIR /build
 RUN python3 -m venv /build/venv
 RUN . /build/venv/bin/activate && \
     pip3 install --upgrade pip setuptools wheel && \
-    pip3 install torch torchvision torchaudio && \
+    pip3 install torch torchvision torchaudio deepspeed mpi4py mpi4py-mpich && \
     pip3 install -r requirements.txt
 
 # https://developer.nvidia.com/cuda-gpus
@@ -40,7 +40,7 @@ RUN test -n "${WEBUI_VERSION}" && git reset --hard ${WEBUI_VERSION} || echo "Usi
 RUN virtualenv /app/venv
 RUN . /app/venv/bin/activate && \
     pip3 install --upgrade pip setuptools wheel && \
-    pip3 install torch torchvision torchaudio
+    pip3 install torch torchvision torchaudio deepspeed mpi4py mpi4py-mpich
 
 COPY --from=builder /build /app/repositories/GPTQ-for-LLaMa
 RUN . /app/venv/bin/activate && \
