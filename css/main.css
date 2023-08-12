@@ -100,7 +100,7 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
 }
 
 .textbox_default textarea {
-    height: calc(100vh - 318px);
+    height: calc(100vh - 310px);
 }
 
 .textbox_default_output textarea {
