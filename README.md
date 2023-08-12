@@ -207,7 +207,7 @@ Optionally, you can use the following command-line flags:
 
 | Flag                                       | Description |
 |--------------------------------------------|-------------|
-| `--loader LOADER`                          | Choose the model loader manually, otherwise, it will get autodetected. Valid options: transformers, autogptq, gptq-for-llama, exllama, exllama_hf, llamacpp, rwkv |
+| `--loader LOADER`                          | Choose the model loader manually, otherwise, it will get autodetected. Valid options: transformers, autogptq, gptq-for-llama, exllama, exllama_hf, llamacpp, rwkv, ctransformers |
 
 #### Accelerate/transformers
 
@@ -237,18 +237,23 @@ Optionally, you can use the following command-line flags:
 | `--quant_type QUANT_TYPE`                   | quant_type for 4-bit. Valid options: nf4, fp4. |
 | `--use_double_quant`                        | use_double_quant for 4-bit. |
 
-#### llama.cpp
+#### GGML (for llama.cpp and ctransformers)
 
 | Flag        | Description |
 |-------------|-------------|
 | `--threads` | Number of threads to use. |
 | `--n_batch` | Maximum number of prompt tokens to batch together when calling llama_eval. |
+| `--n-gpu-layers N_GPU_LAYERS` | Number of layers to offload to the GPU. Only works if llama-cpp-python was compiled with BLAS. Set this to 1000000000 to offload all layers to the GPU. |
+| `--n_ctx N_CTX` | Size of the prompt context. |
+| `--llama_cpp_seed SEED` | Seed for llama-cpp and ctransformers models. Default 0 (random). |
+
+#### llama.cpp
+
+| Flag        | Description |
+|-------------|-------------|
 | `--no-mmap` | Prevent mmap from being used. |
 | `--mlock`   | Force the system to keep the model in RAM. |
 | `--cache-capacity CACHE_CAPACITY`   | Maximum cache capacity. Examples: 2000MiB, 2GiB. When provided without units, bytes will be assumed. |
-| `--n-gpu-layers N_GPU_LAYERS` | Number of layers to offload to the GPU. Only works if llama-cpp-python was compiled with BLAS. Set this to 1000000000 to offload all layers to the GPU. |
-| `--n_ctx N_CTX` | Size of the prompt context. |
-| `--llama_cpp_seed SEED` | Seed for llama-cpp models. Default 0 (random). |
 | `--n_gqa N_GQA`         | grouped-query attention. Must be 8 for llama-2 70b. |
 | `--rms_norm_eps RMS_NORM_EPS`  | 5e-6 is a good value for llama-2 models. |
 | `--cpu`                        | Use the CPU version of llama-cpp-python instead of the GPU-accelerated version. |
