@@ -78,8 +78,8 @@ def str2bool(v):
 parser = argparse.ArgumentParser(formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=54))
 
 # Basic settings
-parser.add_argument('--notebook', action='store_true', help='Launch the web UI in notebook mode, where the output is written to the same text box as the input.')
-parser.add_argument('--chat', action='store_true', help='Launch the web UI in chat mode with a style similar to the Character.AI website.')
+parser.add_argument('--notebook', action='store_true', help='DEPRECATED')
+parser.add_argument('--chat', action='store_true', help='DEPRECATED')
 parser.add_argument('--multi-user', action='store_true', help='Multi-user mode. Chat histories are not saved or automatically loaded. WARNING: this is highly experimental.')
 parser.add_argument('--character', type=str, help='The name of the character to load in chat mode by default.')
 parser.add_argument('--model', type=str, help='Name of the model to load by default.')
@@ -183,6 +183,11 @@ parser.add_argument('--multimodal-pipeline', type=str, default=None, help='The m
 
 args = parser.parse_args()
 args_defaults = parser.parse_args([])
+
+# Deprecation warnings
+for k in ['chat', 'notebook']:
+    if getattr(args, k):
+        logger.warning(f'--{k} has been deprecated and will be removed soon. Please remove that flag.')
 
 # Security warnings
 if args.trust_remote_code:
