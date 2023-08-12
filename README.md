@@ -262,6 +262,7 @@ Optionally, you can use the following command-line flags:
 | `--no_inject_fused_mlp`        | Triton mode only: disable the use of fused MLP, which will use less VRAM at the cost of slower inference. |
 | `--no_use_cuda_fp16`           | This can make models faster on some systems. |
 | `--desc_act`                   | For models that don't have a quantize_config.json, this parameter is used to define whether to set desc_act or not in BaseQuantizeConfig. |
+| `--disable_exllama`            | Disable ExLlama kernel, which can improve inference speed on some systems. |
 
 #### ExLlama
 
