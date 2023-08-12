@@ -9,7 +9,10 @@ from extensions.api.util import (
 )
 from modules import shared
 from modules.chat import generate_chat_reply
-from modules.text_generation import generate_reply
+from modules.text_generation import (
+    get_encoded_length,
+    generate_reply
+)
 from websockets.server import serve
 
 PATH = '/api/v1/stream'
@@ -82,6 +85,18 @@ async def _handle_chat_stream_message(websocket, message):
     }))
 
 
+
+@with_api_lock
+async def _handle_token_count_request(websocket, message):
+    body = json.loads(message)
+
+    await websocket.send(json.dumps({
+        'event': 'token-count',
+        'count': get_encoded_length(body['prompt']),
+        'prompt': body['prompt']
+    }))
+
+
 async def _handle_connection(websocket, path):
 
     if path == '/api/v1/stream':
@@ -91,6 +106,10 @@ async def _handle_connection(websocket, path):
     elif path == '/api/v1/chat-stream':
         async for message in websocket:
             await _handle_chat_stream_message(websocket, message)
+            
+    elif path == '/api/v1/token-count':
+        async for message in websocket:
+            await _handle_token_count_request(websocket, message)
 
     else:
         print(f'Streaming api: unknown path: {path}')
