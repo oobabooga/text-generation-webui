@@ -23,8 +23,8 @@ URI = f'ws://{HOST}/api/v1/stream'
 # the server responds with:
 # {
 #	'event': 'token-count', 
-#	'count' : 42, 
-#	'prompt' : 'a copy of your prompt' 
+#	'count': 42, 
+#	'prompt': 'a copy of your prompt' 
 # }
 
 
