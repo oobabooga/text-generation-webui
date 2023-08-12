@@ -4,7 +4,7 @@ import textwrap
 import gradio as gr
 from bs4 import BeautifulSoup
 
-from modules import chat, shared
+from modules import chat
 from modules.logging_colors import logger
 
 from .chromadb import add_chunks_to_collector, make_collector

@@ -11,6 +11,7 @@ from modules.utils import gradio
 inputs = ('textbox-default', 'interface_state')
 outputs = ('output_textbox', 'html-default')
 
+
 def create_ui():
     default_text = load_prompt(shared.settings['prompt'])
 
