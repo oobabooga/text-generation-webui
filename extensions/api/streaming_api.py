@@ -14,6 +14,7 @@ from modules.text_generation import (
     generate_reply
 )
 from websockets.server import serve
+from modules.logging_colors import logger
 
 PATH = '/api/v1/stream'
 
@@ -21,7 +22,7 @@ async def ensureModelLoaded(websocket):
     if shared.model_name != 'None':
         return True
     else:
-        print('websocket request not handled, no model is loaded')
+        logger.warning('websocket request not handled, no model is loaded')
         await websocket.send(json.dumps({
             'event': 'warning',
             'message': 'no model loaded'
@@ -100,7 +101,7 @@ async def _handle_chat_stream_message(websocket, message):
 @with_api_lock
 async def _handle_token_count_request(websocket, message):
     body = json.loads(message)
-    
+
     await websocket.send(json.dumps({
         'event': 'token-count',
         'count': get_encoded_length(body['prompt']),
@@ -126,7 +127,7 @@ async def _handle_connection(websocket, path):
                 await _handle_token_count_request(websocket, message)
 
     else:
-        print(f'Streaming api: unknown path: {path}')
+        logger.warning(f'Streaming api: unknown path: {path}')
         return
 
 
@@ -140,7 +141,7 @@ def _run_server(port: int, share: bool = False, tunnel_id=str):
 
     def on_start(public_url: str):
         public_url = public_url.replace('https://', 'wss://')
-        print(f'Starting streaming server at public url {public_url}{PATH}')
+        logger.info(f'Starting streaming server at public url {public_url}{PATH}')
 
     if share:
         try:
@@ -148,7 +149,7 @@ def _run_server(port: int, share: bool = False, tunnel_id=str):
         except Exception as e:
             print(e)
     else:
-        print(f'Starting streaming server at ws://{address}:{port}{PATH}')
+        logger.info(f'Starting streaming server at ws://{address}:{port}{PATH}')
 
     asyncio.run(_run(host=address, port=port))
 
