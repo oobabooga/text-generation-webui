@@ -11,9 +11,9 @@ main_parent.parentNode.parentNode.style = "padding: 0";
 
 // Add an event listener to the generation tabs
 main_parent.addEventListener('click', function(e) {
-    let chat_visible =  (chat_tab.offsetHeight > 0 && chat_tab.offsetWidth > 0);
-    let notebook_visible =  (notebook_tab.offsetHeight > 0 && notebook_tab.offsetWidth > 0);
-    let default_visible =  (default_tab.offsetHeight > 0 && default_tab.offsetWidth > 0);
+    let chat_visible = (chat_tab.offsetHeight > 0 && chat_tab.offsetWidth > 0);
+    let notebook_visible = (notebook_tab.offsetHeight > 0 && notebook_tab.offsetWidth > 0);
+    let default_visible = (default_tab.offsetHeight > 0 && default_tab.offsetWidth > 0);
 
     // Check if one of the generation tabs is visible
     if (chat_visible || notebook_visible || default_visible) {
