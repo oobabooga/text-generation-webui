@@ -1,4 +1,4 @@
-let extension_element = document.getElementById('gallery-extension').parentNode;
+let gallery_element = document.getElementById('gallery-extension').parentNode;
 
 main_parent.addEventListener('click', function(e) {
     let chat_visible =  (chat_tab.offsetHeight > 0 && chat_tab.offsetWidth > 0);
@@ -7,8 +7,8 @@ main_parent.addEventListener('click', function(e) {
 
     // Only show this extension in the Chat tab
     if (chat_visible) {
-        extension_element.style.display = 'flex';
+        gallery_element.style.display = 'flex';
     } else {
-        extension_element.style.display = 'none';
+        gallery_element.style.display = 'none';
     }
 });

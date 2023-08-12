@@ -45,10 +45,6 @@
     min-height: 0
 }
 
-#save_session {
-    margin-top: 32px;
-}
-
 .dark svg {
     fill: white;
 }
@@ -193,7 +189,6 @@ button {
 /*****************************************************/
 /*************** Chat UI declarations ****************/
 /*****************************************************/
-
 
 .h-\[40vh\], .wrap.svelte-byatnx.svelte-byatnx.svelte-byatnx {
     height: 66.67vh

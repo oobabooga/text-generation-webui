@@ -2,7 +2,7 @@ import json
 
 import gradio as gr
 
-from modules import chat, presets, shared, ui, utils, ui_chat
+from modules import chat, presets, shared, ui, ui_chat, utils
 from modules.utils import gradio
 
 
