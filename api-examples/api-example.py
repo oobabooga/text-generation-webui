@@ -49,6 +49,7 @@ def run(prompt):
     }
 
     response = requests.post(URI, json=request)
+    #response = requests.post(URI, json=request, headers={'X-TEXT-UI-AUTH':'SEE CONSOLE FOR CURRENT KEY'})
 
     if response.status_code == 200:
         result = response.json()['results'][0]['text']
