@@ -71,10 +71,17 @@ def run(user_input, history):
     response = requests.post(URI, json=request)
 
     if response.status_code == 200:
-        result = response.json()['results'][0]['history']
-        print(json.dumps(result, indent=4))
-        print()
-        print(result['visible'][-1][1])
+        if response.json().get('event'):
+            print(response.json()['event'] + ": " + response.json()['message'])
+
+        if response.json().get('results'):
+            result = response.json()['results'][0]['history']
+            print(json.dumps(result, indent=4))
+            print()
+            print(result['visible'][-1][1])
+
+    else:
+        print("server responded with status code " + response.status_code)
 
 
 if __name__ == '__main__':

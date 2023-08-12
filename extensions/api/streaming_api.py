@@ -2,6 +2,13 @@ import asyncio
 import json
 from threading import Thread
 
+from extensions.api.shared_api import (
+    ensureModelLoaded,
+    _handle_token_count_request,
+    _handle_model_request,
+    _handle_stop_streaming_request
+)
+
 from extensions.api.util import (
     build_parameters,
     try_start_cloudflared,
@@ -11,13 +18,15 @@ from modules import shared
 from modules.chat import generate_chat_reply
 from modules.text_generation import generate_reply
 from websockets.server import serve
+from modules.logging_colors import logger
 
-PATH = '/api/v1/stream'
-
+def WebsocketResponseHandler(context, message):
+    return asyncio.create_task(context['websocket'].send(json.dumps(message)))
 
 @with_api_lock
-async def _handle_stream_message(websocket, message):
-    message = json.loads(message)
+async def _handle_stream_message(context, message):
+    if not ensureModelLoaded(context):
+        return
 
     prompt = message['prompt']
     generate_params = build_parameters(message)
@@ -36,64 +45,97 @@ async def _handle_stream_message(websocket, message):
         if to_send is None or chr(0xfffd) in to_send:  # partial unicode character, don't send it yet.
             continue
 
-        await websocket.send(json.dumps({
+        await context['responseHandler'](context, {
             'event': 'text_stream',
             'message_num': message_num,
             'text': to_send
-        }))
+        })
 
         await asyncio.sleep(0)
         skip_index += len(to_send)
         message_num += 1
 
-    await websocket.send(json.dumps({
+    await context['responseHandler'](context, {
         'event': 'stream_end',
         'message_num': message_num
-    }))
+    })
 
 
 @with_api_lock
-async def _handle_chat_stream_message(websocket, message):
-    body = json.loads(message)
+async def _handle_chat_stream_message(connectionContext, message):
+    if not ensureModelLoaded(connectionContext):
+        return
 
-    user_input = body['user_input']
-    generate_params = build_parameters(body, chat=True)
+    user_input = message['user_input']
+    generate_params = build_parameters(message, chat=True)
     generate_params['stream'] = True
-    regenerate = body.get('regenerate', False)
-    _continue = body.get('_continue', False)
+    regenerate = message.get('regenerate', False)
+    _continue = message.get('_continue', False)
 
     generator = generate_chat_reply(
         user_input, generate_params, regenerate=regenerate, _continue=_continue, loading_message=False)
 
     message_num = 0
     for a in generator:
-        await websocket.send(json.dumps({
+        await connectionContext['responseHandler'](connectionContext, {
             'event': 'text_stream',
             'message_num': message_num,
             'history': a
-        }))
+        })
 
         await asyncio.sleep(0)
         message_num += 1
 
-    await websocket.send(json.dumps({
+    await connectionContext['responseHandler'](connectionContext, {
         'event': 'stream_end',
         'message_num': message_num
-    }))
+    })
 
+
+WEBSOCKET_PATH_HANDLER_DICT = {
+    '/api/v1/stream': {
+        'handler': _handle_stream_message,
+        'async': True
+    },
+    '/api/v1/chat-stream': {
+        'handler': _handle_chat_stream_message,
+        'async': True
+    },
+    '/api/v1/token-count': {
+        'handler': _handle_token_count_request,
+        'async': False
+    },
+    '/api/v1/model': {
+        'handler': _handle_model_request,
+        'async': False
+    },
+    '/api/v1/stop-stream': {
+        'handler': _handle_stop_streaming_request,
+        'async': False
+    }
+}
 
 async def _handle_connection(websocket, path):
 
-    if path == '/api/v1/stream':
-        async for message in websocket:
-            await _handle_stream_message(websocket, message)
+    if WEBSOCKET_PATH_HANDLER_DICT.get(path):
+        connectionContext = {
+            'responseHandler': WebsocketResponseHandler,
+            'websocket': websocket
+        }
 
-    elif path == '/api/v1/chat-stream':
         async for message in websocket:
-            await _handle_chat_stream_message(websocket, message)
+            try:
+                if WEBSOCKET_PATH_HANDLER_DICT[path]['async']:
+                    await WEBSOCKET_PATH_HANDLER_DICT[path]['handler'](connectionContext, json.loads(message))
+                else:
+                    WEBSOCKET_PATH_HANDLER_DICT[path]['handler'](connectionContext, json.loads(message))
+            except ValueError: # catch JSON parsing errors
+                logger.warning("API request not handled, malformed JSON")
+                connectionContext['responseHandler'](connectionContext, { 'event': 'error', 'message': 'malformed JSON data received'})
+        return
 
     else:
-        print(f'Streaming api: unknown path: {path}')
+        logger.warning('Streaming api: unknown path: %s', path)
         return
 
 
@@ -107,7 +149,8 @@ def _run_server(port: int, share: bool = False, tunnel_id=str):
 
     def on_start(public_url: str):
         public_url = public_url.replace('https://', 'wss://')
-        print(f'Starting streaming server at public url {public_url}{PATH}')
+        for path in WEBSOCKET_PATH_HANDLER_DICT:
+            logger.info("Starting websocket API server at public url %s:%s%s", public_url, port, path)
 
     if share:
         try:
@@ -115,7 +158,8 @@ def _run_server(port: int, share: bool = False, tunnel_id=str):
         except Exception as e:
             print(e)
     else:
-        print(f'Starting streaming server at ws://{address}:{port}{PATH}')
+        for path in WEBSOCKET_PATH_HANDLER_DICT:
+            logger.info("Starting websocket API server at ws://%s:%s%s", address, port, path)
 
     asyncio.run(_run(host=address, port=port))
 

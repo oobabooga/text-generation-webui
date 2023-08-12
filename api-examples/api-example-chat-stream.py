@@ -81,11 +81,10 @@ async def run(user_input, history):
             incoming_data = await websocket.recv()
             incoming_data = json.loads(incoming_data)
 
-            match incoming_data['event']:
-                case 'text_stream':
-                    yield incoming_data['history']
-                case 'stream_end':
-                    return
+            if incoming_data['event'] == 'text_stream':
+                yield incoming_data['history']
+            elif incoming_data['event'] == 'stream_end':
+                return
 
 
 async def print_response_stream(user_input, history):

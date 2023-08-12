@@ -51,8 +51,15 @@ def run(prompt):
     response = requests.post(URI, json=request)
 
     if response.status_code == 200:
-        result = response.json()['results'][0]['text']
-        print(prompt + result)
+        if response.json().get('event'):
+            print(response.json()['event'] + ": " + response.json()['message'])
+
+        if response.json().get('results'):
+            result = response.json()['results'][0]['text']
+            print(prompt + result)
+
+    else:
+        print("server responded with status code " + response.status_code)
 
 
 if __name__ == '__main__':

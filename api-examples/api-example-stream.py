@@ -15,6 +15,21 @@ URI = f'ws://{HOST}/api/v1/stream'
 # URI = 'wss://your-uri-here.trycloudflare.com/api/v1/stream'
 
 
+# token count can be requested from '/api/v1/token-count'
+# request = {
+#        'prompt': 'the prompt you want to know the token length of'
+# }
+#
+# the server responds with:
+# {
+#	'event': 'token-count', 
+#	'count': 42, 
+#	'prompt': 'a copy of your prompt' 
+# }
+
+
+
+
 async def run(context):
     # Note: the selected defaults change from time to time.
     request = {
