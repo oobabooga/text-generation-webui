@@ -175,9 +175,6 @@ def get_stopping_strings(state):
             f"\n{state['name2']}:"
         ]
 
-    if state['stop_at_newline']:
-        stopping_strings.append("\n")
-
     return stopping_strings
 
 
@@ -230,43 +227,35 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
         prompt = generate_chat_prompt(text, state, **kwargs)
 
     # Generate
-    cumulative_reply = ''
-    for i in range(state['chat_generation_attempts']):
-        reply = None
-        for j, reply in enumerate(generate_reply(prompt + cumulative_reply, state, stopping_strings=stopping_strings, is_chat=True)):
-            reply = cumulative_reply + reply
+    reply = None
+    for j, reply in enumerate(generate_reply(prompt, state, stopping_strings=stopping_strings, is_chat=True)):
 
-            # Extract the reply
-            visible_reply = re.sub("(<USER>|<user>|{{user}})", state['name1'], reply)
+        # Extract the reply
+        visible_reply = re.sub("(<USER>|<user>|{{user}})", state['name1'], reply)
 
-            # We need this global variable to handle the Stop event,
-            # otherwise gradio gets confused
-            if shared.stop_everything:
-                output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state)
+        # We need this global variable to handle the Stop event,
+        # otherwise gradio gets confused
+        if shared.stop_everything:
+            output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state)
+            yield output
+            return
+
+        if just_started:
+            just_started = False
+            if not _continue:
+                output['internal'].append(['', ''])
+                output['visible'].append(['', ''])
+
+        if _continue:
+            output['internal'][-1] = [text, last_reply[0] + reply]
+            output['visible'][-1] = [visible_text, last_reply[1] + visible_reply]
+            if is_stream:
                 yield output
-                return
-
-            if just_started:
-                just_started = False
-                if not _continue:
-                    output['internal'].append(['', ''])
-                    output['visible'].append(['', ''])
-
-            if _continue:
-                output['internal'][-1] = [text, last_reply[0] + reply]
-                output['visible'][-1] = [visible_text, last_reply[1] + visible_reply]
-                if is_stream:
-                    yield output
-            elif not (j == 0 and visible_reply.strip() == ''):
-                output['internal'][-1] = [text, reply.lstrip(' ')]
-                output['visible'][-1] = [visible_text, visible_reply.lstrip(' ')]
-                if is_stream:
-                    yield output
-
-        if reply in [None, cumulative_reply]:
-            break
-        else:
-            cumulative_reply = reply
+        elif not (j == 0 and visible_reply.strip() == ''):
+            output['internal'][-1] = [text, reply.lstrip(' ')]
+            output['visible'][-1] = [visible_text, visible_reply.lstrip(' ')]
+            if is_stream:
+                yield output
 
     output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state)
     yield output

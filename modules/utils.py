@@ -9,7 +9,7 @@ from modules.logging_colors import logger
 
 # Helper function to get multiple values from shared.gradio
 def gradio(*keys):
-    if len(keys) == 1 and type(keys[0]) is list:
+    if len(keys) == 1 and type(keys[0]) in [list, tuple]:
         keys = keys[0]
 
     return [shared.gradio[k] for k in keys]

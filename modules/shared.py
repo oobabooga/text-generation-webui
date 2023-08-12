@@ -19,8 +19,6 @@ lora_names = []
 stop_everything = False
 generation_lock = None
 processing_message = '*Is typing...*'
-input_params = []
-reload_inputs = []
 
 # UI variables
 gradio = {}
@@ -60,8 +58,7 @@ settings = {
     'chat_generation_attempts': 1,
     'chat_generation_attempts_min': 1,
     'chat_generation_attempts_max': 10,
-    'default_extensions': [],
-    'chat_default_extensions': ['gallery'],
+    'default_extensions': ['gallery'],
     'preset': 'simple-1',
     'prompt': 'QA',
 }
@@ -227,16 +224,7 @@ def add_extension(name):
 
 
 def is_chat():
-    return args.chat
-
-
-def get_mode():
-    if args.chat:
-        return 'chat'
-    elif args.notebook:
-        return 'notebook'
-    else:
-        return 'default'
+    return True
 
 
 args.loader = fix_loader_name(args.loader)

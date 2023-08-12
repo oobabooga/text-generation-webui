@@ -31,8 +31,7 @@ chat-instruct_command: |-
 chat_generation_attempts: 1
 chat_generation_attempts_min: 1
 chat_generation_attempts_max: 10
-default_extensions: []
-chat_default_extensions:
+default_extensions:
 - gallery
 preset: simple-1
 prompt: QA
