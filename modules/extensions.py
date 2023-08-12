@@ -60,10 +60,9 @@ def _apply_string_extensions(function_name, text, state, is_chat=False):
 
             # Handle old extensions without the 'state' arg or
             # the 'is_chat' kwarg
-            parameters = signature(func).parameters
             count = 0
             has_chat = False
-            for k in parameters:
+            for k in signature(func).parameters:
                 if k == 'is_chat':
                     has_chat = True
                 else:
