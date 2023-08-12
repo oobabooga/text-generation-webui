@@ -1,4 +1,6 @@
 import json
+import random
+import string
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
 
@@ -18,6 +20,7 @@ from modules.text_generation import (
 )
 from modules.utils import get_available_models
 
+AUTH_TOKEN = None
 
 def get_model_info():
     return {
@@ -30,8 +33,20 @@ def get_model_info():
 
 
 class Handler(BaseHTTPRequestHandler):
+    def authentication(self):
+        if not shared.args.http_auth:
+            return True
+
+        AUTHENTICATED = False
+        if "X-TEXT-UI-AUTH" in self.headers:
+            authz = self.headers['X-TEXT-UI-AUTH']
+            if str(authz) == str(AUTH_TOKEN):
+                AUTHENTICATED = True
+        return AUTHENTICATED
+
     def do_GET(self):
-        if self.path == '/api/v1/model':
+        is_auth = self.authentication()
+        if self.path == '/api/v1/model' and is_auth:
             self.send_response(200)
             self.end_headers()
             response = json.dumps({
@@ -39,14 +54,17 @@ class Handler(BaseHTTPRequestHandler):
             })
 
             self.wfile.write(response.encode('utf-8'))
+        elif not is_auth:
+            self.send_error(403, explain="NOT AUTHENTICATED, CHECK X-TEXT-UI-AUTH HTTP HEADER")
         else:
             self.send_error(404)
 
     def do_POST(self):
+        is_auth = self.authentication()
         content_length = int(self.headers['Content-Length'])
         body = json.loads(self.rfile.read(content_length).decode('utf-8'))
 
-        if self.path == '/api/v1/generate':
+        if self.path == '/api/v1/generate' and is_auth:
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
@@ -71,7 +89,7 @@ class Handler(BaseHTTPRequestHandler):
 
             self.wfile.write(response.encode('utf-8'))
 
-        elif self.path == '/api/v1/chat':
+        elif self.path == '/api/v1/chat' and is_auth:
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
@@ -98,7 +116,7 @@ class Handler(BaseHTTPRequestHandler):
 
             self.wfile.write(response.encode('utf-8'))
 
-        elif self.path == '/api/v1/stop-stream':
+        elif self.path == '/api/v1/stop-stream' and is_auth:
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
@@ -111,7 +129,7 @@ class Handler(BaseHTTPRequestHandler):
 
             self.wfile.write(response.encode('utf-8'))
 
-        elif self.path == '/api/v1/model':
+        elif self.path == '/api/v1/model' and is_auth:
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
@@ -172,7 +190,7 @@ class Handler(BaseHTTPRequestHandler):
 
             self.wfile.write(response.encode('utf-8'))
 
-        elif self.path == '/api/v1/token-count':
+        elif self.path == '/api/v1/token-count' and is_auth:
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
             self.end_headers()
@@ -185,6 +203,8 @@ class Handler(BaseHTTPRequestHandler):
             })
 
             self.wfile.write(response.encode('utf-8'))
+        elif not is_auth:
+            self.send_error(403, explain="NOT AUTHENTICATED, CHECK X-TEXT-UI-AUTH HTTP HEADER")
         else:
             self.send_error(404)
 
@@ -200,8 +220,12 @@ class Handler(BaseHTTPRequestHandler):
         super().end_headers()
 
 
-def _run_server(port: int, share: bool = False, tunnel_id=str):
+def _run_server(port: int, share: bool = False, tunnel_id=str, http_auth: bool = False):
     address = '0.0.0.0' if shared.args.listen else '127.0.0.1'
+    global AUTH_TOKEN
+    if http_auth:
+        AUTH_TOKEN = ''.join(random.choice(string.digits) for i in range(64))
+        print(f'Set API request header X-TEXT-UI-AUTH to: {AUTH_TOKEN}')
 
     server = ThreadingHTTPServer((address, port), Handler)
 
@@ -220,5 +244,5 @@ def _run_server(port: int, share: bool = False, tunnel_id=str):
     server.serve_forever()
 
 
-def start_server(port: int, share: bool = False, tunnel_id=str):
-    Thread(target=_run_server, args=[port, share, tunnel_id], daemon=True).start()
+def start_server(port: int, share: bool = False, tunnel_id=str, http_auth=bool):
+    Thread(target=_run_server, args=[port, share, tunnel_id, http_auth], daemon=True).start()
