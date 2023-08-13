@@ -7,7 +7,7 @@ main_parent.addEventListener('click', function(e) {
 
     // Only show this extension in the Chat tab
     if (chat_visible) {
-        gallery_element.style.display = 'flex';
+        gallery_element.style.display = 'block';
     } else {
         gallery_element.style.display = 'none';
     }
