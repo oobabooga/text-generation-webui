@@ -32,7 +32,7 @@ class CtransformersModel:
         return result, result
 
     def model_type_is_auto(self):
-        return shared.args.model_type == "Auto" or shared.args.model_type == "None"
+        return shared.args.model_type is None or shared.args.model_type == "Auto" or shared.args.model_type == "None"
 
     def model_dir(self, path):
         if path.is_file():
@@ -49,7 +49,7 @@ class CtransformersModel:
     def generate(self, prompt, state, callback=None):
         prompt = prompt if type(prompt) is str else prompt.decode()
         # ctransformers uses -1 for random seed
-        generator = self.model._stream(
+        generator = self.model(
             prompt=prompt,
             max_new_tokens=state['max_new_tokens'],
             temperature=state['temperature'],

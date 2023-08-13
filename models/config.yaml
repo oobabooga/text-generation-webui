@@ -143,6 +143,7 @@ llama-65b-gptq-3bit:
 .*mpt-.*chat:
   mode: 'instruct'
   instruction_template: 'MPT-Chat'
+  model_type: 'mpt'
 (?!.*-flan-)(?!.*-t5-).*lamini-:
   mode: 'instruct'
   instruction_template: 'Alpaca'
@@ -236,6 +237,7 @@ llama-65b-gptq-3bit:
   mode: 'instruct'
   instruction_template: 'Starchat-Beta'
   custom_stopping_strings: '"<|end|>"'
+  model_type: 'starcoder'
 .*minotaur:
   mode: 'instruct'
   instruction_template: 'Minotaur'
@@ -293,3 +295,6 @@ llama-65b-gptq-3bit:
 .*openchat:
   mode: 'instruct'
   instruction_template: 'OpenChat'
+.*falcon.*-instruct:
+  mode: 'instruct;'
+  model_type: 'falcon'
