@@ -294,4 +294,4 @@ llama-65b-gptq-3bit:
   mode: 'instruct'
   instruction_template: 'OpenChat'
 .*falcon.*-instruct:
-  mode: 'instruct;'
+  mode: 'instruct'
