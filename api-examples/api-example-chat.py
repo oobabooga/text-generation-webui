@@ -30,8 +30,6 @@ def run(user_input, history):
         # 'turn_template': 'turn_template', # Optional
         'regenerate': False,
         '_continue': False,
-        'stop_at_newline': False,
-        'chat_generation_attempts': 1,
         'chat_instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
 
         # Generation params. If 'preset' is set to different than 'None', the values

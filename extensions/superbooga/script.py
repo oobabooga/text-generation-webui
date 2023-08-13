@@ -4,7 +4,7 @@ import textwrap
 import gradio as gr
 from bs4 import BeautifulSoup
 
-from modules import chat, shared
+from modules import chat
 from modules.logging_colors import logger
 
 from .chromadb import add_chunks_to_collector, make_collector
@@ -143,8 +143,8 @@ def remove_special_tokens(string):
     return re.sub(pattern, '', string)
 
 
-def input_modifier(string):
-    if shared.is_chat():
+def input_modifier(string, state, is_chat=False):
+    if is_chat:
         return string
 
     # Find the user input

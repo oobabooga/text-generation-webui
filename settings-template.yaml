@@ -13,7 +13,6 @@ context: This is a conversation with your Assistant. It is a computer program de
 greeting: ''
 turn_template: ''
 custom_stopping_strings: ''
-stop_at_newline: false
 add_bos_token: true
 ban_eos_token: false
 skip_special_tokens: true
@@ -28,11 +27,7 @@ chat-instruct_command: |-
   Continue the chat dialogue below. Write a single reply for the character "<|character|>".
 
   <|prompt|>
-chat_generation_attempts: 1
-chat_generation_attempts_min: 1
-chat_generation_attempts_max: 10
-default_extensions: []
-chat_default_extensions:
+default_extensions:
 - gallery
 preset: simple-1
 prompt: QA

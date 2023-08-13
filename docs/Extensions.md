@@ -39,8 +39,8 @@ The extensions framework is based on special functions and variables that you ca
 | `def ui()` | Creates custom gradio elements when the UI is launched. | 
 | `def custom_css()` | Returns custom CSS as a string. It is applied whenever the web UI is loaded. |
 | `def custom_js()` | Same as above but for javascript. |
-| `def input_modifier(string, state)`  | Modifies the input string before it enters the model. In chat mode, it is applied to the user message. Otherwise, it is applied to the entire prompt. |
-| `def output_modifier(string, state)`  | Modifies the output string before it is presented in the UI. In chat mode, it is applied to the bot's reply. Otherwise, it is applied to the entire output. |
+| `def input_modifier(string, state, is_chat=False)`  | Modifies the input string before it enters the model. In chat mode, it is applied to the user message. Otherwise, it is applied to the entire prompt. |
+| `def output_modifier(string, state, is_chat=False)`  | Modifies the output string before it is presented in the UI. In chat mode, it is applied to the bot's reply. Otherwise, it is applied to the entire output. |
 | `def chat_input_modifier(text, visible_text, state)` | Modifies both the visible and internal inputs in chat mode. Can be used to hijack the chat input with custom content. |
 | `def bot_prefix_modifier(string, state)`  | Applied in chat mode to the prefix for the bot's reply. |
 | `def state_modifier(state)`  | Modifies the dictionary containing the UI input parameters before it is used by the text generation functions. |
@@ -163,7 +163,7 @@ def chat_input_modifier(text, visible_text, state):
     """
     return text, visible_text
 
-def input_modifier(string, state):
+def input_modifier(string, state, is_chat=False):
     """
     In default/notebook modes, modifies the whole prompt.
 
@@ -196,7 +196,7 @@ def logits_processor_modifier(processor_list, input_ids):
     processor_list.append(MyLogits())
     return processor_list
 
-def output_modifier(string, state):
+def output_modifier(string, state, is_chat=False):
     """
     Modifies the LLM output before it gets presented.
 
