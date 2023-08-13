@@ -189,8 +189,6 @@ Optionally, you can use the following command-line flags:
 | Flag                                       | Description |
 |--------------------------------------------|-------------|
 | `-h`, `--help`                             | Show this help message and exit. |
-| `--notebook`                               | Launch the web UI in notebook mode, where the output is written to the same text box as the input. |
-| `--chat`                                   | Launch the web UI in chat mode. |
 | `--multi-user`                             | Multi-user mode. Chat histories are not saved or automatically loaded. WARNING: this is highly experimental. |
 | `--character CHARACTER`                    | The name of the character to load in chat mode by default. |
 | `--model MODEL`                            | Name of the model to load by default. |
