@@ -5,7 +5,7 @@ import gradio as gr
 import torch
 from transformers import BlipForConditionalGeneration, BlipProcessor
 
-from modules import chat, shared
+from modules import chat, shared, ui_chat
 from modules.ui import gather_interface_values
 from modules.utils import gradio
 
@@ -54,5 +54,5 @@ def ui():
             "value": generate_chat_picture(picture, name1, name2)
         }), [picture_select, shared.gradio['name1'], shared.gradio['name2']], None).then(
         gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        chat.generate_chat_reply_wrapper, shared.input_params, gradio('display', 'history'), show_progress=False).then(
+        chat.generate_chat_reply_wrapper, gradio(ui_chat.inputs), gradio('display', 'history'), show_progress=False).then(
         lambda: None, None, picture_select, show_progress=False)

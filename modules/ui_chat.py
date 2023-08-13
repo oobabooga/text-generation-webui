@@ -116,6 +116,7 @@ def create_chat_settings_ui():
 
 def create_event_handlers():
     gen_events = []
+    shared.input_params = gradio(inputs)  # Obsolete, kept for compatibility with old extensions
 
     gen_events.append(shared.gradio['Generate'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
