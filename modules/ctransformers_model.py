@@ -32,7 +32,7 @@ class CtransformersModel:
         return result, result
 
     def model_type_is_auto(self):
-        return shared.args.model_type == "Auto" or shared.args.model_type == "None"
+        return shared.args.model_type is None or shared.args.model_type == "Auto" or shared.args.model_type == "None"
 
     def model_dir(self, path):
         if path.is_file():
