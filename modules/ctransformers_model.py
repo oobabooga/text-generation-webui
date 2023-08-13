@@ -56,7 +56,7 @@ class CtransformersModel:
             top_k=state['top_k'],
             repetition_penalty=state['repetition_penalty'],
             last_n_tokens=state['repetition_penalty_range'],
-            seed=state['seed']
+            seed=int(state['seed'])
         )
 
         output = ""
