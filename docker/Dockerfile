@@ -25,8 +25,9 @@ RUN apt-get update && \
     apt-get install --no-install-recommends -y python3-dev libportaudio2 libasound-dev git python3 python3-pip \
     make g++ libmpich-dev && \
     rm -rf /var/lib/apt/lists/* && \
-    --mount=type=cache,target=/root/.cache/pip pip3 install virtualenv && \
     mkdir /app
+
+RUN --mount=type=cache,target=/root/.cache/pip pip3 install virtualenv
 
 WORKDIR /app
 
