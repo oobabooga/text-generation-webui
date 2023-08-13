@@ -40,7 +40,7 @@ RUN test -n "${WEBUI_VERSION}" && git reset --hard ${WEBUI_VERSION} || echo "Usi
 RUN virtualenv /app/venv
 RUN . /app/venv/bin/activate && \
     pip3 install --upgrade pip setuptools wheel && \
-    pip3 install torch torchvision torchaudio deepspeed mpi4py mpi4py-mpich
+    pip3 install torch torchvision torchaudio deepspeed mpi4py mpi4py-mpich zarr sentence_transformers
 
 COPY --from=builder /build /app/repositories/GPTQ-for-LLaMa
 RUN . /app/venv/bin/activate && \
