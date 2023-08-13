@@ -1,7 +1,7 @@
 FROM nvidia/cuda:11.8.0-devel-ubuntu22.04 as builder
 
 RUN apt-get update && \
-    apt-get install --no-install-recommends -y git vim build-essential python3-dev python3-venv libmpich-dev && \
+    apt-get install --no-install-recommends -y git vim build-essential python3-dev python3-venv libmpich-dev cuda-nvcc-11-8 && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /build
@@ -11,6 +11,8 @@ RUN git clone https://github.com/oobabooga/GPTQ-for-LLaMa . && \
     . venv/bin/activate && \
     pip3 install --upgrade pip setuptools wheel && \
     pip3 install torch torchvision torchaudio deepspeed mpi4py mpi4py-mpich && \
+    pip3 install git+https://github.com/sterlind/GPTQ-for-LLaMa.git@lora_4bit || true && \
+    pip3 install monkeypatch || true && \
     pip3 install -r requirements.txt
 
 ARG TORCH_CUDA_ARCH_LIST="${TORCH_CUDA_ARCH_LIST:-3.5;5.0;6.0;6.1;7.0;7.5;8.0;8.6+PTX}"
@@ -37,7 +39,7 @@ RUN test -n "${WEBUI_VERSION}" && git reset --hard ${WEBUI_VERSION} || echo "Usi
 RUN virtualenv venv && \
     . venv/bin/activate && \
     pip3 install --upgrade pip setuptools wheel && \
-    pip3 install torch torchvision torchaudio deepspeed mpi4py mpi4py-mpich zarr sentence_transformers xformers bs4 monkeypatch
+    pip3 install torch torchvision torchaudio deepspeed mpi4py mpi4py-mpich zarr sentence_transformers xformers bs4
 
 COPY --from=builder /build /app/repositories/GPTQ-for-LLaMa
 RUN . venv/bin/activate && \
