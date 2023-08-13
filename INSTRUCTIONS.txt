@@ -13,13 +13,13 @@ To launch the web UI in the future after it is already installed, run the
 Run the "update" script. It will install the updates only, so it should
 be much faster than the initial installation.
 
-# Adding flags like --chat, --notebook, etc
+# Adding flags like --model, --api, etc
 
 Open the "CMD_FLAGS.txt" file with a text editor, add your flags, and
 save the file. For instance, to add the --api flag, change the file
 contents to
 
---chat --api
+--api
 
 # Running an interactive shell
 
