@@ -224,7 +224,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     width: 100%;
 }
 
-#main button {
+#chat-tab button, #notebook-tab button, #default-tab button {
     min-width: 0 !important;
 }
 
