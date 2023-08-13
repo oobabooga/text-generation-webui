@@ -1,17 +1,30 @@
-document.getElementById("main").parentNode.childNodes[0].classList.add("header_bar");
-document.getElementById("main").parentNode.style = "padding: 0; margin: 0";
-document.getElementById("main").parentNode.parentNode.parentNode.style = "padding: 0";
+let chat_tab = document.getElementById('chat-tab');
+let notebook_tab = document.getElementById('notebook-tab');
+let default_tab = document.getElementById('default-tab');
 
-// Get references to the elements
-let main = document.getElementById('main');
-let main_parent = main.parentNode;
+let main_parent = chat_tab.parentNode;
 let extensions = document.getElementById('extensions');
 
-// Add an event listener to the main element
+main_parent.childNodes[0].classList.add("header_bar");
+main_parent.style = "padding: 0; margin: 0";
+main_parent.parentNode.parentNode.style = "padding: 0";
+
+// Add an event listener to the generation tabs
 main_parent.addEventListener('click', function(e) {
-    // Check if the main element is visible
-    if (main.offsetHeight > 0 && main.offsetWidth > 0) {
+    let chat_visible = (chat_tab.offsetHeight > 0 && chat_tab.offsetWidth > 0);
+    let notebook_visible = (notebook_tab.offsetHeight > 0 && notebook_tab.offsetWidth > 0);
+    let default_visible = (default_tab.offsetHeight > 0 && default_tab.offsetWidth > 0);
+
+    // Check if one of the generation tabs is visible
+    if (chat_visible || notebook_visible || default_visible) {
         extensions.style.display = 'flex';
+        if (chat_visible) {
+            extensions.style.maxWidth = "800px";
+            extensions.style.padding = "0px";
+        } else {
+            extensions.style.maxWidth = "none";
+            extensions.style.padding = "15px";
+        }
     } else {
         extensions.style.display = 'none';
     }

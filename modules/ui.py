@@ -8,10 +8,8 @@ from modules import shared
 
 with open(Path(__file__).resolve().parent / '../css/main.css', 'r') as f:
     css = f.read()
-with open(Path(__file__).resolve().parent / '../css/chat.css', 'r') as f:
-    chat_css = f.read()
 with open(Path(__file__).resolve().parent / '../js/main.js', 'r') as f:
-    main_js = f.read()
+    js = f.read()
 with open(Path(__file__).resolve().parent / '../js/save_files.js', 'r') as f:
     save_files_js = f.read()
 
@@ -116,31 +114,35 @@ def list_interface_input_elements():
         'top_a',
     ]
 
-    if shared.args.chat:
-        elements += [
-            'character_menu',
-            'history',
-            'name1',
-            'name2',
-            'greeting',
-            'context',
-            'chat_generation_attempts',
-            'stop_at_newline',
-            'mode',
-            'instruction_template',
-            'name1_instruct',
-            'name2_instruct',
-            'context_instruct',
-            'turn_template',
-            'chat_style',
-            'chat-instruct_command',
-        ]
-    else:
-        elements.append('textbox')
-        if not shared.args.notebook:
-            elements.append('output_textbox')
+    # Chat elements
+    elements += [
+        'textbox',
+        'character_menu',
+        'history',
+        'name1',
+        'name2',
+        'greeting',
+        'context',
+        'mode',
+        'instruction_template',
+        'name1_instruct',
+        'name2_instruct',
+        'context_instruct',
+        'turn_template',
+        'chat_style',
+        'chat-instruct_command',
+    ]
 
+    # Notebook/default elements
+    elements += [
+        'textbox-notebook',
+        'textbox-default',
+        'output_textbox'
+    ]
+
+    # Model elements
     elements += list_model_elements()
+
     return elements
 
 

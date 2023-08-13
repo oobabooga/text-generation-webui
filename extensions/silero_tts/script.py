@@ -6,7 +6,7 @@ import gradio as gr
 import torch
 
 from extensions.silero_tts import tts_preprocessor
-from modules import chat, shared
+from modules import chat, shared, ui_chat
 from modules.utils import gradio
 
 torch._C._jit_set_profiling_mode(False)
@@ -194,24 +194,23 @@ def ui():
             convert_cancel = gr.Button('Cancel', visible=False)
             convert_confirm = gr.Button('Confirm (cannot be undone)', variant="stop", visible=False)
 
-    if shared.is_chat():
-        # Convert history with confirmation
-        convert_arr = [convert_confirm, convert, convert_cancel]
-        convert.click(lambda: [gr.update(visible=True), gr.update(visible=False), gr.update(visible=True)], None, convert_arr)
-        convert_confirm.click(
-            lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr).then(
-            remove_tts_from_history, gradio('history'), gradio('history')).then(
-            chat.save_persistent_history, gradio('history', 'character_menu', 'mode'), None).then(
-            chat.redraw_html, shared.reload_inputs, gradio('display'))
+    # Convert history with confirmation
+    convert_arr = [convert_confirm, convert, convert_cancel]
+    convert.click(lambda: [gr.update(visible=True), gr.update(visible=False), gr.update(visible=True)], None, convert_arr)
+    convert_confirm.click(
+        lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr).then(
+        remove_tts_from_history, gradio('history'), gradio('history')).then(
+        chat.save_persistent_history, gradio('history', 'character_menu', 'mode'), None).then(
+        chat.redraw_html, gradio(ui_chat.reload_arr), gradio('display'))
 
-        convert_cancel.click(lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr)
+    convert_cancel.click(lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr)
 
-        # Toggle message text in history
-        show_text.change(
-            lambda x: params.update({"show_text": x}), show_text, None).then(
-            toggle_text_in_history, gradio('history'), gradio('history')).then(
-            chat.save_persistent_history, gradio('history', 'character_menu', 'mode'), None).then(
-            chat.redraw_html, shared.reload_inputs, gradio('display'))
+    # Toggle message text in history
+    show_text.change(
+        lambda x: params.update({"show_text": x}), show_text, None).then(
+        toggle_text_in_history, gradio('history'), gradio('history')).then(
+        chat.save_persistent_history, gradio('history', 'character_menu', 'mode'), None).then(
+        chat.redraw_html, gradio(ui_chat.reload_arr), gradio('display'))
 
     # Event functions to update the parameters in the backend
     activate.change(lambda x: params.update({"activate": x}), activate, None)
