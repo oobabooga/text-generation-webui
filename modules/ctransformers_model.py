@@ -18,6 +18,7 @@ class CtransformersModel:
             threads=shared.args.threads,
             gpu_layers=shared.args.n_gpu_layers,
             batch_size=shared.args.n_batch,
+            context_length=shared.args.n_ctx,
             stream=True
         )
 
