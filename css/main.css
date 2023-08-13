@@ -120,6 +120,12 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
     color: #efefef !important;
 }
 
+@media screen and (max-width: 711px) {
+    .textbox_default textarea {
+        height: calc(100vh - 275px);
+    }
+}
+
 /* Hide the gradio footer*/
 footer {
     display: none !important;
