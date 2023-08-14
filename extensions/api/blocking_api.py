@@ -33,16 +33,16 @@ def get_model_info():
 
 
 class Handler(BaseHTTPRequestHandler):
+
     def authentication(self):
+        # No authentication
         if not shared.args.http_auth:
             return True
-
-        AUTHENTICATED = False
-        if "X-TEXT-UI-AUTH" in self.headers:
-            authz = self.headers['X-TEXT-UI-AUTH']
-            if str(authz) == str(AUTH_TOKEN):
-                AUTHENTICATED = True
-        return AUTHENTICATED
+        # Token missing from the header
+        if "X-TEXT-UI-AUTH" not in self.headers:
+            return False
+        # Validate token
+        return str(self.headers['X-TEXT-UI-AUTH']) == str(AUTH_TOKEN)
 
     def do_GET(self):
         is_auth = self.authentication()
