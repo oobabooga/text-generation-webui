@@ -1,3 +1,4 @@
+import copy
 import json
 
 import gradio as gr
@@ -78,7 +79,7 @@ def create_event_handlers():
     if not shared.args.multi_user:
         shared.gradio['save_session'].click(
             ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-            lambda x: json.dumps(x, indent=4), gradio('interface_state'), gradio('temporary_text')).then(
+            save_session, gradio('interface_state'), gradio('temporary_text')).then(
             None, gradio('temporary_text'), None, _js=f"(contents) => {{{ui.save_files_js}; saveSession(contents)}}")
 
         shared.gradio['load_session'].upload(
@@ -98,3 +99,11 @@ def load_session(file, state):
 
     state.update(data)
     return state
+
+
+def save_session(state):
+    output = copy.deepcopy(state)
+    for key in ['prompt_menu-default', 'prompt_menu-notebook']:
+        del output[key]
+
+    return json.dumps(output, indent=4)
