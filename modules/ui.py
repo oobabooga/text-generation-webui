@@ -1,7 +1,9 @@
+import copy
 from pathlib import Path
 
 import gradio as gr
 import torch
+import yaml
 
 from modules import shared
 
@@ -119,6 +121,7 @@ def list_interface_input_elements():
     # Chat elements
     elements += [
         'textbox',
+        'start_with',
         'character_menu',
         'history',
         'name1',
@@ -139,7 +142,9 @@ def list_interface_input_elements():
     elements += [
         'textbox-notebook',
         'textbox-default',
-        'output_textbox'
+        'output_textbox',
+        'prompt_menu-default',
+        'prompt_menu-notebook',
     ]
 
     # Model elements
@@ -168,6 +173,24 @@ def apply_interface_values(state, use_persistent=False):
         return [gr.update() for k in elements]  # Dummy, do nothing
     else:
         return [state[k] if k in state else gr.update() for k in elements]
+
+
+def save_settings(state, preset, instruction_template, extensions):
+    output = copy.deepcopy(shared.settings)
+    exclude = ['name1', 'name2', 'greeting', 'context', 'turn_template']
+    for k in state:
+        if k in shared.settings and k not in exclude:
+            output[k] = state[k]
+
+    output['preset'] = preset
+    output['prompt-default'] = state['prompt_menu-default']
+    output['prompt-notebook'] = state['prompt_menu-notebook']
+    output['character'] = state['character_menu']
+    output['instruction_template'] = instruction_template
+    output['default_extensions'] = extensions
+    output['seed'] = int(output['seed'])
+
+    return yaml.dump(output, sort_keys=False, width=float("inf"))
 
 
 class ToolButton(gr.Button, gr.components.IOComponent):

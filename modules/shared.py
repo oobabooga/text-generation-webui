@@ -29,34 +29,35 @@ session_is_loading = False
 # UI defaults
 settings = {
     'dark_theme': True,
-    'autoload_model': False,
+    'start_with': '',
+    'mode': 'chat',
+    'chat_style': 'TheEncrypted777',
+    'character': 'None',
+    'prompt-default': 'QA',
+    'prompt-notebook': 'QA',
+    'preset': 'simple-1',
     'max_new_tokens': 200,
     'max_new_tokens_min': 1,
     'max_new_tokens_max': 4096,
-    'auto_max_new_tokens': False,
     'seed': -1,
     'negative_prompt': '',
-    'character': 'None',
+    'truncation_length': 2048,
+    'truncation_length_min': 0,
+    'truncation_length_max': 16384,
+    'custom_stopping_strings': '',
+    'auto_max_new_tokens': False,
+    'ban_eos_token': False,
+    'add_bos_token': True,
+    'skip_special_tokens': True,
+    'stream': True,
     'name1': 'You',
     'name2': 'Assistant',
     'context': 'This is a conversation with your Assistant. It is a computer program designed to help you with various tasks such as answering questions, providing recommendations, and helping with decision making. You can ask it anything you want and it will do its best to give you accurate and relevant information.',
     'greeting': '',
-    'turn_template': '',
-    'custom_stopping_strings': '',
-    'add_bos_token': True,
-    'ban_eos_token': False,
-    'skip_special_tokens': True,
-    'truncation_length': 2048,
-    'truncation_length_min': 0,
-    'truncation_length_max': 16384,
-    'mode': 'chat',
-    'start_with': '',
-    'chat_style': 'TheEncrypted777',
     'instruction_template': 'None',
     'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
+    'autoload_model': False,
     'default_extensions': ['gallery'],
-    'preset': 'simple-1',
-    'prompt': 'QA',
 }
 
 
@@ -83,7 +84,7 @@ parser.add_argument('--lora', type=str, nargs="+", help='The list of LoRAs to lo
 parser.add_argument("--model-dir", type=str, default='models/', help="Path to directory with all the models")
 parser.add_argument("--lora-dir", type=str, default='loras/', help="Path to directory with all the loras")
 parser.add_argument('--model-menu', action='store_true', help='Show a model menu in the terminal when the web UI is first launched.')
-parser.add_argument('--no-stream', action='store_true', help='Don\'t stream the text output in real time.')
+parser.add_argument('--no-stream', action='store_true', help='DEPRECATED')
 parser.add_argument('--settings', type=str, help='Load the default interface settings from this yaml file. See settings-template.yaml for an example. If you create a file called settings.yaml, this file will be loaded by default without the need to use the --settings flag.')
 parser.add_argument('--extensions', type=str, nargs="+", help='The list of extensions to load. If you want to load more than one extension, write the names separated by spaces.')
 parser.add_argument('--verbose', action='store_true', help='Print the prompts to the terminal.')
@@ -181,7 +182,7 @@ args = parser.parse_args()
 args_defaults = parser.parse_args([])
 
 # Deprecation warnings
-for k in ['chat', 'notebook']:
+for k in ['chat', 'notebook', 'no_stream']:
     if getattr(args, k):
         logger.warning(f'--{k} has been deprecated and will be removed soon. Please remove that flag.')
 

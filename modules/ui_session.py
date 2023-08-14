@@ -9,8 +9,10 @@ def create_ui():
     with gr.Tab("Session", elem_id="session-tab"):
         with gr.Row():
             with gr.Column():
-                shared.gradio['reset_interface'] = gr.Button("Apply and restart")
-                shared.gradio['toggle_dark_mode'] = gr.Button('Toggle 💡')
+                shared.gradio['reset_interface'] = gr.Button("Apply flags/extensions and restart")
+                with gr.Row():
+                    shared.gradio['toggle_dark_mode'] = gr.Button('Toggle 💡')
+                    shared.gradio['save_settings'] = gr.Button('Save UI defaults to settings.yaml')
 
                 with gr.Row():
                     with gr.Column():
@@ -37,6 +39,12 @@ def create_ui():
             lambda: None, None, None, _js='() => {document.body.innerHTML=\'<h1 style="font-family:monospace;padding-top:20%;margin:0;height:100vh;color:lightgray;text-align:center;background:var(--body-background-fill)">Reloading...</h1>\'; setTimeout(function(){location.reload()},2500); return []}')
 
         shared.gradio['toggle_dark_mode'].click(lambda: None, None, None, _js='() => {document.getElementsByTagName("body")[0].classList.toggle("dark")}')
+        shared.gradio['save_settings'].click(
+            ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+            ui.save_settings, gradio('interface_state', 'preset_menu', 'instruction_template', 'extensions_menu'), gradio('save_contents')).then(
+            lambda: './', None, gradio('save_root')).then(
+            lambda: 'settings.yaml', None, gradio('save_filename')).then(
+            lambda: gr.update(visible=True), None, gradio('file_saver'))
 
 
 def set_interface_arguments(extensions, bool_active):

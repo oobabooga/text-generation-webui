@@ -13,13 +13,11 @@ outputs = ('output_textbox', 'html-default')
 
 
 def create_ui():
-    default_text = load_prompt(shared.settings['prompt'])
-
     with gr.Tab('Default', elem_id='default-tab'):
         shared.gradio['last_input-default'] = gr.State('')
         with gr.Row():
             with gr.Column():
-                shared.gradio['textbox-default'] = gr.Textbox(value=default_text, elem_classes=['textbox_default', 'add_scrollbar'], lines=27, label='Input')
+                shared.gradio['textbox-default'] = gr.Textbox(value='', elem_classes=['textbox_default', 'add_scrollbar'], lines=27, label='Input')
                 with gr.Row():
                     shared.gradio['Generate-default'] = gr.Button('Generate', variant='primary')
                     shared.gradio['Stop-default'] = gr.Button('Stop', elem_id='stop')
