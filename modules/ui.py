@@ -60,6 +60,7 @@ def list_model_elements():
         'no_inject_fused_attention',
         'no_inject_fused_mlp',
         'no_use_cuda_fp16',
+        'disable_exllama',
         'threads',
         'n_batch',
         'no_mmap',

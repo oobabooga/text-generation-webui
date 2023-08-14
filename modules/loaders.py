@@ -46,6 +46,7 @@ loaders_and_params = OrderedDict({
         'wbits',
         'groupsize',
         'desc_act',
+        'disable_exllama',
         'gpu_memory',
         'cpu_memory',
         'cpu',
