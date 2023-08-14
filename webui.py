@@ -19,7 +19,7 @@ else:
         with open(cmd_flags_path, 'r') as f:
             CMD_FLAGS = ' '.join(line.strip() for line in f.read().splitlines() if line.strip())
     else:
-        CMD_FLAGS = '--chat'
+        CMD_FLAGS = ''
 
 
 # Remove the '# ' from the following lines as needed for your AMD GPU on Linux
@@ -88,6 +88,9 @@ def install_dependencies():
     print("D) None (I want to run models in CPU mode)")
     print()
     gpuchoice = input("Input> ").lower()
+    while gpuchoice not in ['a', 'b', 'c', 'd']:
+        print("Invalid choice. Please try again.")
+        gpuchoice = input("Input> ").lower()
 
     if gpuchoice == "d":
         print_big_message("Once the installation ends, make sure to open CMD_FLAGS.txt with\na text editor and add the --cpu flag.")
@@ -109,10 +112,6 @@ def install_dependencies():
         else:
             run_cmd("conda install -y -k ninja git && python -m pip install torch torchvision torchaudio", assert_success=True, environment=True)
 
-    else:
-        print("Invalid choice. Exiting...")
-        sys.exit()
-
     # Clone webui to our computer
     run_cmd("git clone https://github.com/oobabooga/text-generation-webui.git", assert_success=True, environment=True)
 
@@ -123,6 +122,17 @@ def install_dependencies():
 def update_dependencies(initial_installation=False):
     os.chdir("text-generation-webui")
     run_cmd("git pull", assert_success=True, environment=True)
+
+    # Install the extensions dependencies (only on the first install)
+    if initial_installation:
+        extensions = next(os.walk("extensions"))[1]
+        for extension in extensions:
+            if extension in ['superbooga']:  # No wheels available for dependencies
+                continue
+
+            extension_req_path = os.path.join("extensions", extension, "requirements.txt")
+            if os.path.exists(extension_req_path):
+                run_cmd("python -m pip install -r " + extension_req_path + " --upgrade", assert_success=True, environment=True)
 
     textgen_requirements = open("requirements.txt").read().splitlines()
 
@@ -141,17 +151,6 @@ def update_dependencies(initial_installation=False):
 
     # Installs/Updates the project dependencies
     run_cmd("python -m pip install -r requirements.txt --upgrade", assert_success=True, environment=True)
-
-    # Installs the extensions dependencies (only on the first install)
-    if initial_installation:
-        extensions = next(os.walk("extensions"))[1]
-        for extension in extensions:
-            if extension in ['superbooga']:  # No wheels available for dependencies
-                continue
-
-            extension_req_path = os.path.join("extensions", extension, "requirements.txt")
-            if os.path.exists(extension_req_path):
-                run_cmd("python -m pip install -r " + extension_req_path + " --upgrade", assert_success=True, environment=True)
 
     # The following dependencies are for CUDA, not CPU
     # Parse output of 'pip show torch' to determine torch version
