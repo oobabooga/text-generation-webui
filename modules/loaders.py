@@ -290,6 +290,7 @@ loaders_model_types = {
         "dollyv2"
         "replit",
         "starcoder",
+        "gptbigcode",
         "falcon"
     ],
 }
