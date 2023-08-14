@@ -10,6 +10,18 @@
   model_type: 'llama'
 .*bloom:
   model_type: 'bloom'
+.*gpt2:
+  model_type: 'gpt2'
+.*falcon:
+  model_type: 'falcon'
+.*mpt:
+  model_type: 'mpt'
+.*(starcoder|starchat):
+  model_type: 'gpt_bigcode'
+.*dolly-v2:
+  model_type: 'dolly-v2'
+.*replit:
+  model_type: 'replit'
 llama-65b-gptq-3bit:
   groupsize: 'None'
 .*(4bit|int4):
@@ -281,3 +293,5 @@ llama-65b-gptq-3bit:
 .*openchat:
   mode: 'instruct'
   instruction_template: 'OpenChat'
+.*falcon.*-instruct:
+  mode: 'instruct'
