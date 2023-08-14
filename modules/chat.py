@@ -272,8 +272,8 @@ def impersonate_wrapper(text, start_with, state):
 
     yield text + '...'
     reply = None
-    for reply in generate_reply(prompt, state, stopping_strings=stopping_strings, is_chat=True):
-        yield reply.lstrip(' ')
+    for reply in generate_reply(prompt + text, state, stopping_strings=stopping_strings, is_chat=True):
+        yield (text + reply).lstrip(' ')
         if shared.stop_everything:
             return
 
