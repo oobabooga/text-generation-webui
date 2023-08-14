@@ -121,7 +121,7 @@ def create_ui(default_preset):
                                 shared.gradio['add_bos_token'] = gr.Checkbox(value=shared.settings['add_bos_token'], label='Add the bos_token to the beginning of prompts', info='Disabling this can make the replies more creative.')
 
                                 shared.gradio['skip_special_tokens'] = gr.Checkbox(value=shared.settings['skip_special_tokens'], label='Skip special tokens', info='Some specific models need this unset.')
-                                shared.gradio['stream'] = gr.Checkbox(value=not shared.args.no_stream, label='Activate text streaming')
+                                shared.gradio['stream'] = gr.Checkbox(value=shared.settings['stream'], label='Activate text streaming')
 
         ui_chat.create_chat_settings_ui()
 
