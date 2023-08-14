@@ -508,7 +508,6 @@ def load_character(character, name1, name2, instruct=False):
         context = shared.settings['context']
         name2 = shared.settings['name2']
         greeting = shared.settings['greeting']
-        turn_template = shared.settings['turn_template']
 
     return name1, name2, picture, greeting, context, turn_template.replace("\n", r"\n")
 
