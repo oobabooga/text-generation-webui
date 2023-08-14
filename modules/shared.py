@@ -184,7 +184,7 @@ args_defaults = parser.parse_args([])
 # Deprecation warnings
 for k in ['chat', 'notebook', 'no_stream']:
     if getattr(args, k):
-        logger.warning(f'--{k} has been deprecated and will be removed soon. Please remove that flag.')
+        logger.warning(f'The --{k} flag has been deprecated and will be removed soon. Please remove that flag.')
 
 # Security warnings
 if args.trust_remote_code:
