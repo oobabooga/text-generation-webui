@@ -5,7 +5,7 @@
 .*(gpt-j|gptj|gpt4all-j|malion-6b|pygway|pygmalion-6b|dolly-v1):
   model_type: 'gptj'
 .*(gpt-neox|koalpaca-polyglot|polyglot.*koalpaca|polyglot-ko|polyglot_ko|pythia|stablelm|incite|dolly-v2|polycoder|h2ogpt-oig|h2ogpt-oasst1|h2ogpt-gm):
-  model_type: 'gpt_neox'
+  model_type: 'gptneox'
 .*llama:
   model_type: 'llama'
 .*bloom:
@@ -17,9 +17,9 @@
 .*mpt:
   model_type: 'mpt'
 .*(starcoder|starchat):
-  model_type: 'gpt_bigcode'
+  model_type: 'starcoder'
 .*dolly-v2:
-  model_type: 'dolly-v2'
+  model_type: 'dollyv2'
 .*replit:
   model_type: 'replit'
 llama-65b-gptq-3bit:
