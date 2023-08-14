@@ -100,7 +100,7 @@ def process_post(post, c):
     src = re.sub('>', '&gt;', src)
     src = re.sub('(&gt;&gt;[0-9]*)', '<span class="quote">\\1</span>', src)
     src = re.sub('\n', '<br>\n', src)
-    src = f'<blockquote class="message">{src}\n'
+    src = f'<blockquote class="message_4chan">{src}\n'
     src = f'<span class="name">Anonymous </span> <span class="number">No.{number}</span>\n{src}'
     return src
 
@@ -141,7 +141,7 @@ def generate_4chan_html(f):
     output = output.split('\n')
     for i in range(len(output)):
         output[i] = re.sub(r'^(&gt;(.*?)(<br>|</div>))', r'<span class="greentext">\1</span>', output[i])
-        output[i] = re.sub(r'^<blockquote class="message">(&gt;(.*?)(<br>|</div>))', r'<blockquote class="message"><span class="greentext">\1</span>', output[i])
+        output[i] = re.sub(r'^<blockquote class="message_4chan">(&gt;(.*?)(<br>|</div>))', r'<blockquote class="message_4chan"><span class="greentext">\1</span>', output[i])
 
     output = '\n'.join(output)
     return output
