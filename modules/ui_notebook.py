@@ -13,14 +13,12 @@ outputs = ('textbox-notebook', 'html-notebook')
 
 
 def create_ui():
-    default_text = load_prompt(shared.settings['prompt'])
-
     with gr.Tab('Notebook', elem_id='notebook-tab'):
         shared.gradio['last_input-notebook'] = gr.State('')
         with gr.Row():
             with gr.Column(scale=4):
                 with gr.Tab('Raw'):
-                    shared.gradio['textbox-notebook'] = gr.Textbox(value=default_text, elem_classes=['textbox', 'add_scrollbar'], lines=27)
+                    shared.gradio['textbox-notebook'] = gr.Textbox(value='', elem_classes=['textbox', 'add_scrollbar'], lines=27)
 
                 with gr.Tab('Markdown'):
                     shared.gradio['markdown_render-notebook'] = gr.Button('Render')

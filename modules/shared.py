@@ -41,7 +41,6 @@ settings = {
     'name2': 'Assistant',
     'context': 'This is a conversation with your Assistant. It is a computer program designed to help you with various tasks such as answering questions, providing recommendations, and helping with decision making. You can ask it anything you want and it will do its best to give you accurate and relevant information.',
     'greeting': '',
-    'turn_template': '',
     'custom_stopping_strings': '',
     'add_bos_token': True,
     'ban_eos_token': False,
@@ -56,7 +55,8 @@ settings = {
     'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
     'default_extensions': ['gallery'],
     'preset': 'simple-1',
-    'prompt': 'QA',
+    'prompt-default': 'QA',
+    'prompt-notebook': 'QA',
 }
 
 
