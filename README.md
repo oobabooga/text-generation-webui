@@ -4,9 +4,9 @@ A Gradio web UI for Large Language Models.
 
 Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.com/AUTOMATIC1111/stable-diffusion-webui) of text generation.
 
-|![Image1](https://github.com/oobabooga/screenshots/raw/main/qa.png) | ![Image2](https://github.com/oobabooga/screenshots/raw/main/cai3.png) |
+|![Image1](https://github.com/oobabooga/screenshots/raw/main/print_instruct.png) | ![Image2](https://github.com/oobabooga/screenshots/raw/main/print_chat.png) |
 |:---:|:---:|
-|![Image3](https://github.com/oobabooga/screenshots/raw/main/gpt4chan.png) | ![Image4](https://github.com/oobabooga/screenshots/raw/main/galactica.png) |
+|![Image1](https://github.com/oobabooga/screenshots/raw/main/print_default.png) | ![Image2](https://github.com/oobabooga/screenshots/raw/main/print_parameters.png) |
 
 ## Features
 
@@ -178,7 +178,10 @@ After downloading the model, follow these steps:
 python download-model.py EleutherAI/gpt-j-6B --text-only
 ```
 
-When you load this model in default or notebook modes, the "HTML" tab will show the generated text in 4chan format.
+When you load this model in default or notebook modes, the "HTML" tab will show the generated text in 4chan format:
+
+![Image3](https://github.com/oobabooga/screenshots/raw/main/gpt4chan.png)
+
 </details>
 
 ## Starting the web UI
