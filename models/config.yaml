@@ -5,11 +5,23 @@
 .*(gpt-j|gptj|gpt4all-j|malion-6b|pygway|pygmalion-6b|dolly-v1):
   model_type: 'gptj'
 .*(gpt-neox|koalpaca-polyglot|polyglot.*koalpaca|polyglot-ko|polyglot_ko|pythia|stablelm|incite|dolly-v2|polycoder|h2ogpt-oig|h2ogpt-oasst1|h2ogpt-gm):
-  model_type: 'gpt_neox'
+  model_type: 'gptneox'
 .*llama:
   model_type: 'llama'
 .*bloom:
   model_type: 'bloom'
+.*gpt2:
+  model_type: 'gpt2'
+.*falcon:
+  model_type: 'falcon'
+.*mpt:
+  model_type: 'mpt'
+.*(starcoder|starchat):
+  model_type: 'starcoder'
+.*dolly-v2:
+  model_type: 'dollyv2'
+.*replit:
+  model_type: 'replit'
 llama-65b-gptq-3bit:
   groupsize: 'None'
 .*(4bit|int4):
@@ -53,9 +65,11 @@ llama-65b-gptq-3bit:
 .*vicuna.*(1.1|1_1|1.3|1_3):
   mode: 'instruct'
   instruction_template: 'Vicuna-v1.1'
-.*wizard.*vicuna:
+.*vicuna.*(1.5|1_5):
   mode: 'instruct'
   instruction_template: 'Vicuna-v1.1'
+  truncation_length: 4096
+  rms_norm_eps: 5.0e-6
 .*stable.*vicuna:
   mode: 'instruct'
   instruction_template: 'StableVicuna'
@@ -108,10 +122,6 @@ llama-65b-gptq-3bit:
   truncation_length: 4096
 .*stablelm-base:
   truncation_length: 4096
-.*wizardlm:
-  mode: 'instruct'
-  model_type: 'llama'
-  instruction_template: 'WizardLM'
 .*galactica.*finetuned:
   mode: 'instruct'
   instruction_template: 'Galactica Finetuned'
@@ -189,21 +199,12 @@ llama-65b-gptq-3bit:
 .*airoboros.*1.2:
   mode: 'instruct'
   instruction_template: 'Airoboros-v1.2'
-.*WizardLM-30B-V1.0:
-  mode: 'instruct'
-  instruction_template: 'Vicuna-v1.1'
-TheBloke_WizardLM-30B-GPTQ:
-  mode: 'instruct'
-  instruction_template: 'Vicuna-v1.1'
 .*alpa(cino|sta):
   mode: 'instruct'
   instruction_template: 'Alpaca'
 .*hippogriff:
   mode: 'instruct'
   instruction_template: 'Hippogriff'
-.*gpt4all-.*-snoozy:
-  mode: 'instruct'
-  instruction_template: 'WizardLM'
 .*lazarus:
   mode: 'instruct'
   instruction_template: 'Alpaca'
@@ -267,7 +268,7 @@ TheBloke_WizardLM-30B-GPTQ:
   mode: 'instruct'
   instruction_template: 'Alpaca'
   truncation_length: 8192
-.*wizardlm-.*-v1.1:
+.*wizardlm:
   mode: 'instruct'
   instruction_template: 'Vicuna-v1.1'
 .*godzilla:
@@ -279,7 +280,7 @@ TheBloke_WizardLM-30B-GPTQ:
 .*llama-(2|v2).*chat:
   mode: 'instruct'
   instruction_template: 'Llama-v2'
-.*llama.*70b.*ggml.*\.bin:
+.*70b.*ggml.*\.bin:
   n_gqa: 8
 .*newhope:
   mode: 'instruct'
@@ -292,4 +293,5 @@ TheBloke_WizardLM-30B-GPTQ:
 .*openchat:
   mode: 'instruct'
   instruction_template: 'OpenChat'
-
+.*falcon.*-instruct:
+  mode: 'instruct'

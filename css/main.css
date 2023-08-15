@@ -7,6 +7,7 @@
 }
 
 .small-button {
+    min-width: 0 !important;
     max-width: 171px;
     height: 39.594px;
     align-self: end;
@@ -45,13 +46,6 @@
     min-height: 0
 }
 
-#save_session {
-    margin-top: 32px;
-}
-
-#accordion {
-}
-
 .dark svg {
     fill: white;
 }
@@ -64,7 +58,7 @@ ol li p, ul li p {
     display: inline-block;
 }
 
-#main, #parameters, #chat-settings, #lora, #training-tab, #model-tab, #session-tab {
+#chat-tab, #default-tab, #notebook-tab, #parameters, #chat-settings, #lora, #training-tab, #model-tab, #session-tab {
     border: 0;
 }
 
@@ -78,7 +72,6 @@ ol li p, ul li p {
 }
 
 #extensions {
-    padding: 15px;
     margin-bottom: 35px;
 }
 
@@ -108,7 +101,7 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
 }
 
 .textbox_default textarea {
-    height: calc(100vh - 380px);
+    height: calc(100vh - 310px);
 }
 
 .textbox_default_output textarea {
@@ -126,6 +119,12 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
 
 .dark textarea {
     color: #efefef !important;
+}
+
+@media screen and (max-width: 711px) {
+    .textbox_default textarea {
+        height: calc(100vh - 275px);
+    }
 }
 
 /* Hide the gradio footer*/
@@ -192,4 +191,142 @@ button {
 
 .dark .pretty_scrollbar::-webkit-resizer {
   background: #374151;
+}
+
+/*****************************************************/
+/*************** Chat UI declarations ****************/
+/*****************************************************/
+
+.h-\[40vh\], .wrap.svelte-byatnx.svelte-byatnx.svelte-byatnx {
+    height: 66.67vh
+}
+
+.gradio-container {
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+.w-screen {
+    width: unset
+}
+
+div.svelte-362y77>*, div.svelte-362y77>.form>* {
+    flex-wrap: nowrap
+}
+
+.pending.svelte-1ed2p3z {
+    opacity: 1;
+}
+
+#gradio-chatbot {
+    height: 66.67vh;
+}
+
+.wrap.svelte-6roggh.svelte-6roggh {
+    max-height: 92.5%;
+}
+
+/* This is for the microphone button in the whisper extension */
+.sm.svelte-1ipelgc {
+    width: 100%;
+}
+
+#chat-tab button, #notebook-tab button, #default-tab button {
+    min-width: 0 !important;
+}
+
+#chat-tab > :first-child, #extensions {
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+@media screen and (max-width: 688px) {
+    #chat-tab {
+        padding: 0px;
+    }
+
+    .chat {
+        height: calc(100vh - 274px) !important;
+    }
+}
+
+.chat {
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 800px;
+    height: calc(100vh - 286px);
+    overflow-y: auto;
+    padding-right: 20px;
+    display: flex;
+    flex-direction: column-reverse;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    padding-top: 1px;
+}
+
+.chat > .messages {
+    display: flex;
+    flex-direction: column;
+}
+
+.message-body li {
+    margin-top: 0.5em !important;
+    margin-bottom: 0.5em !important;
+}
+
+.message-body li > p {
+    display: inline !important;
+}
+
+.message-body ul, .message-body ol {
+    font-size: 15px !important;
+}
+
+.message-body ul {
+    list-style-type: disc !important;
+}
+
+.message-body pre {
+    margin-bottom: 1.25em !important;
+}
+
+.message-body code {
+    white-space: pre-wrap !important;
+    word-wrap: break-word !important;
+}
+
+.message-body :not(pre) > code {
+    white-space: normal !important;
+}
+
+@media print {
+    body {
+        visibility: hidden;
+    }
+
+    .chat {
+        visibility: visible;
+        position: absolute;
+        left: 0;
+        top: 0;
+        max-width: none;
+        max-height: none;
+        width: 100%;
+        height: fit-content;
+        display: flex;
+        flex-direction: column-reverse;
+    }
+    
+    .message {
+        break-inside: avoid;
+    }
+    
+    .gradio-container {
+        overflow: visible;
+    }
+    
+    .tab-nav {
+        display: none !important;
+    }
 }

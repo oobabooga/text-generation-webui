@@ -175,9 +175,6 @@ def get_stopping_strings(state):
             f"\n{state['name2']}:"
         ]
 
-    if state['stop_at_newline']:
-        stopping_strings.append("\n")
-
     return stopping_strings
 
 
@@ -201,7 +198,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
     if not any((regenerate, _continue)):
         visible_text = text
         text, visible_text = apply_extensions('chat_input', text, visible_text, state)
-        text = apply_extensions('input', text, state)
+        text = apply_extensions('input', text, state, is_chat=True)
 
         # *Is typing...*
         if loading_message:
@@ -230,75 +227,55 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
         prompt = generate_chat_prompt(text, state, **kwargs)
 
     # Generate
-    cumulative_reply = ''
-    for i in range(state['chat_generation_attempts']):
-        reply = None
-        for j, reply in enumerate(generate_reply(prompt + cumulative_reply, state, stopping_strings=stopping_strings, is_chat=True)):
-            reply = cumulative_reply + reply
+    reply = None
+    for j, reply in enumerate(generate_reply(prompt, state, stopping_strings=stopping_strings, is_chat=True)):
 
-            # Extract the reply
-            visible_reply = re.sub("(<USER>|<user>|{{user}})", state['name1'], reply)
+        # Extract the reply
+        visible_reply = re.sub("(<USER>|<user>|{{user}})", state['name1'], reply)
 
-            # We need this global variable to handle the Stop event,
-            # otherwise gradio gets confused
-            if shared.stop_everything:
-                output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state)
+        # We need this global variable to handle the Stop event,
+        # otherwise gradio gets confused
+        if shared.stop_everything:
+            output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
+            yield output
+            return
+
+        if just_started:
+            just_started = False
+            if not _continue:
+                output['internal'].append(['', ''])
+                output['visible'].append(['', ''])
+
+        if _continue:
+            output['internal'][-1] = [text, last_reply[0] + reply]
+            output['visible'][-1] = [visible_text, last_reply[1] + visible_reply]
+            if is_stream:
                 yield output
-                return
+        elif not (j == 0 and visible_reply.strip() == ''):
+            output['internal'][-1] = [text, reply.lstrip(' ')]
+            output['visible'][-1] = [visible_text, visible_reply.lstrip(' ')]
+            if is_stream:
+                yield output
 
-            if just_started:
-                just_started = False
-                if not _continue:
-                    output['internal'].append(['', ''])
-                    output['visible'].append(['', ''])
-
-            if _continue:
-                output['internal'][-1] = [text, last_reply[0] + reply]
-                output['visible'][-1] = [visible_text, last_reply[1] + visible_reply]
-                if is_stream:
-                    yield output
-            elif not (j == 0 and visible_reply.strip() == ''):
-                output['internal'][-1] = [text, reply.lstrip(' ')]
-                output['visible'][-1] = [visible_text, visible_reply.lstrip(' ')]
-                if is_stream:
-                    yield output
-
-        if reply in [None, cumulative_reply]:
-            break
-        else:
-            cumulative_reply = reply
-
-    output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state)
+    output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
     yield output
 
 
-def impersonate_wrapper(text, start_with, state):
+def impersonate_wrapper(text, state):
     if shared.model_name == 'None' or shared.model is None:
         logger.error("No model is loaded! Select one in the Model tab.")
         yield ''
         return
 
-    # Defining some variables
-    cumulative_reply = ''
     prompt = generate_chat_prompt('', state, impersonate=True)
     stopping_strings = get_stopping_strings(state)
 
     yield text + '...'
-    cumulative_reply = text
-    for i in range(state['chat_generation_attempts']):
-        reply = None
-        for reply in generate_reply(prompt + cumulative_reply, state, stopping_strings=stopping_strings, is_chat=True):
-            reply = cumulative_reply + reply
-            yield reply.lstrip(' ')
-            if shared.stop_everything:
-                return
-
-        if reply in [None, cumulative_reply]:
-            break
-        else:
-            cumulative_reply = reply
-
-    yield cumulative_reply.lstrip(' ')
+    reply = None
+    for reply in generate_reply(prompt + text, state, stopping_strings=stopping_strings, is_chat=True):
+        yield (text + reply).lstrip(' ')
+        if shared.stop_everything:
+            return
 
 
 def generate_chat_reply(text, state, regenerate=False, _continue=False, loading_message=True):
@@ -314,15 +291,15 @@ def generate_chat_reply(text, state, regenerate=False, _continue=False, loading_
 
 
 # Same as above but returns HTML for the UI
-def generate_chat_reply_wrapper(text, start_with, state, regenerate=False, _continue=False):
-    if start_with != '' and not _continue:
+def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
+    if state['start_with'] != '' and not _continue:
         if regenerate:
             text, state['history'] = remove_last_message(state['history'])
             regenerate = False
 
         _continue = True
         send_dummy_message(text, state)
-        send_dummy_reply(start_with, state)
+        send_dummy_reply(state['start_with'], state)
 
     for i, history in enumerate(generate_chat_reply(text, state, regenerate, _continue, loading_message=True)):
         yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style']), history
@@ -347,9 +324,12 @@ def send_last_reply_to_input(history):
 
 def replace_last_reply(text, state):
     history = state['history']
-    if len(history['visible']) > 0:
+
+    if len(text.strip()) == 0:
+        return history
+    elif len(history['visible']) > 0:
         history['visible'][-1][1] = text
-        history['internal'][-1][1] = apply_extensions('input', text, state)
+        history['internal'][-1][1] = apply_extensions('input', text, state, is_chat=True)
 
     return history
 
@@ -357,7 +337,7 @@ def replace_last_reply(text, state):
 def send_dummy_message(text, state):
     history = state['history']
     history['visible'].append([text, ''])
-    history['internal'].append([apply_extensions('input', text, state), ''])
+    history['internal'].append([apply_extensions('input', text, state, is_chat=True), ''])
     return history
 
 
@@ -368,7 +348,7 @@ def send_dummy_reply(text, state):
         history['internal'].append(['', ''])
 
     history['visible'][-1][1] = text
-    history['internal'][-1][1] = apply_extensions('input', text, state)
+    history['internal'][-1][1] = apply_extensions('input', text, state, is_chat=True)
     return history
 
 
@@ -382,7 +362,7 @@ def clear_chat_log(state):
     if mode != 'instruct':
         if greeting != '':
             history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
-            history['visible'] += [['', apply_extensions('output', greeting, state)]]
+            history['visible'] += [['', apply_extensions('output', greeting, state, is_chat=True)]]
 
     return history
 
@@ -395,6 +375,7 @@ def save_history(history, path=None):
     p = path or Path('logs/exported_history.json')
     if not p.parent.is_dir():
         p.parent.mkdir(parents=True)
+
     with open(p, 'w', encoding='utf-8') as f:
         f.write(json.dumps(history, indent=4))
 
@@ -415,7 +396,7 @@ def load_history(file, history):
 
 def save_persistent_history(history, character, mode):
     if mode in ['chat', 'chat-instruct'] and character not in ['', 'None', None] and not shared.args.multi_user:
-        save_history(history, path=Path(f'logs/{character}_persistent.json'))
+        save_history(history, path=Path(f'logs/persistent_{character}.json'))
 
 
 def load_persistent_history(state):
@@ -428,8 +409,15 @@ def load_persistent_history(state):
 
     character = state['character_menu']
     greeting = replace_character_names(state['greeting'], state['name1'], state['name2'])
-    p = Path(f'logs/{character}_persistent.json')
-    if not shared.args.multi_user and character not in ['None', '', None] and p.exists():
+
+    should_load_history = (not shared.args.multi_user and character not in ['None', '', None])
+    old_p = Path(f'logs/{character}_persistent.json')
+    p = Path(f'logs/persistent_{character}.json')
+    if should_load_history and old_p.exists():
+        logger.warning(f"Renaming {old_p} to {p}")
+        old_p.rename(p)
+
+    if should_load_history and p.exists():
         f = json.loads(open(p, 'rb').read())
         if 'internal' in f and 'visible' in f:
             history = f
@@ -441,7 +429,7 @@ def load_persistent_history(state):
         history = {'internal': [], 'visible': []}
         if greeting != "":
             history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
-            history['visible'] += [['', apply_extensions('output', greeting, state)]]
+            history['visible'] += [['', apply_extensions('output', greeting, state, is_chat=True)]]
 
     return history
 
@@ -520,7 +508,6 @@ def load_character(character, name1, name2, instruct=False):
         context = shared.settings['context']
         name2 = shared.settings['name2']
         greeting = shared.settings['greeting']
-        turn_template = shared.settings['turn_template']
 
     return name1, name2, picture, greeting, context, turn_template.replace("\n", r"\n")
 

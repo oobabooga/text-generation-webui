@@ -1,19 +1,21 @@
+import copy
 from pathlib import Path
 
 import gradio as gr
 import torch
+import yaml
 
 from modules import shared
 
 
 with open(Path(__file__).resolve().parent / '../css/main.css', 'r') as f:
     css = f.read()
-with open(Path(__file__).resolve().parent / '../css/chat.css', 'r') as f:
-    chat_css = f.read()
 with open(Path(__file__).resolve().parent / '../js/main.js', 'r') as f:
-    main_js = f.read()
+    js = f.read()
 with open(Path(__file__).resolve().parent / '../js/save_files.js', 'r') as f:
     save_files_js = f.read()
+with open(Path(__file__).resolve().parent / '../js/switch_tabs.js', 'r') as f:
+    switch_tabs_js = f.read()
 
 refresh_symbol = '🔄'
 delete_symbol = '🗑️'
@@ -58,6 +60,7 @@ def list_model_elements():
         'no_inject_fused_attention',
         'no_inject_fused_mlp',
         'no_use_cuda_fp16',
+        'disable_exllama',
         'threads',
         'n_batch',
         'no_mmap',
@@ -116,31 +119,38 @@ def list_interface_input_elements():
         'top_a',
     ]
 
-    if shared.args.chat:
-        elements += [
-            'character_menu',
-            'history',
-            'name1',
-            'name2',
-            'greeting',
-            'context',
-            'chat_generation_attempts',
-            'stop_at_newline',
-            'mode',
-            'instruction_template',
-            'name1_instruct',
-            'name2_instruct',
-            'context_instruct',
-            'turn_template',
-            'chat_style',
-            'chat-instruct_command',
-        ]
-    else:
-        elements.append('textbox')
-        if not shared.args.notebook:
-            elements.append('output_textbox')
+    # Chat elements
+    elements += [
+        'textbox',
+        'start_with',
+        'character_menu',
+        'history',
+        'name1',
+        'name2',
+        'greeting',
+        'context',
+        'mode',
+        'instruction_template',
+        'name1_instruct',
+        'name2_instruct',
+        'context_instruct',
+        'turn_template',
+        'chat_style',
+        'chat-instruct_command',
+    ]
 
+    # Notebook/default elements
+    elements += [
+        'textbox-notebook',
+        'textbox-default',
+        'output_textbox',
+        'prompt_menu-default',
+        'prompt_menu-notebook',
+    ]
+
+    # Model elements
     elements += list_model_elements()
+
     return elements
 
 
@@ -164,6 +174,24 @@ def apply_interface_values(state, use_persistent=False):
         return [gr.update() for k in elements]  # Dummy, do nothing
     else:
         return [state[k] if k in state else gr.update() for k in elements]
+
+
+def save_settings(state, preset, instruction_template, extensions):
+    output = copy.deepcopy(shared.settings)
+    exclude = ['name1', 'name2', 'greeting', 'context', 'turn_template']
+    for k in state:
+        if k in shared.settings and k not in exclude:
+            output[k] = state[k]
+
+    output['preset'] = preset
+    output['prompt-default'] = state['prompt_menu-default']
+    output['prompt-notebook'] = state['prompt_menu-notebook']
+    output['character'] = state['character_menu']
+    output['instruction_template'] = instruction_template
+    output['default_extensions'] = extensions
+    output['seed'] = int(output['seed'])
+
+    return yaml.dump(output, sort_keys=False, width=float("inf"))
 
 
 class ToolButton(gr.Button, gr.components.IOComponent):

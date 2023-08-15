@@ -6,6 +6,7 @@ from pathlib import Path
 import markdown
 from PIL import Image, ImageOps
 
+from modules.logging_colors import logger
 from modules.utils import get_available_chat_styles
 
 # This is to store the paths to the thumbnails of the profile pictures
@@ -99,7 +100,7 @@ def process_post(post, c):
     src = re.sub('>', '&gt;', src)
     src = re.sub('(&gt;&gt;[0-9]*)', '<span class="quote">\\1</span>', src)
     src = re.sub('\n', '<br>\n', src)
-    src = f'<blockquote class="message">{src}\n'
+    src = f'<blockquote class="message_4chan">{src}\n'
     src = f'<span class="name">Anonymous </span> <span class="number">No.{number}</span>\n{src}'
     return src
 
@@ -120,6 +121,7 @@ def generate_4chan_html(f):
             post = line
         else:
             post += line
+
     if post != '':
         src = process_post(post, c)
         posts.append(src)
@@ -134,13 +136,14 @@ def generate_4chan_html(f):
     output += f'<style>{_4chan_css}</style><div id="parent"><div id="container">'
     for post in posts:
         output += post
+
     output += '</div></div>'
     output = output.split('\n')
     for i in range(len(output)):
         output[i] = re.sub(r'^(&gt;(.*?)(<br>|</div>))', r'<span class="greentext">\1</span>', output[i])
-        output[i] = re.sub(r'^<blockquote class="message">(&gt;(.*?)(<br>|</div>))', r'<blockquote class="message"><span class="greentext">\1</span>', output[i])
-    output = '\n'.join(output)
+        output[i] = re.sub(r'^<blockquote class="message_4chan">(&gt;(.*?)(<br>|</div>))', r'<blockquote class="message_4chan"><span class="greentext">\1</span>', output[i])
 
+    output = '\n'.join(output)
     return output
 
 
@@ -160,7 +163,13 @@ def get_image_cache(path):
     mtime = os.stat(path).st_mtime
     if (path in image_cache and mtime != image_cache[path][0]) or (path not in image_cache):
         img = make_thumbnail(Image.open(path))
-        output_file = Path(f'cache/{path.name}_cache.png')
+
+        old_p = Path(f'cache/{path.name}_cache.png')
+        p = Path(f'cache/cache_{path.name}.png')
+        if old_p.exists():
+            old_p.rename(p)
+
+        output_file = p
         img.convert('RGB').save(output_file, format='PNG')
         image_cache[path] = [mtime, output_file.as_posix()]
 
