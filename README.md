@@ -124,12 +124,11 @@ Models should be placed in the `text-generation-webui/models` folder. They are u
 * Transformers or GPTQ models are made of several files and must be placed in a subfolder. Example:
 
 ```
-text-generation-webui/
+text-generation-webui
 ├── models
 │   ├── lmsys_vicuna-33b-v1.3
 │   │   ├── config.json
 │   │   ├── generation_config.json
-│   │   ├── huggingface-metadata.txt
 │   │   ├── pytorch_model-00001-of-00007.bin
 │   │   ├── pytorch_model-00002-of-00007.bin
 │   │   ├── pytorch_model-00003-of-00007.bin
@@ -138,15 +137,14 @@ text-generation-webui/
 │   │   ├── pytorch_model-00006-of-00007.bin
 │   │   ├── pytorch_model-00007-of-00007.bin
 │   │   ├── pytorch_model.bin.index.json
-│   │   ├── README.md
 │   │   ├── special_tokens_map.json
 │   │   ├── tokenizer_config.json
 │   │   └── tokenizer.model
 ```
 
-In the "Model" tab of the UI, those models can be downloaded from Hugging Face. You can also download them from the command-line with `python download-model.py organization/model`.
+In the "Model" tab of the UI, those models can be directly downloaded from Hugging Face. You can also download them from the command-line with `python download-model.py organization/model`.
 
-* GGML models are a single file and can be placed directly into `models`. Example:
+* GGML models are a single file and should be placed directly into `models`. Example:
 
 ```
 text-generation-webui/
@@ -154,7 +152,7 @@ text-generation-webui/
 │   ├── llama-13b.ggmlv3.q4_K_M.bin
 ```
 
-Those models have to be downloaded manually and placed into that folder.
+These models have to be downloaded manually and are not supported by the automated downloaders yet.
 
 #### GPT-4chan
 
