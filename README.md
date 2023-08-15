@@ -142,7 +142,7 @@ text-generation-webui
 │   │   └── tokenizer.model
 ```
 
-In the "Model" tab of the UI, those models can be directly downloaded from Hugging Face. You can also download them from the command-line with `python download-model.py organization/model`.
+In the "Model" tab of the UI, those models can be automatically downloaded from Hugging Face. You can also download them via the command-line with `python download-model.py organization/model`.
 
 * GGML models are a single file and should be placed directly into `models`. Example:
 
@@ -152,7 +152,7 @@ text-generation-webui/
 │   ├── llama-13b.ggmlv3.q4_K_M.bin
 ```
 
-These models have to be downloaded manually and are not supported by the automated downloaders yet.
+Those models must be downloaded manually, as they are not currently supported by the automated downloader.
 
 #### GPT-4chan
 
