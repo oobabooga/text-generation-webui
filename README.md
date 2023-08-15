@@ -147,7 +147,7 @@ In the "Model" tab of the UI, those models can be automatically downloaded from 
 * GGML models are a single file and should be placed directly into `models`. Example:
 
 ```
-text-generation-webui/
+text-generation-webui
 ├── models
 │   ├── llama-13b.ggmlv3.q4_K_M.bin
 ```
