@@ -266,7 +266,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 #chat {
-    height: calc(100dvh - 286px);
+    height: calc(100dvh - 284px);
 }
 
 .bigchat #chat {
