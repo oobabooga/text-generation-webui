@@ -101,15 +101,15 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
 }
 
 .textbox_default textarea {
-    height: calc(100vh - 310px);
+    height: calc(100dvh - 310px);
 }
 
 .textbox_default_output textarea {
-    height: calc(100vh - 190px);
+    height: calc(100dvh - 190px);
 }
 
 .textbox textarea {
-    height: calc(100vh - 241px);
+    height: calc(100dvh - 241px);
 }
 
 .textbox_default textarea, .textbox_default_output textarea, .textbox textarea {
@@ -123,7 +123,7 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
 
 @media screen and (max-width: 711px) {
     .textbox_default textarea {
-        height: calc(100vh - 275px);
+        height: calc(100dvh - 275px);
     }
 }
 
@@ -218,10 +218,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     opacity: 1;
 }
 
-#gradio-chatbot {
-    height: 66.67vh;
-}
-
 .wrap.svelte-6roggh.svelte-6roggh {
     max-height: 92.5%;
 }
@@ -247,11 +243,11 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     }
 
     #chat-display {
-        height: calc(100vh - 274px) !important;
+        height: calc(100dvh - 274px) !important;
     }
 
     #chat-display.bigchat {
-        height: calc(100vh - 180px) !important;
+        height: calc(100dvh - 180px) !important;
     }
 }
 
@@ -270,11 +266,11 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 #chat-display {
-    height: calc(100vh - 286px);
+    height: calc(100dvh - 286px);
 }
 
 .bigchat {
-    height: calc(100vh - 200px) !important;
+    height: calc(100dvh - 200px) !important;
 }
 
 
