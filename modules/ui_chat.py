@@ -21,7 +21,7 @@ def create_ui():
     shared.gradio['history'] = gr.State({'internal': [], 'visible': []})
 
     with gr.Tab('Chat', elem_id='chat-tab'):
-        shared.gradio['display'] = gr.HTML(value=chat_html_wrapper({'internal': [], 'visible': []}, shared.settings['name1'], shared.settings['name2'], 'chat', 'cai-chat'), elem_id='chat-display')
+        shared.gradio['display'] = gr.HTML(value=chat_html_wrapper({'internal': [], 'visible': []}, shared.settings['name1'], shared.settings['name2'], 'chat', 'cai-chat'))
 
         shared.gradio['textbox'] = gr.Textbox(label='Input', elem_id='chat-input')
         shared.gradio['show-controls'] = gr.Checkbox(value=True, label='Show controls', elem_id='show-controls')

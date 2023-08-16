@@ -1,5 +1,5 @@
 const belowChatInput = document.querySelectorAll("#chat-tab > div > :nth-child(n+3), #extensions");
-const chatDisplayElement = document.getElementById("chat-display");
+const chatElement = document.getElementById("chat");
 
 function toggle_controls(value) {
     if (value) {
@@ -7,12 +7,12 @@ function toggle_controls(value) {
           element.style.display = "inherit";
         });
 
-        chatDisplayElement.classList.remove("bigchat");
+        chatElement.classList.remove("bigchat");
     } else {
         belowChatInput.forEach(element => {
           element.style.display = "none";
         });
 
-        chatDisplayElement.classList.add("bigchat");
+        chatElement.classList.add("bigchat");
     }
 }
