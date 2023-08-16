@@ -259,6 +259,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     margin-left: auto;
     margin-right: auto;
     max-width: 800px;
+    height: 100%;
     overflow-y: auto;
     padding-right: 20px;
     display: flex;
