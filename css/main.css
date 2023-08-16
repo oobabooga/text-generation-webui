@@ -123,7 +123,7 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
 
 @media screen and (max-width: 711px) {
     .textbox_default textarea {
-        height: calc(100dvh - 275px);
+        height: calc(100dvh - 295px);
     }
 }
 
@@ -243,10 +243,10 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     }
 
     #chat {
-        height: calc(100dvh - 274px) !important;
+        height: calc(100dvh - 272px) !important;
     }
 
-    #chat.bigchat {
+    .bigchat #chat {
         height: calc(100dvh - 180px) !important;
     }
 }
@@ -269,8 +269,8 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     height: calc(100dvh - 286px);
 }
 
-.bigchat {
-    height: calc(100dvh - 200px) !important;
+.bigchat #chat {
+    height: calc(100dvh - 200px);
 }
 
 
