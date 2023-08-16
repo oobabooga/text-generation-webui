@@ -16,6 +16,8 @@ with open(Path(__file__).resolve().parent / '../js/save_files.js', 'r') as f:
     save_files_js = f.read()
 with open(Path(__file__).resolve().parent / '../js/switch_tabs.js', 'r') as f:
     switch_tabs_js = f.read()
+with open(Path(__file__).resolve().parent / '../js/show_controls.js', 'r') as f:
+    show_controls_js = f.read()
 
 refresh_symbol = '🔄'
 delete_symbol = '🗑️'

@@ -22,7 +22,9 @@ def create_ui():
 
     with gr.Tab('Chat', elem_id='chat-tab'):
         shared.gradio['display'] = gr.HTML(value=chat_html_wrapper({'internal': [], 'visible': []}, shared.settings['name1'], shared.settings['name2'], 'chat', 'cai-chat'))
-        shared.gradio['textbox'] = gr.Textbox(label='Input')
+
+        shared.gradio['textbox'] = gr.Textbox(label='Input', elem_id='chat-input')
+        shared.gradio['show-controls'] = gr.Checkbox(value=True, label='Show controls', elem_id='show-controls')
         with gr.Row():
             shared.gradio['Stop'] = gr.Button('Stop', elem_id='stop')
             shared.gradio['Generate'] = gr.Button('Generate', elem_id='Generate', variant='primary')
@@ -48,7 +50,7 @@ def create_ui():
             shared.gradio['start_with'] = gr.Textbox(label='Start reply with', placeholder='Sure thing!', value=shared.settings['start_with'])
 
         with gr.Row():
-            shared.gradio['mode'] = gr.Radio(choices=['chat', 'chat-instruct', 'instruct'], value=shared.settings['mode'] if shared.settings['mode'] in ['chat', 'instruct', 'chat-instruct'] else 'chat', label='Mode', info='Defines how the chat prompt is generated. In instruct and chat-instruct modes, the instruction template selected under Parameters > Instruction template must match the current model.')
+            shared.gradio['mode'] = gr.Radio(choices=['chat', 'chat-instruct', 'instruct'], value=shared.settings['mode'] if shared.settings['mode'] in ['chat', 'instruct', 'chat-instruct'] else 'chat', label='Mode', info='Defines how the chat prompt is generated. In instruct and chat-instruct modes, the instruction template selected under Parameters > Instruction template must match the current model.', elem_id='chat-mode')
             shared.gradio['chat_style'] = gr.Dropdown(choices=utils.get_available_chat_styles(), label='Chat style', value=shared.settings['chat_style'], visible=shared.settings['mode'] != 'instruct')
 
 
@@ -124,6 +126,8 @@ def create_event_handlers():
     # Obsolete variables, kept for compatibility with old extensions
     shared.input_params = gradio(inputs)
     shared.reload_inputs = gradio(reload_arr)
+
+    shared.gradio['show-controls'].change(None, gradio('show-controls'), None, _js=f'(x) => {{{ui.show_controls_js}; toggle_controls(x)}}')
 
     shared.gradio['Generate'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(

@@ -101,15 +101,15 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
 }
 
 .textbox_default textarea {
-    height: calc(100vh - 310px);
+    height: calc(100dvh - 310px);
 }
 
 .textbox_default_output textarea {
-    height: calc(100vh - 190px);
+    height: calc(100dvh - 190px);
 }
 
 .textbox textarea {
-    height: calc(100vh - 241px);
+    height: calc(100dvh - 241px);
 }
 
 .textbox_default textarea, .textbox_default_output textarea, .textbox textarea {
@@ -123,7 +123,7 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
 
 @media screen and (max-width: 711px) {
     .textbox_default textarea {
-        height: calc(100vh - 275px);
+        height: calc(100dvh - 295px);
     }
 }
 
@@ -218,10 +218,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     opacity: 1;
 }
 
-#gradio-chatbot {
-    height: 66.67vh;
-}
-
 .wrap.svelte-6roggh.svelte-6roggh {
     max-height: 92.5%;
 }
@@ -246,8 +242,12 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
         padding: 0px;
     }
 
-    .chat {
-        height: calc(100vh - 274px) !important;
+    #chat {
+        height: calc(100dvh - 272px) !important;
+    }
+
+    .bigchat #chat {
+        height: calc(100dvh - 180px) !important;
     }
 }
 
@@ -255,7 +255,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     margin-left: auto;
     margin-right: auto;
     max-width: 800px;
-    height: calc(100vh - 286px);
+    height: 100%;
     overflow-y: auto;
     padding-right: 20px;
     display: flex;
@@ -263,6 +263,21 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     word-break: break-word;
     overflow-wrap: anywhere;
     padding-top: 1px;
+}
+
+#chat {
+    height: calc(100dvh - 286px);
+}
+
+.bigchat #chat {
+    height: calc(100dvh - 200px);
+}
+
+
+#show-controls {
+    position: absolute;
+    background-color: transparent;
+    left: calc(100% - 140px);
 }
 
 .chat > .messages {
