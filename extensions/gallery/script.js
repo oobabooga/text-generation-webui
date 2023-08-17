@@ -15,9 +15,7 @@ main_parent.addEventListener('click', function(e) {
     if (chat_visible) {
         if (chat_mode_visible) {
             gallery_element.style.display = 'block';
-            if (gallery_only) {
-                extensions_block.style.display = '';
-            }
+            extensions_block.style.display = '';
         } else {
             gallery_element.style.display = 'none';
             extensions_block.style.display = 'none';
@@ -26,9 +24,6 @@ main_parent.addEventListener('click', function(e) {
         gallery_element.style.display = 'none';
         if (gallery_only) {
             extensions_block.style.display = 'none';
-        }
-        else {
-            extensions_block.style.display = '';
         }
     }
 });
