@@ -1,6 +1,6 @@
 #Standalone Dockerfile for text-generation-webui on NVIDIA Jetson Embedded devices
 
-FROM nvcr.io/nvidia/l4t-pytorch:r35.2.1-pth2.0-py3 as builder
+FROM dustynv/l4t-pytorch:r35.4.1 as builder
 ENV TORCH_CUDA_ARCH_LIST Turing
 RUN apt-get update && \
     apt-get install -y python3 python3-pip git build-essential python3-dev
@@ -17,7 +17,7 @@ WORKDIR /build
 RUN pip3 install -r requirements.txt
 RUN python3 setup_cuda.py bdist_wheel -d /wheels
 
-FROM nvcr.io/nvidia/l4t-pytorch:r35.2.1-pth2.0-py3
+FROM dustynv/l4t-pytorch:r35.4.1 
 COPY --from=builder /wheels /wheels
 COPY --from=builder /build /build
 RUN apt-get update && \
@@ -30,7 +30,7 @@ RUN pip3 install -r requirements.txt
 RUN git clone https://github.com/oobabooga/text-generation-webui /app
 
 WORKDIR /app
-#ENV WEBUI_VERSION="2908a515877ffde2b1684b2353f6d72e6cb4d31b"
+#ENV WEBUI_VERSION="b17893a58f1b6d11d3c39594608a421bf09928a1"
 #RUN git reset --hard ${WEBUI_VERSION}
 RUN pip3 install --upgrade pip setuptools
 RUN pip3 install protobuf>=3.3.0
@@ -39,6 +39,8 @@ RUN pip3 install -r requirements.txt
 RUN pip3 uninstall -y bitsandbytes
 RUN mkdir /app/repositories
 RUN mv /build /app/repositories/GPTQ-for-LLaMa
+RUN cd /app/repositories && \
+    git clone https://github.com/turboderp/exllama
 
 #Remove Python 3.10 specific macros
 RUN sed -i 's/@functools.cache/@functools.lru_cache(maxsize=None)/g' /app/modules/chat.py
