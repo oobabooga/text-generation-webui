@@ -253,6 +253,10 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     .bigchat #chat {
         height: calc(100dvh - 180px) !important;
     }
+
+    .chat {
+        flex-direction: column-reverse !important;
+    }
 }
 
 .chat {

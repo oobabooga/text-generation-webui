@@ -50,33 +50,13 @@ document.addEventListener("keydown", function(event) {
 });
 
 // Chat scrolling
-let globalScrollTop = 1e30;
 const targetElement = document.getElementById('chat').parentNode.parentNode.parentNode;
-let childElement = targetElement.childNodes[2].childNodes[0].childNodes[1];
-
-childElement.addEventListener('scroll', function() {
-  let diff = childElement.scrollHeight - childElement.clientHeight;
-  if(childElement.scrollTop == diff || diff == 0) {
-    globalScrollTop = 1e30;
-  } else {
-    globalScrollTop = childElement.scrollTop;
-  }
-});
 
 // Create a MutationObserver instance
 const observer = new MutationObserver(function(mutations) {
   mutations.forEach(function(mutation) {
-    childElement = targetElement.childNodes[2].childNodes[0].childNodes[1];
-    childElement.scrollTop = globalScrollTop; 
-
-    childElement.addEventListener('scroll', function() {
-      let diff = childElement.scrollHeight - childElement.clientHeight;
-      if(childElement.scrollTop == diff || diff == 0) {
-        globalScrollTop = 1e30;
-      } else {
-        globalScrollTop = childElement.scrollTop;
-      }
-    });
+    let childElement = targetElement.childNodes[2].childNodes[0].childNodes[1];
+    childElement.scrollTop = childElement.scrollHeight;
   });
 });
 
