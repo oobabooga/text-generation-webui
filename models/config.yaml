@@ -295,3 +295,8 @@ llama-65b-gptq-3bit:
   instruction_template: 'OpenChat'
 .*falcon.*-instruct:
   mode: 'instruct'
+.*(openorca-platypus2):
+  mode: 'instruct'
+  instruction_template: 'OpenOrca-Platypus2'
+  custom_stopping_strings: '"### Instruction:", "### Response:"'
+  rms_norm_eps: 5.0e-6
