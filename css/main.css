@@ -100,6 +100,10 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
     background-color: #8080802b;
 }
 
+.header_bar button.selected {
+    border-radius: 0;
+}
+
 .textbox_default textarea {
     height: calc(100dvh - 310px);
 }
@@ -166,7 +170,7 @@ button {
 }
 
 .pretty_scrollbar::-webkit-scrollbar {
-  width: 10px;
+  width: 5px;
 }
 
 .pretty_scrollbar::-webkit-scrollbar-track {
@@ -176,13 +180,11 @@ button {
 .pretty_scrollbar::-webkit-scrollbar-thumb,
 .pretty_scrollbar::-webkit-scrollbar-thumb:hover {
   background: #c5c5d2;
-  border-radius: 10px;
 }
 
 .dark .pretty_scrollbar::-webkit-scrollbar-thumb,
 .dark .pretty_scrollbar::-webkit-scrollbar-thumb:hover {
   background: #374151;
-  border-radius: 10px;
 }
 
 .pretty_scrollbar::-webkit-resizer {
@@ -247,7 +249,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     }
 
     #chat {
-        height: calc(100dvh - 272px) !important;
+        height: calc(100dvh - 262px) !important;
     }
 
     .bigchat #chat {
@@ -265,7 +267,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     max-width: 800px;
     height: 100%;
     overflow-y: auto;
-    padding-right: 20px;
+    padding-right: 15px;
     display: flex;
     flex-direction: column;
     word-break: break-word;
@@ -274,7 +276,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 #chat {
-    height: calc(100dvh - 284px);
+    height: calc(100dvh - 272px);
 }
 
 .bigchat #chat {
@@ -284,12 +286,17 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 #show-controls {
     position: absolute;
     background-color: transparent;
-    left: calc(100% - 140px);
+    left: calc(100% - 130px);
 }
 
 .chat > .messages {
     display: flex;
     flex-direction: column;
+}
+
+.chat .message:last-child {
+    margin-bottom: 0px !important;
+    padding-bottom: 0px !important;
 }
 
 .message-body li {
@@ -320,6 +327,17 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 
 .message-body :not(pre) > code {
     white-space: normal !important;
+}
+
+#chat-input {
+    padding: 0;
+    padding-top: 18px;
+    background: var(--background-fill-primary);
+    border: none;
+}
+
+#chat-input textarea:focus {
+    box-shadow: none !important;
 }
 
 @media print {

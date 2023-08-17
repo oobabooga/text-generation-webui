@@ -22,7 +22,7 @@ def create_ui():
 
     with gr.Tab('Chat', elem_id='chat-tab'):
         shared.gradio['display'] = gr.HTML(value=chat_html_wrapper({'internal': [], 'visible': []}, shared.settings['name1'], shared.settings['name2'], 'chat', 'cai-chat'))
-        shared.gradio['textbox'] = gr.Textbox(label='Input', elem_id='chat-input')
+        shared.gradio['textbox'] = gr.Textbox(label='', placeholder='Send a message', elem_id='chat-input')
         shared.gradio['show_controls'] = gr.Checkbox(value=shared.settings['show_controls'], label='Show controls', elem_id='show-controls')
 
         with gr.Row():

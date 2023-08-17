@@ -30,7 +30,9 @@ main_parent.addEventListener('click', function(e) {
     }
 });
 
+//------------------------------------------------
 // Add some scrollbars
+//------------------------------------------------
 const textareaElements = document.querySelectorAll('.add_scrollbar textarea');
 for(i = 0; i < textareaElements.length; i++) {
     textareaElements[i].classList.remove('scroll-hide');
@@ -38,7 +40,9 @@ for(i = 0; i < textareaElements.length; i++) {
     textareaElements[i].style.resize = "none";
 }
 
+//------------------------------------------------
 // Stop generation on Esc pressed
+//------------------------------------------------
 document.addEventListener("keydown", function(event) {
   if (event.key === "Escape") {
     // Find the element with id 'stop' and click it
@@ -49,7 +53,9 @@ document.addEventListener("keydown", function(event) {
   }
 });
 
+//------------------------------------------------
 // Chat scrolling
+//------------------------------------------------
 const targetElement = document.getElementById('chat').parentNode.parentNode.parentNode;
 
 // Create a MutationObserver instance
@@ -71,3 +77,9 @@ const config = {
 
 // Start observing the target element
 observer.observe(targetElement, config);
+
+//------------------------------------------------
+// Improve the looks of the chat input field
+//------------------------------------------------
+document.getElementById('chat-input').parentNode.style.background = 'transparent';
+document.getElementById('chat-input').parentNode.style.border = 'none';
