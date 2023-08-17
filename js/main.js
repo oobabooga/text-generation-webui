@@ -48,3 +48,26 @@ document.addEventListener("keydown", function(event) {
     }
   }
 });
+
+// Chat scrolling
+const targetElement = document.getElementById('chat').parentNode.parentNode.parentNode;
+
+// Create a MutationObserver instance
+const observer = new MutationObserver(function(mutations) {
+  mutations.forEach(function(mutation) {
+    let childElement = targetElement.childNodes[2].childNodes[0].childNodes[1];
+    childElement.scrollTop = childElement.scrollHeight;
+  });
+});
+
+// Configure the observer to watch for changes in the subtree and attributes
+const config = {
+  childList: true,
+  subtree: true,
+  characterData: true,
+  attributeOldValue: true,
+  characterDataOldValue: true
+};
+
+// Start observing the target element
+observer.observe(targetElement, config);
