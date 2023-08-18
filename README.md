@@ -88,7 +88,19 @@ cd text-generation-webui
 pip install -r requirements.txt
 ```
 
-#### Note about older NVIDIA GPUs
+#### llama.cpp on AMD, Metal, and some specific CPUs
+
+Precompiled wheels are included for CPU-only and NVIDIA GPUs (cuBLAS). For AMD, Metal, and some specific CPUs, you need to uninstall those wheels and compile llama-cpp-python yourself.
+
+To uninstall:
+
+```
+pip uninstall -y llama-cpp-python llama-cpp-python-cuda
+```
+
+To compile: https://github.com/abetlen/llama-cpp-python#installation-with-openblas--cublas--clblast--metal
+
+#### bitsandbytes on older NVIDIA GPUs
 
 bitsandbytes >= 0.39 may not work. In that case, to use `--load-in-8bit`, you may have to downgrade like this:
 
