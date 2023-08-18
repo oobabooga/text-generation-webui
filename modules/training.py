@@ -37,9 +37,8 @@ from modules.evaluate import (
     save_past_evaluations
 )
 from modules.logging_colors import logger
-from modules.models import load_model, unload_model
+from modules.models import load_model, reload_model
 from modules.utils import natural_keys
-
 
 MODEL_CLASSES = {v[1]: v[0] for v in MODEL_FOR_CAUSAL_LM_MAPPING_NAMES.items()}
 PARAMETERS = ["lora_name", "always_override", "save_steps", "micro_batch_size", "batch_size", "epochs", "learning_rate", "lr_scheduler_type", "lora_rank", "lora_alpha", "lora_dropout", "cutoff_len", "dataset", "eval_dataset", "format", "eval_steps", "raw_text_file", "overlap_len", "newline_favor_len", "higher_rank_limit", "warmup_steps", "optimizer", "hard_cut_string", "train_only_after", "stop_at_loss", "add_eos_token", "min_chars", "report_to"]
@@ -69,7 +68,7 @@ def create_ui():
 
                     with gr.Row():
                         with gr.Column():
-                            lora_rank = gr.Slider(label='LoRA Rank', value=32, minimum=0, maximum=1024, step=4, info='Also called dimension count. Higher values produce a larger file with better control over the model\'s content. Smaller values produce a smaller file with less overall control. Small values like 4 or 8 are great for stylistic guidance, higher values like 128 or 256 are good for teaching content upgrades, extremely high values (1024+) are difficult to train but may improve fine-detail learning for large datasets. Higher ranks also require higher VRAM.')
+                            lora_rank = gr.Slider(label='LoRA Rank', value=32, minimum=0, maximum=1024, step=4, info='Also called dimension count. Higher values = larger file, more content control. Smaller values = smaller file, less control. Use 4 or 8 for style, 128 or 256 to teach, 1024+ for fine-detail on big data. More VRAM is needed for higher ranks.')
                             lora_alpha = gr.Slider(label='LoRA Alpha', value=64, minimum=0, maximum=2048, step=4, info='This divided by the rank becomes the scaling of the LoRA. Higher means stronger. A good standard value is twice your Rank.')
                             batch_size = gr.Slider(label='Batch Size', value=128, minimum=0, maximum=1024, step=4, info='Global batch size. The two batch sizes together determine gradient accumulation (gradientAccum = batch / microBatch). Higher gradient accum values lead to better quality training.')
                             micro_batch_size = gr.Slider(label='Micro Batch Size', value=4, minimum=1, maximum=128, step=1, info='Per-device batch size (NOTE: multiple devices not yet implemented). Increasing this will increase VRAM usage.')
@@ -215,8 +214,6 @@ def change_rank_limit(use_higher_ranks: bool):
 
 def clean_path(base_path: str, path: str):
     """Strips unusual symbols and forcibly builds a path as relative to the intended directory."""
-    # TODO: Probably could do with a security audit to guarantee there's no ways this can be bypassed to target an unwanted path.
-    # Or swap it to a strict whitelist of [a-zA-Z_0-9]
     path = path.replace('\\', '/').replace('..', '_')
     if base_path is None:
         return path
@@ -281,13 +278,13 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     WANT_INTERRUPT = False
 
     # == Input validation / processing ==
-    yield "Prepping..."
+    yield "Preparing the input..."
     lora_file_path = clean_path(None, lora_name)
     if lora_file_path.strip() == '':
         yield "Missing or invalid LoRA file name input."
         return
 
-    lora_file_path = f"{shared.args.lora_dir}/{lora_file_path}"
+    lora_file_path = f"{Path(shared.args.lora_dir)}/{lora_file_path}"
     actual_lr = float(learning_rate)
     model_type = type(shared.model).__name__
 
@@ -425,11 +422,11 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         eval_data = None
     else:
         if dataset in ['None', '']:
-            yield "**Missing dataset choice input, cannot continue.**"
+            yield "Missing dataset choice input, cannot continue."
             return
 
         if format in ['None', '']:
-            yield "**Missing format choice input, cannot continue.**"
+            yield "Missing format choice input, cannot continue."
             return
 
         train_template["template_type"] = "dataset"
@@ -472,8 +469,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             print("\033[1;31;1m(Model has been modified by previous training, it needs to be reloaded...)\033[0;37;0m")
             try:
                 yield f"Reloading {selected_model}..."
-                unload_model()
-                shared.model, shared.tokenizer = load_model(shared.model_name, None)
+                reload_model()
                 if shared.model is not None:
                     print("Model reloaded OK, continue with training.")
                 else:
@@ -492,7 +488,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     # base model is now frozen and should not be reused for any other LoRA training than this one
     shared.model_dirty_from_training = True
 
-    logger.info("Prepping for training...")
+    logger.info("Preparing for training...")
     config = LoraConfig(
         r=lora_rank,
         lora_alpha=lora_alpha,
@@ -703,10 +699,10 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
     if WANT_INTERRUPT:
         logger.info("Training interrupted.")
-        yield f"Interrupted. Incomplete LoRA saved to `{lora_file_path}`"
+        yield f"Interrupted. Incomplete LoRA saved to `{lora_file_path}`."
     else:
         logger.info("Training complete!")
-        yield f"Done! LoRA saved to `{lora_file_path}`"
+        yield f"Done! LoRA saved to `{lora_file_path}`.\n\nBefore testing your new LoRA, make sure to first reload the model, as it is currently dirty from training."
 
 
 def split_chunks(arr, size, step):
