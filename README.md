@@ -261,6 +261,7 @@ Optionally, you can use the following command-line flags:
 |-------------|-------------|
 | `--no-mmap` | Prevent mmap from being used. |
 | `--mlock`   | Force the system to keep the model in RAM. |
+| `--mul_mat_q` | Activate new mulmat kernels. |
 | `--cache-capacity CACHE_CAPACITY`   | Maximum cache capacity. Examples: 2000MiB, 2GiB. When provided without units, bytes will be assumed. |
 | `--tensor_split TENSOR_SPLIT` | Split the model across multiple GPUs, comma-separated list of proportions, e.g. 18,17 |
 | `--llama_cpp_seed SEED` | Seed for llama-cpp models. Default 0 (random). |

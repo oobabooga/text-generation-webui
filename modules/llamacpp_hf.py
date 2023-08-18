@@ -116,6 +116,7 @@ class LlamacppHF(PreTrainedModel):
             'n_batch': shared.args.n_batch,
             'use_mmap': not shared.args.no_mmap,
             'use_mlock': shared.args.mlock,
+            'mul_mat_q': shared.args.mul_mat_q,
             'low_vram': shared.args.low_vram,
             'n_gpu_layers': shared.args.n_gpu_layers,
             'rope_freq_base': 10000 * shared.args.alpha_value ** (64 / 63.),
