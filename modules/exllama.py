@@ -135,13 +135,20 @@ class ExllamaModel:
                 if token.item() == self.generator.tokenizer.eos_token_id or shared.stop_everything:
                     break
 
-        # Case 2: CFG
+        ## Case 2: CFG
         # Copied from https://github.com/turboderp/exllama/blob/master/example_cfg.py
         else:
             alpha = state['guidance_scale']
             prompts = [prompt, state['negative_prompt'] or '']
 
             ids, mask = self.tokenizer.encode(prompts, return_mask=True)
+
+            # Truncate if the sequence exceeds 2048 tokens
+            if ids[0].shape[-1] > 2048:
+                ids = [id_seq[:, -2048:] for id_seq in ids]
+                mask = [mask_seq[:, -2048:] for mask_seq in mask]
+
+            # Calculate max_new_tokens after truncation
             if state['auto_max_new_tokens']:
                 max_new_tokens = state['truncation_length'] - ids[0].shape[-1]
             else:
