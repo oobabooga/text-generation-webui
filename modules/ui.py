@@ -69,6 +69,7 @@ def list_model_elements():
         'low_vram',
         'mlock',
         'n_gpu_layers',
+        'tensor_split',
         'n_ctx',
         'n_gqa',
         'rms_norm_eps',
