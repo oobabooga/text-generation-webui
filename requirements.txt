@@ -20,7 +20,7 @@ tensorboard
 tqdm
 wandb
 
-git+https://github.com/huggingface/peft@96c0277a1b9a381b10ab34dbf84917f9b3b992e6
+git+https://github.com/huggingface/peft@4b371b489b9850fd583f204cdf8b5471e098d4e4
 git+https://github.com/huggingface/transformers@baf1daa58eb2960248fd9f7c3af0ed245b8ce4af
 
 bitsandbytes==0.41.1; platform_system != "Windows"
