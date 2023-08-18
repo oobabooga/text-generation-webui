@@ -350,12 +350,10 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
         position: absolute;
         left: 0;
         top: 0;
-        max-width: none;
-        max-height: none;
+        max-width: unset;
+        max-height: unset;
         width: 100%;
-        height: fit-content;
-        display: flex;
-        flex-direction: column-reverse;
+        overflow-y: visible;
     }
     
     .message {
@@ -368,5 +366,9 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     
     .tab-nav {
         display: none !important;
+    }
+    
+    #chat-tab > :first-child {
+        max-width: unset;
     }
 }
