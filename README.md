@@ -75,7 +75,7 @@ conda activate textgen
 
 The up-to-date commands can be found here: https://pytorch.org/get-started/locally/. 
 
-#### 2.1 Special instructions
+#### 2.1 Additional information
 
 * MacOS users: https://github.com/oobabooga/text-generation-webui/pull/393
 * AMD users: https://rentry.org/eq3hg
