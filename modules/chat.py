@@ -317,8 +317,8 @@ def remove_last_message(history):
 
 
 def send_last_reply_to_input(history):
-    if len(history['internal']) > 0:
-        return history['internal'][-1][1]
+    if len(history['visible']) > 0:
+        return history['visible'][-1][1]
     else:
         return ''
 
