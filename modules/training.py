@@ -24,6 +24,11 @@ from peft import (
     prepare_model_for_int8_training,
     set_peft_model_state_dict
 )
+from peft.utils.other import \
+    TRANSFORMERS_MODELS_TO_LORA_TARGET_MODULES_MAPPING as model_to_lora_modules
+from transformers.models.auto.modeling_auto import (
+    MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
+)
 
 from modules import shared, ui, utils
 from modules.evaluate import (
@@ -35,33 +40,13 @@ from modules.logging_colors import logger
 from modules.models import load_model, unload_model
 from modules.utils import natural_keys
 
-# This mapping is from a very recent commit, not yet released.
-# If not available, default to a backup map for some common model types.
-try:
-    from peft.utils.other import \
-        TRANSFORMERS_MODELS_TO_LORA_TARGET_MODULES_MAPPING as \
-        model_to_lora_modules
-    from transformers.models.auto.modeling_auto import (
-        MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
-    )
-    MODEL_CLASSES = {v: k for k, v in MODEL_FOR_CAUSAL_LM_MAPPING_NAMES}
-except:
-    standard_modules = ["q_proj", "v_proj"]
-    model_to_lora_modules = {"llama": standard_modules, "opt": standard_modules, "gptj": standard_modules, "gpt_neox": ["query_key_value"], "rw": ["query_key_value"]}
-    MODEL_CLASSES = {
-        "LlamaForCausalLM": "llama",
-        "OPTForCausalLM": "opt",
-        "GPTJForCausalLM": "gptj",
-        "GPTNeoXForCausalLM": "gpt_neox",
-        "RWForCausalLM": "rw"
 
-    }
+MODEL_CLASSES = {v[1]: v[0] for v in MODEL_FOR_CAUSAL_LM_MAPPING_NAMES.items()}
+PARAMETERS = ["lora_name", "always_override", "save_steps", "micro_batch_size", "batch_size", "epochs", "learning_rate", "lr_scheduler_type", "lora_rank", "lora_alpha", "lora_dropout", "cutoff_len", "dataset", "eval_dataset", "format", "eval_steps", "raw_text_file", "overlap_len", "newline_favor_len", "higher_rank_limit", "warmup_steps", "optimizer", "hard_cut_string", "train_only_after", "stop_at_loss", "add_eos_token", "min_chars", "report_to"]
+WANT_INTERRUPT = False
 
 train_log = {}
 train_template = {}
-
-WANT_INTERRUPT = False
-PARAMETERS = ["lora_name", "always_override", "save_steps", "micro_batch_size", "batch_size", "epochs", "learning_rate", "lr_scheduler_type", "lora_rank", "lora_alpha", "lora_dropout", "cutoff_len", "dataset", "eval_dataset", "format", "eval_steps", "raw_text_file", "overlap_len", "newline_favor_len", "higher_rank_limit", "warmup_steps", "optimizer", "hard_cut_string", "train_only_after", "stop_at_loss", "add_eos_token", "min_chars", "report_to"]
 
 
 def create_ui():
