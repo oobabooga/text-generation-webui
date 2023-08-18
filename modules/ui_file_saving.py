@@ -1,3 +1,4 @@
+import copy
 import json
 
 import gradio as gr
@@ -53,12 +54,13 @@ def create_event_handlers():
 
     shared.gradio['save_character_confirm'].click(
         chat.save_character, gradio('name2', 'greeting', 'context', 'character_picture', 'save_character_filename'), None).then(
-        lambda: gr.update(visible=False), None, gradio('character_saver'))
+        lambda: gr.update(visible=False), None, gradio('character_saver')).then(
+        lambda x: gr.update(choices=utils.get_available_characters(), value=x), gradio('save_character_filename'), gradio('character_menu'))
 
     shared.gradio['delete_character_confirm'].click(
         chat.delete_character, gradio('character_menu'), None).then(
         lambda: gr.update(visible=False), None, gradio('character_deleter')).then(
-        lambda: gr.update(choices=utils.get_available_characters()), None, gradio('character_menu'))
+        lambda: gr.update(choices=utils.get_available_characters(), value="None"), None, gradio('character_menu'))
 
     shared.gradio['save_character_cancel'].click(lambda: gr.update(visible=False), None, gradio('character_saver'))
     shared.gradio['delete_character_cancel'].click(lambda: gr.update(visible=False), None, gradio('character_deleter'))
@@ -78,7 +80,7 @@ def create_event_handlers():
     if not shared.args.multi_user:
         shared.gradio['save_session'].click(
             ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-            lambda x: json.dumps(x, indent=4), gradio('interface_state'), gradio('temporary_text')).then(
+            save_session, gradio('interface_state'), gradio('temporary_text')).then(
             None, gradio('temporary_text'), None, _js=f"(contents) => {{{ui.save_files_js}; saveSession(contents)}}")
 
         shared.gradio['load_session'].upload(
@@ -98,3 +100,11 @@ def load_session(file, state):
 
     state.update(data)
     return state
+
+
+def save_session(state):
+    output = copy.deepcopy(state)
+    for key in ['prompt_menu-default', 'prompt_menu-notebook']:
+        del output[key]
+
+    return json.dumps(output, indent=4)

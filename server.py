@@ -71,7 +71,9 @@ def create_interface():
         'loader': shared.args.loader or 'Transformers',
         'mode': shared.settings['mode'],
         'character_menu': shared.args.character or shared.settings['character'],
-        'instruction_template': shared.settings['instruction_template']
+        'instruction_template': shared.settings['instruction_template'],
+        'prompt_menu-default': shared.settings['prompt-default'],
+        'prompt_menu-notebook': shared.settings['prompt-notebook'],
     })
 
     if Path("cache/pfp_character.png").exists():
@@ -126,6 +128,7 @@ def create_interface():
             shared.gradio['interface'].load(lambda: None, None, None, _js="() => document.getElementsByTagName('body')[0].classList.add('dark')")
 
         shared.gradio['interface'].load(lambda: None, None, None, _js=f"() => {{{js}}}")
+        shared.gradio['interface'].load(None, gradio('show_controls'), None, _js=f'(x) => {{{ui.show_controls_js}; toggle_controls(x)}}')
         shared.gradio['interface'].load(partial(ui.apply_interface_values, {}, use_persistent=True), None, gradio(ui.list_interface_input_elements()), show_progress=False)
         shared.gradio['interface'].load(chat.redraw_html, gradio(ui_chat.reload_arr), gradio('display'))
 

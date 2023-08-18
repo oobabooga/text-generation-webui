@@ -5,12 +5,12 @@ from pathlib import Path
 import gradio as gr
 from PIL import Image
 
-from modules import chat, shared, ui, utils
+from modules import chat, prompts, shared, ui, utils
 from modules.html_generator import chat_html_wrapper
 from modules.text_generation import stop_everything_event
 from modules.utils import gradio
 
-inputs = ('Chat input', 'start_with', 'interface_state')
+inputs = ('Chat input', 'interface_state')
 reload_arr = ('history', 'name1', 'name2', 'mode', 'chat_style')
 clear_arr = ('Clear history-confirm', 'Clear history', 'Clear history-cancel')
 
@@ -22,7 +22,9 @@ def create_ui():
 
     with gr.Tab('Chat', elem_id='chat-tab'):
         shared.gradio['display'] = gr.HTML(value=chat_html_wrapper({'internal': [], 'visible': []}, shared.settings['name1'], shared.settings['name2'], 'chat', 'cai-chat'))
-        shared.gradio['textbox'] = gr.Textbox(label='Input')
+        shared.gradio['textbox'] = gr.Textbox(label='', placeholder='Send a message', elem_id='chat-input')
+        shared.gradio['show_controls'] = gr.Checkbox(value=shared.settings['show_controls'], label='Show controls', elem_id='show-controls')
+
         with gr.Row():
             shared.gradio['Stop'] = gr.Button('Stop', elem_id='stop')
             shared.gradio['Generate'] = gr.Button('Generate', elem_id='Generate', variant='primary')
@@ -48,7 +50,7 @@ def create_ui():
             shared.gradio['start_with'] = gr.Textbox(label='Start reply with', placeholder='Sure thing!', value=shared.settings['start_with'])
 
         with gr.Row():
-            shared.gradio['mode'] = gr.Radio(choices=['chat', 'chat-instruct', 'instruct'], value=shared.settings['mode'] if shared.settings['mode'] in ['chat', 'instruct', 'chat-instruct'] else 'chat', label='Mode', info='Defines how the chat prompt is generated. In instruct and chat-instruct modes, the instruction template selected under Parameters > Instruction template must match the current model.')
+            shared.gradio['mode'] = gr.Radio(choices=['chat', 'chat-instruct', 'instruct'], value=shared.settings['mode'] if shared.settings['mode'] in ['chat', 'instruct', 'chat-instruct'] else 'chat', label='Mode', info='Defines how the chat prompt is generated. In instruct and chat-instruct modes, the instruction template selected under Parameters > Instruction template must match the current model.', elem_id='chat-mode')
             shared.gradio['chat_style'] = gr.Dropdown(choices=utils.get_available_chat_styles(), label='Chat style', value=shared.settings['chat_style'], visible=shared.settings['mode'] != 'instruct')
 
 
@@ -82,7 +84,12 @@ def create_chat_settings_ui():
         shared.gradio['name1_instruct'] = gr.Textbox(value='', lines=2, label='User string')
         shared.gradio['name2_instruct'] = gr.Textbox(value='', lines=1, label='Bot string')
         shared.gradio['context_instruct'] = gr.Textbox(value='', lines=4, label='Context')
-        shared.gradio['turn_template'] = gr.Textbox(value=shared.settings['turn_template'], lines=1, label='Turn template', info='Used to precisely define the placement of spaces and new line characters in instruction prompts.')
+        shared.gradio['turn_template'] = gr.Textbox(value='', lines=1, label='Turn template', info='Used to precisely define the placement of spaces and new line characters in instruction prompts.')
+        with gr.Row():
+            shared.gradio['send_instruction_to_default'] = gr.Button('Send to default', elem_classes=['small-button'])
+            shared.gradio['send_instruction_to_notebook'] = gr.Button('Send to notebook', elem_classes=['small-button'])
+            shared.gradio['send_instruction_to_negative_prompt'] = gr.Button('Send to negative prompt', elem_classes=['small-button'])
+
         with gr.Row():
             shared.gradio['chat-instruct_command'] = gr.Textbox(value=shared.settings['chat-instruct_command'], lines=4, label='Command for chat-instruct mode', info='<|character|> gets replaced by the bot name, and <|prompt|> gets replaced by the regular chat prompt.', elem_classes=['add_scrollbar'])
 
@@ -115,50 +122,47 @@ def create_chat_settings_ui():
 
 
 def create_event_handlers():
-    gen_events = []
-    shared.input_params = gradio(inputs)  # Obsolete, kept for compatibility with old extensions
 
-    gen_events.append(shared.gradio['Generate'].click(
+    # Obsolete variables, kept for compatibility with old extensions
+    shared.input_params = gradio(inputs)
+    shared.reload_inputs = gradio(reload_arr)
+
+    shared.gradio['Generate'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         lambda x: (x, ''), gradio('textbox'), gradio('Chat input', 'textbox'), show_progress=False).then(
         chat.generate_chat_reply_wrapper, gradio(inputs), gradio('display', 'history'), show_progress=False).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         chat.save_persistent_history, gradio('history', 'character_menu', 'mode'), None).then(
         lambda: None, None, None, _js=f'() => {{{ui.audio_notification_js}}}')
-    )
 
-    gen_events.append(shared.gradio['textbox'].submit(
+    shared.gradio['textbox'].submit(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         lambda x: (x, ''), gradio('textbox'), gradio('Chat input', 'textbox'), show_progress=False).then(
         chat.generate_chat_reply_wrapper, gradio(inputs), gradio('display', 'history'), show_progress=False).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         chat.save_persistent_history, gradio('history', 'character_menu', 'mode'), None).then(
         lambda: None, None, None, _js=f'() => {{{ui.audio_notification_js}}}')
-    )
 
-    gen_events.append(shared.gradio['Regenerate'].click(
+    shared.gradio['Regenerate'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         partial(chat.generate_chat_reply_wrapper, regenerate=True), gradio(inputs), gradio('display', 'history'), show_progress=False).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         chat.save_persistent_history, gradio('history', 'character_menu', 'mode'), None).then(
         lambda: None, None, None, _js=f'() => {{{ui.audio_notification_js}}}')
-    )
 
-    gen_events.append(shared.gradio['Continue'].click(
+    shared.gradio['Continue'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         partial(chat.generate_chat_reply_wrapper, _continue=True), gradio(inputs), gradio('display', 'history'), show_progress=False).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         chat.save_persistent_history, gradio('history', 'character_menu', 'mode'), None).then(
         lambda: None, None, None, _js=f'() => {{{ui.audio_notification_js}}}')
-    )
 
-    gen_events.append(shared.gradio['Impersonate'].click(
+    shared.gradio['Impersonate'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         lambda x: x, gradio('textbox'), gradio('Chat input'), show_progress=False).then(
         chat.impersonate_wrapper, gradio(inputs), gradio('textbox'), show_progress=False).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         lambda: None, None, None, _js=f'() => {{{ui.audio_notification_js}}}')
-    )
 
     shared.gradio['Replace last reply'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
@@ -203,7 +207,7 @@ def create_event_handlers():
         chat.redraw_html, gradio(reload_arr), gradio('display'))
 
     shared.gradio['Stop'].click(
-        stop_everything_event, None, None, queue=False, cancels=gen_events if shared.args.no_stream else None).then(
+        stop_everything_event, None, None, queue=False).then(
         chat.redraw_html, gradio(reload_arr), gradio('display'))
 
     shared.gradio['mode'].change(
@@ -217,7 +221,7 @@ def create_event_handlers():
     shared.gradio['load_chat_history'].upload(
         chat.load_history, gradio('load_chat_history', 'history'), gradio('history')).then(
         chat.redraw_html, gradio(reload_arr), gradio('display')).then(
-        None, None, None, _js='() => {alert("The history has been loaded.")}')
+        lambda: None, None, None, _js=f'() => {{{ui.switch_tabs_js}; switch_to_chat()}}')
 
     shared.gradio['Copy last reply'].click(chat.send_last_reply_to_input, gradio('history'), gradio('textbox'), show_progress=False)
 
@@ -245,11 +249,11 @@ def create_event_handlers():
 
     shared.gradio['Submit character'].click(
         chat.upload_character, gradio('upload_json', 'upload_img_bot'), gradio('character_menu')).then(
-        None, None, None, _js='() => {alert("The character has been loaded.")}')
+        lambda: None, None, None, _js=f'() => {{{ui.switch_tabs_js}; switch_to_character()}}')
 
     shared.gradio['Submit tavern character'].click(
         chat.upload_tavern_character, gradio('upload_img_tavern', 'tavern_json'), gradio('character_menu')).then(
-        None, None, None, _js='() => {alert("The character has been loaded.")}')
+        lambda: None, None, None, _js=f'() => {{{ui.switch_tabs_js}; switch_to_character()}}')
 
     shared.gradio['upload_json'].upload(lambda: gr.update(interactive=True), None, gradio('Submit character'))
     shared.gradio['upload_json'].clear(lambda: gr.update(interactive=False), None, gradio('Submit character'))
@@ -258,3 +262,17 @@ def create_event_handlers():
     shared.gradio['your_picture'].change(
         chat.upload_your_profile_picture, gradio('your_picture'), None).then(
         partial(chat.redraw_html, reset_cache=True), gradio(reload_arr), gradio('display'))
+
+    shared.gradio['send_instruction_to_default'].click(
+        prompts.load_instruction_prompt_simple, gradio('instruction_template'), gradio('textbox-default')).then(
+        lambda: None, None, None, _js=f'() => {{{ui.switch_tabs_js}; switch_to_default()}}')
+
+    shared.gradio['send_instruction_to_notebook'].click(
+        prompts.load_instruction_prompt_simple, gradio('instruction_template'), gradio('textbox-notebook')).then(
+        lambda: None, None, None, _js=f'() => {{{ui.switch_tabs_js}; switch_to_notebook()}}')
+
+    shared.gradio['send_instruction_to_negative_prompt'].click(
+        prompts.load_instruction_prompt_simple, gradio('instruction_template'), gradio('negative_prompt')).then(
+        lambda: None, None, None, _js=f'() => {{{ui.switch_tabs_js}; switch_to_generation_parameters()}}')
+
+    shared.gradio['show_controls'].change(None, gradio('show_controls'), None, _js=f'(x) => {{{ui.show_controls_js}; toggle_controls(x)}}')

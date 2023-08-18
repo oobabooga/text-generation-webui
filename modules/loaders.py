@@ -46,6 +46,7 @@ loaders_and_params = OrderedDict({
         'wbits',
         'groupsize',
         'desc_act',
+        'disable_exllama',
         'gpu_memory',
         'cpu_memory',
         'cpu',
@@ -92,6 +93,7 @@ loaders_and_params = OrderedDict({
         'llamacpp_HF_info',
     ],
     'ctransformers': [
+        'n_ctx',
         'n_gpu_layers',
         'n_batch',
         'threads',
@@ -288,6 +290,7 @@ loaders_model_types = {
         "dollyv2"
         "replit",
         "starcoder",
+        "gptbigcode",
         "falcon"
     ],
 }

@@ -30,7 +30,9 @@ main_parent.addEventListener('click', function(e) {
     }
 });
 
+//------------------------------------------------
 // Add some scrollbars
+//------------------------------------------------
 const textareaElements = document.querySelectorAll('.add_scrollbar textarea');
 for(i = 0; i < textareaElements.length; i++) {
     textareaElements[i].classList.remove('scroll-hide');
@@ -38,7 +40,9 @@ for(i = 0; i < textareaElements.length; i++) {
     textareaElements[i].style.resize = "none";
 }
 
+//------------------------------------------------
 // Stop generation on Esc pressed
+//------------------------------------------------
 document.addEventListener("keydown", function(event) {
   if (event.key === "Escape") {
     // Find the element with id 'stop' and click it
@@ -48,3 +52,34 @@ document.addEventListener("keydown", function(event) {
     }
   }
 });
+
+//------------------------------------------------
+// Chat scrolling
+//------------------------------------------------
+const targetElement = document.getElementById('chat').parentNode.parentNode.parentNode;
+
+// Create a MutationObserver instance
+const observer = new MutationObserver(function(mutations) {
+  mutations.forEach(function(mutation) {
+    let childElement = targetElement.childNodes[2].childNodes[0].childNodes[1];
+    childElement.scrollTop = childElement.scrollHeight;
+  });
+});
+
+// Configure the observer to watch for changes in the subtree and attributes
+const config = {
+  childList: true,
+  subtree: true,
+  characterData: true,
+  attributeOldValue: true,
+  characterDataOldValue: true
+};
+
+// Start observing the target element
+observer.observe(targetElement, config);
+
+//------------------------------------------------
+// Improve the looks of the chat input field
+//------------------------------------------------
+document.getElementById('chat-input').parentNode.style.background = 'transparent';
+document.getElementById('chat-input').parentNode.style.border = 'none';

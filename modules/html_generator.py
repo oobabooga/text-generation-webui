@@ -1,3 +1,4 @@
+import html
 import os
 import re
 import time
@@ -53,6 +54,9 @@ def convert_to_markdown(string):
         if line.lstrip(' ').startswith('```'):
             is_code = not is_code
 
+        if is_code:
+            line = html.unescape(line)
+
         result += line
         if is_code or line.startswith('|'):  # Don't add an extra \n for tables or code
             result += '\n'
@@ -74,17 +78,18 @@ def convert_to_markdown(string):
 
         result = re.sub(r'(\d+\.)$', r'\g<1> ' + delete_str, result)
 
-        html = markdown.markdown(result, extensions=['fenced_code', 'tables'])
-        pos = html.rfind(delete_str)
+        html_output = markdown.markdown(result, extensions=['fenced_code', 'tables'])
+        pos = html_output.rfind(delete_str)
         if pos > -1:
-            html = html[:pos] + html[pos + len(delete_str):]
+            html_output = html_output[:pos] + html_output[pos + len(delete_str):]
     else:
-        html = markdown.markdown(result, extensions=['fenced_code', 'tables'])
+        html_output = markdown.markdown(result, extensions=['fenced_code', 'tables'])
 
-    return html
+    return html_output
 
 
 def generate_basic_html(string):
+    string = html.escape(string)
     string = convert_to_markdown(string)
     string = f'<style>{readable_css}</style><div class="container">{string}</div>'
     return string
@@ -100,7 +105,7 @@ def process_post(post, c):
     src = re.sub('>', '&gt;', src)
     src = re.sub('(&gt;&gt;[0-9]*)', '<span class="quote">\\1</span>', src)
     src = re.sub('\n', '<br>\n', src)
-    src = f'<blockquote class="message">{src}\n'
+    src = f'<blockquote class="message_4chan">{src}\n'
     src = f'<span class="name">Anonymous </span> <span class="number">No.{number}</span>\n{src}'
     return src
 
@@ -141,7 +146,7 @@ def generate_4chan_html(f):
     output = output.split('\n')
     for i in range(len(output)):
         output[i] = re.sub(r'^(&gt;(.*?)(<br>|</div>))', r'<span class="greentext">\1</span>', output[i])
-        output[i] = re.sub(r'^<blockquote class="message">(&gt;(.*?)(<br>|</div>))', r'<blockquote class="message"><span class="greentext">\1</span>', output[i])
+        output[i] = re.sub(r'^<blockquote class="message_4chan">(&gt;(.*?)(<br>|</div>))', r'<blockquote class="message_4chan"><span class="greentext">\1</span>', output[i])
 
     output = '\n'.join(output)
     return output

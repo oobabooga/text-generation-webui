@@ -13,13 +13,11 @@ outputs = ('output_textbox', 'html-default')
 
 
 def create_ui():
-    default_text = load_prompt(shared.settings['prompt'])
-
     with gr.Tab('Default', elem_id='default-tab'):
         shared.gradio['last_input-default'] = gr.State('')
         with gr.Row():
             with gr.Column():
-                shared.gradio['textbox-default'] = gr.Textbox(value=default_text, elem_classes=['textbox_default', 'add_scrollbar'], lines=27, label='Input')
+                shared.gradio['textbox-default'] = gr.Textbox(value='', elem_classes=['textbox_default', 'add_scrollbar'], lines=27, label='Input')
                 with gr.Row():
                     shared.gradio['Generate-default'] = gr.Button('Generate', variant='primary')
                     shared.gradio['Stop-default'] = gr.Button('Stop', elem_id='stop')
@@ -47,36 +45,28 @@ def create_ui():
 
 
 def create_event_handlers():
-    gen_events = []
-
-    gen_events.append(shared.gradio['Generate-default'].click(
+    shared.gradio['Generate-default'].click(
         lambda x: x, gradio('textbox-default'), gradio('last_input-default')).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         generate_reply_wrapper, gradio(inputs), gradio(outputs), show_progress=False).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         lambda: None, None, None, _js=f'() => {{{ui.audio_notification_js}}}')
-        # lambda: None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[0]; element.scrollTop = element.scrollHeight}")
-    )
 
-    gen_events.append(shared.gradio['textbox-default'].submit(
+    shared.gradio['textbox-default'].submit(
         lambda x: x, gradio('textbox-default'), gradio('last_input-default')).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         generate_reply_wrapper, gradio(inputs), gradio(outputs), show_progress=False).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         lambda: None, None, None, _js=f'() => {{{ui.audio_notification_js}}}')
-        # lambda: None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[0]; element.scrollTop = element.scrollHeight}")
-    )
 
     shared.gradio['markdown_render-default'].click(lambda x: x, gradio('output_textbox'), gradio('markdown-default'), queue=False)
-    gen_events.append(shared.gradio['Continue-default'].click(
+    shared.gradio['Continue-default'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         generate_reply_wrapper, [shared.gradio['output_textbox']] + gradio(inputs)[1:], gradio(outputs), show_progress=False).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         lambda: None, None, None, _js=f'() => {{{ui.audio_notification_js}}}')
-        # lambda: None, None, None, _js="() => {element = document.getElementsByTagName('textarea')[1]; element.scrollTop = element.scrollHeight}")
-    )
 
-    shared.gradio['Stop-default'].click(stop_everything_event, None, None, queue=False, cancels=gen_events if shared.args.no_stream else None)
+    shared.gradio['Stop-default'].click(stop_everything_event, None, None, queue=False)
     shared.gradio['prompt_menu-default'].change(load_prompt, gradio('prompt_menu-default'), gradio('textbox-default'), show_progress=False)
     shared.gradio['save_prompt-default'].click(
         lambda x: x, gradio('textbox-default'), gradio('save_contents')).then(
