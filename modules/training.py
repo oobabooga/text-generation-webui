@@ -37,7 +37,7 @@ from modules.evaluate import (
     save_past_evaluations
 )
 from modules.logging_colors import logger
-from modules.models import load_model, reload_model
+from modules.models import reload_model
 from modules.utils import natural_keys
 
 MODEL_CLASSES = {v[1]: v[0] for v in MODEL_FOR_CAUSAL_LM_MAPPING_NAMES.items()}
