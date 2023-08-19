@@ -36,6 +36,7 @@ def create_ui(default_preset):
 
                             with gr.Column():
                                 shared.gradio['repetition_penalty'] = gr.Slider(1.0, 1.5, value=generate_params['repetition_penalty'], step=0.01, label='repetition_penalty')
+                                shared.gradio['additive_repetition_penalty'] = gr.Slider(0, 4, value=generate_params['additive_repetition_penalty'], step=0.05, label='additive_repetition_penalty')
                                 shared.gradio['repetition_penalty_range'] = gr.Slider(0, 4096, step=64, value=generate_params['repetition_penalty_range'], label='repetition_penalty_range')
                                 shared.gradio['encoder_repetition_penalty'] = gr.Slider(0.8, 1.5, value=generate_params['encoder_repetition_penalty'], step=0.01, label='encoder_repetition_penalty')
                                 shared.gradio['no_repeat_ngram_size'] = gr.Slider(0, 20, step=1, value=generate_params['no_repeat_ngram_size'], label='no_repeat_ngram_size')
@@ -79,7 +80,9 @@ def create_ui(default_preset):
             ### eta_cutoff
             In units of 1e-4; a reasonable value is 3. Should be used with top_p, top_k, and epsilon_cutoff set to 0.
             ### repetition_penalty
-            Exponential penalty factor for repeating prior tokens. 1 means no penalty, higher value = less repetition, lower value = more repetition.
+            Exponential penalty factor for repeating prior tokens. This is a multiplicative factor on the raw token scores. 1 means no penalty, higher value = less repetition, lower value = more repetition.
+            ### additive_repetition_penalty
+            Similar to repetition_penalty, but with an additive offset on the raw token scores instead of a multiplicative factor. 0 means no penalty, higher value = less repetition, lower value = more repetition.
             ### repetition_penalty_range
             The number of most recent tokens to consider for repetition penalty. 0 makes all tokens be used.
             ### encoder_repetition_penalty
