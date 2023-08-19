@@ -125,6 +125,8 @@ class LlamaCppModel:
 
         output = ""
         for completion_chunk in completion_chunks:
+            if shared.stop_everything:
+                break
             text = completion_chunk['choices'][0]['text']
             output += text
             if callback:
