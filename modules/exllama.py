@@ -135,7 +135,7 @@ class ExllamaModel:
                 if token.item() == self.generator.tokenizer.eos_token_id or shared.stop_everything:
                     break
 
-        ## Case 2: CFG
+        # Case 2: CFG
         # Copied from https://github.com/turboderp/exllama/blob/master/example_cfg.py
         else:
             alpha = state['guidance_scale']
