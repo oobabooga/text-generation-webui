@@ -313,12 +313,12 @@ def remove_last_message(history):
     else:
         last = ['', '']
 
-    return last[0], history
+    return html.unescape(last[0]), history
 
 
 def send_last_reply_to_input(history):
     if len(history['visible']) > 0:
-        return history['visible'][-1][1]
+        return html.unescape(history['visible'][-1][1])
     else:
         return ''
 
