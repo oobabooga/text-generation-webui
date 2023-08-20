@@ -116,7 +116,7 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
     height: calc(100dvh - 241px);
 }
 
-.textbox_default textarea, .textbox_default_output textarea, .textbox textarea {
+.textbox_default textarea, .textbox_default_output textarea, .textbox_logits textarea, .textbox textarea {
     font-size: 16px !important;
     color: #46464A !important;
 }

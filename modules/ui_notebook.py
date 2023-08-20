@@ -1,6 +1,6 @@
 import gradio as gr
 
-from modules import shared, ui, utils
+from modules import logits, shared, ui, utils
 from modules.prompts import count_tokens, load_prompt
 from modules.text_generation import (
     generate_reply_wrapper,
@@ -26,6 +26,10 @@ def create_ui():
 
                 with gr.Tab('HTML'):
                     shared.gradio['html-notebook'] = gr.HTML()
+
+                with gr.Tab('Logits'):
+                    shared.gradio['get_logits-notebook'] = gr.Button('Get next token probabilities')
+                    shared.gradio['logits-notebook'] = gr.Textbox(lines=23, label='Output', elem_classes=['textbox_logits', 'add_scrollbar'])
 
                 with gr.Row():
                     shared.gradio['Generate-notebook'] = gr.Button('Generate', variant='primary', elem_classes='small-button')
@@ -83,3 +87,4 @@ def create_event_handlers():
         lambda: gr.update(visible=True), None, gradio('file_deleter'))
 
     shared.gradio['count_tokens-notebook'].click(count_tokens, gradio('textbox-notebook'), gradio('status-notebook'), show_progress=False)
+    shared.gradio['get_logits-notebook'].click(logits.get_next_logits, gradio('textbox-notebook'), gradio('logits-notebook'))
