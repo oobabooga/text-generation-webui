@@ -1,29 +1,27 @@
 # Text generation web UI
 
-A gradio web UI for running Large Language Models like LLaMA, llama.cpp, GPT-J, OPT, and GALACTICA.
+A Gradio web UI for Large Language Models.
 
 Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.com/AUTOMATIC1111/stable-diffusion-webui) of text generation.
 
-|![Image1](https://github.com/oobabooga/screenshots/raw/main/qa.png) | ![Image2](https://github.com/oobabooga/screenshots/raw/main/cai3.png) |
+|![Image1](https://github.com/oobabooga/screenshots/raw/main/print_instruct.png) | ![Image2](https://github.com/oobabooga/screenshots/raw/main/print_chat.png) |
 |:---:|:---:|
-|![Image3](https://github.com/oobabooga/screenshots/raw/main/gpt4chan.png) | ![Image4](https://github.com/oobabooga/screenshots/raw/main/galactica.png) |
+|![Image1](https://github.com/oobabooga/screenshots/raw/main/print_default.png) | ![Image2](https://github.com/oobabooga/screenshots/raw/main/print_parameters.png) |
 
 ## Features
 
-* 3 interface modes: default, notebook, and chat
-* Multiple model backends: transformers, llama.cpp, ExLlama, AutoGPTQ, GPTQ-for-LLaMa
+* 3 interface modes: default (two columns), notebook, and chat
+* Multiple model backends: [transformers](https://github.com/huggingface/transformers), [llama.cpp](https://github.com/ggerganov/llama.cpp), [ExLlama](https://github.com/turboderp/exllama), [AutoGPTQ](https://github.com/PanQiWei/AutoGPTQ), [GPTQ-for-LLaMa](https://github.com/qwopqwop200/GPTQ-for-LLaMa), [ctransformers](https://github.com/marella/ctransformers)
 * Dropdown menu for quickly switching between different models
-* LoRA: load and unload LoRAs on the fly, train a new LoRA
-* Precise instruction templates for chat mode, including Llama 2, Alpaca, Vicuna, WizardLM, StableLM, and many others
+* LoRA: load and unload LoRAs on the fly, train a new LoRA using QLoRA
+* Precise instruction templates for chat mode, including Llama-2-chat, Alpaca, Vicuna, WizardLM, StableLM, and many others
+* 4-bit, 8-bit, and CPU inference through the transformers library
+* Use llama.cpp models with transformers samplers (`llamacpp_HF` loader)
 * [Multimodal pipelines, including LLaVA and MiniGPT-4](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/multimodal)
-* 8-bit and 4-bit inference through bitsandbytes
-* CPU mode for transformers models
-* [DeepSpeed ZeRO-3 inference](docs/DeepSpeed.md)
-* [Extensions](docs/Extensions.md)
+* [Extensions framework](docs/Extensions.md)
 * [Custom chat characters](docs/Chat-mode.md)
 * Very efficient text streaming
 * Markdown output with LaTeX rendering, to use for instance with [GALACTICA](https://github.com/paperswithcode/galai)
-* Nice HTML output for GPT-4chan
 * API, including endpoints for websocket streaming ([see the examples](https://github.com/oobabooga/text-generation-webui/blob/main/api-examples))
 
 To learn how to use the various features, check out the Documentation: https://github.com/oobabooga/text-generation-webui/tree/main/docs
@@ -38,26 +36,24 @@ To learn how to use the various features, check out the Documentation: https://g
 
 Just download the zip above, extract it, and double-click on "start". The web UI and all its dependencies will be installed in the same folder.
 
-* The source codes are here: https://github.com/oobabooga/one-click-installers
+* The source codes and more information can be found here: https://github.com/oobabooga/one-click-installers
 * There is no need to run the installers as admin.
-* AMD doesn't work on Windows.
 * Huge thanks to [@jllllll](https://github.com/jllllll), [@ClayShoaf](https://github.com/ClayShoaf), and [@xNul](https://github.com/xNul) for their contributions to these installers.
 
 ### Manual installation using Conda
 
-Recommended if you have some experience with the command line.
+Recommended if you have some experience with the command-line.
 
 #### 0. Install Conda
 
 https://docs.conda.io/en/latest/miniconda.html
 
-On Linux or WSL, it can be automatically installed with these two commands:
+On Linux or WSL, it can be automatically installed with these two commands ([source](https://educe-ubc.github.io/conda.html)):
 
 ```
 curl -sL "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh" > "Miniconda3.sh"
 bash Miniconda3.sh
 ```
-Source: https://educe-ubc.github.io/conda.html
 
 #### 1. Create a new conda environment
 
@@ -79,7 +75,7 @@ conda activate textgen
 
 The up-to-date commands can be found here: https://pytorch.org/get-started/locally/. 
 
-#### 2.1 Special instructions
+#### 2.1 Additional information
 
 * MacOS users: https://github.com/oobabooga/text-generation-webui/pull/393
 * AMD users: https://rentry.org/eq3hg
@@ -92,9 +88,21 @@ cd text-generation-webui
 pip install -r requirements.txt
 ```
 
-#### bitsandbytes
+#### llama.cpp on AMD, Metal, and some specific CPUs
 
-bitsandbytes >= 0.39 may not work on older NVIDIA GPUs. In that case, to use `--load-in-8bit`, you may have to downgrade like this:
+Precompiled wheels are included for CPU-only and NVIDIA GPUs (cuBLAS). For AMD, Metal, and some specific CPUs, you need to uninstall those wheels and compile llama-cpp-python yourself.
+
+To uninstall:
+
+```
+pip uninstall -y llama-cpp-python llama-cpp-python-cuda
+```
+
+To compile: https://github.com/abetlen/llama-cpp-python#installation-with-openblas--cublas--clblast--metal
+
+#### bitsandbytes on older NVIDIA GPUs
+
+bitsandbytes >= 0.39 may not work. In that case, to use `--load-in-8bit`, you may have to downgrade like this:
 
 * Linux: `pip install bitsandbytes==0.38.1`
 * Windows: `pip install https://github.com/jllllll/bitsandbytes-windows-webui/raw/main/bitsandbytes-0.38.1-py3-none-any.whl`
@@ -113,37 +121,50 @@ docker compose up --build
 
 ### Updating the requirements
 
-From time to time, the `requirements.txt` changes. To update, use this command:
+From time to time, the `requirements.txt` changes. To update, use these commands:
 
 ```
 conda activate textgen
 cd text-generation-webui
 pip install -r requirements.txt --upgrade
 ```
+
 ## Downloading models
 
-Models should be placed inside the `models/` folder.
+Models should be placed in the `text-generation-webui/models` folder. They are usually downloaded from [Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads).
 
-[Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads) is the main place to download models. These are some examples:
+* Transformers or GPTQ models are made of several files and must be placed in a subfolder. Example:
 
-* [Pythia](https://huggingface.co/models?sort=downloads&search=eleutherai%2Fpythia+deduped)
-* [OPT](https://huggingface.co/models?search=facebook/opt)
-* [GALACTICA](https://huggingface.co/models?search=facebook/galactica)
-* [GPT-J 6B](https://huggingface.co/EleutherAI/gpt-j-6B/tree/main)
+```
+text-generation-webui
+├── models
+│   ├── lmsys_vicuna-33b-v1.3
+│   │   ├── config.json
+│   │   ├── generation_config.json
+│   │   ├── pytorch_model-00001-of-00007.bin
+│   │   ├── pytorch_model-00002-of-00007.bin
+│   │   ├── pytorch_model-00003-of-00007.bin
+│   │   ├── pytorch_model-00004-of-00007.bin
+│   │   ├── pytorch_model-00005-of-00007.bin
+│   │   ├── pytorch_model-00006-of-00007.bin
+│   │   ├── pytorch_model-00007-of-00007.bin
+│   │   ├── pytorch_model.bin.index.json
+│   │   ├── special_tokens_map.json
+│   │   ├── tokenizer_config.json
+│   │   └── tokenizer.model
+```
 
-You can automatically download a model from HF using the script `download-model.py`:
+In the "Model" tab of the UI, those models can be automatically downloaded from Hugging Face. You can also download them via the command-line with `python download-model.py organization/model`.
 
-    python download-model.py organization/model
+* GGML models are a single file and should be placed directly into `models`. Example:
 
-For example:
+```
+text-generation-webui
+├── models
+│   ├── llama-13b.ggmlv3.q4_K_M.bin
+```
 
-    python download-model.py facebook/opt-1.3b
-
-To download a protected model, set env vars `HF_USER` and `HF_PASS` to your Hugging Face username and password (or [User Access Token](https://huggingface.co/settings/tokens)). The model's terms must first be accepted on the HF website.
-
-#### GGML models
-
-You can drop these directly into the `models/` folder, making sure that the file name contains `ggml` somewhere and ends in `.bin`.
+Those models must be downloaded manually, as they are not currently supported by the automated downloader.
 
 #### GPT-4chan
 
@@ -169,7 +190,10 @@ After downloading the model, follow these steps:
 python download-model.py EleutherAI/gpt-j-6B --text-only
 ```
 
-When you load this model in default or notebook modes, the "HTML" tab will show the generated text in 4chan format.
+When you load this model in default or notebook modes, the "HTML" tab will show the generated text in 4chan format:
+
+![Image3](https://github.com/oobabooga/screenshots/raw/main/gpt4chan.png)
+
 </details>
 
 ## Starting the web UI
@@ -189,8 +213,6 @@ Optionally, you can use the following command-line flags:
 | Flag                                       | Description |
 |--------------------------------------------|-------------|
 | `-h`, `--help`                             | Show this help message and exit. |
-| `--notebook`                               | Launch the web UI in notebook mode, where the output is written to the same text box as the input. |
-| `--chat`                                   | Launch the web UI in chat mode. |
 | `--multi-user`                             | Multi-user mode. Chat histories are not saved or automatically loaded. WARNING: this is highly experimental. |
 | `--character CHARACTER`                    | The name of the character to load in chat mode by default. |
 | `--model MODEL`                            | Name of the model to load by default. |
@@ -198,7 +220,6 @@ Optionally, you can use the following command-line flags:
 | `--model-dir MODEL_DIR`                    | Path to directory with all the models. |
 | `--lora-dir LORA_DIR`                      | Path to directory with all the loras. |
 | `--model-menu`                             | Show a model menu in the terminal when the web UI is first launched. |
-| `--no-stream`                              | Don't stream the text output in real time. |
 | `--settings SETTINGS_FILE`                 | Load the default interface settings from this yaml file. See `settings-template.yaml` for an example. If you create a file called `settings.yaml`, this file will be loaded by default without the need to use the `--settings` flag. |
 | `--extensions EXTENSIONS [EXTENSIONS ...]` | The list of extensions to load. If you want to load more than one extension, write the names separated by spaces. |
 | `--verbose`                                | Print the prompts to the terminal. |
@@ -207,7 +228,7 @@ Optionally, you can use the following command-line flags:
 
 | Flag                                       | Description |
 |--------------------------------------------|-------------|
-| `--loader LOADER`                          | Choose the model loader manually, otherwise, it will get autodetected. Valid options: transformers, autogptq, gptq-for-llama, exllama, exllama_hf, llamacpp, rwkv |
+| `--loader LOADER`                          | Choose the model loader manually, otherwise, it will get autodetected. Valid options: transformers, autogptq, gptq-for-llama, exllama, exllama_hf, llamacpp, rwkv, ctransformers |
 
 #### Accelerate/transformers
 
@@ -237,21 +258,34 @@ Optionally, you can use the following command-line flags:
 | `--quant_type QUANT_TYPE`                   | quant_type for 4-bit. Valid options: nf4, fp4. |
 | `--use_double_quant`                        | use_double_quant for 4-bit. |
 
-#### llama.cpp
+#### GGML (for llama.cpp and ctransformers)
 
 | Flag        | Description |
 |-------------|-------------|
 | `--threads` | Number of threads to use. |
 | `--n_batch` | Maximum number of prompt tokens to batch together when calling llama_eval. |
-| `--no-mmap` | Prevent mmap from being used. |
-| `--mlock`   | Force the system to keep the model in RAM. |
-| `--cache-capacity CACHE_CAPACITY`   | Maximum cache capacity. Examples: 2000MiB, 2GiB. When provided without units, bytes will be assumed. |
 | `--n-gpu-layers N_GPU_LAYERS` | Number of layers to offload to the GPU. Only works if llama-cpp-python was compiled with BLAS. Set this to 1000000000 to offload all layers to the GPU. |
 | `--n_ctx N_CTX` | Size of the prompt context. |
+
+#### llama.cpp
+
+| Flag        | Description |
+|-------------|-------------|
+| `--no-mmap` | Prevent mmap from being used. |
+| `--mlock`   | Force the system to keep the model in RAM. |
+| `--mul_mat_q` | Activate new mulmat kernels. |
+| `--cache-capacity CACHE_CAPACITY`   | Maximum cache capacity. Examples: 2000MiB, 2GiB. When provided without units, bytes will be assumed. |
+| `--tensor_split TENSOR_SPLIT` | Split the model across multiple GPUs, comma-separated list of proportions, e.g. 18,17 |
 | `--llama_cpp_seed SEED` | Seed for llama-cpp models. Default 0 (random). |
 | `--n_gqa N_GQA`         | grouped-query attention. Must be 8 for llama-2 70b. |
 | `--rms_norm_eps RMS_NORM_EPS`  | 5e-6 is a good value for llama-2 models. |
 | `--cpu`                        | Use the CPU version of llama-cpp-python instead of the GPU-accelerated version. |
+
+#### ctransformers
+
+| Flag        | Description |
+|-------------|-------------|
+| `--model_type MODEL_TYPE` | Model type of pre-quantized model. Currently gpt2, gptj, gptneox, falcon, llama, mpt, starcoder (gptbigcode), dollyv2, and replit are supported. |
 
 #### AutoGPTQ
 
@@ -262,6 +296,7 @@ Optionally, you can use the following command-line flags:
 | `--no_inject_fused_mlp`        | Triton mode only: disable the use of fused MLP, which will use less VRAM at the cost of slower inference. |
 | `--no_use_cuda_fp16`           | This can make models faster on some systems. |
 | `--desc_act`                   | For models that don't have a quantize_config.json, this parameter is used to define whether to set desc_act or not in BaseQuantizeConfig. |
+| `--disable_exllama`            | Disable ExLlama kernel, which can improve inference speed on some systems. |
 
 #### ExLlama
 
@@ -280,9 +315,6 @@ Optionally, you can use the following command-line flags:
 | `--pre_layer PRE_LAYER [PRE_LAYER ...]`  | The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models. For multi-gpu, write the numbers separated by spaces, eg `--pre_layer 30 60`. |
 | `--checkpoint CHECKPOINT` | The path to the quantized checkpoint file. If not specified, it will be automatically detected. |
 | `--monkey-patch`          | Apply the monkey patch for using LoRAs with quantized models.
-| `--quant_attn`         | (triton) Enable quant attention. |
-| `--warmup_autotune`    | (triton) Enable warmup autotune. |
-| `--fused_mlp`          | (triton) Enable fused mlp. |
 
 #### DeepSpeed
 
@@ -348,5 +380,5 @@ If you would like to contribute to the project, check out the [Contributing guid
 
 ## Community
 
-* Subreddit: https://www.reddit.com/r/oobaboogazz/
+* Subreddit: https://www.reddit.com/r/oobabooga/
 * Discord: https://discord.gg/jwZCF2dPQN

@@ -58,7 +58,8 @@ def load_model(model_name, loader=None):
         'llamacpp_HF': llamacpp_HF_loader,
         'RWKV': RWKV_loader,
         'ExLlama': ExLlama_loader,
-        'ExLlama_HF': ExLlama_HF_loader
+        'ExLlama_HF': ExLlama_HF_loader,
+        'ctransformers': ctransformers_loader,
     }
 
     p = Path(model_name)
@@ -242,7 +243,7 @@ def llamacpp_loader(model_name):
     else:
         model_file = list(Path(f'{shared.args.model_dir}/{model_name}').glob('*ggml*.bin'))[0]
 
-    logger.info(f"llama.cpp weights detected: {model_file}\n")
+    logger.info(f"llama.cpp weights detected: {model_file}")
     model, tokenizer = LlamaCppModel.from_pretrained(model_file)
     return model, tokenizer
 
@@ -265,6 +266,24 @@ def llamacpp_HF_loader(model_name):
     )
 
     model = LlamacppHF.from_pretrained(model_name)
+    return model, tokenizer
+
+
+def ctransformers_loader(model_name):
+    from modules.ctransformers_model import CtransformersModel
+
+    path = Path(f'{shared.args.model_dir}/{model_name}')
+    ctrans = CtransformersModel()
+    if ctrans.model_type_is_auto():
+        model_file = path
+    else:
+        if path.is_file():
+            model_file = path
+        else:
+            model_file = list(Path(f'{shared.args.model_dir}/{model_name}').glob('*.bin'))[0]
+
+    logger.info(f'ctransformers weights detected: {model_file}')
+    model, tokenizer = ctrans.from_pretrained(model_file)
     return model, tokenizer
 
 

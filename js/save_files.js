@@ -32,9 +32,9 @@ function saveHistory(history, character, mode) {
     saveFile(history, path);
 }
 
-function saveSession(session, mode) {
+function saveSession(session) {
     let path = null;
 
-    path = `session_${mode}_${getCurrentTimestamp()}.json`;
+    path = `session_${getCurrentTimestamp()}.json`;
     saveFile(session, path);
 }

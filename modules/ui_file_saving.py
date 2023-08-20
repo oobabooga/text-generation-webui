@@ -1,8 +1,9 @@
+import copy
 import json
 
 import gradio as gr
 
-from modules import chat, presets, shared, ui, utils
+from modules import chat, presets, shared, ui, ui_chat, utils
 from modules.utils import gradio
 
 
@@ -26,18 +27,17 @@ def create_ui():
             shared.gradio['delete_cancel'] = gr.Button('Cancel', elem_classes="small-button")
 
     # Character saver/deleter
-    if shared.is_chat():
-        with gr.Box(visible=False, elem_classes='file-saver') as shared.gradio['character_saver']:
-            shared.gradio['save_character_filename'] = gr.Textbox(lines=1, label='File name', info='The character will be saved to your characters/ folder with this base filename.')
-            with gr.Row():
-                shared.gradio['save_character_confirm'] = gr.Button('Save', elem_classes="small-button")
-                shared.gradio['save_character_cancel'] = gr.Button('Cancel', elem_classes="small-button")
+    with gr.Box(visible=False, elem_classes='file-saver') as shared.gradio['character_saver']:
+        shared.gradio['save_character_filename'] = gr.Textbox(lines=1, label='File name', info='The character will be saved to your characters/ folder with this base filename.')
+        with gr.Row():
+            shared.gradio['save_character_confirm'] = gr.Button('Save', elem_classes="small-button")
+            shared.gradio['save_character_cancel'] = gr.Button('Cancel', elem_classes="small-button")
 
-        with gr.Box(visible=False, elem_classes='file-saver') as shared.gradio['character_deleter']:
-            gr.Markdown('Confirm the character deletion?')
-            with gr.Row():
-                shared.gradio['delete_character_confirm'] = gr.Button('Delete', elem_classes="small-button", variant='stop')
-                shared.gradio['delete_character_cancel'] = gr.Button('Cancel', elem_classes="small-button")
+    with gr.Box(visible=False, elem_classes='file-saver') as shared.gradio['character_deleter']:
+        gr.Markdown('Confirm the character deletion?')
+        with gr.Row():
+            shared.gradio['delete_character_confirm'] = gr.Button('Delete', elem_classes="small-button", variant='stop')
+            shared.gradio['delete_character_cancel'] = gr.Button('Cancel', elem_classes="small-button")
 
 
 def create_event_handlers():
@@ -51,18 +51,19 @@ def create_event_handlers():
 
     shared.gradio['delete_cancel'].click(lambda: gr.update(visible=False), None, gradio('file_deleter'))
     shared.gradio['save_cancel'].click(lambda: gr.update(visible=False), None, gradio('file_saver'))
-    if shared.is_chat():
-        shared.gradio['save_character_confirm'].click(
-            chat.save_character, gradio('name2', 'greeting', 'context', 'character_picture', 'save_character_filename'), None).then(
-            lambda: gr.update(visible=False), None, gradio('character_saver'))
 
-        shared.gradio['delete_character_confirm'].click(
-            chat.delete_character, gradio('character_menu'), None).then(
-            lambda: gr.update(visible=False), None, gradio('character_deleter')).then(
-            lambda: gr.update(choices=utils.get_available_characters()), None, gradio('character_menu'))
+    shared.gradio['save_character_confirm'].click(
+        chat.save_character, gradio('name2', 'greeting', 'context', 'character_picture', 'save_character_filename'), None).then(
+        lambda: gr.update(visible=False), None, gradio('character_saver')).then(
+        lambda x: gr.update(choices=utils.get_available_characters(), value=x), gradio('save_character_filename'), gradio('character_menu'))
 
-        shared.gradio['save_character_cancel'].click(lambda: gr.update(visible=False), None, gradio('character_saver'))
-        shared.gradio['delete_character_cancel'].click(lambda: gr.update(visible=False), None, gradio('character_deleter'))
+    shared.gradio['delete_character_confirm'].click(
+        chat.delete_character, gradio('character_menu'), None).then(
+        lambda: gr.update(visible=False), None, gradio('character_deleter')).then(
+        lambda: gr.update(choices=utils.get_available_characters(), value="None"), None, gradio('character_menu'))
+
+    shared.gradio['save_character_cancel'].click(lambda: gr.update(visible=False), None, gradio('character_saver'))
+    shared.gradio['delete_character_cancel'].click(lambda: gr.update(visible=False), None, gradio('character_deleter'))
 
     shared.gradio['save_preset'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
@@ -79,30 +80,31 @@ def create_event_handlers():
     if not shared.args.multi_user:
         shared.gradio['save_session'].click(
             ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-            lambda x: json.dumps(x, indent=4), gradio('interface_state'), gradio('temporary_text')).then(
-            None, gradio('temporary_text'), None, _js=f"(contents) => {{{ui.save_files_js}; saveSession(contents, \"{shared.get_mode()}\")}}")
+            save_session, gradio('interface_state'), gradio('temporary_text')).then(
+            None, gradio('temporary_text'), None, _js=f"(contents) => {{{ui.save_files_js}; saveSession(contents)}}")
 
-        if shared.is_chat():
-            shared.gradio['load_session'].upload(
-                ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-                load_session, gradio('load_session', 'interface_state'), gradio('interface_state')).then(
-                ui.apply_interface_values, gradio('interface_state'), gradio(ui.list_interface_input_elements()), show_progress=False).then(
-                chat.redraw_html, shared.reload_inputs, gradio('display')).then(
-                None, None, None, _js='() => {alert("The session has been loaded.")}')
-        else:
-            shared.gradio['load_session'].upload(
-                ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-                load_session, gradio('load_session', 'interface_state'), gradio('interface_state')).then(
-                ui.apply_interface_values, gradio('interface_state'), gradio(ui.list_interface_input_elements()), show_progress=False).then(
-                None, None, None, _js='() => {alert("The session has been loaded.")}')
+        shared.gradio['load_session'].upload(
+            ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+            load_session, gradio('load_session', 'interface_state'), gradio('interface_state')).then(
+            ui.apply_interface_values, gradio('interface_state'), gradio(ui.list_interface_input_elements()), show_progress=False).then(
+            chat.redraw_html, gradio(ui_chat.reload_arr), gradio('display')).then(
+            None, None, None, _js='() => {alert("The session has been loaded.")}')
 
 
 def load_session(file, state):
     decoded_file = file if type(file) == str else file.decode('utf-8')
     data = json.loads(decoded_file)
 
-    if shared.is_chat() and 'character_menu' in data and state.get('character_menu') != data.get('character_menu'):
+    if 'character_menu' in data and state.get('character_menu') != data.get('character_menu'):
         shared.session_is_loading = True
 
     state.update(data)
     return state
+
+
+def save_session(state):
+    output = copy.deepcopy(state)
+    for key in ['prompt_menu-default', 'prompt_menu-notebook']:
+        del output[key]
+
+    return json.dumps(output, indent=4)
