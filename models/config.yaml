@@ -1,4 +1,4 @@
-.*(llama|alpac|vicuna|guanaco|koala|llava|wizardlm|metharme|pygmalion-7b|wizard-mega|openbuddy|vigogne|h2ogpt-research|manticore):
+.*(llama|alpac|vicuna|guanaco|koala|llava|wizardlm|metharme|pygmalion-7b|wizard-mega|openbuddy|vigogne|h2ogpt-research|manticore|llongorca):
   model_type: 'llama'
 .*(opt-|opt_|opt1|opt3|optfor|galactica|galpaca|pygmalion-350m):
   model_type: 'opt'
@@ -300,3 +300,9 @@ llama-65b-gptq-3bit:
   instruction_template: 'OpenOrca-Platypus2'
   custom_stopping_strings: '"### Instruction:", "### Response:"'
   rms_norm_eps: 5.0e-6
+.*llongorca-13b-16k:
+  mode: 'instruct'
+  instruction_template: 'MPT-Chat'
+  truncation_length: 16384
+  rms_norm_eps: 5.0e-6
+  compress_pos_emb: 4  
