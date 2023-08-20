@@ -29,7 +29,7 @@ def create_ui():
 
                 with gr.Tab('Logits'):
                     shared.gradio['get_logits-notebook'] = gr.Button('Get next token probabilities')
-                    shared.gradio['logits-notebook'] = gr.Textbox(lines=23, label='Output', elem_classes=['textbox_logits', 'add_scrollbar'])
+                    shared.gradio['logits-notebook'] = gr.Textbox(lines=23, label='Output', elem_classes=['textbox_logits_notebook', 'add_scrollbar'])
 
                 with gr.Row():
                     shared.gradio['Generate-notebook'] = gr.Button('Generate', variant='primary', elem_classes='small-button')
