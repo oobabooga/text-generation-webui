@@ -322,6 +322,21 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
         original_tokens = len(original_input_ids[0])
         new_tokens = len(output) - (original_tokens if not shared.is_seq2seq else 0)
         print(f'Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens}, seed {seed})')
+
+        def print_most_changed_tokens(positive_prob_diffs):
+            diffs, sorted_indices = torch.sort(positive_prob_diffs, descending=True)
+            top_n = 30
+            diffs = diffs[:top_n].tolist()
+            tokens = shared.tokenizer.batch_decode([[idx] for idx in sorted_indices[:top_n]])
+            for token, diff in zip(tokens, diffs):
+                token = token.encode('unicode_escape')
+                print(f'{token}: {diff}')
+        if shared.args.verbose and shared.rep_pen_diffs:
+            print('Most penalized tokens due to repetition penalty:')
+            print_most_changed_tokens(shared.rep_pen_diffs['decrease'])
+            print()
+            print('Most boosted tokens due to repetition penalty:')
+            print_most_changed_tokens(shared.rep_pen_diffs['increase'])
         return
 
 
