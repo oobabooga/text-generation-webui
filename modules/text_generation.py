@@ -1,5 +1,6 @@
 import ast
 import copy
+import html
 import random
 import re
 import time
@@ -31,7 +32,7 @@ def generate_reply(*args, **kwargs):
         shared.generation_lock.release()
 
 
-def _generate_reply(question, state, stopping_strings=None, is_chat=False):
+def _generate_reply(question, state, stopping_strings=None, is_chat=False, escape_html=False):
 
     # Find the appropriate generation function
     generate_func = apply_extensions('custom_generate_reply')
@@ -73,6 +74,9 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False):
 
     # Generate
     for reply in generate_func(question, original_question, seed, state, stopping_strings, is_chat=is_chat):
+        if escape_html:
+            reply = html.escape(reply)
+
         reply, stop_found = apply_stopping_strings(reply, all_stop_strings)
         if is_stream:
             cur_time = time.time()
@@ -138,7 +142,7 @@ def generate_reply_wrapper(question, state, stopping_strings=None):
     reply = question if not shared.is_seq2seq else ''
     yield formatted_outputs(reply, shared.model_name)
 
-    for reply in generate_reply(question, state, stopping_strings, is_chat=False):
+    for reply in generate_reply(question, state, stopping_strings, is_chat=False, escape_html=True):
         if not shared.is_seq2seq:
             reply = question + reply
 
