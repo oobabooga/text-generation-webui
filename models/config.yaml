@@ -251,6 +251,8 @@ llama-65b-gptq-3bit:
 .*xgen.*-inst:
   truncation_length: 8192
   instruction_template: 'Vicuna-v0'
+.*16k:
+  truncation_length: 16384
 .*(platypus|gplatty|superplatty):
   mode: 'instruct'
   instruction_template: 'Alpaca'
@@ -303,6 +305,5 @@ llama-65b-gptq-3bit:
 .*llongorca-(7b|13b).*-16k:
   mode: 'instruct'
   instruction_template: 'MPT-Chat'
-  truncation_length: 16384
   rms_norm_eps: 5.0e-6
   compress_pos_emb: 4  
