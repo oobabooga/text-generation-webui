@@ -105,7 +105,7 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
 }
 
 .textbox_default textarea {
-    height: calc(100dvh - 310px);
+    height: calc(100dvh - 280px);
 }
 
 .textbox_default_output textarea {
@@ -227,7 +227,7 @@ audio {
 }
 
 .default-token-counter {
-  top: calc( 0.5 * (100dvh - 285px) ) !important;
+  top: calc( 0.5 * (100dvh - 255px) ) !important;
 }
 
 .token-counter span {
