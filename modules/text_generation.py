@@ -152,9 +152,9 @@ def generate_reply_wrapper(question, state, stopping_strings=None):
 def formatted_outputs(reply, model_name):
     if any(s in model_name for s in ['gpt-4chan', 'gpt4chan']):
         reply = fix_gpt4chan(reply)
-        return reply, generate_4chan_html(reply)
+        return html.unescape(reply), generate_4chan_html(reply)
     else:
-        return reply, generate_basic_html(reply)
+        return html.unescape(reply), generate_basic_html(reply)
 
 
 def fix_gpt4chan(s):
