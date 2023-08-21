@@ -300,7 +300,7 @@ llama-65b-gptq-3bit:
   instruction_template: 'OpenOrca-Platypus2'
   custom_stopping_strings: '"### Instruction:", "### Response:"'
   rms_norm_eps: 5.0e-6
-.*llongorca-13b-16k:
+.*llongorca-(7b|13b).*-16k:
   mode: 'instruct'
   instruction_template: 'MPT-Chat'
   truncation_length: 16384
