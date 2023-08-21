@@ -85,5 +85,5 @@ def create_event_handlers():
         lambda x: x + '.txt', gradio('prompt_menu-notebook'), gradio('delete_filename')).then(
         lambda: gr.update(visible=True), None, gradio('file_deleter'))
 
-    shared.gradio['textbox-notebook'].change(lambda x : f"<span>{count_tokens(x)}</span>", gradio('textbox-notebook'), gradio('token-counter-notebook'), show_progress=False)
+    shared.gradio['textbox-notebook'].input(lambda x : f"<span>{count_tokens(x)}</span>", gradio('textbox-notebook'), gradio('token-counter-notebook'), show_progress=False)
     shared.gradio['get_logits-notebook'].click(logits.get_next_logits, gradio('textbox-notebook'), gradio('logits-notebook'))
