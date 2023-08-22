@@ -8,7 +8,7 @@ colorama
 datasets
 einops
 markdown
-numpy==1.24
+numpy==1.25.2
 pandas
 Pillow>=9.5.0
 pyyaml
