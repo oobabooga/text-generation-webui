@@ -1,3 +1,4 @@
+### Builder image
 FROM nvidia/cuda:11.8.0-devel-ubuntu22.04 as builder
 
 RUN apt-get update && \
@@ -41,16 +42,22 @@ RUN virtualenv venv && \
     pip3 install --upgrade pip setuptools wheel && \
     pip3 install torch torchvision torchaudio deepspeed mpi4py mpi4py-mpich zarr sentence_transformers xformers bs4
 
+### Runtime Image
 COPY --from=builder /build /app/repositories/GPTQ-for-LLaMa
 RUN . venv/bin/activate && \
     pip3 install repositories/GPTQ-for-LLaMa/*.whl
 
-COPY extensions/*/requirements.txt /app/extensions/
-RUN --mount=type=cache,target=/root/.cache/pip . venv/bin/activate && \
-    cd extensions && \
-    for req in *.txt; do pip3 install -r $req; done
-
+# Copying all requirements files
+COPY extensions/ /app/extensions/
 COPY requirements.txt requirements.txt
+
+# Install requirements from all directories
+RUN --mount=type=cache,target=/root/.cache/pip \
+    . /app/venv/bin/activate && \
+    for req in /app/extensions/*/requirements.txt; do \
+    pip3 install -r $req; \
+    done
+
 RUN . venv/bin/activate && pip3 install -r requirements.txt
 
 COPY . /app/
