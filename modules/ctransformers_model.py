@@ -19,7 +19,9 @@ class CtransformersModel:
             gpu_layers=shared.args.n_gpu_layers,
             batch_size=shared.args.n_batch,
             context_length=shared.args.n_ctx,
-            stream=True
+            stream=True,
+            mmap=not shared.args.no_mmap,
+            mlock=shared.args.mlock
         )
 
         self.model = AutoModelForCausalLM.from_pretrained(
