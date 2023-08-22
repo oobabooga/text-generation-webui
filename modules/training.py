@@ -21,7 +21,7 @@ from datasets import Dataset, load_dataset
 from peft import (
     LoraConfig,
     get_peft_model,
-    prepare_model_for_int8_training,
+    prepare_model_for_kbit_training,
     set_peft_model_state_dict
 )
 from peft.utils.other import \
@@ -483,7 +483,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     # == Start prepping the model itself ==
     if not hasattr(shared.model, 'lm_head') or hasattr(shared.model.lm_head, 'weight'):
         logger.info("Getting model ready...")
-        prepare_model_for_int8_training(shared.model)
+        prepare_model_for_kbit_training(shared.model)
 
     # base model is now frozen and should not be reused for any other LoRA training than this one
     shared.model_dirty_from_training = True
