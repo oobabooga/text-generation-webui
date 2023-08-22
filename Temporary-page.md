@@ -1,1 +1,0 @@
-I confirm that https://www.reddit.com/u/oobabooga4/ is me
