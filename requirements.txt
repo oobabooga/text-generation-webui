@@ -20,7 +20,7 @@ tensorboard
 tqdm
 wandb
 
-git+https://github.com/huggingface/peft@96c0277a1b9a381b10ab34dbf84917f9b3b992e6
+git+https://github.com/huggingface/peft@4b371b489b9850fd583f204cdf8b5471e098d4e4
 git+https://github.com/huggingface/transformers@baf1daa58eb2960248fd9f7c3af0ed245b8ce4af
 
 bitsandbytes==0.41.1; platform_system != "Windows"
@@ -31,11 +31,11 @@ https://github.com/jllllll/exllama/releases/download/0.0.10/exllama-0.0.10+cu117
 https://github.com/jllllll/exllama/releases/download/0.0.10/exllama-0.0.10+cu117-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
 
 # llama-cpp-python without GPU support
-llama-cpp-python==0.1.77; platform_system != "Windows"
-https://github.com/abetlen/llama-cpp-python/releases/download/v0.1.77/llama_cpp_python-0.1.77-cp310-cp310-win_amd64.whl; platform_system == "Windows"
+llama-cpp-python==0.1.78; platform_system != "Windows"
+https://github.com/abetlen/llama-cpp-python/releases/download/v0.1.78/llama_cpp_python-0.1.78-cp310-cp310-win_amd64.whl; platform_system == "Windows"
 # llama-cpp-python with CUDA support
-https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/textgen-webui/llama_cpp_python_cuda-0.1.77+cu117-cp310-cp310-win_amd64.whl; platform_system == "Windows"
-https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/textgen-webui/llama_cpp_python_cuda-0.1.77+cu117-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
+https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/textgen-webui/llama_cpp_python_cuda-0.1.78+cu117-cp310-cp310-win_amd64.whl; platform_system == "Windows"
+https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/textgen-webui/llama_cpp_python_cuda-0.1.78+cu117-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
 
 # GPTQ-for-LLaMa
 https://github.com/jllllll/GPTQ-for-LLaMa-CUDA/releases/download/0.1.0/gptq_for_llama-0.1.0+cu117-cp310-cp310-win_amd64.whl; platform_system == "Windows"

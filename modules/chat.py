@@ -308,17 +308,17 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
 
 def remove_last_message(history):
     if len(history['visible']) > 0 and history['internal'][-1][0] != '<|BEGIN-VISIBLE-CHAT|>':
-        last = history['internal'].pop()
-        history['visible'].pop()
+        last = history['visible'].pop()
+        history['internal'].pop()
     else:
         last = ['', '']
 
-    return last[0], history
+    return html.unescape(last[0]), history
 
 
 def send_last_reply_to_input(history):
-    if len(history['internal']) > 0:
-        return history['internal'][-1][1]
+    if len(history['visible']) > 0:
+        return html.unescape(history['visible'][-1][1])
     else:
         return ''
 
