@@ -64,7 +64,7 @@ def create_ui():
                         with gr.Column(scale=5):
                             lora_name = gr.Textbox(label='Name', info='The name of your new LoRA file')
                         with gr.Column():
-                            always_override = gr.Checkbox(label='Override Existing Files', value=False, info='If the name is the same, checking will replace the existing file, and unchecking will load and continue from it (the rank must be the same).')
+                            always_override = gr.Checkbox(label='Override Existing Files', value=False, info='If the name is the same, checking will replace the existing file, and unchecking will load and continue from it (the rank must be the same).', elem_classes=['no-background'])
 
                     with gr.Row():
                         with gr.Column():

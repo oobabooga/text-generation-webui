@@ -30,8 +30,15 @@ def create_ui():
                     shared.gradio['html-notebook'] = gr.HTML()
 
                 with gr.Tab('Logits'):
-                    shared.gradio['get_logits-notebook'] = gr.Button('Get next token probabilities')
-                    shared.gradio['logits-notebook'] = gr.Textbox(lines=23, label='Output', elem_classes=['textbox_logits_notebook', 'add_scrollbar'])
+                    with gr.Row():
+                        with gr.Column(scale=10):
+                            shared.gradio['get_logits-notebook'] = gr.Button('Get next token probabilities')
+                        with gr.Column(scale=1):
+                            shared.gradio['use_samplers-notebook'] = gr.Checkbox(label='Use samplers', value=True, elem_classes=['no-background'])
+
+                    with gr.Row():
+                        shared.gradio['logits-notebook'] = gr.Textbox(lines=23, label='Output', elem_classes=['textbox_logits_notebook', 'add_scrollbar'])
+                        shared.gradio['logits-notebook-previous'] = gr.Textbox(lines=23, label='Previous output', elem_classes=['textbox_logits_notebook', 'add_scrollbar'])
 
                 with gr.Row():
                     shared.gradio['Generate-notebook'] = gr.Button('Generate', variant='primary', elem_classes='small-button')
@@ -85,5 +92,7 @@ def create_event_handlers():
         lambda x: x + '.txt', gradio('prompt_menu-notebook'), gradio('delete_filename')).then(
         lambda: gr.update(visible=True), None, gradio('file_deleter'))
 
-    shared.gradio['textbox-notebook'].input(lambda x : f"<span>{count_tokens(x)}</span>", gradio('textbox-notebook'), gradio('token-counter-notebook'), show_progress=False)
-    shared.gradio['get_logits-notebook'].click(logits.get_next_logits, gradio('textbox-notebook'), gradio('logits-notebook'))
+    shared.gradio['textbox-notebook'].input(lambda x: f"<span>{count_tokens(x)}</span>", gradio('textbox-notebook'), gradio('token-counter-notebook'), show_progress=False)
+    shared.gradio['get_logits-notebook'].click(
+        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+        logits.get_next_logits, gradio('textbox-notebook', 'interface_state', 'use_samplers-notebook', 'logits-notebook'), gradio('logits-notebook', 'logits-notebook-previous'), show_progress=False)

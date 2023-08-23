@@ -237,6 +237,11 @@ audio {
   border-radius: 0.4em;
 }
 
+.no-background {
+  background: var(--background-fill-primary) !important;
+  padding: 0px !important;
+}
+
 /*****************************************************/
 /*************** Chat UI declarations ****************/
 /*****************************************************/
