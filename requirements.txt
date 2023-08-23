@@ -14,7 +14,7 @@ peft==0.5.*
 Pillow>=9.5.0
 pyyaml
 requests
-safetensors==0.3.2
+safetensors==0.3.3
 transformers==4.32.*
 scipy
 sentencepiece
