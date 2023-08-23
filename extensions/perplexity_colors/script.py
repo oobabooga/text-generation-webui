@@ -1,14 +1,11 @@
-import re
 import time
 
 import gradio
-import markdown
 import numpy as np
 import torch
 from transformers import LogitsProcessor
 
 from modules import html_generator, shared
-from modules.html_generator import replace_blockquote
 
 params = {
     'active': True,
@@ -113,15 +110,9 @@ def output_modifier(text):
     sel_probs = ppl_logits_processor.selected_probs[1:]
 
     end_part = '</div></div>' if params['probability_dropdown'] else '</span>'  # Helps with finding the index after replacing part of the text.
-    in_code = False  # Since the <span> tags mess up code blocks, avoid coloring while inside a code block, based on finding tokens with '`' in them
 
     i = 0
     for token, prob, ppl, top_tokens, top_probs in zip(gen_tokens, sel_probs, perplexities, top_tokens_list, top_probs_list):
-        if '`' in token and not params['probability_dropdown']:
-            in_code = not in_code
-            continue
-        if in_code:
-            continue
         color = 'ffffff'
         if params['color_by_probability'] and params['color_by_perplexity']:
             color = probability_perplexity_color_scale(prob, ppl)
@@ -131,20 +122,13 @@ def output_modifier(text):
             color = probability_color_scale(prob)
         if token in text[i:]:
             if params['probability_dropdown']:
-                after_token_index = text[i:].find(token) + len(token)
-                whitespace = text[i:][after_token_index:(after_token_index + 1)]
-                if whitespace != ' ':
-                    whitespace = ''
-                text = text[:i] + text[i:].replace(token, add_dropdown_html(token, color, top_tokens, top_probs[0], whitespace, ppl), 1)
+                text = text[:i] + text[i:].replace(token, add_dropdown_html(token, color, top_tokens, top_probs[0], ppl), 1)
             else:
                 text = text[:i] + text[i:].replace(token, add_color_html(token, color), 1)
             i += text[i:].find(end_part) + len(end_part)
 
     # Use full perplexity list for calculating the average here.
     print('Average perplexity:', round(np.mean(ppl_logits_processor.perplexities_list[:-1]), 4))
-    # Optional hacky workaround: Without this, spaces get added between every token. With this, there is a little extra whitespace at the top.
-    # This fixes the tokenization spaces, somehow. However, this also removes any paragraph breaks in the message.
-    # return '<p>' + text + '</p>'
     # t1 = time.time()
     # print(f"Modifier: {(t1-t0):.3f} s")
     # About 50 ms
@@ -216,11 +200,8 @@ def add_color_html(token, color):
 # I think the issue is from HTML elements taking up space in the visible history, and things like history deepcopy add latency proportional to the size of the history.
 # Potential solution is maybe to modify the main generation code to send just the internal text and not the visible history, to avoid moving too much around.
 # I wonder if we can also avoid using deepcopy here.
-# The whitespace fix here is not perfect -- it will remove whitespace of paragraph breaks and other particular cases.
-def add_dropdown_html(token, color, top_tokens, top_probs, whitespace='', perplexity=0):
-    if whitespace != '':
-        whitespace = '&nbsp;'
-    html = f'<div class="hoverable"><span style="color: #{color}">{token}{whitespace}</span><div class="dropdown"><table class="dropdown-content"><tbody>'
+def add_dropdown_html(token, color, top_tokens, top_probs, perplexity=0):
+    html = f'<div class="hoverable"><span style="color: #{color}">{token}</span><div class="dropdown"><table class="dropdown-content"><tbody>'
     for token_option, prob in zip(top_tokens, top_probs):
         # TODO: Bold for selected token?
         # Using divs prevented the problem of divs inside spans causing issues.
@@ -232,7 +213,7 @@ def add_dropdown_html(token, color, top_tokens, top_probs, whitespace='', perple
     if perplexity != 0:
         ppl_color = perplexity_color_scale(perplexity)
         html += f'<tr><td>Perplexity:</td><td style="color: #{ppl_color}">{perplexity:.4f}</td></tr>'
-    html += '</tbody></table></div></div>\n'  # The newline would normally be added by markdown.markdown() but this is faster.
+    html += '</tbody></table></div></div>'
     return html  # About 750 characters per token...
 
 
@@ -273,11 +254,14 @@ def custom_css():
             line-height: 1.75;
             margin: 0;
             padding: 0;
-            margin-right: -4px;
         }
 
         .hoverable:hover .dropdown {
             display: block;
+        }
+
+        pre {
+            white-space: pre-wrap;
         }
 
         # TODO: This makes the hover menus extend outside the bounds of the chat area, which is good.
@@ -288,51 +272,14 @@ def custom_css():
         #}
     """
 
+
 # Monkeypatch applied to html_generator.py
-# This fixes an issue where the markdown conversion was causing a large slowdown in generation speeds if too many tokens had probability dropdowns added.
-# I'd rather have a more long-term solution, since this really shouldn't be called on all messages for each token, but this works for now.
+# We simply don't render markdown into HTML. We wrap everything in <pre> tags to preserve whitespace
+# formatting. If you're coloring tokens by perplexity or probability, or especially if you're using
+# the probability dropdown, you probably care more about seeing the tokens the model actually outputted
+# rather than rendering ```code blocks``` or *italics*.
 def convert_to_markdown(string):
-    # t0 = time.time()
-    # Blockquote
-    pattern = re.compile(r'\\begin{blockquote}(.*?)\\end{blockquote}', re.DOTALL)
-    string = pattern.sub(replace_blockquote, string)
-
-    # Code
-    string = string.replace('\\begin{code}', '```')
-    string = string.replace('\\end{code}', '```')
-    string = re.sub(r"(.)```", r"\1\n```", string)
-
-    result = ''
-    is_code = False
-    for line in string.split('\n'):
-        if line.lstrip(' ').startswith('```'):
-            is_code = not is_code
-
-        result += line
-        if is_code or line.startswith('|'):  # Don't add an extra \n for tables or code
-            result += '\n'
-        else:
-            result += '\n\n'
-
-    if is_code:
-        result = result + '```'  # Unfinished code block
-
-    string = result.strip()
-    # t1 = time.time()
-    # print(len(string))
-    # print(f"Pre markdown: {(t1-t0):.3f} s")
-    if params['probability_dropdown'] and '<div class="hoverable">' in string:
-        # Prevents all latency introduced by trying to convert the HTML to markdown when it's not even necessary
-        # print('Monkeypatched')
-        return string
-    else:
-        # t0 = time.time()
-        return markdown.markdown(string, extensions=['fenced_code', 'tables'])
-        # t1 = time.time()
-        # print(f"Markdown: {(t1-t0):.3f} s for string of length {len(string)}")
-        # print(string)
-        # print(res)
-        # return res
+    return '<pre>' + string + '</pre>'
 
 
 html_generator.convert_to_markdown = convert_to_markdown
