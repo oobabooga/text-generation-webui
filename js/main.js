@@ -82,3 +82,12 @@ observer.observe(targetElement, config);
 //------------------------------------------------
 document.getElementById('chat-input').parentNode.style.background = 'transparent';
 document.getElementById('chat-input').parentNode.style.border = 'none';
+
+//------------------------------------------------
+// Remove some backgrounds
+//------------------------------------------------
+const noBackgroundelements = document.querySelectorAll('.no-background');
+for(i = 0; i < noBackgroundelements.length; i++) {
+    noBackgroundelements[i].parentNode.style.border = 'none';
+    noBackgroundelements[i].parentNode.parentNode.parentNode.style.alignItems = 'center';
+}
