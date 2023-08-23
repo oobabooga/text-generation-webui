@@ -20,11 +20,12 @@ def get_next_logits(prompt, state, use_samplers, previous):
         scores = output['logits'][-1][-1]
 
     probs = torch.softmax(scores, dim=-1, dtype=torch.float)
-    topk_values, topk_indices = torch.topk(probs, k=20, largest=True, sorted=True)
+    topk_values, topk_indices = torch.topk(probs, k=25, largest=True, sorted=True)
     topk_values = [f"{float(i):.5f}" for i in topk_values]
+    tokens = [shared.tokenizer.decode(i) for i in topk_indices]
 
     output = ''
-    for row in list(zip(topk_values, shared.tokenizer.convert_ids_to_tokens(topk_indices))):
+    for row in list(zip(topk_values, tokens)):
         output += f"{row[0]}  -  {row[1]}\n"
 
     return output, previous
