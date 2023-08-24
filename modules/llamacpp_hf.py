@@ -95,6 +95,7 @@ class LlamacppHF(PreTrainedModel):
         if len(args) > 0:
             if not shared.args.cfg_cache:
                 logger.error("Please enable the cfg-cache option to use CFG with llamacpp_HF.")
+                logger.warning('CFG is currently bugged and not functional for llamacpp_HF. Contributions are welcome.')
                 return
 
             input_ids = args[0]
