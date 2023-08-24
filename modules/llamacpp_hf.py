@@ -33,7 +33,12 @@ class LlamacppHF(PreTrainedModel):
         super().__init__(PretrainedConfig())
         self.model = model
         self.generation_config = GenerationConfig()
+
+        self.llamacpp_cache = None
         self.past_seq = None
+
+        self.llamacpp_cache_negative = None
+        self.past_seq_negative = None
 
     def _validate_model_class(self):
         pass
@@ -49,31 +54,49 @@ class LlamacppHF(PreTrainedModel):
         return torch.device(0)
 
     def __call__(self, *args, **kwargs):
-        input_ids = args[0] if len(args) > 0 else kwargs['input_ids']
         use_cache = kwargs.get('use_cache', True)
         labels = kwargs.get('labels', None)
         cache = kwargs.get('past_key_values', None)
+
+        if len(args) > 0:
+            input_ids = args[0]
+            is_negative = True
+            past_seq = self.past_seq_negative
+            if self.llamacpp_cache_negative is not None:
+                self.model.load_state(self.llamacpp_cache_negative)
+        else:
+            input_ids = kwargs['input_ids']
+            is_negative = False
+            past_seq = self.past_seq
+            if self.llamacpp_cache is not None:
+                self.model.load_state(self.llamacpp_cache)
+
         seq = input_ids[0].tolist()
+        seq_tensor = torch.tensor(seq)
 
         # Make the forward call
         seq_tensor = torch.tensor(seq)
         if labels is None:
-            if self.past_seq is None or not torch.equal(self.past_seq, seq_tensor[:-1]):
+            if past_seq is None or not torch.equal(past_seq, seq_tensor[:-1]):
                 self.model.reset()
                 self.model.eval(seq)
             else:
                 self.model.eval([seq[-1]])
 
-            logits = torch.tensor(self.model.scores[self.model.n_tokens - 1, :]).view(1, 1, -1).to(kwargs['input_ids'].device)
+            logits = torch.tensor(self.model.scores[self.model.n_tokens - 1, :]).view(1, 1, -1).to(input_ids.device)
         else:
             self.model.reset()
             self.model.eval(seq)
             logits = torch.tensor(self.model.eval_logits)
             logits = logits.view(1, logits.shape[0], logits.shape[1]).to(input_ids.device)
 
-        self.past_seq = seq_tensor
+        if is_negative:
+            self.past_seq_negative = seq_tensor
+            self.llamacpp_cache_negative = self.model.save_state()
+        else:
+            self.past_seq = seq_tensor
+            self.llamacpp_cache = self.model.save_state()
 
-        # Based on transformers/models/llama/modeling_llama.py
         loss = None
         if labels is not None:
             # Shift so that tokens < n predict n
