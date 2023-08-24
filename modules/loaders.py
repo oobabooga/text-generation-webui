@@ -29,6 +29,7 @@ loaders_and_params = OrderedDict({
         'max_seq_len',
         'alpha_value',
         'compress_pos_emb',
+        'cfg_cache',
         'exllama_HF_info',
     ],
     'ExLlama': [
@@ -157,6 +158,8 @@ loaders_samplers = {
         'mirostat_mode',
         'mirostat_tau',
         'mirostat_eta',
+        'guidance_scale',
+        'negative_prompt',
         'ban_eos_token',
         'add_bos_token',
         'skip_special_tokens',
