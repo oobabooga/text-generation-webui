@@ -6,6 +6,7 @@ rules:                              # Array of rules
     mergeUnstable: false            # Optional, merge pull request even when the mergeable_state is not clean. Default: false
   - base: deepspeed-1
     upstream: main                  # Required. Can be a branch in the same forked repo.
+    mergeMethod: merge
     # assignees:                    # Optional
     #   - sammcj
     # reviewers:                    # Optional
