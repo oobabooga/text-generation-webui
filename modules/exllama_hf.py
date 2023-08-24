@@ -55,7 +55,7 @@ class ExllamaHF(PreTrainedModel):
     def __call__(self, *args, **kwargs):
         use_cache = kwargs.get('use_cache', True)
         labels = kwargs.get('labels', None)
-        cache = kwargs.get('past_key_values', None)
+        past_key_values = kwargs.get('past_key_values', None)
 
         if len(args) > 0:
             if not shared.args.cfg_cache:
@@ -73,6 +73,9 @@ class ExllamaHF(PreTrainedModel):
             ex_cache = self.ex_cache
 
         seq = input_ids[0].tolist()
+        if is_negative and past_key_values is not None:
+            seq = past_key_values + seq
+
         seq_tensor = torch.tensor(seq)
 
         # Make the forward call
@@ -104,7 +107,7 @@ class ExllamaHF(PreTrainedModel):
             shift_labels = shift_labels.to(shift_logits.device)
             loss = loss_fct(shift_logits, shift_labels)
 
-        return CausalLMOutputWithPast(logits=logits, past_key_values=cache if use_cache else None, loss=loss)
+        return CausalLMOutputWithPast(logits=logits, past_key_values=seq if use_cache else None, loss=loss)
 
     @classmethod
     def from_pretrained(cls, pretrained_model_name_or_path: Optional[Union[str, os.PathLike]], *model_args, **kwargs):
