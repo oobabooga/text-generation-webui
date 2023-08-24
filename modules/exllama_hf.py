@@ -59,7 +59,7 @@ class ExllamaHF(PreTrainedModel):
 
         if len(args) > 0:
             if not shared.args.cfg_cache:
-                logger.error("Please enable the cfg_cache option to use CFG with ExLlama_HF.")
+                logger.error("Please enable the cfg-cache option to use CFG with ExLlama_HF.")
                 return
 
             input_ids = args[0]
