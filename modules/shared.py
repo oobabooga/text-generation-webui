@@ -147,6 +147,7 @@ parser.add_argument('--disable_exllama', action='store_true', help='Disable ExLl
 # ExLlama
 parser.add_argument('--gpu-split', type=str, help="Comma-separated list of VRAM (in GB) to use per GPU device for model layers, e.g. 20,7,7")
 parser.add_argument('--max_seq_len', type=int, default=2048, help="Maximum sequence length.")
+parser.add_argument('--cfg-cache', action='store_true', help="ExLlama_HF: Create an additional cache for CFG negative prompts. Necessary to use CFG with that loader, but not necessary for CFG with base ExLlama.")
 
 # DeepSpeed
 parser.add_argument('--deepspeed', action='store_true', help='Enable the use of DeepSpeed ZeRO-3 for inference via the Transformers integration.')

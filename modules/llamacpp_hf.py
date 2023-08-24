@@ -33,7 +33,7 @@ class LlamacppHF(PreTrainedModel):
         super().__init__(PretrainedConfig())
         self.model = model
         self.generation_config = GenerationConfig()
-        self.cache = None
+        self.past_seq = None
 
     def _validate_model_class(self):
         pass
@@ -58,7 +58,7 @@ class LlamacppHF(PreTrainedModel):
         # Make the forward call
         seq_tensor = torch.tensor(seq)
         if labels is None:
-            if self.cache is None or not torch.equal(self.cache, seq_tensor[:-1]):
+            if self.past_seq is None or not torch.equal(self.past_seq, seq_tensor[:-1]):
                 self.model.reset()
                 self.model.eval(seq)
             else:
@@ -71,7 +71,7 @@ class LlamacppHF(PreTrainedModel):
             logits = torch.tensor(self.model.eval_logits)
             logits = logits.view(1, logits.shape[0], logits.shape[1]).to(input_ids.device)
 
-        self.cache = seq_tensor
+        self.past_seq = seq_tensor
 
         # Based on transformers/models/llama/modeling_llama.py
         loss = None

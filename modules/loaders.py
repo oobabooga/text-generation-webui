@@ -29,6 +29,7 @@ loaders_and_params = OrderedDict({
         'max_seq_len',
         'alpha_value',
         'compress_pos_emb',
+        'cfg_cache',
         'exllama_HF_info',
     ],
     'ExLlama': [
