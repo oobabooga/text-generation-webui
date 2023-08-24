@@ -33,7 +33,22 @@ class LlamacppHF(PreTrainedModel):
         super().__init__(PretrainedConfig())
         self.model = model
         self.generation_config = GenerationConfig()
-        self.cache = None
+
+        self.past_seq = None
+        self.llamacpp_cache = {
+            'n_tokens': self.model.n_tokens,
+            'input_ids': self.model.input_ids,
+            'scores': self.model.scores
+        }
+
+        if shared.args.cfg_cache:
+            logger.warning('CFG is currently bugged and not functional for llamacpp_HF. Contributions are welcome.')
+            self.past_seq_negative = None
+            self.llamacpp_cache_negative = {
+                'n_tokens': self.model.n_tokens,
+                'input_ids': self.model.input_ids.copy(),
+                'scores': self.model.scores.copy()
+            }
 
     def _validate_model_class(self):
         pass
@@ -44,36 +59,83 @@ class LlamacppHF(PreTrainedModel):
     def prepare_inputs_for_generation(self, input_ids, **kwargs):
         return {'input_ids': input_ids, **kwargs}
 
+    def save_cache(self):
+        self.llamacpp_cache.update({
+            'n_tokens': self.model.n_tokens,
+            'input_ids': self.model.input_ids,
+            'scores': self.model.scores
+        })
+
+    def save_negative_cache(self):
+        self.llamacpp_cache_negative.update({
+            'n_tokens': self.model.n_tokens,
+            'input_ids': self.model.input_ids,
+            'scores': self.model.scores
+        })
+
+    def load_cache(self):
+        self.model.n_tokens = self.llamacpp_cache['n_tokens']
+        self.model.input_ids = self.llamacpp_cache['input_ids']
+        self.model.scores = self.llamacpp_cache['scores']
+
+    def load_negative_cache(self):
+        self.model.n_tokens = self.llamacpp_cache_negative['n_tokens']
+        self.model.input_ids = self.llamacpp_cache_negative['input_ids']
+        self.model.scores = self.llamacpp_cache_negative['scores']
+
     @property
     def device(self) -> torch.device:
         return torch.device(0)
 
     def __call__(self, *args, **kwargs):
-        input_ids = args[0] if len(args) > 0 else kwargs['input_ids']
         use_cache = kwargs.get('use_cache', True)
         labels = kwargs.get('labels', None)
-        cache = kwargs.get('past_key_values', None)
+        past_key_values = kwargs.get('past_key_values', None)
+
+        if len(args) > 0:
+            if not shared.args.cfg_cache:
+                logger.error("Please enable the cfg-cache option to use CFG with llamacpp_HF.")
+                logger.warning('CFG is currently bugged and not functional for llamacpp_HF. Contributions are welcome.')
+                return
+
+            input_ids = args[0]
+            is_negative = True
+            past_seq = self.past_seq_negative
+            self.load_negative_cache()
+        else:
+            input_ids = kwargs['input_ids']
+            is_negative = False
+            past_seq = self.past_seq
+            self.load_cache()
+
         seq = input_ids[0].tolist()
+        if is_negative and past_key_values is not None:
+            seq = past_key_values + seq
+
+        seq_tensor = torch.tensor(seq)
 
         # Make the forward call
-        seq_tensor = torch.tensor(seq)
         if labels is None:
-            if self.cache is None or not torch.equal(self.cache, seq_tensor[:-1]):
+            if past_seq is None or not torch.equal(past_seq, seq_tensor[:-1]):
                 self.model.reset()
                 self.model.eval(seq)
             else:
                 self.model.eval([seq[-1]])
 
-            logits = torch.tensor(self.model.scores[self.model.n_tokens - 1, :]).view(1, 1, -1).to(kwargs['input_ids'].device)
+            logits = torch.tensor(self.model.scores[self.model.n_tokens - 1, :]).view(1, 1, -1).to(input_ids.device)
         else:
             self.model.reset()
             self.model.eval(seq)
             logits = torch.tensor(self.model.eval_logits)
             logits = logits.view(1, logits.shape[0], logits.shape[1]).to(input_ids.device)
 
-        self.cache = seq_tensor
+        if is_negative:
+            self.save_negative_cache()
+            self.past_seq_negative = seq_tensor
+        else:
+            self.save_cache()
+            self.past_seq = seq_tensor
 
-        # Based on transformers/models/llama/modeling_llama.py
         loss = None
         if labels is not None:
             # Shift so that tokens < n predict n
@@ -87,7 +149,7 @@ class LlamacppHF(PreTrainedModel):
             shift_labels = shift_labels.to(shift_logits.device)
             loss = loss_fct(shift_logits, shift_labels)
 
-        return CausalLMOutputWithPast(logits=logits, past_key_values=cache if use_cache else None, loss=loss)
+        return CausalLMOutputWithPast(logits=logits, past_key_values=seq if use_cache else None, loss=loss)
 
     @classmethod
     def from_pretrained(cls, pretrained_model_name_or_path: Optional[Union[str, os.PathLike]], *model_args, **kwargs):
