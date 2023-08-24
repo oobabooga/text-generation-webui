@@ -95,7 +95,6 @@ loaders_and_params = OrderedDict({
         'alpha_value',
         'compress_pos_emb',
         'cpu',
-        'cfg_cache',
         'llamacpp_HF_info',
     ],
     'ctransformers': [
