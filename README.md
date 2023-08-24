@@ -280,7 +280,6 @@ Optionally, you can use the following command-line flags:
 | `--n_gqa N_GQA`         | grouped-query attention. Must be 8 for llama-2 70b. |
 | `--rms_norm_eps RMS_NORM_EPS`  | 5e-6 is a good value for llama-2 models. |
 | `--cpu`                        | Use the CPU version of llama-cpp-python instead of the GPU-accelerated version. |
-|`--cfg-cache`                   | llamacpp_HF: Create an additional cache for CFG negative prompts. Necessary to use CFG with that loader. |
 
 #### ctransformers
 
