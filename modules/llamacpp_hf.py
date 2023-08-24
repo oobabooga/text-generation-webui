@@ -34,11 +34,20 @@ class LlamacppHF(PreTrainedModel):
         self.model = model
         self.generation_config = GenerationConfig()
 
-        self.llamacpp_cache = None
         self.past_seq = None
+        self.llamacpp_cache = {
+            'n_tokens': self.model.n_tokens,
+            'input_ids': self.model.input_ids,
+            'scores': self.model.scores
+        }
 
-        self.llamacpp_cache_negative = None
-        self.past_seq_negative = None
+        if shared.args.cfg_cache:
+            self.past_seq_negative = None
+            self.llamacpp_cache_negative = {
+                'n_tokens': self.model.n_tokens,
+                'input_ids': self.model.input_ids.copy(),
+                'scores': self.model.scores.copy()
+            }
 
     def _validate_model_class(self):
         pass
@@ -48,6 +57,30 @@ class LlamacppHF(PreTrainedModel):
 
     def prepare_inputs_for_generation(self, input_ids, **kwargs):
         return {'input_ids': input_ids, **kwargs}
+
+    def save_cache(self):
+        self.llamacpp_cache.update({
+            'n_tokens': self.model.n_tokens,
+            'input_ids': self.model.input_ids,
+            'scores': self.model.scores
+        })
+
+    def save_negative_cache(self):
+        self.llamacpp_cache_negative.update({
+            'n_tokens': self.model.n_tokens,
+            'input_ids': self.model.input_ids,
+            'scores': self.model.scores
+        })
+
+    def load_cache(self):
+        self.model.n_tokens = self.llamacpp_cache['n_tokens']
+        self.model.input_ids = self.llamacpp_cache['input_ids']
+        self.model.scores = self.llamacpp_cache['scores']
+
+    def load_negative_cache(self):
+        self.model.n_tokens = self.llamacpp_cache_negative['n_tokens']
+        self.model.input_ids = self.llamacpp_cache_negative['input_ids']
+        self.model.scores = self.llamacpp_cache_negative['scores']
 
     @property
     def device(self) -> torch.device:
@@ -59,17 +92,19 @@ class LlamacppHF(PreTrainedModel):
         cache = kwargs.get('past_key_values', None)
 
         if len(args) > 0:
+            if not shared.args.cfg_cache:
+                logger.error("Please enable the cfg_cache option to use CFG with llamacpp_HF.")
+                return
+
             input_ids = args[0]
             is_negative = True
             past_seq = self.past_seq_negative
-            if self.llamacpp_cache_negative is not None:
-                self.model.load_state(self.llamacpp_cache_negative)
+            self.load_negative_cache()
         else:
             input_ids = kwargs['input_ids']
             is_negative = False
             past_seq = self.past_seq
-            if self.llamacpp_cache is not None:
-                self.model.load_state(self.llamacpp_cache)
+            self.load_cache()
 
         seq = input_ids[0].tolist()
         seq_tensor = torch.tensor(seq)
@@ -91,11 +126,11 @@ class LlamacppHF(PreTrainedModel):
             logits = logits.view(1, logits.shape[0], logits.shape[1]).to(input_ids.device)
 
         if is_negative:
+            self.save_negative_cache()
             self.past_seq_negative = seq_tensor
-            self.llamacpp_cache_negative = self.model.save_state()
         else:
+            self.save_cache()
             self.past_seq = seq_tensor
-            self.llamacpp_cache = self.model.save_state()
 
         loss = None
         if labels is not None:
