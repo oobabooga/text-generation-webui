@@ -42,6 +42,7 @@ class LlamacppHF(PreTrainedModel):
         }
 
         if shared.args.cfg_cache:
+            logger.warning('CFG is currently bugged and not functional for llamacpp_HF. Contributions are welcome.')
             self.past_seq_negative = None
             self.llamacpp_cache_negative = {
                 'n_tokens': self.model.n_tokens,
