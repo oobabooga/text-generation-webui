@@ -15,7 +15,7 @@ class CtransformersModel:
 
         config = AutoConfig.from_pretrained(
             str(path),
-            threads=shared.args.threads,
+            threads=shared.args.threads if shared.args.threads != 0 else -1,
             gpu_layers=shared.args.n_gpu_layers,
             batch_size=shared.args.n_batch,
             context_length=shared.args.n_ctx,
