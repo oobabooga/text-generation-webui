@@ -180,6 +180,7 @@ if __name__ == "__main__":
         'truncation_length': shared.settings['truncation_length'],
         'n_gqa': 0,
         'rms_norm_eps': 0,
+        'rope_freq_base': 0,
     }
 
     shared.model_config.move_to_end('.*', last=False)  # Move to the beginning
