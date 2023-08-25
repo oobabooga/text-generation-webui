@@ -1,3 +1,4 @@
+import html
 import re
 from pathlib import Path
 
@@ -111,7 +112,7 @@ def output_modifier(string):
     output_file = Path(f'extensions/elevenlabs_tts/outputs/{wav_idx:06d}.mp3'.format(wav_idx))
     print(f'Outputting audio to {str(output_file)}')
     try:
-        audio = elevenlabs.generate(text=string, voice=params['selected_voice'], model=params['model'])
+        audio = elevenlabs.generate(text=html.unescape(string), voice=params['selected_voice'], model=params['model'])
         elevenlabs.save(audio, str(output_file))
 
         autoplay = 'autoplay' if params['autoplay'] else ''
