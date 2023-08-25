@@ -280,7 +280,16 @@ def ctransformers_loader(model_name):
         if path.is_file():
             model_file = path
         else:
-            model_file = list(Path(f'{shared.args.model_dir}/{model_name}').glob('*.bin'))[0]
+            entries = Path(f'{shared.args.model_dir}/{model_name}')
+            gguf = list(entries.glob('*.gguf'))
+            bin = list(entries.glob('*.bin'))
+            if len(gguf) > 0:
+                model_file = gguf[0]
+            elif len(bin) > 0:
+                model_file = bin[0]
+            else:
+                logger.error("Could not find a model for ctransformers.")
+                return None, None
 
     logger.info(f'ctransformers weights detected: {model_file}')
     model, tokenizer = ctrans.from_pretrained(model_file)
