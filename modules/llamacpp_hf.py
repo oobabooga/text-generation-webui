@@ -165,7 +165,7 @@ class LlamacppHF(PreTrainedModel):
         if path.is_file():
             model_file = path
         else:
-            model_file = list(path.glob('*ggml*.bin'))[0]
+            model_file = list(path.glob('*.gguf*'))[0]
 
         logger.info(f"llama.cpp weights detected: {model_file}\n")
 
