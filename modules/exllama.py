@@ -3,7 +3,7 @@ from pathlib import Path
 import torch.nn.functional as F
 from torch import version as torch_version
 
-from modules import shared
+from modules import RoPE, shared
 from modules.logging_colors import logger
 from modules.models import clear_torch_cache
 from modules.text_generation import get_max_prompt_length
@@ -56,8 +56,8 @@ class ExllamaModel:
             config.set_auto_map(shared.args.gpu_split)
             config.gpu_peer_fix = True
 
-        if shared.args.alpha_value:
-            config.alpha_value = shared.args.alpha_value
+        if shared.args.alpha_value > 1 or shared.args.rope_freq_base > 0:
+            config.alpha_value = RoPE.get_alpha_value(shared.args.alpha_value, shared.args.rope_freq_base)
             config.calculate_rotary_embedding_base()
 
         if torch_version.hip:

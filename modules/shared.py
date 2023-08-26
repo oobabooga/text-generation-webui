@@ -159,8 +159,9 @@ parser.add_argument('--rwkv-strategy', type=str, default=None, help='RWKV: The s
 parser.add_argument('--rwkv-cuda-on', action='store_true', help='RWKV: Compile the CUDA kernel for better performance.')
 
 # RoPE
-parser.add_argument('--compress_pos_emb', type=int, default=1, help="Positional embeddings compression factor. Should typically be set to max_seq_len / 2048.")
 parser.add_argument('--alpha_value', type=int, default=1, help="Positional embeddings alpha factor for NTK RoPE scaling. Use either this or compress_pos_emb, not both.")
+parser.add_argument('--rope_freq_base', type=int, default=0, help="If greater than 0, will be used instead of alpha_value. Those two are related by rope_freq_base = 10000 * alpha_value ^ (64 / 63).")
+parser.add_argument('--compress_pos_emb', type=int, default=1, help="Positional embeddings compression factor. Should be set to (context length) / (model\'s original context length). Equal to 1/rope_freq_scale.")
 
 # Gradio
 parser.add_argument('--listen', action='store_true', help='Make the web UI reachable from your local network.')
