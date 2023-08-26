@@ -9,23 +9,38 @@ from transformers.modeling_outputs import CausalLMOutputWithPast
 
 from modules import RoPE, shared
 from modules.logging_colors import logger
+from modules.utils import is_gguf
 
 import llama_cpp
+
+try:
+    import llama_cpp_ggml
+except:
+    llama_cpp_ggml = llama_cpp
 
 if torch.cuda.is_available() and not torch.version.hip:
     try:
         import llama_cpp_cuda
     except:
         llama_cpp_cuda = None
+    try:
+        import llama_cpp_ggml_cuda
+    except:
+        llama_cpp_ggml_cuda = llama_cpp_cuda
 else:
     llama_cpp_cuda = None
+    llama_cpp_ggml_cuda = None
 
 
-def llama_cpp_lib():
-    if shared.args.cpu or llama_cpp_cuda is None:
-        return llama_cpp
+def llama_cpp_lib(model_file: Union[str, Path] = None):
+    if model_file is not None:
+        gguf_model = is_gguf(model_file)
     else:
-        return llama_cpp_cuda
+        gguf_model = True
+    if shared.args.cpu or llama_cpp_cuda is None:
+        return llama_cpp if gguf_model else llama_cpp_ggml
+    else:
+        return llama_cpp_cuda if gguf_model else llama_cpp_ggml_cuda
 
 
 class LlamacppHF(PreTrainedModel):
@@ -165,7 +180,7 @@ class LlamacppHF(PreTrainedModel):
         if path.is_file():
             model_file = path
         else:
-            model_file = list(path.glob('*.gguf*'))[0]
+            model_file = (list(path.glob('*.gguf*')) + list(path.glob('*ggml*.bin')))[0]
 
         logger.info(f"llama.cpp weights detected: {model_file}\n")
 
@@ -193,7 +208,7 @@ class LlamacppHF(PreTrainedModel):
             'logits_all': True,
         }
 
-        Llama = llama_cpp_lib().Llama
+        Llama = llama_cpp_lib(model_file).Llama
         model = Llama(**params)
 
         return LlamacppHF(model)
