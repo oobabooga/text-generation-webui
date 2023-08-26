@@ -79,7 +79,8 @@ def list_model_elements():
         'gpu_split',
         'max_seq_len',
         'compress_pos_emb',
-        'alpha_value'
+        'alpha_value',
+        'rope_freq_base'
     ]
 
     for i in range(torch.cuda.device_count()):
