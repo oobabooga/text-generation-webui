@@ -92,9 +92,14 @@ class LlamaCppModel:
             'rope_freq_base': RoPE.get_rope_freq_base(shared.args.alpha_value, shared.args.rope_freq_base),
             'tensor_split': tensor_split_list,
             'rope_freq_scale': 1.0 / shared.args.compress_pos_emb,
-            'n_gqa': shared.args.n_gqa or None,
-            'rms_norm_eps': shared.args.rms_norm_eps or None,
         }
+        
+        if not is_gguf(str(path)):
+            ggml_params = {
+                'n_gqa': shared.args.n_gqa or None,
+                'rms_norm_eps': shared.args.rms_norm_eps or None,
+            }
+            params = params | ggml_params
 
         result.model = Llama(**params)
         if cache_capacity > 0:
