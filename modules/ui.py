@@ -16,6 +16,8 @@ with open(Path(__file__).resolve().parent / '../js/save_files.js', 'r') as f:
     save_files_js = f.read()
 with open(Path(__file__).resolve().parent / '../js/switch_tabs.js', 'r') as f:
     switch_tabs_js = f.read()
+with open(Path(__file__).resolve().parent / '../js/show_controls.js', 'r') as f:
+    show_controls_js = f.read()
 
 refresh_symbol = '🔄'
 delete_symbol = '🗑️'
@@ -61,12 +63,15 @@ def list_model_elements():
         'no_inject_fused_mlp',
         'no_use_cuda_fp16',
         'disable_exllama',
+        'cfg_cache',
         'threads',
         'n_batch',
         'no_mmap',
         'low_vram',
         'mlock',
+        'mul_mat_q',
         'n_gpu_layers',
+        'tensor_split',
         'n_ctx',
         'n_gqa',
         'rms_norm_eps',
@@ -74,7 +79,8 @@ def list_model_elements():
         'gpu_split',
         'max_seq_len',
         'compress_pos_emb',
-        'alpha_value'
+        'alpha_value',
+        'rope_freq_base'
     ]
 
     for i in range(torch.cuda.device_count()):
@@ -176,7 +182,7 @@ def apply_interface_values(state, use_persistent=False):
         return [state[k] if k in state else gr.update() for k in elements]
 
 
-def save_settings(state, preset, instruction_template, extensions):
+def save_settings(state, preset, instruction_template, extensions, show_controls):
     output = copy.deepcopy(shared.settings)
     exclude = ['name1', 'name2', 'greeting', 'context', 'turn_template']
     for k in state:
@@ -190,6 +196,7 @@ def save_settings(state, preset, instruction_template, extensions):
     output['instruction_template'] = instruction_template
     output['default_extensions'] = extensions
     output['seed'] = int(output['seed'])
+    output['show_controls'] = show_controls
 
     return yaml.dump(output, sort_keys=False, width=float("inf"))
 

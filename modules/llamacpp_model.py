@@ -3,7 +3,7 @@ from functools import partial
 
 import torch
 
-from modules import shared
+from modules import RoPE, shared
 from modules.callbacks import Iteratorize
 from modules.logging_colors import logger
 from modules.text_generation import get_max_prompt_length
@@ -55,6 +55,12 @@ class LlamaCppModel:
                 cache_capacity = int(shared.args.cache_capacity)
 
         logger.info("Cache capacity is " + str(cache_capacity) + " bytes")
+
+        if shared.args.tensor_split is None or shared.args.tensor_split.strip() == '':
+            tensor_split_list = None
+        else:
+            tensor_split_list = [float(x) for x in shared.args.tensor_split.strip().split(",")]
+
         params = {
             'model_path': str(path),
             'n_ctx': shared.args.n_ctx,
@@ -63,9 +69,11 @@ class LlamaCppModel:
             'n_batch': shared.args.n_batch,
             'use_mmap': not shared.args.no_mmap,
             'use_mlock': shared.args.mlock,
+            'mul_mat_q': shared.args.mul_mat_q,
             'low_vram': shared.args.low_vram,
             'n_gpu_layers': shared.args.n_gpu_layers,
-            'rope_freq_base': 10000 * shared.args.alpha_value ** (64 / 63.),
+            'rope_freq_base': RoPE.get_rope_freq_base(shared.args.alpha_value, shared.args.rope_freq_base),
+            'tensor_split': tensor_split_list,
             'rope_freq_scale': 1.0 / shared.args.compress_pos_emb,
             'n_gqa': shared.args.n_gqa or None,
             'rms_norm_eps': shared.args.rms_norm_eps or None,
@@ -117,6 +125,8 @@ class LlamaCppModel:
 
         output = ""
         for completion_chunk in completion_chunks:
+            if shared.stop_everything:
+                break
             text = completion_chunk['choices'][0]['text']
             output += text
             if callback:

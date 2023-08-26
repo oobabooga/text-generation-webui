@@ -43,6 +43,10 @@
     margin-bottom: 9px !important;
 }
 
+.gradio-container .chat .assistant-message:last-child, .gradio-container .chat .user-message:last-child {
+    margin-bottom: 0px !important;
+}
+
 .dark .chat .assistant-message {
     background-color: #3741519e;
     border: 1px solid #4b5563;
@@ -58,5 +62,5 @@ code {
 }
 
 .dark code {
-    background-color: #1a212f !important;
+    background-color: #0e1321 !important;
 }

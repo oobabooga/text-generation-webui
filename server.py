@@ -128,6 +128,7 @@ def create_interface():
             shared.gradio['interface'].load(lambda: None, None, None, _js="() => document.getElementsByTagName('body')[0].classList.add('dark')")
 
         shared.gradio['interface'].load(lambda: None, None, None, _js=f"() => {{{js}}}")
+        shared.gradio['interface'].load(None, gradio('show_controls'), None, _js=f'(x) => {{{ui.show_controls_js}; toggle_controls(x)}}')
         shared.gradio['interface'].load(partial(ui.apply_interface_values, {}, use_persistent=True), None, gradio(ui.list_interface_input_elements()), show_progress=False)
         shared.gradio['interface'].load(chat.redraw_html, gradio(ui_chat.reload_arr), gradio('display'))
 
@@ -179,6 +180,7 @@ if __name__ == "__main__":
         'truncation_length': shared.settings['truncation_length'],
         'n_gqa': 0,
         'rms_norm_eps': 0,
+        'rope_freq_base': 0,
     }
 
     shared.model_config.move_to_end('.*', last=False)  # Move to the beginning

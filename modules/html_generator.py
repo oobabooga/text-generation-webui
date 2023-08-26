@@ -1,3 +1,4 @@
+import html
 import os
 import re
 import time
@@ -74,14 +75,18 @@ def convert_to_markdown(string):
 
         result = re.sub(r'(\d+\.)$', r'\g<1> ' + delete_str, result)
 
-        html = markdown.markdown(result, extensions=['fenced_code', 'tables'])
-        pos = html.rfind(delete_str)
+        html_output = markdown.markdown(result, extensions=['fenced_code', 'tables'])
+        pos = html_output.rfind(delete_str)
         if pos > -1:
-            html = html[:pos] + html[pos + len(delete_str):]
+            html_output = html_output[:pos] + html_output[pos + len(delete_str):]
     else:
-        html = markdown.markdown(result, extensions=['fenced_code', 'tables'])
+        html_output = markdown.markdown(result, extensions=['fenced_code', 'tables'])
 
-    return html
+    # Unescape code blocks
+    pattern = re.compile(r'<code[^>]*>(.*?)</code>', re.DOTALL)
+    html_output = pattern.sub(lambda x: html.unescape(x.group()), html_output)
+
+    return html_output
 
 
 def generate_basic_html(string):

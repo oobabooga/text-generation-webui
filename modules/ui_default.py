@@ -1,6 +1,6 @@
 import gradio as gr
 
-from modules import shared, ui, utils
+from modules import logits, shared, ui, utils
 from modules.prompts import count_tokens, load_prompt
 from modules.text_generation import (
     generate_reply_wrapper,
@@ -17,20 +17,20 @@ def create_ui():
         shared.gradio['last_input-default'] = gr.State('')
         with gr.Row():
             with gr.Column():
-                shared.gradio['textbox-default'] = gr.Textbox(value='', elem_classes=['textbox_default', 'add_scrollbar'], lines=27, label='Input')
+                with gr.Row():
+                    shared.gradio['textbox-default'] = gr.Textbox(value='', elem_classes=['textbox_default', 'add_scrollbar'], lines=27, label='Input')
+                    shared.gradio['token-counter-default'] = gr.HTML(value="<span>0</span>", elem_classes=["token-counter", "default-token-counter"])
+
                 with gr.Row():
                     shared.gradio['Generate-default'] = gr.Button('Generate', variant='primary')
                     shared.gradio['Stop-default'] = gr.Button('Stop', elem_id='stop')
                     shared.gradio['Continue-default'] = gr.Button('Continue')
-                    shared.gradio['count_tokens-default'] = gr.Button('Count tokens')
 
                 with gr.Row():
                     shared.gradio['prompt_menu-default'] = gr.Dropdown(choices=utils.get_available_prompts(), value='None', label='Prompt', elem_classes='slim-dropdown')
                     ui.create_refresh_button(shared.gradio['prompt_menu-default'], lambda: None, lambda: {'choices': utils.get_available_prompts()}, 'refresh-button')
                     shared.gradio['save_prompt-default'] = gr.Button('💾', elem_classes='refresh-button')
                     shared.gradio['delete_prompt-default'] = gr.Button('🗑️', elem_classes='refresh-button')
-
-                shared.gradio['status-default'] = gr.Markdown('')
 
             with gr.Column():
                 with gr.Tab('Raw'):
@@ -42,6 +42,17 @@ def create_ui():
 
                 with gr.Tab('HTML'):
                     shared.gradio['html-default'] = gr.HTML()
+
+                with gr.Tab('Logits'):
+                    with gr.Row():
+                        with gr.Column(scale=10):
+                            shared.gradio['get_logits-default'] = gr.Button('Get next token probabilities')
+                        with gr.Column(scale=1):
+                            shared.gradio['use_samplers-default'] = gr.Checkbox(label='Use samplers', value=True, elem_classes=['no-background'])
+
+                    with gr.Row():
+                        shared.gradio['logits-default'] = gr.Textbox(lines=23, label='Output', elem_classes=['textbox_logits', 'add_scrollbar'])
+                        shared.gradio['logits-default-previous'] = gr.Textbox(lines=23, label='Previous output', elem_classes=['textbox_logits', 'add_scrollbar'])
 
 
 def create_event_handlers():
@@ -79,4 +90,7 @@ def create_event_handlers():
         lambda x: x + '.txt', gradio('prompt_menu-default'), gradio('delete_filename')).then(
         lambda: gr.update(visible=True), None, gradio('file_deleter'))
 
-    shared.gradio['count_tokens-default'].click(count_tokens, gradio('textbox-default'), gradio('status-default'), show_progress=False)
+    shared.gradio['textbox-default'].change(lambda x: f"<span>{count_tokens(x)}</span>", gradio('textbox-default'), gradio('token-counter-default'), show_progress=False)
+    shared.gradio['get_logits-default'].click(
+        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+        logits.get_next_logits, gradio('textbox-default', 'interface_state', 'use_samplers-default', 'logits-default'), gradio('logits-default', 'logits-default-previous'), show_progress=False)

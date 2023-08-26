@@ -22,7 +22,9 @@ def create_ui():
 
     with gr.Tab('Chat', elem_id='chat-tab'):
         shared.gradio['display'] = gr.HTML(value=chat_html_wrapper({'internal': [], 'visible': []}, shared.settings['name1'], shared.settings['name2'], 'chat', 'cai-chat'))
-        shared.gradio['textbox'] = gr.Textbox(label='Input')
+        shared.gradio['textbox'] = gr.Textbox(label='', placeholder='Send a message', elem_id='chat-input')
+        shared.gradio['show_controls'] = gr.Checkbox(value=shared.settings['show_controls'], label='Show controls', elem_id='show-controls')
+
         with gr.Row():
             shared.gradio['Stop'] = gr.Button('Stop', elem_id='stop')
             shared.gradio['Generate'] = gr.Button('Generate', elem_id='Generate', variant='primary')
@@ -45,10 +47,14 @@ def create_ui():
             shared.gradio['Clear history-cancel'] = gr.Button('Cancel', visible=False)
 
         with gr.Row():
+            shared.gradio['send-chat-to-default'] = gr.Button('Send to default')
+            shared.gradio['send-chat-to-notebook'] = gr.Button('Send to notebook')
+
+        with gr.Row():
             shared.gradio['start_with'] = gr.Textbox(label='Start reply with', placeholder='Sure thing!', value=shared.settings['start_with'])
 
         with gr.Row():
-            shared.gradio['mode'] = gr.Radio(choices=['chat', 'chat-instruct', 'instruct'], value=shared.settings['mode'] if shared.settings['mode'] in ['chat', 'instruct', 'chat-instruct'] else 'chat', label='Mode', info='Defines how the chat prompt is generated. In instruct and chat-instruct modes, the instruction template selected under Parameters > Instruction template must match the current model.')
+            shared.gradio['mode'] = gr.Radio(choices=['chat', 'chat-instruct', 'instruct'], value=shared.settings['mode'] if shared.settings['mode'] in ['chat', 'instruct', 'chat-instruct'] else 'chat', label='Mode', info='Defines how the chat prompt is generated. In instruct and chat-instruct modes, the instruction template selected under Parameters > Instruction template must match the current model.', elem_id='chat-mode')
             shared.gradio['chat_style'] = gr.Dropdown(choices=utils.get_available_chat_styles(), label='Chat style', value=shared.settings['chat_style'], visible=shared.settings['mode'] != 'instruct')
 
 
@@ -272,3 +278,15 @@ def create_event_handlers():
     shared.gradio['send_instruction_to_negative_prompt'].click(
         prompts.load_instruction_prompt_simple, gradio('instruction_template'), gradio('negative_prompt')).then(
         lambda: None, None, None, _js=f'() => {{{ui.switch_tabs_js}; switch_to_generation_parameters()}}')
+
+    shared.gradio['send-chat-to-default'].click(
+        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+        partial(chat.generate_chat_prompt, '', _continue=True), gradio('interface_state'), gradio('textbox-default')).then(
+        lambda: None, None, None, _js=f'() => {{{ui.switch_tabs_js}; switch_to_default()}}')
+
+    shared.gradio['send-chat-to-notebook'].click(
+        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+        partial(chat.generate_chat_prompt, '', _continue=True), gradio('interface_state'), gradio('textbox-notebook')).then(
+        lambda: None, None, None, _js=f'() => {{{ui.switch_tabs_js}; switch_to_notebook()}}')
+
+    shared.gradio['show_controls'].change(None, gradio('show_controls'), None, _js=f'(x) => {{{ui.show_controls_js}; toggle_controls(x)}}')

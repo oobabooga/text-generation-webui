@@ -100,19 +100,36 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
     background-color: #8080802b;
 }
 
+.header_bar button.selected {
+    border-radius: 0;
+}
+
 .textbox_default textarea {
-    height: calc(100vh - 310px);
+    height: calc(100dvh - 280px);
 }
 
 .textbox_default_output textarea {
-    height: calc(100vh - 190px);
+    height: calc(100dvh - 190px);
 }
 
 .textbox textarea {
-    height: calc(100vh - 241px);
+    height: calc(100dvh - 241px);
 }
 
-.textbox_default textarea, .textbox_default_output textarea, .textbox textarea {
+.textbox_logits textarea {
+    height: calc(100dvh - 241px);
+}
+
+.textbox_logits_notebook textarea {
+    height: calc(100dvh - 292px);
+}
+
+.textbox_default textarea,
+.textbox_default_output textarea,
+.textbox_logits textarea,
+.textbox_logits_notebook textarea,
+.textbox textarea
+{
     font-size: 16px !important;
     color: #46464A !important;
 }
@@ -123,7 +140,11 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
 
 @media screen and (max-width: 711px) {
     .textbox_default textarea {
-        height: calc(100vh - 275px);
+        height: calc(100dvh - 271px);
+    }
+
+    div .default-token-counter {
+        top: calc( 0.5 * (100dvh - 245px) ) !important;
     }
 }
 
@@ -166,7 +187,7 @@ button {
 }
 
 .pretty_scrollbar::-webkit-scrollbar {
-  width: 10px;
+  width: 5px;
 }
 
 .pretty_scrollbar::-webkit-scrollbar-track {
@@ -176,13 +197,11 @@ button {
 .pretty_scrollbar::-webkit-scrollbar-thumb,
 .pretty_scrollbar::-webkit-scrollbar-thumb:hover {
   background: #c5c5d2;
-  border-radius: 10px;
 }
 
 .dark .pretty_scrollbar::-webkit-scrollbar-thumb,
 .dark .pretty_scrollbar::-webkit-scrollbar-thumb:hover {
   background: #374151;
-  border-radius: 10px;
 }
 
 .pretty_scrollbar::-webkit-resizer {
@@ -191,6 +210,36 @@ button {
 
 .dark .pretty_scrollbar::-webkit-resizer {
   background: #374151;
+}
+
+audio {
+  max-width: 100%;
+}
+
+/* Copied from https://github.com/AUTOMATIC1111/stable-diffusion-webui */
+.token-counter {
+  position: absolute !important;
+  top: calc( 0.5 * (100dvh - 215px) ) !important;
+  right: 2px;
+  z-index: 100;
+  background: var(--input-background-fill) !important;
+  min-height: 0 !important;
+}
+
+.default-token-counter {
+  top: calc( 0.5 * (100dvh - 255px) ) !important;
+}
+
+.token-counter span {
+  padding: 1px;
+  box-shadow: 0 0 0 0.3em rgba(192,192,192,0.15), inset 0 0 0.6em rgba(192,192,192,0.075);
+  border: 2px solid rgba(192,192,192,0.4) !important;
+  border-radius: 0.4em;
+}
+
+.no-background {
+  background: var(--background-fill-primary) !important;
+  padding: 0px !important;
 }
 
 /*****************************************************/
@@ -218,10 +267,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     opacity: 1;
 }
 
-#gradio-chatbot {
-    height: 66.67vh;
-}
-
 .wrap.svelte-6roggh.svelte-6roggh {
     max-height: 92.5%;
 }
@@ -246,8 +291,16 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
         padding: 0px;
     }
 
+    #chat {
+        height: calc(100dvh - 262px) !important;
+    }
+
+    .bigchat #chat {
+        height: calc(100dvh - 180px) !important;
+    }
+
     .chat {
-        height: calc(100vh - 274px) !important;
+        flex-direction: column-reverse !important;
     }
 }
 
@@ -255,19 +308,38 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     margin-left: auto;
     margin-right: auto;
     max-width: 800px;
-    height: calc(100vh - 286px);
+    height: 100%;
     overflow-y: auto;
-    padding-right: 20px;
+    padding-right: 15px;
     display: flex;
-    flex-direction: column-reverse;
+    flex-direction: column;
     word-break: break-word;
     overflow-wrap: anywhere;
-    padding-top: 1px;
+    padding-top: 6px;
+}
+
+#chat {
+    height: calc(100dvh - 272px);
+}
+
+.bigchat #chat {
+    height: calc(100dvh - 200px);
+}
+
+#show-controls {
+    position: absolute;
+    background-color: transparent;
+    left: calc(100% - 130px);
 }
 
 .chat > .messages {
     display: flex;
     flex-direction: column;
+}
+
+.chat .message:last-child {
+    margin-bottom: 0px !important;
+    padding-bottom: 0px !important;
 }
 
 .message-body li {
@@ -300,6 +372,17 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     white-space: normal !important;
 }
 
+#chat-input {
+    padding: 0;
+    padding-top: 18px;
+    background: var(--background-fill-primary);
+    border: none;
+}
+
+#chat-input textarea:focus {
+    box-shadow: none !important;
+}
+
 @media print {
     body {
         visibility: hidden;
@@ -310,12 +393,10 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
         position: absolute;
         left: 0;
         top: 0;
-        max-width: none;
-        max-height: none;
+        max-width: unset;
+        max-height: unset;
         width: 100%;
-        height: fit-content;
-        display: flex;
-        flex-direction: column-reverse;
+        overflow-y: visible;
     }
     
     .message {
@@ -328,5 +409,9 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     
     .tab-nav {
         display: none !important;
+    }
+    
+    #chat-tab > :first-child {
+        max-width: unset;
     }
 }
