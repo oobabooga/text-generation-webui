@@ -119,14 +119,14 @@ def output_modifier(string, state):
         return string
 
     original_string = string
-    string = tts_preprocessor.preprocess(string)
+    string = tts_preprocessor.preprocess(html.unescape(string))
 
     if string == '':
         string = '*Empty reply, try regenerating*'
     else:
         output_file = Path(f'extensions/silero_tts/outputs/{state["character_menu"]}_{int(time.time())}.wav')
         prosody = '<prosody rate="{}" pitch="{}">'.format(params['voice_speed'], params['voice_pitch'])
-        silero_input = f'<speak>{prosody}{xmlesc(html.unescape(string))}</prosody></speak>'
+        silero_input = f'<speak>{prosody}{xmlesc(string)}</prosody></speak>'
         model.save_wav(ssml_text=silero_input, speaker=params['speaker'], sample_rate=int(params['sample_rate']), audio_path=str(output_file))
 
         autoplay = 'autoplay' if params['autoplay'] else ''
