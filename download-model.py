@@ -57,7 +57,8 @@ class ModelDownloader:
         classifications = []
         has_pytorch = False
         has_pt = False
-        # has_gguf = False
+        has_gguf = False
+        has_ggml = False
         has_safetensors = False
         is_lora = False
         while True:
@@ -79,6 +80,7 @@ class ModelDownloader:
                 is_safetensors = re.match(r".*\.safetensors", fname)
                 is_pt = re.match(r".*\.pt", fname)
                 is_gguf = re.match(r'.*\.gguf', fname)
+                is_ggml = re.match(r".*ggml.*\.bin", fname)
                 is_tokenizer = re.match(r"(tokenizer|ice|spiece).*\.model", fname)
                 is_text = re.match(r".*\.(txt|json|py|md)", fname) or is_tokenizer
                 if any((is_pytorch, is_safetensors, is_pt, is_gguf, is_tokenizer, is_text)):
@@ -102,8 +104,11 @@ class ModelDownloader:
                             has_pt = True
                             classifications.append('pt')
                         elif is_gguf:
-                            # has_gguf = True
+                            has_gguf = True
                             classifications.append('gguf')
+                        elif is_ggml:
+                            has_ggml = True
+                            classifications.append('ggml')
 
             cursor = base64.b64encode(f'{{"file_name":"{dict[-1]["path"]}"}}'.encode()) + b':50'
             cursor = base64.b64encode(cursor)
@@ -113,6 +118,12 @@ class ModelDownloader:
         if (has_pytorch or has_pt) and has_safetensors:
             for i in range(len(classifications) - 1, -1, -1):
                 if classifications[i] in ['pytorch', 'pt']:
+                    links.pop(i)
+
+        # If both GGML and GGUF are available, download GGUF only
+        if has_ggml and has_gguf:
+            for i in range(len(classifications) - 1, -1, -1):
+                if classifications[i] == 'ggml':
                     links.pop(i)
 
         return links, sha256, is_lora
