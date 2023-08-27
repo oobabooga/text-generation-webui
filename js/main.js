@@ -40,9 +40,11 @@ for(i = 0; i < textareaElements.length; i++) {
 }
 
 //------------------------------------------------
-// Stop generation on Esc pressed
+// Keyboard shortcuts
 //------------------------------------------------
 document.addEventListener("keydown", function(event) {
+
+  // Stop generation on Esc pressed
   if (event.key === "Escape") {
     // Find the element with id 'stop' and click it
     var stopButton = document.getElementById("stop");
@@ -50,6 +52,17 @@ document.addEventListener("keydown", function(event) {
       stopButton.click();
     }
   }
+
+  // Show chat controls on Ctrl+S pressed
+  else if (event.ctrlKey && event.key == "s") {
+    event.preventDefault();
+
+    var showControlsElement = document.getElementById('show-controls');
+    if (showControlsElement && showControlsElement.childNodes.length >= 4) {
+      showControlsElement.childNodes[3].click();
+    }
+  }
+
 });
 
 //------------------------------------------------
