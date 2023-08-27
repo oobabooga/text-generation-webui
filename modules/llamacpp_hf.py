@@ -37,6 +37,7 @@ def llama_cpp_lib(model_file: Union[str, Path] = None):
         gguf_model = is_gguf(model_file)
     else:
         gguf_model = True
+
     if shared.args.cpu or llama_cpp_cuda is None:
         return llama_cpp if gguf_model else llama_cpp_ggml
     else:
@@ -205,7 +206,7 @@ class LlamacppHF(PreTrainedModel):
             'rope_freq_scale': 1.0 / shared.args.compress_pos_emb,
             'logits_all': True,
         }
-        
+
         if not is_gguf(model_file):
             ggml_params = {
                 'n_gqa': shared.args.n_gqa or None,

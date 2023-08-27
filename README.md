@@ -156,7 +156,7 @@ text-generation-webui
 
 In the "Model" tab of the UI, those models can be automatically downloaded from Hugging Face. You can also download them via the command-line with `python download-model.py organization/model`.
 
-* GGUF models are a single file and should be placed directly into `models`. Example:
+* GGML/GGUF models are a single file and should be placed directly into `models`. Example:
 
 ```
 text-generation-webui
@@ -258,7 +258,7 @@ Optionally, you can use the following command-line flags:
 | `--quant_type QUANT_TYPE`                   | quant_type for 4-bit. Valid options: nf4, fp4. |
 | `--use_double_quant`                        | use_double_quant for 4-bit. |
 
-#### GGUF (for llama.cpp and ctransformers)
+#### GGML/GGUF (for llama.cpp and ctransformers)
 
 | Flag        | Description |
 |-------------|-------------|

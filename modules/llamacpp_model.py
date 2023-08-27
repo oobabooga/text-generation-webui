@@ -37,6 +37,7 @@ def llama_cpp_lib(model_file: Union[str, Path] = None):
         gguf_model = is_gguf(model_file)
     else:
         gguf_model = True
+
     if shared.args.cpu or llama_cpp_cuda is None:
         return llama_cpp if gguf_model else llama_cpp_ggml
     else:
@@ -58,8 +59,8 @@ class LlamaCppModel:
     @classmethod
     def from_pretrained(self, path):
 
-        Llama = llama_cpp_lib(str(path)).Llama
-        LlamaCache = llama_cpp_lib(str(path)).LlamaCache
+        Llama = llama_cpp_lib(path).Llama
+        LlamaCache = llama_cpp_lib(path).LlamaCache
 
         result = self()
         cache_capacity = 0
@@ -93,8 +94,8 @@ class LlamaCppModel:
             'tensor_split': tensor_split_list,
             'rope_freq_scale': 1.0 / shared.args.compress_pos_emb,
         }
-        
-        if not is_gguf(str(path)):
+
+        if not is_gguf(path):
             ggml_params = {
                 'n_gqa': shared.args.n_gqa or None,
                 'rms_norm_eps': shared.args.rms_norm_eps or None,
