@@ -241,7 +241,7 @@ def llamacpp_loader(model_name):
     if path.is_file():
         model_file = path
     else:
-        model_file = list(Path(f'{shared.args.model_dir}/{model_name}').glob('*ggml*.bin'))[0]
+        model_file = (list(Path(f'{shared.args.model_dir}/{model_name}').glob('*.gguf*')) + list(Path(f'{shared.args.model_dir}/{model_name}').glob('*ggml*.bin')))[0]
 
     logger.info(f"llama.cpp weights detected: {model_file}")
     model, tokenizer = LlamaCppModel.from_pretrained(model_file)

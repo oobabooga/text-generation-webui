@@ -1,5 +1,7 @@
 import re
 from functools import partial
+from pathlib import Path
+from typing import Union
 
 import torch
 
@@ -7,23 +9,39 @@ from modules import RoPE, shared
 from modules.callbacks import Iteratorize
 from modules.logging_colors import logger
 from modules.text_generation import get_max_prompt_length
+from modules.utils import is_gguf
 
 import llama_cpp
+
+try:
+    import llama_cpp_ggml
+except:
+    llama_cpp_ggml = llama_cpp
 
 if torch.cuda.is_available() and not torch.version.hip:
     try:
         import llama_cpp_cuda
     except:
         llama_cpp_cuda = None
+    try:
+        import llama_cpp_ggml_cuda
+    except:
+        llama_cpp_ggml_cuda = llama_cpp_cuda
 else:
     llama_cpp_cuda = None
+    llama_cpp_ggml_cuda = None
 
 
-def llama_cpp_lib():
-    if shared.args.cpu or llama_cpp_cuda is None:
-        return llama_cpp
+def llama_cpp_lib(model_file: Union[str, Path] = None):
+    if model_file is not None:
+        gguf_model = is_gguf(model_file)
     else:
-        return llama_cpp_cuda
+        gguf_model = True
+
+    if shared.args.cpu or llama_cpp_cuda is None:
+        return llama_cpp if gguf_model else llama_cpp_ggml
+    else:
+        return llama_cpp_cuda if gguf_model else llama_cpp_ggml_cuda
 
 
 def ban_eos_logits_processor(eos_token, input_ids, logits):
@@ -41,8 +59,8 @@ class LlamaCppModel:
     @classmethod
     def from_pretrained(self, path):
 
-        Llama = llama_cpp_lib().Llama
-        LlamaCache = llama_cpp_lib().LlamaCache
+        Llama = llama_cpp_lib(path).Llama
+        LlamaCache = llama_cpp_lib(path).LlamaCache
 
         result = self()
         cache_capacity = 0
@@ -75,9 +93,14 @@ class LlamaCppModel:
             'rope_freq_base': RoPE.get_rope_freq_base(shared.args.alpha_value, shared.args.rope_freq_base),
             'tensor_split': tensor_split_list,
             'rope_freq_scale': 1.0 / shared.args.compress_pos_emb,
-            'n_gqa': shared.args.n_gqa or None,
-            'rms_norm_eps': shared.args.rms_norm_eps or None,
         }
+
+        if not is_gguf(path):
+            ggml_params = {
+                'n_gqa': shared.args.n_gqa or None,
+                'rms_norm_eps': shared.args.rms_norm_eps or None,
+            }
+            params = params | ggml_params
 
         result.model = Llama(**params)
         if cache_capacity > 0:
