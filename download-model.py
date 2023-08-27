@@ -24,14 +24,14 @@ from tqdm.contrib.concurrent import thread_map
 
 class ModelDownloader:
     def __init__(self, max_retries=5):
-        self.s = requests.Session()
+        self.session = requests.Session()
         if max_retries:
-            self.s.mount('https://cdn-lfs.huggingface.co', HTTPAdapter(max_retries=max_retries))
-            self.s.mount('https://huggingface.co', HTTPAdapter(max_retries=max_retries))
+            self.session.mount('https://cdn-lfs.huggingface.co', HTTPAdapter(max_retries=max_retries))
+            self.session.mount('https://huggingface.co', HTTPAdapter(max_retries=max_retries))
         if os.getenv('HF_USER') is not None and os.getenv('HF_PASS') is not None:
-            self.s.auth = (os.getenv('HF_USER'), os.getenv('HF_PASS'))
+            self.session.auth = (os.getenv('HF_USER'), os.getenv('HF_PASS'))
         if os.getenv('HF_TOKEN') is not None:
-            self.s.headers = {'authorization': f'Bearer {os.getenv("HF_TOKEN")}'}
+            self.session.headers = {'authorization': f'Bearer {os.getenv("HF_TOKEN")}'}
 
     def sanitize_model_and_branch_names(self, model, branch):
         if model[-1] == '/':
@@ -57,12 +57,13 @@ class ModelDownloader:
         classifications = []
         has_pytorch = False
         has_pt = False
-        # has_ggml = False
+        has_gguf = False
+        has_ggml = False
         has_safetensors = False
         is_lora = False
         while True:
             url = f"{base}{page}" + (f"?cursor={cursor.decode()}" if cursor else "")
-            r = self.s.get(url, timeout=10)
+            r = self.session.get(url, timeout=10)
             r.raise_for_status()
             content = r.content
 
@@ -75,13 +76,14 @@ class ModelDownloader:
                 if not is_lora and fname.endswith(('adapter_config.json', 'adapter_model.bin')):
                     is_lora = True
 
-                is_pytorch = re.match("(pytorch|adapter|gptq)_model.*\.bin", fname)
-                is_safetensors = re.match(".*\.safetensors", fname)
-                is_pt = re.match(".*\.pt", fname)
-                is_ggml = re.match(".*ggml.*\.bin", fname)
-                is_tokenizer = re.match("(tokenizer|ice|spiece).*\.model", fname)
-                is_text = re.match(".*\.(txt|json|py|md)", fname) or is_tokenizer
-                if any((is_pytorch, is_safetensors, is_pt, is_ggml, is_tokenizer, is_text)):
+                is_pytorch = re.match(r"(pytorch|adapter|gptq)_model.*\.bin", fname)
+                is_safetensors = re.match(r".*\.safetensors", fname)
+                is_pt = re.match(r".*\.pt", fname)
+                is_gguf = re.match(r'.*\.gguf', fname)
+                is_ggml = re.match(r".*ggml.*\.bin", fname)
+                is_tokenizer = re.match(r"(tokenizer|ice|spiece).*\.model", fname)
+                is_text = re.match(r".*\.(txt|json|py|md)", fname) or is_tokenizer
+                if any((is_pytorch, is_safetensors, is_pt, is_gguf, is_ggml, is_tokenizer, is_text)):
                     if 'lfs' in dict[i]:
                         sha256.append([fname, dict[i]['lfs']['oid']])
 
@@ -101,8 +103,11 @@ class ModelDownloader:
                         elif is_pt:
                             has_pt = True
                             classifications.append('pt')
+                        elif is_gguf:
+                            has_gguf = True
+                            classifications.append('gguf')
                         elif is_ggml:
-                            # has_ggml = True
+                            has_ggml = True
                             classifications.append('ggml')
 
             cursor = base64.b64encode(f'{{"file_name":"{dict[-1]["path"]}"}}'.encode()) + b':50'
@@ -113,6 +118,12 @@ class ModelDownloader:
         if (has_pytorch or has_pt) and has_safetensors:
             for i in range(len(classifications) - 1, -1, -1):
                 if classifications[i] in ['pytorch', 'pt']:
+                    links.pop(i)
+
+        # If both GGML and GGUF are available, download GGUF only
+        if has_ggml and has_gguf:
+            for i in range(len(classifications) - 1, -1, -1):
+                if classifications[i] == 'ggml':
                     links.pop(i)
 
         return links, sha256, is_lora
@@ -136,7 +147,7 @@ class ModelDownloader:
         if output_path.exists() and not start_from_scratch:
 
             # Check if the file has already been downloaded completely
-            r = self.s.get(url, stream=True, timeout=10)
+            r = self.session.get(url, stream=True, timeout=10)
             total_size = int(r.headers.get('content-length', 0))
             if output_path.stat().st_size >= total_size:
                 return
@@ -145,7 +156,7 @@ class ModelDownloader:
             headers = {'Range': f'bytes={output_path.stat().st_size}-'}
             mode = 'ab'
 
-        with self.s.get(url, stream=True, headers=headers, timeout=10) as r:
+        with self.session.get(url, stream=True, headers=headers, timeout=10) as r:
             r.raise_for_status()  # Do not continue the download if the request was unsuccessful
             total_size = int(r.headers.get('content-length', 0))
             block_size = 1024 * 1024  # 1MB

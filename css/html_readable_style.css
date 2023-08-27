@@ -27,3 +27,7 @@
 .container :not(pre) > code {
     white-space: normal !important;
 }
+
+.container .hoverable {
+    font-size: 14px;
+}

@@ -165,7 +165,7 @@ def messages_to_prompt(body: dict, req_params: dict, max_tokens):
     # Instruct models can be much better
     if shared.settings['instruction_template']:
         try:
-            instruct = yaml.safe_load(open(f"characters/instruction-following/{shared.settings['instruction_template']}.yaml", 'r'))
+            instruct = yaml.safe_load(open(f"instruction-templates/{shared.settings['instruction_template']}.yaml", 'r'))
 
             template = instruct['turn_template']
             system_message_template = "{message}"
@@ -193,7 +193,7 @@ def messages_to_prompt(body: dict, req_params: dict, max_tokens):
         except Exception as e:
             req_params['stopping_strings'].extend(['\nUser:', 'User:'])  # XXX User: prompt here also
 
-            print(f"Exception: When loading characters/instruction-following/{shared.settings['instruction_template']}.yaml: {repr(e)}")
+            print(f"Exception: When loading instruction-templates/{shared.settings['instruction_template']}.yaml: {repr(e)}")
             print("Warning: Loaded default instruction-following template for model.")
 
     else:

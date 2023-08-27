@@ -1,10 +1,47 @@
 import functools
+from collections import OrderedDict
 
 import gradio as gr
 
 from modules import shared
 
-loaders_and_params = {
+loaders_and_params = OrderedDict({
+    'Transformers': [
+        'cpu_memory',
+        'gpu_memory',
+        'trust_remote_code',
+        'load_in_8bit',
+        'bf16',
+        'cpu',
+        'disk',
+        'auto_devices',
+        'load_in_4bit',
+        'use_double_quant',
+        'quant_type',
+        'compute_dtype',
+        'trust_remote_code',
+        'alpha_value',
+        'rope_freq_base',
+        'compress_pos_emb',
+        'transformers_info'
+    ],
+    'ExLlama_HF': [
+        'gpu_split',
+        'max_seq_len',
+        'alpha_value',
+        'rope_freq_base',
+        'compress_pos_emb',
+        'cfg_cache',
+        'exllama_HF_info',
+    ],
+    'ExLlama': [
+        'gpu_split',
+        'max_seq_len',
+        'alpha_value',
+        'rope_freq_base',
+        'compress_pos_emb',
+        'exllama_info',
+    ],
     'AutoGPTQ': [
         'triton',
         'no_inject_fused_attention',
@@ -13,6 +50,7 @@ loaders_and_params = {
         'wbits',
         'groupsize',
         'desc_act',
+        'disable_exllama',
         'gpu_memory',
         'cpu_memory',
         'cpu',
@@ -33,61 +71,48 @@ loaders_and_params = {
         'n_gqa',
         'rms_norm_eps',
         'n_gpu_layers',
+        'tensor_split',
         'n_batch',
         'threads',
         'no_mmap',
         'low_vram',
         'mlock',
+        'mul_mat_q',
         'llama_cpp_seed',
-        'compress_pos_emb',
         'alpha_value',
+        'rope_freq_base',
+        'compress_pos_emb',
+        'cpu',
     ],
     'llamacpp_HF': [
         'n_ctx',
         'n_gqa',
         'rms_norm_eps',
         'n_gpu_layers',
+        'tensor_split',
         'n_batch',
         'threads',
         'no_mmap',
         'low_vram',
         'mlock',
-        'llama_cpp_seed',
-        'compress_pos_emb',
+        'mul_mat_q',
         'alpha_value',
+        'rope_freq_base',
+        'compress_pos_emb',
+        'cpu',
+        'cfg_cache',
         'llamacpp_HF_info',
     ],
-    'Transformers': [
-        'cpu_memory',
-        'gpu_memory',
-        'trust_remote_code',
-        'load_in_8bit',
-        'bf16',
-        'cpu',
-        'disk',
-        'auto_devices',
-        'load_in_4bit',
-        'use_double_quant',
-        'quant_type',
-        'compute_dtype',
-        'trust_remote_code',
-        'transformers_info'
-    ],
-    'ExLlama': [
-        'gpu_split',
-        'max_seq_len',
-        'compress_pos_emb',
-        'alpha_value',
-        'exllama_info',
-    ],
-    'ExLlama_HF': [
-        'gpu_split',
-        'max_seq_len',
-        'compress_pos_emb',
-        'alpha_value',
-        'exllama_HF_info',
+    'ctransformers': [
+        'n_ctx',
+        'n_gpu_layers',
+        'n_batch',
+        'threads',
+        'model_type',
+        'no_mmap',
+        'mlock'
     ]
-}
+})
 
 loaders_samplers = {
     'Transformers': {
@@ -113,9 +138,12 @@ loaders_samplers = {
         'mirostat_mode',
         'mirostat_tau',
         'mirostat_eta',
+        'guidance_scale',
+        'negative_prompt',
         'ban_eos_token',
         'add_bos_token',
         'skip_special_tokens',
+        'auto_max_new_tokens',
     },
     'ExLlama_HF': {
         'temperature',
@@ -136,9 +164,12 @@ loaders_samplers = {
         'mirostat_mode',
         'mirostat_tau',
         'mirostat_eta',
+        'guidance_scale',
+        'negative_prompt',
         'ban_eos_token',
         'add_bos_token',
         'skip_special_tokens',
+        'auto_max_new_tokens',
     },
     'ExLlama': {
         'temperature',
@@ -148,7 +179,10 @@ loaders_samplers = {
         'repetition_penalty',
         'repetition_penalty_range',
         'seed',
+        'guidance_scale',
+        'negative_prompt',
         'ban_eos_token',
+        'auto_max_new_tokens',
     },
     'AutoGPTQ': {
         'temperature',
@@ -173,9 +207,12 @@ loaders_samplers = {
         'mirostat_mode',
         'mirostat_tau',
         'mirostat_eta',
+        'guidance_scale',
+        'negative_prompt',
         'ban_eos_token',
         'add_bos_token',
         'skip_special_tokens',
+        'auto_max_new_tokens',
     },
     'GPTQ-for-LLaMa': {
         'temperature',
@@ -200,9 +237,12 @@ loaders_samplers = {
         'mirostat_mode',
         'mirostat_tau',
         'mirostat_eta',
+        'guidance_scale',
+        'negative_prompt',
         'ban_eos_token',
         'add_bos_token',
         'skip_special_tokens',
+        'auto_max_new_tokens',
     },
     'llama.cpp': {
         'temperature',
@@ -234,10 +274,42 @@ loaders_samplers = {
         'mirostat_mode',
         'mirostat_tau',
         'mirostat_eta',
+        'guidance_scale',
+        'negative_prompt',
         'ban_eos_token',
         'add_bos_token',
         'skip_special_tokens',
+        'auto_max_new_tokens',
     },
+    'ctransformers': {
+        'temperature',
+        'top_p',
+        'top_k',
+        'repetition_penalty',
+        'repetition_penalty_range',
+    }
+}
+
+loaders_model_types = {
+    'GPTQ-for-LLaMa': [
+        "None",
+        "llama",
+        "opt",
+        "gptj"
+    ],
+    'ctransformers': [
+        "None",
+        "gpt2",
+        "gptj",
+        "gptneox",
+        "llama",
+        "mpt",
+        "dollyv2",
+        "replit",
+        "starcoder",
+        "gptbigcode",
+        "falcon"
+    ],
 }
 
 
@@ -257,6 +329,13 @@ def blacklist_samplers(loader):
         return [gr.update(visible=True) for sampler in all_samplers]
     else:
         return [gr.update(visible=True) if sampler in loaders_samplers[loader] else gr.update(visible=False) for sampler in all_samplers]
+
+
+def get_model_types(loader):
+    if loader in loaders_model_types:
+        return loaders_model_types[loader]
+
+    return ["None"]
 
 
 def get_gpu_memory_keys():

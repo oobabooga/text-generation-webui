@@ -7,6 +7,7 @@
 }
 
 .small-button {
+    min-width: 0 !important;
     max-width: 171px;
     height: 39.594px;
     align-self: end;
@@ -26,6 +27,10 @@
     max-width: 2.2em;
 }
 
+.button_nowrap {
+    white-space: nowrap;
+}
+
 #slim-column {
     flex: none !important;
     min-width: 0 !important;
@@ -41,9 +46,6 @@
     min-height: 0
 }
 
-#accordion {
-}
-
 .dark svg {
     fill: white;
 }
@@ -56,7 +58,7 @@ ol li p, ul li p {
     display: inline-block;
 }
 
-#main, #parameters, #chat-settings, #lora, #training-tab, #model-tab, #session-tab {
+#chat-tab, #default-tab, #notebook-tab, #parameters, #chat-settings, #lora, #training-tab, #model-tab, #session-tab {
     border: 0;
 }
 
@@ -70,7 +72,6 @@ ol li p, ul li p {
 }
 
 #extensions {
-    padding: 15px;
     margin-bottom: 35px;
 }
 
@@ -90,6 +91,8 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
 .header_bar {
     background-color: #f7f7f7;
     margin-bottom: 20px;
+    display: inline !important;
+    overflow-x: scroll;
 }
 
 .dark .header_bar {
@@ -97,25 +100,52 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
     background-color: #8080802b;
 }
 
+.header_bar button.selected {
+    border-radius: 0;
+}
+
 .textbox_default textarea {
-    height: calc(100vh - 380px);
+    height: calc(100dvh - 280px);
 }
 
 .textbox_default_output textarea {
-    height: calc(100vh - 190px);
+    height: calc(100dvh - 190px);
 }
 
 .textbox textarea {
-    height: calc(100vh - 241px);
+    height: calc(100dvh - 241px);
 }
 
-.textbox_default textarea, .textbox_default_output textarea, .textbox textarea {
+.textbox_logits textarea {
+    height: calc(100dvh - 241px);
+}
+
+.textbox_logits_notebook textarea {
+    height: calc(100dvh - 292px);
+}
+
+.textbox_default textarea,
+.textbox_default_output textarea,
+.textbox_logits textarea,
+.textbox_logits_notebook textarea,
+.textbox textarea
+{
     font-size: 16px !important;
     color: #46464A !important;
 }
 
 .dark textarea {
     color: #efefef !important;
+}
+
+@media screen and (max-width: 711px) {
+    .textbox_default textarea {
+        height: calc(100dvh - 271px);
+    }
+
+    div .default-token-counter {
+        top: calc( 0.5 * (100dvh - 245px) ) !important;
+    }
 }
 
 /* Hide the gradio footer*/
@@ -157,7 +187,7 @@ button {
 }
 
 .pretty_scrollbar::-webkit-scrollbar {
-  width: 10px;
+  width: 5px;
 }
 
 .pretty_scrollbar::-webkit-scrollbar-track {
@@ -167,13 +197,11 @@ button {
 .pretty_scrollbar::-webkit-scrollbar-thumb,
 .pretty_scrollbar::-webkit-scrollbar-thumb:hover {
   background: #c5c5d2;
-  border-radius: 10px;
 }
 
 .dark .pretty_scrollbar::-webkit-scrollbar-thumb,
 .dark .pretty_scrollbar::-webkit-scrollbar-thumb:hover {
   background: #374151;
-  border-radius: 10px;
 }
 
 .pretty_scrollbar::-webkit-resizer {
@@ -182,4 +210,208 @@ button {
 
 .dark .pretty_scrollbar::-webkit-resizer {
   background: #374151;
+}
+
+audio {
+  max-width: 100%;
+}
+
+/* Copied from https://github.com/AUTOMATIC1111/stable-diffusion-webui */
+.token-counter {
+  position: absolute !important;
+  top: calc( 0.5 * (100dvh - 215px) ) !important;
+  right: 2px;
+  z-index: 100;
+  background: var(--input-background-fill) !important;
+  min-height: 0 !important;
+}
+
+.default-token-counter {
+  top: calc( 0.5 * (100dvh - 255px) ) !important;
+}
+
+.token-counter span {
+  padding: 1px;
+  box-shadow: 0 0 0 0.3em rgba(192,192,192,0.15), inset 0 0 0.6em rgba(192,192,192,0.075);
+  border: 2px solid rgba(192,192,192,0.4) !important;
+  border-radius: 0.4em;
+}
+
+.no-background {
+  background: var(--background-fill-primary) !important;
+  padding: 0px !important;
+}
+
+/*****************************************************/
+/*************** Chat UI declarations ****************/
+/*****************************************************/
+
+.h-\[40vh\], .wrap.svelte-byatnx.svelte-byatnx.svelte-byatnx {
+    height: 66.67vh
+}
+
+.gradio-container {
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+.w-screen {
+    width: unset
+}
+
+div.svelte-362y77>*, div.svelte-362y77>.form>* {
+    flex-wrap: nowrap
+}
+
+.pending.svelte-1ed2p3z {
+    opacity: 1;
+}
+
+.wrap.svelte-6roggh.svelte-6roggh {
+    max-height: 92.5%;
+}
+
+/* This is for the microphone button in the whisper extension */
+.sm.svelte-1ipelgc {
+    width: 100%;
+}
+
+#chat-tab button, #notebook-tab button, #default-tab button {
+    min-width: 0 !important;
+}
+
+#chat-tab > :first-child, #extensions {
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+@media screen and (max-width: 688px) {
+    #chat-tab {
+        padding: 0px;
+    }
+
+    #chat {
+        height: calc(100dvh - 262px) !important;
+    }
+
+    .bigchat #chat {
+        height: calc(100dvh - 180px) !important;
+    }
+
+    .chat {
+        flex-direction: column-reverse !important;
+    }
+}
+
+.chat {
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 800px;
+    height: 100%;
+    overflow-y: auto;
+    padding-right: 15px;
+    display: flex;
+    flex-direction: column;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+    padding-top: 6px;
+}
+
+#chat {
+    height: calc(100dvh - 272px);
+}
+
+.bigchat #chat {
+    height: calc(100dvh - 200px);
+}
+
+#show-controls {
+    position: absolute;
+    background-color: transparent;
+    left: calc(100% - 130px);
+}
+
+.chat > .messages {
+    display: flex;
+    flex-direction: column;
+}
+
+.chat .message:last-child {
+    margin-bottom: 0px !important;
+    padding-bottom: 0px !important;
+}
+
+.message-body li {
+    margin-top: 0.5em !important;
+    margin-bottom: 0.5em !important;
+}
+
+.message-body li > p {
+    display: inline !important;
+}
+
+.message-body ul, .message-body ol {
+    font-size: 15px !important;
+}
+
+.message-body ul {
+    list-style-type: disc !important;
+}
+
+.message-body pre {
+    margin-bottom: 1.25em !important;
+}
+
+.message-body code {
+    white-space: pre-wrap !important;
+    word-wrap: break-word !important;
+}
+
+.message-body :not(pre) > code {
+    white-space: normal !important;
+}
+
+#chat-input {
+    padding: 0;
+    padding-top: 18px;
+    background: var(--background-fill-primary);
+    border: none;
+}
+
+#chat-input textarea:focus {
+    box-shadow: none !important;
+}
+
+@media print {
+    body {
+        visibility: hidden;
+    }
+
+    .chat {
+        visibility: visible;
+        position: absolute;
+        left: 0;
+        top: 0;
+        max-width: unset;
+        max-height: unset;
+        width: 100%;
+        overflow-y: visible;
+    }
+    
+    .message {
+        break-inside: avoid;
+    }
+    
+    .gradio-container {
+        overflow: visible;
+    }
+    
+    .tab-nav {
+        display: none !important;
+    }
+    
+    #chat-tab > :first-child {
+        max-width: unset;
+    }
 }

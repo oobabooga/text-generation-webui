@@ -4,6 +4,7 @@ import copy
 # Data type is important, Ex. use 0.0 for a float 0
 default_req_params = {
     'max_new_tokens': 16,  # 'Inf' for chat
+    'auto_max_new_tokens': False,
     'temperature': 1.0,
     'top_p': 1.0,
     'top_k': 1,  # choose 20 for chat in absence of another default
@@ -32,6 +33,8 @@ default_req_params = {
     'mirostat_mode': 0,
     'mirostat_tau': 5.0,
     'mirostat_eta': 0.1,
+    'guidance_scale': 1,
+    'negative_prompt': '',
     'ban_eos_token': False,
     'skip_special_tokens': True,
     'custom_stopping_strings': '',
