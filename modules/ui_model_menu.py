@@ -80,8 +80,8 @@ def create_ui():
                             shared.gradio['n_ctx'] = gr.Slider(minimum=0, maximum=16384, step=256, label="n_ctx", value=shared.args.n_ctx)
                             shared.gradio['threads'] = gr.Slider(label="threads", minimum=0, step=1, maximum=32, value=shared.args.threads)
                             shared.gradio['n_batch'] = gr.Slider(label="n_batch", minimum=1, maximum=2048, value=shared.args.n_batch)
-                            shared.gradio['n_gqa'] = gr.Slider(minimum=0, maximum=16, step=1, label="n_gqa", value=shared.args.n_gqa, info='grouped-query attention. Must be 8 for llama-2 70b.')
-                            shared.gradio['rms_norm_eps'] = gr.Slider(minimum=0, maximum=1e-5, step=1e-6, label="rms_norm_eps", value=shared.args.rms_norm_eps, info='5e-6 is a good value for llama-2 models.')
+                            shared.gradio['n_gqa'] = gr.Slider(minimum=0, maximum=16, step=1, label="n_gqa", value=shared.args.n_gqa, info='GGML only (not used by GGUF): Grouped-Query Attention. Must be 8 for llama-2 70b.')
+                            shared.gradio['rms_norm_eps'] = gr.Slider(minimum=0, maximum=1e-5, step=1e-6, label="rms_norm_eps", value=shared.args.rms_norm_eps, info='GGML only (not used by GGUF): 5e-6 is a good value for llama-2 models.')
 
                             shared.gradio['wbits'] = gr.Dropdown(label="wbits", choices=["None", 1, 2, 3, 4, 8], value=str(shared.args.wbits) if shared.args.wbits > 0 else "None")
                             shared.gradio['groupsize'] = gr.Dropdown(label="groupsize", choices=["None", 32, 64, 128, 1024], value=str(shared.args.groupsize) if shared.args.groupsize > 0 else "None")
@@ -91,7 +91,8 @@ def create_ui():
                             shared.gradio['gpu_split'] = gr.Textbox(label='gpu-split', info='Comma-separated list of VRAM (in GB) to use per GPU. Example: 20,7,7')
                             shared.gradio['max_seq_len'] = gr.Slider(label='max_seq_len', minimum=0, maximum=16384, step=256, info='Maximum sequence length.', value=shared.args.max_seq_len)
                             shared.gradio['alpha_value'] = gr.Slider(label='alpha_value', minimum=1, maximum=8, step=0.1, info='Positional embeddings alpha factor for NTK RoPE scaling. Use either this or compress_pos_emb, not both.', value=shared.args.alpha_value)
-                            shared.gradio['compress_pos_emb'] = gr.Slider(label='compress_pos_emb', minimum=1, maximum=8, step=1, info='Positional embeddings compression factor. Should be set to (context length) / (model\'s original context length).', value=shared.args.compress_pos_emb)
+                            shared.gradio['rope_freq_base'] = gr.Slider(label='rope_freq_base', minimum=0, maximum=1000000, step=1000, info='If greater than 0, will be used instead of alpha_value. Those two are related by rope_freq_base = 10000 * alpha_value ^ (64 / 63)', value=shared.args.rope_freq_base)
+                            shared.gradio['compress_pos_emb'] = gr.Slider(label='compress_pos_emb', minimum=1, maximum=8, step=1, info='Positional embeddings compression factor. Should be set to (context length) / (model\'s original context length). Equal to 1/rope_freq_scale.', value=shared.args.compress_pos_emb)
 
                         with gr.Column():
                             shared.gradio['triton'] = gr.Checkbox(label="triton", value=shared.args.triton)
@@ -144,12 +145,14 @@ def create_event_handlers():
         apply_model_settings_to_state, gradio('model_menu', 'interface_state'), gradio('interface_state')).then(
         ui.apply_interface_values, gradio('interface_state'), gradio(ui.list_interface_input_elements()), show_progress=False).then(
         update_model_parameters, gradio('interface_state'), None).then(
-        load_model_wrapper, gradio('model_menu', 'loader', 'autoload_model'), gradio('model_status'), show_progress=False)
+        load_model_wrapper, gradio('model_menu', 'loader', 'autoload_model'), gradio('model_status'), show_progress=False).success(
+        update_truncation_length, gradio('truncation_length', 'interface_state'), gradio('truncation_length'))
 
     shared.gradio['load_model'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         update_model_parameters, gradio('interface_state'), None).then(
-        partial(load_model_wrapper, autoload=True), gradio('model_menu', 'loader'), gradio('model_status'), show_progress=False)
+        partial(load_model_wrapper, autoload=True), gradio('model_menu', 'loader'), gradio('model_status'), show_progress=False).success(
+        update_truncation_length, gradio('truncation_length', 'interface_state'), gradio('truncation_length'))
 
     shared.gradio['unload_model'].click(
         unload_model, None, None).then(
@@ -159,7 +162,8 @@ def create_event_handlers():
         unload_model, None, None).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         update_model_parameters, gradio('interface_state'), None).then(
-        partial(load_model_wrapper, autoload=True), gradio('model_menu', 'loader'), gradio('model_status'), show_progress=False)
+        partial(load_model_wrapper, autoload=True), gradio('model_menu', 'loader'), gradio('model_status'), show_progress=False).success(
+        update_truncation_length, gradio('truncation_length', 'interface_state'), gradio('truncation_length'))
 
     shared.gradio['save_model_settings'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
@@ -234,3 +238,12 @@ def download_model_wrapper(repo_id, progress=gr.Progress()):
     except:
         progress(1.0)
         yield traceback.format_exc().replace('\n', '\n\n')
+
+
+def update_truncation_length(current_length, state):
+    if state['loader'] in ['ExLlama', 'ExLlama_HF']:
+        return state['max_seq_len']
+    elif state['loader'] in ['llama.cpp', 'llamacpp_HF', 'ctransformers']:
+        return state['n_ctx']
+    else:
+        return current_length

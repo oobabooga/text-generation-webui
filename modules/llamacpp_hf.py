@@ -7,29 +7,45 @@ from torch.nn import CrossEntropyLoss
 from transformers import GenerationConfig, PretrainedConfig, PreTrainedModel
 from transformers.modeling_outputs import CausalLMOutputWithPast
 
-from modules import shared
+from modules import RoPE, shared
 from modules.logging_colors import logger
+from modules.utils import is_gguf
 
 import llama_cpp
+
+try:
+    import llama_cpp_ggml
+except:
+    llama_cpp_ggml = llama_cpp
 
 if torch.cuda.is_available() and not torch.version.hip:
     try:
         import llama_cpp_cuda
     except:
         llama_cpp_cuda = None
+    try:
+        import llama_cpp_ggml_cuda
+    except:
+        llama_cpp_ggml_cuda = llama_cpp_cuda
 else:
     llama_cpp_cuda = None
+    llama_cpp_ggml_cuda = None
 
 
-def llama_cpp_lib():
-    if shared.args.cpu or llama_cpp_cuda is None:
-        return llama_cpp
+def llama_cpp_lib(model_file: Union[str, Path] = None):
+    if model_file is not None:
+        gguf_model = is_gguf(model_file)
     else:
-        return llama_cpp_cuda
+        gguf_model = True
+
+    if shared.args.cpu or llama_cpp_cuda is None:
+        return llama_cpp if gguf_model else llama_cpp_ggml
+    else:
+        return llama_cpp_cuda if gguf_model else llama_cpp_ggml_cuda
 
 
 class LlamacppHF(PreTrainedModel):
-    def __init__(self, model):
+    def __init__(self, model, path):
         super().__init__(PretrainedConfig())
         self.model = model
         self.generation_config = GenerationConfig()
@@ -38,16 +54,17 @@ class LlamacppHF(PreTrainedModel):
         self.llamacpp_cache = {
             'n_tokens': self.model.n_tokens,
             'input_ids': self.model.input_ids,
-            'scores': self.model.scores
+            'scores': self.model.scores,
+            'ctx': self.model.ctx
         }
 
         if shared.args.cfg_cache:
-            logger.warning('CFG is currently bugged and not functional for llamacpp_HF. Contributions are welcome.')
             self.past_seq_negative = None
             self.llamacpp_cache_negative = {
                 'n_tokens': self.model.n_tokens,
                 'input_ids': self.model.input_ids.copy(),
-                'scores': self.model.scores.copy()
+                'scores': self.model.scores.copy(),
+                'ctx': llama_cpp_lib(path).llama_new_context_with_model(model.model, model.params)
             }
 
     def _validate_model_class(self):
@@ -63,25 +80,29 @@ class LlamacppHF(PreTrainedModel):
         self.llamacpp_cache.update({
             'n_tokens': self.model.n_tokens,
             'input_ids': self.model.input_ids,
-            'scores': self.model.scores
+            'scores': self.model.scores,
+            'ctx': self.model.ctx
         })
 
     def save_negative_cache(self):
         self.llamacpp_cache_negative.update({
             'n_tokens': self.model.n_tokens,
             'input_ids': self.model.input_ids,
-            'scores': self.model.scores
+            'scores': self.model.scores,
+            'ctx': self.model.ctx
         })
 
     def load_cache(self):
         self.model.n_tokens = self.llamacpp_cache['n_tokens']
         self.model.input_ids = self.llamacpp_cache['input_ids']
         self.model.scores = self.llamacpp_cache['scores']
+        self.model.ctx = self.llamacpp_cache['ctx']
 
     def load_negative_cache(self):
         self.model.n_tokens = self.llamacpp_cache_negative['n_tokens']
         self.model.input_ids = self.llamacpp_cache_negative['input_ids']
         self.model.scores = self.llamacpp_cache_negative['scores']
+        self.model.ctx = self.llamacpp_cache_negative['ctx']
 
     @property
     def device(self) -> torch.device:
@@ -95,7 +116,6 @@ class LlamacppHF(PreTrainedModel):
         if len(args) > 0:
             if not shared.args.cfg_cache:
                 logger.error("Please enable the cfg-cache option to use CFG with llamacpp_HF.")
-                logger.warning('CFG is currently bugged and not functional for llamacpp_HF. Contributions are welcome.')
                 return
 
             input_ids = args[0]
@@ -161,7 +181,7 @@ class LlamacppHF(PreTrainedModel):
         if path.is_file():
             model_file = path
         else:
-            model_file = list(path.glob('*ggml*.bin'))[0]
+            model_file = (list(path.glob('*.gguf*')) + list(path.glob('*ggml*.bin')))[0]
 
         logger.info(f"llama.cpp weights detected: {model_file}\n")
 
@@ -181,15 +201,20 @@ class LlamacppHF(PreTrainedModel):
             'mul_mat_q': shared.args.mul_mat_q,
             'low_vram': shared.args.low_vram,
             'n_gpu_layers': shared.args.n_gpu_layers,
-            'rope_freq_base': 10000 * shared.args.alpha_value ** (64 / 63.),
+            'rope_freq_base': RoPE.get_rope_freq_base(shared.args.alpha_value, shared.args.rope_freq_base),
             'tensor_split': tensor_split_list,
             'rope_freq_scale': 1.0 / shared.args.compress_pos_emb,
-            'n_gqa': shared.args.n_gqa or None,
-            'rms_norm_eps': shared.args.rms_norm_eps or None,
             'logits_all': True,
         }
 
-        Llama = llama_cpp_lib().Llama
+        if not is_gguf(model_file):
+            ggml_params = {
+                'n_gqa': shared.args.n_gqa or None,
+                'rms_norm_eps': shared.args.rms_norm_eps or None,
+            }
+            params = params | ggml_params
+
+        Llama = llama_cpp_lib(model_file).Llama
         model = Llama(**params)
 
-        return LlamacppHF(model)
+        return LlamacppHF(model, model_file)

@@ -10,12 +10,12 @@ class CtransformersModel:
         pass
 
     @classmethod
-    def from_pretrained(self, path):
-        result = self()
+    def from_pretrained(cls, path):
+        result = cls()
 
         config = AutoConfig.from_pretrained(
             str(path),
-            threads=shared.args.threads,
+            threads=shared.args.threads if shared.args.threads != 0 else -1,
             gpu_layers=shared.args.n_gpu_layers,
             batch_size=shared.args.n_batch,
             context_length=shared.args.n_ctx,
@@ -24,13 +24,13 @@ class CtransformersModel:
             mlock=shared.args.mlock
         )
 
-        self.model = AutoModelForCausalLM.from_pretrained(
+        result.model = AutoModelForCausalLM.from_pretrained(
             str(result.model_dir(path) if result.model_type_is_auto() else path),
             model_type=(None if result.model_type_is_auto() else shared.args.model_type),
             config=config
         )
 
-        logger.info(f'Using ctransformers model_type: {self.model.model_type} for {self.model.model_path}')
+        logger.info(f'Using ctransformers model_type: {result.model.model_type} for {result.model.model_path}')
         return result, result
 
     def model_type_is_auto(self):

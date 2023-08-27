@@ -329,7 +329,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 #show-controls {
     position: absolute;
     background-color: transparent;
-    left: calc(100% - 130px);
+    left: calc(100% - 180px);
 }
 
 .chat > .messages {
