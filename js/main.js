@@ -60,6 +60,9 @@ document.addEventListener("keydown", function(event) {
     var showControlsElement = document.getElementById('show-controls');
     if (showControlsElement && showControlsElement.childNodes.length >= 4) {
       showControlsElement.childNodes[3].click();
+
+      var arr = document.getElementById('chat-input').childNodes[2].childNodes;
+      arr[arr.length - 1].focus();
     }
   }
 
