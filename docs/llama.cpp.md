@@ -9,7 +9,7 @@ llama.cpp is the best backend in two important scenarios:
 
 #### Pre-converted
 
-Download the ggml model directly into your `text-generation-webui/models` folder, making sure that its name contains `ggml` somewhere and ends in `.bin`. It's a single file.
+Download the ggml or gguf models directly into your `text-generation-webui/models` folder, making sure that its name contains `ggml` or `gguf` somewhere and ends in `.bin`. It's a single file.
 
 `q4_K_M` quantization is recommended.
 
