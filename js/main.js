@@ -73,7 +73,8 @@ const targetElement = document.getElementById('chat').parentNode.parentNode.pare
 // Create a MutationObserver instance
 const observer = new MutationObserver(function(mutations) {
   mutations.forEach(function(mutation) {
-    let childElement = targetElement.childNodes[2].childNodes[0].childNodes[1];
+    let nodes = targetElement.childNodes[2].childNodes[0].childNodes;
+    let childElement = nodes[nodes.length - 1];
     childElement.scrollTop = childElement.scrollHeight;
   });
 });
