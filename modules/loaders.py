@@ -304,7 +304,7 @@ loaders_model_types = {
         "gptneox",
         "llama",
         "mpt",
-        "dollyv2"
+        "dollyv2",
         "replit",
         "starcoder",
         "gptbigcode",
