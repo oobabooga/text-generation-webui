@@ -156,7 +156,7 @@ text-generation-webui
 
 In the "Model" tab of the UI, those models can be automatically downloaded from Hugging Face. You can also download them via the command-line with `python download-model.py organization/model`.
 
-* GGML models are a single file and should be placed directly into `models`. Example:
+* GGML/GGUF models are a single file and should be placed directly into `models`. Example:
 
 ```
 text-generation-webui
@@ -258,7 +258,7 @@ Optionally, you can use the following command-line flags:
 | `--quant_type QUANT_TYPE`                   | quant_type for 4-bit. Valid options: nf4, fp4. |
 | `--use_double_quant`                        | use_double_quant for 4-bit. |
 
-#### GGML (for llama.cpp and ctransformers)
+#### GGML/GGUF (for llama.cpp and ctransformers)
 
 | Flag        | Description |
 |-------------|-------------|
@@ -269,16 +269,16 @@ Optionally, you can use the following command-line flags:
 
 #### llama.cpp
 
-| Flag        | Description |
-|-------------|-------------|
-| `--no-mmap` | Prevent mmap from being used. |
-| `--mlock`   | Force the system to keep the model in RAM. |
+| Flag          | Description |
+|---------------|---------------|
+| `--no-mmap`   | Prevent mmap from being used. |
+| `--mlock`     | Force the system to keep the model in RAM. |
 | `--mul_mat_q` | Activate new mulmat kernels. |
 | `--cache-capacity CACHE_CAPACITY`   | Maximum cache capacity. Examples: 2000MiB, 2GiB. When provided without units, bytes will be assumed. |
-| `--tensor_split TENSOR_SPLIT` | Split the model across multiple GPUs, comma-separated list of proportions, e.g. 18,17 |
-| `--llama_cpp_seed SEED` | Seed for llama-cpp models. Default 0 (random). |
-| `--n_gqa N_GQA`         | grouped-query attention. Must be 8 for llama-2 70b. |
-| `--rms_norm_eps RMS_NORM_EPS`  | 5e-6 is a good value for llama-2 models. |
+| `--tensor_split TENSOR_SPLIT`  | Split the model across multiple GPUs, comma-separated list of proportions, e.g. 18,17 |
+| `--llama_cpp_seed SEED`        | Seed for llama-cpp models. Default 0 (random). |
+| `--n_gqa N_GQA`                | GGML only (not used by GGUF): Grouped-Query Attention. Must be 8 for llama-2 70b. |
+| `--rms_norm_eps RMS_NORM_EPS`  | GGML only (not used by GGUF): 5e-6 is a good value for llama-2 models. |
 | `--cpu`                        | Use the CPU version of llama-cpp-python instead of the GPU-accelerated version. |
 |`--cfg-cache`                   | llamacpp_HF: Create an additional cache for CFG negative prompts. |
 

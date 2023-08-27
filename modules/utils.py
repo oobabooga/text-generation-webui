@@ -2,6 +2,7 @@ import os
 import re
 from datetime import datetime
 from pathlib import Path
+from typing import Union
 
 from modules import shared
 from modules.logging_colors import logger
@@ -124,3 +125,15 @@ def get_datasets(path: str, ext: str):
 
 def get_available_chat_styles():
     return sorted(set(('-'.join(k.stem.split('-')[1:]) for k in Path('css').glob('chat_style*.css'))), key=natural_keys)
+
+
+def is_gguf(path: Union[str, Path]) -> bool:
+    '''
+    Determines if a llama.cpp model is in GGUF format
+    Copied from ctransformers utils.py
+    '''
+    path = str(Path(path).resolve())
+    with open(path, "rb") as f:
+        magic = f.read(4)
+
+    return magic == "GGUF".encode()
