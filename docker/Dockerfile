@@ -26,7 +26,7 @@ LABEL description="Docker image for GPTQ-for-LLaMa and Text Generation WebUI"
 
 RUN apt-get update && \
     apt-get install --no-install-recommends -y python3-dev libportaudio2 libasound-dev git python3 python3-pip \
-    make g++ libmpich-dev && \
+    make g++ libmpich-dev ffmpeg && \
     rm -rf /var/lib/apt/lists/* && \
     mkdir /app
 
