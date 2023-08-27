@@ -40,9 +40,11 @@ for(i = 0; i < textareaElements.length; i++) {
 }
 
 //------------------------------------------------
-// Stop generation on Esc pressed
+// Keyboard shortcuts
 //------------------------------------------------
 document.addEventListener("keydown", function(event) {
+
+  // Stop generation on Esc pressed
   if (event.key === "Escape") {
     // Find the element with id 'stop' and click it
     var stopButton = document.getElementById("stop");
@@ -50,6 +52,17 @@ document.addEventListener("keydown", function(event) {
       stopButton.click();
     }
   }
+
+  // Show chat controls on Ctrl+S pressed
+  else if (event.ctrlKey && event.key == "s") {
+    event.preventDefault();
+
+    var showControlsElement = document.getElementById('show-controls');
+    if (showControlsElement && showControlsElement.childNodes.length >= 4) {
+      showControlsElement.childNodes[3].click();
+    }
+  }
+
 });
 
 //------------------------------------------------
@@ -60,7 +73,8 @@ const targetElement = document.getElementById('chat').parentNode.parentNode.pare
 // Create a MutationObserver instance
 const observer = new MutationObserver(function(mutations) {
   mutations.forEach(function(mutation) {
-    let childElement = targetElement.childNodes[2].childNodes[0].childNodes[1];
+    let nodes = targetElement.childNodes[2].childNodes[0].childNodes;
+    let childElement = nodes[nodes.length - 1];
     childElement.scrollTop = childElement.scrollHeight;
   });
 });
