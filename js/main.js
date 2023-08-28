@@ -71,14 +71,37 @@ document.addEventListener("keydown", function(event) {
 //------------------------------------------------
 // Chat scrolling
 //------------------------------------------------
+let globalScrollTop = 1e30;
+let maxScroll = 1e30;
 const targetElement = document.getElementById('chat').parentNode.parentNode.parentNode;
+
+function getChatElement() {
+  let nodes = targetElement.childNodes[2].childNodes[0].childNodes;
+  return nodes[nodes.length - 1];
+}
+
+// Function to update the scroll position
+function updateScrollPosition(newScrollTop) {
+  globalScrollTop = newScrollTop;
+  if (globalScrollTop < 0) {
+    globalScrollTop = 0;
+  }
+  if (globalScrollTop > maxScroll) {
+    globalScrollTop = maxScroll;
+  }
+}
+
+// Listen for the "wheel" event (desktop)
+targetElement.addEventListener('wheel', function (event) {
+  updateScrollPosition(globalScrollTop + event.deltaY);
+});
 
 // Create a MutationObserver instance
 const observer = new MutationObserver(function(mutations) {
   mutations.forEach(function(mutation) {
-    let nodes = targetElement.childNodes[2].childNodes[0].childNodes;
-    let childElement = nodes[nodes.length - 1];
-    childElement.scrollTop = childElement.scrollHeight;
+    let childElement = getChatElement();
+    maxScroll = childElement.scrollHeight;
+    childElement.scrollTop = globalScrollTop;
   });
 });
 
