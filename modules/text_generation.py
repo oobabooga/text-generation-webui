@@ -244,14 +244,14 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
         if k in state:
             generate_params[k] = state[k]
 
-    if state['negative_prompt'] != '':
+    if 'negative_prompt' in state and state['negative_prompt'] != '':
         generate_params['negative_prompt_ids'] = encode(state['negative_prompt'])
 
     for k in ['epsilon_cutoff', 'eta_cutoff']:
-        if state[k] > 0:
+        if k in state and state[k] > 0:
             generate_params[k] = state[k] * 1e-4
 
-    if state['ban_eos_token']:
+    if 'ban_eos_token' in state and state['ban_eos_token']:
         generate_params['suppress_tokens'] = [shared.tokenizer.eos_token_id]
 
     if shared.args.no_cache:
