@@ -30,16 +30,6 @@ document.querySelector('.header_bar').addEventListener('click', function(event) 
 });
 
 //------------------------------------------------
-// Add some scrollbars
-//------------------------------------------------
-const textareaElements = document.querySelectorAll('.add_scrollbar textarea');
-for(i = 0; i < textareaElements.length; i++) {
-    textareaElements[i].classList.remove('scroll-hide');
-    textareaElements[i].classList.add('pretty_scrollbar');
-    textareaElements[i].style.resize = "none";
-}
-
-//------------------------------------------------
 // Keyboard shortcuts
 //------------------------------------------------
 document.addEventListener("keydown", function(event) {
@@ -60,22 +50,53 @@ document.addEventListener("keydown", function(event) {
     var showControlsElement = document.getElementById('show-controls');
     if (showControlsElement && showControlsElement.childNodes.length >= 4) {
       showControlsElement.childNodes[3].click();
+
+      var arr = document.getElementById('chat-input').childNodes[2].childNodes;
+      arr[arr.length - 1].focus();
     }
   }
 
 });
 
 //------------------------------------------------
+// Position the chat typing dots
+//------------------------------------------------
+typing = document.getElementById('typing-container');
+typingParent = typing.parentNode;
+typingSibling = typing.previousElementSibling;
+typingSibling.insertBefore(typing, typingSibling.childNodes[2]);
+
+//------------------------------------------------
 // Chat scrolling
 //------------------------------------------------
 const targetElement = document.getElementById('chat').parentNode.parentNode.parentNode;
+targetElement.classList.add('pretty_scrollbar');
+targetElement.classList.add('chat-parent');
+let isScrolled = false;
+
+targetElement.addEventListener('scroll', function() {
+  let diff = targetElement.scrollHeight - targetElement.clientHeight;
+  if(Math.abs(targetElement.scrollTop - diff) <= 1 || diff == 0) {
+    isScrolled = false;
+  } else {
+    isScrolled = true;
+  }
+});
 
 // Create a MutationObserver instance
 const observer = new MutationObserver(function(mutations) {
   mutations.forEach(function(mutation) {
-    let nodes = targetElement.childNodes[2].childNodes[0].childNodes;
-    let childElement = nodes[nodes.length - 1];
-    childElement.scrollTop = childElement.scrollHeight;
+    if(!isScrolled) {
+      targetElement.scrollTop = targetElement.scrollHeight;
+    }
+
+    const firstChild = targetElement.children[0];
+    if (firstChild.classList.contains('generating')) {
+      typing.parentNode.classList.add('visible-dots');
+    } else {
+      typing.parentNode.classList.remove('visible-dots');
+    }
+
   });
 });
 
@@ -90,6 +111,16 @@ const config = {
 
 // Start observing the target element
 observer.observe(targetElement, config);
+
+//------------------------------------------------
+// Add some scrollbars
+//------------------------------------------------
+const textareaElements = document.querySelectorAll('.add_scrollbar textarea');
+for(i = 0; i < textareaElements.length; i++) {
+    textareaElements[i].classList.remove('scroll-hide');
+    textareaElements[i].classList.add('pretty_scrollbar');
+    textareaElements[i].style.resize = "none";
+}
 
 //------------------------------------------------
 // Improve the looks of the chat input field
