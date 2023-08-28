@@ -68,7 +68,7 @@ let isScrolled = false;
 
 targetElement.addEventListener('scroll', function() {
   let diff = targetElement.scrollHeight - targetElement.clientHeight;
-  if(targetElement.scrollTop == diff || diff == 0) {
+  if(Math.abs(targetElement.scrollTop - diff) <= 1 || diff == 0) {
     isScrolled = false;
   } else {
     isScrolled = true;
