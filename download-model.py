@@ -47,7 +47,7 @@ class ModelDownloader:
 
         return model, branch
 
-    def get_download_links_from_huggingface(self, model, branch, text_only=False):
+    def get_download_links_from_huggingface(self, model, branch, text_only=False, specific_bin=None):
         base = "https://huggingface.co"
         page = f"/api/models/{model}/tree/{branch}"
         cursor = b""
@@ -73,6 +73,9 @@ class ModelDownloader:
 
             for i in range(len(dict)):
                 fname = dict[i]['path']
+                if specific_bin and not fname == specific_bin:
+                    continue
+                
                 if not is_lora and fname.endswith(('adapter_config.json', 'adapter_model.bin')):
                     is_lora = True
 
@@ -218,9 +221,7 @@ class ModelDownloader:
         else:
             print('[-] Invalid checksums. Rerun download-model.py with the --clean flag.')
 
-
 if __name__ == '__main__':
-
     parser = argparse.ArgumentParser()
     parser.add_argument('MODEL', type=str, default=None, nargs='?')
     parser.add_argument('--branch', type=str, default='main', help='Name of the Git branch to download from.')
@@ -230,10 +231,12 @@ if __name__ == '__main__':
     parser.add_argument('--clean', action='store_true', help='Does not resume the previous download.')
     parser.add_argument('--check', action='store_true', help='Validates the checksums of model files.')
     parser.add_argument('--max-retries', type=int, default=5, help='Max retries count when get error in download time.')
+    parser.add_argument('--specific-bin', type=str, default=None, help='Name of the specific .bin file to download (if not provided, downloads all).')
     args = parser.parse_args()
 
     branch = args.branch
     model = args.MODEL
+    specific_bin = args.specific_bin
 
     if model is None:
         print("Error: Please specify the model you'd like to download (e.g. 'python download-model.py facebook/opt-1.3b').")
@@ -248,7 +251,7 @@ if __name__ == '__main__':
         sys.exit()
 
     # Getting the download links from Hugging Face
-    links, sha256, is_lora = downloader.get_download_links_from_huggingface(model, branch, text_only=args.text_only)
+    links, sha256, is_lora = downloader.get_download_links_from_huggingface(model, branch, text_only=args.text_only, specific_bin=specific_bin)
 
     # Getting the output folder
     output_folder = downloader.get_output_folder(model, branch, is_lora, base_folder=args.output)
