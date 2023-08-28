@@ -30,16 +30,6 @@ document.querySelector('.header_bar').addEventListener('click', function(event) 
 });
 
 //------------------------------------------------
-// Add some scrollbars
-//------------------------------------------------
-const textareaElements = document.querySelectorAll('.add_scrollbar textarea');
-for(i = 0; i < textareaElements.length; i++) {
-    textareaElements[i].classList.remove('scroll-hide');
-    textareaElements[i].classList.add('pretty_scrollbar');
-    textareaElements[i].style.resize = "none";
-}
-
-//------------------------------------------------
 // Keyboard shortcuts
 //------------------------------------------------
 document.addEventListener("keydown", function(event) {
@@ -71,37 +61,26 @@ document.addEventListener("keydown", function(event) {
 //------------------------------------------------
 // Chat scrolling
 //------------------------------------------------
-let globalScrollTop = 1e30;
-let maxScroll = 1e30;
 const targetElement = document.getElementById('chat').parentNode.parentNode.parentNode;
+targetElement.classList.add('pretty_scrollbar');
+targetElement.classList.add('chat-parent');
+let isScrolled = false;
 
-function getChatElement() {
-  let nodes = targetElement.childNodes[2].childNodes[0].childNodes;
-  return nodes[nodes.length - 1];
-}
-
-// Function to update the scroll position
-function updateScrollPosition(newScrollTop) {
-  globalScrollTop = newScrollTop;
-  if (globalScrollTop < 0) {
-    globalScrollTop = 0;
+targetElement.addEventListener('scroll', function() {
+  let diff = targetElement.scrollHeight - targetElement.clientHeight;
+  if(targetElement.scrollTop == diff || diff == 0) {
+    isScrolled = false;
+  } else {
+    isScrolled = true;
   }
-  if (globalScrollTop > maxScroll) {
-    globalScrollTop = maxScroll;
-  }
-}
-
-// Listen for the "wheel" event (desktop)
-targetElement.addEventListener('wheel', function (event) {
-  updateScrollPosition(globalScrollTop + event.deltaY);
 });
 
 // Create a MutationObserver instance
 const observer = new MutationObserver(function(mutations) {
   mutations.forEach(function(mutation) {
-    let childElement = getChatElement();
-    maxScroll = childElement.scrollHeight;
-    childElement.scrollTop = globalScrollTop;
+    if(!isScrolled) {
+      targetElement.scrollTop = targetElement.scrollHeight;
+    }
   });
 });
 
@@ -116,6 +95,16 @@ const config = {
 
 // Start observing the target element
 observer.observe(targetElement, config);
+
+//------------------------------------------------
+// Add some scrollbars
+//------------------------------------------------
+const textareaElements = document.querySelectorAll('.add_scrollbar textarea');
+for(i = 0; i < textareaElements.length; i++) {
+    textareaElements[i].classList.remove('scroll-hide');
+    textareaElements[i].classList.add('pretty_scrollbar');
+    textareaElements[i].style.resize = "none";
+}
 
 //------------------------------------------------
 // Improve the looks of the chat input field

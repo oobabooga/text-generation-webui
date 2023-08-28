@@ -291,11 +291,11 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
         padding: 0px;
     }
 
-    #chat {
+    .chat-parent {
         height: calc(100dvh - 262px) !important;
     }
 
-    .bigchat #chat {
+    .bigchat {
         height: calc(100dvh - 180px) !important;
     }
 
@@ -318,11 +318,12 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     padding-top: 6px;
 }
 
-#chat {
+.chat-parent {
     height: calc(100dvh - 272px);
+    overflow: auto !important;
 }
 
-.bigchat #chat {
+.bigchat {
     height: calc(100dvh - 200px);
 }
 
