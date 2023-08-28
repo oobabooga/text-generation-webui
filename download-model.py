@@ -176,7 +176,7 @@ class ModelDownloader:
     def start_download_threads(self, file_list, output_folder, start_from_scratch=False, threads=1):
         thread_map(lambda url: self.get_single_file(url, output_folder, start_from_scratch=start_from_scratch), file_list, max_workers=threads, disable=True)
 
-    def download_model_files(self, model, branch, links, sha256, output_folder, progress_bar=None, start_from_scratch=False, threads=1):
+    def download_model_files(self, model, branch, links, sha256, output_folder, progress_bar=None, start_from_scratch=False, threads=1, specific_bin=None):
         self.progress_bar = progress_bar
 
         # Creating the folder and writing the metadata
@@ -192,8 +192,10 @@ class ModelDownloader:
         metadata += '\n'
         (output_folder / 'huggingface-metadata.txt').write_text(metadata)
 
-        # Downloading the files
-        print(f"Downloading the model to {output_folder}")
+        if specific_bin:
+            print(f"Downloading {specific_bin} to {output_folder}")
+        else:
+            print(f"Downloading the model to {output_folder}")        
         self.start_download_threads(links, output_folder, start_from_scratch=start_from_scratch, threads=threads)
 
     def check_model_files(self, model, branch, links, sha256, output_folder):
@@ -261,4 +263,4 @@ if __name__ == '__main__':
         downloader.check_model_files(model, branch, links, sha256, output_folder)
     else:
         # Download files
-        downloader.download_model_files(model, branch, links, sha256, output_folder, threads=args.threads)
+        downloader.download_model_files(model, branch, links, sha256, output_folder, specific_bin=specific_bin, threads=args.threads)
