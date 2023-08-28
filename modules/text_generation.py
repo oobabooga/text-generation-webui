@@ -241,16 +241,17 @@ def apply_stopping_strings(reply, all_stop_strings):
 def generate_reply_HF(question, original_question, seed, state, stopping_strings=None, is_chat=False):
     generate_params = {}
     for k in ['max_new_tokens', 'do_sample', 'temperature', 'top_p', 'typical_p', 'repetition_penalty', 'repetition_penalty_range', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping', 'tfs', 'top_a', 'mirostat_mode', 'mirostat_tau', 'mirostat_eta', 'guidance_scale']:
-        generate_params[k] = state[k]
+        if k in state:
+            generate_params[k] = state[k]
 
-    if state['negative_prompt'] != '':
+    if 'negative_prompt' in state and state['negative_prompt'] != '':
         generate_params['negative_prompt_ids'] = encode(state['negative_prompt'])
 
     for k in ['epsilon_cutoff', 'eta_cutoff']:
-        if state[k] > 0:
+        if k in state and state[k] > 0:
             generate_params[k] = state[k] * 1e-4
 
-    if state['ban_eos_token']:
+    if 'ban_eos_token' in state and state['ban_eos_token']:
         generate_params['suppress_tokens'] = [shared.tokenizer.eos_token_id]
 
     if shared.args.no_cache:
@@ -263,7 +264,7 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
     input_ids = encode(question, add_bos_token=state['add_bos_token'], truncation_length=get_max_prompt_length(state))
     output = input_ids[0]
     cuda = not any((shared.args.cpu, shared.args.deepspeed))
-    if state['auto_max_new_tokens']:
+    if 'auto_max_new_tokens' in state and state['auto_max_new_tokens']:
         generate_params['max_new_tokens'] = state['truncation_length'] - input_ids.shape[-1]
 
     # Add the encoded tokens to generate_params
