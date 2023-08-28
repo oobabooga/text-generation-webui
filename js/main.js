@@ -30,16 +30,6 @@ document.querySelector('.header_bar').addEventListener('click', function(event) 
 });
 
 //------------------------------------------------
-// Add some scrollbars
-//------------------------------------------------
-const textareaElements = document.querySelectorAll('.add_scrollbar textarea');
-for(i = 0; i < textareaElements.length; i++) {
-    textareaElements[i].classList.remove('scroll-hide');
-    textareaElements[i].classList.add('pretty_scrollbar');
-    textareaElements[i].style.resize = "none";
-}
-
-//------------------------------------------------
 // Keyboard shortcuts
 //------------------------------------------------
 document.addEventListener("keydown", function(event) {
@@ -72,13 +62,25 @@ document.addEventListener("keydown", function(event) {
 // Chat scrolling
 //------------------------------------------------
 const targetElement = document.getElementById('chat').parentNode.parentNode.parentNode;
+targetElement.classList.add('pretty_scrollbar');
+targetElement.classList.add('chat-parent');
+let isScrolled = false;
+
+targetElement.addEventListener('scroll', function() {
+  let diff = targetElement.scrollHeight - targetElement.clientHeight;
+  if(Math.abs(targetElement.scrollTop - diff) <= 1 || diff == 0) {
+    isScrolled = false;
+  } else {
+    isScrolled = true;
+  }
+});
 
 // Create a MutationObserver instance
 const observer = new MutationObserver(function(mutations) {
   mutations.forEach(function(mutation) {
-    let nodes = targetElement.childNodes[2].childNodes[0].childNodes;
-    let childElement = nodes[nodes.length - 1];
-    childElement.scrollTop = childElement.scrollHeight;
+    if(!isScrolled) {
+      targetElement.scrollTop = targetElement.scrollHeight;
+    }
   });
 });
 
@@ -93,6 +95,16 @@ const config = {
 
 // Start observing the target element
 observer.observe(targetElement, config);
+
+//------------------------------------------------
+// Add some scrollbars
+//------------------------------------------------
+const textareaElements = document.querySelectorAll('.add_scrollbar textarea');
+for(i = 0; i < textareaElements.length; i++) {
+    textareaElements[i].classList.remove('scroll-hide');
+    textareaElements[i].classList.add('pretty_scrollbar');
+    textareaElements[i].style.resize = "none";
+}
 
 //------------------------------------------------
 // Improve the looks of the chat input field
