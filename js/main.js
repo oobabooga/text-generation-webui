@@ -59,6 +59,14 @@ document.addEventListener("keydown", function(event) {
 });
 
 //------------------------------------------------
+// Position the chat typing dots
+//------------------------------------------------
+typing = document.getElementById('typing-container');
+typingParent = typing.parentNode;
+typingSibling = typing.previousElementSibling;
+typingSibling.insertBefore(typing, typingSibling.childNodes[2]);
+
+//------------------------------------------------
 // Chat scrolling
 //------------------------------------------------
 const targetElement = document.getElementById('chat').parentNode.parentNode.parentNode;
@@ -81,6 +89,14 @@ const observer = new MutationObserver(function(mutations) {
     if(!isScrolled) {
       targetElement.scrollTop = targetElement.scrollHeight;
     }
+
+    const firstChild = targetElement.children[0];
+    if (firstChild.classList.contains('generating')) {
+      typing.parentNode.classList.add('visible-dots');
+    } else {
+      typing.parentNode.classList.remove('visible-dots');
+    }
+
   });
 });
 

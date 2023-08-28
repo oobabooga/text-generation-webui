@@ -323,12 +323,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     height: calc(100dvh - 200px);
 }
 
-#show-controls {
-    position: absolute;
-    background-color: transparent;
-    left: calc(100% - 180px);
-}
-
 .chat > .messages {
     display: flex;
     flex-direction: column;
@@ -411,4 +405,65 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     #chat-tab > :first-child {
         max-width: unset;
     }
+}
+
+#show-controls {
+    position: absolute;
+    background-color: transparent;
+    left: calc(100% - 180px);
+}
+
+#typing-container {
+    display: none;
+    position: absolute;
+    background-color: transparent;
+    left: -2px;
+    padding: var(--block-padding);
+}
+
+.typing {
+  position: relative;
+}
+
+.visible-dots #typing-container {
+    display: block;
+}
+
+.typing span {
+  content: '';
+  animation: blink 1.5s infinite;
+  animation-fill-mode: both;
+  height: 10px;
+  width: 10px;
+  background: #3b5998;;
+  position: absolute;
+  left:0;
+  top:0;
+  border-radius: 50%;
+}
+
+.typing .dot1 {
+  animation-delay: .2s;
+  margin-left: calc(10px * 1.5);
+}
+
+.typing .dot2 {
+  animation-delay: .4s;
+  margin-left: calc(10px * 3);
+}
+
+@keyframes blink {
+  0% {
+    opacity: .1;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: .1;
+  }
+}
+
+#chat-tab .generating {
+  display: none !important;
 }
