@@ -66,14 +66,14 @@ def convert_to_markdown(string):
     result = result.strip()
 
     # Unfinished list, like "\n1.". A |delete| string is added and then
-    # removed to force a <ol> to be generated instead of a <p>.
-    if re.search(r'(\d+\.?)$', result):
+    # removed to force a <ol> or <ul> to be generated instead of a <p>.
+    if re.search(r'(\n\d+\.?|\n\*\s*)$', result):
         delete_str = '|delete|'
 
-        if not result.endswith('.'):
+        if re.search(r'(\d+\.?)$', result) and not result.endswith('.'):
             result += '.'
 
-        result = re.sub(r'(\d+\.)$', r'\g<1> ' + delete_str, result)
+        result = re.sub(r'(\n\d+\.?|\n\*\s*)$', r'\g<1> ' + delete_str, result)
 
         html_output = markdown.markdown(result, extensions=['fenced_code', 'tables'])
         pos = html_output.rfind(delete_str)
