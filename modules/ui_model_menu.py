@@ -126,6 +126,7 @@ def create_ui():
                     shared.gradio['autoload_model'] = gr.Checkbox(value=shared.settings['autoload_model'], label='Autoload the model', info='Whether to load the model as soon as it is selected in the Model dropdown.')
 
                 shared.gradio['custom_model_menu'] = gr.Textbox(label="Download custom model or LoRA", info="Enter the Hugging Face username/model path, for instance: facebook/galactica-125m. To specify a branch, add it at the end after a \":\" character like this: facebook/galactica-125m:main")
+                shared.gradio['download_single_file'] = gr.Textbox(placeholder="File (for GGML/GGUF)", show_label=False, max_lines=1)
                 shared.gradio['download_model_button'] = gr.Button("Download")
 
                 with gr.Row():
@@ -170,7 +171,7 @@ def create_event_handlers():
         save_model_settings, gradio('model_menu', 'interface_state'), gradio('model_status'), show_progress=False)
 
     shared.gradio['lora_menu_apply'].click(load_lora_wrapper, gradio('lora_menu'), gradio('model_status'), show_progress=False)
-    shared.gradio['download_model_button'].click(download_model_wrapper, gradio('custom_model_menu'), gradio('model_status'), show_progress=True)
+    shared.gradio['download_model_button'].click(download_model_wrapper, gradio('custom_model_menu', 'download_single_file'), gradio('model_status'), show_progress=True)
     shared.gradio['autoload_model'].change(lambda x: gr.update(visible=not x), gradio('autoload_model'), gradio('load_model'))
 
 
@@ -206,7 +207,7 @@ def load_lora_wrapper(selected_loras):
     yield ("Successfuly applied the LoRAs")
 
 
-def download_model_wrapper(repo_id, progress=gr.Progress()):
+def download_model_wrapper(repo_id, single_file, progress=gr.Progress()):
     try:
         downloader_module = importlib.import_module("download-model")
         downloader = downloader_module.ModelDownloader()
@@ -220,7 +221,7 @@ def download_model_wrapper(repo_id, progress=gr.Progress()):
         model, branch = downloader.sanitize_model_and_branch_names(model, branch)
 
         yield ("Getting the download links from Hugging Face")
-        links, sha256, is_lora = downloader.get_download_links_from_huggingface(model, branch, text_only=False)
+        links, sha256, is_lora = downloader.get_download_links_from_huggingface(model, branch, text_only=False, specific_bin=single_file)
 
         yield ("Getting the output folder")
         base_folder = shared.args.lora_dir if is_lora else shared.args.model_dir
