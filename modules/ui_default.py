@@ -18,7 +18,7 @@ def create_ui():
         with gr.Row():
             with gr.Column():
                 with gr.Row():
-                    shared.gradio['textbox-default'] = gr.Textbox(value='', elem_classes=['textbox_default', 'add_scrollbar'], lines=27, label='Input')
+                    shared.gradio['textbox-default'] = gr.Textbox(value='', lines=27, label='Input', elem_classes=['textbox_default', 'add_scrollbar'])
                     shared.gradio['token-counter-default'] = gr.HTML(value="<span>0</span>", elem_classes=["token-counter", "default-token-counter"])
 
                 with gr.Row():
@@ -34,7 +34,7 @@ def create_ui():
 
             with gr.Column():
                 with gr.Tab('Raw'):
-                    shared.gradio['output_textbox'] = gr.Textbox(lines=27, label='Output', elem_classes=['textbox_default_output', 'add_scrollbar'])
+                    shared.gradio['output_textbox'] = gr.Textbox(lines=27, label='Output', elem_id='textbox-default', elem_classes=['textbox_default_output', 'add_scrollbar'])
 
                 with gr.Tab('Markdown'):
                     shared.gradio['markdown_render-default'] = gr.Button('Render')
