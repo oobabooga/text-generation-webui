@@ -8,6 +8,23 @@ function scrollToTop() {
     });
 }
 
+function findButtonsByText(buttonText) {
+  const buttons = document.getElementsByTagName('button');
+  const matchingButtons = [];
+  buttonText = buttonText.trim();
+
+  for (let i = 0; i < buttons.length; i++) {
+    const button = buttons[i];
+    const buttonInnerText = button.textContent.trim();
+
+    if (buttonInnerText === buttonText) {
+      matchingButtons.push(button);
+    }
+  }
+
+  return matchingButtons;
+}
+
 function switch_to_chat() {
     let chat_tab_button = main_parent.childNodes[0].childNodes[1];
     chat_tab_button.click();
@@ -23,21 +40,20 @@ function switch_to_default() {
 function switch_to_notebook() {
     let notebook_tab_button = main_parent.childNodes[0].childNodes[7];
     notebook_tab_button.click();
+    findButtonsByText('Raw')[1].click()
     scrollToTop();
 }
 
 function switch_to_generation_parameters() {
     let parameters_tab_button = main_parent.childNodes[0].childNodes[10];
-    let generation_tab_button = document.getElementById('character-menu').parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.childNodes[0].childNodes[1];
     parameters_tab_button.click();
-    generation_tab_button.click();
+    findButtonsByText('Generation')[0].click()
     scrollToTop();
 }
 
 function switch_to_character() {
     let parameters_tab_button = main_parent.childNodes[0].childNodes[10];
-    let character_tab_button = document.getElementById('character-menu').parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.childNodes[0].childNodes[4];
     parameters_tab_button.click();
-    character_tab_button.click();
+    findButtonsByText('Character')[0].click()
     scrollToTop();
 }
