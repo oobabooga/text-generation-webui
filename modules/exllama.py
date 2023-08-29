@@ -3,7 +3,7 @@ from pathlib import Path
 import torch.nn.functional as F
 from torch import version as torch_version
 
-from modules import shared
+from modules import RoPE, shared
 from modules.logging_colors import logger
 from modules.models import clear_torch_cache
 from modules.text_generation import get_max_prompt_length
@@ -56,8 +56,8 @@ class ExllamaModel:
             config.set_auto_map(shared.args.gpu_split)
             config.gpu_peer_fix = True
 
-        if shared.args.alpha_value:
-            config.alpha_value = shared.args.alpha_value
+        if shared.args.alpha_value > 1 or shared.args.rope_freq_base > 0:
+            config.alpha_value = RoPE.get_alpha_value(shared.args.alpha_value, shared.args.rope_freq_base)
             config.calculate_rotary_embedding_base()
 
         if torch_version.hip:
@@ -111,7 +111,7 @@ class ExllamaModel:
             self.generator.end_beam_search()
 
             # Tokenizing the input
-            ids = self.generator.tokenizer.encode(prompt)
+            ids = self.generator.tokenizer.encode(prompt, max_seq_len=self.model.config.max_seq_len)
             ids = ids[:, -get_max_prompt_length(state):]
             if state['auto_max_new_tokens']:
                 max_new_tokens = state['truncation_length'] - ids.shape[-1]
@@ -141,7 +141,7 @@ class ExllamaModel:
             alpha = state['guidance_scale']
             prompts = [prompt, state['negative_prompt'] or '']
 
-            ids, mask = self.tokenizer.encode(prompts, return_mask=True)
+            ids, mask = self.tokenizer.encode(prompts, return_mask=True, max_seq_len=self.model.config.max_seq_len)
             if state['auto_max_new_tokens']:
                 max_new_tokens = state['truncation_length'] - ids[0].shape[-1]
             else:
@@ -181,7 +181,7 @@ class ExllamaModel:
         return output
 
     def encode(self, string, **kwargs):
-        return self.tokenizer.encode(string)
+        return self.tokenizer.encode(string, max_seq_len=self.model.config.max_seq_len)
 
     def decode(self, string, **kwargs):
         return self.tokenizer.decode(string)[0]

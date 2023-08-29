@@ -1,4 +1,5 @@
 import asyncio
+import html
 import json
 import sys
 
@@ -36,8 +37,6 @@ async def run(user_input, history):
         # 'turn_template': 'turn_template', # Optional
         'regenerate': False,
         '_continue': False,
-        'stop_at_newline': False,
-        'chat_generation_attempts': 1,
         'chat_instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
 
         # Generation params. If 'preset' is set to different than 'None', the values
@@ -93,7 +92,7 @@ async def print_response_stream(user_input, history):
     async for new_history in run(user_input, history):
         cur_message = new_history['visible'][-1][1][cur_len:]
         cur_len += len(cur_message)
-        print(cur_message, end='')
+        print(html.unescape(cur_message), end='')
         sys.stdout.flush()  # If we don't flush, we won't see tokens in realtime.
 
 

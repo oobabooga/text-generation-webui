@@ -19,8 +19,6 @@ lora_names = []
 stop_everything = False
 generation_lock = None
 processing_message = '*Is typing...*'
-input_params = []
-reload_inputs = []
 
 # UI variables
 gradio = {}
@@ -31,40 +29,37 @@ session_is_loading = False
 # UI defaults
 settings = {
     'dark_theme': True,
-    'autoload_model': False,
+    'show_controls': True,
+    'start_with': '',
+    'mode': 'chat',
+    'chat_style': 'TheEncrypted777',
+    'character': 'None',
+    'prompt-default': 'QA',
+    'prompt-notebook': 'QA',
+    'preset': 'simple-1',
     'max_new_tokens': 200,
     'max_new_tokens_min': 1,
     'max_new_tokens_max': 4096,
-    'auto_max_new_tokens': False,
-    'max_tokens_second': 0,
     'seed': -1,
     'negative_prompt': '',
-    'character': 'None',
+    'truncation_length': 2048,
+    'truncation_length_min': 0,
+    'truncation_length_max': 16384,
+    'custom_stopping_strings': '',
+    'auto_max_new_tokens': False,
+    'max_tokens_second': 0,
+    'ban_eos_token': False,
+    'add_bos_token': True,
+    'skip_special_tokens': True,
+    'stream': True,
     'name1': 'You',
     'name2': 'Assistant',
     'context': 'This is a conversation with your Assistant. It is a computer program designed to help you with various tasks such as answering questions, providing recommendations, and helping with decision making. You can ask it anything you want and it will do its best to give you accurate and relevant information.',
     'greeting': '',
-    'turn_template': '',
-    'custom_stopping_strings': '',
-    'stop_at_newline': False,
-    'add_bos_token': True,
-    'ban_eos_token': False,
-    'skip_special_tokens': True,
-    'truncation_length': 2048,
-    'truncation_length_min': 0,
-    'truncation_length_max': 16384,
-    'mode': 'chat',
-    'start_with': '',
-    'chat_style': 'TheEncrypted777',
-    'instruction_template': 'None',
+    'instruction_template': 'Alpaca',
     'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
-    'chat_generation_attempts': 1,
-    'chat_generation_attempts_min': 1,
-    'chat_generation_attempts_max': 10,
-    'default_extensions': [],
-    'chat_default_extensions': ['gallery'],
-    'preset': 'simple-1',
-    'prompt': 'QA',
+    'autoload_model': False,
+    'default_extensions': ['gallery'],
 }
 
 
@@ -82,8 +77,8 @@ def str2bool(v):
 parser = argparse.ArgumentParser(formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=54))
 
 # Basic settings
-parser.add_argument('--notebook', action='store_true', help='Launch the web UI in notebook mode, where the output is written to the same text box as the input.')
-parser.add_argument('--chat', action='store_true', help='Launch the web UI in chat mode with a style similar to the Character.AI website.')
+parser.add_argument('--notebook', action='store_true', help='DEPRECATED')
+parser.add_argument('--chat', action='store_true', help='DEPRECATED')
 parser.add_argument('--multi-user', action='store_true', help='Multi-user mode. Chat histories are not saved or automatically loaded. WARNING: this is highly experimental.')
 parser.add_argument('--character', type=str, help='The name of the character to load in chat mode by default.')
 parser.add_argument('--model', type=str, help='Name of the model to load by default.')
@@ -91,7 +86,7 @@ parser.add_argument('--lora', type=str, nargs="+", help='The list of LoRAs to lo
 parser.add_argument("--model-dir", type=str, default='models/', help="Path to directory with all the models")
 parser.add_argument("--lora-dir", type=str, default='loras/', help="Path to directory with all the loras")
 parser.add_argument('--model-menu', action='store_true', help='Show a model menu in the terminal when the web UI is first launched.')
-parser.add_argument('--no-stream', action='store_true', help='Don\'t stream the text output in real time.')
+parser.add_argument('--no-stream', action='store_true', help='DEPRECATED')
 parser.add_argument('--settings', type=str, help='Load the default interface settings from this yaml file. See settings-template.yaml for an example. If you create a file called settings.yaml, this file will be loaded by default without the need to use the --settings flag.')
 parser.add_argument('--extensions', type=str, nargs="+", help='The list of extensions to load. If you want to load more than one extension, write the names separated by spaces.')
 parser.add_argument('--verbose', action='store_true', help='Print the prompts to the terminal.')
@@ -125,8 +120,10 @@ parser.add_argument('--n_batch', type=int, default=512, help='Maximum number of 
 parser.add_argument('--no-mmap', action='store_true', help='Prevent mmap from being used.')
 parser.add_argument('--low-vram', action='store_true', help='Low VRAM Mode')
 parser.add_argument('--mlock', action='store_true', help='Force the system to keep the model in RAM.')
+parser.add_argument('--mul_mat_q', action='store_true', help='Activate new mulmat kernels.')
 parser.add_argument('--cache-capacity', type=str, help='Maximum cache capacity. Examples: 2000MiB, 2GiB. When provided without units, bytes will be assumed.')
 parser.add_argument('--n-gpu-layers', type=int, default=0, help='Number of layers to offload to the GPU.')
+parser.add_argument('--tensor_split', type=str, default=None, help="Split the model across multiple GPUs, comma-separated list of proportions, e.g. 18,17")
 parser.add_argument('--n_ctx', type=int, default=2048, help='Size of the prompt context.')
 parser.add_argument('--llama_cpp_seed', type=int, default=0, help='Seed for llama-cpp models. Default 0 (random)')
 parser.add_argument('--n_gqa', type=int, default=0, help='grouped-query attention. Must be 8 for llama-2 70b.')
@@ -146,10 +143,12 @@ parser.add_argument('--no_inject_fused_attention', action='store_true', help='Do
 parser.add_argument('--no_inject_fused_mlp', action='store_true', help='Triton mode only: Do not use fused MLP (lowers VRAM requirements).')
 parser.add_argument('--no_use_cuda_fp16', action='store_true', help='This can make models faster on some systems.')
 parser.add_argument('--desc_act', action='store_true', help='For models that don\'t have a quantize_config.json, this parameter is used to define whether to set desc_act or not in BaseQuantizeConfig.')
+parser.add_argument('--disable_exllama', action='store_true', help='Disable ExLlama kernel, which can improve inference speed on some systems.')
 
 # ExLlama
 parser.add_argument('--gpu-split', type=str, help="Comma-separated list of VRAM (in GB) to use per GPU device for model layers, e.g. 20,7,7")
 parser.add_argument('--max_seq_len', type=int, default=2048, help="Maximum sequence length.")
+parser.add_argument('--cfg-cache', action='store_true', help="ExLlama_HF: Create an additional cache for CFG negative prompts. Necessary to use CFG with that loader, but not necessary for CFG with base ExLlama.")
 
 # DeepSpeed
 parser.add_argument('--deepspeed', action='store_true', help='Enable the use of DeepSpeed ZeRO-3 for inference via the Transformers integration.')
@@ -161,8 +160,9 @@ parser.add_argument('--rwkv-strategy', type=str, default=None, help='RWKV: The s
 parser.add_argument('--rwkv-cuda-on', action='store_true', help='RWKV: Compile the CUDA kernel for better performance.')
 
 # RoPE
-parser.add_argument('--compress_pos_emb', type=int, default=1, help="Positional embeddings compression factor. Should typically be set to max_seq_len / 2048.")
-parser.add_argument('--alpha_value', type=int, default=1, help="Positional embeddings alpha factor for NTK RoPE scaling. Use either this or compress_pos_emb, not both.")
+parser.add_argument('--alpha_value', type=float, default=1, help="Positional embeddings alpha factor for NTK RoPE scaling. Use either this or compress_pos_emb, not both.")
+parser.add_argument('--rope_freq_base', type=int, default=0, help="If greater than 0, will be used instead of alpha_value. Those two are related by rope_freq_base = 10000 * alpha_value ^ (64 / 63).")
+parser.add_argument('--compress_pos_emb', type=int, default=1, help="Positional embeddings compression factor. Should be set to (context length) / (model\'s original context length). Equal to 1/rope_freq_scale.")
 
 # Gradio
 parser.add_argument('--listen', action='store_true', help='Make the web UI reachable from your local network.')
@@ -187,6 +187,11 @@ parser.add_argument('--multimodal-pipeline', type=str, default=None, help='The m
 
 args = parser.parse_args()
 args_defaults = parser.parse_args([])
+
+# Deprecation warnings
+for k in ['chat', 'notebook', 'no_stream']:
+    if getattr(args, k):
+        logger.warning(f'The --{k} flag has been deprecated and will be removed soon. Please remove that flag.')
 
 # Security warnings
 if args.trust_remote_code:
@@ -216,6 +221,8 @@ def fix_loader_name(name):
         return 'ExLlama'
     elif name in ['exllama-hf', 'exllama_hf', 'exllama hf', 'ex-llama-hf', 'ex_llama_hf']:
         return 'ExLlama_HF'
+    elif name in ['ctransformers', 'ctranforemrs', 'ctransformer']:
+        return 'ctransformers'
 
 
 def add_extension(name):
@@ -226,16 +233,7 @@ def add_extension(name):
 
 
 def is_chat():
-    return args.chat
-
-
-def get_mode():
-    if args.chat:
-        return 'chat'
-    elif args.notebook:
-        return 'notebook'
-    else:
-        return 'default'
+    return True
 
 
 args.loader = fix_loader_name(args.loader)

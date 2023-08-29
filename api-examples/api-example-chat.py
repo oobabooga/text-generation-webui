@@ -1,3 +1,4 @@
+import html
 import json
 
 import requests
@@ -30,8 +31,6 @@ def run(user_input, history):
         # 'turn_template': 'turn_template', # Optional
         'regenerate': False,
         '_continue': False,
-        'stop_at_newline': False,
-        'chat_generation_attempts': 1,
         'chat_instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
 
         # Generation params. If 'preset' is set to different than 'None', the values
@@ -74,7 +73,7 @@ def run(user_input, history):
         result = response.json()['results'][0]['history']
         print(json.dumps(result, indent=4))
         print()
-        print(result['visible'][-1][1])
+        print(html.unescape(result['visible'][-1][1]))
 
 
 if __name__ == '__main__':

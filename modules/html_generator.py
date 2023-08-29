@@ -1,3 +1,4 @@
+import html
 import os
 import re
 import time
@@ -65,23 +66,27 @@ def convert_to_markdown(string):
     result = result.strip()
 
     # Unfinished list, like "\n1.". A |delete| string is added and then
-    # removed to force a <ol> to be generated instead of a <p>.
-    if re.search(r'(\d+\.?)$', result):
+    # removed to force a <ol> or <ul> to be generated instead of a <p>.
+    if re.search(r'(\n\d+\.?|\n\*\s*)$', result):
         delete_str = '|delete|'
 
-        if not result.endswith('.'):
+        if re.search(r'(\d+\.?)$', result) and not result.endswith('.'):
             result += '.'
 
-        result = re.sub(r'(\d+\.)$', r'\g<1> ' + delete_str, result)
+        result = re.sub(r'(\n\d+\.?|\n\*\s*)$', r'\g<1> ' + delete_str, result)
 
-        html = markdown.markdown(result, extensions=['fenced_code', 'tables'])
-        pos = html.rfind(delete_str)
+        html_output = markdown.markdown(result, extensions=['fenced_code', 'tables'])
+        pos = html_output.rfind(delete_str)
         if pos > -1:
-            html = html[:pos] + html[pos + len(delete_str):]
+            html_output = html_output[:pos] + html_output[pos + len(delete_str):]
     else:
-        html = markdown.markdown(result, extensions=['fenced_code', 'tables'])
+        html_output = markdown.markdown(result, extensions=['fenced_code', 'tables'])
 
-    return html
+    # Unescape code blocks
+    pattern = re.compile(r'<code[^>]*>(.*?)</code>', re.DOTALL)
+    html_output = pattern.sub(lambda x: html.unescape(x.group()), html_output)
+
+    return html_output
 
 
 def generate_basic_html(string):
@@ -100,7 +105,7 @@ def process_post(post, c):
     src = re.sub('>', '&gt;', src)
     src = re.sub('(&gt;&gt;[0-9]*)', '<span class="quote">\\1</span>', src)
     src = re.sub('\n', '<br>\n', src)
-    src = f'<blockquote class="message">{src}\n'
+    src = f'<blockquote class="message_4chan">{src}\n'
     src = f'<span class="name">Anonymous </span> <span class="number">No.{number}</span>\n{src}'
     return src
 
@@ -141,7 +146,7 @@ def generate_4chan_html(f):
     output = output.split('\n')
     for i in range(len(output)):
         output[i] = re.sub(r'^(&gt;(.*?)(<br>|</div>))', r'<span class="greentext">\1</span>', output[i])
-        output[i] = re.sub(r'^<blockquote class="message">(&gt;(.*?)(<br>|</div>))', r'<blockquote class="message"><span class="greentext">\1</span>', output[i])
+        output[i] = re.sub(r'^<blockquote class="message_4chan">(&gt;(.*?)(<br>|</div>))', r'<blockquote class="message_4chan"><span class="greentext">\1</span>', output[i])
 
     output = '\n'.join(output)
     return output
@@ -177,7 +182,7 @@ def get_image_cache(path):
 
 
 def generate_instruct_html(history):
-    output = f'<style>{instruct_css}</style><div class="chat pretty_scrollbar" id="chat"><div class="messages">'
+    output = f'<style>{instruct_css}</style><div class="chat" id="chat"><div class="messages">'
     for i, _row in enumerate(history):
         row = [convert_to_markdown(entry) for entry in _row]
 
@@ -208,7 +213,7 @@ def generate_instruct_html(history):
 
 
 def generate_cai_chat_html(history, name1, name2, style, reset_cache=False):
-    output = f'<style>{chat_styles[style]}</style><div class="chat pretty_scrollbar" id="chat"><div class="messages">'
+    output = f'<style>{chat_styles[style]}</style><div class="chat" id="chat"><div class="messages">'
 
     # We use ?name2 and ?time.time() to force the browser to reset caches
     img_bot = f'<img src="file/cache/pfp_character.png?{name2}">' if Path("cache/pfp_character.png").exists() else ''
@@ -255,7 +260,7 @@ def generate_cai_chat_html(history, name1, name2, style, reset_cache=False):
 
 
 def generate_chat_html(history, name1, name2, reset_cache=False):
-    output = f'<style>{chat_styles["wpp"]}</style><div class="chat pretty_scrollbar" id="chat"><div class="messages">'
+    output = f'<style>{chat_styles["wpp"]}</style><div class="chat" id="chat"><div class="messages">'
 
     for i, _row in enumerate(history):
         row = [convert_to_markdown(entry) for entry in _row]

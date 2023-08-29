@@ -1,5 +1,6 @@
 import ast
 import copy
+import html
 import random
 import re
 import time
@@ -31,7 +32,7 @@ def generate_reply(*args, **kwargs):
         shared.generation_lock.release()
 
 
-def _generate_reply(question, state, stopping_strings=None, is_chat=False):
+def _generate_reply(question, state, stopping_strings=None, is_chat=False, escape_html=False):
 
     # Find the appropriate generation function
     generate_func = apply_extensions('custom_generate_reply')
@@ -41,7 +42,7 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False):
             yield ''
             return
 
-        if shared.model.__class__.__name__ in ['LlamaCppModel', 'RWKVModel', 'ExllamaModel']:
+        if shared.model.__class__.__name__ in ['LlamaCppModel', 'RWKVModel', 'ExllamaModel', 'CtransformersModel']:
             generate_func = generate_reply_custom
         else:
             generate_func = generate_reply_HF
@@ -73,6 +74,9 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False):
 
     # Generate
     for reply in generate_func(question, original_question, seed, state, stopping_strings, is_chat=is_chat):
+        if escape_html:
+            reply = html.escape(reply)
+
         reply, stop_found = apply_stopping_strings(reply, all_stop_strings)
         if is_stream:
             cur_time = time.time()
@@ -102,7 +106,7 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False):
 
 
 def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_length=None):
-    if shared.model.__class__.__name__ in ['LlamaCppModel', 'RWKVModel']:
+    if shared.model.__class__.__name__ in ['LlamaCppModel', 'RWKVModel', 'CtransformersModel']:
         input_ids = shared.tokenizer.encode(str(prompt))
         input_ids = np.array(input_ids).reshape(1, len(input_ids))
     else:
@@ -116,7 +120,7 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
     if truncation_length is not None:
         input_ids = input_ids[:, -truncation_length:]
 
-    if shared.model.__class__.__name__ in ['LlamaCppModel', 'RWKVModel', 'ExllamaModel'] or shared.args.cpu:
+    if shared.model.__class__.__name__ in ['LlamaCppModel', 'RWKVModel', 'ExllamaModel', 'CtransformersModel'] or shared.args.cpu:
         return input_ids
     elif shared.args.deepspeed:
         return input_ids.to(device=local_rank)
@@ -150,7 +154,7 @@ def generate_reply_wrapper(question, state, stopping_strings=None):
     reply = question if not shared.is_seq2seq else ''
     yield formatted_outputs(reply, shared.model_name)
 
-    for reply in generate_reply(question, state, stopping_strings, is_chat=False):
+    for reply in generate_reply(question, state, stopping_strings, is_chat=False, escape_html=True):
         if not shared.is_seq2seq:
             reply = question + reply
 
@@ -160,9 +164,9 @@ def generate_reply_wrapper(question, state, stopping_strings=None):
 def formatted_outputs(reply, model_name):
     if any(s in model_name for s in ['gpt-4chan', 'gpt4chan']):
         reply = fix_gpt4chan(reply)
-        return reply, generate_4chan_html(reply)
+        return html.unescape(reply), generate_4chan_html(reply)
     else:
-        return reply, generate_basic_html(reply)
+        return html.unescape(reply), generate_basic_html(reply)
 
 
 def fix_gpt4chan(s):
