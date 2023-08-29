@@ -93,6 +93,7 @@ def list_interface_input_elements():
     elements = [
         'max_new_tokens',
         'auto_max_new_tokens',
+        'max_tokens_second',
         'seed',
         'temperature',
         'top_p',
@@ -119,7 +120,6 @@ def list_interface_input_elements():
         'ban_eos_token',
         'truncation_length',
         'custom_stopping_strings',
-        'max_tokens_second',
         'skip_special_tokens',
         'stream',
         'tfs',
