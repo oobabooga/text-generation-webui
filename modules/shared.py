@@ -55,7 +55,7 @@ settings = {
     'name2': 'Assistant',
     'context': 'This is a conversation with your Assistant. It is a computer program designed to help you with various tasks such as answering questions, providing recommendations, and helping with decision making. You can ask it anything you want and it will do its best to give you accurate and relevant information.',
     'greeting': '',
-    'instruction_template': 'None',
+    'instruction_template': 'Alpaca',
     'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
     'autoload_model': False,
     'default_extensions': ['gallery'],
