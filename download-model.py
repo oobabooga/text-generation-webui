@@ -131,9 +131,13 @@ class ModelDownloader:
 
         return links, sha256, is_lora
 
-    def get_output_folder(self, model, branch, is_lora, base_folder=None):
+    def get_output_folder(self, model, branch, is_lora, base_folder=None, is_gguf=False, is_ggml=False):
         if base_folder is None:
             base_folder = 'models' if not is_lora else 'loras'
+
+        # If the model is of type GGUF or GGML, save directly in the base_folder
+        if is_gguf or is_ggml:
+            return Path(base_folder)
 
         output_folder = f"{'_'.join(model.split('/')[-2:])}"
         if branch != 'main':
@@ -254,9 +258,13 @@ if __name__ == '__main__':
 
     # Getting the download links from Hugging Face
     links, sha256, is_lora = downloader.get_download_links_from_huggingface(model, branch, text_only=args.text_only, specific_bin=specific_bin)
-
+    
+    # Check if the model is of type GGUF or GGML
+    is_gguf = any(re.search(r'.*\.gguf$', link) for link in links)
+    is_ggml = any(re.search(r'.*ggml.*\.bin$', link) for link in links)    
+    
     # Getting the output folder
-    output_folder = downloader.get_output_folder(model, branch, is_lora, base_folder=args.output)
+    output_folder = downloader.get_output_folder(model, branch, is_lora, base_folder=args.output, is_gguf=is_gguf, is_ggml=is_ggml)
 
     if args.check:
         # Check previously downloaded files
