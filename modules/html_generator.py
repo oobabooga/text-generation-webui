@@ -66,14 +66,14 @@ def convert_to_markdown(string):
     result = result.strip()
 
     # Unfinished list, like "\n1.". A |delete| string is added and then
-    # removed to force a <ol> to be generated instead of a <p>.
-    if re.search(r'(\d+\.?)$', result):
+    # removed to force a <ol> or <ul> to be generated instead of a <p>.
+    if re.search(r'(\n\d+\.?|\n\*\s*)$', result):
         delete_str = '|delete|'
 
-        if not result.endswith('.'):
+        if re.search(r'(\d+\.?)$', result) and not result.endswith('.'):
             result += '.'
 
-        result = re.sub(r'(\d+\.)$', r'\g<1> ' + delete_str, result)
+        result = re.sub(r'(\n\d+\.?|\n\*\s*)$', r'\g<1> ' + delete_str, result)
 
         html_output = markdown.markdown(result, extensions=['fenced_code', 'tables'])
         pos = html_output.rfind(delete_str)
@@ -182,7 +182,7 @@ def get_image_cache(path):
 
 
 def generate_instruct_html(history):
-    output = f'<style>{instruct_css}</style><div class="chat pretty_scrollbar" id="chat"><div class="messages">'
+    output = f'<style>{instruct_css}</style><div class="chat" id="chat"><div class="messages">'
     for i, _row in enumerate(history):
         row = [convert_to_markdown(entry) for entry in _row]
 
@@ -213,7 +213,7 @@ def generate_instruct_html(history):
 
 
 def generate_cai_chat_html(history, name1, name2, style, reset_cache=False):
-    output = f'<style>{chat_styles[style]}</style><div class="chat pretty_scrollbar" id="chat"><div class="messages">'
+    output = f'<style>{chat_styles[style]}</style><div class="chat" id="chat"><div class="messages">'
 
     # We use ?name2 and ?time.time() to force the browser to reset caches
     img_bot = f'<img src="file/cache/pfp_character.png?{name2}">' if Path("cache/pfp_character.png").exists() else ''
@@ -260,7 +260,7 @@ def generate_cai_chat_html(history, name1, name2, style, reset_cache=False):
 
 
 def generate_chat_html(history, name1, name2, reset_cache=False):
-    output = f'<style>{chat_styles["wpp"]}</style><div class="chat pretty_scrollbar" id="chat"><div class="messages">'
+    output = f'<style>{chat_styles["wpp"]}</style><div class="chat" id="chat"><div class="messages">'
 
     for i, _row in enumerate(history):
         row = [convert_to_markdown(entry) for entry in _row]
