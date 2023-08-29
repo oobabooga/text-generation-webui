@@ -1,3 +1,4 @@
+import html
 import json
 
 import requests
@@ -72,7 +73,7 @@ def run(user_input, history):
         result = response.json()['results'][0]['history']
         print(json.dumps(result, indent=4))
         print()
-        print(result['visible'][-1][1])
+        print(html.unescape(result['visible'][-1][1]))
 
 
 if __name__ == '__main__':

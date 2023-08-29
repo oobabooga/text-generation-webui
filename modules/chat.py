@@ -176,6 +176,9 @@ def get_stopping_strings(state):
             f"\n{state['name2']}:"
         ]
 
+    if 'stopping_strings' in state and isinstance(state['stopping_strings'], list):
+        stopping_strings += state.pop('stopping_strings')
+
     return stopping_strings
 
 
