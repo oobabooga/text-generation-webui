@@ -17,6 +17,7 @@ truncation_length_min: 0
 truncation_length_max: 16384
 custom_stopping_strings: ''
 auto_max_new_tokens: false
+max_tokens_second: 0
 ban_eos_token: false
 add_bos_token: true
 skip_special_tokens: true
@@ -25,7 +26,7 @@ name1: You
 name2: Assistant
 context: This is a conversation with your Assistant. It is a computer program designed to help you with various tasks such as answering questions, providing recommendations, and helping with decision making. You can ask it anything you want and it will do its best to give you accurate and relevant information.
 greeting: ''
-instruction_template: None
+instruction_template: Alpaca
 chat-instruct_command: |-
   Continue the chat dialogue below. Write a single reply for the character "<|character|>".
 

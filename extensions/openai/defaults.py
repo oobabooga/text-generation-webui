@@ -5,6 +5,7 @@ import copy
 default_req_params = {
     'max_new_tokens': 16,  # 'Inf' for chat
     'auto_max_new_tokens': False,
+    'max_tokens_second': 0,
     'temperature': 1.0,
     'top_p': 1.0,
     'top_k': 1,  # choose 20 for chat in absence of another default
