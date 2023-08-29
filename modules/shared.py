@@ -47,6 +47,7 @@ settings = {
     'truncation_length_max': 16384,
     'custom_stopping_strings': '',
     'auto_max_new_tokens': False,
+    'max_tokens_second': 0,
     'ban_eos_token': False,
     'add_bos_token': True,
     'skip_special_tokens': True,
