@@ -3,7 +3,7 @@ fastapi==0.95.2
 gradio_client==0.2.5
 gradio==3.33.1
 
-accelerate==0.21.*
+accelerate==0.22.*
 colorama
 datasets
 einops
