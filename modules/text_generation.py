@@ -265,9 +265,7 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
     if state['ban_eos_token']:
         generate_params['suppress_tokens'] = [shared.tokenizer.eos_token_id]
 
-    if shared.args.no_cache:
-        generate_params.update({'use_cache': False})
-
+    generate_params.update({'use_cache': not shared.args.no_cache})
     if shared.args.deepspeed:
         generate_params.update({'synced_gpus': True})
 
