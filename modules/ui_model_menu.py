@@ -127,7 +127,7 @@ def create_ui():
                     shared.gradio['autoload_model'] = gr.Checkbox(value=shared.settings['autoload_model'], label='Autoload the model', info='Whether to load the model as soon as it is selected in the Model dropdown.')
 
                 shared.gradio['custom_model_menu'] = gr.Textbox(label="Download model or LoRA", info="Enter the Hugging Face username/model path, for instance: facebook/galactica-125m. To specify a branch, add it at the end after a \":\" character like this: facebook/galactica-125m:main. To download a single file, enter its name in the second box.")
-                shared.gradio['download_specific_file'] = gr.Textbox(placeholder="File (for GGML/GGUF)", show_label=False, max_lines=1)
+                shared.gradio['download_specific_file'] = gr.Textbox(placeholder="File name (for GGUF/GGML)", show_label=False, max_lines=1)
                 with gr.Row():
                     shared.gradio['download_model_button'] = gr.Button("Download", variant='primary')
                     shared.gradio['get_file_list'] = gr.Button("Get file list")
@@ -241,7 +241,7 @@ def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), retur
             downloader.check_model_files(model, branch, links, sha256, output_folder)
             progress(1.0)
         else:
-            yield (f"Downloading files to {output_folder}")
+            yield (f"Downloading file{'s' if len(links) > 1 else ''} to `{output_folder}/`")
             downloader.download_model_files(model, branch, links, sha256, output_folder, progress_bar=progress, threads=1, is_llamacpp=is_llamacpp)
             yield ("Done!")
     except:

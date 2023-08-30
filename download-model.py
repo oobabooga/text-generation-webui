@@ -175,7 +175,7 @@ class ModelDownloader:
                         f.write(data)
                         if total_size != 0 and self.progress_bar is not None:
                             count += len(data)
-                            self.progress_bar(float(count) / float(total_size), f"Downloading {filename}")
+                            self.progress_bar(float(count) / float(total_size), f"{filename}")
 
     def start_download_threads(self, file_list, output_folder, start_from_scratch=False, threads=1):
         thread_map(lambda url: self.get_single_file(url, output_folder, start_from_scratch=start_from_scratch), file_list, max_workers=threads, disable=True)
