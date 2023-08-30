@@ -43,7 +43,7 @@ The API exists to make it possible to automate text generation actions available
 
 ## Extensions
 
-As a rule of thumb, new extensions should be submitted to https://github.com/oobabooga/text-generation-webui-extensions. **You are highly encouraged to submit your extensions to that list!**. 
+As a rule of thumb, new extensions should be submitted to https://github.com/oobabooga/text-generation-webui-extensions. **You are highly encouraged to submit your extensions to that list!**
 
 New built-in extensions can be accepted in cases where they would be useful to a large percentage of the user base, preferably while adding few or no additional dependencies.
 
