@@ -60,6 +60,7 @@ RUN --mount=type=cache,target=/root/.cache/pip . /app/venv/bin/activate && cd ex
 RUN --mount=type=cache,target=/root/.cache/pip . /app/venv/bin/activate && cd extensions/whisper_stt && pip3 install -r requirements.txt
 RUN --mount=type=cache,target=/root/.cache/pip . /app/venv/bin/activate && cd extensions/superbooga && pip3 install -r requirements.txt
 RUN --mount=type=cache,target=/root/.cache/pip . /app/venv/bin/activate && cd extensions/openai && pip3 install -r requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip . /app/venv/bin/activate && cd extensions/xformers && pip3 install -r requirements.txt
 
 COPY requirements.txt /app/requirements.txt
 RUN . /app/venv/bin/activate && \
