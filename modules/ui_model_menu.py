@@ -242,7 +242,7 @@ def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), retur
             progress(1.0)
         else:
             yield (f"Downloading files to {output_folder}")
-            downloader.download_model_files(model, branch, links, sha256, output_folder, progress_bar=progress, threads=1)
+            downloader.download_model_files(model, branch, links, sha256, output_folder, progress_bar=progress, threads=1, is_llamacpp=is_llamacpp)
             yield ("Done!")
     except:
         progress(1.0)
