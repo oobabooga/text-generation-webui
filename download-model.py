@@ -75,7 +75,7 @@ class ModelDownloader:
                 fname = dict[i]['path']
                 if specific_file is not None and fname != specific_file:
                     continue
-                
+
                 if not is_lora and fname.endswith(('adapter_config.json', 'adapter_model.bin')):
                     is_lora = True
 
@@ -199,7 +199,7 @@ class ModelDownloader:
         if specific_file:
             print(f"Downloading {specific_file} to {output_folder}")
         else:
-            print(f"Downloading the model to {output_folder}")        
+            print(f"Downloading the model to {output_folder}")
 
         self.start_download_threads(links, output_folder, start_from_scratch=start_from_scratch, threads=threads)
 
@@ -261,7 +261,7 @@ if __name__ == '__main__':
 
     # Get the download links from Hugging Face
     links, sha256, is_lora, is_llamacpp = downloader.get_download_links_from_huggingface(model, branch, text_only=args.text_only, specific_file=specific_file)
-    
+
     # Get the output folder
     output_folder = downloader.get_output_folder(model, branch, is_lora, is_llamacpp=is_llamacpp, base_folder=args.output)
 
