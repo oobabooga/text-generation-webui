@@ -1,5 +1,11 @@
 # Text generation web UI
 
+**THIS IS A FORK** - [see upstream](https://github.com/oobabooga/text-generation-webui)!
+
+[active](https://github.com/sammcj/text-generation-webui/tree/deepspeed-1)
+
+---
+
 A Gradio web UI for Large Language Models.
 
 Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.com/AUTOMATIC1111/stable-diffusion-webui) of text generation.
@@ -73,7 +79,7 @@ conda activate textgen
 | Windows | NVIDIA | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117` |
 | Windows | CPU only | `pip3 install torch torchvision torchaudio` |
 
-The up-to-date commands can be found here: https://pytorch.org/get-started/locally/. 
+The up-to-date commands can be found here: https://pytorch.org/get-started/locally/.
 
 #### 3. Install the web UI
 
@@ -204,7 +210,7 @@ When you load this model in default or notebook modes, the "HTML" tab will show 
     cd text-generation-webui
     python server.py
 
-Then browse to 
+Then browse to
 
 `http://localhost:7860/?__theme=dark`
 

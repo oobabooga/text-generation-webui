@@ -3,13 +3,23 @@ name: Update Fork
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 */12 * * *"
+    - cron: "0 19,03 * * *" # At 19:00 and 03:00, every day (UTC)
 
 jobs:
   update-fork:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - name: curl pull.git.ci
-        shell: bash
-        run: |
-          curl -L -s https://pull.git.ci/process/sammcj/text-generation-webui -A "Mozilla/5.0 (compatible;  MSIE 7.01; Windows NT 5.0)"
+      - uses: tgymnich/fork-sync@v1.8
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          owner: oobabooga
+          base: main
+          head: main
+
+      - uses: tgymnich/fork-sync@v1.8
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          owner: oobabooga
+          base: main
+          head: maindeepspeed-1
