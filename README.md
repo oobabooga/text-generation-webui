@@ -95,7 +95,7 @@ pip install -r requirements_nocuda.txt
 
 3) AMD: Manually install AutoGPTQ: [Installation](https://github.com/PanQiWei/AutoGPTQ#installation).
 
-4) AMD: Manually install ExLlama by simply cloning it into the `repositories` folder (it will be automatically compiled at runtime after that):
+4) AMD: Manually install [ExLlama](https://github.com/turboderp/exllama) by simply cloning it into the `repositories` folder (it will be automatically compiled at runtime after that):
 
 ```
 cd text-generation-webui
