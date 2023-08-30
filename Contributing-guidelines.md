@@ -36,7 +36,7 @@ This project aims to provide a web interface for interacting with Large Language
 
 **API**
 
-The API exists to make it possible to automate text generation actions available in the UI.
+The API exists to make it possible to automate text generation actions available in the UI. It is implemented as an extension.
 
 * You should not add features exclusively to the API if they could be added to the UI first.
 * Providing an API with extensive and niche features is not a priority.
