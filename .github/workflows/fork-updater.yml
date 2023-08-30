@@ -12,4 +12,4 @@ jobs:
       - name: curl pull.git.ci
         shell: bash
         run: |
-          curl https://pull.git.ci/process/sammcj/text-generation-webui
+          curl -L -s https://pull.git.ci/process/sammcj/text-generation-webui -A "Mozilla/5.0 (compatible;  MSIE 7.01; Windows NT 5.0)"
