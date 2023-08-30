@@ -158,8 +158,6 @@ text-generation-webui
 │   │   └── tokenizer.model
 ```
 
-In the "Model" tab of the UI, those models can be automatically downloaded from Hugging Face. You can also download them via the command-line with `python download-model.py organization/model`.
-
 * GGML/GGUF models are a single file and should be placed directly into `models`. Example:
 
 ```
@@ -167,6 +165,8 @@ text-generation-webui
 ├── models
 │   ├── llama-13b.ggmlv3.q4_K_M.bin
 ```
+
+In both cases, you can use the "Model" tab of the UI to download the model from Hugging Face automatically. It is also possible to download via the command-line with `python download-model.py organization/model` (use `--help` to see all the options).
 
 #### GPT-4chan
 
