@@ -1,0 +1,15 @@
+name: Update Fork
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 */12 * * *"
+
+jobs:
+  update-fork:
+    runs-on: ubuntu-latest
+    steps:
+      - name: curl pull.git.ci
+        shell: bash
+        run: |
+          curl https://pull.git.ci/process/sammcj/text-generation-webui
