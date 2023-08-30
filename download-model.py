@@ -73,7 +73,7 @@ class ModelDownloader:
 
             for i in range(len(dict)):
                 fname = dict[i]['path']
-                if specific_file is not None and fname != specific_file:
+                if specific_file not in [None, ''] and fname != specific_file:
                     continue
 
                 if not is_lora and fname.endswith(('adapter_config.json', 'adapter_model.bin')):
@@ -175,26 +175,28 @@ class ModelDownloader:
                         f.write(data)
                         if total_size != 0 and self.progress_bar is not None:
                             count += len(data)
-                            self.progress_bar(float(count) / float(total_size), f"Downloading {filename}")
+                            self.progress_bar(float(count) / float(total_size), f"{filename}")
 
     def start_download_threads(self, file_list, output_folder, start_from_scratch=False, threads=1):
         thread_map(lambda url: self.get_single_file(url, output_folder, start_from_scratch=start_from_scratch), file_list, max_workers=threads, disable=True)
 
-    def download_model_files(self, model, branch, links, sha256, output_folder, progress_bar=None, start_from_scratch=False, threads=1, specific_file=None):
+    def download_model_files(self, model, branch, links, sha256, output_folder, progress_bar=None, start_from_scratch=False, threads=1, specific_file=None, is_llamacpp=False):
         self.progress_bar = progress_bar
 
-        # Creating the folder and writing the metadata
+        # Create the folder and writing the metadata
         output_folder.mkdir(parents=True, exist_ok=True)
-        metadata = f'url: https://huggingface.co/{model}\n' \
-                   f'branch: {branch}\n' \
-                   f'download date: {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n'
 
-        sha256_str = '\n'.join([f'    {item[1]} {item[0]}' for item in sha256])
-        if sha256_str:
-            metadata += f'sha256sum:\n{sha256_str}'
+        if not is_llamacpp:
+            metadata = f'url: https://huggingface.co/{model}\n' \
+                       f'branch: {branch}\n' \
+                       f'download date: {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n'
 
-        metadata += '\n'
-        (output_folder / 'huggingface-metadata.txt').write_text(metadata)
+            sha256_str = '\n'.join([f'    {item[1]} {item[0]}' for item in sha256])
+            if sha256_str:
+                metadata += f'sha256sum:\n{sha256_str}'
+
+            metadata += '\n'
+            (output_folder / 'huggingface-metadata.txt').write_text(metadata)
 
         if specific_file:
             print(f"Downloading {specific_file} to {output_folder}")
@@ -270,4 +272,4 @@ if __name__ == '__main__':
         downloader.check_model_files(model, branch, links, sha256, output_folder)
     else:
         # Download files
-        downloader.download_model_files(model, branch, links, sha256, output_folder, specific_file=specific_file, threads=args.threads)
+        downloader.download_model_files(model, branch, links, sha256, output_folder, specific_file=specific_file, threads=args.threads, is_llamacpp=is_llamacpp)
