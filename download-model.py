@@ -73,7 +73,7 @@ class ModelDownloader:
 
             for i in range(len(dict)):
                 fname = dict[i]['path']
-                if specific_file is not None and fname != specific_file:
+                if specific_file not in [None, ''] and fname != specific_file:
                     continue
 
                 if not is_lora and fname.endswith(('adapter_config.json', 'adapter_model.bin')):
