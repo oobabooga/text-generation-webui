@@ -164,8 +164,6 @@ text-generation-webui
 │   ├── llama-13b.ggmlv3.q4_K_M.bin
 ```
 
-Those models must be downloaded manually, as they are not currently supported by the automated downloader.
-
 #### GPT-4chan
 
 <details>
