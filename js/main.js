@@ -3,6 +3,7 @@ let extensions = document.getElementById('extensions');
 
 main_parent.childNodes[0].classList.add("header_bar");
 main_parent.style = "padding: 0; margin: 0";
+main_parent.parentNode.style = "gap: 0";
 main_parent.parentNode.parentNode.style = "padding: 0";
 
 document.querySelector('.header_bar').addEventListener('click', function(event) {

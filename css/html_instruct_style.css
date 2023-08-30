@@ -13,7 +13,7 @@
 
 .message-body p {
     font-size: 15px !important;
-    line-height: 1.75 !important;
+    line-height: 1.4 !important;
     margin-bottom: 1.25em !important;
 }
 
@@ -48,7 +48,7 @@
 }
 
 .dark .chat .assistant-message {
-    background-color: #3741519e;
+    background-color: #1f2937;
     border: 1px solid #4b5563;
 }
 

@@ -22,6 +22,7 @@ async def run(user_input, history):
         'user_input': user_input,
         'max_new_tokens': 250,
         'auto_max_new_tokens': False,
+        'max_tokens_second': 0,
         'history': history,
         'mode': 'instruct',  # Valid options: 'chat', 'chat-instruct', 'instruct'
         'character': 'Example',
