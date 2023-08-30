@@ -73,7 +73,7 @@ class ModelDownloader:
 
             for i in range(len(dict)):
                 fname = dict[i]['path']
-                if isinstance(specific_file, str) and fname != specific_file:
+                if specific_file is not None and fname != specific_file:
                     continue
                 
                 if not is_lora and fname.endswith(('adapter_config.json', 'adapter_model.bin')):
@@ -129,7 +129,7 @@ class ModelDownloader:
                 if classifications[i] == 'ggml':
                     links.pop(i)
 
-        return links, sha256, is_lora, (has_ggml or has_gguf)
+        return links, sha256, is_lora, ((has_ggml or has_gguf) and specific_file is not None)
 
     def get_output_folder(self, model, branch, is_lora, is_llamacpp=False, base_folder=None):
         if base_folder is None:
