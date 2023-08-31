@@ -76,6 +76,7 @@ def create_ui():
                             shared.gradio['transformers_info'] = gr.Markdown('load-in-4bit params:')
                             shared.gradio['compute_dtype'] = gr.Dropdown(label="compute_dtype", choices=["bfloat16", "float16", "float32"], value=shared.args.compute_dtype)
                             shared.gradio['quant_type'] = gr.Dropdown(label="quant_type", choices=["nf4", "fp4"], value=shared.args.quant_type)
+                            shared.gradio['disable_exllama']=gr.Checkbox(label="disable exllama kernel", value=shared.args.disable_exllama, info='Exllama kernel requires model to be loaded on GPUs, disable if using CPU or Lora training.')
 
                             shared.gradio['n_gpu_layers'] = gr.Slider(label="n-gpu-layers", minimum=0, maximum=128, value=shared.args.n_gpu_layers)
                             shared.gradio['n_ctx'] = gr.Slider(minimum=0, maximum=16384, step=256, label="n_ctx", value=shared.args.n_ctx)
