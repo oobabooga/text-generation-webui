@@ -107,6 +107,7 @@ parser.add_argument('--no-cache', action='store_true', help='Set use_cache to Fa
 parser.add_argument('--xformers', action='store_true', help="Use xformer's memory efficient attention. This should increase your tokens/s.")
 parser.add_argument('--sdp-attention', action='store_true', help="Use torch 2.0's sdp attention.")
 parser.add_argument('--trust-remote-code', action='store_true', help="Set trust_remote_code=True while loading a model. Necessary for ChatGLM and Falcon.")
+parser.add_argument('--disable_exllama', action='store_true', help="Set disable_exllama=True while loading a model. Necessary if loading a quantized model on CPU (exllama only supports loading the model on GPUs) and if training.")
 
 # Accelerate 4-bit
 parser.add_argument('--load-in-4bit', action='store_true', help='Load the model with 4-bit precision (using bitsandbytes).')
