@@ -20,6 +20,8 @@ from modules.models_settings import (
 )
 from modules.utils import gradio
 
+# To determine whether the model was completely downloaded or just its metadata
+complete_model_download = False
 
 def create_ui():
     # Finding the default values for the GPU and CPU memories
@@ -177,7 +179,7 @@ def create_event_handlers():
     shared.gradio['lora_menu_apply'].click(load_lora_wrapper, gradio('lora_menu'), gradio('model_status'), show_progress=False)
     shared.gradio['download_model_button'].click(download_model_wrapper, gradio('custom_model_menu', 'download_specific_file'), gradio('model_status'), show_progress=True)
     shared.gradio['download_metadata_model_button'].click(download_metadata_model_wrapper, gradio('custom_model_menu', 'download_specific_file'), gradio('model_status'), show_progress=True)
-    shared.gradio['get_file_list'].click(partial(download_model_wrapper, return_links=True), gradio('custom_model_menu', 'download_specific_file'), gradio('model_status'), show_progress=True)
+    shared.gradio['get_file_list'].click(partial(download_model_wrapper if complete_model_download else download_metadata_model_wrapper, return_links=True), gradio('custom_model_menu', 'download_specific_file'), gradio('model_status'), show_progress=True)
     shared.gradio['autoload_model'].change(lambda x: gr.update(visible=not x), gradio('autoload_model'), gradio('load_model'))
 
 
@@ -215,6 +217,7 @@ def load_lora_wrapper(selected_loras):
 
 def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), return_links=False):
     try:
+        complete_model_download = True
         downloader_module = importlib.import_module("download-model")
         downloader = downloader_module.ModelDownloader()
         repo_id_parts = repo_id.split(":")
@@ -253,6 +256,7 @@ def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), retur
 
 def download_metadata_model_wrapper(repo_id, specific_file, progress=gr.Progress(), return_links=False):
     try:
+        complete_model_download = False
         downloader_module = importlib.import_module("download-metadata-model")
         downloader = downloader_module.ModelDownloader()
         repo_id_parts = repo_id.split(":")
