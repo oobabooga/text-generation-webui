@@ -226,7 +226,7 @@ def download_model_wrapper(repo_id, specific_file, progress=gr.Progress()):
         model, branch = downloader.sanitize_model_and_branch_names(model, branch)
 
         yield ("Getting the download links from Hugging Face")
-        links, sha256, is_lora, is_llamacpp = downloader.get_download_links_from_huggingface(model, branch, text_only=False, specific_file=specific_file)
+        links, sha256, is_lora, is_llamacpp = downloader.get_download_links_from_huggingface(model, branch, text_only=False, specific_file=(specific_file if specific_file != "All files" else None))
 
         yield ("Getting the output folder")
         base_folder = shared.args.lora_dir if is_lora else shared.args.model_dir
