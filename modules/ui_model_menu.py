@@ -127,7 +127,7 @@ def create_ui():
                     shared.gradio['autoload_model'] = gr.Checkbox(value=shared.settings['autoload_model'], label='Autoload the model', info='Whether to load the model as soon as it is selected in the Model dropdown.')
 
                 shared.gradio['custom_model_menu'] = gr.Textbox(label="Download model or LoRA", info="Enter the Hugging Face username/model path, for instance: facebook/galactica-125m. To specify a branch, add it at the end after a \":\" character like this: facebook/galactica-125m:main. To download a single file, enter its name in the second box.")
-                shared.gradio['download_specific_file'] = gr.Textbox(placeholder="File name (for GGUF/GGML)", show_label=False, max_lines=1)
+                shared.gradio['download_specific_file'] = gr.Dropdown(value="All files", show_label=False, interactive=False)
                 with gr.Row():
                     shared.gradio['download_model_button'] = gr.Button("Download", variant='primary')
                     shared.gradio['get_file_list'] = gr.Button("Get file list")
@@ -175,8 +175,9 @@ def create_event_handlers():
 
     shared.gradio['lora_menu_apply'].click(load_lora_wrapper, gradio('lora_menu'), gradio('model_status'), show_progress=False)
     shared.gradio['download_model_button'].click(download_model_wrapper, gradio('custom_model_menu', 'download_specific_file'), gradio('model_status'), show_progress=True)
-    shared.gradio['get_file_list'].click(partial(download_model_wrapper, return_links=True), gradio('custom_model_menu', 'download_specific_file'), gradio('model_status'), show_progress=True)
+    shared.gradio['get_file_list'].click(download_file_list_wrapper, gradio('custom_model_menu'), gradio('download_specific_file'), show_progress=True)
     shared.gradio['autoload_model'].change(lambda x: gr.update(visible=not x), gradio('autoload_model'), gradio('load_model'))
+    shared.gradio['custom_model_menu'].change(lambda: gr.update(choices=[], value="All files", interactive=False), None, gradio('download_specific_file'), show_progress=False)
 
 
 def load_model_wrapper(selected_model, loader, autoload=False):
@@ -211,7 +212,7 @@ def load_lora_wrapper(selected_loras):
     yield ("Successfuly applied the LoRAs")
 
 
-def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), return_links=False):
+def download_model_wrapper(repo_id, specific_file, progress=gr.Progress()):
     try:
         downloader_module = importlib.import_module("download-model")
         downloader = downloader_module.ModelDownloader()
@@ -226,10 +227,6 @@ def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), retur
 
         yield ("Getting the download links from Hugging Face")
         links, sha256, is_lora, is_llamacpp = downloader.get_download_links_from_huggingface(model, branch, text_only=False, specific_file=specific_file)
-
-        if return_links:
-            yield '\n\n'.join([f"`{Path(link).name}`" for link in links])
-            return
 
         yield ("Getting the output folder")
         base_folder = shared.args.lora_dir if is_lora else shared.args.model_dir
@@ -247,6 +244,22 @@ def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), retur
     except:
         progress(1.0)
         yield traceback.format_exc().replace('\n', '\n\n')
+
+
+def download_file_list_wrapper(repo_id):
+    try:
+        downloader_module = importlib.import_module("download-model")
+        downloader = downloader_module.ModelDownloader()
+        repo_id_parts = repo_id.split(":")
+        model = repo_id_parts[0] if len(repo_id_parts) > 0 else repo_id
+        branch = repo_id_parts[1] if len(repo_id_parts) > 1 else "main"
+
+        model, branch = downloader.sanitize_model_and_branch_names(model, branch)
+        links, sha256, is_lora, is_llamacpp = downloader.get_download_links_from_huggingface(model, branch, text_only=False)
+        return gr.update(choices=["All files"] + [Path(link).name for link in links], value="All files", interactive=True)
+    except:
+        return gr.update(choices=[], value="All files", interactive=False)
+
 
 
 def update_truncation_length(current_length, state):
