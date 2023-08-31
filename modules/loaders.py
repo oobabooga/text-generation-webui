@@ -15,7 +15,7 @@ loaders_and_params = OrderedDict({
         'cpu',
         'disk',
         'auto_devices',
-        'disable_exllama_info'
+        'disable_exllama_info',
         'disable_exllama',
         'load_in_4bit',
         'use_double_quant',
