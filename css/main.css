@@ -468,3 +468,16 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 #chat-tab .generating {
   display: none !important;
 }
+
+.svelte-aqlk7e ~ ul.options {
+    min-width: fit-content;
+    max-width: inherit;
+    white-space: nowrap;
+    max-height: 35em;
+}
+
+@media (pointer:fine) {
+  .svelte-aqlk7e ~ ul.options li.item {
+    padding: 0.05em;
+  }
+}
