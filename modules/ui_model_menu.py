@@ -127,10 +127,11 @@ def create_ui():
                     shared.gradio['autoload_model'] = gr.Checkbox(value=shared.settings['autoload_model'], label='Autoload the model', info='Whether to load the model as soon as it is selected in the Model dropdown.')
 
                 shared.gradio['custom_model_menu'] = gr.Textbox(label="Download model or LoRA", info="Enter the Hugging Face username/model path, for instance: facebook/galactica-125m. To specify a branch, add it at the end after a \":\" character like this: facebook/galactica-125m:main. To download a single file, enter its name in the second box.")
-                shared.gradio['download_specific_file'] = gr.Dropdown(value="All files", show_label=False, interactive=False)
+                with gr.Row():
+                    shared.gradio['download_specific_file'] = gr.Dropdown(value="All files", show_label=False, interactive=False, elem_classes='slim-dropdown')
+                    shared.gradio['get_file_list'] = gr.Button(ui.refresh_symbol, elem_classes='refresh-button')
                 with gr.Row():
                     shared.gradio['download_model_button'] = gr.Button("Download", variant='primary')
-                    shared.gradio['get_file_list'] = gr.Button("Get file list")
 
                 with gr.Row():
                     shared.gradio['model_status'] = gr.Markdown('No model is loaded' if shared.model_name == 'None' else 'Ready')
@@ -259,7 +260,6 @@ def download_file_list_wrapper(repo_id):
         return gr.update(choices=["All files"] + [Path(link).name for link in links], value="All files", interactive=True)
     except:
         return gr.update(choices=[], value="All files", interactive=False)
-
 
 
 def update_truncation_length(current_length, state):
