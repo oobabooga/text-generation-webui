@@ -128,7 +128,7 @@ def create_ui():
 
                 shared.gradio['custom_model_menu'] = gr.Textbox(label="Download model or LoRA", info="Enter the Hugging Face username/model path, for instance: facebook/galactica-125m. To specify a branch, add it at the end after a \":\" character like this: facebook/galactica-125m:main. To download a single file, enter its name in the second box.")
                 with gr.Row():
-                    shared.gradio['download_specific_file'] = gr.Dropdown(value="All files", show_label=False, interactive=False, elem_classes='slim-dropdown')
+                    shared.gradio['download_specific_file'] = gr.Dropdown(value="All files", choices=["All files"], show_label=False, elem_classes='slim-dropdown')
                     shared.gradio['get_file_list'] = gr.Button(ui.refresh_symbol, elem_classes='refresh-button')
                 with gr.Row():
                     shared.gradio['download_model_button'] = gr.Button("Download", variant='primary')
@@ -177,7 +177,7 @@ def create_event_handlers():
     shared.gradio['download_model_button'].click(download_model_wrapper, gradio('custom_model_menu', 'download_specific_file'), gradio('model_status'), show_progress=True)
     shared.gradio['get_file_list'].click(download_file_list_wrapper, gradio('custom_model_menu'), gradio('download_specific_file'), show_progress=True)
     shared.gradio['autoload_model'].change(lambda x: gr.update(visible=not x), gradio('autoload_model'), gradio('load_model'))
-    shared.gradio['custom_model_menu'].change(lambda: gr.update(choices=[], value="All files", interactive=False), None, gradio('download_specific_file'), show_progress=False)
+    shared.gradio['custom_model_menu'].change(lambda: gr.update(choices=["All files"], value="All files"), None, gradio('download_specific_file'), show_progress=False)
 
 
 def load_model_wrapper(selected_model, loader, autoload=False):
@@ -256,9 +256,9 @@ def download_file_list_wrapper(repo_id):
 
         model, branch = downloader.sanitize_model_and_branch_names(model, branch)
         links, sha256, is_lora, is_llamacpp = downloader.get_download_links_from_huggingface(model, branch, text_only=False)
-        return gr.update(choices=["All files"] + [Path(link).name for link in links if Path(link).suffix.lower() in (".bin", ".gguf")], value="All files", interactive=True)
+        return gr.update(choices=["All files"] + [Path(link).name for link in links if Path(link).suffix.lower() in (".bin", ".gguf")], value="All files")
     except:
-        return gr.update(choices=[], value="All files", interactive=False)
+        return gr.update(choices=["All files"], value="All files")
 
 
 def update_truncation_length(current_length, state):
