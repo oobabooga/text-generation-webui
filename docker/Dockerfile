@@ -64,7 +64,7 @@ RUN cp venv/lib/python3.10/site-packages/bitsandbytes/libbitsandbytes_cuda118.so
 
 # Install extension requirements
 RUN --mount=type=cache,target=/root/.cache/pip,rw \
-    . venv/bin/activate && \
+    chmod +x venv/bin/activate && . venv/bin/activate && \
     git config --global --add safe.directory '*' && \
     for ext in /app/extensions/*/requirements.txt; do \
     cd "$(dirname "$ext")"; \
