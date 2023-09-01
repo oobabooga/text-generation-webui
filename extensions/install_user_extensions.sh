@@ -7,7 +7,7 @@ VENV=/app/venv/lib/python3.10/site-packages
 EXTENSIONS=/app/extensions
 export GIT_DISCOVERY_ACROSS_FILESYSTEM=1
 
-/app/venv/bin/activate
+source /app/venv/bin/activate
 
 # If the directory /app/venv_user exists
 if [ -d "/app/venv_user" ]; then
