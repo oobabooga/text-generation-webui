@@ -7,7 +7,9 @@ VENV=/app/venv/lib/python3.10/site-packages
 EXTENSIONS=/app/extensions
 export GIT_DISCOVERY_ACROSS_FILESYSTEM=1
 
-source /app/venv/bin/activate
+git config --global --add safe.directory '*' || true
+
+. app/venv/bin/activate
 
 # If the directory /app/venv_user exists
 if [ -d "/app/venv_user" ]; then
