@@ -133,8 +133,7 @@ def create_ui():
                 with gr.Row():
                     shared.gradio['download_model_button'] = gr.Button("Download", variant='primary')
 
-                with gr.Row():
-                    shared.gradio['model_status'] = gr.Markdown('No model is loaded' if shared.model_name == 'None' else 'Ready')
+                shared.gradio['model_status'] = gr.Markdown('No model is loaded' if shared.model_name == 'None' else 'Ready')
 
 
 def create_event_handlers():
