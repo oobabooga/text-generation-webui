@@ -10,7 +10,7 @@ einops
 markdown
 numpy==1.24
 optimum==1.12.0
-pandas
+pandas<2.1
 peft==0.5.*
 Pillow>=9.5.0
 pyyaml
