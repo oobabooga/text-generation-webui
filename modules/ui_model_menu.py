@@ -130,10 +130,10 @@ def create_ui():
                 with gr.Row():
                     shared.gradio['download_specific_file'] = gr.Dropdown(value="All files", choices=["All files"], show_label=False, elem_classes='slim-dropdown')
                     shared.gradio['get_file_list'] = gr.Button(ui.refresh_symbol, elem_classes='refresh-button')
-                with gr.Row():
-                    shared.gradio['download_model_button'] = gr.Button("Download", variant='primary')
+                shared.gradio['download_model_button'] = gr.Button("Download", variant='primary')
 
-                shared.gradio['model_status'] = gr.Markdown('No model is loaded' if shared.model_name == 'None' else 'Ready')
+                with gr.Row():
+                    shared.gradio['model_status'] = gr.Markdown('No model is loaded' if shared.model_name == 'None' else 'Ready')
 
 
 def create_event_handlers():
