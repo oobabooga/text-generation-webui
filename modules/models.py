@@ -2,6 +2,7 @@ import gc
 import os
 import re
 import time
+import json
 import traceback
 from pathlib import Path
 
@@ -69,6 +70,7 @@ def load_model(model_name, loader=None):
         'ExLlamav2_HF': ExLlamav2_HF_loader,
         'ctransformers': ctransformers_loader,
         'AutoAWQ': AutoAWQ_loader,
+        'petals': huggingface_loader,
     }
 
     if loader is None:
@@ -104,12 +106,14 @@ def load_tokenizer(model_name, model):
     path_to_model = Path(f"{shared.args.model_dir}/{model_name}/")
     if any(s in model_name.lower() for s in ['gpt-4chan', 'gpt4chan']) and Path(f"{shared.args.model_dir}/gpt-j-6B/").exists():
         tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/gpt-j-6B/"))
-    elif path_to_model.exists():
+    else:
+        model_id = path_to_model if path_to_model.exists() else model_name
+
         if shared.args.use_fast:
             logger.info('Loading the tokenizer with use_fast=True.')
 
         tokenizer = AutoTokenizer.from_pretrained(
-            path_to_model,
+            model_id,
             trust_remote_code=shared.args.trust_remote_code,
             use_fast=shared.args.use_fast
         )
@@ -118,23 +122,44 @@ def load_tokenizer(model_name, model):
 
 
 def huggingface_loader(model_name):
+    if shared.args.loader == "petals":
+        path_to_model = model_name
+        import logging
+        httpx_logger = logging.getLogger('httpx')
+        httpx_logger.setLevel(logging.WARNING)
+    else:
+        path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
 
-    path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
     params = {
         'low_cpu_mem_usage': True,
         'trust_remote_code': shared.args.trust_remote_code,
         'torch_dtype': torch.bfloat16 if shared.args.bf16 else torch.float16
     }
+
     config = AutoConfig.from_pretrained(path_to_model, trust_remote_code=params['trust_remote_code'])
 
     if 'chatglm' in model_name.lower():
         LoaderClass = AutoModel
+    elif shared.args.loader == "petals":
+        from petals import AutoDistributedModelForCausalLM
+        LoaderClass = AutoDistributedModelForCausalLM
     else:
         if config.to_dict().get('is_encoder_decoder', False):
             LoaderClass = AutoModelForSeq2SeqLM
             shared.is_seq2seq = True
         else:
             LoaderClass = AutoModelForCausalLM
+
+    conditions = [
+        shared.args.cpu,
+        torch.cuda.is_available(),
+        torch.backends.mps.is_available(),
+        is_xpu_available(),
+    ]
+
+    if not any(conditions):
+        logger.warning('No GPU has been detected by Pytorch. Falling back to CPU mode.')
+        shared.args.cpu = True
 
     # Load the model in simple 16-bit mode by default
     if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.load_in_4bit, shared.args.auto_devices, shared.args.disk, shared.args.deepspeed, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None, shared.args.compress_pos_emb > 1, shared.args.alpha_value > 1, shared.args.disable_exllama]):
@@ -157,12 +182,6 @@ def huggingface_loader(model_name):
 
     # Load with quantization and/or offloading
     else:
-
-        if not any((shared.args.cpu, torch.cuda.is_available(), is_xpu_available(), torch.backends.mps.is_available())):
-            logger.warning('torch.cuda.is_available() and is_xpu_available() returned False. This means that no GPU has been detected. Falling back to CPU mode.')
-
-            shared.args.cpu = True
-
         if shared.args.cpu:
             params['torch_dtype'] = torch.float32
         else:
