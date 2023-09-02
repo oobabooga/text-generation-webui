@@ -83,7 +83,7 @@ cd text-generation-webui
 pip install -r requirements.txt
 ```
 
-#### AMD, Metal, Intel Arc, and CPUs without AVCX2
+#### AMD, Metal, Intel Arc, and CPUs without AVX2
 
 1) Replace the last command above with
 
@@ -93,9 +93,13 @@ pip install -r requirements_nocuda.txt
 
 2) Manually install llama-cpp-python using the appropriate command for your hardware: [Installation from PyPI](https://github.com/abetlen/llama-cpp-python#installation-from-pypi).
 
-3) AMD: Manually install AutoGPTQ: [Installation](https://github.com/PanQiWei/AutoGPTQ#installation).
+3) If GGML support is desired install the "llama-cpp-python with GGML" packages following the links in `requirements.txt`. Replace "avx2" in the link with "avx" or "basic" (SSE) to get a version compiled for your CPU's supported instruction set.
+   
+4) Manually install Ctransformers using the appropriate command for your hardware: [Installation](https://github.com/marella/ctransformers#installation).
 
-4) AMD: Manually install [ExLlama](https://github.com/turboderp/exllama) by simply cloning it into the `repositories` folder (it will be automatically compiled at runtime after that):
+5) AMD: Manually install AutoGPTQ: [Installation](https://github.com/PanQiWei/AutoGPTQ#installation).
+
+6) AMD: Manually install [ExLlama](https://github.com/turboderp/exllama) by simply cloning it into the `repositories` folder (it will be automatically compiled at runtime after that):
 
 ```
 cd text-generation-webui
