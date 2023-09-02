@@ -15,6 +15,7 @@ from modules.LoRA import add_lora_to_model
 from modules.models import load_model, unload_model
 from modules.models_settings import (
     apply_model_settings_to_state,
+    get_model_settings_from_yamls,
     save_model_settings,
     update_model_parameters
 )
@@ -181,23 +182,29 @@ def create_event_handlers():
 
 def load_model_wrapper(selected_model, loader, autoload=False):
     if not autoload:
-        yield f"The settings for {selected_model} have been updated.\nClick on \"Load\" to load it."
+        yield f"The settings for `{selected_model}` have been updated.\n\nClick on \"Load\" to load it."
         return
 
     if selected_model == 'None':
         yield "No model selected"
     else:
         try:
-            yield f"Loading {selected_model}..."
+            yield f"Loading `{selected_model}`..."
             shared.model_name = selected_model
             unload_model()
             if selected_model != '':
                 shared.model, shared.tokenizer = load_model(shared.model_name, loader)
 
             if shared.model is not None:
-                yield f"Successfully loaded {selected_model}"
+                output = f"Successfully loaded `{selected_model}`."
+
+                settings = get_model_settings_from_yamls(selected_model)
+                if 'instruction_template' in settings:
+                    output += '\n\nIt seems to be an instruction-following model with template "{}". In the chat tab, instruct or chat-instruct modes should be used.'.format(settings['instruction_template'])
+
+                yield output
             else:
-                yield f"Failed to load {selected_model}."
+                yield f"Failed to load `{selected_model}`."
         except:
             exc = traceback.format_exc()
             logger.error('Failed to load the model.')
