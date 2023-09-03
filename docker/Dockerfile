@@ -13,7 +13,7 @@ RUN --mount=type=cache,target=/root/.cache/pip,rw \
     python3 -m venv venv && \
     . venv/bin/activate && \
     pip3 install --upgrade pip setuptools wheel && \
-    pip3 install torch torchvision torchaudio deepspeed mpi4py mpi4py-mpich && \
+    pip3 install torch torchvision torchaudio deepspeed mpi4py mpi4py-mpich summarizer && \
     pip3 install git+https://github.com/sterlind/GPTQ-for-LLaMa.git@lora_4bit || true && \
     pip3 install monkeypatch || true && \
     pip3 install -r requirements.txt
