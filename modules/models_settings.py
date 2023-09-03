@@ -3,7 +3,7 @@ from pathlib import Path
 
 import yaml
 
-from modules import shared, ui
+from modules import loaders, shared, ui
 
 
 def get_model_settings_from_yamls(model):
@@ -24,11 +24,11 @@ def infer_loader(model_name):
         loader = None
     elif Path(f'{shared.args.model_dir}/{model_name}/quantize_config.json').exists() or ('wbits' in model_settings and type(model_settings['wbits']) is int and model_settings['wbits'] > 0):
         loader = 'AutoGPTQ'
-    elif len(list(path_to_model.glob('*ggml*.bin'))) > 0:
+    elif len(list(path_to_model.glob('*.gguf*')) + list(path_to_model.glob('*ggml*.bin'))) > 0:
         loader = 'llama.cpp'
-    elif re.match('.*ggml.*\.bin', model_name.lower()):
+    elif re.match(r'.*\.gguf|.*ggml.*\.bin', model_name.lower()):
         loader = 'llama.cpp'
-    elif re.match('.*rwkv.*\.pth', model_name.lower()):
+    elif re.match(r'.*rwkv.*\.pth', model_name.lower()):
         loader = 'RWKV'
     else:
         loader = 'Transformers'
@@ -91,8 +91,8 @@ def apply_model_settings_to_state(model, state):
         if 'wbits' in model_settings and type(model_settings['wbits']) is int and model_settings['wbits'] > 0:
             loader = 'AutoGPTQ'
 
-        # If the user is using an alternative GPTQ loader, let them keep using it
-        if not (loader == 'AutoGPTQ' and state['loader'] in ['GPTQ-for-LLaMa', 'ExLlama', 'ExLlama_HF']):
+        # If the user is using an alternative loader for the same model type, let them keep using it
+        if not (loader == 'AutoGPTQ' and state['loader'] in ['GPTQ-for-LLaMa', 'ExLlama', 'ExLlama_HF']) and not (loader == 'llama.cpp' and state['loader'] in ['llamacpp_HF', 'ctransformers']):
             state['loader'] = loader
 
     for k in model_settings:
@@ -126,10 +126,12 @@ def save_model_settings(model, state):
             user_config[model_regex] = {}
 
         for k in ui.list_model_elements():
-            user_config[model_regex][k] = state[k]
-            shared.model_config[model_regex][k] = state[k]
+            if k == 'loader' or k in loaders.loaders_and_params[state['loader']]:
+                user_config[model_regex][k] = state[k]
+                shared.model_config[model_regex][k] = state[k]
 
+        output = yaml.dump(user_config, sort_keys=False)
         with open(p, 'w') as f:
-            f.write(yaml.dump(user_config, sort_keys=False))
+            f.write(output)
 
         yield (f"Settings for {model} saved to {p}")

@@ -10,6 +10,8 @@ from transformers.generation.logits_process import (
     TemperatureLogitsWarper
 )
 
+global_scores = None
+
 
 class TailFreeLogitsWarper(LogitsWarper):
     def __init__(self, tfs: float, filter_value: float = -float("Inf"), min_tokens_to_keep: int = 1):
@@ -104,7 +106,7 @@ class MirostatLogitsWarper(LogitsWarper):
                 break
 
         # Normalize the probabilities of the remaining words
-        prob_topk = torch.softmax(sorted_logits, dim=0)
+        prob_topk = torch.softmax(sorted_logits, dim=0).to('cuda')
 
         prev_i = torch.multinomial(prob_topk, num_samples=1, replacement=True).to('cuda')
 
@@ -119,6 +121,16 @@ class MirostatLogitsWarper(LogitsWarper):
 
         indices_to_remove = sorted_indices_to_remove.unsqueeze(0).scatter(1, sorted_indices.unsqueeze(0), sorted_indices_to_remove.unsqueeze(0))
         scores = scores.masked_fill(indices_to_remove, self.filter_value)
+        return scores
+
+
+class SpyLogitsWarper(LogitsWarper):
+    def __init__(self):
+        pass
+
+    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
+        global global_scores
+        global_scores = scores
         return scores
 
 
@@ -168,6 +180,7 @@ def get_logits_warper_patch(self, generation_config):
     else:
         warpers += warpers_to_add
 
+    warpers.append(SpyLogitsWarper())
     return warpers
 
 

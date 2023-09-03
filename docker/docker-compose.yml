@@ -23,6 +23,7 @@ services:
       - ./prompts:/app/prompts
       - ./softprompts:/app/softprompts
       - ./training:/app/training
+      - ./cloudflared:/etc/cloudflared
     deploy:
       resources:
         reservations:

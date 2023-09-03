@@ -133,6 +133,9 @@ def get_SD_pictures(description, character):
     if params['manage_VRAM']:
         give_VRAM_priority('SD')
 
+    description = re.sub('<audio.*?</audio>', ' ', description)
+    description = f"({description}:1)"
+
     payload = {
         "prompt": params['prompt_prefix'] + description,
         "seed": params['seed'],
