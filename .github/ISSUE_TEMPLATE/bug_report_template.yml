@@ -1,11 +1,19 @@
 name: "Bug report"
-description: Report a bug
+description: Report a software bug
 labels: [ "bug" ]
 body:
   - type: markdown
     attributes:
       value: |
         Thanks for taking the time to fill out this bug report!
+
+        Github Issues is for logging _software bugs_ - If you are looking for general support please instead visit either:
+
+        - Subreddit: [reddit.com/r/oobabooga](reddit.com/r/oobabooga)
+        - Discord: [discord.gg/jwZCF2dPQN](discord.gg/jwZCF2dPQN)
+
+        Where you will get a faster response and more help from the wider community.
+
   - type: textarea
     id: bug-description
     attributes:
@@ -20,6 +28,13 @@ body:
       description: Please search to see if an issue already exists for the issue you encountered.
       options:
         - label: I have searched the existing issues
+          required: true
+  - type: checkboxes
+    attributes:
+      label: Have you asked for support on the Discord or Subreddit?
+      description: For support, troubleshooting, and general questions, please visit the Discord or Subreddit before logging a software bug.
+      options:
+        - label: I have asked for support on the Discord or Subreddit (or N/A)
           required: true
   - type: textarea
     id: reproduction
@@ -39,7 +54,7 @@ body:
     attributes:
       label: Logs
       description: "Please include the full stacktrace of the errors you get in the command-line (if any)."
-      render: shell
+      render: bash
     validations:
       required: true
   - type: textarea
@@ -47,7 +62,11 @@ body:
     attributes:
       label: System Info
       description: "Please share your system info with us: operating system, GPU brand, and GPU model. If you are using a Google Colab notebook, mention that instead."
-      render: shell
-      placeholder: 
+      render: bash
+      placeholder: |
+        - Operating System: (e.g. Fedora 38):
+        - Graphics Card (e.g. RTX 3090):
+        - Memory (e.g. 32 GB):
+        - Model and Model Format (e.g. GGUF/GPTQ):
     validations:
       required: true
