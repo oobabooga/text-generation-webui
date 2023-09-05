@@ -72,6 +72,12 @@ RUN --mount=type=cache,target=/root/.cache/pip,rw \
     pip3 install -r requirements.txt; \
     done
 
+# For rotary positional embedding support
+RUN --mount=type=cache,target=/root/.cache/pip,rw \
+    . venv/bin/activate && \
+    pip install flash-attn --no-build-isolation && \
+    pip install git+https://github.com/HazyResearch/flash-attention.git#subdirectory=csrc/rotary
+
 ENV CLI_ARGS=""
 
 EXPOSE ${CONTAINER_PORT:-7860} ${CONTAINER_API_PORT:-5000} ${CONTAINER_API_STREAM_PORT:-5005}
