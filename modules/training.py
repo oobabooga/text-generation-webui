@@ -17,6 +17,8 @@ from pathlib import Path
 import gradio as gr
 import torch
 import transformers
+from torch.optim.lr_scheduler import LambdaLR
+from functools import partial
 from datasets import Dataset, load_dataset
 from peft import (
     LoraConfig,
@@ -41,12 +43,12 @@ from modules.models import reload_model
 from modules.utils import natural_keys
 
 MODEL_CLASSES = {v[1]: v[0] for v in MODEL_FOR_CAUSAL_LM_MAPPING_NAMES.items()}
-PARAMETERS = ["lora_name", "always_override", "save_steps", "micro_batch_size", "batch_size", "epochs", "learning_rate", "lr_scheduler_type", "lora_rank", "lora_alpha", "lora_dropout", "cutoff_len", "dataset", "eval_dataset", "format", "eval_steps", "raw_text_file", "overlap_len", "newline_favor_len", "higher_rank_limit", "warmup_steps", "optimizer", "hard_cut_string", "train_only_after", "stop_at_loss", "add_eos_token", "min_chars", "report_to"]
+PARAMETERS = ["lora_name", "always_override", "save_steps", "micro_batch_size", "batch_size", "epochs", "learning_rate", "lr_scheduler_type", "lora_rank", "lora_alpha", "lora_dropout", "cutoff_len", "dataset", "eval_dataset", "format", "eval_steps", "raw_text_file", "overlap_len", "newline_favor_len", "higher_rank_limit", "warmup_steps", "optimizer", "hard_cut_string", "train_only_after", "stop_at_loss", "add_eos_token", "min_chars", "report_to", "precize_slicing", "precize_slicing_overlap", "add_eos_token_type", "save_steps_under_loss"]
 WANT_INTERRUPT = False
 
 train_log = {}
 train_template = {}
-
+train_log_graph = []
 
 def create_ui():
     with gr.Tab("Training", elem_id="training-tab"):
@@ -76,10 +78,10 @@ def create_ui():
 
                         with gr.Column():
                             save_steps = gr.Number(label='Save every n steps', value=0, info='If above 0, a checkpoint of the LoRA will be saved every time this many steps pass.')
-
+                            save_steps_under_loss = gr.Slider(label='Save Loss Threshold', value=1.9, minimum=0.0, maximum=3.0, step=0.1, info='Save checkpoints only if the loss is less or equall Threshold loss. (0 = save all)')
                             epochs = gr.Number(label='Epochs', value=3, info='Number of times every entry in the dataset should be fed into training. So 1 means feed each item in once, 5 means feed it in five times, etc.')
                             learning_rate = gr.Textbox(label='Learning Rate', value='3e-4', info='In scientific notation. 3e-4 is a good starting base point. 1e-2 is extremely high, 1e-6 is extremely low.')
-                            lr_scheduler_type = gr.Dropdown(label='LR Scheduler', value='linear', choices=['linear', 'constant', 'constant_with_warmup', 'cosine', 'cosine_with_restarts', 'polynomial', 'inverse_sqrt'], info='Learning rate scheduler - defines how the learning rate changes over time. "Constant" means never change, "linear" means to go in a straight line from the learning rate down to 0, cosine follows a curve, etc.', elem_classes=['slim-dropdown'])
+                            lr_scheduler_type = gr.Dropdown(label='LR Scheduler', value='linear', choices=['linear', 'constant', 'constant_with_warmup', 'cosine', 'cosine_with_restarts', 'polynomial', 'inverse_sqrt', 'FP_low_epoch_annealing'], info='Learning rate scheduler - defines how the learning rate changes over time. "Constant" means never change, "linear" means to go in a straight line from the learning rate down to 0, cosine follows a curve, etc.', elem_classes=['slim-dropdown'])
 
                     with gr.Accordion(label='Advanced Options', open=False):
                         with gr.Row():
@@ -93,7 +95,11 @@ def create_ui():
                                 train_only_after = gr.Textbox(label='Train Only After', value='', info='Only consider text *after* this string in any given chunk for training. For Alpaca datasets, use "### Response:" to only train the response and ignore the input.')
 
                                 add_eos_token = gr.Checkbox(label='Add EOS token', value=False, info="Adds EOS token for each dataset item. In case of raw text, the EOS will be added at the Hard Cut")
-
+                                add_eos_token_type = gr.Dropdown(label='EOS placement (raw text)', choices=['Every Block', 'Hard Cut Blocks Only'], value='Every Block', info='', allow_custom_value = False)
+                                
+                                precize_slicing = gr.Checkbox(label='Precise Raw Text Slicer (PRTS)', value = False, info="Creates training blocks with special attention to clean sentence structure") 
+                                precize_slicing_overlap = gr.Checkbox(label='Overlap blocks in PRTS', value = True, info="Adds overlapping blocks (except for Hard Cut)") 
+ 
                                 higher_rank_limit = gr.Checkbox(label='Enable higher ranks', value=False, info='If checked, changes Rank/Alpha slider above to go much higher. This will not work without a datacenter-class GPU.')
                                 report_to = gr.Radio(label="Save detailed logs with", value="None", choices=["None", "wandb", "tensorboard"], interactive=True)
 
@@ -159,7 +165,7 @@ def create_ui():
                 refresh_table = gr.Button('Refresh the table', elem_classes="small-button")
 
     # Training events
-    all_params = [lora_name, always_override, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lr_scheduler_type, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, higher_rank_limit, warmup_steps, optimizer, hard_cut_string, train_only_after, stop_at_loss, add_eos_token, min_chars, report_to]
+    all_params = [lora_name, always_override, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lr_scheduler_type, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, higher_rank_limit, warmup_steps, optimizer, hard_cut_string, train_only_after, stop_at_loss, add_eos_token, min_chars, report_to, precize_slicing, precize_slicing_overlap, add_eos_token_type, save_steps_under_loss]
 
     copy_from.change(do_copy_params, [copy_from] + all_params, all_params)
     start_button.click(do_train, all_params, output)
@@ -265,8 +271,159 @@ def calc_trainable_parameters(model):
 
     return trainable_params, all_param
 
+#FPHAM custom training scheduller block - should be extracted to separate file
+last_print_label = ''
 
-def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lr_scheduler_type: str, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, higher_rank_limit: bool, warmup_steps: int, optimizer: str, hard_cut_string: str, train_only_after: str, stop_at_loss: float, add_eos_token: bool, min_chars: int, report_to: str):
+def _get_fp_cosine_schedule_with_warmup_lr_lambda(current_step: int, *, num_warmup_steps: int, num_training_steps: int, num_firstepoch_steps: int):
+    
+    global last_print_label
+    print_label = ''
+    
+    num_warmup_steps = min(num_warmup_steps,num_firstepoch_steps)
+
+    if current_step < num_warmup_steps:
+        print_label = 'Scheduler: Warmup'
+    elif current_step < num_firstepoch_steps:
+        print_label = 'Scheduler: Hold'
+    else:
+        print_label = 'Scheduler: Annealing'
+    
+    if print_label != last_print_label:
+        print(print_label)
+    
+    last_print_label = print_label
+
+    if current_step < num_warmup_steps:
+        return float(current_step) / float(max(1, num_warmup_steps))
+    
+    if current_step < num_firstepoch_steps:
+        return 1.0 
+    
+    progress = float(current_step - num_firstepoch_steps) / float(max(1, num_training_steps - num_firstepoch_steps))
+    num_cycles = 0.5
+    return max(0.0, 0.5 * (1.0 + math.cos(math.pi * float(num_cycles) * 2.0 * progress)))    
+    
+
+def custom_scheduler_with_warmup(optimizer, num_warmup_steps, num_training_steps, num_firstepoch_steps, last_epoch=-1):
+    """
+    Args:
+        optimizer ([`~torch.optim.Optimizer`]):
+            The optimizer for which to schedule the learning rate.
+        num_warmup_steps (`int`):
+            The number of steps for the warmup phase.
+        num_training_steps (`int`):
+            The total number of training steps.
+        last_epoch (`int`, *optional*, defaults to -1):
+            The index of the last epoch when resuming training.
+
+    Return:
+        `torch.optim.lr_scheduler.LambdaLR` with the appropriate schedule.
+    """
+    
+    lr_lambda = partial(
+        _get_fp_cosine_schedule_with_warmup_lr_lambda,
+        num_warmup_steps=num_warmup_steps,
+        num_training_steps=num_training_steps,
+        num_firstepoch_steps = num_firstepoch_steps,
+    )
+    return LambdaLR(optimizer, lr_lambda, last_epoch)
+
+class FPSchedulerTrainer(transformers.Trainer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+    def create_scheduler(self, num_training_steps: int, optimizer: torch.optim.Optimizer = None):
+        #Setup the scheduler. The optimizer of the trainer must have been set up either before this method is called or passed as an argument.
+        
+        if self.args.lr_scheduler_type == 'cosine':
+            num_train_epochs = self.args.num_train_epochs
+            num_warmup_steps=self.args.get_warmup_steps(num_training_steps)
+            num_firstepoch_steps = math.ceil(num_training_steps/num_train_epochs)
+            num_warmup_acc = num_warmup_steps*self.args.gradient_accumulation_steps 
+            num_firstepoch_steps_acc = num_firstepoch_steps*self.args.gradient_accumulation_steps
+            num_training_steps_acc = num_training_steps*self.args.gradient_accumulation_steps
+            num_warmup_acc_min = min(num_warmup_acc, num_firstepoch_steps_acc)
+            
+            if num_warmup_acc>num_firstepoch_steps_acc:
+                print(f"\033[1;31;1mWARNING: The number of warmup steps is set too high! It will be clamped to 1 epoch, essentially going from warmup to annealing.\033[0;37;0m")
+                print (f"FP Scheduler Warmup: 0-[{num_warmup_acc_min}], Hold [{num_warmup_acc_min}]-{num_firstepoch_steps_acc}, Annealing {num_firstepoch_steps_acc}-{num_training_steps_acc}")
+            else:
+                print (f"FP Scheduler Warmup: 0-{num_warmup_acc_min}, Hold {num_warmup_acc_min}-{num_firstepoch_steps_acc}, Annealing {num_firstepoch_steps_acc}-{num_training_steps_acc}")
+
+            self.lr_scheduler = custom_scheduler_with_warmup(
+                    optimizer=self.optimizer if optimizer is None else optimizer,
+                    num_warmup_steps=num_warmup_steps,
+                    num_training_steps=num_training_steps, 
+                    num_firstepoch_steps = num_firstepoch_steps,
+                )
+            self._created_lr_scheduler = True
+            return self.lr_scheduler
+        else:
+            return  super().create_scheduler(num_training_steps=num_training_steps, optimizer=optimizer)
+
+def create_graph(lora_path, lora_name):
+    try:
+        import matplotlib.pyplot as plt
+        from matplotlib.ticker import ScalarFormatter
+        
+        peft_model_path = f'{lora_path}/training_graph.json'
+        image_model_path = f'{lora_path}/training_graph.png'
+        # Check if the JSON file exists
+        if os.path.exists(peft_model_path):
+            # Load data from JSON file
+            with open(peft_model_path, 'r') as file:
+                data = json.load(file)
+            # Extract x, y1, and y2 values
+            x = [item['epoch'] for item in data]
+            y1 = [item['learning_rate'] for item in data]
+            y2 = [item['loss'] for item in data]
+
+            # Create the line chart
+            fig, ax1 = plt.subplots(figsize=(10, 6))
+        
+
+            # Plot y1 (learning rate) on the first y-axis
+            ax1.plot(x, y1, 'b-', label='Learning Rate')
+            ax1.set_xlabel('Epoch')
+            ax1.set_ylabel('Learning Rate', color='b')
+            ax1.tick_params('y', colors='b')
+
+            # Create a second y-axis
+            ax2 = ax1.twinx()
+
+            # Plot y2 (loss) on the second y-axis
+            ax2.plot(x, y2, 'r-', label='Loss')
+            ax2.set_ylabel('Loss', color='r')
+            ax2.tick_params('y', colors='r')
+
+            # Set the y-axis formatter to display numbers in scientific notation
+            ax1.yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
+            ax1.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
+
+            # Add grid
+            ax1.grid(True)
+
+            # Combine the legends for both plots
+            lines, labels = ax1.get_legend_handles_labels()
+            lines2, labels2 = ax2.get_legend_handles_labels()
+            ax2.legend(lines + lines2, labels + labels2, loc='best')
+
+            # Set the title
+            plt.title(f'{lora_name} LR and Loss vs Epoch')
+
+            # Save the chart as an image
+            plt.savefig(image_model_path)
+
+            print(f"Graph saved in {image_model_path}")
+        else:
+            print(f"File 'training_graph.json' does not exist in the {lora_path}")
+      
+    except ImportError:
+        print("matplotlib is not installed. Please install matplotlib to create PNG graphs")
+        
+# end of FPHAM custom block        
+
+def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lr_scheduler_type: str, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, higher_rank_limit: bool, warmup_steps: int, optimizer: str, hard_cut_string: str, train_only_after: str, stop_at_loss: float, add_eos_token: bool, min_chars: int, report_to: str, precize_slicing: bool, precize_slicing_overlap: bool, add_eos_token_type: str, save_steps_under_loss: float):
 
     if shared.args.monkey_patch:
         from monkeypatch.peft_tuners_lora_monkey_patch import (
@@ -364,6 +521,164 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
     train_template.clear()
 
+    # FPHAM SPLIT BY SENTENCE BLOCK ===============
+     
+    def split_sentences(text: str):
+        sentences = []
+        sentence = ''
+        delimiters = ['. ', '? ', '! ', '... ', '.\n', '?\n', '!\n','...\n','</s>','<//>']
+        abbreviations = ['Mr. ', 'Mrs. ', 'Dr. ', 'Ms. ', 'St. ', 'Prof. ', 'Jr. ', 'Ltd. ', 'Capt. ', 'Col. ', 'Gen. ', 'Ave. ', 'Blvd. ', 'Co. ', 'Corp. ', 'Dept. ', 'Est. ', 'Gov. ', 'Inc. ', 'Ph.D. ', 'Univ. ']
+        errors = 0
+        max_cut = cutoff_len-1
+        prev_char = ''  
+
+        for char in text:
+            sentence += char
+
+        
+            if (any(sentence.endswith(delimiter) for delimiter in delimiters) and
+                not (prev_char.isupper() and len(sentence) >= 3 and sentence[-3] != ' ') and 
+                not any(sentence.endswith(abbreviation) for abbreviation in abbreviations)):
+                tokens = shared.tokenizer.encode(sentence)
+                
+                if len(tokens) > max_cut:
+                    tokens = tokens[:max_cut]
+                    sentence = shared.tokenizer.decode(tokens, skip_special_tokens=True)
+                    errors = errors + 1
+
+                sentences.append({'text': sentence, 'size': len(tokens)})
+                
+                sentence = ''
+
+            prev_char = char
+
+        if sentence:
+            tokens = shared.tokenizer.encode(sentence)
+            if len(tokens) > max_cut:
+                tokens = tokens[:max_cut]
+                sentence = shared.tokenizer.decode(tokens, skip_special_tokens=True)  
+                errors = errors + 1
+
+            sentences.append({'text': sentence, 'size': len(tokens)})
+
+        if errors > 0:
+            print(f"Trimmed sentences beyond Cutoff Length: {errors}")
+
+        return sentences
+
+    # The goal of following code is to create blocks of text + overlapping blocks while:
+    # respects sentence boundaries
+    # always uses all the text 
+    # hard cut defined by hard_cut_string or </s> will always end at the end of data block
+    # no overlapping blocks will be created across hard cut or across </s> token
+
+    def precise_cut(text: str, overlap: bool, min_chars_cut: int, eos_to_hc: bool):
+
+        debug_slicer = False
+        EOSX_str = '<//>' #hardcut placeholder
+        EOS_str = '</s>' 
+        print("Precise raw text slicer: ON")
+        
+        cut_string = hard_cut_string.replace('\\n', '\n')
+        text = text.replace(cut_string, EOSX_str)
+        sentences = split_sentences(text)
+
+        print(f"Sentences: {len(sentences)}")
+        sentencelist = []
+        currentSentence = ''
+        totalLength = 0
+        max_cut = cutoff_len-1
+        half_cut = cutoff_len//2
+        halfcut_length = 0
+
+        edgeindex = []
+        half_index = 0
+
+        for index, item in enumerate(sentences):
+           
+            if halfcut_length+ item['size'] < half_cut:
+                halfcut_length += item['size']
+                half_index = index
+            else:
+                edgeindex.append(half_index)
+                halfcut_length = -2 * max_cut
+
+
+            if totalLength + item['size'] < max_cut and not currentSentence.endswith(EOSX_str): 
+                currentSentence += item['text']
+                totalLength += item['size']
+            else:
+
+                if len(currentSentence.strip()) > min_chars_cut:
+                    sentencelist.append(currentSentence.strip())
+
+                currentSentence = item['text']
+                totalLength = item['size']
+                halfcut_length = item['size']
+                
+        if len(currentSentence.strip()) > min_chars_cut:    
+            sentencelist.append(currentSentence.strip())
+    
+        unique_blocks = len(sentencelist)
+        print(f"Text Blocks: {unique_blocks}")
+
+        #overlap strategies: 
+        # don't overlap across HARD CUT (EOSX)
+        if overlap:
+            for edge_idx in edgeindex:
+                currentSentence = ''
+                totalLength = 0
+
+                for item in sentences[edge_idx:]:
+                    if totalLength + item['size'] < max_cut:
+                        currentSentence += item['text']
+                        totalLength += item['size']
+                    else:
+                        #if by chance EOSX is at the end then it's acceptable
+                        if currentSentence.endswith(EOSX_str) and len(currentSentence.strip()) > min_chars_cut:
+                                sentencelist.append(currentSentence.strip())    
+                        # otherwise don't cross hard cut    
+                        elif EOSX_str not in currentSentence and len(currentSentence.strip()) > min_chars_cut:
+                            sentencelist.append(currentSentence.strip())
+                        
+                        currentSentence = ''
+                        totalLength = 0
+                        break
+            
+            print(f"+ Overlapping blocks: {len(sentencelist)-unique_blocks}")
+
+        num_EOS = 0
+        for i in range(len(sentencelist)):
+            if eos_to_hc:
+                sentencelist[i] = sentencelist[i].replace(EOSX_str, EOS_str)
+            else:
+                sentencelist[i] = sentencelist[i].replace(EOSX_str, '')
+            
+            #someone may have had stop strings in the raw text...
+            sentencelist[i] = sentencelist[i].replace("</s></s>", EOS_str)
+            num_EOS += sentencelist[i].count(EOS_str)
+
+        if num_EOS > 0:
+            print(f"+ EOS count: {num_EOS}")
+
+        #final check for useless lines
+        sentencelist = [item for item in sentencelist if item.strip() != "</s>"]
+        sentencelist = [item for item in sentencelist if item.strip() != ""]
+
+
+        if debug_slicer:
+            sentencelist_dict = {index: sentence for index, sentence in enumerate(sentencelist)}
+            output_file = "logs/sentencelist.json"
+            with open(output_file, 'w') as f:
+                json.dump(sentencelist_dict, f,indent=2)
+
+     
+        return sentencelist                
+
+    print(f"*** LoRA: {lora_name} ***")
+
+    # END OF FPHAM SENTENCE SPLIT functions ===================     
+
     # == Prep the dataset, format, etc ==
     if raw_text_file not in ['None', '']:
         train_template["template_type"] = "raw_text"
@@ -383,36 +698,55 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         else:
             with open(clean_path('training/datasets', f'{raw_text_file}.txt'), 'r', encoding='utf-8') as file:
                 raw_text = file.read().replace('\r', '')
+        
+        # FPHAM PRECISE SLICING        
+        if min_chars<0:
+            min_chars = 0
 
-        cut_string = hard_cut_string.replace('\\n', '\n')
-        eos_added = 0
-        out_tokens = []
-        for text_part in raw_text.split(cut_string):
-            if len(text_part.strip()) <= min_chars:
-                continue
+        add_EOS_to_all = add_eos_token and add_eos_token_type == 'Every Block'
+        add_EOS_to_HC = add_eos_token and add_eos_token_type != 'Every Block'
 
-            tokens = shared.tokenizer.encode(text_part)
-            if add_eos_token:
-                tokens.append(shared.tokenizer.eos_token_id)
-                eos_added += 1
+        #print (f"add_eos_token {add_eos_token}, add_EOS_to_all {add_EOS_to_all}, add_EOS_to_HC {add_EOS_to_HC}")
 
-            step = cutoff_len - overlap_len
-            if step <= 0:
-                yield f"Error: overlap_len ({overlap_len}) cannot be greater than or equal to cutoff_len ({cutoff_len})"
-                return
+        if precize_slicing:
+            # == New more precise slicing on sentence boundary ==
+            text_chunks = precise_cut(raw_text, precize_slicing_overlap, min_chars, add_EOS_to_HC)
+            train_data = Dataset.from_list([tokenize(x, add_EOS_to_all) for x in text_chunks])
+            if add_EOS_to_all:
+                print(f"Added EOS to {len(text_chunks)} blocks") 
+        else:
+            # == Original slicing ==
+            cut_string = hard_cut_string.replace('\\n', '\n')
+            eos_added = 0
+            out_tokens = []
+            for text_part in raw_text.split(cut_string):
+                if len(text_part.strip()) <= min_chars:
+                    continue
 
-            out_tokens.extend(split_chunks(tokens, cutoff_len, step))
+                tokens = shared.tokenizer.encode(text_part)
+                
+                if add_EOS_to_HC:
+                    tokens.append(shared.tokenizer.eos_token_id)
+                    eos_added += 1
 
-        if eos_added > 0:
-            print(f"EOS added to {eos_added} text blocks")
+                step = cutoff_len - overlap_len
+                if step <= 0:
+                    yield f"Error: overlap_len ({overlap_len}) cannot be greater than or equal to cutoff_len ({cutoff_len})"
+                    return
 
-        del raw_text  # Note: could be a gig for a large dataset, so delete redundant data as we go to be safe on RAM
-        text_chunks = [shared.tokenizer.decode(x) for x in out_tokens]
-        del out_tokens
-        if newline_favor_len > 0:
-            text_chunks = [cut_chunk_for_newline(x, newline_favor_len) for x in text_chunks]
+                out_tokens.extend(split_chunks(tokens, cutoff_len, step))
 
-        train_data = Dataset.from_list([tokenize(x) for x in text_chunks])
+            if eos_added > 0:
+                print(f"EOS added to {eos_added} Hard Cut text blocks")
+
+            del raw_text  # Note: could be a gig for a large dataset, so delete redundant data as we go to be safe on RAM
+            text_chunks = [shared.tokenizer.decode(x) for x in out_tokens]
+            del out_tokens
+            if newline_favor_len > 0:
+                text_chunks = [cut_chunk_for_newline(x, newline_favor_len) for x in text_chunks]
+
+            train_data = Dataset.from_list([tokenize(x, add_EOS_to_all) for x in text_chunks])
+
         del text_chunks
         eval_data = None
     else:
@@ -450,6 +784,8 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         logger.info("Loading JSON datasets...")
         data = load_dataset("json", data_files=clean_path('training/datasets', f'{dataset}.json'))
         train_data = data['train'].map(generate_and_tokenize_prompt, new_fingerprint='%030x' % random.randrange(16**30))
+        if add_eos_token:
+            print(f"Added EOS to all items") 
 
         if eval_dataset == 'None':
             eval_data = None
@@ -536,13 +872,16 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
                 control.should_epoch_stop = True
                 control.should_training_stop = True
             elif state.global_step > 0 and actual_save_steps > 0 and state.global_step % actual_save_steps == 0:
-                lora_model.save_pretrained(f"{lora_file_path}/checkpoint-{tracked.current_steps}/")
-                # Save log
-                with open(f"{lora_file_path}/checkpoint-{tracked.current_steps}/training_log.json", 'w', encoding='utf-8') as file:
-                    json.dump(train_log, file, indent=2)
-                # == Save training prompt ==
-                with open(f"{lora_file_path}/checkpoint-{tracked.current_steps}/training_prompt.json", 'w', encoding='utf-8') as file:
-                    json.dump(train_template, file, indent=2)
+                current_loss = float(train_log.get('loss', 0.0))
+                if current_loss <= save_steps_under_loss or save_steps_under_loss==0.0:
+                    lora_model.save_pretrained(f"{lora_file_path}/checkpoint-{tracked.current_steps}/")
+                    print(f"\033[1;30;40mStep: {tracked.current_steps:6} \033[0;37;0m Checkpoint-{tracked.current_steps} saved")
+                    # Save log
+                    with open(f"{lora_file_path}/checkpoint-{tracked.current_steps}/training_log.json", 'w', encoding='utf-8') as file:
+                        json.dump(train_log, file, indent=2)
+                    # == Save training prompt ==
+                    with open(f"{lora_file_path}/checkpoint-{tracked.current_steps}/training_prompt.json", 'w', encoding='utf-8') as file:
+                        json.dump(train_template, file, indent=2)
 
         def on_substep_end(self, args: transformers.TrainingArguments, state: transformers.TrainerState, control: transformers.TrainerControl, **kwargs):
             tracked.current_steps += 1
@@ -556,7 +895,22 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             if WANT_INTERRUPT:
                 print("\033[1;31;1mInterrupted by user\033[0;37;0m")
 
-            print(f"\033[1;30;40mStep: {tracked.current_steps} \033[0;37;0m", end='')
+            print(f"\033[1;30;40mStep: {tracked.current_steps:6} \033[0;37;0m", end='')
+            
+            entry = {
+                'current_steps': int(train_log.get('current_steps',0)),
+                'loss': float(train_log.get('loss', 0.0)),
+                'learning_rate': float(train_log.get('learning_rate', 0.0)),
+                'epoch': float(train_log.get('epoch', 0.0))
+            }
+
+            # Add the entry to the continuous log
+            train_log_graph.append(entry)
+
+            # Save the graph log for now, we can later generate full graph
+            with open(f"{lora_file_path}/training_graph.json", 'w') as file:
+                json.dump(train_log_graph, file, indent=4)
+
             if 'loss' in logs:
                 loss = float(logs['loss'])
                 if loss <= stop_at_loss:
@@ -564,11 +918,32 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
                     control.should_training_stop = True
                     print(f"\033[1;31;1mStop Loss {stop_at_loss} reached.\033[0;37;0m")
 
-    trainer = transformers.Trainer(
-        model=lora_model,
-        train_dataset=train_data,
-        eval_dataset=eval_data,
-        args=transformers.TrainingArguments(
+    # FPHAM SAMPLE REQ Transformers error handling
+    sample_req = int(train_data.num_rows)//micro_batch_size
+    
+    if sample_req < gradient_accumulation_steps:
+        print(f"\033[1;31;1mWARNING: Current gradient accumulation is too high for the amount of training data.\033[0;37;0m")
+        print(f"Gradient accumulation: {gradient_accumulation_steps} should be less than: {sample_req}. \033[1;31;1mThis could crash Accelerate/Transformers\033[0;37;0m")
+        min_batchSize = sample_req*micro_batch_size
+        print(f"Preferable fix: \033[1;31;1mIncrease the size of dataset\033[0;37;0m")
+        print(f"... or Decrerase Batch Size \033[1;31;1m{batch_size}\033[0;37;0m to below {min_batchSize}")
+        gradient_accumulation_steps = max(1,sample_req-1)
+        print(f"Last resort fix for this run: Lowering Gradient accumulation to {gradient_accumulation_steps}. [Good luck]")
+
+    else:
+        print(f"Data Size Check: Gradient accumulation: {gradient_accumulation_steps} <= Data/Batch {sample_req} ... [OK]")
+
+    #END OF FPHAM SAMPLE REQ
+
+    # FPHAM Custom Scheduler ==
+    custom_scheduller = False
+    lr_scheduler_type_arg = lr_scheduler_type
+
+    if lr_scheduler_type == 'FP_low_epoch_annealing':
+        custom_scheduller = True
+        lr_scheduler_type_arg = 'cosine'
+    
+    args=transformers.TrainingArguments(
             report_to=report_to if report_to != "None" else None,
             per_device_train_batch_size=micro_batch_size,
             gradient_accumulation_steps=gradient_accumulation_steps,
@@ -577,20 +952,38 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             learning_rate=actual_lr,
             fp16=False if shared.args.cpu else True,
             optim=optimizer,
-            logging_steps=2 if stop_at_loss > 0 else 5,
+            logging_steps=1,
             evaluation_strategy="steps" if eval_data is not None else "no",
             eval_steps=math.ceil(eval_steps / gradient_accumulation_steps) if eval_data is not None else None,
             save_strategy="steps" if eval_data is not None else "no",
             output_dir=lora_file_path,
-            lr_scheduler_type=lr_scheduler_type,
+            lr_scheduler_type=lr_scheduler_type_arg,
             load_best_model_at_end=eval_data is not None,
             # TODO: Enable multi-device support
             ddp_find_unused_parameters=None,
             no_cuda=shared.args.cpu,
-        ),
-        data_collator=transformers.DataCollatorForLanguageModeling(shared.tokenizer, mlm=False),
-        callbacks=list([Callbacks()])
-    )
+        )
+
+    if custom_scheduller:
+        trainer = FPSchedulerTrainer(
+            model=lora_model,
+            train_dataset=train_data,
+            eval_dataset=eval_data,
+            args=args,
+            data_collator=transformers.DataCollatorForLanguageModeling(shared.tokenizer, mlm=False),
+            callbacks=list([Callbacks()])
+        )
+    else:
+        trainer = transformers.Trainer(
+            model=lora_model,
+            train_dataset=train_data,
+            eval_dataset=eval_data,
+            args=args,
+            data_collator=transformers.DataCollatorForLanguageModeling(shared.tokenizer, mlm=False),
+            callbacks=list([Callbacks()])
+        )
+    
+    # END OF FPHAM CUSTOM SCHEDULER
 
     lora_model.config.use_cache = False
 
@@ -699,6 +1092,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         logger.info("Training complete!")
         yield f"Done! LoRA saved to `{lora_file_path}`.\n\nBefore testing your new LoRA, make sure to first reload the model, as it is currently dirty from training."
 
+    create_graph(lora_file_path, lora_name)
 
 def split_chunks(arr, size, step):
     for i in range(0, len(arr), step):
