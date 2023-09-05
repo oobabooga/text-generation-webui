@@ -75,8 +75,8 @@ RUN --mount=type=cache,target=/root/.cache/pip,rw \
 # For rotary positional embedding support
 RUN --mount=type=cache,target=/root/.cache/pip,rw \
     . venv/bin/activate && \
-    CUDA_HOME=${CUDA_HOME_HOST} pip install flash-attn --no-build-isolation && \
-    CUDA_HOME=${CUDA_HOME_HOST} pip install git+https://github.com/HazyResearch/flash-attention.git#subdirectory=csrc/rotary
+    CUDA_HOME=/usr/local/cuda-host pip install flash-attn --no-build-isolation && \
+    CUDA_HOME=/usr/local/cuda-host pip install git+https://github.com/HazyResearch/flash-attention.git#subdirectory=csrc/rotary
 
 ENV CLI_ARGS=""
 
