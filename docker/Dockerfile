@@ -18,6 +18,12 @@ RUN --mount=type=cache,target=/root/.cache/pip,rw \
     pip3 install monkeypatch || true && \
     pip3 install -r requirements.txt
 
+# For rotary positional embedding support
+RUN --mount=type=cache,target=/root/.cache/pip,rw \
+    . venv/bin/activate && \
+    pip install flash-attn --no-build-isolation && \
+    pip install git+https://github.com/HazyResearch/flash-attention.git#subdirectory=csrc/rotary
+
 # https://developer.nvidia.com/cuda-gpus
 ARG TORCH_CUDA_ARCH_LIST="${TORCH_CUDA_ARCH_LIST:-3.5;5.0;6.0;6.1;7.0;7.5;8.0;8.6+PTX}"
 RUN . venv/bin/activate && python3 setup_cuda.py bdist_wheel -d .
@@ -71,12 +77,6 @@ RUN --mount=type=cache,target=/root/.cache/pip,rw \
     cd "$(dirname "$ext")"; \
     pip3 install -r requirements.txt; \
     done
-
-# For rotary positional embedding support
-RUN --mount=type=cache,target=/root/.cache/pip,rw \
-    . venv/bin/activate && \
-    CUDA_HOME=/usr/local/cuda-host pip install flash-attn --no-build-isolation && \
-    CUDA_HOME=/usr/local/cuda-host pip install git+https://github.com/HazyResearch/flash-attention.git#subdirectory=csrc/rotary
 
 ENV CLI_ARGS=""
 
