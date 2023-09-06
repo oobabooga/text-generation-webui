@@ -40,7 +40,7 @@ class ModelDownloader:
         if branch is None:
             branch = "main"
         else:
-            pattern = re.compile(r"^[a-zA-Z0-9._-]+$")
+            pattern = re.compile(r"^[a-zA-Z0-9_][a-zA-Z0-9._-]+$")
             if not pattern.match(branch):
                 raise ValueError(
                     "Invalid branch name. Only alphanumeric characters, period, underscore and dash are allowed.")
