@@ -1,4 +1,4 @@
-let main_parent = document.getElementById('chat-tab').parentNode;
+let main_parent = document.getElementById('generate-tab').parentNode;
 let extensions = document.getElementById('extensions');
 
 main_parent.childNodes[0].classList.add("header_bar");
@@ -10,12 +10,8 @@ document.querySelector('.header_bar').addEventListener('click', function(event) 
     if (event.target.tagName === 'BUTTON') {
         const buttonText = event.target.textContent.trim();
 
-        let chat_visible = (buttonText == 'Chat');
-        let default_visible = (buttonText == 'Default');
-        let notebook_visible = (buttonText == 'Notebook');
-
-        // Check if one of the generation tabs is visible
-        if (chat_visible || notebook_visible || default_visible) {
+        // Check if the generation tab is visible
+        if (buttonText == 'Generate') {
             extensions.style.display = 'flex';
             if (chat_visible) {
                 extensions.style.maxWidth = "800px";

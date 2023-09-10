@@ -35,6 +35,7 @@ from modules import (
     ui_file_saving,
     ui_model_menu,
     ui_notebook,
+    ui_generate,
     ui_parameters,
     ui_session,
     utils,
@@ -104,9 +105,10 @@ def create_interface():
         shared.gradio['temporary_text'] = gr.Textbox(visible=False)
 
         # Text Generation tab
-        ui_chat.create_ui()
-        ui_default.create_ui()
-        ui_notebook.create_ui()
+        ui_generate.create_ui()
+        #ui_chat.create_ui()
+        #ui_default.create_ui()
+        #ui_notebook.create_ui()
 
         ui_parameters.create_ui(shared.settings['preset'])  # Parameters tab
         ui_model_menu.create_ui()  # Model tab

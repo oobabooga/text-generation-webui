@@ -58,7 +58,7 @@ ol li p, ul li p {
     display: inline-block;
 }
 
-#chat-tab, #default-tab, #notebook-tab, #parameters, #chat-settings, #lora, #training-tab, #model-tab, #session-tab {
+#chat-tab, #default-tab, #notebook-tab, #parameters, #chat-settings, #lora, #training-tab, #model-tab, #session-tab, #generate-tab {
     border: 0;
 }
 
@@ -281,7 +281,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     min-width: 0 !important;
 }
 
-#chat-tab > :first-child, #extensions {
+#chat-tab > :first-child > :first-child, #extensions {
     max-width: 800px;
     margin-left: auto;
     margin-right: auto;
