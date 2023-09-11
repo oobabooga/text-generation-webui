@@ -269,10 +269,10 @@ def calc_trainable_parameters(model):
 def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lr_scheduler_type: str, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, higher_rank_limit: bool, warmup_steps: int, optimizer: str, hard_cut_string: str, train_only_after: str, stop_at_loss: float, add_eos_token: bool, min_chars: int, report_to: str):
 
     if shared.args.monkey_patch:
-        from monkeypatch.peft_tuners_lora_monkey_patch import (
-            replace_peft_model_with_gptq_lora_model
+        from alpaca_lora_4bit.monkeypatch.peft_tuners_lora_monkey_patch import (
+            replace_peft_model_with_int4_lora_model
         )
-        replace_peft_model_with_gptq_lora_model()
+        replace_peft_model_with_int4_lora_model()
 
     global WANT_INTERRUPT
     WANT_INTERRUPT = False
@@ -512,11 +512,12 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         return
 
     if shared.args.monkey_patch:
-        for n, m in lora_model.named_modules():
-            if '4bit' in str(type(m)):
+        from alpaca_lora_4bit.autograd_4bit import Autograd4bitQuantLinear
+        from alpaca_lora_4bit.models import Linear4bitLt
+        for _, m in lora_model.named_modules():
+            if isinstance(m, Autograd4bitQuantLinear) or isinstance(m, Linear4bitLt):
                 if m.is_v1_model:
                     m.zeros = m.zeros.half()
-
                 m.scales = m.scales.half()
 
     class Tracked():

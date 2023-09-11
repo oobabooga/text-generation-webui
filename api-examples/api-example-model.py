@@ -108,7 +108,7 @@ def complex_model_load(model):
             req['args']['bf16'] = True  # for 24GB
         elif '13b' in model:
             req['args']['load_in_8bit'] = True  # for 24GB
-    elif 'ggml' in model:
+    elif 'gguf' in model:
         # req['args']['threads'] = 16
         if '7b' in model:
             req['args']['n_gpu_layers'] = 100
