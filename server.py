@@ -43,7 +43,7 @@ from modules.extensions import apply_extensions
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model
 from modules.models_settings import (
-    get_model_settings_from_yamls,
+    get_model_metadata,
     update_model_parameters
 )
 from modules.utils import gradio
@@ -177,6 +177,7 @@ if __name__ == "__main__":
         'skip_special_tokens': shared.settings['skip_special_tokens'],
         'custom_stopping_strings': shared.settings['custom_stopping_strings'],
         'truncation_length': shared.settings['truncation_length'],
+        'n_ctx': 2048,
         'rope_freq_base': 0,
     }
 
@@ -213,7 +214,7 @@ if __name__ == "__main__":
 
     # If any model has been selected, load it
     if shared.model_name != 'None':
-        model_settings = get_model_settings_from_yamls(shared.model_name)
+        model_settings = get_model_metadata(shared.model_name)
         shared.settings.update(model_settings)  # hijacking the interface defaults
         update_model_parameters(model_settings, initial=True)  # hijacking the command-line arguments
 
