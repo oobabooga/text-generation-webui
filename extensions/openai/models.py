@@ -1,11 +1,9 @@
-from modules import shared
-from modules.utils import get_available_models
-from modules.models import load_model, unload_model
-from modules.models_settings import (get_model_settings_from_yamls,
-                                     update_model_parameters)
-
 from extensions.openai.embeddings import get_embeddings_model_name
 from extensions.openai.errors import *
+from modules import shared
+from modules.models import load_model, unload_model
+from modules.models_settings import get_model_metadata, update_model_parameters
+from modules.utils import get_available_models
 
 
 def get_current_model_list() -> list:
@@ -33,7 +31,7 @@ def load_model(model_name: str) -> dict:
         shared.model_name = model_name
         unload_model()
 
-        model_settings = get_model_settings_from_yamls(shared.model_name)
+        model_settings = get_model_metadata(shared.model_name)
         shared.settings.update(model_settings)
         update_model_parameters(model_settings, initial=True)
 

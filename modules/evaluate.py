@@ -8,10 +8,7 @@ from tqdm import tqdm
 
 from modules import shared
 from modules.models import load_model, unload_model
-from modules.models_settings import (
-    get_model_settings_from_yamls,
-    update_model_parameters
-)
+from modules.models_settings import get_model_metadata, update_model_parameters
 from modules.text_generation import encode
 
 
@@ -69,7 +66,7 @@ def calculate_perplexity(models, input_dataset, stride, _max_length):
         if model != 'current model':
             try:
                 yield cumulative_log + f"Loading {model}...\n\n"
-                model_settings = get_model_settings_from_yamls(model)
+                model_settings = get_model_metadata(model)
                 shared.settings.update(model_settings)  # hijacking the interface defaults
                 update_model_parameters(model_settings)  # hijacking the command-line arguments
                 shared.model_name = model
