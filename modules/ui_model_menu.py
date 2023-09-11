@@ -15,7 +15,7 @@ from modules.LoRA import add_lora_to_model
 from modules.models import load_model, unload_model
 from modules.models_settings import (
     apply_model_settings_to_state,
-    get_model_settings_from_yamls,
+    get_model_metadata,
     save_model_settings,
     update_model_parameters
 )
@@ -196,7 +196,7 @@ def load_model_wrapper(selected_model, loader, autoload=False):
             if shared.model is not None:
                 output = f"Successfully loaded `{selected_model}`."
 
-                settings = get_model_settings_from_yamls(selected_model)
+                settings = get_model_metadata(selected_model)
                 if 'instruction_template' in settings:
                     output += '\n\nIt seems to be an instruction-following model with template "{}". In the chat tab, instruct or chat-instruct modes should be used.'.format(settings['instruction_template'])
 
