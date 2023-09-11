@@ -163,22 +163,17 @@ This requires using a monkey patch that is supported by this web UI: https://git
 
 To use it:
 
-1. Clone `johnsmith0031/alpaca_lora_4bit` into the repositories folder:
+1. Install alpaca_lora_4bit using pip
 
 ```
-cd text-generation-webui/repositories
-git clone https://github.com/johnsmith0031/alpaca_lora_4bit
+git clone https://github.com/johnsmith0031/alpaca_lora_4bit.git
+cd alpaca_lora_4bit
+git fetch origin winglian-setup_pip
+git checkout winglian-setup_pip
+pip install .
 ```
 
-⚠️  I have tested it with the following commit specifically: `2f704b93c961bf202937b10aac9322b092afdce0`
-
-2. Install https://github.com/sterlind/GPTQ-for-LLaMa with this command:
-
-```
-pip install git+https://github.com/sterlind/GPTQ-for-LLaMa.git@lora_4bit
-```
-
-3. Start the UI with the `--monkey-patch` flag:
+2. Start the UI with the `--monkey-patch` flag:
 
 ```
 python server.py --model llama-7b-4bit-128g --listen --lora tloen_alpaca-lora-7b --monkey-patch
