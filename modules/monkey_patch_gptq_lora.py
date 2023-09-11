@@ -1,6 +1,5 @@
 # Copied from https://github.com/johnsmith0031/alpaca_lora_4bit
 
-import sys
 from pathlib import Path
 
 import alpaca_lora_4bit.autograd_4bit as autograd_4bit
@@ -9,8 +8,10 @@ from alpaca_lora_4bit.autograd_4bit import (
     Autograd4bitQuantLinear,
     load_llama_model_4bit_low_ram
 )
-from alpaca_lora_4bit.monkeypatch.peft_tuners_lora_monkey_patch import replace_peft_model_with_int4_lora_model
 from alpaca_lora_4bit.models import Linear4bitLt
+from alpaca_lora_4bit.monkeypatch.peft_tuners_lora_monkey_patch import (
+    replace_peft_model_with_int4_lora_model
+)
 
 from modules import shared
 from modules.GPTQ_loader import find_quantized_model_file
