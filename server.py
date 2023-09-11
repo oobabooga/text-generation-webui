@@ -177,8 +177,6 @@ if __name__ == "__main__":
         'skip_special_tokens': shared.settings['skip_special_tokens'],
         'custom_stopping_strings': shared.settings['custom_stopping_strings'],
         'truncation_length': shared.settings['truncation_length'],
-        'n_gqa': 0,
-        'rms_norm_eps': 0,
         'rope_freq_base': 0,
     }
 
