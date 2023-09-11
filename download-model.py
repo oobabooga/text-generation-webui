@@ -125,7 +125,7 @@ class ModelDownloader:
         if base_folder is None:
             base_folder = 'models' if not is_lora else 'loras'
 
-        # If the model is of type GGUF or GGML, save directly in the base_folder
+        # If the model is of type GGUF, save directly in the base_folder
         if is_llamacpp:
             return Path(base_folder)
 
