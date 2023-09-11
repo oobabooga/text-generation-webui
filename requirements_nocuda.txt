@@ -1,5 +1,5 @@
 aiofiles==23.1.0
-fastapi==0.95.2
+fastapi==0.103.1
 gradio_client==0.2.5
 gradio==3.33.1
 
