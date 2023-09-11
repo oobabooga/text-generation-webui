@@ -9,39 +9,23 @@ from transformers.modeling_outputs import CausalLMOutputWithPast
 
 from modules import RoPE, shared
 from modules.logging_colors import logger
-from modules.utils import is_gguf
 
 import llama_cpp
-
-try:
-    import llama_cpp_ggml
-except:
-    llama_cpp_ggml = llama_cpp
 
 if torch.cuda.is_available() and not torch.version.hip:
     try:
         import llama_cpp_cuda
     except:
         llama_cpp_cuda = None
-    try:
-        import llama_cpp_ggml_cuda
-    except:
-        llama_cpp_ggml_cuda = llama_cpp_cuda
 else:
     llama_cpp_cuda = None
-    llama_cpp_ggml_cuda = None
 
 
-def llama_cpp_lib(model_file: Union[str, Path] = None):
-    if model_file is not None:
-        gguf_model = is_gguf(model_file)
-    else:
-        gguf_model = True
-
+def llama_cpp_lib():
     if shared.args.cpu or llama_cpp_cuda is None:
-        return llama_cpp if gguf_model else llama_cpp_ggml
+        return llama_cpp
     else:
-        return llama_cpp_cuda if gguf_model else llama_cpp_ggml_cuda
+        return llama_cpp_cuda
 
 
 class LlamacppHF(PreTrainedModel):
@@ -64,7 +48,7 @@ class LlamacppHF(PreTrainedModel):
                 'n_tokens': self.model.n_tokens,
                 'input_ids': self.model.input_ids.copy(),
                 'scores': self.model.scores.copy(),
-                'ctx': llama_cpp_lib(path).llama_new_context_with_model(model.model, model.params)
+                'ctx': llama_cpp_lib().llama_new_context_with_model(model.model, model.params)
             }
 
     def _validate_model_class(self):
@@ -181,7 +165,7 @@ class LlamacppHF(PreTrainedModel):
         if path.is_file():
             model_file = path
         else:
-            model_file = (list(path.glob('*.gguf*')) + list(path.glob('*ggml*.bin')))[0]
+            model_file = list(path.glob('*.gguf'))[0]
 
         logger.info(f"llama.cpp weights detected: {model_file}\n")
 
@@ -207,14 +191,7 @@ class LlamacppHF(PreTrainedModel):
             'logits_all': True,
         }
 
-        if not is_gguf(model_file):
-            ggml_params = {
-                'n_gqa': shared.args.n_gqa or None,
-                'rms_norm_eps': shared.args.rms_norm_eps or None,
-            }
-            params = params | ggml_params
-
-        Llama = llama_cpp_lib(model_file).Llama
+        Llama = llama_cpp_lib().Llama
         model = Llama(**params)
 
         return LlamacppHF(model, model_file)
