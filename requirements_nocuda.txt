@@ -16,7 +16,7 @@ Pillow>=9.5.0
 pyyaml
 requests
 safetensors==0.3.2
-transformers==4.32.*
+transformers==4.33.*
 scipy
 sentencepiece
 tensorboard
