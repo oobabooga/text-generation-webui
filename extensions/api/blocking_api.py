@@ -7,10 +7,7 @@ from modules import shared
 from modules.chat import generate_chat_reply
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, unload_model
-from modules.models_settings import (
-    get_model_metadata,
-    update_model_parameters
-)
+from modules.models_settings import get_model_metadata, update_model_parameters
 from modules.text_generation import (
     encode,
     generate_reply,

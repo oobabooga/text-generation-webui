@@ -18,7 +18,7 @@ from transformers import (
 )
 
 import modules.shared as shared
-from modules import llama_attn_hijack, RoPE, sampler_hijack
+from modules import RoPE, llama_attn_hijack, sampler_hijack
 from modules.logging_colors import logger
 from modules.models_settings import get_model_metadata
 
@@ -61,10 +61,6 @@ def load_model(model_name, loader=None):
         'ExLlama_HF': ExLlama_HF_loader,
         'ctransformers': ctransformers_loader,
     }
-
-    p = Path(model_name)
-    if p.exists():
-        model_name = p.parts[-1]
 
     if loader is None:
         if shared.args.loader is not None:

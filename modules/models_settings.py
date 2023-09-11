@@ -6,6 +6,20 @@ import yaml
 from modules import loaders, metadata_gguf, shared, ui
 
 
+def get_fallback_settings():
+    return {
+        'wbits': 'None',
+        'model_type': 'None',
+        'groupsize': 'None',
+        'pre_layer': 0,
+        'skip_special_tokens': shared.settings['skip_special_tokens'],
+        'custom_stopping_strings': shared.settings['custom_stopping_strings'],
+        'truncation_length': shared.settings['truncation_length'],
+        'n_ctx': 2048,
+        'rope_freq_base': 0,
+    }
+
+
 def get_model_metadata(model):
     model_settings = {}
 
