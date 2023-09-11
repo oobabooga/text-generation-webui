@@ -43,7 +43,7 @@ from modules.models import reload_model
 from modules.utils import natural_keys
 
 MODEL_CLASSES = {v[1]: v[0] for v in MODEL_FOR_CAUSAL_LM_MAPPING_NAMES.items()}
-PARAMETERS = ["lora_name", "always_override", "save_steps", "micro_batch_size", "batch_size", "epochs", "learning_rate", "lr_scheduler_type", "lora_rank", "lora_alpha", "lora_dropout", "cutoff_len", "dataset", "eval_dataset", "format", "eval_steps", "raw_text_file", "overlap_len", "newline_favor_len", "higher_rank_limit", "warmup_steps", "optimizer", "hard_cut_string", "train_only_after", "stop_at_loss", "add_eos_token", "min_chars", "report_to", "precize_slicing", "precize_slicing_overlap", "add_eos_token_type", "save_steps_under_loss"]
+PARAMETERS = ["lora_name", "always_override", "save_steps", "micro_batch_size", "batch_size", "epochs", "learning_rate", "lr_scheduler_type", "lora_rank", "lora_alpha", "lora_dropout", "cutoff_len", "dataset", "eval_dataset", "format", "eval_steps", "raw_text_file", "overlap_len", "newline_favor_len", "higher_rank_limit", "warmup_steps", "optimizer", "hard_cut_string", "train_only_after", "stop_at_loss", "add_eos_token", "min_chars", "report_to", "precize_slicing", "precize_slicing_overlap", "add_eos_token_type", "save_steps_under_loss", "add_bos_token"]
 WANT_INTERRUPT = False
 
 train_log = {}
@@ -93,8 +93,8 @@ def create_ui():
                             with gr.Column():
                                 warmup_steps = gr.Number(label='Warmup Steps', value=100, info='For this many steps at the start, the learning rate will be lower than normal. This helps the trainer prepare the model and precompute statistics to improve the quality of training after the start.')
                                 train_only_after = gr.Textbox(label='Train Only After', value='', info='Only consider text *after* this string in any given chunk for training. For Alpaca datasets, use "### Response:" to only train the response and ignore the input.')
-
-                                add_eos_token = gr.Checkbox(label='Add EOS token', value=False, info="Adds EOS token for each dataset item. In case of raw text, the EOS will be added at the Hard Cut")
+                                add_bos_token = gr.Checkbox(label='Add BOS token', value=True, info="Adds BOS token for each dataset item")
+                                add_eos_token = gr.Checkbox(label='Add EOS token', value=False, info="Adds EOS token for each dataset item")
                                 add_eos_token_type = gr.Dropdown(label='EOS placement (raw text)', choices=['Every Block', 'Hard Cut Blocks Only'], value='Every Block', info='', allow_custom_value = False)
                                 
                                 precize_slicing = gr.Checkbox(label='Precise Raw Text Slicer (PRTS)', value = False, info="Creates training blocks with special attention to clean sentence structure") 
@@ -165,7 +165,7 @@ def create_ui():
                 refresh_table = gr.Button('Refresh the table', elem_classes="small-button")
 
     # Training events
-    all_params = [lora_name, always_override, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lr_scheduler_type, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, higher_rank_limit, warmup_steps, optimizer, hard_cut_string, train_only_after, stop_at_loss, add_eos_token, min_chars, report_to, precize_slicing, precize_slicing_overlap, add_eos_token_type, save_steps_under_loss]
+    all_params = [lora_name, always_override, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lr_scheduler_type, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, higher_rank_limit, warmup_steps, optimizer, hard_cut_string, train_only_after, stop_at_loss, add_eos_token, min_chars, report_to, precize_slicing, precize_slicing_overlap, add_eos_token_type, save_steps_under_loss, add_bos_token]
 
     copy_from.change(do_copy_params, [copy_from] + all_params, all_params)
     start_button.click(do_train, all_params, output)
@@ -423,13 +423,13 @@ def create_graph(lora_path, lora_name):
         
 # end of FPHAM custom block        
 
-def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lr_scheduler_type: str, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, higher_rank_limit: bool, warmup_steps: int, optimizer: str, hard_cut_string: str, train_only_after: str, stop_at_loss: float, add_eos_token: bool, min_chars: int, report_to: str, precize_slicing: bool, precize_slicing_overlap: bool, add_eos_token_type: str, save_steps_under_loss: float):
+def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lr_scheduler_type: str, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, higher_rank_limit: bool, warmup_steps: int, optimizer: str, hard_cut_string: str, train_only_after: str, stop_at_loss: float, add_eos_token: bool, min_chars: int, report_to: str, precize_slicing: bool, precize_slicing_overlap: bool, add_eos_token_type: str, save_steps_under_loss: float, add_bos_token: bool):
 
     if shared.args.monkey_patch:
-        from monkeypatch.peft_tuners_lora_monkey_patch import (
-            replace_peft_model_with_gptq_lora_model
+        from alpaca_lora_4bit.monkeypatch.peft_tuners_lora_monkey_patch import (
+            replace_peft_model_with_int4_lora_model
         )
-        replace_peft_model_with_gptq_lora_model()
+        replace_peft_model_with_int4_lora_model()
 
     global WANT_INTERRUPT
     WANT_INTERRUPT = False
@@ -474,30 +474,31 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     shared.tokenizer.pad_token_id = 0
     shared.tokenizer.padding_side = "left"
 
-    def encode(text, add_bos_token):
+    def encode(text, prepend_bos_token):
+       
         result = shared.tokenizer.encode(text, truncation=True, max_length=cutoff_len)
         # Check if the first two tokens are BOS
         if len(result) >= 2 and result[:2] == [shared.tokenizer.bos_token_id, shared.tokenizer.bos_token_id]:
             result = result[1:]
 
-        if not add_bos_token and result[0] == shared.tokenizer.bos_token_id:
+        if not prepend_bos_token and result[0] == shared.tokenizer.bos_token_id:
             result = result[1:]
         return result
 
-    def tokenize(prompt, append_eos_token=False):
+    def tokenize(prompt, append_eos_token=False, prepend_bos_token = False):
 
         if train_only_after == '' or train_only_after not in prompt:
-            input_ids = encode(prompt, True)
+            input_ids = encode(prompt, prepend_bos_token)
 
             if append_eos_token and input_ids[-1] != shared.tokenizer.eos_token_id and len(input_ids) < cutoff_len:
                 input_ids.append(shared.tokenizer.eos_token_id)
 
             input_ids = [shared.tokenizer.pad_token_id] * (cutoff_len - len(input_ids)) + input_ids
+            
             labels = [1] * len(input_ids)
-
         else:
             ind = prompt.index(train_only_after) + len(train_only_after)
-            before_tokens = encode(prompt[:ind], True)
+            before_tokens = encode(prompt[:ind], prepend_bos_token)
             after_tokens = encode(prompt[ind:], False)
 
             if append_eos_token and after_tokens[-1] != shared.tokenizer.eos_token_id:
@@ -711,7 +712,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         if precize_slicing:
             # == New more precise slicing on sentence boundary ==
             text_chunks = precise_cut(raw_text, precize_slicing_overlap, min_chars, add_EOS_to_HC)
-            train_data = Dataset.from_list([tokenize(x, add_EOS_to_all) for x in text_chunks])
+            train_data = Dataset.from_list([tokenize(x, add_EOS_to_all, add_bos_token) for x in text_chunks])
             if add_EOS_to_all:
                 print(f"Added EOS to {len(text_chunks)} blocks") 
         else:
@@ -745,7 +746,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             if newline_favor_len > 0:
                 text_chunks = [cut_chunk_for_newline(x, newline_favor_len) for x in text_chunks]
 
-            train_data = Dataset.from_list([tokenize(x, add_EOS_to_all) for x in text_chunks])
+            train_data = Dataset.from_list([tokenize(x, add_EOS_to_all, add_bos_token) for x in text_chunks])
 
         del text_chunks
         eval_data = None
@@ -779,13 +780,13 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
         def generate_and_tokenize_prompt(data_point):
             prompt = generate_prompt(data_point)
-            return tokenize(prompt, add_eos_token)
+            return tokenize(prompt, add_eos_token, add_bos_token)
 
         logger.info("Loading JSON datasets...")
         data = load_dataset("json", data_files=clean_path('training/datasets', f'{dataset}.json'))
         train_data = data['train'].map(generate_and_tokenize_prompt, new_fingerprint='%030x' % random.randrange(16**30))
-        if add_eos_token:
-            print(f"Added EOS to all items") 
+
+        print(f"BOS: {add_bos_token} EOS: {add_eos_token}") 
 
         if eval_dataset == 'None':
             eval_data = None
@@ -848,11 +849,12 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         return
 
     if shared.args.monkey_patch:
-        for n, m in lora_model.named_modules():
-            if '4bit' in str(type(m)):
+        from alpaca_lora_4bit.autograd_4bit import Autograd4bitQuantLinear
+        from alpaca_lora_4bit.models import Linear4bitLt
+        for _, m in lora_model.named_modules():
+            if isinstance(m, Autograd4bitQuantLinear) or isinstance(m, Linear4bitLt):
                 if m.is_v1_model:
                     m.zeros = m.zeros.half()
-
                 m.scales = m.scales.half()
 
     class Tracked():
