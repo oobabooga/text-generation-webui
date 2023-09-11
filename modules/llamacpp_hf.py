@@ -14,11 +14,7 @@ import llama_cpp
 
 if torch.cuda.is_available() and not torch.version.hip:
     try:
-<<<<<<< HEAD
-    from llama_cpp_cuda import Llama
-=======
         import llama_cpp_cuda
->>>>>>> upstream/main
     except:
         llama_cpp_cuda = None
 else:
