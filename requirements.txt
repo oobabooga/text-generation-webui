@@ -33,8 +33,8 @@ https://github.com/PanQiWei/AutoGPTQ/releases/download/v0.4.2/auto_gptq-0.4.2+cu
 https://github.com/PanQiWei/AutoGPTQ/releases/download/v0.4.2/auto_gptq-0.4.2+cu117-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
 
 # ExLlama
-https://github.com/jllllll/exllama/releases/download/0.0.14/exllama-0.0.14+cu117-cp310-cp310-win_amd64.whl; platform_system == "Windows"
-https://github.com/jllllll/exllama/releases/download/0.0.14/exllama-0.0.14+cu117-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
+https://github.com/jllllll/exllama/releases/download/0.0.17/exllama-0.0.17+cu117-cp310-cp310-win_amd64.whl; platform_system == "Windows"
+https://github.com/jllllll/exllama/releases/download/0.0.17/exllama-0.0.17+cu117-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
 
 # llama-cpp-python without GPU support
 llama-cpp-python==0.1.84; platform_system != "Windows"
