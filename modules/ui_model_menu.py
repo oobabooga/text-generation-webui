@@ -256,7 +256,7 @@ def download_file_list_wrapper(repo_id):
 
         model, branch = downloader.sanitize_model_and_branch_names(model, branch)
         links, sha256, is_lora, is_llamacpp = downloader.get_download_links_from_huggingface(model, branch, text_only=False)
-        return gr.update(choices=["All files"] + [Path(link).name for link in links if Path(link).suffix.lower() in (".bin", ".gguf")], value="All files")
+        return gr.update(choices=["All files"] + [Path(link).name for link in links if Path(link).suffix.lower() == ".gguf"], value="All files")
     except:
         return gr.update(choices=["All files"], value="All files")
 
