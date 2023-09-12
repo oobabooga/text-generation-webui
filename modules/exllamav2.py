@@ -15,6 +15,7 @@ with RelativeImport("repositories/exllamav2"):
 
 torch.cuda._lazy_init()
 
+
 class Exllamav2Model:
     def __init__(self):
         pass
@@ -42,7 +43,7 @@ class Exllamav2Model:
         cache = ExLlamaV2Cache(model)
 
         result = self()
-        result.model = model 
+        result.model = model
         result.cache = cache
         return result, tokenizer
 
@@ -58,16 +59,16 @@ class Exllamav2Model:
                 max_new_tokens = state['max_new_tokens']
 
             if ids.shape[-1] > 1:
-                self.model.forward(ids[:, :-1], self.cache, preprocess_only = True)
+                self.model.forward(ids[:, :-1], self.cache, preprocess_only=True)
 
             torch.cuda.synchronize()
             for i in range(max_new_tokens):
 
                 logits = self.model.forward(ids[:, -1:], self.cache)
                 sample = torch.argmax(logits[0, -1]).cpu().unsqueeze(0).unsqueeze(0)
-                ids = torch.cat((ids, sample), dim = -1)
+                ids = torch.cat((ids, sample), dim=-1)
 
-                text2 = shared.tokenizer.decode(ids[:,initial_len:])[0]
+                text2 = shared.tokenizer.decode(ids[:, initial_len:])[0]
 
                 yield text2
 
