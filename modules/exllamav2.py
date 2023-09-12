@@ -77,6 +77,7 @@ class Exllamav2Model:
     def generate_with_streaming(self, prompt, state):
         with torch.inference_mode():
             ids = shared.tokenizer.encode(prompt)
+            initial_len = ids.shape[-1]
             tokens_prompt = ids.shape[-1]
             self.model.forward(ids[:, -1:])
 
@@ -99,7 +100,7 @@ class Exllamav2Model:
                 ids = torch.cat((ids, sample), dim = -1)
 
                 # text2 = shared.tokenizer.decode(ids[:, -3:])[0]
-                text2 = shared.tokenizer.decode(ids)[0]
+                text2 = shared.tokenizer.decode(ids[:,initial_len:])[0]
                 # text2 = text2[len(text1):]
 
                 yield text2
