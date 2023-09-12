@@ -32,7 +32,7 @@ def load_model(model_name: str) -> dict:
         unload_model()
 
         model_settings = get_model_metadata(shared.model_name)
-        shared.settings.update(model_settings)
+        shared.settings.update({k: v for k, v in model_settings.items() if k in shared.settings})
         update_model_parameters(model_settings, initial=True)
 
         if shared.settings['mode'] != 'instruct':

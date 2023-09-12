@@ -212,7 +212,7 @@ if __name__ == "__main__":
             model_name = shared.model_name
 
         model_settings = get_model_metadata(model_name)
-        shared.settings.update(model_settings)  # hijacking the interface defaults
+        shared.settings.update({k: v for k, v in model_settings.items() if k in shared.settings})  # hijacking the interface defaults
         update_model_parameters(model_settings, initial=True)  # hijacking the command-line arguments
 
         # Load the model

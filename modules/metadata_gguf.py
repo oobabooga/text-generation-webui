@@ -50,7 +50,11 @@ value_type_info = {
 def get_single(value_type, file):
     if value_type == GGUFValueType.STRING:
         value_length = struct.unpack("<Q", file.read(8))[0]
-        value = file.read(value_length).decode('utf-8')
+        value = file.read(value_length)
+        try:
+            value = value.decode('utf-8')
+        except:
+            pass
     else:
         type_str = _simple_value_packing.get(value_type)
         bytes_length = value_type_info.get(value_type)
