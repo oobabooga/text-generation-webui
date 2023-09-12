@@ -49,6 +49,9 @@ class Exllamav2Model:
 
     def generate_with_streaming(self, prompt, state):
         with torch.inference_mode():
+
+            self.cache.current_seq_len = 0
+
             ids = shared.tokenizer.encode(prompt)
             initial_len = ids.shape[-1]
             self.model.forward(ids[:, -1:])
