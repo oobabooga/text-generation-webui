@@ -59,6 +59,8 @@ def load_model(model_name, loader=None):
         'RWKV': RWKV_loader,
         'ExLlama': ExLlama_loader,
         'ExLlama_HF': ExLlama_HF_loader,
+        'ExLlamav2': ExLlamav2_loader,
+        'ExLlamav2_HF': ExLlamav2_HF_loader,
         'ctransformers': ctransformers_loader,
     }
 
@@ -327,6 +329,19 @@ def ExLlama_HF_loader(model_name):
     from modules.exllama_hf import ExllamaHF
 
     return ExllamaHF.from_pretrained(model_name)
+
+
+def ExLlamav2_loader(model_name):
+    from modules.exllamav2 import Exllamav2Model
+
+    model, tokenizer = Exllamav2Model.from_pretrained(model_name)
+    return model, tokenizer
+
+
+def ExLlamav2_HF_loader(model_name):
+    from modules.exllamav2_hf import Exllamav2HF
+
+    return Exllamav2HF.from_pretrained(model_name)
 
 
 def get_max_memory_dict():
