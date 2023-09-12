@@ -42,6 +42,8 @@ loaders_and_params = OrderedDict({
         'compress_pos_emb',
         'exllama_info',
     ],
+    'ExLlamav2': [
+    ],
     'AutoGPTQ': [
         'triton',
         'no_inject_fused_attention',
