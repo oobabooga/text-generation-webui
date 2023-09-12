@@ -221,6 +221,8 @@ def fix_loader_name(name):
         return 'ExLlama_HF'
     elif name in ['exllamav2', 'exllama-v2', 'ex_llama-v2', 'exlamav2', 'exlama-v2']:
         return 'ExLlamav2'
+    elif name in ['exllamav2-hf', 'exllamav2_hf', 'exllama-v2-hf', 'exllama_v2_hf', 'exllama-v2_hf']:
+        return 'ExLlamav2_HF'
     elif name in ['ctransformers', 'ctranforemrs', 'ctransformer']:
         return 'ctransformers'
 
