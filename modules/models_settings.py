@@ -17,6 +17,7 @@ def get_fallback_settings():
         'truncation_length': shared.settings['truncation_length'],
         'n_ctx': 2048,
         'rope_freq_base': 0,
+        'compress_pos_emb': 1,
     }
 
 
@@ -48,6 +49,10 @@ def get_model_metadata(model):
         metadata = metadata_gguf.load_metadata(model_file)
         if 'llama.context_length' in metadata:
             model_settings['n_ctx'] = metadata['llama.context_length']
+        if 'llama.rope.scale_linear' in metadata:
+            model_settings['compress_pos_emb'] = metadata['llama.rope.scale_linear']
+        if 'llama.rope.freq_base' in metadata:
+            model_settings['rope_freq_base'] = metadata['llama.rope.freq_base']    
 
     return model_settings
 
@@ -124,7 +129,7 @@ def apply_model_settings_to_state(model, state):
         loader = model_settings.pop('loader')
 
         # If the user is using an alternative loader for the same model type, let them keep using it
-        if not (loader == 'AutoGPTQ' and state['loader'] in ['GPTQ-for-LLaMa', 'ExLlama', 'ExLlama_HF']) and not (loader == 'llama.cpp' and state['loader'] in ['llamacpp_HF', 'ctransformers']):
+        if not (loader == 'AutoGPTQ' and state['loader'] in ['GPTQ-for-LLaMa', 'ExLlama', 'ExLlama_HF', 'ExLlamav2', 'ExLlamav2_HF']) and not (loader == 'llama.cpp' and state['loader'] in ['llamacpp_HF', 'ctransformers']):
             state['loader'] = loader
 
     for k in model_settings:
