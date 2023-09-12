@@ -3,21 +3,13 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
 import torch
+from exllamav2 import ExLlamaV2, ExLlamaV2Cache, ExLlamaV2Config
 from torch.nn import CrossEntropyLoss
 from transformers import GenerationConfig, PretrainedConfig, PreTrainedModel
 from transformers.modeling_outputs import CausalLMOutputWithPast
 
 from modules import shared
 from modules.logging_colors import logger
-from modules.relative_imports import RelativeImport
-
-
-with RelativeImport("repositories/exllamav2"):
-    from exllamav2 import (
-        ExLlamaV2,
-        ExLlamaV2Cache,
-        ExLlamaV2Config,
-    )
 
 
 class Exllamav2HF(PreTrainedModel):
