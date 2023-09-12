@@ -1,0 +1,25 @@
+name: Update Fork
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 19,03 * * *" # At 19:00 and 03:00, every day (UTC)
+
+jobs:
+  update-fork:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: tgymnich/fork-sync@v1.8
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          owner: oobabooga
+          base: main
+          head: main
+
+      - uses: tgymnich/fork-sync@v1.8
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          owner: oobabooga
+          base: main
+          head: maindeepspeed-1

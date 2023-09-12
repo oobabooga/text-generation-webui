@@ -8,10 +8,13 @@ accelerate==0.22.*
 colorama
 datasets
 einops
+exllamav2==0.0.0
 markdown
+ninja
 numpy==1.24
-optimum==1.12.0
-pandas<2.1
+optimum==1.13.1
+pandas
+#pandas<2.1
 peft==0.5.*
 Pillow>=9.5.0
 pyyaml
