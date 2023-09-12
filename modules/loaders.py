@@ -43,6 +43,8 @@ loaders_and_params = OrderedDict({
         'exllama_info',
     ],
     'ExLlamav2': [
+        'gpu_split',
+        'max_seq_len',
     ],
     'AutoGPTQ': [
         'triton',
@@ -179,6 +181,16 @@ loaders_samplers = {
         'seed',
         'guidance_scale',
         'negative_prompt',
+        'ban_eos_token',
+        'auto_max_new_tokens',
+    },
+    'ExLlamav2': {
+        'temperature',
+        'top_p',
+        'top_k',
+        'repetition_penalty',
+        'repetition_penalty_range',
+        'seed',
         'ban_eos_token',
         'auto_max_new_tokens',
     },
