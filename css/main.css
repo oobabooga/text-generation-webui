@@ -282,7 +282,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 #chat-tab > :first-child, #extensions {
-    max-width: 800px;
+    max-width: 960px;
     margin-left: auto;
     margin-right: auto;
 }
@@ -304,7 +304,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 .chat {
     margin-left: auto;
     margin-right: auto;
-    max-width: 800px;
+    max-width: 960px;
     height: 100%;
     overflow-y: auto;
     padding-right: 15px;

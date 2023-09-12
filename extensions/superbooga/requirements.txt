@@ -1,5 +1,6 @@
 beautifulsoup4==4.12.2
 chromadb==0.3.18
+pandas==2.0.3
 posthog==2.4.2
 sentence_transformers==2.2.2
 lxml
