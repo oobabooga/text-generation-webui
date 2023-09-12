@@ -45,11 +45,15 @@ loaders_and_params = OrderedDict({
     'ExLlamav2': [
         'gpu_split',
         'max_seq_len',
+        'alpha_value',
+        'compress_pos_emb',
     ],
     'ExLlamav2_HF': [
         'gpu_split',
         'max_seq_len',
         'cfg_cache',
+        'alpha_value',
+        'compress_pos_emb',
     ],
     'AutoGPTQ': [
         'triton',
