@@ -18,9 +18,9 @@ from transformers import (
 )
 
 import modules.shared as shared
-from modules import llama_attn_hijack, RoPE, sampler_hijack
+from modules import RoPE, llama_attn_hijack, sampler_hijack
 from modules.logging_colors import logger
-from modules.models_settings import infer_loader
+from modules.models_settings import get_model_metadata
 
 transformers.logging.set_verbosity_error()
 
@@ -62,15 +62,11 @@ def load_model(model_name, loader=None):
         'ctransformers': ctransformers_loader,
     }
 
-    p = Path(model_name)
-    if p.exists():
-        model_name = p.parts[-1]
-
     if loader is None:
         if shared.args.loader is not None:
             loader = shared.args.loader
         else:
-            loader = infer_loader(model_name)
+            loader = get_model_metadata(model_name)['loader']
             if loader is None:
                 logger.error('The path to the model does not exist. Exiting.')
                 return None, None
@@ -241,7 +237,7 @@ def llamacpp_loader(model_name):
     if path.is_file():
         model_file = path
     else:
-        model_file = (list(Path(f'{shared.args.model_dir}/{model_name}').glob('*.gguf*')) + list(Path(f'{shared.args.model_dir}/{model_name}').glob('*ggml*.bin')))[0]
+        model_file = list(Path(f'{shared.args.model_dir}/{model_name}').glob('*.gguf'))[0]
 
     logger.info(f"llama.cpp weights detected: {model_file}")
     model, tokenizer = LlamaCppModel.from_pretrained(model_file)
