@@ -39,7 +39,7 @@ https://github.com/jllllll/exllama/releases/download/0.0.17/exllama-0.0.17+cu117
 
 # llama-cpp-python without GPU support
 llama-cpp-python==0.1.85; platform_system != "Windows"
-https://github.com/abetlen/llama-cpp-python/releases/download/v0.1.84/llama_cpp_python-0.1.85-cp310-cp310-win_amd64.whl; platform_system == "Windows"
+https://github.com/abetlen/llama-cpp-python/releases/download/v0.1.85/llama_cpp_python-0.1.85-cp310-cp310-win_amd64.whl; platform_system == "Windows"
 
 # llama-cpp-python with CUDA support
 https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/textgen-webui/llama_cpp_python_cuda-0.1.85+cu117-cp310-cp310-win_amd64.whl; platform_system == "Windows"
