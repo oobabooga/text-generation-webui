@@ -32,7 +32,7 @@ settings = {
     'show_controls': True,
     'start_with': '',
     'mode': 'chat',
-    'chat_style': 'TheEncrypted777',
+    'chat_style': 'cai-chat',
     'character': 'None',
     'prompt-default': 'QA',
     'prompt-notebook': 'QA',
