@@ -67,7 +67,7 @@ def calculate_perplexity(models, input_dataset, stride, _max_length):
             try:
                 yield cumulative_log + f"Loading {model}...\n\n"
                 model_settings = get_model_metadata(model)
-                shared.settings.update(model_settings)  # hijacking the interface defaults
+                shared.settings.update({k: v for k, v in model_settings.items() if k in shared.settings})  # hijacking the interface defaults
                 update_model_parameters(model_settings)  # hijacking the command-line arguments
                 shared.model_name = model
                 unload_model()
