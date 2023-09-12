@@ -4,7 +4,7 @@
     padding-bottom: 25px;
     font-size: 15px;
     font-family: Helvetica, Arial, sans-serif;
-    line-height: 1.428571429;
+    line-height: 1.3333;
 }
 
 .circle-you {
@@ -46,7 +46,7 @@
 .message-body p {
     margin-bottom: 0 !important;
     font-size: 15px !important;
-    line-height: 1.428571429 !important;
+    line-height: 1.3333 !important;
 }
 
 .dark .message-body p em {
