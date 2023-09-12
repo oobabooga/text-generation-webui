@@ -65,15 +65,20 @@ class Exllamav2Model:
                 self.model.forward(ids[:, :-1], self.cache, preprocess_only=True)
 
             torch.cuda.synchronize()
+            has_leading_space = False
             for i in range(max_new_tokens):
-
                 logits = self.model.forward(ids[:, -1:], self.cache)
-                sample = torch.argmax(logits[0, -1]).cpu().unsqueeze(0).unsqueeze(0)
-                ids = torch.cat((ids, sample), dim=-1)
+                token = torch.argmax(logits[0, -1]).cpu().unsqueeze(0).unsqueeze(0)
+                ids = torch.cat((ids, token), dim=-1)
 
-                text2 = shared.tokenizer.decode(ids[:, initial_len:])[0]
+                if i == 0 and shared.tokenizer.tokenizer.IdToPiece(int(token)).startswith('▁'):
+                    has_leading_space = True
 
-                yield text2
+                decoded_text = shared.tokenizer.decode(ids[:, initial_len:])[0]
+                if has_leading_space:
+                    decoded_text = ' ' + decoded_text
+
+                yield decoded_text
 
     def generate(self, prompt, state):
         output = ''
