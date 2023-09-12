@@ -17,6 +17,7 @@ def get_fallback_settings():
         'truncation_length': shared.settings['truncation_length'],
         'n_ctx': 2048,
         'rope_freq_base': 0,
+        'compress_pos_emb': 1,
     }
 
 
@@ -48,6 +49,10 @@ def get_model_metadata(model):
         metadata = metadata_gguf.load_metadata(model_file)
         if 'llama.context_length' in metadata:
             model_settings['n_ctx'] = metadata['llama.context_length']
+        if 'llama.rope.scale_linear' in metadata:
+            model_settings['compress_pos_emb'] = metadata['llama.rope.scale_linear']
+        if 'llama.rope.freq_base' in metadata:
+            model_settings['rope_freq_base'] = metadata['llama.rope.freq_base']    
 
     return model_settings
 

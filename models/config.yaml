@@ -62,7 +62,6 @@ llama-65b-gptq-3bit:
   instruction_template: 'Vicuna-v1.1'
 .*vicuna.*(1.5|1_5):
   instruction_template: 'Vicuna-v1.1'
-  truncation_length: 4096
 .*stable.*vicuna:
   instruction_template: 'StableVicuna'
 (?!.*chat).*chinese-vicuna:
@@ -208,8 +207,6 @@ llama-65b-gptq-3bit:
   instruction_template: 'Vicuna-v1.1'
 .*godzilla:
   instruction_template: 'Alpaca'
-.*llama-(2|v2):
-  truncation_length: 4096
 .*llama-(2|v2).*chat:
   instruction_template: 'Llama-v2'
 .*newhope:
@@ -223,7 +220,5 @@ llama-65b-gptq-3bit:
 .*(openorca-platypus2):
   instruction_template: 'OpenOrca-Platypus2'
   custom_stopping_strings: '"### Instruction:", "### Response:"'
-.*codellama:
-  rope_freq_base: 1000000
 .*codellama.*instruct:
   instruction_template: 'Llama-v2'
