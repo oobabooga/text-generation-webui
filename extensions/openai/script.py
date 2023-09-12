@@ -139,8 +139,24 @@ class Handler(BaseHTTPRequestHandler):
         debug_msg(self.requestline)
         debug_msg(self.headers)
 
-        content_length = int(self.headers['Content-Length'])
-        body = json.loads(self.rfile.read(content_length).decode('utf-8'))
+        content_length = self.headers.get('Content-Length')
+        transfer_encoding = self.headers.get('Transfer-Encoding')
+
+        if content_length:
+            body = json.loads(self.rfile.read(int(content_length)).decode('utf-8'))
+        elif transfer_encoding == 'chunked':
+            chunks = []
+            while True:
+                chunk_size = int(self.rfile.readline(), 16)  # Read the chunk size
+                if chunk_size == 0:
+                    break  # End of chunks
+                chunks.append(self.rfile.read(chunk_size))
+                self.rfile.readline()  # Consume the trailing newline after each chunk
+            body = json.loads(b''.join(chunks).decode('utf-8'))
+        else:
+            self.send_response(400, "Bad Request: Either Content-Length or Transfer-Encoding header expected.")
+            self.end_headers()
+            return
 
         debug_msg(body)
 
