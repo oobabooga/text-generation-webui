@@ -80,6 +80,9 @@ class Exllamav2Model:
 
                 yield decoded_text
 
+                if token.item() == shared.tokenizer.eos_token_id or shared.stop_everything:
+                    break
+
     def generate(self, prompt, state):
         output = ''
         for output in self.generate_with_streaming(prompt, state):
