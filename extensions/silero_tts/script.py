@@ -33,12 +33,18 @@ voices_en = ['en_99', 'en_45', 'en_18', 'en_117', 'en_49', 'en_51', 'en_68', 'en
 voices_es = ["es_0", "es_1", "es_2"]
 voices_fr = ["fr_0", "fr_1", "fr_2", "fr_3", "fr_4", "fr_5"]
 voices_de = ["bernd_ungerer", "eva_k", "friedrich", "hokuspokus", "karlsson"]
+voices_ru = ["aidar", "baya", "kseniya", "xenia"]
+voices_ua = ["mykyta"]
+voices_uz = ["dilnavoz"]
 
 languages = {
     "en": {"label": "English", "voices": voices_en, "default_voice": "en_56", "model_id": "v3_en"},
     "es": {"label": "Español", "voices": voices_es, "default_voice": "es_0", "model_id": "v3_es"},
     "fr": {"label": "Français", "voices": voices_fr, "default_voice": "fr_0", "model_id": "v3_fr"},
-    "de": {"label": "Deutsch", "voices": voices_de, "default_voice": "eva_k", "model_id": "v3_de"}
+    "de": {"label": "Deutsch", "voices": voices_de, "default_voice": "eva_k", "model_id": "v3_de"},
+    "ru": {"label": "русский", "voices": voices_ru, "default_voice": "aidar", "model_id": "ru_v3"},
+    "ua": {"label": "українська", "voices": voices_ua, "default_voice": "mykyta", "model_id": "v3_ua"},
+    "uz": {"label": "Oʻzbekcha", "voices": voices_uz, "default_voice": "dilnavoz", "model_id": "v3_uz"},
 }
 
 voice_pitches = ['x-low', 'low', 'medium', 'high', 'x-high']
