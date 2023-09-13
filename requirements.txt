@@ -3,7 +3,6 @@ fastapi==0.95.2
 gradio_client==0.2.5
 gradio==3.33.1
 pydantic==1.10.12
-
 accelerate==0.22.*
 colorama
 datasets
@@ -59,4 +58,4 @@ https://github.com/jllllll/ctransformers-cuBLAS-wheels/releases/download/AVX2/ct
 
 # AVX512
 # https://jllllll.github.io/llama-cpp-python-cuBLAS-wheels/AVX512/
-https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/AVX512/llama_cpp_python-0.1.84+cu117-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
+https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/AVX512/llama_cpp_python-0.1.85+cu117-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
