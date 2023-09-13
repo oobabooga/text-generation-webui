@@ -114,6 +114,9 @@ class Exllamav2HF(PreTrainedModel):
         config = ExLlamaV2Config()
         config.model_dir = pretrained_model_name_or_path
         config.prepare()
+
         config.max_seq_len = shared.args.max_seq_len
+        config.rope_scale = shared.args.compress_pos_emb
+        config.rope_alpha = shared.args.alpha_value
 
         return Exllamav2HF(config)
