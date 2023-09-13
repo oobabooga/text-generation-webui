@@ -293,7 +293,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     }
 
     .chat-parent {
-        height: calc(100dvh - 172px) !important;
+        height: calc(100dvh - 192px) !important;
     }
 
     /*
@@ -318,7 +318,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 .chat-parent {
-    height: calc(100dvh - 182px);
+    height: calc(100dvh - 202px);
     overflow: auto !important;
 }
 
@@ -410,6 +410,12 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     #chat-tab > :first-child {
         max-width: unset;
     }
+}
+
+#show-controls {
+    position: absolute;
+    background-color: transparent;
+    left: calc(100% - 180px);
 }
 
 #typing-container {

@@ -44,6 +44,19 @@ document.addEventListener("keydown", function(event) {
     }
   }
 
+  // Show chat controls on Ctrl+S pressed
+  else if (event.ctrlKey && event.key == "s") {
+    event.preventDefault();
+
+    var showControlsElement = document.getElementById('show-controls');
+    if (showControlsElement && showControlsElement.childNodes.length >= 4) {
+      showControlsElement.childNodes[3].click();
+
+      var arr = document.getElementById('chat-input').childNodes[2].childNodes;
+      arr[arr.length - 1].focus();
+    }
+  }
+
 });
 
 //------------------------------------------------
