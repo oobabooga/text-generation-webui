@@ -207,9 +207,9 @@ if __name__ == "__main__":
     if shared.model_name != 'None':
         p = Path(shared.model_name)
         if p.exists():
-            model_name = p.parts[-1]
-        else:
             model_name = shared.model_name
+        else:
+            model_name = p.parts[-1]
 
         model_settings = get_model_metadata(model_name)
         shared.settings.update({k: v for k, v in model_settings.items() if k in shared.settings})  # hijacking the interface defaults
