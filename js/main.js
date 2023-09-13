@@ -184,6 +184,20 @@ for(i = 0; i < textareaElements.length; i++) {
 //------------------------------------------------
 document.getElementById('chat-input').parentNode.style.background = 'transparent';
 document.getElementById('chat-input').parentNode.style.border = 'none';
+document.getElementById('chat-input').parentElement.parentElement.style.minWidth = 0;
+
+document.getElementById('stop').parentElement.parentElement.style.minWidth = 0;
+document.getElementById('stop').parentElement.parentElement.style.display = 'flex';
+document.getElementById('stop').parentElement.parentElement.style.flexDirection = 'column-reverse';
+document.getElementById('stop').parentElement.parentElement.style.paddingBottom = '3px';
+document.getElementById('stop').parentElement.parentElement.parentElement.style.paddingBottom = '20px';
+
+document.getElementById('gr-hover').parentElement.style.minWidth = 0;
+document.getElementById('gr-hover').parentElement.style.display = 'flex';
+document.getElementById('gr-hover').parentElement.style.flexDirection = 'column-reverse';
+document.getElementById('gr-hover').parentElement.style.flex = '0';
+document.getElementById('gr-hover').parentElement.style.paddingRight = '20px';
+document.getElementById('gr-hover').parentElement.style.paddingBottom = '3px';
 
 //------------------------------------------------
 // Remove some backgrounds
@@ -197,7 +211,6 @@ for(i = 0; i < noBackgroundelements.length; i++) {
 //------------------------------------------------
 // Create the hover menu in the chat tab
 //------------------------------------------------
-
 function closeHoverMenu() {
   hoverMenuElement.style.display = "none";
 }
@@ -207,6 +220,7 @@ const buttonsInChat = chatElement.querySelectorAll("button");
 const hoverMenuElement = document.getElementById("hover-menu");
 const hoverElement = document.querySelector(".hover-element");
 const hoverMenu = document.getElementById('hover-menu');
+let isMouseInsideMenu = false;
 
 for (let i = 14; i >= 2; i--) {
   const button = buttonsInChat[i];
@@ -217,34 +231,7 @@ for (let i = 14; i >= 2; i--) {
       hoverMenu.style.display = 'none';
     });
   }
-
 }
-
-/*
-// Attach a mouseout event listener to the hover menu element
-hoverMenuElement.addEventListener("mouseout", (event) => {
-  // Check if the mouse has left the hover menu entirely
-  if (!hoverElement.contains(event.relatedTarget) && !hoverMenuElement.contains(event.relatedTarget)) {
-    closeHoverMenu();
-  }
-});
-
-// Attach a mouseover event listener to the hover element to reopen the menu
-hoverElement.addEventListener("mouseover", () => {
-  hoverMenuElement.style.display = "block";
-});
-
-// Attach a mouseout event listener to the hover element to close the menu
-hoverElement.addEventListener("mouseout", (event) => {
-  // Check if the mouse has left the hover element entirely
-  if (!hoverElement.contains(event.relatedTarget)) {
-    closeHoverMenu();
-  }
-});
-*/
-
-
-let isMouseInsideMenu = false;
 
 hoverElement.addEventListener('mouseenter', () => {
   hoverMenu.style.display = 'block';
@@ -268,18 +255,8 @@ hoverMenu.addEventListener('mouseleave', () => {
   hoverMenu.style.display = 'none';
 });
 
-document.getElementById('stop').parentElement.parentElement.style.minWidth = 0;
-document.getElementById('stop').parentElement.parentElement.style.display = 'flex';
-document.getElementById('stop').parentElement.parentElement.style.flexDirection = 'column-reverse';
-document.getElementById('stop').parentElement.parentElement.style.paddingBottom = '3px';
-document.getElementById('stop').parentElement.parentElement.parentElement.style.paddingBottom = '20px';
 
-document.getElementById('gr-hover').parentElement.style.minWidth = 0;
-document.getElementById('gr-hover').parentElement.style.display = 'flex';
-document.getElementById('gr-hover').parentElement.style.flexDirection = 'column-reverse';
-document.getElementById('gr-hover').parentElement.style.flex = '0';
-document.getElementById('gr-hover').parentElement.style.paddingRight = '20px';
-document.getElementById('gr-hover').parentElement.style.paddingBottom = '3px';
-
-document.getElementById('chat-input').parentElement.parentElement.style.minWidth = 0;
+//------------------------------------------------
+// Focus on the chat input
+//------------------------------------------------
 document.querySelector('#chat-input textarea').focus()
