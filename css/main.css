@@ -482,3 +482,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
   background: transparent !important;
   border-radius: 0px !important;
 }
+
+.hover-menu button:hover {
+  background: var(--button-secondary-background-fill-hover) !important;
+}

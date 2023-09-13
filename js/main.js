@@ -232,11 +232,9 @@ hoverElement.addEventListener('mouseenter', () => {
 
 hoverElement.addEventListener('mouseleave', () => {
   // Check if the mouse is not inside the menu before hiding it
-  hoverMenuHideTimeout = setTimeout(() => {
-    if (!isMouseInsideMenu) {
-      hoverMenu.style.display = 'none';
-    }
-  }, 300);
+  if (!isMouseInsideMenu) {
+    hoverMenu.style.display = 'none';
+  }
 });
 
 hoverMenu.addEventListener('mouseenter', () => {
