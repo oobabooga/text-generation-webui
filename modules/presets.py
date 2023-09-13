@@ -28,6 +28,7 @@ def default_preset():
         'num_beams': 1,
         'length_penalty': 1,
         'early_stopping': False,
+        'custom_token_bans': '',
     }
 
 
