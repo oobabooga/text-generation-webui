@@ -25,7 +25,7 @@ def create_ui():
 
         with gr.Row():
             with gr.Column(scale=1):
-                gr.HTML(value='<div class="hover-element" onclick="void(0)">&#9776;<div class="hover-menu" id="hover-menu"></div>', elem_id='gr-hover')
+                gr.HTML(value='<div class="hover-element" onclick="void(0)"><span style="width: 100px; display: block">&#9776;</span><div class="hover-menu" id="hover-menu"></div>', elem_id='gr-hover')
 
             with gr.Column(scale=10):
                 shared.gradio['textbox'] = gr.Textbox(label='', placeholder='Send a message', elem_id='chat-input')

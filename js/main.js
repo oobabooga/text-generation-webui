@@ -209,11 +209,8 @@ for(i = 0; i < noBackgroundelements.length; i++) {
 //------------------------------------------------
 // Create the hover menu in the chat tab
 //------------------------------------------------
-const chatElement = document.getElementById("chat-tab");
-const buttonsInChat = chatElement.querySelectorAll("button");
-const hoverElement = document.querySelector(".hover-element");
+const buttonsInChat = document.getElementById("chat-tab").querySelectorAll("button");
 const hoverMenu = document.getElementById('hover-menu');
-let isMouseInsideMenu = false;
 
 for (let i = 14; i >= 2; i--) {
   const button = buttonsInChat[i];
@@ -222,31 +219,12 @@ for (let i = 14; i >= 2; i--) {
   if(i != 10) {
     button.addEventListener("click", () => {
       hoverMenu.style.display = 'none';
+      setTimeout(() => {
+        hoverMenu.style.display = '';
+      }, 500);
     });
   }
 }
-
-hoverElement.addEventListener('mouseenter', () => {
-  hoverMenu.style.display = 'flex';
-});
-
-hoverElement.addEventListener('mouseleave', () => {
-  // Check if the mouse is not inside the menu before hiding it
-  hoverMenuHideTimeout = setTimeout(() => {
-    if (!isMouseInsideMenu) {
-      hoverMenu.style.display = 'none';
-    }
-  }, 200);
-});
-
-hoverMenu.addEventListener('mouseenter', () => {
-  isMouseInsideMenu = true;
-});
-
-hoverMenu.addEventListener('mouseleave', () => {
-  isMouseInsideMenu = false;
-  hoverMenu.style.display = 'none';
-});
 
 //------------------------------------------------
 // Focus on the chat input
