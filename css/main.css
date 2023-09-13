@@ -293,14 +293,8 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     }
 
     .chat-parent {
-        height: calc(100dvh - 192px) !important;
+        height: calc(100dvh - 172px) !important;
     }
-
-    /*
-    .bigchat {
-        height: calc(100dvh - 180px) !important;
-    }
-    */
 }
 
 .chat {
@@ -318,15 +312,9 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 .chat-parent {
-    height: calc(100dvh - 202px);
+    height: calc(100dvh - 182px);
     overflow: auto !important;
 }
-
-/*
-.bigchat {
-    height: calc(100dvh - 200px);
-}
-*/
 
 .chat > .messages {
     display: flex;
