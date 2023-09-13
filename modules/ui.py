@@ -16,8 +16,6 @@ with open(Path(__file__).resolve().parent / '../js/save_files.js', 'r') as f:
     save_files_js = f.read()
 with open(Path(__file__).resolve().parent / '../js/switch_tabs.js', 'r') as f:
     switch_tabs_js = f.read()
-with open(Path(__file__).resolve().parent / '../js/show_controls.js', 'r') as f:
-    show_controls_js = f.read()
 
 refresh_symbol = '🔄'
 delete_symbol = '🗑️'
@@ -181,7 +179,7 @@ def apply_interface_values(state, use_persistent=False):
         return [state[k] if k in state else gr.update() for k in elements]
 
 
-def save_settings(state, preset, instruction_template, extensions, show_controls):
+def save_settings(state, preset, instruction_template, extensions):
     output = copy.deepcopy(shared.settings)
     exclude = ['name1', 'name2', 'greeting', 'context', 'turn_template']
     for k in state:
@@ -195,7 +193,6 @@ def save_settings(state, preset, instruction_template, extensions, show_controls
     output['instruction_template'] = instruction_template
     output['default_extensions'] = extensions
     output['seed'] = int(output['seed'])
-    output['show_controls'] = show_controls
 
     return yaml.dump(output, sort_keys=False, width=float("inf"))
 

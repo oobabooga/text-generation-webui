@@ -44,19 +44,6 @@ document.addEventListener("keydown", function(event) {
     }
   }
 
-  // Show chat controls on Ctrl+S pressed
-  else if (event.ctrlKey && event.key == "s") {
-    event.preventDefault();
-
-    var showControlsElement = document.getElementById('show-controls');
-    if (showControlsElement && showControlsElement.childNodes.length >= 4) {
-      showControlsElement.childNodes[3].click();
-
-      var arr = document.getElementById('chat-input').childNodes[2].childNodes;
-      arr[arr.length - 1].focus();
-    }
-  }
-
 });
 
 //------------------------------------------------
@@ -94,8 +81,12 @@ const observer = new MutationObserver(function(mutations) {
     const firstChild = targetElement.children[0];
     if (firstChild.classList.contains('generating')) {
       typing.parentNode.classList.add('visible-dots');
+      document.getElementById('stop').style.display = 'block';
+      document.getElementById('Generate').style.display = 'none';
     } else {
       typing.parentNode.classList.remove('visible-dots');
+      document.getElementById('stop').style.display = 'none';
+      document.getElementById('Generate').style.display = 'block';
     }
 
   });
@@ -189,3 +180,93 @@ for(i = 0; i < noBackgroundelements.length; i++) {
     noBackgroundelements[i].parentNode.style.border = 'none';
     noBackgroundelements[i].parentNode.parentNode.parentNode.style.alignItems = 'center';
 }
+
+//------------------------------------------------
+// Create the hover menu in the chat tab
+//------------------------------------------------
+
+function closeHoverMenu() {
+  hoverMenuElement.style.display = "none";
+}
+
+const chatElement = document.getElementById("chat-tab");
+const buttonsInChat = chatElement.querySelectorAll("button");
+const hoverMenuElement = document.getElementById("hover-menu");
+const hoverElement = document.querySelector(".hover-element");
+const hoverMenu = document.getElementById('hover-menu');
+
+for (let i = 14; i >= 2; i--) {
+  const button = buttonsInChat[i];
+  hoverMenuElement.appendChild(button);
+
+  if(i != 10) {
+    button.addEventListener("click", () => {
+      hoverMenu.style.display = 'none';
+    });
+  }
+
+}
+
+/*
+// Attach a mouseout event listener to the hover menu element
+hoverMenuElement.addEventListener("mouseout", (event) => {
+  // Check if the mouse has left the hover menu entirely
+  if (!hoverElement.contains(event.relatedTarget) && !hoverMenuElement.contains(event.relatedTarget)) {
+    closeHoverMenu();
+  }
+});
+
+// Attach a mouseover event listener to the hover element to reopen the menu
+hoverElement.addEventListener("mouseover", () => {
+  hoverMenuElement.style.display = "block";
+});
+
+// Attach a mouseout event listener to the hover element to close the menu
+hoverElement.addEventListener("mouseout", (event) => {
+  // Check if the mouse has left the hover element entirely
+  if (!hoverElement.contains(event.relatedTarget)) {
+    closeHoverMenu();
+  }
+});
+*/
+
+
+let isMouseInsideMenu = false;
+
+hoverElement.addEventListener('mouseenter', () => {
+  hoverMenu.style.display = 'block';
+});
+
+hoverElement.addEventListener('mouseleave', () => {
+  // Check if the mouse is not inside the menu before hiding it
+  hoverMenuHideTimeout = setTimeout(() => {
+    if (!isMouseInsideMenu) {
+      hoverMenu.style.display = 'none';
+    }
+  }, 300);
+});
+
+hoverMenu.addEventListener('mouseenter', () => {
+  isMouseInsideMenu = true;
+});
+
+hoverMenu.addEventListener('mouseleave', () => {
+  isMouseInsideMenu = false;
+  hoverMenu.style.display = 'none';
+});
+
+document.getElementById('stop').parentElement.parentElement.style.minWidth = 0;
+document.getElementById('stop').parentElement.parentElement.style.display = 'flex';
+document.getElementById('stop').parentElement.parentElement.style.flexDirection = 'column-reverse';
+document.getElementById('stop').parentElement.parentElement.style.paddingBottom = '3px';
+document.getElementById('stop').parentElement.parentElement.parentElement.style.paddingBottom = '20px';
+
+document.getElementById('gr-hover').parentElement.style.minWidth = 0;
+document.getElementById('gr-hover').parentElement.style.display = 'flex';
+document.getElementById('gr-hover').parentElement.style.flexDirection = 'column-reverse';
+document.getElementById('gr-hover').parentElement.style.flex = '0';
+document.getElementById('gr-hover').parentElement.style.paddingRight = '20px';
+document.getElementById('gr-hover').parentElement.style.paddingBottom = '3px';
+
+document.getElementById('chat-input').parentElement.parentElement.style.minWidth = 0;
+document.querySelector('#chat-input textarea').focus()

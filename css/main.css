@@ -293,12 +293,14 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     }
 
     .chat-parent {
-        height: calc(100dvh - 262px) !important;
+        height: calc(100dvh - 172px) !important;
     }
 
+    /*
     .bigchat {
         height: calc(100dvh - 180px) !important;
     }
+    */
 }
 
 .chat {
@@ -316,13 +318,15 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 .chat-parent {
-    height: calc(100dvh - 272px);
+    height: calc(100dvh - 182px);
     overflow: auto !important;
 }
 
+/*
 .bigchat {
     height: calc(100dvh - 200px);
 }
+*/
 
 .chat > .messages {
     display: flex;
@@ -408,12 +412,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     }
 }
 
-#show-controls {
-    position: absolute;
-    background-color: transparent;
-    left: calc(100% - 180px);
-}
-
 #typing-container {
     display: none;
     position: absolute;
@@ -467,4 +465,28 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 
 #chat-tab .generating {
   display: none !important;
+}
+
+.hover-element {
+  position: relative;
+  font-size: 24px;
+}
+
+.hover-menu {
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  background-color: var(--background-fill-secondary);
+  padding: 20px;
+  z-index: 100;
+  min-width: 300px;
+}
+
+.hover-menu button {
+  width: 100%;
+}
+
+.hover-element:hover .hover-menu {
+  display: block;
 }
