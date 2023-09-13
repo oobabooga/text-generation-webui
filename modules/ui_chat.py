@@ -38,12 +38,12 @@ def create_ui():
                     shared.gradio['Generate'] = gr.Button('►', elem_id='Generate', variant='primary')
 
         # Hover menu buttons
-        shared.gradio['Continue'] = gr.Button('Continue')
-        shared.gradio['Impersonate'] = gr.Button('Impersonate')
         shared.gradio['Regenerate'] = gr.Button('Regenerate')
-        shared.gradio['Remove last'] = gr.Button('Remove last', elem_classes=['button_nowrap'])
-        shared.gradio['Copy last reply'] = gr.Button('Copy last reply')
+        shared.gradio['Continue'] = gr.Button('Continue')
+        shared.gradio['Remove last'] = gr.Button('Remove last reply')
         shared.gradio['Replace last reply'] = gr.Button('Replace last reply')
+        shared.gradio['Copy last reply'] = gr.Button('Copy last reply')
+        shared.gradio['Impersonate'] = gr.Button('Impersonate')
         shared.gradio['Send dummy message'] = gr.Button('Send dummy message')
         shared.gradio['Send dummy reply'] = gr.Button('Send dummy reply')
         shared.gradio['Clear history'] = gr.Button('Clear history')
