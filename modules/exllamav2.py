@@ -28,9 +28,9 @@ class Exllamav2Model:
         config.prepare()
 
         config.max_seq_len = shared.args.max_seq_len
-        config.rope_scale = shared.args.compress_pos_emb
-        config.rope_alpha = shared.args.alpha_value
-
+        config.scale_pos_emb = shared.args.compress_pos_emb
+        config.scale_alpha_value = shared.args.alpha_value
+        
         model = ExLlamaV2(config)
 
         split = None
