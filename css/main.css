@@ -403,7 +403,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 #show-controls {
     position: absolute;
     background-color: transparent;
-    left: calc(100% - 175px);
+    left: calc(100% - 178px);
     border: 0px;
     z-index: 1000;
 }

@@ -8,8 +8,10 @@ import yaml
 from modules import shared
 
 
-with open(Path(__file__).resolve().parent / '../css/main.css', 'r') as f:
+with open(Path(__file__).resolve().parent / '../css/NotoSans/stylesheet.css', 'r') as f:
     css = f.read()
+with open(Path(__file__).resolve().parent / '../css/main.css', 'r') as f:
+    css += f.read()
 with open(Path(__file__).resolve().parent / '../js/main.js', 'r') as f:
     js = f.read()
 with open(Path(__file__).resolve().parent / '../js/save_files.js', 'r') as f:
@@ -24,7 +26,7 @@ delete_symbol = '🗑️'
 save_symbol = '💾'
 
 theme = gr.themes.Default(
-    font=['Helvetica', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+    font=['Noto Sans', 'Helvetica', 'ui-sans-serif', 'system-ui', 'sans-serif'],
     font_mono=['IBM Plex Mono', 'ui-monospace', 'Consolas', 'monospace'],
 ).set(
     border_color_primary='#c5c5d2',
