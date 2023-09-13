@@ -221,7 +221,7 @@ for (let i = 14; i >= 2; i--) {
       hoverMenu.style.display = 'none';
       setTimeout(() => {
         hoverMenu.style.display = '';
-      }, 500);
+      }, 2000);
     });
   }
 }
