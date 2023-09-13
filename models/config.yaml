@@ -1,4 +1,4 @@
-.*(llama|alpac|vicuna|guanaco|koala|llava|wizardlm|metharme|pygmalion-7b|wizard-mega|openbuddy|vigogne|h2ogpt-research|manticore):
+.*(llama|alpac|vicuna|guanaco|koala|llava|wizardlm|metharme|pygmalion-7b|pygmalion-2|mythalion|wizard-mega|openbuddy|vigogne|h2ogpt-research|manticore):
   model_type: 'llama'
 .*(opt-|opt_|opt1|opt3|optfor|galactica|galpaca|pygmalion-350m):
   model_type: 'opt'
@@ -63,7 +63,6 @@ llama-65b-gptq-3bit:
 .*vicuna.*(1.5|1_5):
   instruction_template: 'Vicuna-v1.1'
   truncation_length: 4096
-  rms_norm_eps: 5.0e-6  
 .*stable.*vicuna:
   instruction_template: 'StableVicuna'
 (?!.*chat).*chinese-vicuna:
@@ -86,7 +85,7 @@ llama-65b-gptq-3bit:
   instruction_template: 'Koala'
 .*chatglm:
   instruction_template: 'ChatGLM'
-.*metharme:
+.*(metharme|pygmalion|mythalion):
   instruction_template: 'Metharme'
 .*llava:
   model_type: 'llama'
@@ -211,24 +210,19 @@ llama-65b-gptq-3bit:
   instruction_template: 'Alpaca'
 .*llama-(2|v2):
   truncation_length: 4096
-  rms_norm_eps: 5.0e-6
-.*llama-(2|v2).*chat:
+.*llama(-?)(2|v2).*chat:
   instruction_template: 'Llama-v2'
-.*70b.*ggml.*\.bin:
-  n_gqa: 8
 .*newhope:
   instruction_template: 'NewHope'
 .*stablebeluga2:
   instruction_template: 'StableBeluga2'
   truncation_length: 4096
-  rms_norm_eps: 5.0e-6
 .*openchat:
   instruction_template: 'OpenChat'
 .*falcon.*-instruct:
 .*(openorca-platypus2):
   instruction_template: 'OpenOrca-Platypus2'
   custom_stopping_strings: '"### Instruction:", "### Response:"'
-  rms_norm_eps: 5.0e-6
 .*codellama:
   rope_freq_base: 1000000
 .*codellama.*instruct:

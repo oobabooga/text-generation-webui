@@ -11,7 +11,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 ## Features
 
 * 3 interface modes: default (two columns), notebook, and chat
-* Multiple model backends: [transformers](https://github.com/huggingface/transformers), [llama.cpp](https://github.com/ggerganov/llama.cpp), [ExLlama](https://github.com/turboderp/exllama), [AutoGPTQ](https://github.com/PanQiWei/AutoGPTQ), [GPTQ-for-LLaMa](https://github.com/qwopqwop200/GPTQ-for-LLaMa), [ctransformers](https://github.com/marella/ctransformers)
+* Multiple model backends: [transformers](https://github.com/huggingface/transformers), [llama.cpp](https://github.com/ggerganov/llama.cpp), [ExLlama](https://github.com/turboderp/exllama), [ExLlamaV2](https://github.com/turboderp/exllamav2), [AutoGPTQ](https://github.com/PanQiWei/AutoGPTQ), [GPTQ-for-LLaMa](https://github.com/qwopqwop200/GPTQ-for-LLaMa), [CTransformers](https://github.com/marella/ctransformers)
 * Dropdown menu for quickly switching between different models
 * LoRA: load and unload LoRAs on the fly, train a new LoRA using QLoRA
 * Precise instruction templates for chat mode, including Llama-2-chat, Alpaca, Vicuna, WizardLM, StableLM, and many others
@@ -83,7 +83,7 @@ cd text-generation-webui
 pip install -r requirements.txt
 ```
 
-#### AMD, Metal, Intel Arc, and CPUs without AVCX2
+#### AMD, Metal, Intel Arc, and CPUs without AVX2
 
 1) Replace the last command above with
 
@@ -92,10 +92,12 @@ pip install -r requirements_nocuda.txt
 ```
 
 2) Manually install llama-cpp-python using the appropriate command for your hardware: [Installation from PyPI](https://github.com/abetlen/llama-cpp-python#installation-from-pypi).
+   
+3) Do the same for CTransformers: [Installation](https://github.com/marella/ctransformers#installation).
 
-3) AMD: Manually install AutoGPTQ: [Installation](https://github.com/PanQiWei/AutoGPTQ#installation).
+4) AMD: Manually install AutoGPTQ: [Installation](https://github.com/PanQiWei/AutoGPTQ#installation).
 
-4) AMD: Manually install [ExLlama](https://github.com/turboderp/exllama) by simply cloning it into the `repositories` folder (it will be automatically compiled at runtime after that):
+5) AMD: Manually install [ExLlama](https://github.com/turboderp/exllama) by simply cloning it into the `repositories` folder (it will be automatically compiled at runtime after that):
 
 ```
 cd text-generation-webui
@@ -158,7 +160,7 @@ text-generation-webui
 │   │   └── tokenizer.model
 ```
 
-* GGML/GGUF models are a single file and should be placed directly into `models`. Example:
+* GGUF models are a single file and should be placed directly into `models`. Example:
 
 ```
 text-generation-webui
@@ -260,7 +262,7 @@ Optionally, you can use the following command-line flags:
 | `--quant_type QUANT_TYPE`                   | quant_type for 4-bit. Valid options: nf4, fp4. |
 | `--use_double_quant`                        | use_double_quant for 4-bit. |
 
-#### GGML/GGUF (for llama.cpp and ctransformers)
+#### GGUF (for llama.cpp and ctransformers)
 
 | Flag        | Description |
 |-------------|-------------|
@@ -279,8 +281,6 @@ Optionally, you can use the following command-line flags:
 | `--cache-capacity CACHE_CAPACITY`   | Maximum cache capacity. Examples: 2000MiB, 2GiB. When provided without units, bytes will be assumed. |
 | `--tensor_split TENSOR_SPLIT`  | Split the model across multiple GPUs, comma-separated list of proportions, e.g. 18,17 |
 | `--llama_cpp_seed SEED`        | Seed for llama-cpp models. Default 0 (random). |
-| `--n_gqa N_GQA`                | GGML only (not used by GGUF): Grouped-Query Attention. Must be 8 for llama-2 70b. |
-| `--rms_norm_eps RMS_NORM_EPS`  | GGML only (not used by GGUF): 5e-6 is a good value for llama-2 models. |
 | `--cpu`                        | Use the CPU version of llama-cpp-python instead of the GPU-accelerated version. |
 |`--cfg-cache`                   | llamacpp_HF: Create an additional cache for CFG negative prompts. |
 
@@ -335,7 +335,7 @@ Optionally, you can use the following command-line flags:
 | `--rwkv-strategy RWKV_STRATEGY` | RWKV: The strategy to use while loading the model. Examples: "cpu fp32", "cuda fp16", "cuda fp16i8". |
 | `--rwkv-cuda-on`                | RWKV: Compile the CUDA kernel for better performance. |
 
-#### RoPE (for llama.cpp, ExLlama, and transformers)
+#### RoPE (for llama.cpp, ExLlama, ExLlamaV2, and transformers)
 
 | Flag             | Description |
 |------------------|-------------|

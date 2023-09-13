@@ -9,16 +9,14 @@ llama.cpp is the best backend in two important scenarios:
 
 #### Pre-converted
 
-Download the GGUF or GGML models directly into your `text-generation-webui/models` folder. It will be a single file.
+Download the GGUF models directly into your `text-generation-webui/models` folder. It will be a single file.
 
-* For GGUF models, make sure its name contains `.gguf`.
-* For GGML models, make sure its name contains `ggml` and ends in `.bin`.
-
-`q4_K_M` quantization is recommended.
+* Make sure its name ends in `.gguf`.
+* `q4_K_M` quantization is recommended.
 
 #### Convert Llama yourself
 
-Follow the instructions in the llama.cpp README to generate a ggml: https://github.com/ggerganov/llama.cpp#prepare-data--run
+Follow the instructions in the llama.cpp README to generate a GGUF: https://github.com/ggerganov/llama.cpp#prepare-data--run
 
 ## GPU acceleration
 

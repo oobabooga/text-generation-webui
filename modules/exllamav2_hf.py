@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
 import torch
+from exllamav2 import ExLlamaV2, ExLlamaV2Cache, ExLlamaV2Config
 from torch.nn import CrossEntropyLoss
 from transformers import GenerationConfig, PretrainedConfig, PreTrainedModel
 from transformers.modeling_outputs import CausalLMOutputWithPast
@@ -10,33 +11,25 @@ from transformers.modeling_outputs import CausalLMOutputWithPast
 from modules import shared
 from modules.logging_colors import logger
 
-try:
-    from exllama.model import ExLlama, ExLlamaCache, ExLlamaConfig
-except:
-    logger.warning('Exllama module failed to load. Will attempt to load from repositories.')
-    try:
-        from modules.relative_imports import RelativeImport
 
-        with RelativeImport("repositories/exllama"):
-            from model import ExLlama, ExLlamaCache, ExLlamaConfig
-    except:
-        logger.error("Could not find repositories/exllama/. Make sure that exllama is cloned inside repositories/ and is up to date.")
-        raise
-
-
-class ExllamaHF(PreTrainedModel):
-    def __init__(self, config: ExLlamaConfig):
+class Exllamav2HF(PreTrainedModel):
+    def __init__(self, config: ExLlamaV2Config):
         super().__init__(PretrainedConfig())
         self.ex_config = config
-        self.ex_model = ExLlama(self.ex_config)
-        self.generation_config = GenerationConfig()
-        self.lora = None
+        self.ex_model = ExLlamaV2(config)
+        split = None
+        if shared.args.gpu_split:
+            split = [float(alloc) for alloc in shared.args.gpu_split.split(",")]
 
-        self.ex_cache = ExLlamaCache(self.ex_model)
+        self.ex_model.load(split)
+
+        self.generation_config = GenerationConfig()
+
+        self.ex_cache = ExLlamaV2Cache(self.ex_model)
         self.past_seq = None
 
         if shared.args.cfg_cache:
-            self.ex_cache_negative = ExLlamaCache(self.ex_model)
+            self.ex_cache_negative = ExLlamaV2Cache(self.ex_model)
             self.past_seq_negative = None
 
     def _validate_model_class(self):
@@ -59,7 +52,7 @@ class ExllamaHF(PreTrainedModel):
 
         if len(args) > 0:
             if not shared.args.cfg_cache:
-                logger.error("Please enable the cfg-cache option to use CFG with ExLlama_HF.")
+                logger.error("Please enable the cfg-cache option to use CFG with ExLlamav2_HF.")
                 return
 
             input_ids = args[0]
@@ -82,12 +75,13 @@ class ExllamaHF(PreTrainedModel):
         if labels is None:
             if past_seq is None or not torch.equal(past_seq, seq_tensor[:-1]):
                 ex_cache.current_seq_len = 0
-                self.ex_model.forward(torch.tensor([seq[:-1]], dtype=torch.long), ex_cache, preprocess_only=True, lora=self.lora)
+                self.ex_model.forward(torch.tensor([seq[:-1]], dtype=torch.long), ex_cache, preprocess_only=True)
 
-            logits = self.ex_model.forward(torch.tensor([seq[-1:]], dtype=torch.long), ex_cache, lora=self.lora).to(input_ids.device)
+            logits = self.ex_model.forward(torch.tensor([seq[-1:]], dtype=torch.long), ex_cache).to(input_ids.device)
         else:
             ex_cache.current_seq_len = 0
-            logits = self.ex_model.forward(torch.tensor([seq], dtype=torch.long), ex_cache, last_id_only=False, lora=self.lora)
+            # logits = self.ex_model.forward(torch.tensor([seq], dtype=torch.long), ex_cache, last_id_only=False)
+            logits = self.ex_model.forward(torch.tensor([seq], dtype=torch.long), ex_cache)
 
         if is_negative:
             self.past_seq_negative = seq_tensor
@@ -116,39 +110,13 @@ class ExllamaHF(PreTrainedModel):
             pretrained_model_name_or_path = Path(pretrained_model_name_or_path)
 
         pretrained_model_name_or_path = Path(f'{shared.args.model_dir}') / Path(pretrained_model_name_or_path)
-        config = ExLlamaConfig(pretrained_model_name_or_path / 'config.json')
 
-        # from 'oobabooga/text-generation-webui/modules/exllama.py'
-        weight_path = None
-        for ext in ['.safetensors', '.pt', '.bin']:
-            found = list(pretrained_model_name_or_path.glob(f"*{ext}"))
-            if len(found) > 0:
-                weight_path = found[-1]
-                break
-        assert weight_path is not None, f'could not find weight in "{pretrained_model_name_or_path}"'
+        config = ExLlamaV2Config()
+        config.model_dir = str(pretrained_model_name_or_path)
+        config.prepare()
 
-        config.model_path = str(weight_path)
         config.max_seq_len = shared.args.max_seq_len
-        config.compress_pos_emb = shared.args.compress_pos_emb
-        if shared.args.gpu_split:
-            config.set_auto_map(shared.args.gpu_split)
-            config.gpu_peer_fix = True
+        config.scale_pos_emb = shared.args.compress_pos_emb
+        config.scale_alpha_value = shared.args.alpha_value
 
-        if shared.args.alpha_value > 1 and shared.args.rope_freq_base == 0:
-            config.alpha_value = shared.args.alpha_value
-            config.calculate_rotary_embedding_base()
-        elif shared.args.rope_freq_base > 0:
-            config.rotary_embedding_base = shared.args.rope_freq_base
-
-        if torch.version.hip:
-            config.rmsnorm_no_half2 = True
-            config.rope_no_half2 = True
-            config.matmul_no_half2 = True
-            config.silu_no_half2 = True
-
-        # This slowes down a bit but align better with autogptq generation.
-        # TODO: Should give user choice to tune the exllama config
-        # config.fused_attn = False
-        # config.fused_mlp_thd = 0
-
-        return ExllamaHF(config)
+        return Exllamav2HF(config)

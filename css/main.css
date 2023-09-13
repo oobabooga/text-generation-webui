@@ -277,12 +277,16 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     width: 100%;
 }
 
+#generate-tab {
+	margin-top: -20px;
+}
+
 #chat-tab button, #notebook-tab button, #default-tab button {
     min-width: 0 !important;
 }
 
 #chat-tab > :first-child > :first-child, #extensions {
-    max-width: 800px;
+    max-width: 880px;
     margin-left: auto;
     margin-right: auto;
 }
@@ -293,18 +297,14 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     }
 
     .chat-parent {
-        height: calc(100dvh - 262px) !important;
-    }
-
-    .bigchat {
-        height: calc(100dvh - 180px) !important;
+        height: calc(100dvh - 172px) !important;
     }
 }
 
 .chat {
     margin-left: auto;
     margin-right: auto;
-    max-width: 800px;
+    max-width: 880px;
     height: 100%;
     overflow-y: auto;
     padding-right: 15px;
@@ -316,12 +316,8 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 .chat-parent {
-    height: calc(100dvh - 272px);
+    height: calc(100dvh - 182px);
     overflow: auto !important;
-}
-
-.bigchat {
-    height: calc(100dvh - 200px);
 }
 
 .chat > .messages {
@@ -467,4 +463,34 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 
 #chat-tab .generating {
   display: none !important;
+}
+
+.hover-element {
+  position: relative;
+  font-size: 24px;
+}
+
+.hover-menu {
+  display: none;
+  position: absolute;
+  bottom: 80%;
+  left: 0;
+  background-color: var(--background-fill-secondary);
+  z-index: 100;
+  min-width: 300px;
+  flex-direction: column;
+}
+
+.hover-element:hover .hover-menu {
+  display: flex;
+}
+
+.hover-menu button {
+  width: 100%;
+  background: transparent !important;
+  border-radius: 0px !important;
+}
+
+.hover-menu button:hover {
+  background: var(--button-secondary-background-fill-hover) !important;
 }

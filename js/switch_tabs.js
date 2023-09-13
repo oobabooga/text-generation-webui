@@ -1,5 +1,6 @@
 let chat_tab = document.getElementById('chat-tab');
-let main_parent = chat_tab.parentNode;
+let generate_tab = chat_tab.parentNode;
+let main_parent = document.getElementById('generate-tab').parentNode;
 
 function scrollToTop() {
     window.scrollTo({
@@ -26,19 +27,19 @@ function findButtonsByText(buttonText) {
 }
 
 function switch_to_chat() {
-    let chat_tab_button = main_parent.childNodes[0].childNodes[1];
+    let chat_tab_button = generate_tab.childNodes[0].childNodes[1];
     chat_tab_button.click();
     scrollToTop();
 }
 
 function switch_to_default() {
-    let default_tab_button = main_parent.childNodes[0].childNodes[4];
+    let default_tab_button = generate_tab.childNodes[0].childNodes[4];
     default_tab_button.click();
     scrollToTop();
 }
 
 function switch_to_notebook() {
-    let notebook_tab_button = main_parent.childNodes[0].childNodes[7];
+    let notebook_tab_button = generate_tab.childNodes[0].childNodes[7];
     notebook_tab_button.click();
     findButtonsByText('Raw')[1].click()
     scrollToTop();
@@ -52,8 +53,5 @@ function switch_to_generation_parameters() {
 }
 
 function switch_to_character() {
-    let parameters_tab_button = main_parent.childNodes[0].childNodes[10];
-    parameters_tab_button.click();
     findButtonsByText('Character')[0].click()
-    scrollToTop();
 }

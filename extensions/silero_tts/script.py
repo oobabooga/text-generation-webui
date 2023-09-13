@@ -28,7 +28,25 @@ params = {
 }
 
 current_params = params.copy()
-voices_by_gender = ['en_99', 'en_45', 'en_18', 'en_117', 'en_49', 'en_51', 'en_68', 'en_0', 'en_26', 'en_56', 'en_74', 'en_5', 'en_38', 'en_53', 'en_21', 'en_37', 'en_107', 'en_10', 'en_82', 'en_16', 'en_41', 'en_12', 'en_67', 'en_61', 'en_14', 'en_11', 'en_39', 'en_52', 'en_24', 'en_97', 'en_28', 'en_72', 'en_94', 'en_36', 'en_4', 'en_43', 'en_88', 'en_25', 'en_65', 'en_6', 'en_44', 'en_75', 'en_91', 'en_60', 'en_109', 'en_85', 'en_101', 'en_108', 'en_50', 'en_96', 'en_64', 'en_92', 'en_76', 'en_33', 'en_116', 'en_48', 'en_98', 'en_86', 'en_62', 'en_54', 'en_95', 'en_55', 'en_111', 'en_3', 'en_83', 'en_8', 'en_47', 'en_59', 'en_1', 'en_2', 'en_7', 'en_9', 'en_13', 'en_15', 'en_17', 'en_19', 'en_20', 'en_22', 'en_23', 'en_27', 'en_29', 'en_30', 'en_31', 'en_32', 'en_34', 'en_35', 'en_40', 'en_42', 'en_46', 'en_57', 'en_58', 'en_63', 'en_66', 'en_69', 'en_70', 'en_71', 'en_73', 'en_77', 'en_78', 'en_79', 'en_80', 'en_81', 'en_84', 'en_87', 'en_89', 'en_90', 'en_93', 'en_100', 'en_102', 'en_103', 'en_104', 'en_105', 'en_106', 'en_110', 'en_112', 'en_113', 'en_114', 'en_115']
+
+voices_en = ['en_99', 'en_45', 'en_18', 'en_117', 'en_49', 'en_51', 'en_68', 'en_0', 'en_26', 'en_56', 'en_74', 'en_5', 'en_38', 'en_53', 'en_21', 'en_37', 'en_107', 'en_10', 'en_82', 'en_16', 'en_41', 'en_12', 'en_67', 'en_61', 'en_14', 'en_11', 'en_39', 'en_52', 'en_24', 'en_97', 'en_28', 'en_72', 'en_94', 'en_36', 'en_4', 'en_43', 'en_88', 'en_25', 'en_65', 'en_6', 'en_44', 'en_75', 'en_91', 'en_60', 'en_109', 'en_85', 'en_101', 'en_108', 'en_50', 'en_96', 'en_64', 'en_92', 'en_76', 'en_33', 'en_116', 'en_48', 'en_98', 'en_86', 'en_62', 'en_54', 'en_95', 'en_55', 'en_111', 'en_3', 'en_83', 'en_8', 'en_47', 'en_59', 'en_1', 'en_2', 'en_7', 'en_9', 'en_13', 'en_15', 'en_17', 'en_19', 'en_20', 'en_22', 'en_23', 'en_27', 'en_29', 'en_30', 'en_31', 'en_32', 'en_34', 'en_35', 'en_40', 'en_42', 'en_46', 'en_57', 'en_58', 'en_63', 'en_66', 'en_69', 'en_70', 'en_71', 'en_73', 'en_77', 'en_78', 'en_79', 'en_80', 'en_81', 'en_84', 'en_87', 'en_89', 'en_90', 'en_93', 'en_100', 'en_102', 'en_103', 'en_104', 'en_105', 'en_106', 'en_110', 'en_112', 'en_113', 'en_114', 'en_115']
+voices_es = ["es_0", "es_1", "es_2"]
+voices_fr = ["fr_0", "fr_1", "fr_2", "fr_3", "fr_4", "fr_5"]
+voices_de = ["bernd_ungerer", "eva_k", "friedrich", "hokuspokus", "karlsson"]
+voices_ru = ["aidar", "baya", "kseniya", "xenia"]
+voices_ua = ["mykyta"]
+voices_uz = ["dilnavoz"]
+
+languages = {
+    "en": {"label": "English", "voices": voices_en, "default_voice": "en_56", "model_id": "v3_en"},
+    "es": {"label": "Español", "voices": voices_es, "default_voice": "es_0", "model_id": "v3_es"},
+    "fr": {"label": "Français", "voices": voices_fr, "default_voice": "fr_0", "model_id": "v3_fr"},
+    "de": {"label": "Deutsch", "voices": voices_de, "default_voice": "eva_k", "model_id": "v3_de"},
+    "ru": {"label": "русский", "voices": voices_ru, "default_voice": "aidar", "model_id": "ru_v3"},
+    "ua": {"label": "українська", "voices": voices_ua, "default_voice": "mykyta", "model_id": "v3_ua"},
+    "uz": {"label": "Oʻzbekcha", "voices": voices_uz, "default_voice": "dilnavoz", "model_id": "v3_uz"},
+}
+
 voice_pitches = ['x-low', 'low', 'medium', 'high', 'x-high']
 voice_speeds = ['x-slow', 'slow', 'medium', 'fast', 'x-fast']
 
@@ -167,6 +185,13 @@ def voice_preview(preview_text):
     return f'<audio src="file/{output_file.as_posix()}?{int(time.time())}" controls autoplay></audio>'
 
 
+def language_change(lang):
+    global params
+    lang_code = list(languages.keys())[lang]
+    params.update({"language": lang_code, "speaker": languages[lang_code]["default_voice"], "model_id": languages[lang_code]["model_id"]})
+    return gr.update(choices=languages[lang_code]["voices"], value=languages[lang_code]["default_voice"])
+
+
 def custom_css():
     path_to_css = Path(__file__).parent.resolve() / 'style.css'
     return open(path_to_css, 'r').read()
@@ -180,7 +205,10 @@ def ui():
             autoplay = gr.Checkbox(value=params['autoplay'], label='Play TTS automatically')
 
         show_text = gr.Checkbox(value=params['show_text'], label='Show message text under audio player')
-        voice = gr.Dropdown(value=params['speaker'], choices=voices_by_gender, label='TTS voice')
+        
+        with gr.Row():
+            language = gr.Dropdown(value=languages[params['language']]["label"], choices=[v["label"] for _, v in languages.items()], label='Language', type="index")
+            voice = gr.Dropdown(value=params['speaker'], choices=voices_en, label='TTS voice')
         with gr.Row():
             v_pitch = gr.Dropdown(value=params['voice_pitch'], choices=voice_pitches, label='Voice pitch')
             v_speed = gr.Dropdown(value=params['voice_speed'], choices=voice_speeds, label='Voice speed')
@@ -216,6 +244,7 @@ def ui():
     # Event functions to update the parameters in the backend
     activate.change(lambda x: params.update({"activate": x}), activate, None)
     autoplay.change(lambda x: params.update({"autoplay": x}), autoplay, None)
+    language.change(language_change, language, voice, show_progress=False)
     voice.change(lambda x: params.update({"speaker": x}), voice, None)
     v_pitch.change(lambda x: params.update({"voice_pitch": x}), v_pitch, None)
     v_speed.change(lambda x: params.update({"voice_speed": x}), v_speed, None)
