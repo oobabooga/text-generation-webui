@@ -94,8 +94,12 @@ const observer = new MutationObserver(function(mutations) {
     const firstChild = targetElement.children[0];
     if (firstChild.classList.contains('generating')) {
       typing.parentNode.classList.add('visible-dots');
+      document.getElementById('stop').style.display = 'flex';
+      document.getElementById('Generate').style.display = 'none';
     } else {
       typing.parentNode.classList.remove('visible-dots');
+      document.getElementById('stop').style.display = 'none';
+      document.getElementById('Generate').style.display = 'flex';
     }
 
   });
@@ -116,7 +120,6 @@ observer.observe(targetElement, config);
 //------------------------------------------------
 // Notebook box scrolling
 //------------------------------------------------
-
 const notebookElement = document.querySelector('#textbox-notebook textarea');
 let notebookScrolled = false;
 
@@ -142,7 +145,6 @@ notebookObserver.observe(notebookElement.parentNode.parentNode.parentNode, confi
 //------------------------------------------------
 // Default box scrolling
 //------------------------------------------------
-
 const defaultElement = document.querySelector('#textbox-default textarea');
 let defaultScrolled = false;
 
@@ -180,6 +182,20 @@ for(i = 0; i < textareaElements.length; i++) {
 //------------------------------------------------
 document.getElementById('chat-input').parentNode.style.background = 'transparent';
 document.getElementById('chat-input').parentNode.style.border = 'none';
+document.getElementById('chat-input').parentElement.parentElement.style.minWidth = 0;
+
+document.getElementById('stop').parentElement.parentElement.style.minWidth = 0;
+document.getElementById('stop').parentElement.parentElement.style.display = 'flex';
+document.getElementById('stop').parentElement.parentElement.style.flexDirection = 'column-reverse';
+document.getElementById('stop').parentElement.parentElement.style.paddingBottom = '3px';
+document.getElementById('stop').parentElement.parentElement.parentElement.style.paddingBottom = '20px';
+
+document.getElementById('gr-hover').parentElement.style.minWidth = 0;
+document.getElementById('gr-hover').parentElement.style.display = 'flex';
+document.getElementById('gr-hover').parentElement.style.flexDirection = 'column-reverse';
+document.getElementById('gr-hover').parentElement.style.flex = '0';
+document.getElementById('gr-hover').parentElement.style.paddingRight = '20px';
+document.getElementById('gr-hover').parentElement.style.paddingBottom = '3px';
 
 //------------------------------------------------
 // Remove some backgrounds
@@ -189,3 +205,28 @@ for(i = 0; i < noBackgroundelements.length; i++) {
     noBackgroundelements[i].parentNode.style.border = 'none';
     noBackgroundelements[i].parentNode.parentNode.parentNode.style.alignItems = 'center';
 }
+
+//------------------------------------------------
+// Create the hover menu in the chat tab
+//------------------------------------------------
+const buttonsInChat = document.getElementById("chat-tab").querySelectorAll("button");
+const hoverMenu = document.getElementById('hover-menu');
+
+for (let i = 14; i >= 2; i--) {
+  const button = buttonsInChat[i];
+  hoverMenu.appendChild(button);
+
+  if(i != 10) {
+    button.addEventListener("click", () => {
+      hoverMenu.style.display = 'none';
+      setTimeout(() => {
+        hoverMenu.style.display = '';
+      }, 2000);
+    });
+  }
+}
+
+//------------------------------------------------
+// Focus on the chat input
+//------------------------------------------------
+document.querySelector('#chat-input textarea').focus()
