@@ -208,23 +208,82 @@ for(i = 0; i < noBackgroundelements.length; i++) {
 
 //------------------------------------------------
 // Create the hover menu in the chat tab
+// The show/hide events were adapted from:
+// https://github.com/SillyTavern/SillyTavern/blob/6c8bd06308c69d51e2eb174541792a870a83d2d6/public/script.js
 //------------------------------------------------
 const buttonsInChat = document.getElementById("chat-tab").querySelectorAll("button");
-const hoverMenu = document.getElementById('hover-menu');
+var button = document.getElementById('hover-element-button');
+var menu = document.getElementById('hover-menu');
+
+function showMenu() {
+    menu.style.display = 'flex'; // Show the menu
+}
+
+function hideMenu() {
+    menu.style.display = 'none'; // Hide the menu
+}
 
 for (let i = 14; i >= 2; i--) {
-  const button = buttonsInChat[i];
-  hoverMenu.appendChild(button);
+  const thisButton = buttonsInChat[i];
+  menu.appendChild(thisButton);
 
   if(i != 10) {
-    button.addEventListener("click", () => {
-      hoverMenu.style.display = 'none';
-      setTimeout(() => {
-        hoverMenu.style.display = '';
-      }, 2000);
+    thisButton.addEventListener("click", () => {
+      hideMenu();
     });
   }
 }
+
+function isMouseOverButtonOrMenu() {
+    return menu.matches(':hover') || button.matches(':hover');
+}
+
+button.addEventListener('mouseenter', function () {
+    showMenu();
+});
+
+button.addEventListener('click', function () {
+    showMenu();
+});
+
+// Add event listener for mouseleave on the button
+button.addEventListener('mouseleave', function () {
+    // Delay to prevent menu hiding when the mouse leaves the button into the menu
+    setTimeout(function () {
+        if (!isMouseOverButtonOrMenu()) {
+            hideMenu();
+        }
+    }, 100);
+});
+
+// Add event listener for mouseleave on the menu
+menu.addEventListener('mouseleave', function () {
+    // Delay to prevent menu hide when the mouse leaves the menu into the button
+    setTimeout(function () {
+        if (!isMouseOverButtonOrMenu()) {
+            hideMenu();
+        }
+    }, 100);
+});
+
+// Add event listener for click anywhere in the document
+document.addEventListener('click', function (event) {
+    // Check if the click is outside the button/menu and the menu is visible
+    if (!isMouseOverButtonOrMenu() && menu.style.display === 'flex') {
+        hideMenu();
+    }
+});
+
+//------------------------------------------------
+// Relocate the "Show controls" checkbox
+//------------------------------------------------
+var elementToMove = document.getElementById('show-controls');
+var parent = elementToMove.parentNode;
+for (var i = 0; i < 2; i++) {
+  parent = parent.parentNode;
+}
+
+parent.insertBefore(elementToMove, parent.firstChild);
 
 //------------------------------------------------
 // Focus on the chat input
