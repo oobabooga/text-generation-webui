@@ -91,7 +91,7 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
 
 .header_bar {
     background-color: #f7f7f7;
-    margin-bottom: 20px;
+    margin-bottom: 19px;
     display: inline !important;
     overflow-x: scroll;
 }
@@ -294,7 +294,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     }
 
     .chat-parent {
-        height: calc(100dvh - 172px) !important;
+        height: calc(100dvh - 171px) !important;
     }
 }
 
@@ -309,11 +309,10 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     flex-direction: column;
     word-break: break-word;
     overflow-wrap: anywhere;
-    padding-top: 6px;
 }
 
 .chat-parent {
-    height: calc(100dvh - 182px);
+    height: calc(100dvh - 181px);
     overflow: auto !important;
 }
 
