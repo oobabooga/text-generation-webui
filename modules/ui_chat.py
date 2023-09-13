@@ -166,7 +166,7 @@ def create_event_handlers():
     shared.gradio['Impersonate'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         lambda x: x, gradio('textbox'), gradio('Chat input'), show_progress=False).then(
-        chat.impersonate_wrapper, gradio(inputs), gradio('textbox'), show_progress=False).then(
+        chat.impersonate_wrapper, gradio(inputs), gradio('textbox', 'display'), show_progress=False).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         lambda: None, None, None, _js=f'() => {{{ui.audio_notification_js}}}')
 
