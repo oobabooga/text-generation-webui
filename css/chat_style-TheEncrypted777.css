@@ -5,8 +5,7 @@
     grid-template-columns: 60px minmax(0, 1fr);
     padding-bottom: 28px;
     font-size: 18px;
-    /*Change 'Quicksand' to a font you like or leave it*/
-    font-family: Quicksand, Arial, sans-serif;
+    font-family: 'Noto Sans', Arial, sans-serif;
     line-height: 1.428571429;
 }
 
@@ -105,7 +104,7 @@
         grid-template-columns: 60px minmax(0, 1fr);
         padding-bottom: 25px;
         font-size: 15px;
-        font-family: Helvetica, Arial, sans-serif;
+        font-family: 'Noto Sans', Helvetica, Arial, sans-serif;
         line-height: 1.428571429;
     }
 
