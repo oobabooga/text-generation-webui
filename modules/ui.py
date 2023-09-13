@@ -115,6 +115,7 @@ def list_interface_input_elements():
         'negative_prompt',
         'guidance_scale',
         'add_bos_token',
+        'custom_token_bans',
         'ban_eos_token',
         'truncation_length',
         'custom_stopping_strings',
