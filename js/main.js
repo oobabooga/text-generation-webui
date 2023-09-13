@@ -120,7 +120,6 @@ observer.observe(targetElement, config);
 //------------------------------------------------
 // Notebook box scrolling
 //------------------------------------------------
-
 const notebookElement = document.querySelector('#textbox-notebook textarea');
 let notebookScrolled = false;
 
@@ -146,7 +145,6 @@ notebookObserver.observe(notebookElement.parentNode.parentNode.parentNode, confi
 //------------------------------------------------
 // Default box scrolling
 //------------------------------------------------
-
 const defaultElement = document.querySelector('#textbox-default textarea');
 let defaultScrolled = false;
 
@@ -211,20 +209,24 @@ for(i = 0; i < noBackgroundelements.length; i++) {
 //------------------------------------------------
 // Create the hover menu in the chat tab
 //------------------------------------------------
-function closeHoverMenu() {
-  hoverMenuElement.style.display = "none";
-}
-
 const chatElement = document.getElementById("chat-tab");
 const buttonsInChat = chatElement.querySelectorAll("button");
-const hoverMenuElement = document.getElementById("hover-menu");
 const hoverElement = document.querySelector(".hover-element");
 const hoverMenu = document.getElementById('hover-menu');
 let isMouseInsideMenu = false;
 
+// Function to toggle the visibility of hoverMenu
+function toggleHoverMenu() {
+  if (hoverMenu.style.display === 'block') {
+    hoverMenu.style.display = 'none';
+  } else {
+    hoverMenu.style.display = 'block';
+  }
+}
+
 for (let i = 14; i >= 2; i--) {
   const button = buttonsInChat[i];
-  hoverMenuElement.appendChild(button);
+  hoverMenu.appendChild(button);
 
   if(i != 10) {
     button.addEventListener("click", () => {
@@ -255,6 +257,8 @@ hoverMenu.addEventListener('mouseleave', () => {
   hoverMenu.style.display = 'none';
 });
 
+// Add a click event listener to toggle hoverMenu
+hoverElement.addEventListener('click', toggleHoverMenu);
 
 //------------------------------------------------
 // Focus on the chat input
