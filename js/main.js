@@ -227,6 +227,17 @@ for (let i = 14; i >= 2; i--) {
 }
 
 //------------------------------------------------
+// Relocate the "Show controls" checkbox
+//------------------------------------------------
+var elementToMove = document.getElementById('show-controls');
+var parent = elementToMove.parentNode;
+for (var i = 0; i < 2; i++) {
+  parent = parent.parentNode;
+}
+
+parent.insertBefore(elementToMove, parent.firstChild);
+
+//------------------------------------------------
 // Focus on the chat input
 //------------------------------------------------
 document.querySelector('#chat-input textarea').focus()
