@@ -472,15 +472,13 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
   bottom: 100%;
   left: 0;
   background-color: var(--background-fill-secondary);
-  padding: 20px;
   z-index: 100;
   min-width: 300px;
+  flex-direction: column;
 }
 
 .hover-menu button {
   width: 100%;
-}
-
-.hover-element:hover .hover-menu {
-  display: block;
+  background: transparent !important;
+  border-radius: 0px !important;
 }

@@ -94,12 +94,12 @@ const observer = new MutationObserver(function(mutations) {
     const firstChild = targetElement.children[0];
     if (firstChild.classList.contains('generating')) {
       typing.parentNode.classList.add('visible-dots');
-      document.getElementById('stop').style.display = 'block';
+      document.getElementById('stop').style.display = 'flex';
       document.getElementById('Generate').style.display = 'none';
     } else {
       typing.parentNode.classList.remove('visible-dots');
       document.getElementById('stop').style.display = 'none';
-      document.getElementById('Generate').style.display = 'block';
+      document.getElementById('Generate').style.display = 'flex';
     }
 
   });
@@ -215,15 +215,6 @@ const hoverElement = document.querySelector(".hover-element");
 const hoverMenu = document.getElementById('hover-menu');
 let isMouseInsideMenu = false;
 
-// Function to toggle the visibility of hoverMenu
-function toggleHoverMenu() {
-  if (hoverMenu.style.display === 'block') {
-    hoverMenu.style.display = 'none';
-  } else {
-    hoverMenu.style.display = 'block';
-  }
-}
-
 for (let i = 14; i >= 2; i--) {
   const button = buttonsInChat[i];
   hoverMenu.appendChild(button);
@@ -236,7 +227,7 @@ for (let i = 14; i >= 2; i--) {
 }
 
 hoverElement.addEventListener('mouseenter', () => {
-  hoverMenu.style.display = 'block';
+  hoverMenu.style.display = 'flex';
 });
 
 hoverElement.addEventListener('mouseleave', () => {
@@ -256,9 +247,6 @@ hoverMenu.addEventListener('mouseleave', () => {
   isMouseInsideMenu = false;
   hoverMenu.style.display = 'none';
 });
-
-// Add a click event listener to toggle hoverMenu
-hoverElement.addEventListener('click', toggleHoverMenu);
 
 //------------------------------------------------
 // Focus on the chat input
