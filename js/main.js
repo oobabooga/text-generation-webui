@@ -63,8 +63,8 @@ document.addEventListener("keydown", function(event) {
     document.getElementById('Regenerate').click();
   }
 
-  // Continue on Alt + Enter
-  else if (event.altKey && event.key === 'Enter') {
+  // Continue on Ctrl + Shift + C
+  else if (event.ctrlKey && event.shiftKey && event.key === 'C') {
     event.preventDefault();
     document.getElementById('Continue').click();
   }
@@ -225,7 +225,6 @@ document.getElementById('stop').parentElement.parentElement.style.display = 'fle
 document.getElementById('stop').parentElement.parentElement.style.flexDirection = 'column-reverse';
 document.getElementById('stop').parentElement.parentElement.style.paddingBottom = '3px';
 document.getElementById('stop').parentElement.parentElement.parentElement.style.paddingBottom = '20px';
-
 document.getElementById('stop').parentElement.parentElement.style.flex = '0 0 auto';
 
 document.getElementById('gr-hover').parentElement.style.minWidth = 0;
@@ -263,6 +262,30 @@ function hideMenu() {
 
 for (let i = 14; i >= 2; i--) {
   const thisButton = buttonsInChat[i];
+  const buttonText = thisButton.textContent;
+  const matches = buttonText.match(/(\(.*?\))/);
+
+  if (matches && matches.length > 1) {
+    const input = document.createElement("input");
+    input.type = "text";
+    input.style.width = "180px";
+    input.style.height = "20px";
+    input.placeholder = matches[1];
+    input.style.color = "gray"
+    input.style.border = "none";
+    input.style.background = "transparent";
+    input.style.outline = "none";
+    input.className = "transparent-substring";
+    const newText = buttonText.replace(matches[1], input.outerHTML);
+    thisButton.innerHTML = newText;
+    const newInput = thisButton.querySelector("input");
+    newInput.addEventListener("focus", function() {
+      thisButton.style.pointerEvents = "none";
+    });
+    newInput.addEventListener("blur", function() {
+      thisButton.style.pointerEvents = "";
+    });
+  }
   menu.appendChild(thisButton);
 
   if(i != 10) {
@@ -270,17 +293,6 @@ for (let i = 14; i >= 2; i--) {
       hideMenu();
     });
   }
-
-  const buttonText = thisButton.textContent;
-  const matches = buttonText.match(/(\(.*?\))/);
-
-  if (matches && matches.length > 1) {
-    // Apply the transparent-substring class to the matched substring
-    const substring = matches[1];
-    const newText = buttonText.replace(substring, `&nbsp;<span class="transparent-substring">${substring}</span>`);
-    thisButton.innerHTML = newText;
-  }
-
 }
 
 function isMouseOverButtonOrMenu() {
@@ -291,7 +303,7 @@ button.addEventListener('mouseenter', function () {
     showMenu();
 });
 
-button.addEventListener('click', function () {
+button.addEventListener('touchstart', function () {
     showMenu();
 });
 
@@ -305,9 +317,25 @@ button.addEventListener('mouseleave', function () {
     }, 100);
 });
 
+button.addEventListener('touchend', function () {
+    setTimeout(function () {
+        if (!isMouseOverButtonOrMenu()) {
+            hideMenu();
+        }
+    }, 100);
+});
+
 // Add event listener for mouseleave on the menu
 menu.addEventListener('mouseleave', function () {
     // Delay to prevent menu hide when the mouse leaves the menu into the button
+    setTimeout(function () {
+        if (!isMouseOverButtonOrMenu()) {
+            hideMenu();
+        }
+    }, 100);
+});
+
+menu.addEventListener('touchend', function () {
     setTimeout(function () {
         if (!isMouseOverButtonOrMenu()) {
             hideMenu();
