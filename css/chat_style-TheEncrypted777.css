@@ -89,6 +89,7 @@
     font-size: 18px !important;
     line-height: 1.428571429 !important;
     color: rgb(243, 244, 246) !important;
+    text-shadow: 2px 2px 2px rgb(0, 0, 0);
 }
 
 .message-body p em {
