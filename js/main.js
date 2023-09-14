@@ -184,11 +184,11 @@ document.getElementById('chat-input').parentNode.style.background = 'transparent
 document.getElementById('chat-input').parentNode.style.border = 'none';
 document.getElementById('chat-input').parentElement.parentElement.style.minWidth = 0;
 
-document.getElementById('stop').parentElement.parentElement.style.minWidth = 0;
-document.getElementById('stop').parentElement.parentElement.style.display = 'flex';
-document.getElementById('stop').parentElement.parentElement.style.flexDirection = 'column-reverse';
-document.getElementById('stop').parentElement.parentElement.style.paddingBottom = '3px';
-document.getElementById('stop').parentElement.parentElement.parentElement.style.paddingBottom = '20px';
+document.querySelector('#stop.hover-menu').parentElement.parentElement.style.minWidth = 0;
+document.querySelector('#stop.hover-menu').parentElement.parentElement.style.display = 'flex';
+document.querySelector('#stop.hover-menu').parentElement.parentElement.style.flexDirection = 'column-reverse';
+document.querySelector('#stop.hover-menu').parentElement.parentElement.style.paddingBottom = '3px';
+document.querySelector('#stop.hover-menu').parentElement.parentElement.parentElement.style.paddingBottom = '20px';
 
 document.getElementById('gr-hover').parentElement.style.minWidth = 0;
 document.getElementById('gr-hover').parentElement.style.display = 'flex';
