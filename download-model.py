@@ -88,6 +88,9 @@ class ModelDownloader:
                     if 'lfs' in dict[i]:
                         sha256.append([fname, dict[i]['lfs']['oid']])
 
+                    if "https://huggingface.co/" in model:
+                        model = model.replace("https://huggingface.co/", "")
+
                     if is_text:
                         links.append(f"https://huggingface.co/{model}/resolve/{branch}/{fname}")
                         classifications.append('text')
