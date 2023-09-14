@@ -49,12 +49,10 @@
 
 .dark .chat .assistant-message {
     background-color: #1f2937;
-    border: 1px solid #4b5563;
 }
 
 .dark .chat .user-message {
-    background-color: #111827;
-    border: 1px solid #4b5563;
+    background-color: transparent;
 }
 
 code {

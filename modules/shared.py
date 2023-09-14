@@ -259,10 +259,8 @@ with Path(f'{args.model_dir}/config.yaml') as p:
 with Path(f'{args.model_dir}/config-user.yaml') as p:
     if p.exists():
         user_config = yaml.safe_load(open(p, 'r').read())
-        for k in user_config:
-            if k in model_config:
-                model_config[k].update(user_config[k])
-            else:
-                model_config[k] = user_config[k]
+    else:
+        user_config = {}
 
 model_config = OrderedDict(model_config)
+user_config = OrderedDict(user_config)
