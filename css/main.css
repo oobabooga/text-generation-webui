@@ -483,7 +483,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
   width: 100%;
   background: transparent !important;
   border-radius: 0px !important;
-  justify-content: left;
+  justify-content: space-between;
 }
 
 .hover-menu button:hover {
