@@ -483,8 +483,13 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
   width: 100%;
   background: transparent !important;
   border-radius: 0px !important;
+  justify-content: left;
 }
 
 .hover-menu button:hover {
   background: var(--button-secondary-background-fill-hover) !important;
+}
+
+.transparent-substring {
+  opacity: 0.333;
 }
