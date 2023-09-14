@@ -50,7 +50,7 @@ def create_ui():
         shared.gradio['Send dummy reply'] = gr.Button('Send dummy reply')
         shared.gradio['Clear history'] = gr.Button('Clear history')
         shared.gradio['Clear history-cancel'] = gr.Button('Cancel', visible=False)
-        shared.gradio['Clear history-confirm'] = gr.Button('Confirm', variant='stop', visible=False)
+        shared.gradio['Clear history-confirm'] = gr.Button('Confirm', variant='stop', visible=False, elem_id='clear-history-confirm')
         shared.gradio['send-chat-to-default'] = gr.Button('Send to default')
         shared.gradio['send-chat-to-notebook'] = gr.Button('Send to notebook')
 

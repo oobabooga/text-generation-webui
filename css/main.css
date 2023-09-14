@@ -502,10 +502,13 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
   border-radius: 0px !important;
   justify-content: left;
   margin: 0 !important;
+}
+
+.hover-menu button:not(#clear-history-confirm) {
   border-bottom: 0 !important;
 }
 
-.hover-menu button:last-child {
+.hover-menu button:not(#clear-history-confirm):last-child {
   border-bottom: var(--button-border-width) solid var(--button-secondary-border-color) !important;
 }
 
