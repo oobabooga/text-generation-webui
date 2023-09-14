@@ -147,6 +147,14 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
     div .default-token-counter {
         top: calc( 0.5 * (100dvh - 245px) ) !important;
     }
+
+    .transparent-substring {
+        display: none;
+    }
+
+    .hover-menu {
+        min-width: 250px !important;
+    }
 }
 
 /* Hide the gradio footer*/
@@ -277,6 +285,10 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     width: 100%;
 }
 
+#chat-tab button#Generate, #chat-tab button#stop {
+    width: 89.3438px !important;
+}
+
 #chat-tab button, #notebook-tab button, #default-tab button {
     min-width: 0 !important;
 }
@@ -359,7 +371,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 #chat-input {
     padding: 0;
     padding-top: 18px;
-    background: var(--background-fill-primary);
+    background: transparent;
     border: none;
 }
 
@@ -402,9 +414,13 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 
 #show-controls {
     position: absolute;
-    background-color: transparent;
     left: calc(100% - 179px);
+    height: 100%;
+    background-color: var(--background-fill-primary);
     border: 0px;
+}
+
+#show-controls input {
     z-index: 1000;
 }
 
@@ -474,8 +490,9 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
   bottom: 80%;
   left: 0;
   background-color: var(--background-fill-secondary);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
   z-index: 10000;
-  min-width: 300px;
+  min-width: 330px;
   flex-direction: column;
 }
 
@@ -484,6 +501,15 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
   background: transparent !important;
   border-radius: 0px !important;
   justify-content: left;
+  margin: 0 !important;
+}
+
+.hover-menu button:not(#clear-history-confirm) {
+  border-bottom: 0 !important;
+}
+
+.hover-menu button:not(#clear-history-confirm):last-child {
+  border-bottom: var(--button-border-width) solid var(--button-secondary-border-color) !important;
 }
 
 .hover-menu button:hover {

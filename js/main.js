@@ -63,14 +63,14 @@ document.addEventListener("keydown", function(event) {
     document.getElementById('Regenerate').click();
   }
 
-  // Continue on Ctrl + Right
-  else if (event.ctrlKey && event.key === 'ArrowRight') {
+  // Continue on Alt + Enter
+  else if (event.altKey && event.key === 'Enter') {
     event.preventDefault();
     document.getElementById('Continue').click();
   }
 
-  // Remove last on Ctrl + Up
-  else if (event.ctrlKey && event.key === 'ArrowUp') {
+  // Remove last on Ctrl + Shift + Backspace
+  else if (event.ctrlKey && event.shiftKey && event.key === 'Backspace') {
     event.preventDefault();
     document.getElementById('Remove-last').click();
   }
@@ -87,7 +87,7 @@ document.addEventListener("keydown", function(event) {
     document.getElementById('Replace-last').click();
   }
 
-  // Impersonate last on Ctrl + Shift + M
+  // Impersonate on Ctrl + Shift + M
   else if (event.ctrlKey && event.shiftKey && event.key === 'M') {
     event.preventDefault();
     document.getElementById('Impersonate').click();
@@ -226,6 +226,8 @@ document.getElementById('stop').parentElement.parentElement.style.flexDirection 
 document.getElementById('stop').parentElement.parentElement.style.paddingBottom = '3px';
 document.getElementById('stop').parentElement.parentElement.parentElement.style.paddingBottom = '20px';
 
+document.getElementById('stop').parentElement.parentElement.style.flex = '0 0 auto';
+
 document.getElementById('gr-hover').parentElement.style.minWidth = 0;
 document.getElementById('gr-hover').parentElement.style.display = 'flex';
 document.getElementById('gr-hover').parentElement.style.flexDirection = 'column-reverse';
@@ -331,6 +333,12 @@ for (var i = 0; i < 2; i++) {
 }
 
 parent.insertBefore(elementToMove, parent.firstChild);
+
+//------------------------------------------------
+// Make the chat input grow upwards instead of downwards
+//------------------------------------------------
+document.getElementById('show-controls').parentNode.style.position = 'absolute';
+document.getElementById('show-controls').parentNode.style.bottom = '0px';
 
 //------------------------------------------------
 // Focus on the chat input
