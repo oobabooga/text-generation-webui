@@ -40,6 +40,7 @@ def replace_blockquote(m):
 def convert_to_markdown(string):
 
     # Blockquote
+    string = re.sub(r'(^|[\n])&gt;', r'\1>', string)
     pattern = re.compile(r'\\begin{blockquote}(.*?)\\end{blockquote}', re.DOTALL)
     string = pattern.sub(replace_blockquote, string)
 
