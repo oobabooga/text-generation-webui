@@ -420,6 +420,10 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     border: 0px;
 }
 
+#show-controls input {
+    z-index: 1000;
+}
+
 #typing-container {
     display: none;
     position: absolute;
