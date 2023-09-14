@@ -41,7 +41,7 @@ def create_ui():
 
         # Hover menu buttons
         shared.gradio['Regenerate'] = gr.Button('Regenerate (Ctrl + Enter)', elem_id='Regenerate')
-        shared.gradio['Continue'] = gr.Button('Continue (Ctrl + Shift + C)', elem_id='Continue')
+        shared.gradio['Continue'] = gr.Button('Continue (Alt + Enter)', elem_id='Continue')
         shared.gradio['Remove last'] = gr.Button('Remove last reply (Ctrl + Shift + Backspace)', elem_id='Remove-last')
         shared.gradio['Replace last reply'] = gr.Button('Replace last reply (Ctrl + Shift + L)', elem_id='Replace-last')
         shared.gradio['Copy last reply'] = gr.Button('Copy last reply (Ctrl + Shift + K)', elem_id='Copy-last')
