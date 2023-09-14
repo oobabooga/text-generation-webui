@@ -27,7 +27,7 @@ def output_modifier(string):
     if not params['activate']:
         return string
 
-    return GoogleTranslator(source='en', target=params['language string']).translate(string)
+    return GoogleTranslator(source='en', target=params['language string']).translate(html.unescape(string))
 
 
 def bot_prefix_modifier(string):
