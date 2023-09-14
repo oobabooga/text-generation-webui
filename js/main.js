@@ -255,7 +255,7 @@ for (let i = 14; i >= 2; i--) {
   if (matches && matches.length > 1) {
     // Apply the transparent-substring class to the matched substring
     const substring = matches[1];
-    const newText = buttonText.replace(substring, `&nbsp;<span class="transparent-substring">${substring}</span>`);
+    const newText = buttonText.replace(substring, `&nbsp;<span class="transparent-substring">${substring.slice(1, -1)}</span>`);
     thisButton.innerHTML = newText;
   }
 
