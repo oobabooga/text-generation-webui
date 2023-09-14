@@ -490,6 +490,31 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
   background: var(--button-secondary-background-fill-hover) !important;
 }
 
+#gr-hover-container {
+  min-width: 0 !important;
+  display: flex;
+  flex-direction: column-reverse;
+  padding-right: 20px;
+  padding-bottom: 3px;
+  flex-grow: 0 !important;
+}
+
+#generate-stop-container {
+  min-width: 0 !important;
+  display: flex;
+  flex-direction: column-reverse;
+  padding-bottom: 3px;
+}
+
+#chat-input-container {
+  min-width: 0 !important;
+}
+
+#chat-input-container > .form, #chat-tab > div > .form {
+  background: transparent;
+  border: none;
+}
+
 .transparent-substring {
   opacity: 0.333;
 }

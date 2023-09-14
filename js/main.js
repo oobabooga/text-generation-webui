@@ -214,26 +214,6 @@ for(i = 0; i < textareaElements.length; i++) {
 }
 
 //------------------------------------------------
-// Improve the looks of the chat input field
-//------------------------------------------------
-document.getElementById('chat-input').parentNode.style.background = 'transparent';
-document.getElementById('chat-input').parentNode.style.border = 'none';
-document.getElementById('chat-input').parentElement.parentElement.style.minWidth = 0;
-
-document.querySelector('#stop.hover-menu').parentElement.parentElement.style.minWidth = 0;
-document.querySelector('#stop.hover-menu').parentElement.parentElement.style.display = 'flex';
-document.querySelector('#stop.hover-menu').parentElement.parentElement.style.flexDirection = 'column-reverse';
-document.querySelector('#stop.hover-menu').parentElement.parentElement.style.paddingBottom = '3px';
-document.querySelector('#stop.hover-menu').parentElement.parentElement.parentElement.style.paddingBottom = '20px';
-
-document.getElementById('gr-hover').parentElement.style.minWidth = 0;
-document.getElementById('gr-hover').parentElement.style.display = 'flex';
-document.getElementById('gr-hover').parentElement.style.flexDirection = 'column-reverse';
-document.getElementById('gr-hover').parentElement.style.flex = '0';
-document.getElementById('gr-hover').parentElement.style.paddingRight = '20px';
-document.getElementById('gr-hover').parentElement.style.paddingBottom = '3px';
-
-//------------------------------------------------
 // Remove some backgrounds
 //------------------------------------------------
 const noBackgroundelements = document.querySelectorAll('.no-background');
