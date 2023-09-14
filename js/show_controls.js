@@ -9,12 +9,14 @@ function toggle_controls(value) {
 
         chatParent.classList.remove("bigchat");
         document.getElementById('stop').parentElement.parentElement.parentElement.style.paddingBottom = '20px';
+        document.getElementById('show-controls').parentNode.parentNode.style.paddingBottom = '115px';
     } else {
         belowChatInput.forEach(element => {
           element.style.display = "none";
         });
 
         chatParent.classList.add("bigchat");
-        document.getElementById('stop').parentElement.parentElement.parentElement.style.paddingBottom = '20px';
+        document.getElementById('stop').parentElement.parentElement.parentElement.style.paddingBottom = '0px';
+        document.getElementById('show-controls').parentNode.parentNode.style.paddingBottom = '95px';
     }
 }

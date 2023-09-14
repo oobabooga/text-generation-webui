@@ -337,7 +337,6 @@ parent.insertBefore(elementToMove, parent.firstChild);
 //------------------------------------------------
 document.getElementById('show-controls').parentNode.style.position = 'absolute';
 document.getElementById('show-controls').parentNode.style.bottom = '0px';
-document.getElementById('show-controls').parentNode.parentNode.style.paddingBottom = '115px';
 
 //------------------------------------------------
 // Focus on the chat input
