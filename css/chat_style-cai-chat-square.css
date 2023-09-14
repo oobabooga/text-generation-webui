@@ -1,0 +1,19 @@
+@import url("file/css/chat_style-cai-chat.css");
+
+.circle-bot, .circle-you {
+  height: 75px;
+  border-radius: 8.333px;
+  background-color: #656565;
+}
+
+.circle-bot img, .circle-you img {
+  border-radius: 8.333px;
+}
+
+.circle-you {
+  background-color: #656565;
+}
+
+.message {
+  padding-bottom: 30px;
+}
