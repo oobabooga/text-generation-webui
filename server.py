@@ -126,9 +126,29 @@ def create_interface():
         ui_model_menu.create_event_handlers()
 
         # Interface launch events
-        if shared.settings['dark_theme']:
+        if shared.settings['theme'] == "light":
+            shared.gradio['interface'].load(lambda: None, None, None, _js="() => document.getElementsByTagName('body')[0].classList.remove('dark')")
+        elif shared.settings['theme'] == "dark":
             shared.gradio['interface'].load(lambda: None, None, None, _js="() => document.getElementsByTagName('body')[0].classList.add('dark')")
-
+        else: # default = system
+            shared.gradio['interface'].load(lambda: None, None, None, _js="""
+() => { 
+	const darkThemeMq = window.matchMedia('(prefers-color-scheme: dark)');
+	const bodyClassList = document.getElementsByTagName('body')[0].classList;
+	if (darkThemeMq.matches) { // first run
+		bodyClassList.add('dark');
+	} else {
+		bodyClassList.remove('dark');
+	};
+	darkThemeMq.addListener(e => { // on OS theme change
+		if (e.matches) {
+			bodyClassList.add('dark');
+		} else {
+			bodyClassList.remove('dark');
+		};
+	});
+}
+            """)
         shared.gradio['interface'].load(lambda: None, None, None, _js=f"() => {{{js}}}")
         shared.gradio['interface'].load(None, gradio('show_controls'), None, _js=f'(x) => {{{ui.show_controls_js}; toggle_controls(x)}}')
         shared.gradio['interface'].load(partial(ui.apply_interface_values, {}, use_persistent=True), None, gradio(ui.list_interface_input_elements()), show_progress=False)

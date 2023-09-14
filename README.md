@@ -208,7 +208,7 @@ When you load this model in default or notebook modes, the "HTML" tab will show 
 
 Then browse to 
 
-`http://localhost:7860/?__theme=dark`
+`http://localhost:7860`
 
 Optionally, you can use the following command-line flags:
 

@@ -28,7 +28,7 @@ session_is_loading = False
 
 # UI defaults
 settings = {
-    'dark_theme': True,
+    'theme': 'system', # system, light, or dark
     'show_controls': True,
     'start_with': '',
     'mode': 'chat',
