@@ -36,8 +36,8 @@ def create_ui():
 
                     with gr.Column(scale=1):
                         with gr.Row():
-                            shared.gradio['Stop'] = gr.Button('■', elem_id='stop', visible=False)
-                            shared.gradio['Generate'] = gr.Button('▶', elem_id='Generate', variant='primary')
+                            shared.gradio['Stop'] = gr.Button('Stop', elem_id='stop', visible=False)
+                            shared.gradio['Generate'] = gr.Button('Generate', elem_id='Generate', variant='primary')
 
         # Hover menu buttons
         shared.gradio['Regenerate'] = gr.Button('Regenerate (Ctrl + Enter)', elem_id='Regenerate')

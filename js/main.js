@@ -226,6 +226,8 @@ document.getElementById('stop').parentElement.parentElement.style.flexDirection 
 document.getElementById('stop').parentElement.parentElement.style.paddingBottom = '3px';
 document.getElementById('stop').parentElement.parentElement.parentElement.style.paddingBottom = '20px';
 
+document.getElementById('stop').parentElement.parentElement.style.flex = '0 0 auto';
+
 document.getElementById('gr-hover').parentElement.style.minWidth = 0;
 document.getElementById('gr-hover').parentElement.style.display = 'flex';
 document.getElementById('gr-hover').parentElement.style.flexDirection = 'column-reverse';
