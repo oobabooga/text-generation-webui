@@ -147,6 +147,14 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
     div .default-token-counter {
         top: calc( 0.5 * (100dvh - 245px) ) !important;
     }
+
+    .transparent-substring {
+        display: none;
+    }
+
+    .hover-menu {
+        min-width: 250px !important;
+    }
 }
 
 /* Hide the gradio footer*/
@@ -359,7 +367,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 #chat-input {
     padding: 0;
     padding-top: 18px;
-    background: var(--background-fill-primary);
+    background: transparent;
     border: none;
 }
 
@@ -475,7 +483,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
   left: 0;
   background-color: var(--background-fill-secondary);
   z-index: 10000;
-  min-width: 300px;
+  min-width: 330px;
   flex-direction: column;
 }
 

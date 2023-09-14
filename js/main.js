@@ -63,14 +63,14 @@ document.addEventListener("keydown", function(event) {
     document.getElementById('Regenerate').click();
   }
 
-  // Continue on Ctrl + Right
-  else if (event.ctrlKey && event.key === 'ArrowRight') {
+  // Continue on Ctrl + Shift + C
+  else if (event.ctrlKey && event.shiftKey && event.key === 'C') {
     event.preventDefault();
     document.getElementById('Continue').click();
   }
 
-  // Remove last on Ctrl + Up
-  else if (event.ctrlKey && event.key === 'ArrowUp') {
+  // Remove last on Ctrl + Shift + Backspace
+  else if (event.ctrlKey && event.shiftKey && event.key === 'Backspace') {
     event.preventDefault();
     document.getElementById('Remove-last').click();
   }
@@ -87,7 +87,7 @@ document.addEventListener("keydown", function(event) {
     document.getElementById('Replace-last').click();
   }
 
-  // Impersonate last on Ctrl + Shift + M
+  // Impersonate on Ctrl + Shift + M
   else if (event.ctrlKey && event.shiftKey && event.key === 'M') {
     event.preventDefault();
     document.getElementById('Impersonate').click();
@@ -331,6 +331,12 @@ for (var i = 0; i < 2; i++) {
 }
 
 parent.insertBefore(elementToMove, parent.firstChild);
+
+//------------------------------------------------
+// Make the chat input grow upwards instead of downwards
+//------------------------------------------------
+document.getElementById('show-controls').parentNode.style.position = 'absolute';
+document.getElementById('show-controls').parentNode.style.bottom = '0px';
 
 //------------------------------------------------
 // Focus on the chat input
