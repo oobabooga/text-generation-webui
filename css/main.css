@@ -359,7 +359,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 #chat-input {
     padding: 0;
     padding-top: 18px;
-    background: var(--background-fill-primary);
+    background: transparent;
     border: none;
 }
 

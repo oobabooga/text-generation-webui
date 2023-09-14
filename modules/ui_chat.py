@@ -21,21 +21,23 @@ def create_ui():
     shared.gradio['history'] = gr.State({'internal': [], 'visible': []})
 
     with gr.Tab('Chat', elem_id='chat-tab'):
-        shared.gradio['display'] = gr.HTML(value=chat_html_wrapper({'internal': [], 'visible': []}, shared.settings['name1'], shared.settings['name2'], 'chat', 'cai-chat'))
-
         with gr.Row():
-            with gr.Column(scale=1):
-                gr.HTML(value='<div class="hover-element" onclick="void(0)"><span style="width: 100px; display: block" id="hover-element-button">&#9776;</span><div class="hover-menu" id="hover-menu"></div>', elem_id='gr-hover')
+            with gr.Column():
+                shared.gradio['display'] = gr.HTML(value=chat_html_wrapper({'internal': [], 'visible': []}, shared.settings['name1'], shared.settings['name2'], 'chat', 'cai-chat'))
 
-            with gr.Column(scale=10):
-                shared.gradio['textbox'] = gr.Textbox(label='', placeholder='Send a message', elem_id='chat-input')
-                shared.gradio['show_controls'] = gr.Checkbox(value=shared.settings['show_controls'], label='Show controls (Ctrl+S)', elem_id='show-controls')
-                shared.gradio['typing-dots'] = gr.HTML(value='<div class="typing"><span></span><span class="dot1"></span><span class="dot2"></span></div>', label='typing', elem_id='typing-container')
-
-            with gr.Column(scale=1):
                 with gr.Row():
-                    shared.gradio['Stop'] = gr.Button('■', elem_id='stop', visible=False)
-                    shared.gradio['Generate'] = gr.Button('▶', elem_id='Generate', variant='primary')
+                    with gr.Column(scale=1):
+                        gr.HTML(value='<div class="hover-element" onclick="void(0)"><span style="width: 100px; display: block" id="hover-element-button">&#9776;</span><div class="hover-menu" id="hover-menu"></div>', elem_id='gr-hover')
+
+                    with gr.Column(scale=10):
+                        shared.gradio['textbox'] = gr.Textbox(label='', placeholder='Send a message', elem_id='chat-input', elem_classes=['add_scrollbar'])
+                        shared.gradio['show_controls'] = gr.Checkbox(value=shared.settings['show_controls'], label='Show controls (Ctrl+S)', elem_id='show-controls')
+                        shared.gradio['typing-dots'] = gr.HTML(value='<div class="typing"><span></span><span class="dot1"></span><span class="dot2"></span></div>', label='typing', elem_id='typing-container')
+
+                    with gr.Column(scale=1):
+                        with gr.Row():
+                            shared.gradio['Stop'] = gr.Button('■', elem_id='stop', visible=False)
+                            shared.gradio['Generate'] = gr.Button('▶', elem_id='Generate', variant='primary')
 
         # Hover menu buttons
         shared.gradio['Regenerate'] = gr.Button('Regenerate (Ctrl + Enter)', elem_id='Regenerate')
