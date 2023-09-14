@@ -20,8 +20,8 @@ def create_ui():
         shared.gradio['Chat input'] = gr.State()
         shared.gradio['dummy'] = gr.State()
         shared.gradio['history'] = gr.State({'internal': [], 'visible': []})
-        shared.gradio['display'] = gr.HTML(value=chat_html_wrapper({'internal': [], 'visible': []}, shared.settings['name1'], shared.settings['name2'], 'chat', 'cai-chat'))
         if shared.args.old_chat_menu:
+            shared.gradio['display'] = gr.HTML(value=chat_html_wrapper({'internal': [], 'visible': []}, shared.settings['name1'], shared.settings['name2'], 'chat', 'cai-chat'), elem_classes=["chat-parent", "pretty_scrollbar", "old-ui"])
             with gr.Column(elem_id='chat-input-container'):
                 shared.gradio['textbox'] = gr.Textbox(label='', placeholder='Send a message', elem_id='chat-input')
                 shared.gradio['show_controls'] = gr.Checkbox(value=shared.settings['show_controls'], label='Show controls (Ctrl+S)', elem_id='show-controls')
@@ -52,6 +52,7 @@ def create_ui():
                 shared.gradio['send-chat-to-default'] = gr.Button('Send to default')
                 shared.gradio['send-chat-to-notebook'] = gr.Button('Send to notebook')
         else:
+            shared.gradio['display'] = gr.HTML(value=chat_html_wrapper({'internal': [], 'visible': []}, shared.settings['name1'], shared.settings['name2'], 'chat', 'cai-chat'), elem_classes=["chat-parent", "pretty_scrollbar"])
             with gr.Row():
                 with gr.Column(scale=1, elem_id='gr-hover-container'):
                     gr.HTML(value='<div class="hover-element" onclick="void(0)"><span style="width: 100px; display: block" id="hover-element-button">&#9776;</span><div class="hover-menu" id="hover-menu"></div>', elem_id='gr-hover')
