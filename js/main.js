@@ -63,14 +63,14 @@ document.addEventListener("keydown", function(event) {
     document.getElementById('Regenerate').click();
   }
 
-  // Continue on Ctrl + Right
-  else if (event.ctrlKey && event.key === 'ArrowRight') {
+  // Continue on Ctrl + Shift + C
+  else if (event.ctrlKey && event.shiftKey && event.key === 'C') {
     event.preventDefault();
     document.getElementById('Continue').click();
   }
 
-  // Remove last on Ctrl + Up
-  else if (event.ctrlKey && event.key === 'ArrowUp') {
+  // Remove last on Ctrl + Shift + Backspace
+  else if (event.ctrlKey && event.shiftKey && event.key === 'Backspace') {
     event.preventDefault();
     document.getElementById('Remove-last').click();
   }
@@ -87,7 +87,7 @@ document.addEventListener("keydown", function(event) {
     document.getElementById('Replace-last').click();
   }
 
-  // Impersonate last on Ctrl + Shift + M
+  // Impersonate on Ctrl + Shift + M
   else if (event.ctrlKey && event.shiftKey && event.key === 'M') {
     event.preventDefault();
     document.getElementById('Impersonate').click();

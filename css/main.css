@@ -475,7 +475,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
   left: 0;
   background-color: var(--background-fill-secondary);
   z-index: 10000;
-  min-width: 300px;
+  min-width: 330px;
   flex-direction: column;
 }
 
