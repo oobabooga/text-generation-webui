@@ -163,13 +163,15 @@ def messages_to_prompt(body: dict, req_params: dict, max_tokens):
         req_params['stopping_strings'] = []
 
     # Instruct models can be much better
+    system_message_default_fill = ''
     if shared.settings['instruction_template']:
         try:
             instruct = yaml.safe_load(open(f"instruction-templates/{shared.settings['instruction_template']}.yaml", 'r'))
 
             template = instruct['turn_template']
             system_message_template = "{message}"
-            system_message_default = instruct.get('context', '') # can be missing
+            system_message_default = instruct.get('context', '').replace('<|system-message|>', '{system}') # can be missing
+            system_message_default_fill = instruct.get('system_message_default', '')  # probably missing
             bot_start = template.find('<|bot|>')  # So far, 100% of instruction templates have this token
             user_message_template = template[:bot_start].replace('<|user-message|>', '{message}').replace('<|user|>', instruct.get('user', ''))
             bot_message_template = template[bot_start:].replace('<|bot-message|>', '{message}').replace('<|bot|>', instruct.get('bot', ''))
@@ -231,6 +233,12 @@ def messages_to_prompt(body: dict, req_params: dict, max_tokens):
 
     system_msg = '\n'.join(system_msgs)
     system_msg = end_line(system_msg)
+
+    if '{system}' in context_msg:
+        if not system_msgs:
+            system_msg = system_msg_default_fill
+        context_msg = context_msg.format(system=system_msg)
+        system_msg = ""
 
     prompt = system_msg + context_msg + ''.join(chat_msgs) + role_formats['prompt']
 
