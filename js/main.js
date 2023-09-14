@@ -44,7 +44,7 @@ document.addEventListener("keydown", function(event) {
     }
   }
 
-  // Show chat controls on Ctrl+S pressed
+  // Show chat controls on Ctrl + S
   else if (event.ctrlKey && event.key == "s") {
     event.preventDefault();
 
@@ -55,6 +55,42 @@ document.addEventListener("keydown", function(event) {
       var arr = document.getElementById('chat-input').childNodes[2].childNodes;
       arr[arr.length - 1].focus();
     }
+  }
+
+  // Regenerate on Ctrl + Enter
+  else if (event.ctrlKey && event.key === 'Enter') {
+    event.preventDefault();
+    document.getElementById('Regenerate').click();
+  }
+
+  // Continue on Ctrl + Right
+  else if (event.ctrlKey && event.key === 'ArrowRight') {
+    event.preventDefault();
+    document.getElementById('Continue').click();
+  }
+
+  // Remove last on Ctrl + Up
+  else if (event.ctrlKey && event.key === 'ArrowUp') {
+    event.preventDefault();
+    document.getElementById('Remove-last').click();
+  }
+
+  // Copy last on Ctrl + Shift + K
+  else if (event.ctrlKey && event.shiftKey && event.key === 'K') {
+    event.preventDefault();
+    document.getElementById('Copy-last').click();
+  }
+
+  // Replace last on Ctrl + Shift + L
+  else if (event.ctrlKey && event.shiftKey && event.key === 'L') {
+    event.preventDefault();
+    document.getElementById('Replace-last').click();
+  }
+
+  // Impersonate last on Ctrl + Shift + M
+  else if (event.ctrlKey && event.shiftKey && event.key === 'M') {
+    event.preventDefault();
+    document.getElementById('Impersonate').click();
   }
 
 });
@@ -232,6 +268,17 @@ for (let i = 14; i >= 2; i--) {
       hideMenu();
     });
   }
+
+  const buttonText = thisButton.textContent;
+  const matches = buttonText.match(/(\(.*?\))/);
+
+  if (matches && matches.length > 1) {
+    // Apply the transparent-substring class to the matched substring
+    const substring = matches[1];
+    const newText = buttonText.replace(substring, `&nbsp;<span class="transparent-substring">${substring}</span>`);
+    thisButton.innerHTML = newText;
+  }
+
 }
 
 function isMouseOverButtonOrMenu() {
