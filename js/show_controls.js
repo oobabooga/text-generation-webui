@@ -15,6 +15,6 @@ function toggle_controls(value) {
         });
 
         chatParent.classList.add("bigchat");
-        document.getElementById('stop').parentElement.parentElement.parentElement.style.paddingBottom = '0px';
+        document.getElementById('stop').parentElement.parentElement.parentElement.style.paddingBottom = '20px';
     }
 }
