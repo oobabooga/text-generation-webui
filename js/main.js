@@ -63,8 +63,8 @@ document.addEventListener("keydown", function(event) {
     document.getElementById('Regenerate').click();
   }
 
-  // Continue on Ctrl + Shift + C
-  else if (event.ctrlKey && event.shiftKey && event.key === 'C') {
+  // Continue on Alt + Enter
+  else if (event.altKey && event.key === 'Enter') {
     event.preventDefault();
     document.getElementById('Continue').click();
   }
