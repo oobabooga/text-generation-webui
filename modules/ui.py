@@ -118,6 +118,7 @@ def list_interface_input_elements():
         'guidance_scale',
         'add_bos_token',
         'ban_eos_token',
+        'custom_token_bans',
         'truncation_length',
         'custom_stopping_strings',
         'skip_special_tokens',

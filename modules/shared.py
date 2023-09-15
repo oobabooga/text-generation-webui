@@ -49,6 +49,7 @@ settings = {
     'auto_max_new_tokens': False,
     'max_tokens_second': 0,
     'ban_eos_token': False,
+    'custom_token_bans': '',
     'add_bos_token': True,
     'skip_special_tokens': True,
     'stream': True,

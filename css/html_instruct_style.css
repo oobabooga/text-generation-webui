@@ -4,7 +4,7 @@
     padding-bottom: 25px;
     font-size: 15px;
     font-family: 'Noto Sans', Helvetica, Arial, sans-serif;
-    line-height: 1.428571429;
+    line-height: 22px;
 }
 
 .username {
@@ -13,7 +13,7 @@
 
 .message-body p {
     font-size: 15px !important;
-    line-height: 1.4 !important;
+    line-height: 22px !important;
     margin-bottom: 1.25em !important;
 }
 

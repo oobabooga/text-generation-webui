@@ -171,7 +171,7 @@ text-generation-webui
 ```
 text-generation-webui
 ├── models
-│   ├── llama-13b.ggmlv3.q4_K_M.bin
+│   ├── llama-2-13b-chat.Q4_K_M.gguf
 ```
 
 In both cases, you can use the "Model" tab of the UI to download the model from Hugging Face automatically. It is also possible to download via the command-line with `python download-model.py organization/model` (use `--help` to see all the options).

@@ -30,7 +30,7 @@ class Exllamav2Model:
         config.max_seq_len = shared.args.max_seq_len
         config.scale_pos_emb = shared.args.compress_pos_emb
         config.scale_alpha_value = shared.args.alpha_value
-        
+
         model = ExLlamaV2(config)
 
         split = None
@@ -59,6 +59,11 @@ class Exllamav2Model:
         settings.token_repetition_range = -1 if state['repetition_penalty_range'] <= 0 else state['repetition_penalty_range']
         if state['ban_eos_token']:
             settings.disallow_tokens(self.tokenizer, [self.tokenizer.eos_token_id])
+
+        if state['custom_token_bans']:
+            to_ban = [int(x) for x in state['custom_token_bans'].split(',')]
+            if len(to_ban) > 0:
+                settings.disallow_tokens(self.tokenizer, to_ban)
 
         ids = self.tokenizer.encode(prompt)
         ids = ids[:, -get_max_prompt_length(state):]

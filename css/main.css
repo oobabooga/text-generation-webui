@@ -94,6 +94,8 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
     margin-bottom: 19px;
     display: inline !important;
     overflow-x: scroll;
+    margin-left: calc(-1 * var(--size-4));
+    margin-right: calc(-1 * var(--size-4));
 }
 
 .dark .header_bar {
@@ -106,11 +108,11 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
 }
 
 .textbox_default textarea {
-    height: calc(100dvh - 280px);
+    height: calc(100dvh - 271px);
 }
 
 .textbox_default_output textarea {
-    height: calc(100dvh - 190px);
+    height: calc(100dvh - 181px);
 }
 
 .textbox textarea {
@@ -141,11 +143,11 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
 
 @media screen and (max-width: 711px) {
     .textbox_default textarea {
-        height: calc(100dvh - 271px);
+        height: calc(100dvh - 259px);
     }
 
     div .default-token-counter {
-        top: calc( 0.5 * (100dvh - 245px) ) !important;
+        top: calc( 0.5 * (100dvh - 236px) ) !important;
     }
 
     .transparent-substring {
@@ -228,7 +230,7 @@ audio {
 /* Copied from https://github.com/AUTOMATIC1111/stable-diffusion-webui */
 .token-counter {
   position: absolute !important;
-  top: calc( 0.5 * (100dvh - 215px) ) !important;
+  top: calc( 0.5 * (100dvh - 218px) ) !important;
   right: 2px;
   z-index: 100;
   background: var(--input-background-fill) !important;
@@ -236,7 +238,7 @@ audio {
 }
 
 .default-token-counter {
-  top: calc( 0.5 * (100dvh - 255px) ) !important;
+  top: calc( 0.5 * (100dvh - 248px) ) !important;
 }
 
 .token-counter span {
@@ -504,6 +506,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
   border-radius: 0px !important;
   justify-content: left;
   margin: 0 !important;
+  height: 36px;
 }
 
 .hover-menu button:not(#clear-history-confirm) {

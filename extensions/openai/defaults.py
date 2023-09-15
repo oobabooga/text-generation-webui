@@ -37,6 +37,7 @@ default_req_params = {
     'guidance_scale': 1,
     'negative_prompt': '',
     'ban_eos_token': False,
+    'custom_token_bans': '',
     'skip_special_tokens': True,
     'custom_stopping_strings': '',
     # 'logits_processor' - conditionally passed

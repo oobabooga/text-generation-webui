@@ -91,8 +91,8 @@ def create_chat_settings_ui():
 
         shared.gradio['name1_instruct'] = gr.Textbox(value='', lines=2, label='User string')
         shared.gradio['name2_instruct'] = gr.Textbox(value='', lines=1, label='Bot string')
-        shared.gradio['context_instruct'] = gr.Textbox(value='', lines=4, label='Context')
-        shared.gradio['turn_template'] = gr.Textbox(value='', lines=1, label='Turn template', info='Used to precisely define the placement of spaces and new line characters in instruction prompts.')
+        shared.gradio['context_instruct'] = gr.Textbox(value='', lines=4, label='Context', elem_classes=['add_scrollbar'])
+        shared.gradio['turn_template'] = gr.Textbox(value='', lines=1, label='Turn template', info='Used to precisely define the placement of spaces and new line characters in instruction prompts.', elem_classes=['add_scrollbar'])
         with gr.Row():
             shared.gradio['send_instruction_to_default'] = gr.Button('Send to default', elem_classes=['small-button'])
             shared.gradio['send_instruction_to_notebook'] = gr.Button('Send to notebook', elem_classes=['small-button'])
