@@ -2,7 +2,7 @@ dark_theme: true
 show_controls: true
 start_with: ''
 mode: chat
-chat_style: TheEncrypted777
+chat_style: cai-chat
 character: None
 prompt-default: QA
 prompt-notebook: QA
@@ -19,6 +19,7 @@ custom_stopping_strings: ''
 auto_max_new_tokens: false
 max_tokens_second: 0
 ban_eos_token: false
+custom_token_bans: ''
 add_bos_token: true
 skip_special_tokens: true
 stream: true

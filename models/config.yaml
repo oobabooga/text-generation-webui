@@ -1,4 +1,4 @@
-.*(llama|alpac|vicuna|guanaco|koala|llava|wizardlm|metharme|pygmalion-7b|wizard-mega|openbuddy|vigogne|h2ogpt-research|manticore):
+.*(llama|alpac|vicuna|guanaco|koala|llava|wizardlm|metharme|pygmalion-7b|pygmalion-2|mythalion|wizard-mega|openbuddy|vigogne|h2ogpt-research|manticore):
   model_type: 'llama'
 .*(opt-|opt_|opt1|opt3|optfor|galactica|galpaca|pygmalion-350m):
   model_type: 'opt'
@@ -85,7 +85,7 @@ llama-65b-gptq-3bit:
   instruction_template: 'Koala'
 .*chatglm:
   instruction_template: 'ChatGLM'
-.*metharme:
+.*(metharme|pygmalion|mythalion):
   instruction_template: 'Metharme'
 .*llava:
   model_type: 'llama'
@@ -210,7 +210,7 @@ llama-65b-gptq-3bit:
   instruction_template: 'Alpaca'
 .*llama-(2|v2):
   truncation_length: 4096
-.*llama-(2|v2).*chat:
+.*llama(-?)(2|v2).*chat:
   instruction_template: 'Llama-v2'
 .*newhope:
   instruction_template: 'NewHope'

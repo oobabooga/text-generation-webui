@@ -18,9 +18,9 @@ from transformers import (
 )
 
 import modules.shared as shared
-from modules import llama_attn_hijack, RoPE, sampler_hijack
+from modules import RoPE, llama_attn_hijack, sampler_hijack
 from modules.logging_colors import logger
-from modules.models_settings import infer_loader
+from modules.models_settings import get_model_metadata
 
 transformers.logging.set_verbosity_error()
 
@@ -59,18 +59,16 @@ def load_model(model_name, loader=None):
         'RWKV': RWKV_loader,
         'ExLlama': ExLlama_loader,
         'ExLlama_HF': ExLlama_HF_loader,
+        'ExLlamav2': ExLlamav2_loader,
+        'ExLlamav2_HF': ExLlamav2_HF_loader,
         'ctransformers': ctransformers_loader,
     }
-
-    p = Path(model_name)
-    if p.exists():
-        model_name = p.parts[-1]
 
     if loader is None:
         if shared.args.loader is not None:
             loader = shared.args.loader
         else:
-            loader = infer_loader(model_name)
+            loader = get_model_metadata(model_name)['loader']
             if loader is None:
                 logger.error('The path to the model does not exist. Exiting.')
                 return None, None
@@ -251,9 +249,10 @@ def llamacpp_loader(model_name):
 def llamacpp_HF_loader(model_name):
     from modules.llamacpp_hf import LlamacppHF
 
-    for fname in ["oobabooga_llama-tokenizer", "llama-tokenizer"]:
+    for fname in [model_name, "oobabooga_llama-tokenizer", "llama-tokenizer"]:
         path = Path(f'{shared.args.model_dir}/{fname}')
-        if path.exists():
+        if all((path / file).exists() for file in ['tokenizer_config.json', 'special_tokens_map.json', 'tokenizer.model']):
+            logger.info(f'Using tokenizer from: {path}')
             break
     else:
         logger.error("Could not load the model because a tokenizer in transformers format was not found. Please download oobabooga/llama-tokenizer.")
@@ -331,6 +330,19 @@ def ExLlama_HF_loader(model_name):
     from modules.exllama_hf import ExllamaHF
 
     return ExllamaHF.from_pretrained(model_name)
+
+
+def ExLlamav2_loader(model_name):
+    from modules.exllamav2 import Exllamav2Model
+
+    model, tokenizer = Exllamav2Model.from_pretrained(model_name)
+    return model, tokenizer
+
+
+def ExLlamav2_HF_loader(model_name):
+    from modules.exllamav2_hf import Exllamav2HF
+
+    return Exllamav2HF.from_pretrained(model_name)
 
 
 def get_max_memory_dict():

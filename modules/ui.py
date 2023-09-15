@@ -8,8 +8,10 @@ import yaml
 from modules import shared
 
 
-with open(Path(__file__).resolve().parent / '../css/main.css', 'r') as f:
+with open(Path(__file__).resolve().parent / '../css/NotoSans/stylesheet.css', 'r') as f:
     css = f.read()
+with open(Path(__file__).resolve().parent / '../css/main.css', 'r') as f:
+    css += f.read()
 with open(Path(__file__).resolve().parent / '../js/main.js', 'r') as f:
     js = f.read()
 with open(Path(__file__).resolve().parent / '../js/save_files.js', 'r') as f:
@@ -24,7 +26,7 @@ delete_symbol = '🗑️'
 save_symbol = '💾'
 
 theme = gr.themes.Default(
-    font=['Helvetica', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+    font=['Noto Sans', 'Helvetica', 'ui-sans-serif', 'system-ui', 'sans-serif'],
     font_mono=['IBM Plex Mono', 'ui-monospace', 'Consolas', 'monospace'],
 ).set(
     border_color_primary='#c5c5d2',
@@ -116,6 +118,7 @@ def list_interface_input_elements():
         'guidance_scale',
         'add_bos_token',
         'ban_eos_token',
+        'custom_token_bans',
         'truncation_length',
         'custom_stopping_strings',
         'skip_special_tokens',
@@ -183,7 +186,7 @@ def apply_interface_values(state, use_persistent=False):
 
 def save_settings(state, preset, instruction_template, extensions, show_controls):
     output = copy.deepcopy(shared.settings)
-    exclude = ['name1', 'name2', 'greeting', 'context', 'turn_template']
+    exclude = ['name2', 'greeting', 'context', 'turn_template']
     for k in state:
         if k in shared.settings and k not in exclude:
             output[k] = state[k]

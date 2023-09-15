@@ -18,7 +18,7 @@ document.querySelector('.header_bar').addEventListener('click', function(event) 
         if (chat_visible || notebook_visible || default_visible) {
             extensions.style.display = 'flex';
             if (chat_visible) {
-                extensions.style.maxWidth = "800px";
+                extensions.style.maxWidth = "880px";
                 extensions.style.padding = "0px";
             } else {
                 extensions.style.maxWidth = "none";
@@ -44,7 +44,7 @@ document.addEventListener("keydown", function(event) {
     }
   }
 
-  // Show chat controls on Ctrl+S pressed
+  // Show chat controls on Ctrl + S
   else if (event.ctrlKey && event.key == "s") {
     event.preventDefault();
 
@@ -55,6 +55,42 @@ document.addEventListener("keydown", function(event) {
       var arr = document.getElementById('chat-input').childNodes[2].childNodes;
       arr[arr.length - 1].focus();
     }
+  }
+
+  // Regenerate on Ctrl + Enter
+  else if (event.ctrlKey && event.key === 'Enter') {
+    event.preventDefault();
+    document.getElementById('Regenerate').click();
+  }
+
+  // Continue on Alt + Enter
+  else if (event.altKey && event.key === 'Enter') {
+    event.preventDefault();
+    document.getElementById('Continue').click();
+  }
+
+  // Remove last on Ctrl + Shift + Backspace
+  else if (event.ctrlKey && event.shiftKey && event.key === 'Backspace') {
+    event.preventDefault();
+    document.getElementById('Remove-last').click();
+  }
+
+  // Copy last on Ctrl + Shift + K
+  else if (event.ctrlKey && event.shiftKey && event.key === 'K') {
+    event.preventDefault();
+    document.getElementById('Copy-last').click();
+  }
+
+  // Replace last on Ctrl + Shift + L
+  else if (event.ctrlKey && event.shiftKey && event.key === 'L') {
+    event.preventDefault();
+    document.getElementById('Replace-last').click();
+  }
+
+  // Impersonate on Ctrl + Shift + M
+  else if (event.ctrlKey && event.shiftKey && event.key === 'M') {
+    event.preventDefault();
+    document.getElementById('Impersonate').click();
   }
 
 });
@@ -94,8 +130,12 @@ const observer = new MutationObserver(function(mutations) {
     const firstChild = targetElement.children[0];
     if (firstChild.classList.contains('generating')) {
       typing.parentNode.classList.add('visible-dots');
+      document.getElementById('stop').style.display = 'flex';
+      document.getElementById('Generate').style.display = 'none';
     } else {
       typing.parentNode.classList.remove('visible-dots');
+      document.getElementById('stop').style.display = 'none';
+      document.getElementById('Generate').style.display = 'flex';
     }
 
   });
@@ -116,7 +156,6 @@ observer.observe(targetElement, config);
 //------------------------------------------------
 // Notebook box scrolling
 //------------------------------------------------
-
 const notebookElement = document.querySelector('#textbox-notebook textarea');
 let notebookScrolled = false;
 
@@ -142,7 +181,6 @@ notebookObserver.observe(notebookElement.parentNode.parentNode.parentNode, confi
 //------------------------------------------------
 // Default box scrolling
 //------------------------------------------------
-
 const defaultElement = document.querySelector('#textbox-default textarea');
 let defaultScrolled = false;
 
@@ -180,6 +218,22 @@ for(i = 0; i < textareaElements.length; i++) {
 //------------------------------------------------
 document.getElementById('chat-input').parentNode.style.background = 'transparent';
 document.getElementById('chat-input').parentNode.style.border = 'none';
+document.getElementById('chat-input').parentElement.parentElement.style.minWidth = 0;
+
+document.getElementById('stop').parentElement.parentElement.style.minWidth = 0;
+document.getElementById('stop').parentElement.parentElement.style.display = 'flex';
+document.getElementById('stop').parentElement.parentElement.style.flexDirection = 'column-reverse';
+document.getElementById('stop').parentElement.parentElement.style.paddingBottom = '3px';
+document.getElementById('stop').parentElement.parentElement.parentElement.style.paddingBottom = '20px';
+
+document.getElementById('stop').parentElement.parentElement.style.flex = '0 0 auto';
+
+document.getElementById('gr-hover').parentElement.style.minWidth = 0;
+document.getElementById('gr-hover').parentElement.style.display = 'flex';
+document.getElementById('gr-hover').parentElement.style.flexDirection = 'column-reverse';
+document.getElementById('gr-hover').parentElement.style.flex = '0';
+document.getElementById('gr-hover').parentElement.style.paddingRight = '20px';
+document.getElementById('gr-hover').parentElement.style.paddingBottom = '3px';
 
 //------------------------------------------------
 // Remove some backgrounds
@@ -189,3 +243,104 @@ for(i = 0; i < noBackgroundelements.length; i++) {
     noBackgroundelements[i].parentNode.style.border = 'none';
     noBackgroundelements[i].parentNode.parentNode.parentNode.style.alignItems = 'center';
 }
+
+//------------------------------------------------
+// Create the hover menu in the chat tab
+// The show/hide events were adapted from:
+// https://github.com/SillyTavern/SillyTavern/blob/6c8bd06308c69d51e2eb174541792a870a83d2d6/public/script.js
+//------------------------------------------------
+const buttonsInChat = document.getElementById("chat-tab").querySelectorAll("button");
+var button = document.getElementById('hover-element-button');
+var menu = document.getElementById('hover-menu');
+
+function showMenu() {
+    menu.style.display = 'flex'; // Show the menu
+}
+
+function hideMenu() {
+    menu.style.display = 'none'; // Hide the menu
+}
+
+for (let i = 14; i >= 2; i--) {
+  const thisButton = buttonsInChat[i];
+  menu.appendChild(thisButton);
+
+  if(i != 10) {
+    thisButton.addEventListener("click", () => {
+      hideMenu();
+    });
+  }
+
+  const buttonText = thisButton.textContent;
+  const matches = buttonText.match(/(\(.*?\))/);
+
+  if (matches && matches.length > 1) {
+    // Apply the transparent-substring class to the matched substring
+    const substring = matches[1];
+    const newText = buttonText.replace(substring, `&nbsp;<span class="transparent-substring">${substring}</span>`);
+    thisButton.innerHTML = newText;
+  }
+
+}
+
+function isMouseOverButtonOrMenu() {
+    return menu.matches(':hover') || button.matches(':hover');
+}
+
+button.addEventListener('mouseenter', function () {
+    showMenu();
+});
+
+button.addEventListener('click', function () {
+    showMenu();
+});
+
+// Add event listener for mouseleave on the button
+button.addEventListener('mouseleave', function () {
+    // Delay to prevent menu hiding when the mouse leaves the button into the menu
+    setTimeout(function () {
+        if (!isMouseOverButtonOrMenu()) {
+            hideMenu();
+        }
+    }, 100);
+});
+
+// Add event listener for mouseleave on the menu
+menu.addEventListener('mouseleave', function () {
+    // Delay to prevent menu hide when the mouse leaves the menu into the button
+    setTimeout(function () {
+        if (!isMouseOverButtonOrMenu()) {
+            hideMenu();
+        }
+    }, 100);
+});
+
+// Add event listener for click anywhere in the document
+document.addEventListener('click', function (event) {
+    // Check if the click is outside the button/menu and the menu is visible
+    if (!isMouseOverButtonOrMenu() && menu.style.display === 'flex') {
+        hideMenu();
+    }
+});
+
+//------------------------------------------------
+// Relocate the "Show controls" checkbox
+//------------------------------------------------
+var elementToMove = document.getElementById('show-controls');
+var parent = elementToMove.parentNode;
+for (var i = 0; i < 2; i++) {
+  parent = parent.parentNode;
+}
+
+parent.insertBefore(elementToMove, parent.firstChild);
+
+//------------------------------------------------
+// Make the chat input grow upwards instead of downwards
+//------------------------------------------------
+document.getElementById('show-controls').parentNode.style.position = 'absolute';
+document.getElementById('show-controls').parentNode.style.bottom = '0px';
+
+//------------------------------------------------
+// Focus on the chat input
+//------------------------------------------------
+document.querySelector('#chat-input textarea').focus()

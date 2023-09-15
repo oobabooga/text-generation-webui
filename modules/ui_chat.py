@@ -21,35 +21,38 @@ def create_ui():
     shared.gradio['history'] = gr.State({'internal': [], 'visible': []})
 
     with gr.Tab('Chat', elem_id='chat-tab'):
-        shared.gradio['display'] = gr.HTML(value=chat_html_wrapper({'internal': [], 'visible': []}, shared.settings['name1'], shared.settings['name2'], 'chat', 'cai-chat'))
-        shared.gradio['textbox'] = gr.Textbox(label='', placeholder='Send a message', elem_id='chat-input')
-        shared.gradio['show_controls'] = gr.Checkbox(value=shared.settings['show_controls'], label='Show controls (Ctrl+S)', elem_id='show-controls')
-        shared.gradio['typing-dots'] = gr.HTML(value='<div class="typing"><span></span><span class="dot1"></span><span class="dot2"></span></div>', label='typing', elem_id='typing-container')
-
         with gr.Row():
-            shared.gradio['Stop'] = gr.Button('Stop', elem_id='stop')
-            shared.gradio['Generate'] = gr.Button('Generate', elem_id='Generate', variant='primary')
-            shared.gradio['Continue'] = gr.Button('Continue')
+            with gr.Column():
+                shared.gradio['display'] = gr.HTML(value=chat_html_wrapper({'internal': [], 'visible': []}, shared.settings['name1'], shared.settings['name2'], 'chat', 'cai-chat'))
 
-        with gr.Row():
-            shared.gradio['Impersonate'] = gr.Button('Impersonate')
-            shared.gradio['Regenerate'] = gr.Button('Regenerate')
-            shared.gradio['Remove last'] = gr.Button('Remove last', elem_classes=['button_nowrap'])
+                with gr.Row():
+                    with gr.Column(scale=1):
+                        gr.HTML(value='<div class="hover-element" onclick="void(0)"><span style="width: 100px; display: block" id="hover-element-button">&#9776;</span><div class="hover-menu" id="hover-menu"></div>', elem_id='gr-hover')
 
-        with gr.Row():
-            shared.gradio['Copy last reply'] = gr.Button('Copy last reply')
-            shared.gradio['Replace last reply'] = gr.Button('Replace last reply')
-            shared.gradio['Send dummy message'] = gr.Button('Send dummy message')
-            shared.gradio['Send dummy reply'] = gr.Button('Send dummy reply')
+                    with gr.Column(scale=10):
+                        shared.gradio['textbox'] = gr.Textbox(label='', placeholder='Send a message', elem_id='chat-input', elem_classes=['add_scrollbar'])
+                        shared.gradio['show_controls'] = gr.Checkbox(value=shared.settings['show_controls'], label='Show controls (Ctrl+S)', elem_id='show-controls')
+                        shared.gradio['typing-dots'] = gr.HTML(value='<div class="typing"><span></span><span class="dot1"></span><span class="dot2"></span></div>', label='typing', elem_id='typing-container')
 
-        with gr.Row():
-            shared.gradio['Clear history'] = gr.Button('Clear history')
-            shared.gradio['Clear history-confirm'] = gr.Button('Confirm', variant='stop', visible=False)
-            shared.gradio['Clear history-cancel'] = gr.Button('Cancel', visible=False)
+                    with gr.Column(scale=1):
+                        with gr.Row():
+                            shared.gradio['Stop'] = gr.Button('Stop', elem_id='stop', visible=False)
+                            shared.gradio['Generate'] = gr.Button('Generate', elem_id='Generate', variant='primary')
 
-        with gr.Row():
-            shared.gradio['send-chat-to-default'] = gr.Button('Send to default')
-            shared.gradio['send-chat-to-notebook'] = gr.Button('Send to notebook')
+        # Hover menu buttons
+        shared.gradio['Regenerate'] = gr.Button('Regenerate (Ctrl + Enter)', elem_id='Regenerate')
+        shared.gradio['Continue'] = gr.Button('Continue (Alt + Enter)', elem_id='Continue')
+        shared.gradio['Remove last'] = gr.Button('Remove last reply (Ctrl + Shift + Backspace)', elem_id='Remove-last')
+        shared.gradio['Replace last reply'] = gr.Button('Replace last reply (Ctrl + Shift + L)', elem_id='Replace-last')
+        shared.gradio['Copy last reply'] = gr.Button('Copy last reply (Ctrl + Shift + K)', elem_id='Copy-last')
+        shared.gradio['Impersonate'] = gr.Button('Impersonate (Ctrl + Shift + M)', elem_id='Impersonate')
+        shared.gradio['Send dummy message'] = gr.Button('Send dummy message')
+        shared.gradio['Send dummy reply'] = gr.Button('Send dummy reply')
+        shared.gradio['Clear history'] = gr.Button('Clear history')
+        shared.gradio['Clear history-cancel'] = gr.Button('Cancel', visible=False)
+        shared.gradio['Clear history-confirm'] = gr.Button('Confirm', variant='stop', visible=False, elem_id='clear-history-confirm')
+        shared.gradio['send-chat-to-default'] = gr.Button('Send to default')
+        shared.gradio['send-chat-to-notebook'] = gr.Button('Send to notebook')
 
         with gr.Row():
             shared.gradio['start_with'] = gr.Textbox(label='Start reply with', placeholder='Sure thing!', value=shared.settings['start_with'])
@@ -88,8 +91,8 @@ def create_chat_settings_ui():
 
         shared.gradio['name1_instruct'] = gr.Textbox(value='', lines=2, label='User string')
         shared.gradio['name2_instruct'] = gr.Textbox(value='', lines=1, label='Bot string')
-        shared.gradio['context_instruct'] = gr.Textbox(value='', lines=4, label='Context')
-        shared.gradio['turn_template'] = gr.Textbox(value='', lines=1, label='Turn template', info='Used to precisely define the placement of spaces and new line characters in instruction prompts.')
+        shared.gradio['context_instruct'] = gr.Textbox(value='', lines=4, label='Context', elem_classes=['add_scrollbar'])
+        shared.gradio['turn_template'] = gr.Textbox(value='', lines=1, label='Turn template', info='Used to precisely define the placement of spaces and new line characters in instruction prompts.', elem_classes=['add_scrollbar'])
         with gr.Row():
             shared.gradio['send_instruction_to_default'] = gr.Button('Send to default', elem_classes=['small-button'])
             shared.gradio['send_instruction_to_notebook'] = gr.Button('Send to notebook', elem_classes=['small-button'])
@@ -165,7 +168,7 @@ def create_event_handlers():
     shared.gradio['Impersonate'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         lambda x: x, gradio('textbox'), gradio('Chat input'), show_progress=False).then(
-        chat.impersonate_wrapper, gradio(inputs), gradio('textbox'), show_progress=False).then(
+        chat.impersonate_wrapper, gradio(inputs), gradio('textbox', 'display'), show_progress=False).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         lambda: None, None, None, _js=f'() => {{{ui.audio_notification_js}}}')
 

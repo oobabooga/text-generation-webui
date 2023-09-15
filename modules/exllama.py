@@ -108,6 +108,11 @@ class ExllamaModel:
         else:
             self.generator.disallow_tokens(None)
 
+        if state['custom_token_bans']:
+            to_ban = [int(x) for x in state['custom_token_bans'].split(',')]
+            if len(to_ban) > 0:
+                self.generator.disallow_tokens(self.tokenizer, to_ban)
+
         # Case 1: no CFG
         if state['guidance_scale'] == 1:
             self.generator.end_beam_search()

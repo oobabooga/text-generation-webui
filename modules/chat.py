@@ -266,18 +266,21 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
 
 
 def impersonate_wrapper(text, state):
+
+    static_output = chat_html_wrapper(state['history'], state['name1'], state['name2'], state['mode'], state['chat_style'])
+
     if shared.model_name == 'None' or shared.model is None:
         logger.error("No model is loaded! Select one in the Model tab.")
-        yield ''
+        yield '', static_output
         return
 
     prompt = generate_chat_prompt('', state, impersonate=True)
     stopping_strings = get_stopping_strings(state)
 
-    yield text + '...'
+    yield text + '...', static_output
     reply = None
     for reply in generate_reply(prompt + text, state, stopping_strings=stopping_strings, is_chat=True):
-        yield (text + reply).lstrip(' ')
+        yield (text + reply).lstrip(' '), static_output
         if shared.stop_everything:
             return
 

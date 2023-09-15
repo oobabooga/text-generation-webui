@@ -91,9 +91,11 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
 
 .header_bar {
     background-color: #f7f7f7;
-    margin-bottom: 20px;
+    margin-bottom: 19px;
     display: inline !important;
     overflow-x: scroll;
+    margin-left: calc(-1 * var(--size-4));
+    margin-right: calc(-1 * var(--size-4));
 }
 
 .dark .header_bar {
@@ -106,11 +108,11 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
 }
 
 .textbox_default textarea {
-    height: calc(100dvh - 280px);
+    height: calc(100dvh - 271px);
 }
 
 .textbox_default_output textarea {
-    height: calc(100dvh - 190px);
+    height: calc(100dvh - 181px);
 }
 
 .textbox textarea {
@@ -141,11 +143,19 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
 
 @media screen and (max-width: 711px) {
     .textbox_default textarea {
-        height: calc(100dvh - 271px);
+        height: calc(100dvh - 259px);
     }
 
     div .default-token-counter {
-        top: calc( 0.5 * (100dvh - 245px) ) !important;
+        top: calc( 0.5 * (100dvh - 236px) ) !important;
+    }
+
+    .transparent-substring {
+        display: none;
+    }
+
+    .hover-menu {
+        min-width: 250px !important;
     }
 }
 
@@ -220,7 +230,7 @@ audio {
 /* Copied from https://github.com/AUTOMATIC1111/stable-diffusion-webui */
 .token-counter {
   position: absolute !important;
-  top: calc( 0.5 * (100dvh - 215px) ) !important;
+  top: calc( 0.5 * (100dvh - 218px) ) !important;
   right: 2px;
   z-index: 100;
   background: var(--input-background-fill) !important;
@@ -228,7 +238,7 @@ audio {
 }
 
 .default-token-counter {
-  top: calc( 0.5 * (100dvh - 255px) ) !important;
+  top: calc( 0.5 * (100dvh - 248px) ) !important;
 }
 
 .token-counter span {
@@ -277,34 +287,35 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     width: 100%;
 }
 
+#chat-tab button#Generate, #chat-tab button#stop {
+    width: 89.3438px !important;
+}
+
 #chat-tab button, #notebook-tab button, #default-tab button {
     min-width: 0 !important;
 }
 
 #chat-tab > :first-child, #extensions {
-    max-width: 800px;
+    max-width: 880px;
     margin-left: auto;
     margin-right: auto;
 }
 
 @media screen and (max-width: 688px) {
     #chat-tab {
-        padding: 0px;
+        padding-left: 0px;
+        padding-right: 0px;
     }
 
     .chat-parent {
-        height: calc(100dvh - 262px) !important;
-    }
-
-    .bigchat {
-        height: calc(100dvh - 180px) !important;
+        height: calc(100dvh - 179px) !important;
     }
 }
 
 .chat {
     margin-left: auto;
     margin-right: auto;
-    max-width: 800px;
+    max-width: 880px;
     height: 100%;
     overflow-y: auto;
     padding-right: 15px;
@@ -312,16 +323,11 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     flex-direction: column;
     word-break: break-word;
     overflow-wrap: anywhere;
-    padding-top: 6px;
 }
 
 .chat-parent {
-    height: calc(100dvh - 272px);
+    height: calc(100dvh - 181px);
     overflow: auto !important;
-}
-
-.bigchat {
-    height: calc(100dvh - 200px);
 }
 
 .chat > .messages {
@@ -367,7 +373,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 #chat-input {
     padding: 0;
     padding-top: 18px;
-    background: var(--background-fill-primary);
+    background: transparent;
     border: none;
 }
 
@@ -410,8 +416,16 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 
 #show-controls {
     position: absolute;
-    background-color: transparent;
-    left: calc(100% - 180px);
+    height: 100%;
+    background-color: var(--background-fill-primary);
+    border: 0px;
+    border-radius: 0px;
+}
+
+#show-controls label {
+    z-index: 1000;
+    position: absolute;
+    left: calc(100% - 168px);
 }
 
 #typing-container {
@@ -467,4 +481,46 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 
 #chat-tab .generating {
   display: none !important;
+}
+
+.hover-element {
+  position: relative;
+  font-size: 24px;
+}
+
+.hover-menu {
+  display: none;
+  position: absolute;
+  bottom: 80%;
+  left: 0;
+  background-color: var(--background-fill-secondary);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  z-index: 10000;
+  min-width: 330px;
+  flex-direction: column;
+}
+
+.hover-menu button {
+  width: 100%;
+  background: transparent !important;
+  border-radius: 0px !important;
+  justify-content: left;
+  margin: 0 !important;
+  height: 36px;
+}
+
+.hover-menu button:not(#clear-history-confirm) {
+  border-bottom: 0 !important;
+}
+
+.hover-menu button:not(#clear-history-confirm):last-child {
+  border-bottom: var(--button-border-width) solid var(--button-secondary-border-color) !important;
+}
+
+.hover-menu button:hover {
+  background: var(--button-secondary-background-fill-hover) !important;
+}
+
+.transparent-substring {
+  opacity: 0.333;
 }
