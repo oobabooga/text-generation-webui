@@ -51,9 +51,9 @@
 
 .dark .message-body p em {
     color: rgb(138, 138, 138) !important;
-    font-weight: 500;
 }
 
 .message-body p em {
     color: rgb(110, 110, 110) !important;
+    font-weight: 500;
 }
