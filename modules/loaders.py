@@ -1,9 +1,11 @@
 import functools
 from collections import OrderedDict
+import sys
 
 import gradio as gr
 
 from modules import shared
+
 
 loaders_and_params = OrderedDict({
     'Transformers': [
@@ -308,15 +310,26 @@ loaders_model_types = {
     ],
 }
 
-
-@functools.cache
-def list_all_samplers():
-    all_samplers = set()
-    for k in loaders_samplers:
-        for sampler in loaders_samplers[k]:
-            all_samplers.add(sampler)
-
-    return sorted(all_samplers)
+# use appropriate functools decorator according to python version
+if sys.version_info < (3, 9, 0):
+    @functools.lru_cache(maxsize=None)
+    def list_all_samplers():
+        all_samplers = set()
+        for k in loaders_samplers:
+            for sampler in loaders_samplers[k]:
+                all_samplers.add(sampler)
+    
+        return sorted(all_samplers)
+    
+else:
+    @functools.cache
+    def list_all_samplers():
+        all_samplers = set()
+        for k in loaders_samplers:
+            for sampler in loaders_samplers[k]:
+                all_samplers.add(sampler)
+    
+        return sorted(all_samplers)
 
 
 def blacklist_samplers(loader):
@@ -337,20 +350,36 @@ def get_model_types(loader):
 def get_gpu_memory_keys():
     return [k for k in shared.gradio if k.startswith('gpu_memory')]
 
+# use appropriate functools decorator according to python version
+if sys.version_info < (3, 9, 0):
+    @functools.lru_cache(maxsize=None)
+    def get_all_params():
+        all_params = set()
+        for k in loaders_and_params:
+            for el in loaders_and_params[k]:
+                all_params.add(el)
 
-@functools.cache
-def get_all_params():
-    all_params = set()
-    for k in loaders_and_params:
-        for el in loaders_and_params[k]:
-            all_params.add(el)
+        if 'gpu_memory' in all_params:
+            all_params.remove('gpu_memory')
+            for k in get_gpu_memory_keys():
+                all_params.add(k)
 
-    if 'gpu_memory' in all_params:
-        all_params.remove('gpu_memory')
-        for k in get_gpu_memory_keys():
-            all_params.add(k)
+        return sorted(all_params)
 
-    return sorted(all_params)
+else:
+    @functools.cache
+    def get_all_params():
+        all_params = set()
+        for k in loaders_and_params:
+            for el in loaders_and_params[k]:
+                all_params.add(el)
+
+        if 'gpu_memory' in all_params:
+            all_params.remove('gpu_memory')
+            for k in get_gpu_memory_keys():
+                all_params.add(k)
+
+        return sorted(all_params)
 
 
 def make_loader_params_visible(loader):

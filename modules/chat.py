@@ -4,6 +4,7 @@ import functools
 import html
 import json
 import re
+import sys
 from pathlib import Path
 
 import gradio as gr
@@ -520,12 +521,18 @@ def load_character(character, name1, name2, instruct=False):
 
     return name1, name2, picture, greeting, context, turn_template.replace("\n", r"\n")
 
+# use appropriate functools decorator according to python version
+if sys.version_info < (3, 9, 0):
+    @functools.lru_cache(maxsize=None)
+    def load_character_memoized(character, name1, name2, instruct=False):
+        return load_character(character, name1, name2, instruct=instruct)
 
-@functools.cache
-def load_character_memoized(character, name1, name2, instruct=False):
-    return load_character(character, name1, name2, instruct=instruct)
+else:
+    @functools.cache
+    def load_character_memoized(character, name1, name2, instruct=False):
+        return load_character(character, name1, name2, instruct=instruct)
 
-
+   
 def upload_character(file, img, tavern=False):
     decoded_file = file if type(file) == str else file.decode('utf-8')
     try:

@@ -1,5 +1,6 @@
 import functools
 from pathlib import Path
+import sys
 
 import yaml
 
@@ -47,10 +48,15 @@ def load_preset(name):
     generate_params['temperature'] = min(1.99, generate_params['temperature'])
     return generate_params
 
-
-@functools.cache
-def load_preset_memoized(name):
-    return load_preset(name)
+# use appropriate functools decorator according to python version
+if sys.version_info < (3, 9, 0):
+    @functools.lru_cache(maxsize=None)
+    def load_preset_memoized(name):
+        return load_preset(name)
+else:
+    @functools.cache
+    def load_preset_memoized(name):
+        return load_preset(name)
 
 
 def load_preset_for_ui(name, state):
