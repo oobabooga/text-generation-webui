@@ -504,6 +504,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
   border-radius: 0px !important;
   justify-content: left;
   margin: 0 !important;
+  height: 36px;
 }
 
 .hover-menu button:not(#clear-history-confirm) {
