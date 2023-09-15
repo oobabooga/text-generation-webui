@@ -421,12 +421,9 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 #show-controls label {
+    z-index: 1000;
     position: absolute;
     left: calc(100% - 179px);
-}
-
-#show-controls input {
-    z-index: 1000;
 }
 
 #typing-container {
