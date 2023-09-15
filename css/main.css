@@ -147,7 +147,7 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
     }
 
     div .default-token-counter {
-        top: calc( 0.5 * (100dvh - 245px) ) !important;
+        top: calc( 0.5 * (100dvh - 238px) ) !important;
     }
 
     .transparent-substring {
@@ -230,7 +230,7 @@ audio {
 /* Copied from https://github.com/AUTOMATIC1111/stable-diffusion-webui */
 .token-counter {
   position: absolute !important;
-  top: calc( 0.5 * (100dvh - 215px) ) !important;
+  top: calc( 0.5 * (100dvh - 218px) ) !important;
   right: 2px;
   z-index: 100;
   background: var(--input-background-fill) !important;
@@ -238,7 +238,7 @@ audio {
 }
 
 .default-token-counter {
-  top: calc( 0.5 * (100dvh - 255px) ) !important;
+  top: calc( 0.5 * (100dvh - 257px) ) !important;
 }
 
 .token-counter span {
