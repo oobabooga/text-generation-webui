@@ -25,6 +25,16 @@ chat_styles = {}
 for k in get_available_chat_styles():
     chat_styles[k] = open(Path(f'css/chat_style-{k}.css'), 'r').read()
 
+# Handle styles that derive from other styles
+for k in chat_styles:
+    lines = chat_styles[k].split('\n')
+    input_string = lines[0]
+    match = re.search(r'chat_style-([a-z\-]*)\.css', input_string)
+
+    if match:
+        style = match.group(1)
+        chat_styles[k] = chat_styles.get(style, '') + '\n\n' + '\n'.join(lines[1:])
+
 
 def fix_newlines(string):
     string = string.replace('\n', '\n\n')
