@@ -94,6 +94,8 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
     margin-bottom: 19px;
     display: inline !important;
     overflow-x: scroll;
+    margin-left: calc(-1 * var(--size-4));
+    margin-right: calc(-1 * var(--size-4));
 }
 
 .dark .header_bar {
