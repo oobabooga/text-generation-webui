@@ -147,6 +147,14 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
     div .default-token-counter {
         top: calc( 0.5 * (100dvh - 245px) ) !important;
     }
+    
+    .transparent-substring {
+        display: none;
+    }
+
+    .hover-menu {
+        min-width: 250px !important;
+    }
 }
 
 /* Hide the gradio footer*/
@@ -294,7 +302,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     }
 
     .chat-parent {
-        height: calc(100dvh - 171px);
+        height: calc(100dvh - 179px);
     }
     
     .chat-parent.old-ui {
@@ -375,7 +383,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 #chat-input {
     padding: 0;
     padding-top: 18px;
-    background: var(--background-fill-primary);
+    background: transparent;
     border: none;
 }
 
@@ -490,8 +498,9 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
   bottom: 80%;
   left: 0;
   background-color: var(--background-fill-secondary);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
   z-index: 10000;
-  min-width: 300px;
+  min-width: 330px;
   flex-direction: column;
 }
 
@@ -500,6 +509,15 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
   background: transparent !important;
   border-radius: 0px !important;
   justify-content: space-between;
+  margin: 0 !important;
+}
+
+.hover-menu button:not(#clear-history-confirm) {
+  border-bottom: 0 !important;
+}
+
+.hover-menu button:not(#clear-history-confirm):last-child {
+  border-bottom: var(--button-border-width) solid var(--button-secondary-border-color) !important;
 }
 
 .hover-menu button:hover {
@@ -520,6 +538,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
   display: flex;
   flex-direction: column-reverse;
   padding-bottom: 3px;
+  flex: 0 0 auto;
 }
 
 #chat-input-container {
@@ -529,6 +548,11 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 #chat-input-container > .form, #chat-tab > div > .form {
   background: transparent;
   border: none;
+}
+
+#chat-row {
+  position: absolute;
+  bottom: 0px;
 }
 
 .transparent-substring {

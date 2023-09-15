@@ -33,7 +33,7 @@
 .text {
     /*Change this to move the message box further left or right depending on the size of your profile pic*/
     padding-left: 90px;
-    text-shadow: 2px 2px 2px rgb(0, 0, 0);
+    text-shadow: 2px 2px 2px rgb(0, 0, 0, 0.4);
 }
 
 .text p {
@@ -88,14 +88,12 @@
     margin-bottom: 0 !important;
     font-size: 18px !important;
     line-height: 1.428571429 !important;
-}
-
-.dark .message-body p em {
-    color: rgb(138, 138, 138) !important;
+    color: rgb(243, 244, 246) !important;
+    text-shadow: 2px 2px 2px rgb(0, 0, 0);
 }
 
 .message-body p em {
-    color: rgb(110, 110, 110) !important;
+    color: rgb(138, 138, 138) !important;
 }
 
 @media screen and (max-width: 688px) {
