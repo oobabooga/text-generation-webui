@@ -265,6 +265,7 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
 
     if state['ban_eos_token']:
         generate_params['suppress_tokens'] = [shared.tokenizer.eos_token_id]
+
     if state['custom_token_bans']:
         to_ban = [int(x) for x in state['custom_token_bans'].split(',')]
         if len(to_ban) > 0:

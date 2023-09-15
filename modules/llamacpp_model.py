@@ -34,6 +34,7 @@ def ban_eos_logits_processor(eos_token, input_ids, logits):
 def custom_token_ban_logits_processor(token_ids, input_ids, logits):
     for token_id in token_ids:
         logits[token_id] = -float('inf')
+
     return logits
 
 
@@ -113,6 +114,7 @@ class LlamaCppModel:
         logit_processors = LogitsProcessorList()
         if state['ban_eos_token']:
             logit_processors.append(partial(ban_eos_logits_processor, self.model.tokenizer.eos_token_id))
+
         if state['custom_token_bans']:
             to_ban = [int(x) for x in state['custom_token_bans'].split(',')]
             if len(to_ban) > 0:
