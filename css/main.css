@@ -414,14 +414,16 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 
 #show-controls {
     position: absolute;
-    left: calc(100% - 179px);
     height: 100%;
     background-color: var(--background-fill-primary);
     border: 0px;
+    border-radius: 0px;
 }
 
-#show-controls input {
+#show-controls label {
     z-index: 1000;
+    position: absolute;
+    left: calc(100% - 168px);
 }
 
 #typing-container {
