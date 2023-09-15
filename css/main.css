@@ -108,11 +108,11 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
 }
 
 .textbox_default textarea {
-    height: calc(100dvh - 280px);
+    height: calc(100dvh - 271px);
 }
 
 .textbox_default_output textarea {
-    height: calc(100dvh - 190px);
+    height: calc(100dvh - 181px);
 }
 
 .textbox textarea {
@@ -143,11 +143,11 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
 
 @media screen and (max-width: 711px) {
     .textbox_default textarea {
-        height: calc(100dvh - 261px);
+        height: calc(100dvh - 259px);
     }
 
     div .default-token-counter {
-        top: calc( 0.5 * (100dvh - 238px) ) !important;
+        top: calc( 0.5 * (100dvh - 236px) ) !important;
     }
 
     .transparent-substring {
@@ -238,7 +238,7 @@ audio {
 }
 
 .default-token-counter {
-  top: calc( 0.5 * (100dvh - 257px) ) !important;
+  top: calc( 0.5 * (100dvh - 248px) ) !important;
 }
 
 .token-counter span {
