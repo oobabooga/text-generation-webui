@@ -214,28 +214,6 @@ for(i = 0; i < textareaElements.length; i++) {
 }
 
 //------------------------------------------------
-// Improve the looks of the chat input field
-//------------------------------------------------
-document.getElementById('chat-input').parentNode.style.background = 'transparent';
-document.getElementById('chat-input').parentNode.style.border = 'none';
-document.getElementById('chat-input').parentElement.parentElement.style.minWidth = 0;
-
-document.getElementById('stop').parentElement.parentElement.style.minWidth = 0;
-document.getElementById('stop').parentElement.parentElement.style.display = 'flex';
-document.getElementById('stop').parentElement.parentElement.style.flexDirection = 'column-reverse';
-document.getElementById('stop').parentElement.parentElement.style.paddingBottom = '3px';
-document.getElementById('stop').parentElement.parentElement.parentElement.style.paddingBottom = '20px';
-
-document.getElementById('stop').parentElement.parentElement.style.flex = '0 0 auto';
-
-document.getElementById('gr-hover').parentElement.style.minWidth = 0;
-document.getElementById('gr-hover').parentElement.style.display = 'flex';
-document.getElementById('gr-hover').parentElement.style.flexDirection = 'column-reverse';
-document.getElementById('gr-hover').parentElement.style.flex = '0';
-document.getElementById('gr-hover').parentElement.style.paddingRight = '20px';
-document.getElementById('gr-hover').parentElement.style.paddingBottom = '3px';
-
-//------------------------------------------------
 // Remove some backgrounds
 //------------------------------------------------
 const noBackgroundelements = document.querySelectorAll('.no-background');
@@ -261,7 +239,7 @@ function hideMenu() {
     menu.style.display = 'none'; // Hide the menu
 }
 
-for (let i = 14; i >= 2; i--) {
+for (let i = 14; i >= 5; i--) {
   const thisButton = buttonsInChat[i];
   menu.appendChild(thisButton);
 
@@ -277,7 +255,7 @@ for (let i = 14; i >= 2; i--) {
   if (matches && matches.length > 1) {
     // Apply the transparent-substring class to the matched substring
     const substring = matches[1];
-    const newText = buttonText.replace(substring, `&nbsp;<span class="transparent-substring">${substring}</span>`);
+    const newText = buttonText.replace(substring, `&nbsp;<span class="transparent-substring">${substring.slice(1, -1)}</span>`);
     thisButton.innerHTML = newText;
   }
 

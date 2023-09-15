@@ -306,7 +306,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     }
 
     .chat-parent {
-        height: calc(100dvh - 179px) !important;
+        height: calc(100dvh - 238px) !important;
     }
 }
 
@@ -324,7 +324,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 .chat-parent {
-    height: calc(100dvh - 181px);
+    height: calc(100dvh - 240px);
     overflow: auto !important;
 }
 
@@ -500,7 +500,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
   width: 100%;
   background: transparent !important;
   border-radius: 0px !important;
-  justify-content: left;
+  justify-content: space-between;
   margin: 0 !important;
 }
 
@@ -514,6 +514,31 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 
 .hover-menu button:hover {
   background: var(--button-secondary-background-fill-hover) !important;
+}
+
+#gr-hover-container {
+  min-width: 0 !important;
+  display: flex;
+  flex-direction: column-reverse;
+  padding-right: 20px;
+  padding-bottom: 3px;
+  flex-grow: 0 !important;
+}
+
+#generate-stop-container {
+  min-width: 0 !important;
+  display: flex;
+  flex-direction: column-reverse;
+  padding-bottom: 3px;
+}
+
+#chat-input-container {
+  min-width: 0 !important;
+}
+
+#chat-input-container > .form {
+  background: transparent;
+  border: none;
 }
 
 .transparent-substring {

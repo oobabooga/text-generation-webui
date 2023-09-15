@@ -24,25 +24,26 @@ def create_ui():
         with gr.Row():
             with gr.Column():
                 shared.gradio['display'] = gr.HTML(value=chat_html_wrapper({'internal': [], 'visible': []}, shared.settings['name1'], shared.settings['name2'], 'chat', 'cai-chat'))
-
                 with gr.Row():
-                    with gr.Column(scale=1):
+                    with gr.Column(scale=1, elem_id='gr-hover-container'):
                         gr.HTML(value='<div class="hover-element" onclick="void(0)"><span style="width: 100px; display: block" id="hover-element-button">&#9776;</span><div class="hover-menu" id="hover-menu"></div>', elem_id='gr-hover')
 
-                    with gr.Column(scale=10):
+                    with gr.Column(scale=10, elem_id='chat-input-container'):
                         shared.gradio['textbox'] = gr.Textbox(label='', placeholder='Send a message', elem_id='chat-input', elem_classes=['add_scrollbar'])
                         shared.gradio['show_controls'] = gr.Checkbox(value=shared.settings['show_controls'], label='Show controls (Ctrl+S)', elem_id='show-controls')
                         shared.gradio['typing-dots'] = gr.HTML(value='<div class="typing"><span></span><span class="dot1"></span><span class="dot2"></span></div>', label='typing', elem_id='typing-container')
 
-                    with gr.Column(scale=1):
+                    with gr.Column(scale=1, elem_id='generate-stop-container'):
                         with gr.Row():
                             shared.gradio['Stop'] = gr.Button('Stop', elem_id='stop', visible=False)
                             shared.gradio['Generate'] = gr.Button('Generate', elem_id='Generate', variant='primary')
 
+        with gr.Row():
+            shared.gradio['Regenerate'] = gr.Button('Regenerate', elem_id='Regenerate')
+            shared.gradio['Continue'] = gr.Button('Continue', elem_id='Continue')
+            shared.gradio['Remove last'] = gr.Button('Remove last reply', elem_id='Remove-last')
+
         # Hover menu buttons
-        shared.gradio['Regenerate'] = gr.Button('Regenerate (Ctrl + Enter)', elem_id='Regenerate')
-        shared.gradio['Continue'] = gr.Button('Continue (Alt + Enter)', elem_id='Continue')
-        shared.gradio['Remove last'] = gr.Button('Remove last reply (Ctrl + Shift + Backspace)', elem_id='Remove-last')
         shared.gradio['Replace last reply'] = gr.Button('Replace last reply (Ctrl + Shift + L)', elem_id='Replace-last')
         shared.gradio['Copy last reply'] = gr.Button('Copy last reply (Ctrl + Shift + K)', elem_id='Copy-last')
         shared.gradio['Impersonate'] = gr.Button('Impersonate (Ctrl + Shift + M)', elem_id='Impersonate')
