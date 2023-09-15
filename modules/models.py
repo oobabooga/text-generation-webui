@@ -251,7 +251,7 @@ def llamacpp_HF_loader(model_name):
 
     for fname in [model_name, "oobabooga_llama-tokenizer", "llama-tokenizer"]:
         path = Path(f'{shared.args.model_dir}/{fname}')
-        if (path / 'tokenizer_config.json').exists():
+        if all((path / file).exists() for file in ['tokenizer_config.json', 'special_tokens_map.json', 'tokenizer.model']):
             logger.info(f'Using tokenizer from: {path}')
             break
     else:
