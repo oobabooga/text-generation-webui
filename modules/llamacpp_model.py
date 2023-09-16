@@ -1,6 +1,7 @@
 import re
 from functools import partial
 
+import numpy as np
 import torch
 
 from modules import RoPE, shared
@@ -99,6 +100,12 @@ class LlamaCppModel:
 
     def decode(self, tokens):
         return self.model.detokenize(tokens)
+
+    def get_logits(self, tokens):
+        self.model.eval(tokens)
+        logits = self.model._scores
+        logits = np.expand_dims(logits, 0)  # batch dim is expected
+        return torch.tensor(logits, dtype=torch.float32)
 
     def generate(self, prompt, state, callback=None):
 
