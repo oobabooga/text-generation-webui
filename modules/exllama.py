@@ -154,7 +154,12 @@ class ExllamaModel:
             alpha = state['guidance_scale']
             prompts = [prompt, state['negative_prompt'] or '']
 
-            ids, mask = self.tokenizer.encode(prompts, return_mask=True, max_seq_len=self.model.config.max_seq_len)
+            ids, mask = self.tokenizer.encode(
+                prompts,
+                return_mask=True,
+                max_seq_len=self.model.config.max_seq_len,
+                add_bos=state['add_bos_token']
+            )
             if state['auto_max_new_tokens']:
                 max_new_tokens = state['truncation_length'] - ids[0].shape[-1]
             else:
