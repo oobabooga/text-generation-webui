@@ -112,7 +112,7 @@ class ExllamaModel:
         if state['custom_token_bans']:
             to_ban = [int(x) for x in state['custom_token_bans'].split(',')]
             if len(to_ban) > 0:
-                self.generator.disallow_tokens(self.tokenizer, to_ban)
+                self.generator.disallow_tokens(to_ban)
 
         # Case 1: no CFG
         if state['guidance_scale'] == 1:
@@ -199,7 +199,12 @@ class ExllamaModel:
         return output
 
     def encode(self, string, **kwargs):
-        return self.tokenizer.encode(string, max_seq_len=self.model.config.max_seq_len)
+        return self.tokenizer.encode(string, max_seq_len=self.model.config.max_seq_len, add_bos=True)
 
-    def decode(self, string, **kwargs):
-        return self.tokenizer.decode(string)[0]
+    def decode(self, ids, **kwargs):
+        if isinstance(ids, int):
+            ids = torch.tensor([[ids]])
+        elif isinstance(ids, torch.Tensor) and ids.numel() == 1:
+            ids = ids.view(1, -1)
+
+        return self.tokenizer.decode(ids)[0]

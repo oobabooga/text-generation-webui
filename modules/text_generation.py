@@ -146,7 +146,7 @@ def get_encoded_length(prompt):
 
 def get_token_ids(prompt):
     tokens = encode(prompt)[0]
-    decoded_tokens = [shared.tokenizer.decode(i) for i in tokens]
+    decoded_tokens = [shared.tokenizer.decode(torch.tensor([i])) for i in tokens]
 
     output = ''
     for row in list(zip(tokens, decoded_tokens)):
