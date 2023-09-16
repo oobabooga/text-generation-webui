@@ -524,3 +524,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 .transparent-substring {
   opacity: 0.333;
 }
+
+#chat-buttons:not(.old-ui) {
+    display: none !important;
+}
