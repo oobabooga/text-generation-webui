@@ -227,6 +227,7 @@ Optionally, you can use the following command-line flags:
 | `--settings SETTINGS_FILE`                 | Load the default interface settings from this yaml file. See `settings-template.yaml` for an example. If you create a file called `settings.yaml`, this file will be loaded by default without the need to use the `--settings` flag. |
 | `--extensions EXTENSIONS [EXTENSIONS ...]` | The list of extensions to load. If you want to load more than one extension, write the names separated by spaces. |
 | `--verbose`                                | Print the prompts to the terminal. |
+| `--chat-buttons`                           | Show buttons on chat tab instead of hover menu. |
 
 #### Model loader
 
@@ -356,7 +357,6 @@ Optionally, you can use the following command-line flags:
 | `--gradio-auth-path GRADIO_AUTH_PATH` | Set the gradio authentication file path. The file should contain one or more user:password pairs in this format: "u1:p1,u2:p2,u3:p3" |
 | `--ssl-keyfile SSL_KEYFILE`           | The path to the SSL certificate key file. |
 | `--ssl-certfile SSL_CERTFILE`         | The path to the SSL certificate cert file. |
-| `--chat-buttons`                      | Show buttons on chat tab instead of hover menu. |
 
 #### API
 
