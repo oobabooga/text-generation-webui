@@ -120,7 +120,7 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
 }
 
 .textbox_logits textarea {
-    height: calc(100dvh - 241px);
+    height: calc(100dvh - 232px);
 }
 
 .textbox_logits_notebook textarea {
@@ -131,8 +131,7 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
 .textbox_default_output textarea,
 .textbox_logits textarea,
 .textbox_logits_notebook textarea,
-.textbox textarea
-{
+.textbox textarea {
     font-size: 16px !important;
     color: #46464A !important;
 }
