@@ -282,6 +282,8 @@ if (buttonsInChat.length > 0) {
             thisButton.innerHTML = newText;
         }
     }
+} else {
+    document.getElementById('gr-hover').parentElement.style.display = 'none';
 }
 
 function isMouseOverButtonOrMenu() {
