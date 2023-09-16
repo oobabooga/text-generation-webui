@@ -20,6 +20,10 @@ from extensions.openai.tokens import token_count, token_decode, token_encode
 from extensions.openai.utils import debug_msg
 from modules import shared
 
+import cgi
+import speech_recognition as sr
+from pydub import AudioSegment
+
 params = {
     'port': int(os.environ.get('OPENEDAI_PORT')) if 'OPENEDAI_PORT' in os.environ else 5001,
 }
@@ -138,6 +142,42 @@ class Handler(BaseHTTPRequestHandler):
 
     @openai_error_handler
     def do_POST(self):
+
+        if '/v1/audio/transcriptions' in self.path:
+            r = sr.Recognizer()
+
+            # Parse the form data
+            form = cgi.FieldStorage(
+                fp=self.rfile,
+                headers=self.headers,
+                environ={'REQUEST_METHOD': 'POST', 'CONTENT_TYPE': self.headers['Content-Type']}
+            )
+            
+            audio_file = form['file'].file
+            audio_data = AudioSegment.from_file(audio_file)
+            
+            # Convert AudioSegment to raw data
+            raw_data = audio_data.raw_data
+            
+            # Create AudioData object
+            audio_data = sr.AudioData(raw_data, audio_data.frame_rate, audio_data.sample_width)
+            whipser_language = form.getvalue('language', None)
+            whipser_model = form.getvalue('model', 'tiny')  # Use the model from the form data if it exists, otherwise default to tiny
+
+            transcription = {"text": ""}
+            
+            try:
+                transcription["text"] = r.recognize_whisper(audio_data, language=whipser_language, model=whipser_model)
+            except sr.UnknownValueError:
+                print("Whisper could not understand audio")
+                transcription["text"] = "Whisper could not understand audio UnknownValueError"
+            except sr.RequestError as e:
+                print("Could not request results from Whisper", e)
+                transcription["text"] = "Whisper could not understand audio RequestError"
+            
+            self.return_json(transcription, no_debug=True)
+            return   
+            
         debug_msg(self.requestline)
         debug_msg(self.headers)
 
