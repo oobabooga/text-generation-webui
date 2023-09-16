@@ -250,7 +250,6 @@ for(i = 0; i < noBackgroundelements.length; i++) {
 // https://github.com/SillyTavern/SillyTavern/blob/6c8bd06308c69d51e2eb174541792a870a83d2d6/public/script.js
 //------------------------------------------------
 var buttonsInChat = document.querySelectorAll("#chat-tab #chat-buttons:not(.old-ui) button");
-console.log(buttonsInChat);
 var button = document.getElementById('hover-element-button');
 var menu = document.getElementById('hover-menu');
 
