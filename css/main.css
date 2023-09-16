@@ -515,7 +515,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
   width: 100%;
   background: transparent !important;
   border-radius: 0px !important;
-  justify-content: left;
+  justify-content: space-between;
   margin: 0 !important;
   height: 36px;
 }
@@ -538,4 +538,29 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 
 #chat-buttons:not(.old-ui) {
     display: none !important;
+}
+
+#gr-hover-container {
+  min-width: 0 !important;
+  display: flex;
+  flex-direction: column-reverse;
+  padding-right: 20px;
+  padding-bottom: 3px;
+  flex-grow: 0 !important;
+}
+
+#generate-stop-container {
+  min-width: 0 !important;
+  display: flex;
+  flex-direction: column-reverse;
+  padding-bottom: 3px;
+}
+
+#chat-input-container {
+  min-width: 0 !important;
+}
+
+#chat-input-container > .form {
+  background: transparent;
+  border: none;
 }
