@@ -192,3 +192,8 @@ class ExllamaModel:
 
     def decode(self, string, **kwargs):
         return self.tokenizer.decode(string)[0]
+
+    def get_logits(self, token_ids, **kwargs):
+        self.cache.current_seq_len = 0
+        self.model.forward(token_ids[:, :-1], self.cache, input_mask=None, preprocess_only=True)
+        return self.model.forward(token_ids[:, -1:], self.cache, **kwargs).float().cpu()
