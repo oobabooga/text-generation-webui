@@ -334,7 +334,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 .chat-parent.old-ui {
-    height: calc(100dvh - 290px);
+    height: calc(100dvh - 270px);
 }
 
 .bigchat {

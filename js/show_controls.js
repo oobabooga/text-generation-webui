@@ -10,7 +10,7 @@ function toggle_controls(value) {
 
         chatParent.classList.remove("bigchat");
         document.getElementById('stop').parentElement.parentElement.parentElement.style.paddingBottom = isOld ? '0px' : '20px';
-        document.getElementById('show-controls').parentNode.parentNode.style.paddingBottom = '115px';
+        document.getElementById('show-controls').parentNode.parentNode.style.paddingBottom = isOld ? '95px' : '115px';
     } else {
         belowChatInput.forEach(element => {
           element.style.display = "none";
