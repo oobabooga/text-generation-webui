@@ -214,6 +214,12 @@ for(i = 0; i < textareaElements.length; i++) {
 }
 
 //------------------------------------------------
+// Improve the looks of the chat input field
+//------------------------------------------------
+let isOld = document.querySelectorAll('.old-ui').length > 0;
+document.getElementById('stop').parentElement.parentElement.parentElement.style.paddingBottom = isOld ? '0px' : '20px';
+
+//------------------------------------------------
 // Remove some backgrounds
 //------------------------------------------------
 const noBackgroundelements = document.querySelectorAll('.no-background');
