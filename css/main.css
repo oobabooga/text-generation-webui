@@ -330,6 +330,14 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     overflow: auto !important;
 }
 
+.chat-parent.old-ui {
+    height: calc(100dvh - 290px);
+}
+
+.bigchat {
+    height: calc(100dvh - 181px) !important;
+}
+
 .chat > .messages {
     display: flex;
     flex-direction: column;

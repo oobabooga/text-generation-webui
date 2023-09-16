@@ -23,7 +23,7 @@ def create_ui():
     with gr.Tab('Chat', elem_id='chat-tab'):
         with gr.Row():
             with gr.Column():
-                shared.gradio['display'] = gr.HTML(value=chat_html_wrapper({'internal': [], 'visible': []}, shared.settings['name1'], shared.settings['name2'], 'chat', 'cai-chat'))
+                shared.gradio['display'] = gr.HTML(value=chat_html_wrapper({'internal': [], 'visible': []}, shared.settings['name1'], shared.settings['name2'], 'chat', 'cai-chat'), elem_classes=("old-ui" if shared.args.old_chat_ui else None))
 
                 with gr.Row():
                     with gr.Column(scale=1):
