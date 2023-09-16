@@ -22,6 +22,7 @@ venv/
 *.bak
 *.ipynb
 *.log
+.env
 
 settings.json
 settings.yaml

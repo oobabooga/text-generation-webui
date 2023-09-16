@@ -28,6 +28,18 @@ For example:
 SD_WEBUI_URL=http://127.0.0.1:7861
 ```
 
+
+## Configuration
+
+In the root folder of the repository, copy the example environment into `.env`
+
+```
+cp .env.example .env
+```
+
+Edit the `.env` file to change the default embedding device, embedding model and port.
+
+
 ## Quick start
 
 1. Install the requirements.txt (pip)
