@@ -23,7 +23,7 @@ def create_ui():
     with gr.Tab('Chat', elem_id='chat-tab'):
         with gr.Row():
             with gr.Column():
-                shared.gradio['display'] = gr.HTML(value=chat_html_wrapper({'internal': [], 'visible': []}, shared.settings['name1'], shared.settings['name2'], 'chat', 'cai-chat'), elem_classes=("old-ui" if shared.args.old_chat_ui else None))
+                shared.gradio['display'] = gr.HTML(value=chat_html_wrapper({'internal': [], 'visible': []}, shared.settings['name1'], shared.settings['name2'], 'chat', 'cai-chat'), elem_classes=("old-ui" if shared.args.chat_tab_buttons else None))
 
                 with gr.Row():
                     with gr.Column(scale=1):
@@ -40,7 +40,7 @@ def create_ui():
                             shared.gradio['Generate'] = gr.Button('Generate', elem_id='Generate', variant='primary')
 
         # Hover menu buttons
-        with gr.Column(elem_id='chat-buttons', elem_classes=("old-ui" if shared.args.old_chat_ui else None)):
+        with gr.Column(elem_id='chat-buttons', elem_classes=("old-ui" if shared.args.chat_tab_buttons else None)):
             with gr.Row():
                 shared.gradio['Regenerate'] = gr.Button('Regenerate (Ctrl + Enter)', elem_id='Regenerate')
                 shared.gradio['Continue'] = gr.Button('Continue (Alt + Enter)', elem_id='Continue')
