@@ -4,6 +4,7 @@ from modules import logits, shared, ui, utils
 from modules.prompts import count_tokens, load_prompt
 from modules.text_generation import (
     generate_reply_wrapper,
+    get_token_ids,
     stop_everything_event
 )
 from modules.utils import gradio
@@ -54,6 +55,10 @@ def create_ui():
                         shared.gradio['logits-default'] = gr.Textbox(lines=23, label='Output', elem_classes=['textbox_logits', 'add_scrollbar'])
                         shared.gradio['logits-default-previous'] = gr.Textbox(lines=23, label='Previous output', elem_classes=['textbox_logits', 'add_scrollbar'])
 
+                with gr.Tab('Tokens'):
+                    shared.gradio['get_tokens-default'] = gr.Button('Get token IDs for the input')
+                    shared.gradio['tokens-default'] = gr.Textbox(lines=23, label='Tokens', elem_classes=['textbox_logits', 'add_scrollbar', 'monospace'])
+
 
 def create_event_handlers():
     shared.gradio['Generate-default'].click(
@@ -94,3 +99,5 @@ def create_event_handlers():
     shared.gradio['get_logits-default'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         logits.get_next_logits, gradio('textbox-default', 'interface_state', 'use_samplers-default', 'logits-default'), gradio('logits-default', 'logits-default-previous'), show_progress=False)
+
+    shared.gradio['get_tokens-default'].click(get_token_ids, gradio('textbox-default'), gradio('tokens-default'), show_progress=False)

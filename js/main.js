@@ -216,6 +216,8 @@ for(i = 0; i < textareaElements.length; i++) {
 //------------------------------------------------
 // Improve the looks of the chat input field
 //------------------------------------------------
+let isOld = document.querySelectorAll('.old-ui').length > 0;
+
 document.getElementById('chat-input').parentNode.style.background = 'transparent';
 document.getElementById('chat-input').parentNode.style.border = 'none';
 document.getElementById('chat-input').parentElement.parentElement.style.minWidth = 0;
@@ -224,7 +226,7 @@ document.getElementById('stop').parentElement.parentElement.style.minWidth = 0;
 document.getElementById('stop').parentElement.parentElement.style.display = 'flex';
 document.getElementById('stop').parentElement.parentElement.style.flexDirection = 'column-reverse';
 document.getElementById('stop').parentElement.parentElement.style.paddingBottom = '3px';
-document.getElementById('stop').parentElement.parentElement.parentElement.style.paddingBottom = '20px';
+document.getElementById('stop').parentElement.parentElement.parentElement.style.paddingBottom = isOld ? '0px' : '20px';
 
 document.getElementById('stop').parentElement.parentElement.style.flex = '0 0 auto';
 
@@ -249,7 +251,7 @@ for(i = 0; i < noBackgroundelements.length; i++) {
 // The show/hide events were adapted from:
 // https://github.com/SillyTavern/SillyTavern/blob/6c8bd06308c69d51e2eb174541792a870a83d2d6/public/script.js
 //------------------------------------------------
-const buttonsInChat = document.getElementById("chat-tab").querySelectorAll("button");
+var buttonsInChat = document.querySelectorAll("#chat-tab #chat-buttons:not(.old-ui) button");
 var button = document.getElementById('hover-element-button');
 var menu = document.getElementById('hover-menu');
 
@@ -261,26 +263,34 @@ function hideMenu() {
     menu.style.display = 'none'; // Hide the menu
 }
 
-for (let i = 14; i >= 2; i--) {
-  const thisButton = buttonsInChat[i];
-  menu.appendChild(thisButton);
+if (buttonsInChat.length > 0) {
+    for (let i = buttonsInChat.length - 1; i >= 0; i--) {
+        const thisButton = buttonsInChat[i];
+        menu.appendChild(thisButton);
 
-  if(i != 10) {
-    thisButton.addEventListener("click", () => {
-      hideMenu();
-    });
-  }
+        if(i != 8) {
+            thisButton.addEventListener("click", () => {
+                hideMenu();
+            });
+        }
 
-  const buttonText = thisButton.textContent;
-  const matches = buttonText.match(/(\(.*?\))/);
+        const buttonText = thisButton.textContent;
+        const matches = buttonText.match(/(\(.*?\))/);
 
-  if (matches && matches.length > 1) {
-    // Apply the transparent-substring class to the matched substring
-    const substring = matches[1];
-    const newText = buttonText.replace(substring, `&nbsp;<span class="transparent-substring">${substring}</span>`);
-    thisButton.innerHTML = newText;
-  }
-
+        if (matches && matches.length > 1) {
+            // Apply the transparent-substring class to the matched substring
+            const substring = matches[1];
+            const newText = buttonText.replace(substring, `&nbsp;<span class="transparent-substring">${substring}</span>`);
+            thisButton.innerHTML = newText;
+        }
+    }
+} else {
+    buttonsInChat = document.querySelectorAll("#chat-tab #chat-buttons.old-ui button");
+    console.log(buttonsInChat);
+    for (let i = 0; i < buttonsInChat.length; i++) {
+        buttonsInChat[i].textContent = buttonsInChat[i].textContent.replace(/ \(.*?\)/, '');
+    }
+    document.getElementById('gr-hover').parentElement.style.display = 'none';
 }
 
 function isMouseOverButtonOrMenu() {

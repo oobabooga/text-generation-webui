@@ -23,7 +23,7 @@ def create_ui():
     with gr.Tab('Chat', elem_id='chat-tab'):
         with gr.Row():
             with gr.Column():
-                shared.gradio['display'] = gr.HTML(value=chat_html_wrapper({'internal': [], 'visible': []}, shared.settings['name1'], shared.settings['name2'], 'chat', 'cai-chat'))
+                shared.gradio['display'] = gr.HTML(value=chat_html_wrapper({'internal': [], 'visible': []}, shared.settings['name1'], shared.settings['name2'], 'chat', 'cai-chat'), elem_classes=("old-ui" if shared.args.chat_buttons else None))
 
                 with gr.Row():
                     with gr.Column(scale=1):
@@ -40,19 +40,25 @@ def create_ui():
                             shared.gradio['Generate'] = gr.Button('Generate', elem_id='Generate', variant='primary')
 
         # Hover menu buttons
-        shared.gradio['Regenerate'] = gr.Button('Regenerate (Ctrl + Enter)', elem_id='Regenerate')
-        shared.gradio['Continue'] = gr.Button('Continue (Alt + Enter)', elem_id='Continue')
-        shared.gradio['Remove last'] = gr.Button('Remove last reply (Ctrl + Shift + Backspace)', elem_id='Remove-last')
-        shared.gradio['Replace last reply'] = gr.Button('Replace last reply (Ctrl + Shift + L)', elem_id='Replace-last')
-        shared.gradio['Copy last reply'] = gr.Button('Copy last reply (Ctrl + Shift + K)', elem_id='Copy-last')
-        shared.gradio['Impersonate'] = gr.Button('Impersonate (Ctrl + Shift + M)', elem_id='Impersonate')
-        shared.gradio['Send dummy message'] = gr.Button('Send dummy message')
-        shared.gradio['Send dummy reply'] = gr.Button('Send dummy reply')
-        shared.gradio['Clear history'] = gr.Button('Clear history')
-        shared.gradio['Clear history-cancel'] = gr.Button('Cancel', visible=False)
-        shared.gradio['Clear history-confirm'] = gr.Button('Confirm', variant='stop', visible=False, elem_id='clear-history-confirm')
-        shared.gradio['send-chat-to-default'] = gr.Button('Send to default')
-        shared.gradio['send-chat-to-notebook'] = gr.Button('Send to notebook')
+        with gr.Column(elem_id='chat-buttons', elem_classes=("old-ui" if shared.args.chat_buttons else None)):
+            with gr.Row():
+                shared.gradio['Regenerate'] = gr.Button('Regenerate (Ctrl + Enter)', elem_id='Regenerate')
+                shared.gradio['Continue'] = gr.Button('Continue (Alt + Enter)', elem_id='Continue')
+                shared.gradio['Remove last'] = gr.Button('Remove last reply (Ctrl + Shift + Backspace)', elem_id='Remove-last')
+            with gr.Row():
+                shared.gradio['Replace last reply'] = gr.Button('Replace last reply (Ctrl + Shift + L)', elem_id='Replace-last')
+                shared.gradio['Copy last reply'] = gr.Button('Copy last reply (Ctrl + Shift + K)', elem_id='Copy-last')
+                shared.gradio['Impersonate'] = gr.Button('Impersonate (Ctrl + Shift + M)', elem_id='Impersonate')
+            with gr.Row():
+                shared.gradio['Send dummy message'] = gr.Button('Send dummy message')
+                shared.gradio['Send dummy reply'] = gr.Button('Send dummy reply')
+            with gr.Row():
+                shared.gradio['Clear history'] = gr.Button('Clear history')
+                shared.gradio['Clear history-cancel'] = gr.Button('Cancel', visible=False)
+                shared.gradio['Clear history-confirm'] = gr.Button('Confirm', variant='stop', visible=False, elem_id='clear-history-confirm')
+            with gr.Row():
+                shared.gradio['send-chat-to-default'] = gr.Button('Send to default')
+                shared.gradio['send-chat-to-notebook'] = gr.Button('Send to notebook')
 
         with gr.Row():
             shared.gradio['start_with'] = gr.Textbox(label='Start reply with', placeholder='Sure thing!', value=shared.settings['start_with'])

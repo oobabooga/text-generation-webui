@@ -4,6 +4,7 @@ from modules import logits, shared, ui, utils
 from modules.prompts import count_tokens, load_prompt
 from modules.text_generation import (
     generate_reply_wrapper,
+    get_token_ids,
     stop_everything_event
 )
 from modules.utils import gradio
@@ -39,6 +40,10 @@ def create_ui():
                     with gr.Row():
                         shared.gradio['logits-notebook'] = gr.Textbox(lines=23, label='Output', elem_classes=['textbox_logits_notebook', 'add_scrollbar'])
                         shared.gradio['logits-notebook-previous'] = gr.Textbox(lines=23, label='Previous output', elem_classes=['textbox_logits_notebook', 'add_scrollbar'])
+
+                with gr.Tab('Tokens'):
+                    shared.gradio['get_tokens-notebook'] = gr.Button('Get token IDs for the input')
+                    shared.gradio['tokens-notebook'] = gr.Textbox(lines=23, label='Tokens', elem_classes=['textbox_logits_notebook', 'add_scrollbar', 'monospace'])
 
                 with gr.Row():
                     shared.gradio['Generate-notebook'] = gr.Button('Generate', variant='primary', elem_classes='small-button')
@@ -96,3 +101,5 @@ def create_event_handlers():
     shared.gradio['get_logits-notebook'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         logits.get_next_logits, gradio('textbox-notebook', 'interface_state', 'use_samplers-notebook', 'logits-notebook'), gradio('logits-notebook', 'logits-notebook-previous'), show_progress=False)
+
+    shared.gradio['get_tokens-notebook'].click(get_token_ids, gradio('textbox-notebook'), gradio('tokens-notebook'), show_progress=False)

@@ -233,6 +233,7 @@ Optionally, you can use the following command-line flags:
 | `--settings SETTINGS_FILE`                 | Load the default interface settings from this yaml file. See `settings-template.yaml` for an example. If you create a file called `settings.yaml`, this file will be loaded by default without the need to use the `--settings` flag. |
 | `--extensions EXTENSIONS [EXTENSIONS ...]` | The list of extensions to load. If you want to load more than one extension, write the names separated by spaces. |
 | `--verbose`                                | Print the prompts to the terminal. |
+| `--chat-buttons`                           | Show buttons on chat tab instead of hover menu. |
 
 #### Model loader
 

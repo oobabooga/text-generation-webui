@@ -112,7 +112,7 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
 }
 
 .textbox_default_output textarea {
-    height: calc(100dvh - 181px);
+    height: calc(100dvh - 185px);
 }
 
 .textbox textarea {
@@ -120,19 +120,22 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
 }
 
 .textbox_logits textarea {
-    height: calc(100dvh - 241px);
+    height: calc(100dvh - 236px);
 }
 
 .textbox_logits_notebook textarea {
     height: calc(100dvh - 292px);
 }
 
+.monospace {
+    font-family: monospace;
+}
+
 .textbox_default textarea,
 .textbox_default_output textarea,
 .textbox_logits textarea,
 .textbox_logits_notebook textarea,
-.textbox textarea
-{
+.textbox textarea {
     font-size: 16px !important;
     color: #46464A !important;
 }
@@ -330,6 +333,14 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     overflow: auto !important;
 }
 
+.chat-parent.old-ui {
+    height: calc(100dvh - 270px);
+}
+
+.bigchat {
+    height: calc(100dvh - 181px) !important;
+}
+
 .chat > .messages {
     display: flex;
     flex-direction: column;
@@ -523,4 +534,8 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 
 .transparent-substring {
   opacity: 0.333;
+}
+
+#chat-buttons:not(.old-ui) {
+    display: none !important;
 }
