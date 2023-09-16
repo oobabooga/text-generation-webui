@@ -50,10 +50,13 @@ default_req_params = {
 def get_default_req_params():
     return copy.deepcopy(default_req_params)
 
-# little helper to get defaults if arg is present but None and should be the same type as default.
+
 def default(dic, key, default):
+    '''
+    little helper to get defaults if arg is present but None and should be the same type as default.
+    '''
     val = dic.get(key, default)
-    if type(val) != type(default):
+    if not isinstance(val, type(default)):
         # maybe it's just something like 1 instead of 1.0
         try:
             v = type(default)(val)

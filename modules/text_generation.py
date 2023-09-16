@@ -144,6 +144,17 @@ def get_encoded_length(prompt):
     return len(encode(prompt)[0])
 
 
+def get_token_ids(prompt):
+    tokens = encode(prompt)[0]
+    decoded_tokens = [shared.tokenizer.decode(i) for i in tokens]
+
+    output = ''
+    for row in list(zip(tokens, decoded_tokens)):
+        output += f"{str(int(row[0])).ljust(5)}  -  {row[1]}\n"
+
+    return output
+
+
 def get_max_prompt_length(state):
     return state['truncation_length'] - state['max_new_tokens']
 
