@@ -127,6 +127,10 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
     height: calc(100dvh - 292px);
 }
 
+.monospace {
+    font-family: monospace;
+}
+
 .textbox_default textarea,
 .textbox_default_output textarea,
 .textbox_logits textarea,
