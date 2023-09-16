@@ -100,7 +100,6 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
                         break
                     yield reply
                     
-
         if stop_found:
             break
 
