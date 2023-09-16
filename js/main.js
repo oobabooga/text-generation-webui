@@ -216,6 +216,8 @@ for(i = 0; i < textareaElements.length; i++) {
 //------------------------------------------------
 // Improve the looks of the chat input field
 //------------------------------------------------
+let isOld = document.querySelectorAll('.old-ui').length > 0;
+
 document.getElementById('chat-input').parentNode.style.background = 'transparent';
 document.getElementById('chat-input').parentNode.style.border = 'none';
 document.getElementById('chat-input').parentElement.parentElement.style.minWidth = 0;
@@ -224,7 +226,7 @@ document.getElementById('stop').parentElement.parentElement.style.minWidth = 0;
 document.getElementById('stop').parentElement.parentElement.style.display = 'flex';
 document.getElementById('stop').parentElement.parentElement.style.flexDirection = 'column-reverse';
 document.getElementById('stop').parentElement.parentElement.style.paddingBottom = '3px';
-document.getElementById('stop').parentElement.parentElement.parentElement.style.paddingBottom = '20px';
+document.getElementById('stop').parentElement.parentElement.parentElement.style.paddingBottom = isOld ? '0px' : '20px';
 
 document.getElementById('stop').parentElement.parentElement.style.flex = '0 0 auto';
 
