@@ -1,5 +1,5 @@
 const belowChatInput = document.querySelectorAll("#chat-tab > div > :nth-child(n+2), #extensions");
-const chatParent = document.getElementById("chat").parentNode.parentNode.parentNode;
+const chatParent = document.querySelector(".chat-parent");
 
 function toggle_controls(value) {
     if (value) {

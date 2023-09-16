@@ -356,6 +356,7 @@ Optionally, you can use the following command-line flags:
 | `--gradio-auth-path GRADIO_AUTH_PATH` | Set the gradio authentication file path. The file should contain one or more user:password pairs in this format: "u1:p1,u2:p2,u3:p3" |
 | `--ssl-keyfile SSL_KEYFILE`           | The path to the SSL certificate key file. |
 | `--ssl-certfile SSL_CERTFILE`         | The path to the SSL certificate cert file. |
+| `--chat-buttons`                      | Show buttons on chat tab instead of hover menu. |
 
 #### API
 
