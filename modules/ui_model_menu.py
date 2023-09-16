@@ -216,18 +216,14 @@ def load_lora_wrapper(selected_loras):
     yield ("Successfuly applied the LoRAs")
 
 
-def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), return_links=False):
+def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), return_links=False, check=False):
     try:
         downloader_module = importlib.import_module("download-model")
         downloader = downloader_module.ModelDownloader()
-        repo_id_parts = repo_id.split(":")
-        model = repo_id_parts[0] if len(repo_id_parts) > 0 else repo_id
-        branch = repo_id_parts[1] if len(repo_id_parts) > 1 else "main"
-        check = False
 
         progress(0.0)
         yield ("Cleaning up the model/branch names")
-        model, branch = downloader.sanitize_model_and_branch_names(model, branch)
+        model, branch = downloader.sanitize_model_and_branch_names(repo_id, None)
 
         yield ("Getting the download links from Hugging Face")
         links, sha256, is_lora, is_llamacpp = downloader.get_download_links_from_huggingface(model, branch, text_only=False, specific_file=specific_file)
