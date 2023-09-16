@@ -250,6 +250,7 @@ for(i = 0; i < noBackgroundelements.length; i++) {
 // https://github.com/SillyTavern/SillyTavern/blob/6c8bd06308c69d51e2eb174541792a870a83d2d6/public/script.js
 //------------------------------------------------
 var buttonsInChat = document.querySelectorAll("#chat-tab #chat-buttons:not(.old-ui) button");
+console.log(buttonsInChat);
 var button = document.getElementById('hover-element-button');
 var menu = document.getElementById('hover-menu');
 
@@ -266,7 +267,7 @@ if (buttonsInChat.length > 0) {
         const thisButton = buttonsInChat[i];
         menu.appendChild(thisButton);
 
-        if(i != 10) {
+        if(i != 8) {
             thisButton.addEventListener("click", () => {
                 hideMenu();
             });
