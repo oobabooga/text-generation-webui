@@ -54,8 +54,8 @@ def iterator():
 
 # Extension functions that map string -> string
 def _apply_string_extensions(function_name, text, state, is_chat=False):
-    for extension, name in iterator():
-        if hasattr(extension, function_name) and name in shared.args.extensions:
+    for extension, _ in iterator():
+        if hasattr(extension, function_name):
             func = getattr(extension, function_name)
 
             # Handle old extensions without the 'state' arg or
@@ -85,8 +85,8 @@ def _apply_string_extensions(function_name, text, state, is_chat=False):
 
 # Extension functions that map string -> string
 def _apply_chat_input_extensions(text, visible_text, state):
-    for extension, name in iterator():
-        if hasattr(extension, 'chat_input_modifier') and name in shared.args.extensions:
+    for extension, _ in iterator():
+        if hasattr(extension, 'chat_input_modifier'):
             text, visible_text = extension.chat_input_modifier(text, visible_text, state)
 
     return text, visible_text
@@ -94,8 +94,8 @@ def _apply_chat_input_extensions(text, visible_text, state):
 
 # custom_generate_chat_prompt handling - currently only the first one will work
 def _apply_custom_generate_chat_prompt(text, state, **kwargs):
-    for extension, name in iterator():
-        if hasattr(extension, 'custom_generate_chat_prompt') and name in shared.args.extensions:
+    for extension, _ in iterator():
+        if hasattr(extension, 'custom_generate_chat_prompt'):
             return extension.custom_generate_chat_prompt(text, state, **kwargs)
 
     return None
@@ -103,8 +103,8 @@ def _apply_custom_generate_chat_prompt(text, state, **kwargs):
 
 # Extension that modifies the input parameters before they are used
 def _apply_state_modifier_extensions(state):
-    for extension, name in iterator():
-        if hasattr(extension, "state_modifier") and name in shared.args.extensions:
+    for extension, _ in iterator():
+        if hasattr(extension, "state_modifier"):
             state = getattr(extension, "state_modifier")(state)
 
     return state
@@ -112,8 +112,8 @@ def _apply_state_modifier_extensions(state):
 
 # Extension that modifies the chat history before it is used
 def _apply_history_modifier_extensions(history):
-    for extension, name in iterator():
-        if hasattr(extension, "history_modifier") and name in shared.args.extensions:
+    for extension, _ in iterator():
+        if hasattr(extension, "history_modifier"):
             history = getattr(extension, "history_modifier")(history)
 
     return history
@@ -121,8 +121,8 @@ def _apply_history_modifier_extensions(history):
 
 # Extension functions that override the default tokenizer output - The order of execution is not defined
 def _apply_tokenizer_extensions(function_name, state, prompt, input_ids, input_embeds):
-    for extension, name in iterator():
-        if hasattr(extension, function_name) and name in shared.args.extensions:
+    for extension, _ in iterator():
+        if hasattr(extension, function_name):
             prompt, input_ids, input_embeds = getattr(extension, function_name)(state, prompt, input_ids, input_embeds)
 
     return prompt, input_ids, input_embeds
@@ -131,8 +131,8 @@ def _apply_tokenizer_extensions(function_name, state, prompt, input_ids, input_e
 # Allow extensions to add their own logits processors to the stack being run.
 # Each extension would call `processor_list.append({their LogitsProcessor}())`.
 def _apply_logits_processor_extensions(function_name, processor_list, input_ids):
-    for extension, name in iterator():
-        if hasattr(extension, function_name) and name in shared.args.extensions:
+    for extension, _ in iterator():
+        if hasattr(extension, function_name):
             result = getattr(extension, function_name)(processor_list, input_ids)
             if type(result) is list:
                 processor_list = result
@@ -143,8 +143,8 @@ def _apply_logits_processor_extensions(function_name, processor_list, input_ids)
 # Get prompt length in tokens after applying extension functions which override the default tokenizer output
 # currently only the first one will work
 def _apply_custom_tokenized_length(prompt):
-    for extension, name in iterator():
-        if hasattr(extension, 'custom_tokenized_length') and name in shared.args.extensions:
+    for extension, _ in iterator():
+        if hasattr(extension, 'custom_tokenized_length'):
             return getattr(extension, 'custom_tokenized_length')(prompt)
 
     return None
@@ -152,8 +152,8 @@ def _apply_custom_tokenized_length(prompt):
 
 # Custom generate reply handling - currently only the first one will work
 def _apply_custom_generate_reply():
-    for extension, name in iterator():
-        if hasattr(extension, 'custom_generate_reply') and name in shared.args.extensions:
+    for extension, _ in iterator():
+        if hasattr(extension, 'custom_generate_reply'):
             return getattr(extension, 'custom_generate_reply')
 
     return None
@@ -161,8 +161,8 @@ def _apply_custom_generate_reply():
 
 def _apply_custom_css():
     all_css = ''
-    for extension, name in iterator():
-        if hasattr(extension, 'custom_css') and name in shared.args.extensions:
+    for extension, _ in iterator():
+        if hasattr(extension, 'custom_css'):
             all_css += getattr(extension, 'custom_css')()
 
     return all_css
@@ -170,8 +170,8 @@ def _apply_custom_css():
 
 def _apply_custom_js():
     all_js = ''
-    for extension, name in iterator():
-        if hasattr(extension, 'custom_js') and name in shared.args.extensions:
+    for extension, _ in iterator():
+        if hasattr(extension, 'custom_js'):
             all_js += getattr(extension, 'custom_js')()
 
     return all_js
@@ -180,7 +180,7 @@ def _apply_custom_js():
 def create_extensions_block():
     to_display = []
     for extension, name in iterator():
-        if hasattr(extension, "ui") and not (hasattr(extension, 'params') and extension.params.get('is_tab', False)) and name in shared.args.extensions:
+        if hasattr(extension, "ui") and not (hasattr(extension, 'params') and extension.params.get('is_tab', False)):
             to_display.append((extension, name))
 
     # Creating the extension ui elements
@@ -193,7 +193,7 @@ def create_extensions_block():
 
 def create_extensions_tabs():
     for extension, name in iterator():
-        if hasattr(extension, "ui") and (hasattr(extension, 'params') and extension.params.get('is_tab', False)) and name in shared.args.extensions:
+        if hasattr(extension, "ui") and (hasattr(extension, 'params') and extension.params.get('is_tab', False)):
             display_name = getattr(extension, 'params', {}).get('display_name', name)
             with gr.Tab(display_name, elem_classes="extension-tab"):
                 extension.ui()
