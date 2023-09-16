@@ -9,6 +9,7 @@ import torch
 from extensions.silero_tts import tts_preprocessor
 from modules import chat, shared, ui_chat
 from modules.utils import gradio
+from aksharamukha import transliterate
 
 torch._C._jit_set_profiling_mode(False)
 
@@ -16,7 +17,7 @@ torch._C._jit_set_profiling_mode(False)
 params = {
     'activate': True,
     'speaker': 'en_56',
-    'language': 'en',
+    'language': 'English',
     'model_id': 'v3_en',
     'sample_rate': 48000,
     'device': 'cpu',
@@ -36,15 +37,33 @@ voices_de = ["bernd_ungerer", "eva_k", "friedrich", "hokuspokus", "karlsson"]
 voices_ru = ["aidar", "baya", "kseniya", "xenia"]
 voices_ua = ["mykyta"]
 voices_uz = ["dilnavoz"]
+voices_hindi = ["hindi_female", "hindi_male"]
+voices_malayalam = ["malayalam_female", "malayalam_male"]
+voices_manipuri = ["manipuri_female"]
+voices_bengali = ["bengali_female", "bengali_male"]
+voices_rajasthani = ["rajasthani_female", "rajasthani_male"]
+voices_tamil = ["tamil_female", "tamil_male"]
+voices_telugu = ["telugu_female", "telugu_male"]
+voices_gujarati = ["gujarati_female", "gujarati_male"]
+voices_kannada = ["kannada_female", "kannada_male"]
 
 languages = {
-    "en": {"label": "English", "voices": voices_en, "default_voice": "en_56", "model_id": "v3_en"},
-    "es": {"label": "Español", "voices": voices_es, "default_voice": "es_0", "model_id": "v3_es"},
-    "fr": {"label": "Français", "voices": voices_fr, "default_voice": "fr_0", "model_id": "v3_fr"},
-    "de": {"label": "Deutsch", "voices": voices_de, "default_voice": "eva_k", "model_id": "v3_de"},
-    "ru": {"label": "русский", "voices": voices_ru, "default_voice": "aidar", "model_id": "ru_v3"},
-    "ua": {"label": "українська", "voices": voices_ua, "default_voice": "mykyta", "model_id": "v3_ua"},
-    "uz": {"label": "Oʻzbekcha", "voices": voices_uz, "default_voice": "dilnavoz", "model_id": "v3_uz"},
+    "English": {"lang_id": "en", "voices": voices_en, "default_voice": "en_56", "model_id": "v3_en"},
+    "Español": {"lang_id": "es", "voices": voices_es, "default_voice": "es_0", "model_id": "v3_es"},
+    "Français": {"lang_id": "fr", "voices": voices_fr, "default_voice": "fr_0", "model_id": "v3_fr"},
+    "Deutsch": {"lang_id": "de", "voices": voices_de, "default_voice": "eva_k", "model_id": "v3_de"},
+    "русский": {"lang_id": "ru", "voices": voices_ru, "default_voice": "aidar", "model_id": "ru_v3"},
+    "українська": {"lang_id": "ua", "voices": voices_ua, "default_voice": "mykyta", "model_id": "v3_ua"},
+    "Oʻzbekcha": {"lang_id": "uz", "voices": voices_uz, "default_voice": "dilnavoz", "model_id": "v3_uz"},
+    "हिन्दी": {"lang_id": "indic", "voices": voices_hindi, "default_voice": "hindi_female", "model_id": "v3_indic", "romanize": "Devanagari"},
+    "മലയാളം": {"lang_id": "indic", "voices": voices_malayalam, "default_voice": "malayalam_female", "model_id": "v3_indic", "romanize": "Malayalam"},
+    "মৈইতৈইলোন": {"lang_id": "indic", "voices": voices_manipuri, "default_voice": "manipuri_female", "model_id": "v3_indic", "romanize": "Bengali"},
+    "বাংলা": {"lang_id": "indic", "voices": voices_bengali, "default_voice": "bengali_female", "model_id": "v3_indic", "romanize": "Bengali"},
+    "राजस्थानी": {"lang_id": "indic", "voices": voices_rajasthani, "default_voice": "rajasthani_female", "model_id": "v3_indic", "romanize": "Devanagari"},
+    "தமிழ்": {"lang_id": "indic", "voices": voices_tamil, "default_voice": "tamil_female", "model_id": "v3_indic", "romanize": "Tamil"},
+    "తెలుగు": {"lang_id": "indic", "voices": voices_telugu, "default_voice": "telugu_female", "model_id": "v3_indic", "romanize": "Telugu"},
+    "ગુજરાતી": {"lang_id": "indic", "voices": voices_gujarati, "default_voice": "gujarati_female", "model_id": "v3_indic", "romanize": "Gujarati"},
+    "ಕನ್ನಡ": {"lang_id": "indic", "voices": voices_kannada, "default_voice": "kannada_female", "model_id": "v3_indic", "romanize": "Kannada"},
 }
 
 voice_pitches = ['x-low', 'low', 'medium', 'high', 'x-high']
@@ -69,10 +88,10 @@ def load_model():
     model_path = torch_cache_path + "/snakers4_silero-models_master/src/silero/model/" + params['model_id'] + ".pt"
     if Path(model_path).is_file():
         print(f'\nUsing Silero TTS cached checkpoint found at {torch_cache_path}')
-        model, example_text = torch.hub.load(repo_or_dir=torch_cache_path + '/snakers4_silero-models_master/', model='silero_tts', language=params['language'], speaker=params['model_id'], source='local', path=model_path, force_reload=True)
+        model, example_text = torch.hub.load(repo_or_dir=torch_cache_path + '/snakers4_silero-models_master/', model='silero_tts', language=languages[params['language']]["lang_id"], speaker=params['model_id'], source='local', path=model_path, force_reload=True)
     else:
         print(f'\nSilero TTS cache not found at {torch_cache_path}. Attempting to download...')
-        model, example_text = torch.hub.load(repo_or_dir='snakers4/silero-models', model='silero_tts', language=params['language'], speaker=params['model_id'])
+        model, example_text = torch.hub.load(repo_or_dir='snakers4/silero-models', model='silero_tts', language=languages[params['language']]["lang_id"], speaker=params['model_id'])
     model.to(params['device'])
     return model
 
@@ -137,6 +156,10 @@ def output_modifier(string, state):
         return string
 
     original_string = string
+
+    if "romanize" in languages[params["language"]]:
+        string = transliterate.process(languages[params["language"]]["romanize"], 'ISO', string)
+
     string = tts_preprocessor.preprocess(html.unescape(string))
 
     if string == '':
@@ -166,7 +189,7 @@ def random_sentence():
         return random.choice(list(f))
 
 
-def voice_preview(preview_text):
+def voice_preview(string):
     global model, current_params, streaming_state
 
     for i in params:
@@ -175,7 +198,10 @@ def voice_preview(preview_text):
             current_params = params.copy()
             break
 
-    string = tts_preprocessor.preprocess(preview_text or random_sentence())
+    if "romanize" in languages[params["language"]]:
+        string = transliterate.process(languages[params["language"]]["romanize"], 'ISO', string)
+
+    string = tts_preprocessor.preprocess(string or random_sentence())
 
     output_file = Path('extensions/silero_tts/outputs/voice_preview.wav')
     prosody = f"<prosody rate=\"{params['voice_speed']}\" pitch=\"{params['voice_pitch']}\">"
@@ -187,9 +213,8 @@ def voice_preview(preview_text):
 
 def language_change(lang):
     global params
-    lang_code = list(languages.keys())[lang]
-    params.update({"language": lang_code, "speaker": languages[lang_code]["default_voice"], "model_id": languages[lang_code]["model_id"]})
-    return gr.update(choices=languages[lang_code]["voices"], value=languages[lang_code]["default_voice"])
+    params.update({"language": lang, "speaker": languages[lang]["default_voice"], "model_id": languages[lang]["model_id"]})
+    return gr.update(choices=languages[lang]["voices"], value=languages[lang]["default_voice"])
 
 
 def custom_css():
@@ -207,7 +232,7 @@ def ui():
         show_text = gr.Checkbox(value=params['show_text'], label='Show message text under audio player')
         
         with gr.Row():
-            language = gr.Dropdown(value=languages[params['language']]["label"], choices=[v["label"] for _, v in languages.items()], label='Language', type="index")
+            language = gr.Dropdown(value=params['language'], choices=languages.keys(), label='Language')
             voice = gr.Dropdown(value=params['speaker'], choices=voices_en, label='TTS voice')
         with gr.Row():
             v_pitch = gr.Dropdown(value=params['voice_pitch'], choices=voice_pitches, label='Voice pitch')

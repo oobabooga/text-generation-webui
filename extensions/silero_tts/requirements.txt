@@ -3,3 +3,4 @@ num2words
 omegaconf
 pydub
 PyYAML
+aksharamukha
