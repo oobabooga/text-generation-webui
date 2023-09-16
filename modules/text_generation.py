@@ -88,13 +88,20 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
                     time.sleep(diff)
 
                 last_update = time.time()
+                # Avant de yield, vérifiez à nouveau.
+                if shared.stop_everything:
+                    break
                 yield reply
 
             # Limit updates to 24 per second to not stress low latency networks
             else:
                 if cur_time - last_update > 0.041666666666666664:
                     last_update = cur_time
+                    # Avant de yield, vérifiez à nouveau.
+                    if shared.stop_everything:
+                        break
                     yield reply
+                    
 
         if stop_found:
             break
