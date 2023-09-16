@@ -118,6 +118,7 @@ def list_interface_input_elements():
         'guidance_scale',
         'add_bos_token',
         'ban_eos_token',
+        'custom_token_bans',
         'truncation_length',
         'custom_stopping_strings',
         'skip_special_tokens',
@@ -185,7 +186,7 @@ def apply_interface_values(state, use_persistent=False):
 
 def save_settings(state, preset, instruction_template, extensions, show_controls):
     output = copy.deepcopy(shared.settings)
-    exclude = ['name1', 'name2', 'greeting', 'context', 'turn_template']
+    exclude = ['name2', 'greeting', 'context', 'turn_template']
     for k in state:
         if k in shared.settings and k not in exclude:
             output[k] = state[k]

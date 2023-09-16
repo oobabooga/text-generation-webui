@@ -36,12 +36,12 @@ def create_ui():
 
                     with gr.Column(scale=1):
                         with gr.Row():
-                            shared.gradio['Stop'] = gr.Button('■', elem_id='stop', visible=False)
-                            shared.gradio['Generate'] = gr.Button('▶', elem_id='Generate', variant='primary')
+                            shared.gradio['Stop'] = gr.Button('Stop', elem_id='stop', visible=False)
+                            shared.gradio['Generate'] = gr.Button('Generate', elem_id='Generate', variant='primary')
 
         # Hover menu buttons
         shared.gradio['Regenerate'] = gr.Button('Regenerate (Ctrl + Enter)', elem_id='Regenerate')
-        shared.gradio['Continue'] = gr.Button('Continue (Ctrl + Shift + C)', elem_id='Continue')
+        shared.gradio['Continue'] = gr.Button('Continue (Alt + Enter)', elem_id='Continue')
         shared.gradio['Remove last'] = gr.Button('Remove last reply (Ctrl + Shift + Backspace)', elem_id='Remove-last')
         shared.gradio['Replace last reply'] = gr.Button('Replace last reply (Ctrl + Shift + L)', elem_id='Replace-last')
         shared.gradio['Copy last reply'] = gr.Button('Copy last reply (Ctrl + Shift + K)', elem_id='Copy-last')
@@ -50,7 +50,7 @@ def create_ui():
         shared.gradio['Send dummy reply'] = gr.Button('Send dummy reply')
         shared.gradio['Clear history'] = gr.Button('Clear history')
         shared.gradio['Clear history-cancel'] = gr.Button('Cancel', visible=False)
-        shared.gradio['Clear history-confirm'] = gr.Button('Confirm', variant='stop', visible=False)
+        shared.gradio['Clear history-confirm'] = gr.Button('Confirm', variant='stop', visible=False, elem_id='clear-history-confirm')
         shared.gradio['send-chat-to-default'] = gr.Button('Send to default')
         shared.gradio['send-chat-to-notebook'] = gr.Button('Send to notebook')
 
@@ -91,8 +91,8 @@ def create_chat_settings_ui():
 
         shared.gradio['name1_instruct'] = gr.Textbox(value='', lines=2, label='User string')
         shared.gradio['name2_instruct'] = gr.Textbox(value='', lines=1, label='Bot string')
-        shared.gradio['context_instruct'] = gr.Textbox(value='', lines=4, label='Context')
-        shared.gradio['turn_template'] = gr.Textbox(value='', lines=1, label='Turn template', info='Used to precisely define the placement of spaces and new line characters in instruction prompts.')
+        shared.gradio['context_instruct'] = gr.Textbox(value='', lines=4, label='Context', elem_classes=['add_scrollbar'])
+        shared.gradio['turn_template'] = gr.Textbox(value='', lines=1, label='Turn template', info='Used to precisely define the placement of spaces and new line characters in instruction prompts.', elem_classes=['add_scrollbar'])
         with gr.Row():
             shared.gradio['send_instruction_to_default'] = gr.Button('Send to default', elem_classes=['small-button'])
             shared.gradio['send_instruction_to_notebook'] = gr.Button('Send to notebook', elem_classes=['small-button'])

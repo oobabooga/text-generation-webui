@@ -19,6 +19,7 @@ custom_stopping_strings: ''
 auto_max_new_tokens: false
 max_tokens_second: 0
 ban_eos_token: false
+custom_token_bans: ''
 add_bos_token: true
 skip_special_tokens: true
 stream: true

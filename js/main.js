@@ -63,8 +63,8 @@ document.addEventListener("keydown", function(event) {
     document.getElementById('Regenerate').click();
   }
 
-  // Continue on Ctrl + Shift + C
-  else if (event.ctrlKey && event.shiftKey && event.key === 'C') {
+  // Continue on Alt + Enter
+  else if (event.altKey && event.key === 'Enter') {
     event.preventDefault();
     document.getElementById('Continue').click();
   }
@@ -225,6 +225,8 @@ document.getElementById('stop').parentElement.parentElement.style.display = 'fle
 document.getElementById('stop').parentElement.parentElement.style.flexDirection = 'column-reverse';
 document.getElementById('stop').parentElement.parentElement.style.paddingBottom = '3px';
 document.getElementById('stop').parentElement.parentElement.parentElement.style.paddingBottom = '20px';
+
+document.getElementById('stop').parentElement.parentElement.style.flex = '0 0 auto';
 
 document.getElementById('gr-hover').parentElement.style.minWidth = 0;
 document.getElementById('gr-hover').parentElement.style.display = 'flex';
