@@ -1,6 +1,7 @@
 import re
 
 from num2words import num2words
+from aksharamukha import transliterate
 
 punctuation = r'[\s,.?!/)\'\]>]'
 alphabet_map = {
@@ -33,7 +34,7 @@ alphabet_map = {
 }
 
 
-def preprocess(string):
+def preprocess(string, script):
     # the order for some of these matter
     # For example, you need to remove the commas in numbers before expanding them
     string = remove_surrounded_chars(string)
@@ -61,6 +62,8 @@ def preprocess(string):
     string = string.strip()
     # compact whitespace
     string = ' '.join(string.split())
+    # Romanize Indic text
+    string = romanize(string, script)
 
     return string
 
@@ -189,6 +192,12 @@ def match_mapping(char):
             return alphabet_map[char]
 
     return char
+
+def romanize(string, script):
+    if script:
+        string = transliterate.process(script, 'ISO', string)
+
+    return string
 
 
 def __main__(args):

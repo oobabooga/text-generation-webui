@@ -9,7 +9,6 @@ import torch
 from extensions.silero_tts import tts_preprocessor
 from modules import chat, shared, ui_chat
 from modules.utils import gradio
-from aksharamukha import transliterate
 
 torch._C._jit_set_profiling_mode(False)
 
@@ -157,10 +156,7 @@ def output_modifier(string, state):
 
     original_string = string
 
-    if "romanize" in languages[params["language"]]:
-        string = transliterate.process(languages[params["language"]]["romanize"], 'ISO', string)
-
-    string = tts_preprocessor.preprocess(html.unescape(string))
+    string = tts_preprocessor.preprocess(html.unescape(string), languages[params["language"]].get("romanize", None))
 
     if string == '':
         string = '*Empty reply, try regenerating*'
@@ -198,10 +194,7 @@ def voice_preview(string):
             current_params = params.copy()
             break
 
-    if "romanize" in languages[params["language"]]:
-        string = transliterate.process(languages[params["language"]]["romanize"], 'ISO', string)
-
-    string = tts_preprocessor.preprocess(string or random_sentence())
+    string = tts_preprocessor.preprocess(string or random_sentence(), languages[params["language"]].get("romanize", None))
 
     output_file = Path('extensions/silero_tts/outputs/voice_preview.wav')
     prosody = f"<prosody rate=\"{params['voice_speed']}\" pitch=\"{params['voice_pitch']}\">"
