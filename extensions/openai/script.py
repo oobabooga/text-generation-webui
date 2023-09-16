@@ -4,19 +4,21 @@ import traceback
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
 
-from modules import shared
-
-from extensions.openai.tokens import token_count, token_encode, token_decode
-import extensions.openai.models as OAImodels
+import extensions.openai.completions as OAIcompletions
 import extensions.openai.edits as OAIedits
 import extensions.openai.embeddings as OAIembeddings
 import extensions.openai.images as OAIimages
+import extensions.openai.models as OAImodels
 import extensions.openai.moderations as OAImoderations
-import extensions.openai.completions as OAIcompletions
-from extensions.openai.errors import *
+from extensions.openai.defaults import clamp, default, get_default_req_params
+from extensions.openai.errors import (
+    InvalidRequestError,
+    OpenAIError,
+    ServiceUnavailableError
+)
+from extensions.openai.tokens import token_count, token_decode, token_encode
 from extensions.openai.utils import debug_msg
-from extensions.openai.defaults import (get_default_req_params, default, clamp)
-
+from modules import shared
 
 params = {
     'port': int(os.environ.get('OPENEDAI_PORT')) if 'OPENEDAI_PORT' in os.environ else 5001,
@@ -209,7 +211,7 @@ class Handler(BaseHTTPRequestHandler):
             self.return_json(response)
 
         elif '/images/generations' in self.path:
-            if not 'SD_WEBUI_URL' in os.environ:
+            if 'SD_WEBUI_URL' not in os.environ:
                 raise ServiceUnavailableError("Stable Diffusion not available. SD_WEBUI_URL not set.")
 
             prompt = body['prompt']
