@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import torch
 import torch.nn.functional as F
 from torch import version as torch_version
 
@@ -119,6 +120,11 @@ class ExllamaModel:
 
             # Tokenizing the input
             ids = self.generator.tokenizer.encode(prompt, max_seq_len=self.model.config.max_seq_len)
+            if state['add_bos_token']:
+                ids = torch.cat(
+                    [torch.tensor([[self.tokenizer.bos_token_id]]).to(ids.device),
+                     ids], dim=1
+                ).to(torch.int64)
             ids = ids[:, -get_max_prompt_length(state):]
             if state['auto_max_new_tokens']:
                 max_new_tokens = state['truncation_length'] - ids.shape[-1]

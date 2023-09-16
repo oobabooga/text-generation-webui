@@ -66,6 +66,8 @@ class Exllamav2Model:
                 settings.disallow_tokens(self.tokenizer, to_ban)
 
         ids = self.tokenizer.encode(prompt)
+        if state['add_bos_token']:
+            ids = torch.cat([torch.tensor([[self.tokenizer.bos_token_id]]).to(ids.device), ids], dim=1)
         ids = ids[:, -get_max_prompt_length(state):]
         initial_len = ids.shape[-1]
 
