@@ -13,7 +13,7 @@ This is an expanded Training tab
 
 Notes:
 
-This uses it's own chunking code for raw text based on sentence splitting. This will avoid werid cuts in the chunks and each chunk should now start with sentence and end on some sentence. It works hand in hand with Hard Cut.
+This uses it's own chunking code for raw text based on sentence splitting. This will avoid weird cuts in the chunks and each chunk should now start with sentence and end on some sentence. It works hand in hand with Hard Cut.
 A propper use is to structure your text into logical blocks (ideas) separated by three \n then use three \n in hard cut.
 This way each chunk will contain only one flow of ideas and not derail in the thoughts. 
 And Overlapping code will create overlapped blocks on sentence basis too, but not cross hard cut, thus not cross different ideas either. 
