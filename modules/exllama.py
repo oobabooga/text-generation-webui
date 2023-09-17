@@ -14,7 +14,7 @@ try:
     from exllama.model import ExLlama, ExLlamaCache, ExLlamaConfig
     from exllama.tokenizer import ExLlamaTokenizer
 except:
-    logger.warning('Exllama module failed to load. Will attempt to load from repositories.')
+    logger.warning('exllama module failed to import. Will attempt to import from repositories/.')
     try:
         from modules.relative_imports import RelativeImport
 
@@ -23,7 +23,10 @@ except:
             from model import ExLlama, ExLlamaCache, ExLlamaConfig
             from tokenizer import ExLlamaTokenizer
     except:
-        logger.error("Could not find repositories/exllama/. Make sure that exllama is cloned inside repositories/ and is up to date.")
+        logger.error(
+            "Could not find repositories/exllama. Please ensure that exllama"
+            " (https://github.com/turboderp/exllama) is cloned inside repositories/ and is up to date."
+        )
         raise
 
 

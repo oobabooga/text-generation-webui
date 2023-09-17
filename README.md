@@ -107,9 +107,7 @@ pip install -r requirements_nocuda.txt
 
 ```
 cd text-generation-webui
-mkdir repositories
-cd repositories
-git clone https://github.com/turboderp/exllama
+git clone https://github.com/turboderp/exllama repositories/exllama
 ```
 
 #### bitsandbytes on older NVIDIA GPUs
