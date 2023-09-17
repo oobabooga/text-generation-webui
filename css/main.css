@@ -582,6 +582,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     padding-bottom: 95px !important;
 }
 
-#clear-history-confirm.old-ui {
+#chat-buttons.old-ui #clear-history-confirm {
     order: -1;
 }
