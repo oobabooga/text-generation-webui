@@ -59,6 +59,39 @@ WANT_INTERRUPT = False
 train_log = {}
 train_template = {}
 train_log_graph = []
+Lora_sortedByTime =  False
+
+def list_subfoldersByTime(directory):
+
+    if not directory.endswith('/'):
+        directory += '/'
+    subfolders = []
+    path = directory
+    name_list = os.listdir(path)
+    full_list = [os.path.join(path,i) for i in name_list]
+    time_sorted_list = sorted(full_list, key=os.path.getmtime,reverse=True)
+
+    for entry in time_sorted_list:
+        if os.path.isdir(entry):
+            entry_str = f"{entry}"  # Convert entry to a string
+            full_path = entry_str
+            entry_str = entry_str.replace('\\','/')
+            entry_str = entry_str.replace(f"{directory}", "")  # Remove directory part
+            subfolders.append(entry_str)
+
+    return subfolders
+
+def get_available_loras_local():
+    
+    model_dir = shared.args.lora_dir  # Update with the appropriate directory path
+    subfolders = []
+    if Lora_sortedByTime:
+        subfolders = list_subfoldersByTime(model_dir)
+    else:
+        subfolders = utils.get_available_loras()        
+ 
+
+    return subfolders
 
 def ui():
     with gr.Tab('Train LoRA', elem_id='lora-train-tab'):
@@ -68,12 +101,17 @@ def ui():
                 gr.Markdown("This is enhanced version of Lora Training with an alternative RAW text chunking code")
 
                 with gr.Row():
-                    copy_from = gr.Dropdown(label='Copy parameters from', value='None', choices=utils.get_available_loras(), elem_classes=['slim-dropdown'])
-                    create_refresh_button(copy_from, lambda: None, lambda: {'choices': utils.get_available_loras()}, 'refresh-button')
+                    with gr.Column(scale=5):
+                        with gr.Row():
+                            copy_from = gr.Dropdown(label='Copy parameters from', value='None', choices=get_available_loras_local(), elem_classes=['slim-dropdown'])
+                            create_refresh_button(copy_from, lambda: None, lambda: {'choices': get_available_loras_local()}, 'refresh-button')
+                    with gr.Column():
+                        sort_byTime = gr.Checkbox(label='Sort list by Date', value=False, info='Sorts Loras by date created.', elem_classes=['no-background'])                        
 
                 with gr.Row():
                     with gr.Column(scale=5):
                         lora_name = gr.Textbox(label='Name', info='The name of your new LoRA file')
+    
                     with gr.Column():
                         always_override = gr.Checkbox(label='Override Existing Files', value=False, info='If the name is the same, checking will replace the existing file, and unchecking will load and continue from it (the rank must be the same).', elem_classes=['no-background'])
 
@@ -195,6 +233,16 @@ def ui():
     save_comments.click(
         save_past_evaluations, evaluation_table, None).then(
         lambda: "Comments saved.", None, evaluation_log, show_progress=False)
+
+    def reload_lora():
+        return gr.Dropdown.update(choices=get_available_loras_local())
+ 
+    def global_lora_time(sort_byTime):
+        global Lora_sortedByTime
+        Lora_sortedByTime = sort_byTime
+       
+ 
+    sort_byTime.change(global_lora_time, sort_byTime, None).then(reload_lora,None,copy_from)
 
 
 def do_interrupt():
