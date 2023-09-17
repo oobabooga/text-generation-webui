@@ -107,8 +107,8 @@ class Exllamav2Model:
         return self.tokenizer.encode(string, add_bos=True)
 
     def decode(self, ids, **kwargs):
-        if isinstance(ids, int):
-            ids = torch.tensor([[ids]])
+        if isinstance(ids, list):
+            ids = torch.tensor([ids])
         elif isinstance(ids, torch.Tensor) and ids.numel() == 1:
             ids = ids.view(1, -1)
 
