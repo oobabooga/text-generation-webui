@@ -10,7 +10,7 @@ datasets
 einops
 exllamav2==0.0.2
 markdown
-numpy==1.24
+numpy==1.26.0
 optimum==1.13.1
 pandas
 peft==0.5.*
