@@ -11,7 +11,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 ## Features
 
 * 3 interface modes: default (two columns), notebook, and chat
-* Multiple model backends: [transformers](https://github.com/huggingface/transformers), [llama.cpp](https://github.com/ggerganov/llama.cpp), [ExLlama](https://github.com/turboderp/exllama), [AutoGPTQ](https://github.com/PanQiWei/AutoGPTQ), [GPTQ-for-LLaMa](https://github.com/qwopqwop200/GPTQ-for-LLaMa), [CTransformers](https://github.com/marella/ctransformers)
+* Multiple model backends: [transformers](https://github.com/huggingface/transformers), [llama.cpp](https://github.com/ggerganov/llama.cpp), [ExLlama](https://github.com/turboderp/exllama), [ExLlamaV2](https://github.com/turboderp/exllamav2), [AutoGPTQ](https://github.com/PanQiWei/AutoGPTQ), [GPTQ-for-LLaMa](https://github.com/qwopqwop200/GPTQ-for-LLaMa), [CTransformers](https://github.com/marella/ctransformers)
 * Dropdown menu for quickly switching between different models
 * LoRA: load and unload LoRAs on the fly, train a new LoRA using QLoRA
 * Precise instruction templates for chat mode, including Llama-2-chat, Alpaca, Vicuna, WizardLM, StableLM, and many others
@@ -165,7 +165,7 @@ text-generation-webui
 ```
 text-generation-webui
 ├── models
-│   ├── llama-13b.ggmlv3.q4_K_M.bin
+│   ├── llama-2-13b-chat.Q4_K_M.gguf
 ```
 
 In both cases, you can use the "Model" tab of the UI to download the model from Hugging Face automatically. It is also possible to download via the command-line with `python download-model.py organization/model` (use `--help` to see all the options).
@@ -227,6 +227,7 @@ Optionally, you can use the following command-line flags:
 | `--settings SETTINGS_FILE`                 | Load the default interface settings from this yaml file. See `settings-template.yaml` for an example. If you create a file called `settings.yaml`, this file will be loaded by default without the need to use the `--settings` flag. |
 | `--extensions EXTENSIONS [EXTENSIONS ...]` | The list of extensions to load. If you want to load more than one extension, write the names separated by spaces. |
 | `--verbose`                                | Print the prompts to the terminal. |
+| `--chat-buttons`                           | Show buttons on chat tab instead of hover menu. |
 
 #### Model loader
 
@@ -335,7 +336,7 @@ Optionally, you can use the following command-line flags:
 | `--rwkv-strategy RWKV_STRATEGY` | RWKV: The strategy to use while loading the model. Examples: "cpu fp32", "cuda fp16", "cuda fp16i8". |
 | `--rwkv-cuda-on`                | RWKV: Compile the CUDA kernel for better performance. |
 
-#### RoPE (for llama.cpp, ExLlama, and transformers)
+#### RoPE (for llama.cpp, ExLlama, ExLlamaV2, and transformers)
 
 | Flag             | Description |
 |------------------|-------------|

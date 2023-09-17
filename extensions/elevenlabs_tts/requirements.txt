@@ -1,1 +1,1 @@
-elevenlabs==0.2.*
+elevenlabs==0.2.24

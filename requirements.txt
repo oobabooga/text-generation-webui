@@ -8,9 +8,10 @@ accelerate==0.22.*
 colorama
 datasets
 einops
+exllamav2==0.0.1
 markdown
 numpy==1.24
-optimum==1.12.0
+optimum==1.13.1
 pandas
 peft==0.5.*
 Pillow>=9.5.0
@@ -37,16 +38,16 @@ https://github.com/jllllll/exllama/releases/download/0.0.17/exllama-0.0.17+cu117
 https://github.com/jllllll/exllama/releases/download/0.0.17/exllama-0.0.17+cu117-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
 
 # llama-cpp-python without GPU support
-llama-cpp-python==0.1.84; platform_system != "Windows"
-https://github.com/abetlen/llama-cpp-python/releases/download/v0.1.84/llama_cpp_python-0.1.84-cp310-cp310-win_amd64.whl; platform_system == "Windows"
+llama-cpp-python==0.1.85; platform_system != "Windows"
+https://github.com/abetlen/llama-cpp-python/releases/download/v0.1.85/llama_cpp_python-0.1.85-cp310-cp310-win_amd64.whl; platform_system == "Windows"
 
 # llama-cpp-python with CUDA support
-https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/textgen-webui/llama_cpp_python_cuda-0.1.84+cu117-cp310-cp310-win_amd64.whl; platform_system == "Windows"
-https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/textgen-webui/llama_cpp_python_cuda-0.1.84+cu117-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
+https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/textgen-webui/llama_cpp_python_cuda-0.1.85+cu117-cp310-cp310-win_amd64.whl; platform_system == "Windows"
+https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/textgen-webui/llama_cpp_python_cuda-0.1.85+cu117-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
 
 # GPTQ-for-LLaMa
 https://github.com/jllllll/GPTQ-for-LLaMa-CUDA/releases/download/0.1.0/gptq_for_llama-0.1.0+cu117-cp310-cp310-win_amd64.whl; platform_system == "Windows"
 https://github.com/jllllll/GPTQ-for-LLaMa-CUDA/releases/download/0.1.0/gptq_for_llama-0.1.0+cu117-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
 
 # ctransformers
-https://github.com/jllllll/ctransformers-cuBLAS-wheels/releases/download/AVX2/ctransformers-0.2.25+cu117-py3-none-any.whl
+https://github.com/jllllll/ctransformers-cuBLAS-wheels/releases/download/AVX2/ctransformers-0.2.27+cu117-py3-none-any.whl

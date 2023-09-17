@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import torch
 import torch.nn.functional as F
 from torch import version as torch_version
 
@@ -108,12 +109,22 @@ class ExllamaModel:
         else:
             self.generator.disallow_tokens(None)
 
+        if state['custom_token_bans']:
+            to_ban = [int(x) for x in state['custom_token_bans'].split(',')]
+            if len(to_ban) > 0:
+                self.generator.disallow_tokens(to_ban)
+
         # Case 1: no CFG
         if state['guidance_scale'] == 1:
             self.generator.end_beam_search()
 
             # Tokenizing the input
             ids = self.generator.tokenizer.encode(prompt, max_seq_len=self.model.config.max_seq_len)
+            if state['add_bos_token']:
+                ids = torch.cat(
+                    [torch.tensor([[self.tokenizer.bos_token_id]]).to(ids.device),
+                     ids], dim=1
+                ).to(torch.int64)
             ids = ids[:, -get_max_prompt_length(state):]
             if state['auto_max_new_tokens']:
                 max_new_tokens = state['truncation_length'] - ids.shape[-1]
@@ -143,7 +154,12 @@ class ExllamaModel:
             alpha = state['guidance_scale']
             prompts = [prompt, state['negative_prompt'] or '']
 
-            ids, mask = self.tokenizer.encode(prompts, return_mask=True, max_seq_len=self.model.config.max_seq_len)
+            ids, mask = self.tokenizer.encode(
+                prompts,
+                return_mask=True,
+                max_seq_len=self.model.config.max_seq_len,
+                add_bos=state['add_bos_token']
+            )
             if state['auto_max_new_tokens']:
                 max_new_tokens = state['truncation_length'] - ids[0].shape[-1]
             else:
@@ -183,7 +199,12 @@ class ExllamaModel:
         return output
 
     def encode(self, string, **kwargs):
-        return self.tokenizer.encode(string, max_seq_len=self.model.config.max_seq_len)
+        return self.tokenizer.encode(string, max_seq_len=self.model.config.max_seq_len, add_bos=True)
 
-    def decode(self, string, **kwargs):
-        return self.tokenizer.decode(string)[0]
+    def decode(self, ids, **kwargs):
+        if isinstance(ids, int):
+            ids = torch.tensor([[ids]])
+        elif isinstance(ids, torch.Tensor) and ids.numel() == 1:
+            ids = ids.view(1, -1)
+
+        return self.tokenizer.decode(ids)[0]

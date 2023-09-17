@@ -1,7 +1,8 @@
 from extensions.openai.embeddings import get_embeddings_model_name
-from extensions.openai.errors import *
+from extensions.openai.errors import OpenAIError
 from modules import shared
-from modules.models import load_model, unload_model
+from modules.models import load_model as _load_model
+from modules.models import unload_model
 from modules.models_settings import get_model_metadata, update_model_parameters
 from modules.utils import get_available_models
 
@@ -38,7 +39,7 @@ def load_model(model_name: str) -> dict:
         if shared.settings['mode'] != 'instruct':
             shared.settings['instruction_template'] = None
 
-        shared.model, shared.tokenizer = load_model(shared.model_name)
+        shared.model, shared.tokenizer = _load_model(shared.model_name)
 
         if not shared.model:  # load failed.
             shared.model_name = "None"
