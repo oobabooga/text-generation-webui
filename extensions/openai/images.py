@@ -49,9 +49,9 @@ def generations(prompt: str, size: str, response_format: str, n: int):
         'created': int(time.time()),
         'data': []
     }
-
+    from extensions.openai.script import params
     # TODO: support SD_WEBUI_AUTH username:password pair.
-    sd_url = f"{os.environ['SD_WEBUI_URL']}/sdapi/v1/txt2img"
+    sd_url = f"{os.environ.get('SD_WEBUI_URL', params.get('sd_webui_url', ''))}/sdapi/v1/txt2img"
 
     response = requests.post(url=sd_url, json=payload)
     r = response.json()
