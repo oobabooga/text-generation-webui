@@ -311,7 +311,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     }
 
     .chat-parent {
-        height: calc(100dvh - 179px) !important;
+        height: calc(100dvh - 310px) !important;
     }
 }
 
