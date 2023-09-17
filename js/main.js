@@ -106,9 +106,7 @@ typingSibling.insertBefore(typing, typingSibling.childNodes[2]);
 //------------------------------------------------
 // Chat scrolling
 //------------------------------------------------
-const targetElement = document.getElementById('chat').parentNode.parentNode.parentNode;
-targetElement.classList.add('pretty_scrollbar');
-targetElement.classList.add('chat-parent');
+const targetElement = document.querySelector('.chat-parent');
 let isScrolled = false;
 
 targetElement.addEventListener('scroll', function() {
@@ -212,12 +210,6 @@ for(i = 0; i < textareaElements.length; i++) {
     textareaElements[i].classList.add('pretty_scrollbar');
     textareaElements[i].style.resize = "none";
 }
-
-//------------------------------------------------
-// Improve the looks of the chat input field
-//------------------------------------------------
-let isOld = document.querySelectorAll('.old-ui').length > 0;
-document.getElementById('stop').parentElement.parentElement.parentElement.style.paddingBottom = isOld ? '0px' : '20px';
 
 //------------------------------------------------
 // Remove some backgrounds

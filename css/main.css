@@ -337,7 +337,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     height: calc(100dvh - 270px);
 }
 
-.bigchat {
+.chat-parent.bigchat {
     height: calc(100dvh - 181px) !important;
 }
 
@@ -564,4 +564,20 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 #chat-input-container > .form {
   background: transparent;
   border: none;
+}
+
+#chat-input-row {
+  padding-bottom: 20px;
+}
+
+#chat-input-row.old-ui, #chat-input-row.bigchat {
+  padding-bottom: 0px !important;
+}
+
+#chat-col {
+    padding-bottom: 115px;
+}
+
+#chat-col.old-ui, #chat-col.bigchat {
+    padding-bottom: 95px !important;
 }

@@ -19,13 +19,14 @@ def create_ui():
     shared.gradio['Chat input'] = gr.State()
     shared.gradio['dummy'] = gr.State()
     shared.gradio['history'] = gr.State({'internal': [], 'visible': []})
+    old_ui_class = "old-ui" if shared.args.chat_buttons else None
 
     with gr.Tab('Chat', elem_id='chat-tab'):
         with gr.Row():
-            with gr.Column():
-                shared.gradio['display'] = gr.HTML(value=chat_html_wrapper({'internal': [], 'visible': []}, shared.settings['name1'], shared.settings['name2'], 'chat', 'cai-chat'), elem_classes=("old-ui" if shared.args.chat_buttons else None))
+            with gr.Column(elem_id='chat-col', elem_classes=old_ui_class):
+                shared.gradio['display'] = gr.HTML(value=chat_html_wrapper({'internal': [], 'visible': []}, shared.settings['name1'], shared.settings['name2'], 'chat', 'cai-chat'), elem_classes=["pretty_scrollbar", "chat-parent", old_ui_class])
 
-                with gr.Row():
+                with gr.Row(elem_id="chat-input-row", elem_classes=old_ui_class):
                     with gr.Column(scale=1, elem_id='gr-hover-container'):
                         gr.HTML(value='<div class="hover-element" onclick="void(0)"><span style="width: 100px; display: block" id="hover-element-button">&#9776;</span><div class="hover-menu" id="hover-menu"></div>', elem_id='gr-hover')
 
@@ -40,7 +41,7 @@ def create_ui():
                             shared.gradio['Generate'] = gr.Button('Generate', elem_id='Generate', variant='primary')
 
         # Hover menu buttons
-        with gr.Column(elem_id='chat-buttons', elem_classes=("old-ui" if shared.args.chat_buttons else None)):
+        with gr.Column(elem_id='chat-buttons', elem_classes=old_ui_class):
             with gr.Row():
                 shared.gradio['Regenerate'] = gr.Button('Regenerate (Ctrl + Enter)', elem_id='Regenerate')
                 shared.gradio['Continue'] = gr.Button('Continue (Alt + Enter)', elem_id='Continue')
