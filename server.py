@@ -3,6 +3,7 @@ import warnings
 
 from modules.block_requests import OpenMonkeyPatch, RequestBlocker
 from modules.logging_colors import logger
+from modules.extensions import initialize_state
 
 os.environ['GRADIO_ANALYTICS_ENABLED'] = 'False'
 os.environ['BITSANDBYTES_NOWELCOME'] = '1'
@@ -230,5 +231,6 @@ if __name__ == "__main__":
             shared.need_restart = False
             time.sleep(0.5)
             shared.gradio['interface'].close()
+            initialize_state()
             time.sleep(0.5)
             create_interface()

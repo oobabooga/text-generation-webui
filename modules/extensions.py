@@ -45,6 +45,11 @@ def load_extensions():
                 traceback.print_exc()
 
 
+def initialize_state():
+    global state
+    state = {}
+
+
 # This iterator returns the extensions in the order specified in the command-line
 def iterator():
     for name in sorted(state, key=lambda x: state[x][1]):
