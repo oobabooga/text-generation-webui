@@ -11,7 +11,7 @@ This is an expanded Training tab
 - turn BOS on and OFF
 - target selector
 
-Notes:
+###Notes:
 
 This uses it's own chunking code for raw text based on sentence splitting. This will avoid weird cuts in the chunks and each chunk should now start with sentence and end on some sentence. It works hand in hand with Hard Cut.
 A propper use is to structure your text into logical blocks (ideas) separated by three \n then use three \n in hard cut.
@@ -19,7 +19,8 @@ This way each chunk will contain only one flow of ideas and not derail in the th
 And Overlapping code will create overlapped blocks on sentence basis too, but not cross hard cut, thus not cross different ideas either. 
 Does it make any sense? No? Hmmmm...
 
-Targets
+###Targets
+
 Normal LORA is q, v and that's what you should use.
 You can use (q k v o) or (q k v) and it will give you a lot more trainable parameters. The benefit is that you can keep rank lower and still attain the same coherency as q v with high rank. Guanaco has been trained with QLORA and q k v o for example and they swear by it.
 I also added k-v-down which is lifted from IA3, which is very odd one to use for LORA, but it created adorable style craziness when training on raw structured text and bringing the loss all the way down to 1.1 . It didn't overfit (q-v would be just writing entire novels at loss 1.1) and it followed the instruction seeping from the previous fine-tuning. YMMW of course.
