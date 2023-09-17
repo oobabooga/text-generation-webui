@@ -7,10 +7,7 @@ from modules import shared
 from modules.chat import generate_chat_reply
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, unload_model
-from modules.models_settings import (
-    get_model_settings_from_yamls,
-    update_model_parameters
-)
+from modules.models_settings import get_model_metadata, update_model_parameters
 from modules.text_generation import (
     encode,
     generate_reply,
@@ -132,8 +129,8 @@ class Handler(BaseHTTPRequestHandler):
                 shared.model_name = model_name
                 unload_model()
 
-                model_settings = get_model_settings_from_yamls(shared.model_name)
-                shared.settings.update(model_settings)
+                model_settings = get_model_metadata(shared.model_name)
+                shared.settings.update({k: v for k, v in model_settings.items() if k in shared.settings})
                 update_model_parameters(model_settings, initial=True)
 
                 if shared.settings['mode'] != 'instruct':

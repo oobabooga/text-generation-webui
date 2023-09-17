@@ -3,8 +3,8 @@
     grid-template-columns: 60px minmax(0, 1fr);
     padding-bottom: 25px;
     font-size: 15px;
-    font-family: Helvetica, Arial, sans-serif;
-    line-height: 1.428571429;
+    font-family: 'Noto Sans', Helvetica, Arial, sans-serif;
+    line-height: 23px !important;
 }
 
 .circle-you {
@@ -46,7 +46,7 @@
 .message-body p {
     margin-bottom: 0 !important;
     font-size: 15px !important;
-    line-height: 1.428571429 !important;
+    line-height: 23px !important;
 }
 
 .dark .message-body p em {
@@ -55,4 +55,5 @@
 
 .message-body p em {
     color: rgb(110, 110, 110) !important;
+    font-weight: 500;
 }

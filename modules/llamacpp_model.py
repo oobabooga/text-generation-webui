@@ -1,7 +1,5 @@
 import re
 from functools import partial
-from pathlib import Path
-from typing import Union
 
 import torch
 
@@ -9,43 +7,34 @@ from modules import RoPE, shared
 from modules.callbacks import Iteratorize
 from modules.logging_colors import logger
 from modules.text_generation import get_max_prompt_length
-from modules.utils import is_gguf
 
 import llama_cpp
-
-try:
-    import llama_cpp_ggml
-except:
-    llama_cpp_ggml = llama_cpp
 
 if torch.cuda.is_available() and not torch.version.hip:
     try:
         import llama_cpp_cuda
     except:
         llama_cpp_cuda = None
-    try:
-        import llama_cpp_ggml_cuda
-    except:
-        llama_cpp_ggml_cuda = llama_cpp_cuda
 else:
     llama_cpp_cuda = None
-    llama_cpp_ggml_cuda = None
 
 
-def llama_cpp_lib(model_file: Union[str, Path] = None):
-    if model_file is not None:
-        gguf_model = is_gguf(model_file)
-    else:
-        gguf_model = True
-
+def llama_cpp_lib():
     if shared.args.cpu or llama_cpp_cuda is None:
-        return llama_cpp if gguf_model else llama_cpp_ggml
+        return llama_cpp
     else:
-        return llama_cpp_cuda if gguf_model else llama_cpp_ggml_cuda
+        return llama_cpp_cuda
 
 
 def ban_eos_logits_processor(eos_token, input_ids, logits):
     logits[eos_token] = -float('inf')
+    return logits
+
+
+def custom_token_ban_logits_processor(token_ids, input_ids, logits):
+    for token_id in token_ids:
+        logits[token_id] = -float('inf')
+
     return logits
 
 
@@ -59,8 +48,8 @@ class LlamaCppModel:
     @classmethod
     def from_pretrained(self, path):
 
-        Llama = llama_cpp_lib(path).Llama
-        LlamaCache = llama_cpp_lib(path).LlamaCache
+        Llama = llama_cpp_lib().Llama
+        LlamaCache = llama_cpp_lib().LlamaCache
 
         result = self()
         cache_capacity = 0
@@ -95,13 +84,6 @@ class LlamaCppModel:
             'rope_freq_scale': 1.0 / shared.args.compress_pos_emb,
         }
 
-        if not is_gguf(path):
-            ggml_params = {
-                'n_gqa': shared.args.n_gqa or None,
-                'rms_norm_eps': shared.args.rms_norm_eps or None,
-            }
-            params = params | ggml_params
-
         result.model = Llama(**params)
         if cache_capacity > 0:
             result.model.set_cache(LlamaCache(capacity_bytes=cache_capacity))
@@ -129,6 +111,15 @@ class LlamaCppModel:
         prompt = prompt[-get_max_prompt_length(state):]
         prompt = self.decode(prompt).decode('utf-8')
 
+        logit_processors = LogitsProcessorList()
+        if state['ban_eos_token']:
+            logit_processors.append(partial(ban_eos_logits_processor, self.model.tokenizer.eos_token_id))
+
+        if state['custom_token_bans']:
+            to_ban = [int(x) for x in state['custom_token_bans'].split(',')]
+            if len(to_ban) > 0:
+                logit_processors.append(partial(custom_token_ban_logits_processor, to_ban))
+
         completion_chunks = self.model.create_completion(
             prompt=prompt,
             max_tokens=state['max_new_tokens'],
@@ -141,9 +132,7 @@ class LlamaCppModel:
             mirostat_tau=state['mirostat_tau'],
             mirostat_eta=state['mirostat_eta'],
             stream=True,
-            logits_processor=LogitsProcessorList([
-                partial(ban_eos_logits_processor, self.model.token_eos()),
-            ]) if state['ban_eos_token'] else None,
+            logits_processor=logit_processors,
         )
 
         output = ""

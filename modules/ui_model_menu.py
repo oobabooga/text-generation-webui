@@ -15,6 +15,7 @@ from modules.LoRA import add_lora_to_model
 from modules.models import load_model, unload_model
 from modules.models_settings import (
     apply_model_settings_to_state,
+    get_model_metadata,
     save_model_settings,
     update_model_parameters
 )
@@ -81,8 +82,6 @@ def create_ui():
                             shared.gradio['n_ctx'] = gr.Slider(minimum=0, maximum=16384, step=256, label="n_ctx", value=shared.args.n_ctx)
                             shared.gradio['threads'] = gr.Slider(label="threads", minimum=0, step=1, maximum=32, value=shared.args.threads)
                             shared.gradio['n_batch'] = gr.Slider(label="n_batch", minimum=1, maximum=2048, value=shared.args.n_batch)
-                            shared.gradio['n_gqa'] = gr.Slider(minimum=0, maximum=16, step=1, label="n_gqa", value=shared.args.n_gqa, info='GGML only (not used by GGUF): Grouped-Query Attention. Must be 8 for llama-2 70b.')
-                            shared.gradio['rms_norm_eps'] = gr.Slider(minimum=0, maximum=1e-5, step=1e-6, label="rms_norm_eps", value=shared.args.rms_norm_eps, info='GGML only (not used by GGUF): 5e-6 is a good value for llama-2 models.')
 
                             shared.gradio['wbits'] = gr.Dropdown(label="wbits", choices=["None", 1, 2, 3, 4, 8], value=str(shared.args.wbits) if shared.args.wbits > 0 else "None")
                             shared.gradio['groupsize'] = gr.Dropdown(label="groupsize", choices=["None", 32, 64, 128, 1024], value=str(shared.args.groupsize) if shared.args.groupsize > 0 else "None")
@@ -120,14 +119,14 @@ def create_ui():
                             shared.gradio['gptq_for_llama_info'] = gr.Markdown('GPTQ-for-LLaMa support is currently only kept for compatibility with older GPUs. AutoGPTQ or ExLlama is preferred when compatible. GPTQ-for-LLaMa is installed by default with the webui on supported systems. Otherwise, it has to be installed manually following the instructions here: [instructions](https://github.com/oobabooga/text-generation-webui/blob/main/docs/GPTQ-models-(4-bit-mode).md#installation-1).')
                             shared.gradio['exllama_info'] = gr.Markdown('For more information, consult the [docs](https://github.com/oobabooga/text-generation-webui/blob/main/docs/ExLlama.md).')
                             shared.gradio['exllama_HF_info'] = gr.Markdown('ExLlama_HF is a wrapper that lets you use ExLlama like a Transformers model, which means it can use the Transformers samplers. It\'s a bit slower than the regular ExLlama.')
-                            shared.gradio['llamacpp_HF_info'] = gr.Markdown('llamacpp_HF is a wrapper that lets you use llama.cpp like a Transformers model, which means it can use the Transformers samplers. To use it, make sure to first download oobabooga/llama-tokenizer under "Download model or LoRA".')
+                            shared.gradio['llamacpp_HF_info'] = gr.Markdown('llamacpp_HF loads llama.cpp as a Transformers model. To use it, you need to download a tokenizer.\n\nOption 1: download `oobabooga/llama-tokenizer` under "Download model or LoRA". That\'s a default Llama tokenizer.\n\nOption 2: place your .gguf in a subfolder of models/ along with these 3 files: tokenizer.model, tokenizer_config.json, and special_tokens_map.json. This takes precedence over Option 1.')
 
             with gr.Column():
                 with gr.Row():
                     shared.gradio['autoload_model'] = gr.Checkbox(value=shared.settings['autoload_model'], label='Autoload the model', info='Whether to load the model as soon as it is selected in the Model dropdown.')
 
                 shared.gradio['custom_model_menu'] = gr.Textbox(label="Download model or LoRA", info="Enter the Hugging Face username/model path, for instance: facebook/galactica-125m. To specify a branch, add it at the end after a \":\" character like this: facebook/galactica-125m:main. To download a single file, enter its name in the second box.")
-                shared.gradio['download_specific_file'] = gr.Textbox(placeholder="File name (for GGUF/GGML)", show_label=False, max_lines=1)
+                shared.gradio['download_specific_file'] = gr.Textbox(placeholder="File name (for GGUF models)", show_label=False, max_lines=1)
                 with gr.Row():
                     shared.gradio['download_model_button'] = gr.Button("Download", variant='primary')
                     shared.gradio['get_file_list'] = gr.Button("Get file list")
@@ -181,23 +180,29 @@ def create_event_handlers():
 
 def load_model_wrapper(selected_model, loader, autoload=False):
     if not autoload:
-        yield f"The settings for {selected_model} have been updated.\nClick on \"Load\" to load it."
+        yield f"The settings for `{selected_model}` have been updated.\n\nClick on \"Load\" to load it."
         return
 
     if selected_model == 'None':
         yield "No model selected"
     else:
         try:
-            yield f"Loading {selected_model}..."
+            yield f"Loading `{selected_model}`..."
             shared.model_name = selected_model
             unload_model()
             if selected_model != '':
                 shared.model, shared.tokenizer = load_model(shared.model_name, loader)
 
             if shared.model is not None:
-                yield f"Successfully loaded {selected_model}"
+                output = f"Successfully loaded `{selected_model}`."
+
+                settings = get_model_metadata(selected_model)
+                if 'instruction_template' in settings:
+                    output += '\n\nIt seems to be an instruction-following model with template "{}". In the chat tab, instruct or chat-instruct modes should be used.'.format(settings['instruction_template'])
+
+                yield output
             else:
-                yield f"Failed to load {selected_model}."
+                yield f"Failed to load `{selected_model}`."
         except:
             exc = traceback.format_exc()
             logger.error('Failed to load the model.')
@@ -211,18 +216,14 @@ def load_lora_wrapper(selected_loras):
     yield ("Successfuly applied the LoRAs")
 
 
-def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), return_links=False):
+def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), return_links=False, check=False):
     try:
         downloader_module = importlib.import_module("download-model")
         downloader = downloader_module.ModelDownloader()
-        repo_id_parts = repo_id.split(":")
-        model = repo_id_parts[0] if len(repo_id_parts) > 0 else repo_id
-        branch = repo_id_parts[1] if len(repo_id_parts) > 1 else "main"
-        check = False
 
         progress(0.0)
         yield ("Cleaning up the model/branch names")
-        model, branch = downloader.sanitize_model_and_branch_names(model, branch)
+        model, branch = downloader.sanitize_model_and_branch_names(repo_id, None)
 
         yield ("Getting the download links from Hugging Face")
         links, sha256, is_lora, is_llamacpp = downloader.get_download_links_from_huggingface(model, branch, text_only=False, specific_file=specific_file)

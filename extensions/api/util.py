@@ -49,6 +49,7 @@ def build_parameters(body, chat=False):
         'seed': int(body.get('seed', -1)),
         'add_bos_token': bool(body.get('add_bos_token', True)),
         'truncation_length': int(body.get('truncation_length', body.get('max_context_length', 2048))),
+        'custom_token_bans': str(body.get('custom_token_bans', '')),
         'ban_eos_token': bool(body.get('ban_eos_token', False)),
         'skip_special_tokens': bool(body.get('skip_special_tokens', True)),
         'custom_stopping_strings': '',  # leave this blank

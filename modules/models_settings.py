@@ -3,12 +3,59 @@ from pathlib import Path
 
 import yaml
 
-from modules import loaders, shared, ui
+from modules import loaders, metadata_gguf, shared, ui
 
 
-def get_model_settings_from_yamls(model):
-    settings = shared.model_config
+def get_fallback_settings():
+    return {
+        'wbits': 'None',
+        'model_type': 'None',
+        'groupsize': 'None',
+        'pre_layer': 0,
+        'skip_special_tokens': shared.settings['skip_special_tokens'],
+        'custom_stopping_strings': shared.settings['custom_stopping_strings'],
+        'truncation_length': shared.settings['truncation_length'],
+        'n_ctx': 2048,
+        'rope_freq_base': 0,
+        'compress_pos_emb': 1,
+    }
+
+
+def get_model_metadata(model):
     model_settings = {}
+
+    # Get settings from models/config.yaml and models/config-user.yaml
+    settings = shared.model_config
+    for pat in settings:
+        if re.match(pat.lower(), model.lower()):
+            for k in settings[pat]:
+                model_settings[k] = settings[pat][k]
+
+    if 'loader' not in model_settings:
+        loader = infer_loader(model, model_settings)
+        if 'wbits' in model_settings and type(model_settings['wbits']) is int and model_settings['wbits'] > 0:
+            loader = 'AutoGPTQ'
+
+        model_settings['loader'] = loader
+
+    # Read GGUF metadata
+    if model_settings['loader'] in ['llama.cpp', 'llamacpp_HF', 'ctransformers']:
+        path = Path(f'{shared.args.model_dir}/{model}')
+        if path.is_file():
+            model_file = path
+        else:
+            model_file = list(path.glob('*.gguf'))[0]
+
+        metadata = metadata_gguf.load_metadata(model_file)
+        if 'llama.context_length' in metadata:
+            model_settings['n_ctx'] = metadata['llama.context_length']
+        if 'llama.rope.scale_linear' in metadata:
+            model_settings['compress_pos_emb'] = metadata['llama.rope.scale_linear']
+        if 'llama.rope.freq_base' in metadata:
+            model_settings['rope_freq_base'] = metadata['llama.rope.freq_base']
+
+    # Apply user settings from models/config-user.yaml
+    settings = shared.user_config
     for pat in settings:
         if re.match(pat.lower(), model.lower()):
             for k in settings[pat]:
@@ -17,16 +64,15 @@ def get_model_settings_from_yamls(model):
     return model_settings
 
 
-def infer_loader(model_name):
+def infer_loader(model_name, model_settings):
     path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
-    model_settings = get_model_settings_from_yamls(model_name)
     if not path_to_model.exists():
         loader = None
     elif Path(f'{shared.args.model_dir}/{model_name}/quantize_config.json').exists() or ('wbits' in model_settings and type(model_settings['wbits']) is int and model_settings['wbits'] > 0):
         loader = 'AutoGPTQ'
-    elif len(list(path_to_model.glob('*.gguf*')) + list(path_to_model.glob('*ggml*.bin'))) > 0:
+    elif len(list(path_to_model.glob('*.gguf'))) > 0:
         loader = 'llama.cpp'
-    elif re.match(r'.*\.gguf|.*ggml.*\.bin', model_name.lower()):
+    elif re.match(r'.*\.gguf', model_name.lower()):
         loader = 'llama.cpp'
     elif re.match(r'.*rwkv.*\.pth', model_name.lower()):
         loader = 'RWKV'
@@ -85,14 +131,12 @@ def update_model_parameters(state, initial=False):
 
 # UI: update the state variable with the model settings
 def apply_model_settings_to_state(model, state):
-    model_settings = get_model_settings_from_yamls(model)
-    if 'loader' not in model_settings:
-        loader = infer_loader(model)
-        if 'wbits' in model_settings and type(model_settings['wbits']) is int and model_settings['wbits'] > 0:
-            loader = 'AutoGPTQ'
+    model_settings = get_model_metadata(model)
+    if 'loader' in model_settings:
+        loader = model_settings.pop('loader')
 
         # If the user is using an alternative loader for the same model type, let them keep using it
-        if not (loader == 'AutoGPTQ' and state['loader'] in ['GPTQ-for-LLaMa', 'ExLlama', 'ExLlama_HF']) and not (loader == 'llama.cpp' and state['loader'] in ['llamacpp_HF', 'ctransformers']):
+        if not (loader == 'AutoGPTQ' and state['loader'] in ['GPTQ-for-LLaMa', 'ExLlama', 'ExLlama_HF', 'ExLlamav2', 'ExLlamav2_HF']) and not (loader == 'llama.cpp' and state['loader'] in ['llamacpp_HF', 'ctransformers']):
             state['loader'] = loader
 
     for k in model_settings:
@@ -118,17 +162,14 @@ def save_model_settings(model, state):
             user_config = {}
 
         model_regex = model + '$'  # For exact matches
-        for _dict in [user_config, shared.model_config]:
-            if model_regex not in _dict:
-                _dict[model_regex] = {}
-
         if model_regex not in user_config:
             user_config[model_regex] = {}
 
         for k in ui.list_model_elements():
             if k == 'loader' or k in loaders.loaders_and_params[state['loader']]:
                 user_config[model_regex][k] = state[k]
-                shared.model_config[model_regex][k] = state[k]
+
+        shared.user_config = user_config
 
         output = yaml.dump(user_config, sort_keys=False)
         with open(p, 'w') as f:

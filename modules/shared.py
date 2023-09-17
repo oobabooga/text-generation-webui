@@ -32,7 +32,7 @@ settings = {
     'show_controls': True,
     'start_with': '',
     'mode': 'chat',
-    'chat_style': 'TheEncrypted777',
+    'chat_style': 'cai-chat',
     'character': 'None',
     'prompt-default': 'QA',
     'prompt-notebook': 'QA',
@@ -49,6 +49,7 @@ settings = {
     'auto_max_new_tokens': False,
     'max_tokens_second': 0,
     'ban_eos_token': False,
+    'custom_token_bans': '',
     'add_bos_token': True,
     'skip_special_tokens': True,
     'stream': True,
@@ -90,6 +91,7 @@ parser.add_argument('--no-stream', action='store_true', help='DEPRECATED')
 parser.add_argument('--settings', type=str, help='Load the default interface settings from this yaml file. See settings-template.yaml for an example. If you create a file called settings.yaml, this file will be loaded by default without the need to use the --settings flag.')
 parser.add_argument('--extensions', type=str, nargs="+", help='The list of extensions to load. If you want to load more than one extension, write the names separated by spaces.')
 parser.add_argument('--verbose', action='store_true', help='Print the prompts to the terminal.')
+parser.add_argument('--chat-buttons', action='store_true', help='Show buttons on chat tab instead of hover menu.')
 
 # Model loader
 parser.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise, it will get autodetected. Valid options: transformers, autogptq, gptq-for-llama, exllama, exllama_hf, llamacpp, rwkv')
@@ -126,8 +128,6 @@ parser.add_argument('--n-gpu-layers', type=int, default=0, help='Number of layer
 parser.add_argument('--tensor_split', type=str, default=None, help="Split the model across multiple GPUs, comma-separated list of proportions, e.g. 18,17")
 parser.add_argument('--n_ctx', type=int, default=2048, help='Size of the prompt context.')
 parser.add_argument('--llama_cpp_seed', type=int, default=0, help='Seed for llama-cpp models. Default 0 (random)')
-parser.add_argument('--n_gqa', type=int, default=0, help='grouped-query attention. Must be 8 for llama-2 70b.')
-parser.add_argument('--rms_norm_eps', type=float, default=0, help='5e-6 is a good value for llama-2 models.')
 
 # GPTQ
 parser.add_argument('--wbits', type=int, default=0, help='Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported.')
@@ -221,6 +221,10 @@ def fix_loader_name(name):
         return 'ExLlama'
     elif name in ['exllama-hf', 'exllama_hf', 'exllama hf', 'ex-llama-hf', 'ex_llama_hf']:
         return 'ExLlama_HF'
+    elif name in ['exllamav2', 'exllama-v2', 'ex_llama-v2', 'exlamav2', 'exlama-v2', 'exllama2', 'exllama-2']:
+        return 'ExLlamav2'
+    elif name in ['exllamav2-hf', 'exllamav2_hf', 'exllama-v2-hf', 'exllama_v2_hf', 'exllama-v2_hf', 'exllama2-hf', 'exllama2_hf', 'exllama-2-hf', 'exllama_2_hf', 'exllama-2_hf']:
+        return 'ExLlamav2_HF'
     elif name in ['ctransformers', 'ctranforemrs', 'ctransformer']:
         return 'ctransformers'
 
@@ -257,10 +261,8 @@ with Path(f'{args.model_dir}/config.yaml') as p:
 with Path(f'{args.model_dir}/config-user.yaml') as p:
     if p.exists():
         user_config = yaml.safe_load(open(p, 'r').read())
-        for k in user_config:
-            if k in model_config:
-                model_config[k].update(user_config[k])
-            else:
-                model_config[k] = user_config[k]
+    else:
+        user_config = {}
 
 model_config = OrderedDict(model_config)
+user_config = OrderedDict(user_config)

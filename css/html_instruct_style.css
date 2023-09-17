@@ -3,8 +3,8 @@
     grid-template-columns: 60px 1fr;
     padding-bottom: 25px;
     font-size: 15px;
-    font-family: Helvetica, Arial, sans-serif;
-    line-height: 1.428571429;
+    font-family: 'Noto Sans', Helvetica, Arial, sans-serif;
+    line-height: 22px;
 }
 
 .username {
@@ -13,7 +13,7 @@
 
 .message-body p {
     font-size: 15px !important;
-    line-height: 1.4 !important;
+    line-height: 22px !important;
     margin-bottom: 1.25em !important;
 }
 
@@ -49,12 +49,10 @@
 
 .dark .chat .assistant-message {
     background-color: #1f2937;
-    border: 1px solid #4b5563;
 }
 
 .dark .chat .user-message {
-    background-color: #111827;
-    border: 1px solid #4b5563;
+    background-color: transparent;
 }
 
 code {
