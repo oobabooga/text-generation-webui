@@ -45,6 +45,7 @@ voices_tamil = ["tamil_female", "tamil_male"]
 voices_telugu = ["telugu_female", "telugu_male"]
 voices_gujarati = ["gujarati_female", "gujarati_male"]
 voices_kannada = ["kannada_female", "kannada_male"]
+voices_en_indic = ['tamil_female', 'bengali_female', 'malayalam_male', 'manipuri_female', 'assamese_female', 'gujarati_male', 'telugu_male', 'kannada_male', 'hindi_female', 'rajasthani_female', 'kannada_female', 'bengali_male', 'tamil_male', 'gujarati_female', 'assamese_male']
 
 languages = {
     "English": {"lang_id": "en", "voices": voices_en, "default_voice": "en_56", "model_id": "v3_en"},
@@ -63,6 +64,7 @@ languages = {
     "తెలుగు": {"lang_id": "indic", "voices": voices_telugu, "default_voice": "telugu_female", "model_id": "v3_indic", "romanize": "Telugu"},
     "ગુજરાતી": {"lang_id": "indic", "voices": voices_gujarati, "default_voice": "gujarati_female", "model_id": "v3_indic", "romanize": "Gujarati"},
     "ಕನ್ನಡ": {"lang_id": "indic", "voices": voices_kannada, "default_voice": "kannada_female", "model_id": "v3_indic", "romanize": "Kannada"},
+    "English (India)": {"lang_id": "en", "voices": voices_en_indic, "default_voice": "hindi_female", "model_id": "v3_en_indic"},
 }
 
 voice_pitches = ['x-low', 'low', 'medium', 'high', 'x-high']
