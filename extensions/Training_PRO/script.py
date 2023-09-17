@@ -54,20 +54,23 @@ params = {
 }
 
 MODEL_CLASSES = {v[1]: v[0] for v in MODEL_FOR_CAUSAL_LM_MAPPING_NAMES.items()}
-PARAMETERS = ["lora_name", "always_override", "save_steps", "micro_batch_size", "batch_size", "epochs", "learning_rate", "lr_scheduler_type", "lora_rank", "lora_alpha", "lora_dropout", "cutoff_len", "dataset", "eval_dataset", "format", "eval_steps", "raw_text_file", "higher_rank_limit", "warmup_steps", "optimizer", "hard_cut_string", "train_only_after", "stop_at_loss", "add_eos_token", "min_chars", "report_to", "precize_slicing_overlap", "add_eos_token_type", "save_steps_under_loss", "add_bos_token"]
+PARAMETERS = ["lora_name", "always_override", "save_steps", "micro_batch_size", "batch_size", "epochs", "learning_rate", "lr_scheduler_type", "lora_rank", "lora_alpha", "lora_dropout", "cutoff_len", "dataset", "eval_dataset", "format", "eval_steps", "raw_text_file", "higher_rank_limit", "warmup_steps", "optimizer", "hard_cut_string", "train_only_after", "stop_at_loss", "add_eos_token", "min_chars", "report_to", "precize_slicing_overlap", "add_eos_token_type", "save_steps_under_loss", "add_bos_token", "training_projection"]
 WANT_INTERRUPT = False
 
 train_log = {}
 train_template = {}
 train_log_graph = []
 Lora_sortedByTime =  False
+train_choices = ["all","q-k-v-o","q-k-v","k-v-down","q-v"]
+
+
 
 def ui():
     with gr.Tab('Train LoRA', elem_id='lora-train-tab'):
         tmp = gr.State('')
         with gr.Row():
             with gr.Column():
-                gr.Markdown("This is enhanced version of Lora Training with an alternative RAW text chunking code")
+                gr.Markdown("This is enhanced version of Lora Training with a sentence based RAW text chunking code")
 
                 with gr.Row():
                     with gr.Column(scale=5):
@@ -104,6 +107,8 @@ def ui():
                         with gr.Column():
                             lora_dropout = gr.Slider(label='LoRA Dropout', minimum=0.0, maximum=1.0, step=0.025, value=0.05, info='Percentage probability for dropout of LoRA layers. This can help reduce overfitting. Most users should leave at default.')
                             stop_at_loss = gr.Slider(label='Stop at loss', minimum=0.0, maximum=3.0, step=0.1, value=0.00, info='The process will automatically stop once the desired loss value is reached. (reasonable numbers are 1.5-1.8)')
+                            training_projection = gr.Radio(value = train_choices[4], label='LLaMA Target Projections', info='Change the targets (LORA is typically q-v)', choices=train_choices)    
+
                             optimizer = gr.Dropdown(label='Optimizer', value='adamw_torch', choices=['adamw_hf', 'adamw_torch', 'adamw_torch_fused', 'adamw_torch_xla', 'adamw_apex_fused', 'adafactor', 'adamw_bnb_8bit', 'adamw_anyprecision', 'sgd', 'adagrad'], info='Different optimizer implementation options, for advanced users. Effects of different options are not well documented yet.', elem_classes=['slim-dropdown'])
 
                         with gr.Column():
@@ -113,8 +118,6 @@ def ui():
                             add_eos_token = gr.Checkbox(label='Add EOS token', value=False, info="Adds EOS token for each dataset item")
                             add_eos_token_type = gr.Dropdown(label='EOS placement (raw text)', choices=['Every Block', 'Hard Cut Blocks Only'], value='Every Block', info='', allow_custom_value = False)
                             
-                            precize_slicing_overlap = gr.Checkbox(label='Overlap blocks in Raw Text', value = True, info="Adds overlapping blocks (except for Hard Cut)") 
-
                             higher_rank_limit = gr.Checkbox(label='Enable higher ranks', value=False, info='If checked, changes Rank/Alpha slider above to go much higher. This will not work without a datacenter-class GPU.')
                             report_to = gr.Radio(label="Save detailed logs with", value="None", choices=["None", "wandb", "tensorboard"], interactive=True)
 
@@ -141,8 +144,10 @@ def ui():
 
                     with gr.Row():
                         with gr.Column():
-                            hard_cut_string = gr.Textbox(label='Hard Cut String', value='\\n\\n\\n', info='String that indicates a hard cut between text parts. Helps prevent unwanted overlap.')
-                            min_chars = gr.Number(label='Ignore small blocks', value=0, info='Ignore Hard Cut blocks that have less or equal characters than this number')
+                            precize_slicing_overlap = gr.Checkbox(label='Create Overlapping blocks', value = True) 
+                        with gr.Column():
+                            hard_cut_string = gr.Textbox(label='Hard Cut String', value='\\n\\n\\n', info='String that indicates a cut between logical blocks of text (ex. Ideas or Chapters). Helps prevent unwanted overlap between unrelated ideas.')
+                            min_chars = gr.Number(label='Ignore small blocks', value=0, info='Ignore Text blocks that have less or equal characters than this number.')
 
                 with gr.Row():
                     start_button = gr.Button("Start LoRA Training", variant='primary')
@@ -176,7 +181,7 @@ def ui():
             refresh_table = gr.Button('Refresh the table', elem_classes="small-button")
 
     # Training events
-    all_params = [lora_name, always_override, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lr_scheduler_type, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, higher_rank_limit, warmup_steps, optimizer, hard_cut_string, train_only_after, stop_at_loss, add_eos_token, min_chars, report_to, precize_slicing_overlap, add_eos_token_type, save_steps_under_loss, add_bos_token]
+    all_params = [lora_name, always_override, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lr_scheduler_type, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, higher_rank_limit, warmup_steps, optimizer, hard_cut_string, train_only_after, stop_at_loss, add_eos_token, min_chars, report_to, precize_slicing_overlap, add_eos_token_type, save_steps_under_loss, add_bos_token, training_projection]
 
     copy_from.change(do_copy_params, [copy_from] + all_params, all_params)
     start_button.click(do_train, all_params, output)
@@ -294,7 +299,7 @@ def calc_trainable_parameters(model):
     return trainable_params, all_param
 
 
-def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lr_scheduler_type: str, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, higher_rank_limit: bool, warmup_steps: int, optimizer: str, hard_cut_string: str, train_only_after: str, stop_at_loss: float, add_eos_token: bool, min_chars: int, report_to: str, precize_slicing_overlap: bool, add_eos_token_type: str, save_steps_under_loss: float, add_bos_token: bool):
+def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lr_scheduler_type: str, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, higher_rank_limit: bool, warmup_steps: int, optimizer: str, hard_cut_string: str, train_only_after: str, stop_at_loss: float, add_eos_token: bool, min_chars: int, report_to: str, precize_slicing_overlap: bool, add_eos_token_type: str, save_steps_under_loss: float, add_bos_token: bool, training_projection: str):
 
     if shared.args.monkey_patch:
         from alpaca_lora_4bit.monkeypatch.peft_tuners_lora_monkey_patch import (
@@ -505,6 +510,17 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
     # base model is now frozen and should not be reused for any other LoRA training than this one
     shared.model_dirty_from_training = True
+    if training_projection==train_choices[0]:
+        model_to_lora_modules["llama"] = ["gate_proj","down_proj","up_proj","q_proj","k_proj","v_proj","o_proj"]
+    elif training_projection==train_choices[1]:
+        model_to_lora_modules["llama"] = ["q_proj","k_proj", "v_proj", "o_proj"]
+    elif training_projection==train_choices[2]:
+        model_to_lora_modules["llama"] = ["q_proj","k_proj", "v_proj"]
+    elif training_projection==train_choices[3]:
+        model_to_lora_modules["llama"] = ["k_proj", "v_proj", "down_proj"]        
+    else:
+        model_to_lora_modules["llama"] = ["q_proj", "v_proj"]            
+
 
     logger.info("Preparing for training...")
     config = LoraConfig(
