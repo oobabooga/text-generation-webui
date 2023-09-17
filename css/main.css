@@ -554,7 +554,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
   display: flex;
   flex-direction: column-reverse;
   padding-bottom: 3px;
-  flex: 0 auto;
+  flex: 0 auto !important;
 }
 
 #chat-input-container {
