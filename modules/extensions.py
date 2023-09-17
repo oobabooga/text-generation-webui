@@ -27,6 +27,7 @@ def apply_settings(extension, name):
 
 def load_extensions():
     global state, setup_called
+    state = {}
     for i, name in enumerate(shared.args.extensions):
         if name in available_extensions:
             if name != 'api':
@@ -43,11 +44,6 @@ def load_extensions():
             except:
                 logger.error(f'Failed to load the extension "{name}".')
                 traceback.print_exc()
-
-
-def initialize_state():
-    global state
-    state = {}
 
 
 # This iterator returns the extensions in the order specified in the command-line
