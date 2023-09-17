@@ -107,9 +107,14 @@ class Exllamav2Model:
         return self.tokenizer.encode(string, add_bos=True)
 
     def decode(self, ids, **kwargs):
-        if isinstance(ids, int):
-            ids = torch.tensor([[ids]])
+        if isinstance(ids, list):
+            ids = torch.tensor([ids])
         elif isinstance(ids, torch.Tensor) and ids.numel() == 1:
             ids = ids.view(1, -1)
 
         return self.tokenizer.decode(ids)[0]
+
+    def get_logits(self, token_ids, **kwargs):
+        self.cache.current_seq_len = 0
+        self.model.forward(token_ids[:, :-1], self.cache, input_mask=None, preprocess_only=True)
+        return self.model.forward(token_ids[:, -1:], self.cache, input_mask=None, **kwargs).float().cpu()

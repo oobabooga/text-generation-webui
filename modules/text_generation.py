@@ -106,6 +106,10 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
 
 
 def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_length=None):
+    if shared.tokenizer is None:
+        logger.error('No tokenizer is loaded')
+        raise ValueError('No tokenizer is loaded')
+
     if shared.model.__class__.__name__ in ['LlamaCppModel', 'RWKVModel', 'CtransformersModel', 'Exllamav2Model']:
         input_ids = shared.tokenizer.encode(str(prompt))
         if shared.model.__class__.__name__ not in ['Exllamav2Model']:
@@ -133,6 +137,10 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
 
 
 def decode(output_ids, skip_special_tokens=True):
+    if shared.tokenizer is None:
+        logger.error('No tokenizer is loaded')
+        raise ValueError('No tokenizer is loaded')
+
     return shared.tokenizer.decode(output_ids, skip_special_tokens)
 
 
@@ -146,11 +154,11 @@ def get_encoded_length(prompt):
 
 def get_token_ids(prompt):
     tokens = encode(prompt)[0]
-    decoded_tokens = [shared.tokenizer.decode(i) for i in tokens]
+    decoded_tokens = [shared.tokenizer.decode([i]) for i in tokens]
 
     output = ''
     for row in list(zip(tokens, decoded_tokens)):
-        output += f"{str(int(row[0])).ljust(5)}  -  {row[1]}\n"
+        output += f"{str(int(row[0])).ljust(5)}  -  {repr(row[1])}\n"
 
     return output
 
