@@ -1,6 +1,7 @@
 import html
 import random
 import time
+import json
 from pathlib import Path
 
 import gradio as gr
@@ -29,43 +30,8 @@ params = {
 
 current_params = params.copy()
 
-voices_en = ['en_99', 'en_45', 'en_18', 'en_117', 'en_49', 'en_51', 'en_68', 'en_0', 'en_26', 'en_56', 'en_74', 'en_5', 'en_38', 'en_53', 'en_21', 'en_37', 'en_107', 'en_10', 'en_82', 'en_16', 'en_41', 'en_12', 'en_67', 'en_61', 'en_14', 'en_11', 'en_39', 'en_52', 'en_24', 'en_97', 'en_28', 'en_72', 'en_94', 'en_36', 'en_4', 'en_43', 'en_88', 'en_25', 'en_65', 'en_6', 'en_44', 'en_75', 'en_91', 'en_60', 'en_109', 'en_85', 'en_101', 'en_108', 'en_50', 'en_96', 'en_64', 'en_92', 'en_76', 'en_33', 'en_116', 'en_48', 'en_98', 'en_86', 'en_62', 'en_54', 'en_95', 'en_55', 'en_111', 'en_3', 'en_83', 'en_8', 'en_47', 'en_59', 'en_1', 'en_2', 'en_7', 'en_9', 'en_13', 'en_15', 'en_17', 'en_19', 'en_20', 'en_22', 'en_23', 'en_27', 'en_29', 'en_30', 'en_31', 'en_32', 'en_34', 'en_35', 'en_40', 'en_42', 'en_46', 'en_57', 'en_58', 'en_63', 'en_66', 'en_69', 'en_70', 'en_71', 'en_73', 'en_77', 'en_78', 'en_79', 'en_80', 'en_81', 'en_84', 'en_87', 'en_89', 'en_90', 'en_93', 'en_100', 'en_102', 'en_103', 'en_104', 'en_105', 'en_106', 'en_110', 'en_112', 'en_113', 'en_114', 'en_115']
-voices_es = ["es_0", "es_1", "es_2"]
-voices_fr = ["fr_0", "fr_1", "fr_2", "fr_3", "fr_4", "fr_5"]
-voices_de = ["bernd_ungerer", "eva_k", "friedrich", "hokuspokus", "karlsson"]
-voices_ru = ["aidar", "baya", "kseniya", "xenia"]
-voices_ua = ["mykyta"]
-voices_uz = ["dilnavoz"]
-voices_hindi = ["hindi_female", "hindi_male"]
-voices_malayalam = ["malayalam_female", "malayalam_male"]
-voices_manipuri = ["manipuri_female"]
-voices_bengali = ["bengali_female", "bengali_male"]
-voices_rajasthani = ["rajasthani_female", "rajasthani_male"]
-voices_tamil = ["tamil_female", "tamil_male"]
-voices_telugu = ["telugu_female", "telugu_male"]
-voices_gujarati = ["gujarati_female", "gujarati_male"]
-voices_kannada = ["kannada_female", "kannada_male"]
-voices_en_indic = ['tamil_female', 'bengali_female', 'malayalam_male', 'manipuri_female', 'assamese_female', 'gujarati_male', 'telugu_male', 'kannada_male', 'hindi_female', 'rajasthani_female', 'kannada_female', 'bengali_male', 'tamil_male', 'gujarati_female', 'assamese_male']
-
-languages = {
-    "English": {"lang_id": "en", "voices": voices_en, "default_voice": "en_56", "model_id": "v3_en"},
-    "Español": {"lang_id": "es", "voices": voices_es, "default_voice": "es_0", "model_id": "v3_es"},
-    "Français": {"lang_id": "fr", "voices": voices_fr, "default_voice": "fr_0", "model_id": "v3_fr"},
-    "Deutsch": {"lang_id": "de", "voices": voices_de, "default_voice": "eva_k", "model_id": "v3_de"},
-    "русский": {"lang_id": "ru", "voices": voices_ru, "default_voice": "aidar", "model_id": "ru_v3"},
-    "українська": {"lang_id": "ua", "voices": voices_ua, "default_voice": "mykyta", "model_id": "v3_ua"},
-    "Oʻzbekcha": {"lang_id": "uz", "voices": voices_uz, "default_voice": "dilnavoz", "model_id": "v3_uz"},
-    "हिन्दी": {"lang_id": "indic", "voices": voices_hindi, "default_voice": "hindi_female", "model_id": "v3_indic", "romanize": "Devanagari"},
-    "മലയാളം": {"lang_id": "indic", "voices": voices_malayalam, "default_voice": "malayalam_female", "model_id": "v3_indic", "romanize": "Malayalam"},
-    "মৈইতৈইলোন": {"lang_id": "indic", "voices": voices_manipuri, "default_voice": "manipuri_female", "model_id": "v3_indic", "romanize": "Bengali"},
-    "বাংলা": {"lang_id": "indic", "voices": voices_bengali, "default_voice": "bengali_female", "model_id": "v3_indic", "romanize": "Bengali"},
-    "राजस्थानी": {"lang_id": "indic", "voices": voices_rajasthani, "default_voice": "rajasthani_female", "model_id": "v3_indic", "romanize": "Devanagari"},
-    "தமிழ்": {"lang_id": "indic", "voices": voices_tamil, "default_voice": "tamil_female", "model_id": "v3_indic", "romanize": "Tamil"},
-    "తెలుగు": {"lang_id": "indic", "voices": voices_telugu, "default_voice": "telugu_female", "model_id": "v3_indic", "romanize": "Telugu"},
-    "ગુજરાતી": {"lang_id": "indic", "voices": voices_gujarati, "default_voice": "gujarati_female", "model_id": "v3_indic", "romanize": "Gujarati"},
-    "ಕನ್ನಡ": {"lang_id": "indic", "voices": voices_kannada, "default_voice": "kannada_female", "model_id": "v3_indic", "romanize": "Kannada"},
-    "English (India)": {"lang_id": "en", "voices": voices_en_indic, "default_voice": "hindi_female", "model_id": "v3_en_indic"},
-}
+with open(Path("extensions/silero_tts/languages.json"), encoding='utf8') as f:
+    languages = json.load(f)
 
 voice_pitches = ['x-low', 'low', 'medium', 'high', 'x-high']
 voice_speeds = ['x-slow', 'slow', 'medium', 'fast', 'x-fast']
@@ -228,7 +194,7 @@ def ui():
         
         with gr.Row():
             language = gr.Dropdown(value=params['language'], choices=languages.keys(), label='Language')
-            voice = gr.Dropdown(value=params['speaker'], choices=voices_en, label='TTS voice')
+            voice = gr.Dropdown(value=params['speaker'], choices=languages[params['language']]["voices"], label='TTS voice')
         with gr.Row():
             v_pitch = gr.Dropdown(value=params['voice_pitch'], choices=voice_pitches, label='Voice pitch')
             v_speed = gr.Dropdown(value=params['voice_speed'], choices=voice_speeds, label='Voice speed')
