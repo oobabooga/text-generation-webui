@@ -208,3 +208,8 @@ class ExllamaModel:
             ids = ids.view(1, -1)
 
         return self.tokenizer.decode(ids)[0]
+
+    def get_logits(self, token_ids, **kwargs):
+        self.cache.current_seq_len = 0
+        self.model.forward(token_ids[:, :-1], self.cache, input_mask=None, preprocess_only=True)
+        return self.model.forward(token_ids[:, -1:], self.cache, **kwargs).float().cpu()

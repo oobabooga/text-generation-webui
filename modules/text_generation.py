@@ -150,7 +150,7 @@ def get_token_ids(prompt):
 
     output = ''
     for row in list(zip(tokens, decoded_tokens)):
-        output += f"{str(int(row[0])).ljust(5)}  -  {row[1]}\n"
+        output += f"{str(int(row[0])).ljust(5)}  -  {repr(row[1])[1:-1]}\n"
 
     return output
 
