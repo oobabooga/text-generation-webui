@@ -193,7 +193,7 @@ def ui():
         show_text = gr.Checkbox(value=params['show_text'], label='Show message text under audio player')
         
         with gr.Row():
-            language = gr.Dropdown(value=params['language'], choices=languages.keys(), label='Language')
+            language = gr.Dropdown(value=params['language'], choices=sorted(languages.keys()), label='Language')
             voice = gr.Dropdown(value=params['speaker'], choices=languages[params['language']]["voices"], label='TTS voice')
         with gr.Row():
             v_pitch = gr.Dropdown(value=params['voice_pitch'], choices=voice_pitches, label='Voice pitch')

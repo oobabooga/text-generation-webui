@@ -5,99 +5,105 @@
         "default_voice": "en_56",
         "model_id": "v3_en"
     },
-    "Español": {
+    "Spanish": {
         "lang_id": "es",
         "voices": ["es_0", "es_1", "es_2"],
         "default_voice": "es_0",
         "model_id": "v3_es"
     },
-    "Français": {
+    "French": {
         "lang_id": "fr",
         "voices": ["fr_0", "fr_1", "fr_2", "fr_3", "fr_4", "fr_5"],
         "default_voice": "fr_0",
         "model_id": "v3_fr"
     },
-    "Deutsch": {
+    "German": {
         "lang_id": "de",
         "voices": ["bernd_ungerer", "eva_k", "friedrich", "hokuspokus", "karlsson"],
         "default_voice": "eva_k",
         "model_id": "v3_de"
     },
-    "русский": {
+    "Russian": {
         "lang_id": "ru",
         "voices": ["aidar", "baya", "kseniya", "xenia"],
         "default_voice": "aidar",
         "model_id": "ru_v3"
     },
-    "українська": {
+    "Tatar": {
+        "lang_id": "tt",
+        "voices": ["dilyara"],
+        "default_voice": "dilyara",
+        "model_id": "v3_tt"
+    },
+    "Ukranian": {
         "lang_id": "ua",
         "voices": ["mykyta"],
         "default_voice": "mykyta",
         "model_id": "v3_ua"
     },
-    "Oʻzbekcha": {
+    "Uzbek": {
         "lang_id": "uz",
         "voices": ["dilnavoz"],
         "default_voice": "dilnavoz",
         "model_id": "v3_uz"
     },
-    "हिन्दी": {
+    "Hindi": {
         "lang_id": "indic",
         "voices": ["hindi_female", "hindi_male"],
         "default_voice": "hindi_female",
         "model_id": "v3_indic",
         "romanize": "Devanagari"
     },
-    "മലയാളം": {
+    "Malayalam": {
         "lang_id": "indic",
         "voices": ["malayalam_female", "malayalam_male"],
         "default_voice": "malayalam_female",
         "model_id": "v3_indic",
         "romanize": "Malayalam"
     },
-    "মৈইতৈইলোন": {
+    "Manipuri": {
         "lang_id": "indic",
         "voices": ["manipuri_female"],
         "default_voice": "manipuri_female",
         "model_id": "v3_indic",
         "romanize": "Bengali"
     },
-    "বাংলা": {
+    "Bengali": {
         "lang_id": "indic",
         "voices": ["bengali_female", "bengali_male"],
         "default_voice": "bengali_female",
         "model_id": "v3_indic",
         "romanize": "Bengali"
     },
-    "राजस्थानी": {
+    "Rajasthani": {
         "lang_id": "indic",
         "voices": ["rajasthani_female", "rajasthani_male"],
         "default_voice": "rajasthani_female",
         "model_id": "v3_indic",
         "romanize": "Devanagari"
     },
-    "தமிழ்": {
+    "Tamil": {
         "lang_id": "indic",
         "voices": ["tamil_female", "tamil_male"],
         "default_voice": "tamil_female",
         "model_id": "v3_indic",
         "romanize": "Tamil"
     },
-    "తెలుగు": {
+    "Telugu": {
         "lang_id": "indic",
         "voices": ["telugu_female", "telugu_male"],
         "default_voice": "telugu_female",
         "model_id": "v3_indic",
         "romanize": "Telugu"
     },
-    "ગુજરાતી": {
+    "Gujarati": {
         "lang_id": "indic",
         "voices": ["gujarati_female", "gujarati_male"],
         "default_voice": "gujarati_female",
         "model_id": "v3_indic",
         "romanize": "Gujarati"
     },
-    "ಕನ್ನಡ": {
+    "Kannada": {
         "lang_id": "indic",
         "voices": ["kannada_female", "kannada_male"],
         "default_voice": "kannada_female",
@@ -109,5 +115,125 @@
         "voices": ["tamil_female", "bengali_female", "malayalam_male", "manipuri_female", "assamese_female", "gujarati_male", "telugu_male", "kannada_male", "hindi_female", "rajasthani_female", "kannada_female", "bengali_male", "tamil_male", "gujarati_female", "assamese_male"],
         "default_voice": "hindi_female",
         "model_id": "v3_en_indic"
+    },
+    "Avar": {
+        "lang_id": "cyrillic",
+        "voices": ["b_ava"],
+        "default_voice": "b_ava",
+        "model_id": "v4_cyrillic"
+    },
+    "Bashkir": {
+        "lang_id": "cyrillic",
+        "voices": ["b_bashkir"],
+        "default_voice": "b_bashkir",
+        "model_id": "v4_cyrillic"
+    },
+    "Bulgarian": {
+        "lang_id": "cyrillic",
+        "voices": ["b_bulb", "b_bulc"],
+        "default_voice": "b_bulb",
+        "model_id": "v4_cyrillic"
+    },
+    "Chechen": {
+        "lang_id": "cyrillic",
+        "voices": ["cv_ekaterina", "b_cv"],
+        "default_voice": "b_che",
+        "model_id": "v4_cyrillic"
+    },
+    "Chuvash": {
+        "lang_id": "cyrillic",
+        "voices": ["b_che"],
+        "default_voice": "b_che",
+        "model_id": "v4_cyrillic"
+    },
+    "Erzya": {
+        "lang_id": "cyrillic",
+        "voices": ["b_myv"],
+        "default_voice": "b_myv",
+        "model_id": "v4_cyrillic"
+    },
+    "Kalmyk": {
+        "lang_id": "cyrillic",
+        "voices": ["b_kalmyk"],
+        "default_voice": "b_kalmyk",
+        "model_id": "v4_cyrillic"
+    },
+    "Karachay-Balkar": {
+        "lang_id": "cyrillic",
+        "voices": ["b_krc"],
+        "default_voice": "b_krc",
+        "model_id": "v4_cyrillic"
+    },
+    "Kazakh": {
+        "lang_id": "cyrillic",
+        "voices": ["kz_F1", "kz_F2", "kz_F3", "kz_M1", "kz_M1"],
+        "default_voice": "kz_F1",
+        "model_id": "v4_cyrillic"
+    },
+    "Khakas": {
+        "lang_id": "cyrillic",
+        "voices": ["b_kjh"],
+        "default_voice": "b_kjh",
+        "model_id": "v4_cyrillic"
+    },
+    "Komi-Ziryan": {
+        "lang_id": "cyrillic",
+        "voices": ["b_kpv"],
+        "default_voice": "b_kpv",
+        "model_id": "v4_cyrillic"
+    },
+    "Lezghian": {
+        "lang_id": "cyrillic",
+        "voices": ["b_lez"],
+        "default_voice": "b_lez",
+        "model_id": "v4_cyrillic"
+    },
+    "Mari": {
+        "lang_id": "cyrillic",
+        "voices": ["b_mhr"],
+        "default_voice": "b_mhr",
+        "model_id": "v4_cyrillic"
+    },
+    "Mari High": {
+        "lang_id": "cyrillic",
+        "voices": ["b_mrj"],
+        "default_voice": "b_mrj",
+        "model_id": "v4_cyrillic"
+    },
+    "Nogai": {
+        "lang_id": "cyrillic",
+        "voices": ["b_nog"],
+        "default_voice": "b_nog",
+        "model_id": "v4_cyrillic"
+    },
+    "Ossetic": {
+        "lang_id": "cyrillic",
+        "voices": ["b_oss"],
+        "default_voice": "b_nog",
+        "model_id": "v4_cyrillic"
+    },
+    "Tuvinian": {
+        "lang_id": "cyrillic",
+        "voices": ["b_tyv"],
+        "default_voice": "b_tyv",
+        "model_id": "v4_cyrillic"
+    },
+    "Udmurt": {
+        "lang_id": "cyrillic",
+        "voices": ["b_udm"],
+        "default_voice": "b_udm",
+        "model_id": "v4_cyrillic"
+    },
+    "Yakut": {
+        "lang_id": "cyrillic",
+        "voices": ["b_sah"],
+        "default_voice": "b_sah",
+        "model_id": "v4_cyrillic"
+    },
+    "Kalmyk": {
+        "lang_id": "cyrillic",
+        "voices": ["kalmyk_delghir", "kalmyk_erdni"],
+        "default_voice": "kalmyk_delghir",
+        "model_id": "v4_cyrillic"
     }
 }
