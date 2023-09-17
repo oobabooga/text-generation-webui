@@ -24,7 +24,7 @@ def create_ui():
     with gr.Tab('Chat', elem_id='chat-tab'):
         with gr.Row():
             with gr.Column(elem_id='chat-col', elem_classes=old_ui_class):
-                shared.gradio['display'] = gr.HTML(value=chat_html_wrapper({'internal': [], 'visible': []}, shared.settings['name1'], shared.settings['name2'], 'chat', 'cai-chat'), elem_classes=["pretty_scrollbar", "chat-parent", old_ui_class])
+                shared.gradio['display'] = gr.HTML(value=chat_html_wrapper({'internal': [], 'visible': []}, shared.settings['name1'], shared.settings['name2'], 'chat', 'cai-chat'), elem_classes=old_ui_class)
 
                 with gr.Row(elem_id="chat-input-row", elem_classes=old_ui_class):
                     with gr.Column(scale=1, elem_id='gr-hover-container'):

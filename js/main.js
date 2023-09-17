@@ -106,7 +106,9 @@ typingSibling.insertBefore(typing, typingSibling.childNodes[2]);
 //------------------------------------------------
 // Chat scrolling
 //------------------------------------------------
-const targetElement = document.querySelector('.chat-parent');
+const targetElement = document.getElementById('chat').parentNode.parentNode.parentNode;
+targetElement.classList.add('pretty_scrollbar');
+targetElement.classList.add('chat-parent');
 let isScrolled = false;
 
 targetElement.addEventListener('scroll', function() {
