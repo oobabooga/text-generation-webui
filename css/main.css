@@ -581,3 +581,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 #chat-col.old-ui, #chat-col.bigchat {
     padding-bottom: 95px !important;
 }
+
+#clear-history-confirm.old-ui {
+    order: -1;
+}
