@@ -39,7 +39,8 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
     if generate_func is None:
         if shared.model_name == 'None' or shared.model is None:
             logger.error("No model is loaded! Select one in the Model tab.")
-            raise ValueError('No model is loaded! Select one in the Model tab.')
+            yield ''
+            return
 
         if shared.model.__class__.__name__ in ['LlamaCppModel', 'RWKVModel', 'ExllamaModel', 'Exllamav2Model', 'CtransformersModel']:
             generate_func = generate_reply_custom
