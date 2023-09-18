@@ -11,6 +11,17 @@ from transformers.modeling_outputs import CausalLMOutputWithPast
 from modules import shared
 from modules.logging_colors import logger
 
+try:
+    import flash_attn
+except ModuleNotFoundError:
+    logger.warning(
+        'You are running ExLlamaV2 without flash-attention. This will cause the VRAM usage '
+        'to be a lot higher than it could be.\n'
+        'Try installing flash-attention following the instructions here: '
+        'https://github.com/Dao-AILab/flash-attention#installation-and-features'
+    )
+    pass
+
 
 class Exllamav2HF(PreTrainedModel):
     def __init__(self, config: ExLlamaV2Config):

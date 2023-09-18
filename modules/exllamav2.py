@@ -13,6 +13,17 @@ from exllamav2.generator import ExLlamaV2BaseGenerator, ExLlamaV2Sampler
 from modules import shared
 from modules.text_generation import get_max_prompt_length
 
+try:
+    import flash_attn
+except ModuleNotFoundError:
+    logger.warning(
+        'You are running ExLlamaV2 without flash-attention. This will cause the VRAM usage '
+        'to be a lot higher than it could be.\n'
+        'Try installing flash-attention following the instructions here: '
+        'https://github.com/Dao-AILab/flash-attention#installation-and-features'
+    )
+    pass
+
 
 class Exllamav2Model:
     def __init__(self):
