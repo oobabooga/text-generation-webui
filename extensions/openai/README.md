@@ -168,31 +168,34 @@ print(text)
 
 ## Compatibility & not so compatibility
 
-| API endpoint              | tested with                        | notes                                                                       |
-| ------------------------- | ---------------------------------- | --------------------------------------------------------------------------- |
-| /v1/chat/completions      | openai.ChatCompletion.create()     | Use it with instruction following models                                    |
-| /v1/embeddings            | openai.Embedding.create()          | Using SentenceTransformer embeddings                                        |
-| /v1/images/generations    | openai.Image.create()              | Bare bones, no model configuration, response_format='b64_json' only.        |
-| /v1/moderations           | openai.Moderation.create()         | Basic initial support via embeddings                                        |
-| /v1/models                | openai.Model.list()                | Lists models, Currently loaded model first, plus some compatibility options |
-| /v1/models/{id}           | openai.Model.get()                 | returns whatever you ask for                                                |
-| /v1/edits                 | openai.Edit.create()               | Deprecated by openai, good with instruction following models                |
-| /v1/text_completion       | openai.Completion.create()         | Legacy endpoint, variable quality based on the model                        |
-| /v1/completions           | openai api completions.create      | Legacy endpoint (v0.25)                                                     |
-| /v1/engines/\*/embeddings | python-openai v0.25                | Legacy endpoint                                                             |
-| /v1/engines/\*/generate   | openai engines.generate            | Legacy endpoint                                                             |
-| /v1/engines               | openai engines.list                | Legacy Lists models                                                         |
-| /v1/engines/{model_name}  | openai engines.get -i {model_name} | You can use this legacy endpoint to load models via the api or command line |
-| /v1/images/edits          | openai.Image.create_edit()         | not yet supported                                                           |
-| /v1/images/variations     | openai.Image.create_variation()    | not yet supported                                                           |
-| /v1/audio/\*              | openai.Audio.\*                    | supported                                                                   |
-| /v1/files\*               | openai.Files.\*                    | not yet supported                                                           |
-| /v1/fine-tunes\*          | openai.FineTune.\*                 | not yet supported                                                           |
-| /v1/search                | openai.search, engines.search      | not yet supported                                                           |
+| API endpoint              | tested with                        | notes                                                                          |
+| ------------------------- | ---------------------------------- | ------------------------------------------------------------------------------ |
+| /v1/chat/completions      | openai.ChatCompletion.create()     | Use it with instruction following models                                       |
+| /v1/embeddings            | openai.Embedding.create()          | Using SentenceTransformer embeddings                                           |
+| /v1/images/generations    | openai.Image.create()              | Bare bones, no model configuration, response_format='b64_json' only.           |
+| /v1/moderations           | openai.Moderation.create()         | Basic initial support via embeddings                                           |
+| /v1/models                | openai.Model.list()                | Lists models, Currently loaded model first, plus some compatibility options    |
+| /v1/models/{id}           | openai.Model.get()                 | returns whatever you ask for                                                   |
+| /v1/edits                 | openai.Edit.create()               | Deprecated by openai, good with instruction following models                   |
+| /v1/text_completion       | openai.Completion.create()         | Legacy endpoint, variable quality based on the model                           |
+| /v1/completions           | openai api completions.create      | Legacy endpoint (v0.25)                                                        |
+| /v1/engines/\*/embeddings | python-openai v0.25                | Legacy endpoint                                                                |
+| /v1/engines/\*/generate   | openai engines.generate            | Legacy endpoint                                                                |
+| /v1/engines               | openai engines.list                | Legacy Lists models                                                            |
+| /v1/engines/{model_name}  | openai engines.get -i {model_name} | You can use this legacy endpoint to load models via the api or command line    |
+| /v1/images/edits          | openai.Image.create_edit()         | not yet supported                                                              |
+| /v1/images/variations     | openai.Image.create_variation()    | not yet supported                                                              |
+| /v1/audio/\*              | openai.Audio.\*                    | supported                                                                      |
+| /v1/audiox/\*             | openai.Audio.\*                    | like whisper audio endpoint, by [whisperX](https://github.com/m-bain/whisperX) |
+| /v1/files\*               | openai.Files.\*                    | not yet supported                                                              |
+| /v1/fine-tunes\*          | openai.FineTune.\*                 | not yet supported                                                              |
+| /v1/search                | openai.search, engines.search      | not yet supported                                                              |
 
 Because of the differences in OpenAI model context sizes (2k, 4k, 8k, 16k, etc,) you may need to adjust the max_tokens to fit into the context of the model you choose.
 
 Streaming, temperature, top_p, max_tokens, stop, should all work as expected, but not all parameters are mapped correctly.
+
+The whisperX endpoint requires the Hugging Face API token, which should be configured through the "HF_TOKEN" environment variable.
 
 Some hacky mappings:
 

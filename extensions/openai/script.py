@@ -23,9 +23,11 @@ from modules import shared
 import cgi
 import speech_recognition as sr
 from pydub import AudioSegment
+from extensions.openai.audiox import transcribe_align_diarize
 
 params = {
     'port': int(os.environ.get('OPENEDAI_PORT')) if 'OPENEDAI_PORT' in os.environ else 5001,
+    'hf_token': os.environ.get('HF_TOKEN'),
 }
 
 
@@ -143,15 +145,39 @@ class Handler(BaseHTTPRequestHandler):
     @openai_error_handler
     def do_POST(self):
 
-        if '/v1/audio/transcriptions' in self.path:
-            r = sr.Recognizer()
-
+        if '/v1/audiox/transcriptions' in self.path:
             # Parse the form data
             form = cgi.FieldStorage(
                 fp=self.rfile,
                 headers=self.headers,
                 environ={'REQUEST_METHOD': 'POST', 'CONTENT_TYPE': self.headers['Content-Type']}
             )
+
+            # Retrieve parameters from the form data
+            audio_file = form['file']  # This is a MiniFieldStorage instance
+            file_data = audio_file.file  # This is a file-like object
+            filename = audio_file.filename  # This is the original filename with extension
+
+            device = form.getvalue('device', 'cuda')  # Default to 'cuda' if not provided
+            batch_size = int(form.getvalue('batch_size', 16))  # Default to 16 if not provided
+            compute_type = form.getvalue('compute_type', 'float16')  # Default to 'float16' if not provided
+            model_name = form.getvalue('model', 'large-v2') # Default to 'large-v2' if not provided
+            hf_token = form.getvalue('hf_token', params['hf_token'])
+
+            # Call the function
+            result = transcribe_align_diarize(filename, file_data, device, batch_size, compute_type, model_name, hf_token)
+            self.return_json(result, no_debug=True)
+            return 
+
+        if '/v1/audio/transcriptions' in self.path:
+            # Parse the form data
+            form = cgi.FieldStorage(
+                fp=self.rfile,
+                headers=self.headers,
+                environ={'REQUEST_METHOD': 'POST', 'CONTENT_TYPE': self.headers['Content-Type']}
+            )
+
+            r = sr.Recognizer()
             
             audio_file = form['file'].file
             audio_data = AudioSegment.from_file(audio_file)

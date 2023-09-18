@@ -2,3 +2,5 @@ SpeechRecognition==3.10.0
 flask_cloudflared==0.0.12
 sentence-transformers
 tiktoken
+torchaudio
+git+https://github.com/m-bain/whisperx.git
