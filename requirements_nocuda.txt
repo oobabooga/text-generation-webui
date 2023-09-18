@@ -4,7 +4,7 @@ gradio_client==0.2.5
 gradio==3.33.1
 pydantic==1.10.12
 
-accelerate==0.22.*
+accelerate==0.23.*
 colorama
 datasets
 einops
