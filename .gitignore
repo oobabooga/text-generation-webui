@@ -33,3 +33,10 @@ models/config-user.yaml
 
 .DS_Store
 Thumbs.db
+
+css/chat_style-*
+!css/chat_style-cai-chat.css
+!css/chat_style-cai-chat-square.css
+!css/chat_style-messenger.css
+!css/chat_style-TheEncrypted777.css
+!css/chat_style-wpp.css
