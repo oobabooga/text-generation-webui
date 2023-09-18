@@ -333,7 +333,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     overflow: auto !important;
 }
 
-.chat-parent.old-ui {
+.old-ui .chat-parent {
     height: calc(100dvh - 270px);
 }
 
@@ -536,7 +536,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
   opacity: 0.333;
 }
 
-#chat-buttons:not(.old-ui) {
+#chat-tab:not(.old-ui) #chat-buttons {
     display: none !important;
 }
 
@@ -570,7 +570,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
   padding-bottom: 20px;
 }
 
-#chat-input-row.old-ui, #chat-input-row.bigchat {
+.old-ui #chat-input-row, #chat-input-row.bigchat {
   padding-bottom: 0px !important;
 }
 
@@ -578,10 +578,10 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     padding-bottom: 115px;
 }
 
-#chat-col.old-ui, #chat-col.bigchat {
+.old-ui #chat-col, #chat-col.bigchat {
     padding-bottom: 95px !important;
 }
 
-#chat-buttons.old-ui #clear-history-confirm {
+.old-ui #chat-buttons #clear-history-confirm {
     order: -1;
 }
