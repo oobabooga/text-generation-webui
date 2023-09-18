@@ -107,7 +107,6 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
 
 def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_length=None):
     if shared.tokenizer is None:
-        logger.error('No tokenizer is loaded')
         raise ValueError('No tokenizer is loaded')
 
     if shared.model.__class__.__name__ in ['LlamaCppModel', 'RWKVModel', 'CtransformersModel', 'Exllamav2Model']:
@@ -138,7 +137,6 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
 
 def decode(output_ids, skip_special_tokens=True):
     if shared.tokenizer is None:
-        logger.error('No tokenizer is loaded')
         raise ValueError('No tokenizer is loaded')
 
     return shared.tokenizer.decode(output_ids, skip_special_tokens)

@@ -26,8 +26,15 @@ from pydub import AudioSegment
 from extensions.openai.audiox import transcribe_align_diarize
 
 params = {
-    'port': int(os.environ.get('OPENEDAI_PORT')) if 'OPENEDAI_PORT' in os.environ else 5001,
-    'hf_token': os.environ.get('HF_TOKEN'),
+    # default params
+    'port': 5001,
+    'embedding_device': 'cpu',
+    'embedding_model': 'all-mpnet-base-v2',
+
+    # optional params
+    'sd_webui_url': '',
+    'debug': 0,
+    'hf_token': ''
 }
 
 
@@ -108,11 +115,14 @@ class Handler(BaseHTTPRequestHandler):
             try:
                 func(self)
             except InvalidRequestError as e:
-                self.openai_error(e.message, e.code, e.__class__.__name__, e.param, internal_message=e.internal_message)
+                self.openai_error(e.message, e.code, e.__class__.__name__,
+                                  e.param, internal_message=e.internal_message)
             except OpenAIError as e:
-                self.openai_error(e.message, e.code, e.__class__.__name__, internal_message=e.internal_message)
+                self.openai_error(
+                    e.message, e.code, e.__class__.__name__, internal_message=e.internal_message)
             except Exception as e:
-                self.openai_error(repr(e), 500, 'OpenAIError', internal_message=traceback.format_exc())
+                self.openai_error(repr(e), 500, 'OpenAIError',
+                                  internal_message=traceback.format_exc())
 
         return wrapper
 
@@ -125,7 +135,8 @@ class Handler(BaseHTTPRequestHandler):
             is_legacy = 'engines' in self.path
             is_list = self.path in ['/v1/engines', '/v1/models']
             if is_legacy and not is_list:
-                model_name = self.path[self.path.find('/v1/engines/') + len('/v1/engines/'):]
+                model_name = self.path[self.path.find(
+                    '/v1/engines/') + len('/v1/engines/'):]
                 resp = OAImodels.load_model(model_name)
             elif is_list:
                 resp = OAImodels.list_models(is_legacy)
@@ -150,7 +161,8 @@ class Handler(BaseHTTPRequestHandler):
             form = cgi.FieldStorage(
                 fp=self.rfile,
                 headers=self.headers,
-                environ={'REQUEST_METHOD': 'POST', 'CONTENT_TYPE': self.headers['Content-Type']}
+                environ={'REQUEST_METHOD': 'POST',
+                         'CONTENT_TYPE': self.headers['Content-Type']}
             )
 
             # Retrieve parameters from the form data
@@ -158,52 +170,61 @@ class Handler(BaseHTTPRequestHandler):
             file_data = audio_file.file  # This is a file-like object
             filename = audio_file.filename  # This is the original filename with extension
 
-            device = form.getvalue('device', 'cuda')  # Default to 'cuda' if not provided
-            batch_size = int(form.getvalue('batch_size', 16))  # Default to 16 if not provided
-            compute_type = form.getvalue('compute_type', 'float16')  # Default to 'float16' if not provided
-            model_name = form.getvalue('model', 'large-v2') # Default to 'large-v2' if not provided
+            # Default to 'cuda' if not provided
+            device = form.getvalue('device', 'cuda')
+            # Default to 16 if not provided
+            batch_size = int(form.getvalue('batch_size', 16))
+            # Default to 'float16' if not provided
+            compute_type = form.getvalue('compute_type', 'float16')
+            # Default to 'large-v2' if not provided
+            model_name = form.getvalue('model', 'large-v2')
             hf_token = form.getvalue('hf_token', params['hf_token'])
 
             # Call the function
-            result = transcribe_align_diarize(filename, file_data, device, batch_size, compute_type, model_name, hf_token)
+            result = transcribe_align_diarize(
+                filename, file_data, device, batch_size, compute_type, model_name, hf_token)
             self.return_json(result, no_debug=True)
-            return 
+            return
 
         if '/v1/audio/transcriptions' in self.path:
             # Parse the form data
             form = cgi.FieldStorage(
                 fp=self.rfile,
                 headers=self.headers,
-                environ={'REQUEST_METHOD': 'POST', 'CONTENT_TYPE': self.headers['Content-Type']}
+                environ={'REQUEST_METHOD': 'POST',
+                         'CONTENT_TYPE': self.headers['Content-Type']}
             )
 
             r = sr.Recognizer()
-            
+
             audio_file = form['file'].file
             audio_data = AudioSegment.from_file(audio_file)
-            
+
             # Convert AudioSegment to raw data
             raw_data = audio_data.raw_data
-            
+
             # Create AudioData object
-            audio_data = sr.AudioData(raw_data, audio_data.frame_rate, audio_data.sample_width)
+            audio_data = sr.AudioData(
+                raw_data, audio_data.frame_rate, audio_data.sample_width)
             whipser_language = form.getvalue('language', None)
-            whipser_model = form.getvalue('model', 'tiny')  # Use the model from the form data if it exists, otherwise default to tiny
+            # Use the model from the form data if it exists, otherwise default to tiny
+            whipser_model = form.getvalue('model', 'tiny')
 
             transcription = {"text": ""}
-            
+
             try:
-                transcription["text"] = r.recognize_whisper(audio_data, language=whipser_language, model=whipser_model)
+                transcription["text"] = r.recognize_whisper(
+                    audio_data, language=whipser_language, model=whipser_model)
             except sr.UnknownValueError:
                 print("Whisper could not understand audio")
                 transcription["text"] = "Whisper could not understand audio UnknownValueError"
             except sr.RequestError as e:
                 print("Could not request results from Whisper", e)
                 transcription["text"] = "Whisper could not understand audio RequestError"
-            
+
             self.return_json(transcription, no_debug=True)
-            return   
-            
+            return
+
         debug_msg(self.requestline)
         debug_msg(self.headers)
 
@@ -211,18 +232,21 @@ class Handler(BaseHTTPRequestHandler):
         transfer_encoding = self.headers.get('Transfer-Encoding')
 
         if content_length:
-            body = json.loads(self.rfile.read(int(content_length)).decode('utf-8'))
+            body = json.loads(self.rfile.read(
+                int(content_length)).decode('utf-8'))
         elif transfer_encoding == 'chunked':
             chunks = []
             while True:
-                chunk_size = int(self.rfile.readline(), 16)  # Read the chunk size
+                # Read the chunk size
+                chunk_size = int(self.rfile.readline(), 16)
                 if chunk_size == 0:
                     break  # End of chunks
                 chunks.append(self.rfile.read(chunk_size))
                 self.rfile.readline()  # Consume the trailing newline after each chunk
             body = json.loads(b''.join(chunks).decode('utf-8'))
         else:
-            self.send_response(400, "Bad Request: Either Content-Length or Transfer-Encoding header expected.")
+            self.send_response(
+                400, "Bad Request: Either Content-Length or Transfer-Encoding header expected.")
             self.end_headers()
             return
 
@@ -241,9 +265,11 @@ class Handler(BaseHTTPRequestHandler):
 
                 response = []
                 if 'chat' in self.path:
-                    response = OAIcompletions.stream_chat_completions(body, is_legacy=is_legacy)
+                    response = OAIcompletions.stream_chat_completions(
+                        body, is_legacy=is_legacy)
                 else:
-                    response = OAIcompletions.stream_completions(body, is_legacy=is_legacy)
+                    response = OAIcompletions.stream_completions(
+                        body, is_legacy=is_legacy)
 
                 for resp in response:
                     self.send_sse(resp)
@@ -253,9 +279,11 @@ class Handler(BaseHTTPRequestHandler):
             else:
                 response = ''
                 if 'chat' in self.path:
-                    response = OAIcompletions.chat_completions(body, is_legacy=is_legacy)
+                    response = OAIcompletions.chat_completions(
+                        body, is_legacy=is_legacy)
                 else:
-                    response = OAIcompletions.completions(body, is_legacy=is_legacy)
+                    response = OAIcompletions.completions(
+                        body, is_legacy=is_legacy)
 
                 self.return_json(response)
 
@@ -269,23 +297,28 @@ class Handler(BaseHTTPRequestHandler):
 
             instruction = body['instruction']
             input = body.get('input', '')
-            temperature = clamp(default(body, 'temperature', req_params['temperature']), 0.001, 1.999)  # fixup absolute 0.0
-            top_p = clamp(default(body, 'top_p', req_params['top_p']), 0.001, 1.0)
+            temperature = clamp(default(
+                body, 'temperature', req_params['temperature']), 0.001, 1.999)  # fixup absolute 0.0
+            top_p = clamp(
+                default(body, 'top_p', req_params['top_p']), 0.001, 1.0)
 
             response = OAIedits.edits(instruction, input, temperature, top_p)
 
             self.return_json(response)
 
         elif '/images/generations' in self.path:
-            if 'SD_WEBUI_URL' not in os.environ:
-                raise ServiceUnavailableError("Stable Diffusion not available. SD_WEBUI_URL not set.")
+            if not os.environ.get('SD_WEBUI_URL', params.get('sd_webui_url', '')):
+                raise ServiceUnavailableError(
+                    "Stable Diffusion not available. SD_WEBUI_URL not set.")
 
             prompt = body['prompt']
             size = default(body, 'size', '1024x1024')
-            response_format = default(body, 'response_format', 'url')  # or b64_json
+            response_format = default(
+                body, 'response_format', 'url')  # or b64_json
             n = default(body, 'n', 1)  # ignore the batch limits of max 10
 
-            response = OAIimages.generations(prompt=prompt, size=size, response_format=response_format, n=n)
+            response = OAIimages.generations(
+                prompt=prompt, size=size, response_format=response_format, n=n)
 
             self.return_json(response, no_debug=True)
 
@@ -294,7 +327,8 @@ class Handler(BaseHTTPRequestHandler):
 
             input = body.get('input', body.get('text', ''))
             if not input:
-                raise InvalidRequestError("Missing required argument input", params='input')
+                raise InvalidRequestError(
+                    "Missing required argument input", params='input')
 
             if type(input) is str:
                 input = [input]
@@ -306,7 +340,8 @@ class Handler(BaseHTTPRequestHandler):
         elif '/moderations' in self.path:
             input = body['input']
             if not input:
-                raise InvalidRequestError("Missing required argument input", params='input')
+                raise InvalidRequestError(
+                    "Missing required argument input", params='input')
 
             response = OAImoderations.moderations(input)
 
@@ -339,17 +374,20 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def run_server():
-    server_addr = ('0.0.0.0' if shared.args.listen else '127.0.0.1', params['port'])
+    port = int(os.environ.get('OPENEDAI_PORT', params.get('port', 5001)))
+    server_addr = ('0.0.0.0' if shared.args.listen else '127.0.0.1', port)
     server = ThreadingHTTPServer(server_addr, Handler)
     if shared.args.share:
         try:
             from flask_cloudflared import _run_cloudflared
-            public_url = _run_cloudflared(params['port'], params['port'] + 1)
-            print(f'OpenAI compatible API ready at: OPENAI_API_BASE={public_url}/v1')
+            public_url = _run_cloudflared(port, port + 1)
+            print(
+                f'OpenAI compatible API ready at: OPENAI_API_BASE={public_url}/v1')
         except ImportError:
             print('You should install flask_cloudflared manually')
     else:
-        print(f'OpenAI compatible API ready at: OPENAI_API_BASE=http://{server_addr[0]}:{server_addr[1]}/v1')
+        print(
+            f'OpenAI compatible API ready at: OPENAI_API_BASE=http://{server_addr[0]}:{server_addr[1]}/v1')
 
     server.serve_forever()
 
