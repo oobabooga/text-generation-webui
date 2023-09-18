@@ -589,3 +589,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 .old-ui #chat-buttons #clear-history-confirm {
     order: -1;
 }
+
+#chat-tab:not(.old-ui) #chat-buttons + div {
+    margin-top: calc(var(--layout-gap) * -1)
+}
