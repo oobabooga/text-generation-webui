@@ -3,7 +3,6 @@ import os
 
 import numpy as np
 
-
 def float_list_to_base64(float_array: np.ndarray) -> str:
     # Convert the list to a float32 array that the OpenAPI client expects
     # float_array = np.array(float_list, dtype="float32")
@@ -26,5 +25,6 @@ def end_line(s):
 
 
 def debug_msg(*args, **kwargs):
-    if 'OPENEDAI_DEBUG' in os.environ:
+    from extensions.openai.script import params
+    if os.environ.get("OPENEDAI_DEBUG", params.get('debug', 0)):
         print(*args, **kwargs)

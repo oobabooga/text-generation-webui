@@ -1,6 +1,7 @@
 import re
 from functools import partial
 
+import numpy as np
 import torch
 
 from modules import RoPE, shared
@@ -97,8 +98,14 @@ class LlamaCppModel:
 
         return self.model.tokenize(string)
 
-    def decode(self, tokens):
-        return self.model.detokenize(tokens)
+    def decode(self, ids):
+        return self.model.detokenize(ids).decode('utf-8')
+
+    def get_logits(self, tokens):
+        self.model.eval(tokens)
+        logits = self.model._scores
+        logits = np.expand_dims(logits, 0)  # batch dim is expected
+        return torch.tensor(logits, dtype=torch.float32)
 
     def generate(self, prompt, state, callback=None):
 
@@ -109,7 +116,7 @@ class LlamaCppModel:
         # Handle truncation
         prompt = self.encode(prompt)
         prompt = prompt[-get_max_prompt_length(state):]
-        prompt = self.decode(prompt).decode('utf-8')
+        prompt = self.decode(prompt)
 
         logit_processors = LogitsProcessorList()
         if state['ban_eos_token']:

@@ -11,10 +11,10 @@ https://user-images.githubusercontent.com/3718215/233817203-69b57e77-0c55-4fd6-b
 To run this extension, download a LLM that supports multimodality, and then start server.py with the appropriate `--multimodal-pipeline` argument. Examples:
 
 ```
-python server.py --model wojtab_llava-7b-v0-4bit-128g --multimodal-pipeline llava-7b --chat
-python3 server.py --model wojtab_llava-13b-v0-4bit-128g --multimodal-pipeline llava-13b --chat
-python server.py --model anon8231489123_vicuna-13b-GPTQ-4bit-128g --multimodal-pipeline minigpt4-13b --chat
-python server.py --model llama-7b-4bit --multimodal-pipeline minigpt4-7b --chat
+python server.py --model wojtab_llava-7b-v0-4bit-128g --multimodal-pipeline llava-7b
+python3 server.py --model wojtab_llava-13b-v0-4bit-128g --multimodal-pipeline llava-13b
+python server.py --model anon8231489123_vicuna-13b-GPTQ-4bit-128g --multimodal-pipeline minigpt4-13b
+python server.py --model llama-7b-4bit --multimodal-pipeline minigpt4-7b
 ```
 
 There is built-in support for LLaVA-v0-13B and LLaVA-v0-7b. To install `minigpt4`:
