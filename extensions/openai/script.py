@@ -165,6 +165,12 @@ class Handler(BaseHTTPRequestHandler):
                          'CONTENT_TYPE': self.headers['Content-Type']}
             )
 
+            hf_token = form.getvalue('hf_token', os.environ.get(
+                'HF_TOKEN', params['hf_token']))
+            if not hf_token:
+                raise ServiceUnavailableError(
+                    "HuggingFace API token not available. HF_TOKEN not set.")
+
             # Retrieve parameters from the form data
             audio_file = form['file']  # This is a MiniFieldStorage instance
             file_data = audio_file.file  # This is a file-like object
@@ -178,7 +184,6 @@ class Handler(BaseHTTPRequestHandler):
             compute_type = form.getvalue('compute_type', 'float16')
             # Default to 'large-v2' if not provided
             model_name = form.getvalue('model', 'large-v2')
-            hf_token = form.getvalue('hf_token', params['hf_token'])
 
             # Call the function
             result = transcribe_align_diarize(
