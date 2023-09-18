@@ -116,7 +116,7 @@ class LlamaCppModel:
         # Handle truncation
         prompt = self.encode(prompt)
         prompt = prompt[-get_max_prompt_length(state):]
-        prompt = self.decode(prompt).decode('utf-8')
+        prompt = self.decode(prompt)
 
         logit_processors = LogitsProcessorList()
         if state['ban_eos_token']:

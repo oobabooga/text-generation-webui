@@ -214,30 +214,6 @@ for(i = 0; i < textareaElements.length; i++) {
 }
 
 //------------------------------------------------
-// Improve the looks of the chat input field
-//------------------------------------------------
-let isOld = document.querySelectorAll('.old-ui').length > 0;
-
-document.getElementById('chat-input').parentNode.style.background = 'transparent';
-document.getElementById('chat-input').parentNode.style.border = 'none';
-document.getElementById('chat-input').parentElement.parentElement.style.minWidth = 0;
-
-document.getElementById('stop').parentElement.parentElement.style.minWidth = 0;
-document.getElementById('stop').parentElement.parentElement.style.display = 'flex';
-document.getElementById('stop').parentElement.parentElement.style.flexDirection = 'column-reverse';
-document.getElementById('stop').parentElement.parentElement.style.paddingBottom = '3px';
-document.getElementById('stop').parentElement.parentElement.parentElement.style.paddingBottom = isOld ? '0px' : '20px';
-
-document.getElementById('stop').parentElement.parentElement.style.flex = '0 0 auto';
-
-document.getElementById('gr-hover').parentElement.style.minWidth = 0;
-document.getElementById('gr-hover').parentElement.style.display = 'flex';
-document.getElementById('gr-hover').parentElement.style.flexDirection = 'column-reverse';
-document.getElementById('gr-hover').parentElement.style.flex = '0';
-document.getElementById('gr-hover').parentElement.style.paddingRight = '20px';
-document.getElementById('gr-hover').parentElement.style.paddingBottom = '3px';
-
-//------------------------------------------------
 // Remove some backgrounds
 //------------------------------------------------
 const noBackgroundelements = document.querySelectorAll('.no-background');
@@ -251,7 +227,7 @@ for(i = 0; i < noBackgroundelements.length; i++) {
 // The show/hide events were adapted from:
 // https://github.com/SillyTavern/SillyTavern/blob/6c8bd06308c69d51e2eb174541792a870a83d2d6/public/script.js
 //------------------------------------------------
-var buttonsInChat = document.querySelectorAll("#chat-tab #chat-buttons:not(.old-ui) button");
+var buttonsInChat = document.querySelectorAll("#chat-tab:not(.old-ui) #chat-buttons button");
 var button = document.getElementById('hover-element-button');
 var menu = document.getElementById('hover-menu');
 
@@ -280,17 +256,16 @@ if (buttonsInChat.length > 0) {
         if (matches && matches.length > 1) {
             // Apply the transparent-substring class to the matched substring
             const substring = matches[1];
-            const newText = buttonText.replace(substring, `&nbsp;<span class="transparent-substring">${substring}</span>`);
+            const newText = buttonText.replace(substring, `&nbsp;<span class="transparent-substring">${substring.slice(1, -1)}</span>`);
             thisButton.innerHTML = newText;
         }
     }
 } else {
-    buttonsInChat = document.querySelectorAll("#chat-tab #chat-buttons.old-ui button");
-    console.log(buttonsInChat);
+    buttonsInChat = document.querySelectorAll("#chat-tab.old-ui #chat-buttons button");
     for (let i = 0; i < buttonsInChat.length; i++) {
         buttonsInChat[i].textContent = buttonsInChat[i].textContent.replace(/ \(.*?\)/, '');
     }
-    document.getElementById('gr-hover').parentElement.style.display = 'none';
+    document.getElementById('gr-hover-container').style.display = 'none';
 }
 
 function isMouseOverButtonOrMenu() {
