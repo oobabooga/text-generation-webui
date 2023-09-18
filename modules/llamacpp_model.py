@@ -120,7 +120,7 @@ class LlamaCppModel:
 
         logit_processors = LogitsProcessorList()
         if state['ban_eos_token']:
-            logit_processors.append(partial(ban_eos_logits_processor, self.model.tokenizer.eos_token_id))
+            logit_processors.append(partial(ban_eos_logits_processor, self.model.token_eos()))
 
         if state['custom_token_bans']:
             to_ban = [int(x) for x in state['custom_token_bans'].split(',')]
