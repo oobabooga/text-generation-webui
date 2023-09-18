@@ -179,15 +179,16 @@ class Handler(BaseHTTPRequestHandler):
             # Default to 'cuda' if not provided
             device = form.getvalue('device', 'cuda')
             # Default to 16 if not provided
-            batch_size = int(form.getvalue('batch_size', 16))
+            batch_size = int(form.getvalue('batch_size', 4))
             # Default to 'float16' if not provided
-            compute_type = form.getvalue('compute_type', 'float16')
+            compute_type = form.getvalue('compute_type', 'int8')
             # Default to 'large-v2' if not provided
             model_name = form.getvalue('model', 'large-v2')
+            language = form.getvalue('language')
 
             # Call the function
             result = transcribe_align_diarize(
-                filename, file_data, device, batch_size, compute_type, model_name, hf_token)
+                filename, file_data, device, batch_size, compute_type, model_name, language, hf_token)
             self.return_json(result, no_debug=True)
             return
 
