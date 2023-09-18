@@ -310,7 +310,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
         padding-right: 0px;
     }
 
-    .chat-parent {
+    .old-ui .chat-parent {
         height: calc(100dvh - 310px) !important;
     }
 }
