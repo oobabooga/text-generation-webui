@@ -96,7 +96,7 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
                     last_update = cur_time
                     yield reply
 
-        if stop_found:
+        if stop_found or (state['max_tokens_second'] > 0 and shared.stop_everything):
             break
 
     if not is_chat:
