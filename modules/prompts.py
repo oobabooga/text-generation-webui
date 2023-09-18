@@ -48,4 +48,4 @@ def count_tokens(text):
         tokens = get_encoded_length(text)
         return str(tokens)
     except:
-        return '-1'
+        return '0'
