@@ -1,11 +1,11 @@
 import argparse
+import sys
 from collections import OrderedDict
 from pathlib import Path
 
 import yaml
 
 from modules.logging_colors import logger
-
 
 # Model variables
 model = None
@@ -187,6 +187,11 @@ parser.add_argument('--multimodal-pipeline', type=str, default=None, help='The m
 
 args = parser.parse_args()
 args_defaults = parser.parse_args([])
+provided_arguments = []
+for arg in sys.argv[1:]:
+    arg = arg.lstrip('-').replace('-', '_')
+    if hasattr(args, arg):
+        provided_arguments.append(arg)
 
 # Deprecation warnings
 for k in ['chat', 'notebook', 'no_stream']:
