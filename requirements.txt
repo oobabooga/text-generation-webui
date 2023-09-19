@@ -13,7 +13,6 @@ markdown
 numpy==1.24
 optimum==1.13.1
 pandas
-#pandas<2.1
 peft==0.5.*
 Pillow>=9.5.0
 pyyaml
@@ -25,8 +24,6 @@ sentencepiece
 tensorboard
 tqdm
 wandb
-optimum
-auto-gptq
 
 # bitsandbytes
 bitsandbytes==0.41.1; platform_system != "Windows"
@@ -54,10 +51,3 @@ https://github.com/jllllll/GPTQ-for-LLaMa-CUDA/releases/download/0.1.0/gptq_for_
 
 # ctransformers
 https://github.com/jllllll/ctransformers-cuBLAS-wheels/releases/download/AVX2/ctransformers-0.2.27+cu117-py3-none-any.whl
-#####
-
-
-# AVX512
-# https://jllllll.github.io/llama-cpp-python-cuBLAS-wheels/AVX512/
-#https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/AVX512/llama_cpp_python-0.1.85+cu117-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
-https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/AVX512/llama_cpp_python-0.2.6+cu118-cp310-cp310-manylinux_2_31_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
