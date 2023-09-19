@@ -27,8 +27,10 @@ LABEL maintainer="Your Name <your.email@example.com>"
 LABEL description="Docker image for GPTQ-for-LLaMa and Text Generation WebUI"
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,rw apt-get update && \
-    apt-get install --no-install-recommends -y python3-dev libportaudio2 libasound-dev git python3 python3-pip make g++ ffmpeg && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get install --no-install-recommends -y python3-dev libportaudio2 libasound-dev git python3 python3-pip make \
+    g++ ffmpeg cuda-nvcc-11-8 && \
+    rm -rf /var/lib/apt/lists/* && \
+    ln -s /usr/local/cuda/bin/nvcc /usr/local/bin/nvcc
 
 RUN --mount=type=cache,target=/root/.cache/pip,rw pip3 install virtualenv
 RUN mkdir /app
