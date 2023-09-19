@@ -56,6 +56,8 @@ openai-sd_webui_url: http://127.0.0.1:7861
 openai-debug: 1
 ```
 
+If you've configured the environment variables, please note that settings won't take effect. When utilizing `cache_embedding_model.py` for preloading the embedding model during Docker image building, ensure that you only configure the environment variables.
+
 ### Models
 
 This has been successfully tested with Alpaca, Koala, Vicuna, WizardLM and their variants, (ex. gpt4-x-alpaca, GPT4all-snoozy, stable-vicuna, wizard-vicuna, etc.) and many others. Models that have been trained for **Instruction Following** work best. If you test with other models please let me know how it goes. Less than satisfying results (so far) from: RWKV-4-Raven, llama, mpt-7b-instruct/chat.
