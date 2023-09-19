@@ -111,6 +111,8 @@ def infer_loader(model_name, model_settings):
         loader = 'llama.cpp'
     elif re.match(r'.*\.gguf', model_name.lower()):
         loader = 'llama.cpp'
+    elif re.match(r'.*-awq', model_name.lower()):
+        loader = 'AutoAWQ'
     elif re.match(r'.*rwkv.*\.pth', model_name.lower()):
         loader = 'RWKV'
     elif re.match(r'.*exl2', model_name.lower()):
