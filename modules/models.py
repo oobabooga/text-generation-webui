@@ -1,5 +1,4 @@
 import gc
-import hashlib
 import os
 import re
 import time

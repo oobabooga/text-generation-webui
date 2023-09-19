@@ -70,7 +70,7 @@ def load_metadata(fname):
         GGUF_VERSION = struct.unpack("<I", file.read(4))[0]
         ti_data_count = struct.unpack("<Q", file.read(8))[0]
         kv_data_count = struct.unpack("<Q", file.read(8))[0]
-        
+
         if GGUF_VERSION == 1: 
             raise Exception('You are using an outdated GGUF, please download a new one.')
 
