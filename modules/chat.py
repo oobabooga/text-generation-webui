@@ -530,7 +530,7 @@ def load_character_memoized(character, name1, name2, instruct=False):
 
 
 def upload_character(file, img, tavern=False):
-    decoded_file = file if type(file) == str else file.decode('utf-8')
+    decoded_file = file if isinstance(file, str) else file.decode('utf-8')
     try:
         data = json.loads(decoded_file)
     except:

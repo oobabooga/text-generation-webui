@@ -316,8 +316,8 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
     generate_params['stopping_criteria'].append(_StopEverythingStoppingCriteria())
 
     processor = state.get('logits_processor', LogitsProcessorList([]))
-    # In case folks just pass in a processor by itself.
-    if type(processor) != LogitsProcessorList:
+    # In case a processor is passed by itself.
+    if not isinstance(processor, LogitsProcessorList):
         processor = LogitsProcessorList([processor])
     apply_extensions('logits_processor', processor, input_ids)
     generate_params['logits_processor'] = processor
