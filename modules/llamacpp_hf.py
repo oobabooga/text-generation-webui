@@ -131,9 +131,10 @@ class LlamacppHF(PreTrainedModel):
                     longest_prefix = min_length
 
                 if longest_prefix > 0:
-                    self.model.n_tokens = longest_prefix
-                    self.model.eval(seq[longest_prefix:])
                     reset = False
+                    self.model.n_tokens = longest_prefix
+                    if len(seq_tensor) - longest_prefix > 0:
+                        self.model.eval(seq[longest_prefix:])
 
             if reset:
                 self.model.reset()
