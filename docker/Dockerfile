@@ -38,6 +38,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,rw apt-get update &&
     apt-get install --no-install-recommends -y python3-dev libportaudio2 libasound-dev git python3 python3-pip \
     make g++ libmpich-dev ffmpeg cuda-nvcc-11-8 && \
     rm -rf /var/lib/apt/lists/* && \
+    ln -s /usr/local/cuda/bin/nvcc /usr/local/bin/nvcc && \
     mkdir /app
 
 RUN --mount=type=cache,target=/root/.cache/pip,rw pip3 install virtualenv
