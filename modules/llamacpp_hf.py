@@ -123,17 +123,18 @@ class LlamacppHF(PreTrainedModel):
         # https://github.com/abetlen/llama-cpp-python/commit/f4090a0bb2a2a25acfe28d31c82cc1aa273bedee
         if labels is None:
             if past_seq is not None:
-                longest_prefix = 0
-                for i in range(min(past_seq.shape[0], seq_tensor.shape[0])):
-                    if past_seq[i] == seq_tensor[i]:
-                        longest_prefix += 1
-                    else:
-                        break
+                min_length = min(past_seq.shape[0], seq_tensor.shape[0])
+                indices = torch.nonzero(~torch.eq(past_seq[:min_length], seq_tensor[:min_length]))
+                if len(indices) > 0:
+                    longest_prefix = indices[0].item()
+                else:
+                    longest_prefix = min_length
 
                 if longest_prefix > 0:
-                    self.model.n_tokens = longest_prefix
-                    self.model.eval(seq[longest_prefix:])
                     reset = False
+                    self.model.n_tokens = longest_prefix
+                    if len(seq_tensor) - longest_prefix > 0:
+                        self.model.eval(seq[longest_prefix:])
 
             if reset:
                 self.model.reset()

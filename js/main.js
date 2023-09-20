@@ -113,7 +113,7 @@ let isScrolled = false;
 
 targetElement.addEventListener('scroll', function() {
   let diff = targetElement.scrollHeight - targetElement.clientHeight;
-  if(Math.abs(targetElement.scrollTop - diff) <= 1 || diff == 0) {
+  if(Math.abs(targetElement.scrollTop - diff) <= 10 || diff == 0) {
     isScrolled = false;
   } else {
     isScrolled = true;
@@ -161,7 +161,7 @@ let notebookScrolled = false;
 
 notebookElement.addEventListener('scroll', function() {
   let diff = notebookElement.scrollHeight - notebookElement.clientHeight;
-  if(Math.abs(notebookElement.scrollTop - diff) <= 1 || diff == 0) {
+  if(Math.abs(notebookElement.scrollTop - diff) <= 10 || diff == 0) {
     notebookScrolled = false;
   } else {
     notebookScrolled = true;
@@ -186,7 +186,7 @@ let defaultScrolled = false;
 
 defaultElement.addEventListener('scroll', function() {
   let diff = defaultElement.scrollHeight - defaultElement.clientHeight;
-  if(Math.abs(defaultElement.scrollTop - diff) <= 1 || diff == 0) {
+  if(Math.abs(defaultElement.scrollTop - diff) <= 10 || diff == 0) {
     defaultScrolled = false;
   } else {
     defaultScrolled = true;

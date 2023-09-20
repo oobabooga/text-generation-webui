@@ -92,7 +92,7 @@ def create_event_handlers():
 
 
 def load_session(file, state):
-    decoded_file = file if type(file) == str else file.decode('utf-8')
+    decoded_file = file if isinstance(file, str) else file.decode('utf-8')
     data = json.loads(decoded_file)
 
     if 'character_menu' in data and state.get('character_menu') != data.get('character_menu'):

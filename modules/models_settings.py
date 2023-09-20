@@ -96,7 +96,7 @@ def update_model_parameters(state, initial=False):
             gpu_memories.append(value)
             continue
 
-        if initial and vars(shared.args)[element] != vars(shared.args_defaults)[element]:
+        if initial and element in shared.provided_arguments:
             continue
 
         # Setting null defaults

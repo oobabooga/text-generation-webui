@@ -1,5 +1,4 @@
 import gc
-import hashlib
 import os
 import re
 import time
@@ -110,22 +109,6 @@ def load_tokenizer(model_name, model):
                 trust_remote_code=shared.args.trust_remote_code,
                 use_fast=True
             )
-
-    if tokenizer.__class__.__name__ == 'LlamaTokenizer':
-        pairs = [
-            ['tokenizer_config.json', '516c6167c884793a738c440e29ccb80c15e1493ffc965affc69a1a8ddef4572a'],
-            ['special_tokens_map.json', 'ff3b4a612c4e447acb02d40071bddd989fe0da87eb5b7fe0dbadfc4f74de7531']
-        ]
-
-        for pair in pairs:
-            p = path_to_model / pair[0]
-            if p.exists():
-                with open(p, "rb") as f:
-                    bytes = f.read()
-
-                file_hash = hashlib.sha256(bytes).hexdigest()
-                if file_hash != pair[1]:
-                    logger.warning(f"{p} is different from the original LlamaTokenizer file. It is either customized or outdated.")
 
     return tokenizer
 

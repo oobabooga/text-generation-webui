@@ -85,6 +85,22 @@ class ExllamaModel:
         result.generator = generator
         return result, result
 
+    def encode(self, string, **kwargs):
+        return self.tokenizer.encode(string, max_seq_len=self.model.config.max_seq_len, add_bos=True)
+
+    def decode(self, ids, **kwargs):
+        if isinstance(ids, list):
+            ids = torch.tensor([ids])
+        elif isinstance(ids, torch.Tensor) and ids.numel() == 1:
+            ids = ids.view(1, -1)
+
+        return self.tokenizer.decode(ids)[0]
+
+    def get_logits(self, token_ids, **kwargs):
+        self.cache.current_seq_len = 0
+        self.model.forward(token_ids[:, :-1], self.cache, input_mask=None, preprocess_only=True)
+        return self.model.forward(token_ids[:, -1:], self.cache, **kwargs).float().cpu()
+
     def generate_with_streaming(self, prompt, state):
 
         # The cache batch size must be 2 for CFG and 1 otherwise
@@ -200,19 +216,3 @@ class ExllamaModel:
             pass
 
         return output
-
-    def encode(self, string, **kwargs):
-        return self.tokenizer.encode(string, max_seq_len=self.model.config.max_seq_len, add_bos=True)
-
-    def decode(self, ids, **kwargs):
-        if isinstance(ids, list):
-            ids = torch.tensor([ids])
-        elif isinstance(ids, torch.Tensor) and ids.numel() == 1:
-            ids = ids.view(1, -1)
-
-        return self.tokenizer.decode(ids)[0]
-
-    def get_logits(self, token_ids, **kwargs):
-        self.cache.current_seq_len = 0
-        self.model.forward(token_ids[:, :-1], self.cache, input_mask=None, preprocess_only=True)
-        return self.model.forward(token_ids[:, -1:], self.cache, **kwargs).float().cpu()

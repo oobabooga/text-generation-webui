@@ -38,12 +38,12 @@ https://github.com/jllllll/exllama/releases/download/0.0.17/exllama-0.0.17+cu117
 https://github.com/jllllll/exllama/releases/download/0.0.17/exllama-0.0.17+cu117-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
 
 # llama-cpp-python without GPU support
-llama-cpp-python==0.1.85; platform_system != "Windows"
-https://github.com/abetlen/llama-cpp-python/releases/download/v0.1.85/llama_cpp_python-0.1.85-cp310-cp310-win_amd64.whl; platform_system == "Windows"
+llama-cpp-python==0.2.6; platform_system != "Windows"
+https://github.com/abetlen/llama-cpp-python/releases/download/v0.2.6/llama_cpp_python-0.2.6-cp310-cp310-win_amd64.whl; platform_system == "Windows"
 
 # llama-cpp-python with CUDA support
-https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/textgen-webui/llama_cpp_python_cuda-0.1.85+cu117-cp310-cp310-win_amd64.whl; platform_system == "Windows"
-https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/textgen-webui/llama_cpp_python_cuda-0.1.85+cu117-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
+https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/textgen-webui/llama_cpp_python_cuda-0.2.6+cu117-cp310-cp310-win_amd64.whl; platform_system == "Windows"
+https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/textgen-webui/llama_cpp_python_cuda-0.2.6+cu117-cp310-cp310-manylinux_2_31_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
 
 # GPTQ-for-LLaMa
 https://github.com/jllllll/GPTQ-for-LLaMa-CUDA/releases/download/0.1.0/gptq_for_llama-0.1.0+cu117-cp310-cp310-win_amd64.whl; platform_system == "Windows"
