@@ -52,7 +52,7 @@ settings = {
     'skip_special_tokens': True,
     'stream': True,
     'name1': 'You',
-    'character': 'Example',
+    'character': 'Assistant',
     'instruction_template': 'Alpaca',
     'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
     'autoload_model': False,
