@@ -302,6 +302,11 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
     '''
     Same as above but returns HTML for the UI
     '''
+
+    if state['mode'] in ['chat', 'chat-instruct'] and state['name2'] == '':
+        logger.error('It looks like no character is loaded. Please load one under Parameters > Character.')
+        return
+
     if state['start_with'] != '' and not _continue:
         if regenerate:
             text, state['history'] = remove_last_message(state['history'])
@@ -529,9 +534,9 @@ def load_character(character, name1, name2, instruct=False):
             if filepath.exists():
                 break
 
-        if filepath is None:
-            logger.error(f"Could not find character file for {character} in {folder} folder. Please check your spelling.")
-            return name1, name2, picture, greeting, context, turn_template.replace("\n", r"\n")
+        if filepath is None or not filepath.exists():
+            logger.error(f"Could not find the character \"{character}\" inside {folder}/. No character has been loaded.")
+            raise ValueError
 
         file_contents = open(filepath, 'r', encoding='utf-8').read()
         data = json.loads(file_contents) if extension == "json" else yaml.safe_load(file_contents)
