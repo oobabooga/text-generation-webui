@@ -481,6 +481,7 @@ def load_latest_history(state):
                 unique_id = ''
     else:
         history = {'internal': [], 'visible': []}
+        unique_id = datetime.now().strftime('%Y%m%d-%H-%M-%S')
         if not is_instruct:
             greeting = replace_character_names(state['greeting'], state['name1'], state['name2'])
             if greeting != '':
