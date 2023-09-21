@@ -451,6 +451,23 @@ def load_history(unique_id, character, mode):
     return history
 
 
+def load_history_json(file, history):
+    try:
+        file = file.decode('utf-8')
+        f = json.loads(file)
+        if 'internal' in f and 'visible' in f:
+            history = f
+        else:
+            history = {
+                'internal': f['data'],
+                'visible': f['data_visible']
+            }
+
+        return history
+    except:
+        return history
+
+
 def delete_history(unique_id, character, mode):
     p = get_history_file_path(unique_id, character, mode)
     delete_file(p)
