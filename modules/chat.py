@@ -422,10 +422,6 @@ def load_latest_history(state):
     mode, or the latest instruct history for instruct mode.
     '''
 
-    if shared.session_is_loading:
-        shared.session_is_loading = False
-        return state['history'], ''
-
     if shared.args.multi_user:
         return state['history'], ''
 

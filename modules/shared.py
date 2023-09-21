@@ -24,7 +24,6 @@ processing_message = '*Is typing...*'
 gradio = {}
 persistent_interface_state = {}
 need_restart = False
-session_is_loading = False
 
 # UI defaults
 settings = {
