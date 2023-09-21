@@ -399,9 +399,9 @@ def start_new_chat(state):
 
 def get_history_file_path(unique_id, character, mode):
     if mode == 'instruct':
-        p = Path(f'logs/Instruct/{unique_id}.json')
+        p = Path(f'logs/instruct/{unique_id}.json')
     else:
-        p = Path(f'logs/{character}/{unique_id}.json')
+        p = Path(f'logs/chat/{character}/{unique_id}.json')
 
     return p
 
@@ -420,7 +420,7 @@ def save_history(history, unique_id, character, mode):
 
 def find_all_histories(state):
     if state['mode'] == 'instruct':
-        paths = Path('logs/Instruct').glob('*.json')
+        paths = Path('logs/instruct').glob('*.json')
     else:
         character = state['character_menu']
 
@@ -437,7 +437,7 @@ def find_all_histories(state):
             p.parent.mkdir(exist_ok=True)
             new_p.rename(p)
 
-        paths = Path(f'logs/{character}').glob('*.json')
+        paths = Path(f'logs/chat/{character}').glob('*.json')
 
     histories = sorted(paths, key=lambda x: x.stat().st_mtime, reverse=True)
     histories = [path.stem for path in histories]
