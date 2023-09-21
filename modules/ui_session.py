@@ -22,10 +22,6 @@ def create_ui():
                         shared.gradio['bool_menu'] = gr.CheckboxGroup(choices=get_boolean_arguments(), value=get_boolean_arguments(active=True), label="Boolean command-line flags", elem_classes='checkboxgroup-table')
 
             with gr.Column():
-                if not shared.args.multi_user:
-                    shared.gradio['save_session'] = gr.Button('Save session')
-                    shared.gradio['load_session'] = gr.File(type='binary', file_types=['.json'], label="Upload Session JSON")
-
                 extension_name = gr.Textbox(lines=1, label='Install or update an extension', info='Enter the GitHub URL below and press Enter. For a list of extensions, see: https://github.com/oobabooga/text-generation-webui-extensions ⚠️  WARNING ⚠️ : extensions can execute arbitrary code. Make sure to inspect their source code before activating them.')
                 extension_status = gr.Markdown()
 

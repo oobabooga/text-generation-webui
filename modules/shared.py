@@ -24,7 +24,6 @@ processing_message = '*Is typing...*'
 gradio = {}
 persistent_interface_state = {}
 need_restart = False
-session_is_loading = False
 
 # UI defaults
 settings = {
@@ -33,7 +32,6 @@ settings = {
     'start_with': '',
     'mode': 'chat',
     'chat_style': 'cai-chat',
-    'character': 'None',
     'prompt-default': 'QA',
     'prompt-notebook': 'QA',
     'preset': 'simple-1',
@@ -54,9 +52,7 @@ settings = {
     'skip_special_tokens': True,
     'stream': True,
     'name1': 'You',
-    'name2': 'Assistant',
-    'context': 'This is a conversation with your Assistant. It is a computer program designed to help you with various tasks such as answering questions, providing recommendations, and helping with decision making. You can ask it anything you want and it will do its best to give you accurate and relevant information.',
-    'greeting': '',
+    'character': 'Assistant',
     'instruction_template': 'Alpaca',
     'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
     'autoload_model': False,
