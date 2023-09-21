@@ -146,6 +146,11 @@ def create_event_handlers():
     shared.input_params = gradio(inputs)
     shared.reload_inputs = gradio(reload_arr)
 
+    shared.gradio['past_chats'].change(
+        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+        chat.load_single_history, gradio('past_chats', 'interface_state'), gradio('history', 'unique_id')).then(
+        chat.redraw_html, gradio(reload_arr), gradio('display'))
+
     shared.gradio['Generate'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         lambda x: (x, ''), gradio('textbox'), gradio('Chat input', 'textbox'), show_progress=False).then(
@@ -220,6 +225,7 @@ def create_event_handlers():
         partial(chat.load_character, instruct=False), gradio('character_menu', 'name1', 'name2'), gradio('name1', 'name2', 'character_picture', 'greeting', 'context', 'dummy')).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         chat.load_latest_history, gradio('interface_state'), gradio('history', 'unique_id')).then(
+        lambda x: gr.update(choices=chat.find_all_histories(x), value=chat.find_all_histories(x)[0]), gradio('interface_state'), gradio('past_chats')).then(
         chat.redraw_html, gradio(reload_arr), gradio('display'))
 
     shared.gradio['Stop'].click(

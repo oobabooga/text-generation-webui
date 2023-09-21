@@ -413,35 +413,7 @@ def save_history(history, unique_id, character, mode):
         f.write(json.dumps(history, indent=4))
 
 
-def find_latest_changed_file(paths):
-    latest_file = None
-    latest_time = 0
-
-    # Iterate through the files in the directory
-    for file in paths:
-        if file.is_file():
-            modification_time = file.stat().st_mtime
-            if modification_time > latest_time:
-                latest_time = modification_time
-                latest_file = file
-
-    print(paths), latest_file
-    return latest_file
-
-
-def load_latest_history(state):
-    '''
-    Loads the latest history for the given character in chat or chat-instruct
-    mode, or the latest instruct history for instruct mode.
-    '''
-
-    if shared.session_is_loading:
-        shared.session_is_loading = False
-        return state['history'], ''
-
-    if shared.args.multi_user:
-        return state['history'], ''
-
+def find_all_histories(state):
     is_instruct = state['mode'] == 'instruct'
     if is_instruct:
         paths = Path('logs').glob('persistent_instruct*.json')
@@ -457,32 +429,61 @@ def load_latest_history(state):
 
         paths = Path('logs').glob(f'persistent_{character}*.json')
 
-    p = find_latest_changed_file(paths)
-    if p.exists():
-        f = json.loads(open(p, 'rb').read())
-        if 'internal' in f and 'visible' in f:
-            history = f
-        else:
-            history = {
-                'internal': f['data'],
-                'visible': f['data_visible']
-            }
+    histories = sorted(paths, key = lambda x: x.stat().st_mtime, reverse=True)
+    histories = [path.name for path in histories]
 
-        if is_instruct:
-            match = re.search(r'persistent_instruct(.*?)\.json', p.name)
-        else:
-            match = re.search(fr'persistent_{character}(.*?)\.json', p.name)
+    print(histories)
+    return histories
 
-        unique_id = match.group(1)
-        if unique_id[0] == '_':
-            if len(unique_id) > 1:
-                unique_id = unique_id[1:]
-            else:
-                unique_id = ''
+
+def load_single_history(fname, state):
+    p = Path(f'logs/{fname}')
+    f = json.loads(open(p, 'rb').read())
+    if 'internal' in f and 'visible' in f:
+        history = f
+    else:
+        history = {
+            'internal': f['data'],
+            'visible': f['data_visible']
+        }
+
+    if state['mode'] == 'instruct':
+        match = re.search(r'persistent_instruct(.*?)\.json', p.name)
+    else:
+        character = state['character_menu']
+        match = re.search(fr'persistent_{character}(.*?)\.json', p.name)
+
+    unique_id = match.group(1)
+    if unique_id[0] == '_':
+        if len(unique_id) > 1:
+            unique_id = unique_id[1:]
+        else:
+            unique_id = ''
+
+    return history, unique_id
+
+
+def load_latest_history(state):
+    '''
+    Loads the latest history for the given character in chat or chat-instruct
+    mode, or the latest instruct history for instruct mode.
+    '''
+
+    if shared.session_is_loading:
+        shared.session_is_loading = False
+        return state['history'], ''
+
+    if shared.args.multi_user:
+        return state['history'], ''
+
+    histories = find_all_histories(state)
+
+    if len(histories) > 0:
+        history, unique_id = load_single_history(histories[0], state)
     else:
         history = {'internal': [], 'visible': []}
         unique_id = datetime.now().strftime('%Y%m%d-%H-%M-%S')
-        if not is_instruct:
+        if state['mode'] != 'instruct':
             greeting = replace_character_names(state['greeting'], state['name1'], state['name2'])
             if greeting != '':
                 history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
