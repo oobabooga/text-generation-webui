@@ -244,11 +244,9 @@ if (buttonsInChat.length > 0) {
         const thisButton = buttonsInChat[i];
         menu.appendChild(thisButton);
 
-        if(i != 8) {
-            thisButton.addEventListener("click", () => {
-                hideMenu();
-            });
-        }
+        thisButton.addEventListener("click", () => {
+            hideMenu();
+        });
 
         const buttonText = thisButton.textContent;
         const matches = buttonText.match(/(\(.*?\))/);
