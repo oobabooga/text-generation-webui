@@ -217,9 +217,10 @@ def create_event_handlers():
         stop_everything_event, None, None, queue=False).then(
         chat.redraw_html, gradio(reload_arr), gradio('display'))
 
-    shared.gradio['unique_id'].select(
-        chat.load_history, gradio('unique_id', 'character_menu', 'mode'), gradio('history')).then(
-        chat.redraw_html, gradio(reload_arr), gradio('display'))
+    if not shared.args.multi_user:
+        shared.gradio['unique_id'].select(
+            chat.load_history, gradio('unique_id', 'character_menu', 'mode'), gradio('history')).then(
+            chat.redraw_html, gradio(reload_arr), gradio('display'))
 
     shared.gradio['Start new chat'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
@@ -243,6 +244,7 @@ def create_event_handlers():
         chat.load_history_json, gradio('load_chat_history', 'history'), gradio('history')).then(
         chat.redraw_html, gradio(reload_arr), gradio('display')).then(
         lambda x: gr.update(choices=(histories := chat.find_all_histories(x)), value=histories[0]), gradio('interface_state'), gradio('unique_id')).then(
+        chat.save_history, gradio('history', 'unique_id', 'character_menu', 'mode'), None).then(
         lambda: None, None, None, _js=f'() => {{{ui.switch_tabs_js}; switch_to_chat()}}')
 
     shared.gradio['character_menu'].change(

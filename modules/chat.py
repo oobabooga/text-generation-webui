@@ -383,7 +383,7 @@ def redraw_html(history, name1, name2, mode, style, reset_cache=False):
 
 def start_new_chat(state):
     mode = state['mode']
-    history = {'visible': [], 'internal': []}
+    history = {'internal': [], 'visible': []}
 
     if mode != 'instruct':
         greeting = replace_character_names(state['greeting'], state['name1'], state['name2'])
@@ -419,6 +419,9 @@ def save_history(history, unique_id, character, mode):
 
 
 def find_all_histories(state):
+    if shared.args.multi_user:
+        return ['']
+
     if state['mode'] == 'instruct':
         paths = Path('logs/instruct').glob('*.json')
     else:
@@ -452,7 +455,7 @@ def load_latest_history(state):
     '''
 
     if shared.args.multi_user:
-        return state['history'], ''
+        return start_new_chat(state)
 
     histories = find_all_histories(state)
 
