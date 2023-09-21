@@ -377,18 +377,25 @@ def start_new_chat(state):
             history['visible'] += [['', apply_extensions('output', greeting, state, is_chat=True)]]
 
     unique_id = datetime.now().strftime('%Y%m%d-%H-%M-%S')
-    return history, unique_id
+    save_history(history, unique_id, state['character_menu'], state['mode'])
+
+    return history
+
+
+def get_history_file_path(unique_id, character, mode):
+    if mode == 'instruct':
+        p = Path(f'logs/Instruct/{unique_id}.json')
+    else:
+        p = Path(f'logs/{character}/{unique_id}.json')
+
+    return p
 
 
 def save_history(history, unique_id, character, mode):
     if shared.args.multi_user:
         return
 
-    if mode == 'instruct':
-        p = Path(f'logs/persistent_instruct_{unique_id}.json')
-    else:
-        p = Path(f'logs/persistent_{character}_{unique_id}.json')
-
+    p = get_history_file_path(unique_id, character, mode)
     if not p.parent.is_dir():
         p.parent.mkdir(parents=True)
 
@@ -399,21 +406,13 @@ def save_history(history, unique_id, character, mode):
 
 def find_all_histories(state):
     if state['mode'] == 'instruct':
-        paths = Path('logs').glob('persistent_instruct_*.json')
+        paths = Path('logs/Instruct').glob('*.json')
     else:
         character = state['character_menu']
-
-        # Handle obsolete filenames
-        old_p = Path(f'logs/{character}_persistent.json')
-        if old_p.exists():
-            new_p = Path(f'logs/persistent_{character}.json')
-            logger.warning(f"Renaming {old_p} to {new_p}")
-            old_p.rename(new_p)
-
-        paths = Path('logs').glob(f'persistent_{character}_*.json')
+        paths = Path(f'logs/{character}').glob('*.json')
 
     histories = sorted(paths, key=lambda x: x.stat().st_mtime, reverse=True)
-    histories = [path.name for path in histories]
+    histories = [path.stem for path in histories]
 
     return histories
 
@@ -434,23 +433,17 @@ def load_latest_history(state):
     histories = find_all_histories(state)
 
     if len(histories) > 0:
-        history, unique_id = load_history(histories[0], state)
+        unique_id = Path(histories[0]).stem
+        history = load_history(unique_id, state['character_menu'], state['mode'])
     else:
-        history = {'internal': [], 'visible': []}
-        unique_id = datetime.now().strftime('%Y%m%d-%H-%M-%S')
-        if state['mode'] != 'instruct':
-            greeting = replace_character_names(state['greeting'], state['name1'], state['name2'])
-            if greeting != '':
-                history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
-                history['visible'] += [['', apply_extensions('output', greeting, state, is_chat=True)]]
+        history = start_new_chat(state)
 
-        save_history(history, unique_id, state['character_menu'], state['mode'])
-
-    return history, unique_id
+    return history
 
 
-def load_history(fname, state):
-    p = Path(f'logs/{fname}')
+def load_history(unique_id, character, mode):
+    p = get_history_file_path(unique_id, character, mode)
+
     f = json.loads(open(p, 'rb').read())
     if 'internal' in f and 'visible' in f:
         history = f
@@ -460,25 +453,12 @@ def load_history(fname, state):
             'visible': f['data_visible']
         }
 
-    if state['mode'] == 'instruct':
-        match = re.search(r'persistent_instruct(.*?)\.json', p.name)
-    else:
-        character = state['character_menu']
-        match = re.search(fr'persistent_{character}(.*?)\.json', p.name)
-
-    unique_id = match.group(1)
-    if unique_id[0] == '_':
-        if len(unique_id) > 1:
-            unique_id = unique_id[1:]
-        else:
-            unique_id = ''
-
-    return history, unique_id
+    return history
 
 
-def delete_history(fname):
-    path = Path(f'logs/{fname}')
-    delete_file(path)
+def delete_history(unique_id, character, mode):
+    p = get_history_file_path(unique_id, character, mode)
+    delete_file(p)
 
 
 def replace_character_names(text, name1, name2):
