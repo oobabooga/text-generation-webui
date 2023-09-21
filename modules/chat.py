@@ -393,6 +393,7 @@ def save_history(history, unique_id, character, mode):
         p.parent.mkdir(parents=True)
 
     with open(p, 'w', encoding='utf-8') as f:
+        logger.warning(f'Saving {p}')
         f.write(json.dumps(history, indent=4))
 
 
@@ -443,6 +444,8 @@ def load_latest_history(state):
                 history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
                 history['visible'] += [['', apply_extensions('output', greeting, state, is_chat=True)]]
 
+        save_history(history, unique_id, state['character_menu'], state['mode'])
+
     return history, unique_id
 
 
@@ -471,6 +474,11 @@ def load_history(fname, state):
             unique_id = ''
 
     return history, unique_id
+
+
+def delete_history(fname):
+    path = Path(f'logs/{fname}')
+    delete_file(path)
 
 
 def replace_character_names(text, name1, name2):
