@@ -4,6 +4,7 @@ import functools
 import html
 import json
 import re
+from datetime import datetime
 from pathlib import Path
 
 import gradio as gr
@@ -359,7 +360,7 @@ def send_dummy_reply(text, state):
     return history
 
 
-def clear_chat_log(state):
+def start_new_chat(state):
     greeting = replace_character_names(state['greeting'], state['name1'], state['name2'])
     mode = state['mode']
     history = state['history']
@@ -371,74 +372,122 @@ def clear_chat_log(state):
             history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
             history['visible'] += [['', apply_extensions('output', greeting, state, is_chat=True)]]
 
-    return history
+    unique_id = datetime.now().strftime('%Y%m%d-%H-%M-%S')
+    return history, unique_id
 
 
 def redraw_html(history, name1, name2, mode, style, reset_cache=False):
     return chat_html_wrapper(history, name1, name2, mode, style, reset_cache=reset_cache)
 
 
-def save_history(history, path=None):
-    p = path or Path('logs/exported_history.json')
+def load_history(file, history):
+    try:
+        file = file.decode('utf-8')
+        f = json.loads(file)
+        if 'internal' in f and 'visible' in f:
+            history = f
+        else:
+            history = {
+                'internal': f['data'],
+                'visible': f['data_visible']
+            }
+
+        return history
+    except:
+        return history
+
+
+def save_history(history, unique_id, character, mode):
+    if shared.args.multi_user:
+        return
+
+    if mode == 'instruct':
+        p = Path(f'logs/persistent_instruct{"_" if unique_id != "" else ""}{unique_id}.json')
+    else:
+        p = Path(f'logs/persistent_{character}{"_" if unique_id != "" else ""}{unique_id}.json')
+
     if not p.parent.is_dir():
         p.parent.mkdir(parents=True)
 
     with open(p, 'w', encoding='utf-8') as f:
         f.write(json.dumps(history, indent=4))
 
-    return p
+
+def find_latest_changed_file(paths):
+    latest_file = None
+    latest_time = 0
+
+    # Iterate through the files in the directory
+    for file in paths:
+        if file.is_file():
+            modification_time = file.stat().st_mtime
+            if modification_time > latest_time:
+                latest_time = modification_time
+                latest_file = file
+
+    print(paths), latest_file
+    return latest_file
 
 
-def load_history(file, history):
-    try:
-        file = file.decode('utf-8')
-        j = json.loads(file)
-        if 'internal' in j and 'visible' in j:
-            return j
-        else:
-            return history
-    except:
-        return history
+def load_latest_history(state):
+    '''
+    Loads the latest history for the given character in chat or chat-instruct
+    mode, or the latest instruct history for instruct mode.
+    '''
 
-
-def save_persistent_history(history, character, mode):
-    if mode in ['chat', 'chat-instruct'] and character not in ['', 'None', None] and not shared.args.multi_user:
-        save_history(history, path=Path(f'logs/persistent_{character}.json'))
-
-
-def load_persistent_history(state):
     if shared.session_is_loading:
         shared.session_is_loading = False
-        return state['history']
+        return state['history'], ''
 
-    if state['mode'] == 'instruct':
-        return state['history']
+    if shared.args.multi_user:
+        return state['history'], ''
 
-    character = state['character_menu']
-    greeting = replace_character_names(state['greeting'], state['name1'], state['name2'])
+    is_instruct = state['mode'] == 'instruct'
+    if is_instruct:
+        paths = Path('logs').glob('persistent_instruct*.json')
+    else:
+        character = state['character_menu']
 
-    should_load_history = (not shared.args.multi_user and character not in ['None', '', None])
-    old_p = Path(f'logs/{character}_persistent.json')
-    p = Path(f'logs/persistent_{character}.json')
-    if should_load_history and old_p.exists():
-        logger.warning(f"Renaming {old_p} to {p}")
-        old_p.rename(p)
+        # Handle obsolete filenames
+        old_p = Path(f'logs/{character}_persistent.json')
+        if old_p.exists():
+            new_p = Path(f'logs/persistent_{character}.json')
+            logger.warning(f"Renaming {old_p} to {new_p}")
+            old_p.rename(new_p)
 
-    if should_load_history and p.exists():
+        paths = Path('logs').glob(f'persistent_{character}*.json')
+
+    p = find_latest_changed_file(paths)
+    if p.exists():
         f = json.loads(open(p, 'rb').read())
         if 'internal' in f and 'visible' in f:
             history = f
         else:
-            history = {'internal': [], 'visible': []}
-            history['internal'] = f['data']
-            history['visible'] = f['data_visible']
+            history = {
+                'internal': f['data'],
+                'visible': f['data_visible']
+            }
+
+        if is_instruct:
+            match = re.search(r'persistent_instruct(.*?)\.json', p.name)
+        else:
+            match = re.search(fr'persistent_{character}(.*?)\.json', p.name)
+
+        unique_id = match.group(1)
+        if unique_id[0] == '_':
+            if len(unique_id) > 1:
+                unique_id = unique_id[1:]
+            else:
+                unique_id = ''
     else:
         history = {'internal': [], 'visible': []}
-        if greeting != "":
-            history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
-            history['visible'] += [['', apply_extensions('output', greeting, state, is_chat=True)]]
+        if not is_instruct:
+            greeting = replace_character_names(state['greeting'], state['name1'], state['name2'])
+            if greeting != '':
+                history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
+                history['visible'] += [['', apply_extensions('output', greeting, state, is_chat=True)]]
 
-    return history
+    return history, unique_id
 
 
 def replace_character_names(text, name1, name2):
