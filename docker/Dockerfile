@@ -54,7 +54,7 @@ RUN --mount=type=cache,target=/root/.cache/pip,rw \
     . venv/bin/activate && \
     pip3 install --upgrade pip setuptools wheel && \
     pip3 install torch torchvision torchaudio deepspeed mpi4py mpi4py-mpich zarr sentence_transformers \
-    xformers bs4 summarizer PyPDF2
+    xformers bs4 summarizer PyPDF2 nvidia-curand-cu11
 
 # Create virtualenv
 COPY --from=builder /build /app/repositories/GPTQ-for-LLaMa
