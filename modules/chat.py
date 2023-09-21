@@ -298,13 +298,23 @@ def generate_chat_reply(text, state, regenerate=False, _continue=False, loading_
         yield history
 
 
+def character_is_loaded(state, raise_exception=False):
+    if state['mode'] in ['chat', 'chat-instruct'] and state['name2'] == '':
+        logger.error('It looks like no character is loaded. Please load one under Parameters > Character.')
+        if raise_exception:
+            raise ValueError
+
+        return False
+    else:
+        return True
+
+
 def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
     '''
     Same as above but returns HTML for the UI
     '''
 
-    if state['mode'] in ['chat', 'chat-instruct'] and state['name2'] == '':
-        logger.error('It looks like no character is loaded. Please load one under Parameters > Character.')
+    if not character_is_loaded(state):
         return
 
     if state['start_with'] != '' and not _continue:
