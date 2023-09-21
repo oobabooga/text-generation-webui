@@ -516,61 +516,55 @@ def load_character(character, name1, name2, instruct=False):
     greeting_field = 'greeting'
     picture = None
 
-    # Delete the profile picture cache, if any
-    if Path("cache/pfp_character.png").exists() and not instruct:
-        Path("cache/pfp_character.png").unlink()
-
     if instruct:
         name1 = name2 = ''
         folder = 'instruction-templates'
     else:
         folder = 'characters'
 
-    if character not in ['None', '', None]:
-        picture = generate_pfp_cache(character)
-        filepath = None
-        for extension in ["yml", "yaml", "json"]:
-            filepath = Path(f'{folder}/{character}.{extension}')
-            if filepath.exists():
-                break
+    filepath = None
+    for extension in ["yml", "yaml", "json"]:
+        filepath = Path(f'{folder}/{character}.{extension}')
+        if filepath.exists():
+            break
 
-        if filepath is None or not filepath.exists():
-            logger.error(f"Could not find the character \"{character}\" inside {folder}/. No character has been loaded.")
-            raise ValueError
+    if filepath is None or not filepath.exists():
+        logger.error(f"Could not find the character \"{character}\" inside {folder}/. No character has been loaded.")
+        raise ValueError
 
-        file_contents = open(filepath, 'r', encoding='utf-8').read()
-        data = json.loads(file_contents) if extension == "json" else yaml.safe_load(file_contents)
+    file_contents = open(filepath, 'r', encoding='utf-8').read()
+    data = json.loads(file_contents) if extension == "json" else yaml.safe_load(file_contents)
 
-        # Finding the bot's name
-        for k in ['name', 'bot', '<|bot|>', 'char_name']:
-            if k in data and data[k] != '':
-                name2 = data[k]
-                break
+    if Path("cache/pfp_character.png").exists() and not instruct:
+        Path("cache/pfp_character.png").unlink()
 
-        # Find the user name (if any)
-        for k in ['your_name', 'user', '<|user|>']:
-            if k in data and data[k] != '':
-                name1 = data[k]
-                break
+    picture = generate_pfp_cache(character)
 
-        if 'context' in data:
-            context = data['context']
-            if not instruct:
-                context = context.strip() + '\n'
-        elif "char_persona" in data:
-            context = build_pygmalion_style_context(data)
-            greeting_field = 'char_greeting'
+    # Finding the bot's name
+    for k in ['name', 'bot', '<|bot|>', 'char_name']:
+        if k in data and data[k] != '':
+            name2 = data[k]
+            break
 
-        if greeting_field in data:
-            greeting = data[greeting_field]
+    # Find the user name (if any)
+    for k in ['your_name', 'user', '<|user|>']:
+        if k in data and data[k] != '':
+            name1 = data[k]
+            break
 
-        if 'turn_template' in data:
-            turn_template = data['turn_template']
+    if 'context' in data:
+        context = data['context']
+        if not instruct:
+            context = context.strip() + '\n'
+    elif "char_persona" in data:
+        context = build_pygmalion_style_context(data)
+        greeting_field = 'char_greeting'
 
-    else:
-        context = shared.settings['context']
-        name2 = shared.settings['name2']
-        greeting = shared.settings['greeting']
+    if greeting_field in data:
+        greeting = data[greeting_field]
+
+    if 'turn_template' in data:
+        turn_template = data['turn_template']
 
     return name1, name2, picture, greeting, context, turn_template.replace("\n", r"\n")
 
