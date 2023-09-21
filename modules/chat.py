@@ -400,7 +400,6 @@ def save_history(history, unique_id, character, mode):
         p.parent.mkdir(parents=True)
 
     with open(p, 'w', encoding='utf-8') as f:
-        logger.warning(f'Saving {p}')
         f.write(json.dumps(history, indent=4))
 
 
