@@ -51,3 +51,6 @@ https://github.com/jllllll/GPTQ-for-LLaMa-CUDA/releases/download/0.1.0/gptq_for_
 
 # ctransformers
 https://github.com/jllllll/ctransformers-cuBLAS-wheels/releases/download/AVX2/ctransformers-0.2.27+cu117-py3-none-any.whl
+
+# autoawq
+autoawq==0.1.0

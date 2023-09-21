@@ -61,6 +61,7 @@ def load_model(model_name, loader=None):
         'ExLlamav2': ExLlamav2_loader,
         'ExLlamav2_HF': ExLlamav2_HF_loader,
         'ctransformers': ctransformers_loader,
+        'AutoAWQ': AutoAWQ_loader,
     }
 
     if loader is None:
@@ -277,6 +278,20 @@ def ctransformers_loader(model_name):
     model, tokenizer = ctrans.from_pretrained(model_file)
     return model, tokenizer
 
+def AutoAWQ_loader(model_name):
+   from awq import AutoAWQForCausalLM
+
+   model_dir = Path(f'{shared.args.model_dir}/{model_name}')
+
+   model = AutoAWQForCausalLM.from_quantized(
+       quant_path=model_dir,
+       max_new_tokens=shared.args.n_ctx,
+       trust_remote_code=shared.args.trust_remote_code,
+       fuse_layers=not shared.args.no_inject_fused_attention,
+       batch_size=shared.args.n_batch,
+       safetensors=not shared.args.trust_remote_code)
+
+   return model
 
 def GPTQ_loader(model_name):
 

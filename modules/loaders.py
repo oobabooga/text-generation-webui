@@ -120,6 +120,12 @@ loaders_and_params = OrderedDict({
         'model_type',
         'no_mmap',
         'mlock'
+    ],
+    'AutoAWQ': [
+        'n_ctx',
+        'n_batch',
+        'no_inject_fused_attention',
+        'trust_remote_code',
     ]
 })
 
@@ -341,6 +347,11 @@ loaders_samplers = {
         'top_k',
         'repetition_penalty',
         'repetition_penalty_range',
+    },
+    'AutoAWQ': {
+        'temperature',
+        'top_p',
+        'top_k',
     }
 }
 
