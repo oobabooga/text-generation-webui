@@ -408,6 +408,20 @@ def find_all_histories(state):
         paths = Path('logs/Instruct').glob('*.json')
     else:
         character = state['character_menu']
+
+        # Handle obsolete filenames and paths
+        old_p = Path(f'logs/{character}_persistent.json')
+        new_p = Path(f'logs/persistent_{character}.json')
+        if old_p.exists():
+            logger.warning(f"Renaming {old_p} to {new_p}")
+            old_p.rename(new_p)
+        if new_p.exists():
+            unique_id = datetime.now().strftime('%Y%m%d-%H-%M-%S')
+            p = get_history_file_path(unique_id, character, state['mode'])
+            logger.warning(f"Moving {new_p} to {p}")
+            p.parent.mkdir(exist_ok=True)
+            new_p.rename(p)
+
         paths = Path(f'logs/{character}').glob('*.json')
 
     histories = sorted(paths, key=lambda x: x.stat().st_mtime, reverse=True)
