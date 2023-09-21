@@ -1,9 +1,6 @@
-import copy
-import json
-
 import gradio as gr
 
-from modules import chat, presets, shared, ui, ui_chat, utils
+from modules import chat, presets, shared, ui, utils
 from modules.utils import gradio
 
 
