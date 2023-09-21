@@ -22,7 +22,7 @@ def create_ui():
     with gr.Tab('Chat', elem_id='chat-tab', elem_classes=("old-ui" if shared.args.chat_buttons else None)):
         with gr.Row():
             with gr.Column(elem_id='chat-col'):
-                shared.gradio['display'] = gr.HTML(value=chat_html_wrapper({'internal': [], 'visible': []}, shared.settings['name1'], shared.settings['name2'], 'chat', 'cai-chat'))
+                shared.gradio['display'] = gr.HTML(value=chat_html_wrapper({'internal': [], 'visible': []}, '', '', 'chat', 'cai-chat'))
 
                 with gr.Row(elem_id="chat-input-row"):
                     with gr.Column(scale=1, elem_id='gr-hover-container'):
@@ -84,9 +84,9 @@ def create_chat_settings_ui():
                     shared.gradio['delete_character'] = gr.Button('🗑️', elem_classes='refresh-button')
 
                 shared.gradio['name1'] = gr.Textbox(value=shared.settings['name1'], lines=1, label='Your name')
-                shared.gradio['name2'] = gr.Textbox(value=shared.settings['name2'], lines=1, label='Character\'s name')
-                shared.gradio['context'] = gr.Textbox(value=shared.settings['context'], lines=10, label='Context', elem_classes=['add_scrollbar'])
-                shared.gradio['greeting'] = gr.Textbox(value=shared.settings['greeting'], lines=5, label='Greeting', elem_classes=['add_scrollbar'])
+                shared.gradio['name2'] = gr.Textbox(value='', lines=1, label='Character\'s name')
+                shared.gradio['context'] = gr.Textbox(value='', lines=10, label='Context', elem_classes=['add_scrollbar'])
+                shared.gradio['greeting'] = gr.Textbox(value='', lines=5, label='Greeting', elem_classes=['add_scrollbar'])
 
             with gr.Column(scale=1):
                 shared.gradio['character_picture'] = gr.Image(label='Character picture', type='pil')
