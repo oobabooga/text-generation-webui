@@ -298,8 +298,10 @@ def generate_chat_reply(text, state, regenerate=False, _continue=False, loading_
         yield history
 
 
-# Same as above but returns HTML for the UI
 def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
+    '''
+    Same as above but returns HTML for the UI
+    '''
     if state['start_with'] != '' and not _continue:
         if regenerate:
             text, state['history'] = remove_last_message(state['history'])
@@ -360,14 +362,16 @@ def send_dummy_reply(text, state):
     return history
 
 
-def start_new_chat(state):
-    greeting = replace_character_names(state['greeting'], state['name1'], state['name2'])
-    mode = state['mode']
-    history = state['history']
+def redraw_html(history, name1, name2, mode, style, reset_cache=False):
+    return chat_html_wrapper(history, name1, name2, mode, style, reset_cache=reset_cache)
 
-    history['visible'] = []
-    history['internal'] = []
+
+def start_new_chat(state):
+    mode = state['mode']
+    history = {'visible': [], 'internal': []}
+
     if mode != 'instruct':
+        greeting = replace_character_names(state['greeting'], state['name1'], state['name2'])
         if greeting != '':
             history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
             history['visible'] += [['', apply_extensions('output', greeting, state, is_chat=True)]]
@@ -376,35 +380,14 @@ def start_new_chat(state):
     return history, unique_id
 
 
-def redraw_html(history, name1, name2, mode, style, reset_cache=False):
-    return chat_html_wrapper(history, name1, name2, mode, style, reset_cache=reset_cache)
-
-
-def load_history(file, history):
-    try:
-        file = file.decode('utf-8')
-        f = json.loads(file)
-        if 'internal' in f and 'visible' in f:
-            history = f
-        else:
-            history = {
-                'internal': f['data'],
-                'visible': f['data_visible']
-            }
-
-        return history
-    except:
-        return history
-
-
 def save_history(history, unique_id, character, mode):
     if shared.args.multi_user:
         return
 
     if mode == 'instruct':
-        p = Path(f'logs/persistent_instruct{"_" if unique_id != "" else ""}{unique_id}.json')
+        p = Path(f'logs/persistent_instruct_{unique_id}.json')
     else:
-        p = Path(f'logs/persistent_{character}{"_" if unique_id != "" else ""}{unique_id}.json')
+        p = Path(f'logs/persistent_{character}_{unique_id}.json')
 
     if not p.parent.is_dir():
         p.parent.mkdir(parents=True)
@@ -414,9 +397,8 @@ def save_history(history, unique_id, character, mode):
 
 
 def find_all_histories(state):
-    is_instruct = state['mode'] == 'instruct'
-    if is_instruct:
-        paths = Path('logs').glob('persistent_instruct*.json')
+    if state['mode'] == 'instruct':
+        paths = Path('logs').glob('persistent_instruct_*.json')
     else:
         character = state['character_menu']
 
@@ -427,16 +409,44 @@ def find_all_histories(state):
             logger.warning(f"Renaming {old_p} to {new_p}")
             old_p.rename(new_p)
 
-        paths = Path('logs').glob(f'persistent_{character}*.json')
+        paths = Path('logs').glob(f'persistent_{character}_*.json')
 
-    histories = sorted(paths, key = lambda x: x.stat().st_mtime, reverse=True)
+    histories = sorted(paths, key=lambda x: x.stat().st_mtime, reverse=True)
     histories = [path.name for path in histories]
 
-    print(histories)
     return histories
 
 
-def load_single_history(fname, state):
+def load_latest_history(state):
+    '''
+    Loads the latest history for the given character in chat or chat-instruct
+    mode, or the latest instruct history for instruct mode.
+    '''
+
+    if shared.session_is_loading:
+        shared.session_is_loading = False
+        return state['history'], ''
+
+    if shared.args.multi_user:
+        return state['history'], ''
+
+    histories = find_all_histories(state)
+
+    if len(histories) > 0:
+        history, unique_id = load_history(histories[0], state)
+    else:
+        history = {'internal': [], 'visible': []}
+        unique_id = datetime.now().strftime('%Y%m%d-%H-%M-%S')
+        if state['mode'] != 'instruct':
+            greeting = replace_character_names(state['greeting'], state['name1'], state['name2'])
+            if greeting != '':
+                history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
+                history['visible'] += [['', apply_extensions('output', greeting, state, is_chat=True)]]
+
+    return history, unique_id
+
+
+def load_history(fname, state):
     p = Path(f'logs/{fname}')
     f = json.loads(open(p, 'rb').read())
     if 'internal' in f and 'visible' in f:
@@ -459,35 +469,6 @@ def load_single_history(fname, state):
             unique_id = unique_id[1:]
         else:
             unique_id = ''
-
-    return history, unique_id
-
-
-def load_latest_history(state):
-    '''
-    Loads the latest history for the given character in chat or chat-instruct
-    mode, or the latest instruct history for instruct mode.
-    '''
-
-    if shared.session_is_loading:
-        shared.session_is_loading = False
-        return state['history'], ''
-
-    if shared.args.multi_user:
-        return state['history'], ''
-
-    histories = find_all_histories(state)
-
-    if len(histories) > 0:
-        history, unique_id = load_single_history(histories[0], state)
-    else:
-        history = {'internal': [], 'visible': []}
-        unique_id = datetime.now().strftime('%Y%m%d-%H-%M-%S')
-        if state['mode'] != 'instruct':
-            greeting = replace_character_names(state['greeting'], state['name1'], state['name2'])
-            if greeting != '':
-                history['internal'] += [['<|BEGIN-VISIBLE-CHAT|>', greeting]]
-                history['visible'] += [['', apply_extensions('output', greeting, state, is_chat=True)]]
 
     return history, unique_id
 
