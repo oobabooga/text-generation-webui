@@ -57,11 +57,13 @@ def create_ui():
 
             with gr.Row():
                 shared.gradio['Start new chat'] = gr.Button('Start new chat')
-                shared.gradio['View past chats'] = gr.Button('View past chats')
 
             with gr.Row():
                 shared.gradio['send-chat-to-default'] = gr.Button('Send to default')
                 shared.gradio['send-chat-to-notebook'] = gr.Button('Send to notebook')
+
+        with gr.Row():
+            shared.gradio['past_chats'] = gr.Dropdown(label='Past chats')
 
         with gr.Row():
             shared.gradio['start_with'] = gr.Textbox(label='Start reply with', placeholder='Sure thing!', value=shared.settings['start_with'])
