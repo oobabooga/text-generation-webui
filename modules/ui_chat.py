@@ -204,6 +204,16 @@ def create_event_handlers():
         chat.redraw_html, gradio(reload_arr), gradio('display')).then(
         chat.save_history, gradio('history', 'unique_id', 'character_menu', 'mode'), None)
 
+    shared.gradio['Remove last'].click(
+        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+        chat.remove_last_message, gradio('history'), gradio('textbox', 'history'), show_progress=False).then(
+        chat.redraw_html, gradio(reload_arr), gradio('display')).then(
+        chat.save_history, gradio('history', 'unique_id', 'character_menu', 'mode'), None)
+
+    shared.gradio['Stop'].click(
+        stop_everything_event, None, None, queue=False).then(
+        chat.redraw_html, gradio(reload_arr), gradio('display'))
+
     shared.gradio['unique_id'].select(
         chat.load_history, gradio('unique_id', 'character_menu', 'mode'), gradio('history')).then(
         chat.redraw_html, gradio(reload_arr), gradio('display'))
@@ -221,22 +231,12 @@ def create_event_handlers():
         chat.redraw_html, gradio(reload_arr), gradio('display')).then(
         lambda x: gr.update(choices=(histories := chat.find_all_histories(x)), value=histories[0]), gradio('interface_state'), gradio('unique_id'))
 
-    shared.gradio['Remove last'].click(
-        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        chat.remove_last_message, gradio('history'), gradio('textbox', 'history'), show_progress=False).then(
-        chat.redraw_html, gradio(reload_arr), gradio('display')).then(
-        chat.save_history, gradio('history', 'unique_id', 'character_menu', 'mode'), None)
-
     shared.gradio['character_menu'].change(
         partial(chat.load_character, instruct=False), gradio('character_menu', 'name1', 'name2'), gradio('name1', 'name2', 'character_picture', 'greeting', 'context', 'dummy')).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         chat.load_latest_history, gradio('interface_state'), gradio('history')).then(
         chat.redraw_html, gradio(reload_arr), gradio('display')).then(
         lambda x: gr.update(choices=(histories := chat.find_all_histories(x)), value=histories[0]), gradio('interface_state'), gradio('unique_id'))
-
-    shared.gradio['Stop'].click(
-        stop_everything_event, None, None, queue=False).then(
-        chat.redraw_html, gradio(reload_arr), gradio('display'))
 
     shared.gradio['mode'].change(
         lambda x: gr.update(visible=x != 'instruct'), gradio('mode'), gradio('chat_style'), show_progress=False).then(
