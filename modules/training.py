@@ -353,7 +353,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
                 before_tokens = [shared.tokenizer.pad_token_id] * (cutoff_len - full_length) + before_tokens
 
             input_ids = before_tokens + after_tokens
-            labels = [-100] * len(before_tokens) + [1] * len(after_tokens)
+            labels = [shared.tokenizer.pad_token_id] * len(before_tokens) + [1] * len(after_tokens)
 
         input_ids = torch.tensor(input_ids)
         return {
