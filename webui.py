@@ -113,29 +113,30 @@ def install_dependencies():
     print()
 
     # Select your GPU, or choose to run in CPU mode
-    gpuchoice = input("Input> ").lower()
-    while gpuchoice not in ['a', 'b', 'c', 'd']:
+    choice = input("Input> ").upper()
+    while choice not in ['A', 'B', 'C', 'D']:
         print("Invalid choice. Please try again.")
-        gpuchoice = input("Input> ").lower()
-    if gpuchoice == "d":
+        choice = input("Input> ").upper()
+    if choice == "D":
         print_big_message("Once the installation ends, make sure to open CMD_FLAGS.txt with\na text editor and add the --cpu flag.")
 
-    # Install Pytorch
-    if gpuchoice == "a":
-        run_cmd('conda install -y -k ninja git && python -m pip install torch==2.0.1+cu117 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117', assert_success=True, environment=True)
-    elif gpuchoice == "b" and not is_macos():
+    # Find the proper Pytorch installation command
+    install_git = "conda install -y -k ninja git"
+    install_pytorch = "python -m pip install torch torchvision torchaudio"
+
+    if choice == "A":
+        install_pytorch = "python -m pip install torch==2.0.1+cu117 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117"
+    elif is_macos() and choice == "B":
         if is_linux():
-            run_cmd('conda install -y -k ninja git && python -m pip install torch==2.0.1+rocm5.4.2 torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.4.2', assert_success=True, environment=True)
+            install_pytorch = "python -m pip install torch==2.0.1+rocm5.4.2 torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.4.2"
         else:
             print("AMD GPUs are only supported on Linux. Exiting...")
             sys.exit()
-    elif (gpuchoice == "c" or gpuchoice == "b") and is_macos():
-        run_cmd("conda install -y -k ninja git && python -m pip install torch torchvision torchaudio", assert_success=True, environment=True)
-    elif gpuchoice == "d" or gpuchoice == "c":
-        if is_linux():
-            run_cmd("conda install -y -k ninja git && python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu", assert_success=True, environment=True)
-        else:
-            run_cmd("conda install -y -k ninja git && python -m pip install torch torchvision torchaudio", assert_success=True, environment=True)
+    elif is_linux() and (choice == "C" or choice == "D"):
+        install_pytorch = "python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu"
+
+    # Install Git and then Pytorch
+    run_cmd(f"{install_git} && {install_pytorch}", assert_success=True, environment=True)
 
     # Install the webui dependencies
     update_dependencies(initial_installation=True)
