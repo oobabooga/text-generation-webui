@@ -60,6 +60,7 @@ non_serialized_params = {
         "save_steps_under_loss": 0.0,
         "save_checkpoint_now": False,
         "training_loop": False,
+        "current_stability": 0,
 }
 
 MODEL_CLASSES = {v[1]: v[0] for v in MODEL_FOR_CAUSAL_LM_MAPPING_NAMES.items()}
@@ -117,7 +118,7 @@ def ui():
                         with gr.Column():
                             save_steps = gr.Number(label='Save every n steps', value=0, info='A checkpoint will be saved every n steps. (0 = OFF)')
                         with gr.Column():    
-                            save_steps_under_loss = gr.Slider(label='Save each 0.1 Loss', value=1.8, minimum=0.0, maximum=3.0, step=0.1, info="Saves checkpoints at (or bellow) this loss and then each time loss falls by 0.1. This works independently from 'Save every n steps'")    
+                            save_steps_under_loss = gr.Slider(label='Save at 10% Loss change', value=1.8, minimum=0.0, maximum=3.0, step=0.1, info="Saves checkpoints at (or bellow) this loss and then each time loss falls by at least 10% This works independently from 'Save every n steps'")    
                     with gr.Row():        
                         save_chackpoint_now = gr.Button('Queue Checkpoint Now')
 
@@ -571,7 +572,8 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     non_serialized_params.update({"save_steps_under_loss": save_steps_under_loss+0.01})
     non_serialized_params.update({"save_checkpoint_now": False})
     non_serialized_params.update({"training_loop": False})
-    
+    non_serialized_params.update({"current_stability": 0})
+
     # END OF FPHAM SENTENCE SPLIT functions ===================     
 
     # == Prep the dataset, format, etc ==
@@ -766,16 +768,34 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
                     print(f"\033[1;31;1mSave Checkpoint manually trigerred.\033[0;37;0m")
                     folder_save = f"checkpoint-{tracked.current_steps}-user"  
 
+                patience = 3     # Set the number of consecutive steps for tracking stability
+                
+                if gradient_accumulation_steps==1:
+                    patience = 5
 
-                if current_loss < non_serialized_params['save_steps_under_loss'] and current_loss > 0 and state.global_step > 10:
-                    current_loss_dec = round(current_loss, 2)
-                    loss_str = f"{current_loss_dec:.2f}"
-                    loss_str = loss_str.replace('.', '_')
-                    new_save = (current_loss_dec-0.1) + 0.01
-                    non_serialized_params.update({"save_steps_under_loss": new_save})
+                min_steps = 10
 
-                    folder_save = f"checkpoint-{tracked.current_steps}-loss-{loss_str}" 
-                    force_save = True   
+                if current_loss < non_serialized_params['save_steps_under_loss'] and current_loss > 0 and state.global_step > min_steps:
+                    current_stability = non_serialized_params['current_stability']
+                    current_stability += 1
+                    non_serialized_params.update({"current_stability": current_stability}) 
+
+                    if current_stability >= patience:
+                        current_stability = 0
+                        non_serialized_params.update({"current_stability": current_stability})     
+                        current_loss_dec = round(current_loss, 2)
+                        loss_str = f"{current_loss_dec:.2f}"
+                        loss_str = loss_str.replace('.', '_')
+                        new_save = (current_loss_dec-0.1) + 0.01
+                        non_serialized_params.update({"save_steps_under_loss": new_save})
+
+                        folder_save = f"checkpoint-{tracked.current_steps}-loss-{loss_str}" 
+                        force_save = True   
+
+                   
+                else:
+                    # Reset stability if the loss goes above the threshold
+                    non_serialized_params.update({"current_stability": 0})   
 
                 if state.global_step > 0 and actual_save_steps > 0 and state.global_step % actual_save_steps == 0:
                     folder_save = f"checkpoint-{tracked.current_steps}"  
