@@ -30,8 +30,9 @@ To learn how to use the various features, check out the Documentation: https://g
 
 ### One-click installers
 
-1) Run the `start_linux.sh`, `start_windows.bat`, `start_macos.sh`, or `start_wsl.bat` script depending on your OS.
-2) Select your GPU vendor when asked.
+1) Clone or download the project.
+2) Run the `start_linux.sh`, `start_windows.bat`, `start_macos.sh`, or `start_wsl.bat` script depending on your OS.
+3) Select your GPU vendor when asked.
 3) Have fun!
 
 #### More information
