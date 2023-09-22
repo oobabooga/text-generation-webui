@@ -36,9 +36,9 @@ To learn how to use the various features, check out the Documentation: https://g
 
 #### More information
 
-The script will create a folder called `installer_files` where it will download Miniconda, create a Conda environment, and install the webui requirements. The installation is self-contained: if you want to reinstall, just delete `installer_files` and run the start script again.
+The script will create a folder called `installer_files` where it will create a Conda environment using Miniconda. The installation is self-contained: if you want to reinstall, just delete `installer_files` and run the start script again.
 
-The same `start` script should be used to launch the webui in the future after it is already installed. 
+To launch the webui in the future after it is already installed, run the same `start` script. 
 
 To update, run `update_linux.sh`, `update_windows.bat`, `update_macos.sh`, or `update_wsl.bat`.
 
