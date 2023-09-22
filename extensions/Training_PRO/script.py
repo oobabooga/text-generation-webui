@@ -309,7 +309,7 @@ def ui():
             data = load_dataset("json", data_files=clean_path('training/datasets', f'{dataset}.json'))
             text_chunks = []
             for data_point in data:
-                prompt = generate_prompt(data_point, format_data)
+                prompt = generate_prompt(data_point)
                 text_chunks.append(prompt)
 
             total_blocks = len(text_chunks)
