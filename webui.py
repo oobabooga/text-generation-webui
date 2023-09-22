@@ -2,6 +2,7 @@ import argparse
 import glob
 import os
 import subprocess
+import site
 import sys
 
 script_dir = os.getcwd()
@@ -77,6 +78,16 @@ def clear_cache():
     run_cmd("conda clean -a -y", environment=True)
     run_cmd("python -m pip cache purge", environment=True)
 
+def is_installed():
+    for sitedir in site.getsitepackages():
+        if "site-packages" in sitedir and conda_env_path in sitedir:
+            site_packages_path = sitedir
+            break
+
+    if site_packages_path:
+        return os.path.isfile(os.path.join(site_packages_path, 'torch', '__init__.py'))
+    else:
+        return os.path.isdir(conda_env_path)
 
 def install_dependencies():
     # Select your GPU or, choose to run in CPU mode
@@ -117,7 +128,12 @@ def install_dependencies():
 
 
 def update_dependencies(initial_installation=False):
-    # run_cmd("git pull", assert_success=True, environment=True)  # TODO uncomment before merging (is there a better way?)
+    # Create .git directory if missing
+    if not os.path.isdir(os.path.join(script_dir, ".git")):
+        git_creation_cmd = 'git init -b main && git remote add origin https://github.com/oobabooga/text-generation-webui && git fetch && git remote set-head origin -a && git reset origin/HEAD && git branch --set-upstream-to=origin/HEAD'
+        run_cmd(git_creation_cmd, environment=True, assert_success=True)
+    
+    run_cmd("git pull --autostash", assert_success=True, environment=True)  # TODO is there a better way?
 
     # Install the extensions dependencies (only on the first install)
     if initial_installation:
@@ -230,13 +246,12 @@ if __name__ == "__main__":
         update_dependencies()
     else:
         # If webui has already been installed, skip and run
-        # if not os.path.exists("text-generation-webui/"):
-        if True:  # TODO implement a new installation check
+        if not is_installed():
             install_dependencies()
             os.chdir(script_dir)
 
         # Check if a model has been downloaded yet
-        if len([item for item in glob.glob('text-generation-webui/models/*') if not item.endswith(('.txt', '.yaml'))]) == 0:
+        if len([item for item in glob.glob('models/*') if not item.endswith(('.txt', '.yaml'))]) == 0:
             print_big_message("WARNING: You haven't downloaded any model yet.\nOnce the web UI launches, head over to the \"Model\" tab and download one.")
 
         # Workaround for llama-cpp-python loading paths in CUDA env vars even if they do not exist
