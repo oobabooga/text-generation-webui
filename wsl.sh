@@ -19,7 +19,11 @@ fi
 { conda deactivate && conda deactivate && conda deactivate; } 2> /dev/null
 
 # config   unlike other scripts, can't use current directory due to file IO bug in WSL, needs to be in virtual drive
-INSTALL_DIR="$HOME/text-gen-install"
+INSTALL_DIR_PREFIX="$HOME/text-gen-install"
+if [[ ! $(realpath "$(pwd)/..") = /mnt/* ]]; then
+    INSTALL_DIR_PREFIX="$(realpath "$(pwd)/..")" && INSTALL_INPLACE=1
+fi
+INSTALL_DIR="$INSTALL_DIR_PREFIX/text-generation-webui"
 CONDA_ROOT_PREFIX="$INSTALL_DIR/installer_files/conda"
 INSTALL_ENV_DIR="$INSTALL_DIR/installer_files/env"
 MINICONDA_DOWNLOAD_URL="https://repo.anaconda.com/miniconda/Miniconda3-py310_23.3.1-0-Linux-x86_64.sh"
@@ -66,11 +70,9 @@ if [ "$conda_exists" == "F" ]; then
     "$CONDA_ROOT_PREFIX/bin/conda" --version
 fi
 
-cd $INSTALL_DIR
-
 # create the installer env
 if [ ! -e "$INSTALL_ENV_DIR" ]; then
-    "$CONDA_ROOT_PREFIX/bin/conda" create -y -k --prefix "$INSTALL_ENV_DIR" python=3.10
+    "$CONDA_ROOT_PREFIX/bin/conda" create -y -k --prefix "$INSTALL_ENV_DIR" python=3.10 git
 fi
 
 # check if conda environment was actually created
@@ -82,6 +84,24 @@ fi
 # activate installer env
 source "$CONDA_ROOT_PREFIX/etc/profile.d/conda.sh" # otherwise conda complains about 'shell not initialized' (needed when running in a script)
 conda activate "$INSTALL_ENV_DIR"
+
+# copy webui.py and CMD_FLAGS.txt to install dir to allow edits within Windows
+if [[ $INSTALL_INPLACE != 1 ]]; then
+    cp -u "./webui.py" "$INSTALL_DIR"
+    if [ -f "./CMD_FLAGS.txt" ]; then cp -u "./CMD_FLAGS.txt" "$INSTALL_DIR"; fi
+fi
+
+cd $INSTALL_DIR
+
+if [ ! -f "./server.py" ]; then
+    git init -b main
+    git remote add origin https://github.com/oobabooga/text-generation-webui
+    git fetch
+    git remote set-head origin -a
+    git reset origin/HEAD --hard
+    git branch --set-upstream-to=origin/HEAD
+    git restore -- . :!./webui.py :!./CMD_FLAGS.txt
+fi
 
 # setup installer env   update env if called with 'wsl.sh update'
 case "$1" in
