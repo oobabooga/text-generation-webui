@@ -14,18 +14,12 @@ conda_env_path = os.path.join(script_dir, "installer_files", "env")
 # os.environ["HCC_AMDGPU_TARGET"] = 'gfx1030'
 
 # Command-line flags
-if "OOBABOOGA_FLAGS" in os.environ:
-    CMD_FLAGS = os.environ["OOBABOOGA_FLAGS"]
-    print("The following flags have been taken from the environment variable 'OOBABOOGA_FLAGS':")
-    print(CMD_FLAGS)
-    print("To use the CMD_FLAGS Inside webui.py, unset 'OOBABOOGA_FLAGS'.\n")
+cmd_flags_path = os.path.join(script_dir, "CMD_FLAGS.txt")
+if os.path.exists(cmd_flags_path):
+    with open(cmd_flags_path, 'r') as f:
+        CMD_FLAGS = ' '.join(line.strip() for line in f.read().splitlines() if line.strip())
 else:
-    cmd_flags_path = os.path.join(script_dir, "CMD_FLAGS.txt")
-    if os.path.exists(cmd_flags_path):
-        with open(cmd_flags_path, 'r') as f:
-            CMD_FLAGS = ' '.join(line.strip() for line in f.read().splitlines() if line.strip())
-    else:
-        CMD_FLAGS = ''
+    CMD_FLAGS = ''
 
 
 def is_linux():
