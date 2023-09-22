@@ -8,7 +8,6 @@ https://github.com/FartyPants/Training_PRO
 - Chunking: precise raw text slicer (PRTS) uses sentence slicing and making sure things are clean on all ends
 - overlap chunking - this special overlapping will make additional overlap block based on logical rules (aka no overlap block on hard cut)
 - custom scheduler (follow the code to make your own) In LR Scheduler select FP_low_epoch_annealing - this scheduler will keep the LR constant for first epoch then use cosine for the rest - this part would be best to spawn into a new py file
-- save loss threshold - will not save the "Save every n steps" checkpoints until this threshold is reached (I definitely don't need multiple checkpoints that are 2.5 loss - I'm usually interested in checkpoints between say 1.5 and 1.9 loss)
 - saves graph png file at the end with learning rate and loss per epoch
 - adding EOS to each block or to hard cut only
 - automatically lowers gradient accumulation if you go overboard and set gradient accumulation that will be higher than actual data - transformers would then throw error (or they used to, not sure if still true) but in any way, it will fix bad data
@@ -53,3 +52,5 @@ However - GA is not some golden goose. As said, it isn't the same as batch size.
 I would suggest a series of experiment where you would put batch size as high as possible without OOM, set GA 1, then repeat training while increasing the GA (2, 4...), and see how the model changes. It's likely that it would follow some sort of curve where GA will seem to help before it will make it worse. Some people believe that if you can squeeze 6 BATCH Size, then you should not bother with GA at all... YMMW
 
 High Batch Size vs High GA would also likely produce different results in terms of learning  words vs style. How? Hmmmm... good question.
+
+One optical "benefit" of GA is that the loss will fluctuate less (because of all the gradient accumulation, which works as a form of noise smoothing as well).
