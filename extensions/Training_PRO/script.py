@@ -305,15 +305,26 @@ def ui():
                         return data
                 raise RuntimeError(f'Data-point "{data_point}" has no keyset match within format "{list(format_data.keys())}"')
 
+            def tokenize_dummy(prompt):
+
+                input_ids = shared.tokenizer.encode(prompt, truncation=True, max_length=cutoff_len)
+                labels = [1] * len(input_ids)
+                input_ids = torch.tensor(input_ids)
+                return {
+                    "input_ids": input_ids,
+                    "labels": labels,
+                    "attention_mask": input_ids.ne(shared.tokenizer.pad_token_id),
+                }
+
+            def generate_and_tokenize_prompt(data_point):
+                prompt = generate_prompt(data_point)
+                return tokenize_dummy(prompt)
+
             logger.info("Loading JSON datasets...")
             data = load_dataset("json", data_files=clean_path('training/datasets', f'{dataset}.json'))
-            text_chunks = []
-            for data_point in data:
-                prompt = generate_prompt(data_point)
-                text_chunks.append(prompt)
+            train_data = data['train'].map(generate_and_tokenize_prompt, new_fingerprint='%030x' % random.randrange(16**30))
+            total_blocks = train_data.num_rows
 
-            total_blocks = len(text_chunks)
-            del text_chunks
             result = f"Dataset: ({dataset}.json) has {total_blocks} blocks (with cutoff length = {cutoff_len})"
 
         if total_blocks>0:
