@@ -2,6 +2,7 @@ import argparse
 import glob
 import os
 import subprocess
+import site
 import sys
 
 script_dir = os.getcwd()
@@ -77,6 +78,16 @@ def clear_cache():
     run_cmd("conda clean -a -y", environment=True)
     run_cmd("python -m pip cache purge", environment=True)
 
+def is_installed():
+    for sitedir in site.getsitepackages():
+        if "site-packages" in sitedir and conda_env_path in sitedir:
+            site_packages_path = sitedir
+            break
+
+    if site_packages_path:
+        return os.path.isfile(os.path.join(site_packages_path, 'torch', '__init__.py'))
+    else:
+        return os.path.isdir(conda_env_path)
 
 def install_dependencies():
     # Select your GPU or, choose to run in CPU mode
@@ -235,8 +246,7 @@ if __name__ == "__main__":
         update_dependencies()
     else:
         # If webui has already been installed, skip and run
-        # if not os.path.exists("text-generation-webui/"):
-        if True:  # TODO implement a new installation check
+        if not is_installed():
             install_dependencies()
             os.chdir(script_dir)
 
