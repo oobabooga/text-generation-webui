@@ -62,11 +62,17 @@ def create_ui():
                 shared.gradio['send-chat-to-default'] = gr.Button('Send to default')
                 shared.gradio['send-chat-to-notebook'] = gr.Button('Send to notebook')
 
-        with gr.Row():
+        with gr.Row(elem_id='past-chats-row'):
             shared.gradio['unique_id'] = gr.Dropdown(label='Past chats', elem_classes=['slim-dropdown'])
+            shared.gradio['rename_chat'] = gr.Button('Rename', elem_classes='refresh-button')
             shared.gradio['delete_chat'] = gr.Button('🗑️', elem_classes='refresh-button')
             shared.gradio['delete_chat-cancel'] = gr.Button('Cancel', visible=False, elem_classes='refresh-button')
             shared.gradio['delete_chat-confirm'] = gr.Button('Confirm', variant='stop', visible=False, elem_classes='refresh-button')
+
+        with gr.Row(elem_id='rename-row'):
+            shared.gradio['rename_to'] = gr.Textbox(label='Rename to:', placeholder='New name', visible=False, elem_classes=['no-background'])
+            shared.gradio['rename_to-cancel'] = gr.Button('Cancel', visible=False, elem_classes='refresh-button')
+            shared.gradio['rename_to-confirm'] = gr.Button('Confirm', visible=False, elem_classes='refresh-button')
 
         with gr.Row():
             shared.gradio['start_with'] = gr.Textbox(label='Start reply with', placeholder='Sure thing!', value=shared.settings['start_with'])
@@ -237,6 +243,18 @@ def create_event_handlers():
         chat.redraw_html, gradio(reload_arr), gradio('display')).then(
         lambda x: gr.update(choices=(histories := chat.find_all_histories(x)), value=histories[0]), gradio('interface_state'), gradio('unique_id')).then(
         lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, gradio(clear_arr))
+
+    shared.gradio['rename_chat'].click(
+        lambda x: x, gradio('unique_id'), gradio('rename_to')).then(
+        lambda: [gr.update(visible=True)] * 3, None, gradio('rename_to', 'rename_to-confirm', 'rename_to-cancel'), show_progress=False)
+
+    shared.gradio['rename_to-cancel'].click(
+        lambda: [gr.update(visible=False)] * 3, None, gradio('rename_to', 'rename_to-confirm', 'rename_to-cancel'), show_progress=False)
+
+    shared.gradio['rename_to-confirm'].click(
+        chat.rename_history, gradio('unique_id', 'rename_to', 'character_menu', 'mode'), None).then(
+        lambda: [gr.update(visible=False)] * 3, None, gradio('rename_to', 'rename_to-confirm', 'rename_to-cancel'), show_progress=False).then(
+        lambda x, y: gr.update(choices=chat.find_all_histories(x), value=y), gradio('interface_state', 'rename_to'), gradio('unique_id'))
 
     shared.gradio['load_chat_history'].upload(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
