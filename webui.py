@@ -251,7 +251,7 @@ if __name__ == "__main__":
             os.chdir(script_dir)
 
         # Check if a model has been downloaded yet
-        if len([item for item in glob.glob('text-generation-webui/models/*') if not item.endswith(('.txt', '.yaml'))]) == 0:
+        if len([item for item in glob.glob('models/*') if not item.endswith(('.txt', '.yaml'))]) == 0:
             print_big_message("WARNING: You haven't downloaded any model yet.\nOnce the web UI launches, head over to the \"Model\" tab and download one.")
 
         # Workaround for llama-cpp-python loading paths in CUDA env vars even if they do not exist
