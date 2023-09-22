@@ -51,7 +51,7 @@ Some observations:
 * There is no need to run any of those scripts as admin/root.
 * If you need to move your installation folder, you will need to delete `installer_files` and install again, as some links will be broken. So choose a good location for your `text-generation-webui` folder before installing.
 * Additional instructions for WSL and AMD users can be found here: [Instructions](https://github.com/oobabooga/text-generation-webui/blob/one-click/docs/new/Installation%20Instructions.md).
-* The installer has been tested mostly on NVIDIA GPUs. If you can find a way to improve it for your AMD/Intel Arc/Mac Metal GPU, you are highly encouraged to submit a PR to this repository.
+* The installer has been tested mostly on NVIDIA GPUs. If you can find a way to improve it for your AMD/Intel Arc/Mac Metal GPU, you are highly encouraged to submit a PR to this repository. The main file to be edited is `one_click.py`.
 
 ### Manual installation using Conda
 

@@ -28,7 +28,7 @@ set "CUDA_HOME=%CUDA_PATH%"
 call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" activate "%INSTALL_ENV_DIR%" || ( echo. && echo Miniconda hook not found. && goto end )
 
 @rem update installer env
-call python webui.py --update
+call python one_click.py --update
 
 echo.
 echo Done!

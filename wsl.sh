@@ -47,9 +47,9 @@ fi
 
 if [[ "$INSTALL_DIR" =~ " " ]]; then echo This script relies on Miniconda which can not be silently installed under a path with spaces. && exit; fi
 
-# create install dir if missing and copy webui.py to install dir to maintain functionality without edit
+# create install dir if missing and copy one_click.py to install dir to maintain functionality without edit
 if [ ! -d "$INSTALL_DIR" ]; then mkdir -p "$INSTALL_DIR" || exit; fi
-cp -u "./webui.py" "$INSTALL_DIR"
+cp -u "./one_click.py" "$INSTALL_DIR"
 if [ -f "./CMD_FLAGS.txt" ]; then cp -u "./CMD_FLAGS.txt" "$INSTALL_DIR"; fi
 
 # figure out whether git and conda needs to be installed
@@ -85,9 +85,9 @@ fi
 source "$CONDA_ROOT_PREFIX/etc/profile.d/conda.sh" # otherwise conda complains about 'shell not initialized' (needed when running in a script)
 conda activate "$INSTALL_ENV_DIR"
 
-# copy webui.py and CMD_FLAGS.txt to install dir to allow edits within Windows
+# copy one_click.py and CMD_FLAGS.txt to install dir to allow edits within Windows
 if [[ $INSTALL_INPLACE != 1 ]]; then
-    cp -u "./webui.py" "$INSTALL_DIR"
+    cp -u "./one_click.py" "$INSTALL_DIR"
     if [ -f "./CMD_FLAGS.txt" ]; then cp -u "./CMD_FLAGS.txt" "$INSTALL_DIR"; fi
 fi
 
@@ -100,11 +100,11 @@ if [ ! -f "./server.py" ]; then
     git remote set-head origin -a
     git reset origin/HEAD --hard
     git branch --set-upstream-to=origin/HEAD
-    git restore -- . :!./webui.py :!./CMD_FLAGS.txt
+    git restore -- . :!./one_click.py :!./CMD_FLAGS.txt
 fi
 
 # setup installer env   update env if called with 'wsl.sh update'
 case "$1" in
-("update") python webui.py --update;;
-(*) python webui.py $@;;
+("update") python one_click.py --update;;
+(*) python one_click.py $@;;
 esac
