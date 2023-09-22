@@ -15,8 +15,8 @@ read -n1 -p "Continue the installer anyway? [y,n]" EXIT_PROMPT
 if ! [[ $EXIT_PROMPT == "Y" || $EXIT_PROMPT == "y" ]]; then exit; fi
 fi
 
-# deactivate any currently active conda env
-conda deactivate 2> /dev/null
+# deactivate existing conda envs as needed to avoid conflicts
+{ conda deactivate && conda deactivate && conda deactivate; } 2> /dev/null
 
 # config   unlike other scripts, can't use current directory due to file IO bug in WSL, needs to be in virtual drive
 INSTALL_DIR="$HOME/text-gen-install"

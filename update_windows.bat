@@ -10,6 +10,9 @@ echo "%CD%"| findstr /C:" " >nul && echo This script relies on Miniconda which c
 set TMP=%cd%\installer_files
 set TEMP=%cd%\installer_files
 
+@rem deactivate existing conda envs as needed to avoid conflicts
+(conda deactivate && conda deactivate && conda deactivate) 2>null
+
 @rem config
 set CONDA_ROOT_PREFIX=%cd%\installer_files\conda
 set INSTALL_ENV_DIR=%cd%\installer_files\env
