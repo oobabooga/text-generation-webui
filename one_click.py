@@ -96,7 +96,7 @@ def run_cmd(cmd, assert_success=False, environment=False, capture_output=False, 
     return result
 
 
-def install_dependencies():
+def install_webui():
 
     print("What is your GPU")
     print()
@@ -132,11 +132,12 @@ def install_dependencies():
     # Install Git and then Pytorch
     run_cmd(f"{install_git} && {install_pytorch}", assert_success=True, environment=True)
 
-    # Install the webui dependencies
-    update_dependencies(initial_installation=True)
+    # Install the webui requirements
+    update_requirements(initial_installation=True)
 
 
-def update_dependencies(initial_installation=False):
+def update_requirements(initial_installation=False):
+
     # Create .git directory if missing
     if not os.path.isdir(os.path.join(script_dir, ".git")):
         git_creation_cmd = 'git init -b main && git remote add origin https://github.com/oobabooga/text-generation-webui && git fetch && git remote set-head origin -a && git reset origin/HEAD && git branch --set-upstream-to=origin/HEAD'
@@ -144,11 +145,11 @@ def update_dependencies(initial_installation=False):
 
     run_cmd("git pull --autostash", assert_success=True, environment=True)
 
-    # Install the extensions dependencies (only on the first install)
+    # Initial installation only: install the extensions requirements
     if initial_installation:
         extensions = next(os.walk("extensions"))[1]
         for extension in extensions:
-            if extension in ['superbooga']:  # No wheels available for dependencies
+            if extension in ['superbooga']:  # No wheels available for requirements
                 continue
 
             extension_req_path = os.path.join("extensions", extension, "requirements.txt")
@@ -157,7 +158,7 @@ def update_dependencies(initial_installation=False):
 
     textgen_requirements = open("requirements.txt").read().splitlines()
 
-    # Workaround for git+ packages not updating properly  Also store requirements.txt for later use
+    # Workaround for git+ packages not updating properly. Also store requirements.txt for later use
     git_requirements = [req for req in textgen_requirements if req.startswith("git+")]
 
     # Loop through each "git+" requirement and uninstall it
@@ -170,15 +171,15 @@ def update_dependencies(initial_installation=False):
         run_cmd("python -m pip uninstall -y " + package_name, environment=True)
         print(f"Uninstalled {package_name}")
 
-    # Installs/Updates the project dependencies
+    # Install/update the project requirements
     run_cmd("python -m pip install -r requirements.txt --upgrade", assert_success=True, environment=True)
 
-    # The following dependencies are for CUDA, not CPU
+    # The following requirements are for CUDA, not CPU
     # Parse output of 'pip show torch' to determine torch version
     torver_cmd = run_cmd("python -m pip show torch", assert_success=True, environment=True, capture_output=True)
     torver = [v.split()[1] for v in torver_cmd.stdout.decode('utf-8').splitlines() if 'Version:' in v][0]
 
-    # Check for '+cu' or '+rocm' in version string to determine if torch uses CUDA or ROCm   check for pytorch-cuda as well for backwards compatibility
+    # Check for '+cu' or '+rocm' in version string to determine if torch uses CUDA or ROCm. Check for pytorch-cuda as well for backwards compatibility
     if '+cu' not in torver and '+rocm' not in torver and run_cmd("conda list -f pytorch-cuda | grep pytorch-cuda", environment=True, capture_output=True).returncode == 1:
         clear_cache()
         return
@@ -188,7 +189,7 @@ def update_dependencies(initial_installation=False):
 
     os.chdir("repositories")
 
-    # Install or update exllama as needed
+    # Install or update ExLlama as needed
     if not os.path.exists("exllama/"):
         run_cmd("git clone https://github.com/turboderp/exllama.git", environment=True)
     else:
@@ -196,15 +197,15 @@ def update_dependencies(initial_installation=False):
         run_cmd("git pull", environment=True)
         os.chdir("..")
 
-    # Pre-installed exllama module does not support AMD GPU
+    # Pre-installed ExLlama module does not support AMD GPU
     if '+rocm' in torver:
         run_cmd("python -m pip uninstall -y exllama", environment=True)
-        # Get download URL for latest exllama ROCm wheel
+        # Get download URL for latest ExLlama ROCm wheel
         exllama_rocm = run_cmd('curl -s https://api.github.com/repos/jllllll/exllama/releases/latest | grep browser_download_url | grep rocm5.4.2-cp310-cp310-linux_x86_64.whl | cut -d : -f 2,3 | tr -d \'"\'', environment=True, capture_output=True).stdout.decode('utf-8')
         if 'rocm5.4.2-cp310-cp310-linux_x86_64.whl' in exllama_rocm:
             run_cmd("python -m pip install " + exllama_rocm, environment=True)
 
-    # Fix JIT compile issue with exllama in Linux/WSL
+    # Fix JIT compile issue with ExLlama in Linux/WSL
     if is_linux() and not os.path.exists(f"{conda_env_path}/lib64"):
         run_cmd(f'ln -s "{conda_env_path}/lib" "{conda_env_path}/lib64"', environment=True)
 
@@ -253,11 +254,11 @@ if __name__ == "__main__":
     args, _ = parser.parse_known_args()
 
     if args.update:
-        update_dependencies()
+        update_requirements()
     else:
         # If webui has already been installed, skip and run
         if not is_installed():
-            install_dependencies()
+            install_webui()
             os.chdir(script_dir)
 
         # Check if a model has been downloaded yet
