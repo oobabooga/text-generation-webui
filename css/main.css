@@ -589,3 +589,15 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 .old-ui #chat-buttons #clear-history-confirm {
     order: -1;
 }
+
+.chat ol, .chat ul {
+    margin-top: 6px !important;
+}
+
+#past-chats-row {
+    margin-bottom: calc( -1 * var(--layout-gap) );
+}
+
+#rename-row label {
+    margin-top: var(--layout-gap);
+}

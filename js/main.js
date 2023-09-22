@@ -237,6 +237,7 @@ function showMenu() {
 
 function hideMenu() {
     menu.style.display = 'none'; // Hide the menu
+    document.querySelector('#chat-input textarea').focus();
 }
 
 if (buttonsInChat.length > 0) {
@@ -244,11 +245,9 @@ if (buttonsInChat.length > 0) {
         const thisButton = buttonsInChat[i];
         menu.appendChild(thisButton);
 
-        if(i != 8) {
-            thisButton.addEventListener("click", () => {
-                hideMenu();
-            });
-        }
+        thisButton.addEventListener("click", () => {
+            hideMenu();
+        });
 
         const buttonText = thisButton.textContent;
         const matches = buttonText.match(/(\(.*?\))/);
