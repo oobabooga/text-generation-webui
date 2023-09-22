@@ -15,7 +15,7 @@ https://github.com/FartyPants/Training_PRO
 - turn BOS on and OFF
 - target selector
 - DEMENTOR LEARNING (experimental) Deep Memorization Enforcement Through Overlapping and Repetition. This is an experiment for long-text learning using low epochs (basically use 1 epoch with constant LR or 2 epochs with FP_low_epoch_annealing LR scheduler)
-- Geting rid of micro batch size/batch size confusion. Now there is True Batch Size and Gradient accumulation slider, consisten with all the other training out there
+- Getting rid of micro batch size/batch size confusion. Now there is True Batch Size and Gradient accumulation slider, consisten with all the other training out there
 - Ability to save Checkpoint during training with a button
 - Ability to change Stop Loss during training
 - different modes of checkpoint auto saving
