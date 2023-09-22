@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 cache
 characters
 training/datasets
@@ -33,3 +34,6 @@ models/config-user.yaml
 
 .DS_Store
 Thumbs.db
+=======
+installer_files/
+>>>>>>> second-repo/main
