@@ -64,4 +64,4 @@ source "$CONDA_ROOT_PREFIX/etc/profile.d/conda.sh" # otherwise conda complains a
 conda activate "$INSTALL_ENV_DIR"
 
 # setup installer env
-python webui.py
+python webui.py $@

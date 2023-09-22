@@ -245,7 +245,8 @@ def download_model():
 
 
 def launch_webui():
-    run_cmd(f"python server.py {CMD_FLAGS}", environment=True)
+    flags = [flag for flag in sys.argv[1:] if flag != '--update']
+    run_cmd(f"python server.py {' '.join(flags)} {CMD_FLAGS}", environment=True)
 
 
 if __name__ == "__main__":
@@ -254,7 +255,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--update', action='store_true', help='Update the web UI.')
-    args = parser.parse_args()
+    args, _ = parser.parse_known_args()
 
     if args.update:
         update_dependencies()

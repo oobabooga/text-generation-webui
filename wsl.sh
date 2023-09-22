@@ -106,5 +106,5 @@ fi
 # setup installer env   update env if called with 'wsl.sh update'
 case "$1" in
 ("update") python webui.py --update;;
-(*) python webui.py;;
+(*) python webui.py $@;;
 esac
