@@ -1,41 +1,16 @@
-# Installation
-
-Run the "start" script. It will install the web UI and all of its
-dependencies inside this folder.
-
-To launch the web UI in the future after it is already installed, run the
-"start" script again.
-
-## Updating the web UI
-
-Run the "update" script. It will install the updates only, so it should
-be much faster than the initial installation.
-
-## Adding flags like --model, --api, etc
-
-Open the "CMD_FLAGS.txt" file with a text editor, add your flags, and
-save the file. For instance, to add the --api flag, change the file
-contents to
-
---api
-
-## Running an interactive shell
-
-Sometimes you may need to install some additional Python package. To do
-that, run the "cmd" script and type your commands inside the terminal
-window that will appear.
+# Additional one-click installers info
 
 ## Using an AMD GPU in Linux
 
 Requires ROCm SDK 5.4.2 or 5.4.3 to be installed. Some systems may also
 need: sudo apt-get install libstdc++-12-dev
 
-Edit the "webui.py" script using a text editor and un-comment and
+Edit the "one_click.py" script using a text editor and un-comment and
 modify the lines near the top of the script according to your setup. In
 particular, modify the os.environ["ROCM_PATH"] = '/opt/rocm' line to
 point to your ROCm installation.
 
-## WSL special instructions
+## WSL instructions
 
 If you do not have WSL installed, see here:
 https://learn.microsoft.com/en-us/windows/wsl/install
@@ -69,16 +44,13 @@ Run the "start" script. By default it will install the web UI in WSL:
 /home/{username}/text-gen-install
 
 To launch the web UI in the future after it is already installed, run
-the same "start" script. Ensure that webui.py and wsl.sh are next to it!
+the same "start" script. Ensure that one_click.py and wsl.sh are next to it!
 
 ### Updating the web UI
 
 As an alternative to running the "update" script, you can also run "wsl.sh update" in WSL.
 
 ### Running an interactive shell
-
-To run an interactive shell in the miniconda environment, run the "cmd"
-script. This is useful for installing additional requirements manually.
 
 As an alternative to running the "cmd" script, you can also run "wsl.sh cmd" in WSL.
 
