@@ -86,9 +86,8 @@ def split_sentences(text: str, cutoff_len: int):
 # hard cut defined by hard_cut_string or </s> will always end at the end of data block
 # no overlapping blocks will be created across hard cut or across </s> token
 
-def precise_cut(text: str, overlap: bool, min_chars_cut: int, eos_to_hc: bool, cutoff_len: int, hard_cut_string: str):
+def precise_cut(text: str, overlap: bool, min_chars_cut: int, eos_to_hc: bool, cutoff_len: int, hard_cut_string: str, debug_slicer:bool):
 
-    debug_slicer = False
     EOSX_str = '<//>' #hardcut placeholder
     EOS_str = '</s>' 
     print("Precise raw text slicer: ON")
@@ -187,6 +186,94 @@ def precise_cut(text: str, overlap: bool, min_chars_cut: int, eos_to_hc: bool, c
         output_file = "logs/sentencelist.json"
         with open(output_file, 'w') as f:
             json.dump(sentencelist_dict, f,indent=2)
+        
+        print("Saved sentencelist.json in logs folder")
+    
+    return sentencelist   
 
+
+def sliding_block_cut(text: str, min_chars_cut: int, eos_to_hc: bool, cutoff_len: int, hard_cut_string: str, debug_slicer:bool):
+
+    EOSX_str = '<//>' #hardcut placeholder
+    EOS_str = '</s>' 
+    print("Mega Block Overlap: ON")
+    
+    cut_string = hard_cut_string.replace('\\n', '\n')
+    text = text.replace(cut_string, EOSX_str)
+    sentences = split_sentences(text, cutoff_len)
+
+    print(f"Sentences: {len(sentences)}")
+    sentencelist = []
+    
+    max_cut = cutoff_len-1
+
+    #print(f"max_cut: {max_cut}")
+    advancing_to = 0
+
+    prev_block_lastsentence = ""
+    
+
+    for i in range(len(sentences)):
+        totalLength = 0
+        currentSentence = ''
+        lastsentence = ""
+        
+        if i >= advancing_to:
+            for k in range(i, len(sentences)):
+                
+                current_length = sentences[k]['size']
+
+                if totalLength + current_length <= max_cut and not currentSentence.endswith(EOSX_str):
+                    currentSentence += sentences[k]['text']
+                    totalLength += current_length
+                    lastsentence = sentences[k]['text']
+                else:
+                    if len(currentSentence.strip()) > min_chars_cut:
+                        if prev_block_lastsentence!=lastsentence:
+                            sentencelist.append(currentSentence.strip())
+                            prev_block_lastsentence = lastsentence
+                        
+                    advancing_to = 0
+                    if currentSentence.endswith(EOSX_str):
+                        advancing_to = k
+
+                    currentSentence = ""
+                    totalLength = 0
+                    break
+            
+            if currentSentence != "":
+                if len(currentSentence.strip()) > min_chars_cut:
+                    sentencelist.append(currentSentence.strip())
+
+    unique_blocks = len(sentencelist)
+    print(f"Text Blocks: {unique_blocks}")
+    num_EOS = 0
+    for i in range(len(sentencelist)):
+        if eos_to_hc:
+            sentencelist[i] = sentencelist[i].replace(EOSX_str, EOS_str)
+        else:
+            sentencelist[i] = sentencelist[i].replace(EOSX_str, '')
+        
+        #someone may have had stop strings in the raw text...
+        sentencelist[i] = sentencelist[i].replace("</s></s>", EOS_str)
+        num_EOS += sentencelist[i].count(EOS_str)
+
+    if num_EOS > 0:
+        print(f"+ EOS count: {num_EOS}")
+
+    #final check for useless lines
+    sentencelist = [item for item in sentencelist if item.strip() != "</s>"]
+    sentencelist = [item for item in sentencelist if item.strip() != ""]
+
+
+    if debug_slicer:
+                    # Write the log file
+        Path('logs').mkdir(exist_ok=True)
+        sentencelist_dict = {index: sentence for index, sentence in enumerate(sentencelist)}
+        output_file = "logs/sentencelist.json"
+        with open(output_file, 'w') as f:
+            json.dump(sentencelist_dict, f,indent=2)
+        
+        print("Saved sentencelist.json in logs folder")
     
     return sentencelist   
