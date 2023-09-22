@@ -133,7 +133,7 @@ def update_dependencies(initial_installation=False):
         git_creation_cmd = 'git init -b main && git remote add origin https://github.com/oobabooga/text-generation-webui && git fetch && git remote set-head origin -a && git reset origin/HEAD && git branch --set-upstream-to=origin/HEAD'
         run_cmd(git_creation_cmd, environment=True, assert_success=True)
     
-    run_cmd("git pull", assert_success=True, environment=True)  # TODO is there a better way?
+    run_cmd("git pull --autostash", assert_success=True, environment=True)  # TODO is there a better way?
 
     # Install the extensions dependencies (only on the first install)
     if initial_installation:
