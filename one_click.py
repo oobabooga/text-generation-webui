@@ -17,7 +17,7 @@ conda_env_path = os.path.join(script_dir, "installer_files", "env")
 cmd_flags_path = os.path.join(script_dir, "CMD_FLAGS.txt")
 if os.path.exists(cmd_flags_path):
     with open(cmd_flags_path, 'r') as f:
-        CMD_FLAGS = ' '.join(line.strip() for line in f.read().splitlines() if line.strip())
+        CMD_FLAGS = ' '.join(line.strip() for line in f if line.strip() and not line.strip().startswith('#'))
 else:
     CMD_FLAGS = ''
 
