@@ -118,7 +118,7 @@ def install_webui():
     install_git = "conda install -y -k ninja git"
     install_pytorch = "python -m pip install torch torchvision torchaudio"
 
-    if choice == "A":
+    if is_windows() and choice == "A":
         install_pytorch = "python -m pip install torch==2.0.1+cu117 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117"
     elif is_macos() and choice == "B":
         if is_linux():
