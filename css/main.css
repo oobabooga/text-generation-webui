@@ -591,8 +591,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 .chat ol, .chat ul {
-    padding-left: 40px !important;
-    list-style-position: outside !important;
     margin-top: 6px !important;
 }
 

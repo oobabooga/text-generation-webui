@@ -19,7 +19,6 @@
 
 .chat .message-body ul, .chat .message-body ol {
     margin-bottom: 1.25em !important;
-    padding-left: 1.1em !important;
 }
 
 .dark .message-body p em {
