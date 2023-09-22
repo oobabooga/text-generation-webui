@@ -112,23 +112,12 @@ def install_dependencies():
         else:
             run_cmd("conda install -y -k ninja git && python -m pip install torch torchvision torchaudio", assert_success=True, environment=True)
 
-<<<<<<< HEAD
-=======
-    # Clone webui to our computer
-    run_cmd("git clone https://github.com/oobabooga/text-generation-webui.git", assert_success=True, environment=True)
-
->>>>>>> second-repo/main
     # Install the webui dependencies
     update_dependencies(initial_installation=True)
 
 
 def update_dependencies(initial_installation=False):
-<<<<<<< HEAD
     # run_cmd("git pull", assert_success=True, environment=True)  # TODO uncomment before merging (is there a better way?)
-=======
-    os.chdir("text-generation-webui")
-    run_cmd("git pull", assert_success=True, environment=True)
->>>>>>> second-repo/main
 
     # Install the extensions dependencies (only on the first install)
     if initial_installation:
@@ -222,18 +211,10 @@ def update_dependencies(initial_installation=False):
 
 
 def download_model():
-<<<<<<< HEAD
-=======
-    os.chdir("text-generation-webui")
->>>>>>> second-repo/main
     run_cmd("python download-model.py", environment=True)
 
 
 def launch_webui():
-<<<<<<< HEAD
-=======
-    os.chdir("text-generation-webui")
->>>>>>> second-repo/main
     run_cmd(f"python server.py {CMD_FLAGS}", environment=True)
 
 
@@ -249,12 +230,8 @@ if __name__ == "__main__":
         update_dependencies()
     else:
         # If webui has already been installed, skip and run
-<<<<<<< HEAD
         # if not os.path.exists("text-generation-webui/"):
         if True:  # TODO implement a new installation check
-=======
-        if not os.path.exists("text-generation-webui/"):
->>>>>>> second-repo/main
             install_dependencies()
             os.chdir(script_dir)
 
