@@ -1,3 +1,5 @@
+import os
+import subprocess
 import traceback
 from functools import partial
 from inspect import signature
@@ -33,7 +35,16 @@ def load_extensions():
             if name != 'api':
                 logger.info(f'Loading the extension "{name}"...')
             try:
-                exec(f"import extensions.{name}.script")
+                try:
+                    exec(f"import extensions.{name}.script")
+                except ModuleNotFoundError as e:
+                    if e.name != name:
+                        req_file = f'./extensions/{name}/requirements.txt'
+                        if os.path.exists(req_file):
+                            subprocess.check_call(["python", "-m", "pip", "install", "-r", req_file])
+                            exec(f"import extensions.{name}.script")
+                    else:
+                        raise
                 extension = getattr(extensions, name).script
                 apply_settings(extension, name)
                 if extension not in setup_called and hasattr(extension, "setup"):
