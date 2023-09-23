@@ -1,5 +1,13 @@
 # Additional one-click installers info
 
+## Installing nvcc
+
+If you have an NVIDIA GPU and ever need to compile something, like ExLlamav2 (that currently doesn't have pre-built wheels), you can install `nvcc` by running the `cmd_` script for your OS and entering this command:
+
+```
+conda install cuda -c nvidia/label/cuda-11.7.1
+```
+
 ## Using an AMD GPU in Linux
 
 Requires ROCm SDK 5.4.2 or 5.4.3 to be installed. Some systems may also
