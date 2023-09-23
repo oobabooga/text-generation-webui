@@ -103,20 +103,21 @@ def install_webui():
         choice = os.environ["GPU_CHOICE"].upper()
         print_big_message(f"Selected GPU choice \"{choice}\" based on the GPU_CHOICE environment variable.")
     else:
-        print("What is your GPU")
+        print("What is your GPU?")
         print()
         print("A) NVIDIA")
         print("B) AMD (Linux/MacOS only. Requires ROCm SDK 5.4.2/5.4.3 on Linux)")
         print("C) Apple M Series")
-        print("D) None (I want to run models in CPU mode)")
+        print("D) Intel Arc (IPEX)")
+        print("E) None (I want to run models in CPU mode)")
         print()
 
         choice = input("Input> ").upper()
-        while choice not in ['A', 'B', 'C', 'D']:
+        while choice not in 'ABCDE':
             print("Invalid choice. Please try again.")
             choice = input("Input> ").upper()
 
-    if choice == "D":
+    if choice == "E":
         print_big_message("Once the installation ends, make sure to open CMD_FLAGS.txt with\na text editor and add the --cpu flag.")
 
     # Find the proper Pytorch installation command
@@ -131,8 +132,10 @@ def install_webui():
         else:
             print("AMD GPUs are only supported on Linux. Exiting...")
             sys.exit()
-    elif is_linux() and (choice == "C" or choice == "D"):
+    elif is_linux() and (choice == "C" or choice == "E"):
         install_pytorch = "python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu"
+    elif choice == "D":
+        install_pytorch = "python -m pip install torch==2.0.1a0 torchvision==0.15.2a0 intel_extension_for_pytorch==2.0.110+xpu -f https://developer.intel.com/ipex-whl-stable-xpu"
 
     # Install Git and then Pytorch
     run_cmd(f"{install_git} && {install_pytorch}", assert_success=True, environment=True)
