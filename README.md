@@ -56,7 +56,7 @@ To define persistent command-line flags like `--listen` or `--api`, edit the `CM
 #### Other info
 
 * There is no need to run any of those scripts as admin/root.
-* Additional instructions for WSL and AMD can be found here: [Instructions](https://github.com/oobabooga/text-generation-webui/blob/one-click/docs/One-Click-Installers.md).
+* For additional instructions about AMD setup, WSL setup, and nvcc installation, consult [this page](https://github.com/oobabooga/text-generation-webui/blob/one-click/docs/One-Click-Installers.md).
 * The installer has been tested mostly on NVIDIA GPUs. If you can find a way to improve it for your AMD/Intel Arc/Mac Metal GPU, you are highly encouraged to submit a PR to this repository. The main file to be edited is `one_click.py`.
 * For automated installation, you can use the `GPU_CHOICE` and `LAUNCH_AFTER_INSTALL` environment variables. For instance: `GPU_CHOICE=A LAUNCH_AFTER_INSTALL=False ./start_linux.sh`.
 
