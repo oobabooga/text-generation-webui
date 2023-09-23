@@ -34,6 +34,14 @@ def is_macos():
     return sys.platform.startswith("darwin")
 
 
+def cpu_has_avx2():
+    info = cpuinfo.get_cpu_info()
+    if 'avx2' in info['flags']:
+        return True
+
+    return False
+
+
 def is_installed():
     for sitedir in site.getsitepackages():
         if "site-packages" in sitedir and conda_env_path in sitedir:
@@ -137,7 +145,7 @@ def install_webui():
         install_pytorch = "python -m pip install torch==2.0.1a0 torchvision==0.15.2a0 intel_extension_for_pytorch==2.0.110+xpu -f https://developer.intel.com/ipex-whl-stable-xpu"
 
     # Install Git and then Pytorch
-    run_cmd(f"{install_git} && {install_pytorch}", assert_success=True, environment=True)
+    run_cmd(f"{install_git} && {install_pytorch} && python -m pip install cpuinfo", assert_success=True, environment=True)
 
     # Install the webui requirements
     update_requirements(initial_installation=True)
@@ -162,11 +170,13 @@ def update_requirements(initial_installation=False):
             if os.path.exists(extension_req_path):
                 run_cmd("python -m pip install -r " + extension_req_path + " --upgrade", assert_success=True, environment=True)
 
-    # Detect the pytorch version
+    # Detect the PyTorch version
     torver_cmd = run_cmd("python -m pip show torch", assert_success=True, environment=True, capture_output=True)
     torver = [v.split()[1] for v in torver_cmd.stdout.decode('utf-8').splitlines() if 'Version:' in v][0]
-    is_cuda = '+cu' in torver
-    is_rocm = '+rocm' in torver
+    is_cuda = '+cu' in torver  # 2.0.1
+    is_rocm = '+rocm' in torver  # 2.0.1+rocm5.4.2
+    is_intel = '+cxx11' in torver  # 2.0.1a0+cxx11.abi
+    is_cpu = '+cpu' in torver  # 2.0.1+cpu
 
     if is_rocm:
         requirements_file = "requirements_amd.txt"
