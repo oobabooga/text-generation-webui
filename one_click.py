@@ -180,6 +180,11 @@ def update_requirements(initial_installation=False):
 
     if is_rocm:
         requirements_file = "requirements_amd.txt"
+    elif is_cpu:
+        if cpu_has_avx2():
+            requirements_file = "requirements_minimal.txt"
+        else:
+            requirements_file = "requirements_minimal_noavx2.txt"
     else:
         requirements_file = "requirements.txt"
 
