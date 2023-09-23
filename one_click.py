@@ -1,8 +1,8 @@
 import argparse
 import glob
 import os
-import subprocess
 import site
+import subprocess
 import sys
 
 script_dir = os.getcwd()
@@ -97,7 +97,6 @@ def run_cmd(cmd, assert_success=False, environment=False, capture_output=False, 
 
 
 def install_webui():
-
     # Select your GPU, or choose to run in CPU mode
     if "GPU_CHOICE" in os.environ:
         choice = os.environ["GPU_CHOICE"].upper()
@@ -145,7 +144,6 @@ def install_webui():
 
 
 def update_requirements(initial_installation=False):
-
     # Create .git directory if missing
     if not os.path.isdir(os.path.join(script_dir, ".git")):
         git_creation_cmd = 'git init -b main && git remote add origin https://github.com/oobabooga/text-generation-webui && git fetch && git remote set-head origin -a && git reset origin/HEAD && git branch --set-upstream-to=origin/HEAD'
@@ -215,19 +213,18 @@ def update_requirements(initial_installation=False):
         if 'rocm5.4.2-cp310-cp310-linux_x86_64.whl' in exllama_rocm:
             run_cmd("python -m pip install " + exllama_rocm, environment=True)
 
-    # Fix JIT compile issue with ExLlama in Linux/WSL
-    if is_linux() and not os.path.exists(f"{conda_env_path}/lib64"):
-        run_cmd(f'ln -s "{conda_env_path}/lib" "{conda_env_path}/lib64"', environment=True)
-
-    # On some Linux distributions, g++ may not exist or be the wrong version to compile GPTQ-for-LLaMa
     if is_linux():
+        # Fix JIT compile issue with ExLlama in Linux/WSL
+        if not os.path.exists(f"{conda_env_path}/lib64"):
+            run_cmd(f'ln -s "{conda_env_path}/lib" "{conda_env_path}/lib64"', environment=True)
+
+        # On some Linux distributions, g++ may not exist or be the wrong version to compile GPTQ-for-LLaMa
         gxx_output = run_cmd("g++ -dumpfullversion -dumpversion", environment=True, capture_output=True)
         if gxx_output.returncode != 0 or int(gxx_output.stdout.strip().split(b".")[0]) > 11:
             # Install the correct version of g++
             run_cmd("conda install -y -k conda-forge::gxx_linux-64=11.2.0", environment=True)
 
     if is_rocm:
-
         # Install/Update ROCm AutoGPTQ for AMD GPUs
         auto_gptq_version = [req for req in textgen_requirements if req.startswith('https://github.com/PanQiWei/AutoGPTQ/releases/download/')][0].split('/')[7]
         auto_gptq_wheel = run_cmd(f'curl -s https://api.github.com/repos/PanQiWei/AutoGPTQ/releases/tags/{auto_gptq_version} | grep browser_download_url | grep rocm5.4.2-cp310-cp310-linux_x86_64.whl | cut -d : -f 2,3 | tr -d \'"\'', environment=True, capture_output=True).stdout.decode('utf-8')
@@ -256,7 +253,6 @@ def launch_webui():
 
 
 if __name__ == "__main__":
-
     # Verifies we are in a conda environment
     check_env()
 
