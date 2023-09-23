@@ -186,9 +186,11 @@ def update_requirements(initial_installation=False):
     # Parse output of 'pip show torch' to determine torch version
     torver_cmd = run_cmd("python -m pip show torch", assert_success=True, environment=True, capture_output=True)
     torver = [v.split()[1] for v in torver_cmd.stdout.decode('utf-8').splitlines() if 'Version:' in v][0]
+    is_cuda = '+cu' in torver
+    is_rocm = '+rocm' in torver
 
     # Check for '+cu' or '+rocm' in version string to determine if torch uses CUDA or ROCm. Check for pytorch-cuda as well for backwards compatibility
-    if '+cu' not in torver and '+rocm' not in torver and run_cmd("conda list -f pytorch-cuda | grep pytorch-cuda", environment=True, capture_output=True).returncode == 1:
+    if not any((is_cuda, is_rocm)) and run_cmd("conda list -f pytorch-cuda | grep pytorch-cuda", environment=True, capture_output=True).returncode == 1:
         clear_cache()
         return
 
@@ -206,7 +208,7 @@ def update_requirements(initial_installation=False):
         os.chdir("..")
 
     # Pre-installed ExLlama module does not support AMD GPU
-    if '+rocm' in torver:
+    if is_rocm:
         run_cmd("python -m pip uninstall -y exllama", environment=True)
         # Get download URL for latest ExLlama ROCm wheel
         exllama_rocm = run_cmd('curl -s https://api.github.com/repos/jllllll/exllama/releases/latest | grep browser_download_url | grep rocm5.4.2-cp310-cp310-linux_x86_64.whl | cut -d : -f 2,3 | tr -d \'"\'', environment=True, capture_output=True).stdout.decode('utf-8')
@@ -224,15 +226,15 @@ def update_requirements(initial_installation=False):
             # Install the correct version of g++
             run_cmd("conda install -y -k conda-forge::gxx_linux-64=11.2.0", environment=True)
 
-    # Install/Update ROCm AutoGPTQ for AMD GPUs
-    if '+rocm' in torver:
+    if is_rocm:
+
+        # Install/Update ROCm AutoGPTQ for AMD GPUs
         auto_gptq_version = [req for req in textgen_requirements if req.startswith('https://github.com/PanQiWei/AutoGPTQ/releases/download/')][0].split('/')[7]
         auto_gptq_wheel = run_cmd(f'curl -s https://api.github.com/repos/PanQiWei/AutoGPTQ/releases/tags/{auto_gptq_version} | grep browser_download_url | grep rocm5.4.2-cp310-cp310-linux_x86_64.whl | cut -d : -f 2,3 | tr -d \'"\'', environment=True, capture_output=True).stdout.decode('utf-8')
         if not auto_gptq_wheel and run_cmd(f"python -m pip install {auto_gptq_wheel} --force-reinstall --no-deps", environment=True).returncode != 0:
             print_big_message("ERROR: AutoGPTQ wheel installation failed!\n       You will not be able to use GPTQ-based models with AutoGPTQ.")
 
-    # Install GPTQ-for-LLaMa for ROCm
-    if '+rocm' in torver:
+        # Install GPTQ-for-LLaMa for ROCm
         gptq_wheel = run_cmd('curl -s https://api.github.com/repos/jllllll/GPTQ-for-LLaMa-CUDA/releases/latest | grep browser_download_url | grep rocm5.4.2-cp310-cp310-linux_x86_64.whl | cut -d : -f 2,3 | tr -d \'"\'', environment=True, capture_output=True).stdout.decode('utf-8')
         install_gptq = run_cmd("python -m pip install " + gptq_wheel, environment=True).returncode == 0
         if install_gptq:
@@ -254,6 +256,7 @@ def launch_webui():
 
 
 if __name__ == "__main__":
+
     # Verifies we are in a conda environment
     check_env()
 
