@@ -32,7 +32,7 @@ def generate_reply(*args, **kwargs):
         shared.generation_lock.release()
 
 
-def _generate_reply(question, state, stopping_strings=None, is_chat=False, escape_html=False):
+def _generate_reply(question, state, stopping_strings=None, stopping_regex=None, is_chat=False, escape_html=False):
 
     # Find the appropriate generation function
     generate_func = apply_extensions('custom_generate_reply')
@@ -52,6 +52,11 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
     if not is_chat:
         state = apply_extensions('state', state)
         question = apply_extensions('input', question, state)
+
+    # creating regex pattern
+    pattern = None
+    if stopping_regex is not None:
+        pattern = re.compile(stopping_regex)
 
     # Find the stopping strings
     all_stop_strings = []
@@ -76,8 +81,13 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
     for reply in generate_func(question, original_question, seed, state, stopping_strings, is_chat=is_chat):
         if escape_html:
             reply = html.escape(reply)
-
         reply, stop_found = apply_stopping_strings(reply, all_stop_strings)
+
+        if pattern is not None and not stop_found:
+            stop_found = pattern.search(reply)
+            if stop_found is not None:
+                reply = reply[:len(stop_found.group(0))]
+
         if is_stream:
             cur_time = time.time()
 
