@@ -30,14 +30,14 @@ To learn how to use the various features, check out the Documentation: https://g
 
 ### One-click installers
 
-1) Clone or download the project.
+1) Clone or download the repository.
 2) Run the `start_linux.sh`, `start_windows.bat`, `start_macos.sh`, or `start_wsl.bat` script depending on your OS.
 3) Select your GPU vendor when asked.
-3) Have fun!
+4) Have fun!
 
 #### More information
 
-The script will create a folder called `installer_files` where it will create a Conda environment using Miniconda. The installation is self-contained: if you want to reinstall, just delete `installer_files` and run the start script again.
+The script creates a folder called `installer_files` where it sets up a Conda environment using Miniconda. The installation is self-contained: if you want to reinstall, just delete `installer_files` and run the start script again.
 
 To launch the webui in the future after it is already installed, run the same `start` script. 
 
@@ -46,8 +46,6 @@ To update, run `update_linux.sh`, `update_windows.bat`, `update_macos.sh`, or `u
 To run commands in the `installer_files` environment, run the appropriate cmd script: `cmd_linux.sh`, `cmd_windows.bat`, `cmd_macos.sh`, or `cmd_wsl.bat`.
 
 To define persistent command-line flags like `--listen` or `--api`, edit the `CMD_FLAGS.txt` file with a text editor and add them there. Flags can also be provided directly to the start scripts, for instance, `./start-linux.sh --listen`.
-
-Some observations:
 
 * There is no need to run any of those scripts as admin/root.
 * If you need to move your installation folder, you will need to delete `installer_files` and install again, as some links will be broken. So choose a good location for your `text-generation-webui` folder before installing.
