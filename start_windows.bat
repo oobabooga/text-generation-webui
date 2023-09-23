@@ -18,7 +18,7 @@ set TMP=%cd%\installer_files
 set TEMP=%cd%\installer_files
 
 @rem deactivate existing conda envs as needed to avoid conflicts
-(conda deactivate && conda deactivate && conda deactivate) 2>nul
+(call conda deactivate && call conda deactivate && call conda deactivate) 2>nul
 
 @rem config
 set INSTALL_DIR=%cd%\installer_files
