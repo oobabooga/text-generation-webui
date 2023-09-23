@@ -205,14 +205,6 @@ def update_requirements(initial_installation=False):
         run_cmd("git pull", environment=True)
         os.chdir("..")
 
-    # Pre-installed ExLlama module does not support AMD GPU
-    if is_rocm:
-        run_cmd("python -m pip uninstall -y exllama", environment=True)
-        # Get download URL for latest ExLlama ROCm wheel
-        exllama_rocm = run_cmd('curl -s https://api.github.com/repos/jllllll/exllama/releases/latest | grep browser_download_url | grep rocm5.4.2-cp310-cp310-linux_x86_64.whl | cut -d : -f 2,3 | tr -d \'"\'', environment=True, capture_output=True).stdout.decode('utf-8')
-        if 'rocm5.4.2-cp310-cp310-linux_x86_64.whl' in exllama_rocm:
-            run_cmd("python -m pip install " + exllama_rocm, environment=True)
-
     if is_linux():
         # Fix JIT compile issue with ExLlama in Linux/WSL
         if not os.path.exists(f"{conda_env_path}/lib64"):
@@ -225,6 +217,13 @@ def update_requirements(initial_installation=False):
             run_cmd("conda install -y -k conda-forge::gxx_linux-64=11.2.0", environment=True)
 
     if is_rocm:
+        # Pre-installed ExLlama module does not support AMD GPU
+        run_cmd("python -m pip uninstall -y exllama", environment=True)
+        # Get download URL for latest ExLlama ROCm wheel
+        exllama_rocm = run_cmd('curl -s https://api.github.com/repos/jllllll/exllama/releases/latest | grep browser_download_url | grep rocm5.4.2-cp310-cp310-linux_x86_64.whl | cut -d : -f 2,3 | tr -d \'"\'', environment=True, capture_output=True).stdout.decode('utf-8')
+        if 'rocm5.4.2-cp310-cp310-linux_x86_64.whl' in exllama_rocm:
+            run_cmd("python -m pip install " + exllama_rocm, environment=True)
+
         # Install/Update ROCm AutoGPTQ for AMD GPUs
         auto_gptq_version = [req for req in textgen_requirements if req.startswith('https://github.com/PanQiWei/AutoGPTQ/releases/download/')][0].split('/')[7]
         auto_gptq_wheel = run_cmd(f'curl -s https://api.github.com/repos/PanQiWei/AutoGPTQ/releases/tags/{auto_gptq_version} | grep browser_download_url | grep rocm5.4.2-cp310-cp310-linux_x86_64.whl | cut -d : -f 2,3 | tr -d \'"\'', environment=True, capture_output=True).stdout.decode('utf-8')
