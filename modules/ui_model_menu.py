@@ -251,7 +251,7 @@ def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), retur
 
 
 def update_truncation_length(current_length, state):
-    if state['loader'] in ['ExLlama', 'ExLlama_HF']:
+    if state['loader'].lower().startswith('exllama'):
         return state['max_seq_len']
     elif state['loader'] in ['llama.cpp', 'llamacpp_HF', 'ctransformers']:
         return state['n_ctx']
