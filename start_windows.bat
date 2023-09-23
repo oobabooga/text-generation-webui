@@ -13,6 +13,14 @@ echo "%CD%"| findstr /R /C:"[!#\$%&()\*+,;<=>?@\[\]\^`{|}~]" >nul && (
 )
 set SPCHARMESSAGE=
 
+@rem Check for non-ASCII 7-bit characters in installation path
+set "NONASCII7MESSAGE="WARNING: Non-ASCII 7-bit characters were detected in the installation path!" "         This can cause the installation to fail!""
+echo "%CD%"| findstr /R /C:"[^\x00-\x7F]" >nul && (
+	call :PrintBigMessage %NONASCII7MESSAGE%
+)
+set NONASCII7MESSAGE=
+
+
 @rem fix failed install when installing to a separate drive
 set TMP=%cd%\installer_files
 set TEMP=%cd%\installer_files
