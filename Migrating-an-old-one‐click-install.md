@@ -22,10 +22,10 @@ If yours is at `oobabooga_windows\oobabooga_windows\text-generation-webui`, move
 
 ![Untitled-3](https://github.com/oobabooga/text-generation-webui/assets/112222186/23dd4d58-40ed-4616-8a49-2969912323e2)
 
-4) Delete your previous `oobabooga_windows` folder (or similar), as it no longer contains anything necessary:
+4) Delete your previous `oobabooga_windows` folder (or similar), as it is no longer necessary:
 
 ![Untitled-4](https://github.com/oobabooga/text-generation-webui/assets/112222186/58506d07-5497-47fa-ba84-869aea9d550e)
 
-Make sure that you have completed steps 1 to 3 and that `text-generation-webui` is no longer inside this folder before deleting it.
+Make sure that you have completed steps 1 to 3 and that `text-generation-webui` is no longer inside this folder before deleting it. You may want to backup your `CMD_FLAGS.txt` file.
 
 5) Migration completed!
