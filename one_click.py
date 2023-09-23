@@ -255,7 +255,7 @@ if __name__ == "__main__":
     # Verifies we are in a conda environment
     check_env()
 
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument('--update', action='store_true', help='Update the web UI.')
     args, _ = parser.parse_known_args()
 
