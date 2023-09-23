@@ -35,22 +35,31 @@ To learn how to use the various features, check out the Documentation: https://g
 3) Select your GPU vendor when asked.
 4) Have fun!
 
-#### More information
+#### How it works
 
 The script creates a folder called `installer_files` where it sets up a Conda environment using Miniconda. The installation is self-contained: if you want to reinstall, just delete `installer_files` and run the start script again.
 
 To launch the webui in the future after it is already installed, run the same `start` script. 
 
-To update, run `update_linux.sh`, `update_windows.bat`, `update_macos.sh`, or `update_wsl.bat`.
+#### Getting updates
 
-To run commands in the `installer_files` environment, run the appropriate cmd script: `cmd_linux.sh`, `cmd_windows.bat`, `cmd_macos.sh`, or `cmd_wsl.bat`.
+Run `update_linux.sh`, `update_windows.bat`, `update_macos.sh`, or `update_wsl.bat`.
+
+#### Running commands
+
+If you ever need to install something manually in the `installer_files` environment, you can launch an interactive shell using the cmd script: `cmd_linux.sh`, `cmd_windows.bat`, `cmd_macos.sh`, or `cmd_wsl.bat`.
+
+#### Defining command-line flags
 
 To define persistent command-line flags like `--listen` or `--api`, edit the `CMD_FLAGS.txt` file with a text editor and add them there. Flags can also be provided directly to the start scripts, for instance, `./start-linux.sh --listen`.
+
+#### Other info
 
 * There is no need to run any of those scripts as admin/root.
 * If you need to move your installation folder, you will need to delete `installer_files` and install again, as some links will be broken. So choose a good location for your `text-generation-webui` folder before installing.
 * Additional instructions for WSL and AMD can be found here: [Instructions](https://github.com/oobabooga/text-generation-webui/blob/one-click/docs/One-Click-Installers.md).
 * The installer has been tested mostly on NVIDIA GPUs. If you can find a way to improve it for your AMD/Intel Arc/Mac Metal GPU, you are highly encouraged to submit a PR to this repository. The main file to be edited is `one_click.py`.
+* For automated installation, you can use the `GPU_CHOICE` and `LAUNCH_AFTER_INSTALL` environment variables. For instance: `GPU_CHOICE=A LAUNCH_AFTER_INSTALL=False ./start_linux.sh`.
 
 ### Manual installation using Conda
 
