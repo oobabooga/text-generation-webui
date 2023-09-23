@@ -282,6 +282,7 @@ Optionally, you can use the following command-line flags:
 | `--llama_cpp_seed SEED`        | Seed for llama-cpp models. Default 0 (random). |
 | `--cpu`                        | Use the CPU version of llama-cpp-python instead of the GPU-accelerated version. |
 |`--cfg-cache`                   | llamacpp_HF: Create an additional cache for CFG negative prompts. |
+| `--numa`      | Activate NUMA task allocation for llama.cpp |
 
 #### ctransformers
 

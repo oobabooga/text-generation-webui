@@ -49,6 +49,10 @@ class LlamaCppModel:
     @classmethod
     def from_pretrained(self, path):
 
+        if shared.args.numa:
+            llama_cpp_lib.llama_backend_init(numa=shared.args.numa);
+            logger.info("Enabling NUMA for llama.cpp")
+        
         Llama = llama_cpp_lib().Llama
         LlamaCache = llama_cpp_lib().LlamaCache
 
