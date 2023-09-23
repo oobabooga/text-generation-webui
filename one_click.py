@@ -109,15 +109,15 @@ def install_webui():
         print("B) AMD (Linux/MacOS only. Requires ROCm SDK 5.4.2/5.4.3 on Linux)")
         print("C) Apple M Series")
         print("D) Intel Arc (IPEX)")
-        print("E) None (I want to run models in CPU mode)")
+        print("N) None (I want to run models in CPU mode)")
         print()
 
         choice = input("Input> ").upper()
-        while choice not in 'ABCDE':
+        while choice not in 'ABCDN':
             print("Invalid choice. Please try again.")
             choice = input("Input> ").upper()
 
-    if choice == "E":
+    if choice == "N":
         print_big_message("Once the installation ends, make sure to open CMD_FLAGS.txt with\na text editor and add the --cpu flag.")
 
     # Find the proper Pytorch installation command
@@ -132,7 +132,7 @@ def install_webui():
         else:
             print("AMD GPUs are only supported on Linux. Exiting...")
             sys.exit()
-    elif is_linux() and (choice == "C" or choice == "E"):
+    elif is_linux() and (choice == "C" or choice == "N"):
         install_pytorch = "python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu"
     elif choice == "D":
         install_pytorch = "python -m pip install torch==2.0.1a0 torchvision==0.15.2a0 intel_extension_for_pytorch==2.0.110+xpu -f https://developer.intel.com/ipex-whl-stable-xpu"
