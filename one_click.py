@@ -35,6 +35,8 @@ def is_macos():
 
 
 def cpu_has_avx2():
+    import cpuinfo
+
     info = cpuinfo.get_cpu_info()
     if 'avx2' in info['flags']:
         return True
