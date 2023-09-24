@@ -210,6 +210,8 @@ def update_requirements(initial_installation=False):
         else:
             requirements_file = "requirements_noavx2.txt"
 
+    print(f"Using the following requirements file: {requirements_file}")
+
     textgen_requirements = open(requirements_file).read().splitlines()
 
     # Workaround for git+ packages not updating properly. Also store requirements.txt for later use
