@@ -105,19 +105,22 @@ pip install -r requirements.txt
 
 #### AMD, Metal, Intel Arc, and CPUs without AVX2
 
-1) Replace the last command above with
+1) Replace `requirements.txt` above with the appropriate one for your hardware:
 
-```
-pip install -r requirements_nocuda.txt
-```
+| GPU    | CPU       | Requirements file    |
+|--------|-----------|----------------------|
+| AMD (Linux only) | With AVX2 | `requirements_amd.txt` |
+| AMD (Linux only) | Without AVX2 | `requirements_amd_noavx2.txt` |
+| Metal or None | arm64 | `requirements_mac_silicon.txt` |
+| Metal or None | x86_64 | `requirements_mac_intel.txt` |
+| None or Intel Arc | With AVX2 | `requirements_minimal.txt` |
+| None or Intel Arc | Without AVX2 | `requirements_minimal_noavx2.txt` |
 
-2) Manually install llama-cpp-python using the appropriate command for your hardware: [Installation from PyPI](https://github.com/abetlen/llama-cpp-python#installation-from-pypi).
+2) If necessary, manually install llama-cpp-python using the appropriate command for your hardware: [Installation from PyPI](https://github.com/abetlen/llama-cpp-python#installation-from-pypi).
    
-3) Do the same for CTransformers: [Installation](https://github.com/marella/ctransformers#installation).
+3) The same for CTransformers: [Installation](https://github.com/marella/ctransformers#installation).
 
-4) AMD: Manually install AutoGPTQ: [Installation](https://github.com/PanQiWei/AutoGPTQ#installation).
-
-5) AMD: Manually install [ExLlama](https://github.com/turboderp/exllama) by simply cloning it into the `repositories` folder (it will be automatically compiled at runtime after that):
+4) Manually install [ExLlama](https://github.com/turboderp/exllama) by simply cloning it into the `repositories` folder (it will be automatically compiled at runtime after that):
 
 ```
 cd text-generation-webui
