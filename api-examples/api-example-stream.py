@@ -46,6 +46,7 @@ async def run(context):
         'mirostat_mode': 0,
         'mirostat_tau': 5,
         'mirostat_eta': 0.1,
+        'grammar_file': '',
         'guidance_scale': 1,
         'negative_prompt': '',
 

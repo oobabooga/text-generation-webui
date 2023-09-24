@@ -44,6 +44,7 @@ def build_parameters(body, chat=False):
         'mirostat_mode': int(body.get('mirostat_mode', 0)),
         'mirostat_tau': float(body.get('mirostat_tau', 5)),
         'mirostat_eta': float(body.get('mirostat_eta', 0.1)),
+        'grammar_file': str(body.get('grammar_file', '')),
         'guidance_scale': float(body.get('guidance_scale', 1)),
         'negative_prompt': str(body.get('negative_prompt', '')),
         'seed': int(body.get('seed', -1)),
