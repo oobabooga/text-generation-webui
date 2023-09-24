@@ -114,7 +114,7 @@ def list_interface_input_elements():
         'mirostat_mode',
         'mirostat_tau',
         'mirostat_eta',
-        'grammar_file',
+        'grammar_string',
         'negative_prompt',
         'guidance_scale',
         'add_bos_token',

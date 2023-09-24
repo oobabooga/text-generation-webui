@@ -73,3 +73,15 @@ def create_event_handlers():
         lambda x: f'{x}.yaml', gradio('preset_menu'), gradio('delete_filename')).then(
         lambda: 'presets/', None, gradio('delete_root')).then(
         lambda: gr.update(visible=True), None, gradio('file_deleter'))
+
+    shared.gradio['save_grammar'].click(
+        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+        lambda x: x, gradio('grammar_string'), gradio('save_contents')).then(
+        lambda: 'grammars/', None, gradio('save_root')).then(
+        lambda: 'My Fancy Grammar.gbnf', None, gradio('save_filename')).then(
+        lambda: gr.update(visible=True), None, gradio('file_saver'))
+
+    shared.gradio['delete_grammar'].click(
+        lambda x: x, gradio('grammar_file'), gradio('delete_filename')).then(
+        lambda: 'grammars/', None, gradio('delete_root')).then(
+        lambda: gr.update(visible=True), None, gradio('file_deleter'))
