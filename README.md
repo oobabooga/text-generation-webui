@@ -108,11 +108,11 @@ pip install -r requirements.txt
 1) Replace the last command above with
 
 ```
-pip install -r requirements_nocuda.txt
+pip install -r requirements_nowheels.txt
 ```
 
 2) Manually install llama-cpp-python using the appropriate command for your hardware: [Installation from PyPI](https://github.com/abetlen/llama-cpp-python#installation-from-pypi).
-   
+
 3) Do the same for CTransformers: [Installation](https://github.com/marella/ctransformers#installation).
 
 4) AMD: Manually install AutoGPTQ: [Installation](https://github.com/PanQiWei/AutoGPTQ#installation).
