@@ -1,8 +1,9 @@
+from pathlib import Path
+
 import gradio as gr
 
 from modules import loaders, presets, shared, ui, ui_chat, utils
 from modules.utils import gradio
-from pathlib import Path
 
 
 def create_ui(default_preset):
