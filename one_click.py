@@ -40,13 +40,16 @@ def is_x86_64():
 
 
 def cpu_has_avx2():
-    import cpuinfo
+    try:
+        import cpuinfo
 
-    info = cpuinfo.get_cpu_info()
-    if 'avx2' in info['flags']:
+        info = cpuinfo.get_cpu_info()
+        if 'avx2' in info['flags']:
+            return True
+        else:
+            return False
+    except:
         return True
-
-    return False
 
 
 def torch_version():
@@ -157,7 +160,7 @@ def install_webui():
         install_pytorch = "python -m pip install torch==2.0.1a0 torchvision==0.15.2a0 intel_extension_for_pytorch==2.0.110+xpu -f https://developer.intel.com/ipex-whl-stable-xpu"
 
     # Install Git and then Pytorch
-    run_cmd(f"{install_git} && {install_pytorch} && python -m pip install py-cpuinfo", assert_success=True, environment=True)
+    run_cmd(f"{install_git} && {install_pytorch} && python -m pip install py-cpuinfo==9.0.0", assert_success=True, environment=True)
 
     # Install the webui requirements
     update_requirements(initial_installation=True)
