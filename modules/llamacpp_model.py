@@ -114,7 +114,6 @@ class LlamaCppModel:
         if fname != self.grammar_file:
             self.grammar_file = fname
             p = Path(f'grammars/{fname}')
-            print(p)
             if p.exists():
                 logger.info(f'Loading the following grammar file: {p}')
                 self.grammar = llama_cpp_lib().LlamaGrammar.from_file(str(p))
