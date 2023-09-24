@@ -173,10 +173,6 @@ class LlamacppHF(PreTrainedModel):
     def from_pretrained(cls, pretrained_model_name_or_path: Optional[Union[str, os.PathLike]], *model_args, **kwargs):
         assert len(model_args) == 0 and len(kwargs) == 0, "extra args is currently not supported"
 
-        if shared.args.numa:
-            llama_cpp_lib.llama_backend_init(numa=shared.args.numa);
-            logger.info("Enabling NUMA for llama.cpp")
-
         if isinstance(pretrained_model_name_or_path, str):
             pretrained_model_name_or_path = Path(pretrained_model_name_or_path)
 
@@ -208,6 +204,7 @@ class LlamacppHF(PreTrainedModel):
             'tensor_split': tensor_split_list,
             'rope_freq_scale': 1.0 / shared.args.compress_pos_emb,
             'logits_all': True,
+            'numa': shared.args.numa,	
         }
 
         Llama = llama_cpp_lib().Llama

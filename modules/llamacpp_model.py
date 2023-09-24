@@ -48,11 +48,6 @@ class LlamaCppModel:
 
     @classmethod
     def from_pretrained(self, path):
-
-        if shared.args.numa:
-            llama_cpp_lib.llama_backend_init(numa=shared.args.numa);
-            logger.info("Enabling NUMA for llama.cpp")
-        
         Llama = llama_cpp_lib().Llama
         LlamaCache = llama_cpp_lib().LlamaCache
 
@@ -87,6 +82,7 @@ class LlamaCppModel:
             'rope_freq_base': RoPE.get_rope_freq_base(shared.args.alpha_value, shared.args.rope_freq_base),
             'tensor_split': tensor_split_list,
             'rope_freq_scale': 1.0 / shared.args.compress_pos_emb,
+            'numa': shared.args.numa,	
         }
 
         result.model = Llama(**params)
