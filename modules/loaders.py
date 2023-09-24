@@ -306,6 +306,7 @@ loaders_samplers = {
         'mirostat_tau',
         'mirostat_eta',
         'grammar_file_row',
+        'grammar_string',
         'ban_eos_token',
         'custom_token_bans',
     },
