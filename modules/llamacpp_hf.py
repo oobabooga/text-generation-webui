@@ -10,14 +10,14 @@ from transformers.modeling_outputs import CausalLMOutputWithPast
 from modules import RoPE, shared
 from modules.logging_colors import logger
 
-import llama_cpp
+try:
+    import llama_cpp
+except:
+    llama_cpp = None
 
-if torch.cuda.is_available() and not torch.version.hip:
-    try:
-        import llama_cpp_cuda
-    except:
-        llama_cpp_cuda = None
-else:
+try:
+    import llama_cpp_cuda
+except:
     llama_cpp_cuda = None
 
 

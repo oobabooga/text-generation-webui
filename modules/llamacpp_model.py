@@ -14,12 +14,9 @@ try:
 except:
     llama_cpp = None
 
-if torch.cuda.is_available() and not torch.version.hip:
-    try:
-        import llama_cpp_cuda
-    except:
-        llama_cpp_cuda = None
-else:
+try:
+    import llama_cpp_cuda
+except:
     llama_cpp_cuda = None
 
 
