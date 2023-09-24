@@ -125,7 +125,7 @@ def create_ui(default_preset):
                                 shared.gradio['save_grammar'] = gr.Button('💾', elem_classes='refresh-button')
                                 shared.gradio['delete_grammar'] = gr.Button('🗑️ ', elem_classes='refresh-button')
 
-                    shared.gradio['grammar_string'] = gr.Textbox(value='', label='Grammar', lines=16, elem_classes=['add_scrollbar'])
+                    shared.gradio['grammar_string'] = gr.Textbox(value='', label='Grammar', lines=16, elem_classes=['add_scrollbar', 'monospace'])
                     shared.gradio['grammar_file'].change(lambda x: open(Path(f'grammars/{x}'), 'r').read(), gradio('grammar_file'), gradio('grammar_string'))
 
         ui_chat.create_chat_settings_ui()
