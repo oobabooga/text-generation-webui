@@ -6,7 +6,6 @@
 import os
 
 import sentence_transformers
-from extensions.openai.script import params
 
-st_model = os.environ.get("OPENEDAI_EMBEDDING_MODEL", params.get('embedding_model', 'all-mpnet-base-v2'))
+st_model = os.environ.get("OPENEDAI_EMBEDDING_MODEL", "all-mpnet-base-v2")
 model = sentence_transformers.SentenceTransformer(st_model)
