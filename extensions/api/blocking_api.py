@@ -1,5 +1,7 @@
+import cgi
 import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+import os
 from threading import Thread
 
 from extensions.api.util import build_parameters, try_start_cloudflared
@@ -14,6 +16,7 @@ from modules.text_generation import (
     stop_everything_event
 )
 from modules.utils import get_available_models
+from extensions.api.audiox import transcribe_align_diarize
 
 
 def get_model_info():
@@ -40,6 +43,47 @@ class Handler(BaseHTTPRequestHandler):
             self.send_error(404)
 
     def do_POST(self):
+        if '/api/v1/whisperx' in self.path:
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+
+            # Parse the form data
+            form = cgi.FieldStorage(
+                fp=self.rfile,
+                headers=self.headers,
+                environ={'REQUEST_METHOD': 'POST',
+                         'CONTENT_TYPE': self.headers['Content-Type']}
+            )
+
+            hf_token = form.getvalue('hf_token', os.environ.get(
+                'HF_TOKEN', ''))
+            if not hf_token:
+                result = {'error': 'Missing HF token'}
+                self.wfile.write(json.dumps(result).encode('utf-8'))
+                return
+
+            # Retrieve parameters from the form data
+            audio_file = form['file']  # This is a MiniFieldStorage instance
+            file_data = audio_file.file  # This is a file-like object
+            filename = audio_file.filename  # This is the original filename with extension
+
+            # Default to 'cuda' if not provided
+            device = form.getvalue('device', 'cuda')
+            # Default to 16 if not provided
+            batch_size = int(form.getvalue('batch_size', 4))
+            # Default to 'float16' if not provided
+            compute_type = form.getvalue('compute_type', 'int8')
+            # Default to 'large-v2' if not provided
+            model_name = form.getvalue('model', 'large-v2')
+            language = form.getvalue('language')
+
+            # Call the function
+            result = transcribe_align_diarize(
+                filename, file_data, device, batch_size, compute_type, model_name, language, hf_token)
+            self.wfile.write(json.dumps(result).encode('utf-8'))
+            return
+
         content_length = int(self.headers['Content-Length'])
         body = json.loads(self.rfile.read(content_length).decode('utf-8'))
 
@@ -130,14 +174,16 @@ class Handler(BaseHTTPRequestHandler):
                 unload_model()
 
                 model_settings = get_model_metadata(shared.model_name)
-                shared.settings.update({k: v for k, v in model_settings.items() if k in shared.settings})
+                shared.settings.update(
+                    {k: v for k, v in model_settings.items() if k in shared.settings})
                 update_model_parameters(model_settings, initial=True)
 
                 if shared.settings['mode'] != 'instruct':
                     shared.settings['instruction_template'] = None
 
                 try:
-                    shared.model, shared.tokenizer = load_model(shared.model_name)
+                    shared.model, shared.tokenizer = load_model(
+                        shared.model_name)
                     if shared.args.lora:
                         add_lora_to_model(shared.args.lora)  # list
 
@@ -193,7 +239,8 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', '*')
         self.send_header('Access-Control-Allow-Headers', '*')
-        self.send_header('Cache-Control', 'no-store, no-cache, must-revalidate')
+        self.send_header(
+            'Cache-Control', 'no-store, no-cache, must-revalidate')
         super().end_headers()
 
 
@@ -207,7 +254,8 @@ def _run_server(port: int, share: bool = False, tunnel_id=str):
 
     if share:
         try:
-            try_start_cloudflared(port, tunnel_id, max_attempts=3, on_start=on_start)
+            try_start_cloudflared(
+                port, tunnel_id, max_attempts=3, on_start=on_start)
         except Exception:
             pass
     else:
@@ -218,4 +266,5 @@ def _run_server(port: int, share: bool = False, tunnel_id=str):
 
 
 def start_server(port: int, share: bool = False, tunnel_id=str):
-    Thread(target=_run_server, args=[port, share, tunnel_id], daemon=True).start()
+    Thread(target=_run_server, args=[
+           port, share, tunnel_id], daemon=True).start()
