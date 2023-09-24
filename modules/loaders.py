@@ -305,7 +305,7 @@ loaders_samplers = {
         'mirostat_mode',
         'mirostat_tau',
         'mirostat_eta',
-        'grammar_file',
+        'grammar_file_row',
         'ban_eos_token',
         'custom_token_bans',
     },
