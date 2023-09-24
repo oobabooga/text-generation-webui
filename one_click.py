@@ -1,6 +1,7 @@
 import argparse
 import glob
 import os
+import platform
 import site
 import subprocess
 import sys
@@ -32,6 +33,10 @@ def is_windows():
 
 def is_macos():
     return sys.platform.startswith("darwin")
+
+
+def is_x86_64():
+    return platform.machine() == "x86_64"
 
 
 def is_installed():
@@ -174,6 +179,11 @@ def update_requirements(initial_installation=False):
         requirements_file = "requirements_amd.txt"
     elif is_cpu:
         requirements_file = "requirements_minimal.txt"
+    elif is_macos():
+        if is_x86_64():
+            requirements_file = "requirements_mac_intel.txt"
+        else:
+            requirements_file = "requirements_mac_silicon.txt"
     else:
         requirements_file = "requirements.txt"
 
