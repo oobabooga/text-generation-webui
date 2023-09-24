@@ -237,6 +237,7 @@ function showMenu() {
 
 function hideMenu() {
     menu.style.display = 'none'; // Hide the menu
+    document.querySelector('#chat-input textarea').focus();
 }
 
 if (buttonsInChat.length > 0) {

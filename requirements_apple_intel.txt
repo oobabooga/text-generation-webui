@@ -8,7 +8,7 @@ accelerate==0.23.*
 colorama
 datasets
 einops
-exllamav2==0.0.2
+exllamav2==0.0.3
 markdown
 numpy==1.24
 optimum==1.13.1
@@ -28,3 +28,6 @@ wandb
 # bitsandbytes
 bitsandbytes==0.41.1; platform_system != "Windows"
 https://github.com/jllllll/bitsandbytes-windows-webui/releases/download/wheels/bitsandbytes-0.41.1-py3-none-win_amd64.whl; platform_system == "Windows"
+
+# Mac wheels
+https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/metal/llama_cpp_python-0.2.6-cp310-cp310-macosx_11_0_x86_64.whl
