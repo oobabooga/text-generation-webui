@@ -126,7 +126,6 @@ def create_ui(default_preset):
                                 shared.gradio['delete_grammar'] = gr.Button('🗑️ ', elem_classes='refresh-button')
 
                     shared.gradio['grammar_string'] = gr.Textbox(value='', label='Grammar', lines=16, elem_classes=['add_scrollbar', 'monospace'])
-                    shared.gradio['grammar_file'].change(lambda x: open(Path(f'grammars/{x}'), 'r').read(), gradio('grammar_file'), gradio('grammar_string'))
 
         ui_chat.create_chat_settings_ui()
 
@@ -134,6 +133,7 @@ def create_ui(default_preset):
 def create_event_handlers():
     shared.gradio['filter_by_loader'].change(loaders.blacklist_samplers, gradio('filter_by_loader'), gradio(loaders.list_all_samplers()), show_progress=False)
     shared.gradio['preset_menu'].change(presets.load_preset_for_ui, gradio('preset_menu', 'interface_state'), gradio('interface_state') + gradio(presets.presets_params()))
+    shared.gradio['grammar_file'].change(load_grammar, gradio('grammar_file'), gradio('grammar_string'))
 
 
 def get_truncation_length():
@@ -143,3 +143,11 @@ def get_truncation_length():
         return shared.args.n_ctx
     else:
         return shared.settings['truncation_length']
+
+
+def load_grammar(name):
+    p = Path(f'grammars/{name}')
+    if p.exists():
+        return open(p, 'r').read()
+    else:
+        return ''
