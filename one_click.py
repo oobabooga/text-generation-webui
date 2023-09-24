@@ -39,6 +39,11 @@ def is_x86_64():
     return platform.machine() == "x86_64"
 
 
+def torch_version():
+    from torch import __version__ as torver
+    return torver
+
+
 def is_installed():
     for sitedir in site.getsitepackages():
         if "site-packages" in sitedir and conda_env_path in sitedir:
@@ -168,9 +173,8 @@ def update_requirements(initial_installation=False):
                 run_cmd("python -m pip install -r " + extension_req_path + " --upgrade", assert_success=True, environment=True)
 
     # Detect the PyTorch version
-    torver_cmd = run_cmd("python -m pip show torch", assert_success=True, environment=True, capture_output=True)
-    torver = [v.split()[1] for v in torver_cmd.stdout.decode('utf-8').splitlines() if 'Version:' in v][0]
-    is_cuda = '+cu' in torver  # 2.0.1
+    torver = torch_version()
+    is_cuda = '+cu' in torver  # 2.0.1+cu117
     is_rocm = '+rocm' in torver  # 2.0.1+rocm5.4.2
     is_intel = '+cxx11' in torver  # 2.0.1a0+cxx11.abi
     is_cpu = '+cpu' in torver  # 2.0.1+cpu
