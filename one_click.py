@@ -196,14 +196,14 @@ def update_requirements(initial_installation=False):
             requirements_file = "requirements_amd_noavx2.txt"
     elif is_cpu:
         if cpu_has_avx2():
-            requirements_file = "requirements_cpu.txt"
+            requirements_file = "requirements_cpu_only.txt"
         else:
-            requirements_file = "requirements_cpu_noavx2.txt"
+            requirements_file = "requirements_cpu_only_noavx2.txt"
     elif is_macos():
         if is_x86_64():
-            requirements_file = "requirements_mac_intel.txt"
+            requirements_file = "requirements_apple_intel.txt"
         else:
-            requirements_file = "requirements_mac_silicon.txt"
+            requirements_file = "requirements_apple_silicon.txt"
     else:
         if cpu_has_avx2():
             requirements_file = "requirements.txt"
