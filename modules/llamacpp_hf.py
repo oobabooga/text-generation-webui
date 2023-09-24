@@ -22,7 +22,7 @@ else:
 
 
 def llama_cpp_lib():
-    if shared.args.cpu or llama_cpp_cuda is None:
+    if (shared.args.cpu and llama_cpp is not None) or llama_cpp_cuda is None:
         return llama_cpp
     else:
         return llama_cpp_cuda

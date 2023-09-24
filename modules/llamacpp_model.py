@@ -9,7 +9,10 @@ from modules.callbacks import Iteratorize
 from modules.logging_colors import logger
 from modules.text_generation import get_max_prompt_length
 
-import llama_cpp
+try:
+    import llama_cpp
+except:
+    llama_cpp = None
 
 if torch.cuda.is_available() and not torch.version.hip:
     try:
@@ -21,7 +24,7 @@ else:
 
 
 def llama_cpp_lib():
-    if shared.args.cpu or llama_cpp_cuda is None:
+    if (shared.args.cpu and llama_cpp is not None) or llama_cpp_cuda is None:
         return llama_cpp
     else:
         return llama_cpp_cuda

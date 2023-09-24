@@ -34,16 +34,6 @@ def is_macos():
     return sys.platform.startswith("darwin")
 
 
-def cpu_has_avx2():
-    import cpuinfo
-
-    info = cpuinfo.get_cpu_info()
-    if 'avx2' in info['flags']:
-        return True
-
-    return False
-
-
 def is_installed():
     for sitedir in site.getsitepackages():
         if "site-packages" in sitedir and conda_env_path in sitedir:
@@ -147,7 +137,7 @@ def install_webui():
         install_pytorch = "python -m pip install torch==2.0.1a0 torchvision==0.15.2a0 intel_extension_for_pytorch==2.0.110+xpu -f https://developer.intel.com/ipex-whl-stable-xpu"
 
     # Install Git and then Pytorch
-    run_cmd(f"{install_git} && {install_pytorch} && python -m pip install cpuinfo", assert_success=True, environment=True)
+    run_cmd(f"{install_git} && {install_pytorch}", assert_success=True, environment=True)
 
     # Install the webui requirements
     update_requirements(initial_installation=True)
@@ -183,10 +173,7 @@ def update_requirements(initial_installation=False):
     if is_rocm:
         requirements_file = "requirements_amd.txt"
     elif is_cpu:
-        if cpu_has_avx2():
-            requirements_file = "requirements_minimal.txt"
-        else:
-            requirements_file = "requirements_minimal_noavx2.txt"
+        requirements_file = "requirements_minimal.txt"
     else:
         requirements_file = "requirements.txt"
 
