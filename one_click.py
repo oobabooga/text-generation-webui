@@ -39,6 +39,16 @@ def is_x86_64():
     return platform.machine() == "x86_64"
 
 
+def cpu_has_avx2():
+    import cpuinfo
+
+    info = cpuinfo.get_cpu_info()
+    if 'avx2' in info['flags']:
+        return True
+
+    return False
+
+
 def torch_version():
     from torch import __version__ as torver
     return torver
@@ -147,7 +157,7 @@ def install_webui():
         install_pytorch = "python -m pip install torch==2.0.1a0 torchvision==0.15.2a0 intel_extension_for_pytorch==2.0.110+xpu -f https://developer.intel.com/ipex-whl-stable-xpu"
 
     # Install Git and then Pytorch
-    run_cmd(f"{install_git} && {install_pytorch}", assert_success=True, environment=True)
+    run_cmd(f"{install_git} && {install_pytorch} && python -m pip install cpuinfo", assert_success=True, environment=True)
 
     # Install the webui requirements
     update_requirements(initial_installation=True)
@@ -180,16 +190,25 @@ def update_requirements(initial_installation=False):
     is_cpu = '+cpu' in torver  # 2.0.1+cpu
 
     if is_rocm:
-        requirements_file = "requirements_amd.txt"
+        if cpu_has_avx2():
+            requirements_file = "requirements_amd.txt"
+        else:
+            requirements_file = "requirements_amd_noavx2.txt"
     elif is_cpu:
-        requirements_file = "requirements_minimal.txt"
+        if cpu_has_avx2():
+            requirements_file = "requirements_minimal.txt"
+        else:
+            requirements_file = "requirements_minimal_noavx2.txt"
     elif is_macos():
         if is_x86_64():
             requirements_file = "requirements_mac_intel.txt"
         else:
             requirements_file = "requirements_mac_silicon.txt"
     else:
-        requirements_file = "requirements.txt"
+        if cpu_has_avx2():
+            requirements_file = "requirements.txt"
+        else:
+            requirements_file = "requirements_noavx2.txt"
 
     textgen_requirements = open(requirements_file).read().splitlines()
 
