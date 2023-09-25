@@ -182,12 +182,14 @@ def get_stopping_strings(state):
 
     return stopping_strings
 
+
 def get_stopping_regex(state):
     if 'stopping_regex' in state and isinstance(state['stopping_regex'], str):
         stopping_regex = state.pop('stopping_regex')
         return stopping_regex
     else:
         return None
+
 
 def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_message=True):
     history = state['history']
@@ -241,7 +243,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
 
     # Generate
     reply = None
-    for j, reply in enumerate(generate_reply(prompt, state, stopping_strings=stopping_strings,stopping_regex=stopping_regex, is_chat=True)):
+    for j, reply in enumerate(generate_reply(prompt, state, stopping_strings=stopping_strings, stopping_regex=stopping_regex, is_chat=True)):
 
         # Extract the reply
         visible_reply = re.sub("(<USER>|<user>|{{user}})", state['name1'], reply)
@@ -287,7 +289,7 @@ def impersonate_wrapper(text, state):
     stopping_regex = get_stopping_regex(state)
     yield text + '...', static_output
     reply = None
-    for reply in generate_reply(prompt + text, state, stopping_strings=stopping_strings,stopping_regex=stopping_regex, is_chat=True):
+    for reply in generate_reply(prompt + text, state, stopping_strings=stopping_strings, stopping_regex=stopping_regex, is_chat=True):
         yield (text + reply).lstrip(' '), static_output
         if shared.stop_everything:
             return

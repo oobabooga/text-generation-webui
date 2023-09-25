@@ -72,8 +72,6 @@ def _generate_reply(question, state, stopping_strings=None, stopping_regex=None,
     seed = set_manual_seed(state['seed'])
     last_update = -1
     reply = ''
-    full_str = ''
-    last_len = 0
     is_stream = state['stream']
     if len(all_stop_strings) > 0 and not state['stream']:
         state = copy.deepcopy(state)
@@ -81,19 +79,15 @@ def _generate_reply(question, state, stopping_strings=None, stopping_regex=None,
 
     # Generate
     for reply in generate_func(question, original_question, seed, state, stopping_strings, is_chat=is_chat):
-        last_len = len(full_str)
-        full_str += reply
 
         if escape_html:
             reply = html.escape(reply)
-
         reply, stop_found = apply_stopping_strings(reply, all_stop_strings)
 
-        # If we have regex pattern and no string stop
         if pattern is not None and not stop_found:
-             stop_found = pattern.search(full_str)
-             if stop_found is not None:
-                 reply = reply[:len(stop_found.group(0))-last_len]
+            stop_found = pattern.search(reply)
+            if stop_found is not None:
+                reply = reply[:len(stop_found.group(0))]
 
         if is_stream:
             cur_time = time.time()
