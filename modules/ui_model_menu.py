@@ -115,6 +115,7 @@ def create_ui():
                             shared.gradio['tensor_split'] = gr.Textbox(label='tensor_split', info='Split the model across multiple GPUs, comma-separated list of proportions, e.g. 18,17')
                             shared.gradio['llama_cpp_seed'] = gr.Number(label='Seed (0 for random)', value=shared.args.llama_cpp_seed)
                             shared.gradio['trust_remote_code'] = gr.Checkbox(label="trust-remote-code", value=shared.args.trust_remote_code, info='Make sure to inspect the .py files inside the model folder before loading it with this option enabled.')
+                            shared.gradio['use_fast'] = gr.Checkbox(label="use_fast", value=shared.args.use_fast, info='Set use_fast=True while loading the tokenizer. May trigger a conversion that takes several minutes.')
                             shared.gradio['disable_exllama'] = gr.Checkbox(label="disable_exllama", value=shared.args.disable_exllama, info='Disable ExLlama kernel.')
                             shared.gradio['gptq_for_llama_info'] = gr.Markdown('GPTQ-for-LLaMa support is currently only kept for compatibility with older GPUs. AutoGPTQ or ExLlama is preferred when compatible. GPTQ-for-LLaMa is installed by default with the webui on supported systems. Otherwise, it has to be installed manually following the instructions here: [instructions](https://github.com/oobabooga/text-generation-webui/blob/main/docs/GPTQ-models-(4-bit-mode).md#installation-1).')
                             shared.gradio['exllama_info'] = gr.Markdown('For more information, consult the [docs](https://github.com/oobabooga/text-generation-webui/blob/main/docs/ExLlama.md).')
@@ -149,24 +150,27 @@ def create_event_handlers():
         ui.apply_interface_values, gradio('interface_state'), gradio(ui.list_interface_input_elements()), show_progress=False).then(
         update_model_parameters, gradio('interface_state'), None).then(
         load_model_wrapper, gradio('model_menu', 'loader', 'autoload_model'), gradio('model_status'), show_progress=False).success(
-        update_truncation_length, gradio('truncation_length', 'interface_state'), gradio('truncation_length'))
+        update_truncation_length, gradio('truncation_length', 'interface_state'), gradio('truncation_length')).then(
+        lambda x: x, gradio('loader'), gradio('filter_by_loader'))
 
     shared.gradio['load_model'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         update_model_parameters, gradio('interface_state'), None).then(
         partial(load_model_wrapper, autoload=True), gradio('model_menu', 'loader'), gradio('model_status'), show_progress=False).success(
-        update_truncation_length, gradio('truncation_length', 'interface_state'), gradio('truncation_length'))
-
-    shared.gradio['unload_model'].click(
-        unload_model, None, None).then(
-        lambda: "Model unloaded", None, gradio('model_status'))
+        update_truncation_length, gradio('truncation_length', 'interface_state'), gradio('truncation_length')).then(
+        lambda x: x, gradio('loader'), gradio('filter_by_loader'))
 
     shared.gradio['reload_model'].click(
         unload_model, None, None).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         update_model_parameters, gradio('interface_state'), None).then(
         partial(load_model_wrapper, autoload=True), gradio('model_menu', 'loader'), gradio('model_status'), show_progress=False).success(
-        update_truncation_length, gradio('truncation_length', 'interface_state'), gradio('truncation_length'))
+        update_truncation_length, gradio('truncation_length', 'interface_state'), gradio('truncation_length')).then(
+        lambda x: x, gradio('loader'), gradio('filter_by_loader'))
+
+    shared.gradio['unload_model'].click(
+        unload_model, None, None).then(
+        lambda: "Model unloaded", None, gradio('model_status'))
 
     shared.gradio['save_model_settings'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(

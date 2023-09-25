@@ -20,6 +20,7 @@ loaders_and_params = OrderedDict({
         'quant_type',
         'compute_dtype',
         'trust_remote_code',
+        'use_fast',
         'alpha_value',
         'rope_freq_base',
         'compress_pos_emb',
@@ -33,6 +34,7 @@ loaders_and_params = OrderedDict({
         'rope_freq_base',
         'compress_pos_emb',
         'cfg_cache',
+        'use_fast',
         'exllama_HF_info',
     ],
     'ExLlamav2_HF': [
@@ -41,6 +43,7 @@ loaders_and_params = OrderedDict({
         'cfg_cache',
         'alpha_value',
         'compress_pos_emb',
+        'use_fast',
     ],
     'ExLlama': [
         'gpu_split',
@@ -71,6 +74,7 @@ loaders_and_params = OrderedDict({
         'disk',
         'auto_devices',
         'trust_remote_code',
+        'use_fast',
         'autogptq_info',
     ],
     'GPTQ-for-LLaMa': [
@@ -78,6 +82,7 @@ loaders_and_params = OrderedDict({
         'groupsize',
         'model_type',
         'pre_layer',
+        'use_fast',
         'gptq_for_llama_info',
     ],
     'llama.cpp': [
@@ -111,6 +116,7 @@ loaders_and_params = OrderedDict({
         'compress_pos_emb',
         'cpu',
         'cfg_cache',
+        'use_fast',
         'llamacpp_HF_info',
     ],
     'ctransformers': [
