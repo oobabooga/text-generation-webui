@@ -57,7 +57,7 @@ def create_event_handlers():
     shared.gradio['delete_character_confirm'].click(
         chat.delete_character, gradio('character_menu'), None).then(
         lambda: gr.update(visible=False), None, gradio('character_deleter')).then(
-        lambda: gr.update(choices=utils.get_available_characters(), value="None"), None, gradio('character_menu'))
+        lambda: gr.update(choices=(characters := utils.get_available_characters()), value=characters[0]), None, gradio('character_menu'))
 
     shared.gradio['save_character_cancel'].click(lambda: gr.update(visible=False), None, gradio('character_saver'))
     shared.gradio['delete_character_cancel'].click(lambda: gr.update(visible=False), None, gradio('character_deleter'))
@@ -72,4 +72,16 @@ def create_event_handlers():
     shared.gradio['delete_preset'].click(
         lambda x: f'{x}.yaml', gradio('preset_menu'), gradio('delete_filename')).then(
         lambda: 'presets/', None, gradio('delete_root')).then(
+        lambda: gr.update(visible=True), None, gradio('file_deleter'))
+
+    shared.gradio['save_grammar'].click(
+        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+        lambda x: x, gradio('grammar_string'), gradio('save_contents')).then(
+        lambda: 'grammars/', None, gradio('save_root')).then(
+        lambda: 'My Fancy Grammar.gbnf', None, gradio('save_filename')).then(
+        lambda: gr.update(visible=True), None, gradio('file_saver'))
+
+    shared.gradio['delete_grammar'].click(
+        lambda x: x, gradio('grammar_file'), gradio('delete_filename')).then(
+        lambda: 'grammars/', None, gradio('delete_root')).then(
         lambda: gr.update(visible=True), None, gradio('file_deleter'))

@@ -33,3 +33,4 @@ models/config-user.yaml
 
 .DS_Store
 Thumbs.db
+installer_files/

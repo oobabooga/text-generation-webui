@@ -23,6 +23,7 @@ loaders_and_params = OrderedDict({
         'alpha_value',
         'rope_freq_base',
         'compress_pos_emb',
+        'disable_exllama',
         'transformers_info'
     ],
     'ExLlama_HF': [
@@ -305,6 +306,8 @@ loaders_samplers = {
         'mirostat_mode',
         'mirostat_tau',
         'mirostat_eta',
+        'grammar_file_row',
+        'grammar_string',
         'ban_eos_token',
         'custom_token_bans',
     },

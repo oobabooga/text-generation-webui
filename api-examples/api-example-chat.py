@@ -57,6 +57,7 @@ def run(user_input, history):
         'mirostat_mode': 0,
         'mirostat_tau': 5,
         'mirostat_eta': 0.1,
+        'grammar_string': '',
         'guidance_scale': 1,
         'negative_prompt': '',
 

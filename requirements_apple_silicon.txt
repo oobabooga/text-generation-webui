@@ -1,0 +1,33 @@
+aiofiles==23.1.0
+fastapi==0.95.2
+gradio_client==0.2.5
+gradio==3.33.1
+pydantic==1.10.12
+
+accelerate==0.23.*
+colorama
+datasets
+einops
+exllamav2==0.0.3
+markdown
+numpy==1.24
+optimum==1.13.1
+pandas
+peft==0.5.*
+Pillow>=9.5.0
+pyyaml
+requests
+safetensors==0.3.2
+transformers==4.33.*
+scipy
+sentencepiece
+tensorboard
+tqdm
+wandb
+
+# bitsandbytes
+bitsandbytes==0.41.1; platform_system != "Windows"
+https://github.com/jllllll/bitsandbytes-windows-webui/releases/download/wheels/bitsandbytes-0.41.1-py3-none-win_amd64.whl; platform_system == "Windows"
+
+# Mac wheels
+https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/metal/llama_cpp_python-0.2.6-cp310-cp310-macosx_11_0_arm64.whl
