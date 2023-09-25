@@ -13,7 +13,8 @@ from transformers import (
     AutoModelForCausalLM,
     AutoModelForSeq2SeqLM,
     AutoTokenizer,
-    BitsAndBytesConfig
+    BitsAndBytesConfig,
+    GPTQConfig
 )
 
 import modules.shared as shared
@@ -114,11 +115,13 @@ def load_tokenizer(model_name, model):
 
 
 def huggingface_loader(model_name):
+
     path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
+    config = AutoConfig.from_pretrained(path_to_model, trust_remote_code=shared.args.trust_remote_code)
+
     if 'chatglm' in model_name.lower():
         LoaderClass = AutoModel
     else:
-        config = AutoConfig.from_pretrained(path_to_model, trust_remote_code=shared.args.trust_remote_code)
         if config.to_dict().get("is_encoder_decoder", False):
             LoaderClass = AutoModelForSeq2SeqLM
             shared.is_seq2seq = True
@@ -126,7 +129,7 @@ def huggingface_loader(model_name):
             LoaderClass = AutoModelForCausalLM
 
     # Load the model in simple 16-bit mode by default
-    if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.load_in_4bit, shared.args.auto_devices, shared.args.disk, shared.args.deepspeed, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None, shared.args.compress_pos_emb > 1, shared.args.alpha_value > 1]):
+    if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.load_in_4bit, shared.args.auto_devices, shared.args.disk, shared.args.deepspeed, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None, shared.args.compress_pos_emb > 1, shared.args.alpha_value > 1, shared.args.disable_exllama]):
         model = LoaderClass.from_pretrained(Path(f"{shared.args.model_dir}/{model_name}"), low_cpu_mem_usage=True, torch_dtype=torch.bfloat16 if shared.args.bf16 else torch.float16, trust_remote_code=shared.args.trust_remote_code)
         if torch.backends.mps.is_available():
             device = torch.device('mps')
@@ -170,10 +173,11 @@ def huggingface_loader(model_name):
                 logger.warning("Using the following 4-bit params: " + str(quantization_config_params))
                 params['quantization_config'] = BitsAndBytesConfig(**quantization_config_params)
 
-            elif shared.args.load_in_8bit and any((shared.args.auto_devices, shared.args.gpu_memory)):
-                params['quantization_config'] = BitsAndBytesConfig(load_in_8bit=True, llm_int8_enable_fp32_cpu_offload=True)
             elif shared.args.load_in_8bit:
-                params['quantization_config'] = BitsAndBytesConfig(load_in_8bit=True)
+                if any((shared.args.auto_devices, shared.args.gpu_memory)):
+                    params['quantization_config'] = BitsAndBytesConfig(load_in_8bit=True, llm_int8_enable_fp32_cpu_offload=True)
+                else:
+                    params['quantization_config'] = BitsAndBytesConfig(load_in_8bit=True)
             elif shared.args.bf16:
                 params["torch_dtype"] = torch.bfloat16
             else:
@@ -183,9 +187,16 @@ def huggingface_loader(model_name):
             if shared.args.disk:
                 params["offload_folder"] = shared.args.disk_cache_dir
 
-        checkpoint = Path(f'{shared.args.model_dir}/{model_name}')
+        if shared.args.disable_exllama:
+            try:
+                gptq_config = GPTQConfig(bits=config.quantization_config.get('bits', 4), disable_exllama=True)
+                params['quantization_config'] = gptq_config
+                logger.info('Loading with ExLlama kernel disabled.')
+            except:
+                logger.error('Failed to disable exllama. Does the config.json for this model contain the necessary quantization info?')
+
         if shared.args.load_in_8bit and params.get('max_memory', None) is not None and params['device_map'] == 'auto':
-            config = AutoConfig.from_pretrained(checkpoint, trust_remote_code=shared.args.trust_remote_code)
+            config = AutoConfig.from_pretrained(path_to_model, trust_remote_code=shared.args.trust_remote_code)
             with init_empty_weights():
                 model = LoaderClass.from_config(config, trust_remote_code=shared.args.trust_remote_code)
 
@@ -202,7 +213,7 @@ def huggingface_loader(model_name):
         elif shared.args.alpha_value > 1:
             params['rope_scaling'] = {'type': 'dynamic', 'factor': RoPE.get_alpha_value(shared.args.alpha_value, shared.args.rope_freq_base)}
 
-        model = LoaderClass.from_pretrained(checkpoint, **params)
+        model = LoaderClass.from_pretrained(path_to_model, **params)
 
     return model
 
