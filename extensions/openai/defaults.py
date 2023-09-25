@@ -41,6 +41,7 @@ default_req_params = {
     'custom_token_bans': '',
     'skip_special_tokens': True,
     'custom_stopping_strings': '',
+    'custom_stopping_regex': None,
     # 'logits_processor' - conditionally passed
     # 'stopping_strings' - temporarily used
     # 'logprobs' - temporarily used

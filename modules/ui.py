@@ -122,6 +122,7 @@ def list_interface_input_elements():
         'custom_token_bans',
         'truncation_length',
         'custom_stopping_strings',
+        'custom_stopping_regex',
         'skip_special_tokens',
         'stream',
         'tfs',

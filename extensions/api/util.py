@@ -55,6 +55,7 @@ def build_parameters(body, chat=False):
         'skip_special_tokens': bool(body.get('skip_special_tokens', True)),
         'custom_stopping_strings': '',  # leave this blank
         'stopping_strings': body.get('stopping_strings', []),
+        'stopping_regex': body.get('stopping_regex', None),
     }
 
     preset_name = body.get('preset', 'None')

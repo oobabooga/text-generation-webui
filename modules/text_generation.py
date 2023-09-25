@@ -32,7 +32,7 @@ def generate_reply(*args, **kwargs):
         shared.generation_lock.release()
 
 
-def _generate_reply(question, state, stopping_strings=None, is_chat=False, escape_html=False):
+def _generate_reply(question, state, stopping_strings=None, stopping_regex=None, is_chat=False, escape_html=False):
 
     # Find the appropriate generation function
     generate_func = apply_extensions('custom_generate_reply')
@@ -53,6 +53,11 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
         state = apply_extensions('state', state)
         question = apply_extensions('input', question, state)
 
+    # creating regex pattern
+    pattern = None
+    if stopping_regex is not None:
+        pattern = re.compile(stopping_regex)
+
     # Find the stopping strings
     all_stop_strings = []
     for st in (stopping_strings, ast.literal_eval(f"[{state['custom_stopping_strings']}]")):
@@ -67,6 +72,8 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
     seed = set_manual_seed(state['seed'])
     last_update = -1
     reply = ''
+    full_str = ''
+    last_len = 0
     is_stream = state['stream']
     if len(all_stop_strings) > 0 and not state['stream']:
         state = copy.deepcopy(state)
@@ -74,10 +81,20 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
 
     # Generate
     for reply in generate_func(question, original_question, seed, state, stopping_strings, is_chat=is_chat):
+        last_len = len(full_str)
+        full_str += reply
+
         if escape_html:
             reply = html.escape(reply)
 
         reply, stop_found = apply_stopping_strings(reply, all_stop_strings)
+
+        # If we have regex pattern and no string stop
+        if pattern is not None and not stop_found:
+             stop_found = pattern.search(full_str)
+             if stop_found is not None:
+                 reply = reply[:len(stop_found.group(0))-last_len]
+
         if is_stream:
             cur_time = time.time()
 

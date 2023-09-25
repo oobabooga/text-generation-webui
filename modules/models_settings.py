@@ -14,6 +14,7 @@ def get_fallback_settings():
         'pre_layer': 0,
         'skip_special_tokens': shared.settings['skip_special_tokens'],
         'custom_stopping_strings': shared.settings['custom_stopping_strings'],
+        'custom_stopping_regex': shared.settings['custom_stopping_regex'],
         'truncation_length': shared.settings['truncation_length'],
         'n_ctx': 2048,
         'rope_freq_base': 0,
