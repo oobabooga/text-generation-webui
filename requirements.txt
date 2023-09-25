@@ -24,6 +24,7 @@ sentencepiece
 tensorboard
 tqdm
 wandb
+rwkv==0.8.12
 
 # bitsandbytes
 bitsandbytes==0.41.1; platform_system != "Windows"
