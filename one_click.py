@@ -183,16 +183,22 @@ def update_requirements(initial_installation=False):
 
     run_cmd("git pull --autostash", assert_success=True, environment=True)
 
-    # Initial installation only: install the extensions requirements
-    if initial_installation:
-        extensions = next(os.walk("extensions"))[1]
-        for extension in extensions:
-            if extension in ['superbooga']:  # No wheels available for requirements
-                continue
+    # Extensions requirements are installed only during the initial install by default.
+    # That can be changed with the INSTALL_EXTENSIONS environment variable.
+    install_extensions = os.environ.get("INSTALL_EXTENSIONS", "false").lower() in ("yes", "y", "true", "1", "t", "on")
+    if initial_installation or install_extensions:
+        if not install_extensions:
+            print_big_message("Will not install extensions due to INSTALL_EXTENSIONS environment variable.")
+        else:
+            print("Installing extensions requirements.")
+            extensions = next(os.walk("extensions"))[1]
+            for extension in extensions:
+                if extension in ['superbooga']:  # No wheels available for requirements
+                    continue
 
-            extension_req_path = os.path.join("extensions", extension, "requirements.txt")
-            if os.path.exists(extension_req_path):
-                run_cmd("python -m pip install -r " + extension_req_path + " --upgrade", assert_success=True, environment=True)
+                extension_req_path = os.path.join("extensions", extension, "requirements.txt")
+                if os.path.exists(extension_req_path):
+                    run_cmd("python -m pip install -r " + extension_req_path + " --upgrade", assert_success=True, environment=True)
 
     # Detect the PyTorch version
     torver = torch_version()
