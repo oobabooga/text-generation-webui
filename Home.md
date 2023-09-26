@@ -17,9 +17,9 @@
 | llamacpp_HF | ❌ | ❌ | ❌ | ✅ | ✅ |
 | ctransformers | ❌ | ❌ | ❌ | ❌ | ❌ |
 
-❌ = not implemented
-
 ✅ = implemented
+
+❌ = not implemented
 
 \* For training LoRAs with GPTQ models, use this loader with the options `auto_devices` and `disable_exllama` checked.
 
