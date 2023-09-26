@@ -14,6 +14,7 @@ outputs = ('output_textbox', 'html-default')
 
 
 def create_ui():
+    mu = shared.args.multi_user
     with gr.Tab('Default', elem_id='default-tab'):
         shared.gradio['last_input-default'] = gr.State('')
         with gr.Row():
@@ -29,9 +30,9 @@ def create_ui():
 
                 with gr.Row():
                     shared.gradio['prompt_menu-default'] = gr.Dropdown(choices=utils.get_available_prompts(), value='None', label='Prompt', elem_classes='slim-dropdown')
-                    ui.create_refresh_button(shared.gradio['prompt_menu-default'], lambda: None, lambda: {'choices': utils.get_available_prompts()}, 'refresh-button')
-                    shared.gradio['save_prompt-default'] = gr.Button('💾', elem_classes='refresh-button')
-                    shared.gradio['delete_prompt-default'] = gr.Button('🗑️', elem_classes='refresh-button')
+                    ui.create_refresh_button(shared.gradio['prompt_menu-default'], lambda: None, lambda: {'choices': utils.get_available_prompts()}, 'refresh-button', interactive=not mu)
+                    shared.gradio['save_prompt-default'] = gr.Button('💾', elem_classes='refresh-button', interactive=not mu)
+                    shared.gradio['delete_prompt-default'] = gr.Button('🗑️', elem_classes='refresh-button', interactive=not mu)
 
             with gr.Column():
                 with gr.Tab('Raw'):
