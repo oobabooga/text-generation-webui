@@ -7,6 +7,7 @@ with RelativeImport("repositories/torch-grammar"):
     from torch_grammar import GrammarSampler
 
 
+sampler = None
 grammar = None
 grammar_string = ''
 
@@ -14,15 +15,20 @@ grammar_string = ''
 class GrammarLogitsProcessor(LogitsProcessor):
     def __init__(self, string):
 
-        global grammar, grammar_string
+        global sampler, grammar, grammar_string
 
         if string != grammar_string:
             grammar_string = string
             if string.strip() != '':
                 string = string.strip() + '\n'
-                grammar = GrammarSampler(string, 'root', shared.tokenizer).logits_processor()
+                sampler = GrammarSampler(string, 'root', shared.tokenizer)
             else:
-                grammar = None
+                sampler = None
+
+        if sampler is not None:
+            grammar = sampler.logits_processor()
+        else:
+            grammar = None
 
     def __call__(self, input_ids, scores):
         if grammar is not None:
