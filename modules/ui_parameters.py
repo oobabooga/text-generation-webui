@@ -7,6 +7,7 @@ from modules.utils import gradio
 
 
 def create_ui(default_preset):
+    mu = shared.args.multi_user
     generate_params = presets.load_preset(default_preset)
     with gr.Tab("Parameters", elem_id="parameters"):
         with gr.Tab("Generation"):
@@ -14,9 +15,9 @@ def create_ui(default_preset):
                 with gr.Column():
                     with gr.Row():
                         shared.gradio['preset_menu'] = gr.Dropdown(choices=utils.get_available_presets(), value=default_preset, label='Preset', elem_classes='slim-dropdown')
-                        ui.create_refresh_button(shared.gradio['preset_menu'], lambda: None, lambda: {'choices': utils.get_available_presets()}, 'refresh-button')
-                        shared.gradio['save_preset'] = gr.Button('💾', elem_classes='refresh-button')
-                        shared.gradio['delete_preset'] = gr.Button('🗑️', elem_classes='refresh-button')
+                        ui.create_refresh_button(shared.gradio['preset_menu'], lambda: None, lambda: {'choices': utils.get_available_presets()}, 'refresh-button', interactive=not mu)
+                        shared.gradio['save_preset'] = gr.Button('💾', elem_classes='refresh-button', interactive=not mu)
+                        shared.gradio['delete_preset'] = gr.Button('🗑️', elem_classes='refresh-button', interactive=not mu)
 
                 with gr.Column():
                     shared.gradio['filter_by_loader'] = gr.Dropdown(label="Filter by loader", choices=["All"] + list(loaders.loaders_and_params.keys()), value="All", elem_classes='slim-dropdown')
@@ -73,9 +74,9 @@ def create_ui(default_preset):
 
                             with gr.Row() as shared.gradio['grammar_file_row']:
                                 shared.gradio['grammar_file'] = gr.Dropdown(value='None', choices=utils.get_available_grammars(), label='Load grammar from file (.gbnf)', elem_classes='slim-dropdown')
-                                ui.create_refresh_button(shared.gradio['grammar_file'], lambda: None, lambda: {'choices': utils.get_available_grammars()}, 'refresh-button')
-                                shared.gradio['save_grammar'] = gr.Button('💾', elem_classes='refresh-button')
-                                shared.gradio['delete_grammar'] = gr.Button('🗑️ ', elem_classes='refresh-button')
+                                ui.create_refresh_button(shared.gradio['grammar_file'], lambda: None, lambda: {'choices': utils.get_available_grammars()}, 'refresh-button', interactive=not mu)
+                                shared.gradio['save_grammar'] = gr.Button('💾', elem_classes='refresh-button', interactive=not mu)
+                                shared.gradio['delete_grammar'] = gr.Button('🗑️ ', elem_classes='refresh-button', interactive=not mu)
 
                     shared.gradio['grammar_string'] = gr.Textbox(value='', label='Grammar', lines=16, elem_classes=['add_scrollbar', 'monospace'])
 

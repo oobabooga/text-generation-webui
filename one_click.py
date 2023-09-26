@@ -2,6 +2,7 @@ import argparse
 import glob
 import os
 import platform
+import re
 import site
 import subprocess
 import sys
@@ -22,6 +23,7 @@ if os.path.exists(cmd_flags_path):
 else:
     CMD_FLAGS = ''
 
+flags = f"{' '.join([flag for flag in sys.argv[1:] if flag != '--update'])} {CMD_FLAGS}"
 
 def is_linux():
     return sys.platform.startswith("linux")
@@ -285,8 +287,7 @@ def download_model():
 
 
 def launch_webui():
-    flags = [flag for flag in sys.argv[1:] if flag != '--update']
-    run_cmd(f"python server.py {' '.join(flags)} {CMD_FLAGS}", environment=True)
+    run_cmd(f"python server.py {flags}", environment=True)
 
 
 if __name__ == "__main__":
@@ -310,7 +311,14 @@ if __name__ == "__main__":
             sys.exit()
 
         # Check if a model has been downloaded yet
-        if len([item for item in glob.glob('models/*') if not item.endswith(('.txt', '.yaml'))]) == 0:
+        if '--model-dir' in flags:
+            # Splits on ' ' or '=' while maintaining spaces within quotes
+            flags_list = re.split(' +(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)|=',flags)
+            model_dir = [flags_list[(flags_list.index(flag)+1)] for flag in flags_list if flag == '--model-dir'][0].strip('"\'')
+        else:
+            model_dir = 'models'
+
+        if len([item for item in glob.glob(f'{model_dir}/*') if not item.endswith(('.txt', '.yaml'))]) == 0:
             print_big_message("WARNING: You haven't downloaded any model yet.\nOnce the web UI launches, head over to the \"Model\" tab and download one.")
 
         # Workaround for llama-cpp-python loading paths in CUDA env vars even if they do not exist
