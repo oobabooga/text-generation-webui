@@ -3,7 +3,7 @@ import re
 from datetime import datetime
 from pathlib import Path
 
-from modules import shared
+from modules import github, shared
 from modules.logging_colors import logger
 
 
@@ -107,7 +107,9 @@ def get_available_instruction_templates():
 
 
 def get_available_extensions():
-    return sorted(set(map(lambda x: x.parts[1], Path('extensions').glob('*/script.py'))), key=natural_keys)
+    extensions = sorted(set(map(lambda x: x.parts[1], Path('extensions').glob('*/script.py'))), key=natural_keys)
+    extensions = [v for v in extensions if v not in github.new_extensions]
+    return extensions
 
 
 def get_available_loras():

@@ -1,19 +1,25 @@
-import os
 import subprocess
+from pathlib import Path
+
+from modules.logging_colors import logger
+
+new_extensions = set()
 
 
 def clone_or_pull_repository(github_url):
-    repository_folder = "extensions"
-    repo_name = github_url.split("/")[-1].split(".")[0]
+    global new_extensions
+
+    repository_folder = Path("extensions")
+    repo_name = github_url.rstrip("/").split("/")[-1].split(".")[0]
 
     # Check if the repository folder exists
-    if not os.path.exists(repository_folder):
-        os.makedirs(repository_folder)
+    if not repository_folder.exists():
+        repository_folder.mkdir(parents=True)
 
-    repo_path = os.path.join(repository_folder, repo_name)
+    repo_path = repository_folder / repo_name
 
     # Check if the repository is already cloned
-    if os.path.exists(repo_path):
+    if repo_path.exists():
         yield f"Updating {github_url}..."
         # Perform a 'git pull' to update the repository
         try:
@@ -27,6 +33,8 @@ def clone_or_pull_repository(github_url):
     try:
         yield f"Cloning {github_url}..."
         clone_output = subprocess.check_output(["git", "clone", github_url, repo_path], stderr=subprocess.STDOUT)
+        new_extensions.add(repo_name)
+        logger.info(f"The extension {repo_name} has been downloaded. Please close the the web UI and launch it again to be able to load it.")
         yield "Done."
         return clone_output.decode()
     except subprocess.CalledProcessError as e:
