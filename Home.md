@@ -8,9 +8,9 @@
 |-----|-----|-----|-----|-----|
 | Transformers | ✅ | ✅* | ✅ | ✅ | ✅ |
 | ExLlama_HF | ✅ | ❌ | ❌ | ✅ | ✅ |
-| ExLlamav2_HF | ✅ | ❌ | ❌ | ✅ | ✅ |
+| ExLlamav2_HF | ❌ | ❌ | ❌ | ✅ | ✅ |
 | ExLlama | ✅ | ❌ | ❌ | ❌ | ✅ |
-| ExLlamav2 | ✅ | ❌ | ❌ | ❌ | ❌ |
+| ExLlamav2 | ❌ | ❌ | ❌ | ❌ | ❌ |
 | AutoGPTQ | ✅ | ❌ | ✅ | ✅ | ✅ |
 | GPTQ-for-LLaMa | ✅** | ✅** | ✅ | ✅ | ✅ |
 | llama.cpp | ❌ | ❌ | ❌ | ❌ | ❌ |
@@ -243,3 +243,25 @@ Four tabs can be found:
 ### Notebook tab
 
 Precisely the same thing as the Default tab, with the difference that the output appears in the same text box as the input.
+
+## Using LoRAs with GPTQ-for-LLaMa
+
+This requires using a monkey patch that is supported by this web UI: https://github.com/johnsmith0031/alpaca_lora_4bit
+
+To use it:
+
+1. Install alpaca_lora_4bit using pip
+
+```
+git clone https://github.com/johnsmith0031/alpaca_lora_4bit.git
+cd alpaca_lora_4bit
+git fetch origin winglian-setup_pip
+git checkout winglian-setup_pip
+pip install .
+```
+
+2. Start the UI with the `--monkey-patch` flag:
+
+```
+python server.py --model llama-7b-4bit-128g --listen --lora tloen_alpaca-lora-7b --monkey-patch
+```
