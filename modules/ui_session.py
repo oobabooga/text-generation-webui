@@ -25,9 +25,7 @@ def create_ui():
                 extension_name = gr.Textbox(lines=1, label='Install or update an extension', info='Enter the GitHub URL below and press Enter. For a list of extensions, see: https://github.com/oobabooga/text-generation-webui-extensions ⚠️  WARNING ⚠️ : extensions can execute arbitrary code. Make sure to inspect their source code before activating them.')
                 extension_status = gr.Markdown()
 
-        extension_name.submit(
-            clone_or_pull_repository, extension_name, extension_status, show_progress=False).then(
-            lambda: gr.update(choices=utils.get_available_extensions(), value=shared.args.extensions), None, gradio('extensions_menu'))
+        extension_name.submit(clone_or_pull_repository, extension_name, extension_status, show_progress=False)
 
         # Reset interface event
         shared.gradio['reset_interface'].click(
