@@ -17,7 +17,7 @@
 | llamacpp_HF | ❌ | ❌ | ❌ | ✅ | ✅ |
 | ctransformers | ❌ | ❌ | ❌ | ❌ | ❌ |
 
-❌ = not implemented (feel free to contribute and submit a PR)
+❌ = not implemented
 
 ✅ = implemented
 
