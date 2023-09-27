@@ -78,9 +78,7 @@ RUN --mount=type=cache,target=/root/.cache/pip,rw \
     for ext in /app/extensions/*/requirements.txt; do \
     cd "$(dirname "$ext")"; \
     pip3 install -r requirements.txt; \
-    done && \
-    # workaround for superbooga v2 being a bit borked
-    python3 <<"import nltk\nnltk.download('stopwords')"
+    done
 
 ENV CLI_ARGS=""
 
