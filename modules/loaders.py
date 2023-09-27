@@ -110,9 +110,9 @@ loaders_and_params = OrderedDict({
         'rope_freq_base',
         'compress_pos_emb',
         'cpu',
+        'numa',
         'cfg_cache',
         'llamacpp_HF_info',
-        'numa',
     ],
     'ctransformers': [
         'n_ctx',

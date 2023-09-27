@@ -48,6 +48,7 @@ class LlamaCppModel:
 
     @classmethod
     def from_pretrained(self, path):
+
         Llama = llama_cpp_lib().Llama
         LlamaCache = llama_cpp_lib().LlamaCache
 
