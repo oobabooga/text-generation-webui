@@ -195,7 +195,7 @@ def update_requirements(initial_installation=False):
             print("Installing extensions requirements.")
             extensions = next(os.walk("extensions"))[1]
             for extension in extensions:
-                if extension in ['superbooga']:  # No wheels available for requirements
+                if extension in ['superbooga', 'superboogav2']:  # No wheels available for requirements
                     continue
 
                 extension_req_path = os.path.join("extensions", extension, "requirements.txt")
