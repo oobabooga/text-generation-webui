@@ -4,24 +4,36 @@ import traceback
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
 
-from modules import shared
-
-from extensions.openai.tokens import token_count, token_encode, token_decode
-import extensions.openai.models as OAImodels
+import extensions.openai.completions as OAIcompletions
 import extensions.openai.edits as OAIedits
 import extensions.openai.embeddings as OAIembeddings
 import extensions.openai.images as OAIimages
+import extensions.openai.models as OAImodels
 import extensions.openai.moderations as OAImoderations
-import extensions.openai.completions as OAIcompletions
-from extensions.openai.errors import *
+from extensions.openai.defaults import clamp, default, get_default_req_params
+from extensions.openai.errors import (
+    InvalidRequestError,
+    OpenAIError,
+    ServiceUnavailableError
+)
+from extensions.openai.tokens import token_count, token_decode, token_encode
 from extensions.openai.utils import debug_msg
-from extensions.openai.defaults import (get_default_req_params, default, clamp)
+from modules import shared
 
+import cgi
+import speech_recognition as sr
+from pydub import AudioSegment
 
 params = {
-    'port': int(os.environ.get('OPENEDAI_PORT')) if 'OPENEDAI_PORT' in os.environ else 5001,
+    # default params
+    'port': 5001,
+    'embedding_device': 'cpu',
+    'embedding_model': 'all-mpnet-base-v2',
+    
+    # optional params
+    'sd_webui_url': '',
+    'debug': 0
 }
-
 
 class Handler(BaseHTTPRequestHandler):
     def send_access_control_headers(self):
@@ -55,20 +67,25 @@ class Handler(BaseHTTPRequestHandler):
 
     def send_sse(self, chunk: dict):
         response = 'data: ' + json.dumps(chunk) + '\r\n\r\n'
-        debug_msg(response)
+        debug_msg(response[:-4])
         self.wfile.write(response.encode('utf-8'))
 
     def end_sse(self):
-        self.wfile.write('data: [DONE]\r\n\r\n'.encode('utf-8'))
+        response = 'data: [DONE]\r\n\r\n'
+        debug_msg(response[:-4])
+        self.wfile.write(response.encode('utf-8'))
 
     def return_json(self, ret: dict, code: int = 200, no_debug=False):
         self.send_response(code)
         self.send_access_control_headers()
         self.send_header('Content-Type', 'application/json')
-        self.end_headers()
 
         response = json.dumps(ret)
         r_utf8 = response.encode('utf-8')
+
+        self.send_header('Content-Length', str(len(r_utf8)))
+        self.end_headers()
+
         self.wfile.write(r_utf8)
         if not no_debug:
             debug_msg(r_utf8)
@@ -84,6 +101,7 @@ class Handler(BaseHTTPRequestHandler):
             }
         }
         if internal_message:
+            print(error_type, message)
             print(internal_message)
             # error_resp['internal_message'] = internal_message
 
@@ -93,12 +111,10 @@ class Handler(BaseHTTPRequestHandler):
         def wrapper(self):
             try:
                 func(self)
-            except ServiceUnavailableError as e:
-                self.openai_error(e.message, e.code, e.error_type, internal_message=e.internal_message)
             except InvalidRequestError as e:
-                self.openai_error(e.message, e.code, e.error_type, e.param, internal_message=e.internal_message)
+                self.openai_error(e.message, e.code, e.__class__.__name__, e.param, internal_message=e.internal_message)
             except OpenAIError as e:
-                self.openai_error(e.message, e.code, e.error_type, internal_message=e.internal_message)
+                self.openai_error(e.message, e.code, e.__class__.__name__, internal_message=e.internal_message)
             except Exception as e:
                 self.openai_error(repr(e), 500, 'OpenAIError', internal_message=traceback.format_exc())
 
@@ -119,7 +135,7 @@ class Handler(BaseHTTPRequestHandler):
                 resp = OAImodels.list_models(is_legacy)
             else:
                 model_name = self.path[len('/v1/models/'):]
-                resp = OAImodels.model_info()
+                resp = OAImodels.model_info(model_name)
 
             self.return_json(resp)
 
@@ -132,19 +148,70 @@ class Handler(BaseHTTPRequestHandler):
 
     @openai_error_handler
     def do_POST(self):
+
+        if '/v1/audio/transcriptions' in self.path:
+            r = sr.Recognizer()
+
+            # Parse the form data
+            form = cgi.FieldStorage(
+                fp=self.rfile,
+                headers=self.headers,
+                environ={'REQUEST_METHOD': 'POST', 'CONTENT_TYPE': self.headers['Content-Type']}
+            )
+            
+            audio_file = form['file'].file
+            audio_data = AudioSegment.from_file(audio_file)
+            
+            # Convert AudioSegment to raw data
+            raw_data = audio_data.raw_data
+            
+            # Create AudioData object
+            audio_data = sr.AudioData(raw_data, audio_data.frame_rate, audio_data.sample_width)
+            whipser_language = form.getvalue('language', None)
+            whipser_model = form.getvalue('model', 'tiny')  # Use the model from the form data if it exists, otherwise default to tiny
+
+            transcription = {"text": ""}
+            
+            try:
+                transcription["text"] = r.recognize_whisper(audio_data, language=whipser_language, model=whipser_model)
+            except sr.UnknownValueError:
+                print("Whisper could not understand audio")
+                transcription["text"] = "Whisper could not understand audio UnknownValueError"
+            except sr.RequestError as e:
+                print("Could not request results from Whisper", e)
+                transcription["text"] = "Whisper could not understand audio RequestError"
+            
+            self.return_json(transcription, no_debug=True)
+            return   
+            
         debug_msg(self.requestline)
         debug_msg(self.headers)
 
-        content_length = int(self.headers['Content-Length'])
-        body = json.loads(self.rfile.read(content_length).decode('utf-8'))
+        content_length = self.headers.get('Content-Length')
+        transfer_encoding = self.headers.get('Transfer-Encoding')
+
+        if content_length:
+            body = json.loads(self.rfile.read(int(content_length)).decode('utf-8'))
+        elif transfer_encoding == 'chunked':
+            chunks = []
+            while True:
+                chunk_size = int(self.rfile.readline(), 16)  # Read the chunk size
+                if chunk_size == 0:
+                    break  # End of chunks
+                chunks.append(self.rfile.read(chunk_size))
+                self.rfile.readline()  # Consume the trailing newline after each chunk
+            body = json.loads(b''.join(chunks).decode('utf-8'))
+        else:
+            self.send_response(400, "Bad Request: Either Content-Length or Transfer-Encoding header expected.")
+            self.end_headers()
+            return
 
         debug_msg(body)
 
         if '/completions' in self.path or '/generate' in self.path:
 
             if not shared.model:
-                self.openai_error("No model loaded.")
-                return
+                raise ServiceUnavailableError("No model loaded.")
 
             is_legacy = '/generate' in self.path
             is_streaming = body.get('stream', False)
@@ -176,8 +243,7 @@ class Handler(BaseHTTPRequestHandler):
             # deprecated
 
             if not shared.model:
-                self.openai_error("No model loaded.")
-                return
+                raise ServiceUnavailableError("No model loaded.")
 
             req_params = get_default_req_params()
 
@@ -190,7 +256,10 @@ class Handler(BaseHTTPRequestHandler):
 
             self.return_json(response)
 
-        elif '/images/generations' in self.path and 'SD_WEBUI_URL' in os.environ:
+        elif '/images/generations' in self.path:
+            if not os.environ.get('SD_WEBUI_URL', params.get('sd_webui_url', '')):
+                raise ServiceUnavailableError("Stable Diffusion not available. SD_WEBUI_URL not set.")
+
             prompt = body['prompt']
             size = default(body, 'size', '1024x1024')
             response_format = default(body, 'response_format', 'url')  # or b64_json
@@ -250,17 +319,18 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def run_server():
-    server_addr = ('0.0.0.0' if shared.args.listen else '127.0.0.1', params['port'])
+    port = int(os.environ.get('OPENEDAI_PORT', params.get('port', 5001)))
+    server_addr = ('0.0.0.0' if shared.args.listen else '127.0.0.1', port)
     server = ThreadingHTTPServer(server_addr, Handler)
     if shared.args.share:
         try:
             from flask_cloudflared import _run_cloudflared
-            public_url = _run_cloudflared(params['port'], params['port'] + 1)
-            print(f'Starting OpenAI compatible api at\nOPENAI_API_BASE={public_url}/v1')
+            public_url = _run_cloudflared(port, port + 1)
+            print(f'OpenAI compatible API ready at: OPENAI_API_BASE={public_url}/v1')
         except ImportError:
             print('You should install flask_cloudflared manually')
     else:
-        print(f'Starting OpenAI compatible api:\nOPENAI_API_BASE=http://{server_addr[0]}:{server_addr[1]}/v1')
+        print(f'OpenAI compatible API ready at: OPENAI_API_BASE=http://{server_addr[0]}:{server_addr[1]}/v1')
 
     server.serve_forever()
 

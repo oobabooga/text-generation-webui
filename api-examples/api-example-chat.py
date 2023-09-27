@@ -1,3 +1,4 @@
+import html
 import json
 
 import requests
@@ -14,18 +15,24 @@ def run(user_input, history):
     request = {
         'user_input': user_input,
         'max_new_tokens': 250,
+        'auto_max_new_tokens': False,
+        'max_tokens_second': 0,
         'history': history,
         'mode': 'instruct',  # Valid options: 'chat', 'chat-instruct', 'instruct'
         'character': 'Example',
         'instruction_template': 'Vicuna-v1.1',  # Will get autodetected if unset
-        # 'context_instruct': '',  # Optional
         'your_name': 'You',
-
+        # 'name1': 'name of user', # Optional
+        # 'name2': 'name of character', # Optional
+        # 'context': 'character context', # Optional
+        # 'greeting': 'greeting', # Optional
+        # 'name1_instruct': 'You', # Optional
+        # 'name2_instruct': 'Assistant', # Optional
+        # 'context_instruct': 'context_instruct', # Optional
+        # 'turn_template': 'turn_template', # Optional
         'regenerate': False,
         '_continue': False,
-        'stop_at_newline': False,
-        'chat_generation_attempts': 1,
-        'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
+        'chat_instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
 
         # Generation params. If 'preset' is set to different than 'None', the values
         # in presets/preset-name.yaml are used instead of the individual numbers.
@@ -50,11 +57,15 @@ def run(user_input, history):
         'mirostat_mode': 0,
         'mirostat_tau': 5,
         'mirostat_eta': 0.1,
+        'grammar_string': '',
+        'guidance_scale': 1,
+        'negative_prompt': '',
 
         'seed': -1,
         'add_bos_token': True,
         'truncation_length': 2048,
         'ban_eos_token': False,
+        'custom_token_bans': '',
         'skip_special_tokens': True,
         'stopping_strings': []
     }
@@ -65,7 +76,7 @@ def run(user_input, history):
         result = response.json()['results'][0]['history']
         print(json.dumps(result, indent=4))
         print()
-        print(result['visible'][-1][1])
+        print(html.unescape(result['visible'][-1][1]))
 
 
 if __name__ == '__main__':

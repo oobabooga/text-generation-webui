@@ -3,8 +3,8 @@
     grid-template-columns: 60px 1fr;
     padding-bottom: 25px;
     font-size: 15px;
-    font-family: Helvetica, Arial, sans-serif;
-    line-height: 1.428571429;
+    font-family: 'Noto Sans', Helvetica, Arial, sans-serif;
+    line-height: 22px;
 }
 
 .username {
@@ -13,11 +13,11 @@
 
 .message-body p {
     font-size: 15px !important;
-    line-height: 1.75 !important;
+    line-height: 22px !important;
     margin-bottom: 1.25em !important;
 }
 
-.message-body ul, .message-body ol {
+.chat .message-body ul, .chat .message-body ol {
     margin-bottom: 1.25em !important;
 }
 
@@ -43,14 +43,16 @@
     margin-bottom: 9px !important;
 }
 
+.gradio-container .chat .assistant-message:last-child, .gradio-container .chat .user-message:last-child {
+    margin-bottom: 0px !important;
+}
+
 .dark .chat .assistant-message {
-    background-color: #3741519e;
-    border: 1px solid #4b5563;
+    background-color: #1f2937;
 }
 
 .dark .chat .user-message {
-    background-color: #111827;
-    border: 1px solid #4b5563;
+    background-color: transparent;
 }
 
 code {
@@ -58,5 +60,5 @@ code {
 }
 
 .dark code {
-    background-color: #1a212f !important;
+    background-color: #0e1321 !important;
 }

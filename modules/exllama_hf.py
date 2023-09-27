@@ -29,9 +29,15 @@ class ExllamaHF(PreTrainedModel):
         super().__init__(PretrainedConfig())
         self.ex_config = config
         self.ex_model = ExLlama(self.ex_config)
-        self.ex_cache = ExLlamaCache(self.ex_model)
         self.generation_config = GenerationConfig()
         self.lora = None
+
+        self.ex_cache = ExLlamaCache(self.ex_model)
+        self.past_seq = None
+
+        if shared.args.cfg_cache:
+            self.ex_cache_negative = ExLlamaCache(self.ex_model)
+            self.past_seq_negative = None
 
     def _validate_model_class(self):
         pass
@@ -47,26 +53,62 @@ class ExllamaHF(PreTrainedModel):
         return torch.device(0)
 
     def __call__(self, *args, **kwargs):
-        # TODO: Some decoding methods (such as Contrastive Search) may not work at this time
-        assert len(args) == 0, 'no *args should be passed to forward'
         use_cache = kwargs.get('use_cache', True)
         labels = kwargs.get('labels', None)
-        seq = kwargs['input_ids'][0].tolist()
-        cache = kwargs['past_key_values'] if 'past_key_values' in kwargs else None
+        past_key_values = kwargs.get('past_key_values', None)
 
-        if labels is None:
-            if cache is None:
-                self.ex_cache.current_seq_len = 0
-                cache = self.ex_cache
-                self.ex_model.forward(torch.tensor([seq[:-1]], dtype=torch.long), cache, preprocess_only=True, lora=self.lora)
+        if len(args) > 0:
+            if not shared.args.cfg_cache:
+                logger.error("Please enable the cfg-cache option to use CFG with ExLlama_HF.")
+                return
 
-            logits = self.ex_model.forward(torch.tensor([seq[-1:]], dtype=torch.long), cache, lora=self.lora).to(kwargs['input_ids'].device)
+            input_ids = args[0]
+            is_negative = True
+            past_seq = self.past_seq_negative
+            ex_cache = self.ex_cache_negative
         else:
-            if cache is None:
-                self.ex_cache.current_seq_len = 0
-                cache = self.ex_cache
+            input_ids = kwargs['input_ids']
+            is_negative = False
+            past_seq = self.past_seq
+            ex_cache = self.ex_cache
 
-            logits = self.ex_model.forward(torch.tensor([seq], dtype=torch.long), cache, last_id_only=False, lora=self.lora)
+        seq = input_ids[0].tolist()
+        if is_negative and past_key_values is not None:
+            seq = past_key_values + seq
+
+        seq_tensor = torch.tensor(seq)
+        reset = True
+
+        # Make the forward call
+        if labels is None:
+            if past_seq is not None:
+                min_length = min(past_seq.shape[0], seq_tensor.shape[0])
+                indices = torch.nonzero(~torch.eq(past_seq[:min_length], seq_tensor[:min_length]))
+                if len(indices) > 0:
+                    longest_prefix = indices[0].item()
+                else:
+                    longest_prefix = min_length
+
+                if longest_prefix > 0:
+                    reset = False
+                    ex_cache.current_seq_len = longest_prefix
+                    if len(seq_tensor) - longest_prefix > 1:
+                        self.ex_model.forward(seq_tensor[longest_prefix:-1].view(1, -1), ex_cache, preprocess_only=True, lora=self.lora)
+
+            if reset:
+                ex_cache.current_seq_len = 0
+                if len(seq_tensor) > 1:
+                    self.ex_model.forward(seq_tensor[:-1].view(1, -1), ex_cache, preprocess_only=True, lora=self.lora)
+
+            logits = self.ex_model.forward(seq_tensor[-1:].view(1, -1), ex_cache, lora=self.lora).to(input_ids.device)
+        else:
+            ex_cache.current_seq_len = 0
+            logits = self.ex_model.forward(seq_tensor.view(1, -1), ex_cache, last_id_only=False, lora=self.lora)
+
+        if is_negative:
+            self.past_seq_negative = seq_tensor
+        else:
+            self.past_seq = seq_tensor
 
         loss = None
         if labels is not None:
@@ -81,7 +123,7 @@ class ExllamaHF(PreTrainedModel):
             shift_labels = shift_labels.to(shift_logits.device)
             loss = loss_fct(shift_logits, shift_labels)
 
-        return CausalLMOutputWithPast(logits=logits, past_key_values=cache if use_cache else None, loss=loss)
+        return CausalLMOutputWithPast(logits=logits, past_key_values=seq if use_cache else None, loss=loss)
 
     @classmethod
     def from_pretrained(cls, pretrained_model_name_or_path: Optional[Union[str, os.PathLike]], *model_args, **kwargs):
@@ -108,9 +150,11 @@ class ExllamaHF(PreTrainedModel):
             config.set_auto_map(shared.args.gpu_split)
             config.gpu_peer_fix = True
 
-        if shared.args.alpha_value:
+        if shared.args.alpha_value > 1 and shared.args.rope_freq_base == 0:
             config.alpha_value = shared.args.alpha_value
             config.calculate_rotary_embedding_base()
+        elif shared.args.rope_freq_base > 0:
+            config.rotary_embedding_base = shared.args.rope_freq_base
 
         if torch.version.hip:
             config.rmsnorm_no_half2 = True

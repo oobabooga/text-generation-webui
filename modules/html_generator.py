@@ -1,3 +1,4 @@
+import html
 import os
 import re
 import time
@@ -23,6 +24,16 @@ chat_styles = {}
 for k in get_available_chat_styles():
     chat_styles[k] = open(Path(f'css/chat_style-{k}.css'), 'r').read()
 
+# Handle styles that derive from other styles
+for k in chat_styles:
+    lines = chat_styles[k].split('\n')
+    input_string = lines[0]
+    match = re.search(r'chat_style-([a-z\-]*)\.css', input_string)
+
+    if match:
+        style = match.group(1)
+        chat_styles[k] = chat_styles.get(style, '') + '\n\n' + '\n'.join(lines[1:])
+
 
 def fix_newlines(string):
     string = string.replace('\n', '\n\n')
@@ -38,6 +49,7 @@ def replace_blockquote(m):
 def convert_to_markdown(string):
 
     # Blockquote
+    string = re.sub(r'(^|[\n])&gt;', r'\1>', string)
     pattern = re.compile(r'\\begin{blockquote}(.*?)\\end{blockquote}', re.DOTALL)
     string = pattern.sub(replace_blockquote, string)
 
@@ -58,11 +70,32 @@ def convert_to_markdown(string):
         else:
             result += '\n\n'
 
+    result = result.strip()
     if is_code:
-        result = result + '```'  # Unfinished code block
+        result += '\n```'  # Unfinished code block
 
-    string = result.strip()
-    return markdown.markdown(string, extensions=['fenced_code', 'tables'])
+    # Unfinished list, like "\n1.". A |delete| string is added and then
+    # removed to force a <ol> or <ul> to be generated instead of a <p>.
+    if re.search(r'(\n\d+\.?|\n\*\s*)$', result):
+        delete_str = '|delete|'
+
+        if re.search(r'(\d+\.?)$', result) and not result.endswith('.'):
+            result += '.'
+
+        result = re.sub(r'(\n\d+\.?|\n\*\s*)$', r'\g<1> ' + delete_str, result)
+
+        html_output = markdown.markdown(result, extensions=['fenced_code', 'tables'])
+        pos = html_output.rfind(delete_str)
+        if pos > -1:
+            html_output = html_output[:pos] + html_output[pos + len(delete_str):]
+    else:
+        html_output = markdown.markdown(result, extensions=['fenced_code', 'tables'])
+
+    # Unescape code blocks
+    pattern = re.compile(r'<code[^>]*>(.*?)</code>', re.DOTALL)
+    html_output = pattern.sub(lambda x: html.unescape(x.group()), html_output)
+
+    return html_output
 
 
 def generate_basic_html(string):
@@ -81,7 +114,7 @@ def process_post(post, c):
     src = re.sub('>', '&gt;', src)
     src = re.sub('(&gt;&gt;[0-9]*)', '<span class="quote">\\1</span>', src)
     src = re.sub('\n', '<br>\n', src)
-    src = f'<blockquote class="message">{src}\n'
+    src = f'<blockquote class="message_4chan">{src}\n'
     src = f'<span class="name">Anonymous </span> <span class="number">No.{number}</span>\n{src}'
     return src
 
@@ -102,6 +135,7 @@ def generate_4chan_html(f):
             post = line
         else:
             post += line
+
     if post != '':
         src = process_post(post, c)
         posts.append(src)
@@ -116,13 +150,14 @@ def generate_4chan_html(f):
     output += f'<style>{_4chan_css}</style><div id="parent"><div id="container">'
     for post in posts:
         output += post
+
     output += '</div></div>'
     output = output.split('\n')
     for i in range(len(output)):
         output[i] = re.sub(r'^(&gt;(.*?)(<br>|</div>))', r'<span class="greentext">\1</span>', output[i])
-        output[i] = re.sub(r'^<blockquote class="message">(&gt;(.*?)(<br>|</div>))', r'<blockquote class="message"><span class="greentext">\1</span>', output[i])
-    output = '\n'.join(output)
+        output[i] = re.sub(r'^<blockquote class="message_4chan">(&gt;(.*?)(<br>|</div>))', r'<blockquote class="message_4chan"><span class="greentext">\1</span>', output[i])
 
+    output = '\n'.join(output)
     return output
 
 
@@ -142,7 +177,13 @@ def get_image_cache(path):
     mtime = os.stat(path).st_mtime
     if (path in image_cache and mtime != image_cache[path][0]) or (path not in image_cache):
         img = make_thumbnail(Image.open(path))
-        output_file = Path(f'cache/{path.name}_cache.png')
+
+        old_p = Path(f'cache/{path.name}_cache.png')
+        p = Path(f'cache/cache_{path.name}.png')
+        if old_p.exists():
+            old_p.rename(p)
+
+        output_file = p
         img.convert('RGB').save(output_file, format='PNG')
         image_cache[path] = [mtime, output_file.as_posix()]
 
@@ -150,9 +191,20 @@ def get_image_cache(path):
 
 
 def generate_instruct_html(history):
-    output = f'<style>{instruct_css}</style><div class="chat" id="chat">'
-    for i, _row in enumerate(history[::-1]):
+    output = f'<style>{instruct_css}</style><div class="chat" id="chat"><div class="messages">'
+    for i, _row in enumerate(history):
         row = [convert_to_markdown(entry) for entry in _row]
+
+        if row[0]:  # don't display empty user messages
+            output += f"""
+                  <div class="user-message">
+                    <div class="text">
+                      <div class="message-body">
+                        {row[0]}
+                      </div>
+                    </div>
+                  </div>
+                """
 
         output += f"""
               <div class="assistant-message">
@@ -164,33 +216,37 @@ def generate_instruct_html(history):
               </div>
             """
 
-        if len(row[0]) == 0:  # don't display empty user messages
-            continue
-
-        output += f"""
-              <div class="user-message">
-                <div class="text">
-                  <div class="message-body">
-                    {row[0]}
-                  </div>
-                </div>
-              </div>
-            """
-
-    output += "</div>"
+    output += "</div></div>"
 
     return output
 
 
 def generate_cai_chat_html(history, name1, name2, style, reset_cache=False):
-    output = f'<style>{chat_styles[style]}</style><div class="chat" id="chat">'
+    output = f'<style>{chat_styles[style]}</style><div class="chat" id="chat"><div class="messages">'
 
     # We use ?name2 and ?time.time() to force the browser to reset caches
     img_bot = f'<img src="file/cache/pfp_character.png?{name2}">' if Path("cache/pfp_character.png").exists() else ''
     img_me = f'<img src="file/cache/pfp_me.png?{time.time() if reset_cache else ""}">' if Path("cache/pfp_me.png").exists() else ''
 
-    for i, _row in enumerate(history[::-1]):
+    for i, _row in enumerate(history):
         row = [convert_to_markdown(entry) for entry in _row]
+
+        if row[0]:  # don't display empty user messages
+            output += f"""
+                  <div class="message">
+                    <div class="circle-you">
+                      {img_me}
+                    </div>
+                    <div class="text">
+                      <div class="username">
+                        {name1}
+                      </div>
+                      <div class="message-body">
+                        {row[0]}
+                      </div>
+                    </div>
+                  </div>
+                """
 
         output += f"""
               <div class="message">
@@ -208,49 +264,18 @@ def generate_cai_chat_html(history, name1, name2, style, reset_cache=False):
               </div>
             """
 
-        if len(row[0]) == 0:  # don't display empty user messages
-            continue
-
-        output += f"""
-              <div class="message">
-                <div class="circle-you">
-                  {img_me}
-                </div>
-                <div class="text">
-                  <div class="username">
-                    {name1}
-                  </div>
-                  <div class="message-body">
-                    {row[0]}
-                  </div>
-                </div>
-              </div>
-            """
-
-    output += "</div>"
+    output += "</div></div>"
     return output
 
 
 def generate_chat_html(history, name1, name2, reset_cache=False):
-    output = f'<style>{chat_styles["wpp"]}</style><div class="chat" id="chat">'
+    output = f'<style>{chat_styles["wpp"]}</style><div class="chat" id="chat"><div class="messages">'
 
-    for i, _row in enumerate(history[::-1]):
+    for i, _row in enumerate(history):
         row = [convert_to_markdown(entry) for entry in _row]
 
-        output += f"""
-              <div class="message">
-                <div class="text-bot">
-                  <div class="message-body">
-                    {row[1]}
-                  </div>
-                </div>
-              </div>
-            """
-
-        if len(row[0]) == 0:  # don't display empty user messages
-            continue
-
-        output += f"""
+        if row[0]:  # don't display empty user messages
+            output += f"""
               <div class="message">
                 <div class="text-you">
                   <div class="message-body">
@@ -260,7 +285,17 @@ def generate_chat_html(history, name1, name2, reset_cache=False):
               </div>
             """
 
-    output += "</div>"
+        output += f"""
+          <div class="message">
+            <div class="text-bot">
+              <div class="message-body">
+                {row[1]}
+              </div>
+            </div>
+          </div>
+        """
+
+    output += "</div></div>"
     return output
 
 

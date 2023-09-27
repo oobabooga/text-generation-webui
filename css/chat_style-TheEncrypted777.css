@@ -5,22 +5,14 @@
     grid-template-columns: 60px minmax(0, 1fr);
     padding-bottom: 28px;
     font-size: 18px;
-    /*Change 'Quicksand' to a font you like or leave it*/
-    font-family: Quicksand, Arial, sans-serif;
+    font-family: 'Noto Sans', Arial, sans-serif;
     line-height: 1.428571429;
 }
 
-.circle-you {
-    background-color: gray;
-    border-radius: 1rem;
-    /*Change color to any you like to be the border of your image*/
-    border: 2px solid white;
-}
-
+.circle-you,
 .circle-bot {
     background-color: gray;
     border-radius: 1rem;
-    /*Change color to any you like to be the border of the bot's image*/
     border: 2px solid white;
 }
 
@@ -41,7 +33,7 @@
 .text {
     /*Change this to move the message box further left or right depending on the size of your profile pic*/
     padding-left: 90px;
-    text-shadow: 2px 2px 2px rgb(0, 0, 0);
+    text-shadow: 2px 2px 2px rgb(0, 0, 0, 0.4);
 }
 
 .text p {
@@ -96,12 +88,46 @@
     margin-bottom: 0 !important;
     font-size: 18px !important;
     line-height: 1.428571429 !important;
-}
-
-.dark .message-body p em {
-    color: rgb(138, 138, 138) !important;
+    color: rgb(243, 244, 246) !important;
+    text-shadow: 2px 2px 2px rgb(0, 0, 0);
 }
 
 .message-body p em {
-    color: rgb(110, 110, 110) !important;
+    color: rgb(138, 138, 138) !important;
+}
+
+@media screen and (max-width: 688px) {
+    .message {
+        display: grid;
+        grid-template-columns: 60px minmax(0, 1fr);
+        padding-bottom: 25px;
+        font-size: 15px;
+        font-family: 'Noto Sans', Helvetica, Arial, sans-serif;
+        line-height: 1.428571429;
+    }
+
+    .circle-you, .circle-bot {
+        width: 50px;
+        height: 73px;
+        border-radius: 0.5rem;
+    }
+
+    .circle-bot img,
+    .circle-you img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .text {
+        padding-left: 0px;
+    }
+
+    .message-body p {
+        font-size: 16px !important;
+    }
+
+    .username {
+        font-size: 20px;
+    }
 }

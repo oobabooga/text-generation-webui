@@ -1,0 +1,4 @@
+user: ""
+bot: ""
+turn_template: "<|user|><|user-message|> [/INST] <|bot|><|bot-message|> </s><s>[INST] "
+context: "[INST] <<SYS>>\nAnswer the questions.\n<</SYS>>\n\n"

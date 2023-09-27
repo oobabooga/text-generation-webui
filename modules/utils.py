@@ -3,13 +3,13 @@ import re
 from datetime import datetime
 from pathlib import Path
 
-from modules import shared
+from modules import github, shared
 from modules.logging_colors import logger
 
 
 # Helper function to get multiple values from shared.gradio
 def gradio(*keys):
-    if len(keys) == 1 and type(keys[0]) is list:
+    if len(keys) == 1 and type(keys[0]) in [list, tuple]:
         keys = keys[0]
 
     return [shared.gradio[k] for k in keys]
@@ -71,10 +71,12 @@ def natural_keys(text):
 
 
 def get_available_models():
-    if shared.args.flexgen:
-        return sorted([re.sub('-np$', '', item.name) for item in list(Path(f'{shared.args.model_dir}/').glob('*')) if item.name.endswith('-np')], key=natural_keys)
-    else:
-        return sorted([re.sub('.pth$', '', item.name) for item in list(Path(f'{shared.args.model_dir}/').glob('*')) if not item.name.endswith(('.txt', '-np', '.pt', '.json', '.yaml'))], key=natural_keys)
+    model_list = []
+    for item in list(Path(f'{shared.args.model_dir}/').glob('*')):
+        if not item.name.endswith(('.txt', '-np', '.pt', '.json', '.yaml', '.py')) and 'llama-tokenizer' not in item.name:
+            model_list.append(re.sub('.pth$', '', item.name))
+
+    return sorted(model_list, key=natural_keys)
 
 
 def get_available_presets():
@@ -86,18 +88,17 @@ def get_available_prompts():
     files = set((k.stem for k in Path('prompts').glob('*.txt')))
     prompts += sorted([k for k in files if re.match('^[0-9]', k)], key=natural_keys, reverse=True)
     prompts += sorted([k for k in files if re.match('^[^0-9]', k)], key=natural_keys)
-    prompts += ['Instruct-' + k for k in get_available_instruction_templates() if k != 'None']
     prompts += ['None']
     return prompts
 
 
 def get_available_characters():
     paths = (x for x in Path('characters').iterdir() if x.suffix in ('.json', '.yaml', '.yml'))
-    return ['None'] + sorted(set((k.stem for k in paths if k.stem != "instruction-following")), key=natural_keys)
+    return sorted(set((k.stem for k in paths)), key=natural_keys)
 
 
 def get_available_instruction_templates():
-    path = "characters/instruction-following"
+    path = "instruction-templates"
     paths = []
     if os.path.exists(path):
         paths = (x for x in Path(path).iterdir() if x.suffix in ('.json', '.yaml', '.yml'))
@@ -106,7 +107,9 @@ def get_available_instruction_templates():
 
 
 def get_available_extensions():
-    return sorted(set(map(lambda x: x.parts[1], Path('extensions').glob('*/script.py'))), key=natural_keys)
+    extensions = sorted(set(map(lambda x: x.parts[1], Path('extensions').glob('*/script.py'))), key=natural_keys)
+    extensions = [v for v in extensions if v not in github.new_extensions]
+    return extensions
 
 
 def get_available_loras():
@@ -125,6 +128,5 @@ def get_available_chat_styles():
     return sorted(set(('-'.join(k.stem.split('-')[1:]) for k in Path('css').glob('chat_style*.css'))), key=natural_keys)
 
 
-def get_available_sessions():
-    items = sorted(set(k.stem for k in Path('logs').glob(f'session_{shared.get_mode()}*')), key=natural_keys, reverse=True)
-    return [item for item in items if 'autosave' in item] + [item for item in items if 'autosave' not in item]
+def get_available_grammars():
+    return ['None'] + sorted([item.name for item in list(Path('grammars').glob('*.gbnf'))], key=natural_keys)
