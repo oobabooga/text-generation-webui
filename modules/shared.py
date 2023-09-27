@@ -1,11 +1,11 @@
 import argparse
+import sys
 from collections import OrderedDict
 from pathlib import Path
 
 import yaml
 
 from modules.logging_colors import logger
-
 
 # Model variables
 model = None
@@ -24,7 +24,6 @@ processing_message = '*Is typing...*'
 gradio = {}
 persistent_interface_state = {}
 need_restart = False
-session_is_loading = False
 
 # UI defaults
 settings = {
@@ -33,7 +32,6 @@ settings = {
     'start_with': '',
     'mode': 'chat',
     'chat_style': 'cai-chat',
-    'character': 'None',
     'prompt-default': 'QA',
     'prompt-notebook': 'QA',
     'preset': 'simple-1',
@@ -54,9 +52,7 @@ settings = {
     'skip_special_tokens': True,
     'stream': True,
     'name1': 'You',
-    'name2': 'Assistant',
-    'context': 'This is a conversation with your Assistant. It is a computer program designed to help you with various tasks such as answering questions, providing recommendations, and helping with decision making. You can ask it anything you want and it will do its best to give you accurate and relevant information.',
-    'greeting': '',
+    'character': 'Assistant',
     'instruction_template': 'Alpaca',
     'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
     'autoload_model': False,
@@ -109,6 +105,7 @@ parser.add_argument('--no-cache', action='store_true', help='Set use_cache to Fa
 parser.add_argument('--xformers', action='store_true', help="Use xformer's memory efficient attention. This should increase your tokens/s.")
 parser.add_argument('--sdp-attention', action='store_true', help="Use torch 2.0's sdp attention.")
 parser.add_argument('--trust-remote-code', action='store_true', help="Set trust_remote_code=True while loading a model. Necessary for ChatGLM and Falcon.")
+parser.add_argument('--use_fast', action='store_true', help="Set use_fast=True while loading a tokenizer.")
 
 # Accelerate 4-bit
 parser.add_argument('--load-in-4bit', action='store_true', help='Load the model with 4-bit precision (using bitsandbytes).')
@@ -128,6 +125,7 @@ parser.add_argument('--n-gpu-layers', type=int, default=0, help='Number of layer
 parser.add_argument('--tensor_split', type=str, default=None, help="Split the model across multiple GPUs, comma-separated list of proportions, e.g. 18,17")
 parser.add_argument('--n_ctx', type=int, default=2048, help='Size of the prompt context.')
 parser.add_argument('--llama_cpp_seed', type=int, default=0, help='Seed for llama-cpp models. Default 0 (random)')
+parser.add_argument('--numa', action='store_true', help='Activate NUMA task allocation for llama.cpp')
 
 # GPTQ
 parser.add_argument('--wbits', type=int, default=0, help='Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported.')
@@ -187,6 +185,11 @@ parser.add_argument('--multimodal-pipeline', type=str, default=None, help='The m
 
 args = parser.parse_args()
 args_defaults = parser.parse_args([])
+provided_arguments = []
+for arg in sys.argv[1:]:
+    arg = arg.lstrip('-').replace('-', '_')
+    if hasattr(args, arg):
+        provided_arguments.append(arg)
 
 # Deprecation warnings
 for k in ['chat', 'notebook', 'no_stream']:
@@ -198,8 +201,10 @@ if args.trust_remote_code:
     logger.warning("trust_remote_code is enabled. This is dangerous.")
 if args.share:
     logger.warning("The gradio \"share link\" feature uses a proprietary executable to create a reverse tunnel. Use it with care.")
-if args.multi_user:
-    logger.warning("The multi-user mode is highly experimental. DO NOT EXPOSE IT TO THE INTERNET.")
+if any((args.listen, args.share)) and not any((args.gradio_auth, args.gradio_auth_path)):
+    logger.warning("\nYou are potentially exposing the web UI to the entire internet without any access password.\nYou can create one with the \"--gradio-auth\" flag like this:\n\n--gradio-auth username:password\n\nMake sure to replace username:password with your own.")
+    if args.multi_user:
+        logger.warning("\nThe multi-user mode is highly experimental and should not be shared publicly.")
 
 
 def fix_loader_name(name):

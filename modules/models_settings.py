@@ -76,6 +76,8 @@ def infer_loader(model_name, model_settings):
         loader = 'llama.cpp'
     elif re.match(r'.*rwkv.*\.pth', model_name.lower()):
         loader = 'RWKV'
+    elif re.match(r'.*exl2', model_name.lower()):
+        loader = 'ExLlamav2_HF'
     else:
         loader = 'Transformers'
 
@@ -96,7 +98,7 @@ def update_model_parameters(state, initial=False):
             gpu_memories.append(value)
             continue
 
-        if initial and vars(shared.args)[element] != vars(shared.args_defaults)[element]:
+        if initial and element in shared.provided_arguments:
             continue
 
         # Setting null defaults

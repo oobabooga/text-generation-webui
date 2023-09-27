@@ -96,7 +96,7 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
                     last_update = cur_time
                     yield reply
 
-        if stop_found:
+        if stop_found or (state['max_tokens_second'] > 0 and shared.stop_everything):
             break
 
     if not is_chat:
@@ -106,6 +106,9 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
 
 
 def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_length=None):
+    if shared.tokenizer is None:
+        raise ValueError('No tokenizer is loaded')
+
     if shared.model.__class__.__name__ in ['LlamaCppModel', 'RWKVModel', 'CtransformersModel', 'Exllamav2Model']:
         input_ids = shared.tokenizer.encode(str(prompt))
         if shared.model.__class__.__name__ not in ['Exllamav2Model']:
@@ -133,6 +136,9 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
 
 
 def decode(output_ids, skip_special_tokens=True):
+    if shared.tokenizer is None:
+        raise ValueError('No tokenizer is loaded')
+
     return shared.tokenizer.decode(output_ids, skip_special_tokens)
 
 
@@ -146,11 +152,11 @@ def get_encoded_length(prompt):
 
 def get_token_ids(prompt):
     tokens = encode(prompt)[0]
-    decoded_tokens = [shared.tokenizer.decode(i) for i in tokens]
+    decoded_tokens = [shared.tokenizer.decode([i]) for i in tokens]
 
     output = ''
     for row in list(zip(tokens, decoded_tokens)):
-        output += f"{str(int(row[0])).ljust(5)}  -  {row[1]}\n"
+        output += f"{str(int(row[0])).ljust(5)}  -  {repr(row[1])}\n"
 
     return output
 
@@ -310,8 +316,8 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
     generate_params['stopping_criteria'].append(_StopEverythingStoppingCriteria())
 
     processor = state.get('logits_processor', LogitsProcessorList([]))
-    # In case folks just pass in a processor by itself.
-    if type(processor) != LogitsProcessorList:
+    # In case a processor is passed by itself.
+    if not isinstance(processor, LogitsProcessorList):
         processor = LogitsProcessorList([processor])
     apply_extensions('logits_processor', processor, input_ids)
     generate_params['logits_processor'] = processor

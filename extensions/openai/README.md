@@ -44,6 +44,25 @@ OPENAI_API_BASE=http://0.0.0.0:5001/v1
 
 If needed, replace 0.0.0.0 with the IP/port of your server.
 
+
+### Settings
+
+To adjust your default settings, you can add the following to your `settings.yaml` file.
+
+```
+openai-port: 5002
+openai-embedding_device: cuda
+openai-sd_webui_url: http://127.0.0.1:7861
+openai-debug: 1
+```
+
+If you've configured the environment variables, please note that settings from `settings.yaml` won't take effect. For instance, if you set `openai-port: 5002` in `settings.yaml` but `OPENEDAI_PORT=5001` in the environment variables, the extension will use `5001` as the port number.
+
+When using `cache_embedding_model.py` to preload the embedding model during Docker image building, consider the following:
+
+- If you wish to use the default settings, leave the environment variables unset.
+- If you intend to change the default embedding model, ensure that you configure the environment variable `OPENEDAI_EMBEDDING_MODEL` to the desired model. Avoid setting `openai-embedding_model` in `settings.yaml` because those settings only take effect after the server starts.
+
 ### Models
 
 This has been successfully tested with Alpaca, Koala, Vicuna, WizardLM and their variants, (ex. gpt4-x-alpaca, GPT4all-snoozy, stable-vicuna, wizard-vicuna, etc.) and many others. Models that have been trained for **Instruction Following** work best. If you test with other models please let me know how it goes. Less than satisfying results (so far) from: RWKV-4-Raven, llama, mpt-7b-instruct/chat.

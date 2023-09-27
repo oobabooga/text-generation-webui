@@ -3,7 +3,6 @@ show_controls: true
 start_with: ''
 mode: chat
 chat_style: cai-chat
-character: None
 prompt-default: QA
 prompt-notebook: QA
 preset: simple-1
@@ -24,9 +23,7 @@ add_bos_token: true
 skip_special_tokens: true
 stream: true
 name1: You
-name2: Assistant
-context: This is a conversation with your Assistant. It is a computer program designed to help you with various tasks such as answering questions, providing recommendations, and helping with decision making. You can ask it anything you want and it will do its best to give you accurate and relevant information.
-greeting: ''
+character: Assistant
 instruction_template: Alpaca
 chat-instruct_command: |-
   Continue the chat dialogue below. Write a single reply for the character "<|character|>".
