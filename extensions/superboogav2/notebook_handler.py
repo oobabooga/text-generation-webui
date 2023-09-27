@@ -3,11 +3,11 @@ This module is responsible for handling and modifying the notebook text.
 """
 import re
 
-import extensions.superbooga.parameters as parameters
+import extensions.superboogav2.parameters as parameters
 
 from modules import shared
 from modules.logging_colors import logger
-from extensions.superbooga.utils import create_context_text
+from extensions.superboogav2.utils import create_context_text
 
 from .data_processor import preprocess_text
 

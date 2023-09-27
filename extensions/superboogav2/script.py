@@ -5,13 +5,13 @@ import os
 from pathlib import Path
 
 # Point to where nltk will find the required data.
-os.environ['NLTK_DATA'] = str(Path("extensions/superbooga/nltk_data").resolve())
+os.environ['NLTK_DATA'] = str(Path("extensions/superboogav2/nltk_data").resolve())
 
 import textwrap
 import codecs
 import gradio as gr
 
-import extensions.superbooga.parameters as parameters
+import extensions.superboogav2.parameters as parameters
 
 from modules.logging_colors import logger
 from modules import shared
@@ -58,7 +58,7 @@ def _feed_url_into_collector(urls):
 
 
 def _begin_benchmark():
-    score, max_score = benchmark(Path("extensions/superbooga/benchmark_texts/questions.json"), collector)
+    score, max_score = benchmark(Path("extensions/superboogav2/benchmark_texts/questions.json"), collector)
     return f'**Score**: {score}/{max_score}'
 
 

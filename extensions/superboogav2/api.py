@@ -21,7 +21,7 @@ from modules.logging_colors import logger
 from .chromadb import ChromaCollector
 from .data_processor import process_and_add_to_collector
 
-import extensions.superbooga.parameters as parameters
+import extensions.superboogav2.parameters as parameters
 
 
 class CustomThreadingHTTPServer(ThreadingHTTPServer):

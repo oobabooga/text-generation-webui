@@ -5,7 +5,7 @@ import torch
 import math
 
 import numpy as np
-import extensions.superbooga.parameters as parameters
+import extensions.superboogav2.parameters as parameters
 
 from chromadb.config import Settings
 from sentence_transformers import SentenceTransformer

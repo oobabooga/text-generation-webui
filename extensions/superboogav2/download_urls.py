@@ -4,7 +4,7 @@ import re
 
 from bs4 import BeautifulSoup
 
-import extensions.superbooga.parameters as parameters
+import extensions.superboogav2.parameters as parameters
 
 from .data_processor import process_and_add_to_collector
 from .utils import create_metadata_source

@@ -4,12 +4,12 @@ This module is responsible for modifying the chat prompt and history.
 import json
 import re
 
-import extensions.superbooga.parameters as parameters
+import extensions.superboogav2.parameters as parameters
 
 from modules import chat
 from modules.text_generation import get_encoded_length
 from modules.logging_colors import logger
-from extensions.superbooga.utils import create_context_text, create_metadata_source
+from extensions.superboogav2.utils import create_context_text, create_metadata_source
 
 from .data_processor import process_and_add_to_collector
 from .chromadb import ChromaCollector

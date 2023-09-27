@@ -1,6 +1,6 @@
 """
 This module provides a singleton class `Parameters` that is used to manage all hyperparameters for the embedding application. 
-It expects a JSON file in `extensions/superbooga/config.json`.
+It expects a JSON file in `extensions/superboogav2/config.json`.
 
 Each element in the JSON must have a `default` value which will be used for the current run. Elements can have `categories`. 
 These categories define the range in which the optimizer will search. If the element is tagged with `"should_optimize": false`, 
@@ -60,7 +60,7 @@ class Parameters:
             raise Exception("This class is a singleton!")
         else:
             Parameters._instance = self
-            self.hyperparameters = self._load_from_json(Path("extensions/superbooga/config.json"))
+            self.hyperparameters = self._load_from_json(Path("extensions/superboogav2/config.json"))
 
     def _load_from_json(self, file_path):
         logger.debug('Loading hyperparameters...')

@@ -12,7 +12,7 @@ import logging
 import hashlib
 logging.getLogger('optuna').setLevel(logging.WARNING)
 
-import extensions.superbooga.parameters as parameters
+import extensions.superboogav2.parameters as parameters
 
 from pathlib import Path
 
@@ -97,7 +97,7 @@ def optimize(collector, progress=gr.Progress()):
             return scores_cache[params_hash]
 
         # Benchmark the current set of parameters.
-        score, max_score = benchmark(Path("extensions/superbooga/benchmark_texts/questions.json"), collector)
+        score, max_score = benchmark(Path("extensions/superboogav2/benchmark_texts/questions.json"), collector)
 
         # Cache the score
         scores_cache[params_hash] = score
