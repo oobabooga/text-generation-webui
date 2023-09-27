@@ -124,7 +124,7 @@ def output_modifier(string, state):
 
     original_string = string
 
-    string = tts_preprocessor.preprocess(html.unescape(string), languages[params["language"]].get("romanize", None))
+    string = tts_preprocessor.preprocess(html.unescape(string))
 
     if string == '':
         string = '*Empty reply, try regenerating*'
@@ -162,7 +162,7 @@ def voice_preview(string):
             current_params = params.copy()
             break
 
-    string = tts_preprocessor.preprocess(string or random_sentence(), languages[params["language"]].get("romanize", None))
+    string = tts_preprocessor.preprocess(string or random_sentence())
 
     output_file = Path('extensions/silero_tts/outputs/voice_preview.wav')
     prosody = f"<prosody rate=\"{params['voice_speed']}\" pitch=\"{params['voice_pitch']}\">"

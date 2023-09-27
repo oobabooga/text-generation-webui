@@ -47,69 +47,6 @@
         "default_voice": "dilnavoz",
         "model_id": "v3_uz"
     },
-    "Hindi": {
-        "lang_id": "indic",
-        "voices": ["hindi_female", "hindi_male"],
-        "default_voice": "hindi_female",
-        "model_id": "v3_indic",
-        "romanize": "Devanagari"
-    },
-    "Malayalam": {
-        "lang_id": "indic",
-        "voices": ["malayalam_female", "malayalam_male"],
-        "default_voice": "malayalam_female",
-        "model_id": "v3_indic",
-        "romanize": "Malayalam"
-    },
-    "Manipuri": {
-        "lang_id": "indic",
-        "voices": ["manipuri_female"],
-        "default_voice": "manipuri_female",
-        "model_id": "v3_indic",
-        "romanize": "Bengali"
-    },
-    "Bengali": {
-        "lang_id": "indic",
-        "voices": ["bengali_female", "bengali_male"],
-        "default_voice": "bengali_female",
-        "model_id": "v3_indic",
-        "romanize": "Bengali"
-    },
-    "Rajasthani": {
-        "lang_id": "indic",
-        "voices": ["rajasthani_female", "rajasthani_male"],
-        "default_voice": "rajasthani_female",
-        "model_id": "v3_indic",
-        "romanize": "Devanagari"
-    },
-    "Tamil": {
-        "lang_id": "indic",
-        "voices": ["tamil_female", "tamil_male"],
-        "default_voice": "tamil_female",
-        "model_id": "v3_indic",
-        "romanize": "Tamil"
-    },
-    "Telugu": {
-        "lang_id": "indic",
-        "voices": ["telugu_female", "telugu_male"],
-        "default_voice": "telugu_female",
-        "model_id": "v3_indic",
-        "romanize": "Telugu"
-    },
-    "Gujarati": {
-        "lang_id": "indic",
-        "voices": ["gujarati_female", "gujarati_male"],
-        "default_voice": "gujarati_female",
-        "model_id": "v3_indic",
-        "romanize": "Gujarati"
-    },
-    "Kannada": {
-        "lang_id": "indic",
-        "voices": ["kannada_female", "kannada_male"],
-        "default_voice": "kannada_female",
-        "model_id": "v3_indic",
-        "romanize": "Kannada"
-    },
     "English (India)": {
         "lang_id": "en",
         "voices": ["tamil_female", "bengali_female", "malayalam_male", "manipuri_female", "assamese_female", "gujarati_male", "telugu_male", "kannada_male", "hindi_female", "rajasthani_female", "kannada_female", "bengali_male", "tamil_male", "gujarati_female", "assamese_male"],
