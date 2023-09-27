@@ -30,15 +30,35 @@ To learn how to use the various features, check out the Documentation: https://g
 
 ### One-click installers
 
-| Windows | Linux | macOS | WSL |
-|--------|--------|--------|--------|
-| [oobabooga-windows.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga_windows.zip) | [oobabooga-linux.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga_linux.zip) |[oobabooga-macos.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga_macos.zip) | [oobabooga-wsl.zip](https://github.com/oobabooga/text-generation-webui/releases/download/installers/oobabooga_wsl.zip) |
+1) Clone or download the repository.
+2) Run the `start_linux.sh`, `start_windows.bat`, `start_macos.sh`, or `start_wsl.bat` script depending on your OS.
+3) Select your GPU vendor when asked.
+4) Have fun!
 
-Just download the zip above, extract it, and double-click on "start". The web UI and all its dependencies will be installed in the same folder.
+#### How it works
 
-* The source codes and more information can be found here: https://github.com/oobabooga/one-click-installers
-* There is no need to run the installers as admin.
-* Huge thanks to [@jllllll](https://github.com/jllllll), [@ClayShoaf](https://github.com/ClayShoaf), and [@xNul](https://github.com/xNul) for their contributions to these installers.
+The script creates a folder called `installer_files` where it sets up a Conda environment using Miniconda. The installation is self-contained: if you want to reinstall, just delete `installer_files` and run the start script again.
+
+To launch the webui in the future after it is already installed, run the same `start` script. 
+
+#### Getting updates
+
+Run `update_linux.sh`, `update_windows.bat`, `update_macos.sh`, or `update_wsl.bat`.
+
+#### Running commands
+
+If you ever need to install something manually in the `installer_files` environment, you can launch an interactive shell using the cmd script: `cmd_linux.sh`, `cmd_windows.bat`, `cmd_macos.sh`, or `cmd_wsl.bat`.
+
+#### Defining command-line flags
+
+To define persistent command-line flags like `--listen` or `--api`, edit the `CMD_FLAGS.txt` file with a text editor and add them there. Flags can also be provided directly to the start scripts, for instance, `./start-linux.sh --listen`.
+
+#### Other info
+
+* There is no need to run any of those scripts as admin/root.
+* For additional instructions about AMD setup, WSL setup, and nvcc installation, consult [this page](https://github.com/oobabooga/text-generation-webui/blob/main/docs/One-Click-Installers.md).
+* The installer has been tested mostly on NVIDIA GPUs. If you can find a way to improve it for your AMD/Intel Arc/Mac Metal GPU, you are highly encouraged to submit a PR to this repository. The main file to be edited is `one_click.py`.
+* For automated installation, you can use the `GPU_CHOICE`, `LAUNCH_AFTER_INSTALL`, and `INSTALL_EXTENSIONS` environment variables. For instance: `GPU_CHOICE=A LAUNCH_AFTER_INSTALL=False INSTALL_EXTENSIONS=False ./start_linux.sh`.
 
 ### Manual installation using Conda
 
@@ -88,11 +108,11 @@ pip install -r requirements.txt
 1) Replace the last command above with
 
 ```
-pip install -r requirements_nocuda.txt
+pip install -r requirements_nowheels.txt
 ```
 
 2) Manually install llama-cpp-python using the appropriate command for your hardware: [Installation from PyPI](https://github.com/abetlen/llama-cpp-python#installation-from-pypi).
-   
+
 3) Do the same for CTransformers: [Installation](https://github.com/marella/ctransformers#installation).
 
 4) AMD: Manually install AutoGPTQ: [Installation](https://github.com/PanQiWei/AutoGPTQ#installation).
@@ -249,6 +269,7 @@ Optionally, you can use the following command-line flags:
 | `--xformers`                                | Use xformer's memory efficient attention. This should increase your tokens/s. |
 | `--sdp-attention`                           | Use torch 2.0's sdp attention. |
 | `--trust-remote-code`                       | Set trust_remote_code=True while loading a model. Necessary for ChatGLM and Falcon. |
+| `--use_fast`                                | Set use_fast=True while loading a tokenizer. |
 
 #### Accelerate 4-bit
 

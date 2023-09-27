@@ -3,7 +3,7 @@ import re
 from datetime import datetime
 from pathlib import Path
 
-from modules import shared
+from modules import github, shared
 from modules.logging_colors import logger
 
 
@@ -94,7 +94,7 @@ def get_available_prompts():
 
 def get_available_characters():
     paths = (x for x in Path('characters').iterdir() if x.suffix in ('.json', '.yaml', '.yml'))
-    return ['None'] + sorted(set((k.stem for k in paths)), key=natural_keys)
+    return sorted(set((k.stem for k in paths)), key=natural_keys)
 
 
 def get_available_instruction_templates():
@@ -107,7 +107,9 @@ def get_available_instruction_templates():
 
 
 def get_available_extensions():
-    return sorted(set(map(lambda x: x.parts[1], Path('extensions').glob('*/script.py'))), key=natural_keys)
+    extensions = sorted(set(map(lambda x: x.parts[1], Path('extensions').glob('*/script.py'))), key=natural_keys)
+    extensions = [v for v in extensions if v not in github.new_extensions]
+    return extensions
 
 
 def get_available_loras():
@@ -124,3 +126,7 @@ def get_datasets(path: str, ext: str):
 
 def get_available_chat_styles():
     return sorted(set(('-'.join(k.stem.split('-')[1:]) for k in Path('css').glob('chat_style*.css'))), key=natural_keys)
+
+
+def get_available_grammars():
+    return ['None'] + sorted([item.name for item in list(Path('grammars').glob('*.gbnf'))], key=natural_keys)

@@ -1,6 +1,7 @@
 import os
 import warnings
 
+import modules.one_click_installer_check
 from modules.block_requests import OpenMonkeyPatch, RequestBlocker
 from modules.logging_colors import logger
 
@@ -76,6 +77,7 @@ def create_interface():
         'instruction_template': shared.settings['instruction_template'],
         'prompt_menu-default': shared.settings['prompt-default'],
         'prompt_menu-notebook': shared.settings['prompt-notebook'],
+        'filter_by_loader': shared.args.loader or 'All'
     })
 
     if Path("cache/pfp_character.png").exists():

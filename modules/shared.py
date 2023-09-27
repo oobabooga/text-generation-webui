@@ -24,7 +24,6 @@ processing_message = '*Is typing...*'
 gradio = {}
 persistent_interface_state = {}
 need_restart = False
-session_is_loading = False
 
 # UI defaults
 settings = {
@@ -33,7 +32,6 @@ settings = {
     'start_with': '',
     'mode': 'chat',
     'chat_style': 'cai-chat',
-    'character': 'None',
     'prompt-default': 'QA',
     'prompt-notebook': 'QA',
     'preset': 'simple-1',
@@ -54,9 +52,7 @@ settings = {
     'skip_special_tokens': True,
     'stream': True,
     'name1': 'You',
-    'name2': 'Assistant',
-    'context': 'This is a conversation with your Assistant. It is a computer program designed to help you with various tasks such as answering questions, providing recommendations, and helping with decision making. You can ask it anything you want and it will do its best to give you accurate and relevant information.',
-    'greeting': '',
+    'character': 'Assistant',
     'instruction_template': 'Alpaca',
     'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
     'autoload_model': False,
@@ -109,6 +105,7 @@ parser.add_argument('--no-cache', action='store_true', help='Set use_cache to Fa
 parser.add_argument('--xformers', action='store_true', help="Use xformer's memory efficient attention. This should increase your tokens/s.")
 parser.add_argument('--sdp-attention', action='store_true', help="Use torch 2.0's sdp attention.")
 parser.add_argument('--trust-remote-code', action='store_true', help="Set trust_remote_code=True while loading a model. Necessary for ChatGLM and Falcon.")
+parser.add_argument('--use_fast', action='store_true', help="Set use_fast=True while loading a tokenizer.")
 
 # Accelerate 4-bit
 parser.add_argument('--load-in-4bit', action='store_true', help='Load the model with 4-bit precision (using bitsandbytes).')
@@ -204,8 +201,10 @@ if args.trust_remote_code:
     logger.warning("trust_remote_code is enabled. This is dangerous.")
 if args.share:
     logger.warning("The gradio \"share link\" feature uses a proprietary executable to create a reverse tunnel. Use it with care.")
-if args.multi_user:
-    logger.warning("The multi-user mode is highly experimental. DO NOT EXPOSE IT TO THE INTERNET.")
+if any((args.listen, args.share)) and not any((args.gradio_auth, args.gradio_auth_path)):
+    logger.warning("\nYou are potentially exposing the web UI to the entire internet without any access password.\nYou can create one with the \"--gradio-auth\" flag like this:\n\n--gradio-auth username:password\n\nMake sure to replace username:password with your own.")
+    if args.multi_user:
+        logger.warning("\nThe multi-user mode is highly experimental and should not be shared publicly.")
 
 
 def fix_loader_name(name):

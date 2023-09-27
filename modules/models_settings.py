@@ -76,6 +76,8 @@ def infer_loader(model_name, model_settings):
         loader = 'llama.cpp'
     elif re.match(r'.*rwkv.*\.pth', model_name.lower()):
         loader = 'RWKV'
+    elif re.match(r'.*exl2', model_name.lower()):
+        loader = 'ExLlamav2_HF'
     else:
         loader = 'Transformers'
 

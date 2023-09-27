@@ -127,7 +127,7 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
     height: calc(100dvh - 292px);
 }
 
-.monospace {
+.monospace textarea {
     font-family: monospace;
 }
 
@@ -256,10 +256,9 @@ audio {
   padding: 0px !important;
 }
 
-/*****************************************************/
-/*************** Chat UI declarations ****************/
-/*****************************************************/
-
+/*----------------------------------------------
+  Chat tab
+----------------------------------------------*/
 .h-\[40vh\], .wrap.svelte-byatnx.svelte-byatnx.svelte-byatnx {
     height: 66.67vh
 }
@@ -588,4 +587,26 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 
 .old-ui #chat-buttons #clear-history-confirm {
     order: -1;
+}
+
+.chat ol, .chat ul {
+    margin-top: 6px !important;
+}
+
+/*----------------------------------------------
+  Past chats menus
+----------------------------------------------*/
+#past-chats-row {
+    margin-bottom: calc( -1 * var(--layout-gap) );
+}
+
+#rename-row label {
+    margin-top: var(--layout-gap);
+}
+
+/*----------------------------------------------
+  Keep dropdown menus above errored components
+----------------------------------------------*/
+.options {
+    z-index: 100 !important;
 }
