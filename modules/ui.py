@@ -82,7 +82,8 @@ def list_model_elements():
         'max_seq_len',
         'compress_pos_emb',
         'alpha_value',
-        'rope_freq_base'
+        'rope_freq_base',
+        'numa',
     ]
 
     for i in range(torch.cuda.device_count()):
