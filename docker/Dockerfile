@@ -80,7 +80,7 @@ RUN --mount=type=cache,target=/root/.cache/pip,rw \
     pip3 install -r requirements.txt; \
     done && \
     # workaround for superbooga v2 being a bit borked
-    echo -e "import nltk\nnltk.download('stopwords')" | python3
+    python3 <<"import nltk\nnltk.download('stopwords')"
 
 ENV CLI_ARGS=""
 
