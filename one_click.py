@@ -25,6 +25,7 @@ else:
 
 flags = f"{' '.join([flag for flag in sys.argv[1:] if flag != '--update'])} {CMD_FLAGS}"
 
+
 def is_linux():
     return sys.platform.startswith("linux")
 
@@ -87,12 +88,12 @@ def check_env():
     conda_exist = run_cmd("conda", environment=True, capture_output=True).returncode == 0
     if not conda_exist:
         print("Conda is not installed. Exiting...")
-        sys.exit()
+        sys.exit(1)
 
     # Ensure this is a new environment and not the base environment
     if os.environ["CONDA_DEFAULT_ENV"] == "base":
         print("Create an environment for this project and activate it. Exiting...")
-        sys.exit()
+        sys.exit(1)
 
 
 def clear_cache():
@@ -126,8 +127,8 @@ def run_cmd(cmd, assert_success=False, environment=False, capture_output=False, 
 
     # Assert the command ran successfully
     if assert_success and result.returncode != 0:
-        print("Command '" + cmd + "' failed with exit status code '" + str(result.returncode) + "'. Exiting...")
-        sys.exit()
+        print("Command '" + cmd + "' failed with exit status code '" + str(result.returncode) + "'.\n\nExiting now.\nTry running the start/update script again.")
+        sys.exit(1)
 
     return result
 
@@ -138,6 +139,7 @@ def install_webui():
         choice = os.environ["GPU_CHOICE"].upper()
         print_big_message(f"Selected GPU choice \"{choice}\" based on the GPU_CHOICE environment variable.")
     else:
+        print()
         print("What is your GPU?")
         print()
         print("A) NVIDIA")
@@ -166,7 +168,7 @@ def install_webui():
             install_pytorch = "python -m pip install torch==2.0.1+rocm5.4.2 torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.4.2"
         else:
             print("AMD GPUs are only supported on Linux. Exiting...")
-            sys.exit()
+            sys.exit(1)
     elif is_linux() and (choice == "C" or choice == "N"):
         install_pytorch = "python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu"
     elif choice == "D":
@@ -314,7 +316,7 @@ if __name__ == "__main__":
         # Check if a model has been downloaded yet
         if '--model-dir' in flags:
             # Splits on ' ' or '=' while maintaining spaces within quotes
-            flags_list = re.split(' +(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)|=',flags)
+            flags_list = re.split(' +(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)|=', flags)
             model_dir = [flags_list[(flags_list.index(flag)+1)] for flag in flags_list if flag == '--model-dir'][0].strip('"\'')
         else:
             model_dir = 'models'
