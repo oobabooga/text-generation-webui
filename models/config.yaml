@@ -227,3 +227,5 @@ llama-65b-gptq-3bit:
   rope_freq_base: 1000000
 .*codellama.*instruct:
   instruction_template: 'Llama-v2'
+.*mistral.*instruct:
+  instruction_template: 'Mistral'
