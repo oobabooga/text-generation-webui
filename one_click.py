@@ -55,6 +55,7 @@ def cpu_has_avx2():
 
 
 def torch_version():
+    site_packages_path = None
     for sitedir in site.getsitepackages():
         if "site-packages" in sitedir and conda_env_path in sitedir:
             site_packages_path = sitedir
@@ -69,6 +70,7 @@ def torch_version():
 
 
 def is_installed():
+    site_packages_path = None
     for sitedir in site.getsitepackages():
         if "site-packages" in sitedir and conda_env_path in sitedir:
             site_packages_path = sitedir
