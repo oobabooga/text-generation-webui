@@ -16,6 +16,8 @@ clear_arr = ('delete_chat-confirm', 'delete_chat', 'delete_chat-cancel')
 
 
 def create_ui():
+    mu = shared.args.multi_user
+
     shared.gradio['Chat input'] = gr.State()
     shared.gradio['dummy'] = gr.State()
     shared.gradio['history'] = gr.State({'internal': [], 'visible': []})
@@ -63,9 +65,9 @@ def create_ui():
                 shared.gradio['send-chat-to-notebook'] = gr.Button('Send to notebook')
 
         with gr.Row(elem_id='past-chats-row'):
-            shared.gradio['unique_id'] = gr.Dropdown(label='Past chats', elem_classes=['slim-dropdown'])
-            shared.gradio['rename_chat'] = gr.Button('Rename', elem_classes='refresh-button')
-            shared.gradio['delete_chat'] = gr.Button('🗑️', elem_classes='refresh-button')
+            shared.gradio['unique_id'] = gr.Dropdown(label='Past chats', elem_classes=['slim-dropdown'], interactive=not mu)
+            shared.gradio['rename_chat'] = gr.Button('Rename', elem_classes='refresh-button', interactive=not mu)
+            shared.gradio['delete_chat'] = gr.Button('🗑️', elem_classes='refresh-button', interactive=not mu)
             shared.gradio['delete_chat-cancel'] = gr.Button('Cancel', visible=False, elem_classes='refresh-button')
             shared.gradio['delete_chat-confirm'] = gr.Button('Confirm', variant='stop', visible=False, elem_classes='refresh-button')
 
@@ -83,14 +85,15 @@ def create_ui():
 
 
 def create_chat_settings_ui():
+    mu = shared.args.multi_user
     with gr.Tab('Character'):
         with gr.Row():
             with gr.Column(scale=8):
                 with gr.Row():
                     shared.gradio['character_menu'] = gr.Dropdown(value='', choices=utils.get_available_characters(), label='Character', elem_id='character-menu', info='Used in chat and chat-instruct modes.', elem_classes='slim-dropdown')
-                    ui.create_refresh_button(shared.gradio['character_menu'], lambda: None, lambda: {'choices': utils.get_available_characters()}, 'refresh-button')
-                    shared.gradio['save_character'] = gr.Button('💾', elem_classes='refresh-button')
-                    shared.gradio['delete_character'] = gr.Button('🗑️', elem_classes='refresh-button')
+                    ui.create_refresh_button(shared.gradio['character_menu'], lambda: None, lambda: {'choices': utils.get_available_characters()}, 'refresh-button', interactive=not mu)
+                    shared.gradio['save_character'] = gr.Button('💾', elem_classes='refresh-button', interactive=not mu)
+                    shared.gradio['delete_character'] = gr.Button('🗑️', elem_classes='refresh-button', interactive=not mu)
 
                 shared.gradio['name1'] = gr.Textbox(value=shared.settings['name1'], lines=1, label='Your name')
                 shared.gradio['name2'] = gr.Textbox(value='', lines=1, label='Character\'s name')
@@ -98,16 +101,16 @@ def create_chat_settings_ui():
                 shared.gradio['greeting'] = gr.Textbox(value='', lines=5, label='Greeting', elem_classes=['add_scrollbar'])
 
             with gr.Column(scale=1):
-                shared.gradio['character_picture'] = gr.Image(label='Character picture', type='pil')
-                shared.gradio['your_picture'] = gr.Image(label='Your picture', type='pil', value=Image.open(Path('cache/pfp_me.png')) if Path('cache/pfp_me.png').exists() else None)
+                shared.gradio['character_picture'] = gr.Image(label='Character picture', type='pil', interactive=not mu)
+                shared.gradio['your_picture'] = gr.Image(label='Your picture', type='pil', value=Image.open(Path('cache/pfp_me.png')) if Path('cache/pfp_me.png').exists() else None, interactive=not mu)
 
     with gr.Tab('Instruction template'):
         with gr.Row():
             with gr.Row():
                 shared.gradio['instruction_template'] = gr.Dropdown(choices=utils.get_available_instruction_templates(), label='Instruction template', value='None', info='Change this according to the model/LoRA that you are using. Used in instruct and chat-instruct modes.', elem_classes='slim-dropdown')
-                ui.create_refresh_button(shared.gradio['instruction_template'], lambda: None, lambda: {'choices': utils.get_available_instruction_templates()}, 'refresh-button')
-                shared.gradio['save_template'] = gr.Button('💾', elem_classes='refresh-button')
-                shared.gradio['delete_template'] = gr.Button('🗑️ ', elem_classes='refresh-button')
+                ui.create_refresh_button(shared.gradio['instruction_template'], lambda: None, lambda: {'choices': utils.get_available_instruction_templates()}, 'refresh-button', interactive=not mu)
+                shared.gradio['save_template'] = gr.Button('💾', elem_classes='refresh-button', interactive=not mu)
+                shared.gradio['delete_template'] = gr.Button('🗑️ ', elem_classes='refresh-button', interactive=not mu)
 
         shared.gradio['name1_instruct'] = gr.Textbox(value='', lines=2, label='User string')
         shared.gradio['name2_instruct'] = gr.Textbox(value='', lines=1, label='Bot string')
@@ -132,15 +135,15 @@ def create_chat_settings_ui():
     with gr.Tab('Upload character'):
         with gr.Tab('YAML or JSON'):
             with gr.Row():
-                shared.gradio['upload_json'] = gr.File(type='binary', file_types=['.json', '.yaml'], label='JSON or YAML File')
-                shared.gradio['upload_img_bot'] = gr.Image(type='pil', label='Profile Picture (optional)')
+                shared.gradio['upload_json'] = gr.File(type='binary', file_types=['.json', '.yaml'], label='JSON or YAML File', interactive=not mu)
+                shared.gradio['upload_img_bot'] = gr.Image(type='pil', label='Profile Picture (optional)', interactive=not mu)
 
             shared.gradio['Submit character'] = gr.Button(value='Submit', interactive=False)
 
         with gr.Tab('TavernAI PNG'):
             with gr.Row():
                 with gr.Column():
-                    shared.gradio['upload_img_tavern'] = gr.Image(type='pil', label='TavernAI PNG File', elem_id='upload_img_tavern')
+                    shared.gradio['upload_img_tavern'] = gr.Image(type='pil', label='TavernAI PNG File', elem_id='upload_img_tavern', interactive=not mu)
                     shared.gradio['tavern_json'] = gr.State()
                 with gr.Column():
                     shared.gradio['tavern_name'] = gr.Textbox(value='', lines=1, label='Name', interactive=False)

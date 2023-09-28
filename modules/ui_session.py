@@ -6,13 +6,14 @@ from modules.utils import gradio
 
 
 def create_ui():
+    mu = shared.args.multi_user
     with gr.Tab("Session", elem_id="session-tab"):
         with gr.Row():
             with gr.Column():
-                shared.gradio['reset_interface'] = gr.Button("Apply flags/extensions and restart")
+                shared.gradio['reset_interface'] = gr.Button("Apply flags/extensions and restart", interactive=not mu)
                 with gr.Row():
                     shared.gradio['toggle_dark_mode'] = gr.Button('Toggle 💡')
-                    shared.gradio['save_settings'] = gr.Button('Save UI defaults to settings.yaml')
+                    shared.gradio['save_settings'] = gr.Button('Save UI defaults to settings.yaml', interactive=not mu)
 
                 with gr.Row():
                     with gr.Column():
@@ -22,7 +23,7 @@ def create_ui():
                         shared.gradio['bool_menu'] = gr.CheckboxGroup(choices=get_boolean_arguments(), value=get_boolean_arguments(active=True), label="Boolean command-line flags", elem_classes='checkboxgroup-table')
 
             with gr.Column():
-                extension_name = gr.Textbox(lines=1, label='Install or update an extension', info='Enter the GitHub URL below and press Enter. For a list of extensions, see: https://github.com/oobabooga/text-generation-webui-extensions ⚠️  WARNING ⚠️ : extensions can execute arbitrary code. Make sure to inspect their source code before activating them.')
+                extension_name = gr.Textbox(lines=1, label='Install or update an extension', info='Enter the GitHub URL below and press Enter. For a list of extensions, see: https://github.com/oobabooga/text-generation-webui-extensions ⚠️  WARNING ⚠️ : extensions can execute arbitrary code. Make sure to inspect their source code before activating them.', interactive=not mu)
                 extension_status = gr.Markdown()
 
         extension_name.submit(clone_or_pull_repository, extension_name, extension_status, show_progress=False)
