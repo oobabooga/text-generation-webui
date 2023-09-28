@@ -82,7 +82,8 @@ def list_model_elements():
         'max_seq_len',
         'compress_pos_emb',
         'alpha_value',
-        'rope_freq_base'
+        'rope_freq_base',
+        'numa',
     ]
 
     for i in range(torch.cuda.device_count()):
@@ -219,7 +220,7 @@ class ToolButton(gr.Button, gr.components.IOComponent):
         return "button"
 
 
-def create_refresh_button(refresh_component, refresh_method, refreshed_args, elem_class):
+def create_refresh_button(refresh_component, refresh_method, refreshed_args, elem_class, interactive=True):
     """
     Copied from https://github.com/AUTOMATIC1111/stable-diffusion-webui
     """
@@ -232,7 +233,7 @@ def create_refresh_button(refresh_component, refresh_method, refreshed_args, ele
 
         return gr.update(**(args or {}))
 
-    refresh_button = ToolButton(value=refresh_symbol, elem_classes=elem_class)
+    refresh_button = ToolButton(value=refresh_symbol, elem_classes=elem_class, interactive=interactive)
     refresh_button.click(
         fn=refresh,
         inputs=[],
