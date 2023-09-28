@@ -8,7 +8,7 @@ accelerate==0.23.*
 colorama
 datasets
 einops
-exllamav2==0.0.3
+exllamav2==0.0.4
 markdown
 numpy==1.24
 optimum==1.13.1
@@ -18,16 +18,19 @@ Pillow>=9.5.0
 pyyaml
 requests
 safetensors==0.3.2
-transformers==4.33.*
 scipy
 sentencepiece
 tensorboard
 tqdm
 wandb
 
+git+https://github.com/huggingface/transformers@211f93aab95d1c683494e61c3cf8ff10e1f5d6b7
+
 # bitsandbytes
 bitsandbytes==0.41.1; platform_system != "Windows"
 https://github.com/jllllll/bitsandbytes-windows-webui/releases/download/wheels/bitsandbytes-0.41.1-py3-none-win_amd64.whl; platform_system == "Windows"
 
 # Mac wheels
-https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/metal/llama_cpp_python-0.2.6-cp310-cp310-macosx_11_0_x86_64.whl
+https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/metal/llama_cpp_python-0.2.7-cp310-cp310-macosx_11_0_x86_64.whl; platform_system == "Darwin" and platform_release >= "20.0.0" and platform_release < "21.0.0"
+https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/metal/llama_cpp_python-0.2.7-cp310-cp310-macosx_12_0_x86_64.whl; platform_system == "Darwin" and platform_release >= "21.0.0" and platform_release < "22.0.0"
+https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/metal/llama_cpp_python-0.2.7-cp310-cp310-macosx_13_0_x86_64.whl; platform_system == "Darwin" and platform_release >= "22.0.0" and platform_release < "23.0.0"

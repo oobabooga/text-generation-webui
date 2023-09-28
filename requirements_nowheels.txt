@@ -8,7 +8,7 @@ accelerate==0.23.*
 colorama
 datasets
 einops
-exllamav2==0.0.3
+exllamav2==0.0.4
 markdown
 numpy==1.24
 optimum==1.13.1
@@ -18,12 +18,13 @@ Pillow>=9.5.0
 pyyaml
 requests
 safetensors==0.3.2
-transformers==4.33.*
 scipy
 sentencepiece
 tensorboard
 tqdm
 wandb
+
+git+https://github.com/huggingface/transformers@211f93aab95d1c683494e61c3cf8ff10e1f5d6b7
 
 # bitsandbytes
 bitsandbytes==0.41.1; platform_system != "Windows"

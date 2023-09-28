@@ -295,14 +295,15 @@ Optionally, you can use the following command-line flags:
 
 | Flag          | Description |
 |---------------|---------------|
+| `--mul_mat_q` | Activate new mulmat kernels. |
+| `--tensor_split TENSOR_SPLIT`       | Split the model across multiple GPUs, comma-separated list of proportions, e.g. 18,17 |
+| `--llama_cpp_seed SEED`             | Seed for llama-cpp models. Default 0 (random). |
+| `--cache-capacity CACHE_CAPACITY`   | Maximum cache capacity. Examples: 2000MiB, 2GiB. When provided without units, bytes will be assumed. |
+|`--cfg-cache`                        | llamacpp_HF: Create an additional cache for CFG negative prompts. |
 | `--no-mmap`   | Prevent mmap from being used. |
 | `--mlock`     | Force the system to keep the model in RAM. |
-| `--mul_mat_q` | Activate new mulmat kernels. |
-| `--cache-capacity CACHE_CAPACITY`   | Maximum cache capacity. Examples: 2000MiB, 2GiB. When provided without units, bytes will be assumed. |
-| `--tensor_split TENSOR_SPLIT`  | Split the model across multiple GPUs, comma-separated list of proportions, e.g. 18,17 |
-| `--llama_cpp_seed SEED`        | Seed for llama-cpp models. Default 0 (random). |
-| `--cpu`                        | Use the CPU version of llama-cpp-python instead of the GPU-accelerated version. |
-|`--cfg-cache`                   | llamacpp_HF: Create an additional cache for CFG negative prompts. |
+| `--numa`      | Activate NUMA task allocation for llama.cpp |
+| `--cpu`       | Use the CPU version of llama-cpp-python instead of the GPU-accelerated version. |
 
 #### ctransformers
 
