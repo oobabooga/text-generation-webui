@@ -44,10 +44,6 @@ class Handler(BaseHTTPRequestHandler):
         body = json.loads(self.rfile.read(content_length).decode('utf-8'))
 
         if self.path == '/api/v1/generate':
-            self.send_response(200)
-            self.send_header('Content-Type', 'application/json')
-            self.end_headers()
-
             prompt = body['prompt']
             generate_params = build_parameters(body)
             stopping_strings = generate_params.pop('stopping_strings')
@@ -65,14 +61,17 @@ class Handler(BaseHTTPRequestHandler):
                     'text': answer
                 }]
             })
+            
+            response_encoded = response.encode('utf-8')            
 
-            self.wfile.write(response.encode('utf-8'))
-
-        elif self.path == '/api/v1/chat':
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
+            self.send_header('content-length', len(response_encoded))
             self.end_headers()
 
+            self.wfile.write(response_encoded)
+
+        elif self.path == '/api/v1/chat':
             user_input = body['user_input']
             regenerate = body.get('regenerate', False)
             _continue = body.get('_continue', False)
@@ -93,26 +92,32 @@ class Handler(BaseHTTPRequestHandler):
                 }]
             })
 
-            self.wfile.write(response.encode('utf-8'))
+            response_encoded = response.encode('utf-8')            
 
-        elif self.path == '/api/v1/stop-stream':
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
+            self.send_header('content-length', len(response_encoded))
             self.end_headers()
 
+            self.wfile.write(response_encoded)
+
+        elif self.path == '/api/v1/stop-stream':
             stop_everything_event()
 
             response = json.dumps({
                 'results': 'success'
             })
 
-            self.wfile.write(response.encode('utf-8'))
+            response_encoded = response.encode('utf-8')            
 
-        elif self.path == '/api/v1/model':
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
+            self.send_header('content-length', len(response_encoded))
             self.end_headers()
 
+            self.wfile.write(response_encoded)
+
+        elif self.path == '/api/v1/model':
             # by default return the same as the GET interface
             result = shared.model_name
 
@@ -144,7 +149,14 @@ class Handler(BaseHTTPRequestHandler):
                 except Exception as e:
                     response = json.dumps({'error': {'message': repr(e)}})
 
-                    self.wfile.write(response.encode('utf-8'))
+                    response_encoded = response.encode('utf-8')            
+
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'application/json')
+                    self.send_header('content-length', len(response_encoded))
+                    self.end_headers()
+        
+                    self.wfile.write(response_encoded)
                     raise e
 
                 shared.args.model = shared.model_name
@@ -167,13 +179,16 @@ class Handler(BaseHTTPRequestHandler):
                 'result': result,
             })
 
-            self.wfile.write(response.encode('utf-8'))
+            response_encoded = response.encode('utf-8')            
 
-        elif self.path == '/api/v1/token-count':
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
+            self.send_header('content-length', len(response_encoded))
             self.end_headers()
 
+            self.wfile.write(response_encoded)
+
+        elif self.path == '/api/v1/token-count':
             tokens = encode(body['prompt'])[0]
             response = json.dumps({
                 'results': [{
@@ -181,7 +196,14 @@ class Handler(BaseHTTPRequestHandler):
                 }]
             })
 
-            self.wfile.write(response.encode('utf-8'))
+            response_encoded = response.encode('utf-8')            
+
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('content-length', len(response_encoded))
+            self.end_headers()
+
+            self.wfile.write(response_encoded)
         else:
             self.send_error(404)
 
