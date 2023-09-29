@@ -1,3 +1,4 @@
+import json
 import re
 from pathlib import Path
 
@@ -15,6 +16,7 @@ def get_fallback_settings():
         'skip_special_tokens': shared.settings['skip_special_tokens'],
         'custom_stopping_strings': shared.settings['custom_stopping_strings'],
         'truncation_length': shared.settings['truncation_length'],
+        'max_seq_len': 2048,
         'n_ctx': 2048,
         'rope_freq_base': 0,
         'compress_pos_emb': 1,
@@ -54,6 +56,15 @@ def get_model_metadata(model):
         if 'llama.rope.freq_base' in metadata:
             model_settings['rope_freq_base'] = metadata['llama.rope.freq_base']
 
+    # Read transformers metadata. In particular, the sequence length for the model.
+    else:
+        path = Path(f'{shared.args.model_dir}/{model}/config.json')
+        if path.exists():
+            metadata = json.loads(open(path, 'r').read())
+            if 'max_position_embeddings' in metadata:
+                model_settings['truncation_length'] = metadata['max_position_embeddings']
+                model_settings['max_seq_len'] = metadata['max_position_embeddings']
+
     # Apply user settings from models/config-user.yaml
     settings = shared.user_config
     for pat in settings:
@@ -68,7 +79,7 @@ def infer_loader(model_name, model_settings):
     path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
     if not path_to_model.exists():
         loader = None
-    elif Path(f'{shared.args.model_dir}/{model_name}/quantize_config.json').exists() or ('wbits' in model_settings and type(model_settings['wbits']) is int and model_settings['wbits'] > 0):
+    elif (path_to_model / 'quantize_config.json').exists() or ('wbits' in model_settings and type(model_settings['wbits']) is int and model_settings['wbits'] > 0):
         loader = 'AutoGPTQ'
     elif len(list(path_to_model.glob('*.gguf'))) > 0:
         loader = 'llama.cpp'
