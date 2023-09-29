@@ -42,7 +42,7 @@ settings = {
     'negative_prompt': '',
     'truncation_length': 2048,
     'truncation_length_min': 0,
-    'truncation_length_max': 16384,
+    'truncation_length_max': 32768,
     'custom_stopping_strings': '',
     'auto_max_new_tokens': False,
     'max_tokens_second': 0,
