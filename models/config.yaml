@@ -62,7 +62,6 @@ llama-65b-gptq-3bit:
   instruction_template: 'Vicuna-v1.1'
 .*vicuna.*(1.5|1_5):
   instruction_template: 'Vicuna-v1.1'
-  truncation_length: 4096
 .*stable.*vicuna:
   instruction_template: 'StableVicuna'
 (?!.*chat).*chinese-vicuna:
@@ -93,15 +92,10 @@ llama-65b-gptq-3bit:
   custom_stopping_strings: '"\n###"'
 .*raven:
   instruction_template: 'RWKV-Raven'
-.*ctx8192:
-  truncation_length: 8192
 .*moss-moon.*sft:
   instruction_template: 'MOSS'
 .*stablelm-tuned:
   instruction_template: 'StableLM'
-  truncation_length: 4096
-.*stablelm-base:
-  truncation_length: 4096
 .*galactica.*finetuned:
   instruction_template: 'Galactica Finetuned'
 .*galactica.*-v2:
@@ -147,7 +141,6 @@ llama-65b-gptq-3bit:
   instruction_template: 'Manticore Chat'
 .*bluemoonrp-(30|13)b:
   instruction_template: 'Bluemoon'
-  truncation_length: 4096
 .*Nous-Hermes-13b:
   instruction_template: 'Alpaca'
 .*airoboros:
@@ -181,16 +174,8 @@ llama-65b-gptq-3bit:
   custom_stopping_strings: '"<|end|>"'
 .*minotaur:
   instruction_template: 'Minotaur'
-.*minotaur-15b:
-  truncation_length: 8192
 .*orca_mini:
   instruction_template: 'Orca Mini'
-.*landmark:
-  truncation_length: 8192
-.*superhot-8k:
-  truncation_length: 8192
-.*xgen.*-inst:
-  truncation_length: 8192
   instruction_template: 'Vicuna-v0'
 .*(platypus|gplatty|superplatty):
   instruction_template: 'Alpaca'
@@ -200,23 +185,18 @@ llama-65b-gptq-3bit:
   instruction_template: 'Vicuna-v1.1'
 .*redmond-hermes-coder:
   instruction_template: 'Alpaca'
-  truncation_length: 8192
 .*wizardcoder-15b:
   instruction_template: 'Alpaca'
-  truncation_length: 8192
 .*wizardlm:
   instruction_template: 'Vicuna-v1.1'
 .*godzilla:
   instruction_template: 'Alpaca'
-.*llama-(2|v2):
-  truncation_length: 4096
 .*llama(-?)(2|v2).*chat:
   instruction_template: 'Llama-v2'
 .*newhope:
   instruction_template: 'NewHope'
 .*stablebeluga2:
   instruction_template: 'StableBeluga2'
-  truncation_length: 4096
 .*openchat:
   instruction_template: 'OpenChat'
 .*falcon.*-instruct:

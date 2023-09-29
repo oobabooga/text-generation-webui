@@ -215,6 +215,7 @@ loaders_samplers = {
         'temperature',
         'top_p',
         'top_k',
+        'typical_p',
         'repetition_penalty',
         'repetition_penalty_range',
         'seed',
