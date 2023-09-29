@@ -79,7 +79,7 @@ def infer_loader(model_name, model_settings):
     path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
     if not path_to_model.exists():
         loader = None
-    elif Path(f'{shared.args.model_dir}/{model_name}/quantize_config.json').exists() or ('wbits' in model_settings and type(model_settings['wbits']) is int and model_settings['wbits'] > 0):
+    elif (path_to_model / 'quantize_config.json').exists() or ('wbits' in model_settings and type(model_settings['wbits']) is int and model_settings['wbits'] > 0):
         loader = 'AutoGPTQ'
     elif len(list(path_to_model.glob('*.gguf'))) > 0:
         loader = 'llama.cpp'
