@@ -71,7 +71,6 @@ def list_model_elements():
         'threads',
         'n_batch',
         'no_mmap',
-        'low_vram',
         'mlock',
         'mul_mat_q',
         'n_gpu_layers',
