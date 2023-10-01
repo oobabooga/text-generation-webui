@@ -77,7 +77,7 @@ def marshal_common_params(body):
     req_params['add_bos_token'] = shared.settings.get('add_bos_token', req_params['add_bos_token'])
     req_params['seed'] = shared.settings.get('seed', req_params['seed'])
     req_params['custom_stopping_strings'] = shared.settings['custom_stopping_strings']
-
+    req_params['custom_stopping_regex'] = shared.settings['custom_stopping_regex']
     # OpenAI API Parameters
     # model - ignored for now, TODO: When we can reliably load a model or lora from a name only change this
     req_params['requested_model'] = body.get('model', shared.model_name)
