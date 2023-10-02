@@ -31,8 +31,8 @@ bitsandbytes==0.38.1; platform_system != "Windows"
 https://github.com/jllllll/bitsandbytes-windows-webui/releases/download/wheels/bitsandbytes-0.38.1-py3-none-win_amd64.whl; platform_system == "Windows"
 
 # llama-cpp-python (CPU only, no AVX2)
-https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/basic/llama_cpp_python-0.2.7+cu117-cp310-cp310-manylinux_2_31_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
-https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/basic/llama_cpp_python-0.2.7+cu117-cp310-cp310-win_amd64.whl; platform_system == "Windows"
+https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/basic/llama_cpp_python-0.2.11+cu117-cp310-cp310-manylinux_2_31_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
+https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/basic/llama_cpp_python-0.2.11+cu117-cp310-cp310-win_amd64.whl; platform_system == "Windows"
 
 # AMD wheels
 https://github.com/PanQiWei/AutoGPTQ/releases/download/v0.4.2/auto_gptq-0.4.2+rocm5.4.2-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
