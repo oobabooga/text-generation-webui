@@ -76,6 +76,7 @@ class LlamaCppModel:
             'n_ctx': shared.args.n_ctx,
             'seed': int(shared.args.llama_cpp_seed),
             'n_threads': shared.args.threads or None,
+            'n_threads_batch': shared.args.threads_batch or None,
             'n_batch': shared.args.n_batch,
             'use_mmap': not shared.args.no_mmap,
             'use_mlock': shared.args.mlock,

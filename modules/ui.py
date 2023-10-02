@@ -69,6 +69,7 @@ def list_model_elements():
         'disable_exllama',
         'cfg_cache',
         'threads',
+        'threads_batch',
         'n_batch',
         'no_mmap',
         'mlock',
