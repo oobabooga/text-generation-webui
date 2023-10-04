@@ -15,7 +15,7 @@ Son objectif est de devenir le [AUTOMATIC1111/stable-diffusion-webui](https://gi
 
 - [Installation](#Installation)
 - [Télécharger les modèles](#Télécharger-les-modèles)
-- [Démarrer l'interface web](#Démarrer-linterface-web)
+- [Démarrer l'interface web](#anchor-demarrer)
 - [Préréglages](#Préréglages)
 - [Contribuer](#Contribuer)
 - [Communauté](#Communauté)
@@ -234,6 +234,7 @@ Lorsque vous chargez ce modèle en modes par défaut ou notebook, l'onglet "HTML
 
 </details>
 
+<a name="anchor-demarrer"></a>
 ## Démarrer l'interface web
 [Retour au sommaire](#Sommaire)
 
