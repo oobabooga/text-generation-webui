@@ -1,5 +1,7 @@
 # Text generation web UI
 
+[Français 🇫🇷 ](docs/FR/FR_README.md)
+
 A Gradio web UI for Large Language Models.
 
 Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.com/AUTOMATIC1111/stable-diffusion-webui) of text generation.
@@ -8,7 +10,19 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 |:---:|:---:|
 |![Image1](https://github.com/oobabooga/screenshots/raw/main/print_default.png) | ![Image2](https://github.com/oobabooga/screenshots/raw/main/print_parameters.png) |
 
-## Features
+
+### Content
+
+- [Features](#Features)
+- [Installation](#Installation)
+- [Downloading models](#Downloading-models)
+- [Starting the web UI](#Starting-the-web-UI)
+- [Presets](#Presets)
+- [Contributing]
+- [Community](#community)
+- [Acknowledgment](#acknowledgment)
+- [Features](#features)
+
 
 * 3 interface modes: default (two columns), notebook, and chat
 * Multiple model backends: [transformers](https://github.com/huggingface/transformers), [llama.cpp](https://github.com/ggerganov/llama.cpp), [ExLlama](https://github.com/turboderp/exllama), [ExLlamaV2](https://github.com/turboderp/exllamav2), [AutoGPTQ](https://github.com/PanQiWei/AutoGPTQ), [GPTQ-for-LLaMa](https://github.com/qwopqwop200/GPTQ-for-LLaMa), [CTransformers](https://github.com/marella/ctransformers)
@@ -18,8 +32,8 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * 4-bit, 8-bit, and CPU inference through the transformers library
 * Use llama.cpp models with transformers samplers (`llamacpp_HF` loader)
 * [Multimodal pipelines, including LLaVA and MiniGPT-4](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/multimodal)
-* [Extensions framework](docs/Extensions.md)
-* [Custom chat characters](docs/Chat-mode.md)
+* [Extensions framework](docs/EN/Extensions.md)
+* [Custom chat characters](docs/EN/Chat-mode.md)
 * Very efficient text streaming
 * Markdown output with LaTeX rendering, to use for instance with [GALACTICA](https://github.com/paperswithcode/galai)
 * API, including endpoints for websocket streaming ([see the examples](https://github.com/oobabooga/text-generation-webui/blob/main/api-examples))
@@ -56,7 +70,7 @@ To define persistent command-line flags like `--listen` or `--api`, edit the `CM
 #### Other info
 
 * There is no need to run any of those scripts as admin/root.
-* For additional instructions about AMD setup, WSL setup, and nvcc installation, consult [this page](https://github.com/oobabooga/text-generation-webui/blob/main/docs/One-Click-Installers.md).
+* For additional instructions about AMD setup, WSL setup, and nvcc installation, consult [this page](https://github.com/oobabooga/text-generation-webui/blob/main/docs/EN/One-Click-Installers.md).
 * The installer has been tested mostly on NVIDIA GPUs. If you can find a way to improve it for your AMD/Intel Arc/Mac Metal GPU, you are highly encouraged to submit a PR to this repository. The main file to be edited is `one_click.py`.
 * For automated installation, you can use the `GPU_CHOICE`, `LAUNCH_AFTER_INSTALL`, and `INSTALL_EXTENSIONS` environment variables. For instance: `GPU_CHOICE=A LAUNCH_AFTER_INSTALL=False INSTALL_EXTENSIONS=False ./start_linux.sh`.
 
@@ -140,7 +154,7 @@ cp docker/.env.example .env
 docker compose up --build
 ```
 
-* You need to have docker compose v2.17 or higher installed. See [this guide](https://github.com/oobabooga/text-generation-webui/blob/main/docs/Docker.md) for instructions.
+* You need to have docker compose v2.17 or higher installed. See [this guide](https://github.com/oobabooga/text-generation-webui/blob/main/docs/EN/Docker.md) for instructions.
 * For additional docker files, check out [this repository](https://github.com/Atinoda/text-generation-webui-docker).
 
 ### Updating the requirements
@@ -154,6 +168,7 @@ pip install -r requirements.txt --upgrade
 ```
 
 ## Downloading models
+[Back to Content](#Content)
 
 Models should be placed in the `text-generation-webui/models` folder. They are usually downloaded from [Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads).
 
@@ -219,16 +234,18 @@ When you load this model in default or notebook modes, the "HTML" tab will show 
 </details>
 
 ## Starting the web UI
+[Back to Content](#Content)
 
     conda activate textgen
     cd text-generation-webui
     python server.py
 
+
 Then browse to 
 
 `http://localhost:7860/?__theme=dark`
 
-Optionally, you can use the following command-line flags:
+Optionally, you can use the following command-line flags. If you encounter any issues with these commands, please refer to the [DOCUMENTATION HERE](docs/EN/README.md) before submitting an issue.
 
 #### Basic settings
 
@@ -350,6 +367,8 @@ Optionally, you can use the following command-line flags:
 | `--nvme-offload-dir NVME_OFFLOAD_DIR` | DeepSpeed: Directory to use for ZeRO-3 NVME offloading. |
 | `--local_rank LOCAL_RANK`             | DeepSpeed: Optional argument for distributed setups. |
 
+[About deepspeed](docs/EN/DeepSpeed.md)
+
 #### RWKV
 
 | Flag                            | Description |
@@ -396,6 +415,7 @@ Optionally, you can use the following command-line flags:
 | `--multimodal-pipeline PIPELINE`      | The multimodal pipeline to use. Examples: `llava-7b`, `llava-13b`. |
 
 ## Presets
+[Back to Content](#Content)
 
 Inference settings presets can be created under `presets/` as yaml files. These files are detected automatically at startup.
 
