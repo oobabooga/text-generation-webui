@@ -15,7 +15,7 @@ Son objectif est de devenir le [AUTOMATIC1111/stable-diffusion-webui](https://gi
 
 - [Installation](#Installation)
 - [Télécharger les modèles](#Télécharger-les-modèles)
-- [Démarrer l'interface web](#Démarrer-l-interface-web)
+- [Démarrer l'interface web](#Démarrer-linterface-web)
 - [Préréglages](#Préréglages)
 - [Contribuer](#Contribuer)
 - [Communauté](#Communauté)
