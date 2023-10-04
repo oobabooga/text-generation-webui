@@ -18,7 +18,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 - [Downloading models](#Downloading-models)
 - [Starting the web UI](#Starting-the-web-UI)
 - [Presets](#Presets)
-- [Contributing]
+- [Contributing](#contributing)
 - [Community](#community)
 - [Acknowledgment](#acknowledgment)
 - [Features](#features)
