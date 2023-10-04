@@ -33,7 +33,7 @@ Si vous créez une extension, vous êtes invité à l'héberger dans un dépôt 
 ## Comment écrire une extension
 
 
-Le cadre des extensions est basé sur des fonctions et des variables spéciales que vous pouvez définir dans `script.py`. Les fonctions sont les suivantes:
+La grille des extensions est basé sur des fonctions et des variables spéciales que vous pouvez définir dans `script.py`. Les fonctions sont les suivantes:
 
 | Fonction        | Description |
 |-------------|-------------|
