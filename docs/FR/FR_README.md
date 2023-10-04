@@ -169,6 +169,7 @@ pip install -r requirements.txt --upgrade
 ```
 
 ## Télécharger les modèles
+[Retour au sommaire](#Sommaire)
 
 Les modèles doivent être placés dans le dossier `text-generation-webui/models`. Ils sont généralement téléchargés depuis [Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads).
 
@@ -234,6 +235,7 @@ Lorsque vous chargez ce modèle en modes par défaut ou notebook, l'onglet "HTML
 </details>
 
 ## Démarrer l'interface web
+[Retour au sommaire](#Sommaire)
 
     conda activate textgen
     cd text-generation-webui
@@ -419,6 +421,7 @@ Optionnellement, vous pouvez utiliser les flags de ligne de commande suivants. S
 | `--multimodal-pipeline PIPELINE`           | La chaîne multimodale à utiliser. Exemples : `llava-7b`, `llava-13b`. |
 
 ## Préréglages
+[Retour au sommaire](#Sommaire)
 
 Les paramètres d'inférence peuvent être créés sous `presets/` sous forme de fichiers yaml. Ces fichiers sont détectés automatiquement au démarrage.
 
@@ -436,3 +439,5 @@ Si vous souhaitez contribuer au projet, consultez les [Directives de contributio
 ## Remerciements
 
 En août 2023, [Andreessen Horowitz](https://a16z.com/) (a16z) a fourni une subvention généreuse pour encourager et soutenir mon travail indépendant sur ce projet. Je suis **extrêmement** reconnaissant pour leur confiance et reconnaissance, ce qui me permettra de consacrer plus de temps à réaliser le plein potentiel de text-generation-webui.
+
+[Retour au sommaire](#Sommaire)
