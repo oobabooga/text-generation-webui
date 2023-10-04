@@ -12,8 +12,6 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 
 
 ### Content
-
-- [Features](#Features)
 - [Installation](#Installation)
 - [Downloading models](#Downloading-models)
 - [Starting the web UI](#Starting-the-web-UI)
@@ -21,8 +19,9 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 - [Contributing](#contributing)
 - [Community](#community)
 - [Acknowledgment](#acknowledgment)
-- [Features](#features)
 
+
+## Features
 
 * 3 interface modes: default (two columns), notebook, and chat
 * Multiple model backends: [transformers](https://github.com/huggingface/transformers), [llama.cpp](https://github.com/ggerganov/llama.cpp), [ExLlama](https://github.com/turboderp/exllama), [ExLlamaV2](https://github.com/turboderp/exllamav2), [AutoGPTQ](https://github.com/PanQiWei/AutoGPTQ), [GPTQ-for-LLaMa](https://github.com/qwopqwop200/GPTQ-for-LLaMa), [CTransformers](https://github.com/marella/ctransformers)
