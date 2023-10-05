@@ -399,6 +399,8 @@ loaders_samplers = {
         'mirostat_mode',
         'mirostat_tau',
         'mirostat_eta',
+        'grammar_file_row',
+        'grammar_string',
         'guidance_scale',
         'negative_prompt',
         'ban_eos_token',
