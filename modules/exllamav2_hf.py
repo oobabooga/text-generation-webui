@@ -98,6 +98,10 @@ class Exllamav2HF(PreTrainedModel):
                     ex_cache.current_seq_len = longest_prefix
                     if len(seq_tensor) - longest_prefix > 1:
                         self.ex_model.forward(seq_tensor[longest_prefix:-1].view(1, -1), ex_cache, preprocess_only=True)
+                    elif len(seq_tensor) == longest_prefix:
+                        # Very tricky: if the prefix we are reusing *is* the input_ids, then we have to back up the cache pointer by one,
+                        # because we feed input_ids[-1] to forward() below, but that last token is already in the cache!
+                        ex_cache.current_seq_len -= 1
 
             if reset:
                 ex_cache.current_seq_len = 0
