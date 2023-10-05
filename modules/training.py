@@ -24,8 +24,7 @@ from peft import (
     prepare_model_for_kbit_training,
     set_peft_model_state_dict
 )
-from peft.utils.other import \
-    TRANSFORMERS_MODELS_TO_LORA_TARGET_MODULES_MAPPING as model_to_lora_modules
+
 from transformers.models.auto.modeling_auto import (
     MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
 )
@@ -66,14 +65,20 @@ def create_ui():
                             lora_name = gr.Textbox(label='Name', info='The name of your new LoRA file')
                         with gr.Column():
                             always_override = gr.Checkbox(label='Override Existing Files', value=False, info='If the name is the same, checking will replace the existing file, and unchecking will load and continue from it (the rank must be the same).', elem_classes=['no-background'])
+
+                    with gr.Row():
                         with gr.Column():
-                            q_proj_en = gr.Checkbox(label='Enable q_proj', value=False, elem_classes=['no-background'])
+                            q_proj_en = gr.Checkbox(label='Enable q_proj', value=True, elem_classes=['no-background'])
                         with gr.Column():
-                            v_proj_en = gr.Checkbox(label='Enable v_proj', value=False, elem_classes=['no-background'])
+                            v_proj_en = gr.Checkbox(label='Enable v_proj', value=True, elem_classes=['no-background'])
+
+                    with gr.Row():
                         with gr.Column():
                             k_proj_en = gr.Checkbox(label='Enable k_proj', value=False, elem_classes=['no-background'])
                         with gr.Column():
                             o_proj_en = gr.Checkbox(label='Enable o_proj', value=False, elem_classes=['no-background'])
+
+                    with gr.Row():
                         with gr.Column():
                             gate_proj_en = gr.Checkbox(label='Enable gate_proj', value=False, elem_classes=['no-background'])
                         with gr.Column():
