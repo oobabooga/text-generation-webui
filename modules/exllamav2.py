@@ -83,6 +83,7 @@ class Exllamav2Model:
         settings.temperature = state['temperature']
         settings.top_k = state['top_k']
         settings.top_p = state['top_p']
+        settings.typical = state['typical_p']
         settings.token_repetition_penalty = state['repetition_penalty']
         settings.token_repetition_range = -1 if state['repetition_penalty_range'] <= 0 else state['repetition_penalty_range']
         if state['ban_eos_token']:
