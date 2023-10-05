@@ -69,7 +69,6 @@ def edits(instruction: str, input: str, temperature=1.0, top_p=1.0) -> dict:
     req_params['seed'] = shared.settings.get('seed', req_params['seed'])
     req_params['add_bos_token'] = shared.settings.get('add_bos_token', req_params['add_bos_token'])
     req_params['custom_stopping_strings'] = shared.settings['custom_stopping_strings']
-    req_params['custom_stopping_regex'] = shared.settings['custom_stopping_regex']
     debug_msg({'edit_template': edit_task, 'req_params': req_params, 'token_count': token_count})
 
     generator = generate_reply(edit_task, req_params, stopping_strings=stopping_strings, is_chat=False)

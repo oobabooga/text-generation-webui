@@ -77,7 +77,6 @@ def marshal_common_params(body):
     req_params['add_bos_token'] = shared.settings.get('add_bos_token', req_params['add_bos_token'])
     req_params['seed'] = shared.settings.get('seed', req_params['seed'])
     req_params['custom_stopping_strings'] = shared.settings['custom_stopping_strings']
-    req_params['custom_stopping_regex'] = shared.settings['custom_stopping_regex']
     # OpenAI API Parameters
     # model - ignored for now, TODO: When we can reliably load a model or lora from a name only change this
     req_params['requested_model'] = body.get('model', shared.model_name)
@@ -281,7 +280,7 @@ def chat_completions(body: dict, is_legacy: bool = False) -> dict:
 
     # generate reply #######################################
     debug_msg({'prompt': prompt, 'req_params': req_params})
-    generator = generate_reply(prompt, req_params, stopping_strings=stopping_strings, is_chat=False)
+    generator = generate_reply(prompt, req_params, stopping_strings=stopping_strings,is_chat=False)
 
     answer = ''
     for a in generator:
@@ -383,7 +382,7 @@ def stream_chat_completions(body: dict, is_legacy: bool = False):
 
     stopping_strings = req_params.pop('stopping_strings', [])
 
-    generator = generate_reply(prompt, req_params, stopping_strings=stopping_strings, is_chat=False)
+    generator = generate_reply(prompt, req_params, stopping_strings=stopping_strings,  is_chat=False)
 
     answer = ''
     seen_content = ''
@@ -454,6 +453,7 @@ def completions(body: dict, is_legacy: bool = False):
     requested_model = req_params.pop('requested_model')
     logprob_proc = req_params.pop('logprob_proc', None)
     stopping_strings = req_params.pop('stopping_strings', [])
+
     # req_params['suffix'] = default(body, 'suffix', req_params['suffix'])
     req_params['echo'] = default(body, 'echo', req_params['echo'])
     req_params['top_k'] = default(body, 'best_of', req_params['top_k'])

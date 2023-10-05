@@ -51,11 +51,10 @@ class Handler(BaseHTTPRequestHandler):
             prompt = body['prompt']
             generate_params = build_parameters(body)
             stopping_strings = generate_params.pop('stopping_strings')
-            stopping_regex = generate_params.pop('stopping_regex')
             generate_params['stream'] = False
 
             generator = generate_reply(
-                prompt, generate_params, stopping_strings=stopping_strings, stopping_regex=stopping_regex, is_chat=False)
+                prompt, generate_params, stopping_strings=stopping_strings, is_chat=False)
 
             answer = ''
             for a in generator:

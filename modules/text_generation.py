@@ -32,9 +32,9 @@ def generate_reply(*args, **kwargs):
         shared.generation_lock.release()
 
 
-def _generate_reply(question, state, stopping_strings=None, stopping_regex=None, is_chat=False, escape_html=False):
-
+def _generate_reply(question, state, stopping_strings=None, is_chat=False, escape_html=False):
     # Find the appropriate generation function
+    stopping_regex = state['custom_stopping_regex']
     generate_func = apply_extensions('custom_generate_reply')
     if generate_func is None:
         if shared.model_name == 'None' or shared.model is None:
@@ -91,7 +91,8 @@ def _generate_reply(question, state, stopping_strings=None, stopping_regex=None,
         if pattern is not None and not stop_found:
             stop_found = pattern.search(reply)
             if stop_found is not None:
-                reply = reply[:len(stop_found.group(0))]
+                stop_index = stop_found.end()
+                reply = reply[:stop_index]
 
         if is_stream:
             cur_time = time.time()
