@@ -77,8 +77,6 @@ def create_ui():
                                 k_proj_en = gr.Checkbox(label='Enable k_proj', value=False, elem_classes=['no-background'])
                             with gr.Column():
                                 o_proj_en = gr.Checkbox(label='Enable o_proj', value=False, elem_classes=['no-background'])
-
-                        with gr.Row():
                             with gr.Column():
                                 gate_proj_en = gr.Checkbox(label='Enable gate_proj', value=False, elem_classes=['no-background'])
                             with gr.Column():
