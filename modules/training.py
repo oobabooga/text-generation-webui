@@ -1,6 +1,6 @@
 import os
 
-os.environ["WANDB_MODE"] = "offline"
+#os.environ["WANDB_MODE"] = "offline"
 # os.environ["WANDB_DISABLED"] = "true"
 
 import json
@@ -24,7 +24,8 @@ from peft import (
     prepare_model_for_kbit_training,
     set_peft_model_state_dict
 )
-
+from peft.utils.other import \
+    TRANSFORMERS_MODELS_TO_LORA_TARGET_MODULES_MAPPING as model_to_lora_modules
 from transformers.models.auto.modeling_auto import (
     MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
 )
