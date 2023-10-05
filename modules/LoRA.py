@@ -13,6 +13,8 @@ def add_lora_to_model(lora_names):
         add_lora_autogptq(lora_names)
     elif shared.model.__class__.__name__ in ['ExllamaModel', 'ExllamaHF'] or shared.args.loader == 'ExLlama':
         add_lora_exllama(lora_names)
+    elif shared.model.__class__.__name__ in ['LlamaCppModel']:
+        add_lora_llamacpp(lora_names)               
     else:
         add_lora_transformers(lora_names)
 
@@ -95,6 +97,64 @@ def add_lora_autogptq(lora_names):
         shared.lora_names = [lora_names[0]]
         return
 
+
+def add_lora_llamacpp(lora_names):
+    import llama_cpp
+
+    if len(lora_names) == 0:
+        shared.lora_names = []
+        return
+    else:
+        if len(lora_names) > 1:
+            logger.warning('Llama can only work with 1 LoRA at the moment. Only the first one in the list will be loaded.')      
+
+        lora_path = get_lora_path(lora_names[0])
+        lora_adapter_path = str(lora_path / "ggml-adapter-model.bin")
+
+        logger.info("Applying the following LoRAs to {}: {}".format(shared.model_name, ', '.join([lora_names[0]])))
+
+        if shared.args.tensor_split is None or shared.args.tensor_split.strip() == '':
+            tensor_split_list = None
+        else:
+            tensor_split_list = [float(x) for x in shared.args.tensor_split.strip().split(",")]
+
+        params = {
+            'model_path': str(shared.model.model.model_path),
+            'lora_path': str(lora_adapter_path),
+            'n_ctx': shared.args.n_ctx,
+            'seed': int(shared.args.llama_cpp_seed),
+            'n_threads': shared.args.threads or None,
+            'n_threads_batch': shared.args.threads_batch or None,
+            'n_batch': shared.args.n_batch,
+            'use_mmap': not shared.args.no_mmap,
+            'use_mlock': shared.args.mlock,
+            'mul_mat_q': shared.args.mul_mat_q,
+            'numa': shared.args.numa,
+            'n_gpu_layers': shared.args.n_gpu_layers,
+            'rope_freq_base': RoPE.get_rope_freq_base(shared.args.alpha_value, shared.args.rope_freq_base),
+            'tensor_split': tensor_split_list,
+            'rope_freq_scale': 1.0 / shared.args.compress_pos_emb,
+        }
+
+        shared.model.model = llama_cpp.Llama(**params)
+
+        # shared.model.model.lora_path = lora_adapter_path
+        # if llama_cpp.llama_model_apply_lora_from_file(
+        #     shared.model.model.model,
+        #     shared.model.model.lora_path.encode("utf-8"),
+        #     scale=1,
+        #     path_base_model=shared.model.model.lora_base.encode("utf-8") if shared.model.model.lora_base is not None else llama_cpp.c_char_p(0),
+        #     n_threads=shared.model.model.n_threads,
+        # ):
+        #     raise RuntimeError(
+        #         f"Failed to apply LoRA from lora path: {shared.model.lora_path} to base path: {shared.model.lora_base}"
+        #     )
+
+        shared.lora_names = [lora_names[0]]
+
+        logger.info(f"Succesfully Applied Lora {lora_adapter_path} to Model.")
+
+        return
 
 def add_lora_transformers(lora_names):
     prior_set = set(shared.lora_names)
