@@ -1,11 +1,7 @@
+from torch_grammar import GrammarSampler
 from transformers.generation.logits_process import LogitsProcessor
 
 from modules import shared
-from modules.relative_imports import RelativeImport
-
-with RelativeImport("repositories/torch-grammar"):
-    from torch_grammar import GrammarSampler
-
 
 sampler = None
 grammar = None
