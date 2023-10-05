@@ -68,7 +68,7 @@ def create_ui():
                             always_override = gr.Checkbox(label='Override Existing Files', value=False, info='If the name is the same, checking will replace the existing file, and unchecking will load and continue from it (the rank must be the same).', elem_classes=['no-background'])
 
                     with gr.Accordion(label='Target Modules', open=False):
-                        gr.Markdown("Enables/Disables target modules in training. Targeting more modules is closer to a full fine-tune at the cost of increased VRAM requirements.\nNOTE: Only works for model_id='llama', other types will retain default training behavior and not use these settings.")
+                        gr.Markdown("Selects which modules to target in training. Targeting more modules is closer to a full fine-tune at the cost of increased VRAM requirements and adapter size.\nNOTE: Only works for model_id='llama', other types will retain default training behavior and not use these settings.")
                         with gr.Row():
                             with gr.Column():
                                 q_proj_en = gr.Checkbox(label='Enable q_proj', value=True)
