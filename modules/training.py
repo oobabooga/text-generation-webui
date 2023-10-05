@@ -68,6 +68,7 @@ def create_ui():
                             always_override = gr.Checkbox(label='Override Existing Files', value=False, info='If the name is the same, checking will replace the existing file, and unchecking will load and continue from it (the rank must be the same).', elem_classes=['no-background'])
 
                     with gr.Accordion(label='Target Modules', open=False):
+                        gr.Markdown("Enables/Disables target modules in training. Targeting more modules is closer to a full fine-tune at the cost of increased VRAM requirements.\nNOTE: Only works for model_id='llama', other types will retain default training behavior and not use these settings.")
                         with gr.Row():
                             with gr.Column():
                                 q_proj_en = gr.Checkbox(label='Enable q_proj', value=True, elem_classes=['no-background'])
@@ -336,7 +337,7 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
     shared.tokenizer.padding_side = "left"
     
     #Populate target_modules list with chosen X_proj modules. Llama-based models only atm, non-llama will revert to default behavior.
-    def list_target_modules():
+    def list_target_modules(model_id):
         if model_id != "llama":
             return model_to_lora_modules[model_id]
 
@@ -522,7 +523,7 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
     config = LoraConfig(
         r=lora_rank,
         lora_alpha=lora_alpha,
-        target_modules=list_target_modules(),
+        target_modules=list_target_modules(model_id),
         lora_dropout=lora_dropout,
         bias="none",
         task_type="CAUSAL_LM"
@@ -648,7 +649,7 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
 
     lora_trainable_param, lora_all_param = calc_trainable_parameters(lora_model)
 
-    projections_string = ", ".join([projection.replace("_proj", "") for projection in list_target_modules()])
+    projections_string = ", ".join([projection.replace("_proj", "") for projection in list_target_modules(model_id)])
 
     print(f"Training '{model_id}' model using ({projections_string}) projections")
 
