@@ -35,3 +35,4 @@ models/config-user.yaml
 Thumbs.db
 .chroma
 installer_files
+/CMD_FLAGS.txt
