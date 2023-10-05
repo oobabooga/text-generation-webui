@@ -71,19 +71,19 @@ def create_ui():
                         gr.Markdown("Enables/Disables target modules in training. Targeting more modules is closer to a full fine-tune at the cost of increased VRAM requirements.\nNOTE: Only works for model_id='llama', other types will retain default training behavior and not use these settings.")
                         with gr.Row():
                             with gr.Column():
-                                q_proj_en = gr.Checkbox(label='Enable q_proj', value=True, elem_classes=['no-background'])
+                                q_proj_en = gr.Checkbox(label='Enable q_proj', value=True)
                             with gr.Column():
-                                v_proj_en = gr.Checkbox(label='Enable v_proj', value=True, elem_classes=['no-background'])
+                                v_proj_en = gr.Checkbox(label='Enable v_proj', value=True)
                             with gr.Column():
-                                k_proj_en = gr.Checkbox(label='Enable k_proj', value=False, elem_classes=['no-background'])
+                                k_proj_en = gr.Checkbox(label='Enable k_proj', value=False)
                             with gr.Column():
-                                o_proj_en = gr.Checkbox(label='Enable o_proj', value=False, elem_classes=['no-background'])
+                                o_proj_en = gr.Checkbox(label='Enable o_proj', value=False)
                             with gr.Column():
-                                gate_proj_en = gr.Checkbox(label='Enable gate_proj', value=False, elem_classes=['no-background'])
+                                gate_proj_en = gr.Checkbox(label='Enable gate_proj', value=False)
                             with gr.Column():
-                                down_proj_en = gr.Checkbox(label='Enable down_proj', value=False, elem_classes=['no-background'])
+                                down_proj_en = gr.Checkbox(label='Enable down_proj', value=False)
                             with gr.Column():
-                                up_proj_en = gr.Checkbox(label='Enable up_proj', value=False, elem_classes=['no-background'])
+                                up_proj_en = gr.Checkbox(label='Enable up_proj', value=False)
 
                     with gr.Row():
                         with gr.Column():
