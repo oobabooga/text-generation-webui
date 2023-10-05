@@ -174,3 +174,5 @@
   instruction_template: 'Llama-v2'
 .*mistral.*instruct:
   instruction_template: 'Mistral'
+.*AWQ:
+  n_batch: 1

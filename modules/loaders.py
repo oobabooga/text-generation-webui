@@ -129,6 +129,16 @@ loaders_and_params = OrderedDict({
         'model_type',
         'no_mmap',
         'mlock'
+    ],
+    'AutoAWQ': [
+        'cpu_memory',
+        'gpu_memory',
+        'auto_devices',
+        'max_seq_len',
+        'n_batch',
+        'no_inject_fused_attention',
+        'trust_remote_code',
+        'use_fast',
     ]
 })
 
@@ -366,7 +376,40 @@ loaders_samplers = {
         'top_k',
         'repetition_penalty',
         'repetition_penalty_range',
-    }
+    },
+    'AutoAWQ': {
+        'temperature',
+        'top_p',
+        'top_k',
+        'typical_p',
+        'epsilon_cutoff',
+        'eta_cutoff',
+        'tfs',
+        'top_a',
+        'repetition_penalty',
+        'repetition_penalty_range',
+        'encoder_repetition_penalty',
+        'no_repeat_ngram_size',
+        'min_length',
+        'seed',
+        'do_sample',
+        'penalty_alpha',
+        'num_beams',
+        'length_penalty',
+        'early_stopping',
+        'mirostat_mode',
+        'mirostat_tau',
+        'mirostat_eta',
+        'grammar_file_row',
+        'grammar_string',
+        'guidance_scale',
+        'negative_prompt',
+        'ban_eos_token',
+        'custom_token_bans',
+        'add_bos_token',
+        'skip_special_tokens',
+        'auto_max_new_tokens',
+    },
 }
 
 loaders_model_types = {

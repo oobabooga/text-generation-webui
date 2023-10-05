@@ -21,10 +21,11 @@ safetensors==0.3.2
 scipy
 sentencepiece
 tensorboard
+transformers==4.34.*
 tqdm
 wandb
 
-git+https://github.com/huggingface/transformers@211f93aab95d1c683494e61c3cf8ff10e1f5d6b7
+git+https://github.com/oobabooga/torch-grammar.git
 
 # bitsandbytes
 bitsandbytes==0.41.1; platform_system != "Windows"
@@ -47,3 +48,4 @@ https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/text
 https://github.com/jllllll/GPTQ-for-LLaMa-CUDA/releases/download/0.1.0/gptq_for_llama-0.1.0+cu117-cp310-cp310-win_amd64.whl; platform_system == "Windows"
 https://github.com/jllllll/GPTQ-for-LLaMa-CUDA/releases/download/0.1.0/gptq_for_llama-0.1.0+cu117-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
 https://github.com/jllllll/ctransformers-cuBLAS-wheels/releases/download/AVX2/ctransformers-0.2.27+cu117-py3-none-any.whl
+autoawq==0.1.2
