@@ -280,7 +280,7 @@ def chat_completions(body: dict, is_legacy: bool = False) -> dict:
 
     # generate reply #######################################
     debug_msg({'prompt': prompt, 'req_params': req_params})
-    generator = generate_reply(prompt, req_params, stopping_strings=stopping_strings,is_chat=False)
+    generator = generate_reply(prompt, req_params, stopping_strings=stopping_strings, is_chat=False)
 
     answer = ''
     for a in generator:
