@@ -107,6 +107,8 @@ def infer_loader(model_name, model_settings):
         loader = None
     elif (path_to_model / 'quantize_config.json').exists() or ('wbits' in model_settings and type(model_settings['wbits']) is int and model_settings['wbits'] > 0):
         loader = 'AutoGPTQ'
+    elif (path_to_model / 'quant_config.json').exists() or re.match(r'.*-awq', model_name.lower()):
+        loader = 'AutoAWQ'
     elif len(list(path_to_model.glob('*.gguf'))) > 0:
         loader = 'llama.cpp'
     elif re.match(r'.*\.gguf', model_name.lower()):

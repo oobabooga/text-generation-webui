@@ -232,6 +232,8 @@ def fix_loader_name(name):
         return 'ExLlamav2_HF'
     elif name in ['ctransformers', 'ctranforemrs', 'ctransformer']:
         return 'ctransformers'
+    elif name in ['autoawq', 'awq', 'auto-awq']:
+        return 'AutoAWQ'
 
 
 def add_extension(name):
