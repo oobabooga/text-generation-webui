@@ -110,7 +110,7 @@ class Exllamav2Model:
         has_leading_space = False
         for i in range(max_new_tokens):
             logits = self.model.forward(ids[:, -1:], self.cache, input_mask=None).float().cpu()
-            token, _ = ExLlamaV2Sampler.sample(logits, settings, ids, random.random())
+            token, _, _= ExLlamaV2Sampler.sample(logits, settings, ids, random.random(), self.tokenizer)
             ids = torch.cat([ids, token], dim=1)
 
             if i == 0 and self.tokenizer.tokenizer.IdToPiece(int(token)).startswith('▁'):
