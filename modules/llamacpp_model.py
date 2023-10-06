@@ -1,6 +1,5 @@
 import re
 from functools import partial
-from pathlib import Path
 
 import numpy as np
 import torch
@@ -43,7 +42,7 @@ def custom_token_ban_logits_processor(token_ids, input_ids, logits):
 class LlamaCppModel:
     def __init__(self):
         self.initialized = False
-        self.grammar_file = 'None'
+        self.grammar_string = ''
         self.grammar = None
 
     def __del__(self):
@@ -77,11 +76,12 @@ class LlamaCppModel:
             'n_ctx': shared.args.n_ctx,
             'seed': int(shared.args.llama_cpp_seed),
             'n_threads': shared.args.threads or None,
+            'n_threads_batch': shared.args.threads_batch or None,
             'n_batch': shared.args.n_batch,
             'use_mmap': not shared.args.no_mmap,
             'use_mlock': shared.args.mlock,
             'mul_mat_q': shared.args.mul_mat_q,
-            'low_vram': shared.args.low_vram,
+            'numa': shared.args.numa,
             'n_gpu_layers': shared.args.n_gpu_layers,
             'rope_freq_base': RoPE.get_rope_freq_base(shared.args.alpha_value, shared.args.rope_freq_base),
             'tensor_split': tensor_split_list,
@@ -110,13 +110,11 @@ class LlamaCppModel:
         logits = np.expand_dims(logits, 0)  # batch dim is expected
         return torch.tensor(logits, dtype=torch.float32)
 
-    def load_grammar(self, fname):
-        if fname != self.grammar_file:
-            self.grammar_file = fname
-            p = Path(f'grammars/{fname}')
-            if p.exists():
-                logger.info(f'Loading the following grammar file: {p}')
-                self.grammar = llama_cpp_lib().LlamaGrammar.from_file(str(p))
+    def load_grammar(self, string):
+        if string != self.grammar_string:
+            self.grammar_string = string
+            if string.strip() != '':
+                self.grammar = llama_cpp_lib().LlamaGrammar.from_string(string)
             else:
                 self.grammar = None
 
@@ -131,7 +129,7 @@ class LlamaCppModel:
         prompt = prompt[-get_max_prompt_length(state):]
         prompt = self.decode(prompt)
 
-        self.load_grammar(state['grammar_file'])
+        self.load_grammar(state['grammar_string'])
         logit_processors = LogitsProcessorList()
         if state['ban_eos_token']:
             logit_processors.append(partial(ban_eos_logits_processor, self.model.token_eos()))

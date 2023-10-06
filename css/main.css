@@ -127,7 +127,7 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
     height: calc(100dvh - 292px);
 }
 
-.monospace {
+.monospace textarea {
     font-family: monospace;
 }
 

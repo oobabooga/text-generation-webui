@@ -49,6 +49,7 @@ train_template = {}
 
 
 def create_ui():
+    mu = shared.args.multi_user
     with gr.Tab("Training", elem_id="training-tab"):
         with gr.Tab('Train LoRA', elem_id='lora-train-tab'):
             tmp = gr.State('')
@@ -57,8 +58,8 @@ def create_ui():
                     gr.Markdown("[Tutorial](https://github.com/oobabooga/text-generation-webui/blob/main/docs/Training-LoRAs.md)")
 
                     with gr.Row():
-                        copy_from = gr.Dropdown(label='Copy parameters from', value='None', choices=utils.get_available_loras(), elem_classes=['slim-dropdown'])
-                        ui.create_refresh_button(copy_from, lambda: None, lambda: {'choices': utils.get_available_loras()}, 'refresh-button')
+                        copy_from = gr.Dropdown(label='Copy parameters from', value='None', choices=utils.get_available_loras(), elem_classes=['slim-dropdown'], interactive=not mu)
+                        ui.create_refresh_button(copy_from, lambda: None, lambda: {'choices': utils.get_available_loras()}, 'refresh-button', interactive=not mu)
 
                     with gr.Row():
                         with gr.Column(scale=5):
@@ -100,23 +101,23 @@ def create_ui():
                 with gr.Column():
                     with gr.Tab(label='Formatted Dataset'):
                         with gr.Row():
-                            format = gr.Dropdown(choices=utils.get_datasets('training/formats', 'json'), value='None', label='Data Format', info='The format file used to decide how to format the dataset input.', elem_classes=['slim-dropdown'])
-                            ui.create_refresh_button(format, lambda: None, lambda: {'choices': utils.get_datasets('training/formats', 'json')}, 'refresh-button')
+                            format = gr.Dropdown(choices=utils.get_datasets('training/formats', 'json'), value='None', label='Data Format', info='The format file used to decide how to format the dataset input.', elem_classes=['slim-dropdown'], interactive=not mu)
+                            ui.create_refresh_button(format, lambda: None, lambda: {'choices': utils.get_datasets('training/formats', 'json')}, 'refresh-button', interactive=not mu)
 
                         with gr.Row():
-                            dataset = gr.Dropdown(choices=utils.get_datasets('training/datasets', 'json'), value='None', label='Dataset', info='The dataset file to use for training.', elem_classes=['slim-dropdown'])
-                            ui.create_refresh_button(dataset, lambda: None, lambda: {'choices': utils.get_datasets('training/datasets', 'json')}, 'refresh-button')
+                            dataset = gr.Dropdown(choices=utils.get_datasets('training/datasets', 'json'), value='None', label='Dataset', info='The dataset file to use for training.', elem_classes=['slim-dropdown'], interactive=not mu)
+                            ui.create_refresh_button(dataset, lambda: None, lambda: {'choices': utils.get_datasets('training/datasets', 'json')}, 'refresh-button', interactive=not mu)
 
                         with gr.Row():
-                            eval_dataset = gr.Dropdown(choices=utils.get_datasets('training/datasets', 'json'), value='None', label='Evaluation Dataset', info='The (optional) dataset file used to evaluate the model after training.', elem_classes=['slim-dropdown'])
-                            ui.create_refresh_button(eval_dataset, lambda: None, lambda: {'choices': utils.get_datasets('training/datasets', 'json')}, 'refresh-button')
+                            eval_dataset = gr.Dropdown(choices=utils.get_datasets('training/datasets', 'json'), value='None', label='Evaluation Dataset', info='The (optional) dataset file used to evaluate the model after training.', elem_classes=['slim-dropdown'], interactive=not mu)
+                            ui.create_refresh_button(eval_dataset, lambda: None, lambda: {'choices': utils.get_datasets('training/datasets', 'json')}, 'refresh-button', interactive=not mu)
 
                         eval_steps = gr.Number(label='Evaluate every n steps', value=100, info='If an evaluation dataset is given, test it every time this many steps pass.')
 
                     with gr.Tab(label="Raw text file"):
                         with gr.Row():
-                            raw_text_file = gr.Dropdown(choices=utils.get_datasets('training/datasets', 'txt'), value='None', label='Text file', info='The raw text file to use for training.', elem_classes=['slim-dropdown'])
-                            ui.create_refresh_button(raw_text_file, lambda: None, lambda: {'choices': utils.get_datasets('training/datasets', 'txt')}, 'refresh-button')
+                            raw_text_file = gr.Dropdown(choices=utils.get_datasets('training/datasets', 'txt'), value='None', label='Text file', info='The raw text file to use for training.', elem_classes=['slim-dropdown'], interactive=not mu)
+                            ui.create_refresh_button(raw_text_file, lambda: None, lambda: {'choices': utils.get_datasets('training/datasets', 'txt')}, 'refresh-button', interactive=not mu)
 
                         with gr.Row():
                             with gr.Column():
@@ -128,35 +129,35 @@ def create_ui():
                                 min_chars = gr.Number(label='Ignore small blocks', value=0, info='Ignore Hard Cut blocks that have less or equal characters than this number')
 
                     with gr.Row():
-                        start_button = gr.Button("Start LoRA Training", variant='primary')
-                        stop_button = gr.Button("Interrupt")
+                        start_button = gr.Button("Start LoRA Training", variant='primary', interactive=not mu)
+                        stop_button = gr.Button("Interrupt", interactive=not mu)
 
                     output = gr.Markdown(value="Ready")
 
         with gr.Tab('Perplexity evaluation', elem_id='evaluate-tab'):
             with gr.Row():
                 with gr.Column():
-                    models = gr.Dropdown(utils.get_available_models(), label='Models', multiselect=True)
-                    evaluate_text_file = gr.Dropdown(choices=['wikitext', 'ptb', 'ptb_new'] + utils.get_datasets('training/datasets', 'txt')[1:], value='wikitext', label='Input dataset', info='The raw text file on which the model will be evaluated. The first options are automatically downloaded: wikitext, ptb, and ptb_new. The next options are your local text files under training/datasets.')
+                    models = gr.Dropdown(utils.get_available_models(), label='Models', multiselect=True, interactive=not mu)
+                    evaluate_text_file = gr.Dropdown(choices=['wikitext', 'ptb', 'ptb_new'] + utils.get_datasets('training/datasets', 'txt')[1:], value='wikitext', label='Input dataset', info='The raw text file on which the model will be evaluated. The first options are automatically downloaded: wikitext, ptb, and ptb_new. The next options are your local text files under training/datasets.', interactive=not mu)
                     with gr.Row():
                         with gr.Column():
-                            stride_length = gr.Slider(label='Stride', minimum=1, maximum=2048, value=512, step=1, info='Used to make the evaluation faster at the cost of accuracy. 1 = slowest but most accurate. 512 is a common value.')
+                            stride_length = gr.Slider(label='Stride', minimum=0, maximum=32768, value=512, step=256, info='Used to make the evaluation faster at the cost of accuracy. 1 = slowest but most accurate. 512 is a common value.')
 
                         with gr.Column():
-                            max_length = gr.Slider(label='max_length', minimum=0, maximum=8096, value=0, step=1, info='The context for each evaluation. If set to 0, the maximum context length for the model will be used.')
+                            max_length = gr.Slider(label='max_length', minimum=0, maximum=32768, value=0, step=256, info='The context for each evaluation. If set to 0, the maximum context length for the model will be used.')
 
                     with gr.Row():
-                        start_current_evaluation = gr.Button("Evaluate loaded model")
-                        start_evaluation = gr.Button("Evaluate selected models")
-                        stop_evaluation = gr.Button("Interrupt")
+                        start_current_evaluation = gr.Button("Evaluate loaded model", interactive=not mu)
+                        start_evaluation = gr.Button("Evaluate selected models", interactive=not mu)
+                        stop_evaluation = gr.Button("Interrupt", interactive=not mu)
 
                 with gr.Column():
                     evaluation_log = gr.Markdown(value='')
 
             evaluation_table = gr.Dataframe(value=generate_markdown_table(), interactive=True)
             with gr.Row():
-                save_comments = gr.Button('Save comments', elem_classes="small-button")
-                refresh_table = gr.Button('Refresh the table', elem_classes="small-button")
+                save_comments = gr.Button('Save comments', elem_classes="small-button", interactive=not mu)
+                refresh_table = gr.Button('Refresh the table', elem_classes="small-button", interactive=not mu)
 
     # Training events
     all_params = [lora_name, always_override, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lr_scheduler_type, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, higher_rank_limit, warmup_steps, optimizer, hard_cut_string, train_only_after, stop_at_loss, add_eos_token, min_chars, report_to]

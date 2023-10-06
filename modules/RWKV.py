@@ -1,3 +1,8 @@
+'''
+This loader is not currently maintained as RWKV can now be loaded
+through the transformers library.
+'''
+
 import copy
 import os
 from pathlib import Path
