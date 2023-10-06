@@ -35,7 +35,6 @@ def generate_reply(*args, **kwargs):
 
 def _generate_reply(question, state, stopping_strings=None, is_chat=False, escape_html=False):
     # Find the appropriate generation function
-    stopping_regex = state['custom_stopping_regex']
     generate_func = apply_extensions('custom_generate_reply')
     if generate_func is None:
         if shared.model_name == 'None' or shared.model is None:
@@ -55,6 +54,7 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
         question = apply_extensions('input', question, state)
 
     # creating regex pattern
+    stopping_regex = state['custom_stopping_regex']
     pattern = None
     if stopping_regex is not None:
         pattern = re.compile(stopping_regex)
