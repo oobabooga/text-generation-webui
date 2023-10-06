@@ -74,7 +74,6 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
     last_update = -1
     reply = ''
     full_str = ''
-    last_len = 0
     is_stream = state['stream']
     if len(all_stop_strings) > 0 and not state['stream']:
         state = copy.deepcopy(state)
@@ -82,7 +81,6 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
 
     # Generate
     for reply in generate_func(question, original_question, seed, state, stopping_strings, is_chat=is_chat):
-        last_len = len(full_str)
         full_str += reply
 
         if escape_html:
