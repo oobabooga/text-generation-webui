@@ -20,6 +20,7 @@ def get_fallback_settings():
         'truncation_length': shared.settings['truncation_length'],
         'skip_special_tokens': shared.settings['skip_special_tokens'],
         'custom_stopping_strings': shared.settings['custom_stopping_strings'],
+        'jinja_template': '',
     }
 
 
@@ -90,6 +91,18 @@ def get_model_metadata(model):
                 model_settings['groupsize'] = metadata['group_size']
             if 'desc_act' in metadata:
                 model_settings['desc_act'] = metadata['desc_act']
+
+    # Try to find the Jinja instruct template
+    path = Path(f'{shared.args.model_dir}/{model}') / 'tokenizer_config.json'
+    if path.exists():
+        metadata = json.loads(open(path, 'r').read())
+        if 'chat_template' in metadata:
+            template = metadata['chat_template']
+            for k in ['eos_token', 'bos_token']:
+                if k in metadata:
+                    template = template.replace(k, "'{}'".format(metadata[k]))
+
+            model_settings['jinja_template'] = template
 
     # Apply user settings from models/config-user.yaml
     settings = shared.user_config

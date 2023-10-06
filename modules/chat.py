@@ -9,6 +9,7 @@ from pathlib import Path
 
 import gradio as gr
 import yaml
+from jinja2 import Template
 from PIL import Image
 
 import modules.shared as shared
@@ -71,12 +72,36 @@ def get_turn_substrings(state, instruct=False):
     return output
 
 
+def generate_chat_prompt_jinja(user_input, state, **kwargs):
+    history = kwargs.get('history', state['history'])['internal']
+
+    # Find the maximum prompt size
+    max_length = get_max_prompt_length(state)
+
+    # Initialize the chat template and data
+    chat_template = Template(state['jinja_template'])
+    chat_data = {"messages": []}
+
+    # Iterate through the list of lists and populate the chat_data dictionary
+    for row in history:
+        message, reply = row
+        chat_data["messages"].append({"role": "user", "content": message})
+        chat_data["messages"].append({"role": "assistant", "content": reply})
+
+    chat_data["messages"].append({"role": "user", "content": user_input})
+
+    return chat_template.render(**chat_data)
+
+
 def generate_chat_prompt(user_input, state, **kwargs):
+    is_instruct = state['mode'] == 'instruct'
+    if is_instruct and state['jinja_template'] != '':
+        return generate_chat_prompt_jinja(user_input, state, **kwargs)
+
     impersonate = kwargs.get('impersonate', False)
     _continue = kwargs.get('_continue', False)
     also_return_rows = kwargs.get('also_return_rows', False)
     history = kwargs.get('history', state['history'])['internal']
-    is_instruct = state['mode'] == 'instruct'
 
     # Find the maximum prompt size
     max_length = get_max_prompt_length(state)

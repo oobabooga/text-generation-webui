@@ -147,6 +147,7 @@ def list_interface_input_elements():
         'name2_instruct',
         'context_instruct',
         'turn_template',
+        'jinja_template',
         'chat_style',
         'chat-instruct_command',
     ]

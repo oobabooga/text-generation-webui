@@ -106,23 +106,27 @@ def create_chat_settings_ui():
 
     with gr.Tab('Instruction template'):
         with gr.Row():
-            with gr.Row():
-                shared.gradio['instruction_template'] = gr.Dropdown(choices=utils.get_available_instruction_templates(), label='Instruction template', value='None', info='Change this according to the model/LoRA that you are using. Used in instruct and chat-instruct modes.', elem_classes='slim-dropdown')
-                ui.create_refresh_button(shared.gradio['instruction_template'], lambda: None, lambda: {'choices': utils.get_available_instruction_templates()}, 'refresh-button', interactive=not mu)
-                shared.gradio['save_template'] = gr.Button('💾', elem_classes='refresh-button', interactive=not mu)
-                shared.gradio['delete_template'] = gr.Button('🗑️ ', elem_classes='refresh-button', interactive=not mu)
+            with gr.Column():
+                with gr.Row():
+                    shared.gradio['instruction_template'] = gr.Dropdown(choices=utils.get_available_instruction_templates(), label='Instruction template', value='None', info='Change this according to the model/LoRA that you are using. Used in instruct and chat-instruct modes.', elem_classes='slim-dropdown')
+                    ui.create_refresh_button(shared.gradio['instruction_template'], lambda: None, lambda: {'choices': utils.get_available_instruction_templates()}, 'refresh-button', interactive=not mu)
+                    shared.gradio['save_template'] = gr.Button('💾', elem_classes='refresh-button', interactive=not mu)
+                    shared.gradio['delete_template'] = gr.Button('🗑️ ', elem_classes='refresh-button', interactive=not mu)
 
-        shared.gradio['name1_instruct'] = gr.Textbox(value='', lines=2, label='User string')
-        shared.gradio['name2_instruct'] = gr.Textbox(value='', lines=1, label='Bot string')
-        shared.gradio['context_instruct'] = gr.Textbox(value='', lines=4, label='Context', elem_classes=['add_scrollbar'])
-        shared.gradio['turn_template'] = gr.Textbox(value='', lines=1, label='Turn template', info='Used to precisely define the placement of spaces and new line characters in instruction prompts.', elem_classes=['add_scrollbar'])
+                shared.gradio['name1_instruct'] = gr.Textbox(value='', lines=2, label='User string')
+                shared.gradio['name2_instruct'] = gr.Textbox(value='', lines=1, label='Bot string')
+                shared.gradio['context_instruct'] = gr.Textbox(value='', lines=4, label='Context', elem_classes=['add_scrollbar'])
+                shared.gradio['turn_template'] = gr.Textbox(value='', lines=1, label='Turn template', info='Used to precisely define the placement of spaces and new line characters in instruction prompts.', elem_classes=['add_scrollbar'])
+
+            with gr.Column():
+                shared.gradio['jinja_template'] = gr.Textbox(value='', lines=14, label='Hugging Face Jinja template', info='If set, the fields under \"Instruction template\" are ignored (except for the chat-instruct command).', elem_classes=['add_scrollbar', 'monospace'])
+
+                shared.gradio['chat-instruct_command'] = gr.Textbox(value=shared.settings['chat-instruct_command'], lines=4, label='Command for chat-instruct mode', info='<|character|> gets replaced by the bot name, and <|prompt|> gets replaced by the regular chat prompt.', elem_classes=['add_scrollbar'])
+
         with gr.Row():
             shared.gradio['send_instruction_to_default'] = gr.Button('Send to default', elem_classes=['small-button'])
             shared.gradio['send_instruction_to_notebook'] = gr.Button('Send to notebook', elem_classes=['small-button'])
             shared.gradio['send_instruction_to_negative_prompt'] = gr.Button('Send to negative prompt', elem_classes=['small-button'])
-
-        with gr.Row():
-            shared.gradio['chat-instruct_command'] = gr.Textbox(value=shared.settings['chat-instruct_command'], lines=4, label='Command for chat-instruct mode', info='<|character|> gets replaced by the bot name, and <|prompt|> gets replaced by the regular chat prompt.', elem_classes=['add_scrollbar'])
 
     with gr.Tab('Chat history'):
         with gr.Row():
