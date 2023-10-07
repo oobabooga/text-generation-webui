@@ -249,7 +249,7 @@ def update_requirements(initial_installation=False):
     git_requirements = [req for req in textgen_requirements if req.startswith("git+")]
     for req in git_requirements:
         url = req.replace("git+", "")
-        package_name = url.split("/")[-1].split("@")[0]
+        package_name = url.split("/")[-1].split("@")[0].rstrip(".git")
         run_cmd("python -m pip uninstall -y " + package_name, environment=True)
         print(f"Uninstalled {package_name}")
 
