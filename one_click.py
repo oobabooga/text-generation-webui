@@ -161,8 +161,8 @@ def install_webui():
     install_git = "conda install -y -k ninja git"
     install_pytorch = "python -m pip install torch torchvision torchaudio"
 
-    if is_windows() and choice == "A":
-        install_pytorch = "python -m pip install torch==2.0.1+cu117 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117"
+    if any((is_windows(), is_linux())) and choice == "A":
+        install_pytorch = "pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118"
     elif not is_macos() and choice == "B":
         if is_linux():
             install_pytorch = "python -m pip install torch==2.0.1+rocm5.4.2 torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.4.2"
@@ -210,7 +210,8 @@ def update_requirements(initial_installation=False):
 
     # Detect the PyTorch version
     torver = torch_version()
-    is_cuda = '+cu' in torver  # 2.0.1+cu117
+    is_cuda = '+cu' in torver  # 2.0.1+cu118
+    is_cuda117 = '+cu117' in torver  # 2.0.1+cu117
     is_rocm = '+rocm' in torver  # 2.0.1+rocm5.4.2
     is_intel = '+cxx11' in torver  # 2.0.1a0+cxx11.abi
     is_cpu = '+cpu' in torver  # 2.0.1+cpu
@@ -237,24 +238,23 @@ def update_requirements(initial_installation=False):
             requirements_file = "requirements_noavx2.txt"
 
     print_big_message(f"Installing webui requirements from file: {requirements_file}")
-
     textgen_requirements = open(requirements_file).read().splitlines()
+    if is_cu117:
+        textgen_requirements = [req.replace('+cu118', '+cu117') for req in textgen_requirements]
+    with open('temp_requirements.txt', 'w') as file:
+        file.write('\n'.join(textgen_requirements))
 
-    # Workaround for git+ packages not updating properly. Also store requirements.txt for later use
+    # Workaround for git+ packages not updating properly.
     git_requirements = [req for req in textgen_requirements if req.startswith("git+")]
-
-    # Loop through each "git+" requirement and uninstall it
     for req in git_requirements:
-        # Extract the package name from the "git+" requirement
         url = req.replace("git+", "")
         package_name = url.split("/")[-1].split("@")[0]
-
-        # Uninstall the package using pip
         run_cmd("python -m pip uninstall -y " + package_name, environment=True)
         print(f"Uninstalled {package_name}")
 
     # Install/update the project requirements
-    run_cmd(f"python -m pip install -r {requirements_file} --upgrade", assert_success=True, environment=True)
+    run_cmd(f"python -m pip install -r temp_requirements.txt --upgrade", assert_success=True, environment=True)
+    os.remove('temp_requirements.txt')
 
     # Check for '+cu' or '+rocm' in version string to determine if torch uses CUDA or ROCm. Check for pytorch-cuda as well for backwards compatibility
     if not any((is_cuda, is_rocm)) and run_cmd("conda list -f pytorch-cuda | grep pytorch-cuda", environment=True, capture_output=True).returncode == 1:
