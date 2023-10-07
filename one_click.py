@@ -237,9 +237,10 @@ def update_requirements(initial_installation=False):
         else:
             requirements_file = "requirements_noavx2.txt"
 
+    # Prepare the requirements file
     print_big_message(f"Installing webui requirements from file: {requirements_file}")
     textgen_requirements = open(requirements_file).read().splitlines()
-    if is_cu117:
+    if is_cuda117:
         textgen_requirements = [req.replace('+cu118', '+cu117') for req in textgen_requirements]
     with open('temp_requirements.txt', 'w') as file:
         file.write('\n'.join(textgen_requirements))
@@ -253,7 +254,7 @@ def update_requirements(initial_installation=False):
         print(f"Uninstalled {package_name}")
 
     # Install/update the project requirements
-    run_cmd(f"python -m pip install -r temp_requirements.txt --upgrade", assert_success=True, environment=True)
+    run_cmd("python -m pip install -r temp_requirements.txt --upgrade", assert_success=True, environment=True)
     os.remove('temp_requirements.txt')
 
     # Check for '+cu' or '+rocm' in version string to determine if torch uses CUDA or ROCm. Check for pytorch-cuda as well for backwards compatibility
