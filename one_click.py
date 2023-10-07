@@ -153,7 +153,7 @@ def install_webui():
         print("What is your GPU?")
         print()
         print("A) NVIDIA")
-        print("B) AMD (Linux/MacOS only. Requires ROCm SDK 5.4.2/5.4.3 on Linux)")
+        print("B) AMD (Linux/MacOS only. Requires ROCm SDK 5.6 on Linux)")
         print("C) Apple M Series")
         print("D) Intel Arc (IPEX)")
         print("N) None (I want to run models in CPU mode)")
