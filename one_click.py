@@ -175,7 +175,7 @@ def install_webui():
         install_pytorch = "python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118"
     elif not is_macos() and choice == "B":
         if is_linux():
-            install_pytorch = "python -m pip install torch==2.0.1+rocm5.4.2 torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.4.2"
+            install_pytorch = "python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.6"
         else:
             print("AMD GPUs are only supported on Linux. Exiting...")
             sys.exit(1)
