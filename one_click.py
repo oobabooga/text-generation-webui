@@ -265,7 +265,7 @@ def update_requirements(initial_installation=False):
     print_big_message(f"Installing webui requirements from file: {requirements_file}")
     textgen_requirements = open(requirements_file).read().splitlines()
     if is_cuda117:
-        textgen_requirements = [req.replace('+cu118', '+cu117') for req in textgen_requirements]
+        textgen_requirements = [req.replace('+cu118', '+cu117').replace('torch2.1', 'torch2.0') for req in textgen_requirements]
     with open('temp_requirements.txt', 'w') as file:
         file.write('\n'.join(textgen_requirements))
 
