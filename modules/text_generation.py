@@ -355,6 +355,7 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
                 for output in generator:
                     if output[-1] in eos_token_ids:
                         break
+
                     yield get_reply_from_output_ids(output, input_ids, original_question, state, is_chat=is_chat)
 
     except Exception:
