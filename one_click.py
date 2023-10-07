@@ -162,7 +162,7 @@ def install_webui():
     install_pytorch = "python -m pip install torch torchvision torchaudio"
 
     if any((is_windows(), is_linux())) and choice == "A":
-        install_pytorch = "pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118"
+        install_pytorch = "python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118"
     elif not is_macos() and choice == "B":
         if is_linux():
             install_pytorch = "python -m pip install torch==2.0.1+rocm5.4.2 torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.4.2"
