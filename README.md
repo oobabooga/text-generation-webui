@@ -78,7 +78,7 @@ bash Miniconda3.sh
 #### 1. Create a new conda environment
 
 ```
-conda create -n textgen python=3.10.9
+conda create -n textgen python=3.10
 conda activate textgen
 ```
 
@@ -86,11 +86,11 @@ conda activate textgen
 
 | System | GPU | Command |
 |--------|---------|---------|
-| Linux/WSL | NVIDIA | `pip3 install torch torchvision torchaudio` |
+| Linux/WSL | NVIDIA | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118` |
 | Linux/WSL | CPU only | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu` |
 | Linux | AMD | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.4.2` |
 | MacOS + MPS | Any | `pip3 install torch torchvision torchaudio` |
-| Windows | NVIDIA | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117` |
+| Windows | NVIDIA | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118` |
 | Windows | CPU only | `pip3 install torch torchvision torchaudio` |
 
 The up-to-date commands can be found here: https://pytorch.org/get-started/locally/. 
