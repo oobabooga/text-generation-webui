@@ -1,5 +1,6 @@
 import argparse
 import glob
+import hashlib
 import os
 import platform
 import re
@@ -112,6 +113,15 @@ def print_big_message(message):
     print("*******************************************************************\n\n")
 
 
+def calculate_file_hash(file_path):
+    p = os.path.join(script_dir, file_path)
+    if os.path.isfile(p):
+        with open(p, 'rb') as f:
+            return hashlib.sha256(f.read()).hexdigest()
+    else:
+        return ''
+
+
 def run_cmd(cmd, assert_success=False, environment=False, capture_output=False, env=None):
     # Use the conda environment
     if environment:
@@ -187,7 +197,21 @@ def update_requirements(initial_installation=False):
         git_creation_cmd = 'git init -b main && git remote add origin https://github.com/oobabooga/text-generation-webui && git fetch && git remote set-head origin -a && git reset origin/HEAD && git branch --set-upstream-to=origin/HEAD'
         run_cmd(git_creation_cmd, environment=True, assert_success=True)
 
+    files_to_check = [
+        'start_linux.sh', 'start_macos.sh', 'start_windows.bat', 'start_wsl.bat',
+        'update_linux.sh', 'update_macos.sh', 'update_windows.bat', 'update_wsl.bat',
+        'one_click.py'
+    ]
+
+    before_pull_hashes = {file_name: calculate_file_hash(file_name) for file_name in files_to_check}
     run_cmd("git pull --autostash", assert_success=True, environment=True)
+    after_pull_hashes = {file_name: calculate_file_hash(file_name) for file_name in files_to_check}
+
+    # Check for differences in installation file hashes
+    for file_name in files_to_check:
+        if before_pull_hashes[file_name] != after_pull_hashes[file_name]:
+            print(f"File '{file_name}' was updated during 'git pull'. Please run the script again.")
+            exit(1)
 
     # Extensions requirements are installed only during the initial install by default.
     # That can be changed with the INSTALL_EXTENSIONS environment variable.
