@@ -48,7 +48,7 @@ class LlamacppHF(PreTrainedModel):
                 'n_tokens': self.model.n_tokens,
                 'input_ids': self.model.input_ids.copy(),
                 'scores': self.model.scores.copy(),
-                'ctx': llama_cpp_lib().llama_new_context_with_model(model.model, model.params)
+                'ctx': llama_cpp_lib().llama_new_context_with_model(model.model, model.context_params)
             }
 
     def _validate_model_class(self):
