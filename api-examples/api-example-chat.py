@@ -13,7 +13,7 @@ URI = f'http://{HOST}/api/v1/chat'
 
 def run(user_input, history):
     request = {
-        'user_input': user_input,
+        'prompt': user_input,
         'max_new_tokens': 250,
         'auto_max_new_tokens': False,
         'max_tokens_second': 0,
@@ -73,7 +73,7 @@ def run(user_input, history):
     response = requests.post(URI, json=request)
 
     if response.status_code == 200:
-        result = response.json()['results'][0]['history']
+        result = response.json()['results'][0]['text']
         print(json.dumps(result, indent=4))
         print()
         print(html.unescape(result['visible'][-1][1]))
