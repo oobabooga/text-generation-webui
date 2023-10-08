@@ -17,6 +17,7 @@ if shared.args.xformers:
 
 
 def hijack_llama_attention():
+    import transformers.models.llama.modeling_llama
     if shared.args.xformers:
         transformers.models.llama.modeling_llama.LlamaAttention.forward = xformers_forward
         logger.info("Replaced attention with xformers_attention")
