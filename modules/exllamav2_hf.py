@@ -61,6 +61,10 @@ class Exllamav2HF(PreTrainedModel):
         labels = kwargs.get('labels', None)
         past_key_values = kwargs.get('past_key_values', None)
 
+        if hasattr(shared.model, "lora"):
+           loras=[shared.model.lora]
+        else: loras = None  
+
         if len(args) > 0:
             if not shared.args.cfg_cache:
                 logger.error("Please enable the cfg-cache option to use CFG with ExLlamav2_HF.")
@@ -97,7 +101,7 @@ class Exllamav2HF(PreTrainedModel):
                     reset = False
                     ex_cache.current_seq_len = longest_prefix
                     if len(seq_tensor) - longest_prefix > 1:
-                        self.ex_model.forward(seq_tensor[longest_prefix:-1].view(1, -1), ex_cache, preprocess_only=True)
+                        self.ex_model.forward(seq_tensor[longest_prefix:-1].view(1, -1), ex_cache, preprocess_only=True, loras = loras)
                     elif len(seq_tensor) == longest_prefix:
                         # Very tricky: if the prefix we are reusing *is* the input_ids, then we have to back up the cache pointer by one,
                         # because we feed input_ids[-1] to forward() below, but that last token is already in the cache!
@@ -106,12 +110,12 @@ class Exllamav2HF(PreTrainedModel):
             if reset:
                 ex_cache.current_seq_len = 0
                 if len(seq_tensor) > 1:
-                    self.ex_model.forward(seq_tensor[:-1].view(1, -1), ex_cache, preprocess_only=True)
+                    self.ex_model.forward(seq_tensor[:-1].view(1, -1), ex_cache, preprocess_only=True, loras = loras)
 
-            logits = self.ex_model.forward(seq_tensor[-1:].view(1, -1), ex_cache).to(input_ids.device)
+            logits = self.ex_model.forward(seq_tensor[-1:].view(1, -1), ex_cache, loras = loras).to(input_ids.device)
         else:
             ex_cache.current_seq_len = 0
-            logits = self.ex_model.forward(seq_tensor.view(1, -1), ex_cache, last_id_only=False)
+            logits = self.ex_model.forward(seq_tensor.view(1, -1), ex_cache, last_id_only=False, loras = loras)
 
         if is_negative:
             self.past_seq_negative = seq_tensor
