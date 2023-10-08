@@ -79,6 +79,9 @@ class Exllamav2Model:
         return self.model.forward(token_ids[:, -1:], self.cache, input_mask=None, **kwargs).float().cpu()
 
     def generate_with_streaming(self, prompt, state):
+        if hasattr(shared.model, "lora"):
+           loras=[shared.model.lora]
+        else: loras = None    
         settings = ExLlamaV2Sampler.Settings()
         settings.temperature = state['temperature']
         settings.top_k = state['top_k']
@@ -105,11 +108,11 @@ class Exllamav2Model:
 
         # _gen_begin_base
         self.cache.current_seq_len = 0
-        self.model.forward(ids[:, :-1], self.cache, input_mask=None, preprocess_only=True)
+        self.model.forward(ids[:, :-1], self.cache, input_mask=None, preprocess_only=True, loras = loras)
 
         has_leading_space = False
         for i in range(max_new_tokens):
-            logits = self.model.forward(ids[:, -1:], self.cache, input_mask=None).float().cpu()
+            logits = self.model.forward(ids[:, -1:], self.cache, input_mask=None, loras = loras).float().cpu()
             token, _, _= ExLlamaV2Sampler.sample(logits, settings, ids, random.random(), self.tokenizer)
             ids = torch.cat([ids, token], dim=1)
 
