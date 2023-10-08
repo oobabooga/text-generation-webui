@@ -1,3 +1,8 @@
+**Breaking change: WebUI now uses PyTorch 2.1.**
+
+* For one-click installer users: If you encounter problems after updating, rerun the update script. If issues persist, delete the `installer_files` folder and use the start script to reinstall requirements.
+* For manual installations, update PyTorch with the [provided command](https://github.com/oobabooga/text-generation-webui/edit/main/README.md#2-install-pytorch).
+
 # Text generation web UI
 
 A Gradio web UI for Large Language Models.
