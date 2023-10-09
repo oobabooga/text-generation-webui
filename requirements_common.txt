@@ -8,7 +8,7 @@ accelerate==0.23.*
 colorama
 datasets
 einops
-exllamav2==0.0.5
+exllamav2==0.0.5; platform_system != "Darwin"
 markdown
 numpy==1.24
 optimum==1.13.1

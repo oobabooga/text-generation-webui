@@ -44,7 +44,7 @@ To learn how to use the various features, check out the Documentation: https://g
 
 The script creates a folder called `installer_files` where it sets up a Conda environment using Miniconda. The installation is self-contained: if you want to reinstall, just delete `installer_files` and run the start script again.
 
-To launch the webui in the future after it is already installed, run the same `start` script. 
+To launch the webui in the future after it is already installed, run the same `start` script.
 
 #### Getting updates
 
@@ -98,38 +98,48 @@ conda activate textgen
 | Windows | NVIDIA | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118` |
 | Windows | CPU only | `pip3 install torch torchvision torchaudio` |
 
-The up-to-date commands can be found here: https://pytorch.org/get-started/locally/. 
+The up-to-date commands can be found here: https://pytorch.org/get-started/locally/.
 
 #### 3. Install the web UI
 
 ```
 git clone https://github.com/oobabooga/text-generation-webui
 cd text-generation-webui
-pip install -r requirements.txt
+pip install -r <requirements file according to table below>
 ```
 
-#### AMD, Metal, Intel Arc, and CPUs without AVX2
+Requirements file to use:
 
-1) Replace the last command above with
+| GPU | CPU | requirements file to use |
+|--------|---------|---------|
+| NVidia | has AVX2 | `requirements_cuda.txt` |
+| NVidia | no AVX2 | `requirements_cuda_noavx2.txt` |
+| AMD | has AVX2 | `requirements_amd.txt` |
+| AMD | no AVX2 | `requirements_amd_noavx2.txt` |
+| CPU only | has AVX2 | `requirements_cpu_only.txt` |
+| CPU only | no AVX2 | `requirements_cpu_only_noavx2.txt` |
+| Apple | Intel | `requirements_apple_intel.txt` |
+| Apple | Apple Silicon | `requirements_apple_silicon.txt` |
 
-```
-pip install -r requirements_nowheels.txt
-```
+##### AMD GPU on Windows
 
-2) Manually install llama-cpp-python using the appropriate command for your hardware: [Installation from PyPI](https://github.com/abetlen/llama-cpp-python#installation-from-pypi).
+1) Use `requirements_cpu_only.txt` or `requirements_cpu_only_noavx2.txt` in the command above
 
-3) Do the same for CTransformers: [Installation](https://github.com/marella/ctransformers#installation).
+2) Manually install llama-cpp-python using the appropriate command for your hardware: [Installation from PyPI](https://github.com/abetlen/llama-cpp-python#installation-with-hardware-acceleration)
+    * use the `LLAMA_HIPBLAS=on` toggle
+    * note the [Windows remarks](https://github.com/abetlen/llama-cpp-python#windows-remarks)
 
-4) AMD: Manually install AutoGPTQ: [Installation](https://github.com/PanQiWei/AutoGPTQ#installation).
+3) Manually install AutoGPTQ: [Installation](https://github.com/PanQiWei/AutoGPTQ#install-from-source)
+    * perform the from-source installation - there are no prebuilt ROCm packages for Windows
 
-5) AMD: Manually install [ExLlama](https://github.com/turboderp/exllama) by simply cloning it into the `repositories` folder (it will be automatically compiled at runtime after that):
+4) Manually install [ExLlama](https://github.com/turboderp/exllama) by simply cloning it into the `repositories` folder (it will be automatically compiled at runtime after that):
 
-```
+```sh
 cd text-generation-webui
 git clone https://github.com/turboderp/exllama repositories/exllama
 ```
 
-#### bitsandbytes on older NVIDIA GPUs
+##### bitsandbytes on older NVIDIA GPUs
 
 bitsandbytes >= 0.39 may not work. In that case, to use `--load-in-8bit`, you may have to downgrade like this:
 
@@ -150,12 +160,12 @@ docker compose up --build
 
 ### Updating the requirements
 
-From time to time, the `requirements.txt` changes. To update, use these commands:
+From time to time, the `requirements*.txt` changes. To update, use these commands:
 
 ```
 conda activate textgen
 cd text-generation-webui
-pip install -r requirements.txt --upgrade
+pip install -r <requirements file that you've used> --upgrade
 ```
 
 ## Downloading models
@@ -229,7 +239,7 @@ When you load this model in default or notebook modes, the "HTML" tab will show 
     cd text-generation-webui
     python server.py
 
-Then browse to 
+Then browse to
 
 `http://localhost:7860/?__theme=dark`
 
