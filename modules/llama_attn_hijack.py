@@ -4,7 +4,7 @@ from typing import Optional, Tuple
 
 import torch
 import torch.nn as nn
-import transformers.models.llama.modeling_llama
+
 
 import modules.shared as shared
 from modules.logging_colors import logger
