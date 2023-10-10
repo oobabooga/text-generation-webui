@@ -71,11 +71,8 @@ def add_lora_exllamav2(lora_names):
     from exllamav2 import ExLlamaV2Lora
 
     if len(lora_names) == 0:
-        if shared.model.__class__.__name__ == 'Exllamav2Model':
-            shared.model.lora = None
-        else:
-            shared.model.lora = None
-
+        shared.model.lora.unload()
+        shared.model.lora = None
         shared.lora_names = []
         return
     else:
