@@ -1,5 +1,6 @@
 import argparse
 import glob
+import hashlib
 import os
 import platform
 import re
@@ -24,6 +25,7 @@ else:
     CMD_FLAGS = ''
 
 flags = f"{' '.join([flag for flag in sys.argv[1:] if flag != '--update'])} {CMD_FLAGS}"
+
 
 def is_linux():
     return sys.platform.startswith("linux")
@@ -55,6 +57,7 @@ def cpu_has_avx2():
 
 
 def torch_version():
+    site_packages_path = None
     for sitedir in site.getsitepackages():
         if "site-packages" in sitedir and conda_env_path in sitedir:
             site_packages_path = sitedir
@@ -69,6 +72,7 @@ def torch_version():
 
 
 def is_installed():
+    site_packages_path = None
     for sitedir in site.getsitepackages():
         if "site-packages" in sitedir and conda_env_path in sitedir:
             site_packages_path = sitedir
@@ -85,12 +89,12 @@ def check_env():
     conda_exist = run_cmd("conda", environment=True, capture_output=True).returncode == 0
     if not conda_exist:
         print("Conda is not installed. Exiting...")
-        sys.exit()
+        sys.exit(1)
 
     # Ensure this is a new environment and not the base environment
     if os.environ["CONDA_DEFAULT_ENV"] == "base":
         print("Create an environment for this project and activate it. Exiting...")
-        sys.exit()
+        sys.exit(1)
 
 
 def clear_cache():
@@ -109,6 +113,15 @@ def print_big_message(message):
     print("*******************************************************************\n\n")
 
 
+def calculate_file_hash(file_path):
+    p = os.path.join(script_dir, file_path)
+    if os.path.isfile(p):
+        with open(p, 'rb') as f:
+            return hashlib.sha256(f.read()).hexdigest()
+    else:
+        return ''
+
+
 def run_cmd(cmd, assert_success=False, environment=False, capture_output=False, env=None):
     # Use the conda environment
     if environment:
@@ -124,8 +137,8 @@ def run_cmd(cmd, assert_success=False, environment=False, capture_output=False, 
 
     # Assert the command ran successfully
     if assert_success and result.returncode != 0:
-        print("Command '" + cmd + "' failed with exit status code '" + str(result.returncode) + "'. Exiting...")
-        sys.exit()
+        print("Command '" + cmd + "' failed with exit status code '" + str(result.returncode) + "'.\n\nExiting now.\nTry running the start/update script again.")
+        sys.exit(1)
 
     return result
 
@@ -136,10 +149,11 @@ def install_webui():
         choice = os.environ["GPU_CHOICE"].upper()
         print_big_message(f"Selected GPU choice \"{choice}\" based on the GPU_CHOICE environment variable.")
     else:
+        print()
         print("What is your GPU?")
         print()
         print("A) NVIDIA")
-        print("B) AMD (Linux/MacOS only. Requires ROCm SDK 5.4.2/5.4.3 on Linux)")
+        print("B) AMD (Linux/MacOS only. Requires ROCm SDK 5.6 on Linux)")
         print("C) Apple M Series")
         print("D) Intel Arc (IPEX)")
         print("N) None (I want to run models in CPU mode)")
@@ -157,14 +171,14 @@ def install_webui():
     install_git = "conda install -y -k ninja git"
     install_pytorch = "python -m pip install torch torchvision torchaudio"
 
-    if is_windows() and choice == "A":
-        install_pytorch = "python -m pip install torch==2.0.1+cu117 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117"
+    if any((is_windows(), is_linux())) and choice == "A":
+        install_pytorch = "python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118"
     elif not is_macos() and choice == "B":
         if is_linux():
-            install_pytorch = "python -m pip install torch==2.0.1+rocm5.4.2 torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.4.2"
+            install_pytorch = "python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.6"
         else:
             print("AMD GPUs are only supported on Linux. Exiting...")
-            sys.exit()
+            sys.exit(1)
     elif is_linux() and (choice == "C" or choice == "N"):
         install_pytorch = "python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu"
     elif choice == "D":
@@ -183,28 +197,45 @@ def update_requirements(initial_installation=False):
         git_creation_cmd = 'git init -b main && git remote add origin https://github.com/oobabooga/text-generation-webui && git fetch && git remote set-head origin -a && git reset origin/HEAD && git branch --set-upstream-to=origin/HEAD'
         run_cmd(git_creation_cmd, environment=True, assert_success=True)
 
+    files_to_check = [
+        'start_linux.sh', 'start_macos.sh', 'start_windows.bat', 'start_wsl.bat',
+        'update_linux.sh', 'update_macos.sh', 'update_windows.bat', 'update_wsl.bat',
+        'one_click.py'
+    ]
+
+    before_pull_hashes = {file_name: calculate_file_hash(file_name) for file_name in files_to_check}
     run_cmd("git pull --autostash", assert_success=True, environment=True)
+    after_pull_hashes = {file_name: calculate_file_hash(file_name) for file_name in files_to_check}
+
+    # Check for differences in installation file hashes
+    for file_name in files_to_check:
+        if before_pull_hashes[file_name] != after_pull_hashes[file_name]:
+            print(f"File '{file_name}' was updated during 'git pull'. Please run the script again.")
+            exit(1)
 
     # Extensions requirements are installed only during the initial install by default.
     # That can be changed with the INSTALL_EXTENSIONS environment variable.
-    install_extensions = os.environ.get("INSTALL_EXTENSIONS", "false").lower() in ("yes", "y", "true", "1", "t", "on")
-    if initial_installation or install_extensions:
-        if not install_extensions:
-            print_big_message("Will not install extensions due to INSTALL_EXTENSIONS environment variable.")
-        else:
-            print("Installing extensions requirements.")
-            extensions = next(os.walk("extensions"))[1]
-            for extension in extensions:
-                if extension in ['superbooga', 'superboogav2']:  # No wheels available for requirements
-                    continue
+    install = initial_installation
+    if "INSTALL_EXTENSIONS" in os.environ:
+        install = os.environ["INSTALL_EXTENSIONS"].lower() in ("yes", "y", "true", "1", "t", "on")
 
-                extension_req_path = os.path.join("extensions", extension, "requirements.txt")
-                if os.path.exists(extension_req_path):
-                    run_cmd("python -m pip install -r " + extension_req_path + " --upgrade", assert_success=True, environment=True)
+    if install:
+        print_big_message("Installing extensions requirements.")
+        extensions = next(os.walk("extensions"))[1]
+        for extension in extensions:
+            if extension in ['superbooga', 'superboogav2']:  # No wheels available for requirements
+                continue
+
+            extension_req_path = os.path.join("extensions", extension, "requirements.txt")
+            if os.path.exists(extension_req_path):
+                run_cmd("python -m pip install -r " + extension_req_path + " --upgrade", assert_success=True, environment=True)
+    elif initial_installation:
+        print_big_message("Will not install extensions due to INSTALL_EXTENSIONS environment variable.")
 
     # Detect the PyTorch version
     torver = torch_version()
-    is_cuda = '+cu' in torver  # 2.0.1+cu117
+    is_cuda = '+cu' in torver  # 2.0.1+cu118
+    is_cuda117 = '+cu117' in torver  # 2.0.1+cu117
     is_rocm = '+rocm' in torver  # 2.0.1+rocm5.4.2
     is_intel = '+cxx11' in torver  # 2.0.1a0+cxx11.abi
     is_cpu = '+cpu' in torver  # 2.0.1+cpu
@@ -230,25 +261,25 @@ def update_requirements(initial_installation=False):
         else:
             requirements_file = "requirements_noavx2.txt"
 
-    print(f"Using the following requirements file: {requirements_file}")
-
+    # Prepare the requirements file
+    print_big_message(f"Installing webui requirements from file: {requirements_file}")
     textgen_requirements = open(requirements_file).read().splitlines()
+    if is_cuda117:
+        textgen_requirements = [req.replace('+cu118', '+cu117').replace('torch2.1', 'torch2.0') for req in textgen_requirements]
+    with open('temp_requirements.txt', 'w') as file:
+        file.write('\n'.join(textgen_requirements))
 
-    # Workaround for git+ packages not updating properly. Also store requirements.txt for later use
+    # Workaround for git+ packages not updating properly.
     git_requirements = [req for req in textgen_requirements if req.startswith("git+")]
-
-    # Loop through each "git+" requirement and uninstall it
     for req in git_requirements:
-        # Extract the package name from the "git+" requirement
         url = req.replace("git+", "")
-        package_name = url.split("/")[-1].split("@")[0]
-
-        # Uninstall the package using pip
+        package_name = url.split("/")[-1].split("@")[0].rstrip(".git")
         run_cmd("python -m pip uninstall -y " + package_name, environment=True)
         print(f"Uninstalled {package_name}")
 
     # Install/update the project requirements
-    run_cmd(f"python -m pip install -r {requirements_file} --upgrade", assert_success=True, environment=True)
+    run_cmd("python -m pip install -r temp_requirements.txt --upgrade", assert_success=True, environment=True)
+    os.remove('temp_requirements.txt')
 
     # Check for '+cu' or '+rocm' in version string to determine if torch uses CUDA or ROCm. Check for pytorch-cuda as well for backwards compatibility
     if not any((is_cuda, is_rocm)) and run_cmd("conda list -f pytorch-cuda | grep pytorch-cuda", environment=True, capture_output=True).returncode == 1:
@@ -313,7 +344,7 @@ if __name__ == "__main__":
         # Check if a model has been downloaded yet
         if '--model-dir' in flags:
             # Splits on ' ' or '=' while maintaining spaces within quotes
-            flags_list = re.split(' +(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)|=',flags)
+            flags_list = re.split(' +(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)|=', flags)
             model_dir = [flags_list[(flags_list.index(flag)+1)] for flag in flags_list if flag == '--model-dir'][0].strip('"\'')
         else:
             model_dir = 'models'
