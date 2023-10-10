@@ -92,7 +92,7 @@ def get_model_metadata(model):
                 model_settings['desc_act'] = metadata['desc_act']
 
     # Ignore rope_freq_base if set to the default value
-    if model_settings['rope_freq_base'] == 10000:
+    if 'rope_freq_base' in model_settings and model_settings['rope_freq_base'] == 10000:
         model_settings.pop('rope_freq_base')
 
     # Apply user settings from models/config-user.yaml
