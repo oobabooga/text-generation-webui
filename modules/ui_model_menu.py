@@ -225,16 +225,11 @@ def load_lora_wrapper(selected_loras):
 
 def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), return_links=False, check=False):
     try:
-        downloader_module = importlib.import_module("download-model")
-        downloader = downloader_module.ModelDownloader()
-
         progress(0.0)
-        yield ("Cleaning up the model/branch names")
+        downloader = importlib.import_module("download-model").ModelDownloader()
         model, branch = downloader.sanitize_model_and_branch_names(repo_id, None)
-
         yield ("Getting the download links from Hugging Face")
         links, sha256, is_lora, is_llamacpp = downloader.get_download_links_from_huggingface(model, branch, text_only=False, specific_file=specific_file)
-
         if return_links:
             yield '\n\n'.join([f"`{Path(link).name}`" for link in links])
             return
@@ -242,7 +237,6 @@ def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), retur
         yield ("Getting the output folder")
         base_folder = shared.args.lora_dir if is_lora else shared.args.model_dir
         output_folder = downloader.get_output_folder(model, branch, is_lora, is_llamacpp=is_llamacpp, base_folder=base_folder)
-
         if check:
             progress(0.5)
             yield ("Checking previously downloaded files")
@@ -250,7 +244,7 @@ def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), retur
             progress(1.0)
         else:
             yield (f"Downloading file{'s' if len(links) > 1 else ''} to `{output_folder}/`")
-            downloader.download_model_files(model, branch, links, sha256, output_folder, progress_bar=progress, threads=1, is_llamacpp=is_llamacpp)
+            downloader.download_model_files(model, branch, links, sha256, output_folder, progress_bar=progress, threads=4, is_llamacpp=is_llamacpp)
             yield ("Done!")
     except:
         progress(1.0)
