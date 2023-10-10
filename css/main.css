@@ -92,10 +92,11 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
 .header_bar {
     background-color: #f7f7f7;
     margin-bottom: 19px;
-    display: inline !important;
     overflow-x: scroll;
     margin-left: calc(-1 * var(--size-4));
     margin-right: calc(-1 * var(--size-4));
+    display: block !important;
+    text-wrap: nowrap;
 }
 
 .dark .header_bar {
@@ -432,7 +433,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     position: absolute;
     height: 100%;
     background-color: var(--background-fill-primary);
-    border: 0px;
+    border: 0px !important;
     border-radius: 0px;
 }
 

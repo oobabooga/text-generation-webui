@@ -222,6 +222,13 @@ for(i = 0; i < noBackgroundelements.length; i++) {
   noBackgroundelements[i].parentNode.parentNode.parentNode.style.alignItems = "center";
 }
 
+const slimDropdownElements = document.querySelectorAll('.slim-dropdown');
+for (i = 0; i < slimDropdownElements.length; i++) {
+    const parentNode = slimDropdownElements[i].parentNode;
+    parentNode.style.background = 'transparent';
+    parentNode.style.border = '0';
+}
+
 //------------------------------------------------
 // Create the hover menu in the chat tab
 // The show/hide events were adapted from:
@@ -328,3 +335,4 @@ document.getElementById("show-controls").parentNode.style.bottom = "0px";
 // Focus on the chat input
 //------------------------------------------------
 document.querySelector("#chat-input textarea").focus();
+
