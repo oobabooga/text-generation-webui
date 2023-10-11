@@ -92,10 +92,11 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
 .header_bar {
     background-color: #f7f7f7;
     margin-bottom: 19px;
-    display: inline !important;
     overflow-x: scroll;
     margin-left: calc(-1 * var(--size-4));
     margin-right: calc(-1 * var(--size-4));
+    display: block !important;
+    text-wrap: nowrap;
 }
 
 .dark .header_bar {
@@ -173,17 +174,26 @@ button {
 
 .file-saver {
   position: fixed !important;
+  height: 100%;
+  z-index: 1000;
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  margin-left: -20px;
+  margin-right: -20px;
+}
+
+.file-saver > :first-child {
+  position: fixed !important;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%); /* center horizontally */
+  width: 100%;
   max-width: 500px;
   background-color: var(--input-background-fill);
-  border: 2px solid black !important;
-  z-index: 1000;
+  border: var(--input-border-width) solid var(--input-border-color) !important;
 }
 
-.dark .file-saver {
-  border: 2px solid white !important;
+.file-saver > :first-child > :nth-child(2) {
+  background: var(--block-background-fill);
 }
 
 .checkboxgroup-table label {
@@ -395,6 +405,14 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     box-shadow: none !important;
 }
 
+#chat-input > :first-child {
+    background-color: transparent;
+}
+
+#chat-input .progress-text {
+    display: none;
+}
+
 @media print {
     body {
         visibility: hidden;
@@ -432,7 +450,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     position: absolute;
     height: 100%;
     background-color: var(--background-fill-primary);
-    border: 0px;
+    border: 0px !important;
     border-radius: 0px;
 }
 
