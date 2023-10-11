@@ -335,4 +335,3 @@ document.getElementById("show-controls").parentNode.style.bottom = "0px";
 // Focus on the chat input
 //------------------------------------------------
 document.querySelector("#chat-input textarea").focus();
-

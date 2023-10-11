@@ -228,4 +228,3 @@ def create_refresh_button(refresh_component, refresh_method, refreshed_args, ele
     )
 
     return refresh_button
-
