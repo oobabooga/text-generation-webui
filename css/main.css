@@ -396,6 +396,14 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     box-shadow: none !important;
 }
 
+#chat-input > :first-child {
+    background-color: transparent;
+}
+
+#chat-input .progress-text {
+    display: none;
+}
+
 @media print {
     body {
         visibility: hidden;
