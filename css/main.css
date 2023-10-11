@@ -174,17 +174,26 @@ button {
 
 .file-saver {
   position: fixed !important;
+  height: 100%;
+  z-index: 1000;
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  margin-left: -20px;
+  margin-right: -20px;
+}
+
+.file-saver > :first-child {
+  position: fixed !important;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%); /* center horizontally */
+  width: 100%;
   max-width: 500px;
   background-color: var(--input-background-fill);
-  border: 2px solid black !important;
-  z-index: 1000;
+  border: var(--input-border-width) solid var(--input-border-color) !important;
 }
 
-.dark .file-saver {
-  border: 2px solid white !important;
+.file-saver > :first-child > :nth-child(2) {
+  background: var(--block-background-fill);
 }
 
 .checkboxgroup-table label {
