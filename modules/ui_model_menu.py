@@ -124,6 +124,7 @@ def create_ui():
                             shared.gradio['exllama_info'] = gr.Markdown('For more information, consult the [docs](https://github.com/oobabooga/text-generation-webui/blob/main/docs/ExLlama.md).')
                             shared.gradio['exllama_HF_info'] = gr.Markdown('ExLlama_HF is a wrapper that lets you use ExLlama like a Transformers model, which means it can use the Transformers samplers. It\'s a bit slower than the regular ExLlama.')
                             shared.gradio['llamacpp_HF_info'] = gr.Markdown('llamacpp_HF loads llama.cpp as a Transformers model. To use it, you need to download a tokenizer.\n\nOption 1: download `oobabooga/llama-tokenizer` under "Download model or LoRA". That\'s a default Llama tokenizer.\n\nOption 2: place your .gguf in a subfolder of models/ along with these 3 files: tokenizer.model, tokenizer_config.json, and special_tokens_map.json. This takes precedence over Option 1.')
+                            shared.gradio['lora_base'] = gr.Dropdown(choices=utils.get_available_models(), value=shared.args.lora_base, label='Base model for llamacpp LoRA', elem_classes='slim-dropdown', interactive=not mu)
 
             with gr.Column():
                 with gr.Row():
@@ -143,6 +144,10 @@ def create_event_handlers():
     shared.gradio['loader'].change(
         loaders.make_loader_params_visible, gradio('loader'), gradio(loaders.get_all_params())).then(
         lambda value: gr.update(choices=loaders.get_model_types(value)), gradio('loader'), gradio('model_type'))
+
+    shared.gradio['lora_base'].change(
+        update_lora_base, gradio('lora_base')
+    )
 
     # In this event handler, the interface state is read and updated
     # with the model defaults (if any), and then the model is loaded
@@ -217,10 +222,16 @@ def load_model_wrapper(selected_model, loader, autoload=False):
             yield exc.replace('\n', '\n\n')
 
 
+def update_lora_base(lora_base):
+    shared.args.lora_base = lora_base
+
+
 def load_lora_wrapper(selected_loras):
     yield ("Applying the following LoRAs to {}:\n\n{}".format(shared.model_name, '\n'.join(selected_loras)))
-    add_lora_to_model(selected_loras)
-    yield ("Successfuly applied the LoRAs")
+    if add_lora_to_model(selected_loras):
+        yield ("Successfuly applied the LoRAs")
+    else:
+        yield ("Failed to apply the LoRAs, check the console for detail.")
 
 
 def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), return_links=False, check=False):

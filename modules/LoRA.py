@@ -9,12 +9,18 @@ from modules.models import reload_model
 
 
 def add_lora_to_model(lora_names):
-    if 'GPTQForCausalLM' in shared.model.__class__.__name__ or shared.args.loader == 'AutoGPTQ':
-        add_lora_autogptq(lora_names)
-    elif shared.model.__class__.__name__ in ['ExllamaModel', 'ExllamaHF'] or shared.args.loader == 'ExLlama':
-        add_lora_exllama(lora_names)
+    if shared.model_name == 'None' or shared.model is None:
+        logger.error("No model is loaded, please load a base model first before loading Lora.")
+        return False
     else:
-        add_lora_transformers(lora_names)
+        if 'GPTQForCausalLM' in shared.model.__class__.__name__ or shared.args.loader == 'AutoGPTQ':
+            return add_lora_autogptq(lora_names)
+        elif shared.model.__class__.__name__ in ['ExllamaModel', 'ExllamaHF'] or shared.args.loader == 'ExLlama':
+            return add_lora_exllama(lora_names)
+        elif 'LlamaCppModel' in shared.model.__class__.__name__ or shared.args.loader == 'llama.cpp':
+            return add_lora_llamacpp(lora_names)
+        else:
+            return add_lora_transformers(lora_names)
 
 
 def get_lora_path(lora_name):
@@ -23,6 +29,41 @@ def get_lora_path(lora_name):
         lora_name = p.parts[-1]
 
     return Path(f"{shared.args.lora_dir}/{lora_name}")
+
+
+def add_lora_llamacpp(lora_names):
+    if len(lora_names) == 0:
+        shared.args.lora_path = ''
+        reload_model()
+        shared.lora_names = []
+        logger.info("Successfully removed LoRAs")
+        return False
+    else:
+        if len(lora_names) > 1:
+            logger.warning('Llama.cpp can only work with 1 LoRA at the moment. Only the first one in the list will be loaded.')
+        lora_path = get_lora_path(lora_names[0])
+        logger.info("Applying the following LoRAs to {}: {}".format(shared.model_name, ', '.join([lora_names[0]])))
+        if lora_path.is_file():
+            shared.args.lora_path = f"{shared.args.lora_dir}/{lora_names[0]}"
+        elif lora_path.is_dir():
+            lora_path = lora_path / "ggml-adapter-model.bin"
+            if lora_path.is_file():
+                shared.args.lora_path = f"{shared.args.lora_dir}/{lora_names[0]}/ggml-adapter-model.bin"
+            else:
+                logger.error(f"Could not find the LoRA model. Make sure ggml-adapter-model.bin is in {shared.args.lora_dir}/{lora_names[0]} folder.")
+                return False
+        else:
+            logger.error("Wrong path!")
+            return False
+        flag = True
+        try:
+            reload_model()
+        except:
+            flag = False
+            logger.error("Llama apply LoRA error")
+        shared.lora_names = [lora_names[0]]
+        return flag
+
 
 
 def add_lora_exllama(lora_names):
@@ -34,7 +75,7 @@ def add_lora_exllama(lora_names):
             from repositories.exllama.lora import ExLlamaLora
         except:
             logger.error("Could not find the file repositories/exllama/lora.py. Make sure that exllama is cloned inside repositories/ and is up to date.")
-            return
+            return False
 
     if len(lora_names) == 0:
         if shared.model.__class__.__name__ == 'ExllamaModel':
@@ -43,7 +84,8 @@ def add_lora_exllama(lora_names):
             shared.model.lora = None
 
         shared.lora_names = []
-        return
+        logger.info("Successfully removed LoRAs")
+        return False
     else:
         if len(lora_names) > 1:
             logger.warning('ExLlama can only work with 1 LoRA at the moment. Only the first one in the list will be loaded.')
@@ -61,7 +103,7 @@ def add_lora_exllama(lora_names):
             shared.model.lora = lora
 
         shared.lora_names = [lora_names[0]]
-        return
+        return True
 
 
 # Adapted from https://github.com/Ph0rk0z/text-generation-webui-testing
@@ -72,13 +114,14 @@ def add_lora_autogptq(lora_names):
         from auto_gptq.utils.peft_utils import GPTQLoraConfig
     except:
         logger.error("This version of AutoGPTQ does not support LoRA. You need to install from source or wait for a new release.")
-        return
+        return False
 
     if len(lora_names) == 0:
         reload_model()
 
         shared.lora_names = []
-        return
+        logger.info("Successfully removed LoRAs")
+        return False
     else:
         if len(lora_names) > 1:
             logger.warning('AutoGPTQ can only work with 1 LoRA at the moment. Only the first one in the list will be loaded.')
@@ -93,7 +136,7 @@ def add_lora_autogptq(lora_names):
         logger.info("Applying the following LoRAs to {}: {}".format(shared.model_name, ', '.join([lora_names[0]])))
         shared.model = get_gptq_peft_model(shared.model, peft_config, lora_path)
         shared.lora_names = [lora_names[0]]
-        return
+        return True
 
 
 def add_lora_transformers(lora_names):
@@ -103,7 +146,7 @@ def add_lora_transformers(lora_names):
 
     # If no LoRA needs to be added or removed, exit
     if len(added_set) == 0 and len(removed_set) == 0:
-        return
+        return True
 
     # Add a LoRA when another LoRA is already present
     if len(removed_set) == 0 and len(prior_set) > 0:
@@ -111,7 +154,7 @@ def add_lora_transformers(lora_names):
         for lora in added_set:
             shared.model.load_adapter(get_lora_path(lora), lora)
 
-        return
+        return True
 
     # If any LoRA needs to be removed, start over
     if len(removed_set) > 0:

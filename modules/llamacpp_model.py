@@ -86,6 +86,8 @@ class LlamaCppModel:
             'rope_freq_base': RoPE.get_rope_freq_base(shared.args.alpha_value, shared.args.rope_freq_base),
             'tensor_split': tensor_split_list,
             'rope_freq_scale': 1.0 / shared.args.compress_pos_emb,
+            'lora_path': shared.args.lora_path,
+            'lora_base': f'{shared.args.model_dir}/{shared.args.lora_base}',
         }
 
         result.model = Llama(**params)

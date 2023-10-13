@@ -126,6 +126,8 @@ parser.add_argument('--tensor_split', type=str, default=None, help="Split the mo
 parser.add_argument('--n_ctx', type=int, default=2048, help='Size of the prompt context.')
 parser.add_argument('--llama_cpp_seed', type=int, default=0, help='Seed for llama-cpp models. Default 0 (random)')
 parser.add_argument('--numa', action='store_true', help='Activate NUMA task allocation for llama.cpp')
+parser.add_argument('--lora_path', type=str, default=None, help='Path to Lora adapter which is gguf compatible.')
+parser.add_argument('--lora_base', type=str, default=None, help='Optional base model, useful if using a quantized base model and you want to apply LoRA to an f16 model.')
 
 # GPTQ
 parser.add_argument('--wbits', type=int, default=0, help='Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported.')

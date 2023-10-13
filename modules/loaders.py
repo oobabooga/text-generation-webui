@@ -101,6 +101,7 @@ loaders_and_params = OrderedDict({
         'compress_pos_emb',
         'cpu',
         'numa',
+        'lora_base',
     ],
     'llamacpp_HF': [
         'n_ctx',
