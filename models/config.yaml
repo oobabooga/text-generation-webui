@@ -87,7 +87,7 @@
 .*mpt-.*instruct:
   instruction_template: 'Alpaca'
 .*mpt-.*chat:
-  instruction_template: 'MPT-Chat'
+  instruction_template: 'ChatML'
 (?!.*-flan-)(?!.*-t5-).*lamini-:
   instruction_template: 'Alpaca'
 .*incite.*chat:
@@ -174,5 +174,7 @@
   instruction_template: 'Llama-v2'
 .*mistral.*instruct:
   instruction_template: 'Mistral'
+.*mistral.*openorca:
+  instruction_template: 'ChatML'
 .*AWQ:
   n_batch: 1
