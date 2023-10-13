@@ -187,6 +187,10 @@ def install_webui():
     # Install Git and then Pytorch
     run_cmd(f"{install_git} && {install_pytorch} && python -m pip install py-cpuinfo==9.0.0", assert_success=True, environment=True)
 
+    # Install CUDA libraries (this wasn't necessary for Pytorch before...)
+    if choice == "A":
+        run_cmd("conda install -y -c \"nvidia/label/cuda-11.8.0\" cuda-runtime", assert_success=True, environment=True)
+
     # Install the webui requirements
     update_requirements(initial_installation=True)
 

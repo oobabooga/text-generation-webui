@@ -1,8 +1,3 @@
-**Breaking change: WebUI now uses PyTorch 2.1.**
-
-* For one-click installer users: If you encounter problems after updating, rerun the update script. If issues persist, delete the `installer_files` folder and use the start script to reinstall requirements.
-* For manual installations, update PyTorch with the [provided command](https://github.com/oobabooga/text-generation-webui/#2-install-pytorch).
-
 # Text generation web UI
 
 A Gradio web UI for Large Language Models.
@@ -99,6 +94,12 @@ conda activate textgen
 | Windows | CPU only | `pip3 install torch torchvision torchaudio` |
 
 The up-to-date commands can be found here: https://pytorch.org/get-started/locally/. 
+
+For NVIDIA, you may also need to manually install the CUDA runtime libraries:
+
+```
+conda install -y -c "nvidia/label/cuda-11.8.0" cuda-runtime
+```
 
 #### 3. Install the web UI
 
