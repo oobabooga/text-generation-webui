@@ -98,7 +98,9 @@ class ExllamaModel:
 
     def get_logits(self, token_ids, **kwargs):
         self.cache.current_seq_len = 0
-        self.model.forward(token_ids[:, :-1], self.cache, input_mask=None, preprocess_only=True)
+        if token_ids.shape[-1] > 1:
+            self.model.forward(token_ids[:, :-1], self.cache, input_mask=None, preprocess_only=True)
+
         return self.model.forward(token_ids[:, -1:], self.cache, **kwargs).float().cpu()
 
     def generate_with_streaming(self, prompt, state):

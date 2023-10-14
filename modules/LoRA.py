@@ -70,32 +70,33 @@ def add_lora_exllamav2(lora_names):
 
     from exllamav2 import ExLlamaV2Lora
 
-    if len(lora_names) == 0:
-        shared.model.lora.unload()
-        shared.model.lora = None
-        shared.lora_names = []
+    if isinstance(shared.model.loras, list):
+        for lora in shared.model.loras:
+            lora.unload()
+
+    if len(lora_names) > 0:
+        logger.info("Applying the following LoRAs to {}: {}".format(shared.model_name, ', '.join(lora_names)))
+        shared.model.loras = []
+        for lora_name in lora_names:
+            lora_path = get_lora_path(lora_name)
+            if shared.model.__class__.__name__ == 'Exllamav2Model':
+                lora = ExLlamaV2Lora.from_directory(shared.model.model, str(lora_path))
+            else:
+                lora = ExLlamaV2Lora.from_directory(shared.model.ex_model, str(lora_path))
+
+            shared.model.loras.append(lora)
+
+        shared.lora_names = lora_names
         return
     else:
-        if len(lora_names) > 1:
-            logger.warning('Only the first one in the list will be loaded.')
-
-        lora_path = get_lora_path(lora_names[0])
-
-        logger.info("Applying the following LoRAs to {}: {}".format(shared.model_name, ', '.join([lora_names[0]])))
-        if shared.model.__class__.__name__ == 'Exllamav2Model':
-            lora = ExLlamaV2Lora.from_directory(shared.model.model, str(lora_path))
-            shared.model.lora = lora
-        else:
-            lora = ExLlamaV2Lora.from_directory(shared.model.ex_model, str(lora_path))
-            shared.model.lora = lora
-
-        shared.lora_names = [lora_names[0]]
-        return
-
-# Adapted from https://github.com/Ph0rk0z/text-generation-webui-testing
+        shared.lora_names = []
+        shared.model.loras = None
 
 
 def add_lora_autogptq(lora_names):
+    '''
+    Adapted from https://github.com/Ph0rk0z/text-generation-webui-testing
+    '''
 
     try:
         from auto_gptq import get_gptq_peft_model

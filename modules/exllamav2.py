@@ -60,6 +60,7 @@ class Exllamav2Model:
         result.cache = cache
         result.tokenizer = tokenizer
         result.generator = generator
+        result.loras = None
         return result, result
 
     def encode(self, string, **kwargs):
@@ -75,15 +76,12 @@ class Exllamav2Model:
 
     def get_logits(self, token_ids, **kwargs):
         self.cache.current_seq_len = 0
-        self.model.forward(token_ids[:, :-1], self.cache, input_mask=None, preprocess_only=True)
-        return self.model.forward(token_ids[:, -1:], self.cache, input_mask=None, **kwargs).float().cpu()
+        if token_ids.shape[-1] > 1:
+            self.model.forward(token_ids[:, :-1], self.cache, input_mask=None, preprocess_only=True, loras=self.loras)
+
+        return self.model.forward(token_ids[:, -1:], self.cache, input_mask=None, loras=self.loras, **kwargs).float().cpu()
 
     def generate_with_streaming(self, prompt, state):
-        if hasattr(shared.model, "lora"):
-            loras = [shared.model.lora]
-        else:
-            loras = None
-
         settings = ExLlamaV2Sampler.Settings()
         settings.temperature = state['temperature']
         settings.top_k = state['top_k']
@@ -110,11 +108,11 @@ class Exllamav2Model:
 
         # _gen_begin_base
         self.cache.current_seq_len = 0
-        self.model.forward(ids[:, :-1], self.cache, input_mask=None, preprocess_only=True, loras=loras)
+        self.model.forward(ids[:, :-1], self.cache, input_mask=None, preprocess_only=True, loras=self.loras)
 
         has_leading_space = False
         for i in range(max_new_tokens):
-            logits = self.model.forward(ids[:, -1:], self.cache, input_mask=None, loras=loras).float().cpu()
+            logits = self.model.forward(ids[:, -1:], self.cache, input_mask=None, loras=self.loras).float().cpu()
             token, _, _ = ExLlamaV2Sampler.sample(logits, settings, ids, random.random(), self.tokenizer)
             ids = torch.cat([ids, token], dim=1)
 
