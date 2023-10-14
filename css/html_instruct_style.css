@@ -14,11 +14,14 @@
 .message-body p {
     font-size: 15px !important;
     line-height: 22px !important;
+}
+
+.message-body p, .chat .message-body ul, .chat .message-body ol {
     margin-bottom: 1.25em !important;
 }
 
-.chat .message-body ul, .chat .message-body ol {
-    margin-bottom: 1.25em !important;
+.message-body p:last-child, .chat .message-body ul:last-child, .chat .message-body ol:last-child {
+    margin-bottom: 0em !important;
 }
 
 .dark .message-body p em {
