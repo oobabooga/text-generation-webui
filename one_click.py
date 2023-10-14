@@ -170,9 +170,17 @@ def install_webui():
     # Find the proper Pytorch installation command
     install_git = "conda install -y -k ninja git"
     install_pytorch = "python -m pip install torch torchvision torchaudio"
+    use_cuda121 = "N"
 
     if any((is_windows(), is_linux())) and choice == "A":
-        install_pytorch = "python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118"
+        # Ask for cuda version if using Nvidia
+        print("Would you like to use cuda 12.1? This is required for Flash Attention 2 on Windows. Cuda 12.1 is not supported on Kepler GPUs.")
+        use_cuda121 = input("Input (Y/N)> ").upper()
+        while use_cuda121 not in 'YN':
+            print("Invalid choice. Please try again.")
+            use_cuda121 = input("Input> ").upper()
+
+        install_pytorch = f"python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/{'cu121' if use_cuda121 == 'Y' else 'cu118'}"
     elif not is_macos() and choice == "B":
         if is_linux():
             install_pytorch = "python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.6"
@@ -189,7 +197,7 @@ def install_webui():
 
     # Install CUDA libraries (this wasn't necessary for Pytorch before...)
     if choice == "A":
-        run_cmd("conda install -y -c \"nvidia/label/cuda-11.8.0\" cuda-runtime", assert_success=True, environment=True)
+        run_cmd(f"conda install -y -c \"nvidia/label/{'cuda-12.1.0' if use_cuda121 == 'Y' else 'cuda-11.8.0'}\" cuda-runtime", assert_success=True, environment=True)
 
     # Install the webui requirements
     update_requirements(initial_installation=True)
@@ -238,13 +246,18 @@ def update_requirements(initial_installation=False):
 
     # Detect the PyTorch version
     torver = torch_version()
-    is_cuda = '+cu' in torver  # 2.0.1+cu118
+    print(f"TORCH: {torver}")
+    is_cuda = '+cu118' or '+cu121' in torver  # 2.1.0+cu118 or 2.1.0+cu121
+    is_cuda121 = '+cu121' in torver # 2.1.0+cu121
+    is_cuda118 = '+cu118' in torver # 2.1.0+cu118
     is_cuda117 = '+cu117' in torver  # 2.0.1+cu117
     is_rocm = '+rocm' in torver  # 2.0.1+rocm5.4.2
     is_intel = '+cxx11' in torver  # 2.0.1a0+cxx11.abi
     is_cpu = '+cpu' in torver  # 2.0.1+cpu
 
-    if is_rocm:
+    if is_cuda121:
+        requirements_file = "requirements_cu121.txt"
+    elif is_rocm:
         if cpu_has_avx2():
             requirements_file = "requirements_amd.txt"
         else:
