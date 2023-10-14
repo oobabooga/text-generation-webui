@@ -80,8 +80,10 @@ class Exllamav2Model:
 
     def generate_with_streaming(self, prompt, state):
         if hasattr(shared.model, "lora"):
-           loras=[shared.model.lora]
-        else: loras = None    
+            loras = [shared.model.lora]
+        else:
+            loras = None
+
         settings = ExLlamaV2Sampler.Settings()
         settings.temperature = state['temperature']
         settings.top_k = state['top_k']
@@ -108,12 +110,12 @@ class Exllamav2Model:
 
         # _gen_begin_base
         self.cache.current_seq_len = 0
-        self.model.forward(ids[:, :-1], self.cache, input_mask=None, preprocess_only=True, loras = loras)
+        self.model.forward(ids[:, :-1], self.cache, input_mask=None, preprocess_only=True, loras=loras)
 
         has_leading_space = False
         for i in range(max_new_tokens):
-            logits = self.model.forward(ids[:, -1:], self.cache, input_mask=None, loras = loras).float().cpu()
-            token, _, _= ExLlamaV2Sampler.sample(logits, settings, ids, random.random(), self.tokenizer)
+            logits = self.model.forward(ids[:, -1:], self.cache, input_mask=None, loras=loras).float().cpu()
+            token, _, _ = ExLlamaV2Sampler.sample(logits, settings, ids, random.random(), self.tokenizer)
             ids = torch.cat([ids, token], dim=1)
 
             if i == 0 and self.tokenizer.tokenizer.IdToPiece(int(token)).startswith('▁'):

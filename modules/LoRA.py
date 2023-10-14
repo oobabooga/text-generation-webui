@@ -65,9 +65,9 @@ def add_lora_exllama(lora_names):
         shared.lora_names = [lora_names[0]]
         return
 
+
 def add_lora_exllamav2(lora_names):
 
-    from peft import PeftModel
     from exllamav2 import ExLlamaV2Lora
 
     if len(lora_names) == 0:
@@ -93,6 +93,8 @@ def add_lora_exllamav2(lora_names):
         return
 
 # Adapted from https://github.com/Ph0rk0z/text-generation-webui-testing
+
+
 def add_lora_autogptq(lora_names):
 
     try:
