@@ -87,7 +87,6 @@ def add_lora_exllamav2(lora_names):
             shared.model.loras.append(lora)
 
         shared.lora_names = lora_names
-        return
     else:
         shared.lora_names = []
         shared.model.loras = None
