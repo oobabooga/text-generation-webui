@@ -2,6 +2,7 @@ import gc
 import os
 import re
 import time
+import json
 import traceback
 from pathlib import Path
 
@@ -129,6 +130,12 @@ def huggingface_loader(model_name):
         'trust_remote_code': shared.args.trust_remote_code,
         'torch_dtype': torch.bfloat16 if shared.args.bf16 else torch.float16
     }
+
+    if shared.args.loader == "petals" and shared.args.gpu_split:
+        model_config = json.loads(shared.args.gpu_split)
+        for key in model_config.keys():
+            params[key] = model_config[key]
+
     config = AutoConfig.from_pretrained(path_to_model, trust_remote_code=params['trust_remote_code'])
 
     if 'chatglm' in model_name.lower():
@@ -143,7 +150,7 @@ def huggingface_loader(model_name):
         else:
             LoaderClass = AutoModelForCausalLM
 
-    if not any((shared.args.cpu, torch.cuda.is_available(), torch.backends.mps.is_available())):
+    if not any((shared.args.cpu, shared.args.deepspeed, torch.cuda.is_available(), torch.backends.mps.is_available())):
         logger.warning("torch.cuda.is_available() returned False. This means that no GPU has been detected. Falling back to CPU mode.")
         shared.args.cpu = True
 
@@ -165,10 +172,6 @@ def huggingface_loader(model_name):
 
     # Load with quantization and/or offloading
     else:
-        if not any((shared.args.cpu, torch.cuda.is_available(), torch.backends.mps.is_available())):
-            logger.warning('torch.cuda.is_available() returned False. This means that no GPU has been detected. Falling back to CPU mode.')
-            shared.args.cpu = True
-
         if shared.args.cpu:
             params['torch_dtype'] = torch.float32
         else:

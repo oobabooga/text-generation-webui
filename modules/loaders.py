@@ -29,6 +29,7 @@ loaders_and_params = OrderedDict({
     ],
     'petals': [
         'trust_remote_code',
+        'gpu_split',
     ],
     'ExLlama_HF': [
         'gpu_split',
