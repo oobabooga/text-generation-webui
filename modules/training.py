@@ -156,7 +156,7 @@ def create_ui():
                 with gr.Column():
                     evaluation_log = gr.Markdown(value='')
 
-            evaluation_table = gr.Dataframe(value=generate_markdown_table(), interactive=True)
+            evaluation_table = gr.Dataframe(value=generate_markdown_table(), interactive=True, height=20000, elem_id='evaluation-table')
             with gr.Row():
                 save_comments = gr.Button('Save comments', elem_classes="small-button", interactive=not mu)
                 refresh_table = gr.Button('Refresh the table', elem_classes="small-button", interactive=not mu)
