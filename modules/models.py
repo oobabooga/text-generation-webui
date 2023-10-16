@@ -137,6 +137,8 @@ def huggingface_loader(model_name):
         if torch.backends.mps.is_available():
             device = torch.device('mps')
             model = model.to(device)
+        elif hasattr(torch, 'xpu') and torch.xpu.is_available():
+            model = model.to('xpu')
         else:
             model = model.cuda()
 
