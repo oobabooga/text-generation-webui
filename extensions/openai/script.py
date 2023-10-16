@@ -128,7 +128,7 @@ class Handler(BaseHTTPRequestHandler):
 
         if self.path.startswith('/v1/engines') or self.path.startswith('/v1/models'):
             is_legacy = 'engines' in self.path
-            is_list = self.path in ['/v1/engines', '/v1/models']
+            is_list = self.path.split('?')[0].split('#')[0] in ['/v1/engines', '/v1/models']
             if is_legacy and not is_list:
                 model_name = self.path[self.path.find('/v1/engines/') + len('/v1/engines/'):]
                 resp = OAImodels.load_model(model_name)
