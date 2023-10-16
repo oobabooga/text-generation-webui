@@ -8,7 +8,6 @@
 * [Docker](Docker.md)
 * [ExLlama](ExLlama.md)
 * [Extensions](Extensions.md)
-* [Generation parameters](Generation-parameters.md)
 * [GPTQ models (4 bit mode)](GPTQ-models-(4-bit-mode).md)
 * [LLaMA model](LLaMA-model.md)
 * [llama.cpp](llama.cpp.md)

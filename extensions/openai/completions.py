@@ -1,18 +1,15 @@
 import time
-import yaml
+
 import tiktoken
 import torch
 import torch.nn.functional as F
-from math import log, exp
-
-from transformers import LogitsProcessor, LogitsProcessorList
-
+import yaml
+from extensions.openai.defaults import clamp, default, get_default_req_params
+from extensions.openai.errors import InvalidRequestError
+from extensions.openai.utils import debug_msg, end_line
 from modules import shared
-from modules.text_generation import encode, decode, generate_reply
-
-from extensions.openai.defaults import get_default_req_params, default, clamp
-from extensions.openai.utils import end_line, debug_msg
-from extensions.openai.errors import *
+from modules.text_generation import decode, encode, generate_reply
+from transformers import LogitsProcessor, LogitsProcessorList
 
 
 # Thanks to @Cypherfox [Cypherfoxy] for the logits code, blame to @matatonic
@@ -21,7 +18,7 @@ class LogitsBiasProcessor(LogitsProcessor):
         self.logit_bias = logit_bias
         if self.logit_bias:
             self.keys = list([int(key) for key in self.logit_bias.keys()])
-            values = [ self.logit_bias[str(key)] for key in self.keys ]
+            values = [self.logit_bias[str(key)] for key in self.keys]
             self.values = torch.tensor(values, dtype=torch.float, device=shared.model.device)
             debug_msg(f"{self})")
 
@@ -36,6 +33,7 @@ class LogitsBiasProcessor(LogitsProcessor):
     def __repr__(self):
         return f"<{self.__class__.__name__}(logit_bias={self.logit_bias})>"
 
+
 class LogprobProcessor(LogitsProcessor):
     def __init__(self, logprobs=None):
         self.logprobs = logprobs
@@ -44,11 +42,11 @@ class LogprobProcessor(LogitsProcessor):
     def __call__(self, input_ids: torch.LongTensor, logits: torch.FloatTensor) -> torch.FloatTensor:
         if self.logprobs is not None:  # 0-5
             log_e_probabilities = F.log_softmax(logits, dim=1)
-            top_values, top_indices = torch.topk(log_e_probabilities, k=self.logprobs+1)
-            top_tokens = [ decode(tok) for tok in top_indices[0] ]
-            top_probs = [ float(x) for x in top_values[0] ]
+            top_values, top_indices = torch.topk(log_e_probabilities, k=self.logprobs + 1)
+            top_tokens = [decode(tok) for tok in top_indices[0]]
+            top_probs = [float(x) for x in top_values[0]]
             self.token_alternatives = dict(zip(top_tokens, top_probs))
-            debug_msg(f"{self.__class__.__name__}(logprobs+1={self.logprobs+1}, token_alternatives={self.token_alternatives})")
+            debug_msg(repr(self))
         return logits
 
     def __repr__(self):
@@ -56,14 +54,16 @@ class LogprobProcessor(LogitsProcessor):
 
 
 def convert_logprobs_to_tiktoken(model, logprobs):
-# more problems than it's worth.
-#    try:
-#        encoder = tiktoken.encoding_for_model(model)
-#        # just pick the first one if it encodes to multiple tokens... 99.9% not required and maybe worse overall.
-#        return dict([(encoder.decode([encoder.encode(token)[0]]), prob) for token, prob in logprobs.items()])
-#    except KeyError:
-#        # assume native tokens if we can't find the tokenizer
-        return logprobs
+    # more problems than it's worth.
+    # try:
+    #     encoder = tiktoken.encoding_for_model(model)
+    #     # just pick the first one if it encodes to multiple tokens... 99.9% not required and maybe worse overall.
+    #     return dict([(encoder.decode([encoder.encode(token)[0]]), prob) for token, prob in logprobs.items()])
+    # except KeyError:
+    #     # assume native tokens if we can't find the tokenizer
+    #     return logprobs
+
+    return logprobs
 
 
 def marshal_common_params(body):
@@ -114,7 +114,7 @@ def marshal_common_params(body):
             new_logit_bias = {}
             for logit, bias in logit_bias.items():
                 for x in encode(encoder.decode([int(logit)]), add_special_tokens=False)[0]:
-                    if int(x) in [0, 1, 2, 29871]: # XXX LLAMA tokens
+                    if int(x) in [0, 1, 2, 29871]:  # XXX LLAMA tokens
                         continue
                     new_logit_bias[str(int(x))] = bias
             debug_msg('logit_bias_map', logit_bias, '->', new_logit_bias)
@@ -145,7 +145,7 @@ def messages_to_prompt(body: dict, req_params: dict, max_tokens):
     if body.get('function_call', ''):  # chat only, 'none', 'auto', {'name': 'func'}
         raise InvalidRequestError(message="function_call is not supported.", param='function_call')
 
-    if not 'messages' in body:
+    if 'messages' not in body:
         raise InvalidRequestError(message="messages is required", param='messages')
 
     messages = body['messages']
@@ -158,17 +158,17 @@ def messages_to_prompt(body: dict, req_params: dict, max_tokens):
         'prompt': 'Assistant:',
     }
 
-    if not 'stopping_strings' in req_params:
+    if 'stopping_strings' not in req_params:
         req_params['stopping_strings'] = []
 
     # Instruct models can be much better
     if shared.settings['instruction_template']:
         try:
-            instruct = yaml.safe_load(open(f"characters/instruction-following/{shared.settings['instruction_template']}.yaml", 'r'))
+            instruct = yaml.safe_load(open(f"instruction-templates/{shared.settings['instruction_template']}.yaml", 'r'))
 
             template = instruct['turn_template']
             system_message_template = "{message}"
-            system_message_default = instruct.get('context', '') # can be missing
+            system_message_default = instruct.get('context', '')  # can be missing
             bot_start = template.find('<|bot|>')  # So far, 100% of instruction templates have this token
             user_message_template = template[:bot_start].replace('<|user-message|>', '{message}').replace('<|user|>', instruct.get('user', ''))
             bot_message_template = template[bot_start:].replace('<|bot-message|>', '{message}').replace('<|bot|>', instruct.get('bot', ''))
@@ -192,7 +192,7 @@ def messages_to_prompt(body: dict, req_params: dict, max_tokens):
         except Exception as e:
             req_params['stopping_strings'].extend(['\nUser:', 'User:'])  # XXX User: prompt here also
 
-            print(f"Exception: When loading characters/instruction-following/{shared.settings['instruction_template']}.yaml: {repr(e)}")
+            print(f"Exception: When loading instruction-templates/{shared.settings['instruction_template']}.yaml: {repr(e)}")
             print("Warning: Loaded default instruction-following template for model.")
 
     else:
@@ -215,7 +215,7 @@ def messages_to_prompt(body: dict, req_params: dict, max_tokens):
             raise InvalidRequestError(message="messages: missing role", param='messages')
         if 'content' not in m:
             raise InvalidRequestError(message="messages: missing content", param='messages')
-        
+
         role = m['role']
         content = m['content']
         # name = m.get('name', None)
@@ -271,16 +271,16 @@ def chat_completions(body: dict, is_legacy: bool = False) -> dict:
         req_params['max_new_tokens'] = req_params['truncation_length']
 
     # format the prompt from messages
-    prompt, token_count = messages_to_prompt(body, req_params, max_tokens)
+    prompt, token_count = messages_to_prompt(body, req_params, max_tokens)  # updates req_params['stopping_strings']
 
     # set real max, avoid deeper errors
     if req_params['max_new_tokens'] + token_count >= req_params['truncation_length']:
         req_params['max_new_tokens'] = req_params['truncation_length'] - token_count
 
+    stopping_strings = req_params.pop('stopping_strings', [])
+
     # generate reply #######################################
     debug_msg({'prompt': prompt, 'req_params': req_params})
-    stopping_strings = req_params.pop('stopping_strings', [])
-    logprob_proc = req_params.pop('logprob_proc', None)
     generator = generate_reply(prompt, req_params, stopping_strings=stopping_strings, is_chat=False)
 
     answer = ''
@@ -347,7 +347,7 @@ def stream_chat_completions(body: dict, is_legacy: bool = False):
         req_params['max_new_tokens'] = req_params['truncation_length']
 
     # format the prompt from messages
-    prompt, token_count = messages_to_prompt(body, req_params, max_tokens)
+    prompt, token_count = messages_to_prompt(body, req_params, max_tokens)  # updates req_params['stopping_strings']
 
     # set real max, avoid deeper errors
     if req_params['max_new_tokens'] + token_count >= req_params['truncation_length']:
@@ -438,19 +438,12 @@ def completions(body: dict, is_legacy: bool = False):
 
     # ... encoded as a string, array of strings, array of tokens, or array of token arrays.
     prompt_str = 'context' if is_legacy else 'prompt'
-    if not prompt_str in body:
+    if prompt_str not in body:
         raise InvalidRequestError("Missing required input", param=prompt_str)
 
-    prompt = body[prompt_str]
-    if isinstance(prompt, list):
-        if prompt and isinstance(prompt[0], int):
-            try:
-                encoder = tiktoken.encoding_for_model(requested_model)
-                prompt = encoder.decode(prompt)
-            except KeyError:
-                prompt = decode(prompt)[0]
-        else:
-            raise InvalidRequestError(message="API Batched generation not yet supported.", param=prompt_str)
+    prompt_arg = body[prompt_str]
+    if isinstance(prompt_arg, str) or (isinstance(prompt_arg, list) and isinstance(prompt_arg[0], int)):
+        prompt_arg = [prompt_arg]
 
     # common params
     req_params = marshal_common_params(body)
@@ -460,58 +453,74 @@ def completions(body: dict, is_legacy: bool = False):
     req_params['max_new_tokens'] = max_tokens
     requested_model = req_params.pop('requested_model')
     logprob_proc = req_params.pop('logprob_proc', None)
-
-    token_count = len(encode(prompt)[0])
-
-    if token_count + max_tokens > req_params['truncation_length']:
-        err_msg = f"The token count of your prompt ({token_count}) plus max_tokens ({max_tokens}) cannot exceed the model's context length ({req_params['truncation_length']})."
-        # print(f"Warning: ${err_msg}")
-        raise InvalidRequestError(message=err_msg, param=max_tokens_str)
-
+    stopping_strings = req_params.pop('stopping_strings', [])
+    # req_params['suffix'] = default(body, 'suffix', req_params['suffix'])
     req_params['echo'] = default(body, 'echo', req_params['echo'])
     req_params['top_k'] = default(body, 'best_of', req_params['top_k'])
 
-    # generate reply #######################################
-    debug_msg({'prompt': prompt, 'req_params': req_params})
-    stopping_strings = req_params.pop('stopping_strings', [])
-    generator = generate_reply(prompt, req_params, stopping_strings=stopping_strings, is_chat=False)
+    resp_list_data = []
+    total_completion_token_count = 0
+    total_prompt_token_count = 0
 
-    answer = ''
+    for idx, prompt in enumerate(prompt_arg, start=0):
+        if isinstance(prompt[0], int):
+            # token lists
+            if requested_model == shared.model_name:
+                prompt = decode(prompt)[0]
+            else:
+                try:
+                    encoder = tiktoken.encoding_for_model(requested_model)
+                    prompt = encoder.decode(prompt)
+                except KeyError:
+                    prompt = decode(prompt)[0]
 
-    for a in generator:
-        answer = a
+        token_count = len(encode(prompt)[0])
+        total_prompt_token_count += token_count
 
-    # strip extra leading space off new generated content
-    if answer and answer[0] == ' ':
-        answer = answer[1:]
+        if token_count + max_tokens > req_params['truncation_length']:
+            err_msg = f"The token count of your prompt ({token_count}) plus max_tokens ({max_tokens}) cannot exceed the model's context length ({req_params['truncation_length']})."
+            # print(f"Warning: ${err_msg}")
+            raise InvalidRequestError(message=err_msg, param=max_tokens_str)
 
-    completion_token_count = len(encode(answer)[0])
-    stop_reason = "stop"
-    if token_count + completion_token_count >= req_params['truncation_length'] or completion_token_count >= max_tokens:
-        stop_reason = "length"
+        # generate reply #######################################
+        debug_msg({'prompt': prompt, 'req_params': req_params})
+        generator = generate_reply(prompt, req_params, stopping_strings=stopping_strings, is_chat=False)
+        answer = ''
+
+        for a in generator:
+            answer = a
+
+        # strip extra leading space off new generated content
+        if answer and answer[0] == ' ':
+            answer = answer[1:]
+
+        completion_token_count = len(encode(answer)[0])
+        total_completion_token_count += completion_token_count
+        stop_reason = "stop"
+        if token_count + completion_token_count >= req_params['truncation_length'] or completion_token_count >= max_tokens:
+            stop_reason = "length"
+
+        respi = {
+            "index": idx,
+            "finish_reason": stop_reason,
+            "text": answer,
+            "logprobs": {'top_logprobs': [logprob_proc.token_alternatives]} if logprob_proc else None,
+        }
+
+        resp_list_data.extend([respi])
 
     resp = {
         "id": cmpl_id,
         "object": object_type,
         "created": created_time,
         "model": shared.model_name,  # TODO: add Lora info?
-        resp_list: [{
-            "index": 0,
-            "finish_reason": stop_reason,
-            "text": answer,
-        }],
+        resp_list: resp_list_data,
         "usage": {
-            "prompt_tokens": token_count,
-            "completion_tokens": completion_token_count,
-            "total_tokens": token_count + completion_token_count
+            "prompt_tokens": total_prompt_token_count,
+            "completion_tokens": total_completion_token_count,
+            "total_tokens": total_prompt_token_count + total_completion_token_count
         }
     }
-
-    if logprob_proc and logprob_proc.token_alternatives:
-        top_logprobs = convert_logprobs_to_tiktoken(model=requested_model, logprobs=logprob_proc.token_alternatives)
-        resp[resp_list][0]["logprobs"] = {'top_logprobs': [top_logprobs]}
-    else:
-        resp[resp_list][0]["logprobs"] = None
 
     return resp
 
@@ -528,10 +537,12 @@ def stream_completions(body: dict, is_legacy: bool = False):
 
     # ... encoded as a string, array of strings, array of tokens, or array of token arrays.
     prompt_str = 'context' if is_legacy else 'prompt'
-    if not prompt_str in body:
+    if prompt_str not in body:
         raise InvalidRequestError("Missing required input", param=prompt_str)
 
     prompt = body[prompt_str]
+    req_params = marshal_common_params(body)
+    requested_model = req_params.pop('requested_model')
     if isinstance(prompt, list):
         if prompt and isinstance(prompt[0], int):
             try:
@@ -543,13 +554,15 @@ def stream_completions(body: dict, is_legacy: bool = False):
             raise InvalidRequestError(message="API Batched generation not yet supported.", param=prompt_str)
 
     # common params
-    req_params = marshal_common_params(body)
     req_params['stream'] = True
     max_tokens_str = 'length' if is_legacy else 'max_tokens'
     max_tokens = default(body, max_tokens_str, req_params['max_new_tokens'])
     req_params['max_new_tokens'] = max_tokens
-    requested_model = req_params.pop('requested_model')
     logprob_proc = req_params.pop('logprob_proc', None)
+    stopping_strings = req_params.pop('stopping_strings', [])
+    # req_params['suffix'] = default(body, 'suffix', req_params['suffix'])
+    req_params['echo'] = default(body, 'echo', req_params['echo'])
+    req_params['top_k'] = default(body, 'best_of', req_params['top_k'])
 
     token_count = len(encode(prompt)[0])
 
@@ -557,9 +570,6 @@ def stream_completions(body: dict, is_legacy: bool = False):
         err_msg = f"The token count of your prompt ({token_count}) plus max_tokens ({max_tokens}) cannot exceed the model's context length ({req_params['truncation_length']})."
         # print(f"Warning: ${err_msg}")
         raise InvalidRequestError(message=err_msg, param=max_tokens_str)
-
-    req_params['echo'] = default(body, 'echo', req_params['echo'])
-    req_params['top_k'] = default(body, 'best_of', req_params['top_k'])
 
     def text_streaming_chunk(content):
         # begin streaming
@@ -572,13 +582,9 @@ def stream_completions(body: dict, is_legacy: bool = False):
                 "index": 0,
                 "finish_reason": None,
                 "text": content,
+                "logprobs": {'top_logprobs': [logprob_proc.token_alternatives]} if logprob_proc else None,
             }],
         }
-        if logprob_proc:
-            top_logprobs = convert_logprobs_to_tiktoken(model=requested_model, logprobs=logprob_proc.token_alternatives)
-            chunk[resp_list][0]["logprobs"] = {'top_logprobs': [top_logprobs]}
-        else:
-            chunk[resp_list][0]["logprobs"] = None
 
         return chunk
 
@@ -586,8 +592,6 @@ def stream_completions(body: dict, is_legacy: bool = False):
 
     # generate reply #######################################
     debug_msg({'prompt': prompt, 'req_params': req_params})
-    stopping_strings = req_params.pop('stopping_strings', [])
-    logprob_proc = req_params.pop('logprob_proc', None)
     generator = generate_reply(prompt, req_params, stopping_strings=stopping_strings, is_chat=False)
 
     answer = ''

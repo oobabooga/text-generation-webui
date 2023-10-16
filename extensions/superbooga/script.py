@@ -4,7 +4,7 @@ import textwrap
 import gradio as gr
 from bs4 import BeautifulSoup
 
-from modules import chat, shared
+from modules import chat
 from modules.logging_colors import logger
 
 from .chromadb import add_chunks_to_collector, make_collector
@@ -96,7 +96,8 @@ def apply_settings(chunk_count, chunk_count_initial, time_weight):
 def custom_generate_chat_prompt(user_input, state, **kwargs):
     global chat_collector
 
-    history = state['history']
+    # get history as being modified when using regenerate.
+    history = kwargs['history']
 
     if state['mode'] == 'instruct':
         results = collector.get_sorted(user_input, n_results=params['chunk_count'])
@@ -142,8 +143,8 @@ def remove_special_tokens(string):
     return re.sub(pattern, '', string)
 
 
-def input_modifier(string):
-    if shared.is_chat():
+def input_modifier(string, state, is_chat=False):
+    if is_chat:
         return string
 
     # Find the user input

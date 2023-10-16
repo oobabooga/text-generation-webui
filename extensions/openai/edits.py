@@ -1,10 +1,10 @@
 import time
+
 import yaml
-import os
-from modules import shared
 from extensions.openai.defaults import get_default_req_params
+from extensions.openai.errors import InvalidRequestError
 from extensions.openai.utils import debug_msg
-from extensions.openai.errors import *
+from modules import shared
 from modules.text_generation import encode, generate_reply
 
 
@@ -31,7 +31,7 @@ def edits(instruction: str, input: str, temperature=1.0, top_p=1.0) -> dict:
             stopping_strings.extend(['\n###'])
         else:
             try:
-                instruct = yaml.safe_load(open(f"characters/instruction-following/{shared.settings['instruction_template']}.yaml", 'r'))
+                instruct = yaml.safe_load(open(f"instruction-templates/{shared.settings['instruction_template']}.yaml", 'r'))
 
                 template = instruct['turn_template']
                 template = template\
@@ -45,7 +45,7 @@ def edits(instruction: str, input: str, temperature=1.0, top_p=1.0) -> dict:
 
             except Exception as e:
                 instruction_template = default_template
-                print(f"Exception: When loading characters/instruction-following/{shared.settings['instruction_template']}.yaml: {repr(e)}")
+                print(f"Exception: When loading instruction-templates/{shared.settings['instruction_template']}.yaml: {repr(e)}")
                 print("Warning: Loaded default instruction-following template (Alpaca) for model.")
     else:
         stopping_strings.extend(['\n###'])
@@ -74,7 +74,6 @@ def edits(instruction: str, input: str, temperature=1.0, top_p=1.0) -> dict:
 
     generator = generate_reply(edit_task, req_params, stopping_strings=stopping_strings, is_chat=False)
 
-    longest_stop_len = max([len(x) for x in stopping_strings] + [0])
     answer = ''
     for a in generator:
         answer = a

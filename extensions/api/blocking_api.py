@@ -1,4 +1,5 @@
 import json
+import ssl
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
 
@@ -7,16 +8,14 @@ from modules import shared
 from modules.chat import generate_chat_reply
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model, unload_model
-from modules.models_settings import (
-    get_model_settings_from_yamls,
-    update_model_parameters
-)
+from modules.models_settings import get_model_metadata, update_model_parameters
 from modules.text_generation import (
     encode,
     generate_reply,
     stop_everything_event
 )
 from modules.utils import get_available_models
+from modules.logging_colors import logger
 
 
 def get_model_info():
@@ -132,8 +131,8 @@ class Handler(BaseHTTPRequestHandler):
                 shared.model_name = model_name
                 unload_model()
 
-                model_settings = get_model_settings_from_yamls(shared.model_name)
-                shared.settings.update(model_settings)
+                model_settings = get_model_metadata(shared.model_name)
+                shared.settings.update({k: v for k, v in model_settings.items() if k in shared.settings})
                 update_model_parameters(model_settings, initial=True)
 
                 if shared.settings['mode'] != 'instruct':
@@ -200,25 +199,34 @@ class Handler(BaseHTTPRequestHandler):
         super().end_headers()
 
 
-def _run_server(port: int, share: bool = False):
+def _run_server(port: int, share: bool = False, tunnel_id=str):
     address = '0.0.0.0' if shared.args.listen else '127.0.0.1'
-
     server = ThreadingHTTPServer((address, port), Handler)
 
+    ssl_certfile = shared.args.ssl_certfile
+    ssl_keyfile = shared.args.ssl_keyfile
+    ssl_verify = True if (ssl_keyfile and ssl_certfile) else False
+    if ssl_verify:
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        context.load_cert_chain(ssl_certfile, ssl_keyfile)
+        server.socket = context.wrap_socket(server.socket, server_side=True)
+
     def on_start(public_url: str):
-        print(f'Starting non-streaming server at public url {public_url}/api')
+        logger.info(f'Starting non-streaming server at public url {public_url}/api')
 
     if share:
         try:
-            try_start_cloudflared(port, max_attempts=3, on_start=on_start)
+            try_start_cloudflared(port, tunnel_id, max_attempts=3, on_start=on_start)
         except Exception:
             pass
     else:
-        print(
-            f'Starting API at http://{address}:{port}/api')
+        if ssl_verify:
+            logger.info(f'Starting API at https://{address}:{port}/api')
+        else:
+            logger.info(f'Starting API at http://{address}:{port}/api')
 
     server.serve_forever()
 
 
-def start_server(port: int, share: bool = False):
-    Thread(target=_run_server, args=[port, share], daemon=True).start()
+def start_server(port: int, share: bool = False, tunnel_id=str):
+    Thread(target=_run_server, args=[port, share, tunnel_id], daemon=True).start()

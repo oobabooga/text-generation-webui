@@ -33,3 +33,6 @@ models/config-user.yaml
 
 .DS_Store
 Thumbs.db
+.chroma
+installer_files
+/CMD_FLAGS.txt

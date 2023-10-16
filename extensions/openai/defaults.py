@@ -4,6 +4,8 @@ import copy
 # Data type is important, Ex. use 0.0 for a float 0
 default_req_params = {
     'max_new_tokens': 16,  # 'Inf' for chat
+    'auto_max_new_tokens': False,
+    'max_tokens_second': 0,
     'temperature': 1.0,
     'top_p': 1.0,
     'top_k': 1,  # choose 20 for chat in absence of another default
@@ -32,7 +34,11 @@ default_req_params = {
     'mirostat_mode': 0,
     'mirostat_tau': 5.0,
     'mirostat_eta': 0.1,
+    'grammar_string': '',
+    'guidance_scale': 1,
+    'negative_prompt': '',
     'ban_eos_token': False,
+    'custom_token_bans': '',
     'skip_special_tokens': True,
     'custom_stopping_strings': '',
     # 'logits_processor' - conditionally passed
@@ -45,10 +51,13 @@ default_req_params = {
 def get_default_req_params():
     return copy.deepcopy(default_req_params)
 
-# little helper to get defaults if arg is present but None and should be the same type as default.
+
 def default(dic, key, default):
+    '''
+    little helper to get defaults if arg is present but None and should be the same type as default.
+    '''
     val = dic.get(key, default)
-    if type(val) != type(default):
+    if not isinstance(val, type(default)):
         # maybe it's just something like 1 instead of 1.0
         try:
             v = type(default)(val)

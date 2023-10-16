@@ -39,8 +39,8 @@ The extensions framework is based on special functions and variables that you ca
 | `def ui()` | Creates custom gradio elements when the UI is launched. | 
 | `def custom_css()` | Returns custom CSS as a string. It is applied whenever the web UI is loaded. |
 | `def custom_js()` | Same as above but for javascript. |
-| `def input_modifier(string, state)`  | Modifies the input string before it enters the model. In chat mode, it is applied to the user message. Otherwise, it is applied to the entire prompt. |
-| `def output_modifier(string, state)`  | Modifies the output string before it is presented in the UI. In chat mode, it is applied to the bot's reply. Otherwise, it is applied to the entire output. |
+| `def input_modifier(string, state, is_chat=False)`  | Modifies the input string before it enters the model. In chat mode, it is applied to the user message. Otherwise, it is applied to the entire prompt. |
+| `def output_modifier(string, state, is_chat=False)`  | Modifies the output string before it is presented in the UI. In chat mode, it is applied to the bot's reply. Otherwise, it is applied to the entire output. |
 | `def chat_input_modifier(text, visible_text, state)` | Modifies both the visible and internal inputs in chat mode. Can be used to hijack the chat input with custom content. |
 | `def bot_prefix_modifier(string, state)`  | Applied in chat mode to the prefix for the bot's reply. |
 | `def state_modifier(state)`  | Modifies the dictionary containing the UI input parameters before it is used by the text generation functions. |
@@ -111,14 +111,16 @@ functions are declared in the same order that they are called at
 generation time.
 """
 
+import gradio as gr
 import torch
-from modules import chat
+from transformers import LogitsProcessor
+
+from modules import chat, shared
 from modules.text_generation import (
     decode,
     encode,
     generate_reply,
 )
-from transformers import LogitsProcessor
 
 params = {
     "display_name": "Example Extension",
@@ -128,7 +130,7 @@ params = {
 class MyLogits(LogitsProcessor):
     """
     Manipulates the probabilities for the next token before it gets sampled.
-    Used in the custom_logits_processor function below.
+    Used in the logits_processor_modifier function below.
     """
     def __init__(self):
         pass
@@ -161,7 +163,7 @@ def chat_input_modifier(text, visible_text, state):
     """
     return text, visible_text
 
-def input_modifier(string, state):
+def input_modifier(string, state, is_chat=False):
     """
     In default/notebook modes, modifies the whole prompt.
 
@@ -194,7 +196,7 @@ def logits_processor_modifier(processor_list, input_ids):
     processor_list.append(MyLogits())
     return processor_list
 
-def output_modifier(string, state):
+def output_modifier(string, state, is_chat=False):
     """
     Modifies the LLM output before it gets presented.
 
@@ -232,8 +234,11 @@ def setup():
 
 def ui():
     """
-    Gets executed when the UI is drawn. Custom gradio elements and their
-    corresponding event handlers should be defined here.
+    Gets executed when the UI is drawn. Custom gradio elements and
+    their corresponding event handlers should be defined here.
+
+    To learn about gradio components, check out the docs:
+    https://gradio.app/docs/
     """
     pass
 ```

@@ -1,8 +1,8 @@
 import time
-import numpy as np
-from numpy.linalg import norm
-from extensions.openai.embeddings import get_embeddings
 
+import numpy as np
+from extensions.openai.embeddings import get_embeddings
+from numpy.linalg import norm
 
 moderations_disabled = False  # return 0/false
 category_embeddings = None

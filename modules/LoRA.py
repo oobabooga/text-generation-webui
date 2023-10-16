@@ -13,8 +13,18 @@ def add_lora_to_model(lora_names):
         add_lora_autogptq(lora_names)
     elif shared.model.__class__.__name__ in ['ExllamaModel', 'ExllamaHF'] or shared.args.loader == 'ExLlama':
         add_lora_exllama(lora_names)
+    elif shared.model.__class__.__name__ in ['Exllamav2Model', 'Exllamav2HF'] or shared.args.loader == ['ExLlamav2', 'ExLlamav2_HF']:
+        add_lora_exllamav2(lora_names)
     else:
         add_lora_transformers(lora_names)
+
+
+def get_lora_path(lora_name):
+    p = Path(lora_name)
+    if p.exists():
+        lora_name = p.parts[-1]
+
+    return Path(f"{shared.args.lora_dir}/{lora_name}")
 
 
 def add_lora_exllama(lora_names):
@@ -40,7 +50,7 @@ def add_lora_exllama(lora_names):
         if len(lora_names) > 1:
             logger.warning('ExLlama can only work with 1 LoRA at the moment. Only the first one in the list will be loaded.')
 
-        lora_path = Path(f"{shared.args.lora_dir}/{lora_names[0]}")
+        lora_path = get_lora_path(lora_names[0])
         lora_config_path = lora_path / "adapter_config.json"
         lora_adapter_path = lora_path / "adapter_model.bin"
 
@@ -56,8 +66,36 @@ def add_lora_exllama(lora_names):
         return
 
 
-# Adapted from https://github.com/Ph0rk0z/text-generation-webui-testing
+def add_lora_exllamav2(lora_names):
+
+    from exllamav2 import ExLlamaV2Lora
+
+    if isinstance(shared.model.loras, list):
+        for lora in shared.model.loras:
+            lora.unload()
+
+    if len(lora_names) > 0:
+        logger.info("Applying the following LoRAs to {}: {}".format(shared.model_name, ', '.join(lora_names)))
+        shared.model.loras = []
+        for lora_name in lora_names:
+            lora_path = get_lora_path(lora_name)
+            if shared.model.__class__.__name__ == 'Exllamav2Model':
+                lora = ExLlamaV2Lora.from_directory(shared.model.model, str(lora_path))
+            else:
+                lora = ExLlamaV2Lora.from_directory(shared.model.ex_model, str(lora_path))
+
+            shared.model.loras.append(lora)
+
+        shared.lora_names = lora_names
+    else:
+        shared.lora_names = []
+        shared.model.loras = None
+
+
 def add_lora_autogptq(lora_names):
+    '''
+    Adapted from https://github.com/Ph0rk0z/text-generation-webui-testing
+    '''
 
     try:
         from auto_gptq import get_gptq_peft_model
@@ -81,7 +119,7 @@ def add_lora_autogptq(lora_names):
             inference_mode=True,
         )
 
-        lora_path = Path(f"{shared.args.lora_dir}/{lora_names[0]}")
+        lora_path = get_lora_path(lora_names[0])
         logger.info("Applying the following LoRAs to {}: {}".format(shared.model_name, ', '.join([lora_names[0]])))
         shared.model = get_gptq_peft_model(shared.model, peft_config, lora_path)
         shared.lora_names = [lora_names[0]]
@@ -101,7 +139,7 @@ def add_lora_transformers(lora_names):
     if len(removed_set) == 0 and len(prior_set) > 0:
         logger.info(f"Adding the LoRA(s) named {added_set} to the model...")
         for lora in added_set:
-            shared.model.load_adapter(Path(f"{shared.args.lora_dir}/{lora}"), lora)
+            shared.model.load_adapter(get_lora_path(lora), lora)
 
         return
 
@@ -123,9 +161,9 @@ def add_lora_transformers(lora_names):
                     params['device_map'] = {"base_model.model." + k: v for k, v in shared.model.hf_device_map.items()}
 
         logger.info("Applying the following LoRAs to {}: {}".format(shared.model_name, ', '.join(lora_names)))
-        shared.model = PeftModel.from_pretrained(shared.model, Path(f"{shared.args.lora_dir}/{lora_names[0]}"), adapter_name=lora_names[0], **params)
+        shared.model = PeftModel.from_pretrained(shared.model, get_lora_path(lora_names[0]), adapter_name=lora_names[0], **params)
         for lora in lora_names[1:]:
-            shared.model.load_adapter(Path(f"{shared.args.lora_dir}/{lora}"), lora)
+            shared.model.load_adapter(get_lora_path(lora), lora)
 
         shared.lora_names = lora_names
 
