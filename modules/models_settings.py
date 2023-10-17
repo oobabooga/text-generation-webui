@@ -91,6 +91,10 @@ def get_model_metadata(model):
             if 'desc_act' in metadata:
                 model_settings['desc_act'] = metadata['desc_act']
 
+    # Ignore rope_freq_base if set to the default value
+    if 'rope_freq_base' in model_settings and model_settings['rope_freq_base'] == 10000:
+        model_settings.pop('rope_freq_base')
+
     # Apply user settings from models/config-user.yaml
     settings = shared.user_config
     for pat in settings:
@@ -107,6 +111,8 @@ def infer_loader(model_name, model_settings):
         loader = None
     elif (path_to_model / 'quantize_config.json').exists() or ('wbits' in model_settings and type(model_settings['wbits']) is int and model_settings['wbits'] > 0):
         loader = 'AutoGPTQ'
+    elif (path_to_model / 'quant_config.json').exists() or re.match(r'.*-awq', model_name.lower()):
+        loader = 'AutoAWQ'
     elif len(list(path_to_model.glob('*.gguf'))) > 0:
         loader = 'llama.cpp'
     elif re.match(r'.*\.gguf', model_name.lower()):
@@ -214,4 +220,4 @@ def save_model_settings(model, state):
         with open(p, 'w') as f:
             f.write(output)
 
-        yield (f"Settings for {model} saved to {p}")
+        yield (f"Settings for `{model}` saved to `{p}`.")

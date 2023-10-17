@@ -146,3 +146,32 @@ class LLaVA_v0_7B_Pipeline(LLaVA_v0_Pipeline):
     @staticmethod
     def llava_projector_repo() -> str:
         return "liuhaotian/LLaVA-7b-delta-v0"
+
+
+class LLaVA_LLaMA_2_13B_Pipeline(LLaVA_v0_13B_Pipeline):
+    def __init__(self, params: dict) -> None:
+        super().__init__(params)
+
+    @staticmethod
+    def name() -> str:
+        return "llava-llama-2-13b"
+
+    @staticmethod
+    def placeholder_token_id() -> int:
+        return 0
+
+    @staticmethod
+    def llava_projector_repo() -> str:
+        return "liuhaotian/llava-llama-2-13b-chat-lightning-preview"
+
+    @staticmethod
+    def image_start() -> str:
+        return ""
+
+    @staticmethod
+    def image_end() -> str:
+        return ""
+
+    @staticmethod
+    def placeholder_embeddings() -> torch.Tensor:
+        return LLaVA_v0_Pipeline.embed_tokens(encode("<unk>"*256, add_bos_token=False)[0])

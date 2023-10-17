@@ -18,6 +18,7 @@ from modules.callbacks import (
     _StopEverythingStoppingCriteria
 )
 from modules.extensions import apply_extensions
+from modules.grammar import GrammarLogitsProcessor
 from modules.html_generator import generate_4chan_html, generate_basic_html
 from modules.logging_colors import logger
 from modules.models import clear_torch_cache, local_rank
@@ -131,6 +132,8 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
     elif torch.backends.mps.is_available():
         device = torch.device('mps')
         return input_ids.to(device)
+    elif hasattr(torch, 'xpu') and torch.xpu.is_available():
+        return input_ids.to('xpu')
     else:
         return input_ids.cuda()
 
@@ -319,6 +322,7 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
     # In case a processor is passed by itself.
     if not isinstance(processor, LogitsProcessorList):
         processor = LogitsProcessorList([processor])
+    processor.append(GrammarLogitsProcessor(state['grammar_string']))
     apply_extensions('logits_processor', processor, input_ids)
     generate_params['logits_processor'] = processor
 
@@ -351,9 +355,10 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
 
             with generate_with_streaming(**generate_params) as generator:
                 for output in generator:
-                    yield get_reply_from_output_ids(output, input_ids, original_question, state, is_chat=is_chat)
                     if output[-1] in eos_token_ids:
                         break
+
+                    yield get_reply_from_output_ids(output, input_ids, original_question, state, is_chat=is_chat)
 
     except Exception:
         traceback.print_exc()
