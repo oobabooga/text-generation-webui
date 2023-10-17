@@ -231,6 +231,7 @@ loaders_samplers = {
         'ban_eos_token',
         'add_bos_token',
         'custom_token_bans',
+        'skip_special_tokens',
         'auto_max_new_tokens',
     },
     'ExLlamav2_HF': {
