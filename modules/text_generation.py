@@ -132,6 +132,8 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
     elif torch.backends.mps.is_available():
         device = torch.device('mps')
         return input_ids.to(device)
+    elif hasattr(torch, 'xpu') and torch.xpu.is_available():
+        return input_ids.to('xpu')
     else:
         return input_ids.cuda()
 
@@ -353,9 +355,10 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
 
             with generate_with_streaming(**generate_params) as generator:
                 for output in generator:
-                    yield get_reply_from_output_ids(output, input_ids, original_question, state, is_chat=is_chat)
                     if output[-1] in eos_token_ids:
                         break
+
+                    yield get_reply_from_output_ids(output, input_ids, original_question, state, is_chat=is_chat)
 
     except Exception:
         traceback.print_exc()

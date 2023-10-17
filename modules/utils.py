@@ -71,7 +71,7 @@ def natural_keys(text):
 
 
 def get_available_models():
-    model_list = []
+    model_list = ['None']
     for item in list(Path(f'{shared.args.model_dir}/').glob('*')):
         if not item.name.endswith(('.txt', '-np', '.pt', '.json', '.yaml', '.py')) and 'llama-tokenizer' not in item.name:
             model_list.append(re.sub('.pth$', '', item.name))
@@ -113,7 +113,7 @@ def get_available_extensions():
 
 
 def get_available_loras():
-    return sorted([item.name for item in list(Path(shared.args.lora_dir).glob('*')) if not item.name.endswith(('.txt', '-np', '.pt', '.json'))], key=natural_keys)
+    return ['None'] + sorted([item.name for item in list(Path(shared.args.lora_dir).glob('*')) if not item.name.endswith(('.txt', '-np', '.pt', '.json'))], key=natural_keys)
 
 
 def get_datasets(path: str, ext: str):

@@ -90,7 +90,7 @@ def create_chat_settings_ui():
         with gr.Row():
             with gr.Column(scale=8):
                 with gr.Row():
-                    shared.gradio['character_menu'] = gr.Dropdown(value='', choices=utils.get_available_characters(), label='Character', elem_id='character-menu', info='Used in chat and chat-instruct modes.', elem_classes='slim-dropdown')
+                    shared.gradio['character_menu'] = gr.Dropdown(value=None, choices=utils.get_available_characters(), label='Character', elem_id='character-menu', info='Used in chat and chat-instruct modes.', elem_classes='slim-dropdown')
                     ui.create_refresh_button(shared.gradio['character_menu'], lambda: None, lambda: {'choices': utils.get_available_characters()}, 'refresh-button', interactive=not mu)
                     shared.gradio['save_character'] = gr.Button('💾', elem_classes='refresh-button', interactive=not mu)
                     shared.gradio['delete_character'] = gr.Button('🗑️', elem_classes='refresh-button', interactive=not mu)

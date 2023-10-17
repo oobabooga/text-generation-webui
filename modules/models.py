@@ -90,7 +90,7 @@ def load_model(model_name, loader=None):
     if any((shared.args.xformers, shared.args.sdp_attention)):
         llama_attn_hijack.hijack_llama_attention()
 
-    logger.info(f"Loaded the model in {(time.time()-t0):.2f} seconds.\n")
+    logger.info(f"Loaded the model in {(time.time()-t0):.2f} seconds.")
     return model, tokenizer
 
 
@@ -137,6 +137,8 @@ def huggingface_loader(model_name):
         if torch.backends.mps.is_available():
             device = torch.device('mps')
             model = model.to(device)
+        elif hasattr(torch, 'xpu') and torch.xpu.is_available():
+            model = model.to('xpu')
         else:
             model = model.cuda()
 
@@ -149,8 +151,15 @@ def huggingface_loader(model_name):
 
     # Load with quantization and/or offloading
     else:
-        if not any((shared.args.cpu, torch.cuda.is_available(), torch.backends.mps.is_available())):
-            logger.warning('torch.cuda.is_available() returned False. This means that no GPU has been detected. Falling back to CPU mode.')
+        conditions = [
+            shared.args.cpu,
+            torch.cuda.is_available(),
+            torch.backends.mps.is_available(),
+            hasattr(torch, 'xpu') and torch.xpu.is_available(),
+        ]
+
+        if not any(conditions):
+            logger.warning('No GPU has been detected by Pytorch. Falling back to CPU mode.')
             shared.args.cpu = True
 
         if shared.args.cpu:
@@ -277,24 +286,24 @@ def ctransformers_loader(model_name):
     model, tokenizer = ctrans.from_pretrained(model_file)
     return model, tokenizer
 
+
 def AutoAWQ_loader(model_name):
-   from awq import AutoAWQForCausalLM
+    from awq import AutoAWQForCausalLM
 
-   model_dir = Path(f'{shared.args.model_dir}/{model_name}')
+    model_dir = Path(f'{shared.args.model_dir}/{model_name}')
 
-   if shared.args.deepspeed:
-       logger.warn("AutoAWQ is incompatible with deepspeed")
+    model = AutoAWQForCausalLM.from_quantized(
+                quant_path=model_dir,
+                max_new_tokens=shared.args.max_seq_len,
+                trust_remote_code=shared.args.trust_remote_code,
+                fuse_layers=not shared.args.no_inject_fused_attention,
+                max_memory=get_max_memory_dict(),
+                batch_size=shared.args.n_batch,
+                safetensors=any(model_dir.glob('*.safetensors')),
+            )
 
-   model = AutoAWQForCausalLM.from_quantized(
-       quant_path=model_dir,
-       max_new_tokens=shared.args.max_seq_len,
-       trust_remote_code=shared.args.trust_remote_code,
-       fuse_layers=not shared.args.no_inject_fused_attention,
-       max_memory=get_max_memory_dict(),
-       batch_size=shared.args.n_batch,
-       safetensors=not shared.args.trust_remote_code)
+    return model
 
-   return model
 
 def GPTQ_loader(model_name):
 

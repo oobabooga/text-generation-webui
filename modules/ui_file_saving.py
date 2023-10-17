@@ -8,16 +8,16 @@ def create_ui():
     mu = shared.args.multi_user
 
     # Text file saver
-    with gr.Box(visible=False, elem_classes='file-saver') as shared.gradio['file_saver']:
+    with gr.Group(visible=False, elem_classes='file-saver') as shared.gradio['file_saver']:
         shared.gradio['save_filename'] = gr.Textbox(lines=1, label='File name')
         shared.gradio['save_root'] = gr.Textbox(lines=1, label='File folder', info='For reference. Unchangeable.', interactive=False)
         shared.gradio['save_contents'] = gr.Textbox(lines=10, label='File contents')
         with gr.Row():
-            shared.gradio['save_confirm'] = gr.Button('Save', elem_classes="small-button", interactive=not mu)
+            shared.gradio['save_confirm'] = gr.Button('Save', elem_classes="small-button", variant='primary', interactive=not mu)
             shared.gradio['save_cancel'] = gr.Button('Cancel', elem_classes="small-button")
 
     # Text file deleter
-    with gr.Box(visible=False, elem_classes='file-saver') as shared.gradio['file_deleter']:
+    with gr.Group(visible=False, elem_classes='file-saver') as shared.gradio['file_deleter']:
         shared.gradio['delete_filename'] = gr.Textbox(lines=1, label='File name')
         shared.gradio['delete_root'] = gr.Textbox(lines=1, label='File folder', info='For reference. Unchangeable.', interactive=False)
         with gr.Row():
@@ -25,13 +25,13 @@ def create_ui():
             shared.gradio['delete_cancel'] = gr.Button('Cancel', elem_classes="small-button")
 
     # Character saver/deleter
-    with gr.Box(visible=False, elem_classes='file-saver') as shared.gradio['character_saver']:
+    with gr.Group(visible=False, elem_classes='file-saver') as shared.gradio['character_saver']:
         shared.gradio['save_character_filename'] = gr.Textbox(lines=1, label='File name', info='The character will be saved to your characters/ folder with this base filename.')
         with gr.Row():
-            shared.gradio['save_character_confirm'] = gr.Button('Save', elem_classes="small-button", interactive=not mu)
+            shared.gradio['save_character_confirm'] = gr.Button('Save', elem_classes="small-button", variant='primary', interactive=not mu)
             shared.gradio['save_character_cancel'] = gr.Button('Cancel', elem_classes="small-button")
 
-    with gr.Box(visible=False, elem_classes='file-saver') as shared.gradio['character_deleter']:
+    with gr.Group(visible=False, elem_classes='file-saver') as shared.gradio['character_deleter']:
         gr.Markdown('Confirm the character deletion?')
         with gr.Row():
             shared.gradio['delete_character_confirm'] = gr.Button('Delete', elem_classes="small-button", variant='stop', interactive=not mu)
