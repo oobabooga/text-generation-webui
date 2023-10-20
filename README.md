@@ -113,8 +113,8 @@ Requirements file to use:
 
 | GPU | CPU | requirements file to use |
 |--------|---------|---------|
-| NVidia | has AVX2 | `requirements_cuda.txt` |
-| NVidia | no AVX2 | `requirements_cuda_noavx2.txt` |
+| NVIDIA | has AVX2 | `requirements_cuda.txt` |
+| NVIDIA | no AVX2 | `requirements_cuda_noavx2.txt` |
 | AMD | has AVX2 | `requirements_amd.txt` |
 | AMD | no AVX2 | `requirements_amd_noavx2.txt` |
 | CPU only | has AVX2 | `requirements_cpu_only.txt` |
@@ -146,6 +146,10 @@ bitsandbytes >= 0.39 may not work. In that case, to use `--load-in-8bit`, you ma
 
 * Linux: `pip install bitsandbytes==0.38.1`
 * Windows: `pip install https://github.com/jllllll/bitsandbytes-windows-webui/raw/main/bitsandbytes-0.38.1-py3-none-any.whl`
+
+##### Manual install
+
+The requirments*.txt above contain various precompiled wheels. If you wish to compile things manually, you can use `requirements_nowheels.txt` and then install your desired loaders manually.
 
 ### Alternative: Docker
 
