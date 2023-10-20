@@ -78,7 +78,7 @@ bash Miniconda3.sh
 #### 1. Create a new conda environment
 
 ```
-conda create -n textgen python=3.10
+conda create -n textgen python=3.11
 conda activate textgen
 ```
 
@@ -86,11 +86,11 @@ conda activate textgen
 
 | System | GPU | Command |
 |--------|---------|---------|
-| Linux/WSL | NVIDIA | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118` |
+| Linux/WSL | NVIDIA | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121` |
 | Linux/WSL | CPU only | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu` |
 | Linux | AMD | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.6` |
 | MacOS + MPS | Any | `pip3 install torch torchvision torchaudio` |
-| Windows | NVIDIA | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118` |
+| Windows | NVIDIA | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121` |
 | Windows | CPU only | `pip3 install torch torchvision torchaudio` |
 
 The up-to-date commands can be found here: https://pytorch.org/get-started/locally/. 
@@ -98,7 +98,7 @@ The up-to-date commands can be found here: https://pytorch.org/get-started/local
 For NVIDIA, you may also need to manually install the CUDA runtime libraries:
 
 ```
-conda install -y -c "nvidia/label/cuda-11.8.0" cuda-runtime
+conda install -y -c "nvidia/label/cuda-12.1.0" cuda-runtime
 ```
 
 #### 3. Install the web UI

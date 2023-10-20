@@ -170,17 +170,17 @@ def install_webui():
     # Find the proper Pytorch installation command
     install_git = "conda install -y -k ninja git"
     install_pytorch = "python -m pip install torch torchvision torchaudio"
-    use_cuda121 = "N"
+    use_cuda118 = "N"
 
     if any((is_windows(), is_linux())) and choice == "A":
         # Ask for cuda version if using Nvidia
-        print("Would you like to use cuda 12.1? This is required for Flash Attention 2 on Windows. Cuda 12.1 is not supported on Kepler GPUs.")
-        use_cuda121 = input("Input (Y/N)> ").upper()
-        while use_cuda121 not in 'YN':
+        print("Would you like to use CUDA 11.8 instead of 12.1? This is only necessary for older GPUs like Kepler. For Ampere GPUs, say \"N\".")
+        use_cuda118 = input("Input (Y/N)> ").upper().strip().strip('"')
+        while use_cuda118 not in 'YN':
             print("Invalid choice. Please try again.")
-            use_cuda121 = input("Input> ").upper()
+            use_cuda118 = input("Input> ").upper().strip().strip('"')
 
-        install_pytorch = f"python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/{'cu121' if use_cuda121 == 'Y' else 'cu118'}"
+        install_pytorch = f"python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/{'cu121' if use_cuda118 == 'N' else 'cu118'}"
     elif not is_macos() and choice == "B":
         if is_linux():
             install_pytorch = "python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.6"
@@ -197,7 +197,7 @@ def install_webui():
 
     # Install CUDA libraries (this wasn't necessary for Pytorch before...)
     if choice == "A":
-        run_cmd(f"conda install -y -c \"nvidia/label/{'cuda-12.1.0' if use_cuda121 == 'Y' else 'cuda-11.8.0'}\" cuda-runtime", assert_success=True, environment=True)
+        run_cmd(f"conda install -y -c \"nvidia/label/{'cuda-12.1.0' if use_cuda118 == 'N' else 'cuda-11.8.0'}\" cuda-runtime", assert_success=True, environment=True)
 
     # Install the webui requirements
     update_requirements(initial_installation=True)
