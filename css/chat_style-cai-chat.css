@@ -8,7 +8,7 @@
 }
 
 .message-body {
-    margin-top: 2px;
+    margin-top: 3px;
 }
 
 .circle-you {
@@ -49,7 +49,7 @@
 }
 
 .message-body p, .chat .message-body ul, .chat .message-body ol {
-    margin-bottom: 23.4375px !important;
+    margin-bottom: 10px !important;
 }
 
 .message-body p:last-child, .chat .message-body ul:last-child, .chat .message-body ol:last-child {
