@@ -1,23 +1,18 @@
-aiofiles==23.1.0
-fastapi==0.95.2
-gradio_client==0.2.5
-gradio==3.33.1
-pydantic==1.10.12
-
 accelerate==0.23.*
 colorama
 datasets
 einops
-exllamav2==0.0.5
+exllamav2==0.0.6
+gradio==3.47.*
 markdown
-numpy==1.24
+numpy==1.24.*
 optimum==1.13.1
 pandas
 peft==0.5.*
 Pillow>=9.5.0
 pyyaml
 requests
-safetensors==0.3.2
+safetensors==0.4.0
 scipy
 sentencepiece
 tensorboard
@@ -37,6 +32,6 @@ https://github.com/abetlen/llama-cpp-python/releases/download/v0.2.11/llama_cpp_
 
 # AMD wheels
 https://github.com/jllllll/AutoGPTQ/releases/download/v0.4.2/auto_gptq-0.4.2+rocm5.6-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
-https://github.com/jllllll/exllama/releases/download/0.0.17/exllama-0.0.17+rocm5.6-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
+https://github.com/jllllll/exllama/releases/download/0.0.18/exllama-0.0.18+rocm5.6-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
 https://github.com/jllllll/llama-cpp-python-cuBLAS-wheels/releases/download/rocm/llama_cpp_python_cuda-0.2.11+rocm5.6.1-cp310-cp310-manylinux_2_31_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"
 https://github.com/jllllll/GPTQ-for-LLaMa-CUDA/releases/download/0.1.1/gptq_for_llama-0.1.1+rocm5.6-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64"

@@ -7,7 +7,7 @@ from datasets import load_dataset
 from tqdm import tqdm
 
 from modules import shared
-from modules.models import load_model, unload_model
+from modules.models import clear_torch_cache, load_model, unload_model
 from modules.models_settings import get_model_metadata, update_model_parameters
 from modules.text_generation import encode
 
@@ -59,13 +59,13 @@ def calculate_perplexity(models, input_dataset, stride, _max_length):
 
     for model in models:
         if is_in_past_evaluations(model, input_dataset, stride, _max_length):
-            cumulative_log += f"{model} has already been tested. Ignoring.\n\n"
+            cumulative_log += f"`{model}` has already been tested. Ignoring.\n\n"
             yield cumulative_log
             continue
 
         if model != 'current model':
             try:
-                yield cumulative_log + f"Loading {model}...\n\n"
+                yield cumulative_log + f"Loading `{model}`...\n\n"
                 model_settings = get_model_metadata(model)
                 shared.settings.update({k: v for k, v in model_settings.items() if k in shared.settings})  # hijacking the interface defaults
                 update_model_parameters(model_settings)  # hijacking the command-line arguments
@@ -73,11 +73,11 @@ def calculate_perplexity(models, input_dataset, stride, _max_length):
                 unload_model()
                 shared.model, shared.tokenizer = load_model(shared.model_name)
             except:
-                cumulative_log += f"Failed to load {model}. Moving on.\n\n"
+                cumulative_log += f"Failed to load `{model}`. Moving on.\n\n"
                 yield cumulative_log
                 continue
 
-        cumulative_log += f"Processing {shared.model_name}...\n\n"
+        cumulative_log += f"Processing `{shared.model_name}`...\n\n"
         yield cumulative_log + "Tokenizing the input dataset...\n\n"
         encodings = encode(text, add_special_tokens=False)
         seq_len = encodings.shape[1]
@@ -97,7 +97,7 @@ def calculate_perplexity(models, input_dataset, stride, _max_length):
             input_ids = encodings[:, begin_loc:end_loc]
             target_ids = input_ids.clone()
             target_ids[:, :-trg_len] = -100
-
+            clear_torch_cache()
             with torch.no_grad():
                 outputs = shared.model(input_ids=input_ids, labels=target_ids)
 
@@ -107,7 +107,6 @@ def calculate_perplexity(models, input_dataset, stride, _max_length):
                 neg_log_likelihood = outputs.loss
 
             nlls.append(neg_log_likelihood)
-
             prev_end_loc = end_loc
             if end_loc == seq_len:
                 break
@@ -115,7 +114,7 @@ def calculate_perplexity(models, input_dataset, stride, _max_length):
         ppl = torch.exp(torch.stack(nlls).mean())
         add_entry_to_past_evaluations(float(ppl), shared.model_name, input_dataset, stride, _max_length)
         save_past_evaluations(past_evaluations)
-        cumulative_log += f"The perplexity for {shared.model_name} is: {float(ppl)}\n\n"
+        cumulative_log += f"The perplexity for `{shared.model_name}` is: {float(ppl)}\n\n"
         yield cumulative_log
 
 

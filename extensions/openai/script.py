@@ -1,5 +1,6 @@
 import json
 import os
+import ssl
 import traceback
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
@@ -127,7 +128,7 @@ class Handler(BaseHTTPRequestHandler):
 
         if self.path.startswith('/v1/engines') or self.path.startswith('/v1/models'):
             is_legacy = 'engines' in self.path
-            is_list = self.path in ['/v1/engines', '/v1/models']
+            is_list = self.path.split('?')[0].split('#')[0] in ['/v1/engines', '/v1/models']
             if is_legacy and not is_list:
                 model_name = self.path[self.path.find('/v1/engines/') + len('/v1/engines/'):]
                 resp = OAImodels.load_model(model_name)
@@ -322,6 +323,15 @@ def run_server():
     port = int(os.environ.get('OPENEDAI_PORT', params.get('port', 5001)))
     server_addr = ('0.0.0.0' if shared.args.listen else '127.0.0.1', port)
     server = ThreadingHTTPServer(server_addr, Handler)
+    
+    ssl_certfile=os.environ.get('OPENEDAI_CERT_PATH', shared.args.ssl_certfile)
+    ssl_keyfile=os.environ.get('OPENEDAI_KEY_PATH', shared.args.ssl_keyfile)
+    ssl_verify=True if (ssl_keyfile and ssl_certfile) else False
+    if ssl_verify:        
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        context.load_cert_chain(ssl_certfile, ssl_keyfile)
+        server.socket = context.wrap_socket(server.socket, server_side=True)
+        
     if shared.args.share:
         try:
             from flask_cloudflared import _run_cloudflared
@@ -330,8 +340,11 @@ def run_server():
         except ImportError:
             print('You should install flask_cloudflared manually')
     else:
-        print(f'OpenAI compatible API ready at: OPENAI_API_BASE=http://{server_addr[0]}:{server_addr[1]}/v1')
-
+        if ssl_verify:
+            print(f'OpenAI compatible API ready at: OPENAI_API_BASE=https://{server_addr[0]}:{server_addr[1]}/v1')
+        else:
+            print(f'OpenAI compatible API ready at: OPENAI_API_BASE=http://{server_addr[0]}:{server_addr[1]}/v1')
+    
     server.serve_forever()
 
 

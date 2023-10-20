@@ -4,6 +4,8 @@
 
 Adds support for multimodality (text+images) to text-generation-webui.
 
+Note: multimodal currently only works for transformers, AutoGPTQ, and GPTQ-for-LLaMa loaders. ExLlama (v1 and v2) and llama.cpp support are planned.
+
 https://user-images.githubusercontent.com/3718215/233817203-69b57e77-0c55-4fd6-b742-3204bb13b8fc.mp4
 
 ## Usage
@@ -11,13 +13,15 @@ https://user-images.githubusercontent.com/3718215/233817203-69b57e77-0c55-4fd6-b
 To run this extension, download a LLM that supports multimodality, and then start server.py with the appropriate `--multimodal-pipeline` argument. Examples:
 
 ```
+python server.py --model liuhaotian_llava-v1.5-13b --multimodal-pipeline llava-v1.5-13b --load-in-4bit
+python server.py --model TheBloke_llava-v1.5-13B-GPTQ_gptq-4bit-32g-actorder_True --multimodal-pipeline llava-v1.5-13b --disable_exllama --loader autogptq
 python server.py --model wojtab_llava-7b-v0-4bit-128g --multimodal-pipeline llava-7b
-python3 server.py --model wojtab_llava-13b-v0-4bit-128g --multimodal-pipeline llava-13b
+python server.py --model wojtab_llava-13b-v0-4bit-128g --multimodal-pipeline llava-13b
 python server.py --model anon8231489123_vicuna-13b-GPTQ-4bit-128g --multimodal-pipeline minigpt4-13b
 python server.py --model llama-7b-4bit --multimodal-pipeline minigpt4-7b
 ```
 
-There is built-in support for LLaVA-v0-13B and LLaVA-v0-7b. To install `minigpt4`:
+There is built-in support for LLaVA-v0-13B, LLaVA-v0-7b, and LLaVA-v1.5-13B. To install `minigpt4`:
 
 - clone https://github.com/Wojtab/minigpt-4-pipeline into `extensions/multimodal/pipelines`
 - install the requirements.txt
@@ -31,6 +35,7 @@ To send an image, just upload it to the extension field below chat, and send a p
 Additionally, there is *Embed all images, not only the last one* checkbox. It modifies the image embeddings, by default (if it's unchecked), all but the most recent images have their embeddings empty, so they are not fed to the network. It seems as if some multimodal networks consider the features in all images at the same time as if they were a single image. Due to this behavior, by default, the extension skips previous images. However, it can lead to sub-par generation on other pipelines. If you want to include all images, just tick this checkbox.
 
 ## Compatibility
+
 As of now, the following multimodal pipelines are supported:
 |Pipeline|`--multimodal-pipeline`|Default LLM|LLM info(for the linked model)|Pipeline repository|
 |-|-|-|-|-|

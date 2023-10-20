@@ -100,7 +100,7 @@ def convert_to_markdown(string):
 
 def generate_basic_html(string):
     string = convert_to_markdown(string)
-    string = f'<style>{readable_css}</style><div class="container">{string}</div>'
+    string = f'<style>{readable_css}</style><div class="readable-container">{string}</div>'
     return string
 
 

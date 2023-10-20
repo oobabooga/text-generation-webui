@@ -4,42 +4,22 @@
 }
 
 #parent #container .reply {
-    background-color: rgb(214, 218, 240);
-    border-bottom-color: rgb(183, 197, 217);
-    border-bottom-style: solid;
-    border-bottom-width: 1px;
-    border-image-outset: 0;
-    border-image-repeat: stretch;
-    border-image-slice: 100%;
-    border-image-source: none;
-    border-image-width: 1;
-    border-left-color: rgb(0, 0, 0);
-    border-left-style: none;
-    border-left-width: 0px;
-    border-right-color: rgb(183, 197, 217);
-    border-right-style: solid;
-    border-right-width: 1px;
-    border-top-color: rgb(0, 0, 0);
-    border-top-style: none;
-    border-top-width: 0px;
-    color: rgb(0, 0, 0);
+    background-color: rgb(214 218 240);
+    border-bottom: 1px solid rgb(183 197 217);
+    border-image: none 100% 1 0 stretch;
+    border-left: 0 none rgb(0 0 0);
+    border-right: 1px solid rgb(183 197 217);
+    color: rgb(0 0 0);
     display: table;
     font-family: arial, helvetica, sans-serif;
     font-size: 13.3333px;
-    margin-bottom: 4px;
-    margin-left: 0px;
-    margin-right: 0px;
-    margin-top: 4px;
-    overflow-x: hidden;
-    overflow-y: hidden;
-    padding-bottom: 4px;
-    padding-left: 2px;
-    padding-right: 2px;
-    padding-top: 4px;
+    margin: 4px 0;
+    overflow: hidden hidden;
+    padding: 4px 2px;
 }
 
 #parent #container .number {
-    color: rgb(0, 0, 0);
+    color: rgb(0 0 0);
     font-family: arial, helvetica, sans-serif;
     font-size: 13.3333px;
     width: 342.65px;
@@ -47,23 +27,19 @@
 }
 
 #parent #container .op {
-    color: rgb(0, 0, 0);
+    color: rgb(0 0 0);
     font-family: arial, helvetica, sans-serif;
     font-size: 13.3333px;
-    margin-bottom: 8px;
-    margin-left: 0px;
-    margin-right: 0px;
-    margin-top: 4px;
-    overflow-x: hidden;
-    overflow-y: hidden;
+    margin: 4px 0 8px;
+    overflow: hidden hidden;
 }
 
 #parent #container .op blockquote {
-    margin-left: 0px !important;
+    margin-left: 0 !important;
 }
 
 #parent #container .name {
-    color: rgb(17, 119, 67);
+    color: rgb(17 119 67);
     font-family: arial, helvetica, sans-serif;
     font-size: 13.3333px;
     font-weight: 700;
@@ -71,31 +47,24 @@
 }
 
 #parent #container .quote {
-    color: rgb(221, 0, 0);
+    color: rgb(221 0 0);
     font-family: arial, helvetica, sans-serif;
     font-size: 13.3333px;
-    text-decoration-color: rgb(221, 0, 0);
-    text-decoration-line: underline;
-    text-decoration-style: solid;
+    text-decoration: underline solid rgb(221 0 0);
     text-decoration-thickness: auto;
 }
 
 #parent #container .greentext {
-    color: rgb(120, 153, 34);
+    color: rgb(120 153 34);
     font-family: arial, helvetica, sans-serif;
     font-size: 13.3333px;
 }
 
 #parent #container blockquote {
-    margin: 0px !important;
-    margin-block-start: 1em;
-    margin-block-end: 1em;
-    margin-inline-start: 40px;
-    margin-inline-end: 40px;
-    margin-top: 13.33px !important;
-    margin-bottom: 13.33px !important;
-    margin-left: 40px !important;
-    margin-right: 40px !important;
+    margin: 0 !important;
+    margin-block: 1em 1em;
+    margin-inline: 40px 40px;
+    margin: 13.33px 40px !important;
 }
 
 #parent #container .message_4chan {

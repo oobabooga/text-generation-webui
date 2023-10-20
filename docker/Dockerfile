@@ -11,8 +11,8 @@ WORKDIR /build
 RUN --mount=type=cache,target=/root/.cache/pip,rw \
     python3 -m venv /build/venv && \
     . /build/venv/bin/activate && \
-    pip3 install --upgrade pip setuptools wheel && \
-    pip3 install torch torchvision torchaudio && \
+    pip3 install --upgrade pip setuptools wheel ninja && \
+    pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118 && \
     pip3 install -r requirements.txt
 
 # https://developer.nvidia.com/cuda-gpus
@@ -31,6 +31,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,rw apt-get update &&
     rm -rf /var/lib/apt/lists/*
 
 RUN --mount=type=cache,target=/root/.cache/pip,rw pip3 install virtualenv
+
 RUN mkdir /app
 
 WORKDIR /app
@@ -42,8 +43,9 @@ RUN test -n "${WEBUI_VERSION}" && git reset --hard ${WEBUI_VERSION} || echo "Usi
 RUN virtualenv /app/venv
 RUN --mount=type=cache,target=/root/.cache/pip,rw \
     . /app/venv/bin/activate && \
-    pip3 install --upgrade pip setuptools wheel && \
-    pip3 install torch torchvision torchaudio sentence_transformers xformers
+    pip3 install --upgrade pip setuptools wheel ninja && \
+    pip3 install torch --index-url https://download.pytorch.org/whl/cu118 && \
+    pip3 install torchvision torchaudio sentence_transformers xformers
 
 # Copy and install GPTQ-for-LLaMa
 COPY --from=builder /build /app/repositories/GPTQ-for-LLaMa

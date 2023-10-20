@@ -91,6 +91,10 @@ def get_model_metadata(model):
             if 'desc_act' in metadata:
                 model_settings['desc_act'] = metadata['desc_act']
 
+    # Ignore rope_freq_base if set to the default value
+    if 'rope_freq_base' in model_settings and model_settings['rope_freq_base'] == 10000:
+        model_settings.pop('rope_freq_base')
+
     # Apply user settings from models/config-user.yaml
     settings = shared.user_config
     for pat in settings:
@@ -216,4 +220,4 @@ def save_model_settings(model, state):
         with open(p, 'w') as f:
             f.write(output)
 
-        yield (f"Settings for {model} saved to {p}")
+        yield (f"Settings for `{model}` saved to `{p}`.")

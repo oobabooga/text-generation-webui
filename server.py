@@ -8,6 +8,7 @@ from modules.logging_colors import logger
 os.environ['GRADIO_ANALYTICS_ENABLED'] = 'False'
 os.environ['BITSANDBYTES_NOWELCOME'] = '1'
 warnings.filterwarnings('ignore', category=UserWarning, message='TypedStorage is deprecated')
+warnings.filterwarnings('ignore', category=UserWarning, message='Using the update method is deprecated')
 
 with RequestBlocker():
     import gradio as gr

@@ -207,19 +207,6 @@ def save_settings(state, preset, instruction_template, extensions, show_controls
     return yaml.dump(output, sort_keys=False, width=float("inf"))
 
 
-class ToolButton(gr.Button, gr.components.IOComponent):
-    """
-    Small button with single emoji as text, fits inside gradio forms
-    Copied from https://github.com/AUTOMATIC1111/stable-diffusion-webui
-    """
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-    def get_block_name(self):
-        return "button"
-
-
 def create_refresh_button(refresh_component, refresh_method, refreshed_args, elem_class, interactive=True):
     """
     Copied from https://github.com/AUTOMATIC1111/stable-diffusion-webui
@@ -233,7 +220,7 @@ def create_refresh_button(refresh_component, refresh_method, refreshed_args, ele
 
         return gr.update(**(args or {}))
 
-    refresh_button = ToolButton(value=refresh_symbol, elem_classes=elem_class, interactive=interactive)
+    refresh_button = gr.Button(refresh_symbol, elem_classes=elem_class, interactive=interactive)
     refresh_button.click(
         fn=refresh,
         inputs=[],
@@ -241,11 +228,3 @@ def create_refresh_button(refresh_component, refresh_method, refreshed_args, ele
     )
 
     return refresh_button
-
-
-def create_delete_button(**kwargs):
-    return ToolButton(value=delete_symbol, **kwargs)
-
-
-def create_save_button(**kwargs):
-    return ToolButton(value=save_symbol, **kwargs)
