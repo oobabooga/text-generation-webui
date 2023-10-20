@@ -175,10 +175,10 @@ def install_webui():
     if any((is_windows(), is_linux())) and choice == "A":
         # Ask for cuda version if using Nvidia
         print("Would you like to use CUDA 11.8 instead of 12.1? This is only necessary for older GPUs like Kepler. For Ampere GPUs, say \"N\".")
-        use_cuda118 = input("Input (Y/N)> ").upper().strip().strip('"')
+        use_cuda118 = input("Input (Y/N)> ").upper().strip('"').strip()
         while use_cuda118 not in 'YN':
             print("Invalid choice. Please try again.")
-            use_cuda118 = input("Input> ").upper().strip().strip('"')
+            use_cuda118 = input("Input> ").upper().strip('"').strip()
 
         install_pytorch = f"python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/{'cu121' if use_cuda118 == 'N' else 'cu118'}"
     elif not is_macos() and choice == "B":
@@ -249,17 +249,13 @@ def update_requirements(initial_installation=False):
     torver = torch_version()
     print(f"TORCH: {torver}")
     is_cuda = '+cu118' or '+cu121' in torver  # 2.1.0+cu118 or 2.1.0+cu121
-    is_cuda121 = '+cu121' in torver # 2.1.0+cu121
     is_cuda118 = '+cu118' in torver # 2.1.0+cu118
     is_cuda117 = '+cu117' in torver  # 2.0.1+cu117
-    is_cuda118 = '+cu118' in torver
     is_rocm = '+rocm' in torver  # 2.0.1+rocm5.4.2
     is_intel = '+cxx11' in torver  # 2.0.1a0+cxx11.abi
     is_cpu = '+cpu' in torver  # 2.0.1+cpu
 
-    if is_cuda121:
-        requirements_file = "requirements_cu121.txt"
-    elif is_rocm:
+    if is_rocm:
         if cpu_has_avx2():
             requirements_file = "requirements_amd.txt"
         else:
