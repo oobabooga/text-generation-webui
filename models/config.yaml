@@ -39,6 +39,8 @@
 .*llava:
   instruction_template: 'LLaVA'
   custom_stopping_strings: '"\n###"'
+.*llava.*1.5:
+  instruction_template: 'LLaVA-v1'
 .*wizard.*mega:
   instruction_template: 'Wizard-Mega'
   custom_stopping_strings: '"</s>"'
