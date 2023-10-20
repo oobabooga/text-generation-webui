@@ -149,7 +149,7 @@ bitsandbytes >= 0.39 may not work. In that case, to use `--load-in-8bit`, you ma
 
 ##### Manual install
 
-The requirments*.txt above contain various precompiled wheels. If you wish to compile things manually, you can use `requirements_nowheels.txt` and then install your desired loaders manually.
+The requirments*.txt above contain various precompiled wheels. If you wish to compile things manually, or if you need to because no suitable wheels are available for your hardware, you can use `requirements_nowheels.txt` and then install your desired loaders manually.
 
 ### Alternative: Docker
 
