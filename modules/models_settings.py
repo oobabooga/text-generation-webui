@@ -220,4 +220,4 @@ def save_model_settings(model, state):
         with open(p, 'w') as f:
             f.write(output)
 
-        yield (f"Settings for {model} saved to {p}")
+        yield (f"Settings for `{model}` saved to `{p}`.")

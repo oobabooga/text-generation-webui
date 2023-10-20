@@ -11,43 +11,43 @@
     display: none;
 }
 
-.message-body p {
+.message-body p, .message-body li {
     font-size: 15px !important;
-    line-height: 22px !important;
+    line-height: 22.5px !important;
 }
 
 .message-body p, .chat .message-body ul, .chat .message-body ol {
-    margin-bottom: 1.25em !important;
+    margin-bottom: 23.4375px !important;
 }
 
 .message-body p:last-child, .chat .message-body ul:last-child, .chat .message-body ol:last-child {
-    margin-bottom: 0em !important;
+    margin-bottom: 0 !important;
 }
 
 .dark .message-body p em {
-    color: rgb(198, 202, 214) !important;
+    color: rgb(198 202 214) !important;
 }
 
 .message-body p em {
-    color: rgb(110, 110, 110) !important;
+    color: rgb(110 110 110) !important;
 }
 
 .gradio-container .chat .assistant-message {
-    padding: 15px;
-    border-radius: 20px;
+    padding: 20px;
+    border-radius: 15px;
     background-color: #0000000f;
     margin-top: 9px !important;
     margin-bottom: 18px !important;
 }
 
 .gradio-container .chat .user-message {
-    padding: 15px;
-    border-radius: 20px;
+    padding: 20px;
+    border-radius: 15px;
     margin-bottom: 9px !important;
 }
 
 .gradio-container .chat .assistant-message:last-child, .gradio-container .chat .user-message:last-child {
-    margin-bottom: 0px !important;
+    margin-bottom: 0 !important;
 }
 
 .dark .chat .assistant-message {

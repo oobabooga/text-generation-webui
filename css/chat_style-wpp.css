@@ -47,9 +47,9 @@
 }
 
 .dark .message-body p em {
-    color: rgb(138, 138, 138) !important;
+    color: rgb(138 138 138) !important;
 }
 
 .message-body p em {
-    color: rgb(110, 110, 110) !important;
+    color: rgb(110 110 110) !important;
 }

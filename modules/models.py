@@ -137,6 +137,8 @@ def huggingface_loader(model_name):
         if torch.backends.mps.is_available():
             device = torch.device('mps')
             model = model.to(device)
+        elif hasattr(torch, 'xpu') and torch.xpu.is_available():
+            model = model.to('xpu')
         else:
             model = model.cuda()
 
@@ -149,8 +151,15 @@ def huggingface_loader(model_name):
 
     # Load with quantization and/or offloading
     else:
-        if not any((shared.args.cpu, torch.cuda.is_available(), torch.backends.mps.is_available())):
-            logger.warning('torch.cuda.is_available() returned False. This means that no GPU has been detected. Falling back to CPU mode.')
+        conditions = [
+            shared.args.cpu,
+            torch.cuda.is_available(),
+            torch.backends.mps.is_available(),
+            hasattr(torch, 'xpu') and torch.xpu.is_available(),
+        ]
+
+        if not any(conditions):
+            logger.warning('No GPU has been detected by Pytorch. Falling back to CPU mode.')
             shared.args.cpu = True
 
         if shared.args.cpu:
