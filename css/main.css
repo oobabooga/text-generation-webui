@@ -364,9 +364,13 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     padding-bottom: 0px !important;
 }
 
-.message-body li {
+.message-body li:not(:last-child) {
     margin-top: 0 !important;
-    margin-bottom: 0 !important;
+    margin-bottom: 2px !important;
+}
+
+.message-body li:last-child {
+    margin-bottom: 0px !important;
 }
 
 .message-body li > p {
@@ -382,7 +386,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 .message-body pre:not(:last-child) {
-    margin-bottom: 1.25em !important;
+    margin-bottom: 35.625px !important;
 }
 
 .message-body pre:last-child {
@@ -395,13 +399,13 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     border: 1px solid var(--border-color-primary);
     border-radius: var(--radius-sm);
     background: var(--background-fill-secondary);
-    font-size: 85%;
+    font-size: 90%;
     padding: 1px 3px;
 }
 
 .message-body pre > code {
     display: block;
-    padding: .5em .7em;
+    padding: 15px;
 }
 
 .message-body :not(pre) > code {

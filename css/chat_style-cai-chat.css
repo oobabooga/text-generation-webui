@@ -4,7 +4,11 @@
     padding-bottom: 25px;
     font-size: 15px;
     font-family: 'Noto Sans', Helvetica, Arial, sans-serif;
-    line-height: 23px !important;
+    line-height: 22.5px !important;
+}
+
+.message-body {
+    margin-top: 2px;
 }
 
 .circle-you {
@@ -29,10 +33,6 @@
     object-fit: cover;
 }
 
-.text p {
-    margin-top: 5px;
-}
-
 .username {
     font-weight: bold;
 }
@@ -44,9 +44,16 @@
 }
 
 .message-body p {
-    margin-bottom: 0 !important;
     font-size: 15px !important;
-    line-height: 23px !important;
+    line-height: 22.5px !important;
+}
+
+.message-body p, .chat .message-body ul, .chat .message-body ol {
+    margin-bottom: 23.4375px !important;
+}
+
+.message-body p:last-child, .chat .message-body ul:last-child, .chat .message-body ol:last-child {
+    margin-bottom: 0em !important;
 }
 
 .dark .message-body p em {
