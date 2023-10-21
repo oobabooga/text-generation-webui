@@ -17,12 +17,12 @@ cp docker/.env.example .env
 docker compose up --build
 ```
 
-# Table of contents
+## Table of contents
 
 * [Docker Compose installation instructions](#docker-compose-installation-instructions)
 * [Repository with additional Docker files](#dedicated-docker-repository)
 
-# Docker Compose installation instructions 
+## Docker Compose installation instructions 
 
 By [@loeken](https://github.com/loeken).
 
@@ -52,21 +52,21 @@ By [@loeken](https://github.com/loeken).
   - [7. startup](#7-startup)
 - [notes](#notes)
 
-## Ubuntu 22.04
+### Ubuntu 22.04
 
-### 0. youtube video
+#### 0. youtube video
 A video walking you through the setup can be found here:
 
 [![oobabooga text-generation-webui setup in docker on ubuntu 22.04](https://img.youtube.com/vi/ELkKWYh8qOk/0.jpg)](https://www.youtube.com/watch?v=ELkKWYh8qOk)
 
 
-### 1. update the drivers
+#### 1. update the drivers
 in the the “software updater” update drivers to the last version of the prop driver.
 
-### 2. reboot
+#### 2. reboot
 to switch using to new driver
 
-### 3. install docker
+#### 3. install docker
 ```bash
 sudo apt update
 sudo apt-get install curl
@@ -82,7 +82,7 @@ sudo usermod -aG docker $USER
 newgrp docker
 ```
 
-### 4. docker & container toolkit
+#### 4. docker & container toolkit
 ```bash
 curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
 echo "deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://nvidia.github.io/libnvidia-container/stable/ubuntu22.04/amd64 /" | \
@@ -92,13 +92,13 @@ sudo apt install nvidia-docker2 nvidia-container-runtime -y
 sudo systemctl restart docker
 ```
 
-### 5. clone the repo
+#### 5. clone the repo
 ```
 git clone https://github.com/oobabooga/text-generation-webui
 cd text-generation-webui
 ```
 
-### 6. prepare models
+#### 6. prepare models
 download and place the models inside the models folder. tested with:
 
 4bit
@@ -108,30 +108,30 @@ https://github.com/oobabooga/text-generation-webui/pull/530#issuecomment-1483941
 8bit:
 https://github.com/oobabooga/text-generation-webui/pull/530#issuecomment-1484235789
 
-### 7. prepare .env file
+#### 7. prepare .env file
 edit .env values to your needs.
 ```bash
 cp .env.example .env
 nano .env
 ```
 
-### 8. startup docker container
+#### 8. startup docker container
 ```bash
 docker compose up --build
 ```
 
-## Manjaro
+### Manjaro
 manjaro/arch is similar to ubuntu just the dependency installation is more convenient
 
-### update the drivers
+#### update the drivers
 ```bash
 sudo mhwd -a pci nonfree 0300
 ```
-### reboot
+#### reboot
 ```bash
 reboot
 ```
-### docker & container toolkit
+#### docker & container toolkit
 ```bash
 yay -S docker docker-compose buildkit gcc nvidia-docker
 sudo usermod -aG docker $USER
@@ -139,32 +139,32 @@ newgrp docker
 sudo systemctl restart docker # required by nvidia-container-runtime
 ```
 
-### continue with ubuntu task
+#### continue with ubuntu task
 continue at [5. clone the repo](#5-clone-the-repo)
 
-## Windows
-### 0. youtube video
+### Windows
+#### 0. youtube video
 A video walking you through the setup can be found here:
 [![oobabooga text-generation-webui setup in docker on windows 11](https://img.youtube.com/vi/ejH4w5b5kFQ/0.jpg)](https://www.youtube.com/watch?v=ejH4w5b5kFQ)
 
-### 1. choco package manager
+#### 1. choco package manager
 install package manager  (https://chocolatey.org/ )
 ```
 Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
 ```
 
-### 2. install drivers/dependencies
+#### 2. install drivers/dependencies
 ```
 choco install nvidia-display-driver cuda git docker-desktop
 ```
 
-### 3. install wsl
+#### 3. install wsl
 wsl --install
 
-### 4. reboot
+#### 4. reboot
 after reboot enter username/password in wsl
 
-### 5. git clone && startup
+#### 5. git clone && startup
 clone the repo and edit .env values to your needs.
 ```
 cd Desktop
@@ -174,19 +174,19 @@ COPY .env.example .env
 notepad .env
 ```
 
-### 6. prepare models
+#### 6. prepare models
 download and place the models inside the models folder. tested with:
 
 4bit https://github.com/oobabooga/text-generation-webui/pull/530#issuecomment-1483891617 https://github.com/oobabooga/text-generation-webui/pull/530#issuecomment-1483941105
 
 8bit: https://github.com/oobabooga/text-generation-webui/pull/530#issuecomment-1484235789
 
-### 7. startup
+#### 7. startup
 ```
 docker compose up
 ```
 
-## notes
+### notes
 
 on older ubuntus you can manually install the docker compose plugin like this:
 ```
@@ -197,7 +197,6 @@ chmod +x $DOCKER_CONFIG/cli-plugins/docker-compose
 export PATH="$HOME/.docker/cli-plugins:$PATH"
 ```
 
-# Dedicated docker repository
+## Dedicated docker repository
 
 An external repository maintains a docker wrapper for this project as well as several pre-configured 'one-click' `docker compose` variants (e.g., updated branches of GPTQ). It can be found at: [Atinoda/text-generation-webui-docker](https://github.com/Atinoda/text-generation-webui-docker).
-
