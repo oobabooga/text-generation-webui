@@ -4,7 +4,9 @@ This is where you load models, apply LoRAs to a loaded model, and download new m
 
 ### Transformers
 
-Loads: full precision (16-bit or 32-bit) pytorch models. The repository usually has a clean name without GGUF, EXL2, GPTQ, or AWQ in its name, and the model files are named `pytorch_model.bin` or `model.safetensors`. Example: [https://huggingface.co/lmsys/vicuna-7b-v1.5](https://huggingface.co/lmsys/vicuna-7b-v1.5). 
+Loads: full precision (16-bit or 32-bit) pytorch models. The repository usually has a clean name without GGUF, EXL2, GPTQ, or AWQ in its name, and the model files are named `pytorch_model.bin` or `model.safetensors`. 
+
+Example: [https://huggingface.co/lmsys/vicuna-7b-v1.5](https://huggingface.co/lmsys/vicuna-7b-v1.5). 
 
 Full precision models use a ton of VRAM, so usually you will want to select the "load_in_4bit" and "use_double_quant" options to load the model in 4-bit precision using bitsandbytes.
 
