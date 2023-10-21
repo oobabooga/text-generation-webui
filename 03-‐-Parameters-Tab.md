@@ -30,7 +30,7 @@ The other presets are:
 
 For more information about the parameters, the [transformers documentation](https://huggingface.co/docs/transformers/main_classes/text_generation#transformers.GenerationConfig) is a good reference.
 
-* **max_new_tokens**: Maximum number of tokens to generate. It is used in the truncation calculation through the formula `(prompt_length) = min(truncation_length - max_new_tokens, prompt_length)`, so don't set it higher than necessary.
+* **max_new_tokens**: Maximum number of tokens to generate. Don't set it higher than necessary: it is used in the truncation calculation through the formula `(prompt_length) = min(truncation_length - max_new_tokens, prompt_length)`, so your prompt will get truncated if you set it too high.
 * **temperature**: Primary factor to control the randomness of outputs. 0 = deterministic (only the most likely token is used). Higher value = more randomness.
 * **top_p**: If not set to 1, select tokens with probabilities adding up to less than this number. Higher value = higher range of possible random results.
 * **top_k**: Similar to top_p, but select instead only the top_k most likely tokens. Higher value = higher range of possible random results.
