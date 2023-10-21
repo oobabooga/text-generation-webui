@@ -1,17 +1,15 @@
-## Parameters tab
-
-### Generation
+## Generation
 
 Contains parameters that control the text generation. 
 
-#### Quick rundown
+### Quick rundown
 
 LLMs work by generating one token at a time. Given your prompt, all the model does is calculate the probabilities for every possible next token. The actual token generation is done after that. 
 
 * In *greedy decoding*, the most likely token is always picked.
 * Most commonly, *sampling* techniques are used to choose from the next-token distribution in a more non-trivial way with the goal of improving the quality of the generated text.
 
-#### Preset menu
+### Preset menu
 
 Can be used to save combinations of parameters for reuse. 
 
@@ -28,7 +26,7 @@ The other presets are:
 * LLaMA-Precise: a legacy preset that was the default for the web UI before the Preset Arena.
 * Debug-deterministic: disables sampling. It is useful for debugging, or if you intentionally want to use greedy decoding.
 
-#### Parameters description
+### Parameters description
 
 For a technical description of the parameters, the [transformers documentation](https://huggingface.co/docs/transformers/main_classes/text_generation#transformers.GenerationConfig) is a good reference.
 
@@ -43,9 +41,7 @@ For a technical description of the parameters, the [transformers documentation](
 * **epsilon_cutoff**: In units of 1e-4; a reasonable value is 3. This sets a probability floor below which tokens are excluded from being sampled.
 * **eta_cutoff**: In units of 1e-4; a reasonable value is 3. The main parameter of the special Eta Sampling technique. See [this paper](https://arxiv.org/pdf/2210.15191.pdf) for a description.
 
-
 * **encoder_repetition_penalty**: Also known as the "Hallucinations filter". Used to penalize tokens that are *not* in the prior text. Higher value = more likely to stay in context, lower value = more likely to diverge.
 * **no_repeat_ngram_size**: If not set to 0, specifies the length of token sets that are completely blocked from repeating at all. Higher values = blocks larger phrases, lower values = blocks words or letters from repeating. Only 0 or high values are a good idea in most cases.
 * **min_length**: Minimum generation length in tokens.
 * **penalty_alpha**: Contrastive Search is enabled by setting this to greater than zero and unchecking "do_sample". It should be used with a low value of top_k, for instance, top_k = 4.
-
