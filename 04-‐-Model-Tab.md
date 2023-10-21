@@ -115,7 +115,9 @@ Similar to llama.cpp but it works for certain GGUF/GGML models not originally su
 
 ## Model dropdown
 
-Here you can select a model to be loaded, refresh the list of available models (🔄), load/unload/reload the selected model, and save the settings for the model. The settings are the values in the input fields below. After saving, those settings will get restored whenever you select that model again in the dropdown menu.
+Here you can select a model to be loaded, refresh the list of available models (🔄), load/unload/reload the selected model, and save the settings for the model. The "settings" are the values in the input fields (checkboxes, sliders, dropdowns) below this dropdown. 
+
+After saving, those settings will get restored whenever you select that model again in the dropdown menu.
 
 If the **Autoload the model** checkbox is selected, the model will be loaded as soon as it is selected in this menu. Otherwise, you will have to click on the "Load" button.
 
