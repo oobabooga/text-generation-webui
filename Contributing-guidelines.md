@@ -16,8 +16,8 @@ pycodestyle file.py  # To check for style problems
 
 The following pycodestyle errors can be ignored:
 
-* E501 line too long
 * E402 module level import not at top of file
+* E501 line too long
 * E722 do not use bare 'except'
 
 The remaining errors should be fixed.
@@ -30,8 +30,7 @@ The remaining errors should be fixed.
 
 This project aims to provide a web interface for interacting with Large Language Models. As such, improvements to the UI are of high priority, including:
 
-* Improving the various UI functionalities.
-* Improving the arrangement of UI elements.
+* Improving the chat mode experience.
 * Improving the CSS styles under `text-generation-webui/css`, in particular, those of chat styles.
 
 **API**
@@ -52,7 +51,7 @@ New built-in extensions can be accepted in cases where they would be useful to a
 There are two main installation methods for this project:
 
 1) Manual installation as described in the README.
-2) The one-click-installers available at https://github.com/oobabooga/one-click-installers.
+2) The one-click-installers.
 
 Some Docker files are available in the repository, but I do not use Docker. Pull requests about Docker should contain straightforward fixes or updates only.
 
