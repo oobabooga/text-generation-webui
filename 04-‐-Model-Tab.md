@@ -4,7 +4,7 @@ This is where you load models, apply LoRAs to a loaded model, and download new m
 
 ### Transformers
 
-Loads full precision (16-bit or 32-bit) pytorch models. The repository usually has a clean name without GGUF, EXL2, GPTQ, or AWQ in its name, and the model files are named `pytorch_model.bin` or `model.safetensors`. Example: [https://huggingface.co/lmsys/vicuna-7b-v1.5](https://huggingface.co/lmsys/vicuna-7b-v1.5). 
+Loads: full precision (16-bit or 32-bit) pytorch models. The repository usually has a clean name without GGUF, EXL2, GPTQ, or AWQ in its name, and the model files are named `pytorch_model.bin` or `model.safetensors`. Example: [https://huggingface.co/lmsys/vicuna-7b-v1.5](https://huggingface.co/lmsys/vicuna-7b-v1.5). 
 
 Full precision models use a ton of VRAM, so usually you will want to select the "load_in_4bit" and "use_double_quant" options to load the model in 4-bit precision using bitsandbytes.
 
@@ -29,4 +29,51 @@ Options:
 * **use_fast**: use the "fast" version of the tokenizer. Especially useful for Llama models, which originally had a "slow" tokenizer that received an update. If your local files are in the old "slow" format, checking this option may trigger a conversion that takes several minutes. The fast tokenizer is mostly useful if you are generating 50+ tokens/second using ExLlama or if you are tokenizing a huge dataset for training.
 * **disable_exllama**: only applies when you are loading a GPTQ model though the transformers loader. It needs to be checked if you intend to train LoRAs with the model.
 
-### Transformers
+### ExLlama_HF
+
+Loads: GPTQ models. They usually have GPTQ in the model name, or alternatively something like "-4bit-128g" in the name.
+
+ExLlama_HF is the v1 of ExLlama (https://github.com/turboderp/exllama) connected to the transformers library for sampling, tokenizing, and detokenizing. It is very fast and memory-efficient.
+
+* **gpu-split**: if you have multiple GPUs, the amount of memory to allocate per GPU should be set in this field. Make sure to set a lower value for the first GPU, as that's where the cache is allocated.
+* **max_seq_len**: the maximum sequence length for the model. In ExLlama, the cache is preallocated, so the higher this value, the higher the VRAM. It is automatically set to the maximum sequence length for the model based on its metadata, but you may need to load the model with a lower value to be able to fit it into your GPU. After loading the model, the "Truncate the prompt up to this length" parameter under "Parameters" > "Generation" is automatically set to your chosen "max_seq_len" so that you don't have to set the same thing twice.
+* **cfg-cache**: creates a second cache to hold the negative prompts. You need to set this if and only if you intend to use CFG in the Parameters tab. Checking this parameter doubles the cache VRAM usage.
+
+### ExLlamav2_HF
+
+Loads: GPTQ and EXL2 models. EXL2 models usually have "EXL2" in the model name.
+
+The parameters are the same as in ExLlama_HF.
+
+### ExLlama
+
+The same as ExLlama_HF but using the internal samplers of ExLlama instead of the ones in the Transformers library.
+
+### ExLlamav2
+
+The same as ExLlamav2_HF but using the internal samplers of ExLlama instead of the ones in the Transformers library.
+
+### AutoGPTQ
+
+Loads: GPTQ models.
+
+* **wbits**: for ancient models without proper metadata, sets the model precision in bits manually. Can usually be ignored.
+* **groupsize**: for ancient models without proper metadata, sets the model group size manually. Can usually be ignored.
+* **triton**: only available on Linux. Necessary to use models with both act-order and groupsize simultaneously. Note that ExLlama can load these same models on Windows without triton.
+* **no_inject_fused_attention**: Improves performance while lowering the VRAM usage. I have never used or understood this parameter.
+* **no_inject_fused_mlp**: Similar to the previous parameter but for Triton only. I have never used or understood this parameter.
+* **no_use_cuda_fp16**: on some systems, the performance can be very bad with this unset. Can usually be ignored.
+* **desc_act**: for ancient models without proper metadata, sets the model "act-order" parameter manually. Can usually be ignored.
+
+### GPTQ-for-LLaMa
+
+Loads: GPTQ models.
+
+Ancient loader, the first one to implement 4-bit quantization. It works on older GPUs for which ExLlama and AutoGPTQ don't work, and it doesn't work with "act-order", so you should use it with simple 4-bit-128g models.
+
+* **pre_layer**: used for CPU offloading. The higher the number, the more layers will be sent to the GPU. GPTQ-for-LLaMa CPU offloading was faster than the one implemented in AutoGPTQ the last time I checked.
+
+### GPTQ-for-LLaMa
+
+Loads: GGUF models. Note: GGML models have been deprecated and do not work anymore.
+
