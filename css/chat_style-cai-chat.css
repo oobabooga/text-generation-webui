@@ -4,20 +4,24 @@
     padding-bottom: 25px;
     font-size: 15px;
     font-family: 'Noto Sans', Helvetica, Arial, sans-serif;
-    line-height: 23px !important;
+    line-height: 22.5px !important;
+}
+
+.message-body {
+    margin-top: 3px;
 }
 
 .circle-you {
     width: 50px;
     height: 50px;
-    background-color: rgb(238, 78, 59);
+    background-color: rgb(238 78 59);
     border-radius: 50%;
 }
 
 .circle-bot {
     width: 50px;
     height: 50px;
-    background-color: rgb(59, 78, 244);
+    background-color: rgb(59 78 244);
     border-radius: 50%;
 }
 
@@ -27,10 +31,6 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-}
-
-.text p {
-    margin-top: 5px;
 }
 
 .username {
@@ -44,16 +44,23 @@
 }
 
 .message-body p {
-    margin-bottom: 0 !important;
     font-size: 15px !important;
-    line-height: 23px !important;
+    line-height: 22.5px !important;
+}
+
+.message-body p, .chat .message-body ul, .chat .message-body ol {
+    margin-bottom: 10px !important;
+}
+
+.message-body p:last-child, .chat .message-body ul:last-child, .chat .message-body ol:last-child {
+    margin-bottom: 0 !important;
 }
 
 .dark .message-body p em {
-    color: rgb(138, 138, 138) !important;
+    color: rgb(138 138 138) !important;
 }
 
 .message-body p em {
-    color: rgb(110, 110, 110) !important;
+    color: rgb(110 110 110) !important;
     font-weight: 500;
 }

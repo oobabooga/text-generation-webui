@@ -145,7 +145,7 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
     color: #efefef !important;
 }
 
-@media screen and (max-width: 711px) {
+@media screen and (width <= 711px) {
     .textbox_default textarea {
         height: calc(100dvh - 259px);
     }
@@ -163,7 +163,7 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
     }
 }
 
-/* Hide the gradio footer*/
+/* Hide the gradio footer */
 footer {
     display: none !important;
 }
@@ -173,27 +173,27 @@ button {
 }
 
 .file-saver {
-  position: fixed !important;
-  height: 100%;
-  z-index: 1000;
-  background-color: rgba(0, 0, 0, 0.5) !important;
-  margin-left: -20px;
-  margin-right: -20px;
+    position: fixed !important;
+    height: 100%;
+    z-index: 1000;
+    background-color: rgb(0 0 0 / 50%) !important;
+    margin-left: -20px;
+    margin-right: -20px;
 }
 
 .file-saver > :first-child {
-  position: fixed !important;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%); /* center horizontally */
-  width: 100%;
-  max-width: 500px;
-  background-color: var(--input-background-fill);
-  border: var(--input-border-width) solid var(--input-border-color) !important;
+    position: fixed !important;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* center horizontally */
+    width: 100%;
+    max-width: 500px;
+    background-color: var(--input-background-fill);
+    border: var(--input-border-width) solid var(--input-border-color) !important;
 }
 
 .file-saver > :first-child > :nth-child(2) {
-  background: var(--block-background-fill);
+    background: var(--block-background-fill);
 }
 
 .checkboxgroup-table label {
@@ -211,64 +211,64 @@ button {
 }
 
 .pretty_scrollbar::-webkit-scrollbar {
-  width: 5px;
+    width: 5px;
 }
 
 .pretty_scrollbar::-webkit-scrollbar-track {
-  background: transparent;
+    background: transparent;
 }
 
 .pretty_scrollbar::-webkit-scrollbar-thumb,
 .pretty_scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #c5c5d2;
+    background: #c5c5d2;
 }
 
 .dark .pretty_scrollbar::-webkit-scrollbar-thumb,
 .dark .pretty_scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #374151;
+    background: #374151;
 }
 
 .pretty_scrollbar::-webkit-resizer {
-  background: #c5c5d2;
+    background: #c5c5d2;
 }
 
 .dark .pretty_scrollbar::-webkit-resizer {
-  background: #374151;
+    background: #374151;
 }
 
 audio {
-  max-width: 100%;
+    max-width: 100%;
 }
 
 /* Copied from https://github.com/AUTOMATIC1111/stable-diffusion-webui */
 .token-counter {
-  position: absolute !important;
-  top: calc( 0.5 * (100dvh - 218px) ) !important;
-  right: 2px;
-  z-index: 100;
-  background: var(--input-background-fill) !important;
-  min-height: 0 !important;
+    position: absolute !important;
+    top: calc( 0.5 * (100dvh - 218px) ) !important;
+    right: 2px;
+    z-index: 100;
+    background: var(--input-background-fill) !important;
+    min-height: 0 !important;
 }
 
 .default-token-counter {
-  top: calc( 0.5 * (100dvh - 248px) ) !important;
+    top: calc( 0.5 * (100dvh - 248px) ) !important;
 }
 
 .token-counter span {
-  padding: 1px;
-  box-shadow: 0 0 0 0.3em rgba(192,192,192,0.15), inset 0 0 0.6em rgba(192,192,192,0.075);
-  border: 2px solid rgba(192,192,192,0.4) !important;
-  border-radius: 0.4em;
+    padding: 1px;
+    box-shadow: 0 0 0 0.3em rgb(192 192 192 / 15%), inset 0 0 0.6em rgb(192 192 192 / 7.5%);
+    border: 2px solid rgb(192 192 192 / 40%) !important;
+    border-radius: 0.4em;
 }
 
 .no-background {
-  background: var(--background-fill-primary) !important;
-  padding: 0px !important;
+    background: var(--background-fill-primary) !important;
+    padding: 0 !important;
 }
 
-/*----------------------------------------------
+/* ----------------------------------------------
   Chat tab
-----------------------------------------------*/
+---------------------------------------------- */
 .h-\[40vh\], .wrap.svelte-byatnx.svelte-byatnx.svelte-byatnx {
     height: 66.67vh
 }
@@ -313,10 +313,10 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     margin-right: auto;
 }
 
-@media screen and (max-width: 688px) {
+@media screen and (width <= 688px) {
     #chat-tab {
-        padding-left: 0px;
-        padding-right: 0px;
+        padding-left: 0;
+        padding-right: 0;
     }
 
     .chat-parent {
@@ -360,12 +360,16 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 .chat .message:last-child {
-    margin-bottom: 0px !important;
-    padding-bottom: 0px !important;
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
 }
 
-.message-body li {
+.message-body li:not(:last-child) {
     margin-top: 0 !important;
+    margin-bottom: 2px !important;
+}
+
+.message-body li:last-child {
     margin-bottom: 0 !important;
 }
 
@@ -382,11 +386,11 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 .message-body pre:not(:last-child) {
-    margin-bottom: 1.25em !important;
+    margin-bottom: 35.625px !important;
 }
 
 .message-body pre:last-child {
-    margin-bottom: 0px !important;
+    margin-bottom: 0 !important;
 }
 
 .message-body code {
@@ -395,13 +399,13 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     border: 1px solid var(--border-color-primary);
     border-radius: var(--radius-sm);
     background: var(--background-fill-secondary);
-    font-size: 85%;
+    font-size: 90%;
     padding: 1px 3px;
 }
 
 .message-body pre > code {
     display: block;
-    padding: .5em .7em;
+    padding: 15px;
 }
 
 .message-body :not(pre) > code {
@@ -464,8 +468,8 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     position: absolute;
     height: 100%;
     background-color: var(--background-fill-primary);
-    border: 0px !important;
-    border-radius: 0px;
+    border: 0 !important;
+    border-radius: 0;
 }
 
 #show-controls label {
@@ -483,7 +487,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 .typing {
-  position: relative;
+    position: relative;
 }
 
 .visible-dots #typing-container {
@@ -491,84 +495,86 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 .typing span {
-  content: '';
-  animation: blink 1.5s infinite;
-  animation-fill-mode: both;
-  height: 10px;
-  width: 10px;
-  background: #3b5998;;
-  position: absolute;
-  left:0;
-  top:0;
-  border-radius: 50%;
+    content: '';
+    animation: blink 1.5s infinite;
+    animation-fill-mode: both;
+    height: 10px;
+    width: 10px;
+    background: #3b5998;;
+    position: absolute;
+    left:0;
+    top:0;
+    border-radius: 50%;
 }
 
 .typing .dot1 {
-  animation-delay: .2s;
-  margin-left: calc(10px * 1.5);
+    animation-delay: .2s;
+    margin-left: calc(10px * 1.5);
 }
 
 .typing .dot2 {
-  animation-delay: .4s;
-  margin-left: calc(10px * 3);
+    animation-delay: .4s;
+    margin-left: calc(10px * 3);
 }
 
 @keyframes blink {
-  0% {
-    opacity: .1;
-  }
-  20% {
-    opacity: 1;
-  }
-  100% {
-    opacity: .1;
-  }
+    0% {
+        opacity: .1;
+    }
+
+    20% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: .1;
+    }
 }
 
 #chat-tab .generating {
-  display: none !important;
+    display: none !important;
 }
 
 .hover-element {
-  position: relative;
-  font-size: 24px;
+    position: relative;
+    font-size: 24px;
 }
 
 .hover-menu {
-  display: none;
-  position: absolute;
-  bottom: 80%;
-  left: 0;
-  background-color: var(--background-fill-secondary);
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-  z-index: 10000;
-  min-width: 330px;
-  flex-direction: column;
+    display: none;
+    position: absolute;
+    bottom: 80%;
+    left: 0;
+    background-color: var(--background-fill-secondary);
+    box-shadow: 0 0 10px rgb(0 0 0 / 50%);
+    z-index: 10000;
+    min-width: 330px;
+    flex-direction: column;
 }
 
 .hover-menu button {
-  width: 100%;
-  background: transparent !important;
-  border-radius: 0px !important;
-  justify-content: space-between;
-  margin: 0 !important;
-  height: 36px;
+    width: 100%;
+    background: transparent !important;
+    border-radius: 0 !important;
+    justify-content: space-between;
+    margin: 0 !important;
+    height: 36px;
 }
 
 .hover-menu button:not(#clear-history-confirm) {
-  border-bottom: 0 !important;
+    border-bottom: 0 !important;
 }
 
 .hover-menu button:not(#clear-history-confirm):last-child {
-  border-bottom: var(--button-border-width) solid var(--button-secondary-border-color) !important;
+    border-bottom: var(--button-border-width) solid var(--button-secondary-border-color) !important;
 }
 
 .hover-menu button:hover {
-  background: var(--button-secondary-background-fill-hover) !important;
+    background: var(--button-secondary-background-fill-hover) !important;
 }
 
 .transparent-substring {
-  opacity: 0.333;
+    opacity: 0.333;
 }
 
 #chat-tab:not(.old-ui) #chat-buttons {
@@ -576,37 +582,37 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 #gr-hover-container {
-  min-width: 0 !important;
-  display: flex;
-  flex-direction: column-reverse;
-  padding-right: 20px;
-  padding-bottom: 3px;
-  flex-grow: 0 !important;
+    min-width: 0 !important;
+    display: flex;
+    flex-direction: column-reverse;
+    padding-right: 20px;
+    padding-bottom: 3px;
+    flex-grow: 0 !important;
 }
 
 #generate-stop-container {
-  min-width: 0 !important;
-  display: flex;
-  flex-direction: column-reverse;
-  padding-bottom: 3px;
-  flex: 0 auto !important;
+    min-width: 0 !important;
+    display: flex;
+    flex-direction: column-reverse;
+    padding-bottom: 3px;
+    flex: 0 auto !important;
 }
 
 #chat-input-container {
-  min-width: 0 !important;
+    min-width: 0 !important;
 }
 
 #chat-input-container > .form {
-  background: transparent;
-  border: none;
+    background: transparent;
+    border: none;
 }
 
 #chat-input-row {
-  padding-bottom: 20px;
+    padding-bottom: 20px;
 }
 
 .old-ui #chat-input-row, #chat-input-row.bigchat {
-  padding-bottom: 0px !important;
+    padding-bottom: 0 !important;
 }
 
 #chat-col {
@@ -625,9 +631,9 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     margin-top: 6px !important;
 }
 
-/*----------------------------------------------
+/* ----------------------------------------------
   Past chats menus
-----------------------------------------------*/
+---------------------------------------------- */
 #past-chats-row {
     margin-bottom: calc( -1 * var(--layout-gap) );
 }
@@ -636,16 +642,16 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     margin-top: var(--layout-gap);
 }
 
-/*----------------------------------------------
+/* ----------------------------------------------
   Keep dropdown menus above errored components
-----------------------------------------------*/
+---------------------------------------------- */
 .options {
     z-index: 100 !important;
 }
 
-/*----------------------------------------------
+/* ----------------------------------------------
   Increase the height of the evaluation table
-----------------------------------------------*/
+---------------------------------------------- */
 #evaluation-table table {
     max-height: none !important;
     overflow-y: auto !important;
