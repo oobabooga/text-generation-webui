@@ -23,7 +23,7 @@ pip install -r extensions\extension-name\requirements.txt
 
 if you are on Windows.
 
-If you used the one-click installer, this command should be used in the terminal window that appears when you run the "cmd_" script for your OS.
+If you used the one-click installer, this command should be executed in the terminal window that appears when you run the "cmd_" script for your OS.
 
 ## Saving UI defaults
 
