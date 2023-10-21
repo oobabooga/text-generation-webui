@@ -100,7 +100,7 @@ Defines the instruction template that is used in the Chat tab when "instruct" or
 * **Turn template**: Defines the positioning of spaces and new line characters in a single turn of the dialogue. `<|user-message|>` gets replaced with the user input and `<|bot-message|>` gets replaced with the bot reply. It is necessary to include `<|user|>` and `<|bot|>` even if "User string" and "Bot string" above are empty, as those placeholders are used to split the template in parts in the backend.
 * **Send to default**: Send the full instruction template in string format to the Default tab.
 * **Send to notebook**: Send the full instruction template in string format to the Notebook tab.
-* **Send to notebook**: Send the full instruction template in string format to the "Negative prompt" field under "Parameters" > "Generation".
+* **Send to negative prompt**: Send the full instruction template in string format to the "Negative prompt" field under "Parameters" > "Generation".
 * **Command for chat-instruct mode**: The command that is used in chat-instruct mode to query the model to generate a reply on behalf of the character. Can be used creatively to generate specific kinds of responses.
 
 ## Chat history
