@@ -12,6 +12,7 @@
 | llama.cpp      |       ❌       |           ❌            |       ❌       |          ❌          |           use llamacpp_HF    |
 | llamacpp_HF    |       ❌       |           ❌            |       ❌       |          ❌          |           ✅          |
 | ctransformers  |       ❌       |           ❌            |       ❌       |          ❌          |           ❌          |
+| AutoAWQ        |       ?        |           ❌            |       ?       |          ?          |           ✅          |
 
 ❌ = not implemented
 
