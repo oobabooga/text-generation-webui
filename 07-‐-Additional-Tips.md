@@ -15,7 +15,7 @@ This file will be automatically detected the next time you start the web UI.
 
 ## DeepSpeed
 
-`DeepSpeed ZeRO-3` is an alternative offloading strategy for transformers models.
+`DeepSpeed ZeRO-3` is an alternative offloading strategy for full-precision (16-bit) transformers models.
 
 With this, I have been able to load a 6b model (GPT-J 6B) with less than 6GB of VRAM. The speed of text generation is very decent and much better than what would be accomplished with `--auto-devices --gpu-memory 6`.
 
