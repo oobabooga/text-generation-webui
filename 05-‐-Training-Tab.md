@@ -1,4 +1,4 @@
-##### Training Your Own LoRAs
+## Training Your Own LoRAs
 
 The WebUI seeks to make training your own LoRAs as easy as possible. It comes down to just a few simple steps:
 
