@@ -22,7 +22,7 @@ The **Show controls** checkbox causes the input fields below the input textbox t
 
 ## Past chats
 
-Allows you to switch between the current and previous conversations with the current character, or between the current and previous instruct conversations (if in "instruct" mode). The Rename menu can be used to give a unique name to the selected conversation, and the 🗑️ button allows you to delete it.
+Allows you to switch between the current and previous conversations with the current character, or between the current and previous instruct conversations (if in "instruct" mode). The **Rename** menu can be used to give a unique name to the selected conversation, and the 🗑️ button allows you to delete it.
 
 ## Start reply with
 
