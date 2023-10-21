@@ -25,8 +25,8 @@ if you are on Windows.
 
 If you used the one-click installer, this command should be used in the terminal window that appears when you run the "cmd_" script for your OS.
 
-## Saving UI detaults
+## Saving UI defaults
 
 The "Save UI defaults to settings.yaml" gathers the visible values in the UI and saves them to settings.yaml so that your settings will persist across multiple restarts of the UI.
 
-Note that preset parameters like temperature are not invididually saved, so you need to first save your and select preset in the preset menu before saving the defaults.
+Note that preset parameters like temperature are not individually saved, so you need to first save your preset and select it in the preset menu before saving the defaults.
