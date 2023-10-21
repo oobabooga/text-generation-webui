@@ -4,7 +4,6 @@ The WebUI seeks to make training your own LoRAs as easy as possible. It comes do
 
 ### **Step 1**: Make a plan.
 - What base model do you want to use? The LoRA you make has to be matched up to a single architecture (eg LLaMA-13B) and cannot be transferred to others (eg LLaMA-7B, StableLM, etc. would all be different). Derivatives of the same model (eg Alpaca finetune of LLaMA-13B) might be transferrable, but even then it's best to train exactly on what you plan to use.
-- What model format do you want? At time of writing, 8-bit models are most stable, and 4-bit are supported but experimental. In the near future it is likely that 4-bit will be the best option for most users.
 - What are you training it on? Do you want it to learn real information, a simple format, ...?
 
 ### **Step 2**: Gather a dataset.
