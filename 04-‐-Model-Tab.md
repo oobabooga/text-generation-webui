@@ -35,6 +35,8 @@ Options:
 
 Loads: GPTQ models. They usually have GPTQ in the model name, or alternatively something like "-4bit-128g" in the name.
 
+Example: https://huggingface.co/TheBloke/Llama-2-13B-chat-GPTQ
+
 ExLlama_HF is the v1 of ExLlama (https://github.com/turboderp/exllama) connected to the transformers library for sampling, tokenizing, and detokenizing. It is very fast and memory-efficient.
 
 * **gpu-split**: If you have multiple GPUs, the amount of memory to allocate per GPU should be set in this field. Make sure to set a lower value for the first GPU, as that's where the cache is allocated.
