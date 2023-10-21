@@ -131,7 +131,9 @@ See the README for the PyPl package for more details: https://pypi.org/project/r
 
 You can compile the CUDA kernel for the model with `--rwkv-cuda-on`. This should improve the performance a lot but I haven't been able to get it to work yet.
 
-## You can train LoRAs in CPU mode
+## Miscellaneous info
+
+### You can train LoRAs in CPU mode
 
 Load the web UI with
 
@@ -141,12 +143,12 @@ python server.py --cpu
 
 and start training the LoRA from the training tab as usual.
 
-## You can check the sha256sum of downloaded models with the download script
+### You can check the sha256sum of downloaded models with the download script
 
 ```
 python download-model.py facebook/galactica-125m --check
 ```
 
-## The download script continues interrupted downloads by default
+### The download script continues interrupted downloads by default
 
 It doesn't start over.
