@@ -6,7 +6,7 @@ The following buttons can be found. Note that the hover menu can be replaced wit
 
 * **Generate**: sends your message and makes the model start a reply.
 * **Stop**: stops an ongoing generation as soon as the next token is generated (which can take a while for a slow model).
-* **Continue**: makes the model attempt to continue the existing reply. In some cases, the model may simply end the existing turn immediately without generating anything new, but in other cases it may generate a longer reply.
+* **Continue**: makes the model attempt to continue the existing reply. In some cases, the model may simply end the existing turn immediately without generating anything new, but in other cases, it may generate a longer reply.
 * **Regenerate**: similar to Generate, but your last message is used as input instead of the text in the input field. Note that if the temperature/top_p/top_k parameters are low in the "Parameters" tab of the UI, the new reply may end up identical to the previous one.
 * **Remove last reply**: removes the last input/output pair from the history and sends your last message back into the input field.
 * **Replace last reply**: replaces the last bot reply with whatever you typed into the input field. Useful in conjunction with "Copy last reply" if you want to edit the bot response.
@@ -22,11 +22,11 @@ The **Show controls** checkbox causes the input fields below the input textbox t
 
 ## Past chats
 
-Allows you to switch between the current and previous conversations with the current character, or alternatively between the current and previous instruct conversations (if in "instruct" mode). The Rename menu can be used to give an unique name to the selected conversation, and the 🗑️ button allows you to delete it.
+Allows you to switch between the current and previous conversations with the current character, or between the current and previous instruct conversations (if in "instruct" mode). The Rename menu can be used to give a unique name to the selected conversation, and the 🗑️ button allows you to delete it.
 
 ## Start reply with
 
-Whatever you type there will appear at the start of every reply by the bot. This is useful to guide the response in a desired direction.
+Whatever you type there will appear at the start of every reply by the bot. This is useful to guide the response in the desired direction.
 
 ## Mode
 
@@ -34,7 +34,7 @@ The most important input field. It defines how the chat prompt is formatted. The
 
 ### Instruction-following models
 
-There are two kinds of models: base models, like Llama and GPT-J, and fine-tuned models, like Alpaca and Vicuna. Fine-tuned models are trained starting from base models, most often with the goal of getting the model to understand and respond to instructions just like ChatGPT does. Let's call such models *instruction-following models*.
+There are two kinds of models: base models, like Llama and GPT-J, and fine-tuned models, like Alpaca and Vicuna. Fine-tuned models are trained starting from base models, most often to get the model to understand and respond to instructions just like ChatGPT does. Let's call such models *instruction-following models*.
 
 Each instruction-following model was trained on a specific prompt format, and you have to use that exact prompt format if you want the model to follow your instructions as accurately as it can.
 
@@ -65,7 +65,7 @@ Answer the questions.
 Hi there! [/INST] Hello! It's nice to meet you. What can I help with? </s><s>[INST] How are you? [/INST] I'm doing well, thank you for asking! Is there something specific you would like to talk about or ask me? I'm here to help answer any questions you may have.
 ```
 
-In this format, there are special tokens at the end of each bot reply (`</s>`, the end of sequence token, and `<s>`, the beginning of sequence token); there are no new lines separating the turns; and the context string is written between `<<SYS>>` and `<</SYS>>`. Despite the intimidating look of this format, the logic is the same: there are user turns and bot turns, and each one is appears in a specific place in the template.
+In this format, there are special tokens at the end of each bot reply (`</s>`, the end of sequence token, and `<s>`, the beginning of sequence token); no new lines separating the turns; and the context string is written between `<<SYS>>` and `<</SYS>>`. Despite the intimidating look of this format, the logic is the same: there are user turns and bot turns, and each one appears in a specific place in the template.
 
 It is important to emphasize that instruction-following models **have to be used with the exact prompt format that they were trained on**. Using those models with any other prompt format should be considered undefined behavior. The model will still generate replies, but they will be less accurate to your inputs.
 
@@ -99,10 +99,10 @@ Used for talking to an instruction-following model using the prompt format defin
 
 The prompt format is defined by the following adjustable parameters in "Parameters" > "Instruction template":
 
-* **Context**: appears at the top of the prompt exactly as it is written, including the new line characters at the end (if any). Often the context includes a customizable sub-string. For instance, instead of "Answer the questions." for Llama-2-chat, you can write "Answer the questions as if you were a pirate.", and the model will comply.
-* **Turn template**: defines a single input/reply turn. In this string, `<|user|>` and `<|bot|>` are placeholders that get replaced with whatever you type in the **User string** and **Bot string** fields respectively; they are mandatory and should be present even if those fields are empty. `<|user-message|>` and `<|bot-message|>` get replaced with the user and bot messages at that turn. If the prompt format uses new line characters, they should be written inline as `\n` in the turn template.
+* **Context**: appears at the top of the prompt exactly as it is written, including the newline characters at the end (if any). Often the context includes a customizable sub-string. For instance, instead of "Answer the questions." for Llama-2-chat, you can write "Answer the questions as if you were a pirate.", and the model will comply.
+* **Turn template**: defines a single input/reply turn. In this string, `<|user|>` and `<|bot|>` are placeholders that get replaced with whatever you type in the **User string** and **Bot string** fields respectively; they are mandatory and should be present even if those fields are empty. `<|user-message|>` and `<|bot-message|>` get replaced with the user and bot messages at that turn. If the prompt format uses newline characters, they should be written inline as `\n` in the turn template.
 
-Note that when you load a model in the "Model" tab, the web UI will try to automatically detect its instruction template (if any), and will update the values under "Parameters" > "Instruction template" accordingly. This is done using a set of regular expressions defined in `models/config.yaml`. This detection is not guaranteed to be accurate. You should check the model card on Hugging Face to see if you are really using the correct prompt format.
+Note that when you load a model in the "Model" tab, the web UI will try to automatically detect its instruction template (if any), and will update the values under "Parameters" > "Instruction template" accordingly. This is done using a set of regular expressions defined in `models/config.yaml`. This detection is not guaranteed to be accurate. You should check the model card on Hugging Face to see if you are using the correct prompt format.
 
 ### Chat-instruct
 
@@ -130,7 +130,7 @@ Here, the command is
 
 Below this command, the regular chat prompt is added, including its Context string and the chat history, and then the user turn ends. The bot turn starts with the "Character's name" string followed by `:`, thus prompting the instruction-following model to write a single reply for the character.
 
-The chat-instruct command can be customized under "Parameters" > "Instruction template" > "Command for chat-instruct mode". Inside that command string, `<|character|>` is a placeholder that gets replaced with the bot name and `<|prompt|>` is a placeholder that gets replaced with the full chat prompt.
+The chat-instruct command can be customized under "Parameters" > "Instruction template" > "Command for chat-instruct mode". Inside that command string, `<|character|>` is a placeholder that gets replaced with the bot name, and `<|prompt|>` is a placeholder that gets replaced with the full chat prompt.
 
 Note that you can get creative: instead of writing something trivial like "Write a single reply for the character", you could add more complex instructions like
 
@@ -144,8 +144,8 @@ And it works:
 
 This defines the visual style of the chat UI. Each option is a CSS file defined under `text-generation-webui/css/chat_style-name.css`, where "name" is how this style is called in the dropdown menu. You can add new styles by simply copying `chat_style-cai-chat.css` to `chat_style-myNewStyle.css` and editing the contents of this new file. If you end up with a style that you like, you are highly encouraged to submit it to the repository.
 
-The styles are only applied to chat and chat-instruct modes. Instruct mode has its own separate style defined in `text-generation-webui/css/html_instruct_style.css`.
+The styles are only applied to chat and chat-instruct modes. Instruct mode has its separate style defined in `text-generation-webui/css/html_instruct_style.css`.
 
 ## Character gallery
 
-This menu is actually a built-in extension defined under `text-generation-webui/extensions/gallery`. It displays a gallery with your characters, and if you click on a character, it will be automatically selected in the menu under "Parameters" > "Character".
+This menu is a built-in extension defined under `text-generation-webui/extensions/gallery`. It displays a gallery with your characters, and if you click on a character, it will be automatically selected in the menu under "Parameters" > "Character".
