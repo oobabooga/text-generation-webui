@@ -74,13 +74,13 @@ To the right (or below if you are on mobile), the following parameters are prese
 
 Parameters that define the character that is used in the Chat tab when "chat" or "chat-instruct" are selected under "Mode".
 
-* **Character**: a dropdown menu where you can select from saved characters, save a new character (💾 button), and delete the currently selected character (🗑️).
-* **Your name**: your name as it appears in the prompt.
-* **Character's name**: the bot name as it appears in the prompt.
-* **Context**: a string that is always at the top of the prompt. It never gets truncated. It usually defines the bot's personality and some key elements of the conversation.
-* **Greeting**: an opening message for the bot. When set, it appears whenever you start a new chat.
-* **Character picture**: a profile picture for the bot. To make it apply, you need to save the bot by clicking on 💾.
-* **Your picture**: your profile picture. It will be used in all conversations.
+* **Character**: A dropdown menu where you can select from saved characters, save a new character (💾 button), and delete the currently selected character (🗑️).
+* **Your name**: Your name as it appears in the prompt.
+* **Character's name**: The bot name as it appears in the prompt.
+* **Context**: A string that is always at the top of the prompt. It never gets truncated. It usually defines the bot's personality and some key elements of the conversation.
+* **Greeting**: An opening message for the bot. When set, it appears whenever you start a new chat.
+* **Character picture**: A profile picture for the bot. To make it apply, you need to save the bot by clicking on 💾.
+* **Your picture**: Your profile picture. It will be used in all conversations.
 
 Note: the following replacements in the context and greeting fields when the chat prompt is generated:
 
@@ -93,15 +93,15 @@ So you can use those special placeholders in your character definitions. They ar
 
 Defines the instruction template that is used in the Chat tab when "instruct" or "chat-instruct" are selected under "Mode".
 
-* **Instruction template**: a dropdown menu where you can select from saved templates, save a new template (💾 button), and delete the currently selected template (🗑️).
-* **User string**: in the turn template, `<|user|>` gets replaced with this string.
-* **Bot string**: in the turn template, `<|bot|>` gets replaced with this string.
-* **Context**: a string that appears as-is at the top of the prompt, including the new line characters at the end (if any). The system message for the model can be edited inside this string to customize its behavior.
-* **Turn template**: defines the positioning of spaces and new line characters in a single turn of the dialogue. `<|user-message|>` gets replaced with the user input and `<|bot-message|>` gets replaced with the bot reply. It is necessary to include `<|user|>` and `<|bot|>` even if "User string" and "Bot string" above are empty, as those placeholders are used to split the template in parts in the backend.
-* **Send to default**: send the full instruction template in string format to the Default tab.
-* **Send to notebook**: send the full instruction template in string format to the Notebook tab.
-* **Send to notebook**: send the full instruction template in string format to the "Negative prompt" field under "Parameters" > "Generation".
-* **Command for chat-instruct mode**: the command that is used in chat-instruct mode to query the model to generate a reply on behalf of the character. Can be used creatively to generate specific kinds of responses.
+* **Instruction template**: A dropdown menu where you can select from saved templates, save a new template (💾 button), and delete the currently selected template (🗑️).
+* **User string**: In the turn template, `<|user|>` gets replaced with this string.
+* **Bot string**: In the turn template, `<|bot|>` gets replaced with this string.
+* **Context**: A string that appears as-is at the top of the prompt, including the new line characters at the end (if any). The system message for the model can be edited inside this string to customize its behavior.
+* **Turn template**: Defines the positioning of spaces and new line characters in a single turn of the dialogue. `<|user-message|>` gets replaced with the user input and `<|bot-message|>` gets replaced with the bot reply. It is necessary to include `<|user|>` and `<|bot|>` even if "User string" and "Bot string" above are empty, as those placeholders are used to split the template in parts in the backend.
+* **Send to default**: Send the full instruction template in string format to the Default tab.
+* **Send to notebook**: Send the full instruction template in string format to the Notebook tab.
+* **Send to notebook**: Send the full instruction template in string format to the "Negative prompt" field under "Parameters" > "Generation".
+* **Command for chat-instruct mode**: The command that is used in chat-instruct mode to query the model to generate a reply on behalf of the character. Can be used creatively to generate specific kinds of responses.
 
 ## Chat history
 
