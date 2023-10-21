@@ -7,7 +7,7 @@ After selecting your desired flags and extensions, you can restart the UI by cli
 
 ## Install or update an extension
 
-In this field, you can enter the GitHub URL for an extension and press enter to either install it (i.e. cloning it into `text-generation-webui/extensions`) or update it with `git pull` in case it is already installed.
+In this field, you can enter the GitHub URL for an extension and press enter to either install it (i.e. cloning it into `text-generation-webui/extensions`) or update it with `git pull` in case it is already cloned.
 
 Note that some extensions may include additional Python requirements. In that case, to install those you have to run the command
 
