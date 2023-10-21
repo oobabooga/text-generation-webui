@@ -83,6 +83,8 @@ Ancient loader, the first one to implement 4-bit quantization. It works on older
 
 Loads: GGUF models. Note: GGML models have been deprecated and do not work anymore.
 
+Example: https://huggingface.co/TheBloke/Llama-2-7b-Chat-GGUF
+
 * **n-gpu-layers**: The number of layers to allocate to the GPU. If set to 0, only the CPU will be used. If you want to offload all layers, you can simply set this to the maximum value.
 * **n-ctx**: Context length of the model. In llama.cpp, the context is preallocated, so the higher this value, the higher the RAM/VRAM usage will be. It gets automatically updated with the value in the GGUF metadata for the model when you select it in the Model dropdown.
 * **threads**: Number of threads. Recommended value: your number of physical cores. 
