@@ -41,8 +41,8 @@ For more information about the parameters, the [transformers documentation](http
 * **top_a**: Tokens with probability smaller than `(top_a) * (probability of the most likely token)^2` are discarded.
 * **epsilon_cutoff**: In units of 1e-4; a reasonable value is 3. This sets a probability floor below which tokens are excluded from being sampled.
 * **eta_cutoff**: In units of 1e-4; a reasonable value is 3. The main parameter of the special Eta Sampling technique. See [this paper](https://arxiv.org/pdf/2210.15191.pdf) for a description.
-* **guidance_scale**: the main parameter for Classifier-Free Guidance (CFG). [The paper](https://arxiv.org/pdf/2306.17806.pdf) suggests that 1.5 is a good value. It can be used in conjunction with a negative prompt or not.
-* **Negative prompt**: only used when `guidance_scale != 1`. It is most useful for instruct models and custom system messages. You place your full prompt with the default system message for the model (like "You are Llama, a helpful assistant...") in this field to make the model pay more attention to your custom message.
+* **guidance_scale**: The main parameter for Classifier-Free Guidance (CFG). [The paper](https://arxiv.org/pdf/2306.17806.pdf) suggests that 1.5 is a good value. It can be used in conjunction with a negative prompt or not.
+* **Negative prompt**: Only used when `guidance_scale != 1`. It is most useful for instruct models and custom system messages. You place your full prompt with the default system message for the model (like "You are Llama, a helpful assistant...") in this field to make the model pay more attention to your custom message.
 * **penalty_alpha**: Contrastive Search is enabled by setting this to greater than zero and unchecking "do_sample". It should be used with a low value of top_k, for instance, top_k = 4.
 * **mirostat_mode**: Activates the Mirostat sampling technique. It aims to control perplexity during sampling. See the [paper](https://arxiv.org/abs/2007.14966).
 * **mirostat_tau**: No idea, see the paper for details. According to the Preset Arena, 8 is a good value. 
