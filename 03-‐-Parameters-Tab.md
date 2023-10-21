@@ -69,3 +69,18 @@ To the right (or below if you are on mobile), the following parameters are prese
 * **Activate text streaming**: when unchecked, the full response is outputted at once, without streaming the words one at a time. I recommend unchecking this parameter on high latency networks like running the webui on Google Colab or using `--share`.
 * **Load grammar from file**: loads a GBNF grammar from a file under `text-generation-webui/grammars`. The output is written to the "Grammar" box below. You can also save and delete custom grammars using this menu.
 * **Grammar**: allows you to constrain the model output to a particular format. For instance, you can make the model generate lists, JSON, specific words, etc. Grammar is extremely powerful and I use it all the time. The syntax looks a bit daunting at first sight, but it is very easy once you understand the syntax. See the [GBNF Guide](https://github.com/ggerganov/llama.cpp/blob/master/grammars/README.md) for details.
+
+### Character
+
+Parameters that define the character that is used in the Chat tab when "chat" or "chat-instruct" are selected under "Mode".
+
+* **Character**: a dropdown menu where you can select from saved characters, save a new character (💾 button), and delete the currently selected character (🗑️).
+* **Your name**: your name as it appears in the prompt.
+* **Character's name**: the bot name as it appears in the prompt.
+* **Context**: a string that is always at the top of the prompt. It never gets truncated. It usually defines the bot's personality and some key elements of the conversation.
+* **Greeting**: an opening message for the bot. When set, it appears whenever you start a new chat.
+* **Character picture**: a profile picture for the bot. To make it apply, you need to save the bot by clicking on 💾.
+* **Your picture**: your profile picture. It will be used in all conversations.
+
+### Instruction template
+
