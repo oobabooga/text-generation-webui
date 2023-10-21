@@ -12,7 +12,7 @@ RUN --mount=type=cache,target=/root/.cache/pip,rw \
     python3 -m venv /build/venv && \
     . /build/venv/bin/activate && \
     pip3 install --upgrade pip setuptools wheel ninja && \
-    pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118 && \
+    pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121 && \
     pip3 install -r requirements.txt
 
 # https://developer.nvidia.com/cuda-gpus
@@ -44,7 +44,7 @@ RUN virtualenv /app/venv
 RUN --mount=type=cache,target=/root/.cache/pip,rw \
     . /app/venv/bin/activate && \
     pip3 install --upgrade pip setuptools wheel ninja && \
-    pip3 install torch --index-url https://download.pytorch.org/whl/cu118 && \
+    pip3 install torch --index-url https://download.pytorch.org/whl/cu121 && \
     pip3 install torchvision torchaudio sentence_transformers xformers
 
 # Copy and install GPTQ-for-LLaMa
@@ -61,7 +61,7 @@ RUN --mount=type=cache,target=/root/.cache/pip,rw \
 
 COPY . /app/
 
-RUN cp /app/venv/lib/python3.10/site-packages/bitsandbytes/libbitsandbytes_cuda118.so /app/venv/lib/python3.10/site-packages/bitsandbytes/libbitsandbytes_cpu.so
+RUN cp /app/venv/lib/python3.10/site-packages/bitsandbytes/libbitsandbytes_cuda121.so /app/venv/lib/python3.10/site-packages/bitsandbytes/libbitsandbytes_cpu.so
 
 # Install extension requirements
 RUN --mount=type=cache,target=/root/.cache/pip,rw \
