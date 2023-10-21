@@ -75,7 +75,7 @@ Loads: GPTQ models.
 
 Loads: GPTQ models.
 
-Ancient loader, the first one to implement 4-bit quantization. It works on older GPUs for which ExLlama and AutoGPTQ don't work, and it doesn't work with "act-order", so you should use it with simple 4-bit-128g models.
+Ancient loader, the first one to implement 4-bit quantization. It works on older GPUs for which ExLlama and AutoGPTQ do not work, and it doesn't work with "act-order", so you should use it with simple 4-bit-128g models.
 
 * **pre_layer**: Used for CPU offloading. The higher the number, the more layers will be sent to the GPU. GPTQ-for-LLaMa CPU offloading was faster than the one implemented in AutoGPTQ the last time I checked.
 
