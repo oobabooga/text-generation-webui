@@ -1,4 +1,4 @@
-## Default and notebook tabs
+## Default and Notebook Tabs
 
 Used to generate raw completions starting from your prompt.
 
