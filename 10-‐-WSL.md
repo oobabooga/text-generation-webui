@@ -1,30 +1,34 @@
 ## WSL instructions
 
-If you do not have WSL installed, see the instructions below.:
-https://learn.microsoft.com/en-us/windows/wsl/install
+If you do not have WSL installed, follow the [instructions below](https://github.com/oobabooga/text-generation-webui/wiki/10-%E2%80%90-WSL#wsl-installation) first.
 
-If you want to install Linux to a drive other than C
-Open powershell and enter these commands:
+### Additional WSL setup info
 
+If you want to install Linux to a drive other than C, open powershell and enter these commands:
+
+```
 cd D:\Path\To\Linux
 $ProgressPreference = 'SilentlyContinue'
 Invoke-WebRequest -Uri <LinuxDistroURL> -OutFile Linux.appx -UseBasicParsing
 mv Linux.appx Linux.zip
+```
 
 Then open Linux.zip and you should see several .appx files inside.
+
 The one with _x64.appx contains the exe installer that you need.
+
 Extract the contents of that _x64.appx file and run <distro>.exe to install.
 
-Linux Distro URLs:
-https://learn.microsoft.com/en-us/windows/wsl/install-manual#downloading-distributions
+Linux Distro URLs: https://learn.microsoft.com/en-us/windows/wsl/install-manual#downloading-distributions
 
-******************************************************************************
-*ENSURE THAT THE WSL LINUX DISTRO THAT YOU WISH TO USE IS SET AS THE DEFAULT!*
-******************************************************************************
+**ENSURE THAT THE WSL LINUX DISTRO THAT YOU WISH TO USE IS SET AS THE DEFAULT!**
 
 Do this by using these commands:
+
+```
 wsl -l
 wsl -s <DistroName>
+```
 
 ### Web UI Installation
 
