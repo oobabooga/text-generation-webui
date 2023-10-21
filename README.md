@@ -6,7 +6,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 
 |![Image1](https://github.com/oobabooga/screenshots/raw/main/print_instruct.png) | ![Image2](https://github.com/oobabooga/screenshots/raw/main/print_chat.png) |
 |:---:|:---:|
-|![Image1](https://github.com/oobabooga/screenshots/raw/main/print_default.png) | ![Image2](https://github.com/oobabooga/screenshots/raw/main/print_parameters.png) |
+|![Image1](https://github.com/oobabooga/screenshots/raw/main/print_default.png) | ![Image2](https://github.com/oobabooga/screenshots/raw/main/print_parameters.png) |zz
 
 ## Features
 
@@ -124,14 +124,14 @@ Requirements file to use:
 
 ##### AMD GPU on Windows
 
-1) Use `requirements_cpu_only.txt` or `requirements_cpu_only_noavx2.txt` in the command above
+1) Use `requirements_cpu_only.txt` or `requirements_cpu_only_noavx2.txt` in the command above.
 
-2) Manually install llama-cpp-python using the appropriate command for your hardware: [Installation from PyPI](https://github.com/abetlen/llama-cpp-python#installation-with-hardware-acceleration)
-    * use the `LLAMA_HIPBLAS=on` toggle
-    * note the [Windows remarks](https://github.com/abetlen/llama-cpp-python#windows-remarks)
+2) Manually install llama-cpp-python using the appropriate command for your hardware: [Installation from PyPI](https://github.com/abetlen/llama-cpp-python#installation-with-hardware-acceleration).
+    * Use the `LLAMA_HIPBLAS=on` toggle.
+    * Note the [Windows remarks](https://github.com/abetlen/llama-cpp-python#windows-remarks).
 
-3) Manually install AutoGPTQ: [Installation](https://github.com/PanQiWei/AutoGPTQ#install-from-source)
-    * perform the from-source installation - there are no prebuilt ROCm packages for Windows
+3) Manually install AutoGPTQ: [Installation](https://github.com/PanQiWei/AutoGPTQ#install-from-source).
+    * Perform the from-source installation - there are no prebuilt ROCm packages for Windows.
 
 4) Manually install [ExLlama](https://github.com/turboderp/exllama) by simply cloning it into the `repositories` folder (it will be automatically compiled at runtime after that):
 
