@@ -113,6 +113,14 @@ Loads: GGUF/GGML models.
 
 Similar to llama.cpp but it works for certain GGUF/GGML models not originally supported by llama.cpp like Falcon, StarCoder, StarChat, and GPT-J.
 
+### ctransformers
+
+Loads: AWQ models.
+
+Example: https://huggingface.co/TheBloke/Phind-CodeLlama-34B-v2-AWQ
+
+The parameters are overall similar to AutoGPTQ.
+
 ## Model dropdown
 
 Here you can select a model to be loaded, refresh the list of available models (🔄), load/unload/reload the selected model, and save the settings for the model. The "settings" are the values in the input fields (checkboxes, sliders, dropdowns) below this dropdown. 
