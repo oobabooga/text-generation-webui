@@ -84,3 +84,30 @@ Parameters that define the character that is used in the Chat tab when "chat" or
 
 ## Instruction template
 
+Defines the instruction template that is used in the Chat tab when "instruct" or "chat-instruct" are selected under "Mode".
+
+* **Instruction template**: a dropdown menu where you can select from saved templates, save a new template (💾 button), and delete the currently selected template (🗑️).
+* **User string**: in the turn template, `<|user|>` gets replaced with this string.
+* **Bot string**: in the turn template, `<|bot|>` gets replaced with this string.
+* **Context**: a string that appears as-is at the top of the prompt, including the new line characters at the end (if any). The system message for the model can be edited inside this string to customize its behavior.
+* **Turn template**: defines the positioning of spaces and new line characters in a single turn of the dialogue. `<|user-message|>` gets replaced with the user input and `<|bot-message|>` gets replaced with the bot reply. It is necessary to include `<|user|>` and `<|bot|>` even if "User string" and "Bot string" above are empty, as those placeholders are used to split the template in parts in the backend.
+* **Send to default**: send the full instruction template in string format to the Default tab.
+* **Send to notebook**: send the full instruction template in string format to the Notebook tab.
+* **Send to notebook**: send the full instruction template in string format to the "Negative prompt" field under "Parameters" > "Generation".
+* **Command for chat-instruct mode**: the command that is used in chat-instruct mode to query the model to generate a reply on behalf of the character. Can be used creatively to generate specific kinds of responses.
+
+## Chat history
+
+In this tab, you can download the current chat history in JSON format and upload a previously saved chat history. 
+
+When a history is uploaded, a new chat is created to hold it. That is, you don't lose your current chat in the Chat tab.
+
+## Upload character
+
+### YAML or JSON
+
+Allows you to upload characters in the YAML format used by the web UI, including optionally a profile picture. 
+
+### TavernAI PNG
+
+Allows you to upload a TavernAI character card. It will be converted to the internal YAML format of the web UI after upload.
