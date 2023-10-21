@@ -9,7 +9,7 @@ import traceback
 import numpy as np
 import torch
 import transformers
-from transformers import LogitsProcessorList
+from transformers import LogitsProcessorList, is_torch_xpu_available
 
 import modules.shared as shared
 from modules.callbacks import (
@@ -131,6 +131,8 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
     elif torch.backends.mps.is_available():
         device = torch.device('mps')
         return input_ids.to(device)
+    elif is_torch_xpu_available():
+        return input_ids.to("xpu:0")
     else:
         return input_ids.cuda()
 
@@ -235,7 +237,8 @@ def set_manual_seed(seed):
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
-
+    elif is_torch_xpu_available():
+        torch.xpu.manual_seed_all(seed)
     return seed
 
 

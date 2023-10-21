@@ -39,6 +39,7 @@ from modules.evaluate import (
 from modules.logging_colors import logger
 from modules.models import reload_model
 from modules.utils import natural_keys
+from transformers import is_torch_xpu_available
 
 MODEL_CLASSES = {v[1]: v[0] for v in MODEL_FOR_CAUSAL_LM_MAPPING_NAMES.items()}
 PARAMETERS = ["lora_name", "always_override", "save_steps", "micro_batch_size", "batch_size", "epochs", "learning_rate", "lr_scheduler_type", "lora_rank", "lora_alpha", "lora_dropout", "cutoff_len", "dataset", "eval_dataset", "format", "eval_steps", "raw_text_file", "overlap_len", "newline_favor_len", "higher_rank_limit", "warmup_steps", "optimizer", "hard_cut_string", "train_only_after", "stop_at_loss", "add_eos_token", "min_chars", "report_to"]
@@ -588,6 +589,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             # TODO: Enable multi-device support
             ddp_find_unused_parameters=None,
             no_cuda=shared.args.cpu,
+            use_ipex= True if is_torch_xpu_available and not shared.args.cpu
         ),
         data_collator=transformers.DataCollatorForLanguageModeling(shared.tokenizer, mlm=False),
         callbacks=list([Callbacks()])

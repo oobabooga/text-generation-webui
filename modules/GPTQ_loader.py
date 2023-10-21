@@ -6,6 +6,7 @@ import accelerate
 import torch
 import transformers
 from transformers import AutoConfig, AutoModelForCausalLM
+from accelerate import is_xpu_available
 
 import modules.shared as shared
 from modules.logging_colors import logger
@@ -144,7 +145,7 @@ def load_quantized(model_name):
         model = load_quant(str(path_to_model), str(pt_path), shared.args.wbits, shared.args.groupsize, kernel_switch_threshold=threshold)
 
         # accelerate offload (doesn't work properly)
-        if shared.args.gpu_memory or torch.cuda.device_count() > 1:
+        if shared.args.gpu_memory or torch.cuda.device_count() > 1 or (is_xpu_available() and torch.xpu.device_count() > 1):
             if shared.args.gpu_memory:
                 memory_map = list(map(lambda x: x.strip(), shared.args.gpu_memory))
                 max_cpu_memory = shared.args.cpu_memory.strip() if shared.args.cpu_memory is not None else '99GiB'
@@ -156,6 +157,7 @@ def load_quantized(model_name):
             else:
                 max_memory = accelerate.utils.get_balanced_memory(model)
 
+
             device_map = accelerate.infer_auto_device_map(model, max_memory=max_memory, no_split_module_classes=["LlamaDecoderLayer"])
             logger.info("Using the following device map for the quantized model:", device_map)
             # https://huggingface.co/docs/accelerate/package_reference/big_modeling#accelerate.dispatch_model
@@ -163,6 +165,9 @@ def load_quantized(model_name):
 
         # No offload
         elif not shared.args.cpu:
-            model = model.to(torch.device('cuda:0'))
+            if is_xpu_available():
+                model = model.to(torch.device("xpu:0"))
+            else:
+                model = model.to(torch.device('cuda:0'))
 
     return model

@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from auto_gptq import AutoGPTQForCausalLM, BaseQuantizeConfig
+from accelerate import is_xpu_available
 
 import modules.shared as shared
 from modules.logging_colors import logger
@@ -41,7 +42,7 @@ def load_quantized(model_name):
     # Define the params for AutoGPTQForCausalLM.from_quantized
     params = {
         'model_basename': pt_path.stem,
-        'device': "cuda:0" if not shared.args.cpu else "cpu",
+        'device': "xpu:0" if is_xpu_available() else "cuda:0" if not shared.args.cpu else "cpu",
         'use_triton': shared.args.triton,
         'inject_fused_attention': not shared.args.no_inject_fused_attention,
         'inject_fused_mlp': not shared.args.no_inject_fused_mlp,
