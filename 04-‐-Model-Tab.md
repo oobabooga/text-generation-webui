@@ -79,15 +79,30 @@ Ancient loader, the first one to implement 4-bit quantization. It works on older
 
 Loads: GGUF models. Note: GGML models have been deprecated and do not work anymore.
 
-* **n-gpu-layers**: 
-* **n-ctx**: 
-* **threads**: 
-* **threads_batch**:
-* **n_batch**: 
-* **mul_mat_q**:
-* **no-mmap**:
-* **mlock**: 
-* **numa**: 
-* **CPU**: 
-* **tensor_split**: 
-* **Seed**: 
+* **n-gpu-layers**: the number of layers to allocate to the GPU. If set to 0, only the CPU will be used. If you want to offload all layers, you can simply set this to the maximum value.
+* **n-ctx**: context length of the model. In llama.cpp, the context is preallocated, so the higher this value, the higher the RAM/VRAM usage will be. It gets automatically updated with the value in the GGUF metadata for the model when you select it in the Model dropdown.
+* **threads**: number of threads. Recommended value: your number of physical cores. 
+* **threads_batch**: number of threads for batch processing. Recommended value: your total number of cores (physical + virtual).
+* **n_batch**: batch size for prompt processing. Higher values are supposed to make generation faster, but I have never obtained any benefit from changing this value.
+* **mul_mat_q**: use the mul_mat_q kernel. This usually improves generation speed significantly.
+* **no-mmap**: loads the model into memory at once, possibly preventing I/O operations later on at the cost of a longer load time.
+* **mlock**: force system to keep model in RAM rather than swapping or compressing (no idea what this means, never used it).
+* **numa**: may improve performance on certain multi-cpu systems.
+* **cpu**: force a version of llama.cpp compiled without GPU acceleration to be used. Can usually be ignored, only set this if you want to use CPU only and llama.cpp literally doesn't work otherwise. 
+* **tensor_split**: for multi-gpu only. Sets the amount of memory to allocate per GPU.
+* **Seed**: the seed for the llama.cpp random number generator. Not very useful as it can only be set once (that I'm aware).
+
+### llamacpp_HF
+
+The same as llama.cpp but with transformers samplers, and using the transformers tokenizer instead of the internal llama.cpp tokenizer.
+
+To use it, you need to download a tokenizer. There are two options:
+
+1) Download oobabooga/llama-tokenizer under "Download model or LoRA". That's a default Llama tokenizer.
+2) place your .gguf in a subfolder of models/ along with these 3 files: tokenizer.model, tokenizer_config.json, and special_tokens_map.json. This takes precedence over Option 1.
+
+### ctransformers
+
+Loads: GGUF/GGML models.
+
+Similar to llama.cpp but it works for certain GGUF/GGML models not supported by llama.cpp like Falcon, StarCoder, StarChat, and GPT-J.
