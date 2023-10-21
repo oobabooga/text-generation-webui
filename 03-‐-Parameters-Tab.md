@@ -70,7 +70,7 @@ To the right (or below if you are on mobile), the following parameters are prese
 * **Load grammar from file**: loads a GBNF grammar from a file under `text-generation-webui/grammars`. The output is written to the "Grammar" box below. You can also save and delete custom grammars using this menu.
 * **Grammar**: allows you to constrain the model output to a particular format. For instance, you can make the model generate lists, JSON, specific words, etc. Grammar is extremely powerful and I use it all the time. The syntax looks a bit daunting at first sight, but it is very easy once you understand the syntax. See the [GBNF Guide](https://github.com/ggerganov/llama.cpp/blob/master/grammars/README.md) for details.
 
-### Character
+## Character
 
 Parameters that define the character that is used in the Chat tab when "chat" or "chat-instruct" are selected under "Mode".
 
@@ -82,5 +82,5 @@ Parameters that define the character that is used in the Chat tab when "chat" or
 * **Character picture**: a profile picture for the bot. To make it apply, you need to save the bot by clicking on 💾.
 * **Your picture**: your profile picture. It will be used in all conversations.
 
-### Instruction template
+## Instruction template
 
