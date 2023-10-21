@@ -113,7 +113,7 @@ Loads: GGUF/GGML models.
 
 Similar to llama.cpp but it works for certain GGUF/GGML models not originally supported by llama.cpp like Falcon, StarCoder, StarChat, and GPT-J.
 
-### ctransformers
+### AutoAWQ
 
 Loads: AWQ models.
 
