@@ -53,7 +53,7 @@ The same as ExLlama_HF but using the internal samplers of ExLlama instead of the
 
 ### ExLlamav2
 
-The same as ExLlamav2_HF but using the internal samplers of ExLlama instead of the ones in the Transformers library.
+The same as ExLlamav2_HF but using the internal samplers of ExLlamav2 instead of the ones in the Transformers library.
 
 ### AutoGPTQ
 
