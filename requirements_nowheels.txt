@@ -1,0 +1,27 @@
+accelerate==0.23.*
+colorama
+datasets
+einops
+exllamav2==0.0.6
+gradio==3.47.*
+markdown
+numpy==1.24.*
+optimum==1.13.1
+pandas
+peft==0.5.*
+Pillow>=9.5.0
+pyyaml
+requests
+safetensors==0.4.0
+scipy
+sentencepiece
+tensorboard
+transformers==4.34.*
+tqdm
+wandb
+
+git+https://github.com/oobabooga/torch-grammar.git
+
+# bitsandbytes
+bitsandbytes==0.41.1; platform_system != "Windows"
+https://github.com/jllllll/bitsandbytes-windows-webui/releases/download/wheels/bitsandbytes-0.41.1-py3-none-win_amd64.whl; platform_system == "Windows"

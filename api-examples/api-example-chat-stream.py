@@ -63,6 +63,7 @@ async def run(user_input, history):
         'mirostat_mode': 0,
         'mirostat_tau': 5,
         'mirostat_eta': 0.1,
+        'grammar_string': '',
         'guidance_scale': 1,
         'negative_prompt': '',
 
@@ -70,6 +71,7 @@ async def run(user_input, history):
         'add_bos_token': True,
         'truncation_length': 2048,
         'ban_eos_token': False,
+        'custom_token_bans': '',
         'skip_special_tokens': True,
         'stopping_strings': []
     }

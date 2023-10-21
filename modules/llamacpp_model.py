@@ -1,6 +1,7 @@
 import re
 from functools import partial
 
+import numpy as np
 import torch
 
 from modules import RoPE, shared
@@ -8,19 +9,19 @@ from modules.callbacks import Iteratorize
 from modules.logging_colors import logger
 from modules.text_generation import get_max_prompt_length
 
-import llama_cpp
+try:
+    import llama_cpp
+except:
+    llama_cpp = None
 
-if torch.cuda.is_available() and not torch.version.hip:
-    try:
-        import llama_cpp_cuda
-    except:
-        llama_cpp_cuda = None
-else:
+try:
+    import llama_cpp_cuda
+except:
     llama_cpp_cuda = None
 
 
 def llama_cpp_lib():
-    if shared.args.cpu or llama_cpp_cuda is None:
+    if (shared.args.cpu and llama_cpp is not None) or llama_cpp_cuda is None:
         return llama_cpp
     else:
         return llama_cpp_cuda
@@ -31,9 +32,18 @@ def ban_eos_logits_processor(eos_token, input_ids, logits):
     return logits
 
 
+def custom_token_ban_logits_processor(token_ids, input_ids, logits):
+    for token_id in token_ids:
+        logits[token_id] = -float('inf')
+
+    return logits
+
+
 class LlamaCppModel:
     def __init__(self):
         self.initialized = False
+        self.grammar_string = ''
+        self.grammar = None
 
     def __del__(self):
         self.model.__del__()
@@ -66,11 +76,12 @@ class LlamaCppModel:
             'n_ctx': shared.args.n_ctx,
             'seed': int(shared.args.llama_cpp_seed),
             'n_threads': shared.args.threads or None,
+            'n_threads_batch': shared.args.threads_batch or None,
             'n_batch': shared.args.n_batch,
             'use_mmap': not shared.args.no_mmap,
             'use_mlock': shared.args.mlock,
             'mul_mat_q': shared.args.mul_mat_q,
-            'low_vram': shared.args.low_vram,
+            'numa': shared.args.numa,
             'n_gpu_layers': shared.args.n_gpu_layers,
             'rope_freq_base': RoPE.get_rope_freq_base(shared.args.alpha_value, shared.args.rope_freq_base),
             'tensor_split': tensor_split_list,
@@ -90,8 +101,22 @@ class LlamaCppModel:
 
         return self.model.tokenize(string)
 
-    def decode(self, tokens):
-        return self.model.detokenize(tokens)
+    def decode(self, ids):
+        return self.model.detokenize(ids).decode('utf-8')
+
+    def get_logits(self, tokens):
+        self.model.eval(tokens)
+        logits = self.model._scores
+        logits = np.expand_dims(logits, 0)  # batch dim is expected
+        return torch.tensor(logits, dtype=torch.float32)
+
+    def load_grammar(self, string):
+        if string != self.grammar_string:
+            self.grammar_string = string
+            if string.strip() != '':
+                self.grammar = llama_cpp_lib().LlamaGrammar.from_string(string)
+            else:
+                self.grammar = None
 
     def generate(self, prompt, state, callback=None):
 
@@ -102,7 +127,17 @@ class LlamaCppModel:
         # Handle truncation
         prompt = self.encode(prompt)
         prompt = prompt[-get_max_prompt_length(state):]
-        prompt = self.decode(prompt).decode('utf-8')
+        prompt = self.decode(prompt)
+
+        self.load_grammar(state['grammar_string'])
+        logit_processors = LogitsProcessorList()
+        if state['ban_eos_token']:
+            logit_processors.append(partial(ban_eos_logits_processor, self.model.token_eos()))
+
+        if state['custom_token_bans']:
+            to_ban = [int(x) for x in state['custom_token_bans'].split(',')]
+            if len(to_ban) > 0:
+                logit_processors.append(partial(custom_token_ban_logits_processor, to_ban))
 
         completion_chunks = self.model.create_completion(
             prompt=prompt,
@@ -116,9 +151,8 @@ class LlamaCppModel:
             mirostat_tau=state['mirostat_tau'],
             mirostat_eta=state['mirostat_eta'],
             stream=True,
-            logits_processor=LogitsProcessorList([
-                partial(ban_eos_logits_processor, self.model.token_eos()),
-            ]) if state['ban_eos_token'] else None,
+            logits_processor=logit_processors,
+            grammar=self.grammar
         )
 
         output = ""

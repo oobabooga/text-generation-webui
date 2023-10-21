@@ -22,6 +22,9 @@ from requests.adapters import HTTPAdapter
 from tqdm.contrib.concurrent import thread_map
 
 
+base = "https://huggingface.co"
+
+
 class ModelDownloader:
     def __init__(self, max_retries=5):
         self.session = requests.Session()
@@ -37,6 +40,13 @@ class ModelDownloader:
         if model[-1] == '/':
             model = model[:-1]
 
+        if model.startswith(base + '/'):
+            model = model[len(base) + 1:]
+
+        model_parts = model.split(":")
+        model = model_parts[0] if len(model_parts) > 0 else model
+        branch = model_parts[1] if len(model_parts) > 1 else branch
+
         if branch is None:
             branch = "main"
         else:
@@ -48,7 +58,6 @@ class ModelDownloader:
         return model, branch
 
     def get_download_links_from_huggingface(self, model, branch, text_only=False, specific_file=None):
-        base = "https://huggingface.co"
         page = f"/api/models/{model}/tree/{branch}"
         cursor = b""
 
@@ -82,7 +91,8 @@ class ModelDownloader:
                 is_safetensors = re.match(r".*\.safetensors", fname)
                 is_pt = re.match(r".*\.pt", fname)
                 is_gguf = re.match(r'.*\.gguf', fname)
-                is_tokenizer = re.match(r"(tokenizer|ice|spiece).*\.model", fname)
+                is_tiktoken = re.match(r".*\.tiktoken", fname)
+                is_tokenizer = re.match(r"(tokenizer|ice|spiece).*\.model", fname) or is_tiktoken
                 is_text = re.match(r".*\.(txt|json|py|md)", fname) or is_tokenizer
                 if any((is_pytorch, is_safetensors, is_pt, is_gguf, is_tokenizer, is_text)):
                     if 'lfs' in dict[i]:
@@ -167,10 +177,10 @@ class ModelDownloader:
                             count += len(data)
                             self.progress_bar(float(count) / float(total_size), f"{filename}")
 
-    def start_download_threads(self, file_list, output_folder, start_from_scratch=False, threads=1):
+    def start_download_threads(self, file_list, output_folder, start_from_scratch=False, threads=4):
         thread_map(lambda url: self.get_single_file(url, output_folder, start_from_scratch=start_from_scratch), file_list, max_workers=threads, disable=True)
 
-    def download_model_files(self, model, branch, links, sha256, output_folder, progress_bar=None, start_from_scratch=False, threads=1, specific_file=None, is_llamacpp=False):
+    def download_model_files(self, model, branch, links, sha256, output_folder, progress_bar=None, start_from_scratch=False, threads=4, specific_file=None, is_llamacpp=False):
         self.progress_bar = progress_bar
 
         # Create the folder and writing the metadata
@@ -226,7 +236,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('MODEL', type=str, default=None, nargs='?')
     parser.add_argument('--branch', type=str, default='main', help='Name of the Git branch to download from.')
-    parser.add_argument('--threads', type=int, default=1, help='Number of files to download simultaneously.')
+    parser.add_argument('--threads', type=int, default=4, help='Number of files to download simultaneously.')
     parser.add_argument('--text-only', action='store_true', help='Only download text files (txt/json).')
     parser.add_argument('--specific-file', type=str, default=None, help='Name of the specific file to download (if not provided, downloads all).')
     parser.add_argument('--output', type=str, default=None, help='The folder where the model should be saved.')

@@ -10,19 +10,19 @@ from transformers.modeling_outputs import CausalLMOutputWithPast
 from modules import RoPE, shared
 from modules.logging_colors import logger
 
-import llama_cpp
+try:
+    import llama_cpp
+except:
+    llama_cpp = None
 
-if torch.cuda.is_available() and not torch.version.hip:
-    try:
-        import llama_cpp_cuda
-    except:
-        llama_cpp_cuda = None
-else:
+try:
+    import llama_cpp_cuda
+except:
     llama_cpp_cuda = None
 
 
 def llama_cpp_lib():
-    if shared.args.cpu or llama_cpp_cuda is None:
+    if (shared.args.cpu and llama_cpp is not None) or llama_cpp_cuda is None:
         return llama_cpp
     else:
         return llama_cpp_cuda
@@ -48,7 +48,7 @@ class LlamacppHF(PreTrainedModel):
                 'n_tokens': self.model.n_tokens,
                 'input_ids': self.model.input_ids.copy(),
                 'scores': self.model.scores.copy(),
-                'ctx': llama_cpp_lib().llama_new_context_with_model(model.model, model.params)
+                'ctx': llama_cpp_lib().llama_new_context_with_model(model.model, model.context_params)
             }
 
     def _validate_model_class(self):
@@ -117,14 +117,28 @@ class LlamacppHF(PreTrainedModel):
             seq = past_key_values + seq
 
         seq_tensor = torch.tensor(seq)
+        reset = True
 
-        # Make the forward call
+        # Make the forward call. The prefix-match code has been adapted from
+        # https://github.com/abetlen/llama-cpp-python/commit/f4090a0bb2a2a25acfe28d31c82cc1aa273bedee
         if labels is None:
-            if past_seq is None or not torch.equal(past_seq, seq_tensor[:-1]):
+            if past_seq is not None:
+                min_length = min(past_seq.shape[0], seq_tensor.shape[0])
+                indices = torch.nonzero(~torch.eq(past_seq[:min_length], seq_tensor[:min_length]))
+                if len(indices) > 0:
+                    longest_prefix = indices[0].item()
+                else:
+                    longest_prefix = min_length
+
+                if longest_prefix > 0:
+                    reset = False
+                    self.model.n_tokens = longest_prefix
+                    if len(seq_tensor) - longest_prefix > 0:
+                        self.model.eval(seq[longest_prefix:])
+
+            if reset:
                 self.model.reset()
                 self.model.eval(seq)
-            else:
-                self.model.eval([seq[-1]])
 
             logits = torch.tensor(self.model.scores[self.model.n_tokens - 1, :]).view(1, 1, -1).to(input_ids.device)
         else:
@@ -158,6 +172,7 @@ class LlamacppHF(PreTrainedModel):
     @classmethod
     def from_pretrained(cls, pretrained_model_name_or_path: Optional[Union[str, os.PathLike]], *model_args, **kwargs):
         assert len(model_args) == 0 and len(kwargs) == 0, "extra args is currently not supported"
+
         if isinstance(pretrained_model_name_or_path, str):
             pretrained_model_name_or_path = Path(pretrained_model_name_or_path)
 
@@ -179,11 +194,12 @@ class LlamacppHF(PreTrainedModel):
             'n_ctx': shared.args.n_ctx,
             'seed': int(shared.args.llama_cpp_seed),
             'n_threads': shared.args.threads or None,
+            'n_threads_batch': shared.args.threads_batch or None,
             'n_batch': shared.args.n_batch,
             'use_mmap': not shared.args.no_mmap,
             'use_mlock': shared.args.mlock,
             'mul_mat_q': shared.args.mul_mat_q,
-            'low_vram': shared.args.low_vram,
+            'numa': shared.args.numa,
             'n_gpu_layers': shared.args.n_gpu_layers,
             'rope_freq_base': RoPE.get_rope_freq_base(shared.args.alpha_value, shared.args.rope_freq_base),
             'tensor_split': tensor_split_list,

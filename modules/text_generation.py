@@ -18,6 +18,7 @@ from modules.callbacks import (
     _StopEverythingStoppingCriteria
 )
 from modules.extensions import apply_extensions
+from modules.grammar import GrammarLogitsProcessor
 from modules.html_generator import generate_4chan_html, generate_basic_html
 from modules.logging_colors import logger
 from modules.models import clear_torch_cache, local_rank
@@ -96,7 +97,7 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
                     last_update = cur_time
                     yield reply
 
-        if stop_found:
+        if stop_found or (state['max_tokens_second'] > 0 and shared.stop_everything):
             break
 
     if not is_chat:
@@ -106,6 +107,9 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
 
 
 def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_length=None):
+    if shared.tokenizer is None:
+        raise ValueError('No tokenizer is loaded')
+
     if shared.model.__class__.__name__ in ['LlamaCppModel', 'RWKVModel', 'CtransformersModel', 'Exllamav2Model']:
         input_ids = shared.tokenizer.encode(str(prompt))
         if shared.model.__class__.__name__ not in ['Exllamav2Model']:
@@ -128,11 +132,16 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
     elif torch.backends.mps.is_available():
         device = torch.device('mps')
         return input_ids.to(device)
+    elif hasattr(torch, 'xpu') and torch.xpu.is_available():
+        return input_ids.to('xpu')
     else:
         return input_ids.cuda()
 
 
 def decode(output_ids, skip_special_tokens=True):
+    if shared.tokenizer is None:
+        raise ValueError('No tokenizer is loaded')
+
     return shared.tokenizer.decode(output_ids, skip_special_tokens)
 
 
@@ -142,6 +151,17 @@ def get_encoded_length(prompt):
         return length_after_extensions
 
     return len(encode(prompt)[0])
+
+
+def get_token_ids(prompt):
+    tokens = encode(prompt)[0]
+    decoded_tokens = [shared.tokenizer.decode([i]) for i in tokens]
+
+    output = ''
+    for row in list(zip(tokens, decoded_tokens)):
+        output += f"{str(int(row[0])).ljust(5)}  -  {repr(row[1])}\n"
+
+    return output
 
 
 def get_max_prompt_length(state):
@@ -266,6 +286,14 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
     if state['ban_eos_token']:
         generate_params['suppress_tokens'] = [shared.tokenizer.eos_token_id]
 
+    if state['custom_token_bans']:
+        to_ban = [int(x) for x in state['custom_token_bans'].split(',')]
+        if len(to_ban) > 0:
+            if generate_params.get('suppress_tokens', None):
+                generate_params['suppress_tokens'] += to_ban
+            else:
+                generate_params['suppress_tokens'] = to_ban
+
     generate_params.update({'use_cache': not shared.args.no_cache})
     if shared.args.deepspeed:
         generate_params.update({'synced_gpus': True})
@@ -291,9 +319,10 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
     generate_params['stopping_criteria'].append(_StopEverythingStoppingCriteria())
 
     processor = state.get('logits_processor', LogitsProcessorList([]))
-    # In case folks just pass in a processor by itself.
-    if type(processor) != LogitsProcessorList:
+    # In case a processor is passed by itself.
+    if not isinstance(processor, LogitsProcessorList):
         processor = LogitsProcessorList([processor])
+    processor.append(GrammarLogitsProcessor(state['grammar_string']))
     apply_extensions('logits_processor', processor, input_ids)
     generate_params['logits_processor'] = processor
 
@@ -326,9 +355,10 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
 
             with generate_with_streaming(**generate_params) as generator:
                 for output in generator:
-                    yield get_reply_from_output_ids(output, input_ids, original_question, state, is_chat=is_chat)
                     if output[-1] in eos_token_ids:
                         break
+
+                    yield get_reply_from_output_ids(output, input_ids, original_question, state, is_chat=is_chat)
 
     except Exception:
         traceback.print_exc()

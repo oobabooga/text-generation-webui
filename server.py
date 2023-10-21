@@ -1,12 +1,14 @@
 import os
 import warnings
 
+import modules.one_click_installer_check
 from modules.block_requests import OpenMonkeyPatch, RequestBlocker
 from modules.logging_colors import logger
 
 os.environ['GRADIO_ANALYTICS_ENABLED'] = 'False'
 os.environ['BITSANDBYTES_NOWELCOME'] = '1'
 warnings.filterwarnings('ignore', category=UserWarning, message='TypedStorage is deprecated')
+warnings.filterwarnings('ignore', category=UserWarning, message='Using the update method is deprecated')
 
 with RequestBlocker():
     import gradio as gr
@@ -76,6 +78,7 @@ def create_interface():
         'instruction_template': shared.settings['instruction_template'],
         'prompt_menu-default': shared.settings['prompt-default'],
         'prompt_menu-notebook': shared.settings['prompt-notebook'],
+        'filter_by_loader': shared.args.loader or 'All'
     })
 
     if Path("cache/pfp_character.png").exists():
@@ -208,6 +211,7 @@ if __name__ == "__main__":
         p = Path(shared.model_name)
         if p.exists():
             model_name = p.parts[-1]
+            shared.model_name = model_name
         else:
             model_name = shared.model_name
 

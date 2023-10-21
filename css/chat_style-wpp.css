@@ -1,7 +1,7 @@
 .message {
     padding-bottom: 25px;
     font-size: 15px;
-    font-family: Helvetica, Arial, sans-serif;
+    font-family: 'Noto Sans', Helvetica, Arial, sans-serif;
     line-height: 1.428571429;
 }
 
@@ -47,9 +47,9 @@
 }
 
 .dark .message-body p em {
-    color: rgb(138, 138, 138) !important;
+    color: rgb(138 138 138) !important;
 }
 
 .message-body p em {
-    color: rgb(110, 110, 110) !important;
+    color: rgb(110 110 110) !important;
 }

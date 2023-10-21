@@ -1,10 +1,10 @@
 import time
+
 import yaml
-import os
-from modules import shared
 from extensions.openai.defaults import get_default_req_params
+from extensions.openai.errors import InvalidRequestError
 from extensions.openai.utils import debug_msg
-from extensions.openai.errors import *
+from modules import shared
 from modules.text_generation import encode, generate_reply
 
 
@@ -74,7 +74,6 @@ def edits(instruction: str, input: str, temperature=1.0, top_p=1.0) -> dict:
 
     generator = generate_reply(edit_task, req_params, stopping_strings=stopping_strings, is_chat=False)
 
-    longest_stop_len = max([len(x) for x in stopping_strings] + [0])
     answer = ''
     for a in generator:
         answer = a

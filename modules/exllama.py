@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import torch
 import torch.nn.functional as F
 from torch import version as torch_version
 
@@ -13,7 +14,7 @@ try:
     from exllama.model import ExLlama, ExLlamaCache, ExLlamaConfig
     from exllama.tokenizer import ExLlamaTokenizer
 except:
-    logger.warning('Exllama module failed to load. Will attempt to load from repositories.')
+    logger.warning('exllama module failed to import. Will attempt to import from repositories/.')
     try:
         from modules.relative_imports import RelativeImport
 
@@ -22,7 +23,10 @@ except:
             from model import ExLlama, ExLlamaCache, ExLlamaConfig
             from tokenizer import ExLlamaTokenizer
     except:
-        logger.error("Could not find repositories/exllama/. Make sure that exllama is cloned inside repositories/ and is up to date.")
+        logger.error(
+            "Could not find repositories/exllama. Please ensure that exllama"
+            " (https://github.com/turboderp/exllama) is cloned inside repositories/ and is up to date."
+        )
         raise
 
 
@@ -81,6 +85,24 @@ class ExllamaModel:
         result.generator = generator
         return result, result
 
+    def encode(self, string, **kwargs):
+        return self.tokenizer.encode(string, max_seq_len=self.model.config.max_seq_len, add_bos=True)
+
+    def decode(self, ids, **kwargs):
+        if isinstance(ids, list):
+            ids = torch.tensor([ids])
+        elif isinstance(ids, torch.Tensor) and ids.numel() == 1:
+            ids = ids.view(1, -1)
+
+        return self.tokenizer.decode(ids)[0]
+
+    def get_logits(self, token_ids, **kwargs):
+        self.cache.current_seq_len = 0
+        if token_ids.shape[-1] > 1:
+            self.model.forward(token_ids[:, :-1], self.cache, input_mask=None, preprocess_only=True)
+
+        return self.model.forward(token_ids[:, -1:], self.cache, **kwargs).float().cpu()
+
     def generate_with_streaming(self, prompt, state):
 
         # The cache batch size must be 2 for CFG and 1 otherwise
@@ -108,12 +130,22 @@ class ExllamaModel:
         else:
             self.generator.disallow_tokens(None)
 
+        if state['custom_token_bans']:
+            to_ban = [int(x) for x in state['custom_token_bans'].split(',')]
+            if len(to_ban) > 0:
+                self.generator.disallow_tokens(to_ban)
+
         # Case 1: no CFG
         if state['guidance_scale'] == 1:
             self.generator.end_beam_search()
 
             # Tokenizing the input
             ids = self.generator.tokenizer.encode(prompt, max_seq_len=self.model.config.max_seq_len)
+            if state['add_bos_token']:
+                ids = torch.cat(
+                    [torch.tensor([[self.tokenizer.bos_token_id]]).to(ids.device),
+                     ids], dim=1
+                ).to(torch.int64)
             ids = ids[:, -get_max_prompt_length(state):]
             if state['auto_max_new_tokens']:
                 max_new_tokens = state['truncation_length'] - ids.shape[-1]
@@ -143,7 +175,12 @@ class ExllamaModel:
             alpha = state['guidance_scale']
             prompts = [prompt, state['negative_prompt'] or '']
 
-            ids, mask = self.tokenizer.encode(prompts, return_mask=True, max_seq_len=self.model.config.max_seq_len)
+            ids, mask = self.tokenizer.encode(
+                prompts,
+                return_mask=True,
+                max_seq_len=self.model.config.max_seq_len,
+                add_bos=state['add_bos_token']
+            )
             if state['auto_max_new_tokens']:
                 max_new_tokens = state['truncation_length'] - ids[0].shape[-1]
             else:
@@ -181,9 +218,3 @@ class ExllamaModel:
             pass
 
         return output
-
-    def encode(self, string, **kwargs):
-        return self.tokenizer.encode(string, max_seq_len=self.model.config.max_seq_len)
-
-    def decode(self, string, **kwargs):
-        return self.tokenizer.decode(string)[0]
