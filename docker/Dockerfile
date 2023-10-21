@@ -61,7 +61,7 @@ RUN --mount=type=cache,target=/root/.cache/pip,rw \
 
 COPY . /app/
 
-RUN cp /app/venv/lib/python3.10/site-packages/bitsandbytes/libbitsandbytes_cuda118.so /app/venv/lib/python3.10/site-packages/bitsandbytes/libbitsandbytes_cpu.so
+RUN cp /app/venv/lib/python3.10/site-packages/bitsandbytes/libbitsandbytes_cuda121.so /app/venv/lib/python3.10/site-packages/bitsandbytes/libbitsandbytes_cpu.so
 
 # Install extension requirements
 RUN --mount=type=cache,target=/root/.cache/pip,rw \
