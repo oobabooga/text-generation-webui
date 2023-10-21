@@ -8,7 +8,7 @@ Loads: full precision (16-bit or 32-bit) models. The repository usually has a cl
 
 Example: [https://huggingface.co/lmsys/vicuna-7b-v1.5](https://huggingface.co/lmsys/vicuna-7b-v1.5). 
 
-Full precision models use a ton of VRAM, so usually you will want to select the "load_in_4bit" and "use_double_quant" options to load the model in 4-bit precision using bitsandbytes.
+Full precision models use a ton of VRAM, so you will usually want to select the "load_in_4bit" and "use_double_quant" options to load the model in 4-bit precision using bitsandbytes.
 
 This loader can also load GPTQ models and train LoRAs with them. For that, make sure to check the "auto-devices" and "disable_exllama" options before loading the model.
 
