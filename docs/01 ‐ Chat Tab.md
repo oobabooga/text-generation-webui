@@ -9,7 +9,7 @@ The following buttons can be found. Note that the hover menu can be replaced wit
 * **Continue**: makes the model attempt to continue the existing reply. In some cases, the model may simply end the existing turn immediately without generating anything new, but in other cases, it may generate a longer reply.
 * **Regenerate**: similar to Generate, but your last message is used as input instead of the text in the input field. Note that if the temperature/top_p/top_k parameters are low in the "Parameters" tab of the UI, the new reply may end up identical to the previous one.
 * **Remove last reply**: removes the last input/output pair from the history and sends your last message back into the input field.
-* **Replace last reply**: replaces the last bot reply with whatever you typed into the input field. Useful in conjunction with "Copy last reply" if you want to edit the bot response.
+* **Replace last reply**: replaces the last reply with whatever you typed into the input field. Useful in conjunction with "Copy last reply" if you want to edit the bot response.
 * **Copy last reply**: sends the contents of the bot's last reply to the input field.
 * **Impersonate**: makes the model generate a new message on your behalf in the input field, taking into consideration the existing chat history.
 * **Send dummy message**: adds a new message to the chat history without causing the model to generate a reply.
@@ -22,7 +22,7 @@ The **Show controls** checkbox causes the input fields below the input textbox t
 
 ## Past chats
 
-Allows you to switch between the current and previous conversations with the current character, or between the current and previous instruct conversations (if in "instruct" mode). The Rename menu can be used to give a unique name to the selected conversation, and the 🗑️ button allows you to delete it.
+Allows you to switch between the current and previous conversations with the current character, or between the current and previous instruct conversations (if in "instruct" mode). The **Rename** menu can be used to give a unique name to the selected conversation, and the 🗑️ button allows you to delete it.
 
 ## Start reply with
 
@@ -34,7 +34,7 @@ The most important input field. It defines how the chat prompt is formatted. The
 
 ### Instruction-following models
 
-There are two kinds of models: base models, like Llama and GPT-J, and fine-tuned models, like Alpaca and Vicuna. Fine-tuned models are trained starting from base models, most often to get the model to understand and respond to instructions just like ChatGPT does. Let's call such models *instruction-following models*.
+There are two kinds of models: base models, like Llama and GPT-J, and fine-tuned models, like Alpaca and Vicuna. Fine-tuned models are trained starting from base models, most often with the goal of getting the model to understand and respond to instructions just like ChatGPT does. Let's call such models *instruction-following models*.
 
 Each instruction-following model was trained on a specific prompt format, and you have to use that exact prompt format if you want the model to follow your instructions as accurately as it can.
 
@@ -91,7 +91,7 @@ There are 3 adjustable parameters in "Parameters" > "Character" being used in th
 
 Additionally, the **Greeting** string appears as the bot's opening message whenever the history is cleared.
 
-The "Chat" option should typically be used only for base models, and should not be used for instruction-following models.
+The "Chat" option should typically be used only for base models or non-instruct fine tunes, and should not be used for instruction-following models.
 
 ### Instruct
 
@@ -99,7 +99,7 @@ Used for talking to an instruction-following model using the prompt format defin
 
 The prompt format is defined by the following adjustable parameters in "Parameters" > "Instruction template":
 
-* **Context**: appears at the top of the prompt exactly as it is written, including the newline characters at the end (if any). Often the context includes a customizable sub-string. For instance, instead of "Answer the questions." for Llama-2-chat, you can write "Answer the questions as if you were a pirate.", and the model will comply.
+* **Context**: appears at the top of the prompt exactly as it is written, including the newline characters at the end (if any). Often the context includes a customizable system message. For instance, instead of "Answer the questions." for Llama-2-chat, you can write "Answer the questions as if you were a pirate.", and the model will comply.
 * **Turn template**: defines a single input/reply turn. In this string, `<|user|>` and `<|bot|>` are placeholders that get replaced with whatever you type in the **User string** and **Bot string** fields respectively; they are mandatory and should be present even if those fields are empty. `<|user-message|>` and `<|bot-message|>` get replaced with the user and bot messages at that turn. If the prompt format uses newline characters, they should be written inline as `\n` in the turn template.
 
 Note that when you load a model in the "Model" tab, the web UI will try to automatically detect its instruction template (if any), and will update the values under "Parameters" > "Instruction template" accordingly. This is done using a set of regular expressions defined in `models/config.yaml`. This detection is not guaranteed to be accurate. You should check the model card on Hugging Face to see if you are using the correct prompt format.
