@@ -1,4 +1,5 @@
 import random
+import traceback
 from pathlib import Path
 
 import torch
@@ -24,6 +25,9 @@ except ModuleNotFoundError:
         'https://github.com/Dao-AILab/flash-attention#installation-and-features'
     )
     pass
+except Exception as e:
+    logger.warning('Failed to load flash-attention due to the following error:\n')
+    traceback.print_exc()
 
 
 class Exllamav2Model:
