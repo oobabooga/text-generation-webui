@@ -178,10 +178,10 @@ def install_webui():
         else:
             # Ask for CUDA version if using NVIDIA
             print("\nWould you like to use CUDA 11.8 instead of 12.1? This is only necessary for older GPUs like Kepler.\nIf unsure, say \"N\".\n")
-            use_cuda118 = input("Input (Y/N)> ").upper().strip('"').strip()
+            use_cuda118 = input("Input (Y/N)> ").upper().strip('"\'').strip()
             while use_cuda118 not in 'YN':
                 print("Invalid choice. Please try again.")
-                use_cuda118 = input("Input> ").upper().strip('"').strip()
+                use_cuda118 = input("Input> ").upper().strip('"\'').strip()
 
         install_pytorch = f"python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/{'cu121' if use_cuda118 == 'N' else 'cu118'}"
     elif not is_macos() and choice == "B":
