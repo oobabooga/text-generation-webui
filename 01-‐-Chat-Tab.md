@@ -1,8 +1,6 @@
-## Chat Tab
-
 Used to have multi-turn conversations with the model.
 
-### Input area
+## Input area
 
 The following buttons can be found. Note that the hover menu can be replaced with always-visible buttons with the `--chat-buttons` flag.
 
@@ -22,19 +20,19 @@ The following buttons can be found. Note that the hover menu can be replaced wit
 
 The **Show controls** checkbox causes the input fields below the input textbox to disappear. It is useful for making the page fit entirely into view and not scroll.
 
-### Past chats
+## Past chats
 
 Allows you to switch between the current and previous conversations with the current character, or alternatively between the current and previous instruct conversations (if in "instruct" mode). The Rename menu can be used to give an unique name to the selected conversation, and the 🗑️ button allows you to delete it.
 
-### Start reply with
+## Start reply with
 
 Whatever you type there will appear at the start of every reply by the bot. This is useful to guide the response in a desired direction.
 
-### Mode
+## Mode
 
 The most important input field. It defines how the chat prompt is formatted. There are 3 options: chat, chat-instruct, and instruct. It is worth going into more detail about this because it seems to not be obvious to a lot of people.
 
-#### Instruction-following models
+### Instruction-following models
 
 There are two kinds of models: base models, like Llama and GPT-J, and fine-tuned models, like Alpaca and Vicuna. Fine-tuned models are trained starting from base models, most often with the goal of getting the model to understand and respond to instructions just like ChatGPT does. Let's call such models *instruction-following models*.
 
@@ -73,7 +71,7 @@ It is important to emphasize that instruction-following models **have to be used
 
 Now that an instruction-following model is defined, we can move on to describing the 3 chat modes.
 
-#### Chat
+### Chat
 
 Used for talking to the character defined under "Parameters" > "Character" using a simple chat prompt in this format:
 
@@ -95,7 +93,7 @@ Additionally, the **Greeting** string appears as the bot's opening message whene
 
 The "Chat" option should typically be used only for base models, and should not be used for instruction-following models.
 
-#### Instruct
+### Instruct
 
 Used for talking to an instruction-following model using the prompt format defined under "Parameters" > "Instruction template". Think of this option as an offline ChatGPT.
 
@@ -106,7 +104,7 @@ The prompt format is defined by the following adjustable parameters in "Paramete
 
 Note that when you load a model in the "Model" tab, the web UI will try to automatically detect its instruction template (if any), and will update the values under "Parameters" > "Instruction template" accordingly. This is done using a set of regular expressions defined in `models/config.yaml`. This detection is not guaranteed to be accurate. You should check the model card on Hugging Face to see if you are really using the correct prompt format.
 
-#### Chat-instruct
+### Chat-instruct
 
 As said above, instruction-following models are meant to be used with their specific prompt templates. The chat-instruct mode allows you to use those templates to generate a chat reply, thus mixing Chat and Instruct modes (hence the name).
 
@@ -142,12 +140,12 @@ And it works:
 
 ![chat-instruct](https://github.com/oobabooga/text-generation-webui/assets/112222186/e38e3469-8263-4a10-b1a1-3c955026b8e7)
 
-### Chat style
+## Chat style
 
 This defines the visual style of the chat UI. Each option is a CSS file defined under `text-generation-webui/css/chat_style-name.css`, where "name" is how this style is called in the dropdown menu. You can add new styles by simply copying `chat_style-cai-chat.css` to `chat_style-myNewStyle.css` and editing the contents of this new file. If you end up with a style that you like, you are highly encouraged to submit it to the repository.
 
 The styles are only applied to chat and chat-instruct modes. Instruct mode has its own separate style defined in `text-generation-webui/css/html_instruct_style.css`.
 
-### Character gallery
+## Character gallery
 
 This menu is actually a built-in extension defined under `text-generation-webui/extensions/gallery`. It displays a gallery with your characters, and if you click on a character, it will be automatically selected in the menu under "Parameters" > "Character".
