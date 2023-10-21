@@ -88,4 +88,3 @@ ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_sta
 ```
 
 Each row is in the format `[input, reply]`. `history['visible']` contains the messages as they will appear in the UI, and `history['internal']` contains the messages as they appear in the prompt. When no extension is used, the two will be identical, but many extensions add images, audio widgets, or translations to `history['visible']`.
-
