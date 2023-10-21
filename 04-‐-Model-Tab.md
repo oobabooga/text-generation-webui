@@ -75,7 +75,19 @@ Ancient loader, the first one to implement 4-bit quantization. It works on older
 
 * **pre_layer**: used for CPU offloading. The higher the number, the more layers will be sent to the GPU. GPTQ-for-LLaMa CPU offloading was faster than the one implemented in AutoGPTQ the last time I checked.
 
-### GPTQ-for-LLaMa
+### llama.cpp
 
 Loads: GGUF models. Note: GGML models have been deprecated and do not work anymore.
 
+* **n-gpu-layers**: 
+* **n-ctx**: 
+* **threads**: 
+* **threads_batch**:
+* **n_batch**: 
+* **mul_mat_q**:
+* **no-mmap**:
+* **mlock**: 
+* **numa**: 
+* **CPU**: 
+* **tensor_split**: 
+* **Seed**: 
