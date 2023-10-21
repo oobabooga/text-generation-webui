@@ -36,6 +36,3 @@ pip install -U deepspeed
 deepspeed --num_gpus=1 server.py --deepspeed --chat --model gpt-j-6B
 ```
 
-### Learn more
-
-For more information, check out [this comment](https://github.com/oobabooga/text-generation-webui/issues/40#issuecomment-1412038622) by 81300, who came up with the DeepSpeed support in the web UI.
