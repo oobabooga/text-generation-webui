@@ -111,7 +111,7 @@ To use it, you need to download a tokenizer. There are two options:
 
 Loads: GGUF/GGML models.
 
-Similar to llama.cpp but it works for certain GGUF/GGML models not supported by llama.cpp like Falcon, StarCoder, StarChat, and GPT-J.
+Similar to llama.cpp but it works for certain GGUF/GGML models not originally supported by llama.cpp like Falcon, StarCoder, StarChat, and GPT-J.
 
 ## Model dropdown
 
