@@ -113,8 +113,8 @@ Requirements file to use:
 
 | GPU | CPU | requirements file to use |
 |--------|---------|---------|
-| NVIDIA | has AVX2 | `requirements_cuda.txt` |
-| NVIDIA | no AVX2 | `requirements_cuda_noavx2.txt` |
+| NVIDIA | has AVX2 | `requirements.txt` |
+| NVIDIA | no AVX2 | `requirements_noavx2.txt` |
 | AMD | has AVX2 | `requirements_amd.txt` |
 | AMD | no AVX2 | `requirements_amd_noavx2.txt` |
 | CPU only | has AVX2 | `requirements_cpu_only.txt` |
