@@ -70,7 +70,7 @@ fi
 
 # create the installer env
 if [ ! -e "$INSTALL_ENV_DIR" ]; then
-    "$CONDA_ROOT_PREFIX/bin/conda" create -y -k --prefix "$INSTALL_ENV_DIR" python=3.10 git
+    "$CONDA_ROOT_PREFIX/bin/conda" create -y -k --prefix "$INSTALL_ENV_DIR" python=3.11 git
 fi
 
 # check if conda environment was actually created
