@@ -7,7 +7,7 @@ Contains parameters that control the text generation.
 LLMs work by generating one token at a time. Given your prompt, the model calculates the probabilities for every possible next token. The actual token generation is done after that. 
 
 * In *greedy decoding*, the most likely token is always picked.
-* Most commonly, *sampling* techniques are used to choose from the next-token distribution in a more non-trivial way to improve the quality of the generated text.
+* Most commonly, *sampling* techniques are used to choose from the next-token distribution in a more non-trivial way with the goal of improving the quality of the generated text.
 
 ### Preset menu
 
