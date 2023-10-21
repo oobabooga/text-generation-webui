@@ -106,3 +106,24 @@ To use it, you need to download a tokenizer. There are two options:
 Loads: GGUF/GGML models.
 
 Similar to llama.cpp but it works for certain GGUF/GGML models not supported by llama.cpp like Falcon, StarCoder, StarChat, and GPT-J.
+
+## Model dropdown
+
+Here you can select a model to be loaded, refresh the list of available models (🔄), load/unload/reload the selected model, and save the settings for the model. The settings are the values in the input fields below. After saving, those settings will get restored whenever you select that model again in the dropdown menu.
+
+If the **Autoload the model** checkbox is selected, the model will be loaded as soon as it is selected in this menu. Otherwise, you will have to click on the "Load" button.
+
+## LoRA dropdown
+
+Used to apply LoRAs to the model. Note that LoRA support is not implemented for all loaders. Check this [page](https://github.com/oobabooga/text-generation-webui/wiki) for details.
+
+## Download model or LoRA
+
+Here you can download a model or LoRA directly from the https://huggingface.co/ website.
+
+* Models will be saved to `text-generation-webui/models`
+* LoRAs will be saved to `text-generation-webui/LoRAs`
+
+In the input field, you can enter either the Hugging Face username/model path (like `facebook/galactica-125m`) or the full model URL (like `https://huggingface.co/facebook/galactica-125m`). To specify a branch, add it at the end after a ":" character like this: `facebook/galactica-125m:main`. 
+
+To download a single file, as necessary for models in GGUF format, you can click on "Get file list" after entering the model path in the input field, and then copy and paste the desired file name in the "File name" field before clicking on "Download".
