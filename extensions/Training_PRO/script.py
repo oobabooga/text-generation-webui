@@ -103,10 +103,6 @@ if hasattr(torch.utils.checkpoint, 'noop_context_fn'):
                 return ret
 
 
-# Replace the torch.utils.checkpoint.checkpoint with your custom version
-#torch.utils.checkpoint.checkpoint = my_checkpoint
-
-
 params = {
         "display_name": "Training PRO",
         "is_tab": True
