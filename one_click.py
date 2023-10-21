@@ -173,7 +173,7 @@ def install_webui():
 
     use_cuda118 = "N"
     if any((is_windows(), is_linux())) and choice == "A":
-        if "CUDA_118" in os.environ:
+        if "USE_CUDA118" in os.environ:
             use_cuda118 = os.environ.get("USE_CUDA118", "").lower() in ("yes", "y", "trye", "1", "t", "on")
         else:
             # Ask for CUDA version if using NVIDIA
