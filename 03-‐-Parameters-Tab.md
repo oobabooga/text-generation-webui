@@ -82,6 +82,13 @@ Parameters that define the character that is used in the Chat tab when "chat" or
 * **Character picture**: a profile picture for the bot. To make it apply, you need to save the bot by clicking on 💾.
 * **Your picture**: your profile picture. It will be used in all conversations.
 
+Note: the following replacements in the context and greeting fields when the chat prompt is generated:
+
+* `{{char}}` and `<BOT>` get replaced with "Character's name".
+* `{{user}}` and `<USER>` get replaced with "Your name".
+
+So you can use those special placeholders in your character definitions. They are commonly found in TavernAI character cards.
+
 ## Instruction template
 
 Defines the instruction template that is used in the Chat tab when "instruct" or "chat-instruct" are selected under "Mode".
