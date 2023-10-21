@@ -91,7 +91,7 @@ There are 3 adjustable parameters in "Parameters" > "Character" being used in th
 
 Additionally, the **Greeting** string appears as the bot's opening message whenever the history is cleared.
 
-The "Chat" option should typically be used only for base models, and should not be used for instruction-following models.
+The "Chat" option should typically be used only for base models or non-instruct fine tunes, and should not be used for instruction-following models.
 
 ### Instruct
 
