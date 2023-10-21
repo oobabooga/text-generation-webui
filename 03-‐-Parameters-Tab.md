@@ -82,7 +82,7 @@ Parameters that define the character that is used in the Chat tab when "chat" or
 * **Character picture**: A profile picture for the bot. To make it apply, you need to save the bot by clicking on 💾.
 * **Your picture**: Your profile picture. It will be used in all conversations.
 
-Note: the following replacements in the context and greeting fields when the chat prompt is generated:
+Note: the following replacements take place in the context and greeting fields when the chat prompt is generated:
 
 * `{{char}}` and `<BOT>` get replaced with "Character's name".
 * `{{user}}` and `<USER>` get replaced with "Your name".
