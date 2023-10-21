@@ -245,7 +245,6 @@ def update_requirements(initial_installation=False):
         print_big_message("Will not install extensions due to INSTALL_EXTENSIONS environment variable.")
 
     # Detect the Python and PyTorch versions
-    python_version = '.'.join(sys.version.split(' ')[0].split('.')[0:2])
     torver = torch_version()
     print(f"TORCH: {torver}")
     is_cuda = '+cu118' or '+cu121' in torver  # 2.1.0+cu118 or 2.1.0+cu121
@@ -283,8 +282,6 @@ def update_requirements(initial_installation=False):
         textgen_requirements = [req.replace('+cu121', '+cu117').replace('torch2.1', 'torch2.0') for req in textgen_requirements]
     elif is_cuda118:
         textgen_requirements = [req.replace('+cu121', '+cu118') for req in textgen_requirements]
-    if python_version == '3.10':
-        textgen_requirements = [req.replace('-cp311', '-cp310') for req in textgen_requirements]
     with open('temp_requirements.txt', 'w') as file:
         file.write('\n'.join(textgen_requirements))
 
