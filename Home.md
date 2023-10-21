@@ -1,4 +1,4 @@
-## What works
+## What Works
 
 | Loader         | Loading 1 LoRA | Loading 2 or more LoRAs | Training LoRAs | Multimodal extension | Perplexity evaluation |
 |----------------|----------------|-------------------------|----------------|----------------------|-----------------------|
