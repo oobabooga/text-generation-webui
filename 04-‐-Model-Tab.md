@@ -94,7 +94,7 @@ Example: https://huggingface.co/TheBloke/Llama-2-7b-Chat-GGUF
 * **no-mmap**: Loads the model into memory at once, possibly preventing I/O operations later on at the cost of a longer load time.
 * **mlock**: Force the system to keep the model in RAM rather than swapping or compressing (no idea what this means, never used it).
 * **numa**: May improve performance on certain multi-cpu systems.
-* **cpu**: Force a version of llama.cpp compiled without GPU acceleration to be used. Can usually be ignored, only set this if you want to use CPU only and llama.cpp doesn't work otherwise. 
+* **cpu**: Force a version of llama.cpp compiled without GPU acceleration to be used. Can usually be ignored. Only set this if you want to use CPU only and llama.cpp doesn't work otherwise. 
 * **tensor_split**: For multi-gpu only. Sets the amount of memory to allocate per GPU.
 * **Seed**: The seed for the llama.cpp random number generator. Not very useful as it can only be set once (that I'm aware).
 
