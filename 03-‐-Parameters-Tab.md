@@ -13,7 +13,7 @@ LLMs work by generating one token at a time. Given your prompt, the model calcul
 
 Can be used to save combinations of parameters for reuse. 
 
-The built-in presets were not manually chosen. They were obtained after a blind contest where hundreds of people voted which I called "Preset Arena". The results can be found [here](https://github.com/oobabooga/oobabooga.github.io/blob/main/arena/results.md).
+The built-in presets were not manually chosen. They were obtained after a blind contest called "Preset Arena" where hundreds of people voted. The full results can be found [here](https://github.com/oobabooga/oobabooga.github.io/blob/main/arena/results.md).
 
 A key takeaway is that the best presets are:
 
