@@ -1,5 +1,3 @@
-This is WIP. Please come back later.
-
 ## What works
 
 | Loader         | Loading 1 LoRA | Loading 2 or more LoRAs | Training LoRAs | Multimodal extension | Perplexity evaluation |
