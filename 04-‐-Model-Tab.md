@@ -105,7 +105,7 @@ The same as llama.cpp but with transformers samplers, and using the transformers
 To use it, you need to download a tokenizer. There are two options:
 
 1) Download `oobabooga/llama-tokenizer` under "Download model or LoRA". That's a default Llama tokenizer.
-2) Place your .gguf in a subfolder of `models/` along with these 3 files: tokenizer.model, tokenizer_config.json, and special_tokens_map.json. This takes precedence over Option 1.
+2) Place your .gguf in a subfolder of `models/` along with these 3 files: `tokenizer.model`, `tokenizer_config.json`, and `special_tokens_map.json`. This takes precedence over Option 1.
 
 ### ctransformers
 
