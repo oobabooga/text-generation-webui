@@ -34,7 +34,7 @@ The most important input field. It defines how the chat prompt is formatted. The
 
 ### Instruction-following models
 
-There are two kinds of models: base models, like Llama and GPT-J, and fine-tuned models, like Alpaca and Vicuna. Fine-tuned models are trained starting from base models, most often to get the model to understand and respond to instructions just like ChatGPT does. Let's call such models *instruction-following models*.
+There are two kinds of models: base models, like Llama and GPT-J, and fine-tuned models, like Alpaca and Vicuna. Fine-tuned models are trained starting from base models, most often with the goal of getting the model to understand and respond to instructions just like ChatGPT does. Let's call such models *instruction-following models*.
 
 Each instruction-following model was trained on a specific prompt format, and you have to use that exact prompt format if you want the model to follow your instructions as accurately as it can.
 
