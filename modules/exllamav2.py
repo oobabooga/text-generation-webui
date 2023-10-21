@@ -25,7 +25,7 @@ except ModuleNotFoundError:
         'https://github.com/Dao-AILab/flash-attention#installation-and-features'
     )
     pass
-except Exception as e:
+except Exception:
     logger.warning('Failed to load flash-attention due to the following error:\n')
     traceback.print_exc()
 
