@@ -78,7 +78,7 @@ bash Miniconda3.sh
 #### 1. Create a new conda environment
 
 ```
-conda create -n textgen python=3.10
+conda create -n textgen python=3.11
 conda activate textgen
 ```
 
