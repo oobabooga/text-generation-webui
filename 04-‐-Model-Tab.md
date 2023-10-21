@@ -62,8 +62,8 @@ Loads: GPTQ models.
 * **wbits**: for ancient models without proper metadata, sets the model precision in bits manually. Can usually be ignored.
 * **groupsize**: for ancient models without proper metadata, sets the model group size manually. Can usually be ignored.
 * **triton**: only available on Linux. Necessary to use models with both act-order and groupsize simultaneously. Note that ExLlama can load these same models on Windows without triton.
-* **no_inject_fused_attention**: Improves performance while lowering the VRAM usage. I have never used or understood this parameter.
-* **no_inject_fused_mlp**: Similar to the previous parameter but for Triton only. I have never used or understood this parameter.
+* **no_inject_fused_attention**: Improves performance while increasing the VRAM usage.
+* **no_inject_fused_mlp**: Similar to the previous parameter but for Triton only.
 * **no_use_cuda_fp16**: on some systems, the performance can be very bad with this unset. Can usually be ignored.
 * **desc_act**: for ancient models without proper metadata, sets the model "act-order" parameter manually. Can usually be ignored.
 
