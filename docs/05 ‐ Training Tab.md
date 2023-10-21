@@ -4,7 +4,6 @@ The WebUI seeks to make training your own LoRAs as easy as possible. It comes do
 
 ### **Step 1**: Make a plan.
 - What base model do you want to use? The LoRA you make has to be matched up to a single architecture (eg LLaMA-13B) and cannot be transferred to others (eg LLaMA-7B, StableLM, etc. would all be different). Derivatives of the same model (eg Alpaca finetune of LLaMA-13B) might be transferrable, but even then it's best to train exactly on what you plan to use.
-- What model format do you want? At time of writing, 8-bit models are most stable, and 4-bit are supported but experimental. In the near future it is likely that 4-bit will be the best option for most users.
 - What are you training it on? Do you want it to learn real information, a simple format, ...?
 
 ### **Step 2**: Gather a dataset.
@@ -138,37 +137,3 @@ The [4-bit LoRA monkeypatch](GPTQ-models-(4-bit-mode).md#using-loras-in-4-bit-mo
 - Models do funky things. LoRAs apply themselves, or refuse to apply, or spontaneously error out, or etc. It can be helpful to reload base model or restart the WebUI between training/usage to minimize chances of anything going haywire.
 - Loading or working with multiple LoRAs at the same time doesn't currently work.
 - Generally, recognize and treat the monkeypatch as the dirty temporary hack it is - it works, but isn't very stable. It will get better in time when everything is merged upstream for full official support.
-
-## Legacy notes
-
-LoRA training was contributed by [mcmonkey4eva](https://github.com/mcmonkey4eva) in PR [#570](https://github.com/oobabooga/text-generation-webui/pull/570).
-
-### Using the original alpaca-lora code
-
-Kept here for reference. The Training tab has much more features than this method.
-
-```
-conda activate textgen
-git clone https://github.com/tloen/alpaca-lora
-```
-
-Edit those two lines in `alpaca-lora/finetune.py` to use your existing model folder instead of downloading everything from decapoda:
-
-```
-model = LlamaForCausalLM.from_pretrained(
-    "models/llama-7b",
-    load_in_8bit=True,
-    device_map="auto",
-)
-tokenizer = LlamaTokenizer.from_pretrained(
-    "models/llama-7b", add_eos_token=True
-)
-```
-
-Run the script with:
-
-```
-python finetune.py
-```
-
-It just works. It runs at 22.32s/it, with 1170 iterations in total, so about 7 hours and a half for training a LoRA. RTX 3090, 18153MiB VRAM used, drawing maximum power (350W, room heater mode).
