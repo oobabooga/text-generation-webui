@@ -47,6 +47,8 @@ ExLlama_HF is the v1 of ExLlama (https://github.com/turboderp/exllama) connected
 
 Loads: GPTQ and EXL2 models. EXL2 models usually have "EXL2" in the model name.
 
+Example: https://huggingface.co/turboderp/Llama2-70B-exl2
+
 The parameters are the same as in ExLlama_HF.
 
 ### ExLlama
