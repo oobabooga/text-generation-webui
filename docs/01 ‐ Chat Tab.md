@@ -85,7 +85,7 @@ Chiharu Yamada: I'm doing well, thank you for asking! Is there something specifi
 
 There are 3 adjustable parameters in "Parameters" > "Character" being used in this prompt:
 
-* The **Context** string appears at the top of the prompt. Most often it describes the bot's personality and adds a few example messages to guide the model towards the desired reply length and format. 
+* The **Context** string appears at the top of the prompt. Most often it describes the bot's personality and adds a few example messages to guide the model towards the desired reply length and format. This string never gets truncated: as the prompt size increases, old messages get removed one at a time until the prompt becomes smaller than the truncation length set under "Parameters" > "Generation" > "Truncate the prompt up to this length".
 * The **Your name** string appears at the beginning of each user reply. By default, this string is "You".
 * The **Character's name** string appears at the beginning of each bot reply.
 
