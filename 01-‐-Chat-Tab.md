@@ -1,4 +1,4 @@
-## Chat tab
+## Chat Tab
 
 Used to have multi-turn conversations with the model.
 
