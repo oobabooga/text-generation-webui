@@ -74,7 +74,7 @@ To the right (or below if you are on mobile), the following parameters are prese
 
 Parameters that define the character that is used in the Chat tab when "chat" or "chat-instruct" are selected under "Mode".
 
-* **Character**: A dropdown menu where you can select from saved characters, save a new character (💾 button), and delete the currently selected character (🗑️).
+* **Character**: A dropdown menu where you can select from saved characters, save a new character (💾 button), and delete the selected character (🗑️).
 * **Your name**: Your name as it appears in the prompt.
 * **Character's name**: The bot name as it appears in the prompt.
 * **Context**: A string that is always at the top of the prompt. It never gets truncated. It usually defines the bot's personality and some key elements of the conversation.
