@@ -32,4 +32,4 @@ Precisely the same thing as the Default tab, with the difference that the output
 
 It contains the following additional button:
 
-* **Regenerate**: generates starting from your previous input while discarding the last output.
+* **Regenerate**: uses your previous input for generation while discarding the last output.
