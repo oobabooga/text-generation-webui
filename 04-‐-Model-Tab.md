@@ -129,8 +129,8 @@ Used to apply LoRAs to the model. Note that LoRA support is not implemented for 
 
 Here you can download a model or LoRA directly from the https://huggingface.co/ website.
 
-* Models will be saved to `text-generation-webui/models`
-* LoRAs will be saved to `text-generation-webui/LoRAs`
+* Models will be saved to `text-generation-webui/models`.
+* LoRAs will be saved to `text-generation-webui/loras`.
 
 In the input field, you can enter either the Hugging Face username/model path (like `facebook/galactica-125m`) or the full model URL (like `https://huggingface.co/facebook/galactica-125m`). To specify a branch, add it at the end after a ":" character like this: `facebook/galactica-125m:main`. 
 
