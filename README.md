@@ -264,8 +264,8 @@ Optionally, you can use the following command-line flags:
 
 | Flag                                       | Description |
 |--------------------------------------------|-------------|
-| `-h`, `--help`                             | Show this help message and exit. |
-| `--multi-user`                             | Multi-user mode. Chat histories are not saved or automatically loaded. WARNING: this is highly experimental. |
+| `-h`, `--help`                             | show this help message and exit |
+| `--multi-user`                             | Multi-user mode. Chat histories are not saved or automatically loaded. WARNING: this is likely not safe for sharing publicly. |
 | `--character CHARACTER`                    | The name of the character to load in chat mode by default. |
 | `--model MODEL`                            | Name of the model to load by default. |
 | `--lora LORA [LORA ...]`                   | The list of LoRAs to load. If you want to load more than one LoRA, write the names separated by spaces. |
@@ -275,72 +275,67 @@ Optionally, you can use the following command-line flags:
 | `--settings SETTINGS_FILE`                 | Load the default interface settings from this yaml file. See `settings-template.yaml` for an example. If you create a file called `settings.yaml`, this file will be loaded by default without the need to use the `--settings` flag. |
 | `--extensions EXTENSIONS [EXTENSIONS ...]` | The list of extensions to load. If you want to load more than one extension, write the names separated by spaces. |
 | `--verbose`                                | Print the prompts to the terminal. |
-| `--chat-buttons`                           | Show buttons on chat tab instead of hover menu. |
+| `--chat-buttons`                           | Show buttons on the chat tab instead of a hover menu. |
 
 #### Model loader
 
 | Flag                                       | Description |
 |--------------------------------------------|-------------|
-| `--loader LOADER`                          | Choose the model loader manually, otherwise, it will get autodetected. Valid options: transformers, autogptq, gptq-for-llama, exllama, exllama_hf, llamacpp, rwkv, ctransformers |
+| `--loader LOADER`                          | Choose the model loader manually, otherwise, it will get autodetected. Valid options: transformers, exllama_hf, exllamav2_hf, exllama, exllamav2, autogptq, gptq-for-llama, llama.cpp, llamacpp_hf, ctransformers, autoawq. |
 
 #### Accelerate/transformers
 
 | Flag                                        | Description |
 |---------------------------------------------|-------------|
-| `--cpu`                                     | Use the CPU to generate text. Warning: Training on CPU is extremely slow.|
+| `--cpu`                                     | Use the CPU to generate text. Warning: Training on CPU is extremely slow. |
 | `--auto-devices`                            | Automatically split the model across the available GPU(s) and CPU. |
-|  `--gpu-memory GPU_MEMORY [GPU_MEMORY ...]` | Maximum GPU memory in GiB to be allocated per GPU. Example: `--gpu-memory 10` for a single GPU, `--gpu-memory 10 5` for two GPUs. You can also set values in MiB like `--gpu-memory 3500MiB`. |
-| `--cpu-memory CPU_MEMORY`                   | Maximum CPU memory in GiB to allocate for offloaded weights. Same as above.|
+|  `--gpu-memory GPU_MEMORY [GPU_MEMORY ...]` | Maximum GPU memory in GiB to be allocated per GPU. Example: --gpu-memory 10 for a single GPU, --gpu-memory 10 5 for two GPUs. You can also set values in MiB like --gpu-memory 3500MiB. |
+| `--cpu-memory CPU_MEMORY`                   | Maximum CPU memory in GiB to allocate for offloaded weights. Same as above. |
 | `--disk`                                    | If the model is too large for your GPU(s) and CPU combined, send the remaining layers to the disk. |
-| `--disk-cache-dir DISK_CACHE_DIR`           | Directory to save the disk cache to. Defaults to `cache/`. |
-| `--load-in-8bit`                            | Load the model with 8-bit precision (using bitsandbytes).|
+| `--disk-cache-dir DISK_CACHE_DIR`           | Directory to save the disk cache to. Defaults to "cache". |
+| `--load-in-8bit`                            | Load the model with 8-bit precision (using bitsandbytes). |
 | `--bf16`                                    | Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU. |
-| `--no-cache`                                | Set `use_cache` to False while generating text. This reduces the VRAM usage a bit with a performance cost. |
-| `--xformers`                                | Use xformer's memory efficient attention. This should increase your tokens/s. |
-| `--sdp-attention`                           | Use torch 2.0's sdp attention. |
-| `--trust-remote-code`                       | Set trust_remote_code=True while loading a model. Necessary for ChatGLM and Falcon. |
-| `--use_fast`                                | Set use_fast=True while loading a tokenizer. |
+| `--no-cache`                                | Set `use_cache` to `False` while generating text. This reduces VRAM usage slightly, but it comes at a performance cost. |
+| `--xformers`                                | Use xformer's memory efficient attention. This is really old and probably doesn't do anything. |
+| `--sdp-attention`                           | Use PyTorch 2.0's SDP attention. Same as above. |
+| `--trust-remote-code`                       | Set `trust_remote_code=True` while loading the model. Necessary for some models. |
+| `--use_fast`                                | Set `use_fast=True` while loading the tokenizer. |
 
 #### Accelerate 4-bit
 
-⚠️ Requires minimum compute of 7.0 on Windows at the moment.
+⚠️  Requires minimum compute of 7.0 on Windows at the moment.
 
 | Flag                                        | Description |
 |---------------------------------------------|-------------|
 | `--load-in-4bit`                            | Load the model with 4-bit precision (using bitsandbytes). |
+| `--use_double_quant`                        | use_double_quant for 4-bit. |
 | `--compute_dtype COMPUTE_DTYPE`             | compute dtype for 4-bit. Valid options: bfloat16, float16, float32. |
 | `--quant_type QUANT_TYPE`                   | quant_type for 4-bit. Valid options: nf4, fp4. |
-| `--use_double_quant`                        | use_double_quant for 4-bit. |
-
-#### GGUF (for llama.cpp and ctransformers)
-
-| Flag        | Description |
-|-------------|-------------|
-| `--threads` | Number of threads to use. |
-| `--threads-batch THREADS_BATCH` | Number of threads to use for batches/prompt processing. |
-| `--n_batch` | Maximum number of prompt tokens to batch together when calling llama_eval. |
-| `--n-gpu-layers N_GPU_LAYERS` | Number of layers to offload to the GPU. Only works if llama-cpp-python was compiled with BLAS. Set this to 1000000000 to offload all layers to the GPU. |
-| `--n_ctx N_CTX` | Size of the prompt context. |
 
 #### llama.cpp
 
-| Flag          | Description |
-|---------------|---------------|
-| `--mul_mat_q` | Activate new mulmat kernels. |
-| `--tensor_split TENSOR_SPLIT`       | Split the model across multiple GPUs, comma-separated list of proportions, e.g. 18,17 |
-| `--llama_cpp_seed SEED`             | Seed for llama-cpp models. Default 0 (random). |
-| `--cache-capacity CACHE_CAPACITY`   | Maximum cache capacity. Examples: 2000MiB, 2GiB. When provided without units, bytes will be assumed. |
-|`--cfg-cache`                        | llamacpp_HF: Create an additional cache for CFG negative prompts. |
-| `--no-mmap`   | Prevent mmap from being used. |
-| `--mlock`     | Force the system to keep the model in RAM. |
-| `--numa`      | Activate NUMA task allocation for llama.cpp |
-| `--cpu`       | Use the CPU version of llama-cpp-python instead of the GPU-accelerated version. |
-
-#### ctransformers
-
 | Flag        | Description |
 |-------------|-------------|
-| `--model_type MODEL_TYPE` | Model type of pre-quantized model. Currently gpt2, gptj, gptneox, falcon, llama, mpt, starcoder (gptbigcode), dollyv2, and replit are supported. |
+| `--n_ctx N_CTX` | Size of the prompt context. |
+| `--threads` | Number of threads to use. |
+| `--threads-batch THREADS_BATCH` | Number of threads to use for batches/prompt processing. |
+| `--mul_mat_q` | Activate new mulmat kernels. |
+| `--n_batch` | Maximum number of prompt tokens to batch together when calling llama_eval. |
+| `--no-mmap`   | Prevent mmap from being used. |
+| `--mlock`     | Force the system to keep the model in RAM. |
+| `--n-gpu-layers N_GPU_LAYERS` | Number of layers to offload to the GPU. |
+| `--tensor_split TENSOR_SPLIT`       | Split the model across multiple GPUs. Comma-separated list of proportions. Example: 18,17. |
+| `--llama_cpp_seed SEED`             | Seed for llama-cpp models. Default is 0 (random). |
+| `--numa`      | Activate NUMA task allocation for llama.cpp. |
+| `--cache-capacity CACHE_CAPACITY`   | Maximum cache capacity (llama-cpp-python). Examples: 2000MiB, 2GiB. When provided without units, bytes will be assumed. |
+
+#### ExLlama
+
+| Flag             | Description |
+|------------------|-------------|
+|`--gpu-split`     | Comma-separated list of VRAM (in GB) to use per GPU device for model layers. Example: 20,7,7. |
+|`--max_seq_len MAX_SEQ_LEN`           | Maximum sequence length. |
+|`--cfg-cache`                         | ExLlama_HF: Create an additional cache for CFG negative prompts. Necessary to use CFG with that loader, but not necessary for CFG with base ExLlama. |
 
 #### AutoGPTQ
 
@@ -353,14 +348,6 @@ Optionally, you can use the following command-line flags:
 | `--desc_act`                   | For models that don't have a quantize_config.json, this parameter is used to define whether to set desc_act or not in BaseQuantizeConfig. |
 | `--disable_exllama`            | Disable ExLlama kernel, which can improve inference speed on some systems. |
 
-#### ExLlama
-
-| Flag             | Description |
-|------------------|-------------|
-|`--gpu-split`     | Comma-separated list of VRAM (in GB) to use per GPU device for model layers, e.g. `20,7,7` |
-|`--max_seq_len MAX_SEQ_LEN`           | Maximum sequence length. |
-|`--cfg-cache`                         | ExLlama_HF: Create an additional cache for CFG negative prompts. Necessary to use CFG with that loader, but not necessary for CFG with base ExLlama. |
-
 #### GPTQ-for-LLaMa
 
 | Flag                      | Description |
@@ -370,7 +357,13 @@ Optionally, you can use the following command-line flags:
 | `--groupsize GROUPSIZE`   | Group size. |
 | `--pre_layer PRE_LAYER [PRE_LAYER ...]`  | The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models. For multi-gpu, write the numbers separated by spaces, eg `--pre_layer 30 60`. |
 | `--checkpoint CHECKPOINT` | The path to the quantized checkpoint file. If not specified, it will be automatically detected. |
-| `--monkey-patch`          | Apply the monkey patch for using LoRAs with quantized models.
+| `--monkey-patch`          | Apply the monkey patch for using LoRAs with quantized models. |
+
+#### ctransformers
+
+| Flag        | Description |
+|-------------|-------------|
+| `--model_type MODEL_TYPE` | Model type of pre-quantized model. Currently gpt2, gptj, gptneox, falcon, llama, mpt, starcoder (gptbigcode), dollyv2, and replit are supported. |
 
 #### DeepSpeed
 
@@ -391,21 +384,21 @@ Optionally, you can use the following command-line flags:
 
 | Flag             | Description |
 |------------------|-------------|
-| `--alpha_value ALPHA_VALUE`           | Positional embeddings alpha factor for NTK RoPE scaling. Use either this or compress_pos_emb, not both. |
-| `--rope_freq_base ROPE_FREQ_BASE`     | If greater than 0, will be used instead of alpha_value. Those two are related by rope_freq_base = 10000 * alpha_value ^ (64 / 63). |
-| `--compress_pos_emb COMPRESS_POS_EMB` | Positional embeddings compression factor. Should be set to (context length) / (model's original context length). Equal to 1/rope_freq_scale. |
+| `--alpha_value ALPHA_VALUE`           | Positional embeddings alpha factor for NTK RoPE scaling. Use either this or `compress_pos_emb`, not both. |
+| `--rope_freq_base ROPE_FREQ_BASE`     | If greater than 0, will be used instead of alpha_value. Those two are related by `rope_freq_base = 10000 * alpha_value ^ (64 / 63)`. |
+| `--compress_pos_emb COMPRESS_POS_EMB` | Positional embeddings compression factor. Should be set to `(context length) / (model's original context length)`. Equal to `1/rope_freq_scale`. |
 
 #### Gradio
 
 | Flag                                  | Description |
 |---------------------------------------|-------------|
 | `--listen`                            | Make the web UI reachable from your local network. |
-| `--listen-host LISTEN_HOST`           | The hostname that the server will use. |
 | `--listen-port LISTEN_PORT`           | The listening port that the server will use. |
+| `--listen-host LISTEN_HOST`           | The hostname that the server will use. |
 | `--share`                             | Create a public URL. This is useful for running the web UI on Google Colab or similar. |
 | `--auto-launch`                       | Open the web UI in the default browser upon launch. |
-| `--gradio-auth USER:PWD`              | set gradio authentication like "username:password"; or comma-delimit multiple like "u1:p1,u2:p2,u3:p3" |
-| `--gradio-auth-path GRADIO_AUTH_PATH` | Set the gradio authentication file path. The file should contain one or more user:password pairs in this format: "u1:p1,u2:p2,u3:p3" |
+| `--gradio-auth USER:PWD`              | Set Gradio authentication password in the format "username:password". Multiple credentials can also be supplied with "u1:p1,u2:p2,u3:p3". |
+| `--gradio-auth-path GRADIO_AUTH_PATH` | Set the Gradio authentication file path. The file should contain one or more user:password pairs in the same format as above. |
 | `--ssl-keyfile SSL_KEYFILE`           | The path to the SSL certificate key file. |
 | `--ssl-certfile SSL_CERTFILE`         | The path to the SSL certificate cert file. |
 
