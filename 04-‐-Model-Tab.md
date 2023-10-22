@@ -90,7 +90,7 @@ Example: https://huggingface.co/TheBloke/Llama-2-7b-Chat-GGUF
 * **threads**: Number of threads. Recommended value: your number of physical cores. 
 * **threads_batch**: Number of threads for batch processing. Recommended value: your total number of cores (physical + virtual).
 * **n_batch**: Batch size for prompt processing. Higher values are supposed to make generation faster, but I have never obtained any benefit from changing this value.
-* **mul_mat_q**: Disable the mul_mat_q kernel. This kernel usually improves generation speed significantly. This option to disable it is included in case it doesn't work on some system.
+* **no_mul_mat_q**: Disable the mul_mat_q kernel. This kernel usually improves generation speed significantly. This option to disable it is included in case it doesn't work on some system.
 * **no-mmap**: Loads the model into memory at once, possibly preventing I/O operations later on at the cost of a longer load time.
 * **mlock**: Force the system to keep the model in RAM rather than swapping or compressing (no idea what this means, never used it).
 * **numa**: May improve performance on certain multi-cpu systems.
