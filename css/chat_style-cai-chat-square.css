@@ -1,21 +1,21 @@
 @import url("file/css/chat_style-cai-chat.css");
 
 .circle-bot, .circle-you {
-  height: 90px;
-  width: 60px;
-  border-radius: 10px;
-  background-color: #656565;
+    height: 90px;
+    width: 60px;
+    border-radius: 10px;
+    background-color: #656565;
 }
 
 .circle-bot img, .circle-you img {
-  border-radius: 8.333px;
+    border-radius: 8.333px;
 }
 
 .circle-you {
-  background-color: #656565;
+    background-color: #656565;
 }
 
 .message {
-  padding-bottom: 30px;
-  grid-template-columns: 70px minmax(0, 1fr);
+    padding-bottom: 30px;
+    grid-template-columns: 70px minmax(0, 1fr);
 }

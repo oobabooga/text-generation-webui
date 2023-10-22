@@ -1,15 +1,15 @@
-let chat_tab = document.getElementById('chat-tab');
+let chat_tab = document.getElementById("chat-tab");
 let main_parent = chat_tab.parentNode;
 
 function scrollToTop() {
-    window.scrollTo({
-        top: 0,
-        // behavior: 'smooth'
-    });
+  window.scrollTo({
+    top: 0,
+    // behavior: 'smooth'
+  });
 }
 
 function findButtonsByText(buttonText) {
-  const buttons = document.getElementsByTagName('button');
+  const buttons = document.getElementsByTagName("button");
   const matchingButtons = [];
   buttonText = buttonText.trim();
 
@@ -26,34 +26,34 @@ function findButtonsByText(buttonText) {
 }
 
 function switch_to_chat() {
-    let chat_tab_button = main_parent.childNodes[0].childNodes[1];
-    chat_tab_button.click();
-    scrollToTop();
+  let chat_tab_button = main_parent.childNodes[0].childNodes[1];
+  chat_tab_button.click();
+  scrollToTop();
 }
 
 function switch_to_default() {
-    let default_tab_button = main_parent.childNodes[0].childNodes[4];
-    default_tab_button.click();
-    scrollToTop();
+  let default_tab_button = main_parent.childNodes[0].childNodes[4];
+  default_tab_button.click();
+  scrollToTop();
 }
 
 function switch_to_notebook() {
-    let notebook_tab_button = main_parent.childNodes[0].childNodes[7];
-    notebook_tab_button.click();
-    findButtonsByText('Raw')[1].click()
-    scrollToTop();
+  let notebook_tab_button = main_parent.childNodes[0].childNodes[7];
+  notebook_tab_button.click();
+  findButtonsByText("Raw")[1].click();
+  scrollToTop();
 }
 
 function switch_to_generation_parameters() {
-    let parameters_tab_button = main_parent.childNodes[0].childNodes[10];
-    parameters_tab_button.click();
-    findButtonsByText('Generation')[0].click()
-    scrollToTop();
+  let parameters_tab_button = main_parent.childNodes[0].childNodes[10];
+  parameters_tab_button.click();
+  findButtonsByText("Generation")[0].click();
+  scrollToTop();
 }
 
 function switch_to_character() {
-    let parameters_tab_button = main_parent.childNodes[0].childNodes[10];
-    parameters_tab_button.click();
-    findButtonsByText('Character')[0].click()
-    scrollToTop();
+  let parameters_tab_button = main_parent.childNodes[0].childNodes[10];
+  parameters_tab_button.click();
+  findButtonsByText("Character")[0].click();
+  scrollToTop();
 }

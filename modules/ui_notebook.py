@@ -14,6 +14,7 @@ outputs = ('textbox-notebook', 'html-notebook')
 
 
 def create_ui():
+    mu = shared.args.multi_user
     with gr.Tab('Notebook', elem_id='notebook-tab'):
         shared.gradio['last_input-notebook'] = gr.State('')
         with gr.Row():
@@ -55,9 +56,9 @@ def create_ui():
                 gr.HTML('<div style="padding-bottom: 13px"></div>')
                 with gr.Row():
                     shared.gradio['prompt_menu-notebook'] = gr.Dropdown(choices=utils.get_available_prompts(), value='None', label='Prompt', elem_classes='slim-dropdown')
-                    ui.create_refresh_button(shared.gradio['prompt_menu-notebook'], lambda: None, lambda: {'choices': utils.get_available_prompts()}, ['refresh-button', 'refresh-button-small'])
-                    shared.gradio['save_prompt-notebook'] = gr.Button('💾', elem_classes=['refresh-button', 'refresh-button-small'])
-                    shared.gradio['delete_prompt-notebook'] = gr.Button('🗑️', elem_classes=['refresh-button', 'refresh-button-small'])
+                    ui.create_refresh_button(shared.gradio['prompt_menu-notebook'], lambda: None, lambda: {'choices': utils.get_available_prompts()}, ['refresh-button', 'refresh-button-small'], interactive=not mu)
+                    shared.gradio['save_prompt-notebook'] = gr.Button('💾', elem_classes=['refresh-button', 'refresh-button-small'], interactive=not mu)
+                    shared.gradio['delete_prompt-notebook'] = gr.Button('🗑️', elem_classes=['refresh-button', 'refresh-button-small'], interactive=not mu)
 
 
 def create_event_handlers():

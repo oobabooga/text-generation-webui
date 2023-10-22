@@ -67,6 +67,7 @@ def load_model(model_name, loader=None):
         'ExLlamav2': ExLlamav2_loader,
         'ExLlamav2_HF': ExLlamav2_HF_loader,
         'ctransformers': ctransformers_loader,
+        'AutoAWQ': AutoAWQ_loader,
     }
 
     if loader is None:
@@ -93,7 +94,7 @@ def load_model(model_name, loader=None):
     if any((shared.args.xformers, shared.args.sdp_attention)):
         llama_attn_hijack.hijack_llama_attention()
 
-    logger.info(f"Loaded the model in {(time.time()-t0):.2f} seconds.\n")
+    logger.info(f"Loaded the model in {(time.time()-t0):.2f} seconds.")
     return model, tokenizer
 
 
@@ -103,18 +104,14 @@ def load_tokenizer(model_name, model):
     if any(s in model_name.lower() for s in ['gpt-4chan', 'gpt4chan']) and Path(f"{shared.args.model_dir}/gpt-j-6B/").exists():
         tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/gpt-j-6B/"))
     elif path_to_model.exists():
-        try:
-            tokenizer = AutoTokenizer.from_pretrained(
-                path_to_model,
-                trust_remote_code=shared.args.trust_remote_code,
-                use_fast=False
-            )
-        except ValueError:
-            tokenizer = AutoTokenizer.from_pretrained(
-                path_to_model,
-                trust_remote_code=shared.args.trust_remote_code,
-                use_fast=True
-            )
+        if shared.args.use_fast:
+            logger.info('Loading the tokenizer with use_fast=True.')
+
+        tokenizer = AutoTokenizer.from_pretrained(
+            path_to_model,
+            trust_remote_code=shared.args.trust_remote_code,
+            use_fast=shared.args.use_fast
+        )
 
     return tokenizer
 
@@ -159,8 +156,10 @@ def huggingface_loader(model_name):
 
     # Load with quantization and/or offloading
     else:
+
         if not any((shared.args.cpu, torch.cuda.is_available(), is_xpu_available(), torch.backends.mps.is_available())):
             logger.warning('torch.cuda.is_available() and is_xpu_available() returned False. This means that no GPU has been detected. Falling back to CPU mode.')
+
             shared.args.cpu = True
 
         if shared.args.cpu:
@@ -222,6 +221,7 @@ def huggingface_loader(model_name):
     return model
 
 
+
 def RWKV_loader(model_name):
     from modules.RWKV import RWKVModel, RWKVTokenizer
 
@@ -256,10 +256,13 @@ def llamacpp_HF_loader(model_name):
         logger.error("Could not load the model because a tokenizer in transformers format was not found. Please download oobabooga/llama-tokenizer.")
         return None, None
 
+    if shared.args.use_fast:
+        logger.info('Loading the tokenizer with use_fast=True.')
+
     tokenizer = AutoTokenizer.from_pretrained(
         path,
         trust_remote_code=shared.args.trust_remote_code,
-        use_fast=False
+        use_fast=shared.args.use_fast
     )
 
     model = LlamacppHF.from_pretrained(model_name)
@@ -291,6 +294,24 @@ def ctransformers_loader(model_name):
     logger.info(f'ctransformers weights detected: {model_file}')
     model, tokenizer = ctrans.from_pretrained(model_file)
     return model, tokenizer
+
+
+def AutoAWQ_loader(model_name):
+    from awq import AutoAWQForCausalLM
+
+    model_dir = Path(f'{shared.args.model_dir}/{model_name}')
+
+    model = AutoAWQForCausalLM.from_quantized(
+                quant_path=model_dir,
+                max_new_tokens=shared.args.max_seq_len,
+                trust_remote_code=shared.args.trust_remote_code,
+                fuse_layers=not shared.args.no_inject_fused_attention,
+                max_memory=get_max_memory_dict(),
+                batch_size=shared.args.n_batch,
+                safetensors=any(model_dir.glob('*.safetensors')),
+            )
+
+    return model
 
 
 def GPTQ_loader(model_name):
@@ -341,6 +362,18 @@ def ExLlamav2_HF_loader(model_name):
     from modules.exllamav2_hf import Exllamav2HF
 
     return Exllamav2HF.from_pretrained(model_name)
+
+
+def RWKV_loader(model_name):
+    '''
+    This loader is not currently maintained as RWKV can now be loaded
+    through the transformers library.
+    '''
+    from modules.RWKV import RWKVModel, RWKVTokenizer
+
+    model = RWKVModel.from_pretrained(Path(f'{shared.args.model_dir}/{model_name}'), dtype="fp32" if shared.args.cpu else "bf16" if shared.args.bf16 else "fp16", device="cpu" if shared.args.cpu else "cuda")
+    tokenizer = RWKVTokenizer.from_pretrained(Path(shared.args.model_dir))
+    return model, tokenizer
 
 
 def get_max_memory_dict():
