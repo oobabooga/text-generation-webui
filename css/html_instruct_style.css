@@ -34,7 +34,7 @@
 
 .gradio-container .chat .assistant-message {
     padding: 20px;
-    border-radius: 15px;
+    border-radius: 20px;
     background-color: #0000000f;
     margin-top: 9px !important;
     margin-bottom: 18px !important;
@@ -42,7 +42,7 @@
 
 .gradio-container .chat .user-message {
     padding: 20px;
-    border-radius: 15px;
+    border-radius: 20px;
     margin-bottom: 9px !important;
 }
 
