@@ -14,8 +14,10 @@ To run this extension, download a LLM that supports multimodality, and then star
 
 ```
 # due to dimension mismatch, currently there are two versions of llava-v1.5 pipelines
-python server.py --model liuhaotian_llava-v1.5-7b --multimodal-pipeline llava-v1.5-7b --load-in-4bit
+# LLaVA 1.5 13B has the best performance
 python server.py --model liuhaotian_llava-v1.5-13b --multimodal-pipeline llava-v1.5-13b --load-in-4bit
+# LLaVA 1.5 7B is relavtively weaker, but requires less memory
+python server.py --model liuhaotian_llava-v1.5-7b --multimodal-pipeline llava-v1.5-7b --load-in-4bit
 python server.py --model TheBloke_llava-v1.5-13B-GPTQ_gptq-4bit-32g-actorder_True --multimodal-pipeline llava-v1.5-13b --disable_exllama --loader autogptq
 python server.py --model wojtab_llava-7b-v0-4bit-128g --multimodal-pipeline llava-7b
 python server.py --model wojtab_llava-13b-v0-4bit-128g --multimodal-pipeline llava-13b

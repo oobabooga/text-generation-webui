@@ -203,53 +203,6 @@ class LLaVA_LLaMA_2_13B_Pipeline(LLaVA_v0_13B_Pipeline):
         return LLaVA_v0_Pipeline.embed_tokens(encode("<unk>"*256, add_bos_token=False)[0])
 
 
-class LLaVA_v1_5_7B_Pipeline(LLaVA_v0_13B_Pipeline):
-    CLIP_REPO = "openai/clip-vit-large-patch14-336"
-
-    def __init__(self, params: dict) -> None:
-        super().__init__(params)
-
-    @staticmethod
-    def name() -> str:
-        return "llava-v1.5-7b"
-
-    @staticmethod
-    def llava_projector_shape() -> Tuple[int, int]:
-        return (1024, 4096, 4096)
-
-    @staticmethod
-    def placeholder_token_id() -> int:
-        return 0
-
-    @staticmethod
-    def llava_projector_repo() -> str:
-        return "cnut1648/llava-v1.5-7b"
-
-    @staticmethod
-    def image_start() -> str:
-        return ""
-
-    @staticmethod
-    def image_end() -> str:
-        return ""
-
-    @staticmethod
-    def num_image_embeds() -> int:
-        return 576
-
-    def embed_images(self, images: List[Image.Image]) -> torch.Tensor:
-        # pad it to square first
-        images = [
-            expand2square(image, tuple(int(x*255) for x in self.image_processor.image_mean))
-            for image in images
-        ]
-        return super().embed_images(images)
-
-    @staticmethod
-    def placeholder_embeddings() -> torch.Tensor:
-        return LLaVA_v0_Pipeline.embed_tokens(encode("<unk>"*576, add_bos_token=False)[0])
-
-
 class LLaVA_v1_5_13B_Pipeline(LLaVA_v0_13B_Pipeline):
     CLIP_REPO = "openai/clip-vit-large-patch14-336"
 
@@ -295,3 +248,15 @@ class LLaVA_v1_5_13B_Pipeline(LLaVA_v0_13B_Pipeline):
     @staticmethod
     def placeholder_embeddings() -> torch.Tensor:
         return LLaVA_v0_Pipeline.embed_tokens(encode("<unk>"*576, add_bos_token=False)[0])
+
+class LLaVA_v1_5_7B_Pipeline(LLaVA_v1_5_13B_Pipeline):
+    @staticmethod
+    def name() -> str:
+        return "llava-v1.5-7b"
+
+    @staticmethod
+    def llava_projector_shape() -> Tuple[int, int]:
+        return (1024, 4096, 4096)
+    @staticmethod
+    def llava_projector_repo() -> str:
+        return "cnut1648/llava-v1.5-7b"
