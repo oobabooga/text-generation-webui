@@ -259,4 +259,4 @@ class LLaVA_v1_5_7B_Pipeline(LLaVA_v1_5_13B_Pipeline):
         return (1024, 4096, 4096)
     @staticmethod
     def llava_projector_repo() -> str:
-        return "cnut1648/llava-v1.5-7b"
+        return "liuhaotian/llava-v1.5-7b"
