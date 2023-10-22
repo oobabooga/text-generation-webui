@@ -1,4 +1,5 @@
 import argparse
+import os
 import sys
 from collections import OrderedDict
 from pathlib import Path
@@ -189,12 +190,13 @@ for k in ['chat', 'notebook', 'no_stream']:
 # Security warnings
 if args.trust_remote_code:
     logger.warning('trust_remote_code is enabled. This is dangerous.')
-if args.share:
-    logger.warning("The gradio \"share link\" feature uses a proprietary executable to create a reverse tunnel. Use it with care.")
-if any((args.listen, args.share)) and not any((args.gradio_auth, args.gradio_auth_path)):
-    logger.warning("\nYou are potentially exposing the web UI to the entire internet without any access password.\nYou can create one with the \"--gradio-auth\" flag like this:\n\n--gradio-auth username:password\n\nMake sure to replace username:password with your own.")
-    if args.multi_user:
-        logger.warning('\nThe multi-user mode is highly experimental and should not be shared publicly.')
+if not 'COLAB_GPU' in os.environ:
+    if args.share:
+        logger.warning("The gradio \"share link\" feature uses a proprietary executable to create a reverse tunnel. Use it with care.")
+    if any((args.listen, args.share)) and not any((args.gradio_auth, args.gradio_auth_path)):
+        logger.warning("\nYou are potentially exposing the web UI to the entire internet without any access password.\nYou can create one with the \"--gradio-auth\" flag like this:\n\n--gradio-auth username:password\n\nMake sure to replace username:password with your own.")
+        if args.multi_user:
+            logger.warning('\nThe multi-user mode is highly experimental and should not be shared publicly.')
 
 
 def fix_loader_name(name):
