@@ -316,7 +316,7 @@ def update_requirements(initial_installation=False):
 
     # Install or update ExLlama as needed
     if not os.path.exists("exllama/"):
-        run_cmd("git clone https://github.com/turboderp/exllama.git", environment=True)
+        run_cmd("git clone https://github.com/turboderp/exllama.git -4", environment=True)
     else:
         os.chdir("exllama")
         run_cmd("git pull", environment=True)
