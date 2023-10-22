@@ -12,7 +12,7 @@ def merge_loras():
     if len(list({shared.model.peft_config[adapter].r for adapter in shared.model.peft_config.keys()})) > 1:
         logger.warning("The loaded LoRAs cannot be merged, as they have dissimilar ranks. Only the first one will be active.")
         return
-    
+
     shared.model.add_weighted_adapter(shared.lora_names, [1] * len(shared.lora_names), "__merged")
     shared.model.set_adapter("__merged")
 
