@@ -27,6 +27,7 @@ def apply_settings(extension, name):
 
 def load_extensions():
     global state, setup_called
+    state = {}
     for i, name in enumerate(shared.args.extensions):
         if name in available_extensions:
             if name != 'api':
@@ -53,14 +54,32 @@ def iterator():
 
 
 # Extension functions that map string -> string
-def _apply_string_extensions(function_name, text, state):
+def _apply_string_extensions(function_name, text, state, is_chat=False):
     for extension, _ in iterator():
         if hasattr(extension, function_name):
             func = getattr(extension, function_name)
-            if len(signature(func).parameters) == 2:
-                text = func(text, state)
+
+            # Handle old extensions without the 'state' arg or
+            # the 'is_chat' kwarg
+            count = 0
+            has_chat = False
+            for k in signature(func).parameters:
+                if k == 'is_chat':
+                    has_chat = True
+                else:
+                    count += 1
+
+            if count == 2:
+                args = [text, state]
             else:
-                text = func(text)
+                args = [text]
+
+            if has_chat:
+                kwargs = {'is_chat': is_chat}
+            else:
+                kwargs = {}
+
+            text = func(*args, **kwargs)
 
     return text
 
@@ -169,9 +188,7 @@ def create_extensions_block():
     if len(to_display) > 0:
         with gr.Column(elem_id="extensions"):
             for row in to_display:
-                extension, name = row
-                display_name = getattr(extension, 'params', {}).get('display_name', name)
-                gr.Markdown(f"\n### {display_name}")
+                extension, _ = row
                 extension.ui()
 
 

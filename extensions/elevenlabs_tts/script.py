@@ -1,12 +1,13 @@
+import html
 import re
 from pathlib import Path
 
 import elevenlabs
 import gradio as gr
 
-from modules import chat, shared
-from modules.utils import gradio
+from modules import chat, shared, ui_chat
 from modules.logging_colors import logger
+from modules.utils import gradio
 
 params = {
     'activate': True,
@@ -111,7 +112,7 @@ def output_modifier(string):
     output_file = Path(f'extensions/elevenlabs_tts/outputs/{wav_idx:06d}.mp3'.format(wav_idx))
     print(f'Outputting audio to {str(output_file)}')
     try:
-        audio = elevenlabs.generate(text=string, voice=params['selected_voice'], model=params['model'])
+        audio = elevenlabs.generate(text=html.unescape(string), voice=params['selected_voice'], model=params['model'])
         elevenlabs.save(audio, str(output_file))
 
         autoplay = 'autoplay' if params['autoplay'] else ''
@@ -167,24 +168,23 @@ def ui():
         convert_cancel = gr.Button('Cancel', visible=False)
         convert_confirm = gr.Button('Confirm (cannot be undone)', variant="stop", visible=False)
 
-    if shared.is_chat():
-        # Convert history with confirmation
-        convert_arr = [convert_confirm, convert, convert_cancel]
-        convert.click(lambda: [gr.update(visible=True), gr.update(visible=False), gr.update(visible=True)], None, convert_arr)
-        convert_confirm.click(
-            lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr).then(
-            remove_tts_from_history, gradio('history'), gradio('history')).then(
-            chat.save_persistent_history, gradio('history', 'character_menu', 'mode'), None).then(
-            chat.redraw_html, shared.reload_inputs, gradio('display'))
+    # Convert history with confirmation
+    convert_arr = [convert_confirm, convert, convert_cancel]
+    convert.click(lambda: [gr.update(visible=True), gr.update(visible=False), gr.update(visible=True)], None, convert_arr)
+    convert_confirm.click(
+        lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr).then(
+        remove_tts_from_history, gradio('history'), gradio('history')).then(
+        chat.save_history, gradio('history', 'unique_id', 'character_menu', 'mode'), None).then(
+        chat.redraw_html, gradio(ui_chat.reload_arr), gradio('display'))
 
-        convert_cancel.click(lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr)
+    convert_cancel.click(lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr)
 
-        # Toggle message text in history
-        show_text.change(
-            lambda x: params.update({"show_text": x}), show_text, None).then(
-            toggle_text_in_history, gradio('history'), gradio('history')).then(
-            chat.save_persistent_history, gradio('history', 'character_menu', 'mode'), None).then(
-            chat.redraw_html, shared.reload_inputs, gradio('display'))
+    # Toggle message text in history
+    show_text.change(
+        lambda x: params.update({"show_text": x}), show_text, None).then(
+        toggle_text_in_history, gradio('history'), gradio('history')).then(
+        chat.save_history, gradio('history', 'unique_id', 'character_menu', 'mode'), None).then(
+        chat.redraw_html, gradio(ui_chat.reload_arr), gradio('display'))
 
     # Event functions to update the parameters in the backend
     activate.change(lambda x: params.update({'activate': x}), activate, None)

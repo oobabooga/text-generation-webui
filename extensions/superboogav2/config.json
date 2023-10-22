@@ -1,0 +1,161 @@
+{
+    "to_lower": {
+      "default": false, 
+      "categories": [true, false],
+      "should_optimize": true
+    },
+    "num_conversion": {
+      "default": null,
+      "categories": ["NUM_TO_WORD_METHOD", "NUM_TO_CHAR_METHOD", "NUM_TO_CHAR_LONG_METHOD", null],
+      "should_optimize": true
+    },
+    "merge_spaces": {
+      "default": false,
+      "categories": [true, false],
+      "should_optimize": true
+    },
+    "strip": {
+      "default": true,
+      "categories": [true, false],
+      "should_optimize": false
+    },
+    "remove_punctuation": {
+      "default": true,
+      "categories": [true, false],
+      "should_optimize": true
+    },
+    "remove_stopwords": {
+      "default": false,
+      "categories": [true, false],
+      "should_optimize": true
+    },
+    "remove_specific_pos": {
+      "default": false,
+      "categories": [true, false],
+      "should_optimize": true
+    },
+    "lemmatize": {
+      "default": true,
+      "categories": [true, false],
+      "should_optimize": true
+    },
+    "min_num_sent": {
+      "default": 1,
+      "categories": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 999999],
+      "should_optimize": true
+    },
+    "delta_start": {
+      "default": 0,
+      "categories": [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
+      "should_optimize": true
+    },
+    "chunk_len1": {
+      "default": 500,
+      "categories": [50, 200, 250, 500, 600, 900, 1000],
+      "should_optimize": true
+    },
+    "chunk_len2": {
+      "default": 500,
+      "categories": [0, 50, 200, 250, 500, 600, 900],
+      "should_optimize": true
+    },
+    "chunk_len3": {
+      "default": 1000,
+      "categories": [0, 100, 150, 300, 400, 700, 800, 1000],
+      "should_optimize": true
+    },
+    "chunk_len4": {
+      "default": 700,
+      "categories": [0, 100, 150, 300, 400, 700, 800],
+      "should_optimize": true
+    },
+    "chunk_len_mask": {
+      "default": 15,
+      "categories": [3, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15],
+      "should_optimize": false
+    },
+    "context_len_left": {
+      "default": 250,
+      "categories": [50, 100, 150, 200, 250, 300, 350, 400, 500, 600, 700, 800, 900, 1000],
+      "should_optimize": true
+    },
+    "context_len_right": {
+      "default": 800,
+      "categories": [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1200, 1400, 1500, 1600],
+      "should_optimize": true
+    },
+    "new_dist_strategy": {
+      "default": "DIST_MIN_STRATEGY",
+      "categories": ["DIST_MIN_STRATEGY", "DIST_HARMONIC_STRATEGY", "DIST_GEOMETRIC_STRATEGY", "DIST_ARITHMETIC_STRATEGY"],
+      "should_optimize": false
+    },
+    "chunk_count": {
+      "default": 250,
+      "categories": [30, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300, 325, 350, 375, 400],
+      "should_optimize": true
+    },
+    "min_num_length": {
+      "default": 9,
+      "categories": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      "should_optimize": true
+    },
+    "significant_level": {
+      "default": 1.0,
+      "categories": [0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 999999],
+      "should_optimize": true
+    },
+    "time_steepness": {
+      "default": 0.01,
+      "categories": [0.01, 0.2, 0.4, 0.6, 0.8, 1.0],
+      "should_optimize": false
+    },
+    "time_power": {
+      "default": 0,
+      "categories": [0.0, 0.2, 0.4, 0.6, 0.8, 1.0],
+      "should_optimize": false
+    },
+    "chunk_separator": {
+      "default": ""
+    },
+    "prefix": {
+      "default": "<<document chunk>>\n\n"
+    },
+    "data_separator": {
+      "default": "\n\n<<document chunk>>\n\n"
+    },
+    "postfix": {
+      "default": "\n\n<<document end>>\n\n"
+    },
+    "manual": {
+      "default": true
+    },
+    "add_chat_to_data": {
+      "default": true
+    },
+    "injection_strategy": {
+      "default": "PREPEND_TO_LAST",
+      "categories": ["PREPEND_TO_LAST", "APPEND_TO_LAST", "HIJACK_LAST_IN_CONTEXT"]
+    },
+    "chunk_regex": {
+      "default": "(?<==== ).*?(?= ===)|User story: \\d+"
+    },
+    "strong_cleanup": {
+      "default": false
+    },
+    "max_token_count": {
+      "default": 3072
+    },
+    "threads": {
+      "default": 4
+    },
+    "optimization_steps": {
+      "default": 100
+    },
+    "api_port": {
+      "default": 5002
+    },
+    "api_on": {
+      "default": false
+    }
+  }
+  

@@ -1,11 +1,10 @@
-from modules import shared
-from modules.utils import get_available_models
-from modules.models import load_model, unload_model
-from modules.models_settings import (get_model_settings_from_yamls,
-                                     update_model_parameters)
-
 from extensions.openai.embeddings import get_embeddings_model_name
-from extensions.openai.errors import *
+from extensions.openai.errors import OpenAIError
+from modules import shared
+from modules.models import load_model as _load_model
+from modules.models import unload_model
+from modules.models_settings import get_model_metadata, update_model_parameters
+from modules.utils import get_available_models
 
 
 def get_current_model_list() -> list:
@@ -33,14 +32,14 @@ def load_model(model_name: str) -> dict:
         shared.model_name = model_name
         unload_model()
 
-        model_settings = get_model_settings_from_yamls(shared.model_name)
-        shared.settings.update(model_settings)
+        model_settings = get_model_metadata(shared.model_name)
+        shared.settings.update({k: v for k, v in model_settings.items() if k in shared.settings})
         update_model_parameters(model_settings, initial=True)
 
         if shared.settings['mode'] != 'instruct':
             shared.settings['instruction_template'] = None
 
-        shared.model, shared.tokenizer = load_model(shared.model_name)
+        shared.model, shared.tokenizer = _load_model(shared.model_name)
 
         if not shared.model:  # load failed.
             shared.model_name = "None"
