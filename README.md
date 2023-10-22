@@ -319,7 +319,7 @@ Optionally, you can use the following command-line flags:
 | `--n_ctx N_CTX` | Size of the prompt context. |
 | `--threads` | Number of threads to use. |
 | `--threads-batch THREADS_BATCH` | Number of threads to use for batches/prompt processing. |
-| `--mul_mat_q` | Activate new mulmat kernels. |
+| `--no_mul_mat_q` | Disable the mulmat kernels. |
 | `--n_batch` | Maximum number of prompt tokens to batch together when calling llama_eval. |
 | `--no-mmap`   | Prevent mmap from being used. |
 | `--mlock`     | Force the system to keep the model in RAM. |

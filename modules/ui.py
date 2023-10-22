@@ -73,7 +73,7 @@ def list_model_elements():
         'n_batch',
         'no_mmap',
         'mlock',
-        'mul_mat_q',
+        'no_mul_mat_q',
         'n_gpu_layers',
         'tensor_split',
         'n_ctx',
