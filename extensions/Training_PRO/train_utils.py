@@ -1,13 +1,26 @@
 import os
 from modules import shared, utils
 from pathlib import Path
+import requests
+import tqdm
 import json
+
+'''
+def get_gpu_memory_usage(rank):
+    return {
+        'total': round(torch.cuda.get_device_properties(rank).total_memory / (1024**3), 2),
+        'max': round(torch.cuda.max_memory_allocated(rank) / (1024**3), 2),
+        'reserved': round(torch.cuda.memory_reserved(rank) / (1024**3), 2),
+        'allocated': round(torch.cuda.memory_allocated(rank) / (1024**3), 2)
+    }
+'''
 
 def list_subfoldersByTime(directory):
 
     if not directory.endswith('/'):
         directory += '/'
     subfolders = []
+    subfolders.append('None') 
     path = directory
     name_list = os.listdir(path)
     full_list = [os.path.join(path,i) for i in name_list]
@@ -277,3 +290,79 @@ def sliding_block_cut(text: str, min_chars_cut: int, eos_to_hc: bool, cutoff_len
         print("Saved sentencelist.json in logs folder")
     
     return sentencelist   
+
+# Example usage:
+# download_file_from_url('https://example.com/path/to/your/file.ext', '/output/directory')
+
+def download_file_from_url(url, overwrite, output_dir_in, valid_extensions = {'.txt', '.json'}):
+    try:
+    # Validate and sanitize the URL
+    #parsed_url = urllib.parse.urlparse(url)
+    #if not parsed_url.netloc:
+    #    raise ValueError("Invalid URL")
+    #filename = os.path.basename(parsed_url.path)
+
+    # Get the filename from the URL
+
+        session = requests.Session()
+        headers = {}
+        mode = 'wb'
+        filename = url.split('/')[-1]
+
+        output_dir = str(output_dir_in)
+        # Construct the full path to the output file
+        local_filename = os.path.join(output_dir, filename)
+
+        # Check if the local file already exists
+        overw = ''
+        if os.path.exists(local_filename):
+            if not overwrite:
+                yield f"File '{local_filename}' already exists. Aborting."
+                return
+            else:
+                overw = ' [Overwrite existing]'
+
+        filename_lower = filename.lower()
+
+        # Send an HTTP GET request to the URL with a timeout
+        file_extension = os.path.splitext(filename_lower)[-1]
+        
+        if file_extension not in valid_extensions:
+            yield f"Invalid file extension: {file_extension}. Only {valid_extensions} files are supported."
+            return
+
+        with session.get(url, stream=True, headers=headers, timeout=10) as r:
+            r.raise_for_status() 
+            # total size can be wildly inaccurate
+            #total_size = int(r.headers.get('content-length', 0))
+            
+            block_size = 1024 * 4  
+            with open(local_filename, mode) as f:
+                count = 0
+                for data in r.iter_content(block_size):
+                    f.write(data)
+                    count += len(data)
+
+                    yield f"Downloaded: {count} " + overw
+
+            # Verify file size if possible
+            if os.path.exists(local_filename):
+                downloaded_size = os.path.getsize(local_filename)
+                if downloaded_size > 0:
+                    yield f"File '{filename}' downloaded to '{output_dir}' ({downloaded_size} bytes)."
+                    print("File Downloaded")
+                else:
+                    print("Downloaded file is zero")
+                    yield f"Failed. Downloaded file size is zero)."
+            else:
+                print(f"Error: {local_filename} failed to download.")
+                yield f"Error: {local_filename} failed to download"
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        yield f"An error occurred: {e}"
+
+    finally:
+        # Close the session to release resources
+        session.close()
+
