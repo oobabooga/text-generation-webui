@@ -167,8 +167,22 @@ class ModelDownloader:
             r.raise_for_status()  # Do not continue the download if the request was unsuccessful
             total_size = int(r.headers.get('content-length', 0))
             block_size = 1024 * 1024  # 1MB
+
+            tqdm_kwargs = {
+                'total': total_size,
+                'unit': 'iB',
+                'unit_scale': True,
+                'bar_format': '{l_bar}{bar}| {n_fmt:6}/{total_fmt:6} {rate_fmt:6}'
+            }
+
+            if 'COLAB_GPU' in os.environ:
+                tqdm_kwargs.update({
+                    'position': 0,
+                    'leave': True
+                })
+
             with open(output_path, mode) as f:
-                with tqdm.tqdm(total=total_size, unit='iB', unit_scale=True, bar_format='{l_bar}{bar}| {n_fmt:6}/{total_fmt:6} {rate_fmt:6}') as t:
+                with tqdm.tqdm(**tqdm_kwargs) as t:
                     count = 0
                     for data in r.iter_content(block_size):
                         t.update(len(data))
