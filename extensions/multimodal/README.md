@@ -13,6 +13,8 @@ https://user-images.githubusercontent.com/3718215/233817203-69b57e77-0c55-4fd6-b
 To run this extension, download a LLM that supports multimodality, and then start server.py with the appropriate `--multimodal-pipeline` argument. Examples:
 
 ```
+# due to dimension mismatch, currently there are two versions of llava-v1.5 pipelines
+python server.py --model liuhaotian_llava-v1.5-7b --multimodal-pipeline llava-v1.5-7b --load-in-4bit
 python server.py --model liuhaotian_llava-v1.5-13b --multimodal-pipeline llava-v1.5-13b --load-in-4bit
 python server.py --model TheBloke_llava-v1.5-13B-GPTQ_gptq-4bit-32g-actorder_True --multimodal-pipeline llava-v1.5-13b --disable_exllama --loader autogptq
 python server.py --model wojtab_llava-7b-v0-4bit-128g --multimodal-pipeline llava-7b
