@@ -204,7 +204,7 @@ def install_webui():
 
     # Install CUDA libraries (this wasn't necessary for Pytorch before...)
     if choice == "A":
-        run_cmd(f"conda install -y -c \"nvidia/label/{'cuda-12.1.0' if use_cuda118 == 'N' else 'cuda-11.8.0'}\" cuda-runtime", assert_success=True, environment=True)
+        run_cmd(f"conda install -y -c \"nvidia/label/{'cuda-12.1.1' if use_cuda118 == 'N' else 'cuda-11.8.0'}\" cuda-toolkit", assert_success=True, environment=True)
 
     # Install the webui requirements
     update_requirements(initial_installation=True)
