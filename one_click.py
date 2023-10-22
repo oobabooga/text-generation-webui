@@ -183,9 +183,9 @@ def install_webui():
                 print("Invalid choice. Please try again.")
                 use_cuda118 = input("Input> ").upper().strip('"\'').strip()
         if use_cuda118 == 'Y':
-            print(f"CUDA: 11.8")
+            print("CUDA: 11.8")
         else:
-            print(f"CUDA: 12.1")
+            print("CUDA: 12.1")
 
         install_pytorch = f"python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/{'cu121' if use_cuda118 == 'N' else 'cu118'}"
     elif not is_macos() and choice == "B":
