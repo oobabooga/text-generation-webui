@@ -418,11 +418,9 @@ Optionally, you can use the following command-line flags:
 |---------------------------------------|-------------|
 | `--multimodal-pipeline PIPELINE`      | The multimodal pipeline to use. Examples: `llava-7b`, `llava-13b`. |
 
-## Presets
+## Google Colab notebook
 
-Inference settings presets can be created under `presets/` as yaml files. These files are detected automatically at startup.
-
-The presets that are included by default are the result of a contest that received 7215 votes. More details can be found [here](https://github.com/oobabooga/oobabooga.github.io/blob/main/arena/results.md).
+https://colab.research.google.com/github/oobabooga/text-generation-webui/blob/main/Colab-TextGen-GPU.ipynb
 
 ## Contributing
 
