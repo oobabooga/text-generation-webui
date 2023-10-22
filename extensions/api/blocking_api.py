@@ -212,7 +212,7 @@ def _run_server(port: int, share: bool = False, tunnel_id=str):
         server.socket = context.wrap_socket(server.socket, server_side=True)
 
     def on_start(public_url: str):
-        logger.info(f'Starting non-streaming server at public url {public_url}/api')
+        logger.info(f'Blocking API URL: \n\n{public_url}/api\n')
 
     if share:
         try:
@@ -221,9 +221,9 @@ def _run_server(port: int, share: bool = False, tunnel_id=str):
             pass
     else:
         if ssl_verify:
-            logger.info(f'Starting API at https://{address}:{port}/api')
+            logger.info(f'Blocking API URL: \n\nhttps://{address}:{port}/api\n')
         else:
-            logger.info(f'Starting API at http://{address}:{port}/api')
+            logger.info(f'Blocking API URL: \n\nhttp://{address}:{port}/api\n')
 
     server.serve_forever()
 

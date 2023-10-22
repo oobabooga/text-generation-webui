@@ -122,7 +122,7 @@ def _run_server(port: int, share: bool = False, tunnel_id=str):
 
     def on_start(public_url: str):
         public_url = public_url.replace('https://', 'wss://')
-        logger.info(f'Starting streaming server at public url {public_url}{PATH}')
+        logger.info(f'Streaming API URL: \n\n{public_url}{PATH}\n')
 
     if share:
         try:
@@ -131,9 +131,9 @@ def _run_server(port: int, share: bool = False, tunnel_id=str):
             print(e)
     else:
         if ssl_verify:
-            logger.info(f'Starting streaming server at wss://{address}:{port}{PATH}')
+            logger.info(f'Streaming API URL: \n\nwss://{address}:{port}{PATH}\n')
         else:
-            logger.info(f'Starting streaming server at ws://{address}:{port}{PATH}')
+            logger.info(f'Streaming API URL: \n\nws://{address}:{port}{PATH}\n')
 
     asyncio.run(_run(host=address, port=port))
 
