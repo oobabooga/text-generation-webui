@@ -3,7 +3,7 @@ colorama
 datasets
 einops
 exllamav2==0.0.6
-gradio==3.47.*
+gradio==3.50.*
 markdown
 numpy==1.24.*
 optimum==1.13.1
