@@ -53,6 +53,7 @@ def list_model_elements():
         'load_in_8bit',
         'trust_remote_code',
         'use_fast',
+        'use_flash_attention_2',
         'load_in_4bit',
         'compute_dtype',
         'quant_type',

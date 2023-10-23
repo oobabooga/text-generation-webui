@@ -92,6 +92,7 @@ parser.add_argument('--xformers', action='store_true', help='Use xformer\'s memo
 parser.add_argument('--sdp-attention', action='store_true', help='Use PyTorch 2.0\'s SDP attention. Same as above.')
 parser.add_argument('--trust-remote-code', action='store_true', help='Set trust_remote_code=True while loading the model. Necessary for some models.')
 parser.add_argument('--use_fast', action='store_true', help='Set use_fast=True while loading the tokenizer.')
+parser.add_argument('--use_flash_attention_2', action='store_true', help='Set use_flash_attention_2=True while loading the model.')
 
 # Accelerate 4-bit
 parser.add_argument('--load-in-4bit', action='store_true', help='Load the model with 4-bit precision (using bitsandbytes).')
@@ -191,7 +192,7 @@ for k in ['chat', 'notebook', 'no_stream', 'mul_mat_q']:
 # Security warnings
 if args.trust_remote_code:
     logger.warning('trust_remote_code is enabled. This is dangerous.')
-if 'COLAB_GPU' not in os.environ:
+if not 'COLAB_GPU' in os.environ:
     if args.share:
         logger.warning("The gradio \"share link\" feature uses a proprietary executable to create a reverse tunnel. Use it with care.")
     if any((args.listen, args.share)) and not any((args.gradio_auth, args.gradio_auth_path)):

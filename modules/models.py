@@ -120,6 +120,8 @@ def huggingface_loader(model_name):
         'trust_remote_code': shared.args.trust_remote_code,
         'torch_dtype': torch.bfloat16 if shared.args.bf16 else torch.float16
     }
+    if shared.args.use_flash_attention_2:
+        params['use_flash_attention_2'] = True
     config = AutoConfig.from_pretrained(path_to_model, trust_remote_code=params['trust_remote_code'])
 
     if 'chatglm' in model_name.lower():
