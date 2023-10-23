@@ -15,7 +15,6 @@ model_name = 'None'
 is_seq2seq = False
 model_dirty_from_training = False
 lora_names = []
-rep_pen_diffs = {}
 
 # Generation variables
 stop_everything = False

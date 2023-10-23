@@ -148,7 +148,7 @@ class RepetitionPenaltyLogitsProcessorWithRange(LogitsProcessor):
         self._range = _range
 
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
-        original_scores = scores.clone()
+
         input_ids = input_ids[:, -self._range:]
         score = torch.gather(scores, 1, input_ids)
 
@@ -157,13 +157,6 @@ class RepetitionPenaltyLogitsProcessorWithRange(LogitsProcessor):
         score -= self.additive_penalty
 
         scores.scatter_(1, input_ids, score)
-
-        # Find out what probabilities changed the most
-        old_probs = torch.nn.functional.softmax(original_scores, dim=-1)
-        new_probs = torch.nn.functional.softmax(scores, dim=-1)
-        prob_diff = (new_probs - old_probs).squeeze()
-        increase_only = torch.maximum(prob_diff, torch.zeros_like(prob_diff))
-        decrease_only = torch.maximum(-prob_diff, torch.zeros_like(prob_diff))
 
         return scores
 
@@ -195,13 +188,16 @@ def get_logits_warper_patch(self, generation_config):
 
 
 def get_logits_processor_patch(self, **kwargs):
-    repetition_penalty_range = kwargs['generation_config'].repetition_penalty_range
     repetition_penalty = kwargs['generation_config'].repetition_penalty
     additive_repetition_penalty = kwargs['generation_config'].additive_repetition_penalty
+    repetition_penalty_range = kwargs['generation_config'].repetition_penalty_range
+
     do_rep_pen_hijack = (repetition_penalty > 1) or (additive_repetition_penalty > 0)
+
     if do_rep_pen_hijack:
         # Make sure it always creates a RepetitionPenaltyLogitsProcessor
         kwargs['generation_config'].repetition_penalty = 1.1  # must set to some value > 1
+
     result = self._get_logits_processor_old(**kwargs)
     if do_rep_pen_hijack:
         # Now set the rep_pen back to the actual value (just in case)
