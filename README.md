@@ -19,7 +19,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * Use llama.cpp models with transformers samplers (`llamacpp_HF` loader)
 * [Multimodal pipelines, including LLaVA and MiniGPT-4](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/multimodal)
 * [Extensions framework](https://github.com/oobabooga/text-generation-webui/wiki/07-%E2%80%90-Extensions)
-* [Custom chat characters](docs/Chat-mode.md)
+* [Custom chat characters](https://github.com/oobabooga/text-generation-webui/wiki/03-%E2%80%90-Parameters-Tab#character)
 * Very efficient text streaming
 * Markdown output with LaTeX rendering, to use for instance with [GALACTICA](https://github.com/paperswithcode/galai)
 * API, including endpoints for websocket streaming ([see the examples](https://github.com/oobabooga/text-generation-webui/blob/main/api-examples))
@@ -60,7 +60,7 @@ To define persistent command-line flags like `--listen` or `--api`, edit the `CM
 #### Other info
 
 * There is no need to run any of those scripts as admin/root.
-* For additional instructions about AMD setup, WSL setup, and nvcc installation, consult [this page](https://github.com/oobabooga/text-generation-webui/blob/main/docs/One-Click-Installers.md).
+* For additional instructions about AMD setup, WSL setup, and nvcc installation, consult [the documentation](https://github.com/oobabooga/text-generation-webui/wiki).
 * The installer has been tested mostly on NVIDIA GPUs. If you can find a way to improve it for your AMD/Intel Arc/Mac Metal GPU, you are highly encouraged to submit a PR to this repository. The main file to be edited is `one_click.py`.
 * For automated installation, you can use the `GPU_CHOICE`, `USE_CUDA118`, `LAUNCH_AFTER_INSTALL`, and `INSTALL_EXTENSIONS` environment variables. For instance: `GPU_CHOICE=A USE_CUDA118=FALSE LAUNCH_AFTER_INSTALL=FALSE INSTALL_EXTENSIONS=FALSE ./start_linux.sh`.
 
@@ -170,7 +170,7 @@ cp docker/.env.example .env
 docker compose up --build
 ```
 
-* You need to have docker compose v2.17 or higher installed. See [this guide](https://github.com/oobabooga/text-generation-webui/blob/main/docs/Docker.md) for instructions.
+* You need to have docker compose v2.17 or higher installed. See [this guide](https://github.com/oobabooga/text-generation-webui/wiki/09-%E2%80%90-Docker) for instructions.
 * For additional docker files, check out [this repository](https://github.com/Atinoda/text-generation-webui-docker).
 
 ### Updating the requirements
