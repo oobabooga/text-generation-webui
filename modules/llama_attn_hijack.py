@@ -5,7 +5,6 @@ from typing import Optional, Tuple
 import torch
 import torch.nn as nn
 
-
 import modules.shared as shared
 from modules.logging_colors import logger
 

@@ -191,7 +191,7 @@ for k in ['chat', 'notebook', 'no_stream', 'mul_mat_q']:
 # Security warnings
 if args.trust_remote_code:
     logger.warning('trust_remote_code is enabled. This is dangerous.')
-if not 'COLAB_GPU' in os.environ:
+if 'COLAB_GPU' not in os.environ:
     if args.share:
         logger.warning("The gradio \"share link\" feature uses a proprietary executable to create a reverse tunnel. Use it with care.")
     if any((args.listen, args.share)) and not any((args.gradio_auth, args.gradio_auth_path)):
