@@ -18,7 +18,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * 4-bit, 8-bit, and CPU inference through the transformers library
 * Use llama.cpp models with transformers samplers (`llamacpp_HF` loader)
 * [Multimodal pipelines, including LLaVA and MiniGPT-4](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/multimodal)
-* [Extensions framework](docs/Extensions.md)
+* [Extensions framework](https://github.com/oobabooga/text-generation-webui/wiki/07-%E2%80%90-Extensions)
 * [Custom chat characters](docs/Chat-mode.md)
 * Very efficient text streaming
 * Markdown output with LaTeX rendering, to use for instance with [GALACTICA](https://github.com/paperswithcode/galai)
