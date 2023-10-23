@@ -1,3 +1,5 @@
+import html
+import json
 import random
 import time
 from pathlib import Path
@@ -15,7 +17,7 @@ torch._C._jit_set_profiling_mode(False)
 params = {
     'activate': True,
     'speaker': 'en_56',
-    'language': 'en',
+    'language': 'English',
     'model_id': 'v3_en',
     'sample_rate': 48000,
     'device': 'cpu',
@@ -27,7 +29,10 @@ params = {
 }
 
 current_params = params.copy()
-voices_by_gender = ['en_99', 'en_45', 'en_18', 'en_117', 'en_49', 'en_51', 'en_68', 'en_0', 'en_26', 'en_56', 'en_74', 'en_5', 'en_38', 'en_53', 'en_21', 'en_37', 'en_107', 'en_10', 'en_82', 'en_16', 'en_41', 'en_12', 'en_67', 'en_61', 'en_14', 'en_11', 'en_39', 'en_52', 'en_24', 'en_97', 'en_28', 'en_72', 'en_94', 'en_36', 'en_4', 'en_43', 'en_88', 'en_25', 'en_65', 'en_6', 'en_44', 'en_75', 'en_91', 'en_60', 'en_109', 'en_85', 'en_101', 'en_108', 'en_50', 'en_96', 'en_64', 'en_92', 'en_76', 'en_33', 'en_116', 'en_48', 'en_98', 'en_86', 'en_62', 'en_54', 'en_95', 'en_55', 'en_111', 'en_3', 'en_83', 'en_8', 'en_47', 'en_59', 'en_1', 'en_2', 'en_7', 'en_9', 'en_13', 'en_15', 'en_17', 'en_19', 'en_20', 'en_22', 'en_23', 'en_27', 'en_29', 'en_30', 'en_31', 'en_32', 'en_34', 'en_35', 'en_40', 'en_42', 'en_46', 'en_57', 'en_58', 'en_63', 'en_66', 'en_69', 'en_70', 'en_71', 'en_73', 'en_77', 'en_78', 'en_79', 'en_80', 'en_81', 'en_84', 'en_87', 'en_89', 'en_90', 'en_93', 'en_100', 'en_102', 'en_103', 'en_104', 'en_105', 'en_106', 'en_110', 'en_112', 'en_113', 'en_114', 'en_115']
+
+with open(Path("extensions/silero_tts/languages.json"), encoding='utf8') as f:
+    languages = json.load(f)
+
 voice_pitches = ['x-low', 'low', 'medium', 'high', 'x-high']
 voice_speeds = ['x-slow', 'slow', 'medium', 'fast', 'x-fast']
 
@@ -50,10 +55,10 @@ def load_model():
     model_path = torch_cache_path + "/snakers4_silero-models_master/src/silero/model/" + params['model_id'] + ".pt"
     if Path(model_path).is_file():
         print(f'\nUsing Silero TTS cached checkpoint found at {torch_cache_path}')
-        model, example_text = torch.hub.load(repo_or_dir=torch_cache_path + '/snakers4_silero-models_master/', model='silero_tts', language=params['language'], speaker=params['model_id'], source='local', path=model_path, force_reload=True)
+        model, example_text = torch.hub.load(repo_or_dir=torch_cache_path + '/snakers4_silero-models_master/', model='silero_tts', language=languages[params['language']]["lang_id"], speaker=params['model_id'], source='local', path=model_path, force_reload=True)
     else:
         print(f'\nSilero TTS cache not found at {torch_cache_path}. Attempting to download...')
-        model, example_text = torch.hub.load(repo_or_dir='snakers4/silero-models', model='silero_tts', language=params['language'], speaker=params['model_id'])
+        model, example_text = torch.hub.load(repo_or_dir='snakers4/silero-models', model='silero_tts', language=languages[params['language']]["lang_id"], speaker=params['model_id'])
     model.to(params['device'])
     return model
 
@@ -118,7 +123,8 @@ def output_modifier(string, state):
         return string
 
     original_string = string
-    string = tts_preprocessor.preprocess(string)
+
+    string = tts_preprocessor.preprocess(html.unescape(string))
 
     if string == '':
         string = '*Empty reply, try regenerating*'
@@ -147,7 +153,7 @@ def random_sentence():
         return random.choice(list(f))
 
 
-def voice_preview(preview_text):
+def voice_preview(string):
     global model, current_params, streaming_state
 
     for i in params:
@@ -156,7 +162,7 @@ def voice_preview(preview_text):
             current_params = params.copy()
             break
 
-    string = tts_preprocessor.preprocess(preview_text or random_sentence())
+    string = tts_preprocessor.preprocess(string or random_sentence())
 
     output_file = Path('extensions/silero_tts/outputs/voice_preview.wav')
     prosody = f"<prosody rate=\"{params['voice_speed']}\" pitch=\"{params['voice_pitch']}\">"
@@ -164,6 +170,12 @@ def voice_preview(preview_text):
     model.save_wav(ssml_text=silero_input, speaker=params['speaker'], sample_rate=int(params['sample_rate']), audio_path=str(output_file))
 
     return f'<audio src="file/{output_file.as_posix()}?{int(time.time())}" controls autoplay></audio>'
+
+
+def language_change(lang):
+    global params
+    params.update({"language": lang, "speaker": languages[lang]["default_voice"], "model_id": languages[lang]["model_id"]})
+    return gr.update(choices=languages[lang]["voices"], value=languages[lang]["default_voice"])
 
 
 def custom_css():
@@ -179,7 +191,10 @@ def ui():
             autoplay = gr.Checkbox(value=params['autoplay'], label='Play TTS automatically')
 
         show_text = gr.Checkbox(value=params['show_text'], label='Show message text under audio player')
-        voice = gr.Dropdown(value=params['speaker'], choices=voices_by_gender, label='TTS voice')
+        
+        with gr.Row():
+            language = gr.Dropdown(value=params['language'], choices=sorted(languages.keys()), label='Language')
+            voice = gr.Dropdown(value=params['speaker'], choices=languages[params['language']]["voices"], label='TTS voice')
         with gr.Row():
             v_pitch = gr.Dropdown(value=params['voice_pitch'], choices=voice_pitches, label='Voice pitch')
             v_speed = gr.Dropdown(value=params['voice_speed'], choices=voice_speeds, label='Voice speed')
@@ -200,7 +215,7 @@ def ui():
     convert_confirm.click(
         lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr).then(
         remove_tts_from_history, gradio('history'), gradio('history')).then(
-        chat.save_persistent_history, gradio('history', 'character_menu', 'mode'), None).then(
+        chat.save_history, gradio('history', 'unique_id', 'character_menu', 'mode'), None).then(
         chat.redraw_html, gradio(ui_chat.reload_arr), gradio('display'))
 
     convert_cancel.click(lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr)
@@ -209,12 +224,13 @@ def ui():
     show_text.change(
         lambda x: params.update({"show_text": x}), show_text, None).then(
         toggle_text_in_history, gradio('history'), gradio('history')).then(
-        chat.save_persistent_history, gradio('history', 'character_menu', 'mode'), None).then(
+        chat.save_history, gradio('history', 'unique_id', 'character_menu', 'mode'), None).then(
         chat.redraw_html, gradio(ui_chat.reload_arr), gradio('display'))
 
     # Event functions to update the parameters in the backend
     activate.change(lambda x: params.update({"activate": x}), activate, None)
     autoplay.change(lambda x: params.update({"autoplay": x}), autoplay, None)
+    language.change(language_change, language, voice, show_progress=False)
     voice.change(lambda x: params.update({"speaker": x}), voice, None)
     v_pitch.change(lambda x: params.update({"voice_pitch": x}), v_pitch, None)
     v_speed.change(lambda x: params.update({"voice_speed": x}), v_speed, None)

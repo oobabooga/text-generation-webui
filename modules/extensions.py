@@ -27,6 +27,7 @@ def apply_settings(extension, name):
 
 def load_extensions():
     global state, setup_called
+    state = {}
     for i, name in enumerate(shared.args.extensions):
         if name in available_extensions:
             if name != 'api':

@@ -22,6 +22,7 @@ def build_parameters(body, chat=False):
     generate_params = {
         'max_new_tokens': int(body.get('max_new_tokens', body.get('max_length', 200))),
         'auto_max_new_tokens': bool(body.get('auto_max_new_tokens', False)),
+        'max_tokens_second': int(body.get('max_tokens_second', 0)),
         'do_sample': bool(body.get('do_sample', True)),
         'temperature': float(body.get('temperature', 0.5)),
         'top_p': float(body.get('top_p', 1)),
@@ -44,11 +45,13 @@ def build_parameters(body, chat=False):
         'mirostat_mode': int(body.get('mirostat_mode', 0)),
         'mirostat_tau': float(body.get('mirostat_tau', 5)),
         'mirostat_eta': float(body.get('mirostat_eta', 0.1)),
+        'grammar_string': str(body.get('grammar_string', '')),
         'guidance_scale': float(body.get('guidance_scale', 1)),
         'negative_prompt': str(body.get('negative_prompt', '')),
         'seed': int(body.get('seed', -1)),
         'add_bos_token': bool(body.get('add_bos_token', True)),
         'truncation_length': int(body.get('truncation_length', body.get('max_context_length', 2048))),
+        'custom_token_bans': str(body.get('custom_token_bans', '')),
         'ban_eos_token': bool(body.get('ban_eos_token', False)),
         'skip_special_tokens': bool(body.get('skip_special_tokens', True)),
         'custom_stopping_strings': '',  # leave this blank
@@ -65,8 +68,10 @@ def build_parameters(body, chat=False):
         instruction_template = body.get('instruction_template', shared.settings['instruction_template'])
         if str(instruction_template) == "None":
             instruction_template = "Vicuna-v1.1"
+        if str(character) == "None":
+            character = "Assistant"
 
-        name1, name2, _, greeting, context, _ = load_character_memoized(character, str(body.get('your_name', shared.settings['name1'])), shared.settings['name2'], instruct=False)
+        name1, name2, _, greeting, context, _ = load_character_memoized(character, str(body.get('your_name', shared.settings['name1'])), '', instruct=False)
         name1_instruct, name2_instruct, _, _, context_instruct, turn_template = load_character_memoized(instruction_template, '', '', instruct=True)
         generate_params.update({
             'mode': str(body.get('mode', 'chat')),

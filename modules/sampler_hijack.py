@@ -10,7 +10,8 @@ from transformers.generation.logits_process import (
     TemperatureLogitsWarper
 )
 
-import modules.shared as shared
+global_scores = None
+
 
 class TailFreeLogitsWarper(LogitsWarper):
     def __init__(self, tfs: float, filter_value: float = -float("Inf"), min_tokens_to_keep: int = 1):
@@ -123,6 +124,16 @@ class MirostatLogitsWarper(LogitsWarper):
         return scores
 
 
+class SpyLogitsWarper(LogitsWarper):
+    def __init__(self):
+        pass
+
+    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
+        global global_scores
+        global_scores = scores
+        return scores
+
+
 class RepetitionPenaltyLogitsProcessorWithRange(LogitsProcessor):
     '''
     Copied from the transformers library
@@ -135,7 +146,6 @@ class RepetitionPenaltyLogitsProcessorWithRange(LogitsProcessor):
         self.penalty = penalty
         self.additive_penalty = additive_penalty
         self._range = _range
-        shared.rep_pen_diffs = {}
 
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
         original_scores = scores.clone()
@@ -154,14 +164,7 @@ class RepetitionPenaltyLogitsProcessorWithRange(LogitsProcessor):
         prob_diff = (new_probs - old_probs).squeeze()
         increase_only = torch.maximum(prob_diff, torch.zeros_like(prob_diff))
         decrease_only = torch.maximum(-prob_diff, torch.zeros_like(prob_diff))
-        if 'increase' in shared.rep_pen_diffs:
-            shared.rep_pen_diffs['increase'] += increase_only
-        else:
-            shared.rep_pen_diffs['increase'] = increase_only
-        if 'decrease' in shared.rep_pen_diffs:
-            shared.rep_pen_diffs['decrease'] += decrease_only
-        else:
-            shared.rep_pen_diffs['decrease'] = decrease_only
+
         return scores
 
 
@@ -187,6 +190,7 @@ def get_logits_warper_patch(self, generation_config):
     else:
         warpers += warpers_to_add
 
+    warpers.append(SpyLogitsWarper())
     return warpers
 
 

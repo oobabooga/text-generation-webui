@@ -46,6 +46,6 @@ def load_instruction_prompt_simple(fname):
 def count_tokens(text):
     try:
         tokens = get_encoded_length(text)
-        return f'{tokens} tokens in the input.'
+        return str(tokens)
     except:
-        return 'Couldn\'t count the number of tokens. Is a tokenizer loaded?'
+        return '0'

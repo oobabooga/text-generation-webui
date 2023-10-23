@@ -1,3 +1,5 @@
+import html
+
 import gradio as gr
 from deep_translator import GoogleTranslator
 
@@ -27,7 +29,8 @@ def output_modifier(string):
     if not params['activate']:
         return string
 
-    return GoogleTranslator(source='en', target=params['language string']).translate(string)
+    translated_str = GoogleTranslator(source='en', target=params['language string']).translate(html.unescape(string))
+    return html.escape(translated_str)
 
 
 def bot_prefix_modifier(string):

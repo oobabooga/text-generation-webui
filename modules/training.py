@@ -21,7 +21,7 @@ from datasets import Dataset, load_dataset
 from peft import (
     LoraConfig,
     get_peft_model,
-    prepare_model_for_int8_training,
+    prepare_model_for_kbit_training,
     set_peft_model_state_dict
 )
 from peft.utils.other import \
@@ -41,7 +41,7 @@ from modules.models import reload_model
 from modules.utils import natural_keys
 
 MODEL_CLASSES = {v[1]: v[0] for v in MODEL_FOR_CAUSAL_LM_MAPPING_NAMES.items()}
-PARAMETERS = ["lora_name", "always_override", "save_steps", "micro_batch_size", "batch_size", "epochs", "learning_rate", "lr_scheduler_type", "lora_rank", "lora_alpha", "lora_dropout", "cutoff_len", "dataset", "eval_dataset", "format", "eval_steps", "raw_text_file", "overlap_len", "newline_favor_len", "higher_rank_limit", "warmup_steps", "optimizer", "hard_cut_string", "train_only_after", "stop_at_loss", "add_eos_token", "min_chars", "report_to"]
+PARAMETERS = ["lora_name", "always_override", "q_proj_en", "v_proj_en", "k_proj_en", "o_proj_en", "gate_proj_en", "down_proj_en", "up_proj_en", "save_steps", "micro_batch_size", "batch_size", "epochs", "learning_rate", "lr_scheduler_type", "lora_rank", "lora_alpha", "lora_dropout", "cutoff_len", "dataset", "eval_dataset", "format", "eval_steps", "raw_text_file", "overlap_len", "newline_favor_len", "higher_rank_limit", "warmup_steps", "optimizer", "hard_cut_string", "train_only_after", "stop_at_loss", "add_eos_token", "min_chars", "report_to"]
 WANT_INTERRUPT = False
 
 train_log = {}
@@ -49,6 +49,7 @@ train_template = {}
 
 
 def create_ui():
+    mu = shared.args.multi_user
     with gr.Tab("Training", elem_id="training-tab"):
         with gr.Tab('Train LoRA', elem_id='lora-train-tab'):
             tmp = gr.State('')
@@ -57,14 +58,32 @@ def create_ui():
                     gr.Markdown("[Tutorial](https://github.com/oobabooga/text-generation-webui/blob/main/docs/Training-LoRAs.md)")
 
                     with gr.Row():
-                        copy_from = gr.Dropdown(label='Copy parameters from', value='None', choices=utils.get_available_loras(), elem_classes=['slim-dropdown'])
-                        ui.create_refresh_button(copy_from, lambda: None, lambda: {'choices': utils.get_available_loras()}, 'refresh-button')
+                        copy_from = gr.Dropdown(label='Copy parameters from', value='None', choices=utils.get_available_loras(), elem_classes=['slim-dropdown'], interactive=not mu)
+                        ui.create_refresh_button(copy_from, lambda: None, lambda: {'choices': utils.get_available_loras()}, 'refresh-button', interactive=not mu)
 
                     with gr.Row():
                         with gr.Column(scale=5):
                             lora_name = gr.Textbox(label='Name', info='The name of your new LoRA file')
                         with gr.Column():
-                            always_override = gr.Checkbox(label='Override Existing Files', value=False, info='If the name is the same, checking will replace the existing file, and unchecking will load and continue from it (the rank must be the same).')
+                            always_override = gr.Checkbox(label='Override Existing Files', value=False, info='If the name is the same, checking will replace the existing file, and unchecking will load and continue from it (the rank must be the same).', elem_classes=['no-background'])
+
+                    with gr.Accordion(label='Target Modules', open=False):
+                        gr.Markdown("Selects which modules to target in training. Targeting more modules is closer to a full fine-tune at the cost of increased VRAM requirements and adapter size.\nNOTE: Only works for model_id='llama', other types will retain default training behavior and not use these settings.")
+                        with gr.Row():
+                            with gr.Column():
+                                q_proj_en = gr.Checkbox(label='Enable q_proj', value=True)
+                            with gr.Column():
+                                v_proj_en = gr.Checkbox(label='Enable v_proj', value=True)
+                            with gr.Column():
+                                k_proj_en = gr.Checkbox(label='Enable k_proj', value=False)
+                            with gr.Column():
+                                o_proj_en = gr.Checkbox(label='Enable o_proj', value=False)
+                            with gr.Column():
+                                gate_proj_en = gr.Checkbox(label='Enable gate_proj', value=False)
+                            with gr.Column():
+                                down_proj_en = gr.Checkbox(label='Enable down_proj', value=False)
+                            with gr.Column():
+                                up_proj_en = gr.Checkbox(label='Enable up_proj', value=False)
 
                     with gr.Row():
                         with gr.Column():
@@ -72,21 +91,23 @@ def create_ui():
                             lora_alpha = gr.Slider(label='LoRA Alpha', value=64, minimum=0, maximum=2048, step=4, info='This divided by the rank becomes the scaling of the LoRA. Higher means stronger. A good standard value is twice your Rank.')
                             batch_size = gr.Slider(label='Batch Size', value=128, minimum=0, maximum=1024, step=4, info='Global batch size. The two batch sizes together determine gradient accumulation (gradientAccum = batch / microBatch). Higher gradient accum values lead to better quality training.')
                             micro_batch_size = gr.Slider(label='Micro Batch Size', value=4, minimum=1, maximum=128, step=1, info='Per-device batch size (NOTE: multiple devices not yet implemented). Increasing this will increase VRAM usage.')
-                            cutoff_len = gr.Slider(label='Cutoff Length', minimum=0, maximum=2048, value=256, step=32, info='Cutoff length for text input. Essentially, how long of a line of text to feed in at a time. Higher values require drastically more VRAM.')
+                            cutoff_len = gr.Slider(label='Cutoff Length', minimum=0, maximum=4096, value=256, step=32, info='Cutoff length for text input. Essentially, how long of a line of text to feed in at a time. Higher values require drastically more VRAM.')
 
                         with gr.Column():
                             save_steps = gr.Number(label='Save every n steps', value=0, info='If above 0, a checkpoint of the LoRA will be saved every time this many steps pass.')
 
                             epochs = gr.Number(label='Epochs', value=3, info='Number of times every entry in the dataset should be fed into training. So 1 means feed each item in once, 5 means feed it in five times, etc.')
                             learning_rate = gr.Textbox(label='Learning Rate', value='3e-4', info='In scientific notation. 3e-4 is a good starting base point. 1e-2 is extremely high, 1e-6 is extremely low.')
-                            lr_scheduler_type = gr.Dropdown(label='LR Scheduler', value='linear', choices=['linear', 'constant', 'constant_with_warmup', 'cosine', 'cosine_with_restarts', 'polynomial', 'inverse_sqrt'], info='Learning rate scheduler - defines how the learning rate changes over time. "Constant" means never change, "linear" means to go in a straight line from the learning rate down to 0, cosine follows a curve, etc.', elem_classes=['slim-dropdown'])
+                            with gr.Row():
+                                lr_scheduler_type = gr.Dropdown(label='LR Scheduler', value='linear', choices=['linear', 'constant', 'constant_with_warmup', 'cosine', 'cosine_with_restarts', 'polynomial', 'inverse_sqrt'], info='Learning rate scheduler - defines how the learning rate changes over time. "Constant" means never change, "linear" means to go in a straight line from the learning rate down to 0, cosine follows a curve, etc.', elem_classes=['slim-dropdown'])
 
                     with gr.Accordion(label='Advanced Options', open=False):
                         with gr.Row():
                             with gr.Column():
                                 lora_dropout = gr.Slider(label='LoRA Dropout', minimum=0.0, maximum=1.0, step=0.025, value=0.05, info='Percentage probability for dropout of LoRA layers. This can help reduce overfitting. Most users should leave at default.')
                                 stop_at_loss = gr.Slider(label='Stop at loss', minimum=0.0, maximum=3.0, step=0.1, value=0.00, info='The process will automatically stop once the desired loss value is reached. (reasonable numbers are 1.5-1.8)')
-                                optimizer = gr.Dropdown(label='Optimizer', value='adamw_torch', choices=['adamw_hf', 'adamw_torch', 'adamw_torch_fused', 'adamw_torch_xla', 'adamw_apex_fused', 'adafactor', 'adamw_bnb_8bit', 'adamw_anyprecision', 'sgd', 'adagrad'], info='Different optimizer implementation options, for advanced users. Effects of different options are not well documented yet.', elem_classes=['slim-dropdown'])
+                                with gr.Row():
+                                    optimizer = gr.Dropdown(label='Optimizer', value='adamw_torch', choices=['adamw_hf', 'adamw_torch', 'adamw_torch_fused', 'adamw_torch_xla', 'adamw_apex_fused', 'adafactor', 'adamw_bnb_8bit', 'adamw_anyprecision', 'sgd', 'adagrad'], info='Different optimizer implementation options, for advanced users. Effects of different options are not well documented yet.', elem_classes=['slim-dropdown'])
 
                             with gr.Column():
                                 warmup_steps = gr.Number(label='Warmup Steps', value=100, info='For this many steps at the start, the learning rate will be lower than normal. This helps the trainer prepare the model and precompute statistics to improve the quality of training after the start.')
@@ -100,23 +121,23 @@ def create_ui():
                 with gr.Column():
                     with gr.Tab(label='Formatted Dataset'):
                         with gr.Row():
-                            format = gr.Dropdown(choices=utils.get_datasets('training/formats', 'json'), value='None', label='Data Format', info='The format file used to decide how to format the dataset input.', elem_classes=['slim-dropdown'])
-                            ui.create_refresh_button(format, lambda: None, lambda: {'choices': utils.get_datasets('training/formats', 'json')}, 'refresh-button')
+                            format = gr.Dropdown(choices=utils.get_datasets('training/formats', 'json'), value='None', label='Data Format', info='The format file used to decide how to format the dataset input.', elem_classes=['slim-dropdown'], interactive=not mu)
+                            ui.create_refresh_button(format, lambda: None, lambda: {'choices': utils.get_datasets('training/formats', 'json')}, 'refresh-button', interactive=not mu)
 
                         with gr.Row():
-                            dataset = gr.Dropdown(choices=utils.get_datasets('training/datasets', 'json'), value='None', label='Dataset', info='The dataset file to use for training.', elem_classes=['slim-dropdown'])
-                            ui.create_refresh_button(dataset, lambda: None, lambda: {'choices': utils.get_datasets('training/datasets', 'json')}, 'refresh-button')
+                            dataset = gr.Dropdown(choices=utils.get_datasets('training/datasets', 'json'), value='None', label='Dataset', info='The dataset file to use for training.', elem_classes=['slim-dropdown'], interactive=not mu)
+                            ui.create_refresh_button(dataset, lambda: None, lambda: {'choices': utils.get_datasets('training/datasets', 'json')}, 'refresh-button', interactive=not mu)
 
                         with gr.Row():
-                            eval_dataset = gr.Dropdown(choices=utils.get_datasets('training/datasets', 'json'), value='None', label='Evaluation Dataset', info='The (optional) dataset file used to evaluate the model after training.', elem_classes=['slim-dropdown'])
-                            ui.create_refresh_button(eval_dataset, lambda: None, lambda: {'choices': utils.get_datasets('training/datasets', 'json')}, 'refresh-button')
+                            eval_dataset = gr.Dropdown(choices=utils.get_datasets('training/datasets', 'json'), value='None', label='Evaluation Dataset', info='The (optional) dataset file used to evaluate the model after training.', elem_classes=['slim-dropdown'], interactive=not mu)
+                            ui.create_refresh_button(eval_dataset, lambda: None, lambda: {'choices': utils.get_datasets('training/datasets', 'json')}, 'refresh-button', interactive=not mu)
 
                         eval_steps = gr.Number(label='Evaluate every n steps', value=100, info='If an evaluation dataset is given, test it every time this many steps pass.')
 
                     with gr.Tab(label="Raw text file"):
                         with gr.Row():
-                            raw_text_file = gr.Dropdown(choices=utils.get_datasets('training/datasets', 'txt'), value='None', label='Text file', info='The raw text file to use for training.', elem_classes=['slim-dropdown'])
-                            ui.create_refresh_button(raw_text_file, lambda: None, lambda: {'choices': utils.get_datasets('training/datasets', 'txt')}, 'refresh-button')
+                            raw_text_file = gr.Dropdown(choices=utils.get_datasets('training/datasets', 'txt'), value='None', label='Text file', info='The raw text file to use for training.', elem_classes=['slim-dropdown'], interactive=not mu)
+                            ui.create_refresh_button(raw_text_file, lambda: None, lambda: {'choices': utils.get_datasets('training/datasets', 'txt')}, 'refresh-button', interactive=not mu)
 
                         with gr.Row():
                             with gr.Column():
@@ -128,38 +149,38 @@ def create_ui():
                                 min_chars = gr.Number(label='Ignore small blocks', value=0, info='Ignore Hard Cut blocks that have less or equal characters than this number')
 
                     with gr.Row():
-                        start_button = gr.Button("Start LoRA Training", variant='primary')
-                        stop_button = gr.Button("Interrupt")
+                        start_button = gr.Button("Start LoRA Training", variant='primary', interactive=not mu)
+                        stop_button = gr.Button("Interrupt", interactive=not mu)
 
                     output = gr.Markdown(value="Ready")
 
         with gr.Tab('Perplexity evaluation', elem_id='evaluate-tab'):
             with gr.Row():
                 with gr.Column():
-                    models = gr.Dropdown(utils.get_available_models(), label='Models', multiselect=True)
-                    evaluate_text_file = gr.Dropdown(choices=['wikitext', 'ptb', 'ptb_new'] + utils.get_datasets('training/datasets', 'txt')[1:], value='wikitext', label='Input dataset', info='The raw text file on which the model will be evaluated. The first options are automatically downloaded: wikitext, ptb, and ptb_new. The next options are your local text files under training/datasets.')
+                    models = gr.Dropdown(utils.get_available_models(), label='Models', multiselect=True, interactive=not mu)
+                    evaluate_text_file = gr.Dropdown(choices=['wikitext', 'ptb', 'ptb_new'] + utils.get_datasets('training/datasets', 'txt')[1:], value='wikitext', label='Input dataset', info='The raw text file on which the model will be evaluated. The first options are automatically downloaded: wikitext, ptb, and ptb_new. The next options are your local text files under training/datasets.', interactive=not mu)
                     with gr.Row():
                         with gr.Column():
-                            stride_length = gr.Slider(label='Stride', minimum=1, maximum=2048, value=512, step=1, info='Used to make the evaluation faster at the cost of accuracy. 1 = slowest but most accurate. 512 is a common value.')
+                            stride_length = gr.Slider(label='Stride', minimum=0, maximum=32768, value=512, step=256, info='Used to make the evaluation faster at the cost of accuracy. 1 = slowest but most accurate. 512 is a common value.')
 
                         with gr.Column():
-                            max_length = gr.Slider(label='max_length', minimum=0, maximum=8096, value=0, step=1, info='The context for each evaluation. If set to 0, the maximum context length for the model will be used.')
+                            max_length = gr.Slider(label='max_length', minimum=0, maximum=32768, value=0, step=256, info='The context for each evaluation. If set to 0, the maximum context length for the model will be used.')
 
                     with gr.Row():
-                        start_current_evaluation = gr.Button("Evaluate loaded model")
-                        start_evaluation = gr.Button("Evaluate selected models")
-                        stop_evaluation = gr.Button("Interrupt")
+                        start_current_evaluation = gr.Button("Evaluate loaded model", interactive=not mu)
+                        start_evaluation = gr.Button("Evaluate selected models", interactive=not mu)
+                        stop_evaluation = gr.Button("Interrupt", interactive=not mu)
 
                 with gr.Column():
                     evaluation_log = gr.Markdown(value='')
 
-            evaluation_table = gr.Dataframe(value=generate_markdown_table(), interactive=True)
+            evaluation_table = gr.Dataframe(value=generate_markdown_table(), interactive=True, height=16000, elem_id='evaluation-table')
             with gr.Row():
-                save_comments = gr.Button('Save comments', elem_classes="small-button")
-                refresh_table = gr.Button('Refresh the table', elem_classes="small-button")
+                save_comments = gr.Button('Save comments', elem_classes="small-button", interactive=not mu)
+                refresh_table = gr.Button('Refresh the table', elem_classes="small-button", interactive=not mu)
 
     # Training events
-    all_params = [lora_name, always_override, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lr_scheduler_type, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, higher_rank_limit, warmup_steps, optimizer, hard_cut_string, train_only_after, stop_at_loss, add_eos_token, min_chars, report_to]
+    all_params = [lora_name, always_override, q_proj_en, v_proj_en, k_proj_en, o_proj_en, gate_proj_en, down_proj_en, up_proj_en, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lr_scheduler_type, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, higher_rank_limit, warmup_steps, optimizer, hard_cut_string, train_only_after, stop_at_loss, add_eos_token, min_chars, report_to]
 
     copy_from.change(do_copy_params, [copy_from] + all_params, all_params)
     start_button.click(do_train, all_params, output)
@@ -266,13 +287,13 @@ def calc_trainable_parameters(model):
     return trainable_params, all_param
 
 
-def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lr_scheduler_type: str, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, higher_rank_limit: bool, warmup_steps: int, optimizer: str, hard_cut_string: str, train_only_after: str, stop_at_loss: float, add_eos_token: bool, min_chars: int, report_to: str):
+def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: bool, k_proj_en: bool, o_proj_en: bool, gate_proj_en: bool, down_proj_en: bool, up_proj_en: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lr_scheduler_type: str, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, higher_rank_limit: bool, warmup_steps: int, optimizer: str, hard_cut_string: str, train_only_after: str, stop_at_loss: float, add_eos_token: bool, min_chars: int, report_to: str):
 
     if shared.args.monkey_patch:
-        from monkeypatch.peft_tuners_lora_monkey_patch import (
-            replace_peft_model_with_gptq_lora_model
+        from alpaca_lora_4bit.monkeypatch.peft_tuners_lora_monkey_patch import (
+            replace_peft_model_with_int4_lora_model
         )
-        replace_peft_model_with_gptq_lora_model()
+        replace_peft_model_with_int4_lora_model()
 
     global WANT_INTERRUPT
     WANT_INTERRUPT = False
@@ -305,14 +326,9 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
         time.sleep(5)
 
-    if shared.args.wbits > 0 and not shared.args.monkey_patch:
-        yield "LoRA training with GPTQ models requires loading with `--monkey-patch`"
+    if shared.args.loader == 'GPTQ-for-LLaMa' and not shared.args.monkey_patch:
+        yield "LoRA training with GPTQ-for-LLaMa requires loading with `--monkey-patch`"
         return
-
-    elif not (shared.args.load_in_8bit or shared.args.load_in_4bit) and shared.args.wbits <= 0:
-        yield "It is highly recommended you use `--load-in-8bit` for LoRA training. *(Will continue anyway in 2 seconds, press `Interrupt` to stop.)*"
-        logger.warning("It is highly recommended you use `--load-in-8bit` for LoRA training.")
-        time.sleep(2)  # Give it a moment for the message to show in UI before continuing
 
     if cutoff_len <= 0 or micro_batch_size <= 0 or batch_size <= 0 or actual_lr <= 0 or lora_rank <= 0 or lora_alpha <= 0:
         yield "Cannot input zeroes."
@@ -321,6 +337,23 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     gradient_accumulation_steps = batch_size // micro_batch_size
     shared.tokenizer.pad_token_id = 0
     shared.tokenizer.padding_side = "left"
+
+    # Populate target_modules list with chosen X_proj modules. Llama-based models only atm, non-llama will revert to default behavior.
+    def list_target_modules(model_id):
+        if model_id != "llama":
+            return model_to_lora_modules[model_id]
+
+        available_modules = {
+            "gate": gate_proj_en,
+            "down": down_proj_en,
+            "up": up_proj_en,
+            "q": q_proj_en,
+            "v": v_proj_en,
+            "k": k_proj_en,
+            "o": o_proj_en,
+        }
+        target_mods = [f"{name}_proj" for name, enabled in available_modules.items() if enabled]
+        return target_mods
 
     def encode(text, add_bos_token):
         result = shared.tokenizer.encode(text, truncation=True, max_length=cutoff_len)
@@ -483,7 +516,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     # == Start prepping the model itself ==
     if not hasattr(shared.model, 'lm_head') or hasattr(shared.model.lm_head, 'weight'):
         logger.info("Getting model ready...")
-        prepare_model_for_int8_training(shared.model)
+        prepare_model_for_kbit_training(shared.model)
 
     # base model is now frozen and should not be reused for any other LoRA training than this one
     shared.model_dirty_from_training = True
@@ -492,7 +525,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
     config = LoraConfig(
         r=lora_rank,
         lora_alpha=lora_alpha,
-        target_modules=model_to_lora_modules[model_id],
+        target_modules=list_target_modules(model_id),
         lora_dropout=lora_dropout,
         bias="none",
         task_type="CAUSAL_LM"
@@ -517,11 +550,12 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         return
 
     if shared.args.monkey_patch:
-        for n, m in lora_model.named_modules():
-            if '4bit' in str(type(m)):
+        from alpaca_lora_4bit.autograd_4bit import Autograd4bitQuantLinear
+        from alpaca_lora_4bit.models import Linear4bitLt
+        for _, m in lora_model.named_modules():
+            if isinstance(m, Autograd4bitQuantLinear) or isinstance(m, Linear4bitLt):
                 if m.is_v1_model:
                     m.zeros = m.zeros.half()
-
                 m.scales = m.scales.half()
 
     class Tracked():
@@ -617,7 +651,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
     lora_trainable_param, lora_all_param = calc_trainable_parameters(lora_model)
 
-    projections_string = ", ".join([projection.replace("_proj", "") for projection in model_to_lora_modules[model_id]])
+    projections_string = ", ".join([projection.replace("_proj", "") for projection in list_target_modules(model_id)])
 
     print(f"Training '{model_id}' model using ({projections_string}) projections")
 

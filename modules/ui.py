@@ -8,8 +8,10 @@ import yaml
 from modules import shared
 
 
-with open(Path(__file__).resolve().parent / '../css/main.css', 'r') as f:
+with open(Path(__file__).resolve().parent / '../css/NotoSans/stylesheet.css', 'r') as f:
     css = f.read()
+with open(Path(__file__).resolve().parent / '../css/main.css', 'r') as f:
+    css += f.read()
 with open(Path(__file__).resolve().parent / '../js/main.js', 'r') as f:
     js = f.read()
 with open(Path(__file__).resolve().parent / '../js/save_files.js', 'r') as f:
@@ -24,7 +26,7 @@ delete_symbol = '🗑️'
 save_symbol = '💾'
 
 theme = gr.themes.Default(
-    font=['Helvetica', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+    font=['Noto Sans', 'Helvetica', 'ui-sans-serif', 'system-ui', 'sans-serif'],
     font_mono=['IBM Plex Mono', 'ui-monospace', 'Consolas', 'monospace'],
 ).set(
     border_color_primary='#c5c5d2',
@@ -42,6 +44,7 @@ else:
 def list_model_elements():
     elements = [
         'loader',
+        'filter_by_loader',
         'cpu_memory',
         'auto_devices',
         'disk',
@@ -49,6 +52,7 @@ def list_model_elements():
         'bf16',
         'load_in_8bit',
         'trust_remote_code',
+        'use_fast',
         'load_in_4bit',
         'compute_dtype',
         'quant_type',
@@ -63,22 +67,23 @@ def list_model_elements():
         'no_inject_fused_mlp',
         'no_use_cuda_fp16',
         'disable_exllama',
+        'cfg_cache',
         'threads',
+        'threads_batch',
         'n_batch',
         'no_mmap',
-        'low_vram',
         'mlock',
-        'mul_mat_q',
+        'no_mul_mat_q',
         'n_gpu_layers',
         'tensor_split',
         'n_ctx',
-        'n_gqa',
-        'rms_norm_eps',
         'llama_cpp_seed',
         'gpu_split',
         'max_seq_len',
         'compress_pos_emb',
-        'alpha_value'
+        'alpha_value',
+        'rope_freq_base',
+        'numa',
     ]
 
     for i in range(torch.cuda.device_count()):
@@ -91,6 +96,7 @@ def list_interface_input_elements():
     elements = [
         'max_new_tokens',
         'auto_max_new_tokens',
+        'max_tokens_second',
         'seed',
         'temperature',
         'top_p',
@@ -112,10 +118,12 @@ def list_interface_input_elements():
         'mirostat_mode',
         'mirostat_tau',
         'mirostat_eta',
+        'grammar_string',
         'negative_prompt',
         'guidance_scale',
         'add_bos_token',
         'ban_eos_token',
+        'custom_token_bans',
         'truncation_length',
         'custom_stopping_strings',
         'skip_special_tokens',
@@ -183,7 +191,7 @@ def apply_interface_values(state, use_persistent=False):
 
 def save_settings(state, preset, instruction_template, extensions, show_controls):
     output = copy.deepcopy(shared.settings)
-    exclude = ['name1', 'name2', 'greeting', 'context', 'turn_template']
+    exclude = ['name2', 'greeting', 'context', 'turn_template']
     for k in state:
         if k in shared.settings and k not in exclude:
             output[k] = state[k]
@@ -200,20 +208,7 @@ def save_settings(state, preset, instruction_template, extensions, show_controls
     return yaml.dump(output, sort_keys=False, width=float("inf"))
 
 
-class ToolButton(gr.Button, gr.components.IOComponent):
-    """
-    Small button with single emoji as text, fits inside gradio forms
-    Copied from https://github.com/AUTOMATIC1111/stable-diffusion-webui
-    """
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-    def get_block_name(self):
-        return "button"
-
-
-def create_refresh_button(refresh_component, refresh_method, refreshed_args, elem_class):
+def create_refresh_button(refresh_component, refresh_method, refreshed_args, elem_class, interactive=True):
     """
     Copied from https://github.com/AUTOMATIC1111/stable-diffusion-webui
     """
@@ -226,7 +221,7 @@ def create_refresh_button(refresh_component, refresh_method, refreshed_args, ele
 
         return gr.update(**(args or {}))
 
-    refresh_button = ToolButton(value=refresh_symbol, elem_classes=elem_class)
+    refresh_button = gr.Button(refresh_symbol, elem_classes=elem_class, interactive=interactive)
     refresh_button.click(
         fn=refresh,
         inputs=[],
@@ -234,11 +229,3 @@ def create_refresh_button(refresh_component, refresh_method, refreshed_args, ele
     )
 
     return refresh_button
-
-
-def create_delete_button(**kwargs):
-    return ToolButton(value=delete_symbol, **kwargs)
-
-
-def create_save_button(**kwargs):
-    return ToolButton(value=save_symbol, **kwargs)

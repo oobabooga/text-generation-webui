@@ -1,17 +1,20 @@
 import os
 import warnings
 
-from modules.logging_colors import logger
+import modules.one_click_installer_check
 from modules.block_requests import OpenMonkeyPatch, RequestBlocker
+from modules.logging_colors import logger
 
 os.environ['GRADIO_ANALYTICS_ENABLED'] = 'False'
 os.environ['BITSANDBYTES_NOWELCOME'] = '1'
 warnings.filterwarnings('ignore', category=UserWarning, message='TypedStorage is deprecated')
+warnings.filterwarnings('ignore', category=UserWarning, message='Using the update method is deprecated')
 
 with RequestBlocker():
     import gradio as gr
 
 import matplotlib
+
 matplotlib.use('Agg')  # This fixes LaTeX rendering on some systems
 
 import json
@@ -37,13 +40,14 @@ from modules import (
     ui_notebook,
     ui_parameters,
     ui_session,
-    utils,
+    utils
 )
 from modules.extensions import apply_extensions
 from modules.LoRA import add_lora_to_model
 from modules.models import load_model
 from modules.models_settings import (
-    get_model_settings_from_yamls,
+    get_fallback_settings,
+    get_model_metadata,
     update_model_parameters
 )
 from modules.utils import gradio
@@ -74,6 +78,7 @@ def create_interface():
         'instruction_template': shared.settings['instruction_template'],
         'prompt_menu-default': shared.settings['prompt-default'],
         'prompt_menu-notebook': shared.settings['prompt-notebook'],
+        'filter_by_loader': shared.args.loader or 'All'
     })
 
     if Path("cache/pfp_character.png").exists():
@@ -169,19 +174,7 @@ if __name__ == "__main__":
         shared.settings.update(new_settings)
 
     # Fallback settings for models
-    shared.model_config['.*'] = {
-        'wbits': 'None',
-        'model_type': 'None',
-        'groupsize': 'None',
-        'pre_layer': 0,
-        'mode': shared.settings['mode'],
-        'skip_special_tokens': shared.settings['skip_special_tokens'],
-        'custom_stopping_strings': shared.settings['custom_stopping_strings'],
-        'truncation_length': shared.settings['truncation_length'],
-        'n_gqa': 0,
-        'rms_norm_eps': 0,
-    }
-
+    shared.model_config['.*'] = get_fallback_settings()
     shared.model_config.move_to_end('.*', last=False)  # Move to the beginning
 
     # Activate the extensions listed on settings.yaml
@@ -215,12 +208,19 @@ if __name__ == "__main__":
 
     # If any model has been selected, load it
     if shared.model_name != 'None':
-        model_settings = get_model_settings_from_yamls(shared.model_name)
-        shared.settings.update(model_settings)  # hijacking the interface defaults
+        p = Path(shared.model_name)
+        if p.exists():
+            model_name = p.parts[-1]
+            shared.model_name = model_name
+        else:
+            model_name = shared.model_name
+
+        model_settings = get_model_metadata(model_name)
+        shared.settings.update({k: v for k, v in model_settings.items() if k in shared.settings})  # hijacking the interface defaults
         update_model_parameters(model_settings, initial=True)  # hijacking the command-line arguments
 
         # Load the model
-        shared.model, shared.tokenizer = load_model(shared.model_name)
+        shared.model, shared.tokenizer = load_model(model_name)
         if shared.args.lora:
             add_lora_to_model(shared.args.lora)
 
