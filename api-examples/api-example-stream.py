@@ -35,6 +35,7 @@ async def run(context):
         'tfs': 1,
         'top_a': 0,
         'repetition_penalty': 1.18,
+        'additive_repetition_penalty': 0,
         'repetition_penalty_range': 0,
         'top_k': 40,
         'min_length': 0,
