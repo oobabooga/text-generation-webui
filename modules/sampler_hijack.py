@@ -157,7 +157,6 @@ class RepetitionPenaltyLogitsProcessorWithRange(LogitsProcessor):
         score -= self.additive_penalty
 
         scores.scatter_(1, input_ids, score)
-
         return scores
 
 
@@ -191,17 +190,12 @@ def get_logits_processor_patch(self, **kwargs):
     repetition_penalty = kwargs['generation_config'].repetition_penalty
     additive_repetition_penalty = kwargs['generation_config'].additive_repetition_penalty
     repetition_penalty_range = kwargs['generation_config'].repetition_penalty_range
-
     do_rep_pen_hijack = (repetition_penalty > 1) or (additive_repetition_penalty > 0)
-
     if do_rep_pen_hijack:
-        # Make sure it always creates a RepetitionPenaltyLogitsProcessor
+        # Make sure that a RepetitionPenaltyLogitsProcessor will be created
         kwargs['generation_config'].repetition_penalty = 1.1  # must set to some value > 1
 
     result = self._get_logits_processor_old(**kwargs)
-    if do_rep_pen_hijack:
-        # Now set the rep_pen back to the actual value (just in case)
-        kwargs['generation_config'].repetition_penalty = repetition_penalty
 
     if do_rep_pen_hijack:
         for i in range(len(result)):
