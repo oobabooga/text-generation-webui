@@ -10,6 +10,7 @@ default_req_params = {
     'top_p': 1.0,
     'top_k': 1,  # choose 20 for chat in absence of another default
     'repetition_penalty': 1.18,
+    'additive_repetition_penalty': 0,
     'repetition_penalty_range': 0,
     'encoder_repetition_penalty': 1.0,
     'suffix': None,
