@@ -91,9 +91,9 @@ def create_event_handlers():
 
 
 def get_truncation_length():
-    if shared.args.max_seq_len != shared.args_defaults.max_seq_len:
+    if 'max_seq_len' in shared.provided_arguments:
         return shared.args.max_seq_len
-    if shared.args.n_ctx != shared.args_defaults.n_ctx:
+    elif 'n_ctx' in shared.provided_arguments:
         return shared.args.n_ctx
     else:
         return shared.settings['truncation_length']
