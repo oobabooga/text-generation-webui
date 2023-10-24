@@ -135,7 +135,6 @@ loaders_and_params = OrderedDict({
         'gpu_memory',
         'auto_devices',
         'max_seq_len',
-        'n_batch',
         'no_inject_fused_attention',
         'trust_remote_code',
         'use_fast',
