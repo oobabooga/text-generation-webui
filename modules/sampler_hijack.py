@@ -150,19 +150,23 @@ class RepetitionPenaltyLogitsProcessorWithRange(LogitsProcessor):
 
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
         input_ids = input_ids[:, -self._range:]
-        unique_ids, counts = torch.unique(input_ids, dim=1, sorted=True, return_counts=True)
-        score = torch.gather(scores, 1, unique_ids)
 
-        # multiplicative repetition penalty
-        # if score < 0 then repetition penalty has to be multiplied to reduce the previous token probability
-        score = torch.where(score < 0, score * self.penalty, score / self.penalty)
-        scores.scatter_(1, unique_ids, score)
+        # We loop here because torch.unique() needs to process each row separately in the
+        # case that batch_size > 1.
+        for input_ids_row, scores_row in zip(input_ids, scores):
+            unique_ids, counts = torch.unique(input_ids_row, return_counts=True)
+            score = torch.gather(scores_row, 0, unique_ids)
 
-        # presence_penalty and frequency_penalty
-        raw_presence_penalty = (counts > 0).to(scores.dtype)
-        raw_frequency_penalty = counts.to(scores.dtype)
-        additive_penalty = raw_presence_penalty*self.presence_penalty + raw_frequency_penalty*self.frequency_penalty
-        scores.scatter_add_(1, unique_ids, -additive_penalty)
+            # multiplicative repetition penalty
+            # if score < 0 then repetition penalty has to be multiplied to reduce the previous token probability
+            score = torch.where(score < 0, score * self.penalty, score / self.penalty)
+            scores_row.scatter_(0, unique_ids, score)
+
+            # presence_penalty and frequency_penalty
+            raw_presence_penalty = (counts > 0).to(scores.dtype)
+            raw_frequency_penalty = counts.to(scores.dtype)
+            additive_penalty = raw_presence_penalty*self.presence_penalty + raw_frequency_penalty*self.frequency_penalty
+            scores_row.scatter_add_(0, unique_ids, -additive_penalty)
 
         return scores
 
