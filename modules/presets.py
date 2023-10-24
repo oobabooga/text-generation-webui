@@ -17,6 +17,7 @@ def default_preset():
         'top_a': 0,
         'repetition_penalty': 1,
         'presence_penalty': 0,
+        'frequency_penalty': 0,
         'repetition_penalty_range': 0,
         'encoder_repetition_penalty': 1,
         'no_repeat_ngram_size': 0,

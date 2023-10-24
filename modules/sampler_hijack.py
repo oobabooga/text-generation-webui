@@ -139,12 +139,13 @@ class RepetitionPenaltyLogitsProcessorWithRange(LogitsProcessor):
     Copied from the transformers library
     '''
 
-    def __init__(self, penalty: float, presence_penalty: float, _range: int):
+    def __init__(self, penalty: float, presence_penalty: float, frequency_penalty: float, _range: int):
         if not (penalty > 0):
             raise ValueError(f"`penalty` has to be strictly positive, but is {penalty}")
 
         self.penalty = penalty
         self.presence_penalty = presence_penalty
+        self.frequency_penalty = frequency_penalty
         self._range = _range
 
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
@@ -189,8 +190,9 @@ def get_logits_warper_patch(self, generation_config):
 def get_logits_processor_patch(self, **kwargs):
     repetition_penalty = kwargs['generation_config'].repetition_penalty
     presence_penalty = kwargs['generation_config'].presence_penalty
+    frequency_penalty = kwargs['generation_config'].frequency_penalty
     repetition_penalty_range = kwargs['generation_config'].repetition_penalty_range
-    do_rep_pen_hijack = (repetition_penalty > 1) or (presence_penalty > 0)
+    do_rep_pen_hijack = (repetition_penalty > 1) or (presence_penalty != 0) or (frequency_penalty != 0)
     if do_rep_pen_hijack:
         # Make sure that a RepetitionPenaltyLogitsProcessor will be created
         kwargs['generation_config'].repetition_penalty = 1.1  # must set to some value > 1
@@ -200,7 +202,7 @@ def get_logits_processor_patch(self, **kwargs):
     if do_rep_pen_hijack:
         for i in range(len(result)):
             if result[i].__class__.__name__ == 'RepetitionPenaltyLogitsProcessor':
-                result[i] = RepetitionPenaltyLogitsProcessorWithRange(repetition_penalty, presence_penalty, repetition_penalty_range)
+                result[i] = RepetitionPenaltyLogitsProcessorWithRange(repetition_penalty, presence_penalty, frequency_penalty, repetition_penalty_range)
 
     return result
 
@@ -214,6 +216,7 @@ def generation_config_init_patch(self, **kwargs):
     self.mirostat_tau = kwargs.pop("mirostat_tau", 5)
     self.repetition_penalty_range = kwargs.pop("repetition_penalty_range", 0)
     self.presence_penalty = kwargs.pop("presence_penalty", 0)
+    self.frequency_penalty = kwargs.pop("frequency_penalty", 0)
 
 
 def hijack_samplers():

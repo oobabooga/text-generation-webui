@@ -106,6 +106,7 @@ def list_interface_input_elements():
         'eta_cutoff',
         'repetition_penalty',
         'presence_penalty',
+        'frequency_penalty',
         'repetition_penalty_range',
         'encoder_repetition_penalty',
         'no_repeat_ngram_size',
