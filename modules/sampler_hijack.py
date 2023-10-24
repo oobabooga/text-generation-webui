@@ -149,15 +149,21 @@ class RepetitionPenaltyLogitsProcessorWithRange(LogitsProcessor):
         self._range = _range
 
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
-
         input_ids = input_ids[:, -self._range:]
-        score = torch.gather(scores, 1, input_ids)
+        unique_ids, counts = torch.unique(input_ids, dim=1, sorted=True, return_counts=True)
+        score = torch.gather(scores, 1, unique_ids)
 
+        # multiplicative repetition penalty
         # if score < 0 then repetition penalty has to be multiplied to reduce the previous token probability
         score = torch.where(score < 0, score * self.penalty, score / self.penalty)
-        score -= self.presence_penalty
+        scores.scatter_(1, unique_ids, score)
 
-        scores.scatter_(1, input_ids, score)
+        # presence_penalty and frequency_penalty
+        raw_presence_penalty = (counts > 0).to(scores.dtype)
+        raw_frequency_penalty = counts.to(scores.dtype)
+        additive_penalty = raw_presence_penalty*self.presence_penalty + raw_frequency_penalty*self.frequency_penalty
+        scores.scatter_add_(1, unique_ids, -additive_penalty)
+
         return scores
 
 
