@@ -128,6 +128,11 @@ class ModelDownloader:
                 if classifications[i] in ['pytorch', 'pt']:
                     links.pop(i)
 
+        if has_gguf and specific_file is None:
+            for i in range(len(classifications) - 1, -1, -1):
+                if 'q4_k_m' not in links[i].lower():
+                    links.pop(i)
+
         is_llamacpp = has_gguf and specific_file is not None
         return links, sha256, is_lora, is_llamacpp
 

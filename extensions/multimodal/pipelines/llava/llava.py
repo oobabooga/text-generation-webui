@@ -248,3 +248,15 @@ class LLaVA_v1_5_13B_Pipeline(LLaVA_v0_13B_Pipeline):
     @staticmethod
     def placeholder_embeddings() -> torch.Tensor:
         return LLaVA_v0_Pipeline.embed_tokens(encode("<unk>"*576, add_bos_token=False)[0])
+
+class LLaVA_v1_5_7B_Pipeline(LLaVA_v1_5_13B_Pipeline):
+    @staticmethod
+    def name() -> str:
+        return "llava-v1.5-7b"
+
+    @staticmethod
+    def llava_projector_shape() -> Tuple[int, int]:
+        return (1024, 4096, 4096)
+    @staticmethod
+    def llava_projector_repo() -> str:
+        return "liuhaotian/llava-v1.5-7b"

@@ -86,11 +86,11 @@ Loads: GGUF models. Note: GGML models have been deprecated and do not work anymo
 Example: https://huggingface.co/TheBloke/Llama-2-7b-Chat-GGUF
 
 * **n-gpu-layers**: The number of layers to allocate to the GPU. If set to 0, only the CPU will be used. If you want to offload all layers, you can simply set this to the maximum value.
-* **n-ctx**: Context length of the model. In llama.cpp, the context is preallocated, so the higher this value, the higher the RAM/VRAM usage will be. It gets automatically updated with the value in the GGUF metadata for the model when you select it in the Model dropdown.
+* **n_ctx**: Context length of the model. In llama.cpp, the cache is preallocated, so the higher this value, the higher the VRAM. It is automatically set to the maximum sequence length for the model based on the metadata inside the GGUF file, but you may need to lower this value be able to fit the model into your GPU. After loading the model, the "Truncate the prompt up to this length" parameter under "Parameters" > "Generation" is automatically set to your chosen "n_ctx" so that you don't have to set the same thing twice.
 * **threads**: Number of threads. Recommended value: your number of physical cores. 
 * **threads_batch**: Number of threads for batch processing. Recommended value: your total number of cores (physical + virtual).
 * **n_batch**: Batch size for prompt processing. Higher values are supposed to make generation faster, but I have never obtained any benefit from changing this value.
-* **mul_mat_q**: Use the mul_mat_q kernel. This usually improves generation speed significantly.
+* **no_mul_mat_q**: Disable the mul_mat_q kernel. This kernel usually improves generation speed significantly. This option to disable it is included in case it doesn't work on some system.
 * **no-mmap**: Loads the model into memory at once, possibly preventing I/O operations later on at the cost of a longer load time.
 * **mlock**: Force the system to keep the model in RAM rather than swapping or compressing (no idea what this means, never used it).
 * **numa**: May improve performance on certain multi-cpu systems.

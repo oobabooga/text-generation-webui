@@ -1,9 +1,26 @@
 # Training_PRO
 
-This is an expanded Training tab
+This is an expanded and reworked Training tab
 Maintained by FP
 
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/Q5Q5MOB4M)
+
+Repo home:
+
 https://github.com/FartyPants/Training_PRO
+
+In general the repo above is ahead of the extension included in text WebUi.
+
+## News
+
+- NEFtune: add noise to help with generalization
+- Loss Graph in interface.
+- Supports Mistral training
+- some roundabout around pytorch and transformers version desync
+
+![image](https://github.com/FartyPants/Training_PRO/assets/23346289/e389ec69-d7ad-4922-9ad9-865625997479)
+
+## Features/Changes
 
 - Chunking: precise raw text slicer (PRTS) uses sentence slicing and making sure things are clean on all ends
 - overlap chunking - this special overlapping will make additional overlap block based on logical rules (aka no overlap block on hard cut)
@@ -19,10 +36,29 @@ https://github.com/FartyPants/Training_PRO
 - Ability to change Stop Loss during training
 - different modes of checkpoint auto saving
 - Function to Check Dataset and suggest parameters such as warmup and checkpoint save frequency before training
+- Graph Training Loss in interface
+- more custom schedulers
   
 ### Notes:
 
 This uses it's own chunking code for raw text based on sentence splitting. This will avoid weird cuts in the chunks and each chunk should now start with sentence and end on some sentence. It works hand in hand with Hard Cut. A propper use is to structure your text into logical blocks (ideas) separated by three \n then use three \n in hard cut. This way each chunk will contain only one flow of ideas and not derail in the thoughts. And Overlapping code will create overlapped blocks on sentence basis too, but not cross hard cut, thus not cross different ideas either. Does it make any sense? No? Hmmmm...
+
+### Custom schedulers
+
+A bunch of custom (combination) schedulers are added to the LR schedule. These are based on my own experiments
+
+**FP_low_epoch_annealing**
+
+Uses constant LR (with warmup) for 1 epoch only. The rest of the epoch(s) is cosine annealing. So 10 epochs - 1 will be constant 9 will be nose dive down. However a typical usage would be 2 epochs (hence low epoch in name). 1st is constant, the second is annealing. Simple. I use it 90% of time.
+
+**FP_half_time_annealing**
+
+Like the low epoch, but now the total number of steps is divided by 2. First half is constant, second half is annealing. So 10 epochs - 5 will be constant, 5 will be cosine nose down.
+
+**FP_raise_fall_creative**
+
+This is a sine raise till half of the total steps then cosine fall the rest. (Or you may think of the curve as sine in its entirety. The most learning is done in the hump, in the middle. The warmup entry has no effect, since sine is automatically warm up.
+The idea is to start very mildly as not to overfit with the first blocks of dataset. It seems to broaden the scope of the model making it less strict for tight dataset. 
 
 ### Targets
 

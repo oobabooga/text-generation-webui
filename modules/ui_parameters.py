@@ -31,6 +31,7 @@ def create_ui(default_preset):
                             shared.gradio['top_p'] = gr.Slider(0.0, 1.0, value=generate_params['top_p'], step=0.01, label='top_p')
                             shared.gradio['top_k'] = gr.Slider(0, 200, value=generate_params['top_k'], step=1, label='top_k')
                             shared.gradio['repetition_penalty'] = gr.Slider(1.0, 1.5, value=generate_params['repetition_penalty'], step=0.01, label='repetition_penalty')
+                            shared.gradio['additive_repetition_penalty'] = gr.Slider(0, 4, value=generate_params['additive_repetition_penalty'], step=0.05, label='additive_repetition_penalty')
                             shared.gradio['repetition_penalty_range'] = gr.Slider(0, 4096, step=64, value=generate_params['repetition_penalty_range'], label='repetition_penalty_range')
                             shared.gradio['typical_p'] = gr.Slider(0.0, 1.0, value=generate_params['typical_p'], step=0.01, label='typical_p')
                             shared.gradio['tfs'] = gr.Slider(0.0, 1.0, value=generate_params['tfs'], step=0.01, label='tfs')
@@ -90,9 +91,9 @@ def create_event_handlers():
 
 
 def get_truncation_length():
-    if shared.args.max_seq_len != shared.args_defaults.max_seq_len:
+    if 'max_seq_len' in shared.provided_arguments:
         return shared.args.max_seq_len
-    if shared.args.n_ctx != shared.args_defaults.n_ctx:
+    elif 'n_ctx' in shared.provided_arguments:
         return shared.args.n_ctx
     else:
         return shared.settings['truncation_length']

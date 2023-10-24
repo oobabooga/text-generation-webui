@@ -103,7 +103,7 @@ parser.add_argument('--quant_type', type=str, default='nf4', help='quant_type fo
 parser.add_argument('--n_ctx', type=int, default=2048, help='Size of the prompt context.')
 parser.add_argument('--threads', type=int, default=0, help='Number of threads to use.')
 parser.add_argument('--threads-batch', type=int, default=0, help='Number of threads to use for batches/prompt processing.')
-parser.add_argument('--mul_mat_q', action='store_true', help='Activate new mulmat kernels.')
+parser.add_argument('--no_mul_mat_q', action='store_true', help='Disable the mulmat kernels.')
 parser.add_argument('--n_batch', type=int, default=512, help='Maximum number of prompt tokens to batch together when calling llama_eval.')
 parser.add_argument('--no-mmap', action='store_true', help='Prevent mmap from being used.')
 parser.add_argument('--mlock', action='store_true', help='Force the system to keep the model in RAM.')
@@ -173,6 +173,7 @@ parser.add_argument('--multimodal-pipeline', type=str, default=None, help='The m
 parser.add_argument('--notebook', action='store_true', help='DEPRECATED')
 parser.add_argument('--chat', action='store_true', help='DEPRECATED')
 parser.add_argument('--no-stream', action='store_true', help='DEPRECATED')
+parser.add_argument('--mul_mat_q', action='store_true', help='DEPRECATED')
 
 args = parser.parse_args()
 args_defaults = parser.parse_args([])
@@ -183,14 +184,14 @@ for arg in sys.argv[1:]:
         provided_arguments.append(arg)
 
 # Deprecation warnings
-for k in ['chat', 'notebook', 'no_stream']:
+for k in ['chat', 'notebook', 'no_stream', 'mul_mat_q']:
     if getattr(args, k):
         logger.warning(f'The --{k} flag has been deprecated and will be removed soon. Please remove that flag.')
 
 # Security warnings
 if args.trust_remote_code:
     logger.warning('trust_remote_code is enabled. This is dangerous.')
-if not 'COLAB_GPU' in os.environ:
+if 'COLAB_GPU' not in os.environ:
     if args.share:
         logger.warning("The gradio \"share link\" feature uses a proprietary executable to create a reverse tunnel. Use it with care.")
     if any((args.listen, args.share)) and not any((args.gradio_auth, args.gradio_auth_path)):

@@ -35,6 +35,7 @@ For more information about the parameters, the [transformers documentation](http
 * **top_p**: If not set to 1, select tokens with probabilities adding up to less than this number. Higher value = higher range of possible random results.
 * **top_k**: Similar to top_p, but select instead only the top_k most likely tokens. Higher value = higher range of possible random results.
 * **repetition_penalty**: Penalty factor for repeating prior tokens. 1 means no penalty, higher value = less repetition, lower value = more repetition.
+* **additive_repetition_penalty**: Similar to repetition_penalty, but with an additive offset on the raw token scores instead of a multiplicative factor. It may generate better results. 0 means no penalty, higher value = less repetition, lower value = more repetition.
 * **repetition_penalty_range**: The number of most recent tokens to consider for repetition penalty. 0 makes all tokens be used.
 * **typical_p**: If not set to 1, select only tokens that are at least this much more likely to appear than random tokens, given the prior text.
 * **tfs**: Tries to detect a tail of low-probability tokens in the distribution and removes those tokens. See [this blog post](https://www.trentonbricken.com/Tail-Free-Sampling/) for details. The closer to 0, the more discarded tokens.
@@ -42,7 +43,7 @@ For more information about the parameters, the [transformers documentation](http
 * **epsilon_cutoff**: In units of 1e-4; a reasonable value is 3. This sets a probability floor below which tokens are excluded from being sampled.
 * **eta_cutoff**: In units of 1e-4; a reasonable value is 3. The main parameter of the special Eta Sampling technique. See [this paper](https://arxiv.org/pdf/2210.15191.pdf) for a description.
 * **guidance_scale**: The main parameter for Classifier-Free Guidance (CFG). [The paper](https://arxiv.org/pdf/2306.17806.pdf) suggests that 1.5 is a good value. It can be used in conjunction with a negative prompt or not.
-* **Negative prompt**: Only used when `guidance_scale != 1`. It is most useful for instruct models and custom system messages. You place your full prompt with the default system message for the model (like "You are Llama, a helpful assistant...") in this field to make the model pay more attention to your custom message.
+* **Negative prompt**: Only used when `guidance_scale != 1`. It is most useful for instruct models and custom system messages. You place your full prompt in this field with the system message replaced with the default one for the model (like "You are Llama, a helpful assistant...") to make the model pay more attention to your custom system message.
 * **penalty_alpha**: Contrastive Search is enabled by setting this to greater than zero and unchecking "do_sample". It should be used with a low value of top_k, for instance, top_k = 4.
 * **mirostat_mode**: Activates the Mirostat sampling technique. It aims to control perplexity during sampling. See the [paper](https://arxiv.org/abs/2007.14966).
 * **mirostat_tau**: No idea, see the paper for details. According to the Preset Arena, 8 is a good value. 
