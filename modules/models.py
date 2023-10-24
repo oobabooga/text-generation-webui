@@ -306,7 +306,7 @@ def AutoAWQ_loader(model_name):
                 trust_remote_code=shared.args.trust_remote_code,
                 fuse_layers=not shared.args.no_inject_fused_attention,
                 max_memory=get_max_memory_dict(),
-                batch_size=shared.args.n_batch,
+                batch_size=1,
                 safetensors=any(model_dir.glob('*.safetensors')),
             )
 
