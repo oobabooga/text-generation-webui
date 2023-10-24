@@ -2,7 +2,7 @@ import math
 
 import torch
 import transformers
-from transformers import LogitsWarper
+from transformers import LogitsWarper, is_torch_xpu_available
 from transformers.generation.logits_process import (
     LogitNormalization,
     LogitsProcessor,
@@ -106,9 +106,12 @@ class MirostatLogitsWarper(LogitsWarper):
                 break
 
         # Normalize the probabilities of the remaining words
-        prob_topk = torch.softmax(sorted_logits, dim=0).to('cuda')
-
-        prev_i = torch.multinomial(prob_topk, num_samples=1, replacement=True).to('cuda')
+        if is_torch_xpu_available():
+            prob_topk = torch.softmax(sorted_logits, dim=0).to("xpu")
+            prev_i = torch.multinomial(prob_topk, num_samples=1, replacement=True).to("xpu")
+        else:
+            prob_topk = torch.softmax(sorted_logits, dim=0).to('cuda')
+            prev_i = torch.multinomial(prob_topk, num_samples=1, replacement=True).to('cuda')
 
         observed_surprise = -math.log2(prob_topk[prev_i])
         self.e = observed_surprise - self.mirostat_tau

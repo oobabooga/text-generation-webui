@@ -56,6 +56,19 @@ def cpu_has_avx2():
         return True
 
 
+def cpu_has_amx():
+    try:
+        import cpuinfo
+
+        info = cpuinfo.get_cpu_info()
+        if 'amx' in info['flags']:
+            return True
+        else:
+            return False
+    except:
+        return True
+
+
 def torch_version():
     site_packages_path = None
     for sitedir in site.getsitepackages():
