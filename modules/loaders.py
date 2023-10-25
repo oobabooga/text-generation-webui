@@ -345,6 +345,8 @@ loaders_samplers = {
         'top_k',
         'tfs',
         'repetition_penalty',
+        'presence_penalty',
+        'frequency_penalty',
         'mirostat_mode',
         'mirostat_tau',
         'mirostat_eta',
