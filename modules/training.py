@@ -598,7 +598,7 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
             print(f"\033[1;30;40mStep: {tracked.current_steps} \033[0;37;0m", end='')
             if 'loss' in logs:
                 loss = float(logs['loss'])
-                if loss <= stop_at_loss:
+                if stop_at_loss > 0 and loss <= stop_at_loss:
                     control.should_epoch_stop = True
                     control.should_training_stop = True
                     print(f"\033[1;31;1mStop Loss {stop_at_loss} reached.\033[0;37;0m")
