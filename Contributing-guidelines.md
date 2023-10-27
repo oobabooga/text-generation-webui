@@ -1,4 +1,4 @@
-# Contributing guidelines
+## Contributing guidelines
 
 1) Please submit your changes to the `dev` branch of the repository.
 2) Lint the changes that you have made. I use the following tools:
@@ -20,7 +20,7 @@ The remaining errors should be fixed.
 
 4) Keep it simple, structured, and organized. Don't add more lines than you have to.
 
-## Scope
+### Scope
 
 The main focus of this project is the Gradio UI, so you should familiarize yourself with Gradio: https://www.gradio.app/docs/interface
 
@@ -31,13 +31,13 @@ The API exists to make it possible to automate text generation actions available
 * The UI takes precedence over the API: you should not add features exclusively to the API if they could be added to the UI first.
 * Providing an API with extensive and niche features is not a priority.
 
-## Extensions
+### Extensions
 
 As a rule of thumb, new extensions should be submitted to https://github.com/oobabooga/text-generation-webui-extensions. **You are highly encouraged to submit your extensions to that list!**
 
 New built-in extensions can be accepted in cases where they would be useful to a large percentage of the user base, preferably while adding few or no additional dependencies.
 
-## Installation methods
+### Installation methods
 
 There are two main installation methods for this project:
 
@@ -46,7 +46,7 @@ There are two main installation methods for this project:
 
 Some Docker files are available in the repository, but I never use Docker. Pull requests about Docker should contain straightforward fixes or updates only.
 
-## Some important variables
+### Some important variables
 
 * `shared.settings` contains default values for Gradio components. It can be customized through a `settings.yaml` file.
 * `shared.args` contains the command-line arguments. They represent variables that need to be changed often.
