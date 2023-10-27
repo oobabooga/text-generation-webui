@@ -339,7 +339,7 @@ def ui():
                     height = gr.Slider(64, 2048, value=params['height'], step=64, label='Height')
                 with gr.Column(variant="compact", elem_id="sampler_col"):
                     with gr.Row(elem_id="sampler_row"):
-                        sampler_name = gr.Dropdown(value=params['sampler_name'], label='Sampling method', elem_id="sampler_box")
+                        sampler_name = gr.Dropdown(value=params['sampler_name'], allow_custom_value=True, label='Sampling method', elem_id="sampler_box")
                         create_refresh_button(sampler_name, lambda: None, lambda: {'choices': get_samplers()}, 'refresh-button')
                     steps = gr.Slider(1, 150, value=params['steps'], step=1, label="Sampling steps", elem_id="steps_box")
             with gr.Row():
