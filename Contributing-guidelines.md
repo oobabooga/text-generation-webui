@@ -1,12 +1,6 @@
 # Contributing guidelines
 
-Your help with improving text-generation-webui is welcome and appreciated. Here you can find some general guidelines to make the process easier.
-
-## Requirements
-
-Before submitting a Pull Request, make sure to:
-
-1) Familiarize yourself with Gradio, in particular, its components and methods. The documentation is very easy to follow: https://gradio.app/docs
+1) Please submit your changes to the `dev` branch of the repository.
 2) Lint the changes that you have made. I use the following tools:
 
 ```
@@ -24,14 +18,11 @@ The remaining errors should be fixed.
 
 3) Thoroughly self-test your code. Can you think of a scenario where it might not work as expected? Does it interfere with other parts of the program?
 
-4) Keep it simple, structured, and organized.
+4) Keep it simple, structured, and organized. Don't add more lines than you have to.
 
 ## Scope
 
-This project aims to provide a web interface for interacting with Large Language Models. As such, improvements to the UI are of high priority, including:
-
-* Improving the chat mode experience.
-* Improving the CSS styles under `text-generation-webui/css`, in particular, those of chat styles.
+The main focus of this project is the Gradio UI, so you should familiarize yourself with Gradio: https://www.gradio.app/docs/interface
 
 **API**
 
@@ -53,7 +44,7 @@ There are two main installation methods for this project:
 1) Manual installation as described in the README.
 2) The one-click-installers.
 
-Some Docker files are available in the repository, but I do not use Docker. Pull requests about Docker should contain straightforward fixes or updates only.
+Some Docker files are available in the repository, but I never use Docker. Pull requests about Docker should contain straightforward fixes or updates only.
 
 ## Some important variables
 
