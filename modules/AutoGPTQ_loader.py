@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from accelerate import is_xpu_available
+from accelerate.utils import is_xpu_available
 from auto_gptq import AutoGPTQForCausalLM, BaseQuantizeConfig
 
 import modules.shared as shared

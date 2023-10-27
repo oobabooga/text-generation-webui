@@ -5,7 +5,7 @@ from pathlib import Path
 import accelerate
 import torch
 import transformers
-from accelerate import is_xpu_available
+from accelerate.utils import is_xpu_available
 from gptq_for_llama import llama_inference_offload
 from gptq_for_llama.modelutils import find_layers
 from gptq_for_llama.quant import make_quant

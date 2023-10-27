@@ -7,12 +7,8 @@ from pathlib import Path
 
 import torch
 import transformers
-from accelerate import (
-    infer_auto_device_map,
-    init_empty_weights,
-    is_ccl_available,
-    is_xpu_available
-)
+from accelerate import infer_auto_device_map, init_empty_weights
+from accelerate.utils import is_ccl_available, is_xpu_available
 from transformers import (
     AutoConfig,
     AutoModel,
