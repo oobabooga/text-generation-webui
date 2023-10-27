@@ -648,11 +648,3 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 .options {
     z-index: 100 !important;
 }
-
-/* ----------------------------------------------
-  Increase the height of the evaluation table
----------------------------------------------- */
-#evaluation-table table {
-    max-height: none !important;
-    overflow-y: auto !important;
-}
