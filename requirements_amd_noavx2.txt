@@ -1,4 +1,4 @@
-accelerate==0.23.*
+accelerate==0.24.*
 colorama
 datasets
 einops
