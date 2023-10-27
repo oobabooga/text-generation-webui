@@ -1,9 +1,9 @@
 import torch
+from transformers import is_torch_xpu_available
 
 from modules import sampler_hijack, shared
 from modules.logging_colors import logger
 from modules.text_generation import generate_reply
-from transformers import is_torch_xpu_available
 
 global_scores = None
 

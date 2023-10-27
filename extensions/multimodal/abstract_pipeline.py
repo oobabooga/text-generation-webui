@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 from typing import List, Optional
 
 import torch
-from transformers import is_torch_xpu_available
 from PIL import Image
+from transformers import is_torch_xpu_available
 
 
 class AbstractMultimodalPipeline(ABC):

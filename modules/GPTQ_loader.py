@@ -5,15 +5,14 @@ from pathlib import Path
 import accelerate
 import torch
 import transformers
-from transformers import AutoConfig, AutoModelForCausalLM
 from accelerate import is_xpu_available
-
-import modules.shared as shared
-from modules.logging_colors import logger
-
 from gptq_for_llama import llama_inference_offload
 from gptq_for_llama.modelutils import find_layers
 from gptq_for_llama.quant import make_quant
+from transformers import AutoConfig, AutoModelForCausalLM
+
+import modules.shared as shared
+from modules.logging_colors import logger
 
 
 # This function is a replacement for the load_quant function in the
@@ -156,7 +155,6 @@ def load_quantized(model_name):
                 max_memory['cpu'] = f'{max_cpu_memory}GiB' if not re.match('.*ib$', max_cpu_memory.lower()) else max_cpu_memory
             else:
                 max_memory = accelerate.utils.get_balanced_memory(model)
-
 
             device_map = accelerate.infer_auto_device_map(model, max_memory=max_memory, no_split_module_classes=["LlamaDecoderLayer"])
             logger.info("Using the following device map for the quantized model:", device_map)

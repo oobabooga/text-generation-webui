@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from auto_gptq import AutoGPTQForCausalLM, BaseQuantizeConfig
 from accelerate import is_xpu_available
+from auto_gptq import AutoGPTQForCausalLM, BaseQuantizeConfig
 
 import modules.shared as shared
 from modules.logging_colors import logger

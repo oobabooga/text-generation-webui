@@ -9,10 +9,10 @@ from pathlib import Path
 
 import numpy as np
 from tokenizers import Tokenizer
+from transformers import is_torch_xpu_available
 
 import modules.shared as shared
 from modules.callbacks import Iteratorize
-from transformers import is_torch_xpu_available
 
 np.set_printoptions(precision=4, suppress=True, linewidth=200)
 

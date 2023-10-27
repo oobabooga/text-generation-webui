@@ -7,7 +7,12 @@ from pathlib import Path
 
 import torch
 import transformers
-from accelerate import infer_auto_device_map, init_empty_weights, is_xpu_available, is_ccl_available
+from accelerate import (
+    infer_auto_device_map,
+    init_empty_weights,
+    is_ccl_available,
+    is_xpu_available
+)
 from transformers import (
     AutoConfig,
     AutoModel,
@@ -221,15 +226,6 @@ def huggingface_loader(model_name):
     return model
 
 
-
-def RWKV_loader(model_name):
-    from modules.RWKV import RWKVModel, RWKVTokenizer
-
-    model = RWKVModel.from_pretrained(Path(f'{shared.args.model_dir}/{model_name}'), dtype="fp32" if shared.args.cpu else "bf16" if shared.args.bf16 else "fp16", device="cpu" if shared.args.cpu else "xpu" if is_xpu_available() else "cuda")
-    tokenizer = RWKVTokenizer.from_pretrained(Path(shared.args.model_dir))
-    return model, tokenizer
-
-
 def llamacpp_loader(model_name):
     from modules.llamacpp_model import LlamaCppModel
 
@@ -371,7 +367,12 @@ def RWKV_loader(model_name):
     '''
     from modules.RWKV import RWKVModel, RWKVTokenizer
 
-    model = RWKVModel.from_pretrained(Path(f'{shared.args.model_dir}/{model_name}'), dtype="fp32" if shared.args.cpu else "bf16" if shared.args.bf16 else "fp16", device="cpu" if shared.args.cpu else "cuda")
+    model = RWKVModel.from_pretrained(
+        Path(f'{shared.args.model_dir}/{model_name}'),
+        dtype="fp32" if shared.args.cpu else "bf16" if shared.args.bf16 else "fp16",
+        device="cpu" if shared.args.cpu else "xpu" if is_xpu_available() else "cuda"
+    )
+
     tokenizer = RWKVTokenizer.from_pretrained(Path(shared.args.model_dir))
     return model, tokenizer
 

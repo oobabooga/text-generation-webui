@@ -4,10 +4,9 @@ from pathlib import Path
 import gradio as gr
 import torch
 import yaml
-
-from modules import shared
 from transformers import is_torch_xpu_available
 
+from modules import shared
 
 with open(Path(__file__).resolve().parent / '../css/NotoSans/stylesheet.css', 'r') as f:
     css = f.read()

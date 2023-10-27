@@ -8,6 +8,7 @@ from pathlib import Path
 import gradio as gr
 import psutil
 import torch
+from transformers import is_torch_xpu_available
 
 from modules import loaders, shared, ui, utils
 from modules.logging_colors import logger
@@ -20,7 +21,7 @@ from modules.models_settings import (
     update_model_parameters
 )
 from modules.utils import gradio
-from transformers import is_torch_xpu_available
+
 
 def create_ui():
     mu = shared.args.multi_user
