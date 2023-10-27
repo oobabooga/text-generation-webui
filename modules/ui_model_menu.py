@@ -8,6 +8,7 @@ from pathlib import Path
 import gradio as gr
 import psutil
 import torch
+from transformers import is_torch_xpu_available
 
 from modules import loaders, shared, ui, utils
 from modules.logging_colors import logger
@@ -27,8 +28,12 @@ def create_ui():
 
     # Finding the default values for the GPU and CPU memories
     total_mem = []
-    for i in range(torch.cuda.device_count()):
-        total_mem.append(math.floor(torch.cuda.get_device_properties(i).total_memory / (1024 * 1024)))
+    if is_torch_xpu_available():
+        for i in range(torch.xpu.device_count()):
+            total_mem.append(math.floor(torch.xpu.get_device_properties(i).total_memory / (1024 * 1024)))
+    else:
+        for i in range(torch.cuda.device_count()):
+            total_mem.append(math.floor(torch.cuda.get_device_properties(i).total_memory / (1024 * 1024)))
 
     default_gpu_mem = []
     if shared.args.gpu_memory is not None and len(shared.args.gpu_memory) > 0:

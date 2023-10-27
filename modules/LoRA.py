@@ -2,6 +2,7 @@ from pathlib import Path
 
 import torch
 from peft import PeftModel
+from transformers import is_torch_xpu_available
 
 import modules.shared as shared
 from modules.logging_colors import logger
@@ -178,6 +179,9 @@ def add_lora_transformers(lora_names):
             if not hasattr(shared.model, "hf_device_map"):
                 if torch.backends.mps.is_available():
                     device = torch.device('mps')
+                    shared.model = shared.model.to(device)
+                elif is_torch_xpu_available():
+                    device = torch.device("xpu:0")
                     shared.model = shared.model.to(device)
                 else:
                     shared.model = shared.model.cuda()

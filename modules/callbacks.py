@@ -5,6 +5,7 @@ from threading import Thread
 
 import torch
 import transformers
+from transformers import is_torch_xpu_available
 
 import modules.shared as shared
 
@@ -92,4 +93,7 @@ class Iteratorize:
 def clear_torch_cache():
     gc.collect()
     if not shared.args.cpu:
-        torch.cuda.empty_cache()
+        if is_torch_xpu_available():
+            torch.xpu.empty_cache()
+        else:
+            torch.cuda.empty_cache()

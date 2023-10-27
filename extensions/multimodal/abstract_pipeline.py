@@ -3,6 +3,7 @@ from typing import List, Optional
 
 import torch
 from PIL import Image
+from transformers import is_torch_xpu_available
 
 
 class AbstractMultimodalPipeline(ABC):
@@ -55,7 +56,7 @@ class AbstractMultimodalPipeline(ABC):
 
     def _get_device(self, setting_name: str, params: dict):
         if params[setting_name] is None:
-            return torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+            return torch.device("cuda:0" if torch.cuda.is_available() else "xpu:0" if is_torch_xpu_available() else "cpu")
         return torch.device(params[setting_name])
 
     def _get_dtype(self, setting_name: str, params: dict):

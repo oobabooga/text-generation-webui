@@ -4,9 +4,9 @@ from pathlib import Path
 import gradio as gr
 import torch
 import yaml
+from transformers import is_torch_xpu_available
 
 from modules import shared
-
 
 with open(Path(__file__).resolve().parent / '../css/NotoSans/stylesheet.css', 'r') as f:
     css = f.read()
@@ -85,9 +85,12 @@ def list_model_elements():
         'rope_freq_base',
         'numa',
     ]
-
-    for i in range(torch.cuda.device_count()):
-        elements.append(f'gpu_memory_{i}')
+    if is_torch_xpu_available():
+        for i in range(torch.xpu.device_count()):
+            elements.append(f'gpu_memory_{i}')
+    else:
+        for i in range(torch.cuda.device_count()):
+            elements.append(f'gpu_memory_{i}')
 
     return elements
 
