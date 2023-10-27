@@ -146,6 +146,8 @@ class LlamaCppModel:
             top_p=state['top_p'],
             top_k=state['top_k'],
             repeat_penalty=state['repetition_penalty'],
+            presence_penalty=state['presence_penalty'],
+            frequency_penalty=state['frequency_penalty'],
             tfs_z=state['tfs'],
             mirostat_mode=int(state['mirostat_mode']),
             mirostat_tau=state['mirostat_tau'],

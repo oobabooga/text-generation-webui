@@ -236,8 +236,7 @@ class ModelDownloader:
                 continue
 
             with open(output_folder / sha256[i][0], "rb") as f:
-                bytes = f.read()
-                file_hash = hashlib.sha256(bytes).hexdigest()
+                file_hash = hashlib.file_digest(f, "sha256").hexdigest()
                 if file_hash != sha256[i][1]:
                     print(f'Checksum failed: {sha256[i][0]}  {sha256[i][1]}')
                     validated = False

@@ -1,4 +1,5 @@
 import torch
+from transformers import is_torch_xpu_available
 
 from modules import sampler_hijack, shared
 from modules.logging_colors import logger
@@ -32,13 +33,19 @@ def get_next_logits(prompt, state, use_samplers, previous):
         scores = sampler_hijack.global_scores[-1]
     else:
         if is_non_hf_exllamav2 or is_non_hf_exllamav1:
-            tokens = shared.tokenizer.encode(prompt).cuda()
+            if is_torch_xpu_available():
+                tokens = shared.tokenizer.encode(prompt).to("xpu:0")
+            else:
+                tokens = shared.tokenizer.encode(prompt).cuda()
             scores = shared.model.get_logits(tokens)[-1][-1]
         elif is_non_hf_llamacpp:
             tokens = shared.tokenizer.encode(prompt)
             scores = shared.model.get_logits(tokens)[-1][-1]
         else:
-            tokens = shared.tokenizer.encode(prompt, return_tensors='pt').cuda()
+            if is_torch_xpu_available():
+                tokens = shared.tokenizer.encode(prompt, return_tensors='pt').to("xpu:0")
+            else:
+                tokens = shared.tokenizer.encode(prompt, return_tensors='pt').cuda()
             output = shared.model(input_ids=tokens)
             scores = output['logits'][-1][-1]
 

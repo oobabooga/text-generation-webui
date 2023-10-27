@@ -1,4 +1,4 @@
-accelerate==0.23.*
+accelerate==0.24.*
 colorama
 datasets
 einops
@@ -84,4 +84,4 @@ https://github.com/jllllll/GPTQ-for-LLaMa-CUDA/releases/download/0.1.1/gptq_for_
 https://github.com/jllllll/GPTQ-for-LLaMa-CUDA/releases/download/0.1.1/gptq_for_llama-0.1.1+cu121-cp39-cp39-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.9"
 https://github.com/jllllll/GPTQ-for-LLaMa-CUDA/releases/download/0.1.1/gptq_for_llama-0.1.1+cu121-cp38-cp38-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.8"
 https://github.com/jllllll/ctransformers-cuBLAS-wheels/releases/download/AVX/ctransformers-0.2.27+cu121-py3-none-any.whl
-autoawq==0.1.4
+autoawq==0.1.4; platform_system == "Linux" or platform_system == "Windows"
