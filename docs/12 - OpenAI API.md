@@ -1,8 +1,8 @@
-# An OpenedAI API (openai like)
+## An OpenedAI API (openai like)
 
 This extension creates an API that works kind of like openai (ie. api.openai.com).
 
-## Setup & installation
+### Setup & installation
 
 Install the requirements:
 
@@ -28,7 +28,7 @@ For example:
 SD_WEBUI_URL=http://127.0.0.1:7861
 ```
 
-## Quick start
+### Quick start
 
 1. Install the requirements.txt (pip)
 2. Enable the `openeai` module (--extensions openai), restart the server.
@@ -45,7 +45,7 @@ OPENAI_API_BASE=http://0.0.0.0:5001/v1
 If needed, replace 0.0.0.0 with the IP/port of your server.
 
 
-### Settings
+#### Settings
 
 To adjust your default settings, you can add the following to your `settings.yaml` file.
 
@@ -63,7 +63,7 @@ When using `cache_embedding_model.py` to preload the embedding model during Dock
 - If you wish to use the default settings, leave the environment variables unset.
 - If you intend to change the default embedding model, ensure that you configure the environment variable `OPENEDAI_EMBEDDING_MODEL` to the desired model. Avoid setting `openai-embedding_model` in `settings.yaml` because those settings only take effect after the server starts.
 
-### Models
+#### Models
 
 This has been successfully tested with Alpaca, Koala, Vicuna, WizardLM and their variants, (ex. gpt4-x-alpaca, GPT4all-snoozy, stable-vicuna, wizard-vicuna, etc.) and many others. Models that have been trained for **Instruction Following** work best. If you test with other models please let me know how it goes. Less than satisfying results (so far) from: RWKV-4-Raven, llama, mpt-7b-instruct/chat.
 
@@ -101,7 +101,7 @@ If you see this in your logs, it probably means that the correct format could no
 Warning: Loaded default instruction-following template for model.
 ```
 
-### Embeddings (alpha)
+#### Embeddings (alpha)
 
 Embeddings requires `sentence-transformers` installed, but chat and completions will function without it loaded. The embeddings endpoint is currently using the HuggingFace model: `sentence-transformers/all-mpnet-base-v2` for embeddings. This produces 768 dimensional embeddings (the same as the text-davinci-002 embeddings), which is different from OpenAI's current default `text-embedding-ada-002` model which produces 1536 dimensional embeddings. The model is small-ish and fast-ish. This model and embedding size may change in the future.
 
@@ -116,7 +116,7 @@ In short, the all-MiniLM-L6-v2 model is 5x faster, 5x smaller ram, 2x smaller st
 
 Warning: You cannot mix embeddings from different models even if they have the same dimensions. They are not comparable.
 
-### Client Application Setup
+#### Client Application Setup
 
 Almost everything you use it with will require you to set a dummy OpenAI API key environment variable.
 
@@ -158,7 +158,7 @@ const api = new ChatGPTAPI({
 });
 ```
 
-## API Documentation & Examples
+### API Documentation & Examples
 
 The OpenAI API is well documented, you can view the documentation here: https://platform.openai.com/docs/api-reference
 
@@ -185,7 +185,7 @@ text = response['choices'][0]['message']['content']
 print(text)
 ```
 
-## Compatibility & not so compatibility
+### Compatibility & not so compatibility
 
 | API endpoint              | tested with                        | notes                                                                       |
 | ------------------------- | ---------------------------------- | --------------------------------------------------------------------------- |
@@ -230,7 +230,7 @@ Some hacky mappings:
 | user                    | -                          | not supported yet                                                                                                                                                                                    |
 | functions/function_call | -                          | function calls are not supported yet                                                                                                                                                                 |
 
-### Applications
+#### Applications
 
 Almost everything needs the `OPENAI_API_KEY` and `OPENAI_API_BASE` environment variable set, but there are some exceptions.
 
@@ -250,13 +250,13 @@ Almost everything needs the `OPENAI_API_KEY` and `OPENAI_API_BASE` environment v
 | ✅❌          | babyagi                | https://github.com/yoheinakajima/babyagi                                       | OPENAI_API_BASE=http://127.0.0.1:5001/v1                                                                                                                                                                     |
 | ❌            | guidance               | https://github.com/microsoft/guidance                                          | logit_bias and logprobs not yet supported                                                                                                                                                                    |
 
-## Future plans
+### Future plans
 
 - better error handling
 - model changing, esp. something for swapping loras or embedding models
 - consider switching to FastAPI + starlette for SSE (openai SSE seems non-standard)
 
-## Bugs? Feedback? Comments? Pull requests?
+### Bugs? Feedback? Comments? Pull requests?
 
 To enable debugging and get copious output you can set the `OPENEDAI_DEBUG=1` environment variable.
 
