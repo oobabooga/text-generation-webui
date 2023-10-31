@@ -2,27 +2,54 @@ import cgi
 import json
 import os
 import ssl
+import threading
+import time
 import traceback
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
+from typing import Optional
+from wsgiref.simple_server import WSGIRequestHandler, WSGIServer
 
-import extensions.openai.completions as OAIcompletions
-import extensions.openai.edits as OAIedits
-import extensions.openai.embeddings as OAIembeddings
-import extensions.openai.images as OAIimages
-import extensions.openai.models as OAImodels
-import extensions.openai.moderations as OAImoderations
 import speech_recognition as sr
+import uvicorn
+from extensions.openai.completions import (
+    chat_completions,
+    completions,
+    stream_chat_completions,
+    stream_completions
+)
 from extensions.openai.defaults import clamp, default, get_default_req_params
+from extensions.openai.edits import edits
+from extensions.openai.embeddings import embeddings
 from extensions.openai.errors import (
     InvalidRequestError,
     OpenAIError,
     ServiceUnavailableError
 )
+from extensions.openai.images import generations
+from extensions.openai.models import list_models, load_model, model_info
+from extensions.openai.moderations import moderations
 from extensions.openai.tokens import token_count, token_decode, token_encode
 from extensions.openai.utils import debug_msg
+from fastapi import BackgroundTasks, FastAPI, HTTPException, status
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.wsgi import WSGIMiddleware
+from fastapi.requests import Request
+from fastapi.responses import JSONResponse
+from fastapi.routing import APIRoute
+from fastapi.security import APIKeyHeader
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from flask_cloudflared import _run_cloudflared
 from modules import shared
 from pydub import AudioSegment
+from starlette.responses import StreamingResponse
+from werkzeug.serving import make_server
+
+app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
 
 params = {
     # default params
@@ -36,316 +63,171 @@ params = {
 }
 
 
-class Handler(BaseHTTPRequestHandler):
-    def send_access_control_headers(self):
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Credentials", "true")
-        self.send_header(
-            "Access-Control-Allow-Methods",
-            "GET,HEAD,OPTIONS,POST,PUT"
-        )
-        self.send_header(
-            "Access-Control-Allow-Headers",
-            "Origin, Accept, X-Requested-With, Content-Type, "
-            "Access-Control-Request-Method, Access-Control-Request-Headers, "
-            "Authorization"
-        )
+@app.on_event("startup")
+async def startup_event():
+    app.state.background_task = BackgroundTasks()
 
-    def do_OPTIONS(self):
-        self.send_response(200)
-        self.send_access_control_headers()
-        self.send_header('Content-Type', 'application/json')
-        self.end_headers()
-        self.wfile.write("OK".encode('utf-8'))
 
-    def start_sse(self):
-        self.send_response(200)
-        self.send_access_control_headers()
-        self.send_header('Content-Type', 'text/event-stream')
-        self.send_header('Cache-Control', 'no-cache')
-        # self.send_header('Connection', 'keep-alive')
-        self.end_headers()
+@app.post("/v1/audio/transcriptions")
+async def handle_audio_transcription(request: Request):
+    r = sr.Recognizer()
 
-    def send_sse(self, chunk: dict):
-        response = 'data: ' + json.dumps(chunk) + '\r\n\r\n'
-        debug_msg(response[:-4])
-        self.wfile.write(response.encode('utf-8'))
+    form = await request.form()
+    audio_file = await form["file"].read()
+    audio_data = AudioSegment.from_file(audio_file)
 
-    def end_sse(self):
-        response = 'data: [DONE]\r\n\r\n'
-        debug_msg(response[:-4])
-        self.wfile.write(response.encode('utf-8'))
+    # Convert AudioSegment to raw data
+    raw_data = audio_data.raw_data
 
-    def return_json(self, ret: dict, code: int = 200, no_debug=False):
-        self.send_response(code)
-        self.send_access_control_headers()
-        self.send_header('Content-Type', 'application/json')
+    # Create AudioData object
+    audio_data = sr.AudioData(raw_data, audio_data.frame_rate, audio_data.sample_width)
+    whispher_language = form.get("language", None)
+    whispher_model = form.get("model", "tiny")  # Use the model from the form data if it exists, otherwise default to tiny
 
-        response = json.dumps(ret)
-        r_utf8 = response.encode('utf-8')
+    transcription = {"text": ""}
 
-        self.send_header('Content-Length', str(len(r_utf8)))
-        self.end_headers()
+    try:
+        transcription["text"] = r.recognize_whisper(audio_data, language=whispher_language, model=whispher_model)
+    except sr.UnknownValueError:
+        print("Whisper could not understand audio")
+        transcription["text"] = "Whisper could not understand audio UnknownValueError"
+    except sr.RequestError as e:
+        print("Could not request results from Whisper", e)
+        transcription["text"] = "Whisper could not understand audio RequestError"
 
-        self.wfile.write(r_utf8)
-        if not no_debug:
-            debug_msg(r_utf8)
+    return JSONResponse(transcription, no_debug=True)
 
-    def openai_error(self, message, code=500, error_type='APIError', param='', internal_message=''):
 
-        error_resp = {
-            'error': {
-                'message': message,
-                'code': code,
-                'type': error_type,
-                'param': param,
-            }
-        }
-        if internal_message:
-            print(error_type, message)
-            print(internal_message)
-            # error_resp['internal_message'] = internal_message
+@app.route("/v1/engines/{engine}")
+async def handle_engines(engine: str):
+    is_legacy = engine != "models"
+    resp = list_models(is_legacy)
+    return JSONResponse(resp)
 
-        self.return_json(error_resp, code)
 
-    def openai_error_handler(func):
-        def wrapper(self):
-            try:
-                func(self)
-            except InvalidRequestError as e:
-                self.openai_error(e.message, e.code, e.__class__.__name__, e.param, internal_message=e.internal_message)
-            except OpenAIError as e:
-                self.openai_error(e.message, e.code, e.__class__.__name__, internal_message=e.internal_message)
-            except Exception as e:
-                self.openai_error(repr(e), 500, 'OpenAIError', internal_message=traceback.format_exc())
+@app.route("/v1/models/{model_name}")
+async def handle_models(model_name: str):
+    resp = model_info(model_name)
+    return JSONResponse(resp)
 
-        return wrapper
 
-    @openai_error_handler
-    def do_GET(self):
-        debug_msg(self.requestline)
-        debug_msg(self.headers)
+@app.route("/v1/billing/usage")
+async def handle_billing_usage():
+    return JSONResponse({"total_usage": 0})
 
-        if self.path.startswith('/v1/engines') or self.path.startswith('/v1/models'):
-            is_legacy = 'engines' in self.path
-            is_list = self.path.split('?')[0].split('#')[0] in ['/v1/engines', '/v1/models']
-            if is_legacy and not is_list:
-                model_name = self.path[self.path.find('/v1/engines/') + len('/v1/engines/'):]
-                resp = OAImodels.load_model(model_name)
-            elif is_list:
-                resp = OAImodels.list_models(is_legacy)
-            else:
-                model_name = self.path[len('/v1/models/'):]
-                resp = OAImodels.model_info(model_name)
 
-            self.return_json(resp)
+@app.post("/v1/completions")
+async def handle_completions(request: Request):
+    body = await request.json()
+    is_legacy = "/generate" in request.url.path
+    is_streaming = body.get("stream", False)
 
-        elif '/billing/usage' in self.path:
-            #  Ex. /v1/dashboard/billing/usage?start_date=2023-05-01&end_date=2023-05-31
-            self.return_json({"total_usage": 0}, no_debug=True)
-
-        else:
-            self.send_error(404)
-
-    @openai_error_handler
-    def do_POST(self):
-
-        if '/v1/audio/transcriptions' in self.path:
-            r = sr.Recognizer()
-
-            # Parse the form data
-            form = cgi.FieldStorage(
-                fp=self.rfile,
-                headers=self.headers,
-                environ={'REQUEST_METHOD': 'POST', 'CONTENT_TYPE': self.headers['Content-Type']}
-            )
-
-            audio_file = form['file'].file
-            audio_data = AudioSegment.from_file(audio_file)
-
-            # Convert AudioSegment to raw data
-            raw_data = audio_data.raw_data
-
-            # Create AudioData object
-            audio_data = sr.AudioData(raw_data, audio_data.frame_rate, audio_data.sample_width)
-            whipser_language = form.getvalue('language', None)
-            whipser_model = form.getvalue('model', 'tiny')  # Use the model from the form data if it exists, otherwise default to tiny
-
-            transcription = {"text": ""}
-
-            try:
-                transcription["text"] = r.recognize_whisper(audio_data, language=whipser_language, model=whipser_model)
-            except sr.UnknownValueError:
-                print("Whisper could not understand audio")
-                transcription["text"] = "Whisper could not understand audio UnknownValueError"
-            except sr.RequestError as e:
-                print("Could not request results from Whisper", e)
-                transcription["text"] = "Whisper could not understand audio RequestError"
-
-            self.return_json(transcription, no_debug=True)
-            return
-
-        debug_msg(self.requestline)
-        debug_msg(self.headers)
-
-        content_length = self.headers.get('Content-Length')
-        transfer_encoding = self.headers.get('Transfer-Encoding')
-
-        if content_length:
-            body = json.loads(self.rfile.read(int(content_length)).decode('utf-8'))
-        elif transfer_encoding == 'chunked':
-            chunks = []
+    if is_streaming:
+        async with request.stream() as stream:
             while True:
-                chunk_size = int(self.rfile.readline(), 16)  # Read the chunk size
-                if chunk_size == 0:
-                    break  # End of chunks
-                chunks.append(self.rfile.read(chunk_size))
-                self.rfile.readline()  # Consume the trailing newline after each chunk
-            body = json.loads(b''.join(chunks).decode('utf-8'))
+                chunk = await stream.read()
+                if not chunk:
+                    break
+                yield chunk
+    else:
+        if "chat" in request.url.path:
+            response = await chat_completions(body, is_legacy=is_legacy)
         else:
-            self.send_response(400, "Bad Request: Either Content-Length or Transfer-Encoding header expected.")
-            self.end_headers()
-            return
+            response = await completions(body, is_legacy=is_legacy)
 
-        debug_msg(body)
+        return JSONResponse(response)
 
-        if '/completions' in self.path or '/generate' in self.path:
 
-            if not shared.model:
-                raise ServiceUnavailableError("No model loaded.")
+@app.post("/v1/edits")
+async def handle_edits(request: Request):
+    body = await request.json()
+    instruction = body["instruction"]
+    input = body.get("input", "")
+    temperature = clamp(default(body, "temperature", get_default_req_params()["temperature"]), 0.001, 1.999)  # fixup absolute 0.0
+    top_p = clamp(default(body, "top_p", get_default_req_params()["top_p"]), 0.001, 1.0)
 
-            is_legacy = '/generate' in self.path
-            is_streaming = body.get('stream', False)
+    response = await edits(instruction, input, temperature, top_p)
+    return JSONResponse(response)
 
-            if is_streaming:
-                self.start_sse()
 
-                response = []
-                if 'chat' in self.path:
-                    response = OAIcompletions.stream_chat_completions(body, is_legacy=is_legacy)
-                else:
-                    response = OAIcompletions.stream_completions(body, is_legacy=is_legacy)
+@app.post("/v1/images/generations")
+async def handle_image_generation(request: Request):
+    body = await request.json()
+    prompt = body["prompt"]
+    size = default(body, "size", "1024x1024")
+    response_format = default(body, "response_format", "url")  # or b64_json
+    n = default(body, "n", 1)  # ignore the batch limits of max 10
 
-                for resp in response:
-                    self.send_sse(resp)
+    response = await generations(prompt=prompt, size=size, response_format=response_format, n=n)
+    return JSONResponse(response, no_debug=True)
 
-                self.end_sse()
 
-            else:
-                response = ''
-                if 'chat' in self.path:
-                    response = OAIcompletions.chat_completions(body, is_legacy=is_legacy)
-                else:
-                    response = OAIcompletions.completions(body, is_legacy=is_legacy)
+@app.post("/v1/embeddings")
+async def handle_embeddings(request: Request):
+    body = await request.json()
+    encoding_format = body.get("encoding_format", "")
 
-                self.return_json(response)
+    input = body.get("input", body.get("text", ""))
+    if not input:
+        raise HTTPException(status_code=400, detail="Missing required argument input")
 
-        elif '/edits' in self.path:
-            # deprecated
+    if type(input) is str:
+        input = [input]
 
-            if not shared.model:
-                raise ServiceUnavailableError("No model loaded.")
+    response = await embeddings(input, encoding_format)
+    return JSONResponse(response, no_debug=True)
 
-            req_params = get_default_req_params()
 
-            instruction = body['instruction']
-            input = body.get('input', '')
-            temperature = clamp(default(body, 'temperature', req_params['temperature']), 0.001, 1.999)  # fixup absolute 0.0
-            top_p = clamp(default(body, 'top_p', req_params['top_p']), 0.001, 1.0)
+@app.post("/v1/moderations")
+async def handle_moderations(request: Request):
+    body = await request.json()
+    input = body["input"]
+    if not input:
+        raise HTTPException(status_code=400, detail="Missing required argument input")
 
-            response = OAIedits.edits(instruction, input, temperature, top_p)
+    response = await moderations(input)
+    return JSONResponse(response, no_debug=True)
 
-            self.return_json(response)
 
-        elif '/images/generations' in self.path:
-            if not os.environ.get('SD_WEBUI_URL', params.get('sd_webui_url', '')):
-                raise ServiceUnavailableError("Stable Diffusion not available. SD_WEBUI_URL not set.")
+@app.post("/api/v1/token-count")
+async def handle_token_count(request: Request):
+    body = await request.json()
+    response = token_count(body["prompt"])
+    return JSONResponse(response, no_debug=True)
 
-            prompt = body['prompt']
-            size = default(body, 'size', '1024x1024')
-            response_format = default(body, 'response_format', 'url')  # or b64_json
-            n = default(body, 'n', 1)  # ignore the batch limits of max 10
 
-            response = OAIimages.generations(prompt=prompt, size=size, response_format=response_format, n=n)
+@app.post("/api/v1/token/encode")
+async def handle_token_encode(request: Request):
+    body = await request.json()
+    encoding_format = body.get("encoding_format", "")
+    response = token_encode(body["input"], encoding_format)
+    return JSONResponse(response, no_debug=True)
 
-            self.return_json(response, no_debug=True)
 
-        elif '/embeddings' in self.path:
-            encoding_format = body.get('encoding_format', '')
-
-            input = body.get('input', body.get('text', ''))
-            if not input:
-                raise InvalidRequestError("Missing required argument input", params='input')
-
-            if type(input) is str:
-                input = [input]
-
-            response = OAIembeddings.embeddings(input, encoding_format)
-
-            self.return_json(response, no_debug=True)
-
-        elif '/moderations' in self.path:
-            input = body['input']
-            if not input:
-                raise InvalidRequestError("Missing required argument input", params='input')
-
-            response = OAImoderations.moderations(input)
-
-            self.return_json(response, no_debug=True)
-
-        elif self.path == '/api/v1/token-count':
-            # NOT STANDARD. lifted from the api extension, but it's still very useful to calculate tokenized length client side.
-            response = token_count(body['prompt'])
-
-            self.return_json(response, no_debug=True)
-
-        elif self.path == '/api/v1/token/encode':
-            # NOT STANDARD. needed to support logit_bias, logprobs and token arrays for native models
-            encoding_format = body.get('encoding_format', '')
-
-            response = token_encode(body['input'], encoding_format)
-
-            self.return_json(response, no_debug=True)
-
-        elif self.path == '/api/v1/token/decode':
-            # NOT STANDARD. needed to support logit_bias, logprobs and token arrays for native models
-            encoding_format = body.get('encoding_format', '')
-
-            response = token_decode(body['input'], encoding_format)
-
-            self.return_json(response, no_debug=True)
-
-        else:
-            self.send_error(404)
+@app.post("/api/v1/token/decode")
+async def handle_token_decode(request: Request):
+    body = await request.json()
+    encoding_format = body.get("encoding_format", "")
+    response = token_decode(body["input"], encoding_format)
+    return JSONResponse(response, no_debug=True)
 
 
 def run_server():
     port = int(os.environ.get('OPENEDAI_PORT', params.get('port', 5001)))
-    server_addr = ('0.0.0.0' if shared.args.listen else '127.0.0.1', port)
-    server = ThreadingHTTPServer(server_addr, Handler)
-
-    ssl_certfile = os.environ.get('OPENEDAI_CERT_PATH', shared.args.ssl_certfile)
-    ssl_keyfile = os.environ.get('OPENEDAI_KEY_PATH', shared.args.ssl_keyfile)
-    ssl_verify = True if (ssl_keyfile and ssl_certfile) else False
-    if ssl_verify:
-        context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-        context.load_cert_chain(ssl_certfile, ssl_keyfile)
-        server.socket = context.wrap_socket(server.socket, server_side=True)
+    ssl_certfile=os.environ.get('OPENEDAI_CERT_PATH', shared.args.ssl_certfile)
+    ssl_keyfile=os.environ.get('OPENEDAI_KEY_PATH', shared.args.ssl_keyfile)
+    ssl_verify=True if (ssl_keyfile and ssl_certfile) else False
 
     if shared.args.share:
-        try:
-            from flask_cloudflared import _run_cloudflared
-            public_url = _run_cloudflared(port, port + 1)
-            print(f'OpenAI compatible API ready at: OPENAI_API_BASE={public_url}/v1')
-        except ImportError:
-            print('You should install flask_cloudflared manually')
+        public_url=_run_cloudflared(port, port + 1)
+        print(f'OpenAI compatible API ready at: OPENAI_API_BASE={public_url}/v1')
     else:
         if ssl_verify:
-            print(f'OpenAI compatible API ready at: OPENAI_API_BASE=https://{server_addr[0]}:{server_addr[1]}/v1')
+            print(f'OpenAI compatible API ready at: OPENAI_API_BASE=https://localhost:{port}/v1')
         else:
-            print(f'OpenAI compatible API ready at: OPENAI_API_BASE=http://{server_addr[0]}:{server_addr[1]}/v1')
+            print(f'OpenAI compatible API ready at: OPENAI_API_BASE=http://localhost:{port}/v1')
 
-    server.serve_forever()
+    uvicorn.run(app, host="0.0.0.0", port=port, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile)
 
 
 def setup():
