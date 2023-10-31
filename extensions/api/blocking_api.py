@@ -125,7 +125,10 @@ class Handler(BaseHTTPRequestHandler):
             if action == 'load':
                 model_name = body['model_name']
                 args = body.get('args', {})
+                settings = body.get('settings', {})
                 print('args', args)
+                print('settings', settings)
+
                 for k in args:
                     setattr(shared.args, k, args[k])
 
@@ -138,6 +141,8 @@ class Handler(BaseHTTPRequestHandler):
 
                 if shared.settings['mode'] != 'instruct':
                     shared.settings['instruction_template'] = None
+
+                shared.settings.update(settings)
 
                 try:
                     shared.model, shared.tokenizer = load_model(shared.model_name)
