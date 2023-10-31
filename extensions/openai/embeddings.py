@@ -8,6 +8,8 @@ from sentence_transformers import SentenceTransformer
 embeddings_params_initialized = False
 # using 'lazy loading' to avoid circular import
 # so this function will be executed only once
+
+
 def initialize_embedding_params():
     global embeddings_params_initialized
     if not embeddings_params_initialized:

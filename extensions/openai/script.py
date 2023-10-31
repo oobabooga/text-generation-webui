@@ -1,3 +1,4 @@
+import cgi
 import json
 import os
 import ssl
@@ -11,6 +12,7 @@ import extensions.openai.embeddings as OAIembeddings
 import extensions.openai.images as OAIimages
 import extensions.openai.models as OAImodels
 import extensions.openai.moderations as OAImoderations
+import speech_recognition as sr
 from extensions.openai.defaults import clamp, default, get_default_req_params
 from extensions.openai.errors import (
     InvalidRequestError,
@@ -20,9 +22,6 @@ from extensions.openai.errors import (
 from extensions.openai.tokens import token_count, token_decode, token_encode
 from extensions.openai.utils import debug_msg
 from modules import shared
-
-import cgi
-import speech_recognition as sr
 from pydub import AudioSegment
 
 params = {
@@ -30,11 +29,12 @@ params = {
     'port': 5001,
     'embedding_device': 'cpu',
     'embedding_model': 'all-mpnet-base-v2',
-    
+
     # optional params
     'sd_webui_url': '',
     'debug': 0
 }
+
 
 class Handler(BaseHTTPRequestHandler):
     def send_access_control_headers(self):
@@ -159,20 +159,20 @@ class Handler(BaseHTTPRequestHandler):
                 headers=self.headers,
                 environ={'REQUEST_METHOD': 'POST', 'CONTENT_TYPE': self.headers['Content-Type']}
             )
-            
+
             audio_file = form['file'].file
             audio_data = AudioSegment.from_file(audio_file)
-            
+
             # Convert AudioSegment to raw data
             raw_data = audio_data.raw_data
-            
+
             # Create AudioData object
             audio_data = sr.AudioData(raw_data, audio_data.frame_rate, audio_data.sample_width)
             whipser_language = form.getvalue('language', None)
             whipser_model = form.getvalue('model', 'tiny')  # Use the model from the form data if it exists, otherwise default to tiny
 
             transcription = {"text": ""}
-            
+
             try:
                 transcription["text"] = r.recognize_whisper(audio_data, language=whipser_language, model=whipser_model)
             except sr.UnknownValueError:
@@ -181,10 +181,10 @@ class Handler(BaseHTTPRequestHandler):
             except sr.RequestError as e:
                 print("Could not request results from Whisper", e)
                 transcription["text"] = "Whisper could not understand audio RequestError"
-            
+
             self.return_json(transcription, no_debug=True)
-            return   
-            
+            return
+
         debug_msg(self.requestline)
         debug_msg(self.headers)
 
@@ -323,15 +323,15 @@ def run_server():
     port = int(os.environ.get('OPENEDAI_PORT', params.get('port', 5001)))
     server_addr = ('0.0.0.0' if shared.args.listen else '127.0.0.1', port)
     server = ThreadingHTTPServer(server_addr, Handler)
-    
-    ssl_certfile=os.environ.get('OPENEDAI_CERT_PATH', shared.args.ssl_certfile)
-    ssl_keyfile=os.environ.get('OPENEDAI_KEY_PATH', shared.args.ssl_keyfile)
-    ssl_verify=True if (ssl_keyfile and ssl_certfile) else False
-    if ssl_verify:        
+
+    ssl_certfile = os.environ.get('OPENEDAI_CERT_PATH', shared.args.ssl_certfile)
+    ssl_keyfile = os.environ.get('OPENEDAI_KEY_PATH', shared.args.ssl_keyfile)
+    ssl_verify = True if (ssl_keyfile and ssl_certfile) else False
+    if ssl_verify:
         context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         context.load_cert_chain(ssl_certfile, ssl_keyfile)
         server.socket = context.wrap_socket(server.socket, server_side=True)
-        
+
     if shared.args.share:
         try:
             from flask_cloudflared import _run_cloudflared
@@ -344,7 +344,7 @@ def run_server():
             print(f'OpenAI compatible API ready at: OPENAI_API_BASE=https://{server_addr[0]}:{server_addr[1]}/v1')
         else:
             print(f'OpenAI compatible API ready at: OPENAI_API_BASE=http://{server_addr[0]}:{server_addr[1]}/v1')
-    
+
     server.serve_forever()
 
 
