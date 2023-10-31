@@ -9,7 +9,7 @@ default_req_params = {
     'temperature': 1.0,
     'top_p': 1.0,
     'top_k': 1,  # choose 20 for chat in absence of another default
-    'repetition_penalty': 1.18,
+    'repetition_penalty': 1,
     'presence_penalty': 0,
     'frequency_penalty': 0,
     'repetition_penalty_range': 0,
