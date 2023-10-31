@@ -6,11 +6,13 @@ from extensions.openai.utils import debug_msg, float_list_to_base64
 from sentence_transformers import SentenceTransformer
 
 embeddings_params_initialized = False
-# using 'lazy loading' to avoid circular import
-# so this function will be executed only once
 
 
 def initialize_embedding_params():
+    '''
+    using 'lazy loading' to avoid circular import
+    so this function will be executed only once
+    '''
     global embeddings_params_initialized
     if not embeddings_params_initialized:
         global st_model, embeddings_model, embeddings_device

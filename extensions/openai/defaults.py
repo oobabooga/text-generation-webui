@@ -69,6 +69,7 @@ def default(dic, key, default):
             pass
 
         val = default
+
     return val
 
 
