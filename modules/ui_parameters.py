@@ -57,7 +57,7 @@ def create_ui(default_preset):
                                 shared.gradio['length_penalty'] = gr.Slider(-5, 5, value=generate_params['length_penalty'], label='length_penalty')
                                 shared.gradio['early_stopping'] = gr.Checkbox(value=generate_params['early_stopping'], label='early_stopping')
 
-                    gr.Markdown("[Learn more](https://github.com/oobabooga/text-generation-webui/blob/main/docs/Generation-Parameters.md)")
+                    gr.Markdown("[Learn more](https://github.com/oobabooga/text-generation-webui/wiki/03-%E2%80%90-Parameters-Tab)")
 
                 with gr.Column():
                     with gr.Row():
