@@ -232,7 +232,7 @@ def fix_loader_name(name):
 def add_extension(name):
     if args.extensions is None:
         args.extensions = [name]
-    elif 'api' not in args.extensions:
+    elif name not in args.extensions:
         args.extensions.append(name)
 
 
@@ -244,7 +244,7 @@ args.loader = fix_loader_name(args.loader)
 
 # Activate the API extension
 if args.api or args.public_api:
-    add_extension('api')
+    add_extension('openai')
 
 # Activate the multimodal extension
 if args.multimodal_pipeline is not None:
