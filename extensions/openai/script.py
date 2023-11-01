@@ -22,7 +22,14 @@ from extensions.openai.errors import ServiceUnavailableError
 from extensions.openai.tokens import token_count, token_decode, token_encode
 from modules import shared
 
-from .typing import ChatCompletionRequest, CompletionRequest, to_dict
+from .typing import (
+    ChatCompletionChunkChoiceObject,
+    ChatCompletionChunkResponse,
+    ChatCompletionRequest,
+    CompletionRequest,
+    to_dict,
+    to_json
+)
 
 params = {
     # default params
@@ -71,7 +78,7 @@ async def openai_completions(request: Request, request_data: CompletionRequest):
         async def generator():
             response = OAIcompletions.stream_completions(to_dict(request_data), is_legacy=is_legacy)
             for resp in response:
-                yield resp
+                yield {'data': resp}
 
         return EventSourceResponse(generator())  # sse
 
@@ -90,7 +97,7 @@ async def openai_chat_completions(request: Request, request_data: ChatCompletion
         async def generator():
             response = OAIcompletions.stream_chat_completions(to_dict(request_data), is_legacy=is_legacy)
             for resp in response:
-                yield resp
+                yield {"data": resp}
 
         return EventSourceResponse(generator())  # sse
 
