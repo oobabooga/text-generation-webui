@@ -9,6 +9,7 @@ from sse_starlette import EventSourceResponse
 
 app = FastAPI()
 
+
 class CompletionRequest(BaseModel):
     model: str | None = None
     prompt: str | List[str]
@@ -154,7 +155,7 @@ async def openai_chat_completions(request_data: ChatCompletionRequest):
 async def model_response():
     object = ModelObject(id="")
     response = ModelResponse(
-        data = [to_dict(object)]
+        data=[to_dict(object)]
     )
 
     return JSONResponse(content=to_dict(response))

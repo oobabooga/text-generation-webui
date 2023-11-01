@@ -1,10 +1,14 @@
-import cgi
-import json
 import os
-import ssl
-import traceback
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
+
+import speech_recognition as sr
+import uvicorn
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.requests import Request
+from fastapi.responses import JSONResponse
+from pydub import AudioSegment
+from sse_starlette import EventSourceResponse
 
 import extensions.openai.completions as OAIcompletions
 import extensions.openai.edits as OAIedits
@@ -12,21 +16,15 @@ import extensions.openai.embeddings as OAIembeddings
 import extensions.openai.images as OAIimages
 import extensions.openai.models as OAImodels
 import extensions.openai.moderations as OAImoderations
-import speech_recognition as sr
+from extensions import openai
 from extensions.openai.defaults import clamp, default, get_default_req_params
-from extensions.openai.errors import (
-    InvalidRequestError,
-    OpenAIError,
-    ServiceUnavailableError
-)
+from extensions.openai.errors import ServiceUnavailableError
 from extensions.openai.tokens import token_count, token_decode, token_encode
-from extensions.openai.utils import debug_msg
 from modules import shared
-from pydub import AudioSegment
 
 params = {
     # default params
-    'port': 5001,
+    'port': 5000,
     'embedding_device': 'cpu',
     'embedding_model': 'all-mpnet-base-v2',
 
@@ -35,302 +33,210 @@ params = {
     'debug': 0
 }
 
+app = FastAPI()
 
-class Handler(BaseHTTPRequestHandler):
-    def send_access_control_headers(self):
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Credentials", "true")
-        self.send_header(
-            "Access-Control-Allow-Methods",
-            "GET,HEAD,OPTIONS,POST,PUT"
-        )
-        self.send_header(
-            "Access-Control-Allow-Headers",
-            "Origin, Accept, X-Requested-With, Content-Type, "
-            "Access-Control-Request-Method, Access-Control-Request-Headers, "
-            "Authorization"
-        )
+# Configure CORS settings to allow all origins, methods, and headers
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["GET", "HEAD", "OPTIONS", "POST", "PUT"],
+    allow_headers=[
+        "Origin",
+        "Accept",
+        "X-Requested-With",
+        "Content-Type",
+        "Access-Control-Request-Method",
+        "Access-Control-Request-Headers",
+        "Authorization",
+    ],
+)
 
-    def do_OPTIONS(self):
-        self.send_response(200)
-        self.send_access_control_headers()
-        self.send_header('Content-Type', 'application/json')
-        self.end_headers()
-        self.wfile.write("OK".encode('utf-8'))
 
-    def start_sse(self):
-        self.send_response(200)
-        self.send_access_control_headers()
-        self.send_header('Content-Type', 'text/event-stream')
-        self.send_header('Cache-Control', 'no-cache')
-        # self.send_header('Connection', 'keep-alive')
-        self.end_headers()
+@app.options("/")
+async def options_route():
+    return JSONResponse(content="OK")
 
-    def send_sse(self, chunk: dict):
-        response = 'data: ' + json.dumps(chunk) + '\r\n\r\n'
-        debug_msg(response[:-4])
-        self.wfile.write(response.encode('utf-8'))
 
-    def end_sse(self):
-        response = 'data: [DONE]\r\n\r\n'
-        debug_msg(response[:-4])
-        self.wfile.write(response.encode('utf-8'))
+@app.get("/v1/models")
+@app.get("/v1/engines")
+async def handle_models(request: Request):
+    path = request.url.path
+    is_legacy = 'engines' in path
+    is_list = request.url.path.split('?')[0].split('#')[0] in ['/v1/engines', '/v1/models']
+    if is_legacy and not is_list:
+        model_name = path[path.find('/v1/engines/') + len('/v1/engines/'):]
+        resp = OAImodels.load_model(model_name)
+    elif is_list:
+        resp = OAImodels.list_models(is_legacy)
+    else:
+        model_name = path[len('/v1/models/'):]
+        resp = OAImodels.model_info(model_name)
 
-    def return_json(self, ret: dict, code: int = 200, no_debug=False):
-        self.send_response(code)
-        self.send_access_control_headers()
-        self.send_header('Content-Type', 'application/json')
+    return JSONResponse(content=resp)
 
-        response = json.dumps(ret)
-        r_utf8 = response.encode('utf-8')
 
-        self.send_header('Content-Length', str(len(r_utf8)))
-        self.end_headers()
+@app.get('/v1/billing/usage')
+def handle_billing_usage():
+    '''
+    Ex. /v1/dashboard/billing/usage?start_date=2023-05-01&end_date=2023-05-31
+    '''
+    return JSONResponse(content={"total_usage": 0})
 
-        self.wfile.write(r_utf8)
-        if not no_debug:
-            debug_msg(r_utf8)
 
-    def openai_error(self, message, code=500, error_type='APIError', param='', internal_message=''):
+@app.post('/v1/audio/transcriptions')
+async def handle_audio_transcription(request: Request):
+    r = sr.Recognizer()
 
-        error_resp = {
-            'error': {
-                'message': message,
-                'code': code,
-                'type': error_type,
-                'param': param,
-            }
-        }
-        if internal_message:
-            print(error_type, message)
-            print(internal_message)
-            # error_resp['internal_message'] = internal_message
+    form = await request.form()
+    audio_file = await form["file"].read()
+    audio_data = AudioSegment.from_file(audio_file)
 
-        self.return_json(error_resp, code)
+    # Convert AudioSegment to raw data
+    raw_data = audio_data.raw_data
 
-    def openai_error_handler(func):
-        def wrapper(self):
-            try:
-                func(self)
-            except InvalidRequestError as e:
-                self.openai_error(e.message, e.code, e.__class__.__name__, e.param, internal_message=e.internal_message)
-            except OpenAIError as e:
-                self.openai_error(e.message, e.code, e.__class__.__name__, internal_message=e.internal_message)
-            except Exception as e:
-                self.openai_error(repr(e), 500, 'OpenAIError', internal_message=traceback.format_exc())
+    # Create AudioData object
+    audio_data = sr.AudioData(raw_data, audio_data.frame_rate, audio_data.sample_width)
+    whipser_language = form.getvalue('language', None)
+    whipser_model = form.getvalue('model', 'tiny')  # Use the model from the form data if it exists, otherwise default to tiny
 
-        return wrapper
+    transcription = {"text": ""}
 
-    @openai_error_handler
-    def do_GET(self):
-        debug_msg(self.requestline)
-        debug_msg(self.headers)
+    try:
+        transcription["text"] = r.recognize_whisper(audio_data, language=whipser_language, model=whipser_model)
+    except sr.UnknownValueError:
+        print("Whisper could not understand audio")
+        transcription["text"] = "Whisper could not understand audio UnknownValueError"
+    except sr.RequestError as e:
+        print("Could not request results from Whisper", e)
+        transcription["text"] = "Whisper could not understand audio RequestError"
 
-        if self.path.startswith('/v1/engines') or self.path.startswith('/v1/models'):
-            is_legacy = 'engines' in self.path
-            is_list = self.path.split('?')[0].split('#')[0] in ['/v1/engines', '/v1/models']
-            if is_legacy and not is_list:
-                model_name = self.path[self.path.find('/v1/engines/') + len('/v1/engines/'):]
-                resp = OAImodels.load_model(model_name)
-            elif is_list:
-                resp = OAImodels.list_models(is_legacy)
+    return JSONResponse(content=transcription)
+
+
+@app.post('/v1/completions')
+@app.post('/v1/chat/completions')
+@app.post('/v1/generate')
+async def handle_completions(request: Request):
+    body = await request.json()
+    path = request.url.path
+    is_legacy = "/generate" in path
+    is_streaming = body.get("stream", False)
+
+    if is_streaming:
+        async def generator():
+            response = []
+            if 'chat' in path:
+                response = OAIcompletions.stream_chat_completions(body, is_legacy=is_legacy)
             else:
-                model_name = self.path[len('/v1/models/'):]
-                resp = OAImodels.model_info(model_name)
+                response = OAIcompletions.stream_completions(body, is_legacy=is_legacy)
 
-            self.return_json(resp)
+            for resp in response:
+                yield resp
 
-        elif '/billing/usage' in self.path:
-            #  Ex. /v1/dashboard/billing/usage?start_date=2023-05-01&end_date=2023-05-31
-            self.return_json({"total_usage": 0}, no_debug=True)
+        print('test')
+        return EventSourceResponse(generator())  # sse
 
+    else:
+        response = ''
+        if 'chat' in path:
+            response = OAIcompletions.chat_completions(body, is_legacy=is_legacy)
         else:
-            self.send_error(404)
+            response = OAIcompletions.completions(body, is_legacy=is_legacy)
 
-    @openai_error_handler
-    def do_POST(self):
+        print(response)
+        return JSONResponse(response)
 
-        if '/v1/audio/transcriptions' in self.path:
-            r = sr.Recognizer()
 
-            # Parse the form data
-            form = cgi.FieldStorage(
-                fp=self.rfile,
-                headers=self.headers,
-                environ={'REQUEST_METHOD': 'POST', 'CONTENT_TYPE': self.headers['Content-Type']}
-            )
+@app.post('/v1/edits')
+async def handle_edits(request: Request):
+    '''
+    deprecated
+    '''
 
-            audio_file = form['file'].file
-            audio_data = AudioSegment.from_file(audio_file)
+    body = await request.json()
+    instruction = body["instruction"]
+    input = body.get("input", "")
+    temperature = clamp(default(body, "temperature", get_default_req_params()["temperature"]), 0.001, 1.999)  # fixup absolute 0.0
+    top_p = clamp(default(body, "top_p", get_default_req_params()["top_p"]), 0.001, 1.0)
 
-            # Convert AudioSegment to raw data
-            raw_data = audio_data.raw_data
+    response = await OAIedits.edits(instruction, input, temperature, top_p)
+    return JSONResponse(response)
 
-            # Create AudioData object
-            audio_data = sr.AudioData(raw_data, audio_data.frame_rate, audio_data.sample_width)
-            whipser_language = form.getvalue('language', None)
-            whipser_model = form.getvalue('model', 'tiny')  # Use the model from the form data if it exists, otherwise default to tiny
 
-            transcription = {"text": ""}
+@app.post('/v1/images/generations')
+async def handle_image_generation(request: Request):
 
-            try:
-                transcription["text"] = r.recognize_whisper(audio_data, language=whipser_language, model=whipser_model)
-            except sr.UnknownValueError:
-                print("Whisper could not understand audio")
-                transcription["text"] = "Whisper could not understand audio UnknownValueError"
-            except sr.RequestError as e:
-                print("Could not request results from Whisper", e)
-                transcription["text"] = "Whisper could not understand audio RequestError"
+    if not os.environ.get('SD_WEBUI_URL', params.get('sd_webui_url', '')):
+        raise ServiceUnavailableError("Stable Diffusion not available. SD_WEBUI_URL not set.")
 
-            self.return_json(transcription, no_debug=True)
-            return
+    body = await request.json()
+    prompt = body['prompt']
+    size = default(body, 'size', '1024x1024')
+    response_format = default(body, 'response_format', 'url')  # or b64_json
+    n = default(body, 'n', 1)  # ignore the batch limits of max 10
 
-        debug_msg(self.requestline)
-        debug_msg(self.headers)
+    response = await OAIimages.generations(prompt=prompt, size=size, response_format=response_format, n=n)
+    return JSONResponse(response)
 
-        content_length = self.headers.get('Content-Length')
-        transfer_encoding = self.headers.get('Transfer-Encoding')
 
-        if content_length:
-            body = json.loads(self.rfile.read(int(content_length)).decode('utf-8'))
-        elif transfer_encoding == 'chunked':
-            chunks = []
-            while True:
-                chunk_size = int(self.rfile.readline(), 16)  # Read the chunk size
-                if chunk_size == 0:
-                    break  # End of chunks
-                chunks.append(self.rfile.read(chunk_size))
-                self.rfile.readline()  # Consume the trailing newline after each chunk
-            body = json.loads(b''.join(chunks).decode('utf-8'))
-        else:
-            self.send_response(400, "Bad Request: Either Content-Length or Transfer-Encoding header expected.")
-            self.end_headers()
-            return
+@app.post("/v1/embeddings")
+async def handle_embeddings(request: Request):
+    body = await request.json()
+    encoding_format = body.get("encoding_format", "")
 
-        debug_msg(body)
+    input = body.get('input', body.get('text', ''))
+    if not input:
+        raise HTTPException(status_code=400, detail="Missing required argument input")
 
-        if '/completions' in self.path or '/generate' in self.path:
+    if type(input) is str:
+        input = [input]
 
-            if not shared.model:
-                raise ServiceUnavailableError("No model loaded.")
+    response = await OAIembeddings.embeddings(input, encoding_format)
+    return JSONResponse(response)
 
-            is_legacy = '/generate' in self.path
-            is_streaming = body.get('stream', False)
 
-            if is_streaming:
-                self.start_sse()
+@app.post("/v1/moderations")
+async def handle_moderations(request: Request):
+    body = await request.json()
+    input = body["input"]
+    if not input:
+        raise HTTPException(status_code=400, detail="Missing required argument input")
 
-                response = []
-                if 'chat' in self.path:
-                    response = OAIcompletions.stream_chat_completions(body, is_legacy=is_legacy)
-                else:
-                    response = OAIcompletions.stream_completions(body, is_legacy=is_legacy)
+    response = await OAImoderations.moderations(input)
+    return JSONResponse(response)
 
-                for resp in response:
-                    self.send_sse(resp)
 
-                self.end_sse()
+@app.post("/api/v1/token-count")
+async def handle_token_count(request: Request):
+    body = await request.json()
+    response = token_count(body['prompt'])
+    return JSONResponse(response)
 
-            else:
-                response = ''
-                if 'chat' in self.path:
-                    response = OAIcompletions.chat_completions(body, is_legacy=is_legacy)
-                else:
-                    response = OAIcompletions.completions(body, is_legacy=is_legacy)
 
-                self.return_json(response)
+@app.post("/api/v1/token/encode")
+async def handle_token_encode(request: Request):
+    body = await request.json()
+    encoding_format = body.get("encoding_format", "")
+    response = token_encode(body["input"], encoding_format)
+    return JSONResponse(response)
 
-        elif '/edits' in self.path:
-            # deprecated
 
-            if not shared.model:
-                raise ServiceUnavailableError("No model loaded.")
-
-            req_params = get_default_req_params()
-
-            instruction = body['instruction']
-            input = body.get('input', '')
-            temperature = clamp(default(body, 'temperature', req_params['temperature']), 0.001, 1.999)  # fixup absolute 0.0
-            top_p = clamp(default(body, 'top_p', req_params['top_p']), 0.001, 1.0)
-
-            response = OAIedits.edits(instruction, input, temperature, top_p)
-
-            self.return_json(response)
-
-        elif '/images/generations' in self.path:
-            if not os.environ.get('SD_WEBUI_URL', params.get('sd_webui_url', '')):
-                raise ServiceUnavailableError("Stable Diffusion not available. SD_WEBUI_URL not set.")
-
-            prompt = body['prompt']
-            size = default(body, 'size', '1024x1024')
-            response_format = default(body, 'response_format', 'url')  # or b64_json
-            n = default(body, 'n', 1)  # ignore the batch limits of max 10
-
-            response = OAIimages.generations(prompt=prompt, size=size, response_format=response_format, n=n)
-
-            self.return_json(response, no_debug=True)
-
-        elif '/embeddings' in self.path:
-            encoding_format = body.get('encoding_format', '')
-
-            input = body.get('input', body.get('text', ''))
-            if not input:
-                raise InvalidRequestError("Missing required argument input", params='input')
-
-            if type(input) is str:
-                input = [input]
-
-            response = OAIembeddings.embeddings(input, encoding_format)
-
-            self.return_json(response, no_debug=True)
-
-        elif '/moderations' in self.path:
-            input = body['input']
-            if not input:
-                raise InvalidRequestError("Missing required argument input", params='input')
-
-            response = OAImoderations.moderations(input)
-
-            self.return_json(response, no_debug=True)
-
-        elif self.path == '/api/v1/token-count':
-            # NOT STANDARD. lifted from the api extension, but it's still very useful to calculate tokenized length client side.
-            response = token_count(body['prompt'])
-
-            self.return_json(response, no_debug=True)
-
-        elif self.path == '/api/v1/token/encode':
-            # NOT STANDARD. needed to support logit_bias, logprobs and token arrays for native models
-            encoding_format = body.get('encoding_format', '')
-
-            response = token_encode(body['input'], encoding_format)
-
-            self.return_json(response, no_debug=True)
-
-        elif self.path == '/api/v1/token/decode':
-            # NOT STANDARD. needed to support logit_bias, logprobs and token arrays for native models
-            encoding_format = body.get('encoding_format', '')
-
-            response = token_decode(body['input'], encoding_format)
-
-            self.return_json(response, no_debug=True)
-
-        else:
-            self.send_error(404)
+@app.post("/api/v1/token/decode")
+async def handle_token_decode(request: Request):
+    body = await request.json()
+    encoding_format = body.get("encoding_format", "")
+    response = token_decode(body["input"], encoding_format)
+    return JSONResponse(response, no_debug=True)
 
 
 def run_server():
     port = int(os.environ.get('OPENEDAI_PORT', params.get('port', 5001)))
-    server_addr = ('0.0.0.0' if shared.args.listen else '127.0.0.1', port)
-    server = ThreadingHTTPServer(server_addr, Handler)
+    server_addr = '0.0.0.0' if shared.args.listen else '127.0.0.1'
 
     ssl_certfile = os.environ.get('OPENEDAI_CERT_PATH', shared.args.ssl_certfile)
     ssl_keyfile = os.environ.get('OPENEDAI_KEY_PATH', shared.args.ssl_keyfile)
     ssl_verify = True if (ssl_keyfile and ssl_certfile) else False
-    if ssl_verify:
-        context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-        context.load_cert_chain(ssl_certfile, ssl_keyfile)
-        server.socket = context.wrap_socket(server.socket, server_side=True)
 
     if shared.args.share:
         try:
@@ -341,11 +247,11 @@ def run_server():
             print('You should install flask_cloudflared manually')
     else:
         if ssl_verify:
-            print(f'OpenAI compatible API ready at: OPENAI_API_BASE=https://{server_addr[0]}:{server_addr[1]}/v1')
+            print(f'OpenAI compatible API ready at: OPENAI_API_BASE=https://{server_addr}:{port}/v1')
         else:
-            print(f'OpenAI compatible API ready at: OPENAI_API_BASE=http://{server_addr[0]}:{server_addr[1]}/v1')
+            print(f'OpenAI compatible API ready at: OPENAI_API_BASE=http://{server_addr}:{port}/v1')
 
-    server.serve_forever()
+    uvicorn.run(app, host=server_addr, port=port, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile)
 
 
 def setup():
