@@ -27,7 +27,9 @@ from .typing import (
     ChatCompletionChunkChoiceObject,
     ChatCompletionChunkResponse,
     ChatCompletionRequest,
+    ChatCompletionResponse,
     CompletionRequest,
+    CompletionResponse,
     to_dict,
     to_json
 )
@@ -68,8 +70,8 @@ async def options_route():
     return JSONResponse(content="OK")
 
 
-@app.post('/v1/completions')
-@app.post('/v1/generate')
+@app.post('/v1/completions', response_model=CompletionResponse)
+@app.post('/v1/generate', response_model=CompletionResponse)
 async def openai_completions(request: Request, request_data: CompletionRequest):
     body = await request.json()
     path = request.url.path
@@ -88,7 +90,7 @@ async def openai_completions(request: Request, request_data: CompletionRequest):
         return JSONResponse(response)
 
 
-@app.post('/v1/chat/completions')
+@app.post('/v1/chat/completions', response_model=ChatCompletionResponse)
 async def openai_chat_completions(request: Request, request_data: ChatCompletionRequest):
     body = await request.json()
     path = request.url.path
