@@ -229,10 +229,11 @@ def fix_loader_name(name):
         return 'AutoAWQ'
 
 
-def add_extension(name):
+def add_extension(name, last=False):
     if args.extensions is None:
         args.extensions = [name]
     elif name not in args.extensions:
+        args.extensions = [x for x in args.extensions if x != name]
         args.extensions.append(name)
 
 
@@ -242,13 +243,13 @@ def is_chat():
 
 args.loader = fix_loader_name(args.loader)
 
-# Activate the API extension
-if args.api or args.public_api:
-    add_extension('openai')
-
 # Activate the multimodal extension
 if args.multimodal_pipeline is not None:
     add_extension('multimodal')
+
+# Activate the API extension
+if args.api or args.public_api:
+    add_extension('openai', last=True)
 
 # Load model-specific settings
 with Path(f'{args.model_dir}/config.yaml') as p:
