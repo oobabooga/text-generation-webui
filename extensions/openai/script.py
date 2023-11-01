@@ -22,6 +22,8 @@ from extensions.openai.errors import ServiceUnavailableError
 from extensions.openai.tokens import token_count, token_decode, token_encode
 from modules import shared
 
+from .typing import ChatCompletionRequest, CompletionRequest, to_dict
+
 params = {
     # default params
     'port': 5000,
@@ -56,6 +58,45 @@ app.add_middleware(
 @app.options("/")
 async def options_route():
     return JSONResponse(content="OK")
+
+
+@app.post('/v1/completions')
+@app.post('/v1/generate')
+async def openai_completions(request: Request, request_data: CompletionRequest):
+    body = await request.json()
+    path = request.url.path
+    is_legacy = "/generate" in path
+
+    if request_data.stream:
+        async def generator():
+            response = OAIcompletions.stream_completions(to_dict(request_data), is_legacy=is_legacy)
+            for resp in response:
+                yield resp
+
+        return EventSourceResponse(generator())  # sse
+
+    else:
+        response = OAIcompletions.completions(to_dict(request_data), is_legacy=is_legacy)
+        return JSONResponse(response)
+
+
+@app.post('/v1/chat/completions')
+async def openai_chat_completions(request: Request, request_data: ChatCompletionRequest):
+    body = await request.json()
+    path = request.url.path
+    is_legacy = "/generate" in path
+
+    if request_data.stream:
+        async def generator():
+            response = OAIcompletions.stream_chat_completions(to_dict(request_data), is_legacy=is_legacy)
+            for resp in response:
+                yield resp
+
+        return EventSourceResponse(generator())  # sse
+
+    else:
+        response = OAIcompletions.chat_completions(to_dict(request_data), is_legacy=is_legacy)
+        return JSONResponse(response)
 
 
 @app.get("/v1/models")
@@ -112,40 +153,6 @@ async def handle_audio_transcription(request: Request):
         transcription["text"] = "Whisper could not understand audio RequestError"
 
     return JSONResponse(content=transcription)
-
-
-@app.post('/v1/completions')
-@app.post('/v1/chat/completions')
-@app.post('/v1/generate')
-async def handle_completions(request: Request):
-    body = await request.json()
-    path = request.url.path
-    is_legacy = "/generate" in path
-    is_streaming = body.get("stream", False)
-
-    if is_streaming:
-        async def generator():
-            response = []
-            if 'chat' in path:
-                response = OAIcompletions.stream_chat_completions(body, is_legacy=is_legacy)
-            else:
-                response = OAIcompletions.stream_completions(body, is_legacy=is_legacy)
-
-            for resp in response:
-                yield resp
-
-        print('test')
-        return EventSourceResponse(generator())  # sse
-
-    else:
-        response = ''
-        if 'chat' in path:
-            response = OAIcompletions.chat_completions(body, is_legacy=is_legacy)
-        else:
-            response = OAIcompletions.completions(body, is_legacy=is_legacy)
-
-        print(response)
-        return JSONResponse(response)
 
 
 @app.post('/v1/edits')

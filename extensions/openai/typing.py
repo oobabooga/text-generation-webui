@@ -45,7 +45,7 @@ class ChatCompletionRequest(BaseModel):
     function_call: str | dict | None = None
     functions: List[dict] | None = None
     logit_bias: dict | None = None
-    max_tokens: int | None = float('inf')
+    max_tokens: int | None = None
     n: int | None = 1
     presence_penalty: int | None = 0
     stop: str | List[str] | None = None
