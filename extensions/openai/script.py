@@ -246,7 +246,7 @@ async def handle_token_decode(request: Request):
 
 
 def run_server():
-    port = int(os.environ.get('OPENEDAI_PORT', params.get('port', 5001)))
+    port = int(os.environ.get('OPENEDAI_PORT', params.get('port', 5000)))
     server_addr = '0.0.0.0' if shared.args.listen else '127.0.0.1'
 
     ssl_certfile = os.environ.get('OPENEDAI_CERT_PATH', shared.args.ssl_certfile)
