@@ -207,7 +207,7 @@ async def handle_embeddings(request: Request):
     if type(input) is str:
         input = [input]
 
-    response = await OAIembeddings.embeddings(input, encoding_format)
+    response = OAIembeddings.embeddings(input, encoding_format)
     return JSONResponse(response)
 
 
@@ -218,7 +218,7 @@ async def handle_moderations(request: Request):
     if not input:
         raise HTTPException(status_code=400, detail="Missing required argument input")
 
-    response = await OAImoderations.moderations(input)
+    response = OAImoderations.moderations(input)
     return JSONResponse(response)
 
 
