@@ -29,3 +29,22 @@ def debug_msg(*args, **kwargs):
     from extensions.openai.script import params
     if os.environ.get("OPENEDAI_DEBUG", params.get('debug', 0)):
         print(*args, **kwargs)
+
+
+def default(dic, key, default):
+    '''
+    little helper to get defaults if arg is present but None and should be the same type as default.
+    '''
+    val = dic.get(key, default)
+    if not isinstance(val, type(default)):
+        # maybe it's just something like 1 instead of 1.0
+        try:
+            v = type(default)(val)
+            if type(val)(v) == val:  # if it's the same value passed in, it's ok.
+                return v
+        except:
+            pass
+
+        val = default
+
+    return val

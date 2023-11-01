@@ -4,13 +4,8 @@ import tiktoken
 import torch
 import torch.nn.functional as F
 import yaml
-from extensions.openai.defaults import (
-    clamp,
-    default,
-    get_default_generate_params
-)
 from extensions.openai.errors import InvalidRequestError
-from extensions.openai.utils import debug_msg, end_line
+from extensions.openai.utils import debug_msg, default, end_line
 from modules import shared
 from modules.text_generation import decode, encode, generate_reply
 from transformers import LogitsProcessor, LogitsProcessorList
@@ -71,7 +66,7 @@ def convert_logprobs_to_tiktoken(model, logprobs):
 
 
 def marshal_common_params(body):
-    if body.n != 1:
+    if body['n'] != 1:
         raise InvalidRequestError(message="Only n = 1 is supported.", param='n')
 
     generate_params = body
@@ -90,7 +85,7 @@ def marshal_common_params(body):
         # XXX convert tokens from tiktoken based on requested model
         # Ex.: 'logit_bias': {'1129': 100, '11442': 100, '16243': 100}
         try:
-            encoder = tiktoken.encoding_for_model(generate_params['requested_model'])
+            encoder = tiktoken.encoding_for_model(generate_params['model'])
             new_logit_bias = {}
             for logit, bias in logit_bias.items():
                 for x in encode(encoder.decode([int(logit)]), add_special_tokens=False)[0]:
@@ -237,7 +232,7 @@ def chat_completions(body: dict, is_legacy: bool = False) -> dict:
     # common params
     generate_params = marshal_common_params(body)
     generate_params['stream'] = False
-    requested_model = generate_params.pop('requested_model')
+    requested_model = generate_params.pop('model')
     logprob_proc = generate_params.pop('logprob_proc', None)
     generate_params['top_k'] = 20  # There is no best_of/top_k param for chat, but it is much improved with a higher top_k.
 
@@ -313,9 +308,8 @@ def stream_chat_completions(body: dict, is_legacy: bool = False):
     # common params
     generate_params = marshal_common_params(body)
     generate_params['stream'] = True
-    requested_model = generate_params.pop('requested_model')
+    requested_model = generate_params.pop('model')
     logprob_proc = generate_params.pop('logprob_proc', None)
-    generate_params['top_k'] = 20  # There is no best_of/top_k param for chat, but it is much improved with a higher top_k.
 
     # chat default max_tokens is 'inf', but also flexible
     max_tokens = 0

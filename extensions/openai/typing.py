@@ -47,10 +47,10 @@ class GenerationOptions(BaseModel):
     ban_eos_token: bool = shared.settings['ban_eos_token']
     custom_token_bans: str = shared.settings['custom_token_bans']
     skip_special_tokens: bool = shared.settings['skip_special_tokens']
-    custom_stopping_strings: List[str] = ast.literal_eval(f"[{shared.settings['custom_stopping_strings']}]")
+    custom_stopping_strings: str = shared.settings['custom_stopping_strings']
 
 
-class CompletionRequest(BaseModel):
+class CompletionRequest(GenerationOptions):
     model: str | None = None
     prompt: str | List[str]
     best_of: int | None = 1
@@ -78,7 +78,7 @@ class CompletionResponse(BaseModel):
     usage: dict
 
 
-class ChatCompletionRequest(BaseModel):
+class ChatCompletionRequest(GenerationOptions):
     messages: List[dict]
     model: str | None = None
     frequency_penalty: float | None = 0

@@ -1,7 +1,6 @@
 import time
 
 import yaml
-from extensions.openai.defaults import get_default_req_params
 from extensions.openai.errors import InvalidRequestError
 from extensions.openai.utils import debug_msg
 from modules import shared

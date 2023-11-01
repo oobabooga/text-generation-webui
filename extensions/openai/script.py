@@ -10,10 +10,9 @@ import extensions.openai.models as OAImodels
 import extensions.openai.moderations as OAImoderations
 import speech_recognition as sr
 import uvicorn
-from extensions import openai
-from extensions.openai.defaults import clamp, default, get_default_req_params
 from extensions.openai.errors import ServiceUnavailableError
 from extensions.openai.tokens import token_count, token_decode, token_encode
+from extensions.openai.utils import default
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.requests import Request
@@ -173,10 +172,8 @@ async def handle_edits(request: Request):
     body = await request.json()
     instruction = body["instruction"]
     input = body.get("input", "")
-    temperature = clamp(default(body, "temperature", get_default_req_params()["temperature"]), 0.001, 1.999)  # fixup absolute 0.0
-    top_p = clamp(default(body, "top_p", get_default_req_params()["top_p"]), 0.001, 1.0)
 
-    response = await OAIedits.edits(instruction, input, temperature, top_p)
+    response = await OAIedits.edits(instruction, input, body.temperature, body.top_p)
     return JSONResponse(response)
 
 
