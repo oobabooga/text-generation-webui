@@ -45,9 +45,6 @@
 .*starchat-beta:
   instruction_template: 'Starchat-Beta'
   custom_stopping_strings: '"<|end|>"'
-.*(openorca-platypus2):
-  instruction_template: 'OpenOrca-Platypus2'
-  custom_stopping_strings: '"### Instruction:", "### Response:"'
 (?!.*v0)(?!.*1.1)(?!.*1_1)(?!.*stable)(?!.*chinese).*vicuna:
   instruction_template: 'Vicuna-v0'
 .*vicuna.*v0:
@@ -152,6 +149,9 @@
   instruction_template: 'Orca Mini'
 .*(platypus|gplatty|superplatty):
   instruction_template: 'Alpaca'
+.*(openorca-platypus2):
+  instruction_template: 'OpenOrca-Platypus2'
+  custom_stopping_strings: '"### Instruction:", "### Response:"'
 .*longchat:
   instruction_template: 'Vicuna-v1.1'
 .*vicuna-33b:
