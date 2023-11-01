@@ -4,7 +4,11 @@ import tiktoken
 import torch
 import torch.nn.functional as F
 import yaml
-from extensions.openai.defaults import clamp, default, get_default_req_params
+from extensions.openai.defaults import (
+    clamp,
+    default,
+    get_default_generate_params
+)
 from extensions.openai.errors import InvalidRequestError
 from extensions.openai.utils import debug_msg, end_line
 from modules import shared
@@ -67,29 +71,16 @@ def convert_logprobs_to_tiktoken(model, logprobs):
 
 
 def marshal_common_params(body):
-    req_params = get_default_req_params()
-    req_params.update({
-        'truncation_length': shared.settings['truncation_length'],
-        'add_bos_token': shared.settings.get('add_bos_token', req_params['add_bos_token']),
-        'seed': shared.settings.get('seed', req_params['seed']),
-        'custom_stopping_strings': shared.settings['custom_stopping_strings'],
-        'requested_model': body.get('model', shared.model_name),
-        'suffix': default(body, 'suffix', req_params['suffix']),
-        'temperature': clamp(default(body, 'temperature', req_params['temperature']), 0.01, 1.99),  # fixup absolute 0.0/2.0
-        'top_p': clamp(default(body, 'top_p', req_params['top_p']), 0.01, 1.0),
-        'presence_penalty': default(body, 'presence_penalty', req_params['presence_penalty']),
-        'frequency_penalty': default(body, 'frequency_penalty', req_params['frequency_penalty']),
-    })
-
-    n = default(body, 'n', 1)
-    if n != 1:
+    if body.n != 1:
         raise InvalidRequestError(message="Only n = 1 is supported.", param='n')
+
+    generate_params = body
 
     if 'stop' in body:  # str or array, max len 4 (ignored)
         if isinstance(body['stop'], str):
-            req_params['stopping_strings'] = [body['stop']]  # non-standard parameter
+            generate_params['stopping_strings'] = [body['stop']]  # non-standard parameter
         elif isinstance(body['stop'], list):
-            req_params['stopping_strings'] = body['stop']
+            generate_params['stopping_strings'] = body['stop']
 
     # user - ignored
 
@@ -99,7 +90,7 @@ def marshal_common_params(body):
         # XXX convert tokens from tiktoken based on requested model
         # Ex.: 'logit_bias': {'1129': 100, '11442': 100, '16243': 100}
         try:
-            encoder = tiktoken.encoding_for_model(req_params['requested_model'])
+            encoder = tiktoken.encoding_for_model(generate_params['requested_model'])
             new_logit_bias = {}
             for logit, bias in logit_bias.items():
                 for x in encode(encoder.decode([int(logit)]), add_special_tokens=False)[0]:
@@ -117,18 +108,18 @@ def marshal_common_params(body):
     logprobs = None  # coming to chat eventually
     if 'logprobs' in body:
         logprobs = default(body, 'logprobs', 0)  # maybe cap at topk? don't clamp 0-5.
-        req_params['logprob_proc'] = LogprobProcessor(logprobs)
-        logits_processor.extend([req_params['logprob_proc']])
+        generate_params['logprob_proc'] = LogprobProcessor(logprobs)
+        logits_processor.extend([generate_params['logprob_proc']])
     else:
         logprobs = None
 
     if logits_processor:  # requires logits_processor support
-        req_params['logits_processor'] = LogitsProcessorList(logits_processor)
+        generate_params['logits_processor'] = LogitsProcessorList(logits_processor)
 
-    return req_params
+    return generate_params
 
 
-def messages_to_prompt(body: dict, req_params: dict, max_tokens):
+def messages_to_prompt(body: dict, generate_params: dict, max_tokens):
     # functions
     if body.get('functions', []):  # chat only
         raise InvalidRequestError(message="functions is not supported.", param='functions')
@@ -149,8 +140,8 @@ def messages_to_prompt(body: dict, req_params: dict, max_tokens):
         'prompt': 'Assistant:',
     }
 
-    if 'stopping_strings' not in req_params:
-        req_params['stopping_strings'] = []
+    if 'stopping_strings' not in generate_params:
+        generate_params['stopping_strings'] = []
 
     # Instruct models can be much better
     if shared.settings['instruction_template']:
@@ -174,20 +165,20 @@ def messages_to_prompt(body: dict, req_params: dict, max_tokens):
             }
 
             if 'Alpaca' in shared.settings['instruction_template']:
-                req_params['stopping_strings'].extend(['\n###'])
+                generate_params['stopping_strings'].extend(['\n###'])
             elif instruct['user']:  # WizardLM and some others have no user prompt.
-                req_params['stopping_strings'].extend(['\n' + instruct['user'], instruct['user']])
+                generate_params['stopping_strings'].extend(['\n' + instruct['user'], instruct['user']])
 
             debug_msg(f"Loaded instruction role format: {shared.settings['instruction_template']}")
 
         except Exception as e:
-            req_params['stopping_strings'].extend(['\nUser:', 'User:'])  # XXX User: prompt here also
+            generate_params['stopping_strings'].extend(['\nUser:', 'User:'])  # XXX User: prompt here also
 
             print(f"Exception: When loading instruction-templates/{shared.settings['instruction_template']}.yaml: {repr(e)}")
             print("Warning: Loaded default instruction-following template for model.")
 
     else:
-        req_params['stopping_strings'].extend(['\nUser:', 'User:'])  # XXX User: prompt here also
+        generate_params['stopping_strings'].extend(['\nUser:', 'User:'])  # XXX User: prompt here also
         print("Warning: Loaded default instruction-following template for model.")
 
     system_msgs = []
@@ -224,12 +215,12 @@ def messages_to_prompt(body: dict, req_params: dict, max_tokens):
     prompt = system_msg + context_msg + ''.join(chat_msgs) + role_formats['prompt']
     token_count = len(encode(prompt)[0])
 
-    if token_count >= req_params['truncation_length']:
-        err_msg = f"This model maximum context length is {req_params['truncation_length']} tokens. However, your messages resulted in over {token_count} tokens."
+    if token_count >= generate_params['truncation_length']:
+        err_msg = f"This model maximum context length is {generate_params['truncation_length']} tokens. However, your messages resulted in over {token_count} tokens."
         raise InvalidRequestError(message=err_msg, param='messages')
 
-    if max_tokens > 0 and token_count + max_tokens > req_params['truncation_length']:
-        err_msg = f"This model maximum context length is {req_params['truncation_length']} tokens. However, your messages resulted in over {token_count} tokens and max_tokens is {max_tokens}."
+    if max_tokens > 0 and token_count + max_tokens > generate_params['truncation_length']:
+        err_msg = f"This model maximum context length is {generate_params['truncation_length']} tokens. However, your messages resulted in over {token_count} tokens and max_tokens is {max_tokens}."
         print(f"Warning: ${err_msg}")
         # raise InvalidRequestError(message=err_msg, params='max_tokens')
 
@@ -244,33 +235,33 @@ def chat_completions(body: dict, is_legacy: bool = False) -> dict:
     resp_list = 'data' if is_legacy else 'choices'
 
     # common params
-    req_params = marshal_common_params(body)
-    req_params['stream'] = False
-    requested_model = req_params.pop('requested_model')
-    logprob_proc = req_params.pop('logprob_proc', None)
-    req_params['top_k'] = 20  # There is no best_of/top_k param for chat, but it is much improved with a higher top_k.
+    generate_params = marshal_common_params(body)
+    generate_params['stream'] = False
+    requested_model = generate_params.pop('requested_model')
+    logprob_proc = generate_params.pop('logprob_proc', None)
+    generate_params['top_k'] = 20  # There is no best_of/top_k param for chat, but it is much improved with a higher top_k.
 
     # chat default max_tokens is 'inf', but also flexible
     max_tokens = 0
     max_tokens_str = 'length' if is_legacy else 'max_tokens'
     if max_tokens_str in body:
-        max_tokens = default(body, max_tokens_str, req_params['truncation_length'])
-        req_params['max_new_tokens'] = max_tokens
+        max_tokens = default(body, max_tokens_str, generate_params['truncation_length'])
+        generate_params['max_new_tokens'] = max_tokens
     else:
-        req_params['max_new_tokens'] = req_params['truncation_length']
+        generate_params['max_new_tokens'] = generate_params['truncation_length']
 
     # format the prompt from messages
-    prompt, token_count = messages_to_prompt(body, req_params, max_tokens)  # updates req_params['stopping_strings']
+    prompt, token_count = messages_to_prompt(body, generate_params, max_tokens)  # updates generate_params['stopping_strings']
 
     # set real max, avoid deeper errors
-    if req_params['max_new_tokens'] + token_count >= req_params['truncation_length']:
-        req_params['max_new_tokens'] = req_params['truncation_length'] - token_count
+    if generate_params['max_new_tokens'] + token_count >= generate_params['truncation_length']:
+        generate_params['max_new_tokens'] = generate_params['truncation_length'] - token_count
 
-    stopping_strings = req_params.pop('stopping_strings', [])
+    stopping_strings = generate_params.pop('stopping_strings', [])
 
     # generate reply #######################################
-    debug_msg({'prompt': prompt, 'req_params': req_params})
-    generator = generate_reply(prompt, req_params, stopping_strings=stopping_strings, is_chat=False)
+    debug_msg({'prompt': prompt, 'generate_params': generate_params})
+    generator = generate_reply(prompt, generate_params, stopping_strings=stopping_strings, is_chat=False)
 
     answer = ''
     for a in generator:
@@ -282,7 +273,7 @@ def chat_completions(body: dict, is_legacy: bool = False) -> dict:
 
     completion_token_count = len(encode(answer)[0])
     stop_reason = "stop"
-    if token_count + completion_token_count >= req_params['truncation_length'] or completion_token_count >= req_params['max_new_tokens']:
+    if token_count + completion_token_count >= generate_params['truncation_length'] or completion_token_count >= generate_params['max_new_tokens']:
         stop_reason = "length"
 
     resp = {
@@ -320,27 +311,27 @@ def stream_chat_completions(body: dict, is_legacy: bool = False):
     resp_list = 'data' if is_legacy else 'choices'
 
     # common params
-    req_params = marshal_common_params(body)
-    req_params['stream'] = True
-    requested_model = req_params.pop('requested_model')
-    logprob_proc = req_params.pop('logprob_proc', None)
-    req_params['top_k'] = 20  # There is no best_of/top_k param for chat, but it is much improved with a higher top_k.
+    generate_params = marshal_common_params(body)
+    generate_params['stream'] = True
+    requested_model = generate_params.pop('requested_model')
+    logprob_proc = generate_params.pop('logprob_proc', None)
+    generate_params['top_k'] = 20  # There is no best_of/top_k param for chat, but it is much improved with a higher top_k.
 
     # chat default max_tokens is 'inf', but also flexible
     max_tokens = 0
     max_tokens_str = 'length' if is_legacy else 'max_tokens'
     if max_tokens_str in body:
-        max_tokens = default(body, max_tokens_str, req_params['truncation_length'])
-        req_params['max_new_tokens'] = max_tokens
+        max_tokens = default(body, max_tokens_str, generate_params['truncation_length'])
+        generate_params['max_new_tokens'] = max_tokens
     else:
-        req_params['max_new_tokens'] = req_params['truncation_length']
+        generate_params['max_new_tokens'] = generate_params['truncation_length']
 
     # format the prompt from messages
-    prompt, token_count = messages_to_prompt(body, req_params, max_tokens)  # updates req_params['stopping_strings']
+    prompt, token_count = messages_to_prompt(body, generate_params, max_tokens)  # updates generate_params['stopping_strings']
 
     # set real max, avoid deeper errors
-    if req_params['max_new_tokens'] + token_count >= req_params['truncation_length']:
-        req_params['max_new_tokens'] = req_params['truncation_length'] - token_count
+    if generate_params['max_new_tokens'] + token_count >= generate_params['truncation_length']:
+        generate_params['max_new_tokens'] = generate_params['truncation_length'] - token_count
 
     def chat_streaming_chunk(content):
         # begin streaming
@@ -368,11 +359,11 @@ def stream_chat_completions(body: dict, is_legacy: bool = False):
     yield chat_streaming_chunk('')
 
     # generate reply #######################################
-    debug_msg({'prompt': prompt, 'req_params': req_params})
+    debug_msg({'prompt': prompt, 'generate_params': generate_params})
 
-    stopping_strings = req_params.pop('stopping_strings', [])
+    stopping_strings = generate_params.pop('stopping_strings', [])
 
-    generator = generate_reply(prompt, req_params, stopping_strings=stopping_strings, is_chat=False)
+    generator = generate_reply(prompt, generate_params, stopping_strings=stopping_strings, is_chat=False)
 
     answer = ''
     seen_content = ''
@@ -403,7 +394,7 @@ def stream_chat_completions(body: dict, is_legacy: bool = False):
 
     completion_token_count = len(encode(answer)[0])
     stop_reason = "stop"
-    if token_count + completion_token_count >= req_params['truncation_length'] or completion_token_count >= req_params['max_new_tokens']:
+    if token_count + completion_token_count >= generate_params['truncation_length'] or completion_token_count >= generate_params['max_new_tokens']:
         stop_reason = "length"
 
     chunk = chat_streaming_chunk('')
@@ -435,17 +426,17 @@ def completions(body: dict, is_legacy: bool = False):
         prompt_arg = [prompt_arg]
 
     # common params
-    req_params = marshal_common_params(body)
-    req_params['stream'] = False
+    generate_params = marshal_common_params(body)
+    generate_params['stream'] = False
     max_tokens_str = 'length' if is_legacy else 'max_tokens'
-    max_tokens = default(body, max_tokens_str, req_params['max_new_tokens'])
-    req_params['max_new_tokens'] = max_tokens
-    requested_model = req_params.pop('requested_model')
-    logprob_proc = req_params.pop('logprob_proc', None)
-    stopping_strings = req_params.pop('stopping_strings', [])
-    # req_params['suffix'] = default(body, 'suffix', req_params['suffix'])
-    req_params['echo'] = default(body, 'echo', req_params['echo'])
-    req_params['top_k'] = default(body, 'best_of', req_params['top_k'])
+    max_tokens = default(body, max_tokens_str, generate_params['max_new_tokens'])
+    generate_params['max_new_tokens'] = max_tokens
+    requested_model = generate_params.pop('requested_model')
+    logprob_proc = generate_params.pop('logprob_proc', None)
+    stopping_strings = generate_params.pop('stopping_strings', [])
+    # generate_params['suffix'] = default(body, 'suffix', generate_params['suffix'])
+    generate_params['echo'] = default(body, 'echo', generate_params['echo'])
+    generate_params['top_k'] = default(body, 'best_of', generate_params['top_k'])
 
     resp_list_data = []
     total_completion_token_count = 0
@@ -466,14 +457,14 @@ def completions(body: dict, is_legacy: bool = False):
         token_count = len(encode(prompt)[0])
         total_prompt_token_count += token_count
 
-        if token_count + max_tokens > req_params['truncation_length']:
-            err_msg = f"The token count of your prompt ({token_count}) plus max_tokens ({max_tokens}) cannot exceed the model's context length ({req_params['truncation_length']})."
+        if token_count + max_tokens > generate_params['truncation_length']:
+            err_msg = f"The token count of your prompt ({token_count}) plus max_tokens ({max_tokens}) cannot exceed the model's context length ({generate_params['truncation_length']})."
             # print(f"Warning: ${err_msg}")
             raise InvalidRequestError(message=err_msg, param=max_tokens_str)
 
         # generate reply #######################################
-        debug_msg({'prompt': prompt, 'req_params': req_params})
-        generator = generate_reply(prompt, req_params, stopping_strings=stopping_strings, is_chat=False)
+        debug_msg({'prompt': prompt, 'generate_params': generate_params})
+        generator = generate_reply(prompt, generate_params, stopping_strings=stopping_strings, is_chat=False)
         answer = ''
 
         for a in generator:
@@ -486,7 +477,7 @@ def completions(body: dict, is_legacy: bool = False):
         completion_token_count = len(encode(answer)[0])
         total_completion_token_count += completion_token_count
         stop_reason = "stop"
-        if token_count + completion_token_count >= req_params['truncation_length'] or completion_token_count >= max_tokens:
+        if token_count + completion_token_count >= generate_params['truncation_length'] or completion_token_count >= max_tokens:
             stop_reason = "length"
 
         respi = {
@@ -530,8 +521,8 @@ def stream_completions(body: dict, is_legacy: bool = False):
         raise InvalidRequestError("Missing required input", param=prompt_str)
 
     prompt = body[prompt_str]
-    req_params = marshal_common_params(body)
-    requested_model = req_params.pop('requested_model')
+    generate_params = marshal_common_params(body)
+    requested_model = generate_params.pop('requested_model')
     if isinstance(prompt, list):
         if prompt and isinstance(prompt[0], int):
             try:
@@ -543,20 +534,20 @@ def stream_completions(body: dict, is_legacy: bool = False):
             raise InvalidRequestError(message="API Batched generation not yet supported.", param=prompt_str)
 
     # common params
-    req_params['stream'] = True
+    generate_params['stream'] = True
     max_tokens_str = 'length' if is_legacy else 'max_tokens'
-    max_tokens = default(body, max_tokens_str, req_params['max_new_tokens'])
-    req_params['max_new_tokens'] = max_tokens
-    logprob_proc = req_params.pop('logprob_proc', None)
-    stopping_strings = req_params.pop('stopping_strings', [])
-    # req_params['suffix'] = default(body, 'suffix', req_params['suffix'])
-    req_params['echo'] = default(body, 'echo', req_params['echo'])
-    req_params['top_k'] = default(body, 'best_of', req_params['top_k'])
+    max_tokens = default(body, max_tokens_str, generate_params['max_new_tokens'])
+    generate_params['max_new_tokens'] = max_tokens
+    logprob_proc = generate_params.pop('logprob_proc', None)
+    stopping_strings = generate_params.pop('stopping_strings', [])
+    # generate_params['suffix'] = default(body, 'suffix', generate_params['suffix'])
+    generate_params['echo'] = default(body, 'echo', generate_params['echo'])
+    generate_params['top_k'] = default(body, 'best_of', generate_params['top_k'])
 
     token_count = len(encode(prompt)[0])
 
-    if token_count + max_tokens > req_params['truncation_length']:
-        err_msg = f"The token count of your prompt ({token_count}) plus max_tokens ({max_tokens}) cannot exceed the model's context length ({req_params['truncation_length']})."
+    if token_count + max_tokens > generate_params['truncation_length']:
+        err_msg = f"The token count of your prompt ({token_count}) plus max_tokens ({max_tokens}) cannot exceed the model's context length ({generate_params['truncation_length']})."
         # print(f"Warning: ${err_msg}")
         raise InvalidRequestError(message=err_msg, param=max_tokens_str)
 
@@ -580,8 +571,8 @@ def stream_completions(body: dict, is_legacy: bool = False):
     yield text_streaming_chunk('')
 
     # generate reply #######################################
-    debug_msg({'prompt': prompt, 'req_params': req_params})
-    generator = generate_reply(prompt, req_params, stopping_strings=stopping_strings, is_chat=False)
+    debug_msg({'prompt': prompt, 'generate_params': generate_params})
+    generator = generate_reply(prompt, generate_params, stopping_strings=stopping_strings, is_chat=False)
 
     answer = ''
     seen_content = ''
@@ -612,7 +603,7 @@ def stream_completions(body: dict, is_legacy: bool = False):
 
     completion_token_count = len(encode(answer)[0])
     stop_reason = "stop"
-    if token_count + completion_token_count >= req_params['truncation_length'] or completion_token_count >= max_tokens:
+    if token_count + completion_token_count >= generate_params['truncation_length'] or completion_token_count >= max_tokens:
         stop_reason = "length"
 
     chunk = text_streaming_chunk('')
