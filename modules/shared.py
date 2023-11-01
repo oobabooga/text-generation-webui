@@ -232,8 +232,10 @@ def fix_loader_name(name):
 def add_extension(name, last=False):
     if args.extensions is None:
         args.extensions = [name]
-    else:
+    elif last:
         args.extensions = [x for x in args.extensions if x != name]
+        args.extensions.append(name)
+    elif name not in args.extensions:
         args.extensions.append(name)
 
 
