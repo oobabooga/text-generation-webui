@@ -67,24 +67,20 @@ def convert_logprobs_to_tiktoken(model, logprobs):
 
 
 def marshal_common_params(body):
-    # Request Parameters
-    # Try to use openai defaults or map them to something with the same intent
-
     req_params = get_default_req_params()
+    req_params.update({
+        'truncation_length': shared.settings['truncation_length'],
+        'add_bos_token': shared.settings.get('add_bos_token', req_params['add_bos_token']),
+        'seed': shared.settings.get('seed', req_params['seed']),
+        'custom_stopping_strings': shared.settings['custom_stopping_strings'],
+        'requested_model': body.get('model', shared.model_name),
+        'suffix': default(body, 'suffix', req_params['suffix']),
+        'temperature': clamp(default(body, 'temperature', req_params['temperature']), 0.01, 1.99),  # fixup absolute 0.0/2.0
+        'top_p': clamp(default(body, 'top_p', req_params['top_p']), 0.01, 1.0),
+        'presence_penalty': default(body, 'presence_penalty', req_params['presence_penalty']),
+        'frequency_penalty': default(body, 'frequency_penalty', req_params['frequency_penalty']),
+    })
 
-    # Common request parameters
-    req_params['truncation_length'] = shared.settings['truncation_length']
-    req_params['add_bos_token'] = shared.settings.get('add_bos_token', req_params['add_bos_token'])
-    req_params['seed'] = shared.settings.get('seed', req_params['seed'])
-    req_params['custom_stopping_strings'] = shared.settings['custom_stopping_strings']
-
-    # OpenAI API Parameters
-    # model - ignored for now, TODO: When we can reliably load a model or lora from a name only change this
-    req_params['requested_model'] = body.get('model', shared.model_name)
-
-    req_params['suffix'] = default(body, 'suffix', req_params['suffix'])
-    req_params['temperature'] = clamp(default(body, 'temperature', req_params['temperature']), 0.01, 1.99)  # fixup absolute 0.0/2.0
-    req_params['top_p'] = clamp(default(body, 'top_p', req_params['top_p']), 0.01, 1.0)
     n = default(body, 'n', 1)
     if n != 1:
         raise InvalidRequestError(message="Only n = 1 is supported.", param='n')
@@ -94,13 +90,6 @@ def marshal_common_params(body):
             req_params['stopping_strings'] = [body['stop']]  # non-standard parameter
         elif isinstance(body['stop'], list):
             req_params['stopping_strings'] = body['stop']
-
-    # presence_penalty - ignored
-    # frequency_penalty - ignored
-
-    # pass through unofficial params
-    req_params['repetition_penalty'] = default(body, 'repetition_penalty', req_params['repetition_penalty'])
-    req_params['encoder_repetition_penalty'] = default(body, 'encoder_repetition_penalty', req_params['encoder_repetition_penalty'])
 
     # user - ignored
 
@@ -116,6 +105,7 @@ def marshal_common_params(body):
                 for x in encode(encoder.decode([int(logit)]), add_special_tokens=False)[0]:
                     if int(x) in [0, 1, 2, 29871]:  # XXX LLAMA tokens
                         continue
+
                     new_logit_bias[str(int(x))] = bias
             debug_msg('logit_bias_map', logit_bias, '->', new_logit_bias)
             logit_bias = new_logit_bias
@@ -142,6 +132,7 @@ def messages_to_prompt(body: dict, req_params: dict, max_tokens):
     # functions
     if body.get('functions', []):  # chat only
         raise InvalidRequestError(message="functions is not supported.", param='functions')
+
     if body.get('function_call', ''):  # chat only, 'none', 'auto', {'name': 'func'}
         raise InvalidRequestError(message="function_call is not supported.", param='function_call')
 
@@ -230,9 +221,7 @@ def messages_to_prompt(body: dict, req_params: dict, max_tokens):
 
     system_msg = '\n'.join(system_msgs)
     system_msg = end_line(system_msg)
-
     prompt = system_msg + context_msg + ''.join(chat_msgs) + role_formats['prompt']
-
     token_count = len(encode(prompt)[0])
 
     if token_count >= req_params['truncation_length']:
