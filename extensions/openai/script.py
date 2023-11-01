@@ -1,3 +1,4 @@
+import json
 import os
 from threading import Thread
 
@@ -78,7 +79,7 @@ async def openai_completions(request: Request, request_data: CompletionRequest):
         async def generator():
             response = OAIcompletions.stream_completions(to_dict(request_data), is_legacy=is_legacy)
             for resp in response:
-                yield {'data': resp}
+                yield {"data": json.dumps(resp)}
 
         return EventSourceResponse(generator())  # sse
 
@@ -97,7 +98,7 @@ async def openai_chat_completions(request: Request, request_data: ChatCompletion
         async def generator():
             response = OAIcompletions.stream_chat_completions(to_dict(request_data), is_legacy=is_legacy)
             for resp in response:
-                yield {"data": resp}
+                yield {"data": json.dumps(resp)}
 
         return EventSourceResponse(generator())  # sse
 
