@@ -336,6 +336,7 @@ Optionally, you can use the following command-line flags:
 |`--gpu-split`     | Comma-separated list of VRAM (in GB) to use per GPU device for model layers. Example: 20,7,7. |
 |`--max_seq_len MAX_SEQ_LEN`           | Maximum sequence length. |
 |`--cfg-cache`                         | ExLlama_HF: Create an additional cache for CFG negative prompts. Necessary to use CFG with that loader, but not necessary for CFG with base ExLlama. |
+|`--no_flash_attn`                     | Force flash-attention to not be used. |
 
 #### AutoGPTQ
 
