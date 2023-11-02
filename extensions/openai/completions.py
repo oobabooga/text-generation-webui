@@ -413,7 +413,6 @@ def completions(body: dict, is_legacy: bool = False):
     stopping_strings = generate_params.pop('stopping_strings', [])
     # generate_params['suffix'] = default(body, 'suffix', generate_params['suffix'])
     generate_params['echo'] = default(body, 'echo', generate_params['echo'])
-    generate_params['top_k'] = default(body, 'best_of', generate_params['top_k'])
 
     resp_list_data = []
     total_completion_token_count = 0
@@ -519,7 +518,6 @@ def stream_completions(body: dict, is_legacy: bool = False):
     stopping_strings = generate_params.pop('stopping_strings', [])
     # generate_params['suffix'] = default(body, 'suffix', generate_params['suffix'])
     generate_params['echo'] = default(body, 'echo', generate_params['echo'])
-    generate_params['top_k'] = default(body, 'best_of', generate_params['top_k'])
 
     token_count = len(encode(prompt)[0])
 
