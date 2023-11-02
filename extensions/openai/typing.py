@@ -39,7 +39,7 @@ class GenerationOptions(BaseModel):
     num_beams: int = 1
     length_penalty: float = 1
     early_stopping: bool = False
-    truncation_length: int = 2048
+    truncation_length: int = 0
     max_tokens_second: int = 0
     custom_stopping_strings: str = ""
     custom_token_bans: str = ""
@@ -93,6 +93,7 @@ class ChatCompletionRequest(GenerationOptions):
     temperature: float | None = 1
     top_p: float | None = 1
     user: str | None = None
+    instruction_template: str | None = None
 
 
 class ChatCompletionResponse(BaseModel):

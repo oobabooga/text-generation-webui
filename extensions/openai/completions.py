@@ -65,11 +65,13 @@ def convert_logprobs_to_tiktoken(model, logprobs):
     return logprobs
 
 
-def marshal_common_params(body):
+def process_parameters(body):
     if body['n'] != 1:
         raise InvalidRequestError(message="Only n = 1 is supported.", param='n')
 
     generate_params = body
+    if generate_params['truncation_length'] == 0:
+        generate_params['truncation_length'] = shared.settings['truncation_length']
 
     if 'stop' in body:  # str or array, max len 4 (ignored)
         if isinstance(body['stop'], str):
@@ -126,55 +128,36 @@ def messages_to_prompt(body: dict, generate_params: dict, max_tokens):
         raise InvalidRequestError(message="messages is required", param='messages')
 
     messages = body['messages']
-
-    role_formats = {
-        'user': 'User: {message}\n',
-        'assistant': 'Assistant: {message}\n',
-        'system': '{message}',
-        'context': 'You are a helpful assistant. Answer as concisely as possible.\nUser: I want your assistance.\nAssistant: Sure! What can I do for you?',
-        'prompt': 'Assistant:',
-    }
-
     if 'stopping_strings' not in generate_params:
         generate_params['stopping_strings'] = []
 
-    # Instruct models can be much better
-    if shared.settings['instruction_template']:
-        try:
-            instruct = yaml.safe_load(open(f"instruction-templates/{shared.settings['instruction_template']}.yaml", 'r'))
+    if body['instruction_template'] == None:
+        instruction_template = shared.settings['instruction_template']
 
-            template = instruct['turn_template']
-            system_message_template = "{message}"
-            system_message_default = instruct.get('context', '')  # can be missing
-            bot_start = template.find('<|bot|>')  # So far, 100% of instruction templates have this token
-            user_message_template = template[:bot_start].replace('<|user-message|>', '{message}').replace('<|user|>', instruct.get('user', ''))
-            bot_message_template = template[bot_start:].replace('<|bot-message|>', '{message}').replace('<|bot|>', instruct.get('bot', ''))
-            bot_prompt = bot_message_template[:bot_message_template.find('{message}')].rstrip(' ')
+    instruct = yaml.safe_load(open(f"instruction-templates/{instruction_template}.yaml", 'r'))
 
-            role_formats = {
-                'user': user_message_template,
-                'assistant': bot_message_template,
-                'system': system_message_template,
-                'context': system_message_default,
-                'prompt': bot_prompt,
-            }
+    template = instruct['turn_template']
+    system_message_template = "{message}"
+    system_message_default = instruct.get('context', '')  # can be missing
+    bot_start = template.find('<|bot|>')  # So far, 100% of instruction templates have this token
+    user_message_template = template[:bot_start].replace('<|user-message|>', '{message}').replace('<|user|>', instruct.get('user', ''))
+    bot_message_template = template[bot_start:].replace('<|bot-message|>', '{message}').replace('<|bot|>', instruct.get('bot', ''))
+    bot_prompt = bot_message_template[:bot_message_template.find('{message}')].rstrip(' ')
 
-            if 'Alpaca' in shared.settings['instruction_template']:
-                generate_params['stopping_strings'].extend(['\n###'])
-            elif instruct['user']:  # WizardLM and some others have no user prompt.
-                generate_params['stopping_strings'].extend(['\n' + instruct['user'], instruct['user']])
+    role_formats = {
+        'user': user_message_template,
+        'assistant': bot_message_template,
+        'system': system_message_template,
+        'context': system_message_default,
+        'prompt': bot_prompt,
+    }
 
-            debug_msg(f"Loaded instruction role format: {shared.settings['instruction_template']}")
+    if 'Alpaca' in instruction_template:
+        generate_params['stopping_strings'].extend(['\n###'])
+    elif instruct['user']:  # WizardLM and some others have no user prompt.
+        generate_params['stopping_strings'].extend(['\n' + instruct['user'], instruct['user']])
 
-        except Exception as e:
-            generate_params['stopping_strings'].extend(['\nUser:', 'User:'])  # XXX User: prompt here also
-
-            print(f"Exception: When loading instruction-templates/{shared.settings['instruction_template']}.yaml: {repr(e)}")
-            print("Warning: Loaded default instruction-following template for model.")
-
-    else:
-        generate_params['stopping_strings'].extend(['\nUser:', 'User:'])  # XXX User: prompt here also
-        print("Warning: Loaded default instruction-following template for model.")
+    debug_msg(f"Loaded instruction role format: {instruction_template}")
 
     system_msgs = []
     chat_msgs = []
@@ -223,6 +206,7 @@ def messages_to_prompt(body: dict, generate_params: dict, max_tokens):
 
 
 def chat_completions(body: dict, is_legacy: bool = False) -> dict:
+
     # Chat Completions
     object_type = 'chat.completions'
     created_time = int(time.time())
@@ -230,11 +214,10 @@ def chat_completions(body: dict, is_legacy: bool = False) -> dict:
     resp_list = 'data' if is_legacy else 'choices'
 
     # common params
-    generate_params = marshal_common_params(body)
+    generate_params = process_parameters(body)
     generate_params['stream'] = False
     requested_model = generate_params.pop('model')
     logprob_proc = generate_params.pop('logprob_proc', None)
-    generate_params['top_k'] = 20  # There is no best_of/top_k param for chat, but it is much improved with a higher top_k.
 
     # chat default max_tokens is 'inf', but also flexible
     max_tokens = 0
@@ -306,7 +289,7 @@ def stream_chat_completions(body: dict, is_legacy: bool = False):
     resp_list = 'data' if is_legacy else 'choices'
 
     # common params
-    generate_params = marshal_common_params(body)
+    generate_params = process_parameters(body)
     generate_params['stream'] = True
     requested_model = generate_params.pop('model')
     logprob_proc = generate_params.pop('logprob_proc', None)
@@ -420,7 +403,7 @@ def completions(body: dict, is_legacy: bool = False):
         prompt_arg = [prompt_arg]
 
     # common params
-    generate_params = marshal_common_params(body)
+    generate_params = process_parameters(body)
     generate_params['stream'] = False
     max_tokens_str = 'length' if is_legacy else 'max_tokens'
     max_tokens = default(body, max_tokens_str, generate_params['max_new_tokens'])
@@ -515,7 +498,7 @@ def stream_completions(body: dict, is_legacy: bool = False):
         raise InvalidRequestError("Missing required input", param=prompt_str)
 
     prompt = body[prompt_str]
-    generate_params = marshal_common_params(body)
+    generate_params = process_parameters(body)
     requested_model = generate_params.pop('requested_model')
     if isinstance(prompt, list):
         if prompt and isinstance(prompt[0], int):
