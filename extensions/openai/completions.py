@@ -4,11 +4,13 @@ import tiktoken
 import torch
 import torch.nn.functional as F
 import yaml
+from transformers import LogitsProcessor, LogitsProcessorList
+
 from extensions.openai.errors import InvalidRequestError
 from extensions.openai.utils import debug_msg, default, end_line
 from modules import shared
+from modules.presets import load_preset_memoized
 from modules.text_generation import decode, encode, generate_reply
-from transformers import LogitsProcessor, LogitsProcessorList
 
 
 # Thanks to @Cypherfox [Cypherfoxy] for the logits code, blame to @matatonic

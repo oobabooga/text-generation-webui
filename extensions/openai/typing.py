@@ -4,9 +4,10 @@ from typing import List
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from modules import shared
 from pydantic import BaseModel
 from sse_starlette import EventSourceResponse
+
+from modules import shared
 
 app = FastAPI()
 
