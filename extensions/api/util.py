@@ -26,6 +26,7 @@ def build_parameters(body, chat=False):
         'do_sample': bool(body.get('do_sample', True)),
         'temperature': float(body.get('temperature', 0.5)),
         'top_p': float(body.get('top_p', 1)),
+        'min_p': float(body.get('min_p', 1)),
         'typical_p': float(body.get('typical_p', body.get('typical', 1))),
         'epsilon_cutoff': float(body.get('epsilon_cutoff', 0)),
         'eta_cutoff': float(body.get('eta_cutoff', 0)),

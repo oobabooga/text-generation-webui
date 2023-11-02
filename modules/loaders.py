@@ -149,6 +149,7 @@ loaders_samplers = {
     'Transformers': {
         'temperature',
         'top_p',
+        'min_p',
         'top_k',
         'typical_p',
         'epsilon_cutoff',
@@ -184,6 +185,7 @@ loaders_samplers = {
     'ExLlama_HF': {
         'temperature',
         'top_p',
+        'min_p',
         'top_k',
         'typical_p',
         'epsilon_cutoff',
@@ -244,6 +246,7 @@ loaders_samplers = {
     'ExLlamav2_HF': {
         'temperature',
         'top_p',
+        'min_p',
         'top_k',
         'typical_p',
         'epsilon_cutoff',
@@ -275,6 +278,7 @@ loaders_samplers = {
     'AutoGPTQ': {
         'temperature',
         'top_p',
+        'min_p',
         'top_k',
         'typical_p',
         'epsilon_cutoff',
@@ -310,6 +314,7 @@ loaders_samplers = {
     'GPTQ-for-LLaMa': {
         'temperature',
         'top_p',
+        'min_p',
         'top_k',
         'typical_p',
         'epsilon_cutoff',
@@ -361,6 +366,7 @@ loaders_samplers = {
     'llamacpp_HF': {
         'temperature',
         'top_p',
+        'min_p',
         'top_k',
         'typical_p',
         'epsilon_cutoff',
@@ -399,6 +405,7 @@ loaders_samplers = {
     'AutoAWQ': {
         'temperature',
         'top_p',
+        'min_p',
         'top_k',
         'typical_p',
         'epsilon_cutoff',

@@ -9,6 +9,7 @@ def default_preset():
         'do_sample': True,
         'temperature': 1,
         'top_p': 1,
+        'min_p': 1,
         'top_k': 0,
         'typical_p': 1,
         'epsilon_cutoff': 0,
