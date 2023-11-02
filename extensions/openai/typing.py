@@ -11,11 +11,11 @@ from sse_starlette import EventSourceResponse
 app = FastAPI()
 
 class GenerationOptions(BaseModel):
-    preset: str = 'None'
-    max_new_tokens: int = shared.settings['max_new_tokens']
+    preset: str = "None"
+    max_new_tokens: int = 200
     temperature: float = 1
     top_p: float = 1
-    top_k: int = 1000
+    top_k: int = 0
     repetition_penalty: float = 1
     presence_penalty: float = 0
     frequency_penalty: float = 0
@@ -32,22 +32,22 @@ class GenerationOptions(BaseModel):
     mirostat_tau: float = 5
     mirostat_eta: float = 0.1
     do_sample: bool = True
-    seed: int = shared.settings['seed']
+    seed: int = -1
     encoder_repetition_penalty: float = 1
     no_repeat_ngram_size: int = 0
     min_length: int = 0
     num_beams: int = 1
     length_penalty: float = 1
     early_stopping: bool = False
-    truncation_length: int = shared.settings['truncation_length']
-    max_tokens_second: int = shared.settings['max_tokens_second']
-    custom_stopping_strings: str = shared.settings['custom_stopping_strings']
-    custom_token_bans: str = shared.settings['custom_token_bans']
-    auto_max_new_tokens: bool = shared.settings['auto_max_new_tokens']
-    ban_eos_token: bool = shared.settings['ban_eos_token']
-    add_bos_token: bool = shared.settings['add_bos_token']
-    skip_special_tokens: bool = shared.settings['skip_special_tokens']
-    grammar_string: str = ''
+    truncation_length: int = 2048
+    max_tokens_second: int = 0
+    custom_stopping_strings: str = ""
+    custom_token_bans: str = ""
+    auto_max_new_tokens: bool = False
+    ban_eos_token: bool = False
+    add_bos_token: bool = True
+    skip_special_tokens: bool = True
+    grammar_string: str = ""
 
 
 class CompletionRequest(GenerationOptions):
