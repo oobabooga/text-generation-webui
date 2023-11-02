@@ -26,10 +26,7 @@ The main focus of this project is the Gradio UI, so you should familiarize yours
 
 **API**
 
-The API exists to make it possible to automate text generation actions available in the UI. It is implemented as an extension.
-
-* The UI takes precedence over the API: you should not add features exclusively to the API if they could be added to the UI first.
-* Providing an API with extensive and niche features is not a priority.
+The UI takes precedence over the API: you should not add features exclusively to the API if they could be added to the UI first.
 
 ### Extensions
 
