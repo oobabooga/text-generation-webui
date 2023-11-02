@@ -394,7 +394,6 @@ loaders_samplers = {
     'ctransformers': {
         'temperature',
         'top_p',
-        'min_p',
         'top_k',
         'repetition_penalty',
         'repetition_penalty_range',
