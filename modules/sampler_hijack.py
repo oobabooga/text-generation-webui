@@ -12,6 +12,26 @@ from transformers.generation.logits_process import (
 
 global_scores = None
 
+class MinPLogitsWarper(LogitsWarper):
+    def __init__(self, min_p: float, filter_value: float = -float("Inf"), min_tokens_to_keep: int = 1):
+        if min_p < 0 or min_p > 1.0:
+            raise ValueError(f"`min_p` has to be a float >= 0 and <= 1, but is {min_p}")
+        self.min_p = min_p
+        self.filter_value = filter_value
+        self.min_tokens_to_keep = min_tokens_to_keep
+
+    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
+        # Convert logits to probabilities
+        probs = torch.softmax(scores, dim=-1)
+        # Get the probability of the top token for each sequence in the batch
+        top_probs, _ = probs.max(dim=-1, keepdim=True)
+        # Calculate the actual min_p threshold by scaling min_p with the top token's probability
+        scaled_min_p = self.min_p * top_probs
+        # Create a mask for tokens that have a probability less than the scaled min_p
+        tokens_to_remove = probs < scaled_min_p
+        # Apply the filter to the scores
+        scores = scores.masked_fill(tokens_to_remove, self.filter_value)
+        return scores
 
 class TailFreeLogitsWarper(LogitsWarper):
     def __init__(self, tfs: float, filter_value: float = -float("Inf"), min_tokens_to_keep: int = 1):
@@ -190,6 +210,8 @@ def get_logits_warper_patch(self, generation_config):
             warpers_to_add.append(TailFreeLogitsWarper(tfs=generation_config.tfs, min_tokens_to_keep=min_tokens_to_keep))
         if generation_config.top_a is not None and 0.0 <= generation_config.top_a <= 1.0:
             warpers_to_add.append(TopALogitsWarper(top_a=generation_config.top_a, min_tokens_to_keep=min_tokens_to_keep))
+        if generation_config.min_p is not None and 0.0 <= generation_config.min_p <= 1.0:
+            warpers_to_add.append(MinPLogitsWarper(min_p=generation_config.min_p, min_tokens_to_keep=min_tokens_to_keep))
 
     if warpers and isinstance(warpers[-1], LogitNormalization):
         warpers = warpers[:-1] + warpers_to_add + [warpers[-1]]
@@ -223,6 +245,7 @@ def get_logits_processor_patch(self, **kwargs):
 def generation_config_init_patch(self, **kwargs):
     self.__init___old(**kwargs)
     self.tfs = kwargs.pop("tfs", 1.0)
+    self.min_p = kwargs.pop("min_p", 0.0)
     self.top_a = kwargs.pop("top_a", 0.0)
     self.mirostat_mode = kwargs.pop("mirostat_mode", 0)
     self.mirostat_eta = kwargs.pop("mirostat_eta", 0.1)
