@@ -123,7 +123,8 @@ def huggingface_loader(model_name):
     params = {
         'low_cpu_mem_usage': True,
         'trust_remote_code': shared.args.trust_remote_code,
-        'torch_dtype': torch.bfloat16 if shared.args.bf16 else torch.float16
+        'torch_dtype': torch.bfloat16 if shared.args.bf16 else torch.float16,
+        'use_safetensors': True if shared.args.force_safetensors else None
     }
     config = AutoConfig.from_pretrained(path_to_model, trust_remote_code=params['trust_remote_code'])
 
