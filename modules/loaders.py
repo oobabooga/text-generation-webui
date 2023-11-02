@@ -45,6 +45,8 @@ loaders_and_params = OrderedDict({
         'gpu_split',
         'max_seq_len',
         'cfg_cache',
+        'no_flash_attn',
+        'cache_8bit',
         'alpha_value',
         'compress_pos_emb',
         'use_fast',
@@ -60,6 +62,8 @@ loaders_and_params = OrderedDict({
     'ExLlamav2': [
         'gpu_split',
         'max_seq_len',
+        'no_flash_attn',
+        'cache_8bit',
         'alpha_value',
         'compress_pos_emb',
     ],
