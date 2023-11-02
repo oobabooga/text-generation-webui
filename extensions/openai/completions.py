@@ -27,6 +27,7 @@ class LogitsBiasProcessor(LogitsProcessor):
             logits[0, self.keys] += self.values
             debug_msg(" --> ", logits[0, self.keys])
             debug_msg(" max/min ", float(torch.max(logits[0])), float(torch.min(logits[0])))
+
         return logits
 
     def __repr__(self):
@@ -46,6 +47,7 @@ class LogprobProcessor(LogitsProcessor):
             top_probs = [float(x) for x in top_values[0]]
             self.token_alternatives = dict(zip(top_tokens, top_probs))
             debug_msg(repr(self))
+
         return logits
 
     def __repr__(self):
@@ -66,20 +68,19 @@ def convert_logprobs_to_tiktoken(model, logprobs):
 
 
 def process_parameters(body):
-    if body['n'] != 1:
-        raise InvalidRequestError(message="Only n = 1 is supported.", param='n')
-
     generate_params = body
     if generate_params['truncation_length'] == 0:
         generate_params['truncation_length'] = shared.settings['truncation_length']
+
+    if body['preset'] is not None:
+        preset = load_preset_memoized(body['preset'])
+        generate_params.update(preset)
 
     if 'stop' in body:  # str or array, max len 4 (ignored)
         if isinstance(body['stop'], str):
             generate_params['stopping_strings'] = [body['stop']]  # non-standard parameter
         elif isinstance(body['stop'], list):
             generate_params['stopping_strings'] = body['stop']
-
-    # user - ignored
 
     logits_processor = []
     logit_bias = body.get('logit_bias', None)
