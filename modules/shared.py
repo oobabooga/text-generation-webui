@@ -117,6 +117,7 @@ parser.add_argument('--cache-capacity', type=str, help='Maximum cache capacity (
 parser.add_argument('--gpu-split', type=str, help='Comma-separated list of VRAM (in GB) to use per GPU device for model layers. Example: 20,7,7.')
 parser.add_argument('--max_seq_len', type=int, default=2048, help='Maximum sequence length.')
 parser.add_argument('--cfg-cache', action='store_true', help='ExLlama_HF: Create an additional cache for CFG negative prompts. Necessary to use CFG with that loader, but not necessary for CFG with base ExLlama.')
+parser.add_argument('--no_flash_attn', action='store_true', help='Force flash-attention to not be used.')
 
 # AutoGPTQ
 parser.add_argument('--triton', action='store_true', help='Use triton.')

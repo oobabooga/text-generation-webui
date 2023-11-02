@@ -152,5 +152,6 @@ class Exllamav2HF(PreTrainedModel):
         config.max_seq_len = shared.args.max_seq_len
         config.scale_pos_emb = shared.args.compress_pos_emb
         config.scale_alpha_value = shared.args.alpha_value
+        config.no_flash_attn = shared.args.no_flash_attn
 
         return Exllamav2HF(config)
