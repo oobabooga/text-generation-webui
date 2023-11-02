@@ -11,43 +11,43 @@ from sse_starlette import EventSourceResponse
 app = FastAPI()
 
 class GenerationOptions(BaseModel):
-    max_new_tokens: int = shared.settings['max_new_tokens']
-    auto_max_new_tokens: bool = shared.settings['auto_max_new_tokens']
-    max_tokens_second: int = shared.settings['max_tokens_second']
     preset: str = 'None'
-    do_sample: bool = True
+    max_new_tokens: int = shared.settings['max_new_tokens']
     temperature: float = 1
     top_p: float = 1
-    typical_p: float = 1
-    epsilon_cutoff: float = 0
-    eta_cutoff: float = 0
-    tfs: float = 1
-    top_a: float = 0
+    top_k: int = 1000
     repetition_penalty: float = 1
     presence_penalty: float = 0
     frequency_penalty: float = 0
     repetition_penalty_range: int = 0
-    encoder_repetition_penalty: float = 1
-    top_k: int = 1000
-    min_length: int = 0
-    no_repeat_ngram_size: int = 0
-    num_beams: int = 1
+    typical_p: float = 1
+    tfs: float = 1
+    top_a: float = 0
+    epsilon_cutoff: float = 0
+    eta_cutoff: float = 0
+    guidance_scale: float = 1
+    negative_prompt: str = ''
     penalty_alpha: float = 0
-    length_penalty: float = 1
-    early_stopping: bool = False
     mirostat_mode: int = 0
     mirostat_tau: float = 5
     mirostat_eta: float = 0.1
-    grammar_string: str = ''
-    guidance_scale: float = 1
-    negative_prompt: str = ''
+    do_sample: bool = True
     seed: int = shared.settings['seed']
-    add_bos_token: bool = shared.settings['add_bos_token']
+    encoder_repetition_penalty: float = 1
+    no_repeat_ngram_size: int = 0
+    min_length: int = 0
+    num_beams: int = 1
+    length_penalty: float = 1
+    early_stopping: bool = False
     truncation_length: int = shared.settings['truncation_length']
-    ban_eos_token: bool = shared.settings['ban_eos_token']
-    custom_token_bans: str = shared.settings['custom_token_bans']
-    skip_special_tokens: bool = shared.settings['skip_special_tokens']
+    max_tokens_second: int = shared.settings['max_tokens_second']
     custom_stopping_strings: str = shared.settings['custom_stopping_strings']
+    custom_token_bans: str = shared.settings['custom_token_bans']
+    auto_max_new_tokens: bool = shared.settings['auto_max_new_tokens']
+    ban_eos_token: bool = shared.settings['ban_eos_token']
+    add_bos_token: bool = shared.settings['add_bos_token']
+    skip_special_tokens: bool = shared.settings['skip_special_tokens']
+    grammar_string: str = ''
 
 
 class CompletionRequest(GenerationOptions):
