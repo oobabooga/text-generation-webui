@@ -15,7 +15,6 @@ from modules.presets import load_preset_memoized
 from modules.text_generation import decode, encode, generate_reply
 
 
-# Thanks to @Cypherfox [Cypherfoxy] for the logits code, blame to @matatonic
 class LogitsBiasProcessor(LogitsProcessor):
     def __init__(self, logit_bias={}):
         self.logit_bias = logit_bias
@@ -296,7 +295,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
             "id": cmpl_id,
             "object": object_type,
             "created": created_time,
-            "model": shared.model_name,  # TODO: add Lora info?
+            "model": shared.model_name,
             resp_list: [{
                 "index": 0,
                 "finish_reason": stop_reason,
@@ -367,7 +366,6 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
 
             if token_count + max_tokens > generate_params['truncation_length']:
                 err_msg = f"The token count of your prompt ({token_count}) plus max_tokens ({max_tokens}) cannot exceed the model's context length ({generate_params['truncation_length']})."
-                # print(f"Warning: ${err_msg}")
                 raise InvalidRequestError(message=err_msg, param=max_tokens_str)
 
             # generate reply #######################################
@@ -401,7 +399,7 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
             "id": cmpl_id,
             "object": object_type,
             "created": created_time,
-            "model": shared.model_name,  # TODO: add Lora info?
+            "model": shared.model_name,
             resp_list: resp_list_data,
             "usage": {
                 "prompt_tokens": total_prompt_token_count,
