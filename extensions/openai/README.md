@@ -18,7 +18,7 @@ Make sure you enable it in server launch parameters, it should include:
 --extensions openai
 ```
 
-You can also use the `--listen` argument to make the server available on the networ, and/or the `--share` argument to enable a public Cloudflare endpoint.
+You can also use the `--listen` argument to make the server available on the network, and/or the `--share` argument to enable a public Cloudflare endpoint.
 
 To enable the basic image generation support (txt2img) set the environment variable `SD_WEBUI_URL` to point to your Stable Diffusion API ([Automatic1111](https://github.com/AUTOMATIC1111/stable-diffusion-webui)).
 
