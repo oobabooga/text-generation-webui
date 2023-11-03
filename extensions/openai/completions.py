@@ -134,7 +134,7 @@ def messages_to_prompt(body: dict, generate_params: dict, max_tokens):
     if 'stopping_strings' not in generate_params:
         generate_params['stopping_strings'] = []
 
-    if body['instruction_template'] == None:
+    if body['instruction_template'] is None:
         instruction_template = shared.settings['instruction_template']
 
     instruct = yaml.safe_load(open(f"instruction-templates/{instruction_template}.yaml", 'r'))
@@ -208,92 +208,17 @@ def messages_to_prompt(body: dict, generate_params: dict, max_tokens):
     return prompt, token_count
 
 
-def chat_completions(body: dict, is_legacy: bool = False) -> dict:
+def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -> dict:
 
     # Chat Completions
-    object_type = 'chat.completions'
+    object_type = 'chat.completions' if not stream else 'chat.completions.chunk'
     created_time = int(time.time())
     cmpl_id = "chatcmpl-%d" % (int(time.time() * 1000000000))
     resp_list = 'data' if is_legacy else 'choices'
 
     # common params
     generate_params = process_parameters(body)
-    generate_params['stream'] = False
-    requested_model = generate_params.pop('model')
-    logprob_proc = generate_params.pop('logprob_proc', None)
-
-    # chat default max_tokens is 'inf', but also flexible
-    max_tokens = 0
-    max_tokens_str = 'length' if is_legacy else 'max_tokens'
-    if max_tokens_str in body:
-        max_tokens = default(body, max_tokens_str, generate_params['truncation_length'])
-        generate_params['max_new_tokens'] = max_tokens
-    else:
-        generate_params['max_new_tokens'] = generate_params['truncation_length']
-
-    # format the prompt from messages
-    prompt, token_count = messages_to_prompt(body, generate_params, max_tokens)  # updates generate_params['stopping_strings']
-
-    # set real max, avoid deeper errors
-    if generate_params['max_new_tokens'] + token_count >= generate_params['truncation_length']:
-        generate_params['max_new_tokens'] = generate_params['truncation_length'] - token_count
-
-    stopping_strings = generate_params.pop('stopping_strings', [])
-
-    # generate reply #######################################
-    debug_msg({'prompt': prompt, 'generate_params': generate_params})
-    generator = generate_reply(prompt, generate_params, stopping_strings=stopping_strings, is_chat=False)
-
-    answer = ''
-    for a in generator:
-        answer = a
-
-    # strip extra leading space off new generated content
-    if answer and answer[0] == ' ':
-        answer = answer[1:]
-
-    completion_token_count = len(encode(answer)[0])
-    stop_reason = "stop"
-    if token_count + completion_token_count >= generate_params['truncation_length'] or completion_token_count >= generate_params['max_new_tokens']:
-        stop_reason = "length"
-
-    resp = {
-        "id": cmpl_id,
-        "object": object_type,
-        "created": created_time,
-        "model": shared.model_name,  # TODO: add Lora info?
-        resp_list: [{
-            "index": 0,
-            "finish_reason": stop_reason,
-            "message": {"role": "assistant", "content": answer}
-        }],
-        "usage": {
-            "prompt_tokens": token_count,
-            "completion_tokens": completion_token_count,
-            "total_tokens": token_count + completion_token_count
-        }
-    }
-    if logprob_proc:  # not official for chat yet
-        top_logprobs = convert_logprobs_to_tiktoken(model=requested_model, logprobs=logprob_proc.token_alternatives)
-        resp[resp_list][0]["logprobs"] = {'top_logprobs': [top_logprobs]}
-    # else:
-    #     resp[resp_list][0]["logprobs"] = None
-
-    return resp
-
-
-# generator
-def stream_chat_completions(body: dict, is_legacy: bool = False):
-
-    # Chat Completions
-    stream_object_type = 'chat.completions.chunk'
-    created_time = int(time.time())
-    cmpl_id = "chatcmpl-%d" % (int(time.time() * 1000000000))
-    resp_list = 'data' if is_legacy else 'choices'
-
-    # common params
-    generate_params = process_parameters(body)
-    generate_params['stream'] = True
+    generate_params['stream'] = stream
     requested_model = generate_params.pop('model')
     logprob_proc = generate_params.pop('logprob_proc', None)
 
@@ -317,7 +242,7 @@ def stream_chat_completions(body: dict, is_legacy: bool = False):
         # begin streaming
         chunk = {
             "id": cmpl_id,
-            "object": stream_object_type,
+            "object": object_type,
             "created": created_time,
             "model": shared.model_name,
             resp_list: [{
@@ -336,7 +261,8 @@ def stream_chat_completions(body: dict, is_legacy: bool = False):
         #    chunk[resp_list][0]["logprobs"] = None
         return chunk
 
-    yield chat_streaming_chunk('')
+    if stream:
+        yield chat_streaming_chunk('')
 
     # generate reply #######################################
     debug_msg({'prompt': prompt, 'generate_params': generate_params})
@@ -351,24 +277,25 @@ def stream_chat_completions(body: dict, is_legacy: bool = False):
 
     for a in generator:
         answer = a
+        if stream:
+            len_seen = len(seen_content)
+            new_content = answer[len_seen:]
 
-        len_seen = len(seen_content)
-        new_content = answer[len_seen:]
+            if not new_content or chr(0xfffd) in new_content:  # partial unicode character, don't send it yet.
+                continue
 
-        if not new_content or chr(0xfffd) in new_content:  # partial unicode character, don't send it yet.
-            continue
+            seen_content = answer
 
-        seen_content = answer
+            # strip extra leading space off new generated content
+            if len_seen == 0 and new_content[0] == ' ':
+                new_content = new_content[1:]
 
-        # strip extra leading space off new generated content
-        if len_seen == 0 and new_content[0] == ' ':
-            new_content = new_content[1:]
+            chunk = chat_streaming_chunk(new_content)
 
-        chunk = chat_streaming_chunk(new_content)
+            yield chunk
 
-        yield chunk
 
-    # to get the correct token_count, strip leading space if present
+    # strip extra leading space off new generated content
     if answer and answer[0] == ' ':
         answer = answer[1:]
 
@@ -377,15 +304,50 @@ def stream_chat_completions(body: dict, is_legacy: bool = False):
     if token_count + completion_token_count >= generate_params['truncation_length'] or completion_token_count >= generate_params['max_new_tokens']:
         stop_reason = "length"
 
-    chunk = chat_streaming_chunk('')
-    chunk[resp_list][0]['finish_reason'] = stop_reason
-    chunk['usage'] = {
-        "prompt_tokens": token_count,
-        "completion_tokens": completion_token_count,
-        "total_tokens": token_count + completion_token_count
-    }
+    if stream:
+        chunk = chat_streaming_chunk('')
+        chunk[resp_list][0]['finish_reason'] = stop_reason
+        chunk['usage'] = {
+            "prompt_tokens": token_count,
+            "completion_tokens": completion_token_count,
+            "total_tokens": token_count + completion_token_count
+        }
 
-    yield chunk
+        yield chunk
+    else:
+        resp = {
+            "id": cmpl_id,
+            "object": object_type,
+            "created": created_time,
+            "model": shared.model_name,  # TODO: add Lora info?
+            resp_list: [{
+                "index": 0,
+                "finish_reason": stop_reason,
+                "message": {"role": "assistant", "content": answer}
+            }],
+            "usage": {
+                "prompt_tokens": token_count,
+                "completion_tokens": completion_token_count,
+                "total_tokens": token_count + completion_token_count
+            }
+        }
+        if logprob_proc:  # not official for chat yet
+            top_logprobs = convert_logprobs_to_tiktoken(model=requested_model, logprobs=logprob_proc.token_alternatives)
+            resp[resp_list][0]["logprobs"] = {'top_logprobs': [top_logprobs]}
+        # else:
+        #     resp[resp_list][0]["logprobs"] = None
+
+        return resp
+
+
+def chat_completions(body: dict, is_legacy: bool = False) -> dict:
+    return chat_completions_common(body, is_legacy, stream=False)
+
+
+# generator
+def stream_chat_completions(body: dict, is_legacy: bool = False):
+    for resp in chat_completions_common(body, is_legacy, stream=True):
+        yield resp
 
 
 def completions(body: dict, is_legacy: bool = False):
