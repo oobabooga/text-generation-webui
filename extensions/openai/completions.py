@@ -1,4 +1,5 @@
 import time
+from collections import deque
 
 import tiktoken
 import torch
@@ -294,7 +295,6 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
 
             yield chunk
 
-
     # strip extra leading space off new generated content
     if answer and answer[0] == ' ':
         answer = answer[1:]
@@ -337,221 +337,203 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
         # else:
         #     resp[resp_list][0]["logprobs"] = None
 
-        return resp
-
-
-def chat_completions(body: dict, is_legacy: bool = False) -> dict:
-    return chat_completions_common(body, is_legacy, stream=False)
-
-
-# generator
-def stream_chat_completions(body: dict, is_legacy: bool = False):
-    for resp in chat_completions_common(body, is_legacy, stream=True):
         yield resp
 
 
-def completions(body: dict, is_legacy: bool = False):
-    # Legacy
-    # Text Completions
-    object_type = 'text_completion'
+def completions_common(body: dict, is_legacy: bool = False, stream=False):
+    object_type = 'text_completion.chunk' if stream else 'text_completion'
     created_time = int(time.time())
     cmpl_id = "conv-%d" % (int(time.time() * 1000000000))
     resp_list = 'data' if is_legacy else 'choices'
 
-    # ... encoded as a string, array of strings, array of tokens, or array of token arrays.
     prompt_str = 'context' if is_legacy else 'prompt'
+
+    # ... encoded as a string, array of strings, array of tokens, or array of token arrays.
     if prompt_str not in body:
         raise InvalidRequestError("Missing required input", param=prompt_str)
 
-    prompt_arg = body[prompt_str]
-    if isinstance(prompt_arg, str) or (isinstance(prompt_arg, list) and isinstance(prompt_arg[0], int)):
-        prompt_arg = [prompt_arg]
-
     # common params
     generate_params = process_parameters(body)
-    generate_params['stream'] = False
+    generate_params['stream'] = stream
     max_tokens_str = 'length' if is_legacy else 'max_tokens'
     max_tokens = default(body, max_tokens_str, generate_params['max_new_tokens'])
     generate_params['max_new_tokens'] = max_tokens
-    requested_model = generate_params.pop('requested_model')
+    requested_model = generate_params.pop('model')
     logprob_proc = generate_params.pop('logprob_proc', None)
     stopping_strings = generate_params.pop('stopping_strings', [])
     # generate_params['suffix'] = default(body, 'suffix', generate_params['suffix'])
     generate_params['echo'] = default(body, 'echo', generate_params['echo'])
 
-    resp_list_data = []
-    total_completion_token_count = 0
-    total_prompt_token_count = 0
+    if not stream:
+        prompt_arg = body[prompt_str]
+        if isinstance(prompt_arg, str) or (isinstance(prompt_arg, list) and isinstance(prompt_arg[0], int)):
+            prompt_arg = [prompt_arg]
 
-    for idx, prompt in enumerate(prompt_arg, start=0):
-        if isinstance(prompt[0], int):
-            # token lists
-            if requested_model == shared.model_name:
-                prompt = decode(prompt)[0]
-            else:
+        resp_list_data = []
+        total_completion_token_count = 0
+        total_prompt_token_count = 0
+
+        for idx, prompt in enumerate(prompt_arg, start=0):
+            if isinstance(prompt[0], int):
+                # token lists
+                if requested_model == shared.model_name:
+                    prompt = decode(prompt)[0]
+                else:
+                    try:
+                        encoder = tiktoken.encoding_for_model(requested_model)
+                        prompt = encoder.decode(prompt)
+                    except KeyError:
+                        prompt = decode(prompt)[0]
+
+            token_count = len(encode(prompt)[0])
+            total_prompt_token_count += token_count
+
+            if token_count + max_tokens > generate_params['truncation_length']:
+                err_msg = f"The token count of your prompt ({token_count}) plus max_tokens ({max_tokens}) cannot exceed the model's context length ({generate_params['truncation_length']})."
+                # print(f"Warning: ${err_msg}")
+                raise InvalidRequestError(message=err_msg, param=max_tokens_str)
+
+            # generate reply #######################################
+            debug_msg({'prompt': prompt, 'generate_params': generate_params})
+            generator = generate_reply(prompt, generate_params, stopping_strings=stopping_strings, is_chat=False)
+            answer = ''
+
+            for a in generator:
+                answer = a
+
+            # strip extra leading space off new generated content
+            if answer and answer[0] == ' ':
+                answer = answer[1:]
+
+            completion_token_count = len(encode(answer)[0])
+            total_completion_token_count += completion_token_count
+            stop_reason = "stop"
+            if token_count + completion_token_count >= generate_params['truncation_length'] or completion_token_count >= max_tokens:
+                stop_reason = "length"
+
+            respi = {
+                "index": idx,
+                "finish_reason": stop_reason,
+                "text": answer,
+                "logprobs": {'top_logprobs': [logprob_proc.token_alternatives]} if logprob_proc else None,
+            }
+
+            resp_list_data.extend([respi])
+
+        resp = {
+            "id": cmpl_id,
+            "object": object_type,
+            "created": created_time,
+            "model": shared.model_name,  # TODO: add Lora info?
+            resp_list: resp_list_data,
+            "usage": {
+                "prompt_tokens": total_prompt_token_count,
+                "completion_tokens": total_completion_token_count,
+                "total_tokens": total_prompt_token_count + total_completion_token_count
+            }
+        }
+
+        yield resp
+    else:
+        prompt = body[prompt_str]
+        if isinstance(prompt, list):
+            if prompt and isinstance(prompt[0], int):
                 try:
                     encoder = tiktoken.encoding_for_model(requested_model)
                     prompt = encoder.decode(prompt)
                 except KeyError:
                     prompt = decode(prompt)[0]
+            else:
+                raise InvalidRequestError(message="API Batched generation not yet supported.", param=prompt_str)
 
         token_count = len(encode(prompt)[0])
-        total_prompt_token_count += token_count
 
         if token_count + max_tokens > generate_params['truncation_length']:
             err_msg = f"The token count of your prompt ({token_count}) plus max_tokens ({max_tokens}) cannot exceed the model's context length ({generate_params['truncation_length']})."
             # print(f"Warning: ${err_msg}")
             raise InvalidRequestError(message=err_msg, param=max_tokens_str)
 
+        def text_streaming_chunk(content):
+            # begin streaming
+            chunk = {
+                "id": cmpl_id,
+                "object": object_type,
+                "created": created_time,
+                "model": shared.model_name,
+                resp_list: [{
+                    "index": 0,
+                    "finish_reason": None,
+                    "text": content,
+                    "logprobs": {'top_logprobs': [logprob_proc.token_alternatives]} if logprob_proc else None,
+                }],
+            }
+
+            return chunk
+
+        yield text_streaming_chunk('')
+
         # generate reply #######################################
         debug_msg({'prompt': prompt, 'generate_params': generate_params})
         generator = generate_reply(prompt, generate_params, stopping_strings=stopping_strings, is_chat=False)
+
         answer = ''
+        seen_content = ''
+        completion_token_count = 0
 
         for a in generator:
             answer = a
 
-        # strip extra leading space off new generated content
+            len_seen = len(seen_content)
+            new_content = answer[len_seen:]
+
+            if not new_content or chr(0xfffd) in new_content:  # partial unicode character, don't send it yet.
+                continue
+
+            seen_content = answer
+
+            # strip extra leading space off new generated content
+            if len_seen == 0 and new_content[0] == ' ':
+                new_content = new_content[1:]
+
+            chunk = text_streaming_chunk(new_content)
+
+            yield chunk
+
+        # to get the correct count, we strip the leading space if present
         if answer and answer[0] == ' ':
             answer = answer[1:]
 
         completion_token_count = len(encode(answer)[0])
-        total_completion_token_count += completion_token_count
         stop_reason = "stop"
         if token_count + completion_token_count >= generate_params['truncation_length'] or completion_token_count >= max_tokens:
             stop_reason = "length"
 
-        respi = {
-            "index": idx,
-            "finish_reason": stop_reason,
-            "text": answer,
-            "logprobs": {'top_logprobs': [logprob_proc.token_alternatives]} if logprob_proc else None,
+        chunk = text_streaming_chunk('')
+        chunk[resp_list][0]["finish_reason"] = stop_reason
+        chunk["usage"] = {
+            "prompt_tokens": token_count,
+            "completion_tokens": completion_token_count,
+            "total_tokens": token_count + completion_token_count
         }
-
-        resp_list_data.extend([respi])
-
-    resp = {
-        "id": cmpl_id,
-        "object": object_type,
-        "created": created_time,
-        "model": shared.model_name,  # TODO: add Lora info?
-        resp_list: resp_list_data,
-        "usage": {
-            "prompt_tokens": total_prompt_token_count,
-            "completion_tokens": total_completion_token_count,
-            "total_tokens": total_prompt_token_count + total_completion_token_count
-        }
-    }
-
-    return resp
-
-
-# generator
-def stream_completions(body: dict, is_legacy: bool = False):
-    # Legacy
-    # Text Completions
-    # object_type = 'text_completion'
-    stream_object_type = 'text_completion.chunk'
-    created_time = int(time.time())
-    cmpl_id = "conv-%d" % (int(time.time() * 1000000000))
-    resp_list = 'data' if is_legacy else 'choices'
-
-    # ... encoded as a string, array of strings, array of tokens, or array of token arrays.
-    prompt_str = 'context' if is_legacy else 'prompt'
-    if prompt_str not in body:
-        raise InvalidRequestError("Missing required input", param=prompt_str)
-
-    prompt = body[prompt_str]
-    generate_params = process_parameters(body)
-    requested_model = generate_params.pop('requested_model')
-    if isinstance(prompt, list):
-        if prompt and isinstance(prompt[0], int):
-            try:
-                encoder = tiktoken.encoding_for_model(requested_model)
-                prompt = encoder.decode(prompt)
-            except KeyError:
-                prompt = decode(prompt)[0]
-        else:
-            raise InvalidRequestError(message="API Batched generation not yet supported.", param=prompt_str)
-
-    # common params
-    generate_params['stream'] = True
-    max_tokens_str = 'length' if is_legacy else 'max_tokens'
-    max_tokens = default(body, max_tokens_str, generate_params['max_new_tokens'])
-    generate_params['max_new_tokens'] = max_tokens
-    logprob_proc = generate_params.pop('logprob_proc', None)
-    stopping_strings = generate_params.pop('stopping_strings', [])
-    # generate_params['suffix'] = default(body, 'suffix', generate_params['suffix'])
-    generate_params['echo'] = default(body, 'echo', generate_params['echo'])
-
-    token_count = len(encode(prompt)[0])
-
-    if token_count + max_tokens > generate_params['truncation_length']:
-        err_msg = f"The token count of your prompt ({token_count}) plus max_tokens ({max_tokens}) cannot exceed the model's context length ({generate_params['truncation_length']})."
-        # print(f"Warning: ${err_msg}")
-        raise InvalidRequestError(message=err_msg, param=max_tokens_str)
-
-    def text_streaming_chunk(content):
-        # begin streaming
-        chunk = {
-            "id": cmpl_id,
-            "object": stream_object_type,
-            "created": created_time,
-            "model": shared.model_name,
-            resp_list: [{
-                "index": 0,
-                "finish_reason": None,
-                "text": content,
-                "logprobs": {'top_logprobs': [logprob_proc.token_alternatives]} if logprob_proc else None,
-            }],
-        }
-
-        return chunk
-
-    yield text_streaming_chunk('')
-
-    # generate reply #######################################
-    debug_msg({'prompt': prompt, 'generate_params': generate_params})
-    generator = generate_reply(prompt, generate_params, stopping_strings=stopping_strings, is_chat=False)
-
-    answer = ''
-    seen_content = ''
-    completion_token_count = 0
-
-    for a in generator:
-        answer = a
-
-        len_seen = len(seen_content)
-        new_content = answer[len_seen:]
-
-        if not new_content or chr(0xfffd) in new_content:  # partial unicode character, don't send it yet.
-            continue
-
-        seen_content = answer
-
-        # strip extra leading space off new generated content
-        if len_seen == 0 and new_content[0] == ' ':
-            new_content = new_content[1:]
-
-        chunk = text_streaming_chunk(new_content)
 
         yield chunk
 
-    # to get the correct count, we strip the leading space if present
-    if answer and answer[0] == ' ':
-        answer = answer[1:]
 
-    completion_token_count = len(encode(answer)[0])
-    stop_reason = "stop"
-    if token_count + completion_token_count >= generate_params['truncation_length'] or completion_token_count >= max_tokens:
-        stop_reason = "length"
+def chat_completions(body: dict, is_legacy: bool = False) -> dict:
+    generator = chat_completions_common(body, is_legacy, stream=False)
+    return deque(generator, maxlen=1).pop()
 
-    chunk = text_streaming_chunk('')
-    chunk[resp_list][0]["finish_reason"] = stop_reason
-    chunk["usage"] = {
-        "prompt_tokens": token_count,
-        "completion_tokens": completion_token_count,
-        "total_tokens": token_count + completion_token_count
-    }
 
-    yield chunk
+def stream_chat_completions(body: dict, is_legacy: bool = False):
+    for resp in chat_completions_common(body, is_legacy, stream=True):
+        yield resp
+
+
+def completions(body: dict, is_legacy: bool = False) -> dict:
+    generator = completions_common(body, is_legacy, stream=False)
+    return deque(generator, maxlen=1).pop()
+
+
+def stream_completions(body: dict, is_legacy: bool = False):
+    for resp in completions_common(body, is_legacy, stream=True):
+        yield resp
