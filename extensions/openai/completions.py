@@ -1,15 +1,16 @@
+import copy
 import time
 from collections import deque
 
 import tiktoken
 import torch
 import torch.nn.functional as F
-import yaml
 from transformers import LogitsProcessor, LogitsProcessorList
 
 from extensions.openai.errors import InvalidRequestError
-from extensions.openai.utils import debug_msg, default, end_line
+from extensions.openai.utils import debug_msg, default
 from modules import shared
+from modules.chat import generate_chat_reply, load_character_memoized
 from modules.presets import load_preset_memoized
 from modules.text_generation import decode, encode, generate_reply
 
@@ -120,96 +121,57 @@ def process_parameters(body):
     return generate_params
 
 
-def messages_to_prompt(body: dict, generate_params: dict, max_tokens):
-    # functions
-    if body.get('functions', []):  # chat only
+def convert_history(history):
+    '''
+    Chat histories in this program are in the format [message, reply].
+    This function converts OpenAI histories to that format.
+    '''
+    chat_dialogue = []
+    current_message = ""
+    current_reply = ""
+
+    for entry in history:
+        content = entry["content"]
+        role = entry["role"]
+
+        if role == "user":
+            if current_message:
+                chat_dialogue.append([current_message, ''])
+                current_message = ""
+            current_message = content
+        elif role == "assistant":
+            current_reply = content
+            if current_message:
+                chat_dialogue.append([current_message, current_reply])
+                current_message = ""
+                current_reply = ""
+            else:
+                chat_dialogue.append(['', current_reply])
+
+    if current_message:
+        chat_dialogue.append([current_message, ''])
+
+    return {'internal': chat_dialogue, 'visible': copy.deepcopy(chat_dialogue)}
+
+
+def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -> dict:
+    if body.get('functions', []):
         raise InvalidRequestError(message="functions is not supported.", param='functions')
 
-    if body.get('function_call', ''):  # chat only, 'none', 'auto', {'name': 'func'}
+    if body.get('function_call', ''):
         raise InvalidRequestError(message="function_call is not supported.", param='function_call')
 
     if 'messages' not in body:
         raise InvalidRequestError(message="messages is required", param='messages')
 
     messages = body['messages']
-    if 'stopping_strings' not in generate_params:
-        generate_params['stopping_strings'] = []
-
-    if body['instruction_template'] is None:
-        instruction_template = shared.settings['instruction_template']
-
-    instruct = yaml.safe_load(open(f"instruction-templates/{instruction_template}.yaml", 'r'))
-
-    template = instruct['turn_template']
-    system_message_template = "{message}"
-    system_message_default = instruct.get('context', '')  # can be missing
-    bot_start = template.find('<|bot|>')  # So far, 100% of instruction templates have this token
-    user_message_template = template[:bot_start].replace('<|user-message|>', '{message}').replace('<|user|>', instruct.get('user', ''))
-    bot_message_template = template[bot_start:].replace('<|bot-message|>', '{message}').replace('<|bot|>', instruct.get('bot', ''))
-    bot_prompt = bot_message_template[:bot_message_template.find('{message}')].rstrip(' ')
-
-    role_formats = {
-        'user': user_message_template,
-        'assistant': bot_message_template,
-        'system': system_message_template,
-        'context': system_message_default,
-        'prompt': bot_prompt,
-    }
-
-    if 'Alpaca' in instruction_template:
-        generate_params['stopping_strings'].extend(['\n###'])
-    elif instruct['user']:  # WizardLM and some others have no user prompt.
-        generate_params['stopping_strings'].extend(['\n' + instruct['user'], instruct['user']])
-
-    debug_msg(f"Loaded instruction role format: {instruction_template}")
-
-    system_msgs = []
-    chat_msgs = []
-
-    # You are ChatGPT, a large language model trained by OpenAI. Answer as concisely as possible. Knowledge cutoff: {knowledge_cutoff} Current date: {current_date}
-    context_msg = role_formats['system'].format(message=role_formats['context']) if role_formats['context'] else ''
-    context_msg = end_line(context_msg)
-
-    # Maybe they sent both? This is not documented in the API, but some clients seem to do this.
-    if 'prompt' in body:
-        context_msg = end_line(role_formats['system'].format(message=body['prompt'])) + context_msg
-
     for m in messages:
         if 'role' not in m:
             raise InvalidRequestError(message="messages: missing role", param='messages')
+        elif m['role'] == 'function':
+            raise InvalidRequestError(message="role: function is not supported.", param='messages')
         if 'content' not in m:
             raise InvalidRequestError(message="messages: missing content", param='messages')
-
-        role = m['role']
-        content = m['content']
-        # name = m.get('name', None)
-        # function_call = m.get('function_call', None) # user name or function name with output in content
-        msg = role_formats[role].format(message=content)
-        if role == 'system':
-            system_msgs.extend([msg])
-        elif role == 'function':
-            raise InvalidRequestError(message="role: function is not supported.", param='messages')
-        else:
-            chat_msgs.extend([msg])
-
-    system_msg = '\n'.join(system_msgs)
-    system_msg = end_line(system_msg)
-    prompt = system_msg + context_msg + ''.join(chat_msgs) + role_formats['prompt']
-    token_count = len(encode(prompt)[0])
-
-    if token_count >= generate_params['truncation_length']:
-        err_msg = f"This model maximum context length is {generate_params['truncation_length']} tokens. However, your messages resulted in over {token_count} tokens."
-        raise InvalidRequestError(message=err_msg, param='messages')
-
-    if max_tokens > 0 and token_count + max_tokens > generate_params['truncation_length']:
-        err_msg = f"This model maximum context length is {generate_params['truncation_length']} tokens. However, your messages resulted in over {token_count} tokens and max_tokens is {max_tokens}."
-        print(f"Warning: ${err_msg}")
-        # raise InvalidRequestError(message=err_msg, params='max_tokens')
-
-    return prompt, token_count
-
-
-def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -> dict:
 
     # Chat Completions
     object_type = 'chat.completions' if not stream else 'chat.completions.chunk'
@@ -217,9 +179,32 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
     cmpl_id = "chatcmpl-%d" % (int(time.time() * 1000000000))
     resp_list = 'data' if is_legacy else 'choices'
 
-    # common params
+    # generation parameters
     generate_params = process_parameters(body)
-    generate_params['stream'] = stream
+    if body['instruction_template'] is None:
+        instruction_template = shared.settings['instruction_template']
+    else:
+        instruction_template = body['instruction_template']
+
+    # name1, name2, _, greeting, context, _ = load_character_memoized(character, str(body.get('your_name', shared.settings['name1'])), '', instruct=False)
+    name1_instruct, name2_instruct, _, _, context_instruct, turn_template = load_character_memoized(instruction_template, '', '', instruct=True)
+    history = convert_history(messages)
+    generate_params.update({
+        'mode': 'instruct',
+        # 'mode': str(body.get('mode', 'chat')),
+        # 'name1': str(body.get('name1', name1)),
+        # 'name2': str(body.get('name2', name2)),
+        # 'context': str(body.get('context', context)),
+        # 'greeting': str(body.get('greeting', greeting)),
+        'name1_instruct': str(body.get('name1_instruct', name1_instruct)),
+        'name2_instruct': str(body.get('name2_instruct', name2_instruct)),
+        'context_instruct': str(body.get('context_instruct', context_instruct)),
+        'turn_template': str(body.get('turn_template', turn_template)),
+        'chat-instruct_command': str(body.get('chat_instruct_command', body.get('chat-instruct_command', shared.settings['chat-instruct_command']))),
+        'history': body.get('history', history),
+        'stream': stream
+    })
+
     requested_model = generate_params.pop('model')
     logprob_proc = generate_params.pop('logprob_proc', None)
 
@@ -231,13 +216,6 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
         generate_params['max_new_tokens'] = max_tokens
     else:
         generate_params['max_new_tokens'] = generate_params['truncation_length']
-
-    # format the prompt from messages
-    prompt, token_count = messages_to_prompt(body, generate_params, max_tokens)  # updates generate_params['stopping_strings']
-
-    # set real max, avoid deeper errors
-    if generate_params['max_new_tokens'] + token_count >= generate_params['truncation_length']:
-        generate_params['max_new_tokens'] = generate_params['truncation_length'] - token_count
 
     def chat_streaming_chunk(content):
         # begin streaming
@@ -265,19 +243,20 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
     if stream:
         yield chat_streaming_chunk('')
 
+    prompt = ''
+    token_count = 0
     # generate reply #######################################
     debug_msg({'prompt': prompt, 'generate_params': generate_params})
 
-    stopping_strings = generate_params.pop('stopping_strings', [])
-
-    generator = generate_reply(prompt, generate_params, stopping_strings=stopping_strings, is_chat=False)
+    generator = generate_chat_reply(
+        history['internal'][-1][0], generate_params, regenerate=False, _continue=False, loading_message=False)
 
     answer = ''
     seen_content = ''
     completion_token_count = 0
 
     for a in generator:
-        answer = a
+        answer = a['internal'][-1][1]
         if stream:
             len_seen = len(seen_content)
             new_content = answer[len_seen:]
@@ -294,10 +273,6 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
             chunk = chat_streaming_chunk(new_content)
 
             yield chunk
-
-    # strip extra leading space off new generated content
-    if answer and answer[0] == ' ':
-        answer = answer[1:]
 
     completion_token_count = len(encode(answer)[0])
     stop_reason = "stop"

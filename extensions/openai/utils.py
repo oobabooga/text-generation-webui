@@ -19,12 +19,6 @@ def float_list_to_base64(float_array: np.ndarray) -> str:
     return ascii_string
 
 
-def end_line(s):
-    if s and s[-1] != '\n':
-        s = s + '\n'
-    return s
-
-
 def debug_msg(*args, **kwargs):
     from extensions.openai.script import params
     if os.environ.get("OPENEDAI_DEBUG", params.get('debug', 0)):
