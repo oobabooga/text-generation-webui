@@ -26,6 +26,7 @@
 .DS_Store
 .eslintrc.js
 .idea
+.env
 .venv
 venv
 .vscode

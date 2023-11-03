@@ -8,6 +8,7 @@ def default_preset():
     return {
         'temperature': 1,
         'top_p': 1,
+        'min_p': 1,
         'top_k': 0,
         'repetition_penalty': 1,
         'presence_penalty': 0,
