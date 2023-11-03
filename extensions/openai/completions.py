@@ -129,12 +129,14 @@ def convert_history(history):
     chat_dialogue = []
     current_message = ""
     current_reply = ""
+    user_input = ""
 
     for entry in history:
         content = entry["content"]
         role = entry["role"]
 
         if role == "user":
+            user_input = content
             if current_message:
                 chat_dialogue.append([current_message, ''])
                 current_message = ""
@@ -148,10 +150,10 @@ def convert_history(history):
             else:
                 chat_dialogue.append(['', current_reply])
 
-    if current_message:
-        chat_dialogue.append([current_message, ''])
+    # if current_message:
+    #     chat_dialogue.append([current_message, ''])
 
-    return {'internal': chat_dialogue, 'visible': copy.deepcopy(chat_dialogue)}
+    return user_input, {'internal': chat_dialogue, 'visible': copy.deepcopy(chat_dialogue)}
 
 
 def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -> dict:
@@ -188,7 +190,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
 
     # name1, name2, _, greeting, context, _ = load_character_memoized(character, str(body.get('your_name', shared.settings['name1'])), '', instruct=False)
     name1_instruct, name2_instruct, _, _, context_instruct, turn_template = load_character_memoized(instruction_template, '', '', instruct=True)
-    history = convert_history(messages)
+    user_input, history = convert_history(messages)
     generate_params.update({
         'mode': 'instruct',
         # 'mode': str(body.get('mode', 'chat')),
@@ -249,7 +251,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
     debug_msg({'prompt': prompt, 'generate_params': generate_params})
 
     generator = generate_chat_reply(
-        history['internal'][-1][0], generate_params, regenerate=False, _continue=False, loading_message=False)
+        user_input, generate_params, regenerate=False, _continue=False, loading_message=False)
 
     answer = ''
     seen_content = ''
