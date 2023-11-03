@@ -16,6 +16,7 @@ class GenerationOptions(BaseModel):
     max_new_tokens: int = 200
     temperature: float = 1
     top_p: float = 1
+    min_p: float = 0
     top_k: int = 0
     repetition_penalty: float = 1
     presence_penalty: float = 0
