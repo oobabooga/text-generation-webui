@@ -29,6 +29,7 @@ Options:
 * **load-in-4bit**: Load the model in 4-bit precision using bitsandbytes.
 * **trust-remote-code**: Some models use custom Python code to load the model or the tokenizer. For such models, this option needs to be set. It doesn't download any remote content: all it does is execute the .py files that get downloaded with the model. Those files can potentially include malicious code; I have never seen it happen, but it is in principle possible.
 * **use_fast**: Use the "fast" version of the tokenizer. Especially useful for Llama models, which originally had a "slow" tokenizer that received an update. If your local files are in the old "slow" format, checking this option may trigger a conversion that takes several minutes. The fast tokenizer is mostly useful if you are generating 50+ tokens/second using ExLlama_HF or if you are tokenizing a huge dataset for training.
+* **use_flash_attention_2**: Set use_flash_attention_2=True while loading the model. Possibly useful for training.
 * **disable_exllama**: Only applies when you are loading a GPTQ model through the transformers loader. It needs to be checked if you intend to train LoRAs with the model.
 
 ### ExLlama_HF
@@ -42,6 +43,8 @@ ExLlama_HF is the v1 of ExLlama (https://github.com/turboderp/exllama) connected
 * **gpu-split**: If you have multiple GPUs, the amount of memory to allocate per GPU should be set in this field. Make sure to set a lower value for the first GPU, as that's where the cache is allocated.
 * **max_seq_len**: The maximum sequence length for the model. In ExLlama, the cache is preallocated, so the higher this value, the higher the VRAM. It is automatically set to the maximum sequence length for the model based on its metadata, but you may need to lower this value be able to fit the model into your GPU. After loading the model, the "Truncate the prompt up to this length" parameter under "Parameters" > "Generation" is automatically set to your chosen "max_seq_len" so that you don't have to set the same thing twice.
 * **cfg-cache**: Creates a second cache to hold the CFG negative prompts. You need to set this if and only if you intend to use CFG in the "Parameters" > "Generation" tab. Checking this parameter doubles the cache VRAM usage.
+* **no_flash_attn**: Disables flash attention. Otherwise, it is automatically used as long as the library is installed.
+* **cache_8bit**: Create a 8-bit precision cache instead of a 16-bit one. This saves VRAM but increases perplexity (I don't know by how much).
 
 ### ExLlamav2_HF
 
