@@ -223,7 +223,7 @@ def get_logits_warper_patch(self, generation_config):
         if generation_config.min_p is not None and 0.0 < generation_config.min_p <= 1.0:
             warpers_to_add.append(MinPLogitsWarper(min_p=generation_config.min_p, min_tokens_to_keep=min_tokens_to_keep))
 
-    if isinstance(warpers[-1], LogitNormalization):
+    if len(warpers) > 0 and isinstance(warpers[-1], LogitNormalization):
         normalize = warpers.pop(-1)
     else:
         normalize = None
