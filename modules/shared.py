@@ -93,6 +93,7 @@ parser.add_argument('--sdp-attention', action='store_true', help='Use PyTorch 2.
 parser.add_argument('--trust-remote-code', action='store_true', help='Set trust_remote_code=True while loading the model. Necessary for some models.')
 parser.add_argument('--force-safetensors', action='store_true', help='Set use_safetensors=True while loading the model. This prevents arbitrary code execution.')
 parser.add_argument('--use_fast', action='store_true', help='Set use_fast=True while loading the tokenizer.')
+parser.add_argument('--use_flash_attention_2', action='store_true', help='Set use_flash_attention_2=True while loading the model.')
 
 # Accelerate 4-bit
 parser.add_argument('--load-in-4bit', action='store_true', help='Load the model with 4-bit precision (using bitsandbytes).')

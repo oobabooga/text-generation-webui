@@ -7,8 +7,9 @@ import yaml
 def default_preset():
     return {
         'temperature': 1,
+        'temperature_last': False,
         'top_p': 1,
-        'min_p': 1,
+        'min_p': 0,
         'top_k': 0,
         'repetition_penalty': 1,
         'presence_penalty': 0,
