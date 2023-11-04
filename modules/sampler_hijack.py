@@ -216,11 +216,11 @@ def get_logits_warper_patch(self, generation_config):
             if not isinstance(warper, TemperatureLogitsWarper):
                 warpers.remove(warper)
     else:
-        if generation_config.tfs is not None and 0.0 <= generation_config.tfs <= 1.0:
+        if generation_config.tfs is not None and 0.0 <= generation_config.tfs < 1.0:
             warpers_to_add.append(TailFreeLogitsWarper(tfs=generation_config.tfs, min_tokens_to_keep=min_tokens_to_keep))
-        if generation_config.top_a is not None and 0.0 <= generation_config.top_a <= 1.0:
+        if generation_config.top_a is not None and 0.0 < generation_config.top_a <= 1.0:
             warpers_to_add.append(TopALogitsWarper(top_a=generation_config.top_a, min_tokens_to_keep=min_tokens_to_keep))
-        if generation_config.min_p is not None and 0.0 <= generation_config.min_p <= 1.0:
+        if generation_config.min_p is not None and 0.0 < generation_config.min_p <= 1.0:
             warpers_to_add.append(MinPLogitsWarper(min_p=generation_config.min_p, min_tokens_to_keep=min_tokens_to_keep))
 
     if isinstance(warpers[-1], LogitNormalization):
