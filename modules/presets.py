@@ -8,6 +8,7 @@ def default_preset():
     return {
         'do_sample': True,
         'temperature': 1,
+        'temperature_last': False,
         'top_p': 1,
         'min_p': 0,
         'top_k': 0,
