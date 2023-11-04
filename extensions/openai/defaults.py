@@ -7,7 +7,9 @@ default_req_params = {
     'auto_max_new_tokens': False,
     'max_tokens_second': 0,
     'temperature': 1.0,
+    'temperature_last': False,
     'top_p': 1.0,
+    'min_p': 0,
     'top_k': 1,  # choose 20 for chat in absence of another default
     'repetition_penalty': 1.18,
     'presence_penalty': 0,
