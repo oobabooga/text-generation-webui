@@ -62,7 +62,7 @@ def _load_quant(model, checkpoint, wbits, groupsize=-1, faster_kernel=False, exc
         from safetensors.torch import load_file as safe_load
         model.load_state_dict(safe_load(checkpoint), strict=False)
     else:
-        model.load_state_dict(torch.load(checkpoint), strict=False)
+        model.load_state_dict(torch.load(checkpoint, weights_only=True), strict=False)
 
     model.seqlen = 2048
     return model
