@@ -44,6 +44,7 @@ loaders_and_params = OrderedDict({
         'alpha_value',
         'compress_pos_emb',
         'use_fast',
+        'c8',
     ],
     'ExLlama': [
         'gpu_split',
@@ -58,6 +59,7 @@ loaders_and_params = OrderedDict({
         'max_seq_len',
         'alpha_value',
         'compress_pos_emb',
+        'c8',
     ],
     'AutoGPTQ': [
         'triton',
