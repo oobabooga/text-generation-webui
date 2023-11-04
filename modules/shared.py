@@ -91,7 +91,9 @@ parser.add_argument('--no-cache', action='store_true', help='Set use_cache to Fa
 parser.add_argument('--xformers', action='store_true', help='Use xformer\'s memory efficient attention. This is really old and probably doesn\'t do anything.')
 parser.add_argument('--sdp-attention', action='store_true', help='Use PyTorch 2.0\'s SDP attention. Same as above.')
 parser.add_argument('--trust-remote-code', action='store_true', help='Set trust_remote_code=True while loading the model. Necessary for some models.')
+parser.add_argument('--force-safetensors', action='store_true', help='Set use_safetensors=True while loading the model. This prevents arbitrary code execution.')
 parser.add_argument('--use_fast', action='store_true', help='Set use_fast=True while loading the tokenizer.')
+parser.add_argument('--use_flash_attention_2', action='store_true', help='Set use_flash_attention_2=True while loading the model.')
 
 # Accelerate 4-bit
 parser.add_argument('--load-in-4bit', action='store_true', help='Load the model with 4-bit precision (using bitsandbytes).')
@@ -117,6 +119,8 @@ parser.add_argument('--cache-capacity', type=str, help='Maximum cache capacity (
 parser.add_argument('--gpu-split', type=str, help='Comma-separated list of VRAM (in GB) to use per GPU device for model layers. Example: 20,7,7.')
 parser.add_argument('--max_seq_len', type=int, default=2048, help='Maximum sequence length.')
 parser.add_argument('--cfg-cache', action='store_true', help='ExLlama_HF: Create an additional cache for CFG negative prompts. Necessary to use CFG with that loader, but not necessary for CFG with base ExLlama.')
+parser.add_argument('--no_flash_attn', action='store_true', help='Force flash-attention to not be used.')
+parser.add_argument('--cache_8bit', action='store_true', help='Use 8-bit cache to save VRAM.')
 
 # AutoGPTQ
 parser.add_argument('--triton', action='store_true', help='Use triton.')

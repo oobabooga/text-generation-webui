@@ -300,6 +300,7 @@ Optionally, you can use the following command-line flags:
 | `--sdp-attention`                           | Use PyTorch 2.0's SDP attention. Same as above. |
 | `--trust-remote-code`                       | Set `trust_remote_code=True` while loading the model. Necessary for some models. |
 | `--use_fast`                                | Set `use_fast=True` while loading the tokenizer. |
+| `--use_flash_attention_2`                   | Set use_flash_attention_2=True while loading the model. |
 
 #### Accelerate 4-bit
 
@@ -336,6 +337,8 @@ Optionally, you can use the following command-line flags:
 |`--gpu-split`     | Comma-separated list of VRAM (in GB) to use per GPU device for model layers. Example: 20,7,7. |
 |`--max_seq_len MAX_SEQ_LEN`           | Maximum sequence length. |
 |`--cfg-cache`                         | ExLlama_HF: Create an additional cache for CFG negative prompts. Necessary to use CFG with that loader, but not necessary for CFG with base ExLlama. |
+|`--no_flash_attn`                     | Force flash-attention to not be used. |
+|`--cache_8bit`                        | Use 8-bit cache to save VRAM. |
 
 #### AutoGPTQ
 
