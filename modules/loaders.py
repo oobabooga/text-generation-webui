@@ -152,6 +152,7 @@ loaders_and_params = OrderedDict({
 loaders_samplers = {
     'Transformers': {
         'temperature',
+        'temperature_last',
         'top_p',
         'min_p',
         'top_k',
@@ -221,6 +222,7 @@ loaders_samplers = {
     },
     'ExLlama_HF': {
         'temperature',
+        'temperature_last',
         'top_p',
         'min_p',
         'top_k',
@@ -282,6 +284,7 @@ loaders_samplers = {
     },
     'ExLlamav2_HF': {
         'temperature',
+        'temperature_last',
         'top_p',
         'min_p',
         'top_k',
@@ -314,6 +317,7 @@ loaders_samplers = {
     },
     'AutoGPTQ': {
         'temperature',
+        'temperature_last',
         'top_p',
         'min_p',
         'top_k',
@@ -350,6 +354,7 @@ loaders_samplers = {
     },
     'GPTQ-for-LLaMa': {
         'temperature',
+        'temperature_last',
         'top_p',
         'min_p',
         'top_k',
@@ -402,6 +407,7 @@ loaders_samplers = {
     },
     'llamacpp_HF': {
         'temperature',
+        'temperature_last',
         'top_p',
         'min_p',
         'top_k',
@@ -441,6 +447,7 @@ loaders_samplers = {
     },
     'AutoAWQ': {
         'temperature',
+        'temperature_last',
         'top_p',
         'min_p',
         'top_k',
