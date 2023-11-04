@@ -300,6 +300,7 @@ Optionally, you can use the following command-line flags:
 | `--sdp-attention`                           | Use PyTorch 2.0's SDP attention. Same as above. |
 | `--trust-remote-code`                       | Set `trust_remote_code=True` while loading the model. Necessary for some models. |
 | `--use_fast`                                | Set `use_fast=True` while loading the tokenizer. |
+| `--use_flash_attention_2`                   | Set use_flash_attention_2=True while loading the model. |
 
 #### Accelerate 4-bit
 
