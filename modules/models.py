@@ -108,17 +108,11 @@ def load_tokenizer(model_name, model):
         if shared.args.use_fast:
             logger.info('Loading the tokenizer with use_fast=True.')
 
-        try:
-            tokenizer = AutoTokenizer.from_pretrained(
-                path_to_model,
-                trust_remote_code=shared.args.trust_remote_code,
-                use_fast=shared.args.use_fast
-            )
-        except:
-            tokenizer = AutoTokenizer.from_pretrained(
-                path_to_model,
-                trust_remote_code=shared.args.trust_remote_code
-            )
+        tokenizer = AutoTokenizer.from_pretrained(
+            path_to_model,
+            trust_remote_code=shared.args.trust_remote_code,
+            use_fast=shared.args.use_fast
+        )
 
     return tokenizer
 
