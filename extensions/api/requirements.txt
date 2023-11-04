@@ -1,0 +1,2 @@
+flask_cloudflared==0.0.14
+websockets==11.0.2
