@@ -79,7 +79,12 @@ def process_parameters(body, is_legacy=False):
     max_tokens_str = 'length' if is_legacy else 'max_tokens'
     generate_params['max_new_tokens'] = body.pop(max_tokens_str)
     if generate_params['truncation_length'] == 0:
-        generate_params['truncation_length'] = shared.settings['truncation_length']
+        if shared.args.loader and shared.args.loader.lower().startswith('exllama'):
+            generate_params['truncation_length'] = shared.args.max_seq_len
+        elif shared.args.loader and shared.args.loader in ['llama.cpp', 'llamacpp_HF', 'ctransformers']:
+            generate_params['truncation_length'] = shared.args.n_ctx
+        else:
+            generate_params['truncation_length'] = shared.settings['truncation_length']
 
     if body['preset'] is not None:
         preset = load_preset_memoized(body['preset'])
