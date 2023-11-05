@@ -190,8 +190,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
     name1_instruct, name2_instruct, _, _, context_instruct, turn_template = load_character_memoized(instruction_template, '', '', instruct=True)
     user_input, history = convert_history(messages)
     generate_params.update({
-        'mode': 'instruct',
-        # 'mode': str(body.get('mode', 'chat')),
+        'mode': str(body.get('mode', 'instruct')),
         # 'name1': str(body.get('name1', name1)),
         # 'name2': str(body.get('name2', name2)),
         # 'context': str(body.get('context', context)),

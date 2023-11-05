@@ -94,7 +94,21 @@ class ChatCompletionRequest(GenerationOptions):
     temperature: float | None = 1
     top_p: float | None = 1
     user: str | None = None
+
+    mode: str = 'instruct'
+
     instruction_template: str | None = None
+    name1_instruct: str | None = None
+    name2_instruct: str | None = None
+    context_instruct: str | None = None
+    turn_template: str: None = None
+
+    name1: str | None = None
+    name2: str | None = None
+    context: str | None = None
+    greeting: str | None = None
+
+    chat-instruct_command: str | None = None
 
 
 class ChatCompletionResponse(BaseModel):
