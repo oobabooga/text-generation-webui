@@ -5,13 +5,18 @@ from collections import deque
 import tiktoken
 import torch
 import torch.nn.functional as F
+from transformers import LogitsProcessor, LogitsProcessorList
+
 from extensions.openai.errors import InvalidRequestError
 from extensions.openai.utils import debug_msg
 from modules import shared
-from modules.chat import generate_chat_reply, load_character_memoized
+from modules.chat import (
+    generate_chat_prompt,
+    generate_chat_reply,
+    load_character_memoized
+)
 from modules.presets import load_preset_memoized
 from modules.text_generation import decode, encode, generate_reply
-from transformers import LogitsProcessor, LogitsProcessorList
 
 
 class LogitsBiasProcessor(LogitsProcessor):
@@ -205,9 +210,6 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
         'stream': stream
     })
 
-    requested_model = generate_params.pop('model')
-    logprob_proc = generate_params.pop('logprob_proc', None)
-
     max_tokens_str = 'length' if is_legacy else 'max_tokens'
     max_tokens = body.get(max_tokens_str, None)
     if max_tokens is None:
@@ -215,6 +217,9 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
         generate_params['auto_max_new_tokens'] = True
     else:
         generate_params['max_new_tokens'] = max_tokens
+
+    requested_model = generate_params.pop('model')
+    logprob_proc = generate_params.pop('logprob_proc', None)
 
     def chat_streaming_chunk(content):
         # begin streaming
@@ -242,9 +247,9 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
     if stream:
         yield chat_streaming_chunk('')
 
-    prompt = ''
-    token_count = 0
     # generate reply #######################################
+    prompt = generate_chat_prompt(user_input, generate_params)
+    token_count = len(encode(prompt)[0])
     debug_msg({'prompt': prompt, 'generate_params': generate_params})
 
     generator = generate_chat_reply(
