@@ -111,6 +111,8 @@ class ChatCompletionRequest(GenerationOptions):
 
     chat_instruct_command: str | None = None
 
+    continue_: bool = False
+
 
 class ChatCompletionResponse(BaseModel):
     id: str

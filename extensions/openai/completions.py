@@ -74,9 +74,10 @@ def convert_logprobs_to_tiktoken(model, logprobs):
     return logprobs
 
 
-def process_parameters(body):
+def process_parameters(body, is_legacy=False):
     generate_params = body
-    generate_params['max_new_tokens'] = body.pop('max_tokens')
+    max_tokens_str = 'length' if is_legacy else 'max_tokens'
+    generate_params['max_new_tokens'] = body.pop(max_tokens_str)
     if generate_params['truncation_length'] == 0:
         generate_params['truncation_length'] = shared.settings['truncation_length']
 
@@ -186,7 +187,8 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
     resp_list = 'data' if is_legacy else 'choices'
 
     # generation parameters
-    generate_params = process_parameters(body)
+    generate_params = process_parameters(body, is_legacy=is_legacy)
+    continue_ = body['continue_']
 
     # Instruction template
     instruction_template = body['instruction_template'] or shared.settings['instruction_template']
@@ -222,13 +224,10 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
         'stream': stream
     })
 
-    max_tokens_str = 'length' if is_legacy else 'max_tokens'
-    max_tokens = body.get(max_tokens_str, None)
+    max_tokens = generate_params['max_new_tokens']
     if max_tokens is None:
         generate_params['max_new_tokens'] = 200
         generate_params['auto_max_new_tokens'] = True
-    else:
-        generate_params['max_new_tokens'] = max_tokens
 
     requested_model = generate_params.pop('model')
     logprob_proc = generate_params.pop('logprob_proc', None)
@@ -265,7 +264,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
     debug_msg({'prompt': prompt, 'generate_params': generate_params})
 
     generator = generate_chat_reply(
-        user_input, generate_params, regenerate=False, _continue=False, loading_message=False)
+        user_input, generate_params, regenerate=False, _continue=continue_, loading_message=False)
 
     answer = ''
     seen_content = ''
@@ -344,11 +343,9 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
         raise InvalidRequestError("Missing required input", param=prompt_str)
 
     # common params
-    generate_params = process_parameters(body)
+    generate_params = process_parameters(body, is_legacy=is_legacy)
+    max_tokens = generate_params['max_new_tokens']
     generate_params['stream'] = stream
-    max_tokens_str = 'length' if is_legacy else 'max_tokens'
-    max_tokens = body.get(max_tokens_str, generate_params['max_new_tokens'])
-    generate_params['max_new_tokens'] = max_tokens
     requested_model = generate_params.pop('model')
     logprob_proc = generate_params.pop('logprob_proc', None)
     stopping_strings = generate_params.pop('stopping_strings', [])
