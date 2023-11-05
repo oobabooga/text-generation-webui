@@ -103,6 +103,7 @@ class ChatCompletionRequest(GenerationOptions):
     context_instruct: str | None = None
     turn_template: str | None = None
 
+    character: str | None = None
     name1: str | None = None
     name2: str | None = None
     context: str | None = None

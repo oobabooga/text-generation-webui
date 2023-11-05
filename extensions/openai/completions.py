@@ -187,26 +187,38 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
 
     # generation parameters
     generate_params = process_parameters(body)
-    if body['instruction_template'] is None:
-        instruction_template = shared.settings['instruction_template']
-    else:
-        instruction_template = body['instruction_template']
 
-    # name1, name2, _, greeting, context, _ = load_character_memoized(character, str(body.get('your_name', shared.settings['name1'])), '', instruct=False)
+    # Instruction template
+    instruction_template = body['instruction_template'] or shared.settings['instruction_template']
     name1_instruct, name2_instruct, _, _, context_instruct, turn_template = load_character_memoized(instruction_template, '', '', instruct=True)
+    name1_instruct = body['name1_instruct'] or name1_instruct
+    name2_instruct = body['name2_instruct'] or name2_instruct
+    context_instruct = body['context_instruct'] or context_instruct
+    turn_template = body['turn_template'] or turn_template
+
+    # Chat character
+    character = body['character'] or shared.settings['character']
+    name1 = body['name1'] or shared.settings['name1']
+    name1, name2, _, greeting, context, _ = load_character_memoized(character, name1, '', instruct=False)
+    name2 = body['name2'] or name2
+    context = body['context'] or context
+    greeting = body['greeting'] or greeting
+
+    # History
     user_input, history = convert_history(messages)
+
     generate_params.update({
         'mode': body['mode'],
-        # 'name1': str(body.get('name1', name1)),
-        # 'name2': str(body.get('name2', name2)),
-        # 'context': str(body.get('context', context)),
-        # 'greeting': str(body.get('greeting', greeting)),
+        'name1': name1,
+        'name2': name2,
+        'context': context,
+        'greeting': greeting,
         'name1_instruct': name1_instruct,
         'name2_instruct': name2_instruct,
         'context_instruct': context_instruct,
         'turn_template': turn_template,
-        # 'chat-instruct_command': str(body.get('chat_instruct_command', body.get('chat-instruct_command', shared.settings['chat-instruct_command']))),
-        'history': body.get('history', history),
+        'chat-instruct_command': body['chat_instruct_command'],
+        'history': history,
         'stream': stream
     })
 
