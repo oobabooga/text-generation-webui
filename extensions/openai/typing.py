@@ -147,8 +147,8 @@ class ModelObject(BaseModel):
 
 
 def to_json(obj):
-    return json.dumps(obj.model_dump(), indent=4)
+    return json.dumps(obj.__dict__, indent=4)
 
 
 def to_dict(obj):
-    return obj.model_dump()
+    return obj.__dict__
