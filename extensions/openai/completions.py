@@ -376,10 +376,6 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
             token_count = len(encode(prompt)[0])
             total_prompt_token_count += token_count
 
-            if token_count + max_tokens > generate_params['truncation_length']:
-                err_msg = f"The token count of your prompt ({token_count}) plus max_tokens ({max_tokens}) cannot exceed the model's context length ({generate_params['truncation_length']})."
-                raise InvalidRequestError(message=err_msg, param=max_tokens_str)
-
             # generate reply #######################################
             debug_msg({'prompt': prompt, 'generate_params': generate_params})
             generator = generate_reply(prompt, generate_params, stopping_strings=stopping_strings, is_chat=False)
@@ -434,11 +430,6 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
                 raise InvalidRequestError(message="API Batched generation not yet supported.", param=prompt_str)
 
         token_count = len(encode(prompt)[0])
-
-        if token_count + max_tokens > generate_params['truncation_length']:
-            err_msg = f"The token count of your prompt ({token_count}) plus max_tokens ({max_tokens}) cannot exceed the model's context length ({generate_params['truncation_length']})."
-            # print(f"Warning: ${err_msg}")
-            raise InvalidRequestError(message=err_msg, param=max_tokens_str)
 
         def text_streaming_chunk(content):
             # begin streaming

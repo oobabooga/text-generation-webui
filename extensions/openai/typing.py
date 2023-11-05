@@ -2,13 +2,7 @@ import json
 import time
 from typing import List
 
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
-from modules import shared
 from pydantic import BaseModel
-from sse_starlette import EventSourceResponse
-
-app = FastAPI()
 
 
 class GenerationOptions(BaseModel):

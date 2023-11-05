@@ -26,8 +26,7 @@ from .typing import (
     ChatCompletionResponse,
     CompletionRequest,
     CompletionResponse,
-    to_dict,
-    to_json
+    to_dict
 )
 
 params = {
