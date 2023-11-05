@@ -229,7 +229,6 @@ def run_server():
 
     ssl_certfile = os.environ.get('OPENEDAI_CERT_PATH', shared.args.ssl_certfile)
     ssl_keyfile = os.environ.get('OPENEDAI_KEY_PATH', shared.args.ssl_keyfile)
-    ssl_verify = True if (ssl_keyfile and ssl_certfile) else False
 
     if shared.args.share:
         try:
@@ -239,7 +238,7 @@ def run_server():
         except ImportError:
             print('You should install flask_cloudflared manually')
     else:
-        if ssl_verify:
+        if ssl_keyfile and ssl_certfile:
             print(f'OpenAI compatible API ready at: OPENAI_API_BASE=https://{server_addr}:{port}/v1')
         else:
             print(f'OpenAI compatible API ready at: OPENAI_API_BASE=http://{server_addr}:{port}/v1')
