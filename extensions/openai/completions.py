@@ -71,6 +71,7 @@ def convert_logprobs_to_tiktoken(model, logprobs):
 
 def process_parameters(body):
     generate_params = body
+    generate_params['max_new_tokens'] = body.pop('max_tokens')
     if generate_params['truncation_length'] == 0:
         generate_params['truncation_length'] = shared.settings['truncation_length']
 
@@ -190,16 +191,16 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
     name1_instruct, name2_instruct, _, _, context_instruct, turn_template = load_character_memoized(instruction_template, '', '', instruct=True)
     user_input, history = convert_history(messages)
     generate_params.update({
-        'mode': str(body.get('mode', 'instruct')),
+        'mode': body['mode'],
         # 'name1': str(body.get('name1', name1)),
         # 'name2': str(body.get('name2', name2)),
         # 'context': str(body.get('context', context)),
         # 'greeting': str(body.get('greeting', greeting)),
-        'name1_instruct': str(body.get('name1_instruct', name1_instruct)),
-        'name2_instruct': str(body.get('name2_instruct', name2_instruct)),
-        'context_instruct': str(body.get('context_instruct', context_instruct)),
-        'turn_template': str(body.get('turn_template', turn_template)),
-        'chat-instruct_command': str(body.get('chat_instruct_command', body.get('chat-instruct_command', shared.settings['chat-instruct_command']))),
+        'name1_instruct': name1_instruct,
+        'name2_instruct': name2_instruct,
+        'context_instruct': context_instruct,
+        'turn_template': turn_template,
+        # 'chat-instruct_command': str(body.get('chat_instruct_command', body.get('chat-instruct_command', shared.settings['chat-instruct_command']))),
         'history': body.get('history', history),
         'stream': stream
     })
