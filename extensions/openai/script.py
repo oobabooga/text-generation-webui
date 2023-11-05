@@ -3,7 +3,6 @@ import os
 from threading import Thread
 
 import extensions.openai.completions as OAIcompletions
-import extensions.openai.edits as OAIedits
 import extensions.openai.embeddings as OAIembeddings
 import extensions.openai.images as OAIimages
 import extensions.openai.models as OAImodels
@@ -32,12 +31,9 @@ from .typing import (
 )
 
 params = {
-    # default params
     'port': 5000,
     'embedding_device': 'cpu',
     'embedding_model': 'all-mpnet-base-v2',
-
-    # optional params
     'sd_webui_url': '',
     'debug': 0
 }
@@ -70,7 +66,6 @@ async def options_route():
 @app.post('/v1/completions', response_model=CompletionResponse)
 @app.post('/v1/generate', response_model=CompletionResponse)
 async def openai_completions(request: Request, request_data: CompletionRequest):
-    body = await request.json()
     path = request.url.path
     is_legacy = "/generate" in path
 
@@ -80,7 +75,7 @@ async def openai_completions(request: Request, request_data: CompletionRequest):
             for resp in response:
                 yield {"data": json.dumps(resp)}
 
-        return EventSourceResponse(generator())  # sse
+        return EventSourceResponse(generator())  # SSE streaming
 
     else:
         response = OAIcompletions.completions(to_dict(request_data), is_legacy=is_legacy)
@@ -89,7 +84,6 @@ async def openai_completions(request: Request, request_data: CompletionRequest):
 
 @app.post('/v1/chat/completions', response_model=ChatCompletionResponse)
 async def openai_chat_completions(request: Request, request_data: ChatCompletionRequest):
-    body = await request.json()
     path = request.url.path
     is_legacy = "/generate" in path
 
@@ -99,7 +93,7 @@ async def openai_chat_completions(request: Request, request_data: ChatCompletion
             for resp in response:
                 yield {"data": json.dumps(resp)}
 
-        return EventSourceResponse(generator())  # sse
+        return EventSourceResponse(generator())  # SSE streaming
 
     else:
         response = OAIcompletions.chat_completions(to_dict(request_data), is_legacy=is_legacy)
@@ -112,6 +106,7 @@ async def handle_models(request: Request):
     path = request.url.path
     is_legacy = 'engines' in path
     is_list = request.url.path.split('?')[0].split('#')[0] in ['/v1/engines', '/v1/models']
+
     if is_legacy and not is_list:
         model_name = path[path.find('/v1/engines/') + len('/v1/engines/'):]
         resp = OAImodels.load_model(model_name)
@@ -160,20 +155,6 @@ async def handle_audio_transcription(request: Request):
         transcription["text"] = "Whisper could not understand audio RequestError"
 
     return JSONResponse(content=transcription)
-
-
-@app.post('/v1/edits')
-async def handle_edits(request: Request):
-    '''
-    deprecated
-    '''
-
-    body = await request.json()
-    instruction = body["instruction"]
-    input = body.get("input", "")
-
-    response = await OAIedits.edits(instruction, input, body.temperature, body.top_p)
-    return JSONResponse(response)
 
 
 @app.post('/v1/images/generations')
