@@ -13,7 +13,6 @@ app = FastAPI()
 
 class GenerationOptions(BaseModel):
     preset: str = "None"
-    max_new_tokens: int = 200
     temperature: float = 1
     top_p: float = 1
     min_p: float = 0

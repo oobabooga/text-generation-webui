@@ -208,14 +208,13 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
     requested_model = generate_params.pop('model')
     logprob_proc = generate_params.pop('logprob_proc', None)
 
-    # chat default max_tokens is 'inf', but also flexible
-    max_tokens = 0
     max_tokens_str = 'length' if is_legacy else 'max_tokens'
-    if max_tokens_str in body:
-        max_tokens = body.get(max_tokens_str, generate_params['truncation_length'])
-        generate_params['max_new_tokens'] = max_tokens
+    max_tokens = body.get(max_tokens_str, None)
+    if max_tokens is None:
+        generate_params['max_new_tokens'] = 200
+        generate_params['auto_max_new_tokens'] = True
     else:
-        generate_params['max_new_tokens'] = generate_params['truncation_length']
+        generate_params['max_new_tokens'] = max_tokens
 
     def chat_streaming_chunk(content):
         # begin streaming
