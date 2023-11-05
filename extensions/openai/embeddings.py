@@ -1,10 +1,9 @@
 import os
 
 import numpy as np
-from sentence_transformers import SentenceTransformer
-
 from extensions.openai.errors import ServiceUnavailableError
 from extensions.openai.utils import debug_msg, float_list_to_base64
+from sentence_transformers import SentenceTransformer
 
 embeddings_params_initialized = False
 

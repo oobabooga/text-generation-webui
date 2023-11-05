@@ -2,25 +2,23 @@ import json
 import os
 from threading import Thread
 
-import speech_recognition as sr
-import uvicorn
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.requests import Request
-from fastapi.responses import JSONResponse
-from pydub import AudioSegment
-from sse_starlette import EventSourceResponse
-
 import extensions.openai.completions as OAIcompletions
 import extensions.openai.edits as OAIedits
 import extensions.openai.embeddings as OAIembeddings
 import extensions.openai.images as OAIimages
 import extensions.openai.models as OAImodels
 import extensions.openai.moderations as OAImoderations
+import speech_recognition as sr
+import uvicorn
 from extensions.openai.errors import ServiceUnavailableError
 from extensions.openai.tokens import token_count, token_decode, token_encode
-from extensions.openai.utils import default
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.requests import Request
+from fastapi.responses import JSONResponse
 from modules import shared
+from pydub import AudioSegment
+from sse_starlette import EventSourceResponse
 
 from .typing import (
     ChatCompletionChunkChoiceObject,
@@ -186,9 +184,9 @@ async def handle_image_generation(request: Request):
 
     body = await request.json()
     prompt = body['prompt']
-    size = default(body, 'size', '1024x1024')
-    response_format = default(body, 'response_format', 'url')  # or b64_json
-    n = default(body, 'n', 1)  # ignore the batch limits of max 10
+    size = body.get('size', '1024x1024')
+    response_format = body.get('response_format', 'url')  # or b64_json
+    n = body.get('n', 1)  # ignore the batch limits of max 10
 
     response = await OAIimages.generations(prompt=prompt, size=size, response_format=response_format, n=n)
     return JSONResponse(response)

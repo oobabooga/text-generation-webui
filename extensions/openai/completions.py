@@ -5,14 +5,13 @@ from collections import deque
 import tiktoken
 import torch
 import torch.nn.functional as F
-from transformers import LogitsProcessor, LogitsProcessorList
-
 from extensions.openai.errors import InvalidRequestError
-from extensions.openai.utils import debug_msg, default
+from extensions.openai.utils import debug_msg
 from modules import shared
 from modules.chat import generate_chat_reply, load_character_memoized
 from modules.presets import load_preset_memoized
 from modules.text_generation import decode, encode, generate_reply
+from transformers import LogitsProcessor, LogitsProcessorList
 
 
 class LogitsBiasProcessor(LogitsProcessor):
@@ -108,7 +107,7 @@ def process_parameters(body):
 
     logprobs = None  # coming to chat eventually
     if 'logprobs' in body:
-        logprobs = default(body, 'logprobs', 0)  # maybe cap at topk? don't clamp 0-5.
+        logprobs = body.get('logprobs', 0)  # maybe cap at topk? don't clamp 0-5.
         generate_params['logprob_proc'] = LogprobProcessor(logprobs)
         logits_processor.extend([generate_params['logprob_proc']])
     else:
@@ -213,7 +212,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
     max_tokens = 0
     max_tokens_str = 'length' if is_legacy else 'max_tokens'
     if max_tokens_str in body:
-        max_tokens = default(body, max_tokens_str, generate_params['truncation_length'])
+        max_tokens = body.get(max_tokens_str, generate_params['truncation_length'])
         generate_params['max_new_tokens'] = max_tokens
     else:
         generate_params['max_new_tokens'] = generate_params['truncation_length']
@@ -332,13 +331,13 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
     generate_params = process_parameters(body)
     generate_params['stream'] = stream
     max_tokens_str = 'length' if is_legacy else 'max_tokens'
-    max_tokens = default(body, max_tokens_str, generate_params['max_new_tokens'])
+    max_tokens = body.get(max_tokens_str, generate_params['max_new_tokens'])
     generate_params['max_new_tokens'] = max_tokens
     requested_model = generate_params.pop('model')
     logprob_proc = generate_params.pop('logprob_proc', None)
     stopping_strings = generate_params.pop('stopping_strings', [])
-    # generate_params['suffix'] = default(body, 'suffix', generate_params['suffix'])
-    generate_params['echo'] = default(body, 'echo', generate_params['echo'])
+    # generate_params['suffix'] = body.get('suffix', generate_params['suffix'])
+    generate_params['echo'] = body.get('echo', generate_params['echo'])
 
     if not stream:
         prompt_arg = body[prompt_str]
