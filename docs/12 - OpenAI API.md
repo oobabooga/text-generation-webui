@@ -1,124 +1,64 @@
-## An OpenedAI API (openai like)
+## OpenAI compatible API
 
-This extension creates an API that works kind of like openai (ie. api.openai.com).
+This project includes an API compatible with multiple OpenAI endpoints, including Chat and Completions.
 
-### Setup & installation
-
-Install the requirements:
+If you did not use the one-click installers, you may need to install the requirements first:
 
 ```
-pip3 install -r requirements.txt
+pip install -r extensions/openai/requirements.txt
 ```
 
-It listens on `tcp port 5001` by default. You can use the `OPENEDAI_PORT` environment variable to change this.
+### Starting the API
 
-Make sure you enable it in server launch parameters, it should include:
+Add `--extensions openai` to your command-line flags.
 
-```
---extensions openai
-```
+* To create a public Cloudflare URL, add the `--public-api` flag.
+* To listen on your local network, add the `--listen` flag.
+* To change the port, which is 5000 by default, use `--port 1234` (change 1234 to your desired port number).
+* To use SSL, add `--ssl-keyfile key.pem --ssl-certfile cert.pem`. Note that it doesn't work with `--public-api`.
 
-You can also use the `--listen` argument to make the server available on the networ, and/or the `--share` argument to enable a public Cloudflare endpoint.
+#### Environment variables
 
-To enable the basic image generation support (txt2img) set the environment variable `SD_WEBUI_URL` to point to your Stable Diffusion API ([Automatic1111](https://github.com/AUTOMATIC1111/stable-diffusion-webui)).
+The following environment variables can be used (they take precendence over everything else):
 
-For example:
+| Variable Name          | Description                                                                                        | Example Value              |
+|------------------------|------------------------------------|----------------------------|
+| `OPENEDAI_PORT`           | Port number         |             5000               |
+| `OPENEDAI_CERT_PATH`      | SSL certificate file path         |            cert.pem                |
+| `OPENEDAI_KEY_PATH`       | SSL key file path                    |             key.pem               |
+| `OPENEDAI_DEBUG`          | Enable debugging (set to 1)    | 1                          |
+| `SD_WEBUI_URL`           | WebUI URL (used by endpoint) | http://127.0.0.1:7861 |
+| `OPENEDAI_EMBEDDING_MODEL` | Embedding model (if applicable) |          all-mpnet-base-v2                  |
+| `OPENEDAI_EMBEDDING_DEVICE` | Embedding device (if applicable) |           cuda                 |
 
-```
-SD_WEBUI_URL=http://127.0.0.1:7861
-```
+#### Persistent settings in `settings.yaml`
 
-### Quick start
-
-1. Install the requirements.txt (pip)
-2. Enable the `openeai` module (--extensions openai), restart the server.
-3. Configure the openai client
-
-Most openai application can be configured to connect the API if you set the following environment variables:
-
-```shell
-# Sample .env file:
-OPENAI_API_KEY=sk-111111111111111111111111111111111111111111111111
-OPENAI_API_BASE=http://0.0.0.0:5001/v1
-```
-
-If needed, replace 0.0.0.0 with the IP/port of your server.
-
-
-#### Settings
-
-To adjust your default settings, you can add the following to your `settings.yaml` file.
+You can also set default values by adding these lines to your `settings.yaml` file:
 
 ```
-openai-port: 5002
 openai-embedding_device: cuda
+openai-embedding_model: all-mpnet-base-v2
 openai-sd_webui_url: http://127.0.0.1:7861
 openai-debug: 1
 ```
 
-If you've configured the environment variables, please note that settings from `settings.yaml` won't take effect. For instance, if you set `openai-port: 5002` in `settings.yaml` but `OPENEDAI_PORT=5001` in the environment variables, the extension will use `5001` as the port number.
-
-When using `cache_embedding_model.py` to preload the embedding model during Docker image building, consider the following:
-
-- If you wish to use the default settings, leave the environment variables unset.
-- If you intend to change the default embedding model, ensure that you configure the environment variable `OPENEDAI_EMBEDDING_MODEL` to the desired model. Avoid setting `openai-embedding_model` in `settings.yaml` because those settings only take effect after the server starts.
-
-#### Models
-
-This has been successfully tested with Alpaca, Koala, Vicuna, WizardLM and their variants, (ex. gpt4-x-alpaca, GPT4all-snoozy, stable-vicuna, wizard-vicuna, etc.) and many others. Models that have been trained for **Instruction Following** work best. If you test with other models please let me know how it goes. Less than satisfying results (so far) from: RWKV-4-Raven, llama, mpt-7b-instruct/chat.
-
-For best results across all API endpoints, a model like [vicuna-13b-v1.3-GPTQ](https://huggingface.co/TheBloke/vicuna-13b-v1.3-GPTQ), [stable-vicuna-13B-GPTQ](https://huggingface.co/TheBloke/stable-vicuna-13B-GPTQ) or [airoboros-13B-gpt4-1.3-GPTQ](https://huggingface.co/TheBloke/airoboros-13B-gpt4-1.3-GPTQ) is a good start.
-
-For good results with the [Completions](https://platform.openai.com/docs/api-reference/completions) API endpoint, in addition to the above models, you can also try using a base model like [falcon-7b](https://huggingface.co/tiiuae/falcon-7b) or Llama.
-
-For good results with the [ChatCompletions](https://platform.openai.com/docs/api-reference/chat) or [Edits](https://platform.openai.com/docs/api-reference/edits) API endpoints you can use almost any model trained for instruction following. Be sure that the proper instruction template is detected and loaded or the results will not be good.
-
-For the proper instruction format to be detected you need to have a matching model entry in your `models/config.yaml` file. Be sure to keep this file up to date.
-A matching instruction template file in the characters/instruction-following/ folder will loaded and applied to format messages correctly for the model - this is critical for good results.
-
-For example, the Wizard-Vicuna family of models are trained with the Vicuna 1.1 format. In the models/config.yaml file there is this matching entry:
-
-```
-.*wizard.*vicuna:
-  mode: 'instruct'
-  instruction_template: 'Vicuna-v1.1'
-```
-
-This refers to `characters/instruction-following/Vicuna-v1.1.yaml`, which looks like this:
-
-```
-user: "USER:"
-bot: "ASSISTANT:"
-turn_template: "<|user|> <|user-message|>\n<|bot|> <|bot-message|></s>\n"
-context: "A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions.\n\n"
-```
-
-For most common models this is already setup, but if you are using a new or uncommon model you may need add a matching entry to the models/config.yaml and possibly create your own instruction-following template and for best results.
-
-If you see this in your logs, it probably means that the correct format could not be loaded:
-
-```
-Warning: Loaded default instruction-following template for model.
-```
-
-#### Embeddings (alpha)
-
-Embeddings requires `sentence-transformers` installed, but chat and completions will function without it loaded. The embeddings endpoint is currently using the HuggingFace model: `sentence-transformers/all-mpnet-base-v2` for embeddings. This produces 768 dimensional embeddings (the same as the text-davinci-002 embeddings), which is different from OpenAI's current default `text-embedding-ada-002` model which produces 1536 dimensional embeddings. The model is small-ish and fast-ish. This model and embedding size may change in the future.
-
-| model name             | dimensions | input max tokens | speed | size | Avg. performance |
-| ---------------------- | ---------- | ---------------- | ----- | ---- | ---------------- |
-| text-embedding-ada-002 | 1536       | 8192             | -     | -    | -                |
-| text-davinci-002       | 768        | 2046             | -     | -    | -                |
-| all-mpnet-base-v2      | 768        | 384              | 2800  | 420M | 63.3             |
-| all-MiniLM-L6-v2       | 384        | 256              | 14200 | 80M  | 58.8             |
-
-In short, the all-MiniLM-L6-v2 model is 5x faster, 5x smaller ram, 2x smaller storage, and still offers good quality. Stats from (https://www.sbert.net/docs/pretrained_models.html). To change the model from the default you can set the environment variable `OPENEDAI_EMBEDDING_MODEL`, ex. "OPENEDAI_EMBEDDING_MODEL=all-MiniLM-L6-v2".
-
-Warning: You cannot mix embeddings from different models even if they have the same dimensions. They are not comparable.
+### Examples
 
 #### Client Application Setup
 
-Almost everything you use it with will require you to set a dummy OpenAI API key environment variable.
+
+You can usually force an application that uses the OpenAI API to connect to the local API by using the following environment variables:
+
+```shell
+OPENAI_API_HOST=http://127.0.0.1:5000
+```
+
+or
+
+```shell
+OPENAI_API_KEY=sk-111111111111111111111111111111111111111111111111
+OPENAI_API_BASE=http://127.0.0.1:500/v1
+```
 
 With the [official python openai client](https://github.com/openai/openai-python), set the `OPENAI_API_BASE` environment variables:
 
@@ -128,7 +68,7 @@ OPENAI_API_KEY=sk-111111111111111111111111111111111111111111111111
 OPENAI_API_BASE=http://0.0.0.0:5001/v1
 ```
 
-If needed, replace 0.0.0.0 with the IP/port of your server.
+If needed, replace 127.0.0.1 with the IP/port of your server.
 
 If using .env files to save the `OPENAI_API_BASE` and `OPENAI_API_KEY` variables, make sure the .env file is loaded before the openai module is imported:
 
@@ -157,6 +97,20 @@ const api = new ChatGPTAPI({
   apiBaseUrl: process.env.OPENAI_API_BASE
 });
 ```
+### Embeddings (alpha)
+
+Embeddings requires `sentence-transformers` installed, but chat and completions will function without it loaded. The embeddings endpoint is currently using the HuggingFace model: `sentence-transformers/all-mpnet-base-v2` for embeddings. This produces 768 dimensional embeddings (the same as the text-davinci-002 embeddings), which is different from OpenAI's current default `text-embedding-ada-002` model which produces 1536 dimensional embeddings. The model is small-ish and fast-ish. This model and embedding size may change in the future.
+
+| model name             | dimensions | input max tokens | speed | size | Avg. performance |
+| ---------------------- | ---------- | ---------------- | ----- | ---- | ---------------- |
+| text-embedding-ada-002 | 1536       | 8192             | -     | -    | -                |
+| text-davinci-002       | 768        | 2046             | -     | -    | -                |
+| all-mpnet-base-v2      | 768        | 384              | 2800  | 420M | 63.3             |
+| all-MiniLM-L6-v2       | 384        | 256              | 14200 | 80M  | 58.8             |
+
+In short, the all-MiniLM-L6-v2 model is 5x faster, 5x smaller ram, 2x smaller storage, and still offers good quality. Stats from (https://www.sbert.net/docs/pretrained_models.html). To change the model from the default you can set the environment variable `OPENEDAI_EMBEDDING_MODEL`, ex. "OPENEDAI_EMBEDDING_MODEL=all-MiniLM-L6-v2".
+
+Warning: You cannot mix embeddings from different models even if they have the same dimensions. They are not comparable.
 
 ### API Documentation & Examples
 
@@ -249,15 +203,3 @@ Almost everything needs the `OPENAI_API_KEY` and `OPENAI_API_BASE` environment v
 | ✅❌          | Auto-GPT               | https://github.com/Significant-Gravitas/Auto-GPT                               | OPENAI_API_BASE=http://127.0.0.1:5001/v1 Same issues as langchain. Also assumes a 4k+ context                                                                                                                |
 | ✅❌          | babyagi                | https://github.com/yoheinakajima/babyagi                                       | OPENAI_API_BASE=http://127.0.0.1:5001/v1                                                                                                                                                                     |
 | ❌            | guidance               | https://github.com/microsoft/guidance                                          | logit_bias and logprobs not yet supported                                                                                                                                                                    |
-
-### Future plans
-
-- better error handling
-- model changing, esp. something for swapping loras or embedding models
-- consider switching to FastAPI + starlette for SSE (openai SSE seems non-standard)
-
-### Bugs? Feedback? Comments? Pull requests?
-
-To enable debugging and get copious output you can set the `OPENEDAI_DEBUG=1` environment variable.
-
-Are all appreciated, please @matatonic and I'll try to get back to you as soon as possible.
