@@ -197,6 +197,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
 
     # Instruction template
     instruction_template = body['instruction_template'] or shared.settings['instruction_template']
+    instruction_template = "Alpaca" if instruction_template == "None" else instruction_template
     name1_instruct, name2_instruct, _, _, context_instruct, turn_template = load_character_memoized(instruction_template, '', '', instruct=True)
     name1_instruct = body['name1_instruct'] or name1_instruct
     name2_instruct = body['name2_instruct'] or name2_instruct
@@ -205,6 +206,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
 
     # Chat character
     character = body['character'] or shared.settings['character']
+    character = "Assistant" if character == "None" else character
     name1 = body['name1'] or shared.settings['name1']
     name1, name2, _, greeting, context, _ = load_character_memoized(character, name1, '', instruct=False)
     name2 = body['name2'] or name2
