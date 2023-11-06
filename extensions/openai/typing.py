@@ -2,7 +2,7 @@ import json
 import time
 from typing import List
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class GenerationOptions(BaseModel):
@@ -89,23 +89,23 @@ class ChatCompletionRequest(GenerationOptions):
     top_p: float | None = 1
     user: str | None = None
 
-    mode: str = 'instruct'
+    mode: str = Field(default='instruct', description="Valid options: instruct, chat, chat-instruct.")
 
-    instruction_template: str | None = None
-    name1_instruct: str | None = None
-    name2_instruct: str | None = None
-    context_instruct: str | None = None
-    turn_template: str | None = None
+    instruction_template: str | None = Field(default=None, description="An instruction template defined under text-generation-webui/instruction-templates. If not set, the correct template will be guessed using the regex expressions in models/config.yaml.")
+    name1_instruct: str | None = Field(default=None, description="Overwrites the value set by instruction_template.")
+    name2_instruct: str | None = Field(default=None, description="Overwrites the value set by instruction_template.")
+    context_instruct: str | None = Field(default=None, description="Overwrites the value set by instruction_template.")
+    turn_template: str | None = Field(default=None, description="Overwrites the value set by instruction_template.")
 
-    character: str | None = None
-    name1: str | None = None
-    name2: str | None = None
-    context: str | None = None
-    greeting: str | None = None
+    character: str | None = Field(default=None, description="A character defined under text-generation-webui/characters. If not set, the default \"Assistant\" character will be used.")
+    name1: str | None = Field(default=None, description="Overwrites the value set by character.")
+    name2: str | None = Field(default=None, description="Overwrites the value set by character.")
+    context: str | None = Field(default=None, description="Overwrites the value set by character.")
+    greeting: str | None = Field(default=None, description="Overwrites the value set by character.")
 
     chat_instruct_command: str | None = None
 
-    continue_: bool = False
+    continue_: bool = Field(default=False, description="Makes the last bot message in the history be continued instead of starting a new message.")
 
 
 class ChatCompletionResponse(BaseModel):
