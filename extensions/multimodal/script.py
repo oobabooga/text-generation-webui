@@ -78,9 +78,16 @@ def add_chat_picture(picture, text, visible_text):
 def custom_tokenized_length(prompt):
     return multimodal_embedder.len_in_tokens(prompt)
 
+def load_multimodal_embedder():
+    global multimodal_embedder
+    if multimodal_embedder is None:
+        multimodal_embedder = MultimodalEmbedder(params)
 
 def tokenizer_modifier(state, prompt, input_ids, input_embeds):
     global params
+
+    load_multimodal_embedder()
+
     start_ts = time.time()
     image_match = re.search(r'<img src="data:image/jpeg;base64,[A-Za-z0-9+/=]+">', prompt)
 
@@ -95,8 +102,8 @@ def tokenizer_modifier(state, prompt, input_ids, input_embeds):
 
 
 def ui():
-    global multimodal_embedder
-    multimodal_embedder = MultimodalEmbedder(params)
+    load_multimodal_embedder()
+
     with gr.Column():
         picture_select = gr.Image(label='Send a picture', type='pil')
         # The models don't seem to deal well with multiple images
