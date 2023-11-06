@@ -8,7 +8,6 @@ from pydantic import BaseModel, Field
 class GenerationOptions(BaseModel):
     preset: str | None = None
     temperature: float = 1
-    temperature_last: bool = False
     top_p: float = 1
     min_p: float = 0
     top_k: int = 0
@@ -27,6 +26,7 @@ class GenerationOptions(BaseModel):
     mirostat_mode: int = 0
     mirostat_tau: float = 5
     mirostat_eta: float = 0.1
+    temperature_last: bool = False
     do_sample: bool = True
     seed: int = -1
     encoder_repetition_penalty: float = 1
