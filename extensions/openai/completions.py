@@ -89,11 +89,12 @@ def process_parameters(body, is_legacy=False):
         preset = load_preset_memoized(body['preset'])
         generate_params.update(preset)
 
+    generate_params['custom_stopping_strings'] = []
     if 'stop' in body:  # str or array, max len 4 (ignored)
         if isinstance(body['stop'], str):
-            generate_params['stopping_strings'] = [body['stop']]  # non-standard parameter
+            generate_params['custom_stopping_strings'] = [body['stop']]
         elif isinstance(body['stop'], list):
-            generate_params['stopping_strings'] = body['stop']
+            generate_params['custom_stopping_strings'] = body['stop']
 
     logits_processor = []
     logit_bias = body.get('logit_bias', None)
@@ -352,7 +353,6 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
     generate_params['stream'] = stream
     requested_model = generate_params.pop('model')
     logprob_proc = generate_params.pop('logprob_proc', None)
-    stopping_strings = generate_params.pop('stopping_strings', [])
     # generate_params['suffix'] = body.get('suffix', generate_params['suffix'])
     generate_params['echo'] = body.get('echo', generate_params['echo'])
 
@@ -382,7 +382,7 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
 
             # generate reply #######################################
             debug_msg({'prompt': prompt, 'generate_params': generate_params})
-            generator = generate_reply(prompt, generate_params, stopping_strings=stopping_strings, is_chat=False)
+            generator = generate_reply(prompt, generate_params, is_chat=False)
             answer = ''
 
             for a in generator:
@@ -456,7 +456,7 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
 
         # generate reply #######################################
         debug_msg({'prompt': prompt, 'generate_params': generate_params})
-        generator = generate_reply(prompt, generate_params, stopping_strings=stopping_strings, is_chat=False)
+        generator = generate_reply(prompt, generate_params, is_chat=False)
 
         answer = ''
         seen_content = ''

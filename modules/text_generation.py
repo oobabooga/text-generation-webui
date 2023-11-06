@@ -56,7 +56,10 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
 
     # Find the stopping strings
     all_stop_strings = []
-    for st in (stopping_strings, ast.literal_eval(f"[{state['custom_stopping_strings']}]")):
+    for st in (stopping_strings, state['custom_stopping_strings']):
+        if type(st) is str:
+            st = ast.literal_eval(f"[{st}]")
+
         if type(st) is list and len(st) > 0:
             all_stop_strings += st
 
