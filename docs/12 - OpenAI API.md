@@ -1,6 +1,6 @@
 ## OpenAI compatible API
 
-This project includes an API compatible with multiple OpenAI endpoints, including Chat and Completions.
+The main API for this project is meant to be a drop-in replacement to the OpenAI API, including Chat and Completions endpoints.
 
 If you did not use the one-click installers, you may need to install the requirements first:
 
@@ -12,8 +12,8 @@ pip install -r extensions/openai/requirements.txt
 
 Add `--extensions openai` to your command-line flags.
 
-* To create a public Cloudflare URL, add the `--public-api` flag.
-* To listen on your local network, add the `--listen` flag.
+* To create a public Cloudflare URL, also add the `--public-api` flag.
+* To listen on your local network, also add the `--listen` flag.
 * To change the port, which is 5000 by default, use `--port 1234` (change 1234 to your desired port number).
 * To use SSL, add `--ssl-keyfile key.pem --ssl-certfile cert.pem`. Note that it doesn't work with `--public-api`.
 
@@ -33,7 +33,7 @@ The following environment variables can be used (they take precendence over ever
 
 #### Persistent settings with `settings.yaml`
 
-You can also set default values by adding these lines to your `settings.yaml` file:
+You can also set the following variables in your `settings.yaml` file:
 
 ```
 openai-embedding_device: cuda
@@ -43,6 +43,106 @@ openai-debug: 1
 ```
 
 ### Examples
+
+For the documentation with all the parameters, consult `http://127.0.0.1:5000/docs` or the [typing.py](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/openai/typing.py) file.
+
+The official examples in the [OpenAI documentation](https://platform.openai.com/docs/api-reference) should also work, and the same parameters apply (although the API here has more optional parameters).
+
+#### Completions
+
+```shell
+curl http://127.0.0.1:5000/v1/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "This is a cake recipe:\n\n1.",
+    "max_tokens": 200,
+    "temperature": 1,
+    "top_p": 0.9,
+    "seed": 10
+  }'
+```
+
+#### Chat completions
+
+Works best with instruction-following models. If the "instruction_template" variable is not provided, it will be guessed automatically based on the model name using the regex patterns in `models/config.yaml`.
+
+```shell
+curl http://127.0.0.1:5000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "messages": [
+      {
+        "role": "user",
+        "content": "Hello!"
+      }
+    ],
+    "mode": "instruct",
+    "instruction_template": "Alpaca"
+  }'
+```
+
+#### Chat completions with characters
+
+```shell
+curl http://127.0.0.1:5000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "messages": [
+      {
+        "role": "user",
+        "content": "Hello! Who are you?"
+      }
+    ],
+    "mode": "chat",
+    "character": "Example"
+  }'
+```
+
+#### SSE streaming
+
+```shell
+curl http://127.0.0.1:5000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "messages": [
+      {
+        "role": "user",
+        "content": "Hello!"
+      }
+    ],
+    "mode": "instruct",
+    "instruction_template": "Alpaca",
+    "stream": true
+  }'
+```
+
+#### Python chat example
+
+```python
+import requests
+
+url = "http://127.0.0.1:5000/v1/chat/completions"
+
+headers = {
+    "Content-Type": "application/json"
+}
+
+history = []
+    
+while True:
+    user_message = input("> ")
+    history.append({"role": "user", "content": user_message})
+    data = {
+        "mode": "chat",
+        "character": "Example",
+        "messages": history
+    }
+
+    response = requests.post(url, headers=headers, json=data, verify=False)
+    assistant_message = response.json()['choices'][0]['message']['content']
+    history.append({"role": "assistant", "content": assistant_message})
+    print(assistant_message)
+```
 
 ### Client Application Setup
 
