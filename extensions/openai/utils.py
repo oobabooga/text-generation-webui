@@ -1,7 +1,11 @@
 import base64
 import os
+import time
+import traceback
+from typing import Callable, Optional
 
 import numpy as np
+
 
 def float_list_to_base64(float_array: np.ndarray) -> str:
     # Convert the list to a float32 array that the OpenAPI client expects
@@ -18,13 +22,33 @@ def float_list_to_base64(float_array: np.ndarray) -> str:
     return ascii_string
 
 
-def end_line(s):
-    if s and s[-1] != '\n':
-        s = s + '\n'
-    return s
-
-
 def debug_msg(*args, **kwargs):
     from extensions.openai.script import params
     if os.environ.get("OPENEDAI_DEBUG", params.get('debug', 0)):
         print(*args, **kwargs)
+
+
+def _start_cloudflared(port: int, tunnel_id: str, max_attempts: int = 3, on_start: Optional[Callable[[str], None]] = None):
+    try:
+        from flask_cloudflared import _run_cloudflared
+    except ImportError:
+        print('You should install flask_cloudflared manually')
+        raise Exception(
+            'flask_cloudflared not installed. Make sure you installed the requirements.txt for this extension.')
+
+    for _ in range(max_attempts):
+        try:
+            if tunnel_id is not None:
+                public_url = _run_cloudflared(port, port + 1, tunnel_id=tunnel_id)
+            else:
+                public_url = _run_cloudflared(port, port + 1)
+
+            if on_start:
+                on_start(public_url)
+
+            return
+        except Exception:
+            traceback.print_exc()
+            time.sleep(3)
+
+        raise Exception('Could not start cloudflared.')

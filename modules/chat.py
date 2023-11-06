@@ -81,7 +81,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
     # Find the maximum prompt size
     max_length = get_max_prompt_length(state)
     all_substrings = {
-        'chat': get_turn_substrings(state, instruct=False),
+        'chat': get_turn_substrings(state, instruct=False) if state['mode'] in ['chat', 'chat-instruct'] else None,
         'instruct': get_turn_substrings(state, instruct=True)
     }
 
@@ -237,7 +237,10 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
     for j, reply in enumerate(generate_reply(prompt, state, stopping_strings=stopping_strings, is_chat=True)):
 
         # Extract the reply
-        visible_reply = re.sub("(<USER>|<user>|{{user}})", state['name1'], reply)
+        visible_reply = reply
+        if state['mode'] in ['chat', 'chat-instruct']:
+            visible_reply = re.sub("(<USER>|<user>|{{user}})", state['name1'], reply)
+
         visible_reply = html.escape(visible_reply)
 
         if shared.stop_everything:

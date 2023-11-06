@@ -22,7 +22,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * [Custom chat characters](https://github.com/oobabooga/text-generation-webui/wiki/03-%E2%80%90-Parameters-Tab#character)
 * Very efficient text streaming
 * Markdown output with LaTeX rendering, to use for instance with [GALACTICA](https://github.com/paperswithcode/galai)
-* API, including endpoints for websocket streaming ([see the examples](https://github.com/oobabooga/text-generation-webui/blob/main/api-examples))
+* OpenAI-compatible API server
 
 ## Documentation
 
@@ -412,8 +412,8 @@ Optionally, you can use the following command-line flags:
 | `--api`                               | Enable the API extension. |
 | `--public-api`                        | Create a public URL for the API using Cloudfare. |
 | `--public-api-id PUBLIC_API_ID`       | Tunnel ID for named Cloudflare Tunnel. Use together with public-api option. |
-| `--api-blocking-port BLOCKING_PORT`   | The listening port for the blocking API. |
-| `--api-streaming-port STREAMING_PORT` | The listening port for the streaming API. |
+| `--api-port API_PORT`                 | The listening port for the API. |
+| `--api-key API_KEY`                   | API authentication key. |
 
 #### Multimodal
 
