@@ -167,8 +167,7 @@ parser.add_argument('--ssl-certfile', type=str, help='The path to the SSL certif
 parser.add_argument('--api', action='store_true', help='Enable the API extension.')
 parser.add_argument('--public-api', action='store_true', help='Create a public URL for the API using Cloudfare.')
 parser.add_argument('--public-api-id', type=str, help='Tunnel ID for named Cloudflare Tunnel. Use together with public-api option.', default=None)
-parser.add_argument('--api-blocking-port', type=int, default=5000, help='The listening port for the blocking API.')
-parser.add_argument('--api-streaming-port', type=int, default=5005, help='The listening port for the streaming API.')
+parser.add_argument('--api-port', type=int, default=5000, help='The listening port for the API.')
 
 # Multimodal
 parser.add_argument('--multimodal-pipeline', type=str, default=None, help='The multimodal pipeline to use. Examples: llava-7b, llava-13b.')
@@ -178,6 +177,8 @@ parser.add_argument('--notebook', action='store_true', help='DEPRECATED')
 parser.add_argument('--chat', action='store_true', help='DEPRECATED')
 parser.add_argument('--no-stream', action='store_true', help='DEPRECATED')
 parser.add_argument('--mul_mat_q', action='store_true', help='DEPRECATED')
+parser.add_argument('--api-blocking-port', type=int, default=5000, help='DEPRECATED')
+parser.add_argument('--api-streaming-port', type=int, default=5005, help='DEPRECATED')
 
 args = parser.parse_args()
 args_defaults = parser.parse_args([])
