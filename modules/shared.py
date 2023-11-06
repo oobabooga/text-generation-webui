@@ -39,21 +39,21 @@ settings = {
     'max_new_tokens': 200,
     'max_new_tokens_min': 1,
     'max_new_tokens_max': 4096,
-    'seed': -1,
     'negative_prompt': '',
+    'seed': -1,
     'truncation_length': 2048,
     'truncation_length_min': 0,
     'truncation_length_max': 32768,
-    'custom_stopping_strings': '',
-    'auto_max_new_tokens': False,
     'max_tokens_second': 0,
-    'ban_eos_token': False,
+    'custom_stopping_strings': '',
     'custom_token_bans': '',
+    'auto_max_new_tokens': False,
+    'ban_eos_token': False,
     'add_bos_token': True,
     'skip_special_tokens': True,
     'stream': True,
-    'name1': 'You',
     'character': 'Assistant',
+    'name1': 'You',
     'instruction_template': 'Alpaca',
     'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
     'autoload_model': False,
@@ -167,8 +167,8 @@ parser.add_argument('--ssl-certfile', type=str, help='The path to the SSL certif
 parser.add_argument('--api', action='store_true', help='Enable the API extension.')
 parser.add_argument('--public-api', action='store_true', help='Create a public URL for the API using Cloudfare.')
 parser.add_argument('--public-api-id', type=str, help='Tunnel ID for named Cloudflare Tunnel. Use together with public-api option.', default=None)
-parser.add_argument('--api-blocking-port', type=int, default=5000, help='The listening port for the blocking API.')
-parser.add_argument('--api-streaming-port', type=int, default=5005, help='The listening port for the streaming API.')
+parser.add_argument('--api-port', type=int, default=5000, help='The listening port for the API.')
+parser.add_argument('--api-key', type=str, default='', help='API authentication key.')
 
 # Multimodal
 parser.add_argument('--multimodal-pipeline', type=str, default=None, help='The multimodal pipeline to use. Examples: llava-7b, llava-13b.')
@@ -178,6 +178,8 @@ parser.add_argument('--notebook', action='store_true', help='DEPRECATED')
 parser.add_argument('--chat', action='store_true', help='DEPRECATED')
 parser.add_argument('--no-stream', action='store_true', help='DEPRECATED')
 parser.add_argument('--mul_mat_q', action='store_true', help='DEPRECATED')
+parser.add_argument('--api-blocking-port', type=int, default=5000, help='DEPRECATED')
+parser.add_argument('--api-streaming-port', type=int, default=5005, help='DEPRECATED')
 
 args = parser.parse_args()
 args_defaults = parser.parse_args([])
@@ -233,10 +235,13 @@ def fix_loader_name(name):
         return 'AutoAWQ'
 
 
-def add_extension(name):
+def add_extension(name, last=False):
     if args.extensions is None:
         args.extensions = [name]
-    elif 'api' not in args.extensions:
+    elif last:
+        args.extensions = [x for x in args.extensions if x != name]
+        args.extensions.append(name)
+    elif name not in args.extensions:
         args.extensions.append(name)
 
 
@@ -246,13 +251,14 @@ def is_chat():
 
 args.loader = fix_loader_name(args.loader)
 
-# Activate the API extension
-if args.api or args.public_api:
-    add_extension('api')
-
 # Activate the multimodal extension
 if args.multimodal_pipeline is not None:
     add_extension('multimodal')
+
+# Activate the API extension
+if args.api:
+    # add_extension('openai', last=True)
+    add_extension('api', last=True)
 
 # Load model-specific settings
 with Path(f'{args.model_dir}/config.yaml') as p:
