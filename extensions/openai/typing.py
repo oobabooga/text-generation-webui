@@ -6,8 +6,9 @@ from pydantic import BaseModel, Field
 
 
 class GenerationOptions(BaseModel):
-    preset: str = "None"
+    preset: str | None = None
     temperature: float = 1
+    temperature_last: bool = False
     top_p: float = 1
     min_p: float = 0
     top_k: int = 0
