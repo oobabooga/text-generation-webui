@@ -22,8 +22,6 @@ from pydub import AudioSegment
 from sse_starlette import EventSourceResponse
 
 from .typing import (
-    ChatCompletionChunkChoiceObject,
-    ChatCompletionChunkResponse,
     ChatCompletionRequest,
     ChatCompletionResponse,
     CompletionRequest,
@@ -242,11 +240,6 @@ def run_server():
             logger.info(f'OpenAI compatible API URL:\n\n{public_url}/v1\n')
 
         _start_cloudflared(port, shared.args.public_api_id, max_attempts=3, on_start=on_start)
-
-        try:
-            try_start_cloudflared(port, shared.args.public_api_id, max_attempts=3, on_start=on_start)
-        except Exception:
-            pass
     else:
         if ssl_keyfile and ssl_certfile:
             logger.info(f'OpenAI compatible API URL:\n\nhttps://{server_addr}:{port}/v1\n')

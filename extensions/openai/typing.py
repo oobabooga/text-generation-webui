@@ -117,32 +117,6 @@ class ChatCompletionResponse(BaseModel):
     usage: dict
 
 
-class ChatCompletionChunkResponse(BaseModel):
-    id: str
-    choices: List[dict]
-    created: int = int(time.time())
-    model: str
-    object: str = "chat.completion.chunk"
-
-
-class ChatCompletionChunkChoiceObject(BaseModel):
-    delta: dict
-    finish_reason: str | None = None
-    index: int = 0
-
-
-class ModelResponse(BaseModel):
-    object: str = "list"
-    data: List[dict]
-
-
-class ModelObject(BaseModel):
-    id: str
-    created: int = int(time.time())
-    object: str = "model"
-    owned_by: str = "Open Source"
-
-
 def to_json(obj):
     return json.dumps(obj.__dict__, indent=4)
 
