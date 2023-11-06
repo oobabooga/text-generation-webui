@@ -31,7 +31,7 @@ The following environment variables can be used (they take precendence over ever
 | `OPENEDAI_EMBEDDING_MODEL` | Embedding model (if applicable) |          all-mpnet-base-v2                  |
 | `OPENEDAI_EMBEDDING_DEVICE` | Embedding device (if applicable) |           cuda                 |
 
-#### Persistent settings in `settings.yaml`
+#### Persistent settings with `settings.yaml`
 
 You can also set default values by adding these lines to your `settings.yaml` file:
 
@@ -44,7 +44,7 @@ openai-debug: 1
 
 ### Examples
 
-#### Client Application Setup
+### Client Application Setup
 
 
 You can usually force an application that uses the OpenAI API to connect to the local API by using the following environment variables:
@@ -149,7 +149,7 @@ print(text)
 | /v1/moderations           | openai.Moderation.create()         | Basic initial support via embeddings                                        |
 | /v1/models                | openai.Model.list()                | Lists models, Currently loaded model first, plus some compatibility options |
 | /v1/models/{id}           | openai.Model.get()                 | returns whatever you ask for                                                |
-| /v1/edits                 | openai.Edit.create()               | Deprecated by openai, good with instruction following models                |
+| /v1/edits                 | openai.Edit.create()               | Removed, use /v1/chat/completions instead                                   |
 | /v1/text_completion       | openai.Completion.create()         | Legacy endpoint, variable quality based on the model                        |
 | /v1/completions           | openai api completions.create      | Legacy endpoint (v0.25)                                                     |
 | /v1/engines/\*/embeddings | python-openai v0.25                | Legacy endpoint                                                             |
@@ -163,26 +163,6 @@ print(text)
 | /v1/fine-tunes\*          | openai.FineTune.\*                 | not yet supported                                                           |
 | /v1/search                | openai.search, engines.search      | not yet supported                                                           |
 
-Because of the differences in OpenAI model context sizes (2k, 4k, 8k, 16k, etc,) you may need to adjust the max_tokens to fit into the context of the model you choose.
-
-Streaming, temperature, top_p, max_tokens, stop, should all work as expected, but not all parameters are mapped correctly.
-
-Some hacky mappings:
-
-| OpenAI                  | text-generation-webui      | note                                                                                                                                                                                                 |
-| ----------------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| model                   | -                          | Ignored, the model is not changed                                                                                                                                                                    |
-| frequency_penalty       | encoder_repetition_penalty | this seems to operate with a different scale and defaults, I tried to scale it based on range & defaults, but the results are terrible. hardcoded to 1.18 until there is a better way                |
-| presence_penalty        | repetition_penalty         | same issues as frequency_penalty, hardcoded to 1.0                                                                                                                                                   |
-| best_of                 | top_k                      | default is 1 (top_k is 20 for chat, which doesn't support best_of)                                                                                                                                   |
-| n                       | 1                          | variations are not supported yet.                                                                                                                                                                    |
-| 1                       | num_beams                  | hardcoded to 1                                                                                                                                                                                       |
-| 1.0                     | typical_p                  | hardcoded to 1.0                                                                                                                                                                                     |
-| logprobs & logit_bias   | -                          | experimental, llama only, transformers-kin only (ExLlama_HF ok), can also use llama tokens if 'model' is not an openai model or will convert from tiktoken for the openai model specified in 'model' |
-| messages.name           | -                          | not supported yet                                                                                                                                                                                    |
-| suffix                  | -                          | not supported yet                                                                                                                                                                                    |
-| user                    | -                          | not supported yet                                                                                                                                                                                    |
-| functions/function_call | -                          | function calls are not supported yet                                                                                                                                                                 |
 
 #### Applications
 
