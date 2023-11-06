@@ -5,8 +5,6 @@ from collections import deque
 import tiktoken
 import torch
 import torch.nn.functional as F
-from transformers import LogitsProcessor, LogitsProcessorList
-
 from extensions.openai.errors import InvalidRequestError
 from extensions.openai.utils import debug_msg
 from modules import shared
@@ -17,6 +15,7 @@ from modules.chat import (
 )
 from modules.presets import load_preset_memoized
 from modules.text_generation import decode, encode, generate_reply
+from transformers import LogitsProcessor, LogitsProcessorList
 
 
 class LogitsBiasProcessor(LogitsProcessor):

@@ -11,11 +11,13 @@ import speech_recognition as sr
 import uvicorn
 from extensions.openai.errors import ServiceUnavailableError
 from extensions.openai.tokens import token_count, token_decode, token_encode
+from extensions.openai.utils import _start_cloudflared
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.requests import Request
 from fastapi.responses import JSONResponse
 from modules import shared
+from modules.logging_colors import logger
 from pydub import AudioSegment
 from sse_starlette import EventSourceResponse
 
@@ -223,24 +225,28 @@ async def handle_token_decode(request: Request):
 
 
 def run_server():
+
     port = int(os.environ.get('OPENEDAI_PORT', params.get('port', 5000)))
     server_addr = '0.0.0.0' if shared.args.listen else '127.0.0.1'
 
     ssl_certfile = os.environ.get('OPENEDAI_CERT_PATH', shared.args.ssl_certfile)
     ssl_keyfile = os.environ.get('OPENEDAI_KEY_PATH', shared.args.ssl_keyfile)
 
-    if shared.args.share:
+    if shared.args.public_api:
+        def on_start(public_url: str):
+            logger.info(f'OpenAI compatible API URL:\n\n{public_url}/v1\n')
+
+        _start_cloudflared(port, shared.args.public_api_id, max_attempts=3, on_start=on_start)
+
         try:
-            from flask_cloudflared import _run_cloudflared
-            public_url = _run_cloudflared(port, port + 1)
-            print(f'OpenAI compatible API ready at: OPENAI_API_BASE={public_url}/v1')
-        except ImportError:
-            print('You should install flask_cloudflared manually')
+            try_start_cloudflared(port, shared.args.public_api_id, max_attempts=3, on_start=on_start)
+        except Exception:
+            pass
     else:
         if ssl_keyfile and ssl_certfile:
-            print(f'OpenAI compatible API ready at: OPENAI_API_BASE=https://{server_addr}:{port}/v1')
+            logger.info(f'OpenAI compatible API URL:\n\nhttps://{server_addr}:{port}/v1\n')
         else:
-            print(f'OpenAI compatible API ready at: OPENAI_API_BASE=http://{server_addr}:{port}/v1')
+            logger.info(f'OpenAI compatible API URL:\n\nhttp://{server_addr}:{port}/v1\n')
 
     uvicorn.run(app, host=server_addr, port=port, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile)
 
