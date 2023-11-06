@@ -7,13 +7,9 @@ from pydantic import BaseModel, Field
 
 class GenerationOptions(BaseModel):
     preset: str | None = None
-    temperature: float = 1
-    top_p: float = 1
     min_p: float = 0
     top_k: int = 0
     repetition_penalty: float = 1
-    presence_penalty: float = 0
-    frequency_penalty: float = 0
     repetition_penalty_range: int = 0
     typical_p: float = 1
     tfs: float = 1
@@ -45,7 +41,7 @@ class GenerationOptions(BaseModel):
     grammar_string: str = ""
 
 
-class CompletionRequest(GenerationOptions):
+class CompletionRequestParams(BaseModel):
     model: str | None = None
     prompt: str | List[str]
     best_of: int | None = 1
@@ -64,6 +60,10 @@ class CompletionRequest(GenerationOptions):
     user: str | None = None
 
 
+class CompletionRequest(GenerationOptions, CompletionRequestParams):
+    pass
+
+
 class CompletionResponse(BaseModel):
     id: str
     choices: List[dict]
@@ -73,7 +73,7 @@ class CompletionResponse(BaseModel):
     usage: dict
 
 
-class ChatCompletionRequest(GenerationOptions):
+class ChatCompletionRequestParams(BaseModel):
     messages: List[dict]
     model: str | None = None
     frequency_penalty: float | None = 0
@@ -106,6 +106,10 @@ class ChatCompletionRequest(GenerationOptions):
     chat_instruct_command: str | None = None
 
     continue_: bool = Field(default=False, description="Makes the last bot message in the history be continued instead of starting a new message.")
+
+
+class ChatCompletionRequest(GenerationOptions, ChatCompletionRequestParams):
+    pass
 
 
 class ChatCompletionResponse(BaseModel):
