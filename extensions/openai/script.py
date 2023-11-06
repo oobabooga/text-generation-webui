@@ -12,7 +12,7 @@ import uvicorn
 from extensions.openai.errors import ServiceUnavailableError
 from extensions.openai.tokens import token_count, token_decode, token_encode
 from extensions.openai.utils import _start_cloudflared
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.requests import Request
 from fastapi.responses import JSONResponse
@@ -38,7 +38,14 @@ params = {
     'debug': 0
 }
 
-app = FastAPI()
+
+def verify_api_key(authorization: str = Header(None)) -> None:
+    expected_api_key = shared.args.api_key
+    if expected_api_key and (authorization is None or authorization != f"Bearer {expected_api_key}"):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+
+app = FastAPI(dependencies=[Depends(verify_api_key)])
 
 # Configure CORS settings to allow all origins, methods, and headers
 app.add_middleware(
@@ -245,6 +252,9 @@ def run_server():
             logger.info(f'OpenAI compatible API URL:\n\nhttps://{server_addr}:{port}/v1\n')
         else:
             logger.info(f'OpenAI compatible API URL:\n\nhttp://{server_addr}:{port}/v1\n')
+
+    if shared.args.api_key:
+        logger.info(f'OpenAI API key:\n\n{shared.args.api_key}\n')
 
     uvicorn.run(app, host=server_addr, port=port, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile)
 
