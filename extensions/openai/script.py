@@ -69,7 +69,6 @@ async def options_route():
 
 
 @app.post('/v1/completions', response_model=CompletionResponse)
-@app.post('/v1/generate', response_model=CompletionResponse)
 async def openai_completions(request: Request, request_data: CompletionRequest):
     path = request.url.path
     is_legacy = "/generate" in path
