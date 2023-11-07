@@ -18,6 +18,7 @@ from fastapi.requests import Request
 from fastapi.responses import JSONResponse
 from modules import shared
 from modules.logging_colors import logger
+from modules.text_generation import stop_everything_event
 from pydub import AudioSegment
 from sse_starlette import EventSourceResponse
 
@@ -204,14 +205,7 @@ async def handle_moderations(request: Request):
     return JSONResponse(response)
 
 
-@app.post("/api/v1/token-count")
-async def handle_token_count(request: Request):
-    body = await request.json()
-    response = token_count(body['prompt'])
-    return JSONResponse(response)
-
-
-@app.post("/api/v1/token/encode")
+@app.post("/v1/internal/encode")
 async def handle_token_encode(request: Request):
     body = await request.json()
     encoding_format = body.get("encoding_format", "")
@@ -219,12 +213,25 @@ async def handle_token_encode(request: Request):
     return JSONResponse(response)
 
 
-@app.post("/api/v1/token/decode")
+@app.post("/v1/internal/decode")
 async def handle_token_decode(request: Request):
     body = await request.json()
     encoding_format = body.get("encoding_format", "")
     response = token_decode(body["input"], encoding_format)
     return JSONResponse(response, no_debug=True)
+
+
+@app.post("/v1/internal/token-count")
+async def handle_token_count(request: Request):
+    body = await request.json()
+    response = token_count(body['prompt'])
+    return JSONResponse(response)
+
+
+@app.post("/v1/internal/stop-generation")
+async def handle_stop_generation(request: Request):
+    stop_everything_event()
+    return JSONResponse(content="OK")
 
 
 def run_server():

@@ -123,6 +123,7 @@ loaders_and_params = OrderedDict({
         'numa',
         'cfg_cache',
         'use_fast',
+        'logits_all',
         'llamacpp_HF_info',
     ],
     'ctransformers': [

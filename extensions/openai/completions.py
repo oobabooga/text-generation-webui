@@ -292,13 +292,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
                 continue
 
             seen_content = answer
-
-            # strip extra leading space off new generated content
-            if len_seen == 0 and new_content[0] == ' ':
-                new_content = new_content[1:]
-
             chunk = chat_streaming_chunk(new_content)
-
             yield chunk
 
     completion_token_count = len(encode(answer)[0])
@@ -360,8 +354,8 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
     generate_params['stream'] = stream
     requested_model = generate_params.pop('model')
     logprob_proc = generate_params.pop('logprob_proc', None)
-    # generate_params['suffix'] = body.get('suffix', generate_params['suffix'])
-    generate_params['echo'] = body.get('echo', generate_params['echo'])
+    suffix = body['suffix'] if body['suffix'] else ''
+    echo = body['echo']
 
     if not stream:
         prompt_arg = body[prompt_str]
@@ -384,6 +378,7 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
                     except KeyError:
                         prompt = decode(prompt)[0]
 
+            prefix = prompt if echo else ''
             token_count = len(encode(prompt)[0])
             total_prompt_token_count += token_count
 
@@ -395,10 +390,6 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
             for a in generator:
                 answer = a
 
-            # strip extra leading space off new generated content
-            if answer and answer[0] == ' ':
-                answer = answer[1:]
-
             completion_token_count = len(encode(answer)[0])
             total_completion_token_count += completion_token_count
             stop_reason = "stop"
@@ -408,7 +399,7 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
             respi = {
                 "index": idx,
                 "finish_reason": stop_reason,
-                "text": answer,
+                "text": prefix + answer + suffix,
                 "logprobs": {'top_logprobs': [logprob_proc.token_alternatives]} if logprob_proc else None,
             }
 
@@ -440,6 +431,7 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
             else:
                 raise InvalidRequestError(message="API Batched generation not yet supported.", param=prompt_str)
 
+        prefix = prompt if echo else ''
         token_count = len(encode(prompt)[0])
 
         def text_streaming_chunk(content):
@@ -459,7 +451,7 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
 
             return chunk
 
-        yield text_streaming_chunk('')
+        yield text_streaming_chunk(prefix)
 
         # generate reply #######################################
         debug_msg({'prompt': prompt, 'generate_params': generate_params})
@@ -479,25 +471,15 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
                 continue
 
             seen_content = answer
-
-            # strip extra leading space off new generated content
-            if len_seen == 0 and new_content[0] == ' ':
-                new_content = new_content[1:]
-
             chunk = text_streaming_chunk(new_content)
-
             yield chunk
-
-        # to get the correct count, we strip the leading space if present
-        if answer and answer[0] == ' ':
-            answer = answer[1:]
 
         completion_token_count = len(encode(answer)[0])
         stop_reason = "stop"
         if token_count + completion_token_count >= generate_params['truncation_length'] or completion_token_count >= max_tokens:
             stop_reason = "length"
 
-        chunk = text_streaming_chunk('')
+        chunk = text_streaming_chunk(suffix)
         chunk[resp_list][0]["finish_reason"] = stop_reason
         chunk["usage"] = {
             "prompt_tokens": token_count,

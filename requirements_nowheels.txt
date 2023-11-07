@@ -6,9 +6,9 @@ exllamav2==0.0.7
 gradio==3.50.*
 markdown
 numpy==1.24.*
-optimum==1.13.1
+optimum==1.14.0
 pandas
-peft==0.5.*
+peft==0.6.*
 Pillow>=9.5.0
 pyyaml
 requests
