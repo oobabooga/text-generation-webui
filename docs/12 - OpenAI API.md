@@ -180,7 +180,7 @@ while True:
     print()
 ```
 
-### Python completions example with streaming
+#### Python completions example with streaming
 
 Start the script with `python -u` to see the output in real time.
 
