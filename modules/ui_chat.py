@@ -112,12 +112,12 @@ def create_chat_settings_ui():
                 shared.gradio['save_template'] = gr.Button('💾', elem_classes='refresh-button', interactive=not mu)
                 shared.gradio['delete_template'] = gr.Button('🗑️ ', elem_classes='refresh-button', interactive=not mu)
 
-        shared.gradio['name1_instruct'] = gr.Textbox(value='', lines=2, label='User string')
-        shared.gradio['name2_instruct'] = gr.Textbox(value='', lines=1, label='Bot string')
-        shared.gradio['context_instruct'] = gr.Textbox(value='', lines=4, label='Context', elem_classes=['add_scrollbar'])
-        shared.gradio['system_message'] = gr.Textbox(value='', lines=2, label='Default system message', elem_classes=['add_scrollbar'])
         shared.gradio['custom_system_message'] = gr.Textbox(value=shared.settings['custom_system_message'], lines=2, label='Custom system message', info='If not empty, will be used instead of the default one.', elem_classes=['add_scrollbar'])
         shared.gradio['turn_template'] = gr.Textbox(value='', lines=1, label='Turn template', info='Used to precisely define the placement of spaces and new line characters in instruction prompts.', elem_classes=['add_scrollbar'])
+        shared.gradio['name1_instruct'] = gr.Textbox(value='', lines=2, label='User string', info='Replaces <|user|> in the turn template.')
+        shared.gradio['name2_instruct'] = gr.Textbox(value='', lines=1, label='Bot string', info='Replaces <|bot|> in the turn template.')
+        shared.gradio['context_instruct'] = gr.Textbox(value='', lines=4, label='Context', elem_classes=['add_scrollbar'])
+        shared.gradio['system_message'] = gr.Textbox(value='', lines=2, label='Default system message', info='Replaces <|system-message|> in the context.', elem_classes=['add_scrollbar'])
         with gr.Row():
             shared.gradio['send_instruction_to_default'] = gr.Button('Send to default', elem_classes=['small-button'])
             shared.gradio['send_instruction_to_notebook'] = gr.Button('Send to notebook', elem_classes=['small-button'])
