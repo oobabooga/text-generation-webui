@@ -57,7 +57,7 @@ class CompletionRequestParams(BaseModel):
     suffix: str | None = None
     temperature: float | None = 1
     top_p: float | None = 1
-    user: str | None = None
+    user: str | None = Field(default=None, description="Unused parameter.")
 
 
 class CompletionRequest(GenerationOptions, CompletionRequestParams):
