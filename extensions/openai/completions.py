@@ -140,6 +140,7 @@ def convert_history(history):
     current_message = ""
     current_reply = ""
     user_input = ""
+    system_message = ""
 
     for entry in history:
         content = entry["content"]
@@ -159,11 +160,13 @@ def convert_history(history):
                 current_reply = ""
             else:
                 chat_dialogue.append(['', current_reply])
+        elif role == "system":
+            system_message = content
 
     # if current_message:
     #     chat_dialogue.append([current_message, ''])
 
-    return user_input, {'internal': chat_dialogue, 'visible': copy.deepcopy(chat_dialogue)}
+    return user_input, system_message, {'internal': chat_dialogue, 'visible': copy.deepcopy(chat_dialogue)}
 
 
 def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -> dict:
@@ -198,7 +201,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
     # Instruction template
     instruction_template = body['instruction_template'] or shared.settings['instruction_template']
     instruction_template = "Alpaca" if instruction_template == "None" else instruction_template
-    name1_instruct, name2_instruct, _, _, context_instruct, turn_template = load_character_memoized(instruction_template, '', '', instruct=True)
+    name1_instruct, name2_instruct, _, _, context_instruct, turn_template, system_message = load_character_memoized(instruction_template, '', '', instruct=True)
     name1_instruct = body['name1_instruct'] or name1_instruct
     name2_instruct = body['name2_instruct'] or name2_instruct
     context_instruct = body['context_instruct'] or context_instruct
@@ -208,13 +211,13 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
     character = body['character'] or shared.settings['character']
     character = "Assistant" if character == "None" else character
     name1 = body['name1'] or shared.settings['name1']
-    name1, name2, _, greeting, context, _ = load_character_memoized(character, name1, '', instruct=False)
+    name1, name2, _, greeting, context, _, _ = load_character_memoized(character, name1, '', instruct=False)
     name2 = body['name2'] or name2
     context = body['context'] or context
     greeting = body['greeting'] or greeting
 
     # History
-    user_input, history = convert_history(messages)
+    user_input, custom_system_message, history = convert_history(messages)
 
     generate_params.update({
         'mode': body['mode'],
@@ -225,6 +228,8 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
         'name1_instruct': name1_instruct,
         'name2_instruct': name2_instruct,
         'context_instruct': context_instruct,
+        'system_message': system_message,
+        'custom_system_message': custom_system_message,
         'turn_template': turn_template,
         'chat-instruct_command': body['chat_instruct_command'],
         'history': history,

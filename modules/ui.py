@@ -157,6 +157,8 @@ def list_interface_input_elements():
         'name1_instruct',
         'name2_instruct',
         'context_instruct',
+        'system_message',
+        'custom_system_message',
         'turn_template',
         'chat_style',
         'chat-instruct_command',

@@ -1,4 +1,5 @@
 user: "USER:"
 bot: "ASSISTANT:"
 turn_template: "<|user|> <|user-message|>\n<|bot|> <|bot-message|></s>\n"
-context: "You are a helpful assistant\n"
+context: "<|system-message|>\n"
+system_message: "You are a helpful assistant"
