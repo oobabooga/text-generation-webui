@@ -44,7 +44,7 @@ openai-debug: 1
 
 ### Examples
 
-For the documentation with all the parameters, consult `http://127.0.0.1:5000/docs` or the [typing.py](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/openai/typing.py) file.
+For the documentation with all the parameters and their types, consult `http://127.0.0.1:5000/docs` or the [typing.py](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/openai/typing.py) file.
 
 The official examples in the [OpenAI documentation](https://platform.openai.com/docs/api-reference) should also work, and the same parameters apply (although the API here has more optional parameters).
 
@@ -282,33 +282,6 @@ In short, the all-MiniLM-L6-v2 model is 5x faster, 5x smaller ram, 2x smaller st
 
 Warning: You cannot mix embeddings from different models even if they have the same dimensions. They are not comparable.
 
-### API Documentation & Examples
-
-The OpenAI API is well documented, you can view the documentation here: https://platform.openai.com/docs/api-reference
-
-Examples of how to use the Completions API in Python can be found here: https://platform.openai.com/examples
-Not all of them will work with all models unfortunately, See the notes on Models for how to get the best results.
-
-Here is a simple python example.
-
-```python
-import os
-os.environ['OPENAI_API_KEY']="sk-111111111111111111111111111111111111111111111111"
-os.environ['OPENAI_API_BASE']="http://0.0.0.0:5001/v1"
-import openai
-
-response = openai.ChatCompletion.create(
-  model="x",
-  messages = [{ 'role': 'system', 'content': "Answer in a consistent style." },
-    {'role': 'user', 'content': "Teach me about patience."},
-    {'role': 'assistant', 'content': "The river that carves the deepest valley flows from a modest spring; the grandest symphony originates from a single note; the most intricate tapestry begins with a solitary thread."},
-    {'role': 'user', 'content': "Teach me about the ocean."},
-  ]
-)
-text = response['choices'][0]['message']['content']
-print(text)
-```
-
 ### Compatibility & not so compatibility
 
 | API endpoint              | tested with                        | notes                                                                       |
@@ -332,7 +305,6 @@ print(text)
 | /v1/files\*               | openai.Files.\*                    | not yet supported                                                           |
 | /v1/fine-tunes\*          | openai.FineTune.\*                 | not yet supported                                                           |
 | /v1/search                | openai.search, engines.search      | not yet supported                                                           |
-
 
 #### Applications
 
