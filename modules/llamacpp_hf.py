@@ -204,7 +204,7 @@ class LlamacppHF(PreTrainedModel):
             'rope_freq_base': RoPE.get_rope_freq_base(shared.args.alpha_value, shared.args.rope_freq_base),
             'tensor_split': tensor_split_list,
             'rope_freq_scale': 1.0 / shared.args.compress_pos_emb,
-            'logits_all': True,
+            'logits_all': shared.args.logits_all,
         }
 
         Llama = llama_cpp_lib().Llama
