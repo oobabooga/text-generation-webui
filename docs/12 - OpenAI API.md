@@ -215,8 +215,7 @@ for event in client.events():
 print()
 ```
 
-### Client Application Setup
-
+### Third-party application setup
 
 You can usually force an application that uses the OpenAI API to connect to the local API by using the following environment variables:
 
@@ -228,18 +227,18 @@ or
 
 ```shell
 OPENAI_API_KEY=sk-111111111111111111111111111111111111111111111111
-OPENAI_API_BASE=http://127.0.0.1:500/v1
+OPENAI_API_BASE=http://127.0.0.1:5000/v1
 ```
 
-With the [official python openai client](https://github.com/openai/openai-python), set the `OPENAI_API_BASE` environment variables:
+With the [official python openai client](https://github.com/openai/openai-python), the address can be set like this:
 
 ```shell
-# Sample .env file:
-OPENAI_API_KEY=sk-111111111111111111111111111111111111111111111111
-OPENAI_API_BASE=http://0.0.0.0:5001/v1
-```
+import openai
 
-If needed, replace 127.0.0.1 with the IP/port of your server.
+openai.api_key = "..."
+openai.api_base = "http://127.0.0.1:5000/v1"
+openai.api_version = "2023-05-15"
+```
 
 If using .env files to save the `OPENAI_API_BASE` and `OPENAI_API_KEY` variables, make sure the .env file is loaded before the openai module is imported:
 
