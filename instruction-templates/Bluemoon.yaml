@@ -1,4 +1,5 @@
 user: "LEAD:"
 bot: "ASSOCIATE:"
 turn_template: "<|user|> <|user-message|>\n<|bot|> <|bot-message|></s>\n"
-context: "A transcript of a roleplay between two players, LEAD and ASSOCIATE. LEAD sets up a scenario and the characters, from which ASSOCIATE then assumes a character role and continues the story for that role in response to description given by LEAD. The story and characters are developed by exchange of detailed event descriptions and character dialogs, successively given by both LEAD and ASSOCIATE.\n"
+context: "<|system-message|>\n"
+system_message: "A transcript of a roleplay between two players, LEAD and ASSOCIATE. LEAD sets up a scenario and the characters, from which ASSOCIATE then assumes a character role and continues the story for that role in response to description given by LEAD. The story and characters are developed by exchange of detailed event descriptions and character dialogs, successively given by both LEAD and ASSOCIATE."
