@@ -44,13 +44,13 @@ class GenerationOptions(BaseModel):
 class CompletionRequestParams(BaseModel):
     model: str | None = None
     prompt: str | List[str]
-    best_of: int | None = 1
+    best_of: int | None = Field(default=1, description="Unused parameter.")
     echo: bool | None = False
     frequency_penalty: float | None = 0
     logit_bias: dict | None = None
     logprobs: int | None = None
     max_tokens: int | None = 16
-    n: int | None = 1
+    n: int | None = Field(default=1, description="Unused parameter.")
     presence_penalty: int | None = 0
     stop: str | List[str] | None = None
     stream: bool | None = False
@@ -77,17 +77,17 @@ class ChatCompletionRequestParams(BaseModel):
     messages: List[dict]
     model: str | None = None
     frequency_penalty: float | None = 0
-    function_call: str | dict | None = None
-    functions: List[dict] | None = None
+    function_call: str | dict | None = Field(default=None, description="Unused parameter.")
+    functions: List[dict] | None = Field(default=None, description="Unused parameter.")
     logit_bias: dict | None = None
     max_tokens: int | None = None
-    n: int | None = 1
+    n: int | None = Field(default=1, description="Unused parameter.")
     presence_penalty: int | None = 0
     stop: str | List[str] | None = None
     stream: bool | None = False
     temperature: float | None = 1
     top_p: float | None = 1
-    user: str | None = None
+    user: str | None = Field(default=None, description="Unused parameter.")
 
     mode: str = Field(default='instruct', description="Valid options: instruct, chat, chat-instruct.")
 
