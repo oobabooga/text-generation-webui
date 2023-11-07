@@ -124,9 +124,6 @@ class Handler(BaseHTTPRequestHandler):
             if action == 'load':
                 model_name = body['model_name']
                 args = body.get('args', {})
-                print('args', args)
-                for k in args:
-                    setattr(shared.args, k, args[k])
 
                 shared.model_name = model_name
                 unload_model()
@@ -134,6 +131,9 @@ class Handler(BaseHTTPRequestHandler):
                 model_settings = get_model_metadata(shared.model_name)
                 shared.settings.update({k: v for k, v in model_settings.items() if k in shared.settings})
                 update_model_parameters(model_settings, initial=True)
+                print('args', args)
+                for k in args:
+                    setattr(shared.args, k, args[k])
 
                 if shared.settings['mode'] != 'instruct':
                     shared.settings['instruction_template'] = None
