@@ -284,6 +284,8 @@ Warning: You cannot mix embeddings from different models even if they have the s
 
 ### Compatibility & not so compatibility
 
+Note: the table below may be obsolete.
+
 | API endpoint              | tested with                        | notes                                                                       |
 | ------------------------- | ---------------------------------- | --------------------------------------------------------------------------- |
 | /v1/chat/completions      | openai.ChatCompletion.create()     | Use it with instruction following models                                    |
@@ -309,6 +311,8 @@ Warning: You cannot mix embeddings from different models even if they have the s
 #### Applications
 
 Almost everything needs the `OPENAI_API_KEY` and `OPENAI_API_BASE` environment variable set, but there are some exceptions.
+
+Note: the table below may be obsolete.
 
 | Compatibility | Application/Library    | Website                                                                        | Notes                                                                                                                                                                                                        |
 | ------------- | ---------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
