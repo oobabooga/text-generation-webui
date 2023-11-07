@@ -595,14 +595,9 @@ def load_character(character, name1, name2, instruct=False):
         context = build_pygmalion_style_context(data)
         greeting_field = 'char_greeting'
 
-    if greeting_field in data:
-        greeting = data[greeting_field]
-
-    if 'turn_template' in data:
-        turn_template = data['turn_template']
-
-    if 'system_message' in data:
-        system_message = data['system_message']
+    greeting = data.get(greeting_field, greeting)
+    turn_template = data.get('turn_template', turn_template)
+    system_message = data.get('system_message', system_message)
 
     return name1, name2, picture, greeting, context, turn_template.replace("\n", r"\n"), system_message
 
