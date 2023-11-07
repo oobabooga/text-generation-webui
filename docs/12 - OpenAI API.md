@@ -237,7 +237,7 @@ OPENAI_API_BASE=http://127.0.0.1:5000/v1
 
 With the [official python openai client](https://github.com/openai/openai-python), the address can be set like this:
 
-```shell
+```python
 import openai
 
 openai.api_key = "..."
