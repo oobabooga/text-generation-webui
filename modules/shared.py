@@ -55,6 +55,7 @@ settings = {
     'character': 'Assistant',
     'name1': 'You',
     'instruction_template': 'Alpaca',
+    'custom_system_message': '',
     'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
     'autoload_model': False,
     'default_extensions': ['gallery'],
