@@ -12,10 +12,11 @@ pip install -r extensions/openai/requirements.txt
 
 Add `--extensions openai` to your command-line flags.
 
-* To create a public Cloudflare URL, also add the `--public-api` flag.
-* To listen on your local network, also add the `--listen` flag.
+* To create a public Cloudflare URL, add the `--public-api` flag.
+* To listen on your local network, add the `--listen` flag.
 * To change the port, which is 5000 by default, use `--api-port 1234` (change 1234 to your desired port number).
 * To use SSL, add `--ssl-keyfile key.pem --ssl-certfile cert.pem`. Note that it doesn't work with `--public-api`.
+* To use an API key for authentication, add `--api-key yourkey`.
 
 #### Environment variables
 
