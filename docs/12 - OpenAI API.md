@@ -174,11 +174,15 @@ while True:
     stream_response = requests.post(url, headers=headers, json=data, verify=False, stream=True)
     client = sseclient.SSEClient(stream_response)
 
+    assistant_message = ''
     for event in client.events():
         payload = json.loads(event.data)
-        print(payload['choices'][0]['message']['content'], end='')
+        chunk = payload['choices'][0]['message']['content']
+        assistant_message += chunk
+        print(chunk, end='')
 
     print()
+    history.append({"role": "assistant", "content": assistant_message})
 ```
 
 #### Python completions example with streaming
