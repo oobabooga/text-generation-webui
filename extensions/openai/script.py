@@ -112,22 +112,18 @@ async def openai_chat_completions(request: Request, request_data: ChatCompletion
 
 
 @app.get("/v1/models")
-@app.get("/v1/engines")
+@app.get("/v1/models/{model}")
 async def handle_models(request: Request):
     path = request.url.path
-    is_legacy = 'engines' in path
-    is_list = request.url.path.split('?')[0].split('#')[0] in ['/v1/engines', '/v1/models']
+    is_list = request.url.path.split('?')[0].split('#')[0] == '/v1/models'
 
-    if is_legacy and not is_list:
-        model_name = path[path.find('/v1/engines/') + len('/v1/engines/'):]
-        resp = OAImodels.load_model(model_name)
-    elif is_list:
-        resp = OAImodels.list_models(is_legacy)
+    if is_list:
+        response = OAImodels.list_models()
     else:
         model_name = path[len('/v1/models/'):]
-        resp = OAImodels.model_info(model_name)
+        response = OAImodels.model_info_dict(model_name)
 
-    return JSONResponse(content=resp)
+    return JSONResponse(response)
 
 
 @app.get('/v1/billing/usage')
