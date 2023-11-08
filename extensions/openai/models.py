@@ -51,7 +51,7 @@ def _load_model(data):
     # Update shared.args with custom model loading settings
     if args:
         for k in args:
-            if k in shared.args:
+            if hasattr(shared.args, k):
                 setattr(shared.args, k, args[k])
 
     shared.model, shared.tokenizer = load_model(model_name)
