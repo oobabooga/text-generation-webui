@@ -7,6 +7,13 @@ from modules.models_settings import get_model_metadata, update_model_parameters
 from modules.utils import get_available_models
 
 
+def get_current_model_info():
+    return {
+        'model_name': shared.model_name,
+        'lora_names': shared.lora_names
+    }
+
+
 def get_current_model_list() -> list:
     return [shared.model_name]  # The real chat/completions model, maybe "None"
 

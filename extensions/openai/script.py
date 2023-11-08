@@ -27,6 +27,7 @@ from .typing import (
     ChatCompletionResponse,
     CompletionRequest,
     CompletionResponse,
+    ModelInfoResponse,
     to_dict
 )
 
@@ -232,6 +233,12 @@ async def handle_token_count(request: Request):
 async def handle_stop_generation(request: Request):
     stop_everything_event()
     return JSONResponse(content="OK")
+
+
+@app.get("/v1/internal/model-info", response_model=ModelInfoResponse)
+async def handle_model_info():
+    payload = OAImodels.get_current_model_info()
+    return JSONResponse(content=payload)
 
 
 def run_server():

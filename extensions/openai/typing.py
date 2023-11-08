@@ -121,6 +121,11 @@ class ChatCompletionResponse(BaseModel):
     usage: dict
 
 
+class ModelInfoResponse(BaseModel):
+    model_name: str
+    lora_names: List[str]
+
+
 def to_json(obj):
     return json.dumps(obj.__dict__, indent=4)
 
