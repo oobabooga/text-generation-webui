@@ -147,6 +147,12 @@ class ModelInfoResponse(BaseModel):
     lora_names: List[str]
 
 
+class LoadModelRequest(BaseModel):
+    model_name: str
+    args: dict | None = None
+    settings: dict | None = None
+
+
 def to_json(obj):
     return json.dumps(obj.__dict__, indent=4)
 

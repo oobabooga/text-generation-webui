@@ -1,5 +1,6 @@
 import json
 import os
+import traceback
 from threading import Thread
 
 import extensions.openai.completions as OAIcompletions
@@ -31,6 +32,7 @@ from .typing import (
     DecodeResponse,
     EncodeRequest,
     EncodeResponse,
+    LoadModelRequest,
     ModelInfoResponse,
     TokenCountResponse,
     to_dict
@@ -231,10 +233,20 @@ async def handle_stop_generation(request: Request):
     return JSONResponse(content="OK")
 
 
-@app.get("/v1/internal/model-info", response_model=ModelInfoResponse)
+@app.get("/v1/internal/model/info", response_model=ModelInfoResponse)
 async def handle_model_info():
     payload = OAImodels.get_current_model_info()
     return JSONResponse(content=payload)
+
+
+@app.post("/v1/internal/model/load")
+async def handle_load_model(request_data: LoadModelRequest):
+    try:
+        OAImodels._load_model(to_dict(request_data))
+        return JSONResponse(content="OK")
+    except:
+        traceback.print_exc()
+        return HTTPException(status_code=400, detail="Failed to load the model.")
 
 
 def run_server():

@@ -1,4 +1,6 @@
 from modules import shared
+from modules.models import load_model, unload_model
+from modules.models_settings import get_model_metadata, update_model_parameters
 from modules.utils import get_available_models
 
 
@@ -35,3 +37,27 @@ def get_dummy_models() -> list:
         'gpt-3.5-turbo',
         'text-embedding-ada-002',
     ]
+
+
+def _load_model(data):
+    model_name = data["model_name"]
+    args = data["args"]
+    settings = data["settings"]
+
+    unload_model()
+    model_settings = get_model_metadata(model_name)
+    update_model_parameters(model_settings, initial=True)
+
+    # Update shared.args with custom model loading settings
+    if args:
+        for k in args:
+            if k in shared.args:
+                setattr(shared.args, k, args[k])
+
+    shared.model, shared.tokenizer = load_model(model_name)
+
+    # Update shared.settings with custom generation defaults
+    if settings:
+        for k in settings:
+            if k in shared.settings:
+                shared.settings[k] = settings[k]
