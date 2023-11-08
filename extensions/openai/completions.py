@@ -390,10 +390,6 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
             for a in generator:
                 answer = a
 
-            # strip extra leading space off new generated content
-            if answer and answer[0] == ' ':
-                answer = answer[1:]
-
             completion_token_count = len(encode(answer)[0])
             total_completion_token_count += completion_token_count
             stop_reason = "stop"
@@ -474,10 +470,6 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
                 continue
 
             seen_content = answer
-
-            # strip extra leading space off new generated content
-            if len_seen == 0 and new_content[0] == ' ':
-                new_content = new_content[1:]
 
             chunk = text_streaming_chunk(new_content)
 
