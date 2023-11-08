@@ -116,9 +116,6 @@ async def openai_chat_completions(request: Request, request_data: ChatCompletion
 @app.get("/v1/models")
 @app.get("/v1/models/{model}")
 async def handle_models(request: Request):
-    '''
-    Default OpenAI endpoint; useless. You are probably looking for /v1/internal/model.
-    '''
     path = request.url.path
     is_list = request.url.path.split('?')[0].split('#')[0] == '/v1/models'
 
