@@ -140,6 +140,7 @@ def convert_history(history):
     current_message = ""
     current_reply = ""
     user_input = ""
+    system_message = ""
 
     for entry in history:
         content = entry["content"]
@@ -159,11 +160,13 @@ def convert_history(history):
                 current_reply = ""
             else:
                 chat_dialogue.append(['', current_reply])
+        elif role == "system":
+            system_message = content
 
     # if current_message:
     #     chat_dialogue.append([current_message, ''])
 
-    return user_input, {'internal': chat_dialogue, 'visible': copy.deepcopy(chat_dialogue)}
+    return user_input, system_message, {'internal': chat_dialogue, 'visible': copy.deepcopy(chat_dialogue)}
 
 
 def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -> dict:
@@ -198,7 +201,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
     # Instruction template
     instruction_template = body['instruction_template'] or shared.settings['instruction_template']
     instruction_template = "Alpaca" if instruction_template == "None" else instruction_template
-    name1_instruct, name2_instruct, _, _, context_instruct, turn_template = load_character_memoized(instruction_template, '', '', instruct=True)
+    name1_instruct, name2_instruct, _, _, context_instruct, turn_template, system_message = load_character_memoized(instruction_template, '', '', instruct=True)
     name1_instruct = body['name1_instruct'] or name1_instruct
     name2_instruct = body['name2_instruct'] or name2_instruct
     context_instruct = body['context_instruct'] or context_instruct
@@ -208,13 +211,13 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
     character = body['character'] or shared.settings['character']
     character = "Assistant" if character == "None" else character
     name1 = body['name1'] or shared.settings['name1']
-    name1, name2, _, greeting, context, _ = load_character_memoized(character, name1, '', instruct=False)
+    name1, name2, _, greeting, context, _, _ = load_character_memoized(character, name1, '', instruct=False)
     name2 = body['name2'] or name2
     context = body['context'] or context
     greeting = body['greeting'] or greeting
 
     # History
-    user_input, history = convert_history(messages)
+    user_input, custom_system_message, history = convert_history(messages)
 
     generate_params.update({
         'mode': body['mode'],
@@ -225,6 +228,8 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
         'name1_instruct': name1_instruct,
         'name2_instruct': name2_instruct,
         'context_instruct': context_instruct,
+        'system_message': system_message,
+        'custom_system_message': custom_system_message,
         'turn_template': turn_template,
         'chat-instruct_command': body['chat_instruct_command'],
         'history': history,
@@ -287,13 +292,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
                 continue
 
             seen_content = answer
-
-            # strip extra leading space off new generated content
-            if len_seen == 0 and new_content[0] == ' ':
-                new_content = new_content[1:]
-
             chunk = chat_streaming_chunk(new_content)
-
             yield chunk
 
     completion_token_count = len(encode(answer)[0])
@@ -355,8 +354,8 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
     generate_params['stream'] = stream
     requested_model = generate_params.pop('model')
     logprob_proc = generate_params.pop('logprob_proc', None)
-    # generate_params['suffix'] = body.get('suffix', generate_params['suffix'])
-    generate_params['echo'] = body.get('echo', generate_params['echo'])
+    suffix = body['suffix'] if body['suffix'] else ''
+    echo = body['echo']
 
     if not stream:
         prompt_arg = body[prompt_str]
@@ -379,6 +378,7 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
                     except KeyError:
                         prompt = decode(prompt)[0]
 
+            prefix = prompt if echo else ''
             token_count = len(encode(prompt)[0])
             total_prompt_token_count += token_count
 
@@ -390,10 +390,6 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
             for a in generator:
                 answer = a
 
-            # strip extra leading space off new generated content
-            if answer and answer[0] == ' ':
-                answer = answer[1:]
-
             completion_token_count = len(encode(answer)[0])
             total_completion_token_count += completion_token_count
             stop_reason = "stop"
@@ -403,7 +399,7 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
             respi = {
                 "index": idx,
                 "finish_reason": stop_reason,
-                "text": answer,
+                "text": prefix + answer + suffix,
                 "logprobs": {'top_logprobs': [logprob_proc.token_alternatives]} if logprob_proc else None,
             }
 
@@ -435,6 +431,7 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
             else:
                 raise InvalidRequestError(message="API Batched generation not yet supported.", param=prompt_str)
 
+        prefix = prompt if echo else ''
         token_count = len(encode(prompt)[0])
 
         def text_streaming_chunk(content):
@@ -454,7 +451,7 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
 
             return chunk
 
-        yield text_streaming_chunk('')
+        yield text_streaming_chunk(prefix)
 
         # generate reply #######################################
         debug_msg({'prompt': prompt, 'generate_params': generate_params})
@@ -474,25 +471,15 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
                 continue
 
             seen_content = answer
-
-            # strip extra leading space off new generated content
-            if len_seen == 0 and new_content[0] == ' ':
-                new_content = new_content[1:]
-
             chunk = text_streaming_chunk(new_content)
-
             yield chunk
-
-        # to get the correct count, we strip the leading space if present
-        if answer and answer[0] == ' ':
-            answer = answer[1:]
 
         completion_token_count = len(encode(answer)[0])
         stop_reason = "stop"
         if token_count + completion_token_count >= generate_params['truncation_length'] or completion_token_count >= max_tokens:
             stop_reason = "length"
 
-        chunk = text_streaming_chunk('')
+        chunk = text_streaming_chunk(suffix)
         chunk[resp_list][0]["finish_reason"] = stop_reason
         chunk["usage"] = {
             "prompt_tokens": token_count,

@@ -87,6 +87,7 @@ def list_model_elements():
         'alpha_value',
         'rope_freq_base',
         'numa',
+        'logits_all',
     ]
     if is_torch_xpu_available():
         for i in range(torch.xpu.device_count()):
@@ -156,6 +157,8 @@ def list_interface_input_elements():
         'name1_instruct',
         'name2_instruct',
         'context_instruct',
+        'system_message',
+        'custom_system_message',
         'turn_template',
         'chat_style',
         'chat-instruct_command',

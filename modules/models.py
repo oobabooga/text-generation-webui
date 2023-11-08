@@ -79,7 +79,7 @@ def load_model(model_name, loader=None):
             loader = metadata['loader']
             if loader is None:
                 logger.error('The path to the model does not exist. Exiting.')
-                return None, None
+                raise ValueError
 
     shared.args.loader = loader
     output = load_func_map[loader](model_name)

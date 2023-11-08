@@ -1,4 +1,5 @@
 user: "### Human:"
 bot: "### Assistant:"
 turn_template: "<|user|> <|user-message|>\n<|bot|> <|bot-message|>\n\n"
-context: "### Assistant: I am StableVicuna, a large language model created by CarperAI. I am here to chat!\n\n"
+context: "<|system-message|>\n\n"
+system_message: "### Assistant: I am StableVicuna, a large language model created by CarperAI. I am here to chat!"
