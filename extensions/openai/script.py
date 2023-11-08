@@ -27,7 +27,12 @@ from .typing import (
     ChatCompletionResponse,
     CompletionRequest,
     CompletionResponse,
+    DecodeRequest,
+    DecodeResponse,
+    EncodeRequest,
+    EncodeResponse,
     ModelInfoResponse,
+    TokenCountResponse,
     to_dict
 )
 
@@ -206,26 +211,21 @@ async def handle_moderations(request: Request):
     return JSONResponse(response)
 
 
-@app.post("/v1/internal/encode")
-async def handle_token_encode(request: Request):
-    body = await request.json()
-    encoding_format = body.get("encoding_format", "")
-    response = token_encode(body["input"], encoding_format)
+@app.post("/v1/internal/encode", response_model=EncodeResponse)
+async def handle_token_encode(request_data: EncodeRequest):
+    response = token_encode(request_data.text)
     return JSONResponse(response)
 
 
-@app.post("/v1/internal/decode")
-async def handle_token_decode(request: Request):
-    body = await request.json()
-    encoding_format = body.get("encoding_format", "")
-    response = token_decode(body["input"], encoding_format)
-    return JSONResponse(response, no_debug=True)
+@app.post("/v1/internal/decode", response_model=DecodeResponse)
+async def handle_token_decode(request_data: DecodeRequest):
+    response = token_decode(request_data.tokens)
+    return JSONResponse(response)
 
 
-@app.post("/v1/internal/token-count")
-async def handle_token_count(request: Request):
-    body = await request.json()
-    response = token_count(body['prompt'])
+@app.post("/v1/internal/token-count", response_model=TokenCountResponse)
+async def handle_token_count(request_data: EncodeRequest):
+    response = token_count(request_data.text)
     return JSONResponse(response)
 
 

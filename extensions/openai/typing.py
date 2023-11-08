@@ -121,6 +121,27 @@ class ChatCompletionResponse(BaseModel):
     usage: dict
 
 
+class EncodeRequest(BaseModel):
+    text: str
+
+
+class DecodeRequest(BaseModel):
+    tokens: List[int]
+
+
+class EncodeResponse(BaseModel):
+    tokens: List[int]
+    length: int
+
+
+class DecodeResponse(BaseModel):
+    text: str
+
+
+class TokenCountResponse(BaseModel):
+    length: int
+
+
 class ModelInfoResponse(BaseModel):
     model_name: str
     lora_names: List[str]
