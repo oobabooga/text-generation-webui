@@ -51,7 +51,7 @@ class CompletionRequestParams(BaseModel):
     logprobs: int | None = None
     max_tokens: int | None = 16
     n: int | None = Field(default=1, description="Unused parameter.")
-    presence_penalty: int | None = 0
+    presence_penalty: float | None = 0
     stop: str | List[str] | None = None
     stream: bool | None = False
     suffix: str | None = None
@@ -82,7 +82,7 @@ class ChatCompletionRequestParams(BaseModel):
     logit_bias: dict | None = None
     max_tokens: int | None = None
     n: int | None = Field(default=1, description="Unused parameter.")
-    presence_penalty: int | None = 0
+    presence_penalty: float | None = 0
     stop: str | List[str] | None = None
     stream: bool | None = False
     temperature: float | None = 1
