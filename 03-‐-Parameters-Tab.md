@@ -98,10 +98,12 @@ So you can use those special placeholders in your character definitions. They ar
 Defines the instruction template that is used in the Chat tab when "instruct" or "chat-instruct" are selected under "Mode".
 
 * **Instruction template**: A dropdown menu where you can select from saved templates, save a new template (💾 button), and delete the currently selected template (🗑️).
-* **User string**: In the turn template, `<|user|>` gets replaced with this string.
-* **Bot string**: In the turn template, `<|bot|>` gets replaced with this string.
-* **Context**: A string that appears as-is at the top of the prompt, including the new line characters at the end (if any). The system message for the model can be edited inside this string to customize its behavior.
-* **Turn template**: Defines the positioning of spaces and new line characters in a single turn of the dialogue. `<|user-message|>` gets replaced with the user input and `<|bot-message|>` gets replaced with the bot reply. It is necessary to include `<|user|>` and `<|bot|>` even if "User string" and "Bot string" above are empty, as those placeholders are used to split the template in parts in the backend.
+* **Custom system message**: A message that defines the personality of the chatbot, replacing its default "System message" string. Example: "You are a duck."
+* **Turn template**: Defines the positioning of spaces and new line characters in a single turn of the dialogue. `<|user-message|>` gets replaced with the user input, `<|bot-message|>` gets replaced with the bot reply, `<|user|>` gets replaced with the "User string" below, and `<|bot|>` gets replaced with "Bot string" below. The `<|user|>` and `<|bot|>` placeholders must be included even if "User string" and "Bot string" are empty, as they are used to split the template in parts in the backend.
+* **User string**: Replaces `<|user|>` in the turn template.
+* **Bot string**: Replaces `<|bot|>` in the turn template.
+* **Context**: A string that appears as-is at the top of the prompt, including the new line characters at the end (if any). The `<|system-message|>` placeholder gets replaced with the "System message" string below, unless "Custom system message" is not empty, in which case it is used instead.
+* **System message**: A default message recommended by the model creator(s) to define the personality of the chatbot.
 * **Send to default**: Send the full instruction template in string format to the Default tab.
 * **Send to notebook**: Send the full instruction template in string format to the Notebook tab.
 * **Send to negative prompt**: Send the full instruction template in string format to the "Negative prompt" field under "Parameters" > "Generation".
