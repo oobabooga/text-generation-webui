@@ -117,7 +117,7 @@ def create_chat_settings_ui():
         shared.gradio['name1_instruct'] = gr.Textbox(value='', lines=2, label='User string', info='Replaces <|user|> in the turn template.')
         shared.gradio['name2_instruct'] = gr.Textbox(value='', lines=1, label='Bot string', info='Replaces <|bot|> in the turn template.')
         shared.gradio['context_instruct'] = gr.Textbox(value='', lines=4, label='Context', elem_classes=['add_scrollbar'])
-        shared.gradio['system_message'] = gr.Textbox(value='', lines=2, label='Default system message', info='Replaces <|system-message|> in the context.', elem_classes=['add_scrollbar'])
+        shared.gradio['system_message'] = gr.Textbox(value='', lines=2, label='System message', info='Replaces <|system-message|> in the context.', elem_classes=['add_scrollbar'])
         with gr.Row():
             shared.gradio['send_instruction_to_default'] = gr.Button('Send to default', elem_classes=['small-button'])
             shared.gradio['send_instruction_to_notebook'] = gr.Button('Send to notebook', elem_classes=['small-button'])
