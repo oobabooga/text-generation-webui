@@ -27,7 +27,7 @@ def create_ui(default_preset):
                     with gr.Row():
                         with gr.Column():
                             shared.gradio['max_new_tokens'] = gr.Slider(minimum=shared.settings['max_new_tokens_min'], maximum=shared.settings['max_new_tokens_max'], step=1, label='max_new_tokens', value=shared.settings['max_new_tokens'])
-                            shared.gradio['temperature'] = gr.Slider(0.0, 1.99, value=generate_params['temperature'], step=0.01, label='temperature')
+                            shared.gradio['temperature'] = gr.Slider(0.0, 1.99, value=generate_params['temperature'], step=0.01, label='temperature', info='temp=0 is greedy sampling')
                             shared.gradio['top_p'] = gr.Slider(0.0, 1.0, value=generate_params['top_p'], step=0.01, label='top_p')
                             shared.gradio['min_p'] = gr.Slider(0.0, 1.0, value=generate_params['min_p'], step=0.01, label='min_p')
                             shared.gradio['top_k'] = gr.Slider(0, 200, value=generate_params['top_k'], step=1, label='top_k')
