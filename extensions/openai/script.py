@@ -91,6 +91,10 @@ async def openai_completions(request: Request, request_data: CompletionRequest):
             async with streaming_semaphore:
                 response = OAIcompletions.stream_completions(to_dict(request_data), is_legacy=is_legacy)
                 for resp in response:
+                    disconnected = await request.is_disconnected()
+                    if disconnected:
+                        break
+
                     yield {"data": json.dumps(resp)}
 
         return EventSourceResponse(generator())  # SSE streaming
@@ -110,6 +114,10 @@ async def openai_chat_completions(request: Request, request_data: ChatCompletion
             async with streaming_semaphore:
                 response = OAIcompletions.stream_chat_completions(to_dict(request_data), is_legacy=is_legacy)
                 for resp in response:
+                    disconnected = await request.is_disconnected()
+                    if disconnected:
+                        break
+
                     yield {"data": json.dumps(resp)}
 
         return EventSourceResponse(generator())  # SSE streaming
