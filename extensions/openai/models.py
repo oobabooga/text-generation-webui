@@ -46,7 +46,7 @@ def _load_model(data):
 
     unload_model()
     model_settings = get_model_metadata(model_name)
-    update_model_parameters(model_settings, initial=True)
+    update_model_parameters(model_settings)
 
     # Update shared.args with custom model loading settings
     if args:

@@ -241,6 +241,29 @@ async def handle_model_info():
 
 @app.post("/v1/internal/model/load")
 async def handle_load_model(request_data: LoadModelRequest):
+    '''
+    This endpoint is experimental and may change in the future.
+
+    The "args" parameter can be used to modify flags like "--load-in-4bit"
+    or "--n-gpu-layers" before loading a model. Example:
+
+    "args": {
+      "load_in_4bit": true,
+      "n_gpu_layers": 12
+    }
+
+    Note that those settings will remain after loading the model. So you
+    may need to change them back to load a second model.
+
+    The "settings" parameter is also a dict but with keys for the
+    shared.settings object. It can be used to modify the default instruction
+    template like this:
+
+    "settings": {
+      "instruction_template": "Alpaca"
+    }
+    '''
+
     try:
         OAImodels._load_model(to_dict(request_data))
         return JSONResponse(content="OK")
