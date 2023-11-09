@@ -12,10 +12,11 @@ pip install -r extensions/openai/requirements.txt
 
 Add `--extensions openai` to your command-line flags.
 
-* To create a public Cloudflare URL, also add the `--public-api` flag.
-* To listen on your local network, also add the `--listen` flag.
-* To change the port, which is 5000 by default, use `--port 1234` (change 1234 to your desired port number).
+* To create a public Cloudflare URL, add the `--public-api` flag.
+* To listen on your local network, add the `--listen` flag.
+* To change the port, which is 5000 by default, use `--api-port 1234` (change 1234 to your desired port number).
 * To use SSL, add `--ssl-keyfile key.pem --ssl-certfile cert.pem`. Note that it doesn't work with `--public-api`.
+* To use an API key for authentication, add `--api-key yourkey`.
 
 #### Environment variables
 
@@ -44,7 +45,7 @@ openai-debug: 1
 
 ### Examples
 
-For the documentation with all the parameters, consult `http://127.0.0.1:5000/docs` or the [typing.py](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/openai/typing.py) file.
+For the documentation with all the parameters and their types, consult `http://127.0.0.1:5000/docs` or the [typing.py](https://github.com/oobabooga/text-generation-webui/blob/main/extensions/openai/typing.py) file.
 
 The official examples in the [OpenAI documentation](https://platform.openai.com/docs/api-reference) should also work, and the same parameters apply (although the API here has more optional parameters).
 
@@ -128,7 +129,7 @@ headers = {
 }
 
 history = []
-    
+
 while True:
     user_message = input("> ")
     history.append({"role": "user", "content": user_message})
@@ -144,8 +145,82 @@ while True:
     print(assistant_message)
 ```
 
-### Client Application Setup
+#### Python chat example with streaming
 
+Start the script with `python -u` to see the output in real time.
+
+```python
+import requests
+import sseclient  # pip install sseclient-py
+import json
+
+url = "http://127.0.0.1:5000/v1/chat/completions"
+
+headers = {
+    "Content-Type": "application/json"
+}
+
+history = []
+
+while True:
+    user_message = input("> ")
+    history.append({"role": "user", "content": user_message})
+    data = {
+        "mode": "instruct",
+        "stream": True,
+        "messages": history
+    }
+
+    stream_response = requests.post(url, headers=headers, json=data, verify=False, stream=True)
+    client = sseclient.SSEClient(stream_response)
+
+    assistant_message = ''
+    for event in client.events():
+        payload = json.loads(event.data)
+        chunk = payload['choices'][0]['message']['content']
+        assistant_message += chunk
+        print(chunk, end='')
+
+    print()
+    history.append({"role": "assistant", "content": assistant_message})
+```
+
+#### Python completions example with streaming
+
+Start the script with `python -u` to see the output in real time.
+
+```python
+import json
+import requests
+import sseclient  # pip install sseclient-py
+
+url = "http://127.0.0.1:5000/v1/completions"
+
+headers = {
+    "Content-Type": "application/json"
+}
+
+data = {
+    "prompt": "This is a cake recipe:\n\n1.",
+    "max_tokens": 200,
+    "temperature": 1,
+    "top_p": 0.9,
+    "seed": 10,
+    "stream": True,
+}
+
+stream_response = requests.post(url, headers=headers, json=data, verify=False, stream=True)
+client = sseclient.SSEClient(stream_response)
+
+print(data['prompt'], end='')
+for event in client.events():
+    payload = json.loads(event.data)
+    print(payload['choices'][0]['text'], end='')
+
+print()
+```
+
+### Third-party application setup
 
 You can usually force an application that uses the OpenAI API to connect to the local API by using the following environment variables:
 
@@ -157,18 +232,18 @@ or
 
 ```shell
 OPENAI_API_KEY=sk-111111111111111111111111111111111111111111111111
-OPENAI_API_BASE=http://127.0.0.1:500/v1
+OPENAI_API_BASE=http://127.0.0.1:5000/v1
 ```
 
-With the [official python openai client](https://github.com/openai/openai-python), set the `OPENAI_API_BASE` environment variables:
+With the [official python openai client](https://github.com/openai/openai-python), the address can be set like this:
 
-```shell
-# Sample .env file:
-OPENAI_API_KEY=sk-111111111111111111111111111111111111111111111111
-OPENAI_API_BASE=http://0.0.0.0:5001/v1
+```python
+import openai
+
+openai.api_key = "..."
+openai.api_base = "http://127.0.0.1:5000/v1"
+openai.api_version = "2023-05-15"
 ```
-
-If needed, replace 127.0.0.1 with the IP/port of your server.
 
 If using .env files to save the `OPENAI_API_BASE` and `OPENAI_API_KEY` variables, make sure the .env file is loaded before the openai module is imported:
 
@@ -212,34 +287,9 @@ In short, the all-MiniLM-L6-v2 model is 5x faster, 5x smaller ram, 2x smaller st
 
 Warning: You cannot mix embeddings from different models even if they have the same dimensions. They are not comparable.
 
-### API Documentation & Examples
-
-The OpenAI API is well documented, you can view the documentation here: https://platform.openai.com/docs/api-reference
-
-Examples of how to use the Completions API in Python can be found here: https://platform.openai.com/examples
-Not all of them will work with all models unfortunately, See the notes on Models for how to get the best results.
-
-Here is a simple python example.
-
-```python
-import os
-os.environ['OPENAI_API_KEY']="sk-111111111111111111111111111111111111111111111111"
-os.environ['OPENAI_API_BASE']="http://0.0.0.0:5001/v1"
-import openai
-
-response = openai.ChatCompletion.create(
-  model="x",
-  messages = [{ 'role': 'system', 'content': "Answer in a consistent style." },
-    {'role': 'user', 'content': "Teach me about patience."},
-    {'role': 'assistant', 'content': "The river that carves the deepest valley flows from a modest spring; the grandest symphony originates from a single note; the most intricate tapestry begins with a solitary thread."},
-    {'role': 'user', 'content': "Teach me about the ocean."},
-  ]
-)
-text = response['choices'][0]['message']['content']
-print(text)
-```
-
 ### Compatibility & not so compatibility
+
+Note: the table below may be obsolete.
 
 | API endpoint              | tested with                        | notes                                                                       |
 | ------------------------- | ---------------------------------- | --------------------------------------------------------------------------- |
@@ -263,10 +313,11 @@ print(text)
 | /v1/fine-tunes\*          | openai.FineTune.\*                 | not yet supported                                                           |
 | /v1/search                | openai.search, engines.search      | not yet supported                                                           |
 
-
 #### Applications
 
 Almost everything needs the `OPENAI_API_KEY` and `OPENAI_API_BASE` environment variable set, but there are some exceptions.
+
+Note: the table below may be obsolete.
 
 | Compatibility | Application/Library    | Website                                                                        | Notes                                                                                                                                                                                                        |
 | ------------- | ---------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |

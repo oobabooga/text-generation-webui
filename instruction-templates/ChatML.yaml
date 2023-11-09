@@ -1,7 +1,7 @@
 user: "user"
 bot: "assistant"
 context: |
-  <|im_start|>system
+  <|im_start|><|system-message|>
   <|im_end|>
 turn_template: "<|im_start|><|user|>\n<|user-message|><|im_end|>\n<|im_start|><|bot|>\n<|bot-message|><|im_end|>\n"
-
+system_message: "system"

@@ -6,14 +6,10 @@ from pydantic import BaseModel, Field
 
 
 class GenerationOptions(BaseModel):
-    preset: str | None = None
-    temperature: float = 1
-    top_p: float = 1
+    preset: str | None = Field(default=None, description="The name of a file under text-generation-webui/presets (without the .yaml extension). The sampling parameters that get overwritten by this option are the keys in the default_preset() function in modules/presets.py.")
     min_p: float = 0
     top_k: int = 0
     repetition_penalty: float = 1
-    presence_penalty: float = 0
-    frequency_penalty: float = 0
     repetition_penalty_range: int = 0
     typical_p: float = 1
     tfs: float = 1
@@ -45,23 +41,27 @@ class GenerationOptions(BaseModel):
     grammar_string: str = ""
 
 
-class CompletionRequest(GenerationOptions):
+class CompletionRequestParams(BaseModel):
     model: str | None = None
     prompt: str | List[str]
-    best_of: int | None = 1
+    best_of: int | None = Field(default=1, description="Unused parameter.")
     echo: bool | None = False
     frequency_penalty: float | None = 0
     logit_bias: dict | None = None
     logprobs: int | None = None
     max_tokens: int | None = 16
-    n: int | None = 1
-    presence_penalty: int | None = 0
+    n: int | None = Field(default=1, description="Unused parameter.")
+    presence_penalty: float | None = 0
     stop: str | List[str] | None = None
     stream: bool | None = False
     suffix: str | None = None
     temperature: float | None = 1
     top_p: float | None = 1
-    user: str | None = None
+    user: str | None = Field(default=None, description="Unused parameter.")
+
+
+class CompletionRequest(GenerationOptions, CompletionRequestParams):
+    pass
 
 
 class CompletionResponse(BaseModel):
@@ -73,21 +73,21 @@ class CompletionResponse(BaseModel):
     usage: dict
 
 
-class ChatCompletionRequest(GenerationOptions):
+class ChatCompletionRequestParams(BaseModel):
     messages: List[dict]
     model: str | None = None
     frequency_penalty: float | None = 0
-    function_call: str | dict | None = None
-    functions: List[dict] | None = None
+    function_call: str | dict | None = Field(default=None, description="Unused parameter.")
+    functions: List[dict] | None = Field(default=None, description="Unused parameter.")
     logit_bias: dict | None = None
     max_tokens: int | None = None
-    n: int | None = 1
-    presence_penalty: int | None = 0
+    n: int | None = Field(default=1, description="Unused parameter.")
+    presence_penalty: float | None = 0
     stop: str | List[str] | None = None
     stream: bool | None = False
     temperature: float | None = 1
     top_p: float | None = 1
-    user: str | None = None
+    user: str | None = Field(default=None, description="Unused parameter.")
 
     mode: str = Field(default='instruct', description="Valid options: instruct, chat, chat-instruct.")
 
@@ -108,6 +108,10 @@ class ChatCompletionRequest(GenerationOptions):
     continue_: bool = Field(default=False, description="Makes the last bot message in the history be continued instead of starting a new message.")
 
 
+class ChatCompletionRequest(GenerationOptions, ChatCompletionRequestParams):
+    pass
+
+
 class ChatCompletionResponse(BaseModel):
     id: str
     choices: List[dict]
@@ -115,6 +119,38 @@ class ChatCompletionResponse(BaseModel):
     model: str
     object: str = "chat.completion"
     usage: dict
+
+
+class EncodeRequest(BaseModel):
+    text: str
+
+
+class DecodeRequest(BaseModel):
+    tokens: List[int]
+
+
+class EncodeResponse(BaseModel):
+    tokens: List[int]
+    length: int
+
+
+class DecodeResponse(BaseModel):
+    text: str
+
+
+class TokenCountResponse(BaseModel):
+    length: int
+
+
+class ModelInfoResponse(BaseModel):
+    model_name: str
+    lora_names: List[str]
+
+
+class LoadModelRequest(BaseModel):
+    model_name: str
+    args: dict | None = None
+    settings: dict | None = None
 
 
 def to_json(obj):

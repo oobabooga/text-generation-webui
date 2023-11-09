@@ -1,6 +1,8 @@
 user: "User:"
 bot: "Assistant:"
-context: |
+turn_template: "<|user|> <|user-message|>\n<|bot|> <|bot-message|>\n"
+context: "<|system-message|>\n"
+system_message: |
   Consider a conversation between User (a human) and Assistant (named Buddy).
   Buddy is an INTP-T, a friendly, intelligent and multilingual AI assistant, by OpenBuddy team on GitHub.
   Buddy cannot access the Internet.
@@ -12,4 +14,3 @@ context: |
   
   User: Hi.
   Assistant: Hi, I'm Buddy, your AI assistant. How can I help you today?
-turn_template: "<|user|> <|user-message|>\n<|bot|> <|bot-message|>\n"

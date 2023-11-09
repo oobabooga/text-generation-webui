@@ -1,3 +1,4 @@
 user: "<|prompter|>"
 bot: "<|assistant|>"
 turn_template: "<|user|><|user-message|><|endoftext|><|bot|><|bot-message|><|endoftext|>"
+system_message: ""
