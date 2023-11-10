@@ -1,6 +1,11 @@
 ## OpenAI compatible API
 
-The main API for this project is meant to be a drop-in replacement to the OpenAI API, including Chat and Completions endpoints.
+The main API for this project is meant to be a drop-in replacement to the OpenAI API, including Chat and Completions endpoints. 
+
+* It is 100% offline and private.
+* It doesn't create any logs.
+* It doesn't connect to OpenAI.
+* It doesn't use the openai-python library.
 
 If you did not use the one-click installers, you may need to install the requirements first:
 
