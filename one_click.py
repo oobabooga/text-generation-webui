@@ -190,7 +190,7 @@ def install_webui():
             use_cuda118 = "Y" if os.environ.get("USE_CUDA118", "").lower() in ("yes", "y", "true", "1", "t", "on") else "N"
         else:
             # Ask for CUDA version if using NVIDIA
-            print("\nWould you like to use CUDA 11.8 instead of 12.1? This is only necessary for older GPUs like Kepler.\nIf unsure, say \"N\".\n")
+            print("\nDo you want to use CUDA 11.8 instead of 12.1? Only choose this option if your GPU is very old (Kepler or older).\nFor RTX and GTX series GPUs, say \"N\". If unsure, say \"N\".\n")
             use_cuda118 = input("Input (Y/N)> ").upper().strip('"\'').strip()
             while use_cuda118 not in 'YN':
                 print("Invalid choice. Please try again.")
