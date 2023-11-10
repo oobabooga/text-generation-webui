@@ -42,7 +42,7 @@ class GenerationOptions(BaseModel):
 
 
 class CompletionRequestParams(BaseModel):
-    model: str | None = None
+    model: str | None = Field(default=None, description="Unused parameter. To change the model, use the /v1/internal/model/load endpoint.")
     prompt: str | List[str]
     best_of: int | None = Field(default=1, description="Unused parameter.")
     echo: bool | None = False
@@ -75,7 +75,7 @@ class CompletionResponse(BaseModel):
 
 class ChatCompletionRequestParams(BaseModel):
     messages: List[dict]
-    model: str | None = None
+    model: str | None = Field(default=None, description="Unused parameter. To change the model, use the /v1/internal/model/load endpoint.")
     frequency_penalty: float | None = 0
     function_call: str | dict | None = Field(default=None, description="Unused parameter.")
     functions: List[dict] | None = Field(default=None, description="Unused parameter.")
@@ -92,10 +92,11 @@ class ChatCompletionRequestParams(BaseModel):
     mode: str = Field(default='instruct', description="Valid options: instruct, chat, chat-instruct.")
 
     instruction_template: str | None = Field(default=None, description="An instruction template defined under text-generation-webui/instruction-templates. If not set, the correct template will be guessed using the regex expressions in models/config.yaml.")
+    turn_template: str | None = Field(default=None, description="Overwrites the value set by instruction_template.")
     name1_instruct: str | None = Field(default=None, description="Overwrites the value set by instruction_template.")
     name2_instruct: str | None = Field(default=None, description="Overwrites the value set by instruction_template.")
     context_instruct: str | None = Field(default=None, description="Overwrites the value set by instruction_template.")
-    turn_template: str | None = Field(default=None, description="Overwrites the value set by instruction_template.")
+    system_message: str | None = Field(default=None, description="Overwrites the value set by instruction_template.")
 
     character: str | None = Field(default=None, description="A character defined under text-generation-webui/characters. If not set, the default \"Assistant\" character will be used.")
     name1: str | None = Field(default=None, description="Overwrites the value set by character.")

@@ -204,8 +204,9 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
     name1_instruct, name2_instruct, _, _, context_instruct, turn_template, system_message = load_character_memoized(instruction_template, '', '', instruct=True)
     name1_instruct = body['name1_instruct'] or name1_instruct
     name2_instruct = body['name2_instruct'] or name2_instruct
-    context_instruct = body['context_instruct'] or context_instruct
     turn_template = body['turn_template'] or turn_template
+    context_instruct = body['context_instruct'] or context_instruct
+    system_message = body['system_message'] or system_message
 
     # Chat character
     character = body['character'] or shared.settings['character']
