@@ -211,7 +211,7 @@ The following environment variables can be used (they take precendence over ever
 | `OPENEDAI_KEY_PATH`       | SSL key file path                    |             key.pem               |
 | `OPENEDAI_DEBUG`          | Enable debugging (set to 1)    | 1                          |
 | `SD_WEBUI_URL`           | WebUI URL (used by endpoint) | http://127.0.0.1:7861 |
-| `OPENEDAI_EMBEDDING_MODEL` | Embedding model (if applicable) |          all-mpnet-base-v2                  |
+| `OPENEDAI_EMBEDDING_MODEL` | Embedding model (if applicable) |          sentence-transformers/all-mpnet-base-v2                  |
 | `OPENEDAI_EMBEDDING_DEVICE` | Embedding device (if applicable) |           cuda                 |
 
 #### Persistent settings with `settings.yaml`
@@ -220,7 +220,7 @@ You can also set the following variables in your `settings.yaml` file:
 
 ```
 openai-embedding_device: cuda
-openai-embedding_model: all-mpnet-base-v2
+openai-embedding_model: "sentence-transformers/all-mpnet-base-v2"
 openai-sd_webui_url: http://127.0.0.1:7861
 openai-debug: 1
 ```
