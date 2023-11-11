@@ -50,6 +50,13 @@ def _feed_file_into_collector(file):
     process_and_add_to_collector(text, collector, False, create_metadata_source('file'))
     yield '### Done.'
 
+def _feed_files_into_collector(files):
+    yield '### Reading and processing the input dataset...'
+    for file in files:
+        text = file.decode('utf-8')
+        process_and_add_to_collector(text, collector, False, create_metadata_source('file'))
+    yield '### Done.'
+
 
 def _feed_url_into_collector(urls):
     for i in feed_url_into_collector(urls, collector):
@@ -240,6 +247,10 @@ def ui():
             with gr.Tab("File input"):
                 file_input = gr.File(label='Input file', type='binary')
                 update_file = gr.Button('Load data')
+
+            with gr.Tab("Multiple File input"):
+                file_input = gr.Files(label='Input file', type='binary')
+                update_files = gr.Button('Load data')
                 
             with gr.Tab("Settings"):
                 with gr.Accordion("Processing settings", open=True):
@@ -322,6 +333,7 @@ def ui():
     update_data.click(_feed_data_into_collector, [data_input], last_updated, show_progress=False)
     update_url.click(_feed_url_into_collector, [url_input], last_updated, show_progress=False)
     update_file.click(_feed_file_into_collector, [file_input], last_updated, show_progress=False)
+    update_files.click(_feed_files_into_collector, [file_input], last_updated, show_progress=False)
     benchmark_button.click(_begin_benchmark, [], last_updated, show_progress=True)
     optimize_button.click(_begin_optimization, [], [last_updated] + optimizable_params, show_progress=True)
     clear_button.click(_clear_data, [], last_updated, show_progress=False)
