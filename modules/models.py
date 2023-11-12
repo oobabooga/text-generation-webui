@@ -97,6 +97,7 @@ def load_model(model_name, loader=None):
         llama_attn_hijack.hijack_llama_attention()
 
     shared.settings.update({k: v for k, v in metadata.items() if k in shared.settings})
+    shared.model_name = model_name
     logger.info(f"Loaded the model in {(time.time()-t0):.2f} seconds.")
     return model, tokenizer
 
