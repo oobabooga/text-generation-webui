@@ -1,4 +1,5 @@
 from modules import shared
+from modules.LoRA import add_lora_to_model
 from modules.models import load_model, unload_model
 from modules.models_settings import get_model_metadata, update_model_parameters
 from modules.utils import get_available_models
@@ -56,6 +57,8 @@ def _load_model(data):
 
     shared.model, shared.tokenizer = load_model(model_name)
     shared.model_name = model_name
+    if shared.args.lora:
+        add_lora_to_model(shared.args.lora)
 
     # Update shared.settings with custom generation defaults
     if settings:
