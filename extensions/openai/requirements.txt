@@ -1,5 +1,4 @@
 SpeechRecognition==3.10.0
 flask_cloudflared==0.0.14
-sentence-transformers
 sse-starlette==1.6.5
 tiktoken
