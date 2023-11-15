@@ -20,6 +20,7 @@ from fastapi.requests import Request
 from fastapi.responses import JSONResponse
 from modules import shared
 from modules.logging_colors import logger
+from modules.models import unload_model
 from modules.text_generation import stop_everything_event
 from pydub import AudioSegment
 from sse_starlette import EventSourceResponse
@@ -283,6 +284,12 @@ async def handle_load_model(request_data: LoadModelRequest):
     except:
         traceback.print_exc()
         return HTTPException(status_code=400, detail="Failed to load the model.")
+
+
+@app.post("/v1/internal/model/unload")
+async def handle_load_model():
+    unload_model()
+    return JSONResponse(content="OK")
 
 
 def run_server():
