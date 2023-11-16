@@ -128,7 +128,7 @@ class LlamaCppModel:
             repeat_penalty=state['repetition_penalty'],
             top_k=state['top_k'],
             stream=True,
-            seed=state['seed'],
+            seed=int(state['seed']) if state['seed'] != -1 else None,
             tfs_z=state['tfs'],
             mirostat_mode=int(state['mirostat_mode']),
             mirostat_tau=state['mirostat_tau'],
