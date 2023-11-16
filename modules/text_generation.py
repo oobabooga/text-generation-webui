@@ -44,7 +44,7 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
             return
 
         if (shared.model.__class__.__name__ != 'LlamaCppModel') and (state['temperature'] == 0.0):
-            state['temperature'] = 0.1  #For non LlamaCpp Models ignore 0.0 temperature   
+            state['temperature'] = 0.01  #For non LlamaCpp Models ignore 0.0 temperature   
         
         if shared.model.__class__.__name__ in ['LlamaCppModel', 'RWKVModel', 'ExllamaModel', 'Exllamav2Model', 'CtransformersModel']:
             generate_func = generate_reply_custom
