@@ -389,12 +389,12 @@ def RWKV_loader(model_name):
 
 def get_max_memory_dict():
     max_memory = {}
+    max_cpu_memory = shared.args.cpu_memory.strip() if shared.args.cpu_memory is not None else '99GiB'
     if shared.args.gpu_memory:
         memory_map = list(map(lambda x: x.strip(), shared.args.gpu_memory))
         for i in range(len(memory_map)):
             max_memory[i] = f'{memory_map[i]}GiB' if not re.match('.*ib$', memory_map[i].lower()) else memory_map[i]
 
-        max_cpu_memory = shared.args.cpu_memory.strip() if shared.args.cpu_memory is not None else '99GiB'
         max_memory['cpu'] = f'{max_cpu_memory}GiB' if not re.match('.*ib$', max_cpu_memory.lower()) else max_cpu_memory
 
     # If --auto-devices is provided standalone, try to get a reasonable value
@@ -411,7 +411,8 @@ def get_max_memory_dict():
 
         suggestion = int(round(suggestion / 1000))
         logger.warning(f"Auto-assiging --gpu-memory {suggestion} for your GPU to try to prevent out-of-memory errors. You can manually set other values.")
-        max_memory = {0: f'{suggestion}GiB', 'cpu': f'{shared.args.cpu_memory or 99}GiB'}
+        max_memory[0] = f'{suggestion}GiB'
+        max_memory['cpu'] = f'{max_cpu_memory}GiB' if not re.match('.*ib$', max_cpu_memory.lower()) else max_cpu_memory
 
     return max_memory if len(max_memory) > 0 else None
 
