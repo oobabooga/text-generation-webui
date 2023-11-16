@@ -1,5 +1,6 @@
 from modules import shared
 from modules.LoRA import add_lora_to_model
+from modules.logging_colors import logger
 from modules.models import load_model, unload_model
 from modules.models_settings import get_model_metadata, update_model_parameters
 from modules.utils import get_available_models
@@ -65,3 +66,7 @@ def _load_model(data):
         for k in settings:
             if k in shared.settings:
                 shared.settings[k] = settings[k]
+                if k == 'truncation_length':
+                    logger.info(f"TRUNCATION LENGTH (UPDATED): {shared.settings['truncation_length']}")
+                elif k == 'instruction_template':
+                    logger.info(f"INSTRUCTION TEMPLATE (UPDATED): {shared.settings['instruction_template']}")
