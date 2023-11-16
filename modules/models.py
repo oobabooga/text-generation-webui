@@ -97,6 +97,13 @@ def load_model(model_name, loader=None):
         llama_attn_hijack.hijack_llama_attention()
 
     shared.settings.update({k: v for k, v in metadata.items() if k in shared.settings})
+    if loader.lower().startswith('exllama'):
+        shared.settings['truncation_length'] = shared.args.max_seq_len
+    elif loader in ['llama.cpp', 'llamacpp_HF', 'ctransformers']:
+        shared.settings['truncation_length'] = shared.args.n_ctx
+
+    logger.info(f"CONTEXT LENGTH: {shared.settings['truncation_length']}")
+    logger.info(f"INSTRUCTION TEMPLATE: {shared.settings['instruction_template']}")
     logger.info(f"Loaded the model in {(time.time()-t0):.2f} seconds.")
     return model, tokenizer
 
@@ -395,6 +402,7 @@ def get_max_memory_dict():
             total_mem = (torch.xpu.get_device_properties(0).total_memory / (1024 * 1024))
         else:
             total_mem = (torch.cuda.get_device_properties(0).total_memory / (1024 * 1024))
+
         suggestion = round((total_mem - 1000) / 1000) * 1000
         if total_mem - suggestion < 800:
             suggestion -= 1000
