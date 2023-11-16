@@ -102,7 +102,6 @@ loaders_and_params = OrderedDict({
         'alpha_value',
         'rope_freq_base',
         'compress_pos_emb',
-        'cpu',
         'numa',
     ],
     'llamacpp_HF': [
@@ -118,7 +117,6 @@ loaders_and_params = OrderedDict({
         'alpha_value',
         'rope_freq_base',
         'compress_pos_emb',
-        'cpu',
         'numa',
         'cfg_cache',
         'use_fast',
