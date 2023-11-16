@@ -316,6 +316,9 @@ def update_requirements(initial_installation=False):
         run_cmd("python -m pip uninstall -y " + package_name, environment=True)
         print(f"Uninstalled {package_name}")
 
+    # Uninstall previous llama-cpp-python versions
+    run_cmd("python -m pip uninstall -y llama-cpp-python-cuda" + package_name, environment=True)
+
     # Install/update the project requirements
     run_cmd("python -m pip install -r temp_requirements.txt --upgrade", assert_success=True, environment=True)
     os.remove('temp_requirements.txt')
