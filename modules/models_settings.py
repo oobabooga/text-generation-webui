@@ -127,8 +127,10 @@ def infer_loader(model_name, model_settings):
     return loader
 
 
-# UI: update the command-line arguments based on the interface values
 def update_model_parameters(state, initial=False):
+    '''
+    UI: update the command-line arguments based on the interface values
+    '''
     elements = ui.list_model_elements()  # the names of the parameters
     gpu_memories = []
 
@@ -174,8 +176,10 @@ def update_model_parameters(state, initial=False):
             shared.args.gpu_memory = None
 
 
-# UI: update the state variable with the model settings
 def apply_model_settings_to_state(model, state):
+    '''
+    UI: update the state variable with the model settings
+    '''
     model_settings = get_model_metadata(model)
     if 'loader' in model_settings:
         loader = model_settings.pop('loader')
@@ -194,8 +198,10 @@ def apply_model_settings_to_state(model, state):
     return state
 
 
-# Save the settings for this model to models/config-user.yaml
 def save_model_settings(model, state):
+    '''
+    Save the settings for this model to models/config-user.yaml
+    '''
     if model == 'None':
         yield ("Not saving the settings because no model is loaded.")
         return

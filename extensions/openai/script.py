@@ -20,6 +20,7 @@ from fastapi.requests import Request
 from fastapi.responses import JSONResponse
 from modules import shared
 from modules.logging_colors import logger
+from modules.models import unload_model
 from modules.text_generation import stop_everything_event
 from pydub import AudioSegment
 from sse_starlette import EventSourceResponse
@@ -260,10 +261,12 @@ async def handle_load_model(request_data: LoadModelRequest):
     The "args" parameter can be used to modify flags like "--load-in-4bit"
     or "--n-gpu-layers" before loading a model. Example:
 
+    ```
     "args": {
       "load_in_4bit": true,
       "n_gpu_layers": 12
     }
+    ```
 
     Note that those settings will remain after loading the model. So you
     may need to change them back to load a second model.
@@ -272,9 +275,11 @@ async def handle_load_model(request_data: LoadModelRequest):
     shared.settings object. It can be used to modify the default instruction
     template like this:
 
+    ```
     "settings": {
       "instruction_template": "Alpaca"
     }
+    ```
     '''
 
     try:
@@ -283,6 +288,12 @@ async def handle_load_model(request_data: LoadModelRequest):
     except:
         traceback.print_exc()
         return HTTPException(status_code=400, detail="Failed to load the model.")
+
+
+@app.post("/v1/internal/model/unload")
+async def handle_unload_model():
+    unload_model()
+    return JSONResponse(content="OK")
 
 
 def run_server():

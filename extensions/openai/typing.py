@@ -99,7 +99,7 @@ class ChatCompletionRequestParams(BaseModel):
     system_message: str | None = Field(default=None, description="Overwrites the value set by instruction_template.")
 
     character: str | None = Field(default=None, description="A character defined under text-generation-webui/characters. If not set, the default \"Assistant\" character will be used.")
-    name1: str | None = Field(default=None, description="Overwrites the value set by character.")
+    name1: str | None = Field(default=None, description="Your name (the user). By default, it's \"You\".")
     name2: str | None = Field(default=None, description="Overwrites the value set by character.")
     context: str | None = Field(default=None, description="Overwrites the value set by character.")
     greeting: str | None = Field(default=None, description="Overwrites the value set by character.")
