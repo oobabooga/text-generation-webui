@@ -287,7 +287,7 @@ async def handle_load_model(request_data: LoadModelRequest):
 
 
 @app.post("/v1/internal/model/unload")
-async def handle_load_model():
+async def handle_unload_model():
     unload_model()
     return JSONResponse(content="OK")
 
