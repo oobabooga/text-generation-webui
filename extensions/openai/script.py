@@ -261,10 +261,12 @@ async def handle_load_model(request_data: LoadModelRequest):
     The "args" parameter can be used to modify flags like "--load-in-4bit"
     or "--n-gpu-layers" before loading a model. Example:
 
+    ```
     "args": {
       "load_in_4bit": true,
       "n_gpu_layers": 12
     }
+    ```
 
     Note that those settings will remain after loading the model. So you
     may need to change them back to load a second model.
@@ -273,9 +275,11 @@ async def handle_load_model(request_data: LoadModelRequest):
     shared.settings object. It can be used to modify the default instruction
     template like this:
 
+    ```
     "settings": {
       "instruction_template": "Alpaca"
     }
+    ```
     '''
 
     try:
