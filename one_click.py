@@ -319,6 +319,11 @@ def update_requirements(initial_installation=False):
     # Uninstall previous llama-cpp-python versions
     run_cmd("python -m pip uninstall -y llama-cpp-python-cuda" + package_name, environment=True)
 
+    # Make sure that API requirements are installed (temporary)
+    extension_req_path = os.path.join("extensions", "openai", "requirements.txt")
+    if os.path.exists(extension_req_path):
+        run_cmd("python -m pip install -r " + extension_req_path + " --upgrade", environment=True)
+
     # Install/update the project requirements
     run_cmd("python -m pip install -r temp_requirements.txt --upgrade", assert_success=True, environment=True)
     os.remove('temp_requirements.txt')
