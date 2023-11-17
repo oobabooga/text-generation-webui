@@ -4,25 +4,27 @@ import os
 import traceback
 from threading import Thread
 
+import speech_recognition as sr
+import uvicorn
+from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.requests import Request
+from fastapi.responses import JSONResponse
+from pydub import AudioSegment
+from sse_starlette import EventSourceResponse
+
 import extensions.openai.completions as OAIcompletions
 import extensions.openai.embeddings as OAIembeddings
 import extensions.openai.images as OAIimages
 import extensions.openai.models as OAImodels
 import extensions.openai.moderations as OAImoderations
-import speech_recognition as sr
-import uvicorn
 from extensions.openai.errors import ServiceUnavailableError
 from extensions.openai.tokens import token_count, token_decode, token_encode
 from extensions.openai.utils import _start_cloudflared
-from fastapi import Depends, FastAPI, Header, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.requests import Request
-from fastapi.responses import JSONResponse
 from modules import shared
 from modules.logging_colors import logger
+from modules.models import unload_model
 from modules.text_generation import stop_everything_event
-from pydub import AudioSegment
-from sse_starlette import EventSourceResponse
 
 from .typing import (
     ChatCompletionRequest,
@@ -260,10 +262,12 @@ async def handle_load_model(request_data: LoadModelRequest):
     The "args" parameter can be used to modify flags like "--load-in-4bit"
     or "--n-gpu-layers" before loading a model. Example:
 
+    ```
     "args": {
       "load_in_4bit": true,
       "n_gpu_layers": 12
     }
+    ```
 
     Note that those settings will remain after loading the model. So you
     may need to change them back to load a second model.
@@ -272,9 +276,11 @@ async def handle_load_model(request_data: LoadModelRequest):
     shared.settings object. It can be used to modify the default instruction
     template like this:
 
+    ```
     "settings": {
       "instruction_template": "Alpaca"
     }
+    ```
     '''
 
     try:
@@ -283,6 +289,12 @@ async def handle_load_model(request_data: LoadModelRequest):
     except:
         traceback.print_exc()
         return HTTPException(status_code=400, detail="Failed to load the model.")
+
+
+@app.post("/v1/internal/model/unload")
+async def handle_unload_model():
+    unload_model()
+    return JSONResponse(content="OK")
 
 
 def run_server():
@@ -294,14 +306,14 @@ def run_server():
 
     if shared.args.public_api:
         def on_start(public_url: str):
-            logger.info(f'OpenAI compatible API URL:\n\n{public_url}\n')
+            logger.info(f'OpenAI-compatible API URL:\n\n{public_url}\n')
 
         _start_cloudflared(port, shared.args.public_api_id, max_attempts=3, on_start=on_start)
     else:
         if ssl_keyfile and ssl_certfile:
-            logger.info(f'OpenAI compatible API URL:\n\nhttps://{server_addr}:{port}\n')
+            logger.info(f'OpenAI-compatible API URL:\n\nhttps://{server_addr}:{port}\n')
         else:
-            logger.info(f'OpenAI compatible API URL:\n\nhttp://{server_addr}:{port}\n')
+            logger.info(f'OpenAI-compatible API URL:\n\nhttp://{server_addr}:{port}\n')
 
     if shared.args.api_key:
         logger.info(f'OpenAI API key:\n\n{shared.args.api_key}\n')

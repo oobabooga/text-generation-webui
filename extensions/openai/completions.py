@@ -5,6 +5,8 @@ from collections import deque
 import tiktoken
 import torch
 import torch.nn.functional as F
+from transformers import LogitsProcessor, LogitsProcessorList
+
 from extensions.openai.errors import InvalidRequestError
 from extensions.openai.utils import debug_msg
 from modules import shared
@@ -15,7 +17,6 @@ from modules.chat import (
 )
 from modules.presets import load_preset_memoized
 from modules.text_generation import decode, encode, generate_reply
-from transformers import LogitsProcessor, LogitsProcessorList
 
 
 class LogitsBiasProcessor(LogitsProcessor):
@@ -78,12 +79,7 @@ def process_parameters(body, is_legacy=False):
     max_tokens_str = 'length' if is_legacy else 'max_tokens'
     generate_params['max_new_tokens'] = body.pop(max_tokens_str)
     if generate_params['truncation_length'] == 0:
-        if shared.args.loader and shared.args.loader.lower().startswith('exllama'):
-            generate_params['truncation_length'] = shared.args.max_seq_len
-        elif shared.args.loader and shared.args.loader in ['llama.cpp', 'llamacpp_HF', 'ctransformers']:
-            generate_params['truncation_length'] = shared.args.n_ctx
-        else:
-            generate_params['truncation_length'] = shared.settings['truncation_length']
+        generate_params['truncation_length'] = shared.settings['truncation_length']
 
     if body['preset'] is not None:
         preset = load_preset_memoized(body['preset'])
