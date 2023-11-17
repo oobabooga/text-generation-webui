@@ -298,7 +298,7 @@ Optionally, you can use the following command-line flags:
 | `--xformers`                                | Use xformer's memory efficient attention. This is really old and probably doesn't do anything. |
 | `--sdp-attention`                           | Use PyTorch 2.0's SDP attention. Same as above. |
 | `--trust-remote-code`                       | Set `trust_remote_code=True` while loading the model. Necessary for some models. |
-| `--use_fast`                                | Set `use_fast=True` while loading the tokenizer. |
+| `--no_use_fast`                             | Set use_fast=False while loading the tokenizer (it's True by default). Use this if you have any problems related to use_fast. |
 | `--use_flash_attention_2`                   | Set use_flash_attention_2=True while loading the model. |
 
 #### Accelerate 4-bit
@@ -325,6 +325,7 @@ Optionally, you can use the following command-line flags:
 | `--mlock`     | Force the system to keep the model in RAM. |
 | `--n-gpu-layers N_GPU_LAYERS` | Number of layers to offload to the GPU. |
 | `--tensor_split TENSOR_SPLIT`       | Split the model across multiple GPUs. Comma-separated list of proportions. Example: 18,17. |
+| `--llama_cpp_seed SEED`             | Seed for llama-cpp models. Default is 0 (random). |
 | `--numa`      | Activate NUMA task allocation for llama.cpp. |
 | `--logits_all`| Needs to be set for perplexity evaluation to work. Otherwise, ignore it, as it makes prompt processing slower. |
 | `--cache-capacity CACHE_CAPACITY`   | Maximum cache capacity (llama-cpp-python). Examples: 2000MiB, 2GiB. When provided without units, bytes will be assumed. |

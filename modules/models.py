@@ -114,13 +114,13 @@ def load_tokenizer(model_name, model):
     if any(s in model_name.lower() for s in ['gpt-4chan', 'gpt4chan']) and Path(f"{shared.args.model_dir}/gpt-j-6B/").exists():
         tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/gpt-j-6B/"))
     elif path_to_model.exists():
-        if shared.args.use_fast:
-            logger.info('Loading the tokenizer with use_fast=True.')
+        if shared.args.no_use_fast:
+            logger.info('Loading the tokenizer with use_fast=False.')
 
         tokenizer = AutoTokenizer.from_pretrained(
             path_to_model,
             trust_remote_code=shared.args.trust_remote_code,
-            use_fast=shared.args.use_fast
+            use_fast=not shared.args.no_use_fast
         )
 
     return tokenizer
@@ -262,13 +262,13 @@ def llamacpp_HF_loader(model_name):
         logger.error("Could not load the model because a tokenizer in transformers format was not found. Please download oobabooga/llama-tokenizer.")
         return None, None
 
-    if shared.args.use_fast:
-        logger.info('Loading the tokenizer with use_fast=True.')
+    if shared.args.no_use_fast:
+        logger.info('Loading the tokenizer with use_fast=False.')
 
     tokenizer = AutoTokenizer.from_pretrained(
         path,
         trust_remote_code=shared.args.trust_remote_code,
-        use_fast=shared.args.use_fast
+        use_fast=not shared.args.no_use_fast
     )
 
     model = LlamacppHF.from_pretrained(model_name)
