@@ -2,7 +2,6 @@ import os
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
-import llama_cpp
 import torch
 from torch.nn import CrossEntropyLoss
 from transformers import GenerationConfig, PretrainedConfig, PreTrainedModel
@@ -10,6 +9,23 @@ from transformers.modeling_outputs import CausalLMOutputWithPast
 
 from modules import RoPE, shared
 from modules.logging_colors import logger
+
+try:
+    import llama_cpp
+except:
+    llama_cpp = None
+
+try:
+    import llama_cpp_cuda
+except:
+    llama_cpp_cuda = None
+
+
+def llama_cpp_lib():
+    if (shared.args.cpu and llama_cpp is not None) or llama_cpp_cuda is None:
+        return llama_cpp
+    else:
+        return llama_cpp_cuda
 
 
 class LlamacppHF(PreTrainedModel):
@@ -23,7 +39,7 @@ class LlamacppHF(PreTrainedModel):
             'n_tokens': self.model.n_tokens,
             'input_ids': self.model.input_ids,
             'scores': self.model.scores,
-            'ctx': self.model._ctx.ctx
+            'ctx': self.model.ctx
         }
 
         if shared.args.cfg_cache:
@@ -32,7 +48,7 @@ class LlamacppHF(PreTrainedModel):
                 'n_tokens': self.model.n_tokens,
                 'input_ids': self.model.input_ids.copy(),
                 'scores': self.model.scores.copy(),
-                'ctx': llama_cpp.llama_new_context_with_model(model.model, model.context_params)
+                'ctx': llama_cpp_lib().llama_new_context_with_model(model.model, model.context_params)
             }
 
     def _validate_model_class(self):
@@ -49,7 +65,7 @@ class LlamacppHF(PreTrainedModel):
             'n_tokens': self.model.n_tokens,
             'input_ids': self.model.input_ids,
             'scores': self.model.scores,
-            'ctx': self.model._ctx.ctx
+            'ctx': self.model.ctx
         })
 
     def save_negative_cache(self):
@@ -57,20 +73,20 @@ class LlamacppHF(PreTrainedModel):
             'n_tokens': self.model.n_tokens,
             'input_ids': self.model.input_ids,
             'scores': self.model.scores,
-            'ctx': self.model._ctx.ctx
+            'ctx': self.model.ctx
         })
 
     def load_cache(self):
         self.model.n_tokens = self.llamacpp_cache['n_tokens']
         self.model.input_ids = self.llamacpp_cache['input_ids']
         self.model.scores = self.llamacpp_cache['scores']
-        self.model._ctx.ctx = self.llamacpp_cache['ctx']
+        self.model.ctx = self.llamacpp_cache['ctx']
 
     def load_negative_cache(self):
         self.model.n_tokens = self.llamacpp_cache_negative['n_tokens']
         self.model.input_ids = self.llamacpp_cache_negative['input_ids']
         self.model.scores = self.llamacpp_cache_negative['scores']
-        self.model._ctx.ctx = self.llamacpp_cache_negative['ctx']
+        self.model.ctx = self.llamacpp_cache_negative['ctx']
 
     @property
     def device(self) -> torch.device:
@@ -176,6 +192,7 @@ class LlamacppHF(PreTrainedModel):
         params = {
             'model_path': str(model_file),
             'n_ctx': shared.args.n_ctx,
+            'seed': int(shared.args.llama_cpp_seed),
             'n_threads': shared.args.threads or None,
             'n_threads_batch': shared.args.threads_batch or None,
             'n_batch': shared.args.n_batch,
@@ -190,5 +207,7 @@ class LlamacppHF(PreTrainedModel):
             'logits_all': shared.args.logits_all,
         }
 
-        model = llama_cpp.Llama(**params)
+        Llama = llama_cpp_lib().Llama
+        model = Llama(**params)
+
         return LlamacppHF(model, model_file)
