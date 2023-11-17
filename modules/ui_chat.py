@@ -5,7 +5,7 @@ from pathlib import Path
 import gradio as gr
 from PIL import Image
 
-from modules import chat, prompts, shared, ui, utils
+from modules import chat, shared, ui, utils
 from modules.html_generator import chat_html_wrapper
 from modules.text_generation import stop_everything_event
 from modules.utils import gradio
@@ -330,15 +330,21 @@ def create_event_handlers():
         partial(chat.redraw_html, reset_cache=True), gradio(reload_arr), gradio('display'))
 
     shared.gradio['send_instruction_to_default'].click(
-        prompts.load_instruction_prompt_simple, gradio('instruction_template'), gradio('textbox-default')).then(
+        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+        lambda x: x.update({'mode': 'instruct', 'history': {'internal': [], 'visible': []}}), gradio('interface_state'), None).then(
+        partial(chat.generate_chat_prompt, 'Input'), gradio('interface_state'), gradio('textbox-default')).then(
         lambda: None, None, None, _js=f'() => {{{ui.switch_tabs_js}; switch_to_default()}}')
 
     shared.gradio['send_instruction_to_notebook'].click(
-        prompts.load_instruction_prompt_simple, gradio('instruction_template'), gradio('textbox-notebook')).then(
+        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+        lambda x: x.update({'mode': 'instruct', 'history': {'internal': [], 'visible': []}}), gradio('interface_state'), None).then(
+        partial(chat.generate_chat_prompt, 'Input'), gradio('interface_state'), gradio('textbox-notebook')).then(
         lambda: None, None, None, _js=f'() => {{{ui.switch_tabs_js}; switch_to_notebook()}}')
 
     shared.gradio['send_instruction_to_negative_prompt'].click(
-        prompts.load_instruction_prompt_simple, gradio('instruction_template'), gradio('negative_prompt')).then(
+        ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
+        lambda x: x.update({'mode': 'instruct', 'history': {'internal': [], 'visible': []}}), gradio('interface_state'), None).then(
+        partial(chat.generate_chat_prompt, 'Input'), gradio('interface_state'), gradio('negative_prompt')).then(
         lambda: None, None, None, _js=f'() => {{{ui.switch_tabs_js}; switch_to_generation_parameters()}}')
 
     shared.gradio['send-chat-to-default'].click(

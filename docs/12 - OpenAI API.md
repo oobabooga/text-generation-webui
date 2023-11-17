@@ -1,6 +1,11 @@
 ## OpenAI compatible API
 
-The main API for this project is meant to be a drop-in replacement to the OpenAI API, including Chat and Completions endpoints.
+The main API for this project is meant to be a drop-in replacement to the OpenAI API, including Chat and Completions endpoints. 
+
+* It is 100% offline and private.
+* It doesn't create any logs.
+* It doesn't connect to OpenAI.
+* It doesn't use the openai-python library.
 
 If you did not use the one-click installers, you may need to install the requirements first:
 
@@ -10,38 +15,13 @@ pip install -r extensions/openai/requirements.txt
 
 ### Starting the API
 
-Add `--extensions openai` to your command-line flags.
+Add `--api` to your command-line flags.
 
 * To create a public Cloudflare URL, add the `--public-api` flag.
 * To listen on your local network, add the `--listen` flag.
 * To change the port, which is 5000 by default, use `--api-port 1234` (change 1234 to your desired port number).
 * To use SSL, add `--ssl-keyfile key.pem --ssl-certfile cert.pem`. Note that it doesn't work with `--public-api`.
 * To use an API key for authentication, add `--api-key yourkey`.
-
-#### Environment variables
-
-The following environment variables can be used (they take precendence over everything else):
-
-| Variable Name          | Description                                                                                        | Example Value              |
-|------------------------|------------------------------------|----------------------------|
-| `OPENEDAI_PORT`           | Port number         |             5000               |
-| `OPENEDAI_CERT_PATH`      | SSL certificate file path         |            cert.pem                |
-| `OPENEDAI_KEY_PATH`       | SSL key file path                    |             key.pem               |
-| `OPENEDAI_DEBUG`          | Enable debugging (set to 1)    | 1                          |
-| `SD_WEBUI_URL`           | WebUI URL (used by endpoint) | http://127.0.0.1:7861 |
-| `OPENEDAI_EMBEDDING_MODEL` | Embedding model (if applicable) |          all-mpnet-base-v2                  |
-| `OPENEDAI_EMBEDDING_DEVICE` | Embedding device (if applicable) |           cuda                 |
-
-#### Persistent settings with `settings.yaml`
-
-You can also set the following variables in your `settings.yaml` file:
-
-```
-openai-embedding_device: cuda
-openai-embedding_model: all-mpnet-base-v2
-openai-sd_webui_url: http://127.0.0.1:7861
-openai-debug: 1
-```
 
 ### Examples
 
@@ -218,6 +198,31 @@ for event in client.events():
     print(payload['choices'][0]['text'], end='')
 
 print()
+```
+
+### Environment variables
+
+The following environment variables can be used (they take precendence over everything else):
+
+| Variable Name          | Description                                                                                        | Example Value              |
+|------------------------|------------------------------------|----------------------------|
+| `OPENEDAI_PORT`           | Port number         |             5000               |
+| `OPENEDAI_CERT_PATH`      | SSL certificate file path         |            cert.pem                |
+| `OPENEDAI_KEY_PATH`       | SSL key file path                    |             key.pem               |
+| `OPENEDAI_DEBUG`          | Enable debugging (set to 1)    | 1                          |
+| `SD_WEBUI_URL`           | WebUI URL (used by endpoint) | http://127.0.0.1:7861 |
+| `OPENEDAI_EMBEDDING_MODEL` | Embedding model (if applicable) |          sentence-transformers/all-mpnet-base-v2                  |
+| `OPENEDAI_EMBEDDING_DEVICE` | Embedding device (if applicable) |           cuda                 |
+
+#### Persistent settings with `settings.yaml`
+
+You can also set the following variables in your `settings.yaml` file:
+
+```
+openai-embedding_device: cuda
+openai-embedding_model: "sentence-transformers/all-mpnet-base-v2"
+openai-sd_webui_url: http://127.0.0.1:7861
+openai-debug: 1
 ```
 
 ### Third-party application setup

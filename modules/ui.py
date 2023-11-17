@@ -52,7 +52,7 @@ def list_model_elements():
         'bf16',
         'load_in_8bit',
         'trust_remote_code',
-        'use_fast',
+        'no_use_fast',
         'use_flash_attention_2',
         'load_in_4bit',
         'compute_dtype',

@@ -20,7 +20,7 @@ conda_env_path = os.path.join(script_dir, "installer_files", "env")
 cmd_flags_path = os.path.join(script_dir, "CMD_FLAGS.txt")
 if os.path.exists(cmd_flags_path):
     with open(cmd_flags_path, 'r') as f:
-        CMD_FLAGS = ' '.join(line.strip() for line in f if line.strip() and not line.strip().startswith('#'))
+        CMD_FLAGS = ' '.join(line.strip().rstrip('\\').strip() for line in f if line.strip().rstrip('\\').strip() and not line.strip().startswith('#'))
 else:
     CMD_FLAGS = ''
 
@@ -190,7 +190,7 @@ def install_webui():
             use_cuda118 = "Y" if os.environ.get("USE_CUDA118", "").lower() in ("yes", "y", "true", "1", "t", "on") else "N"
         else:
             # Ask for CUDA version if using NVIDIA
-            print("\nWould you like to use CUDA 11.8 instead of 12.1? This is only necessary for older GPUs like Kepler.\nIf unsure, say \"N\".\n")
+            print("\nDo you want to use CUDA 11.8 instead of 12.1? Only choose this option if your GPU is very old (Kepler or older).\nFor RTX and GTX series GPUs, say \"N\". If unsure, say \"N\".\n")
             use_cuda118 = input("Input (Y/N)> ").upper().strip('"\'').strip()
             while use_cuda118 not in 'YN':
                 print("Invalid choice. Please try again.")
@@ -242,7 +242,7 @@ def update_requirements(initial_installation=False):
     # Check for differences in installation file hashes
     for file_name in files_to_check:
         if before_pull_hashes[file_name] != after_pull_hashes[file_name]:
-            print(f"File '{file_name}' was updated during 'git pull'. Please run the script again.")
+            print_big_message(f"File '{file_name}' was updated during 'git pull'. Please run the script again.")
             exit(1)
 
     # Extensions requirements are installed only during the initial install by default.
@@ -315,6 +315,11 @@ def update_requirements(initial_installation=False):
         package_name = url.split("/")[-1].split("@")[0].rstrip(".git")
         run_cmd("python -m pip uninstall -y " + package_name, environment=True)
         print(f"Uninstalled {package_name}")
+
+    # Make sure that API requirements are installed (temporary)
+    extension_req_path = os.path.join("extensions", "openai", "requirements.txt")
+    if os.path.exists(extension_req_path):
+        run_cmd("python -m pip install -r " + extension_req_path + " --upgrade", environment=True)
 
     # Install/update the project requirements
     run_cmd("python -m pip install -r temp_requirements.txt --upgrade", assert_success=True, environment=True)

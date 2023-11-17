@@ -42,7 +42,7 @@ class GenerationOptions(BaseModel):
 
 
 class CompletionRequestParams(BaseModel):
-    model: str | None = None
+    model: str | None = Field(default=None, description="Unused parameter. To change the model, use the /v1/internal/model/load endpoint.")
     prompt: str | List[str]
     best_of: int | None = Field(default=1, description="Unused parameter.")
     echo: bool | None = False
@@ -75,7 +75,7 @@ class CompletionResponse(BaseModel):
 
 class ChatCompletionRequestParams(BaseModel):
     messages: List[dict]
-    model: str | None = None
+    model: str | None = Field(default=None, description="Unused parameter. To change the model, use the /v1/internal/model/load endpoint.")
     frequency_penalty: float | None = 0
     function_call: str | dict | None = Field(default=None, description="Unused parameter.")
     functions: List[dict] | None = Field(default=None, description="Unused parameter.")
@@ -92,13 +92,14 @@ class ChatCompletionRequestParams(BaseModel):
     mode: str = Field(default='instruct', description="Valid options: instruct, chat, chat-instruct.")
 
     instruction_template: str | None = Field(default=None, description="An instruction template defined under text-generation-webui/instruction-templates. If not set, the correct template will be guessed using the regex expressions in models/config.yaml.")
+    turn_template: str | None = Field(default=None, description="Overwrites the value set by instruction_template.")
     name1_instruct: str | None = Field(default=None, description="Overwrites the value set by instruction_template.")
     name2_instruct: str | None = Field(default=None, description="Overwrites the value set by instruction_template.")
     context_instruct: str | None = Field(default=None, description="Overwrites the value set by instruction_template.")
-    turn_template: str | None = Field(default=None, description="Overwrites the value set by instruction_template.")
+    system_message: str | None = Field(default=None, description="Overwrites the value set by instruction_template.")
 
     character: str | None = Field(default=None, description="A character defined under text-generation-webui/characters. If not set, the default \"Assistant\" character will be used.")
-    name1: str | None = Field(default=None, description="Overwrites the value set by character.")
+    name1: str | None = Field(default=None, description="Your name (the user). By default, it's \"You\".")
     name2: str | None = Field(default=None, description="Overwrites the value set by character.")
     context: str | None = Field(default=None, description="Overwrites the value set by character.")
     greeting: str | None = Field(default=None, description="Overwrites the value set by character.")
@@ -151,6 +152,19 @@ class LoadModelRequest(BaseModel):
     model_name: str
     args: dict | None = None
     settings: dict | None = None
+
+
+class EmbeddingsRequest(BaseModel):
+    input: str | List[str]
+    model: str | None = Field(default=None, description="Unused parameter. To change the model, set the OPENEDAI_EMBEDDING_MODEL and OPENEDAI_EMBEDDING_DEVICE environment variables before starting the server.")
+    encoding_format: str = Field(default="float", description="Can be float or base64.")
+    user: str | None = Field(default=None, description="Unused parameter.")
+
+
+class EmbeddingsResponse(BaseModel):
+    index: int
+    embedding: List[float]
+    object: str = "embedding"
 
 
 def to_json(obj):

@@ -2,6 +2,7 @@ import os
 import time
 
 import requests
+
 from extensions.openai.errors import ServiceUnavailableError
 
 

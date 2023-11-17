@@ -21,7 +21,6 @@ import tqdm
 from requests.adapters import HTTPAdapter
 from tqdm.contrib.concurrent import thread_map
 
-
 base = "https://huggingface.co"
 
 

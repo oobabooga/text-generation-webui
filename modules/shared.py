@@ -93,7 +93,7 @@ parser.add_argument('--xformers', action='store_true', help='Use xformer\'s memo
 parser.add_argument('--sdp-attention', action='store_true', help='Use PyTorch 2.0\'s SDP attention. Same as above.')
 parser.add_argument('--trust-remote-code', action='store_true', help='Set trust_remote_code=True while loading the model. Necessary for some models.')
 parser.add_argument('--force-safetensors', action='store_true', help='Set use_safetensors=True while loading the model. This prevents arbitrary code execution.')
-parser.add_argument('--use_fast', action='store_true', help='Set use_fast=True while loading the tokenizer.')
+parser.add_argument('--no_use_fast', action='store_true', help='Set use_fast=False while loading the tokenizer (it\'s True by default). Use this if you have any problems related to use_fast.')
 parser.add_argument('--use_flash_attention_2', action='store_true', help='Set use_flash_attention_2=True while loading the model.')
 
 # Accelerate 4-bit
@@ -182,6 +182,7 @@ parser.add_argument('--no-stream', action='store_true', help='DEPRECATED')
 parser.add_argument('--mul_mat_q', action='store_true', help='DEPRECATED')
 parser.add_argument('--api-blocking-port', type=int, default=5000, help='DEPRECATED')
 parser.add_argument('--api-streaming-port', type=int, default=5005, help='DEPRECATED')
+parser.add_argument('--use_fast', action='store_true', help='DEPRECATED')
 
 args = parser.parse_args()
 args_defaults = parser.parse_args([])
@@ -192,7 +193,7 @@ for arg in sys.argv[1:]:
         provided_arguments.append(arg)
 
 # Deprecation warnings
-for k in ['chat', 'notebook', 'no_stream', 'mul_mat_q']:
+for k in ['notebook', 'chat', 'no_stream', 'mul_mat_q', 'use_fast']:
     if getattr(args, k):
         logger.warning(f'The --{k} flag has been deprecated and will be removed soon. Please remove that flag.')
 
@@ -258,9 +259,8 @@ if args.multimodal_pipeline is not None:
     add_extension('multimodal')
 
 # Activate the API extension
-if args.api:
-    # add_extension('openai', last=True)
-    add_extension('api', last=True)
+if args.api or args.public_api:
+    add_extension('openai', last=True)
 
 # Load model-specific settings
 with Path(f'{args.model_dir}/config.yaml') as p:

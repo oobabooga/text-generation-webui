@@ -28,7 +28,7 @@ Options:
 * **disk**: Enable disk offloading for layers that don't fit into the GPU and CPU combined.
 * **load-in-4bit**: Load the model in 4-bit precision using bitsandbytes.
 * **trust-remote-code**: Some models use custom Python code to load the model or the tokenizer. For such models, this option needs to be set. It doesn't download any remote content: all it does is execute the .py files that get downloaded with the model. Those files can potentially include malicious code; I have never seen it happen, but it is in principle possible.
-* **use_fast**: Use the "fast" version of the tokenizer. Especially useful for Llama models, which originally had a "slow" tokenizer that received an update. If your local files are in the old "slow" format, checking this option may trigger a conversion that takes several minutes. The fast tokenizer is mostly useful if you are generating 50+ tokens/second using ExLlama_HF or if you are tokenizing a huge dataset for training.
+* **no_use_fast**: Do not use the "fast" version of the tokenizer. Can usually be ignored; only check this if you can't load the tokenizer for your model otherwise.
 * **use_flash_attention_2**: Set use_flash_attention_2=True while loading the model. Possibly useful for training.
 * **disable_exllama**: Only applies when you are loading a GPTQ model through the transformers loader. It needs to be checked if you intend to train LoRAs with the model.
 
