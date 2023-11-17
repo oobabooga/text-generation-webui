@@ -4,26 +4,27 @@ import os
 import traceback
 from threading import Thread
 
+import speech_recognition as sr
+import uvicorn
+from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.requests import Request
+from fastapi.responses import JSONResponse
+from pydub import AudioSegment
+from sse_starlette import EventSourceResponse
+
 import extensions.openai.completions as OAIcompletions
 import extensions.openai.embeddings as OAIembeddings
 import extensions.openai.images as OAIimages
 import extensions.openai.models as OAImodels
 import extensions.openai.moderations as OAImoderations
-import speech_recognition as sr
-import uvicorn
 from extensions.openai.errors import ServiceUnavailableError
 from extensions.openai.tokens import token_count, token_decode, token_encode
 from extensions.openai.utils import _start_cloudflared
-from fastapi import Depends, FastAPI, Header, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.requests import Request
-from fastapi.responses import JSONResponse
 from modules import shared
 from modules.logging_colors import logger
 from modules.models import unload_model
 from modules.text_generation import stop_everything_event
-from pydub import AudioSegment
-from sse_starlette import EventSourceResponse
 
 from .typing import (
     ChatCompletionRequest,
