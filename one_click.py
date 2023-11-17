@@ -242,7 +242,7 @@ def update_requirements(initial_installation=False):
     # Check for differences in installation file hashes
     for file_name in files_to_check:
         if before_pull_hashes[file_name] != after_pull_hashes[file_name]:
-            print(f"File '{file_name}' was updated during 'git pull'. Please run the script again.")
+            print_big_message(f"File '{file_name}' was updated during 'git pull'. Please run the script again.")
             exit(1)
 
     # Extensions requirements are installed only during the initial install by default.
