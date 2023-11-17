@@ -93,7 +93,7 @@ parser.add_argument('--xformers', action='store_true', help='Use xformer\'s memo
 parser.add_argument('--sdp-attention', action='store_true', help='Use PyTorch 2.0\'s SDP attention. Same as above.')
 parser.add_argument('--trust-remote-code', action='store_true', help='Set trust_remote_code=True while loading the model. Necessary for some models.')
 parser.add_argument('--force-safetensors', action='store_true', help='Set use_safetensors=True while loading the model. This prevents arbitrary code execution.')
-parser.add_argument('--no_use_fast', action='store_true', help='Set use_fast=False while loading the tokenizer (it\'s True by default). Set this if you have any problems related to use_fast.')
+parser.add_argument('--no_use_fast', action='store_true', help='Set use_fast=False while loading the tokenizer (it\'s True by default). Use this if you have any problems related to use_fast.')
 parser.add_argument('--use_flash_attention_2', action='store_true', help='Set use_flash_attention_2=True while loading the model.')
 
 # Accelerate 4-bit
