@@ -225,7 +225,7 @@ def create_event_handlers():
         chat.save_history, gradio('history', 'unique_id', 'character_menu', 'mode'), None)
 
     shared.gradio['Stop'].click(
-        stop_everything_event, None, None, queue=False).then(
+        stop_everything_event, None, None, concurrency_limit=None).then(
         chat.redraw_html, gradio(reload_arr), gradio('display'))
 
     if not shared.args.multi_user:

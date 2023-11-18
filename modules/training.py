@@ -185,7 +185,7 @@ def create_ui():
 
     copy_from.change(do_copy_params, [copy_from] + all_params, all_params)
     start_button.click(do_train, all_params, output)
-    stop_button.click(do_interrupt, None, None, queue=False)
+    stop_button.click(do_interrupt, None, None, concurrency_limit=None)
     higher_rank_limit.change(change_rank_limit, [higher_rank_limit], [lora_rank, lora_alpha])
 
     # Evaluation events. For some reason, the interrupt event
@@ -198,7 +198,7 @@ def create_ui():
     ev_cur = start_current_evaluation.click(calculate_perplexity, [tmp, evaluate_text_file, stride_length, max_length], evaluation_log, show_progress=False)
     start_current_evaluation.click(generate_markdown_table, None, evaluation_table, show_progress=False)
 
-    stop_evaluation.click(None, None, None, cancels=[ev, ev_cur], queue=False)
+    stop_evaluation.click(None, None, None, cancels=[ev, ev_cur], concurrency_limit=None)
     refresh_table.click(generate_markdown_table, None, evaluation_table, show_progress=True)
     save_comments.click(
         save_past_evaluations, evaluation_table, None).then(
