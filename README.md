@@ -169,7 +169,7 @@ cp docker/.env.example .env
 docker compose up --build
 ```
 
-* You need to have docker compose v2.17 or higher installed. See [this guide](https://github.com/oobabooga/text-generation-webui/wiki/09-%E2%80%90-Docker) for instructions.
+* You need to have Docker Compose v2.17 or higher installed. See [this guide](https://github.com/oobabooga/text-generation-webui/wiki/09-%E2%80%90-Docker) for instructions.
 * For additional docker files, check out [this repository](https://github.com/Atinoda/text-generation-webui-docker).
 
 ### Updating the requirements

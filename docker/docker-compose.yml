@@ -11,7 +11,6 @@ services:
     ports:
       - "${HOST_PORT:-7860}:${CONTAINER_PORT:-7860}"
       - "${HOST_API_PORT:-5000}:${CONTAINER_API_PORT:-5000}"
-      - "${HOST_API_STREAM_PORT:-5005}:${CONTAINER_API_STREAM_PORT:-5005}"
     stdin_open: true
     tty: true
     volumes:
