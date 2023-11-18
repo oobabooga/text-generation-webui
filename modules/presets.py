@@ -95,7 +95,9 @@ def random_preset(state):
     generate_params = default_preset()
     for cat in params_and_values:
         choices = list(params_and_values[cat].keys())
-        choices = [x for x in choices if x in loaders_samplers[shared.args.loader]]
+        if shared.args.loader is not None:
+            choices = [x for x in choices if x in loaders_samplers[shared.args.loader]]
+
         if len(choices) > 0:
             choice = random.choice(choices)
             generate_params[choice] = random.choice(params_and_values[cat][choice])
