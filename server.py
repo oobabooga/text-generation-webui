@@ -156,6 +156,9 @@ def create_interface():
             ssl_certfile=shared.args.ssl_certfile,
             allowed_paths=[
                 'cache',
+                'css',
+                'extensions',
+                'js',
             ]
         )
 
