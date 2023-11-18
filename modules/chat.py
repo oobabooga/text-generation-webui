@@ -91,7 +91,12 @@ def generate_chat_prompt(user_input, state, **kwargs):
     if state['mode'] == 'chat-instruct':
         wrapper = ''
         command = state['chat-instruct_command'].replace('<|character|>', state['name2'] if not impersonate else state['name1'])
-        wrapper += state['context_instruct']
+        context_instruct = state['context_instruct']
+        if state['custom_system_message'].strip() != '':
+            context_instruct = context_instruct.replace('<|system-message|>', state['custom_system_message'])
+        else:
+            context_instruct = context_instruct.replace('<|system-message|>', state['system_message'])
+        wrapper += context_instruct
         wrapper += all_substrings['instruct']['user_turn'].replace('<|user-message|>', command)
         wrapper += all_substrings['instruct']['bot_turn_stripped']
         if impersonate:
