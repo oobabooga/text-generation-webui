@@ -31,9 +31,9 @@ def create_ui():
         # Reset interface event
         shared.gradio['reset_interface'].click(
             set_interface_arguments, gradio('extensions_menu', 'bool_menu'), None).then(
-            lambda: None, None, None, _js='() => {document.body.innerHTML=\'<h1 style="font-family:monospace;padding-top:20%;margin:0;height:100vh;color:lightgray;text-align:center;background:var(--body-background-fill)">Reloading...</h1>\'; setTimeout(function(){location.reload()},2500); return []}')
+            lambda: None, None, None, js='() => {document.body.innerHTML=\'<h1 style="font-family:monospace;padding-top:20%;margin:0;height:100vh;color:lightgray;text-align:center;background:var(--body-background-fill)">Reloading...</h1>\'; setTimeout(function(){location.reload()},2500); return []}')
 
-        shared.gradio['toggle_dark_mode'].click(lambda: None, None, None, _js='() => {document.getElementsByTagName("body")[0].classList.toggle("dark")}')
+        shared.gradio['toggle_dark_mode'].click(lambda: None, None, None, js='() => {document.getElementsByTagName("body")[0].classList.toggle("dark")}')
         shared.gradio['save_settings'].click(
             ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
             ui.save_settings, gradio('interface_state', 'preset_menu', 'instruction_template', 'extensions_menu', 'show_controls'), gradio('save_contents')).then(
