@@ -4,6 +4,9 @@ from pathlib import Path
 
 import yaml
 
+from modules import shared
+from modules.loaders import loaders_samplers
+
 
 def default_preset():
     return {
@@ -91,8 +94,11 @@ def random_preset(state):
 
     generate_params = default_preset()
     for cat in params_and_values:
-        choice = random.choice(list(params_and_values[cat].keys()))
-        generate_params[choice] = random.choice(params_and_values[cat][choice])
+        choices = list(params_and_values[cat].keys())
+        choices = [x for x in choices if x in loaders_samplers[shared.args.loader]]
+        if len(choices) > 0:
+            choice = random.choice(choices)
+            generate_params[choice] = random.choice(params_and_values[cat][choice])
 
     state.update(generate_params)
     return state, *[generate_params[k] for k in presets_params()]
