@@ -80,7 +80,6 @@ def list_model_elements():
         'n_gpu_layers',
         'tensor_split',
         'n_ctx',
-        'llama_cpp_seed',
         'gpu_split',
         'max_seq_len',
         'compress_pos_emb',

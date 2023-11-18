@@ -74,7 +74,6 @@ class LlamaCppModel:
         params = {
             'model_path': str(path),
             'n_ctx': shared.args.n_ctx,
-            'seed': int(shared.args.llama_cpp_seed),
             'n_threads': shared.args.threads or None,
             'n_threads_batch': shared.args.threads_batch or None,
             'n_batch': shared.args.n_batch,
@@ -144,15 +143,16 @@ class LlamaCppModel:
             max_tokens=state['max_new_tokens'],
             temperature=state['temperature'],
             top_p=state['top_p'],
-            top_k=state['top_k'],
-            repeat_penalty=state['repetition_penalty'],
-            presence_penalty=state['presence_penalty'],
             frequency_penalty=state['frequency_penalty'],
+            presence_penalty=state['presence_penalty'],
+            repeat_penalty=state['repetition_penalty'],
+            top_k=state['top_k'],
+            stream=True,
+            seed=int(state['seed']) if state['seed'] != -1 else None,
             tfs_z=state['tfs'],
             mirostat_mode=int(state['mirostat_mode']),
             mirostat_tau=state['mirostat_tau'],
             mirostat_eta=state['mirostat_eta'],
-            stream=True,
             logits_processor=logit_processors,
             grammar=self.grammar
         )
