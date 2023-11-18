@@ -325,7 +325,6 @@ Optionally, you can use the following command-line flags:
 | `--mlock`     | Force the system to keep the model in RAM. |
 | `--n-gpu-layers N_GPU_LAYERS` | Number of layers to offload to the GPU. |
 | `--tensor_split TENSOR_SPLIT`       | Split the model across multiple GPUs. Comma-separated list of proportions. Example: 18,17. |
-| `--llama_cpp_seed SEED`             | Seed for llama-cpp models. Default is 0 (random). |
 | `--numa`      | Activate NUMA task allocation for llama.cpp. |
 | `--logits_all`| Needs to be set for perplexity evaluation to work. Otherwise, ignore it, as it makes prompt processing slower. |
 | `--cache-capacity CACHE_CAPACITY`   | Maximum cache capacity (llama-cpp-python). Examples: 2000MiB, 2GiB. When provided without units, bytes will be assumed. |
