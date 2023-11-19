@@ -145,6 +145,7 @@ def add_lora_transformers(lora_names):
         if len(lora_names) > 1:
             merge_loras()
 
+        shared.lora_names = lora_names
         return
 
     # If any LoRA needs to be removed, start over
