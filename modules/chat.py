@@ -544,9 +544,13 @@ def generate_pfp_cache(character):
 
     for path in [Path(f"characters/{character}.{extension}") for extension in ['png', 'jpg', 'jpeg']]:
         if path.exists():
-            img = make_thumbnail(Image.open(path))
-            img.save(Path('cache/pfp_character.png'), format='PNG')
-            return img
+            original_img = Image.open(path)
+            original_img.save(Path('cache/pfp_character.png'), format='PNG')
+
+            thumb = make_thumbnail(original_img)
+            thumb.save(Path('cache/pfp_character_thumb.png'), format='PNG')
+
+            return thumb
 
     return None
 
@@ -575,8 +579,9 @@ def load_character(character, name1, name2, instruct=False):
     file_contents = open(filepath, 'r', encoding='utf-8').read()
     data = json.loads(file_contents) if extension == "json" else yaml.safe_load(file_contents)
 
-    if Path("cache/pfp_character.png").exists() and not instruct:
-        Path("cache/pfp_character.png").unlink()
+    for path in [Path("cache/pfp_character.png"), Path("cache/pfp_character_thumb.png")]:
+        if path.exists() and not instruct:
+            path.unlink()
 
     picture = generate_pfp_cache(character)
 
