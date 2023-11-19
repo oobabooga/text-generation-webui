@@ -11,9 +11,13 @@ LLMs work by generating one token at a time. Given your prompt, the model calcul
 
 ### Preset menu
 
-Can be used to save combinations of parameters for reuse. 
+Can be used to save and load combinations of parameters for reuse.
 
-The built-in presets were not manually chosen. They were obtained after a blind contest called "Preset Arena" where hundreds of people voted. The full results can be found [here](https://github.com/oobabooga/oobabooga.github.io/blob/main/arena/results.md).
+* **🎲 button**: creates a random yet interpretable preset. Only 1 parameter of each category is included for the categories: removing tail tokens, avoiding repetition, and flattening the distribution. That is, top_p and top_k are not mixed, and neither are repetition_penalty and frequency_penalty. You can use this button to break out of a loop of bad generations after multiple "Regenerate" attempts.
+
+#### Built-in presets
+
+These were obtained after a blind contest called "Preset Arena" where hundreds of people voted. The full results can be found [here](https://github.com/oobabooga/oobabooga.github.io/blob/main/arena/results.md).
 
 A key takeaway is that the best presets are:
 
