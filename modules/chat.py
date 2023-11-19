@@ -96,6 +96,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
             context_instruct = context_instruct.replace('<|system-message|>', state['custom_system_message'])
         else:
             context_instruct = context_instruct.replace('<|system-message|>', state['system_message'])
+
         wrapper += context_instruct
         wrapper += all_substrings['instruct']['user_turn'].replace('<|user-message|>', command)
         wrapper += all_substrings['instruct']['bot_turn_stripped']
