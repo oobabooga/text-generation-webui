@@ -16,6 +16,7 @@ from sse_starlette import EventSourceResponse
 import extensions.openai.completions as OAIcompletions
 import extensions.openai.embeddings as OAIembeddings
 import extensions.openai.images as OAIimages
+import extensions.openai.logits as OAIlogits
 import extensions.openai.models as OAImodels
 import extensions.openai.moderations as OAImoderations
 from extensions.openai.errors import ServiceUnavailableError
@@ -37,8 +38,13 @@ from .typing import (
     EmbeddingsResponse,
     EncodeRequest,
     EncodeResponse,
+    LoadLorasRequest,
     LoadModelRequest,
+    LogitsRequest,
+    LogitsResponse,
+    LoraListResponse,
     ModelInfoResponse,
+    ModelListResponse,
     TokenCountResponse,
     to_dict
 )
@@ -60,7 +66,15 @@ def verify_api_key(authorization: str = Header(None)) -> None:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
 
-app = FastAPI(dependencies=[Depends(verify_api_key)])
+def verify_admin_key(authorization: str = Header(None)) -> None:
+    expected_api_key = shared.args.admin_key
+    if expected_api_key and (authorization is None or authorization != f"Bearer {expected_api_key}"):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+
+app = FastAPI()
+check_key = [Depends(verify_api_key)]
+check_admin_key = [Depends(verify_admin_key)]
 
 # Configure CORS settings to allow all origins, methods, and headers
 app.add_middleware(
@@ -72,12 +86,12 @@ app.add_middleware(
 )
 
 
-@app.options("/")
+@app.options("/", dependencies=check_key)
 async def options_route():
     return JSONResponse(content="OK")
 
 
-@app.post('/v1/completions', response_model=CompletionResponse)
+@app.post('/v1/completions', response_model=CompletionResponse, dependencies=check_key)
 async def openai_completions(request: Request, request_data: CompletionRequest):
     path = request.url.path
     is_legacy = "/generate" in path
@@ -100,7 +114,7 @@ async def openai_completions(request: Request, request_data: CompletionRequest):
         return JSONResponse(response)
 
 
-@app.post('/v1/chat/completions', response_model=ChatCompletionResponse)
+@app.post('/v1/chat/completions', response_model=ChatCompletionResponse, dependencies=check_key)
 async def openai_chat_completions(request: Request, request_data: ChatCompletionRequest):
     path = request.url.path
     is_legacy = "/generate" in path
@@ -123,14 +137,14 @@ async def openai_chat_completions(request: Request, request_data: ChatCompletion
         return JSONResponse(response)
 
 
-@app.get("/v1/models")
-@app.get("/v1/models/{model}")
+@app.get("/v1/models", dependencies=check_key)
+@app.get("/v1/models/{model}", dependencies=check_key)
 async def handle_models(request: Request):
     path = request.url.path
     is_list = request.url.path.split('?')[0].split('#')[0] == '/v1/models'
 
     if is_list:
-        response = OAImodels.list_models()
+        response = OAImodels.list_dummy_models()
     else:
         model_name = path[len('/v1/models/'):]
         response = OAImodels.model_info_dict(model_name)
@@ -138,7 +152,7 @@ async def handle_models(request: Request):
     return JSONResponse(response)
 
 
-@app.get('/v1/billing/usage')
+@app.get('/v1/billing/usage', dependencies=check_key)
 def handle_billing_usage():
     '''
     Ex. /v1/dashboard/billing/usage?start_date=2023-05-01&end_date=2023-05-31
@@ -146,7 +160,7 @@ def handle_billing_usage():
     return JSONResponse(content={"total_usage": 0})
 
 
-@app.post('/v1/audio/transcriptions')
+@app.post('/v1/audio/transcriptions', dependencies=check_key)
 async def handle_audio_transcription(request: Request):
     r = sr.Recognizer()
 
@@ -176,7 +190,7 @@ async def handle_audio_transcription(request: Request):
     return JSONResponse(content=transcription)
 
 
-@app.post('/v1/images/generations')
+@app.post('/v1/images/generations', dependencies=check_key)
 async def handle_image_generation(request: Request):
 
     if not os.environ.get('SD_WEBUI_URL', params.get('sd_webui_url', '')):
@@ -192,7 +206,7 @@ async def handle_image_generation(request: Request):
     return JSONResponse(response)
 
 
-@app.post("/v1/embeddings", response_model=EmbeddingsResponse)
+@app.post("/v1/embeddings", response_model=EmbeddingsResponse, dependencies=check_key)
 async def handle_embeddings(request: Request, request_data: EmbeddingsRequest):
     input = request_data.input
     if not input:
@@ -205,7 +219,7 @@ async def handle_embeddings(request: Request, request_data: EmbeddingsRequest):
     return JSONResponse(response)
 
 
-@app.post("/v1/moderations")
+@app.post("/v1/moderations", dependencies=check_key)
 async def handle_moderations(request: Request):
     body = await request.json()
     input = body["input"]
@@ -216,37 +230,53 @@ async def handle_moderations(request: Request):
     return JSONResponse(response)
 
 
-@app.post("/v1/internal/encode", response_model=EncodeResponse)
+@app.post("/v1/internal/encode", response_model=EncodeResponse, dependencies=check_key)
 async def handle_token_encode(request_data: EncodeRequest):
     response = token_encode(request_data.text)
     return JSONResponse(response)
 
 
-@app.post("/v1/internal/decode", response_model=DecodeResponse)
+@app.post("/v1/internal/decode", response_model=DecodeResponse, dependencies=check_key)
 async def handle_token_decode(request_data: DecodeRequest):
     response = token_decode(request_data.tokens)
     return JSONResponse(response)
 
 
-@app.post("/v1/internal/token-count", response_model=TokenCountResponse)
+@app.post("/v1/internal/token-count", response_model=TokenCountResponse, dependencies=check_key)
 async def handle_token_count(request_data: EncodeRequest):
     response = token_count(request_data.text)
     return JSONResponse(response)
 
 
-@app.post("/v1/internal/stop-generation")
+@app.post("/v1/internal/logits", response_model=LogitsResponse, dependencies=check_key)
+async def handle_logits(request_data: LogitsRequest):
+    '''
+    Given a prompt, returns the top 50 most likely logits as a dict.
+    The keys are the tokens, and the values are the probabilities.
+    '''
+    response = OAIlogits._get_next_logits(to_dict(request_data))
+    return JSONResponse(response)
+
+
+@app.post("/v1/internal/stop-generation", dependencies=check_key)
 async def handle_stop_generation(request: Request):
     stop_everything_event()
     return JSONResponse(content="OK")
 
 
-@app.get("/v1/internal/model/info", response_model=ModelInfoResponse)
+@app.get("/v1/internal/model/info", response_model=ModelInfoResponse, dependencies=check_key)
 async def handle_model_info():
     payload = OAImodels.get_current_model_info()
     return JSONResponse(content=payload)
 
 
-@app.post("/v1/internal/model/load")
+@app.get("/v1/internal/model/list", response_model=ModelListResponse, dependencies=check_admin_key)
+async def handle_list_models():
+    payload = OAImodels.list_models()
+    return JSONResponse(content=payload)
+
+
+@app.post("/v1/internal/model/load", dependencies=check_admin_key)
 async def handle_load_model(request_data: LoadModelRequest):
     '''
     This endpoint is experimental and may change in the future.
@@ -283,9 +313,30 @@ async def handle_load_model(request_data: LoadModelRequest):
         return HTTPException(status_code=400, detail="Failed to load the model.")
 
 
-@app.post("/v1/internal/model/unload")
+@app.post("/v1/internal/model/unload", dependencies=check_admin_key)
 async def handle_unload_model():
     unload_model()
+
+
+@app.get("/v1/internal/lora/list", response_model=LoraListResponse, dependencies=check_admin_key)
+async def handle_list_loras():
+    response = OAImodels.list_loras()
+    return JSONResponse(content=response)
+
+
+@app.post("/v1/internal/lora/load", dependencies=check_admin_key)
+async def handle_load_loras(request_data: LoadLorasRequest):
+    try:
+        OAImodels.load_loras(request_data.lora_names)
+        return JSONResponse(content="OK")
+    except:
+        traceback.print_exc()
+        return HTTPException(status_code=400, detail="Failed to apply the LoRA(s).")
+
+
+@app.post("/v1/internal/lora/unload", dependencies=check_admin_key)
+async def handle_unload_loras():
+    OAImodels.unload_all_loras()
     return JSONResponse(content="OK")
 
 
@@ -308,10 +359,19 @@ def run_server():
             logger.info(f'OpenAI-compatible API URL:\n\nhttp://{server_addr}:{port}\n')
 
     if shared.args.api_key:
+        if not shared.args.admin_key:
+            shared.args.admin_key = shared.args.api_key
+
         logger.info(f'OpenAI API key:\n\n{shared.args.api_key}\n')
+
+    if shared.args.admin_key:
+        logger.info(f'OpenAI API admin key (for loading/unloading models):\n\n{shared.args.admin_key}\n')
 
     uvicorn.run(app, host=server_addr, port=port, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile)
 
 
 def setup():
-    Thread(target=run_server, daemon=True).start()
+    if shared.args.nowebui:
+        run_server()
+    else:
+        Thread(target=run_server, daemon=True).start()

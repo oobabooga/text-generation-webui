@@ -73,5 +73,5 @@ RUN --mount=type=cache,target=/root/.cache/pip,rw \
 
 ENV CLI_ARGS=""
 
-EXPOSE ${CONTAINER_PORT:-7860} ${CONTAINER_API_PORT:-5000} ${CONTAINER_API_STREAM_PORT:-5005}
+EXPOSE ${CONTAINER_PORT:-7860} ${CONTAINER_API_PORT:-5000}
 CMD . /app/venv/bin/activate && python3 server.py ${CLI_ARGS}

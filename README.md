@@ -169,7 +169,7 @@ cp docker/.env.example .env
 docker compose up --build
 ```
 
-* You need to have docker compose v2.17 or higher installed. See [this guide](https://github.com/oobabooga/text-generation-webui/wiki/09-%E2%80%90-Docker) for instructions.
+* You need to have Docker Compose v2.17 or higher installed. See [this guide](https://github.com/oobabooga/text-generation-webui/wiki/09-%E2%80%90-Docker) for instructions.
 * For additional docker files, check out [this repository](https://github.com/Atinoda/text-generation-webui-docker).
 
 ### Updating the requirements
@@ -325,7 +325,6 @@ Optionally, you can use the following command-line flags:
 | `--mlock`     | Force the system to keep the model in RAM. |
 | `--n-gpu-layers N_GPU_LAYERS` | Number of layers to offload to the GPU. |
 | `--tensor_split TENSOR_SPLIT`       | Split the model across multiple GPUs. Comma-separated list of proportions. Example: 18,17. |
-| `--llama_cpp_seed SEED`             | Seed for llama-cpp models. Default is 0 (random). |
 | `--numa`      | Activate NUMA task allocation for llama.cpp. |
 | `--logits_all`| Needs to be set for perplexity evaluation to work. Otherwise, ignore it, as it makes prompt processing slower. |
 | `--cache-capacity CACHE_CAPACITY`   | Maximum cache capacity (llama-cpp-python). Examples: 2000MiB, 2GiB. When provided without units, bytes will be assumed. |
@@ -414,6 +413,8 @@ Optionally, you can use the following command-line flags:
 | `--public-api-id PUBLIC_API_ID`       | Tunnel ID for named Cloudflare Tunnel. Use together with public-api option. |
 | `--api-port API_PORT`                 | The listening port for the API. |
 | `--api-key API_KEY`                   | API authentication key. |
+| `--admin-key ADMIN_KEY`               | API authentication key for admin tasks like loading and unloading models. If not set, will be the same as --api-key. |
+| `--nowebui`                           | Do not launch the Gradio UI. Useful for launching the API in standalone mode. |
 
 #### Multimodal
 

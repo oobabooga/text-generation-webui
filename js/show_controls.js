@@ -10,6 +10,12 @@ function toggle_controls(value) {
     chatParent.classList.remove("bigchat");
     document.getElementById("chat-input-row").classList.remove("bigchat");
     document.getElementById("chat-col").classList.remove("bigchat");
+
+    let gallery_element = document.getElementById('gallery-extension');
+    if (gallery_element) {
+      gallery_element.style.display = 'block';
+    }
+
   } else {
     belowChatInput.forEach(element => {
       element.style.display = "none";

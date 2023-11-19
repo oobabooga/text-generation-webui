@@ -1,13 +1,21 @@
 Docker Compose is a way of installing and launching the web UI in an isolated Ubuntu image using only a few commands.
 
-In order to create the image as described in the main README, you must have docker compose 2.17 or higher:
+## Installing Docker Compose
+
+In order to create the image as described in the main README, you must have Docker Compose installed (2.17 or higher is recommended):
 
 ```
 ~$ docker compose version
-Docker Compose version v2.17.2
+Docker Compose version v2.21.0
 ```
 
-Make sure to also create the necessary symbolic links:
+The installation instructions for various Linux distributions can be found here:
+
+https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository
+
+## Launching the image
+
+Use these commands to launch the image:
 
 ```
 cd text-generation-webui
@@ -17,12 +25,10 @@ cp docker/.env.example .env
 docker compose up --build
 ```
 
-## Table of contents
+## More detailed installation instructions
 
 * [Docker Compose installation instructions](#docker-compose-installation-instructions)
 * [Repository with additional Docker files](#dedicated-docker-repository)
-
-## Docker Compose installation instructions 
 
 By [@loeken](https://github.com/loeken).
 

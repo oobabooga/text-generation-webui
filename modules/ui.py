@@ -20,6 +20,8 @@ with open(Path(__file__).resolve().parent / '../js/switch_tabs.js', 'r') as f:
     switch_tabs_js = f.read()
 with open(Path(__file__).resolve().parent / '../js/show_controls.js', 'r') as f:
     show_controls_js = f.read()
+with open(Path(__file__).resolve().parent / '../js/update_big_picture.js', 'r') as f:
+    update_big_picture_js = f.read()
 
 refresh_symbol = '🔄'
 delete_symbol = '🗑️'
@@ -80,7 +82,6 @@ def list_model_elements():
         'n_gpu_layers',
         'tensor_split',
         'n_ctx',
-        'llama_cpp_seed',
         'gpu_split',
         'max_seq_len',
         'compress_pos_emb',
