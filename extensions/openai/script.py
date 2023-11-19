@@ -247,6 +247,10 @@ async def handle_token_count(request_data: EncodeRequest):
 
 @app.post("/v1/internal/logits", response_model=LogitsResponse, dependencies=check_key)
 async def handle_logits(request_data: LogitsRequest):
+    '''
+    Given a prompt, returns the top 50 most likely logits as a dict.
+    The keys are the tokens, and the values are the probabilities.
+    '''
     response = OAIlogits._get_next_logits(to_dict(request_data))
     return JSONResponse(response)
 
