@@ -544,9 +544,13 @@ def generate_pfp_cache(character):
 
     for path in [Path(f"characters/{character}.{extension}") for extension in ['png', 'jpg', 'jpeg']]:
         if path.exists():
-            img = make_thumbnail(Image.open(path))
-            img.save(Path('cache/pfp_character.png'), format='PNG')
-            return img
+            original_img = Image.open(path)
+            original_img.save(Path('cache/pfp_character.png'), format='PNG')
+
+            thumb = make_thumbnail(original_img)
+            thumb.save(Path('cache/pfp_character_thumb.png'), format='PNG')
+
+            return thumb
 
     return None
 
