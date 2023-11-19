@@ -373,4 +373,3 @@ function toggleBigPicture() {
   }
 }
 
-showBigPicture();
