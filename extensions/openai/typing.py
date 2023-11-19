@@ -122,6 +122,19 @@ class ChatCompletionResponse(BaseModel):
     usage: dict
 
 
+class EmbeddingsRequest(BaseModel):
+    input: str | List[str]
+    model: str | None = Field(default=None, description="Unused parameter. To change the model, set the OPENEDAI_EMBEDDING_MODEL and OPENEDAI_EMBEDDING_DEVICE environment variables before starting the server.")
+    encoding_format: str = Field(default="float", description="Can be float or base64.")
+    user: str | None = Field(default=None, description="Unused parameter.")
+
+
+class EmbeddingsResponse(BaseModel):
+    index: int
+    embedding: List[float]
+    object: str = "embedding"
+
+
 class EncodeRequest(BaseModel):
     text: str
 
@@ -166,23 +179,22 @@ class ModelInfoResponse(BaseModel):
     lora_names: List[str]
 
 
+class ModelListResponse(BaseModel):
+    model_names: List[str]
+
+
 class LoadModelRequest(BaseModel):
     model_name: str
     args: dict | None = None
     settings: dict | None = None
 
 
-class EmbeddingsRequest(BaseModel):
-    input: str | List[str]
-    model: str | None = Field(default=None, description="Unused parameter. To change the model, set the OPENEDAI_EMBEDDING_MODEL and OPENEDAI_EMBEDDING_DEVICE environment variables before starting the server.")
-    encoding_format: str = Field(default="float", description="Can be float or base64.")
-    user: str | None = Field(default=None, description="Unused parameter.")
+class LoraListResponse(BaseModel):
+    lora_names: List[str]
 
 
-class EmbeddingsResponse(BaseModel):
-    index: int
-    embedding: List[float]
-    object: str = "embedding"
+class LoadLorasRequest(BaseModel):
+    lora_names: List[str]
 
 
 def to_json(obj):
