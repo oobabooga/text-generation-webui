@@ -126,13 +126,13 @@ class EncodeRequest(BaseModel):
     text: str
 
 
-class DecodeRequest(BaseModel):
-    tokens: List[int]
-
-
 class EncodeResponse(BaseModel):
     tokens: List[int]
     length: int
+
+
+class DecodeRequest(BaseModel):
+    tokens: List[int]
 
 
 class DecodeResponse(BaseModel):
@@ -141,6 +141,24 @@ class DecodeResponse(BaseModel):
 
 class TokenCountResponse(BaseModel):
     length: int
+
+
+class LogitsRequestParams(BaseModel):
+    prompt: str
+    use_samplers: bool = False
+    frequency_penalty: float | None = 0
+    max_tokens: int | None = 16
+    presence_penalty: float | None = 0
+    temperature: float | None = 1
+    top_p: float | None = 1
+
+
+class LogitsRequest(GenerationOptions, LogitsRequestParams):
+    pass
+
+
+class LogitsResponse(BaseModel):
+    logits: dict
 
 
 class ModelInfoResponse(BaseModel):
