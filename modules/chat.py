@@ -579,8 +579,9 @@ def load_character(character, name1, name2, instruct=False):
     file_contents = open(filepath, 'r', encoding='utf-8').read()
     data = json.loads(file_contents) if extension == "json" else yaml.safe_load(file_contents)
 
-    if Path("cache/pfp_character.png").exists() and not instruct:
-        Path("cache/pfp_character.png").unlink()
+    for path in [Path("cache/pfp_character.png"), Path("cache/pfp_character_thumb.png")]:
+        if path.exists() and not instruct:
+            path.unlink()
 
     picture = generate_pfp_cache(character)
 
