@@ -16,6 +16,7 @@ from sse_starlette import EventSourceResponse
 import extensions.openai.completions as OAIcompletions
 import extensions.openai.embeddings as OAIembeddings
 import extensions.openai.images as OAIimages
+import extensions.openai.logits as OAIlogits
 import extensions.openai.models as OAImodels
 import extensions.openai.moderations as OAImoderations
 from extensions.openai.errors import ServiceUnavailableError
@@ -38,6 +39,8 @@ from .typing import (
     EncodeRequest,
     EncodeResponse,
     LoadModelRequest,
+    LogitsRequest,
+    LogitsResponse,
     ModelInfoResponse,
     TokenCountResponse,
     to_dict
@@ -239,6 +242,12 @@ async def handle_token_decode(request_data: DecodeRequest):
 @app.post("/v1/internal/token-count", response_model=TokenCountResponse, dependencies=check_key)
 async def handle_token_count(request_data: EncodeRequest):
     response = token_count(request_data.text)
+    return JSONResponse(response)
+
+
+@app.post("/v1/internal/logits", response_model=LogitsResponse, dependencies=check_key)
+async def handle_logits(request_data: LogitsRequest):
+    response = OAIlogits._get_next_logits(to_dict(request_data))
     return JSONResponse(response)
 
 
