@@ -413,6 +413,7 @@ Optionally, you can use the following command-line flags:
 | `--public-api-id PUBLIC_API_ID`       | Tunnel ID for named Cloudflare Tunnel. Use together with public-api option. |
 | `--api-port API_PORT`                 | The listening port for the API. |
 | `--api-key API_KEY`                   | API authentication key. |
+| `--admin-key ADMIN_KEY`               | API authentication key for admin tasks like loading and unloading models. If not set, will be the same as --api-key. |
 
 #### Multimodal
 
