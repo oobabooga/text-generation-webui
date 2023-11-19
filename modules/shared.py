@@ -170,6 +170,7 @@ parser.add_argument('--public-api', action='store_true', help='Create a public U
 parser.add_argument('--public-api-id', type=str, help='Tunnel ID for named Cloudflare Tunnel. Use together with public-api option.', default=None)
 parser.add_argument('--api-port', type=int, default=5000, help='The listening port for the API.')
 parser.add_argument('--api-key', type=str, default='', help='API authentication key.')
+parser.add_argument('--admin-key', type=str, default='', help='API authentication key for admin tasks like loading and unloading models. If not set, will be the same as --api-key.')
 
 # Multimodal
 parser.add_argument('--multimodal-pipeline', type=str, default=None, help='The multimodal pipeline to use. Examples: llava-7b, llava-13b.')
