@@ -414,6 +414,7 @@ Optionally, you can use the following command-line flags:
 | `--api-port API_PORT`                 | The listening port for the API. |
 | `--api-key API_KEY`                   | API authentication key. |
 | `--admin-key ADMIN_KEY`               | API authentication key for admin tasks like loading and unloading models. If not set, will be the same as --api-key. |
+| `--nowebui`                           | Do not launch the Gradio UI. Useful for launching the API in standalone mode. |
 
 #### Multimodal
 
