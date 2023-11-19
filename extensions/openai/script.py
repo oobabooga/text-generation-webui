@@ -341,4 +341,7 @@ def run_server():
 
 
 def setup():
-    Thread(target=run_server, daemon=True).start()
+    if shared.args.nowebui:
+        run_server()
+    else:
+        Thread(target=run_server, daemon=True).start()
