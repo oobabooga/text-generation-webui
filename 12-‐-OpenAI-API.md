@@ -97,6 +97,29 @@ curl http://127.0.0.1:5000/v1/chat/completions \
   }'
 ```
 
+#### Logits
+
+```
+curl -k http://127.0.0.1:5000/v1/internal/logits \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Who is best, Asuka or Rei? Answer:",
+    "use_samplers": false
+  }'
+```
+
+#### Logits after sampling parameters
+
+```
+curl -k http://127.0.0.1:5000/v1/internal/logits \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "Who is best, Asuka or Rei? Answer:",
+    "use_samplers": true,
+    "top_k": 3
+  }'
+```
+
 #### Python chat example
 
 ```python
