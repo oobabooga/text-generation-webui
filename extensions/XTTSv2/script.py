@@ -30,7 +30,10 @@ def preprocess(raw_input):
 
 
 def delete_old():
-    shutil.rmtree(f"{this_dir}/generated")
+    try:
+        shutil.rmtree(f"{this_dir}/generated")
+    except FileNotFoundError:
+        pass
 
 
 def preprocess_narrator(raw_input):

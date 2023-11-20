@@ -35,3 +35,4 @@ spacy[ja]
 cutlet
 unidic-lite
 mecab-python3
+TTS==0.20.6
