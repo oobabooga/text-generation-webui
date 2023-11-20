@@ -1,13 +1,14 @@
-from TTS.api import TTS
+import json
 import os
 import shutil
-import json
 import time
 from pathlib import Path
+
 import gradio as gr
-import soundfile as sf
 import numpy as np
+import soundfile as sf
 from modules import shared
+from TTS.api import TTS
 
 streaming_state = shared.args.no_stream
 
