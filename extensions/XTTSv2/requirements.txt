@@ -1,0 +1,37 @@
+cython
+scipy
+soundfile
+librosa
+scikit-learn
+numba
+inflect
+tqdm
+anyascii
+pyyaml
+fsspec
+aiohttp
+packaging
+pysbd
+coqpit
+unidecode
+num2words
+trainer
+# bangla
+bangla
+bnnumerizer
+bnunicodenormalizer
+# de es fr
+gruut[de,es,fr]
+# korean
+jamo
+nltk
+g2pkk
+hangul_romanize
+# chinese
+jieba
+pypinyin
+# japanese
+spacy[ja]
+cutlet
+unidic-lite
+mecab-python3

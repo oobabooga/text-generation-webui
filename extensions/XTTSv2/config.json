@@ -1,0 +1,28 @@
+{
+    "activate": true,
+    "autoplay": true,
+    "show_text": true,
+    "combine": true,
+    "delete": true,
+    "voice": "example.wav",
+    "narrator": "example.wav",
+    "language": "English",
+    "available_languages": {
+        "English": "en",
+        "Spanish": "es",
+        "French": "fr",
+        "German": "de",
+        "Italian": "it",
+        "Portuguese": "pt",
+        "Polish": "pl",
+        "Turkish": "tr",
+        "Russian": "ru",
+        "Dutch": "nl",
+        "Czech": "cs",
+        "Arabic": "ar",
+        "Chinese": "zh-cn",
+        "Japanese": "ja",
+        "Hungarian": "hu",
+        "Korean": "ko"
+    }
+}
