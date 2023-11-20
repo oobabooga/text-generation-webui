@@ -49,6 +49,7 @@ def combine(audiofiles):
     audio = np.array([])
     for audiofile in audiofiles:
         audio = np.concatenate((audio, sf.read(audiofile)[0]))
+
     return audio
 
 
@@ -57,8 +58,11 @@ def history_modifier(history):
         history["visible"][-1] = [
             history["visible"][-1][0],
             history["visible"][-1][1].replace(
-                'controls autoplay style="height: 30px;">', 'controls style="height: 30px;">')
+                'controls autoplay style="height: 30px;">',
+                'controls style="height: 30px;">'
+            )
         ]
+
     return history
 
 
@@ -67,13 +71,13 @@ def format_html(audiofiles):
         autoplay = "autoplay" if params["autoplay"] else ""
         combined = combine(audiofiles)
         time_label = audiofiles[0].split("/")[-1].split("_")[0]
-        sf.write(f"{this_dir}/generated/{time_label}_combined.wav",
-                 combined, 24000)
+        sf.write(f"{this_dir}/generated/{time_label}_combined.wav", combined, 24000)
         return f'<audio src="file/{this_dir}/generated/{time_label}_combined.wav" controls {autoplay} style="height: 30px;"></audio>'
     else:
         string = ""
         for audiofile in audiofiles:
             string += f'<audio src="file/{audiofile}" controls style="height: 30px;"></audio>'
+
     return string
 
 
@@ -81,6 +85,7 @@ def input_modifier(string):
     if not params["activate"]:
         shared.processing_message = "*Is typing...*"
         return string
+
     shared.processing_message = "*Is recording a voice message...*"
     shared.args.no_stream = True
     return string
@@ -98,13 +103,14 @@ def tts_char(string):
 
     ttstext = preprocess(string)
     time_label = int(time.time())
-    tts.tts_to_file(text=ttstext,
-                    file_path=f"{this_dir}/generated/{time_label}.wav",
-                    speaker_wav=[f"{this_dir}/voices/{params['voice']}"],
-                    language=languages[params["language"]])
+    tts.tts_to_file(
+        text=ttstext,
+        file_path=f"{this_dir}/generated/{time_label}.wav",
+        speaker_wav=[f"{this_dir}/voices/{params['voice']}"],
+        language=languages[params["language"]]
+    )
 
     autoplay = "autoplay" if params["autoplay"] else ""
-
     string = f'<audio src="file/{this_dir}/generated/{time_label}.wav" controls {autoplay} style="height: 30px;"></audio><br>{ttstext}'
     if params["show_text"]:
         string += f"<br>{ttstext}"
@@ -130,19 +136,24 @@ def tts_narrator(string):
     for i, turn in enumerate(turns):
         if turn.strip() == "":
             continue
+
         voice = voices[i % 2]
         if voice == "Skip":
             continue
-        tts.tts_to_file(text=turn,
-                        file_path=f"{this_dir}/generated/{time_label}_{i:03d}.wav",
-                        speaker_wav=[f"{this_dir}/voices/{voice}"],
-                        language=languages[params["language"]])
-        audiofiles.append(
-            f"{this_dir}/generated/{time_label}_{i:03d}.wav")
+
+        tts.tts_to_file(
+            text=turn,
+            file_path=f"{this_dir}/generated/{time_label}_{i:03d}.wav",
+            speaker_wav=[f"{this_dir}/voices/{voice}"],
+            language=languages[params["language"]]
+        )
+
+        audiofiles.append(f"{this_dir}/generated/{time_label}_{i:03d}.wav")
 
     string = format_html(audiofiles)
     if params["show_text"]:
         string += f"<br>{ttstext}"
+
     shared.args.no_stream = streaming_state
     return string
 
@@ -163,36 +174,31 @@ def setup():
         print("[XTTS] Deleting old generated files...")
         delete_old()
         print("[XTTS] Done!")
+
     print("[XTTS] Creating directories (if they don't exist)...")
     if not Path(f"{this_dir}/generated").exists():
         Path(f"{this_dir}/generated").mkdir(parents=True)
+
     print("[XTTS] Done!")
 
 
 def ui():
     with gr.Accordion("XTTS"):
         with gr.Row():
-            activate = gr.Checkbox(
-                value=params["activate"], label="Activate TTS")
+            activate = gr.Checkbox(value=params["activate"], label="Activate TTS")
             autoplay = gr.Checkbox(value=params["autoplay"], label="Autoplay")
-            show_text = gr.Checkbox(
-                value=params["show_text"], label="Show text")
-            combine_audio = gr.Checkbox(
-                value=params["combine"], label="Combine audio")
+            show_text = gr.Checkbox(value=params["show_text"], label="Show text")
+            combine_audio = gr.Checkbox(value=params["combine"], label="Combine audio")
+
         with gr.Row():
-            voice = gr.Dropdown(
-                voice_presets, label="Voice Wav", value=params["voice"])
-            narrator = gr.Dropdown(
-                narrator_presets, label="Narrator Wav", value=params["narrator"])
-            language = gr.Dropdown(
-                languages.keys(), label="Language", value=params["language"])
+            voice = gr.Dropdown(voice_presets, label="Voice Wav", value=params["voice"])
+            narrator = gr.Dropdown(narrator_presets, label="Narrator Wav", value=params["narrator"])
+            language = gr.Dropdown(languages.keys(), label="Language", value=params["language"])
 
     activate.change(lambda x: params.update({"activate": x}), activate, None)
     autoplay.change(lambda x: params.update({"autoplay": x}), autoplay, None)
-    show_text.change(lambda x: params.update(
-        {"show_text": x}), show_text, None)
-    combine_audio.change(lambda x: params.update(
-        {"combine": x}), combine_audio, None)
+    show_text.change(lambda x: params.update({"show_text": x}), show_text, None)
+    combine_audio.change(lambda x: params.update({"combine": x}), combine_audio, None)
 
     voice.change(lambda x: params.update({"voice": x}), voice, None)
     narrator.change(lambda x: params.update({"narrator": x}), narrator, None)
