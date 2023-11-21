@@ -80,7 +80,7 @@ CONTEXT = "You are LLaVA, a large language and vision assistant trained by UW Ma
 with open('extreme_ironing.jpg', 'rb') as f:
     img_str = base64.b64encode(f.read()).decode('utf-8')
     prompt = CONTEXT + f'### Human: What is unusual about this image: \n<img src="data:image/jpeg;base64,{img_str}">### Assistant: '
-    print(requests.post('http://127.0.0.1:5000/api/v1/generate', json={'prompt': prompt, 'stopping_strings': ['\n###']}).json())
+    print(requests.post('http://127.0.0.1:5000/v1/completions', json={'prompt': prompt, 'max_tokens': 200, 'stop': ['\n###']}).json())
 ```
 script output:
 ```Python
