@@ -255,7 +255,7 @@ def update_requirements(initial_installation=False):
         print_big_message("Installing extensions requirements.")
         extensions = next(os.walk("extensions"))[1]
         for extension in extensions:
-            if extension in ['superbooga', 'superboogav2']:  # No wheels available for requirements
+            if extension in ['superbooga', 'superboogav2', 'coqui_tts']:  # Fail to install on Windows
                 continue
 
             extension_req_path = os.path.join("extensions", extension, "requirements.txt")
