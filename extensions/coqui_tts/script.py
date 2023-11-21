@@ -1,205 +1,203 @@
+import html
 import json
-import os
-import shutil
+import random
 import time
 from pathlib import Path
 
 import gradio as gr
-import numpy as np
-import soundfile as sf
-from modules import shared
+from modules import chat, shared, ui_chat
+from modules.ui import create_refresh_button
+from modules.utils import gradio
 from TTS.api import TTS
 
-streaming_state = shared.args.no_stream
+params = {
+    "activate": True,
+    "autoplay": True,
+    "show_text": False,
+    "voice": "female_01.wav",
+    "language": "English",
+    "model_name": "tts_models/multilingual/multi-dataset/xtts_v2",
+    "device": "cuda"
+}
 
-tts = None
-this_dir = os.path.dirname(os.path.abspath(__file__))
-params = json.load(open(f"{this_dir}/config.json"))
-languages = params["available_languages"]
-voice_presets = sorted(os.listdir(f"{this_dir}/voices"))
-narrator_presets = ["None", "Skip"] + voice_presets
+this_dir = str(Path(__file__).parent.resolve())
+
+model = None
+with open(Path(f"{this_dir}/languages.json"), encoding='utf8') as f:
+    languages = json.load(f)
+
+
+def get_available_voices():
+    return sorted([voice.name for voice in Path(f"{this_dir}/voices").glob("*.wav")])
 
 
 def preprocess(raw_input):
-    raw_input = raw_input.replace("&amp;", "&")
-    raw_input = raw_input.replace("&lt;", "<")
-    raw_input = raw_input.replace("&gt;", ">")
-    raw_input = raw_input.replace("&quot;", '"')
-    raw_input = raw_input.replace("&#x27;", "'")
-    raw_input = raw_input.strip("\"")
+    raw_input = html.unescape(raw_input)
+    # raw_input = raw_input.strip("\"")
     return raw_input
 
 
-def delete_old():
-    try:
-        shutil.rmtree(f"{this_dir}/generated")
-    except FileNotFoundError:
-        pass
+def load_model():
+    model = TTS(params["model_name"]).to(params["device"])
+    return model
 
 
-def preprocess_narrator(raw_input):
-    raw_input = preprocess(raw_input)
-    raw_input = raw_input.replace("***", "*")
-    raw_input = raw_input.replace("**", "*")
-    narrated_text = raw_input.split("*")
-    return raw_input, narrated_text
+def remove_tts_from_history(history):
+    for i, entry in enumerate(history['internal']):
+        history['visible'][i] = [history['visible'][i][0], entry[1]]
+
+    return history
 
 
-def combine(audiofiles):
-    audio = np.array([])
-    for audiofile in audiofiles:
-        audio = np.concatenate((audio, sf.read(audiofile)[0]))
+def toggle_text_in_history(history):
+    for i, entry in enumerate(history['visible']):
+        visible_reply = entry[1]
+        if visible_reply.startswith('<audio'):
+            if params['show_text']:
+                reply = history['internal'][i][1]
+                history['visible'][i] = [history['visible'][i][0], f"{visible_reply.split('</audio>')[0]}</audio>\n\n{reply}"]
+            else:
+                history['visible'][i] = [history['visible'][i][0], f"{visible_reply.split('</audio>')[0]}</audio>"]
 
-    return audio
+    return history
+
+
+def random_sentence():
+    with open(Path("extensions/coqui_tts/harvard_sentences.txt")) as f:
+        return random.choice(list(f))
+
+
+def voice_preview(string):
+    string = html.unescape(string) or random_sentence()
+
+    output_file = Path('extensions/coqui_tts/outputs/voice_preview.wav')
+    model.tts_to_file(
+        text=string,
+        file_path=output_file,
+        speaker_wav=[f"{this_dir}/voices/{params['voice']}"],
+        language=languages[params["language"]]
+    )
+
+    return f'<audio src="file/{output_file.as_posix()}?{int(time.time())}" controls autoplay></audio>'
 
 
 def history_modifier(history):
-    if len(history["internal"]) > 0:
-        history["visible"][-1] = [
-            history["visible"][-1][0],
-            history["visible"][-1][1].replace(
-                'controls autoplay style="height: 30px;">',
-                'controls style="height: 30px;">'
-            )
+    # Remove autoplay from the last reply
+    if len(history['internal']) > 0:
+        history['visible'][-1] = [
+            history['visible'][-1][0],
+            history['visible'][-1][1].replace('controls autoplay>', 'controls>')
         ]
 
     return history
 
 
-def format_html(audiofiles):
-    if params["combine"]:
-        autoplay = "autoplay" if params["autoplay"] else ""
-        combined = combine(audiofiles)
-        time_label = audiofiles[0].split("/")[-1].split("_")[0]
-        sf.write(f"{this_dir}/generated/{time_label}_combined.wav", combined, 24000)
-        return f'<audio src="file/{this_dir}/generated/{time_label}_combined.wav" controls {autoplay} style="height: 30px;"></audio>'
-    else:
-        string = ""
-        for audiofile in audiofiles:
-            string += f'<audio src="file/{audiofile}" controls style="height: 30px;"></audio>'
+def state_modifier(state):
+    if not params['activate']:
+        return state
 
-    return string
+    state['stream'] = False
+    return state
 
 
-def input_modifier(string):
-    if not params["activate"]:
-        shared.processing_message = "*Is typing...*"
+def input_modifier(string, state):
+    if not params['activate']:
         return string
 
     shared.processing_message = "*Is recording a voice message...*"
-    shared.args.no_stream = True
     return string
 
 
-def tts_char(string):
-    global tts
-    string = string
-    if not params["activate"]:
+def output_modifier(string, state):
+    if not params['activate']:
         return string
 
-    if tts is None:
-        print("[XTTS] Loading XTTS...")
-        tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2").to("cuda")
+    original_string = string
 
-    ttstext = preprocess(string)
-    time_label = int(time.time())
-    tts.tts_to_file(
-        text=ttstext,
-        file_path=f"{this_dir}/generated/{time_label}.wav",
-        speaker_wav=[f"{this_dir}/voices/{params['voice']}"],
-        language=languages[params["language"]]
-    )
-
-    autoplay = "autoplay" if params["autoplay"] else ""
-    string = f'<audio src="file/{this_dir}/generated/{time_label}.wav" controls {autoplay} style="height: 30px;"></audio><br>{ttstext}'
-    if params["show_text"]:
-        string += f"<br>{ttstext}"
-
-    shared.args.no_stream = streaming_state
-    return string
-
-
-def tts_narrator(string):
-    global tts
-    string = string
-    if not params["activate"]:
-        return string
-
-    if tts is None:
-        print("[XTTS] Loading XTTS...")
-        tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2").to("cuda")
-
-    ttstext, turns = preprocess_narrator(string)
-    voices = (params["voice"], params["narrator"])
-    audiofiles = []
-    time_label = int(time.time())
-    for i, turn in enumerate(turns):
-        if turn.strip() == "":
-            continue
-
-        voice = voices[i % 2]
-        if voice == "Skip":
-            continue
-
-        tts.tts_to_file(
-            text=turn,
-            file_path=f"{this_dir}/generated/{time_label}_{i:03d}.wav",
-            speaker_wav=[f"{this_dir}/voices/{voice}"],
+    string = preprocess(html.unescape(string))
+    if string == '':
+        string = '*Empty reply, try regenerating*'
+    else:
+        output_file = Path(f'extensions/silero_tts/outputs/{state["character_menu"]}_{int(time.time())}.wav')
+        model.tts_to_file(
+            text=string,
+            file_path=output_file,
+            speaker_wav=[f"{this_dir}/voices/{params['voice']}"],
             language=languages[params["language"]]
         )
 
-        audiofiles.append(f"{this_dir}/generated/{time_label}_{i:03d}.wav")
+        autoplay = 'autoplay' if params['autoplay'] else ''
+        string = f'<audio src="file/{output_file.as_posix()}" controls {autoplay}></audio>'
+        if params['show_text']:
+            string += f'\n\n{original_string}'
 
-    string = format_html(audiofiles)
-    if params["show_text"]:
-        string += f"<br>{ttstext}"
-
-    shared.args.no_stream = streaming_state
+    shared.processing_message = "*Is typing...*"
     return string
 
 
-def output_modifier(string):
-    if params["narrator"] == "None":
-        return tts_char(string)
-    else:
-        return tts_narrator(string)
+def custom_css():
+    path_to_css = Path(f"{this_dir}/style.css")
+    return open(path_to_css, 'r').read()
 
 
 def setup():
-    global tts
+    global model
     print("[XTTS] Loading XTTS...")
-    tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2").to("cuda")
+    model = load_model()
     print("[XTTS] Done!")
-    if params["delete"]:
-        print("[XTTS] Deleting old generated files...")
-        delete_old()
-        print("[XTTS] Done!")
-
-    print("[XTTS] Creating directories (if they don't exist)...")
-    if not Path(f"{this_dir}/generated").exists():
-        Path(f"{this_dir}/generated").mkdir(parents=True)
-
-    print("[XTTS] Done!")
+    Path(f"{this_dir}/outputs").mkdir(parents=True, exist_ok=True)
 
 
 def ui():
-    with gr.Accordion("XTTS"):
+    with gr.Accordion("Coqui TTS (XTTSv2)"):
         with gr.Row():
-            activate = gr.Checkbox(value=params["activate"], label="Activate TTS")
-            autoplay = gr.Checkbox(value=params["autoplay"], label="Autoplay")
-            show_text = gr.Checkbox(value=params["show_text"], label="Show text")
-            combine_audio = gr.Checkbox(value=params["combine"], label="Combine audio")
+            activate = gr.Checkbox(value=params['activate'], label='Activate TTS')
+            autoplay = gr.Checkbox(value=params['autoplay'], label='Play TTS automatically')
 
         with gr.Row():
-            voice = gr.Dropdown(voice_presets, label="Voice Wav", value=params["voice"])
-            narrator = gr.Dropdown(narrator_presets, label="Narrator Wav", value=params["narrator"])
+            show_text = gr.Checkbox(value=params['show_text'], label='Show message text under audio player')
+
+        with gr.Row():
+            with gr.Row():
+                voice = gr.Dropdown(get_available_voices(), label="Voice wav", value=params["voice"])
+                create_refresh_button(voice, lambda: None, lambda: {'choices': get_available_voices(), 'value': params["voice"]}, 'refresh-button')
+
             language = gr.Dropdown(languages.keys(), label="Language", value=params["language"])
 
+        with gr.Row():
+            preview_text = gr.Text(show_label=False, placeholder="Preview text", elem_id="silero_preview_text")
+            preview_play = gr.Button("Preview")
+            preview_audio = gr.HTML(visible=False)
+
+        with gr.Row():
+            convert = gr.Button('Permanently replace audios with the message texts')
+            convert_cancel = gr.Button('Cancel', visible=False)
+            convert_confirm = gr.Button('Confirm (cannot be undone)', variant="stop", visible=False)
+
+    # Convert history with confirmation
+    convert_arr = [convert_confirm, convert, convert_cancel]
+    convert.click(lambda: [gr.update(visible=True), gr.update(visible=False), gr.update(visible=True)], None, convert_arr)
+    convert_confirm.click(
+        lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr).then(
+        remove_tts_from_history, gradio('history'), gradio('history')).then(
+        chat.save_history, gradio('history', 'unique_id', 'character_menu', 'mode'), None).then(
+        chat.redraw_html, gradio(ui_chat.reload_arr), gradio('display'))
+
+    convert_cancel.click(lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, convert_arr)
+
+    # Toggle message text in history
+    show_text.change(
+        lambda x: params.update({"show_text": x}), show_text, None).then(
+        toggle_text_in_history, gradio('history'), gradio('history')).then(
+        chat.save_history, gradio('history', 'unique_id', 'character_menu', 'mode'), None).then(
+        chat.redraw_html, gradio(ui_chat.reload_arr), gradio('display'))
+
+    # Event functions to update the parameters in the backend
     activate.change(lambda x: params.update({"activate": x}), activate, None)
     autoplay.change(lambda x: params.update({"autoplay": x}), autoplay, None)
-    show_text.change(lambda x: params.update({"show_text": x}), show_text, None)
-    combine_audio.change(lambda x: params.update({"combine": x}), combine_audio, None)
-
     voice.change(lambda x: params.update({"voice": x}), voice, None)
-    narrator.change(lambda x: params.update({"narrator": x}), narrator, None)
     language.change(lambda x: params.update({"language": x}), language, None)
+
+    # Play preview
+    preview_text.submit(voice_preview, preview_text, preview_audio)
+    preview_play.click(voice_preview, preview_text, preview_audio)
