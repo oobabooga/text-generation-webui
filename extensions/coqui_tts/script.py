@@ -18,8 +18,8 @@ except ModuleNotFoundError:
     logger.error(
         "Could not find the TTS module. Make sure to install the requirements for the coqui_tts extension."
         "\n"
-        "\nLinux / Mac:\npip install -r extensions/coqui_tts/requirements.txt\n"
-        "\nWindows:\npip install -r extensions\\coqui_tts\\requirements.txt\n"
+        "\nLinux / Mac:\npip install -r extensions/coqui_tts/requirements.txt --no-dependencies\n"
+        "\nWindows:\npip install -r extensions\\coqui_tts\\requirements.txt --no-dependencies\n"
         "\n"
         "If you used the one-click installer, paste the command above in the terminal window launched after running the \"cmd_\" script. On Windows, that's \"cmd_windows.bat\"."
     )
