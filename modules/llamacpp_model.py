@@ -143,6 +143,8 @@ class LlamaCppModel:
             max_tokens=state['max_new_tokens'],
             temperature=state['temperature'],
             top_p=state['top_p'],
+            min_p=state['min_p'],
+            typical_p=state['typical_p'],
             frequency_penalty=state['frequency_penalty'],
             presence_penalty=state['presence_penalty'],
             repeat_penalty=state['repetition_penalty'],
