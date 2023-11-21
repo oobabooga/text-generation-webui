@@ -21,7 +21,6 @@ params = {
 }
 
 this_dir = str(Path(__file__).parent.resolve())
-
 model = None
 with open(Path(f"{this_dir}/languages.json"), encoding='utf8') as f:
     languages = json.load(f)
@@ -113,12 +112,11 @@ def output_modifier(string, state):
         return string
 
     original_string = string
-
     string = preprocess(html.unescape(string))
     if string == '':
         string = '*Empty reply, try regenerating*'
     else:
-        output_file = Path(f'extensions/silero_tts/outputs/{state["character_menu"]}_{int(time.time())}.wav')
+        output_file = Path(f'extensions/coqui_tts/outputs/{state["character_menu"]}_{int(time.time())}.wav')
         model.tts_to_file(
             text=string,
             file_path=output_file,
