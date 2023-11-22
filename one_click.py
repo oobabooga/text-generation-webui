@@ -260,7 +260,7 @@ def update_requirements(initial_installation=False):
 
             extension_req_path = os.path.join("extensions", extension, "requirements.txt")
             if os.path.exists(extension_req_path):
-                run_cmd("python -m pip install -r " + extension_req_path + " --upgrade", assert_success=True, environment=True)
+                run_cmd("python -m pip install -r " + extension_req_path + " --upgrade", assert_success=False, environment=True)
     elif initial_installation:
         print_big_message("Will not install extensions due to INSTALL_EXTENSIONS environment variable.")
 
