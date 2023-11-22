@@ -195,7 +195,8 @@ for arg in sys.argv[1:]:
         provided_arguments.append(arg)
 
 # Deprecation warnings
-for k in ['notebook', 'chat', 'no_stream', 'mul_mat_q', 'use_fast']:
+deprecated_args = ['notebook', 'chat', 'no_stream', 'mul_mat_q', 'use_fast']
+for k in deprecated_args:
     if getattr(args, k):
         logger.warning(f'The --{k} flag has been deprecated and will be removed soon. Please remove that flag.')
 
