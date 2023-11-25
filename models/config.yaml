@@ -184,3 +184,5 @@
   instruction_template: 'ChatML'
 .*openhermes.*mistral:
   instruction_template: 'ChatML'
+.*Yi-34B-Chat:
+  instruction_template: 'ChatML'
