@@ -64,7 +64,8 @@ class LlamaCppModel:
             else:
                 cache_capacity = int(shared.args.cache_capacity)
 
-        logger.info("Cache capacity is " + str(cache_capacity) + " bytes")
+        if cache_capacity > 0:
+            logger.info("Cache capacity is " + str(cache_capacity) + " bytes")
 
         if shared.args.tensor_split is None or shared.args.tensor_split.strip() == '':
             tensor_split_list = None
@@ -118,9 +119,7 @@ class LlamaCppModel:
                 self.grammar = None
 
     def generate(self, prompt, state, callback=None):
-
         LogitsProcessorList = llama_cpp_lib().LogitsProcessorList
-
         prompt = prompt if type(prompt) is str else prompt.decode()
 
         # Handle truncation
@@ -163,6 +162,7 @@ class LlamaCppModel:
         for completion_chunk in completion_chunks:
             if shared.stop_everything:
                 break
+
             text = completion_chunk['choices'][0]['text']
             output += text
             if callback:
