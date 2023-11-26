@@ -29,6 +29,8 @@
 .env
 .venv
 venv
+.envrc
+.direnv
 .vscode
 *.bak
 *.ipynb
