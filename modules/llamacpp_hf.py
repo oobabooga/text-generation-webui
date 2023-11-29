@@ -37,7 +37,7 @@ class LlamacppHF(PreTrainedModel):
 
         # StreamingLLM
         self.streaming_llm = streaming_llm
-        self.attention_sink_size = 5
+        self.attention_sink_size = attention_sink_size
 
         # Swappable caches for CFG
         self.past_seq = None
