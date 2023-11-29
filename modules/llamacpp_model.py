@@ -46,7 +46,7 @@ class LlamaCppModel:
         self.grammar = None
 
     def __del__(self):
-        self.model.__del__()
+        del self.model
 
     @classmethod
     def from_pretrained(self, path):
