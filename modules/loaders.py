@@ -85,6 +85,15 @@ loaders_and_params = OrderedDict({
         'no_use_fast',
         'autogptq_info',
     ],
+    'AutoAWQ': [
+        'cpu_memory',
+        'gpu_memory',
+        'auto_devices',
+        'max_seq_len',
+        'no_inject_fused_attention',
+        'trust_remote_code',
+        'no_use_fast',
+    ],
     'GPTQ-for-LLaMa': [
         'wbits',
         'groupsize',
@@ -124,15 +133,6 @@ loaders_and_params = OrderedDict({
         'cache_8bit',
         'alpha_value',
         'compress_pos_emb',
-    ],
-    'AutoAWQ': [
-        'cpu_memory',
-        'gpu_memory',
-        'auto_devices',
-        'max_seq_len',
-        'no_inject_fused_attention',
-        'trust_remote_code',
-        'no_use_fast',
     ],
     'ctransformers': [
         'n_ctx',
