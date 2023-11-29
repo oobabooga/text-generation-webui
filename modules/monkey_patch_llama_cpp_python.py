@@ -76,9 +76,9 @@ def my_generate(
             # A removed chunk has been found
             if removed_length > 0:
                 reset = False
-                if prefix_length < self.attention_sink_size:
-                    prefix_length = self.attention_sink_size
-                    removed_length -= (self.attention_sink_size - prefix_length)
+                if prefix_length < shared.args.attention_sink_size:
+                    prefix_length = shared.args.attention_sink_size
+                    removed_length -= (shared.args.attention_sink_size - prefix_length)
 
                 print('\n\n')
                 print('MATCHING PREFIX=', repr(shared.tokenizer.decode(matching_prefix)))
