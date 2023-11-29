@@ -12,7 +12,7 @@ RUN --mount=type=cache,target=/root/.cache/pip,rw \
     python3 -m venv /build/venv && \
     . /build/venv/bin/activate && \
     pip3 install --upgrade pip setuptools wheel ninja && \
-    pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121 && \
+    pip3 install torch torchvision torchaudio xformers --index-url https://download.pytorch.org/whl/cu121 && \
     pip3 install -r requirements.txt
 
 # https://developer.nvidia.com/cuda-gpus
@@ -44,8 +44,8 @@ RUN virtualenv /app/venv
 RUN --mount=type=cache,target=/root/.cache/pip,rw \
     . /app/venv/bin/activate && \
     pip3 install --upgrade pip setuptools wheel ninja && \
-    pip3 install torch --index-url https://download.pytorch.org/whl/cu121 && \
-    pip3 install torchvision torchaudio sentence_transformers xformers
+    pip3 install torch xformers --index-url https://download.pytorch.org/whl/cu121 && \
+    pip3 install torchvision torchaudio sentence_transformers
 
 # Copy and install GPTQ-for-LLaMa
 COPY --from=builder /build /app/repositories/GPTQ-for-LLaMa
@@ -73,5 +73,5 @@ RUN --mount=type=cache,target=/root/.cache/pip,rw \
 
 ENV CLI_ARGS=""
 
-EXPOSE ${CONTAINER_PORT:-7860} ${CONTAINER_API_PORT:-5000} ${CONTAINER_API_STREAM_PORT:-5005}
+EXPOSE ${CONTAINER_PORT:-7860} ${CONTAINER_API_PORT:-5000}
 CMD . /app/venv/bin/activate && python3 server.py ${CLI_ARGS}

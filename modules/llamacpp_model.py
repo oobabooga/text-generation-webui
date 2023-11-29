@@ -64,7 +64,8 @@ class LlamaCppModel:
             else:
                 cache_capacity = int(shared.args.cache_capacity)
 
-        logger.info("Cache capacity is " + str(cache_capacity) + " bytes")
+        if cache_capacity > 0:
+            logger.info("Cache capacity is " + str(cache_capacity) + " bytes")
 
         if shared.args.tensor_split is None or shared.args.tensor_split.strip() == '':
             tensor_split_list = None
@@ -74,7 +75,6 @@ class LlamaCppModel:
         params = {
             'model_path': str(path),
             'n_ctx': shared.args.n_ctx,
-            'seed': int(shared.args.llama_cpp_seed),
             'n_threads': shared.args.threads or None,
             'n_threads_batch': shared.args.threads_batch or None,
             'n_batch': shared.args.n_batch,
@@ -119,9 +119,7 @@ class LlamaCppModel:
                 self.grammar = None
 
     def generate(self, prompt, state, callback=None):
-
         LogitsProcessorList = llama_cpp_lib().LogitsProcessorList
-
         prompt = prompt if type(prompt) is str else prompt.decode()
 
         # Handle truncation
@@ -144,15 +142,18 @@ class LlamaCppModel:
             max_tokens=state['max_new_tokens'],
             temperature=state['temperature'],
             top_p=state['top_p'],
-            top_k=state['top_k'],
-            repeat_penalty=state['repetition_penalty'],
-            presence_penalty=state['presence_penalty'],
+            min_p=state['min_p'],
+            typical_p=state['typical_p'],
             frequency_penalty=state['frequency_penalty'],
+            presence_penalty=state['presence_penalty'],
+            repeat_penalty=state['repetition_penalty'],
+            top_k=state['top_k'],
+            stream=True,
+            seed=int(state['seed']) if state['seed'] != -1 else None,
             tfs_z=state['tfs'],
             mirostat_mode=int(state['mirostat_mode']),
             mirostat_tau=state['mirostat_tau'],
             mirostat_eta=state['mirostat_eta'],
-            stream=True,
             logits_processor=logit_processors,
             grammar=self.grammar
         )
@@ -161,6 +162,7 @@ class LlamaCppModel:
         for completion_chunk in completion_chunks:
             if shared.stop_everything:
                 break
+
             text = completion_chunk['choices'][0]['text']
             output += text
             if callback:

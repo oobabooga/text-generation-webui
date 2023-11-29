@@ -39,7 +39,7 @@ class LlamacppHF(PreTrainedModel):
             'n_tokens': self.model.n_tokens,
             'input_ids': self.model.input_ids,
             'scores': self.model.scores,
-            'ctx': self.model.ctx
+            'ctx': self.model._ctx
         }
 
         if shared.args.cfg_cache:
@@ -65,7 +65,7 @@ class LlamacppHF(PreTrainedModel):
             'n_tokens': self.model.n_tokens,
             'input_ids': self.model.input_ids,
             'scores': self.model.scores,
-            'ctx': self.model.ctx
+            'ctx': self.model._ctx
         })
 
     def save_negative_cache(self):
@@ -73,20 +73,20 @@ class LlamacppHF(PreTrainedModel):
             'n_tokens': self.model.n_tokens,
             'input_ids': self.model.input_ids,
             'scores': self.model.scores,
-            'ctx': self.model.ctx
+            'ctx': self.model._ctx
         })
 
     def load_cache(self):
         self.model.n_tokens = self.llamacpp_cache['n_tokens']
         self.model.input_ids = self.llamacpp_cache['input_ids']
         self.model.scores = self.llamacpp_cache['scores']
-        self.model.ctx = self.llamacpp_cache['ctx']
+        self.model._ctx = self.llamacpp_cache['ctx']
 
     def load_negative_cache(self):
         self.model.n_tokens = self.llamacpp_cache_negative['n_tokens']
         self.model.input_ids = self.llamacpp_cache_negative['input_ids']
         self.model.scores = self.llamacpp_cache_negative['scores']
-        self.model.ctx = self.llamacpp_cache_negative['ctx']
+        self.model._ctx = self.llamacpp_cache_negative['ctx']
 
     @property
     def device(self) -> torch.device:
@@ -192,7 +192,6 @@ class LlamacppHF(PreTrainedModel):
         params = {
             'model_path': str(model_file),
             'n_ctx': shared.args.n_ctx,
-            'seed': int(shared.args.llama_cpp_seed),
             'n_threads': shared.args.threads or None,
             'n_threads_batch': shared.args.threads_batch or None,
             'n_batch': shared.args.n_batch,

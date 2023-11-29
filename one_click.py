@@ -255,12 +255,12 @@ def update_requirements(initial_installation=False):
         print_big_message("Installing extensions requirements.")
         extensions = next(os.walk("extensions"))[1]
         for extension in extensions:
-            if extension in ['superbooga', 'superboogav2']:  # No wheels available for requirements
+            if extension in ['superbooga', 'superboogav2', 'coqui_tts']:  # Fail to install on Windows
                 continue
 
             extension_req_path = os.path.join("extensions", extension, "requirements.txt")
             if os.path.exists(extension_req_path):
-                run_cmd("python -m pip install -r " + extension_req_path + " --upgrade", assert_success=True, environment=True)
+                run_cmd("python -m pip install -r " + extension_req_path + " --upgrade", assert_success=False, environment=True)
     elif initial_installation:
         print_big_message("Will not install extensions due to INSTALL_EXTENSIONS environment variable.")
 
@@ -303,7 +303,7 @@ def update_requirements(initial_installation=False):
     elif is_cuda118:
         textgen_requirements = [req.replace('+cu121', '+cu118').replace('+cu122', '+cu118') for req in textgen_requirements]
     if is_windows() and (is_cuda117 or is_cuda118):  # No flash-attention on Windows for CUDA 11
-        textgen_requirements = [req for req in textgen_requirements if 'bdashore3/flash-attention' not in req]
+        textgen_requirements = [req for req in textgen_requirements if 'jllllll/flash-attention' not in req]
 
     with open('temp_requirements.txt', 'w') as file:
         file.write('\n'.join(textgen_requirements))

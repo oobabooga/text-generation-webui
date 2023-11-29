@@ -58,7 +58,7 @@ def set_interface_arguments(extensions, bool_active):
 
 
 def get_boolean_arguments(active=False):
-    exclude = ["default", "notebook", "chat"]
+    exclude = shared.deprecated_args
 
     cmd_list = vars(shared.args)
     bool_list = sorted([k for k in cmd_list if type(cmd_list[k]) is bool and k not in exclude + ui.list_model_elements()])

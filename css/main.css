@@ -648,3 +648,23 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 .options {
     z-index: 100 !important;
 }
+
+/* ----------------------------------------------
+  Big profile picture for characters
+---------------------------------------------- */
+.bigProfilePicture {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: calc((100vw - 880px - 120px) /2);
+}
+
+.pfp_character:hover {
+    cursor: pointer;
+}
+
+@media screen and (width <= 1300px) {
+    .bigProfilePicture {
+        display: none;
+    }
+}

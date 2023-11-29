@@ -5,5 +5,4 @@ Dockerfile
 /models
 /presets
 /prompts
-/softprompts
 /training
