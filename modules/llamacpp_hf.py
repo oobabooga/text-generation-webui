@@ -133,17 +133,18 @@ class LlamacppHF(PreTrainedModel):
                 if self.streaming_llm:
                     removed_length, overlap_length = find_streamingllm_lengths(past_seq[prefix_length:], seq_tensor[prefix_length:])
 
-                    matching_prefix = past_seq[:prefix_length]
-                    removed_chunk = past_seq[prefix_length:prefix_length+removed_length]
-                    overlapping_sequence = seq_tensor[prefix_length:prefix_length+overlap_length]
-                    added_chunk = seq_tensor[prefix_length+overlap_length:]
-
                     # A removed chunk has been found
                     if removed_length > 0:
                         reset = False
-                        if prefix_length < self.attention_sink_size:
-                            prefix_length = self.attention_sink_size
+                        sink_length = prefix_length
+                        if sink_length < self.attention_sink_size:
+                            sink_length = self.attention_sink_size
                             removed_length -= (self.attention_sink_size - prefix_length)
+
+                        matching_prefix = past_seq[:prefix_length]
+                        removed_chunk = past_seq[sink_length:sink_length+removed_length]
+                        overlapping_sequence = seq_tensor[prefix_length:prefix_length+overlap_length]
+                        added_chunk = seq_tensor[prefix_length+overlap_length:]
 
                         print('\n\n')
                         print('MATCHING PREFIX=', repr(shared.tokenizer.decode(matching_prefix)))
@@ -152,10 +153,10 @@ class LlamacppHF(PreTrainedModel):
                         print('ADDED CHUNK=', repr(shared.tokenizer.decode(added_chunk)))
                         print('\n\n')
 
-                        # Remove interval [prefix_length, prefix_length+removed_length) from the context
+                        # Remove interval [sink_length, sink_length+removed_length) from the context
                         # Subtract removed_length from self.model.n_tokens
-                        self.model._ctx.kv_cache_seq_rm(0, prefix_length, prefix_length+removed_length)
-                        self.model._ctx.kv_cache_seq_shift(0, prefix_length+removed_length, -1, -removed_length)
+                        self.model._ctx.kv_cache_seq_rm(0, sink_length, sink_length+removed_length)
+                        self.model._ctx.kv_cache_seq_shift(0, sink_length+removed_length, -1, -removed_length)
 
                         self.model.n_tokens -= removed_length
                         self.model.eval(seq[prefix_length+overlap_length:])
