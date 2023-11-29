@@ -114,6 +114,8 @@ loaders_and_params = OrderedDict({
         'threads_batch',
         'no_mmap',
         'mlock',
+        'streaming_llm',
+        'attention_sink_size',
         'no_mul_mat_q',
         'alpha_value',
         'rope_freq_base',

@@ -103,6 +103,8 @@ parser.add_argument('--compute_dtype', type=str, default='float16', help='comput
 parser.add_argument('--quant_type', type=str, default='nf4', help='quant_type for 4-bit. Valid options: nf4, fp4.')
 
 # llama.cpp
+parser.add_argument('--streaming-llm', action='store_true', help='Activates StreamingLLM, which prevents the prompt from ever being reevaluated when old chat messages are removed due to the context length for the model being reached.')
+parser.add_argument('--attention-sink-size', type=int, default=5, help='Minimum attention sink length from StreamingLLM.')
 parser.add_argument('--n_ctx', type=int, default=2048, help='Size of the prompt context.')
 parser.add_argument('--threads', type=int, default=0, help='Number of threads to use.')
 parser.add_argument('--threads-batch', type=int, default=0, help='Number of threads to use for batches/prompt processing.')
