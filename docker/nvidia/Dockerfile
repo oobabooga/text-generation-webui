@@ -24,7 +24,7 @@ RUN --mount=type=cache,target=/root/.cache/pip,rw \
     # clone and build gptq-for-llama
     git clone --depth=1 https://github.com/oobabooga/GPTQ-for-LLaMa /home/app/gptq-for-llama && \
     # TODO: remove fixes to gptq-for-llama requirements conflicts
-    sed -i -e 's/safetensors==0\.3\.0$/safetensors>=0.3.0,<2.0/' -e 's/transformers==4\.28\.0$/transformers==4.35.*/' -e 's/accelerate==0\.18\.0$/accelerate==0.24.*/' /home/app/gptq-for-llama/requirements.txt && \
+    sed -i -e 's/safetensors==0\.3\.0$/safetensors>=0.3.0,<1.0/' -e 's/transformers==4\.28\.0$/transformers==4.35.*/' -e 's/accelerate==0\.18\.0$/accelerate==0.24.*/' /home/app/gptq-for-llama/requirements.txt && \
     # build all requirements files as wheel dists
     pip3 wheel -w wheels -r requirements.txt -r /home/app/gptq-for-llama/requirements.txt `echo "$BUILD_EXTENSIONS" | sed -r 's/([^,]+)\s*,?\s*/ -r \/home\/app\/build\/extensions\/\1\/requirements.txt/g'`
     # drop wheel and setuptools .whl to avoid install issues
