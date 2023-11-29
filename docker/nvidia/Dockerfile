@@ -7,7 +7,7 @@ WORKDIR /builder
 ARG TORCH_CUDA_ARCH_LIST="${TORCH_CUDA_ARCH_LIST:-3.5;5.0;6.0;6.1;7.0;7.5;8.0;8.6+PTX}"
 ARG APP_UID="${APP_UID:-6972}"
 ARG APP_GID="${APP_GID:-6972}"
-ARG EXTENSIONS="${BUILD_EXTENSIONS:-}"
+ARG BUILD_EXTENSIONS="${BUILD_EXTENSIONS:-}"
 # create / update build env
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,rw \
     apt update && \
@@ -29,7 +29,7 @@ RUN --mount=type=cache,target=/root/.cache/pip,rw \
     # TODO: remove fixes to gptq-for-llama requirements conflicts
     sed -i -e 's/safetensors==0\.3\.0$/safetensors>=0.3.0,<=2.0/' -e 's/transformers==4\.28\.0$/transformers==4.35.*/' -e 's/accelerate==0\.18\.0$/accelerate==0.24.*/' /home/app/gptq-for-llama/requirements.txt && \
     # build all requirements files as wheel dists
-    pip3 wheel -w wheels -r requirements.txt -r /home/app/gptq-for-llama/requirements.txt `echo "$BUILD_EXTENSIONS" | sed -r 's/([^,]+)/ -r \1\/requirements.txt/g'`
+    pip3 wheel -w wheels -r requirements.txt -r /home/app/gptq-for-llama/requirements.txt `echo "$BUILD_EXTENSIONS" | sed -r 's/([^,]+)/ -r extensions/\1\/requirements.txt/g'`
     # drop wheel and setuptools .whl to avoid install issues
 RUN rm wheels/setuptools*.whl
 
