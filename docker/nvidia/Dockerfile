@@ -1,6 +1,3 @@
-# default UID is 6972
-# override the runtime user via docker-compose.override.yml or mount dirs with root group access 
-
 # BUILDER
 FROM nvidia/cuda:12.1.1-devel-ubuntu22.04 as builder
 WORKDIR /builder
@@ -48,10 +45,6 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,rw \
     # make shared builder & runtime app user
     addgroup --gid $APP_GID app_grp && \
     useradd -m -u $APP_UID --gid app_grp app
-    # make install dirs accessible to root group
-    # chmod -R g+rwX /usr/local/ && \
-    # chmod -R g+rwX /usr/include/ && \
-    # chmod -R g+rwX /home/app
 USER app:app_grp
 # install locally built wheels for app
 WORKDIR /home/app/wheels
