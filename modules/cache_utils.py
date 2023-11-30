@@ -64,8 +64,10 @@ def handle_llamacpp_prefix_and_streamingllm(model, past_seq, seq, seq_tensor):
         i1, i2, j1, j2 = find_longest_common_substring_indices(past_seq.tolist(), seq)
         overlap_length = i2 - i1 + 1
 
-        # A removed chunk has been found
-        if i1 > 0:
+        # A removed chunk has been found.
+        # i1 > 0 means that the longest common substring is not the prefix.
+        # short overlaps of few tokens are ignored (like a single '\n' character)
+        if i1 > 0 and overlap_length > 0.2 * seq_tensor.shape[-1]:
             reset = False
 
             prefix_length = find_prefix_length(past_seq[:i1], seq_tensor[:j1])
