@@ -16,31 +16,40 @@ def find_prefix_length(past_seq, seq_tensor):
     return prefix_length
 
 
-def find_subsequence_index(past_seq, seq_tensor):
+def find_longest_common_substring_indices(s1, s2):
     '''
-    Looks for the location of seq_tensor in past_seq.
-    If seq_tensor is not a subsequence of past_seq, returns -1.
+    Given two lists, solves the Longest Common Substring problem.
+    It returns the indices where the substring starts and ends in
+    s1 and s2.
+
+    Example:
+
+    ir, jr, ir2, jr2 = find_longest_common_substring_indices(s1, s2)
+    print(s1[ir:jr + 1])
+    print(s2[ir2:jr2 + 1])
+
+    Adapted from
+    https://rosettacode.org/wiki/Longest_common_substring#Python
     '''
-    # Find the indices where seq_tensor is equal to elements in past_seq
-    indices = torch.where(past_seq == seq_tensor[0])
 
-    # Check each potential starting index
-    for index in indices[0]:
-        # Extract the subsequence from past_seq starting at the potential index
-        subsequence = past_seq[index:index + len(seq_tensor)]
+    len1, len2 = len(s1), len(s2)
+    ir, jr = 0, -1
+    ir2, jr2 = 0, -1
+    for i1 in range(len1):
+        i2 = s2.index(s1[i1]) if s1[i1] in s2 else -1
+        while i2 >= 0:
+            j1, j2 = i1, i2
+            while j1 < len1 and j2 < len2 and s2[j2] == s1[j1]:
+                if j1 - i1 >= jr - ir:
+                    ir, jr = i1, j1
+                    ir2, jr2 = i2, j2
 
-        # Check if the extracted subsequence is equal to seq_tensor
-        if torch.equal(subsequence, seq_tensor):
-            return index.item()  # Return the starting index as a Python integer
+                j1 += 1
+                j2 += 1
 
-    # If no match is found, return -1
-    return -1
+            try:
+                i2 = s2.index(s1[i1], i2 + 1)
+            except ValueError:
+                i2 = -1
 
-
-def find_streamingllm_lengths(past_seq, seq_tensor):
-    for overlap_length in range(seq_tensor.shape[-1], 0, -1):
-        removed_length = find_subsequence_index(past_seq, seq_tensor[:overlap_length])
-        if removed_length != -1:
-            return removed_length, overlap_length
-    else:
-        return -1, -1
+    return ir, jr, ir2, jr2

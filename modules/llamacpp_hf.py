@@ -8,7 +8,10 @@ from transformers import GenerationConfig, PretrainedConfig, PreTrainedModel
 from transformers.modeling_outputs import CausalLMOutputWithPast
 
 from modules import RoPE, shared
-from modules.cache_utils import find_prefix_length, find_streamingllm_lengths
+from modules.cache_utils import (
+    find_longest_common_substring_indices,
+    find_prefix_length
+)
 from modules.logging_colors import logger
 
 try:
@@ -128,23 +131,25 @@ class LlamacppHF(PreTrainedModel):
         # Make the forward call
         if labels is None:
             if past_seq is not None:
-                prefix_length = find_prefix_length(past_seq, seq_tensor)
-
                 if self.streaming_llm:
-                    removed_length, overlap_length = find_streamingllm_lengths(past_seq[prefix_length:], seq_tensor[prefix_length:])
+                    i1, i2, j1, j2 = find_longest_common_substring_indices(past_seq.tolist(), seq)
+                    overlap_length = i2 - i1 + 1
 
                     # A removed chunk has been found
-                    if removed_length > 0:
+                    if i1 > 0:
                         reset = False
+
+                        prefix_length = find_prefix_length(past_seq[:i1], seq_tensor[:j1])
                         sink_length = prefix_length
                         if sink_length < self.attention_sink_size:
                             sink_length = self.attention_sink_size
-                            removed_length -= (self.attention_sink_size - prefix_length)
+
+                        removed_length = i1 - sink_length
 
                         matching_prefix = past_seq[:prefix_length]
-                        removed_chunk = past_seq[sink_length:sink_length+removed_length]
-                        overlapping_sequence = seq_tensor[prefix_length:prefix_length+overlap_length]
-                        added_chunk = seq_tensor[prefix_length+overlap_length:]
+                        removed_chunk = past_seq[sink_length:i1]
+                        overlapping_sequence = seq_tensor[j1:j2+1]
+                        added_chunk = seq_tensor[j2+1:]
 
                         print('\n\n')
                         print('MATCHING PREFIX=', repr(shared.tokenizer.decode(matching_prefix)))
@@ -153,7 +158,7 @@ class LlamacppHF(PreTrainedModel):
                         print('ADDED CHUNK=', repr(shared.tokenizer.decode(added_chunk)))
                         print('\n\n')
 
-                        # Remove interval [sink_length, sink_length+removed_length) from the context
+                        # Remove interval [sink_length, sink_length + removed_length) from the context
                         # Subtract removed_length from self.model.n_tokens
                         self.model._ctx.kv_cache_seq_rm(0, sink_length, sink_length+removed_length)
                         self.model._ctx.kv_cache_seq_shift(0, sink_length+removed_length, -1, -removed_length)
@@ -162,17 +167,21 @@ class LlamacppHF(PreTrainedModel):
                         self.model.eval(seq[prefix_length+overlap_length:])
 
                     # No removed chunk has been found
-                    elif prefix_length > 0:
+                    else:
+                        prefix_length = find_prefix_length(past_seq, seq_tensor)
+                        if prefix_length > 0:
+                            reset = False
+                            self.model.n_tokens = prefix_length
+                            if len(seq_tensor) - prefix_length > 0:
+                                self.model.eval(seq[prefix_length:])
+
+                else:
+                    prefix_length = find_prefix_length(past_seq, seq_tensor)
+                    if prefix_length > 0:
                         reset = False
                         self.model.n_tokens = prefix_length
                         if len(seq_tensor) - prefix_length > 0:
                             self.model.eval(seq[prefix_length:])
-
-                elif prefix_length > 0:
-                    reset = False
-                    self.model.n_tokens = prefix_length
-                    if len(seq_tensor) - prefix_length > 0:
-                        self.model.eval(seq[prefix_length:])
 
             if reset:
                 self.model.reset()
