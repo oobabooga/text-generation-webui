@@ -182,3 +182,7 @@
   instruction_template: 'Alpaca'
 .*orca-2-(13|7)b:
   instruction_template: 'ChatML'
+.*openhermes.*mistral:
+  instruction_template: 'ChatML'
+.*Yi-34B-Chat:
+  instruction_template: 'ChatML'
