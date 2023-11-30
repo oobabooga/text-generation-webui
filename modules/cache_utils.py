@@ -41,13 +41,57 @@ def find_longest_common_substring_indices(s1, s2):
         i2 = s2.index(s1[i1]) if s1[i1] in s2 else -1
         while i2 >= 0:
             j1, j2 = i1, i2
-            while j1 < len1 and j2 < len2 and s2[j2] == s1[j1]:
-                if j1 - i1 >= jr - ir:
-                    ir, jr = i1, j1
-                    ir2, jr2 = i2, j2
 
-                j1 += 1
-                j2 += 1
+            while True:
+                walked = False
+
+                j1_bak = j1
+                j2_bak = j2
+
+                while j1 < len1 and j2 < len2 and s2[j2] == s1[j1]:
+                    if j1 - i1 >= jr - ir:
+                        ir, jr = i1, j1
+                        ir2, jr2 = i2, j2
+
+                    j1 += 1
+                    j2 += 1
+                    walked = True
+
+                if walked:
+                    continue
+
+                # The normal function would not have the next 2 while loops.
+                # They are there to account for different tokenizations of the
+                # same sequence. For instance, in the Llama tokenizer,
+                # [306, 311] and [13001] are the same thing.
+
+                j1 = j1_bak + 1
+                j2 = j2_bak + 2
+                while j1 < len1 and j2 < len2 and s2[j2] == s1[j1]:
+                    if j1 - i1 >= jr - ir:
+                        ir, jr = i1, j1
+                        ir2, jr2 = i2, j2
+
+                    j1 += 1
+                    j2 += 1
+                    walked = True
+
+                if walked:
+                    continue
+
+                j1 = j1_bak + 2
+                j2 = j2_bak + 1
+                while j1 < len1 and j2 < len2 and s2[j2] == s1[j1]:
+                    if j1 - i1 >= jr - ir:
+                        ir, jr = i1, j1
+                        ir2, jr2 = i2, j2
+
+                    j1 += 1
+                    j2 += 1
+                    walked = True
+
+                if not walked:
+                    break
 
             try:
                 i2 = s2.index(s1[i1], i2 + 1)
@@ -82,12 +126,17 @@ def handle_llamacpp_prefix_and_streamingllm(model, past_seq, seq, seq_tensor):
             overlapping_sequence = seq_tensor[j1:j2+1]
             added_chunk = seq_tensor[j2+1:]
 
+            print(past_seq)
+            print(seq_tensor)
+
             print('\n\n')
             print('MATCHING PREFIX=', repr(shared.tokenizer.decode(matching_prefix)))
             print('REMOVED CHUNK=', repr(shared.tokenizer.decode(removed_chunk)))
             # print('OVERLAPPING SEQUENCE=', repr(shared.tokenizer.decode(overlapping_sequence)))
             print('ADDED CHUNK=', repr(shared.tokenizer.decode(added_chunk)))
             print('\n\n')
+
+            print('------------------')
 
             # Remove interval [sink_length, sink_length + removed_length) from the context
             # Subtract removed_length from model.n_tokens
