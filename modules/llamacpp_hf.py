@@ -8,10 +8,7 @@ from transformers import GenerationConfig, PretrainedConfig, PreTrainedModel
 from transformers.modeling_outputs import CausalLMOutputWithPast
 
 from modules import RoPE, shared
-from modules.cache_utils import (
-    find_longest_common_substring_indices,
-    find_prefix_length
-)
+from modules.cache_utils import handle_llamacpp_prefix_and_streamingllm
 from modules.logging_colors import logger
 
 try:
@@ -33,14 +30,10 @@ def llama_cpp_lib():
 
 
 class LlamacppHF(PreTrainedModel):
-    def __init__(self, model, streaming_llm: bool = False, attention_sink_size: int = 5):
+    def __init__(self, model):
         super().__init__(PretrainedConfig())
         self.model = model
         self.generation_config = GenerationConfig()
-
-        # StreamingLLM
-        self.streaming_llm = streaming_llm
-        self.attention_sink_size = attention_sink_size
 
         # Swappable caches for CFG
         self.past_seq = None
@@ -131,57 +124,7 @@ class LlamacppHF(PreTrainedModel):
         # Make the forward call
         if labels is None:
             if past_seq is not None:
-                if self.streaming_llm:
-                    i1, i2, j1, j2 = find_longest_common_substring_indices(past_seq.tolist(), seq)
-                    overlap_length = i2 - i1 + 1
-
-                    # A removed chunk has been found
-                    if i1 > 0:
-                        reset = False
-
-                        prefix_length = find_prefix_length(past_seq[:i1], seq_tensor[:j1])
-                        sink_length = prefix_length
-                        if sink_length < self.attention_sink_size:
-                            sink_length = self.attention_sink_size
-
-                        removed_length = i1 - sink_length
-
-                        matching_prefix = past_seq[:prefix_length]
-                        removed_chunk = past_seq[sink_length:i1]
-                        overlapping_sequence = seq_tensor[j1:j2+1]
-                        added_chunk = seq_tensor[j2+1:]
-
-                        print('\n\n')
-                        print('MATCHING PREFIX=', repr(shared.tokenizer.decode(matching_prefix)))
-                        print('REMOVED CHUNK=', repr(shared.tokenizer.decode(removed_chunk)))
-                        # print('OVERLAPPING SEQUENCE=', repr(shared.tokenizer.decode(overlapping_sequence)))
-                        print('ADDED CHUNK=', repr(shared.tokenizer.decode(added_chunk)))
-                        print('\n\n')
-
-                        # Remove interval [sink_length, sink_length + removed_length) from the context
-                        # Subtract removed_length from self.model.n_tokens
-                        self.model._ctx.kv_cache_seq_rm(0, sink_length, sink_length+removed_length)
-                        self.model._ctx.kv_cache_seq_shift(0, sink_length+removed_length, -1, -removed_length)
-
-                        self.model.n_tokens -= removed_length
-                        self.model.eval(seq[prefix_length+overlap_length:])
-
-                    # No removed chunk has been found
-                    else:
-                        prefix_length = find_prefix_length(past_seq, seq_tensor)
-                        if prefix_length > 0:
-                            reset = False
-                            self.model.n_tokens = prefix_length
-                            if len(seq_tensor) - prefix_length > 0:
-                                self.model.eval(seq[prefix_length:])
-
-                else:
-                    prefix_length = find_prefix_length(past_seq, seq_tensor)
-                    if prefix_length > 0:
-                        reset = False
-                        self.model.n_tokens = prefix_length
-                        if len(seq_tensor) - prefix_length > 0:
-                            self.model.eval(seq[prefix_length:])
+                reset = handle_llamacpp_prefix_and_streamingllm(self.model, past_seq, seq, seq_tensor)
 
             if reset:
                 self.model.reset()
@@ -256,4 +199,4 @@ class LlamacppHF(PreTrainedModel):
         Llama = llama_cpp_lib().Llama
         model = Llama(**params)
 
-        return LlamacppHF(model, shared.args.streaming_llm, shared.args.attention_sink_size)
+        return LlamacppHF(model)

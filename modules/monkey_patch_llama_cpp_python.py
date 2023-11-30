@@ -3,11 +3,7 @@ from typing import Generator, Optional, Sequence
 import torch
 from llama_cpp import LlamaGrammar, LogitsProcessorList, StoppingCriteriaList
 
-from modules import shared
-from modules.cache_utils import (
-    find_longest_common_substring_indices,
-    find_prefix_length
-)
+from modules.cache_utils import handle_llamacpp_prefix_and_streamingllm
 
 try:
     import llama_cpp
@@ -66,57 +62,7 @@ def my_generate(
     past_seq = torch.tensor(self._input_ids)
 
     if reset and self.n_tokens > 0:
-        if shared.args.streaming_llm:
-            i1, i2, j1, j2 = find_longest_common_substring_indices(past_seq.tolist(), seq)
-            overlap_length = i2 - i1 + 1
-
-            # A removed chunk has been found
-            if i1 > 0:
-                reset = False
-
-                prefix_length = find_prefix_length(past_seq[:i1], seq_tensor[:j1])
-                sink_length = prefix_length
-                if sink_length < shared.args.attention_sink_size:
-                    sink_length = shared.args.attention_sink_size
-
-                removed_length = i1 - sink_length
-
-                matching_prefix = past_seq[:prefix_length]
-                removed_chunk = past_seq[sink_length:i1]
-                overlapping_sequence = seq_tensor[j1:j2+1]
-                added_chunk = seq_tensor[j2+1:]
-
-                print('\n\n')
-                print('MATCHING PREFIX=', repr(shared.tokenizer.decode(matching_prefix)))
-                print('REMOVED CHUNK=', repr(shared.tokenizer.decode(removed_chunk)))
-                # print('OVERLAPPING SEQUENCE=', repr(shared.tokenizer.decode(overlapping_sequence)))
-                print('ADDED CHUNK=', repr(shared.tokenizer.decode(added_chunk)))
-                print('\n\n')
-
-                # Remove interval [sink_length, sink_length + removed_length) from the context
-                # Subtract removed_length from self.n_tokens
-                self._ctx.kv_cache_seq_rm(0, sink_length, sink_length+removed_length)
-                self._ctx.kv_cache_seq_shift(0, sink_length+removed_length, -1, -removed_length)
-
-                self.n_tokens -= removed_length
-                self.eval(seq[prefix_length+overlap_length:])
-
-            # No removed chunk has been found
-            else:
-                prefix_length = find_prefix_length(past_seq, seq_tensor)
-                if prefix_length > 0:
-                    reset = False
-                    self.n_tokens = prefix_length
-                    if len(seq_tensor) - prefix_length > 0:
-                        self.eval(seq[prefix_length:])
-
-        else:
-            prefix_length = find_prefix_length(past_seq, seq_tensor)
-            if prefix_length > 0:
-                reset = False
-                self.n_tokens = prefix_length
-                if len(seq_tensor) - prefix_length > 0:
-                    self.eval(seq[prefix_length:])
+        reset = handle_llamacpp_prefix_and_streamingllm(self, past_seq, seq, seq_tensor)
 
     if reset:
         self.reset()
