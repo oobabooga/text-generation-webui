@@ -163,14 +163,18 @@ The requirments*.txt above contain various precompiled wheels. If you wish to co
 ### Alternative: Docker
 
 ```
-ln -s docker/{Dockerfile,docker-compose.yml,.dockerignore} .
+ln -s docker/{nvidia/Dockerfile,docker-compose.yml} .
 cp docker/.env.example .env
-# Edit .env and set TORCH_CUDA_ARCH_LIST based on your GPU model
+# Edit .env and set: 
+#   TORCH_CUDA_ARCH_LIST based on your GPU model
+#   APP_RUNTIME_GID      your host user's group id (run `id -g` in a terminal)
+#   BUILD_EXTENIONS      optionally add comma separated list of extensions to build
 docker compose up --build
 ```
 
 * You need to have Docker Compose v2.17 or higher installed. See [this guide](https://github.com/oobabooga/text-generation-webui/wiki/09-%E2%80%90-Docker) for instructions.
 * For additional docker files, check out [this repository](https://github.com/Atinoda/text-generation-webui-docker).
+* Currently breaks GPTQ-for-Llama
 
 ### Updating the requirements
 
