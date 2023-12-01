@@ -59,6 +59,7 @@ settings = {
     'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
     'autoload_model': False,
     'gallery-items_per_page': 50,
+    'gallery-open': False,
     'default_extensions': ['gallery'],
 }
 
