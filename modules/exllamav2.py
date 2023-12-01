@@ -131,7 +131,7 @@ class Exllamav2Model:
             token, _, _ = ExLlamaV2Sampler.sample(logits, settings, ids, random.random(), self.tokenizer)
             ids = torch.cat([ids, token], dim=1)
 
-            if i == 0 and self.tokenizer.tokenizer.IdToPiece(int(token)).startswith('▁'):
+            if i == 0 and self.tokenizer.tokenizer.id_to_piece(int(token)).startswith('▁'):
                 has_leading_space = True
 
             decoded_text = self.tokenizer.decode(ids[:, initial_len:], decode_special_tokens=not state['skip_special_tokens'])[0]
