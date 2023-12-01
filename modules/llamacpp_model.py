@@ -105,6 +105,7 @@ class LlamaCppModel:
         return self.model.detokenize(ids).decode('utf-8')
 
     def get_logits(self, tokens):
+        self.model.reset()
         self.model.eval(tokens)
         logits = self.model._scores
         logits = np.expand_dims(logits, 0)  # batch dim is expected
