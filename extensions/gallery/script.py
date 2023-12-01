@@ -3,7 +3,7 @@ from pathlib import Path
 import gradio as gr
 
 from modules.html_generator import get_image_cache
-from modules.shared import gradio
+from modules.shared import gradio, settings
 
 
 def generate_css():
@@ -96,7 +96,7 @@ def ui():
             label="",
             samples=generate_html(),
             elem_classes=["character-gallery"],
-            samples_per_page=50
+            samples_per_page=settings["gallery-items_per_page"]
         )
 
     update.click(generate_html, [], gallery)
