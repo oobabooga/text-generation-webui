@@ -2,7 +2,7 @@ accelerate==0.24.*
 colorama
 datasets
 einops
-exllamav2==0.0.8; platform_system != "Darwin" and platform_machine != "x86_64"
+exllamav2==0.0.10; platform_system != "Darwin" and platform_machine != "x86_64"
 gradio==3.50.*
 markdown
 numpy==1.24.*
