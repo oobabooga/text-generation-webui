@@ -364,7 +364,7 @@ def run_server():
 
         logger.info(f'OpenAI API key:\n\n{shared.args.api_key}\n')
 
-    if shared.args.admin_key:
+    if shared.args.admin_key and shared.args.admin_key != shared.args.api_key:
         logger.info(f'OpenAI API admin key (for loading/unloading models):\n\n{shared.args.admin_key}\n')
 
     uvicorn.run(app, host=server_addr, port=port, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile)

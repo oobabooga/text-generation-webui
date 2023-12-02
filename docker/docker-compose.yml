@@ -5,28 +5,31 @@ services:
       context: .
       args:
         # specify which cuda version your card supports: https://developer.nvidia.com/cuda-gpus
-        TORCH_CUDA_ARCH_LIST: ${TORCH_CUDA_ARCH_LIST:-7.5}
-        WEBUI_VERSION: ${WEBUI_VERSION:-HEAD}
+        TORCH_CUDA_ARCH_LIST: ${TORCH_CUDA_ARCH_LIST:-7.5} 
+        BUILD_EXTENSIONS: ${BUILD_EXTENSIONS:-}
+        APP_GID: ${APP_GID:-6972} 
+        APP_UID: ${APP_UID-6972} 
     env_file: .env
+    user: "${APP_RUNTIME_UID:-6972}:${APP_RUNTIME_GID:-6972}"
     ports:
       - "${HOST_PORT:-7860}:${CONTAINER_PORT:-7860}"
       - "${HOST_API_PORT:-5000}:${CONTAINER_API_PORT:-5000}"
     stdin_open: true
     tty: true
     volumes:
-      - ./characters:/app/characters
-      - ./extensions:/app/extensions
-      - ./loras:/app/loras
-      - ./models:/app/models
-      - ./presets:/app/presets
-      - ./prompts:/app/prompts
-      - ./softprompts:/app/softprompts
-      - ./training:/app/training
+      - ./characters:/home/app/text-generation-webui/characters
+      - ./extensions:/home/app/text-generation-webui/extensions
+      - ./loras:/home/app/text-generation-webui/loras
+      - ./models:/home/app/text-generation-webui/models
+      - ./presets:/home/app/text-generation-webui/presets
+      - ./prompts:/home/app/text-generation-webui/prompts
+      - ./softprompts:/home/app/text-generation-webui/softprompts
+      - ./training:/home/app/text-generation-webui/training
       - ./cloudflared:/etc/cloudflared
     deploy:
       resources:
         reservations:
           devices:
             - driver: nvidia
-              device_ids: ['0']
+              count: all
               capabilities: [gpu]
