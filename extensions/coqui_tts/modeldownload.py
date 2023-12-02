@@ -5,8 +5,15 @@ from tqdm import tqdm
 import importlib.metadata as metadata  # Use importlib.metadata
 from packaging import version
 
+# Use this_dir in the downloader script
+this_dir = Path(__file__).parent.resolve()
+
+# Define paths
+base_path = this_dir / 'models'
+model_path = base_path / 'xttsv2_2.0.2'
+
 # Read the version specifier from requirements.txt
-with open('requirements.txt', 'r') as req_file:
+with open(this_dir / 'requirements.txt', 'r') as req_file:
     requirements = req_file.readlines()
 
 tts_version_required = None
@@ -48,13 +55,6 @@ def check_tts_version():
             print("[CoquiTTS Startup] TTS version is up to date.")
     except metadata.PackageNotFoundError:
         print("[CoquiTTS Startup] \033[91mWarning\033[0m TTS is not installed.")
-
-# Use this_dir in the downloader script
-this_dir = Path(__file__).parent.resolve()
-
-# Define paths
-base_path = this_dir / 'models'
-model_path = base_path / 'xttsv2_2.0.2'
 
 # Check and create directories
 create_directory_if_not_exists(base_path)
