@@ -239,6 +239,8 @@ def fix_loader_name(name):
         return 'ctransformers'
     elif name in ['autoawq', 'awq', 'auto-awq']:
         return 'AutoAWQ'
+    elif name in ['qwen_hf', 'qwen', 'qwen-hf', 'Qwen-HF', 'Qwen', 'QwenHF' ]:
+        return 'Qwen_HF'
 
 
 def add_extension(name, last=False):
