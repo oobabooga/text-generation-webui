@@ -5,6 +5,19 @@ from tqdm import tqdm
 import importlib.metadata as metadata  # Use importlib.metadata
 from packaging import version
 
+# Read the version specifier from requirements.txt
+with open('requirements.txt', 'r') as req_file:
+    requirements = req_file.readlines()
+
+tts_version_required = None
+for req in requirements:
+    if req.startswith('TTS=='):
+        tts_version_required = req.strip().split('==')[1]
+        break
+
+if tts_version_required is None:
+    raise ValueError("[CoquiTTS Startup] \033[91mWarning\033[0m Could not find TTS version specifier in requirements.txt")
+
 def create_directory_if_not_exists(directory):
     if not directory.exists():
         directory.mkdir(parents=True)
@@ -26,11 +39,11 @@ def download_file(url, destination):
 def check_tts_version():
     try:
         tts_version = metadata.version("tts")
-        print(f"[CoquiTTS Startup] TTS version: \033[93m{tts_version}\033[0m")
+        print(f"[CoquiTTS Startup] TTS version installed: \033[93m{tts_version}\033[0m")
 
-        if version.parse(tts_version) < version.parse("0.21.1"):
-            print("[CoquiTTS Startup] \033[91mWarning\033[0m TTS version is too old. Please upgrade to version 0.21.1 or later.\033[0m")
-            print("[CoquiTTS Startup] \033[91mWarning\033[0m pip install --upgrade tts\033[0m")
+        if version.parse(tts_version) < version.parse(tts_version_required):
+            print(f"[CoquiTTS Startup] \033[91mWarning\033[0m TTS version is too old. Please upgrade to version \033[93m{tts_version_required}\033[0m or later.\033[0m")
+            print("[CoquiTTS Startup] \033[91mWarning\033[0m At your terminal/command prompt \033[94mpip install --upgrade tts\033[0m")
         else:
             print("[CoquiTTS Startup] TTS version is up to date.")
     except metadata.PackageNotFoundError:
