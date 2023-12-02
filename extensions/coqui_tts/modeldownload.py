@@ -26,15 +26,15 @@ def download_file(url, destination):
 def check_tts_version():
     try:
         tts_version = metadata.version("tts")
-        print(f"[COQUI TTS] STARTUP: TTS version: {tts_version}")
+        print(f"[CoquiTTS Startup] TTS version: \033[93m{tts_version}\033[0m")
 
         if version.parse(tts_version) < version.parse("0.21.1"):
-            print("[COQUI TTS] STARTUP: \033[91mTTS version is too old. Please upgrade to version 0.21.1 or later.\033[0m")
-            print("[COQUI TTS] STARTUP: \033[91mpip install --upgrade tts\033[0m")
+            print("[CoquiTTS Startup] \033[91mWarning\033[0m TTS version is too old. Please upgrade to version 0.21.1 or later.\033[0m")
+            print("[CoquiTTS Startup] \033[91mWarning\033[0m pip install --upgrade tts\033[0m")
         else:
-            print("[COQUI TTS] STARTUP: TTS version is up to date.")
+            print("[CoquiTTS Startup] TTS version is up to date.")
     except metadata.PackageNotFoundError:
-        print("[COQUI TTS] STARTUP: TTS is not installed.")
+        print("[CoquiTTS Startup] \033[91mWarning\033[0m TTS is not installed.")
 
 # Use this_dir in the downloader script
 this_dir = Path(__file__).parent.resolve()
@@ -57,11 +57,11 @@ files_to_download = {
 }
 
 # Download files if they don't exist
-print("[COQUI TTS] STARTUP: Checking Model is Downloaded.")
+print("[CoquiTTS Startup] Checking Model is Downloaded.")
 for filename, url in files_to_download.items():
     destination = model_path / filename
     if not destination.exists():
-        print(f"[COQUI TTS] STARTUP: Downloading {filename}...")
+        print(f"[CoquiTTS Startup] Downloading {filename}...")
         download_file(url, destination)
 
 check_tts_version()

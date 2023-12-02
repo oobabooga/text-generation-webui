@@ -1,0 +1,18 @@
+{
+  "activate": true,
+  "autoplay": true,
+  "deepspeed_activate": false,
+  "ip_address": "127.0.0.1",
+  "language": "English",
+  "low_vram": false,
+  "model_loaded": true,
+  "model_name": "tts_models/multilingual/multi-dataset/xtts_v2",
+  "model_version": "xttsv2_2.0.2",
+  "port_number": "7851",
+  "remove_trailing_dots": false,
+  "show_text": true,
+  "tts_method_api_local": false,
+  "tts_method_api_tts": false,
+  "tts_method_xtts_local": true,
+  "voice": "female_01.wav"
+}
