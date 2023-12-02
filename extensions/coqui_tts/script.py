@@ -145,7 +145,7 @@ else:
 timeout = 60  # Adjust the timeout as needed
 
 # Introduce a delay before starting the check loop
-time.sleep(20)  #Wait 20 secs before checking if the tts_server.py has started up.
+time.sleep(25)  #Wait 25 secs before checking if the tts_server.py has started up.
 start_time = time.time()
 while time.time() - start_time < timeout:
     try:
