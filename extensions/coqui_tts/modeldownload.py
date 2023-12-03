@@ -2,15 +2,29 @@ import os
 from pathlib import Path
 import requests
 from tqdm import tqdm
-import importlib.metadata as metadata  # Use importlib.metadata
+import importlib.metadata as metadata
+import json
 from packaging import version
 
 # Use this_dir in the downloader script
 this_dir = Path(__file__).parent.resolve()
 
-# Define paths
-base_path = this_dir / 'models'
-model_path = base_path / 'xttsv2_2.0.2'
+# Define the path to the JSON file
+config_file_path = this_dir / 'modeldownload.json'
+
+# Check if the JSON file exists
+if config_file_path.exists():
+    with open(config_file_path, 'r') as config_file:
+        settings = json.load(config_file)
+
+    # Extract settings from the loaded JSON
+    base_path = Path(settings.get("base_path", ""))
+    model_path = Path(settings.get("model_path", ""))
+    files_to_download = settings.get("files_to_download", {})
+else:
+    # Default settings if the JSON file doesn't exist or is empty
+    print("[CoquiTTS Startup] \033[91mWarning\033[0m modeldownload.json is missing so please re-download it and save it in the coquii_tts main folder.")
+    print("[CoquiTTS Startup] \033[91mWarning\033[0m API Local and XTTSv2 Local will error unless this is corrected.")
 
 # Read the version specifier from requirements.txt
 with open(this_dir / 'requirements.txt', 'r') as req_file:
@@ -57,22 +71,23 @@ def check_tts_version():
         print("[CoquiTTS Startup] \033[91mWarning\033[0m TTS is not installed.")
 
 # Check and create directories
-create_directory_if_not_exists(base_path)
-create_directory_if_not_exists(model_path)
-
-# Define files and their corresponding URLs
-files_to_download = {
-    'LICENSE.txt': 'https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/LICENSE.txt?download=true',
-    'README.md': 'https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/README.md?download=true',
-    'config.json': 'https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/config.json?download=true',
-    'model.pth': 'https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/model.pth?download=true',
-    'vocab.json': 'https://huggingface.co/coqui/XTTS-v2/resolve/v2.0.2/vocab.json?download=true',
-}
+if str(base_path) == "models":
+    create_directory_if_not_exists(this_dir / base_path / model_path)
+else:
+    create_directory_if_not_exists(base_path / model_path)
+    print("[CoquiTTS Startup] \033[94mInfo\033[0m Custom path set in \033[93mmodeldownload.json\033[0m. Using the following settings:")
+    print("[CoquiTTS Startup] \033[94mInfo\033[0m Base folder Path:\033[93m", base_path , "\033[0m")
+    print("[CoquiTTS Startup] \033[94mInfo\033[0m Model folder Path:\033[93m", model_path , "\033[0m")
+    print("[CoquiTTS Startup] \033[94mInfo\033[0m Full Path:\033[93m", base_path / model_path , "\033[0m")
 
 # Download files if they don't exist
 print("[CoquiTTS Startup] Checking Model is Downloaded.")
 for filename, url in files_to_download.items():
-    destination = model_path / filename
+    if str(base_path) == "models":
+        destination = this_dir / base_path / model_path / filename
+    else:
+        destination = Path(base_path) / model_path / filename
+
     if not destination.exists():
         print(f"[CoquiTTS Startup] Downloading {filename}...")
         download_file(url, destination)

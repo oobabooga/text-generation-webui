@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoquiTTS Settings</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 5px;
+            padding: 5px;
+            background-color: #f4f4f4;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        h1, h2, h3 {
+            text-decoration: underline;
+            margin-bottom: 10px;
+        }
+
+        form {
+            max-width: 800px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+            /* Adjusted the gap to create more space */
+            justify-content: start;
+        }
+
+        .radio-group {
+            grid-column: span 2;
+            /* Span both columns */
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        label {
+            display: block;
+            margin-top: 2px;
+            color: #555;
+        }
+
+        select,
+        input,
+        button {
+            width: 100%;
+            padding: 3px;
+            margin-top: 1px;
+            margin-bottom: 3px;
+            box-sizing: border-box;
+            font-size: 11px;
+        }
+
+        button {
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            padding: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            grid-column: span 4;
+        }
+		.warning {
+            grid-column: span 4; /* Span all 4 columns */
+			text-align: center; /* Center-align the text */
+            color: red; /* Adjusted color for emphasis */
+            font-weight: bold; /* Make the text bold */
+            margin-top: 10px; /* Add some space between the button and the warning */
+        }
+    </style>
+</head>
+
+<body>
+    <h3>CoquiTTS Startup Settings</h3><br>
+    <form action="/update-settings" method="post">
+
+        <label for="activate" style="color: #33cc33;">Activate TTS:</label>
+        <select id="activate" name="activate" required="">
+            <option {% if data.activate %}selected{% endif %} value="true">True</option>
+            <option {% if not data.activate %}selected{% endif %} value="false">False</option>
+        </select>
+
+        <label for="autoplay" style="color: #33cc33;">&nbsp; &nbsp; Autoplay TTS output:</label>
+        <select id="autoplay" name="autoplay" required="">
+            <option {% if data.autoplay %}selected{% endif %} value="true">True</option>
+            <option {% if not data.autoplay %}selected{% endif %} value="false">False</option>
+        </select>
+
+        <label for="show_text" style="color: #33cc33;"> Show Text on generation:</label>
+        <select id="show_text" name="show_text" required="">
+            <option {% if data.show_text %}selected{% endif %} value="true">True</option>
+            <option {% if not data.show_text %}selected{% endif %} value="false">False</option>
+        </select>
+
+        <label for="voice" style="color: #33cc33;">&nbsp; &nbsp; Default voice:</label>
+        <input id="voice" name="voice" required="" type="text" value="{{ data.voice }}" />
+
+
+		<label for="language" style="color: #33cc33;">Default Language:</label>
+			<select id="language" name="language" required="">
+				<option value="Arabic" {% if data.language == 'Arabic' %}selected{% endif %}>Arabic</option>
+				<option value="Chinese" {% if data.language == 'Chinese' %}selected{% endif %}>Chinese</option>
+				<option value="Czech" {% if data.language == 'Czech' %}selected{% endif %}>Czech</option>
+				<option value="Dutch" {% if data.language == 'Dutch' %}selected{% endif %}>Dutch</option>
+				<option value="English" {% if data.language == 'English' %}selected{% endif %}>English</option>
+				<option value="French" {% if data.language == 'French' %}selected{% endif %}>French</option>
+				<option value="German" {% if data.language == 'German' %}selected{% endif %}>German</option>
+				<option value="Hungarian" {% if data.language == 'Hungarian' %}selected{% endif %}>Hungarian</option>
+				<option value="Italian" {% if data.language == 'Italian' %}selected{% endif %}>Italian</option>
+				<option value="Japanese" {% if data.language == 'Japanese' %}selected{% endif %}>Japanese</option>
+				<option value="Korean" {% if data.language == 'Korean' %}selected{% endif %}>Korean</option>
+				<option value="Polish" {% if data.language == 'Polish' %}selected{% endif %}>Polish</option>
+				<option value="Portuguese" {% if data.language == 'Portuguese' %}selected{% endif %}>Portuguese</option>
+				<option value="Russian" {% if data.language == 'Russian' %}selected{% endif %}>Russian</option>
+				<option value="Spanish" {% if data.language == 'Spanish' %}selected{% endif %}>Spanish</option>
+				<option value="Turkish" {% if data.language == 'Turkish' %}selected{% endif %}>Turkish</option>
+		</select>
+
+        <label for="remove_trailing_dots" style="color: #33cc33;">&nbsp; &nbsp;&nbsp;Remove Trailing Dots:</label>
+        <select id="remove_trailing_dots" name="remove_trailing_dots" required="">
+            <option {% if data.remove_trailing_dots %}selected{% endif %} value="true">True</option>
+            <option {% if not data.remove_trailing_dots %}selected{% endif %} value="false">False</option>
+        </select>
+
+
+		<label for="delete_output_wavs" style="color: #33cc33;">Del WAV's older than:</label>
+			<select id="delete_output_wavs" name="delete_output_wavs" required="">
+				<option value="Disabled" {% if data.delete_output_wavs == 'Disabled' %}selected{% endif %}>Disabled</option>
+				<option value="1 Day" {% if data.delete_output_wavs == '1 Day' %}selected{% endif %}>1 Day</option>
+				<option value="2 Days" {% if data.delete_output_wavs == '2 Days' %}selected{% endif %}>2 Days</option>
+				<option value="3 Days" {% if data.delete_output_wavs == '3 Days' %}selected{% endif %}>3 Days</option>
+				<option value="4 Day" {% if data.delete_output_wavs == '4 Days' %}selected{% endif %}>4 Days</option>
+				<option value="5 Day" {% if data.delete_output_wavs == '5 Days' %}selected{% endif %}>5 Days</option>
+				<option value="6 Day" {% if data.delete_output_wavs == '6 Days' %}selected{% endif %}>6 Days</option>
+				<option value="7 Days" {% if data.delete_output_wavs == '7 Days' %}selected{% endif %}>7 Days</option>
+				<option value="14 Days" {% if data.delete_output_wavs == '14 Days' %}selected{% endif %}>14 Days</option>
+				<option value="21 Days" {% if data.delete_output_wavs == '21 Days' %}selected{% endif %}>21 Days</option>
+				<option value="28 Days" {% if data.delete_output_wavs == '28 Days' %}selected{% endif %}>28 Days</option>
+		</select>
+
+	
+        <label for="low_vram" style="color: #33cc33;">&nbsp; &nbsp; Low VRAM:</label>
+        <select id="low_vram" name="low_vram" required="">
+            <option {% if data.low_vram %}selected{% endif %} value="true">True</option>
+            <option {% if not data.low_vram %}selected{% endif %} value="false">False</option>
+        </select>
+
+		
+        <label for="deepspeed_activate" style="color: red;">DeepSpeed Activate:</label>
+        <select id="deepspeed_activate" name="deepspeed_activate" required="">
+            <option {% if data.deepspeed_activate %}selected{% endif %} value="true">True</option>
+            <option {% if not data.deepspeed_activate %}selected{% endif %} value="false">False</option>
+        </select>
+
+		<label for="output_folder_wav" style="color: red;">&nbsp; &nbsp; WAV Output Folder:</label>
+		<input id="output_folder_wav" name="output_folder_wav" required="" type="text" value="{{ data.output_folder_wav }}" />
+
+
+        <input type="hidden" id="model_loaded" name="model_loaded" value="{{ data.model_loaded }}" />
+
+        <!-- Continue updating other dropdowns and inputs in a similar manner -->
+
+        <label for="model_name" style="color: red;"> API TTS Model Name:</label>
+        <input id="model_name" name="model_name" required="" type="text" value="{{ data.model_name }}" />
+
+<label for="model_version" style="color: red; font-size: 16px; line-height: 1; vertical-align: bottom; margin-bottom: 0;">&nbsp; &nbsp;&nbsp;API Local Model Folder:</label>
+<span style="font-size: 14px; vertical-align: bottom; margin-bottom: 0; margin-top: 2px;">{{ modeldownload_model_path }}</span>
+
+
+
+
+        <label for="ip_address" style="color: red;"> IP Address:</label>
+        <input id="ip_address" name="ip_address" required="" type="text" value="{{ data.ip_address }}" />
+
+        <label for="port_number" style="color: red;"> &nbsp; &nbsp; Port Number:</label>
+        <input id="port_number" name="port_number" required="" type="text" value="{{ data.port_number }}" />
+
+<div class="radio-group">
+    <label for="tts_method_api_local" style="color: #33cc33;">Model: <span style="color: black; font-weight: normal;">API Local</span>:</label>
+    <input id="tts_method_api_local_true" {% if data.tts_method_api_local %}checked{% endif %} name="tts_method" type="radio" value="api_local" />
+</div>
+
+<div class="radio-group">
+    <label for="tts_method_api_tts" style="color: #33cc33;">&nbsp; &nbsp;&nbsp;Model: <span style="color: black; font-weight: normal;">API TTS</span>:</label>
+    <input id="tts_method_api_tts_true" {% if data.tts_method_api_tts %}checked{% endif %} name="tts_method" type="radio" value="api_tts" />
+</div>
+
+<div class="radio-group">
+    <label for="tts_method_xtts_local" style="color: #33cc33;">Model: <span style="color: black; font-weight: normal;">XTTS Local</span>:</label>
+    <input id="tts_method_xtts_local_true" {% if data.tts_method_xtts_local %}checked{% endif %} name="tts_method" type="radio" value="xtts_local" />
+</div>
+        <button type="submit">Update Settings</button>
+		</form>
+		   <p class="warning">WARNING: Changing RED items or setting DeepSpeed to True on a system without DeepSpeed installed, may cause errors.</p>
+
+</body>
+
+</html>

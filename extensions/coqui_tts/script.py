@@ -10,6 +10,7 @@ import signal
 import sys
 import atexit
 from pathlib import Path
+from datetime import datetime, timedelta
 
 import gradio as gr
 
@@ -50,7 +51,7 @@ with open(this_dir / 'languages.json', encoding='utf8') as f:
 process_lock = threading.Lock()
 
 #######################################
-#### LOAD PARAMS FROM CONFFIG.JSON ####
+#### LOAD PARAMS FROM CONFIG.JSON ####
 #######################################
 def load_config(file_path):
     with open(file_path, 'r') as config_file:
@@ -63,13 +64,45 @@ params = load_config(config_file_path)
 def get_available_voices():
     return sorted([voice.name for voice in Path(f"{this_dir}/voices").glob("*.wav")])
 
-##########################################
-#### STARTUP CHECKS & LICENSE DISPLAY ####
-##########################################
+#########################
+#### LICENSE DISPLAY ####
+#########################
 #STARTUP Display Licence Information
 print("[CoquiTTS Startup] \033[94mCoqui Public Model License\033[0m")
 print("[CoquiTTS Startup] \033[94mhttps://coqui.ai/cpml.txt\033[0m")
 
+############################################
+#### DELETE OLD OUTPUT WAV FILES IF SET ####
+############################################
+def delete_old_files(folder_path, days_to_keep):
+    current_time = datetime.now()
+    print("[CoquiTTS Startup] Deletion of old output folder WAV files is currently enabled and set at", delete_output_wavs_setting)
+    for file_name in os.listdir(folder_path):
+        file_path = os.path.join(folder_path, file_name)
+        if os.path.isfile(file_path):
+            file_creation_time = datetime.fromtimestamp(os.path.getctime(file_path))
+            age = current_time - file_creation_time
+            if age > timedelta(days=days_to_keep):
+                os.remove(file_path)
+
+# Extract settings using params dictionary
+delete_output_wavs_setting = params["delete_output_wavs"]
+output_folder_wav = params["output_folder_wav"]
+output_folder_wav = os.path.normpath(output_folder_wav)
+
+# Check and perform file deletion
+if delete_output_wavs_setting.lower() == "disabled":
+    print("[CoquiTTS Startup] Old output wav file deletion is set to disabled.")
+else:
+    try:
+        days_to_keep = int(delete_output_wavs_setting.split()[0])
+        delete_old_files(output_folder_wav, days_to_keep)
+    except ValueError:
+        print("[CoquiTTS Startup] Invalid setting for deleting old wav files. Please use 'Disabled' or 'X Days' format.")
+
+########################
+#### STARTUP CHECKS ####
+########################
 #STARTUP Checks routine
 def check_required_files():
     this_dir = Path(__file__).parent.resolve()
@@ -79,6 +112,17 @@ def check_required_files():
 
 #STARTUP Call Check routine
 check_required_files()
+
+#################################################
+#### SET GRADIO BUTTONS BASED ON CONFIG.JSON ####
+#################################################
+
+if params["tts_method_api_tts"] == True:
+    gr_modelchoice = "API TTS"
+elif params["tts_method_api_local"] == True:
+    gr_modelchoice = "API Local"
+elif params["tts_method_xtts_local"] == True:
+    gr_modelchoice = "XTTSv2 Local"
 
 ######################
 #### GRADIO STUFF ####
@@ -249,7 +293,7 @@ def voice_preview(string):
         return  
     string = cleaned_string 
     # Setup the output file
-    output_file = Path('extensions/coqui_tts/outputs/voice_preview.wav') 
+    output_file = Path(params["output_folder_wav"]) / "voice_preview.wav"
     # Generate the audio
     language_code = languages.get(params["language"])  
     # Convert the WindowsPath object to a string before using it in JSON payload
@@ -279,11 +323,9 @@ def output_modifier(string, state):
         return
     string = cleaned_string
     # Setup the output file
-    output_file = Path(f'extensions/coqui_tts/outputs/{state["character_menu"]}_{int(time.time())}.wav')
-
+    output_file = Path(f'{params["output_folder_wav"]}/{state["character_menu"]}_{int(time.time())}.wav')
     # Generate the audio and handle the response
     language_code = languages.get(params["language"])
-
     # Convert the WindowsPath object to a string before using it in JSON payload
     output_file_str = output_file.as_posix()
 
@@ -407,9 +449,9 @@ def ui():
             tts_radio_buttons = gr.Radio(
             choices=["API TTS", "API Local", "XTTSv2 Local"],
             label="Select TTS Generation Method (Read NOTE)",
-            value="XTTSv2 Local"  # Set the default value
+            value=gr_modelchoice  # Set the default value
             )
-            explanation_text = gr.HTML(f"<p>NOTE: Switching Model Type, Low VRAM & DeepSpeed takes 15 seconds. Each TTS generation method has a slightly different sound. DeepSpeed checkbox is only visible if DeepSpeed is present. Readme: <a href='http://{params['ip_address']}:{params['port_number']}'>http://{params['ip_address']}:{params['port_number']}</a>")
+            explanation_text = gr.HTML(f"<p>NOTE: Switching Model Type, Low VRAM & DeepSpeed takes 15 seconds. Each TTS generation method has a slightly different sound. DeepSpeed checkbox is only visible if DeepSpeed is present. Readme & Settings: <a href='http://{params['ip_address']}:{params['port_number']}'>http://{params['ip_address']}:{params['port_number']}</a>")
             
         with gr.Row():
             with gr.Row():
