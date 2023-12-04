@@ -144,6 +144,8 @@ loaders_and_params = OrderedDict({
         'mlock'
     ],
     'QuIP#': [
+        'trust_remote_code',
+        'no_use_fast',
         'no_flash_attn',
     ]
 })
