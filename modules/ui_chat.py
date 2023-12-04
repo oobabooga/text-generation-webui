@@ -11,7 +11,7 @@ from modules.text_generation import stop_everything_event
 from modules.utils import gradio
 
 inputs = ('Chat input', 'interface_state')
-reload_arr = ('history', 'name1', 'name2', 'mode', 'chat_style')
+reload_arr = ('history', 'name1', 'name2', 'mode', 'chat_style', 'character_menu')
 clear_arr = ('delete_chat-confirm', 'delete_chat', 'delete_chat-cancel')
 
 
@@ -25,7 +25,7 @@ def create_ui():
     with gr.Tab('Chat', elem_id='chat-tab', elem_classes=("old-ui" if shared.args.chat_buttons else None)):
         with gr.Row():
             with gr.Column(elem_id='chat-col'):
-                shared.gradio['display'] = gr.HTML(value=chat_html_wrapper({'internal': [], 'visible': []}, '', '', 'chat', 'cai-chat'))
+                shared.gradio['display'] = gr.HTML(value=chat_html_wrapper({'internal': [], 'visible': []}, '', '', 'chat', 'cai-chat', ''))
 
                 with gr.Row(elem_id="chat-input-row"):
                     with gr.Column(scale=1, elem_id='gr-hover-container'):
