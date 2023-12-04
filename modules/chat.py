@@ -281,7 +281,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
 
 def impersonate_wrapper(text, state):
 
-    static_output = chat_html_wrapper(state['history'], state['name1'], state['name2'], state['mode'], state['chat_style'])
+    static_output = chat_html_wrapper(state['history'], state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
 
     if shared.model_name == 'None' or shared.model is None:
         logger.error("No model is loaded! Select one in the Model tab.")
@@ -340,7 +340,7 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
         send_dummy_reply(state['start_with'], state)
 
     for i, history in enumerate(generate_chat_reply(text, state, regenerate, _continue, loading_message=True)):
-        yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style']), history
+        yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu']), history
 
 
 def remove_last_message(history):
@@ -390,8 +390,8 @@ def send_dummy_reply(text, state):
     return history
 
 
-def redraw_html(history, name1, name2, mode, style, reset_cache=False):
-    return chat_html_wrapper(history, name1, name2, mode, style, reset_cache=reset_cache)
+def redraw_html(history, name1, name2, mode, style, character, reset_cache=False):
+    return chat_html_wrapper(history, name1, name2, mode, style, character, reset_cache=reset_cache)
 
 
 def start_new_chat(state):
