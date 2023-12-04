@@ -158,7 +158,7 @@ conda install -y -c "nvidia/label/cuda-11.8.0" cuda-runtime
 
 ##### Manual install
 
-The requirments*.txt above contain various precompiled wheels. If you wish to compile things manually, or if you need to because no suitable wheels are available for your hardware, you can use `requirements_nowheels.txt` and then install your desired loaders manually.
+The requirements*.txt above contain various precompiled wheels. If you wish to compile things manually, or if you need to because no suitable wheels are available for your hardware, you can use `requirements_nowheels.txt` and then install your desired loaders manually.
 
 ### Alternative: Docker
 
