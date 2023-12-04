@@ -283,7 +283,7 @@ Optionally, you can use the following command-line flags:
 
 | Flag                                       | Description |
 |--------------------------------------------|-------------|
-| `--loader LOADER`                          | Choose the model loader manually, otherwise, it will get autodetected. Valid options: transformers, exllama_hf, exllamav2_hf, exllama, exllamav2, autogptq, gptq-for-llama, llama.cpp, llamacpp_hf, ctransformers, autoawq. |
+| `--loader LOADER`                          | Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, llamacpp_HF, ExLlama_HF, ExLlamav2_HF, AutoGPTQ, AutoAWQ, GPTQ-for-LLaMa, ExLlama, ExLlamav2, ctransformers. |
 
 #### Accelerate/transformers
 
