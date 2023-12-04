@@ -328,7 +328,14 @@ def QuipSharp_loader(model_name):
         from lib.utils.unsafe_import import model_from_hf_path
 
     model_dir = Path(f'{shared.args.model_dir}/{model_name}')
-    tokenizer_dir = Path(f'{shared.args.model_dir}/oobabooga_llama-tokenizer')
+    for fname in [model_name, "oobabooga_llama-tokenizer", "llama-tokenizer"]:
+        path = Path(f'{shared.args.model_dir}/{fname}')
+        if all((path / file).exists() for file in ['tokenizer_config.json', 'special_tokens_map.json', 'tokenizer.model']):
+            tokenizer_dir = path
+            break
+    else:
+        logger.error("Could not load the model because the tokenizer files could not be found in the model folder. Please download oobabooga/llama-tokenizer.")
+        return None, None
 
     model, model_str = model_from_hf_path(
         str(model_dir),
