@@ -43,7 +43,7 @@ settings = {
     'seed': -1,
     'truncation_length': 2048,
     'truncation_length_min': 0,
-    'truncation_length_max': 32768,
+    'truncation_length_max': 200000,
     'max_tokens_second': 0,
     'custom_stopping_strings': '',
     'custom_token_bans': '',
