@@ -4,6 +4,7 @@ import re
 import time
 import traceback
 from pathlib import Path
+from modules.relative_imports import RelativeImport
 
 import torch
 import transformers
@@ -69,6 +70,7 @@ def load_model(model_name, loader=None):
         'ExLlamav2_HF': ExLlamav2_HF_loader,
         'ctransformers': ctransformers_loader,
         'AutoAWQ': AutoAWQ_loader,
+        'QuIP#': QuipSharp_loader,
     }
 
     metadata = get_model_metadata(model_name)
@@ -319,6 +321,28 @@ def AutoAWQ_loader(model_name):
             )
 
     return model
+
+
+def QuipSharp_loader(model_name):
+    with RelativeImport("repositories/quip-sharp"):
+        from lib.utils.unsafe_import import model_from_hf_path
+
+    model_dir = Path(f'{shared.args.model_dir}/{model_name}')
+    tokenizer_dir = Path(f'{shared.args.model_dir}/oobabooga_llama-tokenizer')
+
+    model, model_str = model_from_hf_path(
+        str(model_dir),
+        use_cuda_graph=False,
+        use_flash_attn=not shared.args.no_flash_attn
+    )
+
+    tokenizer = AutoTokenizer.from_pretrained(
+        tokenizer_dir,
+        trust_remote_code=shared.args.trust_remote_code,
+        use_fast=not shared.args.no_use_fast
+    )
+
+    return model, tokenizer
 
 
 def GPTQ_loader(model_name):

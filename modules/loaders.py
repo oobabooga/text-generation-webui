@@ -143,6 +143,9 @@ loaders_and_params = OrderedDict({
         'no_mmap',
         'mlock'
     ],
+    'QuIP#': [
+        'no_flash_attn',
+    ]
 })
 
 loaders_samplers = {
@@ -417,6 +420,43 @@ loaders_samplers = {
         'repetition_penalty_range',
     },
     'AutoAWQ': {
+        'temperature',
+        'temperature_last',
+        'top_p',
+        'min_p',
+        'top_k',
+        'typical_p',
+        'epsilon_cutoff',
+        'eta_cutoff',
+        'tfs',
+        'top_a',
+        'repetition_penalty',
+        'presence_penalty',
+        'frequency_penalty',
+        'repetition_penalty_range',
+        'encoder_repetition_penalty',
+        'no_repeat_ngram_size',
+        'min_length',
+        'seed',
+        'do_sample',
+        'penalty_alpha',
+        'num_beams',
+        'length_penalty',
+        'early_stopping',
+        'mirostat_mode',
+        'mirostat_tau',
+        'mirostat_eta',
+        'grammar_file_row',
+        'grammar_string',
+        'guidance_scale',
+        'negative_prompt',
+        'ban_eos_token',
+        'custom_token_bans',
+        'add_bos_token',
+        'skip_special_tokens',
+        'auto_max_new_tokens',
+    },
+    'QuIP#': {
         'temperature',
         'temperature_last',
         'top_p',
