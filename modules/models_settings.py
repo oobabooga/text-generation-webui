@@ -33,7 +33,9 @@ def get_model_metadata(model):
             for k in settings[pat]:
                 model_settings[k] = settings[pat][k]
 
+    custom_user_loader = True
     if 'loader' not in model_settings:
+        custom_user_loader = False
         loader = infer_loader(model, model_settings)
         if 'wbits' in model_settings and type(model_settings['wbits']) is int and model_settings['wbits'] > 0:
             loader = 'AutoGPTQ'
@@ -79,6 +81,9 @@ def get_model_metadata(model):
                     model_settings['groupsize'] = metadata['quantization_config']['group_size']
                 if 'desc_act' in metadata['quantization_config']:
                     model_settings['desc_act'] = metadata['quantization_config']['desc_act']
+
+            if 'quip_params' in metadata and not custom_user_loader:
+                model_settings['loader'] = 'QuIP#'
 
         # Read AutoGPTQ metadata
         path = Path(f'{shared.args.model_dir}/{model}/quantize_config.json')
