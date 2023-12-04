@@ -5,6 +5,7 @@ import gradio as gr
 from modules.html_generator import get_image_cache
 from modules.shared import gradio, settings
 
+
 cards = []
 
 
@@ -109,6 +110,7 @@ def ui():
             filter_box = gr.Textbox(label='', placeholder='Filter', lines=1, max_lines=1, container=False, elem_id='gallery-filter-box')
             gr.ClearButton(filter_box, value='🗑️', elem_classes='refresh-button')
             update = gr.Button("Refresh", elem_classes='refresh-button')
+
         gallery = gr.Dataset(
             components=[gr.HTML(visible=False)],
             label="",
