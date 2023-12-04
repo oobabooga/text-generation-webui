@@ -4,7 +4,6 @@ import re
 import time
 import traceback
 from pathlib import Path
-from modules.relative_imports import RelativeImport
 
 import torch
 import transformers
@@ -24,6 +23,7 @@ import modules.shared as shared
 from modules import RoPE, llama_attn_hijack, sampler_hijack
 from modules.logging_colors import logger
 from modules.models_settings import get_model_metadata
+from modules.relative_imports import RelativeImport
 
 transformers.logging.set_verbosity_error()
 
