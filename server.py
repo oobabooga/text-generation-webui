@@ -53,6 +53,15 @@ from modules.models_settings import (
 )
 from modules.utils import gradio
 
+#### CAPTURE CTRL+C AND SHUTDOWN ######
+import signal
+def signal_handler(sig, frame):
+    logger.info(f"Received Ctrl+C. Shutting down Text-Generation-WebUI gracefully")
+    shared.gradio['interface'].close()
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, signal_handler)
+#### ALL THE NORMAL SCRIPT BELOW ######
 
 def create_interface():
 

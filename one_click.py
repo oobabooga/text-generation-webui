@@ -8,6 +8,17 @@ import site
 import subprocess
 import sys
 
+#### CAPTURE CTRL+C AND SHUTDOWN ######
+import signal
+from datetime import datetime
+current_datetime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+def signal_handler(sig, frame):
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, signal_handler) 
+#### ALL THE NORMAL SCRIPT BELOW ######
+
 script_dir = os.getcwd()
 conda_env_path = os.path.join(script_dir, "installer_files", "env")
 
