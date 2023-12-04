@@ -1,3 +1,5 @@
+import accelerate;
+
 import os
 import warnings
 
