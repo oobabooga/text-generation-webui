@@ -53,6 +53,13 @@ from modules.models_settings import (
 )
 from modules.utils import gradio
 
+import signal
+def signal_handler(sig, frame):
+    logger.info(f"Received Ctrl+C. Shutting down Text-Generation-WebUI gracefully")
+    shared.gradio['interface'].close()
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, signal_handler)
 
 def create_interface():
 

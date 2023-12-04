@@ -7,6 +7,12 @@ import re
 import site
 import subprocess
 import sys
+import signal
+
+def signal_handler(sig, frame):
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, signal_handler) 
 
 script_dir = os.getcwd()
 conda_env_path = os.path.join(script_dir, "installer_files", "env")
