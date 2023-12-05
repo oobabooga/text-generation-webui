@@ -4,6 +4,7 @@ import hashlib
 import os
 import platform
 import re
+import signal
 import site
 import subprocess
 import sys
@@ -25,6 +26,13 @@ else:
     CMD_FLAGS = ''
 
 flags = f"{' '.join([flag for flag in sys.argv[1:] if flag != '--update'])} {CMD_FLAGS}"
+
+
+def signal_handler(sig, frame):
+    sys.exit(0)
+
+
+signal.signal(signal.SIGINT, signal_handler)
 
 
 def is_linux():
