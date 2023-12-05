@@ -4,15 +4,11 @@ import hashlib
 import os
 import platform
 import re
+import signal
 import site
 import subprocess
 import sys
-import signal
 
-def signal_handler(sig, frame):
-    sys.exit(0)
-
-signal.signal(signal.SIGINT, signal_handler) 
 
 script_dir = os.getcwd()
 conda_env_path = os.path.join(script_dir, "installer_files", "env")
@@ -31,6 +27,13 @@ else:
     CMD_FLAGS = ''
 
 flags = f"{' '.join([flag for flag in sys.argv[1:] if flag != '--update'])} {CMD_FLAGS}"
+
+
+def signal_handler(sig, frame):
+    sys.exit(0)
+
+
+signal.signal(signal.SIGINT, signal_handler)
 
 
 def is_linux():

@@ -20,15 +20,15 @@ matplotlib.use('Agg')  # This fixes LaTeX rendering on some systems
 
 import json
 import os
+import signal
 import sys
 import time
 from functools import partial
 from pathlib import Path
 from threading import Lock
 
-import yaml
-
 import modules.extensions as extensions_module
+import yaml
 from modules import (
     chat,
     shared,
@@ -53,13 +53,17 @@ from modules.models_settings import (
 )
 from modules.utils import gradio
 
-import signal
+
 def signal_handler(sig, frame):
-    logger.info(f"Received Ctrl+C. Shutting down Text-Generation-WebUI gracefully")
-    shared.gradio['interface'].close()
+    logger.info(f"Received Ctrl+C. Shutting down Text generation web UI gracefully")
+    if 'interface' in shared.gradio:
+        shared.gradio['interface'].close()
+
     sys.exit(0)
 
+
 signal.signal(signal.SIGINT, signal_handler)
+
 
 def create_interface():
 
