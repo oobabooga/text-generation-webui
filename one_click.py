@@ -9,7 +9,6 @@ import site
 import subprocess
 import sys
 
-
 script_dir = os.getcwd()
 conda_env_path = os.path.join(script_dir, "installer_files", "env")
 

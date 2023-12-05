@@ -28,8 +28,9 @@ from functools import partial
 from pathlib import Path
 from threading import Lock
 
-import modules.extensions as extensions_module
 import yaml
+
+import modules.extensions as extensions_module
 from modules import (
     chat,
     shared,
