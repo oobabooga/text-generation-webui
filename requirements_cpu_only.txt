@@ -1,8 +1,8 @@
-accelerate==0.24.*
+accelerate==0.25.*
 colorama
 datasets
 einops
-exllamav2==0.0.8
+exllamav2==0.0.10
 gradio==3.50.*
 markdown
 numpy==1.24.*

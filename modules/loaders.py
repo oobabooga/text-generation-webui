@@ -71,7 +71,6 @@ loaders_and_params = OrderedDict({
         'compress_pos_emb',
         'cfg_cache',
         'no_use_fast',
-        'exllama_HF_info',
     ],
     'ExLlamav2_HF': [
         'gpu_split',
@@ -133,6 +132,7 @@ loaders_and_params = OrderedDict({
         'cache_8bit',
         'alpha_value',
         'compress_pos_emb',
+        'exllamav2_info',
     ],
     'ctransformers': [
         'n_ctx',
