@@ -57,7 +57,7 @@ from modules.utils import gradio
 
 
 def signal_handler(sig, frame):
-    logger.info(f"Received Ctrl+C. Shutting down Text generation web UI gracefully")
+    logger.info("Received Ctrl+C. Shutting down Text generation web UI gracefully.")
     if 'interface' in shared.gradio:
         shared.gradio['interface'].close()
 
