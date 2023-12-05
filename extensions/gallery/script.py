@@ -3,11 +3,18 @@ from pathlib import Path
 import gradio as gr
 
 from modules.html_generator import get_image_cache
-from modules.shared import gradio
+from modules.shared import gradio, settings
+
+
+cards = []
 
 
 def generate_css():
     css = """
+      .highlighted-border {
+        border-color: rgb(249, 115, 22) !important;
+      }
+
       .character-gallery > .gallery {
         margin: 1rem 0;
         display: grid !important;
@@ -58,6 +65,7 @@ def generate_css():
 
 
 def generate_html():
+    global cards
     cards = []
     # Iterate through files in image folder
     for file in sorted(Path("characters").glob("*")):
@@ -78,6 +86,14 @@ def generate_html():
     return cards
 
 
+def filter_cards(filter_str=''):
+    if filter_str == '':
+        return cards
+
+    filter_upper = filter_str.upper()
+    return [k for k in cards if filter_upper in k[1].upper()]
+
+
 def select_character(evt: gr.SelectData):
     return (evt.value[1])
 
@@ -88,16 +104,26 @@ def custom_js():
 
 
 def ui():
-    with gr.Accordion("Character gallery", open=False, elem_id='gallery-extension'):
-        update = gr.Button("Refresh")
+    with gr.Accordion("Character gallery", open=settings["gallery-open"], elem_id='gallery-extension'):
         gr.HTML(value="<style>" + generate_css() + "</style>")
+        with gr.Row():
+            filter_box = gr.Textbox(label='', placeholder='Filter', lines=1, max_lines=1, container=False, elem_id='gallery-filter-box')
+            gr.ClearButton(filter_box, value='🗑️', elem_classes='refresh-button')
+            update = gr.Button("Refresh", elem_classes='refresh-button')
+
         gallery = gr.Dataset(
             components=[gr.HTML(visible=False)],
             label="",
             samples=generate_html(),
             elem_classes=["character-gallery"],
-            samples_per_page=50
+            samples_per_page=settings["gallery-items_per_page"]
         )
 
-    update.click(generate_html, [], gallery)
+    filter_box.change(lambda: None, None, None, _js=f'() => {{{custom_js()}; gotoFirstPage()}}').success(
+        filter_cards, filter_box, gallery).then(
+        lambda x: gr.update(elem_classes='highlighted-border' if x != '' else ''), filter_box, filter_box, show_progress=False)
+
+    update.click(generate_html, [], None).success(
+        filter_cards, filter_box, gallery)
+
     gallery.select(select_character, None, gradio['character_menu'])

@@ -221,11 +221,11 @@ def generate_instruct_html(history):
     return output
 
 
-def generate_cai_chat_html(history, name1, name2, style, reset_cache=False):
+def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=False):
     output = f'<style>{chat_styles[style]}</style><div class="chat" id="chat"><div class="messages">'
 
-    # We use ?name2 and ?time.time() to force the browser to reset caches
-    img_bot = f'<img src="file/cache/pfp_character_thumb.png?{name2}" class="pfp_character">' if Path("cache/pfp_character_thumb.png").exists() else ''
+    # We use ?character and ?time.time() to force the browser to reset caches
+    img_bot = f'<img src="file/cache/pfp_character_thumb.png?{character}" class="pfp_character">' if Path("cache/pfp_character_thumb.png").exists() else ''
     img_me = f'<img src="file/cache/pfp_me.png?{time.time() if reset_cache else ""}">' if Path("cache/pfp_me.png").exists() else ''
 
     for i, _row in enumerate(history):
@@ -299,10 +299,10 @@ def generate_chat_html(history, name1, name2, reset_cache=False):
     return output
 
 
-def chat_html_wrapper(history, name1, name2, mode, style, reset_cache=False):
+def chat_html_wrapper(history, name1, name2, mode, style, character, reset_cache=False):
     if mode == 'instruct':
         return generate_instruct_html(history['visible'])
     elif style == 'wpp':
         return generate_chat_html(history['visible'], name1, name2)
     else:
-        return generate_cai_chat_html(history['visible'], name1, name2, style, reset_cache)
+        return generate_cai_chat_html(history['visible'], name1, name2, style, character, reset_cache)

@@ -1,4 +1,4 @@
-accelerate==0.24.*
+accelerate==0.25.*
 colorama
 datasets
 einops
@@ -12,7 +12,7 @@ peft==0.6.*
 Pillow>=9.5.0
 pyyaml
 requests
-safetensors==0.4.0
+safetensors==0.4.1
 scipy
 sentencepiece
 tensorboard
