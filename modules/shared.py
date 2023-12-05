@@ -43,7 +43,7 @@ settings = {
     'seed': -1,
     'truncation_length': 2048,
     'truncation_length_min': 0,
-    'truncation_length_max': 32768,
+    'truncation_length_max': 200000,
     'max_tokens_second': 0,
     'custom_stopping_strings': '',
     'custom_token_bans': '',
@@ -58,6 +58,8 @@ settings = {
     'custom_system_message': '',
     'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
     'autoload_model': False,
+    'gallery-items_per_page': 50,
+    'gallery-open': False,
     'default_extensions': ['gallery'],
 }
 
@@ -77,7 +79,7 @@ parser.add_argument('--verbose', action='store_true', help='Print the prompts to
 parser.add_argument('--chat-buttons', action='store_true', help='Show buttons on the chat tab instead of a hover menu.')
 
 # Model loader
-parser.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise, it will get autodetected. Valid options: transformers, exllama_hf, exllamav2_hf, exllama, exllamav2, autogptq, gptq-for-llama, llama.cpp, llamacpp_hf, ctransformers, autoawq.')
+parser.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, llamacpp_HF, ExLlama_HF, ExLlamav2_HF, AutoGPTQ, AutoAWQ, GPTQ-for-LLaMa, ExLlama, ExLlamav2, ctransformers.')
 
 # Accelerate/transformers
 parser.add_argument('--cpu', action='store_true', help='Use the CPU to generate text. Warning: Training on CPU is extremely slow.')
