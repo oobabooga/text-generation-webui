@@ -93,9 +93,10 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
                 last_update = time.time()
                 yield reply
 
-            # Limit updates to 24 or 5 per second to avoid lag
+            # Limit updates to 24 or 5 per second to avoid lag in the Gradio UI
+            # API updates are not limited
             else:
-                min_update_interval = 0.2 if (shared.args.listen or shared.args.share) else 0.0417
+                min_update_interval = 0 if not escape_html else 0.2 if (shared.args.listen or shared.args.share) else 0.0417
                 if cur_time - last_update > min_update_interval:
                     last_update = cur_time
                     yield reply
