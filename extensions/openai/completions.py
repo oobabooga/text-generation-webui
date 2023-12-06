@@ -17,7 +17,10 @@ from modules.chat import (
 )
 from modules.presets import load_preset_memoized
 from modules.text_generation import decode, encode, generate_reply
-
+from PIL import Image
+from io import BytesIO
+import base64
+import requests
 
 class LogitsBiasProcessor(LogitsProcessor):
     def __init__(self, logit_bias={}):
@@ -139,7 +142,23 @@ def convert_history(history):
     system_message = ""
 
     for entry in history:
-        content = entry["content"]
+        if "image_url" in entry:
+            image_url = entry['image_url']
+            if "base64" in image_url:
+                image_url = image_url.split('base64')[1]
+                img = Image.open(BytesIO(base64.b64decode(image_url)))
+            else:
+                try:
+                    my_res = requests.get(image_url)
+                    img = Image.open(BytesIO(my_res.content))
+                except Exception as e:
+                    raise 'Image cannot be loaded from the URL!'
+            buffered = BytesIO()
+            img.save(buffered, format="PNG")
+            img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
+            content = f'<img src="data:image/jpeg;base64,{img_str}">'
+        else:
+            content = entry["content"]
         role = entry["role"]
 
         if role == "user":
@@ -181,7 +200,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
             raise InvalidRequestError(message="messages: missing role", param='messages')
         elif m['role'] == 'function':
             raise InvalidRequestError(message="role: function is not supported.", param='messages')
-        if 'content' not in m:
+        if 'content' not in m and "image_url" not in m:
             raise InvalidRequestError(message="messages: missing content", param='messages')
 
     # Chat Completions
