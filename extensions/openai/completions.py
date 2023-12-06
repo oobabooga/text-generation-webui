@@ -21,6 +21,7 @@ from PIL import Image
 from io import BytesIO
 import base64
 import requests
+import re
 
 class LogitsBiasProcessor(LogitsProcessor):
     def __init__(self, logit_bias={}):
@@ -145,7 +146,7 @@ def convert_history(history):
         if "image_url" in entry:
             image_url = entry['image_url']
             if "base64" in image_url:
-                image_url = image_url.split('base64')[1]
+                image_url = re.sub('^data:image/.+;base64,', '', image_url)
                 img = Image.open(BytesIO(base64.b64decode(image_url)))
             else:
                 try:
