@@ -241,6 +241,8 @@ def fix_loader_name(name):
         return 'ctransformers'
     elif name in ['autoawq', 'awq', 'auto-awq']:
         return 'AutoAWQ'
+    elif name in ['quip#', 'quip-sharp', 'quipsharp', 'quip_sharp']:
+        return 'QuIP#'
 
 
 def add_extension(name, last=False):
