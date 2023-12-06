@@ -1,4 +1,5 @@
 import gc
+import logging
 import os
 import re
 import time
@@ -324,32 +325,34 @@ def AutoAWQ_loader(model_name):
 
 
 def QuipSharp_loader(model_name):
-    with RelativeImport("repositories/quip-sharp"):
-        from lib.utils.unsafe_import import model_from_hf_path
+    try:
+        with RelativeImport("repositories/quip-sharp"):
+            from lib.utils.unsafe_import import model_from_hf_path
+    except:
+        logger.error(
+            "\nQuIP# has not been found. It must be installed manually for now.\n"
+            "For instructions on how to do that, please consult:\n"
+            "https://github.com/oobabooga/text-generation-webui/pull/4803\n"
+        )
+        return None, None
+
+    # This fixes duplicate logging messages after the import above.
+    handlers = logging.getLogger().handlers
+    if len(handlers) > 1:
+        logging.getLogger().removeHandler(handlers[1])
 
     model_dir = Path(f'{shared.args.model_dir}/{model_name}')
-    for fname in [model_name, "oobabooga_llama-tokenizer", "llama-tokenizer"]:
-        path = Path(f'{shared.args.model_dir}/{fname}')
-        if all((path / file).exists() for file in ['tokenizer_config.json', 'special_tokens_map.json', 'tokenizer.model']):
-            tokenizer_dir = path
-            break
-    else:
-        logger.error("Could not load the model because the tokenizer files could not be found in the model folder. Please download oobabooga/llama-tokenizer.")
+    if not all((model_dir / file).exists() for file in ['tokenizer_config.json', 'special_tokens_map.json', 'tokenizer.model']):
+        logger.error(f"Could not load the model because the tokenizer files could not be found in the model folder. Please download the following files from the original (unquantized) model into {model_dir}: special_tokens_map.json, tokenizer.json, tokenizer.model, tokenizer_config.json.")
         return None, None
 
     model, model_str = model_from_hf_path(
-        str(model_dir),
+        model_dir,
         use_cuda_graph=False,
         use_flash_attn=not shared.args.no_flash_attn
     )
 
-    tokenizer = AutoTokenizer.from_pretrained(
-        tokenizer_dir,
-        trust_remote_code=shared.args.trust_remote_code,
-        use_fast=not shared.args.no_use_fast
-    )
-
-    return model, tokenizer
+    return model
 
 
 def GPTQ_loader(model_name):
