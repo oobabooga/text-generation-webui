@@ -36,7 +36,7 @@ settings = {
     'prompt-default': 'QA',
     'prompt-notebook': 'QA',
     'preset': 'simple-1',
-    'max_new_tokens': 200,
+    'max_new_tokens': 512,
     'max_new_tokens_min': 1,
     'max_new_tokens_max': 4096,
     'negative_prompt': '',
