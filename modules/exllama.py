@@ -165,6 +165,14 @@ class ExllamaModel:
                 if has_leading_space:
                     decoded_text = ' ' + decoded_text
 
+                # Check the partial unicode character
+                if chr(0xfffd) in decoded_text:
+                    is_last = i == max_new_tokens - 1
+                    is_stopping = token.item() == self.generator.tokenizer.eos_token_id or shared.stop_everything
+                    # If we are not at the end of the generation, we skip this token
+                    if not (is_last or is_stopping):
+                        continue
+
                 yield decoded_text
                 if token.item() == self.generator.tokenizer.eos_token_id or shared.stop_everything:
                     break
@@ -204,6 +212,14 @@ class ExllamaModel:
                 decoded_text = self.generator.tokenizer.decode(self.generator.sequence[0][initial_len:])
                 if has_leading_space:
                     decoded_text = ' ' + decoded_text
+
+                # Check the partial unicode character
+                if chr(0xfffd) in decoded_text:
+                    is_last = i == max_new_tokens - 1
+                    is_stopping = token.item() == self.tokenizer.eos_token_id or shared.stop_everything
+                    # If we are not at the end of the generation, we skip this token
+                    if not (is_last or is_stopping):
+                        continue
 
                 yield decoded_text
                 if token.item() == self.tokenizer.eos_token_id or shared.stop_everything:
