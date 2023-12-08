@@ -21,8 +21,9 @@ def save_file(fname, contents):
         return
 
     root_folder = Path(__file__).resolve().parent.parent
-    abs_path = os.path.abspath(fname)
-    rel_path = os.path.relpath(abs_path, root_folder)
+    abs_path_str = os.path.abspath(fname)
+    rel_path_str = os.path.relpath(abs_path_str, root_folder)
+    rel_path = Path(rel_path_str)
     if rel_path.parts[0] == '..':
         logger.error(f'Invalid file path: {fname}')
         return
@@ -39,8 +40,9 @@ def delete_file(fname):
         return
 
     root_folder = Path(__file__).resolve().parent.parent
-    abs_path = os.path.abspath(fname)
-    rel_path = os.path.relpath(abs_path, root_folder)
+    abs_path_str = os.path.abspath(fname)
+    rel_path_str = os.path.relpath(abs_path_str, root_folder)
+    rel_path = Path(rel_path_str)
     if rel_path.parts[0] == '..':
         logger.error(f'Invalid file path: {fname}')
         return
