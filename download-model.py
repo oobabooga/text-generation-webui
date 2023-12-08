@@ -128,7 +128,7 @@ class ModelDownloader:
                     links.pop(i)
 
         # For GGUF, try to download only the Q4_K_M if no specific file is specified.
-        # If not present, exclude all GGUFs, as that's like a repository with both
+        # If not present, exclude all GGUFs, as that's likely a repository with both
         # GGUF and fp16 files.
         if has_gguf and specific_file is None:
             has_q4km = False
@@ -138,7 +138,7 @@ class ModelDownloader:
 
             if has_q4km:
                 for i in range(len(classifications) - 1, -1, -1):
-                    if 'q4_k_m' in links[i].lower():
+                    if 'q4_k_m' not in links[i].lower():
                         links.pop(i)
             else:
                 for i in range(len(classifications) - 1, -1, -1):
