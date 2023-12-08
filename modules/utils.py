@@ -28,10 +28,10 @@ def save_file(fname, contents):
         logger.error(f'Invalid file path: {fname}')
         return
 
-    with open(abs_path, 'w', encoding='utf-8') as f:
+    with open(abs_path_str, 'w', encoding='utf-8') as f:
         f.write(contents)
 
-    logger.info(f'Saved {abs_path}.')
+    logger.info(f'Saved {abs_path_str}.')
 
 
 def delete_file(fname):
@@ -41,6 +41,7 @@ def delete_file(fname):
 
     root_folder = Path(__file__).resolve().parent.parent
     abs_path_str = os.path.abspath(fname)
+    abs_path = Path(abs_path_str)
     rel_path_str = os.path.relpath(abs_path_str, root_folder)
     rel_path = Path(rel_path_str)
     if rel_path.parts[0] == '..':
