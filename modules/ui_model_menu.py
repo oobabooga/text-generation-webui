@@ -203,10 +203,9 @@ def load_model_wrapper(selected_model, loader, autoload=False):
     else:
         try:
             yield f"Loading `{selected_model}`..."
-            shared.model_name = selected_model
             unload_model()
             if selected_model != '':
-                shared.model, shared.tokenizer = load_model(shared.model_name, loader)
+                shared.model, shared.tokenizer = load_model(selected_model, loader)
 
             if shared.model is not None:
                 output = f"Successfully loaded `{selected_model}`."
