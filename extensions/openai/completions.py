@@ -236,7 +236,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
 
     max_tokens = generate_params['max_new_tokens']
     if max_tokens in [None, 0]:
-        generate_params['max_new_tokens'] = 200
+        generate_params['max_new_tokens'] = 512
         generate_params['auto_max_new_tokens'] = True
 
     requested_model = generate_params.pop('model')
