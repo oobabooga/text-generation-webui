@@ -146,10 +146,10 @@ class Exllamav2Model:
                 if not (is_last or is_stopping):
                     continue
 
-            yield decoded_text
-
             if token.item() == self.tokenizer.eos_token_id or shared.stop_everything:
                 break
+
+            yield decoded_text
 
     def generate(self, prompt, state):
         output = ''

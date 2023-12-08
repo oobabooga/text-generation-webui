@@ -173,9 +173,10 @@ class ExllamaModel:
                     if not (is_last or is_stopping):
                         continue
 
-                yield decoded_text
                 if token.item() == self.generator.tokenizer.eos_token_id or shared.stop_everything:
                     break
+
+                yield decoded_text
 
         # Case 2: CFG
         # Copied from https://github.com/turboderp/exllama/blob/master/example_cfg.py
