@@ -265,9 +265,8 @@ def apply_stopping_strings(reply, all_stop_strings):
 
 def get_reply_from_output_ids(output_ids, state, starting_from=0):
     reply = decode(output_ids[starting_from:], state['skip_special_tokens'])
-    if type(shared.tokenizer) in [transformers.LlamaTokenizer, transformers.LlamaTokenizerFast] and len(output_ids) > starting_from:
-        if shared.tokenizer.convert_ids_to_tokens(int(output_ids[starting_from])).startswith('▁'):
-            reply = ' ' + reply
+    if hasattr(shared.tokenizer, 'convert_ids_to_tokens') and len(output_ids) > starting_from and shared.tokenizer.convert_ids_to_tokens(int(output_ids[starting_from])).startswith('▁'):
+        reply = ' ' + reply
 
     return reply
 
