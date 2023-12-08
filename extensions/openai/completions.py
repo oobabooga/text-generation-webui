@@ -155,7 +155,7 @@ def convert_history(history):
                 except Exception as e:
                     raise 'Image cannot be loaded from the URL!'
             buffered = BytesIO()
-            img.save(buffered, format="PNG")
+            img.save(buffered, format="JPEG")
             img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
             content = f'<img src="data:image/jpeg;base64,{img_str}">'
         else:
