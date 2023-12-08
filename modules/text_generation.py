@@ -362,7 +362,12 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
                     if output[-1] in eos_token_ids:
                         break
 
-                    cumulative_reply += get_reply_from_output_ids(output, state, starting_from=starting_from)
+                    new_content = get_reply_from_output_ids(output, state, starting_from=starting_from)
+                    # check the partial unicode character
+                    if chr(0xfffd) in new_content:
+                        continue
+
+                    cumulative_reply += new_content
                     starting_from = len(output)
                     yield cumulative_reply
 
