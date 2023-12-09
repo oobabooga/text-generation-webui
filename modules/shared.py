@@ -191,7 +191,8 @@ parser.add_argument('--api-streaming-port', type=int, default=5005, help='DEPREC
 parser.add_argument('--llama_cpp_seed', type=int, default=0, help='DEPRECATED')
 parser.add_argument('--use_fast', action='store_true', help='DEPRECATED')
 
-args = parser.parse_args()
+args, unknown = parser.parse_known_args()
+logger.warning(f'Textgen-webui has been provided with unknown arguments: {unknown}')
 args_defaults = parser.parse_args([])
 provided_arguments = []
 for arg in sys.argv[1:]:
@@ -246,6 +247,8 @@ def fix_loader_name(name):
         return 'AutoAWQ'
     elif name in ['quip#', 'quip-sharp', 'quipsharp', 'quip_sharp']:
         return 'QuIP#'
+    elif name in ['vllm', 'Vllm', 'VLLM']:
+        return 'Vllm'
 
 
 def add_extension(name, last=False):

@@ -155,6 +155,9 @@ loaders_and_params = OrderedDict({
         'trust_remote_code',
         'no_use_fast',
         'no_flash_attn',
+    ],
+    'Vllm': [
+        # Use Vllm's default settings
     ]
 })
 
@@ -502,6 +505,9 @@ loaders_samplers = {
         'add_bos_token',
         'skip_special_tokens',
         'auto_max_new_tokens',
+    },
+    'Vllm': {
+        # Use Vllm's default settings
     },
 }
 

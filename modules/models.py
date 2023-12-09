@@ -73,6 +73,7 @@ def load_model(model_name, loader=None):
         'ctransformers': ctransformers_loader,
         'AutoAWQ': AutoAWQ_loader,
         'QuIP#': QuipSharp_loader,
+        'Vllm': Vllm_loader,
     }
 
     metadata = get_model_metadata(model_name)
@@ -426,6 +427,11 @@ def RWKV_loader(model_name):
 
     tokenizer = RWKVTokenizer.from_pretrained(Path(shared.args.model_dir))
     return model, tokenizer
+
+def Vllm_loader(model_name):
+    from modules.vllm import VllmModel
+    
+    return VllmModel.from_pretrained(model_name)
 
 
 def get_max_memory_dict():

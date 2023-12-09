@@ -216,7 +216,7 @@ List of command-line flags
 
 | Flag                                       | Description |
 |--------------------------------------------|-------------|
-| `--loader LOADER`                          | Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, llamacpp_HF, ExLlama_HF, ExLlamav2_HF, AutoGPTQ, AutoAWQ, GPTQ-for-LLaMa, ExLlama, ExLlamav2, ctransformers, QuIP#. |
+| `--loader LOADER`                          | Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, llamacpp_HF, ExLlama_HF, ExLlamav2_HF, AutoGPTQ, AutoAWQ, GPTQ-for-LLaMa, ExLlama, ExLlamav2, ctransformers, QuIP#, vllm. |
 
 #### Accelerate/transformers
 
@@ -319,6 +319,15 @@ List of command-line flags
 |---------------------------------|-------------|
 | `--rwkv-strategy RWKV_STRATEGY` | RWKV: The strategy to use while loading the model. Examples: "cpu fp32", "cuda fp16", "cuda fp16i8". |
 | `--rwkv-cuda-on`                | RWKV: Compile the CUDA kernel for better performance. |
+
+#### VLLM
+
+| Flag             | Description |
+|------------------|-------------|
+| `--max-model-len MAX_MODEL_LEN` | Model context length. If unspecified, will be automatically derived from the model config.|
+| `--dtype “float16”` | Data type for model weights and activations.“auto” will use FP16 precision for FP32 and FP16 models, and BF16 precision for BF16 models.|
+
+Refer https://docs.vllm.ai/en/latest/models/engine_args.html for more details. All arguments can simply be passed to textgen webui.
 
 #### RoPE (for llama.cpp, ExLlama, ExLlamaV2, and transformers)
 
