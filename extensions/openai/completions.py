@@ -85,7 +85,7 @@ def process_parameters(body, is_legacy=False):
         preset = load_preset_memoized(body['preset'])
         generate_params.update(preset)
 
-    generate_params['custom_stopping_strings'] = []
+    generate_params['custom_stopping_strings'] = shared.settings['custom_stopping_strings']
     if 'stop' in body:  # str or array, max len 4 (ignored)
         if isinstance(body['stop'], str):
             generate_params['custom_stopping_strings'] = [body['stop']]
