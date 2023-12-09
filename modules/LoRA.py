@@ -54,6 +54,8 @@ def add_lora_exllama(lora_names):
         lora_path = get_lora_path(lora_names[0])
         lora_config_path = lora_path / "adapter_config.json"
         lora_adapter_path = lora_path / "adapter_model.bin"
+        if not lora_adapter_path.exists():
+            lora_adapter_path = lora_path / "adapter_model.safetensors"
 
         logger.info("Applying the following LoRAs to {}: {}".format(shared.model_name, ', '.join([lora_names[0]])))
         if shared.model.__class__.__name__ == 'ExllamaModel':
