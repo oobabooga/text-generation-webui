@@ -72,6 +72,7 @@ def load_model(model_name, loader=None):
         'ctransformers': ctransformers_loader,
         'AutoAWQ': AutoAWQ_loader,
         'QuIP#': QuipSharp_loader,
+        'HQQ': HQQ_loader,
     }
 
     metadata = get_model_metadata(model_name)
@@ -404,6 +405,14 @@ def ExLlamav2_HF_loader(model_name):
 
     return Exllamav2HF.from_pretrained(model_name)
 
+def HQQ_loader(model_name):
+    from hqq.engine.hf import HQQModelForCausalLM, AutoTokenizer
+
+    model_dir = f'{shared.args.model_dir}/{model_name}'
+    logger.warning(f"loading HQQ model from {model_dir}")
+    model = HQQModelForCausalLM.from_quantized(model_dir)
+    tokenizer = AutoTokenizer.from_pretrained(model_dir)
+    return model, tokenizer
 
 def RWKV_loader(model_name):
     '''

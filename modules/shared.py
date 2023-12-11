@@ -243,6 +243,8 @@ def fix_loader_name(name):
         return 'AutoAWQ'
     elif name in ['quip#', 'quip-sharp', 'quipsharp', 'quip_sharp']:
         return 'QuIP#'
+    elif name in ['HQQ']:
+        return 'HQQ'
 
 
 def add_extension(name, last=False):
