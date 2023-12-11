@@ -24,8 +24,32 @@ skip_special_tokens: true
 stream: true
 character: Assistant
 name1: You
-instruction_template: Alpaca
-custom_system_message: ''
+instruction_template_str: |+
+  instruction_template: |-
+    {%- set found_item = false -%}
+    {%- for message in messages -%}
+        {%- if message['role'] == 'system' -%}
+            {%- set found_item = true -%}
+        {%- endif -%}
+    {%- endfor -%}
+    {%- if not found_item -%}
+        {{- '' + 'Below is an instruction that describes a task. Write a response that appropriately completes the request.' + '\n\n' -}}
+    {%- endif %}
+    {%- for message in messages %}
+        {%- if message['role'] == 'system' -%}
+            {{- '' + message['content'] + '\n\n' -}}
+        {%- else -%}
+            {%- if message['role'] == 'user' -%}
+                {{-'### Instruction:\n' + message['content'] + '\n\n'-}}
+            {%- else -%}
+                {{-'### Response:\n' + message['content'] + '\n\n' -}}
+            {%- endif -%}
+        {%- endif -%}
+    {%- endfor -%}
+    {%- if add_generation_prompt -%}
+        {{-'### Response:\n'-}}
+    {%- endif -%}
+
 chat_template_str: |-
   {%- for message in messages %}
       {%- if message['role'] == 'system' -%}
@@ -41,6 +65,7 @@ chat_template_str: |-
   {%- if add_generation_prompt -%}
       {{- name2 + ':' -}}
   {%- endif -%}
+custom_system_message: ''
 chat-instruct_command: |-
   Continue the chat dialogue below. Write a single reply for the character "<|character|>".
 
