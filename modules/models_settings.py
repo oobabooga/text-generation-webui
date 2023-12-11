@@ -115,7 +115,10 @@ def get_model_metadata(model):
             model_settings['instruction_template'] = 'Custom'
             model_settings['instruction_template_str'] = template
 
-    if 'instruction_template' in model_settings and model_settings['instruction_template'] != 'Custom':
+    if 'instruction_template' not in model_settings:
+        model_settings['instruction_template'] = 'Alpaca'
+
+    if model_settings['instruction_template'] != 'Custom':
         model_settings['instruction_template_str'] = chat.load_instruction_template(model_settings['instruction_template'])
 
     # Ignore rope_freq_base if set to the default value
