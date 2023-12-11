@@ -115,13 +115,13 @@ def get_model_metadata(model):
                     if k == 'bos_token' and template.startswith(value):
                         template = template[len(value):]
 
-            model_settings['instruction_template'] = 'Custom'
+            model_settings['instruction_template'] = 'Custom (obtained from model metadata)'
             model_settings['instruction_template_str'] = template
 
     if 'instruction_template' not in model_settings:
         model_settings['instruction_template'] = 'Alpaca'
 
-    if model_settings['instruction_template'] != 'Custom':
+    if model_settings['instruction_template'] != 'Custom (obtained from model metadata)':
         model_settings['instruction_template_str'] = chat.load_instruction_template(model_settings['instruction_template'])
 
     # Ignore rope_freq_base if set to the default value
