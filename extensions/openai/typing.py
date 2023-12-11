@@ -92,17 +92,14 @@ class ChatCompletionRequestParams(BaseModel):
     mode: str = Field(default='instruct', description="Valid options: instruct, chat, chat-instruct.")
 
     instruction_template: str | None = Field(default=None, description="An instruction template defined under text-generation-webui/instruction-templates. If not set, the correct template will be guessed using the regex expressions in models/config.yaml.")
-    turn_template: str | None = Field(default=None, description="Overwrites the value set by instruction_template.")
-    name1_instruct: str | None = Field(default=None, description="Overwrites the value set by instruction_template.")
-    name2_instruct: str | None = Field(default=None, description="Overwrites the value set by instruction_template.")
-    context_instruct: str | None = Field(default=None, description="Overwrites the value set by instruction_template.")
-    system_message: str | None = Field(default=None, description="Overwrites the value set by instruction_template.")
+    instruction_template_str: str | None = Field(default=None, description="Overwrites the value set by instruction_template.")
 
     character: str | None = Field(default=None, description="A character defined under text-generation-webui/characters. If not set, the default \"Assistant\" character will be used.")
     name1: str | None = Field(default=None, description="Your name (the user). By default, it's \"You\".")
     name2: str | None = Field(default=None, description="Overwrites the value set by character.")
     context: str | None = Field(default=None, description="Overwrites the value set by character.")
     greeting: str | None = Field(default=None, description="Overwrites the value set by character.")
+    chat_template_str: str | None = Field(default=None)
 
     chat_instruct_command: str | None = None
 

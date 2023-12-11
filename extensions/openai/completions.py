@@ -13,7 +13,8 @@ from modules import shared
 from modules.chat import (
     generate_chat_prompt,
     generate_chat_reply,
-    load_character_memoized
+    load_character_memoized,
+    load_instruction_template_memoized
 )
 from modules.presets import load_preset_memoized
 from modules.text_generation import decode, encode, generate_reply
@@ -195,21 +196,23 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
     continue_ = body['continue_']
 
     # Instruction template
-    instruction_template = body['instruction_template'] or shared.settings['instruction_template']
-    instruction_template = "Alpaca" if instruction_template == "None" else instruction_template
-    name1_instruct, name2_instruct, _, _, context_instruct, turn_template, system_message = load_character_memoized(instruction_template, '', '', instruct=True)
-    name1_instruct = body['name1_instruct'] or name1_instruct
-    name2_instruct = body['name2_instruct'] or name2_instruct
-    turn_template = body['turn_template'] or turn_template
-    context_instruct = body['context_instruct'] or context_instruct
-    system_message = body['system_message'] or system_message
+    if body['instruction_template_str']:
+        instruction_template_str = body['instruction_template_str']
+    elif body['instruction_template']:
+        instruction_template = body['instruction_template']
+        instruction_template = "Alpaca" if instruction_template == "None" else instruction_template
+        instruction_template_str = load_instruction_template_memoized(instruction_template)
+    else:
+        instruction_template_str = shared.settings['instruction_template_str']
+
+    chat_template_str = body['chat_template_str'] or shared.settings['chat_template_str']
     chat_instruct_command = body['chat_instruct_command'] or shared.settings['chat-instruct_command']
 
     # Chat character
     character = body['character'] or shared.settings['character']
     character = "Assistant" if character == "None" else character
     name1 = body['name1'] or shared.settings['name1']
-    name1, name2, _, greeting, context, _, _ = load_character_memoized(character, name1, '', instruct=False)
+    name1, name2, _, greeting, context = load_character_memoized(character, name1, '')
     name2 = body['name2'] or name2
     context = body['context'] or context
     greeting = body['greeting'] or greeting
@@ -223,12 +226,9 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
         'name2': name2,
         'context': context,
         'greeting': greeting,
-        'name1_instruct': name1_instruct,
-        'name2_instruct': name2_instruct,
-        'context_instruct': context_instruct,
-        'system_message': system_message,
+        'instruction_template_str': instruction_template_str,
         'custom_system_message': custom_system_message,
-        'turn_template': turn_template,
+        'chat_template_str': chat_template_str,
         'chat-instruct_command': chat_instruct_command,
         'history': history,
         'stream': stream

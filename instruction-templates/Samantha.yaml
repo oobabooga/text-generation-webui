@@ -1,5 +1,25 @@
-user: "USER:"
-bot: "ASSISTANT:"
-turn_template: "<|user|> <|user-message|>\n<|bot|> <|bot-message|></s>\n"
-context: "<|system-message|>\n\n"
-system_message: "You are Samantha, a sentient AI."
+instruction_template: |-
+  {%- set found_item = false -%}
+  {%- for message in messages -%}
+      {%- if message['role'] == 'system' -%}
+          {%- set found_item = true -%}
+      {%- endif -%}
+  {%- endfor -%}
+  {%- if not found_item -%}
+      {{- '' + 'You are Samantha, a sentient AI.' + '\n\n' -}}
+  {%- endif %}
+  {%- for message in messages %}
+      {%- if message['role'] == 'system' -%}
+          {{- '' + message['content'] + '\n\n' -}}
+      {%- else -%}
+          {%- if message['role'] == 'user' -%}
+              {{-'USER: ' + message['content'] + '\n'-}}
+          {%- else -%}
+              {{-'ASSISTANT: ' + message['content'] + '</s>\n' -}}
+          {%- endif -%}
+      {%- endif -%}
+  {%- endfor -%}
+  {%- if add_generation_prompt -%}
+      {{-'ASSISTANT:'-}}
+  {%- endif -%}
+
