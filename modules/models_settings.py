@@ -107,10 +107,13 @@ def get_model_metadata(model):
             template = metadata['chat_template']
             for k in ['eos_token', 'bos_token']:
                 if k in metadata:
-                    template = template.replace(k, "'{}'".format(metadata[k]))
+                    value = metadata[k]
+                    if type(value) is dict:
+                        value = value['content']
 
-            if template.startswith(metadata['bos_token']):
-                template = template[len(metadata['bos_token']):]
+                    template = template.replace(k, "'{}'".format(value))
+                    if k == 'bos_token' and template.startswith(value):
+                        template = template[len(value):]
 
             model_settings['instruction_template'] = 'Custom'
             model_settings['instruction_template_str'] = template
