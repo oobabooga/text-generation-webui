@@ -80,21 +80,20 @@ def generate_chat_prompt(user_input, state, **kwargs):
     also_return_rows = kwargs.get('also_return_rows', False)
     history = kwargs.get('history', state['history'])['internal']
 
-    # Find the maximum prompt size
-    max_length = get_max_prompt_length(state)
-
     # Templates
     chat_template = jinja_env.from_string(state['chat_template_str'])
     instruction_template = jinja_env.from_string(state['instruction_template_str'])
+    chat_renderer = partial(chat_template.render, add_generation_prompt=False, name1=state['name1'], name2=state['name2'])
+    instruct_renderer = partial(instruction_template.render, add_generation_prompt=False)
 
     messages = []
 
     if state['mode'] == 'instruct':
-        renderer = partial(instruction_template.render, add_generation_prompt=False)
+        renderer = instruct_renderer
         if state['custom_system_message'].strip() != '':
             messages.append({"role": "system", "content": state['custom_system_message']})
     else:
-        renderer = partial(chat_template.render, add_generation_prompt=False, name1=state['name1'], name2=state['name2'])
+        renderer = chat_renderer
         if state['context'].strip() != '':
             messages.append({"role": "system", "content": state['context']})
 
@@ -113,12 +112,12 @@ def generate_chat_prompt(user_input, state, **kwargs):
         messages.append({"role": "user", "content": user_input})
 
     def make_prompt(messages):
-        if state['mode'] == 'chat-instruct':
-            if _continue:
-                prompt = renderer(messages=messages[:-1])
-            else:
-                prompt = renderer(messages=messages)
+        if state['mode'] == 'chat-instruct' and _continue:
+            prompt = renderer(messages=messages[:-1])
+        else:
+            prompt = renderer(messages=messages)
 
+        if state['mode'] == 'chat-instruct':
             outer_messages = []
             if state['custom_system_message'].strip() != '':
                 outer_messages.append({"role": "system", "content": state['custom_system_message']})
@@ -135,14 +134,12 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
             outer_messages.append({"role": "user", "content": command})
             outer_messages.append({"role": "assistant", "content": prefix})
-            prompt = instruction_template.render(messages=outer_messages)
 
-            tmp = partial(instruction_template.render, add_generation_prompt=False)
-            suffix = get_generation_prompt(tmp, impersonate=False)[1]
+            prompt = instruction_template.render(messages=outer_messages)
+            suffix = get_generation_prompt(instruct_renderer, impersonate=False)[1]
             prompt = prompt[:-len(suffix)]
 
         else:
-            prompt = renderer(messages=messages)
             if _continue:
                 suffix = get_generation_prompt(renderer, impersonate=impersonate)[1]
                 prompt = prompt[:-len(suffix)]
@@ -151,8 +148,10 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
         return prompt
 
-    # Handle truncation
     prompt = make_prompt(messages)
+
+    # Handle truncation
+    max_length = get_max_prompt_length(state)
     while len(messages) > 0 and get_encoded_length(prompt) > max_length:
         # Try to save the system message
         if len(messages) > 1 and messages[0]['role'] == 'system':
