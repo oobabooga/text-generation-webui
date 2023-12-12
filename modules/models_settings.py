@@ -112,8 +112,6 @@ def get_model_metadata(model):
                         value = value['content']
 
                     template = template.replace(k, "'{}'".format(value))
-                    if k == 'bos_token' and template.startswith(value):
-                        template = template[len(value):]
 
             model_settings['instruction_template'] = 'Custom (obtained from model metadata)'
             model_settings['instruction_template_str'] = template
