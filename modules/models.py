@@ -406,13 +406,14 @@ def ExLlamav2_HF_loader(model_name):
     return Exllamav2HF.from_pretrained(model_name)
 
 def HQQ_loader(model_name):
-    from hqq.engine.hf import HQQModelForCausalLM, AutoTokenizer
+    from hqq.engine.hf import HQQModelForCausalLM
+    from hqq.core.quantize import HQQLinear, HQQBackend
 
     model_dir = f'{shared.args.model_dir}/{model_name}'
-    logger.warning(f"loading HQQ model from {model_dir}")
+    logger.warning(f"loading HQQ model from {model_dir} with HQQLinear backend")
     model = HQQModelForCausalLM.from_quantized(model_dir)
-    tokenizer = AutoTokenizer.from_pretrained(model_dir)
-    return model, tokenizer
+    HQQLinear.set_backend(HQQBackend.PYTORCH_COMPILE)
+    return model
 
 def RWKV_loader(model_name):
     '''
