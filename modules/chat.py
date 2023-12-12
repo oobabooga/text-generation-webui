@@ -818,7 +818,7 @@ def jinja_template_from_old_format(params, verbose=False):
 
     result = MASTER_TEMPLATE
     if 'system_message' in params:
-        result = result.replace('<|SYSTEM-MESSAGE|>', params['system_message'])
+        result = result.replace('<|SYSTEM-MESSAGE|>', params['system_message'].replace('\n', '\\n'))
     else:
         result = result.replace('<|SYSTEM-MESSAGE|>', '')
 
