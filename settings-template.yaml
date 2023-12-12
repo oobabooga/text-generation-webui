@@ -61,9 +61,6 @@ chat_template_str: |-
           {%- endif -%}
       {%- endif -%}
   {%- endfor -%}
-  {%- if add_generation_prompt -%}
-      {{- name2 + ':' -}}
-  {%- endif -%}
 chat-instruct_command: |-
   Continue the chat dialogue below. Write a single reply for the character "<|character|>".
 
