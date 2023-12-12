@@ -1,5 +1,25 @@
-user: "<|user|>"
-bot: "<|assistant|>"
-turn_template: "<|user|>\n<|user-message|><|end|>\n<|bot|>\n<|bot-message|><|end|>\n"
-context: "<|system|><|system-message|>\n<|end|>\n"
-system_message: ""
+instruction_template: |-
+  {%- set found_item = false -%}
+  {%- for message in messages -%}
+      {%- if message['role'] == 'system' -%}
+          {%- set found_item = true -%}
+      {%- endif -%}
+  {%- endfor -%}
+  {%- if not found_item -%}
+      {{- '<|system|>' + '' + '\n<|end|>\n' -}}
+  {%- endif %}
+  {%- for message in messages %}
+      {%- if message['role'] == 'system' -%}
+          {{- '<|system|>' + message['content'] + '\n<|end|>\n' -}}
+      {%- else -%}
+          {%- if message['role'] == 'user' -%}
+              {{-'<|user|>\n' + message['content'] + '<|end|>\n'-}}
+          {%- else -%}
+              {{-'<|assistant|>\n' + message['content'] + '<|end|>\n' -}}
+          {%- endif -%}
+      {%- endif -%}
+  {%- endfor -%}
+  {%- if add_generation_prompt -%}
+      {{-'<|assistant|>\n'-}}
+  {%- endif -%}
+

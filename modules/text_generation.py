@@ -120,10 +120,9 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
             input_ids = np.array(input_ids).reshape(1, len(input_ids))
     else:
         input_ids = shared.tokenizer.encode(str(prompt), return_tensors='pt', add_special_tokens=add_special_tokens)
-
-        # This is a hack for making replies more creative.
-        if not add_bos_token and input_ids[0][0] == shared.tokenizer.bos_token_id:
-            input_ids = input_ids[:, 1:]
+        if not add_bos_token:
+            while len(input_ids[0]) > 0 and input_ids[0][0] == shared.tokenizer.bos_token_id:
+                input_ids = input_ids[:, 1:]
 
     # Handling truncation
     if truncation_length is not None:

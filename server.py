@@ -89,7 +89,7 @@ def create_interface():
         'loader': shared.args.loader or 'Transformers',
         'mode': shared.settings['mode'],
         'character_menu': shared.args.character or shared.settings['character'],
-        'instruction_template': shared.settings['instruction_template'],
+        'instruction_template_str': shared.settings['instruction_template_str'],
         'prompt_menu-default': shared.settings['prompt-default'],
         'prompt_menu-notebook': shared.settings['prompt-notebook'],
         'filter_by_loader': shared.args.loader or 'All'

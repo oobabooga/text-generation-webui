@@ -1,5 +1,25 @@
-user: "USER:"
-bot: "GPT:"
-turn_template: "<|user|> <|user-message|> <|bot|><|bot-message|></s>"
-context: "<|system-message|> "
-system_message: "BEGINNING OF CONVERSATION:"
+instruction_template: |-
+  {%- set found_item = false -%}
+  {%- for message in messages -%}
+      {%- if message['role'] == 'system' -%}
+          {%- set found_item = true -%}
+      {%- endif -%}
+  {%- endfor -%}
+  {%- if not found_item -%}
+      {{- '' + 'BEGINNING OF CONVERSATION:' + ' ' -}}
+  {%- endif %}
+  {%- for message in messages %}
+      {%- if message['role'] == 'system' -%}
+          {{- '' + message['content'] + ' ' -}}
+      {%- else -%}
+          {%- if message['role'] == 'user' -%}
+              {{-'USER: ' + message['content'] + ' '-}}
+          {%- else -%}
+              {{-'GPT:' + message['content'] + '</s>' -}}
+          {%- endif -%}
+      {%- endif -%}
+  {%- endfor -%}
+  {%- if add_generation_prompt -%}
+      {{-'GPT:'-}}
+  {%- endif -%}
+

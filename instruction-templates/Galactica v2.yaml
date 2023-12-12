@@ -1,5 +1,25 @@
-user: "<human>"
-bot: "<bot>"
-turn_template: "<|user|><|user-message|><|bot|><|bot-message|>"
-context: "<prefix><|system-message|></prefix>"
-system_message: "You are a helpful chatbot name Stan"
+instruction_template: |-
+  {%- set found_item = false -%}
+  {%- for message in messages -%}
+      {%- if message['role'] == 'system' -%}
+          {%- set found_item = true -%}
+      {%- endif -%}
+  {%- endfor -%}
+  {%- if not found_item -%}
+      {{- '<prefix>' + 'You are a helpful chatbot name Stan' + '</prefix>' -}}
+  {%- endif %}
+  {%- for message in messages %}
+      {%- if message['role'] == 'system' -%}
+          {{- '<prefix>' + message['content'] + '</prefix>' -}}
+      {%- else -%}
+          {%- if message['role'] == 'user' -%}
+              {{-'<human>' + message['content'] + ''-}}
+          {%- else -%}
+              {{-'<bot>' + message['content'] + '' -}}
+          {%- endif -%}
+      {%- endif -%}
+  {%- endfor -%}
+  {%- if add_generation_prompt -%}
+      {{-'<bot>'-}}
+  {%- endif -%}
+

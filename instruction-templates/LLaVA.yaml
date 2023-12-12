@@ -1,5 +1,25 @@
-user: "### Human:"
-bot: "### Assistant:"
-turn_template: "<|user|> <|user-message|><|bot|> <|bot-message|>\n"
-context: "<|system-message|>\n"
-system_message: "You are LLaVA, a large language and vision assistant trained by UW Madison WAIV Lab. You are able to understand the visual content that the user provides, and assist the user with a variety of tasks using natural language. Follow the instructions carefully and explain your answers in detail.### Human: Hi!### Assistant: Hi there! How can I help you today?"
+instruction_template: |-
+  {%- set found_item = false -%}
+  {%- for message in messages -%}
+      {%- if message['role'] == 'system' -%}
+          {%- set found_item = true -%}
+      {%- endif -%}
+  {%- endfor -%}
+  {%- if not found_item -%}
+      {{- '' + 'You are LLaVA, a large language and vision assistant trained by UW Madison WAIV Lab. You are able to understand the visual content that the user provides, and assist the user with a variety of tasks using natural language. Follow the instructions carefully and explain your answers in detail.### Human: Hi!### Assistant: Hi there! How can I help you today?' + '\n' -}}
+  {%- endif %}
+  {%- for message in messages %}
+      {%- if message['role'] == 'system' -%}
+          {{- '' + message['content'] + '\n' -}}
+      {%- else -%}
+          {%- if message['role'] == 'user' -%}
+              {{-'### Human: ' + message['content'] + ''-}}
+          {%- else -%}
+              {{-'### Assistant: ' + message['content'] + '\n' -}}
+          {%- endif -%}
+      {%- endif -%}
+  {%- endfor -%}
+  {%- if add_generation_prompt -%}
+      {{-'### Assistant:'-}}
+  {%- endif -%}
+

@@ -1,5 +1,25 @@
-user: "GPT4 User:"
-bot: "GPT4 Assistant:"
-turn_template: "<|user|> <|user-message|><|end_of_turn|><|bot|> <|bot-message|><|end_of_turn|>"
-context: ""
-system_message: ""
+instruction_template: |-
+  {%- set found_item = false -%}
+  {%- for message in messages -%}
+      {%- if message['role'] == 'system' -%}
+          {%- set found_item = true -%}
+      {%- endif -%}
+  {%- endfor -%}
+  {%- if not found_item -%}
+      {{- '' + '' + '' -}}
+  {%- endif %}
+  {%- for message in messages %}
+      {%- if message['role'] == 'system' -%}
+          {{- '' + message['content'] + '' -}}
+      {%- else -%}
+          {%- if message['role'] == 'user' -%}
+              {{-'GPT4 User: ' + message['content'] + '<|end_of_turn|>'-}}
+          {%- else -%}
+              {{-'GPT4 Assistant: ' + message['content'] + '<|end_of_turn|>' -}}
+          {%- endif -%}
+      {%- endif -%}
+  {%- endfor -%}
+  {%- if add_generation_prompt -%}
+      {{-'GPT4 Assistant:'-}}
+  {%- endif -%}
+
