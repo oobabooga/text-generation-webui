@@ -205,7 +205,7 @@ def get_stopping_strings(state):
     return list(set(stopping_strings))
 
 
-def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_message=True):
+def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_message=True, for_ui=False):
     history = state['history']
     output = copy.deepcopy(history)
     output = apply_extensions('history', output)
@@ -256,7 +256,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
 
     # Generate
     reply = None
-    for j, reply in enumerate(generate_reply(prompt, state, stopping_strings=stopping_strings, is_chat=True)):
+    for j, reply in enumerate(generate_reply(prompt, state, stopping_strings=stopping_strings, is_chat=True, for_ui=for_ui)):
 
         # Extract the reply
         visible_reply = reply
@@ -311,7 +311,7 @@ def impersonate_wrapper(text, state):
             return
 
 
-def generate_chat_reply(text, state, regenerate=False, _continue=False, loading_message=True):
+def generate_chat_reply(text, state, regenerate=False, _continue=False, loading_message=True, for_ui=False):
     history = state['history']
     if regenerate or _continue:
         text = ''
@@ -319,7 +319,7 @@ def generate_chat_reply(text, state, regenerate=False, _continue=False, loading_
             yield history
             return
 
-    for history in chatbot_wrapper(text, state, regenerate=regenerate, _continue=_continue, loading_message=loading_message):
+    for history in chatbot_wrapper(text, state, regenerate=regenerate, _continue=_continue, loading_message=loading_message, for_ui=for_ui):
         yield history
 
 
@@ -351,7 +351,7 @@ def generate_chat_reply_wrapper(text, state, regenerate=False, _continue=False):
         send_dummy_message(text, state)
         send_dummy_reply(state['start_with'], state)
 
-    for i, history in enumerate(generate_chat_reply(text, state, regenerate, _continue, loading_message=True)):
+    for i, history in enumerate(generate_chat_reply(text, state, regenerate, _continue, loading_message=True, for_ui=True)):
         yield chat_html_wrapper(history, state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu']), history
 
 

@@ -33,7 +33,7 @@ def generate_reply(*args, **kwargs):
         shared.generation_lock.release()
 
 
-def _generate_reply(question, state, stopping_strings=None, is_chat=False, escape_html=False):
+def _generate_reply(question, state, stopping_strings=None, is_chat=False, escape_html=False, for_ui=False):
 
     # Find the appropriate generation function
     generate_func = apply_extensions('custom_generate_reply')
@@ -96,7 +96,7 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
             # Limit updates to 24 or 5 per second to avoid lag in the Gradio UI
             # API updates are not limited
             else:
-                min_update_interval = 0 if not escape_html else 0.2 if (shared.args.listen or shared.args.share) else 0.0417
+                min_update_interval = 0 if not for_ui else 0.2 if (shared.args.listen or shared.args.share) else 0.0417
                 if cur_time - last_update > min_update_interval:
                     last_update = cur_time
                     yield reply
@@ -178,7 +178,7 @@ def generate_reply_wrapper(question, state, stopping_strings=None):
     reply = question if not shared.is_seq2seq else ''
     yield formatted_outputs(reply, shared.model_name)
 
-    for reply in generate_reply(question, state, stopping_strings, is_chat=False, escape_html=True):
+    for reply in generate_reply(question, state, stopping_strings, is_chat=False, escape_html=True, for_ui=True):
         if not shared.is_seq2seq:
             reply = question + reply
 
