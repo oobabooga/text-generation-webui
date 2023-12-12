@@ -131,6 +131,8 @@ def generate_chat_prompt(user_input, state, **kwargs):
                 prefix += messages[-1]["content"]
             else:
                 prefix = get_generation_prompt(renderer, impersonate=impersonate)[0]
+                if not impersonate:
+                    prefix = apply_extensions('bot_prefix', prefix, state)
 
             outer_messages.append({"role": "user", "content": command})
             outer_messages.append({"role": "assistant", "content": prefix})
@@ -144,7 +146,11 @@ def generate_chat_prompt(user_input, state, **kwargs):
                 suffix = get_generation_prompt(renderer, impersonate=impersonate)[1]
                 prompt = prompt[:-len(suffix)]
             else:
-                prompt += get_generation_prompt(renderer, impersonate=impersonate)[0]
+                prefix = get_generation_prompt(renderer, impersonate=impersonate)[0]
+                if state['mode'] == 'chat' and not impersonate:
+                    prefix = apply_extensions('bot_prefix', prefix, state)
+
+                prompt += prefix
 
         return prompt
 
