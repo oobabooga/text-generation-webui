@@ -108,7 +108,8 @@ def generate_chat_prompt(user_input, state, **kwargs):
         if user_msg not in ['', '<|BEGIN-VISIBLE-CHAT|>']:
             messages.insert(insert_pos, {"role": "user", "content": user_msg})
 
-    if not impersonate and not _continue:
+    user_input = user_input.strip()
+    if user_input and not impersonate and not _continue:
         messages.append({"role": "user", "content": user_input})
 
     def make_prompt(messages):
