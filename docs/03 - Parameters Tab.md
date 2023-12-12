@@ -103,10 +103,11 @@ Defines the instruction template that is used in the Chat tab when "instruct" or
 
 * **Saved instruction templates**: A dropdown menu where you can load a saved template, save a new template (💾 button), and delete the currently selected template (🗑️).
 * **Custom system message**: A message that defines the personality of the chatbot, replacing its default "System message" string. Example: "You are a duck."
-* **Instruction template string**: A Jinja2 template that defines the prompt format for the instruction-following conversation.
+* **Instruction template**: A Jinja2 template that defines the prompt format for the instruction-following conversation.
 * **Send to default**: Send the full instruction template in string format to the Default tab.
 * **Send to notebook**: Send the full instruction template in string format to the Notebook tab.
 * **Send to negative prompt**: Send the full instruction template in string format to the "Negative prompt" field under "Parameters" > "Generation".
+* **Chat template**: A Jinja2 template that defines the prompt format for regular chat conversations with characters.
 * **Command for chat-instruct mode**: The command that is used in chat-instruct mode to query the model to generate a reply on behalf of the character. Can be used creatively to generate specific kinds of responses.
 
 ## Chat history

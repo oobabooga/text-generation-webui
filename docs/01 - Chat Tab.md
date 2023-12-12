@@ -97,7 +97,7 @@ The "Chat" option should typically be used only for base models or non-instruct 
 
 Used for talking to an instruction-following model using the prompt format defined under "Parameters" > "Instruction template". Think of this option as an offline ChatGPT.
 
-The prompt format is defined by the **Instruction template string** parameter in "Parameters" > "Instruction template", which represents a A Jinja2 template.
+The prompt format is defined by the **Instruction template** parameter in "Parameters" > "Instruction template", which represents a Jinja2 template.
 
 Note that when you load a model in the "Model" tab, the web UI will try to automatically detect its instruction template (if any), and will update the values under "Parameters" > "Instruction template" accordingly. This is done using a set of regular expressions defined in `models/config.yaml`. This detection is not guaranteed to be accurate. You should check the model card on Hugging Face to see if you are using the correct prompt format.
 
