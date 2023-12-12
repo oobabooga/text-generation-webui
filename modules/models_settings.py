@@ -113,6 +113,8 @@ def get_model_metadata(model):
 
                     template = template.replace(k, "'{}'".format(value))
 
+            template = re.sub(r'raise_exception\([^)]*\)', "''", template)
+
             model_settings['instruction_template'] = 'Custom (obtained from model metadata)'
             model_settings['instruction_template_str'] = template
 
