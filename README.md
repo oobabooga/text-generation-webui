@@ -59,7 +59,7 @@ To define persistent command-line flags like `--listen` or `--api`, edit the `CM
 #### Other info
 
 * There is no need to run any of those scripts as admin/root.
-* For additional instructions about AMD setup, WSL setup, and nvcc installation, consult [the documentation](https://github.com/oobabooga/text-generation-webui/wiki).
+* For additional instructions about AMD setup and WSL setup, consult [the documentation](https://github.com/oobabooga/text-generation-webui/wiki).
 * The installer has been tested mostly on NVIDIA GPUs. If you can find a way to improve it for your AMD/Intel Arc/Mac Metal GPU, you are highly encouraged to submit a PR to this repository. The main file to be edited is `one_click.py`.
 * For automated installation, you can use the `GPU_CHOICE`, `USE_CUDA118`, `LAUNCH_AFTER_INSTALL`, and `INSTALL_EXTENSIONS` environment variables. For instance: `GPU_CHOICE=A USE_CUDA118=FALSE LAUNCH_AFTER_INSTALL=FALSE INSTALL_EXTENSIONS=FALSE ./start_linux.sh`.
 
@@ -98,10 +98,16 @@ conda activate textgen
 
 The up-to-date commands can be found here: https://pytorch.org/get-started/locally/.
 
-For NVIDIA, you may also need to manually install the CUDA runtime libraries:
+For NVIDIA, you also need to install the CUDA runtime libraries:
 
 ```
-conda install -y -c "nvidia/label/cuda-12.1.0" cuda-runtime
+conda install -y -c "nvidia/label/cuda-12.1.1" cuda-runtime
+```
+
+If you need `nvcc` to compile some library manually, replace the command above with
+
+```
+conda install -y -c "nvidia/label/cuda-12.1.1" cuda
 ```
 
 #### 3. Install the web UI
