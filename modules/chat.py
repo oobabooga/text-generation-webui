@@ -798,12 +798,15 @@ def jinja_template_from_old_format(params, verbose=False):
     pre_assistant = pre_assistant.replace('<|bot|>', params['bot'])
     post_assistant = params['turn_template'].split('<|bot-message|>')[1]
 
-    pre_system = pre_system.replace('\n', '\\n')
-    post_system = post_system.replace('\n', '\\n')
-    pre_user = pre_user.replace('\n', '\\n')
-    post_user = post_user.replace('\n', '\\n')
-    pre_assistant = pre_assistant.replace('\n', '\\n')
-    post_assistant = post_assistant.replace('\n', '\\n')
+    def preprocess(string):
+        return string.replace('\n', '\\n').replace('\'', '\\\'')
+
+    pre_system = preprocess(pre_system)
+    post_system = preprocess(post_system)
+    pre_user = preprocess(pre_user)
+    post_user = preprocess(post_user)
+    pre_assistant = preprocess(pre_assistant)
+    post_assistant = preprocess(post_assistant)
 
     if verbose:
         print(
@@ -818,7 +821,7 @@ def jinja_template_from_old_format(params, verbose=False):
 
     result = MASTER_TEMPLATE
     if 'system_message' in params:
-        result = result.replace('<|SYSTEM-MESSAGE|>', params['system_message'].replace('\n', '\\n'))
+        result = result.replace('<|SYSTEM-MESSAGE|>', preprocess(params['system_message']))
     else:
         result = result.replace('<|SYSTEM-MESSAGE|>', '')
 
@@ -827,7 +830,7 @@ def jinja_template_from_old_format(params, verbose=False):
     result = result.replace('<|PRE-USER|>', pre_user)
     result = result.replace('<|POST-USER|>', post_user)
     result = result.replace('<|PRE-ASSISTANT|>', pre_assistant)
-    result = result.replace('<|PRE-ASSISTANT-GENERATE|>', pre_assistant.strip())
+    result = result.replace('<|PRE-ASSISTANT-GENERATE|>', pre_assistant.rstrip(' '))
     result = result.replace('<|POST-ASSISTANT|>', post_assistant)
 
     result = result.strip()

@@ -1,5 +1,6 @@
 import html
 import json
+import os
 import random
 import time
 from pathlib import Path
@@ -26,6 +27,7 @@ except ModuleNotFoundError:
 
     raise
 
+os.environ["COQUI_TOS_AGREED"] = "1"
 
 params = {
     "activate": True,
