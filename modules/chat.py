@@ -827,7 +827,7 @@ def jinja_template_from_old_format(params, verbose=False):
     result = result.replace('<|PRE-USER|>', pre_user)
     result = result.replace('<|POST-USER|>', post_user)
     result = result.replace('<|PRE-ASSISTANT|>', pre_assistant)
-    result = result.replace('<|PRE-ASSISTANT-GENERATE|>', pre_assistant.strip())
+    result = result.replace('<|PRE-ASSISTANT-GENERATE|>', pre_assistant.rstrip(' '))
     result = result.replace('<|POST-ASSISTANT|>', post_assistant)
 
     result = result.strip()
