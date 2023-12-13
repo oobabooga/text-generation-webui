@@ -97,10 +97,7 @@ The "Chat" option should typically be used only for base models or non-instruct 
 
 Used for talking to an instruction-following model using the prompt format defined under "Parameters" > "Instruction template". Think of this option as an offline ChatGPT.
 
-The prompt format is defined by the following adjustable parameters in "Parameters" > "Instruction template":
-
-* **Context**: appears at the top of the prompt exactly as it is written, including the newline characters at the end (if any). Often the context includes a customizable system message. For instance, instead of "Answer the questions." for Llama-2-chat, you can write "Answer the questions as if you were a pirate.", and the model will comply.
-* **Turn template**: defines a single input/reply turn. In this string, `<|user|>` and `<|bot|>` are placeholders that get replaced with whatever you type in the **User string** and **Bot string** fields respectively; they are mandatory and should be present even if those fields are empty. `<|user-message|>` and `<|bot-message|>` get replaced with the user and bot messages at that turn. If the prompt format uses newline characters, they should be written inline as `\n` in the turn template.
+The prompt format is defined by the **Instruction template** parameter in "Parameters" > "Instruction template", which represents a Jinja2 template.
 
 Note that when you load a model in the "Model" tab, the web UI will try to automatically detect its instruction template (if any), and will update the values under "Parameters" > "Instruction template" accordingly. This is done using a set of regular expressions defined in `models/config.yaml`. This detection is not guaranteed to be accurate. You should check the model card on Hugging Face to see if you are using the correct prompt format.
 

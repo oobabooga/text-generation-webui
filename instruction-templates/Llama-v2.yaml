@@ -1,5 +1,25 @@
-user: ""
-bot: ""
-turn_template: "<|user|><|user-message|> [/INST] <|bot|><|bot-message|> </s><s>[INST] "
-context: "[INST] <<SYS>>\n<|system-message|>\n<</SYS>>\n\n"
-system_message: "Answer the questions."
+instruction_template: |-
+  {%- set found_item = false -%}
+  {%- for message in messages -%}
+      {%- if message['role'] == 'system' -%}
+          {%- set found_item = true -%}
+      {%- endif -%}
+  {%- endfor -%}
+  {%- if not found_item -%}
+      {{- '[INST] <<SYS>>\n' + 'Answer the questions.' + '\n<</SYS>>\n\n' -}}
+  {%- endif %}
+  {%- for message in messages %}
+      {%- if message['role'] == 'system' -%}
+          {{- '[INST] <<SYS>>\n' + message['content'] + '\n<</SYS>>\n\n' -}}
+      {%- else -%}
+          {%- if message['role'] == 'user' -%}
+              {{-'' + message['content'] + ' [/INST] '-}}
+          {%- else -%}
+              {{-'' + message['content'] + ' </s><s>[INST] ' -}}
+          {%- endif -%}
+      {%- endif -%}
+  {%- endfor -%}
+  {%- if add_generation_prompt -%}
+      {{-''-}}
+  {%- endif -%}
+

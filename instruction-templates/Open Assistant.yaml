@@ -1,4 +1,25 @@
-user: "<|prompter|>"
-bot: "<|assistant|>"
-turn_template: "<|user|><|user-message|><|endoftext|><|bot|><|bot-message|><|endoftext|>"
-system_message: ""
+instruction_template: |-
+  {%- set found_item = false -%}
+  {%- for message in messages -%}
+      {%- if message['role'] == 'system' -%}
+          {%- set found_item = true -%}
+      {%- endif -%}
+  {%- endfor -%}
+  {%- if not found_item -%}
+      {{- '' + '' + '' -}}
+  {%- endif %}
+  {%- for message in messages %}
+      {%- if message['role'] == 'system' -%}
+          {{- '' + message['content'] + '' -}}
+      {%- else -%}
+          {%- if message['role'] == 'user' -%}
+              {{-'<|prompter|>' + message['content'] + '<|endoftext|>'-}}
+          {%- else -%}
+              {{-'<|assistant|>' + message['content'] + '<|endoftext|>' -}}
+          {%- endif -%}
+      {%- endif -%}
+  {%- endfor -%}
+  {%- if add_generation_prompt -%}
+      {{-'<|assistant|>'-}}
+  {%- endif -%}
+

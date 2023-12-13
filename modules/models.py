@@ -58,6 +58,7 @@ def load_model(model_name, loader=None):
     t0 = time.time()
 
     shared.is_seq2seq = False
+    shared.model_name = model_name
     load_func_map = {
         'Transformers': huggingface_loader,
         'AutoGPTQ': AutoGPTQ_loader,
@@ -107,7 +108,7 @@ def load_model(model_name, loader=None):
 
     logger.info(f"LOADER: {loader}")
     logger.info(f"TRUNCATION LENGTH: {shared.settings['truncation_length']}")
-    logger.info(f"INSTRUCTION TEMPLATE: {shared.settings['instruction_template']}")
+    logger.info(f"INSTRUCTION TEMPLATE: {metadata['instruction_template']}")
     logger.info(f"Loaded the model in {(time.time()-t0):.2f} seconds.")
     return model, tokenizer
 

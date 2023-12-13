@@ -2,6 +2,7 @@ import os
 import warnings
 
 import accelerate  # This early import makes Intel GPUs happy
+
 import modules.one_click_installer_check
 from modules.block_requests import OpenMonkeyPatch, RequestBlocker
 from modules.logging_colors import logger
@@ -58,9 +59,6 @@ from modules.utils import gradio
 
 def signal_handler(sig, frame):
     logger.info("Received Ctrl+C. Shutting down Text generation web UI gracefully.")
-    if 'interface' in shared.gradio:
-        shared.gradio['interface'].close()
-
     sys.exit(0)
 
 
@@ -89,7 +87,7 @@ def create_interface():
         'loader': shared.args.loader or 'Transformers',
         'mode': shared.settings['mode'],
         'character_menu': shared.args.character or shared.settings['character'],
-        'instruction_template': shared.settings['instruction_template'],
+        'instruction_template_str': shared.settings['instruction_template_str'],
         'prompt_menu-default': shared.settings['prompt-default'],
         'prompt_menu-notebook': shared.settings['prompt-notebook'],
         'filter_by_loader': shared.args.loader or 'All'

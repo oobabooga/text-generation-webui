@@ -59,6 +59,7 @@ loaders_and_params = OrderedDict({
         'cpu',
         'numa',
         'cfg_cache',
+        'trust_remote_code',
         'no_use_fast',
         'logits_all',
         'llamacpp_HF_info',
@@ -70,6 +71,7 @@ loaders_and_params = OrderedDict({
         'rope_freq_base',
         'compress_pos_emb',
         'cfg_cache',
+        'trust_remote_code',
         'no_use_fast',
     ],
     'ExLlamav2_HF': [
@@ -80,6 +82,7 @@ loaders_and_params = OrderedDict({
         'cache_8bit',
         'alpha_value',
         'compress_pos_emb',
+        'trust_remote_code',
         'no_use_fast',
     ],
     'AutoGPTQ': [
@@ -114,6 +117,7 @@ loaders_and_params = OrderedDict({
         'groupsize',
         'model_type',
         'pre_layer',
+        'trust_remote_code',
         'no_use_fast',
         'gptq_for_llama_info',
     ],
