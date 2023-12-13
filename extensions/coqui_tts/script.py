@@ -1,3 +1,4 @@
+import os
 import html
 import json
 import random
@@ -26,6 +27,7 @@ except ModuleNotFoundError:
 
     raise
 
+os.environ["COQUI_TOS_AGREED"] = "1"
 
 params = {
     "activate": True,
