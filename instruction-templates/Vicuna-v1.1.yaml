@@ -6,7 +6,7 @@ instruction_template: |-
       {%- endif -%}
   {%- endfor -%}
   {%- if not found_item -%}
-      {{- '' + 'A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions.' + '\n\n' -}}
+      {{- '' + 'A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user\'s questions.' + '\n\n' -}}
   {%- endif %}
   {%- for message in messages %}
       {%- if message['role'] == 'system' -%}
