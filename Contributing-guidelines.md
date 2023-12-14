@@ -24,26 +24,10 @@ The remaining errors should be fixed.
 
 The main focus of this project is the Gradio UI, so you should familiarize yourself with Gradio: https://www.gradio.app/docs/interface
 
-**API**
-
-The UI takes precedence over the API: you should not add features exclusively to the API if they could be added to the UI first.
-
-### Extensions
-
-As a rule of thumb, new extensions should be submitted to https://github.com/oobabooga/text-generation-webui-extensions. **You are highly encouraged to submit your extensions to that list!**
-
-New built-in extensions can be accepted in cases where they would be useful to a large percentage of the user base, preferably while adding few or no additional dependencies.
-
-### Installation methods
-
-There are two main installation methods for this project:
-
-1) The one-click-installers.
-2) Manual installation as described in the README.
-
-Some Docker files are available in the repository, but I never use Docker. Pull requests about Docker should contain straightforward fixes or updates only.
-
-### Some important variables
+<details>
+<summary>
+Project structure
+</summary>
 
 * `shared.settings` contains default values for Gradio components. It can be customized through a `settings.yaml` file.
 * `shared.args` contains the command-line arguments. They represent variables that need to be changed often.
@@ -76,3 +60,10 @@ ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_sta
 ```
 
 Each row is in the format `[input, reply]`. `history['visible']` contains the messages as they will appear in the UI, and `history['internal']` contains the messages as they appear in the prompt. When no extension is used, the two will be identical, but many extensions add images, audio widgets, or translations to `history['visible']`.
+</details>
+
+### Extensions
+
+As a rule of thumb, new extensions should be submitted to https://github.com/oobabooga/text-generation-webui-extensions. **You are highly encouraged to submit your extensions to that list!**
+
+New built-in extensions can be accepted in cases where they would be useful to a large percentage of the user base, preferably while adding few or no additional dependencies.
