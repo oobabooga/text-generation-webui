@@ -32,6 +32,8 @@ To launch the web UI again in the future, run the same `start_` script that you 
 
 Command-line flags can be passed to the `start_` script. Alternatively, you can open the file `CMD_FLAGS.txt` with a text editor and add your flags there.
 
+To get updates in the future, run `update_linux.sh`, `update_windows.bat`, `update_macos.sh`, or `update_wsl.bat`.
+
 <details>
 <summary>
 Setup details and information about installing manually
@@ -45,17 +47,9 @@ The script creates a folder called `installer_files` where it sets up a Conda en
 
 To launch the webui in the future after it is already installed, run the same `start` script.
 
-#### Getting updates
-
-Run `update_linux.sh`, `update_windows.bat`, `update_macos.sh`, or `update_wsl.bat`.
-
 #### Running commands
 
 If you ever need to install something manually in the `installer_files` environment, you can launch an interactive shell using the cmd script: `cmd_linux.sh`, `cmd_windows.bat`, `cmd_macos.sh`, or `cmd_wsl.bat`.
-
-#### Defining command-line flags
-
-To define persistent command-line flags like `--listen` or `--api`, edit the `CMD_FLAGS.txt` file with a text editor and add them there. Flags can also be provided directly to the start scripts, for instance, `./start-linux.sh --listen`.
 
 #### Other info
 
