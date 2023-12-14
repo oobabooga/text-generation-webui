@@ -358,8 +358,6 @@ List of command-line flags
 |---------------------------------------|-------------|
 | `--multimodal-pipeline PIPELINE`      | The multimodal pipeline to use. Examples: `llava-7b`, `llava-13b`. |
 
-
-
 </details>
 
 ## Documentation
