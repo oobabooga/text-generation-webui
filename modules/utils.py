@@ -47,8 +47,8 @@ def delete_file(fname):
         logger.error(f'Invalid file path: {fname}')
         return
 
-    if abs_path.exists():
-        abs_path.unlink()
+    if rel_path.exists():
+        rel_path.unlink()
         logger.info(f'Deleted {fname}.')
 
 
