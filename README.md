@@ -10,264 +10,37 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 
 ## Features
 
-* 3 interface modes: default (two columns), notebook, and chat
-* Multiple model backends: [Transformers](https://github.com/huggingface/transformers), [llama.cpp](https://github.com/ggerganov/llama.cpp) (through [llama-cpp-python](https://github.com/abetlen/llama-cpp-python)), [ExLlama](https://github.com/turboderp/exllama), [ExLlamaV2](https://github.com/turboderp/exllamav2), [AutoGPTQ](https://github.com/PanQiWei/AutoGPTQ), [AutoAWQ](https://github.com/casper-hansen/AutoAWQ), [GPTQ-for-LLaMa](https://github.com/qwopqwop200/GPTQ-for-LLaMa), [CTransformers](https://github.com/marella/ctransformers), [QuIP#](https://github.com/Cornell-RelaxML/quip-sharp)
-* Dropdown menu for quickly switching between different models
-* LoRA: load and unload LoRAs on the fly, train a new LoRA using QLoRA
-* Precise instruction templates for chat mode, including Llama-2-chat, Alpaca, Vicuna, WizardLM, StableLM, and many others
-* 4-bit, 8-bit, and CPU inference through the transformers library
-* Use llama.cpp models with transformers samplers (`llamacpp_HF` loader)
-* [Multimodal pipelines, including LLaVA and MiniGPT-4](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/multimodal)
-* [Extensions framework](https://github.com/oobabooga/text-generation-webui/wiki/07-%E2%80%90-Extensions)
-* [Custom chat characters](https://github.com/oobabooga/text-generation-webui/wiki/03-%E2%80%90-Parameters-Tab#character)
-* Markdown output with LaTeX rendering, to use for instance with [GALACTICA](https://github.com/paperswithcode/galai)
-* OpenAI-compatible API server with Chat and Completions endpoints -- see the [examples](https://github.com/oobabooga/text-generation-webui/wiki/12-%E2%80%90-OpenAI-API#examples)
+* 3 interface modes: default (two columns), notebook, and chat.
+* Multiple model backends: [Transformers](https://github.com/huggingface/transformers), [llama.cpp](https://github.com/ggerganov/llama.cpp) (through [llama-cpp-python](https://github.com/abetlen/llama-cpp-python)), [ExLlama](https://github.com/turboderp/exllama), [ExLlamaV2](https://github.com/turboderp/exllamav2), [AutoGPTQ](https://github.com/PanQiWei/AutoGPTQ), [AutoAWQ](https://github.com/casper-hansen/AutoAWQ), [GPTQ-for-LLaMa](https://github.com/qwopqwop200/GPTQ-for-LLaMa), [CTransformers](https://github.com/marella/ctransformers), [QuIP#](https://github.com/Cornell-RelaxML/quip-sharp).
+* Dropdown menu for quickly switching between different models.
+* Large number of extensions (built-in and user-contributed), including Coqui TTS for voice outputs, Whisper STT for voice inputs, translation, [multimodal pipelines](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/multimodal), vector databases, Stable Diffusion integration, and a lot more. See [the wiki](https://github.com/oobabooga/text-generation-webui/wiki/07-%E2%80%90-Extensions) and [the extensions directory](https://github.com/oobabooga/text-generation-webui-extensions) for details.
+* Chat with [custom characters](https://github.com/oobabooga/text-generation-webui/wiki/03-%E2%80%90-Parameters-Tab#character).
+* Precise templates for instruction-following models, including Llama-2-chat, Alpaca, Vicuna, Mistral, and many others.
+* Easy UI for training LoRAs, as well as loading/unloading them on the fly.
+* HF transformers integration: load models in 4-bit or 8-bit quantization through bitsandbytes, use llama.cpp with transformers samplers (`llamacpp_HF` loader), CPU inference in 32-bit precision using PyTorch.
+* OpenAI-compatible API server with Chat and Completions endpoints -- see the [examples](https://github.com/oobabooga/text-generation-webui/wiki/12-%E2%80%90-OpenAI-API#examples).
 
-## Documentation
-
-To learn how to use the various features, check out the Documentation: 
-
-https://github.com/oobabooga/text-generation-webui/wiki
-
-## Installation
-
-### One-click installers
+## How to install
 
 1) Clone or [download](https://github.com/oobabooga/text-generation-webui/archive/refs/heads/main.zip) the repository.
 2) Run the `start_linux.sh`, `start_windows.bat`, `start_macos.sh`, or `start_wsl.bat` script depending on your OS.
 3) Select your GPU vendor when asked.
-4) Have fun!
+4) Once the installation ends, browse to `http://localhost:7860/?__theme=dark`.
+5) Have fun!
 
-#### How it works
-
-The script creates a folder called `installer_files` where it sets up a Conda environment using Miniconda. The installation is self-contained: if you want to reinstall, just delete `installer_files` and run the start script again.
-
-To launch the webui in the future after it is already installed, run the same `start` script.
-
-#### Getting updates
-
-Run `update_linux.sh`, `update_windows.bat`, `update_macos.sh`, or `update_wsl.bat`.
-
-#### Running commands
-
-If you ever need to install something manually in the `installer_files` environment, you can launch an interactive shell using the cmd script: `cmd_linux.sh`, `cmd_windows.bat`, `cmd_macos.sh`, or `cmd_wsl.bat`.
-
-#### Defining command-line flags
-
-To define persistent command-line flags like `--listen` or `--api`, edit the `CMD_FLAGS.txt` file with a text editor and add them there. Flags can also be provided directly to the start scripts, for instance, `./start-linux.sh --listen`.
-
-#### Other info
-
-* There is no need to run any of those scripts as admin/root.
-* For additional instructions about AMD setup and WSL setup, consult [the documentation](https://github.com/oobabooga/text-generation-webui/wiki).
-* The installer has been tested mostly on NVIDIA GPUs. If you can find a way to improve it for your AMD/Intel Arc/Mac Metal GPU, you are highly encouraged to submit a PR to this repository. The main file to be edited is `one_click.py`.
-* For automated installation, you can use the `GPU_CHOICE`, `USE_CUDA118`, `LAUNCH_AFTER_INSTALL`, and `INSTALL_EXTENSIONS` environment variables. For instance: `GPU_CHOICE=A USE_CUDA118=FALSE LAUNCH_AFTER_INSTALL=FALSE INSTALL_EXTENSIONS=FALSE ./start_linux.sh`.
-
-### Manual installation using Conda
-
-Recommended if you have some experience with the command-line.
-
-#### 0. Install Conda
-
-https://docs.conda.io/en/latest/miniconda.html
-
-On Linux or WSL, it can be automatically installed with these two commands ([source](https://educe-ubc.github.io/conda.html)):
-
-```
-curl -sL "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh" > "Miniconda3.sh"
-bash Miniconda3.sh
-```
-
-#### 1. Create a new conda environment
-
-```
-conda create -n textgen python=3.11
-conda activate textgen
-```
-
-#### 2. Install Pytorch
-
-| System | GPU | Command |
-|--------|---------|---------|
-| Linux/WSL | NVIDIA | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121` |
-| Linux/WSL | CPU only | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu` |
-| Linux | AMD | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.6` |
-| MacOS + MPS | Any | `pip3 install torch torchvision torchaudio` |
-| Windows | NVIDIA | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121` |
-| Windows | CPU only | `pip3 install torch torchvision torchaudio` |
-
-The up-to-date commands can be found here: https://pytorch.org/get-started/locally/.
-
-For NVIDIA, you also need to install the CUDA runtime libraries:
-
-```
-conda install -y -c "nvidia/label/cuda-12.1.1" cuda-runtime
-```
-
-If you need `nvcc` to compile some library manually, replace the command above with
-
-```
-conda install -y -c "nvidia/label/cuda-12.1.1" cuda
-```
-
-#### 3. Install the web UI
-
-```
-git clone https://github.com/oobabooga/text-generation-webui
-cd text-generation-webui
-pip install -r <requirements file according to table below>
-```
-
-Requirements file to use:
-
-| GPU | CPU | requirements file to use |
-|--------|---------|---------|
-| NVIDIA | has AVX2 | `requirements.txt` |
-| NVIDIA | no AVX2 | `requirements_noavx2.txt` |
-| AMD | has AVX2 | `requirements_amd.txt` |
-| AMD | no AVX2 | `requirements_amd_noavx2.txt` |
-| CPU only | has AVX2 | `requirements_cpu_only.txt` |
-| CPU only | no AVX2 | `requirements_cpu_only_noavx2.txt` |
-| Apple | Intel | `requirements_apple_intel.txt` |
-| Apple | Apple Silicon | `requirements_apple_silicon.txt` |
-
-##### AMD GPU on Windows
-
-1) Use `requirements_cpu_only.txt` or `requirements_cpu_only_noavx2.txt` in the command above.
-
-2) Manually install llama-cpp-python using the appropriate command for your hardware: [Installation from PyPI](https://github.com/abetlen/llama-cpp-python#installation-with-hardware-acceleration).
-    * Use the `LLAMA_HIPBLAS=on` toggle.
-    * Note the [Windows remarks](https://github.com/abetlen/llama-cpp-python#windows-remarks).
-
-3) Manually install AutoGPTQ: [Installation](https://github.com/PanQiWei/AutoGPTQ#install-from-source).
-    * Perform the from-source installation - there are no prebuilt ROCm packages for Windows.
-
-4) Manually install [ExLlama](https://github.com/turboderp/exllama) by simply cloning it into the `repositories` folder (it will be automatically compiled at runtime after that):
-
-```sh
-cd text-generation-webui
-git clone https://github.com/turboderp/exllama repositories/exllama
-```
-
-##### Older NVIDIA GPUs
-
-1) For Kepler GPUs and older, you will need to install CUDA 11.8 instead of 12:
-
-```
-pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-conda install -y -c "nvidia/label/cuda-11.8.0" cuda-runtime
-```
-
-2) bitsandbytes >= 0.39 may not work. In that case, to use `--load-in-8bit`, you may have to downgrade like this:
-    * Linux: `pip install bitsandbytes==0.38.1`
-    * Windows: `pip install https://github.com/jllllll/bitsandbytes-windows-webui/raw/main/bitsandbytes-0.38.1-py3-none-any.whl`
-
-##### Manual install
-
-The requirements*.txt above contain various precompiled wheels. If you wish to compile things manually, or if you need to because no suitable wheels are available for your hardware, you can use `requirements_nowheels.txt` and then install your desired loaders manually.
-
-### Alternative: Docker
-
-```
-ln -s docker/{nvidia/Dockerfile,docker-compose.yml,.dockerignore} .
-cp docker/.env.example .env
-# Edit .env and set: 
-#   TORCH_CUDA_ARCH_LIST based on your GPU model
-#   APP_RUNTIME_GID      your host user's group id (run `id -g` in a terminal)
-#   BUILD_EXTENIONS      optionally add comma separated list of extensions to build
-docker compose up --build
-```
-
-* You need to have Docker Compose v2.17 or higher installed. See [this guide](https://github.com/oobabooga/text-generation-webui/wiki/09-%E2%80%90-Docker) for instructions.
-* For additional docker files, check out [this repository](https://github.com/Atinoda/text-generation-webui-docker).
-
-### Updating the requirements
-
-From time to time, the `requirements*.txt` changes. To update, use these commands:
-
-```
-conda activate textgen
-cd text-generation-webui
-pip install -r <requirements file that you've used> --upgrade
-```
-
-## Downloading models
-
-Models should be placed in the `text-generation-webui/models` folder. They are usually downloaded from [Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads).
-
-* Transformers or GPTQ models are made of several files and must be placed in a subfolder. Example:
-
-```
-text-generation-webui
-├── models
-│   ├── lmsys_vicuna-33b-v1.3
-│   │   ├── config.json
-│   │   ├── generation_config.json
-│   │   ├── pytorch_model-00001-of-00007.bin
-│   │   ├── pytorch_model-00002-of-00007.bin
-│   │   ├── pytorch_model-00003-of-00007.bin
-│   │   ├── pytorch_model-00004-of-00007.bin
-│   │   ├── pytorch_model-00005-of-00007.bin
-│   │   ├── pytorch_model-00006-of-00007.bin
-│   │   ├── pytorch_model-00007-of-00007.bin
-│   │   ├── pytorch_model.bin.index.json
-│   │   ├── special_tokens_map.json
-│   │   ├── tokenizer_config.json
-│   │   └── tokenizer.model
-```
-
-* GGUF models are a single file and should be placed directly into `models`. Example:
-
-```
-text-generation-webui
-├── models
-│   ├── llama-2-13b-chat.Q4_K_M.gguf
-```
-
-In both cases, you can use the "Model" tab of the UI to download the model from Hugging Face automatically. It is also possible to download via the command-line with `python download-model.py organization/model` (use `--help` to see all the options).
-
-#### GPT-4chan
+To launch the web UI again in the future, run the same `start_` script that you used to install it.
 
 <details>
 <summary>
-Instructions
+Setup details
 </summary>
 
-[GPT-4chan](https://huggingface.co/ykilcher/gpt-4chan) has been shut down from Hugging Face, so you need to download it elsewhere. You have two options:
+Command-line flags can be passed to that script. Alternatively, you can place your flags in the `CMD_FLAGS.txt` file.
 
-* Torrent: [16-bit](https://archive.org/details/gpt4chan_model_float16) / [32-bit](https://archive.org/details/gpt4chan_model)
-* Direct download: [16-bit](https://theswissbay.ch/pdf/_notpdf_/gpt4chan_model_float16/) / [32-bit](https://theswissbay.ch/pdf/_notpdf_/gpt4chan_model/)
-
-The 32-bit version is only relevant if you intend to run the model in CPU mode. Otherwise, you should use the 16-bit version.
-
-After downloading the model, follow these steps:
-
-1. Place the files under `models/gpt4chan_model_float16` or `models/gpt4chan_model`.
-2. Place GPT-J 6B's config.json file in that same folder: [config.json](https://huggingface.co/EleutherAI/gpt-j-6B/raw/main/config.json).
-3. Download GPT-J 6B's tokenizer files (they will be automatically detected when you attempt to load GPT-4chan):
-
-```
-python download-model.py EleutherAI/gpt-j-6B --text-only
-```
-
-When you load this model in default or notebook modes, the "HTML" tab will show the generated text in 4chan format:
-
-![Image3](https://github.com/oobabooga/screenshots/raw/main/gpt4chan.png)
-
-</details>
-
-## Starting the web UI
-
-    conda activate textgen
-    cd text-generation-webui
-    python server.py
-
-Then browse to
-
-`http://localhost:7860/?__theme=dark`
-
-Optionally, you can use the following command-line flags:
-
+<details>
+<summary>
+Command-line flags list
+</summary>
 #### Basic settings
 
 | Flag                                       | Description |
@@ -430,6 +203,246 @@ Optionally, you can use the following command-line flags:
 | Flag                                  | Description |
 |---------------------------------------|-------------|
 | `--multimodal-pipeline PIPELINE`      | The multimodal pipeline to use. Examples: `llava-7b`, `llava-13b`. |
+
+
+</details>
+
+### One-click-installer
+
+#### How it works
+
+The script creates a folder called `installer_files` where it sets up a Conda environment using Miniconda. The installation is self-contained: if you want to reinstall, just delete `installer_files` and run the start script again.
+
+To launch the webui in the future after it is already installed, run the same `start` script.
+
+#### Getting updates
+
+Run `update_linux.sh`, `update_windows.bat`, `update_macos.sh`, or `update_wsl.bat`.
+
+#### Running commands
+
+If you ever need to install something manually in the `installer_files` environment, you can launch an interactive shell using the cmd script: `cmd_linux.sh`, `cmd_windows.bat`, `cmd_macos.sh`, or `cmd_wsl.bat`.
+
+#### Defining command-line flags
+
+To define persistent command-line flags like `--listen` or `--api`, edit the `CMD_FLAGS.txt` file with a text editor and add them there. Flags can also be provided directly to the start scripts, for instance, `./start-linux.sh --listen`.
+
+#### Other info
+
+* There is no need to run any of those scripts as admin/root.
+* For additional instructions about AMD setup and WSL setup, consult [the documentation](https://github.com/oobabooga/text-generation-webui/wiki).
+* The installer has been tested mostly on NVIDIA GPUs. If you can find a way to improve it for your AMD/Intel Arc/Mac Metal GPU, you are highly encouraged to submit a PR to this repository. The main file to be edited is `one_click.py`.
+* For automated installation, you can use the `GPU_CHOICE`, `USE_CUDA118`, `LAUNCH_AFTER_INSTALL`, and `INSTALL_EXTENSIONS` environment variables. For instance: `GPU_CHOICE=A USE_CUDA118=FALSE LAUNCH_AFTER_INSTALL=FALSE INSTALL_EXTENSIONS=FALSE ./start_linux.sh`.
+
+### Manual installation using Conda
+
+Recommended if you have some experience with the command-line.
+
+#### 0. Install Conda
+
+https://docs.conda.io/en/latest/miniconda.html
+
+On Linux or WSL, it can be automatically installed with these two commands ([source](https://educe-ubc.github.io/conda.html)):
+
+```
+curl -sL "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh" > "Miniconda3.sh"
+bash Miniconda3.sh
+```
+
+#### 1. Create a new conda environment
+
+```
+conda create -n textgen python=3.11
+conda activate textgen
+```
+
+#### 2. Install Pytorch
+
+| System | GPU | Command |
+|--------|---------|---------|
+| Linux/WSL | NVIDIA | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121` |
+| Linux/WSL | CPU only | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu` |
+| Linux | AMD | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.6` |
+| MacOS + MPS | Any | `pip3 install torch torchvision torchaudio` |
+| Windows | NVIDIA | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121` |
+| Windows | CPU only | `pip3 install torch torchvision torchaudio` |
+
+The up-to-date commands can be found here: https://pytorch.org/get-started/locally/.
+
+For NVIDIA, you also need to install the CUDA runtime libraries:
+
+```
+conda install -y -c "nvidia/label/cuda-12.1.1" cuda-runtime
+```
+
+If you need `nvcc` to compile some library manually, replace the command above with
+
+```
+conda install -y -c "nvidia/label/cuda-12.1.1" cuda
+```
+
+#### 3. Install the web UI
+
+```
+git clone https://github.com/oobabooga/text-generation-webui
+cd text-generation-webui
+pip install -r <requirements file according to table below>
+```
+
+Requirements file to use:
+
+| GPU | CPU | requirements file to use |
+|--------|---------|---------|
+| NVIDIA | has AVX2 | `requirements.txt` |
+| NVIDIA | no AVX2 | `requirements_noavx2.txt` |
+| AMD | has AVX2 | `requirements_amd.txt` |
+| AMD | no AVX2 | `requirements_amd_noavx2.txt` |
+| CPU only | has AVX2 | `requirements_cpu_only.txt` |
+| CPU only | no AVX2 | `requirements_cpu_only_noavx2.txt` |
+| Apple | Intel | `requirements_apple_intel.txt` |
+| Apple | Apple Silicon | `requirements_apple_silicon.txt` |
+
+### Start the web UI
+
+    conda activate textgen
+    cd text-generation-webui
+    python server.py
+
+Then browse to
+
+`http://localhost:7860/?__theme=dark`
+
+##### AMD GPU on Windows
+
+1) Use `requirements_cpu_only.txt` or `requirements_cpu_only_noavx2.txt` in the command above.
+
+2) Manually install llama-cpp-python using the appropriate command for your hardware: [Installation from PyPI](https://github.com/abetlen/llama-cpp-python#installation-with-hardware-acceleration).
+    * Use the `LLAMA_HIPBLAS=on` toggle.
+    * Note the [Windows remarks](https://github.com/abetlen/llama-cpp-python#windows-remarks).
+
+3) Manually install AutoGPTQ: [Installation](https://github.com/PanQiWei/AutoGPTQ#install-from-source).
+    * Perform the from-source installation - there are no prebuilt ROCm packages for Windows.
+
+4) Manually install [ExLlama](https://github.com/turboderp/exllama) by simply cloning it into the `repositories` folder (it will be automatically compiled at runtime after that):
+
+```sh
+cd text-generation-webui
+git clone https://github.com/turboderp/exllama repositories/exllama
+```
+
+##### Older NVIDIA GPUs
+
+1) For Kepler GPUs and older, you will need to install CUDA 11.8 instead of 12:
+
+```
+pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+conda install -y -c "nvidia/label/cuda-11.8.0" cuda-runtime
+```
+
+2) bitsandbytes >= 0.39 may not work. In that case, to use `--load-in-8bit`, you may have to downgrade like this:
+    * Linux: `pip install bitsandbytes==0.38.1`
+    * Windows: `pip install https://github.com/jllllll/bitsandbytes-windows-webui/raw/main/bitsandbytes-0.38.1-py3-none-any.whl`
+
+##### Manual install
+
+The requirements*.txt above contain various precompiled wheels. If you wish to compile things manually, or if you need to because no suitable wheels are available for your hardware, you can use `requirements_nowheels.txt` and then install your desired loaders manually.
+
+### Alternative: Docker
+
+```
+ln -s docker/{nvidia/Dockerfile,docker-compose.yml,.dockerignore} .
+cp docker/.env.example .env
+# Edit .env and set: 
+#   TORCH_CUDA_ARCH_LIST based on your GPU model
+#   APP_RUNTIME_GID      your host user's group id (run `id -g` in a terminal)
+#   BUILD_EXTENIONS      optionally add comma separated list of extensions to build
+docker compose up --build
+```
+
+* You need to have Docker Compose v2.17 or higher installed. See [this guide](https://github.com/oobabooga/text-generation-webui/wiki/09-%E2%80%90-Docker) for instructions.
+* For additional docker files, check out [this repository](https://github.com/Atinoda/text-generation-webui-docker).
+
+### Updating the requirements
+
+From time to time, the `requirements*.txt` changes. To update, use these commands:
+
+```
+conda activate textgen
+cd text-generation-webui
+pip install -r <requirements file that you've used> --upgrade
+```
+
+
+</details>
+
+## Documentation
+
+https://github.com/oobabooga/text-generation-webui/wiki
+
+## Downloading models
+
+Models should be placed in the `text-generation-webui/models` folder. They are usually downloaded from [Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads).
+
+* GGUF models are a single file and should be placed directly into `models`. Example:
+
+```
+text-generation-webui
+├── models
+│   ├── llama-2-13b-chat.Q4_K_M.gguf
+```
+
+* Other models (like 16-bit transformers models and GPTQ models) are made of several files and must be placed in a subfolder. Example:
+
+```
+text-generation-webui
+├── models
+│   ├── lmsys_vicuna-33b-v1.3
+│   │   ├── config.json
+│   │   ├── generation_config.json
+│   │   ├── pytorch_model-00001-of-00007.bin
+│   │   ├── pytorch_model-00002-of-00007.bin
+│   │   ├── pytorch_model-00003-of-00007.bin
+│   │   ├── pytorch_model-00004-of-00007.bin
+│   │   ├── pytorch_model-00005-of-00007.bin
+│   │   ├── pytorch_model-00006-of-00007.bin
+│   │   ├── pytorch_model-00007-of-00007.bin
+│   │   ├── pytorch_model.bin.index.json
+│   │   ├── special_tokens_map.json
+│   │   ├── tokenizer_config.json
+│   │   └── tokenizer.model
+```
+
+In both cases, you can use the "Model" tab of the UI to download the model from Hugging Face automatically. It is also possible to download via the command-line with `python download-model.py organization/model` (use `--help` to see all the options).
+
+#### GPT-4chan
+
+<details>
+<summary>
+Instructions
+</summary>
+
+[GPT-4chan](https://huggingface.co/ykilcher/gpt-4chan) has been shut down from Hugging Face, so you need to download it elsewhere. You have two options:
+
+* Torrent: [16-bit](https://archive.org/details/gpt4chan_model_float16) / [32-bit](https://archive.org/details/gpt4chan_model)
+* Direct download: [16-bit](https://theswissbay.ch/pdf/_notpdf_/gpt4chan_model_float16/) / [32-bit](https://theswissbay.ch/pdf/_notpdf_/gpt4chan_model/)
+
+The 32-bit version is only relevant if you intend to run the model in CPU mode. Otherwise, you should use the 16-bit version.
+
+After downloading the model, follow these steps:
+
+1. Place the files under `models/gpt4chan_model_float16` or `models/gpt4chan_model`.
+2. Place GPT-J 6B's config.json file in that same folder: [config.json](https://huggingface.co/EleutherAI/gpt-j-6B/raw/main/config.json).
+3. Download GPT-J 6B's tokenizer files (they will be automatically detected when you attempt to load GPT-4chan):
+
+```
+python download-model.py EleutherAI/gpt-j-6B --text-only
+```
+
+When you load this model in default or notebook modes, the "HTML" tab will show the generated text in 4chan format:
+
+![Image3](https://github.com/oobabooga/screenshots/raw/main/gpt4chan.png)
+
+</details>
 
 ## Google Colab notebook
 
