@@ -148,11 +148,7 @@ loaders_and_params = OrderedDict({
         'no_use_fast',
         'no_flash_attn',
     ],
-    'HQQ': [
-        'trust_remote_code',
-        'no_use_fast',
-        'no_flash_attn',
-    ]
+    'HQQ': []
 })
 
 loaders_samplers = {
