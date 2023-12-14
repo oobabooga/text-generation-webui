@@ -38,8 +38,8 @@ New built-in extensions can be accepted in cases where they would be useful to a
 
 There are two main installation methods for this project:
 
-1) Manual installation as described in the README.
-2) The one-click-installers.
+1) The one-click-installers.
+2) Manual installation as described in the README.
 
 Some Docker files are available in the repository, but I never use Docker. Pull requests about Docker should contain straightforward fixes or updates only.
 
