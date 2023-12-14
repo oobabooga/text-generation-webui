@@ -14,7 +14,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * Multiple model backends: [Transformers](https://github.com/huggingface/transformers), [llama.cpp](https://github.com/ggerganov/llama.cpp) (through [llama-cpp-python](https://github.com/abetlen/llama-cpp-python)), [ExLlama](https://github.com/turboderp/exllama), [ExLlamaV2](https://github.com/turboderp/exllamav2), [AutoGPTQ](https://github.com/PanQiWei/AutoGPTQ), [AutoAWQ](https://github.com/casper-hansen/AutoAWQ), [GPTQ-for-LLaMa](https://github.com/qwopqwop200/GPTQ-for-LLaMa), [CTransformers](https://github.com/marella/ctransformers), [QuIP#](https://github.com/Cornell-RelaxML/quip-sharp).
 * Dropdown menu for quickly switching between different models.
 * Large number of extensions (built-in and user-contributed), including Coqui TTS for voice outputs, Whisper STT for voice inputs, translation, [multimodal pipelines](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/multimodal), vector databases, Stable Diffusion integration, and a lot more. See [the wiki](https://github.com/oobabooga/text-generation-webui/wiki/07-%E2%80%90-Extensions) and [the extensions directory](https://github.com/oobabooga/text-generation-webui-extensions) for details.
-* Chat with [custom characters](https://github.com/oobabooga/text-generation-webui/wiki/03-%E2%80%90-Parameters-Tab#character).
+* [Chat with custom characters](https://github.com/oobabooga/text-generation-webui/wiki/03-%E2%80%90-Parameters-Tab#character).
 * Precise templates for instruction-following models, including Llama-2-chat, Alpaca, Vicuna, Mistral, and many others.
 * Easy UI for training LoRAs, as well as loading/unloading them on the fly.
 * HF transformers integration: load models in 4-bit or 8-bit quantization through bitsandbytes, use llama.cpp with transformers samplers (`llamacpp_HF` loader), CPU inference in 32-bit precision using PyTorch.
@@ -35,12 +35,6 @@ To launch the web UI again in the future, run the same `start_` script that you 
 Setup details
 </summary>
 
-Command-line flags can be passed to that script. Alternatively, you can place your flags in the `CMD_FLAGS.txt` file.
-
-<details>
-<summary>
-Command-line flags list
-</summary>
 #### Basic settings
 
 | Flag                                       | Description |
@@ -206,6 +200,13 @@ Command-line flags list
 
 
 </details>
+
+Command-line flags can be passed to that script. Alternatively, you can place your flags in the `CMD_FLAGS.txt` file.
+
+<details>
+<summary>
+Command-line flags list
+</summary>
 
 ### One-click-installer
 
