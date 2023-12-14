@@ -43,9 +43,7 @@ Setup details and information about installing manually
 
 #### How it works
 
-The script creates a folder called `installer_files` where it sets up a Conda environment using Miniconda. The installation is self-contained: if you want to reinstall, just delete `installer_files` and run the start script again.
-
-To launch the webui in the future after it is already installed, run the same `start` script.
+The script creates a folder called `installer_files` where it sets up a Conda environment using Miniconda.
 
 #### Running commands
 
