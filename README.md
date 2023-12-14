@@ -28,9 +28,11 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 4) Once the installation ends, browse to `http://localhost:7860/?__theme=dark`.
 5) Have fun!
 
-To launch the web UI again in the future, run the same `start_` script that you used to install it.
+To launch the web UI again in the future, run the `start_` script again.
 
-Command-line flags can be passed to the `start_` script. Alternatively, you can open the file `CMD_FLAGS.txt` with a text editor and add your flags there.
+This script sets up the web UI environment entirely in the `installer_files` folder -- it doesn't touch your system folders. To reinstall the project requirements, you can simply delete this folder and run the `start_` script again.
+
+That script accepts command-line flags. Alternatively, you can open the file `CMD_FLAGS.txt` with a text editor and add your flags there.
 
 To get updates in the future, run `update_linux.sh`, `update_windows.bat`, `update_macos.sh`, or `update_wsl.bat`.
 
