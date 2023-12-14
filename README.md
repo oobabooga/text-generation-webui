@@ -45,8 +45,8 @@ The script uses Miniconda to set up a Conda environment in the `installer_files`
 
 If you ever need to install something manually in the `installer_files` environment, you can launch an interactive shell using the cmd script: `cmd_linux.sh`, `cmd_windows.bat`, `cmd_macos.sh`, or `cmd_wsl.bat`.
 
-* There is no need to run any of those scripts as admin/root.
-* For additional instructions about AMD setup and WSL setup, consult [the documentation](https://github.com/oobabooga/text-generation-webui/wiki).
+* There is no need to run any of those scripts (`start_`, `update_`, or `cmd_`) as admin/root.
+* For additional instructions about AMD and WSL setup, consult [the documentation](https://github.com/oobabooga/text-generation-webui/wiki).
 * For automated installation, you can use the `GPU_CHOICE`, `USE_CUDA118`, `LAUNCH_AFTER_INSTALL`, and `INSTALL_EXTENSIONS` environment variables. For instance: `GPU_CHOICE=A USE_CUDA118=FALSE LAUNCH_AFTER_INSTALL=FALSE INSTALL_EXTENSIONS=FALSE ./start_linux.sh`.
 
 ### Manual installation using Conda
@@ -162,7 +162,7 @@ conda install -y -c "nvidia/label/cuda-11.8.0" cuda-runtime
 
 ##### Manual install
 
-The requirements*.txt above contain various precompiled wheels. If you wish to compile things manually, or if you need to because no suitable wheels are available for your hardware, you can use `requirements_nowheels.txt` and then install your desired loaders manually.
+The `requirements*.txt` above contain various wheels precompiled through GitHub Actions. If you wish to compile things manually, or if you need to because no suitable wheels are available for your hardware, you can use `requirements_nowheels.txt` and then install your desired loaders manually.
 
 ### Alternative: Docker
 
@@ -181,7 +181,7 @@ docker compose up --build
 
 ### Updating the requirements
 
-From time to time, the `requirements*.txt` changes. To update, use these commands:
+From time to time, the `requirements*.txt` change. To update, use these commands:
 
 ```
 conda activate textgen
@@ -422,6 +422,6 @@ If you would like to contribute to the project, check out the [Contributing guid
 
 ## Acknowledgment & support
 
-In August 2023, [Andreessen Horowitz](https://a16z.com/) (a16z) provided a generous grant to encourage and support my independent work on this project ([link](https://a16z.com/supporting-the-open-source-ai-community/)). I am **extremely** grateful for their trust and recognition.
+In August 2023, [Andreessen Horowitz](https://a16z.com/) (a16z) provided a generous grant to encourage and support my independent work on this project. I am **extremely** grateful for their trust and recognition.
 
 If you find this project useful, I have a [Ko-fi page](https://ko-fi.com/oobabooga) where you can make a donation. Your support helps me continue maintaining and improving this project.
