@@ -215,7 +215,6 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
         yield output
         return
 
-    just_started = True
     visible_text = None
     stopping_strings = get_stopping_strings(state)
     is_stream = state['stream']
@@ -228,22 +227,30 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
         text, visible_text = apply_extensions('chat_input', text, visible_text, state)
         text = apply_extensions('input', text, state, is_chat=True)
 
+        output['internal'].append([text, ''])
+        output['visible'].append([visible_text, ''])
+
         # *Is typing...*
         if loading_message:
-            yield {'visible': output['visible'] + [[visible_text, shared.processing_message]], 'internal': output['internal']}
+            yield {
+                'visible': output['visible'][:-1] + [[output['visible'][-1][0], shared.processing_message]],
+                'internal': output['internal']
+            }
     else:
         text, visible_text = output['internal'][-1][0], output['visible'][-1][0]
         if regenerate:
-            output['visible'].pop()
-            output['internal'].pop()
-
-            # *Is typing...*
             if loading_message:
-                yield {'visible': output['visible'] + [[visible_text, shared.processing_message]], 'internal': output['internal']}
+                yield {
+                    'visible': output['visible'][:-1] + [[output['visible'][-1][0], shared.processing_message]],
+                    'internal': output['internal'][:-1] + [[output['internal'][-1][0], shared.processing_message]]
+                }
         elif _continue:
             last_reply = [output['internal'][-1][1], output['visible'][-1][1]]
             if loading_message:
-                yield {'visible': output['visible'][:-1] + [[visible_text, last_reply[1] + '...']], 'internal': output['internal']}
+                yield {
+                    'visible': output['visible'][:-1] + [[output['visible'][-1][0], last_reply[1] + '...']],
+                    'internal': output['internal']
+                }
 
     # Generate the prompt
     kwargs = {
@@ -269,12 +276,6 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             output['visible'][-1][1] = apply_extensions('output', output['visible'][-1][1], state, is_chat=True)
             yield output
             return
-
-        if just_started:
-            just_started = False
-            if not _continue:
-                output['internal'].append(['', ''])
-                output['visible'].append(['', ''])
 
         if _continue:
             output['internal'][-1] = [text, last_reply[0] + reply]
