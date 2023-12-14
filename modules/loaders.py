@@ -42,6 +42,7 @@ loaders_and_params = OrderedDict({
         'compress_pos_emb',
         'cpu',
         'numa',
+        'kv_overrides',
     ],
     'llamacpp_HF': [
         'n_ctx',
@@ -62,6 +63,7 @@ loaders_and_params = OrderedDict({
         'no_use_fast',
         'logits_all',
         'llamacpp_HF_info',
+        'kv_overrides',
     ],
     'ExLlama_HF': [
         'gpu_split',

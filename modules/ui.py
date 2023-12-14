@@ -89,6 +89,7 @@ def list_model_elements():
         'rope_freq_base',
         'numa',
         'logits_all',
+        'kv_overrides',
     ]
     if is_torch_xpu_available():
         for i in range(torch.xpu.device_count()):
