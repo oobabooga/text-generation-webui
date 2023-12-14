@@ -13,7 +13,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * 3 interface modes: default (two columns), notebook, and chat.
 * Multiple model backends: [Transformers](https://github.com/huggingface/transformers), [llama.cpp](https://github.com/ggerganov/llama.cpp) (through [llama-cpp-python](https://github.com/abetlen/llama-cpp-python)), [ExLlama](https://github.com/turboderp/exllama), [ExLlamaV2](https://github.com/turboderp/exllamav2), [AutoGPTQ](https://github.com/PanQiWei/AutoGPTQ), [AutoAWQ](https://github.com/casper-hansen/AutoAWQ), [GPTQ-for-LLaMa](https://github.com/qwopqwop200/GPTQ-for-LLaMa), [CTransformers](https://github.com/marella/ctransformers), [QuIP#](https://github.com/Cornell-RelaxML/quip-sharp).
 * Dropdown menu for quickly switching between different models.
-* Large number of extensions (built-in and user-contributed), including Coqui TTS for voice outputs, Whisper STT for voice inputs, translation, [multimodal pipelines](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/multimodal), vector databases, Stable Diffusion integration, and a lot more. See [the wiki](https://github.com/oobabooga/text-generation-webui/wiki/07-%E2%80%90-Extensions) and [the extensions directory](https://github.com/oobabooga/text-generation-webui-extensions) for details.
+* Large number of extensions (built-in and user-contributed), including Coqui TTS for realistic voice outputs, Whisper STT for voice inputs, translation, [multimodal pipelines](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/multimodal), vector databases, Stable Diffusion integration, and a lot more. See [the wiki](https://github.com/oobabooga/text-generation-webui/wiki/07-%E2%80%90-Extensions) and [the extensions directory](https://github.com/oobabooga/text-generation-webui-extensions) for details.
 * [Chat with custom characters](https://github.com/oobabooga/text-generation-webui/wiki/03-%E2%80%90-Parameters-Tab#character).
 * Precise templates for instruction-following models, including Llama-2-chat, Alpaca, Vicuna, Mistral, and many others.
 * Easy UI for training LoRAs, as well as loading/unloading them on the fly.
@@ -29,6 +29,8 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 5) Have fun!
 
 To launch the web UI again in the future, run the same `start_` script that you used to install it.
+
+Command-line flags can be passed to the `start_` script. Alternatively, you can open the file `CMD_FLAGS.txt` with a text editor and add your flags there.
 
 <details>
 <summary>
@@ -200,8 +202,6 @@ cd text-generation-webui
 pip install -r <requirements file that you have used> --upgrade
 ```
 </details>
-
-Command-line flags can be passed to the `start_` script. Alternatively, you can open the file `CMD_FLAGS.txt` with a text editor and add your flags there.
 
 <details>
 <summary>
@@ -382,14 +382,14 @@ https://github.com/oobabooga/text-generation-webui/wiki
 
 ## Downloading models
 
-Models should be placed in the `text-generation-webui/models` folder. They are usually downloaded from [Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads).
+Models should be placed in the folder `text-generation-webui/models`. They are usually downloaded from [Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads).
 
 * GGUF models are a single file and should be placed directly into `models`. Example:
 
 ```
 text-generation-webui
-├── models
-│   ├── llama-2-13b-chat.Q4_K_M.gguf
+└── models
+    └── llama-2-13b-chat.Q4_K_M.gguf
 ```
 
 * Other models (like 16-bit transformers models and GPTQ models) are made of several files and must be placed in a subfolder. Example:
@@ -413,7 +413,13 @@ text-generation-webui
 │   │   └── tokenizer.model
 ```
 
-In both cases, you can use the "Model" tab of the UI to download the model from Hugging Face automatically. It is also possible to download via the command-line with `python download-model.py organization/model` (use `--help` to see all the options).
+In both cases, you can use the "Model" tab of the UI to download the model from Hugging Face automatically. It is also possible to download via the command-line with 
+
+```
+python download-model.py organization/model
+```
+
+Use `--help` to see all the options.
 
 #### GPT-4chan
 
