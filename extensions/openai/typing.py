@@ -1,6 +1,6 @@
 import json
 import time
-from typing import List
+from typing import List, Dict
 
 from pydantic import BaseModel, Field
 
@@ -161,6 +161,7 @@ class LogitsRequestParams(BaseModel):
     presence_penalty: float | None = 0
     temperature: float | None = 1
     top_p: float | None = 1
+    top_logits: int | None = 50
 
 
 class LogitsRequest(GenerationOptions, LogitsRequestParams):
@@ -168,7 +169,7 @@ class LogitsRequest(GenerationOptions, LogitsRequestParams):
 
 
 class LogitsResponse(BaseModel):
-    logits: dict
+    logits: Dict[str, float]
 
 
 class ModelInfoResponse(BaseModel):
