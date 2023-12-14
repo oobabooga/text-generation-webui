@@ -15,9 +15,9 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 * Dropdown menu for quickly switching between different models.
 * Large number of extensions (built-in and user-contributed), including Coqui TTS for realistic voice outputs, Whisper STT for voice inputs, translation, [multimodal pipelines](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/multimodal), vector databases, Stable Diffusion integration, and a lot more. See [the wiki](https://github.com/oobabooga/text-generation-webui/wiki/07-%E2%80%90-Extensions) and [the extensions directory](https://github.com/oobabooga/text-generation-webui-extensions) for details.
 * [Chat with custom characters](https://github.com/oobabooga/text-generation-webui/wiki/03-%E2%80%90-Parameters-Tab#character).
-* Precise templates for instruction-following models, including Llama-2-chat, Alpaca, Vicuna, Mistral, and many others.
-* Easy UI for training LoRAs, as well as loading/unloading them on the fly.
-* HF transformers integration: load models in 4-bit or 8-bit quantization through bitsandbytes, use llama.cpp with transformers samplers (`llamacpp_HF` loader), CPU inference in 32-bit precision using PyTorch.
+* Precise chat templates for instruction-following models, including Llama-2-chat, Alpaca, Vicuna, Mistral, and many others.
+* LoRA: train new LoRAs with your own data, load/unload LoRAs on the fly for generation.
+* Transformers library integration: load models in 4-bit or 8-bit precision through bitsandbytes, use llama.cpp with transformers samplers (`llamacpp_HF` loader), CPU inference in 32-bit precision using PyTorch.
 * OpenAI-compatible API server with Chat and Completions endpoints -- see the [examples](https://github.com/oobabooga/text-generation-webui/wiki/12-%E2%80%90-OpenAI-API#examples).
 
 ## How to install
@@ -28,7 +28,7 @@ Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.
 4) Once the installation ends, browse to `http://localhost:7860/?__theme=dark`.
 5) Have fun!
 
-To restart the web UI later, just run the `start_` script once again. This script will set up the project's requirements in the `installer_files` folder. In case you need to reinstall the requirements, you can easily do so by deleting that folder and then running the `start_` script again.
+To restart the web UI in the future, just run the `start_` script again. This script creates a `installer_files` folder where it sets up the project's requirements. In case you need to reinstall the requirements, you can easily do so by deleting that folder and then running the `start_` script again.
 
 You also have the option of using command-line flags with the script. As an alternative, you can edit the `CMD_FLAGS.txt` file with a text editor and include your flags there.
 
@@ -41,19 +41,12 @@ Setup details and information about installing manually
 
 ### One-click-installer
 
-#### How it works
-
-The script creates a folder called `installer_files` where it sets up a Conda environment using Miniconda.
-
-#### Running commands
+The script uses Miniconda to set up a Conda environment in the `installer_files` folder.
 
 If you ever need to install something manually in the `installer_files` environment, you can launch an interactive shell using the cmd script: `cmd_linux.sh`, `cmd_windows.bat`, `cmd_macos.sh`, or `cmd_wsl.bat`.
 
-#### Other info
-
 * There is no need to run any of those scripts as admin/root.
 * For additional instructions about AMD setup and WSL setup, consult [the documentation](https://github.com/oobabooga/text-generation-webui/wiki).
-* The installer has been tested mostly on NVIDIA GPUs. If you can find a way to improve it for your AMD/Intel Arc/Mac Metal GPU, you are highly encouraged to submit a PR to this repository. The main file to be edited is `one_click.py`.
 * For automated installation, you can use the `GPU_CHOICE`, `USE_CUDA118`, `LAUNCH_AFTER_INSTALL`, and `INSTALL_EXTENSIONS` environment variables. For instance: `GPU_CHOICE=A USE_CUDA118=FALSE LAUNCH_AFTER_INSTALL=FALSE INSTALL_EXTENSIONS=FALSE ./start_linux.sh`.
 
 ### Manual installation using Conda
@@ -126,9 +119,11 @@ Requirements file to use:
 
 ### Start the web UI
 
-    conda activate textgen
-    cd text-generation-webui
-    python server.py
+```
+conda activate textgen
+cd text-generation-webui
+python server.py
+```
 
 Then browse to
 
@@ -199,7 +194,6 @@ pip install -r <requirements file that you have used> --upgrade
 <summary>
 List of command-line flags
 </summary>
-
 
 #### Basic settings
 
@@ -405,7 +399,7 @@ text-generation-webui
 │   │   └── tokenizer.model
 ```
 
-In both cases, you can use the "Model" tab of the UI to download the model from Hugging Face automatically. It is also possible to download via the command-line with 
+In both cases, you can use the "Model" tab of the UI to download the model from Hugging Face automatically. It is also possible to download it via the command-line with 
 
 ```
 python download-model.py organization/model
@@ -428,6 +422,6 @@ If you would like to contribute to the project, check out the [Contributing guid
 
 ## Acknowledgment & support
 
-In August 2023, [Andreessen Horowitz](https://a16z.com/) (a16z) provided a generous grant to encourage and support my independent work on this project. I am **extremely** grateful for their trust and recognition.
+In August 2023, [Andreessen Horowitz](https://a16z.com/) (a16z) provided a generous grant to encourage and support my independent work on this project ([link](https://a16z.com/supporting-the-open-source-ai-community/)). I am **extremely** grateful for their trust and recognition.
 
 If you find this project useful, I have a [Ko-fi page](https://ko-fi.com/oobabooga) where you can make a donation. Your support helps me continue maintaining and improving this project.
