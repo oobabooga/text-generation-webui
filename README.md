@@ -413,7 +413,7 @@ In both cases, you can use the "Model" tab of the UI to download the model from 
 python download-model.py organization/model
 ```
 
-Use `--help` to see all the options.
+Run `python download-model.py --help` to see all the options.
 
 ## Google Colab notebook
 
