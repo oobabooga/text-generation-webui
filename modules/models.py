@@ -410,9 +410,11 @@ def HQQ_loader(model_name):
     from hqq.engine.hf import HQQModelForCausalLM
     from hqq.core.quantize import HQQLinear, HQQBackend
 
+    logger.info(f"Loading HQQ model with backend: {shared.args.hqq_backend}")
+
     model_dir = Path(f'{shared.args.model_dir}/{model_name}')
     model = HQQModelForCausalLM.from_quantized(str(model_dir))
-    HQQLinear.set_backend(HQQBackend.PYTORCH_COMPILE)
+    HQQLinear.set_backend(getattr(HQQBackend, shared.args.hqq_backend))
     return model
 
 
