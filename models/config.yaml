@@ -174,7 +174,7 @@
   instruction_template: 'OpenChat'
 .*codellama.*instruct:
   instruction_template: 'Llama-v2'
-.*mistral.*instruct:
+.*(mistral|mixtral).*instruct:
   instruction_template: 'Mistral'
 .*mistral.*openorca:
   instruction_template: 'ChatML'
