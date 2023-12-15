@@ -242,7 +242,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
             if loading_message:
                 yield {
                     'visible': output['visible'][:-1] + [[visible_text, shared.processing_message]],
-                    'internal': output['internal'][:-1] + [[text, shared.processing_message]]
+                    'internal': output['internal'][:-1] + [[text, '']]
                 }
         elif _continue:
             last_reply = [output['internal'][-1][1], output['visible'][-1][1]]
