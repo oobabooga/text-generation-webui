@@ -304,7 +304,7 @@ def update_requirements(initial_installation=False):
             requirements_file = "requirements_noavx2.txt"
 
     print_big_message(f"Installing webui requirements from file: {requirements_file}")
-    print(f"TORCH: {torver}")
+    print(f"TORCH: {torver}\n")
 
     # Prepare the requirements file
     textgen_requirements = open(requirements_file).read().splitlines()
