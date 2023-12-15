@@ -148,7 +148,10 @@ loaders_and_params = OrderedDict({
         'no_use_fast',
         'no_flash_attn',
     ],
-    'HQQ': []
+    'HQQ': [
+        'trust_remote_code',
+        'no_use_fast',
+    ]
 })
 
 loaders_samplers = {
@@ -516,6 +519,10 @@ loaders_samplers = {
         'min_length',
         'seed',
         'do_sample',
+        'penalty_alpha',
+        'num_beams',
+        'length_penalty',
+        'early_stopping',
         'mirostat_mode',
         'mirostat_tau',
         'mirostat_eta',
