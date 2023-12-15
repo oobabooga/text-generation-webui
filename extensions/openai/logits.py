@@ -8,4 +8,4 @@ def _get_next_logits(body):
     state = process_parameters(body) if use_samplers else {}
     state['stream'] = True
 
-    return get_next_logits(body['prompt'], state, use_samplers, "", return_dict=True)
+    return get_next_logits(body['prompt'], state, use_samplers, "", top_logits=body['top_logits'], return_dict=True)

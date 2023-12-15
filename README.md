@@ -285,6 +285,7 @@ List of command-line flags
 | `--no_use_cuda_fp16`           | This can make models faster on some systems. |
 | `--desc_act`                   | For models that don't have a quantize_config.json, this parameter is used to define whether to set desc_act or not in BaseQuantizeConfig. |
 | `--disable_exllama`            | Disable ExLlama kernel, which can improve inference speed on some systems. |
+| `--disable_exllamav2`          | Disable ExLlamav2 kernel. |
 
 #### GPTQ-for-LLaMa
 

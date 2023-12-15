@@ -1,6 +1,6 @@
 import json
 import time
-from typing import List
+from typing import Dict, List
 
 from pydantic import BaseModel, Field
 
@@ -120,7 +120,7 @@ class ChatCompletionResponse(BaseModel):
 
 
 class EmbeddingsRequest(BaseModel):
-    input: str | List[str]
+    input: str | List[str] | List[int] | List[List[int]]
     model: str | None = Field(default=None, description="Unused parameter. To change the model, set the OPENEDAI_EMBEDDING_MODEL and OPENEDAI_EMBEDDING_DEVICE environment variables before starting the server.")
     encoding_format: str = Field(default="float", description="Can be float or base64.")
     user: str | None = Field(default=None, description="Unused parameter.")
@@ -156,6 +156,7 @@ class TokenCountResponse(BaseModel):
 class LogitsRequestParams(BaseModel):
     prompt: str
     use_samplers: bool = False
+    top_logits: int | None = 50
     frequency_penalty: float | None = 0
     max_tokens: int | None = 16
     presence_penalty: float | None = 0
@@ -168,7 +169,7 @@ class LogitsRequest(GenerationOptions, LogitsRequestParams):
 
 
 class LogitsResponse(BaseModel):
-    logits: dict
+    logits: Dict[str, float]
 
 
 class ModelInfoResponse(BaseModel):
