@@ -55,7 +55,6 @@ def _load_model(data):
                 setattr(shared.args, k, args[k])
 
     shared.model, shared.tokenizer = load_model(model_name)
-    shared.model_name = model_name
 
     # Update shared.settings with custom generation defaults
     if settings:

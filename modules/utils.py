@@ -21,16 +21,17 @@ def save_file(fname, contents):
         return
 
     root_folder = Path(__file__).resolve().parent.parent
-    abs_path = Path(fname).resolve()
-    rel_path = abs_path.relative_to(root_folder)
+    abs_path_str = os.path.abspath(fname)
+    rel_path_str = os.path.relpath(abs_path_str, root_folder)
+    rel_path = Path(rel_path_str)
     if rel_path.parts[0] == '..':
         logger.error(f'Invalid file path: {fname}')
         return
 
-    with open(abs_path, 'w', encoding='utf-8') as f:
+    with open(abs_path_str, 'w', encoding='utf-8') as f:
         f.write(contents)
 
-    logger.info(f'Saved {abs_path}.')
+    logger.info(f'Saved {abs_path_str}.')
 
 
 def delete_file(fname):
@@ -39,14 +40,15 @@ def delete_file(fname):
         return
 
     root_folder = Path(__file__).resolve().parent.parent
-    abs_path = Path(fname).resolve()
-    rel_path = abs_path.relative_to(root_folder)
+    abs_path_str = os.path.abspath(fname)
+    rel_path_str = os.path.relpath(abs_path_str, root_folder)
+    rel_path = Path(rel_path_str)
     if rel_path.parts[0] == '..':
         logger.error(f'Invalid file path: {fname}')
         return
 
-    if abs_path.exists():
-        abs_path.unlink()
+    if rel_path.exists():
+        rel_path.unlink()
         logger.info(f'Deleted {fname}.')
 
 
@@ -103,7 +105,7 @@ def get_available_instruction_templates():
     if os.path.exists(path):
         paths = (x for x in Path(path).iterdir() if x.suffix in ('.json', '.yaml', '.yml'))
 
-    return ['None'] + sorted(set((k.stem for k in paths)), key=natural_keys)
+    return ['Custom'] + sorted(set((k.stem for k in paths)), key=natural_keys)
 
 
 def get_available_extensions():

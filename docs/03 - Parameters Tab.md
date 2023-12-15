@@ -101,16 +101,13 @@ So you can use those special placeholders in your character definitions. They ar
 
 Defines the instruction template that is used in the Chat tab when "instruct" or "chat-instruct" are selected under "Mode".
 
-* **Instruction template**: A dropdown menu where you can select from saved templates, save a new template (💾 button), and delete the currently selected template (🗑️).
+* **Saved instruction templates**: A dropdown menu where you can load a saved template, save a new template (💾 button), and delete the currently selected template (🗑️).
 * **Custom system message**: A message that defines the personality of the chatbot, replacing its default "System message" string. Example: "You are a duck."
-* **Turn template**: Defines the positioning of spaces and new line characters in a single turn of the dialogue. `<|user-message|>` gets replaced with the user input, `<|bot-message|>` gets replaced with the bot reply, `<|user|>` gets replaced with the "User string" below, and `<|bot|>` gets replaced with "Bot string" below. The `<|user|>` and `<|bot|>` placeholders must be included even if "User string" and "Bot string" are empty, as they are used to split the template in parts in the backend.
-* **User string**: Replaces `<|user|>` in the turn template.
-* **Bot string**: Replaces `<|bot|>` in the turn template.
-* **Context**: A string that appears as-is at the top of the prompt, including the new line characters at the end (if any). The `<|system-message|>` placeholder gets replaced with the "System message" string below, unless "Custom system message" is not empty, in which case it is used instead.
-* **System message**: A default message recommended by the model creator(s) to define the personality of the chatbot.
+* **Instruction template**: A Jinja2 template that defines the prompt format for the instruction-following conversation.
 * **Send to default**: Send the full instruction template in string format to the Default tab.
 * **Send to notebook**: Send the full instruction template in string format to the Notebook tab.
 * **Send to negative prompt**: Send the full instruction template in string format to the "Negative prompt" field under "Parameters" > "Generation".
+* **Chat template**: A Jinja2 template that defines the prompt format for regular chat conversations with characters.
 * **Command for chat-instruct mode**: The command that is used in chat-instruct mode to query the model to generate a reply on behalf of the character. Can be used creatively to generate specific kinds of responses.
 
 ## Chat history
