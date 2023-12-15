@@ -220,7 +220,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
     is_stream = state['stream']
 
     # Prepare the input
-    if not any((regenerate, _continue)):
+    if not (regenerate or _continue):
         visible_text = html.escape(text)
 
         # Apply extensions
@@ -241,21 +241,21 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
         if regenerate:
             if loading_message:
                 yield {
-                    'visible': output['visible'][:-1] + [[output['visible'][-1][0], shared.processing_message]],
-                    'internal': output['internal'][:-1] + [[output['internal'][-1][0], shared.processing_message]]
+                    'visible': output['visible'][:-1] + [[visible_text, shared.processing_message]],
+                    'internal': output['internal'][:-1] + [[text, shared.processing_message]]
                 }
         elif _continue:
             last_reply = [output['internal'][-1][1], output['visible'][-1][1]]
             if loading_message:
                 yield {
-                    'visible': output['visible'][:-1] + [[output['visible'][-1][0], last_reply[1] + '...']],
+                    'visible': output['visible'][:-1] + [[visible_text, last_reply[1] + '...']],
                     'internal': output['internal']
                 }
 
     # Generate the prompt
     kwargs = {
         '_continue': _continue,
-        'history': output,
+        'history': output if _continue else {k: v[:-1] for k, v in output.items()}
     }
     prompt = apply_extensions('custom_generate_chat_prompt', text, state, **kwargs)
     if prompt is None:
