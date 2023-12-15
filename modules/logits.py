@@ -8,7 +8,7 @@ from modules.text_generation import generate_reply
 global_scores = None
 
 
-def get_next_logits(prompt, state, use_samplers, previous, return_dict=False):
+def get_next_logits(prompt, state, use_samplers, previous, top_logits=50, return_dict=False):
     if shared.model is None:
         logger.error("No model is loaded! Select one in the Model tab.")
         return 'Error: No model is loaded1 Select one in the Model tab.', previous
@@ -50,8 +50,7 @@ def get_next_logits(prompt, state, use_samplers, previous, return_dict=False):
             scores = output['logits'][-1][-1]
 
     probs = torch.softmax(scores, dim=-1, dtype=torch.float)
-    topk_values, topk_indices = torch.topk(probs, k=50, largest=True, sorted=True)
-    topk_values = [f"{float(i):.5f}" for i in topk_values]
+    topk_values, topk_indices = torch.topk(probs, k=top_logits, largest=True, sorted=True)
     if is_non_hf_exllamav1 or is_non_hf_llamacpp:
         topk_indices = [i.expand((1, 1)) for i in topk_indices]
 
@@ -61,12 +60,14 @@ def get_next_logits(prompt, state, use_samplers, previous, return_dict=False):
         tokens = [shared.tokenizer.decode(i) for i in topk_indices]
 
     if return_dict:
+        topk_values = [float(i) for i in topk_values]
         output = {}
         for row in list(zip(topk_values, tokens)):
             output[row[1]] = row[0]
 
         return output
     else:
+        topk_values = [f"{float(i):.5f}" for i in topk_values]
         output = ''
         for row in list(zip(topk_values, tokens)):
             output += f"{row[0]}  -  {repr(row[1])}\n"

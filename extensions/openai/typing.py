@@ -1,6 +1,6 @@
 import json
 import time
-from typing import List
+from typing import Dict, List
 
 from pydantic import BaseModel, Field
 
@@ -156,6 +156,7 @@ class TokenCountResponse(BaseModel):
 class LogitsRequestParams(BaseModel):
     prompt: str
     use_samplers: bool = False
+    top_logits: int | None = 50
     frequency_penalty: float | None = 0
     max_tokens: int | None = 16
     presence_penalty: float | None = 0
@@ -168,7 +169,7 @@ class LogitsRequest(GenerationOptions, LogitsRequestParams):
 
 
 class LogitsResponse(BaseModel):
-    logits: dict
+    logits: Dict[str, float]
 
 
 class ModelInfoResponse(BaseModel):
