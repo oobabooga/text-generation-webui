@@ -70,6 +70,7 @@ def list_model_elements():
         'no_inject_fused_mlp',
         'no_use_cuda_fp16',
         'disable_exllama',
+        'disable_exllamav2',
         'cfg_cache',
         'no_flash_attn',
         'cache_8bit',

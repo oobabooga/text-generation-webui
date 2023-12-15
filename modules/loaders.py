@@ -25,6 +25,7 @@ loaders_and_params = OrderedDict({
         'rope_freq_base',
         'compress_pos_emb',
         'disable_exllama',
+        'disable_exllamav2',
         'transformers_info'
     ],
     'llama.cpp': [
@@ -94,6 +95,7 @@ loaders_and_params = OrderedDict({
         'groupsize',
         'desc_act',
         'disable_exllama',
+        'disable_exllamav2',
         'gpu_memory',
         'cpu_memory',
         'cpu',
