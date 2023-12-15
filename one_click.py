@@ -264,7 +264,7 @@ def update_requirements(initial_installation=False):
     if install:
         print_big_message("Installing extensions requirements.")
         skip = ['superbooga', 'superboogav2', 'coqui_tts']  # Fail to install on Windows
-        extensions = [os.path.basename(foldername) for foldername, _, filenames in os.walk('extensions') if 'requirements.txt' in filenames]
+        extensions = [foldername for foldername in os.listdir('extensions') if os.path.isfile(os.path.join('extensions', foldername, 'requirements.txt'))]
         extensions = [x for x in extensions if x not in skip]
         for i, extension in enumerate(extensions):
             print(f"\n\n--- [{i+1}/{len(extensions)}]: {extension}\n\n")
