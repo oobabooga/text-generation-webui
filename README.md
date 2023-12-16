@@ -326,6 +326,7 @@ List of command-line flags
 |------------------|-------------|
 | `--max-model-len MAX_MODEL_LEN` | Model context length. If unspecified, will be automatically derived from the model config.|
 | `--dtype “float16”` | Data type for model weights and activations.“auto” will use FP16 precision for FP32 and FP16 models, and BF16 precision for BF16 models.|
+| `--gpu-memory-utilization <percentage>` | The percentage of GPU memory to be used for the model executor.|
 
 Refer https://docs.vllm.ai/en/latest/models/engine_args.html for more details. All arguments can simply be passed to textgen webui.
 
