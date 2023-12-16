@@ -104,12 +104,6 @@ typingSibling = typing.previousElementSibling;
 typingSibling.insertBefore(typing, typingSibling.childNodes[2]);
 
 //------------------------------------------------
-// Make chat area occupy 100% of parent height
-//------------------------------------------------
-document.getElementById("chat").parentNode.style.height = "100%";
-document.getElementById("chat").parentNode.parentNode.style.height = "100%";
-
-//------------------------------------------------
 // Chat scrolling
 //------------------------------------------------
 const targetElement = document.getElementById("chat").parentNode.parentNode.parentNode;
