@@ -332,7 +332,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     margin-left: auto;
     margin-right: auto;
     max-width: 880px;
-    height: 100%;
+    min-height: var(--chat-height);
     overflow-y: auto;
     padding-right: 15px;
     display: flex;
