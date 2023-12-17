@@ -4,8 +4,6 @@
   padding-right: 19px !important;
   border: 1px solid var(--block-border-color);
   border-radius: 8px;
-  border-top-right-radius: 0px;
-  border-bottom-right-radius: 0px;
 }
 
 .message {
