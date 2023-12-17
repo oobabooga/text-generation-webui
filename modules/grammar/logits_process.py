@@ -14,7 +14,6 @@ import torch
 from transformers.generation.logits_process import LogitsProcessor
 from transformers.utils import add_start_docstrings
 
-
 LOGITS_PROCESSOR_INPUTS_DOCSTRING = r"""
     Args:
         input_ids (`torch.LongTensor` of shape `(batch_size, sequence_length)`):

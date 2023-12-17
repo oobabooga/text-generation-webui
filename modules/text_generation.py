@@ -18,7 +18,7 @@ from modules.callbacks import (
     _StopEverythingStoppingCriteria
 )
 from modules.extensions import apply_extensions
-from modules.grammar.grammar_utils import IncrementalGrammarConstraint
+from modules.grammar.grammar_utils import initialize_grammar
 from modules.grammar.logits_process import GrammarConstrainedLogitsProcessor
 from modules.html_generator import generate_4chan_html, generate_basic_html
 from modules.logging_colors import logger
@@ -325,7 +325,7 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
 
     # Grammar
     if state['grammar_string'].strip() != '':
-        grammar = IncrementalGrammarConstraint(state['grammar_string'].strip(), start_rule_name="root", tokenizer=shared.tokenizer)
+        grammar = initialize_grammar(state['grammar_string'])
         grammar_processor = GrammarConstrainedLogitsProcessor(grammar)
         processor.append(grammar_processor)
 

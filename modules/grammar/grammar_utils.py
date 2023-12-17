@@ -17,6 +17,8 @@ from typing import Dict, List
 
 import torch
 
+from modules import shared
+
 logger = logging.getLogger(__name__)
 
 
@@ -678,3 +680,8 @@ class TokenTrie:
                 current[byte] = {}
             current = current[byte]
         current[LEAF] = token_id
+
+
+@lru_cache(maxsize=5)
+def initialize_grammar(grammar_string):
+    return IncrementalGrammarConstraint(grammar_string.strip(), start_rule_name="root", tokenizer=shared.tokenizer)
