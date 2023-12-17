@@ -156,56 +156,6 @@ const config = {
 observer.observe(targetElement, config);
 
 //------------------------------------------------
-// Notebook box scrolling
-//------------------------------------------------
-const notebookElement = document.querySelector("#textbox-notebook textarea");
-let notebookScrolled = false;
-
-notebookElement.addEventListener("scroll", function() {
-  let diff = notebookElement.scrollHeight - notebookElement.clientHeight;
-  if(Math.abs(notebookElement.scrollTop - diff) <= 10 || diff == 0) {
-    notebookScrolled = false;
-  } else {
-    notebookScrolled = true;
-  }
-});
-
-const notebookObserver = new MutationObserver(function(mutations) {
-  mutations.forEach(function(mutation) {
-    if(!notebookScrolled) {
-      notebookElement.scrollTop = notebookElement.scrollHeight;
-    }
-  });
-});
-
-notebookObserver.observe(notebookElement.parentNode.parentNode.parentNode, config);
-
-//------------------------------------------------
-// Default box scrolling
-//------------------------------------------------
-const defaultElement = document.querySelector("#textbox-default textarea");
-let defaultScrolled = false;
-
-defaultElement.addEventListener("scroll", function() {
-  let diff = defaultElement.scrollHeight - defaultElement.clientHeight;
-  if(Math.abs(defaultElement.scrollTop - diff) <= 10 || diff == 0) {
-    defaultScrolled = false;
-  } else {
-    defaultScrolled = true;
-  }
-});
-
-const defaultObserver = new MutationObserver(function(mutations) {
-  mutations.forEach(function(mutation) {
-    if(!defaultScrolled) {
-      defaultElement.scrollTop = defaultElement.scrollHeight;
-    }
-  });
-});
-
-defaultObserver.observe(defaultElement.parentNode.parentNode.parentNode, config);
-
-//------------------------------------------------
 // Add some scrollbars
 //------------------------------------------------
 const textareaElements = document.querySelectorAll(".add_scrollbar textarea");
