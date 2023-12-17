@@ -118,6 +118,13 @@ def get_model_metadata(model):
             model_settings['instruction_template'] = 'Custom (obtained from model metadata)'
             model_settings['instruction_template_str'] = template
 
+    # Apply user settings from models/config-user.yaml
+    settings = shared.user_config
+    for pat in settings:
+        if re.match(pat.lower(), model.lower()):
+            for k in settings[pat]:
+                model_settings[k] = settings[pat][k]
+                
     if 'instruction_template' not in model_settings:
         model_settings['instruction_template'] = 'Alpaca'
 
@@ -127,13 +134,6 @@ def get_model_metadata(model):
     # Ignore rope_freq_base if set to the default value
     if 'rope_freq_base' in model_settings and model_settings['rope_freq_base'] == 10000:
         model_settings.pop('rope_freq_base')
-
-    # Apply user settings from models/config-user.yaml
-    settings = shared.user_config
-    for pat in settings:
-        if re.match(pat.lower(), model.lower()):
-            for k in settings[pat]:
-                model_settings[k] = settings[pat][k]
 
     return model_settings
 
