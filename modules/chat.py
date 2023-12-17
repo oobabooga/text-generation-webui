@@ -210,10 +210,6 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
     output = copy.deepcopy(history)
     output = apply_extensions('history', output)
     state = apply_extensions('state', state)
-    if shared.model_name == 'None' or shared.model is None:
-        logger.error("No model is loaded! Select one in the Model tab.")
-        yield output
-        return
 
     visible_text = None
     stopping_strings = get_stopping_strings(state)
@@ -251,6 +247,9 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
                     'visible': output['visible'][:-1] + [[visible_text, last_reply[1] + '...']],
                     'internal': output['internal']
                 }
+
+    if shared.model_name == 'None' or shared.model is None:
+        raise ValueError("No model is loaded! Select one in the Model tab.")
 
     # Generate the prompt
     kwargs = {
