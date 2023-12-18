@@ -22,15 +22,10 @@
 .message-body p, .message-body li {
     font-size: 15px !important;
     line-height: 24px !important;
-    list-style-position: outside;
 }
 
 .message-body p, .chat .message-body ul, .chat .message-body ol {
     margin-bottom: 16px !important;
-}
-
-.chat .message-body ul, .chat .message-body ol {
-    padding-inline-start: 2em;
 }
 
 .message-body p:last-child, .chat .message-body ul:last-child, .chat .message-body ol:last-child {
