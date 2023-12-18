@@ -1,10 +1,18 @@
+.chat {
+  background: var(--block-background-fill);
+  padding: 24px 19px;
+  padding-right: 19px !important;
+  border: 1px solid var(--block-border-color);
+  border-radius: 8px;
+}
+
 .message {
     display: grid;
     grid-template-columns: 60px 1fr;
     padding-bottom: 25px;
     font-size: 15px;
     font-family: 'Noto Sans', Helvetica, Arial, sans-serif;
-    line-height: 22px;
+    line-height: 24px;
 }
 
 .username {
@@ -13,11 +21,16 @@
 
 .message-body p, .message-body li {
     font-size: 15px !important;
-    line-height: 22.5px !important;
+    line-height: 24px !important;
+    list-style-position: outside;
 }
 
 .message-body p, .chat .message-body ul, .chat .message-body ol {
-    margin-bottom: 23.4375px !important;
+    margin-bottom: 16px !important;
+}
+
+.chat .message-body ul, .chat .message-body ol {
+    padding-inline-start: 2em;
 }
 
 .message-body p:last-child, .chat .message-body ul:last-child, .chat .message-body ol:last-child {
@@ -34,34 +47,34 @@
 
 .gradio-container .chat .assistant-message {
     padding: 20px;
-    border-radius: 20px;
-    background-color: #0000000f;
-    margin-top: 9px !important;
-    margin-bottom: 18px !important;
+    background: var(--background-fill-secondary);
+    margin-top: 12px !important;
+    margin-bottom: 24px !important;
+    margin-right: 16px;
+    border-radius: 22px;
+    border-bottom-left-radius: 0;
+    border: 1px solid var(--border-color-primary);
 }
 
 .gradio-container .chat .user-message {
     padding: 20px;
+    background-color: var(--color-accent-soft);
     border-radius: 20px;
-    margin-bottom: 9px !important;
+    margin-bottom: 12px !important;
+    margin-left: 16px;
+    border-radius: 22px;
+    border-bottom-right-radius: 0;
+    border: 1px solid var(--border-color-accent-subdued);
 }
 
 .gradio-container .chat .assistant-message:last-child, .gradio-container .chat .user-message:last-child {
     margin-bottom: 0 !important;
 }
 
-.dark .chat .assistant-message {
-    background-color: #1f2937;
-}
-
-.dark .chat .user-message {
-    background-color: transparent;
-}
-
 code {
-    background-color: white !important;
+    background-color: #f3f4f6 !important;
 }
 
 .dark code {
-    background-color: #0e1321 !important;
+    background-color: #1f2937 !important;
 }

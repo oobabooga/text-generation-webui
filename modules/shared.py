@@ -125,6 +125,7 @@ parser.add_argument('--max_seq_len', type=int, default=2048, help='Maximum seque
 parser.add_argument('--cfg-cache', action='store_true', help='ExLlama_HF: Create an additional cache for CFG negative prompts. Necessary to use CFG with that loader, but not necessary for CFG with base ExLlama.')
 parser.add_argument('--no_flash_attn', action='store_true', help='Force flash-attention to not be used.')
 parser.add_argument('--cache_8bit', action='store_true', help='Use 8-bit cache to save VRAM.')
+parser.add_argument('--num_experts_per_token', type=int, default=2, help='Number of experts to use for generation. Applies to MoE models like Mixtral.')
 
 # AutoGPTQ
 parser.add_argument('--triton', action='store_true', help='Use triton.')

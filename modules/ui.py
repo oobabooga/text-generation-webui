@@ -73,6 +73,7 @@ def list_model_elements():
         'disable_exllamav2',
         'cfg_cache',
         'no_flash_attn',
+        'num_experts_per_token',
         'cache_8bit',
         'threads',
         'threads_batch',
