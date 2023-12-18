@@ -39,6 +39,8 @@ from transformers.models.auto.modeling_auto import (
     MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
 )
 
+from transformers import is_torch_xpu_available
+
 from modules import shared, utils
 from modules.ui import create_refresh_button
 
@@ -121,6 +123,7 @@ non_serialized_params = {
         "save_epochs": 0,
         "checkpoint_offset": 0,
         "epoch_offset":0,
+        "safe_serialization": False,
 }
 
 MODEL_CLASSES = {v[1]: v[0] for v in MODEL_FOR_CAUSAL_LM_MAPPING_NAMES.items()}
@@ -290,7 +293,7 @@ def ui():
                         stride_length = gr.Slider(label='Stride', minimum=1, maximum=2048, value=512, step=1, info='Used to make the evaluation faster at the cost of accuracy. 1 = slowest but most accurate. 512 is a common value.')
 
                     with gr.Column():
-                        max_length = gr.Slider(label='max_length', minimum=0, maximum=8096, value=0, step=1, info='The context for each evaluation. If set to 0, the maximum context length for the model will be used.')
+                        max_length = gr.Slider(label='max_length', minimum=0, maximum=shared.settings['truncation_length_max'], value=0, step=1, info='The context for each evaluation. If set to 0, the maximum context length for the model will be used.')
 
                 with gr.Row():
                     start_current_evaluation = gr.Button("Evaluate loaded model")
@@ -1025,7 +1028,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
                     force_save = True   
 
                 if force_save:       
-                    lora_model.save_pretrained(f"{lora_file_path}/{folder_save}/")
+                    lora_model.save_pretrained(f"{lora_file_path}/{folder_save}/", safe_serialization = non_serialized_params['safe_serialization'])
                     print(f"\033[1;30;40mStep: {tracked.current_steps:6} \033[0;37;0m Saved: [{folder_save}]")
                     # Save log
                     with open(f"{lora_file_path}/{folder_save}/training_log.json", 'w', encoding='utf-8') as file:
@@ -1147,6 +1150,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
             # TODO: Enable multi-device support
             ddp_find_unused_parameters=None,
             no_cuda=shared.args.cpu,
+            use_ipex=True if is_torch_xpu_available and not shared.args.cpu else False
         )
 
     if custom_scheduller:
@@ -1252,7 +1256,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
         log_train_dataset(trainer)
         trainer.train()
         # Note: save in the thread in case the gradio thread breaks (eg browser closed)
-        lora_model.save_pretrained(lora_file_path)
+        lora_model.save_pretrained(lora_file_path, safe_serialization = non_serialized_params['safe_serialization'])
         logger.info("LoRA training run is completed and saved.")
         # Save log
         with open(f"{lora_file_path}/training_log.json", 'w', encoding='utf-8') as file:
@@ -1353,7 +1357,7 @@ def do_train(lora_name: str, always_override: bool, save_steps: int, micro_batch
 
     if not tracked.did_save:
         logger.info("Training complete, saving...")
-        lora_model.save_pretrained(lora_file_path)
+        lora_model.save_pretrained(lora_file_path, safe_serialization = non_serialized_params['safe_serialization'])
 
     if WANT_INTERRUPT:
         logger.info("Training interrupted.")
