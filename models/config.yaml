@@ -186,3 +186,5 @@
   instruction_template: 'ChatML'
 .*Yi-34B-Chat:
   instruction_template: 'ChatML'
+(dolphin).*:
+  instruction_template: 'ChatML'
