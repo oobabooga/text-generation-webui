@@ -13,9 +13,9 @@ instruction_template: |-
           {{- '' + message['content'] + '\n' -}}
       {%- else -%}
           {%- if message['role'] == 'user' -%}
-              {{-'\n<|USER|>: ' + message['content'] + '\n'-}}
+              {{-'<|USER|>: ' + message['content'] + '\n'-}}
           {%- else -%}
-              {{-'<|ASSISTANT|>: ' + message['content'] + '' -}}
+              {{-'<|ASSISTANT|>: ' + message['content'] + '\n' -}}
           {%- endif -%}
       {%- endif -%}
   {%- endfor -%}

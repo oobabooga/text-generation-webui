@@ -107,7 +107,7 @@ def create_chat_settings_ui():
         with gr.Row():
             with gr.Column():
                 with gr.Row():
-                    shared.gradio['instruction_template'] = gr.Dropdown(choices=utils.get_available_instruction_templates(), label='Saved instruction templates', value='Custom', info='Change this according to the model/LoRA that you are using. Used in instruct and chat-instruct modes.', elem_classes='slim-dropdown')
+                    shared.gradio['instruction_template'] = gr.Dropdown(choices=utils.get_available_instruction_templates(), label='Saved instruction templates', value='Select template to load...', elem_classes='slim-dropdown')
                     ui.create_refresh_button(shared.gradio['instruction_template'], lambda: None, lambda: {'choices': utils.get_available_instruction_templates()}, 'refresh-button', interactive=not mu)
                     shared.gradio['load_template'] = gr.Button("Load", elem_classes='refresh-button')
                     shared.gradio['save_template'] = gr.Button('💾', elem_classes='refresh-button', interactive=not mu)
@@ -119,7 +119,7 @@ def create_chat_settings_ui():
         with gr.Row():
             with gr.Column():
                 shared.gradio['custom_system_message'] = gr.Textbox(value=shared.settings['custom_system_message'], lines=2, label='Custom system message', info='If not empty, will be used instead of the default one.', elem_classes=['add_scrollbar'])
-                shared.gradio['instruction_template_str'] = gr.Textbox(value='', label='Instruction template', lines=24, elem_classes=['add_scrollbar', 'monospace'])
+                shared.gradio['instruction_template_str'] = gr.Textbox(value='', label='Instruction template', lines=24, info='Change this according to the model/LoRA that you are using. Used in instruct and chat-instruct modes.', elem_classes=['add_scrollbar', 'monospace'])
                 with gr.Row():
                     shared.gradio['send_instruction_to_default'] = gr.Button('Send to default', elem_classes=['small-button'])
                     shared.gradio['send_instruction_to_notebook'] = gr.Button('Send to notebook', elem_classes=['small-button'])
@@ -299,7 +299,10 @@ def create_event_handlers():
 
     shared.gradio['delete_character'].click(lambda: gr.update(visible=True), None, gradio('character_deleter'))
 
-    shared.gradio['load_template'].click(chat.load_instruction_template, gradio('instruction_template'), gradio('instruction_template_str'))
+    shared.gradio['load_template'].click(
+        chat.load_instruction_template, gradio('instruction_template'), gradio('instruction_template_str')).then(
+        lambda: "Select template to load...", None, gradio('instruction_template'))
+
     shared.gradio['save_template'].click(
         lambda: 'My Template.yaml', None, gradio('save_filename')).then(
         lambda: 'instruction-templates/', None, gradio('save_root')).then(
