@@ -364,6 +364,14 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     padding-bottom: 0 !important;
 }
 
+.message-body li {
+    list-style-position: outside;
+}
+
+.chat .message-body ul, .chat .message-body ol {
+    padding-inline-start: 2em;
+}
+
 .message-body li:not(:last-child) {
     margin-top: 0 !important;
     margin-bottom: 2px !important;
