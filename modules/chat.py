@@ -768,13 +768,13 @@ def delete_character(name, instruct=False):
 
 def jinja_template_from_old_format(params, verbose=False):
     MASTER_TEMPLATE = """
-{%- set found_item = false -%}
+{%- set ns = namespace(found=false) -%}
 {%- for message in messages -%}
     {%- if message['role'] == 'system' -%}
-        {%- set found_item = true -%}
+        {%- set ns.found = true -%}
     {%- endif -%}
 {%- endfor -%}
-{%- if not found_item -%}
+{%- if not ns.found -%}
     {{- '<|PRE-SYSTEM|>' + '<|SYSTEM-MESSAGE|>' + '<|POST-SYSTEM|>' -}}
 {%- endif %}
 {%- for message in messages %}
