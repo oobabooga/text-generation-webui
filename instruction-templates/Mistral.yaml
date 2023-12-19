@@ -1,16 +1,7 @@
 instruction_template: |-
-  {%- set found_item = false -%}
-  {%- for message in messages -%}
-      {%- if message['role'] == 'system' -%}
-          {%- set found_item = true -%}
-      {%- endif -%}
-  {%- endfor -%}
-  {%- if not found_item -%}
-      {{- '' + '' + '' -}}
-  {%- endif %}
   {%- for message in messages %}
       {%- if message['role'] == 'system' -%}
-          {{- '' + message['content'] + '' -}}
+          {{- message['content'] -}}
       {%- else -%}
           {%- if message['role'] == 'user' -%}
               {{-'[INST] ' + message['content'] + ' [/INST]'-}}

@@ -6,20 +6,19 @@ instruction_template: |-
       {%- endif -%}
   {%- endfor -%}
   {%- if not found_item -%}
-      {{- '' + 'Below is an instruction that describes a task. Write a response that appropriately completes the request.' + '\n\n' -}}
+      {{-'SYSTEM: ' + '' + '\n' -}}
   {%- endif %}
   {%- for message in messages %}
       {%- if message['role'] == 'system' -%}
-          {{- '' + message['content'] + '\n\n' -}}
+          {{-'SYSTEM: ' + message['content'] + '\n' -}}
       {%- else -%}
           {%- if message['role'] == 'user' -%}
-              {{-'### Instruction:\n' + message['content'] + '\n\n'-}}
+              {{-'USER: ' + message['content'] + '\n'-}}
           {%- else -%}
-              {{-'### Response:\n' + message['content'] + '\n\n' -}}
+              {{-'ASSISTANT: ' + message['content'] + '</s>\n' -}}
           {%- endif -%}
       {%- endif -%}
   {%- endfor -%}
   {%- if add_generation_prompt -%}
-      {{-'### Response:\n'-}}
+      {{-'ASSISTANT:'-}}
   {%- endif -%}
-

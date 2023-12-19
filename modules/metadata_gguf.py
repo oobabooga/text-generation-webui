@@ -82,8 +82,9 @@ def load_metadata(fname):
             if value_type == GGUFValueType.ARRAY:
                 ltype = GGUFValueType(struct.unpack("<I", file.read(4))[0])
                 length = struct.unpack("<Q", file.read(8))[0]
-                for j in range(length):
-                    _ = get_single(ltype, file)
+
+                arr = [get_single(ltype, file) for _ in range(length)]
+                metadata[key.decode()] = arr
             else:
                 value = get_single(value_type, file)
                 metadata[key.decode()] = value

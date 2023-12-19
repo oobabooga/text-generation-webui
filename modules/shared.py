@@ -125,6 +125,7 @@ parser.add_argument('--max_seq_len', type=int, default=2048, help='Maximum seque
 parser.add_argument('--cfg-cache', action='store_true', help='ExLlama_HF: Create an additional cache for CFG negative prompts. Necessary to use CFG with that loader, but not necessary for CFG with base ExLlama.')
 parser.add_argument('--no_flash_attn', action='store_true', help='Force flash-attention to not be used.')
 parser.add_argument('--cache_8bit', action='store_true', help='Use 8-bit cache to save VRAM.')
+parser.add_argument('--num_experts_per_token', type=int, default=2, help='Number of experts to use for generation. Applies to MoE models like Mixtral.')
 
 # AutoGPTQ
 parser.add_argument('--triton', action='store_true', help='Use triton.')
@@ -133,6 +134,7 @@ parser.add_argument('--no_inject_fused_mlp', action='store_true', help='Triton m
 parser.add_argument('--no_use_cuda_fp16', action='store_true', help='This can make models faster on some systems.')
 parser.add_argument('--desc_act', action='store_true', help='For models that do not have a quantize_config.json, this parameter is used to define whether to set desc_act or not in BaseQuantizeConfig.')
 parser.add_argument('--disable_exllama', action='store_true', help='Disable ExLlama kernel, which can improve inference speed on some systems.')
+parser.add_argument('--disable_exllamav2', action='store_true', help='Disable ExLlamav2 kernel.')
 
 # GPTQ-for-LLaMa
 parser.add_argument('--wbits', type=int, default=0, help='Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported.')
