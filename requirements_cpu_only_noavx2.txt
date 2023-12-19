@@ -4,6 +4,7 @@ datasets
 einops
 exllamav2==0.0.11
 gradio==3.50.*
+hqq==0.1.1
 markdown
 numpy==1.24.*
 optimum==1.15.*
