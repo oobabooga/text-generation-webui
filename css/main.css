@@ -91,7 +91,7 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
 
 .header_bar {
     background-color: #f7f7f7;
-    margin-bottom: 19px;
+    margin-bottom: 0px;
     overflow-x: scroll;
     margin-left: calc(-1 * var(--size-4));
     margin-right: calc(-1 * var(--size-4));
@@ -297,6 +297,10 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 /* This is for the microphone button in the whisper extension */
 .sm.svelte-1ipelgc {
     width: 100%;
+}
+
+#chat-tab {
+    padding-top: 0px;
 }
 
 #chat-tab button#Generate, #chat-tab button#stop {

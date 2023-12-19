@@ -18,9 +18,11 @@ document.querySelector(".header_bar").addEventListener("click", function(event) 
     if (chat_visible || notebook_visible || default_visible) {
       extensions.style.display = "flex";
       if (chat_visible) {
+        this.style.marginBottom = "0px";
         extensions.style.maxWidth = "880px";
         extensions.style.padding = "0px";
       } else {
+        this.style.marginBottom = "19px";
         extensions.style.maxWidth = "none";
         extensions.style.padding = "15px";
       }
