@@ -27,6 +27,7 @@ document.querySelector(".header_bar").addEventListener("click", function(event) 
         extensions.style.padding = "15px";
       }
     } else {
+      this.style.marginBottom = "19px";
       extensions.style.display = "none";
     }
   }
