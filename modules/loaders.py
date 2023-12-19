@@ -155,6 +155,7 @@ loaders_and_params = OrderedDict({
         'trust_remote_code',
         'no_use_fast',
         'no_flash_attn',
+        'quipsharp_info',
     ],
     'HQQ': [
         'hqq_backend',
