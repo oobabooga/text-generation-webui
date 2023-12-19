@@ -1,11 +1,11 @@
 instruction_template: |-
-  {%- set found_item = false -%}
+  {%- set ns = namespace(found=false) -%}
   {%- for message in messages -%}
       {%- if message['role'] == 'system' -%}
-          {%- set found_item = true -%}
+          {%- set ns.found = true -%}
       {%- endif -%}
   {%- endfor -%}
-  {%- if not found_item -%}
+  {%- if not ns.found -%}
       {{- '' + 'The following is a conversation between an AI assistant called Assistant and a human user called User. The assistant is intelligent, knowledgeable and polite to answer questions of user.' + '\n\n' -}}
   {%- endif %}
   {%- for message in messages %}
