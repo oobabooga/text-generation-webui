@@ -92,6 +92,7 @@ def list_model_elements():
         'numa',
         'logits_all',
         'no_offload_kqv',
+        'tensorcores',
         'hqq_backend',
     ]
     if is_torch_xpu_available():
