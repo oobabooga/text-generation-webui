@@ -91,6 +91,7 @@ def list_model_elements():
         'rope_freq_base',
         'numa',
         'logits_all',
+        'no_offload_kqv',
         'hqq_backend',
     ]
     if is_torch_xpu_available():

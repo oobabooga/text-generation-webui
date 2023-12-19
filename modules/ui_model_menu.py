@@ -115,6 +115,7 @@ def create_ui():
                             shared.gradio['mlock'] = gr.Checkbox(label="mlock", value=shared.args.mlock)
                             shared.gradio['numa'] = gr.Checkbox(label="numa", value=shared.args.numa, info='NUMA support can help on some systems with non-uniform memory access.')
                             shared.gradio['cpu'] = gr.Checkbox(label="cpu", value=shared.args.cpu)
+                            shared.gradio['no_offload_kqv'] = gr.Checkbox(label="no_offload_kqv", value=shared.args.no_offload_kqv, info='Do not offload the  K, Q, V to the GPU. This saves VRAM but reduces the performance.')
                             shared.gradio['load_in_8bit'] = gr.Checkbox(label="load-in-8bit", value=shared.args.load_in_8bit)
                             shared.gradio['bf16'] = gr.Checkbox(label="bf16", value=shared.args.bf16)
                             shared.gradio['auto_devices'] = gr.Checkbox(label="auto-devices", value=shared.args.auto_devices)
