@@ -20,12 +20,21 @@ try:
 except:
     llama_cpp_cuda = None
 
+try:
+    import llama_cpp_cuda_tensorcores
+except:
+    llama_cpp_cuda_tensorcores = None
+
 
 def llama_cpp_lib():
-    if (shared.args.cpu and llama_cpp is not None) or llama_cpp_cuda is None:
+    if shared.args.cpu and llama_cpp is not None:
         return llama_cpp
-    else:
+    elif shared.args.tensorcores and llama_cpp_cuda_tensorcores is not None:
+        return llama_cpp_cuda_tensorcores
+    elif llama_cpp_cuda is not None:
         return llama_cpp_cuda
+    else:
+        return llama_cpp
 
 
 class LlamacppHF(PreTrainedModel):
