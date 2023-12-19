@@ -164,6 +164,7 @@ def run_cmd(cmd, assert_success=False, environment=False, capture_output=False, 
 
     return result
 
+
 class GPU(Enum):
     # GPU types
     NVIDIA = 1
@@ -171,6 +172,7 @@ class GPU(Enum):
     APPLE = 3
     INTEL = 4
     NONE = 5
+
 
 def find_gpu() -> GPU:
     # Find the GPU type and return it as a GPU type
@@ -203,6 +205,7 @@ def find_gpu() -> GPU:
             return GPU.NONE
     else:
         return GPU.NONE
+
 
 def install_webui():
     # Select your GPU, or choose to run in CPU mode
