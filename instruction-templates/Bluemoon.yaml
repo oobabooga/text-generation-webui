@@ -1,11 +1,11 @@
 instruction_template: |-
-  {%- set found_item = false -%}
+  {%- set ns = namespace(found=false) -%}
   {%- for message in messages -%}
       {%- if message['role'] == 'system' -%}
-          {%- set found_item = true -%}
+          {%- set ns.found = true -%}
       {%- endif -%}
   {%- endfor -%}
-  {%- if not found_item -%}
+  {%- if not ns.found -%}
       {{- '' + 'A transcript of a roleplay between two players, LEAD and ASSOCIATE. LEAD sets up a scenario and the characters, from which ASSOCIATE then assumes a character role and continues the story for that role in response to description given by LEAD. The story and characters are developed by exchange of detailed event descriptions and character dialogs, successively given by both LEAD and ASSOCIATE.' + '\n' -}}
   {%- endif %}
   {%- for message in messages %}

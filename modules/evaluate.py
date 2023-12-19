@@ -7,6 +7,7 @@ from datasets import load_dataset
 from tqdm import tqdm
 
 from modules import shared
+from modules.logging_colors import logger
 from modules.models import clear_torch_cache, load_model, unload_model
 from modules.models_settings import get_model_metadata, update_model_parameters
 from modules.text_generation import encode
@@ -37,6 +38,9 @@ def calculate_perplexity(models, input_dataset, stride, _max_length):
     Based on:
     https://huggingface.co/docs/transformers/perplexity#calculating-ppl-with-fixedlength-models
     '''
+
+    if not shared.args.no_use_fast:
+        logger.warning("--no_use_fast is not being used. If tokenizing the input dataset takes a long time, consider loading the model with that option checked.")
 
     global past_evaluations
     cumulative_log = ''

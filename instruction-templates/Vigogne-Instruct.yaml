@@ -1,11 +1,11 @@
 instruction_template: |-
-  {%- set found_item = false -%}
+  {%- set ns = namespace(found=false) -%}
   {%- for message in messages -%}
       {%- if message['role'] == 'system' -%}
-          {%- set found_item = true -%}
+          {%- set ns.found = true -%}
       {%- endif -%}
   {%- endfor -%}
-  {%- if not found_item -%}
+  {%- if not ns.found -%}
       {{- '' + 'Ci-dessous se trouve une instruction qui décrit une tâche à accomplir. Rédigez une réponse qui répond de manière précise à la demande.' + '\n\n' -}}
   {%- endif %}
   {%- for message in messages %}
