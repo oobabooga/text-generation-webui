@@ -263,6 +263,7 @@ List of command-line flags
 | `--tensor_split TENSOR_SPLIT`       | Split the model across multiple GPUs. Comma-separated list of proportions. Example: 18,17. |
 | `--numa`      | Activate NUMA task allocation for llama.cpp. |
 | `--logits_all`| Needs to be set for perplexity evaluation to work. Otherwise, ignore it, as it makes prompt processing slower. |
+| `--no_offload_kqv` | Do not offload the K, Q, V to the GPU. This saves VRAM but reduces the performance. |
 | `--cache-capacity CACHE_CAPACITY`   | Maximum cache capacity (llama-cpp-python). Examples: 2000MiB, 2GiB. When provided without units, bytes will be assumed. |
 
 #### ExLlama

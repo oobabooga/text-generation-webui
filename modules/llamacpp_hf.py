@@ -204,6 +204,7 @@ class LlamacppHF(PreTrainedModel):
             'tensor_split': tensor_split_list,
             'rope_freq_scale': 1.0 / shared.args.compress_pos_emb,
             'logits_all': shared.args.logits_all,
+            'offload_kqv': not shared.args.no_offload_kqv
         }
 
         Llama = llama_cpp_lib().Llama
