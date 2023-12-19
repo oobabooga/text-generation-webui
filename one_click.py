@@ -8,6 +8,7 @@ import signal
 import site
 import subprocess
 import sys
+from enum import Enum
 
 script_dir = os.getcwd()
 conda_env_path = os.path.join(script_dir, "installer_files", "env")
@@ -163,6 +164,45 @@ def run_cmd(cmd, assert_success=False, environment=False, capture_output=False, 
 
     return result
 
+class GPU(Enum):
+    # GPU types
+    NVIDIA = 1
+    AMD = 2
+    APPLE = 3
+    INTEL = 4
+    NONE = 5
+
+def find_gpu() -> GPU:
+    # Find the GPU type and return it as a GPU type
+    if is_windows():
+        if os.system("wmic path win32_VideoController get name | findstr /i nvidia >nul") == 0:
+            return GPU.NVIDIA
+        elif os.system("wmic path win32_VideoController get name | findstr /i amd >nul") == 0:
+            return GPU.AMD
+        elif os.system("wmic path win32_VideoController get name | findstr /i intel >nul") == 0:
+            return GPU.INTEL
+        else:
+            return GPU.NONE
+    elif is_linux():
+        if os.system("lspci | grep -i nvidia > /dev/null") == 0:
+            return GPU.NVIDIA
+        elif os.system("lspci | grep -i amd > /dev/null") == 0:
+            return GPU.AMD
+        elif os.system("lspci | grep -i intel > /dev/null") == 0:
+            return GPU.INTEL
+        else:
+            return GPU.NONE
+    elif is_macos():
+        if os.system("system_profiler SPDisplaysDataType | grep -i nvidia > /dev/null") == 0:
+            return GPU.NVIDIA
+        elif os.system("system_profiler SPDisplaysDataType | grep -i amd > /dev/null") == 0:
+            return GPU.AMD
+        elif os.system("system_profiler SPDisplaysDataType | grep -i intel > /dev/null") == 0:
+            return GPU.INTEL
+        else:
+            return GPU.NONE
+    else:
+        return GPU.NONE
 
 def install_webui():
     # Select your GPU, or choose to run in CPU mode
@@ -173,27 +213,50 @@ def install_webui():
         print()
         print("What is your GPU?")
         print()
-        print("A) NVIDIA")
-        print("B) AMD (Linux/MacOS only. Requires ROCm SDK 5.6 on Linux)")
-        print("C) Apple M Series")
-        print("D) Intel Arc (IPEX)")
+        print("A) Auto-detect GPU")
+        print("B) NVIDIA")
+        print("C) AMD (Linux/MacOS only. Requires ROCm SDK 5.6 on Linux)")
+        print("D) Apple M Series")
+        print("E) Intel Arc (IPEX)")
         print("N) None (I want to run models in CPU mode)")
         print()
 
         choice = input("Input> ").upper()
-        while choice not in 'ABCDN':
+        while choice not in 'ABCDE':
             print("Invalid choice. Please try again.")
             choice = input("Input> ").upper()
 
     if choice == "N":
-        print_big_message("Once the installation ends, make sure to open CMD_FLAGS.txt with\na text editor and add the --cpu flag.")
+        print_big_message("Adding the --cpu flag to CMD_FLAGS.txt.")
+        cmd_flags_path = os.path.join(script_dir, "CMD_FLAGS.txt")
+
+        with open(cmd_flags_path, 'r') as cmd_flags_file:
+            if "--cpu" not in cmd_flags_file.read():
+                with open(cmd_flags_path, 'a') as cmd_flags_file:
+                    cmd_flags_file.write(" --cpu")
+
+    typeOfGPUFromChoice = {
+        "A": GPU.NONE,
+        "B": GPU.NVIDIA,
+        "C": GPU.AMD,
+        "D": GPU.APPLE,
+        "E": GPU.INTEL,
+        "N": GPU.NONE
+    }
+
+    selected_gpu = typeOfGPUFromChoice.get(choice, GPU.NONE)
+
+    if selected_gpu == GPU.NONE and choice != "N":
+        selected_gpu = find_gpu()
+        print(f"Auto-detected GPU type: {selected_gpu.name}.")
+        print("If this is incorrect, please re-run the script and choose the correct GPU type.")
 
     # Find the proper Pytorch installation command
     install_git = "conda install -y -k ninja git"
     install_pytorch = "python -m pip install torch torchvision torchaudio"
 
     use_cuda118 = "N"
-    if any((is_windows(), is_linux())) and choice == "A":
+    if any((is_windows(), is_linux())) and selected_gpu == GPU.NVIDIA:
         if "USE_CUDA118" in os.environ:
             use_cuda118 = "Y" if os.environ.get("USE_CUDA118", "").lower() in ("yes", "y", "true", "1", "t", "on") else "N"
         else:
@@ -209,15 +272,15 @@ def install_webui():
             print("CUDA: 12.1")
 
         install_pytorch = f"python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/{'cu121' if use_cuda118 == 'N' else 'cu118'}"
-    elif not is_macos() and choice == "B":
+    elif not is_macos() and selected_gpu == GPU.AMD:
         if is_linux():
             install_pytorch = "python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.6"
         else:
             print("AMD GPUs are only supported on Linux. Exiting...")
             sys.exit(1)
-    elif is_linux() and (choice == "C" or choice == "N"):
+    elif is_linux() and selected_gpu == GPU.APPLE or choice == "N":
         install_pytorch = "python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu"
-    elif choice == "D":
+    elif selected_gpu == GPU.INTEL:
         install_pytorch = "python -m pip install torch==2.1.0a0 torchvision==0.16.0a0 intel_extension_for_pytorch==2.1.10+xpu --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/"
 
     # Install Git and then Pytorch
@@ -225,7 +288,7 @@ def install_webui():
     run_cmd(f"{install_git} && {install_pytorch} && python -m pip install py-cpuinfo==9.0.0", assert_success=True, environment=True)
 
     # Install CUDA libraries (this wasn't necessary for Pytorch before...)
-    if choice == "A":
+    if selected_gpu == GPU.NVIDIA:
         print_big_message("Installing the CUDA runtime libraries.")
         run_cmd(f"conda install -y -c \"nvidia/label/{'cuda-12.1.1' if use_cuda118 == 'N' else 'cuda-11.8.0'}\" cuda-runtime", assert_success=True, environment=True)
 
@@ -283,25 +346,15 @@ def update_requirements(initial_installation=False):
     is_cpu = '+cpu' in torver  # 2.0.1+cpu
 
     if is_rocm:
-        if cpu_has_avx2():
-            requirements_file = "requirements_amd.txt"
-        else:
-            requirements_file = "requirements_amd_noavx2.txt"
+        base_requirements = "requirements_amd" + ("_noavx2" if not cpu_has_avx2() else "") + ".txt"
     elif is_cpu:
-        if cpu_has_avx2():
-            requirements_file = "requirements_cpu_only.txt"
-        else:
-            requirements_file = "requirements_cpu_only_noavx2.txt"
+        base_requirements = "requirements_cpu_only" + ("_noavx2" if not cpu_has_avx2() else "") + ".txt"
     elif is_macos():
-        if is_x86_64():
-            requirements_file = "requirements_apple_intel.txt"
-        else:
-            requirements_file = "requirements_apple_silicon.txt"
+        base_requirements = "requirements_apple_" + ("intel" if is_x86_64() else "silicon") + ".txt"
     else:
-        if cpu_has_avx2():
-            requirements_file = "requirements.txt"
-        else:
-            requirements_file = "requirements_noavx2.txt"
+        base_requirements = "requirements" + ("_noavx2" if not cpu_has_avx2() else "") + ".txt"
+
+    requirements_file = base_requirements
 
     print_big_message(f"Installing webui requirements from file: {requirements_file}")
     print(f"TORCH: {torver}\n")
@@ -368,6 +421,7 @@ def update_requirements(initial_installation=False):
 
 
 def download_model():
+    # TODO: Replace with an import
     run_cmd("python download-model.py", environment=True)
 
 
