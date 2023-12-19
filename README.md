@@ -305,6 +305,12 @@ List of command-line flags
 |-------------|-------------|
 | `--model_type MODEL_TYPE` | Model type of pre-quantized model. Currently gpt2, gptj, gptneox, falcon, llama, mpt, starcoder (gptbigcode), dollyv2, and replit are supported. |
 
+#### HQQ
+
+| Flag        | Description |
+|-------------|-------------|
+| `--hqq-backend` | Backend for the HQQ loader. Valid options: PYTORCH, PYTORCH_COMPILE, ATEN. |
+
 #### DeepSpeed
 
 | Flag                                  | Description |
