@@ -13,6 +13,7 @@ warnings.filterwarnings('ignore', category=UserWarning, message='TypedStorage is
 warnings.filterwarnings('ignore', category=UserWarning, message='Using the update method is deprecated')
 warnings.filterwarnings('ignore', category=UserWarning, message='Field "model_name" has conflict')
 warnings.filterwarnings('ignore', category=UserWarning, message='The value passed into gr.Dropdown()')
+warnings.filterwarnings('ignore', category=UserWarning, message='Field "model_names" has conflict')
 
 with RequestBlocker():
     import gradio as gr
