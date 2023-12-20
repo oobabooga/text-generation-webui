@@ -91,16 +91,19 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
 
 .header_bar {
     background-color: #f7f7f7;
+    box-shadow: 0 2px 3px rgba(22 22 22 / 35%);
     margin-bottom: 0px;
     overflow-x: scroll;
     margin-left: calc(-1 * var(--size-4));
     margin-right: calc(-1 * var(--size-4));
     display: block !important;
     text-wrap: nowrap;
+    z-index: 90;
 }
 
 .dark .header_bar {
     border: none !important;
+    box-shadow: 0 3px 4px rgba(20 20 20 / 60%);
     background-color: #8080802b;
 }
 
