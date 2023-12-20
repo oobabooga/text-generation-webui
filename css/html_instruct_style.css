@@ -1,9 +1,14 @@
+.chat-parent {
+    border-radius: 0 0 0 8px !important;
+}
+
 .chat {
   background: var(--block-background-fill);
   padding: 24px 19px;
   padding-right: 19px !important;
   border: 1px solid var(--block-border-color);
-  border-radius: 8px;
+  border-top: none;
+  border-radius: 0 0 0 8px !important;
 }
 
 .message {
