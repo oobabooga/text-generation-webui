@@ -54,7 +54,7 @@ sampler_hijack.hijack_samplers()
 
 
 def load_model(model_name, loader=None):
-    logger.info(f"Loading {model_name}...")
+    logger.info(f"Loading {model_name}")
     t0 = time.time()
 
     shared.is_seq2seq = False
@@ -413,8 +413,8 @@ def ExLlamav2_HF_loader(model_name):
 
 
 def HQQ_loader(model_name):
+    from hqq.core.quantize import HQQBackend, HQQLinear
     from hqq.engine.hf import HQQModelForCausalLM
-    from hqq.core.quantize import HQQLinear, HQQBackend
 
     logger.info(f"Loading HQQ model with backend: {shared.args.hqq_backend}")
 

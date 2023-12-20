@@ -4,7 +4,7 @@ datasets
 einops
 exllamav2==0.0.11
 gradio==3.50.*
-hqq==0.1.1
+hqq==0.1.1.post1
 markdown
 numpy==1.24.*
 optimum==1.16.*
@@ -13,6 +13,7 @@ peft==0.7.*
 Pillow>=9.5.0
 pyyaml
 requests
+rich
 safetensors==0.4.1
 scipy
 sentencepiece

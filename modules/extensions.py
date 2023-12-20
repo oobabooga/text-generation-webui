@@ -31,9 +31,14 @@ def load_extensions():
     for i, name in enumerate(shared.args.extensions):
         if name in available_extensions:
             if name != 'api':
-                logger.info(f'Loading the extension "{name}"...')
+                logger.info(f'Loading the extension "{name}"')
             try:
-                exec(f"import extensions.{name}.script")
+                try:
+                    exec(f"import extensions.{name}.script")
+                except ModuleNotFoundError:
+                    logger.error(f"Could not import the requirements for '{name}'. Make sure to install the requirements for the extension.\n\nLinux / Mac:\n\npip install -r extensions/{name}/requirements.txt --upgrade\n\nWindows:\n\npip install -r extensions\\{name}\\requirements.txt --upgrade\n\nIf you used the one-click installer, paste the command above in the terminal window opened after launching the cmd script for your OS.")
+                    raise
+
                 extension = getattr(extensions, name).script
                 apply_settings(extension, name)
                 if extension not in setup_called and hasattr(extension, "setup"):
