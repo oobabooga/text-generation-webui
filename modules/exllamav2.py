@@ -120,7 +120,6 @@ class Exllamav2Model:
         else:
             max_new_tokens = state['max_new_tokens']
 
-        self.generator.set_stop_conditions([])
         self.generator.begin_stream(ids, settings, loras=self.loras)
 
         decoded_text = ''
