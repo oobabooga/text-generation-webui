@@ -19,12 +19,21 @@ try:
 except:
     llama_cpp_cuda = None
 
+try:
+    import llama_cpp_cuda_tensorcores
+except:
+    llama_cpp_cuda_tensorcores = None
+
 
 def llama_cpp_lib():
-    if (shared.args.cpu and llama_cpp is not None) or llama_cpp_cuda is None:
+    if shared.args.cpu and llama_cpp is not None:
         return llama_cpp
-    else:
+    elif shared.args.tensorcores and llama_cpp_cuda_tensorcores is not None:
+        return llama_cpp_cuda_tensorcores
+    elif llama_cpp_cuda is not None:
         return llama_cpp_cuda
+    else:
+        return llama_cpp
 
 
 def ban_eos_logits_processor(eos_token, input_ids, logits):
@@ -86,6 +95,7 @@ class LlamaCppModel:
             'rope_freq_base': RoPE.get_rope_freq_base(shared.args.alpha_value, shared.args.rope_freq_base),
             'tensor_split': tensor_split_list,
             'rope_freq_scale': 1.0 / shared.args.compress_pos_emb,
+            'offload_kqv': not shared.args.no_offload_kqv
         }
 
         result.model = Llama(**params)

@@ -1,5 +1,25 @@
-user: "Question:"
-bot: "<work>"
-turn_template: "<|user|> <|user-message|>\n\n<|bot|><|bot-message|>\n\n"
-context: ""
-system_message: ""
+instruction_template: |-
+  {%- set ns = namespace(found=false) -%}
+  {%- for message in messages -%}
+      {%- if message['role'] == 'system' -%}
+          {%- set ns.found = true -%}
+      {%- endif -%}
+  {%- endfor -%}
+  {%- if not ns.found -%}
+      {{- '' + '' + '' -}}
+  {%- endif %}
+  {%- for message in messages %}
+      {%- if message['role'] == 'system' -%}
+          {{- '' + message['content'] + '' -}}
+      {%- else -%}
+          {%- if message['role'] == 'user' -%}
+              {{-'Question: ' + message['content'] + '\n\n'-}}
+          {%- else -%}
+              {{-'<work>' + message['content'] + '\n\n' -}}
+          {%- endif -%}
+      {%- endif -%}
+  {%- endfor -%}
+  {%- if add_generation_prompt -%}
+      {{-'<work>'-}}
+  {%- endif -%}
+

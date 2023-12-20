@@ -4,7 +4,7 @@ from pathlib import Path
 
 import yaml
 
-from modules import loaders, metadata_gguf, shared, ui
+from modules import chat, loaders, metadata_gguf, shared, ui
 
 
 def get_fallback_settings():
@@ -32,7 +32,6 @@ def get_model_metadata(model):
         if re.match(pat.lower(), model.lower()):
             for k in settings[pat]:
                 model_settings[k] = settings[pat][k]
-
 
     path = Path(f'{shared.args.model_dir}/{model}/config.json')
     if path.exists():
@@ -65,6 +64,16 @@ def get_model_metadata(model):
             model_settings['compress_pos_emb'] = metadata['llama.rope.scale_linear']
         if 'llama.rope.freq_base' in metadata:
             model_settings['rope_freq_base'] = metadata['llama.rope.freq_base']
+        if 'tokenizer.chat_template' in metadata:
+            template = metadata['tokenizer.chat_template']
+            eos_token = metadata['tokenizer.ggml.tokens'][metadata['tokenizer.ggml.eos_token_id']]
+            bos_token = metadata['tokenizer.ggml.tokens'][metadata['tokenizer.ggml.bos_token_id']]
+            template = template.replace('eos_token', "'{}'".format(eos_token))
+            template = template.replace('bos_token', "'{}'".format(bos_token))
+
+            template = re.sub(r'raise_exception\([^)]*\)', "''", template)
+            model_settings['instruction_template'] = 'Custom (obtained from model metadata)'
+            model_settings['instruction_template_str'] = template
 
     else:
         # Transformers metadata
@@ -100,6 +109,30 @@ def get_model_metadata(model):
             if 'desc_act' in metadata:
                 model_settings['desc_act'] = metadata['desc_act']
 
+    # Try to find the Jinja instruct template
+    path = Path(f'{shared.args.model_dir}/{model}') / 'tokenizer_config.json'
+    if path.exists():
+        metadata = json.loads(open(path, 'r').read())
+        if 'chat_template' in metadata:
+            template = metadata['chat_template']
+            for k in ['eos_token', 'bos_token']:
+                if k in metadata:
+                    value = metadata[k]
+                    if type(value) is dict:
+                        value = value['content']
+
+                    template = template.replace(k, "'{}'".format(value))
+
+            template = re.sub(r'raise_exception\([^)]*\)', "''", template)
+            model_settings['instruction_template'] = 'Custom (obtained from model metadata)'
+            model_settings['instruction_template_str'] = template
+
+    if 'instruction_template' not in model_settings:
+        model_settings['instruction_template'] = 'Alpaca'
+
+    if model_settings['instruction_template'] != 'Custom (obtained from model metadata)':
+        model_settings['instruction_template_str'] = chat.load_instruction_template(model_settings['instruction_template'])
+
     # Ignore rope_freq_base if set to the default value
     if 'rope_freq_base' in model_settings and model_settings['rope_freq_base'] == 10000:
         model_settings.pop('rope_freq_base')
@@ -130,6 +163,8 @@ def infer_loader(model_name, model_settings):
         loader = 'RWKV'
     elif re.match(r'.*exl2', model_name.lower()):
         loader = 'ExLlamav2_HF'
+    elif re.match(r'.*-hqq', model_name.lower()):
+        return 'HQQ'
     else:
         loader = 'Transformers'
 

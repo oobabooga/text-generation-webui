@@ -123,6 +123,8 @@ targetElement.addEventListener("scroll", function() {
 // Create a MutationObserver instance
 const observer = new MutationObserver(function(mutations) {
   mutations.forEach(function(mutation) {
+    updateChatHeight();
+
     if(!isScrolled) {
       targetElement.scrollTop = targetElement.scrollHeight;
     }
@@ -152,56 +154,6 @@ const config = {
 
 // Start observing the target element
 observer.observe(targetElement, config);
-
-//------------------------------------------------
-// Notebook box scrolling
-//------------------------------------------------
-const notebookElement = document.querySelector("#textbox-notebook textarea");
-let notebookScrolled = false;
-
-notebookElement.addEventListener("scroll", function() {
-  let diff = notebookElement.scrollHeight - notebookElement.clientHeight;
-  if(Math.abs(notebookElement.scrollTop - diff) <= 10 || diff == 0) {
-    notebookScrolled = false;
-  } else {
-    notebookScrolled = true;
-  }
-});
-
-const notebookObserver = new MutationObserver(function(mutations) {
-  mutations.forEach(function(mutation) {
-    if(!notebookScrolled) {
-      notebookElement.scrollTop = notebookElement.scrollHeight;
-    }
-  });
-});
-
-notebookObserver.observe(notebookElement.parentNode.parentNode.parentNode, config);
-
-//------------------------------------------------
-// Default box scrolling
-//------------------------------------------------
-const defaultElement = document.querySelector("#textbox-default textarea");
-let defaultScrolled = false;
-
-defaultElement.addEventListener("scroll", function() {
-  let diff = defaultElement.scrollHeight - defaultElement.clientHeight;
-  if(Math.abs(defaultElement.scrollTop - diff) <= 10 || diff == 0) {
-    defaultScrolled = false;
-  } else {
-    defaultScrolled = true;
-  }
-});
-
-const defaultObserver = new MutationObserver(function(mutations) {
-  mutations.forEach(function(mutation) {
-    if(!defaultScrolled) {
-      defaultElement.scrollTop = defaultElement.scrollHeight;
-    }
-  });
-});
-
-defaultObserver.observe(defaultElement.parentNode.parentNode.parentNode, config);
 
 //------------------------------------------------
 // Add some scrollbars
@@ -373,3 +325,15 @@ function toggleBigPicture() {
   }
 }
 
+//------------------------------------------------
+// Define the --chat-height global CSS variable to
+// the height of the chat parent
+//------------------------------------------------
+function updateChatHeight() {
+  const chatContainer = document.getElementById('chat').parentNode.parentNode.parentNode;
+  const newChatHeight = `${chatContainer.clientHeight}px`;
+
+  document.documentElement.style.setProperty('--chat-height', newChatHeight);
+}
+
+window.addEventListener('resize', updateChatHeight);

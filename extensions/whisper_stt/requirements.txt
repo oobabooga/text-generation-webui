@@ -1,4 +1,4 @@
 SpeechRecognition==3.10.0
-git+https://github.com/oobabooga/whisper.git
+openai-whisper
 soundfile
 ffmpeg

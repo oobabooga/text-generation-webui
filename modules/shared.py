@@ -54,8 +54,9 @@ settings = {
     'stream': True,
     'character': 'Assistant',
     'name1': 'You',
-    'instruction_template': 'Alpaca',
     'custom_system_message': '',
+    'instruction_template_str': "{%- set ns = namespace(found=false) -%}\n{%- for message in messages -%}\n    {%- if message['role'] == 'system' -%}\n        {%- set ns.found = true -%}\n    {%- endif -%}\n{%- endfor -%}\n{%- if not ns.found -%}\n    {{- '' + 'Below is an instruction that describes a task. Write a response that appropriately completes the request.' + '\\n\\n' -}}\n{%- endif %}\n{%- for message in messages %}\n    {%- if message['role'] == 'system' -%}\n        {{- '' + message['content'] + '\\n\\n' -}}\n    {%- else -%}\n        {%- if message['role'] == 'user' -%}\n            {{-'### Instruction:\\n' + message['content'] + '\\n\\n'-}}\n        {%- else -%}\n            {{-'### Response:\\n' + message['content'] + '\\n\\n' -}}\n        {%- endif -%}\n    {%- endif -%}\n{%- endfor -%}\n{%- if add_generation_prompt -%}\n    {{-'### Response:\\n'-}}\n{%- endif -%}",
+    'chat_template_str': "{%- for message in messages %}\n    {%- if message['role'] == 'system' -%}\n        {{- message['content'] + '\\n\\n' -}}\n    {%- else -%}\n        {%- if message['role'] == 'user' -%}\n            {{- name1 + ': ' + message['content'] + '\\n'-}}\n        {%- else -%}\n            {{- name2 + ': ' + message['content'] + '\\n' -}}\n        {%- endif -%}\n    {%- endif -%}\n{%- endfor -%}",
     'chat-instruct_command': 'Continue the chat dialogue below. Write a single reply for the character "<|character|>".\n\n<|prompt|>',
     'autoload_model': False,
     'gallery-items_per_page': 50,
@@ -105,6 +106,7 @@ parser.add_argument('--compute_dtype', type=str, default='float16', help='comput
 parser.add_argument('--quant_type', type=str, default='nf4', help='quant_type for 4-bit. Valid options: nf4, fp4.')
 
 # llama.cpp
+parser.add_argument('--tensorcores', action='store_true', help='Use llama-cpp-python compiled with tensor cores support. This increases performance on RTX cards. NVIDIA only.')
 parser.add_argument('--n_ctx', type=int, default=2048, help='Size of the prompt context.')
 parser.add_argument('--threads', type=int, default=0, help='Number of threads to use.')
 parser.add_argument('--threads-batch', type=int, default=0, help='Number of threads to use for batches/prompt processing.')
@@ -116,6 +118,7 @@ parser.add_argument('--n-gpu-layers', type=int, default=0, help='Number of layer
 parser.add_argument('--tensor_split', type=str, default=None, help='Split the model across multiple GPUs. Comma-separated list of proportions. Example: 18,17.')
 parser.add_argument('--numa', action='store_true', help='Activate NUMA task allocation for llama.cpp.')
 parser.add_argument('--logits_all', action='store_true', help='Needs to be set for perplexity evaluation to work. Otherwise, ignore it, as it makes prompt processing slower.')
+parser.add_argument('--no_offload_kqv', action='store_true', help='Do not offload the  K, Q, V to the GPU. This saves VRAM but reduces the performance.')
 parser.add_argument('--cache-capacity', type=str, help='Maximum cache capacity (llama-cpp-python). Examples: 2000MiB, 2GiB. When provided without units, bytes will be assumed.')
 
 # ExLlama
@@ -124,6 +127,7 @@ parser.add_argument('--max_seq_len', type=int, default=2048, help='Maximum seque
 parser.add_argument('--cfg-cache', action='store_true', help='ExLlama_HF: Create an additional cache for CFG negative prompts. Necessary to use CFG with that loader, but not necessary for CFG with base ExLlama.')
 parser.add_argument('--no_flash_attn', action='store_true', help='Force flash-attention to not be used.')
 parser.add_argument('--cache_8bit', action='store_true', help='Use 8-bit cache to save VRAM.')
+parser.add_argument('--num_experts_per_token', type=int, default=2, help='Number of experts to use for generation. Applies to MoE models like Mixtral.')
 
 # AutoGPTQ
 parser.add_argument('--triton', action='store_true', help='Use triton.')
@@ -132,6 +136,7 @@ parser.add_argument('--no_inject_fused_mlp', action='store_true', help='Triton m
 parser.add_argument('--no_use_cuda_fp16', action='store_true', help='This can make models faster on some systems.')
 parser.add_argument('--desc_act', action='store_true', help='For models that do not have a quantize_config.json, this parameter is used to define whether to set desc_act or not in BaseQuantizeConfig.')
 parser.add_argument('--disable_exllama', action='store_true', help='Disable ExLlama kernel, which can improve inference speed on some systems.')
+parser.add_argument('--disable_exllamav2', action='store_true', help='Disable ExLlamav2 kernel.')
 
 # GPTQ-for-LLaMa
 parser.add_argument('--wbits', type=int, default=0, help='Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported.')
@@ -140,6 +145,9 @@ parser.add_argument('--groupsize', type=int, default=-1, help='Group size.')
 parser.add_argument('--pre_layer', type=int, nargs='+', help='The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models. For multi-gpu, write the numbers separated by spaces, eg --pre_layer 30 60.')
 parser.add_argument('--checkpoint', type=str, help='The path to the quantized checkpoint file. If not specified, it will be automatically detected.')
 parser.add_argument('--monkey-patch', action='store_true', help='Apply the monkey patch for using LoRAs with quantized models.')
+
+# HQQ
+parser.add_argument('--hqq-backend', type=str, default='PYTORCH_COMPILE', help='Backend for the HQQ loader. Valid options: PYTORCH, PYTORCH_COMPILE, ATEN.')
 
 # DeepSpeed
 parser.add_argument('--deepspeed', action='store_true', help='Enable the use of DeepSpeed ZeRO-3 for inference via the Transformers integration.')
@@ -196,22 +204,26 @@ for arg in sys.argv[1:]:
     if hasattr(args, arg):
         provided_arguments.append(arg)
 
-# Deprecation warnings
 deprecated_args = ['notebook', 'chat', 'no_stream', 'mul_mat_q', 'use_fast']
-for k in deprecated_args:
-    if getattr(args, k):
-        logger.warning(f'The --{k} flag has been deprecated and will be removed soon. Please remove that flag.')
 
-# Security warnings
-if args.trust_remote_code:
-    logger.warning('trust_remote_code is enabled. This is dangerous.')
-if 'COLAB_GPU' not in os.environ and not args.nowebui:
-    if args.share:
-        logger.warning("The gradio \"share link\" feature uses a proprietary executable to create a reverse tunnel. Use it with care.")
-    if any((args.listen, args.share)) and not any((args.gradio_auth, args.gradio_auth_path)):
-        logger.warning("\nYou are potentially exposing the web UI to the entire internet without any access password.\nYou can create one with the \"--gradio-auth\" flag like this:\n\n--gradio-auth username:password\n\nMake sure to replace username:password with your own.")
-        if args.multi_user:
-            logger.warning('\nThe multi-user mode is highly experimental and should not be shared publicly.')
+
+def do_cmd_flags_warnings():
+
+    # Deprecation warnings
+    for k in deprecated_args:
+        if getattr(args, k):
+            logger.warning(f'The --{k} flag has been deprecated and will be removed soon. Please remove that flag.')
+
+    # Security warnings
+    if args.trust_remote_code:
+        logger.warning('trust_remote_code is enabled. This is dangerous.')
+    if 'COLAB_GPU' not in os.environ and not args.nowebui:
+        if args.share:
+            logger.warning("The gradio \"share link\" feature uses a proprietary executable to create a reverse tunnel. Use it with care.")
+        if any((args.listen, args.share)) and not any((args.gradio_auth, args.gradio_auth_path)):
+            logger.warning("\nYou are potentially exposing the web UI to the entire internet without any access password.\nYou can create one with the \"--gradio-auth\" flag like this:\n\n--gradio-auth username:password\n\nMake sure to replace username:password with your own.")
+            if args.multi_user:
+                logger.warning('\nThe multi-user mode is highly experimental and should not be shared publicly.')
 
 
 def fix_loader_name(name):
@@ -243,6 +255,8 @@ def fix_loader_name(name):
         return 'AutoAWQ'
     elif name in ['quip#', 'quip-sharp', 'quipsharp', 'quip_sharp']:
         return 'QuIP#'
+    elif name in ['hqq']:
+        return 'HQQ'
 
 
 def add_extension(name, last=False):
