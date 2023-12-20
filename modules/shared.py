@@ -204,22 +204,26 @@ for arg in sys.argv[1:]:
     if hasattr(args, arg):
         provided_arguments.append(arg)
 
-# Deprecation warnings
 deprecated_args = ['notebook', 'chat', 'no_stream', 'mul_mat_q', 'use_fast']
-for k in deprecated_args:
-    if getattr(args, k):
-        logger.warning(f'The --{k} flag has been deprecated and will be removed soon. Please remove that flag.')
 
-# Security warnings
-if args.trust_remote_code:
-    logger.warning('trust_remote_code is enabled. This is dangerous.')
-if 'COLAB_GPU' not in os.environ and not args.nowebui:
-    if args.share:
-        logger.warning("The gradio \"share link\" feature uses a proprietary executable to create a reverse tunnel. Use it with care.")
-    if any((args.listen, args.share)) and not any((args.gradio_auth, args.gradio_auth_path)):
-        logger.warning("\nYou are potentially exposing the web UI to the entire internet without any access password.\nYou can create one with the \"--gradio-auth\" flag like this:\n\n--gradio-auth username:password\n\nMake sure to replace username:password with your own.")
-        if args.multi_user:
-            logger.warning('\nThe multi-user mode is highly experimental and should not be shared publicly.')
+
+def do_cmd_flags_warnings():
+
+    # Deprecation warnings
+    for k in deprecated_args:
+        if getattr(args, k):
+            logger.warning(f'The --{k} flag has been deprecated and will be removed soon. Please remove that flag.')
+
+    # Security warnings
+    if args.trust_remote_code:
+        logger.warning('trust_remote_code is enabled. This is dangerous.')
+    if 'COLAB_GPU' not in os.environ and not args.nowebui:
+        if args.share:
+            logger.warning("The gradio \"share link\" feature uses a proprietary executable to create a reverse tunnel. Use it with care.")
+        if any((args.listen, args.share)) and not any((args.gradio_auth, args.gradio_auth_path)):
+            logger.warning("\nYou are potentially exposing the web UI to the entire internet without any access password.\nYou can create one with the \"--gradio-auth\" flag like this:\n\n--gradio-auth username:password\n\nMake sure to replace username:password with your own.")
+            if args.multi_user:
+                logger.warning('\nThe multi-user mode is highly experimental and should not be shared publicly.')
 
 
 def fix_loader_name(name):

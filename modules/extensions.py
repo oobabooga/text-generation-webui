@@ -31,7 +31,7 @@ def load_extensions():
     for i, name in enumerate(shared.args.extensions):
         if name in available_extensions:
             if name != 'api':
-                logger.info(f'Loading the extension "{name}"...')
+                logger.info(f'Loading the extension "{name}"')
             try:
                 try:
                     exec(f"import extensions.{name}.script")

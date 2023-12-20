@@ -54,7 +54,7 @@ sampler_hijack.hijack_samplers()
 
 
 def load_model(model_name, loader=None):
-    logger.info(f"Loading {model_name}...")
+    logger.info(f"Loading {model_name}")
     t0 = time.time()
 
     shared.is_seq2seq = False

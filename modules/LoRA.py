@@ -138,7 +138,7 @@ def add_lora_transformers(lora_names):
 
     # Add a LoRA when another LoRA is already present
     if len(removed_set) == 0 and len(prior_set) > 0 and "__merged" not in shared.model.peft_config.keys():
-        logger.info(f"Adding the LoRA(s) named {added_set} to the model...")
+        logger.info(f"Adding the LoRA(s) named {added_set} to the model")
         for lora in added_set:
             shared.model.load_adapter(get_lora_path(lora), lora)
 
