@@ -413,8 +413,12 @@ def ExLlamav2_HF_loader(model_name):
 
 
 def HQQ_loader(model_name):
-    from hqq.engine.hf import HQQModelForCausalLM
-    from hqq.core.quantize import HQQLinear, HQQBackend
+    try:
+        from hqq.engine.hf import HQQModelForCausalLM
+        from hqq.core.quantize import HQQLinear, HQQBackend
+    except ModuleNotFoundError:
+        logger.error("HQQ is not installed. You can install it with:\n\npip install hqq")
+        return None
 
     logger.info(f"Loading HQQ model with backend: {shared.args.hqq_backend}")
 
