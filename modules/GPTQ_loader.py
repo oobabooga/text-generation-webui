@@ -126,7 +126,7 @@ def load_quantized(model_name):
     path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
     pt_path = find_quantized_model_file(model_name)
     if not pt_path:
-        logger.error("Could not find the quantized model in .pt or .safetensors format, exiting...")
+        logger.error("Could not find the quantized model in .pt or .safetensors format. Exiting.")
         exit()
     else:
         logger.info(f"Found the following quantized model: {pt_path}")

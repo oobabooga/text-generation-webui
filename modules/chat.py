@@ -95,7 +95,8 @@ def generate_chat_prompt(user_input, state, **kwargs):
     else:
         renderer = chat_renderer
         if state['context'].strip() != '':
-            messages.append({"role": "system", "content": state['context']})
+            context = replace_character_names(state['context'], state['name1'], state['name2'])
+            messages.append({"role": "system", "content": context})
 
     insert_pos = len(messages)
     for user_msg, assistant_msg in reversed(history):
