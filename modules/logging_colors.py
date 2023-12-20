@@ -27,10 +27,10 @@ def setup_logging():
         def get(self):
             return self.buffer
 
-    from rich.theme import Theme
-    from rich.logging import RichHandler
     from rich.console import Console
+    from rich.logging import RichHandler
     from rich.pretty import install as pretty_install
+    from rich.theme import Theme
     from rich.traceback import install as traceback_install
 
     level = logging.DEBUG

@@ -10,7 +10,6 @@ from TTS.api import TTS
 from TTS.utils.synthesizer import Synthesizer
 
 from modules import chat, shared, ui_chat
-from modules.logging_colors import logger
 from modules.ui import create_refresh_button
 from modules.utils import gradio
 
