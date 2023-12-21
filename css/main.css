@@ -304,6 +304,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 
 #chat-tab {
     padding-top: 0px;
+    padding-bottom: 0px;
 }
 
 #chat-tab button#Generate, #chat-tab button#stop {
