@@ -104,8 +104,8 @@ group.add_argument('--force-safetensors', action='store_true', help='Set use_saf
 group.add_argument('--no_use_fast', action='store_true', help='Set use_fast=False while loading the tokenizer (it\'s True by default). Use this if you have any problems related to use_fast.')
 group.add_argument('--use_flash_attention_2', action='store_true', help='Set use_flash_attention_2=True while loading the model.')
 
-# Accelerate 4-bit
-group = parser.add_argument_group('Accelerate 4-bit')
+# bitsandbytes 4-bit
+group = parser.add_argument_group('bitsandbytes 4-bit')
 group.add_argument('--load-in-4bit', action='store_true', help='Load the model with 4-bit precision (using bitsandbytes).')
 group.add_argument('--use_double_quant', action='store_true', help='use_double_quant for 4-bit.')
 group.add_argument('--compute_dtype', type=str, default='float16', help='compute dtype for 4-bit. Valid options: bfloat16, float16, float32.')
