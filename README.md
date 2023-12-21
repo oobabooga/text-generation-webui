@@ -237,7 +237,7 @@ List of command-line flags
 | `--no_use_fast`                             | Set use_fast=False while loading the tokenizer (it's True by default). Use this if you have any problems related to use_fast. |
 | `--use_flash_attention_2`                   | Set use_flash_attention_2=True while loading the model. |
 
-#### Accelerate 4-bit
+#### bitsandbytes 4-bit
 
 ⚠️  Requires minimum compute of 7.0 on Windows at the moment.
 
