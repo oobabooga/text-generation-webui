@@ -126,7 +126,7 @@ targetElement.addEventListener("scroll", function() {
 // Create a MutationObserver instance
 const observer = new MutationObserver(function(mutations) {
   mutations.forEach(function(mutation) {
-    updateChatHeight();
+    updateCssProperties();
 
     if(!isScrolled) {
       targetElement.scrollTop = targetElement.scrollHeight;
@@ -329,14 +329,17 @@ function toggleBigPicture() {
 }
 
 //------------------------------------------------
-// Define the --chat-height global CSS variable to
-// the height of the chat parent
+// Define global CSS properties for resizing and
+// positioning certain elements
 //------------------------------------------------
-function updateChatHeight() {
+function updateCssProperties() {
   const chatContainer = document.getElementById('chat').parentNode.parentNode.parentNode;
   const newChatHeight = `${chatContainer.clientHeight}px`;
-
   document.documentElement.style.setProperty('--chat-height', newChatHeight);
+
+  const header = document.querySelector('.header_bar');
+  const chatInputOffset = `${header.clientHeight}px`;
+  document.documentElement.style.setProperty('--chat-input-offset', chatInputOffset);
 }
 
-window.addEventListener('resize', updateChatHeight);
+window.addEventListener('resize', updateCssProperties);

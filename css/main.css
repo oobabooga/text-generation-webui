@@ -325,14 +325,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
         padding-left: 0;
         padding-right: 0;
     }
-
-    .chat-parent {
-        height: calc(100dvh - 179px) !important;
-    }
-
-    .old-ui .chat-parent {
-        height: calc(100dvh - 310px) !important;
-    }
 }
 
 .chat {
@@ -349,16 +341,16 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 .chat-parent {
-    height: calc(100dvh - 181px);
+    height: calc(100dvh - 113px - var(--chat-input-offset));
     overflow: auto !important;
 }
 
 .old-ui .chat-parent {
-    height: calc(100dvh - 270px);
+    height: calc(100dvh - 207px - var(--chat-input-offset));
 }
 
 .chat-parent.bigchat {
-    height: calc(100dvh - 181px) !important;
+    height: calc(100dvh - 113px - var(--chat-input-offset)) !important;
 }
 
 .chat > .messages {
