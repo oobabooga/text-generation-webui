@@ -265,7 +265,13 @@ def apply_stopping_strings(reply, all_stop_strings):
 
 def get_reply_from_output_ids(output_ids, state, starting_from=0):
     reply = decode(output_ids[starting_from:], state['skip_special_tokens'])
-    if (hasattr(shared.tokenizer, 'convert_ids_to_tokens') and len(output_ids) > starting_from and shared.tokenizer.convert_ids_to_tokens(int(output_ids[starting_from])).startswith('▁')) and not reply.startswith(' '):
+    token_ids = int(output_ids[starting_from])
+    tokens = shared.tokenizer.convert_ids_to_tokens(token_ids)
+    if isinstance(tokens, (bytes,)):
+        tokens = tokens.decode('utf8')
+    flag = tokens.startswith('▁')
+    # logger.debug(f'{type(tokens) = }, {tokens = }')
+    if (hasattr(shared.tokenizer, 'convert_ids_to_tokens') and len(output_ids) > starting_from and flag) and not reply.startswith(' '):
         reply = ' ' + reply
 
     return reply
