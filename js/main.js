@@ -332,14 +332,28 @@ function toggleBigPicture() {
 // Define global CSS properties for resizing and
 // positioning certain elements
 //------------------------------------------------
+let currentChatInputHeight = 0;
+
 function updateCssProperties() {
+  // Set the height of the chat area
   const chatContainer = document.getElementById('chat').parentNode.parentNode.parentNode;
-  const newChatHeight = `${chatContainer.clientHeight}px`;
+  const chatInputHeight = document.querySelector('#chat-input textarea').clientHeight;
+  const newChatHeight = `${chatContainer.clientHeight - chatInputHeight + 40}px`;
   document.documentElement.style.setProperty('--chat-height', newChatHeight);
 
+  // Set the position offset of the chat input box
   const header = document.querySelector('.header_bar');
   const chatInputOffset = `${header.clientHeight}px`;
   document.documentElement.style.setProperty('--chat-input-offset', chatInputOffset);
+
+  // Offset the scroll position of the chat area
+  if (chatInputHeight !== currentChatInputHeight) {
+    chatContainer.scrollTop += chatInputHeight > currentChatInputHeight ? chatInputHeight : -chatInputHeight;
+    currentChatInputHeight = chatInputHeight;
+  }
 }
+
+new ResizeObserver(updateCssProperties)
+  .observe(document.querySelector('#chat-input textarea'));
 
 window.addEventListener('resize', updateCssProperties);
