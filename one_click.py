@@ -177,17 +177,21 @@ class GPU(Enum):
 def find_gpu() -> GPU:
     # Find the GPU type and return it as a GPU type
     if is_windows():
-        if os.system("wmic path win32_VideoController get name | findstr /i nvidia >nul") == 0:
-            return GPU.NVIDIA
-        elif os.system("wmic path win32_VideoController get name | findstr /i amd >nul") == 0:
-            return GPU.AMD
-        elif os.system("wmic path win32_VideoController get name | findstr /i intel >nul") == 0:
-            return GPU.INTEL
-        else:
-            return GPU.NONE
+        # wmic path win32_VideoController get name
+        with subprocess.Popen(["wmic", "path", "win32_VideoController", "get", "name"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True) as proc:
+            output = proc.communicate()[0].lower()
+            if "nvidia" in output:
+                return GPU.NVIDIA
+            elif "amd" in output:
+                return GPU.AMD
+            elif "intel" in output:
+                return GPU.INTEL
+            else:
+                return GPU.NONE
     elif is_linux():
-        with os.popen("lspci -vnn | grep -i 'VGA\|3D\|Display'") as proc:
-            output = proc.read().lower()
+        # lspci -vnn | grep -i 'VGA\|3D\|Display'
+        with subprocess.Popen(["lspci", "-vnn"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True) as proc:
+            output = proc.communicate()[0].lower()
             if "nvidia" in output:
                 return GPU.NVIDIA
             elif "amd" in output:
