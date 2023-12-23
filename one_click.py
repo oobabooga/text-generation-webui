@@ -366,7 +366,7 @@ def update_requirements(initial_installation=False):
     is_cuda118 = '+cu118' in torver  # 2.1.0+cu118
     is_cuda117 = '+cu117' in torver  # 2.0.1+cu117
     is_rocm = '+rocm' in torver  # 2.0.1+rocm5.4.2
-    is_intel = '+cxx11' in torver  # 2.0.1a0+cxx11.abi
+    # is_intel = '+cxx11' in torver  # 2.0.1a0+cxx11.abi
     is_cpu = '+cpu' in torver  # 2.0.1+cpu
 
     if is_rocm:
