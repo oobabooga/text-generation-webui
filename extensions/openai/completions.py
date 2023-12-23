@@ -205,6 +205,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
             raise InvalidRequestError(message="messages: missing role", param='messages')
         elif m['role'] == 'function':
             raise InvalidRequestError(message="role: function is not supported.", param='messages')
+
         if 'content' not in m and "image_url" not in m:
             raise InvalidRequestError(message="messages: missing content", param='messages')
 
