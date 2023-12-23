@@ -178,37 +178,47 @@ def find_gpu() -> GPU:
     # Find the GPU type and return it as a GPU type
     if is_windows():
         # wmic path win32_VideoController get name
-        with subprocess.Popen(["wmic", "path", "win32_VideoController", "get", "name"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True) as proc:
-            output = proc.communicate()[0].lower()
-            if "nvidia" in output:
-                return GPU.NVIDIA
-            elif "amd" in output:
-                return GPU.AMD
-            elif "intel" in output:
-                return GPU.INTEL
-            else:
-                return GPU.NONE
+        try:
+            with subprocess.Popen(["wmic", "path", "win32_VideoController", "get", "name"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True) as proc:
+                output = proc.communicate()[0].lower()
+                if "nvidia" in output:
+                    return GPU.NVIDIA
+                elif "amd" in output:
+                    return GPU.AMD
+                elif "intel" in output:
+                    return GPU.INTEL
+                else:
+                    return GPU.NONE
+        except:
+            raise Exception("Failed to find GPU type. Please select your GPU manually.")
     elif is_linux():
         # lspci -vnn | grep -i 'VGA\|3D\|Display'
-        with subprocess.Popen(["lspci", "-vnn"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True) as proc:
-            output = proc.communicate()[0].lower()
-            if "nvidia" in output:
+        try:
+            with subprocess.Popen(["lspci", "-vnn"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True) as proc:
+                output = proc.communicate()[0].lower()
+                if "nvidia" in output:
+                    return GPU.NVIDIA
+                elif "amd" in output:
+                    return GPU.AMD
+                elif "intel" in output:
+                    return GPU.INTEL
+                else:
+                    return GPU.NONE
+        except:
+            raise Exception("Failed to find GPU type. Please select your GPU manually.")
+    elif is_macos():
+        # system_profiler SPDisplaysDataType | grep -i ...
+        try:
+            if os.system("system_profiler SPDisplaysDataType | grep -i nvidia > /dev/null") == 0:
                 return GPU.NVIDIA
-            elif "amd" in output:
+            elif os.system("system_profiler SPDisplaysDataType | grep -i amd > /dev/null") == 0:
                 return GPU.AMD
-            elif "intel" in output:
+            elif os.system("system_profiler SPDisplaysDataType | grep -i intel > /dev/null") == 0:
                 return GPU.INTEL
             else:
                 return GPU.NONE
-    elif is_macos():
-        if os.system("system_profiler SPDisplaysDataType | grep -i nvidia > /dev/null") == 0:
-            return GPU.NVIDIA
-        elif os.system("system_profiler SPDisplaysDataType | grep -i amd > /dev/null") == 0:
-            return GPU.AMD
-        elif os.system("system_profiler SPDisplaysDataType | grep -i intel > /dev/null") == 0:
-            return GPU.INTEL
-        else:
-            return GPU.NONE
+        except:
+            raise Exception("Failed to find GPU type. Please select your GPU manually.")
     else:
         return GPU.NONE
 
@@ -256,7 +266,12 @@ def install_webui():
     selected_gpu = typeOfGPUFromChoice.get(choice, GPU.NONE)
 
     if selected_gpu == GPU.NONE and choice != "N":
-        selected_gpu = find_gpu()
+        try:
+            selected_gpu = find_gpu()
+        except Exception as e:
+            print_big_message(f"{e}")
+            print("Exiting...")
+            sys.exit(1)
         print(f"Auto-detected GPU type: {selected_gpu.name}.")
         print("If this is incorrect, please re-run the script and choose the correct GPU type.")
 
