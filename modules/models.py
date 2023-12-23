@@ -1,4 +1,5 @@
 import gc
+import logging
 import os
 import re
 import time
@@ -23,6 +24,7 @@ import modules.shared as shared
 from modules import RoPE, llama_attn_hijack, sampler_hijack
 from modules.logging_colors import logger
 from modules.models_settings import get_model_metadata
+from modules.relative_imports import RelativeImport
 
 transformers.logging.set_verbosity_error()
 
@@ -52,10 +54,11 @@ sampler_hijack.hijack_samplers()
 
 
 def load_model(model_name, loader=None):
-    logger.info(f"Loading {model_name}...")
+    logger.info(f"Loading {model_name}")
     t0 = time.time()
 
     shared.is_seq2seq = False
+    shared.model_name = model_name
     load_func_map = {
         'Transformers': huggingface_loader,
         'AutoGPTQ': AutoGPTQ_loader,
@@ -69,6 +72,8 @@ def load_model(model_name, loader=None):
         'ExLlamav2_HF': ExLlamav2_HF_loader,
         'ctransformers': ctransformers_loader,
         'AutoAWQ': AutoAWQ_loader,
+        'QuIP#': QuipSharp_loader,
+        'HQQ': HQQ_loader,
     }
 
     metadata = get_model_metadata(model_name)
@@ -104,7 +109,7 @@ def load_model(model_name, loader=None):
 
     logger.info(f"LOADER: {loader}")
     logger.info(f"TRUNCATION LENGTH: {shared.settings['truncation_length']}")
-    logger.info(f"INSTRUCTION TEMPLATE: {shared.settings['instruction_template']}")
+    logger.info(f"INSTRUCTION TEMPLATE: {metadata['instruction_template']}")
     logger.info(f"Loaded the model in {(time.time()-t0):.2f} seconds.")
     return model, tokenizer
 
@@ -152,7 +157,7 @@ def huggingface_loader(model_name):
             LoaderClass = AutoModelForCausalLM
 
     # Load the model in simple 16-bit mode by default
-    if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.load_in_4bit, shared.args.auto_devices, shared.args.disk, shared.args.deepspeed, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None, shared.args.compress_pos_emb > 1, shared.args.alpha_value > 1, shared.args.disable_exllama]):
+    if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.load_in_4bit, shared.args.auto_devices, shared.args.disk, shared.args.deepspeed, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None, shared.args.compress_pos_emb > 1, shared.args.alpha_value > 1, shared.args.disable_exllama, shared.args.disable_exllamav2]):
         model = LoaderClass.from_pretrained(path_to_model, **params)
         if torch.backends.mps.is_available():
             device = torch.device('mps')
@@ -217,11 +222,16 @@ def huggingface_loader(model_name):
             if shared.args.disk:
                 params['offload_folder'] = shared.args.disk_cache_dir
 
-        if shared.args.disable_exllama:
+        if shared.args.disable_exllama or shared.args.disable_exllamav2:
             try:
-                gptq_config = GPTQConfig(bits=config.quantization_config.get('bits', 4), disable_exllama=True)
+                gptq_config = GPTQConfig(
+                    bits=config.quantization_config.get('bits', 4),
+                    disable_exllama=shared.args.disable_exllama,
+                    disable_exllamav2=shared.args.disable_exllamav2,
+                )
+
                 params['quantization_config'] = gptq_config
-                logger.info('Loading with ExLlama kernel disabled.')
+                logger.info(f'Loading with disable_exllama={shared.args.disable_exllama} and disable_exllamav2={shared.args.disable_exllamav2}.')
             except:
                 exc = traceback.format_exc()
                 logger.error('Failed to disable exllama. Does the config.json for this model contain the necessary quantization info?')
@@ -321,6 +331,37 @@ def AutoAWQ_loader(model_name):
     return model
 
 
+def QuipSharp_loader(model_name):
+    try:
+        with RelativeImport("repositories/quip-sharp"):
+            from lib.utils.unsafe_import import model_from_hf_path
+    except:
+        logger.error(
+            "\nQuIP# has not been found. It must be installed manually for now.\n"
+            "For instructions on how to do that, please consult:\n"
+            "https://github.com/oobabooga/text-generation-webui/pull/4803\n"
+        )
+        return None, None
+
+    # This fixes duplicate logging messages after the import above.
+    handlers = logging.getLogger().handlers
+    if len(handlers) > 1:
+        logging.getLogger().removeHandler(handlers[1])
+
+    model_dir = Path(f'{shared.args.model_dir}/{model_name}')
+    if not all((model_dir / file).exists() for file in ['tokenizer_config.json', 'special_tokens_map.json', 'tokenizer.model']):
+        logger.error(f"Could not load the model because the tokenizer files could not be found in the model folder. Please download the following files from the original (unquantized) model into {model_dir}: special_tokens_map.json, tokenizer.json, tokenizer.model, tokenizer_config.json.")
+        return None, None
+
+    model, model_str = model_from_hf_path(
+        model_dir,
+        use_cuda_graph=False,
+        use_flash_attn=not shared.args.no_flash_attn
+    )
+
+    return model
+
+
 def GPTQ_loader(model_name):
 
     # Monkey patch
@@ -369,6 +410,18 @@ def ExLlamav2_HF_loader(model_name):
     from modules.exllamav2_hf import Exllamav2HF
 
     return Exllamav2HF.from_pretrained(model_name)
+
+
+def HQQ_loader(model_name):
+    from hqq.core.quantize import HQQBackend, HQQLinear
+    from hqq.engine.hf import HQQModelForCausalLM
+
+    logger.info(f"Loading HQQ model with backend: {shared.args.hqq_backend}")
+
+    model_dir = Path(f'{shared.args.model_dir}/{model_name}')
+    model = HQQModelForCausalLM.from_quantized(str(model_dir))
+    HQQLinear.set_backend(getattr(HQQBackend, shared.args.hqq_backend))
+    return model
 
 
 def RWKV_loader(model_name):
@@ -429,6 +482,7 @@ def clear_torch_cache():
 
 def unload_model():
     shared.model = shared.tokenizer = None
+    shared.model_name = 'None'
     shared.lora_names = []
     shared.model_dirty_from_training = False
     clear_torch_cache()

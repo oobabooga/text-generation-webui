@@ -53,7 +53,10 @@ def add_lora_exllama(lora_names):
 
         lora_path = get_lora_path(lora_names[0])
         lora_config_path = lora_path / "adapter_config.json"
-        lora_adapter_path = lora_path / "adapter_model.bin"
+        for file_name in ["adapter_model.safetensors", "adapter_model.bin"]:
+            file_path = lora_path / file_name
+            if file_path.is_file():
+                lora_adapter_path = file_path
 
         logger.info("Applying the following LoRAs to {}: {}".format(shared.model_name, ', '.join([lora_names[0]])))
         if shared.model.__class__.__name__ == 'ExllamaModel':
@@ -138,7 +141,7 @@ def add_lora_transformers(lora_names):
 
     # Add a LoRA when another LoRA is already present
     if len(removed_set) == 0 and len(prior_set) > 0 and "__merged" not in shared.model.peft_config.keys():
-        logger.info(f"Adding the LoRA(s) named {added_set} to the model...")
+        logger.info(f"Adding the LoRA(s) named {added_set} to the model")
         for lora in added_set:
             shared.model.load_adapter(get_lora_path(lora), lora)
 

@@ -36,7 +36,7 @@ def create_ui():
         shared.gradio['toggle_dark_mode'].click(lambda: None, None, None, _js='() => {document.getElementsByTagName("body")[0].classList.toggle("dark")}')
         shared.gradio['save_settings'].click(
             ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-            ui.save_settings, gradio('interface_state', 'preset_menu', 'instruction_template', 'extensions_menu', 'show_controls'), gradio('save_contents')).then(
+            ui.save_settings, gradio('interface_state', 'preset_menu', 'extensions_menu', 'show_controls'), gradio('save_contents')).then(
             lambda: './', None, gradio('save_root')).then(
             lambda: 'settings.yaml', None, gradio('save_filename')).then(
             lambda: gr.update(visible=True), None, gradio('file_saver'))

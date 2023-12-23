@@ -70,8 +70,10 @@ def list_model_elements():
         'no_inject_fused_mlp',
         'no_use_cuda_fp16',
         'disable_exllama',
+        'disable_exllamav2',
         'cfg_cache',
         'no_flash_attn',
+        'num_experts_per_token',
         'cache_8bit',
         'threads',
         'threads_batch',
@@ -89,6 +91,9 @@ def list_model_elements():
         'rope_freq_base',
         'numa',
         'logits_all',
+        'no_offload_kqv',
+        'tensorcores',
+        'hqq_backend',
     ]
     if is_torch_xpu_available():
         for i in range(torch.xpu.device_count()):
@@ -154,13 +159,9 @@ def list_interface_input_elements():
         'greeting',
         'context',
         'mode',
-        'instruction_template',
-        'name1_instruct',
-        'name2_instruct',
-        'context_instruct',
-        'system_message',
         'custom_system_message',
-        'turn_template',
+        'instruction_template_str',
+        'chat_template_str',
         'chat_style',
         'chat-instruct_command',
     ]
@@ -202,7 +203,7 @@ def apply_interface_values(state, use_persistent=False):
         return [state[k] if k in state else gr.update() for k in elements]
 
 
-def save_settings(state, preset, instruction_template, extensions, show_controls):
+def save_settings(state, preset, extensions, show_controls):
     output = copy.deepcopy(shared.settings)
     exclude = ['name2', 'greeting', 'context', 'turn_template']
     for k in state:
@@ -213,7 +214,6 @@ def save_settings(state, preset, instruction_template, extensions, show_controls
     output['prompt-default'] = state['prompt_menu-default']
     output['prompt-notebook'] = state['prompt_menu-notebook']
     output['character'] = state['character_menu']
-    output['instruction_template'] = instruction_template
     output['default_extensions'] = extensions
     output['seed'] = int(output['seed'])
     output['show_controls'] = show_controls

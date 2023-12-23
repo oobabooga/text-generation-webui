@@ -4,6 +4,7 @@ import hashlib
 import os
 import platform
 import re
+import signal
 import site
 import subprocess
 import sys
@@ -25,6 +26,13 @@ else:
     CMD_FLAGS = ''
 
 flags = f"{' '.join([flag for flag in sys.argv[1:] if flag != '--update'])} {CMD_FLAGS}"
+
+
+def signal_handler(sig, frame):
+    sys.exit(0)
+
+
+signal.signal(signal.SIGINT, signal_handler)
 
 
 def is_linux():
@@ -210,13 +218,15 @@ def install_webui():
     elif is_linux() and (choice == "C" or choice == "N"):
         install_pytorch = "python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu"
     elif choice == "D":
-        install_pytorch = "python -m pip install torch==2.0.1a0 torchvision==0.15.2a0 intel_extension_for_pytorch==2.0.110+xpu -f https://developer.intel.com/ipex-whl-stable-xpu"
+        install_pytorch = "python -m pip install torch==2.1.0a0 torchvision==0.16.0a0 intel_extension_for_pytorch==2.1.10+xpu --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/"
 
     # Install Git and then Pytorch
+    print_big_message("Installing PyTorch.")
     run_cmd(f"{install_git} && {install_pytorch} && python -m pip install py-cpuinfo==9.0.0", assert_success=True, environment=True)
 
     # Install CUDA libraries (this wasn't necessary for Pytorch before...)
     if choice == "A":
+        print_big_message("Installing the CUDA runtime libraries.")
         run_cmd(f"conda install -y -c \"nvidia/label/{'cuda-12.1.1' if use_cuda118 == 'N' else 'cuda-11.8.0'}\" cuda-runtime", assert_success=True, environment=True)
 
     # Install the webui requirements
@@ -253,20 +263,18 @@ def update_requirements(initial_installation=False):
 
     if install:
         print_big_message("Installing extensions requirements.")
-        extensions = next(os.walk("extensions"))[1]
-        for extension in extensions:
-            if extension in ['superbooga', 'superboogav2', 'coqui_tts']:  # Fail to install on Windows
-                continue
-
+        skip = ['superbooga', 'superboogav2', 'coqui_tts']  # Fail to install on Windows
+        extensions = [foldername for foldername in os.listdir('extensions') if os.path.isfile(os.path.join('extensions', foldername, 'requirements.txt'))]
+        extensions = [x for x in extensions if x not in skip]
+        for i, extension in enumerate(extensions):
+            print(f"\n\n--- [{i+1}/{len(extensions)}]: {extension}\n\n")
             extension_req_path = os.path.join("extensions", extension, "requirements.txt")
-            if os.path.exists(extension_req_path):
-                run_cmd("python -m pip install -r " + extension_req_path + " --upgrade", assert_success=False, environment=True)
+            run_cmd("python -m pip install -r " + extension_req_path + " --upgrade", assert_success=False, environment=True)
     elif initial_installation:
         print_big_message("Will not install extensions due to INSTALL_EXTENSIONS environment variable.")
 
     # Detect the Python and PyTorch versions
     torver = torch_version()
-    print(f"TORCH: {torver}")
     is_cuda = '+cu' in torver
     is_cuda118 = '+cu118' in torver  # 2.1.0+cu118
     is_cuda117 = '+cu117' in torver  # 2.0.1+cu117
@@ -295,8 +303,10 @@ def update_requirements(initial_installation=False):
         else:
             requirements_file = "requirements_noavx2.txt"
 
-    # Prepare the requirements file
     print_big_message(f"Installing webui requirements from file: {requirements_file}")
+    print(f"TORCH: {torver}\n")
+
+    # Prepare the requirements file
     textgen_requirements = open(requirements_file).read().splitlines()
     if is_cuda117:
         textgen_requirements = [req.replace('+cu121', '+cu117').replace('+cu122', '+cu117').replace('torch2.1', 'torch2.0') for req in textgen_requirements]
