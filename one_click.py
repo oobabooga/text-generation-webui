@@ -186,14 +186,16 @@ def find_gpu() -> GPU:
         else:
             return GPU.NONE
     elif is_linux():
-        if os.system("lspci | grep -i nvidia > /dev/null") == 0:
-            return GPU.NVIDIA
-        elif os.system("lspci | grep -i amd > /dev/null") == 0:
-            return GPU.AMD
-        elif os.system("lspci | grep -i intel > /dev/null") == 0:
-            return GPU.INTEL
-        else:
-            return GPU.NONE
+        with os.popen("lspci -vnn | grep -i 'VGA\|3D\|Display'") as proc:
+            output = proc.read().lower()
+            if "nvidia" in output:
+                return GPU.NVIDIA
+            elif "amd" in output:
+                return GPU.AMD
+            elif "intel" in output:
+                return GPU.INTEL
+            else:
+                return GPU.NONE
     elif is_macos():
         if os.system("system_profiler SPDisplaysDataType | grep -i nvidia > /dev/null") == 0:
             return GPU.NVIDIA
@@ -225,7 +227,7 @@ def install_webui():
         print()
 
         choice = input("Input> ").upper()
-        while choice not in 'ABCDE':
+        while choice not in 'ABCDEN':
             print("Invalid choice. Please try again.")
             choice = input("Input> ").upper()
 
