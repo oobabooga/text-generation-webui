@@ -1,10 +1,15 @@
+import base64
 import copy
+import re
 import time
 from collections import deque
+from io import BytesIO
 
+import requests
 import tiktoken
 import torch
 import torch.nn.functional as F
+from PIL import Image
 from transformers import LogitsProcessor, LogitsProcessorList
 
 from extensions.openai.errors import InvalidRequestError
@@ -17,11 +22,7 @@ from modules.chat import (
 )
 from modules.presets import load_preset_memoized
 from modules.text_generation import decode, encode, generate_reply
-from PIL import Image
-from io import BytesIO
-import base64
-import requests
-import re
+
 
 class LogitsBiasProcessor(LogitsProcessor):
     def __init__(self, logit_bias={}):
@@ -152,14 +153,16 @@ def convert_history(history):
                 try:
                     my_res = requests.get(image_url)
                     img = Image.open(BytesIO(my_res.content))
-                except Exception as e:
+                except Exception:
                     raise 'Image cannot be loaded from the URL!'
+
             buffered = BytesIO()
             img.save(buffered, format="JPEG")
             img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
             content = f'<img src="data:image/jpeg;base64,{img_str}">'
         else:
             content = entry["content"]
+
         role = entry["role"]
 
         if role == "user":
