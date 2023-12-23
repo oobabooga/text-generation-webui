@@ -477,7 +477,7 @@ if __name__ == "__main__":
         if '--model-dir' in flags:
             # Splits on ' ' or '=' while maintaining spaces within quotes
             flags_list = re.split(' +(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)|=', flags)
-            model_dir = [flags_list[(flags_list.index(flag)+1)] for flag in flags_list if flag == '--model-dir'][0].strip('"\'')
+            model_dir = [flags_list[(flags_list.index(flag) + 1)] for flag in flags_list if flag == '--model-dir'][0].strip('"\'')
         else:
             model_dir = 'models'
 
