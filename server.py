@@ -1,6 +1,8 @@
 import os
 import warnings
 
+from modules import shared
+
 import accelerate  # This early import makes Intel GPUs happy
 
 import modules.one_click_installer_check
@@ -36,7 +38,6 @@ import yaml
 import modules.extensions as extensions_module
 from modules import (
     chat,
-    shared,
     training,
     ui,
     ui_chat,
