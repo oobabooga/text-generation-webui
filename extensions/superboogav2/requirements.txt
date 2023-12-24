@@ -8,3 +8,4 @@ sentence_transformers==2.2.2
 spacy
 pytextrank
 num2words
+pydantic==1.10.12
