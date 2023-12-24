@@ -170,14 +170,11 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
     # Handle truncation
     max_length = get_max_prompt_length(state)
-    while len(messages) > 0 and get_encoded_length(prompt) > max_length:
-        # Try to save the system message
-        if len(messages) > 1 and messages[0]['role'] == 'system':
-            messages.pop(1)
-        else:
-            messages.pop(0)
-
-        prompt = make_prompt(messages)
+    encoded_length = get_encoded_length(prompt) 
+    if len(messages) > 0 and encoded_length > max_length:
+        if shared.args.verbose:
+            logger.error(f'messages {messages}')
+        raise ValueError(f'Prompt encoded_length {encoded_length} > max_length {max_length}')
 
     if also_return_rows:
         return prompt, [message['content'] for message in messages]
