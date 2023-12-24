@@ -45,6 +45,7 @@ settings = {
     'truncation_length_min': 0,
     'truncation_length_max': 200000,
     'max_tokens_second': 0,
+    'max_updates_second': 0,
     'custom_stopping_strings': '',
     'custom_token_bans': '',
     'auto_max_new_tokens': False,
