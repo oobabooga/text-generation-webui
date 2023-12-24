@@ -51,7 +51,7 @@ def load_embedding_model(model: str):
         print(f"Loaded embedding model: {model}")
     except Exception as e:
         embeddings_model = None
-        raise ServiceUnavailableError(f"Error: Failed to load embedding model: {model}", internal_message=repr(e))
+        raise ServiceUnavailableError(f"Error: Failed to load embedding model: {model} with exception {e}")
 
 
 def get_embeddings_model():
