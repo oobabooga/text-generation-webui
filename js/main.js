@@ -16,19 +16,20 @@ document.querySelector(".header_bar").addEventListener("click", function(event) 
 
     // Check if one of the generation tabs is visible
     if (chat_visible || notebook_visible || default_visible) {
-      extensions.style.display = "flex";
+      extensions && (extensions.style.display = "flex");
+
       if (chat_visible) {
         this.style.marginBottom = "0px";
-        extensions.style.maxWidth = "880px";
-        extensions.style.padding = "0px";
+        extensions && (extensions.style.maxWidth = "880px");
+        extensions && (extensions.style.padding = "0px");
       } else {
         this.style.marginBottom = "19px";
-        extensions.style.maxWidth = "none";
-        extensions.style.padding = "15px";
+        extensions && (extensions.style.maxWidth = "none");
+        extensions && (extensions.style.padding = "15px");
       }
     } else {
       this.style.marginBottom = "19px";
-      extensions.style.display = "none";
+      extensions && (extensions.style.display = "none");
     }
   }
 });
