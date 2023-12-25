@@ -339,7 +339,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     word-break: break-word;
     overflow-wrap: anywhere;
     border-top: none;
-    border-radius: 0 0 8px 8px !important;
 }
 
 .chat-parent {
