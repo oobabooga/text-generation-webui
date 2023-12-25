@@ -2,8 +2,12 @@
   background: var(--block-background-fill);
   padding: 24px 19px;
   padding-right: 19px !important;
+  padding-top: 0px;
   border: 1px solid var(--block-border-color);
-  border-radius: 8px;
+}
+
+.chat > .messages {
+  padding-top: 28px !important;
 }
 
 .message {
@@ -13,6 +17,10 @@
     font-size: 15px;
     font-family: 'Noto Sans', Helvetica, Arial, sans-serif;
     line-height: 24px;
+}
+
+.message:first-child {
+    padding-top: 0;
 }
 
 .username {
