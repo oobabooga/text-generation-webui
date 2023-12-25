@@ -340,6 +340,7 @@ function updateCssProperties() {
   const chatInputHeight = document.querySelector('#chat-input textarea').clientHeight;
   const newChatHeight = `${chatContainer.clientHeight - chatInputHeight + 40}px`;
   document.documentElement.style.setProperty('--chat-height', newChatHeight);
+  document.documentElement.style.setProperty('--my-delta', `${chatInputHeight - 40}px`);
 
   // Set the position offset of the chat input box
   const header = document.querySelector('.header_bar');
