@@ -1,10 +1,15 @@
+import base64
 import copy
+import re
 import time
 from collections import deque
+from io import BytesIO
 
+import requests
 import tiktoken
 import torch
 import torch.nn.functional as F
+from PIL import Image
 from transformers import LogitsProcessor, LogitsProcessorList
 
 from extensions.openai.errors import InvalidRequestError
@@ -140,7 +145,25 @@ def convert_history(history):
     system_message = ""
 
     for entry in history:
-        content = entry["content"]
+        if "image_url" in entry:
+            image_url = entry['image_url']
+            if "base64" in image_url:
+                image_url = re.sub('^data:image/.+;base64,', '', image_url)
+                img = Image.open(BytesIO(base64.b64decode(image_url)))
+            else:
+                try:
+                    my_res = requests.get(image_url)
+                    img = Image.open(BytesIO(my_res.content))
+                except Exception:
+                    raise 'Image cannot be loaded from the URL!'
+
+            buffered = BytesIO()
+            img.save(buffered, format="JPEG")
+            img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
+            content = f'<img src="data:image/jpeg;base64,{img_str}">'
+        else:
+            content = entry["content"]
+
         role = entry["role"]
 
         if role == "user":
@@ -182,7 +205,8 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
             raise InvalidRequestError(message="messages: missing role", param='messages')
         elif m['role'] == 'function':
             raise InvalidRequestError(message="role: function is not supported.", param='messages')
-        if 'content' not in m:
+
+        if 'content' not in m and "image_url" not in m:
             raise InvalidRequestError(message="messages: missing content", param='messages')
 
     # Chat Completions
