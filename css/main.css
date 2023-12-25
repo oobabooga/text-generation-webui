@@ -342,20 +342,20 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 .chat-parent {
-    height: calc(100dvh - 98px - var(--chat-input-offset) - var(--my-delta));
+    height: calc(100dvh - 98px - var(--header-height) - var(--input-delta));
     overflow: auto !important;
     border-radius: 0 0 8px 8px !important;
-    margin-bottom: var(--my-delta) !important;
+    margin-bottom: var(--input-delta) !important;
 }
 
 .old-ui .chat-parent {
-    height: calc(100dvh - 192px - var(--chat-input-offset) - var(--my-delta));
-    margin-bottom: var(--my-delta) !important;
+    height: calc(100dvh - 192px - var(--header-height) - var(--input-delta));
+    margin-bottom: var(--input-delta) !important;
 }
 
 .chat-parent.bigchat {
-    height: calc(100dvh - 98px - var(--chat-input-offset) - var(--my-delta)) !important;
-    margin-bottom: var(--my-delta) !important;
+    height: calc(100dvh - 98px - var(--header-height) - var(--input-delta)) !important;
+    margin-bottom: var(--input-delta) !important;
 }
 
 .chat > .messages {
