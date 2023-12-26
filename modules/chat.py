@@ -176,19 +176,27 @@ def generate_chat_prompt(user_input, state, **kwargs):
         orig_enc_len = encoded_length
         truncation_failed = False
         truncation_retries = 0
+        other_content_len = 0
+        user_idx = -1
         
+        # Find the index of the user message, and calculate the length of the other messages
+        for i in range(len(messages)):
+            if messages[i]['role'] == 'user':
+                user_idx = i
+            else:
+                other_content_len += len(messages[i]['content'])
+        
+        # If there are no user messages, fail
+        if user_idx == -1:
+            logger.warn(f'Truncation failed with no user messages')
+            truncation_failed = True
+        
+        # Loop until we have a successful truncation
         while encoded_length > max_length and not truncation_failed:
             truncation_retries += 1
             ratio_truncation_start = 1.0 - 0.95 * max_length / encoded_length
-            user_content_len = 1
-            other_content_len = 0
-            
-            # Count the length of the user messages and other roles messages
-            for i in range(len(messages)):
-                if messages[i]['role'] == 'user':
-                    user_content_len = len(messages[i]['content'])
-                else:
-                    other_content_len += len(messages[i]['content'])
+            user_content_len = max(len(messages[user_idx]['content']), 1)
+                    
             # Scale the truncation start based on the length of the user messages relative to the total length
             ratio_truncation_start *= 1.0 * (user_content_len + other_content_len) / user_content_len
             
@@ -197,21 +205,25 @@ def generate_chat_prompt(user_input, state, **kwargs):
                 truncation_failed = True
                 
             if not truncation_failed:
+                if shared.args.verbose:
+                    logger.debug(f'Truncating user message from len {len(messages[user_idx]["content"])}')
                 # Truncate the user messages from the start
-                for i in range(len(messages)):
-                    if messages[i]['role'] == 'user':
-                        if shared.args.verbose:
-                            logger.debug(f'Truncating user message from len {len(messages[i]["content"])}')
-                        messages[i]['content'] = messages[i]['content'][int(user_content_len * ratio_truncation_start):]
-                        if shared.args.verbose:
-                            logger.debug(f'to len {len(messages[i]["content"])}')
+                messages[user_idx]['content'] = messages[user_idx]['content'][int(user_content_len * ratio_truncation_start):]
+                if shared.args.verbose:
+                    logger.debug(f'to len {len(messages[user_idx]["content"])}')
+                        
+                # Re-render the prompt
                 prompt = make_prompt(messages)
                 encoded_length = get_encoded_length(prompt)
             
         if truncation_failed:
+            ctx_len = state['truncation_length']
+            completion_len = state['max_new_tokens']
+            # Error message similar to openai's error message on exceeding max context length
+            err_msg = f"This model's maximum context length is {ctx_len} tokens. However, you requested {orig_enc_len + completion_len} tokens ({orig_enc_len} in the messages, {completion_len} in the completion). Please reduce the length of the messages or completion."
             if shared.args.verbose:
-                logger.error(f'Prompt encoded_length {orig_enc_len} > max_length {max_length} \nMessages failed from truncation:\n {orig_msg}')
-            raise ValueError(f'Prompt encoded_length {orig_enc_len} > max_length {max_length}')
+                logger.error(f'{err_msg} \nMessages failed from truncation:\n {orig_msg}')
+            raise ValueError(err_msg)
 
     if also_return_rows:
         return prompt, [message['content'] for message in messages]

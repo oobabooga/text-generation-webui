@@ -1,4 +1,3 @@
-import openai
 from fastapi import HTTPException
 
 class OpenAIError(HTTPException):
