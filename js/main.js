@@ -364,13 +364,13 @@ window.addEventListener("resize", updateCssProperties);
 var displayWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
 
 // Set the --document-width variable in the root element style
-document.documentElement.style.setProperty('--document-width', displayWidth + 'px');
+document.documentElement.style.setProperty("--document-width", displayWidth + "px");
 
 // Add an event listener to update the variable if the window is resized
-window.addEventListener('resize', function() {
+window.addEventListener("resize", function() {
   // Update the display width
   var updatedWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
 
   // Set the updated width to the --document-width variable
-  document.documentElement.style.setProperty('--document-width', updatedWidth + 'px');
+  document.documentElement.style.setProperty("--document-width", updatedWidth + "px");
 });
