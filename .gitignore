@@ -30,6 +30,7 @@
 venv
 .envrc
 .direnv
+.vs
 .vscode
 *.bak
 *.ipynb
