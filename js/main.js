@@ -339,19 +339,21 @@ function updateCssProperties() {
   // Set the height of the chat area
   const chatContainer = document.getElementById("chat").parentNode.parentNode.parentNode;
   const chatInputHeight = document.querySelector("#chat-input textarea").clientHeight;
-  const newChatHeight = `${chatContainer.clientHeight - chatInputHeight + 40}px`;
-  document.documentElement.style.setProperty("--chat-height", newChatHeight);
-  document.documentElement.style.setProperty("--input-delta", `${chatInputHeight - 40}px`);
+  if (chatContainer.clientHeight > 0) {
+    const newChatHeight = `${chatContainer.clientHeight - chatInputHeight + 40}px`;
+    document.documentElement.style.setProperty("--chat-height", newChatHeight);
+    document.documentElement.style.setProperty("--input-delta", `${chatInputHeight - 40}px`);
 
-  // Set the position offset of the chat input box
-  const header = document.querySelector(".header_bar");
-  const headerHeight = `${header.clientHeight}px`;
-  document.documentElement.style.setProperty("--header-height", headerHeight);
+    // Set the position offset of the chat input box
+    const header = document.querySelector(".header_bar");
+    const headerHeight = `${header.clientHeight}px`;
+    document.documentElement.style.setProperty("--header-height", headerHeight);
 
-  // Offset the scroll position of the chat area
-  if (chatInputHeight !== currentChatInputHeight) {
-    chatContainer.scrollTop += chatInputHeight > currentChatInputHeight ? chatInputHeight : -chatInputHeight;
-    currentChatInputHeight = chatInputHeight;
+    // Offset the scroll position of the chat area
+    if (chatInputHeight !== currentChatInputHeight) {
+      chatContainer.scrollTop += chatInputHeight > currentChatInputHeight ? chatInputHeight : -chatInputHeight;
+      currentChatInputHeight = chatInputHeight;
+    }
   }
 }
 
