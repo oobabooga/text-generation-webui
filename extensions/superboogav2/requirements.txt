@@ -1,3 +1,4 @@
+pydantic==1.*
 beautifulsoup4==4.12.2
 chromadb==0.3.18
 lxml
