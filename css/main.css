@@ -92,7 +92,7 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
 .header_bar {
     background-color: #f7f7f7;
     box-shadow: 0 2px 3px rgba(22 22 22 / 35%);
-    margin-bottom: 0px;
+    margin-bottom: 0;
     overflow-x: scroll;
     margin-left: calc(-1 * var(--size-4));
     margin-right: calc(-1 * var(--size-4));
@@ -303,7 +303,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 #chat-tab {
-    padding-top: 0px;
+    padding-top: 0;
 }
 
 #chat-tab button#Generate, #chat-tab button#stop {
