@@ -10,6 +10,7 @@ function toggle_controls(value) {
     chatParent.classList.remove("bigchat");
     document.getElementById("chat-input-row").classList.remove("bigchat");
     document.getElementById("chat-col").classList.remove("bigchat");
+    document.getElementById("chat-tab").style.paddingBottom = "";
 
     let gallery_element = document.getElementById('gallery-extension');
     if (gallery_element) {
@@ -24,5 +25,6 @@ function toggle_controls(value) {
     chatParent.classList.add("bigchat");
     document.getElementById("chat-input-row").classList.add("bigchat");
     document.getElementById("chat-col").classList.add("bigchat");
+    document.getElementById("chat-tab").style.paddingBottom = "0px";
   }
 }
