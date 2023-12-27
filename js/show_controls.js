@@ -12,9 +12,9 @@ function toggle_controls(value) {
     document.getElementById("chat-col").classList.remove("bigchat");
     document.getElementById("chat-tab").style.paddingBottom = "";
 
-    let gallery_element = document.getElementById('gallery-extension');
+    let gallery_element = document.getElementById("gallery-extension");
     if (gallery_element) {
-      gallery_element.style.display = 'block';
+      gallery_element.style.display = "block";
     }
 
   } else {
