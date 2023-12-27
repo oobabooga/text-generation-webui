@@ -685,7 +685,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 
 
 /* ----------------------------------------------
-  Big profile picture for characters
+  Past chat histories in a side bar on desktop
 ---------------------------------------------- */
 @media screen and (width >= 1230px) {
   #past-chats-row {
