@@ -237,7 +237,7 @@ List of command-line flags
 | `--no_use_fast`                             | Set use_fast=False while loading the tokenizer (it's True by default). Use this if you have any problems related to use_fast. |
 | `--use_flash_attention_2`                   | Set use_flash_attention_2=True while loading the model. |
 
-#### Accelerate 4-bit
+#### bitsandbytes 4-bit
 
 ⚠️  Requires minimum compute of 7.0 on Windows at the moment.
 
@@ -252,6 +252,7 @@ List of command-line flags
 
 | Flag        | Description |
 |-------------|-------------|
+| `--tensorcores`  | Use llama-cpp-python compiled with tensor cores support. This increases performance on RTX cards. NVIDIA only. |
 | `--n_ctx N_CTX` | Size of the prompt context. |
 | `--threads` | Number of threads to use. |
 | `--threads-batch THREADS_BATCH` | Number of threads to use for batches/prompt processing. |
@@ -263,6 +264,7 @@ List of command-line flags
 | `--tensor_split TENSOR_SPLIT`       | Split the model across multiple GPUs. Comma-separated list of proportions. Example: 18,17. |
 | `--numa`      | Activate NUMA task allocation for llama.cpp. |
 | `--logits_all`| Needs to be set for perplexity evaluation to work. Otherwise, ignore it, as it makes prompt processing slower. |
+| `--no_offload_kqv` | Do not offload the K, Q, V to the GPU. This saves VRAM but reduces the performance. |
 | `--cache-capacity CACHE_CAPACITY`   | Maximum cache capacity (llama-cpp-python). Examples: 2000MiB, 2GiB. When provided without units, bytes will be assumed. |
 
 #### ExLlama

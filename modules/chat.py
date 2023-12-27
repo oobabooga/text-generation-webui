@@ -95,7 +95,8 @@ def generate_chat_prompt(user_input, state, **kwargs):
     else:
         renderer = chat_renderer
         if state['context'].strip() != '':
-            messages.append({"role": "system", "content": state['context']})
+            context = replace_character_names(state['context'], state['name1'], state['name2'])
+            messages.append({"role": "system", "content": context})
 
     insert_pos = len(messages)
     for user_msg, assistant_msg in reversed(history):
@@ -768,13 +769,13 @@ def delete_character(name, instruct=False):
 
 def jinja_template_from_old_format(params, verbose=False):
     MASTER_TEMPLATE = """
-{%- set found_item = false -%}
+{%- set ns = namespace(found=false) -%}
 {%- for message in messages -%}
     {%- if message['role'] == 'system' -%}
-        {%- set found_item = true -%}
+        {%- set ns.found = true -%}
     {%- endif -%}
 {%- endfor -%}
-{%- if not found_item -%}
+{%- if not ns.found -%}
     {{- '<|PRE-SYSTEM|>' + '<|SYSTEM-MESSAGE|>' + '<|POST-SYSTEM|>' -}}
 {%- endif %}
 {%- for message in messages %}

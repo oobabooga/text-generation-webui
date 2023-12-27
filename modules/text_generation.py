@@ -77,6 +77,10 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
         state = copy.deepcopy(state)
         state['stream'] = True
 
+    min_update_interval = 0
+    if state.get('max_updates_second', 0) > 0:
+        min_update_interval = 1 / state['max_updates_second']
+
     # Generate
     for reply in generate_func(question, original_question, seed, state, stopping_strings, is_chat=is_chat):
         reply, stop_found = apply_stopping_strings(reply, all_stop_strings)
@@ -94,10 +98,9 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
                 last_update = time.time()
                 yield reply
 
-            # Limit updates to 24 or 5 per second to avoid lag in the Gradio UI
+            # Limit updates to avoid lag in the Gradio UI
             # API updates are not limited
             else:
-                min_update_interval = 0 if not for_ui else 0.2 if (shared.args.listen or shared.args.share) else 0.0417
                 if cur_time - last_update > min_update_interval:
                     last_update = cur_time
                     yield reply
@@ -265,8 +268,15 @@ def apply_stopping_strings(reply, all_stop_strings):
 
 def get_reply_from_output_ids(output_ids, state, starting_from=0):
     reply = decode(output_ids[starting_from:], state['skip_special_tokens'])
-    if hasattr(shared.tokenizer, 'convert_ids_to_tokens') and len(output_ids) > starting_from and shared.tokenizer.convert_ids_to_tokens(int(output_ids[starting_from])).startswith('▁'):
-        reply = ' ' + reply
+
+    # Handle tokenizers that do not add the leading space for the first token
+    if (hasattr(shared.tokenizer, 'convert_ids_to_tokens') and len(output_ids) > starting_from) and not reply.startswith(' '):
+        first_token = shared.tokenizer.convert_ids_to_tokens(int(output_ids[starting_from]))
+        if isinstance(first_token, (bytes,)):
+            first_token = first_token.decode('utf8')
+
+        if first_token.startswith('▁'):
+            reply = ' ' + reply
 
     return reply
 

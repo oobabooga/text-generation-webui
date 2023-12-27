@@ -188,3 +188,5 @@
   instruction_template: 'ChatML'
 (dolphin).*:
   instruction_template: 'ChatML'
+.*synthia:
+  instruction_template: 'Synthia'
