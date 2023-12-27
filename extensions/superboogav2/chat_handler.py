@@ -51,17 +51,17 @@ def _format_single_exchange(name, text):
 
 
 def _get_names(state: dict):
-    if _is_instruct_mode(state):
-        user_name = state['name1_instruct']
-        bot_name = state['name2_instruct']
-    else:
-        user_name = state['name1']
-        bot_name = state['name2']
-
-    if not user_name:
-        user_name = 'User'
-    if not bot_name:
-        bot_name = 'Assistant'
+    user_name = 'User'
+    bot_name = 'Assistant'
+    try:
+        if _is_instruct_mode(state):
+            user_name = state['name1_instruct']
+            bot_name = state['name2_instruct']
+        else:
+            user_name = state['name1']
+            bot_name = state['name2']
+    except(KeyError):
+        logger.warn("A name for the bot or user could not be found. Using defaults. Ensure name1, name2, name1_instruct, and name2_instruct are set!")
 
     return user_name, bot_name
 
