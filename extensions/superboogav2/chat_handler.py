@@ -1,7 +1,6 @@
 """
 This module is responsible for modifying the chat prompt and history.
 """
-import json
 import re
 
 import extensions.superboogav2.parameters as parameters
