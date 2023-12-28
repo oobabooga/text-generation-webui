@@ -582,18 +582,25 @@ def load_character(character, name1, name2):
     context = greeting = ""
     greeting_field = 'greeting'
     picture = None
-
+    matched_extension = None
+    file_contents = None
     filepath = None
-    for extension in ["yml", "yaml", "json"]:
+
+    for extension in ["yml", "yaml", "json", "png"]:
         filepath = Path(f'characters/{character}.{extension}')
         if filepath.exists():
+            matched_extension = extension
             break
 
     if filepath is None or not filepath.exists():
         logger.error(f"Could not find the character \"{character}\" inside characters/. No character has been loaded.")
         raise ValueError
+    
+    if(matched_extension == "png"):
+        file_contents = extract_character_from_image(filepath, character)
+    else:
+        file_contents = open(filepath, 'r', encoding='utf-8').read()
 
-    file_contents = open(filepath, 'r', encoding='utf-8').read()
     data = json.loads(file_contents) if extension == "json" else yaml.safe_load(file_contents)
 
     for path in [Path("cache/pfp_character.png"), Path("cache/pfp_character_thumb.png")]:
@@ -614,14 +621,27 @@ def load_character(character, name1, name2):
             name1 = data[k]
             break
 
-    if 'context' in data:
+    if 'context' in data: # Standard
         context = data['context'].strip()
-    elif "char_persona" in data:
-        context = build_pygmalion_style_context(data)
+    elif "char_persona" in data: # Pygmalion
+        context = build_context(data, name2)
         greeting_field = 'char_greeting'
+    elif "description" in data: # Character card
+        context = build_context(data, name2)
+        greeting_field = 'first_mes'
 
     greeting = data.get(greeting_field, greeting)
     return name1, name2, picture, greeting, context
+
+
+def extract_character_from_image(image_path : str, character : str):
+    image = Image.open(image_path)
+    image.load()
+    try:
+        character_crypted = image.info["chara"]
+    except(KeyError):
+        logger.error(f"Could not load data for the character \"{character}\" from image. The selected image may not have character data present!")
+    return base64.b64decode(character_crypted).decode("utf-8")
 
 
 def load_instruction_template(template):
@@ -659,7 +679,7 @@ def upload_character(file, img, tavern=False):
     if 'char_name' in data:
         name = data['char_name']
         greeting = data['char_greeting']
-        context = build_pygmalion_style_context(data)
+        context = build_context(data)
         yaml_data = generate_character_yaml(name, greeting, context)
     else:
         name = data['name']
@@ -680,19 +700,42 @@ def upload_character(file, img, tavern=False):
     logger.info(f'New character saved to "characters/{outfile_name}.yaml".')
     return gr.update(value=outfile_name, choices=get_available_characters())
 
-
-def build_pygmalion_style_context(data):
+def build_context(data : str, charName : str):
+    # To support a new format, simply add the corresponding keys to the lists below.
+    personaKeys = ['personality', 'char_persona', 'description']
+    scenarioKeys = ['scenario', 'world_scenario']
+    exDialogKeys = ['mes_example', 'example_dialogue']
+    
     context = ""
-    if 'char_persona' in data and data['char_persona'] != '':
-        context += f"{data['char_name']}'s Persona: {data['char_persona']}\n"
+    personaStrings = []
+    scenarioStrings = []
+    exDialogStrings = []
 
-    if 'world_scenario' in data and data['world_scenario'] != '':
-        context += f"Scenario: {data['world_scenario']}\n"
+    for personaKey in personaKeys:
+        if personaKey in data and data[personaKey] != '':
+            personaStrings.append(f"{data[personaKey].strip()}")
 
-    if 'example_dialogue' in data and data['example_dialogue'] != '':
-        context += f"{data['example_dialogue'].strip()}\n"
+    for scenarioKey in scenarioKeys:
+        if scenarioKey in data and data[scenarioKey] != '':
+            scenarioStrings.append(f"Scenario: {data[scenarioKey].strip()}")
 
-    context = f"{context.strip()}\n"
+    for exDialogKey in exDialogKeys:
+        if exDialogKey in data and data[exDialogKey] != '':
+            exDialogStrings.append(f"{data[exDialogKey].strip()}")
+
+    # Remove any duplicates. These are commonly found in multi-format compatible character data.
+    # Then add results to context with any desired prefixes.
+    if(personaStrings):
+        personaString = list(dict.fromkeys(personaStrings))[0]
+        context += f"{charName}'s Persona: " + personaString + "\n"
+    if(scenarioStrings):
+        scenarioString = list(dict.fromkeys(scenarioStrings))[0]
+        context += f"Scenario: " + scenarioString + "\n"
+    if(exDialogStrings):
+        exDialogString = list(dict.fromkeys(exDialogStrings))[0]
+        context += exDialogString + "\n"
+
+    context = f"{context.strip()}"
     return context
 
 
