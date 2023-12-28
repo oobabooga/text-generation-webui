@@ -18,14 +18,6 @@ from .chromadb import ChromaCollector
 
 CHAT_METADATA = create_metadata_source('automatic-chat-insert')
 
-INSTRUCT_MODE = 'instruct'
-CHAT_INSTRUCT_MODE = 'chat-instruct'
-
-
-def _is_instruct_mode(state: dict):
-    mode = state.get('mode')
-    return mode == INSTRUCT_MODE or mode == CHAT_INSTRUCT_MODE
-
 
 def _remove_tag_if_necessary(user_input: str):
     if not parameters.get_is_manual():
