@@ -200,7 +200,6 @@ function showMenu() {
 
 function hideMenu() {
   menu.style.display = "none"; // Hide the menu
-  document.querySelector("#chat-input textarea").focus();
 }
 
 if (buttonsInChat.length > 0) {
@@ -239,7 +238,12 @@ button.addEventListener("mouseenter", function () {
 });
 
 button.addEventListener("click", function () {
+  if (menu.style.display === "flex") {
+    hideMenu();
+  }
+  else {
   showMenu();
+  }
 });
 
 // Add event listener for mouseleave on the button
