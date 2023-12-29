@@ -737,7 +737,7 @@ def build_context(data : str, charName : str):
         for scenarioString in scenarioStrings:
             context += scenarioString + "\n"
     if(exDialogStrings):
-        exDialogString = remove_partial_duplicate_strings_all_pairs(list(dict.fromkeys(exDialogStrings)))
+        exDialogStrings = remove_partial_duplicate_strings_all_pairs(list(dict.fromkeys(exDialogStrings)))
         for exDialogString in exDialogStrings:
             context += exDialogString + "\n"
 
@@ -754,6 +754,8 @@ def remove_partial_duplicate_strings_all_pairs(stringList : list):
                 cleanStringList.append(cleanStringPair[0])
             if cleanStringPair[1] not in cleanStringList:
                 cleanStringList.append(cleanStringPair[1])
+    else:
+        cleanStringList = stringList
     return cleanStringList
 
 def remove_partial_duplicate_strings(string1 : str, string2 : str):
