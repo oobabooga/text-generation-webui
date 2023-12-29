@@ -4,6 +4,7 @@ import functools
 import html
 import json
 import re
+import itertools
 from datetime import datetime
 from functools import partial
 from pathlib import Path
@@ -723,20 +724,52 @@ def build_context(data : str, charName : str):
         if exDialogKey in data and data[exDialogKey] != '':
             exDialogStrings.append(f"{data[exDialogKey].strip()}")
 
-    # Remove any duplicates. These are commonly found in multi-format compatible character data.
+    # Remove any duplicates or partial duplicates. These are commonly found in multi-format compatible character data.
     # Then add results to context with any desired prefixes.
     if(personaStrings):
-        personaString = list(dict.fromkeys(personaStrings))[0]
-        context += f"{charName}'s Persona: " + personaString + "\n"
+        personaStrings = remove_partial_duplicate_strings_all_pairs(list(dict.fromkeys(personaStrings)))
+        context += f"{charName}'s Persona: "
+        for personaString in personaStrings:
+            context += personaString + "\n"
     if(scenarioStrings):
-        scenarioString = list(dict.fromkeys(scenarioStrings))[0]
-        context += f"Scenario: " + scenarioString + "\n"
+        scenarioStrings = remove_partial_duplicate_strings_all_pairs(list(dict.fromkeys(scenarioStrings)))
+        context += f"Scenario: "
+        for scenarioString in scenarioStrings:
+            context += scenarioString + "\n"
     if(exDialogStrings):
-        exDialogString = list(dict.fromkeys(exDialogStrings))[0]
-        context += exDialogString + "\n"
+        exDialogString = remove_partial_duplicate_strings_all_pairs(list(dict.fromkeys(exDialogStrings)))
+        for exDialogString in exDialogStrings:
+            context += exDialogString + "\n"
 
     context = f"{context.strip()}"
     return context
+
+def remove_partial_duplicate_strings_all_pairs(stringList : list):
+    # TODO: Do this in a way that isn't so horribly clunky and inefficient.
+    cleanStringList = []
+    if len(stringList) >= 2:
+        for pair in itertools.combinations(stringList, 2):
+            cleanStringPair = remove_partial_duplicate_strings(*pair)
+            if cleanStringPair[0] not in cleanStringList:
+                cleanStringList.append(cleanStringPair[0])
+            if cleanStringPair[1] not in cleanStringList:
+                cleanStringList.append(cleanStringPair[1])
+    return cleanStringList
+
+def remove_partial_duplicate_strings(string1 : str, string2 : str):
+    '''
+    Note: Despite the name, this will only remove a string if the other string contains it in its entirety.
+    Finding a way to check any substring of the first string against the second string could reduce the context,
+    but then you run into issues with commonly shared substrings, eg "the".
+    '''
+    string1 = string1.strip()
+    string2 = string2.strip()
+
+    if string1 in string2:
+        string2 = string2.replace(string1, '').strip()
+    if string2 in string1:
+        string1 = string1.replace(string2, '').strip()
+    return string1, string2
 
 
 def upload_tavern_character(img, _json):
