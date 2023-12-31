@@ -97,10 +97,6 @@ def load_model(model_name, loader=None):
         else:
             tokenizer = load_tokenizer(model_name, model)
 
-    # Hijack attention with xformers
-    if any((shared.args.xformers, shared.args.sdp_attention)):
-        llama_attn_hijack.hijack_llama_attention()
-
     shared.settings.update({k: v for k, v in metadata.items() if k in shared.settings})
     if loader.lower().startswith('exllama'):
         shared.settings['truncation_length'] = shared.args.max_seq_len

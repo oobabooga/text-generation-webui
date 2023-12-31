@@ -98,8 +98,6 @@ group.add_argument('--disk-cache-dir', type=str, default='cache', help='Director
 group.add_argument('--load-in-8bit', action='store_true', help='Load the model with 8-bit precision (using bitsandbytes).')
 group.add_argument('--bf16', action='store_true', help='Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU.')
 group.add_argument('--no-cache', action='store_true', help='Set use_cache to False while generating text. This reduces VRAM usage slightly, but it comes at a performance cost.')
-group.add_argument('--xformers', action='store_true', help='Use xformer\'s memory efficient attention. This is really old and probably doesn\'t do anything.')
-group.add_argument('--sdp-attention', action='store_true', help='Use PyTorch 2.0\'s SDP attention. Same as above.')
 group.add_argument('--trust-remote-code', action='store_true', help='Set trust_remote_code=True while loading the model. Necessary for some models.')
 group.add_argument('--force-safetensors', action='store_true', help='Set use_safetensors=True while loading the model. This prevents arbitrary code execution.')
 group.add_argument('--no_use_fast', action='store_true', help='Set use_fast=False while loading the tokenizer (it\'s True by default). Use this if you have any problems related to use_fast.')
