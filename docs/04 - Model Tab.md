@@ -32,31 +32,20 @@ Options:
 * **use_flash_attention_2**: Set use_flash_attention_2=True while loading the model. Possibly useful for training.
 * **disable_exllama**: Only applies when you are loading a GPTQ model through the transformers loader. It needs to be checked if you intend to train LoRAs with the model.
 
-### ExLlama_HF
+### ExLlamav2_HF
 
-Loads: GPTQ models. They usually have GPTQ in the model name, or alternatively something like "-4bit-128g" in the name.
+Loads: GPTQ and EXL2 models. EXL2 models usually have "EXL2" in the model name, while GPTQ models usually have GPTQ in the model name, or alternatively something like "-4bit-128g" in the name.
 
-Example: https://huggingface.co/TheBloke/Llama-2-13B-chat-GPTQ
+Examples:
 
-ExLlama_HF is the v1 of ExLlama (https://github.com/turboderp/exllama) connected to the transformers library for sampling, tokenizing, and detokenizing. It is very fast and memory-efficient.
+* https://huggingface.co/turboderp/Llama2-70B-exl2
+* https://huggingface.co/TheBloke/Llama-2-13B-chat-GPTQ
 
 * **gpu-split**: If you have multiple GPUs, the amount of memory to allocate per GPU should be set in this field. Make sure to set a lower value for the first GPU, as that's where the cache is allocated.
 * **max_seq_len**: The maximum sequence length for the model. In ExLlama, the cache is preallocated, so the higher this value, the higher the VRAM. It is automatically set to the maximum sequence length for the model based on its metadata, but you may need to lower this value be able to fit the model into your GPU. After loading the model, the "Truncate the prompt up to this length" parameter under "Parameters" > "Generation" is automatically set to your chosen "max_seq_len" so that you don't have to set the same thing twice.
 * **cfg-cache**: Creates a second cache to hold the CFG negative prompts. You need to set this if and only if you intend to use CFG in the "Parameters" > "Generation" tab. Checking this parameter doubles the cache VRAM usage.
 * **no_flash_attn**: Disables flash attention. Otherwise, it is automatically used as long as the library is installed.
 * **cache_8bit**: Create a 8-bit precision cache instead of a 16-bit one. This saves VRAM but increases perplexity (I don't know by how much).
-
-### ExLlamav2_HF
-
-Loads: GPTQ and EXL2 models. EXL2 models usually have "EXL2" in the model name.
-
-Example: https://huggingface.co/turboderp/Llama2-70B-exl2
-
-The parameters are the same as in ExLlama_HF.
-
-### ExLlama
-
-The same as ExLlama_HF but using the internal samplers of ExLlama instead of the ones in the Transformers library.
 
 ### ExLlamav2
 

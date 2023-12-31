@@ -41,13 +41,11 @@ def get_model_metadata(model):
 
     if 'loader' not in model_settings:
         if hf_metadata is not None and 'quip_params' in hf_metadata:
-            model_settings['loader'] = 'QuIP#'
+            loader = 'QuIP#'
         else:
             loader = infer_loader(model, model_settings)
-            if 'wbits' in model_settings and type(model_settings['wbits']) is int and model_settings['wbits'] > 0:
-                loader = 'AutoGPTQ'
 
-            model_settings['loader'] = loader
+        model_settings['loader'] = loader
 
     # GGUF metadata
     if model_settings['loader'] in ['llama.cpp', 'llamacpp_HF', 'ctransformers']:
@@ -152,7 +150,7 @@ def infer_loader(model_name, model_settings):
     if not path_to_model.exists():
         loader = None
     elif (path_to_model / 'quantize_config.json').exists() or ('wbits' in model_settings and type(model_settings['wbits']) is int and model_settings['wbits'] > 0):
-        loader = 'ExLlama_HF'
+        loader = 'ExLlamav2_HF'
     elif (path_to_model / 'quant_config.json').exists() or re.match(r'.*-awq', model_name.lower()):
         loader = 'AutoAWQ'
     elif len(list(path_to_model.glob('*.gguf'))) > 0:
@@ -229,7 +227,7 @@ def apply_model_settings_to_state(model, state):
         loader = model_settings.pop('loader')
 
         # If the user is using an alternative loader for the same model type, let them keep using it
-        if not (loader == 'AutoGPTQ' and state['loader'] in ['GPTQ-for-LLaMa', 'ExLlama', 'ExLlama_HF', 'ExLlamav2', 'ExLlamav2_HF']) and not (loader == 'llama.cpp' and state['loader'] in ['llamacpp_HF', 'ctransformers']):
+        if not (loader == 'ExLlamav2_HF' and state['loader'] in ['GPTQ-for-LLaMa', 'ExLlamav2', 'AutoGPTQ']) and not (loader == 'llama.cpp' and state['loader'] in ['llamacpp_HF', 'ctransformers']):
             state['loader'] = loader
 
     for k in model_settings:
