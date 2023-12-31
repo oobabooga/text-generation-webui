@@ -198,15 +198,7 @@ group = parser.add_argument_group('Multimodal')
 group.add_argument('--multimodal-pipeline', type=str, default=None, help='The multimodal pipeline to use. Examples: llava-7b, llava-13b.')
 
 # Deprecated parameters
-group = parser.add_argument_group('Deprecated')
-group.add_argument('--notebook', action='store_true', help='DEPRECATED')
-group.add_argument('--chat', action='store_true', help='DEPRECATED')
-group.add_argument('--no-stream', action='store_true', help='DEPRECATED')
-group.add_argument('--mul_mat_q', action='store_true', help='DEPRECATED')
-group.add_argument('--api-blocking-port', type=int, default=5000, help='DEPRECATED')
-group.add_argument('--api-streaming-port', type=int, default=5005, help='DEPRECATED')
-group.add_argument('--llama_cpp_seed', type=int, default=0, help='DEPRECATED')
-group.add_argument('--use_fast', action='store_true', help='DEPRECATED')
+# group = parser.add_argument_group('Deprecated')
 
 args = parser.parse_args()
 args_defaults = parser.parse_args([])
@@ -216,7 +208,7 @@ for arg in sys.argv[1:]:
     if hasattr(args, arg):
         provided_arguments.append(arg)
 
-deprecated_args = ['notebook', 'chat', 'no_stream', 'mul_mat_q', 'use_fast']
+deprecated_args = []
 
 
 def do_cmd_flags_warnings():
