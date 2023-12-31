@@ -81,6 +81,16 @@ loaders_and_params = OrderedDict({
         'trust_remote_code',
         'no_use_fast',
     ],
+    'ExLlamav2': [
+        'gpu_split',
+        'max_seq_len',
+        'no_flash_attn',
+        'num_experts_per_token',
+        'cache_8bit',
+        'alpha_value',
+        'compress_pos_emb',
+        'exllamav2_info',
+    ],
     'AutoGPTQ': [
         'triton',
         'no_inject_fused_attention',
@@ -117,16 +127,6 @@ loaders_and_params = OrderedDict({
         'trust_remote_code',
         'no_use_fast',
         'gptq_for_llama_info',
-    ],
-    'ExLlamav2': [
-        'gpu_split',
-        'max_seq_len',
-        'no_flash_attn',
-        'num_experts_per_token',
-        'cache_8bit',
-        'alpha_value',
-        'compress_pos_emb',
-        'exllamav2_info',
     ],
     'ctransformers': [
         'n_ctx',
