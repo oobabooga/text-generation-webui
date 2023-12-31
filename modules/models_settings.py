@@ -35,7 +35,7 @@ def get_model_metadata(model):
 
     path = Path(f'{shared.args.model_dir}/{model}/config.json')
     if path.exists():
-        hf_metadata = json.loads(open(path, 'r').read())
+        hf_metadata = json.loads(open(path, 'r', encoding='utf-8').read())
     else:
         hf_metadata = None
 
@@ -78,7 +78,7 @@ def get_model_metadata(model):
     else:
         # Transformers metadata
         if hf_metadata is not None:
-            metadata = json.loads(open(path, 'r').read())
+            metadata = json.loads(open(path, 'r', encoding='utf-8').read())
             if 'max_position_embeddings' in metadata:
                 model_settings['truncation_length'] = metadata['max_position_embeddings']
                 model_settings['max_seq_len'] = metadata['max_position_embeddings']
@@ -101,7 +101,7 @@ def get_model_metadata(model):
         # Read AutoGPTQ metadata
         path = Path(f'{shared.args.model_dir}/{model}/quantize_config.json')
         if path.exists():
-            metadata = json.loads(open(path, 'r').read())
+            metadata = json.loads(open(path, 'r', encoding='utf-8').read())
             if 'bits' in metadata:
                 model_settings['wbits'] = metadata['bits']
             if 'group_size' in metadata:
@@ -112,7 +112,7 @@ def get_model_metadata(model):
     # Try to find the Jinja instruct template
     path = Path(f'{shared.args.model_dir}/{model}') / 'tokenizer_config.json'
     if path.exists():
-        metadata = json.loads(open(path, 'r').read())
+        metadata = json.loads(open(path, 'r', encoding='utf-8').read())
         if 'chat_template' in metadata:
             template = metadata['chat_template']
             for k in ['eos_token', 'bos_token']:
