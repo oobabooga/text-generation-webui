@@ -65,7 +65,6 @@ def load_model(model_name, loader=None):
         'GPTQ-for-LLaMa': GPTQ_loader,
         'llama.cpp': llamacpp_loader,
         'llamacpp_HF': llamacpp_HF_loader,
-        'RWKV': RWKV_loader,
         'ExLlamav2': ExLlamav2_loader,
         'ExLlamav2_HF': ExLlamav2_HF_loader,
         'ctransformers': ctransformers_loader,
@@ -403,23 +402,6 @@ def HQQ_loader(model_name):
     model = HQQModelForCausalLM.from_quantized(str(model_dir))
     HQQLinear.set_backend(getattr(HQQBackend, shared.args.hqq_backend))
     return model
-
-
-def RWKV_loader(model_name):
-    '''
-    This loader is not currently maintained as RWKV can now be loaded
-    through the transformers library.
-    '''
-    from modules.RWKV import RWKVModel, RWKVTokenizer
-
-    model = RWKVModel.from_pretrained(
-        Path(f'{shared.args.model_dir}/{model_name}'),
-        dtype="fp32" if shared.args.cpu else "bf16" if shared.args.bf16 else "fp16",
-        device="cpu" if shared.args.cpu else "xpu" if is_xpu_available() else "cuda"
-    )
-
-    tokenizer = RWKVTokenizer.from_pretrained(Path(shared.args.model_dir))
-    return model, tokenizer
 
 
 def get_max_memory_dict():

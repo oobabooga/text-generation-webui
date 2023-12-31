@@ -312,13 +312,6 @@ List of command-line flags
 | `--nvme-offload-dir NVME_OFFLOAD_DIR` | DeepSpeed: Directory to use for ZeRO-3 NVME offloading. |
 | `--local_rank LOCAL_RANK`             | DeepSpeed: Optional argument for distributed setups. |
 
-#### RWKV
-
-| Flag                            | Description |
-|---------------------------------|-------------|
-| `--rwkv-strategy RWKV_STRATEGY` | RWKV: The strategy to use while loading the model. Examples: "cpu fp32", "cuda fp16", "cuda fp16i8". |
-| `--rwkv-cuda-on`                | RWKV: Compile the CUDA kernel for better performance. |
-
 #### RoPE (for llama.cpp, ExLlamaV2, and transformers)
 
 | Flag             | Description |
