@@ -321,7 +321,7 @@ List of command-line flags
 | `--rwkv-strategy RWKV_STRATEGY` | RWKV: The strategy to use while loading the model. Examples: "cpu fp32", "cuda fp16", "cuda fp16i8". |
 | `--rwkv-cuda-on`                | RWKV: Compile the CUDA kernel for better performance. |
 
-#### RoPE (for llama.cpp, ExLlama, ExLlamaV2, and transformers)
+#### RoPE (for llama.cpp, ExLlamaV2, and transformers)
 
 | Flag             | Description |
 |------------------|-------------|
