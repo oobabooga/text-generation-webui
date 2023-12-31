@@ -21,42 +21,31 @@ Options:
 * **alpha_value**: Used to extend the context length of a model with a minor loss in quality. I have measured 1.75 to be optimal for 1.5x context, and 2.5 for 2x context. That is, with alpha = 2.5 you can make a model with 4096 context length go to 8192 context length.
 * **rope_freq_base**: Originally another way to write "alpha_value", it ended up becoming a necessary parameter for some models like CodeLlama, which was fine-tuned with this set to 1000000 and hence needs to be loaded with it set to 1000000 as well.
 * **compress_pos_emb**: The first and original context-length extension method, discovered by [kaiokendev](https://kaiokendev.github.io/til). When set to 2, the context length is doubled, 3 and it's tripled, etc. It should only be used for models that have been fine-tuned with this parameter set to different than 1. For models that have not been tuned to have greater context length, alpha_value will lead to a smaller accuracy loss.
-* **cpu**: Loads the model in CPU mode using Pytorch. The model will be loaded in 32-bit precision, so a lot of RAM will be used. CPU inference with transformers is older than llama.cpp and it works, but it's a lot slower.
+* **cpu**: Loads the model in CPU mode using Pytorch. The model will be loaded in 32-bit precision, so a lot of RAM will be used. CPU inference with transformers is older than llama.cpp and it works, but it's a lot slower. Note: this parameter has a different interpretation in the llama.cpp loader (see below).
 * **load-in-8bit**: Load the model in 8-bit precision using bitsandbytes. The 8-bit kernel in that library has been optimized for training and not inference, so load-in-8bit is slower than load-in-4bit (but more accurate).
 * **bf16**: Use bfloat16 precision instead of float16 (the default). Only applies when quantization is not used.
 * **auto-devices**: When checked, the backend will try to guess a reasonable value for "gpu-memory" to allow you to load a model with CPU offloading. I recommend just setting "gpu-memory" manually instead. This parameter is also needed for loading GPTQ models, in which case it needs to be checked before loading the model.
 * **disk**: Enable disk offloading for layers that don't fit into the GPU and CPU combined.
 * **load-in-4bit**: Load the model in 4-bit precision using bitsandbytes.
 * **trust-remote-code**: Some models use custom Python code to load the model or the tokenizer. For such models, this option needs to be set. It doesn't download any remote content: all it does is execute the .py files that get downloaded with the model. Those files can potentially include malicious code; I have never seen it happen, but it is in principle possible.
-* **use_fast**: Use the "fast" version of the tokenizer. Especially useful for Llama models, which originally had a "slow" tokenizer that received an update. If your local files are in the old "slow" format, checking this option may trigger a conversion that takes several minutes. The fast tokenizer is mostly useful if you are generating 50+ tokens/second using ExLlama_HF or if you are tokenizing a huge dataset for training.
+* **no_use_fast**: Do not use the "fast" version of the tokenizer. Can usually be ignored; only check this if you can't load the tokenizer for your model otherwise.
 * **use_flash_attention_2**: Set use_flash_attention_2=True while loading the model. Possibly useful for training.
 * **disable_exllama**: Only applies when you are loading a GPTQ model through the transformers loader. It needs to be checked if you intend to train LoRAs with the model.
 
-### ExLlama_HF
+### ExLlamav2_HF
 
-Loads: GPTQ models. They usually have GPTQ in the model name, or alternatively something like "-4bit-128g" in the name.
+Loads: GPTQ and EXL2 models. EXL2 models usually have "EXL2" in the model name, while GPTQ models usually have GPTQ in the model name, or alternatively something like "-4bit-128g" in the name.
 
-Example: https://huggingface.co/TheBloke/Llama-2-13B-chat-GPTQ
+Examples:
 
-ExLlama_HF is the v1 of ExLlama (https://github.com/turboderp/exllama) connected to the transformers library for sampling, tokenizing, and detokenizing. It is very fast and memory-efficient.
+* https://huggingface.co/turboderp/Llama2-70B-exl2
+* https://huggingface.co/TheBloke/Llama-2-13B-chat-GPTQ
 
 * **gpu-split**: If you have multiple GPUs, the amount of memory to allocate per GPU should be set in this field. Make sure to set a lower value for the first GPU, as that's where the cache is allocated.
 * **max_seq_len**: The maximum sequence length for the model. In ExLlama, the cache is preallocated, so the higher this value, the higher the VRAM. It is automatically set to the maximum sequence length for the model based on its metadata, but you may need to lower this value be able to fit the model into your GPU. After loading the model, the "Truncate the prompt up to this length" parameter under "Parameters" > "Generation" is automatically set to your chosen "max_seq_len" so that you don't have to set the same thing twice.
 * **cfg-cache**: Creates a second cache to hold the CFG negative prompts. You need to set this if and only if you intend to use CFG in the "Parameters" > "Generation" tab. Checking this parameter doubles the cache VRAM usage.
 * **no_flash_attn**: Disables flash attention. Otherwise, it is automatically used as long as the library is installed.
 * **cache_8bit**: Create a 8-bit precision cache instead of a 16-bit one. This saves VRAM but increases perplexity (I don't know by how much).
-
-### ExLlamav2_HF
-
-Loads: GPTQ and EXL2 models. EXL2 models usually have "EXL2" in the model name.
-
-Example: https://huggingface.co/turboderp/Llama2-70B-exl2
-
-The parameters are the same as in ExLlama_HF.
-
-### ExLlama
-
-The same as ExLlama_HF but using the internal samplers of ExLlama instead of the ones in the Transformers library.
 
 ### ExLlamav2
 
@@ -97,6 +86,7 @@ Example: https://huggingface.co/TheBloke/Llama-2-7b-Chat-GGUF
 * **no-mmap**: Loads the model into memory at once, possibly preventing I/O operations later on at the cost of a longer load time.
 * **mlock**: Force the system to keep the model in RAM rather than swapping or compressing (no idea what this means, never used it).
 * **numa**: May improve performance on certain multi-cpu systems.
+* **cpu**: Force a version of llama.cpp compiled without GPU acceleration to be used. Can usually be ignored. Only set this if you want to use CPU only and llama.cpp doesn't work otherwise. 
 * **tensor_split**: For multi-gpu only. Sets the amount of memory to allocate per GPU.
 * **Seed**: The seed for the llama.cpp random number generator. Not very useful as it can only be set once (that I'm aware).
 
