@@ -21,7 +21,7 @@ from transformers import (
 )
 
 import modules.shared as shared
-from modules import RoPE, llama_attn_hijack, sampler_hijack
+from modules import RoPE, sampler_hijack
 from modules.logging_colors import logger
 from modules.models_settings import get_model_metadata
 from modules.relative_imports import RelativeImport
@@ -96,10 +96,6 @@ def load_model(model_name, loader=None):
             return None, None
         else:
             tokenizer = load_tokenizer(model_name, model)
-
-    # Hijack attention with xformers
-    if any((shared.args.xformers, shared.args.sdp_attention)):
-        llama_attn_hijack.hijack_llama_attention()
 
     shared.settings.update({k: v for k, v in metadata.items() if k in shared.settings})
     if loader.lower().startswith('exllama'):
