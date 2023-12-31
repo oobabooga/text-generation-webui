@@ -21,7 +21,7 @@ from transformers import (
 )
 
 import modules.shared as shared
-from modules import RoPE, llama_attn_hijack, sampler_hijack
+from modules import RoPE, sampler_hijack
 from modules.logging_colors import logger
 from modules.models_settings import get_model_metadata
 from modules.relative_imports import RelativeImport
