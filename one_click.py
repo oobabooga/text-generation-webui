@@ -343,27 +343,6 @@ def update_requirements(initial_installation=False):
     if not os.path.exists("repositories/"):
         os.mkdir("repositories")
 
-    os.chdir("repositories")
-
-    # Install or update ExLlama as needed
-    if not os.path.exists("exllama/"):
-        run_cmd("git clone https://github.com/turboderp/exllama.git", environment=True)
-    else:
-        os.chdir("exllama")
-        run_cmd("git pull", environment=True)
-        os.chdir("..")
-
-    if is_linux():
-        # Fix JIT compile issue with ExLlama in Linux/WSL
-        if not os.path.exists(f"{conda_env_path}/lib64"):
-            run_cmd(f'ln -s "{conda_env_path}/lib" "{conda_env_path}/lib64"', environment=True)
-
-        # On some Linux distributions, g++ may not exist or be the wrong version to compile GPTQ-for-LLaMa
-        gxx_output = run_cmd("g++ -dumpfullversion -dumpversion", environment=True, capture_output=True)
-        if gxx_output.returncode != 0 or int(gxx_output.stdout.strip().split(b".")[0]) > 11:
-            # Install the correct version of g++
-            run_cmd("conda install -y -k conda-forge::gxx_linux-64=11.2.0", environment=True)
-
     clear_cache()
 
 

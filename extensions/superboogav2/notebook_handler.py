@@ -16,9 +16,9 @@ def _remove_special_tokens(string):
     return re.sub(pattern, '', string)
 
 
-def input_modifier_internal(string, collector):
+def input_modifier_internal(string, collector, is_chat):
     # Sanity check.
-    if shared.is_chat():
+    if is_chat:
         return string
 
     # Find the user input
