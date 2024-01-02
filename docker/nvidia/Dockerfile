@@ -3,6 +3,7 @@ FROM nvidia/cuda:12.1.1-devel-ubuntu22.04 as builder
 WORKDIR /builder
 ARG TORCH_CUDA_ARCH_LIST="${TORCH_CUDA_ARCH_LIST:-3.5;5.0;6.0;6.1;7.0;7.5;8.0;8.6+PTX}"
 ARG BUILD_EXTENSIONS="${BUILD_EXTENSIONS:-}"
+ARG BUILD_REQUIREMENTS="${BUILD_REQUIREMENTS:-requirements.txt}"
 ARG APP_UID="${APP_UID:-6972}"
 ARG APP_GID="${APP_GID:-6972}"
 # create / update build env
@@ -18,7 +19,7 @@ RUN --mount=type=cache,target=/root/.cache/pip,rw \
 USER app:app_grp
 # build wheels for runtime
 WORKDIR /home/app/build
-COPY --chown=app:app_grp requirements.txt /home/app/build
+COPY --chown=app:app_grp "$BUILD_REQUIREMENTS" /home/app/build/requirements.txt
 COPY --chown=app:app_grp extensions /home/app/build/extensions
 RUN --mount=type=cache,target=/root/.cache/pip,rw \
     # build all requirements files as wheel dists
