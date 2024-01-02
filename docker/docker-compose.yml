@@ -16,7 +16,11 @@ services:
         # | Apple | Intel | `requirements_apple_intel.txt` |
         # | Apple | Apple Silicon | `requirements_apple_silicon.txt` |
         # Default: requirements.txt`
-        BUILD_REQUIREMENTS: requirements.txt
+        # BUILD_REQUIREMENTS: requirements.txt
+        
+        # Extension requirements to build: 
+        # BUILD_EXTENSIONS: 
+        
         # specify which cuda version your card supports: https://developer.nvidia.com/cuda-gpus
         TORCH_CUDA_ARCH_LIST: ${TORCH_CUDA_ARCH_LIST:-7.5} 
         BUILD_EXTENSIONS: ${BUILD_EXTENSIONS:-}
