@@ -45,55 +45,70 @@ def fix_newlines(string):
 def replace_blockquote(m):
     return m.group().replace('\n', '\n> ').replace('\\begin{blockquote}', '').replace('\\end{blockquote}', '')
 
+# generate html code for jupyter code cells
+def thebe_code_block(m):
+    string = "<pre"
+    string += html.unescape(m[1])
+    string += ">"
+    string += html.unescape(m[2])
+    string += "</pre>"
+    return string
 
 def convert_to_markdown(string):
+    # skip markdown generation if jupyter code cell found in the output
+    jupyter_code_block_pattern = re.compile(r'&lt;pre(.*?)&gt;(.*?)&lt;/pre&gt;', re.DOTALL)
+    html_output = ""
+    if not jupyter_code_block_pattern.search(string):
+        # Blockquote
+        string = re.sub(r'(^|[\n])&gt;', r'\1>', string)
+        pattern = re.compile(r'\\begin{blockquote}(.*?)\\end{blockquote}', re.DOTALL)
+        string = pattern.sub(replace_blockquote, string)
 
-    # Blockquote
-    string = re.sub(r'(^|[\n])&gt;', r'\1>', string)
-    pattern = re.compile(r'\\begin{blockquote}(.*?)\\end{blockquote}', re.DOTALL)
-    string = pattern.sub(replace_blockquote, string)
+        # Code
+        string = string.replace('\\begin{code}', '```')
+        string = string.replace('\\end{code}', '```')
+        string = re.sub(r"(.)```", r"\1\n```", string)
 
-    # Code
-    string = string.replace('\\begin{code}', '```')
-    string = string.replace('\\end{code}', '```')
-    string = re.sub(r"(.)```", r"\1\n```", string)
+        result = ''
+        is_code = False
+        for line in string.split('\n'):
+            if line.lstrip(' ').startswith('```'):
+                is_code = not is_code
 
-    result = ''
-    is_code = False
-    for line in string.split('\n'):
-        if line.lstrip(' ').startswith('```'):
-            is_code = not is_code
+            result += line
+            if is_code or line.startswith('|'):  # Don't add an extra \n for tables or code
+                result += '\n'
+            else:
+                result += '\n\n'
 
-        result += line
-        if is_code or line.startswith('|'):  # Don't add an extra \n for tables or code
-            result += '\n'
+        result = result.strip()
+        if is_code:
+            result += '\n```'  # Unfinished code block
+
+        # Unfinished list, like "\n1.". A |delete| string is added and then
+        # removed to force a <ol> or <ul> to be generated instead of a <p>.
+        if re.search(r'(\n\d+\.?|\n\*\s*)$', result):
+            delete_str = '|delete|'
+
+            if re.search(r'(\d+\.?)$', result) and not result.endswith('.'):
+                result += '.'
+
+            result = re.sub(r'(\n\d+\.?|\n\*\s*)$', r'\g<1> ' + delete_str, result)
+
+            html_output = markdown.markdown(result, extensions=['fenced_code', 'tables'])
+            pos = html_output.rfind(delete_str)
+            if pos > -1:
+                html_output = html_output[:pos] + html_output[pos + len(delete_str):]
         else:
-            result += '\n\n'
+            html_output = markdown.markdown(result, extensions=['fenced_code', 'tables'])
 
-    result = result.strip()
-    if is_code:
-        result += '\n```'  # Unfinished code block
-
-    # Unfinished list, like "\n1.". A |delete| string is added and then
-    # removed to force a <ol> or <ul> to be generated instead of a <p>.
-    if re.search(r'(\n\d+\.?|\n\*\s*)$', result):
-        delete_str = '|delete|'
-
-        if re.search(r'(\d+\.?)$', result) and not result.endswith('.'):
-            result += '.'
-
-        result = re.sub(r'(\n\d+\.?|\n\*\s*)$', r'\g<1> ' + delete_str, result)
-
-        html_output = markdown.markdown(result, extensions=['fenced_code', 'tables'])
-        pos = html_output.rfind(delete_str)
-        if pos > -1:
-            html_output = html_output[:pos] + html_output[pos + len(delete_str):]
+        # Unescape code blocks
+        pattern = re.compile(r'<code[^>]*>(.*?)</code>', re.DOTALL)
+        html_output = pattern.sub(lambda x: html.unescape(x.group()), html_output)
     else:
-        html_output = markdown.markdown(result, extensions=['fenced_code', 'tables'])
-
-    # Unescape code blocks
-    pattern = re.compile(r'<code[^>]*>(.*?)</code>', re.DOTALL)
-    html_output = pattern.sub(lambda x: html.unescape(x.group()), html_output)
+        # Unescape jupyter thebe cells
+        pattern = re.compile(r'&lt;pre(.*?)&gt;(.*?)&lt;/pre&gt;', re.DOTALL)
+        html_output = pattern.sub(thebe_code_block, string)
 
     return html_output
 
