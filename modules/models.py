@@ -126,7 +126,6 @@ def load_tokenizer(model_name, model):
 
 
 def huggingface_loader(model_name):
-
     path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
     params = {
         'low_cpu_mem_usage': True,
@@ -170,10 +169,8 @@ def huggingface_loader(model_name):
 
     # Load with quantization and/or offloading
     else:
-
         if not any((shared.args.cpu, torch.cuda.is_available(), is_xpu_available(), torch.backends.mps.is_available())):
             logger.warning('torch.cuda.is_available() and is_xpu_available() returned False. This means that no GPU has been detected. Falling back to CPU mode.')
-
             shared.args.cpu = True
 
         if shared.args.cpu:
