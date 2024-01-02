@@ -602,7 +602,13 @@ def load_character(character, name1, name2):
     else:
         file_contents = open(filepath, 'r', encoding='utf-8').read()
 
-    data = json.loads(file_contents) if extension == "json" else yaml.safe_load(file_contents)
+    data = ""
+    if(is_json(file_contents)):
+        data = json.loads(file_contents)
+    elif(is_yaml(file_contents)):
+        data = yaml.safe_load(file_contents)
+    else:
+        logger.warning("Unable to read character data!")
 
     for path in [Path("cache/pfp_character.png"), Path("cache/pfp_character_thumb.png")]:
         if path.exists():
@@ -643,6 +649,22 @@ def extract_character_from_image(image_path : str, character : str):
     except(KeyError):
         logger.error(f"Could not load data for the character \"{character}\" from image. The selected image may not have character data present!")
     return base64.b64decode(character_crypted).decode("utf-8")
+
+
+def is_json(input):
+    try:
+        jsonFile = json.loads(input)
+    except ValueError:
+        return False
+    return True
+
+
+def is_yaml(input):
+    try:
+        yamlFile = yaml.safe_load(input)
+    except yaml.YAMLError:
+        return False
+    return True
 
 
 def load_instruction_template(template):
