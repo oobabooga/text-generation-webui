@@ -8,6 +8,7 @@ import markdown
 from PIL import Image, ImageOps
 
 from modules.utils import get_available_chat_styles
+from modules import shared
 
 # This is to store the paths to the thumbnails of the profile pictures
 image_cache = {}
@@ -170,7 +171,7 @@ def make_thumbnail(image):
 
 
 def get_image_cache(path):
-    cache_folder = Path("cache")
+    cache_folder = Path(shared.args.disk_cache_dir)
     if not cache_folder.exists():
         cache_folder.mkdir()
 
@@ -178,8 +179,8 @@ def get_image_cache(path):
     if (path in image_cache and mtime != image_cache[path][0]) or (path not in image_cache):
         img = make_thumbnail(Image.open(path))
 
-        old_p = Path(f'cache/{path.name}_cache.png')
-        p = Path(f'cache/cache_{path.name}.png')
+        old_p = Path(f'{cache_folder}/{path.name}_cache.png')
+        p = Path(f'{cache_folder}/cache_{path.name}.png')
         if old_p.exists():
             old_p.rename(p)
 
