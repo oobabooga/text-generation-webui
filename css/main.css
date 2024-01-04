@@ -91,16 +91,19 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
 
 .header_bar {
     background-color: #f7f7f7;
-    margin-bottom: 19px;
+    box-shadow: 0 2px 3px rgba(22 22 22 / 35%);
+    margin-bottom: 0;
     overflow-x: scroll;
     margin-left: calc(-1 * var(--size-4));
     margin-right: calc(-1 * var(--size-4));
     display: block !important;
     text-wrap: nowrap;
+    z-index: 90;
 }
 
 .dark .header_bar {
     border: none !important;
+    box-shadow: 0 3px 4px rgba(20 20 20 / 60%);
     background-color: #8080802b;
 }
 
@@ -299,6 +302,10 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     width: 100%;
 }
 
+#chat-tab {
+    padding-top: 0;
+}
+
 #chat-tab button#Generate, #chat-tab button#stop {
     width: 89.3438px !important;
 }
@@ -318,14 +325,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
         padding-left: 0;
         padding-right: 0;
     }
-
-    .chat-parent {
-        height: calc(100dvh - 179px) !important;
-    }
-
-    .old-ui .chat-parent {
-        height: calc(100dvh - 310px) !important;
-    }
 }
 
 .chat {
@@ -339,24 +338,31 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     flex-direction: column;
     word-break: break-word;
     overflow-wrap: anywhere;
+    border-top: none;
+    border-radius: 0 0 0 8px;
 }
 
 .chat-parent {
-    height: calc(100dvh - 181px);
+    height: calc(100dvh - 98px - var(--header-height) - var(--input-delta));
     overflow: auto !important;
+    border-radius: 0 !important;
+    margin-bottom: var(--input-delta) !important;
 }
 
 .old-ui .chat-parent {
-    height: calc(100dvh - 270px);
+    height: calc(100dvh - 192px - var(--header-height) - var(--input-delta));
+    margin-bottom: var(--input-delta) !important;
 }
 
 .chat-parent.bigchat {
-    height: calc(100dvh - 181px) !important;
+    height: calc(100dvh - 98px - var(--header-height) - var(--input-delta)) !important;
+    margin-bottom: var(--input-delta) !important;
 }
 
 .chat > .messages {
     display: flex;
     flex-direction: column;
+    padding-top: 25px;
 }
 
 .chat .message:last-child {
@@ -484,6 +490,10 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     z-index: 1000;
     position: absolute;
     left: calc(100% - 168px);
+}
+
+#show-controls span {
+    opacity: 0.6;
 }
 
 #typing-container {
@@ -624,11 +634,11 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 #chat-col {
-    padding-bottom: 115px;
+    padding-bottom: 100px;
 }
 
 .old-ui #chat-col, #chat-col.bigchat {
-    padding-bottom: 95px !important;
+    padding-bottom: 80px !important;
 }
 
 .old-ui #chat-buttons #clear-history-confirm {
