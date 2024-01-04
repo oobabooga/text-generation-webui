@@ -510,8 +510,7 @@ def load_latest_history(state):
     histories = find_all_histories(state)
 
     if len(histories) > 0:
-        unique_id = Path(histories[0]).stem
-        history = load_history(unique_id, state['character_menu'], state['mode'])
+        history = load_history(histories[0], state['character_menu'], state['mode'])
     else:
         history = start_new_chat(state)
 
