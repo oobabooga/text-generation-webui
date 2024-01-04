@@ -193,6 +193,7 @@ for (i = 0; i < slimDropdownElements.length; i++) {
 var buttonsInChat = document.querySelectorAll("#chat-tab:not(.old-ui) #chat-buttons button");
 var button = document.getElementById("hover-element-button");
 var menu = document.getElementById("hover-menu");
+var istouchscreen = (navigator.maxTouchPoints > 0) || "ontouchstart" in document.documentElement;
 
 function showMenu() {
   menu.style.display = "flex"; // Show the menu
@@ -200,6 +201,9 @@ function showMenu() {
 
 function hideMenu() {
   menu.style.display = "none"; // Hide the menu
+  if (!istouchscreen) {
+    document.querySelector("#chat-input textarea").focus(); // Focus on the chat input
+  }
 }
 
 if (buttonsInChat.length > 0) {
@@ -234,7 +238,9 @@ function isMouseOverButtonOrMenu() {
 }
 
 button.addEventListener("mouseenter", function () {
-  showMenu();
+  if (!istouchscreen) {
+    showMenu();
+  }
 });
 
 button.addEventListener("click", function () {
