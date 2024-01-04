@@ -78,11 +78,18 @@ curl http://127.0.0.1:5000/v1/chat/completions \
     "messages": [
       {
         "role": "user",
-        "image_url": "https://avatars.githubusercontent.com/u/112222186?v=4"
-      },
-      {
-        "role": "user",
-        "content": "What is unusual about this image?"
+        "content": [
+            {
+                "type": "text",
+                "text": "what is unusual about this image?"
+            },
+            {
+                "type": "image_url",
+                "image_url": {
+                    "url": "https://avatars.githubusercontent.com/u/112222186?v=4"
+                }
+            }
+        ]
       }
     ]
   }'
@@ -100,13 +107,20 @@ img_bytes = img.read()
 img_base64 = base64.b64encode(img_bytes).decode('utf-8')
 data = { "messages": [
         {
-            "role": "user",
-            "image_url": f"data:image/jpeg;base64,{img_base64}"
-        },
-        {
-            "role": "user",
-            "content": "what is unusual about this image?"
-        }
+          "role": "user",
+          "content": [
+            {
+                "type": "text",
+                "text": "what is unusual about this image?"
+            },
+            {
+                "type": "image_url",
+                "image_url": {
+                    "url": f"data:image/jpeg;base64,{img_base64}"
+                }
+            }
+          ]
+       }
     ]
 }
 response = requests.post('http://127.0.0.1:5000/v1/chat/completions', json=data)
