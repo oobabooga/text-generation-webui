@@ -1,7 +1,7 @@
 instruction_template: |-
   {%- for message in messages %}
       {%- if message['role'] == 'system' -%}
-          {{- message['content'] -}}
+          {{-'<s> ' + message['content'] -}}
       {%- else -%}
           {%- if message['role'] == 'user' -%}
               {{-'[INST] ' + message['content'] + ' [/INST]'-}}
