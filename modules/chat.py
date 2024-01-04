@@ -511,8 +511,7 @@ def load_latest_history(state):
     histories = find_all_histories(state)
 
     if len(histories) > 0:
-        unique_id = Path(histories[0]).stem
-        history = load_history(unique_id, state['character_menu'], state['mode'])
+        history = load_history(histories[0], state['character_menu'], state['mode'])
     else:
         history = start_new_chat(state)
 
@@ -562,17 +561,17 @@ def replace_character_names(text, name1, name2):
 
 
 def generate_pfp_cache(character):
-    cache_folder = Path("cache")
+    cache_folder = Path(shared.args.disk_cache_dir)
     if not cache_folder.exists():
         cache_folder.mkdir()
 
     for path in [Path(f"characters/{character}.{extension}") for extension in ['png', 'jpg', 'jpeg']]:
         if path.exists():
             original_img = Image.open(path)
-            original_img.save(Path('cache/pfp_character.png'), format='PNG')
+            original_img.save(Path('{cache_folder}/pfp_character.png'), format='PNG')
 
             thumb = make_thumbnail(original_img)
-            thumb.save(Path('cache/pfp_character_thumb.png'), format='PNG')
+            thumb.save(Path('{cache_folder}/pfp_character_thumb.png'), format='PNG')
 
             return thumb
 
@@ -610,7 +609,9 @@ def load_character(character, name1, name2):
     else:
         logger.warning("Unable to read character data!")
 
-    for path in [Path("cache/pfp_character.png"), Path("cache/pfp_character_thumb.png")]:
+    cache_folder = Path(shared.args.disk_cache_dir)
+
+    for path in [Path("{cache_folder}/pfp_character.png"), Path("{cache_folder}/pfp_character_thumb.png")]:
         if path.exists():
             path.unlink()
 
@@ -723,13 +724,14 @@ def upload_character(file, img, tavern=False):
     logger.info(f'New character saved to "characters/{outfile_name}.yaml".')
     return gr.update(value=outfile_name, choices=get_available_characters())
 
+
 def build_context(data : str, charName : str):
     # To support a new format, simply add the corresponding keys to the lists below.
     personaKeys = ['personality', 'char_persona', 'description']
     scenarioKeys = ['scenario', 'world_scenario']
     exDialogKeys = ['mes_example', 'example_dialogue']
-    
     context = ""
+
     personaStrings = []
     scenarioStrings = []
     exDialogStrings = []
@@ -814,17 +816,17 @@ def check_tavern_character(img):
 
 
 def upload_your_profile_picture(img):
-    cache_folder = Path("cache")
+    cache_folder = Path(shared.args.disk_cache_dir)
     if not cache_folder.exists():
         cache_folder.mkdir()
 
     if img is None:
-        if Path("cache/pfp_me.png").exists():
-            Path("cache/pfp_me.png").unlink()
+        if Path("{cache_folder}/pfp_me.png").exists():
+            Path("{cache_folder}/pfp_me.png").unlink()
     else:
         img = make_thumbnail(img)
-        img.save(Path('cache/pfp_me.png'))
-        logger.info('Profile picture saved to "cache/pfp_me.png"')
+        img.save(Path('{cache_folder}/pfp_me.png'))
+        logger.info('Profile picture saved to "{cache_folder}/pfp_me.png"')
 
 
 def generate_character_yaml(name, greeting, context):
