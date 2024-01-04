@@ -611,7 +611,7 @@ def load_character(character, name1, name2):
 
     cache_folder = Path(shared.args.disk_cache_dir)
 
-    for path in [Path("{cache_folder}/pfp_character.png"), Path("{cache_folder}/pfp_character_thumb.png")]:
+    for path in [Path(f"{cache_folder}/pfp_character.png"), Path(f"{cache_folder}/pfp_character_thumb.png")]:
         if path.exists():
             path.unlink()
 
