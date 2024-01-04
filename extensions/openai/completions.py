@@ -145,43 +145,46 @@ def convert_history(history):
     system_message = ""
 
     for entry in history:
-        if "image_url" in entry:
-            image_url = entry['image_url']
-            if "base64" in image_url:
-                image_url = re.sub('^data:image/.+;base64,', '', image_url)
-                img = Image.open(BytesIO(base64.b64decode(image_url)))
-            else:
-                try:
-                    my_res = requests.get(image_url)
-                    img = Image.open(BytesIO(my_res.content))
-                except Exception:
-                    raise 'Image cannot be loaded from the URL!'
-
-            buffered = BytesIO()
-            img.save(buffered, format="JPEG")
-            img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
-            content = f'<img src="data:image/jpeg;base64,{img_str}">'
-        else:
-            content = entry["content"]
-
         role = entry["role"]
-
-        if role == "user":
-            user_input = content
-            if current_message:
-                chat_dialogue.append([current_message, ''])
-                current_message = ""
-            current_message = content
-        elif role == "assistant":
-            current_reply = content
-            if current_message:
-                chat_dialogue.append([current_message, current_reply])
-                current_message = ""
-                current_reply = ""
+        entry_content = entry["content"]
+        if isinstance(entry_content, str):
+            entry_content = [{'type': 'text', 'text': entry_content}]
+        for c in entry_content:
+            if "image_url" == c['type']:
+                image_url = c['image_url']['url']
+                if "base64" in image_url:
+                    image_url = re.sub('^data:image/.+;base64,', '', image_url)
+                    img = Image.open(BytesIO(base64.b64decode(image_url)))
+                else:
+                    try:
+                        my_res = requests.get(image_url)
+                        img = Image.open(BytesIO(my_res.content))
+                    except Exception:
+                        raise 'Image cannot be loaded from the URL!'
+    
+                buffered = BytesIO()
+                img.save(buffered, format="JPEG")
+                img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
+                content = f'<img src="data:image/jpeg;base64,{img_str}">'
             else:
-                chat_dialogue.append(['', current_reply])
-        elif role == "system":
-            system_message = content
+                content = c["text"]
+    
+            if role == "user":
+                user_input = content
+                if current_message:
+                    chat_dialogue.append([current_message, ''])
+                    current_message = ""
+                current_message = content
+            elif role == "assistant":
+                current_reply = content
+                if current_message:
+                    chat_dialogue.append([current_message, current_reply])
+                    current_message = ""
+                    current_reply = ""
+                else:
+                    chat_dialogue.append(['', current_reply])
+            elif role == "system":
+                system_message = content
 
     # if current_message:
     #     chat_dialogue.append([current_message, ''])
