@@ -1,9 +1,13 @@
 .chat {
-  background: var(--block-background-fill);
-  padding: 24px 19px;
-  padding-right: 19px !important;
-  border: 1px solid var(--block-border-color);
-  border-radius: 8px;
+    background: var(--block-background-fill);
+    padding: 24px 19px;
+    padding-right: 19px !important;
+    padding-top: 0;
+    border: 1px solid var(--block-border-color);
+}
+
+.chat > .messages {
+    padding-top: 28px !important;
 }
 
 .message {
@@ -13,6 +17,10 @@
     font-size: 15px;
     font-family: 'Noto Sans', Helvetica, Arial, sans-serif;
     line-height: 24px;
+}
+
+.message:first-child {
+    padding-top: 0;
 }
 
 .username {
@@ -54,7 +62,6 @@
 .gradio-container .chat .user-message {
     padding: 20px;
     background-color: var(--color-accent-soft);
-    border-radius: 20px;
     margin-bottom: 12px !important;
     margin-left: 16px;
     border-radius: 22px;

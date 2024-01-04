@@ -95,7 +95,8 @@ def generate_chat_prompt(user_input, state, **kwargs):
     else:
         renderer = chat_renderer
         if state['context'].strip() != '':
-            messages.append({"role": "system", "content": state['context']})
+            context = replace_character_names(state['context'], state['name1'], state['name2'])
+            messages.append({"role": "system", "content": context})
 
     insert_pos = len(messages)
     for user_msg, assistant_msg in reversed(history):
@@ -509,8 +510,7 @@ def load_latest_history(state):
     histories = find_all_histories(state)
 
     if len(histories) > 0:
-        unique_id = Path(histories[0]).stem
-        history = load_history(unique_id, state['character_menu'], state['mode'])
+        history = load_history(histories[0], state['character_menu'], state['mode'])
     else:
         history = start_new_chat(state)
 
@@ -560,17 +560,17 @@ def replace_character_names(text, name1, name2):
 
 
 def generate_pfp_cache(character):
-    cache_folder = Path("cache")
+    cache_folder = Path(shared.args.disk_cache_dir)
     if not cache_folder.exists():
         cache_folder.mkdir()
 
     for path in [Path(f"characters/{character}.{extension}") for extension in ['png', 'jpg', 'jpeg']]:
         if path.exists():
             original_img = Image.open(path)
-            original_img.save(Path('cache/pfp_character.png'), format='PNG')
+            original_img.save(Path('{cache_folder}/pfp_character.png'), format='PNG')
 
             thumb = make_thumbnail(original_img)
-            thumb.save(Path('cache/pfp_character_thumb.png'), format='PNG')
+            thumb.save(Path('{cache_folder}/pfp_character_thumb.png'), format='PNG')
 
             return thumb
 
@@ -594,8 +594,9 @@ def load_character(character, name1, name2):
 
     file_contents = open(filepath, 'r', encoding='utf-8').read()
     data = json.loads(file_contents) if extension == "json" else yaml.safe_load(file_contents)
+    cache_folder = Path(shared.args.disk_cache_dir)
 
-    for path in [Path("cache/pfp_character.png"), Path("cache/pfp_character_thumb.png")]:
+    for path in [Path("{cache_folder}/pfp_character.png"), Path("{cache_folder}/pfp_character_thumb.png")]:
         if path.exists():
             path.unlink()
 
@@ -713,17 +714,17 @@ def check_tavern_character(img):
 
 
 def upload_your_profile_picture(img):
-    cache_folder = Path("cache")
+    cache_folder = Path(shared.args.disk_cache_dir)
     if not cache_folder.exists():
         cache_folder.mkdir()
 
     if img is None:
-        if Path("cache/pfp_me.png").exists():
-            Path("cache/pfp_me.png").unlink()
+        if Path("{cache_folder}/pfp_me.png").exists():
+            Path("{cache_folder}/pfp_me.png").unlink()
     else:
         img = make_thumbnail(img)
-        img.save(Path('cache/pfp_me.png'))
-        logger.info('Profile picture saved to "cache/pfp_me.png"')
+        img.save(Path('{cache_folder}/pfp_me.png'))
+        logger.info('Profile picture saved to "{cache_folder}/pfp_me.png"')
 
 
 def generate_character_yaml(name, greeting, context):
@@ -768,13 +769,13 @@ def delete_character(name, instruct=False):
 
 def jinja_template_from_old_format(params, verbose=False):
     MASTER_TEMPLATE = """
-{%- set found_item = false -%}
+{%- set ns = namespace(found=false) -%}
 {%- for message in messages -%}
     {%- if message['role'] == 'system' -%}
-        {%- set found_item = true -%}
+        {%- set ns.found = true -%}
     {%- endif -%}
 {%- endfor -%}
-{%- if not found_item -%}
+{%- if not ns.found -%}
     {{- '<|PRE-SYSTEM|>' + '<|SYSTEM-MESSAGE|>' + '<|POST-SYSTEM|>' -}}
 {%- endif %}
 {%- for message in messages %}

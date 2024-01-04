@@ -20,12 +20,21 @@ try:
 except:
     llama_cpp_cuda = None
 
+try:
+    import llama_cpp_cuda_tensorcores
+except:
+    llama_cpp_cuda_tensorcores = None
+
 
 def llama_cpp_lib():
-    if (shared.args.cpu and llama_cpp is not None) or llama_cpp_cuda is None:
+    if shared.args.cpu and llama_cpp is not None:
         return llama_cpp
-    else:
+    elif shared.args.tensorcores and llama_cpp_cuda_tensorcores is not None:
+        return llama_cpp_cuda_tensorcores
+    elif llama_cpp_cuda is not None:
         return llama_cpp_cuda
+    else:
+        return llama_cpp
 
 
 class LlamacppHF(PreTrainedModel):
@@ -204,6 +213,7 @@ class LlamacppHF(PreTrainedModel):
             'tensor_split': tensor_split_list,
             'rope_freq_scale': 1.0 / shared.args.compress_pos_emb,
             'logits_all': shared.args.logits_all,
+            'offload_kqv': not shared.args.no_offload_kqv
         }
 
         Llama = llama_cpp_lib().Llama
