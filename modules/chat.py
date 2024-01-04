@@ -742,7 +742,7 @@ def build_context(data : str, charName : str):
 
     for scenarioKey in scenarioKeys:
         if scenarioKey in data and data[scenarioKey] != '':
-            scenarioStrings.append(f"Scenario: {data[scenarioKey].strip()}")
+            scenarioStrings.append(f"{data[scenarioKey].strip()}")
 
     for exDialogKey in exDialogKeys:
         if exDialogKey in data and data[exDialogKey] != '':
