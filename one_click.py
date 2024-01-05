@@ -204,7 +204,7 @@ def install_webui():
 
     # Find the proper Pytorch installation command
     install_git = "conda install -y -k ninja git"
-    install_pytorch = "python -m pip install torch==2.1.* torchvision==0.16.* torchaudio==2.1.*"
+    install_pytorch = "python -m pip install torch==2.1.* torchvision==0.16.* torchaudio==2.1.* "
 
     use_cuda118 = "N"
     if any((is_windows(), is_linux())) and selected_gpu == "NVIDIA":
@@ -220,20 +220,20 @@ def install_webui():
 
         if use_cuda118 == 'Y':
             print("CUDA: 11.8")
-            install_pytorch = f"python -m pip install torch==2.1.* torchvision==0.16.* torchaudio==2.1.* --index-url https://download.pytorch.org/whl/cu118"
+            install_pytorch += "--index-url https://download.pytorch.org/whl/cu118"
         else:
             print("CUDA: 12.1")
-            install_pytorch = f"python -m pip install torch==2.1.* torchvision==0.16.* torchaudio==2.1.* --index-url https://download.pytorch.org/whl/cu121"
-    elif not is_macos() and choice == "B":
+            install_pytorch += "--index-url https://download.pytorch.org/whl/cu121"
+    elif not is_macos() and selected_gpu == "AMD":
         if is_linux():
-            install_pytorch = "python -m pip install torch==2.1.* torchvision==0.16.* torchaudio==2.1.* --index-url https://download.pytorch.org/whl/rocm5.6"
+            install_pytorch += "--index-url https://download.pytorch.org/whl/rocm5.6"
         else:
             print("AMD GPUs are only supported on Linux. Exiting...")
             sys.exit(1)
-    elif is_linux() and (choice == "C" or choice == "N"):
-        install_pytorch = "python -m pip install torch==2.1.* torchvision==0.16.* torchaudio==2.1.* --index-url https://download.pytorch.org/whl/cpu"
-    elif choice == "D":
-        install_pytorch = "python -m pip install torch==2.1.* torchvision==0.16.* intel_extension_for_pytorch==2.1.* --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/"
+    elif is_linux() and selected_gpu in ["APPLE", "NONE"]:
+        install_pytorch += "--index-url https://download.pytorch.org/whl/cpu"
+    elif selected_gpu == "INTEL":
+        install_pytorch += "intel_extension_for_pytorch==2.1.* --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/"
 
     # Install Git and then Pytorch
     print_big_message("Installing PyTorch.")
