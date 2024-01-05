@@ -66,21 +66,28 @@ class GptFastHF(PreTrainedModel):
                     reset = False
                     self.n_tokens = longest_prefix
                     if len(seq_tensor) - longest_prefix > 0:
-                        for token in seq[longest_prefix:]:
+                        for token in seq[longest_prefix:-1]:
                             a = torch.tensor([[token]], device=self.torch_device, dtype=torch.int32)
                             b = torch.tensor([self.n_tokens], device=self.torch_device, dtype=torch.int32)
                             logits = self.model(a, b)
                             self.n_tokens += 1
+                    elif len(seq_tensor) == longest_prefix:
+                        # Very tricky: if the prefix we are reusing *is* the input_ids, then we have to back up the cache pointer by one,
+                        # because we feed input_ids[-1] to forward() below, but that last token is already in the cache!
+                        ex_cache.current_seq_len -= 1
 
             if reset:
                 self.n_tokens = 0
-                for token in seq:
+                for token in seq[:-1]:
                     a = torch.tensor([[token]], device=self.torch_device, dtype=torch.int32)
                     b = torch.tensor([self.n_tokens], device=self.torch_device, dtype=torch.int32)
                     logits = self.model(a, b)
                     self.n_tokens += 1
 
-            logits = logits.to(input_ids.device)
+            a = torch.tensor([[seq[-1]]], device=self.torch_device, dtype=torch.int32)
+            b = torch.tensor([self.n_tokens], device=self.torch_device, dtype=torch.int32)
+            logits = self.model(a, b)
+            self.n_tokens += 1
         # else:
         #     logits = self.model(input_ids).to(input_ids.device)
 
