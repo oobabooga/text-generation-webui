@@ -72,7 +72,7 @@ class GptFastHF(PreTrainedModel):
                     elif len(seq) == longest_prefix:
                         # Very tricky: if the prefix we are reusing *is* the input_ids, then we have to back up the cache pointer by one,
                         # because we feed input_ids[-1] to forward() below, but that last token is already in the cache!
-                        ex_cache.current_seq_len -= 1
+                        self.n_tokens -= 1
 
             if reset:
                 self.n_tokens = 0
@@ -132,7 +132,7 @@ class GptFastHF(PreTrainedModel):
 
         logger.info(f"Device: {device}")
         model = _load_model(model_file, device, precision, use_tp)
-        torch.cuda.synchronize()
+        # torch.cuda.synchronize()
 
         with torch.device(device):
             model.setup_caches(max_batch_size=1, max_seq_length=shared.args.max_seq_len)
