@@ -12,6 +12,58 @@ from transformers.generation.logits_process import (
 
 global_scores = None
 
+class DynaTempLogitsWarper(LogitsWarper):
+    def __init__(self, dynatemp: float, filter_value: float = -float("Inf"), min_tokens_to_keep: int = 1):
+        if not isinstance(dynatemp, float) or not (dynatemp > 0):
+            except_msg = (
+                f"`dynatemp` has to be a strictly positive float, otherwise your next token "
+                "scores will be invalid."
+            )
+            if isinstance(dynatemp, float) and dynatemp == 0.0:
+                except_msg += " If you're looking for greedy decoding strategies, set `do_sample=False`."
+            raise ValueError(except_msg)
+
+        self.dynatemp = dynatemp
+
+    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
+        # temp testing variables
+        
+        min_temp = 0.0
+        max_temp = 2.0
+        exponent_val = 1.0
+        
+        # Convert logits to probabilities
+        probs = torch.softmax(scores, dim=-1)
+
+        # Calculate entropy of the softmax probabilities
+        entropy = -1.0 * torch.where(probs > 0, probs * torch.log(probs), torch.zeros_like(probs)).sum()
+
+        print("Entropy:", entropy.item())
+
+        # Calculate maximum possible entropy
+        # Measure the length of the vocabulary via the last dimension of 'probs'
+        vocab_size = probs.shape[-1] 
+        max_entropy = math.log(vocab_size)
+
+        print("Max Possible Entropy:", max_entropy)
+
+        # Guard against division by zero
+        max_entropy = max_entropy if max_entropy != 0.0 else 1.0
+
+        # Normalize the entropy
+        normalized_entropy = entropy / max_entropy
+
+        print("Normalized Entropy:", normalized_entropy.item())
+
+        # Map the normalized entropy to the desired temperature range using the power function
+        dyn_temp = min_temp + (max_temp - min_temp) * (normalized_entropy.pow(exponent_val))
+
+        print("Dynamic Temperature (dyn_temp):", dyn_temp.item())
+
+        # Apply the dynamically calculated temperature scaling
+        scores = scores / dyn_temp
+
+        return scores
 
 class MinPLogitsWarper(LogitsWarper):
     def __init__(self, min_p: float, filter_value: float = -float("Inf"), min_tokens_to_keep: int = 1):
@@ -222,12 +274,14 @@ def get_logits_warper_patch(self, generation_config):
             warpers_to_add.append(TopALogitsWarper(top_a=generation_config.top_a, min_tokens_to_keep=min_tokens_to_keep))
         if generation_config.min_p is not None and 0.0 < generation_config.min_p <= 1.0:
             warpers_to_add.append(MinPLogitsWarper(min_p=generation_config.min_p, min_tokens_to_keep=min_tokens_to_keep))
+        if generation_config.dynatemp is not None and generation_config.dynatemp > 0.8:
+            warpers_to_add.append(DynaTempLogitsWarper(dynatemp=generation_config.dynatemp, min_tokens_to_keep=min_tokens_to_keep))
 
     if len(warpers) > 0 and isinstance(warpers[-1], LogitNormalization):
         normalize = warpers.pop(-1)
     else:
         normalize = None
-
+            
     warpers += warpers_to_add
     if generation_config.temperature_last:
         temperature_idx = None
@@ -272,6 +326,7 @@ def get_logits_processor_patch(self, **kwargs):
 def generation_config_init_patch(self, **kwargs):
     self.__init___old(**kwargs)
     self.min_p = kwargs.pop("min_p", 0.0)
+    self.dynatemp = kwargs.pop("dynatemp", 1.0)
     self.tfs = kwargs.pop("tfs", 1.0)
     self.top_a = kwargs.pop("top_a", 0.0)
     self.mirostat_mode = kwargs.pop("mirostat_mode", 0)
