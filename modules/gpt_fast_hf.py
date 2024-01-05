@@ -18,7 +18,6 @@ from modules.logging_colors import logger
 from transformers import LogitsProcessorList, is_torch_xpu_available
 
 
-
 class GptFastHF(PreTrainedModel):
     def __init__(self, model, device):
         super().__init__(PretrainedConfig())
@@ -52,7 +51,6 @@ class GptFastHF(PreTrainedModel):
         seq = input_ids[0]
         reset = True
 
-        a = torch.tensor([[0]], device=self.torch_device, dtype=torch.int32)
         if labels is None:
             if past_seq is not None:
                 min_length = min(past_seq.shape[0], seq.shape[0])
