@@ -186,7 +186,7 @@ def install_webui():
             print("Invalid choice. Please try again.")
             choice = input("Input> ").upper()
 
-    gpu_choice_type = {
+    gpu_choice_to_name = {
         "A": "NVIDIA",
         "B": "AMD",
         "C": "APPLE",
@@ -194,13 +194,13 @@ def install_webui():
         "N": "NONE"
     }
 
-    selected_gpu = gpu_choice_type.get(choice, "NONE")
+    selected_gpu = gpu_choice_to_name.get(choice, "NONE")
 
     if selected_gpu == "NONE"
         with open(cmd_flags_path, 'r+') as cmd_flags_file:
             if "--cpu" not in cmd_flags_file.read():
                 print_big_message("Adding the --cpu flag to CMD_FLAGS.txt.")
-                cmd_flags_file.write(f" --cpu")
+                cmd_flags_file.write(f"\n--cpu")
 
     # Find the proper Pytorch installation command
     install_git = "conda install -y -k ninja git"
