@@ -6,6 +6,7 @@ import torch
 import yaml
 from transformers import is_torch_xpu_available
 
+import extensions
 from modules import shared
 
 with open(Path(__file__).resolve().parent / '../css/NotoSans/stylesheet.css', 'r') as f:
@@ -204,7 +205,7 @@ def apply_interface_values(state, use_persistent=False):
         return [state[k] if k in state else gr.update() for k in elements]
 
 
-def save_settings(state, preset, extensions, show_controls):
+def save_settings(state, preset, extensions_list, show_controls):
     output = copy.deepcopy(shared.settings)
     exclude = ['name2', 'greeting', 'context', 'turn_template']
     for k in state:
@@ -215,9 +216,18 @@ def save_settings(state, preset, extensions, show_controls):
     output['prompt-default'] = state['prompt_menu-default']
     output['prompt-notebook'] = state['prompt_menu-notebook']
     output['character'] = state['character_menu']
-    output['default_extensions'] = extensions
+    output['default_extensions'] = extensions_list
     output['seed'] = int(output['seed'])
     output['show_controls'] = show_controls
+
+    # Save extension values in the UI
+    for extension_name in extensions_list:
+        extension = getattr(extensions, extension_name).script
+        if hasattr(extension, 'params'):
+            params = getattr(extension, 'params')
+            for param in params:
+                _id = f"{extension_name}-{param}"
+                output[_id] = params[param]
 
     return yaml.dump(output, sort_keys=False, width=float("inf"))
 
