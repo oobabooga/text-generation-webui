@@ -15,12 +15,15 @@ from transformers.modeling_outputs import CausalLMOutputWithPast
 
 from modules import shared
 from modules.logging_colors import logger
+from transformers import LogitsProcessorList, is_torch_xpu_available
+
 
 
 class GptFastHF(PreTrainedModel):
-    def __init__(self, model):
+    def __init__(self, model, device):
         super().__init__(PretrainedConfig())
         self.model = model
+        self.torch_device = device
         self.generation_config = GenerationConfig()
         self.past_seq = None
         self.n_tokens = 0
@@ -64,16 +67,16 @@ class GptFastHF(PreTrainedModel):
                     self.n_tokens = longest_prefix
                     if len(seq_tensor) - longest_prefix > 0:
                         for token in seq[longest_prefix:]:
-                            a = torch.tensor([[token]], device='cuda:0', dtype=torch.int32)
-                            b = torch.tensor([self.n_tokens], device='cuda:0', dtype=torch.int32)
+                            a = torch.tensor([[token]], device=self.torch_device, dtype=torch.int32)
+                            b = torch.tensor([self.n_tokens], device=self.torch_device, dtype=torch.int32)
                             logits = self.model(a, b)
                             self.n_tokens += 1
 
             if reset:
                 self.n_tokens = 0
                 for token in seq:
-                    a = torch.tensor([[token]], device='cuda:0', dtype=torch.int32)
-                    b = torch.tensor([self.n_tokens], device='cuda:0', dtype=torch.int32)
+                    a = torch.tensor([[token]], device=self.torch_device, dtype=torch.int32)
+                    b = torch.tensor([self.n_tokens], device=self.torch_device, dtype=torch.int32)
                     logits = self.model(a, b)
                     self.n_tokens += 1
 
@@ -113,13 +116,20 @@ class GptFastHF(PreTrainedModel):
         # https://github.com/pytorch-labs/gpt-fast/blob/main/generate.py
         rank = maybe_init_dist()
         use_tp = rank is not None
-        device = 'cuda'
         precision = torch.bfloat16
 
+        if torch.backends.mps.is_available():
+            device = 'mps'
+        elif is_torch_xpu_available():
+            device = 'xpu:0'
+        else:
+            device = 'cuda'
+
+        logger.info(f"Device: {device}")
         model = _load_model(model_file, device, precision, use_tp)
         torch.cuda.synchronize()
 
         with torch.device(device):
-            model.setup_caches(max_batch_size=1, max_seq_length=2048)
+            model.setup_caches(max_batch_size=1, max_seq_length=shared.args.max_seq_len)
 
-        return GptFastHF(model)
+        return GptFastHF(model, device)
