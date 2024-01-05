@@ -423,11 +423,6 @@ def update_requirements(initial_installation=False):
     clear_cache()
 
 
-def download_model():
-    # TODO: Replace with an import
-    run_cmd("python download-model.py", environment=True)
-
-
 def launch_webui():
     run_cmd(f"python server.py {flags}", environment=True)
 
