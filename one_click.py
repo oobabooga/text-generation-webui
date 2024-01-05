@@ -247,12 +247,9 @@ def install_webui():
 
     if choice == "N":
         print_big_message("Adding the --cpu flag to CMD_FLAGS.txt.")
-        cmd_flags_path = os.path.join(script_dir, "CMD_FLAGS.txt")
-
-        with open(cmd_flags_path, 'r') as cmd_flags_file:
+        with open(cmd_flags_path, 'r+') as cmd_flags_file:
             if "--cpu" not in cmd_flags_file.read():
-                with open(cmd_flags_path, 'a') as cmd_flags_file:
-                    cmd_flags_file.write(" --cpu")
+                cmd_flags_file.write(f" --cpu")
 
     gpu_choice_type = {
         "A": GPU.NONE,
