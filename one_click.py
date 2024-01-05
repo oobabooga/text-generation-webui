@@ -254,7 +254,7 @@ def install_webui():
                 with open(cmd_flags_path, 'a') as cmd_flags_file:
                     cmd_flags_file.write(" --cpu")
 
-    typeOfGPUFromChoice = {
+    gpu_choice_type = {
         "A": GPU.NONE,
         "B": GPU.NVIDIA,
         "C": GPU.AMD,
@@ -263,7 +263,7 @@ def install_webui():
         "N": GPU.NONE
     }
 
-    selected_gpu = typeOfGPUFromChoice.get(choice, GPU.NONE)
+    selected_gpu = gpu_choice_type.get(choice, GPU.NONE)
 
     if selected_gpu == GPU.NONE and choice != "N":
         try:
