@@ -16,16 +16,20 @@ document.querySelector(".header_bar").addEventListener("click", function(event) 
 
     // Check if one of the generation tabs is visible
     if (chat_visible || notebook_visible || default_visible) {
-      extensions.style.display = "flex";
+      extensions && (extensions.style.display = "flex");
+
       if (chat_visible) {
-        extensions.style.maxWidth = "880px";
-        extensions.style.padding = "0px";
+        this.style.marginBottom = "0px";
+        extensions && (extensions.style.maxWidth = "880px");
+        extensions && (extensions.style.padding = "0px");
       } else {
-        extensions.style.maxWidth = "none";
-        extensions.style.padding = "15px";
+        this.style.marginBottom = "19px";
+        extensions && (extensions.style.maxWidth = "none");
+        extensions && (extensions.style.padding = "15px");
       }
     } else {
-      extensions.style.display = "none";
+      this.style.marginBottom = "19px";
+      extensions && (extensions.style.display = "none");
     }
   }
 });
@@ -123,7 +127,7 @@ targetElement.addEventListener("scroll", function() {
 // Create a MutationObserver instance
 const observer = new MutationObserver(function(mutations) {
   mutations.forEach(function(mutation) {
-    updateChatHeight();
+    updateCssProperties();
 
     if(!isScrolled) {
       targetElement.scrollTop = targetElement.scrollHeight;
@@ -174,11 +178,11 @@ for(i = 0; i < noBackgroundelements.length; i++) {
   noBackgroundelements[i].parentNode.parentNode.parentNode.style.alignItems = "center";
 }
 
-const slimDropdownElements = document.querySelectorAll('.slim-dropdown');
+const slimDropdownElements = document.querySelectorAll(".slim-dropdown");
 for (i = 0; i < slimDropdownElements.length; i++) {
-    const parentNode = slimDropdownElements[i].parentNode;
-    parentNode.style.background = 'transparent';
-    parentNode.style.border = '0';
+  const parentNode = slimDropdownElements[i].parentNode;
+  parentNode.style.background = "transparent";
+  parentNode.style.border = "0";
 }
 
 //------------------------------------------------
@@ -189,6 +193,7 @@ for (i = 0; i < slimDropdownElements.length; i++) {
 var buttonsInChat = document.querySelectorAll("#chat-tab:not(.old-ui) #chat-buttons button");
 var button = document.getElementById("hover-element-button");
 var menu = document.getElementById("hover-menu");
+var istouchscreen = (navigator.maxTouchPoints > 0) || "ontouchstart" in document.documentElement;
 
 function showMenu() {
   menu.style.display = "flex"; // Show the menu
@@ -196,7 +201,9 @@ function showMenu() {
 
 function hideMenu() {
   menu.style.display = "none"; // Hide the menu
-  document.querySelector("#chat-input textarea").focus();
+  if (!istouchscreen) {
+    document.querySelector("#chat-input textarea").focus(); // Focus on the chat input
+  }
 }
 
 if (buttonsInChat.length > 0) {
@@ -231,11 +238,18 @@ function isMouseOverButtonOrMenu() {
 }
 
 button.addEventListener("mouseenter", function () {
-  showMenu();
+  if (!istouchscreen) {
+    showMenu();
+  }
 });
 
 button.addEventListener("click", function () {
+  if (menu.style.display === "flex") {
+    hideMenu();
+  }
+  else {
   showMenu();
+  }
 });
 
 // Add event listener for mouseleave on the button
@@ -309,7 +323,7 @@ function addBigPicture() {
 }
 
 function deleteBigPicture() {
-  var bigProfilePictures = document.querySelectorAll('.bigProfilePicture');
+  var bigProfilePictures = document.querySelectorAll(".bigProfilePicture");
   bigProfilePictures.forEach(function (element) {
     element.parentNode.removeChild(element);
   });
@@ -326,14 +340,34 @@ function toggleBigPicture() {
 }
 
 //------------------------------------------------
-// Define the --chat-height global CSS variable to
-// the height of the chat parent
+// Define global CSS properties for resizing and
+// positioning certain elements
 //------------------------------------------------
-function updateChatHeight() {
-  const chatContainer = document.getElementById('chat').parentNode.parentNode.parentNode;
-  const newChatHeight = `${chatContainer.clientHeight}px`;
+let currentChatInputHeight = 0;
 
-  document.documentElement.style.setProperty('--chat-height', newChatHeight);
+function updateCssProperties() {
+  // Set the height of the chat area
+  const chatContainer = document.getElementById("chat").parentNode.parentNode.parentNode;
+  const chatInputHeight = document.querySelector("#chat-input textarea").clientHeight;
+  if (chatContainer.clientHeight > 0) {
+    const newChatHeight = `${chatContainer.clientHeight - chatInputHeight + 40}px`;
+    document.documentElement.style.setProperty("--chat-height", newChatHeight);
+    document.documentElement.style.setProperty("--input-delta", `${chatInputHeight - 40}px`);
+
+    // Set the position offset of the chat input box
+    const header = document.querySelector(".header_bar");
+    const headerHeight = `${header.clientHeight}px`;
+    document.documentElement.style.setProperty("--header-height", headerHeight);
+
+    // Offset the scroll position of the chat area
+    if (chatInputHeight !== currentChatInputHeight) {
+      chatContainer.scrollTop += chatInputHeight > currentChatInputHeight ? chatInputHeight : -chatInputHeight;
+      currentChatInputHeight = chatInputHeight;
+    }
+  }
 }
 
-window.addEventListener('resize', updateChatHeight);
+new ResizeObserver(updateCssProperties)
+  .observe(document.querySelector("#chat-input textarea"));
+
+window.addEventListener("resize", updateCssProperties);

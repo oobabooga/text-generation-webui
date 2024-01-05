@@ -67,7 +67,55 @@ This extension uses the following parameters (from `settings.json`):
 
 ## Usage through API
 
+### Chat completions endpoint
+
+#### With an image URL
+
+```shell
+curl http://127.0.0.1:5000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "messages": [
+      {
+        "role": "user",
+        "image_url": "https://avatars.githubusercontent.com/u/112222186?v=4"
+      },
+      {
+        "role": "user",
+        "content": "What is unusual about this image?"
+      }
+    ]
+  }'
+```
+
+#### With a Base64 image
+
+```python
+import base64
+import json
+import requests
+
+img = open('image.jpg', 'rb')
+img_bytes = img.read()
+img_base64 = base64.b64encode(img_bytes).decode('utf-8')
+data = { "messages": [
+        {
+            "role": "user",
+            "image_url": f"data:image/jpeg;base64,{img_base64}"
+        },
+        {
+            "role": "user",
+            "content": "what is unusual about this image?"
+        }
+    ]
+}
+response = requests.post('http://127.0.0.1:5000/v1/chat/completions', json=data)
+print(response.text)
+```
+
 You can run the multimodal inference through API, by inputting the images to prompt. Images are embedded like so: `f'<img src="data:image/jpeg;base64,{img_str}">'`, where `img_str` is base-64 jpeg data. Note that you will need to launch `server.py` with the arguments `--api --extensions multimodal`. 
+
+### Completions endpoint
 
 Python example:
 

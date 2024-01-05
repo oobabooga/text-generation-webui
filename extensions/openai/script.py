@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import os
 import traceback
 from threading import Thread
@@ -367,6 +368,7 @@ def run_server():
     if shared.args.admin_key and shared.args.admin_key != shared.args.api_key:
         logger.info(f'OpenAI API admin key (for loading/unloading models):\n\n{shared.args.admin_key}\n')
 
+    logging.getLogger("uvicorn.error").propagate = False
     uvicorn.run(app, host=server_addr, port=port, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile)
 
 
