@@ -259,6 +259,8 @@ def fix_loader_name(name):
         return 'QuIP#'
     elif name in ['hqq']:
         return 'HQQ'
+    elif name in ['gptfast', 'gpt-fast', 'gpt_fast']:
+        return 'gpt-fast'
 
 
 def add_extension(name, last=False):

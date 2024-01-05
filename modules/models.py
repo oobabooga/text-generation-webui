@@ -71,6 +71,7 @@ def load_model(model_name, loader=None):
         'AutoAWQ': AutoAWQ_loader,
         'QuIP#': QuipSharp_loader,
         'HQQ': HQQ_loader,
+        'gpt-fast': gpt_fast_loader,
     }
 
     metadata = get_model_metadata(model_name)
@@ -399,6 +400,12 @@ def HQQ_loader(model_name):
     model = HQQModelForCausalLM.from_quantized(str(model_dir))
     HQQLinear.set_backend(getattr(HQQBackend, shared.args.hqq_backend))
     return model
+
+
+def gpt_fast_loader(model_name):
+    from modules.gpt_fast_hf import GptFastHF
+
+    return GptFastHF.from_pretrained(model_name)
 
 
 def get_max_memory_dict():
