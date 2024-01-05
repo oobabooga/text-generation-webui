@@ -165,64 +165,6 @@ def run_cmd(cmd, assert_success=False, environment=False, capture_output=False, 
     return result
 
 
-class GPU(Enum):
-    # GPU types
-    NVIDIA = 1
-    AMD = 2
-    APPLE = 3
-    INTEL = 4
-    NONE = 5
-
-
-def find_gpu() -> GPU:
-    # Find the GPU type and return it as a GPU type
-    if is_windows():
-        # wmic path win32_VideoController get name
-        try:
-            with subprocess.Popen(["wmic", "path", "win32_VideoController", "get", "name"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True) as proc:
-                output = proc.communicate()[0].lower()
-                if "nvidia" in output:
-                    return GPU.NVIDIA
-                elif "amd" in output:
-                    return GPU.AMD
-                elif "intel" in output:
-                    return GPU.INTEL
-                else:
-                    return GPU.NONE
-        except:
-            raise Exception("Failed to find GPU type. Please select your GPU manually.")
-    elif is_linux():
-        # lspci -vnn | grep -i 'VGA\|3D\|Display'
-        try:
-            with subprocess.Popen(["lspci", "-vnn"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True) as proc:
-                output = proc.communicate()[0].lower()
-                if "nvidia" in output:
-                    return GPU.NVIDIA
-                elif "amd" in output:
-                    return GPU.AMD
-                elif "intel" in output:
-                    return GPU.INTEL
-                else:
-                    return GPU.NONE
-        except:
-            raise Exception("Failed to find GPU type. Please select your GPU manually.")
-    elif is_macos():
-        # system_profiler SPDisplaysDataType | grep -i ...
-        try:
-            if os.system("system_profiler SPDisplaysDataType | grep -i nvidia > /dev/null") == 0:
-                return GPU.NVIDIA
-            elif os.system("system_profiler SPDisplaysDataType | grep -i amd > /dev/null") == 0:
-                return GPU.AMD
-            elif os.system("system_profiler SPDisplaysDataType | grep -i intel > /dev/null") == 0:
-                return GPU.INTEL
-            else:
-                return GPU.NONE
-        except:
-            raise Exception("Failed to find GPU type. Please select your GPU manually.")
-    else:
-        return GPU.NONE
-
-
 def install_webui():
     # Select your GPU, or choose to run in CPU mode
     if "GPU_CHOICE" in os.environ:
@@ -232,45 +174,33 @@ def install_webui():
         print()
         print("What is your GPU?")
         print()
-        print("A) Auto-detect GPU")
-        print("B) NVIDIA")
-        print("C) AMD (Linux/MacOS only. Requires ROCm SDK 5.6 on Linux)")
-        print("D) Apple M Series")
-        print("E) Intel Arc (IPEX)")
+        print("A) NVIDIA")
+        print("B) AMD (Linux/MacOS only. Requires ROCm SDK 5.6 on Linux)")
+        print("C) Apple M Series")
+        print("D) Intel Arc (IPEX)")
         print("N) None (I want to run models in CPU mode)")
         print()
 
         choice = input("Input> ").upper()
-        while choice not in 'ABCDEN':
+        while choice not in 'ABCDN':
             print("Invalid choice. Please try again.")
             choice = input("Input> ").upper()
 
     if choice == "N":
-        print_big_message("Adding the --cpu flag to CMD_FLAGS.txt.")
         with open(cmd_flags_path, 'r+') as cmd_flags_file:
             if "--cpu" not in cmd_flags_file.read():
+                print_big_message("Adding the --cpu flag to CMD_FLAGS.txt.")
                 cmd_flags_file.write(f" --cpu")
 
     gpu_choice_type = {
-        "A": GPU.NONE,
-        "B": GPU.NVIDIA,
-        "C": GPU.AMD,
-        "D": GPU.APPLE,
-        "E": GPU.INTEL,
+        "A": GPU.NVIDIA,
+        "B": GPU.AMD,
+        "C": GPU.APPLE,
+        "D": GPU.INTEL,
         "N": GPU.NONE
     }
 
     selected_gpu = gpu_choice_type.get(choice, GPU.NONE)
-
-    if selected_gpu == GPU.NONE and choice != "N":
-        try:
-            selected_gpu = find_gpu()
-        except Exception as e:
-            print_big_message(f"{e}")
-            print("Exiting...")
-            sys.exit(1)
-        print(f"Auto-detected GPU type: {selected_gpu.name}.")
-        print("If this is incorrect, please re-run the script and choose the correct GPU type.")
 
     # Find the proper Pytorch installation command
     install_git = "conda install -y -k ninja git"
