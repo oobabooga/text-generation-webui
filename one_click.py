@@ -8,7 +8,6 @@ import signal
 import site
 import subprocess
 import sys
-from enum import Enum
 
 script_dir = os.getcwd()
 conda_env_path = os.path.join(script_dir, "installer_files", "env")
@@ -194,13 +193,13 @@ def install_webui():
         "N": "NONE"
     }
 
-    selected_gpu = gpu_choice_to_name.get(choice, "NONE")
+    selected_gpu = gpu_choice_to_name[choice]
 
-    if selected_gpu == "NONE"
+    if selected_gpu == "NONE":
         with open(cmd_flags_path, 'r+') as cmd_flags_file:
             if "--cpu" not in cmd_flags_file.read():
                 print_big_message("Adding the --cpu flag to CMD_FLAGS.txt.")
-                cmd_flags_file.write(f"\n--cpu")
+                cmd_flags_file.write("\n--cpu")
 
     # Find the proper Pytorch installation command
     install_git = "conda install -y -k ninja git"
@@ -230,7 +229,7 @@ def install_webui():
         else:
             print("AMD GPUs are only supported on Linux. Exiting...")
             sys.exit(1)
-    elif is_linux() and selected_gpu == "APPLE" or selected_gpu == "NONE":
+    elif is_linux() and selected_gpu in ["APPLE", "NONE"]:
         install_pytorch = "python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu"
     elif selected_gpu == "INTEL":
         install_pytorch = "python -m pip install torch==2.1.0a0 torchvision==0.16.0a0 intel_extension_for_pytorch==2.1.10+xpu --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/"
