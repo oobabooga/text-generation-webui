@@ -49,14 +49,14 @@ class GptFastHF(PreTrainedModel):
         input_ids = kwargs['input_ids']
         past_seq = self.past_seq
 
-        seq = input_ids[0].tolist()
-        seq_tensor = torch.tensor(seq)
+        seq = input_ids[0]
         reset = True
 
+        a = torch.tensor([[0]], device=self.torch_device, dtype=torch.int32)
         if labels is None:
             if past_seq is not None:
-                min_length = min(past_seq.shape[0], seq_tensor.shape[0])
-                indices = torch.nonzero(~torch.eq(past_seq[:min_length], seq_tensor[:min_length]))
+                min_length = min(past_seq.shape[0], seq.shape[0])
+                indices = torch.nonzero(~torch.eq(past_seq[:min_length], seq[:min_length]))
                 if len(indices) > 0:
                     longest_prefix = indices[0].item()
                 else:
@@ -65,13 +65,13 @@ class GptFastHF(PreTrainedModel):
                 if longest_prefix > 0:
                     reset = False
                     self.n_tokens = longest_prefix
-                    if len(seq_tensor) - longest_prefix > 0:
+                    if len(seq) - longest_prefix > 0:
                         for token in seq[longest_prefix:-1]:
                             a = torch.tensor([[token]], device=self.torch_device, dtype=torch.int32)
                             b = torch.tensor([self.n_tokens], device=self.torch_device, dtype=torch.int32)
                             logits = self.model(a, b)
                             self.n_tokens += 1
-                    elif len(seq_tensor) == longest_prefix:
+                    elif len(seq) == longest_prefix:
                         # Very tricky: if the prefix we are reusing *is* the input_ids, then we have to back up the cache pointer by one,
                         # because we feed input_ids[-1] to forward() below, but that last token is already in the cache!
                         ex_cache.current_seq_len -= 1
@@ -91,7 +91,7 @@ class GptFastHF(PreTrainedModel):
         # else:
         #     logits = self.model(input_ids).to(input_ids.device)
 
-        self.past_seq = seq_tensor
+        self.past_seq = seq
 
         loss = None
         # if labels is not None:
