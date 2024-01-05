@@ -185,15 +185,28 @@ def install_webui():
             print("Invalid choice. Please try again.")
             choice = input("Input> ").upper()
 
-    if choice == "N":
-        print_big_message("Once the installation ends, make sure to open CMD_FLAGS.txt with\na text editor and add the --cpu flag.")
+    gpu_choice_to_name = {
+        "A": "NVIDIA",
+        "B": "AMD",
+        "C": "APPLE",
+        "D": "INTEL",
+        "N": "NONE"
+    }
+
+    selected_gpu = gpu_choice_to_name[choice]
+
+    if selected_gpu == "NONE":
+        with open(cmd_flags_path, 'r+') as cmd_flags_file:
+            if "--cpu" not in cmd_flags_file.read():
+                print_big_message("Adding the --cpu flag to CMD_FLAGS.txt.")
+                cmd_flags_file.write("\n--cpu")
 
     # Find the proper Pytorch installation command
     install_git = "conda install -y -k ninja git"
     install_pytorch = "python -m pip install torch torchvision torchaudio"
 
     use_cuda118 = "N"
-    if any((is_windows(), is_linux())) and choice == "A":
+    if any((is_windows(), is_linux())) and selected_gpu == "NVIDIA":
         if "USE_CUDA118" in os.environ:
             use_cuda118 = "Y" if os.environ.get("USE_CUDA118", "").lower() in ("yes", "y", "true", "1", "t", "on") else "N"
         else:
@@ -203,21 +216,22 @@ def install_webui():
             while use_cuda118 not in 'YN':
                 print("Invalid choice. Please try again.")
                 use_cuda118 = input("Input> ").upper().strip('"\'').strip()
+
         if use_cuda118 == 'Y':
             print("CUDA: 11.8")
         else:
             print("CUDA: 12.1")
 
         install_pytorch = f"python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/{'cu121' if use_cuda118 == 'N' else 'cu118'}"
-    elif not is_macos() and choice == "B":
+    elif not is_macos() and selected_gpu == "AMD":
         if is_linux():
             install_pytorch = "python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.6"
         else:
             print("AMD GPUs are only supported on Linux. Exiting...")
             sys.exit(1)
-    elif is_linux() and (choice == "C" or choice == "N"):
+    elif is_linux() and selected_gpu in ["APPLE", "NONE"]:
         install_pytorch = "python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu"
-    elif choice == "D":
+    elif selected_gpu == "INTEL":
         install_pytorch = "python -m pip install torch==2.1.0a0 torchvision==0.16.0a0 intel_extension_for_pytorch==2.1.10+xpu --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/"
 
     # Install Git and then Pytorch
@@ -225,7 +239,7 @@ def install_webui():
     run_cmd(f"{install_git} && {install_pytorch} && python -m pip install py-cpuinfo==9.0.0", assert_success=True, environment=True)
 
     # Install CUDA libraries (this wasn't necessary for Pytorch before...)
-    if choice == "A":
+    if selected_gpu == "NVIDIA":
         print_big_message("Installing the CUDA runtime libraries.")
         run_cmd(f"conda install -y -c \"nvidia/label/{'cuda-12.1.1' if use_cuda118 == 'N' else 'cuda-11.8.0'}\" cuda-runtime", assert_success=True, environment=True)
 
@@ -279,29 +293,19 @@ def update_requirements(initial_installation=False):
     is_cuda118 = '+cu118' in torver  # 2.1.0+cu118
     is_cuda117 = '+cu117' in torver  # 2.0.1+cu117
     is_rocm = '+rocm' in torver  # 2.0.1+rocm5.4.2
-    is_intel = '+cxx11' in torver  # 2.0.1a0+cxx11.abi
+    # is_intel = '+cxx11' in torver  # 2.0.1a0+cxx11.abi
     is_cpu = '+cpu' in torver  # 2.0.1+cpu
 
     if is_rocm:
-        if cpu_has_avx2():
-            requirements_file = "requirements_amd.txt"
-        else:
-            requirements_file = "requirements_amd_noavx2.txt"
+        base_requirements = "requirements_amd" + ("_noavx2" if not cpu_has_avx2() else "") + ".txt"
     elif is_cpu:
-        if cpu_has_avx2():
-            requirements_file = "requirements_cpu_only.txt"
-        else:
-            requirements_file = "requirements_cpu_only_noavx2.txt"
+        base_requirements = "requirements_cpu_only" + ("_noavx2" if not cpu_has_avx2() else "") + ".txt"
     elif is_macos():
-        if is_x86_64():
-            requirements_file = "requirements_apple_intel.txt"
-        else:
-            requirements_file = "requirements_apple_silicon.txt"
+        base_requirements = "requirements_apple_" + ("intel" if is_x86_64() else "silicon") + ".txt"
     else:
-        if cpu_has_avx2():
-            requirements_file = "requirements.txt"
-        else:
-            requirements_file = "requirements_noavx2.txt"
+        base_requirements = "requirements" + ("_noavx2" if not cpu_has_avx2() else "") + ".txt"
+
+    requirements_file = base_requirements
 
     print_big_message(f"Installing webui requirements from file: {requirements_file}")
     print(f"TORCH: {torver}\n")
@@ -346,10 +350,6 @@ def update_requirements(initial_installation=False):
     clear_cache()
 
 
-def download_model():
-    run_cmd("python download-model.py", environment=True)
-
-
 def launch_webui():
     run_cmd(f"python server.py {flags}", environment=True)
 
@@ -378,7 +378,7 @@ if __name__ == "__main__":
         if '--model-dir' in flags:
             # Splits on ' ' or '=' while maintaining spaces within quotes
             flags_list = re.split(' +(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)|=', flags)
-            model_dir = [flags_list[(flags_list.index(flag)+1)] for flag in flags_list if flag == '--model-dir'][0].strip('"\'')
+            model_dir = [flags_list[(flags_list.index(flag) + 1)] for flag in flags_list if flag == '--model-dir'][0].strip('"\'')
         else:
             model_dir = 'models'
 
