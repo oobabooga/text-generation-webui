@@ -1,7 +1,7 @@
 .message {
     display: grid;
     grid-template-columns: 60px minmax(0, 1fr);
-    padding-bottom: 25px;
+    padding-bottom: 15px;
     font-size: 15px;
     font-family: 'Noto Sans', Helvetica, Arial, sans-serif;
     line-height: 22.5px !important;
@@ -50,10 +50,6 @@
 
 .message-body p, .chat .message-body ul, .chat .message-body ol {
     margin-bottom: 10px !important;
-}
-
-.message-body p:last-child, .chat .message-body ul:last-child, .chat .message-body ol:last-child {
-    margin-bottom: 0 !important;
 }
 
 .dark .message-body p em {

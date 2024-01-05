@@ -21,7 +21,7 @@ from transformers import (
 )
 
 import modules.shared as shared
-from modules import RoPE, llama_attn_hijack, sampler_hijack
+from modules import RoPE, sampler_hijack
 from modules.logging_colors import logger
 from modules.models_settings import get_model_metadata
 from modules.relative_imports import RelativeImport
@@ -65,9 +65,6 @@ def load_model(model_name, loader=None):
         'GPTQ-for-LLaMa': GPTQ_loader,
         'llama.cpp': llamacpp_loader,
         'llamacpp_HF': llamacpp_HF_loader,
-        'RWKV': RWKV_loader,
-        'ExLlama': ExLlama_loader,
-        'ExLlama_HF': ExLlama_HF_loader,
         'ExLlamav2': ExLlamav2_loader,
         'ExLlamav2_HF': ExLlamav2_HF_loader,
         'ctransformers': ctransformers_loader,
@@ -96,10 +93,6 @@ def load_model(model_name, loader=None):
             return None, None
         else:
             tokenizer = load_tokenizer(model_name, model)
-
-    # Hijack attention with xformers
-    if any((shared.args.xformers, shared.args.sdp_attention)):
-        llama_attn_hijack.hijack_llama_attention()
 
     shared.settings.update({k: v for k, v in metadata.items() if k in shared.settings})
     if loader.lower().startswith('exllama'):
@@ -133,7 +126,6 @@ def load_tokenizer(model_name, model):
 
 
 def huggingface_loader(model_name):
-
     path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
     params = {
         'low_cpu_mem_usage': True,
@@ -177,10 +169,8 @@ def huggingface_loader(model_name):
 
     # Load with quantization and/or offloading
     else:
-
         if not any((shared.args.cpu, torch.cuda.is_available(), is_xpu_available(), torch.backends.mps.is_available())):
             logger.warning('torch.cuda.is_available() and is_xpu_available() returned False. This means that no GPU has been detected. Falling back to CPU mode.')
-
             shared.args.cpu = True
 
         if shared.args.cpu:
@@ -386,19 +376,6 @@ def AutoGPTQ_loader(model_name):
     return modules.AutoGPTQ_loader.load_quantized(model_name)
 
 
-def ExLlama_loader(model_name):
-    from modules.exllama import ExllamaModel
-
-    model, tokenizer = ExllamaModel.from_pretrained(model_name)
-    return model, tokenizer
-
-
-def ExLlama_HF_loader(model_name):
-    from modules.exllama_hf import ExllamaHF
-
-    return ExllamaHF.from_pretrained(model_name)
-
-
 def ExLlamav2_loader(model_name):
     from modules.exllamav2 import Exllamav2Model
 
@@ -422,23 +399,6 @@ def HQQ_loader(model_name):
     model = HQQModelForCausalLM.from_quantized(str(model_dir))
     HQQLinear.set_backend(getattr(HQQBackend, shared.args.hqq_backend))
     return model
-
-
-def RWKV_loader(model_name):
-    '''
-    This loader is not currently maintained as RWKV can now be loaded
-    through the transformers library.
-    '''
-    from modules.RWKV import RWKVModel, RWKVTokenizer
-
-    model = RWKVModel.from_pretrained(
-        Path(f'{shared.args.model_dir}/{model_name}'),
-        dtype="fp32" if shared.args.cpu else "bf16" if shared.args.bf16 else "fp16",
-        device="cpu" if shared.args.cpu else "xpu" if is_xpu_available() else "cuda"
-    )
-
-    tokenizer = RWKVTokenizer.from_pretrained(Path(shared.args.model_dir))
-    return model, tokenizer
 
 
 def get_max_memory_dict():
