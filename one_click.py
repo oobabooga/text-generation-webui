@@ -186,28 +186,28 @@ def install_webui():
             print("Invalid choice. Please try again.")
             choice = input("Input> ").upper()
 
-    if choice == "N":
+    gpu_choice_type = {
+        "A": "NVIDIA",
+        "B": "AMD",
+        "C": "APPLE",
+        "D": "INTEL",
+        "N": "NONE"
+    }
+
+    selected_gpu = gpu_choice_type.get(choice, "NONE")
+
+    if selected_gpu == "NONE"
         with open(cmd_flags_path, 'r+') as cmd_flags_file:
             if "--cpu" not in cmd_flags_file.read():
                 print_big_message("Adding the --cpu flag to CMD_FLAGS.txt.")
                 cmd_flags_file.write(f" --cpu")
-
-    gpu_choice_type = {
-        "A": GPU.NVIDIA,
-        "B": GPU.AMD,
-        "C": GPU.APPLE,
-        "D": GPU.INTEL,
-        "N": GPU.NONE
-    }
-
-    selected_gpu = gpu_choice_type.get(choice, GPU.NONE)
 
     # Find the proper Pytorch installation command
     install_git = "conda install -y -k ninja git"
     install_pytorch = "python -m pip install torch torchvision torchaudio"
 
     use_cuda118 = "N"
-    if any((is_windows(), is_linux())) and selected_gpu == GPU.NVIDIA:
+    if any((is_windows(), is_linux())) and selected_gpu == "NVIDIA":
         if "USE_CUDA118" in os.environ:
             use_cuda118 = "Y" if os.environ.get("USE_CUDA118", "").lower() in ("yes", "y", "true", "1", "t", "on") else "N"
         else:
@@ -217,21 +217,22 @@ def install_webui():
             while use_cuda118 not in 'YN':
                 print("Invalid choice. Please try again.")
                 use_cuda118 = input("Input> ").upper().strip('"\'').strip()
+
         if use_cuda118 == 'Y':
             print("CUDA: 11.8")
         else:
             print("CUDA: 12.1")
 
         install_pytorch = f"python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/{'cu121' if use_cuda118 == 'N' else 'cu118'}"
-    elif not is_macos() and selected_gpu == GPU.AMD:
+    elif not is_macos() and selected_gpu == "AMD":
         if is_linux():
             install_pytorch = "python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.6"
         else:
             print("AMD GPUs are only supported on Linux. Exiting...")
             sys.exit(1)
-    elif is_linux() and selected_gpu == GPU.APPLE or choice == "N":
+    elif is_linux() and selected_gpu == "APPLE" or selected_gpu == "NONE":
         install_pytorch = "python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu"
-    elif selected_gpu == GPU.INTEL:
+    elif selected_gpu == "INTEL":
         install_pytorch = "python -m pip install torch==2.1.0a0 torchvision==0.16.0a0 intel_extension_for_pytorch==2.1.10+xpu --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/"
 
     # Install Git and then Pytorch
@@ -239,7 +240,7 @@ def install_webui():
     run_cmd(f"{install_git} && {install_pytorch} && python -m pip install py-cpuinfo==9.0.0", assert_success=True, environment=True)
 
     # Install CUDA libraries (this wasn't necessary for Pytorch before...)
-    if selected_gpu == GPU.NVIDIA:
+    if selected_gpu == "NVIDIA":
         print_big_message("Installing the CUDA runtime libraries.")
         run_cmd(f"conda install -y -c \"nvidia/label/{'cuda-12.1.1' if use_cuda118 == 'N' else 'cuda-11.8.0'}\" cuda-runtime", assert_success=True, environment=True)
 
