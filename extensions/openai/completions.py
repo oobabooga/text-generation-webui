@@ -294,9 +294,9 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
 
     # generate reply #######################################
     try:
-        prompt = generate_chat_prompt(user_input, generate_params)
+        prompt = generate_chat_prompt(user_input, generate_params, except_on_truncation_fail=True)
     except ValueError as e:
-        raise InvalidRequestError(message=str(e), param=[user_input, generate_params])
+        raise InvalidRequestError(message=str(e), param='messages')
     
     token_count = len(encode(prompt)[0])
     debug_msg({'prompt': prompt, 'generate_params': generate_params})
