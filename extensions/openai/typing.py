@@ -84,8 +84,10 @@ class ChatCompletionRequestParams(BaseModel):
     messages: List[dict]
     model: str | None = Field(default=None, description="Unused parameter. To change the model, use the /v1/internal/model/load endpoint.")
     frequency_penalty: float | None = 0
-    function_call: str | dict | None = Field(default=None, description="Unused parameter.")
-    functions: List[dict] | None = Field(default=None, description="Unused parameter.")
+    function_call: str | dict | None = Field(default=None, description="Function calling(Deprecated openai keyname).")
+    functions: List[dict] | None = Field(default=None, description="Functions(Deprecated openai keyname).")
+    tool_choice: str | dict | None = Field(default=None, description="Function calling.")
+    tools: List[dict] | None = Field(default=None, description="Functions.")
     logit_bias: dict | None = None
     max_tokens: int | None = None
     n: int | None = Field(default=1, description="Unused parameter.")
@@ -200,6 +202,28 @@ class LoraListResponse(BaseModel):
 
 class LoadLorasRequest(BaseModel):
     lora_names: List[str]
+    
+    
+# The function_call or tool_choice keyname from openai api request body
+# e.g. {"type": "function", "function": {"name": "get_n_day_weather_forecast"}}
+class FunctionName(BaseModel):
+    name: str
+class FunctionCallRequest(BaseModel):
+    type: str = "function"
+    function: FunctionName
+    
+class FunctionNameArg(BaseModel):
+    name: str
+    arguments: object
+"""
+TODO : llm function call response actually is hard to parse into json dict due to argument in nasty single format
+e.g {\"name\": \"calculate_loan_payment\", \"arguments\": '{\"principal\": 50000, \"interest_rate\": 5, \"loan_term\": 10}'}
+so we have to use ast.literal_eval, so we just make arguments: object instead of str or dict
+"""
+class FunctionCallResponse(BaseModel):
+    id: str
+    type: str = "function"
+    function: FunctionNameArg
 
 
 def to_json(obj):
