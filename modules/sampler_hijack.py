@@ -37,6 +37,9 @@ class DynaTempLogitsWarper(LogitsWarper):
         # Calculate entropy of the softmax probabilities
         entropy = -1.0 * torch.where(probs > 0, probs * torch.log(probs), torch.zeros_like(probs)).sum()
 
+        # Guard against future possible division by zero
+        entropy = max(entropy, torch.tensor(1e-10))  # Ensures entropy is slightly greater than 0
+
         print("Entropy:", entropy.item())
 
         # Any logits which are not -Infinity will be considered for calculating max entropy.
@@ -47,7 +50,7 @@ class DynaTempLogitsWarper(LogitsWarper):
 
         print("Max Possible Entropy considering valid tokens only:", max_entropy)
 
-        # Guard against division by zero
+        # Guard against future possible division by zero
         max_entropy = max_entropy if max_entropy != 0.0 else 1.0
 
         # Normalize the entropy
