@@ -292,7 +292,6 @@ def get_logits_warper_patch(self, generation_config):
                 temp_warper_idx = i
                 break
 
-        # If a temperature warper is found, move it to the end
         if temp_warper_idx is not None:
             warpers.append(warpers.pop(temp_warper_idx))
             warpers = LogitsProcessorList(warpers)
@@ -301,6 +300,8 @@ def get_logits_warper_patch(self, generation_config):
         warpers.append(normalize)
 
     warpers.append(SpyLogitsWarper())
+    # for i in range(len(warpers)):
+    #     print(warpers[i].__class__.__name__)
     return warpers
 
 
