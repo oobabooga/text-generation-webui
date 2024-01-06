@@ -48,10 +48,10 @@ class DynaTempLogitsWarper(LogitsWarper):
         # Now, calculate the max entropy by using only the valid tokens' count
         max_entropy = math.log(num_valid_tokens)
 
-        print("Max Possible Entropy considering valid tokens only:", max_entropy)
-
         # Guard against future possible division by zero
-        max_entropy = max_entropy if max_entropy != 0.0 else 1.0
+        max_entropy = max_entropy if max_entropy > 0.0 else 1e-10
+
+        print("Max Possible Entropy considering valid tokens only:", max_entropy)
 
         # Normalize the entropy
         normalized_entropy = entropy / max_entropy
