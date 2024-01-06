@@ -13,7 +13,10 @@ from transformers.generation.logits_process import (
 global_scores = None
 
 class DynaTempLogitsWarper(LogitsWarper):
-    def __init__(self, dynatemp: float, filter_value: float = -float("Inf"), min_tokens_to_keep: int = 1):
+    def __init__(self, dynatemp: float, temperature: float, filter_value: float = -float("Inf"), min_tokens_to_keep: int = 1):
+
+        self.temperature = temperature
+        
         if not isinstance(dynatemp, float) or not (dynatemp > 0):
             except_msg = (
                 f"`dynatemp` has to be a strictly positive float, otherwise your next token "
@@ -27,6 +30,8 @@ class DynaTempLogitsWarper(LogitsWarper):
 
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
         # temp testing variables
+
+        print("Temperature from generation_config:", self.temperature)
         
         min_temp = 0.0
         max_temp = 2.0
@@ -255,13 +260,15 @@ class RepetitionPenaltyLogitsProcessorWithRange(LogitsProcessor):
 
         return scores
 
-
 def get_logits_warper_patch(self, generation_config):
     warpers = self._get_logits_warper_old(generation_config)
     warpers_to_add = LogitsProcessorList()
     min_tokens_to_keep = 2 if generation_config.num_beams > 1 else 1
 
-    if generation_config.mirostat_mode is not None and generation_config.mirostat_mode == 2:
+    # Insert the new DynaTempLogitsWarper check at the top to prioritize it
+    if generation_config.dynatemp is not None and generation_config.dynatemp > 0.0:
+        warpers_to_add.append(DynaTempLogitsWarper(dynatemp=generation_config.dynatemp, temperature==generation_config.temperature, min_tokens_to_keep=min_tokens_to_keep))
+    elif generation_config.mirostat_mode is not None and generation_config.mirostat_mode == 2:
         warpers_to_add.append(MirostatLogitsWarper(mirostat_mode=generation_config.mirostat_mode, mirostat_eta=generation_config.mirostat_eta, mirostat_tau=generation_config.mirostat_tau, min_tokens_to_keep=min_tokens_to_keep))
         # We need to disable samplers other than temperature
         for warper in warpers:
@@ -274,8 +281,7 @@ def get_logits_warper_patch(self, generation_config):
             warpers_to_add.append(TopALogitsWarper(top_a=generation_config.top_a, min_tokens_to_keep=min_tokens_to_keep))
         if generation_config.min_p is not None and 0.0 < generation_config.min_p <= 1.0:
             warpers_to_add.append(MinPLogitsWarper(min_p=generation_config.min_p, min_tokens_to_keep=min_tokens_to_keep))
-        if generation_config.dynatemp is not None and generation_config.dynatemp > 0.8:
-            warpers_to_add.append(DynaTempLogitsWarper(dynatemp=generation_config.dynatemp, min_tokens_to_keep=min_tokens_to_keep))
+        # Removed the original DynaTempLogitsWarper condition
 
     if len(warpers) > 0 and isinstance(warpers[-1], LogitNormalization):
         normalize = warpers.pop(-1)
@@ -284,22 +290,22 @@ def get_logits_warper_patch(self, generation_config):
             
     warpers += warpers_to_add
     if generation_config.temperature_last:
-        temperature_idx = None
-        for i in range(len(warpers)):
-            if warpers[i].__class__.__name__ == 'TemperatureLogitsWarper':
-                temperature_idx = i
+        temp_warper_idx = None
+        # Check for both TemperatureLogitsWarper and DynaTempLogitsWarper
+        for i, warper in enumerate(warpers):
+            if isinstance(warper, TemperatureLogitsWarper) or isinstance(warper, DynaTempLogitsWarper):
+                temp_warper_idx = i
                 break
 
-        if temperature_idx is not None:
-            warpers = warpers[:temperature_idx] + warpers[temperature_idx + 1:] + [warpers[temperature_idx]]
+        # If a temperature warper is found, move it to the end
+        if temp_warper_idx is not None:
+            warpers.append(warpers.pop(temp_warper_idx))
             warpers = LogitsProcessorList(warpers)
 
     if normalize is not None:
         warpers.append(normalize)
 
     warpers.append(SpyLogitsWarper())
-    # for i in range(len(warpers)):
-    #     print(warpers[i].__class__.__name__)
     return warpers
 
 
