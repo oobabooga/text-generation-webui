@@ -40,12 +40,13 @@ class DynaTempLogitsWarper(LogitsWarper):
 
         print("Entropy:", entropy.item())
 
-        # Calculate maximum possible entropy
-        # Measure the length of the vocabulary via the last dimension of 'probs'
-        vocab_size = probs.shape[-1] 
-        max_entropy = math.log(vocab_size)
+        # Any logits which are not -Infinity will be considered for calculating max entropy.
+        num_valid_tokens = torch.sum(scores > -float('inf')).item()
 
-        print("Max Possible Entropy:", max_entropy)
+        # Now, calculate the max entropy by using only the valid tokens' count
+        max_entropy = math.log(num_valid_tokens)
+
+        print("Max Possible Entropy considering valid tokens only:", max_entropy)
 
         # Guard against division by zero
         max_entropy = max_entropy if max_entropy != 0.0 else 1.0
@@ -263,12 +264,11 @@ def get_logits_warper_patch(self, generation_config):
     # Insert the new DynaTempLogitsWarper check at the top to prioritize it
     if generation_config.dynatemp is not None and generation_config.dynatemp > 0.0:
         warpers_to_add.append(DynaTempLogitsWarper(dynatemp=generation_config.dynatemp, temperature=generation_config.temperature, min_tokens_to_keep=min_tokens_to_keep))
-    elif generation_config.mirostat_mode is not None and generation_config.mirostat_mode == 2:
+ 
+    if generation_config.mirostat_mode is not None and generation_config.mirostat_mode == 2:
         warpers_to_add.append(MirostatLogitsWarper(mirostat_mode=generation_config.mirostat_mode, mirostat_eta=generation_config.mirostat_eta, mirostat_tau=generation_config.mirostat_tau, min_tokens_to_keep=min_tokens_to_keep))
         # We need to disable samplers other than temperature
-        for warper in warpers:
-            if not isinstance(warper, TemperatureLogitsWarper):
-                warpers.remove(warper)
+        warpers = [warper for warper in warpers if isinstance(warper, (TemperatureLogitsWarper, DynaTempLogitsWarper))]
     else:
         if generation_config.tfs is not None and 0.0 <= generation_config.tfs < 1.0:
             warpers_to_add.append(TailFreeLogitsWarper(tfs=generation_config.tfs, min_tokens_to_keep=min_tokens_to_keep))
