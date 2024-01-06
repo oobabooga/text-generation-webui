@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 class GenerationOptions(BaseModel):
     preset: str | None = Field(default=None, description="The name of a file under text-generation-webui/presets (without the .yaml extension). The sampling parameters that get overwritten by this option are the keys in the default_preset() function in modules/presets.py.")
     min_p: float = 0
+    dynatemp: float = 0
     top_k: int = 0
     repetition_penalty: float = 1
     repetition_penalty_range: int = 1024
