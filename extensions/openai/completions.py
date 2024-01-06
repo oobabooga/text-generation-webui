@@ -178,7 +178,7 @@ class FunctionCallContext():
             
         # Handle function requests
         if self.functions != []:
-            self.FUNCTION_PROMPT = 'You are a helpful assistant with access to the following functions. Use them if required -'
+            self.FUNCTION_PROMPT = 'You are given access to the following functions, use them if required -'
         
             for func in self.functions:
                 if not FunctionCallRequest.parse_obj(func):
@@ -194,19 +194,19 @@ class FunctionCallContext():
                 for func in self.functions:
                     if FunctionCallRequest.parse_obj(func).function.name == FunctionCallRequest.parse_obj(self.function_call).function.name:
                         found_function_call = True
-                        self.FUNCTION_PROMPT += f'\n{func["function"]}'
+                        self.FUNCTION_PROMPT += f'\n{func["function"]}\n'
                         break
                 if not found_function_call:
                     raise InvalidRequestError(message=f"function_call {self.function_call} is not in functions", param='function_call')
                 
                 # must call function
-                self.FUNCTION_PROMPT += f'\nYou must call this function in your reply: {self.function_call["function"]}'
+                self.FUNCTION_PROMPT += f'\nYOU MUST CALL THIS FUNCTION IN YOUR REPLY: {self.function_call["function"]}.'
             else:            
                 for func in self.functions:
-                    self.FUNCTION_PROMPT += f'\n{func["function"]}'
+                    self.FUNCTION_PROMPT += f'\n{func["function"]}\n'
                     
             # give 1-shot prompt for function call reply format
-            self.FUNCTION_PROMPT += """\nIf you need to call any function, you must reply in the format: <functioncall>json str</functioncall>, e.g <functioncall> {\"name\": \"calculate_loan_payment\", \"arguments\": '{\"principal\": 50000, \"interest_rate\": 5, \"loan_term\": 10}'} </functioncall>."""
+            self.FUNCTION_PROMPT += """If you find it necessary to call function, you must reply in the format only when necessary: <functioncall> json_str </functioncall>, e.g <functioncall> {\"name\": \"calculate_loan_payment\", \"arguments\": '{\"principal\": 50000, \"interest_rate\": 5, \"loan_term\": 10}'} </functioncall>."""
         else:
             self.FUNCTION_PROMPT = ''
             
@@ -224,7 +224,7 @@ class FunctionCallContext():
                 # Use re.search to find the matched pattern
                 match = re.search(pattern, content, re.DOTALL)
                 
-                debug_msg(f"Try match '{pattern}' from llm reply '{content}'")
+                debug_msg(f"process_finish_msg Try match '{pattern}' from llm reply '{content}'")
                 if match:
                     json_str = match.group(1)
                     json_str = json_str.strip()
@@ -258,7 +258,7 @@ class FunctionCallContext():
                     debug_msg(f"process_finish_msg response:\n{finish_response}")
                     return finish_response
                 else:
-                    debug_msg("No match found process_finish_msg.")
+                    debug_msg("process_finish_msg No match found.")
         except Exception as e:
             debug_msg(f"process_finish_msg exception: {e}")
 
