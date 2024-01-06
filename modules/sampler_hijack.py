@@ -13,7 +13,7 @@ from transformers.generation.logits_process import (
 global_scores = None
 
 class DynaTempLogitsWarper(LogitsWarper):
-    def __init__(self, dynatemp: float, temperature: float, filter_value: float = -float("Inf"), min_tokens_to_keep: int = 1):
+    def __init__(self, dynatemp: float, temperature: float, min_tokens_to_keep: int = 1):
 
         self.temperature = temperature
         
@@ -30,8 +30,6 @@ class DynaTempLogitsWarper(LogitsWarper):
 
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
         # temp testing variables
-
-        print("Temperature from generation_config:", self.temperature)
         
         min_temp = 0.0
         max_temp = 2.0
@@ -268,7 +266,8 @@ def get_logits_warper_patch(self, generation_config):
     # Insert the new DynaTempLogitsWarper check at the top to prioritize it
     if generation_config.dynatemp is not None and generation_config.dynatemp > 0.0:
         warpers_to_add.append(DynaTempLogitsWarper(dynatemp=generation_config.dynatemp, temperature=generation_config.temperature, min_tokens_to_keep=min_tokens_to_keep))
-    elif generation_config.mirostat_mode is not None and generation_config.mirostat_mode == 2:
+        
+    if generation_config.mirostat_mode is not None and generation_config.mirostat_mode == 2:
         warpers_to_add.append(MirostatLogitsWarper(mirostat_mode=generation_config.mirostat_mode, mirostat_eta=generation_config.mirostat_eta, mirostat_tau=generation_config.mirostat_tau, min_tokens_to_keep=min_tokens_to_keep))
         # We need to disable samplers other than temperature
         for warper in warpers:
@@ -307,7 +306,6 @@ def get_logits_warper_patch(self, generation_config):
 
     warpers.append(SpyLogitsWarper())
     return warpers
-
 
 def get_logits_processor_patch(self, **kwargs):
     repetition_penalty = kwargs['generation_config'].repetition_penalty
