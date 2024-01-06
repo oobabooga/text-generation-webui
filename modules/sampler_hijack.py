@@ -25,9 +25,12 @@ class DynaTempLogitsWarper(LogitsWarper):
 
         print("Temperature from generation_config:", self.temperature)
         
-        min_temp = 0.0
-        max_temp = 2.0
+        min_temp = self.temperature - self.dynatemp
+        max_temp = self.temperature + self.dynatemp
         exponent_val = 1.0
+
+        print("min_temp:", min_temp)
+        print("max_temp:", max_temp)
         
         # Convert logits to probabilities
         probs = torch.softmax(scores, dim=-1)
