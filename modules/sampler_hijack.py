@@ -267,7 +267,7 @@ def get_logits_warper_patch(self, generation_config):
 
     # Insert the new DynaTempLogitsWarper check at the top to prioritize it
     if generation_config.dynatemp is not None and generation_config.dynatemp > 0.0:
-        warpers_to_add.append(DynaTempLogitsWarper(dynatemp=generation_config.dynatemp, temperature==generation_config.temperature, min_tokens_to_keep=min_tokens_to_keep))
+        warpers_to_add.append(DynaTempLogitsWarper(dynatemp=generation_config.dynatemp, temperature=generation_config.temperature, min_tokens_to_keep=min_tokens_to_keep))
     elif generation_config.mirostat_mode is not None and generation_config.mirostat_mode == 2:
         warpers_to_add.append(MirostatLogitsWarper(mirostat_mode=generation_config.mirostat_mode, mirostat_eta=generation_config.mirostat_eta, mirostat_tau=generation_config.mirostat_tau, min_tokens_to_keep=min_tokens_to_keep))
         # We need to disable samplers other than temperature
