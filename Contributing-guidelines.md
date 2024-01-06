@@ -18,7 +18,7 @@ The remaining errors should be fixed.
 
 3) Thoroughly self-test your code. Can you think of a scenario where it might not work as expected? Does it interfere with other parts of the program?
 
-4) Keep it simple, structured, and organized. Don't add more lines than you have to.
+4) Keep it simple, structured, and organized. Do not add more lines than you have to.
 
 ### Scope
 
