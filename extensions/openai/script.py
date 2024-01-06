@@ -174,13 +174,13 @@ async def handle_audio_transcription(request: Request):
 
     # Create AudioData object
     audio_data = sr.AudioData(raw_data, audio_data.frame_rate, audio_data.sample_width)
-    whipser_language = form.getvalue('language', None)
-    whipser_model = form.getvalue('model', 'tiny')  # Use the model from the form data if it exists, otherwise default to tiny
+    whisper_language = form.getvalue('language', None)
+    whisper_model = form.getvalue('model', 'tiny')  # Use the model from the form data if it exists, otherwise default to tiny
 
     transcription = {"text": ""}
 
     try:
-        transcription["text"] = r.recognize_whisper(audio_data, language=whipser_language, model=whipser_model)
+        transcription["text"] = r.recognize_whisper(audio_data, language=whisper_language, model=whisper_model)
     except sr.UnknownValueError:
         print("Whisper could not understand audio")
         transcription["text"] = "Whisper could not understand audio UnknownValueError"
