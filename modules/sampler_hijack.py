@@ -21,11 +21,10 @@ class DynaTempLogitsWarper(LogitsWarper):
         self.min_tokens_to_keep = min_tokens_to_keep
 
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
-        # temp testing variables
 
-        print("Temperature from generation_config:", self.temperature)
+        print("----------------------\nTemperature from generation_config:", self.temperature)
         
-        min_temp = self.temperature - self.dynatemp
+        min_temp = max(0.0, self.temperature - self.dynatemp)
         max_temp = self.temperature + self.dynatemp
         exponent_val = 1.0
 
@@ -63,6 +62,8 @@ class DynaTempLogitsWarper(LogitsWarper):
 
         # Apply the dynamically calculated temperature scaling
         scores = scores / dyn_temp
+        
+        print("----------------------")
 
         return scores
 
