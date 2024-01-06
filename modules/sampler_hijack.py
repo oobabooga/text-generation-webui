@@ -265,9 +265,11 @@ def get_logits_warper_patch(self, generation_config):
     warpers_to_add = LogitsProcessorList()
     min_tokens_to_keep = 2 if generation_config.num_beams > 1 else 1
 
-    # Insert the new DynaTempLogitsWarper check at the top to prioritize it
+    # If DynaTempLogitsWarper is being used, prioritize it by appending it first
     if generation_config.dynatemp is not None and generation_config.dynatemp > 0.0:
         warpers_to_add.append(DynaTempLogitsWarper(dynatemp=generation_config.dynatemp, temperature=generation_config.temperature, min_tokens_to_keep=min_tokens_to_keep))
+        # Ensure that TemperatureLogitsWarper is removed if present
+        warpers = [warper for warper in warpers if not isinstance(warper, TemperatureLogitsWarper)]
  
     if generation_config.mirostat_mode is not None and generation_config.mirostat_mode == 2:
         warpers_to_add.append(MirostatLogitsWarper(mirostat_mode=generation_config.mirostat_mode, mirostat_eta=generation_config.mirostat_eta, mirostat_tau=generation_config.mirostat_tau, min_tokens_to_keep=min_tokens_to_keep))
@@ -289,15 +291,15 @@ def get_logits_warper_patch(self, generation_config):
     warpers += warpers_to_add
     if generation_config.temperature_last:
         temp_warper_idx = None
-        # Check for both TemperatureLogitsWarper and DynaTempLogitsWarper
         for i, warper in enumerate(warpers):
             if isinstance(warper, TemperatureLogitsWarper) or isinstance(warper, DynaTempLogitsWarper):
                 temp_warper_idx = i
                 break
-
         if temp_warper_idx is not None:
             warpers.append(warpers.pop(temp_warper_idx))
-            warpers = LogitsProcessorList(warpers)
+
+    # Convert into LogitsProcessorList to ensure proper behavior
+    warpers = LogitsProcessorList(warpers)
 
     if normalize is not None:
         warpers.append(normalize)
