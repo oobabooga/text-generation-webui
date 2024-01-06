@@ -276,13 +276,12 @@ def get_logits_warper_patch(self, generation_config):
             warpers_to_add.append(TopALogitsWarper(top_a=generation_config.top_a, min_tokens_to_keep=min_tokens_to_keep))
         if generation_config.min_p is not None and 0.0 < generation_config.min_p <= 1.0:
             warpers_to_add.append(MinPLogitsWarper(min_p=generation_config.min_p, min_tokens_to_keep=min_tokens_to_keep))
-        # Removed the original DynaTempLogitsWarper condition
 
     if len(warpers) > 0 and isinstance(warpers[-1], LogitNormalization):
         normalize = warpers.pop(-1)
     else:
         normalize = None
-            
+
     warpers += warpers_to_add
     if generation_config.temperature_last:
         temp_warper_idx = None
