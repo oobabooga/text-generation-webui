@@ -33,7 +33,7 @@ def generate_info():
 
 
 def ui():
-    activate = gr.Checkbox(value=params['activate'], label='Activate Dynamic Temperature in terms of range', info='When checked, the default temperature/dynatemp parameters are ignored and the parameters below are used instead.')
+    activate = gr.Checkbox(value=params['activate'], label='Activate Dynamic Temperature Range', info='When checked, the default temperature/dynatemp parameters are ignored and the parameters below are used instead.')
     with gr.Row():
         minimum_temperature = gr.Slider(0, 5, step=0.01, label="Minimum temperature", value=params["minimum_temperature"], interactive=True)
         maximum_temperature = gr.Slider(0, 5, step=0.01, label="Maximum temperature", value=params["maximum_temperature"], interactive=True)
