@@ -285,7 +285,7 @@ def get_reply_from_output_ids(output_ids, state, starting_from=0):
 
 def generate_reply_HF(question, original_question, seed, state, stopping_strings=None, is_chat=False):
     generate_params = {}
-    for k in ['max_new_tokens', 'temperature', 'temperature_last', 'dynatemp', 'top_p', 'min_p', 'top_k', 'repetition_penalty', 'presence_penalty', 'frequency_penalty', 'repetition_penalty_range', 'typical_p', 'tfs', 'top_a', 'guidance_scale', 'penalty_alpha', 'mirostat_mode', 'mirostat_tau', 'mirostat_eta', 'do_sample', 'encoder_repetition_penalty', 'no_repeat_ngram_size', 'min_length', 'num_beams', 'length_penalty', 'early_stopping']:
+    for k in ['max_new_tokens', 'temperature', 'temperature_last', 'dynamic_temperature', 'dynamic_temperature_low', 'top_p', 'min_p', 'top_k', 'repetition_penalty', 'presence_penalty', 'frequency_penalty', 'repetition_penalty_range', 'typical_p', 'tfs', 'top_a', 'guidance_scale', 'penalty_alpha', 'mirostat_mode', 'mirostat_tau', 'mirostat_eta', 'do_sample', 'encoder_repetition_penalty', 'no_repeat_ngram_size', 'min_length', 'num_beams', 'length_penalty', 'early_stopping']:
         generate_params[k] = state[k]
 
     if state['negative_prompt'] != '':
@@ -346,7 +346,8 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
 
     if shared.args.verbose:
         logger.info("GENERATE_PARAMS=")
-        pprint.PrettyPrinter(indent=4, sort_dicts=False).pprint(generate_params)
+        filtered_params = {key: value for key, value in generate_params.items() if not isinstance(value, torch.Tensor)}
+        pprint.PrettyPrinter(indent=4, sort_dicts=False).pprint(filtered_params)
         print()
 
     t0 = time.time()
