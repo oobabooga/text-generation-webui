@@ -249,7 +249,7 @@ def install_webui():
         print_big_message("Installing Intel oneAPI runtime libraries.")
         run_cmd(f"conda install -y -c intel dpcpp-cpp-rt=2024.0 mkl-dpcpp=2024.0")
         # Install libuv required by Intel-patched torch
-        run_cmd(f"conda install libuv")
+        run_cmd(f"conda install -y libuv")
 
     # Install the webui requirements
     update_requirements(initial_installation=True)
