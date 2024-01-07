@@ -8,7 +8,7 @@ from modules.text_generation import generate_reply
 global_scores = None
 
 
-def get_next_logits(prompt, state, use_samplers, previous, top_logits=50, return_dict=False):
+def get_next_logits(prompt, state, use_samplers, previous, top_logits=25, return_dict=False):
     if shared.model is None:
         logger.error("No model is loaded! Select one in the Model tab.")
         return 'Error: No model is loaded1 Select one in the Model tab.', previous

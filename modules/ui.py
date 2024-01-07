@@ -115,6 +115,7 @@ def list_interface_input_elements():
         'seed',
         'temperature',
         'temperature_last',
+        'dynatemp',
         'top_p',
         'min_p',
         'top_k',
