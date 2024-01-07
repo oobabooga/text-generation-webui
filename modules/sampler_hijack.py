@@ -278,7 +278,7 @@ def get_logits_warper_patch(self, generation_config):
     if generation_config.dynatemp > 0:
         # Make sure TemperatureLogitsWarper will be created by temporarily
         # setting temperature to a value != 1.
-        generation_config.temperature = 1.1  # must set to some value != 1
+        generation_config.temperature = 1.1
 
     warpers = self._get_logits_warper_old(generation_config)
     if generation_config.dynatemp > 0:
@@ -325,7 +325,7 @@ def get_logits_warper_patch(self, generation_config):
     warpers.append(SpyLogitsWarper())
     warpers = LogitsProcessorList(warpers)
     # for i in range(len(warpers)):
-    #     print("---", warpers[i].__class__.__name__)
+    #     print(warpers[i].__class__.__name__)
     return warpers
 
 
