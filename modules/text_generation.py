@@ -346,7 +346,8 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
 
     if shared.args.verbose:
         logger.info("GENERATE_PARAMS=")
-        pprint.PrettyPrinter(indent=4, sort_dicts=False).pprint(generate_params)
+        filtered_params = {key: value for key, value in generate_params.items() if not isinstance(value, torch.Tensor)}
+        pprint.PrettyPrinter(indent=4, sort_dicts=False).pprint(filtered_params)
         print()
 
     t0 = time.time()
