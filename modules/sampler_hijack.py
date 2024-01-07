@@ -10,6 +10,8 @@ from transformers.generation.logits_process import (
     TemperatureLogitsWarper
 )
 
+from modules import shared
+
 global_scores = None
 
 
@@ -78,6 +80,10 @@ class TemperatureLogitsWarperWithDynatemp(LogitsWarper):
             # print("Normalized Entropy:", normalized_entropy.item())
             # print("Dynamic Temperature (dyn_temp):", dyn_temp.item())
             # print("----------------------")
+
+            # max_prob_token_id = torch.argmax(scores, dim=-1)  # Get the token ID with the highest probability
+            # max_prob_token = shared.tokenizer.convert_ids_to_tokens(int(max_prob_token_id))  # Convert ID to token
+            # print("--- T=", float(dyn_temp), "token=", max_prob_token, "min=", min_temp, "max=", max_temp)
 
             return scores
 
@@ -274,6 +280,10 @@ class RepetitionPenaltyLogitsProcessorWithRange(LogitsProcessor):
 
 
 def get_logits_warper_patch(self, generation_config):
+    # Make sure that temperature is float and not int
+    if isinstance(generation_config.temperature, int):
+        generation_config.temperature = float(generation_config.temperature)
+
     temperature = generation_config.temperature
     if generation_config.dynatemp > 0:
         # Make sure TemperatureLogitsWarper will be created by temporarily
