@@ -13,63 +13,79 @@ from transformers.generation.logits_process import (
 global_scores = None
 
 
-class DynaTempLogitsWarper(LogitsWarper):
-    def __init__(self, dynatemp: float, temperature: float, filter_value: float = -float("Inf"), min_tokens_to_keep: int = 1):
+class TemperatureLogitsWarperWithDynatemp(LogitsWarper):
+    def __init__(self, temperature: float, dynatemp: float, filter_value: float = -float("Inf"), min_tokens_to_keep: int = 1):
+        if not isinstance(temperature, float) or not (temperature > 0):
+            except_msg = (
+                f"`temperature` (={temperature}) has to be a strictly positive float, otherwise your next token "
+                "scores will be invalid."
+            )
+            if isinstance(temperature, float) and temperature == 0.0:
+                except_msg += " If you're looking for greedy decoding strategies, set `do_sample=False`."
 
-        self.dynatemp = dynatemp
+            raise ValueError(except_msg)
+
         self.temperature = temperature
+        self.dynatemp = dynatemp
         self.filter_value = filter_value
         self.min_tokens_to_keep = min_tokens_to_keep
 
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
 
-        print("----------------------\nTemperature from generation_config:", self.temperature)
+        # Regular temperature
+        if self.dynatemp == 0:
+            scores = scores / self.temperature
+            return scores
+        
+        # Dynamic temperature
+        else:
+            print("----------------------\nTemperature from generation_config:", self.temperature)
 
-        min_temp = max(0.0, self.temperature - self.dynatemp)
-        max_temp = self.temperature + self.dynatemp
-        exponent_val = 1.0
+            min_temp = max(0.0, self.temperature - self.dynatemp)
+            max_temp = self.temperature + self.dynatemp
+            exponent_val = 1.0
 
-        print("min_temp:", min_temp)
-        print("max_temp:", max_temp)
+            print("min_temp:", min_temp)
+            print("max_temp:", max_temp)
 
-        # Convert logits to probabilities
-        probs = torch.softmax(scores, dim=-1)
+            # Convert logits to probabilities
+            probs = torch.softmax(scores, dim=-1)
 
-        # Calculate entropy of the softmax probabilities
-        entropy = -1.0 * torch.where(probs > 0, probs * torch.log(probs), torch.zeros_like(probs)).sum()
+            # Calculate entropy of the softmax probabilities
+            entropy = -1.0 * torch.where(probs > 0, probs * torch.log(probs), torch.zeros_like(probs)).sum()
 
-        # Guard against future possible division by zero
-        entropy = max(entropy, torch.tensor(1e-10))  # Ensures entropy is slightly greater than 0
+            # Guard against future possible division by zero
+            entropy = max(entropy, torch.tensor(1e-10))  # Ensures entropy is slightly greater than 0
 
-        print("Entropy:", entropy.item())
+            print("Entropy:", entropy.item())
 
-        # Any logits which are not -Infinity will be considered for calculating max entropy.
-        num_valid_tokens = torch.sum(scores > -float('inf')).item()
+            # Any logits which are not -Infinity will be considered for calculating max entropy.
+            num_valid_tokens = torch.sum(scores > -float('inf')).item()
 
-        # Now, calculate the max entropy by using only the valid tokens' count
-        max_entropy = math.log(num_valid_tokens)
+            # Now, calculate the max entropy by using only the valid tokens' count
+            max_entropy = math.log(num_valid_tokens)
 
-        # Guard against future possible division by zero
-        max_entropy = max_entropy if max_entropy > 0.0 else 1e-10
+            # Guard against future possible division by zero
+            max_entropy = max_entropy if max_entropy > 0.0 else 1e-10
 
-        print("Max Possible Entropy considering valid tokens only:", max_entropy)
+            print("Max Possible Entropy considering valid tokens only:", max_entropy)
 
-        # Normalize the entropy
-        normalized_entropy = entropy / max_entropy
+            # Normalize the entropy
+            normalized_entropy = entropy / max_entropy
 
-        print("Normalized Entropy:", normalized_entropy.item())
+            print("Normalized Entropy:", normalized_entropy.item())
 
-        # Map the normalized entropy to the desired temperature range using the power function
-        dyn_temp = min_temp + (max_temp - min_temp) * (normalized_entropy.pow(exponent_val))
+            # Map the normalized entropy to the desired temperature range using the power function
+            dyn_temp = min_temp + (max_temp - min_temp) * (normalized_entropy.pow(exponent_val))
 
-        print("Dynamic Temperature (dyn_temp):", dyn_temp.item())
+            print("Dynamic Temperature (dyn_temp):", dyn_temp.item())
 
-        # Apply the dynamically calculated temperature scaling
-        scores = scores / dyn_temp
+            # Apply the dynamically calculated temperature scaling
+            scores = scores / dyn_temp
 
-        print("----------------------")
+            print("----------------------")
 
-        return scores
+            return scores
 
 
 class MinPLogitsWarper(LogitsWarper):
@@ -264,20 +280,27 @@ class RepetitionPenaltyLogitsProcessorWithRange(LogitsProcessor):
 
 
 def get_logits_warper_patch(self, generation_config):
+    temperature = generation_config.temperature
+    if generation_config.dynatemp > 0:
+        # Make sure TemperatureLogitsWarper will be created by temporarily
+        # setting temperature to a value != 1.
+        generation_config.temperature = 1.1  # must set to some value != 1
+
     warpers = self._get_logits_warper_old(generation_config)
+    if generation_config.dynatemp > 0:
+        for i in range(len(warpers)):
+            if warpers[i].__class__.__name__ == 'TemperatureLogitsWarper':
+                warpers[i] = TemperatureLogitsWarperWithDynatemp(temperature, generation_config.dynatemp)
+
     warpers_to_add = LogitsProcessorList()
     min_tokens_to_keep = 2 if generation_config.num_beams > 1 else 1
-
-    # If DynaTempLogitsWarper is being used, prioritize it by appending it first
-    if generation_config.dynatemp is not None and generation_config.dynatemp > 0.0:
-        warpers_to_add.append(DynaTempLogitsWarper(dynatemp=generation_config.dynatemp, temperature=generation_config.temperature, min_tokens_to_keep=min_tokens_to_keep))
-        # Ensure that TemperatureLogitsWarper is removed if present
-        warpers = [warper for warper in warpers if not isinstance(warper, TemperatureLogitsWarper)]
 
     if generation_config.mirostat_mode is not None and generation_config.mirostat_mode == 2:
         warpers_to_add.append(MirostatLogitsWarper(mirostat_mode=generation_config.mirostat_mode, mirostat_eta=generation_config.mirostat_eta, mirostat_tau=generation_config.mirostat_tau, min_tokens_to_keep=min_tokens_to_keep))
         # We need to disable samplers other than temperature
-        warpers = [warper for warper in warpers if isinstance(warper, (TemperatureLogitsWarper, DynaTempLogitsWarper))]
+        for warper in warpers:
+            if not isinstance(warper, TemperatureLogitsWarper):
+                warpers.remove(warper)
     else:
         if generation_config.tfs is not None and 0.0 <= generation_config.tfs < 1.0:
             warpers_to_add.append(TailFreeLogitsWarper(tfs=generation_config.tfs, min_tokens_to_keep=min_tokens_to_keep))
@@ -293,23 +316,22 @@ def get_logits_warper_patch(self, generation_config):
 
     warpers += warpers_to_add
     if generation_config.temperature_last:
-        temp_warper_idx = None
-        for i, warper in enumerate(warpers):
-            if isinstance(warper, TemperatureLogitsWarper) or isinstance(warper, DynaTempLogitsWarper):
-                temp_warper_idx = i
+        temperature_idx = None
+        for i in range(len(warpers)):
+            if warpers[i].__class__.__name__ in ['TemperatureLogitsWarper', 'TemperatureLogitsWarperWithDynatemp']:
+                temperature_idx = i
                 break
-        if temp_warper_idx is not None:
-            warpers.append(warpers.pop(temp_warper_idx))
 
-    # Convert into LogitsProcessorList to ensure proper behavior
-    warpers = LogitsProcessorList(warpers)
+        if temperature_idx is not None:
+            warpers.append(warpers.pop(temperature_idx))
 
     if normalize is not None:
         warpers.append(normalize)
 
     warpers.append(SpyLogitsWarper())
+    warpers = LogitsProcessorList(warpers)
     # for i in range(len(warpers)):
-    #     print(warpers[i].__class__.__name__)
+    #     print("---", warpers[i].__class__.__name__)
     return warpers
 
 
