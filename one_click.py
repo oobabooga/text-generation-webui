@@ -233,7 +233,7 @@ def install_webui():
     elif is_linux() and selected_gpu in ["APPLE", "NONE"]:
         install_pytorch += "--index-url https://download.pytorch.org/whl/cpu"
     elif selected_gpu == "INTEL":
-        install_pytorch += "intel_extension_for_pytorch==2.1.* --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/"
+        install_pytorch = "python -m pip install torch==2.1.0a0 torchvision==0.16.0a0 torchaudio==2.1.0a0 intel-extension-for-pytorch==2.1.10 --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/"
 
     # Install Git and then Pytorch
     print_big_message("Installing PyTorch.")
@@ -243,6 +243,13 @@ def install_webui():
     if selected_gpu == "NVIDIA":
         print_big_message("Installing the CUDA runtime libraries.")
         run_cmd(f"conda install -y -c \"nvidia/label/{'cuda-12.1.1' if use_cuda118 == 'N' else 'cuda-11.8.0'}\" cuda-runtime", assert_success=True, environment=True)
+
+    if selected_gpu == "INTEL":
+        # Install oneAPI dependencies via conda
+        print_big_message("Installing Intel oneAPI runtime libraries.")
+        run_cmd(f"conda install -y -c intel dpcpp-cpp-rt=2024.0 mkl-dpcpp=2024.0")
+        # Install libuv required by Intel-patched torch
+        run_cmd(f"conda install -y libuv")
 
     # Install the webui requirements
     update_requirements(initial_installation=True)
