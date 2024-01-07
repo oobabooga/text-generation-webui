@@ -10,6 +10,10 @@ from transformers import is_torch_xpu_available
 import modules.shared as shared
 
 
+class StopNowException(Exception):
+    pass
+
+
 class _StopEverythingStoppingCriteria(transformers.StoppingCriteria):
     def __init__(self):
         transformers.StoppingCriteria.__init__(self)
@@ -49,13 +53,13 @@ class Iteratorize:
 
         def _callback(val):
             if self.stop_now or shared.stop_everything:
-                raise ValueError
+                raise StopNowException
             self.q.put(val)
 
         def gentask():
             try:
                 ret = self.mfunc(callback=_callback, *args, **self.kwargs)
-            except ValueError:
+            except StopNowException:
                 pass
             except:
                 traceback.print_exc()

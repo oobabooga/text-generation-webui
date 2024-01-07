@@ -12,6 +12,7 @@ def default_preset():
     return {
         'temperature': 1,
         'temperature_last': False,
+        'dynatemp': 0,
         'top_p': 1,
         'min_p': 0,
         'top_k': 0,

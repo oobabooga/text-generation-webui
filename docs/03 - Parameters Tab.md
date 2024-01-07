@@ -54,6 +54,7 @@ For more information about the parameters, the [transformers documentation](http
 * **mirostat_mode**: Activates the Mirostat sampling technique. It aims to control perplexity during sampling. See the [paper](https://arxiv.org/abs/2007.14966).
 * **mirostat_tau**: No idea, see the paper for details. According to the Preset Arena, 8 is a good value. 
 * **mirostat_eta**: No idea, see the paper for details. According to the Preset Arena, 0.1 is a good value.
+* **dynatemp**: Dynamic Temperature is activated when this parameter is greater than 0. The temperature range is determined by adding and subtracting dynatemp from the current temperature.
 * **temperature_last**: Makes temperature the last sampler instead of the first. With this, you can remove low probability tokens with a sampler like min_p and then use a high temperature to make the model creative without losing coherency.
 * **do_sample**: When unchecked, sampling is entirely disabled, and greedy decoding is used instead (the most likely token is always picked).
 * **Seed**: Set the Pytorch seed to this number. Note that some loaders do not use Pytorch (notably llama.cpp), and others are not deterministic (notably ExLlama v1 and v2). For these loaders, the seed has no effect.
