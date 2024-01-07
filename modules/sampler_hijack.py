@@ -36,17 +36,12 @@ class TemperatureLogitsWarperWithDynatemp(LogitsWarper):
         if self.dynatemp == 0:
             scores = scores / self.temperature
             return scores
-        
+
         # Dynamic temperature
         else:
-            print("----------------------\nTemperature from generation_config:", self.temperature)
-
             min_temp = max(0.0, self.temperature - self.dynatemp)
             max_temp = self.temperature + self.dynatemp
             exponent_val = 1.0
-
-            print("min_temp:", min_temp)
-            print("max_temp:", max_temp)
 
             # Convert logits to probabilities
             probs = torch.softmax(scores, dim=-1)
@@ -57,8 +52,6 @@ class TemperatureLogitsWarperWithDynatemp(LogitsWarper):
             # Guard against future possible division by zero
             entropy = max(entropy, torch.tensor(1e-10))  # Ensures entropy is slightly greater than 0
 
-            print("Entropy:", entropy.item())
-
             # Any logits which are not -Infinity will be considered for calculating max entropy.
             num_valid_tokens = torch.sum(scores > -float('inf')).item()
 
@@ -68,22 +61,23 @@ class TemperatureLogitsWarperWithDynatemp(LogitsWarper):
             # Guard against future possible division by zero
             max_entropy = max_entropy if max_entropy > 0.0 else 1e-10
 
-            print("Max Possible Entropy considering valid tokens only:", max_entropy)
-
             # Normalize the entropy
             normalized_entropy = entropy / max_entropy
-
-            print("Normalized Entropy:", normalized_entropy.item())
 
             # Map the normalized entropy to the desired temperature range using the power function
             dyn_temp = min_temp + (max_temp - min_temp) * (normalized_entropy.pow(exponent_val))
 
-            print("Dynamic Temperature (dyn_temp):", dyn_temp.item())
-
             # Apply the dynamically calculated temperature scaling
             scores = scores / dyn_temp
 
-            print("----------------------")
+            # print("----------------------\nTemperature from generation_config:", self.temperature)
+            # print("min_temp:", min_temp)
+            # print("max_temp:", max_temp)
+            # print("Entropy:", entropy.item())
+            # print("Max Possible Entropy considering valid tokens only:", max_entropy)
+            # print("Normalized Entropy:", normalized_entropy.item())
+            # print("Dynamic Temperature (dyn_temp):", dyn_temp.item())
+            # print("----------------------")
 
             return scores
 
