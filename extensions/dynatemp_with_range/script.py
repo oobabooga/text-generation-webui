@@ -6,6 +6,7 @@ params = {
     "maximum_temperature": 2,
 }
 
+
 def convert_to_dynatemp():
     temperature = 0.5 * (params["minimum_temperature"] + params["maximum_temperature"])
     dynatemp = params["maximum_temperature"] - temperature
@@ -22,7 +23,7 @@ def state_modifier(state):
         temperature, dynatemp = convert_to_dynatemp()
 
         state["temperature"] = temperature
-        state["dynatemp"] = dynatemp 
+        state["dynatemp"] = dynatemp
 
     return state
 
