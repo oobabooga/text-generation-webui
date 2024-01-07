@@ -12,6 +12,7 @@ from transformers.generation.logits_process import (
 
 global_scores = None
 
+
 class DynaTempLogitsWarper(LogitsWarper):
     def __init__(self, dynatemp: float, temperature: float, filter_value: float = -float("Inf"), min_tokens_to_keep: int = 1):
 
@@ -23,14 +24,14 @@ class DynaTempLogitsWarper(LogitsWarper):
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
 
         print("----------------------\nTemperature from generation_config:", self.temperature)
-        
+
         min_temp = max(0.0, self.temperature - self.dynatemp)
         max_temp = self.temperature + self.dynatemp
         exponent_val = 1.0
 
         print("min_temp:", min_temp)
         print("max_temp:", max_temp)
-        
+
         # Convert logits to probabilities
         probs = torch.softmax(scores, dim=-1)
 
@@ -65,10 +66,11 @@ class DynaTempLogitsWarper(LogitsWarper):
 
         # Apply the dynamically calculated temperature scaling
         scores = scores / dyn_temp
-        
+
         print("----------------------")
 
         return scores
+
 
 class MinPLogitsWarper(LogitsWarper):
     def __init__(self, min_p: float, filter_value: float = -float("Inf"), min_tokens_to_keep: int = 1):
@@ -255,10 +257,11 @@ class RepetitionPenaltyLogitsProcessorWithRange(LogitsProcessor):
             # presence_penalty and frequency_penalty
             raw_presence_penalty = (counts > 0).to(scores.dtype)
             raw_frequency_penalty = counts.to(scores.dtype)
-            additive_penalty = raw_presence_penalty*self.presence_penalty + raw_frequency_penalty*self.frequency_penalty
+            additive_penalty = raw_presence_penalty * self.presence_penalty + raw_frequency_penalty * self.frequency_penalty
             scores_row.scatter_add_(0, unique_ids, -additive_penalty)
 
         return scores
+
 
 def get_logits_warper_patch(self, generation_config):
     warpers = self._get_logits_warper_old(generation_config)
@@ -270,7 +273,7 @@ def get_logits_warper_patch(self, generation_config):
         warpers_to_add.append(DynaTempLogitsWarper(dynatemp=generation_config.dynatemp, temperature=generation_config.temperature, min_tokens_to_keep=min_tokens_to_keep))
         # Ensure that TemperatureLogitsWarper is removed if present
         warpers = [warper for warper in warpers if not isinstance(warper, TemperatureLogitsWarper)]
- 
+
     if generation_config.mirostat_mode is not None and generation_config.mirostat_mode == 2:
         warpers_to_add.append(MirostatLogitsWarper(mirostat_mode=generation_config.mirostat_mode, mirostat_eta=generation_config.mirostat_eta, mirostat_tau=generation_config.mirostat_tau, min_tokens_to_keep=min_tokens_to_keep))
         # We need to disable samplers other than temperature
