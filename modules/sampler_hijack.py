@@ -352,7 +352,7 @@ def get_logits_processor_patch(self, **kwargs):
 def generation_config_init_patch(self, **kwargs):
     self.__init___old(**kwargs)
     self.min_p = kwargs.pop("min_p", 0.0)
-    self.dynatemp = kwargs.pop("dynatemp", 1.0)
+    self.dynatemp = kwargs.pop("dynatemp", 0.0)
     self.tfs = kwargs.pop("tfs", 1.0)
     self.top_a = kwargs.pop("top_a", 0.0)
     self.mirostat_mode = kwargs.pop("mirostat_mode", 0)

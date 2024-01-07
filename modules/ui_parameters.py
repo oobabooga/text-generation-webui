@@ -49,8 +49,8 @@ def create_ui(default_preset):
                             shared.gradio['mirostat_mode'] = gr.Slider(0, 2, step=1, value=generate_params['mirostat_mode'], label='mirostat_mode', info='mode=1 is for llama.cpp only.')
                             shared.gradio['mirostat_tau'] = gr.Slider(0, 10, step=0.01, value=generate_params['mirostat_tau'], label='mirostat_tau')
                             shared.gradio['mirostat_eta'] = gr.Slider(0, 1, step=0.01, value=generate_params['mirostat_eta'], label='mirostat_eta')
+                            shared.gradio['dynatemp'] = gr.Slider(0.00, 5, value=generate_params['dynatemp'], step=0.01, label='dynatemp')
                             shared.gradio['temperature_last'] = gr.Checkbox(value=generate_params['temperature_last'], label='temperature_last', info='Makes temperature the last sampler instead of the first.')
-                            shared.gradio['dynatemp'] = gr.Slider(0.00, 5, value=generate_params['dynatemp'], step=0.01, label='dynatemp', info='Dynamic Temperature range. Your minimum Temp is Temperature subtracted by this value, and your maximum Temp is Temperature plus this value.')
                             shared.gradio['do_sample'] = gr.Checkbox(value=generate_params['do_sample'], label='do_sample')
                             shared.gradio['seed'] = gr.Number(value=shared.settings['seed'], label='Seed (-1 for random)')
                             with gr.Accordion('Other parameters', open=False):
