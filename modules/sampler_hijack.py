@@ -281,10 +281,9 @@ def get_logits_warper_patch(self, generation_config):
         generation_config.temperature = 1.1
 
     warpers = self._get_logits_warper_old(generation_config)
-    if generation_config.dynatemp > 0:
-        for i in range(len(warpers)):
-            if warpers[i].__class__.__name__ == 'TemperatureLogitsWarper':
-                warpers[i] = TemperatureLogitsWarperWithDynatemp(temperature, generation_config.dynatemp)
+    for i in range(len(warpers)):
+        if warpers[i].__class__.__name__ == 'TemperatureLogitsWarper':
+            warpers[i] = TemperatureLogitsWarperWithDynatemp(temperature, generation_config.dynatemp)
 
     warpers_to_add = LogitsProcessorList()
     min_tokens_to_keep = 2 if generation_config.num_beams > 1 else 1
