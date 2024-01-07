@@ -12,7 +12,8 @@ def default_preset():
     return {
         'temperature': 1,
         'temperature_last': False,
-        'dynatemp': 0,
+        'dynamic_temperature': 0,
+        'dynamic_temperature_low': 0.1,
         'top_p': 1,
         'min_p': 0,
         'top_k': 0,
@@ -53,7 +54,6 @@ def load_preset(name):
         for k in preset:
             generate_params[k] = preset[k]
 
-    generate_params['temperature'] = min(1.99, generate_params['temperature'])
     return generate_params
 
 
