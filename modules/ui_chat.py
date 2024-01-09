@@ -65,7 +65,9 @@ def create_ui():
 
         with gr.Row(elem_id='past-chats-row', elem_classes=['pretty_scrollbar']): 
             with gr.Column():
-                gr.Markdown('Past chats')
+                with gr.Row():
+                    shared.gradio['unique_id'] = gr.Dropdown(label='Past chats', elem_classes=['slim-dropdown'], interactive=not mu)
+
                 with gr.Row():
                     shared.gradio['delete_chat'] = gr.Button('🗑️', elem_classes='refresh-button', interactive=not mu)
                     shared.gradio['delete_chat-cancel'] = gr.Button('Cancel', visible=False, elem_classes='refresh-button')
@@ -77,10 +79,9 @@ def create_ui():
                     shared.gradio['rename_to-cancel'] = gr.Button('Cancel', visible=False, elem_classes='refresh-button')
                     shared.gradio['rename_to-confirm'] = gr.Button('Confirm', visible=False, elem_classes='refresh-button')
 
-                shared.gradio['unique_id'] = gr.Radio(label='', elem_classes=['slim-dropdown'], interactive=not mu)
-
         with gr.Row():
             shared.gradio['start_with'] = gr.Textbox(label='Start reply with', placeholder='Sure thing!', value=shared.settings['start_with'])
+
 
         with gr.Row():
             shared.gradio['mode'] = gr.Radio(choices=['chat', 'chat-instruct', 'instruct'], value='chat', label='Mode', info='Defines how the chat prompt is generated. In instruct and chat-instruct modes, the instruction template selected under Parameters > Instruction template must match the current model.', elem_id='chat-mode')
