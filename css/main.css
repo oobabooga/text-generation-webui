@@ -661,6 +661,20 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 }
 
 /* ----------------------------------------------
+  Past chat histories in a side bar on desktop
+---------------------------------------------- */
+@media screen and (width >= 1327px) {
+    #past-chats-row {
+        position: absolute;
+        top: 16px;
+        left: 0;
+        width: calc(0.5*(var(--document-width) - 880px - 120px - 16px*2));
+        max-width: 300px;
+        margin-left: calc(-0.5*(var(--document-width) - 880px - 14px - 16px * 2));
+    }
+}
+
+/* ----------------------------------------------
   Keep dropdown menus above errored components
 ---------------------------------------------- */
 .options {
@@ -687,27 +701,3 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     }
 }
 
-
-/* ----------------------------------------------
-  Past chat histories in a side bar on desktop
----------------------------------------------- */
-@media screen and (width >= 1230px) {
-    #past-chats-row {
-        position: absolute;
-        top: 20px;
-        left: 20px;
-        width: calc(0.5 * (var(--document-width) - 880px - 60px));
-        margin-left: calc(-0.5 * (var(--document-width) - 880px - 60px + 60px));
-        max-height: calc( 100vh - var(--header-height) - 40px);
-        overflow: hidden;
-        padding-right: 20px;
-    }
-
-    #past-chats-row:hover {
-        overflow-y: scroll;
-    }
-}
-
-#past-chats-row > :nth-child(1) {
-    gap: 0 !important;
-}

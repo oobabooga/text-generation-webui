@@ -70,18 +70,17 @@ def create_ui():
 
                 with gr.Row():
                     shared.gradio['delete_chat'] = gr.Button('🗑️', elem_classes='refresh-button', interactive=not mu)
-                    shared.gradio['delete_chat-cancel'] = gr.Button('Cancel', visible=False, elem_classes='refresh-button')
                     shared.gradio['delete_chat-confirm'] = gr.Button('Confirm', variant='stop', visible=False, elem_classes='refresh-button')
+                    shared.gradio['delete_chat-cancel'] = gr.Button('Cancel', visible=False, elem_classes='refresh-button')
                     shared.gradio['rename_chat'] = gr.Button('Rename', elem_classes='refresh-button', interactive=not mu)
 
                 with gr.Row(elem_id='rename-row'):
                     shared.gradio['rename_to'] = gr.Textbox(label='Rename to:', placeholder='New name', visible=False, elem_classes=['no-background'])
-                    shared.gradio['rename_to-cancel'] = gr.Button('Cancel', visible=False, elem_classes='refresh-button')
                     shared.gradio['rename_to-confirm'] = gr.Button('Confirm', visible=False, elem_classes='refresh-button')
+                    shared.gradio['rename_to-cancel'] = gr.Button('Cancel', visible=False, elem_classes='refresh-button')
 
         with gr.Row():
             shared.gradio['start_with'] = gr.Textbox(label='Start reply with', placeholder='Sure thing!', value=shared.settings['start_with'])
-
 
         with gr.Row():
             shared.gradio['mode'] = gr.Radio(choices=['chat', 'chat-instruct', 'instruct'], value='chat', label='Mode', info='Defines how the chat prompt is generated. In instruct and chat-instruct modes, the instruction template selected under Parameters > Instruction template must match the current model.', elem_id='chat-mode')
@@ -251,11 +250,10 @@ def create_event_handlers():
     shared.gradio['delete_chat-cancel'].click(lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, gradio(clear_arr))
     shared.gradio['delete_chat-confirm'].click(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
-        lambda: gr.update(interactive=False), None, gradio('unique_id'), show_progress=False).then(
         chat.delete_history, gradio('unique_id', 'character_menu', 'mode'), None).then(
         chat.load_latest_history, gradio('interface_state'), gradio('history')).then(
         chat.redraw_html, gradio(reload_arr), gradio('display')).then(
-        lambda x: gr.update(choices=(histories := chat.find_all_histories(x)), value=histories[0], interactive=True), gradio('interface_state'), gradio('unique_id')).then(
+        lambda x: gr.update(choices=(histories := chat.find_all_histories(x)), value=histories[0]), gradio('interface_state'), gradio('unique_id')).then(
         lambda: [gr.update(visible=False), gr.update(visible=True), gr.update(visible=False)], None, gradio(clear_arr))
 
     shared.gradio['rename_chat'].click(
