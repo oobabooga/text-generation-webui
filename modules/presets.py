@@ -53,7 +53,7 @@ def load_preset(name):
     if name not in ['None', None, '']:
         path = Path(f'presets/{name}.yaml')
         if path.exists():
-            with open(Path(f'presets/{name}.yaml'), 'r') as infile:
+            with open(path, 'r') as infile:
                 preset = yaml.safe_load(infile)
 
             for k in preset:
