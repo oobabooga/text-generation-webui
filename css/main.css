@@ -652,10 +652,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 /* ----------------------------------------------
   Past chats menus
 ---------------------------------------------- */
-#past-chats-row {
-    margin-bottom: calc( -1 * var(--layout-gap) );
-}
-
 #rename-row label {
     margin-top: var(--layout-gap);
 }
