@@ -356,12 +356,20 @@ def list_all_samplers():
     return sorted(all_samplers)
 
 
-def blacklist_samplers(loader):
+def blacklist_samplers(loader, dynamic_temperature):
     all_samplers = list_all_samplers()
-    if loader == 'All':
-        return [gr.update(visible=True) for sampler in all_samplers]
-    else:
-        return [gr.update(visible=True) if sampler in loaders_samplers[loader] else gr.update(visible=False) for sampler in all_samplers]
+    output = []
+
+    for sampler in all_samplers:
+        if loader == 'All' or sampler in loaders_samplers[loader]:
+            if sampler.startswith('dynatemp'):
+                output.append(gr.update(visible=dynamic_temperature))
+            else:
+                output.append(gr.update(visible=True))
+        else:
+            output.append(gr.update(visible=False))
+
+    return output
 
 
 def get_model_types(loader):
