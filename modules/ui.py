@@ -245,9 +245,6 @@ def create_refresh_button(refresh_component, refresh_method, refreshed_args, ele
         refresh_method()
         args = refreshed_args() if callable(refreshed_args) else refreshed_args
 
-        for k, v in args.items():
-            setattr(refresh_component, k, v)
-
         return gr.update(**(args or {}))
 
     refresh_button = gr.Button(refresh_symbol, elem_classes=elem_class, interactive=interactive)
