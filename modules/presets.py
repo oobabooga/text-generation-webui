@@ -6,6 +6,7 @@ import yaml
 
 from modules import shared
 from modules.loaders import loaders_samplers
+from modules.logging_colors import logger
 
 
 def default_preset():
@@ -50,11 +51,15 @@ def presets_params():
 def load_preset(name):
     generate_params = default_preset()
     if name not in ['None', None, '']:
-        with open(Path(f'presets/{name}.yaml'), 'r') as infile:
-            preset = yaml.safe_load(infile)
+        path = Path(f'presets/{name}.yaml')
+        if path.exists():
+            with open(Path(f'presets/{name}.yaml'), 'r') as infile:
+                preset = yaml.safe_load(infile)
 
-        for k in preset:
-            generate_params[k] = preset[k]
+            for k in preset:
+                generate_params[k] = preset[k]
+        else:
+            logger.error(f"The preset \"{name}\" does not exist under \"{path}\". Using the default parameters.")
 
     return generate_params
 
