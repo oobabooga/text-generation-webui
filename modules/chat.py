@@ -517,6 +517,26 @@ def load_latest_history(state):
     return history
 
 
+def load_history_after_deletion(state, idx):
+    '''
+    Loads the latest history for the given character in chat or chat-instruct
+    mode, or the latest instruct history for instruct mode.
+    '''
+
+    if shared.args.multi_user:
+        return start_new_chat(state)
+
+    histories = find_all_histories(state)
+
+    if len(histories) > 0:
+        history = load_history(histories[int(idx)], state['character_menu'], state['mode'])
+    else:
+        history = start_new_chat(state)
+        histories = find_all_histories(state)
+
+    return history, gr.update(choices=histories, value=histories[int(idx)])
+
+
 def load_history(unique_id, character, mode):
     p = get_history_file_path(unique_id, character, mode)
 
