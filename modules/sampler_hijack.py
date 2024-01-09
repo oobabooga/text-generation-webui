@@ -84,7 +84,7 @@ class TemperatureLogitsWarperWithDynatemp(LogitsWarper):
 
             # max_prob_token_id = torch.argmax(scores, dim=-1)  # Get the token ID with the highest probability
             # max_prob_token = shared.tokenizer.convert_ids_to_tokens(int(max_prob_token_id))  # Convert ID to token
-            # print("--- T=", float(dyn_temp), "token=", max_prob_token, "min=", min_temp, "max=", max_temp)
+            # print("--- T=", float(dyn_temp), "token=", max_prob_token, "min=", min_temp, "max=", max_temp, "exponent=", exponent_val)
 
             return scores
 
@@ -294,7 +294,13 @@ def get_logits_warper_patch(self, generation_config):
     warpers = self._get_logits_warper_old(generation_config)
     for i in range(len(warpers)):
         if warpers[i].__class__.__name__ == 'TemperatureLogitsWarper':
-            warpers[i] = TemperatureLogitsWarperWithDynatemp(temperature, generation_config.dynamic_temperature, generation_config.dynatemp_low)
+            warpers[i] = TemperatureLogitsWarperWithDynatemp(
+                temperature,
+                generation_config.dynamic_temperature,
+                generation_config.dynatemp_low,
+                generation_config.dynatemp_high,
+                generation_config.dynatemp_exponent
+            )
 
     warpers_to_add = LogitsProcessorList()
     min_tokens_to_keep = 2 if generation_config.num_beams > 1 else 1
