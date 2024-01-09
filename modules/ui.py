@@ -249,7 +249,7 @@ def create_refresh_button(refresh_component, refresh_method, refreshed_args, ele
 
     refresh_button = gr.Button(refresh_symbol, elem_classes=elem_class, interactive=interactive)
     refresh_button.click(
-        fn=refresh,
+        fn=lambda: {k: tuple(v) if type(k) is list else v for k, v in refresh().items()},
         inputs=[],
         outputs=[refresh_component]
     )
