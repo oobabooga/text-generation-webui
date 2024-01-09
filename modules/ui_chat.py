@@ -66,10 +66,10 @@ def create_ui():
                     shared.gradio['unique_id'] = gr.Dropdown(label='Chat history', elem_classes=['slim-dropdown'], interactive=not mu)
 
                 with gr.Row():
+                    shared.gradio['rename_chat'] = gr.Button('Rename', elem_classes='refresh-button', interactive=not mu)
                     shared.gradio['delete_chat'] = gr.Button('🗑️', elem_classes='refresh-button', interactive=not mu)
                     shared.gradio['delete_chat-confirm'] = gr.Button('Confirm', variant='stop', visible=False, elem_classes='refresh-button')
                     shared.gradio['delete_chat-cancel'] = gr.Button('Cancel', visible=False, elem_classes='refresh-button')
-                    shared.gradio['rename_chat'] = gr.Button('Rename', elem_classes='refresh-button', interactive=not mu)
                     shared.gradio['Start new chat'] = gr.Button('New chat', elem_classes='refresh-button')
 
                 with gr.Row(elem_id='rename-row'):
