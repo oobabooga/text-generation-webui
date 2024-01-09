@@ -209,7 +209,7 @@ def apply_interface_values(state, use_persistent=False):
         return [state[k] if k in state else gr.update() for k in elements]
 
 
-def save_settings(state, preset, extensions_list, show_controls):
+def save_settings(state, preset, extensions_list, show_controls, theme_state):
     output = copy.deepcopy(shared.settings)
     exclude = ['name2', 'greeting', 'context', 'turn_template']
     for k in state:
@@ -223,6 +223,7 @@ def save_settings(state, preset, extensions_list, show_controls):
     output['default_extensions'] = extensions_list
     output['seed'] = int(output['seed'])
     output['show_controls'] = show_controls
+    output['dark_theme'] = True if theme_state == 'dark' else False
 
     # Save extension values in the UI
     for extension_name in extensions_list:
