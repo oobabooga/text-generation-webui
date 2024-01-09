@@ -63,7 +63,7 @@ def create_ui():
         with gr.Row(elem_id='past-chats-row', elem_classes=['pretty_scrollbar']): 
             with gr.Column():
                 with gr.Row():
-                    shared.gradio['unique_id'] = gr.Dropdown(label='Chat history', elem_classes=['slim-dropdown'], interactive=not mu)
+                    shared.gradio['unique_id'] = gr.Dropdown(label='Past chats', elem_classes=['slim-dropdown'], interactive=not mu)
 
                 with gr.Row():
                     shared.gradio['rename_chat'] = gr.Button('Rename', elem_classes='refresh-button', interactive=not mu)
