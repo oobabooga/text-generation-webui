@@ -21,7 +21,7 @@ These were obtained after a blind contest called "Preset Arena" where hundreds o
 
 A key takeaway is that the best presets are:
 
-* **For Instruct**: Divine Intellect, Big O, simple-1, Space Alien, StarChat, Titanic, tfs-with-top-a, Asterism, Contrastive Search (only works for the Transformers loader at the moment).
+* **For Instruct**: Divine Intellect, Big O, simple-1.
 * **For Chat**: Midnight Enigma, Yara, Shortwave.
 
 The other presets are:
