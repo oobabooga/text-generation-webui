@@ -37,6 +37,7 @@ document.querySelector(".header_bar").addEventListener("click", function(event) 
 //------------------------------------------------
 // Keyboard shortcuts
 //------------------------------------------------
+let previousTabId = 'chat-tab-button';
 document.addEventListener("keydown", function(event) {
 
   // Stop generation on Esc pressed
@@ -97,6 +98,19 @@ document.addEventListener("keydown", function(event) {
     document.getElementById("Impersonate").click();
   }
 
+  // Switch between tabs on Tab
+  else if (!event.ctrlKey && !event.shiftKey && event.key === "Tab") {
+    event.preventDefault();
+    var parametersButton = document.getElementById('parameters-button');
+    var parentContainer = parametersButton.parentNode;
+    var selectedChild = parentContainer.querySelector('.selected');
+    if (selectedChild.id == 'parameters-button') {
+        document.getElementById(previousTabId).click();
+    } else {
+        previousTabId = selectedChild.id;
+        parametersButton.click();
+    }
+  }
 });
 
 //------------------------------------------------
