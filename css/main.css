@@ -193,11 +193,11 @@ button {
     max-width: 500px;
     background-color: var(--input-background-fill);
     border: var(--input-border-width) solid var(--input-border-color) !important;
-    padding: 10px;
 }
 
-.file-saver > :first-child > :nth-child(2) {
+.file-saver > :first-child > :last-child {
     background: var(--block-background-fill);
+    justify-content: flex-end;
 }
 
 .checkboxgroup-table label {
