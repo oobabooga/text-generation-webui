@@ -14,6 +14,7 @@ from jinja2.sandbox import ImmutableSandboxedEnvironment
 from PIL import Image
 
 import modules.shared as shared
+from modules import utils
 from modules.extensions import apply_extensions
 from modules.html_generator import chat_html_wrapper, make_thumbnail
 from modules.logging_colors import logger
@@ -526,15 +527,22 @@ def load_history_after_deletion(state, idx):
     if shared.args.multi_user:
         return start_new_chat(state)
 
+    idx = min(int(idx), len(histories) - 1)
     histories = find_all_histories(state)
 
     if len(histories) > 0:
-        history = load_history(histories[int(idx)], state['character_menu'], state['mode'])
+        history = load_history(histories[idx], state['character_menu'], state['mode'])
     else:
         history = start_new_chat(state)
         histories = find_all_histories(state)
 
-    return history, gr.update(choices=histories, value=histories[int(idx)])
+    return history, gr.update(choices=histories, value=histories[idx])
+
+
+def update_character_menu_after_deletion(idx):
+    characters = utils.get_available_characters()
+    idx = min(int(idx), len(characters) - 1)
+    return gr.update(choices=characters, value=characters[idx])
 
 
 def load_history(unique_id, character, mode):
