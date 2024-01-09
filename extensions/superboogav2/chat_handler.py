@@ -1,14 +1,14 @@
 """
 This module is responsible for modifying the chat prompt and history.
 """
-import json
 import re
 
 import extensions.superboogav2.parameters as parameters
 
-from modules import chat
+from modules import chat, shared
 from modules.text_generation import get_encoded_length
 from modules.logging_colors import logger
+from modules.chat import load_character_memoized
 from extensions.superboogav2.utils import create_context_text, create_metadata_source
 
 from .data_processor import process_and_add_to_collector
@@ -16,14 +16,6 @@ from .chromadb import ChromaCollector
 
 
 CHAT_METADATA = create_metadata_source('automatic-chat-insert')
-
-INSTRUCT_MODE = 'instruct'
-CHAT_INSTRUCT_MODE = 'chat-instruct'
-
-
-def _is_instruct_mode(state: dict):
-    mode = state.get('mode')
-    return mode == INSTRUCT_MODE or mode == CHAT_INSTRUCT_MODE
 
 
 def _remove_tag_if_necessary(user_input: str):
@@ -51,17 +43,11 @@ def _format_single_exchange(name, text):
 
 
 def _get_names(state: dict):
-    if _is_instruct_mode(state):
-        user_name = state['name1_instruct']
-        bot_name = state['name2_instruct']
-    else:
-        user_name = state['name1']
-        bot_name = state['name2']
-
-    if not user_name:
-        user_name = 'User'
-    if not bot_name:
-        bot_name = 'Assistant'
+    default_char = shared.settings.get('character', "Assistant")
+    default_user = shared.settings.get('name1', "You")
+    character = state.get('character', default_char)
+    user_name = state.get('name1', default_user)
+    user_name, bot_name, _, _, _ = load_character_memoized(character, user_name, '')
 
     return user_name, bot_name
 

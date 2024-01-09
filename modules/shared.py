@@ -85,7 +85,7 @@ group.add_argument('--chat-buttons', action='store_true', help='Show buttons on 
 
 # Model loader
 group = parser.add_argument_group('Model loader')
-group.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, llamacpp_HF, ExLlama_HF, ExLlamav2_HF, AutoGPTQ, AutoAWQ, GPTQ-for-LLaMa, ExLlama, ExLlamav2, ctransformers, QuIP#.')
+group.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, llamacpp_HF, ExLlamav2_HF, ExLlamav2, AutoGPTQ, AutoAWQ, GPTQ-for-LLaMa, ctransformers, QuIP#.')
 
 # Transformers/Accelerate
 group = parser.add_argument_group('Transformers/Accelerate')
@@ -98,8 +98,6 @@ group.add_argument('--disk-cache-dir', type=str, default='cache', help='Director
 group.add_argument('--load-in-8bit', action='store_true', help='Load the model with 8-bit precision (using bitsandbytes).')
 group.add_argument('--bf16', action='store_true', help='Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU.')
 group.add_argument('--no-cache', action='store_true', help='Set use_cache to False while generating text. This reduces VRAM usage slightly, but it comes at a performance cost.')
-group.add_argument('--xformers', action='store_true', help='Use xformer\'s memory efficient attention. This is really old and probably doesn\'t do anything.')
-group.add_argument('--sdp-attention', action='store_true', help='Use PyTorch 2.0\'s SDP attention. Same as above.')
 group.add_argument('--trust-remote-code', action='store_true', help='Set trust_remote_code=True while loading the model. Necessary for some models.')
 group.add_argument('--force-safetensors', action='store_true', help='Set use_safetensors=True while loading the model. This prevents arbitrary code execution.')
 group.add_argument('--no_use_fast', action='store_true', help='Set use_fast=False while loading the tokenizer (it\'s True by default). Use this if you have any problems related to use_fast.')
@@ -133,7 +131,7 @@ group.add_argument('--cache-capacity', type=str, help='Maximum cache capacity (l
 group = parser.add_argument_group('ExLlama')
 group.add_argument('--gpu-split', type=str, help='Comma-separated list of VRAM (in GB) to use per GPU device for model layers. Example: 20,7,7.')
 group.add_argument('--max_seq_len', type=int, default=2048, help='Maximum sequence length.')
-group.add_argument('--cfg-cache', action='store_true', help='ExLlama_HF: Create an additional cache for CFG negative prompts. Necessary to use CFG with that loader, but not necessary for CFG with base ExLlama.')
+group.add_argument('--cfg-cache', action='store_true', help='ExLlamav2_HF: Create an additional cache for CFG negative prompts. Necessary to use CFG with that loader.')
 group.add_argument('--no_flash_attn', action='store_true', help='Force flash-attention to not be used.')
 group.add_argument('--cache_8bit', action='store_true', help='Use 8-bit cache to save VRAM.')
 group.add_argument('--num_experts_per_token', type=int, default=2, help='Number of experts to use for generation. Applies to MoE models like Mixtral.')
@@ -166,11 +164,6 @@ group = parser.add_argument_group('DeepSpeed')
 group.add_argument('--deepspeed', action='store_true', help='Enable the use of DeepSpeed ZeRO-3 for inference via the Transformers integration.')
 group.add_argument('--nvme-offload-dir', type=str, help='DeepSpeed: Directory to use for ZeRO-3 NVME offloading.')
 group.add_argument('--local_rank', type=int, default=0, help='DeepSpeed: Optional argument for distributed setups.')
-
-# RWKV
-group = parser.add_argument_group('RWKV')
-group.add_argument('--rwkv-strategy', type=str, default=None, help='RWKV: The strategy to use while loading the model. Examples: "cpu fp32", "cuda fp16", "cuda fp16i8".')
-group.add_argument('--rwkv-cuda-on', action='store_true', help='RWKV: Compile the CUDA kernel for better performance.')
 
 # RoPE
 group = parser.add_argument_group('RoPE')
@@ -205,15 +198,7 @@ group = parser.add_argument_group('Multimodal')
 group.add_argument('--multimodal-pipeline', type=str, default=None, help='The multimodal pipeline to use. Examples: llava-7b, llava-13b.')
 
 # Deprecated parameters
-group = parser.add_argument_group('Deprecated')
-group.add_argument('--notebook', action='store_true', help='DEPRECATED')
-group.add_argument('--chat', action='store_true', help='DEPRECATED')
-group.add_argument('--no-stream', action='store_true', help='DEPRECATED')
-group.add_argument('--mul_mat_q', action='store_true', help='DEPRECATED')
-group.add_argument('--api-blocking-port', type=int, default=5000, help='DEPRECATED')
-group.add_argument('--api-streaming-port', type=int, default=5005, help='DEPRECATED')
-group.add_argument('--llama_cpp_seed', type=int, default=0, help='DEPRECATED')
-group.add_argument('--use_fast', action='store_true', help='DEPRECATED')
+# group = parser.add_argument_group('Deprecated')
 
 args = parser.parse_args()
 args_defaults = parser.parse_args([])
@@ -223,7 +208,7 @@ for arg in sys.argv[1:]:
     if hasattr(args, arg):
         provided_arguments.append(arg)
 
-deprecated_args = ['notebook', 'chat', 'no_stream', 'mul_mat_q', 'use_fast']
+deprecated_args = []
 
 
 def do_cmd_flags_warnings():
@@ -262,8 +247,6 @@ def fix_loader_name(name):
         return 'GPTQ-for-LLaMa'
     elif name in ['exllama', 'ex-llama', 'ex_llama', 'exlama']:
         return 'ExLlama'
-    elif name in ['exllama-hf', 'exllama_hf', 'exllama hf', 'ex-llama-hf', 'ex_llama_hf']:
-        return 'ExLlama_HF'
     elif name in ['exllamav2', 'exllama-v2', 'ex_llama-v2', 'exlamav2', 'exlama-v2', 'exllama2', 'exllama-2']:
         return 'ExLlamav2'
     elif name in ['exllamav2-hf', 'exllamav2_hf', 'exllama-v2-hf', 'exllama_v2_hf', 'exllama-v2_hf', 'exllama2-hf', 'exllama2_hf', 'exllama-2-hf', 'exllama_2_hf', 'exllama-2_hf']:

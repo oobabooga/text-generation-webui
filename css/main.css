@@ -492,6 +492,10 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     left: calc(100% - 168px);
 }
 
+#show-controls span {
+    opacity: 0.6;
+}
+
 #typing-container {
     display: none;
     position: absolute;

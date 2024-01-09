@@ -81,15 +81,15 @@ loaders_and_params = OrderedDict({
         'trust_remote_code',
         'no_use_fast',
     ],
-    'ExLlama_HF': [
+    'ExLlamav2': [
         'gpu_split',
         'max_seq_len',
+        'no_flash_attn',
+        'num_experts_per_token',
+        'cache_8bit',
         'alpha_value',
-        'rope_freq_base',
         'compress_pos_emb',
-        'cfg_cache',
-        'trust_remote_code',
-        'no_use_fast',
+        'exllamav2_info',
     ],
     'AutoGPTQ': [
         'triton',
@@ -128,24 +128,6 @@ loaders_and_params = OrderedDict({
         'no_use_fast',
         'gptq_for_llama_info',
     ],
-    'ExLlamav2': [
-        'gpu_split',
-        'max_seq_len',
-        'no_flash_attn',
-        'num_experts_per_token',
-        'cache_8bit',
-        'alpha_value',
-        'compress_pos_emb',
-        'exllamav2_info',
-    ],
-    'ExLlama': [
-        'gpu_split',
-        'max_seq_len',
-        'alpha_value',
-        'rope_freq_base',
-        'compress_pos_emb',
-        'exllama_info',
-    ],
     'ctransformers': [
         'n_ctx',
         'n_gpu_layers',
@@ -173,6 +155,10 @@ def transformers_samplers():
     return {
         'temperature',
         'temperature_last',
+        'dynamic_temperature',
+        'dynatemp_low',
+        'dynatemp_high',
+        'dynatemp_exponent',
         'top_p',
         'min_p',
         'top_k',
@@ -216,54 +202,6 @@ loaders_samplers = {
     'AutoAWQ': transformers_samplers(),
     'QuIP#': transformers_samplers(),
     'HQQ': transformers_samplers(),
-    'ExLlama_HF': {
-        'temperature',
-        'temperature_last',
-        'top_p',
-        'min_p',
-        'top_k',
-        'typical_p',
-        'epsilon_cutoff',
-        'eta_cutoff',
-        'tfs',
-        'top_a',
-        'repetition_penalty',
-        'presence_penalty',
-        'frequency_penalty',
-        'repetition_penalty_range',
-        'encoder_repetition_penalty',
-        'no_repeat_ngram_size',
-        'min_length',
-        'seed',
-        'do_sample',
-        'mirostat_mode',
-        'mirostat_tau',
-        'mirostat_eta',
-        'grammar_file_row',
-        'grammar_string',
-        'guidance_scale',
-        'negative_prompt',
-        'ban_eos_token',
-        'custom_token_bans',
-        'add_bos_token',
-        'skip_special_tokens',
-        'auto_max_new_tokens',
-    },
-    'ExLlama': {
-        'temperature',
-        'top_p',
-        'top_k',
-        'typical_p',
-        'repetition_penalty',
-        'repetition_penalty_range',
-        'seed',
-        'guidance_scale',
-        'negative_prompt',
-        'ban_eos_token',
-        'add_bos_token',
-        'custom_token_bans',
-        'auto_max_new_tokens',
-    },
     'ExLlamav2': {
         'temperature',
         'top_p',
@@ -286,6 +224,10 @@ loaders_samplers = {
     'ExLlamav2_HF': {
         'temperature',
         'temperature_last',
+        'dynamic_temperature',
+        'dynatemp_low',
+        'dynatemp_high',
+        'dynatemp_exponent',
         'top_p',
         'min_p',
         'top_k',
@@ -338,6 +280,10 @@ loaders_samplers = {
     'llamacpp_HF': {
         'temperature',
         'temperature_last',
+        'dynamic_temperature',
+        'dynatemp_low',
+        'dynatemp_high',
+        'dynatemp_exponent',
         'top_p',
         'min_p',
         'top_k',
@@ -410,12 +356,20 @@ def list_all_samplers():
     return sorted(all_samplers)
 
 
-def blacklist_samplers(loader):
+def blacklist_samplers(loader, dynamic_temperature):
     all_samplers = list_all_samplers()
-    if loader == 'All':
-        return [gr.update(visible=True) for sampler in all_samplers]
-    else:
-        return [gr.update(visible=True) if sampler in loaders_samplers[loader] else gr.update(visible=False) for sampler in all_samplers]
+    output = []
+
+    for sampler in all_samplers:
+        if loader == 'All' or sampler in loaders_samplers[loader]:
+            if sampler.startswith('dynatemp'):
+                output.append(gr.update(visible=dynamic_temperature))
+            else:
+                output.append(gr.update(visible=True))
+        else:
+            output.append(gr.update(visible=False))
+
+    return output
 
 
 def get_model_types(loader):
