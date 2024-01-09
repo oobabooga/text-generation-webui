@@ -1,6 +1,0 @@
-dynamic_temperature: true
-dynatemp_low: 0.01
-dynatemp_high: 2
-dynatemp_exponent: 1
-temperature_last: true
-min_p: 0.07
