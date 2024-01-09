@@ -527,8 +527,8 @@ def load_history_after_deletion(state, idx):
     if shared.args.multi_user:
         return start_new_chat(state)
 
-    idx = min(int(idx), len(histories) - 1)
     histories = find_all_histories(state)
+    idx = min(int(idx), len(histories) - 1)
 
     if len(histories) > 0:
         history = load_history(histories[idx], state['character_menu'], state['mode'])
