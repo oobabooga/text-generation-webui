@@ -1,4 +1,5 @@
 import argparse
+import copy
 import os
 import sys
 from collections import OrderedDict
@@ -65,6 +66,7 @@ settings = {
     'default_extensions': ['gallery'],
 }
 
+default_settings = copy.deepcopy(settings)
 
 # Parser copied from https://github.com/vladmandic/automatic
 parser = argparse.ArgumentParser(description="Text generation web UI", conflict_handler='resolve', add_help=True, formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=55, indent_increment=2, width=200))

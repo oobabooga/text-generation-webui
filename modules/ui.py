@@ -234,6 +234,11 @@ def save_settings(state, preset, extensions_list, show_controls, theme_state):
                 _id = f"{extension_name}-{param}"
                 output[_id] = params[param]
 
+    # Do not save unchanged settings
+    for key in list(output.keys()):
+        if key in shared.default_settings and output[key] == shared.default_settings[key]:
+            output.pop(key)
+
     return yaml.dump(output, sort_keys=False, width=float("inf"))
 
 
