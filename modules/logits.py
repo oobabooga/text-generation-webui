@@ -42,7 +42,7 @@ def get_next_logits(prompt, state, use_samplers, previous, top_logits=25, return
             tokens = shared.tokenizer.encode(prompt)
             scores = shared.model.get_logits(tokens)[-1][-1]
         elif is_non_hf_mambassm:
-            tokens = shared.tokenizer.encode(prompt, return_tensors= 'pt').cuda()
+            tokens = shared.tokenizer.encode(prompt, return_tensors='pt').cuda()
             scores = shared.model.get_logits(tokens)[-1]
         else:
             if is_torch_xpu_available():
