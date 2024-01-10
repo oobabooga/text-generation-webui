@@ -19,10 +19,9 @@ def apply_settings(extension, name):
 
     for param in extension.params:
         _id = f"{name}-{param}"
-        if _id not in shared.settings:
-            continue
-
-        extension.params[param] = shared.settings[_id]
+        shared.default_settings[_id] = extension.params[param]
+        if _id in shared.settings:
+            extension.params[param] = shared.settings[_id]
 
 
 def load_extensions():
@@ -40,10 +39,14 @@ def load_extensions():
                     raise
 
                 extension = getattr(extensions, name).script
-                apply_settings(extension, name)
-                if extension not in setup_called and hasattr(extension, "setup"):
+
+                # Only run setup() and apply settings from settings.yaml once
+                if extension not in setup_called:
+                    apply_settings(extension, name)
+                    if hasattr(extension, "setup"):
+                        extension.setup()
+
                     setup_called.add(extension)
-                    extension.setup()
 
                 state[name] = [True, i]
             except:
