@@ -111,6 +111,11 @@ def get_model_metadata(model):
     path = Path(f'{shared.args.model_dir}/{model}') / 'tokenizer_config.json'
     if path.exists():
         metadata = json.loads(open(path, 'r', encoding='utf-8').read())
+        if 'instruction_template' in metadata:
+            model_settings['instruction_template'] = metadata['instruction_template']
+        if 'instruction_template_str' in metadata:
+            model_settings['instruction_template'] = 'Custom (obtained from model metadata)'
+            model_settings['instruction_template_str'] = metadata['instruction_template_str']
         if 'chat_template' in metadata:
             template = metadata['chat_template']
             for k in ['eos_token', 'bos_token']:
