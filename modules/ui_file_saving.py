@@ -13,37 +13,37 @@ def create_ui():
         shared.gradio['save_root'] = gr.Textbox(lines=1, label='File folder', info='For reference. Unchangeable.', interactive=False)
         shared.gradio['save_contents'] = gr.Textbox(lines=10, label='File contents')
         with gr.Row():
-            shared.gradio['save_confirm'] = gr.Button('Save', elem_classes="small-button", variant='primary', interactive=not mu)
             shared.gradio['save_cancel'] = gr.Button('Cancel', elem_classes="small-button")
+            shared.gradio['save_confirm'] = gr.Button('Save', elem_classes="small-button", variant='primary', interactive=not mu)
 
     # Text file deleter
     with gr.Group(visible=False, elem_classes='file-saver') as shared.gradio['file_deleter']:
         shared.gradio['delete_filename'] = gr.Textbox(lines=1, label='File name')
         shared.gradio['delete_root'] = gr.Textbox(lines=1, label='File folder', info='For reference. Unchangeable.', interactive=False)
         with gr.Row():
-            shared.gradio['delete_confirm'] = gr.Button('Delete', elem_classes="small-button", variant='stop', interactive=not mu)
             shared.gradio['delete_cancel'] = gr.Button('Cancel', elem_classes="small-button")
+            shared.gradio['delete_confirm'] = gr.Button('Delete', elem_classes="small-button", variant='stop', interactive=not mu)
 
     # Character saver/deleter
     with gr.Group(visible=False, elem_classes='file-saver') as shared.gradio['character_saver']:
         shared.gradio['save_character_filename'] = gr.Textbox(lines=1, label='File name', info='The character will be saved to your characters/ folder with this base filename.')
         with gr.Row():
-            shared.gradio['save_character_confirm'] = gr.Button('Save', elem_classes="small-button", variant='primary', interactive=not mu)
             shared.gradio['save_character_cancel'] = gr.Button('Cancel', elem_classes="small-button")
+            shared.gradio['save_character_confirm'] = gr.Button('Save', elem_classes="small-button", variant='primary', interactive=not mu)
 
     with gr.Group(visible=False, elem_classes='file-saver') as shared.gradio['character_deleter']:
         gr.Markdown('Confirm the character deletion?')
         with gr.Row():
-            shared.gradio['delete_character_confirm'] = gr.Button('Delete', elem_classes="small-button", variant='stop', interactive=not mu)
             shared.gradio['delete_character_cancel'] = gr.Button('Cancel', elem_classes="small-button")
+            shared.gradio['delete_character_confirm'] = gr.Button('Delete', elem_classes="small-button", variant='stop', interactive=not mu)
 
     # Preset saver
     with gr.Group(visible=False, elem_classes='file-saver') as shared.gradio['preset_saver']:
         shared.gradio['save_preset_filename'] = gr.Textbox(lines=1, label='File name', info='The preset will be saved to your presets/ folder with this base filename.')
         shared.gradio['save_preset_contents'] = gr.Textbox(lines=10, label='File contents')
         with gr.Row():
-            shared.gradio['save_preset_confirm'] = gr.Button('Save', elem_classes="small-button", variant='primary', interactive=not mu)
             shared.gradio['save_preset_cancel'] = gr.Button('Cancel', elem_classes="small-button")
+            shared.gradio['save_preset_confirm'] = gr.Button('Save', elem_classes="small-button", variant='primary', interactive=not mu)
 
 
 def create_event_handlers():
@@ -64,9 +64,10 @@ def create_event_handlers():
         lambda x: gr.update(choices=utils.get_available_characters(), value=x), gradio('save_character_filename'), gradio('character_menu'))
 
     shared.gradio['delete_character_confirm'].click(
+        lambda x: str(utils.get_available_characters().index(x)), gradio('character_menu'), gradio('temporary_text')).then(
         chat.delete_character, gradio('character_menu'), None).then(
-        lambda: gr.update(visible=False), None, gradio('character_deleter')).then(
-        lambda: gr.update(choices=(characters := utils.get_available_characters()), value=characters[0]), None, gradio('character_menu'))
+        chat.update_character_menu_after_deletion, gradio('temporary_text'), gradio('character_menu')).then(
+        lambda: gr.update(visible=False), None, gradio('character_deleter'))
 
     shared.gradio['save_character_cancel'].click(lambda: gr.update(visible=False), None, gradio('character_saver'))
     shared.gradio['delete_character_cancel'].click(lambda: gr.update(visible=False), None, gradio('character_deleter'))

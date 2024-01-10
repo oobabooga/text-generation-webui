@@ -108,7 +108,7 @@ def ui():
         gr.HTML(value="<style>" + generate_css() + "</style>")
         with gr.Row():
             filter_box = gr.Textbox(label='', placeholder='Filter', lines=1, max_lines=1, container=False, elem_id='gallery-filter-box')
-            gr.ClearButton(filter_box, value='🗑️', elem_classes='refresh-button')
+            gr.ClearButton(filter_box, value='Clear', elem_classes='refresh-button')
             update = gr.Button("Refresh", elem_classes='refresh-button')
 
         gallery = gr.Dataset(

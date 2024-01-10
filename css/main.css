@@ -195,8 +195,9 @@ button {
     border: var(--input-border-width) solid var(--input-border-color) !important;
 }
 
-.file-saver > :first-child > :nth-child(2) {
+.file-saver > :first-child > :last-child {
     background: var(--block-background-fill);
+    justify-content: flex-end;
 }
 
 .checkboxgroup-table label {
@@ -652,12 +653,22 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
 /* ----------------------------------------------
   Past chats menus
 ---------------------------------------------- */
-#past-chats-row {
-    margin-bottom: calc( -1 * var(--layout-gap) );
-}
-
 #rename-row label {
     margin-top: var(--layout-gap);
+}
+
+/* ----------------------------------------------
+  Past chat histories in a side bar on desktop
+---------------------------------------------- */
+@media screen and (width >= 1327px) {
+    #past-chats-row {
+        position: absolute;
+        top: 16px;
+        left: 0;
+        width: calc(0.5*(var(--document-width) - 880px - 120px - 16px*2));
+        max-width: 300px;
+        margin-left: calc(-0.5*(var(--document-width) - 880px - 14px - 16px * 2));
+    }
 }
 
 /* ----------------------------------------------

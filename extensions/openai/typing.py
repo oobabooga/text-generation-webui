@@ -9,7 +9,9 @@ class GenerationOptions(BaseModel):
     preset: str | None = Field(default=None, description="The name of a file under text-generation-webui/presets (without the .yaml extension). The sampling parameters that get overwritten by this option are the keys in the default_preset() function in modules/presets.py.")
     min_p: float = 0
     dynamic_temperature: bool = False
-    dynamic_temperature_low: float = 0.1
+    dynatemp_low: float = 1
+    dynatemp_high: float = 1
+    dynatemp_exponent: float = 1
     top_k: int = 0
     repetition_penalty: float = 1
     repetition_penalty_range: int = 1024

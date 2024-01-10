@@ -25,13 +25,13 @@ def save_file(fname, contents):
     rel_path_str = os.path.relpath(abs_path_str, root_folder)
     rel_path = Path(rel_path_str)
     if rel_path.parts[0] == '..':
-        logger.error(f'Invalid file path: {fname}')
+        logger.error(f'Invalid file path: \"{fname}\"')
         return
 
     with open(abs_path_str, 'w', encoding='utf-8') as f:
         f.write(contents)
 
-    logger.info(f'Saved {abs_path_str}.')
+    logger.info(f'Saved \"{abs_path_str}\".')
 
 
 def delete_file(fname):
@@ -44,12 +44,12 @@ def delete_file(fname):
     rel_path_str = os.path.relpath(abs_path_str, root_folder)
     rel_path = Path(rel_path_str)
     if rel_path.parts[0] == '..':
-        logger.error(f'Invalid file path: {fname}')
+        logger.error(f'Invalid file path: \"{fname}\"')
         return
 
     if rel_path.exists():
         rel_path.unlink()
-        logger.info(f'Deleted {fname}.')
+        logger.info(f'Deleted \"{fname}\".')
 
 
 def current_time():
