@@ -22,9 +22,7 @@ class MambaSsmModel:
 
         dtype = torch.float16
         model = MambaLMHeadModel.from_pretrained(path_to_model, "cuda", dtype)
-        logger.debug("mamba: model loaded %s", model)
         tokenizer = AutoTokenizer.from_pretrained('EleutherAI/gpt-neox-20b')
-        logger.debug("mamba: tokenizer loaded %s", tokenizer)
 
         result = self()
         result.model = model
@@ -76,16 +74,9 @@ class MambaSsmModel:
             top_p=state['top_p'],
         )
         decoded = self.decode(output.sequences.cpu()[0][initial_len:])
-        # logger.debug("decoded %s", decoded)
+        logger.debug("decoded %s", decoded)
         callback(decoded)
         return decoded
-
-        # output = ""
-        # for token in generator:
-        #     if callback:
-        #         callback(token)
-
-        #     output += token
 
     def generate_with_streaming(self, *args, **kwargs):
         with Iteratorize(self.generate, args, kwargs,
