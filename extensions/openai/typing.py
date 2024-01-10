@@ -99,8 +99,8 @@ class ChatCompletionRequestParams(BaseModel):
     instruction_template_str: str | None = Field(default=None, description="A Jinja2 instruction template. If set, will take precedence over everything else.")
 
     character: str | None = Field(default=None, description="A character defined under text-generation-webui/characters. If not set, the default \"Assistant\" character will be used.")
-    name1: str | None = Field(default=None, description="Your name (the user). By default, it's \"You\".")
-    name2: str | None = Field(default=None, description="Overwrites the value set by character.")
+    name1: str | None = Field(default=None, description="Your name (the user). By default, it's \"You\".", alias=['user_name'])
+    name2: str | None = Field(default=None, description="Overwrites the value set by character.", alias=['bot_name'])
     context: str | None = Field(default=None, description="Overwrites the value set by character.")
     greeting: str | None = Field(default=None, description="Overwrites the value set by character.")
     chat_template_str: str | None = Field(default=None, description="Jinja2 template for chat.")
