@@ -529,6 +529,7 @@ def load_history_after_deletion(state, idx):
 
     histories = find_all_histories(state)
     idx = min(int(idx), len(histories) - 1)
+    idx = max(0, idx)
 
     if len(histories) > 0:
         history = load_history(histories[idx], state['character_menu'], state['mode'])
@@ -542,6 +543,7 @@ def load_history_after_deletion(state, idx):
 def update_character_menu_after_deletion(idx):
     characters = utils.get_available_characters()
     idx = min(int(idx), len(characters) - 1)
+    idx = max(0, idx)
     return gr.update(choices=characters, value=characters[idx])
 
 

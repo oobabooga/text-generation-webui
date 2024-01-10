@@ -37,7 +37,7 @@ document.querySelector(".header_bar").addEventListener("click", function(event) 
 //------------------------------------------------
 // Keyboard shortcuts
 //------------------------------------------------
-let previousTabId = 'chat-tab-button';
+let previousTabId = "chat-tab-button";
 document.addEventListener("keydown", function(event) {
 
   // Stop generation on Esc pressed
@@ -101,14 +101,14 @@ document.addEventListener("keydown", function(event) {
   // Switch between tabs on Tab
   else if (!event.ctrlKey && !event.shiftKey && event.key === "Tab") {
     event.preventDefault();
-    var parametersButton = document.getElementById('parameters-button');
+    var parametersButton = document.getElementById("parameters-button");
     var parentContainer = parametersButton.parentNode;
-    var selectedChild = parentContainer.querySelector('.selected');
-    if (selectedChild.id == 'parameters-button') {
-        document.getElementById(previousTabId).click();
+    var selectedChild = parentContainer.querySelector(".selected");
+    if (selectedChild.id == "parameters-button") {
+      document.getElementById(previousTabId).click();
     } else {
-        previousTabId = selectedChild.id;
-        parametersButton.click();
+      previousTabId = selectedChild.id;
+      parametersButton.click();
     }
   }
 });
@@ -262,7 +262,7 @@ button.addEventListener("click", function () {
     hideMenu();
   }
   else {
-  showMenu();
+    showMenu();
   }
 });
 
@@ -401,7 +401,7 @@ window.addEventListener("resize", updateDocumentWidth);
 //------------------------------------------------
 // Focus on the rename text area when it becomes visible
 //------------------------------------------------
-const renameTextArea = document.getElementById('rename-row').querySelector('textarea');
+const renameTextArea = document.getElementById("rename-row").querySelector("textarea");
 
 function respondToVisibility(element, callback) {
   var options = {
