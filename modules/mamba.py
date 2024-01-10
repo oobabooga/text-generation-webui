@@ -1,14 +1,7 @@
-import random
-import traceback
-from pathlib import Path
-
 import torch
 from mamba_ssm.models.mixer_seq_simple import MambaLMHeadModel
-from mamba_ssm.utils.generation import sample
 from transformers import AutoTokenizer
-from modules import shared
 from modules.logging_colors import logger
-from modules.text_generation import get_max_prompt_length
 from modules.callbacks import Iteratorize
 
 
