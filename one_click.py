@@ -257,7 +257,7 @@ def install_webui():
 
 def update_requirements(initial_installation=False):
     # Create .git directory if missing
-    if not os.path.isdir(os.path.join(script_dir, ".git")):
+    if not os.path.exists(os.path.join(script_dir, ".git")):
         git_creation_cmd = 'git init -b main && git remote add origin https://github.com/oobabooga/text-generation-webui && git fetch && git symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/main && git reset --hard origin/main && git branch --set-upstream-to=origin/main'
         run_cmd(git_creation_cmd, environment=True, assert_success=True)
 
@@ -268,7 +268,7 @@ def update_requirements(initial_installation=False):
     ]
 
     before_pull_hashes = {file_name: calculate_file_hash(file_name) for file_name in files_to_check}
-    run_cmd("git pull --autostash", assert_success=True, environment=True)
+    run_cmd("git pull --autostash origin main", assert_success=True, environment=True)
     after_pull_hashes = {file_name: calculate_file_hash(file_name) for file_name in files_to_check}
 
     # Check for differences in installation file hashes
