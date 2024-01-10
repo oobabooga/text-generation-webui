@@ -99,7 +99,7 @@ document.addEventListener("keydown", function(event) {
   }
 
   // Switch between tabs on Tab
-  else if (!event.ctrlKey && !event.shiftKey && event.key === "Tab") {
+  else if (!event.ctrlKey && !event.shiftKey && !event.altKey && !event.metaKey && event.key === "Tab") {
     event.preventDefault();
     var parametersButton = document.getElementById("parameters-button");
     var parentContainer = parametersButton.parentNode;
