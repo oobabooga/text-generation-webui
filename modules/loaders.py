@@ -147,7 +147,10 @@ loaders_and_params = OrderedDict({
         'hqq_backend',
         'trust_remote_code',
         'no_use_fast',
-    ]
+    ],
+    'Mamba-Ssm': [
+        
+    ],
 })
 
 
@@ -321,6 +324,11 @@ loaders_samplers = {
         'repetition_penalty',
         'repetition_penalty_range',
     },
+    'Mamba-Ssm': [
+        'temperature',
+        'top_p',
+        'top_k',
+    ],
 }
 
 loaders_model_types = {

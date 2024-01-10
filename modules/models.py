@@ -71,6 +71,7 @@ def load_model(model_name, loader=None):
         'AutoAWQ': AutoAWQ_loader,
         'QuIP#': QuipSharp_loader,
         'HQQ': HQQ_loader,
+        'Mamba-Ssm': MambaSsm_loader,
     }
 
     metadata = get_model_metadata(model_name)
@@ -400,6 +401,13 @@ def HQQ_loader(model_name):
     HQQLinear.set_backend(getattr(HQQBackend, shared.args.hqq_backend))
     return model
 
+def MambaSsm_loader(model_name):
+    from modules.mamba import MambaSsmModel
+    path = Path(f'{shared.args.model_dir}/{model_name}')
+
+    mamba = MambaSsmModel()
+    model, tokenizer = mamba.from_pretrained(path)
+    return model, tokenizer
 
 def get_max_memory_dict():
     max_memory = {}

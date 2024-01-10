@@ -1,4 +1,5 @@
 accelerate==0.25.*
+causal-conv1d
 colorama
 datasets
 einops
@@ -6,6 +7,7 @@ exllamav2==0.0.11; platform_system != "Darwin" and platform_machine != "x86_64"
 gradio==3.50.*
 hqq==0.1.2
 lm_eval==0.3.0
+mamba-ssm
 markdown
 numpy==1.24.*
 optimum==1.16.*
