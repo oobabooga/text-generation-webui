@@ -52,6 +52,11 @@ def create_ui():
     else:
         default_cpu_mem = 0
 
+    # Supported types: https://bigdl.readthedocs.io/en/latest/doc/PythonAPI/LLM/transformers.html#bigdl.llm.transformers.AutoModelForCausalLM.from_pretrained
+    # "None" means no quantization
+    # "Default" means load_in_4bit = True only, others are using load_in_low_bit = "sym_int4", etc
+    quant_types_bigdl = ["None", "Default", "sym_int4", "asym_int4", "sym_int5", "asym_int5", "sym_int8", "nf3", "nf4", "fp4", "fp8", "fp8_e4m3", "fp8_e5m2"]
+
     with gr.Tab("Model", elem_id="model-tab"):
         with gr.Row():
             with gr.Column():
@@ -84,6 +89,7 @@ def create_ui():
                             shared.gradio['transformers_info'] = gr.Markdown('load-in-4bit params:')
                             shared.gradio['compute_dtype'] = gr.Dropdown(label="compute_dtype", choices=["bfloat16", "float16", "float32"], value=shared.args.compute_dtype)
                             shared.gradio['quant_type'] = gr.Dropdown(label="quant_type", choices=["nf4", "fp4"], value=shared.args.quant_type)
+                            shared.gradio['quant_type_bigdl'] = gr.Dropdown(label="quant_type", choices=quant_types_bigdl, value=shared.args.quant_type)
                             shared.gradio['hqq_backend'] = gr.Dropdown(label="hqq_backend", choices=["PYTORCH", "PYTORCH_COMPILE", "ATEN"], value=shared.args.hqq_backend)
 
                             shared.gradio['n_gpu_layers'] = gr.Slider(label="n-gpu-layers", minimum=0, maximum=128, value=shared.args.n_gpu_layers)

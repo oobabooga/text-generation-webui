@@ -60,6 +60,7 @@ def list_model_elements():
         'load_in_4bit',
         'compute_dtype',
         'quant_type',
+        'quant_type_bigdl',
         'use_double_quant',
         'wbits',
         'groupsize',

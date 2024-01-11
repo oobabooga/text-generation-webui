@@ -261,6 +261,8 @@ def fix_loader_name(name):
         return 'QuIP#'
     elif name in ['hqq']:
         return 'HQQ'
+    elif name in ['bigdl', 'bigdl-llm']:
+        return 'BigDL'
 
 
 def add_extension(name, last=False):

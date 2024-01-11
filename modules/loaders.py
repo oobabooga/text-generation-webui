@@ -3,6 +3,8 @@ from collections import OrderedDict
 
 import gradio as gr
 
+from transformers import is_torch_xpu_available
+
 from modules import shared
 
 loaders_and_params = OrderedDict({
@@ -149,6 +151,15 @@ loaders_and_params = OrderedDict({
         'no_use_fast',
     ]
 })
+
+if is_torch_xpu_available():
+    print('XPU is available, adding BigDL loader')
+
+    loaders_and_params['BigDL'] = [
+        'quant_type_bigdl',
+        'compute_dtype',
+        'trust_remote_code'
+    ]
 
 
 def transformers_samplers():
@@ -321,6 +332,7 @@ loaders_samplers = {
         'repetition_penalty',
         'repetition_penalty_range',
     },
+    'BigDL': transformers_samplers(),
 }
 
 loaders_model_types = {

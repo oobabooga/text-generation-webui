@@ -71,6 +71,7 @@ def load_model(model_name, loader=None):
         'AutoAWQ': AutoAWQ_loader,
         'QuIP#': QuipSharp_loader,
         'HQQ': HQQ_loader,
+        'BigDL': bigdl_loader,
     }
 
     metadata = get_model_metadata(model_name)
@@ -399,6 +400,58 @@ def HQQ_loader(model_name):
     model = HQQModelForCausalLM.from_quantized(str(model_dir))
     HQQLinear.set_backend(getattr(HQQBackend, shared.args.hqq_backend))
     return model
+
+
+def bigdl_loader(model_name):
+    if is_xpu_available():
+        import intel_extension_for_pytorch
+        import bigdl.llm.transformers as bigdl
+    else:
+        logger.warn('XPU is not available!')
+        raise ValueError
+
+    path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
+
+    torch_dtype = None
+
+    if shared.args.compute_dtype == 'bfloat16':
+        torch_dtype = torch.bfloat16
+    elif shared.args.compute_dtype == 'float16':
+        torch_dtype = torch.float16
+    elif shared.args.compute_dtype == 'float32':
+        torch_dtype = torch.float32
+    else:
+        logger.warn('Unsupported compute_dtype' + shared.args.compute_dtype)
+        raise ValueError
+
+    params = {
+        'low_cpu_mem_usage': True,
+        'trust_remote_code': shared.args.trust_remote_code,
+        'torch_dtype': torch_dtype,
+        'use_safetensors': True if shared.args.force_safetensors else None,
+        'use_cache': True,
+        'device_map': 'auto'
+    }
+
+    config = AutoConfig.from_pretrained(path_to_model, trust_remote_code=params['trust_remote_code'])
+
+    if 'chatglm' in model_name.lower():
+        LoaderClass = bigdl.AutoModel
+    else:
+        if config.to_dict().get('is_encoder_decoder', False):
+            LoaderClass = bigdl.AutoModelForSeq2SeqLM
+            shared.is_seq2seq = True
+        else:
+            LoaderClass = bigdl.AutoModelForCausalLM
+
+    if shared.args.quant_type_bigdl == 'Default':
+        params['load_in_4bit'] = True
+        logger.info('Using default load_in_4bit in BigDL')
+    elif shared.args.quant_type_bigdl != 'None':
+        params['load_in_low_bit'] = shared.args.quant_type_bigdl
+        logger.info('Using ' + shared.args.quant_type_bigdl + ' as load_in_low_bit in BigDL')
+
+    return LoaderClass.from_pretrained(path_to_model, **params).to('xpu')
 
 
 def get_max_memory_dict():
