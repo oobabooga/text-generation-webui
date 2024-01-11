@@ -13,8 +13,7 @@ class MambaSsmModel:
     @classmethod
     def from_pretrained(self, path_to_model):
 
-        dtype = torch.float16
-        model = MambaLMHeadModel.from_pretrained(path_to_model, "cuda", dtype)
+        model = MambaLMHeadModel.from_pretrained(path_to_model, dtype=torch.bfloat16, device="cuda")
         tokenizer = AutoTokenizer.from_pretrained('EleutherAI/gpt-neox-20b')
 
         result = self()
@@ -78,3 +77,6 @@ class MambaSsmModel:
             for token in generator:
                 reply += token
                 yield reply
+
+    def to(self, *args, **kwargs):
+        self.model.to(*args, **kwargs)

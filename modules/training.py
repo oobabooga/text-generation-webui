@@ -1,7 +1,7 @@
 import os
 
-os.environ["WANDB_MODE"] = "offline"
-# os.environ["WANDB_DISABLED"] = "true"
+#os.environ["WANDB_MODE"] = "offline"
+#os.environ["WANDB_DISABLED"] = "true"
 
 import json
 import math
@@ -155,6 +155,56 @@ def create_ui():
 
                     output = gr.Markdown(value="Ready")
 
+        with gr.Tab('Train Ssm', elem_id='ssm-train-tab'):
+                with gr.Column(scale=5):
+                    ssm_name = gr.Textbox(label='Name', info='The name of your new model file. Used as output directory.')
+                with gr.Column():
+                    ssm_always_override = gr.Checkbox(label='Override Existing Files', value=False, info='If the name is the same, checking will replace the existing file, and unchecking will load and continue from it (the rank must be the same).', elem_classes=['no-background'])
+                with gr.Column():
+                    # with gr.Tab(label='Formatted Dataset'):
+                    #     with gr.Row():
+                    #         ssm_format = gr.Dropdown(choices=utils.get_datasets('training/formats', 'json'), value='None', label='Data Format', info='The format file used to decide how to format the dataset input.', elem_classes=['slim-dropdown'], interactive=not mu)
+                    #         ui.create_refresh_button(ssm_format, lambda: None, lambda: {'choices': utils.get_datasets('training/formats', 'json')}, 'refresh-button', interactive=not mu)
+
+                    #     with gr.Row():
+                    #         ssm_dataset = gr.Dropdown(choices=utils.get_datasets('training/datasets', 'json'), value='None', label='Dataset', info='The dataset file to use for training.', elem_classes=['slim-dropdown'], interactive=not mu)
+                    #         ui.create_refresh_button(ssm_dataset, lambda: None, lambda: {'choices': utils.get_datasets('training/datasets', 'json')}, 'refresh-button', interactive=not mu)
+
+                    #     with gr.Row():
+                    #         ssm_eval_dataset = gr.Dropdown(choices=utils.get_datasets('training/datasets', 'json'), value='None', label='Evaluation Dataset', info='The (optional) dataset file used to evaluate the model after training.', elem_classes=['slim-dropdown'], interactive=not mu)
+                    #         ui.create_refresh_button(ssm_eval_dataset, lambda: None, lambda: {'choices': utils.get_datasets('training/datasets', 'json')}, 'refresh-button', interactive=not mu)
+
+                    #     ssm_eval_steps = gr.Number(label='Evaluate every n steps', value=100, info='If an evaluation dataset is given, test it every time this many steps pass.')
+
+                    # with gr.Tab(label="Raw text file"):
+                    #     with gr.Row():
+                    #         ssm_raw_text_file = gr.Dropdown(choices=utils.get_datasets('training/datasets', 'txt'), value='None', label='Text file', info='The raw text file to use for training.', elem_classes=['slim-dropdown'], interactive=not mu)
+                    #         ui.create_refresh_button(ssm_raw_text_file, lambda: None, lambda: {'choices': utils.get_datasets('training/datasets', 'txt')}, 'refresh-button', interactive=not mu)
+
+                    #     with gr.Row():
+                    #         with gr.Column():
+                    #             ssm_overlap_len = gr.Slider(label='Overlap Length', minimum=0, maximum=512, value=128, step=16, info='How many tokens from the prior chunk of text to include into the next chunk. (The chunks themselves will be of a size determined by Cutoff Length). Setting overlap to exactly half the cutoff length may be ideal.')
+                    #             ssm_newline_favor_len = gr.Slider(label='Prefer Newline Cut Length', minimum=0, maximum=512, value=128, step=16, info='Length (in characters, not tokens) of the maximum distance to shift an overlap cut by to ensure chunks cut at newlines. If too low, cuts may occur in the middle of lines.')
+
+                    #         with gr.Column():
+                    #             ssm_hard_cut_string = gr.Textbox(label='Hard Cut String', value='\\n\\n\\n', info='String that indicates a hard cut between text parts. Helps prevent unwanted overlap.')
+                    #             ssm_min_chars = gr.Number(label='Ignore small blocks', value=0, info='Ignore Hard Cut blocks that have less or equal characters than this number')
+                    with gr.Row():
+                        with gr.Column():
+                            ssm_batch_size = gr.Slider(label='Batch Size', value=4, minimum=1, maximum=16, step=4, info='Global batch size. Determines VRAM.')
+
+                        with gr.Column():
+                            ssm_save_steps = gr.Number(label='Save every n steps', value=0, info='If above 0, a checkpoint of the LoRA will be saved every time this many steps pass.')
+
+                            ssm_epochs = gr.Number(label='Epochs', value=3, info='Number of times every entry in the dataset should be fed into training. So 1 means feed each item in once, 5 means feed it in five times, etc.')
+                            ssm_learning_rate = gr.Textbox(label='Learning Rate', value='5e-5', info='In scientific notation. 3e-4 is a good starting base point. 1e-2 is extremely high, 1e-6 is extremely low.')
+
+                    with gr.Row():
+                        ssm_start_button = gr.Button("Start Ssm Training", variant='primary', interactive=not mu)
+                        ssm_stop_button = gr.Button("Interrupt", interactive=not mu)
+
+                    ssm_output = gr.Markdown(value="Ready")
+
         with gr.Tab('Perplexity evaluation', elem_id='evaluate-tab'):
             with gr.Row():
                 with gr.Column():
@@ -180,12 +230,19 @@ def create_ui():
                 save_comments = gr.Button('Save comments', elem_classes="small-button", interactive=not mu)
                 refresh_table = gr.Button('Refresh the table', elem_classes="small-button", interactive=not mu)
 
+        
+
     # Training events
     all_params = [lora_name, always_override, q_proj_en, v_proj_en, k_proj_en, o_proj_en, gate_proj_en, down_proj_en, up_proj_en, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lr_scheduler_type, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, higher_rank_limit, warmup_steps, optimizer, hard_cut_string, train_only_after, stop_at_loss, add_eos_token, min_chars, report_to]
+    ssm_params = [ssm_name, always_override, format, dataset,
+     eval_dataset, raw_text_file, overlap_len, newline_favor_len, hard_cut_string, min_chars,
+     ssm_batch_size, ssm_save_steps, ssm_epochs, ssm_learning_rate]
 
     copy_from.change(do_copy_params, [copy_from] + all_params, all_params)
     start_button.click(do_train, all_params, output)
     stop_button.click(do_interrupt, None, None, queue=False)
+    ssm_start_button.click(do_train_ssm, ssm_params, ssm_output)
+    ssm_stop_button.click(do_interrupt, None, None, queue=False)
     higher_rank_limit.change(change_rank_limit, [higher_rank_limit], [lora_rank, lora_alpha])
 
     # Evaluation events. For some reason, the interrupt event
@@ -286,6 +343,193 @@ def calc_trainable_parameters(model):
             trainable_params += num_params
 
     return trainable_params, all_param
+
+def do_train_ssm(ssm_name: str, always_override: bool, format, dataset, eval_dataset, raw_text_file, overlap_len, newline_favor_len, hard_cut_string, min_chars, ssm_batch_size, ssm_save_steps, ssm_epochs, ssm_learning_rate):
+    model = shared.model.model
+    tokenizer = shared.tokenizer
+    tokenizer.eos_token = "<|endoftext|>"
+    tokenizer.pad_token = tokenizer.eos_token
+    #### TODO: make good
+    train_only_after = ''
+    cutoff_len = 128
+    overlap_len = 128
+    add_eos_token = True
+
+    #### TODO: REFACTOR
+    def encode(text, add_bos_token):
+        result = shared.tokenizer.encode(text, truncation=True, max_length=cutoff_len)
+        # Check if the first two tokens are BOS
+        if len(result) >= 2 and result[:2] == [shared.tokenizer.bos_token_id, shared.tokenizer.bos_token_id]:
+            result = result[1:]
+
+        if not add_bos_token and result[0] == shared.tokenizer.bos_token_id:
+            result = result[1:]
+        return result
+
+    def tokenize(prompt, append_eos_token=False):
+        if train_only_after == '' or train_only_after not in prompt:
+            input_ids = encode(prompt, True)
+
+            if append_eos_token and input_ids[-1] != shared.tokenizer.eos_token_id and len(input_ids) < cutoff_len:
+                input_ids.append(shared.tokenizer.eos_token_id)
+
+            input_ids = [shared.tokenizer.pad_token_id] * (cutoff_len - len(input_ids)) + input_ids
+            labels = [1] * len(input_ids)
+
+        else:
+            ind = prompt.index(train_only_after) + len(train_only_after)
+            before_tokens = encode(prompt[:ind], True)
+            after_tokens = encode(prompt[ind:], False)
+
+            if append_eos_token and after_tokens[-1] != shared.tokenizer.eos_token_id:
+                after_tokens.append(shared.tokenizer.eos_token_id)
+
+            full_length = len(after_tokens) + len(before_tokens)
+            if full_length > cutoff_len:
+                after_tokens = after_tokens[:cutoff_len - len(before_tokens)]
+            else:
+                before_tokens = [shared.tokenizer.pad_token_id] * (cutoff_len - full_length) + before_tokens
+
+            input_ids = before_tokens + after_tokens
+            labels = [-100] * len(before_tokens) + [1] * len(after_tokens)
+        #print(input_ids)
+        input_ids = torch.tensor(input_ids)
+        return {
+            "input_ids": input_ids,
+            "labels": labels,
+            "attention_mask": input_ids.ne(shared.tokenizer.pad_token_id),
+        }
+
+
+       # == Prep the dataset, format, etc ==
+    if raw_text_file not in ['None', '']:
+        train_template["template_type"] = "raw_text"
+        logger.info("Loading raw text file dataset")
+        fullpath = clean_path('training/datasets', f'{raw_text_file}')
+        fullpath = Path(fullpath)
+        if fullpath.is_dir():
+            logger.info('Training path directory {}'.format(raw_text_file))
+            raw_text = ""
+            file_paths = sorted(fullpath.glob('*.txt'), key=lambda path: natural_keys(path.name))
+            for file_path in file_paths:
+                if file_path.is_file():
+                    with file_path.open('r', encoding='utf-8') as file:
+                        raw_text += file.read().replace('\r', '')
+
+                    logger.info(f"Loaded training file: {file_path.name}")
+        else:
+            with open(clean_path('training/datasets', f'{raw_text_file}.txt'), 'r', encoding='utf-8') as file:
+                raw_text = file.read().replace('\r', '')
+
+        cut_string = hard_cut_string.replace('\\n', '\n')
+        eos_added = 0
+        out_tokens = []
+        for text_part in raw_text.split(cut_string):
+            if len(text_part.strip()) <= min_chars:
+                continue
+
+            tokens = shared.tokenizer.encode(text_part)
+            if add_eos_token:
+                tokens.append(shared.tokenizer.eos_token_id)
+                eos_added += 1
+
+            step = cutoff_len - overlap_len
+            if step <= 0:
+                yield f"Error: overlap_len ({overlap_len}) cannot be greater than or equal to cutoff_len ({cutoff_len})"
+                return
+
+            out_tokens.extend(split_chunks(tokens, cutoff_len, step))
+
+        if eos_added > 0:
+            print(f"EOS added to {eos_added} text blocks")
+
+        del raw_text  # Note: could be a gig for a large dataset, so delete redundant data as we go to be safe on RAM
+        text_chunks = [shared.tokenizer.decode(x) for x in out_tokens]
+        del out_tokens
+        if newline_favor_len > 0:
+            text_chunks = [cut_chunk_for_newline(x, newline_favor_len) for x in text_chunks]
+
+        train_data = Dataset.from_list([tokenize(x) for x in text_chunks])
+        del text_chunks
+        eval_data = None
+    else:
+        if dataset in ['None', '']:
+            yield "Missing dataset choice input, cannot continue."
+            return
+
+        if format in ['None', '']:
+            yield "Missing format choice input, cannot continue."
+            return
+
+        train_template["template_type"] = "dataset"
+
+        with open(clean_path('training/formats', f'{format}.json'), 'r', encoding='utf-8-sig') as formatFile:
+            format_data: dict[str, str] = json.load(formatFile)
+
+        # == store training prompt ==
+        for _, value in format_data.items():
+            prompt_key = f"template_{len(train_template)}"
+            train_template[prompt_key] = value
+
+        def generate_prompt(data_point: dict[str, str]):
+            for options, data in format_data.items():
+                if set(options.split(',')) == set(x[0] for x in data_point.items() if (type(x[1]) is str and len(x[1].strip()) > 0)):
+                    for key, val in data_point.items():
+                        if type(val) is str:
+                            data = data.replace(f'%{key}%', val)
+                    return data
+            raise RuntimeError(f'Data-point "{data_point}" has no keyset match within format "{list(format_data.keys())}"')
+
+        def generate_and_tokenize_prompt(data_point):
+            prompt = generate_prompt(data_point)
+            return tokenize(prompt, False) #  add_eos_token
+
+        logger.info("Loading JSON datasets")
+        data = load_dataset("json", data_files=clean_path('training/datasets', f'{dataset}.json'))
+        train_data = data['train'].map(generate_and_tokenize_prompt, new_fingerprint='%030x' % random.randrange(16**30))
+
+        if eval_dataset == 'None':
+            eval_data = None
+        else:
+            eval_data = load_dataset("json", data_files=clean_path('training/datasets', f'{eval_dataset}.json'))
+            eval_data = eval_data['train'].map(generate_and_tokenize_prompt, new_fingerprint='%030x' % random.randrange(16**30))
+
+    ### END REFACTOR ME
+
+ 
+    #tokenizer.chat_template = AutoTokenizer.from_pretrained("HuggingFaceH4/zephyr-7b-beta").chat_template
+
+
+    # data_module = ChatDataModule(
+    #     tokenizer=tokenizer,
+    #     data_path=args.data_path,
+    #     conversation_template=tokenizer.chat_template,
+    #     max_tokens=2048
+    # )
+
+    from modules.mamba_trainer import MambaTrainer
+
+    trainer = MambaTrainer(
+        model=model,
+        #train_dataset=data_module.dataset,
+        train_dataset=train_data,
+        tokenizer=tokenizer,
+        args=transformers.TrainingArguments(
+            learning_rate=5e-5,#ssm_learning_rate,
+            num_train_epochs=ssm_epochs,
+            per_device_train_batch_size=ssm_batch_size,
+            gradient_accumulation_steps=4, # args.gradient_accumulation_steps,
+            optim='paged_adamw_8bit', # ype=str, default="adamw_torch" , lowvram: paged_adamw_8bit
+            output_dir=f'trained_ssns/{ssm_name}',
+            #logging_steps=50,
+            save_steps=500,
+            do_eval=False,            
+        ),
+        #data_collator=data_module.data_collator,
+        data_collator=transformers.DataCollatorForLanguageModeling(shared.tokenizer, mlm=False),
+    )
+
+    trainer.train()
 
 
 def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: bool, k_proj_en: bool, o_proj_en: bool, gate_proj_en: bool, down_proj_en: bool, up_proj_en: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lr_scheduler_type: str, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, higher_rank_limit: bool, warmup_steps: int, optimizer: str, hard_cut_string: str, train_only_after: str, stop_at_loss: float, add_eos_token: bool, min_chars: int, report_to: str):
