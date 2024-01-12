@@ -175,6 +175,18 @@ button {
     font-size: 14px !important;
 }
 
+input[type="range"]:disabled {
+    background-image: linear-gradient(#aaa, #777);
+}
+
+input[type='range']:disabled::-webkit-slider-thumb {
+    background-color:#444;
+}
+
+input[type='range']:disabled::-moz-range-thumb {
+    background-color:#444;
+}
+
 .file-saver {
     position: fixed !important;
     height: 100%;
