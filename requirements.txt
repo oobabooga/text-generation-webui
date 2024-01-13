@@ -22,6 +22,7 @@ tensorboard
 transformers==4.36.*
 tqdm
 wandb
+jinja2==3.1.2
 
 # bitsandbytes
 bitsandbytes==0.41.1; platform_system != "Windows"
