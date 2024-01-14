@@ -1,6 +1,7 @@
 import ast
 import copy
 import html
+import pprint
 import random
 import re
 import time
@@ -44,7 +45,7 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
             yield ''
             return
 
-        if shared.model.__class__.__name__ in ['LlamaCppModel', 'RWKVModel', 'ExllamaModel', 'Exllamav2Model', 'CtransformersModel']:
+        if shared.model.__class__.__name__ in ['LlamaCppModel', 'Exllamav2Model', 'CtransformersModel']:
             generate_func = generate_reply_custom
         else:
             generate_func = generate_reply_HF
@@ -65,7 +66,8 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
             all_stop_strings += st
 
     if shared.args.verbose:
-        print(f'\n\n{question}\n--------------------\n')
+        logger.info("PROMPT=")
+        print(question)
 
     shared.stop_everything = False
     clear_torch_cache()
@@ -76,6 +78,10 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
     if len(all_stop_strings) > 0 and not state['stream']:
         state = copy.deepcopy(state)
         state['stream'] = True
+
+    min_update_interval = 0
+    if state.get('max_updates_second', 0) > 0:
+        min_update_interval = 1 / state['max_updates_second']
 
     # Generate
     for reply in generate_func(question, original_question, seed, state, stopping_strings, is_chat=is_chat):
@@ -94,10 +100,9 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
                 last_update = time.time()
                 yield reply
 
-            # Limit updates to 24 or 5 per second to avoid lag in the Gradio UI
+            # Limit updates to avoid lag in the Gradio UI
             # API updates are not limited
             else:
-                min_update_interval = 0 if not for_ui else 0.2 if (shared.args.listen or shared.args.share) else 0.0417
                 if cur_time - last_update > min_update_interval:
                     last_update = cur_time
                     yield reply
@@ -115,7 +120,7 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
     if shared.tokenizer is None:
         raise ValueError('No tokenizer is loaded')
 
-    if shared.model.__class__.__name__ in ['LlamaCppModel', 'RWKVModel', 'CtransformersModel', 'Exllamav2Model']:
+    if shared.model.__class__.__name__ in ['LlamaCppModel', 'CtransformersModel', 'Exllamav2Model']:
         input_ids = shared.tokenizer.encode(str(prompt))
         if shared.model.__class__.__name__ not in ['Exllamav2Model']:
             input_ids = np.array(input_ids).reshape(1, len(input_ids))
@@ -129,7 +134,7 @@ def encode(prompt, add_special_tokens=True, add_bos_token=True, truncation_lengt
     if truncation_length is not None:
         input_ids = input_ids[:, -truncation_length:]
 
-    if shared.model.__class__.__name__ in ['LlamaCppModel', 'RWKVModel', 'ExllamaModel', 'Exllamav2Model', 'CtransformersModel'] or shared.args.cpu:
+    if shared.model.__class__.__name__ in ['LlamaCppModel', 'Exllamav2Model', 'CtransformersModel'] or shared.args.cpu:
         return input_ids
     elif shared.args.deepspeed:
         return input_ids.to(device=local_rank)
@@ -265,15 +270,22 @@ def apply_stopping_strings(reply, all_stop_strings):
 
 def get_reply_from_output_ids(output_ids, state, starting_from=0):
     reply = decode(output_ids[starting_from:], state['skip_special_tokens'])
-    if (hasattr(shared.tokenizer, 'convert_ids_to_tokens') and len(output_ids) > starting_from and shared.tokenizer.convert_ids_to_tokens(int(output_ids[starting_from])).startswith('▁')) and not reply.startswith(' '):
-        reply = ' ' + reply
+
+    # Handle tokenizers that do not add the leading space for the first token
+    if (hasattr(shared.tokenizer, 'convert_ids_to_tokens') and len(output_ids) > starting_from) and not reply.startswith(' '):
+        first_token = shared.tokenizer.convert_ids_to_tokens(int(output_ids[starting_from]))
+        if isinstance(first_token, (bytes,)):
+            first_token = first_token.decode('utf8')
+
+        if first_token.startswith('▁'):
+            reply = ' ' + reply
 
     return reply
 
 
 def generate_reply_HF(question, original_question, seed, state, stopping_strings=None, is_chat=False):
     generate_params = {}
-    for k in ['max_new_tokens', 'do_sample', 'temperature', 'temperature_last', 'top_p', 'min_p', 'typical_p', 'repetition_penalty', 'presence_penalty', 'frequency_penalty', 'repetition_penalty_range', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping', 'tfs', 'top_a', 'mirostat_mode', 'mirostat_tau', 'mirostat_eta', 'guidance_scale']:
+    for k in ['max_new_tokens', 'temperature', 'temperature_last', 'dynamic_temperature', 'dynatemp_low', 'dynatemp_high', 'dynatemp_exponent', 'top_p', 'min_p', 'top_k', 'repetition_penalty', 'presence_penalty', 'frequency_penalty', 'repetition_penalty_range', 'typical_p', 'tfs', 'top_a', 'guidance_scale', 'penalty_alpha', 'mirostat_mode', 'mirostat_tau', 'mirostat_eta', 'do_sample', 'encoder_repetition_penalty', 'no_repeat_ngram_size', 'min_length', 'num_beams', 'length_penalty', 'early_stopping']:
         generate_params[k] = state[k]
 
     if state['negative_prompt'] != '':
@@ -331,6 +343,12 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
 
     apply_extensions('logits_processor', processor, input_ids)
     generate_params['logits_processor'] = processor
+
+    if shared.args.verbose:
+        logger.info("GENERATE_PARAMS=")
+        filtered_params = {key: value for key, value in generate_params.items() if not isinstance(value, torch.Tensor)}
+        pprint.PrettyPrinter(indent=4, sort_dicts=False).pprint(filtered_params)
+        print()
 
     t0 = time.time()
     try:

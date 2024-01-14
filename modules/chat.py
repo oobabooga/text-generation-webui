@@ -14,6 +14,7 @@ from jinja2.sandbox import ImmutableSandboxedEnvironment
 from PIL import Image
 
 import modules.shared as shared
+from modules import utils
 from modules.extensions import apply_extensions
 from modules.html_generator import chat_html_wrapper, make_thumbnail
 from modules.logging_colors import logger
@@ -510,12 +511,40 @@ def load_latest_history(state):
     histories = find_all_histories(state)
 
     if len(histories) > 0:
-        unique_id = Path(histories[0]).stem
-        history = load_history(unique_id, state['character_menu'], state['mode'])
+        history = load_history(histories[0], state['character_menu'], state['mode'])
     else:
         history = start_new_chat(state)
 
     return history
+
+
+def load_history_after_deletion(state, idx):
+    '''
+    Loads the latest history for the given character in chat or chat-instruct
+    mode, or the latest instruct history for instruct mode.
+    '''
+
+    if shared.args.multi_user:
+        return start_new_chat(state)
+
+    histories = find_all_histories(state)
+    idx = min(int(idx), len(histories) - 1)
+    idx = max(0, idx)
+
+    if len(histories) > 0:
+        history = load_history(histories[idx], state['character_menu'], state['mode'])
+    else:
+        history = start_new_chat(state)
+        histories = find_all_histories(state)
+
+    return history, gr.update(choices=histories, value=histories[idx])
+
+
+def update_character_menu_after_deletion(idx):
+    characters = utils.get_available_characters()
+    idx = min(int(idx), len(characters) - 1)
+    idx = max(0, idx)
+    return gr.update(choices=characters, value=characters[idx])
 
 
 def load_history(unique_id, character, mode):
@@ -561,17 +590,17 @@ def replace_character_names(text, name1, name2):
 
 
 def generate_pfp_cache(character):
-    cache_folder = Path("cache")
+    cache_folder = Path(shared.args.disk_cache_dir)
     if not cache_folder.exists():
         cache_folder.mkdir()
 
     for path in [Path(f"characters/{character}.{extension}") for extension in ['png', 'jpg', 'jpeg']]:
         if path.exists():
             original_img = Image.open(path)
-            original_img.save(Path('cache/pfp_character.png'), format='PNG')
+            original_img.save(Path(f'{cache_folder}/pfp_character.png'), format='PNG')
 
             thumb = make_thumbnail(original_img)
-            thumb.save(Path('cache/pfp_character_thumb.png'), format='PNG')
+            thumb.save(Path(f'{cache_folder}/pfp_character_thumb.png'), format='PNG')
 
             return thumb
 
@@ -595,8 +624,9 @@ def load_character(character, name1, name2):
 
     file_contents = open(filepath, 'r', encoding='utf-8').read()
     data = json.loads(file_contents) if extension == "json" else yaml.safe_load(file_contents)
+    cache_folder = Path(shared.args.disk_cache_dir)
 
-    for path in [Path("cache/pfp_character.png"), Path("cache/pfp_character_thumb.png")]:
+    for path in [Path(f"{cache_folder}/pfp_character.png"), Path(f"{cache_folder}/pfp_character_thumb.png")]:
         if path.exists():
             path.unlink()
 
@@ -714,17 +744,17 @@ def check_tavern_character(img):
 
 
 def upload_your_profile_picture(img):
-    cache_folder = Path("cache")
+    cache_folder = Path(shared.args.disk_cache_dir)
     if not cache_folder.exists():
         cache_folder.mkdir()
 
     if img is None:
-        if Path("cache/pfp_me.png").exists():
-            Path("cache/pfp_me.png").unlink()
+        if Path(f"{cache_folder}/pfp_me.png").exists():
+            Path(f"{cache_folder}/pfp_me.png").unlink()
     else:
         img = make_thumbnail(img)
-        img.save(Path('cache/pfp_me.png'))
-        logger.info('Profile picture saved to "cache/pfp_me.png"')
+        img.save(Path(f'{cache_folder}/pfp_me.png'))
+        logger.info(f'Profile picture saved to "{cache_folder}/pfp_me.png"')
 
 
 def generate_character_yaml(name, greeting, context):

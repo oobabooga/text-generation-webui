@@ -8,6 +8,10 @@ from pydantic import BaseModel, Field
 class GenerationOptions(BaseModel):
     preset: str | None = Field(default=None, description="The name of a file under text-generation-webui/presets (without the .yaml extension). The sampling parameters that get overwritten by this option are the keys in the default_preset() function in modules/presets.py.")
     min_p: float = 0
+    dynamic_temperature: bool = False
+    dynatemp_low: float = 1
+    dynatemp_high: float = 1
+    dynatemp_exponent: float = 1
     top_k: int = 0
     repetition_penalty: float = 1
     repetition_penalty_range: int = 1024
@@ -95,10 +99,10 @@ class ChatCompletionRequestParams(BaseModel):
     instruction_template_str: str | None = Field(default=None, description="A Jinja2 instruction template. If set, will take precedence over everything else.")
 
     character: str | None = Field(default=None, description="A character defined under text-generation-webui/characters. If not set, the default \"Assistant\" character will be used.")
-    name1: str | None = Field(default=None, description="Your name (the user). By default, it's \"You\".")
-    name2: str | None = Field(default=None, description="Overwrites the value set by character.")
-    context: str | None = Field(default=None, description="Overwrites the value set by character.")
-    greeting: str | None = Field(default=None, description="Overwrites the value set by character.")
+    user_name: str | None = Field(default=None, description="Your name (the user). By default, it's \"You\".", alias=['name1'])
+    bot_name: str | None = Field(default=None, description="Overwrites the value set by character field.", alias=['name2'])
+    context: str | None = Field(default=None, description="Overwrites the value set by character field.")
+    greeting: str | None = Field(default=None, description="Overwrites the value set by character field.")
     chat_template_str: str | None = Field(default=None, description="Jinja2 template for chat.")
 
     chat_instruct_command: str | None = None
