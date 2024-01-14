@@ -144,24 +144,25 @@ def convert_history(history):
     user_input = ""
     system_message = ""
 
-    new_history = []
-    for entry in history:
-        if isinstance(entry['content'], list):
-            image_url = None
-            content = None
-            for item in entry['content']:
-                if not isinstance(item, dict):
-                    continue
-                if item['type'] == 'image_url' and isinstance(item['image_url'], dict):
-                    image_url = item['image_url']['url']
-                elif item['type'] == 'text' and isinstance(item['text'], str):
-                    content = item['text']
-            if image_url and content:
-                new_history.append({"image_url": image_url, "role": "user"})
-                new_history.append({"content": content, "role": "user"})
-        else:
-            new_history.append(entry)
-    history = new_history
+    if any(isinstance(entry['content'], list) for entry in history):
+        new_history = []
+        for entry in history:
+            if isinstance(entry['content'], list):
+                image_url = None
+                content = None
+                for item in entry['content']:
+                    if not isinstance(item, dict):
+                        continue
+                    if item['type'] == 'image_url' and isinstance(item['image_url'], dict):
+                        image_url = item['image_url']['url']
+                    elif item['type'] == 'text' and isinstance(item['text'], str):
+                        content = item['text']
+                if image_url and content:
+                    new_history.append({"image_url": image_url, "role": "user"})
+                    new_history.append({"content": content, "role": "user"})
+            else:
+                new_history.append(entry)
+        history = new_history
 
     for entry in history:
         if "image_url" in entry:
