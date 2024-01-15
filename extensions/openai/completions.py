@@ -14,7 +14,7 @@ from transformers import LogitsProcessor, LogitsProcessorList
 
 from extensions.openai.errors import InvalidRequestError
 from extensions.openai.utils import debug_msg
-from extensions.openai.typing import FunctionCallRequest, FunctionCallResponse, FunctionNameArg
+from extensions.openai.function_call import FunctionCallContext
 from modules import shared
 from modules.chat import (
     generate_chat_prompt,
@@ -127,143 +127,6 @@ def process_parameters(body, is_legacy=False):
     return generate_params
 
     
-class FunctionCallContext():
-    def __init__(self, body):
-        
-        def init_from_body(body):
-            self.functions = body.get(self.FUNCTIONS, [])
-            self.function_call = body.get(self.FUNCTION_CALL, 'none')
-            
-            if self.functions is None:
-                self.functions = []
-            if self.function_call is None:
-                # if functions is empty, function_call defaults to none
-                # https://platform.openai.com/docs/api-reference/chat/create#chat-create-tools
-                if self.functions == []:
-                    self.function_call = 'none'
-                # otherwise, if functions are provided, default function_call to auto
-                else:
-                    self.function_call = 'auto'
-                
-            # Validation
-            if self.functions != [] and self.function_call == 'none':
-                # If user specify function_call to none even when functions are provided, we ignore all functions
-                # https://cookbook.openai.com/examples/how_to_call_functions_with_chat_models
-                self.functions = []
-            if self.functions == [] and (self.function_call != 'none' and self.function_call != 'auto'):
-                raise InvalidRequestError(message=f"function_call {self.function_call} is provided but functions are none", param=self.FUNCTIONS)
-        
-        # Legacy function call api
-        self.use_legacy = True
-        if self.use_legacy:
-            self.ROLE = 'function'
-            self.FINISH_REASON = self.RESPOSE ='function_call'
-            self.FUNCTIONS = 'functions'
-            self.FUNCTION_CALL = 'function_call'
-            init_from_body(body)
-
-        # See if lecagy is used, otherwise try new format
-        if self.functions != [] and self.function_call != 'none':
-            self.use_legacy = True
-        else:
-            self.use_legacy = False
-            
-        # Try use new format https://platform.openai.com/docs/api-reference/chat/create#chat-create-tools
-        if not self.use_legacy:
-            self.ROLE = 'tool'
-            self.FINISH_REASON = self.RESPOSE ='tool_calls'
-            self.FUNCTIONS = 'tools'
-            self.FUNCTION_CALL = 'tool_choice'
-            init_from_body(body)
-            
-        # Handle function requests
-        if self.functions != []:
-            self.FUNCTION_PROMPT = 'You are given access to the following functions, use them if required -'
-        
-            for func in self.functions:
-                if not FunctionCallRequest.parse_obj(func):
-                    raise InvalidRequestError(message=f"function {func} is not a valid format", param='functions')
-        
-            if self.function_call != 'auto':
-                # check if function_call is correct format
-                if not FunctionCallRequest.parse_obj(self.function_call):
-                    raise InvalidRequestError(message=f"function_call {self.function_call} is not valid format", param='function_call')
-                
-                # check if function_call is in functions, and only add selected function to prompt
-                found_function_call = False
-                for func in self.functions:
-                    if FunctionCallRequest.parse_obj(func).function.name == FunctionCallRequest.parse_obj(self.function_call).function.name:
-                        found_function_call = True
-                        self.FUNCTION_PROMPT += f'\n{func["function"]}\n'
-                        break
-                if not found_function_call:
-                    raise InvalidRequestError(message=f"function_call {self.function_call} is not in functions", param='function_call')
-                
-                # must call function
-                self.FUNCTION_PROMPT += f'\nYOU MUST CALL THIS FUNCTION IN YOUR REPLY: {self.function_call["function"]}.'
-            else:            
-                for func in self.functions:
-                    self.FUNCTION_PROMPT += f'\n{func["function"]}\n'
-                    
-            # give 1-shot prompt for function call reply format
-            self.FUNCTION_PROMPT += """If you find it necessary to call function, you must reply in the format only when necessary: <functioncall> json_str </functioncall>, e.g <functioncall> {\"name\": \"calculate_loan_payment\", \"arguments\": '{\"principal\": 50000, \"interest_rate\": 5, \"loan_term\": 10}'} </functioncall>."""
-        else:
-            self.FUNCTION_PROMPT = ''
-            
-    def process_role_msg(self, content)->str:
-        return f'Previous function call has responded with: <functionresponse> {content} </functionresponse>.'
-    
-    def process_finish_msg(self, content)->str:
-        try:
-            if self.functions != []:
-                import re
-                import ast
-                # Define the pattern to match the JSON string within the functioncall tags
-                pattern = r'<functioncall>(.*?)</functioncall>'
-
-                # Use re.search to find the matched pattern
-                match = re.search(pattern, content, re.DOTALL)
-                
-                debug_msg(f"process_finish_msg Try match '{pattern}' from llm reply '{content}'")
-                if match:
-                    json_str = match.group(1)
-                    json_str = json_str.strip()
-                    """
-                    https://www.datasciencebyexample.com/2023/03/16/what-to-do-when-single-quotes-in-json-string/
-                    TODO : llm function call response actually is hard to parse using json.load or pydantic.parse_raw due to argument value in nasty single quote format
-                    e.g {\"name\": \"calculate_loan_payment\", \"arguments\": '{\"principal\": 50000, \"interest_rate\": 5, \"loan_term\": 10}'}
-                    so we have to use ast.literal_eval
-                    """
-                    json_dict = ast.literal_eval(json_str)
-
-                    # Gen openai like call id with 24 random characters
-                    def gen_openai_like_call_id()->str:
-                        import random
-                        import string
-                        length = 24
-                        charset = string.ascii_lowercase + string.digits 
-                        return ''.join(random.choice(charset) for i in range(length))
-                    
-                    response = FunctionCallResponse(
-                        id=f'call_{gen_openai_like_call_id()}',
-                        function=FunctionNameArg(name=json_dict['name'], arguments=json_dict['arguments'])
-                        )
-                    
-                    finish_response = ''
-                    if hasattr(response, 'model_dump_json'):
-                        finish_response = response.model_dump_json(indent=4)
-                    else:
-                        finish_response = response.json(indent=4)
-                    
-                    debug_msg(f"process_finish_msg response:\n{finish_response}")
-                    return finish_response
-                else:
-                    debug_msg("process_finish_msg No match found.")
-        except Exception as e:
-            debug_msg(f"process_finish_msg exception: {e}")
-
-        return None
-
 def convert_history(history, function_call_context: FunctionCallContext):
     '''
     Chat histories in this program are in the format [message, reply].
@@ -362,6 +225,7 @@ def convert_history(history, function_call_context: FunctionCallContext):
 
 def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -> dict:
 
+    # Generate function call context for handing potential function calls requests
     function_call_context = FunctionCallContext(body)
 
     if 'messages' not in body:

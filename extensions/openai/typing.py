@@ -212,14 +212,14 @@ class FunctionCallRequest(BaseModel):
     type: str = "function"
     function: FunctionName
     
+"""
+some llm function call response (e.g. openai's chatgpt/gpt4) actually is hard to parse into json dict due to value of `argument` key in nasty single format
+e.g {\"name\": \"calculate_loan_payment\", \"arguments\": '{\"principal\": 50000, \"interest_rate\": 5, \"loan_term\": 10}'}
+so we have to use ast.literal_eval to evaluate the FunctionNameArg, where arguments as a type of object instead of a type of str or dict
+"""
 class FunctionNameArg(BaseModel):
     name: str
     arguments: object
-"""
-TODO : llm function call response actually is hard to parse into json dict due to argument in nasty single format
-e.g {\"name\": \"calculate_loan_payment\", \"arguments\": '{\"principal\": 50000, \"interest_rate\": 5, \"loan_term\": 10}'}
-so we have to use ast.literal_eval, so we just make arguments: object instead of str or dict
-"""
 class FunctionCallResponse(BaseModel):
     id: str
     type: str = "function"
