@@ -97,6 +97,9 @@ async def openai_completions(request: Request, request_data: CompletionRequest):
     path = request.url.path
     is_legacy = "/generate" in path
 
+    if request_data.temperature == 0:
+        request_data.do_sample = False
+
     if request_data.stream:
         async def generator():
             async with streaming_semaphore:
@@ -119,6 +122,9 @@ async def openai_completions(request: Request, request_data: CompletionRequest):
 async def openai_chat_completions(request: Request, request_data: ChatCompletionRequest):
     path = request.url.path
     is_legacy = "/generate" in path
+
+    if request_data.temperature == 0:
+        request_data.do_sample = False
 
     if request_data.stream:
         async def generator():
