@@ -30,10 +30,15 @@ class ModelDownloader:
         if max_retries:
             self.session.mount('https://cdn-lfs.huggingface.co', HTTPAdapter(max_retries=max_retries))
             self.session.mount('https://huggingface.co', HTTPAdapter(max_retries=max_retries))
-        if os.getenv('HF_USER') is not None and os.getenv('HF_PASS') is not None:
-            self.session.auth = (os.getenv('HF_USER'), os.getenv('HF_PASS'))
-        if os.getenv('HF_TOKEN') is not None:
-            self.session.headers = {'authorization': f'Bearer {os.getenv("HF_TOKEN")}'}
+
+        hf_user = os.getenv('HF_USER')
+        hf_pass = os.getenv('HF_PASS')
+        hf_token = os.getenv('HF_TOKEN')
+
+        if hf_user and hf_pass:
+            self.session.auth = (hf_user, hf_pass)
+        elif hf_token:
+            self.session.headers = {'authorization': f'Bearer {hf_token}'}
 
     def sanitize_model_and_branch_names(self, model, branch):
         if model[-1] == '/':
