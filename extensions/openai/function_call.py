@@ -99,6 +99,16 @@ class FunctionCallContext():
                     
             # give 1-shot prompt for function call reply format
             self.FUNCTION_PROMPT += """If you find it necessary to call function, you must reply in the format only when necessary: <functioncall> json_str </functioncall>, e.g <functioncall> {\"name\": \"calculate_loan_payment\", \"arguments\": '{\"principal\": 50000, \"interest_rate\": 5, \"loan_term\": 10}'} </functioncall>."""
+            self.FUNCTION_PROMPT += """Here is a sample conversation between a helpful assistant that call a function for user requests that are within range of provided functions, and reject invalid user request that provided functions cannot do:\
+                SYSTEM: You are a helpful assistant with access to the following functions. Use them if required -\n{\n \"name\": \"calculate_median\",\n \"description\": \"Calculate the median of a list of numbers\",\n \"parameters\": {\n \"type\": \"object\",\n \"properties\": {\n \"numbers\": {\n \"type\": \"array\",\n \"items\": {\n \"type\": \"number\"\n },\n \"description\": \"A list of numbers\"\n }\n },\n \"required\": [\n \"numbers\"\n ]\n }\n}\n\n\
+                USER: Hi, I have a list of numbers and I need to find the median. Can you help me with that?\
+                ASSISTANT: Of course, I can help you with that. Please provide me with the list of numbers.\
+                USER: The numbers are 5, 2, 9, 1, 7, 4, 6, 3, 8.\
+                ASSISTANT: <functioncall> {"name": "calculate_median", "arguments": '{"numbers": [5, 2, 9, 1, 7, 4, 6, 3, 8]}'} </functioncall>\
+                USER: <functionresponse> {"median": 5} </functionresponse>\
+                ASSISTANT: The median of the list of numbers is 5.\
+                USER: That's great! Can you also help me book a flight to Bei Jing next week?\
+                ASSISTANT: I'm sorry, I don't have the capability to book flights or perform external tasks. My current task is to calculate median number with a list of numbers."""
         else:
             self.FUNCTION_PROMPT = ''
             

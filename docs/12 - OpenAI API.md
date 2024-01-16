@@ -120,6 +120,23 @@ curl -k http://127.0.0.1:5000/v1/internal/logits \
   }'
 ```
 
+#### Tool calling (aka. Function calling)
+
+Create a json body of system, function and user prompts
+```
+vim body.json
+
+{"model": "gpt-3.5-turbo-0613", "messages": [{"role": "system", "content": "Don't make assumptions about what values to plug into functions. Ask for clarification if a user request is ambiguous."}, {"role": "user", "content": "What's the weather like today for San Francisco"}], "tools": [{"type": "function", "function": {"name": "get_current_weather", "description": "Get the current weather", "parameters": {"type": "object", "properties": {"location": {"type": "string", "description": "The city and state, e.g. San Francisco, CA"}, "format": {"type": "string", "enum": ["celsius", "fahrenheit"], "description": "The temperature unit to use. Infer this from the users location."}}, "required": ["location", "format"]}}}, {"type": "function", "function": {"name": "get_n_day_weather_forecast", "description": "Get an N-day weather forecast", "parameters": {"type": "object", "properties": {"location": {"type": "string", "description": "The city and state, e.g. San Francisco, CA"}, "format": {"type": "string", "enum": ["celsius", "fahrenheit"], "description": "The temperature unit to use. Infer this from the users location."}, "num_days": {"type": "integer", "description": "The number of days to forecast"}}, "required": ["location", "format", "num_days"]}}}]}
+```
+
+```
+curl --request POST --url http://127.0.0.1:5000/v1/chat/completions --header "Content-Type: application/json" --data "@body.json"
+```
+
+```
+{"id":"chatcmpl-1705414971293916672","object":"chat.completions","created":1705414971,"model":"LMCocktail-10.7B-v1","choices":[{"index":0,"finish_reason":"tool_calls","message":{"role":"assistant","content":"","tool_calls":["{\n    \"id\": \"call_v9u75a1wi62o8vqxco2arkn3\",\n    \"type\": \"function\",\n    \"function\": {\n        \"name\": \"get_current_weather\",\n        \"arguments\": \"{\\\"location\\\": \\\"San Francisco, CA\\\", \\\"format\\\": \\\"celsius\\\"}\"\n    }\n}"]}}],"usage":{"prompt_tokens":821,"completion_tokens":155,"total_tokens":976}}
+```
+
 #### Python chat example
 
 ```python
@@ -321,7 +338,7 @@ Note: the table below may be obsolete.
 
 | API endpoint              | tested with                        | notes                                                                       |
 | ------------------------- | ---------------------------------- | --------------------------------------------------------------------------- |
-| /v1/chat/completions      | openai.ChatCompletion.create()     | Use it with instruction following models                                    |
+| /v1/chat/completions      | openai.ChatCompletion.create()     | Use it with instruction following models, also support tool calling with acceptable success rate (since we use few shots prompting).                                   |
 | /v1/embeddings            | openai.Embedding.create()          | Using SentenceTransformer embeddings                                        |
 | /v1/images/generations    | openai.Image.create()              | Bare bones, no model configuration, response_format='b64_json' only.        |
 | /v1/moderations           | openai.Moderation.create()         | Basic initial support via embeddings                                        |
