@@ -69,6 +69,9 @@ call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" activate "%INSTALL_ENV_DIR%" || ( 
 @rem setup installer env
 call python one_click.py %*
 
+@rem install python requirements
+pip install -r requirements.txt
+
 @rem below are functions for the script   next line skips these during normal execution
 goto end
 
