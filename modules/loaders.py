@@ -9,7 +9,6 @@ loaders_and_params = OrderedDict({
     'Transformers': [
         'cpu_memory',
         'gpu_memory',
-        'trust_remote_code',
         'load_in_8bit',
         'bf16',
         'cpu',
@@ -21,6 +20,7 @@ loaders_and_params = OrderedDict({
         'compute_dtype',
         'trust_remote_code',
         'use_fast',
+        'use_flash_attention_2',
         'alpha_value',
         'rope_freq_base',
         'compress_pos_emb',
