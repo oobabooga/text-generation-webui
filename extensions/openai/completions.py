@@ -351,10 +351,10 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
     if token_count + completion_token_count >= generate_params['truncation_length'] or completion_token_count >= generate_params['max_new_tokens']:
         stop_reason = "length"
         
-    function_call_response = function_call_context.process_finish_msg(answer)
-    if function_call_response:
+    function_call_responses = function_call_context.process_finish_msg(answer)
+    if len(function_call_responses) > 0:
         stop_reason = function_call_context.FINISH_REASON
-        response_message[function_call_context.RESPOSE] = [function_call_response]
+        response_message[function_call_context.RESPOSE] = function_call_responses
     else:
         response_message['content'] = answer
 

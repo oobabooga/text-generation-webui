@@ -1,6 +1,7 @@
 from extensions.openai.errors import InvalidRequestError
 from extensions.openai.utils import debug_msg
 from extensions.openai.typing import FunctionCallRequest, FunctionCallResponse, FunctionNameArg
+from typing import List
 
 """
 This is a class to hold the context of a function call
@@ -99,23 +100,26 @@ class FunctionCallContext():
                     
             # give 1-shot prompt for function call reply format
             self.FUNCTION_PROMPT += """If you find it necessary to call function, you must reply in the format only when necessary: <functioncall> json_str </functioncall>, e.g <functioncall> {\"name\": \"calculate_loan_payment\", \"arguments\": '{\"principal\": 50000, \"interest_rate\": 5, \"loan_term\": 10}'} </functioncall>."""
-            self.FUNCTION_PROMPT += """Here is a sample conversation between a helpful assistant that call a function for user requests that are within range of provided functions, and reject invalid user request that provided functions cannot do:\
-                SYSTEM: You are a helpful assistant with access to the following functions. Use them if required -\n{\n \"name\": \"calculate_median\",\n \"description\": \"Calculate the median of a list of numbers\",\n \"parameters\": {\n \"type\": \"object\",\n \"properties\": {\n \"numbers\": {\n \"type\": \"array\",\n \"items\": {\n \"type\": \"number\"\n },\n \"description\": \"A list of numbers\"\n }\n },\n \"required\": [\n \"numbers\"\n ]\n }\n}\n\n\
-                USER: Hi, I have a list of numbers and I need to find the median. Can you help me with that?\
-                ASSISTANT: Of course, I can help you with that. Please provide me with the list of numbers.\
-                USER: The numbers are 5, 2, 9, 1, 7, 4, 6, 3, 8.\
-                ASSISTANT: <functioncall> {"name": "calculate_median", "arguments": '{"numbers": [5, 2, 9, 1, 7, 4, 6, 3, 8]}'} </functioncall>\
-                USER: <functionresponse> {"median": 5} </functionresponse>\
-                ASSISTANT: The median of the list of numbers is 5.\
-                USER: That's great! Can you also help me book a flight to Bei Jing next week?\
-                ASSISTANT: I'm sorry, I don't have the capability to book flights or perform external tasks. My current task is to calculate median number with a list of numbers."""
+            self.FUNCTION_PROMPT += """Here is a sample conversation between a helpful assistant that call a function for user requests that are within range of provided functions, and reject invalid user request that provided functions cannot do:
+SYSTEM: You are a helpful assistant with access to the following functions. Use them if required -\n{\n \"name\": \"calculate_median\",\n \"description\": \"Calculate the median of a list of numbers\",\n \"parameters\": {\n \"type\": \"object\",\n \"properties\": {\n \"numbers\": {\n \"type\": \"array\",\n \"items\": {\n \"type\": \"number\"\n },\n \"description\": \"A list of numbers\"\n }\n },\n \"required\": [\n \"numbers\"\n ]\n }\n}
+USER: Hi, I have a list of numbers and I need to find the median. Can you help me with that?
+ASSISTANT: Of course, I can help you with that. Please provide me with the list of numbers.
+USER: The numbers are 5, 2, 9, 1, 7, 4, 6, 3, 8.
+ASSISTANT: <functioncall> {"name": "calculate_median", "arguments": '{"numbers": [5, 2, 9, 1, 7, 4, 6, 3, 8]}'} </functioncall>
+USER: <functionresponse> {"median": 5} </functionresponse>
+ASSISTANT: The median of the list of numbers is 5.
+USER: That's great! Can you also help me book a flight to Bei Jing next week?
+ASSISTANT: I'm sorry, I don't have the capability to book flights or perform external tasks. My current task is to calculate median number with a list of numbers.
+End of the example convseration.
+"""
         else:
             self.FUNCTION_PROMPT = ''
             
     def process_role_msg(self, content)->str:
         return f'Previous function call has responded with: <functionresponse> {content} </functionresponse>.'
     
-    def process_finish_msg(self, content)->str:
+    def process_finish_msg(self, content)-> List[str]:
+        finish_responses = []
         try:
             if self.functions != []:
                 import re
@@ -123,13 +127,16 @@ class FunctionCallContext():
                 # Define the pattern to match the JSON string within the functioncall tags
                 pattern = r'<functioncall>(.*?)</functioncall>'
 
-                # Use re.search to find the matched pattern
-                match = re.search(pattern, content, re.DOTALL)
-                
                 debug_msg(f"process_finish_msg Try match '{pattern}' from llm reply '{content}'")
-                if match:
-                    json_str = match.group(1)
+                # Use re.findall to find all matched patterns
+                matches = re.findall(pattern, content, re.DOTALL)
+                if len(matches) == 0:
+                    debug_msg("process_finish_msg No match found.")
+                    
+                for match in matches:
+                    json_str = match.strip()
                     json_str = json_str.strip()
+                    debug_msg(f"process_finish_msg Found match json_str {json_str}")
                     """
                     https://www.datasciencebyexample.com/2023/03/16/what-to-do-when-single-quotes-in-json-string/
                     llm function call response actually is hard to parse using json.load or pydantic.parse_raw due to the value of `argument` key in nasty single quote format
@@ -152,16 +159,16 @@ class FunctionCallContext():
                         )
                     
                     finish_response = ''
+                    # Handle pydantic method name change
                     if hasattr(response, 'model_dump_json'):
                         finish_response = response.model_dump_json(indent=4)
                     else:
                         finish_response = response.json(indent=4)
                     
                     debug_msg(f"process_finish_msg response:\n{finish_response}")
-                    return finish_response
-                else:
-                    debug_msg("process_finish_msg No match found.")
+                    finish_responses.append(finish_response)
+                
         except Exception as e:
             debug_msg(f"process_finish_msg exception: {e}")
 
-        return None
+        return finish_responses
