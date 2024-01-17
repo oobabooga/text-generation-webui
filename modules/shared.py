@@ -261,7 +261,8 @@ def fix_loader_name(name):
         return 'QuIP#'
     elif name in ['hqq']:
         return 'HQQ'
-
+    else:
+        return name
 
 def add_extension(name, last=False):
     if args.extensions is None:
