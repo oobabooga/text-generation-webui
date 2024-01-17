@@ -192,6 +192,7 @@ def transformers_samplers():
         'add_bos_token',
         'skip_special_tokens',
         'auto_max_new_tokens',
+        'prompt_lookup_num_tokens'
     }
 
 
