@@ -521,9 +521,10 @@ def do_train_ssm(ssm_name: str, always_override: bool, format, dataset, eval_dat
             gradient_accumulation_steps=4, # args.gradient_accumulation_steps,
             optim='paged_adamw_8bit', # ype=str, default="adamw_torch" , lowvram: paged_adamw_8bit
             output_dir=f'trained_ssns/{ssm_name}',
-            #logging_steps=50,
+            logging_steps=50,
             save_steps=500,
-            do_eval=False,            
+            do_eval=False,
+            #save_only_model=True,            
         ),
         #data_collator=data_module.data_collator,
         data_collator=transformers.DataCollatorForLanguageModeling(shared.tokenizer, mlm=False),
