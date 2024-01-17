@@ -37,6 +37,7 @@ class GenerationOptions(BaseModel):
     early_stopping: bool = False
     truncation_length: int = 0
     max_tokens_second: int = 0
+    prompt_lookup_num_tokens: int = 0
     custom_token_bans: str = ""
     auto_max_new_tokens: bool = False
     ban_eos_token: bool = False

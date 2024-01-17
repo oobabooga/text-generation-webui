@@ -291,6 +291,9 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
     if state['negative_prompt'] != '':
         generate_params['negative_prompt_ids'] = encode(state['negative_prompt'])
 
+    if state['prompt_lookup_num_tokens'] > 0:
+        generate_params['prompt_lookup_num_tokens'] = state['prompt_lookup_num_tokens']
+
     for k in ['epsilon_cutoff', 'eta_cutoff']:
         if state[k] > 0:
             generate_params[k] = state[k] * 1e-4
