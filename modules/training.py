@@ -497,18 +497,9 @@ def do_train_ssm(ssm_name: str, always_override: bool, format, dataset, eval_dat
     ### END REFACTOR ME
 
  
-    #tokenizer.chat_template = AutoTokenizer.from_pretrained("HuggingFaceH4/zephyr-7b-beta").chat_template
-
-
-    # data_module = ChatDataModule(
-    #     tokenizer=tokenizer,
-    #     data_path=args.data_path,
-    #     conversation_template=tokenizer.chat_template,
-    #     max_tokens=2048
-    # )
+    output_dir = f'trained_ssns/{ssm_name}'
 
     from modules.mamba_trainer import MambaTrainer
-
     trainer = MambaTrainer(
         model=model,
         #train_dataset=data_module.dataset,
@@ -520,10 +511,11 @@ def do_train_ssm(ssm_name: str, always_override: bool, format, dataset, eval_dat
             per_device_train_batch_size=ssm_batch_size,
             gradient_accumulation_steps=4, # args.gradient_accumulation_steps,
             optim='paged_adamw_8bit', # ype=str, default="adamw_torch" , lowvram: paged_adamw_8bit
-            output_dir=f'trained_ssns/{ssm_name}',
+            output_dir=output_dir,
             logging_steps=50,
-            save_steps=500,
+            save_steps=ssm_save_steps,
             do_eval=False,
+            report_to="none",
             #save_only_model=True,            
         ),
         #data_collator=data_module.data_collator,
@@ -531,7 +523,7 @@ def do_train_ssm(ssm_name: str, always_override: bool, format, dataset, eval_dat
     )
 
     trainer.train()
-
+    trainer.save_model(output_dir)
 
 def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: bool, k_proj_en: bool, o_proj_en: bool, gate_proj_en: bool, down_proj_en: bool, up_proj_en: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lr_scheduler_type: str, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, higher_rank_limit: bool, warmup_steps: int, optimizer: str, hard_cut_string: str, train_only_after: str, stop_at_loss: float, add_eos_token: bool, min_chars: int, report_to: str):
 

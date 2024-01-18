@@ -1,7 +1,7 @@
 from transformers import Trainer
 import torch
 import os
-
+import json
 
 class MambaTrainer(Trainer):
     def compute_loss(self, model, inputs, return_outputs=False):
@@ -17,9 +17,10 @@ class MambaTrainer(Trainer):
 
         return lm_loss
 
-    def save_model(self, output_dir, _internal_call):
+    def save_model(self, output_dir, _internal_call: bool = False):
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
             
+        open(f"{output_dir}/config.json", "w").write(self.model.config.to_json_string())
         torch.save(self.model.state_dict(), f"{output_dir}/pytorch_model.bin")
         self.tokenizer.save_pretrained(output_dir)
