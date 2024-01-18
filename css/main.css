@@ -491,7 +491,6 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     z-index: 1000;
     position: absolute;
     right: 0;
-    line-height: 16px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
