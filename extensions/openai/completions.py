@@ -353,7 +353,9 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
         
     function_call_responses = function_call_context.process_finish_msg(answer)
     if len(function_call_responses) > 0:
+        # OpenAI compliance for functioin call responses, reference https://github.com/openai/openai-cookbook/blob/main/examples/How_to_call_functions_with_chat_models.ipynb
         stop_reason = function_call_context.FINISH_REASON
+        response_message['content'] = None
         response_message[function_call_context.RESPOSE] = function_call_responses
     else:
         response_message['content'] = answer

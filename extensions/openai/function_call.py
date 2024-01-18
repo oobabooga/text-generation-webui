@@ -118,7 +118,7 @@ End of the example convseration.
     def process_role_msg(self, content)->str:
         return f'Previous function call has responded with: <functionresponse> {content} </functionresponse>.'
     
-    def process_finish_msg(self, content)-> List[str]:
+    def process_finish_msg(self, content)-> List[dict]:
         finish_responses = []
         try:
             if self.functions != []:
@@ -134,16 +134,44 @@ End of the example convseration.
                     debug_msg("process_finish_msg No match found.")
                     
                 for match in matches:
+                    if match is None or not isinstance(match, str):
+                        debug_msg(f"process_finish_msg match is None or not str {match}")
+                        continue
+
                     json_str = match.strip()
-                    json_str = json_str.strip()
-                    debug_msg(f"process_finish_msg Found match json_str {json_str}")
-                    """
-                    https://www.datasciencebyexample.com/2023/03/16/what-to-do-when-single-quotes-in-json-string/
-                    llm function call response actually is hard to parse using json.load or pydantic.parse_raw due to the value of `argument` key in nasty single quote format
-                    e.g {\"name\": \"calculate_loan_payment\", \"arguments\": '{\"principal\": 50000, \"interest_rate\": 5, \"loan_term\": 10}'}
-                    so we have to use ast.literal_eval
-                    """
-                    json_dict = ast.literal_eval(json_str)
+                    debug_msg(f"process_finish_msg Found matching json_str {json_str}")
+
+                    json_dict = None
+                    try:
+                        """
+                        https://www.datasciencebyexample.com/2023/03/16/what-to-do-when-single-quotes-in-json-string/
+                        llm function call response actually is hard to parse using json.load or pydantic.parse_raw due to the value of `argument` key in nasty single quote format
+                        e.g {\"name\": \"calculate_loan_payment\", \"arguments\": '{\"principal\": 50000, \"interest_rate\": 5, \"loan_term\": 10}'}
+                        so we have to use ast.literal_eval
+                        """
+                        json_dict = ast.literal_eval(json_str)
+                    except SyntaxError as e:
+                        debug_msg(f"process_finish_msg Error parsing json_str {json_str} with error {e}")
+                    
+                    if json_dict is None or not isinstance(json_dict, dict):
+                        try:
+                            debug_msg(f"process_finish_msg json_dict is None or not dict, will try method 2 {json_dict}")
+                            """
+                            Try to replace single quote with triple quote
+                            Edge sample below could be resolved by this method
+                            {"name": "ask_database", "arguments": '{"query": "SELECT ArtistId, Name, COUNT(TrackId) as track_count \nFROM Track \nGROUP BY ArtistId \nORDER BY track_count DESC \nLIMIT 5 \n;"}'}
+                            """
+                            json_str2 = json_str.replace("\'", "\"\"\"")
+                            json_dict = ast.literal_eval(json_str2)
+                        except SyntaxError as e:
+                            debug_msg(f"process_finish_msg Error parsing json_str2 {json_str2} with error {e}")
+                            # There is no way to parse this, so just skip
+                            continue
+                    
+                    # Sanity check on json_dict
+                    if 'name' not in json_dict or 'arguments' not in json_dict:
+                        debug_msg(f"process_finish_msg json_dict does not have name or arguments {json_dict}")
+                        continue
 
                     # Gen openai like call id with 24 random characters
                     def gen_openai_like_call_id()->str:
@@ -158,12 +186,12 @@ End of the example convseration.
                         function=FunctionNameArg(name=json_dict['name'], arguments=json_dict['arguments'])
                         )
                     
-                    finish_response = ''
-                    # Handle pydantic method name change
-                    if hasattr(response, 'model_dump_json'):
-                        finish_response = response.model_dump_json(indent=4)
+                    finish_response = None
+                    # Handle pydantic method name change for compatibility
+                    if hasattr(response, 'model_dump'):
+                        finish_response = response.model_dump(mode='json')
                     else:
-                        finish_response = response.json(indent=4)
+                        finish_response = response.dict()
                     
                     debug_msg(f"process_finish_msg response:\n{finish_response}")
                     finish_responses.append(finish_response)

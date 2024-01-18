@@ -106,7 +106,12 @@ def generate_chat_prompt(user_input, state, **kwargs):
     insert_pos = len(messages)
     for user_msg, assistant_msg in reversed(history):
         user_msg = user_msg.strip()
-        assistant_msg = assistant_msg.strip()
+
+        # check if assistant message is str, openai function call could lead to assistant_msg being None
+        if isinstance(assistant_msg, str):
+            assistant_msg = assistant_msg.strip()
+        else:
+            assistant_msg = ''
 
         if assistant_msg:
             messages.insert(insert_pos, {"role": "assistant", "content": assistant_msg})
