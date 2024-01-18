@@ -173,6 +173,23 @@ End of the example convseration.
                         debug_msg(f"process_finish_msg json_dict does not have name or arguments {json_dict}")
                         continue
 
+                    """
+                    https://stackoverflow.com/questions/22394235/invalid-control-character-with-python-json-loads
+                    Escape control chars in arguments to pass json.load(text, strict=True) when deserializing on the client side
+                    """
+                    def excape_crtl_chars(text: str)->str:
+                        # Define a dictionary that maps control characters to their escape sequences
+                        control_chars_dict = {i: '\\x{:02x}'.format(i) for i in range(32)}
+                        # Add some additional control characters that aren't in the default translation table
+                        control_chars_dict[127] = '\\x7f'
+                        # Remove control characters from the string
+                        cleaned_text = text.translate(control_chars_dict)
+                        if len(cleaned_text) != len(text):
+                            debug_msg(f"process_finish_msg escape control chars from {text} to {cleaned_text}")
+                        return cleaned_text
+                    
+                    json_dict['arguments'] = excape_crtl_chars(json_dict['arguments'])
+
                     # Gen openai like call id with 24 random characters
                     def gen_openai_like_call_id()->str:
                         import random
