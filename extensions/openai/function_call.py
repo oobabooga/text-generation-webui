@@ -71,21 +71,22 @@ class FunctionCallContext():
             
         # Handle function requests
         if self.functions != []:
+            self.expect_finish_with_function_call = True
             self.FUNCTION_PROMPT = 'You are given access to the following functions, use them if required -'
         
             for func in self.functions:
-                if not FunctionCallRequest.parse_obj(func):
+                if not FunctionCallRequest.model_validate(func):
                     raise InvalidRequestError(message=f"function {func} is not a valid format", param='functions')
         
             if self.function_call != 'auto':
                 # check if function_call is correct format
-                if not FunctionCallRequest.parse_obj(self.function_call):
+                if not FunctionCallRequest.model_validate(self.function_call):
                     raise InvalidRequestError(message=f"function_call {self.function_call} is not valid format", param='function_call')
                 
                 # check if function_call is in functions, and only add selected function to prompt
                 found_function_call = False
                 for func in self.functions:
-                    if FunctionCallRequest.parse_obj(func).function.name == FunctionCallRequest.parse_obj(self.function_call).function.name:
+                    if FunctionCallRequest.model_validate(func).function.name == FunctionCallRequest.model_validate(self.function_call).function.name:
                         found_function_call = True
                         self.FUNCTION_PROMPT += f'\n{func["function"]}\n'
                         break
@@ -113,17 +114,20 @@ ASSISTANT: I'm sorry, I don't have the capability to book flights or perform ext
 End of the example convseration.
 """
         else:
+            self.expect_finish_with_function_call = False
             self.FUNCTION_PROMPT = ''
             
     def process_role_msg(self, content)->str:
         return f'Previous function call has responded with: <functionresponse> {content} </functionresponse>.'
     
-    def process_finish_msg(self, content)-> List[dict]:
+    def process_finish_msg(self, content)-> (List[dict], bool):
         finish_responses = []
+        exception_occurred = False
         try:
             if self.functions != []:
                 import re
                 import ast
+                import json
                 # Define the pattern to match the JSON string within the functioncall tags
                 pattern = r'<functioncall>(.*?)</functioncall>'
 
@@ -179,15 +183,16 @@ End of the example convseration.
                     """
                     def excape_crtl_chars(text: str)->str:
                         # Define a dictionary that maps control characters to their escape sequences
-                        control_chars_dict = {i: '\\x{:02x}'.format(i) for i in range(32)}
+                        control_chars_dict = {i: '\\u{:04x}'.format(i) for i in range(32)}
                         # Add some additional control characters that aren't in the default translation table
-                        control_chars_dict[127] = '\\x7f'
+                        control_chars_dict[127] = '\\u007f'
                         # Remove control characters from the string
                         cleaned_text = text.translate(control_chars_dict)
                         if len(cleaned_text) != len(text):
                             debug_msg(f"process_finish_msg escape control chars from {text} to {cleaned_text}")
                         return cleaned_text
                     
+                    json_dict['name'] = excape_crtl_chars(json_dict['name'])
                     json_dict['arguments'] = excape_crtl_chars(json_dict['arguments'])
 
                     # Gen openai like call id with 24 random characters
@@ -203,17 +208,12 @@ End of the example convseration.
                         function=FunctionNameArg(name=json_dict['name'], arguments=json_dict['arguments'])
                         )
                     
-                    finish_response = None
-                    # Handle pydantic method name change for compatibility
-                    if hasattr(response, 'model_dump'):
-                        finish_response = response.model_dump(mode='json')
-                    else:
-                        finish_response = response.dict()
-                    
+                    finish_response = response.model_dump(mode='json')                    
                     debug_msg(f"process_finish_msg response:\n{finish_response}")
                     finish_responses.append(finish_response)
                 
         except Exception as e:
             debug_msg(f"process_finish_msg exception: {e}")
+            exception_occurred = True
 
-        return finish_responses
+        return finish_responses, exception_occurred

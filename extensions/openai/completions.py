@@ -86,8 +86,13 @@ def convert_logprobs_to_tiktoken(model, logprobs):
 
 
 
-def process_parameters(body, is_legacy=False):
+def process_parameters(body, function_call_context:FunctionCallContext, is_legacy=False):
     generate_params = body
+
+    if function_call_context.expect_finish_with_function_call:
+        # low temp for function calling
+        generate_params['temperature'] = min(generate_params['temperature'], 0.3)
+
     max_tokens_str = 'length' if is_legacy else 'max_tokens'
     generate_params['max_new_tokens'] = body.pop(max_tokens_str)
     if generate_params['truncation_length'] == 0:
@@ -227,7 +232,9 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
 
     # Generate function call context for handing potential function calls requests
     function_call_context = FunctionCallContext(body)
-
+    if function_call_context.expect_finish_with_function_call and stream:
+        raise InvalidRequestError(message="Function call context is not supported for streaming", param='messages')
+        
     if 'messages' not in body:
         raise InvalidRequestError(message="messages is required", param='messages')
 
@@ -246,7 +253,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
     resp_list = 'data' if is_legacy else 'choices'
 
     # generation parameters
-    generate_params = process_parameters(body, is_legacy=is_legacy)
+    generate_params = process_parameters(body, function_call_context, is_legacy=is_legacy)
     continue_ = body['continue_']
 
     # Instruction template
@@ -325,40 +332,57 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
     token_count = len(encode(prompt)[0])
     debug_msg({'prompt': prompt, 'generate_params': generate_params})
 
-    generator = generate_chat_reply(
-        user_input, generate_params, regenerate=False, _continue=continue_, loading_message=False)
+    max_retries = 3
+    finish_good = False
+    while not finish_good and max_retries > 0:
+        generator = generate_chat_reply(
+            user_input, generate_params, regenerate=False, _continue=continue_, loading_message=False)
 
-    answer = ''
-    seen_content = ''
-    completion_token_count = 0
-    response_message = {"role": "assistant", "content": ''}
+        answer = ''
+        seen_content = ''
+        completion_token_count = 0
+        response_message = {"role": "assistant", "content": ''}
 
-    for a in generator:
-        answer = a['internal'][-1][1]
-        if stream:
-            len_seen = len(seen_content)
-            new_content = answer[len_seen:]
+        for a in generator:
+            answer = a['internal'][-1][1]
+            if stream:
+                len_seen = len(seen_content)
+                new_content = answer[len_seen:]
 
-            if not new_content or chr(0xfffd) in new_content:  # partial unicode character, don't send it yet.
-                continue
+                if not new_content or chr(0xfffd) in new_content:  # partial unicode character, don't send it yet.
+                    continue
 
-            seen_content = answer
-            chunk = chat_streaming_chunk(new_content)
-            yield chunk
+                seen_content = answer
+                chunk = chat_streaming_chunk(new_content)
+                yield chunk
 
-    completion_token_count = len(encode(answer)[0])
-    stop_reason = "stop"
-    if token_count + completion_token_count >= generate_params['truncation_length'] or completion_token_count >= generate_params['max_new_tokens']:
-        stop_reason = "length"
-        
-    function_call_responses = function_call_context.process_finish_msg(answer)
-    if len(function_call_responses) > 0:
-        # OpenAI compliance for functioin call responses, reference https://github.com/openai/openai-cookbook/blob/main/examples/How_to_call_functions_with_chat_models.ipynb
-        stop_reason = function_call_context.FINISH_REASON
-        response_message['content'] = None
-        response_message[function_call_context.RESPOSE] = function_call_responses
-    else:
-        response_message['content'] = answer
+        completion_token_count = len(encode(answer)[0])
+        stop_reason = "stop"
+        if token_count + completion_token_count >= generate_params['truncation_length'] or completion_token_count >= generate_params['max_new_tokens']:
+            stop_reason = "length"
+            
+        if not function_call_context.expect_finish_with_function_call:
+            # good finish
+            response_message['content'] = answer
+            finish_good = True
+        else:
+            function_call_responses, exception_occurred = function_call_context.process_finish_msg(answer)
+            if not exception_occurred:
+                if len(function_call_responses) > 0:
+                    # OpenAI compliance for functioin call responses, reference https://github.com/openai/openai-cookbook/blob/main/examples/How_to_call_functions_with_chat_models.ipynb
+                    stop_reason = function_call_context.FINISH_REASON
+                    response_message['content'] = None
+                    response_message[function_call_context.RESPOSE] = function_call_responses
+                    finish_good = True
+                else:
+                    # good finish due to rejecting using function call
+                    response_message['content'] = answer
+                    finish_good = True
+            else:
+                # function call with exception occurred, retry
+                debug_msg(f'function call with exception_occurred, retrying...')
+                finish_good = False
+                max_retries -= 1
 
     if stream:
         chunk = chat_streaming_chunk('')
