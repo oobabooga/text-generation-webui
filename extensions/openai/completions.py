@@ -104,7 +104,9 @@ def process_parameters(body, is_legacy=False):
         # XXX convert tokens from tiktoken based on requested model
         # Ex.: 'logit_bias': {'1129': 100, '11442': 100, '16243': 100}
         try:
-            encoder = tiktoken.encoding_for_model(generate_params['model'] if generate_params['model'] else "llama")
+            if not generate_params['model']:
+                raise KeyError # not openAI model.
+            encoder = tiktoken.encoding_for_model(generate_params['model'])
             new_logit_bias = {}
             for logit, bias in logit_bias.items():
                 for x in encode(encoder.decode([int(logit)]), add_special_tokens=False)[0]:
