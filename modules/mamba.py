@@ -68,10 +68,14 @@ class MambaSsmConfig(mamba_ssm.models.config_mamba.MambaConfig):
 
 
 class MambaSsmModel:
+    __module__ = 'torch'
 
     def __init__(self):        
         pass
 
+    def forward(self, input_ids, position_ids=None, inference_params=None, num_last_tokens=0):
+        pass
+    
     @classmethod
     def from_pretrained(self, path_to_model):
 
@@ -79,6 +83,7 @@ class MambaSsmModel:
         mamba_ssm_config = MambaSsmConfig()
         mamba_ssm_config.from_mamba_config(model.config)
         model.config = mamba_ssm_config
+        
         tokenizer_file = os.path.join(path_to_model, 'tokenizer.json')
         if os.path.isfile(tokenizer_file):
             tokenizer = AutoTokenizer.from_pretrained(path_to_model)
@@ -87,6 +92,7 @@ class MambaSsmModel:
 
         result = self()
         result.model = model
+        result.config = model.config
         result.cache = None
         result.tokenizer = tokenizer
         result.generator = None

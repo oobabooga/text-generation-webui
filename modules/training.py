@@ -30,6 +30,8 @@ from transformers import is_torch_xpu_available
 from transformers.models.auto.modeling_auto import (
     MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
 )
+from modules.mamba_trainer import MambaTrainer
+from modules.mamba import MambaSsmModel
 
 from modules import shared, ui, utils
 from modules.evaluate import (
@@ -499,7 +501,7 @@ def do_train_ssm(ssm_name: str, always_override: bool, format, dataset, eval_dat
  
     output_dir = f'trained_ssns/{ssm_name}'
 
-    from modules.mamba_trainer import MambaTrainer
+
     trainer = MambaTrainer(
         model=model,
         #train_dataset=data_module.dataset,
@@ -760,42 +762,46 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
     # base model is now frozen and should not be reused for any other LoRA training than this one
     shared.model_dirty_from_training = True
 
-    logger.info("Preparing for training")
-    config = LoraConfig(
-        r=lora_rank,
-        lora_alpha=lora_alpha,
-        target_modules=list_target_modules(model_id),
-        lora_dropout=lora_dropout,
-        bias="none",
-        task_type="CAUSAL_LM"
-    )
+    if isinstance(shared.model, MambaSsmModel):
+        logger.info("Preparing for SSM training")
+        lora_model = shared.model.model
+    else:
+        logger.info("Preparing for training")
+        config = LoraConfig(
+            r=lora_rank,
+            lora_alpha=lora_alpha,
+            target_modules=list_target_modules(model_id),
+            lora_dropout=lora_dropout,
+            bias="none",
+            task_type="CAUSAL_LM"
+        )
 
-    # == Backup the existing adapter ==
-    if not always_override:
-        backup_adapter(lora_file_path)
+        # == Backup the existing adapter ==
+        if not always_override:
+            backup_adapter(lora_file_path)
 
-    # == get model trainable params
-    model_trainable_params, model_all_params = calc_trainable_parameters(shared.model)
+        # == get model trainable params
+        model_trainable_params, model_all_params = calc_trainable_parameters(shared.model)
 
-    try:
-        logger.info("Creating LoRA model")
-        lora_model = get_peft_model(shared.model, config)
-        if not always_override and Path(f"{lora_file_path}/adapter_model.bin").is_file():
-            logger.info("Loading existing LoRA data")
-            state_dict_peft = torch.load(f"{lora_file_path}/adapter_model.bin", weights_only=True)
-            set_peft_model_state_dict(lora_model, state_dict_peft)
-    except:
-        yield traceback.format_exc().replace('\n', '\n\n')
-        return
+        try:
+            logger.info("Creating LoRA model")
+            lora_model = get_peft_model(shared.model, config)
+            if not always_override and Path(f"{lora_file_path}/adapter_model.bin").is_file():
+                logger.info("Loading existing LoRA data")
+                state_dict_peft = torch.load(f"{lora_file_path}/adapter_model.bin", weights_only=True)
+                set_peft_model_state_dict(lora_model, state_dict_peft)
+        except:
+            yield traceback.format_exc().replace('\n', '\n\n')
+            return
 
-    if shared.args.monkey_patch:
-        from alpaca_lora_4bit.autograd_4bit import Autograd4bitQuantLinear
-        from alpaca_lora_4bit.models import Linear4bitLt
-        for _, m in lora_model.named_modules():
-            if isinstance(m, Autograd4bitQuantLinear) or isinstance(m, Linear4bitLt):
-                if m.is_v1_model:
-                    m.zeros = m.zeros.half()
-                m.scales = m.scales.half()
+        if shared.args.monkey_patch:
+            from alpaca_lora_4bit.autograd_4bit import Autograd4bitQuantLinear
+            from alpaca_lora_4bit.models import Linear4bitLt
+            for _, m in lora_model.named_modules():
+                if isinstance(m, Autograd4bitQuantLinear) or isinstance(m, Linear4bitLt):
+                    if m.is_v1_model:
+                        m.zeros = m.zeros.half()
+                    m.scales = m.scales.half()
 
     class Tracked():
         def __init__(self):
@@ -842,35 +848,88 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
                     control.should_training_stop = True
                     print(f"\033[1;31;1mStop Loss {stop_at_loss} reached.\033[0;37;0m")
 
-    trainer = transformers.Trainer(
-        model=lora_model,
-        train_dataset=train_data,
-        eval_dataset=eval_data,
-        args=transformers.TrainingArguments(
-            report_to=report_to if report_to != "None" else None,
-            per_device_train_batch_size=micro_batch_size,
-            gradient_accumulation_steps=gradient_accumulation_steps,
-            warmup_steps=math.ceil(warmup_steps / gradient_accumulation_steps),
-            num_train_epochs=epochs,
-            learning_rate=actual_lr,
-            fp16=False if shared.args.cpu or shared.args.bf16 else True,
-            bf16=shared.args.bf16,
-            optim=optimizer,
-            logging_steps=2 if stop_at_loss > 0 else 5,
-            evaluation_strategy="steps" if eval_data is not None else "no",
-            eval_steps=math.ceil(eval_steps / gradient_accumulation_steps) if eval_data is not None else None,
-            save_strategy="steps" if eval_data is not None else "no",
-            output_dir=lora_file_path,
-            lr_scheduler_type=lr_scheduler_type,
-            load_best_model_at_end=eval_data is not None,
-            # TODO: Enable multi-device support
-            ddp_find_unused_parameters=None,
-            no_cuda=shared.args.cpu,
-            use_ipex=True if is_torch_xpu_available() and not shared.args.cpu else False
-        ),
-        data_collator=transformers.DataCollatorForLanguageModeling(shared.tokenizer, mlm=False),
-        callbacks=list([Callbacks()])
-    )
+    if isinstance(shared.model, MambaSsmModel):
+        # trainer = MambaTrainer(
+        #     model=shared.model,
+        #     #train_dataset=data_module.dataset,
+        #     train_dataset=train_data,
+        #     tokenizer=shared.model.tokenizer,
+        #     args=transformers.TrainingArguments(
+        #         learning_rate=5e-5,#ssm_learning_rate,
+        #         num_train_epochs=epochs,
+        #         per_device_train_batch_size=batch_size,
+        #         gradient_accumulation_steps=4, # args.gradient_accumulation_steps,
+        #         optim='paged_adamw_8bit', # ype=str, default="adamw_torch" , lowvram: paged_adamw_8bit
+        #         output_dir=lora_file_path,
+        #         logging_steps=50,
+        #         #save_steps=ssm_save_steps,
+        #         do_eval=False,
+        #         report_to="none",
+        #         #save_only_model=True,            
+        #     ),
+        #     #data_collator=data_module.data_collator,
+        #     data_collator=transformers.DataCollatorForLanguageModeling(shared.tokenizer, mlm=False),
+        # )
+        trainer = MambaTrainer(
+            model=lora_model,
+            train_dataset=train_data,
+            #tokenizer=lora_model.tokenizer,
+            #eval_dataset=eval_data,
+            args=transformers.TrainingArguments(
+                report_to=report_to if report_to != "None" else None,
+                per_device_train_batch_size=micro_batch_size,
+                gradient_accumulation_steps=gradient_accumulation_steps,
+                warmup_steps=math.ceil(warmup_steps / gradient_accumulation_steps),
+                num_train_epochs=epochs,
+                learning_rate=actual_lr,
+                fp16=False, # if shared.args.cpu or shared.args.bf16 else True,
+                bf16=True, #shared.args.bf16,
+                optim='paged_adamw_8bit', # optimizer,
+                logging_steps=2 if stop_at_loss > 0 else 5,
+                evaluation_strategy="steps" if eval_data is not None else "no",
+                eval_steps=math.ceil(eval_steps / gradient_accumulation_steps) if eval_data is not None else None,
+                save_strategy="steps" if eval_data is not None else "no",
+                output_dir=lora_file_path,
+                lr_scheduler_type=lr_scheduler_type,
+                load_best_model_at_end=eval_data is not None,
+                # TODO: Enable multi-device support
+                ddp_find_unused_parameters=None,
+                no_cuda=shared.args.cpu,
+                use_ipex=True if is_torch_xpu_available() and not shared.args.cpu else False
+            ),
+            data_collator=transformers.DataCollatorForLanguageModeling(shared.tokenizer, mlm=False),
+            callbacks=list([Callbacks()])
+        )
+    else:
+        trainer = transformers.Trainer(
+            model=lora_model,
+            train_dataset=train_data,
+            eval_dataset=eval_data,
+            args=transformers.TrainingArguments(
+                report_to=report_to if report_to != "None" else None,
+                per_device_train_batch_size=micro_batch_size,
+                gradient_accumulation_steps=gradient_accumulation_steps,
+                warmup_steps=math.ceil(warmup_steps / gradient_accumulation_steps),
+                num_train_epochs=epochs,
+                learning_rate=actual_lr,
+                fp16=False if shared.args.cpu or shared.args.bf16 else True,
+                bf16=shared.args.bf16,
+                optim=optimizer,
+                logging_steps=2 if stop_at_loss > 0 else 5,
+                evaluation_strategy="steps" if eval_data is not None else "no",
+                eval_steps=math.ceil(eval_steps / gradient_accumulation_steps) if eval_data is not None else None,
+                save_strategy="steps" if eval_data is not None else "no",
+                output_dir=lora_file_path,
+                lr_scheduler_type=lr_scheduler_type,
+                load_best_model_at_end=eval_data is not None,
+                # TODO: Enable multi-device support
+                ddp_find_unused_parameters=None,
+                no_cuda=shared.args.cpu,
+                use_ipex=True if is_torch_xpu_available() and not shared.args.cpu else False
+            ),
+            data_collator=transformers.DataCollatorForLanguageModeling(shared.tokenizer, mlm=False),
+            callbacks=list([Callbacks()])
+        )
 
     lora_model.config.use_cache = False
 
@@ -896,14 +955,16 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
 
     print(f"Training '{model_id}' model using ({projections_string}) projections")
 
-    if lora_all_param > 0:
-        print(f"Trainable params: {lora_trainable_param:,d} ({100 * lora_trainable_param / lora_all_param:.4f} %), All params: {lora_all_param:,d} (Model: {model_all_params:,d})")
+    if not isinstance(shared.model, MambaSsmModel):
+        if lora_all_param > 0:
+            print(f"Trainable params: {lora_trainable_param:,d} ({100 * lora_trainable_param / lora_all_param:.4f} %), All params: {lora_all_param:,d} (Model: {model_all_params:,d})")
 
     train_log.update({"base_model_name": shared.model_name})
     train_log.update({"base_model_class": shared.model.__class__.__name__})
-    train_log.update({"base_loaded_in_4bit": getattr(lora_model, "is_loaded_in_4bit", False)})
-    train_log.update({"base_loaded_in_8bit": getattr(lora_model, "is_loaded_in_8bit", False)})
-    train_log.update({"projections": projections_string})
+    if not isinstance(shared.model, MambaSsmModel):
+        train_log.update({"base_loaded_in_4bit": getattr(lora_model, "is_loaded_in_4bit", False)})
+        train_log.update({"base_loaded_in_8bit": getattr(lora_model, "is_loaded_in_8bit", False)})
+        train_log.update({"projections": projections_string})
 
     if stop_at_loss > 0:
         print(f"Monitoring loss \033[1;31;1m(Auto-Stop at: {stop_at_loss})\033[0;37;0m")
