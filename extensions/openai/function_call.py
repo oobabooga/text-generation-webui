@@ -103,17 +103,39 @@ class FunctionCallContext():
                     
             # give 1-shot prompt for function call reply format
             self.FUNCTION_PROMPT += """If you find it necessary to call function, you must reply in the format: <functioncall> json_str </functioncall>, e.g <functioncall> {\"name\": \"calculate_loan_payment\", \"arguments\": '{\"principal\": 50000, \"interest_rate\": 5, \"loan_term\": 10}'} </functioncall>."""
-            self.FUNCTION_PROMPT += """Here is a sample conversation between a helpful assistant that call a function for user requests that are within range of provided functions, and reject invalid user request that provided functions cannot do:
+            self.FUNCTION_PROMPT += """You should call a function for user requests that are within scope of provided functions, and reject invalid user request that provided functions cannot do:
+Begin of the sample function calling convseration 1.
 SYSTEM: You are a helpful assistant with access to the following functions. Use them if required -\n{\n \"name\": \"calculate_median\",\n \"description\": \"Calculate the median of a list of numbers\",\n \"parameters\": {\n \"type\": \"object\",\n \"properties\": {\n \"numbers\": {\n \"type\": \"array\",\n \"items\": {\n \"type\": \"number\"\n },\n \"description\": \"A list of numbers\"\n }\n },\n \"required\": [\n \"numbers\"\n ]\n }\n}
 USER: Hi, I have a list of numbers and I need to find the median. Can you help me with that?
 ASSISTANT: Of course, I can help you with that. Please provide me with the list of numbers.
-USER: The numbers are 5, 2, 9, 1, 7, 4, 6, 3, 8.
-ASSISTANT: <functioncall> {"name": "calculate_median", "arguments": '{"numbers": [5, 2, 9, 1, 7, 4, 6, 3, 8]}'} </functioncall>
+USER: The 1st list of numbers are 5, 2, 9, 1, 7, 4, 6, 3, 8. The 2nd list of numbers are 1, 2, 3, 4, 5.
+ASSISTANT: <functioncall> {"name": "calculate_median", "arguments": '{"numbers": [5, 2, 9, 1, 7, 4, 6, 3, 8]}'} </functioncall>\n<functioncall> {"name": "calculate_median", "arguments": '{"numbers": [1, 2, 3, 4, 5]}'} </functioncall>
 USER: <functionresponse> {"median": 5} </functionresponse>
-ASSISTANT: The median of the list of numbers is 5.
+USER: <functionresponse> {"median": 3} </functionresponse>
+ASSISTANT: The median of the 1st list of numbers is 5. The median of the 2nd list of numbers is 3.
 USER: That's great! Can you also help me book a flight to Bei Jing next week?
 ASSISTANT: I'm sorry, I don't have the capability to book flights or perform external tasks. My current task is to calculate median number with a list of numbers.
-End of the example convseration.
+End of the sample function calling convseration 1.
+
+Begin of the sample function calling convseration 2.
+You are given access to the following functions, use them if required -
+{'name': 'ask_database', 'description': 'Use this function to answer user questions about music. Input should be a fully formed SQL query.', 'parameters': {'type': 'object', 'properties': {'query': {'type': 'string', 'description': "\nSQL query extracting info to answer the user's question.\nSQL should be written using this database schema:\nTable: Album\nColumns: AlbumId, Title, ArtistId\nTable: Artist\nColumns: ArtistId, Name\nTable: Track\nColumns: TrackId, Name, AlbumId, MediaTypeId, GenreId, Composer, Milliseconds, Bytes, UnitPrice\nThe query should be returned in plain text, not in JSON.\n"}}, 'required': ['query']}}
+USER: Hi, who are the top 5 artists by number of tracks?
+ASSISTANT: <functioncall> {'name': 'ask_database', 'arguments': '{"query": "SELECT Artist.Name, COUNT(Track.TrackId) AS TrackCount FROM Artist JOIN Album ON Artist.ArtistId = Album.ArtistId JOIN Track ON Album.AlbumId = Track.AlbumId GROUP BY Artist.Name ORDER BY TrackCount DESC LIMIT 5"}'} </functioncall> 
+USER: <functionresponse> [('Iron Maiden', 213), ('U2', 135), ('Led Zeppelin', 114), ('Metallica', 112), ('Lost', 92)] </functionresponse> 
+ASSISTANT: Here is the table for the top 5 artists by number of tracks.
+| Artist | Count |
+|--------|-------|
+| Iron Maiden | 213 |
+| U2 | 135 |
+| Led Zeppelin | 114 |
+| Metallica | 112 |
+| Lost | 92 |
+USER: What is the name of the album with the most tracks?
+ASSISTANT: <functioncall> {'name': 'ask_database', 'arguments': '{"query": "SELECT Album.Title, COUNT(Track.TrackId) AS TrackCount FROM Album JOIN Track ON Album.AlbumId = Track.AlbumId GROUP BY Album.Title ORDER BY TrackCount DESC LIMIT 1"}'} </functioncall>
+USER: <functionresponse> [('Greatest Hits', 57)] </functionresponse> 
+ASSISTANT: The album with the most tracks is Greatest Hits with 57 tracks.
+End of the sample function calling convseration 2.
 """
         else:
             self.expect_finish_with_function_call = False
@@ -121,17 +143,11 @@ End of the example convseration.
             
     # Handle tool/function role message in history messages
     def process_role_msg(self, content:str)->str:
-        return f'<functionresponse> {content} </functionresponse>.'
+        return f'<functionresponse> {content} </functionresponse>'
     
     # Handle potential function call in history messages
     def process_assistant_msg(self, content:str)->str:
-        try:
-            pattern = r'{(.*?)name(.*?)arguments(.*?)}'
-            if re.match(pattern, content):
-                return f'<functioncall> {content} </functioncall>'
-        except:
-            pass
-        return content 
+        return f'<functioncall> {content} </functioncall>'
     
     # Handle function call in assistant reply
     def process_finish_msg(self, content:str)-> (List[dict], bool):
@@ -191,22 +207,25 @@ End of the example convseration.
                         continue
 
                     def excape_crtl_chars(text: str)->str:
-                        """
-                        https://stackoverflow.com/questions/22394235/invalid-control-character-with-python-json-loads
-                        Escape control chars in arguments to pass json.load(text, strict=True) when deserializing on the client side, since strict=True is the default option
-                        e.g.
-                        message = url_response.json()["choices"][0]["message"]
-                        json.loads(message["tool_calls"][0]["function"]["arguments"])
-                        """
-                        # Define a dictionary that maps control characters to their escape sequences
-                        control_chars_dict = {i: '\\u{:04x}'.format(i) for i in range(32)}
-                        # Add some additional control characters that aren't in the default translation table
-                        control_chars_dict[127] = '\\u007f'
-                        # Remove control characters from the string
-                        cleaned_text = text.translate(control_chars_dict)
-                        if len(cleaned_text) != len(text):
-                            debug_msg(f"process_finish_msg escape control chars from {text} to {cleaned_text}")
-                        return cleaned_text
+                        # """
+                        # https://stackoverflow.com/questions/22394235/invalid-control-character-with-python-json-loads
+                        # Escape control chars in arguments to pass json.load(text, strict=True) when deserializing on the client side, since strict=True is the default option
+                        # e.g.
+                        # message = url_response.json()["choices"][0]["message"]
+                        # json.loads(message["tool_calls"][0]["function"]["arguments"])
+                        # """
+                        # # Define a dictionary that maps control characters to their escape sequences
+                        # control_chars_dict = {i: '\\u{:04x}'.format(i) for i in range(32)}
+                        # # Add some additional control characters that aren't in the default translation table
+                        # control_chars_dict[127] = '\\u007f'
+                        # # Remove control characters from the string
+                        # cleaned_text = text.translate(control_chars_dict)
+                        # if len(cleaned_text) != len(text):
+                        #     debug_msg(f"process_finish_msg escape control chars from {text} to {cleaned_text}")
+                        # return cleaned_text
+                        
+                        # Should leave it as it is because it is problem of the llm output, user should try use json.load(text, strict=False) if they have encounter control char in json
+                        return text
                     
                     # Gen openai like call id with 24 random characters
                     def gen_openai_like_call_id()->str:

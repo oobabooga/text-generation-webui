@@ -200,7 +200,7 @@ def convert_history(history, function_call_context: FunctionCallContext):
 
             current_message = content
         elif role == "assistant":
-            current_reply = function_call_context.process_assistant_msg(content)
+            current_reply = content
             if current_message:
                 chat_dialogue.append([current_message, current_reply])
                 current_message = ""
@@ -369,9 +369,11 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
             function_call_responses, exception_occurred = function_call_context.process_finish_msg(answer)
             if not exception_occurred:
                 if len(function_call_responses) > 0:
-                    # OpenAI compliance for functioin call responses, reference https://github.com/openai/openai-cookbook/blob/main/examples/How_to_call_functions_with_chat_models.ipynb
                     stop_reason = function_call_context.FINISH_REASON
-                    response_message['content'] = None
+
+                    # OpenAI has made 'content' section for functioin call responses None, reference https://github.com/openai/openai-cookbook/blob/main/examples/How_to_call_functions_with_chat_models.ipynb
+                    # But also mentioned in the last SQL query part in the notebook, we actually need to re-fill 'content' with function called in order to pass a multi-round function calling conversation. So we just make up the 'conte4nt' here for the user
+                    response_message['content'] = '\n'.join([function_call_context.process_assistant_msg(iter["function"]) for iter in function_call_responses])
                     response_message[function_call_context.RESPOSE] = function_call_responses
                     finish_good = True
                 else:
