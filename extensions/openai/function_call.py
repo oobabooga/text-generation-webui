@@ -2,6 +2,8 @@ from extensions.openai.errors import InvalidRequestError
 from extensions.openai.utils import debug_msg
 from extensions.openai.typing import FunctionCallRequest, FunctionCallResponse, FunctionNameArg
 from typing import List
+import re
+import ast
 
 """
 This is a class to hold the context of a function call
@@ -100,7 +102,7 @@ class FunctionCallContext():
                     self.FUNCTION_PROMPT += f'\n{func["function"]}\n'
                     
             # give 1-shot prompt for function call reply format
-            self.FUNCTION_PROMPT += """If you find it necessary to call function, you must reply in the format only when necessary: <functioncall> json_str </functioncall>, e.g <functioncall> {\"name\": \"calculate_loan_payment\", \"arguments\": '{\"principal\": 50000, \"interest_rate\": 5, \"loan_term\": 10}'} </functioncall>."""
+            self.FUNCTION_PROMPT += """If you find it necessary to call function, you must reply in the format: <functioncall> json_str </functioncall>, e.g <functioncall> {\"name\": \"calculate_loan_payment\", \"arguments\": '{\"principal\": 50000, \"interest_rate\": 5, \"loan_term\": 10}'} </functioncall>."""
             self.FUNCTION_PROMPT += """Here is a sample conversation between a helpful assistant that call a function for user requests that are within range of provided functions, and reject invalid user request that provided functions cannot do:
 SYSTEM: You are a helpful assistant with access to the following functions. Use them if required -\n{\n \"name\": \"calculate_median\",\n \"description\": \"Calculate the median of a list of numbers\",\n \"parameters\": {\n \"type\": \"object\",\n \"properties\": {\n \"numbers\": {\n \"type\": \"array\",\n \"items\": {\n \"type\": \"number\"\n },\n \"description\": \"A list of numbers\"\n }\n },\n \"required\": [\n \"numbers\"\n ]\n }\n}
 USER: Hi, I have a list of numbers and I need to find the median. Can you help me with that?
@@ -117,17 +119,27 @@ End of the example convseration.
             self.expect_finish_with_function_call = False
             self.FUNCTION_PROMPT = ''
             
-    def process_role_msg(self, content)->str:
-        return f'Previous function call has responded with: <functionresponse> {content} </functionresponse>.'
+    # Handle tool/function role message in history messages
+    def process_role_msg(self, content:str)->str:
+        return f'<functionresponse> {content} </functionresponse>.'
     
-    def process_finish_msg(self, content)-> (List[dict], bool):
+    # Handle potential function call in history messages
+    def process_assistant_msg(self, content:str)->str:
+        try:
+            pattern = r'{(.*?)name(.*?)arguments(.*?)}'
+            if re.match(pattern, content):
+                return f'<functioncall> {content} </functioncall>'
+        except:
+            pass
+        return content 
+    
+    # Handle function call in assistant reply
+    def process_finish_msg(self, content:str)-> (List[dict], bool):
         finish_responses = []
         exception_occurred = False
         try:
-            if self.functions != []:
-                import re
-                import ast
-                import json
+            if self.expect_finish_with_function_call:
+                
                 # Define the pattern to match the JSON string within the functioncall tags
                 pattern = r'<functioncall>(.*?)</functioncall>'
 
@@ -145,6 +157,7 @@ End of the example convseration.
                     json_str = match.strip()
                     debug_msg(f"process_finish_msg Found matching json_str {json_str}")
 
+                    # Parse llm output into dict, will handle edge cases here, e.g. single quptes
                     json_dict = None
                     try:
                         """
@@ -177,11 +190,14 @@ End of the example convseration.
                         debug_msg(f"process_finish_msg json_dict does not have name or arguments {json_dict}")
                         continue
 
-                    """
-                    https://stackoverflow.com/questions/22394235/invalid-control-character-with-python-json-loads
-                    Escape control chars in arguments to pass json.load(text, strict=True) when deserializing on the client side
-                    """
                     def excape_crtl_chars(text: str)->str:
+                        """
+                        https://stackoverflow.com/questions/22394235/invalid-control-character-with-python-json-loads
+                        Escape control chars in arguments to pass json.load(text, strict=True) when deserializing on the client side, since strict=True is the default option
+                        e.g.
+                        message = url_response.json()["choices"][0]["message"]
+                        json.loads(message["tool_calls"][0]["function"]["arguments"])
+                        """
                         # Define a dictionary that maps control characters to their escape sequences
                         control_chars_dict = {i: '\\u{:04x}'.format(i) for i in range(32)}
                         # Add some additional control characters that aren't in the default translation table
@@ -192,9 +208,6 @@ End of the example convseration.
                             debug_msg(f"process_finish_msg escape control chars from {text} to {cleaned_text}")
                         return cleaned_text
                     
-                    json_dict['name'] = excape_crtl_chars(json_dict['name'])
-                    json_dict['arguments'] = excape_crtl_chars(json_dict['arguments'])
-
                     # Gen openai like call id with 24 random characters
                     def gen_openai_like_call_id()->str:
                         import random
@@ -205,7 +218,10 @@ End of the example convseration.
                     
                     response = FunctionCallResponse(
                         id=f'call_{gen_openai_like_call_id()}',
-                        function=FunctionNameArg(name=json_dict['name'], arguments=json_dict['arguments'])
+                        function=FunctionNameArg(
+                            name=excape_crtl_chars(json_dict['name']),
+                            arguments=excape_crtl_chars(json_dict['arguments'])
+                            )
                         )
                     
                     finish_response = response.model_dump(mode='json')                    

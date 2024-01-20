@@ -200,7 +200,7 @@ def convert_history(history, function_call_context: FunctionCallContext):
 
             current_message = content
         elif role == "assistant":
-            current_reply = content
+            current_reply = function_call_context.process_assistant_msg(content)
             if current_message:
                 chat_dialogue.append([current_message, current_reply])
                 current_message = ""
