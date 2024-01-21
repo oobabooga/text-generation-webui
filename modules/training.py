@@ -44,7 +44,7 @@ from modules.models import reload_model
 from modules.utils import natural_keys
 
 MODEL_CLASSES = {v[1]: v[0] for v in MODEL_FOR_CAUSAL_LM_MAPPING_NAMES.items()}
-PARAMETERS = ["lora_name", "always_override", "q_proj_en", "v_proj_en", "k_proj_en", "o_proj_en", "gate_proj_en", "down_proj_en", "up_proj_en", "save_steps", "micro_batch_size", "batch_size", "epochs", "learning_rate", "lr_scheduler_type", "lora_rank", "lora_alpha", "lora_dropout", "cutoff_len", "dataset", "eval_dataset", "format", "eval_steps", "raw_text_file", "overlap_len", "newline_favor_len", "higher_rank_limit", "warmup_steps", "optimizer", "hard_cut_string", "train_only_after", "stop_at_loss", "add_eos_token", "min_chars", "report_to"]
+PARAMETERS = ["trained_model_name", "always_override", "q_proj_en", "v_proj_en", "k_proj_en", "o_proj_en", "gate_proj_en", "down_proj_en", "up_proj_en", "save_steps", "micro_batch_size", "batch_size", "epochs", "learning_rate", "lr_scheduler_type", "lora_rank", "lora_alpha", "lora_dropout", "cutoff_len", "dataset", "eval_dataset", "format", "eval_steps", "raw_text_file", "overlap_len", "newline_favor_len", "higher_rank_limit", "warmup_steps", "optimizer", "hard_cut_string", "train_only_after", "stop_at_loss", "add_eos_token", "min_chars", "report_to"]
 WANT_INTERRUPT = False
 
 train_log = {}
@@ -53,6 +53,7 @@ train_template = {}
 
 def create_ui():
     mu = shared.args.multi_user
+    isSsm = isinstance(shared.model, MambaSsmModel)
     with gr.Tab("Training", elem_id="training-tab"):
         with gr.Tab('Train LoRA', elem_id='lora-train-tab'):
             tmp = gr.State('')
@@ -66,33 +67,33 @@ def create_ui():
 
                     with gr.Row():
                         with gr.Column(scale=5):
-                            lora_name = gr.Textbox(label='Name', info='The name of your new LoRA file')
+                            trained_model_name = gr.Textbox(label='Name', info='The name of your new LoRA or SSM file')
                         with gr.Column():
                             always_override = gr.Checkbox(label='Override Existing Files', value=False, info='If the name is the same, checking will replace the existing file, and unchecking will load and continue from it (the rank must be the same).', elem_classes=['no-background'])
 
-                    with gr.Accordion(label='Target Modules', open=False):
-                        gr.Markdown("Selects which modules to target in training. Targeting more modules is closer to a full fine-tune at the cost of increased VRAM requirements and adapter size.\nNOTE: Only works for model_id='llama', other types will retain default training behavior and not use these settings.")
+                    with gr.Accordion(label='Target Modules', open=False, visible=not isSsm):
+                        gr.Markdown("Selects which modules to target in LoRA training. Targeting more modules is closer to a full fine-tune at the cost of increased VRAM requirements and adapter size.\nNOTE: Only works for model_id='llama', other types will retain default training behavior and not use these settings.")
                         with gr.Row():
                             with gr.Column():
-                                q_proj_en = gr.Checkbox(label='Enable q_proj', value=True)
+                                q_proj_en = gr.Checkbox(label='Enable q_proj', value=True, visible=not isSsm)
                             with gr.Column():
-                                v_proj_en = gr.Checkbox(label='Enable v_proj', value=True)
+                                v_proj_en = gr.Checkbox(label='Enable v_proj', value=True, visible=not isSsm)
                             with gr.Column():
-                                k_proj_en = gr.Checkbox(label='Enable k_proj', value=False)
+                                k_proj_en = gr.Checkbox(label='Enable k_proj', value=False, visible=not isSsm)
                             with gr.Column():
-                                o_proj_en = gr.Checkbox(label='Enable o_proj', value=False)
+                                o_proj_en = gr.Checkbox(label='Enable o_proj', value=False, visible=not isSsm)
                             with gr.Column():
-                                gate_proj_en = gr.Checkbox(label='Enable gate_proj', value=False)
+                                gate_proj_en = gr.Checkbox(label='Enable gate_proj', value=False, visible=not isSsm)
                             with gr.Column():
-                                down_proj_en = gr.Checkbox(label='Enable down_proj', value=False)
+                                down_proj_en = gr.Checkbox(label='Enable down_proj', value=False, visible=not isSsm)
                             with gr.Column():
-                                up_proj_en = gr.Checkbox(label='Enable up_proj', value=False)
+                                up_proj_en = gr.Checkbox(label='Enable up_proj', value=False, visible=not isSsm)
 
                     with gr.Row():
                         with gr.Column():
-                            lora_rank = gr.Slider(label='LoRA Rank', value=32, minimum=0, maximum=1024, step=4, info='Also called dimension count. Higher values = larger file, more content control. Smaller values = smaller file, less control. Use 4 or 8 for style, 128 or 256 to teach, 1024+ for fine-detail on big data. More VRAM is needed for higher ranks.')
-                            lora_alpha = gr.Slider(label='LoRA Alpha', value=64, minimum=0, maximum=2048, step=4, info='This divided by the rank becomes the scaling of the LoRA. Higher means stronger. A good standard value is twice your Rank.')
-                            batch_size = gr.Slider(label='Batch Size', value=128, minimum=0, maximum=1024, step=4, info='Global batch size. The two batch sizes together determine gradient accumulation (gradientAccum = batch / microBatch). Higher gradient accum values lead to better quality training.')
+                            lora_rank = gr.Slider(label='LoRA Rank', value=32, minimum=0, maximum=1024, step=4, info='Also called dimension count. Higher values = larger file, more content control. Smaller values = smaller file, less control. Use 4 or 8 for style, 128 or 256 to teach, 1024+ for fine-detail on big data. More VRAM is needed for higher ranks.', visible=not isSsm)
+                            lora_alpha = gr.Slider(label='LoRA Alpha', value=64, minimum=0, maximum=2048, step=4, info='This divided by the rank becomes the scaling of the LoRA. Higher means stronger. A good standard value is twice your Rank.', visible=not isSsm)
+                            batch_size = gr.Slider(label='Batch Size', value=128, minimum=0, maximum=1024, step=4, info='Global batch size. The two batch sizes together determine gradient accumulation (gradientAccum = batch / microBatch). Higher gradient accum values lead to better quality training.', visible=not isSsm)
                             micro_batch_size = gr.Slider(label='Micro Batch Size', value=4, minimum=1, maximum=128, step=1, info='Per-device batch size (NOTE: multiple devices not yet implemented). Increasing this will increase VRAM usage.')
                             cutoff_len = gr.Slider(label='Cutoff Length', minimum=0, maximum=4096, value=256, step=32, info='Cutoff length for text input. Essentially, how long of a line of text to feed in at a time. Higher values require drastically more VRAM.')
 
@@ -107,7 +108,7 @@ def create_ui():
                     with gr.Accordion(label='Advanced Options', open=False):
                         with gr.Row():
                             with gr.Column():
-                                lora_dropout = gr.Slider(label='LoRA Dropout', minimum=0.0, maximum=1.0, step=0.025, value=0.05, info='Percentage probability for dropout of LoRA layers. This can help reduce overfitting. Most users should leave at default.')
+                                lora_dropout = gr.Slider(label='LoRA Dropout', minimum=0.0, maximum=1.0, step=0.025, value=0.05, info='Percentage probability for dropout of LoRA layers. This can help reduce overfitting. Most users should leave at default.', visible=not isSsm)
                                 stop_at_loss = gr.Slider(label='Stop at loss', minimum=0.0, maximum=3.0, step=0.1, value=0.00, info='The process will automatically stop once the desired loss value is reached. (reasonable numbers are 1.5-1.8)')
                                 with gr.Row():
                                     optimizer = gr.Dropdown(label='Optimizer', value='adamw_torch', choices=['adamw_hf', 'adamw_torch', 'adamw_torch_fused', 'adamw_torch_xla', 'adamw_apex_fused', 'adafactor', 'adamw_bnb_8bit', 'adamw_anyprecision', 'sgd', 'adagrad'], info='Different optimizer implementation options, for advanced users. Effects of different options are not well documented yet.', elem_classes=['slim-dropdown'])
@@ -118,7 +119,7 @@ def create_ui():
 
                                 add_eos_token = gr.Checkbox(label='Add EOS token', value=False, info="Adds EOS token for each dataset item. In case of raw text, the EOS will be added at the Hard Cut")
 
-                                higher_rank_limit = gr.Checkbox(label='Enable higher ranks', value=False, info='If checked, changes Rank/Alpha slider above to go much higher. This will not work without a datacenter-class GPU.')
+                                higher_rank_limit = gr.Checkbox(label='Enable higher ranks', value=False, info='If checked, changes Rank/Alpha slider above to go much higher. This will not work without a datacenter-class GPU.', visible=not isSsm)
                                 report_to = gr.Radio(label="Save detailed logs with", value="None", choices=["None", "wandb", "tensorboard"], interactive=True)
 
                 with gr.Column():
@@ -152,60 +153,10 @@ def create_ui():
                                 min_chars = gr.Number(label='Ignore small blocks', value=0, info='Ignore Hard Cut blocks that have less or equal characters than this number')
 
                     with gr.Row():
-                        start_button = gr.Button("Start LoRA Training", variant='primary', interactive=not mu)
+                        start_button = gr.Button("Start Training", variant='primary', interactive=not mu)
                         stop_button = gr.Button("Interrupt", interactive=not mu)
 
                     output = gr.Markdown(value="Ready")
-
-        with gr.Tab('Train Ssm', elem_id='ssm-train-tab'):
-                with gr.Column(scale=5):
-                    ssm_name = gr.Textbox(label='Name', info='The name of your new model file. Used as output directory.')
-                with gr.Column():
-                    ssm_always_override = gr.Checkbox(label='Override Existing Files', value=False, info='If the name is the same, checking will replace the existing file, and unchecking will load and continue from it (the rank must be the same).', elem_classes=['no-background'])
-                with gr.Column():
-                    # with gr.Tab(label='Formatted Dataset'):
-                    #     with gr.Row():
-                    #         ssm_format = gr.Dropdown(choices=utils.get_datasets('training/formats', 'json'), value='None', label='Data Format', info='The format file used to decide how to format the dataset input.', elem_classes=['slim-dropdown'], interactive=not mu)
-                    #         ui.create_refresh_button(ssm_format, lambda: None, lambda: {'choices': utils.get_datasets('training/formats', 'json')}, 'refresh-button', interactive=not mu)
-
-                    #     with gr.Row():
-                    #         ssm_dataset = gr.Dropdown(choices=utils.get_datasets('training/datasets', 'json'), value='None', label='Dataset', info='The dataset file to use for training.', elem_classes=['slim-dropdown'], interactive=not mu)
-                    #         ui.create_refresh_button(ssm_dataset, lambda: None, lambda: {'choices': utils.get_datasets('training/datasets', 'json')}, 'refresh-button', interactive=not mu)
-
-                    #     with gr.Row():
-                    #         ssm_eval_dataset = gr.Dropdown(choices=utils.get_datasets('training/datasets', 'json'), value='None', label='Evaluation Dataset', info='The (optional) dataset file used to evaluate the model after training.', elem_classes=['slim-dropdown'], interactive=not mu)
-                    #         ui.create_refresh_button(ssm_eval_dataset, lambda: None, lambda: {'choices': utils.get_datasets('training/datasets', 'json')}, 'refresh-button', interactive=not mu)
-
-                    #     ssm_eval_steps = gr.Number(label='Evaluate every n steps', value=100, info='If an evaluation dataset is given, test it every time this many steps pass.')
-
-                    # with gr.Tab(label="Raw text file"):
-                    #     with gr.Row():
-                    #         ssm_raw_text_file = gr.Dropdown(choices=utils.get_datasets('training/datasets', 'txt'), value='None', label='Text file', info='The raw text file to use for training.', elem_classes=['slim-dropdown'], interactive=not mu)
-                    #         ui.create_refresh_button(ssm_raw_text_file, lambda: None, lambda: {'choices': utils.get_datasets('training/datasets', 'txt')}, 'refresh-button', interactive=not mu)
-
-                    #     with gr.Row():
-                    #         with gr.Column():
-                    #             ssm_overlap_len = gr.Slider(label='Overlap Length', minimum=0, maximum=512, value=128, step=16, info='How many tokens from the prior chunk of text to include into the next chunk. (The chunks themselves will be of a size determined by Cutoff Length). Setting overlap to exactly half the cutoff length may be ideal.')
-                    #             ssm_newline_favor_len = gr.Slider(label='Prefer Newline Cut Length', minimum=0, maximum=512, value=128, step=16, info='Length (in characters, not tokens) of the maximum distance to shift an overlap cut by to ensure chunks cut at newlines. If too low, cuts may occur in the middle of lines.')
-
-                    #         with gr.Column():
-                    #             ssm_hard_cut_string = gr.Textbox(label='Hard Cut String', value='\\n\\n\\n', info='String that indicates a hard cut between text parts. Helps prevent unwanted overlap.')
-                    #             ssm_min_chars = gr.Number(label='Ignore small blocks', value=0, info='Ignore Hard Cut blocks that have less or equal characters than this number')
-                    with gr.Row():
-                        with gr.Column():
-                            ssm_batch_size = gr.Slider(label='Batch Size', value=4, minimum=1, maximum=16, step=4, info='Global batch size. Determines VRAM.')
-
-                        with gr.Column():
-                            ssm_save_steps = gr.Number(label='Save every n steps', value=0, info='If above 0, a checkpoint of the LoRA will be saved every time this many steps pass.')
-
-                            ssm_epochs = gr.Number(label='Epochs', value=3, info='Number of times every entry in the dataset should be fed into training. So 1 means feed each item in once, 5 means feed it in five times, etc.')
-                            ssm_learning_rate = gr.Textbox(label='Learning Rate', value='5e-5', info='In scientific notation. 3e-4 is a good starting base point. 1e-2 is extremely high, 1e-6 is extremely low.')
-
-                    with gr.Row():
-                        ssm_start_button = gr.Button("Start Ssm Training", variant='primary', interactive=not mu)
-                        ssm_stop_button = gr.Button("Interrupt", interactive=not mu)
-
-                    ssm_output = gr.Markdown(value="Ready")
 
         with gr.Tab('Perplexity evaluation', elem_id='evaluate-tab'):
             with gr.Row():
@@ -235,16 +186,11 @@ def create_ui():
         
 
     # Training events
-    all_params = [lora_name, always_override, q_proj_en, v_proj_en, k_proj_en, o_proj_en, gate_proj_en, down_proj_en, up_proj_en, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lr_scheduler_type, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, higher_rank_limit, warmup_steps, optimizer, hard_cut_string, train_only_after, stop_at_loss, add_eos_token, min_chars, report_to]
-    ssm_params = [ssm_name, always_override, format, dataset,
-     eval_dataset, raw_text_file, overlap_len, newline_favor_len, hard_cut_string, min_chars,
-     ssm_batch_size, ssm_save_steps, ssm_epochs, ssm_learning_rate]
+    all_params = [trained_model_name, always_override, q_proj_en, v_proj_en, k_proj_en, o_proj_en, gate_proj_en, down_proj_en, up_proj_en, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lr_scheduler_type, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, higher_rank_limit, warmup_steps, optimizer, hard_cut_string, train_only_after, stop_at_loss, add_eos_token, min_chars, report_to]
 
     copy_from.change(do_copy_params, [copy_from] + all_params, all_params)
     start_button.click(do_train, all_params, output)
     stop_button.click(do_interrupt, None, None, queue=False)
-    ssm_start_button.click(do_train_ssm, ssm_params, ssm_output)
-    ssm_stop_button.click(do_interrupt, None, None, queue=False)
     higher_rank_limit.change(change_rank_limit, [higher_rank_limit], [lora_rank, lora_alpha])
 
     # Evaluation events. For some reason, the interrupt event
@@ -269,8 +215,8 @@ def do_interrupt():
     WANT_INTERRUPT = True
 
 
-def do_copy_params(lora_name: str, *args):
-    f_name = f"{shared.args.lora_dir}/{clean_path(None, lora_name)}/training_parameters.json"
+def do_copy_params(trained_model_name: str, *args):
+    f_name = f"{shared.args.lora_dir}/{clean_path(None, trained_model_name)}/training_parameters.json"
     if Path(f_name).is_file():
         with open(f_name, 'r', encoding='utf-8') as format_file:
             params: dict[str, str] = json.load(format_file)
@@ -346,188 +292,8 @@ def calc_trainable_parameters(model):
 
     return trainable_params, all_param
 
-def do_train_ssm(ssm_name: str, always_override: bool, format, dataset, eval_dataset, raw_text_file, overlap_len, newline_favor_len, hard_cut_string, min_chars, ssm_batch_size, ssm_save_steps, ssm_epochs, ssm_learning_rate):
-    model = shared.model.model
-    tokenizer = shared.tokenizer
-    tokenizer.eos_token = "<|endoftext|>"
-    tokenizer.pad_token = tokenizer.eos_token
-    #### TODO: make good
-    train_only_after = ''
-    cutoff_len = 128
-    overlap_len = 128
-    add_eos_token = True
 
-    #### TODO: REFACTOR
-    def encode(text, add_bos_token):
-        result = shared.tokenizer.encode(text, truncation=True, max_length=cutoff_len)
-        # Check if the first two tokens are BOS
-        if len(result) >= 2 and result[:2] == [shared.tokenizer.bos_token_id, shared.tokenizer.bos_token_id]:
-            result = result[1:]
-
-        if not add_bos_token and result[0] == shared.tokenizer.bos_token_id:
-            result = result[1:]
-        return result
-
-    def tokenize(prompt, append_eos_token=False):
-        if train_only_after == '' or train_only_after not in prompt:
-            input_ids = encode(prompt, True)
-
-            if append_eos_token and input_ids[-1] != shared.tokenizer.eos_token_id and len(input_ids) < cutoff_len:
-                input_ids.append(shared.tokenizer.eos_token_id)
-
-            input_ids = [shared.tokenizer.pad_token_id] * (cutoff_len - len(input_ids)) + input_ids
-            labels = [1] * len(input_ids)
-
-        else:
-            ind = prompt.index(train_only_after) + len(train_only_after)
-            before_tokens = encode(prompt[:ind], True)
-            after_tokens = encode(prompt[ind:], False)
-
-            if append_eos_token and after_tokens[-1] != shared.tokenizer.eos_token_id:
-                after_tokens.append(shared.tokenizer.eos_token_id)
-
-            full_length = len(after_tokens) + len(before_tokens)
-            if full_length > cutoff_len:
-                after_tokens = after_tokens[:cutoff_len - len(before_tokens)]
-            else:
-                before_tokens = [shared.tokenizer.pad_token_id] * (cutoff_len - full_length) + before_tokens
-
-            input_ids = before_tokens + after_tokens
-            labels = [-100] * len(before_tokens) + [1] * len(after_tokens)
-        #print(input_ids)
-        input_ids = torch.tensor(input_ids)
-        return {
-            "input_ids": input_ids,
-            "labels": labels,
-            "attention_mask": input_ids.ne(shared.tokenizer.pad_token_id),
-        }
-
-
-       # == Prep the dataset, format, etc ==
-    if raw_text_file not in ['None', '']:
-        train_template["template_type"] = "raw_text"
-        logger.info("Loading raw text file dataset")
-        fullpath = clean_path('training/datasets', f'{raw_text_file}')
-        fullpath = Path(fullpath)
-        if fullpath.is_dir():
-            logger.info('Training path directory {}'.format(raw_text_file))
-            raw_text = ""
-            file_paths = sorted(fullpath.glob('*.txt'), key=lambda path: natural_keys(path.name))
-            for file_path in file_paths:
-                if file_path.is_file():
-                    with file_path.open('r', encoding='utf-8') as file:
-                        raw_text += file.read().replace('\r', '')
-
-                    logger.info(f"Loaded training file: {file_path.name}")
-        else:
-            with open(clean_path('training/datasets', f'{raw_text_file}.txt'), 'r', encoding='utf-8') as file:
-                raw_text = file.read().replace('\r', '')
-
-        cut_string = hard_cut_string.replace('\\n', '\n')
-        eos_added = 0
-        out_tokens = []
-        for text_part in raw_text.split(cut_string):
-            if len(text_part.strip()) <= min_chars:
-                continue
-
-            tokens = shared.tokenizer.encode(text_part)
-            if add_eos_token:
-                tokens.append(shared.tokenizer.eos_token_id)
-                eos_added += 1
-
-            step = cutoff_len - overlap_len
-            if step <= 0:
-                yield f"Error: overlap_len ({overlap_len}) cannot be greater than or equal to cutoff_len ({cutoff_len})"
-                return
-
-            out_tokens.extend(split_chunks(tokens, cutoff_len, step))
-
-        if eos_added > 0:
-            print(f"EOS added to {eos_added} text blocks")
-
-        del raw_text  # Note: could be a gig for a large dataset, so delete redundant data as we go to be safe on RAM
-        text_chunks = [shared.tokenizer.decode(x) for x in out_tokens]
-        del out_tokens
-        if newline_favor_len > 0:
-            text_chunks = [cut_chunk_for_newline(x, newline_favor_len) for x in text_chunks]
-
-        train_data = Dataset.from_list([tokenize(x) for x in text_chunks])
-        del text_chunks
-        eval_data = None
-    else:
-        if dataset in ['None', '']:
-            yield "Missing dataset choice input, cannot continue."
-            return
-
-        if format in ['None', '']:
-            yield "Missing format choice input, cannot continue."
-            return
-
-        train_template["template_type"] = "dataset"
-
-        with open(clean_path('training/formats', f'{format}.json'), 'r', encoding='utf-8-sig') as formatFile:
-            format_data: dict[str, str] = json.load(formatFile)
-
-        # == store training prompt ==
-        for _, value in format_data.items():
-            prompt_key = f"template_{len(train_template)}"
-            train_template[prompt_key] = value
-
-        def generate_prompt(data_point: dict[str, str]):
-            for options, data in format_data.items():
-                if set(options.split(',')) == set(x[0] for x in data_point.items() if (type(x[1]) is str and len(x[1].strip()) > 0)):
-                    for key, val in data_point.items():
-                        if type(val) is str:
-                            data = data.replace(f'%{key}%', val)
-                    return data
-            raise RuntimeError(f'Data-point "{data_point}" has no keyset match within format "{list(format_data.keys())}"')
-
-        def generate_and_tokenize_prompt(data_point):
-            prompt = generate_prompt(data_point)
-            return tokenize(prompt, False) #  add_eos_token
-
-        logger.info("Loading JSON datasets")
-        data = load_dataset("json", data_files=clean_path('training/datasets', f'{dataset}.json'))
-        train_data = data['train'].map(generate_and_tokenize_prompt, new_fingerprint='%030x' % random.randrange(16**30))
-
-        if eval_dataset == 'None':
-            eval_data = None
-        else:
-            eval_data = load_dataset("json", data_files=clean_path('training/datasets', f'{eval_dataset}.json'))
-            eval_data = eval_data['train'].map(generate_and_tokenize_prompt, new_fingerprint='%030x' % random.randrange(16**30))
-
-    ### END REFACTOR ME
-
- 
-    output_dir = f'trained_ssns/{ssm_name}'
-
-
-    trainer = MambaTrainer(
-        model=model,
-        #train_dataset=data_module.dataset,
-        train_dataset=train_data,
-        tokenizer=tokenizer,
-        args=transformers.TrainingArguments(
-            learning_rate=5e-5,#ssm_learning_rate,
-            num_train_epochs=ssm_epochs,
-            per_device_train_batch_size=ssm_batch_size,
-            gradient_accumulation_steps=4, # args.gradient_accumulation_steps,
-            optim='paged_adamw_8bit', # ype=str, default="adamw_torch" , lowvram: paged_adamw_8bit
-            output_dir=output_dir,
-            logging_steps=50,
-            save_steps=ssm_save_steps,
-            do_eval=False,
-            report_to="none",
-            #save_only_model=True,            
-        ),
-        #data_collator=data_module.data_collator,
-        data_collator=transformers.DataCollatorForLanguageModeling(shared.tokenizer, mlm=False),
-    )
-
-    trainer.train()
-    trainer.save_model(output_dir)
-
-def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: bool, k_proj_en: bool, o_proj_en: bool, gate_proj_en: bool, down_proj_en: bool, up_proj_en: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lr_scheduler_type: str, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, higher_rank_limit: bool, warmup_steps: int, optimizer: str, hard_cut_string: str, train_only_after: str, stop_at_loss: float, add_eos_token: bool, min_chars: int, report_to: str):
+def do_train(trained_model_name: str, always_override: bool, q_proj_en: bool, v_proj_en: bool, k_proj_en: bool, o_proj_en: bool, gate_proj_en: bool, down_proj_en: bool, up_proj_en: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lr_scheduler_type: str, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, higher_rank_limit: bool, warmup_steps: int, optimizer: str, hard_cut_string: str, train_only_after: str, stop_at_loss: float, add_eos_token: bool, min_chars: int, report_to: str):
 
     if shared.args.monkey_patch:
         from alpaca_lora_4bit.monkeypatch.peft_tuners_lora_monkey_patch import (
@@ -540,16 +306,18 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
 
     # == Input validation / processing ==
     yield "Preparing the input..."
-    lora_file_path = clean_path(None, lora_name)
-    if lora_file_path.strip() == '':
-        yield "Missing or invalid LoRA file name input."
+    trained_model_file_path = clean_path(None, trained_model_name)
+    if trained_model_file_path.strip() == '':
+        yield "Missing or invalid LoRA or SSM file name input."
         return
 
-    lora_file_path = f"{Path(shared.args.lora_dir)}/{lora_file_path}"
+    trained_model_file_path = f"{Path(shared.args.lora_dir)}/{trained_model_file_path}"
     actual_lr = float(learning_rate)
     model_type = type(shared.model).__name__
 
-    if model_type in MODEL_CLASSES:
+    if model_type == 'MambaSsmModel':
+        model_id = 'mamba'
+    elif model_type in MODEL_CLASSES:
         model_id = MODEL_CLASSES[model_type]
     else:
         model_id = "llama"
@@ -764,7 +532,7 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
 
     if isinstance(shared.model, MambaSsmModel):
         logger.info("Preparing for SSM training")
-        lora_model = shared.model.model
+        trained_model = shared.model.model
     else:
         logger.info("Preparing for training")
         config = LoraConfig(
@@ -778,18 +546,18 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
 
         # == Backup the existing adapter ==
         if not always_override:
-            backup_adapter(lora_file_path)
+            backup_adapter(trained_model_file_path)
 
         # == get model trainable params
         model_trainable_params, model_all_params = calc_trainable_parameters(shared.model)
 
         try:
             logger.info("Creating LoRA model")
-            lora_model = get_peft_model(shared.model, config)
-            if not always_override and Path(f"{lora_file_path}/adapter_model.bin").is_file():
+            trained_model = get_peft_model(shared.model, config)
+            if not always_override and Path(f"{trained_model_file_path}/adapter_model.bin").is_file():
                 logger.info("Loading existing LoRA data")
-                state_dict_peft = torch.load(f"{lora_file_path}/adapter_model.bin", weights_only=True)
-                set_peft_model_state_dict(lora_model, state_dict_peft)
+                state_dict_peft = torch.load(f"{trained_model_file_path}/adapter_model.bin", weights_only=True)
+                set_peft_model_state_dict(trained_model, state_dict_peft)
         except:
             yield traceback.format_exc().replace('\n', '\n\n')
             return
@@ -797,7 +565,7 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
         if shared.args.monkey_patch:
             from alpaca_lora_4bit.autograd_4bit import Autograd4bitQuantLinear
             from alpaca_lora_4bit.models import Linear4bitLt
-            for _, m in lora_model.named_modules():
+            for _, m in trained_model.named_modules():
                 if isinstance(m, Autograd4bitQuantLinear) or isinstance(m, Linear4bitLt):
                     if m.is_v1_model:
                         m.zeros = m.zeros.half()
@@ -820,12 +588,12 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
                 control.should_epoch_stop = True
                 control.should_training_stop = True
             elif state.global_step > 0 and actual_save_steps > 0 and state.global_step % actual_save_steps == 0:
-                lora_model.save_pretrained(f"{lora_file_path}/checkpoint-{tracked.current_steps}/")
+                trained_model.save_pretrained(f"{trained_model_file_path}/checkpoint-{tracked.current_steps}/")
                 # Save log
-                with open(f"{lora_file_path}/checkpoint-{tracked.current_steps}/training_log.json", 'w', encoding='utf-8') as file:
+                with open(f"{trained_model_file_path}/checkpoint-{tracked.current_steps}/training_log.json", 'w', encoding='utf-8') as file:
                     json.dump(train_log, file, indent=2)
                 # == Save training prompt ==
-                with open(f"{lora_file_path}/checkpoint-{tracked.current_steps}/training_prompt.json", 'w', encoding='utf-8') as file:
+                with open(f"{trained_model_file_path}/checkpoint-{tracked.current_steps}/training_prompt.json", 'w', encoding='utf-8') as file:
                     json.dump(train_template, file, indent=2)
 
         def on_substep_end(self, args: transformers.TrainingArguments, state: transformers.TrainerState, control: transformers.TrainerControl, **kwargs):
@@ -849,34 +617,12 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
                     print(f"\033[1;31;1mStop Loss {stop_at_loss} reached.\033[0;37;0m")
 
     if isinstance(shared.model, MambaSsmModel):
-        # trainer = MambaTrainer(
-        #     model=shared.model,
-        #     #train_dataset=data_module.dataset,
-        #     train_dataset=train_data,
-        #     tokenizer=shared.model.tokenizer,
-        #     args=transformers.TrainingArguments(
-        #         learning_rate=5e-5,#ssm_learning_rate,
-        #         num_train_epochs=epochs,
-        #         per_device_train_batch_size=batch_size,
-        #         gradient_accumulation_steps=4, # args.gradient_accumulation_steps,
-        #         optim='paged_adamw_8bit', # ype=str, default="adamw_torch" , lowvram: paged_adamw_8bit
-        #         output_dir=lora_file_path,
-        #         logging_steps=50,
-        #         #save_steps=ssm_save_steps,
-        #         do_eval=False,
-        #         report_to="none",
-        #         #save_only_model=True,            
-        #     ),
-        #     #data_collator=data_module.data_collator,
-        #     data_collator=transformers.DataCollatorForLanguageModeling(shared.tokenizer, mlm=False),
-        # )
         trainer = MambaTrainer(
-            model=lora_model,
+            model=trained_model,
             train_dataset=train_data,
-            #tokenizer=lora_model.tokenizer,
-            #eval_dataset=eval_data,
+            eval_dataset=eval_data,
             args=transformers.TrainingArguments(
-                report_to=report_to if report_to != "None" else None,
+                report_to=report_to if report_to != "None" else "none",
                 per_device_train_batch_size=micro_batch_size,
                 gradient_accumulation_steps=gradient_accumulation_steps,
                 warmup_steps=math.ceil(warmup_steps / gradient_accumulation_steps),
@@ -889,7 +635,7 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
                 evaluation_strategy="steps" if eval_data is not None else "no",
                 eval_steps=math.ceil(eval_steps / gradient_accumulation_steps) if eval_data is not None else None,
                 save_strategy="steps" if eval_data is not None else "no",
-                output_dir=lora_file_path,
+                output_dir=trained_model_file_path,
                 lr_scheduler_type=lr_scheduler_type,
                 load_best_model_at_end=eval_data is not None,
                 # TODO: Enable multi-device support
@@ -902,7 +648,7 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
         )
     else:
         trainer = transformers.Trainer(
-            model=lora_model,
+            model=trained_model,
             train_dataset=train_data,
             eval_dataset=eval_data,
             args=transformers.TrainingArguments(
@@ -919,7 +665,7 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
                 evaluation_strategy="steps" if eval_data is not None else "no",
                 eval_steps=math.ceil(eval_steps / gradient_accumulation_steps) if eval_data is not None else None,
                 save_strategy="steps" if eval_data is not None else "no",
-                output_dir=lora_file_path,
+                output_dir=trained_model_file_path,
                 lr_scheduler_type=lr_scheduler_type,
                 load_best_model_at_end=eval_data is not None,
                 # TODO: Enable multi-device support
@@ -931,39 +677,40 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
             callbacks=list([Callbacks()])
         )
 
-    lora_model.config.use_cache = False
+    if not isinstance(shared.model, MambaSsmModel):
+        trained_model.config.use_cache = False 
 
     if torch.__version__ >= "2" and sys.platform != "win32":
-        lora_model = torch.compile(lora_model)
+        trained_model = torch.compile(trained_model)
 
     # == Save parameters for reuse ==
-    with open(f"{lora_file_path}/training_parameters.json", 'w', encoding='utf-8') as file:
+    with open(f"{trained_model_file_path}/training_parameters.json", 'w', encoding='utf-8') as file:
         vars = locals()
         json.dump({x: vars[x] for x in PARAMETERS}, file, indent=2)
 
     # == Save training prompt ==
-    with open(f"{lora_file_path}/training_prompt.json", 'w', encoding='utf-8') as file:
+    with open(f"{trained_model_file_path}/training_prompt.json", 'w', encoding='utf-8') as file:
         json.dump(train_template, file, indent=2)
 
     # == Main run and monitor loop ==
     logger.info("Starting training")
     yield "Starting..."
 
-    lora_trainable_param, lora_all_param = calc_trainable_parameters(lora_model)
-
-    projections_string = ", ".join([projection.replace("_proj", "") for projection in list_target_modules(model_id)])
-
-    print(f"Training '{model_id}' model using ({projections_string}) projections")
 
     if not isinstance(shared.model, MambaSsmModel):
+        lora_trainable_param, lora_all_param = calc_trainable_parameters(trained_model)
+
+        projections_string = ", ".join([projection.replace("_proj", "") for projection in list_target_modules(model_id)])
+
+        print(f"Training '{model_id}' model using ({projections_string}) projections")
         if lora_all_param > 0:
             print(f"Trainable params: {lora_trainable_param:,d} ({100 * lora_trainable_param / lora_all_param:.4f} %), All params: {lora_all_param:,d} (Model: {model_all_params:,d})")
 
     train_log.update({"base_model_name": shared.model_name})
     train_log.update({"base_model_class": shared.model.__class__.__name__})
     if not isinstance(shared.model, MambaSsmModel):
-        train_log.update({"base_loaded_in_4bit": getattr(lora_model, "is_loaded_in_4bit", False)})
-        train_log.update({"base_loaded_in_8bit": getattr(lora_model, "is_loaded_in_8bit", False)})
+        train_log.update({"base_loaded_in_4bit": getattr(trained_model, "is_loaded_in_4bit", False)})
+        train_log.update({"base_loaded_in_8bit": getattr(trained_model, "is_loaded_in_8bit", False)})
         train_log.update({"projections": projections_string})
 
     if stop_at_loss > 0:
@@ -995,10 +742,10 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
         log_train_dataset(trainer)
         trainer.train()
         # Note: save in the thread in case the gradio thread breaks (eg browser closed)
-        lora_model.save_pretrained(lora_file_path)
-        logger.info("LoRA training run is completed and saved.")
+        trained_model.save_pretrained(trained_model_file_path)
+        logger.info("Training run is completed and saved.")
         # Save log
-        with open(f"{lora_file_path}/training_log.json", 'w', encoding='utf-8') as file:
+        with open(f"{trained_model_file_path}/training_log.json", 'w', encoding='utf-8') as file:
             json.dump(train_log, file, indent=2)
 
     thread = threading.Thread(target=threaded_run)
@@ -1031,14 +778,14 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
     # Saving in the train thread might fail if an error occurs, so save here if so.
     if not tracked.did_save:
         logger.info("Training complete, saving")
-        lora_model.save_pretrained(lora_file_path)
+        trained_model.save_pretrained(trained_model_file_path)
 
     if WANT_INTERRUPT:
         logger.info("Training interrupted.")
-        yield f"Interrupted. Incomplete LoRA saved to `{lora_file_path}`."
+        yield f"Interrupted. Incomplete LoRA saved to `{trained_model_file_path}`."
     else:
         logger.info("Training complete!")
-        yield f"Done! LoRA saved to `{lora_file_path}`.\n\nBefore testing your new LoRA, make sure to first reload the model, as it is currently dirty from training."
+        yield f"Done! LoRA saved to `{trained_model_file_path}`.\n\nBefore testing your new LoRA, make sure to first reload the model, as it is currently dirty from training."
 
 
 def split_chunks(arr, size, step):
