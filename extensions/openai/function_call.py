@@ -159,19 +159,19 @@ End of the sample function calling convseration 2.
                 # Define the pattern to match the JSON string within the functioncall tags
                 pattern = r'<functioncall>(.*?)</functioncall>'
 
-                debug_msg(f"process_finish_msg Try match '{pattern}' from llm reply '{content}'")
+                debug_msg(f"function call: process_finish_msg Try match '{pattern}' from llm reply '{content}'")
                 # Use re.findall to find all matched patterns
                 matches = re.findall(pattern, content, re.DOTALL)
                 if len(matches) == 0:
-                    debug_msg("process_finish_msg No match found.")
+                    debug_msg("function call: process_finish_msg No match found.")
                     
                 for match in matches:
                     if match is None or not isinstance(match, str):
-                        debug_msg(f"process_finish_msg match is None or not str {match}")
+                        debug_msg(f"function call: process_finish_msg match is None or not str {match}")
                         continue
 
                     json_str = match.strip()
-                    debug_msg(f"process_finish_msg Found matching json_str {json_str}")
+                    debug_msg(f"function call: process_finish_msg Found matching json_str {json_str}")
 
                     # Parse llm output into dict, will handle edge cases here, e.g. single quptes
                     json_dict = None
@@ -184,11 +184,11 @@ End of the sample function calling convseration 2.
                         """
                         json_dict = ast.literal_eval(json_str)
                     except SyntaxError as e:
-                        debug_msg(f"process_finish_msg Error parsing json_str {json_str} with error {e}")
+                        debug_msg(f"function call: process_finish_msg Error parsing json_str {json_str} with error {e}")
                     
                     if json_dict is None or not isinstance(json_dict, dict):
                         try:
-                            debug_msg(f"process_finish_msg json_dict is None or not dict, will try method 2 {json_dict}")
+                            debug_msg(f"function call: process_finish_msg json_dict is None or not dict, will try method 2 {json_dict}")
                             """
                             Try to replace single quote with triple quote
                             Edge sample below could be resolved by this method
@@ -197,13 +197,13 @@ End of the sample function calling convseration 2.
                             json_str2 = json_str.replace("\'", "\"\"\"")
                             json_dict = ast.literal_eval(json_str2)
                         except SyntaxError as e:
-                            debug_msg(f"process_finish_msg Error parsing json_str2 {json_str2} with error {e}")
+                            debug_msg(f"function call: process_finish_msg Error parsing json_str2 {json_str2} with error {e}")
                             # There is no way to parse this, so just skip
                             continue
                     
                     # Sanity check on json_dict
                     if 'name' not in json_dict or 'arguments' not in json_dict:
-                        debug_msg(f"process_finish_msg json_dict does not have name or arguments {json_dict}")
+                        debug_msg(f"function call: process_finish_msg json_dict does not have name or arguments {json_dict}")
                         continue
 
                     def excape_crtl_chars(text: str)->str:
@@ -221,7 +221,7 @@ End of the sample function calling convseration 2.
                         # # Remove control characters from the string
                         # cleaned_text = text.translate(control_chars_dict)
                         # if len(cleaned_text) != len(text):
-                        #     debug_msg(f"process_finish_msg escape control chars from {text} to {cleaned_text}")
+                        #     debug_msg(f"function call: process_finish_msg escape control chars from {text} to {cleaned_text}")
                         # return cleaned_text
                         
                         # Should leave it as it is because it is problem of the llm output, user should try use json.load(text, strict=False) if they have encounter control char in json
@@ -244,11 +244,11 @@ End of the sample function calling convseration 2.
                         )
                     
                     finish_response = response.model_dump(mode='json')                    
-                    debug_msg(f"process_finish_msg response:\n{finish_response}")
+                    debug_msg(f"function call: process_finish_msg response:\n{finish_response}")
                     finish_responses.append(finish_response)
                 
         except Exception as e:
-            debug_msg(f"process_finish_msg exception: {e}")
+            debug_msg(f"function call: process_finish_msg exception: {e}")
             exception_occurred = True
 
         return finish_responses, exception_occurred
