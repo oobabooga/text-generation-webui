@@ -349,7 +349,7 @@ def update_requirements(initial_installation=False):
 
     # Install mamba_ssm packages only on Linux with CUDA.
     # Install after other packages as some dependencies seem broken. (they need packaging which does not want to install first)
-    if is_cuda and not is_windows:
+    if is_cuda and is_linux():
         run_cmd("python -m pip install -r requirements_mamba.txt --upgrade", assert_success=True, environment=True)
 
     # Check for '+cu' or '+rocm' in version string to determine if torch uses CUDA or ROCm. Check for pytorch-cuda as well for backwards compatibility
