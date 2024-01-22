@@ -412,8 +412,10 @@ If you would like to contribute to the project, check out the [Contributing guid
 * Subreddit: https://www.reddit.com/r/oobabooga/
 * Discord: https://discord.gg/jwZCF2dPQN
 
-## Acknowledgment & support
+## Acknowledgment
 
 In August 2023, [Andreessen Horowitz](https://a16z.com/) (a16z) provided a generous grant to encourage and support my independent work on this project. I am **extremely** grateful for their trust and recognition.
+
+## Support
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/B0B5JFPBO)
