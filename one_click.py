@@ -347,7 +347,8 @@ def update_requirements(initial_installation=False):
     run_cmd("python -m pip install -r temp_requirements.txt --upgrade", assert_success=True, environment=True)
     os.remove('temp_requirements.txt')
 
-    # Install mamba_ssm packages after other packages as some dependencies seem broken. (they need packaging which does not want to install first)
+    # Install mamba_ssm packages only on Linux with CUDA.
+    # Install after other packages as some dependencies seem broken. (they need packaging which does not want to install first)
     if is_cuda and not is_windows:
         run_cmd("python -m pip install -r requirements_mamba.txt --upgrade", assert_success=True, environment=True)
 

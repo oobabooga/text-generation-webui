@@ -1,2 +1,4 @@
+# both of these need the module "packaging" which is installed in requirements.txt
+# this is necessary because the install order is wrong otherwise. seems like a bug in the depencdency declaration of these packages.
 causal-conv1d
 mamba-ssm
