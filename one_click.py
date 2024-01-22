@@ -347,6 +347,10 @@ def update_requirements(initial_installation=False):
     run_cmd("python -m pip install -r temp_requirements.txt --upgrade", assert_success=True, environment=True)
     os.remove('temp_requirements.txt')
 
+    # Install mamba_ssm packages after other packages as some dependencies seem broken. (they need packaging which does not want to install first)
+    if is_cuda and not is_windows:
+        run_cmd("python -m pip install -r requirements_mamba.txt --upgrade", assert_success=True, environment=True)
+
     # Check for '+cu' or '+rocm' in version string to determine if torch uses CUDA or ROCm. Check for pytorch-cuda as well for backwards compatibility
     if not any((is_cuda, is_rocm)) and run_cmd("conda list -f pytorch-cuda | grep pytorch-cuda", environment=True, capture_output=True).returncode == 1:
         clear_cache()

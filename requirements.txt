@@ -1,5 +1,4 @@
 accelerate==0.25.*
-causal-conv1d
 colorama
 datasets
 einops
@@ -8,7 +7,6 @@ gradio==3.50.*
 hqq==0.1.2
 jinja2==3.1.2
 lm_eval==0.3.0
-mamba-ssm
 markdown
 numpy==1.24.*
 optimum==1.16.*
