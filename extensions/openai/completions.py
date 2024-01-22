@@ -22,7 +22,12 @@ from modules.chat import (
     load_instruction_template_memoized
 )
 from modules.presets import load_preset_memoized
-from modules.text_generation import decode, encode, generate_reply, get_reply_from_output_ids
+from modules.text_generation import (
+    decode,
+    encode,
+    generate_reply,
+    get_reply_from_output_ids
+)
 
 
 class LogitsBiasProcessor(LogitsProcessor):
