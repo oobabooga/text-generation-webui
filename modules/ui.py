@@ -112,6 +112,7 @@ def list_interface_input_elements():
         'auto_max_new_tokens',
         'max_tokens_second',
         'max_updates_second',
+        'prompt_lookup_num_tokens',
         'seed',
         'temperature',
         'temperature_last',
