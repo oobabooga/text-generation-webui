@@ -1,13 +1,35 @@
 import torch
 from mamba_ssm.models.mixer_seq_simple import MambaLMHeadModel
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer, Trainer
 from modules.logging_colors import logger
 from modules.callbacks import Iteratorize
 
-from typing import Any, Dict #, List, Optional, Tuple, Union
+from typing import Any, Dict
 import json
 import mamba_ssm.models.config_mamba
-import os.path
+import os
+
+class MambaTrainer(Trainer):
+    def compute_loss(self, model, inputs, return_outputs=False):
+        input_ids = inputs.pop("input_ids")
+        lm_logits = model(input_ids).logits
+
+        labels = input_ids.to(lm_logits.device)
+        shift_logits = lm_logits[:, :-1, :].contiguous()
+        labels = labels[:, 1:].contiguous()
+
+        loss_fct = torch.nn.CrossEntropyLoss()
+        lm_loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), labels.view(-1))
+
+        return lm_loss
+
+    def save_model(self, output_dir, _internal_call: bool = False):
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+            
+        open(f"{output_dir}/config.json", "w").write(self.model.config.to_json_string())
+        torch.save(self.model.state_dict(), f"{output_dir}/pytorch_model.bin")
+        self.tokenizer.save_pretrained(output_dir)
 
 class MambaSsmConfig(mamba_ssm.models.config_mamba.MambaConfig):
 

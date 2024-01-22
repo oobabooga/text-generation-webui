@@ -30,8 +30,6 @@ from transformers import is_torch_xpu_available
 from transformers.models.auto.modeling_auto import (
     MODEL_FOR_CAUSAL_LM_MAPPING_NAMES
 )
-from modules.mamba_trainer import MambaTrainer
-from modules.mamba import MambaSsmModel
 
 from modules import shared, ui, utils
 from modules.evaluate import (
@@ -41,6 +39,7 @@ from modules.evaluate import (
 )
 from modules.logging_colors import logger
 from modules.models import reload_model
+from modules.mamba import MambaSsmModel, MambaTrainer
 from modules.utils import natural_keys
 
 MODEL_CLASSES = {v[1]: v[0] for v in MODEL_FOR_CAUSAL_LM_MAPPING_NAMES.items()}
@@ -111,7 +110,7 @@ def create_ui():
                                 lora_dropout = gr.Slider(label='LoRA Dropout', minimum=0.0, maximum=1.0, step=0.025, value=0.05, info='Percentage probability for dropout of LoRA layers. This can help reduce overfitting. Most users should leave at default.', visible=not isSsm)
                                 stop_at_loss = gr.Slider(label='Stop at loss', minimum=0.0, maximum=3.0, step=0.1, value=0.00, info='The process will automatically stop once the desired loss value is reached. (reasonable numbers are 1.5-1.8)')
                                 with gr.Row():
-                                    optimizer = gr.Dropdown(label='Optimizer', value='adamw_torch', choices=['adamw_hf', 'adamw_torch', 'adamw_torch_fused', 'adamw_torch_xla', 'adamw_apex_fused', 'adafactor', 'adamw_bnb_8bit', 'adamw_anyprecision', 'sgd', 'adagrad'], info='Different optimizer implementation options, for advanced users. Effects of different options are not well documented yet.', elem_classes=['slim-dropdown'])
+                                    optimizer = gr.Dropdown(label='Optimizer', value='adamw_torch' if not isSsm else 'paged_adamw_8bit', choices=['adamw_hf', 'adamw_torch', 'adamw_torch_fused', 'adamw_torch_xla', 'adamw_apex_fused', 'adafactor', 'adamw_bnb_8bit', 'adamw_anyprecision', 'sgd', 'adagrad', 'paged_adamw_8bit'], info='Different optimizer implementation options, for advanced users. Effects of different options are not well documented yet.', elem_classes=['slim-dropdown'])
 
                             with gr.Column():
                                 warmup_steps = gr.Number(label='Warmup Steps', value=100, info='For this many steps at the start, the learning rate will be lower than normal. This helps the trainer prepare the model and precompute statistics to improve the quality of training after the start.')
@@ -616,50 +615,16 @@ def do_train(trained_model_name: str, always_override: bool, q_proj_en: bool, v_
                     control.should_training_stop = True
                     print(f"\033[1;31;1mStop Loss {stop_at_loss} reached.\033[0;37;0m")
 
-    if isinstance(shared.model, MambaSsmModel):
-        trainer = MambaTrainer(
-            model=trained_model,
-            train_dataset=train_data,
-            eval_dataset=eval_data,
-            args=transformers.TrainingArguments(
+    training_arguments = transformers.TrainingArguments(
                 report_to=report_to if report_to != "None" else "none",
                 per_device_train_batch_size=micro_batch_size,
                 gradient_accumulation_steps=gradient_accumulation_steps,
                 warmup_steps=math.ceil(warmup_steps / gradient_accumulation_steps),
                 num_train_epochs=epochs,
                 learning_rate=actual_lr,
-                fp16=False, # if shared.args.cpu or shared.args.bf16 else True,
-                bf16=True, #shared.args.bf16,
-                optim='paged_adamw_8bit', # optimizer,
-                logging_steps=2 if stop_at_loss > 0 else 5,
-                evaluation_strategy="steps" if eval_data is not None else "no",
-                eval_steps=math.ceil(eval_steps / gradient_accumulation_steps) if eval_data is not None else None,
-                save_strategy="steps" if eval_data is not None else "no",
-                output_dir=trained_model_file_path,
-                lr_scheduler_type=lr_scheduler_type,
-                load_best_model_at_end=eval_data is not None,
-                # TODO: Enable multi-device support
-                ddp_find_unused_parameters=None,
-                no_cuda=shared.args.cpu,
-                use_ipex=True if is_torch_xpu_available() and not shared.args.cpu else False
-            ),
-            data_collator=transformers.DataCollatorForLanguageModeling(shared.tokenizer, mlm=False),
-            callbacks=list([Callbacks()])
-        )
-    else:
-        trainer = transformers.Trainer(
-            model=trained_model,
-            train_dataset=train_data,
-            eval_dataset=eval_data,
-            args=transformers.TrainingArguments(
-                report_to=report_to if report_to != "None" else None,
-                per_device_train_batch_size=micro_batch_size,
-                gradient_accumulation_steps=gradient_accumulation_steps,
-                warmup_steps=math.ceil(warmup_steps / gradient_accumulation_steps),
-                num_train_epochs=epochs,
-                learning_rate=actual_lr,
-                fp16=False if shared.args.cpu or shared.args.bf16 else True,
-                bf16=shared.args.bf16,
+                # Mamba only supports bf16 at the moment
+                fp16=False if shared.args.cpu or shared.args.bf16 or isinstance(shared.model, MambaSsmModel) else True,
+                bf16=shared.args.bf16 or isinstance(shared.model, MambaSsmModel),
                 optim=optimizer,
                 logging_steps=2 if stop_at_loss > 0 else 5,
                 evaluation_strategy="steps" if eval_data is not None else "no",
@@ -672,7 +637,23 @@ def do_train(trained_model_name: str, always_override: bool, q_proj_en: bool, v_
                 ddp_find_unused_parameters=None,
                 no_cuda=shared.args.cpu,
                 use_ipex=True if is_torch_xpu_available() and not shared.args.cpu else False
-            ),
+            )
+
+    if isinstance(shared.model, MambaSsmModel):
+        trainer = MambaTrainer(
+            model=trained_model,
+            train_dataset=train_data,
+            eval_dataset=eval_data,
+            args=training_arguments,
+            data_collator=transformers.DataCollatorForLanguageModeling(shared.tokenizer, mlm=False),
+            callbacks=list([Callbacks()])
+        )
+    else:
+        trainer = transformers.Trainer(
+            model=trained_model,
+            train_dataset=train_data,
+            eval_dataset=eval_data,
+            args=training_arguments,
             data_collator=transformers.DataCollatorForLanguageModeling(shared.tokenizer, mlm=False),
             callbacks=list([Callbacks()])
         )
