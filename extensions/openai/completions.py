@@ -92,6 +92,10 @@ def process_parameters(body, is_legacy=False):
     if generate_params['truncation_length'] == 0:
         generate_params['truncation_length'] = shared.settings['truncation_length']
 
+    if generate_params['temperature'] == 0:
+        generate_params['do_sample'] = False
+        generate_params['top_k'] = 1
+
     if body['preset'] is not None:
         preset = load_preset_memoized(body['preset'])
         generate_params.update(preset)
