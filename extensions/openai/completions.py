@@ -153,6 +153,7 @@ def convert_history(history):
     user_input = ""
     system_message = ""
 
+    # Multimodal: convert OpenAI format to multimodal extension format
     if any(isinstance(entry['content'], list) for entry in history):
         new_history = []
         for entry in history:
