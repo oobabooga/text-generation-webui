@@ -16,6 +16,7 @@ class GenerationOptions(BaseModel):
     repetition_penalty: float = 1
     repetition_penalty_range: int = 1024
     typical_p: float = 1
+    noise_level: float = 0
     tfs: float = 1
     top_a: float = 0
     epsilon_cutoff: float = 0
