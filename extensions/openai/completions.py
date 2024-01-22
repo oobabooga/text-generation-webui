@@ -158,15 +158,18 @@ def convert_history(history):
                 for item in entry['content']:
                     if not isinstance(item, dict):
                         continue
+
                     if item['type'] == 'image_url' and isinstance(item['image_url'], dict):
                         image_url = item['image_url']['url']
                     elif item['type'] == 'text' and isinstance(item['text'], str):
                         content = item['text']
+
                 if image_url and content:
                     new_history.append({"image_url": image_url, "role": "user"})
                     new_history.append({"content": content, "role": "user"})
             else:
                 new_history.append(entry)
+
         history = new_history
 
     for entry in history:
@@ -181,9 +184,11 @@ def convert_history(history):
                     img = Image.open(BytesIO(my_res.content))
                 except Exception:
                     raise 'Image cannot be loaded from the URL!'
+
             buffered = BytesIO()
             if img.mode in ("RGBA", "P"):
                 img = img.convert("RGB")
+
             img.save(buffered, format="JPEG")
             img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
             content = f'<img src="data:image/jpeg;base64,{img_str}">'
@@ -197,6 +202,7 @@ def convert_history(history):
             if current_message:
                 chat_dialogue.append([current_message, ''])
                 current_message = ""
+
             current_message = content
         elif role == "assistant":
             current_reply = content
