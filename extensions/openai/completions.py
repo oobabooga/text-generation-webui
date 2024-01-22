@@ -156,8 +156,9 @@ def convert_history(history):
                     img = Image.open(BytesIO(my_res.content))
                 except Exception:
                     raise 'Image cannot be loaded from the URL!'
-
             buffered = BytesIO()
+            if img.mode in ("RGBA", "P"):
+                img = img.convert("RGB")
             img.save(buffered, format="JPEG")
             img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
             content = f'<img src="data:image/jpeg;base64,{img_str}">'
