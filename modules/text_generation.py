@@ -1,6 +1,7 @@
 import ast
 import copy
 import html
+import pprint
 import random
 import re
 import time
@@ -66,7 +67,8 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
             all_stop_strings += st
 
     if shared.args.verbose:
-        print(f'\n\n{question}\n--------------------\n')
+        logger.info("PROMPT=")
+        print(question)
 
     shared.stop_everything = False
     clear_torch_cache()
@@ -267,8 +269,8 @@ def apply_stopping_strings(reply, all_stop_strings):
     return reply, stop_found
 
 
-def get_reply_from_output_ids(output_ids, state, starting_from=0):
-    reply = decode(output_ids[starting_from:], state['skip_special_tokens'])
+def get_reply_from_output_ids(output_ids, state=None, starting_from=0):
+    reply = decode(output_ids[starting_from:], state['skip_special_tokens'] if state else True)
 
     # Handle tokenizers that do not add the leading space for the first token
     if (hasattr(shared.tokenizer, 'convert_ids_to_tokens') and len(output_ids) > starting_from) and not reply.startswith(' '):
@@ -284,11 +286,14 @@ def get_reply_from_output_ids(output_ids, state, starting_from=0):
 
 def generate_reply_HF(question, original_question, seed, state, stopping_strings=None, is_chat=False):
     generate_params = {}
-    for k in ['max_new_tokens', 'do_sample', 'temperature', 'temperature_last', 'top_p', 'min_p', 'typical_p', 'repetition_penalty', 'presence_penalty', 'frequency_penalty', 'repetition_penalty_range', 'encoder_repetition_penalty', 'top_k', 'min_length', 'no_repeat_ngram_size', 'num_beams', 'penalty_alpha', 'length_penalty', 'early_stopping', 'tfs', 'top_a', 'mirostat_mode', 'mirostat_tau', 'mirostat_eta', 'guidance_scale']:
+    for k in ['max_new_tokens', 'temperature', 'temperature_last', 'dynamic_temperature', 'dynatemp_low', 'dynatemp_high', 'dynatemp_exponent', 'top_p', 'min_p', 'top_k', 'repetition_penalty', 'presence_penalty', 'frequency_penalty', 'repetition_penalty_range', 'typical_p', 'tfs', 'top_a', 'guidance_scale', 'penalty_alpha', 'mirostat_mode', 'mirostat_tau', 'mirostat_eta', 'do_sample', 'encoder_repetition_penalty', 'no_repeat_ngram_size', 'min_length', 'num_beams', 'length_penalty', 'early_stopping']:
         generate_params[k] = state[k]
 
     if state['negative_prompt'] != '':
         generate_params['negative_prompt_ids'] = encode(state['negative_prompt'])
+
+    if state['prompt_lookup_num_tokens'] > 0:
+        generate_params['prompt_lookup_num_tokens'] = state['prompt_lookup_num_tokens']
 
     for k in ['epsilon_cutoff', 'eta_cutoff']:
         if state[k] > 0:
@@ -342,6 +347,12 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
 
     apply_extensions('logits_processor', processor, input_ids)
     generate_params['logits_processor'] = processor
+
+    if shared.args.verbose:
+        logger.info("GENERATE_PARAMS=")
+        filtered_params = {key: value for key, value in generate_params.items() if not isinstance(value, torch.Tensor)}
+        pprint.PrettyPrinter(indent=4, sort_dicts=False).pprint(filtered_params)
+        print()
 
     t0 = time.time()
     try:

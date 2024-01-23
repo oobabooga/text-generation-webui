@@ -4,13 +4,12 @@ instruction_template: |-
           {{- message['content'] -}}
       {%- else -%}
           {%- if message['role'] == 'user' -%}
-              {{-'[INST] ' + message['content'] + ' [/INST]'-}}
+              {{-' [INST] ' + message['content'].rstrip() + ' [/INST] '-}}
           {%- else -%}
-              {{-'' + message['content'] + '</s> ' -}}
+              {{-'' + message['content'] + '</s>' -}}
           {%- endif -%}
       {%- endif -%}
   {%- endfor -%}
   {%- if add_generation_prompt -%}
       {{-''-}}
   {%- endif -%}
-
