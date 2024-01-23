@@ -283,24 +283,36 @@ class GaussianNoiseLogitsProcessor(LogitsProcessor):
     '''
     Noise is applied to the logits based on the provided noise_level.
     It is a Gaussian noise where noise_level determines the standard deviation of the Gaussian distribution.
-    This class assumes noise_level is within the scale of [0, 1].
     '''
 
     def __init__(self, noise_level: float):
-        if not (0 <= noise_level <= 1):
-            raise ValueError(f"`noise_level` has to be between 0 and 1, but is {noise_level}")
-
-        self.noise_level = noise_level
+        self.noise_level = noise_level / 1000.0  # Adjust the noise_level to be 1/1000th of the original value
 
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
 
+        # Define scale range
+        scale_min, scale_max = 0.0, 1.0
+
+        # Store original min and max of logits
+        orig_min, orig_max = scores.min(), scores.max()
+
+        # Scale logits between scale_min and scale_max
+        scaled_scores = (scores - orig_min) * ((scale_max - scale_min) / (orig_max - orig_min)) + scale_min
+
         # Create Gaussian noise
-        noise = torch.normal(mean=0., std=self.noise_level, size=scores.shape).to(scores.device)
+        noise = torch.normal(mean=0., std=self.noise_level, size=scaled_scores.shape).to(scaled_scores.device)
 
-        # Add Noise to logits
-        scores = scores + noise 
+        # Add Noise to scaled_logits
+        noisy_scaled_scores = scaled_scores + noise 
 
-        return scores
+        # Rescale the noisy logits back to original range
+        noisy_scores = ((noisy_scaled_scores - scale_min) * (orig_max - orig_min) / (scale_max - scale_min)) + orig_min
+
+        # Print top 5 original and new logits 
+        print("Original top 5 logits: ", torch.topk(scores, 5))
+        print("New top 5 logits: ", torch.topk(noisy_scores, 5))
+
+        return noisy_scores
 
 
 def get_logits_warper_patch(self, generation_config):

@@ -286,8 +286,9 @@ def get_reply_from_output_ids(output_ids, state, starting_from=0):
 def generate_reply_HF(question, original_question, seed, state, stopping_strings=None, is_chat=False):
     generate_params = {}
     for k in ['max_new_tokens', 'temperature', 'temperature_last', 'dynamic_temperature', 'dynatemp_low', 'dynatemp_high', 'dynatemp_exponent', 'top_p', 'min_p', 'top_k', 'repetition_penalty', 'presence_penalty', 'frequency_penalty', 'repetition_penalty_range', 'typical_p', 'tfs', 'top_a', 'noise_level', 'guidance_scale', 'penalty_alpha', 'mirostat_mode', 'mirostat_tau', 'mirostat_eta', 'do_sample', 'encoder_repetition_penalty', 'no_repeat_ngram_size', 'min_length', 'num_beams', 'length_penalty', 'early_stopping']:
-        generate_params[k] = state[k]
-
+        if k in state:
+            generate_params[k] = state[k]
+            
     if state['negative_prompt'] != '':
         generate_params['negative_prompt_ids'] = encode(state['negative_prompt'])
 
