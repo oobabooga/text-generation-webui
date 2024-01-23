@@ -14,6 +14,9 @@ inputs = ('Chat input', 'interface_state')
 reload_arr = ('history', 'name1', 'name2', 'mode', 'chat_style', 'character_menu')
 clear_arr = ('delete_chat-confirm', 'delete_chat', 'delete_chat-cancel')
 
+def count_tokens(x):
+    from modules.text_generation import total_tokens
+    return total_tokens
 
 def create_ui():
     mu = shared.args.multi_user
@@ -25,6 +28,7 @@ def create_ui():
         with gr.Row():
             with gr.Column(elem_id='chat-col'):
                 shared.gradio['display'] = gr.HTML(value=chat_html_wrapper({'internal': [], 'visible': []}, '', '', 'chat', 'cai-chat', ''))
+                shared.gradio['token-counter-chat'] = gr.HTML(value="<span>0</span>", elem_classes=["token-counter", "default-token-counter"])
 
                 with gr.Row(elem_id="chat-input-row"):
                     with gr.Column(scale=1, elem_id='gr-hover-container'):
@@ -82,6 +86,7 @@ def create_ui():
             shared.gradio['mode'] = gr.Radio(choices=['chat', 'chat-instruct', 'instruct'], value='chat', label='Mode', info='Defines how the chat prompt is generated. In instruct and chat-instruct modes, the instruction template selected under Parameters > Instruction template must match the current model.', elem_id='chat-mode')
             shared.gradio['chat_style'] = gr.Dropdown(choices=utils.get_available_chat_styles(), label='Chat style', value=shared.settings['chat_style'], visible=shared.settings['mode'] != 'instruct')
 
+        shared.gradio['display'].change(lambda x: f"<span>{count_tokens(x)}</span>", gradio('display'), gradio('token-counter-chat'), show_progress=False)
 
 def create_chat_settings_ui():
     mu = shared.args.multi_user

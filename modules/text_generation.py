@@ -24,6 +24,7 @@ from modules.html_generator import generate_4chan_html, generate_basic_html
 from modules.logging_colors import logger
 from modules.models import clear_torch_cache, local_rank
 
+total_tokens = 0
 
 def generate_reply(*args, **kwargs):
     shared.generation_lock.acquire()
@@ -392,7 +393,9 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
         t1 = time.time()
         original_tokens = len(original_input_ids[0])
         new_tokens = len(output) - (original_tokens if not shared.is_seq2seq else 0)
-        print(f'Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens}, seed {seed})')
+        global total_tokens
+        total_tokens = new_tokens + original_tokens
+        print(f'Output generated generate_reply_hf in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens}, seed {seed})')
         return
 
 
@@ -421,5 +424,8 @@ def generate_reply_custom(question, original_question, seed, state, stopping_str
         t1 = time.time()
         original_tokens = len(encode(original_question)[0])
         new_tokens = len(encode(original_question + reply)[0]) - original_tokens
-        print(f'Output generated in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens}, seed {seed})')
+        global total_tokens
+        total_tokens = new_tokens + original_tokens
+        print(f'{original_question=}')
+        print(f'Output generated generate_reply_custom in {(t1-t0):.2f} seconds ({new_tokens/(t1-t0):.2f} tokens/s, {new_tokens} tokens, context {original_tokens}, seed {seed})')
         return
