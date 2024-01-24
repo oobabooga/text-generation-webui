@@ -1,4 +1,4 @@
-phrasePattern ::= "*" ( [A-Za-z'.]+ " " )* [A-Za-z'.]+ "*"
-quotedText ::= "\"" [A-Za-z'.*]+ (" " [A-Za-z'.*]+)* "\""
-root ::= (phrasePattern singleSpace quotedText singleSpace?)+
+phrasePattern ::= "*" [A-Z] ( [A-Za-z'.?!,:;-]+ " " )* [A-Za-z'.?!,:;-]+ "*"
+quotedText ::= "\"" [A-Za-z'.*?!,:;-]+ (" " [A-Za-z'.*?!,:;-]+)* "\""
+root ::= phrasePattern singleSpace quotedText singleSpace? phrasePattern singleSpace quotedText singleSpace? (phrasePattern singleSpace quotedText singleSpace?)?
 singleSpace ::= " "
