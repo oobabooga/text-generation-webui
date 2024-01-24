@@ -49,7 +49,7 @@ else:
 
             Args:
                 use_diff (`bool`, *optional*, defaults to `True`):
-                    If set to `True`, only the difference between the config instance and the default `PretrainedConfig()`
+                    If set to `True`, only the difference between the config instance and the default `MambaSsmConfig()`
                     is serialized to JSON string.
 
             Returns:
@@ -65,6 +65,12 @@ else:
                 'fused_add_norm': self.fused_add_norm,
                 'pad_vocab_size_multiple': self.pad_vocab_size_multiple,
             }
+            if use_diff:
+                default_mamba_config = mamba_ssm.models.config_mamba.MambaConfig()
+                default_mamba_ssm_config = MambaSsmConfig().from_mamba_config(default_mamba_config).to_dict()
+                for key in data:
+                    if data[key] == default_mamba_ssm_config[key]:
+                        del data[key]
             return json.dumps(data)
 
 

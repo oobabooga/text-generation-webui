@@ -458,5 +458,6 @@ def unload_model():
 
 
 def reload_model():
+    model_name = shared.model_name
     unload_model()
-    shared.model, shared.tokenizer = load_model(shared.model_name)
+    shared.model, shared.tokenizer = load_model(model_name)

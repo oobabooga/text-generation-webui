@@ -616,9 +616,10 @@ def do_train(trained_model_name: str, always_override: bool, q_proj_en: bool, v_
                     print(f"\033[1;31;1mStop Loss {stop_at_loss} reached.\033[0;37;0m")
 
     # Fix training for mixed precision models
-    for param in shared.model.parameters():
-        if param.requires_grad:
-            param.data = param.data.float()
+    if not isinstance(shared.model, MambaSsmModel):
+        for param in shared.model.parameters():
+            if param.requires_grad:
+                param.data = param.data.float()
 
     training_arguments = transformers.TrainingArguments(
                 report_to=report_to if report_to != "None" else "none",
