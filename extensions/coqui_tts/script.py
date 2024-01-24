@@ -3,6 +3,7 @@ import json
 import os
 import random
 import time
+import torch
 from pathlib import Path
 
 import gradio as gr
@@ -23,7 +24,7 @@ params = {
     "voice": "female_01.wav",
     "language": "English",
     "model_name": "tts_models/multilingual/multi-dataset/xtts_v2",
-    "device": "cuda"
+    "device": "cuda" if torch.cuda.is_available() else "cpu"
 }
 
 this_dir = str(Path(__file__).parent.resolve())
