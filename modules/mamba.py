@@ -2,11 +2,13 @@ import importlib.util
 if not importlib.util.find_spec("mamba_ssm"):
     class MambaTrainer:
         pass
+
     class MambaSsmConfig:
         pass
+
     class MambaSsmModel:
         def __init__(self):
-            raise NotImplementedError("MambaSsmModel is currently only supported on Linux with CUDA.")           
+            raise NotImplementedError("MambaSsmModel is currently only supported on Linux with CUDA.")
         pass
 else:
     import torch
@@ -36,7 +38,7 @@ else:
         def save_model(self, output_dir, _internal_call: bool = False):
             if not os.path.exists(output_dir):
                 os.makedirs(output_dir)
-                
+
             open(f"{output_dir}/config.json", "w").write(self.model.config.to_json_string())
             torch.save(self.model.state_dict(), f"{output_dir}/pytorch_model.bin")
             self.tokenizer.save_pretrained(output_dir)
@@ -73,7 +75,6 @@ else:
                         del data[key]
             return json.dumps(data)
 
-
         def to_dict(self) -> Dict[str, Any]:
             """
             Serializes this instance to a Python dictionary.
@@ -96,24 +97,22 @@ else:
         def from_mamba_config(self, mamba_config):
             self.d_model = mamba_config.d_model
             self.n_layer = mamba_config.n_layer
-            self.vocab_size =  mamba_config.vocab_size
-            self.ssm_cfg =  mamba_config.ssm_cfg
-            self.rms_norm =  mamba_config.rms_norm
+            self.vocab_size = mamba_config.vocab_size
+            self.ssm_cfg = mamba_config.ssm_cfg
+            self.rms_norm = mamba_config.rms_norm
             self.residual_in_fp32 = mamba_config.residual_in_fp32
             self.fused_add_norm = mamba_config.fused_add_norm
             self.pad_vocab_size_multiple = mamba_config.pad_vocab_size_multiple
 
-
-
     class MambaSsmModel:
         __module__ = 'torch'
 
-        def __init__(self): 
+        def __init__(self):
             pass
 
         def forward(self, input_ids, position_ids=None, inference_params=None, num_last_tokens=0):
             pass
-        
+
         @classmethod
         def from_pretrained(self, path_to_model):
 
@@ -121,7 +120,7 @@ else:
             mamba_ssm_config = MambaSsmConfig()
             mamba_ssm_config.from_mamba_config(model.config)
             model.config = mamba_ssm_config
-            
+
             tokenizer_file = os.path.join(path_to_model, 'tokenizer.json')
             if os.path.isfile(tokenizer_file):
                 tokenizer = AutoTokenizer.from_pretrained(path_to_model)
@@ -184,8 +183,7 @@ else:
             return decoded
 
         def generate_with_streaming(self, *args, **kwargs):
-            with Iteratorize(self.generate, args, kwargs,
-                            callback=None) as generator:
+            with Iteratorize(self.generate, args, kwargs, callback=None) as generator:
                 reply = ''
                 for token in generator:
                     reply += token
@@ -193,4 +191,3 @@ else:
 
         def to(self, *args, **kwargs):
             self.model.to(*args, **kwargs)
-

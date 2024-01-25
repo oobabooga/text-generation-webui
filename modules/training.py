@@ -50,11 +50,11 @@ train_log = {}
 train_template = {}
 
 lora_controls = {}
-ssm_controls = {} # none yet, but they will come.
+ssm_controls = {}  # none yet, but they will come.
+
 
 def create_ui():
     mu = shared.args.multi_user
-    isSsm = isinstance(shared.model, MambaSsmModel)
     with gr.Tab("Training", elem_id="training-tab"):
         with gr.Tab('Train (LoRA or SSM)', elem_id='lora-train-tab'):
             tmp = gr.State('')
@@ -115,7 +115,7 @@ def create_ui():
                                 lora_dropout = gr.Slider(label='LoRA Dropout', minimum=0.0, maximum=1.0, step=0.025, value=0.05, info='Percentage probability for dropout of LoRA layers. This can help reduce overfitting. Most users should leave at default.')
                                 higher_rank_limit = gr.Checkbox(label='Enable higher ranks', value=False, info='If checked, changes Rank/Alpha slider above to go much higher. This will not work without a datacenter-class GPU.')
                             with gr.Tab(label="SSM only settings"):
-                                    gr.Label(label="none yet")
+                                gr.Label(label="none yet")
                         with gr.Row():
                             with gr.Column():
                                 stop_at_loss = gr.Slider(label='Stop at loss', minimum=0.0, maximum=3.0, step=0.1, value=0.00, info='The process will automatically stop once the desired loss value is reached. (reasonable numbers are 1.5-1.8)')
@@ -191,8 +191,6 @@ def create_ui():
                 save_comments = gr.Button('Save comments', elem_classes="small-button", interactive=not mu)
                 refresh_table = gr.Button('Refresh the table', elem_classes="small-button", interactive=not mu)
 
-        
-
     # Training events
     all_params = [trained_model_name, always_override, q_proj_en, v_proj_en, k_proj_en, o_proj_en, gate_proj_en, down_proj_en, up_proj_en, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lr_scheduler_type, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, higher_rank_limit, warmup_steps, optimizer, hard_cut_string, train_only_after, stop_at_loss, add_eos_token, min_chars, report_to]
 
@@ -215,7 +213,7 @@ def create_ui():
     refresh_table.click(generate_markdown_table, None, evaluation_table, show_progress=True)
     save_comments.click(
         save_past_evaluations, evaluation_table, None).then(
-        lambda: "Comments saved.", None, evaluation_log, show_progress=False)  
+        lambda: "Comments saved.", None, evaluation_log, show_progress=False)
 
 
 def do_interrupt():
@@ -631,28 +629,28 @@ def do_train(trained_model_name: str, always_override: bool, q_proj_en: bool, v_
                 param.data = param.data.float()
 
     training_arguments = transformers.TrainingArguments(
-                report_to=report_to if report_to != "None" else "none",
-                per_device_train_batch_size=micro_batch_size,
-                gradient_accumulation_steps=gradient_accumulation_steps,
-                warmup_steps=math.ceil(warmup_steps / gradient_accumulation_steps),
-                num_train_epochs=epochs,
-                learning_rate=actual_lr,
-                # Mamba only supports bf16 at the moment
-                fp16=False if shared.args.cpu or shared.args.bf16 or isinstance(shared.model, MambaSsmModel) else True,
-                bf16=shared.args.bf16 or isinstance(shared.model, MambaSsmModel),
-                optim=optimizer,
-                logging_steps=2 if stop_at_loss > 0 else 5,
-                evaluation_strategy="steps" if eval_data is not None else "no",
-                eval_steps=math.ceil(eval_steps / gradient_accumulation_steps) if eval_data is not None else None,
-                save_strategy="steps" if eval_data is not None else "no",
-                output_dir=trained_model_file_path,
-                lr_scheduler_type=lr_scheduler_type,
-                load_best_model_at_end=eval_data is not None,
-                # TODO: Enable multi-device support
-                ddp_find_unused_parameters=None,
-                no_cuda=shared.args.cpu,
-                use_ipex=True if is_torch_xpu_available() and not shared.args.cpu else False
-            )
+        report_to=report_to if report_to != "None" else "none",
+        per_device_train_batch_size=micro_batch_size,
+        gradient_accumulation_steps=gradient_accumulation_steps,
+        warmup_steps=math.ceil(warmup_steps / gradient_accumulation_steps),
+        num_train_epochs=epochs,
+        learning_rate=actual_lr,
+        # Mamba only supports bf16 at the moment
+        fp16=False if shared.args.cpu or shared.args.bf16 or isinstance(shared.model, MambaSsmModel) else True,
+        bf16=shared.args.bf16 or isinstance(shared.model, MambaSsmModel),
+        optim=optimizer,
+        logging_steps=2 if stop_at_loss > 0 else 5,
+        evaluation_strategy="steps" if eval_data is not None else "no",
+        eval_steps=math.ceil(eval_steps / gradient_accumulation_steps) if eval_data is not None else None,
+        save_strategy="steps" if eval_data is not None else "no",
+        output_dir=trained_model_file_path,
+        lr_scheduler_type=lr_scheduler_type,
+        load_best_model_at_end=eval_data is not None,
+        # TODO: Enable multi-device support
+        ddp_find_unused_parameters=None,
+        no_cuda=shared.args.cpu,
+        use_ipex=True if is_torch_xpu_available() and not shared.args.cpu else False
+    )
 
     if isinstance(shared.model, MambaSsmModel):
         trainer = MambaTrainer(
@@ -674,7 +672,7 @@ def do_train(trained_model_name: str, always_override: bool, q_proj_en: bool, v_
         )
 
     if not isinstance(shared.model, MambaSsmModel):
-        trained_model.config.use_cache = False 
+        trained_model.config.use_cache = False
 
     if torch.__version__ >= "2" and sys.platform != "win32":
         trained_model = torch.compile(trained_model)
@@ -691,7 +689,6 @@ def do_train(trained_model_name: str, always_override: bool, q_proj_en: bool, v_
     # == Main run and monitor loop ==
     logger.info("Starting training")
     yield "Starting..."
-
 
     if not isinstance(shared.model, MambaSsmModel):
         lora_trainable_param, lora_all_param = calc_trainable_parameters(trained_model)
