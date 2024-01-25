@@ -49,12 +49,14 @@ WANT_INTERRUPT = False
 train_log = {}
 train_template = {}
 
+lora_controls = {}
+ssm_controls = {} # none yet, but they will come.
 
 def create_ui():
     mu = shared.args.multi_user
     isSsm = isinstance(shared.model, MambaSsmModel)
     with gr.Tab("Training", elem_id="training-tab"):
-        with gr.Tab('Train LoRA', elem_id='lora-train-tab'):
+        with gr.Tab('Train (LoRA or SSM)', elem_id='lora-train-tab'):
             tmp = gr.State('')
             with gr.Row():
                 with gr.Column():
@@ -70,29 +72,32 @@ def create_ui():
                         with gr.Column():
                             always_override = gr.Checkbox(label='Override Existing Files', value=False, info='If the name is the same, checking will replace the existing file, and unchecking will load and continue from it (the rank must be the same).', elem_classes=['no-background'])
 
-                    with gr.Accordion(label='Target Modules', open=False, visible=not isSsm):
-                        gr.Markdown("Selects which modules to target in LoRA training. Targeting more modules is closer to a full fine-tune at the cost of increased VRAM requirements and adapter size.\nNOTE: Only works for model_id='llama', other types will retain default training behavior and not use these settings.")
-                        with gr.Row():
-                            with gr.Column():
-                                q_proj_en = gr.Checkbox(label='Enable q_proj', value=True, visible=not isSsm)
-                            with gr.Column():
-                                v_proj_en = gr.Checkbox(label='Enable v_proj', value=True, visible=not isSsm)
-                            with gr.Column():
-                                k_proj_en = gr.Checkbox(label='Enable k_proj', value=False, visible=not isSsm)
-                            with gr.Column():
-                                o_proj_en = gr.Checkbox(label='Enable o_proj', value=False, visible=not isSsm)
-                            with gr.Column():
-                                gate_proj_en = gr.Checkbox(label='Enable gate_proj', value=False, visible=not isSsm)
-                            with gr.Column():
-                                down_proj_en = gr.Checkbox(label='Enable down_proj', value=False, visible=not isSsm)
-                            with gr.Column():
-                                up_proj_en = gr.Checkbox(label='Enable up_proj', value=False, visible=not isSsm)
+                    with gr.Tab(label="LoRA only settings"):
+                        with gr.Accordion(label='Target Modules', open=False):
+                            gr.Markdown("Selects which modules to target in LoRA training. Targeting more modules is closer to a full fine-tune at the cost of increased VRAM requirements and adapter size.\nNOTE: Only works for model_id='llama', other types will retain default training behavior and not use these settings.")
+                            with gr.Row():
+                                with gr.Column():
+                                    q_proj_en = gr.Checkbox(label='Enable q_proj', value=True)
+                                with gr.Column():
+                                    v_proj_en = gr.Checkbox(label='Enable v_proj', value=True)
+                                with gr.Column():
+                                    k_proj_en = gr.Checkbox(label='Enable k_proj', value=False)
+                                with gr.Column():
+                                    o_proj_en = gr.Checkbox(label='Enable o_proj', value=False)
+                                with gr.Column():
+                                    gate_proj_en = gr.Checkbox(label='Enable gate_proj', value=False)
+                                with gr.Column():
+                                    down_proj_en = gr.Checkbox(label='Enable down_proj', value=False)
+                                with gr.Column():
+                                    up_proj_en = gr.Checkbox(label='Enable up_proj', value=False)
+                        lora_rank = gr.Slider(label='LoRA Rank', value=32, minimum=0, maximum=1024, step=4, info='Also called dimension count. Higher values = larger file, more content control. Smaller values = smaller file, less control. Use 4 or 8 for style, 128 or 256 to teach, 1024+ for fine-detail on big data. More VRAM is needed for higher ranks.')
+                        lora_alpha = gr.Slider(label='LoRA Alpha', value=64, minimum=0, maximum=2048, step=4, info='This divided by the rank becomes the scaling of the LoRA. Higher means stronger. A good standard value is twice your Rank.')
+                    with gr.Tab(label="SSM only settings"):
+                        gr.Label(label="none yet")
 
                     with gr.Row():
                         with gr.Column():
-                            lora_rank = gr.Slider(label='LoRA Rank', value=32, minimum=0, maximum=1024, step=4, info='Also called dimension count. Higher values = larger file, more content control. Smaller values = smaller file, less control. Use 4 or 8 for style, 128 or 256 to teach, 1024+ for fine-detail on big data. More VRAM is needed for higher ranks.', visible=not isSsm)
-                            lora_alpha = gr.Slider(label='LoRA Alpha', value=64, minimum=0, maximum=2048, step=4, info='This divided by the rank becomes the scaling of the LoRA. Higher means stronger. A good standard value is twice your Rank.', visible=not isSsm)
-                            batch_size = gr.Slider(label='Batch Size', value=128, minimum=0, maximum=1024, step=4, info='Global batch size. The two batch sizes together determine gradient accumulation (gradientAccum = batch / microBatch). Higher gradient accum values lead to better quality training.', visible=not isSsm)
+                            batch_size = gr.Slider(label='Batch Size', value=128, minimum=0, maximum=1024, step=4, info='Global batch size. The two batch sizes together determine gradient accumulation (gradientAccum = batch / microBatch). Higher gradient accum values lead to better quality training.')
                             micro_batch_size = gr.Slider(label='Micro Batch Size', value=4, minimum=1, maximum=128, step=1, info='Per-device batch size (NOTE: multiple devices not yet implemented). Increasing this will increase VRAM usage.')
                             cutoff_len = gr.Slider(label='Cutoff Length', minimum=0, maximum=4096, value=256, step=32, info='Cutoff length for text input. Essentially, how long of a line of text to feed in at a time. Higher values require drastically more VRAM.')
 
@@ -106,11 +111,16 @@ def create_ui():
 
                     with gr.Accordion(label='Advanced Options', open=False):
                         with gr.Row():
+                            with gr.Tab(label="LoRA only settings"):
+                                lora_dropout = gr.Slider(label='LoRA Dropout', minimum=0.0, maximum=1.0, step=0.025, value=0.05, info='Percentage probability for dropout of LoRA layers. This can help reduce overfitting. Most users should leave at default.')
+                                higher_rank_limit = gr.Checkbox(label='Enable higher ranks', value=False, info='If checked, changes Rank/Alpha slider above to go much higher. This will not work without a datacenter-class GPU.')
+                            with gr.Tab(label="SSM only settings"):
+                                    gr.Label(label="none yet")
+                        with gr.Row():
                             with gr.Column():
-                                lora_dropout = gr.Slider(label='LoRA Dropout', minimum=0.0, maximum=1.0, step=0.025, value=0.05, info='Percentage probability for dropout of LoRA layers. This can help reduce overfitting. Most users should leave at default.', visible=not isSsm)
                                 stop_at_loss = gr.Slider(label='Stop at loss', minimum=0.0, maximum=3.0, step=0.1, value=0.00, info='The process will automatically stop once the desired loss value is reached. (reasonable numbers are 1.5-1.8)')
                                 with gr.Row():
-                                    optimizer = gr.Dropdown(label='Optimizer', value='adamw_torch' if not isSsm else 'paged_adamw_8bit', choices=['adamw_hf', 'adamw_torch', 'adamw_torch_fused', 'adamw_torch_xla', 'adamw_apex_fused', 'adafactor', 'adamw_bnb_8bit', 'adamw_anyprecision', 'sgd', 'adagrad', 'paged_adamw_8bit'], info='Different optimizer implementation options, for advanced users. Effects of different options are not well documented yet.', elem_classes=['slim-dropdown'])
+                                    optimizer = gr.Dropdown(label='Optimizer', value='adamw_torch', choices=['adamw_hf', 'adamw_torch', 'adamw_torch_fused', 'adamw_torch_xla', 'adamw_apex_fused', 'adafactor', 'adamw_bnb_8bit', 'adamw_anyprecision', 'sgd', 'adagrad', 'paged_adamw_8bit'], info='Different optimizer implementation options, for advanced users. Effects of different options are not well documented yet. Use paged_adamw_8bit if training SSM with low VRAM.', elem_classes=['slim-dropdown'])
 
                             with gr.Column():
                                 warmup_steps = gr.Number(label='Warmup Steps', value=100, info='For this many steps at the start, the learning rate will be lower than normal. This helps the trainer prepare the model and precompute statistics to improve the quality of training after the start.')
@@ -118,7 +128,6 @@ def create_ui():
 
                                 add_eos_token = gr.Checkbox(label='Add EOS token', value=False, info="Adds EOS token for each dataset item. In case of raw text, the EOS will be added at the Hard Cut")
 
-                                higher_rank_limit = gr.Checkbox(label='Enable higher ranks', value=False, info='If checked, changes Rank/Alpha slider above to go much higher. This will not work without a datacenter-class GPU.', visible=not isSsm)
                                 report_to = gr.Radio(label="Save detailed logs with", value="None", choices=["None", "wandb", "tensorboard"], interactive=True)
 
                 with gr.Column():
@@ -206,7 +215,7 @@ def create_ui():
     refresh_table.click(generate_markdown_table, None, evaluation_table, show_progress=True)
     save_comments.click(
         save_past_evaluations, evaluation_table, None).then(
-        lambda: "Comments saved.", None, evaluation_log, show_progress=False)
+        lambda: "Comments saved.", None, evaluation_log, show_progress=False)  
 
 
 def do_interrupt():
