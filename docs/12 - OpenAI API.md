@@ -99,7 +99,7 @@ curl http://127.0.0.1:5000/v1/chat/completions \
 
 #### Logits
 
-```
+```shell
 curl -k http://127.0.0.1:5000/v1/internal/logits \
   -H "Content-Type: application/json" \
   -d '{
@@ -110,7 +110,7 @@ curl -k http://127.0.0.1:5000/v1/internal/logits \
 
 #### Logits after sampling parameters
 
-```
+```shell
 curl -k http://127.0.0.1:5000/v1/internal/logits \
   -H "Content-Type: application/json" \
   -d '{

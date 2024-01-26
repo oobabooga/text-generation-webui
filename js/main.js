@@ -99,11 +99,12 @@ document.addEventListener("keydown", function(event) {
   }
 
   // Switch between tabs on Tab
-  else if (!event.ctrlKey && !event.shiftKey && event.key === "Tab") {
+  else if (!event.ctrlKey && !event.shiftKey && !event.altKey && !event.metaKey && event.key === "Tab") {
     event.preventDefault();
     var parametersButton = document.getElementById("parameters-button");
     var parentContainer = parametersButton.parentNode;
     var selectedChild = parentContainer.querySelector(".selected");
+
     if (selectedChild.id == "parameters-button") {
       document.getElementById(previousTabId).click();
     } else {
@@ -318,7 +319,29 @@ document.getElementById("show-controls").parentNode.style.bottom = "0px";
 //------------------------------------------------
 // Focus on the chat input
 //------------------------------------------------
-document.querySelector("#chat-input textarea").focus();
+const chatTextArea = document.getElementById("chat-input").querySelector("textarea");
+
+function respondToChatInputVisibility(element, callback) {
+  var options = {
+    root: document.documentElement,
+  };
+
+  var observer = new IntersectionObserver((entries, observer) => {
+    entries.forEach(entry => {
+      callback(entry.intersectionRatio > 0);
+    });
+  }, options);
+
+  observer.observe(element);
+}
+
+function handleChatInputVisibilityChange(isVisible) {
+  if (isVisible) {
+    chatTextArea.focus();
+  }
+}
+
+respondToChatInputVisibility(chatTextArea, handleChatInputVisibilityChange);
 
 //------------------------------------------------
 // Show enlarged character picture when the profile
@@ -403,7 +426,7 @@ window.addEventListener("resize", updateDocumentWidth);
 //------------------------------------------------
 const renameTextArea = document.getElementById("rename-row").querySelector("textarea");
 
-function respondToVisibility(element, callback) {
+function respondToRenameVisibility(element, callback) {
   var options = {
     root: document.documentElement,
   };
@@ -424,4 +447,4 @@ function handleVisibilityChange(isVisible) {
   }
 }
 
-respondToVisibility(renameTextArea, handleVisibilityChange);
+respondToRenameVisibility(renameTextArea, handleVisibilityChange);

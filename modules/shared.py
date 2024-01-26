@@ -1,4 +1,5 @@
 import argparse
+import copy
 import os
 import sys
 from collections import OrderedDict
@@ -46,6 +47,7 @@ settings = {
     'truncation_length_max': 200000,
     'max_tokens_second': 0,
     'max_updates_second': 0,
+    'prompt_lookup_num_tokens': 0,
     'custom_stopping_strings': '',
     'custom_token_bans': '',
     'auto_max_new_tokens': False,
@@ -65,6 +67,7 @@ settings = {
     'default_extensions': ['gallery'],
 }
 
+default_settings = copy.deepcopy(settings)
 
 # Parser copied from https://github.com/vladmandic/automatic
 parser = argparse.ArgumentParser(description="Text generation web UI", conflict_handler='resolve', add_help=True, formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=55, indent_increment=2, width=200))

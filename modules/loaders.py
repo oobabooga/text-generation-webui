@@ -192,6 +192,7 @@ def transformers_samplers():
         'add_bos_token',
         'skip_special_tokens',
         'auto_max_new_tokens',
+        'prompt_lookup_num_tokens'
     }
 
 
@@ -204,12 +205,16 @@ loaders_samplers = {
     'HQQ': transformers_samplers(),
     'ExLlamav2': {
         'temperature',
+        'temperature_last',
         'top_p',
         'min_p',
         'top_k',
         'typical_p',
         'tfs',
+        'top_a',
         'repetition_penalty',
+        'presence_penalty',
+        'frequency_penalty',
         'repetition_penalty_range',
         'seed',
         'mirostat_mode',

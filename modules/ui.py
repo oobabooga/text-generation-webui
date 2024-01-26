@@ -112,6 +112,7 @@ def list_interface_input_elements():
         'auto_max_new_tokens',
         'max_tokens_second',
         'max_updates_second',
+        'prompt_lookup_num_tokens',
         'seed',
         'temperature',
         'temperature_last',
@@ -232,7 +233,14 @@ def save_settings(state, preset, extensions_list, show_controls, theme_state):
             params = getattr(extension, 'params')
             for param in params:
                 _id = f"{extension_name}-{param}"
-                output[_id] = params[param]
+                # Only save if different from default value
+                if param not in shared.default_settings or params[param] != shared.default_settings[param]:
+                    output[_id] = params[param]
+
+    # Do not save unchanged settings
+    for key in list(output.keys()):
+        if key in shared.default_settings and output[key] == shared.default_settings[key]:
+            output.pop(key)
 
     return yaml.dump(output, sort_keys=False, width=float("inf"))
 
