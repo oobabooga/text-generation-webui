@@ -169,7 +169,7 @@ def generate_chat_prompt(user_input, state, **kwargs):
     prompt = make_prompt(messages)
 
     # Handle truncation
-    max_length = get_max_prompt_length(state)
+    max_length = state['truncation_length']
     while len(messages) > 0 and get_encoded_length(prompt) > max_length:
         # Try to save the system message
         if len(messages) > 1 and messages[0]['role'] == 'system':
