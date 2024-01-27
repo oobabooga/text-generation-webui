@@ -149,17 +149,17 @@ def run_cmd(cmd, assert_success=False, environment=False, capture_output=False, 
     if environment:
         if is_windows():
             conda_bat_path = os.path.join(script_dir, "installer_files", "conda", "condabin", "conda.bat")
-            cmd = "\"" + conda_bat_path + "\" activate \"" + conda_env_path + "\" >nul && " + cmd
+            cmd = f'"{conda_bat_path}" activate "{conda_env_path}" >nul && {cmd}'
         else:
             conda_sh_path = os.path.join(script_dir, "installer_files", "conda", "etc", "profile.d", "conda.sh")
-            cmd = ". \"" + conda_sh_path + "\" && conda activate \"" + conda_env_path + "\" && " + cmd
+            cmd = f'. "{conda_sh_path}" && conda activate "{conda_env_path}" && {cmd}'
 
     # Run shell commands
     result = subprocess.run(cmd, shell=True, capture_output=capture_output, env=env)
 
     # Assert the command ran successfully
     if assert_success and result.returncode != 0:
-        print("Command '" + cmd + "' failed with exit status code '" + str(result.returncode) + "'.\n\nExiting now.\nTry running the start/update script again.")
+        print(f"Command '{cmd}' failed with exit status code '{str(result.returncode)}'.\n\nExiting now.\nTry running the start/update script again.")
         sys.exit(1)
 
     return result
@@ -291,7 +291,7 @@ def update_requirements(initial_installation=False):
         for i, extension in enumerate(extensions):
             print(f"\n\n--- [{i+1}/{len(extensions)}]: {extension}\n\n")
             extension_req_path = os.path.join("extensions", extension, "requirements.txt")
-            run_cmd("python -m pip install -r " + extension_req_path + " --upgrade", assert_success=False, environment=True)
+            run_cmd(f"python -m pip install -r {extension_req_path} --upgrade", assert_success=False, environment=True)
     elif initial_installation:
         print_big_message("Will not install extensions due to INSTALL_EXTENSIONS environment variable.")
 
@@ -335,13 +335,13 @@ def update_requirements(initial_installation=False):
     for req in git_requirements:
         url = req.replace("git+", "")
         package_name = url.split("/")[-1].split("@")[0].rstrip(".git")
-        run_cmd("python -m pip uninstall -y " + package_name, environment=True)
+        run_cmd(f"python -m pip uninstall -y {package_name}", environment=True)
         print(f"Uninstalled {package_name}")
 
     # Make sure that API requirements are installed (temporary)
     extension_req_path = os.path.join("extensions", "openai", "requirements.txt")
     if os.path.exists(extension_req_path):
-        run_cmd("python -m pip install -r " + extension_req_path + " --upgrade", environment=True)
+        run_cmd(f"python -m pip install -r {extension_req_path} --upgrade", environment=True)
 
     # Install/update the project requirements
     run_cmd("python -m pip install -r temp_requirements.txt --upgrade", assert_success=True, environment=True)
