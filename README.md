@@ -161,13 +161,13 @@ The `requirements*.txt` above contain various wheels precompiled through GitHub 
 
 ```
 For NVIDIA GPU:
-ln -s docker/{nvidia/Dockerfile,docker-compose.yml,.dockerignore} .
+ln -s docker/{nvidia/Dockerfile,nvidia/docker-compose.yml,.dockerignore} .
 For AMD GPU: 
-ln -s docker/{amd/Dockerfile,docker-compose.yml,.dockerignore} .
+ln -s docker/{amd/Dockerfile,intel/docker-compose.yml,.dockerignore} .
 For Intel GPU:
-ln -s docker/{intel/Dockerfile,docker-compose.yml,.dockerignore} .
+ln -s docker/{intel/Dockerfile,amd/docker-compose.yml,.dockerignore} .
 For CPU only
-ln -s docker/{cpu/Dockerfile,docker-compose.yml,.dockerignore} .
+ln -s docker/{cpu/Dockerfile,cpu/docker-compose.yml,.dockerignore} .
 cp docker/.env.example .env
 #Create logs/cache dir : 
 mkdir -p logs cache
