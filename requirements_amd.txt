@@ -2,7 +2,7 @@ accelerate==0.25.*
 colorama
 datasets
 einops
-exllamav2==0.0.11; platform_system == "Windows" or python_version < "3.10" or python_version > "3.11" or platform_machine != "x86_64"
+exllamav2==0.0.12; platform_system == "Windows" or python_version < "3.10" or python_version > "3.11" or platform_machine != "x86_64"
 gradio==3.50.*
 hqq==0.1.2
 jinja2==3.1.2
@@ -47,8 +47,8 @@ https://github.com/jllllll/AutoGPTQ/releases/download/v0.6.0/auto_gptq-0.6.0+roc
 https://github.com/jllllll/AutoGPTQ/releases/download/v0.6.0/auto_gptq-0.6.0+rocm5.6-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.10"
 https://github.com/jllllll/AutoGPTQ/releases/download/v0.6.0/auto_gptq-0.6.0+rocm5.6-cp39-cp39-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.9"
 https://github.com/jllllll/AutoGPTQ/releases/download/v0.6.0/auto_gptq-0.6.0+rocm5.6-cp38-cp38-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.8"
-https://github.com/turboderp/exllamav2/releases/download/v0.0.11/exllamav2-0.0.11+rocm5.6-cp311-cp311-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"
-https://github.com/turboderp/exllamav2/releases/download/v0.0.11/exllamav2-0.0.11+rocm5.6-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.10"
+https://github.com/turboderp/exllamav2/releases/download/v0.0.12/exllamav2-0.0.12+rocm5.6-cp311-cp311-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"
+https://github.com/turboderp/exllamav2/releases/download/v0.0.12/exllamav2-0.0.12+rocm5.6-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.10"
 https://github.com/jllllll/GPTQ-for-LLaMa-CUDA/releases/download/0.1.1/gptq_for_llama-0.1.1+rocm5.6-cp311-cp311-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.11"
 https://github.com/jllllll/GPTQ-for-LLaMa-CUDA/releases/download/0.1.1/gptq_for_llama-0.1.1+rocm5.6-cp310-cp310-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.10"
 https://github.com/jllllll/GPTQ-for-LLaMa-CUDA/releases/download/0.1.1/gptq_for_llama-0.1.1+rocm5.6-cp39-cp39-linux_x86_64.whl; platform_system == "Linux" and platform_machine == "x86_64" and python_version == "3.9"
