@@ -34,19 +34,14 @@ services:
     stdin_open: true
     tty: true
     volumes:
+      - ./cache:/home/app/text-generation-webui/cache
       - ./characters:/home/app/text-generation-webui/characters
       - ./extensions:/home/app/text-generation-webui/extensions
       - ./loras:/home/app/text-generation-webui/loras
+      - ./logs:/home/app/text-generation-webui/logs
       - ./models:/home/app/text-generation-webui/models
       - ./presets:/home/app/text-generation-webui/presets
       - ./prompts:/home/app/text-generation-webui/prompts
       - ./softprompts:/home/app/text-generation-webui/softprompts
       - ./training:/home/app/text-generation-webui/training
       - ./cloudflared:/etc/cloudflared
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
