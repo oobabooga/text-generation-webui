@@ -279,7 +279,7 @@ class RepetitionPenaltyLogitsProcessorWithRange(LogitsProcessor):
 
         return scores
 
-class GaussianNoiseLogitsProcessor(LogitsProcessor):
+class QuadraticSamplingLogitsProcessor(LogitsProcessor):
     '''
     Applies a quadratic transformation to the logits based on the provided smoothing factor.
     The transformation is centered around the maximum logit value.
@@ -372,16 +372,16 @@ def get_logits_processor_patch(self, **kwargs):
     presence_penalty = kwargs['generation_config'].presence_penalty
     frequency_penalty = kwargs['generation_config'].frequency_penalty
     repetition_penalty_range = kwargs['generation_config'].repetition_penalty_range
-    noise_level = kwargs['generation_config'].noise_level
+    smoothing_factor = kwargs['generation_config'].smoothing_factor
     do_rep_pen_hijack = (repetition_penalty > 1) or (presence_penalty != 0) or (frequency_penalty != 0)
     if do_rep_pen_hijack:
         kwargs['generation_config'].repetition_penalty = 1.1  # Set to value > 1 to ensure RepetitionPenaltyLogitsProcessor is created
 
     result = self._get_logits_processor_old(**kwargs)
 
-    # Add GaussianNoiseLogitsProcessor only when noise_level > 0
-    if noise_level > 0:
-        result.append(GaussianNoiseLogitsProcessor(noise_level))
+    # Add QuadraticSamplingLogitsProcessor only when smoothing_factor > 0
+    if smoothing_factor > 0:
+        result.append(QuadraticSamplingLogitsProcessor(smoothing_factor))
 
     if do_rep_pen_hijack:
         for i in range(len(result)):
@@ -400,7 +400,7 @@ def generation_config_init_patch(self, **kwargs):
     self.dynatemp_exponent = kwargs.pop("dynatemp_exponent", 1)
     self.tfs = kwargs.pop("tfs", 1.0)
     self.top_a = kwargs.pop("top_a", 0.0)
-    self.noise_level = kwargs.pop("noise_level", 0.0)
+    self.smoothing_factor = kwargs.pop("smoothing_factor", 0.0)
     self.mirostat_mode = kwargs.pop("mirostat_mode", 0)
     self.mirostat_eta = kwargs.pop("mirostat_eta", 0.1)
     self.mirostat_tau = kwargs.pop("mirostat_tau", 5)

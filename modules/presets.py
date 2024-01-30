@@ -25,7 +25,7 @@ def default_preset():
         'frequency_penalty': 0,
         'repetition_penalty_range': 1024,
         'typical_p': 1,
-        'noise_level': 0,
+        'smoothing_factor': 0,
         'tfs': 1,
         'top_a': 0,
         'epsilon_cutoff': 0,
