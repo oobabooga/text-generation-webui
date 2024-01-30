@@ -281,38 +281,25 @@ class RepetitionPenaltyLogitsProcessorWithRange(LogitsProcessor):
 
 class GaussianNoiseLogitsProcessor(LogitsProcessor):
     '''
-    Noise is applied to the logits based on the provided noise_level.
-    It is a Gaussian noise where noise_level determines the standard deviation of the Gaussian distribution.
+    Applies a quadratic transformation to the logits based on the provided smoothing factor.
+    The transformation is centered around the maximum logit value.
     '''
 
-    def __init__(self, noise_level: float):
-        self.noise_level = noise_level / 1000.0  # Adjust the noise_level to be 1/1000th of the original value
+    def __init__(self, smoothing_factor: float):
+        self.smoothing_factor = smoothing_factor
 
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
+        # Compute the maximum logit value
+        max_logit = scores.max()
 
-        # Define scale range
-        scale_min, scale_max = 0.0, 1.0
+        # Apply the quadratic transformation
+        transformed_logits = -(self.smoothing_factor * (scores - max_logit)**2) + max_logit
 
-        # Store original min and max of logits
-        orig_min, orig_max = scores.min(), scores.max()
+        # No need to print the top 5 logits since this is not required
+        # print("Original top 5 logits: ", torch.topk(scores, 5))
+        # print("New top 5 logits: ", torch.topk(transformed_logits, 5))
 
-        # Scale logits between scale_min and scale_max
-        scaled_scores = (scores - orig_min) * ((scale_max - scale_min) / (orig_max - orig_min)) + scale_min
-
-        # Create Gaussian noise
-        noise = torch.normal(mean=0., std=self.noise_level, size=scaled_scores.shape).to(scaled_scores.device)
-
-        # Add Noise to scaled_logits
-        noisy_scaled_scores = scaled_scores + noise 
-
-        # Rescale the noisy logits back to original range
-        noisy_scores = ((noisy_scaled_scores - scale_min) * (orig_max - orig_min) / (scale_max - scale_min)) + orig_min
-
-        # Print top 5 original and new logits 
-        print("Original top 5 logits: ", torch.topk(scores, 5))
-        print("New top 5 logits: ", torch.topk(noisy_scores, 5))
-
-        return noisy_scores
+        return transformed_logits
 
 
 def get_logits_warper_patch(self, generation_config):
