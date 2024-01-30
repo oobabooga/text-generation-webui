@@ -299,7 +299,6 @@ def update_requirements(initial_installation=False):
     torver = torch_version()
     is_cuda = '+cu' in torver
     is_cuda118 = '+cu118' in torver  # 2.1.0+cu118
-    is_cuda117 = '+cu117' in torver  # 2.0.1+cu117
     is_rocm = '+rocm' in torver  # 2.0.1+rocm5.4.2
     is_intel = '+cxx11' in torver  # 2.0.1a0+cxx11.abi
     is_cpu = '+cpu' in torver  # 2.0.1+cpu
@@ -320,11 +319,9 @@ def update_requirements(initial_installation=False):
 
     # Prepare the requirements file
     textgen_requirements = open(requirements_file).read().splitlines()
-    if is_cuda117:
-        textgen_requirements = [req.replace('+cu121', '+cu117').replace('+cu122', '+cu117').replace('torch2.1', 'torch2.0') for req in textgen_requirements]
-    elif is_cuda118:
+    if is_cuda118:
         textgen_requirements = [req.replace('+cu121', '+cu118').replace('+cu122', '+cu118') for req in textgen_requirements]
-    if is_windows() and (is_cuda117 or is_cuda118):  # No flash-attention on Windows for CUDA 11
+    if is_windows() and is_cuda118:  # No flash-attention on Windows for CUDA 11
         textgen_requirements = [req for req in textgen_requirements if 'jllllll/flash-attention' not in req]
 
     with open('temp_requirements.txt', 'w') as file:
