@@ -149,17 +149,17 @@ def run_cmd(cmd, assert_success=False, environment=False, capture_output=False, 
     if environment:
         if is_windows():
             conda_bat_path = os.path.join(script_dir, "installer_files", "conda", "condabin", "conda.bat")
-            cmd = "\"" + conda_bat_path + "\" activate \"" + conda_env_path + "\" >nul && " + cmd
+            cmd = f'"{conda_bat_path}" activate "{conda_env_path}" >nul && {cmd}'
         else:
             conda_sh_path = os.path.join(script_dir, "installer_files", "conda", "etc", "profile.d", "conda.sh")
-            cmd = ". \"" + conda_sh_path + "\" && conda activate \"" + conda_env_path + "\" && " + cmd
+            cmd = f'. "{conda_sh_path}" && conda activate "{conda_env_path}" && {cmd}'
 
     # Run shell commands
     result = subprocess.run(cmd, shell=True, capture_output=capture_output, env=env)
 
     # Assert the command ran successfully
     if assert_success and result.returncode != 0:
-        print("Command '" + cmd + "' failed with exit status code '" + str(result.returncode) + "'.\n\nExiting now.\nTry running the start/update script again.")
+        print(f"Command '{cmd}' failed with exit status code '{str(result.returncode)}'.\n\nExiting now.\nTry running the start/update script again.")
         sys.exit(1)
 
     return result
@@ -257,7 +257,7 @@ def install_webui():
 
 def update_requirements(initial_installation=False):
     # Create .git directory if missing
-    if not os.path.isdir(os.path.join(script_dir, ".git")):
+    if not os.path.exists(os.path.join(script_dir, ".git")):
         git_creation_cmd = 'git init -b main && git remote add origin https://github.com/oobabooga/text-generation-webui && git fetch && git symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/main && git reset --hard origin/main && git branch --set-upstream-to=origin/main'
         run_cmd(git_creation_cmd, environment=True, assert_success=True)
 
@@ -291,7 +291,7 @@ def update_requirements(initial_installation=False):
         for i, extension in enumerate(extensions):
             print(f"\n\n--- [{i+1}/{len(extensions)}]: {extension}\n\n")
             extension_req_path = os.path.join("extensions", extension, "requirements.txt")
-            run_cmd("python -m pip install -r " + extension_req_path + " --upgrade", assert_success=False, environment=True)
+            run_cmd(f"python -m pip install -r {extension_req_path} --upgrade", assert_success=False, environment=True)
     elif initial_installation:
         print_big_message("Will not install extensions due to INSTALL_EXTENSIONS environment variable.")
 
@@ -299,7 +299,6 @@ def update_requirements(initial_installation=False):
     torver = torch_version()
     is_cuda = '+cu' in torver
     is_cuda118 = '+cu118' in torver  # 2.1.0+cu118
-    is_cuda117 = '+cu117' in torver  # 2.0.1+cu117
     is_rocm = '+rocm' in torver  # 2.0.1+rocm5.4.2
     is_intel = '+cxx11' in torver  # 2.0.1a0+cxx11.abi
     is_cpu = '+cpu' in torver  # 2.0.1+cpu
@@ -320,11 +319,9 @@ def update_requirements(initial_installation=False):
 
     # Prepare the requirements file
     textgen_requirements = open(requirements_file).read().splitlines()
-    if is_cuda117:
-        textgen_requirements = [req.replace('+cu121', '+cu117').replace('+cu122', '+cu117').replace('torch2.1', 'torch2.0') for req in textgen_requirements]
-    elif is_cuda118:
+    if is_cuda118:
         textgen_requirements = [req.replace('+cu121', '+cu118').replace('+cu122', '+cu118') for req in textgen_requirements]
-    if is_windows() and (is_cuda117 or is_cuda118):  # No flash-attention on Windows for CUDA 11
+    if is_windows() and is_cuda118:  # No flash-attention on Windows for CUDA 11
         textgen_requirements = [req for req in textgen_requirements if 'jllllll/flash-attention' not in req]
 
     with open('temp_requirements.txt', 'w') as file:
@@ -335,13 +332,13 @@ def update_requirements(initial_installation=False):
     for req in git_requirements:
         url = req.replace("git+", "")
         package_name = url.split("/")[-1].split("@")[0].rstrip(".git")
-        run_cmd("python -m pip uninstall -y " + package_name, environment=True)
+        run_cmd(f"python -m pip uninstall -y {package_name}", environment=True)
         print(f"Uninstalled {package_name}")
 
     # Make sure that API requirements are installed (temporary)
     extension_req_path = os.path.join("extensions", "openai", "requirements.txt")
     if os.path.exists(extension_req_path):
-        run_cmd("python -m pip install -r " + extension_req_path + " --upgrade", environment=True)
+        run_cmd(f"python -m pip install -r {extension_req_path} --upgrade", environment=True)
 
     # Install/update the project requirements
     run_cmd("python -m pip install -r temp_requirements.txt --upgrade", assert_success=True, environment=True)

@@ -110,22 +110,6 @@ def process_parameters(body, is_legacy=False):
     logits_processor = []
     logit_bias = body.get('logit_bias', None)
     if logit_bias:  # {str: float, ...}
-        # XXX convert tokens from tiktoken based on requested model
-        # Ex.: 'logit_bias': {'1129': 100, '11442': 100, '16243': 100}
-        try:
-            encoder = tiktoken.encoding_for_model(generate_params['model'])
-            new_logit_bias = {}
-            for logit, bias in logit_bias.items():
-                for x in encode(encoder.decode([int(logit)]), add_special_tokens=False)[0]:
-                    if int(x) in [0, 1, 2, 29871]:  # XXX LLAMA tokens
-                        continue
-
-                    new_logit_bias[str(int(x))] = bias
-            debug_msg('logit_bias_map', logit_bias, '->', new_logit_bias)
-            logit_bias = new_logit_bias
-        except KeyError:
-            pass  # assume native tokens if we can't find the tokenizer
-
         logits_processor = [LogitsBiasProcessor(logit_bias)]
 
     logprobs = None  # coming to chat eventually
