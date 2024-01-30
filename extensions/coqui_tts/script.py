@@ -3,10 +3,10 @@ import json
 import os
 import random
 import time
-import torch
 from pathlib import Path
 
 import gradio as gr
+import torch
 from TTS.api import TTS
 from TTS.utils.synthesizer import Synthesizer
 
