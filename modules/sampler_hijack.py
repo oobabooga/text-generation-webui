@@ -279,7 +279,7 @@ class RepetitionPenaltyLogitsProcessorWithRange(LogitsProcessor):
 
         return scores
 
-class QuadraticSamplingLogitsProcessor(LogitsProcessor):
+class QuadraticSamplingLogitsWarper(LogitsWarper):
     '''
     Applies a quadratic transformation to the logits based on the provided smoothing factor.
     The transformation is centered around the maximum logit value.
@@ -340,7 +340,11 @@ def get_logits_warper_patch(self, generation_config):
             warpers_to_add.append(TopALogitsWarper(top_a=generation_config.top_a, min_tokens_to_keep=min_tokens_to_keep))
         if generation_config.min_p is not None and 0.0 < generation_config.min_p <= 1.0:
             warpers_to_add.append(MinPLogitsWarper(min_p=generation_config.min_p, min_tokens_to_keep=min_tokens_to_keep))
-
+            
+        # Add QuadraticSamplingLogitsWarper only when smoothing_factor > 0
+        if generation_config.smoothing_factor > 0:
+            warpers_to_add.append(QuadraticSamplingLogitsWarper(smoothing_factor=generation_config.smoothing_factor))
+            
     if len(warpers) > 0 and isinstance(warpers[-1], LogitNormalization):
         normalize = warpers.pop(-1)
     else:
@@ -378,10 +382,6 @@ def get_logits_processor_patch(self, **kwargs):
         kwargs['generation_config'].repetition_penalty = 1.1  # Set to value > 1 to ensure RepetitionPenaltyLogitsProcessor is created
 
     result = self._get_logits_processor_old(**kwargs)
-
-    # Add QuadraticSamplingLogitsProcessor only when smoothing_factor > 0
-    if smoothing_factor > 0:
-        result.append(QuadraticSamplingLogitsProcessor(smoothing_factor))
 
     if do_rep_pen_hijack:
         for i in range(len(result)):
