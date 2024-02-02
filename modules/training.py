@@ -43,7 +43,7 @@ from modules.mamba import MambaSsmModel, MambaTrainer
 from modules.utils import natural_keys
 
 MODEL_CLASSES = {v[1]: v[0] for v in MODEL_FOR_CAUSAL_LM_MAPPING_NAMES.items()}
-PARAMETERS = ["trained_model_name", "always_override", "q_proj_en", "v_proj_en", "k_proj_en", "o_proj_en", "gate_proj_en", "down_proj_en", "up_proj_en", "save_steps", "micro_batch_size", "batch_size", "epochs", "learning_rate", "lr_scheduler_type", "lora_rank", "lora_alpha", "lora_dropout", "cutoff_len", "dataset", "eval_dataset", "format", "eval_steps", "raw_text_file", "overlap_len", "newline_favor_len", "higher_rank_limit", "warmup_steps", "optimizer", "hard_cut_string", "train_only_after", "stop_at_loss", "add_eos_token", "min_chars", "report_to"]
+PARAMETERS = ["trained_model_name", "training_form", "always_override", "q_proj_en", "v_proj_en", "k_proj_en", "o_proj_en", "gate_proj_en", "down_proj_en", "up_proj_en", "save_steps", "micro_batch_size", "batch_size", "epochs", "learning_rate", "lr_scheduler_type", "lora_rank", "lora_alpha", "lora_dropout", "cutoff_len", "dataset", "eval_dataset", "format", "eval_steps", "raw_text_file", "overlap_len", "newline_favor_len", "higher_rank_limit", "warmup_steps", "optimizer", "hard_cut_string", "train_only_after", "stop_at_loss", "add_eos_token", "min_chars", "report_to"]
 WANT_INTERRUPT = False
 
 train_log = {}
@@ -56,11 +56,12 @@ ssm_controls = {}  # none yet, but they will come.
 def create_ui():
     mu = shared.args.multi_user
     with gr.Tab("Training", elem_id="training-tab"):
-        with gr.Tab('Train (LoRA or SSM)', elem_id='lora-train-tab'):
+        with gr.Tab('Train', elem_id='lora-train-tab'):
             tmp = gr.State('')
             with gr.Row():
                 with gr.Column():
                     gr.Markdown("[Tutorial](https://github.com/oobabooga/text-generation-webui/wiki/05-%E2%80%90-Training-Tab)")
+                    training_form = gr.Radio(["full", "LoRA"], value="LoRA", label="Form of training", info="Full fine-tune or more performant LoRA?")
 
                     with gr.Row():
                         copy_from = gr.Dropdown(label='Copy parameters from', value='None', choices=utils.get_available_loras(), elem_classes=['slim-dropdown'], interactive=not mu)
@@ -68,7 +69,7 @@ def create_ui():
 
                     with gr.Row():
                         with gr.Column(scale=5):
-                            trained_model_name = gr.Textbox(label='Name', info='The name of your new LoRA or SSM file')
+                            trained_model_name = gr.Textbox(label='Name', info='The name of your new LoRA or model file')
                         with gr.Column():
                             always_override = gr.Checkbox(label='Override Existing Files', value=False, info='If the name is the same, checking will replace the existing file, and unchecking will load and continue from it (the rank must be the same).', elem_classes=['no-background'])
 
@@ -92,8 +93,8 @@ def create_ui():
                                     up_proj_en = gr.Checkbox(label='Enable up_proj', value=False)
                         lora_rank = gr.Slider(label='LoRA Rank', value=32, minimum=0, maximum=1024, step=4, info='Also called dimension count. Higher values = larger file, more content control. Smaller values = smaller file, less control. Use 4 or 8 for style, 128 or 256 to teach, 1024+ for fine-detail on big data. More VRAM is needed for higher ranks.')
                         lora_alpha = gr.Slider(label='LoRA Alpha', value=64, minimum=0, maximum=2048, step=4, info='This divided by the rank becomes the scaling of the LoRA. Higher means stronger. A good standard value is twice your Rank.')
-                    with gr.Tab(label="SSM only settings"):
-                        gr.Label(label="none yet")
+                    # with gr.Tab(label="SSM only settings"):
+                    #     gr.Label(label="none yet")
 
                     with gr.Row():
                         with gr.Column():
@@ -114,8 +115,8 @@ def create_ui():
                             with gr.Tab(label="LoRA only settings"):
                                 lora_dropout = gr.Slider(label='LoRA Dropout', minimum=0.0, maximum=1.0, step=0.025, value=0.05, info='Percentage probability for dropout of LoRA layers. This can help reduce overfitting. Most users should leave at default.')
                                 higher_rank_limit = gr.Checkbox(label='Enable higher ranks', value=False, info='If checked, changes Rank/Alpha slider above to go much higher. This will not work without a datacenter-class GPU.')
-                            with gr.Tab(label="SSM only settings"):
-                                gr.Label(label="none yet")
+                            # with gr.Tab(label="SSM only settings"):
+                            #     gr.Label(label="none yet")
                         with gr.Row():
                             with gr.Column():
                                 stop_at_loss = gr.Slider(label='Stop at loss', minimum=0.0, maximum=3.0, step=0.1, value=0.00, info='The process will automatically stop once the desired loss value is reached. (reasonable numbers are 1.5-1.8)')
@@ -192,7 +193,7 @@ def create_ui():
                 refresh_table = gr.Button('Refresh the table', elem_classes="small-button", interactive=not mu)
 
     # Training events
-    all_params = [trained_model_name, always_override, q_proj_en, v_proj_en, k_proj_en, o_proj_en, gate_proj_en, down_proj_en, up_proj_en, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lr_scheduler_type, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, higher_rank_limit, warmup_steps, optimizer, hard_cut_string, train_only_after, stop_at_loss, add_eos_token, min_chars, report_to]
+    all_params = [trained_model_name, training_form, always_override, q_proj_en, v_proj_en, k_proj_en, o_proj_en, gate_proj_en, down_proj_en, up_proj_en, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lr_scheduler_type, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, higher_rank_limit, warmup_steps, optimizer, hard_cut_string, train_only_after, stop_at_loss, add_eos_token, min_chars, report_to]
 
     copy_from.change(do_copy_params, [copy_from] + all_params, all_params)
     start_button.click(do_train, all_params, output)
@@ -299,7 +300,7 @@ def calc_trainable_parameters(model):
     return trainable_params, all_param
 
 
-def do_train(trained_model_name: str, always_override: bool, q_proj_en: bool, v_proj_en: bool, k_proj_en: bool, o_proj_en: bool, gate_proj_en: bool, down_proj_en: bool, up_proj_en: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lr_scheduler_type: str, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, higher_rank_limit: bool, warmup_steps: int, optimizer: str, hard_cut_string: str, train_only_after: str, stop_at_loss: float, add_eos_token: bool, min_chars: int, report_to: str):
+def do_train(trained_model_name: str, training_form: int, always_override: bool, q_proj_en: bool, v_proj_en: bool, k_proj_en: bool, o_proj_en: bool, gate_proj_en: bool, down_proj_en: bool, up_proj_en: bool, save_steps: int, micro_batch_size: int, batch_size: int, epochs: int, learning_rate: str, lr_scheduler_type: str, lora_rank: int, lora_alpha: int, lora_dropout: float, cutoff_len: int, dataset: str, eval_dataset: str, format: str, eval_steps: int, raw_text_file: str, overlap_len: int, newline_favor_len: int, higher_rank_limit: bool, warmup_steps: int, optimizer: str, hard_cut_string: str, train_only_after: str, stop_at_loss: float, add_eos_token: bool, min_chars: int, report_to: str):
 
     if shared.args.monkey_patch:
         from alpaca_lora_4bit.monkeypatch.peft_tuners_lora_monkey_patch import (
@@ -536,11 +537,10 @@ def do_train(trained_model_name: str, always_override: bool, q_proj_en: bool, v_
     # base model is now frozen and should not be reused for any other LoRA training than this one
     shared.model_dirty_from_training = True
 
-    if isinstance(shared.model, MambaSsmModel):
-        logger.info("Preparing for SSM training")
+    logger.info("Preparing for training")
+    if training_form == "full":
         trained_model = shared.model.model
-    else:
-        logger.info("Preparing for training")
+    elif training_form == "LoRA":
         config = LoraConfig(
             r=lora_rank,
             lora_alpha=lora_alpha,
@@ -622,8 +622,8 @@ def do_train(trained_model_name: str, always_override: bool, q_proj_en: bool, v_
                     control.should_training_stop = True
                     print(f"\033[1;31;1mStop Loss {stop_at_loss} reached.\033[0;37;0m")
 
-    # Fix training for mixed precision models
-    if not isinstance(shared.model, MambaSsmModel):
+    # Fix training for mixed precision models.
+    if hasattr(shared.model.__class__, 'parameters') and callable(getattr(shared.model.__class__, 'parameters')):
         for param in shared.model.parameters():
             if param.requires_grad:
                 param.data = param.data.float()
@@ -635,9 +635,8 @@ def do_train(trained_model_name: str, always_override: bool, q_proj_en: bool, v_
         warmup_steps=math.ceil(warmup_steps / gradient_accumulation_steps),
         num_train_epochs=epochs,
         learning_rate=actual_lr,
-        # Mamba only supports bf16 at the moment
-        fp16=False if shared.args.cpu or shared.args.bf16 or isinstance(shared.model, MambaSsmModel) else True,
-        bf16=shared.args.bf16 or isinstance(shared.model, MambaSsmModel),
+        fp16=False if shared.args.cpu or shared.args.bf16 else True,
+        bf16=shared.args.bf16,
         optim=optimizer,
         logging_steps=2 if stop_at_loss > 0 else 5,
         evaluation_strategy="steps" if eval_data is not None else "no",
@@ -671,7 +670,7 @@ def do_train(trained_model_name: str, always_override: bool, q_proj_en: bool, v_
             callbacks=list([Callbacks()])
         )
 
-    if not isinstance(shared.model, MambaSsmModel):
+    if hasattr(trained_model.config, 'use_cache'):
         trained_model.config.use_cache = False
 
     if torch.__version__ >= "2" and sys.platform != "win32":
@@ -690,7 +689,7 @@ def do_train(trained_model_name: str, always_override: bool, q_proj_en: bool, v_
     logger.info("Starting training")
     yield "Starting..."
 
-    if not isinstance(shared.model, MambaSsmModel):
+    if training_form == 'LoRA':
         lora_trainable_param, lora_all_param = calc_trainable_parameters(trained_model)
 
         projections_string = ", ".join([projection.replace("_proj", "") for projection in list_target_modules(model_id)])
@@ -701,7 +700,7 @@ def do_train(trained_model_name: str, always_override: bool, q_proj_en: bool, v_
 
     train_log.update({"base_model_name": shared.model_name})
     train_log.update({"base_model_class": shared.model.__class__.__name__})
-    if not isinstance(shared.model, MambaSsmModel):
+    if training_form == 'LoRA':
         train_log.update({"base_loaded_in_4bit": getattr(trained_model, "is_loaded_in_4bit", False)})
         train_log.update({"base_loaded_in_8bit": getattr(trained_model, "is_loaded_in_8bit", False)})
         train_log.update({"projections": projections_string})
@@ -775,10 +774,10 @@ def do_train(trained_model_name: str, always_override: bool, q_proj_en: bool, v_
 
     if WANT_INTERRUPT:
         logger.info("Training interrupted.")
-        yield f"Interrupted. Incomplete LoRA saved to `{trained_model_file_path}`."
+        yield f"Interrupted. Incomplete model saved to `{trained_model_file_path}`."
     else:
         logger.info("Training complete!")
-        yield f"Done! LoRA saved to `{trained_model_file_path}`.\n\nBefore testing your new LoRA, make sure to first reload the model, as it is currently dirty from training."
+        yield f"Done! Model or LoRA saved to `{trained_model_file_path}`.\n\nBefore testing, make sure to first reload the model, as it is currently dirty from training."
 
 
 def split_chunks(arr, size, step):

@@ -407,6 +407,7 @@ def MambaSsm_loader(model_name):
     path = Path(f'{shared.args.model_dir}/{model_name}')
     mamba = MambaSsmModel()
     model, tokenizer = mamba.from_pretrained(path)
+    shared.args.bf16 = True
     return model, tokenizer
 
 
