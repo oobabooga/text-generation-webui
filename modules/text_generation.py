@@ -276,9 +276,13 @@ def get_reply_from_output_ids(output_ids, state=None, starting_from=0):
         first_token = shared.tokenizer.convert_ids_to_tokens(int(output_ids[starting_from]))
         if isinstance(first_token, (bytes,)):
             first_token = first_token.decode('utf8')
-
-        if first_token.startswith('▁'):
-            reply = ' ' + reply
+        elif isinstance(first_token, str):
+            if first_token.startswith('▁'):
+                reply = ' ' + reply
+        elif isinstance(first_token, list) and len(first_token) > 0:
+            if isinstance(first_token[0], str):
+                if first_token[0].startswith('▁'):
+                    reply = ' ' + reply
 
     return reply
 
