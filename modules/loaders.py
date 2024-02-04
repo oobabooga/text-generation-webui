@@ -44,6 +44,7 @@ loaders_and_params = OrderedDict({
         'cpu',
         'numa',
         'no_offload_kqv',
+        'row_split',
         'tensorcores',
     ],
     'llamacpp_HF': [
@@ -66,6 +67,7 @@ loaders_and_params = OrderedDict({
         'no_use_fast',
         'logits_all',
         'no_offload_kqv',
+        'row_split',
         'tensorcores',
         'llamacpp_HF_info',
     ],
