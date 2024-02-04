@@ -298,28 +298,6 @@ class RepetitionPenaltyLogitsProcessorWithRange(LogitsProcessor):
 
         return scores
 
-class QuadraticSamplingLogitsWarper(LogitsWarper):
-    '''
-    Applies a quadratic transformation to the logits based on the provided smoothing factor.
-    The transformation is centered around the maximum logit value.
-    '''
-
-    def __init__(self, smoothing_factor: float):
-        self.smoothing_factor = smoothing_factor
-
-    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
-        # Compute the maximum logit value
-        max_logit = scores.max()
-
-        # Apply the quadratic transformation
-        transformed_logits = -(self.smoothing_factor * (scores - max_logit)**2) + max_logit
-
-        # No need to print the top 5 logits since this is not required
-        # print("Original top 5 logits: ", torch.topk(scores, 5))
-        # print("New top 5 logits: ", torch.topk(transformed_logits, 5))
-
-        return transformed_logits
-
 
 def get_logits_warper_patch(self, generation_config):
     # Make sure that temperature is float and not int
@@ -327,7 +305,7 @@ def get_logits_warper_patch(self, generation_config):
         generation_config.temperature = float(generation_config.temperature)
 
     temperature = generation_config.temperature
-    if generation_config.dynamic_temperature:
+    if generation_config.dynamic_temperature or generation_config.smoothing_factor > 0:
         # Make sure TemperatureLogitsWarper will be created by temporarily
         # setting temperature to a value != 1.
         generation_config.temperature = 1.1
@@ -361,10 +339,6 @@ def get_logits_warper_patch(self, generation_config):
         if generation_config.min_p is not None and 0.0 < generation_config.min_p <= 1.0:
             warpers_to_add.append(MinPLogitsWarper(min_p=generation_config.min_p, min_tokens_to_keep=min_tokens_to_keep))
             
-        # Add QuadraticSamplingLogitsWarper only when smoothing_factor > 0
-        if generation_config.smoothing_factor > 0:
-            warpers_to_add.append(QuadraticSamplingLogitsWarper(smoothing_factor=generation_config.smoothing_factor))
-            
     if len(warpers) > 0 and isinstance(warpers[-1], LogitNormalization):
         normalize = warpers.pop(-1)
     else:
@@ -396,7 +370,6 @@ def get_logits_processor_patch(self, **kwargs):
     presence_penalty = kwargs['generation_config'].presence_penalty
     frequency_penalty = kwargs['generation_config'].frequency_penalty
     repetition_penalty_range = kwargs['generation_config'].repetition_penalty_range
-    smoothing_factor = kwargs['generation_config'].smoothing_factor
     do_rep_pen_hijack = (repetition_penalty > 1) or (presence_penalty != 0) or (frequency_penalty != 0)
     if do_rep_pen_hijack:
         kwargs['generation_config'].repetition_penalty = 1.1  # Set to value > 1 to ensure RepetitionPenaltyLogitsProcessor is created
@@ -418,9 +391,9 @@ def generation_config_init_patch(self, **kwargs):
     self.dynatemp_low = kwargs.pop("dynatemp_low", 1)
     self.dynatemp_high = kwargs.pop("dynatemp_high", 1)
     self.dynatemp_exponent = kwargs.pop("dynatemp_exponent", 1)
+    self.smoothing_factor = kwargs.pop("smoothing_factor", 0.0)
     self.tfs = kwargs.pop("tfs", 1.0)
     self.top_a = kwargs.pop("top_a", 0.0)
-    self.smoothing_factor = kwargs.pop("smoothing_factor", 0.0)
     self.mirostat_mode = kwargs.pop("mirostat_mode", 0)
     self.mirostat_eta = kwargs.pop("mirostat_eta", 0.1)
     self.mirostat_tau = kwargs.pop("mirostat_tau", 5)
