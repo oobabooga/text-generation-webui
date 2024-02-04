@@ -129,6 +129,7 @@ group.add_argument('--numa', action='store_true', help='Activate NUMA task alloc
 group.add_argument('--logits_all', action='store_true', help='Needs to be set for perplexity evaluation to work. Otherwise, ignore it, as it makes prompt processing slower.')
 group.add_argument('--no_offload_kqv', action='store_true', help='Do not offload the  K, Q, V to the GPU. This saves VRAM but reduces the performance.')
 group.add_argument('--cache-capacity', type=str, help='Maximum cache capacity (llama-cpp-python). Examples: 2000MiB, 2GiB. When provided without units, bytes will be assumed.')
+group.add_argument('--row_split', action='store_true', help='Split multi-gpu by row instead of layer. Faster on some cards.')
 
 # ExLlama
 group = parser.add_argument_group('ExLlama')
