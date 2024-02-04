@@ -15,8 +15,12 @@ from modules import shared
 global_scores = None
 
 
-class TemperatureLogitsWarperWithDynatemp(LogitsWarper):
-    def __init__(self, temperature: float, dynamic_temperature: bool, dynatemp_low: float, dynatemp_high: float, dynatemp_exponent: float):
+class ModifiedTemperatureLogitsWarper(LogitsWarper):
+    '''
+    Based on the original Transformers temperature logits warper, this
+    adds support for dynamic temperature and quadratic sampling.
+    '''
+    def __init__(self, temperature: float, dynamic_temperature: bool, dynatemp_low: float, dynatemp_high: float, dynatemp_exponent: float, smoothing_factor: float):
         if not isinstance(temperature, float) or not (temperature > 0):
             except_msg = (
                 f"`temperature` (={temperature}) has to be a strictly positive float, otherwise your next token "
@@ -32,16 +36,27 @@ class TemperatureLogitsWarperWithDynatemp(LogitsWarper):
         self.dynatemp_low = dynatemp_low
         self.dynatemp_high = dynatemp_high
         self.dynatemp_exponent = dynatemp_exponent
+        self.smoothing_factor = smoothing_factor
 
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
 
-        # Regular temperature
-        if not self.dynamic_temperature:
-            scores = scores / self.temperature
-            return scores
+        # Quadratic sampling
+        if self.smoothing_factor > 0:
+
+            # Compute the maximum logit value
+            max_logit = scores.max()
+
+            # Apply the quadratic transformation
+            transformed_logits = -(self.smoothing_factor * (scores - max_logit)**2) + max_logit
+
+            # No need to print the top 5 logits since this is not required
+            # print("Original top 5 logits: ", torch.topk(scores, 5))
+            # print("New top 5 logits: ", torch.topk(transformed_logits, 5))
+
+            return transformed_logits
 
         # Dynamic temperature
-        else:
+        elif self.dynamic_temperature:
             min_temp = self.dynatemp_low
             max_temp = self.dynatemp_high
             exponent_val = self.dynatemp_exponent
@@ -88,6 +103,10 @@ class TemperatureLogitsWarperWithDynatemp(LogitsWarper):
 
             return scores
 
+        # Regular temperature
+        else:
+            scores = scores / self.temperature
+            return scores
 
 class MinPLogitsWarper(LogitsWarper):
     def __init__(self, min_p: float, filter_value: float = -float("Inf"), min_tokens_to_keep: int = 1):
@@ -316,12 +335,13 @@ def get_logits_warper_patch(self, generation_config):
     warpers = self._get_logits_warper_old(generation_config)
     for i in range(len(warpers)):
         if warpers[i].__class__.__name__ == 'TemperatureLogitsWarper':
-            warpers[i] = TemperatureLogitsWarperWithDynatemp(
+            warpers[i] = ModifiedTemperatureLogitsWarper(
                 temperature,
                 generation_config.dynamic_temperature,
                 generation_config.dynatemp_low,
                 generation_config.dynatemp_high,
-                generation_config.dynatemp_exponent
+                generation_config.dynatemp_exponent,
+                generation_config.smoothing_factor
             )
 
     warpers_to_add = LogitsProcessorList()
@@ -354,7 +374,7 @@ def get_logits_warper_patch(self, generation_config):
     if generation_config.temperature_last:
         temperature_idx = None
         for i in range(len(warpers)):
-            if warpers[i].__class__.__name__ in ['TemperatureLogitsWarper', 'TemperatureLogitsWarperWithDynatemp']:
+            if warpers[i].__class__.__name__ in ['TemperatureLogitsWarper', 'ModifiedTemperatureLogitsWarper']:
                 temperature_idx = i
                 break
 
