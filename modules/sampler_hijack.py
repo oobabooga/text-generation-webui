@@ -108,6 +108,7 @@ class ModifiedTemperatureLogitsWarper(LogitsWarper):
             scores = scores / self.temperature
             return scores
 
+
 class MinPLogitsWarper(LogitsWarper):
     def __init__(self, min_p: float, filter_value: float = -float("Inf"), min_tokens_to_keep: int = 1):
         if min_p < 0 or min_p > 1.0:
@@ -338,7 +339,7 @@ def get_logits_warper_patch(self, generation_config):
             warpers_to_add.append(TopALogitsWarper(top_a=generation_config.top_a, min_tokens_to_keep=min_tokens_to_keep))
         if generation_config.min_p is not None and 0.0 < generation_config.min_p <= 1.0:
             warpers_to_add.append(MinPLogitsWarper(min_p=generation_config.min_p, min_tokens_to_keep=min_tokens_to_keep))
-            
+
     if len(warpers) > 0 and isinstance(warpers[-1], LogitNormalization):
         normalize = warpers.pop(-1)
     else:
