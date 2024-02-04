@@ -12,6 +12,7 @@ class GenerationOptions(BaseModel):
     dynatemp_low: float = 1
     dynatemp_high: float = 1
     dynatemp_exponent: float = 1
+    smoothing_factor: float = 0
     top_k: int = 0
     repetition_penalty: float = 1
     repetition_penalty_range: int = 1024

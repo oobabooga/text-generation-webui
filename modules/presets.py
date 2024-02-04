@@ -17,6 +17,7 @@ def default_preset():
         'dynatemp_low': 1,
         'dynatemp_high': 1,
         'dynatemp_exponent': 1,
+        'smoothing_factor': 0,
         'top_p': 1,
         'min_p': 0,
         'top_k': 0,

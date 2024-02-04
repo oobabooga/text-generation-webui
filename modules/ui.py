@@ -120,6 +120,7 @@ def list_interface_input_elements():
         'dynatemp_low',
         'dynatemp_high',
         'dynatemp_exponent',
+        'smoothing_factor',
         'top_p',
         'min_p',
         'top_k',
