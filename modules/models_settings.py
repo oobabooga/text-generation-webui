@@ -141,6 +141,8 @@ def get_model_metadata(model):
         if re.match(pat.lower(), model.lower()):
             for k in settings[pat]:
                 model_settings[k] = settings[pat][k]
+                if k == 'loader' and settings[pat][k] == 'ExLlamav2':
+                    model_settings[k] = 'ExLlamav2_HF'
 
     return model_settings
 
