@@ -254,7 +254,6 @@ loaders_samplers = {
         'grammar_string',
         'ban_eos_token',
         'custom_token_bans',
-        'sampler_priority',
     },
     'llamacpp_HF': {
         'temperature',
