@@ -5,7 +5,6 @@ instruction_template: |-
           {%- set ns.found = true -%}
       {%- endif -%}
   {%- endfor -%}
-  
   {%- for message in messages %}
       {%- if message['role'] == 'system' -%}
           {{- '<|im_start|>system\n' + message['content'].rstrip() + '<|im_end|>\n' -}}
@@ -20,5 +19,4 @@ instruction_template: |-
   {%- if add_generation_prompt -%}
       {{-'<|im_start|>assistant\n'-}}
   {%- endif -%}
-
 
