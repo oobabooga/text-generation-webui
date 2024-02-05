@@ -50,6 +50,11 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
         else:
             generate_func = generate_reply_HF
 
+    if generate_func != generate_reply_HF and shared.args.verbose:
+        logger.info("PROMPT=")
+        print(question)
+        print()
+
     # Prepare the input
     original_question = question
     if not is_chat:
@@ -64,10 +69,6 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
 
         if type(st) is list and len(st) > 0:
             all_stop_strings += st
-
-    if shared.args.verbose:
-        logger.info("PROMPT=")
-        print(question)
 
     shared.stop_everything = False
     clear_torch_cache()
@@ -353,6 +354,10 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
         logger.info("GENERATE_PARAMS=")
         filtered_params = {key: value for key, value in generate_params.items() if not isinstance(value, torch.Tensor)}
         pprint.PrettyPrinter(indent=4, sort_dicts=False).pprint(filtered_params)
+        print()
+
+        logger.info("PROMPT=")
+        print(decode(input_ids[0], skip_special_tokens=False))
         print()
 
     t0 = time.time()
