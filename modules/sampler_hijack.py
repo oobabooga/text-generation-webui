@@ -395,8 +395,11 @@ def get_logits_warper_patch(self, generation_config):
     if generation_config.temperature_last:
         for param_name in ['temperature', 'dynamic_temperature', 'quadratic_sampling']:
             if param_name in sampler_priority:
-                index = sampler_priority.index(param_name)
-                sampler_priority.append(sampler_priority.pop(index))
+                if param_name in sampler_priority:
+                    index = sampler_priority.index(param_name)
+                    sampler_priority.append(sampler_priority.pop(index))
+                else:
+                    sampler_priority.append(param_name)
 
     class_name_to_nickname = {
         'DynamicTemperatureLogitsWarper': 'dynamic_temperature',
