@@ -6,7 +6,7 @@ exllamav2==0.0.12; platform_system == "Windows" or python_version < "3.10" or py
 gradio==3.50.*
 hqq==0.1.2.post1
 jinja2==3.1.2
-lm_eval==0.3.0
+lm_eval==0.4.1
 markdown
 numpy==1.24.*
 optimum==1.16.*
