@@ -474,7 +474,7 @@ def generation_config_init_patch(self, **kwargs):
     self.presence_penalty = kwargs.pop("presence_penalty", 0)
     self.frequency_penalty = kwargs.pop("frequency_penalty", 0)
     self.temperature_last = kwargs.pop("temperature_last", False)
-    self.sampler_priority = kwargs.pop("sampler_priority", "temperature,top_k,top_p,typical_p,epsilon_cutoff,eta_cutoff,tfs,top_a,min_p,dynamic_temperature,quadratic_sampling,mirostat")
+    self.sampler_priority = kwargs.pop("sampler_priority", "temperature,dynamic_temperature,quadratic_sampling,top_k,top_p,typical_p,epsilon_cutoff,eta_cutoff,tfs,top_a,min_p,mirostat")
 
 
 def hijack_samplers():
