@@ -166,18 +166,63 @@ def generate_chat_prompt(user_input, state, **kwargs):
         prompt = remove_extra_bos(prompt)
         return prompt
 
-    prompt = make_prompt(messages)
-
     # Handle truncation
     max_length = get_max_prompt_length(state)
-    while len(messages) > 0 and get_encoded_length(prompt) > max_length:
-        # Try to save the system message
-        if len(messages) > 1 and messages[0]['role'] == 'system':
+    prompt = make_prompt(messages)
+    encoded_length = get_encoded_length(prompt)
+
+    while len(messages) > 0 and encoded_length > max_length:
+
+        # Remove old message, save system message
+        if len(messages) > 2 and messages[0]['role'] == 'system':
             messages.pop(1)
-        else:
+
+        # Remove old message when no system message is present
+        elif len(messages) > 1 and messages[0]['role'] != 'system':
             messages.pop(0)
 
+        # Resort to truncating the user input
+        else:
+            user_message = messages[-1]['content']
+
+            messages[-1]['content'] = ''
+            prompt = make_prompt(messages)
+            encoded_length = get_encoded_length(prompt)
+
+            # Check if truncation is possible at all
+            if encoded_length <= max_length:
+
+                # Bisect the truncation point
+                left, right = 0, len(user_message) - 1
+
+                while right - left > 1:
+                    mid = (left + right) // 2
+
+                    messages[-1]['content'] = user_message[mid:]
+                    prompt = make_prompt(messages)
+                    encoded_length = get_encoded_length(prompt)
+
+                    if encoded_length <= max_length:
+                        right = mid
+                    else:
+                        left = mid
+
+                messages[-1]['content'] = user_message[right:]
+                prompt = make_prompt(messages)
+                encoded_length = get_encoded_length(prompt)
+                if encoded_length > max_length:
+                    raise ValueError("Failed")
+
+                logger.warning(f"The input is too long and has been truncated.\nContext length: {state['truncation_length']}\nmax_new_tokens: {state['max_new_tokens']} (is it too high?)")
+
+            # Truncation not possible.
+            # The system message is likely too long.
+            else:
+                logger.error("The input is too long for the available context length.\nContext length: {state['truncation_length']}\nmax_new_tokens: {state['max_new_tokens']} (is it too high?)")
+                raise ValueError
+
         prompt = make_prompt(messages)
+        encoded_length = get_encoded_length(prompt)
 
     if also_return_rows:
         return prompt, [message['content'] for message in messages]
