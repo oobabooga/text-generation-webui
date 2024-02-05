@@ -183,44 +183,33 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
         # Resort to truncating the user input
         else:
+
             user_message = messages[-1]['content']
 
-            messages[-1]['content'] = ''
-            prompt = make_prompt(messages)
-            encoded_length = get_encoded_length(prompt)
+            # Bisect the truncation point
+            left, right = 0, len(user_message) - 1
 
-            # Check if truncation is possible at all
-            if encoded_length <= max_length:
+            while right - left > 1:
+                mid = (left + right) // 2
 
-                # Bisect the truncation point
-                left, right = 0, len(user_message) - 1
-
-                while right - left > 1:
-                    mid = (left + right) // 2
-
-                    messages[-1]['content'] = user_message[mid:]
-                    prompt = make_prompt(messages)
-                    encoded_length = get_encoded_length(prompt)
-
-                    if encoded_length <= max_length:
-                        right = mid
-                    else:
-                        left = mid
-
-                messages[-1]['content'] = user_message[right:]
+                messages[-1]['content'] = user_message[mid:]
                 prompt = make_prompt(messages)
                 encoded_length = get_encoded_length(prompt)
-                if encoded_length > max_length:
-                    logger.error(f"Failed to build the chat prompt. The input is too long for the available context length.\n\nTruncation length: {state['truncation_length']}\nmax_new_tokens: {state['max_new_tokens']} (is it too high?)\nAvailable context length: {max_length}\n")
-                    raise ValueError
 
-                logger.warning(f"The input has been truncated. Context length: {state['truncation_length']}, max_new_tokens: {state['max_new_tokens']}.")
-                break
+                if encoded_length <= max_length:
+                    right = mid
+                else:
+                    left = mid
 
-            # Truncation not possible. The system message is likely too long.
-            else:
+            messages[-1]['content'] = user_message[right:]
+            prompt = make_prompt(messages)
+            encoded_length = get_encoded_length(prompt)
+            if encoded_length > max_length:
                 logger.error(f"Failed to build the chat prompt. The input is too long for the available context length.\n\nTruncation length: {state['truncation_length']}\nmax_new_tokens: {state['max_new_tokens']} (is it too high?)\nAvailable context length: {max_length}\n")
                 raise ValueError
+            else:
+                logger.warning(f"The input has been truncated. Context length: {state['truncation_length']}, max_new_tokens: {state['max_new_tokens']}.")
+                break
 
         prompt = make_prompt(messages)
         encoded_length = get_encoded_length(prompt)
