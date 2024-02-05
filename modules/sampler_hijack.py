@@ -209,6 +209,7 @@ class MirostatLogitsWarper(LogitsWarper):
     def __init__(self, mirostat_mode: int, mirostat_tau: float, mirostat_eta: float, filter_value: float = -float("Inf"), min_tokens_to_keep: int = 1):
         if mirostat_mode not in [2]:
             raise ValueError(f"`mirostat` has to be a an integer 2, but is {mirostat_mode}")
+
         self.mirostat_mode = mirostat_mode
         self.mirostat_eta = mirostat_eta
         self.mirostat_tau = mirostat_tau
@@ -301,6 +302,7 @@ class RepetitionPenaltyLogitsProcessorWithRange(LogitsProcessor):
 
 
 def get_logits_warper_patch(self, generation_config):
+
     # Make sure that temperature is float and not int
     if isinstance(generation_config.temperature, int):
         generation_config.temperature = float(generation_config.temperature)
@@ -346,7 +348,44 @@ def get_logits_warper_patch(self, generation_config):
         normalize = None
 
     warpers += warpers_to_add
-    if generation_config.temperature_last:
+
+    # Custom sampler order
+    if generation_config.sampler_priority != "":
+
+        # Create a dictionary to map class names to their nicknames
+        class_name_to_nickname = {
+            'EpsilonLogitsWarper': 'epsilon_cutoff',
+            'EtaLogitsWarper': 'eta_cutoff',
+            'MinPLogitsWarper': 'min_p',
+            'MirostatLogitsWarper': 'mirostat',
+            'ModifiedTemperatureLogitsWarper': 'temperature',
+            'TailFreeLogitsWarper': 'tfs',
+            'TopALogitsWarper': 'top_a',
+            'TopKLogitsWarper': 'top_k',
+            'TopPLogitsWarper': 'top_p',
+            'TypicalLogitsWarper': 'typical_p'
+        }
+
+        # Assumed to be passed as a comma-separated list of parameters
+        # Example: eta_cutoff,typical_p,temperature,min_p
+        sampler_priority = [x.strip() for x in generation_config.sampler_priority.split(',')]
+
+        def custom_sort_key(obj):
+            class_name = obj.__class__.__name__
+
+            # Return a large value if class name is not mapped or if the mapped nickname is not in priority
+            if class_name not in class_name_to_nickname or class_name_to_nickname[class_name] not in sampler_priority:
+                return float('inf')
+
+            # Return the index of the nickname in the priority list for sorting
+            return sampler_priority.index(class_name_to_nickname[class_name])
+
+        # Sort the list using the custom key function
+        warpers = sorted(warpers, key=custom_sort_key)
+
+    # Move temperature to the end if temperature_last is set
+    # and sampler_priority is not set
+    elif generation_config.temperature_last:
         temperature_idx = None
         for i in range(len(warpers)):
             if warpers[i].__class__.__name__ in ['TemperatureLogitsWarper', 'ModifiedTemperatureLogitsWarper']:
@@ -361,8 +400,9 @@ def get_logits_warper_patch(self, generation_config):
 
     warpers.append(SpyLogitsWarper())
     warpers = LogitsProcessorList(warpers)
-    # for i in range(len(warpers)):
-    #     print(warpers[i].__class__.__name__)
+    for i in range(len(warpers)):
+        print(warpers[i].__class__.__name__)
+
     return warpers
 
 
@@ -402,6 +442,7 @@ def generation_config_init_patch(self, **kwargs):
     self.presence_penalty = kwargs.pop("presence_penalty", 0)
     self.frequency_penalty = kwargs.pop("frequency_penalty", 0)
     self.temperature_last = kwargs.pop("temperature_last", False)
+    self.sampler_priority = kwargs.pop("sampler_priority", "")
 
 
 def hijack_samplers():
