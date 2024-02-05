@@ -16,7 +16,7 @@ Pillow>=9.5.0
 pyyaml
 requests
 rich
-safetensors==0.4.1
+safetensors==0.4.*
 scipy
 sentencepiece
 tensorboard
