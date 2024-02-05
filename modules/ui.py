@@ -93,6 +93,7 @@ def list_model_elements():
         'numa',
         'logits_all',
         'no_offload_kqv',
+        'row_split',
         'tensorcores',
         'hqq_backend',
     ]
