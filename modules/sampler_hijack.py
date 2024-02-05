@@ -421,7 +421,6 @@ def get_logits_warper_patch(self, generation_config):
 
         # Return a large value if class name is not mapped or if the mapped nickname is not in priority
         if class_name not in class_name_to_nickname or class_name_to_nickname[class_name] not in sampler_priority:
-            print("----------------------------->", class_name)
             return float('inf')
 
         # Return the index of the nickname in the priority list for sorting
