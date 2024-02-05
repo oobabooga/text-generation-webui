@@ -389,7 +389,7 @@ def get_logits_warper_patch(self, generation_config):
     # Sort the samplers
     # sampler_priority is assumed to contain parameters separated by newlines or commas.
     # Example: eta_cutoff,typical_p,temperature,min_p
-    sampler_priority = [x.strip() for x in generation_config.sampler_priority.replace('\n', ',').split(',')]
+    sampler_priority = [x.strip() for x in generation_config.sampler_priority.replace('\n', ',').split(',') if x.strip()]
 
     # Handle temperature_last
     if generation_config.temperature_last:
@@ -425,8 +425,7 @@ def get_logits_warper_patch(self, generation_config):
         return sampler_priority.index(class_name_to_nickname[class_name])
 
     # Sort the list using the custom key function
-    if False:
-        warpers = sorted(warpers, key=custom_sort_key)
+    warpers = sorted(warpers, key=custom_sort_key)
 
     if normalize is not None:
         warpers.append(normalize)
