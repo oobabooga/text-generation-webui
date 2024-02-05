@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
+from modules.utils import recursive_path_search
 
 import torch
 from torch.nn import CrossEntropyLoss
@@ -188,13 +189,15 @@ class LlamacppHF(PreTrainedModel):
         if isinstance(pretrained_model_name_or_path, str):
             pretrained_model_name_or_path = Path(pretrained_model_name_or_path)
 
-        path = Path(f'{shared.args.model_dir}') / Path(pretrained_model_name_or_path)
-        if path.is_file():
-            model_file = path
+        model_dir = Path(shared.args.model_dir)
+        search_path = recursive_path_search(model_dir, pretrained_model_name_or_path)
+        if search_path is not None and search_path.is_file() and search_path.suffix == '.gguf':
+            path_to_model_file = search_path
         else:
-            model_file = list(path.glob('*.gguf'))[0]
-
-        logger.info(f"llama.cpp weights detected: {model_file}\n")
+            gguf_file_path = recursive_path_search(model_dir, '*.gguf')
+            if gguf_file_path is not None:
+                path_to_model_file = gguf_file_path
+            logger.info(f"llama.cpp weights detected: {path_to_model_file}\n")
 
         if shared.args.tensor_split is None or shared.args.tensor_split.strip() == '':
             tensor_split_list = None
@@ -202,7 +205,7 @@ class LlamacppHF(PreTrainedModel):
             tensor_split_list = [float(x) for x in shared.args.tensor_split.strip().split(",")]
 
         params = {
-            'model_path': str(model_file),
+            'model_path': str(path_to_model_file),
             'n_ctx': shared.args.n_ctx,
             'n_threads': shared.args.threads or None,
             'n_threads_batch': shared.args.threads_batch or None,
@@ -222,4 +225,4 @@ class LlamacppHF(PreTrainedModel):
         Llama = llama_cpp_lib().Llama
         model = Llama(**params)
 
-        return LlamacppHF(model, model_file)
+        return LlamacppHF(model, path_to_model_file)

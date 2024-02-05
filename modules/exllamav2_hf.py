@@ -2,6 +2,7 @@ import os
 import traceback
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
+from modules.utils import recursive_path_search
 
 import torch
 from exllamav2 import (
@@ -155,8 +156,9 @@ class Exllamav2HF(PreTrainedModel):
         if isinstance(pretrained_model_name_or_path, str):
             pretrained_model_name_or_path = Path(pretrained_model_name_or_path)
 
-        pretrained_model_name_or_path = Path(f'{shared.args.model_dir}') / Path(pretrained_model_name_or_path)
-
+        model_dir = Path(shared.args.model_dir)
+        pretrained_model_name_or_path = recursive_path_search(model_dir, pretrained_model_name_or_path)
+        
         config = ExLlamaV2Config()
         config.model_dir = str(pretrained_model_name_or_path)
         config.prepare()

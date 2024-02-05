@@ -3,6 +3,7 @@ import re
 from pathlib import Path
 
 import accelerate
+from modules.utils import recursive_path_search
 import torch
 import transformers
 from accelerate.utils import is_xpu_available
@@ -72,11 +73,16 @@ def _load_quant(model, checkpoint, wbits, groupsize=-1, faster_kernel=False, exc
 def find_quantized_model_file(model_name):
     if shared.args.checkpoint:
         return Path(shared.args.checkpoint)
-
-    path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
+    
+    model_dir = Path(shared.args.model_dir)
+    search_path = recursive_path_search(model_dir, model_name)
+    if search_path is not None:
+        path_to_model_dir = search_path
+    else:
+        path_to_model_dir = Path(f"{shared.args.model_dir}/{model_name}/")
     pt_path = None
     priority_name_list = [
-        Path(f'{shared.args.model_dir}/{model_name}{hyphen}{shared.args.wbits}bit{group}{ext}')
+        Path(f'{path_to_model_dir}{hyphen}{shared.args.wbits}bit{group}{ext}')
         for group in ([f'-{shared.args.groupsize}g', ''] if shared.args.groupsize > 0 else [''])
         for ext in ['.safetensors', '.pt']
         for hyphen in ['-', f'/{model_name}-', '/']
@@ -91,7 +97,7 @@ def find_quantized_model_file(model_name):
     # or the last .safetensors found in its folder as a last resort
     if not pt_path:
         for ext in ['.pt', '.safetensors']:
-            found = list(path_to_model.glob(f"*{ext}"))
+            found = list(path_to_model_dir.glob(f"*{ext}"))
             if len(found) > 0:
                 if len(found) > 1:
                     logger.warning(f'More than one {ext} model has been found. The last one will be selected. It could be wrong.')
@@ -123,7 +129,8 @@ def load_quantized(model_name):
         exit()
 
     # Find the quantized model weights file (.pt/.safetensors)
-    path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
+    models_dir = Path(shared.args.model_dir)
+    path_to_model_dir = recursive_path_search(models_dir, model_name)
     pt_path = find_quantized_model_file(model_name)
     if not pt_path:
         logger.error("Could not find the quantized model in .pt or .safetensors format. Exiting.")
@@ -138,10 +145,10 @@ def load_quantized(model_name):
         else:
             pre_layer = shared.args.pre_layer
 
-        model = load_quant(str(path_to_model), str(pt_path), shared.args.wbits, shared.args.groupsize, pre_layer)
+        model = load_quant(str(path_to_model_dir), str(pt_path), shared.args.wbits, shared.args.groupsize, pre_layer)
     else:
         threshold = False if model_type == 'gptj' else 128
-        model = load_quant(str(path_to_model), str(pt_path), shared.args.wbits, shared.args.groupsize, kernel_switch_threshold=threshold)
+        model = load_quant(str(path_to_model_dir), str(pt_path), shared.args.wbits, shared.args.groupsize, kernel_switch_threshold=threshold)
 
         # accelerate offload (doesn't work properly)
         if shared.args.gpu_memory or torch.cuda.device_count() > 1 or (is_xpu_available() and torch.xpu.device_count() > 1):

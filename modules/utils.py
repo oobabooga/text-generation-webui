@@ -52,6 +52,17 @@ def delete_file(fname):
         logger.info(f'Deleted \"{fname}\".')
 
 
+def recursive_path_search(directory, pattern):
+    for item in directory.iterdir():
+        if item.is_dir():
+            result = recursive_path_search(item, pattern)
+            if result is not None:
+                return result
+        elif item.match == pattern:
+            return item
+    return None
+
+
 def current_time():
     return f"{datetime.now().strftime('%Y-%m-%d-%H%M%S')}"
 
@@ -74,8 +85,12 @@ def natural_keys(text):
 
 def get_available_models():
     model_list = []
-    for item in list(Path(f'{shared.args.model_dir}/').glob('*')):
-        if not item.name.endswith(('.txt', '-np', '.pt', '.json', '.yaml', '.py')) and 'llama-tokenizer' not in item.name:
+    for item in list(Path(shared.args.model_dir).glob('*')):
+        if item.is_dir():
+            model_file = recursive_path_search(item, '*.pth')
+            if model_file is not None and 'llama-tokenizer' not in model_file.name:
+                model_list.append(re.sub('.pth$', '', model_file.name))
+        elif not item.name.endswith(('.txt', '-np', '.pt', '.json', '.yaml', '.py')) and 'llama-tokenizer' not in item.name:
             model_list.append(re.sub('.pth$', '', item.name))
 
     return ['None'] + sorted(model_list, key=natural_keys)
@@ -132,3 +147,4 @@ def get_available_chat_styles():
 
 def get_available_grammars():
     return ['None'] + sorted([item.name for item in list(Path('grammars').glob('*.gbnf'))], key=natural_keys)
+

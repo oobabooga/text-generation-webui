@@ -6,10 +6,12 @@ from auto_gptq import AutoGPTQForCausalLM, BaseQuantizeConfig
 import modules.shared as shared
 from modules.logging_colors import logger
 from modules.models import get_max_memory_dict
+from modules.utils import recursive_path_search
 
 
 def load_quantized(model_name):
-    path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
+    models_dir = Path(shared.args.model_dir)
+    path_to_model_dir = recursive_path_search(models_dir, model_name)
     pt_path = None
 
     # Find the model checkpoint
@@ -17,7 +19,7 @@ def load_quantized(model_name):
         pt_path = Path(shared.args.checkpoint)
     else:
         for ext in ['.safetensors', '.pt', '.bin']:
-            found = list(path_to_model.glob(f"*{ext}"))
+            found = list(path_to_model_dir.glob(f"*{ext}"))
             if len(found) > 0:
                 if len(found) > 1:
                     logger.warning(f'More than one {ext} model has been found. The last one will be selected. It could be wrong.')
@@ -30,7 +32,7 @@ def load_quantized(model_name):
         return
 
     use_safetensors = pt_path.suffix == '.safetensors'
-    if not (path_to_model / "quantize_config.json").exists():
+    if not (path_to_model_dir / "quantize_config.json").exists():
         quantize_config = BaseQuantizeConfig(
             bits=bits if (bits := shared.args.wbits) > 0 else 4,
             group_size=gs if (gs := shared.args.groupsize) > 0 else -1,
@@ -56,7 +58,7 @@ def load_quantized(model_name):
     }
 
     logger.info(f"The AutoGPTQ params are: {params}")
-    model = AutoGPTQForCausalLM.from_quantized(path_to_model, **params)
+    model = AutoGPTQForCausalLM.from_quantized(path_to_model_dir, **params)
 
     # These lines fix the multimodal extension when used with AutoGPTQ
     if hasattr(model, 'model'):

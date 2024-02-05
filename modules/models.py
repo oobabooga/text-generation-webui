@@ -5,6 +5,7 @@ import re
 import time
 import traceback
 from pathlib import Path
+from modules.utils import recursive_path_search
 
 import torch
 import transformers
@@ -109,15 +110,23 @@ def load_model(model_name, loader=None):
 
 def load_tokenizer(model_name, model):
     tokenizer = None
-    path_to_model = Path(f"{shared.args.model_dir}/{model_name}/")
-    if any(s in model_name.lower() for s in ['gpt-4chan', 'gpt4chan']) and Path(f"{shared.args.model_dir}/gpt-j-6B/").exists():
-        tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/gpt-j-6B/"))
-    elif path_to_model.exists():
+    models_dir = Path(shared.args.model_dir)
+    search_path = recursive_path_search(models_dir, model_name)
+    if search_path is not None:
+        path_to_model_file = search_path
+    else:
+        path_to_model_file = Path(f"{shared.args.model_dir}/{model_name}/")
+        
+    if any(s in model_name.lower() for s in ['gpt-4chan', 'gpt4chan']):
+        gpt_j_path = recursive_path_search(models_dir, 'gpt-j-6B')
+        if gpt_j_path is not None and gpt_j_path.exists():
+            tokenizer = AutoTokenizer.from_pretrained(gpt_j_path)
+    elif path_to_model_file.exists():
         if shared.args.no_use_fast:
             logger.info('Loading the tokenizer with use_fast=False.')
 
         tokenizer = AutoTokenizer.from_pretrained(
-            path_to_model,
+            path_to_model_file,
             trust_remote_code=shared.args.trust_remote_code,
             use_fast=not shared.args.no_use_fast
         )
@@ -126,7 +135,12 @@ def load_tokenizer(model_name, model):
 
 
 def huggingface_loader(model_name):
-    path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
+    model_dir = Path(shared.args.model_dir)
+    search_path = recursive_path_search(model_dir, model_name)
+    if search_path is not None:
+        path_to_model_file = search_path
+    else:
+        path_to_model_file = Path(f"{shared.args.model_dir}/{model_name}/")
     params = {
         'low_cpu_mem_usage': True,
         'trust_remote_code': shared.args.trust_remote_code,
@@ -137,7 +151,7 @@ def huggingface_loader(model_name):
     if shared.args.use_flash_attention_2:
         params['use_flash_attention_2'] = True
 
-    config = AutoConfig.from_pretrained(path_to_model, trust_remote_code=params['trust_remote_code'])
+    config = AutoConfig.from_pretrained(path_to_model_file, trust_remote_code=params['trust_remote_code'])
 
     if 'chatglm' in model_name.lower():
         LoaderClass = AutoModel
@@ -150,7 +164,7 @@ def huggingface_loader(model_name):
 
     # Load the model in simple 16-bit mode by default
     if not any([shared.args.cpu, shared.args.load_in_8bit, shared.args.load_in_4bit, shared.args.auto_devices, shared.args.disk, shared.args.deepspeed, shared.args.gpu_memory is not None, shared.args.cpu_memory is not None, shared.args.compress_pos_emb > 1, shared.args.alpha_value > 1, shared.args.disable_exllama, shared.args.disable_exllamav2]):
-        model = LoaderClass.from_pretrained(path_to_model, **params)
+        model = LoaderClass.from_pretrained(path_to_model_file, **params)
         if torch.backends.mps.is_available():
             device = torch.device('mps')
             model = model.to(device)
@@ -162,7 +176,7 @@ def huggingface_loader(model_name):
 
     # DeepSpeed ZeRO-3
     elif shared.args.deepspeed:
-        model = LoaderClass.from_pretrained(path_to_model, torch_dtype=params['torch_dtype'], trust_remote_code=params['trust_remote_code'])
+        model = LoaderClass.from_pretrained(path_to_model_file, torch_dtype=params['torch_dtype'], trust_remote_code=params['trust_remote_code'])
         model = deepspeed.initialize(model=model, config_params=ds_config, model_parameters=None, optimizer=None, lr_scheduler=None)[0]
         model.module.eval()  # Inference
         logger.info(f'DeepSpeed ZeRO-3 is enabled: {is_deepspeed_zero3_enabled()}')
@@ -232,7 +246,7 @@ def huggingface_loader(model_name):
         elif shared.args.alpha_value > 1:
             params['rope_scaling'] = {'type': 'dynamic', 'factor': RoPE.get_alpha_value(shared.args.alpha_value, shared.args.rope_freq_base)}
 
-        model = LoaderClass.from_pretrained(path_to_model, **params)
+        model = LoaderClass.from_pretrained(path_to_model_file, **params)
 
     return model
 
@@ -240,24 +254,28 @@ def huggingface_loader(model_name):
 def llamacpp_loader(model_name):
     from modules.llamacpp_model import LlamaCppModel
 
-    path = Path(f'{shared.args.model_dir}/{model_name}')
-    if path.is_file():
-        model_file = path
+    models_dir = Path(shared.args.model_dir)
+    search_path = recursive_path_search(models_dir, model_name)
+    if search_path is not None and search_path.is_file() and search_path.suffix == '.gguf':
+        path_to_model_file = search_path
     else:
-        model_file = list(Path(f'{shared.args.model_dir}/{model_name}').glob('*.gguf'))[0]
+        gguf_file_path = recursive_path_search(models_dir, '*.gguf')
+        if gguf_file_path is not None:
+            path_to_model_file = gguf_file_path
 
-    logger.info(f"llama.cpp weights detected: {model_file}")
-    model, tokenizer = LlamaCppModel.from_pretrained(model_file)
+    logger.info(f"llama.cpp weights detected: {path_to_model_file}")
+    model, tokenizer = LlamaCppModel.from_pretrained(path_to_model_file)
     return model, tokenizer
 
 
 def llamacpp_HF_loader(model_name):
     from modules.llamacpp_hf import LlamacppHF
 
-    for fname in [model_name, "oobabooga_llama-tokenizer", "llama-tokenizer"]:
-        path = Path(f'{shared.args.model_dir}/{fname}')
-        if all((path / file).exists() for file in ['tokenizer_config.json', 'special_tokens_map.json', 'tokenizer.model']):
-            logger.info(f'Using tokenizer from: {path}')
+    models_dir = Path(shared.args.model_dir)
+    for file_name in [model_name, "oobabooga_llama-tokenizer", "llama-tokenizer"]:
+        path_to_model_file = recursive_path_search(models_dir, file_name)
+        if path_to_model_file is not None and all((path_to_model_file / file).exists() for file in ['tokenizer_config.json', 'special_tokens_map.json', 'tokenizer.model']):
+            logger.info(f'Using tokenizer from: {path_to_model_file}')
             break
     else:
         logger.error("Could not load the model because a tokenizer in transformers format was not found. Please download oobabooga/llama-tokenizer.")
@@ -267,7 +285,7 @@ def llamacpp_HF_loader(model_name):
         logger.info('Loading the tokenizer with use_fast=False.')
 
     tokenizer = AutoTokenizer.from_pretrained(
-        path,
+        path_to_model_file,
         trust_remote_code=shared.args.trust_remote_code,
         use_fast=not shared.args.no_use_fast
     )
@@ -279,43 +297,48 @@ def llamacpp_HF_loader(model_name):
 def ctransformers_loader(model_name):
     from modules.ctransformers_model import CtransformersModel
 
-    path = Path(f'{shared.args.model_dir}/{model_name}')
+    models_dir = Path(shared.args.model_dir)
+    search_path = recursive_path_search(models_dir, model_name)
     ctrans = CtransformersModel()
     if ctrans.model_type_is_auto():
-        model_file = path
+        path_to_model_file = search_path
     else:
-        if path.is_file():
-            model_file = path
+        if search_path is not None and search_path.is_file():
+            path_to_model_file = search_path
         else:
-            entries = Path(f'{shared.args.model_dir}/{model_name}')
-            gguf = list(entries.glob('*.gguf'))
-            bin = list(entries.glob('*.bin'))
-            if len(gguf) > 0:
-                model_file = gguf[0]
-            elif len(bin) > 0:
-                model_file = bin[0]
+            gguf = recursive_path_search(models_dir, '*.gguf')
+            bin = recursive_path_search(models_dir, '*.bin')
+            if gguf is not None:
+                path_to_model_file = gguf
+            elif bin is not None:
+                path_to_model_file = bin
             else:
                 logger.error("Could not find a model for ctransformers.")
                 return None, None
 
-    logger.info(f'ctransformers weights detected: {model_file}')
-    model, tokenizer = ctrans.from_pretrained(model_file)
+    logger.info(f'ctransformers weights detected: {path_to_model_file}')
+    model, tokenizer = ctrans.from_pretrained(path_to_model_file)
     return model, tokenizer
 
 
 def AutoAWQ_loader(model_name):
     from awq import AutoAWQForCausalLM
 
-    model_dir = Path(f'{shared.args.model_dir}/{model_name}')
+    models_dir = Path(shared.args.model_dir)
+    search_path = recursive_path_search(models_dir, model_name)
+    if search_path is not None:
+        path_to_model_dir = search_path
+    else:
+        path_to_model_dir = Path(f"{shared.args.model_dir}/{model_name}/")
 
     model = AutoAWQForCausalLM.from_quantized(
-        quant_path=model_dir,
+        quant_path=path_to_model_dir,
         max_new_tokens=shared.args.max_seq_len,
         trust_remote_code=shared.args.trust_remote_code,
         fuse_layers=not shared.args.no_inject_fused_attention,
         max_memory=get_max_memory_dict(),
         batch_size=1,
-        safetensors=any(model_dir.glob('*.safetensors')),
+        safetensors=any(path_to_model_dir.glob('*.safetensors')),
     )
 
     return model
@@ -338,13 +361,18 @@ def QuipSharp_loader(model_name):
     if len(handlers) > 1:
         logging.getLogger().removeHandler(handlers[1])
 
-    model_dir = Path(f'{shared.args.model_dir}/{model_name}')
-    if not all((model_dir / file).exists() for file in ['tokenizer_config.json', 'special_tokens_map.json', 'tokenizer.model']):
-        logger.error(f"Could not load the model because the tokenizer files could not be found in the model folder. Please download the following files from the original (unquantized) model into {model_dir}: special_tokens_map.json, tokenizer.json, tokenizer.model, tokenizer_config.json.")
+    model_dir = Path(shared.args.model_dir)
+    search_path = recursive_path_search(model_dir, model_name)
+    if search_path is not None:
+        path_to_model_dir = search_path
+    else:
+        path_to_model_dir = Path(f"{shared.args.model_dir}/{model_name}/")
+    if not all((path_to_model_dir / file).exists() for file in ['tokenizer_config.json', 'special_tokens_map.json', 'tokenizer.model']):
+        logger.error(f"Could not load the model because the tokenizer files could not be found in the model folder. Please download the following files from the original (unquantized) model into {path_to_model_dir}: special_tokens_map.json, tokenizer.json, tokenizer.model, tokenizer_config.json.")
         return None, None
 
     model, model_str = model_from_hf_path(
-        model_dir,
+        path_to_model_dir,
         use_cuda_graph=False,
         use_flash_attn=not shared.args.no_flash_attn
     )
@@ -395,8 +423,13 @@ def HQQ_loader(model_name):
 
     logger.info(f"Loading HQQ model with backend: {shared.args.hqq_backend}")
 
-    model_dir = Path(f'{shared.args.model_dir}/{model_name}')
-    model = HQQModelForCausalLM.from_quantized(str(model_dir))
+    model_dir = Path(shared.args.model_dir)
+    search_path = recursive_path_search(model_dir, model_name)
+    if search_path is not None:
+        path_to_model_file = search_path
+    else:
+        path_to_model_file = Path(f"{shared.args.model_dir}/{model_name}/")
+    model = HQQModelForCausalLM.from_quantized(str(path_to_model_file))
     HQQLinear.set_backend(getattr(HQQBackend, shared.args.hqq_backend))
     return model
 

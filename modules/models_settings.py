@@ -5,6 +5,7 @@ from pathlib import Path
 import yaml
 
 from modules import chat, loaders, metadata_gguf, shared, ui
+from modules.utils import recursive_path_search
 
 
 def get_fallback_settings():
@@ -23,19 +24,21 @@ def get_fallback_settings():
     }
 
 
-def get_model_metadata(model):
+def get_model_metadata(model_name):
     model_settings = {}
 
     # Get settings from models/config.yaml and models/config-user.yaml
     settings = shared.model_config
     for pat in settings:
-        if re.match(pat.lower(), model.lower()):
+        if re.match(pat.lower(), model_name.lower()):
             for k in settings[pat]:
                 model_settings[k] = settings[pat][k]
 
-    path = Path(f'{shared.args.model_dir}/{model}/config.json')
-    if path.exists():
-        hf_metadata = json.loads(open(path, 'r', encoding='utf-8').read())
+    models_dir = Path(shared.args.model_dir)
+    path_to_model_dir = recursive_path_search(models_dir, model_name)
+    config_path = Path(f'{path_to_model_dir}/config.json')
+    if config_path.exists():
+        hf_metadata = json.loads(open(config_path, 'r', encoding='utf-8').read())
     else:
         hf_metadata = None
 
@@ -43,17 +46,16 @@ def get_model_metadata(model):
         if hf_metadata is not None and 'quip_params' in hf_metadata:
             loader = 'QuIP#'
         else:
-            loader = infer_loader(model, model_settings)
+            loader = infer_loader(model_name, model_settings)
 
         model_settings['loader'] = loader
 
     # GGUF metadata
     if model_settings['loader'] in ['llama.cpp', 'llamacpp_HF', 'ctransformers']:
-        path = Path(f'{shared.args.model_dir}/{model}')
-        if path.is_file():
-            model_file = path
+        if path_to_model_dir.is_file():
+            model_file = path_to_model_dir
         else:
-            model_file = list(path.glob('*.gguf'))[0]
+            model_file = list(path_to_model_dir.glob('*.gguf'))[0]
 
         metadata = metadata_gguf.load_metadata(model_file)
         if 'llama.context_length' in metadata:
@@ -76,7 +78,7 @@ def get_model_metadata(model):
     else:
         # Transformers metadata
         if hf_metadata is not None:
-            metadata = json.loads(open(path, 'r', encoding='utf-8').read())
+            metadata = json.loads(open(config_path, 'r', encoding='utf-8').read())
             if 'max_position_embeddings' in metadata:
                 model_settings['truncation_length'] = metadata['max_position_embeddings']
                 model_settings['max_seq_len'] = metadata['max_position_embeddings']
@@ -97,9 +99,9 @@ def get_model_metadata(model):
                     model_settings['desc_act'] = metadata['quantization_config']['desc_act']
 
         # Read AutoGPTQ metadata
-        path = Path(f'{shared.args.model_dir}/{model}/quantize_config.json')
-        if path.exists():
-            metadata = json.loads(open(path, 'r', encoding='utf-8').read())
+        config_path = Path(f'{path_to_model_dir}/quantize_config.json')
+        if config_path.exists():
+            metadata = json.loads(open(config_path, 'r', encoding='utf-8').read())
             if 'bits' in metadata:
                 model_settings['wbits'] = metadata['bits']
             if 'group_size' in metadata:
@@ -108,9 +110,9 @@ def get_model_metadata(model):
                 model_settings['desc_act'] = metadata['desc_act']
 
     # Try to find the Jinja instruct template
-    path = Path(f'{shared.args.model_dir}/{model}') / 'tokenizer_config.json'
-    if path.exists():
-        metadata = json.loads(open(path, 'r', encoding='utf-8').read())
+    tokenizer_path = Path(f'{path_to_model_dir}') / 'tokenizer_config.json'
+    if tokenizer_path.exists():
+        metadata = json.loads(open(tokenizer_path, 'r', encoding='utf-8').read())
         if 'chat_template' in metadata:
             template = metadata['chat_template']
             for k in ['eos_token', 'bos_token']:
@@ -138,7 +140,7 @@ def get_model_metadata(model):
     # Apply user settings from models/config-user.yaml
     settings = shared.user_config
     for pat in settings:
-        if re.match(pat.lower(), model.lower()):
+        if re.match(pat.lower(), model_name.lower()):
             for k in settings[pat]:
                 model_settings[k] = settings[pat][k]
 
@@ -146,14 +148,15 @@ def get_model_metadata(model):
 
 
 def infer_loader(model_name, model_settings):
-    path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
-    if not path_to_model.exists():
+    models_dir = Path(shared.args.model_dir)
+    path_to_model_dir = recursive_path_search(models_dir, model_name)
+    if not path_to_model_dir.exists():
         loader = None
-    elif (path_to_model / 'quantize_config.json').exists() or ('wbits' in model_settings and type(model_settings['wbits']) is int and model_settings['wbits'] > 0):
+    elif (path_to_model_dir / 'quantize_config.json').exists() or ('wbits' in model_settings and type(model_settings['wbits']) is int and model_settings['wbits'] > 0):
         loader = 'ExLlamav2_HF'
-    elif (path_to_model / 'quant_config.json').exists() or re.match(r'.*-awq', model_name.lower()):
+    elif (path_to_model_dir / 'quant_config.json').exists() or re.match(r'.*-awq', model_name.lower()):
         loader = 'AutoAWQ'
-    elif len(list(path_to_model.glob('*.gguf'))) > 0:
+    elif len(list(path_to_model_dir.glob('*.gguf'))) > 0:
         loader = 'llama.cpp'
     elif re.match(r'.*\.gguf', model_name.lower()):
         loader = 'llama.cpp'
@@ -238,32 +241,34 @@ def apply_model_settings_to_state(model, state):
     return state
 
 
-def save_model_settings(model, state):
+def save_model_settings(model_name, state):
     '''
     Save the settings for this model to models/config-user.yaml
     '''
-    if model == 'None':
+    if model_name == 'None':
         yield ("Not saving the settings because no model is loaded.")
         return
 
-    with Path(f'{shared.args.model_dir}/config-user.yaml') as p:
-        if p.exists():
-            user_config = yaml.safe_load(open(p, 'r').read())
-        else:
-            user_config = {}
+    models_dir = Path(shared.args.model_dir)
+    path_to_model_dir = recursive_path_search(models_dir, model_name)
+    config_path = Path(f'{path_to_model_dir}/config-user.yaml')
+    if config_path.exists():
+        user_config = yaml.safe_load(open(config_path, 'r').read())
+    else:
+        user_config = {}
 
-        model_regex = model + '$'  # For exact matches
-        if model_regex not in user_config:
-            user_config[model_regex] = {}
+    model_regex = model_name + '$'  # For exact matches
+    if model_regex not in user_config:
+        user_config[model_regex] = {}
 
-        for k in ui.list_model_elements():
-            if k == 'loader' or k in loaders.loaders_and_params[state['loader']]:
-                user_config[model_regex][k] = state[k]
+    for k in ui.list_model_elements():
+        if k == 'loader' or k in loaders.loaders_and_params[state['loader']]:
+            user_config[model_regex][k] = state[k]
 
-        shared.user_config = user_config
+    shared.user_config = user_config
 
-        output = yaml.dump(user_config, sort_keys=False)
-        with open(p, 'w') as f:
-            f.write(output)
+    output = yaml.dump(user_config, sort_keys=False)
+    with open(config_path, 'w') as f:
+        f.write(output)
 
-        yield (f"Settings for `{model}` saved to `{p}`.")
+    yield (f"Settings for `{model_name}` saved to `{config_path}`.")

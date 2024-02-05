@@ -15,14 +15,20 @@ from alpaca_lora_4bit.monkeypatch.peft_tuners_lora_monkey_patch import (
 
 from modules import shared
 from modules.GPTQ_loader import find_quantized_model_file
+from modules.utils import recursive_path_search
 
 replace_peft_model_with_int4_lora_model()
 
 
 def load_model_llama(model_name):
-    config_path = str(Path(f'{shared.args.model_dir}/{model_name}'))
+    model_dir = Path(shared.args.model_dir)
+    search_path = recursive_path_search(model_dir, model_name)
+    if search_path is not None:
+        path_to_model_dir = search_path
+    else:
+        path_to_model_dir = Path(f"{shared.args.model_dir}/{model_name}/")
     model_path = str(find_quantized_model_file(model_name))
-    model, tokenizer = load_llama_model_4bit_low_ram(config_path, model_path, groupsize=shared.args.groupsize, is_v1_model=False)
+    model, tokenizer = load_llama_model_4bit_low_ram(path_to_model_dir, model_path, groupsize=shared.args.groupsize, is_v1_model=False)
     for _, m in model.named_modules():
         if isinstance(m, Autograd4bitQuantLinear) or isinstance(m, Linear4bitLt):
             if m.is_v1_model:
