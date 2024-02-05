@@ -353,7 +353,7 @@ def get_logits_warper_patch(self, generation_config):
             )
         )
 
-    if generation_config.dynamic_temperature > 0:
+    if generation_config.dynamic_temperature:
         warpers_to_add.append(
             DynamicTemperatureLogitsWarper(
                 dynatemp_low=generation_config.dynatemp_low,
@@ -386,7 +386,7 @@ def get_logits_warper_patch(self, generation_config):
 
     warpers += warpers_to_add
 
-    # Sort the samplers
+    # Sort the samplers.
     # sampler_priority is assumed to contain parameters separated by newlines or commas.
     # Example: eta_cutoff,typical_p,temperature,min_p
     sampler_priority = [x.strip() for x in generation_config.sampler_priority.replace('\n', ',').split(',') if x.strip()]
