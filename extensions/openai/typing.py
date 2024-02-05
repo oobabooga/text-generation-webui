@@ -40,6 +40,7 @@ class GenerationOptions(BaseModel):
     max_tokens_second: int = 0
     prompt_lookup_num_tokens: int = 0
     custom_token_bans: str = ""
+    sampler_priority: str = ""
     auto_max_new_tokens: bool = False
     ban_eos_token: bool = False
     add_bos_token: bool = True

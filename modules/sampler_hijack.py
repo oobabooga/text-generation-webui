@@ -14,7 +14,7 @@ from modules import shared
 global_scores = None
 
 
-class ModifiedTemperatureLogitsWarper(LogitsWarper):
+class TemperatureLogitsWarperCustom(LogitsWarper):
     '''
     A copy of the original Transformers temperature logits warper.
     '''
@@ -322,7 +322,7 @@ def get_logits_warper_patch(self, generation_config):
     # Currently, it behaves identically to the original.
     for i in range(len(warpers)):
         if warpers[i].__class__.__name__ == 'TemperatureLogitsWarper':
-            warpers[i] = ModifiedTemperatureLogitsWarper(
+            warpers[i] = TemperatureLogitsWarperCustom(
                 generation_config.temperature,
             )
 
@@ -387,9 +387,9 @@ def get_logits_warper_patch(self, generation_config):
     warpers += warpers_to_add
 
     # Sort the samplers
-    # sampler_priority is assumed to be passed as a comma-separated list of parameters.
+    # sampler_priority is assumed to contain parameters separated by newlines or commas.
     # Example: eta_cutoff,typical_p,temperature,min_p
-    sampler_priority = [x.strip() for x in generation_config.sampler_priority.split(',')]
+    sampler_priority = [x.strip() for x in generation_config.sampler_priority.replace('\n', ',').split(',')]
 
     # Handle temperature_last
     if generation_config.temperature_last:
@@ -404,7 +404,7 @@ def get_logits_warper_patch(self, generation_config):
         'EtaLogitsWarper': 'eta_cutoff',
         'MinPLogitsWarper': 'min_p',
         'MirostatLogitsWarper': 'mirostat',
-        'ModifiedTemperatureLogitsWarper': 'temperature',
+        'TemperatureLogitsWarperCustom': 'temperature',
         'QuadraticSamplingLogitsWarper': 'quadratic_sampling',
         'TailFreeLogitsWarper': 'tfs',
         'TopALogitsWarper': 'top_a',
