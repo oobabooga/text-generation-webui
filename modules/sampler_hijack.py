@@ -1,4 +1,5 @@
 import math
+import pprint
 
 import torch
 import transformers
@@ -6,10 +7,11 @@ from transformers import LogitsWarper, is_torch_xpu_available
 from transformers.generation.logits_process import (
     LogitNormalization,
     LogitsProcessor,
-    LogitsProcessorList,
+    LogitsProcessorList
 )
 
 from modules import shared
+from modules.logging_colors import logger
 
 global_scores = None
 
@@ -432,8 +434,9 @@ def get_logits_warper_patch(self, generation_config):
 
     warpers.append(SpyLogitsWarper())
     warpers = LogitsProcessorList(warpers)
-    for i in range(len(warpers)):
-        print(warpers[i].__class__.__name__)
+    if shared.args.verbose:
+        logger.info("WARPERS=")
+        pprint.PrettyPrinter(indent=4, sort_dicts=False).pprint([x.__class__.__name__ for x in warpers])
 
     return warpers
 
@@ -474,7 +477,7 @@ def generation_config_init_patch(self, **kwargs):
     self.presence_penalty = kwargs.pop("presence_penalty", 0)
     self.frequency_penalty = kwargs.pop("frequency_penalty", 0)
     self.temperature_last = kwargs.pop("temperature_last", False)
-    self.sampler_priority = kwargs.pop("sampler_priority", "temperature,dynamic_temperature,quadratic_sampling,top_k,top_p,typical_p,epsilon_cutoff,eta_cutoff,tfs,top_a,min_p,mirostat")
+    self.sampler_priority = kwargs.pop("sampler_priority", ['temperature', 'dynamic_temperature', 'quadratic_sampling', 'top_k', 'top_p', 'typical_p', 'epsilon_cutoff', 'eta_cutoff', 'tfs', 'top_a', 'min_p', 'mirostat'])
 
 
 def hijack_samplers():
