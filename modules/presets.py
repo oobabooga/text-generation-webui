@@ -120,9 +120,12 @@ def generate_preset_yaml(state):
     defaults = default_preset()
     data = {k: state[k] for k in presets_params()}
 
-    # Remove entries that are identical to the defaults
+    # Remove entries that are identical to the defaults.
+    # sampler_priority is always saved because it is experimental
+    # and the default order may change.
+
     for k in list(data.keys()):
-        if data[k] == defaults[k]:
+        if data[k] == defaults[k] and k != 'sampler_priority':
             del data[k]
 
     return yaml.dump(data, sort_keys=False)
