@@ -1,5 +1,6 @@
 beautifulsoup4==4.12.2
 chromadb==0.3.18
+pydantic==1.10.13
 lxml
 optuna
 pandas==2.0.3
