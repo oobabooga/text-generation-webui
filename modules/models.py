@@ -65,6 +65,7 @@ def load_model(model_name, loader=None):
         'GPTQ-for-LLaMa': GPTQ_loader,
         'llama.cpp': llamacpp_loader,
         'llamacpp_HF': llamacpp_HF_loader,
+        'ExLlamav2': ExLlamav2_loader,
         'ExLlamav2_HF': ExLlamav2_HF_loader,
         'ctransformers': ctransformers_loader,
         'AutoAWQ': AutoAWQ_loader,
@@ -373,6 +374,13 @@ def AutoGPTQ_loader(model_name):
     import modules.AutoGPTQ_loader
 
     return modules.AutoGPTQ_loader.load_quantized(model_name)
+
+
+def ExLlamav2_loader(model_name):
+    from modules.exllamav2 import Exllamav2Model
+
+    model, tokenizer = Exllamav2Model.from_pretrained(model_name)
+    return model, tokenizer
 
 
 def ExLlamav2_HF_loader(model_name):
