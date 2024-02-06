@@ -12,6 +12,7 @@ class GenerationOptions(BaseModel):
     dynatemp_low: float = 1
     dynatemp_high: float = 1
     dynatemp_exponent: float = 1
+    smoothing_factor: float = 0
     top_k: int = 0
     repetition_penalty: float = 1
     repetition_penalty_range: int = 1024
@@ -39,6 +40,7 @@ class GenerationOptions(BaseModel):
     max_tokens_second: int = 0
     prompt_lookup_num_tokens: int = 0
     custom_token_bans: str = ""
+    sampler_priority: List[str] | str | None = Field(default=None, description="List of samplers where the first items will appear first in the stack. Example: [\"top_k\", \"temperature\", \"top_p\"].")
     auto_max_new_tokens: bool = False
     ban_eos_token: bool = False
     add_bos_token: bool = True

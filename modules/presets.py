@@ -17,6 +17,7 @@ def default_preset():
         'dynatemp_low': 1,
         'dynatemp_high': 1,
         'dynatemp_exponent': 1,
+        'smoothing_factor': 0,
         'top_p': 1,
         'min_p': 0,
         'top_k': 0,
@@ -41,6 +42,7 @@ def default_preset():
         'num_beams': 1,
         'length_penalty': 1,
         'early_stopping': False,
+        'sampler_priority': 'temperature\ndynamic_temperature\nquadratic_sampling\ntop_k\ntop_p\ntypical_p\nepsilon_cutoff\neta_cutoff\ntfs\ntop_a\nmin_p\nmirostat'
     }
 
 

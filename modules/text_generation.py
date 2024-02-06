@@ -50,6 +50,11 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
         else:
             generate_func = generate_reply_HF
 
+    if generate_func != generate_reply_HF and shared.args.verbose:
+        logger.info("PROMPT=")
+        print(question)
+        print()
+
     # Prepare the input
     original_question = question
     if not is_chat:
@@ -64,10 +69,6 @@ def _generate_reply(question, state, stopping_strings=None, is_chat=False, escap
 
         if type(st) is list and len(st) > 0:
             all_stop_strings += st
-
-    if shared.args.verbose:
-        logger.info("PROMPT=")
-        print(question)
 
     shared.stop_everything = False
     clear_torch_cache()
@@ -285,8 +286,14 @@ def get_reply_from_output_ids(output_ids, state=None, starting_from=0):
 
 def generate_reply_HF(question, original_question, seed, state, stopping_strings=None, is_chat=False):
     generate_params = {}
-    for k in ['max_new_tokens', 'temperature', 'temperature_last', 'dynamic_temperature', 'dynatemp_low', 'dynatemp_high', 'dynatemp_exponent', 'top_p', 'min_p', 'top_k', 'repetition_penalty', 'presence_penalty', 'frequency_penalty', 'repetition_penalty_range', 'typical_p', 'tfs', 'top_a', 'guidance_scale', 'penalty_alpha', 'mirostat_mode', 'mirostat_tau', 'mirostat_eta', 'do_sample', 'encoder_repetition_penalty', 'no_repeat_ngram_size', 'min_length', 'num_beams', 'length_penalty', 'early_stopping']:
-        generate_params[k] = state[k]
+    for k in ['max_new_tokens', 'temperature', 'temperature_last', 'dynamic_temperature', 'dynatemp_low', 'dynatemp_high', 'dynatemp_exponent', 'smoothing_factor', 'top_p', 'min_p', 'top_k', 'repetition_penalty', 'presence_penalty', 'frequency_penalty', 'repetition_penalty_range', 'typical_p', 'tfs', 'top_a', 'guidance_scale', 'penalty_alpha', 'mirostat_mode', 'mirostat_tau', 'mirostat_eta', 'do_sample', 'encoder_repetition_penalty', 'no_repeat_ngram_size', 'min_length', 'num_beams', 'length_penalty', 'early_stopping']:
+        if k in state:
+            generate_params[k] = state[k]
+
+    if isinstance(state['sampler_priority'], list):
+        generate_params['sampler_priority'] = state['sampler_priority']
+    elif isinstance(state['sampler_priority'], str):
+        generate_params['sampler_priority'] = [x.strip() for x in state['sampler_priority'].replace('\n', ',').split(',') if x.strip()]
 
     if state['negative_prompt'] != '':
         generate_params['negative_prompt_ids'] = encode(state['negative_prompt'])
@@ -351,6 +358,10 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
         logger.info("GENERATE_PARAMS=")
         filtered_params = {key: value for key, value in generate_params.items() if not isinstance(value, torch.Tensor)}
         pprint.PrettyPrinter(indent=4, sort_dicts=False).pprint(filtered_params)
+        print()
+
+        logger.info("PROMPT=")
+        print(decode(input_ids[0], skip_special_tokens=False))
         print()
 
     t0 = time.time()

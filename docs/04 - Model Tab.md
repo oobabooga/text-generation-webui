@@ -42,7 +42,7 @@ Examples:
 * https://huggingface.co/TheBloke/Llama-2-13B-chat-GPTQ
 
 * **gpu-split**: If you have multiple GPUs, the amount of memory to allocate per GPU should be set in this field. Make sure to set a lower value for the first GPU, as that's where the cache is allocated.
-* **max_seq_len**: The maximum sequence length for the model. In ExLlama, the cache is preallocated, so the higher this value, the higher the VRAM. It is automatically set to the maximum sequence length for the model based on its metadata, but you may need to lower this value be able to fit the model into your GPU. After loading the model, the "Truncate the prompt up to this length" parameter under "Parameters" > "Generation" is automatically set to your chosen "max_seq_len" so that you don't have to set the same thing twice.
+* **max_seq_len**: The maximum sequence length for the model. In ExLlamaV2, the cache is preallocated, so the higher this value, the higher the VRAM. It is automatically set to the maximum sequence length for the model based on its metadata, but you may need to lower this value be able to fit the model into your GPU. After loading the model, the "Truncate the prompt up to this length" parameter under "Parameters" > "Generation" is automatically set to your chosen "max_seq_len" so that you don't have to set the same thing twice.
 * **cfg-cache**: Creates a second cache to hold the CFG negative prompts. You need to set this if and only if you intend to use CFG in the "Parameters" > "Generation" tab. Checking this parameter doubles the cache VRAM usage.
 * **no_flash_attn**: Disables flash attention. Otherwise, it is automatically used as long as the library is installed.
 * **cache_8bit**: Create a 8-bit precision cache instead of a 16-bit one. This saves VRAM but increases perplexity (I don't know by how much).
@@ -57,7 +57,7 @@ Loads: GPTQ models.
 
 * **wbits**: For ancient models without proper metadata, sets the model precision in bits manually. Can usually be ignored.
 * **groupsize**: For ancient models without proper metadata, sets the model group size manually. Can usually be ignored.
-* **triton**: Only available on Linux. Necessary to use models with both act-order and groupsize simultaneously. Note that ExLlama can load these same models on Windows without triton.
+* **triton**: Only available on Linux. Necessary to use models with both act-order and groupsize simultaneously. Note that ExLlamaV2 can load these same models on Windows without triton.
 * **no_inject_fused_attention**: Improves performance while increasing the VRAM usage.
 * **no_inject_fused_mlp**: Similar to the previous parameter but for Triton only.
 * **no_use_cuda_fp16**: On some systems, the performance can be very bad with this unset. Can usually be ignored.
@@ -67,7 +67,7 @@ Loads: GPTQ models.
 
 Loads: GPTQ models.
 
-Ancient loader, the first one to implement 4-bit quantization. It works on older GPUs for which ExLlama and AutoGPTQ do not work, and it doesn't work with "act-order", so you should use it with simple 4-bit-128g models.
+Ancient loader, the first one to implement 4-bit quantization. It works on older GPUs for which ExLlamaV2 and AutoGPTQ do not work, and it doesn't work with "act-order", so you should use it with simple 4-bit-128g models.
 
 * **pre_layer**: Used for CPU offloading. The higher the number, the more layers will be sent to the GPU. GPTQ-for-LLaMa CPU offloading was faster than the one implemented in AutoGPTQ the last time I checked.
 
