@@ -270,9 +270,13 @@ def apply_stopping_strings(reply, all_stop_strings):
     return reply, stop_found
 
 
+time_lost = 0
+import time
+
 def get_reply_from_output_ids(output_ids, state=None, starting_from=0):
     reply = decode(output_ids[starting_from:], state['skip_special_tokens'] if state else True)
 
+    a = time.time()
     # Handle tokenizers that do not add the leading space for the first token
     if (hasattr(shared.tokenizer, 'convert_ids_to_tokens') and len(output_ids) > starting_from) and not reply.startswith(' '):
         first_token = shared.tokenizer.convert_ids_to_tokens(int(output_ids[starting_from]))
@@ -282,10 +286,14 @@ def get_reply_from_output_ids(output_ids, state=None, starting_from=0):
         if first_token.startswith('▁'):
             reply = ' ' + reply
 
+    global time_lost
+    time_lost += time.time() - a
     return reply
 
 
 def generate_reply_HF(question, original_question, seed, state, stopping_strings=None, is_chat=False):
+    global time_lost
+    time_lost = 0
     generate_params = {}
     for k in ['max_new_tokens', 'temperature', 'temperature_last', 'dynamic_temperature', 'dynatemp_low', 'dynatemp_high', 'dynatemp_exponent', 'smoothing_factor', 'top_p', 'min_p', 'top_k', 'repetition_penalty', 'presence_penalty', 'frequency_penalty', 'repetition_penalty_range', 'typical_p', 'tfs', 'top_a', 'guidance_scale', 'penalty_alpha', 'mirostat_mode', 'mirostat_tau', 'mirostat_eta', 'do_sample', 'encoder_repetition_penalty', 'no_repeat_ngram_size', 'min_length', 'num_beams', 'length_penalty', 'early_stopping']:
         if k in state:
@@ -407,6 +415,7 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
     except Exception:
         traceback.print_exc()
     finally:
+        print("TIME_LOST=", time_lost)
         t1 = time.time()
         original_tokens = len(original_input_ids[0])
         new_tokens = len(output) - (original_tokens if not shared.is_seq2seq else 0)
