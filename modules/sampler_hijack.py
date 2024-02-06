@@ -428,16 +428,15 @@ def get_logits_warper_patch(self, generation_config):
 
     # Sort the list using the custom key function
     warpers = sorted(warpers, key=custom_sort_key)
+    if shared.args.verbose:
+        logger.info("WARPERS=")
+        pprint.PrettyPrinter(indent=4, sort_dicts=False).pprint([x.__class__.__name__ for x in warpers])
 
     if normalize is not None:
         warpers.append(normalize)
 
     warpers.append(SpyLogitsWarper())
     warpers = LogitsProcessorList(warpers)
-    if shared.args.verbose:
-        logger.info("WARPERS=")
-        pprint.PrettyPrinter(indent=4, sort_dicts=False).pprint([x.__class__.__name__ for x in warpers])
-
     return warpers
 
 
