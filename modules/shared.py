@@ -50,7 +50,6 @@ settings = {
     'prompt_lookup_num_tokens': 0,
     'custom_stopping_strings': '',
     'custom_token_bans': '',
-    'sampler_priority': 'temperature,top_k,top_p,typical_p,epsilon_cutoff,eta_cutoff,tfs,top_a,min_p,dynamic_temperature,quadratic_sampling,mirostat',
     'auto_max_new_tokens': False,
     'ban_eos_token': False,
     'add_bos_token': True,
@@ -130,7 +129,7 @@ group.add_argument('--numa', action='store_true', help='Activate NUMA task alloc
 group.add_argument('--logits_all', action='store_true', help='Needs to be set for perplexity evaluation to work. Otherwise, ignore it, as it makes prompt processing slower.')
 group.add_argument('--no_offload_kqv', action='store_true', help='Do not offload the  K, Q, V to the GPU. This saves VRAM but reduces the performance.')
 group.add_argument('--cache-capacity', type=str, help='Maximum cache capacity (llama-cpp-python). Examples: 2000MiB, 2GiB. When provided without units, bytes will be assumed.')
-group.add_argument('--row_split', action='store_true', help='Split multi-gpu by row instead of layer. Faster on some cards.')
+group.add_argument('--row_split', action='store_true', help='Split the model by rows across GPUs. This may improve multi-gpu performance.')
 
 # ExLlama
 group = parser.add_argument_group('ExLlama')

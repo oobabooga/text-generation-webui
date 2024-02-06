@@ -6,6 +6,7 @@
 | llama.cpp      |       ❌       |           ❌            |       ❌       |          ❌          |    use llamacpp_HF    |
 | llamacpp_HF    |       ❌       |           ❌            |       ❌       |          ❌          |           ✅          |
 | ExLlamav2_HF   |       ✅       |           ✅            |       ❌       |          ❌          |           ✅          |
+| ExLlamav2      |       ✅       |           ✅            |       ❌       |          ❌          |   use ExLlamav2_HF    |
 | AutoGPTQ       |       ✅       |           ❌            |       ❌       |          ✅          |           ✅          |
 | AutoAWQ        |       ?        |           ❌            |       ?        |          ?           |           ✅          |
 | GPTQ-for-LLaMa |       ✅\*\*   |           ✅\*\*\*      |       ✅       |          ✅          |           ✅          |

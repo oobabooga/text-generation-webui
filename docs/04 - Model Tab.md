@@ -47,6 +47,10 @@ Examples:
 * **no_flash_attn**: Disables flash attention. Otherwise, it is automatically used as long as the library is installed.
 * **cache_8bit**: Create a 8-bit precision cache instead of a 16-bit one. This saves VRAM but increases perplexity (I don't know by how much).
 
+### ExLlamav2
+
+The same as ExLlamav2_HF but using the internal samplers of ExLlamav2 instead of the ones in the Transformers library.
+
 ### AutoGPTQ
 
 Loads: GPTQ models.
