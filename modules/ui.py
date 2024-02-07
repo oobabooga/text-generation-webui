@@ -93,6 +93,7 @@ def list_model_elements():
         'numa',
         'logits_all',
         'no_offload_kqv',
+        'row_split',
         'tensorcores',
         'hqq_backend',
     ]
@@ -120,6 +121,7 @@ def list_interface_input_elements():
         'dynatemp_low',
         'dynatemp_high',
         'dynatemp_exponent',
+        'smoothing_factor',
         'top_p',
         'min_p',
         'top_k',
@@ -147,6 +149,7 @@ def list_interface_input_elements():
         'add_bos_token',
         'ban_eos_token',
         'custom_token_bans',
+        'sampler_priority',
         'truncation_length',
         'custom_stopping_strings',
         'skip_special_tokens',

@@ -12,7 +12,7 @@ from modules.models import reload_model
 def add_lora_to_model(lora_names):
     if 'GPTQForCausalLM' in shared.model.__class__.__name__ or shared.args.loader == 'AutoGPTQ':
         add_lora_autogptq(lora_names)
-    elif shared.model.__class__.__name__ in ['Exllamav2Model', 'Exllamav2HF'] or shared.args.loader == ['ExLlamav2', 'ExLlamav2_HF']:
+    elif shared.model.__class__.__name__ in ['Exllamav2Model', 'Exllamav2HF'] or shared.args.loader in ['ExLlamav2', 'ExLlamav2_HF']:
         add_lora_exllamav2(lora_names)
     else:
         add_lora_transformers(lora_names)
