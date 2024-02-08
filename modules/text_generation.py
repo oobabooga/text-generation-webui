@@ -277,7 +277,7 @@ def get_reply_from_output_ids(output_ids, state=None, starting_from=0):
         if isinstance(first_token, (bytes,)):
             first_token = first_token.decode('utf8')
 
-        if first_token.startswith('▁'):
+        if first_token == [None] or first_token.startswith('▁'):
             reply = ' ' + reply
 
     return reply
