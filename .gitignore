@@ -47,4 +47,5 @@ wandb
 /docker-compose.yaml
 /docker-compose.yml
 /Dockerfile
+.dockerignore
 .env
