@@ -350,8 +350,11 @@ def do_train(trained_model_name: str, training_form: int, always_override: bool,
         return
 
     gradient_accumulation_steps = batch_size // micro_batch_size
+
     shared.tokenizer.pad_token_id = 0
     shared.tokenizer.padding_side = "left"
+    if not shared.tokenizer.pad_token:
+        shared.tokenizer.pad_token = [shared.tokenizer.pad_token_id]
 
     # Populate target_modules list with chosen X_proj modules. Llama-based models only atm, non-llama will revert to default behavior.
     def list_target_modules(model_id):
@@ -539,7 +542,10 @@ def do_train(trained_model_name: str, training_form: int, always_override: bool,
 
     logger.info("Preparing for training")
     if training_form == "full":
-        trained_model = shared.model.model
+        if model_type == 'MambaSsmModel':
+            trained_model = shared.model.model
+        else:
+            trained_model = shared.model
     elif training_form == "LoRA":
         config = LoraConfig(
             r=lora_rank,
