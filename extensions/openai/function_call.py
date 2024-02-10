@@ -206,7 +206,7 @@ End of the sample function calling convseration 2.
                         debug_msg(f"function call: process_finish_msg json_dict does not have name or arguments {json_dict}")
                         continue
 
-                    def excape_crtl_chars(text: str)->str:
+                    def escape_crtl_chars(text: str)->str:
                         # """
                         # https://stackoverflow.com/questions/22394235/invalid-control-character-with-python-json-loads
                         # Escape control chars in arguments to pass json.load(text, strict=True) when deserializing on the client side, since strict=True is the default option
@@ -238,8 +238,8 @@ End of the sample function calling convseration 2.
                     response = FunctionCallResponse(
                         id=f'call_{gen_openai_like_call_id()}',
                         function=FunctionNameArg(
-                            name=excape_crtl_chars(json_dict['name']),
-                            arguments=excape_crtl_chars(json_dict['arguments'])
+                            name=escape_crtl_chars(json_dict['name']),
+                            arguments=escape_crtl_chars(json_dict['arguments'])
                             )
                         )
                     
