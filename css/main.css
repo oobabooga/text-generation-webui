@@ -94,8 +94,8 @@ div.svelte-15lo0d8 > *, div.svelte-15lo0d8 > .form > * {
     box-shadow: 0 2px 3px rgba(22 22 22 / 35%);
     margin-bottom: 0;
     overflow-x: scroll;
-    margin-left: calc(-1 * var(--size-4));
-    margin-right: calc(-1 * var(--size-4));
+    margin-left: calc(-2 * var(--size-4));
+    margin-right: calc(-2 * var(--size-4));
     display: block !important;
     text-wrap: nowrap;
     z-index: 90;
