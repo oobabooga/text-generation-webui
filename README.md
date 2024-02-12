@@ -75,12 +75,12 @@ conda activate textgen
 
 | System | GPU | Command |
 |--------|---------|---------|
-| Linux/WSL | NVIDIA | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121` |
-| Linux/WSL | CPU only | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu` |
-| Linux | AMD | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.6` |
-| MacOS + MPS | Any | `pip3 install torch torchvision torchaudio` |
-| Windows | NVIDIA | `pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121` |
-| Windows | CPU only | `pip3 install torch torchvision torchaudio` |
+| Linux/WSL | NVIDIA | `pip3 install torch==2.1.* torchvision==0.16.* torchaudio==2.1.* --index-url https://download.pytorch.org/whl/cu121` |
+| Linux/WSL | CPU only | `pip3 install torch==2.1.* torchvision==0.16.* torchaudio==2.1.* --index-url https://download.pytorch.org/whl/cpu` |
+| Linux | AMD | `pip3 install torch==2.1.* torchvision==0.16.* torchaudio==2.1.* --index-url https://download.pytorch.org/whl/rocm5.6` |
+| MacOS + MPS | Any | `pip3 install torch==2.1.* torchvision==0.16.* torchaudio==2.1.*` |
+| Windows | NVIDIA | `pip3 install torch==2.1.* torchvision==0.16.* torchaudio==2.1.* --index-url https://download.pytorch.org/whl/cu121` |
+| Windows | CPU only | `pip3 install torch==2.1.* torchvision==0.16.* torchaudio==2.1.*` |
 
 The up-to-date commands can be found here: https://pytorch.org/get-started/locally/.
 
@@ -145,7 +145,7 @@ Then browse to
 1) For Kepler GPUs and older, you will need to install CUDA 11.8 instead of 12:
 
 ```
-pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+pip3 install torch==2.1.* torchvision==0.16.* torchaudio==2.1.* --index-url https://download.pytorch.org/whl/cu118
 conda install -y -c "nvidia/label/cuda-11.8.0" cuda-runtime
 ```
 
