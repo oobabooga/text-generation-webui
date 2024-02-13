@@ -408,6 +408,10 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     margin-bottom: 0 !important;
 }
 
+#default-tab .prose pre, #notebook-tab .prose pre {
+    overflow: scroll;
+}
+
 .message-body code {
     white-space: pre-wrap !important;
     word-wrap: break-word !important;
