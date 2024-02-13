@@ -6,12 +6,18 @@ import yaml
 
 from modules import shared
 from modules.loaders import loaders_samplers
+from modules.logging_colors import logger
 
 
 def default_preset():
     return {
         'temperature': 1,
         'temperature_last': False,
+        'dynamic_temperature': False,
+        'dynatemp_low': 1,
+        'dynatemp_high': 1,
+        'dynatemp_exponent': 1,
+        'smoothing_factor': 0,
         'top_p': 1,
         'min_p': 0,
         'top_k': 0,
@@ -36,6 +42,7 @@ def default_preset():
         'num_beams': 1,
         'length_penalty': 1,
         'early_stopping': False,
+        'sampler_priority': 'temperature\ndynamic_temperature\nquadratic_sampling\ntop_k\ntop_p\ntypical_p\nepsilon_cutoff\neta_cutoff\ntfs\ntop_a\nmin_p\nmirostat'
     }
 
 
@@ -46,13 +53,16 @@ def presets_params():
 def load_preset(name):
     generate_params = default_preset()
     if name not in ['None', None, '']:
-        with open(Path(f'presets/{name}.yaml'), 'r') as infile:
-            preset = yaml.safe_load(infile)
+        path = Path(f'presets/{name}.yaml')
+        if path.exists():
+            with open(path, 'r') as infile:
+                preset = yaml.safe_load(infile)
 
-        for k in preset:
-            generate_params[k] = preset[k]
+            for k in preset:
+                generate_params[k] = preset[k]
+        else:
+            logger.error(f"The preset \"{name}\" does not exist under \"{path}\". Using the default parameters.")
 
-    generate_params['temperature'] = min(1.99, generate_params['temperature'])
     return generate_params
 
 
@@ -110,9 +120,12 @@ def generate_preset_yaml(state):
     defaults = default_preset()
     data = {k: state[k] for k in presets_params()}
 
-    # Remove entries that are identical to the defaults
+    # Remove entries that are identical to the defaults.
+    # sampler_priority is always saved because it is experimental
+    # and the default order may change.
+
     for k in list(data.keys()):
-        if data[k] == defaults[k]:
+        if data[k] == defaults[k] and k != 'sampler_priority':
             del data[k]
 
     return yaml.dump(data, sort_keys=False)

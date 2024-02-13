@@ -12,4 +12,4 @@ whisper_stt-whipser_model: tiny
 whisper_stt-auto_submit: False
 ```
 
-See source documentation for [model names](https://github.com/openai/whisper#available-models-and-languages) and (languages)[https://github.com/openai/whisper/blob/main/whisper/tokenizer.py] you can use.
+See source documentation for [model names](https://github.com/openai/whisper#available-models-and-languages) and [languages](https://github.com/openai/whisper/blob/main/whisper/tokenizer.py) you can use.

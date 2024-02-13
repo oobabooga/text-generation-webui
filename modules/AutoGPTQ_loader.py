@@ -52,6 +52,7 @@ def load_quantized(model_name):
         'quantize_config': quantize_config,
         'use_cuda_fp16': not shared.args.no_use_cuda_fp16,
         'disable_exllama': shared.args.disable_exllama,
+        'disable_exllamav2': shared.args.disable_exllamav2,
     }
 
     logger.info(f"The AutoGPTQ params are: {params}")

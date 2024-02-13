@@ -1,4 +1,3 @@
-import random
 import traceback
 from pathlib import Path
 
@@ -10,7 +9,7 @@ from exllamav2 import (
     ExLlamaV2Config,
     ExLlamaV2Tokenizer
 )
-from exllamav2.generator import ExLlamaV2BaseGenerator, ExLlamaV2Sampler
+from exllamav2.generator import ExLlamaV2Sampler, ExLlamaV2StreamingGenerator
 
 from modules import shared
 from modules.logging_colors import logger
@@ -48,6 +47,7 @@ class Exllamav2Model:
         config.scale_pos_emb = shared.args.compress_pos_emb
         config.scale_alpha_value = shared.args.alpha_value
         config.no_flash_attn = shared.args.no_flash_attn
+        config.num_experts_per_token = int(shared.args.num_experts_per_token)
 
         model = ExLlamaV2(config)
 
@@ -63,7 +63,7 @@ class Exllamav2Model:
         else:
             cache = ExLlamaV2Cache(model)
 
-        generator = ExLlamaV2BaseGenerator(model, cache, tokenizer)
+        generator = ExLlamaV2StreamingGenerator(model, cache, tokenizer)
 
         result = self()
         result.model = model
@@ -93,17 +93,27 @@ class Exllamav2Model:
 
     def generate_with_streaming(self, prompt, state):
         settings = ExLlamaV2Sampler.Settings()
+
+        settings.token_repetition_penalty = state['repetition_penalty']
+        settings.token_repetition_range = -1 if state['repetition_penalty_range'] <= 0 else state['repetition_penalty_range']
+
+        settings.token_frequency_penalty = state['frequency_penalty']
+        settings.token_presence_penalty = state['presence_penalty']
+
         settings.temperature = state['temperature']
         settings.top_k = state['top_k']
         settings.top_p = state['top_p']
+        settings.top_a = state['top_a']
         settings.min_p = state['min_p']
         settings.tfs = state['tfs']
         settings.typical = state['typical_p']
+
+        settings.temperature_last = state['temperature_last']
+
         settings.mirostat = state['mirostat_mode'] == 2
         settings.mirostat_tau = state['mirostat_tau']
         settings.mirostat_eta = state['mirostat_eta']
-        settings.token_repetition_penalty = state['repetition_penalty']
-        settings.token_repetition_range = -1 if state['repetition_penalty_range'] <= 0 else state['repetition_penalty_range']
+
         if state['ban_eos_token']:
             settings.disallow_tokens(self.tokenizer, [self.tokenizer.eos_token_id])
 
@@ -114,41 +124,21 @@ class Exllamav2Model:
 
         ids = self.tokenizer.encode(prompt, add_bos=state['add_bos_token'], encode_special_tokens=True)
         ids = ids[:, -get_max_prompt_length(state):]
-        initial_len = ids.shape[-1]
 
         if state['auto_max_new_tokens']:
             max_new_tokens = state['truncation_length'] - ids.shape[-1]
         else:
             max_new_tokens = state['max_new_tokens']
 
-        # _gen_begin_base
-        self.cache.current_seq_len = 0
-        self.model.forward(ids[:, :-1], self.cache, input_mask=None, preprocess_only=True, loras=self.loras)
+        self.generator.begin_stream(ids, settings, loras=self.loras)
 
-        has_leading_space = False
+        decoded_text = ''
         for i in range(max_new_tokens):
-            logits = self.model.forward(ids[:, -1:], self.cache, input_mask=None, loras=self.loras).float().cpu()
-            token, _, _ = ExLlamaV2Sampler.sample(logits, settings, ids, random.random(), self.tokenizer)
-            ids = torch.cat([ids, token], dim=1)
-
-            if i == 0 and self.tokenizer.tokenizer.id_to_piece(int(token)).startswith('▁'):
-                has_leading_space = True
-
-            decoded_text = self.tokenizer.decode(ids[:, initial_len:], decode_special_tokens=not state['skip_special_tokens'])[0]
-            if has_leading_space:
-                decoded_text = ' ' + decoded_text
-
-            # Check the partial unicode character
-            if chr(0xfffd) in decoded_text:
-                is_last = i == max_new_tokens - 1
-                is_stopping = token.item() == self.tokenizer.eos_token_id or shared.stop_everything
-                # If we are not at the end of the generation, we skip this token
-                if not (is_last or is_stopping):
-                    continue
-
-            if token.item() == self.tokenizer.eos_token_id or shared.stop_everything:
+            chunk, eos, _ = self.generator.stream()
+            if eos or shared.stop_everything:
                 break
 
+            decoded_text += chunk
             yield decoded_text
 
     def generate(self, prompt, state):

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import yaml
 
-from modules import loaders, metadata_gguf, shared, ui
+from modules import chat, loaders, metadata_gguf, shared, ui
 
 
 def get_fallback_settings():
@@ -33,22 +33,19 @@ def get_model_metadata(model):
             for k in settings[pat]:
                 model_settings[k] = settings[pat][k]
 
-
     path = Path(f'{shared.args.model_dir}/{model}/config.json')
     if path.exists():
-        hf_metadata = json.loads(open(path, 'r').read())
+        hf_metadata = json.loads(open(path, 'r', encoding='utf-8').read())
     else:
         hf_metadata = None
 
     if 'loader' not in model_settings:
         if hf_metadata is not None and 'quip_params' in hf_metadata:
-            model_settings['loader'] = 'QuIP#'
+            loader = 'QuIP#'
         else:
             loader = infer_loader(model, model_settings)
-            if 'wbits' in model_settings and type(model_settings['wbits']) is int and model_settings['wbits'] > 0:
-                loader = 'AutoGPTQ'
 
-            model_settings['loader'] = loader
+        model_settings['loader'] = loader
 
     # GGUF metadata
     if model_settings['loader'] in ['llama.cpp', 'llamacpp_HF', 'ctransformers']:
@@ -65,11 +62,21 @@ def get_model_metadata(model):
             model_settings['compress_pos_emb'] = metadata['llama.rope.scale_linear']
         if 'llama.rope.freq_base' in metadata:
             model_settings['rope_freq_base'] = metadata['llama.rope.freq_base']
+        if 'tokenizer.chat_template' in metadata:
+            template = metadata['tokenizer.chat_template']
+            eos_token = metadata['tokenizer.ggml.tokens'][metadata['tokenizer.ggml.eos_token_id']]
+            bos_token = metadata['tokenizer.ggml.tokens'][metadata['tokenizer.ggml.bos_token_id']]
+            template = template.replace('eos_token', "'{}'".format(eos_token))
+            template = template.replace('bos_token', "'{}'".format(bos_token))
+
+            template = re.sub(r'raise_exception\([^)]*\)', "''", template)
+            model_settings['instruction_template'] = 'Custom (obtained from model metadata)'
+            model_settings['instruction_template_str'] = template
 
     else:
         # Transformers metadata
         if hf_metadata is not None:
-            metadata = json.loads(open(path, 'r').read())
+            metadata = json.loads(open(path, 'r', encoding='utf-8').read())
             if 'max_position_embeddings' in metadata:
                 model_settings['truncation_length'] = metadata['max_position_embeddings']
                 model_settings['max_seq_len'] = metadata['max_position_embeddings']
@@ -92,13 +99,37 @@ def get_model_metadata(model):
         # Read AutoGPTQ metadata
         path = Path(f'{shared.args.model_dir}/{model}/quantize_config.json')
         if path.exists():
-            metadata = json.loads(open(path, 'r').read())
+            metadata = json.loads(open(path, 'r', encoding='utf-8').read())
             if 'bits' in metadata:
                 model_settings['wbits'] = metadata['bits']
             if 'group_size' in metadata:
                 model_settings['groupsize'] = metadata['group_size']
             if 'desc_act' in metadata:
                 model_settings['desc_act'] = metadata['desc_act']
+
+    # Try to find the Jinja instruct template
+    path = Path(f'{shared.args.model_dir}/{model}') / 'tokenizer_config.json'
+    if path.exists():
+        metadata = json.loads(open(path, 'r', encoding='utf-8').read())
+        if 'chat_template' in metadata:
+            template = metadata['chat_template']
+            for k in ['eos_token', 'bos_token']:
+                if k in metadata:
+                    value = metadata[k]
+                    if type(value) is dict:
+                        value = value['content']
+
+                    template = template.replace(k, "'{}'".format(value))
+
+            template = re.sub(r'raise_exception\([^)]*\)', "''", template)
+            model_settings['instruction_template'] = 'Custom (obtained from model metadata)'
+            model_settings['instruction_template_str'] = template
+
+    if 'instruction_template' not in model_settings:
+        model_settings['instruction_template'] = 'Alpaca'
+
+    if model_settings['instruction_template'] != 'Custom (obtained from model metadata)':
+        model_settings['instruction_template_str'] = chat.load_instruction_template(model_settings['instruction_template'])
 
     # Ignore rope_freq_base if set to the default value
     if 'rope_freq_base' in model_settings and model_settings['rope_freq_base'] == 10000:
@@ -119,17 +150,17 @@ def infer_loader(model_name, model_settings):
     if not path_to_model.exists():
         loader = None
     elif (path_to_model / 'quantize_config.json').exists() or ('wbits' in model_settings and type(model_settings['wbits']) is int and model_settings['wbits'] > 0):
-        loader = 'ExLlama_HF'
+        loader = 'ExLlamav2_HF'
     elif (path_to_model / 'quant_config.json').exists() or re.match(r'.*-awq', model_name.lower()):
         loader = 'AutoAWQ'
     elif len(list(path_to_model.glob('*.gguf'))) > 0:
         loader = 'llama.cpp'
     elif re.match(r'.*\.gguf', model_name.lower()):
         loader = 'llama.cpp'
-    elif re.match(r'.*rwkv.*\.pth', model_name.lower()):
-        loader = 'RWKV'
     elif re.match(r'.*exl2', model_name.lower()):
         loader = 'ExLlamav2_HF'
+    elif re.match(r'.*-hqq', model_name.lower()):
+        return 'HQQ'
     else:
         loader = 'Transformers'
 
@@ -194,7 +225,7 @@ def apply_model_settings_to_state(model, state):
         loader = model_settings.pop('loader')
 
         # If the user is using an alternative loader for the same model type, let them keep using it
-        if not (loader == 'AutoGPTQ' and state['loader'] in ['GPTQ-for-LLaMa', 'ExLlama', 'ExLlama_HF', 'ExLlamav2', 'ExLlamav2_HF']) and not (loader == 'llama.cpp' and state['loader'] in ['llamacpp_HF', 'ctransformers']):
+        if not (loader == 'ExLlamav2_HF' and state['loader'] in ['GPTQ-for-LLaMa', 'ExLlamav2', 'AutoGPTQ']) and not (loader == 'llama.cpp' and state['loader'] in ['llamacpp_HF', 'ctransformers']):
             state['loader'] = loader
 
     for k in model_settings:
