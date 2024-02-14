@@ -14,7 +14,7 @@ jobs:
         with:
           stale-issue-message: ""
           close-issue-message: "This issue has been closed due to inactivity for 6 weeks. If you believe it is still relevant, please leave a comment below. You can tag a developer in your comment."
-          days-before-issue-stale: 42
+          days-before-issue-stale: 60
           days-before-issue-close: 0
           stale-issue-label: "stale"
           days-before-pr-stale: -1
