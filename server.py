@@ -187,7 +187,7 @@ if __name__ == "__main__":
         settings_file = Path('settings.json')
 
     if settings_file is not None:
-        logger.info(f"Loading settings from {settings_file}")
+        logger.info(f"Loading settings from \"{settings_file}\"")
         file_contents = open(settings_file, 'r', encoding='utf-8').read()
         new_settings = json.loads(file_contents) if settings_file.suffix == "json" else yaml.safe_load(file_contents)
         shared.settings.update(new_settings)

@@ -431,6 +431,7 @@ def get_logits_warper_patch(self, generation_config):
     if shared.args.verbose:
         logger.info("WARPERS=")
         pprint.PrettyPrinter(indent=4, sort_dicts=False).pprint([x.__class__.__name__ for x in warpers])
+        print()
 
     if normalize is not None:
         warpers.append(normalize)

@@ -290,9 +290,9 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
         if k in state:
             generate_params[k] = state[k]
 
-    if isinstance(state['sampler_priority'], list):
+    if isinstance(state['sampler_priority'], list) and len(state['sampler_priority']) > 0:
         generate_params['sampler_priority'] = state['sampler_priority']
-    elif isinstance(state['sampler_priority'], str):
+    elif isinstance(state['sampler_priority'], str) and state['sampler_priority'].strip() != '':
         generate_params['sampler_priority'] = [x.strip() for x in state['sampler_priority'].replace('\n', ',').split(',') if x.strip()]
 
     if state['negative_prompt'] != '':
