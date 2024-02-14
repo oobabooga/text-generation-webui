@@ -36,7 +36,7 @@ def eval_with_progress(self, tokens: Sequence[int]):
         progress_bar = range(0, len(tokens), self.n_batch)
 
     for i in progress_bar:
-        batch = tokens[i : min(len(tokens), i + self.n_batch)]
+        batch = tokens[i: min(len(tokens), i + self.n_batch)]
         n_past = self.n_tokens
         n_tokens = len(batch)
         self._batch.set_batch(
@@ -44,16 +44,16 @@ def eval_with_progress(self, tokens: Sequence[int]):
         )
         self._ctx.decode(self._batch)
         # Save tokens
-        self.input_ids[n_past : n_past + n_tokens] = batch
+        self.input_ids[n_past: n_past + n_tokens] = batch
         # Save logits
         rows = n_tokens
         cols = self._n_vocab
         offset = (
             0 if self.context_params.logits_all else n_tokens - 1
         )  # NOTE: Only save the last token logits if logits_all is False
-        self.scores[n_past + offset : n_past + n_tokens, :].reshape(-1)[
+        self.scores[n_past + offset: n_past + n_tokens, :].reshape(-1)[
             :
-        ] = self._ctx.get_logits()[offset * cols : rows * cols]
+        ] = self._ctx.get_logits()[offset * cols: rows * cols]
         # Update n_tokens
         self.n_tokens += n_tokens
 

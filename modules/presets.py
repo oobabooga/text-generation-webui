@@ -125,7 +125,7 @@ def random_preset(state):
     for cat in params_and_values:
         choices = list(params_and_values[cat].keys())
         if shared.args.loader is not None:
-            choices = [x for x in choices if loader_contains(sampler)]
+            choices = [x for x in choices if loader_contains(x)]
 
         if len(choices) > 0:
             choice = random.choice(choices)
