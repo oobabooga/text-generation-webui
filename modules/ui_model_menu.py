@@ -143,7 +143,7 @@ def create_ui():
                             shared.gradio['disable_exllamav2'] = gr.Checkbox(label="disable_exllamav2", value=shared.args.disable_exllamav2, info='Disable ExLlamav2 kernel for GPTQ models.')
                             shared.gradio['gptq_for_llama_info'] = gr.Markdown('Legacy loader for compatibility with older GPUs. ExLlamav2_HF or AutoGPTQ are preferred for GPTQ models when supported.')
                             shared.gradio['exllamav2_info'] = gr.Markdown("ExLlamav2_HF is recommended over ExLlamav2 for better integration with extensions and more consistent sampling behavior across loaders.")
-+                            shared.gradio['llamacpp_HF_info'] = gr.Markdown("llamacpp_HF loads llama.cpp as a Transformers model. To use it, download a tokenizer in HF format for your GGUF:\n\n1. Create a folder inside models/\n2. Place your GGUF in the new folder.\n3. Add the original model's tokenizer files there: `tokenizer.model`, `tokenizer_config.json`, `tokenizer.json`, and `special_tokens_map.json`.")
+                            shared.gradio['llamacpp_HF_info'] = gr.Markdown("llamacpp_HF loads llama.cpp as a Transformers model. To use it, download a tokenizer in HF format for your GGUF:\n\n1. Create a folder inside models/\n2. Place your GGUF in the new folder.\n3. Add the original model's tokenizer files there: `tokenizer.model`, `tokenizer_config.json`, `tokenizer.json`, and `special_tokens_map.json`.")
 
             with gr.Column():
                 with gr.Row():
