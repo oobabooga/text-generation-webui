@@ -76,6 +76,7 @@ def list_model_elements():
         'no_flash_attn',
         'num_experts_per_token',
         'cache_8bit',
+        'autosplit',
         'threads',
         'threads_batch',
         'n_batch',
