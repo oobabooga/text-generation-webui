@@ -38,6 +38,7 @@ class Exllamav2HF(PreTrainedModel):
         self.ex_config = config
         self.ex_model = ExLlamaV2(config)
         self.loras = None
+        self.generation_config = GenerationConfig()
 
         if shared.args.cache_8bit:
             self.ex_cache = ExLlamaV2Cache_8bit(self.ex_model, lazy=True)
@@ -52,7 +53,6 @@ class Exllamav2HF(PreTrainedModel):
                 split = [float(alloc) for alloc in shared.args.gpu_split.split(",")]
 
             self.ex_model.load(split)
-            self.generation_config = GenerationConfig()
 
         self.past_seq = None
         if shared.args.cfg_cache:
