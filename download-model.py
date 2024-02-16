@@ -156,9 +156,8 @@ class ModelDownloader:
         is_llamacpp = has_gguf and specific_file is not None
         return links, sha256, is_lora, is_llamacpp
 
-    def get_output_folder(self, model, branch, is_lora, is_llamacpp=False, base_folder=None):
-        if base_folder is None:
-            base_folder = 'models' if not is_lora else 'loras'
+    def get_output_folder(self, model, branch, is_lora, is_llamacpp=False):
+        base_folder = 'models' if not is_lora else 'loras'
 
         # If the model is of type GGUF, save directly in the base_folder
         if is_llamacpp:
@@ -303,7 +302,10 @@ if __name__ == '__main__':
     links, sha256, is_lora, is_llamacpp = downloader.get_download_links_from_huggingface(model, branch, text_only=args.text_only, specific_file=specific_file)
 
     # Get the output folder
-    output_folder = downloader.get_output_folder(model, branch, is_lora, is_llamacpp=is_llamacpp, base_folder=args.output)
+    if args.output:
+        output_folder = Path(args.output)
+    else:
+        output_folder = downloader.get_output_folder(model, branch, is_lora, is_llamacpp=is_llamacpp)
 
     if args.check:
         # Check previously downloaded files
