@@ -90,7 +90,6 @@ def get_available_ggufs():
     return ['None'] + sorted(model_list, key=natural_keys)
 
 
-
 def get_available_presets():
     return sorted(set((k.stem for k in Path('presets').glob('*.yaml'))), key=natural_keys)
 
