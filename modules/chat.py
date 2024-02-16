@@ -691,6 +691,9 @@ def load_character(character, name1, name2):
 
 
 def load_instruction_template(template):
+    if template == 'None':
+        return ''
+
     for filepath in [Path(f'instruction-templates/{template}.yaml'), Path('instruction-templates/Alpaca.yaml')]:
         if filepath.exists():
             break

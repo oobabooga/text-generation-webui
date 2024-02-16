@@ -17,6 +17,7 @@ from modules.models import load_model, unload_model
 from modules.models_settings import (
     apply_model_settings_to_state,
     get_model_metadata,
+    save_instruction_template,
     save_model_settings,
     update_model_parameters
 )
@@ -165,6 +166,14 @@ def create_ui():
                     shared.gradio['create_llamacpp_hf_button'] = gr.Button("Submit", variant="primary", interactive=not mu)
                     gr.Markdown("This will move your gguf file into a subfolder of `models` along with the necessary tokenizer files.")
 
+                with gr.Tab("Customize instruction template"):
+                    with gr.Row():
+                        shared.gradio['customized_template'] = gr.Dropdown(choices=utils.get_available_instruction_templates(), value='None', label='Select the desired instruction template', elem_classes='slim-dropdown')
+                        ui.create_refresh_button(shared.gradio['customized_template'], lambda: None, lambda: {'choices': utils.get_available_instruction_templates()}, 'refresh-button', interactive=not mu)
+
+                    shared.gradio['customized_template_submit'] = gr.Button("Submit", variant="primary", interactive=not mu)
+                    gr.Markdown("This allows you to set a customized template for the model currently selected in the \"Model loader\" menu. Whenver the model gets loaded, this template will be used in place of the template specified in the model's medatada, which sometimes is wrong.")
+
                 with gr.Row():
                     shared.gradio['model_status'] = gr.Markdown('No model is loaded' if shared.model_name == 'None' else 'Ready')
 
@@ -214,6 +223,7 @@ def create_event_handlers():
     shared.gradio['get_file_list'].click(partial(download_model_wrapper, return_links=True), gradio('custom_model_menu', 'download_specific_file'), gradio('model_status'), show_progress=True)
     shared.gradio['autoload_model'].change(lambda x: gr.update(visible=not x), gradio('autoload_model'), gradio('load_model'))
     shared.gradio['create_llamacpp_hf_button'].click(create_llamacpp_hf, gradio('gguf_menu', 'unquantized_url'), gradio('model_status'), show_progress=True)
+    shared.gradio['customized_template_submit'].click(save_instruction_template, gradio('model_menu', 'customized_template'), gradio('model_status'), show_progress=True)
 
 
 def load_model_wrapper(selected_model, loader, autoload=False):
@@ -320,3 +330,7 @@ def update_truncation_length(current_length, state):
             return state['n_ctx']
 
     return current_length
+
+
+def save_model_template(model, template):
+    pass
