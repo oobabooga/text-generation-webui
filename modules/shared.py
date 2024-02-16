@@ -279,6 +279,23 @@ def is_chat():
     return True
 
 
+def load_user_config():
+    '''
+    Loads custom model-specific settings
+    '''
+    if Path(f'{args.model_dir}/config-user.yaml').exists():
+        file_content = open(f'{args.model_dir}/config-user.yaml', 'r').read().strip()
+
+        if file_content:
+            user_config = yaml.safe_load(file_content)
+        else:
+            user_config = {}
+    else:
+        user_config = {}
+
+    return user_config
+
+
 args.loader = fix_loader_name(args.loader)
 
 # Activate the multimodal extension
@@ -297,11 +314,7 @@ with Path(f'{args.model_dir}/config.yaml') as p:
         model_config = {}
 
 # Load custom model-specific settings
-with Path(f'{args.model_dir}/config-user.yaml') as p:
-    if p.exists():
-        user_config = yaml.safe_load(open(p, 'r').read())
-    else:
-        user_config = {}
+user_config = load_user_config()
 
 model_config = OrderedDict(model_config)
 user_config = OrderedDict(user_config)

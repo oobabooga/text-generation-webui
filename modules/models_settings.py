@@ -243,27 +243,54 @@ def save_model_settings(model, state):
     Save the settings for this model to models/config-user.yaml
     '''
     if model == 'None':
-        yield ("Not saving the settings because no model is loaded.")
+        yield ("Not saving the settings because no model is selected in the menu.")
         return
 
-    with Path(f'{shared.args.model_dir}/config-user.yaml') as p:
-        if p.exists():
-            user_config = yaml.safe_load(open(p, 'r').read())
-        else:
-            user_config = {}
+    user_config = shared.load_user_config()
+    model_regex = model + '$'  # For exact matches
+    if model_regex not in user_config:
+        user_config[model_regex] = {}
 
-        model_regex = model + '$'  # For exact matches
-        if model_regex not in user_config:
-            user_config[model_regex] = {}
+    for k in ui.list_model_elements():
+        if k == 'loader' or k in loaders.loaders_and_params[state['loader']]:
+            user_config[model_regex][k] = state[k]
 
-        for k in ui.list_model_elements():
-            if k == 'loader' or k in loaders.loaders_and_params[state['loader']]:
-                user_config[model_regex][k] = state[k]
+    shared.user_config = user_config
 
-        shared.user_config = user_config
+    output = yaml.dump(user_config, sort_keys=False)
+    p = Path(f'{shared.args.model_dir}/config-user.yaml')
+    with open(p, 'w') as f:
+        f.write(output)
 
-        output = yaml.dump(user_config, sort_keys=False)
-        with open(p, 'w') as f:
-            f.write(output)
+    yield (f"Settings for `{model}` saved to `{p}`.")
 
-        yield (f"Settings for `{model}` saved to `{p}`.")
+
+def save_instruction_template(model, template):
+    '''
+    Similar to the function above, but it saves only the instruction template.
+    '''
+    if model == 'None':
+        yield ("Not saving the template because no model is selected in the menu.")
+        return
+
+    user_config = shared.load_user_config()
+    model_regex = model + '$'  # For exact matches
+    if model_regex not in user_config:
+        user_config[model_regex] = {}
+
+    if template == 'None':
+        user_config[model_regex].pop('instruction_template', None)
+    else:
+        user_config[model_regex]['instruction_template'] = template
+
+    shared.user_config = user_config
+
+    output = yaml.dump(user_config, sort_keys=False)
+    p = Path(f'{shared.args.model_dir}/config-user.yaml')
+    with open(p, 'w') as f:
+        f.write(output)
+
+    if template == 'None':
+        yield (f"Instruction template for `{model}` unset in `{p}`, as the value for template was `{template}`.")
+    else:
+        yield (f"Instruction template for `{model}` saved to `{p}` as `{template}`.")
