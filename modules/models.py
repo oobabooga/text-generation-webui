@@ -396,9 +396,13 @@ def unload_model():
     clear_torch_cache()
 
 
+def load_last_model():
+    shared.model, shared.tokenizer = load_model(shared.previous_model_name)
+
+
 def reload_model():
     unload_model()
-    shared.model, shared.tokenizer = load_model(shared.model_name)
+    shared.model, shared.tokenizer = load_model(shared.previous_model_name)
 
 
 def unload_model_if_idle():
