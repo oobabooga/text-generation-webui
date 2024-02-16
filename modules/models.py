@@ -257,7 +257,7 @@ def llamacpp_HF_loader(model_name):
     path = Path(f'{shared.args.model_dir}/{model_name}')
 
     # Check if a HF tokenizer is available for the model
-    if all((path / file).exists() for file in ['tokenizer.json', 'tokenizer_config.json']):
+    if all((path / file).exists() for file in ['tokenizer_config.json']):
         logger.info(f'Using tokenizer from: \"{path}\"')
     else:
         logger.error("Could not load the model because a tokenizer in Transformers format was not found.")
