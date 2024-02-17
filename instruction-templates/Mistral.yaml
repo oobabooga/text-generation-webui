@@ -4,7 +4,7 @@ instruction_template: |-
           {{- message['content'] -}}
       {%- else -%}
           {%- if message['role'] == 'user' -%}
-              {{-' [INST] ' + message['content'].rstrip() + ' [/INST] '-}}
+              {{-'[INST] ' + message['content'].rstrip() + ' [/INST]'-}}
           {%- else -%}
               {{-'' + message['content'] + '</s>' -}}
           {%- endif -%}

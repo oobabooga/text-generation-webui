@@ -51,18 +51,21 @@ class Exllamav2Model:
 
         model = ExLlamaV2(config)
 
-        split = None
-        if shared.args.gpu_split:
-            split = [float(alloc) for alloc in shared.args.gpu_split.split(",")]
+        if shared.args.cache_8bit:
+            cache = ExLlamaV2Cache_8bit(model, lazy=True)
+        else:
+            cache = ExLlamaV2Cache(model, lazy=True)
 
-        model.load(split)
+        if shared.args.autosplit:
+            model.load_autosplit(cache)
+        else:
+            split = None
+            if shared.args.gpu_split:
+                split = [float(alloc) for alloc in shared.args.gpu_split.split(",")]
+
+            model.load(split)
 
         tokenizer = ExLlamaV2Tokenizer(config)
-        if shared.args.cache_8bit:
-            cache = ExLlamaV2Cache_8bit(model)
-        else:
-            cache = ExLlamaV2Cache(model)
-
         generator = ExLlamaV2StreamingGenerator(model, cache, tokenizer)
 
         result = self()
