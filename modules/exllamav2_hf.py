@@ -36,23 +36,25 @@ class Exllamav2HF(PreTrainedModel):
     def __init__(self, config: ExLlamaV2Config):
         super().__init__(PretrainedConfig())
         self.ex_config = config
-        self.ex_model = ExLlamaV2(config)
         self.loras = None
         self.generation_config = GenerationConfig()
 
-        if shared.args.cache_8bit:
-            self.ex_cache = ExLlamaV2Cache_8bit(self.ex_model, lazy=True)
-        else:
-            self.ex_cache = ExLlamaV2Cache(self.ex_model, lazy=True)
+        self.ex_model = ExLlamaV2(config)
 
-        if shared.args.autosplit:
-            self.ex_model.load_autosplit(self.ex_cache)
-        else:
+        if not shared.args.autosplit:
             split = None
             if shared.args.gpu_split:
                 split = [float(alloc) for alloc in shared.args.gpu_split.split(",")]
 
             self.ex_model.load(split)
+
+        if shared.args.cache_8bit:
+            self.ex_cache = ExLlamaV2Cache_8bit(self.ex_model, lazy=shared.args.autosplit)
+        else:
+            self.ex_cache = ExLlamaV2Cache(self.ex_model, lazy=shared.args.autosplit)
+
+        if shared.args.autosplit:
+            self.ex_model.load_autosplit(self.ex_cache)
 
         self.past_seq = None
         if shared.args.cfg_cache:
