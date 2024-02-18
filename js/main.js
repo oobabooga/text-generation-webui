@@ -390,7 +390,12 @@ function updateCssProperties() {
   if (chatContainer.clientHeight > 0) {
 
     // Calculate new chat height and adjust CSS properties
-    const newChatHeight = `${chatContainer.clientHeight - chatInputHeight + 40}px`;
+    var numericHeight = chatContainer.parentNode.clientHeight - chatInputHeight + 40 - 100;
+    if (document.getElementById("chat-tab").style.paddingBottom != "") {
+      numericHeight += 20;
+    }
+    const newChatHeight = `${numericHeight}px`;
+
     document.documentElement.style.setProperty("--chat-height", newChatHeight);
     document.documentElement.style.setProperty("--input-delta", `${chatInputHeight - 40}px`);
 
