@@ -377,36 +377,41 @@ function toggleBigPicture() {
 }
 
 //------------------------------------------------
-// Define global CSS properties for resizing and
-// positioning certain elements
+// Handle the chat input box growth
 //------------------------------------------------
 let currentChatInputHeight = 0;
 
+// Update chat layout based on chat and input dimensions
 function updateCssProperties() {
-  // Set the height of the chat area
   const chatContainer = document.getElementById("chat").parentNode.parentNode.parentNode;
   const chatInputHeight = document.querySelector("#chat-input textarea").clientHeight;
+
+  // Check if the chat container is visible
   if (chatContainer.clientHeight > 0) {
+
+    // Calculate new chat height and adjust CSS properties
     const newChatHeight = `${chatContainer.clientHeight - chatInputHeight + 40}px`;
     document.documentElement.style.setProperty("--chat-height", newChatHeight);
     document.documentElement.style.setProperty("--input-delta", `${chatInputHeight - 40}px`);
 
-    // Set the position offset of the chat input box
+    // Get and set header height
     const header = document.querySelector(".header_bar");
     const headerHeight = `${header.clientHeight}px`;
     document.documentElement.style.setProperty("--header-height", headerHeight);
 
-    // Offset the scroll position of the chat area
+    // Adjust scrollTop based on input height change
     if (chatInputHeight !== currentChatInputHeight) {
-      chatContainer.scrollTop += chatInputHeight > currentChatInputHeight ? chatInputHeight : -chatInputHeight;
+      chatContainer.scrollTop += chatInputHeight > currentChatInputHeight ? chatInputHeight : -chatInputHeight + 40;
       currentChatInputHeight = chatInputHeight;
     }
   }
 }
 
+// Observe textarea size changes and call update function
 new ResizeObserver(updateCssProperties)
   .observe(document.querySelector("#chat-input textarea"));
 
+// Handle changes in window size
 window.addEventListener("resize", updateCssProperties);
 
 //------------------------------------------------
