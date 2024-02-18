@@ -689,6 +689,15 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
         max-width: 300px;
         margin-left: calc(-0.5*(var(--document-width) - 880px - 14px - 16px * 2));
     }
+
+    #chat-controls {
+        position: absolute;
+        top: 16px;
+        right: 0;
+        width: calc(0.5*(var(--document-width) - 880px - 120px - 16px*2));
+        max-width: 300px;
+        margin-right: calc(-0.5*(var(--document-width) - 880px - 14px - 16px * 2));
+    }
 }
 
 /* ----------------------------------------------
