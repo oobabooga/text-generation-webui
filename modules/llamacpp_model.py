@@ -4,7 +4,12 @@ from functools import partial
 import numpy as np
 import torch
 
-from modules import RoPE, llama_cpp_python_hijack, shared, monkey_patch_llama_cpp_python
+from modules import (
+    RoPE,
+    llama_cpp_python_hijack,
+    monkey_patch_llama_cpp_python,
+    shared
+)
 from modules.callbacks import Iteratorize
 from modules.logging_colors import logger
 from modules.text_generation import get_max_prompt_length

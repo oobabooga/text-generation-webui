@@ -7,7 +7,6 @@ from torch.nn import CrossEntropyLoss
 from transformers import GenerationConfig, PretrainedConfig, PreTrainedModel
 from transformers.modeling_outputs import CausalLMOutputWithPast
 
-from modules import RoPE, shared
 from modules import RoPE, llama_cpp_python_hijack, shared
 from modules.cache_utils import handle_llamacpp_prefix_and_streamingllm
 from modules.logging_colors import logger

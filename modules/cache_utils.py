@@ -123,8 +123,8 @@ def handle_llamacpp_prefix_and_streamingllm(model, past_seq, seq, seq_tensor):
 
             matching_prefix = past_seq[:prefix_length]
             removed_chunk = past_seq[sink_length:i1]
-            overlapping_sequence = seq_tensor[j1:j2+1]
-            added_chunk = seq_tensor[j2+1:]
+            overlapping_sequence = seq_tensor[j1:j2 + 1]
+            added_chunk = seq_tensor[j2 + 1:]
 
             print(past_seq)
             print(seq_tensor)
@@ -140,11 +140,11 @@ def handle_llamacpp_prefix_and_streamingllm(model, past_seq, seq, seq_tensor):
 
             # Remove interval [sink_length, sink_length + removed_length) from the context
             # Subtract removed_length from model.n_tokens
-            model._ctx.kv_cache_seq_rm(0, sink_length, sink_length+removed_length)
-            model._ctx.kv_cache_seq_shift(0, sink_length+removed_length, -1, -removed_length)
+            model._ctx.kv_cache_seq_rm(0, sink_length, sink_length + removed_length)
+            model._ctx.kv_cache_seq_shift(0, sink_length + removed_length, -1, -removed_length)
 
             model.n_tokens -= removed_length
-            model.eval(seq[prefix_length+overlap_length:])
+            model.eval(seq[prefix_length + overlap_length:])
 
         # No removed chunk has been found
         else:
