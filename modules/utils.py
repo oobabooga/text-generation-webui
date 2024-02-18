@@ -21,16 +21,17 @@ def save_file(fname, contents):
         return
 
     root_folder = Path(__file__).resolve().parent.parent
-    abs_path = Path(fname).resolve()
-    rel_path = abs_path.relative_to(root_folder)
+    abs_path_str = os.path.abspath(fname)
+    rel_path_str = os.path.relpath(abs_path_str, root_folder)
+    rel_path = Path(rel_path_str)
     if rel_path.parts[0] == '..':
-        logger.error(f'Invalid file path: {fname}')
+        logger.error(f'Invalid file path: \"{fname}\"')
         return
 
-    with open(abs_path, 'w', encoding='utf-8') as f:
+    with open(abs_path_str, 'w', encoding='utf-8') as f:
         f.write(contents)
 
-    logger.info(f'Saved {abs_path}.')
+    logger.info(f'Saved \"{abs_path_str}\".')
 
 
 def delete_file(fname):
@@ -39,15 +40,16 @@ def delete_file(fname):
         return
 
     root_folder = Path(__file__).resolve().parent.parent
-    abs_path = Path(fname).resolve()
-    rel_path = abs_path.relative_to(root_folder)
+    abs_path_str = os.path.abspath(fname)
+    rel_path_str = os.path.relpath(abs_path_str, root_folder)
+    rel_path = Path(rel_path_str)
     if rel_path.parts[0] == '..':
-        logger.error(f'Invalid file path: {fname}')
+        logger.error(f'Invalid file path: \"{fname}\"')
         return
 
-    if abs_path.exists():
-        abs_path.unlink()
-        logger.info(f'Deleted {fname}.')
+    if rel_path.exists():
+        rel_path.unlink()
+        logger.info(f'Deleted \"{fname}\".')
 
 
 def current_time():
@@ -74,7 +76,16 @@ def get_available_models():
     model_list = []
     for item in list(Path(f'{shared.args.model_dir}/').glob('*')):
         if not item.name.endswith(('.txt', '-np', '.pt', '.json', '.yaml', '.py')) and 'llama-tokenizer' not in item.name:
-            model_list.append(re.sub('.pth$', '', item.name))
+            model_list.append(item.name)
+
+    return ['None'] + sorted(model_list, key=natural_keys)
+
+
+def get_available_ggufs():
+    model_list = []
+    for item in Path(f'{shared.args.model_dir}/').glob('*'):
+        if item.is_file() and item.name.lower().endswith(".gguf"):
+            model_list.append(item.name)
 
     return ['None'] + sorted(model_list, key=natural_keys)
 

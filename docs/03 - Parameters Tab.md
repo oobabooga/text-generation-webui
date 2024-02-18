@@ -21,7 +21,7 @@ These were obtained after a blind contest called "Preset Arena" where hundreds o
 
 A key takeaway is that the best presets are:
 
-* **For Instruct**: Divine Intellect, Big O, simple-1, Space Alien, StarChat, Titanic, tfs-with-top-a, Asterism, Contrastive Search (only works for the Transformers loader at the moment).
+* **For Instruct**: Divine Intellect, Big O, simple-1.
 * **For Chat**: Midnight Enigma, Yara, Shortwave.
 
 The other presets are:
@@ -54,9 +54,11 @@ For more information about the parameters, the [transformers documentation](http
 * **mirostat_mode**: Activates the Mirostat sampling technique. It aims to control perplexity during sampling. See the [paper](https://arxiv.org/abs/2007.14966).
 * **mirostat_tau**: No idea, see the paper for details. According to the Preset Arena, 8 is a good value. 
 * **mirostat_eta**: No idea, see the paper for details. According to the Preset Arena, 0.1 is a good value.
-* **temperature_last**: Makes temperature the last sampler instead of the first. With this, you can remove low probability tokens with a sampler like min_p and then use a high temperature to make the model creative without losing coherency.
+* **dynamic_temperature**: Activates Dynamic Temperature. This modifies temperature to range between "dynatemp_low" (minimum) and "dynatemp_high" (maximum), with an entropy-based scaling. The steepness of the curve is controlled by "dynatemp_exponent".
+* **smoothing_factor**: Activates Quadratic Sampling. When `0 < smoothing_factor < 1`, the logits distribution becomes flatter. When `smoothing_factor > 1`, it becomes more peaked.
+* **temperature_last**: Makes temperature the last sampler instead of the first. With this, you can remove low probability tokens with a sampler like min_p and then use a high temperature to make the model creative without losing coherency. Note: this parameter takes precedence over "Sampler priority". That means that `temperature`/`dynamic_temperature`/`quadratic_sampling` will be removed from wherever they are and moved to the end of the stack.
 * **do_sample**: When unchecked, sampling is entirely disabled, and greedy decoding is used instead (the most likely token is always picked).
-* **Seed**: Set the Pytorch seed to this number. Note that some loaders do not use Pytorch (notably llama.cpp), and others are not deterministic (notably ExLlama v1 and v2). For these loaders, the seed has no effect.
+* **Seed**: Set the Pytorch seed to this number. Note that some loaders do not use Pytorch (notably llama.cpp), and others are not deterministic (ExLlamaV2). For these loaders, the seed has no effect.
 * **encoder_repetition_penalty**: Also known as the "Hallucinations filter". Used to penalize tokens that are *not* in the prior text. Higher value = more likely to stay in context, lower value = more likely to diverge.
 * **no_repeat_ngram_size**: If not set to 0, specifies the length of token sets that are completely blocked from repeating at all. Higher values = blocks larger phrases, lower values = blocks words or letters from repeating. Only 0 or high values are a good idea in most cases.
 * **min_length**: Minimum generation length in tokens. This is a built-in parameter in the transformers library that has never been very useful. Typically you want to check "Ban the eos_token" instead.
@@ -75,6 +77,7 @@ To the right (or below if you are on mobile), the following parameters are prese
 * **Add the bos_token to the beginning of prompts**: By default, the tokenizer will add a BOS (Beginning of Sequence) token to your prompt. During training, BOS tokens are used to separate different documents. If unchecked, no BOS token will be added, and the model will interpret your prompt as being in the middle of a document instead of at the start of one. This significantly changes the output and can make it more creative.
 * **Skip special tokens**: When decoding the generated tokens, skip special tokens from being converted to their text representation. Otherwise, BOS appears as `<s>`, EOS as `</s>`, etc.
 * **Activate text streaming**: When unchecked, the full response is outputted at once, without streaming the words one at a time. I recommend unchecking this parameter on high latency networks like running the webui on Google Colab or using `--share`.
+* **Sampler priority**: Allows you to customize the order in which the different samplers are applied. The first sampler on the list gets applied first. With this, custom orders like `top_p -> temperature -> top_k` can be defined.
 * **Load grammar from file**: Loads a GBNF grammar from a file under `text-generation-webui/grammars`. The output is written to the "Grammar" box below. You can also save and delete custom grammars using this menu.
 * **Grammar**: Allows you to constrain the model output to a particular format. For instance, you can make the model generate lists, JSON, specific words, etc. Grammar is extremely powerful and I highly recommend it. The syntax looks a bit daunting at first sight, but it gets very easy once you understand it. See the [GBNF Guide](https://github.com/ggerganov/llama.cpp/blob/master/grammars/README.md) for details.
 
@@ -101,16 +104,13 @@ So you can use those special placeholders in your character definitions. They ar
 
 Defines the instruction template that is used in the Chat tab when "instruct" or "chat-instruct" are selected under "Mode".
 
-* **Instruction template**: A dropdown menu where you can select from saved templates, save a new template (💾 button), and delete the currently selected template (🗑️).
+* **Saved instruction templates**: A dropdown menu where you can load a saved template, save a new template (💾 button), and delete the currently selected template (🗑️).
 * **Custom system message**: A message that defines the personality of the chatbot, replacing its default "System message" string. Example: "You are a duck."
-* **Turn template**: Defines the positioning of spaces and new line characters in a single turn of the dialogue. `<|user-message|>` gets replaced with the user input, `<|bot-message|>` gets replaced with the bot reply, `<|user|>` gets replaced with the "User string" below, and `<|bot|>` gets replaced with "Bot string" below. The `<|user|>` and `<|bot|>` placeholders must be included even if "User string" and "Bot string" are empty, as they are used to split the template in parts in the backend.
-* **User string**: Replaces `<|user|>` in the turn template.
-* **Bot string**: Replaces `<|bot|>` in the turn template.
-* **Context**: A string that appears as-is at the top of the prompt, including the new line characters at the end (if any). The `<|system-message|>` placeholder gets replaced with the "System message" string below, unless "Custom system message" is not empty, in which case it is used instead.
-* **System message**: A default message recommended by the model creator(s) to define the personality of the chatbot.
+* **Instruction template**: A Jinja2 template that defines the prompt format for the instruction-following conversation.
 * **Send to default**: Send the full instruction template in string format to the Default tab.
 * **Send to notebook**: Send the full instruction template in string format to the Notebook tab.
 * **Send to negative prompt**: Send the full instruction template in string format to the "Negative prompt" field under "Parameters" > "Generation".
+* **Chat template**: A Jinja2 template that defines the prompt format for regular chat conversations with characters.
 * **Command for chat-instruct mode**: The command that is used in chat-instruct mode to query the model to generate a reply on behalf of the character. Can be used creatively to generate specific kinds of responses.
 
 ## Chat history

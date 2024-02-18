@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import os
 import traceback
 from threading import Thread
@@ -173,13 +174,13 @@ async def handle_audio_transcription(request: Request):
 
     # Create AudioData object
     audio_data = sr.AudioData(raw_data, audio_data.frame_rate, audio_data.sample_width)
-    whipser_language = form.getvalue('language', None)
-    whipser_model = form.getvalue('model', 'tiny')  # Use the model from the form data if it exists, otherwise default to tiny
+    whisper_language = form.getvalue('language', None)
+    whisper_model = form.getvalue('model', 'tiny')  # Use the model from the form data if it exists, otherwise default to tiny
 
     transcription = {"text": ""}
 
     try:
-        transcription["text"] = r.recognize_whisper(audio_data, language=whipser_language, model=whipser_model)
+        transcription["text"] = r.recognize_whisper(audio_data, language=whisper_language, model=whisper_model)
     except sr.UnknownValueError:
         print("Whisper could not understand audio")
         transcription["text"] = "Whisper could not understand audio UnknownValueError"
@@ -367,6 +368,7 @@ def run_server():
     if shared.args.admin_key and shared.args.admin_key != shared.args.api_key:
         logger.info(f'OpenAI API admin key (for loading/unloading models):\n\n{shared.args.admin_key}\n')
 
+    logging.getLogger("uvicorn.error").propagate = False
     uvicorn.run(app, host=server_addr, port=port, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile)
 
 

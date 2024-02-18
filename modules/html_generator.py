@@ -7,6 +7,7 @@ from pathlib import Path
 import markdown
 from PIL import Image, ImageOps
 
+from modules import shared
 from modules.utils import get_available_chat_styles
 
 # This is to store the paths to the thumbnails of the profile pictures
@@ -170,7 +171,7 @@ def make_thumbnail(image):
 
 
 def get_image_cache(path):
-    cache_folder = Path("cache")
+    cache_folder = Path(shared.args.disk_cache_dir)
     if not cache_folder.exists():
         cache_folder.mkdir()
 
@@ -178,8 +179,8 @@ def get_image_cache(path):
     if (path in image_cache and mtime != image_cache[path][0]) or (path not in image_cache):
         img = make_thumbnail(Image.open(path))
 
-        old_p = Path(f'cache/{path.name}_cache.png')
-        p = Path(f'cache/cache_{path.name}.png')
+        old_p = Path(f'{cache_folder}/{path.name}_cache.png')
+        p = Path(f'{cache_folder}/cache_{path.name}.png')
         if old_p.exists():
             old_p.rename(p)
 
@@ -221,11 +222,11 @@ def generate_instruct_html(history):
     return output
 
 
-def generate_cai_chat_html(history, name1, name2, style, reset_cache=False):
+def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=False):
     output = f'<style>{chat_styles[style]}</style><div class="chat" id="chat"><div class="messages">'
 
-    # We use ?name2 and ?time.time() to force the browser to reset caches
-    img_bot = f'<img src="file/cache/pfp_character_thumb.png?{name2}" class="pfp_character">' if Path("cache/pfp_character_thumb.png").exists() else ''
+    # We use ?character and ?time.time() to force the browser to reset caches
+    img_bot = f'<img src="file/cache/pfp_character_thumb.png?{character}" class="pfp_character">' if Path("cache/pfp_character_thumb.png").exists() else ''
     img_me = f'<img src="file/cache/pfp_me.png?{time.time() if reset_cache else ""}">' if Path("cache/pfp_me.png").exists() else ''
 
     for i, _row in enumerate(history):
@@ -299,10 +300,10 @@ def generate_chat_html(history, name1, name2, reset_cache=False):
     return output
 
 
-def chat_html_wrapper(history, name1, name2, mode, style, reset_cache=False):
+def chat_html_wrapper(history, name1, name2, mode, style, character, reset_cache=False):
     if mode == 'instruct':
         return generate_instruct_html(history['visible'])
     elif style == 'wpp':
         return generate_chat_html(history['visible'], name1, name2)
     else:
-        return generate_cai_chat_html(history['visible'], name1, name2, style, reset_cache)
+        return generate_cai_chat_html(history['visible'], name1, name2, style, character, reset_cache)

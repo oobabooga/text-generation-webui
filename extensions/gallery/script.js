@@ -5,6 +5,13 @@ let extensions_block = document.getElementById('extensions');
 let extensions_block_size = extensions_block.childNodes.length;
 let gallery_only = (extensions_block_size == 5);
 
+function gotoFirstPage() {
+    const firstPageButton = gallery_element.querySelector('.paginate > button');
+    if (firstPageButton) {
+        firstPageButton.click();
+    }
+}
+
 document.querySelector('.header_bar').addEventListener('click', function(event) {
     if (event.target.tagName === 'BUTTON') {
         const buttonText = event.target.textContent.trim();
