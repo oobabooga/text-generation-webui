@@ -297,8 +297,6 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
             resp_list: [{
                 "index": 0,
                 "finish_reason": None,
-                # So yeah... do both methods? delta and messages.
-                "message": {'role': 'assistant', 'content': content},
                 "delta": {'role': 'assistant', 'content': content},
             }],
         }
