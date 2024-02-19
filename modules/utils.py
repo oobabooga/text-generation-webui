@@ -76,7 +76,16 @@ def get_available_models():
     model_list = []
     for item in list(Path(f'{shared.args.model_dir}/').glob('*')):
         if not item.name.endswith(('.txt', '-np', '.pt', '.json', '.yaml', '.py')) and 'llama-tokenizer' not in item.name:
-            model_list.append(re.sub('.pth$', '', item.name))
+            model_list.append(item.name)
+
+    return ['None'] + sorted(model_list, key=natural_keys)
+
+
+def get_available_ggufs():
+    model_list = []
+    for item in Path(f'{shared.args.model_dir}/').glob('*'):
+        if item.is_file() and item.name.lower().endswith(".gguf"):
+            model_list.append(item.name)
 
     return ['None'] + sorted(model_list, key=natural_keys)
 
@@ -105,7 +114,7 @@ def get_available_instruction_templates():
     if os.path.exists(path):
         paths = (x for x in Path(path).iterdir() if x.suffix in ('.json', '.yaml', '.yml'))
 
-    return ['Select template to load...'] + sorted(set((k.stem for k in paths)), key=natural_keys)
+    return ['None'] + sorted(set((k.stem for k in paths)), key=natural_keys)
 
 
 def get_available_extensions():

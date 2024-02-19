@@ -341,6 +341,7 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     overflow-wrap: anywhere;
     border-top: none;
     border-radius: 0 0 0 8px;
+    visibility: visible;
 }
 
 .chat-parent {
@@ -348,6 +349,18 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     overflow: auto !important;
     border-radius: 0 !important;
     margin-bottom: var(--input-delta) !important;
+}
+
+/* On desktop, automatically hide the chat scroll bar
+ * when not hovered. */
+@media (hover: hover) and (pointer: fine) {
+    .chat-parent {
+        visibility: hidden;
+    }
+
+    .chat-parent:focus, .chat-parent:hover {
+        visibility: visible;
+    }
 }
 
 .old-ui .chat-parent {
@@ -675,6 +688,15 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
         width: calc(0.5*(var(--document-width) - 880px - 120px - 16px*2));
         max-width: 300px;
         margin-left: calc(-0.5*(var(--document-width) - 880px - 14px - 16px * 2));
+    }
+
+    #chat-controls {
+        position: absolute;
+        top: 16px;
+        right: 0;
+        width: calc(0.5*(var(--document-width) - 880px - 120px - 16px*2));
+        max-width: 400px;
+        margin-right: calc(-0.5*(var(--document-width) - 880px - 14px - 16px * 2));
     }
 }
 
