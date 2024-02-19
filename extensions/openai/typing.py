@@ -15,6 +15,7 @@ class GenerationOptions(BaseModel):
     smoothing_factor: float = 0
     top_k: int = 0
     repetition_penalty: float = 1
+    penalty_threshold: float = 1
     repetition_penalty_range: int = 1024
     typical_p: float = 1
     tfs: float = 1

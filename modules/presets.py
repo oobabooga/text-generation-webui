@@ -25,6 +25,7 @@ def default_preset():
         'repetition_penalty': 1,
         'presence_penalty': 0,
         'frequency_penalty': 0,
+        'penalty_threshold': 1,
         'repetition_penalty_range': 1024,
         'typical_p': 1,
         'tfs': 1,

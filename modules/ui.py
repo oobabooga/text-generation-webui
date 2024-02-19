@@ -132,6 +132,7 @@ def list_interface_input_elements():
         'repetition_penalty',
         'presence_penalty',
         'frequency_penalty',
+        'penalty_threshold',
         'repetition_penalty_range',
         'encoder_repetition_penalty',
         'no_repeat_ngram_size',

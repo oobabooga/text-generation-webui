@@ -276,16 +276,17 @@ class SpyLogitsWarper(LogitsWarper):
 
 class RepetitionPenaltyLogitsProcessorWithRange(LogitsProcessor):
     '''
-    Copied from the transformers library
+    Adapted from the transformers library
     '''
 
-    def __init__(self, penalty: float, presence_penalty: float, frequency_penalty: float, _range: int):
+    def __init__(self, penalty: float, presence_penalty: float, frequency_penalty: float, penalty_threshold: float, _range: int):
         if not (penalty > 0):
             raise ValueError(f"`penalty` has to be strictly positive, but is {penalty}")
 
         self.penalty = penalty
         self.presence_penalty = presence_penalty
         self.frequency_penalty = frequency_penalty
+        self.penalty_threshold = penalty_threshold
         self._range = _range
 
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
@@ -295,14 +296,29 @@ class RepetitionPenaltyLogitsProcessorWithRange(LogitsProcessor):
         # case that batch_size > 1.
         for input_ids_row, scores_row in zip(input_ids, scores):
             unique_ids, counts = torch.unique(input_ids_row, return_counts=True)
+
+            # Calculate the total number of tokens in the input
+            total_tokens = torch.sum(counts)
+
+            # Identify tokens with counts less than or equal to penalty_threshold * total_tokens
+            valid_tokens_mask = counts <= self.penalty_threshold * total_tokens
+
+            # Print non-valid tokens
+            non_valid_tokens = unique_ids[~valid_tokens_mask]
+            print("Non-valid tokens:", [shared.tokenizer.convert_ids_to_tokens(int(i)) for i in non_valid_tokens.tolist()])
+
+            # Apply penalties only to valid tokens
+            unique_ids = unique_ids[valid_tokens_mask]
+            counts = counts[valid_tokens_mask]
+
             score = torch.gather(scores_row, 0, unique_ids)
 
-            # multiplicative repetition penalty
+            # Repetition penalty (the default, multiplicative one)
             # if score < 0 then repetition penalty has to be multiplied to reduce the previous token probability
             score = torch.where(score < 0, score * self.penalty, score / self.penalty)
             scores_row.scatter_(0, unique_ids, score)
 
-            # presence_penalty and frequency_penalty
+            # Presence penalty and frequency penalty
             raw_presence_penalty = (counts > 0).to(scores.dtype)
             raw_frequency_penalty = counts.to(scores.dtype)
             additive_penalty = raw_presence_penalty * self.presence_penalty + raw_frequency_penalty * self.frequency_penalty
@@ -445,6 +461,7 @@ def get_logits_processor_patch(self, **kwargs):
     repetition_penalty = kwargs['generation_config'].repetition_penalty
     presence_penalty = kwargs['generation_config'].presence_penalty
     frequency_penalty = kwargs['generation_config'].frequency_penalty
+    penalty_threshold = kwargs['generation_config'].penalty_threshold
     repetition_penalty_range = kwargs['generation_config'].repetition_penalty_range
     do_rep_pen_hijack = (repetition_penalty > 1) or (presence_penalty != 0) or (frequency_penalty != 0)
     if do_rep_pen_hijack:
@@ -455,7 +472,13 @@ def get_logits_processor_patch(self, **kwargs):
     if do_rep_pen_hijack:
         for i in range(len(result)):
             if result[i].__class__.__name__ == 'RepetitionPenaltyLogitsProcessor':
-                result[i] = RepetitionPenaltyLogitsProcessorWithRange(repetition_penalty, presence_penalty, frequency_penalty, repetition_penalty_range)
+                result[i] = RepetitionPenaltyLogitsProcessorWithRange(
+                    repetition_penalty,
+                    presence_penalty,
+                    frequency_penalty,
+                    penalty_threshold,
+                    repetition_penalty_range
+                )
 
     return result
 
@@ -474,6 +497,7 @@ def generation_config_init_patch(self, **kwargs):
     self.mirostat_eta = kwargs.pop("mirostat_eta", 0.1)
     self.mirostat_tau = kwargs.pop("mirostat_tau", 5)
     self.repetition_penalty_range = kwargs.pop("repetition_penalty_range", 0)
+    self.penalty_threshold = kwargs.pop("penalty_threshold", 1)
     self.presence_penalty = kwargs.pop("presence_penalty", 0)
     self.frequency_penalty = kwargs.pop("frequency_penalty", 0)
     self.temperature_last = kwargs.pop("temperature_last", False)
