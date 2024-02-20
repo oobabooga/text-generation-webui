@@ -297,9 +297,6 @@ class RepetitionPenaltyLogitsProcessorWithRange(LogitsProcessor):
         for input_ids_row, scores_row in zip(input_ids, scores):
             unique_ids, counts = torch.unique(input_ids_row, return_counts=True)
 
-            # Calculate the total number of tokens in the input
-            total_tokens = torch.sum(counts)
-
             # Find the most common token and its count
             max_count_idx = torch.argmax(counts)
             most_common_token = unique_ids[max_count_idx]
