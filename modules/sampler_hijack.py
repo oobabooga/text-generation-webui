@@ -300,8 +300,13 @@ class RepetitionPenaltyLogitsProcessorWithRange(LogitsProcessor):
             # Calculate the total number of tokens in the input
             total_tokens = torch.sum(counts)
 
-            # Identify tokens with counts less than or equal to penalty_threshold * total_tokens
-            valid_tokens_mask = counts <= self.penalty_threshold * total_tokens
+            # Find the most common token and its count
+            max_count_idx = torch.argmax(counts)
+            most_common_token = unique_ids[max_count_idx]
+            most_common_count = counts[max_count_idx]
+
+            # Identify tokens with counts less than or equal to penalty_threshold * most_common_count
+            valid_tokens_mask = counts <= self.penalty_threshold * most_common_count
 
             # Print non-valid tokens
             non_valid_tokens = unique_ids[~valid_tokens_mask]

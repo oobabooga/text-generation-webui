@@ -35,7 +35,7 @@ def create_ui(default_preset):
                             shared.gradio['repetition_penalty'] = gr.Slider(1.0, 1.5, value=generate_params['repetition_penalty'], step=0.01, label='repetition_penalty')
                             shared.gradio['presence_penalty'] = gr.Slider(0, 2, value=generate_params['presence_penalty'], step=0.05, label='presence_penalty')
                             shared.gradio['frequency_penalty'] = gr.Slider(0, 2, value=generate_params['frequency_penalty'], step=0.05, label='frequency_penalty')
-                            shared.gradio['penalty_threshold'] = gr.Slider(0, 1, step=0.001, value=generate_params['penalty_threshold'], label='penalty_threshold')
+                            shared.gradio['penalty_threshold'] = gr.Slider(0, 1, step=0.01, value=generate_params['penalty_threshold'], label='penalty_threshold')
                             shared.gradio['repetition_penalty_range'] = gr.Slider(0, 4096, step=64, value=generate_params['repetition_penalty_range'], label='repetition_penalty_range')
                             shared.gradio['typical_p'] = gr.Slider(0.0, 1.0, value=generate_params['typical_p'], step=0.01, label='typical_p')
                             shared.gradio['tfs'] = gr.Slider(0.0, 1.0, value=generate_params['tfs'], step=0.01, label='tfs')
