@@ -10,7 +10,7 @@ import traceback
 import numpy as np
 import torch
 import transformers
-from transformers import LogitsProcessorList, is_torch_xpu_available, is_torch_npu_available
+from transformers import LogitsProcessorList, is_torch_npu_available, is_torch_xpu_available
 
 import modules.shared as shared
 from modules.callbacks import (

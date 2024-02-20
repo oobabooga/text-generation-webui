@@ -5,7 +5,7 @@ from threading import Thread
 
 import torch
 import transformers
-from transformers import is_torch_xpu_available, is_torch_npu_available
+from transformers import is_torch_npu_available, is_torch_xpu_available
 
 import modules.shared as shared
 
