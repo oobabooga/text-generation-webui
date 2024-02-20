@@ -313,11 +313,11 @@ def install_webui():
             install_pytorch = "python -m pip install torch==2.1.0a0 torchvision==0.16.0a0 torchaudio==2.1.0a0 intel-extension-for-pytorch==2.1.10+xpu --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/"
         else:
             install_pytorch = "python -m pip install torch==2.1.0a0 torchvision==0.16.0a0 torchaudio==2.1.0a0 intel-extension-for-pytorch==2.1.10 --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/"
-    elif selected_gpu == "HUAWEI":
+    elif selected_gpu == "Ascend":
         if is_linux():
             install_pytorch = "python -m pip install torch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 --index-url https://download.pytorch.org/whl/cpu && python -m pip install torch_npu==2.1.0"
         else:
-            print("Huawei Ascend NPUs are only supported on Linux. Exiting...")
+            print("Ascend NPUs are only supported on Linux. Exiting...")
             sys.exit(1)
 
     # Install Git and then Pytorch
