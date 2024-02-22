@@ -192,11 +192,13 @@ def create_ui():
     # doesn't work with the .then() syntax, so I write them one
     # by one in this ugly but functional way.
     ev = start_evaluation.click(calculate_perplexity, [models, evaluate_text_file, stride_length, max_length], evaluation_log, show_progress=False)
-    start_evaluation.click(generate_markdown_table, None, evaluation_table, show_progress=False)
+    ev.then(generate_markdown_table, None, evaluation_table, show_progress=False)
 
-    start_current_evaluation.click(lambda: ['current model'], None, tmp)
-    ev_cur = start_current_evaluation.click(calculate_perplexity, [tmp, evaluate_text_file, stride_length, max_length], evaluation_log, show_progress=False)
-    start_current_evaluation.click(generate_markdown_table, None, evaluation_table, show_progress=False)
+    ev_cur = start_current_evaluation.click(
+        lambda: ['current model'], None, tmp).then(
+        calculate_perplexity, [tmp, evaluate_text_file, stride_length, max_length], evaluation_log, show_progress=False)
+
+    ev_cur.then(generate_markdown_table, None, evaluation_table, show_progress=False)
 
     stop_evaluation.click(None, None, None, cancels=[ev, ev_cur], queue=False)
     refresh_table.click(generate_markdown_table, None, evaluation_table, show_progress=True)
