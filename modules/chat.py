@@ -501,11 +501,11 @@ def rename_history(old_id, new_id, character, mode):
     old_p = get_history_file_path(old_id, character, mode)
     new_p = get_history_file_path(new_id, character, mode)
     if new_p.parent != old_p.parent:
-        logger.error(f"The following path is not allowed: {new_p}.")
+        logger.error(f"The following path is not allowed: \"{new_p}\".")
     elif new_p == old_p:
         logger.info("The provided path is identical to the old one.")
     else:
-        logger.info(f"Renaming {old_p} to {new_p}")
+        logger.info(f"Renaming \"{old_p}\" to \"{new_p}\"")
         old_p.rename(new_p)
 
 
@@ -522,12 +522,13 @@ def find_all_histories(state):
         old_p = Path(f'logs/{character}_persistent.json')
         new_p = Path(f'logs/persistent_{character}.json')
         if old_p.exists():
-            logger.warning(f"Renaming {old_p} to {new_p}")
+            logger.warning(f"Renaming \"{old_p}\" to \"{new_p}\"")
             old_p.rename(new_p)
+
         if new_p.exists():
             unique_id = datetime.now().strftime('%Y%m%d-%H-%M-%S')
             p = get_history_file_path(unique_id, character, state['mode'])
-            logger.warning(f"Moving {new_p} to {p}")
+            logger.warning(f"Moving \"{new_p}\" to \"{p}\"")
             p.parent.mkdir(exist_ok=True)
             new_p.rename(p)
 
