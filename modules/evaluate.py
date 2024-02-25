@@ -39,8 +39,20 @@ def calculate_perplexity(models, input_dataset, stride, _max_length):
     https://huggingface.co/docs/transformers/perplexity#calculating-ppl-with-fixedlength-models
     '''
 
+    if shared.args.loader == "llama.cpp":
+        logger.error("llamacpp_HF is required for perplexity evaluation with GGUF models. Please reload the model with llamacpp_HF instead of llama.cpp.")
+        raise ValueError
+
+    if shared.args.loader == "ExLlamav2":
+        logger.error("ExLlamav2_HF is required for perplexity evaluation with EXL2 models. Please reload the model with ExLlamav2_HF instead of ExLlamav2.")
+        raise ValueError
+
+    if shared.args.loader == "llamacpp_HF" and not shared.args.logits_all:
+        logger.error("--logits_all is required for perplexity evaluation with GGUF models. Please reload the model with that option set/checked.")
+        raise ValueError
+
     if not shared.args.no_use_fast:
-        logger.warning("--no_use_fast is not being used. If tokenizing the input dataset takes a long time, consider loading the model with that option checked.")
+        logger.warning("--no_use_fast is not set. If tokenizing the input dataset takes a long time, try reloading the model with that option set/checked.")
 
     global past_evaluations
     cumulative_log = ''

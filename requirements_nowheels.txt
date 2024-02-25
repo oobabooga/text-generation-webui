@@ -1,4 +1,4 @@
-accelerate==0.25.*
+accelerate==0.27.*
 colorama
 datasets
 einops
@@ -8,7 +8,7 @@ jinja2==3.1.2
 lm_eval==0.3.0
 markdown
 numpy==1.26.*
-optimum==1.16.*
+optimum==1.17.*
 pandas
 peft==0.8.*
 Pillow>=9.5.0

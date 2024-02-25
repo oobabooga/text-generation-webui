@@ -717,6 +717,11 @@ div.svelte-362y77>*, div.svelte-362y77>.form>* {
     width: calc((100vw - 880px - 120px) /2);
 }
 
+.pfp_character {
+    position: relative;
+    z-index: 100;
+}
+
 .pfp_character:hover {
     cursor: pointer;
 }
