@@ -202,7 +202,7 @@ def convert_history(history):
             else:
                 chat_dialogue.append(['', current_reply])
         elif role == "system":
-            system_message = content
+            system_message += f"{content}\n" ### models are usually trained on one system message, but some apps (e.g. SuperAGI) send multiple - need to support
 
     # if current_message:
     #     chat_dialogue.append([current_message, ''])
