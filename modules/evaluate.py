@@ -127,9 +127,14 @@ def calculate_perplexity(models, input_dataset, stride, _max_length):
                 break
 
         ppl = torch.exp(torch.stack(nlls).mean())
+
         add_entry_to_past_evaluations(float(ppl), shared.model_name, input_dataset, stride, _max_length)
         save_past_evaluations(past_evaluations)
-        cumulative_log += f"The perplexity for `{shared.model_name}` is: {float(ppl)}\n\n"
+
+        message = f"The perplexity for `{shared.model_name}` is: {float(ppl)}"
+        logger.info(message)
+
+        cumulative_log += f"{message}\n\n"
         yield cumulative_log
 
 
