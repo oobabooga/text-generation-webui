@@ -1,3 +1,4 @@
+import importlib
 import traceback
 from functools import partial
 from inspect import signature
@@ -33,12 +34,10 @@ def load_extensions():
                 logger.info(f'Loading the extension "{name}"')
             try:
                 try:
-                    exec(f"import extensions.{name}.script")
+                    extension = importlib.import_module(f"extensions.{name}.script")
                 except ModuleNotFoundError:
                     logger.error(f"Could not import the requirements for '{name}'. Make sure to install the requirements for the extension.\n\nLinux / Mac:\n\npip install -r extensions/{name}/requirements.txt --upgrade\n\nWindows:\n\npip install -r extensions\\{name}\\requirements.txt --upgrade\n\nIf you used the one-click installer, paste the command above in the terminal window opened after launching the cmd script for your OS.")
                     raise
-
-                extension = getattr(extensions, name).script
 
                 # Only run setup() and apply settings from settings.yaml once
                 if extension not in setup_called:

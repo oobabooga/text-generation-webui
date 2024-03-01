@@ -354,6 +354,12 @@ function addBigPicture() {
   var timestamp = new Date().getTime();
   imgElement.src = "/file/cache/pfp_character.png?time=" + timestamp;
   imgElement.classList.add("bigProfilePicture");
+  imgElement.addEventListener("load", function () {
+    this.style.visibility = "visible";
+  });
+  imgElement.addEventListener("error", function () {
+    this.style.visibility = "hidden";
+  });
 
   var imgElementParent = document.getElementById("chat").parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode;
   imgElementParent.appendChild(imgElement);

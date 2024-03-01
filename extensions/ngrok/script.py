@@ -8,7 +8,6 @@
 # See this example for full list of options: https://github.com/ngrok/ngrok-py/blob/main/examples/ngrok-connect-full.py
 # or the README.md in this directory.
 
-import logging
 from modules import shared
 
 # Pick up host/port command line arguments
@@ -31,6 +30,6 @@ def ui():
     try:
         import ngrok
         tunnel = ngrok.connect(**options)
-        logging.info(f"Ingress established at: {tunnel.url()}")
+        shared.logger.info(f"Ingress established at: {tunnel.url()}")
     except ModuleNotFoundError:
-        logging.error("===> ngrok library not found, please run `pip install -r extensions/ngrok/requirements.txt`")
+        shared.logger.error("===> ngrok library not found, please run `pip install -r extensions/ngrok/requirements.txt`")
