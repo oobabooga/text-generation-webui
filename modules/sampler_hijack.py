@@ -114,11 +114,13 @@ class QuadraticSamplingLogitsWarper(LogitsWarper):
         diff = scores - max_logit
         k = (3 - self.smoothing_curve) / 2
         s = (self.smoothing_curve - 1) / 2
-        transformed_logits = -(k * self.smoothing_factor * diff**2) + (s * self.smoothing_factor * diff**3) + max_logit
 
-        # No need to print the top 5 logits since this is not required
-        # print("Original top 5 logits: ", torch.topk(scores, 5))
-        # print("New top 5 logits: ", torch.topk(transformed_logits, 5))
+        # Apply transformation to non-negative infinity values
+        transformed_logits = torch.where(
+            scores != float('-inf'),
+            -(k * self.smoothing_factor * diff**2) + (s * self.smoothing_factor * diff**3) + max_logit,
+            scores
+        )
 
         return transformed_logits
 
