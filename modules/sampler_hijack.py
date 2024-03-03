@@ -375,7 +375,7 @@ def get_logits_warper_patch(self, generation_config):
                 smoothing_curve=generation_config.smoothing_curve
             )
         )
-        
+
     if generation_config.mirostat_mode is not None and generation_config.mirostat_mode == 2:
         warpers_to_add.append(
             MirostatLogitsWarper(
