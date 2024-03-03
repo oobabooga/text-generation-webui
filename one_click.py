@@ -9,13 +9,20 @@ import site
 import subprocess
 import sys
 
-script_dir = os.getcwd()
-conda_env_path = os.path.join(script_dir, "installer_files", "env")
-
 # Remove the '# ' from the following lines as needed for your AMD GPU on Linux
 # os.environ["ROCM_PATH"] = '/opt/rocm'
 # os.environ["HSA_OVERRIDE_GFX_VERSION"] = '10.3.0'
 # os.environ["HCC_AMDGPU_TARGET"] = 'gfx1030'
+
+
+# Define the required PyTorch version
+TORCH_VERSION = "2.2.1"
+TORCHVISION_VERSION = "0.17.1"
+TORCHAUDIO_VERSION = "2.2.1"
+
+# Environment
+script_dir = os.getcwd()
+conda_env_path = os.path.join(script_dir, "installer_files", "env")
 
 # Command-line flags
 cmd_flags_path = os.path.join(script_dir, "CMD_FLAGS.txt")
@@ -86,11 +93,40 @@ def torch_version():
 
     if site_packages_path:
         torch_version_file = open(os.path.join(site_packages_path, 'torch', 'version.py')).read().splitlines()
-        torver = [line for line in torch_version_file if '__version__' in line][0].split('__version__ = ')[1].strip("'")
+        torver = [line for line in torch_version_file if line.startswith('__version__')][0].split('__version__ = ')[1].strip("'")
     else:
         from torch import __version__ as torver
 
     return torver
+
+
+def update_pytorch():
+    print_big_message("Checking for PyTorch updates")
+
+    torver = torch_version()
+    is_cuda = '+cu' in torver
+    is_cuda118 = '+cu118' in torver  # 2.1.0+cu118
+    is_rocm = '+rocm' in torver  # 2.0.1+rocm5.4.2
+    is_intel = '+cxx11' in torver  # 2.0.1a0+cxx11.abi
+    is_cpu = '+cpu' in torver  # 2.0.1+cpu
+
+    install_pytorch = f"python -m pip install --upgrade torch=={TORCH_VERSION} torchvision=={TORCHVISION_VERSION} torchaudio=={TORCHAUDIO_VERSION} "
+
+    if is_cuda118:
+        install_pytorch += "--index-url https://download.pytorch.org/whl/cu118"
+    elif is_cuda:
+        install_pytorch += "--index-url https://download.pytorch.org/whl/cu121"
+    elif is_rocm:
+        install_pytorch += "--index-url https://download.pytorch.org/whl/rocm5.6"
+    elif is_cpu:
+        install_pytorch += "--index-url https://download.pytorch.org/whl/cpu"
+    elif is_intel:
+        if is_linux():
+            install_pytorch = "python -m pip install --upgrade torch==2.1.0a0 torchvision==0.16.0a0 torchaudio==2.1.0a0 intel-extension-for-pytorch==2.1.10+xpu --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/"
+        else:
+            install_pytorch = "python -m pip install --upgrade torch==2.1.0a0 torchvision==0.16.0a0 torchaudio==2.1.0a0 intel-extension-for-pytorch==2.1.10 --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/"
+
+    run_cmd(f"{install_pytorch}", assert_success=True, environment=True)
 
 
 def is_installed():
@@ -166,7 +202,8 @@ def run_cmd(cmd, assert_success=False, environment=False, capture_output=False, 
 
 
 def install_webui():
-    # Select your GPU, or choose to run in CPU mode
+
+    # Ask the user for the GPU vendor
     if "GPU_CHOICE" in os.environ:
         choice = os.environ["GPU_CHOICE"].upper()
         print_big_message(f"Selected GPU choice \"{choice}\" based on the GPU_CHOICE environment variable.")
@@ -195,23 +232,20 @@ def install_webui():
     }
 
     selected_gpu = gpu_choice_to_name[choice]
+    use_cuda118 = "N"
 
+    # Write a flag to CMD_FLAGS.txt for CPU mode
     if selected_gpu == "NONE":
         with open(cmd_flags_path, 'r+') as cmd_flags_file:
             if "--cpu" not in cmd_flags_file.read():
                 print_big_message("Adding the --cpu flag to CMD_FLAGS.txt.")
                 cmd_flags_file.write("\n--cpu")
 
-    # Find the proper Pytorch installation command
-    install_git = "conda install -y -k ninja git"
-    install_pytorch = "python -m pip install torch==2.1.* torchvision==0.16.* torchaudio==2.1.* "
-
-    use_cuda118 = "N"
-    if any((is_windows(), is_linux())) and selected_gpu == "NVIDIA":
+    # Check if the user wants CUDA 11.8
+    elif any((is_windows(), is_linux())) and selected_gpu == "NVIDIA":
         if "USE_CUDA118" in os.environ:
             use_cuda118 = "Y" if os.environ.get("USE_CUDA118", "").lower() in ("yes", "y", "true", "1", "t", "on") else "N"
         else:
-            # Ask for CUDA version if using NVIDIA
             print("\nDo you want to use CUDA 11.8 instead of 12.1? Only choose this option if your GPU is very old (Kepler or older).\nFor RTX and GTX series GPUs, say \"N\". If unsure, say \"N\".\n")
             use_cuda118 = input("Input (Y/N)> ").upper().strip('"\'').strip()
             while use_cuda118 not in 'YN':
@@ -220,29 +254,35 @@ def install_webui():
 
         if use_cuda118 == 'Y':
             print("CUDA: 11.8")
-            install_pytorch += "--index-url https://download.pytorch.org/whl/cu118"
         else:
             print("CUDA: 12.1")
-            install_pytorch += "--index-url https://download.pytorch.org/whl/cu121"
-    elif not is_macos() and selected_gpu == "AMD":
-        if is_linux():
-            install_pytorch += "--index-url https://download.pytorch.org/whl/rocm5.6"
+
+    # No PyTorch for AMD on Windows (?)
+    elif is_windows() and selected_gpu == "AMD":
+        print("PyTorch setup on Windows is not implemented yet. Exiting...")
+        sys.exit(1)
+
+    # Find the Pytorch installation command
+    install_pytorch = f"python -m pip install torch=={TORCH_VERSION} torchvision=={TORCHVISION_VERSION} torchaudio=={TORCHAUDIO_VERSION} "
+
+    if selected_gpu == "NVIDIA":
+        if use_cuda118 == 'Y':
+            install_pytorch += "--index-url https://download.pytorch.org/whl/cu118"
         else:
-            print("AMD GPUs are only supported on Linux. Exiting...")
-            sys.exit(1)
-    elif is_linux() and selected_gpu in ["APPLE", "NONE"]:
+            install_pytorch += "--index-url https://download.pytorch.org/whl/cu121"
+    elif selected_gpu == "AMD":
+        install_pytorch += "--index-url https://download.pytorch.org/whl/rocm5.6"
+    elif selected_gpu in ["APPLE", "NONE"]:
         install_pytorch += "--index-url https://download.pytorch.org/whl/cpu"
     elif selected_gpu == "INTEL":
-        install_pytorch = "python -m pip install torch==2.1.0a0 torchvision==0.16.0a0 torchaudio==2.1.0a0 intel-extension-for-pytorch==2.1.10 --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/"
+        if is_linux():
+            install_pytorch = "python -m pip install torch==2.1.0a0 torchvision==0.16.0a0 torchaudio==2.1.0a0 intel-extension-for-pytorch==2.1.10+xpu --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/"
+        else:
+            install_pytorch = "python -m pip install torch==2.1.0a0 torchvision==0.16.0a0 torchaudio==2.1.0a0 intel-extension-for-pytorch==2.1.10 --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/"
 
     # Install Git and then Pytorch
     print_big_message("Installing PyTorch.")
-    run_cmd(f"{install_git} && {install_pytorch} && python -m pip install py-cpuinfo==9.0.0", assert_success=True, environment=True)
-
-    # Install CUDA libraries (this wasn't necessary for Pytorch before...)
-    if selected_gpu == "NVIDIA":
-        print_big_message("Installing the CUDA runtime libraries.")
-        run_cmd(f"conda install -y -c \"nvidia/label/{'cuda-12.1.1' if use_cuda118 == 'N' else 'cuda-11.8.0'}\" cuda-runtime", assert_success=True, environment=True)
+    run_cmd(f"conda install -y -k ninja git && {install_pytorch} && python -m pip install py-cpuinfo==9.0.0", assert_success=True, environment=True)
 
     if selected_gpu == "INTEL":
         # Install oneAPI dependencies via conda
@@ -295,7 +335,11 @@ def update_requirements(initial_installation=False):
     elif initial_installation:
         print_big_message("Will not install extensions due to INSTALL_EXTENSIONS environment variable.")
 
-    # Detect the Python and PyTorch versions
+    # Update PyTorch
+    if not initial_installation:
+        update_pytorch()
+
+    # Detect the PyTorch version
     torver = torch_version()
     is_cuda = '+cu' in torver
     is_cuda118 = '+cu118' in torver  # 2.1.0+cu118
