@@ -93,7 +93,7 @@ def torch_version():
 
     if site_packages_path:
         torch_version_file = open(os.path.join(site_packages_path, 'torch', 'version.py')).read().splitlines()
-        torver = [line for line in torch_version_file if '__version__' in line][0].split('__version__ = ')[1].strip("'")
+        torver = [line for line in torch_version_file if line.startswith('__version__')][0].split('__version__ = ')[1].strip("'")
     else:
         from torch import __version__ as torver
 
@@ -101,6 +101,8 @@ def torch_version():
 
 
 def update_pytorch():
+    print_big_message("Checking for PyTorch updates")
+
     torver = torch_version()
     is_cuda = '+cu' in torver
     is_cuda118 = '+cu118' in torver  # 2.1.0+cu118
@@ -294,9 +296,6 @@ def install_webui():
 
 
 def update_requirements(initial_installation=False):
-    if not initial_installation:
-        print_big_message("Note: if anything goes wrong during the update, just delete your \"installer_files\" folder\nand run the start script again to setup a fresh environment.")
-
     # Create .git directory if missing
     if not os.path.exists(os.path.join(script_dir, ".git")):
         git_creation_cmd = 'git init -b main && git remote add origin https://github.com/oobabooga/text-generation-webui && git fetch && git symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/main && git reset --hard origin/main && git branch --set-upstream-to=origin/main'
@@ -309,7 +308,7 @@ def update_requirements(initial_installation=False):
     ]
 
     before_pull_hashes = {file_name: calculate_file_hash(file_name) for file_name in files_to_check}
-    run_cmd("git pull --autostash", assert_success=True, environment=True)
+    # run_cmd("git pull --autostash", assert_success=True, environment=True)
     after_pull_hashes = {file_name: calculate_file_hash(file_name) for file_name in files_to_check}
 
     # Check for differences in installation file hashes
@@ -337,7 +336,8 @@ def update_requirements(initial_installation=False):
         print_big_message("Will not install extensions due to INSTALL_EXTENSIONS environment variable.")
 
     # Update PyTorch
-    update_pytorch()
+    if not initial_installation:
+        update_pytorch()
 
     # Detect the PyTorch version
     torver = torch_version()
