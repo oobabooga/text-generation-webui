@@ -308,7 +308,7 @@ def update_requirements(initial_installation=False):
     ]
 
     before_pull_hashes = {file_name: calculate_file_hash(file_name) for file_name in files_to_check}
-    # run_cmd("git pull --autostash", assert_success=True, environment=True)
+    run_cmd("git pull --autostash", assert_success=True, environment=True)
     after_pull_hashes = {file_name: calculate_file_hash(file_name) for file_name in files_to_check}
 
     # Check for differences in installation file hashes
