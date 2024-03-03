@@ -99,22 +99,27 @@ class DynamicTemperatureLogitsWarper(LogitsWarper):
 
 class QuadraticSamplingLogitsWarper(LogitsWarper):
     '''
-    Quadratic sampling.
+    Quadratic sampling with smoothing factor and smoothing curve parameters.
     '''
 
-    def __init__(self, smoothing_factor: float):
+    def __init__(self, smoothing_factor, smoothing_curve):
         self.smoothing_factor = smoothing_factor
+        self.smoothing_curve = smoothing_curve
 
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
-        # Compute the maximum logit value
+
+        # Compute necessary values
         max_logit = scores.max()
+        diff = scores - max_logit
+        k = (3 - self.smoothing_curve) / 2
+        s = (self.smoothing_curve - 1) / 2
 
-        # Apply the quadratic transformation
-        transformed_logits = -(self.smoothing_factor * (scores - max_logit)**2) + max_logit
-
-        # No need to print the top 5 logits since this is not required
-        # print("Original top 5 logits: ", torch.topk(scores, 5))
-        # print("New top 5 logits: ", torch.topk(transformed_logits, 5))
+        # Apply transformation to non-negative infinity values
+        transformed_logits = torch.where(
+            scores != float('-inf'),
+            -(k * self.smoothing_factor * diff**2) + (s * self.smoothing_factor * diff**3) + max_logit,
+            scores
+        )
 
         return transformed_logits
 
@@ -367,7 +372,8 @@ def get_logits_warper_patch(self, generation_config):
     if generation_config.smoothing_factor > 0:
         warpers_to_add.append(
             QuadraticSamplingLogitsWarper(
-                smoothing_factor=generation_config.smoothing_factor
+                smoothing_factor=generation_config.smoothing_factor,
+                smoothing_curve=generation_config.smoothing_curve
             )
         )
 
@@ -468,6 +474,7 @@ def generation_config_init_patch(self, **kwargs):
     self.dynatemp_high = kwargs.pop("dynatemp_high", 1)
     self.dynatemp_exponent = kwargs.pop("dynatemp_exponent", 1)
     self.smoothing_factor = kwargs.pop("smoothing_factor", 0.0)
+    self.smoothing_curve = kwargs.pop("smoothing_curve", 1.0)
     self.tfs = kwargs.pop("tfs", 1.0)
     self.top_a = kwargs.pop("top_a", 0.0)
     self.mirostat_mode = kwargs.pop("mirostat_mode", 0)
