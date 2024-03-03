@@ -107,10 +107,9 @@ class QuadraticSamplingLogitsWarper(LogitsWarper):
         self.smoothing_curve = smoothing_curve
 
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
-        # Compute the maximum logit value
-        max_logit = scores.max()
 
-        # Apply the quadratic transformation
+        # Compute necessary values
+        max_logit = scores.max()
         diff = scores - max_logit
         k = (3 - self.smoothing_curve) / 2
         s = (self.smoothing_curve - 1) / 2
