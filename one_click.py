@@ -261,7 +261,7 @@ def install_webui():
     elif is_windows() and selected_gpu == "AMD":
         print("PyTorch setup on Windows is not implemented yet. Exiting...")
         sys.exit(1)
-    
+
     # Find the Pytorch installation command
     install_pytorch = f"python -m pip install torch=={TORCH_VERSION} torchvision=={TORCHVISION_VERSION} torchaudio=={TORCHAUDIO_VERSION} "
 
