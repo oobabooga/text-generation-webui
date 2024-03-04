@@ -110,7 +110,6 @@ fi
 
 # setup installer env   update env if called with 'wsl.sh update'
 case "$1" in
-("update") python one_click.py --update;;
-("install-extensions") python one_click.py --install-extensions;;
+("update-wizard") python one_click.py --update-wizard;;
 (*) python one_click.py $@;;
 esac
