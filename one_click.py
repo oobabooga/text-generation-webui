@@ -246,7 +246,7 @@ def install_webui():
         if "USE_CUDA118" in os.environ:
             use_cuda118 = "Y" if os.environ.get("USE_CUDA118", "").lower() in ("yes", "y", "true", "1", "t", "on") else "N"
         else:
-            print("\nDo you want to use CUDA 11.8 instead of 12.1? Only choose this option if your GPU is very old (Kepler or older).\nFor RTX and GTX series GPUs, say \"N\". If unsure, say \"N\".\n")
+            print("\nDo you want to use CUDA 11.8 instead of 12.1? Only choose this option if your GPU is very old (Kepler or older).\n\nFor RTX and GTX series GPUs, say \"N\".\nIf unsure, say \"N\".\n")
             use_cuda118 = input("Input (Y/N)> ").upper().strip('"\'').strip()
             while use_cuda118 not in 'YN':
                 print("Invalid choice. Please try again.")
@@ -295,6 +295,15 @@ def install_webui():
     update_requirements(initial_installation=True)
 
 
+def install_extensions_requirements():
+    print_big_message("Installing extensions requirements.\nSome of these may fail on Windows. Don\'t worry if you see error messages. They will not affect the main program.")
+    extensions = [foldername for foldername in os.listdir('extensions') if os.path.isfile(os.path.join('extensions', foldername, 'requirements.txt'))]
+    for i, extension in enumerate(extensions):
+        print(f"\n\n--- [{i+1}/{len(extensions)}]: {extension}\n\n")
+        extension_req_path = os.path.join("extensions", extension, "requirements.txt")
+        run_cmd(f"python -m pip install -r {extension_req_path} --upgrade", assert_success=False, environment=True)
+
+
 def update_requirements(initial_installation=False):
     # Create .git directory if missing
     if not os.path.exists(os.path.join(script_dir, ".git")):
@@ -316,24 +325,6 @@ def update_requirements(initial_installation=False):
         if before_pull_hashes[file_name] != after_pull_hashes[file_name]:
             print_big_message(f"File '{file_name}' was updated during 'git pull'. Please run the script again.")
             exit(1)
-
-    # Extensions requirements are installed only during the initial install by default.
-    # That can be changed with the INSTALL_EXTENSIONS environment variable.
-    install = initial_installation
-    if "INSTALL_EXTENSIONS" in os.environ:
-        install = os.environ["INSTALL_EXTENSIONS"].lower() in ("yes", "y", "true", "1", "t", "on")
-
-    if install:
-        print_big_message("Installing extensions requirements.")
-        skip = ['superbooga', 'superboogav2', 'coqui_tts']  # Fail to install on Windows
-        extensions = [foldername for foldername in os.listdir('extensions') if os.path.isfile(os.path.join('extensions', foldername, 'requirements.txt'))]
-        extensions = [x for x in extensions if x not in skip]
-        for i, extension in enumerate(extensions):
-            print(f"\n\n--- [{i+1}/{len(extensions)}]: {extension}\n\n")
-            extension_req_path = os.path.join("extensions", extension, "requirements.txt")
-            run_cmd(f"python -m pip install -r {extension_req_path} --upgrade", assert_success=False, environment=True)
-    elif initial_installation:
-        print_big_message("Will not install extensions due to INSTALL_EXTENSIONS environment variable.")
 
     # Update PyTorch
     if not initial_installation:
@@ -379,11 +370,6 @@ def update_requirements(initial_installation=False):
         run_cmd(f"python -m pip uninstall -y {package_name}", environment=True)
         print(f"Uninstalled {package_name}")
 
-    # Make sure that API requirements are installed (temporary)
-    extension_req_path = os.path.join("extensions", "openai", "requirements.txt")
-    if os.path.exists(extension_req_path):
-        run_cmd(f"python -m pip install -r {extension_req_path} --upgrade", environment=True)
-
     # Install/update the project requirements
     run_cmd("python -m pip install -r temp_requirements.txt --upgrade", assert_success=True, environment=True)
     os.remove('temp_requirements.txt')
@@ -409,18 +395,24 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument('--update', action='store_true', help='Update the web UI.')
+    parser.add_argument('--install-extensions', action='store_true', help='Install extensions requirements.')
     args, _ = parser.parse_known_args()
 
     if args.update:
         update_requirements()
+    elif args.install_extensions:
+        install_extensions_requirements()
+        update_requirements()
     else:
-        # If webui has already been installed, skip and run
         if not is_installed():
             install_webui()
             os.chdir(script_dir)
 
+            script_name = "extensions_reqs_windows.bat" if is_windows() else ("extensions_reqs_linux.sh" if is_linux() else "extensions_reqs_macos.sh")
+            print_big_message(f"The installation is finished.\nIf you wish to install or update extensions requirements, you can\nrun the following script at any time: {script_name}.")
+
         if os.environ.get("LAUNCH_AFTER_INSTALL", "").lower() in ("no", "n", "false", "0", "f", "off"):
-            print_big_message("Install finished successfully and will now exit due to LAUNCH_AFTER_INSTALL.")
+            print_big_message("Will now exit due to LAUNCH_AFTER_INSTALL.")
             sys.exit()
 
         # Check if a model has been downloaded yet
@@ -432,7 +424,7 @@ if __name__ == "__main__":
             model_dir = 'models'
 
         if len([item for item in glob.glob(f'{model_dir}/*') if not item.endswith(('.txt', '.yaml'))]) == 0:
-            print_big_message("WARNING: You haven't downloaded any model yet.\nOnce the web UI launches, head over to the \"Model\" tab and download one.")
+            print_big_message("You haven't downloaded any model yet.\nOnce the web UI launches, head over to the \"Model\" tab and download one.")
 
         # Workaround for llama-cpp-python loading paths in CUDA env vars even if they do not exist
         conda_path_bin = os.path.join(conda_env_path, "bin")

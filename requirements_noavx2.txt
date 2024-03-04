@@ -23,6 +23,12 @@ transformers==4.38.*
 tqdm
 wandb
 
+# API
+SpeechRecognition==3.10.0
+flask_cloudflared==0.0.14
+sse-starlette==1.6.5
+tiktoken
+
 # bitsandbytes
 bitsandbytes==0.42.*; platform_system != "Windows"
 https://github.com/oobabooga/bitsandbytes-windows-webui/releases/download/wheels/bitsandbytes-0.42.0-py3-none-win_amd64.whl; platform_system == "Windows"
