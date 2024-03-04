@@ -19,6 +19,7 @@ def default_preset():
         'dynatemp_high': 1,
         'dynatemp_exponent': 1,
         'smoothing_factor': 0,
+        'smoothing_curve': 1,
         'top_p': 1,
         'min_p': 0,
         'top_k': 0,
@@ -109,7 +110,7 @@ def random_preset(state):
                 [1, 2],
                 [1, 5]
             ],
-            'smoothing_factor': [0.2, 0.3, 0.6, 1.2]
+            'smoothing_factor': [0.2, 0.3, 0.6, 1.2],
         },
         'repetition': {
             'repetition_penalty': [1, 1.05, 1.1, 1.15, 1.20, 1.25],

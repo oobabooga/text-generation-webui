@@ -32,7 +32,7 @@ To restart the web UI in the future, just run the `start_` script again. This sc
 
 The script accepts command-line flags. Alternatively, you can edit the `CMD_FLAGS.txt` file with a text editor and add your flags there.
 
-To get updates in the future, run `update_linux.sh`, `update_windows.bat`, `update_macos.sh`, or `update_wsl.bat`.
+To get updates in the future, run `update_wizard_linux.sh`, `update_wizard_windows.bat`, `update_wizard_macos.sh`, or `update_wizard_wsl.bat`.
 
 <details>
 <summary>
@@ -45,9 +45,10 @@ The script uses Miniconda to set up a Conda environment in the `installer_files`
 
 If you ever need to install something manually in the `installer_files` environment, you can launch an interactive shell using the cmd script: `cmd_linux.sh`, `cmd_windows.bat`, `cmd_macos.sh`, or `cmd_wsl.bat`.
 
-* There is no need to run any of those scripts (`start_`, `update_`, or `cmd_`) as admin/root.
+* There is no need to run any of those scripts (`start_`, `update_wizard_`, or `cmd_`) as admin/root.
+* To install the requirements for extensions, you can use the `extensions_reqs` script for your OS. At the end, this script will install the main requirements for the project to make sure that they take precedence in case of version conflicts.
 * For additional instructions about AMD and WSL setup, consult [the documentation](https://github.com/oobabooga/text-generation-webui/wiki).
-* For automated installation, you can use the `GPU_CHOICE`, `USE_CUDA118`, `LAUNCH_AFTER_INSTALL`, and `INSTALL_EXTENSIONS` environment variables. For instance: `GPU_CHOICE=A USE_CUDA118=FALSE LAUNCH_AFTER_INSTALL=FALSE INSTALL_EXTENSIONS=FALSE ./start_linux.sh`.
+* For automated installation, you can use the `GPU_CHOICE`, `USE_CUDA118`, and `LAUNCH_AFTER_INSTALL` environment variables. For instance: `GPU_CHOICE=A USE_CUDA118=FALSE LAUNCH_AFTER_INSTALL=FALSE ./start_linux.sh`.
 
 ### Manual installation using Conda
 
@@ -75,12 +76,12 @@ conda activate textgen
 
 | System | GPU | Command |
 |--------|---------|---------|
-| Linux/WSL | NVIDIA | `pip3 install torch==2.1.* torchvision==0.16.* torchaudio==2.1.* --index-url https://download.pytorch.org/whl/cu121` |
-| Linux/WSL | CPU only | `pip3 install torch==2.1.* torchvision==0.16.* torchaudio==2.1.* --index-url https://download.pytorch.org/whl/cpu` |
-| Linux | AMD | `pip3 install torch==2.1.* torchvision==0.16.* torchaudio==2.1.* --index-url https://download.pytorch.org/whl/rocm5.6` |
-| MacOS + MPS | Any | `pip3 install torch==2.1.* torchvision==0.16.* torchaudio==2.1.*` |
-| Windows | NVIDIA | `pip3 install torch==2.1.* torchvision==0.16.* torchaudio==2.1.* --index-url https://download.pytorch.org/whl/cu121` |
-| Windows | CPU only | `pip3 install torch==2.1.* torchvision==0.16.* torchaudio==2.1.*` |
+| Linux/WSL | NVIDIA | `pip3 install torch==2.2.1 torchvision==0.17.1 torchaudio==2.2.1 --index-url https://download.pytorch.org/whl/cu121` |
+| Linux/WSL | CPU only | `pip3 install torch==2.2.1 torchvision==0.17.1 torchaudio==2.2.1 --index-url https://download.pytorch.org/whl/cpu` |
+| Linux | AMD | `pip3 install torch==2.2.1 torchvision==0.17.1 torchaudio==2.2.1 --index-url https://download.pytorch.org/whl/rocm5.6` |
+| MacOS + MPS | Any | `pip3 install torch==2.2.1 torchvision==0.17.1 torchaudio==2.2.1` |
+| Windows | NVIDIA | `pip3 install torch==2.2.1 torchvision==0.17.1 torchaudio==2.2.1 --index-url https://download.pytorch.org/whl/cu121` |
+| Windows | CPU only | `pip3 install torch==2.2.1 torchvision==0.17.1 torchaudio==2.2.1` |
 
 The up-to-date commands can be found here: https://pytorch.org/get-started/locally/.
 
@@ -145,7 +146,7 @@ Then browse to
 1) For Kepler GPUs and older, you will need to install CUDA 11.8 instead of 12:
 
 ```
-pip3 install torch==2.1.* torchvision==0.16.* torchaudio==2.1.* --index-url https://download.pytorch.org/whl/cu118
+pip3 install torch==2.2.1 torchvision==0.17.1 torchaudio==2.2.1 --index-url https://download.pytorch.org/whl/cu118
 conda install -y -c "nvidia/label/cuda-11.8.0" cuda-runtime
 ```
 

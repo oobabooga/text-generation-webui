@@ -45,6 +45,9 @@ if "%conda_exists%" == "F" (
 	@rem test the conda binary
 	echo Miniconda version:
 	call "%CONDA_ROOT_PREFIX%\_conda.exe" --version || ( echo. && echo Miniconda not found. && goto end )
+
+    @rem delete the Miniconda installer
+    del "%INSTALL_DIR%\miniconda_installer.exe"
 )
 
 @rem create the installer env

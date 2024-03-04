@@ -66,6 +66,9 @@ if [ "$conda_exists" == "F" ]; then
     # test the conda binary
     echo "Miniconda version:"
     "$CONDA_ROOT_PREFIX/bin/conda" --version
+
+    # delete the Miniconda installer
+    rm "$INSTALL_DIR/miniconda_installer.sh"
 fi
 
 # create the installer env
@@ -107,6 +110,6 @@ fi
 
 # setup installer env   update env if called with 'wsl.sh update'
 case "$1" in
-("update") python one_click.py --update;;
+("update-wizard") python one_click.py --update-wizard;;
 (*) python one_click.py $@;;
 esac
