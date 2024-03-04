@@ -437,7 +437,7 @@ if __name__ == "__main__":
             install_webui()
             os.chdir(script_dir)
 
-            script_name = "extensions_reqs_windows.bat" if is_windows() else ("extensions_reqs_linux.sh" if is_linux() else "extensions_reqs_macos.sh")
+            script_name = "update_wizard_windows.bat" if is_windows() else ("update_wizard_linux.sh" if is_linux() else "update_wizard_macos.sh")
             print_big_message(f"The installation is finished.\n\nIf you wish to install or update extensions requirements, you can\nrun the following script at any time: {script_name}.")
 
         if os.environ.get("LAUNCH_AFTER_INSTALL", "").lower() in ("no", "n", "false", "0", "f", "off"):
