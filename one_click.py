@@ -32,7 +32,7 @@ if os.path.exists(cmd_flags_path):
 else:
     CMD_FLAGS = ''
 
-flags = f"{' '.join([flag for flag in sys.argv[1:] if flag != '--update'])} {CMD_FLAGS}"
+flags = f"{' '.join([flag for flag in sys.argv[1:] if flag != '--update-wizard'])} {CMD_FLAGS}"
 
 
 def signal_handler(sig, frame):
