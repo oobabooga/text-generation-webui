@@ -1,6 +1,7 @@
 accelerate==0.25.*
 colorama
 datasets
+decorator
 einops
 exllamav2==0.0.11
 gradio==3.50.*
