@@ -165,8 +165,7 @@ def print_big_message(message):
     lines = message.split('\n')
     print("\n\n*******************************************************************")
     for line in lines:
-        if line.strip() != '':
-            print("*", line)
+        print("*", line)
 
     print("*******************************************************************\n\n")
 
