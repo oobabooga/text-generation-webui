@@ -239,7 +239,7 @@ def install_webui():
         with open(cmd_flags_path, 'r+') as cmd_flags_file:
             if "--cpu" not in cmd_flags_file.read():
                 print_big_message("Adding the --cpu flag to CMD_FLAGS.txt.")
-                cmd_flags_file.write("\n--cpu")
+                cmd_flags_file.write("\n--cpu\n")
 
     # Check if the user wants CUDA 11.8
     elif any((is_windows(), is_linux())) and selected_gpu == "NVIDIA":
