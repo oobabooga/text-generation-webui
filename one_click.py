@@ -316,6 +316,8 @@ def update_requirements(initial_installation=False):
         'one_click.py'
     ]
 
+    print_big_message("Updating the local copy of the repository with \"git pull\"")
+
     before_pull_hashes = {file_name: calculate_file_hash(file_name) for file_name in files_to_check}
     run_cmd("git pull --autostash", assert_success=True, environment=True)
     after_pull_hashes = {file_name: calculate_file_hash(file_name) for file_name in files_to_check}
