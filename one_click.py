@@ -419,7 +419,7 @@ if __name__ == "__main__":
                 'A': 'Update the web UI',
                 'B': 'Install/update extensions requirements',
                 'C': 'Revert local changes to repository files with \"git reset --hard\"',
-                'N': 'Nothing (exit).'
+                'N': 'Nothing (exit)'
             },
         )
 
