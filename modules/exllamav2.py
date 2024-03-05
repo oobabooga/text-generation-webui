@@ -6,6 +6,7 @@ from exllamav2 import (
     ExLlamaV2,
     ExLlamaV2Cache,
     ExLlamaV2Cache_8bit,
+    ExLlamaV2Cache_Q4,
     ExLlamaV2Config,
     ExLlamaV2Tokenizer
 )
@@ -60,6 +61,8 @@ class Exllamav2Model:
 
         if shared.args.cache_8bit:
             cache = ExLlamaV2Cache_8bit(model, lazy=shared.args.autosplit)
+        elif share.args.cache_q4:
+            cache = ExLlamaV2Cache_Q4(self.ex_model)
         else:
             cache = ExLlamaV2Cache(model, lazy=shared.args.autosplit)
 
