@@ -309,7 +309,7 @@ def install_webui():
 
 
 def install_extensions_requirements():
-    print_big_message("Installing extensions requirements.\nSome of these may fail on Windows. Don\'t worry if you see error messages. They will not affect the main program.")
+    print_big_message("Installing extensions requirements.\nSome of these may fail on Windows.\nDon\'t worry if you see error messages, as they will not affect the main program.")
     extensions = [foldername for foldername in os.listdir('extensions') if os.path.isfile(os.path.join('extensions', foldername, 'requirements.txt'))]
     for i, extension in enumerate(extensions):
         print(f"\n\n--- [{i+1}/{len(extensions)}]: {extension}\n\n")
