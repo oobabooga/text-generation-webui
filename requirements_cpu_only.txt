@@ -2,7 +2,7 @@ accelerate==0.27.*
 colorama
 datasets
 einops
-gradio==3.50.*
+gradio==4.19.*
 hqq==0.1.3.post1
 jinja2==3.1.2
 lm_eval==0.3.0
