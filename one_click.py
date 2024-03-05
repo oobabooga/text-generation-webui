@@ -259,7 +259,7 @@ def install_webui():
         if "USE_CUDA118" in os.environ:
             use_cuda118 = "Y" if os.environ.get("USE_CUDA118", "").lower() in ("yes", "y", "true", "1", "t", "on") else "N"
         else:
-            print("\nDo you want to use CUDA 11.8 instead of 12.1? Only choose this option if your GPU is\nvery old (Kepler or older).\n\nFor RTX and GTX series GPUs, say \"N\".\nIf unsure, say \"N\".\n")
+            print("\nDo you want to use CUDA 11.8 instead of 12.1?\nOnly choose this option if your GPU is very old (Kepler or older).\n\nFor RTX and GTX series GPUs, say \"N\".\nIf unsure, say \"N\".\n")
             use_cuda118 = input("Input (Y/N)> ").upper().strip('"\'').strip()
             while use_cuda118 not in 'YN':
                 print("Invalid choice. Please try again.")
@@ -437,9 +437,6 @@ if __name__ == "__main__":
         if not is_installed():
             install_webui()
             os.chdir(script_dir)
-
-            script_name = "update_wizard_windows.bat" if is_windows() else ("update_wizard_linux.sh" if is_linux() else "update_wizard_macos.sh")
-            print_big_message(f"The installation is finished.\n\nIf you wish to install or update extensions requirements, you can\nrun the following script at any time: {script_name}.")
 
         if os.environ.get("LAUNCH_AFTER_INSTALL", "").lower() in ("no", "n", "false", "0", "f", "off"):
             print_big_message("Will now exit due to LAUNCH_AFTER_INSTALL.")
