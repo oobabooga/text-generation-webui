@@ -435,7 +435,8 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
         raise InvalidRequestError("Missing required input", param=prompt_str)
 
     # common params
-    generate_params = process_parameters(body, is_legacy=is_legacy)
+    dummy_function_call_context = FunctionCallContext({}) # Completion api would not support function call, so we simply create a dummy context here
+    generate_params = process_parameters(body, dummy_function_call_context, is_legacy=is_legacy)
     max_tokens = generate_params['max_new_tokens']
     generate_params['stream'] = stream
     requested_model = generate_params.pop('model')
