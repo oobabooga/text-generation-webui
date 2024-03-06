@@ -200,6 +200,16 @@ def run_cmd(cmd, assert_success=False, environment=False, capture_output=False, 
     return result
 
 
+def generate_alphabetic_sequence(index):
+    result = ''
+    while index >= 0:
+        index, remainder = divmod(index, 26)
+        result = chr(ord('A') + remainder) + result
+        index -= 1
+
+    return result
+
+
 def get_user_choice(question, options_dict):
     print()
     print(question)
@@ -308,9 +318,13 @@ def install_webui():
     update_requirements(initial_installation=True)
 
 
+def get_extensions_names():
+    return [foldername for foldername in os.listdir('extensions') if os.path.isfile(os.path.join('extensions', foldername, 'requirements.txt'))]
+
+
 def install_extensions_requirements():
     print_big_message("Installing extensions requirements.\nSome of these may fail on Windows.\nDon\'t worry if you see error messages, as they will not affect the main program.")
-    extensions = [foldername for foldername in os.listdir('extensions') if os.path.isfile(os.path.join('extensions', foldername, 'requirements.txt'))]
+    extensions = get_extensions_names()
     for i, extension in enumerate(extensions):
         print(f"\n\n--- [{i+1}/{len(extensions)}]: {extension}\n\n")
         extension_req_path = os.path.join("extensions", extension, "requirements.txt")
@@ -414,25 +428,38 @@ if __name__ == "__main__":
     args, _ = parser.parse_known_args()
 
     if args.update_wizard:
-        choice = get_user_choice(
-            "What would you like to do?",
-            {
-                'A': 'Update the web UI',
-                'B': 'Install/update extensions requirements',
-                'C': 'Revert local changes to repository files with \"git reset --hard\"',
-                'N': 'Nothing (exit)'
-            },
-        )
+        while True:
+            choice = get_user_choice(
+                "What would you like to do?",
+                {
+                    'A': 'Update the web UI',
+                    'B': 'Install/update extensions requirements',
+                    'C': 'Revert local changes to repository files with \"git reset --hard\"',
+                    'N': 'Nothing (exit)'
+                },
+            )
 
-        if choice == 'A':
-            update_requirements()
-        elif choice == 'B':
-            install_extensions_requirements()
-            update_requirements(pull=False)
-        elif choice == 'C':
-            run_cmd("git reset --hard", assert_success=True, environment=True)
-        elif choice == 'N':
-            sys.exit()
+            if choice == 'A':
+                update_requirements()
+            elif choice == 'B':
+                choices = {'A': 'All extensions'}
+                for i, name in enumerate(get_extensions_names()):
+                    key = generate_alphabetic_sequence(i + 1)
+                    choices[key] = name
+
+                choice = get_user_choice("What extension?", choices)
+
+                if choice == 'A':
+                    install_extensions_requirements()
+                else:
+                    extension_req_path = os.path.join("extensions", choices[choice], "requirements.txt")
+                    run_cmd(f"python -m pip install -r {extension_req_path} --upgrade", assert_success=False, environment=True)
+
+                update_requirements(pull=False)
+            elif choice == 'C':
+                run_cmd("git reset --hard", assert_success=True, environment=True)
+            elif choice == 'N':
+                sys.exit()
     else:
         if not is_installed():
             install_webui()
