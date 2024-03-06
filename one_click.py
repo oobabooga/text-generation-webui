@@ -356,6 +356,9 @@ def update_requirements(initial_installation=False, pull=True):
                 print_big_message(f"File '{file_name}' was updated during 'git pull'. Please run the script again.")
                 exit(1)
 
+    if os.environ.get("INSTALL_EXTENSIONS", "").lower() in ("yes", "y", "true", "1", "t", "on"):
+        install_extensions_requirements()
+
     # Update PyTorch
     if not initial_installation:
         update_pytorch()
