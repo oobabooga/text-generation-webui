@@ -75,7 +75,7 @@ def create_ui():
         with gr.Row():
             with gr.Column():
                 shared.gradio['loader'] = gr.Dropdown(label="Model loader", choices=loaders.loaders_and_params.keys(), value=None)
-                with gr.Blocks():
+                with gr.Box():
                     with gr.Row():
                         with gr.Column():
                             with gr.Blocks():
