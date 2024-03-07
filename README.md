@@ -279,6 +279,7 @@ List of command-line flags
 |`--cfg-cache`                         | ExLlamav2_HF: Create an additional cache for CFG negative prompts. Necessary to use CFG with that loader. |
 |`--no_flash_attn`                     | Force flash-attention to not be used. |
 |`--cache_8bit`                        | Use 8-bit cache to save VRAM. |
+|`--cache_4bit`                        | Use 4-bit cache to save VRAM. |
 |`--num_experts_per_token NUM_EXPERTS_PER_TOKEN` |  Number of experts to use for generation. Applies to MoE models like Mixtral. |
 
 #### AutoGPTQ
