@@ -9,12 +9,12 @@ The benchmark function will return the score as an integer.
 import datetime
 import json
 import os
-
 from pathlib import Path
 
-from .data_processor import process_and_add_to_collector, preprocess_text
+from .data_processor import preprocess_text, process_and_add_to_collector
 from .parameters import get_chunk_count, get_max_token_count
 from .utils import create_metadata_source
+
 
 def benchmark(config_path, collector):
     # Get the current system date

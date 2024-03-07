@@ -12,16 +12,15 @@ This module is responsible for the VectorDB API. It currently supports:
 
 import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import urlparse, parse_qs
 from threading import Thread
+from urllib.parse import parse_qs, urlparse
 
+import extensions.superboogav2.parameters as parameters
 from modules import shared
 from modules.logging_colors import logger
 
 from .chromadb import ChromaCollector
 from .data_processor import process_and_add_to_collector
-
-import extensions.superboogav2.parameters as parameters
 
 
 class CustomThreadingHTTPServer(ThreadingHTTPServer):
@@ -197,7 +196,7 @@ class APIManager:
 
     def stop_server(self):
         if self.server is not None:
-            logger.info(f'Stopping chromaDB API.')
+            logger.info('Stopping chromaDB API.')
             self.server.shutdown()
             self.server.server_close()
             self.server = None

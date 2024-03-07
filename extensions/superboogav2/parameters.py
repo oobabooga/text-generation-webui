@@ -6,12 +6,10 @@ Each element in the JSON must have a `default` value which will be used for the 
 These categories define the range in which the optimizer will search. If the element is tagged with `"should_optimize": false`, 
 then the optimizer will only ever use the default value.
 """
+import json
 from pathlib import Path
 
-import json
-
 from modules.logging_colors import logger
-
 
 NUM_TO_WORD_METHOD = 'Number to Word'
 NUM_TO_CHAR_METHOD = 'Number to Char'

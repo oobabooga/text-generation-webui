@@ -11,13 +11,12 @@ This module contains utils for preprocessing the text before converting it to em
     * removing specific parts of speech (adverbs and interjections)
 - TextSummarizer extracts the most important sentences from a long string using text-ranking.
 """
-import pytextrank
-import string
-import spacy
 import math
-import nltk
 import re
+import string
 
+import nltk
+import spacy
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
 from num2words import num2words

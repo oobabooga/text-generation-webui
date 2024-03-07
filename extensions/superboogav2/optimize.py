@@ -3,22 +3,24 @@ This module implements a hyperparameter optimization routine for the embedding a
 
 Each run, the optimizer will set the default values inside the hyperparameters. At the end, it will output the best ones it has found.
 """
-import re
+import hashlib
 import json
-import optuna
+import logging
+import re
+
 import gradio as gr
 import numpy as np
-import logging
-import hashlib
-logging.getLogger('optuna').setLevel(logging.WARNING)
+import optuna
 
-import extensions.superboogav2.parameters as parameters
+logging.getLogger('optuna').setLevel(logging.WARNING)
 
 from pathlib import Path
 
+import extensions.superboogav2.parameters as parameters
+from modules.logging_colors import logger
+
 from .benchmark import benchmark
 from .parameters import Parameters
-from modules.logging_colors import logger
 
 
 # Format the parameters into markdown format.
@@ -67,7 +69,7 @@ def _get_params_hash(params):
 
 def optimize(collector, progress=gr.Progress()):
     # Inform the user that something is happening.
-    progress(0, desc=f'Setting Up...')
+    progress(0, desc='Setting Up...')
 
     # Track the current step
     current_step = 0

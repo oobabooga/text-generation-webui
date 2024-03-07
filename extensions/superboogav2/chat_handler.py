@@ -4,16 +4,17 @@ This module is responsible for modifying the chat prompt and history.
 import re
 
 import extensions.superboogav2.parameters as parameters
-
+from extensions.superboogav2.utils import (
+    create_context_text,
+    create_metadata_source
+)
 from modules import chat, shared
-from modules.text_generation import get_encoded_length
-from modules.logging_colors import logger
 from modules.chat import load_character_memoized
-from extensions.superboogav2.utils import create_context_text, create_metadata_source
+from modules.logging_colors import logger
+from modules.text_generation import get_encoded_length
 
-from .data_processor import process_and_add_to_collector
 from .chromadb import ChromaCollector
-
+from .data_processor import process_and_add_to_collector
 
 CHAT_METADATA = create_metadata_source('automatic-chat-insert')
 

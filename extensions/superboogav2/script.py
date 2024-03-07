@@ -7,24 +7,24 @@ from pathlib import Path
 # Point to where nltk will find the required data.
 os.environ['NLTK_DATA'] = str(Path("extensions/superboogav2/nltk_data").resolve())
 
-import textwrap
 import codecs
+import textwrap
+
 import gradio as gr
 
 import extensions.superboogav2.parameters as parameters
-
-from modules.logging_colors import logger
 from modules import shared
+from modules.logging_colors import logger
 
-from .utils import create_metadata_source
-from .chromadb import make_collector
-from .download_urls import feed_url_into_collector
-from .data_processor import process_and_add_to_collector
-from .benchmark import benchmark
-from .optimize import optimize
-from .notebook_handler import input_modifier_internal
-from .chat_handler import custom_generate_chat_prompt_internal
 from .api import APIManager
+from .benchmark import benchmark
+from .chat_handler import custom_generate_chat_prompt_internal
+from .chromadb import make_collector
+from .data_processor import process_and_add_to_collector
+from .download_urls import feed_url_into_collector
+from .notebook_handler import input_modifier_internal
+from .optimize import optimize
+from .utils import create_metadata_source
 
 collector = None
 api_manager = None

@@ -1,42 +1,23 @@
-import threading
-import chromadb
-import posthog
-import torch
 import math
+import random
+import threading
 
+import chromadb
 import numpy as np
-import extensions.superboogav2.parameters as parameters
-
+import posthog
 from chromadb.config import Settings
-from sentence_transformers import SentenceTransformer
+from chromadb.utils import embedding_functions
 
+import extensions.superboogav2.parameters as parameters
 from modules.logging_colors import logger
-from modules.text_generation import encode, decode
+from modules.text_generation import decode, encode
 
-logger.debug('Intercepting all calls to posthog.')
+# Intercept calls to posthog
 posthog.capture = lambda *args, **kwargs: None
 
 
-class Collecter():
-    def __init__(self):
-        pass
+embedder = embedding_functions.SentenceTransformerEmbeddingFunction("sentence-transformers/all-mpnet-base-v2")
 
-    def add(self, texts: list[str], texts_with_context: list[str], starting_indices: list[int]):
-        pass
-
-    def get(self, search_strings: list[str], n_results: int) -> list[str]:
-        pass
-
-    def clear(self):
-        pass
-
-
-class Embedder():
-    def __init__(self):
-        pass
-
-    def embed(self, text: str) -> list[torch.Tensor]:
-        pass
 
 class Info:
     def __init__(self, start_index, text_with_context, distance, id):
@@ -93,12 +74,15 @@ class Info:
         
         return not (s1_end < s2_start or s2_end < s1_start)
 
-class ChromaCollector(Collecter):
-    def __init__(self, embedder: Embedder):
-        super().__init__()
+
+class ChromaCollector():
+    def __init__(self):
+        name = ''.join(random.choice('ab') for _ in range(10))
+
+        self.name = name
         self.chroma_client = chromadb.Client(Settings(anonymized_telemetry=False))
-        self.embedder = embedder
-        self.collection = self.chroma_client.create_collection(name="context", embedding_function=self.embedder.embed)
+        self.collection = self.chroma_client.create_collection(name=name, embedding_function=embedder)
+
         self.ids = []
         self.id_to_info = {}
         self.embeddings_cache = {}
@@ -126,7 +110,7 @@ class ChromaCollector(Collecter):
 
             # If there are any non-existing texts, compute their embeddings all at once. Each call to embed has significant overhead.
             if non_existing_texts:
-                non_existing_embeddings = self.embedder.embed(non_existing_texts).tolist()
+                non_existing_embeddings = embedder(non_existing_texts)
                 for text, embedding in zip(non_existing_texts, non_existing_embeddings):
                     self.embeddings_cache[text] = embedding
 
@@ -358,19 +342,13 @@ class ChromaCollector(Collecter):
     def clear(self):
         with self.lock:
             self.chroma_client.reset()
-            self.collection = self.chroma_client.create_collection("context", embedding_function=self.embedder.embed)
+
             self.ids = []
-            self.id_to_info = {}
+            self.chroma_client.delete_collection(name=self.name)
+            self.collection = self.chroma_client.create_collection(name=self.name, embedding_function=embedder)
 
             logger.info('Successfully cleared all records and reset chromaDB.')
 
 
-class SentenceTransformerEmbedder(Embedder):
-    def __init__(self) -> None:
-        logger.debug('Creating Sentence Embedder...')
-        self.model = SentenceTransformer("sentence-transformers/all-mpnet-base-v2")
-        self.embed = self.model.encode
-
-
 def make_collector():
-    return ChromaCollector(SentenceTransformerEmbedder())
+    return ChromaCollector()

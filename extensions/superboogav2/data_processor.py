@@ -4,13 +4,14 @@ It will then split it into chunks of specified length. For each of those chunks,
 It will only include full words.
 """
 
-import re
 import bisect
+import re
 
 import extensions.superboogav2.parameters as parameters
 
-from .data_preprocessor import TextPreprocessorBuilder, TextSummarizer
 from .chromadb import ChromaCollector
+from .data_preprocessor import TextPreprocessorBuilder, TextSummarizer
+
 
 def preprocess_text_no_summary(text) -> str:
     builder = TextPreprocessorBuilder(text)
