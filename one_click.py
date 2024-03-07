@@ -342,7 +342,7 @@ def update_requirements(initial_installation=False, pull=True):
 
         files_to_check = [
             'start_linux.sh', 'start_macos.sh', 'start_windows.bat', 'start_wsl.bat',
-            'update_linux.sh', 'update_macos.sh', 'update_windows.bat', 'update_wsl.bat',
+            'update_wizard_linux.sh', 'update_wizard_macos.sh', 'update_wizard_windows.bat', 'update_wizard_wsl.bat',
             'one_click.py'
         ]
 
