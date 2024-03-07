@@ -342,7 +342,7 @@ def update_requirements(initial_installation=False, pull=True):
 
         files_to_check = [
             'start_linux.sh', 'start_macos.sh', 'start_windows.bat', 'start_wsl.bat',
-            'update_linux.sh', 'update_macos.sh', 'update_windows.bat', 'update_wsl.bat',
+            'update_wizard_linux.sh', 'update_wizard_macos.sh', 'update_wizard_windows.bat', 'update_wizard_wsl.bat',
             'one_click.py'
         ]
 
@@ -355,6 +355,9 @@ def update_requirements(initial_installation=False, pull=True):
             if before_pull_hashes[file_name] != after_pull_hashes[file_name]:
                 print_big_message(f"File '{file_name}' was updated during 'git pull'. Please run the script again.")
                 exit(1)
+
+    if os.environ.get("INSTALL_EXTENSIONS", "").lower() in ("yes", "y", "true", "1", "t", "on"):
+        install_extensions_requirements()
 
     # Update PyTorch
     if not initial_installation:
@@ -387,7 +390,7 @@ def update_requirements(initial_installation=False, pull=True):
     if is_cuda118:
         textgen_requirements = [req.replace('+cu121', '+cu118').replace('+cu122', '+cu118') for req in textgen_requirements]
     if is_windows() and is_cuda118:  # No flash-attention on Windows for CUDA 11
-        textgen_requirements = [req for req in textgen_requirements if 'jllllll/flash-attention' not in req]
+        textgen_requirements = [req for req in textgen_requirements if 'oobabooga/flash-attention' not in req]
 
     with open('temp_requirements.txt', 'w') as file:
         file.write('\n'.join(textgen_requirements))

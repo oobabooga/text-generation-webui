@@ -48,7 +48,7 @@ If you ever need to install something manually in the `installer_files` environm
 * There is no need to run any of those scripts (`start_`, `update_wizard_`, or `cmd_`) as admin/root.
 * To install the requirements for extensions, you can use the `extensions_reqs` script for your OS. At the end, this script will install the main requirements for the project to make sure that they take precedence in case of version conflicts.
 * For additional instructions about AMD and WSL setup, consult [the documentation](https://github.com/oobabooga/text-generation-webui/wiki).
-* For automated installation, you can use the `GPU_CHOICE`, `USE_CUDA118`, and `LAUNCH_AFTER_INSTALL` environment variables. For instance: `GPU_CHOICE=A USE_CUDA118=FALSE LAUNCH_AFTER_INSTALL=FALSE ./start_linux.sh`.
+* For automated installation, you can use the `GPU_CHOICE`, `USE_CUDA118`, `LAUNCH_AFTER_INSTALL`, and `INSTALL_EXTENSIONS` environment variables. For instance: `GPU_CHOICE=A USE_CUDA118=FALSE LAUNCH_AFTER_INSTALL=FALSE INSTALL_EXTENSIONS=TRUE ./start_linux.sh`.
 
 ### Manual installation using Conda
 
@@ -279,6 +279,7 @@ List of command-line flags
 |`--cfg-cache`                         | ExLlamav2_HF: Create an additional cache for CFG negative prompts. Necessary to use CFG with that loader. |
 |`--no_flash_attn`                     | Force flash-attention to not be used. |
 |`--cache_8bit`                        | Use 8-bit cache to save VRAM. |
+|`--cache_4bit`                        | Use Q4 cache to save VRAM. |
 |`--num_experts_per_token NUM_EXPERTS_PER_TOKEN` |  Number of experts to use for generation. Applies to MoE models like Mixtral. |
 
 #### AutoGPTQ

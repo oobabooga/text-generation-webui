@@ -8,6 +8,7 @@ from exllamav2 import (
     ExLlamaV2,
     ExLlamaV2Cache,
     ExLlamaV2Cache_8bit,
+    ExLlamaV2Cache_Q4,
     ExLlamaV2Config
 )
 from torch.nn import CrossEntropyLoss
@@ -50,6 +51,8 @@ class Exllamav2HF(PreTrainedModel):
 
         if shared.args.cache_8bit:
             self.ex_cache = ExLlamaV2Cache_8bit(self.ex_model, lazy=shared.args.autosplit)
+        elif shared.args.cache_4bit:
+            self.ex_cache = ExLlamaV2Cache_Q4(self.ex_model, lazy=shared.args.autosplit)
         else:
             self.ex_cache = ExLlamaV2Cache(self.ex_model, lazy=shared.args.autosplit)
 
@@ -60,6 +63,8 @@ class Exllamav2HF(PreTrainedModel):
         if shared.args.cfg_cache:
             if shared.args.cache_8bit:
                 self.ex_cache_negative = ExLlamaV2Cache_8bit(self.ex_model)
+            elif shared.args.cache_4bit:
+                self.ex_cache_negative = ExLlamaV2Cache_Q4(self.ex_model)
             else:
                 self.ex_cache_negative = ExLlamaV2Cache(self.ex_model)
 
