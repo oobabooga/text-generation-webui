@@ -61,7 +61,7 @@ class Exllamav2Model:
 
         if shared.args.cache_8bit:
             cache = ExLlamaV2Cache_8bit(model, lazy=shared.args.autosplit)
-        elif share.args.cache_q4:
+        elif share.args.cache_4bit:
             cache = ExLlamaV2Cache_Q4(model, lazy=shared.args.autosplit)
         else:
             cache = ExLlamaV2Cache(model, lazy=shared.args.autosplit)
