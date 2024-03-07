@@ -51,7 +51,7 @@ class Exllamav2HF(PreTrainedModel):
 
         if shared.args.cache_8bit:
             self.ex_cache = ExLlamaV2Cache_8bit(self.ex_model, lazy=shared.args.autosplit)
-        elif shared.args.cache_4bit:
+        elif share.args.cache_q4:
             self.ex_cache = ExLlamaV2Cache_Q4(self.ex_model, lazy=shared.args.autosplit)
         else:
             self.ex_cache = ExLlamaV2Cache(self.ex_model, lazy=shared.args.autosplit)
@@ -63,6 +63,8 @@ class Exllamav2HF(PreTrainedModel):
         if shared.args.cfg_cache:
             if shared.args.cache_8bit:
                 self.ex_cache_negative = ExLlamaV2Cache_8bit(self.ex_model)
+            elif share.args.cache_q4:
+                self.ex_cache_negative = ExLlamaV2Cache_Q4(self.ex_model)
             else:
                 self.ex_cache_negative = ExLlamaV2Cache(self.ex_model)
 
