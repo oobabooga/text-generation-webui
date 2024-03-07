@@ -29,6 +29,7 @@ from .utils import create_metadata_source
 collector = None
 api_manager = None
 
+
 def setup():
     global collector
     global api_manager
@@ -37,6 +38,7 @@ def setup():
 
     if parameters.get_api_on():
         api_manager.start_server(parameters.get_api_port())
+
 
 def _feed_data_into_collector(corpus):
     yield '### Processing data...'
@@ -87,7 +89,7 @@ def _get_optimizable_settings() -> list:
         preprocess_pipeline.append('Merge Spaces')
     if parameters.should_strip():
         preprocess_pipeline.append('Strip Edges')
-        
+
     return [
         parameters.get_time_power(),
         parameters.get_time_steepness(),
@@ -104,8 +106,8 @@ def _get_optimizable_settings() -> list:
     ]
 
 
-def _apply_settings(optimization_steps, time_power, time_steepness, significant_level, min_sentences, new_dist_strat, delta_start, min_number_length, num_conversion, 
-                    preprocess_pipeline, api_port, api_on, injection_strategy, add_chat_to_data, manual, postfix, data_separator, prefix, max_token_count, 
+def _apply_settings(optimization_steps, time_power, time_steepness, significant_level, min_sentences, new_dist_strat, delta_start, min_number_length, num_conversion,
+                    preprocess_pipeline, api_port, api_on, injection_strategy, add_chat_to_data, manual, postfix, data_separator, prefix, max_token_count,
                     chunk_count, chunk_sep, context_len, chunk_regex, chunk_len, threads, strong_cleanup):
     logger.debug('Applying settings.')
 
@@ -240,7 +242,7 @@ def ui():
             with gr.Tab("File input"):
                 file_input = gr.File(label='Input file', type='binary')
                 update_file = gr.Button('Load data')
-                
+
             with gr.Tab("Settings"):
                 with gr.Accordion("Processing settings", open=True):
                     chunk_len = gr.Textbox(value=parameters.get_chunk_len(), label='Chunk length', info='In characters, not tokens. This value is used when you click on "Load data".')
@@ -305,19 +307,16 @@ def ui():
                 optimize_button = gr.Button('Optimize')
                 optimization_steps = gr.Number(value=parameters.get_optimization_steps(), label='Optimization Steps', info='For how many steps to optimize.', interactive=True)
 
-
             clear_button = gr.Button('❌ Clear Data')
 
-            
         with gr.Column():
             last_updated = gr.Markdown()
 
-    all_params = [optimization_steps, time_power, time_steepness, significant_level, min_sentences, new_dist_strat, delta_start, min_number_length, num_conversion, 
-                  preprocess_pipeline, api_port, api_on, injection_strategy, add_chat_to_data, manual, postfix, data_separator, prefix, max_token_count, 
+    all_params = [optimization_steps, time_power, time_steepness, significant_level, min_sentences, new_dist_strat, delta_start, min_number_length, num_conversion,
+                  preprocess_pipeline, api_port, api_on, injection_strategy, add_chat_to_data, manual, postfix, data_separator, prefix, max_token_count,
                   chunk_count, chunk_sep, context_len, chunk_regex, chunk_len, threads, strong_cleanup]
-    optimizable_params = [time_power, time_steepness, significant_level, min_sentences, new_dist_strat, delta_start, min_number_length, num_conversion, 
-                  preprocess_pipeline, chunk_count, context_len, chunk_len]
-
+    optimizable_params = [time_power, time_steepness, significant_level, min_sentences, new_dist_strat, delta_start, min_number_length, num_conversion,
+                          preprocess_pipeline, chunk_count, context_len, chunk_len]
 
     update_data.click(_feed_data_into_collector, [data_input], last_updated, show_progress=False)
     update_url.click(_feed_url_into_collector, [url_input], last_updated, show_progress=False)
@@ -325,7 +324,6 @@ def ui():
     benchmark_button.click(_begin_benchmark, [], last_updated, show_progress=True)
     optimize_button.click(_begin_optimization, [], [last_updated] + optimizable_params, show_progress=True)
     clear_button.click(_clear_data, [], last_updated, show_progress=False)
-
 
     optimization_steps.input(fn=_apply_settings, inputs=all_params, show_progress=False)
     time_power.input(fn=_apply_settings, inputs=all_params, show_progress=False)

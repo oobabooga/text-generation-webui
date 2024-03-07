@@ -30,7 +30,7 @@ def _markdown_hyperparams():
         # Escape any markdown syntax
         param_name = re.sub(r"([_*\[\]()~`>#+-.!])", r"\\\1", param_name)
         param_value_default = re.sub(r"([_*\[\]()~`>#+-.!])", r"\\\1", str(param_value['default'])) if param_value['default'] else ' '
-        
+
         res.append('* {}: **{}**'.format(param_name, param_value_default))
 
     return '\n'.join(res)
@@ -51,13 +51,13 @@ def _convert_np_types(params):
 # Set the default values for the hyperparameters.
 def _set_hyperparameters(params):
     for param_name, param_value in params.items():
-        if param_name in Parameters.getInstance().hyperparameters: 
+        if param_name in Parameters.getInstance().hyperparameters:
             Parameters.getInstance().hyperparameters[param_name]['default'] = param_value
 
 
 # Check if the parameter is for optimization.
 def _is_optimization_param(val):
-    is_opt = val.get('should_optimize', False) # Either does not exist or is false
+    is_opt = val.get('should_optimize', False)  # Either does not exist or is false
     return is_opt
 
 
