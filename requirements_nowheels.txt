@@ -3,7 +3,7 @@ colorama
 datasets
 einops
 gradio==3.50.*
-hqq==0.1.3.post1
+hqq==0.1.5
 jinja2==3.1.2
 lm_eval==0.3.0
 markdown
@@ -22,3 +22,9 @@ tensorboard
 transformers==4.38.*
 tqdm
 wandb
+
+# API
+SpeechRecognition==3.10.0
+flask_cloudflared==0.0.14
+sse-starlette==1.6.5
+tiktoken
