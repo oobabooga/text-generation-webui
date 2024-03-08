@@ -354,6 +354,12 @@ function addBigPicture() {
   var timestamp = new Date().getTime();
   imgElement.src = "/file/cache/pfp_character.png?time=" + timestamp;
   imgElement.classList.add("bigProfilePicture");
+  imgElement.addEventListener("load", function () {
+    this.style.visibility = "visible";
+  });
+  imgElement.addEventListener("error", function () {
+    this.style.visibility = "hidden";
+  });
 
   var imgElementParent = document.getElementById("chat").parentNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode;
   imgElementParent.appendChild(imgElement);
@@ -377,36 +383,46 @@ function toggleBigPicture() {
 }
 
 //------------------------------------------------
-// Define global CSS properties for resizing and
-// positioning certain elements
+// Handle the chat input box growth
 //------------------------------------------------
 let currentChatInputHeight = 0;
 
+// Update chat layout based on chat and input dimensions
 function updateCssProperties() {
-  // Set the height of the chat area
   const chatContainer = document.getElementById("chat").parentNode.parentNode.parentNode;
   const chatInputHeight = document.querySelector("#chat-input textarea").clientHeight;
+
+  // Check if the chat container is visible
   if (chatContainer.clientHeight > 0) {
-    const newChatHeight = `${chatContainer.clientHeight - chatInputHeight + 40}px`;
+
+    // Calculate new chat height and adjust CSS properties
+    var numericHeight = chatContainer.parentNode.clientHeight - chatInputHeight + 40 - 100;
+    if (document.getElementById("chat-tab").style.paddingBottom != "") {
+      numericHeight += 20;
+    }
+    const newChatHeight = `${numericHeight}px`;
+
     document.documentElement.style.setProperty("--chat-height", newChatHeight);
     document.documentElement.style.setProperty("--input-delta", `${chatInputHeight - 40}px`);
 
-    // Set the position offset of the chat input box
+    // Get and set header height
     const header = document.querySelector(".header_bar");
     const headerHeight = `${header.clientHeight}px`;
     document.documentElement.style.setProperty("--header-height", headerHeight);
 
-    // Offset the scroll position of the chat area
+    // Adjust scrollTop based on input height change
     if (chatInputHeight !== currentChatInputHeight) {
-      chatContainer.scrollTop += chatInputHeight > currentChatInputHeight ? chatInputHeight : -chatInputHeight;
+      chatContainer.scrollTop += chatInputHeight > currentChatInputHeight ? chatInputHeight : -chatInputHeight + 40;
       currentChatInputHeight = chatInputHeight;
     }
   }
 }
 
+// Observe textarea size changes and call update function
 new ResizeObserver(updateCssProperties)
   .observe(document.querySelector("#chat-input textarea"));
 
+// Handle changes in window size
 window.addEventListener("resize", updateCssProperties);
 
 //------------------------------------------------

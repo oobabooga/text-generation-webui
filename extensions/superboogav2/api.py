@@ -12,16 +12,15 @@ This module is responsible for the VectorDB API. It currently supports:
 
 import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import urlparse, parse_qs
 from threading import Thread
+from urllib.parse import parse_qs, urlparse
 
+import extensions.superboogav2.parameters as parameters
 from modules import shared
 from modules.logging_colors import logger
 
 from .chromadb import ChromaCollector
 from .data_processor import process_and_add_to_collector
-
-import extensions.superboogav2.parameters as parameters
 
 
 class CustomThreadingHTTPServer(ThreadingHTTPServer):
@@ -38,14 +37,12 @@ class Handler(BaseHTTPRequestHandler):
         self.collector = collector
         super().__init__(request, client_address, server)
 
-
     def _send_412_error(self, message):
         self.send_response(412)
         self.send_header("Content-type", "application/json")
         self.end_headers()
         response = json.dumps({"error": message})
         self.wfile.write(response.encode('utf-8'))
-
 
     def _send_404_error(self):
         self.send_response(404)
@@ -54,14 +51,12 @@ class Handler(BaseHTTPRequestHandler):
         response = json.dumps({"error": "Resource not found"})
         self.wfile.write(response.encode('utf-8'))
 
-
     def _send_400_error(self, error_message: str):
         self.send_response(400)
         self.send_header("Content-type", "application/json")
         self.end_headers()
         response = json.dumps({"error": error_message})
         self.wfile.write(response.encode('utf-8'))
-        
 
     def _send_200_response(self, message: str):
         self.send_response(200)
@@ -75,23 +70,20 @@ class Handler(BaseHTTPRequestHandler):
 
         self.wfile.write(response.encode('utf-8'))
 
-
     def _handle_get(self, search_strings: list[str], n_results: int, max_token_count: int, sort_param: str):
         if sort_param == parameters.SORT_DISTANCE:
             results = self.collector.get_sorted_by_dist(search_strings, n_results, max_token_count)
         elif sort_param == parameters.SORT_ID:
             results = self.collector.get_sorted_by_id(search_strings, n_results, max_token_count)
-        else: # Default is dist
+        else:  # Default is dist
             results = self.collector.get_sorted_by_dist(search_strings, n_results, max_token_count)
-        
+
         return {
             "results": results
         }
 
-        
     def do_GET(self):
         self._send_404_error()
-
 
     def do_POST(self):
         try:
@@ -107,7 +99,7 @@ class Handler(BaseHTTPRequestHandler):
                 if corpus is None:
                     self._send_412_error("Missing parameter 'corpus'")
                     return
-                
+
                 clear_before_adding = body.get('clear_before_adding', False)
                 metadata = body.get('metadata')
                 process_and_add_to_collector(corpus, self.collector, clear_before_adding, metadata)
@@ -118,7 +110,7 @@ class Handler(BaseHTTPRequestHandler):
                 if corpus is None:
                     self._send_412_error("Missing parameter 'metadata'")
                     return
-                
+
                 self.collector.delete(ids_to_delete=None, where=metadata)
                 self._send_200_response("Data successfully deleted")
 
@@ -127,15 +119,15 @@ class Handler(BaseHTTPRequestHandler):
                 if search_strings is None:
                     self._send_412_error("Missing parameter 'search_strings'")
                     return
-                
+
                 n_results = body.get('n_results')
                 if n_results is None:
                     n_results = parameters.get_chunk_count()
-                
+
                 max_token_count = body.get('max_token_count')
                 if max_token_count is None:
                     max_token_count = parameters.get_max_token_count()
-                
+
                 sort_param = query_params.get('sort', ['distance'])[0]
 
                 results = self._handle_get(search_strings, n_results, max_token_count, sort_param)
@@ -145,7 +137,6 @@ class Handler(BaseHTTPRequestHandler):
                 self._send_404_error()
         except Exception as e:
             self._send_400_error(str(e))
-
 
     def do_DELETE(self):
         try:
@@ -161,11 +152,9 @@ class Handler(BaseHTTPRequestHandler):
         except Exception as e:
             self._send_400_error(str(e))
 
-
     def do_OPTIONS(self):
         self.send_response(200)
         self.end_headers()
-
 
     def end_headers(self):
         self.send_header('Access-Control-Allow-Origin', '*')
@@ -197,7 +186,7 @@ class APIManager:
 
     def stop_server(self):
         if self.server is not None:
-            logger.info(f'Stopping chromaDB API.')
+            logger.info('Stopping chromaDB API.')
             self.server.shutdown()
             self.server.server_close()
             self.server = None

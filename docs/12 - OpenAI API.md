@@ -7,12 +7,6 @@ The main API for this project is meant to be a drop-in replacement to the OpenAI
 * It doesn't connect to OpenAI.
 * It doesn't use the openai-python library.
 
-If you did not use the one-click installers, you may need to install the requirements first:
-
-```
-pip install -r extensions/openai/requirements.txt
-```
-
 ### Starting the API
 
 Add `--api` to your command-line flags.

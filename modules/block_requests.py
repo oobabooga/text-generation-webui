@@ -7,6 +7,7 @@ from modules.logging_colors import logger
 
 original_open = open
 original_get = requests.get
+original_print = print
 
 
 class RequestBlocker:
@@ -22,9 +23,11 @@ class OpenMonkeyPatch:
 
     def __enter__(self):
         builtins.open = my_open
+        builtins.print = my_print
 
     def __exit__(self, exc_type, exc_value, traceback):
         builtins.open = original_open
+        builtins.print = original_print
 
 
 def my_get(url, **kwargs):
@@ -45,3 +48,15 @@ def my_open(*args, **kwargs):
         return io.BytesIO(file_contents)
     else:
         return original_open(*args, **kwargs)
+
+
+def my_print(*args, **kwargs):
+    if len(args) > 0 and 'To create a public link, set `share=True`' in args[0]:
+        return
+    else:
+        if len(args) > 0 and 'Running on local URL' in args[0]:
+            args = list(args)
+            args[0] = f"\n{args[0].strip()}\n"
+            args = tuple(args)
+
+        original_print(*args, **kwargs)
