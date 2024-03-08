@@ -305,14 +305,14 @@ def install_webui():
 
     # Install Git and then Pytorch
     print_big_message("正在安装PyTorch。")
-    run_cmd(f"conda install -y -k ninja git && {install_pytorch} && python -m pip install py-cpuinfo==9.0.0", assert_success=True, environment=True)
+    run_cmd(f"conda install -y -k -c https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main/ ninja git && {install_pytorch} && python -m pip install py-cpuinfo==9.0.0 -i https://pypi.tuna.tsinghua.edu.cn/simple", assert_success=True, environment=True)
 
     if selected_gpu == "INTEL":
         # Install oneAPI dependencies via conda
         print_big_message("正在安装Intel oneAPI运行时库。")
         run_cmd("conda install -y -c intel dpcpp-cpp-rt=2024.0 mkl-dpcpp=2024.0")
         # Install libuv required by Intel-patched torch
-        run_cmd("conda install -y libuv")
+        run_cmd("conda install -y -c https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main/ libuv")
 
     # Install the webui requirements
     update_requirements(initial_installation=True)
@@ -328,17 +328,17 @@ def install_extensions_requirements():
     for i, extension in enumerate(extensions):
         print(f"\n\n--- [{i+1}/{len(extensions)}]: {extension}\n\n")
         extension_req_path = os.path.join("extensions", extension, "requirements.txt")
-        run_cmd(f"python -m pip install -r {extension_req_path} --upgrade", assert_success=False, environment=True)
+        run_cmd(f"python -m pip install -r {extension_req_path} -i https://pypi.tuna.tsinghua.edu.cn/simple --upgrade", assert_success=False, environment=True)
 
 
 def update_requirements(initial_installation=False, pull=True):
     # Create .git directory if missing
     if not os.path.exists(os.path.join(script_dir, ".git")):
-        git_creation_cmd = 'git init -b main && git remote add origin https://github.com/oobabooga/text-generation-webui && git fetch && git symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/main && git reset --hard origin/main && git branch --set-upstream-to=origin/main'
+        git_creation_cmd = 'git init -b main && git remote add origin https://mirror.ghproxy.com/https://github.com/Touch-Night/text-generation-webui && git fetch && git symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/Chinese && git reset --hard origin/Chinese && git branch --set-upstream-to=origin/Chinese'
         run_cmd(git_creation_cmd, environment=True, assert_success=True)
 
     if pull:
-        print_big_message("Updating the local copy of the repository with \"git pull\"")
+        print_big_message("正在使用\"git pull\"更新本地副本。")
 
         files_to_check = [
             'start_linux.sh', 'start_macos.sh', 'start_windows.bat', 'start_wsl.bat',
@@ -353,7 +353,7 @@ def update_requirements(initial_installation=False, pull=True):
         # Check for differences in installation file hashes
         for file_name in files_to_check:
             if before_pull_hashes[file_name] != after_pull_hashes[file_name]:
-                print_big_message(f"File '{file_name}' was updated during 'git pull'. Please run the script again.")
+                print_big_message(f"文件'{file_name}'在'git pull'期间被更新。请再次运行脚本。")
                 exit(1)
 
     if os.environ.get("INSTALL_EXTENSIONS", "").lower() in ("yes", "y", "true", "1", "t", "on"):
@@ -382,7 +382,7 @@ def update_requirements(initial_installation=False, pull=True):
 
     requirements_file = base_requirements
 
-    print_big_message(f"Installing webui requirements from file: {requirements_file}")
+    print_big_message(f"正在从文件{requirements_file}安装webui依赖。")
     print(f"TORCH: {torver}\n")
 
     # Prepare the requirements file
@@ -401,10 +401,10 @@ def update_requirements(initial_installation=False, pull=True):
         url = req.replace("git+", "")
         package_name = url.split("/")[-1].split("@")[0].rstrip(".git")
         run_cmd(f"python -m pip uninstall -y {package_name}", environment=True)
-        print(f"Uninstalled {package_name}")
+        print(f"已卸载 {package_name}")
 
     # Install/update the project requirements
-    run_cmd("python -m pip install -r temp_requirements.txt --upgrade", assert_success=True, environment=True)
+    run_cmd("python -m pip install -r temp_requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple --upgrade", assert_success=True, environment=True)
     os.remove('temp_requirements.txt')
 
     # Check for '+cu' or '+rocm' in version string to determine if torch uses CUDA or ROCm. Check for pytorch-cuda as well for backwards compatibility
@@ -427,36 +427,36 @@ if __name__ == "__main__":
     check_env()
 
     parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument('--update-wizard', action='store_true', help='Launch a menu with update options.')
+    parser.add_argument('--update-wizard', action='store_true', help='启动一个带有更新选项的菜单。')
     args, _ = parser.parse_known_args()
 
     if args.update_wizard:
         while True:
             choice = get_user_choice(
-                "What would you like to do?",
+                "你想做什么？",
                 {
-                    'A': 'Update the web UI',
-                    'B': 'Install/update extensions requirements',
-                    'C': 'Revert local changes to repository files with \"git reset --hard\"',
-                    'N': 'Nothing (exit)'
+                    'A': '更新web UI',
+                    'B': '安装/更新扩展依赖',
+                    'C': '使用\"git reset --hard\"恢复本地更改',
+                    'N': '没事（退出）'
                 },
             )
 
             if choice == 'A':
                 update_requirements()
             elif choice == 'B':
-                choices = {'A': 'All extensions'}
+                choices = {'A': '所有扩展'}
                 for i, name in enumerate(get_extensions_names()):
                     key = generate_alphabetic_sequence(i + 1)
                     choices[key] = name
 
-                choice = get_user_choice("What extension?", choices)
+                choice = get_user_choice("哪个扩展？", choices)
 
                 if choice == 'A':
                     install_extensions_requirements()
                 else:
                     extension_req_path = os.path.join("extensions", choices[choice], "requirements.txt")
-                    run_cmd(f"python -m pip install -r {extension_req_path} --upgrade", assert_success=False, environment=True)
+                    run_cmd(f"python -m pip install -r {extension_req_path} -i https://pypi.tuna.tsinghua.edu.cn/simple --upgrade", assert_success=False, environment=True)
 
                 update_requirements(pull=False)
             elif choice == 'C':
@@ -469,7 +469,7 @@ if __name__ == "__main__":
             os.chdir(script_dir)
 
         if os.environ.get("LAUNCH_AFTER_INSTALL", "").lower() in ("no", "n", "false", "0", "f", "off"):
-            print_big_message("Will now exit due to LAUNCH_AFTER_INSTALL.")
+            print_big_message("由于LAUNCH_AFTER_INSTALL，现在将退出。")
             sys.exit()
 
         # Check if a model has been downloaded yet
@@ -481,7 +481,7 @@ if __name__ == "__main__":
             model_dir = 'models'
 
         if len([item for item in glob.glob(f'{model_dir}/*') if not item.endswith(('.txt', '.yaml'))]) == 0:
-            print_big_message("You haven't downloaded any model yet.\nOnce the web UI launches, head over to the \"Model\" tab and download one.")
+            print_big_message("你还没有下载任何模型。\n等Web UI启动之后，转到\"模型\"选项卡去下载一个。")
 
         # Workaround for llama-cpp-python loading paths in CUDA env vars even if they do not exist
         conda_path_bin = os.path.join(conda_env_path, "bin")
