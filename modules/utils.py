@@ -104,8 +104,8 @@ def get_available_prompts():
 
 
 def get_available_characters():
-    paths = (x for x in Path('characters').iterdir() if x.suffix in ('.json', '.yaml', '.yml'))
-    return sorted(set((k.stem for k in paths)), key=natural_keys)
+    paths = (x for x in Path('characters').rglob("*") if x.suffix in ('.json', '.yaml', '.yml'))
+    return sorted(set((str(Path(*k.parts[1:]).with_name(k.stem)) for k in paths)), key=natural_keys)
 
 
 def get_available_instruction_templates():
