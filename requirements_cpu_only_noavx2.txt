@@ -1,4 +1,5 @@
 accelerate==0.27.*
+aqlm[gpu,cpu]==1.1.0
 colorama
 datasets
 einops
