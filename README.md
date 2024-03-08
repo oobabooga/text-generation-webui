@@ -1,124 +1,124 @@
 # Text generation web UI
 
-A Gradio web UI for Large Language Models.
+一个用于大型语言模型的Gradio Web UI。
 
-Its goal is to become the [AUTOMATIC1111/stable-diffusion-webui](https://github.com/AUTOMATIC1111/stable-diffusion-webui) of text generation.
+此项目的目标是成为文本生成领域的[AUTOMATIC1111/stable-diffusion-webui](https://github.com/AUTOMATIC1111/stable-diffusion-webui).
 
 |![Image1](https://github.com/oobabooga/screenshots/raw/main/print_instruct.png) | ![Image2](https://github.com/oobabooga/screenshots/raw/main/print_chat.png) |
 |:---:|:---:|
 |![Image1](https://github.com/oobabooga/screenshots/raw/main/print_default.png) | ![Image2](https://github.com/oobabooga/screenshots/raw/main/print_parameters.png) |
 
-## Features
+## 功能
 
-* 3 interface modes: default (two columns), notebook, and chat.
-* Multiple model backends: [Transformers](https://github.com/huggingface/transformers), [llama.cpp](https://github.com/ggerganov/llama.cpp) (through [llama-cpp-python](https://github.com/abetlen/llama-cpp-python)), [ExLlamaV2](https://github.com/turboderp/exllamav2), [AutoGPTQ](https://github.com/PanQiWei/AutoGPTQ), [AutoAWQ](https://github.com/casper-hansen/AutoAWQ), [GPTQ-for-LLaMa](https://github.com/qwopqwop200/GPTQ-for-LLaMa), [CTransformers](https://github.com/marella/ctransformers), [QuIP#](https://github.com/Cornell-RelaxML/quip-sharp).
-* Dropdown menu for quickly switching between different models.
-* Large number of extensions (built-in and user-contributed), including Coqui TTS for realistic voice outputs, Whisper STT for voice inputs, translation, [multimodal pipelines](https://github.com/oobabooga/text-generation-webui/tree/main/extensions/multimodal), vector databases, Stable Diffusion integration, and a lot more. See [the wiki](https://github.com/oobabooga/text-generation-webui/wiki/07-%E2%80%90-Extensions) and [the extensions directory](https://github.com/oobabooga/text-generation-webui-extensions) for details.
-* [Chat with custom characters](https://github.com/oobabooga/text-generation-webui/wiki/03-%E2%80%90-Parameters-Tab#character).
-* Precise chat templates for instruction-following models, including Llama-2-chat, Alpaca, Vicuna, Mistral.
-* LoRA: train new LoRAs with your own data, load/unload LoRAs on the fly for generation.
-* Transformers library integration: load models in 4-bit or 8-bit precision through bitsandbytes, use llama.cpp with transformers samplers (`llamacpp_HF` loader), CPU inference in 32-bit precision using PyTorch.
-* OpenAI-compatible API server with Chat and Completions endpoints -- see the [examples](https://github.com/oobabooga/text-generation-webui/wiki/12-%E2%80%90-OpenAI-API#examples).
+* 三种界面模式：默认（两列），笔记本和聊天。
+* 多种模型后端：[Transformers](https://github.com/huggingface/transformers), [llama.cpp](https://github.com/ggerganov/llama.cpp) (through [llama-cpp-python](https://github.com/abetlen/llama-cpp-python)), [ExLlamaV2](https://github.com/turboderp/exllamav2), [AutoGPTQ](https://github.com/PanQiWei/AutoGPTQ), [AutoAWQ](https://github.com/casper-hansen/AutoAWQ), [GPTQ-for-LLaMa](https://github.com/qwopqwop200/GPTQ-for-LLaMa), [CTransformers](https://github.com/marella/ctransformers), [QuIP#](https://github.com/Cornell-RelaxML/quip-sharp)。
+* 下拉菜单快速切换不同的模型。
+* 大量的扩展（内置和用户贡献），包括Coqui TTS用于逼真的语音输出，Whisper STT用于语音输入，翻译，[多模态模型](https://github.com/Touch-Night/text-generation-webui/tree/Chinese/extensions/multimodal)，向量库，Stable Diffusion集成，以及更多。请参阅[wiki](https://github.com/Touch-Night/text-generation-webui/wiki/07-%E2%80%90-Extensions)和[扩展列表](https://github.com/oobabooga/text-generation-webui-extensions)。
+* [和自定义角色聊天](https://github.com/Touch-Night/text-generation-webui/wiki/03-%E2%80%90-Parameters-Tab#character)。
+* 精确的聊天模板，用于指令遵循模型，包括Llama-2-chat，Alpaca，Vicuna，Mistral。
+* LoRA: 使用自己的数据训练新的LoRA，即时加载/卸载LoRA。
+* Transformers库集成：通过bitsandbytes在4位或8位精度下加载模型，使用llama.cpp的同时使用transformers采样器（`llamacpp_HF` 加载器），使用PyTorch在32位精度下进行CPU推理。
+* OpenAI兼容的API服务器，具有Chat和Completions endpoints -- 请参阅[示例](https://github.com/Touch-Night/text-generation-webui/wiki/12-%E2%80%90-OpenAI-API#examples).
 
-## How to install
+## 如何安装
 
-1) Clone or [download](https://github.com/oobabooga/text-generation-webui/archive/refs/heads/main.zip) the repository.
-2) Run the `start_linux.sh`, `start_windows.bat`, `start_macos.sh`, or `start_wsl.bat` script depending on your OS.
-3) Select your GPU vendor when asked.
-4) Once the installation ends, browse to `http://localhost:7860/?__theme=dark`.
-5) Have fun!
+1) 克隆或[下载](https://github.com/Touch-Night/text-generation-webui/archive/refs/heads/Chinese.zip)此存储库。
+2) 根据您的操作系统运行`start_linux.sh`，`start_windows.bat`，`start_macos.sh`或`start_wsl.bat`脚本。
+3) 当要求时选择您的GPU供应商。
+4) 安装结束后，浏览到`http://localhost:7860/?__theme=dark`。
+5) 玩得开心！
 
-To restart the web UI in the future, just run the `start_` script again. This script creates an `installer_files` folder where it sets up the project's requirements. In case you need to reinstall the requirements, you can simply delete that folder and start the web UI again.
+要在将来重新启动Web UI，只需再次运行`start_`脚本。此脚本创建了一个`installer_files`文件夹，其中设置了项目的依赖。如果您需要重新安装依赖，只需删除该文件夹并再次启动Web UI。
 
-The script accepts command-line flags. Alternatively, you can edit the `CMD_FLAGS.txt` file with a text editor and add your flags there.
+此脚本接受命令行标志。或者，您可以使用文本编辑器编辑`CMD_FLAGS.txt`文件并在其中添加标志。
 
-To get updates in the future, run `update_wizard_linux.sh`, `update_wizard_windows.bat`, `update_wizard_macos.sh`, or `update_wizard_wsl.bat`.
+要在将来获得更新，请运行`update_wizard_linux.sh`，`update_wizard_windows.bat`，`update_wizard_macos.sh`或`update_wizard_wsl.bat`。
 
 <details>
 <summary>
-Setup details and information about installing manually
+安装细节和手动安装的信息
 </summary>
 
-### One-click-installer
+### 一键安装脚本
 
-The script uses Miniconda to set up a Conda environment in the `installer_files` folder.
+此脚本使用Miniconda在`installer_files`文件夹中建立Conda环境。
 
-If you ever need to install something manually in the `installer_files` environment, you can launch an interactive shell using the cmd script: `cmd_linux.sh`, `cmd_windows.bat`, `cmd_macos.sh`, or `cmd_wsl.bat`.
+如果您需要在`installer_files`环境中手动安装某些内容，可以使用cmd脚本启动交互式shell：`cmd_linux.sh`，`cmd_windows.bat`，`cmd_macos.sh`或`cmd_wsl.bat`。
 
-* There is no need to run any of those scripts (`start_`, `update_wizard_`, or `cmd_`) as admin/root.
-* To install the requirements for extensions, you can use the `extensions_reqs` script for your OS. At the end, this script will install the main requirements for the project to make sure that they take precedence in case of version conflicts.
-* For additional instructions about AMD and WSL setup, consult [the documentation](https://github.com/oobabooga/text-generation-webui/wiki).
-* For automated installation, you can use the `GPU_CHOICE`, `USE_CUDA118`, `LAUNCH_AFTER_INSTALL`, and `INSTALL_EXTENSIONS` environment variables. For instance: `GPU_CHOICE=A USE_CUDA118=FALSE LAUNCH_AFTER_INSTALL=FALSE INSTALL_EXTENSIONS=TRUE ./start_linux.sh`.
+* 无需以管理员/根用户身份运行这些脚本（`start_`，`update_wizard_`或`cmd_`）。
+* 要安装扩展的依赖，您可以使用您的操作系统的`extensions_reqs`脚本。最后，此脚本将安装项目的主依赖，以确保在版本冲突的情况下它们优先。
+* 有关AMD和WSL设置的其他说明，请参阅[此文档](https://github.com/Touch-Night/text-generation-webui/wiki)。
+* 为了自动安装，您可以使用`GPU_CHOICE`，`USE_CUDA118`，`LAUNCH_AFTER_INSTALL`和`INSTALL_EXTENSIONS`环境变量。例如：`GPU_CHOICE=A USE_CUDA118=FALSE LAUNCH_AFTER_INSTALL=FALSE INSTALL_EXTENSIONS=TRUE ./start_linux.sh`。
 
-### Manual installation using Conda
+### 使用Conda手动安装
 
-Recommended if you have some experience with the command-line.
+如果您有使用命令行的经验，那可以推荐使用这种方式。
 
-#### 0. Install Conda
+#### 0.安装Conda
 
 https://docs.conda.io/en/latest/miniconda.html
 
-On Linux or WSL, it can be automatically installed with these two commands ([source](https://educe-ubc.github.io/conda.html)):
+在Linux或WSL上，可以使用这两个命令自动安装（ [来源](https://educe-ubc.github.io/conda.html) ）：
 
 ```
-curl -sL "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh" > "Miniconda3.sh"
+curl -sL  "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh"  >  "Miniconda3.sh" 
 bash Miniconda3.sh
 ```
 
-#### 1. Create a new conda environment
+#### 1.创建一个新的Conda环境
 
 ```
 conda create -n textgen python=3.11
 conda activate textgen
 ```
 
-#### 2. Install Pytorch
+#### 2.安装Pytorch
 
-| System | GPU | Command |
+| 系统| GPU| 命令|
 |--------|---------|---------|
-| Linux/WSL | NVIDIA | `pip3 install torch==2.2.1 torchvision==0.17.1 torchaudio==2.2.1 --index-url https://download.pytorch.org/whl/cu121` |
-| Linux/WSL | CPU only | `pip3 install torch==2.2.1 torchvision==0.17.1 torchaudio==2.2.1 --index-url https://download.pytorch.org/whl/cpu` |
-| Linux | AMD | `pip3 install torch==2.2.1 torchvision==0.17.1 torchaudio==2.2.1 --index-url https://download.pytorch.org/whl/rocm5.6` |
-| MacOS + MPS | Any | `pip3 install torch==2.2.1 torchvision==0.17.1 torchaudio==2.2.1` |
-| Windows | NVIDIA | `pip3 install torch==2.2.1 torchvision==0.17.1 torchaudio==2.2.1 --index-url https://download.pytorch.org/whl/cu121` |
-| Windows | CPU only | `pip3 install torch==2.2.1 torchvision==0.17.1 torchaudio==2.2.1` |
+| Linux/WSL| Nvidia|  `pip3 install torch==2.2.1 torchvision==0.17.1 torchaudio==2.2.1 --index-url https://download.pytorch.org/whl/cu121`  |
+| Linux/WSL| 仅CPU|  `pip3 install torch==2.2.1 torchvision==0.17.1 torchaudio==2.2.1 --index-url https://download.pytorch.org/whl/cpu`  |
+| Linux| AMD|  `pip3 install torch==2.2.1 torchvision==0.17.1 torchaudio==2.2.1 --index-url https://download.pytorch.org/whl/rocm5.6`  |
+| MacOS + MPS| 任意|  `pip3 install torch==2.2.1 torchvision==0.17.1 torchaudio==2.2.1`  |
+| Windows| Nvidia|  `pip3 install torch==2.2.1 torchvision==0.17.1 torchaudio==2.2.1 --index-url https://download.pytorch.org/whl/cu121`  |
+| Windows| 仅CPU|  `pip3 install torch==2.2.1 torchvision==0.17.1 torchaudio==2.2.1`  |
 
-The up-to-date commands can be found here: https://pytorch.org/get-started/locally/.
+最新的命令可以在这里找到：https://pytorch.org/get-started/locally/ 。
 
-For NVIDIA, you also need to install the CUDA runtime libraries:
-
-```
-conda install -y -c "nvidia/label/cuda-12.1.1" cuda-runtime
-```
-
-If you need `nvcc` to compile some library manually, replace the command above with
+对于NVIDIA，您还需要安装CUDA运行时库：
 
 ```
-conda install -y -c "nvidia/label/cuda-12.1.1" cuda
+conda install -y -c  "nvidia/label/cuda-12.1.1"  cuda-runtime
 ```
 
-#### 3. Install the web UI
+如果你需要 `nvcc`  来手动编译一些库，请用下面的命令替换上述命令：
 
 ```
-git clone https://github.com/oobabooga/text-generation-webui
+conda install -y -c  "nvidia/label/cuda-12.1.1"  cuda
+```
+
+#### 3.安装Web UI
+
+```
+git clone -b Chinese https://github.com/Touch-Night/text-generation-webui
 cd text-generation-webui
-pip install -r <requirements file according to table below>
+pip install -r <根据下表确定的依赖文件>
 ```
 
-Requirements file to use:
+要使用的依赖文件：
 
-| GPU | CPU | requirements file to use |
+| GPU| CPU| 要使用的依赖文件|
 |--------|---------|---------|
-| NVIDIA | has AVX2 | `requirements.txt` |
-| NVIDIA | no AVX2 | `requirements_noavx2.txt` |
-| AMD | has AVX2 | `requirements_amd.txt` |
-| AMD | no AVX2 | `requirements_amd_noavx2.txt` |
-| CPU only | has AVX2 | `requirements_cpu_only.txt` |
-| CPU only | no AVX2 | `requirements_cpu_only_noavx2.txt` |
-| Apple | Intel | `requirements_apple_intel.txt` |
-| Apple | Apple Silicon | `requirements_apple_silicon.txt` |
+| Nvidia| 有AVX2|  `requirements.txt`  |
+| Nvidia| 无avx2|  `requirements_noavx2.txt`  |
+| AMD| 有AVX2|  `requirements_amd.txt`  |
+| AMD| 无avx2|  `requirements_amd_noavx2.txt`  |
+| 仅CPU| 有AVX2|  `requirements_cpu_only.txt`  |
+| 仅CPU| 无avx2|  `requirements_cpu_only_noavx2.txt`  |
+| 苹果| 英特尔|  `requirements_apple_intel.txt`  |
+| 苹果| 苹果Silicon|  `requirements_apple_silicon.txt`  |
 
-### Start the web UI
+### 启动Web UI
 
 ```
 conda activate textgen
@@ -126,256 +126,256 @@ cd text-generation-webui
 python server.py
 ```
 
-Then browse to
+然后浏览
 
-`http://localhost:7860/?__theme=dark`
+ `http://localhost:7860/?__theme=dark` 
 
-##### AMD GPU on Windows
+##### Windows上的AMD GPU
 
-1) Use `requirements_cpu_only.txt` or `requirements_cpu_only_noavx2.txt` in the command above.
+1) 在上面的命令中使用 `requirements_cpu_only.txt` 或者 `requirements_cpu_only_noavx2.txt`。
 
-2) Manually install llama-cpp-python using the appropriate command for your hardware: [Installation from PyPI](https://github.com/abetlen/llama-cpp-python#installation-with-hardware-acceleration).
-    * Use the `LLAMA_HIPBLAS=on` toggle.
-    * Note the [Windows remarks](https://github.com/abetlen/llama-cpp-python#windows-remarks).
+2) 根据你的硬件使用适当的命令手动安装llama-cpp-python：[从PyPI安装](https://github.com/abetlen/llama-cpp-python#installation-with-hardware-acceleration) 。
+    * 使用 `LLAMA_HIPBLAS=on` 切换键。
+    * 注意 [Windows remarks](https://github.com/abetlen/llama-cpp-python#windows-remarks) 。
 
-3) Manually install AutoGPTQ: [Installation](https://github.com/PanQiWei/AutoGPTQ#install-from-source).
-    * Perform the from-source installation - there are no prebuilt ROCm packages for Windows.
+3) 手动安装autoGPTQ：[安装方法](https://github.com/PanQiWei/AutoGPTQ#install-from-source) 。
+    * 从源代码安装 - Windows没有预构建的ROCm包。
 
-##### Older NVIDIA GPUs
+##### 较老的NVIDIA GPU
 
-1) For Kepler GPUs and older, you will need to install CUDA 11.8 instead of 12:
+1)  对于Kepler GPU和较早的GPU，您需要安装CUDA 11.8而不是12：
 
 ```
 pip3 install torch==2.2.1 torchvision==0.17.1 torchaudio==2.2.1 --index-url https://download.pytorch.org/whl/cu118
-conda install -y -c "nvidia/label/cuda-11.8.0" cuda-runtime
+conda install -y -c  "nvidia/label/cuda-11.8.0"  cuda-runtime
 ```
 
-2) bitsandbytes >= 0.39 may not work. In that case, to use `--load-in-8bit`, you may have to downgrade like this:
-    * Linux: `pip install bitsandbytes==0.38.1`
-    * Windows: `pip install https://github.com/jllllll/bitsandbytes-windows-webui/raw/main/bitsandbytes-0.38.1-py3-none-any.whl`
+2) bitsandbytes >= 0.39 可能无法正常工作。在这种情况下，使用 `--load-in-8bit` ，您可能必须这样降级：
+    * Linux： `pip install bitsandbytes==0.38.1` 
+    * Windows： `pip install https://github.com/jllllll/bitsandbytes-windows-webui/raw/main/bitsandbytes-0.38.1-py3-none-any.whl` 
 
-##### Manual install
+##### 手动安装
 
-The `requirements*.txt` above contain various wheels precompiled through GitHub Actions. If you wish to compile things manually, or if you need to because no suitable wheels are available for your hardware, you can use `requirements_nowheels.txt` and then install your desired loaders manually.
+`requirements*.txt` 包含通过GitHub Action预编译的各种轮子。如果您想手动编译它们，或者您因为没有合适的车轮可用于您的硬件而需要这么做，则可以使用 `requirements_nowheels.txt` 然后手动安装所需的加载器。
 
-### Alternative: Docker
+### 另一可选方案：Docker
 
 ```
-For NVIDIA GPU:
+对于NVIDIA GPU:
 ln -s docker/{nvidia/Dockerfile,nvidia/docker-compose.yml,.dockerignore} .
-For AMD GPU: 
+对于AMD GPU: 
 ln -s docker/{amd/Dockerfile,intel/docker-compose.yml,.dockerignore} .
-For Intel GPU:
+对于Intel GPU:
 ln -s docker/{intel/Dockerfile,amd/docker-compose.yml,.dockerignore} .
-For CPU only
+对于仅CPU
 ln -s docker/{cpu/Dockerfile,cpu/docker-compose.yml,.dockerignore} .
 cp docker/.env.example .env
-#Create logs/cache dir : 
+# 创建 logs/cache 目录 : 
 mkdir -p logs cache
-# Edit .env and set: 
-#   TORCH_CUDA_ARCH_LIST based on your GPU model
-#   APP_RUNTIME_GID      your host user's group id (run `id -g` in a terminal)
-#   BUILD_EXTENIONS      optionally add comma separated list of extensions to build
-# Edit CMD_FLAGS.txt and add in it the options you want to execute (like --listen --cpu)
+# 编辑 .env 并设置以下内容: 
+#   TORCH_CUDA_ARCH_LIST （据你的GPU型号而定）
+#   APP_RUNTIME_GID      你的主机用户的组ID（在终端中运行 `id -g`查看）
+#   BUILD_EXTENIONS      可选地添加逗号分隔的扩展名列表以构建
+# 编辑 CMD_FLAGS.txt 并在其中添加您想要执行的选项（如 --listen --cpu）
 # 
 docker compose up --build
 ```
 
-* You need to have Docker Compose v2.17 or higher installed. See [this guide](https://github.com/oobabooga/text-generation-webui/wiki/09-%E2%80%90-Docker) for instructions.
-* For additional docker files, check out [this repository](https://github.com/Atinoda/text-generation-webui-docker).
+*您需要安装Docker Compose v2.17或更高的版本。查看 [本指南](https://github.com/Touch-Night/text-generation-webui/wiki/09-%E2%80%90-Docker)获取说明。
+*有关其他Docker文件，请查看[这个存储库](https://github.com/Atinoda/text-generation-webui-docker) 。
 
-### Updating the requirements
+### 更新依赖
 
-From time to time, the `requirements*.txt` change. To update, use these commands:
+随着时间的推移，`requirements*.txt` 可能改变。要更新，请使用以下命令：
 
 ```
 conda activate textgen
 cd text-generation-webui
-pip install -r <requirements file that you have used> --upgrade
+pip install -r <你曾使用过的依赖文件> --upgrade
 ```
-</details>
+</delect>
 
 <details>
 <summary>
-List of command-line flags
+命令行标记列表
 </summary>
 
-#### Basic settings
+#### 基本设置
 
-| Flag                                       | Description |
+| 标记| 描述|
 |--------------------------------------------|-------------|
-| `-h`, `--help`                             | show this help message and exit |
-| `--multi-user`                             | Multi-user mode. Chat histories are not saved or automatically loaded. WARNING: this is likely not safe for sharing publicly. |
-| `--character CHARACTER`                    | The name of the character to load in chat mode by default. |
-| `--model MODEL`                            | Name of the model to load by default. |
-| `--lora LORA [LORA ...]`                   | The list of LoRAs to load. If you want to load more than one LoRA, write the names separated by spaces. |
-| `--model-dir MODEL_DIR`                    | Path to directory with all the models. |
-| `--lora-dir LORA_DIR`                      | Path to directory with all the loras. |
-| `--model-menu`                             | Show a model menu in the terminal when the web UI is first launched. |
-| `--settings SETTINGS_FILE`                 | Load the default interface settings from this yaml file. See `settings-template.yaml` for an example. If you create a file called `settings.yaml`, this file will be loaded by default without the need to use the `--settings` flag. |
-| `--extensions EXTENSIONS [EXTENSIONS ...]` | The list of extensions to load. If you want to load more than one extension, write the names separated by spaces. |
-| `--verbose`                                | Print the prompts to the terminal. |
-| `--chat-buttons`                           | Show buttons on the chat tab instead of a hover menu. |
+|  `-h` ，，，， `--help`                              | 显示此帮助消息然后退出|
+|  `--multi-user`                              | 多用户模式。聊天历史将不保存或自动加载。警告：公开分享可能不安全。|
+|  `--character CHARACTER`                     | 默认情况下，要在聊天模式加载的角色名称。|
+|  `--model MODEL`                             | 默认情况下加载的模型名称。|
+|  `--lora LORA [LORA ...]`                    | 加载的LoRA列表。如果您想加载多个LoRA，请写下由空格分开的名称。|
+|  `--model-dir MODEL_DIR`                     | 所有模型的目录路径。|
+|  `--lora-dir LORA_DIR`                       | 所有LoRA的目录路径。|
+|  `--model-menu`                              | 当Web UI首次启动时，在终端中显示模型菜单。|
+|  `--settings SETTINGS_FILE`                  | 从此YAML文件加载默认接口设置。`settings-template.yaml` 是一个示例。如果您创建一个名为`settings.yaml`的文件，默认情况下将加载此文件，而无需使用 `--settings` 标记。|
+|  `--extensions EXTENSIONS [EXTENSIONS ...]`  | 加载的扩展列表。如果要加载多个扩展，请写下由空格隔开的名称。|
+|  `--verbose`                                 | 将提示词打印到终端。|
+|  `--chat-buttons`                            | 在“聊天”选项卡上显示按钮，而不是悬停菜单。|
 
-#### Model loader
+#### 模型加载器
 
-| Flag                                       | Description |
+| 标记| 描述|
 |--------------------------------------------|-------------|
-| `--loader LOADER`                          | Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, llamacpp_HF, ExLlamav2_HF, ExLlamav2, AutoGPTQ, AutoAWQ, GPTQ-for-LLaMa, ctransformers, QuIP#. |
+|  `--loader LOADER`                           | 手动选择模型加载器，否则，它将被自动检测。可选选项：Transformers，llama.cpp，llamacpp_hf，Exllamav2_HF，Exllamav2，AutoGPTQ，AutoAWQ，GPTQ-for-LLaMa，ctransformers，QuIP#。|
 
 #### Accelerate/transformers
 
-| Flag                                        | Description |
+| 标记| 描述|
 |---------------------------------------------|-------------|
-| `--cpu`                                     | Use the CPU to generate text. Warning: Training on CPU is extremely slow. |
-| `--auto-devices`                            | Automatically split the model across the available GPU(s) and CPU. |
-|  `--gpu-memory GPU_MEMORY [GPU_MEMORY ...]` | Maximum GPU memory in GiB to be allocated per GPU. Example: --gpu-memory 10 for a single GPU, --gpu-memory 10 5 for two GPUs. You can also set values in MiB like --gpu-memory 3500MiB. |
-| `--cpu-memory CPU_MEMORY`                   | Maximum CPU memory in GiB to allocate for offloaded weights. Same as above. |
-| `--disk`                                    | If the model is too large for your GPU(s) and CPU combined, send the remaining layers to the disk. |
-| `--disk-cache-dir DISK_CACHE_DIR`           | Directory to save the disk cache to. Defaults to "cache". |
-| `--load-in-8bit`                            | Load the model with 8-bit precision (using bitsandbytes). |
-| `--bf16`                                    | Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU. |
-| `--no-cache`                                | Set `use_cache` to `False` while generating text. This reduces VRAM usage slightly, but it comes at a performance cost. |
-| `--trust-remote-code`                       | Set `trust_remote_code=True` while loading the model. Necessary for some models. |
-| `--no_use_fast`                             | Set use_fast=False while loading the tokenizer (it's True by default). Use this if you have any problems related to use_fast. |
-| `--use_flash_attention_2`                   | Set use_flash_attention_2=True while loading the model. |
+|  `--cpu`                                      | 使用CPU生成文本。警告：使用CPU训练非常慢。|
+|  `--auto-devices`                             | 自动将模型划分到可用的GPU和CPU上。|
+|   `--gpu-memory GPU_MEMORY [GPU_MEMORY ...]`  | 为每个GPU分配的最大GPU内存，单位为GiB。例如：单个GPU使用 --gpu-memory 10，两个GPU使用 --gpu-memory 10 5。你也可以像这样用MiB来设置值 --gpu-memory 3500MiB。|
+|  `--cpu-memory CPU_MEMORY`                    | 用于分配卸载权重的最大CPU内存，单位为GiB。与上面相同。|
+|  `--disk`                                     | 如果模型对于你的GPU和CPU的总和来说太大了，将剩余的层发送到磁盘。|
+|  `--disk-cache-dir DISK_CACHE_DIR`            | 磁盘缓存保存目录。默认为 "cache" 。|
+|  `--load-in-8bit`                             | 使用8位精度加载模型（使用bitsandbytes）。|
+|  `--bf16`                                     | 使用bfloat16精度加载模型。需要Nvidia Ampere GPU。|
+|  `--no-cache`                                 | 生成文本时设置 `use_cache` 为 `False`。这略微减少了显存的使用，但这也导致性能损失。|
+|  `--trust-remote-code`                        | 加载模型时设置 `trust_remote_code=True`。这对于某些模型是必需的。|
+|  `--no_use_fast`                              | 加载tokenizer时设置use_fast=false（默认情况下为true）。如果您遇到与use_fast有关的任何问题，请使用此功能。|
+|  `--use_flash_attention_2`                    | 在加载模型时设置use_flash_attention_2=True。|
 
-#### bitsandbytes 4-bit
+#### bitsandbytes 4-比特
 
-⚠️  Requires minimum compute of 7.0 on Windows at the moment.
+⚠️  目前要求Windows上的最低计算水平为7.0。
 
-| Flag                                        | Description |
+| 标记| 描述|
 |---------------------------------------------|-------------|
-| `--load-in-4bit`                            | Load the model with 4-bit precision (using bitsandbytes). |
-| `--use_double_quant`                        | use_double_quant for 4-bit. |
-| `--compute_dtype COMPUTE_DTYPE`             | compute dtype for 4-bit. Valid options: bfloat16, float16, float32. |
-| `--quant_type QUANT_TYPE`                   | quant_type for 4-bit. Valid options: nf4, fp4. |
+|  `--load-in-4bit`                             | 以4位精度加载模型（使用bitsandbytes）。|
+|  `--use_double_quant`                         | 对4位精度使用use_double_quant。|
+|  `--compute_dtype COMPUTE_DTYPE`              | 4位精度的计算数据类型。有效选项：bfloat16, float16, float32。|
+|  `--quant_type QUANT_TYPE`                    | 4位精度的量化类型。有效选项：nf4, fp4。|
 
 #### llama.cpp
 
-| Flag        | Description |
+| 标记| 描述|
 |-------------|-------------|
-| `--tensorcores`  | Use llama-cpp-python compiled with tensor cores support. This increases performance on RTX cards. NVIDIA only. |
-| `--n_ctx N_CTX` | Size of the prompt context. |
-| `--threads` | Number of threads to use. |
-| `--threads-batch THREADS_BATCH` | Number of threads to use for batches/prompt processing. |
-| `--no_mul_mat_q` | Disable the mulmat kernels. |
-| `--n_batch` | Maximum number of prompt tokens to batch together when calling llama_eval. |
-| `--no-mmap`   | Prevent mmap from being used. |
-| `--mlock`     | Force the system to keep the model in RAM. |
-| `--n-gpu-layers N_GPU_LAYERS` | Number of layers to offload to the GPU. |
-| `--tensor_split TENSOR_SPLIT`       | Split the model across multiple GPUs. Comma-separated list of proportions. Example: 18,17. |
-| `--numa`      | Activate NUMA task allocation for llama.cpp. |
-| `--logits_all`| Needs to be set for perplexity evaluation to work. Otherwise, ignore it, as it makes prompt processing slower. |
-| `--no_offload_kqv` | Do not offload the K, Q, V to the GPU. This saves VRAM but reduces the performance. |
-| `--cache-capacity CACHE_CAPACITY`   | Maximum cache capacity (llama-cpp-python). Examples: 2000MiB, 2GiB. When provided without units, bytes will be assumed. |
+|  `--tensorcores`   | 使用编译了tensorcores支持的llama-cpp-python。这在RTX显卡上可以提高性能。仅限NVIDIA。|
+|  `--n_ctx N_CTX`  | 提示词上下文的大小。|
+|  `--threads`  | 要使用的线程数。|
+|  `--threads-batch THREADS_BATCH`  | 用于批处理/提示词处理的线程数。|
+|  `--no_mul_mat_q`  | 禁用mulmat内核。|
+|  `--n_batch`  | 在调用llama_eval时批量处理的提示词token的最大数量。|
+|  `--no-mmap`    | 防止使用mmap。|
+|  `--mlock`      | 强制系统将模型保留在RAM中。|
+|  `--n-gpu-layers N_GPU_LAYERS`  | 卸载到GPU的层数。|
+|  `--tensor_split TENSOR_SPLIT`        | 在多个GPU上分割模型。逗号分隔的比例列表。示例：18,17。|
+|  `--numa`       | 激活Llama.cpp的NUMA任务分配。|
+|  `--logits_all` | 需要设置以使困惑度评估工作。否则，请忽略它，因为它会使提示处理变慢。|
+|  `--no_offload_kqv`  | 不将K、Q、V卸载到GPU。这可以节省VRAM，但会降低性能。|
+|  `--cache-capacity CACHE_CAPACITY`    | 最大缓存容量（llama-cpp-python）。示例：2000MiB, 2GiB。如果没有提供单位，默认为字节。|
 
-#### ExLlamav2
+#### Exllamav2
 
-| Flag             | Description |
+| 标记| 描述|
 |------------------|-------------|
-|`--gpu-split`     | Comma-separated list of VRAM (in GB) to use per GPU device for model layers. Example: 20,7,7. |
-|`--max_seq_len MAX_SEQ_LEN`           | Maximum sequence length. |
-|`--cfg-cache`                         | ExLlamav2_HF: Create an additional cache for CFG negative prompts. Necessary to use CFG with that loader. |
-|`--no_flash_attn`                     | Force flash-attention to not be used. |
-|`--cache_8bit`                        | Use 8-bit cache to save VRAM. |
-|`--cache_4bit`                        | Use Q4 cache to save VRAM. |
-|`--num_experts_per_token NUM_EXPERTS_PER_TOKEN` |  Number of experts to use for generation. Applies to MoE models like Mixtral. |
+| `--gpu-split`      | 逗号分隔的列表，指定每个GPU设备用于模型层的VRAM（以GB为单位）。示例：20,7,7。|
+| `--max_seq_len MAX_SEQ_LEN`            | 最大序列长度。|
+| `--cfg-cache`                          | ExLlamav2_HF：为CFG负面提示创建一个额外的缓存。使用该加载器时，必须使用CFG。|
+| `--no_flash_attn`                      | 强制不使用flash-attention。|
+| `--cache_8bit`                         | 使用8位缓存以节省VRAM。|
+|`--cache_4bit`                        | 使用Q4缓存以节省VRAM。|
+| `--num_experts_per_token NUM_EXPERTS_PER_TOKEN`  | 用于生成的专家数量。适用于MoE模型，如Mixtral。|
 
 #### AutoGPTQ
 
-| Flag             | Description |
+| 标记| 描述|
 |------------------|-------------|
-| `--triton`                     | Use triton. |
-| `--no_inject_fused_attention`  | Disable the use of fused attention, which will use less VRAM at the cost of slower inference. |
-| `--no_inject_fused_mlp`        | Triton mode only: disable the use of fused MLP, which will use less VRAM at the cost of slower inference. |
-| `--no_use_cuda_fp16`           | This can make models faster on some systems. |
-| `--desc_act`                   | For models that don't have a quantize_config.json, this parameter is used to define whether to set desc_act or not in BaseQuantizeConfig. |
-| `--disable_exllama`            | Disable ExLlama kernel, which can improve inference speed on some systems. |
-| `--disable_exllamav2`          | Disable ExLlamav2 kernel. |
+|  `--triton`                      | 使用triton。|
+|  `--no_inject_fused_attention`   | 禁用融合注意力机制，这将以降低推理速度为代价，使用更少的显存。|
+|  `--no_inject_fused_mlp`         | 仅使用Triton模式：禁用使用Fused MLP的使用，它将以较慢的推理为代价使用较少的VRAM。|
+|  `--no_use_cuda_fp16`            | 在某些系统上可以使模型更快。|
+|  `--desc_act`                    | 对于没有quantize_config.json的模型，此参数用于定义是否在BaseQuantizeConfig中设置desc_act。|
+|  `--disable_exllama`             | 禁用ExLlama内核，这在某些系统上可以提高推理速度。|
+|  `--disable_exllamav2`           | 禁用ExLlamav2内核。|
 
 #### GPTQ-for-LLaMa
 
-| Flag                      | Description |
+| 标记| 描述|
 |---------------------------|-------------|
-| `--wbits WBITS`           | Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported. |
-| `--model_type MODEL_TYPE` | Model type of pre-quantized model. Currently LLaMA, OPT, and GPT-J are supported. |
-| `--groupsize GROUPSIZE`   | Group size. |
-| `--pre_layer PRE_LAYER [PRE_LAYER ...]`  | The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models. For multi-gpu, write the numbers separated by spaces, eg `--pre_layer 30 60`. |
-| `--checkpoint CHECKPOINT` | The path to the quantized checkpoint file. If not specified, it will be automatically detected. |
-| `--monkey-patch`          | Apply the monkey patch for using LoRAs with quantized models. |
+|  `--wbits WBITS`            | 加载指定位精度的预量化模型。支持2、3、4和8位。|
+|  `--model_type MODEL_TYPE`  | 预量化模型的模型类型。目前支持LLaMA、OPT和GPT-J。|
+|  `--groupsize GROUPSIZE`    | 组大小。|
+|  `--pre_layer PRE_LAYER [PRE_LAYER ...]`   | 分配给GPU的层数。设置此参数可启用4位模型的CPU卸载。对于多GPU，将数字用空格分隔，例如`--pre_layer 30 60` 。|
+|  `--checkpoint CHECKPOINT`  | 量化检查点文件的路径。如果未指定，将自动检测。|
+|  `--monkey-patch`           | 应用monkey patch以使用量化模型的LoRAs。|
 
 #### ctransformers
 
-| Flag        | Description |
+| 标记| 描述|
 |-------------|-------------|
-| `--model_type MODEL_TYPE` | Model type of pre-quantized model. Currently gpt2, gptj, gptneox, falcon, llama, mpt, starcoder (gptbigcode), dollyv2, and replit are supported. |
+|  `--model_type MODEL_TYPE`  | 预量化模型的模型类型。目前支持gpt2、gptj、gptneox、falcon、llama、mpt、starcoder（gptbigcode）、dollyv2和replit。|
 
 #### HQQ
 
-| Flag        | Description |
+| 标记| 描述|
 |-------------|-------------|
-| `--hqq-backend` | Backend for the HQQ loader. Valid options: PYTORCH, PYTORCH_COMPILE, ATEN. |
+|  `--hqq-backend`  | HQQ加载器的后端。有效选项：PYTORCH, PYTORCH_COMPILE, ATEN。|
 
 #### DeepSpeed
 
-| Flag                                  | Description |
+| 标记| 描述|
 |---------------------------------------|-------------|
-| `--deepspeed`                         | Enable the use of DeepSpeed ZeRO-3 for inference via the Transformers integration. |
-| `--nvme-offload-dir NVME_OFFLOAD_DIR` | DeepSpeed: Directory to use for ZeRO-3 NVME offloading. |
-| `--local_rank LOCAL_RANK`             | DeepSpeed: Optional argument for distributed setups. |
+|  `--deepspeed`                          | 通过Transformers集成启用DeepSpeed ZeRO-3进行推理。|
+|  `--nvme-offload-dir NVME_OFFLOAD_DIR`  | DeepSpeed：用于ZeRO-3 NVME卸载的目录。|
+|  `--local_rank LOCAL_RANK`              | DeepSpeed：分布式设置的可选参数。|
 
-#### RoPE (for llama.cpp, ExLlamaV2, and transformers)
+#### RoPE（用于llama.cpp，ExLlamaV2和transformers）
 
-| Flag             | Description |
+| 标记| 描述|
 |------------------|-------------|
-| `--alpha_value ALPHA_VALUE`           | Positional embeddings alpha factor for NTK RoPE scaling. Use either this or `compress_pos_emb`, not both. |
-| `--rope_freq_base ROPE_FREQ_BASE`     | If greater than 0, will be used instead of alpha_value. Those two are related by `rope_freq_base = 10000 * alpha_value ^ (64 / 63)`. |
-| `--compress_pos_emb COMPRESS_POS_EMB` | Positional embeddings compression factor. Should be set to `(context length) / (model's original context length)`. Equal to `1/rope_freq_scale`. |
+|  `--alpha_value ALPHA_VALUE`            | NTK RoPE缩放的位置嵌入alpha因子。使用此选项或`compress_pos_emb`，不要同时使用两者。|
+|  `--rope_freq_base ROPE_FREQ_BASE`      | 如果大于0，将代替alpha_value使用。这两者符合`rope_freq_base = 10000 * alpha_value ^ (64 / 63)`关系式。|
+|  `--compress_pos_emb COMPRESS_POS_EMB`  | 位置嵌入的压缩因子。应设置为`(上下文长度) / (模型原始上下文长度)`。等于`1/rope_freq_scale`。|
 
 #### Gradio
 
-| Flag                                  | Description |
+| 标记| 描述|
 |---------------------------------------|-------------|
-| `--listen`                            | Make the web UI reachable from your local network. |
-| `--listen-port LISTEN_PORT`           | The listening port that the server will use. |
-| `--listen-host LISTEN_HOST`           | The hostname that the server will use. |
-| `--share`                             | Create a public URL. This is useful for running the web UI on Google Colab or similar. |
-| `--auto-launch`                       | Open the web UI in the default browser upon launch. |
-| `--gradio-auth USER:PWD`              | Set Gradio authentication password in the format "username:password". Multiple credentials can also be supplied with "u1:p1,u2:p2,u3:p3". |
-| `--gradio-auth-path GRADIO_AUTH_PATH` | Set the Gradio authentication file path. The file should contain one or more user:password pairs in the same format as above. |
-| `--ssl-keyfile SSL_KEYFILE`           | The path to the SSL certificate key file. |
-| `--ssl-certfile SSL_CERTFILE`         | The path to the SSL certificate cert file. |
+|  `--listen`                             | 使web UI能够从你的本地网络访问。|
+|  `--listen-port LISTEN_PORT`            | 服务器将使用的监听端口。|
+|  `--listen-host LISTEN_HOST`            | 服务器将使用的主机名。|
+|  `--share`                              | 创建一个公共URL。这对于在Google Colab或类似环境上运行web UI很有用。|
+|  `--auto-launch`                        | 启动时在默认浏览器中打开web UI。|
+|  `--gradio-auth USER:PWD`               | 设置Gradio认证密码，格式为"username:password"。也可以提供多个凭证，格式为"u1:p1,u2:p2,u3:p3"。|
+|  `--gradio-auth-path GRADIO_AUTH_PATH`  | 设置Gradio认证文件路径。文件应包含一个或多个和上面相同格式的用户:密码对。|
+|  `--ssl-keyfile SSL_KEYFILE`            | SSL证书密钥文件的路径。|
+|  `--ssl-certfile SSL_CERTFILE`          | SSL证书文件的路径。|
 
 #### API
 
-| Flag                                  | Description |
+| 标记| 描述|
 |---------------------------------------|-------------|
-| `--api`                               | Enable the API extension. |
-| `--public-api`                        | Create a public URL for the API using Cloudfare. |
-| `--public-api-id PUBLIC_API_ID`       | Tunnel ID for named Cloudflare Tunnel. Use together with public-api option. |
-| `--api-port API_PORT`                 | The listening port for the API. |
-| `--api-key API_KEY`                   | API authentication key. |
-| `--admin-key ADMIN_KEY`               | API authentication key for admin tasks like loading and unloading models. If not set, will be the same as --api-key. |
-| `--nowebui`                           | Do not launch the Gradio UI. Useful for launching the API in standalone mode. |
+|  `--api`                                | 启用API扩展。|
+|  `--public-api`                         | 使用CloudFare为API创建公共URL。|
+|  `--public-api-id PUBLIC_API_ID`        | 命名Cloudflare Tunnel的隧道ID。与public-api选项一起使用。|
+|  `--api-port API_PORT`                  | API的监听端口。|
+|  `--api-key API_KEY`                    | API认证密钥。|
+|  `--admin-key ADMIN_KEY`                | 用于加载和卸载模型等管理员任务的API认证密钥。如果未设置，将与--api-key相同。|
+|  `--nowebui`                            | 不启动Gradio UI。用于以独立模式启动API时很有用。|
 
 #### Multimodal
 
-| Flag                                  | Description |
+| 旗帜| 描述|
 |---------------------------------------|-------------|
-| `--multimodal-pipeline PIPELINE`      | The multimodal pipeline to use. Examples: `llava-7b`, `llava-13b`. |
+|  `--multimodal-pipeline PIPELINE`       | 要使用的多模态模型pipeline。示例：`llava-7b`、`llava-13b`。|
 
-</details>
+</delect>
 
-## Documentation
+## 文档
 
-https://github.com/oobabooga/text-generation-webui/wiki
+https://github.com/Touch-Night/text-generation-webui/wiki
 
-## Downloading models
+## 下载模型
 
-Models should be placed in the folder `text-generation-webui/models`. They are usually downloaded from [Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads).
+模型应该放在`text-generation-webui/models`文件夹中。它们通常可以从[Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads)下载。
 
-* GGUF models are a single file and should be placed directly into `models`. Example:
+* GGUF模型是单个文件，应直接放入`models`文件夹。例如：
 
 ```
 text-generation-webui
@@ -383,7 +383,7 @@ text-generation-webui
     └── llama-2-13b-chat.Q4_K_M.gguf
 ```
 
-* The remaining model types (like 16-bit transformers models and GPTQ models) are made of several files and must be placed in a subfolder. Example:
+*其余的模型类型（例如16-位transformers模型和GPTQ模型）由多个文件组成，必须放置在子文件夹中。例如：
 
 ```
 text-generation-webui
@@ -404,27 +404,27 @@ text-generation-webui
 │   │   └── tokenizer.model
 ```
 
-In both cases, you can use the "Model" tab of the UI to download the model from Hugging Face automatically. It is also possible to download it via the command-line with 
+在这两种情况下，您都可以使用 "Model"  UI的选项卡自动从Hugging Face上下载模型。也可以通过以下命令在命令行下载它
 
 ```
 python download-model.py organization/model
 ```
 
-Run `python download-model.py --help` to see all the options.
+运行 `python download-model.py --help` 查看所有选项。
 
-## Google Colab notebook
+## Google Colab笔记本
 
-https://colab.research.google.com/github/oobabooga/text-generation-webui/blob/main/Colab-TextGen-GPU.ipynb
+https://colab.research.google.com/github/Touch-Night/text-generation-webui/blob/Chinese/Colab-TextGen-GPU.ipynb
 
-## Contributing
+## 贡献
 
-If you would like to contribute to the project, check out the [Contributing guidelines](https://github.com/oobabooga/text-generation-webui/wiki/Contributing-guidelines).
+如果您想为项目做出贡献，请查看 [贡献准则](https://github.com/Touch-Night/text-generation-webui/wiki/Contributing-guidelines) 。
 
-## Community
+## 社区
 
-* Subreddit: https://www.reddit.com/r/oobabooga/
+* Subreddit：https://www.reddit.com/r/oobabooga/
 * Discord: https://discord.gg/jwZCF2dPQN
 
-## Acknowledgment
+## 致谢
 
-In August 2023, [Andreessen Horowitz](https://a16z.com/) (a16z) provided a generous grant to encourage and support my independent work on this project. I am **extremely** grateful for their trust and recognition.
+2023年8月， [安德烈·霍洛维茨（Andreessen Horowitz）](https://a16z.com/)  （A16Z）提供了一项慷慨的赠款，以鼓励和支持我对该项目的独立工作。我 **极其**  感谢他们的信任和认可。

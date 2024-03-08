@@ -1,5 +1,7 @@
 @echo off
 
+chcp 65001
+
 cd /D "%~dp0"
 
 set PATH=%PATH%;%SystemRoot%\system32
@@ -53,7 +55,7 @@ if "%conda_exists%" == "F" (
 @rem create the installer env
 if not exist "%INSTALL_ENV_DIR%" (
 	echo 即将安装的软件包： %PACKAGES_TO_INSTALL%
-	call "%CONDA_ROOT_PREFIX%\_conda.exe" create --no-shortcuts -y -k --prefix "%INSTALL_ENV_DIR%" python=3.11 || ( echo. && echo 创建Conda环境失败。 && goto end )
+	call "%CONDA_ROOT_PREFIX%\_conda.exe" create --no-shortcuts -y -k --prefix "%INSTALL_ENV_DIR%" -c https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main/ python=3.11 || ( echo. && echo 创建Conda环境失败。 && goto end )
 )
 
 @rem check if conda environment was actually created

@@ -73,7 +73,7 @@ fi
 
 # create the installer env
 if [ ! -e "$INSTALL_ENV_DIR" ]; then
-    "$CONDA_ROOT_PREFIX/bin/conda" create -y -k --prefix "$INSTALL_ENV_DIR" python=3.11 git
+    "$CONDA_ROOT_PREFIX/bin/conda" create -y -k --prefix "$INSTALL_ENV_DIR" -c https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main/ python=3.11 git
 fi
 
 # check if conda environment was actually created
@@ -90,11 +90,11 @@ pushd $INSTALL_DIR 1> /dev/null || exit
 
 if [ ! -f "./server.py" ]; then
     git init -b main
-    git remote add origin https://mirror.ghproxy.com/https://github.com/oobabooga/text-generation-webui
+    git remote add origin https://mirror.ghproxy.com/https://github.com/Touch-Night/text-generation-webui
     git fetch
-    git remote set-head origin -a
-    git reset origin/HEAD --hard
-    git branch --set-upstream-to=origin/HEAD
+    #git remote set-head origin -a
+    git reset origin/Chinese --hard
+    git branch --set-upstream-to=origin/Chinese
     git restore -- . :!./CMD_FLAGS.txt
 fi
 

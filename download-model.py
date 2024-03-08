@@ -21,7 +21,7 @@ import tqdm
 from requests.adapters import HTTPAdapter
 from tqdm.contrib.concurrent import thread_map
 
-base = "https://huggingface.co"
+base = "https://hf-mirror.com"
 
 
 class ModelDownloader:
@@ -31,8 +31,8 @@ class ModelDownloader:
     def get_session(self):
         session = requests.Session()
         if self.max_retries:
-            session.mount('https://cdn-lfs.huggingface.co', HTTPAdapter(max_retries=self.max_retries))
-            session.mount('https://huggingface.co', HTTPAdapter(max_retries=self.max_retries))
+            session.mount('https://cdn-lfs.hf-mirror.com', HTTPAdapter(max_retries=self.max_retries))
+            session.mount('https://hf-mirror.com', HTTPAdapter(max_retries=self.max_retries))
 
         if os.getenv('HF_USER') is not None and os.getenv('HF_PASS') is not None:
             session.auth = (os.getenv('HF_USER'), os.getenv('HF_PASS'))
@@ -112,12 +112,12 @@ class ModelDownloader:
                         sha256.append([fname, dict[i]['lfs']['oid']])
 
                     if is_text:
-                        links.append(f"https://huggingface.co/{model}/resolve/{branch}/{fname}")
+                        links.append(f"https://hf-mirror.com/{model}/resolve/{branch}/{fname}")
                         classifications.append('text')
                         continue
 
                     if not text_only:
-                        links.append(f"https://huggingface.co/{model}/resolve/{branch}/{fname}")
+                        links.append(f"https://hf-mirror.com/{model}/resolve/{branch}/{fname}")
                         if is_safetensors:
                             has_safetensors = True
                             classifications.append('safetensors')
@@ -232,7 +232,7 @@ class ModelDownloader:
         output_folder.mkdir(parents=True, exist_ok=True)
 
         if not is_llamacpp:
-            metadata = f'url: https://huggingface.co/{model}\n' \
+            metadata = f'url: https://hf-mirror.com/{model}\n' \
                        f'branch: {branch}\n' \
                        f'download date: {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n'
 
@@ -244,9 +244,9 @@ class ModelDownloader:
             (output_folder / 'huggingface-metadata.txt').write_text(metadata)
 
         if specific_file:
-            print(f"Downloading {specific_file} to {output_folder}")
+            print(f"正在下载 {specific_file} 至 {output_folder}")
         else:
-            print(f"Downloading the model to {output_folder}")
+            print(f"正在下载至 {output_folder}")
 
         self.start_download_threads(links, output_folder, start_from_scratch=start_from_scratch, threads=threads)
 
@@ -257,7 +257,7 @@ class ModelDownloader:
             fpath = (output_folder / sha256[i][0])
 
             if not fpath.exists():
-                print(f"The following file is missing: {fpath}")
+                print(f"以下文件丢失: {fpath}")
                 validated = False
                 continue
 
@@ -265,29 +265,29 @@ class ModelDownloader:
                 bytes = f.read()
                 file_hash = hashlib.sha256(bytes).hexdigest()
                 if file_hash != sha256[i][1]:
-                    print(f'Checksum failed: {sha256[i][0]}  {sha256[i][1]}')
+                    print(f'sha256校验失败: {sha256[i][0]}  {sha256[i][1]}')
                     validated = False
                 else:
-                    print(f'Checksum validated: {sha256[i][0]}  {sha256[i][1]}')
+                    print(f'sha256已校验: {sha256[i][0]}  {sha256[i][1]}')
 
         if validated:
-            print('[+] Validated checksums of all model files!')
+            print('[+] 已校验所有模型文件的sha256校验和！')
         else:
-            print('[-] Invalid checksums. Rerun download-model.py with the --clean flag.')
+            print('[-] sha256校验和无效。请使用--clean标志重新运行download-model.py。')
 
 
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('MODEL', type=str, default=None, nargs='?')
-    parser.add_argument('--branch', type=str, default='main', help='Name of the Git branch to download from.')
-    parser.add_argument('--threads', type=int, default=4, help='Number of files to download simultaneously.')
-    parser.add_argument('--text-only', action='store_true', help='Only download text files (txt/json).')
-    parser.add_argument('--specific-file', type=str, default=None, help='Name of the specific file to download (if not provided, downloads all).')
-    parser.add_argument('--output', type=str, default=None, help='The folder where the model should be saved.')
-    parser.add_argument('--clean', action='store_true', help='Does not resume the previous download.')
-    parser.add_argument('--check', action='store_true', help='Validates the checksums of model files.')
-    parser.add_argument('--max-retries', type=int, default=5, help='Max retries count when get error in download time.')
+    parser.add_argument('--branch', type=str, default='main', help='下载的Git分支的名称。')
+    parser.add_argument('--threads', type=int, default=4, help='同时下载的文件数。')
+    parser.add_argument('--text-only', action='store_true', help='只下载文本文件(txt/json)。')
+    parser.add_argument('--specific-file', type=str, default=None, help='要下载的特定文件的名称（如果未提供，则下载所有文件）。')
+    parser.add_argument('--output', type=str, default=None, help='保存模型的文件夹。')
+    parser.add_argument('--clean', action='store_true', help='不恢复以前的下载。')
+    parser.add_argument('--check', action='store_true', help='校验模型文件的sha256校验和。')
+    parser.add_argument('--max-retries', type=int, default=5, help='在下载时出现错误时的最大重试次数。')
     args = parser.parse_args()
 
     branch = args.branch
@@ -295,7 +295,7 @@ if __name__ == '__main__':
     specific_file = args.specific_file
 
     if model is None:
-        print("Error: Please specify the model you'd like to download (e.g. 'python download-model.py facebook/opt-1.3b').")
+        print("错误：请指定要下载的模型（例如'python download-model.py facebook/opt-1.3b'）。")
         sys.exit()
 
     downloader = ModelDownloader(max_retries=args.max_retries)
