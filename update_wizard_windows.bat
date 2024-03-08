@@ -4,7 +4,7 @@ cd /D "%~dp0"
 
 set PATH=%PATH%;%SystemRoot%\system32
 
-echo "%CD%"| findstr /C:" " >nul && echo This script relies on Miniconda which can not be silently installed under a path with spaces. && goto end
+echo "%CD%"| findstr /C:" " >nul && echo 此脚本依赖Miniconda，而它无法在包含空格的路径下静默安装。 && goto end
 
 @rem fix failed install when installing to a separate drive
 set TMP=%cd%\installer_files
@@ -25,12 +25,12 @@ set "CUDA_PATH=%INSTALL_ENV_DIR%"
 set "CUDA_HOME=%CUDA_PATH%"
 
 @rem activate installer env
-call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" activate "%INSTALL_ENV_DIR%" || ( echo. && echo Miniconda hook not found. && goto end )
+call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" activate "%INSTALL_ENV_DIR%" || ( echo. && echo 找不到Miniconda钩子。 && goto end )
 
 @rem update installer env
 call python one_click.py --update-wizard && (
     echo.
-    echo Done!
+    echo 已完成！
 )
 
 :end

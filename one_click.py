@@ -101,7 +101,7 @@ def torch_version():
 
 
 def update_pytorch():
-    print_big_message("Checking for PyTorch updates")
+    print_big_message("正在检查PyTorch更新")
 
     torver = torch_version()
     is_cuda = '+cu' in torver
@@ -113,13 +113,13 @@ def update_pytorch():
     install_pytorch = f"python -m pip install --upgrade torch=={TORCH_VERSION} torchvision=={TORCHVISION_VERSION} torchaudio=={TORCHAUDIO_VERSION} "
 
     if is_cuda118:
-        install_pytorch += "--index-url https://download.pytorch.org/whl/cu118"
+        install_pytorch += "--index-url https://mirror.sjtu.edu.cn/pytorch-wheels/cu118"
     elif is_cuda:
-        install_pytorch += "--index-url https://download.pytorch.org/whl/cu121"
+        install_pytorch += "--index-url https://mirror.sjtu.edu.cn/pytorch-wheels/cu121"
     elif is_rocm:
-        install_pytorch += "--index-url https://download.pytorch.org/whl/rocm5.6"
+        install_pytorch += "--index-url https://mirror.sjtu.edu.cn/pytorch-wheels/rocm5.6"
     elif is_cpu:
-        install_pytorch += "--index-url https://download.pytorch.org/whl/cpu"
+        install_pytorch += "--index-url https://mirror.sjtu.edu.cn/pytorch-wheels/cpu"
     elif is_intel:
         if is_linux():
             install_pytorch = "python -m pip install --upgrade torch==2.1.0a0 torchvision==0.16.0a0 torchaudio==2.1.0a0 intel-extension-for-pytorch==2.1.10+xpu --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/"
@@ -146,12 +146,12 @@ def check_env():
     # If we have access to conda, we are probably in an environment
     conda_exist = run_cmd("conda", environment=True, capture_output=True).returncode == 0
     if not conda_exist:
-        print("Conda is not installed. Exiting...")
+        print("Conda未安装。正在退出...")
         sys.exit(1)
 
     # Ensure this is a new environment and not the base environment
     if os.environ["CONDA_DEFAULT_ENV"] == "base":
-        print("Create an environment for this project and activate it. Exiting...")
+        print("请为此项目创建一个环境并激活它。正在退出...")
         sys.exit(1)
 
 
@@ -194,7 +194,7 @@ def run_cmd(cmd, assert_success=False, environment=False, capture_output=False, 
 
     # Assert the command ran successfully
     if assert_success and result.returncode != 0:
-        print(f"Command '{cmd}' failed with exit status code '{str(result.returncode)}'.\n\nExiting now.\nTry running the start/update script again.")
+        print(f"指令 '{cmd}' 运行失败，退出状态码为 '{str(result.returncode)}'。\n\n现在正在退出。\n请尝试再次运行启动/更新脚本。")
         sys.exit(1)
 
     return result
@@ -220,10 +220,10 @@ def get_user_choice(question, options_dict):
 
     print()
 
-    choice = input("Input> ").upper()
+    choice = input("输入> ").upper()
     while choice not in options_dict.keys():
-        print("Invalid choice. Please try again.")
-        choice = input("Input> ").upper()
+        print("非法选择，请重试。")
+        choice = input("输入> ").upper()
 
     return choice
 
@@ -233,16 +233,16 @@ def install_webui():
     # Ask the user for the GPU vendor
     if "GPU_CHOICE" in os.environ:
         choice = os.environ["GPU_CHOICE"].upper()
-        print_big_message(f"Selected GPU choice \"{choice}\" based on the GPU_CHOICE environment variable.")
+        print_big_message(f"已基于GPU_CHOICE环境变量选择\"{choice}\"。")
     else:
         choice = get_user_choice(
-            "What is your GPU?",
+            "你的GPU是什么型号的?",
             {
-                'A': 'NVIDIA',
-                'B': 'AMD (Linux/MacOS only. Requires ROCm SDK 5.6 on Linux)',
-                'C': 'Apple M Series',
+                'A': 'NVIDIA/英伟达',
+                'B': 'AMD (仅限Linux/MacOS。在Linux上需要ROCm SDK 5.6)',
+                'C': 'Apple M 系列',
                 'D': 'Intel Arc (IPEX)',
-                'N': 'None (I want to run models in CPU mode)'
+                'N': 'None (我想在CPU模式下运行模型)'
             },
         )
 
@@ -261,7 +261,7 @@ def install_webui():
     if selected_gpu == "NONE":
         with open(cmd_flags_path, 'r+') as cmd_flags_file:
             if "--cpu" not in cmd_flags_file.read():
-                print_big_message("Adding the --cpu flag to CMD_FLAGS.txt.")
+                print_big_message("正在添加--cpu标记到CMD_FLAGS.txt。")
                 cmd_flags_file.write("\n--cpu\n")
 
     # Check if the user wants CUDA 11.8
@@ -269,11 +269,11 @@ def install_webui():
         if "USE_CUDA118" in os.environ:
             use_cuda118 = "Y" if os.environ.get("USE_CUDA118", "").lower() in ("yes", "y", "true", "1", "t", "on") else "N"
         else:
-            print("\nDo you want to use CUDA 11.8 instead of 12.1?\nOnly choose this option if your GPU is very old (Kepler or older).\n\nFor RTX and GTX series GPUs, say \"N\".\nIf unsure, say \"N\".\n")
-            use_cuda118 = input("Input (Y/N)> ").upper().strip('"\'').strip()
+            print("\n你想要使用CUDA 11.8而不是12.1吗？\n仅当您的 GPU 非常旧（Kepler 或更早）时才选择此选项。\n\n对于RTX和GTX系列GPU，请选择 \"N\"。\n如果不确定，选 \"N\"。\n")
+            use_cuda118 = input("输入 (Y/N)> ").upper().strip('"\'').strip()
             while use_cuda118 not in 'YN':
-                print("Invalid choice. Please try again.")
-                use_cuda118 = input("Input> ").upper().strip('"\'').strip()
+                print("非法选择，请重试。")
+                use_cuda118 = input("输入> ").upper().strip('"\'').strip()
 
         if use_cuda118 == 'Y':
             print("CUDA: 11.8")
@@ -282,7 +282,7 @@ def install_webui():
 
     # No PyTorch for AMD on Windows (?)
     elif is_windows() and selected_gpu == "AMD":
-        print("PyTorch setup on Windows is not implemented yet. Exiting...")
+        print("PyTorch在Windows上的安装尚未实现。正在退出...")
         sys.exit(1)
 
     # Find the Pytorch installation command
@@ -290,13 +290,13 @@ def install_webui():
 
     if selected_gpu == "NVIDIA":
         if use_cuda118 == 'Y':
-            install_pytorch += "--index-url https://download.pytorch.org/whl/cu118"
+            install_pytorch += "--index-url https://mirror.sjtu.edu.cn/pytorch-wheels/cu118"
         else:
-            install_pytorch += "--index-url https://download.pytorch.org/whl/cu121"
+            install_pytorch += "--index-url https://mirror.sjtu.edu.cn/pytorch-wheels/cu121"
     elif selected_gpu == "AMD":
-        install_pytorch += "--index-url https://download.pytorch.org/whl/rocm5.6"
+        install_pytorch += "--index-url https://mirror.sjtu.edu.cn/pytorch-wheels/rocm5.6"
     elif selected_gpu in ["APPLE", "NONE"]:
-        install_pytorch += "--index-url https://download.pytorch.org/whl/cpu"
+        install_pytorch += "--index-url https://mirror.sjtu.edu.cn/pytorch-wheels/cpu"
     elif selected_gpu == "INTEL":
         if is_linux():
             install_pytorch = "python -m pip install torch==2.1.0a0 torchvision==0.16.0a0 torchaudio==2.1.0a0 intel-extension-for-pytorch==2.1.10+xpu --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/"
@@ -304,12 +304,12 @@ def install_webui():
             install_pytorch = "python -m pip install torch==2.1.0a0 torchvision==0.16.0a0 torchaudio==2.1.0a0 intel-extension-for-pytorch==2.1.10 --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/"
 
     # Install Git and then Pytorch
-    print_big_message("Installing PyTorch.")
+    print_big_message("正在安装PyTorch。")
     run_cmd(f"conda install -y -k ninja git && {install_pytorch} && python -m pip install py-cpuinfo==9.0.0", assert_success=True, environment=True)
 
     if selected_gpu == "INTEL":
         # Install oneAPI dependencies via conda
-        print_big_message("Installing Intel oneAPI runtime libraries.")
+        print_big_message("正在安装Intel oneAPI运行时库。")
         run_cmd("conda install -y -c intel dpcpp-cpp-rt=2024.0 mkl-dpcpp=2024.0")
         # Install libuv required by Intel-patched torch
         run_cmd("conda install -y libuv")
@@ -323,7 +323,7 @@ def get_extensions_names():
 
 
 def install_extensions_requirements():
-    print_big_message("Installing extensions requirements.\nSome of these may fail on Windows.\nDon\'t worry if you see error messages, as they will not affect the main program.")
+    print_big_message("正在安装扩展需求。\n一些扩展可能在Windows上安装失败。\n如果看到错误消息，请不要担心，因为它们不会影响主程序。")
     extensions = get_extensions_names()
     for i, extension in enumerate(extensions):
         print(f"\n\n--- [{i+1}/{len(extensions)}]: {extension}\n\n")
