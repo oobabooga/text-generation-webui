@@ -8,7 +8,6 @@ from transformers import GenerationConfig, PretrainedConfig, PreTrainedModel
 from transformers.modeling_outputs import CausalLMOutputWithPast
 
 from modules import RoPE, llama_cpp_python_hijack, shared
-from modules.cache_utils import process_llamacpp_cache
 from modules.logging_colors import logger
 
 try:
@@ -133,10 +132,6 @@ class LlamacppHF(PreTrainedModel):
         # https://github.com/abetlen/llama-cpp-python/commit/f4090a0bb2a2a25acfe28d31c82cc1aa273bedee
         if labels is None:
             if past_seq is not None:
-                if shared.args.streaming_llm:
-                    past_seq = process_llamacpp_cache(self.model, seq, past_seq.tolist())
-                    past_seq = torch.tensor(past_seq)
-
                 min_length = min(past_seq.shape[0], seq_tensor.shape[0])
                 indices = torch.nonzero(~torch.eq(past_seq[:min_length], seq_tensor[:min_length]))
                 if len(indices) > 0:
