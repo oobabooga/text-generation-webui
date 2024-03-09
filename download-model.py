@@ -14,12 +14,15 @@ import json
 import os
 import re
 import sys
+import threading
 from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor
 
 import requests
 import tqdm
 from requests.adapters import HTTPAdapter
-from tqdm.contrib.concurrent import thread_map
+from urllib3.util.retry import Retry
+from requests.exceptions import RequestException
 
 base = "https://huggingface.co"
 
@@ -176,55 +179,100 @@ class ModelDownloader:
         output_folder = Path(base_folder) / output_folder
         return output_folder
 
-    def get_single_file(self, url, output_folder, start_from_scratch=False):
-        session = self.get_session()
-        filename = Path(url.rsplit('/', 1)[1])
-        output_path = output_folder / filename
+    def get_single_file(self, url, output_folder, part, progress_bars, start_from_scratch, timeout=30):
+        filename = Path(url.rsplit('/', 1)[-1])
+        part_filename = output_folder / f"{filename}.part{part}"
         headers = {}
-        mode = 'wb'
-        if output_path.exists() and not start_from_scratch:
 
-            # Check if the file has already been downloaded completely
-            r = session.get(url, stream=True, timeout=10)
-            total_size = int(r.headers.get('content-length', 0))
-            if output_path.stat().st_size >= total_size:
-                return
+        session = requests.Session()
+        retries = Retry(total=self.max_retries, backoff_factor=0, status_forcelist=[502, 503, 504, 429])
+        session.mount('https://', HTTPAdapter(max_retries=retries))
 
-            # Otherwise, resume the download from where it left off
-            headers = {'Range': f'bytes={output_path.stat().st_size}-'}
-            mode = 'ab'
+        if not start_from_scratch and part_filename.exists():
+            existing_size = part_filename.stat().st_size
+            headers['Range'] = f'bytes={existing_size}-'
+        else:
+            existing_size = 0
 
-        with session.get(url, stream=True, headers=headers, timeout=10) as r:
-            r.raise_for_status()  # Do not continue the download if the request was unsuccessful
-            total_size = int(r.headers.get('content-length', 0))
-            block_size = 1024 * 1024  # 1MB
+        # Ensure the progress bar for this URL exists
+        if url not in progress_bars:
+            progress_bars[url] = tqdm.tqdm(total=0, desc=f"Downloading {filename}", unit='iB', unit_scale=True)
 
-            tqdm_kwargs = {
-                'total': total_size,
-                'unit': 'iB',
-                'unit_scale': True,
-                'bar_format': '{l_bar}{bar}| {n_fmt:6}/{total_fmt:6} {rate_fmt:6}'
-            }
+        while True:
+            try:
+                with session.get(url, stream=True, headers=headers, timeout=timeout) as r:
+                    r.raise_for_status()
+                    # If server supports range requests, adjust total size based on the range we requested
+                    if 'content-range' in r.headers:
+                        total_size = int(r.headers.get('content-range').split('/')[-1])
+                    else:
+                        total_size = int(r.headers.get('content-length', 0))
 
-            if 'COLAB_GPU' in os.environ:
-                tqdm_kwargs.update({
-                    'position': 0,
-                    'leave': True
-                })
+                    # Set the total size in the corresponding progress bar if it's the first part
+                    if part == 0:
+                        progress_bars[url].total = total_size
+                        progress_bars[url].refresh()
 
-            with open(output_path, mode) as f:
-                with tqdm.tqdm(**tqdm_kwargs) as t:
-                    count = 0
-                    for data in r.iter_content(block_size):
-                        t.update(len(data))
-                        f.write(data)
-                        if total_size != 0 and self.progress_bar is not None:
-                            count += len(data)
-                            self.progress_bar(float(count) / float(total_size), f"{filename}")
+                    mode = 'ab' if existing_size else 'wb'
+                    with open(part_filename, mode) as f:
+                        for data in r.iter_content(1024 * 1024):  # 1MB chunks
+                            f.write(data)
+                            progress_bars[url].update(len(data))
+                break  # Successfully completed download, exit loop
+            except RequestException as e:
+                print(f"Download {filename} failed with error: {e}, retrying.")
+                # Reset the progress bar for this URL to the existing size
+                progress_bars[url].n = existing_size
+                progress_bars[url].refresh()
 
-    def start_download_threads(self, file_list, output_folder, start_from_scratch=False, threads=4):
-        thread_map(lambda url: self.get_single_file(url, output_folder, start_from_scratch=start_from_scratch), file_list, max_workers=threads, disable=True)
+    def download_and_merge_file(self, url, output_folder, total_parts, progress_bars, start_from_scratch):
+        # Download all parts of the file concurrently
+        threads = []
+        for part in range(total_parts):
+            thread = threading.Thread(target=self.get_single_file, args=(url, output_folder, part, progress_bars, start_from_scratch))
+            threads.append(thread)
+            thread.start()
 
+        for thread in threads:
+            thread.join()
+
+        # Merge the parts into a single file
+        filename = Path(url.rsplit('/', 1)[-1])
+        output_path = output_folder / filename
+        with open(output_path, 'wb') as f_out:
+            for part in range(total_parts):
+                part_filename = output_folder / f"{filename}.part{part}"
+                with open(part_filename, 'rb') as f_part:
+                    f_out.write(f_part.read())
+                part_filename.unlink()
+
+        # Manually set progress bar as complete
+        progress_bars[url].n = progress_bars[url].total
+        progress_bars[url].refresh()
+
+    def start_download_threads(self, file_list, output_folder, threads=8, total_parts=8, start_from_scratch=False):
+        progress_bars = {}
+        all_threads = []
+
+        with ThreadPoolExecutor(max_workers=threads) as executor:
+            for url in file_list:
+                filename = Path(url.rsplit('/', 1)[-1])
+                progress_bar = tqdm.tqdm(total=0, desc=f"Downloading {filename}", unit='iB', unit_scale=True)
+                progress_bars[url] = progress_bar
+
+                future = executor.submit(self.download_and_merge_file, url, output_folder, total_parts, progress_bars, start_from_scratch)
+                all_threads.append(future)
+
+        # Wait for all threads to complete
+        for future in all_threads:
+            future.result()
+
+        # Update progress bars to complete state and refresh
+        for url in file_list:
+            progress_bars[url].n = progress_bars[url].total
+            progress_bars[url].refresh()
+
+                    
     def download_model_files(self, model, branch, links, sha256, output_folder, progress_bar=None, start_from_scratch=False, threads=4, specific_file=None, is_llamacpp=False):
         self.progress_bar = progress_bar
 
@@ -281,7 +329,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('MODEL', type=str, default=None, nargs='?')
     parser.add_argument('--branch', type=str, default='main', help='Name of the Git branch to download from.')
-    parser.add_argument('--threads', type=int, default=4, help='Number of files to download simultaneously.')
+    parser.add_argument('--threads', type=int, default=8, help='Number of threads to download simultaneously.')
     parser.add_argument('--text-only', action='store_true', help='Only download text files (txt/json).')
     parser.add_argument('--specific-file', type=str, default=None, help='Name of the specific file to download (if not provided, downloads all).')
     parser.add_argument('--output', type=str, default=None, help='The folder where the model should be saved.')
