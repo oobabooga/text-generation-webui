@@ -94,13 +94,14 @@ def find_longest_common_substring_indices(list1, list2):
         while index2 >= 0:
             temp_index1, temp_index2 = index1, index2
             while temp_index1 < len_list1 and temp_index2 < len_list2 and list2[temp_index2] == list1[temp_index1]:
-                if temp_index1-index1 >= end_index_list1-start_index_list1:
+                if temp_index1 - index1 >= end_index_list1 - start_index_list1:
                     start_index_list1, end_index_list1 = index1, temp_index1
                     start_index_list2, end_index_list2 = index2, temp_index2
+
                 temp_index1 += 1
                 temp_index2 += 1
             try:
-                index2 = list2.index(list1[index1], index2+1)
+                index2 = list2.index(list1[index1], index2 + 1)
             except ValueError:
                 break
 
