@@ -14,12 +14,15 @@ import json
 import os
 import re
 import sys
+import threading
 from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor
 
 import requests
 import tqdm
 from requests.adapters import HTTPAdapter
-from tqdm.contrib.concurrent import thread_map
+from urllib3.util.retry import Retry
+from requests.exceptions import RequestException
 
 base = "https://hf-mirror.com"
 
@@ -65,7 +68,7 @@ class ModelDownloader:
             pattern = re.compile(r"^[a-zA-Z0-9._-]+$")
             if not pattern.match(branch):
                 raise ValueError(
-                    "Invalid branch name. Only alphanumeric characters, period, underscore and dash are allowed.")
+                    "非法分支名称。只允许使用字母数字字符、句点、下划线和破折号。")
 
         return model, branch
 
@@ -176,55 +179,100 @@ class ModelDownloader:
         output_folder = Path(base_folder) / output_folder
         return output_folder
 
-    def get_single_file(self, url, output_folder, start_from_scratch=False):
-        session = self.get_session()
-        filename = Path(url.rsplit('/', 1)[1])
-        output_path = output_folder / filename
+    def get_single_file(self, url, output_folder, part, progress_bars, start_from_scratch, timeout=30):
+        filename = Path(url.rsplit('/', 1)[-1])
+        part_filename = output_folder / f"{filename}.part{part}"
         headers = {}
-        mode = 'wb'
-        if output_path.exists() and not start_from_scratch:
 
-            # Check if the file has already been downloaded completely
-            r = session.get(url, stream=True, timeout=10)
-            total_size = int(r.headers.get('content-length', 0))
-            if output_path.stat().st_size >= total_size:
-                return
+        session = requests.Session()
+        retries = Retry(total=self.max_retries, backoff_factor=0, status_forcelist=[502, 503, 504, 429])
+        session.mount('https://', HTTPAdapter(max_retries=retries))
 
-            # Otherwise, resume the download from where it left off
-            headers = {'Range': f'bytes={output_path.stat().st_size}-'}
-            mode = 'ab'
+        if not start_from_scratch and part_filename.exists():
+            existing_size = part_filename.stat().st_size
+            headers['Range'] = f'bytes={existing_size}-'
+        else:
+            existing_size = 0
 
-        with session.get(url, stream=True, headers=headers, timeout=10) as r:
-            r.raise_for_status()  # Do not continue the download if the request was unsuccessful
-            total_size = int(r.headers.get('content-length', 0))
-            block_size = 1024 * 1024  # 1MB
+        # Ensure the progress bar for this URL exists
+        if url not in progress_bars:
+            progress_bars[url] = tqdm.tqdm(total=0, desc=f"正在下载 {filename}", unit='iB', unit_scale=True)
 
-            tqdm_kwargs = {
-                'total': total_size,
-                'unit': 'iB',
-                'unit_scale': True,
-                'bar_format': '{l_bar}{bar}| {n_fmt:6}/{total_fmt:6} {rate_fmt:6}'
-            }
+        while True:
+            try:
+                with session.get(url, stream=True, headers=headers, timeout=timeout) as r:
+                    r.raise_for_status()
+                    # If server supports range requests, adjust total size based on the range we requested
+                    if 'content-range' in r.headers:
+                        total_size = int(r.headers.get('content-range').split('/')[-1])
+                    else:
+                        total_size = int(r.headers.get('content-length', 0))
 
-            if 'COLAB_GPU' in os.environ:
-                tqdm_kwargs.update({
-                    'position': 0,
-                    'leave': True
-                })
+                    # Set the total size in the corresponding progress bar if it's the first part
+                    if part == 0:
+                        progress_bars[url].total = total_size
+                        progress_bars[url].refresh()
 
-            with open(output_path, mode) as f:
-                with tqdm.tqdm(**tqdm_kwargs) as t:
-                    count = 0
-                    for data in r.iter_content(block_size):
-                        t.update(len(data))
-                        f.write(data)
-                        if total_size != 0 and self.progress_bar is not None:
-                            count += len(data)
-                            self.progress_bar(float(count) / float(total_size), f"{filename}")
+                    mode = 'ab' if existing_size else 'wb'
+                    with open(part_filename, mode) as f:
+                        for data in r.iter_content(1024 * 1024):  # 1MB chunks
+                            f.write(data)
+                            progress_bars[url].update(len(data))
+                break  # Successfully completed download, exit loop
+            except RequestException as e:
+                print(f"下载 {filename} 时出错：{e}，正在重试。")
+                # Reset the progress bar for this URL to the existing size
+                progress_bars[url].n = existing_size
+                progress_bars[url].refresh()
 
-    def start_download_threads(self, file_list, output_folder, start_from_scratch=False, threads=4):
-        thread_map(lambda url: self.get_single_file(url, output_folder, start_from_scratch=start_from_scratch), file_list, max_workers=threads, disable=True)
+    def download_and_merge_file(self, url, output_folder, total_parts, progress_bars, start_from_scratch):
+        # Download all parts of the file concurrently
+        threads = []
+        for part in range(total_parts):
+            thread = threading.Thread(target=self.get_single_file, args=(url, output_folder, part, progress_bars, start_from_scratch))
+            threads.append(thread)
+            thread.start()
 
+        for thread in threads:
+            thread.join()
+
+        # Merge the parts into a single file
+        filename = Path(url.rsplit('/', 1)[-1])
+        output_path = output_folder / filename
+        with open(output_path, 'wb') as f_out:
+            for part in range(total_parts):
+                part_filename = output_folder / f"{filename}.part{part}"
+                with open(part_filename, 'rb') as f_part:
+                    f_out.write(f_part.read())
+                part_filename.unlink()
+
+        # Manually set progress bar as complete
+        progress_bars[url].n = progress_bars[url].total
+        progress_bars[url].refresh()
+
+    def start_download_threads(self, file_list, output_folder, threads=8, total_parts=8, start_from_scratch=False):
+        progress_bars = {}
+        all_threads = []
+
+        with ThreadPoolExecutor(max_workers=threads) as executor:
+            for url in file_list:
+                filename = Path(url.rsplit('/', 1)[-1])
+                progress_bar = tqdm.tqdm(total=0, desc=f"正在下载 {filename}", unit='iB', unit_scale=True)
+                progress_bars[url] = progress_bar
+
+                future = executor.submit(self.download_and_merge_file, url, output_folder, total_parts, progress_bars, start_from_scratch)
+                all_threads.append(future)
+
+        # Wait for all threads to complete
+        for future in all_threads:
+            future.result()
+
+        # Update progress bars to complete state and refresh
+        for url in file_list:
+            progress_bars[url].n = progress_bars[url].total
+            progress_bars[url].refresh()
+
+                    
     def download_model_files(self, model, branch, links, sha256, output_folder, progress_bar=None, start_from_scratch=False, threads=4, specific_file=None, is_llamacpp=False):
         self.progress_bar = progress_bar
 
@@ -278,16 +326,16 @@ class ModelDownloader:
 
 if __name__ == '__main__':
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('MODEL', type=str, default=None, nargs='?')
-    parser.add_argument('--branch', type=str, default='main', help='下载的Git分支的名称。')
-    parser.add_argument('--threads', type=int, default=4, help='同时下载的文件数。')
-    parser.add_argument('--text-only', action='store_true', help='只下载文本文件(txt/json)。')
-    parser.add_argument('--specific-file', type=str, default=None, help='要下载的特定文件的名称（如果未提供，则下载所有文件）。')
-    parser.add_argument('--output', type=str, default=None, help='保存模型的文件夹。')
-    parser.add_argument('--clean', action='store_true', help='不恢复以前的下载。')
-    parser.add_argument('--check', action='store_true', help='校验模型文件的sha256校验和。')
-    parser.add_argument('--max-retries', type=int, default=5, help='在下载时出现错误时的最大重试次数。')
+    parser = argparse.ArgumentParser(description='下载 Hugging Face 上的模型文件到本地。')
+    parser.add_argument('MODEL', type=str, default=None, nargs='?', help='指定要下载的模型的完整路径，例如：facebook/opt-1.3b。')
+    parser.add_argument('--branch', type=str, default='main', help='指定要下载的 Git 分支的名称，默认为 "main"。')
+    parser.add_argument('--threads', type=int, default=8, help='用于并发下载文件的线程数，默认为 8。')
+    parser.add_argument('--text-only', action='store_true', help='只下载文本文件(txt/json)，不下载模型文件。')
+    parser.add_argument('--specific-file', type=str, default=None, help='指定要下载的特定文件的名称。如果未提供，则下载所有文件。')
+    parser.add_argument('--output', type=str, default=None, help='指定保存模型的文件夹。如果未提供，则使用默认位置。')
+    parser.add_argument('--clean', action='store_true', help='从头开始下载，不恢复以前的下载。')
+    parser.add_argument('--check', action='store_true', help='下载完成后校验模型文件的 sha256 校验和。')
+    parser.add_argument('--max-retries', type=int, default=5, help='在下载时出现错误时的最大重试次数，默认为 5。')
     args = parser.parse_args()
 
     branch = args.branch
