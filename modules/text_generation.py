@@ -367,7 +367,9 @@ def generate_reply_HF(question, original_question, seed, state, stopping_strings
 
     # Handle StreamingLLM for llamacpp_HF
     if shared.model.__class__.__name__ == 'LlamacppHF' and shared.args.streaming_llm:
-        process_llamacpp_cache(shared.model.model, input_ids[-1].tolist(), shared.model.model._input_ids)
+        tmp = process_llamacpp_cache(shared.model.model, input_ids[-1].tolist(), shared.model.model._input_ids)
+        shared.model.past_seq = torch.tensor(tmp)
+        shared.model.save_cache()
 
     t0 = time.time()
     try:
