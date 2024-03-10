@@ -32,6 +32,10 @@ def default_preset():
         'top_a': 0,
         'epsilon_cutoff': 0,
         'eta_cutoff': 0,
+        'dry_allowed_length': 2,
+        'dry_multiplier': 0,
+        'dry_base': 1.75,
+        'dry_sequence_breakers': '["\\n", ":", "\\"", "*"]',
         'guidance_scale': 1,
         'penalty_alpha': 0,
         'mirostat_mode': 0,
@@ -44,7 +48,7 @@ def default_preset():
         'num_beams': 1,
         'length_penalty': 1,
         'early_stopping': False,
-        'sampler_priority': 'temperature\ndynamic_temperature\nquadratic_sampling\ntop_k\ntop_p\ntypical_p\nepsilon_cutoff\neta_cutoff\ntfs\ntop_a\nmin_p\nmirostat'
+        'sampler_priority': 'temperature\ndynamic_temperature\nquadratic_sampling\ndry\ntop_k\ntop_p\ntypical_p\nepsilon_cutoff\neta_cutoff\ntfs\ntop_a\nmin_p\nmirostat'
     }
 
 

@@ -1,3 +1,4 @@
+import json
 import math
 import pprint
 
@@ -220,6 +221,70 @@ class TopALogitsWarper(LogitsWarper):
         return scores
 
 
+class DRYLogitsWarper(LogitsWarper):
+    def __init__(self, allowed_length: int, multiplier: float, base: float, sequence_breakers: set[int]):
+        self.allowed_length = allowed_length
+        self.multiplier = multiplier
+        self.base = base
+        self.sequence_breakers = sequence_breakers
+
+    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
+        for input_ids_row, scores_row in zip(input_ids, scores):
+            # Raw integer must be extracted here to check for set membership.
+            last_token = input_ids_row[-1].item()
+
+            if last_token in self.sequence_breakers:
+                continue
+
+            # Exclude the last token as it always matches.
+            match_indices = (input_ids_row[:-1] == last_token).nonzero()
+
+            # Stores the maximum matching sequence length
+            # for each token immediately following the sequence in the input.
+            match_lengths = {}
+
+            for i in match_indices:
+                next_token = input_ids_row[i+1].item()
+
+                if next_token in self.sequence_breakers:
+                    continue
+
+                # We have already found that `last_token` matches at this index,
+                # so the match is at least of length 1.
+                match_length = 1
+
+                # Extend the match backwards as far as possible.
+                while True:
+                    j = i - match_length
+                    if j < 0:
+                        # Start of input reached.
+                        break
+
+                    previous_token = input_ids_row[-(match_length+1)].item()
+                    if input_ids_row[j] != previous_token:
+                        # Start of match reached.
+                        break
+
+                    if previous_token in self.sequence_breakers:
+                        # Sequence-breaking token reached.
+                        break
+
+                    match_length += 1
+
+                if next_token in match_lengths:
+                    match_lengths[next_token] = max(match_length, match_lengths[next_token])
+                else:
+                    match_lengths[next_token] = match_length
+
+            # Apply penalties.
+            for token, match_length in match_lengths.items():
+                if match_length >= self.allowed_length:
+                    penalty = self.multiplier * self.base ** (match_length - self.allowed_length)
+                    scores_row[token] -= penalty
+
+        return scores
+
+
 class MirostatLogitsWarper(LogitsWarper):
     def __init__(self, mirostat_mode: int, mirostat_tau: float, mirostat_eta: float, filter_value: float = -float("Inf"), min_tokens_to_keep: int = 1):
         if mirostat_mode not in [2]:
@@ -352,6 +417,20 @@ def get_logits_warper_patch(self, generation_config):
             )
         )
 
+    if generation_config.dry_multiplier is not None and generation_config.dry_multiplier > 0.0:
+        sequence_breaker_strings = json.loads(generation_config.dry_sequence_breakers)
+        # Prefix with 'a' to get the correct encoding of the token at the end of a text.
+        sequence_breakers = {shared.tokenizer.encode(f'a{s}')[-1] for s in sequence_breaker_strings}
+
+        warpers_to_add.append(
+            DRYLogitsWarper(
+                allowed_length=generation_config.dry_allowed_length,
+                multiplier=generation_config.dry_multiplier,
+                base=generation_config.dry_base,
+                sequence_breakers=sequence_breakers,
+            )
+        )
+
     if generation_config.min_p is not None and 0.0 < generation_config.min_p <= 1.0:
         warpers_to_add.append(
             MinPLogitsWarper(
@@ -411,6 +490,7 @@ def get_logits_warper_patch(self, generation_config):
         'DynamicTemperatureLogitsWarper': 'dynamic_temperature',
         'EpsilonLogitsWarper': 'epsilon_cutoff',
         'EtaLogitsWarper': 'eta_cutoff',
+        'DRYLogitsWarper': 'dry',
         'MinPLogitsWarper': 'min_p',
         'MirostatLogitsWarper': 'mirostat',
         'QuadraticSamplingLogitsWarper': 'quadratic_sampling',
@@ -477,6 +557,10 @@ def generation_config_init_patch(self, **kwargs):
     self.smoothing_curve = kwargs.pop("smoothing_curve", 1.0)
     self.tfs = kwargs.pop("tfs", 1.0)
     self.top_a = kwargs.pop("top_a", 0.0)
+    self.dry_allowed_length = kwargs.pop("dry_allowed_length", 2)
+    self.dry_multiplier = kwargs.pop("dry_multiplier", 0.0)
+    self.dry_base = kwargs.pop("dry_base", 1.75)
+    self.dry_sequence_breakers = kwargs.pop("dry_sequence_breakers", '["\\n", ":", "\\"", "*"]')
     self.mirostat_mode = kwargs.pop("mirostat_mode", 0)
     self.mirostat_eta = kwargs.pop("mirostat_eta", 0.1)
     self.mirostat_tau = kwargs.pop("mirostat_tau", 5)
@@ -484,7 +568,7 @@ def generation_config_init_patch(self, **kwargs):
     self.presence_penalty = kwargs.pop("presence_penalty", 0)
     self.frequency_penalty = kwargs.pop("frequency_penalty", 0)
     self.temperature_last = kwargs.pop("temperature_last", False)
-    self.sampler_priority = kwargs.pop("sampler_priority", ['temperature', 'dynamic_temperature', 'quadratic_sampling', 'top_k', 'top_p', 'typical_p', 'epsilon_cutoff', 'eta_cutoff', 'tfs', 'top_a', 'min_p', 'mirostat'])
+    self.sampler_priority = kwargs.pop("sampler_priority", ['temperature', 'dynamic_temperature', 'quadratic_sampling', 'dry', 'top_k', 'top_p', 'typical_p', 'epsilon_cutoff', 'eta_cutoff', 'tfs', 'top_a', 'min_p', 'mirostat'])
 
 
 def hijack_samplers():
