@@ -4,6 +4,7 @@ import gradio as gr
 
 from modules.html_generator import get_image_cache
 from modules.shared import gradio, settings
+from modules.utils import get_available_characters
 
 
 cards = []
@@ -68,9 +69,7 @@ def generate_html():
     global cards
     cards = []
     # Iterate through files in image folder
-    for file in sorted(Path("characters").rglob("*")):
-        if file.suffix in [".json", ".yml", ".yaml"]:
-            character = Path(*file.parts[1:]).with_name(file.stem)
+    for character in get_available_characters():
             container_html = '<div class="character-container">'
             image_html = "<div class='placeholder'></div>"
 
