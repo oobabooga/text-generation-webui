@@ -1,4 +1,5 @@
 @echo off
+setlocal enabledelayedexpansion
 
 cd /D "%~dp0"
 
@@ -25,6 +26,7 @@ set INSTALL_DIR=%cd%\installer_files
 set CONDA_ROOT_PREFIX=%cd%\installer_files\conda
 set INSTALL_ENV_DIR=%cd%\installer_files\env
 set MINICONDA_DOWNLOAD_URL=https://repo.anaconda.com/miniconda/Miniconda3-py310_23.3.1-0-Windows-x86_64.exe
+set MINICONDA_CHECKSUM=307194e1f12bbeb52b083634e89cc67db4f7980bd542254b43d3309eaf7cb358
 set conda_exists=F
 
 @rem figure out whether git and conda needs to be installed
@@ -39,6 +41,18 @@ if "%conda_exists%" == "F" (
 	mkdir "%INSTALL_DIR%"
 	call curl -Lk "%MINICONDA_DOWNLOAD_URL%" > "%INSTALL_DIR%\miniconda_installer.exe" || ( echo. && echo Miniconda failed to download. && goto end )
 
+	for /f %%a in ('CertUtil -hashfile "%INSTALL_DIR%\miniconda_installer.exe" SHA256 ^| find /i /v " " ^| find /i "%MINICONDA_CHECKSUM%"') do (
+		set "output=%%a"
+	)
+
+	if not defined output (
+		echo The checksum verification for miniconda_installer.exe has failed.
+		del "%INSTALL_DIR%\miniconda_installer.exe"
+		goto end
+	) else (
+		echo The checksum verification for miniconda_installer.exe has passed successfully.
+	)
+
 	echo Installing Miniconda to %CONDA_ROOT_PREFIX%
 	start /wait "" "%INSTALL_DIR%\miniconda_installer.exe" /InstallationType=JustMe /NoShortcuts=1 /AddToPath=0 /RegisterPython=0 /NoRegistry=1 /S /D=%CONDA_ROOT_PREFIX%
 
@@ -46,8 +60,8 @@ if "%conda_exists%" == "F" (
 	echo Miniconda version:
 	call "%CONDA_ROOT_PREFIX%\_conda.exe" --version || ( echo. && echo Miniconda not found. && goto end )
 
-    @rem delete the Miniconda installer
-    del "%INSTALL_DIR%\miniconda_installer.exe"
+	@rem delete the Miniconda installer
+	del "%INSTALL_DIR%\miniconda_installer.exe"
 )
 
 @rem create the installer env
