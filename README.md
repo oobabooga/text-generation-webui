@@ -373,7 +373,7 @@ https://github.com/Touch-Night/text-generation-webui/wiki
 
 ## 下载模型
 
-模型应该放在`text-generation-webui/models`文件夹中。它们通常可以从[Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads)下载。
+模型应该放在`text-generation-webui/models`文件夹中。它们通常可以从[Hugging Face](https://huggingface.co/models?pipeline_tag=text-generation&sort=downloads)和其镜像站[hf-mirror](https://hf-mirror.com/models?pipeline_tag=text-generation&sort=downloads)下载。
 
 * GGUF模型是单个文件，应直接放入`models`文件夹。例如：
 
@@ -383,7 +383,7 @@ text-generation-webui
     └── llama-2-13b-chat.Q4_K_M.gguf
 ```
 
-*其余的模型类型（例如16-位transformers模型和GPTQ模型）由多个文件组成，必须放置在子文件夹中。例如：
+* 其余的模型类型（例如16-位transformers模型和GPTQ模型）由多个文件组成，必须放置在子文件夹中。例如：
 
 ```
 text-generation-webui
