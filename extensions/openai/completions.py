@@ -250,13 +250,13 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
     else:
         instruction_template_str = shared.settings['instruction_template_str']
 
-    chat_template_str = body['chat_template_str'] or shared.settings['chat_template_str']
-    chat_instruct_command = body['chat_instruct_command'] or shared.settings['chat-instruct_command']
+    chat_template_str = body['chat_template_str'] or shared.default_settings['chat_template_str']
+    chat_instruct_command = body['chat_instruct_command'] or shared.default_settings['chat-instruct_command']
 
     # Chat character
-    character = body['character'] or shared.settings['character']
+    character = body['character'] or shared.default_settings['character']
     character = "Assistant" if character == "None" else character
-    name1 = body['user_name'] or shared.settings['name1']
+    name1 = body['user_name'] or shared.default_settings['name1']
     name1, name2, _, greeting, context = load_character_memoized(character, name1, '')
     name2 = body['bot_name'] or name2
     context = body['context'] or context
