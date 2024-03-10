@@ -30,7 +30,7 @@
 
 要在将来重新启动Web UI，只需再次运行`start_`脚本。此脚本创建了一个`installer_files`文件夹，其中设置了项目的依赖。如果您需要重新安装依赖，只需删除该文件夹并再次启动Web UI。
 
-此脚本接受命令行标志。或者，您可以使用文本编辑器编辑`CMD_FLAGS.txt`文件并在其中添加标志。
+此脚本接受命令行参数。或者，您可以使用文本编辑器编辑`CMD_FLAGS.txt`文件并在其中添加命令行参数。
 
 要在将来获得更新，请运行`update_wizard_linux.sh`，`update_wizard_windows.bat`，`update_wizard_macos.sh`或`update_wizard_wsl.bat`。
 
@@ -193,16 +193,16 @@ conda activate textgen
 cd text-generation-webui
 pip install -r <你曾使用过的依赖文件> --upgrade
 ```
-</delect>
+</details>
 
 <details>
 <summary>
-命令行标记列表
+命令行参数列表
 </summary>
 
 #### 基本设置
 
-| 标记| 描述|
+| 命令行参数| 描述|
 |--------------------------------------------|-------------|
 |  `-h` ，，，， `--help`                              | 显示此帮助消息然后退出|
 |  `--multi-user`                              | 多用户模式。聊天历史将不保存或自动加载。警告：公开分享可能不安全。|
@@ -212,20 +212,20 @@ pip install -r <你曾使用过的依赖文件> --upgrade
 |  `--model-dir MODEL_DIR`                     | 所有模型的目录路径。|
 |  `--lora-dir LORA_DIR`                       | 所有LoRA的目录路径。|
 |  `--model-menu`                              | 当Web UI首次启动时，在终端中显示模型菜单。|
-|  `--settings SETTINGS_FILE`                  | 从此YAML文件加载默认接口设置。`settings-template.yaml` 是一个示例。如果您创建一个名为`settings.yaml`的文件，默认情况下将加载此文件，而无需使用 `--settings` 标记。|
+|  `--settings SETTINGS_FILE`                  | 从此YAML文件加载默认接口设置。`settings-template.yaml` 是一个示例。如果您创建一个名为`settings.yaml`的文件，默认情况下将加载此文件，而无需使用 `--settings` 命令行参数。|
 |  `--extensions EXTENSIONS [EXTENSIONS ...]`  | 加载的扩展列表。如果要加载多个扩展，请写下由空格隔开的名称。|
 |  `--verbose`                                 | 将提示词打印到终端。|
 |  `--chat-buttons`                            | 在“聊天”选项卡上显示按钮，而不是悬停菜单。|
 
 #### 模型加载器
 
-| 标记| 描述|
+| 命令行参数| 描述|
 |--------------------------------------------|-------------|
 |  `--loader LOADER`                           | 手动选择模型加载器，否则，它将被自动检测。可选选项：Transformers，llama.cpp，llamacpp_hf，Exllamav2_HF，Exllamav2，AutoGPTQ，AutoAWQ，GPTQ-for-LLaMa，ctransformers，QuIP#。|
 
 #### Accelerate/transformers
 
-| 标记| 描述|
+| 命令行参数| 描述|
 |---------------------------------------------|-------------|
 |  `--cpu`                                      | 使用CPU生成文本。警告：使用CPU训练非常慢。|
 |  `--auto-devices`                             | 自动将模型划分到可用的GPU和CPU上。|
@@ -244,7 +244,7 @@ pip install -r <你曾使用过的依赖文件> --upgrade
 
 ⚠️  目前要求Windows上的最低计算水平为7.0。
 
-| 标记| 描述|
+| 命令行参数| 描述|
 |---------------------------------------------|-------------|
 |  `--load-in-4bit`                             | 以4位精度加载模型（使用bitsandbytes）。|
 |  `--use_double_quant`                         | 对4位精度使用use_double_quant。|
@@ -253,7 +253,7 @@ pip install -r <你曾使用过的依赖文件> --upgrade
 
 #### llama.cpp
 
-| 标记| 描述|
+| 命令行参数| 描述|
 |-------------|-------------|
 |  `--tensorcores`   | 使用编译了tensorcores支持的llama-cpp-python。这在RTX显卡上可以提高性能。仅限NVIDIA。|
 |  `--n_ctx N_CTX`  | 提示词上下文的大小。|
@@ -272,7 +272,7 @@ pip install -r <你曾使用过的依赖文件> --upgrade
 
 #### Exllamav2
 
-| 标记| 描述|
+| 命令行参数| 描述|
 |------------------|-------------|
 | `--gpu-split`      | 逗号分隔的列表，指定每个GPU设备用于模型层的VRAM（以GB为单位）。示例：20,7,7。|
 | `--max_seq_len MAX_SEQ_LEN`            | 最大序列长度。|
@@ -284,7 +284,7 @@ pip install -r <你曾使用过的依赖文件> --upgrade
 
 #### AutoGPTQ
 
-| 标记| 描述|
+| 命令行参数| 描述|
 |------------------|-------------|
 |  `--triton`                      | 使用triton。|
 |  `--no_inject_fused_attention`   | 禁用融合注意力机制，这将以降低推理速度为代价，使用更少的显存。|
@@ -296,7 +296,7 @@ pip install -r <你曾使用过的依赖文件> --upgrade
 
 #### GPTQ-for-LLaMa
 
-| 标记| 描述|
+| 命令行参数| 描述|
 |---------------------------|-------------|
 |  `--wbits WBITS`            | 加载指定位精度的预量化模型。支持2、3、4和8位。|
 |  `--model_type MODEL_TYPE`  | 预量化模型的模型类型。目前支持LLaMA、OPT和GPT-J。|
@@ -307,19 +307,19 @@ pip install -r <你曾使用过的依赖文件> --upgrade
 
 #### ctransformers
 
-| 标记| 描述|
+| 命令行参数| 描述|
 |-------------|-------------|
 |  `--model_type MODEL_TYPE`  | 预量化模型的模型类型。目前支持gpt2、gptj、gptneox、falcon、llama、mpt、starcoder（gptbigcode）、dollyv2和replit。|
 
 #### HQQ
 
-| 标记| 描述|
+| 命令行参数| 描述|
 |-------------|-------------|
 |  `--hqq-backend`  | HQQ加载器的后端。有效选项：PYTORCH, PYTORCH_COMPILE, ATEN。|
 
 #### DeepSpeed
 
-| 标记| 描述|
+| 命令行参数| 描述|
 |---------------------------------------|-------------|
 |  `--deepspeed`                          | 通过Transformers集成启用DeepSpeed ZeRO-3进行推理。|
 |  `--nvme-offload-dir NVME_OFFLOAD_DIR`  | DeepSpeed：用于ZeRO-3 NVME卸载的目录。|
@@ -327,7 +327,7 @@ pip install -r <你曾使用过的依赖文件> --upgrade
 
 #### RoPE（用于llama.cpp，ExLlamaV2和transformers）
 
-| 标记| 描述|
+| 命令行参数| 描述|
 |------------------|-------------|
 |  `--alpha_value ALPHA_VALUE`            | NTK RoPE缩放的位置嵌入alpha因子。使用此选项或`compress_pos_emb`，不要同时使用两者。|
 |  `--rope_freq_base ROPE_FREQ_BASE`      | 如果大于0，将代替alpha_value使用。这两者符合`rope_freq_base = 10000 * alpha_value ^ (64 / 63)`关系式。|
@@ -335,7 +335,7 @@ pip install -r <你曾使用过的依赖文件> --upgrade
 
 #### Gradio
 
-| 标记| 描述|
+| 命令行参数| 描述|
 |---------------------------------------|-------------|
 |  `--listen`                             | 使web UI能够从你的本地网络访问。|
 |  `--listen-port LISTEN_PORT`            | 服务器将使用的监听端口。|
@@ -349,7 +349,7 @@ pip install -r <你曾使用过的依赖文件> --upgrade
 
 #### API
 
-| 标记| 描述|
+| 命令行参数| 描述|
 |---------------------------------------|-------------|
 |  `--api`                                | 启用API扩展。|
 |  `--public-api`                         | 使用CloudFare为API创建公共URL。|
@@ -365,7 +365,7 @@ pip install -r <你曾使用过的依赖文件> --upgrade
 |---------------------------------------|-------------|
 |  `--multimodal-pipeline PIPELINE`       | 要使用的多模态模型pipeline。示例：`llava-7b`、`llava-13b`。|
 
-</delect>
+</details>
 
 ## 文档
 
