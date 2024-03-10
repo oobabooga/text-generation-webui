@@ -51,134 +51,134 @@ train_template = {}
 
 def create_ui():
     mu = shared.args.multi_user
-    with gr.Tab("Training", elem_id="training-tab"):
-        with gr.Tab('Train LoRA', elem_id='lora-train-tab'):
+    with gr.Tab("训练", elem_id="training-tab"):
+        with gr.Tab('训练LoRA', elem_id='lora-train-tab'):
             tmp = gr.State('')
             with gr.Row():
                 with gr.Column():
-                    gr.Markdown("[Tutorial](https://github.com/oobabooga/text-generation-webui/wiki/05-%E2%80%90-Training-Tab)")
+                    gr.Markdown("[教程](https://github.com/Touch-Night/text-generation-webui/wiki/05-%E2%80%90-Training-Tab)")
 
                     with gr.Row():
-                        copy_from = gr.Dropdown(label='Copy parameters from', value='None', choices=utils.get_available_loras(), elem_classes=['slim-dropdown'], interactive=not mu)
-                        ui.create_refresh_button(copy_from, lambda: None, lambda: {'choices': utils.get_available_loras()}, 'refresh-button', interactive=not mu)
+                        copy_from = gr.Dropdown(label='从以下参数复制', value='None', choices=utils.get_available_loras(), elem_classes=['slim-dropdown'], interactive=not mu)
+                        ui.create_refresh_button(copy_from, lambda: None, lambda: {'choices': utils.get_available_loras()}, '刷新按钮', interactive=not mu)
 
                     with gr.Row():
                         with gr.Column(scale=5):
-                            lora_name = gr.Textbox(label='Name', info='The name of your new LoRA file')
+                            lora_name = gr.Textbox(label='名称', info='新LoRA文件的名称')
                         with gr.Column():
-                            always_override = gr.Checkbox(label='Override Existing Files', value=False, info='If the name is the same, checking will replace the existing file, and unchecking will load and continue from it (the rank must be the same).', elem_classes=['no-background'])
+                            always_override = gr.Checkbox(label='覆盖现有文件', value=False, info='如果名称相同，选中将替换现有文件，未选中将加载并继续（排名必须相同）。', elem_classes=['no-background'])
 
-                    with gr.Accordion(label='Target Modules', open=False):
-                        gr.Markdown("Selects which modules to target in training. Targeting more modules is closer to a full fine-tune at the cost of increased VRAM requirements and adapter size.\nNOTE: Only works for model_id='llama', other types will retain default training behavior and not use these settings.")
+                    with gr.Accordion(label='目标模块', open=False):
+                        gr.Markdown("选择在训练中要针对的模块。针对更多模块更接近完整的微调，但会增加VRAM需求和适配器大小。\n注意：仅对model_id='llama'有效，其他类型将保留默认训练行为，不使用这些设置。")
                         with gr.Row():
                             with gr.Column():
-                                q_proj_en = gr.Checkbox(label='Enable q_proj', value=True)
+                                q_proj_en = gr.Checkbox(label='启用q_proj', value=True)
                             with gr.Column():
-                                v_proj_en = gr.Checkbox(label='Enable v_proj', value=True)
+                                v_proj_en = gr.Checkbox(label='启用v_proj', value=True)
                             with gr.Column():
-                                k_proj_en = gr.Checkbox(label='Enable k_proj', value=False)
+                                k_proj_en = gr.Checkbox(label='启用k_proj', value=False)
                             with gr.Column():
-                                o_proj_en = gr.Checkbox(label='Enable o_proj', value=False)
+                                o_proj_en = gr.Checkbox(label='启用o_proj', value=False)
                             with gr.Column():
-                                gate_proj_en = gr.Checkbox(label='Enable gate_proj', value=False)
+                                gate_proj_en = gr.Checkbox(label='启用gate_proj', value=False)
                             with gr.Column():
-                                down_proj_en = gr.Checkbox(label='Enable down_proj', value=False)
+                                down_proj_en = gr.Checkbox(label='启用down_proj', value=False)
                             with gr.Column():
-                                up_proj_en = gr.Checkbox(label='Enable up_proj', value=False)
+                                up_proj_en = gr.Checkbox(label='启用up_proj', value=False)
 
                     with gr.Row():
                         with gr.Column():
-                            lora_rank = gr.Slider(label='LoRA Rank', value=32, minimum=0, maximum=1024, step=4, info='Also called dimension count. Higher values = larger file, more content control. Smaller values = smaller file, less control. Use 4 or 8 for style, 128 or 256 to teach, 1024+ for fine-detail on big data. More VRAM is needed for higher ranks.')
-                            lora_alpha = gr.Slider(label='LoRA Alpha', value=64, minimum=0, maximum=2048, step=4, info='This divided by the rank becomes the scaling of the LoRA. Higher means stronger. A good standard value is twice your Rank.')
-                            batch_size = gr.Slider(label='Batch Size', value=128, minimum=0, maximum=1024, step=4, info='Global batch size. The two batch sizes together determine gradient accumulation (gradientAccum = batch / microBatch). Higher gradient accum values lead to better quality training.')
-                            micro_batch_size = gr.Slider(label='Micro Batch Size', value=4, minimum=1, maximum=128, step=1, info='Per-device batch size (NOTE: multiple devices not yet implemented). Increasing this will increase VRAM usage.')
-                            cutoff_len = gr.Slider(label='Cutoff Length', minimum=0, maximum=4096, value=256, step=32, info='Cutoff length for text input. Essentially, how long of a line of text to feed in at a time. Higher values require drastically more VRAM.')
+                            lora_rank = gr.Slider(label='LoRA秩', value=32, minimum=0, maximum=1024, step=4, info='也称为维度计数。较高的值=更大的文件，更多的内容控制。较小的值=更小的文件，控制力较差。用4或8来表示风格，用128或256来教学，用1024+来细节处理大数据。更高的排名需要更多的VRAM。')
+                            lora_alpha = gr.Slider(label='LoRA Alpha', value=64, minimum=0, maximum=2048, step=4, info='这个除以排名成为LoRA的缩放。较高意味着更强。一个好的标准值是你排名的两倍。')
+                            batch_size = gr.Slider(label='批量大小', value=128, minimum=0, maximum=1024, step=4, info='全局批量大小。这两个批量大小共同决定了梯度累积（gradientAccum = batch / microBatch）。较高的梯度累积值会带来更好的训练质量。')
+                            micro_batch_size = gr.Slider(label='微批量大小', value=4, minimum=1, maximum=128, step=1, info='每个设备的批量大小（注意：多设备尚未实现）。增加这个将增加VRAM使用。')
+                            cutoff_len = gr.Slider(label='截断长度', minimum=0, maximum=4096, value=256, step=32, info='文本输入的截断长度。本质上，一次输入多长的文本行。较高的值需要大量的VRAM。')
 
                         with gr.Column():
-                            save_steps = gr.Number(label='Save every n steps', value=0, info='If above 0, a checkpoint of the LoRA will be saved every time this many steps pass.')
+                            save_steps = gr.Number(label='每n步保存一次', value=0, info='如果大于0，每当这么多步过去时，就会保存LoRA的一个检查点。')
 
-                            epochs = gr.Number(label='Epochs', value=3, info='Number of times every entry in the dataset should be fed into training. So 1 means feed each item in once, 5 means feed it in five times, etc.')
-                            learning_rate = gr.Textbox(label='Learning Rate', value='3e-4', info='In scientific notation. 3e-4 is a good starting base point. 1e-2 is extremely high, 1e-6 is extremely low.')
+                            epochs = gr.Number(label='周期', value=3, info='数据集中的每个条目应该输入训练的次数。所以1意味着每个项目输入一次，5意味着输入五次，等等。')
+                            learning_rate = gr.Textbox(label='学习率', value='3e-4', info='用科学记数法表示。3e-4是一个很好的起点。1e-2非常高，1e-6非常低。')
                             with gr.Row():
-                                lr_scheduler_type = gr.Dropdown(label='LR Scheduler', value='linear', choices=['linear', 'constant', 'constant_with_warmup', 'cosine', 'cosine_with_restarts', 'polynomial', 'inverse_sqrt'], info='Learning rate scheduler - defines how the learning rate changes over time. "Constant" means never change, "linear" means to go in a straight line from the learning rate down to 0, cosine follows a curve, etc.', elem_classes=['slim-dropdown'])
+                                lr_scheduler_type = gr.Dropdown(label='学习率调度器', value='linear', choices=['linear', 'constant', 'constant_with_warmup', 'cosine', 'cosine_with_restarts', 'polynomial', 'inverse_sqrt'], info='学习率调度器 - 定义学习率随时间的变化方式。"Constant"意味着永不改变，"linear"意味着从学习率直线下降到0，cosine遵循曲线等等。', elem_classes=['slim-dropdown'])
 
-                    with gr.Accordion(label='Advanced Options', open=False):
+                    with gr.Accordion(label='高级选项', open=False):
                         with gr.Row():
                             with gr.Column():
-                                lora_dropout = gr.Slider(label='LoRA Dropout', minimum=0.0, maximum=1.0, step=0.025, value=0.05, info='Percentage probability for dropout of LoRA layers. This can help reduce overfitting. Most users should leave at default.')
-                                stop_at_loss = gr.Slider(label='Stop at loss', minimum=0.0, maximum=3.0, step=0.1, value=0.00, info='The process will automatically stop once the desired loss value is reached. (reasonable numbers are 1.5-1.8)')
+                                lora_dropout = gr.Slider(label='LoRA Dropout', minimum=0.0, maximum=1.0, step=0.025, value=0.05, info='LoRA层的dropout概率百分比。这可以帮助减少过拟合。大多数用户应保持默认值。')
+                                stop_at_loss = gr.Slider(label='停止损失', minimum=0.0, maximum=3.0, step=0.1, value=0.00, info='一旦达到期望的损失值，过程将自动停止。（合理的数字是1.5-1.8）')
                                 with gr.Row():
-                                    optimizer = gr.Dropdown(label='Optimizer', value='adamw_torch', choices=['adamw_hf', 'adamw_torch', 'adamw_torch_fused', 'adamw_torch_xla', 'adamw_apex_fused', 'adafactor', 'adamw_bnb_8bit', 'adamw_anyprecision', 'sgd', 'adagrad'], info='Different optimizer implementation options, for advanced users. Effects of different options are not well documented yet.', elem_classes=['slim-dropdown'])
+                                    optimizer = gr.Dropdown(label='优化器', value='adamw_torch', choices=['adamw_hf', 'adamw_torch', 'adamw_torch_fused', 'adamw_torch_xla', 'adamw_apex_fused', 'adafactor', 'adamw_bnb_8bit', 'adamw_anyprecision', 'sgd', 'adagrad'], info='不同优化器实现选项，供高级用户使用。不同选项的效果尚未得到很好的记录。', elem_classes=['slim-dropdown'])
 
                             with gr.Column():
-                                warmup_steps = gr.Number(label='Warmup Steps', value=100, info='For this many steps at the start, the learning rate will be lower than normal. This helps the trainer prepare the model and precompute statistics to improve the quality of training after the start.')
-                                train_only_after = gr.Textbox(label='Train Only After', value='', info='Only consider text *after* this string in any given chunk for training. For Alpaca datasets, use "### Response:" to only train the response and ignore the input.')
+                                warmup_steps = gr.Number(label='热身步数', value=100, info='在开始时的这么多步骤中，学习率将低于正常水平。这有助于训练器准备模型并预先计算统计数据，以提高开始后的训练质量。')
+                                train_only_after = gr.Textbox(label='仅在此之后训练', value='', info='在任何给定的文本块中，只考虑*在此字符串之后*的文本进行训练。对于Alpaca数据集，使用"### Response:"仅训练响应并忽略输入。')
 
-                                add_eos_token = gr.Checkbox(label='Add EOS token', value=False, info="Adds EOS token for each dataset item. In case of raw text, the EOS will be added at the Hard Cut")
+                                add_eos_token = gr.Checkbox(label='添加EOS令牌', value=False, info="为每个数据集项目添加EOS令牌。如果是原始文本，则EOS将添加在硬切割处")
 
-                                higher_rank_limit = gr.Checkbox(label='Enable higher ranks', value=False, info='If checked, changes Rank/Alpha slider above to go much higher. This will not work without a datacenter-class GPU.')
-                                report_to = gr.Radio(label="Save detailed logs with", value="None", choices=["None", "wandb", "tensorboard"], interactive=True)
+                                higher_rank_limit = gr.Checkbox(label='启用更高秩', value=False, info='如果选中，将更改上面的秩/Alpha滑块，使其更高。如果没有数据中心级GPU，这将不起作用。')
+                                report_to = gr.Radio(label="保存详细日志至", value="None", choices=["None", "wandb", "tensorboard"], interactive=True)
 
                 with gr.Column():
-                    with gr.Tab(label='Formatted Dataset'):
+                    with gr.Tab(label='格式化数据集'):
                         with gr.Row():
-                            format = gr.Dropdown(choices=utils.get_datasets('training/formats', 'json'), value='None', label='Data Format', info='The format file used to decide how to format the dataset input.', elem_classes=['slim-dropdown'], interactive=not mu)
-                            ui.create_refresh_button(format, lambda: None, lambda: {'choices': utils.get_datasets('training/formats', 'json')}, 'refresh-button', interactive=not mu)
+                            format = gr.Dropdown(choices=utils.get_datasets('training/formats', 'json'), value='None', label='数据格式', info='用于决定如何格式化数据集输入的格式文件。', elem_classes=['slim-dropdown'], interactive=not mu)
+                            ui.create_refresh_button(format, lambda: None, lambda: {'choices': utils.get_datasets('training/formats', 'json')}, '刷新按钮', interactive=not mu)
 
                         with gr.Row():
-                            dataset = gr.Dropdown(choices=utils.get_datasets('training/datasets', 'json'), value='None', label='Dataset', info='The dataset file to use for training.', elem_classes=['slim-dropdown'], interactive=not mu)
-                            ui.create_refresh_button(dataset, lambda: None, lambda: {'choices': utils.get_datasets('training/datasets', 'json')}, 'refresh-button', interactive=not mu)
+                            dataset = gr.Dropdown(choices=utils.get_datasets('training/datasets', 'json'), value='None', label='数据集', info='用于训练的数据集文件。', elem_classes=['slim-dropdown'], interactive=not mu)
+                            ui.create_refresh_button(dataset, lambda: None, lambda: {'choices': utils.get_datasets('training/datasets', 'json')}, '刷新按钮', interactive=not mu)
 
                         with gr.Row():
-                            eval_dataset = gr.Dropdown(choices=utils.get_datasets('training/datasets', 'json'), value='None', label='Evaluation Dataset', info='The (optional) dataset file used to evaluate the model after training.', elem_classes=['slim-dropdown'], interactive=not mu)
-                            ui.create_refresh_button(eval_dataset, lambda: None, lambda: {'choices': utils.get_datasets('training/datasets', 'json')}, 'refresh-button', interactive=not mu)
+                            eval_dataset = gr.Dropdown(choices=utils.get_datasets('training/datasets', 'json'), value='None', label='评估数据集', info='用于在训练后评估模型的（可选）数据集文件。', elem_classes=['slim-dropdown'], interactive=not mu)
+                            ui.create_refresh_button(eval_dataset, lambda: None, lambda: {'choices': utils.get_datasets('training/datasets', 'json')}, '刷新按钮', interactive=not mu)
 
-                        eval_steps = gr.Number(label='Evaluate every n steps', value=100, info='If an evaluation dataset is given, test it every time this many steps pass.')
+                        eval_steps = gr.Number(label='每n步评估一次', value=100, info='如果给出评估数据集，每次通过这么多步骤时测试它。')
 
-                    with gr.Tab(label="Raw text file"):
+                    with gr.Tab(label="原始文本文件"):
                         with gr.Row():
-                            raw_text_file = gr.Dropdown(choices=utils.get_datasets('training/datasets', 'txt'), value='None', label='Text file', info='The raw text file to use for training.', elem_classes=['slim-dropdown'], interactive=not mu)
-                            ui.create_refresh_button(raw_text_file, lambda: None, lambda: {'choices': utils.get_datasets('training/datasets', 'txt')}, 'refresh-button', interactive=not mu)
+                            raw_text_file = gr.Dropdown(choices=utils.get_datasets('training/datasets', 'txt'), value='None', label='文本文件', info='用于训练的原始文本文件。', elem_classes=['slim-dropdown'], interactive=not mu)
+                            ui.create_refresh_button(raw_text_file, lambda: None, lambda: {'choices': utils.get_datasets('training/datasets', 'txt')}, '刷新按钮', interactive=not mu)
 
                         with gr.Row():
                             with gr.Column():
-                                overlap_len = gr.Slider(label='Overlap Length', minimum=0, maximum=512, value=128, step=16, info='How many tokens from the prior chunk of text to include into the next chunk. (The chunks themselves will be of a size determined by Cutoff Length). Setting overlap to exactly half the cutoff length may be ideal.')
-                                newline_favor_len = gr.Slider(label='Prefer Newline Cut Length', minimum=0, maximum=512, value=128, step=16, info='Length (in characters, not tokens) of the maximum distance to shift an overlap cut by to ensure chunks cut at newlines. If too low, cuts may occur in the middle of lines.')
+                                overlap_len = gr.Slider(label='重叠长度', minimum=0, maximum=512, value=128, step=16, info='在下一个文本块中包含多少个来自前一个文本块的tokens。（文本块本身的大小由截断长度决定）。将重叠设置为截断长度的恰好一半可能是理想的。')
+                                newline_favor_len = gr.Slider(label='优先换行剪切长度', minimum=0, maximum=512, value=128, step=16, info='为了确保文本块在换行处剪切，可移动重叠剪切的最大距离的长度（以字符而非tokens计算）。如果设置得太低，剪切可能会发生在行中间。')
 
                             with gr.Column():
-                                hard_cut_string = gr.Textbox(label='Hard Cut String', value='\\n\\n\\n', info='String that indicates a hard cut between text parts. Helps prevent unwanted overlap.')
-                                min_chars = gr.Number(label='Ignore small blocks', value=0, info='Ignore Hard Cut blocks that have less or equal characters than this number')
+                                hard_cut_string = gr.Textbox(label='硬剪切字符串', value='\\n\\n\\n', info='表示文本部分之间硬剪切的字符串。有助于防止不想要的重叠。')
+                                min_chars = gr.Number(label='忽略小块', value=0, info='忽略小于或等于该数字字符的硬剪切块。')
 
-                    with gr.Row():
-                        start_button = gr.Button("Start LoRA Training", variant='primary', interactive=not mu)
-                        stop_button = gr.Button("Interrupt", interactive=not mu)
+                        with gr.Row():
+                            start_button = gr.Button("开始LoRA训练", variant='primary', interactive=not mu)
+                            stop_button = gr.Button("中断", interactive=not mu)
 
-                    output = gr.Markdown(value="Ready")
+                        output = gr.Markdown(value="准备就绪")
 
-        with gr.Tab('Perplexity evaluation', elem_id='evaluate-tab'):
+        with gr.Tab('困惑度评估', elem_id='evaluate-tab'):
             with gr.Row():
                 with gr.Column():
-                    models = gr.Dropdown(utils.get_available_models(), label='Models', multiselect=True, interactive=not mu)
-                    evaluate_text_file = gr.Dropdown(choices=['wikitext', 'ptb', 'ptb_new'] + utils.get_datasets('training/datasets', 'txt')[1:], value='wikitext', label='Input dataset', info='The raw text file on which the model will be evaluated. The first options are automatically downloaded: wikitext, ptb, and ptb_new. The next options are your local text files under training/datasets.', interactive=not mu)
+                    models = gr.Dropdown(utils.get_available_models(), label='模型', multiselect=True, interactive=not mu)
+                    evaluate_text_file = gr.Dropdown(choices=['wikitext', 'ptb', 'ptb_new'] + utils.get_datasets('training/datasets', 'txt')[1:], value='wikitext', label='输入数据集', info='模型将在其上进行评估的原始文本文件。前几个选项会自动下载：wikitext, ptb, 和 ptb_new。接下来的选项是您在training/datasets下的本地文本文件。', interactive=not mu)
                     with gr.Row():
                         with gr.Column():
-                            stride_length = gr.Slider(label='Stride', minimum=0, maximum=32768, value=512, step=256, info='Used to make the evaluation faster at the cost of accuracy. 1 = slowest but most accurate. 512 is a common value.')
+                            stride_length = gr.Slider(label='步长', minimum=0, maximum=32768, value=512, step=256, info='以牺牲准确性为代价来加快评估速度。1 = 最慢但最准确。512是一个常见的值。')
 
                         with gr.Column():
-                            max_length = gr.Slider(label='max_length', minimum=0, maximum=shared.settings['truncation_length_max'], value=0, step=256, info='The context for each evaluation. If set to 0, the maximum context length for the model will be used.')
+                            max_length = gr.Slider(label='最大长度', minimum=0, maximum=shared.settings['truncation_length_max'], value=0, step=256, info='每次评估的上下文长度。如果设置为0，将使用模型的最大上下文长度。')
 
                     with gr.Row():
-                        start_current_evaluation = gr.Button("Evaluate loaded model", interactive=not mu)
-                        start_evaluation = gr.Button("Evaluate selected models", interactive=not mu)
-                        stop_evaluation = gr.Button("Interrupt", interactive=not mu)
+                        start_current_evaluation = gr.Button("评估已加载模型", interactive=not mu)
+                        start_evaluation = gr.Button("评估所选模型", interactive=not mu)
+                        stop_evaluation = gr.Button("中断", interactive=not mu)
 
                 with gr.Column():
                     evaluation_log = gr.Markdown(value='')
 
             evaluation_table = gr.Dataframe(value=generate_markdown_table(), interactive=True)
             with gr.Row():
-                save_comments = gr.Button('Save comments', elem_classes="small-button", interactive=not mu)
-                refresh_table = gr.Button('Refresh the table', elem_classes="small-button", interactive=not mu)
+                save_comments = gr.Button('保存评论', elem_classes="small-button", interactive=not mu)
+                refresh_table = gr.Button('刷新表格', elem_classes="small-button", interactive=not mu)
 
     # Training events
     all_params = [lora_name, always_override, q_proj_en, v_proj_en, k_proj_en, o_proj_en, gate_proj_en, down_proj_en, up_proj_en, save_steps, micro_batch_size, batch_size, epochs, learning_rate, lr_scheduler_type, lora_rank, lora_alpha, lora_dropout, cutoff_len, dataset, eval_dataset, format, eval_steps, raw_text_file, overlap_len, newline_favor_len, higher_rank_limit, warmup_steps, optimizer, hard_cut_string, train_only_after, stop_at_loss, add_eos_token, min_chars, report_to]
@@ -204,7 +204,7 @@ def create_ui():
     refresh_table.click(generate_markdown_table, None, evaluation_table, show_progress=True)
     save_comments.click(
         save_past_evaluations, evaluation_table, None).then(
-        lambda: "Comments saved.", None, evaluation_log, show_progress=False)
+        lambda: "评论已保存。", None, evaluation_log, show_progress=False)
 
 
 def do_interrupt():
@@ -251,7 +251,7 @@ def backup_adapter(input_folder):
         adapter_file = Path(f"{input_folder}/adapter_model.bin")
         if adapter_file.is_file():
 
-            logger.info("Backing up existing LoRA adapter")
+            logger.info("正在备份现有的LoRA适配器")
             creation_date = datetime.fromtimestamp(adapter_file.stat().st_ctime)
             creation_date_str = creation_date.strftime("Backup-%Y-%m-%d")
 
@@ -262,7 +262,7 @@ def backup_adapter(input_folder):
             # Check if the file already exists in the subfolder
             backup_adapter_file = Path(f"{input_folder}/{creation_date_str}/adapter_model.bin")
             if backup_adapter_file.is_file():
-                print(" - Backup already exists. Skipping backup process.")
+                print(" - 备份已存在。跳过备份过程。")
                 return
 
             # Copy existing files to the new subfolder
@@ -271,7 +271,7 @@ def backup_adapter(input_folder):
                 if file.is_file():
                     shutil.copy2(file, subfolder_path)
     except Exception as e:
-        print("An error occurred in backup_adapter:", str(e))
+        print("备份适配器时发生错误：", str(e))
 
 
 def calc_trainable_parameters(model):
@@ -302,10 +302,10 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
     WANT_INTERRUPT = False
 
     # == Input validation / processing ==
-    yield "Preparing the input..."
+    yield "准备输入..."
     lora_file_path = clean_path(None, lora_name)
     if lora_file_path.strip() == '':
-        yield "Missing or invalid LoRA file name input."
+        yield "缺少或无效的LoRA文件名输入。"
         return
 
     lora_file_path = f"{Path(shared.args.lora_dir)}/{lora_file_path}"
@@ -318,23 +318,23 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
         model_id = "llama"
         if model_type == "PeftModelForCausalLM":
             if len(shared.lora_names) > 0:
-                yield "You are trying to train a LoRA while you already have another LoRA loaded. This will work, but may have unexpected effects. *(Will continue anyway in 5 seconds, press `Interrupt` to stop.)*"
-                logger.warning("Training LoRA over top of another LoRA. May have unexpected effects.")
+                yield "您正在尝试在已加载另一个LoRA的情况下训练LoRA。这可以工作，但可能会有意想不到的效果。*(将在5秒后继续，按`中断`停止。)*"
+                logger.warning("在另一个LoRA上训练LoRA。可能会有意想不到的效果。")
             else:
-                yield "Model ID not matched due to LoRA loading. Consider reloading base model. *(Will continue anyway in 5 seconds, press `Interrupt` to stop.)*"
-                logger.warning("Model ID not matched due to LoRA loading. Consider reloading base model.")
+                yield "由于LoRA加载，模型ID未匹配。考虑重新加载基础模型。*(将在5秒后继续，按`中断`停止。)*"
+                logger.warning("由于LoRA加载，模型ID未匹配。考虑重新加载基础模型。")
         else:
-            yield "LoRA training has only currently been validated for LLaMA, OPT, GPT-J, and GPT-NeoX models. Unexpected errors may follow. *(Will continue anyway in 5 seconds, press `Interrupt` to stop.)*"
-            logger.warning(f"LoRA training has only currently been validated for LLaMA, OPT, GPT-J, and GPT-NeoX models. (Found model type: {model_type})")
+            yield "LoRA训练目前仅对LLaMA、OPT、GPT-J和GPT-NeoX模型进行了验证。可能会出现意外错误。*(将在5秒后继续，按`中断`停止。)*"
+            logger.warning(f"LoRA训练目前仅对LLaMA、OPT、GPT-J和GPT-NeoX模型进行了验证。（发现模型类型：{model_type}）")
 
         time.sleep(5)
 
     if shared.args.loader == 'GPTQ-for-LLaMa' and not shared.args.monkey_patch:
-        yield "LoRA training with GPTQ-for-LLaMa requires loading with `--monkey-patch`"
+        yield "使用GPTQ-for-LLaMa进行LoRA训练需要启用`--monkey-patch`"
         return
 
     if cutoff_len <= 0 or micro_batch_size <= 0 or batch_size <= 0 or actual_lr <= 0 or lora_rank <= 0 or lora_alpha <= 0:
-        yield "Cannot input zeroes."
+        yield "不能输入零。"
         return
 
     gradient_accumulation_steps = batch_size // micro_batch_size
@@ -408,11 +408,11 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
     # == Prep the dataset, format, etc ==
     if raw_text_file not in ['None', '']:
         train_template["template_type"] = "raw_text"
-        logger.info("Loading raw text file dataset")
+        logger.info("正在加载原始文本文件数据集")
         fullpath = clean_path('training/datasets', f'{raw_text_file}')
         fullpath = Path(fullpath)
         if fullpath.is_dir():
-            logger.info('Training path directory {}'.format(raw_text_file))
+            logger.info('训练路径目录 {}'.format(raw_text_file))
             raw_text = ""
             file_paths = sorted(fullpath.glob('*.txt'), key=lambda path: natural_keys(path.name))
             for file_path in file_paths:
@@ -420,7 +420,7 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
                     with file_path.open('r', encoding='utf-8') as file:
                         raw_text += file.read().replace('\r', '')
 
-                    logger.info(f"Loaded training file: {file_path.name}")
+                    logger.info(f"已加载训练文件：{file_path.name}")
         else:
             with open(clean_path('training/datasets', f'{raw_text_file}.txt'), 'r', encoding='utf-8') as file:
                 raw_text = file.read().replace('\r', '')
@@ -439,13 +439,13 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
 
             step = cutoff_len - overlap_len
             if step <= 0:
-                yield f"Error: overlap_len ({overlap_len}) cannot be greater than or equal to cutoff_len ({cutoff_len})"
+                yield f"错误：overlap_len（{overlap_len}）不能大于或等于cutoff_len（{cutoff_len}）"
                 return
 
             out_tokens.extend(split_chunks(tokens, cutoff_len, step))
 
         if eos_added > 0:
-            print(f"EOS added to {eos_added} text blocks")
+            print(f"已向{eos_added}个文本块添加EOS")
 
         del raw_text  # Note: could be a gig for a large dataset, so delete redundant data as we go to be safe on RAM
         text_chunks = [shared.tokenizer.decode(x) for x in out_tokens]
@@ -458,11 +458,11 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
         eval_data = None
     else:
         if dataset in ['None', '']:
-            yield "Missing dataset choice input, cannot continue."
+            yield "缺少数据集选择输入，无法继续。"
             return
 
         if format in ['None', '']:
-            yield "Missing format choice input, cannot continue."
+            yield "缺少格式选择输入，无法继续。"
             return
 
         train_template["template_type"] = "dataset"
@@ -482,13 +482,13 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
                         if type(val) is str:
                             data = data.replace(f'%{key}%', val)
                     return data
-            raise RuntimeError(f'Data-point "{data_point}" has no keyset match within format "{list(format_data.keys())}"')
+            raise RuntimeError(f'数据点 "{data_point}" 在格式 "{list(format_data.keys())}" 中没有匹配的键集')
 
         def generate_and_tokenize_prompt(data_point):
             prompt = generate_prompt(data_point)
             return tokenize(prompt, add_eos_token)
 
-        logger.info("Loading JSON datasets")
+        logger.info("正在加载JSON数据集")
         data = load_dataset("json", data_files=clean_path('training/datasets', f'{dataset}.json'))
         train_data = data['train'].map(generate_and_tokenize_prompt, new_fingerprint='%030x' % random.randrange(16**30))
 
@@ -502,30 +502,30 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
     if shared.model_dirty_from_training:
         selected_model = shared.model_name
         if selected_model:
-            print("\033[1;31;1m(Model has been modified by previous training, it needs to be reloaded...)\033[0;37;0m")
+            print("\033[1;31;1m(模型已被之前的训练修改，需要重新加载...)\033[0;37;0m")
             try:
-                yield f"Reloading {selected_model}..."
+                yield f"正在重新加载 {selected_model}..."
                 reload_model()
                 if shared.model is not None:
-                    print("Model reloaded OK, continue with training.")
+                    print("模型重新加载成功，继续训练。")
                 else:
-                    return f"Failed to load {selected_model}."
+                    return f"加载 {selected_model} 失败。"
             except:
                 exc = traceback.format_exc()
-                logger.error('Failed to reload the model.')
+                logger.error('重新加载模型失败。')
                 print(exc)
                 return exc.replace('\n', '\n\n')
 
     # == Start prepping the model itself ==
     if not hasattr(shared.model, 'lm_head') or hasattr(shared.model.lm_head, 'weight'):
-        logger.info("Getting model ready")
+        logger.info("正在准备模型")
         if 'quantization_config' in shared.model.config.to_dict():
             prepare_model_for_kbit_training(shared.model)
 
     # base model is now frozen and should not be reused for any other LoRA training than this one
     shared.model_dirty_from_training = True
 
-    logger.info("Preparing for training")
+    logger.info("正在准备训练")
     config = LoraConfig(
         r=lora_rank,
         lora_alpha=lora_alpha,
@@ -543,10 +543,10 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
     model_trainable_params, model_all_params = calc_trainable_parameters(shared.model)
 
     try:
-        logger.info("Creating LoRA model")
+        logger.info("正在创建LoRA模型")
         lora_model = get_peft_model(shared.model, config)
         if not always_override and Path(f"{lora_file_path}/adapter_model.bin").is_file():
-            logger.info("Loading existing LoRA data")
+            logger.info("正在加载现有的LoRA数据")
             state_dict_peft = torch.load(f"{lora_file_path}/adapter_model.bin", weights_only=True)
             set_peft_model_state_dict(lora_model, state_dict_peft)
     except:
@@ -597,15 +597,15 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
             train_log.update(logs)
             train_log.update({"current_steps": tracked.current_steps})
             if WANT_INTERRUPT:
-                print("\033[1;31;1mInterrupted by user\033[0;37;0m")
+                print("\033[1;31;1m用户中断\033[0;37;0m")
 
-            print(f"\033[1;30;40mStep: {tracked.current_steps} \033[0;37;0m", end='')
+            print(f"\033[1;30;40m步数：{tracked.current_steps} \033[0;37;0m", end='')
             if 'loss' in logs:
                 loss = float(logs['loss'])
                 if loss <= stop_at_loss:
                     control.should_epoch_stop = True
                     control.should_training_stop = True
-                    print(f"\033[1;31;1mStop Loss {stop_at_loss} reached.\033[0;37;0m")
+                    print(f"\033[1;31;1m达到停止损失 {stop_at_loss}。\033[0;37;0m")
 
     # Fix training for mixed precision models
     for param in shared.model.parameters():
@@ -657,17 +657,17 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
         json.dump(train_template, file, indent=2)
 
     # == Main run and monitor loop ==
-    logger.info("Starting training")
-    yield "Starting..."
+    logger.info("正在开始训练")
+    yield "正在开始..."
 
     lora_trainable_param, lora_all_param = calc_trainable_parameters(lora_model)
 
     projections_string = ", ".join([projection.replace("_proj", "") for projection in list_target_modules(model_id)])
 
-    print(f"Training '{model_id}' model using ({projections_string}) projections")
+    print(f"使用（{projections_string}）投影来训练 '{model_id}' 模型")
 
     if lora_all_param > 0:
-        print(f"Trainable params: {lora_trainable_param:,d} ({100 * lora_trainable_param / lora_all_param:.4f} %), All params: {lora_all_param:,d} (Model: {model_all_params:,d})")
+        print(f"可训练参数：{lora_trainable_param:,d} ({100 * lora_trainable_param / lora_all_param:.4f} %), 所有参数：{lora_all_param:,d} (模型：{model_all_params:,d})")
 
     train_log.update({"base_model_name": shared.model_name})
     train_log.update({"base_model_class": shared.model.__class__.__name__})
@@ -676,10 +676,10 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
     train_log.update({"projections": projections_string})
 
     if stop_at_loss > 0:
-        print(f"Monitoring loss \033[1;31;1m(Auto-Stop at: {stop_at_loss})\033[0;37;0m")
+        print(f"正在监控损失 \033[1;31;1m(自动停止于：{stop_at_loss})\033[0;37;0m")
 
     if WANT_INTERRUPT:
-        yield "Interrupted before start."
+        yield "在开始之前被中断。"
         return
 
     def log_train_dataset(trainer):
@@ -696,16 +696,16 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
             with open(Path('logs/train_dataset_sample.json'), 'w') as json_file:
                 json.dump(decoded_entries, json_file, indent=4)
 
-            logger.info("Log file 'train_dataset_sample.json' created in the 'logs' directory.")
+            logger.info("日志文件 'train_dataset_sample.json' 已在 'logs' 目录中创建。")
         except Exception as e:
-            logger.error(f"Failed to create log file due to error: {e}")
+            logger.error(f"由于错误 {e} 创建日志文件失败")
 
     def threaded_run():
         log_train_dataset(trainer)
         trainer.train()
         # Note: save in the thread in case the gradio thread breaks (eg browser closed)
         lora_model.save_pretrained(lora_file_path)
-        logger.info("LoRA training run is completed and saved.")
+        logger.info("LoRA训练运行已完成并保存。")
         # Save log
         with open(f"{lora_file_path}/training_log.json", 'w', encoding='utf-8') as file:
             json.dump(train_log, file, indent=2)
@@ -718,7 +718,7 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
     while thread.is_alive():
         time.sleep(0.5)
         if WANT_INTERRUPT:
-            yield "Interrupting, please wait... *(Run will stop after the current training step completes.)*"
+            yield "正在中断，请等待... *(运行将在当前训练步骤完成后停止。)*"
 
         elif tracked.current_steps != last_step:
             last_step = tracked.current_steps
@@ -735,19 +735,19 @@ def do_train(lora_name: str, always_override: bool, q_proj_en: bool, v_proj_en: 
 
                 total_time_estimate = (1.0 / its) * (tracked.max_steps)
 
-            yield f"Running... **{tracked.current_steps}** / **{tracked.max_steps}** ... {timer_info}, {format_time(time_elapsed)} / {format_time(total_time_estimate)} ... {format_time(total_time_estimate - time_elapsed)} remaining"
+            yield f"运行中... **{tracked.current_steps}** / **{tracked.max_steps}** ... {timer_info}, {format_time(time_elapsed)} / {format_time(total_time_estimate)} ... {format_time(total_time_estimate - time_elapsed)} 剩余"
 
     # Saving in the train thread might fail if an error occurs, so save here if so.
     if not tracked.did_save:
-        logger.info("Training complete, saving")
+        logger.info("训练完成，正在保存")
         lora_model.save_pretrained(lora_file_path)
 
     if WANT_INTERRUPT:
-        logger.info("Training interrupted.")
-        yield f"Interrupted. Incomplete LoRA saved to `{lora_file_path}`."
+        logger.info("训练被中断。")
+        yield f"已中断。未完成的LoRA已保存到 `{lora_file_path}`。"
     else:
-        logger.info("Training complete!")
-        yield f"Done! LoRA saved to `{lora_file_path}`.\n\nBefore testing your new LoRA, make sure to first reload the model, as it is currently dirty from training."
+        logger.info("训练完成！")
+        yield f"完成！LoRA已保存到 `{lora_file_path}`。\n\n在测试您的新LoRA之前，请确保首先重新加载模型，因为它目前正因训练而处于脏乱状态。"
 
 
 def split_chunks(arr, size, step):
@@ -775,11 +775,11 @@ def cut_chunk_for_newline(chunk: str, max_length: int):
 
 def format_time(seconds: float):
     if seconds < 120:
-        return f"`{seconds:.0f}` seconds"
+        return f"`{seconds:.0f}` 秒"
 
     minutes = seconds / 60
     if minutes < 120:
-        return f"`{minutes:.0f}` minutes"
+        return f"`{minutes:.0f}` 分钟"
 
     hours = minutes / 60
-    return f"`{hours:.0f}` hours"
+    return f"`{hours:.0f}` 小时"

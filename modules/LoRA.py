@@ -35,7 +35,7 @@ def add_lora_exllamav2(lora_names):
             lora.unload()
 
     if len(lora_names) > 0:
-        logger.info("Applying the following LoRAs to {}: {}".format(shared.model_name, ', '.join(lora_names)))
+        logger.info("将以下LoRAs应用于{}：{}".format(shared.model_name, '，'.join(lora_names)))
         shared.model.loras = []
         for lora_name in lora_names:
             lora_path = get_lora_path(lora_name)
@@ -61,7 +61,7 @@ def add_lora_autogptq(lora_names):
         from auto_gptq import get_gptq_peft_model
         from auto_gptq.utils.peft_utils import GPTQLoraConfig
     except:
-        logger.error("This version of AutoGPTQ does not support LoRA. You need to install from source or wait for a new release.")
+        logger.error("AutoGPTQ的这个版本不支持LoRA。您需要从源代码安装或等待新版本的发布。")
         return
 
     if len(lora_names) == 0:
@@ -71,16 +71,16 @@ def add_lora_autogptq(lora_names):
         return
     else:
         if len(lora_names) > 1:
-            logger.warning('AutoGPTQ can only work with 1 LoRA at the moment. Only the first one in the list will be loaded.')
+            logger.warning('AutoGPTQ目前只能同时使用1个LoRA。列表中的第一个将被加载。')
         if not shared.args.no_inject_fused_attention:
-            logger.warning('Fused Atttention + AutoGPTQ may break Lora loading. Disable it.')
+            logger.warning('融合注意力机制 + AutoGPTQ可能会破坏LoRA加载。请禁用它。')
 
         peft_config = GPTQLoraConfig(
             inference_mode=True,
         )
 
         lora_path = get_lora_path(lora_names[0])
-        logger.info("Applying the following LoRAs to {}: {}".format(shared.model_name, ', '.join([lora_names[0]])))
+        logger.info("正在将以下LoRA应用于{}：{}".format(shared.model_name, '，'.join([lora_names[0]])))
         shared.model = get_gptq_peft_model(shared.model, peft_config, lora_path)
         shared.lora_names = [lora_names[0]]
         return
@@ -97,7 +97,7 @@ def add_lora_transformers(lora_names):
 
     # Add a LoRA when another LoRA is already present
     if len(removed_set) == 0 and len(prior_set) > 0 and "__merged" not in shared.model.peft_config.keys():
-        logger.info(f"Adding the LoRA(s) named {added_set} to the model")
+        logger.info(f"正在将名为{added_set}的LoRA(s)添加到模型中")
         for lora in added_set:
             shared.model.load_adapter(get_lora_path(lora), lora)
 
@@ -121,7 +121,7 @@ def add_lora_transformers(lora_names):
                 if hasattr(shared.model, "hf_device_map"):
                     params['device_map'] = {"base_model.model." + k: v for k, v in shared.model.hf_device_map.items()}
 
-        logger.info("Applying the following LoRAs to {}: {}".format(shared.model_name, ', '.join(lora_names)))
+        logger.info("正在将以下LoRAs应用于{}：{}".format(shared.model_name, '，'.join(lora_names)))
         shared.model = PeftModel.from_pretrained(shared.model, get_lora_path(lora_names[0]), adapter_name=lora_names[0], **params)
         for lora in lora_names[1:]:
             shared.model.load_adapter(get_lora_path(lora), lora)
@@ -146,7 +146,7 @@ def add_lora_transformers(lora_names):
 
 def merge_loras():
     if len(list({shared.model.peft_config[adapter].r for adapter in shared.model.peft_config.keys()})) > 1:
-        logger.warning("The loaded LoRAs cannot be merged, as they have dissimilar ranks. Only the first one will be active.")
+        logger.warning("加载的LoRAs无法合并，因为它们的等级不同。只有第一个将会被激活。")
         return
 
     shared.model.add_weighted_adapter(shared.lora_names, [1] * len(shared.lora_names), "__merged")

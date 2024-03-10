@@ -62,7 +62,7 @@ from modules.utils import gradio
 
 
 def signal_handler(sig, frame):
-    logger.info("Received Ctrl+C. Shutting down Text generation web UI gracefully.")
+    logger.info("已收到Ctrl+C指令。正在丝滑地关闭Text generation web UI。")
     sys.exit(0)
 
 
@@ -174,7 +174,7 @@ def create_interface():
 
 if __name__ == "__main__":
 
-    logger.info("Starting Text generation web UI")
+    logger.info("正在启动Text generation web UI...")
     do_cmd_flags_warnings()
 
     # Load custom settings
@@ -212,14 +212,14 @@ if __name__ == "__main__":
     # Select the model from a command-line menu
     elif shared.args.model_menu:
         if len(available_models) == 0:
-            logger.error('No models are available! Please download at least one.')
+            logger.error('没有可用的模型！请至少下载一个。')
             sys.exit(0)
         else:
-            print('The following models are available:\n')
+            print('以下模型可用：\n')
             for i, model in enumerate(available_models):
                 print(f'{i+1}. {model}')
 
-            print(f'\nWhich one do you want to load? 1-{len(available_models)}\n')
+            print(f'\n你想加载哪一个？1-{len(available_models)}\n')
             i = int(input()) - 1
             print()
 

@@ -24,11 +24,10 @@ class TemperatureLogitsWarperCustom(LogitsWarper):
     def __init__(self, temperature: float):
         if not isinstance(temperature, float) or not (temperature > 0):
             except_msg = (
-                f"`temperature` (={temperature}) has to be a strictly positive float, otherwise your next token "
-                "scores will be invalid."
+                f"`temperature`（值为{temperature}）必须是一个严格正的浮点数，否则您的下一个token分数将是无效的。"
             )
             if isinstance(temperature, float) and temperature == 0.0:
-                except_msg += " If you're looking for greedy decoding strategies, set `do_sample=False`."
+                except_msg += " 如果您正在寻找贪婪解码策略，请设置`do_sample=False`。"
 
             raise ValueError(except_msg)
 
@@ -127,7 +126,7 @@ class QuadraticSamplingLogitsWarper(LogitsWarper):
 class MinPLogitsWarper(LogitsWarper):
     def __init__(self, min_p: float, filter_value: float = -float("Inf"), min_tokens_to_keep: int = 1):
         if min_p < 0 or min_p > 1.0:
-            raise ValueError(f"`min_p` has to be a float >= 0 and <= 1, but is {min_p}")
+            raise ValueError(f"`min_p`必须是一个大于等于0且小于等于1的浮点数，但当前值为{min_p}")
         self.min_p = min_p
         self.filter_value = filter_value
         self.min_tokens_to_keep = min_tokens_to_keep
@@ -158,7 +157,7 @@ class TailFreeLogitsWarper(LogitsWarper):
     def __init__(self, tfs: float, filter_value: float = -float("Inf"), min_tokens_to_keep: int = 1):
         tfs = float(tfs)
         if tfs < 0 or tfs > 1.0:
-            raise ValueError(f"`tfs` has to be a float >= 0 and <= 1, but is {tfs}")
+            raise ValueError(f"`tfs`必须是一个大于等于0且小于等于1的浮点数，但当前值为{tfs}")
         self.tfs = tfs
         self.filter_value = filter_value
         self.min_tokens_to_keep = min_tokens_to_keep
@@ -198,7 +197,7 @@ class TopALogitsWarper(LogitsWarper):
     def __init__(self, top_a: float, filter_value: float = -float("Inf"), min_tokens_to_keep: int = 1):
         top_a = float(top_a)
         if top_a < 0 or top_a > 1.0:
-            raise ValueError(f"`top_a` has to be a float >= 0 and <= 1, but is {top_a}")
+            raise ValueError(f"`top_a`必须是一个大于等于0且小于等于1的浮点数，但当前值为{top_a}")
         self.top_a = top_a
         self.filter_value = filter_value
         self.min_tokens_to_keep = min_tokens_to_keep
@@ -223,7 +222,7 @@ class TopALogitsWarper(LogitsWarper):
 class MirostatLogitsWarper(LogitsWarper):
     def __init__(self, mirostat_mode: int, mirostat_tau: float, mirostat_eta: float, filter_value: float = -float("Inf"), min_tokens_to_keep: int = 1):
         if mirostat_mode not in [2]:
-            raise ValueError(f"`mirostat` has to be a an integer 2, but is {mirostat_mode}")
+            raise ValueError(f"`mirostat`必须是整数2，但当前值为{mirostat_mode}")
 
         self.mirostat_mode = mirostat_mode
         self.mirostat_eta = mirostat_eta
@@ -286,7 +285,7 @@ class RepetitionPenaltyLogitsProcessorWithRange(LogitsProcessor):
 
     def __init__(self, penalty: float, presence_penalty: float, frequency_penalty: float, _range: int):
         if not (penalty > 0):
-            raise ValueError(f"`penalty` has to be strictly positive, but is {penalty}")
+            raise ValueError(f"`penalty`必须是严格正数，但当前值为{penalty}")
 
         self.penalty = penalty
         self.presence_penalty = presence_penalty

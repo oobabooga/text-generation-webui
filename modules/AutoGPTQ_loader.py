@@ -20,13 +20,13 @@ def load_quantized(model_name):
             found = list(path_to_model.glob(f"*{ext}"))
             if len(found) > 0:
                 if len(found) > 1:
-                    logger.warning(f'More than one {ext} model has been found. The last one will be selected. It could be wrong.')
+                    logger.warning(f'找到了多个 {ext} 模型。将选择最后一个。这可能是错误的。')
 
                 pt_path = found[-1]
                 break
 
     if pt_path is None:
-        logger.error("The model could not be loaded because its checkpoint file in .bin/.pt/.safetensors format could not be located.")
+        logger.error("由于找不到 .bin/.pt/.safetensors 格式的检查点文件，无法加载模型。")
         return
 
     use_safetensors = pt_path.suffix == '.safetensors'
@@ -55,7 +55,7 @@ def load_quantized(model_name):
         'disable_exllamav2': shared.args.disable_exllamav2,
     }
 
-    logger.info(f"The AutoGPTQ params are: {params}")
+    logger.info(f"AutoGPTQ参数为：{params}")
     model = AutoGPTQForCausalLM.from_quantized(path_to_model, **params)
 
     # These lines fix the multimodal extension when used with AutoGPTQ

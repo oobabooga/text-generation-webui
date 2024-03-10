@@ -30,7 +30,7 @@ class CtransformersModel:
             config=config
         )
 
-        logger.info(f'Using ctransformers model_type: {result.model.model_type} for {result.model.model_path}')
+        logger.info(f'正在使用 ctransformers 模型类型: {result.model.model_type}，路径为 {result.model.model_path}')
         return result, result
 
     def model_type_is_auto(self):

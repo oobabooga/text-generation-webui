@@ -108,7 +108,7 @@ class LlamacppHF(PreTrainedModel):
 
         if len(args) > 0:
             if not shared.args.cfg_cache:
-                logger.error("Please enable the cfg-cache option to use CFG with llamacpp_HF.")
+                logger.error("请启用 cfg-cache 选项以便与 llamacpp_HF 使用 CFG。")
                 return
 
             input_ids = args[0]
@@ -183,7 +183,7 @@ class LlamacppHF(PreTrainedModel):
 
     @classmethod
     def from_pretrained(cls, pretrained_model_name_or_path: Optional[Union[str, os.PathLike]], *model_args, **kwargs):
-        assert len(model_args) == 0 and len(kwargs) == 0, "extra args is currently not supported"
+        assert len(model_args) == 0 and len(kwargs) == 0, "当前不支持额外的参数"
 
         if isinstance(pretrained_model_name_or_path, str):
             pretrained_model_name_or_path = Path(pretrained_model_name_or_path)
@@ -194,7 +194,7 @@ class LlamacppHF(PreTrainedModel):
         else:
             model_file = list(path.glob('*.gguf'))[0]
 
-        logger.info(f"llama.cpp weights detected: {model_file}\n")
+        logger.info(f"检测到 llama.cpp 权重：{model_file}\n")
 
         if shared.args.tensor_split is None or shared.args.tensor_split.strip() == '':
             tensor_split_list = None

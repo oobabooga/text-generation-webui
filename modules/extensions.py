@@ -31,12 +31,12 @@ def load_extensions():
     for i, name in enumerate(shared.args.extensions):
         if name in available_extensions:
             if name != 'api':
-                logger.info(f'Loading the extension "{name}"')
+                logger.info(f'正在加载扩展 "{name}"')
             try:
                 try:
                     extension = importlib.import_module(f"extensions.{name}.script")
                 except ModuleNotFoundError:
-                    logger.error(f"Could not import the requirements for '{name}'. Make sure to install the requirements for the extension.\n\n* To install requirements for all available extensions, launch the\n  update_wizard script for your OS and choose the B option.\n\n* To install the requirements for this extension alone, launch the\n  cmd script for your OS and paste the following command in the\n  terminal window that appears:\n\nLinux / Mac:\n\npip install -r extensions/{name}/requirements.txt --upgrade\n\nWindows:\n\npip install -r extensions\\{name}\\requirements.txt --upgrade\n")
+                    logger.error(f"无法导入 '{name}' 的必需组件。确保安装了扩展的必需组件。\n\n* 要为所有可用的扩展安装必需组件，请启动您的操作系统的 update_wizard 脚本，并选择 B 选项。\n\n* 要仅为这个扩展安装必需组件，请启动您的操作系统的 cmd 脚本，并在出现的终端窗口中粘贴以下命令：\n\nLinux / Mac:\n\npip install -r extensions/{name}/requirements.txt --upgrade\n\nWindows:\n\npip install -r extensions\\{name}\\requirements.txt --upgrade\n")
                     raise
 
                 # Only run setup() and apply settings from settings.yaml once
@@ -49,7 +49,7 @@ def load_extensions():
 
                 state[name] = [True, i]
             except:
-                logger.error(f'Failed to load the extension "{name}".')
+                logger.error(f'加载扩展 "{name}" 失败。')
                 traceback.print_exc()
 
 
@@ -226,6 +226,6 @@ EXTENSION_MAP = {
 
 def apply_extensions(typ, *args, **kwargs):
     if typ not in EXTENSION_MAP:
-        raise ValueError(f"Invalid extension type {typ}")
+        raise ValueError(f"无效的扩展类型 {typ}")
 
     return EXTENSION_MAP[typ](*args, **kwargs)

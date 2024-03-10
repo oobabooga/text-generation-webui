@@ -40,23 +40,22 @@ def calculate_perplexity(models, input_dataset, stride, _max_length):
     '''
 
     if shared.args.loader == "llama.cpp":
-        logger.error("llamacpp_HF is required for perplexity evaluation with GGUF models. Please reload the model with llamacpp_HF instead of llama.cpp.")
+        logger.error("llamacpp_HF 是使用 GGUF 模型进行困惑度评估所必需的。请使用 llamacpp_HF 代替 llama.cpp 重新加载模型。")
         raise ValueError
 
     if shared.args.loader == "ExLlamav2":
-        logger.error("ExLlamav2_HF is required for perplexity evaluation with EXL2 models. Please reload the model with ExLlamav2_HF instead of ExLlamav2.")
-        raise ValueError
+        logger.error("ExLlamav2_HF 是进行 EXL2 模型困惑度评估所必需的。请使用 ExLlamav2_HF 代替 ExLlamav2 重新加载模型。")
 
     if shared.args.loader == "llamacpp_HF" and not shared.args.logits_all:
-        logger.error("--logits_all is required for perplexity evaluation with GGUF models. Please reload the model with that option set/checked.")
+        logger.error("--logits_all 参数是使用 GGUF 模型进行困惑度评估所必需的。请在设置或勾选该选项后重新加载模型。")
         raise ValueError
 
     if not shared.args.no_use_fast:
-        logger.warning("--no_use_fast is not set. If tokenizing the input dataset takes a long time, try reloading the model with that option set/checked.")
+        logger.warning("--no_use_fast 未设置。如果对输入数据集进行分词花费了很长时间，请尝试在设置或勾选该选项后重新加载模型。")
 
     global past_evaluations
     cumulative_log = ''
-    cumulative_log += "Loading the input dataset...\n\n"
+    cumulative_log += "正在加载输入数据集...\n\n"
     yield cumulative_log
 
     # Copied from https://github.com/qwopqwop200/GPTQ-for-LLaMa/blob/triton/utils/datautils.py
@@ -75,25 +74,25 @@ def calculate_perplexity(models, input_dataset, stride, _max_length):
 
     for model in models:
         if is_in_past_evaluations(model, input_dataset, stride, _max_length):
-            cumulative_log += f"`{model}` has already been tested. Ignoring.\n\n"
+            cumulative_log += f"`{model}`已经被测试过了。忽略。\n\n"
             yield cumulative_log
             continue
 
         if model != 'current model':
             try:
-                yield cumulative_log + f"Loading `{model}`...\n\n"
+                yield cumulative_log + f"正在加载`{model}`...\n\n"
                 model_settings = get_model_metadata(model)
                 shared.settings.update({k: v for k, v in model_settings.items() if k in shared.settings})  # hijacking the interface defaults
                 update_model_parameters(model_settings)  # hijacking the command-line arguments
                 unload_model()
                 shared.model, shared.tokenizer = load_model(model)
             except:
-                cumulative_log += f"Failed to load `{model}`. Moving on.\n\n"
+                cumulative_log += f"加载`{model}`失败。继续。\n\n"
                 yield cumulative_log
                 continue
 
-        cumulative_log += f"Processing `{shared.model_name}`...\n\n"
-        yield cumulative_log + "Tokenizing the input dataset...\n\n"
+        cumulative_log += f"正在处理`{shared.model_name}`...\n\n"
+        yield cumulative_log + "正在对输入数据集进行分词...\n\n"
         encodings = encode(text, add_special_tokens=False)
         seq_len = encodings.shape[1]
         if _max_length:
@@ -106,7 +105,7 @@ def calculate_perplexity(models, input_dataset, stride, _max_length):
         nlls = []
         prev_end_loc = 0
         for begin_loc in tqdm(range(0, seq_len, stride)):
-            yield cumulative_log + f"Evaluating... {100*begin_loc/seq_len:.2f}%"
+            yield cumulative_log + f"正在评估... {100*begin_loc/seq_len:.2f}%"
             end_loc = min(begin_loc + max_length, seq_len)
             trg_len = end_loc - prev_end_loc  # may be different from stride on last loop
             input_ids = encodings[:, begin_loc:end_loc]
@@ -131,7 +130,7 @@ def calculate_perplexity(models, input_dataset, stride, _max_length):
         add_entry_to_past_evaluations(float(ppl), shared.model_name, input_dataset, stride, _max_length)
         save_past_evaluations(past_evaluations)
 
-        message = f"The perplexity for `{shared.model_name}` is: {float(ppl)}"
+        message = f"`{shared.model_name}`的困惑度时是：{float(ppl)}"
         logger.info(message)
 
         cumulative_log += f"{message}\n\n"

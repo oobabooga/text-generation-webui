@@ -88,10 +88,8 @@ class GrammarConstrainedLogitsProcessor(LogitsProcessor):
             # The conclusion is that, we assume the input_ids are valid, and our generation will be correct.
             # If the input_ids are not valid, then the generation result will be wrong and we don't take responsibility for that.
             raise RuntimeError(
-                "Input ID's length is inconsistent with the current state of "
-                "the GrammarConstrainedLogitsProcessor. If you want to process "
-                "another input sequence, please instantiate a new "
-                "GrammarConstrainedLogitsProcessor."
+                "输入 ID 的长度与当前的 GrammarConstrainedLogitsProcessor 的状态不一致。"
+                "如果你想处理另一个输入序列，请实例化一个新的 GrammarConstrainedLogitsProcessor。"
             )
 
         self.filter_logits(scores, scores.device)

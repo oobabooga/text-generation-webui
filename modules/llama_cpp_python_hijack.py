@@ -31,7 +31,7 @@ def eval_with_progress(self, tokens: Sequence[int]):
     self._ctx.kv_cache_seq_rm(-1, self.n_tokens, -1)
 
     if len(tokens) > 1:
-        progress_bar = tqdm(range(0, len(tokens), self.n_batch), desc="Prompt evaluation", leave=False)
+        progress_bar = tqdm(range(0, len(tokens), self.n_batch), desc="提示词评估", leave=False)
     else:
         progress_bar = range(0, len(tokens), self.n_batch)
 

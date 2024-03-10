@@ -18,21 +18,21 @@ def clone_or_pull_repository(github_url):
 
     # Check if the repository is already cloned
     if repo_path.exists():
-        yield f"Updating {github_url}..."
+        yield f"正在更新 {github_url}..."
         # Perform a 'git pull' to update the repository
         try:
             pull_output = subprocess.check_output(["git", "-C", repo_path, "pull"], stderr=subprocess.STDOUT)
-            yield "Done."
+            yield "已完成。"
             return pull_output.decode()
         except subprocess.CalledProcessError as e:
             return str(e)
 
     # Clone the repository
     try:
-        yield f"Cloning {github_url}..."
+        yield f"正在克隆 {github_url}..."
         clone_output = subprocess.check_output(["git", "clone", github_url, repo_path], stderr=subprocess.STDOUT)
         new_extensions.add(repo_name)
-        yield f"The extension `{repo_name}` has been downloaded.\n\nPlease close the the web UI completely and launch it again to be able to load it."
+        yield f"扩展 `{repo_name}` 已下载。\n\n请完全关闭网页界面并重新启动，以便能够加载它。"
         return clone_output.decode()
     except subprocess.CalledProcessError as e:
         return str(e)

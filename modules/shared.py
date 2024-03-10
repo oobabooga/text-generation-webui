@@ -20,7 +20,7 @@ lora_names = []
 # Generation variables
 stop_everything = False
 generation_lock = None
-processing_message = '*Is typing...*'
+processing_message = '*正在输入...*'
 
 # UI variables
 gradio = {}
@@ -73,135 +73,135 @@ default_settings = copy.deepcopy(settings)
 parser = argparse.ArgumentParser(description="Text generation web UI", conflict_handler='resolve', add_help=True, formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=55, indent_increment=2, width=200))
 
 # Basic settings
-group = parser.add_argument_group('Basic settings')
-group.add_argument('--multi-user', action='store_true', help='Multi-user mode. Chat histories are not saved or automatically loaded. Warning: this is likely not safe for sharing publicly.')
-group.add_argument('--character', type=str, help='The name of the character to load in chat mode by default.')
-group.add_argument('--model', type=str, help='Name of the model to load by default.')
-group.add_argument('--lora', type=str, nargs='+', help='The list of LoRAs to load. If you want to load more than one LoRA, write the names separated by spaces.')
-group.add_argument('--model-dir', type=str, default='models/', help='Path to directory with all the models.')
-group.add_argument('--lora-dir', type=str, default='loras/', help='Path to directory with all the loras.')
-group.add_argument('--model-menu', action='store_true', help='Show a model menu in the terminal when the web UI is first launched.')
-group.add_argument('--settings', type=str, help='Load the default interface settings from this yaml file. See settings-template.yaml for an example. If you create a file called settings.yaml, this file will be loaded by default without the need to use the --settings flag.')
-group.add_argument('--extensions', type=str, nargs='+', help='The list of extensions to load. If you want to load more than one extension, write the names separated by spaces.')
-group.add_argument('--verbose', action='store_true', help='Print the prompts to the terminal.')
-group.add_argument('--chat-buttons', action='store_true', help='Show buttons on the chat tab instead of a hover menu.')
+group = parser.add_argument_group('基本设置')
+group.add_argument('--multi-user', action='store_true', help='多用户模式。聊天历史不会被保存或自动加载。警告：这可能不适合公开分享。')
+group.add_argument('--character', type=str, help='默认情况下在聊天模式中加载的角色名。')
+group.add_argument('--model', type=str, help='默认情况下要加载的模型名。')
+group.add_argument('--lora', type=str, nargs='+', help='要加载的LoRA列表。如果你想加载多于一个LoRA，将名字用空格分隔。')
+group.add_argument('--model-dir', type=str, default='models/', help='所有模型的目录路径。')
+group.add_argument('--lora-dir', type=str, default='loras/', help='所有LoRAs的目录路径。')
+group.add_argument('--model-menu', action='store_true', help='当web UI首次启动时，在终端显示模型菜单。')
+group.add_argument('--settings', type=str, help='从这个yaml文件加载默认界面设置。参见settings-template.yaml的示例。如果你创建了一个叫做settings.yaml的文件，这个文件将会默认加载，无需使用--settings命令行参数。')
+group.add_argument('--extensions', type=str, nargs='+', help='要加载的扩展列表。如果你想加载多于一个扩展，将名字用空格分隔。')
+group.add_argument('--verbose', action='store_true', help='在终端打印提示。')
+group.add_argument('--chat-buttons', action='store_true', help='在聊天标签页显示按钮，而不是悬浮菜单。')
 
 # Model loader
-group = parser.add_argument_group('Model loader')
-group.add_argument('--loader', type=str, help='Choose the model loader manually, otherwise, it will get autodetected. Valid options: Transformers, llama.cpp, llamacpp_HF, ExLlamav2_HF, ExLlamav2, AutoGPTQ, AutoAWQ, GPTQ-for-LLaMa, ctransformers, QuIP#.')
+group = parser.add_argument_group('模型加载器')
+group.add_argument('--loader', type=str, help='手动选择模型加载器，否则将自动检测。有效选项包括：Transformers, llama.cpp, llamacpp_HF, ExLlamav2_HF, ExLlamav2, AutoGPTQ, AutoAWQ, GPTQ-for-LLaMa, ctransformers, QuIP#。')
 
 # Transformers/Accelerate
 group = parser.add_argument_group('Transformers/Accelerate')
-group.add_argument('--cpu', action='store_true', help='Use the CPU to generate text. Warning: Training on CPU is extremely slow.')
-group.add_argument('--auto-devices', action='store_true', help='Automatically split the model across the available GPU(s) and CPU.')
-group.add_argument('--gpu-memory', type=str, nargs='+', help='Maximum GPU memory in GiB to be allocated per GPU. Example: --gpu-memory 10 for a single GPU, --gpu-memory 10 5 for two GPUs. You can also set values in MiB like --gpu-memory 3500MiB.')
-group.add_argument('--cpu-memory', type=str, help='Maximum CPU memory in GiB to allocate for offloaded weights. Same as above.')
-group.add_argument('--disk', action='store_true', help='If the model is too large for your GPU(s) and CPU combined, send the remaining layers to the disk.')
-group.add_argument('--disk-cache-dir', type=str, default='cache', help='Directory to save the disk cache to. Defaults to "cache".')
-group.add_argument('--load-in-8bit', action='store_true', help='Load the model with 8-bit precision (using bitsandbytes).')
-group.add_argument('--bf16', action='store_true', help='Load the model with bfloat16 precision. Requires NVIDIA Ampere GPU.')
-group.add_argument('--no-cache', action='store_true', help='Set use_cache to False while generating text. This reduces VRAM usage slightly, but it comes at a performance cost.')
-group.add_argument('--trust-remote-code', action='store_true', help='Set trust_remote_code=True while loading the model. Necessary for some models.')
-group.add_argument('--force-safetensors', action='store_true', help='Set use_safetensors=True while loading the model. This prevents arbitrary code execution.')
-group.add_argument('--no_use_fast', action='store_true', help='Set use_fast=False while loading the tokenizer (it\'s True by default). Use this if you have any problems related to use_fast.')
-group.add_argument('--use_flash_attention_2', action='store_true', help='Set use_flash_attention_2=True while loading the model.')
+group.add_argument('--cpu', action='store_true', help='使用CPU生成文本。警告：在CPU上训练速度极慢。')
+group.add_argument('--auto-devices', action='store_true', help='自动将模型分布到可用的GPU和CPU上。')
+group.add_argument('--gpu-memory', type=str, nargs='+', help='每个GPU分配的最大GPU内存（以GiB为单位）。例如：单个GPU使用--gpu-memory 10，两个GPU使用--gpu-memory 10 5。您也可以像这样设置MiB值--gpu-memory 3500MiB。')
+group.add_argument('--cpu-memory', type=str, help='分配给卸载权重的最大CPU内存（以GiB为单位）。同上。')
+group.add_argument('--disk', action='store_true', help='如果模型对于您的GPU和CPU的组合来说太大，将剩余的层发送到磁盘。')
+group.add_argument('--disk-cache-dir', type=str, default='cache', help='保存磁盘缓存的目录。默认为"cache"。')
+group.add_argument('--load-in-8bit', action='store_true', help='以8位精度加载模型（使用bitsandbytes）。')
+group.add_argument('--bf16', action='store_true', help='以bfloat16精度加载模型。需要NVIDIA Ampere GPU。')
+group.add_argument('--no-cache', action='store_true', help='生成文本时将use_cache设置为False。这可以稍微减少VRAM使用，但会降低性能。')
+group.add_argument('--trust-remote-code', action='store_true', help='加载模型时将trust_remote_code设置为True。对于某些模型来说是必要的。')
+group.add_argument('--force-safetensors', action='store_true', help='加载模型时将use_safetensors设置为True。这可以防止任意代码执行。')
+group.add_argument('--no_use_fast', action='store_true', help='加载分词器时将use_fast设置为False（默认为True）。如果您遇到与use_fast相关的问题，请使用此选项。')
+group.add_argument('--use_flash_attention_2', action='store_true', help='加载模型时将use_flash_attention_2设置为True。')
 
 # bitsandbytes 4-bit
 group = parser.add_argument_group('bitsandbytes 4-bit')
-group.add_argument('--load-in-4bit', action='store_true', help='Load the model with 4-bit precision (using bitsandbytes).')
-group.add_argument('--use_double_quant', action='store_true', help='use_double_quant for 4-bit.')
-group.add_argument('--compute_dtype', type=str, default='float16', help='compute dtype for 4-bit. Valid options: bfloat16, float16, float32.')
-group.add_argument('--quant_type', type=str, default='nf4', help='quant_type for 4-bit. Valid options: nf4, fp4.')
+group.add_argument('--load-in-4bit', action='store_true', help='以4位精度加载模型（使用bitsandbytes）。')
+group.add_argument('--use_double_quant', action='store_true', help='对4位使用use_double_quant。')
+group.add_argument('--compute_dtype', type=str, default='float16', help='4位的计算数据类型。有效选项：bfloat16, float16, float32。')
+group.add_argument('--quant_type', type=str, default='nf4', help='4位的量化类型。有效选项：nf4, fp4。')
 
 # llama.cpp
 group = parser.add_argument_group('llama.cpp')
-group.add_argument('--tensorcores', action='store_true', help='Use llama-cpp-python compiled with tensor cores support. This increases performance on RTX cards. NVIDIA only.')
-group.add_argument('--n_ctx', type=int, default=2048, help='Size of the prompt context.')
-group.add_argument('--threads', type=int, default=0, help='Number of threads to use.')
-group.add_argument('--threads-batch', type=int, default=0, help='Number of threads to use for batches/prompt processing.')
-group.add_argument('--no_mul_mat_q', action='store_true', help='Disable the mulmat kernels.')
-group.add_argument('--n_batch', type=int, default=512, help='Maximum number of prompt tokens to batch together when calling llama_eval.')
-group.add_argument('--no-mmap', action='store_true', help='Prevent mmap from being used.')
-group.add_argument('--mlock', action='store_true', help='Force the system to keep the model in RAM.')
-group.add_argument('--n-gpu-layers', type=int, default=0, help='Number of layers to offload to the GPU.')
-group.add_argument('--tensor_split', type=str, default=None, help='Split the model across multiple GPUs. Comma-separated list of proportions. Example: 18,17.')
-group.add_argument('--numa', action='store_true', help='Activate NUMA task allocation for llama.cpp.')
-group.add_argument('--logits_all', action='store_true', help='Needs to be set for perplexity evaluation to work. Otherwise, ignore it, as it makes prompt processing slower.')
-group.add_argument('--no_offload_kqv', action='store_true', help='Do not offload the  K, Q, V to the GPU. This saves VRAM but reduces the performance.')
-group.add_argument('--cache-capacity', type=str, help='Maximum cache capacity (llama-cpp-python). Examples: 2000MiB, 2GiB. When provided without units, bytes will be assumed.')
-group.add_argument('--row_split', action='store_true', help='Split the model by rows across GPUs. This may improve multi-gpu performance.')
+group.add_argument('--tensorcores', action='store_true', help='使用支持tensor cores的llama-cpp-python编译版本。这可以提高RTX卡的性能。仅限NVIDIA。')
+group.add_argument('--n_ctx', type=int, default=2048, help='提示词上下文的大小。')
+group.add_argument('--threads', type=int, default=0, help='使用的线程数。')
+group.add_argument('--threads-batch', type=int, default=0, help='用于批处理/提示词处理的线程数。')
+group.add_argument('--no_mul_mat_q', action='store_true', help='禁用mulmat内核。')
+group.add_argument('--n_batch', type=int, default=512, help='在调用llama_eval时批量处理的最大提示词令牌数。')
+group.add_argument('--no-mmap', action='store_true', help='防止使用mmap。')
+group.add_argument('--mlock', action='store_true', help='强制系统将模型保留在RAM中。')
+group.add_argument('--n-gpu-layers', type=int, default=0, help='卸载到GPU的层数。')
+group.add_argument('--tensor_split', type=str, default=None, help='将模型分布在多个GPU上。逗号分隔的比例列表。例如：18,17。')
+group.add_argument('--numa', action='store_true', help='为llama.cpp激活NUMA任务分配。')
+group.add_argument('--logits_all', action='store_true', help='需要设置以便困惑度评估能够工作。否则，忽略它，因为它会使提示词处理变慢。')
+group.add_argument('--no_offload_kqv', action='store_true', help='不要将K, Q, V卸载到GPU。这样可以节省VRAM，但会降低性能。')
+group.add_argument('--cache-capacity', type=str, help='最大缓存容量（llama-cpp-python）。例如：2000MiB, 2GiB。如果没有提供单位，默认为字节。')
+group.add_argument('--row_split', action='store_true', help='在GPUs之间按行分割模型。这可能会提高多GPU性能。')
 
 # ExLlamaV2
 group = parser.add_argument_group('ExLlamaV2')
-group.add_argument('--gpu-split', type=str, help='Comma-separated list of VRAM (in GB) to use per GPU device for model layers. Example: 20,7,7.')
-group.add_argument('--autosplit', action='store_true', help='Autosplit the model tensors across the available GPUs. This causes --gpu-split to be ignored.')
-group.add_argument('--max_seq_len', type=int, default=2048, help='Maximum sequence length.')
-group.add_argument('--cfg-cache', action='store_true', help='ExLlamav2_HF: Create an additional cache for CFG negative prompts. Necessary to use CFG with that loader.')
-group.add_argument('--no_flash_attn', action='store_true', help='Force flash-attention to not be used.')
-group.add_argument('--cache_8bit', action='store_true', help='Use 8-bit cache to save VRAM.')
-group.add_argument('--cache_4bit', action='store_true', help='Use Q4 cache to save VRAM.')
-group.add_argument('--num_experts_per_token', type=int, default=2, help='Number of experts to use for generation. Applies to MoE models like Mixtral.')
+group.add_argument('--gpu-split', type=str, help='用逗号分隔的VRAM（以GB为单位）列表，指定每个GPU设备用于模型层的内存。示例：20,7,7。')
+group.add_argument('--autosplit', action='store_true', help='自动将模型张量分布在可用的GPU上。这会导致忽略--gpu-split参数。')
+group.add_argument('--max_seq_len', type=int, default=2048, help='最大序列长度。')
+group.add_argument('--cfg-cache', action='store_true', help='ExLlamav2_HF：为CFG负提示词创建额外的缓存。使用该加载器进行CFG时必需。')
+group.add_argument('--no_flash_attn', action='store_true', help='强制不使用flash-attention。')
+group.add_argument('--cache_8bit', action='store_true', help='使用8位缓存以节省VRAM。')
+group.add_argument('--cache_4bit', action='store_true', help='使用Q4缓存以节省VRAM。')
+group.add_argument('--num_experts_per_token', type=int, default=2, help='用于生成的专家数量。适用于像Mixtral这样的MoE模型。')
 
 # AutoGPTQ
 group = parser.add_argument_group('AutoGPTQ')
-group.add_argument('--triton', action='store_true', help='Use triton.')
-group.add_argument('--no_inject_fused_attention', action='store_true', help='Disable the use of fused attention, which will use less VRAM at the cost of slower inference.')
-group.add_argument('--no_inject_fused_mlp', action='store_true', help='Triton mode only: disable the use of fused MLP, which will use less VRAM at the cost of slower inference.')
-group.add_argument('--no_use_cuda_fp16', action='store_true', help='This can make models faster on some systems.')
-group.add_argument('--desc_act', action='store_true', help='For models that do not have a quantize_config.json, this parameter is used to define whether to set desc_act or not in BaseQuantizeConfig.')
-group.add_argument('--disable_exllama', action='store_true', help='Disable ExLlama kernel, which can improve inference speed on some systems.')
-group.add_argument('--disable_exllamav2', action='store_true', help='Disable ExLlamav2 kernel.')
+group.add_argument('--triton', action='store_true', help='使用triton。')
+group.add_argument('--no_inject_fused_attention', action='store_true', help='禁用融合注意力机制，这将减少VRAM的使用，但会导致推理速度变慢。')
+group.add_argument('--no_inject_fused_mlp', action='store_true', help='仅Triton模式：禁用融合MLP，这将减少VRAM的使用，但会导致推理速度变慢。')
+group.add_argument('--no_use_cuda_fp16', action='store_true', help='这可以在某些系统上加快模型的速度。')
+group.add_argument('--desc_act', action='store_true', help='对于没有quantize_config.json的模型，此参数用于定义是否在BaseQuantizeConfig中设置desc_act。')
+group.add_argument('--disable_exllama', action='store_true', help='禁用ExLlama内核，这可以在某些系统上提高推理速度。')
+group.add_argument('--disable_exllamav2', action='store_true', help='禁用ExLlamav2内核。')
 
 # GPTQ-for-LLaMa
 group = parser.add_argument_group('GPTQ-for-LLaMa')
-group.add_argument('--wbits', type=int, default=0, help='Load a pre-quantized model with specified precision in bits. 2, 3, 4 and 8 are supported.')
-group.add_argument('--model_type', type=str, help='Model type of pre-quantized model. Currently LLaMA, OPT, and GPT-J are supported.')
-group.add_argument('--groupsize', type=int, default=-1, help='Group size.')
-group.add_argument('--pre_layer', type=int, nargs='+', help='The number of layers to allocate to the GPU. Setting this parameter enables CPU offloading for 4-bit models. For multi-gpu, write the numbers separated by spaces, eg --pre_layer 30 60.')
-group.add_argument('--checkpoint', type=str, help='The path to the quantized checkpoint file. If not specified, it will be automatically detected.')
-group.add_argument('--monkey-patch', action='store_true', help='Apply the monkey patch for using LoRAs with quantized models.')
+group.add_argument('--wbits', type=int, default=0, help='以指定的位精度加载预量化模型。支持2、3、4和8位。')
+group.add_argument('--model_type', type=str, help='预量化模型的类型。目前支持LLaMA、OPT和GPT-J。')
+group.add_argument('--groupsize', type=int, default=-1, help='组大小。')
+group.add_argument('--pre_layer', type=int, nargs='+', help='分配给GPU的层数。设置此参数可启用4位模型的CPU卸载。对于多GPU，将数字用空格分隔，例如 --pre_layer 30 60。')
+group.add_argument('--checkpoint', type=str, help='量化检查点文件的路径。如果未指定，将自动检测。')
+group.add_argument('--monkey-patch', action='store_true', help='应用monkey patch以便与量化模型一起使用LoRAs。')
 
 # HQQ
 group = parser.add_argument_group('HQQ')
-group.add_argument('--hqq-backend', type=str, default='PYTORCH_COMPILE', help='Backend for the HQQ loader. Valid options: PYTORCH, PYTORCH_COMPILE, ATEN.')
+group.add_argument('--hqq-backend', type=str, default='PYTORCH_COMPILE', help='HQQ加载器的后端。有效选项：PYTORCH, PYTORCH_COMPILE, ATEN。')
 
 # DeepSpeed
 group = parser.add_argument_group('DeepSpeed')
-group.add_argument('--deepspeed', action='store_true', help='Enable the use of DeepSpeed ZeRO-3 for inference via the Transformers integration.')
-group.add_argument('--nvme-offload-dir', type=str, help='DeepSpeed: Directory to use for ZeRO-3 NVME offloading.')
-group.add_argument('--local_rank', type=int, default=0, help='DeepSpeed: Optional argument for distributed setups.')
+group.add_argument('--deepspeed', action='store_true', help='通过Transformers集成启用DeepSpeed ZeRO-3进行推理。')
+group.add_argument('--nvme-offload-dir', type=str, help='DeepSpeed：用于ZeRO-3 NVME卸载的目录。')
+group.add_argument('--local_rank', type=int, default=0, help='DeepSpeed：分布式设置的可选参数。')
 
 # RoPE
 group = parser.add_argument_group('RoPE')
-group.add_argument('--alpha_value', type=float, default=1, help='Positional embeddings alpha factor for NTK RoPE scaling. Use either this or compress_pos_emb, not both.')
-group.add_argument('--rope_freq_base', type=int, default=0, help='If greater than 0, will be used instead of alpha_value. Those two are related by rope_freq_base = 10000 * alpha_value ^ (64 / 63).')
-group.add_argument('--compress_pos_emb', type=int, default=1, help="Positional embeddings compression factor. Should be set to (context length) / (model\'s original context length). Equal to 1/rope_freq_scale.")
+group.add_argument('--alpha_value', type=float, default=1, help='NTK RoPE缩放的位置嵌入alpha因子。使用这个或compress_pos_emb，不要同时使用。')
+group.add_argument('--rope_freq_base', type=int, default=0, help='如果大于0，将代替alpha_value使用。这两个参数的关系为rope_freq_base = 10000 * alpha_value ^ (64 / 63)。')
+group.add_argument('--compress_pos_emb', type=int, default=1, help="位置嵌入的压缩因子。应该设置为（上下文长度）/（模型的原始上下文长度）。等于1/rope_freq_scale。")
 
 # Gradio
 group = parser.add_argument_group('Gradio')
-group.add_argument('--listen', action='store_true', help='Make the web UI reachable from your local network.')
-group.add_argument('--listen-port', type=int, help='The listening port that the server will use.')
-group.add_argument('--listen-host', type=str, help='The hostname that the server will use.')
-group.add_argument('--share', action='store_true', help='Create a public URL. This is useful for running the web UI on Google Colab or similar.')
-group.add_argument('--auto-launch', action='store_true', default=False, help='Open the web UI in the default browser upon launch.')
-group.add_argument('--gradio-auth', type=str, help='Set Gradio authentication password in the format "username:password". Multiple credentials can also be supplied with "u1:p1,u2:p2,u3:p3".', default=None)
-group.add_argument('--gradio-auth-path', type=str, help='Set the Gradio authentication file path. The file should contain one or more user:password pairs in the same format as above.', default=None)
-group.add_argument('--ssl-keyfile', type=str, help='The path to the SSL certificate key file.', default=None)
-group.add_argument('--ssl-certfile', type=str, help='The path to the SSL certificate cert file.', default=None)
+group.add_argument('--listen', action='store_true', help='使Web界面能够从您的本地网络访问。')
+group.add_argument('--listen-port', type=int, help='服务器将使用的监听端口。')
+group.add_argument('--listen-host', type=str, help='服务器将使用的主机名。')
+group.add_argument('--share', action='store_true', help='创建一个公共URL。这对于在Google Colab或类似环境上运行Web界面很有用。')
+group.add_argument('--auto-launch', action='store_true', default=False, help='启动时在默认浏览器中打开Web界面。')
+group.add_argument('--gradio-auth', type=str, help='设置Gradio认证密码，格式为"用户名:密码"。也可以提供多个凭证，如"u1:p1,u2:p2,u3:p3"。', default=None)
+group.add_argument('--gradio-auth-path', type=str, help='设置Gradio认证文件路径。文件应包含一个或多个上述格式的用户:密码对。', default=None)
+group.add_argument('--ssl-keyfile', type=str, help='SSL证书密钥文件的路径。', default=None)
+group.add_argument('--ssl-certfile', type=str, help='SSL证书文件的路径。', default=None)
 
 # API
 group = parser.add_argument_group('API')
-group.add_argument('--api', action='store_true', help='Enable the API extension.')
-group.add_argument('--public-api', action='store_true', help='Create a public URL for the API using Cloudfare.')
-group.add_argument('--public-api-id', type=str, help='Tunnel ID for named Cloudflare Tunnel. Use together with public-api option.', default=None)
-group.add_argument('--api-port', type=int, default=5000, help='The listening port for the API.')
-group.add_argument('--api-key', type=str, default='', help='API authentication key.')
-group.add_argument('--admin-key', type=str, default='', help='API authentication key for admin tasks like loading and unloading models. If not set, will be the same as --api-key.')
-group.add_argument('--nowebui', action='store_true', help='Do not launch the Gradio UI. Useful for launching the API in standalone mode.')
+group.add_argument('--api', action='store_true', help='启用API扩展。')
+group.add_argument('--public-api', action='store_true', help='使用Cloudfare创建一个公共API URL。')
+group.add_argument('--public-api-id', type=str, help='指定Cloudflare Tunnel的隧道ID。与public-api选项一起使用。', default=None)
+group.add_argument('--api-port', type=int, default=5000, help='API的监听端口。')
+group.add_argument('--api-key', type=str, default='', help='API认证密钥。')
+group.add_argument('--admin-key', type=str, default='', help='用于管理任务的API认证密钥，如加载和卸载模型。如果未设置，将与--api-key相同。')
+group.add_argument('--nowebui', action='store_true', help='不启动Gradio UI。适用于以独立模式启动API。')
 
 # Multimodal
 group = parser.add_argument_group('Multimodal')
-group.add_argument('--multimodal-pipeline', type=str, default=None, help='The multimodal pipeline to use. Examples: llava-7b, llava-13b.')
+group.add_argument('--multimodal-pipeline', type=str, default=None, help='要使用的多模态管道。示例：llava-7b, llava-13b。')
 
 # Deprecated parameters
 # group = parser.add_argument_group('Deprecated')
@@ -222,18 +222,18 @@ def do_cmd_flags_warnings():
     # Deprecation warnings
     for k in deprecated_args:
         if getattr(args, k):
-            logger.warning(f'The --{k} flag has been deprecated and will be removed soon. Please remove that flag.')
+            logger.warning(f'--{k}命令行参数已被弃用，即将被移除。请移除该参数。')
 
     # Security warnings
     if args.trust_remote_code:
-        logger.warning('trust_remote_code is enabled. This is dangerous.')
+        logger.warning('trust_remote_code已启用。这有危险。')
     if 'COLAB_GPU' not in os.environ and not args.nowebui:
         if args.share:
-            logger.warning("The gradio \"share link\" feature uses a proprietary executable to create a reverse tunnel. Use it with care.")
+            logger.warning("Gradio的“共享链接”功能使用专有的可执行文件创建反向隧道。请谨慎使用。")
         if any((args.listen, args.share)) and not any((args.gradio_auth, args.gradio_auth_path)):
-            logger.warning("\nYou are potentially exposing the web UI to the entire internet without any access password.\nYou can create one with the \"--gradio-auth\" flag like this:\n\n--gradio-auth username:password\n\nMake sure to replace username:password with your own.")
+            logger.warning("\n您可能正在将Web界面暴露给整个互联网，而没有任何访问密码。\n您可以使用“--gradio-auth”标志创建一个，如下所示：\n\n--gradio-auth 用户名:密码\n\n确保将用户名:密码替换为您自己的。")
             if args.multi_user:
-                logger.warning('\nThe multi-user mode is highly experimental and should not be shared publicly.')
+                logger.warning('\n多用户模式处于高度实验阶段，不应公开分享。')
 
 
 def fix_loader_name(name):

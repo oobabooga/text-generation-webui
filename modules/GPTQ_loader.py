@@ -94,7 +94,7 @@ def find_quantized_model_file(model_name):
             found = list(path_to_model.glob(f"*{ext}"))
             if len(found) > 0:
                 if len(found) > 1:
-                    logger.warning(f'More than one {ext} model has been found. The last one will be selected. It could be wrong.')
+                    logger.warning(f'找到多个 {ext} 模型。将选择最后一个。这可能是错误的。')
 
                 pt_path = found[-1]
                 break
@@ -105,8 +105,8 @@ def find_quantized_model_file(model_name):
 # The function that loads the model in modules/models.py
 def load_quantized(model_name):
     if shared.args.model_type is None:
-        logger.error("The model could not be loaded because its type could not be inferred from its name.")
-        logger.error("Please specify the type manually using the --model_type argument.")
+        logger.error("无法加载模型，因为无法从其名称推断出模型的类型。")
+        logger.error("请使用 --model_type 参数手动指定类型。")
         return None
 
     # Select the appropriate load_quant function
@@ -115,21 +115,21 @@ def load_quantized(model_name):
         load_quant = llama_inference_offload.load_quant
     elif model_type in ('llama', 'opt', 'gptj'):
         if shared.args.pre_layer:
-            logger.warning("Ignoring --pre_layer because it only works for llama model type.")
+            logger.warning("忽略 --pre_layer 参数，因为它只适用于 llama 模型类型。")
 
         load_quant = _load_quant
     else:
-        logger.error("Unknown pre-quantized model type specified. Only 'llama', 'opt' and 'gptj' are supported")
+        logger.error("指定了未知的预量化模型类型。只支持 'llama'、'opt' 和 'gptj'")
         exit()
 
     # Find the quantized model weights file (.pt/.safetensors)
     path_to_model = Path(f'{shared.args.model_dir}/{model_name}')
     pt_path = find_quantized_model_file(model_name)
     if not pt_path:
-        logger.error("Could not find the quantized model in .pt or .safetensors format. Exiting.")
+        logger.error("找不到 .pt 或 .safetensors 格式的量化模型。正在退出。")
         exit()
     else:
-        logger.info(f"Found the following quantized model: {pt_path}")
+        logger.info(f"找到以下量化模型：{pt_path}")
 
     # qwopqwop200's offload
     if model_type == 'llama' and shared.args.pre_layer:
@@ -157,7 +157,7 @@ def load_quantized(model_name):
                 max_memory = accelerate.utils.get_balanced_memory(model)
 
             device_map = accelerate.infer_auto_device_map(model, max_memory=max_memory, no_split_module_classes=["LlamaDecoderLayer"])
-            logger.info("Using the following device map for the quantized model:", device_map)
+            logger.info("对于量化模型，使用以下设备映射：", device_map)
             # https://huggingface.co/docs/accelerate/package_reference/big_modeling#accelerate.dispatch_model
             model = accelerate.dispatch_model(model, device_map=device_map, offload_buffers=True)
 

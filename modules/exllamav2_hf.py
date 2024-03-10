@@ -22,14 +22,13 @@ try:
     import flash_attn
 except ModuleNotFoundError:
     logger.warning(
-        'You are running ExLlamaV2 without flash-attention. This will cause the VRAM usage '
-        'to be a lot higher than it could be.\n'
-        'Try installing flash-attention following the instructions here: '
+        '您正在运行 ExLlamaV2 而没有使用 flash-attention。这将导致显存使用量比可能的情况要高得多。\n'
+        '尝试按照这里的说明安装 flash-attention：'
         'https://github.com/Dao-AILab/flash-attention#installation-and-features'
     )
     pass
 except Exception:
-    logger.warning('Failed to load flash-attention due to the following error:\n')
+    logger.warning('由于以下错误，加载 flash-attention 失败：\n')
     traceback.print_exc()
 
 
@@ -90,7 +89,7 @@ class Exllamav2HF(PreTrainedModel):
 
         if len(args) > 0:
             if not shared.args.cfg_cache:
-                logger.error("Please enable the cfg-cache option to use CFG with ExLlamav2_HF.")
+                logger.error("请启用 cfg-cache 选项以便与 ExLlamav2_HF 一起使用 CFG。")
                 return
 
             input_ids = args[0]
@@ -162,7 +161,7 @@ class Exllamav2HF(PreTrainedModel):
 
     @classmethod
     def from_pretrained(cls, pretrained_model_name_or_path: Optional[Union[str, os.PathLike]], *model_args, **kwargs):
-        assert len(model_args) == 0 and len(kwargs) == 0, "extra args is currently not supported"
+        assert len(model_args) == 0 and len(kwargs) == 0, "当前不支持额外的参数"
         if isinstance(pretrained_model_name_or_path, str):
             pretrained_model_name_or_path = Path(pretrained_model_name_or_path)
 

@@ -96,7 +96,7 @@ def parse_name(src):
     while pos < len(src) and is_word_char(src[pos]):
         pos += 1
     if pos == 0:
-        raise RuntimeError("expecting name at " + src)
+        raise RuntimeError("需要在 " + src + " 处指定名称。")
     return src[:pos], src[pos:]
 
 
@@ -116,7 +116,7 @@ def parse_char(src):
                 second = hex_to_int(src[3])
                 if second > -1:
                     return (first << 4) + second, src[4:]
-            raise RuntimeError("expecting \\xNN at " + src)
+            raise RuntimeError("需要在 " + src + " 处指定 \\xNN。")
         elif esc in ('"', "[", "]"):
             return esc, src[2:]
         elif esc == "r":
@@ -125,10 +125,10 @@ def parse_char(src):
             return "\n", src[2:]
         elif esc == "t":
             return "\t", src[2:]
-        raise RuntimeError("unknown escape at " + src)
+        raise RuntimeError("在" + src + "处存在未知的转义字符。")
     elif src:
         return src[0], src[1:]
-    raise RuntimeError("unexpected end of input")
+    raise RuntimeError("输入意外结束。")
 
 
 def parse_sequence(state, src, rule_name, outbuf, is_nested):
@@ -186,11 +186,11 @@ def parse_sequence(state, src, rule_name, outbuf, is_nested):
             outbuf.append(REF_RULE_MARKER)
             outbuf.append(sub_rule_id)
             if remaining_src[0] != ")":
-                raise RuntimeError("expecting ')' at " + remaining_src)
+                raise RuntimeError("在" + remaining_src + "处需要 ')'")
             remaining_src = remove_leading_white_space(remaining_src[1:], is_nested)
         elif remaining_src[0] in ("*", "+", "?"):  # repetition operator
             if len(outbuf) - out_start_pos - 1 == 0:
-                raise RuntimeError("expecting preceeding item to */+/? at " + remaining_src)
+                raise RuntimeError("在" + remaining_src + "处需要前置项以 */+/?")
             out_grammar = state.grammar_encoding
 
             # apply transformation to previous symbol (last_sym_start -
@@ -257,7 +257,7 @@ def parse_rule(state, src):
     rule_id = get_symbol_id(state, name)
 
     if remaining_src[:3] != "::=":
-        raise RuntimeError("expecting ::= at " + remaining_src)
+        raise RuntimeError("在" + remaining_src + "处需要 '::='")
     remaining_src = remove_leading_white_space(remaining_src[3:], True)
 
     remaining_src = parse_alternates(state, remaining_src, name, rule_id, False)
@@ -267,7 +267,7 @@ def parse_rule(state, src):
     elif remaining_src and remaining_src[0] == "\n":
         remaining_src = remaining_src[1:]
     elif remaining_src:
-        raise RuntimeError("expecting newline or end at " + remaining_src)
+        raise RuntimeError("在" + remaining_src + "处需要换行符或结束。")
     return remove_leading_white_space(remaining_src, True)
 
 
@@ -285,7 +285,7 @@ def parse_ebnf(src):
         state.grammar_encoding.append(0xFFFF)
         return state
     except RuntimeError as err:
-        logger.warning("error parsing grammar:", err)
+        logger.warning("解析语法时出错：", err)
         return ParseState()
 
 
@@ -325,12 +325,12 @@ def print_rule(file, grammar_encoding, index, symbol_id_names):
 def print_grammar(file, state):
     pos = 0
     symbol_id_names = {v: k for k, v in state.symbol_ids.items()}
-    print("Grammar Rules:", file=file)
+    print("语法规则：", file=file)
 
     while state.grammar_encoding[pos] != 0xFFFF:
         pos = print_rule(file, state.grammar_encoding, pos, symbol_id_names)
     pos = 0
-    print("\nBinary representation:", file=file)
+    print("\n二进制表示：", file=file)
     while state.grammar_encoding[pos] != 0xFFFF:
         print(f"{state.grammar_encoding[pos]:04x}", end=" ", file=file)
         pos += 1
@@ -492,8 +492,8 @@ class IncrementalGrammarConstraint(GrammarConstraint):
         if token_id == self.eos_token_id:
             if stacks and all(len(stack) != 0 for stack in stacks):
                 raise Exception(
-                    f"At least one of the stack should be empty when EOS is reached. However, "
-                    f"the stacks are {stacks}"
+                    f"至少有一个堆栈在达到EOS时应为空。"
+                    f"然而，堆栈是{stacks}"
                 )
             return []
 
@@ -660,7 +660,7 @@ class TokenTrie:
                 return bytes(token, "utf-8")
 
         else:
-            print("Warning: unrecognized tokenizer: using default token formatting")
+            print("警告：无法识别的分词器：使用默认的token格式。")
 
             def fmt_token(id):
                 token = tokenizer.convert_ids_to_tokens(id)

@@ -80,7 +80,7 @@ def load_model(model_name, loader=None):
         else:
             loader = metadata['loader']
             if loader is None:
-                logger.error('The path to the model does not exist. Exiting.')
+                logger.error('模型的路径不存在。正在退出。')
                 raise ValueError
 
     shared.args.loader = loader
@@ -100,10 +100,10 @@ def load_model(model_name, loader=None):
     elif loader in ['llama.cpp', 'llamacpp_HF', 'ctransformers']:
         shared.settings['truncation_length'] = shared.args.n_ctx
 
-    logger.info(f"LOADER: \"{loader}\"")
-    logger.info(f"TRUNCATION LENGTH: {shared.settings['truncation_length']}")
-    logger.info(f"INSTRUCTION TEMPLATE: \"{metadata['instruction_template']}\"")
-    logger.info(f"Loaded the model in {(time.time()-t0):.2f} seconds.")
+    logger.info(f"加载器：\"{loader}\"")
+    logger.info(f"截断长度：{shared.settings['truncation_length']}")
+    logger.info(f"指令模板：\"{metadata['instruction_template']}\"")
+    logger.info(f"在{(time.time()-t0):.2f}秒内加载了模型。")
     return model, tokenizer
 
 
@@ -114,7 +114,7 @@ def load_tokenizer(model_name, model):
         tokenizer = AutoTokenizer.from_pretrained(Path(f"{shared.args.model_dir}/gpt-j-6B/"))
     elif path_to_model.exists():
         if shared.args.no_use_fast:
-            logger.info('Loading the tokenizer with use_fast=False.')
+            logger.info('正在use_fast设置为False的情况下加载分词器。')
 
         tokenizer = AutoTokenizer.from_pretrained(
             path_to_model,
@@ -165,12 +165,12 @@ def huggingface_loader(model_name):
         model = LoaderClass.from_pretrained(path_to_model, torch_dtype=params['torch_dtype'], trust_remote_code=params['trust_remote_code'])
         model = deepspeed.initialize(model=model, config_params=ds_config, model_parameters=None, optimizer=None, lr_scheduler=None)[0]
         model.module.eval()  # Inference
-        logger.info(f'DeepSpeed ZeRO-3 is enabled: {is_deepspeed_zero3_enabled()}')
+        logger.info(f'DeepSpeed ZeRO-3已启用：{is_deepspeed_zero3_enabled()}')
 
     # Load with quantization and/or offloading
     else:
         if not any((shared.args.cpu, torch.cuda.is_available(), is_xpu_available(), torch.backends.mps.is_available())):
-            logger.warning('torch.cuda.is_available() and is_xpu_available() returned False. This means that no GPU has been detected. Falling back to CPU mode.')
+            logger.warning('torch.cuda.is_available()和is_xpu_available()均返回False。这意味着未检测到GPU。正在回退到CPU模式。')
             shared.args.cpu = True
 
         if shared.args.cpu:
@@ -221,10 +221,10 @@ def huggingface_loader(model_name):
                 )
 
                 params['quantization_config'] = gptq_config
-                logger.info(f'Loading with disable_exllama={shared.args.disable_exllama} and disable_exllamav2={shared.args.disable_exllamav2}.')
+                logger.info(f'正在以设置项disable_exllama={shared.args.disable_exllama}和disable_exllamav2={shared.args.disable_exllamav2}加载。')
             except:
                 exc = traceback.format_exc()
-                logger.error('Failed to disable exllama. Does the config.json for this model contain the necessary quantization info?')
+                logger.error('禁用exllama失败。这个模型的config.json文件中是否包含必要的量化信息？')
                 print(exc)
 
         if shared.args.compress_pos_emb > 1:
@@ -246,7 +246,7 @@ def llamacpp_loader(model_name):
     else:
         model_file = list(Path(f'{shared.args.model_dir}/{model_name}').glob('*.gguf'))[0]
 
-    logger.info(f"llama.cpp weights detected: \"{model_file}\"")
+    logger.info(f"检测到llama.cpp权重：\"{model_file}\"")
     model, tokenizer = LlamaCppModel.from_pretrained(model_file)
     return model, tokenizer
 
@@ -258,9 +258,9 @@ def llamacpp_HF_loader(model_name):
 
     # Check if a HF tokenizer is available for the model
     if all((path / file).exists() for file in ['tokenizer_config.json']):
-        logger.info(f'Using tokenizer from: \"{path}\"')
+        logger.info(f'正在使用来自：“{path}”的分词器')
     else:
-        logger.error("Could not load the model because a tokenizer in Transformers format was not found.")
+        logger.error("无法加载模型，因为找不到Transformers格式的分词器。")
         return None, None
 
     model = LlamacppHF.from_pretrained(model_name)
@@ -286,10 +286,10 @@ def ctransformers_loader(model_name):
             elif len(bin) > 0:
                 model_file = bin[0]
             else:
-                logger.error("Could not find a model for ctransformers.")
+                logger.error("找不到ctransformers的模型。")
                 return None, None
 
-    logger.info(f'ctransformers weights detected: \"{model_file}\"')
+    logger.info(f"检测到ctransformers权重：\"{model_file}\"")
     model, tokenizer = ctrans.from_pretrained(model_file)
     return model, tokenizer
 
@@ -318,8 +318,8 @@ def QuipSharp_loader(model_name):
             from lib.utils.unsafe_import import model_from_hf_path
     except:
         logger.error(
-            "\nQuIP# has not been found. It must be installed manually for now.\n"
-            "For instructions on how to do that, please consult:\n"
+            "\n未找到QuIP#。目前必须手动安装。\n"
+            "有关如何进行安装的说明，请参阅：\n"
             "https://github.com/oobabooga/text-generation-webui/pull/4803\n"
         )
         return None, None
@@ -331,7 +331,7 @@ def QuipSharp_loader(model_name):
 
     model_dir = Path(f'{shared.args.model_dir}/{model_name}')
     if not all((model_dir / file).exists() for file in ['tokenizer_config.json', 'special_tokens_map.json', 'tokenizer.model']):
-        logger.error(f"Could not load the model because the tokenizer files could not be found in the model folder. Please download the following files from the original (unquantized) model into {model_dir}: special_tokens_map.json, tokenizer.json, tokenizer.model, tokenizer_config.json.")
+        logger.error(f"无法加载模型，因为在模型文件夹中找不到分词器文件。请从原始（未量化的）模型中下载以下文件到{model_dir}：special_tokens_map.json、tokenizer.json、tokenizer.model、tokenizer_config.json。")
         return None, None
 
     model, model_str = model_from_hf_path(
@@ -347,7 +347,7 @@ def GPTQ_loader(model_name):
 
     # Monkey patch
     if shared.args.monkey_patch:
-        logger.warning("Applying the monkey patch for using LoRAs with GPTQ models. It may cause undefined behavior outside its intended scope.")
+        logger.warning("正在应用monkey patch以便于GPTQ模型使用LoRAs。这可能会在其预期范围之外引起未定义行为。")
         from modules.monkey_patch_gptq_lora import load_model_llama
 
         model, _ = load_model_llama(model_name)
@@ -384,7 +384,7 @@ def HQQ_loader(model_name):
     from hqq.core.quantize import HQQBackend, HQQLinear
     from hqq.engine.hf import HQQModelForCausalLM
 
-    logger.info(f"Loading HQQ model with backend: \"{shared.args.hqq_backend}\"")
+    logger.info(f"正在使用后端“{shared.args.hqq_backend}”加载HQQ模型")
 
     model_dir = Path(f'{shared.args.model_dir}/{model_name}')
     model = HQQModelForCausalLM.from_quantized(str(model_dir))
@@ -415,7 +415,7 @@ def get_max_memory_dict():
             suggestion -= 1000
 
         suggestion = int(round(suggestion / 1000))
-        logger.warning(f"Auto-assiging --gpu-memory {suggestion} for your GPU to try to prevent out-of-memory errors. You can manually set other values.")
+        logger.warning(f"正在自动分配--gpu-memory {suggestion}给您的GPU，以尝试防止内存溢出错误。您也可以手动设置其他值。")
         max_memory[0] = f'{suggestion}GiB'
         max_memory['cpu'] = f'{max_cpu_memory}GiB' if not re.match('.*ib$', max_cpu_memory.lower()) else max_cpu_memory
 

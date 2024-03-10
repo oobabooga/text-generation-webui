@@ -210,10 +210,10 @@ def generate_chat_prompt(user_input, state, **kwargs):
                 prompt = make_prompt(messages)
                 encoded_length = get_encoded_length(prompt)
                 if encoded_length > max_length:
-                    logger.error(f"Failed to build the chat prompt. The input is too long for the available context length.\n\nTruncation length: {state['truncation_length']}\nmax_new_tokens: {state['max_new_tokens']} (is it too high?)\nAvailable context length: {max_length}\n")
+                    logger.error(f"无法构建聊天提示词。 输入对于可用上下文长度太长。\n\n截断长度：{state['truncation_length']}\n最大新生成token数：{state['max_new_tokens']}（有可能它太高了）\n可用上下文长度：{max_length}\n")
                     raise ValueError
                 else:
-                    logger.warning(f"The input has been truncated. Context length: {state['truncation_length']}, max_new_tokens: {state['max_new_tokens']}, available context length: {max_length}.")
+                    logger.warning(f"输入已被截断。上下文长度：{state['truncation_length']}, 最大新生成token数：{state['max_new_tokens']}, 可用上下文长度：{max_length}。")
                     break
 
             prompt = make_prompt(messages)
@@ -300,7 +300,7 @@ def chatbot_wrapper(text, state, regenerate=False, _continue=False, loading_mess
                 }
 
     if shared.model_name == 'None' or shared.model is None:
-        raise ValueError("No model is loaded! Select one in the Model tab.")
+        raise ValueError("你还没有加载模型！请在模型选项卡中选择一个。")
 
     # Generate the prompt
     kwargs = {
@@ -347,7 +347,7 @@ def impersonate_wrapper(text, state):
     static_output = chat_html_wrapper(state['history'], state['name1'], state['name2'], state['mode'], state['chat_style'], state['character_menu'])
 
     if shared.model_name == 'None' or shared.model is None:
-        logger.error("No model is loaded! Select one in the Model tab.")
+        logger.error("你还没有加载模型！请在模型选项卡中选择一个。")
         yield '', static_output
         return
 
@@ -376,7 +376,7 @@ def generate_chat_reply(text, state, regenerate=False, _continue=False, loading_
 
 def character_is_loaded(state, raise_exception=False):
     if state['mode'] in ['chat', 'chat-instruct'] and state['name2'] == '':
-        logger.error('It looks like no character is loaded. Please load one under Parameters > Character.')
+        logger.error('看起来你还没有加载角色卡。请在参数 > 角色下加载一个。')
         if raise_exception:
             raise ValueError
 
@@ -501,11 +501,11 @@ def rename_history(old_id, new_id, character, mode):
     old_p = get_history_file_path(old_id, character, mode)
     new_p = get_history_file_path(new_id, character, mode)
     if new_p.parent != old_p.parent:
-        logger.error(f"The following path is not allowed: \"{new_p}\".")
+        logger.error(f"以下路径不被允许：\"{new_p}\"。")
     elif new_p == old_p:
-        logger.info("The provided path is identical to the old one.")
+        logger.info("提供的路径与旧路径相同。")
     else:
-        logger.info(f"Renaming \"{old_p}\" to \"{new_p}\"")
+        logger.info(f"已重命名 \"{old_p}\" 为 \"{new_p}\"")
         old_p.rename(new_p)
 
 
@@ -522,13 +522,13 @@ def find_all_histories(state):
         old_p = Path(f'logs/{character}_persistent.json')
         new_p = Path(f'logs/persistent_{character}.json')
         if old_p.exists():
-            logger.warning(f"Renaming \"{old_p}\" to \"{new_p}\"")
+            logger.warning(f"正在重命名 \"{old_p}\" 为 \"{new_p}\"")
             old_p.rename(new_p)
 
         if new_p.exists():
             unique_id = datetime.now().strftime('%Y%m%d-%H-%M-%S')
             p = get_history_file_path(unique_id, character, state['mode'])
-            logger.warning(f"Moving \"{new_p}\" to \"{p}\"")
+            logger.warning(f"正在移动 \"{new_p}\" 到 \"{p}\"")
             p.parent.mkdir(exist_ok=True)
             new_p.rename(p)
 
@@ -660,7 +660,7 @@ def load_character(character, name1, name2):
             break
 
     if filepath is None or not filepath.exists():
-        logger.error(f"Could not find the character \"{character}\" inside characters/. No character has been loaded.")
+        logger.error(f"无法在characters文件夹中找到角色\"{character}\"。未加载任何角色。")
         raise ValueError
 
     file_contents = open(filepath, 'r', encoding='utf-8').read()
@@ -751,7 +751,7 @@ def upload_character(file, img, tavern=False):
     if img is not None:
         img.save(Path(f'characters/{outfile_name}.png'))
 
-    logger.info(f'New character saved to "characters/{outfile_name}.yaml".')
+    logger.info(f'新角色已保存到 "characters/{outfile_name}.yaml"。')
     return gr.update(value=outfile_name, choices=get_available_characters())
 
 
@@ -777,7 +777,7 @@ def upload_tavern_character(img, _json):
 
 def check_tavern_character(img):
     if "chara" not in img.info:
-        return "Not a TavernAI card", None, None, gr.update(interactive=False)
+        return "这不是一个TavernAI角色卡", None, None, gr.update(interactive=False)
 
     decoded_string = base64.b64decode(img.info['chara']).replace(b'\\r\\n', b'\\n')
     _json = json.loads(decoded_string)
@@ -798,7 +798,7 @@ def upload_your_profile_picture(img):
     else:
         img = make_thumbnail(img)
         img.save(Path(f'{cache_folder}/pfp_me.png'))
-        logger.info(f'Profile picture saved to "{cache_folder}/pfp_me.png"')
+        logger.info(f'头像已保存到 "{cache_folder}/pfp_me.png"')
 
 
 def generate_character_yaml(name, greeting, context):
@@ -822,7 +822,7 @@ def generate_instruction_template_yaml(instruction_template):
 
 def save_character(name, greeting, context, picture, filename):
     if filename == "":
-        logger.error("The filename is empty, so the character will not be saved.")
+        logger.error("文件名为空，因此角色将不会被保存。")
         return
 
     data = generate_character_yaml(name, greeting, context)

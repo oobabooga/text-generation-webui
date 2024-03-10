@@ -10,19 +10,19 @@ global_scores = None
 
 def get_next_logits(prompt, state, use_samplers, previous, top_logits=25, return_dict=False):
     if shared.model is None:
-        logger.error("No model is loaded! Select one in the Model tab.")
-        return 'Error: No model is loaded1 Select one in the Model tab.', previous
+        logger.error("未加载模型！请在“模型”选项卡中选择一个。")
+        return '错误：未加载模型！请在“模型”选项卡中选择一个。', previous
 
     is_non_hf_exllamav2 = shared.model.__class__.__name__ == 'Exllamav2Model'
     is_non_hf_llamacpp = shared.model.__class__.__name__ == 'LlamaCppModel'
 
     if use_samplers:
         if any([is_non_hf_exllamav2, is_non_hf_llamacpp]):
-            logger.error("Sampler hijacking is not supported non-Huggingface loaders.")
+            logger.error("采样器劫持不支持非Huggingface加载器。")
             # sampling is all done in c for exllama, so it is really hard to hijack
             # it should be possible to hijack llamacpp sampler by hijacking all their sampling methods,
             # but it is not implemented yet
-            return 'Error: Sampler hijacking is not supported non-Huggingface loaders. Please disable the "Use samplers" option.', previous
+            return '错误：采样器劫持不支持非Huggingface加载器。请禁用“使用采样器”选项。', previous
 
         state['max_new_tokens'] = 1
         state['auto_max_new_tokens'] = False

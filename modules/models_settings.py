@@ -245,7 +245,7 @@ def save_model_settings(model, state):
     Save the settings for this model to models/config-user.yaml
     '''
     if model == 'None':
-        yield ("Not saving the settings because no model is selected in the menu.")
+        yield ("不保存设置，因为菜单中没有选择模型。")
         return
 
     user_config = shared.load_user_config()
@@ -264,7 +264,7 @@ def save_model_settings(model, state):
     with open(p, 'w') as f:
         f.write(output)
 
-    yield (f"Settings for `{model}` saved to `{p}`.")
+    yield (f"已将`{model}`的设置保存到`{p}`。")
 
 
 def save_instruction_template(model, template):
@@ -272,7 +272,7 @@ def save_instruction_template(model, template):
     Similar to the function above, but it saves only the instruction template.
     '''
     if model == 'None':
-        yield ("Not saving the template because no model is selected in the menu.")
+        yield ("不保存模板，因为菜单中没有选择模型。")
         return
 
     user_config = shared.load_user_config()
@@ -293,6 +293,6 @@ def save_instruction_template(model, template):
         f.write(output)
 
     if template == 'None':
-        yield (f"Instruction template for `{model}` unset in `{p}`, as the value for template was `{template}`.")
+        yield (f"因为模板的值是`{template}`，所以已在`{p}`中取消设置`{model}`的指令模板。")
     else:
-        yield (f"Instruction template for `{model}` saved to `{p}` as `{template}`.")
+        yield (f"已将`{model}`的指令模板设置为`{template}`并保存到`{p}`。")

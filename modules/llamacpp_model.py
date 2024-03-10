@@ -74,7 +74,7 @@ class LlamaCppModel:
                 cache_capacity = int(shared.args.cache_capacity)
 
         if cache_capacity > 0:
-            logger.info("Cache capacity is " + str(cache_capacity) + " bytes")
+            logger.info("缓存容量为 " + str(cache_capacity) + " 字节")
 
         if shared.args.tensor_split is None or shared.args.tensor_split.strip() == '':
             tensor_split_list = None

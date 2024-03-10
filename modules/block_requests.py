@@ -31,7 +31,7 @@ class OpenMonkeyPatch:
 
 
 def my_get(url, **kwargs):
-    logger.info('Unwanted HTTP request redirected to localhost :)')
+    logger.info('不需要的HTTP请求被重定向到localhost :)')
     kwargs.setdefault('allow_redirects', True)
     return requests.api.request('get', 'http://127.0.0.1/', **kwargs)
 

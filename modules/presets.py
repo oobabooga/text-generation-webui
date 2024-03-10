@@ -63,7 +63,7 @@ def load_preset(name):
             for k in preset:
                 generate_params[k] = preset[k]
         else:
-            logger.error(f"The preset \"{name}\" does not exist under \"{path}\". Using the default parameters.")
+            logger.error(f"预设“{name}”在“{path}”下不存在。使用默认参数。")
 
     return generate_params
 
