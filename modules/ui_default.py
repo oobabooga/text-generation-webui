@@ -15,49 +15,49 @@ outputs = ('output_textbox', 'html-default')
 
 def create_ui():
     mu = shared.args.multi_user
-    with gr.Tab('Default', elem_id='default-tab'):
+    with gr.Tab('默认', elem_id='default-tab'):
         shared.gradio['last_input-default'] = gr.State('')
         with gr.Row():
             with gr.Column():
                 with gr.Row():
-                    shared.gradio['textbox-default'] = gr.Textbox(value='', lines=27, label='Input', elem_classes=['textbox_default', 'add_scrollbar'])
+                    shared.gradio['textbox-default'] = gr.Textbox(value='', lines=27, label='输入', elem_classes=['textbox_default', 'add_scrollbar'])
                     shared.gradio['token-counter-default'] = gr.HTML(value="<span>0</span>", elem_classes=["token-counter", "default-token-counter"])
 
                 with gr.Row():
-                    shared.gradio['Generate-default'] = gr.Button('Generate', variant='primary')
-                    shared.gradio['Stop-default'] = gr.Button('Stop', elem_id='stop')
-                    shared.gradio['Continue-default'] = gr.Button('Continue')
+                    shared.gradio['Generate-default'] = gr.Button('生成', variant='primary')
+                    shared.gradio['Stop-default'] = gr.Button('停止', elem_id='stop')
+                    shared.gradio['Continue-default'] = gr.Button('继续')
 
                 with gr.Row():
-                    shared.gradio['prompt_menu-default'] = gr.Dropdown(choices=utils.get_available_prompts(), value='None', label='Prompt', elem_classes='slim-dropdown')
-                    ui.create_refresh_button(shared.gradio['prompt_menu-default'], lambda: None, lambda: {'choices': utils.get_available_prompts()}, 'refresh-button', interactive=not mu)
-                    shared.gradio['save_prompt-default'] = gr.Button('💾', elem_classes='refresh-button', interactive=not mu)
-                    shared.gradio['delete_prompt-default'] = gr.Button('🗑️', elem_classes='refresh-button', interactive=not mu)
+                    shared.gradio['prompt_menu-default'] = gr.Dropdown(choices=utils.get_available_prompts(), value='None', label='提示', elem_classes='slim-dropdown')
+                    ui.create_refresh_button(shared.gradio['prompt_menu-default'], lambda: None, lambda: {'choices': utils.get_available_prompts()}, '刷新按钮', interactive=not mu)
+                    shared.gradio['save_prompt-default'] = gr.Button('💾', elem_classes='刷新按钮', interactive=not mu)
+                    shared.gradio['delete_prompt-default'] = gr.Button('🗑️', elem_classes='刷新按钮', interactive=not mu)
 
             with gr.Column():
-                with gr.Tab('Raw'):
-                    shared.gradio['output_textbox'] = gr.Textbox(lines=27, label='Output', elem_id='textbox-default', elem_classes=['textbox_default_output', 'add_scrollbar'])
+                with gr.Tab('原始'):
+                    shared.gradio['output_textbox'] = gr.Textbox(lines=27, label='输出', elem_id='textbox-default', elem_classes=['textbox_default_output', 'add_scrollbar'])
 
                 with gr.Tab('Markdown'):
-                    shared.gradio['markdown_render-default'] = gr.Button('Render')
+                    shared.gradio['markdown_render-default'] = gr.Button('渲染')
                     shared.gradio['markdown-default'] = gr.Markdown()
 
                 with gr.Tab('HTML'):
                     shared.gradio['html-default'] = gr.HTML()
 
-                with gr.Tab('Logits'):
+                with gr.Tab('逻辑值'):
                     with gr.Row():
                         with gr.Column(scale=10):
-                            shared.gradio['get_logits-default'] = gr.Button('Get next token probabilities')
+                            shared.gradio['get_logits-default'] = gr.Button('获取下一个token概率')
                         with gr.Column(scale=1):
-                            shared.gradio['use_samplers-default'] = gr.Checkbox(label='Use samplers', value=True, elem_classes=['no-background'])
+                            shared.gradio['use_samplers-default'] = gr.Checkbox(label='使用采样器', value=True, elem_classes=['no-background'])
 
                     with gr.Row():
-                        shared.gradio['logits-default'] = gr.Textbox(lines=23, label='Output', elem_classes=['textbox_logits', 'add_scrollbar'])
-                        shared.gradio['logits-default-previous'] = gr.Textbox(lines=23, label='Previous output', elem_classes=['textbox_logits', 'add_scrollbar'])
+                        shared.gradio['logits-default'] = gr.Textbox(lines=23, label='输出', elem_classes=['textbox_logits', 'add_scrollbar'])
+                        shared.gradio['logits-default-previous'] = gr.Textbox(lines=23, label='先前输出', elem_classes=['textbox_logits', 'add_scrollbar'])
 
                 with gr.Tab('Tokens'):
-                    shared.gradio['get_tokens-default'] = gr.Button('Get token IDs for the input')
+                    shared.gradio['get_tokens-default'] = gr.Button('获取输入的token ID')
                     shared.gradio['tokens-default'] = gr.Textbox(lines=23, label='Tokens', elem_classes=['textbox_logits', 'add_scrollbar', 'monospace'])
 
 

@@ -7,23 +7,23 @@ from modules.utils import gradio
 
 def create_ui():
     mu = shared.args.multi_user
-    with gr.Tab("Session", elem_id="session-tab"):
+    with gr.Tab("会话", elem_id="session-tab"):
         with gr.Row():
             with gr.Column():
-                shared.gradio['reset_interface'] = gr.Button("Apply flags/extensions and restart", interactive=not mu)
+                shared.gradio['reset_interface'] = gr.Button("应用命令行参数/扩展并重启", interactive=not mu)
                 with gr.Row():
-                    shared.gradio['toggle_dark_mode'] = gr.Button('Toggle 💡')
-                    shared.gradio['save_settings'] = gr.Button('Save UI defaults to settings.yaml', interactive=not mu)
+                    shared.gradio['toggle_dark_mode'] = gr.Button('切换 💡')
+                    shared.gradio['save_settings'] = gr.Button('将UI默认设置保存到settings.yaml', interactive=not mu)
 
                 with gr.Row():
                     with gr.Column():
-                        shared.gradio['extensions_menu'] = gr.CheckboxGroup(choices=utils.get_available_extensions(), value=shared.args.extensions, label="Available extensions", info='Note that some of these extensions may require manually installing Python requirements through the command: pip install -r extensions/extension_name/requirements.txt', elem_classes='checkboxgroup-table')
+                        shared.gradio['extensions_menu'] = gr.CheckboxGroup(choices=utils.get_available_extensions(), value=shared.args.extensions, label="可用扩展", info='注意，一些扩展可能需要通过命令手动安装Python需求：pip install -r extensions/extension_name/requirements.txt', elem_classes='checkboxgroup-table')
 
                     with gr.Column():
-                        shared.gradio['bool_menu'] = gr.CheckboxGroup(choices=get_boolean_arguments(), value=get_boolean_arguments(active=True), label="Boolean command-line flags", elem_classes='checkboxgroup-table')
+                        shared.gradio['bool_menu'] = gr.CheckboxGroup(choices=get_boolean_arguments(), value=get_boolean_arguments(active=True), label="布尔命令行标志", elem_classes='checkboxgroup-table')
 
             with gr.Column():
-                extension_name = gr.Textbox(lines=1, label='Install or update an extension', info='Enter the GitHub URL below and press Enter. For a list of extensions, see: https://github.com/oobabooga/text-generation-webui-extensions ⚠️  WARNING ⚠️ : extensions can execute arbitrary code. Make sure to inspect their source code before activating them.', interactive=not mu)
+                extension_name = gr.Textbox(lines=1, label='安装或更新扩展', info='在下面输入GitHub URL并按Enter。扩展列表请见：https://github.com/oobabooga/text-generation-webui-extensions ⚠️  警告 ⚠️：扩展可以执行任意代码。在激活它们之前，请确保检查它们的源代码。', interactive=not mu)
                 extension_status = gr.Markdown()
 
         shared.gradio['theme_state'] = gr.Textbox(visible=False, value='dark' if shared.settings['dark_theme'] else 'light')
@@ -32,7 +32,7 @@ def create_ui():
         # Reset interface event
         shared.gradio['reset_interface'].click(
             set_interface_arguments, gradio('extensions_menu', 'bool_menu'), None).then(
-            lambda: None, None, None, _js='() => {document.body.innerHTML=\'<h1 style="font-family:monospace;padding-top:20%;margin:0;height:100vh;color:lightgray;text-align:center;background:var(--body-background-fill)">Reloading...</h1>\'; setTimeout(function(){location.reload()},2500); return []}')
+            lambda: None, None, None, _js='() => {document.body.innerHTML=\'<h1 style="font-family:monospace;padding-top:20%;margin:0;height:100vh;color:lightgray;text-align:center;background:var(--body-background-fill)">重新加载中...</h1>\'; setTimeout(function(){location.reload()},2500); return []}')
 
         shared.gradio['toggle_dark_mode'].click(
             lambda: None, None, None, _js='() => {document.getElementsByTagName("body")[0].classList.toggle("dark")}').then(

@@ -9,41 +9,41 @@ def create_ui():
 
     # Text file saver
     with gr.Group(visible=False, elem_classes='file-saver') as shared.gradio['file_saver']:
-        shared.gradio['save_filename'] = gr.Textbox(lines=1, label='File name')
-        shared.gradio['save_root'] = gr.Textbox(lines=1, label='File folder', info='For reference. Unchangeable.', interactive=False)
-        shared.gradio['save_contents'] = gr.Textbox(lines=10, label='File contents')
+        shared.gradio['save_filename'] = gr.Textbox(lines=1, label='文件名')
+        shared.gradio['save_root'] = gr.Textbox(lines=1, label='文件夹', info='仅供参考。不可更改。', interactive=False)
+        shared.gradio['save_contents'] = gr.Textbox(lines=10, label='文件内容')
         with gr.Row():
-            shared.gradio['save_cancel'] = gr.Button('Cancel', elem_classes="small-button")
-            shared.gradio['save_confirm'] = gr.Button('Save', elem_classes="small-button", variant='primary', interactive=not mu)
+            shared.gradio['save_cancel'] = gr.Button('取消', elem_classes="small-button")
+            shared.gradio['save_confirm'] = gr.Button('保存', elem_classes="small-button", variant='primary', interactive=not mu)
 
     # Text file deleter
     with gr.Group(visible=False, elem_classes='file-saver') as shared.gradio['file_deleter']:
-        shared.gradio['delete_filename'] = gr.Textbox(lines=1, label='File name')
-        shared.gradio['delete_root'] = gr.Textbox(lines=1, label='File folder', info='For reference. Unchangeable.', interactive=False)
+        shared.gradio['delete_filename'] = gr.Textbox(lines=1, label='文件名')
+        shared.gradio['delete_root'] = gr.Textbox(lines=1, label='文件夹', info='仅供参考。不可更改。', interactive=False)
         with gr.Row():
-            shared.gradio['delete_cancel'] = gr.Button('Cancel', elem_classes="small-button")
-            shared.gradio['delete_confirm'] = gr.Button('Delete', elem_classes="small-button", variant='stop', interactive=not mu)
+            shared.gradio['delete_cancel'] = gr.Button('取消', elem_classes="small-button")
+            shared.gradio['delete_confirm'] = gr.Button('删除', elem_classes="small-button", variant='stop', interactive=not mu)
 
     # Character saver/deleter
     with gr.Group(visible=False, elem_classes='file-saver') as shared.gradio['character_saver']:
-        shared.gradio['save_character_filename'] = gr.Textbox(lines=1, label='File name', info='The character will be saved to your characters/ folder with this base filename.')
+        shared.gradio['save_character_filename'] = gr.Textbox(lines=1, label='文件名', info='角色将被保存到您的characters文件夹中，使用这个基础文件名。')
         with gr.Row():
-            shared.gradio['save_character_cancel'] = gr.Button('Cancel', elem_classes="small-button")
-            shared.gradio['save_character_confirm'] = gr.Button('Save', elem_classes="small-button", variant='primary', interactive=not mu)
+            shared.gradio['save_character_cancel'] = gr.Button('取消', elem_classes="small-button")
+            shared.gradio['save_character_confirm'] = gr.Button('保存', elem_classes="small-button", variant='primary', interactive=not mu)
 
     with gr.Group(visible=False, elem_classes='file-saver') as shared.gradio['character_deleter']:
-        gr.Markdown('Confirm the character deletion?')
+        gr.Markdown('确认删除角色？')
         with gr.Row():
-            shared.gradio['delete_character_cancel'] = gr.Button('Cancel', elem_classes="small-button")
-            shared.gradio['delete_character_confirm'] = gr.Button('Delete', elem_classes="small-button", variant='stop', interactive=not mu)
+            shared.gradio['delete_character_cancel'] = gr.Button('取消', elem_classes="small-button")
+            shared.gradio['delete_character_confirm'] = gr.Button('删除', elem_classes="small-button", variant='stop', interactive=not mu)
 
     # Preset saver
     with gr.Group(visible=False, elem_classes='file-saver') as shared.gradio['preset_saver']:
-        shared.gradio['save_preset_filename'] = gr.Textbox(lines=1, label='File name', info='The preset will be saved to your presets/ folder with this base filename.')
-        shared.gradio['save_preset_contents'] = gr.Textbox(lines=10, label='File contents')
+        shared.gradio['save_preset_filename'] = gr.Textbox(lines=1, label='文件名', info='预设将被保存到您的presets文件夹中，使用这个基础文件名。')
+        shared.gradio['save_preset_contents'] = gr.Textbox(lines=10, label='文件内容')
         with gr.Row():
-            shared.gradio['save_preset_cancel'] = gr.Button('Cancel', elem_classes="small-button")
-            shared.gradio['save_preset_confirm'] = gr.Button('Save', elem_classes="small-button", variant='primary', interactive=not mu)
+            shared.gradio['save_preset_cancel'] = gr.Button('取消', elem_classes="small-button")
+            shared.gradio['save_preset_confirm'] = gr.Button('保存', elem_classes="small-button", variant='primary', interactive=not mu)
 
 
 def create_event_handlers():

@@ -53,131 +53,131 @@ def create_ui():
     else:
         default_cpu_mem = 0
 
-    with gr.Tab("Model", elem_id="model-tab"):
+    with gr.Tab("模型", elem_id="model-tab"):
         with gr.Row():
             with gr.Column():
                 with gr.Row():
                     with gr.Column():
                         with gr.Row():
-                            shared.gradio['model_menu'] = gr.Dropdown(choices=utils.get_available_models(), value=lambda: shared.model_name, label='Model', elem_classes='slim-dropdown', interactive=not mu)
-                            ui.create_refresh_button(shared.gradio['model_menu'], lambda: None, lambda: {'choices': utils.get_available_models()}, 'refresh-button', interactive=not mu)
-                            shared.gradio['load_model'] = gr.Button("Load", visible=not shared.settings['autoload_model'], elem_classes='refresh-button', interactive=not mu)
-                            shared.gradio['unload_model'] = gr.Button("Unload", elem_classes='refresh-button', interactive=not mu)
-                            shared.gradio['reload_model'] = gr.Button("Reload", elem_classes='refresh-button', interactive=not mu)
-                            shared.gradio['save_model_settings'] = gr.Button("Save settings", elem_classes='refresh-button', interactive=not mu)
+                            shared.gradio['model_menu'] = gr.Dropdown(choices=utils.get_available_models(), value=lambda: shared.model_name, label='模型', elem_classes='slim-dropdown', interactive=not mu)
+                            ui.create_refresh_button(shared.gradio['model_menu'], lambda: None, lambda: {'choices': utils.get_available_models()}, '刷新按钮', interactive=not mu)
+                            shared.gradio['load_model'] = gr.Button("加载", visible=not shared.settings['autoload_model'], elem_classes='刷新按钮', interactive=not mu)
+                            shared.gradio['unload_model'] = gr.Button("卸载", elem_classes='刷新按钮', interactive=not mu)
+                            shared.gradio['reload_model'] = gr.Button("重载", elem_classes='刷新按钮', interactive=not mu)
+                            shared.gradio['save_model_settings'] = gr.Button("保存设置", elem_classes='刷新按钮', interactive=not mu)
 
                     with gr.Column():
                         with gr.Row():
                             shared.gradio['lora_menu'] = gr.Dropdown(multiselect=True, choices=utils.get_available_loras(), value=shared.lora_names, label='LoRA(s)', elem_classes='slim-dropdown', interactive=not mu)
-                            ui.create_refresh_button(shared.gradio['lora_menu'], lambda: None, lambda: {'choices': utils.get_available_loras(), 'value': shared.lora_names}, 'refresh-button', interactive=not mu)
-                            shared.gradio['lora_menu_apply'] = gr.Button(value='Apply LoRAs', elem_classes='refresh-button', interactive=not mu)
+                            ui.create_refresh_button(shared.gradio['lora_menu'], lambda: None, lambda: {'choices': utils.get_available_loras(), 'value': shared.lora_names}, '刷新按钮', interactive=not mu)
+                            shared.gradio['lora_menu_apply'] = gr.Button(value='应用LoRAs', elem_classes='刷新按钮', interactive=not mu)
 
         with gr.Row():
             with gr.Column():
-                shared.gradio['loader'] = gr.Dropdown(label="Model loader", choices=loaders.loaders_and_params.keys(), value=None)
+                shared.gradio['loader'] = gr.Dropdown(label="模型加载器", choices=loaders.loaders_and_params.keys(), value=None)
                 with gr.Box():
                     with gr.Row():
                         with gr.Column():
                             with gr.Blocks():
                                 for i in range(len(total_mem)):
-                                    shared.gradio[f'gpu_memory_{i}'] = gr.Slider(label=f"gpu-memory in MiB for device :{i}", maximum=total_mem[i], value=default_gpu_mem[i])
+                                    shared.gradio[f'gpu_memory_{i}'] = gr.Slider(label=f"GPU内存（MiB）设备：{i}", maximum=total_mem[i], value=default_gpu_mem[i])
 
-                                shared.gradio['cpu_memory'] = gr.Slider(label="cpu-memory in MiB", maximum=total_cpu_mem, value=default_cpu_mem)
+                                shared.gradio['cpu_memory'] = gr.Slider(label="CPU内存（MiB）", maximum=total_cpu_mem, value=default_cpu_mem)
 
                             with gr.Blocks():
-                                shared.gradio['transformers_info'] = gr.Markdown('load-in-4bit params:')
-                                shared.gradio['compute_dtype'] = gr.Dropdown(label="compute_dtype", choices=["bfloat16", "float16", "float32"], value=shared.args.compute_dtype)
-                                shared.gradio['quant_type'] = gr.Dropdown(label="quant_type", choices=["nf4", "fp4"], value=shared.args.quant_type)
+                                shared.gradio['transformers_info'] = gr.Markdown('加载4比特参数：')
+                                shared.gradio['compute_dtype'] = gr.Dropdown(label="计算数据类型", choices=["bfloat16", "float16", "float32"], value=shared.args.compute_dtype)
+                                shared.gradio['quant_type'] = gr.Dropdown(label="量化类型", choices=["nf4", "fp4"], value=shared.args.quant_type)
 
-                            shared.gradio['hqq_backend'] = gr.Dropdown(label="hqq_backend", choices=["PYTORCH", "PYTORCH_COMPILE", "ATEN"], value=shared.args.hqq_backend)
-                            shared.gradio['n_gpu_layers'] = gr.Slider(label="n-gpu-layers", minimum=0, maximum=256, value=shared.args.n_gpu_layers)
-                            shared.gradio['n_ctx'] = gr.Slider(minimum=0, maximum=shared.settings['truncation_length_max'], step=256, label="n_ctx", value=shared.args.n_ctx, info='Context length. Try lowering this if you run out of memory while loading the model.')
-                            shared.gradio['tensor_split'] = gr.Textbox(label='tensor_split', info='List of proportions to split the model across multiple GPUs. Example: 18,17')
-                            shared.gradio['n_batch'] = gr.Slider(label="n_batch", minimum=1, maximum=2048, step=1, value=shared.args.n_batch)
-                            shared.gradio['threads'] = gr.Slider(label="threads", minimum=0, step=1, maximum=32, value=shared.args.threads)
-                            shared.gradio['threads_batch'] = gr.Slider(label="threads_batch", minimum=0, step=1, maximum=32, value=shared.args.threads_batch)
-                            shared.gradio['wbits'] = gr.Dropdown(label="wbits", choices=["None", 1, 2, 3, 4, 8], value=shared.args.wbits if shared.args.wbits > 0 else "None")
-                            shared.gradio['groupsize'] = gr.Dropdown(label="groupsize", choices=["None", 32, 64, 128, 1024], value=shared.args.groupsize if shared.args.groupsize > 0 else "None")
-                            shared.gradio['model_type'] = gr.Dropdown(label="model_type", choices=["None"], value=shared.args.model_type or "None")
-                            shared.gradio['pre_layer'] = gr.Slider(label="pre_layer", minimum=0, maximum=100, value=shared.args.pre_layer[0] if shared.args.pre_layer is not None else 0)
-                            shared.gradio['gpu_split'] = gr.Textbox(label='gpu-split', info='Comma-separated list of VRAM (in GB) to use per GPU. Example: 20,7,7')
-                            shared.gradio['max_seq_len'] = gr.Slider(label='max_seq_len', minimum=0, maximum=shared.settings['truncation_length_max'], step=256, info='Context length. Try lowering this if you run out of memory while loading the model.', value=shared.args.max_seq_len)
+                            shared.gradio['hqq_backend'] = gr.Dropdown(label="hqq后端", choices=["PYTORCH", "PYTORCH_COMPILE", "ATEN"], value=shared.args.hqq_backend)
+                            shared.gradio['n_gpu_layers'] = gr.Slider(label="GPU层数", minimum=0, maximum=256, value=shared.args.n_gpu_layers)
+                            shared.gradio['n_ctx'] = gr.Slider(minimum=0, maximum=shared.settings['truncation_length_max'], step=256, label="n_ctx", value=shared.args.n_ctx, info='上下文长度。如果在加载模型时内存不足，请尝试降低此值。')
+                            shared.gradio['tensor_split'] = gr.Textbox(label='张量分割', info='将模型分割到多个GPU的比例列表。示例：18,17')
+                            shared.gradio['n_batch'] = gr.Slider(label="批处理大小", minimum=1, maximum=2048, step=1, value=shared.args.n_batch)
+                            shared.gradio['threads'] = gr.Slider(label="线程", minimum=0, step=1, maximum=32, value=shared.args.threads)
+                            shared.gradio['threads_batch'] = gr.Slider(label="批处理线程", minimum=0, step=1, maximum=32, value=shared.args.threads_batch)
+                            shared.gradio['wbits'] = gr.Dropdown(label="权重位", choices=["None", 1, 2, 3, 4, 8], value=shared.args.wbits if shared.args.wbits > 0 else "None")
+                            shared.gradio['groupsize'] = gr.Dropdown(label="组大小", choices=["None", 32, 64, 128, 1024], value=shared.args.groupsize if shared.args.groupsize > 0 else "None")
+                            shared.gradio['model_type'] = gr.Dropdown(label="模型类型", choices=["None"], value=shared.args.model_type or "None")
+                            shared.gradio['pre_layer'] = gr.Slider(label="预处理层", minimum=0, maximum=100, value=shared.args.pre_layer[0] if shared.args.pre_layer is not None else 0)
+                            shared.gradio['gpu_split'] = gr.Textbox(label='GPU分割', info='以逗号分隔的每个GPU使用的VRAM（以GB为单位）列表。示例：20,7,7')
+                            shared.gradio['max_seq_len'] = gr.Slider(label='最大序列长度', minimum=0, maximum=shared.settings['truncation_length_max'], step=256, info='上下文长度。如果在加载模型时内存不足，请尝试降低此值。', value=shared.args.max_seq_len)
                             with gr.Blocks():
-                                shared.gradio['alpha_value'] = gr.Slider(label='alpha_value', minimum=1, maximum=8, step=0.05, info='Positional embeddings alpha factor for NTK RoPE scaling. Recommended values (NTKv1): 1.75 for 1.5x context, 2.5 for 2x context. Use either this or compress_pos_emb, not both.', value=shared.args.alpha_value)
-                                shared.gradio['rope_freq_base'] = gr.Slider(label='rope_freq_base', minimum=0, maximum=1000000, step=1000, info='If greater than 0, will be used instead of alpha_value. Those two are related by rope_freq_base = 10000 * alpha_value ^ (64 / 63)', value=shared.args.rope_freq_base)
-                                shared.gradio['compress_pos_emb'] = gr.Slider(label='compress_pos_emb', minimum=1, maximum=8, step=1, info='Positional embeddings compression factor. Should be set to (context length) / (model\'s original context length). Equal to 1/rope_freq_scale.', value=shared.args.compress_pos_emb)
+                                shared.gradio['alpha_value'] = gr.Slider(label='alpha值', minimum=1, maximum=8, step=0.05, info='NTK RoPE缩放的位置嵌入alpha因子。推荐值（NTKv1）：1.5倍上下文长度用1.75，2倍上下文长度用2.5。使用此项或压缩位置嵌入，不要同时使用。', value=shared.args.alpha_value)
+                                shared.gradio['rope_freq_base'] = gr.Slider(label='rope频率基数', minimum=0, maximum=1000000, step=1000, info='如果大于0，将代替alpha值使用。这两者之间的关系是rope_freq_base = 10000 * alpha值 ^ (64 / 63)', value=shared.args.rope_freq_base)
+                                shared.gradio['compress_pos_emb'] = gr.Slider(label='压缩位置嵌入', minimum=1, maximum=8, step=1, info='位置嵌入的压缩因子。应设置为（上下文长度）/（模型原始上下文长度）。等于1/rope_freq_scale。', value=shared.args.compress_pos_emb)
 
-                            shared.gradio['autogptq_info'] = gr.Markdown('ExLlamav2_HF is recommended over AutoGPTQ for models derived from Llama.')
-                            shared.gradio['quipsharp_info'] = gr.Markdown('QuIP# has to be installed manually at the moment.')
+                            shared.gradio['autogptq_info'] = gr.Markdown('推荐使用ExLlamav2_HF而非AutoGPTQ，适用于从Llama衍生的模型。')
+                            shared.gradio['quipsharp_info'] = gr.Markdown('QuIP#目前需要手动安装。')
 
                         with gr.Column():
-                            shared.gradio['load_in_8bit'] = gr.Checkbox(label="load-in-8bit", value=shared.args.load_in_8bit)
-                            shared.gradio['load_in_4bit'] = gr.Checkbox(label="load-in-4bit", value=shared.args.load_in_4bit)
-                            shared.gradio['use_double_quant'] = gr.Checkbox(label="use_double_quant", value=shared.args.use_double_quant)
-                            shared.gradio['use_flash_attention_2'] = gr.Checkbox(label="use_flash_attention_2", value=shared.args.use_flash_attention_2, info='Set use_flash_attention_2=True while loading the model.')
-                            shared.gradio['auto_devices'] = gr.Checkbox(label="auto-devices", value=shared.args.auto_devices)
-                            shared.gradio['tensorcores'] = gr.Checkbox(label="tensorcores", value=shared.args.tensorcores, info='NVIDIA only: use llama-cpp-python compiled with tensor cores support. This increases performance on RTX cards.')
-                            shared.gradio['cpu'] = gr.Checkbox(label="cpu", value=shared.args.cpu, info='llama.cpp: Use llama-cpp-python compiled without GPU acceleration. Transformers: use PyTorch in CPU mode.')
-                            shared.gradio['row_split'] = gr.Checkbox(label="row_split", value=shared.args.row_split, info='Split the model by rows across GPUs. This may improve multi-gpu performance.')
-                            shared.gradio['no_offload_kqv'] = gr.Checkbox(label="no_offload_kqv", value=shared.args.no_offload_kqv, info='Do not offload the  K, Q, V to the GPU. This saves VRAM but reduces the performance.')
-                            shared.gradio['no_mul_mat_q'] = gr.Checkbox(label="no_mul_mat_q", value=shared.args.no_mul_mat_q, info='Disable the mulmat kernels.')
-                            shared.gradio['triton'] = gr.Checkbox(label="triton", value=shared.args.triton)
-                            shared.gradio['no_inject_fused_attention'] = gr.Checkbox(label="no_inject_fused_attention", value=shared.args.no_inject_fused_attention, info='Disable fused attention. Fused attention improves inference performance but uses more VRAM. Fuses layers for AutoAWQ. Disable if running low on VRAM.')
-                            shared.gradio['no_inject_fused_mlp'] = gr.Checkbox(label="no_inject_fused_mlp", value=shared.args.no_inject_fused_mlp, info='Affects Triton only. Disable fused MLP. Fused MLP improves performance but uses more VRAM. Disable if running low on VRAM.')
-                            shared.gradio['no_use_cuda_fp16'] = gr.Checkbox(label="no_use_cuda_fp16", value=shared.args.no_use_cuda_fp16, info='This can make models faster on some systems.')
-                            shared.gradio['desc_act'] = gr.Checkbox(label="desc_act", value=shared.args.desc_act, info='\'desc_act\', \'wbits\', and \'groupsize\' are used for old models without a quantize_config.json.')
-                            shared.gradio['no_mmap'] = gr.Checkbox(label="no-mmap", value=shared.args.no_mmap)
-                            shared.gradio['mlock'] = gr.Checkbox(label="mlock", value=shared.args.mlock)
-                            shared.gradio['numa'] = gr.Checkbox(label="numa", value=shared.args.numa, info='NUMA support can help on some systems with non-uniform memory access.')
-                            shared.gradio['disk'] = gr.Checkbox(label="disk", value=shared.args.disk)
+                            shared.gradio['load_in_8bit'] = gr.Checkbox(label="加载8比特", value=shared.args.load_in_8bit)
+                            shared.gradio['load_in_4bit'] = gr.Checkbox(label="加载4比特", value=shared.args.load_in_4bit)
+                            shared.gradio['use_double_quant'] = gr.Checkbox(label="使用双重量化", value=shared.args.use_double_quant)
+                            shared.gradio['use_flash_attention_2'] = gr.Checkbox(label="使用flash_attention_2", value=shared.args.use_flash_attention_2, info='加载模型时设置use_flash_attention_2=True。')
+                            shared.gradio['auto_devices'] = gr.Checkbox(label="自动分配设备", value=shared.args.auto_devices)
+                            shared.gradio['tensorcores'] = gr.Checkbox(label="张量核心", value=shared.args.tensorcores, info='仅限NVIDIA：使用支持张量核心的llama-cpp-python编译。这可以提高RTX卡的性能。')
+                            shared.gradio['cpu'] = gr.Checkbox(label="CPU", value=shared.args.cpu, info='llama.cpp：使用没有GPU加速的llama-cpp-python编译。Transformers：使用PyTorch的CPU模式。')
+                            shared.gradio['row_split'] = gr.Checkbox(label="行分割", value=shared.args.row_split, info='在GPU之间按行分割模型。这可能会提高多GPU性能。')
+                            shared.gradio['no_offload_kqv'] = gr.Checkbox(label="不卸载KQV", value=shared.args.no_offload_kqv, info='不要将K、Q、V卸载到GPU。这可以节省VRAM，但会降低性能。')
+                            shared.gradio['no_mul_mat_q'] = gr.Checkbox(label="禁用mul_mat_q", value=shared.args.no_mul_mat_q, info='禁用mulmat内核。')
+                            shared.gradio['triton'] = gr.Checkbox(label="Triton", value=shared.args.triton)
+                            shared.gradio['no_inject_fused_attention'] = gr.Checkbox(label="不注入融合注意力", value=shared.args.no_inject_fused_attention, info='禁用融合注意力。融合注意力可以提高推理性能，但会使用更多的VRAM。融合AutoAWQ的层。如果VRAM不足，请禁用。')
+                            shared.gradio['no_inject_fused_mlp'] = gr.Checkbox(label="不注入融合MLP", value=shared.args.no_inject_fused_mlp, info='仅影响Triton。禁用融合MLP。融合MLP可以提高性能，但会使用更多的VRAM。如果VRAM不足，请禁用。')
+                            shared.gradio['no_use_cuda_fp16'] = gr.Checkbox(label="不使用cuda_fp16", value=shared.args.no_use_cuda_fp16, info='在某些系统上，这可以使模型更快。')
+                            shared.gradio['desc_act'] = gr.Checkbox(label="描述激活", value=shared.args.desc_act, info='\'描述激活\'、\'权重位\'和\'组大小\'用于没有quantize_config.json的旧模型。')
+                            shared.gradio['no_mmap'] = gr.Checkbox(label="不使用内存映射", value=shared.args.no_mmap)
+                            shared.gradio['mlock'] = gr.Checkbox(label="内存锁定", value=shared.args.mlock)
+                            shared.gradio['numa'] = gr.Checkbox(label="NUMA", value=shared.args.numa, info='NUMA支持可以在具有非统一内存访问的系统上提供帮助。')
+                            shared.gradio['disk'] = gr.Checkbox(label="磁盘", value=shared.args.disk)
                             shared.gradio['bf16'] = gr.Checkbox(label="bf16", value=shared.args.bf16)
-                            shared.gradio['cache_8bit'] = gr.Checkbox(label="cache_8bit", value=shared.args.cache_8bit, info='Use 8-bit cache to save VRAM.')
-                            shared.gradio['cache_4bit'] = gr.Checkbox(label="cache_4bit", value=shared.args.cache_4bit, info='Use Q4 cache to save VRAM.')
-                            shared.gradio['autosplit'] = gr.Checkbox(label="autosplit", value=shared.args.autosplit, info='Automatically split the model tensors across the available GPUs.')
-                            shared.gradio['no_flash_attn'] = gr.Checkbox(label="no_flash_attn", value=shared.args.no_flash_attn, info='Force flash-attention to not be used.')
-                            shared.gradio['cfg_cache'] = gr.Checkbox(label="cfg-cache", value=shared.args.cfg_cache, info='Necessary to use CFG with this loader.')
-                            shared.gradio['num_experts_per_token'] = gr.Number(label="Number of experts per token", value=shared.args.num_experts_per_token, info='Only applies to MoE models like Mixtral.')
+                            shared.gradio['cache_8bit'] = gr.Checkbox(label="8比特缓存", value=shared.args.cache_8bit, info='使用8比特缓存以节省VRAM。')
+                            shared.gradio['cache_4bit'] = gr.Checkbox(label="4比特缓存", value=shared.args.cache_4bit, info='使用Q4缓存以节省VRAM。')
+                            shared.gradio['autosplit'] = gr.Checkbox(label="自动分割", value=shared.args.autosplit, info='自动在可用的GPU之间分割模型张量。')
+                            shared.gradio['no_flash_attn'] = gr.Checkbox(label="不使用flash_attention", value=shared.args.no_flash_attn, info='强制不使用flash-attention。')
+                            shared.gradio['cfg_cache'] = gr.Checkbox(label="CFG缓存", value=shared.args.cfg_cache, info='使用此加载器时，使用CFG是必需的。')
+                            shared.gradio['num_experts_per_token'] = gr.Number(label="每个标记的专家数量", value=shared.args.num_experts_per_token, info='仅适用于像Mixtral这样的MoE模型。')
                             with gr.Blocks():
-                                shared.gradio['trust_remote_code'] = gr.Checkbox(label="trust-remote-code", value=shared.args.trust_remote_code, info='Set trust_remote_code=True while loading the tokenizer/model. To enable this option, start the web UI with the --trust-remote-code flag.', interactive=shared.args.trust_remote_code)
-                                shared.gradio['no_use_fast'] = gr.Checkbox(label="no_use_fast", value=shared.args.no_use_fast, info='Set use_fast=False while loading the tokenizer.')
-                                shared.gradio['logits_all'] = gr.Checkbox(label="logits_all", value=shared.args.logits_all, info='Needs to be set for perplexity evaluation to work with this loader. Otherwise, ignore it, as it makes prompt processing slower.')
+                                shared.gradio['trust_remote_code'] = gr.Checkbox(label="信任远程代码(trust-remote-code)", value=shared.args.trust_remote_code, info='加载分词器/模型时设置trust_remote_code=True。要启用此选项，请使用--trust-remote-code参数启动Web UI。', interactive=shared.args.trust_remote_code)
+                                shared.gradio['no_use_fast'] = gr.Checkbox(label="不使用快速模式", value=shared.args.no_use_fast, info='加载分词器时设置use_fast=False。')
+                                shared.gradio['logits_all'] = gr.Checkbox(label="全部逻辑", value=shared.args.logits_all, info='使用此加载器进行困惑度评估时需要设置。否则，请忽略它，因为它会使提示处理速度变慢。')
 
-                            shared.gradio['disable_exllama'] = gr.Checkbox(label="disable_exllama", value=shared.args.disable_exllama, info='Disable ExLlama kernel for GPTQ models.')
-                            shared.gradio['disable_exllamav2'] = gr.Checkbox(label="disable_exllamav2", value=shared.args.disable_exllamav2, info='Disable ExLlamav2 kernel for GPTQ models.')
-                            shared.gradio['gptq_for_llama_info'] = gr.Markdown('Legacy loader for compatibility with older GPUs. ExLlamav2_HF or AutoGPTQ are preferred for GPTQ models when supported.')
-                            shared.gradio['exllamav2_info'] = gr.Markdown("ExLlamav2_HF is recommended over ExLlamav2 for better integration with extensions and more consistent sampling behavior across loaders.")
-                            shared.gradio['llamacpp_HF_info'] = gr.Markdown("llamacpp_HF loads llama.cpp as a Transformers model. To use it, you need to place your GGUF in a subfolder of models/ with the necessary tokenizer files.\n\nYou can use the \"llamacpp_HF creator\" menu to do that automatically.")
+                            shared.gradio['disable_exllama'] = gr.Checkbox(label="禁用ExLlama", value=shared.args.disable_exllama, info='对于GPTQ模型，禁用ExLlama内核。')
+                            shared.gradio['disable_exllamav2'] = gr.Checkbox(label="禁用ExLlamav2", value=shared.args.disable_exllamav2, info='对于GPTQ模型，禁用ExLlamav2内核。')
+                            shared.gradio['gptq_for_llama_info'] = gr.Markdown('用于与旧GPU兼容的传统加载器。如果支持，推荐使用ExLlamav2_HF或AutoGPTQ适用于GPTQ模型。')
+                            shared.gradio['exllamav2_info'] = gr.Markdown("相比于ExLlamav2，推荐使用ExLlamav2_HF，因为它与扩展有更好的集成，并且在加载器之间提供了更一致的采样行为。")
+                            shared.gradio['llamacpp_HF_info'] = gr.Markdown("llamacpp_HF将llama.cpp作为Transformers模型加载。要使用它，您需要将GGUF放在models/的子文件夹中，并提供必要的分词器文件。\n\n您可以使用'llamacpp_HF创建器'菜单自动完成。")
 
             with gr.Column():
                 with gr.Row():
-                    shared.gradio['autoload_model'] = gr.Checkbox(value=shared.settings['autoload_model'], label='Autoload the model', info='Whether to load the model as soon as it is selected in the Model dropdown.', interactive=not mu)
+                    shared.gradio['autoload_model'] = gr.Checkbox(value=shared.settings['autoload_model'], label='自动加载模型', info='选择模型下拉菜单中的模型后是否立即加载模型。', interactive=not mu)
 
-                with gr.Tab("Download"):
-                    shared.gradio['custom_model_menu'] = gr.Textbox(label="Download model or LoRA", info="Enter the Hugging Face username/model path, for instance: facebook/galactica-125m. To specify a branch, add it at the end after a \":\" character like this: facebook/galactica-125m:main. To download a single file, enter its name in the second box.", interactive=not mu)
-                    shared.gradio['download_specific_file'] = gr.Textbox(placeholder="File name (for GGUF models)", show_label=False, max_lines=1, interactive=not mu)
+                with gr.Tab("下载"):
+                    shared.gradio['custom_model_menu'] = gr.Textbox(label="下载模型或LoRA", info="输入Hugging Face用户名/模型路径，例如：facebook/galactica-125m。要指定分支，在最后加上\":\"字符，像这样：facebook/galactica-125m:main。要下载单个文件，请在第二个框中输入其名称。", interactive=not mu)
+                    shared.gradio['download_specific_file'] = gr.Textbox(placeholder="文件名（适用于GGUF模型）", show_label=False, max_lines=1, interactive=not mu)
                     with gr.Row():
-                        shared.gradio['download_model_button'] = gr.Button("Download", variant='primary', interactive=not mu)
-                        shared.gradio['get_file_list'] = gr.Button("Get file list", interactive=not mu)
+                        shared.gradio['download_model_button'] = gr.Button("下载", variant='primary', interactive=not mu)
+                        shared.gradio['get_file_list'] = gr.Button("获取文件列表", interactive=not mu)
 
-                with gr.Tab("llamacpp_HF creator"):
+                with gr.Tab("llamacpp_HF创建器"):
                     with gr.Row():
-                        shared.gradio['gguf_menu'] = gr.Dropdown(choices=utils.get_available_ggufs(), value=lambda: shared.model_name, label='Choose your GGUF', elem_classes='slim-dropdown', interactive=not mu)
+                        shared.gradio['gguf_menu'] = gr.Dropdown(choices=utils.get_available_ggufs(), value=lambda: shared.model_name, label='选择你的GGUF', elem_classes='slim-dropdown', interactive=not mu)
                         ui.create_refresh_button(shared.gradio['gguf_menu'], lambda: None, lambda: {'choices': utils.get_available_ggufs()}, 'refresh-button', interactive=not mu)
 
-                    shared.gradio['unquantized_url'] = gr.Textbox(label="Enter the URL for the original (unquantized) model", info="Example: https://huggingface.co/lmsys/vicuna-13b-v1.5", max_lines=1)
-                    shared.gradio['create_llamacpp_hf_button'] = gr.Button("Submit", variant="primary", interactive=not mu)
-                    gr.Markdown("This will move your gguf file into a subfolder of `models` along with the necessary tokenizer files.")
+                    shared.gradio['unquantized_url'] = gr.Textbox(label="输入原始（未量化）模型的URL", info="示例：https://hf-mirror.com/lmsys/vicuna-13b-v1.5", max_lines=1)
+                    shared.gradio['create_llamacpp_hf_button'] = gr.Button("提交", variant="primary", interactive=not mu)
+                    gr.Markdown("这将把你的gguf文件移动到`models`的子文件夹中，并附带必要的分词器文件。")
 
-                with gr.Tab("Customize instruction template"):
+                with gr.Tab("自定义指令模板"):
                     with gr.Row():
-                        shared.gradio['customized_template'] = gr.Dropdown(choices=utils.get_available_instruction_templates(), value='None', label='Select the desired instruction template', elem_classes='slim-dropdown')
+                        shared.gradio['customized_template'] = gr.Dropdown(choices=utils.get_available_instruction_templates(), value='None', label='选择所需的指令模板', elem_classes='slim-dropdown')
                         ui.create_refresh_button(shared.gradio['customized_template'], lambda: None, lambda: {'choices': utils.get_available_instruction_templates()}, 'refresh-button', interactive=not mu)
 
-                    shared.gradio['customized_template_submit'] = gr.Button("Submit", variant="primary", interactive=not mu)
-                    gr.Markdown("This allows you to set a customized template for the model currently selected in the \"Model loader\" menu. Whenever the model gets loaded, this template will be used in place of the template specified in the model's medatada, which sometimes is wrong.")
+                    shared.gradio['customized_template_submit'] = gr.Button("提交", variant="primary", interactive=not mu)
+                    gr.Markdown("这允许你为\"模型加载器\"菜单中当前选中的模型设置一个自定义模板。每当加载模型时，都会使用此模板代替模型元数据中指定的模板，有时后者可能是错误的。")
 
                 with gr.Row():
-                    shared.gradio['model_status'] = gr.Markdown('No model is loaded' if shared.model_name == 'None' else 'Ready')
+                    shared.gradio['model_status'] = gr.Markdown('没有加载模型' if shared.model_name == 'None' else '准备就绪')
 
 
 def create_event_handlers():
@@ -230,39 +230,39 @@ def create_event_handlers():
 
 def load_model_wrapper(selected_model, loader, autoload=False):
     if not autoload:
-        yield f"The settings for `{selected_model}` have been updated.\n\nClick on \"Load\" to load it."
+        yield f"已更新`{selected_model}`的设置。\n\n点击“加载”来加载模型。"
         return
 
     if selected_model == 'None':
-        yield "No model selected"
+        yield "未选择模型"
     else:
         try:
-            yield f"Loading `{selected_model}`..."
+            yield f"正在加载`{selected_model}`..."
             unload_model()
             if selected_model != '':
                 shared.model, shared.tokenizer = load_model(selected_model, loader)
 
             if shared.model is not None:
-                output = f"Successfully loaded `{selected_model}`."
+                output = f"成功加载`{selected_model}`。"
 
                 settings = get_model_metadata(selected_model)
                 if 'instruction_template' in settings:
-                    output += '\n\nIt seems to be an instruction-following model with template "{}". In the chat tab, instruct or chat-instruct modes should be used.'.format(settings['instruction_template'])
+                    output += '\n\n这似乎是一个有指令模板 "{}" 的指令跟随模型。在聊天标签页中，应使用指令或聊天指令模式。'.format(settings['instruction_template'])
 
                 yield output
             else:
-                yield f"Failed to load `{selected_model}`."
+                yield f"加载`{selected_model}`失败。"
         except:
             exc = traceback.format_exc()
-            logger.error('Failed to load the model.')
+            logger.error('加载模型失败。')
             print(exc)
             yield exc.replace('\n', '\n\n')
 
 
 def load_lora_wrapper(selected_loras):
-    yield ("Applying the following LoRAs to {}:\n\n{}".format(shared.model_name, '\n'.join(selected_loras)))
+    yield ("将以下LoRAs应用于{}:\n\n{}".format(shared.model_name, '\n'.join(selected_loras)))
     add_lora_to_model(selected_loras)
-    yield ("Successfuly applied the LoRAs")
+    yield ("成功应用了LoRAs")
 
 
 def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), return_links=False, check=False):
@@ -272,7 +272,7 @@ def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), retur
         progress(0.0)
         model, branch = downloader.sanitize_model_and_branch_names(repo_id, None)
 
-        yield ("Getting the download links from Hugging Face")
+        yield ("从HF Mirror获取下载链接")
         links, sha256, is_lora, is_llamacpp = downloader.get_download_links_from_huggingface(model, branch, text_only=False, specific_file=specific_file)
         if return_links:
             output = "```\n"
@@ -283,19 +283,19 @@ def download_model_wrapper(repo_id, specific_file, progress=gr.Progress(), retur
             yield output
             return
 
-        yield ("Getting the output folder")
+        yield ("获取输出文件夹")
         output_folder = downloader.get_output_folder(model, branch, is_lora, is_llamacpp=is_llamacpp)
         if check:
             progress(0.5)
 
-            yield ("Checking previously downloaded files")
+            yield ("检查之前下载的文件")
             downloader.check_model_files(model, branch, links, sha256, output_folder)
             progress(1.0)
         else:
-            yield (f"Downloading file{'s' if len(links) > 1 else ''} to `{output_folder}/`")
+            yield (f"下载文件{'们' if len(links) > 1 else ''}到`{output_folder}/`")
             downloader.download_model_files(model, branch, links, sha256, output_folder, progress_bar=progress, threads=4, is_llamacpp=is_llamacpp)
 
-            yield (f"Model successfully saved to `{output_folder}/`.")
+            yield (f"模型成功保存到`{output_folder}/`。")
     except:
         progress(1.0)
         yield traceback.format_exc().replace('\n', '\n\n')
@@ -308,17 +308,17 @@ def create_llamacpp_hf(gguf_name, unquantized_url, progress=gr.Progress()):
         progress(0.0)
         model, branch = downloader.sanitize_model_and_branch_names(unquantized_url, None)
 
-        yield ("Getting the tokenizer files links from Hugging Face")
+        yield ("从Hugging Face获取分词器文件链接")
         links, sha256, is_lora, is_llamacpp = downloader.get_download_links_from_huggingface(model, branch, text_only=True)
         output_folder = Path(shared.args.model_dir) / (re.sub(r'(?i)\.gguf$', '', gguf_name) + "-HF")
 
-        yield (f"Downloading tokenizer to `{output_folder}`")
+        yield (f"下载分词器到`{output_folder}`")
         downloader.download_model_files(model, branch, links, sha256, output_folder, progress_bar=progress, threads=4, is_llamacpp=False)
 
-        # Move the GGUF
+        # 移动GGUF文件
         (Path(shared.args.model_dir) / gguf_name).rename(output_folder / gguf_name)
 
-        yield (f"Model saved to `{output_folder}/`.\n\nYou can now load it using llamacpp_HF.")
+        yield (f"模型已保存到`{output_folder}/`。\n\n现在您可以使用llamacpp_HF加载它。")
     except:
         progress(1.0)
         yield traceback.format_exc().replace('\n', '\n\n')

@@ -15,47 +15,47 @@ outputs = ('textbox-notebook', 'html-notebook')
 
 def create_ui():
     mu = shared.args.multi_user
-    with gr.Tab('Notebook', elem_id='notebook-tab'):
+    with gr.Tab('笔记本', elem_id='notebook-tab'):
         shared.gradio['last_input-notebook'] = gr.State('')
         with gr.Row():
             with gr.Column(scale=4):
-                with gr.Tab('Raw'):
+                with gr.Tab('原始'):
                     with gr.Row():
                         shared.gradio['textbox-notebook'] = gr.Textbox(value='', lines=27, elem_id='textbox-notebook', elem_classes=['textbox', 'add_scrollbar'])
                         shared.gradio['token-counter-notebook'] = gr.HTML(value="<span>0</span>", elem_classes=["token-counter"])
 
                 with gr.Tab('Markdown'):
-                    shared.gradio['markdown_render-notebook'] = gr.Button('Render')
+                    shared.gradio['markdown_render-notebook'] = gr.Button('渲染')
                     shared.gradio['markdown-notebook'] = gr.Markdown()
 
                 with gr.Tab('HTML'):
                     shared.gradio['html-notebook'] = gr.HTML()
 
-                with gr.Tab('Logits'):
+                with gr.Tab('逻辑'):
                     with gr.Row():
                         with gr.Column(scale=10):
-                            shared.gradio['get_logits-notebook'] = gr.Button('Get next token probabilities')
+                            shared.gradio['get_logits-notebook'] = gr.Button('获取下一个token概率')
                         with gr.Column(scale=1):
-                            shared.gradio['use_samplers-notebook'] = gr.Checkbox(label='Use samplers', value=True, elem_classes=['no-background'])
+                            shared.gradio['use_samplers-notebook'] = gr.Checkbox(label='使用采样器', value=True, elem_classes=['no-background'])
 
                     with gr.Row():
-                        shared.gradio['logits-notebook'] = gr.Textbox(lines=23, label='Output', elem_classes=['textbox_logits_notebook', 'add_scrollbar'])
-                        shared.gradio['logits-notebook-previous'] = gr.Textbox(lines=23, label='Previous output', elem_classes=['textbox_logits_notebook', 'add_scrollbar'])
+                        shared.gradio['logits-notebook'] = gr.Textbox(lines=23, label='输出', elem_classes=['textbox_logits_notebook', 'add_scrollbar'])
+                        shared.gradio['logits-notebook-previous'] = gr.Textbox(lines=23, label='之前的输出', elem_classes=['textbox_logits_notebook', 'add_scrollbar'])
 
                 with gr.Tab('Tokens'):
-                    shared.gradio['get_tokens-notebook'] = gr.Button('Get token IDs for the input')
+                    shared.gradio['get_tokens-notebook'] = gr.Button('获取输入的token ID')
                     shared.gradio['tokens-notebook'] = gr.Textbox(lines=23, label='Tokens', elem_classes=['textbox_logits_notebook', 'add_scrollbar', 'monospace'])
 
                 with gr.Row():
-                    shared.gradio['Generate-notebook'] = gr.Button('Generate', variant='primary', elem_classes='small-button')
-                    shared.gradio['Stop-notebook'] = gr.Button('Stop', elem_classes='small-button', elem_id='stop')
-                    shared.gradio['Undo'] = gr.Button('Undo', elem_classes='small-button')
-                    shared.gradio['Regenerate-notebook'] = gr.Button('Regenerate', elem_classes='small-button')
+                    shared.gradio['Generate-notebook'] = gr.Button('生成', variant='primary', elem_classes='small-button')
+                    shared.gradio['Stop-notebook'] = gr.Button('停止', elem_classes='small-button', elem_id='stop')
+                    shared.gradio['Undo'] = gr.Button('撤销', elem_classes='small-button')
+                    shared.gradio['Regenerate-notebook'] = gr.Button('重新生成', elem_classes='small-button')
 
             with gr.Column(scale=1):
                 gr.HTML('<div style="padding-bottom: 13px"></div>')
                 with gr.Row():
-                    shared.gradio['prompt_menu-notebook'] = gr.Dropdown(choices=utils.get_available_prompts(), value='None', label='Prompt', elem_classes='slim-dropdown')
+                    shared.gradio['prompt_menu-notebook'] = gr.Dropdown(choices=utils.get_available_prompts(), value='None', label='提示词', elem_classes='slim-dropdown')
                     ui.create_refresh_button(shared.gradio['prompt_menu-notebook'], lambda: None, lambda: {'choices': utils.get_available_prompts()}, ['refresh-button', 'refresh-button-small'], interactive=not mu)
                     shared.gradio['save_prompt-notebook'] = gr.Button('💾', elem_classes=['refresh-button', 'refresh-button-small'], interactive=not mu)
                     shared.gradio['delete_prompt-notebook'] = gr.Button('🗑️', elem_classes=['refresh-button', 'refresh-button-small'], interactive=not mu)

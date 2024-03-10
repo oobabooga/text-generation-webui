@@ -21,7 +21,7 @@ def create_ui():
     shared.gradio['Chat input'] = gr.State()
     shared.gradio['history'] = gr.State({'internal': [], 'visible': []})
 
-    with gr.Tab('Chat', elem_id='chat-tab', elem_classes=("old-ui" if shared.args.chat_buttons else None)):
+    with gr.Tab('聊天', elem_id='chat-tab', elem_classes=("old-ui" if shared.args.chat_buttons else None)):
         with gr.Row():
             with gr.Column(elem_id='chat-col'):
                 shared.gradio['display'] = gr.HTML(value=chat_html_wrapper({'internal': [], 'visible': []}, '', '', 'chat', 'cai-chat', ''))
@@ -31,136 +31,133 @@ def create_ui():
                         gr.HTML(value='<div class="hover-element" onclick="void(0)"><span style="width: 100px; display: block" id="hover-element-button">&#9776;</span><div class="hover-menu" id="hover-menu"></div>', elem_id='gr-hover')
 
                     with gr.Column(scale=10, elem_id='chat-input-container'):
-                        shared.gradio['textbox'] = gr.Textbox(label='', placeholder='Send a message', elem_id='chat-input', elem_classes=['add_scrollbar'])
-                        shared.gradio['show_controls'] = gr.Checkbox(value=shared.settings['show_controls'], label='Show controls (Ctrl+S)', elem_id='show-controls')
-                        shared.gradio['typing-dots'] = gr.HTML(value='<div class="typing"><span></span><span class="dot1"></span><span class="dot2"></span></div>', label='typing', elem_id='typing-container')
+                        shared.gradio['textbox'] = gr.Textbox(label='', placeholder='发送消息', elem_id='chat-input', elem_classes=['add_scrollbar'])
+                        shared.gradio['show_controls'] = gr.Checkbox(value=shared.settings['show_controls'], label='显示控件 (Ctrl+S)', elem_id='show-controls')
+                        shared.gradio['typing-dots'] = gr.HTML(value='<div class="typing"><span></span><span class="dot1"></span><span class="dot2"></span></div>', label='打字中', elem_id='typing-container')
 
                     with gr.Column(scale=1, elem_id='generate-stop-container'):
                         with gr.Row():
-                            shared.gradio['Stop'] = gr.Button('Stop', elem_id='stop', visible=False)
-                            shared.gradio['Generate'] = gr.Button('Generate', elem_id='Generate', variant='primary')
+                            shared.gradio['Stop'] = gr.Button('停止', elem_id='stop', visible=False)
+                            shared.gradio['Generate'] = gr.Button('生成', elem_id='Generate', variant='primary')
 
         # Hover menu buttons
         with gr.Column(elem_id='chat-buttons'):
             with gr.Row():
-                shared.gradio['Regenerate'] = gr.Button('Regenerate (Ctrl + Enter)', elem_id='Regenerate')
-                shared.gradio['Continue'] = gr.Button('Continue (Alt + Enter)', elem_id='Continue')
-                shared.gradio['Remove last'] = gr.Button('Remove last reply (Ctrl + Shift + Backspace)', elem_id='Remove-last')
+                shared.gradio['Regenerate'] = gr.Button('重新生成 (Ctrl + Enter)', elem_id='Regenerate')
+                shared.gradio['Continue'] = gr.Button('继续 (Alt + Enter)', elem_id='Continue')
+                shared.gradio['Remove last'] = gr.Button('删除上一条 (Ctrl + Shift + Backspace)', elem_id='Remove-last')
 
             with gr.Row():
-                shared.gradio['Replace last reply'] = gr.Button('Replace last reply (Ctrl + Shift + L)', elem_id='Replace-last')
-                shared.gradio['Copy last reply'] = gr.Button('Copy last reply (Ctrl + Shift + K)', elem_id='Copy-last')
-                shared.gradio['Impersonate'] = gr.Button('Impersonate (Ctrl + Shift + M)', elem_id='Impersonate')
+                shared.gradio['Replace last reply'] = gr.Button('替换上一条回复 (Ctrl + Shift + L)', elem_id='Replace-last')
+                shared.gradio['Copy last reply'] = gr.Button('复制上一条回复 (Ctrl + Shift + K)', elem_id='Copy-last')
+                shared.gradio['Impersonate'] = gr.Button('AI帮答 (Ctrl + Shift + M)', elem_id='Impersonate')
 
             with gr.Row():
-                shared.gradio['Send dummy message'] = gr.Button('Send dummy message')
-                shared.gradio['Send dummy reply'] = gr.Button('Send dummy reply')
+                shared.gradio['Send dummy message'] = gr.Button('发送空消息')
+                shared.gradio['Send dummy reply'] = gr.Button('触发空回复')
 
             with gr.Row():
-                shared.gradio['send-chat-to-default'] = gr.Button('Send to default')
-                shared.gradio['send-chat-to-notebook'] = gr.Button('Send to notebook')
+                shared.gradio['send-chat-to-default'] = gr.Button('发送至默认')
+                shared.gradio['send-chat-to-notebook'] = gr.Button('发送至笔记本')
 
         with gr.Row(elem_id='past-chats-row', elem_classes=['pretty_scrollbar']):
             with gr.Column():
                 with gr.Row():
-                    shared.gradio['unique_id'] = gr.Dropdown(label='Past chats', elem_classes=['slim-dropdown'], interactive=not mu)
+                    shared.gradio['unique_id'] = gr.Dropdown(label='过往聊天', elem_classes=['slim-dropdown'], interactive=not mu)
 
                 with gr.Row():
-                    shared.gradio['rename_chat'] = gr.Button('Rename', elem_classes='refresh-button', interactive=not mu)
+                    shared.gradio['rename_chat'] = gr.Button('重命名', elem_classes='refresh-button', interactive=not mu)
                     shared.gradio['delete_chat'] = gr.Button('🗑️', elem_classes='refresh-button', interactive=not mu)
-                    shared.gradio['delete_chat-confirm'] = gr.Button('Confirm', variant='stop', visible=False, elem_classes='refresh-button')
-                    shared.gradio['delete_chat-cancel'] = gr.Button('Cancel', visible=False, elem_classes='refresh-button')
-                    shared.gradio['Start new chat'] = gr.Button('New chat', elem_classes='refresh-button')
+                    shared.gradio['delete_chat-confirm'] = gr.Button('确认', variant='stop', visible=False, elem_classes='refresh-button')
+                    shared.gradio['delete_chat-cancel'] = gr.Button('取消', visible=False, elem_classes='refresh-button')
+                    shared.gradio['Start new chat'] = gr.Button('新建聊天', elem_classes='refresh-button')
 
                 with gr.Row(elem_id='rename-row'):
-                    shared.gradio['rename_to'] = gr.Textbox(label='Rename to:', placeholder='New name', visible=False, elem_classes=['no-background'])
-                    shared.gradio['rename_to-confirm'] = gr.Button('Confirm', visible=False, elem_classes='refresh-button')
-                    shared.gradio['rename_to-cancel'] = gr.Button('Cancel', visible=False, elem_classes='refresh-button')
+                    shared.gradio['rename_to'] = gr.Textbox(label='重命名为：', placeholder='新名称', visible=False, elem_classes=['no-background'])
+                    shared.gradio['rename_to-confirm'] = gr.Button('确认', visible=False, elem_classes='refresh-button')
+                    shared.gradio['rename_to-cancel'] = gr.Button('取消', visible=False, elem_classes='refresh-button')
 
         with gr.Row(elem_id='chat-controls', elem_classes=['pretty_scrollbar']):
             with gr.Column():
                 with gr.Row():
-                    shared.gradio['start_with'] = gr.Textbox(label='Start reply with', placeholder='Sure thing!', value=shared.settings['start_with'], elem_classes=['add_scrollbar'])
+                    shared.gradio['start_with'] = gr.Textbox(label='回复开头', placeholder='当然可以！', value=shared.settings['start_with'], elem_classes=['add_scrollbar'])
 
                 with gr.Row():
-                    shared.gradio['mode'] = gr.Radio(choices=['chat', 'chat-instruct', 'instruct'], value='chat', label='Mode', info='Defines how the chat prompt is generated. In instruct and chat-instruct modes, the instruction template selected under Parameters > Instruction template must match the current model.', elem_id='chat-mode')
+                    shared.gradio['mode'] = gr.Radio(choices=['chat', 'chat-instruct', 'instruct'], value='chat', label='模式', info='定义如何生成聊天提示。在 instruct 和 chat-instruct 模式下，参数 > 指令模板下选择的指令模板必须与当前模型匹配。', elem_id='chat-mode')
 
                 with gr.Row():
-                    shared.gradio['chat_style'] = gr.Dropdown(choices=utils.get_available_chat_styles(), label='Chat style', value=shared.settings['chat_style'], visible=shared.settings['mode'] != 'instruct')
+                    shared.gradio['chat_style'] = gr.Dropdown(choices=utils.get_available_chat_styles(), label='聊天界面风格', value=shared.settings['chat_style'], visible=shared.settings['mode'] != 'instruct')
 
 
 def create_chat_settings_ui():
     mu = shared.args.multi_user
-    with gr.Tab('Character'):
+    with gr.Tab('角色'):
         with gr.Row():
             with gr.Column(scale=8):
                 with gr.Row():
-                    shared.gradio['character_menu'] = gr.Dropdown(value=None, choices=utils.get_available_characters(), label='Character', elem_id='character-menu', info='Used in chat and chat-instruct modes.', elem_classes='slim-dropdown')
+                    shared.gradio['character_menu'] = gr.Dropdown(value=None, choices=utils.get_available_characters(), label='角色', elem_id='character-menu', info='用于聊天和聊天指令模式。', elem_classes='slim-dropdown')
                     ui.create_refresh_button(shared.gradio['character_menu'], lambda: None, lambda: {'choices': utils.get_available_characters()}, 'refresh-button', interactive=not mu)
                     shared.gradio['save_character'] = gr.Button('💾', elem_classes='refresh-button', interactive=not mu)
                     shared.gradio['delete_character'] = gr.Button('🗑️', elem_classes='refresh-button', interactive=not mu)
 
-                shared.gradio['name1'] = gr.Textbox(value=shared.settings['name1'], lines=1, label='Your name')
-                shared.gradio['name2'] = gr.Textbox(value='', lines=1, label='Character\'s name')
-                shared.gradio['context'] = gr.Textbox(value='', lines=10, label='Context', elem_classes=['add_scrollbar'])
-                shared.gradio['greeting'] = gr.Textbox(value='', lines=5, label='Greeting', elem_classes=['add_scrollbar'])
+                shared.gradio['name1'] = gr.Textbox(value=shared.settings['name1'], lines=1, label='你的名字')
+                shared.gradio['name2'] = gr.Textbox(value='', lines=1, label='角色的名字')
+                shared.gradio['context'] = gr.Textbox(value='', lines=10, label='背景', elem_classes=['add_scrollbar'])
+                shared.gradio['greeting'] = gr.Textbox(value='', lines=5, label='问候', elem_classes=['add_scrollbar'])
 
             with gr.Column(scale=1):
-                shared.gradio['character_picture'] = gr.Image(label='Character picture', type='pil', interactive=not mu)
-                shared.gradio['your_picture'] = gr.Image(label='Your picture', type='pil', value=Image.open(Path('cache/pfp_me.png')) if Path('cache/pfp_me.png').exists() else None, interactive=not mu)
+                shared.gradio['character_picture'] = gr.Image(label='角色图片', type='pil', interactive=not mu)
+                shared.gradio['your_picture'] = gr.Image(label='你的图片', type='pil', value=Image.open(Path('cache/pfp_me.png')) if Path('cache/pfp_me.png').exists() else None, interactive=not mu)
 
-    with gr.Tab('Instruction template'):
+    with gr.Tab('指令模板'):
         with gr.Row():
             with gr.Column():
                 with gr.Row():
-                    shared.gradio['instruction_template'] = gr.Dropdown(choices=utils.get_available_instruction_templates(), label='Saved instruction templates', info="After selecting the template, click on \"Load\" to load and apply it.", value='None', elem_classes='slim-dropdown')
+                    shared.gradio['instruction_template'] = gr.Dropdown(choices=utils.get_available_instruction_templates(), label='已保存的指令模板', info="选择模板后，点击“加载”来加载并应用它。", value='None', elem_classes='slim-dropdown')
                     ui.create_refresh_button(shared.gradio['instruction_template'], lambda: None, lambda: {'choices': utils.get_available_instruction_templates()}, 'refresh-button', interactive=not mu)
-                    shared.gradio['load_template'] = gr.Button("Load", elem_classes='refresh-button')
+                    shared.gradio['load_template'] = gr.Button("加载", elem_classes='refresh-button')
                     shared.gradio['save_template'] = gr.Button('💾', elem_classes='refresh-button', interactive=not mu)
                     shared.gradio['delete_template'] = gr.Button('🗑️ ', elem_classes='refresh-button', interactive=not mu)
 
-            with gr.Column():
-                pass
-
-        with gr.Row():
-            with gr.Column():
-                shared.gradio['custom_system_message'] = gr.Textbox(value=shared.settings['custom_system_message'], lines=2, label='Custom system message', info='If not empty, will be used instead of the default one.', elem_classes=['add_scrollbar'])
-                shared.gradio['instruction_template_str'] = gr.Textbox(value='', label='Instruction template', lines=24, info='Change this according to the model/LoRA that you are using. Used in instruct and chat-instruct modes.', elem_classes=['add_scrollbar', 'monospace'])
-                with gr.Row():
-                    shared.gradio['send_instruction_to_default'] = gr.Button('Send to default', elem_classes=['small-button'])
-                    shared.gradio['send_instruction_to_notebook'] = gr.Button('Send to notebook', elem_classes=['small-button'])
-                    shared.gradio['send_instruction_to_negative_prompt'] = gr.Button('Send to negative prompt', elem_classes=['small-button'])
-
-            with gr.Column():
-                shared.gradio['chat_template_str'] = gr.Textbox(value=shared.settings['chat_template_str'], label='Chat template', lines=22, elem_classes=['add_scrollbar', 'monospace'])
-                shared.gradio['chat-instruct_command'] = gr.Textbox(value=shared.settings['chat-instruct_command'], lines=4, label='Command for chat-instruct mode', info='<|character|> gets replaced by the bot name, and <|prompt|> gets replaced by the regular chat prompt.', elem_classes=['add_scrollbar'])
-
-    with gr.Tab('Chat history'):
-        with gr.Row():
-            with gr.Column():
-                shared.gradio['save_chat_history'] = gr.Button(value='Save history')
-
-            with gr.Column():
-                shared.gradio['load_chat_history'] = gr.File(type='binary', file_types=['.json', '.txt'], label='Upload History JSON')
-
-    with gr.Tab('Upload character'):
-        with gr.Tab('YAML or JSON'):
             with gr.Row():
-                shared.gradio['upload_json'] = gr.File(type='binary', file_types=['.json', '.yaml'], label='JSON or YAML File', interactive=not mu)
-                shared.gradio['upload_img_bot'] = gr.Image(type='pil', label='Profile Picture (optional)', interactive=not mu)
+                with gr.Column():
+                    shared.gradio['custom_system_message'] = gr.Textbox(value=shared.settings['custom_system_message'], lines=2, label='自定义系统消息', info='如果不为空，将代替默认消息使用。', elem_classes=['add_scrollbar'])
+                    shared.gradio['instruction_template_str'] = gr.Textbox(value='', label='指令模板', lines=24, info='根据你正在使用的模型/LoRA进行更改。在指令和聊天指令模式下使用。', elem_classes=['add_scrollbar', 'monospace'])
+                    with gr.Row():
+                        shared.gradio['send_instruction_to_default'] = gr.Button('发送至默认', elem_classes=['small-button'])
+                        shared.gradio['send_instruction_to_notebook'] = gr.Button('发送至笔记本', elem_classes=['small-button'])
+                        shared.gradio['send_instruction_to_negative_prompt'] = gr.Button('发送至负面提示', elem_classes=['small-button'])
 
-            shared.gradio['Submit character'] = gr.Button(value='Submit', interactive=False)
+            with gr.Column():
+                shared.gradio['chat_template_str'] = gr.Textbox(value=shared.settings['chat_template_str'], label='聊天模板', lines=22, elem_classes=['add_scrollbar', 'monospace'])
+                shared.gradio['chat-instruct_command'] = gr.Textbox(value=shared.settings['chat-instruct_command'], lines=4, label='聊天指令模式命令', info='<|character|> 将被角色名称替换，<|prompt|> 将被常规聊天提示替换。', elem_classes=['add_scrollbar'])
+
+    with gr.Tab('聊天记录'):
+        with gr.Row():
+            with gr.Column():
+                shared.gradio['save_chat_history'] = gr.Button(value='保存历史记录')
+
+            with gr.Column():
+                shared.gradio['load_chat_history'] = gr.File(type='binary', file_types=['.json', '.txt'], label='上传历史记录 JSON')
+
+    with gr.Tab('上传角色'):
+        with gr.Tab('YAML 或 JSON'):
+            with gr.Row():
+                shared.gradio['upload_json'] = gr.File(type='binary', file_types=['.json', '.yaml'], label='JSON 或 YAML 文件', interactive=not mu)
+                shared.gradio['upload_img_bot'] = gr.Image(type='pil', label='头像图片（可选）', interactive=not mu)
+
+            shared.gradio['Submit character'] = gr.Button(value='提交', interactive=False)
 
         with gr.Tab('TavernAI PNG'):
             with gr.Row():
                 with gr.Column():
-                    shared.gradio['upload_img_tavern'] = gr.Image(type='pil', label='TavernAI PNG File', elem_id='upload_img_tavern', interactive=not mu)
+                    shared.gradio['upload_img_tavern'] = gr.Image(type='pil', label='TavernAI PNG 文件', elem_id='upload_img_tavern', interactive=not mu)
                     shared.gradio['tavern_json'] = gr.State()
                 with gr.Column():
-                    shared.gradio['tavern_name'] = gr.Textbox(value='', lines=1, label='Name', interactive=False)
-                    shared.gradio['tavern_desc'] = gr.Textbox(value='', lines=4, max_lines=4, label='Description', interactive=False)
+                    shared.gradio['tavern_name'] = gr.Textbox(value='', lines=1, label='名称', interactive=False)
+                    shared.gradio['tavern_desc'] = gr.Textbox(value='', lines=4, max_lines=4, label='描述', interactive=False)
 
-            shared.gradio['Submit tavern character'] = gr.Button(value='Submit', interactive=False)
+            shared.gradio['Submit tavern character'] = gr.Button(value='提交', interactive=False)
 
 
 def create_event_handlers():
