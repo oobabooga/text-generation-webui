@@ -30,8 +30,8 @@ def process_llamacpp_cache(model, new_sequence, past_sequence):
         overlapping_sequence = new_sequence[j1:j2 + 1]
         added_chunk = new_sequence[j2 + 1:]
 
-        # print(past_sequence)
-        # print(new_sequence)
+        # print(past_sequence.tolist())
+        # print(new_sequence.tolist())
 
         print()
         print('MATCHING PREFIX=', repr(shared.tokenizer.decode(matching_prefix)))
