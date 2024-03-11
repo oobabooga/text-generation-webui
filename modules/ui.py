@@ -97,6 +97,8 @@ def list_model_elements():
         'no_offload_kqv',
         'row_split',
         'tensorcores',
+        'streaming_llm',
+        'attention_sink_size',
         'hqq_backend',
     ]
     if is_torch_xpu_available():

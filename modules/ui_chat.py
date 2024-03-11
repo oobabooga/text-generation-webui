@@ -88,6 +88,9 @@ def create_ui():
                 with gr.Row():
                     shared.gradio['chat_style'] = gr.Dropdown(choices=utils.get_available_chat_styles(), label='Chat style', value=shared.settings['chat_style'], visible=shared.settings['mode'] != 'instruct')
 
+                with gr.Row():
+                    shared.gradio['chat-instruct_command'] = gr.Textbox(value=shared.settings['chat-instruct_command'], lines=16, label='Command for chat-instruct mode', info='<|character|> and <|prompt|> get replaced with the bot name and the regular chat prompt respectively.', visible=False, elem_classes=['add_scrollbar'])
+
 
 def create_chat_settings_ui():
     mu = shared.args.multi_user
@@ -133,7 +136,6 @@ def create_chat_settings_ui():
 
             with gr.Column():
                 shared.gradio['chat_template_str'] = gr.Textbox(value=shared.settings['chat_template_str'], label='Chat template', lines=22, elem_classes=['add_scrollbar', 'monospace'])
-                shared.gradio['chat-instruct_command'] = gr.Textbox(value=shared.settings['chat-instruct_command'], lines=4, label='Command for chat-instruct mode', info='<|character|> gets replaced by the bot name, and <|prompt|> gets replaced by the regular chat prompt.', elem_classes=['add_scrollbar'])
 
     with gr.Tab('Chat history'):
         with gr.Row():
@@ -293,7 +295,7 @@ def create_event_handlers():
         lambda: None, None, None, _js=f'() => {{{ui.update_big_picture_js}; updateBigPicture()}}')
 
     shared.gradio['mode'].change(
-        lambda x: gr.update(visible=x != 'instruct'), gradio('mode'), gradio('chat_style'), show_progress=False).then(
+        lambda x: [gr.update(visible=x != 'instruct'), gr.update(visible=x == 'chat-instruct')], gradio('mode'), gradio('chat_style', 'chat-instruct_command'), show_progress=False).then(
         ui.gather_interface_values, gradio(shared.input_elements), gradio('interface_state')).then(
         chat.load_latest_history, gradio('interface_state'), gradio('history')).then(
         chat.redraw_html, gradio(reload_arr), gradio('display')).then(

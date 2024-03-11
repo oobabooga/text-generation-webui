@@ -3,22 +3,24 @@ This module implements a hyperparameter optimization routine for the embedding a
 
 Each run, the optimizer will set the default values inside the hyperparameters. At the end, it will output the best ones it has found.
 """
-import re
+import hashlib
 import json
-import optuna
+import logging
+import re
+
 import gradio as gr
 import numpy as np
-import logging
-import hashlib
-logging.getLogger('optuna').setLevel(logging.WARNING)
+import optuna
 
-import extensions.superboogav2.parameters as parameters
+logging.getLogger('optuna').setLevel(logging.WARNING)
 
 from pathlib import Path
 
+import extensions.superboogav2.parameters as parameters
+from modules.logging_colors import logger
+
 from .benchmark import benchmark
 from .parameters import Parameters
-from modules.logging_colors import logger
 
 
 # Format the parameters into markdown format.
@@ -28,7 +30,7 @@ def _markdown_hyperparams():
         # Escape any markdown syntax
         param_name = re.sub(r"([_*\[\]()~`>#+-.!])", r"\\\1", param_name)
         param_value_default = re.sub(r"([_*\[\]()~`>#+-.!])", r"\\\1", str(param_value['default'])) if param_value['default'] else ' '
-        
+
         res.append('* {}: **{}**'.format(param_name, param_value_default))
 
     return '\n'.join(res)
@@ -49,13 +51,13 @@ def _convert_np_types(params):
 # Set the default values for the hyperparameters.
 def _set_hyperparameters(params):
     for param_name, param_value in params.items():
-        if param_name in Parameters.getInstance().hyperparameters: 
+        if param_name in Parameters.getInstance().hyperparameters:
             Parameters.getInstance().hyperparameters[param_name]['default'] = param_value
 
 
 # Check if the parameter is for optimization.
 def _is_optimization_param(val):
-    is_opt = val.get('should_optimize', False) # Either does not exist or is false
+    is_opt = val.get('should_optimize', False)  # Either does not exist or is false
     return is_opt
 
 
@@ -67,7 +69,7 @@ def _get_params_hash(params):
 
 def optimize(collector, progress=gr.Progress()):
     # Inform the user that something is happening.
-    progress(0, desc=f'Setting Up...')
+    progress(0, desc='Setting Up...')
 
     # Track the current step
     current_step = 0
