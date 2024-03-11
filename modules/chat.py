@@ -197,16 +197,16 @@ def generate_chat_prompt(user_input, state, **kwargs):
                 while right - left > 1:
                     mid = (left + right) // 2
 
-                    messages[-1]['content'] = user_message[mid:]
+                    messages[-1]['content'] = user_message[:mid]
                     prompt = make_prompt(messages)
                     encoded_length = get_encoded_length(prompt)
 
                     if encoded_length <= max_length:
-                        right = mid
-                    else:
                         left = mid
+                    else:
+                        right = mid
 
-                messages[-1]['content'] = user_message[right:]
+                messages[-1]['content'] = user_message[:left]
                 prompt = make_prompt(messages)
                 encoded_length = get_encoded_length(prompt)
                 if encoded_length > max_length:

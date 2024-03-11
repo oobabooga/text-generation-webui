@@ -1,16 +1,17 @@
 """
-This module is responsible for processing the corpus and feeding it into chromaDB. It will receive a corpus of text. 
+This module is responsible for processing the corpus and feeding it into chromaDB. It will receive a corpus of text.
 It will then split it into chunks of specified length. For each of those chunks, it will append surrounding context.
 It will only include full words.
 """
 
-import re
 import bisect
+import re
 
 import extensions.superboogav2.parameters as parameters
 
-from .data_preprocessor import TextPreprocessorBuilder, TextSummarizer
 from .chromadb import ChromaCollector
+from .data_preprocessor import TextPreprocessorBuilder, TextSummarizer
+
 
 def preprocess_text_no_summary(text) -> str:
     builder = TextPreprocessorBuilder(text)
@@ -42,7 +43,7 @@ def preprocess_text_no_summary(text) -> str:
             builder.num_to_char(parameters.get_min_num_length())
         elif parameters.get_num_conversion_strategy() == parameters.NUM_TO_CHAR_LONG_METHOD:
             builder.num_to_char_long(parameters.get_min_num_length())
-    
+
     return builder.build()
 
 
@@ -53,10 +54,10 @@ def preprocess_text(text) -> list[str]:
 
 def _create_chunks_with_context(corpus, chunk_len, context_left, context_right):
     """
-    This function takes a corpus of text and splits it into chunks of a specified length, 
-    then adds a specified amount of context to each chunk. The context is added by first 
-    going backwards from the start of the chunk and then going forwards from the end of the 
-    chunk, ensuring that the context includes only whole words and that the total context length 
+    This function takes a corpus of text and splits it into chunks of a specified length,
+    then adds a specified amount of context to each chunk. The context is added by first
+    going backwards from the start of the chunk and then going forwards from the end of the
+    chunk, ensuring that the context includes only whole words and that the total context length
     does not exceed the specified limit. This function uses binary search for efficiency.
 
     Returns:
@@ -102,7 +103,7 @@ def _create_chunks_with_context(corpus, chunk_len, context_left, context_right):
         # Combine all the words in the context range (before, chunk, and after)
         chunk_with_context = ''.join(words[context_start_index:context_end_index])
         chunks_with_context.append(chunk_with_context)
-        
+
         # Determine the start index of the chunk with context
         chunk_with_context_start_index = word_start_indices[context_start_index]
         chunk_with_context_start_indices.append(chunk_with_context_start_index)
@@ -125,9 +126,9 @@ def _clear_chunks(data_chunks, data_chunks_with_context, data_chunk_starting_ind
         seen_chunk_start = seen_chunks.get(chunk)
         if seen_chunk_start:
             # If we've already seen this exact chunk, and the context around it it very close to the seen chunk, then skip it.
-            if abs(seen_chunk_start-index) < parameters.get_delta_start():
+            if abs(seen_chunk_start - index) < parameters.get_delta_start():
                 continue
-        
+
         distinct_data_chunks.append(chunk)
         distinct_data_chunks_with_context.append(context)
         distinct_data_chunk_starting_indices.append(index)
@@ -206,4 +207,4 @@ def process_and_add_to_collector(corpus: str, collector: ChromaCollector, clear_
 
     if clear_collector_before_adding:
         collector.clear()
-    collector.add(data_chunks, data_chunks_with_context, data_chunk_starting_indices, [metadata]*len(data_chunks) if metadata is not None else None)
+    collector.add(data_chunks, data_chunks_with_context, data_chunk_starting_indices, [metadata] * len(data_chunks) if metadata is not None else None)

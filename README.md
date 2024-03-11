@@ -269,6 +269,9 @@ pip install -r <你曾使用过的依赖文件> --upgrade
 |  `--logits_all` | 需要设置以使困惑度评估工作。否则，请忽略它，因为它会使提示处理变慢。|
 |  `--no_offload_kqv`  | 不将K、Q、V卸载到GPU。这可以节省VRAM，但会降低性能。|
 |  `--cache-capacity CACHE_CAPACITY`    | 最大缓存容量（llama-cpp-python）。示例：2000MiB, 2GiB。如果没有提供单位，默认为字节。|
+| `--row_split`                               | 将模型按行分割到多个GPU上，这可能会提高多GPU的性能。 |
+| `--streaming-llm`                           | 激活StreamingLLM以避免在删除旧消息时重新评估整个提示词。 |
+| `--attention-sink-size ATTENTION_SINK_SIZE` | StreamingLLM：sink token的数量。仅在修剪后的提示词与旧提示词前缀不同时使用。 |
 
 #### Exllamav2
 

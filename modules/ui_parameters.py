@@ -76,7 +76,7 @@ def create_ui(default_preset):
                             shared.gradio['max_updates_second'] = gr.Slider(value=shared.settings['max_updates_second'], minimum=0, maximum=24, step=1, label='每秒最多UI更新数', info='如果在流式响应期间UI出现延迟，请设置此项。')
                             shared.gradio['prompt_lookup_num_tokens'] = gr.Slider(value=shared.settings['prompt_lookup_num_tokens'], minimum=0, maximum=10, step=1, label='prompt_lookup_num_tokens', info='激活提示查找解码。')
 
-                            shared.gradio['custom_stopping_strings'] = gr.Textbox(lines=1, value=shared.settings["custom_stopping_strings"] or None, label='自定义停止字符串', info='除默认值外。用""包围并用逗号分隔。', placeholder='"\\n", "\\nYou:"')
+                            shared.gradio['custom_stopping_strings'] = gr.Textbox(lines=2, value=shared.settings["custom_stopping_strings"] or None, label='自定义停止字符串', info='除默认值外。用""包围并用逗号分隔。', placeholder='"\\n", "\\nYou:"')
                             shared.gradio['custom_token_bans'] = gr.Textbox(value=shared.settings['custom_token_bans'] or None, label='自定义token禁止', info='要禁止生成的特定token ID，用逗号分隔。ID可以在默认或笔记本标签中找到。')
 
                         with gr.Column():

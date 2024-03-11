@@ -1,17 +1,15 @@
 """
-This module provides a singleton class `Parameters` that is used to manage all hyperparameters for the embedding application. 
+This module provides a singleton class `Parameters` that is used to manage all hyperparameters for the embedding application.
 It expects a JSON file in `extensions/superboogav2/config.json`.
 
-Each element in the JSON must have a `default` value which will be used for the current run. Elements can have `categories`. 
-These categories define the range in which the optimizer will search. If the element is tagged with `"should_optimize": false`, 
+Each element in the JSON must have a `default` value which will be used for the current run. Elements can have `categories`.
+These categories define the range in which the optimizer will search. If the element is tagged with `"should_optimize": false`,
 then the optimizer will only ever use the default value.
 """
+import json
 from pathlib import Path
 
-import json
-
 from modules.logging_colors import logger
-
 
 NUM_TO_WORD_METHOD = 'Number to Word'
 NUM_TO_CHAR_METHOD = 'Number to Char'

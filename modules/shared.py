@@ -130,6 +130,8 @@ group.add_argument('--logits_all', action='store_true', help='需要设置以便
 group.add_argument('--no_offload_kqv', action='store_true', help='不要将K, Q, V卸载到GPU。这样可以节省VRAM，但会降低性能。')
 group.add_argument('--cache-capacity', type=str, help='最大缓存容量（llama-cpp-python）。例如：2000MiB, 2GiB。如果没有提供单位，默认为字节。')
 group.add_argument('--row_split', action='store_true', help='在GPUs之间按行分割模型。这可能会提高多GPU性能。')
+group.add_argument('--streaming-llm', action='store_true', help='激活StreamingLLM以避免在删除旧消息时重新评估整个提示词。')
+group.add_argument('--attention-sink-size', type=int, default=5, help='StreamingLLM：sink token的数量。仅在修剪后的提示词不与旧提示词前缀相同时使用。')
 
 # ExLlamaV2
 group = parser.add_argument_group('ExLlamaV2')
