@@ -2,6 +2,7 @@ import html
 import os
 import re
 import time
+import functools
 from pathlib import Path
 
 import markdown
@@ -47,6 +48,7 @@ def replace_blockquote(m):
     return m.group().replace('\n', '\n> ').replace('\\begin{blockquote}', '').replace('\\end{blockquote}', '')
 
 
+@functools.lru_cache(maxsize=512)
 def convert_to_markdown(string):
 
     # Blockquote
