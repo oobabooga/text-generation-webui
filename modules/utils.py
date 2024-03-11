@@ -104,7 +104,7 @@ def get_available_prompts():
 
 
 def get_available_characters():
-    paths = (x for x in Path('characters').rglob("*") if x.suffix in ('.json', '.yaml', '.yml'))
+    paths = (x for x in Path('characters').rglob('*') if not any((p for p in x.parts if p.startswith('.'))) and x.suffix in ('.json', '.yaml', '.yml'))
     return sorted(set((str(Path(*k.parts[1:]).with_name(k.stem)) for k in paths)), key=natural_keys)
 
 
