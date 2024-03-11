@@ -27,7 +27,7 @@ wandb
 # API
 SpeechRecognition==3.10.0
 flask_cloudflared==0.0.14
-sse-starlette==1.6.5
+sse-starlette==2.0.0
 tiktoken
 
 # Mac wheels
