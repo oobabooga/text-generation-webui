@@ -60,7 +60,7 @@ def create_ui():
 
                     with gr.Row():
                         copy_from = gr.Dropdown(label='从以下参数复制', value='None', choices=utils.get_available_loras(), elem_classes=['slim-dropdown'], interactive=not mu)
-                        ui.create_refresh_button(copy_from, lambda: None, lambda: {'choices': utils.get_available_loras()}, '刷新按钮', interactive=not mu)
+                        ui.create_refresh_button(copy_from, lambda: None, lambda: {'choices': utils.get_available_loras()}, 'refresh-button', interactive=not mu)
 
                     with gr.Row():
                         with gr.Column(scale=5):
@@ -123,22 +123,22 @@ def create_ui():
                     with gr.Tab(label='格式化数据集'):
                         with gr.Row():
                             format = gr.Dropdown(choices=utils.get_datasets('training/formats', 'json'), value='None', label='数据格式', info='用于决定如何格式化数据集输入的格式文件。', elem_classes=['slim-dropdown'], interactive=not mu)
-                            ui.create_refresh_button(format, lambda: None, lambda: {'choices': utils.get_datasets('training/formats', 'json')}, '刷新按钮', interactive=not mu)
+                            ui.create_refresh_button(format, lambda: None, lambda: {'choices': utils.get_datasets('training/formats', 'json')}, 'refresh-button', interactive=not mu)
 
                         with gr.Row():
                             dataset = gr.Dropdown(choices=utils.get_datasets('training/datasets', 'json'), value='None', label='数据集', info='用于训练的数据集文件。', elem_classes=['slim-dropdown'], interactive=not mu)
-                            ui.create_refresh_button(dataset, lambda: None, lambda: {'choices': utils.get_datasets('training/datasets', 'json')}, '刷新按钮', interactive=not mu)
+                            ui.create_refresh_button(dataset, lambda: None, lambda: {'choices': utils.get_datasets('training/datasets', 'json')}, 'refresh-button', interactive=not mu)
 
                         with gr.Row():
                             eval_dataset = gr.Dropdown(choices=utils.get_datasets('training/datasets', 'json'), value='None', label='评估数据集', info='用于在训练后评估模型的（可选）数据集文件。', elem_classes=['slim-dropdown'], interactive=not mu)
-                            ui.create_refresh_button(eval_dataset, lambda: None, lambda: {'choices': utils.get_datasets('training/datasets', 'json')}, '刷新按钮', interactive=not mu)
+                            ui.create_refresh_button(eval_dataset, lambda: None, lambda: {'choices': utils.get_datasets('training/datasets', 'json')}, 'refresh-button', interactive=not mu)
 
                         eval_steps = gr.Number(label='每n步评估一次', value=100, info='如果给出评估数据集，每次通过这么多步骤时测试它。')
 
                     with gr.Tab(label="原始文本文件"):
                         with gr.Row():
                             raw_text_file = gr.Dropdown(choices=utils.get_datasets('training/datasets', 'txt'), value='None', label='文本文件', info='用于训练的原始文本文件。', elem_classes=['slim-dropdown'], interactive=not mu)
-                            ui.create_refresh_button(raw_text_file, lambda: None, lambda: {'choices': utils.get_datasets('training/datasets', 'txt')}, '刷新按钮', interactive=not mu)
+                            ui.create_refresh_button(raw_text_file, lambda: None, lambda: {'choices': utils.get_datasets('training/datasets', 'txt')}, 'refresh-button', interactive=not mu)
 
                         with gr.Row():
                             with gr.Column():

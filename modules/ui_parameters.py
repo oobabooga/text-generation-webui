@@ -21,7 +21,7 @@ def create_ui(default_preset):
                         shared.gradio['random_preset'] = gr.Button('🎲', elem_classes='refresh-button')
 
                 with gr.Column():
-                    shared.gradio['filter_by_loader'] = gr.Dropdown(label="按加载器过滤", choices=["全部"] + list(loaders.loaders_and_params.keys()), value="全部", elem_classes='slim-dropdown')
+                    shared.gradio['filter_by_loader'] = gr.Dropdown(label="按加载器过滤", choices=["All"] + list(loaders.loaders_and_params.keys()), value="All", elem_classes='slim-dropdown')
 
             with gr.Row():
                 with gr.Column():
@@ -55,7 +55,7 @@ def create_ui(default_preset):
                             shared.gradio['dynatemp_low'] = gr.Slider(0.01, 5, value=generate_params['dynatemp_low'], step=0.01, label='dynatemp_low', visible=generate_params['dynamic_temperature'])
                             shared.gradio['dynatemp_high'] = gr.Slider(0.01, 5, value=generate_params['dynatemp_high'], step=0.01, label='dynatemp_high', visible=generate_params['dynamic_temperature'])
                             shared.gradio['dynatemp_exponent'] = gr.Slider(0.01, 5, value=generate_params['dynatemp_exponent'], step=0.01, label='dynatemp_exponent', visible=generate_params['dynamic_temperature'])
-                            shared.gradio['temperature_last'] = gr.Checkbox(value=generate_params['temperature_last'], label='最后温度', info='将温度/动态温度/二次采样移动到采样器堆栈的末尾，忽略“采样器优先级”中的位置。')
+                            shared.gradio['temperature_last'] = gr.Checkbox(value=generate_params['temperature_last'], label='温度放最后', info='将温度/动态温度/二次采样移动到采样器堆栈的末尾，忽略“采样器优先级”中的位置。')
                             shared.gradio['do_sample'] = gr.Checkbox(value=generate_params['do_sample'], label='do_sample')
                             shared.gradio['seed'] = gr.Number(value=shared.settings['seed'], label='种子（-1为随机）')
                             with gr.Accordion('其他参数', open=False):
@@ -74,10 +74,10 @@ def create_ui(default_preset):
                             shared.gradio['truncation_length'] = gr.Slider(value=get_truncation_length(), minimum=shared.settings['truncation_length_min'], maximum=shared.settings['truncation_length_max'], step=256, label='将提示截断到此长度', info='如果提示超过此长度，最左侧的token将被移除。大多数模型要求这个值最多为2048。')
                             shared.gradio['max_tokens_second'] = gr.Slider(value=shared.settings['max_tokens_second'], minimum=0, maximum=20, step=1, label='每秒最多token数', info='为了实时阅读文本。')
                             shared.gradio['max_updates_second'] = gr.Slider(value=shared.settings['max_updates_second'], minimum=0, maximum=24, step=1, label='每秒最多UI更新数', info='如果在流式响应期间UI出现延迟，请设置此项。')
-                            shared.gradio['prompt_lookup_num_tokens'] = gr.Slider(value=shared.settings['prompt_lookup_num_tokens'], minimum=0, maximum=10, step=1, label='prompt_lookup_num_tokens', info='激活提示查找解码。')
+                            shared.gradio['prompt_lookup_num_tokens'] = gr.Slider(value=shared.settings['prompt_lookup_num_tokens'], minimum=0, maximum=10, step=1, label='prompt_lookup_num_tokens', info='激活提示词查找解码。')
 
                             shared.gradio['custom_stopping_strings'] = gr.Textbox(lines=2, value=shared.settings["custom_stopping_strings"] or None, label='自定义停止字符串', info='除默认值外。用""包围并用逗号分隔。', placeholder='"\\n", "\\nYou:"')
-                            shared.gradio['custom_token_bans'] = gr.Textbox(value=shared.settings['custom_token_bans'] or None, label='自定义token禁止', info='要禁止生成的特定token ID，用逗号分隔。ID可以在默认或笔记本标签中找到。')
+                            shared.gradio['custom_token_bans'] = gr.Textbox(value=shared.settings['custom_token_bans'] or None, label='自定义禁止token', info='要禁止生成的特定token ID，用逗号分隔。ID可以在默认或笔记本标签中找到。')
 
                         with gr.Column():
                             shared.gradio['auto_max_new_tokens'] = gr.Checkbox(value=shared.settings['auto_max_new_tokens'], label='自动最大新token数', info='将max_new_tokens扩展到可用的上下文长度。')

@@ -126,14 +126,13 @@ def create_chat_settings_ui():
                 pass
 
         with gr.Row():
-            with gr.Row():
-                with gr.Column():
-                    shared.gradio['custom_system_message'] = gr.Textbox(value=shared.settings['custom_system_message'], lines=2, label='自定义系统消息', info='如果不为空，将代替默认消息使用。', elem_classes=['add_scrollbar'])
-                    shared.gradio['instruction_template_str'] = gr.Textbox(value='', label='指令模板', lines=24, info='根据你正在使用的模型/LoRA进行更改。在指令和聊天指令模式下使用。', elem_classes=['add_scrollbar', 'monospace'])
-                    with gr.Row():
-                        shared.gradio['send_instruction_to_default'] = gr.Button('发送至默认', elem_classes=['small-button'])
-                        shared.gradio['send_instruction_to_notebook'] = gr.Button('发送至笔记本', elem_classes=['small-button'])
-                        shared.gradio['send_instruction_to_negative_prompt'] = gr.Button('发送至负面提示', elem_classes=['small-button'])
+            with gr.Column():
+                shared.gradio['custom_system_message'] = gr.Textbox(value=shared.settings['custom_system_message'], lines=2, label='自定义系统消息', info='如果不为空，将代替默认消息使用。', elem_classes=['add_scrollbar'])
+                shared.gradio['instruction_template_str'] = gr.Textbox(value='', label='指令模板', lines=24, info='根据你正在使用的模型/LoRA进行更改。在指令和聊天指令模式下使用。', elem_classes=['add_scrollbar', 'monospace'])
+                with gr.Row():
+                    shared.gradio['send_instruction_to_default'] = gr.Button('发送至默认', elem_classes=['small-button'])
+                    shared.gradio['send_instruction_to_notebook'] = gr.Button('发送至笔记本', elem_classes=['small-button'])
+                    shared.gradio['send_instruction_to_negative_prompt'] = gr.Button('发送至负面提示', elem_classes=['small-button'])
 
             with gr.Column():
                 shared.gradio['chat_template_str'] = gr.Textbox(value=shared.settings['chat_template_str'], label='聊天模板', lines=22, elem_classes=['add_scrollbar', 'monospace'])

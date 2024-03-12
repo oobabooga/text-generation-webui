@@ -30,9 +30,9 @@ def create_ui():
 
                 with gr.Row():
                     shared.gradio['prompt_menu-default'] = gr.Dropdown(choices=utils.get_available_prompts(), value='None', label='提示', elem_classes='slim-dropdown')
-                    ui.create_refresh_button(shared.gradio['prompt_menu-default'], lambda: None, lambda: {'choices': utils.get_available_prompts()}, '刷新按钮', interactive=not mu)
-                    shared.gradio['save_prompt-default'] = gr.Button('💾', elem_classes='刷新按钮', interactive=not mu)
-                    shared.gradio['delete_prompt-default'] = gr.Button('🗑️', elem_classes='刷新按钮', interactive=not mu)
+                    ui.create_refresh_button(shared.gradio['prompt_menu-default'], lambda: None, lambda: {'choices': utils.get_available_prompts()}, 'refresh-button', interactive=not mu)
+                    shared.gradio['save_prompt-default'] = gr.Button('💾', elem_classes='refresh-button', interactive=not mu)
+                    shared.gradio['delete_prompt-default'] = gr.Button('🗑️', elem_classes='refresh-button', interactive=not mu)
 
             with gr.Column():
                 with gr.Tab('原始'):
