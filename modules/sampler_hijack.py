@@ -222,13 +222,17 @@ class TopALogitsWarper(LogitsWarper):
 
 
 class DRYLogitsWarper(LogitsWarper):
-    def __init__(self, allowed_length: int, multiplier: float, base: float, sequence_breakers: set[int]):
+    def __init__(self, allowed_length: int, multiplier: float, base: float, sequence_breakers: set[int], _range: int):
         self.allowed_length = allowed_length
         self.multiplier = multiplier
         self.base = base
         self.sequence_breakers = sequence_breakers
+        self._range = _range
 
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
+        if self._range > 0:
+            input_ids = input_ids[:, -self._range:]
+
         for input_ids_row, scores_row in zip(input_ids, scores):
             # Raw integer must be extracted here to check for set membership.
             last_token = input_ids_row[-1].item()
@@ -428,6 +432,7 @@ def get_logits_warper_patch(self, generation_config):
                 multiplier=generation_config.dry_multiplier,
                 base=generation_config.dry_base,
                 sequence_breakers=sequence_breakers,
+                _range=generation_config.dry_range,
             )
         )
 
@@ -561,6 +566,7 @@ def generation_config_init_patch(self, **kwargs):
     self.dry_multiplier = kwargs.pop("dry_multiplier", 0.0)
     self.dry_base = kwargs.pop("dry_base", 1.75)
     self.dry_sequence_breakers = kwargs.pop("dry_sequence_breakers", '["\\n", ":", "\\"", "*"]')
+    self.dry_range = kwargs.pop("dry_range", 0)
     self.mirostat_mode = kwargs.pop("mirostat_mode", 0)
     self.mirostat_eta = kwargs.pop("mirostat_eta", 0.1)
     self.mirostat_tau = kwargs.pop("mirostat_tau", 5)
