@@ -53,8 +53,8 @@ def create_ui():
                 shared.gradio['Impersonate'] = gr.Button('AI帮答 (Ctrl + Shift + M)', elem_id='Impersonate')
 
             with gr.Row():
-                shared.gradio['Send dummy message'] = gr.Button('发送空消息')
-                shared.gradio['Send dummy reply'] = gr.Button('触发空回复')
+                shared.gradio['Send dummy message'] = gr.Button('发送假消息')
+                shared.gradio['Send dummy reply'] = gr.Button('触发假回复')
 
             with gr.Row():
                 shared.gradio['send-chat-to-default'] = gr.Button('发送至默认')
