@@ -170,6 +170,7 @@ def list_interface_input_elements():
         'character_menu',
         'history',
         'name1',
+        'user_bio',
         'name2',
         'greeting',
         'context',
