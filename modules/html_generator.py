@@ -48,7 +48,7 @@ def replace_blockquote(m):
     return m.group().replace('\n', '\n> ').replace('\\begin{blockquote}', '').replace('\\end{blockquote}', '')
 
 
-@functools.lru_cache(maxsize=512)
+@functools.lru_cache(maxsize=4096)
 def convert_to_markdown(string):
 
     # Blockquote
