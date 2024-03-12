@@ -149,11 +149,11 @@ def create_ui():
                                 hard_cut_string = gr.Textbox(label='硬剪切字符串', value='\\n\\n\\n', info='表示文本部分之间硬剪切的字符串。有助于防止不想要的重叠。')
                                 min_chars = gr.Number(label='忽略小块', value=0, info='忽略小于或等于该数字字符的硬剪切块。')
 
-                        with gr.Row():
-                            start_button = gr.Button("开始LoRA训练", variant='primary', interactive=not mu)
-                            stop_button = gr.Button("中断", interactive=not mu)
+                    with gr.Row():
+                        start_button = gr.Button("开始LoRA训练", variant='primary', interactive=not mu)
+                        stop_button = gr.Button("中断", interactive=not mu)
 
-                        output = gr.Markdown(value="准备就绪")
+                    output = gr.Markdown(value="准备就绪")
 
         with gr.Tab('困惑度评估', elem_id='evaluate-tab'):
             with gr.Row():

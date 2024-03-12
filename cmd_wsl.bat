@@ -1,5 +1,7 @@
 @echo off
 
+chcp 65001
+
 cd /D "%~dp0"
 
 set PATH=%PATH%;%SystemRoot%\system32

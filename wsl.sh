@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export LANG=zh_CN.UTF-8
+
 # detect if build-essential is missing or broken
 if ! dpkg-query -W -f'${Status}' "build-essential" 2>/dev/null | grep -q "ok installed"; then
 echo "build-essential未找到或已损坏！

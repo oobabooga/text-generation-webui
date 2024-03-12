@@ -122,6 +122,10 @@ def create_chat_settings_ui():
                     shared.gradio['save_template'] = gr.Button('💾', elem_classes='refresh-button', interactive=not mu)
                     shared.gradio['delete_template'] = gr.Button('🗑️ ', elem_classes='refresh-button', interactive=not mu)
 
+            with gr.Column():
+                pass
+
+        with gr.Row():
             with gr.Row():
                 with gr.Column():
                     shared.gradio['custom_system_message'] = gr.Textbox(value=shared.settings['custom_system_message'], lines=2, label='自定义系统消息', info='如果不为空，将代替默认消息使用。', elem_classes=['add_scrollbar'])

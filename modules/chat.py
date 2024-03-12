@@ -505,7 +505,7 @@ def rename_history(old_id, new_id, character, mode):
     elif new_p == old_p:
         logger.info("提供的路径与旧路径相同。")
     else:
-        logger.info(f"已重命名 \"{old_p}\" 为 \"{new_p}\"")
+        logger.info(f"正在重命名 \"{old_p}\" 为 \"{new_p}\"")
         old_p.rename(new_p)
 
 

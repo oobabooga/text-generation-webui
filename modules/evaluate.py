@@ -45,6 +45,7 @@ def calculate_perplexity(models, input_dataset, stride, _max_length):
 
     if shared.args.loader == "ExLlamav2":
         logger.error("ExLlamav2_HF 是进行 EXL2 模型困惑度评估所必需的。请使用 ExLlamav2_HF 代替 ExLlamav2 重新加载模型。")
+        raise ValueError
 
     if shared.args.loader == "llamacpp_HF" and not shared.args.logits_all:
         logger.error("--logits_all 参数是使用 GGUF 模型进行困惑度评估所必需的。请在设置或勾选该选项后重新加载模型。")
@@ -130,7 +131,7 @@ def calculate_perplexity(models, input_dataset, stride, _max_length):
         add_entry_to_past_evaluations(float(ppl), shared.model_name, input_dataset, stride, _max_length)
         save_past_evaluations(past_evaluations)
 
-        message = f"`{shared.model_name}`的困惑度时是：{float(ppl)}"
+        message = f"`{shared.model_name}`的困惑度是：{float(ppl)}"
         logger.info(message)
 
         cumulative_log += f"{message}\n\n"

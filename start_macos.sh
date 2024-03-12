@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export LANG=zh_CN.UTF-8
+
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
 if [[ "$(pwd)" =~ " " ]]; then echo 此脚本依赖Miniconda，而它无法在包含空格的路径下静默安装。 && exit; fi
