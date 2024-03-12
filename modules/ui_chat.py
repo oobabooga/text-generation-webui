@@ -110,7 +110,7 @@ def create_chat_settings_ui():
 
                 with gr.Tab("User"):
                     shared.gradio['name1'] = gr.Textbox(value=shared.settings['name1'], lines=1, label='Name')
-                    shared.gradio['user_bio'] = gr.Textbox(value='', lines=5, label='Description', info='Here you can optionally write a description of yourself.', placeholder='{{user}}\'s personality: ...', elem_classes=['add_scrollbar'])
+                    shared.gradio['user_bio'] = gr.Textbox(value=shared.settings['user_bio'], lines=10, label='Description', info='Here you can optionally write a description of yourself.', placeholder='{{user}}\'s personality: ...', elem_classes=['add_scrollbar'])
 
                 with gr.Tab('Chat history'):
                     with gr.Row():
