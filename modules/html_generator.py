@@ -101,6 +101,17 @@ def convert_to_markdown(string):
     return html_output
 
 
+def convert_to_markdown_wrapped(string, use_cache=True):
+    '''
+    Used to avoid caching convert_to_markdown calls during streaming.
+    '''
+
+    if use_cache:
+        return convert_to_markdown(string)
+
+    return convert_to_markdown.__wrapped__(string)
+
+
 def generate_basic_html(string):
     string = convert_to_markdown(string)
     string = f'<style>{readable_css}</style><div class="readable-container">{string}</div>'
@@ -196,7 +207,7 @@ def get_image_cache(path):
 def generate_instruct_html(history):
     output = f'<style>{instruct_css}</style><div class="chat" id="chat"><div class="messages">'
     for i, _row in enumerate(history):
-        row = [convert_to_markdown(entry) for entry in _row]
+        row = [convert_to_markdown_wrapped(entry, use_cache=i != len(history) - 1) for entry in _row]
 
         if row[0]:  # don't display empty user messages
             output += f"""
@@ -232,7 +243,7 @@ def generate_cai_chat_html(history, name1, name2, style, character, reset_cache=
     img_me = f'<img src="file/cache/pfp_me.png?{time.time() if reset_cache else ""}">' if Path("cache/pfp_me.png").exists() else ''
 
     for i, _row in enumerate(history):
-        row = [convert_to_markdown(entry) for entry in _row]
+        row = [convert_to_markdown_wrapped(entry, use_cache=i != len(history) - 1) for entry in _row]
 
         if row[0]:  # don't display empty user messages
             output += f"""
@@ -275,7 +286,7 @@ def generate_chat_html(history, name1, name2, reset_cache=False):
     output = f'<style>{chat_styles["wpp"]}</style><div class="chat" id="chat"><div class="messages">'
 
     for i, _row in enumerate(history):
-        row = [convert_to_markdown(entry) for entry in _row]
+        row = [convert_to_markdown_wrapped(entry, use_cache=i != len(history) - 1) for entry in _row]
 
         if row[0]:  # don't display empty user messages
             output += f"""
