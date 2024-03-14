@@ -222,7 +222,7 @@ def apply_interface_values(state, use_persistent=False):
 
 def save_settings(state, preset, extensions_list, show_controls, theme_state):
     output = copy.deepcopy(shared.settings)
-    exclude = ['name2', 'greeting', 'context', 'turn_template']
+    exclude = ['name2', 'greeting', 'context', 'turn_template', 'truncation_length']
     for k in state:
         if k in shared.settings and k not in exclude:
             output[k] = state[k]
