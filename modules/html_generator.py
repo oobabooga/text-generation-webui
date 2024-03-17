@@ -1,8 +1,8 @@
+import functools
 import html
 import os
 import re
 import time
-import functools
 from pathlib import Path
 
 import markdown
