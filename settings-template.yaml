@@ -54,7 +54,12 @@ instruction_template_str: |-
 chat_template_str: |-
   {%- for message in messages %}
       {%- if message['role'] == 'system' -%}
-          {{- message['content'] + '\n\n' -}}
+          {%- if message['content'] -%}
+              {{- message['content'] + '\n\n' -}}
+          {%- endif -%}
+          {%- if user_bio -%}
+              {{- user_bio + '\n\n' -}}
+          {%- endif -%}
       {%- else -%}
           {%- if message['role'] == 'user' -%}
               {{- name1 + ': ' + message['content'] + '\n'-}}
