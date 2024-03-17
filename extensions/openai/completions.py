@@ -14,6 +14,7 @@ from transformers import LogitsProcessor, LogitsProcessorList
 
 from extensions.openai.errors import InvalidRequestError
 from extensions.openai.utils import debug_msg
+from extensions.openai.function_call import FunctionCallContext
 from modules import shared
 from modules.chat import (
     generate_chat_prompt,
@@ -71,7 +72,6 @@ class LogprobProcessor(LogitsProcessor):
     def __repr__(self):
         return f"<{self.__class__.__name__}(logprobs={self.logprobs}, token_alternatives={self.token_alternatives})>"
 
-
 def convert_logprobs_to_tiktoken(model, logprobs):
     # more problems than it's worth.
     # try:
@@ -85,8 +85,14 @@ def convert_logprobs_to_tiktoken(model, logprobs):
     return logprobs
 
 
-def process_parameters(body, is_legacy=False):
+
+def process_parameters(body, function_call_context:FunctionCallContext, is_legacy=False):
     generate_params = body
+
+    if function_call_context.expect_finish_with_function_call:
+        # low temp for function calling
+        generate_params['temperature'] = min(generate_params['temperature'], 0.3)
+
     max_tokens_str = 'length' if is_legacy else 'max_tokens'
     generate_params['max_new_tokens'] = body.pop(max_tokens_str)
     if generate_params['truncation_length'] == 0:
@@ -125,8 +131,8 @@ def process_parameters(body, is_legacy=False):
 
     return generate_params
 
-
-def convert_history(history):
+    
+def convert_history(history, function_call_context: FunctionCallContext):
     '''
     Chat histories in this program are in the format [message, reply].
     This function converts OpenAI histories to that format.
@@ -203,20 +209,32 @@ def convert_history(history):
                 chat_dialogue.append(['', current_reply])
         elif role == "system":
             system_message = content
+        elif role == function_call_context.ROLE:
+            # Treat function responses as user input for llm to interprete
+            user_input = function_call_context.process_role_msg(content)
+            if current_message:
+                chat_dialogue.append([current_message, ''])
+                current_message = ""
+            current_message = user_input
 
     # if current_message:
     #     chat_dialogue.append([current_message, ''])
+    
+    # add function prompt to system prompt
+    if function_call_context.FUNCTION_PROMPT:
+        system_message += function_call_context.FUNCTION_PROMPT
+        debug_msg('adding function prompt to system prompt: ', function_call_context.FUNCTION_PROMPT)
 
     return user_input, system_message, {'internal': chat_dialogue, 'visible': copy.deepcopy(chat_dialogue)}
 
 
 def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -> dict:
-    if body.get('functions', []):
-        raise InvalidRequestError(message="functions is not supported.", param='functions')
 
-    if body.get('function_call', ''):
-        raise InvalidRequestError(message="function_call is not supported.", param='function_call')
-
+    # Generate function call context for handing potential function calls requests
+    function_call_context = FunctionCallContext(body)
+    if function_call_context.expect_finish_with_function_call and stream:
+        raise InvalidRequestError(message="Function call context is not supported for streaming", param='messages')
+        
     if 'messages' not in body:
         raise InvalidRequestError(message="messages is required", param='messages')
 
@@ -224,8 +242,6 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
     for m in messages:
         if 'role' not in m:
             raise InvalidRequestError(message="messages: missing role", param='messages')
-        elif m['role'] == 'function':
-            raise InvalidRequestError(message="role: function is not supported.", param='messages')
 
         if 'content' not in m and "image_url" not in m:
             raise InvalidRequestError(message="messages: missing content", param='messages')
@@ -237,7 +253,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
     resp_list = 'data' if is_legacy else 'choices'
 
     # generation parameters
-    generate_params = process_parameters(body, is_legacy=is_legacy)
+    generate_params = process_parameters(body, function_call_context, is_legacy=is_legacy)
     continue_ = body['continue_']
 
     # Instruction template
@@ -263,7 +279,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
     greeting = body['greeting'] or greeting
 
     # History
-    user_input, custom_system_message, history = convert_history(messages)
+    user_input, custom_system_message, history = convert_history(messages, function_call_context)
 
     generate_params.update({
         'mode': body['mode'],
@@ -316,30 +332,59 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
     token_count = len(encode(prompt)[0])
     debug_msg({'prompt': prompt, 'generate_params': generate_params})
 
-    generator = generate_chat_reply(
-        user_input, generate_params, regenerate=False, _continue=continue_, loading_message=False)
+    max_retries = 3
+    finish_good = False
+    while not finish_good and max_retries > 0:
+        generator = generate_chat_reply(
+            user_input, generate_params, regenerate=False, _continue=continue_, loading_message=False)
 
-    answer = ''
-    seen_content = ''
-    completion_token_count = 0
+        answer = ''
+        seen_content = ''
+        completion_token_count = 0
+        response_message = {"role": "assistant", "content": ''}
 
-    for a in generator:
-        answer = a['internal'][-1][1]
-        if stream:
-            len_seen = len(seen_content)
-            new_content = answer[len_seen:]
+        for a in generator:
+            answer = a['internal'][-1][1]
+            if stream:
+                len_seen = len(seen_content)
+                new_content = answer[len_seen:]
 
-            if not new_content or chr(0xfffd) in new_content:  # partial unicode character, don't send it yet.
-                continue
+                if not new_content or chr(0xfffd) in new_content:  # partial unicode character, don't send it yet.
+                    continue
 
-            seen_content = answer
-            chunk = chat_streaming_chunk(new_content)
-            yield chunk
+                seen_content = answer
+                chunk = chat_streaming_chunk(new_content)
+                yield chunk
 
-    completion_token_count = len(encode(answer)[0])
-    stop_reason = "stop"
-    if token_count + completion_token_count >= generate_params['truncation_length'] or completion_token_count >= generate_params['max_new_tokens']:
-        stop_reason = "length"
+        completion_token_count = len(encode(answer)[0])
+        stop_reason = "stop"
+        if token_count + completion_token_count >= generate_params['truncation_length'] or completion_token_count >= generate_params['max_new_tokens']:
+            stop_reason = "length"
+            
+        if not function_call_context.expect_finish_with_function_call:
+            # good finish
+            response_message['content'] = answer
+            finish_good = True
+        else:
+            function_call_responses, exception_occurred = function_call_context.process_finish_msg(answer)
+            if not exception_occurred:
+                if len(function_call_responses) > 0:
+                    stop_reason = function_call_context.FINISH_REASON
+
+                    # OpenAI has made 'content' section for functioin call responses None, reference https://github.com/openai/openai-cookbook/blob/main/examples/How_to_call_functions_with_chat_models.ipynb
+                    # But also mentioned in the last SQL query part in the notebook, we actually need to re-fill 'content' with function called in order to pass a multi-round function calling conversation. So we just make up the 'conte4nt' here for the user
+                    response_message['content'] = '\n'.join([function_call_context.process_assistant_msg(iter["function"]) for iter in function_call_responses])
+                    response_message[function_call_context.RESPOSE] = function_call_responses
+                    finish_good = True
+                else:
+                    # good finish due to rejecting using function call
+                    response_message['content'] = answer
+                    finish_good = True
+            else:
+                # function call with exception occurred, retry
+                debug_msg(f'function call with exception_occurred, retrying...')
+                finish_good = False
+                max_retries -= 1
 
     if stream:
         chunk = chat_streaming_chunk('')
@@ -360,7 +405,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
             resp_list: [{
                 "index": 0,
                 "finish_reason": stop_reason,
-                "message": {"role": "assistant", "content": answer}
+                "message": response_message
             }],
             "usage": {
                 "prompt_tokens": token_count,
@@ -390,7 +435,8 @@ def completions_common(body: dict, is_legacy: bool = False, stream=False):
         raise InvalidRequestError("Missing required input", param=prompt_str)
 
     # common params
-    generate_params = process_parameters(body, is_legacy=is_legacy)
+    dummy_function_call_context = FunctionCallContext({}) # Completion api would not support function call, so we simply create a dummy context here
+    generate_params = process_parameters(body, dummy_function_call_context, is_legacy=is_legacy)
     max_tokens = generate_params['max_new_tokens']
     generate_params['stream'] = stream
     requested_model = generate_params.pop('model')
