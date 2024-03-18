@@ -14,6 +14,9 @@ inputs = ('Chat input', 'interface_state')
 reload_arr = ('history', 'name1', 'name2', 'mode', 'chat_style', 'character_menu')
 clear_arr = ('delete_chat-confirm', 'delete_chat', 'delete_chat-cancel')
 
+def last_stats(x):
+    from modules.text_generation import total_tokens, last_speed
+    return f'{total_tokens}, {last_speed:.2f} tps'
 
 def create_ui():
     mu = shared.args.multi_user
@@ -25,6 +28,7 @@ def create_ui():
         with gr.Row():
             with gr.Column(elem_id='chat-col'):
                 shared.gradio['display'] = gr.HTML(value=chat_html_wrapper({'internal': [], 'visible': []}, '', '', 'chat', 'cai-chat', ''))
+                shared.gradio['token-counter-chat'] = gr.HTML(value="<span></span>", elem_classes=["token-counter", "default-token-counter"])
 
                 with gr.Row(elem_id="chat-input-row"):
                     with gr.Column(scale=1, elem_id='gr-hover-container'):
@@ -39,6 +43,7 @@ def create_ui():
                         with gr.Row():
                             shared.gradio['Stop'] = gr.Button('Stop', elem_id='stop', visible=False)
                             shared.gradio['Generate'] = gr.Button('Generate', elem_id='Generate', variant='primary')
+
 
         # Hover menu buttons
         with gr.Column(elem_id='chat-buttons'):
@@ -91,6 +96,7 @@ def create_ui():
                 with gr.Row():
                     shared.gradio['chat-instruct_command'] = gr.Textbox(value=shared.settings['chat-instruct_command'], lines=16, label='Command for chat-instruct mode', info='<|character|> and <|prompt|> get replaced with the bot name and the regular chat prompt respectively.', visible=False, elem_classes=['add_scrollbar'])
 
+        shared.gradio['display'].change(lambda x: f"<span>{last_stats(x)}</span>", gradio('display'), gradio('token-counter-chat'), show_progress=False)
 
 def create_chat_settings_ui():
     mu = shared.args.multi_user
