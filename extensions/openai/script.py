@@ -145,7 +145,7 @@ async def handle_models(request: Request):
     is_list = request.url.path.split('?')[0].split('#')[0] == '/v1/models'
 
     if is_list:
-        response = OAImodels.list_dummy_models()
+        response = OAImodels.list_models()
     else:
         model_name = path[len('/v1/models/'):]
         response = OAImodels.model_info_dict(model_name)
