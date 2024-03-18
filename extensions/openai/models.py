@@ -22,7 +22,7 @@ def list_models():
     for model in get_available_models():
         result["data"].append(model_info_dict(model))
 
-    return {'model_names': result}
+    return result
 
 
 def list_dummy_models():
