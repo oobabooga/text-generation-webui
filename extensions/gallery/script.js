@@ -16,9 +16,9 @@ document.querySelector('.header_bar').addEventListener('click', function(event) 
     if (event.target.tagName === 'BUTTON') {
         const buttonText = event.target.textContent.trim();
 
-        let chat_visible = (buttonText == 'Chat');
-        let default_visible = (buttonText == 'Default');
-        let notebook_visible = (buttonText == 'Notebook');
+        let chat_visible = (buttonText == '聊天');
+        let default_visible = (buttonText == '默认');
+        let notebook_visible = (buttonText == '笔记本');
         let chat_mode_visible = (chat_mode_element.offsetHeight > 0 && chat_mode_element.offsetWidth > 0);
 
         // Only show this extension in the Chat tab
