@@ -90,7 +90,7 @@ def create_ui():
                                 shared.gradio['quant_type'] = gr.Dropdown(label="量化类型", choices=["nf4", "fp4"], value=shared.args.quant_type)
 
                             shared.gradio['hqq_backend'] = gr.Dropdown(label="hqq后端", choices=["PYTORCH", "PYTORCH_COMPILE", "ATEN"], value=shared.args.hqq_backend)
-                            shared.gradio['n_gpu_layers'] = gr.Slider(label="GPU层数", minimum=0, maximum=256, value=shared.args.n_gpu_layers)
+                            shared.gradio['n_gpu_layers'] = gr.Slider(label="GPU层数", minimum=0, maximum=256, value=shared.args.n_gpu_layers, info='必须要设为大于0的值，你的GPU才会被使用。')
                             shared.gradio['n_ctx'] = gr.Slider(minimum=0, maximum=shared.settings['truncation_length_max'], step=256, label="n_ctx", value=shared.args.n_ctx, info='上下文长度。如果在加载模型时内存不足，请尝试降低此值。')
                             shared.gradio['tensor_split'] = gr.Textbox(label='张量分割', info='将模型分割到多个GPU的比例列表。示例：18,17')
                             shared.gradio['n_batch'] = gr.Slider(label="批处理大小", minimum=1, maximum=2048, step=1, value=shared.args.n_batch)
@@ -111,14 +111,14 @@ def create_ui():
                             shared.gradio['quipsharp_info'] = gr.Markdown('QuIP#目前需要手动安装。')
 
                         with gr.Column():
-                            shared.gradio['load_in_8bit'] = gr.Checkbox(label="加载8比特", value=shared.args.load_in_8bit)
-                            shared.gradio['load_in_4bit'] = gr.Checkbox(label="加载4比特", value=shared.args.load_in_4bit)
+                            shared.gradio['load_in_8bit'] = gr.Checkbox(label="以8比特量化加载", value=shared.args.load_in_8bit)
+                            shared.gradio['load_in_4bit'] = gr.Checkbox(label="以4比特量化加载", value=shared.args.load_in_4bit)
                             shared.gradio['use_double_quant'] = gr.Checkbox(label="使用双重量化", value=shared.args.use_double_quant)
                             shared.gradio['use_flash_attention_2'] = gr.Checkbox(label="使用flash_attention_2", value=shared.args.use_flash_attention_2, info='加载模型时设置use_flash_attention_2=True。')
                             shared.gradio['auto_devices'] = gr.Checkbox(label="自动分配设备", value=shared.args.auto_devices)
                             shared.gradio['tensorcores'] = gr.Checkbox(label="张量核心", value=shared.args.tensorcores, info='仅限NVIDIA：使用支持张量核心的llama-cpp-python编译。这可以提高RTX卡的性能。')
                             shared.gradio['streaming_llm'] = gr.Checkbox(label="streaming_llm", value=shared.args.streaming_llm, info='（实验性功能）激活StreamingLLM以避免在删除旧消息时重新评估整个提示词。')
-                            shared.gradio['attention_sink_size'] = gr.Number(label="attention_sink_size", value=shared.args.attention_sink_size, info='StreamingLLM：sink token的数量。仅在修剪后的提示词不与旧提示词前缀相同时使用。')
+                            shared.gradio['attention_sink_size'] = gr.Number(label="attention_sink_size", value=shared.args.attention_sink_size, precision=0, info='StreamingLLM：sink token的数量。仅在修剪后的提示词不与旧提示词前缀相同时使用。')
                             shared.gradio['cpu'] = gr.Checkbox(label="CPU", value=shared.args.cpu, info='llama.cpp：使用没有GPU加速的llama-cpp-python编译。Transformers：使用PyTorch的CPU模式。')
                             shared.gradio['row_split'] = gr.Checkbox(label="行分割", value=shared.args.row_split, info='在GPU之间按行分割模型。这可能会提高多GPU性能。')
                             shared.gradio['no_offload_kqv'] = gr.Checkbox(label="不卸载KQV", value=shared.args.no_offload_kqv, info='不要将K、Q、V卸载到GPU。这可以节省VRAM，但会降低性能。')

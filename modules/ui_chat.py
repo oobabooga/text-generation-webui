@@ -94,19 +94,50 @@ def create_ui():
 
 def create_chat_settings_ui():
     mu = shared.args.multi_user
-    with gr.Tab('角色'):
+    with gr.Tab('聊天'):
         with gr.Row():
             with gr.Column(scale=8):
-                with gr.Row():
-                    shared.gradio['character_menu'] = gr.Dropdown(value=None, choices=utils.get_available_characters(), label='角色', elem_id='character-menu', info='用于聊天和聊天指令模式。', elem_classes='slim-dropdown')
-                    ui.create_refresh_button(shared.gradio['character_menu'], lambda: None, lambda: {'choices': utils.get_available_characters()}, 'refresh-button', interactive=not mu)
-                    shared.gradio['save_character'] = gr.Button('💾', elem_classes='refresh-button', interactive=not mu)
-                    shared.gradio['delete_character'] = gr.Button('🗑️', elem_classes='refresh-button', interactive=not mu)
+                with gr.Tab("角色"):
+                    with gr.Row():
+                        shared.gradio['character_menu'] = gr.Dropdown(value=None, choices=utils.get_available_characters(), label='角色', elem_id='character-menu', info='用于聊天和聊天指令模式。', elem_classes='slim-dropdown')
+                        ui.create_refresh_button(shared.gradio['character_menu'], lambda: None, lambda: {'choices': utils.get_available_characters()}, 'refresh-button', interactive=not mu)
+                        shared.gradio['save_character'] = gr.Button('💾', elem_classes='refresh-button', interactive=not mu)
+                        shared.gradio['delete_character'] = gr.Button('🗑️', elem_classes='refresh-button', interactive=not mu)
 
-                shared.gradio['name1'] = gr.Textbox(value=shared.settings['name1'], lines=1, label='你的名字')
-                shared.gradio['name2'] = gr.Textbox(value='', lines=1, label='角色的名字')
-                shared.gradio['context'] = gr.Textbox(value='', lines=10, label='背景', elem_classes=['add_scrollbar'])
-                shared.gradio['greeting'] = gr.Textbox(value='', lines=5, label='问候', elem_classes=['add_scrollbar'])
+                    shared.gradio['name2'] = gr.Textbox(value='', lines=1, label='角色的名字')
+                    shared.gradio['context'] = gr.Textbox(value='', lines=10, label='背景', elem_classes=['add_scrollbar'])
+                    shared.gradio['greeting'] = gr.Textbox(value='', lines=5, label='问候', elem_classes=['add_scrollbar'])
+
+                with gr.Tab("用户"):
+                    shared.gradio['name1'] = gr.Textbox(value=shared.settings['name1'], lines=1, label='名字')
+                    shared.gradio['user_bio'] = gr.Textbox(value=shared.settings['user_bio'], lines=10, label='描述', info='你可以在这里写下有关你自己的描述。', placeholder='{{user}}\'s personality: ...', elem_classes=['add_scrollbar'])
+
+                with gr.Tab('聊天记录'):
+                    with gr.Row():
+                        with gr.Column():
+                            shared.gradio['save_chat_history'] = gr.Button(value='保存历史记录')
+
+                        with gr.Column():
+                            shared.gradio['load_chat_history'] = gr.File(type='binary', file_types=['.json', '.txt'], label='上传历史记录JSON文件')
+
+                with gr.Tab('上传角色'):
+                    with gr.Tab('YAML 或 JSON'):
+                        with gr.Row():
+                            shared.gradio['upload_json'] = gr.File(type='binary', file_types=['.json', '.yaml'], label='JSON 或 YAML 文件', interactive=not mu)
+                            shared.gradio['upload_img_bot'] = gr.Image(type='pil', label='头像（可选）', interactive=not mu)
+
+                        shared.gradio['Submit character'] = gr.Button(value='提交', interactive=False)
+
+                    with gr.Tab('TavernAI 角色卡'):
+                        with gr.Row():
+                            with gr.Column():
+                                shared.gradio['upload_img_tavern'] = gr.Image(type='pil', label='TavernAI PNG 文件', elem_id='upload_img_tavern', interactive=not mu)
+                                shared.gradio['tavern_json'] = gr.State()
+                            with gr.Column():
+                                shared.gradio['tavern_name'] = gr.Textbox(value='', lines=1, label='名字', interactive=False)
+                                shared.gradio['tavern_desc'] = gr.Textbox(value='', lines=4, max_lines=4, label='描述', interactive=False)
+
+                        shared.gradio['Submit tavern character'] = gr.Button(value='提交', interactive=False)
 
             with gr.Column(scale=1):
                 shared.gradio['character_picture'] = gr.Image(label='角色图片', type='pil', interactive=not mu)
@@ -136,33 +167,6 @@ def create_chat_settings_ui():
 
             with gr.Column():
                 shared.gradio['chat_template_str'] = gr.Textbox(value=shared.settings['chat_template_str'], label='聊天模板', lines=22, elem_classes=['add_scrollbar', 'monospace'])
-
-    with gr.Tab('聊天记录'):
-        with gr.Row():
-            with gr.Column():
-                shared.gradio['save_chat_history'] = gr.Button(value='保存历史记录')
-
-            with gr.Column():
-                shared.gradio['load_chat_history'] = gr.File(type='binary', file_types=['.json', '.txt'], label='上传历史记录 JSON')
-
-    with gr.Tab('上传角色'):
-        with gr.Tab('YAML 或 JSON'):
-            with gr.Row():
-                shared.gradio['upload_json'] = gr.File(type='binary', file_types=['.json', '.yaml'], label='JSON 或 YAML 文件', interactive=not mu)
-                shared.gradio['upload_img_bot'] = gr.Image(type='pil', label='头像图片（可选）', interactive=not mu)
-
-            shared.gradio['Submit character'] = gr.Button(value='提交', interactive=False)
-
-        with gr.Tab('TavernAI PNG'):
-            with gr.Row():
-                with gr.Column():
-                    shared.gradio['upload_img_tavern'] = gr.Image(type='pil', label='TavernAI PNG 文件', elem_id='upload_img_tavern', interactive=not mu)
-                    shared.gradio['tavern_json'] = gr.State()
-                with gr.Column():
-                    shared.gradio['tavern_name'] = gr.Textbox(value='', lines=1, label='名称', interactive=False)
-                    shared.gradio['tavern_desc'] = gr.Textbox(value='', lines=4, max_lines=4, label='描述', interactive=False)
-
-            shared.gradio['Submit tavern character'] = gr.Button(value='提交', interactive=False)
 
 
 def create_event_handlers():
