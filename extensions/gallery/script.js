@@ -16,9 +16,9 @@ document.querySelector('.header_bar').addEventListener('click', function(event) 
     if (event.target.tagName === 'BUTTON') {
         const buttonText = event.target.textContent.trim();
 
-        let chat_visible = (buttonText == 'èŠå¤©');
-        let default_visible = (buttonText == 'é»˜è®¤');
-        let notebook_visible = (buttonText == 'ç¬”è®°æœ¬');
+        let chat_visible = (buttonText == 'ÁÄÌì');
+        let default_visible = (buttonText == 'Ä¬ÈÏ');
+        let notebook_visible = (buttonText == '±Ê¼Ç±¾');
         let chat_mode_visible = (chat_mode_element.offsetHeight > 0 && chat_mode_element.offsetWidth > 0);
 
         // Only show this extension in the Chat tab
