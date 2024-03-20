@@ -22,7 +22,7 @@
 
 ## 如何安装
 
-1) 克隆或[下载](https://github.com/Touch-Night/text-generation-webui/archive/refs/heads/Chinese.zip)此存储库。
+1) 克隆或[下载](https://mirror.ghproxy.com/https://github.com/Touch-Night/text-generation-webui/releases/download/7cf1402/text-generation-webui-Chinese.zip)此存储库。
 2) 根据您的操作系统运行`start_linux.sh`，`start_windows.bat`，`start_macos.sh`或`start_wsl.bat`脚本。
 3) 当要求时选择您的GPU供应商。
 4) 安装结束后，浏览到`http://localhost:7860/?__theme=dark`。
