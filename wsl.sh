@@ -4,15 +4,15 @@ export LANG=zh_CN.UTF-8
 
 # detect if build-essential is missing or broken
 if ! dpkg-query -W -f'${Status}' "build-essential" 2>/dev/null | grep -q "ok installed"; then
-echo "build-essentialæœªæ‰¾åˆ°æˆ–å·²æŸåï¼
+echo "build-essentialÎ´ÕÒµ½»òÒÑËð»µ£¡
 
-è¦ç¼–è¯‘æ‰€éœ€çš„PythonåŒ…ï¼Œéœ€è¦C++ç¼–è¯‘å™¨ï¼
-è¦å®‰è£…ä¸€ä¸ªï¼Œè¯·è¿è¡Œcmd_wsl.batå¹¶è¾“å…¥ä»¥ä¸‹å‘½ä»¤ï¼š
+Òª±àÒëËùÐèµÄPython°ü£¬ÐèÒªC++±àÒëÆ÷£¡
+Òª°²×°Ò»¸ö£¬ÇëÔËÐÐcmd_wsl.bat²¢ÊäÈëÒÔÏÂÃüÁî£º
 
 sudo apt-get update
 sudo apt-get install build-essential
 "
-read -n1 -p "[y,n]ä»è¦ç»§ç»­å®‰è£…å—ï¼Ÿ[y,n]" EXIT_PROMPT
+read -n1 -p "[y,n]ÈÔÒª¼ÌÐø°²×°Âð£¿[y,n]" EXIT_PROMPT
 # only continue if user inputs 'y' else exit
 if ! [[ $EXIT_PROMPT == "Y" || $EXIT_PROMPT == "y" ]]; then exit; fi
 fi
@@ -47,7 +47,7 @@ if [ "$1" == "cmd" ]; then
     exit
 fi
 
-if [[ "$INSTALL_DIR" =~ " " ]]; then echo æ­¤è„šæœ¬ä¾èµ–Minicondaï¼Œè€Œå®ƒæ— æ³•åœ¨åŒ…å«ç©ºæ ¼çš„è·¯å¾„ä¸‹é™é»˜å®‰è£…ã€‚ && exit; fi
+if [[ "$INSTALL_DIR" =~ " " ]]; then echo ´Ë½Å±¾ÒÀÀµMiniconda£¬¶øËüÎÞ·¨ÔÚ°üº¬¿Õ¸ñµÄÂ·¾¶ÏÂ¾²Ä¬°²×°¡£ && exit; fi
 
 # create install dir if missing
 if [ ! -d "$INSTALL_DIR" ]; then mkdir -p "$INSTALL_DIR" || exit; fi
@@ -58,7 +58,7 @@ if "$CONDA_ROOT_PREFIX/bin/conda" --version &>/dev/null; then conda_exists="T"; 
 # (if necessary) install git and conda into a contained environment
 # download miniconda
 if [ "$conda_exists" == "F" ]; then
-    echo "æ­£åœ¨ä»Ž $MINICONDA_DOWNLOAD_URL ä¸‹è½½Minicondaè‡³ $INSTALL_DIR/miniconda_installer.sh"
+    echo "ÕýÔÚ´Ó $MINICONDA_DOWNLOAD_URL ÏÂÔØMinicondaÖÁ $INSTALL_DIR/miniconda_installer.sh"
 
     curl -L "$MINICONDA_DOWNLOAD_URL" > "$INSTALL_DIR/miniconda_installer.sh"
 
@@ -66,7 +66,7 @@ if [ "$conda_exists" == "F" ]; then
     bash "$INSTALL_DIR/miniconda_installer.sh" -b -p $CONDA_ROOT_PREFIX
 
     # test the conda binary
-    echo "Minicondaç‰ˆæœ¬ï¼š"
+    echo "Miniconda°æ±¾£º"
     "$CONDA_ROOT_PREFIX/bin/conda" --version
 
     # delete the Miniconda installer
@@ -80,7 +80,7 @@ fi
 
 # check if conda environment was actually created
 if [ ! -e "$INSTALL_ENV_DIR/bin/python" ]; then
-    echo "Conda çŽ¯å¢ƒæœªåˆ›å»ºã€‚"
+    echo "Conda »·¾³Î´´´½¨¡£"
     exit
 fi
 

@@ -1,16 +1,14 @@
 @echo off
 setlocal enabledelayedexpansion
 
-chcp 65001
-
 cd /D "%~dp0"
 
 set PATH=%PATH%;%SystemRoot%\system32
 
-echo "%CD%"| findstr /C:" " >nul && echo æ­¤è„šæœ¬ä¾èµ–Minicondaï¼Œè€Œå®ƒæ— æ³•åœ¨åŒ…å«ç©ºæ ¼çš„è·¯å¾„ä¸‹é™é»˜å®‰è£…ã€‚ && goto end
+echo "%CD%"| findstr /C:" " >nul && echo ´Ë½Å±¾ÒÀÀµMiniconda£¬¶øËüÎŞ·¨ÔÚ°üº¬¿Õ¸ñµÄÂ·¾¶ÏÂ¾²Ä¬°²×°¡£ && goto end
 
 @rem Check for special characters in installation path
-set "SPCHARMESSAGE="è­¦å‘Šï¼šåœ¨å®‰è£…è·¯å¾„ä¸­æ£€æµ‹åˆ°ç‰¹æ®Šå­—ç¬¦ï¼" "         è¿™å¯èƒ½å¯¼è‡´å®‰è£…å¤±è´¥ï¼""
+set "SPCHARMESSAGE="¾¯¸æ£ºÔÚ°²×°Â·¾¶ÖĞ¼ì²âµ½ÌØÊâ×Ö·û£¡" "         Õâ¿ÉÄÜµ¼ÖÂ°²×°Ê§°Ü£¡""
 echo "%CD%"| findstr /R /C:"[!#\$%&()\*+,;<=>?@\[\]\^`{|}~]" >nul && (
 	call :PrintBigMessage %SPCHARMESSAGE%
 )
@@ -38,29 +36,29 @@ if "%ERRORLEVEL%" EQU "0" set conda_exists=T
 @rem (if necessary) install git and conda into a contained environment
 @rem download conda
 if "%conda_exists%" == "F" (
-	echo æ­£åœ¨ä» %MINICONDA_DOWNLOAD_URL% ä¸‹è½½Minicondaè‡³ %INSTALL_DIR%\miniconda_installer.exe
+	echo ÕıÔÚ´Ó %MINICONDA_DOWNLOAD_URL% ÏÂÔØMinicondaÖÁ %INSTALL_DIR%\miniconda_installer.exe
 
 	mkdir "%INSTALL_DIR%"
-	call curl -Lk "%MINICONDA_DOWNLOAD_URL%" > "%INSTALL_DIR%\miniconda_installer.exe" || ( echo. && echo ä¸‹è½½Minicondaå¤±è´¥ã€‚ && goto end )
+	call curl -Lk "%MINICONDA_DOWNLOAD_URL%" > "%INSTALL_DIR%\miniconda_installer.exe" || ( echo. && echo ÏÂÔØMinicondaÊ§°Ü¡£ && goto end )
 
 	for /f %%a in ('CertUtil -hashfile "%INSTALL_DIR%\miniconda_installer.exe" SHA256 ^| find /i /v " " ^| find /i "%MINICONDA_CHECKSUM%"') do (
 		set "output=%%a"
 	)
 
 	if not defined output (
-		echo miniconda_installer.exeçš„æ ¡éªŒå’ŒéªŒè¯å¤±è´¥äº†ã€‚
+		echo miniconda_installer.exeµÄĞ£ÑéºÍÑéÖ¤Ê§°ÜÁË¡£
 		del "%INSTALL_DIR%\miniconda_installer.exe"
 		goto end
 	) else (
-		echo miniconda_installer.exeçš„æ ¡éªŒå’ŒéªŒè¯å·²ç»æˆåŠŸé€šè¿‡ã€‚
+		echo miniconda_installer.exeµÄĞ£ÑéºÍÑéÖ¤ÒÑ¾­³É¹¦Í¨¹ı¡£
 	)
 
-	echo æ­£åœ¨å°†Minicondaå®‰è£…è‡³ %CONDA_ROOT_PREFIX%
+	echo ÕıÔÚ½«Miniconda°²×°ÖÁ %CONDA_ROOT_PREFIX%
 	start /wait "" "%INSTALL_DIR%\miniconda_installer.exe" /InstallationType=JustMe /NoShortcuts=1 /AddToPath=0 /RegisterPython=0 /NoRegistry=1 /S /D=%CONDA_ROOT_PREFIX%
 
 	@rem test the conda binary
-	echo Minicondaç‰ˆæœ¬ï¼š
-	call "%CONDA_ROOT_PREFIX%\_conda.exe" --version || ( echo. && echo æ‰¾ä¸åˆ°Minicondaã€‚ && goto end )
+	echo Miniconda°æ±¾£º
+	call "%CONDA_ROOT_PREFIX%\_conda.exe" --version || ( echo. && echo ÕÒ²»µ½Miniconda¡£ && goto end )
 
 	@rem delete the Miniconda installer
 	del "%INSTALL_DIR%\miniconda_installer.exe"
@@ -68,12 +66,12 @@ if "%conda_exists%" == "F" (
 
 @rem create the installer env
 if not exist "%INSTALL_ENV_DIR%" (
-	echo å³å°†å®‰è£…çš„è½¯ä»¶åŒ…ï¼š %PACKAGES_TO_INSTALL%
-	call "%CONDA_ROOT_PREFIX%\_conda.exe" create --no-shortcuts -y -k --prefix "%INSTALL_ENV_DIR%" -c https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main/ python=3.11 || ( echo. && echo åˆ›å»ºCondaç¯å¢ƒå¤±è´¥ã€‚ && goto end )
+	echo ¼´½«°²×°µÄÈí¼ş°ü£º %PACKAGES_TO_INSTALL%
+	call "%CONDA_ROOT_PREFIX%\_conda.exe" create --no-shortcuts -y -k --prefix "%INSTALL_ENV_DIR%" -c https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main/ python=3.11 || ( echo. && echo ´´½¨Conda»·¾³Ê§°Ü¡£ && goto end )
 )
 
 @rem check if conda environment was actually created
-if not exist "%INSTALL_ENV_DIR%\python.exe" ( echo. && echo Condaç¯å¢ƒæœªåˆ›å»ºã€‚ && goto end )
+if not exist "%INSTALL_ENV_DIR%\python.exe" ( echo. && echo Conda»·¾³Î´´´½¨¡£ && goto end )
 
 @rem environment isolation
 set PYTHONNOUSERSITE=1
@@ -83,7 +81,7 @@ set "CUDA_PATH=%INSTALL_ENV_DIR%"
 set "CUDA_HOME=%CUDA_PATH%"
 
 @rem activate installer env
-call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" activate "%INSTALL_ENV_DIR%" || ( echo. && echo æ‰¾ä¸åˆ°Minicondaé’©å­ã€‚ && goto end )
+call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" activate "%INSTALL_ENV_DIR%" || ( echo. && echo ÕÒ²»µ½Miniconda¹³×Ó¡£ && goto end )
 
 @rem setup installer env
 call python one_click.py %*

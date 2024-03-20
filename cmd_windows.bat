@@ -1,12 +1,10 @@
 @echo off
 
-chcp 65001
-
 cd /D "%~dp0"
 
 set PATH=%PATH%;%SystemRoot%\system32
 
-echo "%CD%"| findstr /C:" " >nul && echo æ­¤è„šæœ¬ä¾èµ–Minicondaï¼Œè€Œå®ƒæ— æ³•åœ¨åŒ…å«ç©ºæ ¼çš„è·¯å¾„ä¸‹é™é»˜å®‰è£…ã€‚ && goto end
+echo "%CD%"| findstr /C:" " >nul && echo ´Ë½Å±¾ÒÀÀµMiniconda£¬¶øËüÎŞ·¨ÔÚ°üº¬¿Õ¸ñµÄÂ·¾¶ÏÂ¾²Ä¬°²×°¡£ && goto end
 
 @rem fix failed install when installing to a separate drive
 set TMP=%cd%\installer_files
@@ -27,7 +25,7 @@ set "CUDA_PATH=%INSTALL_ENV_DIR%"
 set "CUDA_HOME=%CUDA_PATH%"
 
 @rem activate installer env
-call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" activate "%INSTALL_ENV_DIR%" || ( echo. && echo æ‰¾ä¸åˆ°Minicondaé’©å­ã€‚ && goto end )
+call "%CONDA_ROOT_PREFIX%\condabin\conda.bat" activate "%INSTALL_ENV_DIR%" || ( echo. && echo ÕÒ²»µ½Miniconda¹³×Ó¡£ && goto end )
 
 @rem enter commands
 cmd /k "%*"
