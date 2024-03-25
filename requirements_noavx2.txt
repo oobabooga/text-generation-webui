@@ -13,7 +13,7 @@ numba==0.59.*
 numpy==1.26.*
 optimum==1.17.*
 pandas
-peft==0.8.*
+peft==0.10.*
 Pillow>=9.5.0
 pyyaml
 requests
