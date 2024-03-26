@@ -161,12 +161,14 @@ def generate_chat_prompt(user_input, state, **kwargs):
 
             prompt = instruction_template.render(messages=outer_messages)
             suffix = get_generation_prompt(instruct_renderer, impersonate=False)[1]
-            prompt = prompt[:-len(suffix)]
+            if len(suffix) > 0:
+                prompt = prompt[:-len(suffix)]
 
         else:
             if _continue:
                 suffix = get_generation_prompt(renderer, impersonate=impersonate)[1]
-                prompt = prompt[:-len(suffix)]
+                if len(suffix) > 0:
+                    prompt = prompt[:-len(suffix)]
             else:
                 prefix = get_generation_prompt(renderer, impersonate=impersonate)[0]
                 if state['mode'] == 'chat' and not impersonate:
