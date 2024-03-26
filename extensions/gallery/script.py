@@ -119,7 +119,7 @@ def ui():
             samples_per_page=settings["gallery-items_per_page"]
         )
 
-    filter_box.change(lambda: None, None, None, _js=f'() => {{{custom_js()}; gotoFirstPage()}}').success(
+    filter_box.change(lambda: None, None, None, js=f'() => {{{custom_js()}; gotoFirstPage()}}').success(
         filter_cards, filter_box, gallery).then(
         lambda x: gr.update(elem_classes='highlighted-border' if x != '' else ''), filter_box, filter_box, show_progress=False)
 
