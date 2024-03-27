@@ -5,7 +5,7 @@ from threading import Thread
 
 import torch
 import transformers
-from transformers import is_torch_xpu_available
+from transformers import is_torch_npu_available, is_torch_xpu_available
 
 import modules.shared as shared
 
@@ -99,5 +99,7 @@ def clear_torch_cache():
     if not shared.args.cpu:
         if is_torch_xpu_available():
             torch.xpu.empty_cache()
+        elif is_torch_npu_available():
+            torch.npu.empty_cache()
         else:
             torch.cuda.empty_cache()
