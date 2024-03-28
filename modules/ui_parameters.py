@@ -89,11 +89,6 @@ def create_ui(default_preset):
                             shared.gradio['skip_special_tokens'] = gr.Checkbox(value=shared.settings['skip_special_tokens'], label='Skip special tokens', info='Some specific models need this unset.')
                             shared.gradio['stream'] = gr.Checkbox(value=shared.settings['stream'], label='Activate text streaming')
 
-#                with gr.Column():  # Traditional parameters
-#                with gr.Column():  # "Other" parameters
-#                with gr.Column():  # Meme parameters
-#                with gr.Column():  # Non-sampling parameters
-
         ui_chat.create_chat_settings_ui()
 
 
