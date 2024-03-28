@@ -4,6 +4,7 @@ import functools
 import html
 import json
 import re
+import itertools
 from datetime import datetime
 from functools import partial
 from pathlib import Path
@@ -661,19 +662,33 @@ def load_character(character, name1, name2):
     context = greeting = ""
     greeting_field = 'greeting'
     picture = None
-
+    matched_extension = None
+    file_contents = None
     filepath = None
-    for extension in ["yml", "yaml", "json"]:
+
+    for extension in ["yml", "yaml", "json", "png"]:
         filepath = Path(f'characters/{character}.{extension}')
         if filepath.exists():
+            matched_extension = extension
             break
 
     if filepath is None or not filepath.exists():
         logger.error(f"Could not find the character \"{character}\" inside characters/. No character has been loaded.")
         raise ValueError
+    
+    if(matched_extension == "png"):
+        file_contents = extract_character_from_image(filepath, character)
+    else:
+        file_contents = open(filepath, 'r', encoding='utf-8').read()
 
-    file_contents = open(filepath, 'r', encoding='utf-8').read()
-    data = json.loads(file_contents) if extension == "json" else yaml.safe_load(file_contents)
+    data = ""
+    if(is_json(file_contents)):
+        data = json.loads(file_contents)
+    elif(is_yaml(file_contents)):
+        data = yaml.safe_load(file_contents)
+    else:
+        logger.warning("Unable to read character data!")
+
     cache_folder = Path(shared.args.disk_cache_dir)
 
     for path in [Path(f"{cache_folder}/pfp_character.png"), Path(f"{cache_folder}/pfp_character_thumb.png")]:
@@ -694,14 +709,43 @@ def load_character(character, name1, name2):
             name1 = data[k]
             break
 
-    if 'context' in data:
+    if 'context' in data: # Standard
         context = data['context'].strip()
-    elif "char_persona" in data:
-        context = build_pygmalion_style_context(data)
+    elif "char_persona" in data: # Pygmalion
+        context = build_context(data, name2)
         greeting_field = 'char_greeting'
+    elif "description" in data: # Character card
+        context = build_context(data, name2)
+        greeting_field = 'first_mes'
 
     greeting = data.get(greeting_field, greeting)
     return name1, name2, picture, greeting, context
+
+
+def extract_character_from_image(image_path : str, character : str):
+    image = Image.open(image_path)
+    image.load()
+    try:
+        character_crypted = image.info["chara"]
+    except(KeyError):
+        logger.error(f"Could not load data for the character \"{character}\" from image. The selected image may not have character data present!")
+    return base64.b64decode(character_crypted).decode("utf-8")
+
+
+def is_json(input):
+    try:
+        jsonFile = json.loads(input)
+    except ValueError:
+        return False
+    return True
+
+
+def is_yaml(input):
+    try:
+        yamlFile = yaml.safe_load(input)
+    except yaml.YAMLError:
+        return False
+    return True
 
 
 def load_instruction_template(template):
@@ -742,7 +786,7 @@ def upload_character(file, img, tavern=False):
     if 'char_name' in data:
         name = data['char_name']
         greeting = data['char_greeting']
-        context = build_pygmalion_style_context(data)
+        context = build_context(data)
         yaml_data = generate_character_yaml(name, greeting, context)
     else:
         name = data['name']
@@ -764,19 +808,77 @@ def upload_character(file, img, tavern=False):
     return gr.update(value=outfile_name, choices=get_available_characters())
 
 
-def build_pygmalion_style_context(data):
+def build_context(data : str, charName : str):
+    # To support a new format, simply add the corresponding keys to the lists below.
+    personaKeys = ['personality', 'char_persona', 'description']
+    scenarioKeys = ['scenario', 'world_scenario']
+    exDialogKeys = ['mes_example', 'example_dialogue']
     context = ""
-    if 'char_persona' in data and data['char_persona'] != '':
-        context += f"{data['char_name']}'s Persona: {data['char_persona']}\n"
 
-    if 'world_scenario' in data and data['world_scenario'] != '':
-        context += f"Scenario: {data['world_scenario']}\n"
+    personaStrings = []
+    scenarioStrings = []
+    exDialogStrings = []
 
-    if 'example_dialogue' in data and data['example_dialogue'] != '':
-        context += f"{data['example_dialogue'].strip()}\n"
+    for personaKey in personaKeys:
+        if personaKey in data and data[personaKey] != '':
+            personaStrings.append(f"{data[personaKey].strip()}")
 
-    context = f"{context.strip()}\n"
+    for scenarioKey in scenarioKeys:
+        if scenarioKey in data and data[scenarioKey] != '':
+            scenarioStrings.append(f"{data[scenarioKey].strip()}")
+
+    for exDialogKey in exDialogKeys:
+        if exDialogKey in data and data[exDialogKey] != '':
+            exDialogStrings.append(f"{data[exDialogKey].strip()}")
+
+    # Remove any duplicates or partial duplicates. These are commonly found in multi-format compatible character data.
+    # Then add results to context with any desired prefixes.
+    if(personaStrings):
+        personaStrings = remove_partial_duplicate_strings_all_pairs(list(dict.fromkeys(personaStrings)))
+        context += f"{charName}'s Persona: "
+        for personaString in personaStrings:
+            context += personaString + "\n"
+    if(scenarioStrings):
+        scenarioStrings = remove_partial_duplicate_strings_all_pairs(list(dict.fromkeys(scenarioStrings)))
+        context += f"Scenario: "
+        for scenarioString in scenarioStrings:
+            context += scenarioString + "\n"
+    if(exDialogStrings):
+        exDialogStrings = remove_partial_duplicate_strings_all_pairs(list(dict.fromkeys(exDialogStrings)))
+        for exDialogString in exDialogStrings:
+            context += exDialogString + "\n"
+
+    context = f"{context.strip()}"
     return context
+
+def remove_partial_duplicate_strings_all_pairs(stringList : list):
+    # TODO: Do this in a way that isn't so horribly clunky and inefficient.
+    cleanStringList = []
+    if len(stringList) >= 2:
+        for pair in itertools.combinations(stringList, 2):
+            cleanStringPair = remove_partial_duplicate_strings(*pair)
+            if cleanStringPair[0] not in cleanStringList:
+                cleanStringList.append(cleanStringPair[0])
+            if cleanStringPair[1] not in cleanStringList:
+                cleanStringList.append(cleanStringPair[1])
+    else:
+        cleanStringList = stringList
+    return cleanStringList
+
+def remove_partial_duplicate_strings(string1 : str, string2 : str):
+    '''
+    Note: Despite the name, this will only remove a string if the other string contains it in its entirety.
+    Finding a way to check any substring of the first string against the second string could reduce the context,
+    but then you run into issues with commonly shared substrings, eg "the".
+    '''
+    string1 = string1.strip()
+    string2 = string2.strip()
+
+    if string1 in string2:
+        string2 = string2.replace(string1, '').strip()
+    if string2 in string1:
+        string1 = string1.replace(string2, '').strip()
+    return string1, string2
 
 
 def upload_tavern_character(img, _json):
