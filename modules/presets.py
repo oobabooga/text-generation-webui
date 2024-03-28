@@ -40,10 +40,6 @@ def default_preset():
         'do_sample': True,
         'encoder_repetition_penalty': 1,
         'no_repeat_ngram_size': 0,
-        'min_length': 0,
-        'num_beams': 1,
-        'length_penalty': 1,
-        'early_stopping': False,
         'sampler_priority': 'temperature\ndynamic_temperature\nquadratic_sampling\ntop_k\ntop_p\ntypical_p\nepsilon_cutoff\neta_cutoff\ntfs\ntop_a\nmin_p\nmirostat'
     }
 

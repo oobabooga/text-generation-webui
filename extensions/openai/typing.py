@@ -33,10 +33,6 @@ class GenerationOptions(BaseModel):
     seed: int = -1
     encoder_repetition_penalty: float = 1
     no_repeat_ngram_size: int = 0
-    min_length: int = 0
-    num_beams: int = 1
-    length_penalty: float = 1
-    early_stopping: bool = False
     truncation_length: int = 0
     max_tokens_second: int = 0
     prompt_lookup_num_tokens: int = 0
