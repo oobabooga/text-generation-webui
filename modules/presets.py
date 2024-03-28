@@ -40,10 +40,6 @@ def default_preset():
         'do_sample': True,
         'encoder_repetition_penalty': 1,
         'no_repeat_ngram_size': 0,
-        'min_length': 0,
-        'num_beams': 1,
-        'length_penalty': 1,
-        'early_stopping': False,
         'sampler_priority': 'temperature\ndynamic_temperature\nquadratic_sampling\ntop_k\ntop_p\ntypical_p\nepsilon_cutoff\neta_cutoff\ntfs\ntop_a\nmin_p\nmirostat'
     }
 
@@ -52,7 +48,7 @@ def presets_params():
     return [k for k in default_preset()]
 
 
-def load_preset(name):
+def load_preset(name, verbose=False):
     generate_params = default_preset()
     if name not in ['None', None, '']:
         path = Path(f'presets/{name}.yaml')
@@ -65,6 +61,10 @@ def load_preset(name):
         else:
             logger.error(f"The preset \"{name}\" does not exist under \"{path}\". Using the default parameters.")
 
+    if verbose:
+        logger.info(f"\"{name}\" preset:")
+        pprint.PrettyPrinter(indent=4, width=1, sort_dicts=False).pprint(remove_defaults(generate_params))
+
     return generate_params
 
 
@@ -74,7 +74,7 @@ def load_preset_memoized(name):
 
 
 def load_preset_for_ui(name, state):
-    generate_params = load_preset(name)
+    generate_params = load_preset(name, verbose=True)
     state.update(generate_params)
     return state, *[generate_params[k] for k in presets_params()]
 
