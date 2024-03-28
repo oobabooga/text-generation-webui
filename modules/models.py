@@ -433,12 +433,17 @@ def clear_torch_cache():
 
 def unload_model():
     shared.model = shared.tokenizer = None
+    shared.last_model_name = shared.model_name
     shared.model_name = 'None'
     shared.lora_names = []
     shared.model_dirty_from_training = False
     clear_torch_cache()
 
 
+def load_last_model():
+    shared.model, shared.tokenizer = load_model(shared.last_model_name)
+
+
 def reload_model():
     unload_model()
-    shared.model, shared.tokenizer = load_model(shared.model_name)
+    load_last_model()

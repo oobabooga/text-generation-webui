@@ -13,6 +13,7 @@ from modules.logging_colors import logger
 model = None
 tokenizer = None
 model_name = 'None'
+last_model_name = 'None'
 is_seq2seq = False
 model_dirty_from_training = False
 lora_names = []
