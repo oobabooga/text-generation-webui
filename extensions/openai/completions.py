@@ -261,6 +261,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
     name2 = body['bot_name'] or name2
     context = body['context'] or context
     greeting = body['greeting'] or greeting
+    user_bio = body['user_bio'] or ''
 
     # History
     user_input, custom_system_message, history = convert_history(messages)
@@ -271,6 +272,7 @@ def chat_completions_common(body: dict, is_legacy: bool = False, stream=False) -
         'name2': name2,
         'context': context,
         'greeting': greeting,
+        'user_bio': user_bio,
         'instruction_template_str': instruction_template_str,
         'custom_system_message': custom_system_message,
         'chat_template_str': chat_template_str,
